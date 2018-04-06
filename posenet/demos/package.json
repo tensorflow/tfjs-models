@@ -1,0 +1,48 @@
+{
+  "name": "tfjs-models",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "license": "Apache-2.0",
+  "private": true,
+  "engines": {
+    "node": ">=8.9.0"
+  },
+  "dependencies": {
+    "@tensorflow/tfjs": "0.6.1"
+  },
+  "scripts": {
+    "watch": "NODE_ENV=development parcel --no-hmr --open index.html ",
+    "build": "NODE_ENV=production parcel build index.html  --no-minify --public-url ./"
+  },
+  "devDependencies": {
+    "babel-plugin-transform-runtime": "~6.23.0",
+    "babel-polyfill": "~6.26.0",
+    "babel-preset-env": "~1.6.1",
+    "clang-format": "~1.2.2",
+    "parcel-bundler": "~1.6.2"
+  },
+  "babel": {
+    "presets": [
+      [
+        "env",
+        {
+          "modules": false,
+          "targets": {
+            "browsers": [
+              "> 1%",
+              "last 3 versions",
+              "ie >= 9",
+              "ios >= 8",
+              "android >= 4.2"
+            ]
+          },
+          "useBuiltIns": false
+        }
+      ]
+    ],
+    "plugins": [
+      "transform-runtime"
+    ]
+  }
+}

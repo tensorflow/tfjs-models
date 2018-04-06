@@ -37,7 +37,7 @@
     "build": "tsc --sourceMap false && browserify -g browserify-shim --standalone posenet src/index.ts -p [tsify] -o dist/bundle.js",
     "test": "karma start",
     "publish-npm": "tsc --sourceMap false && yarn build && npm publish",
-    "build-demo": "browserify --debug --standalone demos demos/index.ts -p [tsify] -o demos/bundle.js",
+    "build-demo": "browserify --debug --standalone demos demos/index.js -o demos/bundle.js",
     "deploy-demo": "cd demos/ && gcloud app deploy -v cl-deeplearnjs-posenet --project cl-move-mirror --no-promote",
     "watch-demo": "watchify --debug -v --standalone demos demos/index.ts -p [tsify] -o demos/bundle.js",
     "simple-server": "cd demos && python -m SimpleHTTPServer",
