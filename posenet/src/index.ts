@@ -18,7 +18,7 @@
 import * as multiPose from './multiPose';
 import * as singlePose from './singlePose';
 
-export {jointNames} from './keypoints';
+export {jointIds, jointNames} from './keypoints';
 export {PoseNet} from './posenet';
 export {Keypoint, Pose} from './types';
 // tslint:disable-next-line:max-line-length

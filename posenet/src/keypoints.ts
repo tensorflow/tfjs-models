@@ -28,9 +28,11 @@ export const jointNames = [
 
 export const NUM_KEYPOINTS = jointNames.length;
 
-export interface NumberDict { [jointName: string]: number; }
+export interface NumberDict {
+  [jointName: string]: number;
+}
 
-export const jointIdsByName =
+export const jointIds =
     jointNames.reduce((result: NumberDict, jointName, i): NumberDict => {
       result[jointName] = i;
       return result;
@@ -47,4 +49,4 @@ const connectedJointNames: StringTuple[] = [
 
 export const connectedJointIndeces = connectedJointNames.map(
     ([jointNameA, jointNameB]) =>
-        ([jointIdsByName[jointNameA], jointIdsByName[jointNameB]]));
+        ([jointIds[jointNameA], jointIds[jointNameB]]));

@@ -119,7 +119,7 @@ function drawResults(image, heatmaps, outputStride, poses,
 function loadImage(imagePath) {
   const image = new Image();
   const promise = new Promise((resolve, reject) => {
-    image.onload = async () => {
+    image.onload = () => {
       resolve(image);
     };
   });
