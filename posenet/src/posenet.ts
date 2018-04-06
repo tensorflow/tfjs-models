@@ -20,6 +20,7 @@ import {CheckpointLoader} from './deeplearn-legacy-loader';
 
 import * as multiPose from './multiPose';
 import * as singlePose from './singlePose';
+import {Pose} from './types';
 
 const GOOGLE_CLOUD_STORAGE_DIR =
     'https://storage.googleapis.com/cl-move-mirror.appspot.com/';
@@ -104,12 +105,13 @@ export class PoseNet {
    * that are needed for single pose decoding
    *
    * @param input un-preprocessed input image.
-   * @param outputStride the desired stride for the outputs.  Must be 32, 16, 
-   * or 8. The output width and height will be will be 
-   * (inputDimension - 1)/outputStride + 1 
+   * @param outputStride the desired stride for the outputs.  Must be 32, 16,
+   * or 8. The output width and height will be will be
+   * (inputDimension - 1)/outputStride + 1
    * @return heatmapScores, offsets
    */
-  predictForSinglePose(input: tf.Tensor3D, outputStride: OutputStride = 32) {
+  predictForSinglePose(input: tf.Tensor3D, outputStride: OutputStride = 32):
+      {heatmapScores: tf.Tensor3D, offsets: tf.Tensor3D} {
     return tf.tidy(() => {
       const mobileNetOutput = this.mobileNet(input, outputStride);
 
@@ -132,12 +134,17 @@ export class PoseNet {
    * that are needed for single pose decoding
    *
    * @param input un-preprocessed input image.
-   * @param outputStride the desired stride for the outputs.  Must be 32, 16, 
-   * or 8. The output width and height will be will be 
-   * (inputDimension - 1)/outputStride + 1 
+   * @param outputStride the desired stride for the outputs.  Must be 32, 16,
+   * or 8. The output width and height will be will be
+   * (inputDimension - 1)/outputStride + 1
    * @return heatmapScores, offsets, displacementFwd, displacementBwd
    */
-  predictForMultiPose(input: tf.Tensor3D, outputStride: OutputStride = 32) {
+  predictForMultiPose(input: tf.Tensor3D, outputStride: OutputStride = 32): {
+    heatmapScores: tf.Tensor3D,
+    offsets: tf.Tensor3D,
+    displacementFwd: tf.Tensor3D,
+    displacementBwd: tf.Tensor3D
+  } {
     return tf.tidy(() => {
       const mobileNetOutput = this.mobileNet(input, outputStride);
 
@@ -167,24 +174,24 @@ export class PoseNet {
   }
 
   /**
-   * Infer through PoseNet, and estimates a single pose using the outputs. 
-   * assumes variables have been loaded. This does standard ImageNet 
+   * Infer through PoseNet, and estimates a single pose using the outputs.
+   * assumes variables have been loaded. This does standard ImageNet
    * pre-processing before inferring through the model. This
    * method returns a single pose.
    *
    * @param input un-preprocessed input image.
-   * @param outputStride the desired stride for the outputs.  Must be 32, 16, 
-   * or 8. The output width and height will be will be 
-   * (inputDimension - 1)/outputStride + 1 
-   * @return A single pose with a confidence score, which contains an array of 
+   * @param outputStride the desired stride for the outputs.  Must be 32, 16,
+   * or 8. The output width and height will be will be
+   * (inputDimension - 1)/outputStride + 1
+   * @return A single pose with a confidence score, which contains an array of
    * keypoints indexed by part id, each with a score and position.
    */
-  async estimateSinglePose(
-      input: tf.Tensor3D, outputStride: OutputStride = 32) {
+  estimateSinglePose(input: tf.Tensor3D, outputStride: OutputStride = 32):
+      Pose {
     const {heatmapScores, offsets} =
-        await this.predictForSinglePose(input, outputStride);
+        this.predictForSinglePose(input, outputStride);
 
-    const pose = await singlePose.decode(heatmapScores, offsets, outputStride);
+    const pose = singlePose.decode(heatmapScores, offsets, outputStride);
 
     heatmapScores.dispose();
     offsets.dispose();
@@ -193,38 +200,38 @@ export class PoseNet {
   }
 
   /**
-   * Infer through PoseNet, and estimates multiple poses using the outputs. 
-   * assumes variables have been loaded. This does standard ImageNet 
-   * pre-processing before inferring through the model.  It detects 
-   * multiple poses and finds their parts from part scores and 
-   * displacement vectors using a fast greedy decoding algorithm.  It returns 
-   * up to `maxDetections` object instance detections in decreasing root score 
+   * Infer through PoseNet, and estimates multiple poses using the outputs.
+   * assumes variables have been loaded. This does standard ImageNet
+   * pre-processing before inferring through the model.  It detects
+   * multiple poses and finds their parts from part scores and
+   * displacement vectors using a fast greedy decoding algorithm.  It returns
+   * up to `maxDetections` object instance detections in decreasing root score
    * order.
    *
    * @param input un-preprocessed input image.
-   * 
-   * @param outputStride the desired stride for the outputs.  Must be 32, 16, 
-   * or 8. The output width and height will be will be 
-   * (inputDimension - 1)/outputStride + 1 
-   * 
-   * @param maxDetections Maximum number of returned instance detections per 
+   *
+   * @param outputStride the desired stride for the outputs.  Must be 32, 16,
+   * or 8. The output width and height will be will be
+   * (inputDimension - 1)/outputStride + 1
+   *
+   * @param maxDetections Maximum number of returned instance detections per
    * image. Defaults to 5.
-   * 
-   * @param scoreThreshold Only return instance detections that have root part 
+   *
+   * @param scoreThreshold Only return instance detections that have root part
    * score greater or equal to this value. Defaults to 0.5
-   * 
-   * @param nmsRadius Non-maximum suppression part distance in pixels. It needs 
-   * to be strictly positive. Two parts suppress each other if they are less 
+   *
+   * @param nmsRadius Non-maximum suppression part distance in pixels. It needs
+   * to be strictly positive. Two parts suppress each other if they are less
    * than `nmsRadius` pixels away. Defaults to 20.
-   * 
+   *
    * @return An array of poses and their scores, each containing keypoints and
    * the corresponding keypoint scores.
    */
   async estimateMultiplePoses(
       input: tf.Tensor3D, outputStride: OutputStride = 32, maxDetections = 5,
-      scoreThreshold = .5, nmsRadius = 20) {
+      scoreThreshold = .5, nmsRadius = 20): Promise<Pose[]> {
     const {heatmapScores, offsets, displacementFwd, displacementBwd} =
-        await this.predictForMultiPose(input, outputStride);
+        this.predictForMultiPose(input, outputStride);
 
     const poses = await multiPose.decode(
         heatmapScores, offsets, displacementFwd, displacementBwd, outputStride,

@@ -96,16 +96,13 @@ function drawHeatmapAsAlpha(
 
 function drawResults(
     image: HTMLImageElement, heatmaps: tf.Tensor3D, outputStride: OutputStride,
-    poses: Pose[], minPartConfidence: number, minPoseConfidence: number,
-    inferenceTime: number) {
+    poses: Pose[], minPartConfidence: number, minPoseConfidence: number) {
   const resultsElement = document.getElementById(`results`);
   const resultsCanvas =
       resultsElement.querySelector('canvas') as HTMLCanvasElement;
 
   resultsElement.querySelector('#outputStride').innerHTML =
       String(outputStride);
-  resultsElement.querySelector('.inference').innerHTML =
-      `Inference time: ${inferenceTime} ms`;
 
   drawHeatmapAsAlpha(image, heatmaps, outputStride, resultsCanvas);
 
@@ -138,33 +135,25 @@ async function testImageForSinglePoseAndDrawResults(
     model: posenet.PoseNet, imagePath: string, guiState: GuiState) {
   const image = await loadImage(imagePath);
 
-  const start = new Date().getTime();
-
   const pixels = tf.fromPixels(image);
   const {heatmapScores, offsets} =
-      await model.predictForSinglePose(pixels, guiState.outputStride);
-
-  const inferenceTime = (new Date().getTime() - start);
+      model.predictForSinglePose(pixels, guiState.outputStride);
 
   const pose =
       posenet.singlePose.decode(heatmapScores, offsets, guiState.outputStride);
 
   drawResults(
       image, heatmapScores, guiState.outputStride, [pose],
-      guiState.minPartConfidence, guiState.minPoseConfidence, inferenceTime);
+      guiState.minPartConfidence, guiState.minPoseConfidence);
 }
 
 async function testImageForMultiplePosesAndDrawResults(
     model: posenet.PoseNet, imagePath: string, guiState: GuiState) {
   const image = await loadImage(imagePath);
 
-  const start = new Date().getTime();
-
   const pixels = tf.fromPixels(image);
   const {heatmapScores, offsets, displacementBwd, displacementFwd} =
-      await model.predictForMultiPose(pixels, guiState.outputStride);
-
-  const inferenceTime = (new Date().getTime() - start);
+      model.predictForMultiPose(pixels, guiState.outputStride);
 
   const poses = await posenet.multiPose.decode(
       heatmapScores, offsets, displacementFwd, displacementBwd,
@@ -173,7 +162,7 @@ async function testImageForMultiplePosesAndDrawResults(
 
   drawResults(
       image, heatmapScores, guiState.outputStride, poses,
-      guiState.minPartConfidence, guiState.minPoseConfidence, inferenceTime);
+      guiState.minPartConfidence, guiState.minPoseConfidence);
 }
 
 function setStatusText(text: string) {

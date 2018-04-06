@@ -68,9 +68,10 @@ function decode(
   };
 }
 
-/** We get a new keypoint along the `edgeId` for the pose instance, assuming 
- * that the position of the `idSource` part is already known. For this, we 
- * follow the displacement vector from the source to target part (stored in 
+/**
+ * We get a new keypoint along the `edgeId` for the pose instance, assuming
+ * that the position of the `idSource` part is already known. For this, we
+ * follow the displacement vector from the source to target part (stored in
  * the `i`-t channel of the displacement tensor).
  */
 function traverseToTargetKeypoint(
@@ -107,15 +108,16 @@ function traverseToTargetKeypoint(
   return {point: targetKeypoint, score};
 }
 
-/** Follows the displacement fields to decode the full pose of the object
+/**
+ * Follows the displacement fields to decode the full pose of the object
  * instance given the position of a part that acts as root.
- * 
+ *
  * @return An array of decoded keypoints and their scores for a single pose
  */
 export function decodePose(
     root: PartWithScore, scores: TensorBuffer3D, offsets: TensorBuffer3D,
     outputStride: number, displacementsFwd: TensorBuffer3D,
-    displacementsBwd: TensorBuffer3D) {
+    displacementsBwd: TensorBuffer3D): Keypoint[] {
   const numParts = scores.shape[2];
   const numEdges = parentToChildEdges.length;
 

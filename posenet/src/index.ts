@@ -15,14 +15,12 @@
  * =============================================================================
  */
 
-import {fromPixels} from '@tensorflow/tfjs-core';
-
 import * as multiPose from './multiPose';
 import * as singlePose from './singlePose';
 
 export {jointNames} from './keypoints';
-export {PoseNet,} from './posenet';
+export {PoseNet} from './posenet';
 export {Keypoint, Pose} from './types';
 // tslint:disable-next-line:max-line-length
 export {getAdjacentKeyPoints, getBoundingBox, getBoundingBoxPoints, resizeBilinearGrayscale, setHeatmapAsAlphaChannel, toHeatmapImage, toSingleChannelPixels} from './util';
-export {fromPixels, multiPose, singlePose};
+export {multiPose, singlePose};
