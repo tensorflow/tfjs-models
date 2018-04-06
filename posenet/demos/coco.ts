@@ -106,11 +106,10 @@ function drawResults(
       String(outputStride);
   resultsElement.querySelector('.inference').innerHTML =
       `Inference time: ${inferenceTime} ms`;
-  // console.log(pOutputStridex2d(heatmaps).print())
+
   drawHeatmapAsAlpha(image, heatmaps, outputStride, resultsCanvas);
 
   poses.forEach(pose => {
-    console.log('score', pose.score, minPartConfidence);
     if (pose.score >= minPoseConfidence) {
       drawKeypoints(
           pose.keypoints, minPartConfidence, resultsCanvas.getContext('2d'));
@@ -186,26 +185,26 @@ async function testImageForSinglePoseClick(
     model: posenet.PoseNet, image: string, guiState: GuiState) {
   setStatusText('Predicting...');
 
-  document.getElementById('results').setAttribute('style', 'display:none');
+  document.getElementById('results').style.display = 'none';
 
   await testImageForSinglePoseAndDrawResults(model, image, guiState);
 
   setStatusText('');
 
-  document.getElementById('results').setAttribute('style', 'display:block');
+  document.getElementById('results').style.display = 'block';
 }
 
 async function testImageForMultiPoseClick(
     model: posenet.PoseNet, image: string, guiState: GuiState) {
   setStatusText('Predicting...');
 
-  document.getElementById('results').setAttribute('style', 'display:none');
+  document.getElementById('results').style.display = 'none';
 
   await testImageForMultiplePosesAndDrawResults(model, image, guiState);
 
   setStatusText('');
 
-  document.getElementById('results').setAttribute('style', 'display:block');
+  document.getElementById('results').style.display = 'block';
 }
 
 type MultiPoseDetectionState = {
@@ -277,6 +276,6 @@ export async function bindPage() {
 
   setupGui(model);
 
-  document.getElementById('loading').setAttribute('style', 'display:none');
-  document.getElementById('main').setAttribute('style', 'display:block');
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('main').style.display = 'block';
 }

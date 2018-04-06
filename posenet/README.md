@@ -1,7 +1,21 @@
 # PoseNet model
 
-This package contains a standalone PoseNet model for Pose Estimation,
+This package contains a standalone PoseNet for Pose Estimation,
 as well as some demos.
+
+## Installation
+
+You can use this as standalone es5 bundle like this:
+
+```html
+<script src="https://unpkg.com/tfjs-posenet"></script>
+```
+
+Or you can install it via npm for use in a TypeScript / ES6 project.
+
+```sh
+npm install tfjs-posenet --save-dev
+```
 
 ## Setup
 

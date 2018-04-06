@@ -42,7 +42,6 @@ export function drawSkeleton(
       posenet.getAdjacentKeyPoints(keypoints, minConfidence);
 
   adjacentKeyPoints.forEach((keypoints: Keypoint[]) => {
-    // console.log('in draw', leftPoint, rightPoint)
     drawSegment(
         toTuple(keypoints[0].point), toTuple(keypoints[1].point), '#0000ff',
         scale, ctx);

@@ -141,7 +141,6 @@ function detectPoseInRealTime(video: HTMLVideoElement, model: posenet.PoseNet) {
   const ctx = canvas.getContext('2d');
 
   async function poseDetectionFrame() {
-    const start = new Date().getTime();
     const videoResolution = Number(guiState.videoResolution);
     const outputStride = Number(guiState.outputStride) as 8 | 16 | 32;
     const minConfidence = Number(guiState.minPartConfidence);
@@ -159,8 +158,6 @@ function detectPoseInRealTime(video: HTMLVideoElement, model: posenet.PoseNet) {
 
     const scale = outputResolution / videoResolution;
 
-    const startPredict = new Date().getTime();
-
     const poses = await model.estimateMultiplePoses(
         image,
         outputStride,
@@ -168,10 +165,6 @@ function detectPoseInRealTime(video: HTMLVideoElement, model: posenet.PoseNet) {
         guiState.minPartConfidence,
         guiState.nmsRadius,
     );
-
-    console.log(
-        'total prediction and decode time',
-        new Date().getTime() - startPredict);
 
     if (guiState.showVideo) {
       const toRender = await tf.tidy(
@@ -193,11 +186,9 @@ function detectPoseInRealTime(video: HTMLVideoElement, model: posenet.PoseNet) {
       }
     });
 
-    console.log('after render models in memory', tf.memory().numTensors);
-
     image.dispose();
     originalImage.dispose();
-    console.log('frame time', new Date().getTime() - start);
+
     requestAnimationFrame(poseDetectionFrame);
   }
 
@@ -209,8 +200,8 @@ export async function bindPage() {
 
   await model.load();
 
-  document.getElementById('loading').setAttribute('style', 'display:none');
-  document.getElementById('main').setAttribute('style', 'display:block');
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('main').style.display = 'block';
 
   const cameras = await getCameras();
   if (cameras.length === 0) {
