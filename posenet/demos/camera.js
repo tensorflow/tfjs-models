@@ -14,87 +14,65 @@
  * limitations under the License.
  * =============================================================================
  */
-
 import * as tf from '@tensorflow/tfjs-core';
-import {GUI} from 'dat.gui';
-
+import dat from 'dat.gui';
 import * as posenet from '../src';
-import {OutputStride} from '../src/posenet';
 
-// tslint:disable-next-line:max-line-length
 import {drawKeypoints, drawSkeleton, renderToCanvas} from './demo_util';
-
 const maxStride = 32;
-
 const videoSizes = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map(
-    (multiplier: number) => (maxStride * multiplier + 1));
-
+  (multiplier) => (maxStride * multiplier + 1));
 const maxVideoSize = 513;
 
 async function getCameras() {
   const devices = await navigator.mediaDevices.enumerateDevices();
-
   return devices.filter(({kind}) => kind === 'videoinput');
 }
 
-let currentStream: MediaStream = null;
+let currentStream = null;
 
 function stopCurrentVideoStream() {
   if (currentStream) {
-    currentStream.getTracks().forEach(track => {
+    currentStream.getTracks().forEach((track) => {
       track.stop();
     });
   }
 }
 
-function loadVideo(cameraId: string) {
-  return new Promise<HTMLVideoElement>((resolve, reject) => {
+function loadVideo(cameraId) {
+  return new Promise((resolve, reject) => {
     stopCurrentVideoStream();
-    const video = document.getElementById('video') as HTMLVideoElement;
+
+    const video = document.getElementById('video');
+
     video.width = maxVideoSize;
     video.height = maxVideoSize;
 
     if (navigator.getUserMedia) {
-      navigator.getUserMedia(
-          {
-            video: {
-              width: maxVideoSize,
-              height: maxVideoSize,
-              deviceId: {exact: cameraId}
-            }
-          },
-          handleVideo, videoError);
+      navigator.getUserMedia({
+        video: {
+          width: maxVideoSize,
+          height: maxVideoSize,
+          deviceId: {exact: cameraId},
+        },
+      }, handleVideo, videoError);
     }
 
-    function handleVideo(stream: MediaStream) {
+    function handleVideo(stream) {
       currentStream = stream;
       video.src = window.URL.createObjectURL(stream);
 
       resolve(video);
     }
 
-    function videoError(e: MediaStreamError) {
+    function videoError(e) {
       // do something
       reject(e);
     }
   });
 }
 
-type GuiState = {
-  camera?: string,
-        outputStride: OutputStride,
-        minPartConfidence: number,
-        minPoseConfidence: number,
-        maxPoseDetections: number,
-        nmsRadius: number,
-        videoResolution: number,
-        showVideo: boolean,
-        showSkeleton: boolean,
-        showPoints: boolean,
-        outputResolution: number
-};
-
-const guiState: GuiState = {
+const guiState = {
   outputStride: 16,
   minPartConfidence: 0.2,
   minPoseConfidence: 0.4,
@@ -104,24 +82,22 @@ const guiState: GuiState = {
   showVideo: true,
   showSkeleton: true,
   showPoints: true,
-  outputResolution: 385
+  outputResolution: 385,
 };
 
-function setupGui(cameras: MediaDeviceInfo[]) {
+function setupGui(cameras) {
   if (cameras.length > 0) {
     guiState.camera = cameras[0].deviceId;
   }
 
-  const cameraOptions = cameras.reduce(
-      (result: {[label: string]: string}, {label, deviceId}):
-          {[label: string]: string} => {
-            result[label] = deviceId;
-            return result;
-          },
-      {});
+  const cameraOptions = cameras.reduce((result, {label, deviceId}) => {
+    result[label] = deviceId;
+    return result;
+  }, {});
 
-  const gui = new GUI();
-  gui.add(guiState, 'camera', cameraOptions).onChange((deviceId: string) => {
+  const gui = new dat.GUI();
+
+  gui.add(guiState, 'camera', cameraOptions).onChange((deviceId) => {
     loadVideo(deviceId);
   });
   gui.add(guiState, 'outputStride', [8, 16, 32]);
@@ -136,16 +112,16 @@ function setupGui(cameras: MediaDeviceInfo[]) {
   gui.add(guiState, 'showPoints');
 }
 
-function detectPoseInRealTime(video: HTMLVideoElement, model: posenet.PoseNet) {
-  const canvas = document.getElementById('output') as HTMLCanvasElement;
+function detectPoseInRealTime(video, model) {
+  const canvas = document.getElementById('output');
   const ctx = canvas.getContext('2d');
 
   async function poseDetectionFrame() {
-    const start = new Date().getTime();
     const videoResolution = Number(guiState.videoResolution);
-    const outputStride = Number(guiState.outputStride) as 8 | 16 | 32;
+    const outputStride = Number(guiState.outputStride);
     const minConfidence = Number(guiState.minPartConfidence);
     const outputResolution = Number(guiState.outputResolution);
+
     canvas.width = outputResolution;
     canvas.height = outputResolution;
 
@@ -154,31 +130,21 @@ function detectPoseInRealTime(video: HTMLVideoElement, model: posenet.PoseNet) {
     ctx.scale(-1, 1);
 
     const originalImage = tf.fromPixels(video);
-    const image =
-        originalImage.resizeBilinear([videoResolution, videoResolution]);
+    const image = originalImage.resizeBilinear(
+      [videoResolution, videoResolution]);
 
     const scale = outputResolution / videoResolution;
-
-    const startPredict = new Date().getTime();
-
-    const poses = await model.predictAndDecodeMultiplePoses(
-        image,
-        outputStride,
-        guiState.maxPoseDetections,
-        guiState.minPartConfidence,
-        guiState.nmsRadius,
-    );
-
-    console.log(
-        'total prediction and decode time',
-        new Date().getTime() - startPredict);
+    const poses = await model.estimateMultiplePoses(
+      image, outputStride, guiState.maxPoseDetections,
+      guiState.minPartConfidence, guiState.nmsRadius);
 
     if (guiState.showVideo) {
-      const toRender = await tf.tidy(
-          () => originalImage.reverse(1).resizeBilinear(
-              [outputResolution, outputResolution]));
-      await renderToCanvas(toRender, ctx);
+      const toRender = await tf.tidy(() => {
+        return originalImage.reverse(1)
+          .resizeBilinear([outputResolution, outputResolution]);
+      });
 
+      await renderToCanvas(toRender, ctx);
       toRender.dispose();
     }
 
@@ -193,11 +159,9 @@ function detectPoseInRealTime(video: HTMLVideoElement, model: posenet.PoseNet) {
       }
     });
 
-    console.log('after render models in memory', tf.memory().numTensors);
-
     image.dispose();
     originalImage.dispose();
-    console.log('frame time', new Date().getTime() - start);
+
     requestAnimationFrame(poseDetectionFrame);
   }
 
@@ -209,17 +173,23 @@ export async function bindPage() {
 
   await model.load();
 
-  document.getElementById('loading').setAttribute('style', 'display:none');
-  document.getElementById('main').setAttribute('style', 'display:block');
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('main').style.display = 'block';
 
   const cameras = await getCameras();
+
   if (cameras.length === 0) {
     alert('No webcams available.  Reload the page when a webcam is available.');
     return;
   }
 
   const video = await loadVideo(cameras[0].deviceId);
-  setupGui(cameras);
 
+  setupGui(cameras);
   detectPoseInRealTime(video, model);
 }
+
+navigator.getUserMedia = navigator.getUserMedia ||
+  navigator.webkitGetUserMedia ||
+  navigator.mozGetUserMedia;
+bindPage();

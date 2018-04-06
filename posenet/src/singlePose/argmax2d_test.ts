@@ -19,7 +19,7 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {argmax2d} from './argmax2d';
 
-describe('util argmax2d', () => {
+describe('argmax2d', () => {
   it('x = [2, 2, 1]', () => {
     const input = tf.tensor3d([1, 2, 0, 3], [2, 2, 1]);
 
@@ -40,6 +40,7 @@ describe('util argmax2d', () => {
           const result = argmax2d(input);
           tf.test_util.expectArraysClose(result, expected);
         };
+
 
     expectArgmax2dToEqual(input1, tf.tensor2d([2, 1], [1, 2], 'int32'));
     expectArgmax2dToEqual(input2, tf.tensor2d([1, 0], [1, 2], 'int32'));

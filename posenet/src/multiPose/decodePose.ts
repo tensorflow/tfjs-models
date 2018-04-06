@@ -1,4 +1,21 @@
-import {jointIdsByName, NumberTuple, StringTuple} from '../keypoints';
+/**
+ * @license
+ * Copyright 2018 Google LLC. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * =============================================================================
+ */
+
+import {jointIds, NumberTuple, StringTuple} from '../keypoints';
 import {Keypoint, PartWithScore, TensorBuffer3D, Vector2D} from '../types';
 import {clamp, getOffsetPoint} from './util';
 
@@ -23,7 +40,7 @@ const poseChain: StringTuple[] = [
 
 const parentChildrenTuples: NumberTuple[] = poseChain.map(
     ([parentJoinName, childJoinName]): NumberTuple =>
-        ([jointIdsByName[parentJoinName], jointIdsByName[childJoinName]]));
+        ([jointIds[parentJoinName], jointIds[childJoinName]]));
 
 const parentToChildEdges: number[] =
     parentChildrenTuples.map(([, childJointId]) => childJointId);
@@ -51,12 +68,12 @@ function decode(
   };
 }
 
-// We add a new `id_target` part to the detection instance, assuming that the
-// position of the `id_source` part is already known. For this, we follow the
-// displacement vector from the source to target part (stored in the `i`-th
-// channel of the displacement tensor), followed by a local search in a small
-// window in order to find the position of maximum score for the `id_target`
-// part.
+/**
+ * We get a new keypoint along the `edgeId` for the pose instance, assuming
+ * that the position of the `idSource` part is already known. For this, we
+ * follow the displacement vector from the source to target part (stored in
+ * the `i`-t channel of the displacement tensor).
+ */
 function traverseToTargetKeypoint(
     edgeId: number, sourceKeypoint: Keypoint, targetKeypointId: number,
     scoresBuffer: TensorBuffer3D, offsets: TensorBuffer3D, outputStride: number,
@@ -91,21 +108,25 @@ function traverseToTargetKeypoint(
   return {point: targetKeypoint, score};
 }
 
+/**
+ * Follows the displacement fields to decode the full pose of the object
+ * instance given the position of a part that acts as root.
+ *
+ * @return An array of decoded keypoints and their scores for a single pose
+ */
 export function decodePose(
     root: PartWithScore, scores: TensorBuffer3D, offsets: TensorBuffer3D,
     outputStride: number, displacementsFwd: TensorBuffer3D,
-    displacementsBwd: TensorBuffer3D) {
-  // Start a new detection instance at the position of the root.
+    displacementsBwd: TensorBuffer3D): Keypoint[] {
   const numParts = scores.shape[2];
   const numEdges = parentToChildEdges.length;
 
   const instanceKeypoints: Keypoint[] = new Array(numParts);
+  // Start a new detection instance at the position of the root.
   const {part: rootPart, score: rootScore} = root;
   const rootPoint = getImageCoords(rootPart, outputStride, offsets);
 
   instanceKeypoints[rootPart.id] = {score: rootScore, point: rootPoint};
-
-  // console.log('root part', rootPart, rootPoint);
 
   // Decode the part positions upwards in the tree, following the backward
   // displacements.
