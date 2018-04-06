@@ -31,7 +31,6 @@ export function getOffsetVectors(
   const result: number[] = [];
   const offsetBuffer = offsets.buffer();
 
-  // console.log('the shapes', heatMapCoords.shape, offsets.shape)
   for (let keypoint = 0; keypoint < NUM_KEYPOINTS; keypoint++) {
     const heatmapY = heatMapCoords.get(keypoint, 0).valueOf();
     const heatmapX = heatMapCoords.get(keypoint, 1).valueOf();

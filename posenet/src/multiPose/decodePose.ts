@@ -51,12 +51,11 @@ function decode(
   };
 }
 
-// We add a new `id_target` part to the detection instance, assuming that the
-// position of the `id_source` part is already known. For this, we follow the
-// displacement vector from the source to target part (stored in the `i`-th
-// channel of the displacement tensor), followed by a local search in a small
-// window in order to find the position of maximum score for the `id_target`
-// part.
+/** We get a new keypoint along the `edgeId` for the pose instance, assuming 
+ * that the position of the `idSource` part is already known. For this, we 
+ * follow the displacement vector from the source to target part (stored in 
+ * the `i`-t channel of the displacement tensor).
+ */
 function traverseToTargetKeypoint(
     edgeId: number, sourceKeypoint: Keypoint, targetKeypointId: number,
     scoresBuffer: TensorBuffer3D, offsets: TensorBuffer3D, outputStride: number,
@@ -91,21 +90,24 @@ function traverseToTargetKeypoint(
   return {point: targetKeypoint, score};
 }
 
+/** Follows the displacement fields to decode the full pose of the object
+ * instance given the position of a part that acts as root.
+ * 
+ * @return An array of decoded keypoints and their scores for a single pose
+ */
 export function decodePose(
     root: PartWithScore, scores: TensorBuffer3D, offsets: TensorBuffer3D,
     outputStride: number, displacementsFwd: TensorBuffer3D,
     displacementsBwd: TensorBuffer3D) {
-  // Start a new detection instance at the position of the root.
   const numParts = scores.shape[2];
   const numEdges = parentToChildEdges.length;
 
   const instanceKeypoints: Keypoint[] = new Array(numParts);
+  // Start a new detection instance at the position of the root.
   const {part: rootPart, score: rootScore} = root;
   const rootPoint = getImageCoords(rootPart, outputStride, offsets);
 
   instanceKeypoints[rootPart.id] = {score: rootScore, point: rootPoint};
-
-  // console.log('root part', rootPart, rootPoint);
 
   // Decode the part positions upwards in the tree, following the backward
   // displacements.
