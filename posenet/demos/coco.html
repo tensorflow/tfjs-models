@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>PoseNet - Coco Images Demo</title>
+  </head>
+  <style type='text/css'>
+    h3, h4, p { margin: 10px 0; }
+    #main ul {
+      margin: 10px 0;
+      padding: 0;
+    }
+    #main li {
+      list-style-type: none;
+      display: inline-block;
+    }
+    .results > div { border: black 1px solid; padding: 10px; }
+  </style>
+  <body>
+    <div id="loading">
+      Loading the model...
+    </div>
+    <div id='main' style='display:none'>
+      <div id="status"></div>
+      <div id='results' style='display:none'>
+          <h4>Results with output stride of <span id='outputStride'></span></h4>
+          <p class='inference'></p>
+          <canvas /></canvas>
+        </div>
+      </div>
+    </div>
+
+    <script src="/bundle.js"></script>
+    <script>
+      demos.coco.bindPage();
+    </script>
+  </body>
+</html>

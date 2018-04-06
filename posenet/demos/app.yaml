@@ -1,0 +1,24 @@
+runtime: python27
+api_version: 2
+threadsafe: true
+
+handlers:
+- url: /
+  static_files: index.html
+  upload: index.html
+- url: /bundle.js
+  static_files: bundle.js
+  upload: bundle.js
+- url: /camera.html
+  static_files: camera.html
+  upload: camera.html
+- url: /coco.html
+  static_files: coco.html
+  upload: coco.html
+
+- url: /images
+  static_dir: images
+# - url: /demos/camera.html
+#   static_files: /camera.html
+#   upload: /demos/camera.html
+
