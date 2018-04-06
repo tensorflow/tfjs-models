@@ -1,6 +1,6 @@
 {
-  "name": "tfjs-posenet",
-  "version": "0.1.3",
+  "name": "tfjs-models",
+  "version": "0.0.1",
   "description": "Pretrained PoseNet model in tensorflow.js",
   "main": "dist/posenet/index.js",
   "unpkg": "dist/bundle.js",
