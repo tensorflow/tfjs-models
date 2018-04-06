@@ -161,7 +161,7 @@ function detectPoseInRealTime(video: HTMLVideoElement, model: posenet.PoseNet) {
 
     const startPredict = new Date().getTime();
 
-    const poses = await model.predictAndDecodeMultiplePoses(
+    const poses = await model.estimateMultiplePoses(
         image,
         outputStride,
         guiState.maxPoseDetections,
