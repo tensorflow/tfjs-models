@@ -13,9 +13,13 @@
   },
   "scripts": {
     "watch": "NODE_ENV=development parcel --no-hmr --open index.html ",
-    "build": "NODE_ENV=production parcel build index.html  --no-minify --public-url ./"
+    "build": "NODE_ENV=production parcel build index.html  --no-minify --public-url ./",
+    "lint": "eslint ."
   },
   "devDependencies": {
+    "eslint": "^4.19.1",
+    "eslint-config-google": "^0.9.1",
+    "dat.gui": "^0.7.1",
     "babel-plugin-transform-runtime": "~6.23.0",
     "babel-polyfill": "~6.26.0",
     "babel-preset-env": "~1.6.1",
@@ -42,7 +46,25 @@
       ]
     ],
     "plugins": [
-      "transform-runtime"
+      ["transform-runtime", {
+        "polyfill": false,
+        "regenerator": true
+      }]
     ]
-  }
+  },
+  "eslintConfig": {
+    "extends": "google",
+    "rules": {
+      "require-jsdoc": 0,
+      "indent": ["error", 2]
+    },
+    "env": {
+      "es6": true
+    },
+    "parserOptions": {
+      "ecmaVersion": 8,
+      "sourceType": "module"
+    }
+  },
+  "eslintIgnore": ["dist/"]
 }

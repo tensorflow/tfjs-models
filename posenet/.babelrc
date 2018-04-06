@@ -1,0 +1,23 @@
+{
+  "presets": [
+    [
+      "env",
+      {
+        "modules": false,
+        "targets": {
+          "browsers": [
+            "> 1%",
+            "last 3 versions",
+            "ie >= 9",
+            "ios >= 8",
+            "android >= 4.2"
+          ]
+        },
+        "useBuiltIns": false
+      }
+    ]
+  ],
+  "plugins": [
+    "transform-runtime"
+  ]
+}
