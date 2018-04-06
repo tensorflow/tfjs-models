@@ -129,9 +129,9 @@ export class PoseNet {
 
   /**
    * Infer through PoseNet, assumes variables have been loaded. This does
-   * standard ImageNet pre-processing before inferring through the model. This
-   * method returns the heatmaps and offsets.  Infers through the outputs
-   * that are needed for single pose decoding
+   * standard ImageNet pre-processing before inferring through the model. Infers
+   * through the outputs that are needed for multiple pose decoding. This
+   * method returns the heatmaps offsets, and mid-range displacements.
    *
    * @param input un-preprocessed input image.
    * @param outputStride the desired stride for the outputs.  Must be 32, 16,

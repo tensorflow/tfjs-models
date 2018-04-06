@@ -69,7 +69,7 @@ All keypoints are indexed by part id.  The parts and their ids are:
 
 ### Single Pose Estimation
 
-Single pose estimation is the simpler and faster of the two algorithms. Its ideal use case is for when there is only one person in the picture. The downside is that if there is another person in the picture with a keypoint that has a high probability of being accurate, then that keypoint can be associated with the main person’s pose, creating the effect of the two poses being joined together.
+Single pose estimation is the simpler and faster of the two algorithms. Its ideal use case is for when there is only one person in the image. The downside is that if there is another person in the image with a keypoint that has a high probability of being accurate, then that keypoint can be associated with the main person’s pose, creating the effect of the two poses being joined together.
 
 ```javascript
 const pose = poseNet.estimateSinglePose(image, outputStride);
@@ -126,14 +126,14 @@ which would produce the output:
   "score": 0.32371445304906,
   "keypoints": [
     {
-      "point": {
+      "position": {
         "x": 301.42237830162,
         "y": 177.69162777066
       },
       "score": 0.99799561500549
     },
     {
-      "point": {
+      "position": {
         "x": 326.05302262306,
         "y": 122.9596464932
       },
@@ -141,104 +141,104 @@ which would produce the output:
     },
     {
       "score": 0.99926537275314,
-      "point": {
+      "position": {
         "x": 258.72196650505,
         "y": 127.51624706388
       }
     },
     {
-      "point": {
+      "position": {
         "x": 371.96474182606,
         "y": 138.90043857694
       },
       "score": 0.40378707647324
     },
     {
-      "point": {
+      "position": {
         "x": 203.78961634636,
         "y": 156.80045631528
       },
       "score": 0.78946894407272
     },
     {
-      "point": {
+      "position": {
         "x": 441.67818045616,
         "y": 338.34006336331
       },
       "score": 0.39678099751472
     },
     {
-      "point": {
+      "position": {
         "x": 138.2363049984,
         "y": 326.64904239774
       },
       "score": 0.72325360774994
     },
     {
-      "point": {
+      "position": {
         "x": 486.23655533791,
         "y": 623.74580791593
       },
       "score": 0.014773745089769
     },
     {
-      "point": {
+      "position": {
         "x": 44.407468557358,
         "y": 521.24995449185
       },
       "score": 0.094393648207188
     },
     {
-      "point": {
+      "position": {
         "x": 461.8336493969,
         "y": 707.50588062406
       },
       "score": 0.0051866522990167
     },
     {
-      "point": {
+      "position": {
         "x": 9.5200374126434,
         "y": 541.85546138883
       },
       "score": 0.05102001875639
     },
     {
-      "point": {
+      "position": {
         "x": 377.21912312508,
         "y": 793.79121902585
       },
       "score": 0.011524646542966
     },
     {
-      "point": {
+      "position": {
         "x": 146.87340044975,
         "y": 720.60785129666
       },
       "score": 0.0097815711051226
     },
     {
-      "point": {
+      "position": {
         "x": 359.16951823235,
         "y": 977.52648285031
       },
       "score": 0.0014817604096606
     },
     {
-      "point": {
+      "position": {
         "x": 135.16723370552,
         "y": 820.65058174729
       },
       "score": 0.0015287395799533
     },
     {
-      "point": {
+      "position": {
         "x": 347.4669687748,
         "y": 1128.0613844693
       },
       "score": 0.0011711831903085
     },
     {
-      "point": {
+      "position": {
         "x": 128.20254254341,
         "y": 900.62542334199
       },
@@ -250,7 +250,7 @@ which would produce the output:
 
 ### Multiple Pose Estimation
 
-Multiple Pose estimation can decode multiple poses in a picture. It is more complex and slightly slower than the single pose-algorithm, but has the advantage that if multiple people appear in a picture, their detected keypoints are less likely to be associated with the wrong pose. Even if the use case is to detect a single person’s pose, this algorithm may be more desirable in that the accidental effect of two poses being joined together won’t occur when multiple people appear in the picture. It uses the `Fast greedy decoding` algorithm from the research paper [PersonLab: Person Pose Estimation and Instance Segmentation with a Bottom-Up, Part-Based, Geometric Embedding Model](https://arxiv.org/pdf/1803.08225.pdf).
+Multiple Pose estimation can decode multiple poses in an image. It is more complex and slightly slower than the single pose-algorithm, but has the advantage that if multiple people appear in an image, their detected keypoints are less likely to be associated with the wrong pose. Even if the use case is to detect a single person’s pose, this algorithm may be more desirable in that the accidental effect of two poses being joined together won’t occur when multiple people appear in the image. It uses the `Fast greedy decoding` algorithm from the research paper [PersonLab: Person Pose Estimation and Instance Segmentation with a Bottom-Up, Part-Based, Geometric Embedding Model](https://arxiv.org/pdf/1803.08225.pdf).
 
 ```javascript
 const poses = await poseNet.estimateMultiplePoses(image, outputStride, maxPoseDetections, scoreThreshold, nmsRadius);
@@ -306,7 +306,7 @@ This produces the output:
     "score": 0.42985695206067,
     "keypoints": [
       {
-        "point": {
+        "position": {
           "x": 126.09371757507,
           "y": 97.861720561981
         },
@@ -314,13 +314,13 @@ This produces the output:
       },
       {
         "score": 0.99919074773788,
-        "point": {
+        "position": {
           "x": 132.53466176987,
           "y": 86.429876804352
         }
       },
       {
-        "point": {
+        "position": {
           "x": 100.85626316071,
           "y": 84.421931743622
         },
@@ -330,7 +330,7 @@ This produces the output:
       ...
 
       {
-        "point": {
+        "position": {
           "x": 72.665352582932,
           "y": 493.34189963341
         },
@@ -340,16 +340,16 @@ This produces the output:
   },
   {
     "score": 0.13461434583673,
-    "keypoints": [
+    "keypositions": [
       {
-        "point": {
+        "position": {
           "x": 116.58444058895,
           "y": 99.772533416748
         },
         "score": 0.9978438615799
       },
       {
-        "point": {
+        "position": {
           "x": 133.49897611141,
           "y": 79.644590377808
         },
@@ -359,7 +359,7 @@ This produces the output:
       ...
 
       {
-        "point": {
+        "position": {
           "x": 59.334579706192,
           "y": 485.5936152935
         },
@@ -380,8 +380,8 @@ const noseKeypoint = pose[jointIds.nose];
 const leftKneeKeypoint = post[joinIds.left_knee];
 
 const noseScore = noseKeypoint.score;
-const nosePoint = noseKeypoint.point;
+const nosePosition = noseKeypoint.position;
 
 const leftKneeScore = leftKneeKeypoint.score;
-const leftKneePoint = leftKneeKeypoint.point;
+const leftKneePosition = leftKneeKeypoint.position;
 ```

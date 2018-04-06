@@ -21,12 +21,6 @@ import {Keypoint} from '.';
 import {connectedJointIndeces} from './keypoints';
 import {TensorBuffer3D, Vector2D} from './types';
 
-function getTuple(index: number, points: tf.Tensor2D) {
-  const tuple = tf.slice2d(points, [index, 0], [1, 2]).buffer().values;
-
-  return [tuple[0], tuple[1]];
-}
-
 function eitherPointDoesntMeetConfidence(
     a: number, b: number, minConfidence: number) {
   return (a < minConfidence || b < minConfidence);

@@ -20,16 +20,14 @@ import {NUM_KEYPOINTS} from '../keypoints';
 
 export function getPointsConfidence(
     heatmapScores: tf.TensorBuffer<tf.Rank.R3>,
-    heatMapCoords: tf.TensorBuffer<tf.Rank.R2>) {
+    heatMapCoords: tf.TensorBuffer<tf.Rank.R2>): Float32Array {
   const numKeypoints = heatMapCoords.shape[0];
   const result = new Float32Array(numKeypoints);
-
-  const heatMapCoordsValues = heatMapCoords.values;
 
   for (let keypoint = 0; keypoint < numKeypoints; keypoint++) {
     const y = heatMapCoords.get(keypoint, 0);
     const x = heatMapCoords.get(keypoint, 1);
-    result[keypoint] = heatmapScores.get(y, x, keypoint).valueOf();
+    result[keypoint] = heatmapScores.get(y, x, keypoint);
   }
 
   return result;
