@@ -1,6 +1,6 @@
 # PoseNet model
 
-This package contains a standalone PoseNet model for classification,
+This package contains a standalone PoseNet model for Pose Estimation,
 as well as some demos.
 
 ## Setup
