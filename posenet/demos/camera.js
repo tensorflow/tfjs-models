@@ -148,8 +148,6 @@ function detectPoseInRealTime(video, model) {
       toRender.dispose();
     }
 
-    console.log(JSON.stringify(poses[0]));
-
     poses.forEach(({score, keypoints}) => {
       if (score >= guiState.minPoseConfidence) {
         if (guiState.showPoints) {

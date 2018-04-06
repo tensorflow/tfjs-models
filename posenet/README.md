@@ -248,6 +248,132 @@ which would produce the output:
 }
 ```
 
+### Multiple Pose Estimation
+
+Multiple Pose estimation can decode multiple poses in a picture. It is more complex and slightly slower than the single pose-algorithm, but has the advantage that if multiple people appear in a picture, their detected keypoints are less likely to be associated with the wrong pose. Even if the use case is to detect a single person’s pose, this algorithm may be more desirable in that the accidental effect of two poses being joined together won’t occur when multiple people appear in the picture. It uses the Fast greedy decoding algorithm from the research paper [PersonLab: Person Pose Estimation and Instance Segmentation with a Bottom-Up, Part-Based, Geometric Embedding Model](https://arxiv.org/pdf/1803.08225.pdf).
+
+```javascript
+const poses = poseNet.estimateMultiplePoses(image, outputStride, maxPoseDetections, minPartConfidence, guiState.nmsRadius);
+```
+
+#### Inputs
+
+* **image** - a 3d tensor of the image data to predict the poses for.
+* **outputStride** - the desired stride for the outputs when feeding the image through the model.  Must be 32, 16, 8.   The higher the number, the faster the performance but slower the accuracy, and visa versa.
+* **maxPoseDetections** (optional) - the maximum number of poses to detect. Defaults to 5.
+* **scoreThreshold** (optional) - Only return instance detections that have root part score greater or equal to this value. Defaults to 0.5.
+* **nmsRadius** (optional) - Non-maximum suppression part distance. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away. Defaults to 20.
+
+#### Returns
+
+It returns a `pose` array, each with a confidence score and an array of keypoints indexed by part id, each with a score and position.
+
+#### Example Usage
+
+##### Estimating multiple poses from an image
+
+```javascript
+import * as tf from '@tensorflow/tfjs-core';
+import {PoseNet} from '@tensorflow/tfjs-models/posenet';
+const imageSize = 513;
+const outputStride = 16;
+const maxPoseDetections = 2;
+
+async function estimateMultiplePosesOnImage(imageElement) {
+  const poseNet = new PoseNet();
+  await poseNet.load();
+
+  // convert html image element to 3d Tensor
+  const image = tf.fromPixels(imageElement);
+  // resize image to have acceptable size
+  const resized = image.resizeBilinear([imageSize, imageSize]);
+
+  const pose = poseNet.estimateMultiplePoses(resized, outputStride, maxPoseDetections);
+
+  image.dispoe();
+  resized.dispose();
+
+  return pose;
+}
+
+const imageElement = document.getElementById('cat');
+
+const poses = estimateMultiplePosesOnImage(imageElement);
+
+console.log(poses);
+```
+This produces the output:
+
+```json
+[
+  {
+    "score": 0.42985695206067,
+    "keypoints": [
+      {
+        "point": {
+          "x": 126.09371757507,
+          "y": 97.861720561981
+        },
+        "score": 0.99710708856583
+      },
+      {
+        "score": 0.99919074773788,
+        "point": {
+          "x": 132.53466176987,
+          "y": 86.429876804352
+        }
+      },
+      {
+        "point": {
+          "x": 100.85626316071,
+          "y": 84.421931743622
+        },
+        "score": 0.99851280450821
+      },
+
+      ...
+
+      {
+        "point": {
+          "x": 72.665352582932,
+          "y": 493.34189963341
+        },
+        "score": 0.0028593824245036
+      }
+    ],
+  },
+  {
+    "score": 0.13461434583673,
+    "keypoints": [
+      {
+        "point": {
+          "x": 116.58444058895,
+          "y": 99.772533416748
+        },
+        "score": 0.9978438615799
+      },
+      {
+        "point": {
+          "x": 133.49897611141,
+          "y": 79.644590377808
+        },
+        "score": 0.99919074773788
+      },
+
+      ...
+
+      {
+        "point": {
+          "x": 59.334579706192,
+          "y": 485.5936152935
+        },
+        "score": 0.004110524430871
+      }
+    ]
+  }
+]
+```
+
 ##### Getting a keypoint for a specific part in the pose
 
 ```javascript

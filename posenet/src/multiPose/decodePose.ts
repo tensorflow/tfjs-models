@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import {jointIdsByName, NumberTuple, StringTuple} from '../keypoints';
+import {jointIds, NumberTuple, StringTuple} from '../keypoints';
 import {Keypoint, PartWithScore, TensorBuffer3D, Vector2D} from '../types';
 import {clamp, getOffsetPoint} from './util';
 
@@ -40,7 +40,7 @@ const poseChain: StringTuple[] = [
 
 const parentChildrenTuples: NumberTuple[] = poseChain.map(
     ([parentJoinName, childJoinName]): NumberTuple =>
-        ([jointIdsByName[parentJoinName], jointIdsByName[childJoinName]]));
+        ([jointIds[parentJoinName], jointIds[childJoinName]]));
 
 const parentToChildEdges: number[] =
     parentChildrenTuples.map(([, childJointId]) => childJointId);

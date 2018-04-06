@@ -110,7 +110,7 @@ const kLocalMaximumRadius = 1;
  * @param outputStride The output stride that was used when feed-forwarding
  * through the PoseNet model.  Must be 32, 16, or 8.
  *
- * @param maxDetections Maximum number of returned instance detections per
+ * @param maxPoseDetections Maximum number of returned instance detections per
  * image.
  *
  * @param scoreThreshold Only return instance detections that have root part
@@ -126,7 +126,7 @@ const kLocalMaximumRadius = 1;
 export async function decode(
     heatmapScores: tf.Tensor3D, offsets: tf.Tensor3D,
     displacementsFwd: tf.Tensor3D, displacementsBwd: tf.Tensor3D,
-    outputStride: number, maxDetections: number, scoreThreshold = 0.5,
+    outputStride: number, maxPoseDetections: number, scoreThreshold = 0.5,
     nmsRadius = 20): Promise<Pose[]> {
   const poses: Pose[] = [];
 
@@ -141,7 +141,7 @@ export async function decode(
 
   // Generate at most maxDetections object instances per image in
   // decreasing root part score order.
-  while (poses.length < maxDetections && !queue.empty()) {
+  while (poses.length < maxPoseDetections && !queue.empty()) {
     // The top element in the queue is the next root candidate.
     const root = queue.dequeue();
 
