@@ -16,7 +16,7 @@
  */
 
 import * as tf from '@tensorflow/tfjs-core';
-import {CheckpointLoader} from './deeplearn-legacy-loader';
+import {CheckpointLoader} from './checkpoint_loader';
 
 import * as multiPose from './multiPose';
 import * as singlePose from './singlePose';

@@ -32,25 +32,6 @@ function eitherPointDoesntMeetConfidence(
   return (a < minConfidence || b < minConfidence);
 }
 
-// OBSOLETE: will be deprecated soon
-export function getAdjacentOffsetPoints(
-    offsetPoints: tf.Tensor2D, keypointConfidence: Float32Array,
-    minConfidence: number): number[][][] {
-  return connectedJointIndeces.reduce(
-      (result: number[][][], [leftJoint, rightJoint]): number[][][] => {
-        const leftJoinConfidence = keypointConfidence[leftJoint];
-        const rightJointConfidence = keypointConfidence[rightJoint];
-        if (eitherPointDoesntMeetConfidence(
-                leftJoinConfidence, rightJointConfidence, minConfidence)) {
-          return result;
-        }
-        const leftPoint = getTuple(leftJoint, offsetPoints);
-        const rightPoint = getTuple(rightJoint, offsetPoints);
-        result.push([leftPoint, rightPoint]);
-        return result;
-      }, []);
-}
-
 export function getAdjacentKeyPoints(
     keypoints: Keypoint[], minConfidence: number): Keypoint[][] {
   return connectedJointIndeces.reduce(
@@ -71,32 +52,39 @@ export function getAdjacentKeyPoints(
 }
 
 export function setHeatmapAsAlphaChannel(
-    imagePixels: tf.Tensor3D, outputStride: number, heatmapImage: tf.Tensor2D) {
+    imagePixels: tf.Tensor3D, outputStride: number,
+    heatmapImage: tf.Tensor2D): tf.Tensor3D {
   const [height, width] = imagePixels.shape;
 
-  const scaledUp = resizeBilinearGrayscale(heatmapImage, [
-    heatmapImage.shape[0] * outputStride, heatmapImage.shape[1] * outputStride
-  ]);
+  return tf.tidy(() => {
+    const scaledUp = resizeBilinearGrayscale(heatmapImage, [
+      heatmapImage.shape[0] * outputStride, heatmapImage.shape[1] * outputStride
+    ]);
 
-  const rgb =
-      imagePixels.slice([0, 0, 0], [height, width, 3]).div(tf.scalar(255)) as
-      tf.Tensor3D;
-  const a = scaledUp.slice([0, 0, 0], [height, width, 1]);
+    const rgb =
+        imagePixels.slice([0, 0, 0], [height, width, 3]).div(tf.scalar(255)) as
+        tf.Tensor3D;
+    const a = scaledUp.slice([0, 0, 0], [height, width, 1]);
 
-  const result = tf.concat3d([rgb, a], 2);
+    const result = tf.concat3d([rgb, a], 2);
 
-  return result;
+    return result;
+  })
 }
 
-export function toHeatmapImage(heatmapScores: tf.Tensor3D) {
-  return heatmapScores.sum(2).minimum(tf.scalar(1)) as tf.Tensor2D;
+export function toHeatmapImage(heatmapScores: tf.Tensor3D): tf.Tensor2D {
+  return tf.tidy(() => {
+    return heatmapScores.sum(2).minimum(tf.scalar(1)) as tf.Tensor2D;
+  });
 }
 
 export function resizeBilinearGrayscale(
     heatmapImage: tf.Tensor2D, size: [number, number]) {
-  const channel = heatmapImage.expandDims(2) as tf.Tensor3D;
-  const rgb = tf.concat([channel, channel, channel], 2) as tf.Tensor3D;
-  return tf.image.resizeBilinear(rgb, size);
+  return tf.tidy(() => {
+    const channel = heatmapImage.expandDims(2) as tf.Tensor3D;
+    const rgb = tf.concat([channel, channel, channel], 2) as tf.Tensor3D;
+    return tf.image.resizeBilinear(rgb, size);
+  })
 }
 
 export function toSingleChannelPixels(tensor: tf.Tensor2D) {
