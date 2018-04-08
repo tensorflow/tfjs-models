@@ -250,10 +250,10 @@ which would produce the output:
 
 ### Multiple Pose Estimation
 
-Multiple Pose estimation can decode multiple poses in a picture. It is more complex and slightly slower than the single pose-algorithm, but has the advantage that if multiple people appear in a picture, their detected keypoints are less likely to be associated with the wrong pose. Even if the use case is to detect a single person’s pose, this algorithm may be more desirable in that the accidental effect of two poses being joined together won’t occur when multiple people appear in the picture. It uses the Fast greedy decoding algorithm from the research paper [PersonLab: Person Pose Estimation and Instance Segmentation with a Bottom-Up, Part-Based, Geometric Embedding Model](https://arxiv.org/pdf/1803.08225.pdf).
+Multiple Pose estimation can decode multiple poses in a picture. It is more complex and slightly slower than the single pose-algorithm, but has the advantage that if multiple people appear in a picture, their detected keypoints are less likely to be associated with the wrong pose. Even if the use case is to detect a single person’s pose, this algorithm may be more desirable in that the accidental effect of two poses being joined together won’t occur when multiple people appear in the picture. It uses the `Fast greedy decoding` algorithm from the research paper [PersonLab: Person Pose Estimation and Instance Segmentation with a Bottom-Up, Part-Based, Geometric Embedding Model](https://arxiv.org/pdf/1803.08225.pdf).
 
 ```javascript
-const poses = poseNet.estimateMultiplePoses(image, outputStride, maxPoseDetections, minPartConfidence, guiState.nmsRadius);
+const poses = await poseNet.estimateMultiplePoses(image, outputStride, maxPoseDetections, scoreThreshold, nmsRadius);
 ```
 
 #### Inputs
@@ -266,7 +266,7 @@ const poses = poseNet.estimateMultiplePoses(image, outputStride, maxPoseDetectio
 
 #### Returns
 
-It returns a `pose` array, each with a confidence score and an array of keypoints indexed by part id, each with a score and position.
+It returns a `promise` that resolves with an array of `poses`, each with a confidence score and an array of `keypoints` indexed by part id, each with a score and position.
 
 #### Example Usage
 
@@ -275,33 +275,29 @@ It returns a `pose` array, each with a confidence score and an array of keypoint
 ```javascript
 import * as tf from '@tensorflow/tfjs-core';
 import {PoseNet} from '@tensorflow/tfjs-models/posenet';
+
 const imageSize = 513;
 const outputStride = 16;
 const maxPoseDetections = 2;
 
-async function estimateMultiplePosesOnImage(imageElement) {
-  const poseNet = new PoseNet();
-  await poseNet.load();
-
+const poseNet = new PoseNet();
+poseNet.load().then(function() {
+  const imageElement = document.getElementById('cat');
   // convert html image element to 3d Tensor
   const image = tf.fromPixels(imageElement);
   // resize image to have acceptable size
   const resized = image.resizeBilinear([imageSize, imageSize]);
+  // estimate poses
+  const pose = poseNet.estimateMultiplePoses(
+    resized, outputStride, maxPoseDetections);
 
-  const pose = poseNet.estimateMultiplePoses(resized, outputStride, maxPoseDetections);
+  console.log(poses);
 
   image.dispoe();
   resized.dispose();
-
-  return pose;
 }
-
-const imageElement = document.getElementById('cat');
-
-const poses = estimateMultiplePosesOnImage(imageElement);
-
-console.log(poses);
 ```
+
 This produces the output:
 
 ```json
@@ -377,11 +373,11 @@ This produces the output:
 ##### Getting a keypoint for a specific part in the pose
 
 ```javascript
-import {jointIds} from 'posenet';
+const pose = poseNet.estimateSinglePose(image, outputStride);
 
 const noseKeypoint = pose[jointIds.nose];
 
-const leftKneeKeypoint = post[joinIds.right_elbow];
+const leftKneeKeypoint = post[joinIds.left_knee];
 
 const noseScore = noseKeypoint.score;
 const nosePoint = noseKeypoint.point;
