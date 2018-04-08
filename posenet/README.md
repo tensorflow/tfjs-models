@@ -103,7 +103,7 @@ async function estimatePoseOnImage(imageElement) {
   // resize image to have acceptable size
   const resized = image.resizeBilinear([imageSize, imageSize]);
 
-  const pose = poseNet.estimateSinglePose(resized, outputStride);
+  const pose = await poseNet.estimateSinglePose(resized, outputStride);
 
   image.dispoe();
   resized.dispose();

@@ -17,13 +17,13 @@
     "lint": "eslint ."
   },
   "devDependencies": {
-    "eslint": "^4.19.1",
-    "eslint-config-google": "^0.9.1",
-    "dat.gui": "^0.7.1",
     "babel-plugin-transform-runtime": "~6.23.0",
     "babel-polyfill": "~6.26.0",
     "babel-preset-env": "~1.6.1",
     "clang-format": "~1.2.2",
+    "dat.gui": "^0.7.1",
+    "eslint": "^4.19.1",
+    "eslint-config-google": "^0.9.1",
     "parcel-bundler": "~1.6.2"
   },
   "babel": {
@@ -46,17 +46,23 @@
       ]
     ],
     "plugins": [
-      ["transform-runtime", {
-        "polyfill": false,
-        "regenerator": true
-      }]
+      [
+        "transform-runtime",
+        {
+          "polyfill": false,
+          "regenerator": true
+        }
+      ]
     ]
   },
   "eslintConfig": {
     "extends": "google",
     "rules": {
       "require-jsdoc": 0,
-      "indent": ["error", 2]
+      "indent": [
+        "error",
+        2
+      ]
     },
     "env": {
       "es6": true
@@ -66,5 +72,7 @@
       "sourceType": "module"
     }
   },
-  "eslintIgnore": ["dist/"]
+  "eslintIgnore": [
+    "dist/"
+  ]
 }

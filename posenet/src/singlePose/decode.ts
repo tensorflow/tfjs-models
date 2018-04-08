@@ -63,7 +63,7 @@ export async function decode(
 
   const [scoresBuffer, offsetsBuffer, heatmapValuesBuffer] = await Promise.all([
     toTensorBuffer(heatmapScores), toTensorBuffer(offsets),
-    toTensorBuffer(heatmapValues)
+    toTensorBuffer(heatmapValues, 'int32')
   ])
 
   const offsetPoints = await toTensorBuffer(

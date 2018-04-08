@@ -119,13 +119,14 @@ export function getBoundingBoxPoints(keypoints: Keypoint[]): Vector2D[] {
 }
 
 export async function toTensorBuffer<rank extends tf.Rank>(
-    tensor: tf.Tensor<rank>): Promise<tf.TensorBuffer<rank>> {
+    tensor: tf.Tensor<rank>,
+    type: 'float32'|'int32' = 'float32'): Promise<tf.TensorBuffer<rank>> {
   const tensorData = await tensor.data();
 
-  return new tf.TensorBuffer<rank>(tensor.shape, 'float32', tensorData);
+  return new tf.TensorBuffer<rank>(tensor.shape, type, tensorData);
 }
 
 export async function toTensorBuffers3D(tensors: tf.Tensor3D[]):
     Promise<TensorBuffer3D[]> {
-  return Promise.all(tensors.map(toTensorBuffer));
+  return Promise.all(tensors.map(tensor => toTensorBuffer(tensor, 'float32')));
 }

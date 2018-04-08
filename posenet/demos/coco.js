@@ -47,6 +47,31 @@ const images = [
   'two_on_bench.jpg',
 ];
 
+require('./images/frisbee.jpg')
+require('./images/frisbee_2.jpg')
+require('./images/backpackman.jpg')
+require('./images/boy_doughnut.jpg')
+require('./images/soccer.png')
+require('./images/with_computer.jpg')
+require('./images/snowboard.jpg')
+require('./images/person_bench.jpg')
+require('./images/skiing.jpg')
+require('./images/fire_hydrant.jpg')
+require('./images/kyte.jpg')
+require('./images/looking_at_computer.jpg')
+require('./images/tennis.jpg')
+require('./images/tennis_standing.jpg')
+require('./images/truck.jpg')
+require('./images/on_bus.jpg')
+require('./images/tie_with_beer.jpg')
+require('./images/baseball.jpg')
+require('./images/multi_skiing.jpg')
+require('./images/riding_elephant.jpg')
+require('./images/skate_park_venice.jpg')
+require('./images/skate_park.jpg')
+require('./images/tennis_in_crowd.jpg')
+require('./images/two_on_bench.jpg')
+
 function toImageData(image) {
   const [height, width] = image.shape;
 
@@ -116,7 +141,7 @@ function drawResults(image, heatmaps, outputStride, poses,
   });
 }
 
-function loadImage(imagePath) {
+async function loadImage(imagePath) {
   const image = new Image();
   const promise = new Promise((resolve, reject) => {
     image.onload = () => {
