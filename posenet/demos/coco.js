@@ -135,7 +135,7 @@ async function testImageForSinglePoseAndDrawResults(
 
   const {heatmapScores, offsets} = model.predictForSinglePose(
     pixels, guiState.outputStride);
-  const pose = posenet.singlePose.decode(
+  const pose = await posenet.singlePose.decode(
     heatmapScores, offsets, guiState.outputStride);
 
   drawResults(image, heatmapScores, guiState.outputStride, [pose],

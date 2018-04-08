@@ -19,7 +19,7 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {Keypoint} from '.';
 import {connectedJointIndeces} from './keypoints';
-import {Vector2D} from './types';
+import {TensorBuffer3D, Vector2D} from './types';
 
 function getTuple(index: number, points: tf.Tensor2D) {
   const tuple = tf.slice2d(points, [index, 0], [1, 2]).buffer().values;
@@ -116,4 +116,16 @@ export function getBoundingBoxPoints(keypoints: Keypoint[]): Vector2D[] {
     {x: minX, y: minY}, {x: maxX, y: minY}, {x: maxX, y: maxY},
     {x: minX, y: maxY}
   ];
+}
+
+export async function toTensorBuffer<rank extends tf.Rank>(
+    tensor: tf.Tensor<rank>): Promise<tf.TensorBuffer<rank>> {
+  const tensorData = await tensor.data();
+
+  return new tf.TensorBuffer<rank>(tensor.shape, 'float32', tensorData);
+}
+
+export async function toTensorBuffers3D(tensors: tf.Tensor3D[]):
+    Promise<TensorBuffer3D[]> {
+  return Promise.all(tensors.map(toTensorBuffer));
 }

@@ -186,12 +186,12 @@ export class PoseNet {
    * @return A single pose with a confidence score, which contains an array of
    * keypoints indexed by part id, each with a score and position.
    */
-  estimateSinglePose(input: tf.Tensor3D, outputStride: OutputStride = 32):
-      Pose {
+  async estimateSinglePose(input: tf.Tensor3D, outputStride: OutputStride = 32):
+      Promise<Pose> {
     const {heatmapScores, offsets} =
         this.predictForSinglePose(input, outputStride);
 
-    const pose = singlePose.decode(heatmapScores, offsets, outputStride);
+    const pose = await singlePose.decode(heatmapScores, offsets, outputStride);
 
     heatmapScores.dispose();
     offsets.dispose();

@@ -18,6 +18,7 @@
 import * as tf from '@tensorflow/tfjs-core';
 
 import {Keypoint, Pose} from '../types';
+import {toTensorBuffers3D} from '../util';
 
 import {buildPartWithScoreQueue} from './buildPartWithScoreQueue';
 import {decodePose} from './decodePose';
@@ -51,16 +52,6 @@ function getInstanceScore(
       }, 0.0);
 
   return notOverlappedKeypointScores /= instanceKeypoints.length;
-}
-
-async function toTensorBuffer3D(tensor: tf.Tensor3D) {
-  const tensorData = await tensor.data();
-
-  return new tf.TensorBuffer<tf.Rank.R3>(tensor.shape, 'float32', tensorData);
-}
-
-async function toTensorBuffers3D(tensors: tf.Tensor3D[]) {
-  return Promise.all(tensors.map(toTensorBuffer3D));
 }
 
 // A point (y, x) is considered as root part candidate if its score is a

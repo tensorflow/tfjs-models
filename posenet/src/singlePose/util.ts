@@ -19,15 +19,16 @@ import * as tf from '@tensorflow/tfjs-core';
 import {NUM_KEYPOINTS} from '../keypoints';
 
 export function getPointsConfidence(
-    heatmapScores: tf.Tensor3D, heatMapCoords: tf.Tensor2D) {
+    heatmapScores: tf.TensorBuffer<tf.Rank.R3>,
+    heatMapCoords: tf.TensorBuffer<tf.Rank.R2>) {
   const numKeypoints = heatMapCoords.shape[0];
   const result = new Float32Array(numKeypoints);
 
-  const heatMapCoordsValues = heatMapCoords.buffer().values;
+  const heatMapCoordsValues = heatMapCoords.values;
 
   for (let keypoint = 0; keypoint < numKeypoints; keypoint++) {
-    const y = heatMapCoordsValues[keypoint * 2];
-    const x = heatMapCoordsValues[keypoint * 2 + 1];
+    const y = heatMapCoords.get(keypoint, 0);
+    const x = heatMapCoords.get(keypoint, 1);
     result[keypoint] = heatmapScores.get(y, x, keypoint).valueOf();
   }
 
@@ -44,15 +45,15 @@ function getOffsetPoint(
 }
 
 export function getOffsetVectors(
-    heatMapCoords: tf.Tensor2D, offsets: tf.Tensor3D) {
+    heatMapCoordsBuffer: tf.TensorBuffer<tf.Rank.R2>,
+    offsetsBuffer: tf.TensorBuffer<tf.Rank.R3>) {
   const result: number[] = [];
-  const offsetBuffer = offsets.buffer();
 
   for (let keypoint = 0; keypoint < NUM_KEYPOINTS; keypoint++) {
-    const heatmapY = heatMapCoords.get(keypoint, 0).valueOf();
-    const heatmapX = heatMapCoords.get(keypoint, 1).valueOf();
+    const heatmapY = heatMapCoordsBuffer.get(keypoint, 0).valueOf();
+    const heatmapX = heatMapCoordsBuffer.get(keypoint, 1).valueOf();
 
-    const {x, y} = getOffsetPoint(heatmapY, heatmapX, keypoint, offsetBuffer);
+    const {x, y} = getOffsetPoint(heatmapY, heatmapX, keypoint, offsetsBuffer);
 
     result.push(y);
     result.push(x);
@@ -62,10 +63,14 @@ export function getOffsetVectors(
 }
 
 export function getOffsetPoints(
-    heatMapCoords: tf.Tensor2D, outputStride: number, offsets: tf.Tensor3D) {
-  const offsetVectors = getOffsetVectors(heatMapCoords, offsets);
+    heatMapCoordsBuffer: tf.TensorBuffer<tf.Rank.R2>, outputStride: number,
+    offsetsBuffer: tf.TensorBuffer<tf.Rank.R3>): tf.Tensor2D {
+  return tf.tidy(() => {
+    const offsetVectors = getOffsetVectors(heatMapCoordsBuffer, offsetsBuffer);
 
-  return heatMapCoords.mul(tf.scalar(outputStride, 'int32'))
-      .toFloat()
-      .add(offsetVectors);
+    return heatMapCoordsBuffer.toTensor()
+        .mul(tf.scalar(outputStride, 'int32'))
+        .toFloat()
+        .add(offsetVectors);
+  })
 }
