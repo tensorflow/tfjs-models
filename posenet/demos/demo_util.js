@@ -34,8 +34,8 @@ export function drawSkeleton(keypoints, minConfidence, ctx, scale = 1) {
     keypoints, minConfidence);
 
   adjacentKeyPoints.forEach((keypoints) => {
-    drawSegment(toTuple(keypoints[0].score),
-      toTuple(keypoints[1].score), '#0000ff', scale, ctx);
+    drawSegment(toTuple(keypoints[0].position),
+      toTuple(keypoints[1].position), '#0000ff', scale, ctx);
   });
 }
 
