@@ -82,12 +82,12 @@ function traverseToTargetKeypoint(
 
   // Nearest neighbor interpolation for the source->target displacements.
   const sourceKeypointIndeces =
-      decode(sourceKeypoint.point, outputStride, height, width);
+      decode(sourceKeypoint.position, outputStride, height, width);
 
   const displacement =
       getDisplacement(edgeId, sourceKeypointIndeces, displacements);
 
-  const displacedPoint = addVectors(sourceKeypoint.point, displacement);
+  const displacedPoint = addVectors(sourceKeypoint.position, displacement);
 
   const displacedPointIndeces =
       decode(displacedPoint, outputStride, height, width);
@@ -105,7 +105,7 @@ function traverseToTargetKeypoint(
   const score = scoresBuffer.get(
       targetKeypointIndeces.y, targetKeypointIndeces.x, targetKeypointId);
 
-  return {point: targetKeypoint, score};
+  return {position: targetKeypoint, score};
 }
 
 /**
@@ -126,7 +126,7 @@ export function decodePose(
   const {part: rootPart, score: rootScore} = root;
   const rootPoint = getImageCoords(rootPart, outputStride, offsets);
 
-  instanceKeypoints[rootPart.id] = {score: rootScore, point: rootPoint};
+  instanceKeypoints[rootPart.id] = {score: rootScore, position: rootPoint};
 
   // Decode the part positions upwards in the tree, following the backward
   // displacements.

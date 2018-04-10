@@ -18,8 +18,8 @@
 import * as tf from '@tensorflow/tfjs-core';
 import {CheckpointLoader} from './checkpoint_loader';
 
-import * as multiPose from './multiPose';
-import * as singlePose from './singlePose';
+import decodeMultiplePoses from './multiPose/decodeMultiplePoses';
+import decodeSinglePose from './singlePose/decodeSinglePose';
 import {Pose} from './types';
 
 const GOOGLE_CLOUD_STORAGE_DIR =
@@ -191,7 +191,7 @@ export class PoseNet {
     const {heatmapScores, offsets} =
         this.predictForSinglePose(input, outputStride);
 
-    const pose = await singlePose.decode(heatmapScores, offsets, outputStride);
+    const pose = await decodeSinglePose(heatmapScores, offsets, outputStride);
 
     heatmapScores.dispose();
     offsets.dispose();
@@ -233,7 +233,7 @@ export class PoseNet {
     const {heatmapScores, offsets, displacementFwd, displacementBwd} =
         this.predictForMultiPose(input, outputStride);
 
-    const poses = await multiPose.decode(
+    const poses = await decodeMultiplePoses(
         heatmapScores, offsets, displacementFwd, displacementBwd, outputStride,
         maxDetections, scoreThreshold, nmsRadius);
 

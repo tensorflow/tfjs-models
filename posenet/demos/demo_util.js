@@ -34,8 +34,8 @@ export function drawSkeleton(keypoints, minConfidence, ctx, scale = 1) {
     keypoints, minConfidence);
 
   adjacentKeyPoints.forEach((keypoints) => {
-    drawSegment(toTuple(keypoints[0].point),
-      toTuple(keypoints[1].point), '#0000ff', scale, ctx);
+    drawSegment(toTuple(keypoints[0].score),
+      toTuple(keypoints[1].score), '#0000ff', scale, ctx);
   });
 }
 
@@ -117,7 +117,7 @@ export function drawKeypoints(keypoints, minConfidence, ctx, scale = 1) {
       continue;
     }
 
-    const {y, x} = keypoint.point;
+    const {y, x} = keypoint.position;
     ctx.beginPath();
     ctx.arc(x * scale, y * scale, 3, 0, 2 * Math.PI);
     ctx.fillStyle = 'blue';

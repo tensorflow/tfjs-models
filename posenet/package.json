@@ -27,6 +27,7 @@
     "karma-jasmine": "~1.1.0",
     "karma-typescript": "~3.0.8",
     "tslint": "~5.8.0",
+    "tsify": "~3.0.1",
     "typescript": "2.7.2",
     "uglifyjs": "~2.4.11",
     "watchify": "~3.11.0"

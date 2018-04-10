@@ -112,7 +112,7 @@ export function drawHeatmapImage(heatmaps) {
 
   renderToCanvas(scaledUp, document.getElementById('heatmap'));
 }
-function drawHeatmapAsAlpha(image, heatmaps, outputStride, canvas) {
+export function drawHeatmapAsAlpha(image, heatmaps, outputStride, canvas) {
   const singleChannelImage = posenet.toHeatmapImage(heatmaps);
   const pixels = tf.fromPixels(image);
   const alphadImage = posenet.setHeatmapAsAlphaChannel(
@@ -121,7 +121,7 @@ function drawHeatmapAsAlpha(image, heatmaps, outputStride, canvas) {
   renderToCanvas(alphadImage, canvas);
 }
 
-function drawResults(image, heatmaps, outputStride, poses,
+function drawResults(image, outputStride, poses,
   minPartConfidence, minPoseConfidence) {
   const resultsElement = document.getElementById(`results`);
   const resultsCanvas = resultsElement.querySelector('canvas');
@@ -129,10 +129,9 @@ function drawResults(image, heatmaps, outputStride, poses,
   resultsElement.querySelector('#outputStride').innerHTML =
         String(outputStride);
 
-  drawHeatmapAsAlpha(image, heatmaps, outputStride, resultsCanvas);
-
   poses.forEach((pose) => {
     if (pose.score >= minPoseConfidence) {
+      console.log(pose);
       drawKeypoints(pose.keypoints,
         minPartConfidence, resultsCanvas.getContext('2d'));
       drawSkeleton(pose.keypoints,
@@ -158,12 +157,10 @@ async function testImageForSinglePoseAndDrawResults(
   const image = await loadImage(imagePath);
   const pixels = tf.fromPixels(image);
 
-  const {heatmapScores, offsets} = model.predictForSinglePose(
+  const pose = await model.estimateSinglePose(
     pixels, guiState.outputStride);
-  const pose = await posenet.singlePose.decode(
-    heatmapScores, offsets, guiState.outputStride);
 
-  drawResults(image, heatmapScores, guiState.outputStride, [pose],
+  drawResults(image, guiState.outputStride, [pose],
     guiState.minPartConfidence, guiState.minPoseConfidence);
 }
 
@@ -172,15 +169,9 @@ async function testImageForMultiplePosesAndDrawResults(
   const image = await loadImage(imagePath);
   const pixels = tf.fromPixels(image);
 
-  const {heatmapScores, offsets, displacementBwd, displacementFwd} = model.
-    predictForMultiPose(pixels, guiState.outputStride);
+  const poses = await model.estimateMultiplePoses(pixels, guiState.outputStride);
 
-  const poses = await posenet.multiPose.decode(heatmapScores, offsets,
-    displacementFwd, displacementBwd, guiState.outputStride,
-    guiState.multiPoseDetection.maxDetections, guiState.minPartConfidence,
-    guiState.multiPoseDetection.nmsRadius);
-
-  drawResults(image, heatmapScores, guiState.outputStride, poses,
+  drawResults(image, guiState.outputStride, poses,
     guiState.minPartConfidence, guiState.minPoseConfidence);
 }
 

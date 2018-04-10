@@ -89,7 +89,7 @@ export function toSingleChannelPixels(tensor: tf.Tensor2D) {
 
 const {NEGATIVE_INFINITY, POSITIVE_INFINITY} = Number;
 export function getBoundingBox(keypoints: Keypoint[]) {
-  return keypoints.reduce(({maxX, maxY, minX, minY}, {point: {x, y}}) => {
+  return keypoints.reduce(({maxX, maxY, minX, minY}, {position: {x, y}}) => {
     return {
       maxX: Math.max(maxX, x),
       maxY: Math.max(maxY, y),
