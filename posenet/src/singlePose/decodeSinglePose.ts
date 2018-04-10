@@ -17,7 +17,8 @@
 
 import * as tf from '@tensorflow/tfjs-core';
 
-import {OutputStride} from '../posenet';
+import {partNames} from '../keypoints';
+import {OutputStride} from '../mobilenet';
 import {Keypoint, Pose} from '../types';
 import {toTensorBuffer} from '../util';
 
@@ -55,7 +56,7 @@ import {getOffsetPoints, getPointsConfidence} from './util';
  * which contains an array of keypoints indexed by part id, each with a score
  * and position.
  */
-export async function decode(
+export default async function decodeSinglePose(
     heatmapScores: tf.Tensor3D, offsets: tf.Tensor3D,
     outputStride: OutputStride): Promise<Pose> {
   let totalScore = 0.0;
@@ -81,6 +82,7 @@ export async function decode(
         y: offsetPointsBuffer.get(keypointId, 0),
         x: offsetPointsBuffer.get(keypointId, 1)
       },
+      part: partNames[keypointId],
       score
     };
   });

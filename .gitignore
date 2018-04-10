@@ -2,4 +2,5 @@ node_modules
 **/*/node_modules
 **/*/coverage
 **/*/dist
+**/*/.cache
 **/*/yarn-error.log

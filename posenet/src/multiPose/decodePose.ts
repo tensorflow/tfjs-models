@@ -15,10 +15,10 @@
  * =============================================================================
  */
 
-import {jointIds, NumberTuple, StringTuple} from '../keypoints';
+import {NumberTuple, partIds, partNames, StringTuple} from '../keypoints';
 import {Keypoint, PartWithScore, TensorBuffer3D, Vector2D} from '../types';
-import {clamp, getOffsetPoint} from './util';
 
+import {clamp, getOffsetPoint} from './util';
 import {addVectors, getImageCoords} from './util';
 
 /*
@@ -28,19 +28,19 @@ import {addVectors, getImageCoords} from './util';
  * child->parent, we can define the tree root as any node.
  */
 const poseChain: StringTuple[] = [
-  ['nose', 'left_eye'], ['left_eye', 'left_ear'], ['nose', 'right_eye'],
-  ['right_eye', 'right_ear'], ['nose', 'left_shoulder'],
-  ['left_shoulder', 'left_elbow'], ['left_elbow', 'left_wrist'],
-  ['left_shoulder', 'left_hip'], ['left_hip', 'left_knee'],
-  ['left_knee', 'left_ankle'], ['nose', 'right_shoulder'],
-  ['right_shoulder', 'right_elbow'], ['right_elbow', 'right_wrist'],
-  ['right_shoulder', 'right_hip'], ['right_hip', 'right_knee'],
-  ['right_knee', 'right_ankle']
+  ['nose', 'leftEye'], ['leftEye', 'leftEar'], ['nose', 'rightEye'],
+  ['rightEye', 'rightEar'], ['nose', 'leftShoulder'],
+  ['leftShoulder', 'leftElbow'], ['leftElbow', 'leftWrist'],
+  ['leftShoulder', 'leftHip'], ['leftHip', 'leftKnee'],
+  ['leftKnee', 'leftAnkle'], ['nose', 'rightShoulder'],
+  ['rightShoulder', 'rightElbow'], ['rightElbow', 'rightWrist'],
+  ['rightShoulder', 'rightHip'], ['rightHip', 'rightKnee'],
+  ['rightKnee', 'rightAnkle']
 ];
 
 const parentChildrenTuples: NumberTuple[] = poseChain.map(
     ([parentJoinName, childJoinName]): NumberTuple =>
-        ([jointIds[parentJoinName], jointIds[childJoinName]]));
+        ([partIds[parentJoinName], partIds[childJoinName]]));
 
 const parentToChildEdges: number[] =
     parentChildrenTuples.map(([, childJointId]) => childJointId);
@@ -82,12 +82,12 @@ function traverseToTargetKeypoint(
 
   // Nearest neighbor interpolation for the source->target displacements.
   const sourceKeypointIndeces =
-      decode(sourceKeypoint.point, outputStride, height, width);
+      decode(sourceKeypoint.position, outputStride, height, width);
 
   const displacement =
       getDisplacement(edgeId, sourceKeypointIndeces, displacements);
 
-  const displacedPoint = addVectors(sourceKeypoint.point, displacement);
+  const displacedPoint = addVectors(sourceKeypoint.position, displacement);
 
   const displacedPointIndeces =
       decode(displacedPoint, outputStride, height, width);
@@ -105,7 +105,7 @@ function traverseToTargetKeypoint(
   const score = scoresBuffer.get(
       targetKeypointIndeces.y, targetKeypointIndeces.x, targetKeypointId);
 
-  return {point: targetKeypoint, score};
+  return {position: targetKeypoint, part: partNames[targetKeypointId], score};
 }
 
 /**
@@ -126,7 +126,11 @@ export function decodePose(
   const {part: rootPart, score: rootScore} = root;
   const rootPoint = getImageCoords(rootPart, outputStride, offsets);
 
-  instanceKeypoints[rootPart.id] = {score: rootScore, point: rootPoint};
+  instanceKeypoints[rootPart.id] = {
+    score: rootScore,
+    part: partNames[rootPart.id],
+    position: rootPoint
+  };
 
   // Decode the part positions upwards in the tree, following the backward
   // displacements.

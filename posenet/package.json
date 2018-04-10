@@ -1,19 +1,18 @@
 {
-  "name": "tfjs-models",
+  "name": "@tensorflow-models/posenet",
   "version": "0.0.1",
   "description": "Pretrained PoseNet model in tensorflow.js",
-  "main": "dist/posenet/index.js",
+  "main": "dist/index.js",
   "unpkg": "dist/bundle.js",
-  "types": "dist/posenet/index.d.ts",
+  "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs-core": "0.6.0"
+    "@tensorflow/tfjs-core": "0.8.1"
   },
   "devDependencies": {
-    "@tensorflow/tfjs-core": "0.6.0",
     "@types/jasmine": "~2.5.53",
     "babel-core": "^6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",
@@ -26,7 +25,9 @@
     "karma-firefox-launcher": "~1.0.1",
     "karma-jasmine": "~1.1.0",
     "karma-typescript": "~3.0.8",
+    "@tensorflow/tfjs-core": "0.8.1",
     "tslint": "~5.8.0",
+    "tsify": "~3.0.1",
     "typescript": "2.7.2",
     "uglifyjs": "~2.4.11",
     "watchify": "~3.11.0"
@@ -40,7 +41,7 @@
     "lint": "tslint -p . -t verbose"
   },
   "browserify-shim": {
-    "tfjs": "global:dl"
+    "tf": "global:dl"
   },
   "browserify": {
     "global-transform": [

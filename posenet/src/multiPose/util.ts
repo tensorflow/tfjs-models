@@ -19,7 +19,7 @@ import {NUM_KEYPOINTS} from '../keypoints';
 import {Part, TensorBuffer3D, Vector2D} from '../types';
 
 export function getOffsetPoint(
-    y: number, x: number, keypoint: number, offsets: TensorBuffer3D) {
+    y: number, x: number, keypoint: number, offsets: TensorBuffer3D): Vector2D {
   return {
     y: offsets.get(y, x, keypoint),
     x: offsets.get(y, x, keypoint + NUM_KEYPOINTS)
@@ -27,7 +27,7 @@ export function getOffsetPoint(
 }
 
 export function getImageCoords(
-    part: Part, outputStride: number, offsets: TensorBuffer3D) {
+    part: Part, outputStride: number, offsets: TensorBuffer3D): Vector2D {
   const {heatmapY, heatmapX, id: keypoint} = part;
   const {y, x} = getOffsetPoint(heatmapY, heatmapX, keypoint, offsets);
   return {
@@ -36,7 +36,7 @@ export function getImageCoords(
   };
 }
 
-export function fillArray<T>(element: T, size: number) {
+export function fillArray<T>(element: T, size: number): T[] {
   const result: T[] = new Array(size);
 
   for (let i = 0; i < size; i++) {
@@ -46,7 +46,7 @@ export function fillArray<T>(element: T, size: number) {
   return result;
 }
 
-export function clamp(a: number, min: number, max: number) {
+export function clamp(a: number, min: number, max: number): number {
   if (a < min) {
     return min;
   }
@@ -57,7 +57,7 @@ export function clamp(a: number, min: number, max: number) {
 }
 
 export function squaredDistance(
-    y1: number, x1: number, y2: number, x2: number) {
+    y1: number, x1: number, y2: number, x2: number): number {
   const dy = y2 - y1;
   const dx = x2 - x1;
   return dy * dy + dx * dx;

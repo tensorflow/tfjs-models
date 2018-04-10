@@ -35,15 +35,11 @@ describe('argmax2d', () => {
     const input2 =
         tf.tensor3d([.5, .2, .9, 4.3, .2, .7, .6, -0.11, 1.4], [3, 3, 1]);
 
-    const expectArgmax2dToEqual =
-        (input: tf.Tensor3D, expected: tf.Tensor2D) => {
-          const result = argmax2d(input);
-          tf.test_util.expectArraysClose(result, expected);
-        };
+    tf.test_util.expectArraysClose(
+        argmax2d(input1), tf.tensor2d([2, 1], [1, 2], 'int32'));
 
-
-    expectArgmax2dToEqual(input1, tf.tensor2d([2, 1], [1, 2], 'int32'));
-    expectArgmax2dToEqual(input2, tf.tensor2d([1, 0], [1, 2], 'int32'));
+    tf.test_util.expectArraysClose(
+        argmax2d(input2), tf.tensor2d([1, 0], [1, 2], 'int32'));
   });
 
   it('x = [3, 3, 3]', () => {

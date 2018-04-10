@@ -15,12 +15,13 @@
  * =============================================================================
  */
 
-import * as multiPose from './multiPose';
-import * as singlePose from './singlePose';
+import decodeMultiplePoses from './multiPose/decodeMultiplePoses';
+import decodeSinglePose from './singlePose/decodeSinglePose';
 
-export {jointIds, jointNames} from './keypoints';
+export {checkpoints} from './checkpoints';
+export {partIds, partNames} from './keypoints';
 export {PoseNet} from './posenet';
 export {Keypoint, Pose} from './types';
 // tslint:disable-next-line:max-line-length
 export {getAdjacentKeyPoints, getBoundingBox, getBoundingBoxPoints, resizeBilinearGrayscale, setHeatmapAsAlphaChannel, toHeatmapImage, toSingleChannelPixels} from './util';
-export {multiPose, singlePose};
+export {decodeMultiplePoses, decodeSinglePose};
