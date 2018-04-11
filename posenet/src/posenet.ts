@@ -30,7 +30,6 @@ export type OutputStride = 32|16|8;
 export class PoseNet {
   private variables: {[varName: string]: tf.Tensor};
 
-  // yolo variables
   private PREPROCESS_DIVISOR = tf.scalar(255.0 / 2);
   private ONE = tf.scalar(1);
 
