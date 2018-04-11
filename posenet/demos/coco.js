@@ -17,7 +17,7 @@
 import * as tf from '@tensorflow/tfjs-core';
 import dat from 'dat.gui';
 import * as posenet from '../src';
-import {drawKeypoints, drawSkeleton} from './demo_util';
+import {drawKeypoints, drawSkeleton, renderImageToCanvas} from './demo_util';
 
 const images = [
   'frisbee.jpg',
@@ -121,21 +121,16 @@ export function drawHeatmapAsAlpha(image, heatmaps, outputStride, canvas) {
   renderToCanvas(alphadImage, canvas);
 }
 
-function drawResults(image, outputStride, poses,
+function drawResults(canvas, poses,
   minPartConfidence, minPoseConfidence) {
-  const resultsElement = document.getElementById(`results`);
-  const resultsCanvas = resultsElement.querySelector('canvas');
-
-  resultsElement.querySelector('#outputStride').innerHTML =
-        String(outputStride);
-
+  renderImageToCanvas(image, [513, 513], canvas);
   poses.forEach((pose) => {
     if (pose.score >= minPoseConfidence) {
-      console.log(pose);
       drawKeypoints(pose.keypoints,
-        minPartConfidence, resultsCanvas.getContext('2d'));
+        minPartConfidence, canvas.getContext('2d'));
+
       drawSkeleton(pose.keypoints,
-        minPartConfidence, resultsCanvas.getContext('2d'));
+        minPartConfidence, canvas.getContext('2d'));
     }
   });
 }
@@ -156,33 +151,49 @@ function singlePersonCanvas() {
   return document.querySelector('#single canvas');
 }
 
+function multiPersonCanvas() {
+  return document.querySelector('#multi canvas');
+}
+
 function drawSinglePoseResults(pose) {
   const canvas = singlePersonCanvas();
-  console.log('got canvas');
-  const ctx = canvas.getContext('2d');
-  drawResults(ctx, image, guiState.outputStride, [pose],
-    guiState.minPartConfidence, guiState.minPoseConfidence);
+  drawResults(canvas, [pose],
+    guiState.singlePoseDetection.minPartConfidence,
+    guiState.singlePoseDetection.minPoseConfidence);
 }
 
-function drawMultiplePosesResults() {
+function drawMultiplePosesResults(poses) {
+  const canvas = multiPersonCanvas();
+  drawResults(canvas, poses,
+    guiState.multiPoseDetection.minPartConfidence,
+    guiState.multiPoseDetection.minPoseConfidence);
 }
 
-async function decodeSingleAndMultiplePoses(modelOutputs) {
-  console.log('decoding');
+async function decodeSinglePoseAndDrawResults() {
+  if (!modelOutputs) return;
+
   const pose = await posenet.decodeSinglePose(
     modelOutputs.heatmapScores, modelOutputs.offsets,
-    guiState.singlePoseDetection.outputStride);
+    guiState.outputStride);
+
+  drawSinglePoseResults(pose);
+}
+
+async function decodeMultiplePosesAndDrawResults() {
+  if (!modelOutputs) return;
 
   const poses = await posenet.decodeMultiplePoses(
     modelOutputs.heatmapScores, modelOutputs.offsets,
     modelOutputs.displacementFwd, modelOutputs.displacementBwd,
-    guiState.multiPoseDetection.outputStride,
+    guiState.outputStride,
     guiState.multiPoseDetection.maxDetections, guiState.multiPoseDetection);
 
-  console.log('decoded');
-
-  drawSinglePoseResults(pose);
   drawMultiplePosesResults(poses);
+}
+
+async function decodeSingleAndMultiplePoses() {
+  decodeSinglePoseAndDrawResults();
+  decodeMultiplePosesAndDrawResults();
 }
 
 function setStatusText(text) {
@@ -190,8 +201,8 @@ function setStatusText(text) {
   resultElement.innerText = text;
 }
 
-let modelOutputs = null;
 let image = null;
+let modelOutputs = null;
 
 function disposeModelOutputs() {
   if (modelOutputs) {
@@ -199,9 +210,6 @@ function disposeModelOutputs() {
     modelOutputs.offsets.dispose();
     modelOutputs.displacementFwd.dispose();
     modelOutputs.displacementBwd.dispose();
-  }
-  if (image) {
-    image.dispose();
   }
 }
 
@@ -212,14 +220,15 @@ async function testImageAndEstimatePoses(model) {
   disposeModelOutputs();
   image = await loadImage(guiState.image);
 
-  console.log('predicting');
-  modelOutputs = await model.predictForMultiPose(image, guiState.outputStride);
-  console.log('predicted');
+  const input = tf.fromPixels(image);
+
+  modelOutputs = await model.predictForMultiPose(input, guiState.outputStride);
 
   await decodeSingleAndMultiplePoses();
 
   setStatusText('');
   document.getElementById('results').style.display = 'block';
+  input.dispose();
 }
 
 let guiState;
@@ -227,10 +236,10 @@ let guiState;
 function setupGui(model) {
   guiState = {
     outputStride: 8,
-    image: images[0],
+    image: 'tennis_in_crowd.jpg',
     detect: () => {
       testImageAndEstimatePoses(
-        model, guiState.image, guiState);
+        model);
     },
     singlePoseDetection: {
       minPartConfidence: 0.5,
@@ -240,7 +249,7 @@ function setupGui(model) {
       minPartConfidence: 0.5,
       minPoseConfidence: 0.5,
       scoreThreshold: 0.5,
-      nmsRadius: 13.0,
+      nmsRadius: 20.0,
       maxDetections: 15,
     },
   };
@@ -251,25 +260,32 @@ function setupGui(model) {
         Number(outputStride));
   gui.add(guiState, 'image', images);
   gui.add(guiState, 'detect');
-  const singlePoseDetection = gui.addFolder('Single Pose Detection');
-  singlePoseDetection.add(
-    guiState.singlePoseDetection, 'minPartConfidence', 0.0, 1.0);
-  singlePoseDetection.add(
-    guiState.singlePoseDetection, 'minPoseConfidence', 0.0, 1.0);
-  singlePoseDetection.open();
 
-  const multiPoseDetection = gui.addFolder('Multi Pose Detection');
+  const multiPoseDetection = gui.addFolder('Multi Pose Estimation');
   multiPoseDetection.open();
   multiPoseDetection.add(
-    guiState.multiPoseDetection, 'minPartConfidence', 0.0, 1.0);
+    guiState.multiPoseDetection, 'minPartConfidence', 0.0, 1.0)
+    .onChange(decodeMultiplePosesAndDrawResults);
   multiPoseDetection.add(
-    guiState.multiPoseDetection, 'minPoseConfidence', 0.0, 1.0);
+    guiState.multiPoseDetection, 'minPoseConfidence', 0.0, 1.0)
+    .onChange(decodeMultiplePosesAndDrawResults);
 
-  multiPoseDetection.add(guiState.multiPoseDetection, 'nmsRadius', 0.0, 40.0);
+  multiPoseDetection.add(guiState.multiPoseDetection, 'nmsRadius', 0.0, 40.0)
+    .onChange(decodeMultiplePosesAndDrawResults);
   multiPoseDetection.add(guiState.multiPoseDetection, 'maxDetections')
     .min(1)
     .max(20)
-    .step(1);
+    .step(1)
+    .onChange(decodeMultiplePosesAndDrawResults);
+
+  const singlePoseDetection = gui.addFolder('Single Pose Estimation');
+  singlePoseDetection.add(
+    guiState.singlePoseDetection, 'minPartConfidence', 0.0, 1.0)
+    .onChange(decodeSinglePoseAndDrawResults);
+  singlePoseDetection.add(
+    guiState.singlePoseDetection, 'minPoseConfidence', 0.0, 1.0)
+    .onChange(decodeSinglePoseAndDrawResults);
+  singlePoseDetection.open();
 }
 
 export async function bindPage() {
@@ -278,6 +294,8 @@ export async function bindPage() {
   await model.load();
 
   setupGui(model);
+
+  await testImageAndEstimatePoses(model);
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'block';
 }

@@ -13,7 +13,7 @@
       list-style-type: none;
       display: inline-block;
     }
-    .results > div { border: black 1px solid; padding: 10px; }
+    #results > div { display:inline-block; width: 513px}
   </style>
   <body>
     <div id="loading">
@@ -22,8 +22,13 @@
     <div id='main' style='display:none'>
       <div id="status"></div>
       <div id='results' style='display:none'>
+        <div id="multi">
+          <h4>Multiple Poses Estimation</h4>
+          <canvas /></canvas>
+        </div>
+
         <div id="single">
-          <h4>Results with output stride of <span class='outputStride'></span></h4>
+          <h4>Single Pose Estimation</h4>
           <canvas /></canvas>
         </div>
       </div>
