@@ -152,27 +152,37 @@ async function loadImage(imagePath) {
   return promise;
 }
 
-async function testImageForSinglePoseAndDrawResults(
-  model, imagePath, guiState) {
-  const image = await loadImage(imagePath);
-  const pixels = tf.fromPixels(image);
+function singlePersonCanvas() {
+  return document.querySelector('#single canvas');
+}
 
-  const pose = await model.estimateSinglePose(
-    pixels, guiState.outputStride);
-
-  drawResults(image, guiState.outputStride, [pose],
+function drawSinglePoseResults(pose) {
+  const canvas = singlePersonCanvas();
+  console.log('got canvas');
+  const ctx = canvas.getContext('2d');
+  drawResults(ctx, image, guiState.outputStride, [pose],
     guiState.minPartConfidence, guiState.minPoseConfidence);
 }
 
-async function testImageForMultiplePosesAndDrawResults(
-  model, imagePath, guiState) {
-  const image = await loadImage(imagePath);
-  const pixels = tf.fromPixels(image);
+function drawMultiplePosesResults() {
+}
 
-  const poses = await model.estimateMultiplePoses(pixels, guiState.outputStride);
+async function decodeSingleAndMultiplePoses(modelOutputs) {
+  console.log('decoding');
+  const pose = await posenet.decodeSinglePose(
+    modelOutputs.heatmapScores, modelOutputs.offsets,
+    guiState.singlePoseDetection.outputStride);
 
-  drawResults(image, guiState.outputStride, poses,
-    guiState.minPartConfidence, guiState.minPoseConfidence);
+  const poses = await posenet.decodeMultiplePoses(
+    modelOutputs.heatmapScores, modelOutputs.offsets,
+    modelOutputs.displacementFwd, modelOutputs.displacementBwd,
+    guiState.multiPoseDetection.outputStride,
+    guiState.multiPoseDetection.maxDetections, guiState.multiPoseDetection);
+
+  console.log('decoded');
+
+  drawSinglePoseResults(pose);
+  drawMultiplePosesResults(poses);
 }
 
 function setStatusText(text) {
@@ -180,43 +190,56 @@ function setStatusText(text) {
   resultElement.innerText = text;
 }
 
-async function testImageForSinglePoseClick(model, image, guiState) {
+let modelOutputs = null;
+let image = null;
+
+function disposeModelOutputs() {
+  if (modelOutputs) {
+    modelOutputs.heatmapScores.dispose();
+    modelOutputs.offsets.dispose();
+    modelOutputs.displacementFwd.dispose();
+    modelOutputs.displacementBwd.dispose();
+  }
+  if (image) {
+    image.dispose();
+  }
+}
+
+async function testImageAndEstimatePoses(model) {
   setStatusText('Predicting...');
   document.getElementById('results').style.display = 'none';
 
-  await testImageForSinglePoseAndDrawResults(model, image, guiState);
+  disposeModelOutputs();
+  image = await loadImage(guiState.image);
+
+  console.log('predicting');
+  modelOutputs = await model.predictForMultiPose(image, guiState.outputStride);
+  console.log('predicted');
+
+  await decodeSingleAndMultiplePoses();
 
   setStatusText('');
   document.getElementById('results').style.display = 'block';
 }
 
-async function testImageForMultiPoseClick(model, image, guiState) {
-  setStatusText('Predicting...');
-  document.getElementById('results').style.display = 'none';
-
-  await testImageForMultiplePosesAndDrawResults(model, image, guiState);
-
-  setStatusText('');
-  document.getElementById('results').style.display = 'block';
-}
+let guiState;
 
 function setupGui(model) {
-  const guiState = {
+  guiState = {
     outputStride: 8,
     image: images[0],
-    minPartConfidence: 0.5,
-    minPoseConfidence: 0.5,
+    detect: () => {
+      testImageAndEstimatePoses(
+        model, guiState.image, guiState);
+    },
     singlePoseDetection: {
-      detect: () => {
-        testImageForSinglePoseClick(
-          model, guiState.image, guiState);
-      },
+      minPartConfidence: 0.5,
+      minPoseConfidence: 0.5,
     },
     multiPoseDetection: {
-      detect: () => {
-        testImageForMultiPoseClick(
-          model, guiState.image, guiState);
-      },
+      minPartConfidence: 0.5,
+      minPoseConfidence: 0.5,
+      scoreThreshold: 0.5,
       nmsRadius: 13.0,
       maxDetections: 15,
     },
@@ -227,21 +250,26 @@ function setupGui(model) {
     .onChange((outputStride) => guiState.outputStride =
         Number(outputStride));
   gui.add(guiState, 'image', images);
-  gui.add(guiState, 'minPartConfidence', 0.0, 1.0);
-  gui.add(guiState, 'minPoseConfidence', 0.0, 1.0);
-
+  gui.add(guiState, 'detect');
   const singlePoseDetection = gui.addFolder('Single Pose Detection');
+  singlePoseDetection.add(
+    guiState.singlePoseDetection, 'minPartConfidence', 0.0, 1.0);
+  singlePoseDetection.add(
+    guiState.singlePoseDetection, 'minPoseConfidence', 0.0, 1.0);
   singlePoseDetection.open();
-  singlePoseDetection.add(guiState.singlePoseDetection, 'detect');
 
   const multiPoseDetection = gui.addFolder('Multi Pose Detection');
   multiPoseDetection.open();
+  multiPoseDetection.add(
+    guiState.multiPoseDetection, 'minPartConfidence', 0.0, 1.0);
+  multiPoseDetection.add(
+    guiState.multiPoseDetection, 'minPoseConfidence', 0.0, 1.0);
+
   multiPoseDetection.add(guiState.multiPoseDetection, 'nmsRadius', 0.0, 40.0);
   multiPoseDetection.add(guiState.multiPoseDetection, 'maxDetections')
     .min(1)
     .max(20)
     .step(1);
-  multiPoseDetection.add(guiState.multiPoseDetection, 'detect');
 }
 
 export async function bindPage() {
