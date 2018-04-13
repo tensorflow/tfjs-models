@@ -2,9 +2,9 @@
   "name": "@tensorflow-models/posenet",
   "version": "0.0.1",
   "description": "Pretrained PoseNet model in tensorflow.js",
-  "main": "dist/posenet/index.js",
+  "main": "dist/index.js",
   "unpkg": "dist/bundle.js",
-  "types": "dist/posenet/index.d.ts",
+  "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/tensorflow/tfjs-models.git"
