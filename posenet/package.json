@@ -1,5 +1,5 @@
 {
-  "name": "tfjs-models",
+  "name": "@tensorflow-models/posenet",
   "version": "0.0.1",
   "description": "Pretrained PoseNet model in tensorflow.js",
   "main": "dist/posenet/index.js",
@@ -41,7 +41,7 @@
     "lint": "tslint -p . -t verbose"
   },
   "browserify-shim": {
-    "tfjs": "global:dl"
+    "tf": "global:dl"
   },
   "browserify": {
     "global-transform": [

@@ -1,4 +1,6 @@
 {
+  "name": "tensorflow-models",
+  "version": "0.0.1",
   "devDependencies": {
     "clang-format": "~1.2.2"
   },

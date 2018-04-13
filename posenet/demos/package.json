@@ -24,24 +24,20 @@
     "dat.gui": "^0.7.1",
     "eslint": "^4.19.1",
     "eslint-config-google": "^0.9.1",
-    "parcel-bundler": "~1.6.2"
+    "parcel-bundler": "~1.6.2",
+    "babel-preset-es2017": "^6.24.1"
   },
   "babel": {
     "presets": [
       [
         "env",
         {
-          "modules": false,
+          "esmodules": false,
           "targets": {
             "browsers": [
-              "> 1%",
-              "last 3 versions",
-              "ie >= 9",
-              "ios >= 8",
-              "android >= 4.2"
+              "> 3%"
             ]
-          },
-          "useBuiltIns": false
+          }
         }
       ]
     ],

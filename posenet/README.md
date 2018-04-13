@@ -24,7 +24,7 @@ npm install tfjs-posenet --save-dev
 
 ### Developing the Demos
 
-    yarn install
+    yarn
 
 Cd into the demos folder
 
@@ -32,7 +32,7 @@ Cd into the demos folder
 
 Install dependencies and prepare the build directory:
 
-    yarn install
+    yarn
 
 To watch files for changes, and launch a dev server:
 
@@ -90,7 +90,7 @@ It returns a `pose` with a confidence score and an array of keypoints indexed by
 
 ```javascript
 import * as tf from '@tensorflow/tfjs-core';
-import {PoseNet} from '@tensorflow/tfjs-models/posenet';
+import {PoseNet} from '@tensorflow-models/posenet';
 const imageSize = 513;
 const outputStride = 16;
 
