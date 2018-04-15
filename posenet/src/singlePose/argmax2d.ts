@@ -20,7 +20,7 @@ import * as tf from '@tensorflow/tfjs-core';
 // does a floored division.  this is needed temporarily
 // standard integer division can result in bugs
 // https://github.com/PAIR-code/deeplearnjs/issues/847
-function integerDiv(a: tf.Tensor1D, b: number) {
+function integerDiv(a: tf.Tensor1D, b: number): tf.Tensor1D {
   const originalValues = a.buffer().values;
   const values = new Int32Array(a.shape[0]);
 
@@ -31,7 +31,7 @@ function integerDiv(a: tf.Tensor1D, b: number) {
   return tf.tensor1d(values, 'int32');
 }
 
-function mod(a: tf.Tensor1D, b: number) {
+function mod(a: tf.Tensor1D, b: number): tf.Tensor1D {
   return tf.tidy(() => {
     const floored = integerDiv(a, b);
 

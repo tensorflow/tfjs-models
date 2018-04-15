@@ -99,11 +99,12 @@ export class PoseNet {
 
   /**
    * Infer through PoseNet, assumes variables have been loaded. This does
-   * standard ImageNet pre-processing before inferring through the model. This
+   * standard ImageNet pre-processing before inferring through the model.
+   * The image should pixels should have values [0-255]. This
    * method returns the heatmaps and offsets.  Infers through the outputs
    * that are needed for single pose decoding
    *
-   * @param input un-preprocessed input image.
+   * @param input un-preprocessed input image, with values in range [0-255]
    * @param outputStride the desired stride for the outputs.  Must be 32, 16,
    * or 8. The output width and height will be will be
    * (inputDimension - 1)/outputStride + 1
@@ -128,11 +129,12 @@ export class PoseNet {
 
   /**
    * Infer through PoseNet, assumes variables have been loaded. This does
-   * standard ImageNet pre-processing before inferring through the model. Infers
+   * standard ImageNet pre-processing before inferring through the model.
+   * The image should pixels should have values [0-255]. Infers
    * through the outputs that are needed for multiple pose decoding. This
    * method returns the heatmaps offsets, and mid-range displacements.
    *
-   * @param input un-preprocessed input image.
+   * @param input un-preprocessed input image, with values in range [0-255]
    * @param outputStride the desired stride for the outputs.  Must be 32, 16,
    * or 8. The output width and height will be will be
    * (inputDimension - 1)/outputStride + 1
@@ -175,10 +177,11 @@ export class PoseNet {
   /**
    * Infer through PoseNet, and estimates a single pose using the outputs.
    * assumes variables have been loaded. This does standard ImageNet
-   * pre-processing before inferring through the model. This
-   * method returns a single pose.
+   * pre-processing before inferring through the model.
+   * The image should pixels should have values [0-255].
+   * This method returns a single pose.
    *
-   * @param input un-preprocessed input image.
+   * @param input un-preprocessed input image, with values in range [0-255].
    * @param outputStride the desired stride for the outputs.  Must be 32, 16,
    * or 8. The output width and height will be will be
    * (inputDimension - 1)/outputStride + 1
@@ -201,13 +204,14 @@ export class PoseNet {
   /**
    * Infer through PoseNet, and estimates multiple poses using the outputs.
    * assumes variables have been loaded. This does standard ImageNet
-   * pre-processing before inferring through the model.  It detects
-   * multiple poses and finds their parts from part scores and
+   * pre-processing before inferring through the model.
+   * The image should pixels should have values [0-255].
+   * It detects multiple poses and finds their parts from part scores and
    * displacement vectors using a fast greedy decoding algorithm.  It returns
    * up to `maxDetections` object instance detections in decreasing root score
    * order.
    *
-   * @param input un-preprocessed input image.
+   * @param input un-preprocessed input image, with values in range [0-255].
    *
    * @param outputStride the desired stride for the outputs.  Must be 32, 16,
    * or 8. The output width and height will be will be

@@ -11,32 +11,15 @@ of PoseNet in Tensorflow.js.
 You can use this as standalone es5 bundle like this:
 
 ```html
+<script src="https://unpkg.com/tfjs-core"></script>
 <script src="https://unpkg.com/tfjs-posenet"></script>
 ```
 
 Or you can install it via npm for use in a TypeScript / ES6 project.
 
 ```sh
-npm install tfjs-posenet --save-dev
+npm install @tensorflow-models/posenet
 ```
-
-## Setup
-
-### Developing the Demos
-
-    yarn
-
-Cd into the demos folder
-
-    cd demos
-
-Install dependencies and prepare the build directory:
-
-    yarn
-
-To watch files for changes, and launch a dev server:
-
-    yarn watch
 
 ## Usage
 
@@ -274,7 +257,7 @@ It returns a `promise` that resolves with an array of `poses`, each with a confi
 
 ```javascript
 import * as tf from '@tensorflow/tfjs-core';
-import {PoseNet} from '@tensorflow/tfjs-models/posenet';
+import {PoseNet} from '@tensorflow-models/posenet';
 
 const imageSize = 513;
 const outputStride = 16;
@@ -385,3 +368,22 @@ const nosePosition = noseKeypoint.position;
 const leftKneeScore = leftKneeKeypoint.score;
 const leftKneePosition = leftKneeKeypoint.position;
 ```
+
+## Developing the Demos
+
+### Setup
+
+    yarn
+
+Cd into the demos folder
+
+    cd demos
+
+Install dependencies and prepare the build directory:
+
+    yarn
+
+To watch files for changes, and launch a dev server:
+
+    yarn watch
+

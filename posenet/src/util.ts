@@ -22,7 +22,7 @@ import {connectedJointIndeces} from './keypoints';
 import {TensorBuffer3D, Vector2D} from './types';
 
 function eitherPointDoesntMeetConfidence(
-    a: number, b: number, minConfidence: number) {
+    a: number, b: number, minConfidence: number): boolean {
   return (a < minConfidence || b < minConfidence);
 }
 
@@ -73,7 +73,7 @@ export function toHeatmapImage(heatmapScores: tf.Tensor3D): tf.Tensor2D {
 }
 
 export function resizeBilinearGrayscale(
-    heatmapImage: tf.Tensor2D, size: [number, number]) {
+    heatmapImage: tf.Tensor2D, size: [number, number]): tf.Tensor3D {
   return tf.tidy(() => {
     const channel = heatmapImage.expandDims(2) as tf.Tensor3D;
     const rgb = tf.concat([channel, channel, channel], 2) as tf.Tensor3D;
@@ -81,14 +81,15 @@ export function resizeBilinearGrayscale(
   })
 }
 
-export function toSingleChannelPixels(tensor: tf.Tensor2D) {
+export function toSingleChannelPixels(tensor: tf.Tensor2D): ImageData {
   return new ImageData(
       new Uint8ClampedArray(tensor.mul(tf.scalar(255)).toInt().buffer().values),
       tensor.shape[1], tensor.shape[0]);
 }
 
 const {NEGATIVE_INFINITY, POSITIVE_INFINITY} = Number;
-export function getBoundingBox(keypoints: Keypoint[]) {
+export function getBoundingBox(keypoints: Keypoint[]):
+    {maxX: number, maxY: number, minX: number, minY: number} {
   return keypoints.reduce(({maxX, maxY, minX, minY}, {position: {x, y}}) => {
     return {
       maxX: Math.max(maxX, x),
