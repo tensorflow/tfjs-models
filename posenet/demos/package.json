@@ -27,26 +27,6 @@
     "parcel-bundler": "~1.6.2",
     "babel-preset-es2017": "^6.24.1"
   },
-  "babel": {
-    "presets": [
-      [
-        "env",
-        {
-          "esmodules": false,
-          "targets": {
-            "browsers": [
-              "> 3%"
-            ]
-          }
-        }
-      ]
-    ],
-    "plugins": [
-      [
-        "transform-runtime"
-      ]
-    ]
-  },
   "eslintConfig": {
     "extends": "google",
     "rules": {
