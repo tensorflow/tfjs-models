@@ -28,14 +28,14 @@ import {addVectors, getImageCoords} from './util';
  * child->parent, we can define the tree root as any node.
  */
 const poseChain: StringTuple[] = [
-  ['nose', 'left_eye'], ['left_eye', 'left_ear'], ['nose', 'right_eye'],
-  ['right_eye', 'right_ear'], ['nose', 'left_shoulder'],
-  ['left_shoulder', 'left_elbow'], ['left_elbow', 'left_wrist'],
-  ['left_shoulder', 'left_hip'], ['left_hip', 'left_knee'],
-  ['left_knee', 'left_ankle'], ['nose', 'right_shoulder'],
-  ['right_shoulder', 'right_elbow'], ['right_elbow', 'right_wrist'],
-  ['right_shoulder', 'right_hip'], ['right_hip', 'right_knee'],
-  ['right_knee', 'right_ankle']
+  ['nose', 'leftEye'], ['leftEye', 'leftEar'], ['nose', 'rightEye'],
+  ['rightEye', 'rightEar'], ['nose', 'leftShoulder'],
+  ['leftShoulder', 'leftElbow'], ['leftElbow', 'leftWrist'],
+  ['leftShoulder', 'leftHip'], ['leftHip', 'leftKnee'],
+  ['leftKnee', 'leftAnkle'], ['nose', 'rightShoulder'],
+  ['rightShoulder', 'rightElbow'], ['rightElbow', 'rightWrist'],
+  ['rightShoulder', 'rightHip'], ['rightHip', 'rightKnee'],
+  ['rightKnee', 'rightAnkle']
 ];
 
 const parentChildrenTuples: NumberTuple[] = poseChain.map(
