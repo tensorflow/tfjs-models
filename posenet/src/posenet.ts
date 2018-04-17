@@ -45,7 +45,8 @@ export class PoseNet {
   private mobileNet(input: tf.Tensor3D, outputStride: OutputStride) {
     // Normalize the pixels [0, 255] to be between [-1, 1].
     const preprocessedInput =
-        input.div(this.PREPROCESS_DIVISOR).sub(this.ONE) as tf.Tensor3D;
+        tf.cast(input, 'float32').div(this.PREPROCESS_DIVISOR).sub(this.ONE) as
+        tf.Tensor3D;
 
     const conv2d0Stride = 2;
 
