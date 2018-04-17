@@ -10,10 +10,9 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs-core": "0.6.0"
+    "@tensorflow/tfjs-core": "0.7.2"
   },
   "devDependencies": {
-    "@tensorflow/tfjs-core": "0.6.0",
     "@types/jasmine": "~2.5.53",
     "babel-core": "^6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",
@@ -26,6 +25,7 @@
     "karma-firefox-launcher": "~1.0.1",
     "karma-jasmine": "~1.1.0",
     "karma-typescript": "~3.0.8",
+    "@tensorflow/tfjs-core": "0.7.2",
     "tslint": "~5.8.0",
     "tsify": "~3.0.1",
     "typescript": "2.7.2",

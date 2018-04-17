@@ -2,24 +2,11 @@
 # yarn lockfile v1
 
 
-"@tensorflow/tfjs-core@0.6.0":
-  version "0.6.0"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-core/-/tfjs-core-0.6.0.tgz#e33d9889472b0599291ecdb7fa83579586b21e66"
+"@tensorflow/tfjs-core@0.7.2":
+  version "0.7.2"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-core/-/tfjs-core-0.7.2.tgz#3a9a5bfbe29b165468172b4d30662d82244250b5"
   dependencies:
     seedrandom "~2.4.3"
-
-"@tensorflow/tfjs-layers@0.1.2":
-  version "0.1.2"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-layers/-/tfjs-layers-0.1.2.tgz#fead9860495a0bdb1525645ed7614675e8decaaf"
-  dependencies:
-    underscore "~1.8.3"
-
-"@tensorflow/tfjs@0.6.1":
-  version "0.6.1"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs/-/tfjs-0.6.1.tgz#8cb0133a0f2d8d6068c0742d8ceb998ef39899b0"
-  dependencies:
-    "@tensorflow/tfjs-core" "0.6.0"
-    "@tensorflow/tfjs-layers" "0.1.2"
 
 abbrev@1:
   version "1.1.1"
@@ -4171,10 +4158,6 @@ uglify-js@^3.3.14:
 uid-number@^0.0.6:
   version "0.0.6"
   resolved "https://registry.yarnpkg.com/uid-number/-/uid-number-0.0.6.tgz#0ea10e8035e8eb5b8e4449f06da1c730663baa81"
-
-underscore@~1.8.3:
-  version "1.8.3"
-  resolved "https://registry.yarnpkg.com/underscore/-/underscore-1.8.3.tgz#4f3fb53b106e6097fcf9cb4109f2a5e9bdfa5022"
 
 unicode-trie@^0.3.1:
   version "0.3.1"
