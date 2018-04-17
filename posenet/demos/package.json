@@ -9,7 +9,7 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow/tfjs-core": "0.7.2"
+    "@tensorflow/tfjs-core": "0.8.1"
   },
   "scripts": {
     "watch": "NODE_ENV=development parcel --no-hmr --open index.html ",
