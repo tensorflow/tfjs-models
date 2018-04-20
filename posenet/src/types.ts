@@ -38,6 +38,12 @@ export type Keypoint = {
   position: Vector2D
 };
 
+export type KeypointWithName = {
+  score: number,
+  position: Vector2D,
+  name: string
+};
+
 export type Pose = {
   keypoints: Keypoint[],
   score: number
