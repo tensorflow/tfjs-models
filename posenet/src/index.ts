@@ -20,7 +20,7 @@ import decodeSinglePose from './singlePose/decodeSinglePose';
 
 export {jointIds, jointNames} from './keypoints';
 export {PoseNet} from './posenet';
-export {Keypoint, Pose} from './types';
+export {Keypoint, KeypointWithName, Pose} from './types';
 // tslint:disable-next-line:max-line-length
 export {getAdjacentKeyPoints, getBoundingBox, getBoundingBoxPoints, resizeBilinearGrayscale, setHeatmapAsAlphaChannel, toHeatmapImage, toSingleChannelPixels} from './util';
 export {decodeMultiplePoses, decodeSinglePose};
