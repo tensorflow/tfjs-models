@@ -60,7 +60,7 @@ function loadVideo(cameraId) {
 
     function handleVideo(stream) {
       currentStream = stream;
-      video.src = window.URL.createObjectURL(stream);
+      video.srcObject = stream;
 
       resolve(video);
     }
