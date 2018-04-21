@@ -15,10 +15,10 @@
  * =============================================================================
  */
 
-import {jointIds, NumberTuple, StringTuple} from '../keypoints';
+import {NumberTuple, partIds, partNames, StringTuple} from '../keypoints';
 import {Keypoint, PartWithScore, TensorBuffer3D, Vector2D} from '../types';
-import {clamp, getOffsetPoint} from './util';
 
+import {clamp, getOffsetPoint} from './util';
 import {addVectors, getImageCoords} from './util';
 
 /*
@@ -40,7 +40,7 @@ const poseChain: StringTuple[] = [
 
 const parentChildrenTuples: NumberTuple[] = poseChain.map(
     ([parentJoinName, childJoinName]): NumberTuple =>
-        ([jointIds[parentJoinName], jointIds[childJoinName]]));
+        ([partIds[parentJoinName], partIds[childJoinName]]));
 
 const parentToChildEdges: number[] =
     parentChildrenTuples.map(([, childJointId]) => childJointId);
@@ -105,7 +105,7 @@ function traverseToTargetKeypoint(
   const score = scoresBuffer.get(
       targetKeypointIndeces.y, targetKeypointIndeces.x, targetKeypointId);
 
-  return {position: targetKeypoint, score};
+  return {position: targetKeypoint, part: partNames[targetKeypointId], score};
 }
 
 /**
@@ -126,7 +126,11 @@ export function decodePose(
   const {part: rootPart, score: rootScore} = root;
   const rootPoint = getImageCoords(rootPart, outputStride, offsets);
 
-  instanceKeypoints[rootPart.id] = {score: rootScore, position: rootPoint};
+  instanceKeypoints[rootPart.id] = {
+    score: rootScore,
+    part: partNames[rootPart.id],
+    position: rootPoint
+  };
 
   // Decode the part positions upwards in the tree, following the backward
   // displacements.
