@@ -44,9 +44,14 @@ function scoreIsMaximumInLocalWindow(
   return localMaximum;
 }
 
+/**
+ * Builds a priority queue with part candidate positions for a specific image in
+ * the batch. For this we find all local maxima in the score maps with score
+ * values above a threshold. We create a single priority queue across all parts.
+ */
 export function buildPartWithScoreQueue(
     scoreThreshold: number, localMaximumRadius: number,
-    scores: TensorBuffer3D) {
+    scores: TensorBuffer3D): MaxHeap<PartWithScore> {
   const [height, width, numKeypoints] = scores.shape;
 
   const queue = new MaxHeap<PartWithScore>(
