@@ -23,6 +23,7 @@ const maxStride = 32;
 const videoSizes = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map(
   (multiplier) => (maxStride * multiplier + 1));
 const maxVideoSize = 513;
+const canvasSize = 400;
 
 async function getCameras() {
   const devices = await navigator.mediaDevices.enumerateDevices();
@@ -76,13 +77,12 @@ const guiState = {
   outputStride: 16,
   minPartConfidence: 0.2,
   minPoseConfidence: 0.4,
-  videoResolution: 225,
+  inputImageResolution: 225,
   maxPoseDetections: 2,
   nmsRadius: 10,
   showVideo: true,
   showSkeleton: true,
-  showPoints: true,
-  outputResolution: 385,
+  showPoints: true
 };
 
 function setupGui(cameras) {
@@ -105,8 +105,7 @@ function setupGui(cameras) {
   gui.add(guiState, 'minPoseConfidence', 0.0, 1.0);
   gui.add(guiState, 'maxPoseDetections').min(1).max(20).step(1);
   gui.add(guiState, 'nmsRadius').min(0.0).max(40.0);
-  gui.add(guiState, 'videoResolution', videoSizes);
-  gui.add(guiState, 'outputResolution').min(0).max(800).step(1);
+  gui.add(guiState, 'inputImageResolution', videoSizes);
   gui.add(guiState, 'showVideo');
   gui.add(guiState, 'showSkeleton');
   gui.add(guiState, 'showPoints');
@@ -116,36 +115,30 @@ function detectPoseInRealTime(video, model) {
   const canvas = document.getElementById('output');
   const ctx = canvas.getContext('2d');
 
+  canvas.width = canvasSize;
+  canvas.height = canvasSize;
+
   async function poseDetectionFrame() {
-    const videoResolution = Number(guiState.videoResolution);
+    const inputImageResolution = Number(guiState.inputImageResolution);
     const outputStride = Number(guiState.outputStride);
     const minConfidence = Number(guiState.minPartConfidence);
-    const outputResolution = Number(guiState.outputResolution);
 
-    canvas.width = outputResolution;
-    canvas.height = outputResolution;
-
-    ctx.clearRect(0, 0, outputResolution, outputResolution);
-    ctx.translate(outputResolution, 0);
-    ctx.scale(-1, 1);
+    ctx.clearRect(0, 0,canvasSize, canvasSize);
 
     const originalImage = tf.fromPixels(video);
-    const image = originalImage.resizeBilinear(
-      [videoResolution, videoResolution]);
+    const image = originalImage.reverse(1).resizeBilinear(
+      [inputImageResolution, inputImageResolution]);
 
-    const scale = outputResolution / videoResolution;
+    const scale = canvasSize / inputImageResolution;
     const poses = await model.estimateMultiplePoses(
       image, outputStride, guiState.maxPoseDetections,
       guiState.minPartConfidence, guiState.nmsRadius);
 
     if (guiState.showVideo) {
-      const toRender = await tf.tidy(() => {
-        return originalImage.reverse(1)
-          .resizeBilinear([outputResolution, outputResolution]);
-      });
-
-      await renderToCanvas(toRender, ctx);
-      toRender.dispose();
+      ctx.save();
+      ctx.scale(-1,1);
+      ctx.drawImage(video,0,0,canvasSize*-1,canvasSize);
+      ctx.restore();
     }
 
     poses.forEach(({score, keypoints}) => {
