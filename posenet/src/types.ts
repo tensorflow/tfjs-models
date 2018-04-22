@@ -35,13 +35,8 @@ export type PartWithScore = {
 
 export type Keypoint = {
   score: number,
-  position: Vector2D
-};
-
-export type KeypointWithName = {
-  score: number,
   position: Vector2D,
-  name: string
+  part: string
 };
 
 export type Pose = {

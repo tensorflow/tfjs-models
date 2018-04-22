@@ -154,6 +154,9 @@ async function decodeSinglePoseAndDrawResults() {
     modelOutputs.heatmapScores, modelOutputs.offsets,
     guiState.outputStride);
 
+
+  console.log(JSON.stringify(pose));
+
   drawSinglePoseResults(pose);
 }
 
@@ -165,6 +168,8 @@ async function decodeMultiplePosesAndDrawResults() {
     modelOutputs.displacementFwd, modelOutputs.displacementBwd,
     guiState.outputStride,
     guiState.multiPoseDetection.maxDetections, guiState.multiPoseDetection);
+
+  console.log(JSON.stringify(poses));
 
   drawMultiplePosesResults(poses);
 }

@@ -19,26 +19,25 @@ export type Tuple<T> = [T, T];
 export type StringTuple = Tuple<string>;
 export type NumberTuple = Tuple<number>;
 
-export const jointNames = [
+export const partNames = [
   'nose', 'leftEye', 'rightEye', 'leftEar', 'rightEar', 'leftShoulder',
   'rightShoulder', 'leftElbow', 'rightElbow', 'leftWrist', 'rightWrist',
-  'leftHip', 'rightHip', 'leftKnee', 'rightKnee', 'leftAnkle',
-  'rightAnkle'
+  'leftHip', 'rightHip', 'leftKnee', 'rightKnee', 'leftAnkle', 'rightAnkle'
 ];
 
-export const NUM_KEYPOINTS = jointNames.length;
+export const NUM_KEYPOINTS = partNames.length;
 
 export interface NumberDict {
   [jointName: string]: number;
 }
 
-export const jointIds =
-    jointNames.reduce((result: NumberDict, jointName, i): NumberDict => {
+export const partIds =
+    partNames.reduce((result: NumberDict, jointName, i): NumberDict => {
       result[jointName] = i;
       return result;
     }, {}) as NumberDict;
 
-const connectedJointNames: StringTuple[] = [
+const connectedPartNames: StringTuple[] = [
   ['leftHip', 'leftShoulder'], ['leftElbow', 'leftShoulder'],
   ['leftElbow', 'leftWrist'], ['leftHip', 'leftKnee'],
   ['leftKnee', 'leftAnkle'], ['rightHip', 'rightShoulder'],
@@ -47,6 +46,5 @@ const connectedJointNames: StringTuple[] = [
   ['leftShoulder', 'rightShoulder'], ['leftHip', 'rightHip']
 ];
 
-export const connectedJointIndeces = connectedJointNames.map(
-    ([jointNameA, jointNameB]) =>
-        ([jointIds[jointNameA], jointIds[jointNameB]]));
+export const connectedPartIndeces = connectedPartNames.map(
+    ([jointNameA, jointNameB]) => ([partIds[jointNameA], partIds[jointNameB]]));

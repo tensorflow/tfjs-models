@@ -17,8 +17,8 @@
 
 import * as tf from '@tensorflow/tfjs-core';
 
-import {Keypoint, KeypointWithName} from '.';
-import {connectedJointIndeces, jointNames} from './keypoints';
+import {Keypoint} from '.';
+import {connectedPartIndeces} from './keypoints';
 import {TensorBuffer3D, Vector2D} from './types';
 
 function eitherPointDoesntMeetConfidence(
@@ -28,20 +28,15 @@ function eitherPointDoesntMeetConfidence(
 
 export function getAdjacentKeyPoints(
     keypoints: Keypoint[], minConfidence: number): Keypoint[][] {
-  return connectedJointIndeces.reduce(
-      (result: KeypointWithName[][], [leftJoint, rightJoint]): KeypointWithName[][] => {
+  return connectedPartIndeces.reduce(
+      (result: Keypoint[][], [leftJoint, rightJoint]): Keypoint[][] => {
         if (eitherPointDoesntMeetConfidence(
                 keypoints[leftJoint].score, keypoints[rightJoint].score,
                 minConfidence)) {
           return result;
         }
 
-        const leftJointWithName: KeypointWithName = { score: keypoints[leftJoint].score, 
-          position: keypoints[leftJoint].position, name: jointNames[leftJoint]};
-        const rightJointWithName: KeypointWithName = { score: keypoints[rightJoint].score, 
-          position: keypoints[rightJoint].position, name: jointNames[rightJoint]};
-
-        result.push([leftJointWithName, rightJointWithName]);
+        result.push([keypoints[leftJoint], keypoints[rightJoint]]);
 
         return result;
       }, []);
