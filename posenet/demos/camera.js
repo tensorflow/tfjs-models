@@ -16,6 +16,7 @@
  */
 import * as tf from '@tensorflow/tfjs-core';
 import dat from 'dat.gui';
+import Stats from 'stats.js';
 import * as posenet from '../src';
 
 import {drawKeypoints, drawSkeleton, renderToCanvas} from './demo_util';
@@ -24,6 +25,7 @@ const videoSizes = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map(
   (multiplier) => (maxStride * multiplier + 1));
 const maxVideoSize = 513;
 const canvasSize = 400;
+const stats = new Stats();
 
 async function getCameras() {
   const devices = await navigator.mediaDevices.enumerateDevices();
@@ -150,6 +152,11 @@ function setupGui(cameras) {
   });
 }
 
+function setupFPS() {
+  stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
+  document.body.appendChild(stats.dom);
+}
+
 function detectPoseInRealTime(video, model) {
   const canvas = document.getElementById('output');
   const ctx = canvas.getContext('2d');
@@ -158,6 +165,8 @@ function detectPoseInRealTime(video, model) {
   canvas.height = canvasSize;
 
   async function poseDetectionFrame() {
+    stats.begin();
+
     const inputImageResolution = Number(guiState.input.inputImageResolution);
     const outputStride = Number(guiState.input.outputStride);
 
@@ -212,6 +221,8 @@ function detectPoseInRealTime(video, model) {
     image.dispose();
     originalImage.dispose();
 
+    stats.end();
+
     requestAnimationFrame(poseDetectionFrame);
   }
 
@@ -236,6 +247,7 @@ export async function bindPage() {
   const video = await loadVideo(cameras[0].deviceId);
 
   setupGui(cameras);
+  setupFPS();
   detectPoseInRealTime(video, model);
 }
 
