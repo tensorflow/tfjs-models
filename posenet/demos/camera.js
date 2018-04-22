@@ -74,15 +74,26 @@ function loadVideo(cameraId) {
 }
 
 const guiState = {
-  outputStride: 16,
-  minPartConfidence: 0.2,
-  minPoseConfidence: 0.4,
-  inputImageResolution: 225,
-  maxPoseDetections: 2,
-  nmsRadius: 10,
-  showVideo: true,
-  showSkeleton: true,
-  showPoints: true
+  algorithm: 'single-pose',
+  input: {
+    outputStride: 16,
+    inputImageResolution: 225
+  },
+  singlePoseDetection: {
+    minPoseConfidence: 0.1,
+    minPartConfidence: 0.5
+  },
+  multiPoseDetection: {
+    maxPoseDetections: 2,
+    minPoseConfidence: 0.1,
+    minPartConfidence: 0.3,
+    nmsRadius: 20.0
+  },
+  output: {
+    showVideo: true,
+    showSkeleton: true,
+    showPoints: true
+  }
 };
 
 function setupGui(cameras) {
@@ -95,20 +106,48 @@ function setupGui(cameras) {
     return result;
   }, {});
 
-  const gui = new dat.GUI();
+  const gui = new dat.GUI({ width: 300 });
 
   gui.add(guiState, 'camera', cameraOptions).onChange((deviceId) => {
     loadVideo(deviceId);
   });
-  gui.add(guiState, 'outputStride', [8, 16, 32]);
-  gui.add(guiState, 'minPartConfidence', 0.0, 1.0);
-  gui.add(guiState, 'minPoseConfidence', 0.0, 1.0);
-  gui.add(guiState, 'maxPoseDetections').min(1).max(20).step(1);
-  gui.add(guiState, 'nmsRadius').min(0.0).max(40.0);
-  gui.add(guiState, 'inputImageResolution', videoSizes);
-  gui.add(guiState, 'showVideo');
-  gui.add(guiState, 'showSkeleton');
-  gui.add(guiState, 'showPoints');
+  const algorithmController = gui.add(guiState, 'algorithm', [ 'single-pose', 'multi-pose' ] );
+
+  var input = gui.addFolder('Input');
+  input.add(guiState.input, 'outputStride', [8, 16, 32]);
+  input.add(guiState.input, 'inputImageResolution', videoSizes);
+  input.open();
+
+  var single = gui.addFolder('Single Pose Detection');
+  single.add(guiState.singlePoseDetection, 'minPoseConfidence', 0.0, 1.0);
+  single.add(guiState.singlePoseDetection, 'minPartConfidence', 0.0, 1.0);
+  single.open();
+
+  var multi = gui.addFolder('Multi Pose Detection');
+  multi.add(guiState.multiPoseDetection, 'maxPoseDetections').min(1).max(20).step(1);
+  multi.add(guiState.multiPoseDetection, 'minPoseConfidence', 0.0, 1.0);
+  multi.add(guiState.multiPoseDetection, 'minPartConfidence', 0.0, 1.0);
+  multi.add(guiState.multiPoseDetection, 'nmsRadius').min(0.0).max(40.0);
+  
+  var output = gui.addFolder('Output');
+  output.add(guiState.output, 'showVideo');
+  output.add(guiState.output, 'showSkeleton');
+  output.add(guiState.output, 'showPoints');
+  output.open();
+
+
+  algorithmController.onChange(function(value) {
+    switch (guiState.algorithm) {
+      case 'single-pose':
+        multi.close();
+        single.open();
+        break;
+      case 'multi-pose':
+        single.close();
+        multi.open();
+        break;
+    }
+  });
 }
 
 function detectPoseInRealTime(video, model) {
@@ -119,22 +158,40 @@ function detectPoseInRealTime(video, model) {
   canvas.height = canvasSize;
 
   async function poseDetectionFrame() {
-    const inputImageResolution = Number(guiState.inputImageResolution);
-    const outputStride = Number(guiState.outputStride);
-    const minConfidence = Number(guiState.minPartConfidence);
-
-    ctx.clearRect(0, 0,canvasSize, canvasSize);
+    const inputImageResolution = Number(guiState.input.inputImageResolution);
+    const outputStride = Number(guiState.input.outputStride);
 
     const originalImage = tf.fromPixels(video);
     const image = originalImage.reverse(1).resizeBilinear(
       [inputImageResolution, inputImageResolution]);
 
     const scale = canvasSize / inputImageResolution;
-    const poses = await model.estimateMultiplePoses(
-      image, outputStride, guiState.maxPoseDetections,
-      guiState.minPartConfidence, guiState.nmsRadius);
 
-    if (guiState.showVideo) {
+    let poses = [];
+    let minPoseConfidence;
+    let minPartConfidence;
+    switch (guiState.algorithm) {
+      case 'single-pose':
+          const pose = await model.estimateSinglePose(image, outputStride);
+          poses.push(pose);
+
+          minPoseConfidence = Number(guiState.singlePoseDetection.minPoseConfidence);
+          minPartConfidence = Number(guiState.singlePoseDetection.minPartConfidence);
+          break;
+      case 'multi-pose':
+          poses = await model.estimateMultiplePoses(image, outputStride, 
+            guiState.multiPoseDetection.maxPoseDetections,
+            guiState.multiPoseDetection.minPartConfidence, 
+            guiState.multiPoseDetection.nmsRadius);
+
+          minPoseConfidence = Number(guiState.multiPoseDetection.minPoseConfidence);
+          minPartConfidence = Number(guiState.multiPoseDetection.minPartConfidence);
+          break;
+    }
+
+    ctx.clearRect(0, 0,canvasSize, canvasSize);
+
+    if (guiState.output.showVideo) {
       ctx.save();
       ctx.scale(-1,1);
       ctx.drawImage(video,0,0,canvasSize*-1,canvasSize);
@@ -142,12 +199,12 @@ function detectPoseInRealTime(video, model) {
     }
 
     poses.forEach(({score, keypoints}) => {
-      if (score >= guiState.minPoseConfidence) {
-        if (guiState.showPoints) {
-          drawKeypoints(keypoints, minConfidence, ctx, scale);
+      if (score >= minPoseConfidence) {
+        if (guiState.output.showPoints) {
+          drawKeypoints(keypoints, minPartConfidence, ctx, scale);
         }
-        if (guiState.showSkeleton) {
-          drawSkeleton(keypoints, minConfidence, ctx, scale);
+        if (guiState.output.showSkeleton) {
+          drawSkeleton(keypoints, minPartConfidence, ctx, scale);
         }
       }
     });
