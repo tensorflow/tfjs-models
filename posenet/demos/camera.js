@@ -78,6 +78,7 @@ function loadVideo(cameraId) {
 const guiState = {
   algorithm: 'single-pose',
   input: {
+    mobileNetArchitecture: '101',
     outputStride: 16,
     inputImageResolution: 225,
   },
@@ -98,7 +99,7 @@ const guiState = {
   },
 };
 
-function setupGui(cameras) {
+function setupGui(cameras, model) {
   if (cameras.length > 0) {
     guiState.camera = cameras[0].deviceId;
   }
@@ -117,6 +118,8 @@ function setupGui(cameras) {
     guiState, 'algorithm', ['single-pose', 'multi-pose'] );
 
   let input = gui.addFolder('Input');
+  const architectureController =
+    input.add(guiState.input, 'mobileNetArchitecture', Object.keys(posenet.checkpoints));
   input.add(guiState.input, 'outputStride', [8, 16, 32]);
   input.add(guiState.input, 'inputImageResolution', videoSizes);
   input.open();
@@ -139,6 +142,10 @@ function setupGui(cameras) {
   output.add(guiState.output, 'showPoints');
   output.open();
 
+
+  architectureController.onChange(function(architecture) {
+    guiState.changeToArchitecture = architecture;
+  });
 
   algorithmController.onChange(function(value) {
     switch (guiState.algorithm) {
@@ -167,6 +174,14 @@ function detectPoseInRealTime(video, model) {
   canvas.height = canvasSize;
 
   async function poseDetectionFrame() {
+    if (guiState.changeToArchitecture) {
+      const checkpoint = posenet.checkpoints[guiState.changeToArchitecture];
+
+      await model.load(checkpoint.url, checkpoint.architecture);
+
+      guiState.changeToArchitecture = null;
+    }
+
     stats.begin();
 
     const inputImageResolution = Number(guiState.input.inputImageResolution);
@@ -250,8 +265,8 @@ export async function bindPage() {
 
   const video = await loadVideo(cameras[0].deviceId);
 
-  setupGui(cameras);
-  // setupFPS();
+  setupGui(cameras, model);
+  setupFPS();
   detectPoseInRealTime(video, model);
 }
 

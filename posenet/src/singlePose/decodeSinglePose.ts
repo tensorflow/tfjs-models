@@ -18,7 +18,7 @@
 import * as tf from '@tensorflow/tfjs-core';
 
 import {partNames} from '../keypoints';
-import {OutputStride} from '../posenet';
+import {OutputStride} from '../mobilenet';
 import {Keypoint, Pose} from '../types';
 import {toTensorBuffer} from '../util';
 

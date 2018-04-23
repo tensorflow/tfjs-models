@@ -18,6 +18,7 @@
 import decodeMultiplePoses from './multiPose/decodeMultiplePoses';
 import decodeSinglePose from './singlePose/decodeSinglePose';
 
+export {checkpoints} from './checkpoints';
 export {partIds, partNames} from './keypoints';
 export {PoseNet} from './posenet';
 export {Keypoint, Pose} from './types';

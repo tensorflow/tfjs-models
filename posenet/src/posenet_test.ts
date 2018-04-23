@@ -20,11 +20,14 @@ import * as tf from '@tensorflow/tfjs-core';
 import {PoseNet} from './posenet';
 
 describe('PoseNet', () => {
+  let posenet: PoseNet;
+  beforeAll(async () => {
+    posenet = new PoseNet();
+    await posenet.load();
+  })
+
   describe('estimateSinglePose', () => {
     it('does not leak memory', async function() {
-      const posenet = new PoseNet();
-      await posenet.load();
-
       const image = tf.randomNormal([513, 513, 3]) as tf.Tensor3D;
       const outputStride = 32;
 
