@@ -25,7 +25,6 @@ const images = [
   'backpackman.jpg',
   'boy_doughnut.jpg',
   'soccer.png',
-  'yoga.jpg',
   'with_computer.jpg',
   'snowboard.jpg',
   'person_bench.jpg',
@@ -213,7 +212,7 @@ let guiState;
 
 function setupGui(model) {
   guiState = {
-    outputStride: 8,
+    outputStride: 16,
     image: 'tennis_in_crowd.jpg',
     detect: () => {
       testImageAndEstimatePoses(
@@ -273,6 +272,7 @@ export async function bindPage() {
 
   setupGui(model);
 
+  // setStatusText('Predicting...');
   await testImageAndEstimatePoses(model);
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'block';
