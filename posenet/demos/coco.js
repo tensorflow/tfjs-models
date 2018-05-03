@@ -210,11 +210,16 @@ async function testImageAndEstimatePoses(model) {
 
 let guiState;
 
+// var detectButton = { detect: () => {
+//     testImageAndEstimatePoses(model);
+//   }
+// };
+
 function setupGui(model) {
   guiState = {
     outputStride: 16,
     image: 'tennis_in_crowd.jpg',
-    detect: () => {
+    detectPoseButton: () => {
       testImageAndEstimatePoses(
         model);
     },
@@ -236,7 +241,7 @@ function setupGui(model) {
     .onChange((outputStride) => guiState.outputStride =
         Number(outputStride));
   gui.add(guiState, 'image', images);
-  gui.add(guiState, 'detect');
+  gui.add(guiState, 'detectPoseButton');
 
   const multiPoseDetection = gui.addFolder('Multi Pose Estimation');
   multiPoseDetection.open();
