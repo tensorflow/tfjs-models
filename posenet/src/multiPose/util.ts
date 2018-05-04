@@ -67,6 +67,6 @@ export function addVectors(a: Vector2D, b: Vector2D): Vector2D {
   return {x: a.x + b.x, y: a.y + b.y};
 }
 
-export function clampVector(a: Vector2D, min: number, max: number) {
+export function clampVector(a: Vector2D, min: number, max: number): Vector2D {
   return {y: clamp(a.y, min, max), x: clamp(a.x, min, max)};
 }

@@ -17,6 +17,7 @@
 
 import * as tf from '@tensorflow/tfjs-core';
 import {NUM_KEYPOINTS} from '../keypoints';
+import {Vector2D} from '../types';
 
 export function getPointsConfidence(
     heatmapScores: tf.TensorBuffer<tf.Rank.R3>,
@@ -35,7 +36,7 @@ export function getPointsConfidence(
 
 function getOffsetPoint(
     y: number, x: number, keypoint: number,
-    offsetsBuffer: tf.TensorBuffer<tf.Rank.R3>) {
+    offsetsBuffer: tf.TensorBuffer<tf.Rank.R3>): Vector2D {
   return {
     y: offsetsBuffer.get(y, x, keypoint),
     x: offsetsBuffer.get(y, x, keypoint + NUM_KEYPOINTS)
@@ -44,7 +45,7 @@ function getOffsetPoint(
 
 export function getOffsetVectors(
     heatMapCoordsBuffer: tf.TensorBuffer<tf.Rank.R2>,
-    offsetsBuffer: tf.TensorBuffer<tf.Rank.R3>) {
+    offsetsBuffer: tf.TensorBuffer<tf.Rank.R3>): tf.Tensor2D {
   const result: number[] = [];
 
   for (let keypoint = 0; keypoint < NUM_KEYPOINTS; keypoint++) {

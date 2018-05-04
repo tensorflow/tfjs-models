@@ -4,8 +4,6 @@ const GOOGLE_CLOUD_STORAGE_DIR =
 
 import {mobileNetArchitectures, ConvolutionDefinition} from './mobilenet'
 
-// https://storage.cloud.google.com/cl-move-mirror.appspot.com/mobile_net_101/manifest.json?_ga=2.16958649.-1265528061.1521221796
-
 export type Checkpoint = {
   url: string,
   architecture: ConvolutionDefinition[]

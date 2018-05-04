@@ -26,7 +26,7 @@ import {getImageCoords, squaredDistance} from './util';
 
 function withinNmsRadiusOfCorrespondingPoint(
     poses: Pose[], squaredNmsRadius: number, {x, y}: {x: number, y: number},
-    keypointId: number) {
+    keypointId: number): boolean {
   return poses.some(({keypoints}) => {
     const correspondingKeypoint = keypoints[keypointId].position;
     return squaredDistance(
@@ -41,7 +41,7 @@ function withinNmsRadiusOfCorrespondingPoint(
  */
 function getInstanceScore(
     existingPoses: Pose[], squaredNmsRadius: number,
-    instanceKeypoints: Keypoint[]) {
+    instanceKeypoints: Keypoint[]): number {
   let notOverlappedKeypointScores = instanceKeypoints.reduce(
       (result, {position, score}, keypointId): number => {
         if (!withinNmsRadiusOfCorrespondingPoint(

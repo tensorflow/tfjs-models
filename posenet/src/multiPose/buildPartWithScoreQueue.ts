@@ -21,7 +21,7 @@ import {MaxHeap} from './maxHeap';
 
 function scoreIsMaximumInLocalWindow(
     keypointId: number, score: number, heatmapY: number, heatmapX: number,
-    localMaximumRadius: number, scores: TensorBuffer3D) {
+    localMaximumRadius: number, scores: TensorBuffer3D): boolean {
   const [height, width] = scores.shape;
 
   let localMaximum = true;

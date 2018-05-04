@@ -2,8 +2,8 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {CheckpointLoader} from './checkpoint_loader';
 
-export type ConvType = 'conv2d'|'seperableConv';
-export type ConvolutionDefinition = [ConvType, number];
+export type ConvolutionType = 'conv2d'|'seperableConv';
+export type ConvolutionDefinition = [ConvolutionType, number];
 export type OutputStride = 32|16|8;
 
 // clang-format off
@@ -70,10 +70,15 @@ type Layer = {
   blockId: number,
   stride: number,
   outputStride: number,
-  convType: ConvType,
+  convType: ConvolutionType,
   rate: number
 };
 
+/* Takes a mobilenet architectures' convolution definitions and converts them
+ * into definitions for convolutional layers that will generate outputs with the
+ * desired output stride. It does this by reducing the input stride in certain
+ * layers and applying atrous convolution in subsequent layers. Raises an error
+ * if the output stride is not possible with the architecture.  */
 function toOutputStridedLayers(
     convolutionDefinition: ConvolutionDefinition[],
     outputStride: OutputStride): Layer[] {

@@ -1,10 +1,10 @@
 # Pose Detection in the Browser: PoseNet Model
 
-This package contains a standalone model called PoseNet, as well as some demos, for running real-time pose estimation in the browser using TensorFlow.js. 
+This package contains a standalone model called PoseNet, as well as some demos, for running real-time pose estimation in the browser using TensorFlow.js.
 
 <img src="./demos/camera.gif" alt="cameraDemo" style="width: 600px;"/>
 
-PoseNet can be used to estimate either a single pose or multiple poses, meaning there is a version of the algorithm that can detect only one person in an image/video and one version that can detect multiple persons in an image/video. 
+PoseNet can be used to estimate either a single pose or multiple poses, meaning there is a version of the algorithm that can detect only one person in an image/video and one version that can detect multiple persons in an image/video.
 
 [Refer to this blog post](https://medium.com/p/1cf363e812ce) for a high-level description of PoseNet running on Tensorflow.js.
 
@@ -57,7 +57,7 @@ All keypoints are indexed by part id.  The parts and their ids are:
 Single pose estimation is the simpler and faster of the two algorithms. Its ideal use case is for when there is only one person in the image. The disadvantage is that if there are multiple persons in an image, keypoints from both persons will likely be estimated as being part of the same single pose—meaning, for example, that person #1’s left arm and person #2’s right knee might be conflated by the algorithm as belonging to the same pose.
 
 ```javascript
-const pose = poseNet.estimateSinglePose(image, outputStride);
+const pose = await poseNet.estimateSinglePose(image, outputStride);
 ```
 
 #### Inputs
@@ -286,13 +286,13 @@ const poseNet = new posenet.PoseNet();
 
 poseNet.load().then(function() {
   const imageElement = document.getElementById('cat');
-  
+
   // convert html image element to 3d Tensor
   const image = tf.fromPixels(imageElement);
-  
+
   // resize image to have acceptable size
   const resized = image.resizeBilinear([imageSize, imageSize]);
-  
+
   // estimate poses
   const pose = poseNet.estimateMultiplePoses(
     resized, outputStride, maxPoseDetections);
