@@ -284,7 +284,9 @@ const maxPoseDetections = 2;
 
 const poseNet = new posenet.PoseNet();
 
-poseNet.load().then(function() {
+async function estimateMultiplePosesOnImage(imageElement) {
+  await poseNet.load();
+
   const imageElement = document.getElementById('cat');
 
   // convert html image element to 3d Tensor
@@ -294,7 +296,7 @@ poseNet.load().then(function() {
   const resized = image.resizeBilinear([imageSize, imageSize]);
 
   // estimate poses
-  const pose = poseNet.estimateMultiplePoses(
+  const poses = await poseNet.estimateMultiplePoses(
     resized, outputStride, maxPoseDetections);
 
   console.log(poses);
@@ -433,7 +435,7 @@ This produces the output:
 ##### Getting a keypoint for a specific part in the pose
 
 ```javascript
-const pose = poseNet.estimateSinglePose(image, outputStride);
+const pose = await poseNet.estimateSinglePose(image, outputStride);
 
 const noseKeypoint = pose[jointIds.nose];
 
@@ -449,4 +451,3 @@ const leftKneePosition = leftKneeKeypoint.position;
 ## Developing the Demos
 
 Details for how to run the demos are included in the `demos/` folder.
-

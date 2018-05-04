@@ -42,48 +42,6 @@ export function getAdjacentKeyPoints(
       }, []);
 }
 
-export function setHeatmapAsAlphaChannel(
-    imagePixels: tf.Tensor3D, outputStride: number,
-    heatmapImage: tf.Tensor2D): tf.Tensor3D {
-  const [height, width] = imagePixels.shape;
-
-  return tf.tidy(() => {
-    const scaledUp = resizeBilinearGrayscale(heatmapImage, [
-      heatmapImage.shape[0] * outputStride, heatmapImage.shape[1] * outputStride
-    ]);
-
-    const rgb =
-        imagePixels.slice([0, 0, 0], [height, width, 3]).div(tf.scalar(255)) as
-        tf.Tensor3D;
-    const a = scaledUp.slice([0, 0, 0], [height, width, 1]);
-
-    const result = tf.concat3d([rgb, a], 2);
-
-    return result;
-  })
-}
-
-export function toHeatmapImage(heatmapScores: tf.Tensor3D): tf.Tensor2D {
-  return tf.tidy(() => {
-    return heatmapScores.sum(2).minimum(tf.scalar(1)) as tf.Tensor2D;
-  });
-}
-
-export function resizeBilinearGrayscale(
-    heatmapImage: tf.Tensor2D, size: [number, number]): tf.Tensor3D {
-  return tf.tidy(() => {
-    const channel = heatmapImage.expandDims(2) as tf.Tensor3D;
-    const rgb = tf.concat([channel, channel, channel], 2) as tf.Tensor3D;
-    return tf.image.resizeBilinear(rgb, size);
-  })
-}
-
-export function toSingleChannelPixels(tensor: tf.Tensor2D): ImageData {
-  return new ImageData(
-      new Uint8ClampedArray(tensor.mul(tf.scalar(255)).toInt().buffer().values),
-      tensor.shape[1], tensor.shape[0]);
-}
-
 const {NEGATIVE_INFINITY, POSITIVE_INFINITY} = Number;
 export function getBoundingBox(keypoints: Keypoint[]):
     {maxX: number, maxY: number, minX: number, minY: number} {
