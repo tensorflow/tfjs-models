@@ -1,0 +1,6 @@
+{
+  "devDependencies": {
+    "clang-format": "~1.2.2"
+  },
+  "license": "Apache-2.0"
+}

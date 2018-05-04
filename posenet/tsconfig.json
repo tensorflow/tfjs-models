@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "outDir": "./"
+  },
+  "files": [
+    "./demos/coco.ts",
+    "./demos/camera.ts"
+  ]
+}
