@@ -1,18 +1,20 @@
-# PoseNet model
+# Pose Detection in the Browser: PoseNet Model
 
-This package contains a standalone PoseNet for Pose Estimation,
-as well as some demos.
+This package contains a standalone model called PoseNet, as well as some demos, for running real-time pose estimation in the browser using TensorFlow.js. 
 
-[Refer to the blog post](https://medium.com/p/1cf363e812ce) for a high-level description
-of PoseNet in Tensorflow.js.
+<img src="./demos/camera.gif" alt="cameraDemo" style="width: 600px;"/>
+
+PoseNet can be used to estimate either a single pose or multiple poses, meaning there is a version of the algorithm that can detect only one person in an image/video and one version that can detect multiple persons in an image/video. 
+
+[Refer to this blog post](https://medium.com/p/1cf363e812ce) for a high-level description of PoseNet running on Tensorflow.js.
 
 ## Installation
 
 You can use this as standalone es5 bundle like this:
 
 ```html
-<script src="https://unpkg.com/tfjs-core"></script>
-<script src="https://unpkg.com/tfjs-posenet"></script>
+<script src="https://unpkg.com/tfjs"></script>
+<script src="https://unpkg.com/posenet"></script>
 ```
 
 Or you can install it via npm for use in a TypeScript / ES6 project.
@@ -50,9 +52,9 @@ All keypoints are indexed by part id.  The parts and their ids are:
 | 15 | leftAnkle |
 | 16 | rightAnkle |
 
-### Single Pose Estimation
+### Single-Person Pose Estimation
 
-Single pose estimation is the simpler and faster of the two algorithms. Its ideal use case is for when there is only one person in the image. The downside is that if there is another person in the image with a keypoint that has a high probability of being accurate, then that keypoint can be associated with the main person’s pose, creating the effect of the two poses being joined together.
+Single pose estimation is the simpler and faster of the two algorithms. Its ideal use case is for when there is only one person in the image. The disadvantage is that if there are multiple persons in an image, keypoints from both persons will likely be estimated as being part of the same single pose—meaning, for example, that person #1’s left arm and person #2’s right knee might be conflated by the algorithm as belonging to the same pose.
 
 ```javascript
 const pose = poseNet.estimateSinglePose(image, outputStride);
@@ -72,13 +74,13 @@ It returns a `pose` with a confidence score and an array of keypoints indexed by
 ##### Estimating a single pose from an image
 
 ```javascript
-import * as tf from '@tensorflow/tfjs-core';
-import {PoseNet} from '@tensorflow-models/posenet';
+import * as tf from '@tensorflow/tfjs';
+import * as posenet from '@tensorflow-models/posenet';
 const imageSize = 513;
 const outputStride = 16;
 
 async function estimatePoseOnImage(imageElement) {
-  const poseNet = new PoseNet();
+  const poseNet = new posenet.PoseNet();
   await poseNet.load();
 
   // convert html image element to 3d Tensor
@@ -88,7 +90,7 @@ async function estimatePoseOnImage(imageElement) {
 
   const pose = await poseNet.estimateSinglePose(resized, outputStride);
 
-  image.dispoe();
+  image.dispose();
   resized.dispose();
 
   return pose;
@@ -248,7 +250,7 @@ which would produce the output:
 }
 ```
 
-### Multiple Pose Estimation
+### Multi-Person Pose Estimation
 
 Multiple Pose estimation can decode multiple poses in an image. It is more complex and slightly slower than the single pose-algorithm, but has the advantage that if multiple people appear in an image, their detected keypoints are less likely to be associated with the wrong pose. Even if the use case is to detect a single person’s pose, this algorithm may be more desirable in that the accidental effect of two poses being joined together won’t occur when multiple people appear in the image. It uses the `Fast greedy decoding` algorithm from the research paper [PersonLab: Person Pose Estimation and Instance Segmentation with a Bottom-Up, Part-Based, Geometric Embedding Model](https://arxiv.org/pdf/1803.08225.pdf).
 
@@ -273,20 +275,24 @@ It returns a `promise` that resolves with an array of `poses`, each with a confi
 ##### Estimating multiple poses from an image
 
 ```javascript
-import * as tf from '@tensorflow/tfjs-core';
-import {PoseNet} from '@tensorflow-models/posenet';
+import * as tf from '@tensorflow/tfjs';
+import * as posenet from '@tensorflow-models/posenet';
 
 const imageSize = 513;
 const outputStride = 16;
 const maxPoseDetections = 2;
 
-const poseNet = new PoseNet();
+const poseNet = new posenet.PoseNet();
+
 poseNet.load().then(function() {
   const imageElement = document.getElementById('cat');
+  
   // convert html image element to 3d Tensor
   const image = tf.fromPixels(imageElement);
+  
   // resize image to have acceptable size
   const resized = image.resizeBilinear([imageSize, imageSize]);
+  
   // estimate poses
   const pose = poseNet.estimateMultiplePoses(
     resized, outputStride, maxPoseDetections);
@@ -300,7 +306,7 @@ poseNet.load().then(function() {
 
 This produces the output:
 
-```json
+```
 [
   // pose 1
   {
@@ -442,19 +448,5 @@ const leftKneePosition = leftKneeKeypoint.position;
 
 ## Developing the Demos
 
-### Setup
-
-    yarn
-
-Cd into the demos folder
-
-    cd demos
-
-Install dependencies and prepare the build directory:
-
-    yarn
-
-To watch files for changes, and launch a dev server:
-
-    yarn watch
+Details for how to run the demos are included in the `demos/` folder.
 

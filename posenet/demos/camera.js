@@ -251,7 +251,7 @@ export async function bindPage() {
   const video = await loadVideo(cameras[0].deviceId);
 
   setupGui(cameras);
-  setupFPS();
+  // setupFPS();
   detectPoseInRealTime(video, model);
 }
 
