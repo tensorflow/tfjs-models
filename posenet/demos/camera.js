@@ -78,7 +78,7 @@ function loadVideo(cameraId) {
 const guiState = {
   algorithm: 'single-pose',
   input: {
-    mobileNetArchitecture: '1.01',
+    mobileNetArchitecture: '101',
     outputStride: 16,
     inputImageResolution: 225,
   },
@@ -178,9 +178,11 @@ function detectPoseInRealTime(video, net) {
 
   async function poseDetectionFrame() {
     if (guiState.changeToArchitecture) {
+      const checkpoint = checkpoints[guiState.changeToArchitecture];
+
       guiState.net.dispose();
 
-      guiState.net = await posenet(guiState.changeToArchitecture);
+      guiState.net = await posenet(checkpoint.url, checkpoint.architecture);
 
       guiState.changeToArchitecture = null;
     }
