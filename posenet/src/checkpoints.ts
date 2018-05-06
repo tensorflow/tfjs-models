@@ -25,20 +25,20 @@ export type Checkpoint = {
   architecture: ConvolutionDefinition[]
 }
 
-export const checkpoints: {[name: string]: Checkpoint} = {
-  '101': {
+export const checkpoints: {[multiplier: string]: Checkpoint} = {
+  '1.01': {
     url: GOOGLE_CLOUD_STORAGE_DIR + 'mobilenet_v1_101/',
     architecture: mobileNetArchitectures[100]
   },
-  '100': {
+  '1.00': {
     url: GOOGLE_CLOUD_STORAGE_DIR + 'mobilenet_v1_100/',
     architecture: mobileNetArchitectures[100]
   },
-  '75': {
+  '0.75': {
     url: GOOGLE_CLOUD_STORAGE_DIR + 'mobilenet_v1_075/',
     architecture: mobileNetArchitectures[75]
   },
-  '50': {
+  '0.50': {
     url: GOOGLE_CLOUD_STORAGE_DIR + 'mobilenet_v1_050/',
     architecture: mobileNetArchitectures[50]
   }

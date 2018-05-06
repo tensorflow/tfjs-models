@@ -34,11 +34,10 @@ export class PoseNet {
   }
 
   /**
-   * Infer through PoseNet, assumes variables have been loaded. This does
-   * standard ImageNet pre-processing before inferring through the model.
-   * The image should pixels should have values [0-255]. This
-   * method returns the heatmaps and offsets.  Infers through the outputs
-   * that are needed for single pose decoding
+   * Infer through PoseNet. This does standard ImageNet pre-processing before
+   * inferring through the model. The image should pixels should have values
+   * [0-255]. This method returns the heatmaps and offsets.  Infers through the
+   * outputs that are needed for single pose decoding
    *
    * @param input un-preprocessed input image, with values in range [0-255]
    * @param outputStride the desired stride for the outputs.  Must be 32, 16,
@@ -62,11 +61,11 @@ export class PoseNet {
   }
 
   /**
-   * Infer through PoseNet, assumes variables have been loaded. This does
-   * standard ImageNet pre-processing before inferring through the model.
-   * The image should pixels should have values [0-255]. Infers
-   * through the outputs that are needed for multiple pose decoding. This
-   * method returns the heatmaps offsets, and mid-range displacements.
+   * Infer through PoseNet. This does standard ImageNet pre-processing before
+   * inferring through the model. The image should pixels should have values
+   * [0-255]. Infers through the outputs that are needed for multiple pose
+   * decoding. This method returns the heatmaps offsets, and mid-range
+   * displacements.
    *
    * @param input un-preprocessed input image, with values in range [0-255]
    * @param outputStride the desired stride for the outputs.  Must be 32, 16,
@@ -105,9 +104,8 @@ export class PoseNet {
   }
 
   /**
-   * Infer through PoseNet, and estimates a single pose using the outputs.
-   * assumes variables have been loaded. This does standard ImageNet
-   * pre-processing before inferring through the model.
+   * Infer through PoseNet, and estimates a single pose using the outputs. This
+   * does standard ImageNet pre-processing before inferring through the model.
    * The image should pixels should have values [0-255].
    * This method returns a single pose.
    *
@@ -133,13 +131,11 @@ export class PoseNet {
 
   /**
    * Infer through PoseNet, and estimates multiple poses using the outputs.
-   * assumes variables have been loaded. This does standard ImageNet
-   * pre-processing before inferring through the model.
-   * The image should pixels should have values [0-255].
-   * It detects multiple poses and finds their parts from part scores and
-   * displacement vectors using a fast greedy decoding algorithm.  It returns
-   * up to `maxDetections` object instance detections in decreasing root score
-   * order.
+   * This does standard ImageNet pre-processing before inferring through the
+   * model. The image should pixels should have values [0-255]. It detects
+   * multiple poses and finds their parts from part scores and displacement
+   * vectors using a fast greedy decoding algorithm.  It returns up to
+   * `maxDetections` object instance detections in decreasing root score order.
    *
    * @param input un-preprocessed input image, with values in range [0-255].
    *
@@ -183,15 +179,43 @@ export class PoseNet {
   }
 }
 
-export default async function posenet(
-    checkpointUrl: string = defaultCheckpoint.url,
-    convolutionDefinitions: ConvolutionDefinition[] =
-        defaultCheckpoint.architecture): Promise<PoseNet> {
-  const checkpointLoader = new CheckpointLoader(checkpointUrl);
+/**
+ * Loads the PoseNet model instance from a checkpoint, with the MobileNet
+ * architecture specified by the multiplier.
+ *
+ * @param multiplier An optional string with values: "1.01", "1.00, ""0.75", or
+ * "0.50". Defaults to "1.01". It is the string with the value of the float
+ * multiplier for the depth (number of channels) for all convolution ops. The
+ * value corresponds to an MobileNet architecture and checkpoint.  The larger
+ * the value, the larger the size of the layers, and more accurate the model at
+ * the cost of speed.  Set this to a smaller value to increase speed at the cost
+ * of accuracy.
+ *
+ * @return
+ */
+export default async function posenet(multiplier: string = '1.01'):
+    Promise<PoseNet> {
+  const possibleMultipliers = Object.keys(checkpoints);
+  tf.util.assert(
+      typeof multiplier === 'string',
+      `Error: got multiplier type of ${
+          typeof multiplier} when it should be a ` +
+          `string.`);
+
+  tf.util.assert(
+      possibleMultipliers.indexOf(multiplier) >= 0,
+      `Error: Invalid multiplier value of ${
+          multiplier}.  No checkpoint exists for that ` +
+          `multiplier. Must be one of ${possibleMultipliers.join(',')}.`);
+
+  // get the checkpoint for the multiplier
+  const checkpoint = checkpoints[multiplier];
+
+  const checkpointLoader = new CheckpointLoader(checkpoint.url);
 
   const variables = await checkpointLoader.getAllVariables();
 
-  const mobileNet = new MobileNet(variables, convolutionDefinitions);
+  const mobileNet = new MobileNet(variables, checkpoint.architecture);
 
   return new PoseNet(mobileNet);
 }
