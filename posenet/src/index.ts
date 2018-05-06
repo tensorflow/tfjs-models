@@ -25,5 +25,4 @@ export {Keypoint, Pose} from './types';
 // tslint:disable-next-line:max-line-length
 export {getAdjacentKeyPoints, getBoundingBox, getBoundingBoxPoints} from './util';
 export {decodeMultiplePoses, decodeSinglePose};
-export {PoseNet};
-export default posenet;
+export {posenet, PoseNet};

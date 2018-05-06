@@ -14,10 +14,9 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as tf from '@tensorflow/tfjs-core';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
-import posenet, {checkpoints} from '../src';
+import * as posenet from '../src';
 
 import {drawKeypoints, drawSkeleton} from './demo_util';
 const maxStride = 32;
@@ -122,7 +121,7 @@ function setupGui(cameras, net) {
 
   let input = gui.addFolder('Input');
   const architectureController =
-    input.add(guiState.input, 'mobileNetArchitecture', Object.keys(checkpoints));
+    input.add(guiState.input, 'mobileNetArchitecture', Object.keys(posenet.checkpoints));
   input.add(guiState.input, 'outputStride', [8, 16, 32]);
   input.add(guiState.input, 'inputImageResolution', videoSizes);
   input.open();
@@ -181,7 +180,7 @@ function detectPoseInRealTime(video, net) {
     if (guiState.changeToArchitecture) {
       guiState.net.dispose();
 
-      guiState.net = await posenet(guiState.changeToArchitecture);
+      guiState.net = await posenet.posenet(guiState.changeToArchitecture);
 
       guiState.changeToArchitecture = null;
     }
@@ -246,7 +245,7 @@ function detectPoseInRealTime(video, net) {
 }
 
 export async function bindPage() {
-  const net = await posenet();
+  const net = await posenet.posenet();
 
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'block';

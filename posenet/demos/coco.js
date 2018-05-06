@@ -16,7 +16,7 @@
  */
 import dat from 'dat.gui';
 import * as tf from '@tensorflow/tfjs-core';
-import posenet, {decodeMultiplePoses, decodeSinglePose} from '../src';
+import * as posenet from '../src';
 import {drawKeypoints, drawSkeleton, renderImageToCanvas} from './demo_util';
 
 const images = [
@@ -121,7 +121,7 @@ async function decodeSinglePoseAndDrawResults() {
     return;
   }
 
-  const pose = await decodeSinglePose(
+  const pose = await posenet.decodeSinglePose(
     modelOutputs.heatmapScores, modelOutputs.offsets,
     guiState.outputStride);
 
@@ -133,7 +133,7 @@ async function decodeMultiplePosesAndDrawResults() {
     return;
   }
 
-  const poses = await decodeMultiplePoses(
+  const poses = await posenet.decodeMultiplePoses(
     modelOutputs.heatmapScores, modelOutputs.offsets,
     modelOutputs.displacementFwd, modelOutputs.displacementBwd,
     guiState.outputStride,
@@ -240,7 +240,7 @@ function setupGui(net) {
 }
 
 export async function bindPage() {
-  const net = await posenet();
+  const net = await posenet.posenet();
 
   setupGui(net);
 

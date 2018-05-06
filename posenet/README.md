@@ -77,14 +77,14 @@ It returns a `pose` with a confidence score and an array of keypoints indexed by
 ##### Estimating a single pose from an image
 
 ```javascript
-import posenet from '@tensorflow-models/posenet';
+import * as posenet from '@tensorflow-models/posenet';
 const inputSize = 321;
 const outputStride = 16;
 const reverse = false;
 
 async function estimatePoseOnImage(imageElement) {
   // load the posenet model from a checkpoint
-  const net = await posenet();
+  const net = await posenet.posenet();
 
   const pose = await net.estimateSinglePose(imageElement, inputSize, reverse, outputStride);
 
@@ -273,7 +273,7 @@ It returns a `promise` that resolves with an array of `poses`, each with a confi
 ##### Estimating multiple poses from an image
 
 ```javascript
-import posenet from '@tensorflow-models/posenet';
+import * as posenet from '@tensorflow-models/posenet';
 
 const inputSize = 321;
 const outputStride = 16;
@@ -282,7 +282,7 @@ const outputStride = 16;
 const maxPoseDetections = 2;
 
 async function estimateMultiplePosesOnImage(imageElement) {
-  const net = await poseNet();
+  const net = await posenet.posenet();
 
   // estimate poses
   const poses = await net.estimateMultiplePoses(imageElement,
