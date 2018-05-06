@@ -64,7 +64,7 @@ const pose = await poseNet.estimateSinglePose(image, resolution, reverse, output
 
 * **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
    The input image to feed through the network.
-* **resolution** - The size to scale the image to before feeding through the network. Defaults to 513.  Must have a value which when 1 is subtracted from it, is divisible by the output stride. Sample acceptable values are 29, 161, 193, 257, 289, 321, 353, 385, 417, 449, 481, 513. Set this number lower to scale down the image and increase the speed when feeding through the network.
+* **resolution** - The resolution to scale the image to before feeding through the network. Defaults to 513.  Must have a value which when 1 is subtracted from it, is divisible by the output stride. Sample acceptable values are 29, 161, 193, 257, 289, 321, 353, 385, 417, 449, 481, 513. Set this number lower to scale down the image and increase the speed when feeding through the network.
 * **reverse** - If the input image should be reversed horizontally.  Defaults to false. This is useful for video elements where the input image is usually reversed.
 * **outputStride** - the desired stride for the outputs when feeding the image through the model.  Must be 32, 16, 8.  Defaults to 16.  The higher the number, the faster the performance but slower the accuracy, and visa versa.
 
