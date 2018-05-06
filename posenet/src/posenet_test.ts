@@ -21,39 +21,44 @@ import {PoseNet} from './posenet';
 
 describe('PoseNet', () => {
   let posenet: PoseNet;
-  beforeAll(async () => {
+  beforeAll((done) => {
     posenet = new PoseNet();
-    await posenet.load();
+
+    posenet.load().then(done).catch(done.fail);
   })
 
   describe('estimateSinglePose', () => {
-    it('does not leak memory', async function() {
+    it('does not leak memory', done => {
       const image = tf.randomNormal([513, 513, 3]) as tf.Tensor3D;
       const outputStride = 32;
 
       const beforeTensors = tf.memory().numTensors;
-      await posenet.estimateSinglePose(image, outputStride);
 
-      expect(tf.memory().numTensors).toEqual(beforeTensors);
+      posenet.estimateSinglePose(image, outputStride)
+          .then(() => {
+            expect(tf.memory().numTensors).toEqual(beforeTensors);
 
-      image.dispose();
+            image.dispose();
+          })
+          .then(done)
+          .catch(done.fail);
     });
   });
 
   describe('estimateMultiplePoses', () => {
-    it('does not leak memory', async function() {
-      const posenet = new PoseNet();
-      await posenet.load();
-
+    it('does not leak memory', done => {
       const image = tf.randomNormal([513, 513, 3]) as tf.Tensor3D;
       const outputStride = 32;
 
       const beforeTensors = tf.memory().numTensors;
-      await posenet.estimateMultiplePoses(image, outputStride);
+      posenet.estimateMultiplePoses(image, outputStride)
+          .then(() => {
+            expect(tf.memory().numTensors).toEqual(beforeTensors);
 
-      expect(tf.memory().numTensors).toEqual(beforeTensors);
-
-      image.dispose();
+            image.dispose();
+          })
+          .then(done)
+          .catch(done.fail);
     });
   });
 })

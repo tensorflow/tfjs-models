@@ -147,7 +147,7 @@ function drawMultiplePosesResults(poses) {
 }
 
 async function decodeSinglePoseAndDrawResults() {
-  if (!modelOutputs) return;
+  if (!modelOutputs) { return; }
 
   const pose = await posenet.decodeSinglePose(
     modelOutputs.heatmapScores, modelOutputs.offsets,
@@ -157,7 +157,7 @@ async function decodeSinglePoseAndDrawResults() {
 }
 
 async function decodeMultiplePosesAndDrawResults() {
-  if (!modelOutputs) return;
+  if (!modelOutputs) { return; }
 
   const poses = await posenet.decodeMultiplePoses(
     modelOutputs.heatmapScores, modelOutputs.offsets,
@@ -209,11 +209,6 @@ async function testImageAndEstimatePoses(model) {
 }
 
 let guiState;
-
-// var detectButton = { detect: () => {
-//     testImageAndEstimatePoses(model);
-//   }
-// };
 
 function setupGui(model) {
   guiState = {
@@ -277,7 +272,6 @@ export async function bindPage() {
 
   setupGui(model);
 
-  // setStatusText('Predicting...');
   await testImageAndEstimatePoses(model);
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'block';

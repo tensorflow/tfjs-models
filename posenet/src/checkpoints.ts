@@ -1,8 +1,24 @@
+/**
+ * @license
+ * Copyright 2018 Google Inc. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licnses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * =============================================================================
+ */
+
+import {ConvolutionDefinition, mobileNetArchitectures} from './mobilenet'
 
 const GOOGLE_CLOUD_STORAGE_DIR =
-    'https://storage.googleapis.com/cl-move-mirror.appspot.com/';
-
-import {mobileNetArchitectures, ConvolutionDefinition} from './mobilenet'
+    'https://storage.googleapis.com/tfjs-models/weights/posenet/';
 
 export type Checkpoint = {
   url: string,
@@ -11,19 +27,19 @@ export type Checkpoint = {
 
 export const checkpoints: {[name: string]: Checkpoint} = {
   '101': {
-    url: GOOGLE_CLOUD_STORAGE_DIR + 'mobile_net_101/',
+    url: GOOGLE_CLOUD_STORAGE_DIR + 'mobilenet_v1_101/',
     architecture: mobileNetArchitectures[100]
   },
   '100': {
-    url: GOOGLE_CLOUD_STORAGE_DIR + 'mobile_net_100/',
+    url: GOOGLE_CLOUD_STORAGE_DIR + 'mobilenet_v1_100/',
     architecture: mobileNetArchitectures[100]
   },
   '75': {
-    url: GOOGLE_CLOUD_STORAGE_DIR + 'mobile_net_075/',
+    url: GOOGLE_CLOUD_STORAGE_DIR + 'mobilenet_v1_075/',
     architecture: mobileNetArchitectures[75]
   },
   '50': {
-    url: GOOGLE_CLOUD_STORAGE_DIR + 'mobile_net_050/',
+    url: GOOGLE_CLOUD_STORAGE_DIR + 'mobilenet_v1_050/',
     architecture: mobileNetArchitectures[50]
   }
 }

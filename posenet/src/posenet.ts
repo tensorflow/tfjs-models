@@ -18,7 +18,7 @@
 import * as tf from '@tensorflow/tfjs-core';
 
 import {checkpoints} from './checkpoints';
-import {ConvolutionDefinition, MobileNet, OutputStride} from './mobilenet';
+import {assertValidOutputStride, ConvolutionDefinition, MobileNet, OutputStride} from './mobilenet';
 import decodeMultiplePoses from './multiPose/decodeMultiplePoses';
 import decodeSinglePose from './singlePose/decodeSinglePose';
 import {Pose} from './types';
@@ -51,6 +51,7 @@ export class PoseNet {
    */
   predictForSinglePose(input: tf.Tensor3D, outputStride: OutputStride = 32):
       {heatmapScores: tf.Tensor3D, offsets: tf.Tensor3D} {
+    assertValidOutputStride(outputStride);
     return tf.tidy(() => {
       const mobileNetOutput = this.mobileNet.predict(input, outputStride);
 
@@ -82,6 +83,7 @@ export class PoseNet {
     displacementFwd: tf.Tensor3D,
     displacementBwd: tf.Tensor3D
   } {
+    assertValidOutputStride(outputStride);
     return tf.tidy(() => {
       const mobileNetOutput = this.mobileNet.predict(input, outputStride);
 

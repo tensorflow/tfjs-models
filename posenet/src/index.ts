@@ -18,10 +18,10 @@
 import decodeMultiplePoses from './multiPose/decodeMultiplePoses';
 import decodeSinglePose from './singlePose/decodeSinglePose';
 
-export { checkpoints } from './checkpoints';
-export { partIds, partNames } from './keypoints';
-export { PoseNet } from './posenet';
-export { Keypoint, Pose } from './types';
+export {checkpoints} from './checkpoints';
+export {partIds, partNames} from './keypoints';
+export {PoseNet} from './posenet';
+export {Keypoint, Pose} from './types';
 // tslint:disable-next-line:max-line-length
-export { getAdjacentKeyPoints, getBoundingBox, getBoundingBoxPoints } from './util';
-export { decodeMultiplePoses, decodeSinglePose };
+export {getAdjacentKeyPoints, getBoundingBox, getBoundingBoxPoints} from './util';
+export {decodeMultiplePoses, decodeSinglePose};

@@ -11,7 +11,7 @@ The camera demo shows how to estimate poses in real-time from a webcam video str
 
 ### Demo 2: Coco Images
 
-The [coco images](http://cocodataset.org/#home) demo shows how to estimate poses in images. It also illustrates the differences between the single-person and multi-person pose detection algorithms. 
+The [coco images](http://cocodataset.org/#home) demo shows how to estimate poses in images. It also illustrates the differences between the single-person and multi-person pose detection algorithms.
 
 <img src="./coco.gif" alt="cameraDemo" style="width: 600px;"/>
 
@@ -20,16 +20,24 @@ The [coco images](http://cocodataset.org/#home) demo shows how to estimate poses
 
 From the `posenet` folder run:
 
-    yarn
+```sh
+yarn
+```
 
-Cd into the demos folder
+cd into the demos folder
 
-    cd demos
+```sh
+cd demos
+```
 
 Install dependencies and prepare the build directory:
 
-    yarn
+```sh
+yarn
+```
 
 To watch files for changes, and launch a dev server:
 
-    yarn watch
+```sh
+yarn watch
+```
