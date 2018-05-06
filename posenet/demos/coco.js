@@ -17,7 +17,7 @@
 import * as tf from '@tensorflow/tfjs-core';
 import dat from 'dat.gui';
 import * as posenet from '../src';
-import {drawKeypoints, drawSkeleton} from './demo_util';
+import {drawKeypoints, drawSkeleton, renderImageToCanvas} from './demo_util';
 
 const images = [
   'frisbee.jpg',
@@ -25,7 +25,6 @@ const images = [
   'backpackman.jpg',
   'boy_doughnut.jpg',
   'soccer.png',
-  'yoga.jpg',
   'with_computer.jpg',
   'snowboard.jpg',
   'person_bench.jpg',
@@ -46,31 +45,6 @@ const images = [
   'tennis_in_crowd.jpg',
   'two_on_bench.jpg',
 ];
-
-require('./images/frisbee.jpg')
-require('./images/frisbee_2.jpg')
-require('./images/backpackman.jpg')
-require('./images/boy_doughnut.jpg')
-require('./images/soccer.png')
-require('./images/with_computer.jpg')
-require('./images/snowboard.jpg')
-require('./images/person_bench.jpg')
-require('./images/skiing.jpg')
-require('./images/fire_hydrant.jpg')
-require('./images/kyte.jpg')
-require('./images/looking_at_computer.jpg')
-require('./images/tennis.jpg')
-require('./images/tennis_standing.jpg')
-require('./images/truck.jpg')
-require('./images/on_bus.jpg')
-require('./images/tie_with_beer.jpg')
-require('./images/baseball.jpg')
-require('./images/multi_skiing.jpg')
-require('./images/riding_elephant.jpg')
-require('./images/skate_park_venice.jpg')
-require('./images/skate_park.jpg')
-require('./images/tennis_in_crowd.jpg')
-require('./images/two_on_bench.jpg')
 
 function toImageData(image) {
   const [height, width] = image.shape;
@@ -112,7 +86,7 @@ export function drawHeatmapImage(heatmaps) {
 
   renderToCanvas(scaledUp, document.getElementById('heatmap'));
 }
-function drawHeatmapAsAlpha(image, heatmaps, outputStride, canvas) {
+export function drawHeatmapAsAlpha(image, heatmaps, outputStride, canvas) {
   const singleChannelImage = posenet.toHeatmapImage(heatmaps);
   const pixels = tf.fromPixels(image);
   const alphadImage = posenet.setHeatmapAsAlphaChannel(
@@ -121,67 +95,82 @@ function drawHeatmapAsAlpha(image, heatmaps, outputStride, canvas) {
   renderToCanvas(alphadImage, canvas);
 }
 
-function drawResults(image, heatmaps, outputStride, poses,
+function drawResults(canvas, poses,
   minPartConfidence, minPoseConfidence) {
-  const resultsElement = document.getElementById(`results`);
-  const resultsCanvas = resultsElement.querySelector('canvas');
-
-  resultsElement.querySelector('#outputStride').innerHTML =
-        String(outputStride);
-
-  drawHeatmapAsAlpha(image, heatmaps, outputStride, resultsCanvas);
-
+  renderImageToCanvas(image, [513, 513], canvas);
   poses.forEach((pose) => {
     if (pose.score >= minPoseConfidence) {
       drawKeypoints(pose.keypoints,
-        minPartConfidence, resultsCanvas.getContext('2d'));
+        minPartConfidence, canvas.getContext('2d'));
+
       drawSkeleton(pose.keypoints,
-        minPartConfidence, resultsCanvas.getContext('2d'));
+        minPartConfidence, canvas.getContext('2d'));
     }
   });
 }
 
+const imageBucket = 'https://storage.googleapis.com/tfjs-models/assets/posenet/';
+
 async function loadImage(imagePath) {
   const image = new Image();
   const promise = new Promise((resolve, reject) => {
+    image.crossOrigin = '';
     image.onload = () => {
       resolve(image);
     };
   });
 
-  image.src = require(`./images/${imagePath}`);
+  image.src = `${imageBucket}${imagePath}`;
   return promise;
 }
 
-async function testImageForSinglePoseAndDrawResults(
-  model, imagePath, guiState) {
-  const image = await loadImage(imagePath);
-  const pixels = tf.fromPixels(image);
-
-  const {heatmapScores, offsets} = model.predictForSinglePose(
-    pixels, guiState.outputStride);
-  const pose = await posenet.singlePose.decode(
-    heatmapScores, offsets, guiState.outputStride);
-
-  drawResults(image, heatmapScores, guiState.outputStride, [pose],
-    guiState.minPartConfidence, guiState.minPoseConfidence);
+function singlePersonCanvas() {
+  return document.querySelector('#single canvas');
 }
 
-async function testImageForMultiplePosesAndDrawResults(
-  model, imagePath, guiState) {
-  const image = await loadImage(imagePath);
-  const pixels = tf.fromPixels(image);
+function multiPersonCanvas() {
+  return document.querySelector('#multi canvas');
+}
 
-  const {heatmapScores, offsets, displacementBwd, displacementFwd} = model.
-    predictForMultiPose(pixels, guiState.outputStride);
+function drawSinglePoseResults(pose) {
+  const canvas = singlePersonCanvas();
+  drawResults(canvas, [pose],
+    guiState.singlePoseDetection.minPartConfidence,
+    guiState.singlePoseDetection.minPoseConfidence);
+}
 
-  const poses = await posenet.multiPose.decode(heatmapScores, offsets,
-    displacementFwd, displacementBwd, guiState.outputStride,
-    guiState.multiPoseDetection.maxDetections, guiState.minPartConfidence,
-    guiState.multiPoseDetection.nmsRadius);
+function drawMultiplePosesResults(poses) {
+  const canvas = multiPersonCanvas();
+  drawResults(canvas, poses,
+    guiState.multiPoseDetection.minPartConfidence,
+    guiState.multiPoseDetection.minPoseConfidence);
+}
 
-  drawResults(image, heatmapScores, guiState.outputStride, poses,
-    guiState.minPartConfidence, guiState.minPoseConfidence);
+async function decodeSinglePoseAndDrawResults() {
+  if (!modelOutputs) return;
+
+  const pose = await posenet.decodeSinglePose(
+    modelOutputs.heatmapScores, modelOutputs.offsets,
+    guiState.outputStride);
+
+  drawSinglePoseResults(pose);
+}
+
+async function decodeMultiplePosesAndDrawResults() {
+  if (!modelOutputs) return;
+
+  const poses = await posenet.decodeMultiplePoses(
+    modelOutputs.heatmapScores, modelOutputs.offsets,
+    modelOutputs.displacementFwd, modelOutputs.displacementBwd,
+    guiState.outputStride,
+    guiState.multiPoseDetection.maxDetections, guiState.multiPoseDetection);
+
+  drawMultiplePosesResults(poses);
+}
+
+async function decodeSingleAndMultiplePoses() {
+  decodeSinglePoseAndDrawResults();
+  decodeMultiplePosesAndDrawResults();
 }
 
 function setStatusText(text) {
@@ -189,44 +178,60 @@ function setStatusText(text) {
   resultElement.innerText = text;
 }
 
-async function testImageForSinglePoseClick(model, image, guiState) {
+let image = null;
+let modelOutputs = null;
+
+function disposeModelOutputs() {
+  if (modelOutputs) {
+    modelOutputs.heatmapScores.dispose();
+    modelOutputs.offsets.dispose();
+    modelOutputs.displacementFwd.dispose();
+    modelOutputs.displacementBwd.dispose();
+  }
+}
+
+async function testImageAndEstimatePoses(model) {
   setStatusText('Predicting...');
   document.getElementById('results').style.display = 'none';
 
-  await testImageForSinglePoseAndDrawResults(model, image, guiState);
+  disposeModelOutputs();
+  image = await loadImage(guiState.image);
+
+  const input = tf.fromPixels(image);
+
+  modelOutputs = await model.predictForMultiPose(input, guiState.outputStride);
+
+  await decodeSingleAndMultiplePoses();
 
   setStatusText('');
   document.getElementById('results').style.display = 'block';
+  input.dispose();
 }
 
-async function testImageForMultiPoseClick(model, image, guiState) {
-  setStatusText('Predicting...');
-  document.getElementById('results').style.display = 'none';
+let guiState;
 
-  await testImageForMultiplePosesAndDrawResults(model, image, guiState);
-
-  setStatusText('');
-  document.getElementById('results').style.display = 'block';
-}
+// var detectButton = { detect: () => {
+//     testImageAndEstimatePoses(model);
+//   }
+// };
 
 function setupGui(model) {
-  const guiState = {
-    outputStride: 8,
-    image: images[0],
-    minPartConfidence: 0.5,
-    minPoseConfidence: 0.5,
+  guiState = {
+    outputStride: 16,
+    image: 'tennis_in_crowd.jpg',
+    detectPoseButton: () => {
+      testImageAndEstimatePoses(
+        model);
+    },
     singlePoseDetection: {
-      detect: () => {
-        testImageForSinglePoseClick(
-          model, guiState.image, guiState);
-      },
+      minPartConfidence: 0.5,
+      minPoseConfidence: 0.5,
     },
     multiPoseDetection: {
-      detect: () => {
-        testImageForMultiPoseClick(
-          model, guiState.image, guiState);
-      },
-      nmsRadius: 13.0,
+      minPartConfidence: 0.5,
+      minPoseConfidence: 0.5,
+      scoreThreshold: 0.5,
+      nmsRadius: 20.0,
       maxDetections: 15,
     },
   };
@@ -236,21 +241,33 @@ function setupGui(model) {
     .onChange((outputStride) => guiState.outputStride =
         Number(outputStride));
   gui.add(guiState, 'image', images);
-  gui.add(guiState, 'minPartConfidence', 0.0, 1.0);
-  gui.add(guiState, 'minPoseConfidence', 0.0, 1.0);
+  gui.add(guiState, 'detectPoseButton');
 
-  const singlePoseDetection = gui.addFolder('Single Pose Detection');
-  singlePoseDetection.open();
-  singlePoseDetection.add(guiState.singlePoseDetection, 'detect');
-
-  const multiPoseDetection = gui.addFolder('Multi Pose Detection');
+  const multiPoseDetection = gui.addFolder('Multi Pose Estimation');
   multiPoseDetection.open();
-  multiPoseDetection.add(guiState.multiPoseDetection, 'nmsRadius', 0.0, 40.0);
+  multiPoseDetection.add(
+    guiState.multiPoseDetection, 'minPartConfidence', 0.0, 1.0)
+    .onChange(decodeMultiplePosesAndDrawResults);
+  multiPoseDetection.add(
+    guiState.multiPoseDetection, 'minPoseConfidence', 0.0, 1.0)
+    .onChange(decodeMultiplePosesAndDrawResults);
+
+  multiPoseDetection.add(guiState.multiPoseDetection, 'nmsRadius', 0.0, 40.0)
+    .onChange(decodeMultiplePosesAndDrawResults);
   multiPoseDetection.add(guiState.multiPoseDetection, 'maxDetections')
     .min(1)
     .max(20)
-    .step(1);
-  multiPoseDetection.add(guiState.multiPoseDetection, 'detect');
+    .step(1)
+    .onChange(decodeMultiplePosesAndDrawResults);
+
+  const singlePoseDetection = gui.addFolder('Single Pose Estimation');
+  singlePoseDetection.add(
+    guiState.singlePoseDetection, 'minPartConfidence', 0.0, 1.0)
+    .onChange(decodeSinglePoseAndDrawResults);
+  singlePoseDetection.add(
+    guiState.singlePoseDetection, 'minPoseConfidence', 0.0, 1.0)
+    .onChange(decodeSinglePoseAndDrawResults);
+  singlePoseDetection.open();
 }
 
 export async function bindPage() {
@@ -259,6 +276,9 @@ export async function bindPage() {
   await model.load();
 
   setupGui(model);
+
+  // setStatusText('Predicting...');
+  await testImageAndEstimatePoses(model);
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'block';
 }

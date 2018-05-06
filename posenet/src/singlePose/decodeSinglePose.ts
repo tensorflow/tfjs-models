@@ -17,9 +17,10 @@
 
 import * as tf from '@tensorflow/tfjs-core';
 
-import {OutputStride} from '../posenet';
+import {partNames} from '../keypoints';
+import {OutputStride} from '../mobilenet';
 import {Keypoint, Pose} from '../types';
-import {toTensorBuffer, toTensorBuffers3D} from '../util';
+import {toTensorBuffer} from '../util';
 
 import {argmax2d} from './argmax2d';
 import {getOffsetPoints, getPointsConfidence} from './util';
@@ -51,10 +52,11 @@ import {getOffsetPoints, getPointsConfidence} from './util';
  * @param outputStride The output stride that was used when feed-forwarding
  * through the PoseNet model.  Must be 32, 16, or 8.
  *
- * @return A single pose with a confidence score, which contains an array of
- * keypoints indexed by part id, each with a score and position.
+ * @return A promise that resolves with single pose with a confidence score,
+ * which contains an array of keypoints indexed by part id, each with a score
+ * and position.
  */
-export async function decode(
+export default async function decodeSinglePose(
     heatmapScores: tf.Tensor3D, offsets: tf.Tensor3D,
     outputStride: OutputStride): Promise<Pose> {
   let totalScore = 0.0;
@@ -66,8 +68,9 @@ export async function decode(
     toTensorBuffer(heatmapValues, 'int32')
   ])
 
-  const offsetPoints = await toTensorBuffer(
-      getOffsetPoints(heatmapValuesBuffer, outputStride, offsetsBuffer));
+  const offsetPoints =
+      getOffsetPoints(heatmapValuesBuffer, outputStride, offsetsBuffer);
+  const offsetPointsBuffer = await toTensorBuffer(offsetPoints);
 
   const keypointConfidence =
       Array.from(getPointsConfidence(scoresBuffer, heatmapValuesBuffer));
@@ -75,13 +78,17 @@ export async function decode(
   const keypoints = keypointConfidence.map((score, keypointId): Keypoint => {
     totalScore += score;
     return {
-      point: {
-        y: offsetPoints.get(keypointId, 0),
-        x: offsetPoints.get(keypointId, 1)
+      position: {
+        y: offsetPointsBuffer.get(keypointId, 0),
+        x: offsetPointsBuffer.get(keypointId, 1)
       },
+      part: partNames[keypointId],
       score
     };
   });
+
+  heatmapValues.dispose();
+  offsetPoints.dispose();
 
   return {keypoints, score: totalScore / keypoints.length};
 }

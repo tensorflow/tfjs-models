@@ -43,6 +43,17 @@ module.exports = function(config) {
         browser_version: 'latest',
         os: 'OS X',
         os_version: 'Sierra'
+      },
+      bs_firefox_mac: {
+        base: 'BrowserStack',
+        browser: 'firefox',
+        browser_version: 'latest',
+        os: 'OS X',
+        os_version: 'Sierra'
+      },
+      chrome_with_swift_shader: {
+        base: 'Chrome',
+        flags: ['--blacklist-accelerated-compositing', '--blacklist-webgl']
       }
     },
     client: {

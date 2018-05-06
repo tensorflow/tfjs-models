@@ -17,6 +17,9 @@
 import * as tf from '@tensorflow/tfjs-core';
 import * as posenet from '../src';
 
+const color = 'aqua';
+const lineWidth = 2;
+
 function toTuple({y, x}) {
   return [y, x];
 }
@@ -25,6 +28,7 @@ export function drawSegment([ay, ax], [by, bx], color, scale, ctx) {
   ctx.beginPath();
   ctx.moveTo(ax * scale, ay * scale);
   ctx.lineTo(bx * scale, by * scale);
+  ctx.lineWidth = lineWidth;
   ctx.strokeStyle = color;
   ctx.stroke();
 }
@@ -34,8 +38,8 @@ export function drawSkeleton(keypoints, minConfidence, ctx, scale = 1) {
     keypoints, minConfidence);
 
   adjacentKeyPoints.forEach((keypoints) => {
-    drawSegment(toTuple(keypoints[0].point),
-      toTuple(keypoints[1].point), '#0000ff', scale, ctx);
+    drawSegment(toTuple(keypoints[0].position),
+      toTuple(keypoints[1].position), color, scale, ctx);
   });
 }
 
@@ -71,7 +75,7 @@ export function drawHeatMapValues(heatMapValues, outputStride, canvas) {
   const radius = 5;
   const scaledValues = heatMapValues.mul(tf.scalar(outputStride, 'int32'));
 
-  drawPoints(ctx, scaledValues, radius, 'blue');
+  drawPoints(ctx, scaledValues, radius, color);
 }
 
 function drawPoints(ctx, points, radius, color) {
@@ -84,7 +88,7 @@ function drawPoints(ctx, points, radius, color) {
     if (pointX !== 0 && pointY !== 0) {
       ctx.beginPath();
       ctx.arc(pointX, pointY, radius, 0, 2 * Math.PI);
-      ctx.fillStyle = 'blue';
+      ctx.fillStyle = color;
       ctx.fill();
     }
   }
@@ -105,7 +109,7 @@ export function drawOffsetVectors(
     const offsetPointX = offsetPointsData[i + 1];
 
     drawSegment([heatmapY, heatmapX], [offsetPointY, offsetPointX],
-      '#ffff00', scale, ctx);
+      color, scale, ctx);
   }
 }
 
@@ -117,10 +121,10 @@ export function drawKeypoints(keypoints, minConfidence, ctx, scale = 1) {
       continue;
     }
 
-    const {y, x} = keypoint.point;
+    const {y, x} = keypoint.position;
     ctx.beginPath();
     ctx.arc(x * scale, y * scale, 3, 0, 2 * Math.PI);
-    ctx.fillStyle = 'blue';
+    ctx.fillStyle = color;
     ctx.fill();
   }
 }
