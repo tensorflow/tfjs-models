@@ -17,6 +17,7 @@
 
 import * as tf from '@tensorflow/tfjs-core';
 
+export type MobileNetMultiplier = 0.50|0.75|1.0|1.01;
 export type ConvolutionType = 'conv2d'|'separableConv';
 export type ConvolutionDefinition = [ConvolutionType, number];
 export type OutputStride = 32|16|8;
@@ -77,12 +78,20 @@ const mobileNet50Architecture: ConvolutionDefinition[]  = [
 const VALID_OUTPUT_STRIDES = [8, 16, 32];
 export function assertValidOutputStride(outputStride: any) {
   tf.util.assert(
-      typeof outputStride === 'number',
-      'Error: outputStride is not a number number');
+      typeof outputStride === 'number', 'outputStride is not a number');
   tf.util.assert(
       VALID_OUTPUT_STRIDES.indexOf(outputStride) >= 0,
-      `Error: outputStride of ${outputStride} is invalid. ` +
+      `outputStride of ${outputStride} is invalid. ` +
           `It must be either 8, 16, or 32`);
+}
+
+export function assertValidResolution(resolution: any, outputStride: number) {
+  tf.util.assert(typeof resolution === 'number', 'resolution is not a number');
+
+  tf.util.assert(
+      (resolution - 1) % outputStride === 0,
+      `resolution of ${resolution} is invalid for output stride ` +
+          `${outputStride}.`);
 }
 
 export const mobileNetArchitectures:

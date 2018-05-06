@@ -19,11 +19,13 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {CheckpointLoader} from './checkpoint_loader';
 import {checkpoints} from './checkpoints';
-import {assertValidOutputStride, MobileNet, OutputStride} from './mobilenet';
+import {assertValidOutputStride, assertValidResolution, MobileNet, OutputStride} from './mobilenet';
 import decodeMultiplePoses from './multiPose/decodeMultiplePoses';
 import decodeSinglePose from './singlePose/decodeSinglePose';
 import {Pose} from './types';
 import {scalePose, scalePoses} from './util';
+
+export type PoseNetResolution = 161|193|257|289|321|353|385|417|449|481|513;
 
 export type InputType =
     ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement;
@@ -91,7 +93,6 @@ export class PoseNet {
     displacementFwd: tf.Tensor3D,
     displacementBwd: tf.Tensor3D
   } {
-    assertValidOutputStride(outputStride);
     return tf.tidy(() => {
       const mobileNetOutput = this.mobileNet.predict(input, outputStride);
 
@@ -124,9 +125,9 @@ export class PoseNet {
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
    *
-   * @param inputSize The size the input should be resized to before feeding
-   * it through the network.  Defaults to 513.  Must have a value which when
-   * 1 is subtracted from it, is divisible by the output stride. Sample
+   * @param resolution The resolution the input should be resized to before
+   * feeding it through the network.  Defaults to 513.  Must have a value which
+   * when 1 is subtracted from it, is divisible by the output stride. Sample
    * acceptable values are 29, 161, 193, 257, 289, 321, 353, 385, 417, 449, 481,
    * 513. Set this number lower to scale down the image and increase the speed
    * when feeding through the network.
@@ -139,13 +140,18 @@ export class PoseNet {
    * or 8. Defaults to 16. The output width and height will be will be
    * (inputDimension - 1)/outputStride + 1
    * @return A single pose with a confidence score, which contains an array of
-   * keypoints indexed by part id, each with a score and position.
+   * keypoints indexed by part id, each with a score and position.  The
+   * positions of the keypoints are in the same scale as the original image
    */
   async estimateSinglePose(
-      input: InputType, inputSize: number = 513, reverse: boolean = false,
+      input: InputType, resolution: PoseNetResolution = 513,
+      reverse: boolean = false,
       outputStride: OutputStride = 16): Promise<Pose> {
+    assertValidOutputStride(outputStride);
+    assertValidResolution(resolution, outputStride);
+
     const {heatmapScores, offsets} = tf.tidy(() => {
-      const inputTensor = toInputTensor(input, inputSize, reverse);
+      const inputTensor = toInputTensor(input, resolution, reverse);
       return this.predictForSinglePose(inputTensor, outputStride);
     })
 
@@ -154,7 +160,7 @@ export class PoseNet {
     heatmapScores.dispose();
     offsets.dispose();
 
-    const scale = input.width / inputSize;
+    const scale = input.width / resolution;
 
     return scalePose(pose, scale);
   }
@@ -170,9 +176,9 @@ export class PoseNet {
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
    *
-   * @param inputSize The size the input should be resized to before feeding
-   * it through the network.  Defaults to 513.  Must have a value which when
-   * 1 is subtracted from it, is divisible by the output stride. Sample
+   * @param resolution The resolution the input should be resized to before
+   * feeding it through the network.  Defaults to 513.  Must have a value which
+   * when 1 is subtracted from it, is divisible by the output stride. Sample
    * acceptable values are 29, 161, 193, 257, 289, 321, 353, 385, 417, 449, 481,
    * 513. Set this number lower to scale down the image and increase the speed
    * when feeding through the network.
@@ -196,15 +202,18 @@ export class PoseNet {
    * than `nmsRadius` pixels away. Defaults to 20.
    *
    * @return An array of poses and their scores, each containing keypoints and
-   * the corresponding keypoint scores.
+   * the corresponding keypoint scores.  The positions of the keypoints are
+   * in the same scale as the original image
    */
   async estimateMultiplePoses(
-      input: InputType, inputSize: number = 513, reverse: boolean = false,
-      outputStride: OutputStride = 16, maxDetections = 5, scoreThreshold = .5,
-      nmsRadius = 20): Promise<Pose[]> {
+      input: InputType, resolution: PoseNetResolution = 513,
+      reverse: boolean = false, outputStride: OutputStride = 16,
+      maxDetections = 5, scoreThreshold = .5, nmsRadius = 20): Promise<Pose[]> {
+    assertValidOutputStride(outputStride);
+    assertValidResolution(resolution, outputStride);
     const {heatmapScores, offsets, displacementFwd, displacementBwd} =
         tf.tidy(() => {
-          const inputTensor = toInputTensor(input, inputSize, reverse);
+          const inputTensor = toInputTensor(input, resolution, reverse);
           return this.predictForMultiPose(inputTensor, outputStride);
         })
 
@@ -217,7 +226,7 @@ export class PoseNet {
     displacementFwd.dispose();
     displacementBwd.dispose();
 
-    const scale = input.width / inputSize;
+    const scale = input.width / resolution;
 
     return scalePoses(poses, scale);
   }
