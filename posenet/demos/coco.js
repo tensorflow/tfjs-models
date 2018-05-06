@@ -14,8 +14,8 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as tf from '@tensorflow/tfjs-core';
 import dat from 'dat.gui';
+import * as tf from '@tensorflow/tfjs-core';
 import posenet, {decodeMultiplePoses, decodeSinglePose} from '../src';
 import {drawKeypoints, drawSkeleton, renderImageToCanvas} from './demo_util';
 
@@ -63,20 +63,6 @@ function toImageData(image) {
   }
 
   return imageData;
-}
-
-function renderToCanvas(image, canvas) {
-  const [height, width] = image.shape;
-  canvas.width = width;
-  canvas.height = height;
-
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = 'black';
-  ctx.fillRect(0, 0, width, height);
-
-  const imageData = toImageData(image);
-
-  ctx.putImageData(imageData, 0, 0);
 }
 
 function drawResults(canvas, poses,
@@ -131,7 +117,9 @@ function drawMultiplePosesResults(poses) {
 }
 
 async function decodeSinglePoseAndDrawResults() {
-  if (!modelOutputs) { return; }
+  if (!modelOutputs) {
+    return;
+  }
 
   const pose = await decodeSinglePose(
     modelOutputs.heatmapScores, modelOutputs.offsets,
@@ -141,7 +129,9 @@ async function decodeSinglePoseAndDrawResults() {
 }
 
 async function decodeMultiplePosesAndDrawResults() {
-  if (!modelOutputs) { return; }
+  if (!modelOutputs) {
+    return;
+  }
 
   const poses = await decodeMultiplePoses(
     modelOutputs.heatmapScores, modelOutputs.offsets,

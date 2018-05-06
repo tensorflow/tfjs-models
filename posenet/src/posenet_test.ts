@@ -33,16 +33,15 @@ describe('PoseNet', () => {
 
   describe('estimateSinglePose', () => {
     it('does not leak memory', done => {
-      const image = tf.randomNormal([513, 513, 3]) as tf.Tensor3D;
-      const outputStride = 32;
+      const canvas: HTMLCanvasElement = document.createElement('canvas');
+      canvas.width = 513;
+      canvas.height = 513;
 
       const beforeTensors = tf.memory().numTensors;
 
-      net.estimateSinglePose(image, outputStride)
+      net.estimateSinglePose(canvas)
           .then(() => {
             expect(tf.memory().numTensors).toEqual(beforeTensors);
-
-            image.dispose();
           })
           .then(done)
           .catch(done.fail);
@@ -51,15 +50,14 @@ describe('PoseNet', () => {
 
   describe('estimateMultiplePoses', () => {
     it('does not leak memory', done => {
-      const image = tf.randomNormal([513, 513, 3]) as tf.Tensor3D;
-      const outputStride = 32;
+      const canvas: HTMLCanvasElement = document.createElement('canvas');
+      canvas.width = 513;
+      canvas.height = 513;
 
       const beforeTensors = tf.memory().numTensors;
-      net.estimateMultiplePoses(image, outputStride)
+      net.estimateMultiplePoses(canvas)
           .then(() => {
             expect(tf.memory().numTensors).toEqual(beforeTensors);
-
-            image.dispose();
           })
           .then(done)
           .catch(done.fail);

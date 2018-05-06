@@ -17,9 +17,8 @@
 
 import * as tf from '@tensorflow/tfjs-core';
 
-import {Keypoint} from '.';
 import {connectedPartIndeces} from './keypoints';
-import {TensorBuffer3D, Vector2D} from './types';
+import {Keypoint, Pose, TensorBuffer3D, Vector2D} from './types';
 
 function eitherPointDoesntMeetConfidence(
     a: number, b: number, minConfidence: number): boolean {
@@ -79,4 +78,23 @@ export async function toTensorBuffer<rank extends tf.Rank>(
 export async function toTensorBuffers3D(tensors: tf.Tensor3D[]):
     Promise<TensorBuffer3D[]> {
   return Promise.all(tensors.map(tensor => toTensorBuffer(tensor, 'float32')));
+}
+
+export function scalePose(pose: Pose, scale: number): Pose {
+  return {
+    score: pose.score,
+    keypoints: pose.keypoints.map(
+        ({score, part, position}) => ({
+          score,
+          part,
+          position: {x: position.x * scale, y: position.y * scale}
+        }))
+  };
+}
+
+export function scalePoses(poses: Pose[], scale: number): Pose[] {
+  if (scale === 1) {
+    return poses;
+  }
+  return poses.map(pose => scalePose(pose, scale));
 }

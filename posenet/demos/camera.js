@@ -172,6 +172,7 @@ function setupFPS() {
 function detectPoseInRealTime(video, net) {
   const canvas = document.getElementById('output');
   const ctx = canvas.getContext('2d');
+  const reverse = true;
 
   canvas.width = canvasSize;
   canvas.height = canvasSize;
@@ -190,18 +191,12 @@ function detectPoseInRealTime(video, net) {
     const inputImageResolution = Number(guiState.input.inputImageResolution);
     const outputStride = Number(guiState.input.outputStride);
 
-    const originalImage = tf.fromPixels(video);
-    const image = originalImage.reverse(1).resizeBilinear(
-      [inputImageResolution, inputImageResolution]);
-
-    const scale = canvasSize / inputImageResolution;
-
     let poses = [];
     let minPoseConfidence;
     let minPartConfidence;
     switch (guiState.algorithm) {
     case 'single-pose':
-      const pose = await guiState.net.estimateSinglePose(image, outputStride);
+      const pose = await guiState.net.estimateSinglePose(video, inputImageResolution, reverse, outputStride);
       poses.push(pose);
 
       minPoseConfidence = Number(
@@ -210,7 +205,7 @@ function detectPoseInRealTime(video, net) {
         guiState.singlePoseDetection.minPartConfidence);
       break;
     case 'multi-pose':
-      poses = await guiState.net.estimateMultiplePoses(image, outputStride,
+      poses = await guiState.net.estimateMultiplePoses(video, inputImageResolution, reverse, outputStride,
         guiState.multiPoseDetection.maxPoseDetections,
         guiState.multiPoseDetection.minPartConfidence,
         guiState.multiPoseDetection.nmsRadius);
@@ -229,6 +224,8 @@ function detectPoseInRealTime(video, net) {
       ctx.restore();
     }
 
+    const scale = canvasSize / video.width;
+
     poses.forEach(({score, keypoints}) => {
       if (score >= minPoseConfidence) {
         if (guiState.output.showPoints) {
@@ -239,9 +236,6 @@ function detectPoseInRealTime(video, net) {
         }
       }
     });
-
-    image.dispose();
-    originalImage.dispose();
 
     stats.end();
 
