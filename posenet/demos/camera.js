@@ -121,7 +121,7 @@ function setupGui(cameras, net) {
 
   let input = gui.addFolder('Input');
   const architectureController =
-    input.add(guiState.input, 'mobileNetArchitecture', Object.keys(posenet.checkpoints));
+    input.add(guiState.input, 'mobileNetArchitecture', ['1.01', '1.00', '0.75', '0.50']);
   input.add(guiState.input, 'outputStride', [8, 16, 32]);
   input.add(guiState.input, 'inputImageResolution', videoSizes);
   input.open();
@@ -180,7 +180,7 @@ function detectPoseInRealTime(video, net) {
     if (guiState.changeToArchitecture) {
       guiState.net.dispose();
 
-      guiState.net = await posenet.load(guiState.changeToArchitecture);
+      guiState.net = await posenet.load(Number(guiState.changeToArchitecture));
 
       guiState.changeToArchitecture = null;
     }

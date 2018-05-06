@@ -19,7 +19,7 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {CheckpointLoader} from './checkpoint_loader';
 import {checkpoints} from './checkpoints';
-import {assertValidOutputStride, assertValidResolution, MobileNet, OutputStride} from './mobilenet';
+import {assertValidOutputStride, assertValidResolution, MobileNet, MobileNetMultiplier, OutputStride} from './mobilenet';
 import decodeMultiplePoses from './multiPose/decodeMultiplePoses';
 import decodeSinglePose from './singlePose/decodeSinglePose';
 import {Pose} from './types';
@@ -250,18 +250,17 @@ export class PoseNet {
  *
  * @return
  */
-export default async function load(multiplier: string = '1.01'):
+export default async function load(multiplier: MobileNetMultiplier = 1.01):
     Promise<PoseNet> {
   const possibleMultipliers = Object.keys(checkpoints);
   tf.util.assert(
-      typeof multiplier === 'string',
-      `Error: got multiplier type of ${
-          typeof multiplier} when it should be a ` +
-          `string.`);
+      typeof multiplier === 'number',
+      `got multiplier type of ${typeof multiplier} when it should be a ` +
+          `number.`);
 
   tf.util.assert(
-      possibleMultipliers.indexOf(multiplier) >= 0,
-      `Error: Invalid multiplier value of ${
+      possibleMultipliers.indexOf(multiplier.toString()) >= 0,
+      `invalid multiplier value of ${
           multiplier}.  No checkpoint exists for that ` +
           `multiplier. Must be one of ${possibleMultipliers.join(',')}.`);
 
