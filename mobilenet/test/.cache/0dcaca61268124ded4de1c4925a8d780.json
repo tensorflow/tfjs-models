@@ -1,0 +1,1 @@
+{"dependencies":[{"name":"./cat.jpg","dynamic":true},{"name":"./index.ts","dynamic":true}],"generated":{"html":"<img id=\"cat\" src=\"/dist/032003cec9753d12c4d4f6c796f46da0.jpg\" width=\"224\" height=\"224/\">\n<script src=\"/dist/7493ea026ba0c017a8d3bacd0abcc4bd.js\"></script>\n"},"hash":"beb577dbb7781fc72ab65e94aee9cf00","cacheData":{}}
