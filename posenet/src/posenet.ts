@@ -17,6 +17,7 @@
 
 import * as tf from '@tensorflow/tfjs-core';
 
+import {CheckpointLoader} from './checkpoint_loader';
 import {checkpoints} from './checkpoints';
 import {assertValidOutputStride, ConvolutionDefinition, MobileNet, OutputStride} from './mobilenet';
 import decodeMultiplePoses from './multiPose/decodeMultiplePoses';
@@ -26,14 +27,10 @@ import {Pose} from './types';
 const defaultCheckpoint = checkpoints[101];
 
 export class PoseNet {
-  mobileNet: MobileNet = new MobileNet();
+  mobileNet: MobileNet;
 
-  async load(
-      checkpointUrl: string = defaultCheckpoint.url,
-      convolutionDefinitions:
-          ConvolutionDefinition[] = defaultCheckpoint.architecture):
-      Promise<void> {
-    await this.mobileNet.load(checkpointUrl, convolutionDefinitions);
+  constructor(mobileNet: MobileNet) {
+    this.mobileNet = mobileNet;
   }
 
   /**
@@ -184,4 +181,17 @@ export class PoseNet {
   public dispose() {
     this.mobileNet.dispose();
   }
+}
+
+export default async function posenet(
+    checkpointUrl: string = defaultCheckpoint.url,
+    convolutionDefinitions: ConvolutionDefinition[] =
+        defaultCheckpoint.architecture): Promise<PoseNet> {
+  const checkpointLoader = new CheckpointLoader(checkpointUrl);
+
+  const variables = await checkpointLoader.getAllVariables();
+
+  const mobileNet = new MobileNet(variables, convolutionDefinitions);
+
+  return new PoseNet(mobileNet);
 }

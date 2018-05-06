@@ -17,7 +17,7 @@
 import * as tf from '@tensorflow/tfjs-core';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
-import * as posenet from '../src';
+import posenet, {checkpoints} from '../src';
 
 import {drawKeypoints, drawSkeleton} from './demo_util';
 const maxStride = 32;
@@ -97,9 +97,12 @@ const guiState = {
     showSkeleton: true,
     showPoints: true,
   },
+  net: null,
 };
 
-function setupGui(cameras, model) {
+function setupGui(cameras, net) {
+  guiState.net = net;
+
   if (cameras.length > 0) {
     guiState.camera = cameras[0].deviceId;
   }
@@ -119,7 +122,7 @@ function setupGui(cameras, model) {
 
   let input = gui.addFolder('Input');
   const architectureController =
-    input.add(guiState.input, 'mobileNetArchitecture', Object.keys(posenet.checkpoints));
+    input.add(guiState.input, 'mobileNetArchitecture', Object.keys(checkpoints));
   input.add(guiState.input, 'outputStride', [8, 16, 32]);
   input.add(guiState.input, 'inputImageResolution', videoSizes);
   input.open();
@@ -166,7 +169,7 @@ function setupFPS() {
   document.body.appendChild(stats.dom);
 }
 
-function detectPoseInRealTime(video, model) {
+function detectPoseInRealTime(video, net) {
   const canvas = document.getElementById('output');
   const ctx = canvas.getContext('2d');
 
@@ -175,9 +178,11 @@ function detectPoseInRealTime(video, model) {
 
   async function poseDetectionFrame() {
     if (guiState.changeToArchitecture) {
-      const checkpoint = posenet.checkpoints[guiState.changeToArchitecture];
+      const checkpoint = checkpoints[guiState.changeToArchitecture];
 
-      await model.load(checkpoint.url, checkpoint.architecture);
+      guiState.net.dispose();
+
+      guiState.net = await posenet(checkpoint.url, checkpoint.architecture);
 
       guiState.changeToArchitecture = null;
     }
@@ -198,7 +203,7 @@ function detectPoseInRealTime(video, model) {
     let minPartConfidence;
     switch (guiState.algorithm) {
     case 'single-pose':
-      const pose = await model.estimateSinglePose(image, outputStride);
+      const pose = await guiState.net.estimateSinglePose(image, outputStride);
       poses.push(pose);
 
       minPoseConfidence = Number(
@@ -207,7 +212,7 @@ function detectPoseInRealTime(video, model) {
         guiState.singlePoseDetection.minPartConfidence);
       break;
     case 'multi-pose':
-      poses = await model.estimateMultiplePoses(image, outputStride,
+      poses = await guiState.net.estimateMultiplePoses(image, outputStride,
         guiState.multiPoseDetection.maxPoseDetections,
         guiState.multiPoseDetection.minPartConfidence,
         guiState.multiPoseDetection.nmsRadius);
@@ -249,9 +254,7 @@ function detectPoseInRealTime(video, model) {
 }
 
 export async function bindPage() {
-  const model = new posenet.PoseNet();
-
-  await model.load();
+  const net = await posenet();
 
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'block';
@@ -265,9 +268,9 @@ export async function bindPage() {
 
   const video = await loadVideo(cameras[0].deviceId);
 
-  setupGui(cameras, model);
+  setupGui(cameras, net);
   setupFPS();
-  detectPoseInRealTime(video, model);
+  detectPoseInRealTime(video, net);
 }
 
 navigator.getUserMedia = navigator.getUserMedia ||

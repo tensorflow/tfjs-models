@@ -17,14 +17,18 @@
 
 import * as tf from '@tensorflow/tfjs-core';
 
-import {PoseNet} from './posenet';
+import posenet, {PoseNet} from './posenet';
 
 describe('PoseNet', () => {
-  let posenet: PoseNet;
-  beforeAll((done) => {
-    posenet = new PoseNet();
+  let net: PoseNet;
 
-    posenet.load().then(done).catch(done.fail);
+  beforeAll((done) => {
+    posenet()
+        .then((posenetInstance: PoseNet) => {
+          net = posenetInstance;
+        })
+        .then(done)
+        .catch(done.fail);
   })
 
   describe('estimateSinglePose', () => {
@@ -34,7 +38,7 @@ describe('PoseNet', () => {
 
       const beforeTensors = tf.memory().numTensors;
 
-      posenet.estimateSinglePose(image, outputStride)
+      net.estimateSinglePose(image, outputStride)
           .then(() => {
             expect(tf.memory().numTensors).toEqual(beforeTensors);
 
@@ -51,7 +55,7 @@ describe('PoseNet', () => {
       const outputStride = 32;
 
       const beforeTensors = tf.memory().numTensors;
-      posenet.estimateMultiplePoses(image, outputStride)
+      net.estimateMultiplePoses(image, outputStride)
           .then(() => {
             expect(tf.memory().numTensors).toEqual(beforeTensors);
 

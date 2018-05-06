@@ -16,7 +16,7 @@
  */
 import * as tf from '@tensorflow/tfjs-core';
 import dat from 'dat.gui';
-import * as posenet from '../src';
+import posenet, {decodeMultiplePoses, decodeSinglePose} from '../src';
 import {drawKeypoints, drawSkeleton, renderImageToCanvas} from './demo_util';
 
 const images = [
@@ -79,22 +79,6 @@ function renderToCanvas(image, canvas) {
   ctx.putImageData(imageData, 0, 0);
 }
 
-export function drawHeatmapImage(heatmaps) {
-  const singleChannelImage = posenet.toHeatmapImage(heatmaps);
-  const scaledUp = posenet.resizeBilinearGrayscale(
-    singleChannelImage, [100, 100]);
-
-  renderToCanvas(scaledUp, document.getElementById('heatmap'));
-}
-export function drawHeatmapAsAlpha(image, heatmaps, outputStride, canvas) {
-  const singleChannelImage = posenet.toHeatmapImage(heatmaps);
-  const pixels = tf.fromPixels(image);
-  const alphadImage = posenet.setHeatmapAsAlphaChannel(
-    pixels, outputStride, singleChannelImage);
-
-  renderToCanvas(alphadImage, canvas);
-}
-
 function drawResults(canvas, poses,
   minPartConfidence, minPoseConfidence) {
   renderImageToCanvas(image, [513, 513], canvas);
@@ -149,7 +133,7 @@ function drawMultiplePosesResults(poses) {
 async function decodeSinglePoseAndDrawResults() {
   if (!modelOutputs) { return; }
 
-  const pose = await posenet.decodeSinglePose(
+  const pose = await decodeSinglePose(
     modelOutputs.heatmapScores, modelOutputs.offsets,
     guiState.outputStride);
 
@@ -159,7 +143,7 @@ async function decodeSinglePoseAndDrawResults() {
 async function decodeMultiplePosesAndDrawResults() {
   if (!modelOutputs) { return; }
 
-  const poses = await posenet.decodeMultiplePoses(
+  const poses = await decodeMultiplePoses(
     modelOutputs.heatmapScores, modelOutputs.offsets,
     modelOutputs.displacementFwd, modelOutputs.displacementBwd,
     guiState.outputStride,
@@ -190,7 +174,7 @@ function disposeModelOutputs() {
   }
 }
 
-async function testImageAndEstimatePoses(model) {
+async function testImageAndEstimatePoses(net) {
   setStatusText('Predicting...');
   document.getElementById('results').style.display = 'none';
 
@@ -199,7 +183,7 @@ async function testImageAndEstimatePoses(model) {
 
   const input = tf.fromPixels(image);
 
-  modelOutputs = await model.predictForMultiPose(input, guiState.outputStride);
+  modelOutputs = await net.predictForMultiPose(input, guiState.outputStride);
 
   await decodeSingleAndMultiplePoses();
 
@@ -210,13 +194,13 @@ async function testImageAndEstimatePoses(model) {
 
 let guiState;
 
-function setupGui(model) {
+function setupGui(net) {
   guiState = {
     outputStride: 16,
     image: 'tennis_in_crowd.jpg',
     detectPoseButton: () => {
       testImageAndEstimatePoses(
-        model);
+        net);
     },
     singlePoseDetection: {
       minPartConfidence: 0.5,
@@ -266,13 +250,11 @@ function setupGui(model) {
 }
 
 export async function bindPage() {
-  const model = new posenet.PoseNet();
+  const net = await posenet();
 
-  await model.load();
+  setupGui(net);
 
-  setupGui(model);
-
-  await testImageAndEstimatePoses(model);
+  await testImageAndEstimatePoses(net);
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'block';
 }

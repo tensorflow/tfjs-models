@@ -17,8 +17,6 @@
 
 import * as tf from '@tensorflow/tfjs-core';
 
-import {CheckpointLoader} from './checkpoint_loader';
-
 export type ConvolutionType = 'conv2d'|'separableConv';
 export type ConvolutionDefinition = [ConvolutionType, number];
 export type OutputStride = 32|16|8;
@@ -153,15 +151,10 @@ export class MobileNet {
   private PREPROCESS_DIVISOR = tf.scalar(255.0 / 2);
   private ONE = tf.scalar(1);
 
-  async load(
-      checkpointUrl: string,
-      convolutionDefinitions: ConvolutionDefinition[]): Promise<void> {
-    const checkpointLoader = new CheckpointLoader(checkpointUrl);
-
-    // clean up old weights
-    this.dispose();
-
-    this.variables = await checkpointLoader.getAllVariables();
+  constructor(
+      variables: {[varName: string]: tf.Tensor},
+      convolutionDefinitions: ConvolutionDefinition[]) {
+    this.variables = variables;
     this.convolutionDefinitions = convolutionDefinitions;
   }
 
