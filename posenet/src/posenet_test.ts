@@ -17,13 +17,13 @@
 
 import * as tf from '@tensorflow/tfjs-core';
 
-import posenet, {PoseNet} from './posenet';
+import load, {PoseNet} from './posenet';
 
 describe('PoseNet', () => {
   let net: PoseNet;
 
   beforeAll((done) => {
-    posenet()
+    load()
         .then((posenetInstance: PoseNet) => {
           net = posenetInstance;
         })

@@ -240,7 +240,7 @@ function setupGui(net) {
 }
 
 export async function bindPage() {
-  const net = await posenet.posenet();
+  const net = await posenet.load();
 
   setupGui(net);
 

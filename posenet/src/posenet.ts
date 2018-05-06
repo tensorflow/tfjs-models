@@ -241,7 +241,7 @@ export class PoseNet {
  *
  * @return
  */
-export default async function posenet(multiplier: string = '1.01'):
+export default async function load(multiplier: string = '1.01'):
     Promise<PoseNet> {
   const possibleMultipliers = Object.keys(checkpoints);
   tf.util.assert(

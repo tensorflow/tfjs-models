@@ -84,7 +84,7 @@ const reverse = false;
 
 async function estimatePoseOnImage(imageElement) {
   // load the posenet model from a checkpoint
-  const net = await posenet.posenet();
+  const net = await posenet.load();
 
   const pose = await net.estimateSinglePose(imageElement, inputSize, reverse, outputStride);
 
@@ -282,7 +282,7 @@ const outputStride = 16;
 const maxPoseDetections = 2;
 
 async function estimateMultiplePosesOnImage(imageElement) {
-  const net = await posenet.posenet();
+  const net = await posenet.load();
 
   // estimate poses
   const poses = await net.estimateMultiplePoses(imageElement,

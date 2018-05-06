@@ -180,7 +180,7 @@ function detectPoseInRealTime(video, net) {
     if (guiState.changeToArchitecture) {
       guiState.net.dispose();
 
-      guiState.net = await posenet.posenet(guiState.changeToArchitecture);
+      guiState.net = await posenet.load(guiState.changeToArchitecture);
 
       guiState.changeToArchitecture = null;
     }
@@ -245,7 +245,7 @@ function detectPoseInRealTime(video, net) {
 }
 
 export async function bindPage() {
-  const net = await posenet.posenet();
+  const net = await posenet.load();
 
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'block';
