@@ -86,7 +86,7 @@ It returns a `pose` with a confidence score and an array of keypoints indexed by
  </head>
 
   <body>
-    <img id='cat' src='/images.cat.jpg '/>
+    <img id='cat' src='/images/cat.jpg '/>
   </body>
   <!-- Place your code in the script tag below. You can also use an external .js file -->
   <script>
@@ -311,7 +311,7 @@ It returns a `promise` that resolves with an array of `poses`, each with a confi
  </head>
 
   <body>
-    <img id='cat' src='/images.cat.jpg '/>
+    <img id='cat' src='/images/cat.jpg '/>
   </body>
   <!-- Place your code in the script tag below. You can also use an external .js file -->
   <script>
