@@ -13,8 +13,8 @@ PoseNet can be used to estimate either a single pose or multiple poses, meaning 
 You can use this as standalone es5 bundle like this:
 
 ```html
-<script src="https://unpkg.com/tfjs"></script>
-<script src="https://unpkg.com/posenet"></script>
+  <script src="https://unpkg.com/@tensorflow/tfjs"></script>
+  <script src="https://unpkg.com/@tensorflow-models/posenet"></script>
 ```
 
 Or you can install it via npm for use in a TypeScript / ES6 project.
@@ -80,9 +80,9 @@ It returns a `pose` with a confidence score and an array of keypoints indexed by
 <html>
   <head>
     <!-- Load TensorFlow.js -->
-    <script src="https://unpkg.com/tfjs"></script>
+    <script src="https://unpkg.com/@tensorflow/tfjs"></script>
     <!-- Load Posenet -->
-    <script src="https://unpkg.com/posenet"></script>
+    <script src="https://unpkg.com/@tensorflow-models/posenet"></script>
  </head>
 
   <body>
@@ -305,9 +305,9 @@ It returns a `promise` that resolves with an array of `poses`, each with a confi
 <html>
   <head>
     <!-- Load TensorFlow.js -->
-    <script src="https://unpkg.com/tfjs"></script>
+    <script src="https://unpkg.com/@tensorflow/tfjs"></script>
     <!-- Load Posenet -->
-    <script src="https://unpkg.com/posenet"></script>
+    <script src="https://unpkg.com/@tensorflow-models/posenet"></script>
  </head>
 
   <body>
