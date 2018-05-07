@@ -15,21 +15,20 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs-core';
+import * as tf from '@tensorflow/tfjs';
 import {NUM_KEYPOINTS} from '../keypoints';
+import {Vector2D} from '../types';
 
 export function getPointsConfidence(
     heatmapScores: tf.TensorBuffer<tf.Rank.R3>,
-    heatMapCoords: tf.TensorBuffer<tf.Rank.R2>) {
+    heatMapCoords: tf.TensorBuffer<tf.Rank.R2>): Float32Array {
   const numKeypoints = heatMapCoords.shape[0];
   const result = new Float32Array(numKeypoints);
-
-  const heatMapCoordsValues = heatMapCoords.values;
 
   for (let keypoint = 0; keypoint < numKeypoints; keypoint++) {
     const y = heatMapCoords.get(keypoint, 0);
     const x = heatMapCoords.get(keypoint, 1);
-    result[keypoint] = heatmapScores.get(y, x, keypoint).valueOf();
+    result[keypoint] = heatmapScores.get(y, x, keypoint);
   }
 
   return result;
@@ -37,7 +36,7 @@ export function getPointsConfidence(
 
 function getOffsetPoint(
     y: number, x: number, keypoint: number,
-    offsetsBuffer: tf.TensorBuffer<tf.Rank.R3>) {
+    offsetsBuffer: tf.TensorBuffer<tf.Rank.R3>): Vector2D {
   return {
     y: offsetsBuffer.get(y, x, keypoint),
     x: offsetsBuffer.get(y, x, keypoint + NUM_KEYPOINTS)
@@ -46,7 +45,7 @@ function getOffsetPoint(
 
 export function getOffsetVectors(
     heatMapCoordsBuffer: tf.TensorBuffer<tf.Rank.R2>,
-    offsetsBuffer: tf.TensorBuffer<tf.Rank.R3>) {
+    offsetsBuffer: tf.TensorBuffer<tf.Rank.R3>): tf.Tensor2D {
   const result: number[] = [];
 
   for (let keypoint = 0; keypoint < NUM_KEYPOINTS; keypoint++) {

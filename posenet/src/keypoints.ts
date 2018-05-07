@@ -19,34 +19,32 @@ export type Tuple<T> = [T, T];
 export type StringTuple = Tuple<string>;
 export type NumberTuple = Tuple<number>;
 
-export const jointNames = [
-  'nose', 'left_eye', 'right_eye', 'left_ear', 'right_ear', 'left_shoulder',
-  'right_shoulder', 'left_elbow', 'right_elbow', 'left_wrist', 'right_wrist',
-  'left_hip', 'right_hip', 'left_knee', 'right_knee', 'left_ankle',
-  'right_ankle'
+export const partNames = [
+  'nose', 'leftEye', 'rightEye', 'leftEar', 'rightEar', 'leftShoulder',
+  'rightShoulder', 'leftElbow', 'rightElbow', 'leftWrist', 'rightWrist',
+  'leftHip', 'rightHip', 'leftKnee', 'rightKnee', 'leftAnkle', 'rightAnkle'
 ];
 
-export const NUM_KEYPOINTS = jointNames.length;
+export const NUM_KEYPOINTS = partNames.length;
 
 export interface NumberDict {
   [jointName: string]: number;
 }
 
-export const jointIds =
-    jointNames.reduce((result: NumberDict, jointName, i): NumberDict => {
+export const partIds =
+    partNames.reduce((result: NumberDict, jointName, i): NumberDict => {
       result[jointName] = i;
       return result;
     }, {}) as NumberDict;
 
-const connectedJointNames: StringTuple[] = [
-  ['left_hip', 'left_shoulder'], ['left_elbow', 'left_shoulder'],
-  ['left_elbow', 'left_wrist'], ['left_hip', 'left_knee'],
-  ['left_knee', 'left_ankle'], ['right_hip', 'right_shoulder'],
-  ['right_elbow', 'right_shoulder'], ['right_elbow', 'right_wrist'],
-  ['right_hip', 'right_knee'], ['right_knee', 'right_ankle'],
-  ['left_shoulder', 'right_shoulder'], ['left_hip', 'right_hip']
+const connectedPartNames: StringTuple[] = [
+  ['leftHip', 'leftShoulder'], ['leftElbow', 'leftShoulder'],
+  ['leftElbow', 'leftWrist'], ['leftHip', 'leftKnee'],
+  ['leftKnee', 'leftAnkle'], ['rightHip', 'rightShoulder'],
+  ['rightElbow', 'rightShoulder'], ['rightElbow', 'rightWrist'],
+  ['rightHip', 'rightKnee'], ['rightKnee', 'rightAnkle'],
+  ['leftShoulder', 'rightShoulder'], ['leftHip', 'rightHip']
 ];
 
-export const connectedJointIndeces = connectedJointNames.map(
-    ([jointNameA, jointNameB]) =>
-        ([jointIds[jointNameA], jointIds[jointNameB]]));
+export const connectedPartIndeces = connectedPartNames.map(
+    ([jointNameA, jointNameB]) => ([partIds[jointNameA], partIds[jointNameB]]));

@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs-core';
+import * as tf from '@tensorflow/tfjs';
 
 export type Vector2D = {
   y: number,
@@ -35,7 +35,8 @@ export type PartWithScore = {
 
 export type Keypoint = {
   score: number,
-  point: Vector2D
+  position: Vector2D,
+  part: string
 };
 
 export type Pose = {

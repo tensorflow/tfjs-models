@@ -33,12 +33,12 @@ export class MaxHeap<T> {
     this.getElementValue = getElementValue;
   }
 
-  public enqueue(x: T) {
+  public enqueue(x: T): void {
     this.priorityQueue[++this.numberOfElements] = x;
     this.swim(this.numberOfElements);
   }
 
-  public dequeue() {
+  public dequeue(): T {
     const max = this.priorityQueue[0];
     this.exchange(0, this.numberOfElements--);
     this.sink(0);
@@ -46,30 +46,30 @@ export class MaxHeap<T> {
     return max;
   }
 
-  public empty() {
+  public empty(): boolean {
     return this.numberOfElements === -1;
   }
 
-  public size() {
+  public size(): number {
     return this.numberOfElements + 1;
   }
 
-  public all() {
+  public all(): T[] {
     return this.priorityQueue.slice(0, this.numberOfElements + 1);
   }
 
-  public max() {
+  public max(): T {
     return this.priorityQueue[0];
   }
 
-  private swim(k: number) {
+  private swim(k: number): void {
     while (k > 0 && this.less(half(k), k)) {
       this.exchange(k, half(k));
       k = half(k);
     }
   }
 
-  private sink(k: number) {
+  private sink(k: number): void {
     while (2 * k <= this.numberOfElements) {
       let j = 2 * k;
       if (j < this.numberOfElements && this.less(j, j + 1)) {
@@ -83,15 +83,15 @@ export class MaxHeap<T> {
     }
   }
 
-  private getValueAt(i: number) {
+  private getValueAt(i: number): number {
     return this.getElementValue(this.priorityQueue[i]);
   }
 
-  private less(i: number, j: number) {
+  private less(i: number, j: number): boolean {
     return this.getValueAt(i) < this.getValueAt(j);
   }
 
-  private exchange(i: number, j: number) {
+  private exchange(i: number, j: number): void {
     const t = this.priorityQueue[i];
     this.priorityQueue[i] = this.priorityQueue[j];
     this.priorityQueue[j] = t;

@@ -15,26 +15,20 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs-core';
+import * as tf from '@tensorflow/tfjs';
 
-import {Keypoint} from '.';
-import {connectedJointIndeces} from './keypoints';
-import {TensorBuffer3D, Vector2D} from './types';
-
-function getTuple(index: number, points: tf.Tensor2D) {
-  const tuple = tf.slice2d(points, [index, 0], [1, 2]).buffer().values;
-
-  return [tuple[0], tuple[1]];
-}
+import {connectedPartIndeces} from './keypoints';
+import {OutputStride} from './mobilenet';
+import {Keypoint, Pose, TensorBuffer3D, Vector2D} from './types';
 
 function eitherPointDoesntMeetConfidence(
-    a: number, b: number, minConfidence: number) {
+    a: number, b: number, minConfidence: number): boolean {
   return (a < minConfidence || b < minConfidence);
 }
 
 export function getAdjacentKeyPoints(
     keypoints: Keypoint[], minConfidence: number): Keypoint[][] {
-  return connectedJointIndeces.reduce(
+  return connectedPartIndeces.reduce(
       (result: Keypoint[][], [leftJoint, rightJoint]): Keypoint[][] => {
         if (eitherPointDoesntMeetConfidence(
                 keypoints[leftJoint].score, keypoints[rightJoint].score,
@@ -42,60 +36,16 @@ export function getAdjacentKeyPoints(
           return result;
         }
 
-        const leftPoint = keypoints[leftJoint];
-        const rightPoint = keypoints[rightJoint];
-
-        result.push([leftPoint, rightPoint]);
+        result.push([keypoints[leftJoint], keypoints[rightJoint]]);
 
         return result;
       }, []);
 }
 
-export function setHeatmapAsAlphaChannel(
-    imagePixels: tf.Tensor3D, outputStride: number,
-    heatmapImage: tf.Tensor2D): tf.Tensor3D {
-  const [height, width] = imagePixels.shape;
-
-  return tf.tidy(() => {
-    const scaledUp = resizeBilinearGrayscale(heatmapImage, [
-      heatmapImage.shape[0] * outputStride, heatmapImage.shape[1] * outputStride
-    ]);
-
-    const rgb =
-        imagePixels.slice([0, 0, 0], [height, width, 3]).div(tf.scalar(255)) as
-        tf.Tensor3D;
-    const a = scaledUp.slice([0, 0, 0], [height, width, 1]);
-
-    const result = tf.concat3d([rgb, a], 2);
-
-    return result;
-  })
-}
-
-export function toHeatmapImage(heatmapScores: tf.Tensor3D): tf.Tensor2D {
-  return tf.tidy(() => {
-    return heatmapScores.sum(2).minimum(tf.scalar(1)) as tf.Tensor2D;
-  });
-}
-
-export function resizeBilinearGrayscale(
-    heatmapImage: tf.Tensor2D, size: [number, number]) {
-  return tf.tidy(() => {
-    const channel = heatmapImage.expandDims(2) as tf.Tensor3D;
-    const rgb = tf.concat([channel, channel, channel], 2) as tf.Tensor3D;
-    return tf.image.resizeBilinear(rgb, size);
-  })
-}
-
-export function toSingleChannelPixels(tensor: tf.Tensor2D) {
-  return new ImageData(
-      new Uint8ClampedArray(tensor.mul(tf.scalar(255)).toInt().buffer().values),
-      tensor.shape[1], tensor.shape[0]);
-}
-
 const {NEGATIVE_INFINITY, POSITIVE_INFINITY} = Number;
-export function getBoundingBox(keypoints: Keypoint[]) {
-  return keypoints.reduce(({maxX, maxY, minX, minY}, {point: {x, y}}) => {
+export function getBoundingBox(keypoints: Keypoint[]):
+    {maxX: number, maxY: number, minX: number, minY: number} {
+  return keypoints.reduce(({maxX, maxY, minX, minY}, {position: {x, y}}) => {
     return {
       maxX: Math.max(maxX, x),
       maxY: Math.max(maxY, y),
@@ -129,4 +79,31 @@ export async function toTensorBuffer<rank extends tf.Rank>(
 export async function toTensorBuffers3D(tensors: tf.Tensor3D[]):
     Promise<TensorBuffer3D[]> {
   return Promise.all(tensors.map(tensor => toTensorBuffer(tensor, 'float32')));
+}
+
+export function scalePose(pose: Pose, scale: number): Pose {
+  return {
+    score: pose.score,
+    keypoints: pose.keypoints.map(
+        ({score, part, position}) => ({
+          score,
+          part,
+          position: {x: position.x * scale, y: position.y * scale}
+        }))
+  };
+}
+
+export function scalePoses(poses: Pose[], scale: number): Pose[] {
+  if (scale === 1) {
+    return poses;
+  }
+  return poses.map(pose => scalePose(pose, scale));
+}
+
+export function getValidResolution(
+    imageScaleFactor: number, inputDimension: number,
+    outputStride: OutputStride): number {
+  const evenResolution = inputDimension * imageScaleFactor - 1;
+
+  return evenResolution - (evenResolution % outputStride) + 1;
 }

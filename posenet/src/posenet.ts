@@ -15,154 +15,98 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs-core';
+import * as tf from '@tensorflow/tfjs';
+
 import {CheckpointLoader} from './checkpoint_loader';
-
-import * as multiPose from './multiPose';
-import * as singlePose from './singlePose';
+import {checkpoints} from './checkpoints';
+import {assertValidOutputStride, assertValidScaleFactor, MobileNet, MobileNetMultiplier, OutputStride} from './mobilenet';
+import decodeMultiplePoses from './multiPose/decodeMultiplePoses';
+import decodeSinglePose from './singlePose/decodeSinglePose';
 import {Pose} from './types';
+import {getValidResolution, scalePose, scalePoses} from './util';
 
-const GOOGLE_CLOUD_STORAGE_DIR =
-    'https://storage.googleapis.com/cl-move-mirror.appspot.com/';
+export type PoseNetResolution = 161|193|257|289|321|353|385|417|449|481|513;
 
-export type OutputStride = 32|16|8;
+export type InputType =
+    ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement;
+
+function toInputTensor(
+    input: InputType, inputSize: number, flipHorizontal: boolean): tf.Tensor3D {
+  const imageTensor = tf.fromPixels(input);
+
+  if (flipHorizontal) {
+    return imageTensor.reverse(1).resizeBilinear([inputSize, inputSize]);
+  } else {
+    return imageTensor.resizeBilinear([inputSize, inputSize]);
+  }
+}
 
 export class PoseNet {
-  private variables: {[varName: string]: tf.Tensor};
+  mobileNet: MobileNet;
 
-  // yolo variables
-  private PREPROCESS_DIVISOR = tf.scalar(255.0 / 2);
-  private ONE = tf.scalar(1);
-
-  /**
-   * Loads necessary variables for PoseNet.
-   */
-  async load(): Promise<void> {
-    const checkpointLoader = new CheckpointLoader(
-        GOOGLE_CLOUD_STORAGE_DIR + 'mobilenet_val2017_232/');
-    this.variables = await checkpointLoader.getAllVariables();
-  }
-
-  private mobileNet(input: tf.Tensor3D, outputStride: OutputStride) {
-    // Normalize the pixels [0, 255] to be between [-1, 1].
-    const preprocessedInput =
-        input.div(this.PREPROCESS_DIVISOR).sub(this.ONE) as tf.Tensor3D;
-
-    const conv2d0Stride = 2;
-
-    const x1 = preprocessedInput
-                   .conv2d(this.weights('Conv2d_0'), conv2d0Stride, 'same')
-                   .add(this.biases('Conv2d_0'))
-                   // relu6
-                   .clipByValue(0, 6) as tf.Tensor3D;
-
-    let previousLayer = x1;
-
-    const convStridesAndLayerNames: number[][] = [
-      [1, 1], [2, 2], [1, 3], [2, 4], [1, 5], [2, 6], [1, 7], [1, 8], [1, 9],
-      [1, 10], [1, 11], [2, 12], [1, 13]
-    ];
-
-    // The currentStride variable keeps track of the output stride of
-    // the activations, i.e., the running product of convolution
-    // strides up to the current network layer. This allows us to
-    // invoke atrous convolution whenever applying the next
-    // convolution would result in the activations having output
-    // stride larger than the target outputStride.
-    let currentStride = conv2d0Stride;
-
-    // The atrous convolution rate parameter.
-    let rate = 1;
-
-    convStridesAndLayerNames.forEach(([stride, layerName]) => {
-      let layerStride, layerRate;
-
-      if (currentStride === outputStride) {
-        // If we have reached the target outputStride, then we need to
-        // employ atrous convolution with stride=1 and multiply the atrous
-        // rate by the current unit's stride for use in subsequent layers.
-        layerStride = 1;
-        layerRate = rate;
-        rate *= stride;
-      } else {
-        layerStride = stride;
-        layerRate = 1;
-        currentStride *= stride;
-      }
-
-      const layer = this.depthwiseConvBlock(
-          previousLayer, layerStride, layerName, layerRate);
-      previousLayer = layer;
-    });
-
-    return previousLayer;
+  constructor(mobileNet: MobileNet) {
+    this.mobileNet = mobileNet;
   }
 
   /**
-   * Infer through PoseNet, assumes variables have been loaded. This does
-   * standard ImageNet pre-processing before inferring through the model. This
-   * method returns the heatmaps and offsets.  Infers through the outputs
-   * that are needed for single pose decoding
+   * Infer through PoseNet. This does standard ImageNet pre-processing before
+   * inferring through the model. The image should pixels should have values
+   * [0-255]. This method returns the heatmaps and offsets.  Infers through the
+   * outputs that are needed for single pose decoding
    *
-   * @param input un-preprocessed input image.
+   * @param input un-preprocessed input image, with values in range [0-255]
    * @param outputStride the desired stride for the outputs.  Must be 32, 16,
-   * or 8. The output width and height will be will be
+   * or 8. Defaults to 16.  The output width and height will be will be
    * (inputDimension - 1)/outputStride + 1
    * @return heatmapScores, offsets
    */
-  predictForSinglePose(input: tf.Tensor3D, outputStride: OutputStride = 32):
+  predictForSinglePose(input: tf.Tensor3D, outputStride: OutputStride = 16):
       {heatmapScores: tf.Tensor3D, offsets: tf.Tensor3D} {
+    assertValidOutputStride(outputStride);
     return tf.tidy(() => {
-      const mobileNetOutput = this.mobileNet(input, outputStride);
+      const mobileNetOutput = this.mobileNet.predict(input, outputStride);
 
       const heatmaps =
-          mobileNetOutput.conv2d(this.weights('heatmap_2'), 1, 'same')
-              .add(this.biases('heatmap_2')) as tf.Tensor3D;
+          this.mobileNet.convToOutput(mobileNetOutput, 'heatmap_2');
 
-      const offsets =
-          mobileNetOutput.conv2d(this.weights('offset_2'), 1, 'same')
-              .add(this.biases('offset_2')) as tf.Tensor3D;
+      const offsets = this.mobileNet.convToOutput(mobileNetOutput, 'offset_2');
 
       return {heatmapScores: heatmaps.sigmoid(), offsets};
     });
   }
 
   /**
-   * Infer through PoseNet, assumes variables have been loaded. This does
-   * standard ImageNet pre-processing before inferring through the model. This
-   * method returns the heatmaps and offsets.  Infers through the outputs
-   * that are needed for single pose decoding
+   * Infer through PoseNet. This does standard ImageNet pre-processing before
+   * inferring through the model. The image should pixels should have values
+   * [0-255]. Infers through the outputs that are needed for multiple pose
+   * decoding. This method returns the heatmaps offsets, and mid-range
+   * displacements.
    *
-   * @param input un-preprocessed input image.
+   * @param input un-preprocessed input image, with values in range [0-255]
    * @param outputStride the desired stride for the outputs.  Must be 32, 16,
-   * or 8. The output width and height will be will be
+   * or 8. Defaults to 16. The output width and height will be will be
    * (inputDimension - 1)/outputStride + 1
    * @return heatmapScores, offsets, displacementFwd, displacementBwd
    */
-  predictForMultiPose(input: tf.Tensor3D, outputStride: OutputStride = 32): {
+  predictForMultiPose(input: tf.Tensor3D, outputStride: OutputStride = 16): {
     heatmapScores: tf.Tensor3D,
     offsets: tf.Tensor3D,
     displacementFwd: tf.Tensor3D,
     displacementBwd: tf.Tensor3D
   } {
     return tf.tidy(() => {
-      const mobileNetOutput = this.mobileNet(input, outputStride);
+      const mobileNetOutput = this.mobileNet.predict(input, outputStride);
 
       const heatmaps =
-          mobileNetOutput.conv2d(this.weights('heatmap_2'), 1, 'same')
-              .add(this.biases('heatmap_2')) as tf.Tensor3D;
+          this.mobileNet.convToOutput(mobileNetOutput, 'heatmap_2');
 
-      const offsets =
-          mobileNetOutput.conv2d(this.weights('offset_2'), 1, 'same')
-              .add(this.biases('offset_2')) as tf.Tensor3D;
+      const offsets = this.mobileNet.convToOutput(mobileNetOutput, 'offset_2');
 
       const displacementFwd =
-          mobileNetOutput.conv2d(this.weights('displacement_fwd_2'), 1, 'same')
-              .add(this.biases('displacement_fwd_2')) as tf.Tensor3D;
+          this.mobileNet.convToOutput(mobileNetOutput, 'displacement_fwd_2');
 
       const displacementBwd =
-          mobileNetOutput.conv2d(this.weights('displacement_bwd_2'), 1, 'same')
-              .add(this.biases('displacement_bwd_2')) as tf.Tensor3D;
+          this.mobileNet.convToOutput(mobileNetOutput, 'displacement_bwd_2');
 
       return {
         heatmapScores: heatmaps.sigmoid(),
@@ -174,45 +118,79 @@ export class PoseNet {
   }
 
   /**
-   * Infer through PoseNet, and estimates a single pose using the outputs.
-   * assumes variables have been loaded. This does standard ImageNet
-   * pre-processing before inferring through the model. This
-   * method returns a single pose.
+   * Infer through PoseNet, and estimates a single pose using the outputs. This
+   * does standard ImageNet pre-processing before inferring through the model.
+   * The image should pixels should have values [0-255].
+   * This method returns a single pose.
    *
-   * @param input un-preprocessed input image.
+   * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
+   * The input image to feed through the network.
+   *
+   * @param imageScaleFactor A number between 0.2 and 1. Defaults to 0.50. What
+   * to scale the image by before feeding it through the network.  Set this
+   * number lower to scale down the image and increase the speed when feeding
+   * through the network at the cost of accuracy.
+   *
+   * @param flipHorizontal.  Defaults to false.  If the poses should be
+   * flipped/mirrored  horizontally.  This should be set to true for videos
+   * where the video is by default flipped horizontally (i.e. a webcam), and you
+   * want the poses to be returned in the proper orientation.
+   *
    * @param outputStride the desired stride for the outputs.  Must be 32, 16,
-   * or 8. The output width and height will be will be
+   * or 8. Defaults to 16. The output width and height will be will be
    * (inputDimension - 1)/outputStride + 1
    * @return A single pose with a confidence score, which contains an array of
-   * keypoints indexed by part id, each with a score and position.
+   * keypoints indexed by part id, each with a score and position.  The
+   * positions of the keypoints are in the same scale as the original image
    */
-  async estimateSinglePose(input: tf.Tensor3D, outputStride: OutputStride = 32):
-      Promise<Pose> {
-    const {heatmapScores, offsets} =
-        this.predictForSinglePose(input, outputStride);
+  async estimateSinglePose(
+      input: InputType, imageScaleFactor: number = 0.5,
+      flipHorizontal: boolean = false,
+      outputStride: OutputStride = 16): Promise<Pose> {
+    assertValidOutputStride(outputStride);
+    assertValidScaleFactor(imageScaleFactor);
+    const resolution =
+        getValidResolution(imageScaleFactor, input.width, outputStride);
 
-    const pose = await singlePose.decode(heatmapScores, offsets, outputStride);
+    const {heatmapScores, offsets} = tf.tidy(() => {
+      const inputTensor = toInputTensor(input, resolution, flipHorizontal);
+      return this.predictForSinglePose(inputTensor, outputStride);
+    });
+
+    const pose = await decodeSinglePose(heatmapScores, offsets, outputStride);
 
     heatmapScores.dispose();
     offsets.dispose();
 
-    return pose;
+    const scale = input.width / resolution;
+
+    return scalePose(pose, scale);
   }
 
   /**
    * Infer through PoseNet, and estimates multiple poses using the outputs.
-   * assumes variables have been loaded. This does standard ImageNet
-   * pre-processing before inferring through the model.  It detects
-   * multiple poses and finds their parts from part scores and
-   * displacement vectors using a fast greedy decoding algorithm.  It returns
-   * up to `maxDetections` object instance detections in decreasing root score
-   * order.
+   * This does standard ImageNet pre-processing before inferring through the
+   * model. The image should pixels should have values [0-255]. It detects
+   * multiple poses and finds their parts from part scores and displacement
+   * vectors using a fast greedy decoding algorithm.  It returns up to
+   * `maxDetections` object instance detections in decreasing root score order.
    *
-   * @param input un-preprocessed input image.
+   * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
+   * The input image to feed through the network.
+   *
+   * @param imageScaleFactor  A number between 0.2 and 1. Defaults to 0.50. What
+   * to scale the image by before feeding it through the network.  Set this
+   * number lower to scale down the image and increase the speed when feeding
+   * through the network at the cost of accuracy.
+   *
+   * @param flipHorizontal Defaults to false.  If the poses should be
+   * flipped/mirrored  horizontally.  This should be set to true for videos
+   * where the video is by default flipped horizontally (i.e. a webcam), and you
+   * want the poses to be returned in the proper orientation.
    *
    * @param outputStride the desired stride for the outputs.  Must be 32, 16,
-   * or 8. The output width and height will be will be
-   * (inputDimension - 1)/outputStride + 1
+   * or 8. Defaults to 16. The output width and height will be will be
+   * (inputSize - 1)/outputStride + 1
    *
    * @param maxDetections Maximum number of returned instance detections per
    * image. Defaults to 5.
@@ -225,15 +203,24 @@ export class PoseNet {
    * than `nmsRadius` pixels away. Defaults to 20.
    *
    * @return An array of poses and their scores, each containing keypoints and
-   * the corresponding keypoint scores.
+   * the corresponding keypoint scores.  The positions of the keypoints are
+   * in the same scale as the original image
    */
   async estimateMultiplePoses(
-      input: tf.Tensor3D, outputStride: OutputStride = 32, maxDetections = 5,
-      scoreThreshold = .5, nmsRadius = 20): Promise<Pose[]> {
+      input: InputType, imageScaleFactor: number = 0.5,
+      flipHorizontal: boolean = false, outputStride: OutputStride = 16,
+      maxDetections = 5, scoreThreshold = .5, nmsRadius = 20): Promise<Pose[]> {
+    assertValidOutputStride(outputStride);
+    assertValidScaleFactor(imageScaleFactor);
+    const resolution =
+        getValidResolution(imageScaleFactor, input.width, outputStride);
     const {heatmapScores, offsets, displacementFwd, displacementBwd} =
-        this.predictForMultiPose(input, outputStride);
+        tf.tidy(() => {
+          const inputTensor = toInputTensor(input, resolution, flipHorizontal);
+          return this.predictForMultiPose(inputTensor, outputStride);
+        });
 
-    const poses = await multiPose.decode(
+    const poses = await decodeMultiplePoses(
         heatmapScores, offsets, displacementFwd, displacementBwd, outputStride,
         maxDetections, scoreThreshold, nmsRadius);
 
@@ -242,46 +229,55 @@ export class PoseNet {
     displacementFwd.dispose();
     displacementBwd.dispose();
 
-    return poses;
+    const scale = input.width / resolution;
+
+    return scalePoses(poses, scale);
   }
 
-  private depthwiseConvBlock(
-      inputs: tf.Tensor3D, stride: number, blockID: number, dilations = 1) {
-    const dwLayer = `Conv2d_${String(blockID)}_depthwise`;
-    const pwLayer = `Conv2d_${String(blockID)}_pointwise`;
-
-    const x1 = inputs
-                   .depthwiseConv2D(
-                       this.depthwiseWeights(dwLayer), stride, 'same', 'NHWC',
-                       dilations)
-                   .add(this.biases(dwLayer))
-                   // relu6
-                   .clipByValue(0, 6) as tf.Tensor3D;
-
-    const x2 = x1.conv2d(this.weights(pwLayer), [1, 1], 'same')
-                   .add(this.biases(pwLayer))
-                   // relu6
-                   .clipByValue(0, 6) as tf.Tensor3D;
-
-    return x2;
+  public dispose() {
+    this.mobileNet.dispose();
   }
+}
 
-  private weights(layerName: string) {
-    return this.variables[`MobilenetV1/${layerName}/weights`] as tf.Tensor4D;
+/**
+ * Loads the PoseNet model instance from a checkpoint, with the MobileNet
+ * architecture specified by the multiplier.
+ *
+ * @param multiplier An optional number with values: 1.01, 1.0, 0.75, or
+ * 0.50. Defaults to 1.01. It is the float multiplier for the depth (number of
+ * channels) for all convolution ops. The value corresponds to an MobileNet
+ * architecture and checkpoint.  The larger the value, the larger the size of
+ * the layers, and more accurate the model at the cost of speed.  Set this to a
+ * smaller value to increase speed at the cost of accuracy.
+ *
+ */
+export async function load(multiplier: MobileNetMultiplier = 1.01):
+    Promise<PoseNet> {
+  if (tf == null) {
+    throw new Error(
+        `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
+        `also include @tensorflow/tfjs on the page before using this model.`);
   }
+  const possibleMultipliers = Object.keys(checkpoints);
+  tf.util.assert(
+      typeof multiplier === 'number',
+      `got multiplier type of ${typeof multiplier} when it should be a ` +
+          `number.`);
 
-  private biases(layerName: string) {
-    return this.variables[`MobilenetV1/${layerName}/biases`] as tf.Tensor1D;
-  }
+  tf.util.assert(
+      possibleMultipliers.indexOf(multiplier.toString()) >= 0,
+      `invalid multiplier value of ${
+          multiplier}.  No checkpoint exists for that ` +
+          `multiplier. Must be one of ${possibleMultipliers.join(',')}.`);
 
-  private depthwiseWeights(layerName: string) {
-    return this.variables[`MobilenetV1/${layerName}/depthwise_weights`] as
-        tf.Tensor4D;
-  }
+  // get the checkpoint for the multiplier
+  const checkpoint = checkpoints[multiplier];
 
-  dispose() {
-    for (const varName in this.variables) {
-      this.variables[varName].dispose();
-    }
-  }
+  const checkpointLoader = new CheckpointLoader(checkpoint.url);
+
+  const variables = await checkpointLoader.getAllVariables();
+
+  const mobileNet = new MobileNet(variables, checkpoint.architecture);
+
+  return new PoseNet(mobileNet);
 }

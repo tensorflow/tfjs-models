@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs-core';
+import * as tf from '@tensorflow/tfjs';
 
 import {Keypoint, Pose} from '../types';
 import {toTensorBuffers3D} from '../util';
@@ -26,9 +26,9 @@ import {getImageCoords, squaredDistance} from './util';
 
 function withinNmsRadiusOfCorrespondingPoint(
     poses: Pose[], squaredNmsRadius: number, {x, y}: {x: number, y: number},
-    keypointId: number) {
+    keypointId: number): boolean {
   return poses.some(({keypoints}) => {
-    const correspondingKeypoint = keypoints[keypointId].point;
+    const correspondingKeypoint = keypoints[keypointId].position;
     return squaredDistance(
                y, x, correspondingKeypoint.y, correspondingKeypoint.x) <=
         squaredNmsRadius;
@@ -41,11 +41,11 @@ function withinNmsRadiusOfCorrespondingPoint(
  */
 function getInstanceScore(
     existingPoses: Pose[], squaredNmsRadius: number,
-    instanceKeypoints: Keypoint[]) {
-  let notOverlappedKeypointScores =
-      instanceKeypoints.reduce((result, {point, score}, keypointId): number => {
+    instanceKeypoints: Keypoint[]): number {
+  let notOverlappedKeypointScores = instanceKeypoints.reduce(
+      (result, {position, score}, keypointId): number => {
         if (!withinNmsRadiusOfCorrespondingPoint(
-                existingPoses, squaredNmsRadius, point, keypointId)) {
+                existingPoses, squaredNmsRadius, position, keypointId)) {
           result += score;
         }
         return result;
@@ -114,7 +114,7 @@ const kLocalMaximumRadius = 1;
  * @return An array of poses and their scores, each containing keypoints and
  * the corresponding keypoint scores.
  */
-export async function decode(
+export default async function decodeMultiplePoses(
     heatmapScores: tf.Tensor3D, offsets: tf.Tensor3D,
     displacementsFwd: tf.Tensor3D, displacementsBwd: tf.Tensor3D,
     outputStride: number, maxPoseDetections: number, scoreThreshold = 0.5,
