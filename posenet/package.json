@@ -34,9 +34,8 @@
   },
   "scripts": {
     "build": "tsc --sourceMap false && browserify -g browserify-shim --standalone posenet src/index.ts -p [tsify] -o dist/bundle.js",
-    "watch": "watchify --debug -v --standalone posenet src/index.ts -p [tsify] -o dist/index.js",
     "test": "karma start",
-    "publish-npm": "tsc --sourceMap false && yarn build && npm publish",
+    "publish-npm": "yarn build && npm publish",
     "dev": "npm run watch && cs demos && npm run watch",
     "lint": "tslint -p . -t verbose"
   },
