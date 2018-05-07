@@ -13,8 +13,8 @@ PoseNet can be used to estimate either a single pose or multiple poses, meaning 
 You can use this as standalone es5 bundle like this:
 
 ```html
-<script src="https://unpkg.com/tfjs"></script>
-<script src="https://unpkg.com/posenet"></script>
+  <script src="https://unpkg.com/@tensorflow/tfjs"></script>
+  <script src="https://unpkg.com/@tensorflow-models/posenet"></script>
 ```
 
 Or you can install it via npm for use in a TypeScript / ES6 project.
@@ -57,13 +57,16 @@ All keypoints are indexed by part id.  The parts and their ids are:
 Single pose estimation is the simpler and faster of the two algorithms. Its ideal use case is for when there is only one person in the image. The disadvantage is that if there are multiple persons in an image, keypoints from both persons will likely be estimated as being part of the same single pose—meaning, for example, that person #1’s left arm and person #2’s right knee might be conflated by the algorithm as belonging to the same pose.
 
 ```javascript
-const pose = await poseNet.estimateSinglePose(image, outputStride);
+const pose = await poseNet.estimateSinglePose(image, resolution, reverse, outputStride);
 ```
 
 #### Inputs
 
-* **image** - a 3d tensor of the image data to predict the poses for.
-* **outputStride** - the desired stride for the outputs when feeding the image through the model.  Must be 32, 16, 8.   The higher the number, the faster the performance but slower the accuracy, and visa versa.
+* **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
+   The input image to feed through the network.
+* **resolution** - The resolution to scale the image to before feeding through the network. Defaults to 513.  Must have a value which when 1 is subtracted from it, is divisible by the output stride. Sample acceptable values are 29, 161, 193, 257, 289, 321, 353, 385, 417, 449, 481, 513. Set this number lower to scale down the image and increase the speed when feeding through the network.
+* **reverse** - If the input image should be reversed horizontally.  Defaults to false. This is useful for video elements where the input image is usually reversed.
+* **outputStride** - the desired stride for the outputs when feeding the image through the model.  Must be 32, 16, 8.  Defaults to 16.  The higher the number, the faster the performance but slower the accuracy, and visa versa.
 
 #### Returns
 
@@ -71,27 +74,50 @@ It returns a `pose` with a confidence score and an array of keypoints indexed by
 
 #### Example Usage
 
-##### Estimating a single pose from an image
+##### via Script Tag
+
+```html
+<html>
+  <head>
+    <!-- Load TensorFlow.js -->
+    <script src="https://unpkg.com/@tensorflow/tfjs"></script>
+    <!-- Load Posenet -->
+    <script src="https://unpkg.com/@tensorflow-models/posenet"></script>
+ </head>
+
+  <body>
+    <img id='cat' src='/images.cat.jpg '/>
+  </body>
+  <!-- Place your code in the script tag below. You can also use an external .js file -->
+  <script>
+    var resolution = 321;
+    var outputStride = 16;
+    var reverse = false;
+
+    var imageElement = document.getElementById('cat');
+
+    posenet.load().then(function(net){
+      return net.estimateSinglePose(imageElement, resolution, reverse, outputStride)
+    }).then(function(pose){
+      console.log(pose);
+    })
+  </script>
+</html>
+```
+
+###### via NPM
 
 ```javascript
-import * as tf from '@tensorflow/tfjs';
 import * as posenet from '@tensorflow-models/posenet';
-const imageSize = 513;
+const resolution = 321;
 const outputStride = 16;
+const reverse = false;
 
 async function estimatePoseOnImage(imageElement) {
-  const poseNet = new posenet.PoseNet();
-  await poseNet.load();
+  // load the posenet model from a checkpoint
+  const net = await posenet.load();
 
-  // convert html image element to 3d Tensor
-  const image = tf.fromPixels(imageElement);
-  // resize image to have acceptable size
-  const resized = image.resizeBilinear([imageSize, imageSize]);
-
-  const pose = await poseNet.estimateSinglePose(resized, outputStride);
-
-  image.dispose();
-  resized.dispose();
+  const pose = await net.estimateSinglePose(imageElement, resolution, reverse, outputStride);
 
   return pose;
 }
@@ -255,13 +281,16 @@ which would produce the output:
 Multiple Pose estimation can decode multiple poses in an image. It is more complex and slightly slower than the single pose-algorithm, but has the advantage that if multiple people appear in an image, their detected keypoints are less likely to be associated with the wrong pose. Even if the use case is to detect a single person’s pose, this algorithm may be more desirable in that the accidental effect of two poses being joined together won’t occur when multiple people appear in the image. It uses the `Fast greedy decoding` algorithm from the research paper [PersonLab: Person Pose Estimation and Instance Segmentation with a Bottom-Up, Part-Based, Geometric Embedding Model](https://arxiv.org/pdf/1803.08225.pdf).
 
 ```javascript
-const poses = await poseNet.estimateMultiplePoses(image, outputStride, maxPoseDetections, scoreThreshold, nmsRadius);
+const poses = await net.estimateMultiplePoses(image, resolution, reverse, outputStride, maxPoseDetections, scoreThreshold, nmsRadius);
 ```
 
 #### Inputs
 
-* **image** - a 3d tensor of the image data to predict the poses for.
-* **outputStride** - the desired stride for the outputs when feeding the image through the model.  Must be 32, 16, 8.   The higher the number, the faster the performance but slower the accuracy, and visa versa.
+* **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
+   The input image to feed through the network.
+* **resolution** - The resolution to scale the image to before feeding through the network. Defaults to 513.  Must have a value which when 1 is subtracted from it, is divisible by the output stride. Sample acceptable values are 29, 161, 193, 257, 289, 321, 353, 385, 417, 449, 481, 513. Set this number lower to scale down the image and increase the speed feeding when through the network.
+* **reverse** - If the input image should be reversed horizontally.  Defaults to false. This is useful for video elements where the input image is usually reversed.
+* **outputStride** - the desired stride for the outputs when feeding the image through the model.  Must be 32, 16, 8.  Defaults to 16.  The higher the number, the faster the performance but slower the accuracy, and visa versa.
 * **maxPoseDetections** (optional) - the maximum number of poses to detect. Defaults to 5.
 * **scoreThreshold** (optional) - Only return instance detections that have root part score greater or equal to this value. Defaults to 0.5.
 * **nmsRadius** (optional) - Non-maximum suppression part distance. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away. Defaults to 20.
@@ -270,44 +299,67 @@ const poses = await poseNet.estimateMultiplePoses(image, outputStride, maxPoseDe
 
 It returns a `promise` that resolves with an array of `poses`, each with a confidence score and an array of `keypoints` indexed by part id, each with a score and position.
 
-#### Example Usage
+##### via Script Tag
 
-##### Estimating multiple poses from an image
+```html
+<html>
+  <head>
+    <!-- Load TensorFlow.js -->
+    <script src="https://unpkg.com/@tensorflow/tfjs"></script>
+    <!-- Load Posenet -->
+    <script src="https://unpkg.com/@tensorflow-models/posenet"></script>
+ </head>
+
+  <body>
+    <img id='cat' src='/images.cat.jpg '/>
+  </body>
+  <!-- Place your code in the script tag below. You can also use an external .js file -->
+  <script>
+    var resolution = 321;
+    var reverse = false;
+    var outputStride = 16;
+    var maxPoseDetections = 2;
+
+    var imageElement = document.getElementById('cat');
+
+    posenet.load().then(function(net){
+      return net.estimateMultiplePoses(imageElement, resolution, reverse, outputStride, maxPoseDetections)
+    }).then(function(poses){
+      console.log(poses);
+    })
+  </script>
+</html>
+```
+
+###### via NPM
 
 ```javascript
-import * as tf from '@tensorflow/tfjs';
 import * as posenet from '@tensorflow-models/posenet';
 
-const imageSize = 513;
+const resolution = 321;
+const outputStride = 16;
+const reverse = false;
 const outputStride = 16;
 const maxPoseDetections = 2;
 
-const poseNet = new posenet.PoseNet();
-
 async function estimateMultiplePosesOnImage(imageElement) {
-  await poseNet.load();
-
-  const imageElement = document.getElementById('cat');
-
-  // convert html image element to 3d Tensor
-  const image = tf.fromPixels(imageElement);
-
-  // resize image to have acceptable size
-  const resized = image.resizeBilinear([imageSize, imageSize]);
+  const net = await posenet.load();
 
   // estimate poses
-  const poses = await poseNet.estimateMultiplePoses(
-    resized, outputStride, maxPoseDetections);
+  const poses = await net.estimateMultiplePoses(imageElement,
+    resolution, reverse, outputStride, maxPoseDetections);
 
-  console.log(poses);
-
-  image.dispoe();
-  resized.dispose();
+  return poses;
 }
+
+const imageElement = document.getElementById('people');
+
+const poses = estimateMultiplePosesOnImage(imageElement);
+
+console.log(poses);
 ```
 
 This produces the output:
-
 ```
 [
   // pose 1
@@ -430,22 +482,6 @@ This produces the output:
     ]
   }
 ]
-```
-
-##### Getting a keypoint for a specific part in the pose
-
-```javascript
-const pose = await poseNet.estimateSinglePose(image, outputStride);
-
-const noseKeypoint = pose[jointIds.nose];
-
-const leftKneeKeypoint = post[joinIds.leftKnee];
-
-const noseScore = noseKeypoint.score;
-const nosePosition = noseKeypoint.position;
-
-const leftKneeScore = leftKneeKeypoint.score;
-const leftKneePosition = leftKneeKeypoint.position;
 ```
 
 ## Developing the Demos

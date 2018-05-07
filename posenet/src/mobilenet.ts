@@ -1,63 +1,98 @@
-import * as tf from '@tensorflow/tfjs-core';
+/**
+ * @license
+ * Copyright 2018 Google Inc. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * =============================================================================
+ */
 
-import {CheckpointLoader} from './checkpoint_loader';
+import * as tf from '@tensorflow/tfjs';
 
-export type ConvolutionType = 'conv2d'|'seperableConv';
+export type MobileNetMultiplier = 0.50|0.75|1.0|1.01;
+export type ConvolutionType = 'conv2d'|'separableConv';
 export type ConvolutionDefinition = [ConvolutionType, number];
 export type OutputStride = 32|16|8;
 
 // clang-format off
 const mobileNet100Architecture: ConvolutionDefinition[] = [
   ['conv2d', 2],
-  ['seperableConv', 1],
-  ['seperableConv', 2],
-  ['seperableConv', 1],
-  ['seperableConv', 2],
-  ['seperableConv', 1],
-  ['seperableConv', 2],
-  ['seperableConv', 1],
-  ['seperableConv', 1],
-  ['seperableConv', 1],
-  ['seperableConv', 1],
-  ['seperableConv', 1],
-  ['seperableConv', 2],
-  ['seperableConv', 1]
+  ['separableConv', 1],
+  ['separableConv', 2],
+  ['separableConv', 1],
+  ['separableConv', 2],
+  ['separableConv', 1],
+  ['separableConv', 2],
+  ['separableConv', 1],
+  ['separableConv', 1],
+  ['separableConv', 1],
+  ['separableConv', 1],
+  ['separableConv', 1],
+  ['separableConv', 2],
+  ['separableConv', 1]
 ];
 
 const mobileNet75Architecture: ConvolutionDefinition[]  = [
   ['conv2d', 2],
-  ['seperableConv', 1],
-  ['seperableConv', 2],
-  ['seperableConv', 1],
-  ['seperableConv', 2],
-  ['seperableConv', 1],
-  ['seperableConv', 2],
-  ['seperableConv', 1],
-  ['seperableConv', 1],
-  ['seperableConv', 1],
-  ['seperableConv', 1],
-  ['seperableConv', 1],
-  ['seperableConv', 1],
-  ['seperableConv', 1]
+  ['separableConv', 1],
+  ['separableConv', 2],
+  ['separableConv', 1],
+  ['separableConv', 2],
+  ['separableConv', 1],
+  ['separableConv', 2],
+  ['separableConv', 1],
+  ['separableConv', 1],
+  ['separableConv', 1],
+  ['separableConv', 1],
+  ['separableConv', 1],
+  ['separableConv', 1],
+  ['separableConv', 1]
 ];
 
 const mobileNet50Architecture: ConvolutionDefinition[]  = [
   ['conv2d', 2],
-  ['seperableConv', 1],
-  ['seperableConv', 2],
-  ['seperableConv', 1],
-  ['seperableConv', 2],
-  ['seperableConv', 1],
-  ['seperableConv', 2],
-  ['seperableConv', 1],
-  ['seperableConv', 1],
-  ['seperableConv', 1],
-  ['seperableConv', 1],
-  ['seperableConv', 1],
-  ['seperableConv', 1],
-  ['seperableConv', 1]
+  ['separableConv', 1],
+  ['separableConv', 2],
+  ['separableConv', 1],
+  ['separableConv', 2],
+  ['separableConv', 1],
+  ['separableConv', 2],
+  ['separableConv', 1],
+  ['separableConv', 1],
+  ['separableConv', 1],
+  ['separableConv', 1],
+  ['separableConv', 1],
+  ['separableConv', 1],
+  ['separableConv', 1]
 ];
 // clang-format on
+
+const VALID_OUTPUT_STRIDES = [8, 16, 32];
+export function assertValidOutputStride(outputStride: any) {
+  tf.util.assert(
+      typeof outputStride === 'number', 'outputStride is not a number');
+  tf.util.assert(
+      VALID_OUTPUT_STRIDES.indexOf(outputStride) >= 0,
+      `outputStride of ${outputStride} is invalid. ` +
+          `It must be either 8, 16, or 32`);
+}
+
+export function assertValidResolution(resolution: any, outputStride: number) {
+  tf.util.assert(typeof resolution === 'number', 'resolution is not a number');
+
+  tf.util.assert(
+      (resolution - 1) % outputStride === 0,
+      `resolution of ${resolution} is invalid for output stride ` +
+          `${outputStride}.`);
+}
 
 export const mobileNetArchitectures:
     {[name: string]: ConvolutionDefinition[]} = {
@@ -74,11 +109,13 @@ type Layer = {
   rate: number
 };
 
-/* Takes a mobilenet architectures' convolution definitions and converts them
+/**
+ * Takes a mobilenet architectures' convolution definitions and converts them
  * into definitions for convolutional layers that will generate outputs with the
  * desired output stride. It does this by reducing the input stride in certain
  * layers and applying atrous convolution in subsequent layers. Raises an error
- * if the output stride is not possible with the architecture.  */
+ * if the output stride is not possible with the architecture.
+ */
 function toOutputStridedLayers(
     convolutionDefinition: ConvolutionDefinition[],
     outputStride: OutputStride): Layer[] {
@@ -123,15 +160,10 @@ export class MobileNet {
   private PREPROCESS_DIVISOR = tf.scalar(255.0 / 2);
   private ONE = tf.scalar(1);
 
-  async load(
-      checkpointUrl: string,
-      convolutionDefinitions: ConvolutionDefinition[]): Promise<void> {
-    const checkpointLoader = new CheckpointLoader(checkpointUrl);
-
-    // clean up old weights
-    this.dispose();
-
-    this.variables = await checkpointLoader.getAllVariables();
+  constructor(
+      variables: {[varName: string]: tf.Tensor},
+      convolutionDefinitions: ConvolutionDefinition[]) {
+    this.variables = variables;
     this.convolutionDefinitions = convolutionDefinitions;
   }
 
@@ -149,8 +181,8 @@ export class MobileNet {
          {blockId, stride, convType, rate}: Layer) => {
           if (convType === 'conv2d') {
             return this.conv(previousLayer, stride, blockId);
-          } else if (convType === 'seperableConv') {
-            return this.seperableConv(previousLayer, stride, blockId, rate);
+          } else if (convType === 'separableConv') {
+            return this.separableConv(previousLayer, stride, blockId, rate);
           } else {
             throw Error('Unknown conv type of ' + convType);
           }
@@ -174,7 +206,7 @@ export class MobileNet {
                .clipByValue(0, 6) as tf.Tensor3D;
   }
 
-  private seperableConv(
+  private separableConv(
       inputs: tf.Tensor3D, stride: number, blockID: number,
       dilations = 1): tf.Tensor3D {
     const dwLayer = `Conv2d_${String(blockID)}_depthwise`;

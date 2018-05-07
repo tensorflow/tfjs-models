@@ -14,8 +14,8 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as tf from '@tensorflow/tfjs-core';
 import dat from 'dat.gui';
+import * as tf from '@tensorflow/tfjs-core';
 import * as posenet from '../src';
 import {drawKeypoints, drawSkeleton, renderImageToCanvas} from './demo_util';
 
@@ -63,36 +63,6 @@ function toImageData(image) {
   }
 
   return imageData;
-}
-
-function renderToCanvas(image, canvas) {
-  const [height, width] = image.shape;
-  canvas.width = width;
-  canvas.height = height;
-
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = 'black';
-  ctx.fillRect(0, 0, width, height);
-
-  const imageData = toImageData(image);
-
-  ctx.putImageData(imageData, 0, 0);
-}
-
-export function drawHeatmapImage(heatmaps) {
-  const singleChannelImage = posenet.toHeatmapImage(heatmaps);
-  const scaledUp = posenet.resizeBilinearGrayscale(
-    singleChannelImage, [100, 100]);
-
-  renderToCanvas(scaledUp, document.getElementById('heatmap'));
-}
-export function drawHeatmapAsAlpha(image, heatmaps, outputStride, canvas) {
-  const singleChannelImage = posenet.toHeatmapImage(heatmaps);
-  const pixels = tf.fromPixels(image);
-  const alphadImage = posenet.setHeatmapAsAlphaChannel(
-    pixels, outputStride, singleChannelImage);
-
-  renderToCanvas(alphadImage, canvas);
 }
 
 function drawResults(canvas, poses,
@@ -147,7 +117,9 @@ function drawMultiplePosesResults(poses) {
 }
 
 async function decodeSinglePoseAndDrawResults() {
-  if (!modelOutputs) return;
+  if (!modelOutputs) {
+    return;
+  }
 
   const pose = await posenet.decodeSinglePose(
     modelOutputs.heatmapScores, modelOutputs.offsets,
@@ -157,7 +129,9 @@ async function decodeSinglePoseAndDrawResults() {
 }
 
 async function decodeMultiplePosesAndDrawResults() {
-  if (!modelOutputs) return;
+  if (!modelOutputs) {
+    return;
+  }
 
   const poses = await posenet.decodeMultiplePoses(
     modelOutputs.heatmapScores, modelOutputs.offsets,
@@ -190,7 +164,7 @@ function disposeModelOutputs() {
   }
 }
 
-async function testImageAndEstimatePoses(model) {
+async function testImageAndEstimatePoses(net) {
   setStatusText('Predicting...');
   document.getElementById('results').style.display = 'none';
 
@@ -199,7 +173,7 @@ async function testImageAndEstimatePoses(model) {
 
   const input = tf.fromPixels(image);
 
-  modelOutputs = await model.predictForMultiPose(input, guiState.outputStride);
+  modelOutputs = await net.predictForMultiPose(input, guiState.outputStride);
 
   await decodeSingleAndMultiplePoses();
 
@@ -210,18 +184,13 @@ async function testImageAndEstimatePoses(model) {
 
 let guiState;
 
-// var detectButton = { detect: () => {
-//     testImageAndEstimatePoses(model);
-//   }
-// };
-
-function setupGui(model) {
+function setupGui(net) {
   guiState = {
     outputStride: 16,
     image: 'tennis_in_crowd.jpg',
     detectPoseButton: () => {
       testImageAndEstimatePoses(
-        model);
+        net);
     },
     singlePoseDetection: {
       minPartConfidence: 0.5,
@@ -271,14 +240,11 @@ function setupGui(model) {
 }
 
 export async function bindPage() {
-  const model = new posenet.PoseNet();
+  const net = await posenet.load();
 
-  await model.load();
+  setupGui(net);
 
-  setupGui(model);
-
-  // setStatusText('Predicting...');
-  await testImageAndEstimatePoses(model);
+  await testImageAndEstimatePoses(net);
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'block';
 }

@@ -14,7 +14,6 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as tf from '@tensorflow/tfjs-core';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 import * as posenet from '../src';
@@ -78,7 +77,7 @@ function loadVideo(cameraId) {
 const guiState = {
   algorithm: 'single-pose',
   input: {
-    mobileNetArchitecture: '101',
+    mobileNetArchitecture: '1.01',
     outputStride: 16,
     inputImageResolution: 225,
   },
@@ -97,9 +96,12 @@ const guiState = {
     showSkeleton: true,
     showPoints: true,
   },
+  net: null,
 };
 
-function setupGui(cameras, model) {
+function setupGui(cameras, net) {
+  guiState.net = net;
+
   if (cameras.length > 0) {
     guiState.camera = cameras[0].deviceId;
   }
@@ -119,7 +121,7 @@ function setupGui(cameras, model) {
 
   let input = gui.addFolder('Input');
   const architectureController =
-    input.add(guiState.input, 'mobileNetArchitecture', Object.keys(posenet.checkpoints));
+    input.add(guiState.input, 'mobileNetArchitecture', ['1.01', '1.00', '0.75', '0.50']);
   input.add(guiState.input, 'outputStride', [8, 16, 32]);
   input.add(guiState.input, 'inputImageResolution', videoSizes);
   input.open();
@@ -166,18 +168,19 @@ function setupFPS() {
   document.body.appendChild(stats.dom);
 }
 
-function detectPoseInRealTime(video, model) {
+function detectPoseInRealTime(video, net) {
   const canvas = document.getElementById('output');
   const ctx = canvas.getContext('2d');
+  const reverse = true;
 
   canvas.width = canvasSize;
   canvas.height = canvasSize;
 
   async function poseDetectionFrame() {
     if (guiState.changeToArchitecture) {
-      const checkpoint = posenet.checkpoints[guiState.changeToArchitecture];
+      guiState.net.dispose();
 
-      await model.load(checkpoint.url, checkpoint.architecture);
+      guiState.net = await posenet.load(Number(guiState.changeToArchitecture));
 
       guiState.changeToArchitecture = null;
     }
@@ -187,18 +190,12 @@ function detectPoseInRealTime(video, model) {
     const inputImageResolution = Number(guiState.input.inputImageResolution);
     const outputStride = Number(guiState.input.outputStride);
 
-    const originalImage = tf.fromPixels(video);
-    const image = originalImage.reverse(1).resizeBilinear(
-      [inputImageResolution, inputImageResolution]);
-
-    const scale = canvasSize / inputImageResolution;
-
     let poses = [];
     let minPoseConfidence;
     let minPartConfidence;
     switch (guiState.algorithm) {
     case 'single-pose':
-      const pose = await model.estimateSinglePose(image, outputStride);
+      const pose = await guiState.net.estimateSinglePose(video, inputImageResolution, reverse, outputStride);
       poses.push(pose);
 
       minPoseConfidence = Number(
@@ -207,7 +204,7 @@ function detectPoseInRealTime(video, model) {
         guiState.singlePoseDetection.minPartConfidence);
       break;
     case 'multi-pose':
-      poses = await model.estimateMultiplePoses(image, outputStride,
+      poses = await guiState.net.estimateMultiplePoses(video, inputImageResolution, reverse, outputStride,
         guiState.multiPoseDetection.maxPoseDetections,
         guiState.multiPoseDetection.minPartConfidence,
         guiState.multiPoseDetection.nmsRadius);
@@ -226,6 +223,8 @@ function detectPoseInRealTime(video, model) {
       ctx.restore();
     }
 
+    const scale = canvasSize / video.width;
+
     poses.forEach(({score, keypoints}) => {
       if (score >= minPoseConfidence) {
         if (guiState.output.showPoints) {
@@ -237,9 +236,6 @@ function detectPoseInRealTime(video, model) {
       }
     });
 
-    image.dispose();
-    originalImage.dispose();
-
     stats.end();
 
     requestAnimationFrame(poseDetectionFrame);
@@ -249,9 +245,7 @@ function detectPoseInRealTime(video, model) {
 }
 
 export async function bindPage() {
-  const model = new posenet.PoseNet();
-
-  await model.load();
+  const net = await posenet.load();
 
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'block';
@@ -265,9 +259,9 @@ export async function bindPage() {
 
   const video = await loadVideo(cameras[0].deviceId);
 
-  setupGui(cameras, model);
+  setupGui(cameras, net);
   setupFPS();
-  detectPoseInRealTime(video, model);
+  detectPoseInRealTime(video, net);
 }
 
 navigator.getUserMedia = navigator.getUserMedia ||

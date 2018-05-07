@@ -15,45 +15,52 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs-core';
+import * as tf from '@tensorflow/tfjs';
 
-import {PoseNet} from './posenet';
+import {load, PoseNet} from './posenet';
 
 describe('PoseNet', () => {
-  let posenet: PoseNet;
-  beforeAll(async () => {
-    posenet = new PoseNet();
-    await posenet.load();
+  let net: PoseNet;
+
+  beforeAll((done) => {
+    load()
+        .then((posenetInstance: PoseNet) => {
+          net = posenetInstance;
+        })
+        .then(done)
+        .catch(done.fail);
   })
 
   describe('estimateSinglePose', () => {
-    it('does not leak memory', async function() {
-      const image = tf.randomNormal([513, 513, 3]) as tf.Tensor3D;
-      const outputStride = 32;
+    it('does not leak memory', done => {
+      const canvas: HTMLCanvasElement = document.createElement('canvas');
+      canvas.width = 513;
+      canvas.height = 513;
 
       const beforeTensors = tf.memory().numTensors;
-      await posenet.estimateSinglePose(image, outputStride);
 
-      expect(tf.memory().numTensors).toEqual(beforeTensors);
-
-      image.dispose();
+      net.estimateSinglePose(canvas)
+          .then(() => {
+            expect(tf.memory().numTensors).toEqual(beforeTensors);
+          })
+          .then(done)
+          .catch(done.fail);
     });
   });
 
   describe('estimateMultiplePoses', () => {
-    it('does not leak memory', async function() {
-      const posenet = new PoseNet();
-      await posenet.load();
-
-      const image = tf.randomNormal([513, 513, 3]) as tf.Tensor3D;
-      const outputStride = 32;
+    it('does not leak memory', done => {
+      const canvas: HTMLCanvasElement = document.createElement('canvas');
+      canvas.width = 513;
+      canvas.height = 513;
 
       const beforeTensors = tf.memory().numTensors;
-      await posenet.estimateMultiplePoses(image, outputStride);
-
-      expect(tf.memory().numTensors).toEqual(beforeTensors);
-
-      image.dispose();
+      net.estimateMultiplePoses(canvas)
+          .then(() => {
+            expect(tf.memory().numTensors).toEqual(beforeTensors);
+          })
+          .then(done)
+          .catch(done.fail);
     });
   });
 })
