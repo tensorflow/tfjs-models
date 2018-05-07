@@ -31,7 +31,7 @@ export async function load(
         `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
         `also include @tensorflow/tfjs on the page before using this model.`);
   }
-  if (version != 1) {
+  if (version !== 1) {
     throw new Error(
         `Currently only MobileNet V1 is supported. Got version ${version}.`);
   }
@@ -66,9 +66,14 @@ export class MobileNet {
 
   async load() {
     this.model = await tf.loadModel(this.path);
-    // Warmup the model.
-    tf.tidy(() => this.model.predict(tf.zeros([0, IMAGE_SIZE, IMAGE_SIZE, 3])));
     this.endpoints = this.model.layers.map(l => l.name);
+
+    // Warmup the model.
+    const result = tf.tidy(
+                       () => this.model.predict(tf.zeros(
+                           [0, IMAGE_SIZE, IMAGE_SIZE, 3]))) as tf.Tensor;
+    await result.data();
+    result.dispose();
   }
 
   /**
@@ -87,7 +92,7 @@ export class MobileNet {
     if (endpoint != null && this.endpoints.indexOf(endpoint) === -1) {
       throw new Error(
           `Unknown endpoint ${endpoint}. Available endpoints: ` +
-          `${this.endpoints}.`)
+          `${this.endpoints}.`);
     }
 
     return tf.tidy(() => {
@@ -102,7 +107,7 @@ export class MobileNet {
 
       // Resize the image to
       let resized = normalized;
-      if (img.shape[0] != IMAGE_SIZE || img.shape[1] != IMAGE_SIZE) {
+      if (img.shape[0] !== IMAGE_SIZE || img.shape[1] !== IMAGE_SIZE) {
         const alignCorners = true;
         resized = tf.image.resizeBilinear(
             normalized, [IMAGE_SIZE, IMAGE_SIZE], alignCorners);
@@ -118,7 +123,7 @@ export class MobileNet {
         if (this.intermediateModels[endpoint] == null) {
           const layer = this.model.layers.find(l => l.name === endpoint);
           this.intermediateModels[endpoint] =
-              tf.model({inputs: this.model.inputs, outputs: layer.output})
+              tf.model({inputs: this.model.inputs, outputs: layer.output});
         }
         model = this.intermediateModels[endpoint];
       }
@@ -172,7 +177,7 @@ async function getTopKClasses(logits: tf.Tensor2D, topK: number):
     topClassesAndProbs.push({
       className: IMAGENET_CLASSES[topkIndices[i]],
       probability: topkValues[i]
-    })
+    });
   }
   return topClassesAndProbs;
 }

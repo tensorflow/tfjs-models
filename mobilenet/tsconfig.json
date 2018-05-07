@@ -20,6 +20,6 @@
     "experimentalDecorators": true
   },
   "include": [
-    "mobilenet.ts", "imagenet_classes.ts"
+    "index.ts", "imagenet_classes.ts"
   ]
 }

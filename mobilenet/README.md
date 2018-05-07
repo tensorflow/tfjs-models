@@ -19,37 +19,30 @@ There are two main ways to get this model in your JavaScript project: via script
 ### via Script Tag
 
 ```html
-<html>
-  <head>
-    <!-- Load TensorFlow.js. This is required to use MobileNet. -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.10.3"> </script>
-    <!-- Load the MobileNet model. -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@0.1.0"> </script>
+<!-- Load TensorFlow.js. This is required to use MobileNet. -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.10.3"> </script>
+<!-- Load the MobileNet model. -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@0.1.0"> </script>
 
-    <!-- Replace this with your image. Make sure CORS settings allow reading the image! -->
-    <img id="img" src="cat.jpg"></img>
+<!-- Replace this with your image. Make sure CORS settings allow reading the image! -->
+<img id="img" src="cat.jpg"></img>
 
-    <!-- Place your code in the script tag below. You can also use an external .js file -->
-    <script>
-      // Notice there is no 'import' statement. 'mobilenet' and 'tf' is
-      // available on the index-page because of the script tag above.
+<!-- Place your code in the script tag below. You can also use an external .js file -->
+<script>
+  // Notice there is no 'import' statement. 'mobilenet' and 'tf' is
+  // available on the index-page because of the script tag above.
 
-      const img = document.getElementById('img');
+  const img = document.getElementById('img');
 
-      // Load the model.
-      mobilenet.load().then(model => {
-        // Classify the image.
-        model.classify(img).then(predictions => {
-          console.log('Predictions: ');
-          console.log(predictions);
-        });
-      });
-    </script>
-  </head>
-
-  <body>
-  </body>
-</html>
+  // Load the model.
+  mobilenet.load().then(model => {
+    // Classify the image.
+    model.classify(img).then(predictions => {
+      console.log('Predictions: ');
+      console.log(predictions);
+    });
+  });
+</script>
 ```
 
 ### via NPM
