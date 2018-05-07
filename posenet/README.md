@@ -57,7 +57,7 @@ All keypoints are indexed by part id.  The parts and their ids are:
 Single pose estimation is the simpler and faster of the two algorithms. Its ideal use case is for when there is only one person in the image. The disadvantage is that if there are multiple persons in an image, keypoints from both persons will likely be estimated as being part of the same single pose—meaning, for example, that person #1’s left arm and person #2’s right knee might be conflated by the algorithm as belonging to the same pose.
 
 ```javascript
-const pose = await poseNet.estimateSinglePose(image, imageScaleFactor, reverse, outputStride);
+const pose = await poseNet.estimateSinglePose(image, imageScaleFactor, flipHorizontal, outputStride);
 ```
 
 #### Inputs
@@ -65,7 +65,7 @@ const pose = await poseNet.estimateSinglePose(image, imageScaleFactor, reverse, 
 * **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
    The input image to feed through the network.
 * **imageScaleFactor** - A number between 0.2 and 1.0. Defaults to 0.50.   What to scale the image by before feeding it through the network.  Set this number lower to scale down the image and increase the speed when feeding through the network at the cost of accuracy.
-* **reverse** - If the input image should be reversed horizontally.  Defaults to false. This is useful for video elements where the input image is usually reversed.
+* **flipHorizontal** - Defaults to false.  If the poses should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the poses to be returned in the proper orientation.
 * **outputStride** - the desired stride for the outputs when feeding the image through the model.  Must be 32, 16, 8.  Defaults to 16.  The higher the number, the faster the performance but slower the accuracy, and visa versa.
 
 #### Returns
@@ -92,12 +92,12 @@ It returns a `pose` with a confidence score and an array of keypoints indexed by
   <script>
     var imageScaleFactor = 0.5;
     var outputStride = 16;
-    var reverse = false;
+    var flipHorizontal = false;
 
     var imageElement = document.getElementById('cat');
 
     posenet.load().then(function(net){
-      return net.estimateSinglePose(imageElement, imageScaleFactor, reverse, outputStride)
+      return net.estimateSinglePose(imageElement, imageScaleFactor, flipHorizontal, outputStride)
     }).then(function(pose){
       console.log(pose);
     })
@@ -111,13 +111,13 @@ It returns a `pose` with a confidence score and an array of keypoints indexed by
 import * as posenet from '@tensorflow-models/posenet';
 const imageScaleFactor = 0.5;
 const outputStride = 16;
-const reverse = false;
+const flipHorizontal = false;
 
 async function estimatePoseOnImage(imageElement) {
   // load the posenet model from a checkpoint
   const net = await posenet.load();
 
-  const pose = await net.estimateSinglePose(imageElement, imageScaleFactor, reverse, outputStride);
+  const pose = await net.estimateSinglePose(imageElement, imageScaleFactor, flipHorizontal, outputStride);
 
   return pose;
 }
@@ -281,7 +281,7 @@ which would produce the output:
 Multiple Pose estimation can decode multiple poses in an image. It is more complex and slightly slower than the single pose-algorithm, but has the advantage that if multiple people appear in an image, their detected keypoints are less likely to be associated with the wrong pose. Even if the use case is to detect a single person’s pose, this algorithm may be more desirable in that the accidental effect of two poses being joined together won’t occur when multiple people appear in the image. It uses the `Fast greedy decoding` algorithm from the research paper [PersonLab: Person Pose Estimation and Instance Segmentation with a Bottom-Up, Part-Based, Geometric Embedding Model](https://arxiv.org/pdf/1803.08225.pdf).
 
 ```javascript
-const poses = await net.estimateMultiplePoses(image, imageScaleFactor, reverse, outputStride, maxPoseDetections, scoreThreshold, nmsRadius);
+const poses = await net.estimateMultiplePoses(image, imageScaleFactor, flipHorizontal, outputStride, maxPoseDetections, scoreThreshold, nmsRadius);
 ```
 
 #### Inputs
@@ -289,7 +289,7 @@ const poses = await net.estimateMultiplePoses(image, imageScaleFactor, reverse, 
 * **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
    The input image to feed through the network.
 * **imageScaleFactor** - A number between 0.2 and 1.0. Defaults to 0.50.   What to scale the image by before feeding it through the network.  Set this number lower to scale down the image and increase the speed when feeding through the network at the cost of accuracy.
-* **reverse** - If the input image should be reversed horizontally.  Defaults to false. This is useful for video elements where the input image is usually reversed.
+* **flipHorizontal** - Defaults to false.  If the poses should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the poses to be returned in the proper orientation.
 * **outputStride** - the desired stride for the outputs when feeding the image through the model.  Must be 32, 16, 8.  Defaults to 16.  The higher the number, the faster the performance but slower the accuracy, and visa versa.
 * **maxPoseDetections** (optional) - the maximum number of poses to detect. Defaults to 5.
 * **scoreThreshold** (optional) - Only return instance detections that have root part score greater or equal to this value. Defaults to 0.5.
@@ -316,14 +316,14 @@ It returns a `promise` that resolves with an array of `poses`, each with a confi
   <!-- Place your code in the script tag below. You can also use an external .js file -->
   <script>
     var imageScaleFactor = 0.5;
-    var reverse = false;
+    var flipHorizontal = false;
     var outputStride = 16;
     var maxPoseDetections = 2;
 
     var imageElement = document.getElementById('cat');
 
     posenet.load().then(function(net){
-      return net.estimateMultiplePoses(imageElement, 0.5, reverse, outputStride, maxPoseDetections)
+      return net.estimateMultiplePoses(imageElement, 0.5, flipHorizontal, outputStride, maxPoseDetections)
     }).then(function(poses){
       console.log(poses);
     })
@@ -338,7 +338,7 @@ import * as posenet from '@tensorflow-models/posenet';
 
 const imageScaleFactor = 0.5;
 const outputStride = 16;
-const reverse = false;
+const flipHorizontal = false;
 const outputStride = 16;
 const maxPoseDetections = 2;
 
@@ -347,7 +347,7 @@ async function estimateMultiplePosesOnImage(imageElement) {
 
   // estimate poses
   const poses = await net.estimateMultiplePoses(imageElement,
-    imageScaleFactor, reverse, outputStride, maxPoseDetections);
+    imageScaleFactor, flipHorizontal, outputStride, maxPoseDetections);
 
   return poses;
 }

@@ -168,7 +168,7 @@ function setupFPS() {
 function detectPoseInRealTime(video, net) {
   const canvas = document.getElementById('output');
   const ctx = canvas.getContext('2d');
-  const reverse = true;
+  const flipHorizontal = true;
 
   canvas.width = canvasSize;
   canvas.height = canvasSize;
@@ -192,7 +192,7 @@ function detectPoseInRealTime(video, net) {
     let minPartConfidence;
     switch (guiState.algorithm) {
     case 'single-pose':
-      const pose = await guiState.net.estimateSinglePose(video, imageScaleFactor, reverse, outputStride);
+      const pose = await guiState.net.estimateSinglePose(video, imageScaleFactor, flipHorizontal, outputStride);
       poses.push(pose);
 
       minPoseConfidence = Number(
@@ -201,7 +201,7 @@ function detectPoseInRealTime(video, net) {
         guiState.singlePoseDetection.minPartConfidence);
       break;
     case 'multi-pose':
-      poses = await guiState.net.estimateMultiplePoses(video, imageScaleFactor, reverse, outputStride,
+      poses = await guiState.net.estimateMultiplePoses(video, imageScaleFactor, flipHorizontal, outputStride,
         guiState.multiPoseDetection.maxPoseDetections,
         guiState.multiPoseDetection.minPartConfidence,
         guiState.multiPoseDetection.nmsRadius);

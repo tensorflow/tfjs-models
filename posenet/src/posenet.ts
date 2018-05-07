@@ -31,10 +31,10 @@ export type InputType =
     ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement;
 
 function toInputTensor(
-    input: InputType, inputSize: number, reverse: boolean): tf.Tensor3D {
+    input: InputType, inputSize: number, flipHorizontal: boolean): tf.Tensor3D {
   const imageTensor = tf.fromPixels(input);
 
-  if (reverse) {
+  if (flipHorizontal) {
     return imageTensor.reverse(1).resizeBilinear([inputSize, inputSize]);
   } else {
     return imageTensor.resizeBilinear([inputSize, inputSize]);
@@ -131,9 +131,10 @@ export class PoseNet {
    * number lower to scale down the image and increase the speed when feeding
    * through the network at the cost of accuracy.
    *
-   * @param reverse.  A boolean which defaults to false.  If set to true,
-   * reverses the image horizontally before feeding through the network.  Useful
-   * for videos where the image is often reversed horizontally.
+   * @param flipHorizontal.  Defaults to false.  If the poses should be
+   * flipped/mirrored  horizontally.  This should be set to true for videos
+   * where the video is by default flipped horizontally (i.e. a webcam), and you
+   * want the poses to be returned in the proper orientation.
    *
    * @param outputStride the desired stride for the outputs.  Must be 32, 16,
    * or 8. Defaults to 16. The output width and height will be will be
@@ -144,7 +145,7 @@ export class PoseNet {
    */
   async estimateSinglePose(
       input: InputType, imageScaleFactor: number = 0.5,
-      reverse: boolean = false,
+      flipHorizontal: boolean = false,
       outputStride: OutputStride = 16): Promise<Pose> {
     assertValidOutputStride(outputStride);
     assertValidScaleFactor(imageScaleFactor);
@@ -152,7 +153,7 @@ export class PoseNet {
         getValidResolution(imageScaleFactor, input.width, outputStride);
 
     const {heatmapScores, offsets} = tf.tidy(() => {
-      const inputTensor = toInputTensor(input, resolution, reverse);
+      const inputTensor = toInputTensor(input, resolution, flipHorizontal);
       return this.predictForSinglePose(inputTensor, outputStride);
     });
 
@@ -182,9 +183,10 @@ export class PoseNet {
    * number lower to scale down the image and increase the speed when feeding
    * through the network at the cost of accuracy.
    *
-   * @param reverse.  A boolean which defaults to false.  If set to true,
-   * reverses the image horizontally before feeding through the network.  Useful
-   * for videos where the image is often reversed horizontally.
+   * @param flipHorizontal Defaults to false.  If the poses should be
+   * flipped/mirrored  horizontally.  This should be set to true for videos
+   * where the video is by default flipped horizontally (i.e. a webcam), and you
+   * want the poses to be returned in the proper orientation.
    *
    * @param outputStride the desired stride for the outputs.  Must be 32, 16,
    * or 8. Defaults to 16. The output width and height will be will be
@@ -206,7 +208,7 @@ export class PoseNet {
    */
   async estimateMultiplePoses(
       input: InputType, imageScaleFactor: number = 0.5,
-      reverse: boolean = false, outputStride: OutputStride = 16,
+      flipHorizontal: boolean = false, outputStride: OutputStride = 16,
       maxDetections = 5, scoreThreshold = .5, nmsRadius = 20): Promise<Pose[]> {
     assertValidOutputStride(outputStride);
     assertValidScaleFactor(imageScaleFactor);
@@ -214,7 +216,7 @@ export class PoseNet {
         getValidResolution(imageScaleFactor, input.width, outputStride);
     const {heatmapScores, offsets, displacementFwd, displacementBwd} =
         tf.tidy(() => {
-          const inputTensor = toInputTensor(input, resolution, reverse);
+          const inputTensor = toInputTensor(input, resolution, flipHorizontal);
           return this.predictForMultiPose(inputTensor, outputStride);
         });
 
