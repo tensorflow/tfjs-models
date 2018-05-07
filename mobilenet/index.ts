@@ -19,57 +19,52 @@ import * as tf from '@tensorflow/tfjs';
 import {IMAGENET_CLASSES} from './imagenet_classes';
 
 const BASE_PATH = 'https://storage.googleapis.com/tfjs-models/tfjs/';
+const IMAGE_SIZE = 224;
 
-type MobileNetVersion = 1;
-type MobileNetMultiplier = 0.25|0.50|0.75|1.0;
-type MobileNetResolution = 224|192|160|128;
+export type MobileNetVersion = 1;
+export type MobileNetAlpha = 0.25|0.50|0.75|1.0;
 
-export default async function mobilenet(
-    version: MobileNetVersion = 1, multiplier: MobileNetMultiplier = 1.0,
-    resolution: MobileNetResolution = 224) {
+export async function load(
+    version: MobileNetVersion = 1, alpha: MobileNetAlpha = 1.0) {
+  if (tf == null) {
+    throw new Error(
+        `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
+        `also include @tensorflow/tfjs on the page before using this model.`);
+  }
   if (version != 1) {
     throw new Error(
         `Currently only MobileNet V1 is supported. Got version ${version}.`);
   }
-  if ([0.25, 0.50, 0.75, 1.0].indexOf(multiplier) === -1) {
+  if ([0.25, 0.50, 0.75, 1.0].indexOf(alpha) === -1) {
     throw new Error(
-        `MobileNet constructed with invalid multiplier ` +
-        `${multiplier}. Valid multipliers are 0.25, 0.50, 0.75, and 1.0.`);
-  }
-  if (resolution != 224) {
-    throw new Error(
-        `Currently only MobileNet with resolution 224 is supported. Got ` +
-        `resolution ${resolution}.`)
+        `MobileNet constructed with invalid alpha ` +
+        `${alpha}. Valid multipliers are 0.25, 0.50, 0.75, and 1.0.`);
   }
 
-  const mobilenet = new MobileNet(version, multiplier, resolution);
+  const mobilenet = new MobileNet(version, alpha);
   await mobilenet.load();
   return mobilenet;
 }
 
-class MobileNet {
+export class MobileNet {
   private path: string;
   private model: tf.Model;
 
-  private offset: tf.Scalar;
+  private normalizationOffset: tf.Scalar;
 
-  constructor(
-      version: MobileNetVersion, multiplier: MobileNetMultiplier,
-      private resolution: MobileNetResolution) {
+  constructor(version: MobileNetVersion, alpha: MobileNetAlpha) {
     const multiplierStr =
-        ({0.25: '0.25', 0.50: '0.50', 0.75: '0.75', 1.0: '1.0'})[multiplier];
+        ({0.25: '0.25', 0.50: '0.50', 0.75: '0.75', 1.0: '1.0'})[alpha];
     this.path =
-        `${BASE_PATH}mobilenet_v${version}_${multiplierStr}_${resolution}/` +
+        `${BASE_PATH}mobilenet_v${version}_${multiplierStr}_${IMAGE_SIZE}/` +
         `model.json`;
-    this.offset = tf.scalar(127.5);
+    this.normalizationOffset = tf.scalar(127.5);
   }
 
   async load() {
     this.model = await tf.loadModel(this.path);
     // Warmup the model.
-    tf.tidy(
-        () => this.model.predict(
-            tf.zeros([0, this.resolution, this.resolution, 3])));
+    tf.tidy(() => this.model.predict(tf.zeros([0, IMAGE_SIZE, IMAGE_SIZE, 3])));
   }
 
   /**
@@ -90,21 +85,22 @@ class MobileNet {
       }
 
       // Normalize the image from [0, 255] to [-1, 1].
-      const normalized =
-          img.toFloat().sub(this.offset).div(this.offset) as tf.Tensor3D;
+      const normalized = img.toFloat()
+                             .sub(this.normalizationOffset)
+                             .div(this.normalizationOffset) as tf.Tensor3D;
 
       // Resize the image to
       let resized = normalized;
-      if (img.shape[0] != this.resolution || img.shape[1] != this.resolution) {
+      if (img.shape[0] != IMAGE_SIZE || img.shape[1] != IMAGE_SIZE) {
         const alignCorners = true;
         resized = tf.image.resizeBilinear(
-            normalized, [this.resolution, this.resolution], alignCorners);
+            normalized, [IMAGE_SIZE, IMAGE_SIZE], alignCorners);
       }
 
       // Reshape to a single-element batch so we can pass it to predict.
-      const batched = resized.reshape([1, this.resolution, this.resolution, 3]);
+      const batched = resized.reshape([1, IMAGE_SIZE, IMAGE_SIZE, 3]);
 
-      return this.model.predict(batched) as tf.Tensor;
+      return this.model.predict(batched) as tf.Tensor2D;
     });
 
     const classes = await getTopKClasses(logits, topk);
@@ -115,8 +111,8 @@ class MobileNet {
   }
 }
 
-async function getTopKClasses(
-    logits, topK): Promise<Array<{className: string, probability: number}>> {
+async function getTopKClasses(logits: tf.Tensor2D, topK: number):
+    Promise<Array<{className: string, probability: number}>> {
   const values = await logits.data();
 
   const valuesAndIndices = [];

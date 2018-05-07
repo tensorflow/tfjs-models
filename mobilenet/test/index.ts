@@ -1,7 +1,7 @@
-import mobilenet from '../mobilenet';
+import * as mobilenet from '../index';
 
 async function page() {
-  const net = await mobilenet(1, 0.25);
+  const net = await mobilenet.load();
 
   const img = document.getElementById('cat') as HTMLImageElement;
   const preds = await net.classify(img);
