@@ -74,7 +74,38 @@ It returns a `pose` with a confidence score and an array of keypoints indexed by
 
 #### Example Usage
 
-##### Estimating a single pose from an image
+##### via Script Tag
+
+```html
+<html>
+  <head>
+    <!-- Load TensorFlow.js -->
+    <script src="https://unpkg.com/tfjs"></script>
+    <!-- Load Posenet -->
+    <script src="https://unpkg.com/posenet"></script>
+ </head>
+
+  <body>
+    <img id='cat' src='/images.cat.jpg '/>
+  </body>
+  <!-- Place your code in the script tag below. You can also use an external .js file -->
+  <script>
+    var resolution = 321;
+    var outputStride = 16;
+    var reverse = false;
+
+    var imageElement = document.getElementById('cat');
+
+    posenet.load().then(function(net){
+      return net.estimateSinglePose(imageElement, resolution, reverse, outputStride)
+    }).then(function(pose){
+      console.log(pose);
+    })
+  </script>
+</html>
+```
+
+###### via NPM
 
 ```javascript
 import * as posenet from '@tensorflow-models/posenet';
@@ -268,9 +299,39 @@ const poses = await net.estimateMultiplePoses(image, resolution, reverse, output
 
 It returns a `promise` that resolves with an array of `poses`, each with a confidence score and an array of `keypoints` indexed by part id, each with a score and position.
 
-#### Example Usage
+##### via Script Tag
 
-##### Estimating multiple poses from an image
+```html
+<html>
+  <head>
+    <!-- Load TensorFlow.js -->
+    <script src="https://unpkg.com/tfjs"></script>
+    <!-- Load Posenet -->
+    <script src="https://unpkg.com/posenet"></script>
+ </head>
+
+  <body>
+    <img id='cat' src='/images.cat.jpg '/>
+  </body>
+  <!-- Place your code in the script tag below. You can also use an external .js file -->
+  <script>
+    var resolution = 321;
+    var reverse = false;
+    var outputStride = 16;
+    var maxPoseDetections = 2;
+
+    var imageElement = document.getElementById('cat');
+
+    posenet.load().then(function(net){
+      return net.estimateMultiplePoses(imageElement, resolution, reverse, outputStride, maxPoseDetections)
+    }).then(function(poses){
+      console.log(poses);
+    })
+  </script>
+</html>
+```
+
+###### via NPM
 
 ```javascript
 import * as posenet from '@tensorflow-models/posenet';
