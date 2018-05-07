@@ -55,13 +55,13 @@ import * as mobilenet from '@tensorflow-models/mobilenet';
 const img = document.getElementById('img');
 
 // Load the model.
-mobilenet.load().then(model => {
-  // Classify the image.
-  model.classify(img).then(predictions => {
-    console.log('Predictions: ');
-    console.log(predictions);
-  });
-});
+const model = await mobilenet.load();
+
+// Classify the image.
+const predictions = await model.classify(img);
+
+console.log('Predictions: ');
+console.log(predictions);
 ```
 
 ## API
