@@ -27,7 +27,7 @@
   "scripts": {
     "build": "tsc --sourceMap false && browserify  -g browserify-shim --standalone mobilenet index.ts -p [tsify] -o dist/bundle.js",
     "test": "karma start",
-    "publish-npm": "tsc --sourceMap false && yarn build && npm publish",
+    "publish-npm": "yarn build && npm publish",
     "dev": "npm run watch && cs demos && npm run watch",
     "lint": "tslint -p . -t verbose"
   },
