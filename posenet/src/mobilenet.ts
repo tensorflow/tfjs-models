@@ -99,7 +99,7 @@ export function assertValidScaleFactor(imageScaleFactor: any) {
       typeof imageScaleFactor === 'number', 'imageScaleFactor is not a number');
 
   tf.util.assert(
-      imageScaleFactor >= 2.0 && imageScaleFactor <= 1.0,
+      imageScaleFactor >= 0.2 && imageScaleFactor <= 1.0,
       'imageScaleFactor must be between 0.2 and 1.0')
 }
 
