@@ -47,8 +47,11 @@ export async function load(
 }
 
 export class MobileNet {
+  public endpoints: string[];
+
   private path: string;
   private model: tf.Model;
+  private intermediateModels: {[layerName: string]: tf.Model} = {};
 
   private normalizationOffset: tf.Scalar;
 
@@ -59,6 +62,7 @@ export class MobileNet {
         `${BASE_PATH}mobilenet_v${version}_${multiplierStr}_${IMAGE_SIZE}/` +
         `model.json`;
     this.normalizationOffset = tf.scalar(127.5);
+    this.endpoints = this.model.layers.map(l => l.name);
   }
 
   async load() {
@@ -68,18 +72,25 @@ export class MobileNet {
   }
 
   /**
-   * Classifies an image from the 1000 ImageNet classes returning a map of
-   * the most likely class names to their probability.
+   * Infers through the model. Optionally takes an endpoint to return an
+   * intermediate activation.
    *
    * @param img The image to classify. Can be a tensor or a DOM element image,
    * video, or canvas.
-   * @param topk How many top values to use. Defaults to 3.
+   * @param endpoint The endpoint to infer through. If not defined, returns
+   * logits.
    */
-  async classify(
+  infer(
       img: tf.Tensor3D|ImageData|HTMLImageElement|HTMLCanvasElement|
       HTMLVideoElement,
-      topk = 3): Promise<Array<{className: string, probability: number}>> {
-    const logits = tf.tidy(() => {
+      endpoint?: string): tf.Tensor {
+    if (endpoint != null && this.endpoints.indexOf(endpoint) === -1) {
+      throw new Error(
+          `Unknown endpoint ${endpoint}. Available endpoints: ` +
+          `${this.endpoints}.`)
+    }
+
+    return tf.tidy(() => {
       if (!(img instanceof tf.Tensor)) {
         img = tf.fromPixels(img);
       }
@@ -100,8 +111,35 @@ export class MobileNet {
       // Reshape to a single-element batch so we can pass it to predict.
       const batched = resized.reshape([1, IMAGE_SIZE, IMAGE_SIZE, 3]);
 
+      let model: tf.Model;
+      if (endpoint == null) {
+        model = this.model;
+      } else {
+        if (this.intermediateModels[endpoint] == null) {
+          const layer = this.model.layers.find(l => l.name === endpoint);
+          this.intermediateModels[endpoint] =
+              tf.model({inputs: this.model.inputs, outputs: layer.output})
+        }
+        model = this.intermediateModels[endpoint];
+      }
+
       return this.model.predict(batched) as tf.Tensor2D;
     });
+  }
+
+  /**
+   * Classifies an image from the 1000 ImageNet classes returning a map of
+   * the most likely class names to their probability.
+   *
+   * @param img The image to classify. Can be a tensor or a DOM element image,
+   * video, or canvas.
+   * @param topk How many top values to use. Defaults to 3.
+   */
+  async classify(
+      img: tf.Tensor3D|ImageData|HTMLImageElement|HTMLCanvasElement|
+      HTMLVideoElement,
+      topk = 3): Promise<Array<{className: string, probability: number}>> {
+    const logits = this.infer(img) as tf.Tensor2D;
 
     const classes = await getTopKClasses(logits, topk);
 

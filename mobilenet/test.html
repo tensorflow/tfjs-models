@@ -12,6 +12,8 @@ async function go() {
   const img = document.getElementById('img');
   const pred = await net.classify(img);
 
+  console.log(net.endpoints());
+
   console.log(pred);
 }
 go();
