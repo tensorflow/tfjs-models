@@ -5,7 +5,7 @@ MobileNets are small, low-latency, low-power models parameterized to meet the re
 MobileNets trade off between latency, size and accuracy while comparing favorably with popular models from the literature.
 
 This TensorFlow.js model does not require you to know about machine learning.
-It can take as input any browser-based image elements (<img>, <video>, <canvas>
+It can take as input any browser-based image elements (`<img>`, `<video>`, `<canvas>`
 elements, for example) and returns an array of most likely predictions and
 their confidences.
 
@@ -81,19 +81,58 @@ mobilenet.load(
 ```
 
 Args:
-- version: The MobileNet version number. Currently only accepts and defaults to version 1. In the future we will support MobileNet V2.
-- alpha: Controls the width of the network, trading accuracy for performance. A smaller alpha decreases accuracy and increases performance. Defaults to 1.0.
+- **version:** The MobileNet version number. Currently only accepts and defaults to version 1. In the future we will support MobileNet V2.
+- **alpha:** Controls the width of the network, trading accuracy for performance. A smaller alpha decreases accuracy and increases performance. Defaults to 1.0.
 
 Returns a `model` object.
 
 #### Making a classification
+
+You can make a classification with mobilenet without needing to create a Tensor
+with `MobileNet.classify`, which takes an input image element and returns an
+array with top classes and their probabilities.
+
+If you want to use this for transfer learning, see the `infer` method.
+
 ```ts
 model.classify(
   img: tf.Tensor3D | ImageData | HTMLImageElement |
       HTMLCanvasElement | HTMLVideoElement,
   topk?: number
 )
+```
 
 Args:
-- img: A Tensor or an image element to make a classification on.
-- topk: How many of the top probabilities to return. Defaults to 3.
+- **img:** A Tensor or an image element to make a classification on.
+- **topk:** How many of the top probabilities to return. Defaults to 3.
+
+Returns an array of classes and probabilities that looks like:
+
+```js
+[{
+  className: "Egyptian cat",
+  probability: 0.8380282521247864
+}, {
+  className: "tabby, tabby cat",
+  probability: 0.04644153267145157
+}, {
+  className: "Siamese cat, Siamese",
+  probability: 0.024488523602485657
+}]
+```
+
+#### Getting activations
+
+You can also use this model to get intermediate activations or logits as
+TensorFlow.js tensors.
+
+```ts
+model.infer(
+  img: tf.Tensor3D | ImageData | HTMLImageElement |
+      HTMLCanvasElement | HTMLVideoElement,
+  endpoint?: string
+)
+```
+
+- **img:** A Tensor or an image element to make a classification on.
+- **endpoint:** The optional endpoint to predict through. You can list all the endpoints with `model.endpoint`. These correspond to layers of the MobileNet model. If undefined, will return 1000D unnormalized logits.

@@ -62,13 +62,13 @@ export class MobileNet {
         `${BASE_PATH}mobilenet_v${version}_${multiplierStr}_${IMAGE_SIZE}/` +
         `model.json`;
     this.normalizationOffset = tf.scalar(127.5);
-    this.endpoints = this.model.layers.map(l => l.name);
   }
 
   async load() {
     this.model = await tf.loadModel(this.path);
     // Warmup the model.
     tf.tidy(() => this.model.predict(tf.zeros([0, IMAGE_SIZE, IMAGE_SIZE, 3])));
+    this.endpoints = this.model.layers.map(l => l.name);
   }
 
   /**
@@ -123,7 +123,7 @@ export class MobileNet {
         model = this.intermediateModels[endpoint];
       }
 
-      return this.model.predict(batched) as tf.Tensor2D;
+      return model.predict(batched) as tf.Tensor2D;
     });
   }
 
