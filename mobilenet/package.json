@@ -1,0 +1,43 @@
+{
+  "name": "@tensorflow-models/mobilenet",
+  "version": "0.0.1",
+  "description": "Pretrained MobileNet in TensorFlow.js",
+  "main": "dist/index.js",
+  "unpkg": "dist/bundle.js",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tensorflow/tfjs-models.git"
+  },
+  "peerDependencies": {
+    "@tensorflow/tfjs": "0.10.3"
+  },
+  "devDependencies": {
+    "@tensorflow/tfjs": "0.10.3",
+    "babel-core": "^6.26.0",
+    "babel-plugin-transform-runtime": "~6.23.0",
+    "browserify": "~14.5.0",
+    "browserify-shim": "~3.8.14",
+    "tsify": "~3.0.3",
+    "tslint": "~5.8.0",
+    "typescript": "2.7.2",
+    "uglifyjs": "~2.4.11",
+    "watchify": "~3.11.0"
+  },
+  "scripts": {
+    "build": "tsc --sourceMap false && browserify  -g browserify-shim --standalone mobilenet index.ts -p [tsify] -o dist/bundle.js",
+    "test": "karma start",
+    "publish-npm": "yarn build && npm publish",
+    "dev": "npm run watch && cs demos && npm run watch",
+    "lint": "tslint -p . -t verbose"
+  },
+  "browserify-shim": {
+    "@tensorflow/tfjs": "global:tf"
+  },
+  "browserify": {
+    "global-transform": [
+      "browserify-shim"
+    ]
+  },
+  "license": "Apache-2.0"
+}
