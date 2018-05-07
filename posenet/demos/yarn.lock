@@ -12,7 +12,7 @@
   version "0.5.3"
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-layers/-/tfjs-layers-0.5.3.tgz#0b45624ba8bcbd8e904f68344f16cf6358c695af"
 
-"@tensorflow/tfjs@0.8.1":
+"@tensorflow/tfjs@0.10.3":
   version "0.10.3"
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs/-/tfjs-0.10.3.tgz#29d44e57d53492532829c768958151fb8893b2ab"
   dependencies:

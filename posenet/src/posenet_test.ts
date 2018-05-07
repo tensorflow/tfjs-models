@@ -15,9 +15,9 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs-core';
+import * as tf from '@tensorflow/tfjs';
 
-import load, {PoseNet} from './posenet';
+import {load, PoseNet} from './posenet';
 
 describe('PoseNet', () => {
   let net: PoseNet;

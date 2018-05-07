@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs-core';
+import * as tf from '@tensorflow/tfjs';
 
 import {connectedPartIndeces} from './keypoints';
 import {Keypoint, Pose, TensorBuffer3D, Vector2D} from './types';

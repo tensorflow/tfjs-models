@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs-core';
+import * as tf from '@tensorflow/tfjs';
 
 export type MobileNetMultiplier = 0.50|0.75|1.0|1.01;
 export type ConvolutionType = 'conv2d'|'separableConv';

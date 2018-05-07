@@ -10,7 +10,7 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs": "0.8.1"
+    "@tensorflow/tfjs": "0.10.3"
   },
   "devDependencies": {
     "@types/jasmine": "~2.5.53",
@@ -25,7 +25,7 @@
     "karma-firefox-launcher": "~1.0.1",
     "karma-jasmine": "~1.1.0",
     "karma-typescript": "~3.0.8",
-    "@tensorflow/tfjs": "0.8.1",
+    "@tensorflow/tfjs": "0.10.3",
     "tslint": "~5.8.0",
     "tsify": "~3.0.1",
     "typescript": "2.7.2",
@@ -41,7 +41,7 @@
     "lint": "tslint -p . -t verbose"
   },
   "browserify-shim": {
-    "tf": "global:tf"
+    "@tensorflow/tfjs": "global:tf"
   },
   "browserify": {
     "global-transform": [

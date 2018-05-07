@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs-core';
+import * as tf from '@tensorflow/tfjs';
 
 import {CheckpointLoader} from './checkpoint_loader';
 import {checkpoints} from './checkpoints';
@@ -34,10 +34,11 @@ function toInputTensor(
     input: InputType, inputSize: number, reverse: boolean): tf.Tensor3D {
   const imageTensor = tf.fromPixels(input);
 
-  if (reverse)
+  if (reverse) {
     return imageTensor.reverse(1).resizeBilinear([inputSize, inputSize]);
-  else
+  } else {
     return imageTensor.resizeBilinear([inputSize, inputSize]);
+  }
 }
 
 export class PoseNet {
@@ -153,7 +154,7 @@ export class PoseNet {
     const {heatmapScores, offsets} = tf.tidy(() => {
       const inputTensor = toInputTensor(input, resolution, reverse);
       return this.predictForSinglePose(inputTensor, outputStride);
-    })
+    });
 
     const pose = await decodeSinglePose(heatmapScores, offsets, outputStride);
 
@@ -215,7 +216,7 @@ export class PoseNet {
         tf.tidy(() => {
           const inputTensor = toInputTensor(input, resolution, reverse);
           return this.predictForMultiPose(inputTensor, outputStride);
-        })
+        });
 
     const poses = await decodeMultiplePoses(
         heatmapScores, offsets, displacementFwd, displacementBwd, outputStride,
@@ -240,18 +241,21 @@ export class PoseNet {
  * Loads the PoseNet model instance from a checkpoint, with the MobileNet
  * architecture specified by the multiplier.
  *
- * @param multiplier An optional string with values: "1.01", "1.00, ""0.75", or
- * "0.50". Defaults to "1.01". It is the string with the value of the float
- * multiplier for the depth (number of channels) for all convolution ops. The
- * value corresponds to an MobileNet architecture and checkpoint.  The larger
- * the value, the larger the size of the layers, and more accurate the model at
- * the cost of speed.  Set this to a smaller value to increase speed at the cost
- * of accuracy.
+ * @param multiplier An optional number with values: 1.01, 1.0, 0.75, or
+ * 0.50. Defaults to 1.01. It is the float multiplier for the depth (number of
+ * channels) for all convolution ops. The value corresponds to an MobileNet
+ * architecture and checkpoint.  The larger the value, the larger the size of
+ * the layers, and more accurate the model at the cost of speed.  Set this to a
+ * smaller value to increase speed at the cost of accuracy.
  *
- * @return
  */
-export default async function load(multiplier: MobileNetMultiplier = 1.01):
+export async function load(multiplier: MobileNetMultiplier = 1.01):
     Promise<PoseNet> {
+  if (tf == null) {
+    throw new Error(
+        `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
+        `also include @tensorflow/tfjs on the page before using this model.`);
+  }
   const possibleMultipliers = Object.keys(checkpoints);
   tf.util.assert(
       typeof multiplier === 'number',
