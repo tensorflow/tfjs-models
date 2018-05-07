@@ -74,10 +74,14 @@ mobilenet.load().then(model => {
 ## API
 
 #### Loading the model
+`mobilenet` is the module name, which is automatically included when you use
+the <script src> method. When using ES6 imports, mobilenet is the module.
+
 ```ts
 mobilenet.load(
   version?: 1,
-  alpha?: 0.25 | .50 | .75 | 1.0)
+  alpha?: 0.25 | .50 | .75 | 1.0
+)
 ```
 
 Args:
@@ -93,6 +97,8 @@ with `MobileNet.classify`, which takes an input image element and returns an
 array with top classes and their probabilities.
 
 If you want to use this for transfer learning, see the `infer` method.
+
+This method exists on the model that is loaded from `mobilenet.load`.
 
 ```ts
 model.classify(
@@ -125,6 +131,8 @@ Returns an array of classes and probabilities that looks like:
 
 You can also use this model to get intermediate activations or logits as
 TensorFlow.js tensors.
+
+This method exists on the model that is loaded from `mobilenet.load`.
 
 ```ts
 model.infer(
