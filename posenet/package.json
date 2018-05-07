@@ -47,8 +47,5 @@
       "browserify-shim"
     ]
   },
-  "license": "Apache-2.0",
-  "dependencies": {
-    "npm": "^6.0.0"
-  }
+  "license": "Apache-2.0"
 }
