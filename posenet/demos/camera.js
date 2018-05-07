@@ -19,9 +19,6 @@ import Stats from 'stats.js';
 import * as posenet from '../src';
 
 import {drawKeypoints, drawSkeleton} from './demo_util';
-const maxStride = 32;
-const videoSizes = [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].map(
-  (multiplier) => (maxStride * multiplier + 1));
 const maxVideoSize = 513;
 const canvasSize = 400;
 const stats = new Stats();
@@ -79,7 +76,7 @@ const guiState = {
   input: {
     mobileNetArchitecture: '1.01',
     outputStride: 16,
-    inputImageResolution: 225,
+    imageScaleFactor: 0.5,
   },
   singlePoseDetection: {
     minPoseConfidence: 0.1,
@@ -123,7 +120,7 @@ function setupGui(cameras, net) {
   const architectureController =
     input.add(guiState.input, 'mobileNetArchitecture', ['1.01', '1.00', '0.75', '0.50']);
   input.add(guiState.input, 'outputStride', [8, 16, 32]);
-  input.add(guiState.input, 'inputImageResolution', videoSizes);
+  input.add(guiState.input, 'imageScaleFactor').min(0.2).max(1.0);
   input.open();
 
   let single = gui.addFolder('Single Pose Detection');
@@ -171,7 +168,7 @@ function setupFPS() {
 function detectPoseInRealTime(video, net) {
   const canvas = document.getElementById('output');
   const ctx = canvas.getContext('2d');
-  const reverse = true;
+  const flipHorizontal = true;
 
   canvas.width = canvasSize;
   canvas.height = canvasSize;
@@ -187,7 +184,7 @@ function detectPoseInRealTime(video, net) {
 
     stats.begin();
 
-    const inputImageResolution = Number(guiState.input.inputImageResolution);
+    const imageScaleFactor = guiState.input.imageScaleFactor;
     const outputStride = Number(guiState.input.outputStride);
 
     let poses = [];
@@ -195,7 +192,7 @@ function detectPoseInRealTime(video, net) {
     let minPartConfidence;
     switch (guiState.algorithm) {
     case 'single-pose':
-      const pose = await guiState.net.estimateSinglePose(video, inputImageResolution, reverse, outputStride);
+      const pose = await guiState.net.estimateSinglePose(video, imageScaleFactor, flipHorizontal, outputStride);
       poses.push(pose);
 
       minPoseConfidence = Number(
@@ -204,7 +201,7 @@ function detectPoseInRealTime(video, net) {
         guiState.singlePoseDetection.minPartConfidence);
       break;
     case 'multi-pose':
-      poses = await guiState.net.estimateMultiplePoses(video, inputImageResolution, reverse, outputStride,
+      poses = await guiState.net.estimateMultiplePoses(video, imageScaleFactor, flipHorizontal, outputStride,
         guiState.multiPoseDetection.maxPoseDetections,
         guiState.multiPoseDetection.minPartConfidence,
         guiState.multiPoseDetection.nmsRadius);

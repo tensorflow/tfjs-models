@@ -46,25 +46,6 @@ const images = [
   'two_on_bench.jpg',
 ];
 
-function toImageData(image) {
-  const [height, width] = image.shape;
-
-  const imageData = new ImageData(width, height);
-  const data = image.buffer().values;
-
-  for (let i = 0; i < height * width; i++) {
-    const j = i * 4;
-    const k = i * 4;
-
-    imageData.data[j + 0] = Math.round(255 * data[k + 0]);
-    imageData.data[j + 1] = Math.round(255 * data[k + 1]);
-    imageData.data[j + 2] = Math.round(255 * data[k + 2]);
-    imageData.data[j + 3] = Math.max(20, Math.round(255 * data[k + 3]));
-  }
-
-  return imageData;
-}
-
 function drawResults(canvas, poses,
   minPartConfidence, minPoseConfidence) {
   renderImageToCanvas(image, [513, 513], canvas);

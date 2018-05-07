@@ -19,11 +19,11 @@ import * as tf from '@tensorflow/tfjs';
 
 import {CheckpointLoader} from './checkpoint_loader';
 import {checkpoints} from './checkpoints';
-import {assertValidOutputStride, assertValidResolution, MobileNet, MobileNetMultiplier, OutputStride} from './mobilenet';
+import {assertValidOutputStride, assertValidScaleFactor, MobileNet, MobileNetMultiplier, OutputStride} from './mobilenet';
 import decodeMultiplePoses from './multiPose/decodeMultiplePoses';
 import decodeSinglePose from './singlePose/decodeSinglePose';
 import {Pose} from './types';
-import {scalePose, scalePoses} from './util';
+import {getValidResolution, scalePose, scalePoses} from './util';
 
 export type PoseNetResolution = 161|193|257|289|321|353|385|417|449|481|513;
 
@@ -31,10 +31,10 @@ export type InputType =
     ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement;
 
 function toInputTensor(
-    input: InputType, inputSize: number, reverse: boolean): tf.Tensor3D {
+    input: InputType, inputSize: number, flipHorizontal: boolean): tf.Tensor3D {
   const imageTensor = tf.fromPixels(input);
 
-  if (reverse) {
+  if (flipHorizontal) {
     return imageTensor.reverse(1).resizeBilinear([inputSize, inputSize]);
   } else {
     return imageTensor.resizeBilinear([inputSize, inputSize]);
@@ -126,16 +126,15 @@ export class PoseNet {
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
    *
-   * @param resolution The resolution the input should be resized to before
-   * feeding it through the network.  Defaults to 513.  Must have a value which
-   * when 1 is subtracted from it, is divisible by the output stride. Sample
-   * acceptable values are 29, 161, 193, 257, 289, 321, 353, 385, 417, 449, 481,
-   * 513. Set this number lower to scale down the image and increase the speed
-   * when feeding through the network.
+   * @param imageScaleFactor A number between 0.2 and 1. Defaults to 0.50. What
+   * to scale the image by before feeding it through the network.  Set this
+   * number lower to scale down the image and increase the speed when feeding
+   * through the network at the cost of accuracy.
    *
-   * @param reverse.  A boolean which defaults to false.  If set to true,
-   * reverses the image horizontally before feeding through the network.  Useful
-   * for videos where the image is often reversed horizontally.
+   * @param flipHorizontal.  Defaults to false.  If the poses should be
+   * flipped/mirrored  horizontally.  This should be set to true for videos
+   * where the video is by default flipped horizontally (i.e. a webcam), and you
+   * want the poses to be returned in the proper orientation.
    *
    * @param outputStride the desired stride for the outputs.  Must be 32, 16,
    * or 8. Defaults to 16. The output width and height will be will be
@@ -145,14 +144,16 @@ export class PoseNet {
    * positions of the keypoints are in the same scale as the original image
    */
   async estimateSinglePose(
-      input: InputType, resolution: PoseNetResolution = 513,
-      reverse: boolean = false,
+      input: InputType, imageScaleFactor: number = 0.5,
+      flipHorizontal: boolean = false,
       outputStride: OutputStride = 16): Promise<Pose> {
     assertValidOutputStride(outputStride);
-    assertValidResolution(resolution, outputStride);
+    assertValidScaleFactor(imageScaleFactor);
+    const resolution =
+        getValidResolution(imageScaleFactor, input.width, outputStride);
 
     const {heatmapScores, offsets} = tf.tidy(() => {
-      const inputTensor = toInputTensor(input, resolution, reverse);
+      const inputTensor = toInputTensor(input, resolution, flipHorizontal);
       return this.predictForSinglePose(inputTensor, outputStride);
     });
 
@@ -177,16 +178,15 @@ export class PoseNet {
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
    *
-   * @param resolution The resolution the input should be resized to before
-   * feeding it through the network.  Defaults to 513.  Must have a value which
-   * when 1 is subtracted from it, is divisible by the output stride. Sample
-   * acceptable values are 29, 161, 193, 257, 289, 321, 353, 385, 417, 449, 481,
-   * 513. Set this number lower to scale down the image and increase the speed
-   * when feeding through the network.
+   * @param imageScaleFactor  A number between 0.2 and 1. Defaults to 0.50. What
+   * to scale the image by before feeding it through the network.  Set this
+   * number lower to scale down the image and increase the speed when feeding
+   * through the network at the cost of accuracy.
    *
-   * @param reverse.  A boolean which defaults to false.  If set to true,
-   * reverses the image horizontally before feeding through the network.  Useful
-   * for videos where the image is often reversed horizontally.
+   * @param flipHorizontal Defaults to false.  If the poses should be
+   * flipped/mirrored  horizontally.  This should be set to true for videos
+   * where the video is by default flipped horizontally (i.e. a webcam), and you
+   * want the poses to be returned in the proper orientation.
    *
    * @param outputStride the desired stride for the outputs.  Must be 32, 16,
    * or 8. Defaults to 16. The output width and height will be will be
@@ -207,14 +207,16 @@ export class PoseNet {
    * in the same scale as the original image
    */
   async estimateMultiplePoses(
-      input: InputType, resolution: PoseNetResolution = 513,
-      reverse: boolean = false, outputStride: OutputStride = 16,
+      input: InputType, imageScaleFactor: number = 0.5,
+      flipHorizontal: boolean = false, outputStride: OutputStride = 16,
       maxDetections = 5, scoreThreshold = .5, nmsRadius = 20): Promise<Pose[]> {
     assertValidOutputStride(outputStride);
-    assertValidResolution(resolution, outputStride);
+    assertValidScaleFactor(imageScaleFactor);
+    const resolution =
+        getValidResolution(imageScaleFactor, input.width, outputStride);
     const {heatmapScores, offsets, displacementFwd, displacementBwd} =
         tf.tidy(() => {
-          const inputTensor = toInputTensor(input, resolution, reverse);
+          const inputTensor = toInputTensor(input, resolution, flipHorizontal);
           return this.predictForMultiPose(inputTensor, outputStride);
         });
 
