@@ -18,6 +18,7 @@
 import * as tf from '@tensorflow/tfjs';
 
 import {connectedPartIndeces} from './keypoints';
+import {OutputStride} from './mobilenet';
 import {Keypoint, Pose, TensorBuffer3D, Vector2D} from './types';
 
 function eitherPointDoesntMeetConfidence(
@@ -97,4 +98,12 @@ export function scalePoses(poses: Pose[], scale: number): Pose[] {
     return poses;
   }
   return poses.map(pose => scalePose(pose, scale));
+}
+
+export function getValidResolution(
+    imageScaleFactor: number, inputDimension: number,
+    outputStride: OutputStride): number {
+  const evenResolution = inputDimension * imageScaleFactor - 1;
+
+  return evenResolution - (evenResolution % outputStride) + 1;
 }

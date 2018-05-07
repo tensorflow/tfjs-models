@@ -94,6 +94,15 @@ export function assertValidResolution(resolution: any, outputStride: number) {
           `${outputStride}.`);
 }
 
+export function assertValidScaleFactor(imageScaleFactor: any) {
+  tf.util.assert(
+      typeof imageScaleFactor === 'number', 'scaleFactor is not a number');
+
+  tf.util.assert(
+      imageScaleFactor <= 1.0, 'imageScaleFactor cannot be greater than 1.0')
+}
+
+
 export const mobileNetArchitectures:
     {[name: string]: ConvolutionDefinition[]} = {
       100: mobileNet100Architecture,
