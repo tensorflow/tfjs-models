@@ -23,70 +23,61 @@ const maxVideoSize = 513;
 const canvasSize = 400;
 const stats = new Stats();
 
-/**
- * Gets all available media devices and filters for only video devices
- */
-async function getCameras() {
-  const devices = await navigator.mediaDevices.enumerateDevices();
-  return devices.filter(({ kind }) => kind === 'videoinput');
+function isAndroid() {
+  return /Android/i.test(navigator.userAgent);
 }
 
-let currentStream = null;
+function isiOS() {
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+function isMobile() {
+  return isAndroid() || isiOS();
+}
 
 /**
- * Stops the video stream permanently
+ * Loads a the camera to be used in the demo
+ *
  */
-function stopCurrentVideoStream() {
-  if (currentStream) {
-    currentStream.getTracks().forEach((track) => {
-      track.stop();
+async function setupCamera() {
+  const video = document.getElementById('video');
+  video.width = maxVideoSize;
+  video.height = maxVideoSize;
+
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    const mobile = isMobile();
+    const stream = await navigator.mediaDevices.getUserMedia({
+      'audio': false,
+      'video': {
+        facingMode: 'user',
+        width: mobile ? undefined : maxVideoSize,
+        height: mobile ? undefined: maxVideoSize}
     });
+    video.srcObject = stream;
+
+    return new Promise(resolve => {
+      video.onloadedmetadata = () => {
+        resolve(video);
+      };
+    });
+  } else {
+    const errorMessage = "This browser does not support video capture, or this device does not have a camera";
+    alert(errorMessage);
+    return Promise.reject(errorMessage);
   }
 }
 
-/**
- * Loads a video based on a device ID
- *
- * @param {number} a video media device ID
- */
-function loadVideo(cameraId) {
-  return new Promise((resolve, reject) => {
-    stopCurrentVideoStream();
+async function loadVideo() {
+  const video = await setupCamera();
+  video.play();
 
-    const video = document.getElementById('video');
-
-    // Important to note that the image fed into posenet must be square
-    video.width = maxVideoSize;
-    video.height = maxVideoSize;
-
-    if (navigator.getUserMedia) {
-      navigator.getUserMedia({
-        video: {
-          width: maxVideoSize,
-          height: maxVideoSize,
-          deviceId: { exact: cameraId },
-        },
-      }, handleVideo, videoError);
-    }
-
-    function handleVideo(stream) {
-      currentStream = stream;
-      video.srcObject = stream;
-
-      resolve(video);
-    }
-
-    function videoError(e) {
-      // do something
-      reject(e);
-    }
-  });
+  return video;
 }
 
 const guiState = {
   algorithm: 'single-pose',
   input: {
-    mobileNetArchitecture: '1.01',
+    mobileNetArchitecture: isMobile() ? '0.50' : '1.01',
     outputStride: 16,
     imageScaleFactor: 0.5,
   },
@@ -125,9 +116,6 @@ function setupGui(cameras, net) {
 
   const gui = new dat.GUI({ width: 300 });
 
-  gui.add(guiState, 'camera', cameraOptions).onChange((deviceId) => {
-    loadVideo(deviceId);
-  });
   // The single-pose algorithm is faster and simpler but requires only one person to be
   // in the frame or results will be innaccurate. Multi-pose works for more than 1 person
   const algorithmController = gui.add(
@@ -258,7 +246,8 @@ function detectPoseInRealTime(video, net) {
     if (guiState.output.showVideo) {
       ctx.save();
       ctx.scale(-1, 1);
-      ctx.drawImage(video, 0, 0, canvasSize * -1, canvasSize);
+      ctx.translate(-canvasSize, 0);
+      ctx.drawImage(video, 0, 0, canvasSize, canvasSize);
       ctx.restore();
     }
 
@@ -298,16 +287,16 @@ export async function bindPage() {
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'block';
 
-  const cameras = await getCameras();
+  let video;
 
-  if (cameras.length === 0) {
-    alert('No webcams available.  Reload the page when a webcam is available.');
+  try {
+    video = await loadVideo();
+  } catch(e) {
+    console.error(e);
     return;
   }
 
-  const video = await loadVideo(cameras[0].deviceId);
-
-  setupGui(cameras, net);
+  setupGui([], net);
   setupFPS();
   detectPoseInRealTime(video, net);
 }
