@@ -16,7 +16,7 @@ as building blocks in other applications.
 ## Models
 
 ### Image classification
-- [MobileNet](https://github.com/tensorflow/tfjs-models/tree/master/mobilenet)
+- [MobileNet](https://github.com/tensorflow/tfjs-models/tree/master/mobilenet) - Classify images with labels from the [ImageNet database](http://www.image-net.org/).
   - `npm install @tensorflow-models/mobilenet`
-- [PoseNet](https://github.com/tensorflow/tfjs-models/tree/master/posenet)
+- [PoseNet](https://github.com/tensorflow/tfjs-models/tree/master/posenet) - Realtime pose detection.
   - `npm install @tensorflow-models/posenet`
