@@ -32,7 +32,7 @@ function isOS() {
 }
 
 function isMobile() {
-  isAndroid() || isOS();
+  return isAndroid() || isOS();
 }
 
 /**
