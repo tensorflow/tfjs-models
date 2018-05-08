@@ -136,4 +136,4 @@ model.infer(
 ```
 
 - **img:** A Tensor or an image element to make a classification on.
-- **endpoint:** The optional endpoint to predict through. You can list all the endpoints with `model.endpoint`. These correspond to layers of the MobileNet model. If undefined, will return 1000D unnormalized logits.
+- **endpoint:** The optional endpoint to predict through. You can list all the endpoints with `model.endpoints`. These correspond to layers of the MobileNet model. If undefined, will return 1000D unnormalized logits.
