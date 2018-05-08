@@ -12,3 +12,11 @@ non-machine learning experts.
 If you want to contribute a model, please first file an issue to find out
 whether we will accept it. We are trying to only add models that can be used
 as building blocks in other applications.
+
+## Models
+
+### Image classification
+- [MobileNet](https://github.com/tensorflow/tfjs-models/tree/master/mobilenet)
+  - `npm install @tensorflow-models/mobilenet`
+- [PoseNet](https://github.com/tensorflow/tfjs-models/tree/master/posenet)
+  - `npm install @tensorflow-models/posenet`
