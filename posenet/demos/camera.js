@@ -27,12 +27,12 @@ function isAndroid() {
   return /Android/i.test(navigator.userAgent);
 }
 
-function isOS() {
+function isiOS() {
   return /iPhone|iPad|iPod/i.test(navigator.userAgent);
 }
 
 function isMobile() {
-  return isAndroid() || isOS();
+  return isAndroid() || isiOS();
 }
 
 /**
@@ -61,7 +61,9 @@ async function setupCamera() {
       };
     });
   } else {
-    throw new Error("This browser does not support video capture.");
+    const errorMessage = "This browser does not support video capture, or this device does not have a camera";
+    alert(errorMessage);
+    return Promise.reject(errorMessage);
   }
 }
 
@@ -290,7 +292,7 @@ export async function bindPage() {
   try {
     video = await loadVideo();
   } catch(e) {
-    alert(e);
+    console.error(e);
     return;
   }
 
