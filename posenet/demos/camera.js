@@ -23,58 +23,55 @@ const maxVideoSize = 513;
 const canvasSize = 400;
 const stats = new Stats();
 
-async function getCameras() {
-  const devices = await navigator.mediaDevices.enumerateDevices();
-  return devices.filter(({kind}) => kind === 'videoinput');
+function isAndroid() {
+  return /Android/i.test(navigator.userAgent);
 }
 
-let currentStream = null;
+function isOS() {
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
 
-function stopCurrentVideoStream() {
-  if (currentStream) {
-    currentStream.getTracks().forEach((track) => {
-      track.stop();
+function isMobile() {
+  isAndroid() || isOS();
+}
+
+async function setupCamera() {
+  const video = document.getElementById('video');
+  video.width = maxVideoSize;
+  video.height = maxVideoSize;
+
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    const mobile = isMobile();
+    const stream = await navigator.mediaDevices.getUserMedia({
+      'audio': false,
+      'video': {
+        facingMode: 'user',
+        width: mobile ? undefined : maxVideoSize,
+        height: mobile ? undefined: maxVideoSize}
     });
+    video.srcObject = stream;
+
+    return new Promise(resolve => {
+      video.onloadedmetadata = () => {
+        resolve(video);
+      };
+    });
+  } else {
+    throw new Error("This browser does not support video capture.");
   }
 }
 
-function loadVideo(cameraId) {
-  return new Promise((resolve, reject) => {
-    stopCurrentVideoStream();
+async function loadVideo() {
+  const video = await setupCamera();
+  video.play();
 
-    const video = document.getElementById('video');
-
-    video.width = maxVideoSize;
-    video.height = maxVideoSize;
-
-    if (navigator.getUserMedia) {
-      navigator.getUserMedia({
-        video: {
-          width: maxVideoSize,
-          height: maxVideoSize,
-          deviceId: {exact: cameraId},
-        },
-      }, handleVideo, videoError);
-    }
-
-    function handleVideo(stream) {
-      currentStream = stream;
-      video.srcObject = stream;
-
-      resolve(video);
-    }
-
-    function videoError(e) {
-      // do something
-      reject(e);
-    }
-  });
+  return video;
 }
 
 const guiState = {
   algorithm: 'single-pose',
   input: {
-    mobileNetArchitecture: '1.01',
+    mobileNetArchitecture: isMobile() ? '0.50' : '1.01',
     outputStride: 16,
     imageScaleFactor: 0.5,
   },
@@ -110,9 +107,6 @@ function setupGui(cameras, net) {
 
   const gui = new dat.GUI({width: 300});
 
-  gui.add(guiState, 'camera', cameraOptions).onChange((deviceId) => {
-    loadVideo(deviceId);
-  });
   const algorithmController = gui.add(
     guiState, 'algorithm', ['single-pose', 'multi-pose'] );
 
@@ -216,7 +210,8 @@ function detectPoseInRealTime(video, net) {
     if (guiState.output.showVideo) {
       ctx.save();
       ctx.scale(-1, 1);
-      ctx.drawImage(video, 0, 0, canvasSize*-1, canvasSize);
+      ctx.translate(-canvasSize, 0);
+      ctx.drawImage(video, 0, 0, canvasSize, canvasSize);
       ctx.restore();
     }
 
@@ -247,16 +242,16 @@ export async function bindPage() {
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'block';
 
-  const cameras = await getCameras();
+  let video;
 
-  if (cameras.length === 0) {
-    alert('No webcams available.  Reload the page when a webcam is available.');
+  try {
+    video = await loadVideo();
+  } catch(e) {
+    alert(e);
     return;
   }
 
-  const video = await loadVideo(cameras[0].deviceId);
-
-  setupGui(cameras, net);
+  setupGui([], net);
   setupFPS();
   detectPoseInRealTime(video, net);
 }

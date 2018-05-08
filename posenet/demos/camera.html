@@ -17,15 +17,23 @@
         text-align: center;
         margin: auto;
     }
+
+    @media only screen and (max-width: 600px) {
+      .footer-text, .dg {
+        display: none;
+      }
+    }
     </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 
 <body>
     <div id="loading">
         Loading the model...
     </div>
+
     <div id='main' style='display:none'>
-        <video autoplay="true" id="video" style=" -moz-transform: scaleX(-1);
+        <video id="video" playsinline style=" -moz-transform: scaleX(-1);
         -o-transform: scaleX(-1);
         -webkit-transform: scaleX(-1);
         transform: scaleX(-1);
