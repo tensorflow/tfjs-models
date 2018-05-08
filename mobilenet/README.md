@@ -22,7 +22,7 @@ There are two main ways to get this model in your JavaScript project: via script
 <!-- Load TensorFlow.js. This is required to use MobileNet. -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.10.3"> </script>
 <!-- Load the MobileNet model. -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@0.1.0"> </script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@0.0.1"> </script>
 
 <!-- Replace this with your image. Make sure CORS settings allow reading the image! -->
 <img id="img" src="cat.jpg"></img>
