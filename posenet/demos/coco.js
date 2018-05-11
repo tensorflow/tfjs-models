@@ -224,7 +224,6 @@ function setupGui(net) {
         .onChange((outputStride) => guiState.outputStride =
             Number(outputStride));
     gui.add(guiState, 'image', images);
-    gui.add(guiState, 'detectPoseButton');
 
     // Pose confidence: the overall confidence in the estimation of a person's 
     // pose (i.e. a person detected in a frame)
