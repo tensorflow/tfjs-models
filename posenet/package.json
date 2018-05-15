@@ -36,7 +36,7 @@
     "build": "tsc --sourceMap false && browserify -g browserify-shim --standalone posenet src/index.ts -p [tsify] -o dist/bundle.js",
     "test": "karma start",
     "publish-npm": "yarn build && npm publish",
-    "dev": "npm run watch && cs demos && npm run watch",
+    "dev": "npm run watch && cd demos && npm run watch",
     "lint": "tslint -p . -t verbose"
   },
   "browserify-shim": {
