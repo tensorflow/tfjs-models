@@ -19,8 +19,8 @@ import Stats from 'stats.js';
 import * as posenet from '../src';
 
 import { drawKeypoints, drawSkeleton } from './demo_util';
-const maxVideoSize = 513;
-const canvasSize = 400;
+const videoWidth = 600;
+const videoHeight = 500;
 const stats = new Stats();
 
 function isAndroid() {
@@ -41,8 +41,8 @@ function isMobile() {
  */
 async function setupCamera() {
   const video = document.getElementById('video');
-  video.width = maxVideoSize;
-  video.height = maxVideoSize;
+  video.width = videoWidth;
+  video.height = videoHeight;
 
   if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     const mobile = isMobile();
@@ -50,8 +50,8 @@ async function setupCamera() {
       'audio': false,
       'video': {
         facingMode: 'user',
-        width: mobile ? undefined : maxVideoSize,
-        height: mobile ? undefined: maxVideoSize}
+        width: mobile ? undefined : videoWidth,
+        height: mobile ? undefined: videoHeight}
     });
     video.srcObject = stream;
 
@@ -195,8 +195,8 @@ function detectPoseInRealTime(video, net) {
   const ctx = canvas.getContext('2d');
   const flipHorizontal = true; // since images are being fed from a webcam
 
-  canvas.width = canvasSize;
-  canvas.height = canvasSize;
+  canvas.width = videoWidth;
+  canvas.height = videoHeight;
 
   async function poseDetectionFrame() {
     if (guiState.changeToArchitecture) {
@@ -241,17 +241,15 @@ function detectPoseInRealTime(video, net) {
         break;
     }
 
-    ctx.clearRect(0, 0, canvasSize, canvasSize);
+    ctx.clearRect(0, 0, videoWidth, videoHeight);
 
     if (guiState.output.showVideo) {
       ctx.save();
       ctx.scale(-1, 1);
-      ctx.translate(-canvasSize, 0);
-      ctx.drawImage(video, 0, 0, canvasSize, canvasSize);
+      ctx.translate(-videoWidth, 0);
+      ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
       ctx.restore();
     }
-
-    const scale = canvasSize / video.width;
 
     // For each pose (i.e. person) detected in an image, loop through the poses
     // and draw the resulting skeleton and keypoints if over certain confidence
@@ -259,10 +257,10 @@ function detectPoseInRealTime(video, net) {
     poses.forEach(({ score, keypoints }) => {
       if (score >= minPoseConfidence) {
         if (guiState.output.showPoints) {
-          drawKeypoints(keypoints, minPartConfidence, ctx, scale);
+          drawKeypoints(keypoints, minPartConfidence, ctx);
         }
         if (guiState.output.showSkeleton) {
-          drawSkeleton(keypoints, minPartConfidence, ctx, scale);
+          drawSkeleton(keypoints, minPartConfidence, ctx);
         }
       }
     });
