@@ -1,7 +1,8 @@
 node_modules
+dist/
+dist-es6/
+
 **/*/node_modules
 **/*/coverage
-**/*/dist
-**/*/dist-es6
 **/*/.cache
 **/*/yarn-error.log
