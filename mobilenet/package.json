@@ -25,11 +25,11 @@
     "tsify": "~3.0.3",
     "tslint": "~5.8.0",
     "typescript": "2.7.2",
-    "uglifyjs": "~2.4.11",
+    "uglify-js": "~3.0.28",
     "watchify": "~3.11.0"
   },
   "scripts": {
-    "build": "tsc --project tsconfig-es5.json && tsc && rollup -c && uglifyjs dist/mobilenet.js -c -m -o dist/mobilenet.min.js",
+    "build": "rm -r dist dist-es6 && tsc --project tsconfig-es5.json && tsc && rollup -c && uglifyjs dist/mobilenet.js -c -m -o dist/mobilenet.min.js",
     "test": "karma start",
     "publish-npm": "yarn build && npm publish",
     "dev": "npm run watch && cs demos && npm run watch",

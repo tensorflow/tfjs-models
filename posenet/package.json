@@ -32,7 +32,7 @@
     "rollup-plugin-typescript2": "~0.13.0",
     "tslint": "~5.8.0",
     "typescript": "2.7.2",
-    "uglifyjs": "~2.4.11",
+    "uglify-js": "~3.0.28",
     "watchify": "~3.11.0"
   },
   "scripts": {
