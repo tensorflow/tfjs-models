@@ -27,6 +27,7 @@
     "karma-firefox-launcher": "~1.0.1",
     "karma-jasmine": "~1.1.0",
     "karma-typescript": "~3.0.8",
+    "rimraf": "~2.6.2",
     "rollup": "~0.58.2",
     "rollup-plugin-node-resolve": "~3.3.0",
     "rollup-plugin-typescript2": "~0.13.0",
@@ -35,7 +36,7 @@
     "uglify-js": "~3.0.28"
   },
   "scripts": {
-    "build": "tsc --project tsconfig-es5.json && tsc && rollup -c && uglifyjs dist/posenet.js -c -m -o dist/posenet.min.js",
+    "build": "rimraf dist dist-es6 && tsc --project tsconfig-es5.json && tsc && rollup -c && uglifyjs dist/posenet.js -c -m -o dist/posenet.min.js",
     "test": "karma start",
     "publish-npm": "yarn build && npm publish",
     "dev": "npm run watch && cd demos && npm run watch",
