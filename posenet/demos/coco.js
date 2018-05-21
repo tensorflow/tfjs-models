@@ -220,11 +220,13 @@ function setupGui(net) {
     // Output stride:  Internally, this parameter affects the height and width of the layers 
     // in the neural network. The lower the value of the output stride the higher the accuracy 
     // but slower the speed, the higher the value the faster the speed but lower the accuracy.
-    gui.add(guiState, 'outputStride', [32, 16, 8])
-        .onChange((outputStride) => guiState.outputStride =
-            Number(outputStride));
-    gui.add(guiState, 'image', images);
-    gui.add(guiState, 'detectPoseButton');
+    gui.add(guiState, 'outputStride', [8, 16, 32])
+        .onChange((outputStride) => {
+           guiState.outputStride = Number(outputStride);
+           testImageAndEstimatePoses(net);
+        });
+    gui.add(guiState, 'image', images)
+        .onChange(() => testImageAndEstimatePoses(net));
 
     // Pose confidence: the overall confidence in the estimation of a person's 
     // pose (i.e. a person detected in a frame)
