@@ -2,22 +2,22 @@
 # yarn lockfile v1
 
 
-"@tensorflow/tfjs-core@0.8.4":
-  version "0.8.4"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-core/-/tfjs-core-0.8.4.tgz#20c5bf017cb57486ca77cc01a92d6df85c2e38ff"
+"@tensorflow/tfjs-core@0.11.0":
+  version "0.11.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-core/-/tfjs-core-0.11.0.tgz#d112ea43a31a639582c78e91a084b5494dec53f0"
   dependencies:
     seedrandom "~2.4.3"
 
-"@tensorflow/tfjs-layers@0.5.3":
-  version "0.5.3"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-layers/-/tfjs-layers-0.5.3.tgz#0b45624ba8bcbd8e904f68344f16cf6358c695af"
+"@tensorflow/tfjs-layers@0.6.1":
+  version "0.6.1"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-layers/-/tfjs-layers-0.6.1.tgz#fd0241fcb1cedf42379935cea42b1e2dea62f3d4"
 
-"@tensorflow/tfjs@0.10.3":
-  version "0.10.3"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs/-/tfjs-0.10.3.tgz#29d44e57d53492532829c768958151fb8893b2ab"
+"@tensorflow/tfjs@0.11.1":
+  version "0.11.1"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs/-/tfjs-0.11.1.tgz#ccf0a12300a2201d281d67828862080cf2d0c3a7"
   dependencies:
-    "@tensorflow/tfjs-core" "0.8.4"
-    "@tensorflow/tfjs-layers" "0.5.3"
+    "@tensorflow/tfjs-core" "0.11.0"
+    "@tensorflow/tfjs-layers" "0.6.1"
 
 "@types/estree@0.0.38":
   version "0.0.38"
@@ -2833,7 +2833,7 @@ ripemd160@^2.0.0, ripemd160@^2.0.1:
     hash-base "^2.0.0"
     inherits "^2.0.1"
 
-rollup-plugin-node-resolve@^3.3.0:
+rollup-plugin-node-resolve@~3.3.0:
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/rollup-plugin-node-resolve/-/rollup-plugin-node-resolve-3.3.0.tgz#c26d110a36812cbefa7ce117cadcd3439aa1c713"
   dependencies:
@@ -2841,7 +2841,7 @@ rollup-plugin-node-resolve@^3.3.0:
     is-module "^1.0.0"
     resolve "^1.1.6"
 
-rollup-plugin-typescript2@^0.13.0:
+rollup-plugin-typescript2@~0.13.0:
   version "0.13.0"
   resolved "https://registry.yarnpkg.com/rollup-plugin-typescript2/-/rollup-plugin-typescript2-0.13.0.tgz#5fc838657d05af82e04554832cadf06cdb32f657"
   dependencies:
@@ -2858,7 +2858,7 @@ rollup-pluginutils@^2.0.1:
     micromatch "^2.3.11"
     tosource "^1.0.0"
 
-rollup@^0.58.2:
+rollup@~0.58.2:
   version "0.58.2"
   resolved "https://registry.yarnpkg.com/rollup/-/rollup-0.58.2.tgz#2feddea8c0c022f3e74b35c48e3c21b3433803ce"
   dependencies:

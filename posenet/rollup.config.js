@@ -12,7 +12,7 @@ export default {
   ],
   output: {
     banner: `// @tensorflow/tfjs-models Copyright ${(new Date).getFullYear()} Google`,
-    file: 'dist/bundle.js',
+    file: 'dist/posenet.js',
     format: 'umd',
     name: 'posenet',
     globals: {
