@@ -1,8 +1,10 @@
 {
   "name": "@tensorflow-models/posenet",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Pretrained PoseNet model in tensorflow.js",
   "main": "dist/index.js",
+  "jsnext:main": "dist-es6/index.js",
+  "module": "dist-es6/index.js",
   "unpkg": "dist/bundle.js",
   "types": "dist/index.d.ts",
   "repository": {
@@ -10,7 +12,7 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs": "0.10.3"
+    "@tensorflow/tfjs": "0.11.1"
   },
   "devDependencies": {
     "@tensorflow/tfjs": "0.10.3",
@@ -33,7 +35,7 @@
     "watchify": "~3.11.0"
   },
   "scripts": {
-    "build": "tsc --sourceMap false && rollup -c",
+    "build": "tsc --project tsconfig-es5.json && tsc && rollup -c",
     "test": "karma start",
     "publish-npm": "yarn build && npm publish",
     "dev": "npm run watch && cd demos && npm run watch",
