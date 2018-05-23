@@ -288,10 +288,10 @@ export async function bindPage() {
   try {
     video = await loadVideo();
   } catch(e) {
-    const errorMessage = "This browser does not support video capture, or this device does not have a camera";
-    alert(errorMessage);
-    console.error(e);
-    return;
+    let info = document.getElementById('info');
+    info.textContent = "this browser does not support video capture, or this device does not have a camera";
+    info.style.display = 'block';
+    throw e;
   }
 
   setupGui([], net);
