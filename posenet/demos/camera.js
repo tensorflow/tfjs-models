@@ -40,31 +40,29 @@ function isMobile() {
  *
  */
 async function setupCamera() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    throw 'Browser API navigator.mediaDevices.getUserMedia not available';
+  }
+
   const video = document.getElementById('video');
   video.width = videoWidth;
   video.height = videoHeight;
 
-  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-    const mobile = isMobile();
-    const stream = await navigator.mediaDevices.getUserMedia({
-      'audio': false,
-      'video': {
-        facingMode: 'user',
-        width: mobile ? undefined : videoWidth,
-        height: mobile ? undefined: videoHeight}
-    });
-    video.srcObject = stream;
+  const mobile = isMobile();
+  const stream = await navigator.mediaDevices.getUserMedia({
+    'audio': false,
+    'video': {
+      facingMode: 'user',
+      width: mobile ? undefined : videoWidth,
+      height: mobile ? undefined: videoHeight}
+  });
+  video.srcObject = stream;
 
-    return new Promise(resolve => {
-      video.onloadedmetadata = () => {
-        resolve(video);
-      };
-    });
-  } else {
-    const errorMessage = "This browser does not support video capture, or this device does not have a camera";
-    alert(errorMessage);
-    return Promise.reject(errorMessage);
-  }
+  return new Promise(resolve => {
+    video.onloadedmetadata = () => {
+      resolve(video);
+    };
+  });
 }
 
 async function loadVideo() {
@@ -290,8 +288,10 @@ export async function bindPage() {
   try {
     video = await loadVideo();
   } catch(e) {
-    console.error(e);
-    return;
+    let info = document.getElementById('info');
+    info.textContent = "this browser does not support video capture, or this device does not have a camera";
+    info.style.display = 'block';
+    throw e;
   }
 
   setupGui([], net);
