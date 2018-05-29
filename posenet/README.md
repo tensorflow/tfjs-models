@@ -10,6 +10,8 @@ PoseNet can be used to estimate either a single pose or multiple poses, meaning 
 
 [Refer to this blog post](https://medium.com/tensorflow/real-time-human-pose-estimation-in-the-browser-with-tensorflow-js-7dd0bc881cd5) for a high-level description of PoseNet running on Tensorflow.js.
 
+To keep track of issues we use the [tensorflow/tfjs](https://github.com/tensorflow/tfjs) Github repo.
+
 ## Installation
 
 You can use this as standalone es5 bundle like this:

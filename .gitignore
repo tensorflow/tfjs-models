@@ -1,6 +1,10 @@
 node_modules
+dist/
+dist-es6/
+
 **/*/node_modules
 **/*/coverage
-**/*/dist
 **/*/.cache
 **/*/yarn-error.log
+
+.rpt2_cache/
