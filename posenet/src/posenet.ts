@@ -19,7 +19,7 @@ import * as tf from '@tensorflow/tfjs';
 
 import { CheckpointLoader } from './checkpoint_loader';
 import { checkpoints } from './checkpoints';
-import { assertValidOutputStride, assertValidScaleFactor, MobileNet, MobileNetMultiplier, OutputStride } from './mobilenet';
+import { assertValidOutputStride, assertValidScaleFactor, assertValidDimensions, MobileNet, MobileNetMultiplier, OutputStride } from './mobilenet';
 import decodeMultiplePoses from './multiPose/decodeMultiplePoses';
 import decodeSinglePose from './singlePose/decodeSinglePose';
 import { Pose } from './types';
@@ -146,6 +146,7 @@ export class PoseNet {
     input: InputType, imageScaleFactor: number = 0.5,
     flipHorizontal: boolean = false,
     outputStride: OutputStride = 16): Promise<Pose> {
+    assertValidDimensions(input);
     assertValidOutputStride(outputStride);
     assertValidScaleFactor(imageScaleFactor);
     const resizedHeight =
@@ -212,6 +213,7 @@ export class PoseNet {
     input: InputType, imageScaleFactor: number = 0.5,
     flipHorizontal: boolean = false, outputStride: OutputStride = 16,
     maxDetections = 5, scoreThreshold = .5, nmsRadius = 20): Promise<Pose[]> {
+    assertValidDimensions(input);
     assertValidOutputStride(outputStride);
     assertValidScaleFactor(imageScaleFactor);
     const resizedHeight =
