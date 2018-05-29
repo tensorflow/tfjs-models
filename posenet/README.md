@@ -56,6 +56,20 @@ All keypoints are indexed by part id.  The parts and their ids are:
 | 15 | leftAnkle |
 | 16 | rightAnkle |
 
+### Loading a pre-trained PoseNet Model
+
+In the first step of pose estimation, an image is fed through a pre-trained model.  PoseNet **comes with a few different versions of the model,** each corresponding to a MobileNet v1 architecture with a specific multiplier. To get started, a model must be loaded from a checkpoint, with the MobileNet architecture specified by the multiplier:
+
+```javascript
+const net = await posenet.load(multiplier);
+```
+
+#### Inputs
+
+* **multiplier** - An optional number with values: `1.01`, `1.0`, `0.75`, or `0.50`. Defaults to `1.01`.   It is the float multiplier for the depth (number of channels) for all convolution operations. The value corresponds to a MobileNet architecture and checkpoint.  The larger the value, the larger the size of the layers, and more accurate the model at the cost of speed.  Set this to a smaller value to increase speed at the cost of accuracy.
+
+**By default,** PoseNet loads a model with a **`1.01`** multiplier.  This is recommended for computers with **powerful GPUs.**  A model with a **`0.75`** muliplier is recommended for computers with **mid-range/lower-end GPUS.** A model with a **`0.50`** architecture is recommended for **mobile.**
+
 ### Single-Person Pose Estimation
 
 Single pose estimation is the simpler and faster of the two algorithms. Its ideal use case is for when there is only one person in the image. The disadvantage is that if there are multiple persons in an image, keypoints from both persons will likely be estimated as being part of the same single pose—meaning, for example, that person #1’s left arm and person #2’s right knee might be conflated by the algorithm as belonging to the same pose.
@@ -491,3 +505,4 @@ This produces the output:
 ## Developing the Demos
 
 Details for how to run the demos are included in the `demos/` folder.
+
