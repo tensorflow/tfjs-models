@@ -104,13 +104,13 @@ export function assertValidScaleFactor(imageScaleFactor: any) {
       'imageScaleFactor must be between 0.2 and 1.0')
 }
 
-export function assertValidDimensions(inputType: InputType) {
+export function assertValidDimensions(input: InputType) {
   tf.util.assert(
-    typeof inputType.width === 'number' && inputType.width > 0,
+    typeof input.width === 'number' && input.width > 0,
     'The width of the input must be a number greater than 0');
 
   tf.util.assert(
-    typeof inputType.height === 'number' && inputType.height > 0,
+    typeof input.height === 'number' && input.height > 0,
     'The height of the input must be a number greater than 0');
 }
 
