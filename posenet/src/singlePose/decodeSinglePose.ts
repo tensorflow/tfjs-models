@@ -56,7 +56,7 @@ import {getOffsetPoints, getPointsConfidence} from './util';
  * which contains an array of keypoints indexed by part id, each with a score
  * and position.
  */
-export default async function decodeSinglePose(
+export async function decodeSinglePose(
     heatmapScores: tf.Tensor3D, offsets: tf.Tensor3D,
     outputStride: OutputStride): Promise<Pose> {
   let totalScore = 0.0;
@@ -66,7 +66,7 @@ export default async function decodeSinglePose(
   const [scoresBuffer, offsetsBuffer, heatmapValuesBuffer] = await Promise.all([
     toTensorBuffer(heatmapScores), toTensorBuffer(offsets),
     toTensorBuffer(heatmapValues, 'int32')
-  ])
+  ]);
 
   const offsetPoints =
       getOffsetPoints(heatmapValuesBuffer, outputStride, offsetsBuffer);

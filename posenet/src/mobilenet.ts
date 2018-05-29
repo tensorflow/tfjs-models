@@ -76,6 +76,7 @@ const mobileNet50Architecture: ConvolutionDefinition[]  = [
 // clang-format on
 
 const VALID_OUTPUT_STRIDES = [8, 16, 32];
+// tslint:disable-next-line:no-any
 export function assertValidOutputStride(outputStride: any) {
   tf.util.assert(
       typeof outputStride === 'number', 'outputStride is not a number');
@@ -85,6 +86,7 @@ export function assertValidOutputStride(outputStride: any) {
           `It must be either 8, 16, or 32`);
 }
 
+// tslint:disable-next-line:no-any
 export function assertValidResolution(resolution: any, outputStride: number) {
   tf.util.assert(typeof resolution === 'number', 'resolution is not a number');
 
@@ -94,22 +96,22 @@ export function assertValidResolution(resolution: any, outputStride: number) {
           `${outputStride}.`);
 }
 
+// tslint:disable-next-line:no-any
 export function assertValidScaleFactor(imageScaleFactor: any) {
   tf.util.assert(
       typeof imageScaleFactor === 'number', 'imageScaleFactor is not a number');
 
   tf.util.assert(
       imageScaleFactor >= 0.2 && imageScaleFactor <= 1.0,
-      'imageScaleFactor must be between 0.2 and 1.0')
+      'imageScaleFactor must be between 0.2 and 1.0');
 }
-
 
 export const mobileNetArchitectures:
     {[name: string]: ConvolutionDefinition[]} = {
       100: mobileNet100Architecture,
       75: mobileNet75Architecture,
       50: mobileNet50Architecture
-    }
+    };
 
 type Layer = {
   blockId: number,
@@ -157,9 +159,12 @@ function toOutputStridedLayers(
     }
 
     return {
-      blockId, convType, stride: layerStride, rate: layerRate,
-          outputStride: currentStride
-    }
+      blockId,
+      convType,
+      stride: layerStride,
+      rate: layerRate,
+      outputStride: currentStride
+    };
   });
 }
 
@@ -194,7 +199,7 @@ export class MobileNet {
           } else if (convType === 'separableConv') {
             return this.separableConv(previousLayer, stride, blockId, rate);
           } else {
-            throw Error('Unknown conv type of ' + convType);
+            throw Error(`Unknown conv type of ${convType}`);
           }
         },
         preprocessedInput);

@@ -35,6 +35,7 @@
   "scripts": {
     "build": "tsc --sourceMap false && rollup -c",
     "test": "karma start",
+    "test-travis": "karma start --browsers='bs_firefox_mac,bs_chrome_mac' --singleRun",
     "publish-npm": "yarn build && npm publish",
     "dev": "npm run watch && cd demos && npm run watch",
     "lint": "tslint -p . -t verbose"
