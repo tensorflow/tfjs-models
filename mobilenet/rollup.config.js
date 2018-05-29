@@ -19,7 +19,7 @@ import node from 'rollup-plugin-node-resolve';
 import typescript from 'rollup-plugin-typescript2';
 
 export default {
-  input: 'src/index.ts',
+  input: 'index.ts',
   plugins: [
     typescript(),
     node()
@@ -29,9 +29,9 @@ export default {
   ],
   output: {
     banner: `// @tensorflow/tfjs-models Copyright ${(new Date).getFullYear()} Google`,
-    file: 'dist/posenet.js',
+    file: 'dist/mobilenet.js',
     format: 'umd',
-    name: 'posenet',
+    name: 'mobilenet',
     globals: {
       '@tensorflow/tfjs': 'tf'
     }
