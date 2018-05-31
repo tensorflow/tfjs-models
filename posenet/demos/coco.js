@@ -15,8 +15,8 @@
  * =============================================================================
  */
 import dat from 'dat.gui';
-import * as tf from '@tensorflow/tfjs-core';
-import * as posenet from '../src';
+import * as tf from '@tensorflow/tfjs';
+import * as posenet from '@tensorflow-models/posenet';
 import { drawKeypoints, drawSkeleton, renderImageToCanvas } from './demo_util';
 
 const images = [

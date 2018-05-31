@@ -16,7 +16,7 @@
  */
 import dat from 'dat.gui';
 import Stats from 'stats.js';
-import * as posenet from '../src';
+import * as posenet from '@tensorflow-models/posenet';
 
 import { drawKeypoints, drawSkeleton } from './demo_util';
 const videoWidth = 600;
