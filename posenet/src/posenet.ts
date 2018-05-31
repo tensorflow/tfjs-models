@@ -255,7 +255,7 @@ export class PoseNet {
  *
  * @param multiplier An optional number with values: 1.01, 1.0, 0.75, or
  * 0.50. Defaults to 1.01. It is the float multiplier for the depth (number of
- * channels) for all convolution ops. The value corresponds to an MobileNet
+ * channels) for all convolution ops. The value corresponds to a MobileNet
  * architecture and checkpoint.  The larger the value, the larger the size of
  * the layers, and more accurate the model at the cost of speed.  Set this to a
  * smaller value to increase speed at the cost of accuracy.
