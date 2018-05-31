@@ -18,13 +18,7 @@ The [coco images](http://cocodataset.org/#home) demo shows how to estimate poses
 
 ## Setup
 
-From the `posenet` folder run:
-
-```sh
-yarn
-```
-
-cd into the demos folder
+cd into the demos folder:
 
 ```sh
 cd demos
