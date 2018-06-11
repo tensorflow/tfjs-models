@@ -34,10 +34,7 @@
     "extends": "google",
     "rules": {
       "require-jsdoc": 0,
-      "indent": [
-        "error",
-        2
-      ]
+      "valid-jsdoc": 0
     },
     "env": {
       "es6": true

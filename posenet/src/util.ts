@@ -17,7 +17,7 @@
 
 import * as tf from '@tensorflow/tfjs';
 
-import {connectedPartIndeces} from './keypoints';
+import {connectedPartIndices} from './keypoints';
 import {OutputStride} from './mobilenet';
 import {Keypoint, Pose, TensorBuffer3D, Vector2D} from './types';
 
@@ -28,7 +28,7 @@ function eitherPointDoesntMeetConfidence(
 
 export function getAdjacentKeyPoints(
     keypoints: Keypoint[], minConfidence: number): Keypoint[][] {
-  return connectedPartIndeces.reduce(
+  return connectedPartIndices.reduce(
       (result: Keypoint[][], [leftJoint, rightJoint]): Keypoint[][] => {
         if (eitherPointDoesntMeetConfidence(
                 keypoints[leftJoint].score, keypoints[rightJoint].score,

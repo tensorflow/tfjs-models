@@ -64,28 +64,28 @@ function traverseToTargetKeypoint(
   const [height, width] = scoresBuffer.shape;
 
   // Nearest neighbor interpolation for the source->target displacements.
-  const sourceKeypointIndeces = getStridedIndexNearPoint(
+  const sourceKeypointIndices = getStridedIndexNearPoint(
       sourceKeypoint.position, outputStride, height, width);
 
   const displacement =
-      getDisplacement(edgeId, sourceKeypointIndeces, displacements);
+      getDisplacement(edgeId, sourceKeypointIndices, displacements);
 
   const displacedPoint = addVectors(sourceKeypoint.position, displacement);
 
-  const displacedPointIndeces =
+  const displacedPointIndices =
       getStridedIndexNearPoint(displacedPoint, outputStride, height, width);
 
   const offsetPoint = getOffsetPoint(
-      displacedPointIndeces.y, displacedPointIndeces.x, targetKeypointId,
+      displacedPointIndices.y, displacedPointIndices.x, targetKeypointId,
       offsets);
 
   const score = scoresBuffer.get(
-      displacedPointIndeces.y, displacedPointIndeces.x, targetKeypointId);
+      displacedPointIndices.y, displacedPointIndices.x, targetKeypointId);
 
   const targetKeypoint = addVectors(
       {
-        x: displacedPointIndeces.x * outputStride,
-        y: displacedPointIndeces.y * outputStride
+        x: displacedPointIndices.x * outputStride,
+        y: displacedPointIndices.y * outputStride
       },
       {x: offsetPoint.x, y: offsetPoint.y});
 

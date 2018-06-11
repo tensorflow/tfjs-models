@@ -63,7 +63,5 @@ export const poseChain: StringTuple[] = [
   ['rightKnee', 'rightAnkle']
 ];
 
-
-
-export const connectedPartIndeces = connectedPartNames.map(
+export const connectedPartIndices = connectedPartNames.map(
     ([jointNameA, jointNameB]) => ([partIds[jointNameA], partIds[jointNameB]]));
