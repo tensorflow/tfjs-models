@@ -6,5 +6,7 @@ dist-es6/
 **/*/coverage
 **/*/.cache
 **/*/yarn-error.log
+**/*/yalc.lock
+**/*/.yalc
 
 .rpt2_cache/
