@@ -24,6 +24,13 @@ function toTuple({ y, x }) {
   return [y, x];
 }
 
+export function drawPoint(ctx, y, x, r, color) {
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, 2 * Math.PI);
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
 /**
  * Draws a line on a canvas, i.e. a joint
  */
@@ -61,11 +68,8 @@ export function drawKeypoints(keypoints, minConfidence, ctx, scale = 1) {
     }
 
     const { y, x } = keypoint.position;
-    ctx.beginPath();
-    ctx.arc(x * scale, y * scale, 3, 0, 2 * Math.PI);
-    ctx.fillStyle = color;
-    ctx.fill();
-  }
+    drawPoint(ctx, y * scale, x * scale, 3, color);
+ }
 }
 
 /**
@@ -171,3 +175,47 @@ export function drawOffsetVectors(
       color, scale, ctx);
   }
 }
+
+
+/*
+ * Define the skeleton. This defines the parent->child relationships of our
+ * tree. Arbitrarily this defines the nose as the root of the tree, however
+ * since we will infer the displacement for both parent->child and
+ * child->parent, we can define the tree root as any node.
+ */
+const poseChain  = [
+  ['nose', 'leftEye'], ['leftEye', 'leftEar'], ['nose', 'rightEye'],
+  ['rightEye', 'rightEar'], ['nose', 'leftShoulder'],
+  ['leftShoulder', 'leftElbow'], ['leftElbow', 'leftWrist'],
+  ['leftShoulder', 'leftHip'], ['leftHip', 'leftKnee'],
+  ['leftKnee', 'leftAnkle'], ['nose', 'rightShoulder'],
+  ['rightShoulder', 'rightElbow'], ['rightElbow', 'rightWrist'],
+  ['rightShoulder', 'rightHip'], ['rightHip', 'rightKnee'],
+  ['rightKnee', 'rightAnkle']
+];
+
+const { partIds } = posenet;
+
+const parentChildrenTuples = poseChain.map(
+    ([parentJoinName, childJoinName]) =>
+        ([partIds[parentJoinName], partIds[childJoinName]]));
+
+export const parentToChildEdges =
+   parentChildrenTuples.reduce((result, [partId], i) => {
+    if (result[partId])
+      result[partId] = [...result[partId], i];
+    else
+      result[partId] = [i];
+
+    return result;
+   }, {})
+
+export const childToParentEdges =
+   parentChildrenTuples.reduce((result, [, partId], i) => {
+    if (result[partId])
+      result[partId] = [...result[partId], i];
+    else
+      result[partId] = [i];
+
+    return result;
+   }, {})
