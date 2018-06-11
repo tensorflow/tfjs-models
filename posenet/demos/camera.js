@@ -73,9 +73,9 @@ async function loadVideo() {
 }
 
 const guiState = {
-  algorithm: 'single-pose',
+  algorithm: 'multi-pose',
   input: {
-    mobileNetArchitecture: isMobile() ? '0.50' : '1.01',
+    mobileNetArchitecture: isMobile() ? '0.50' : '0.75',
     outputStride: 16,
     imageScaleFactor: 0.5,
   },
@@ -84,10 +84,10 @@ const guiState = {
     minPartConfidence: 0.5,
   },
   multiPoseDetection: {
-    maxPoseDetections: 2,
-    minPoseConfidence: 0.1,
-    minPartConfidence: 0.3,
-    nmsRadius: 20.0,
+    maxPoseDetections: 5,
+    minPoseConfidence: 0.15,
+    minPartConfidence: 0.1,
+    nmsRadius: 30.0,
   },
   output: {
     showVideo: true,
@@ -140,7 +140,6 @@ function setupGui(cameras, net) {
   let single = gui.addFolder('Single Pose Detection');
   single.add(guiState.singlePoseDetection, 'minPoseConfidence', 0.0, 1.0);
   single.add(guiState.singlePoseDetection, 'minPartConfidence', 0.0, 1.0);
-  single.open();
 
   let multi = gui.addFolder('Multi Pose Detection');
   multi.add(
@@ -150,6 +149,7 @@ function setupGui(cameras, net) {
   // nms Radius: controls the minimum distance between poses that are returned
   // defaults to 20, which is probably fine for most use cases
   multi.add(guiState.multiPoseDetection, 'nmsRadius').min(0.0).max(40.0);
+  multi.open();
 
   let output = gui.addFolder('Output');
   output.add(guiState.output, 'showVideo');
@@ -277,8 +277,8 @@ function detectPoseInRealTime(video, net) {
  * camera devices, and setting off the detectPoseInRealTime function.
  */
 export async function bindPage() {
-  // Load the PoseNet model weights for version 1.01
-  const net = await posenet.load();
+  // Load the PoseNet model weights with architecture 0.75
+  const net = await posenet.load(0.75);
 
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'block';
