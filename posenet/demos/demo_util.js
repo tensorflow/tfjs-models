@@ -20,8 +20,15 @@ import * as posenet from '@tensorflow-models/posenet';
 const color = 'aqua';
 const lineWidth = 2;
 
-function toTuple({ y, x }) {
+function toTuple({y, x}) {
   return [y, x];
+}
+
+export function drawPoint(ctx, y, x, r, color) {
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, 2 * Math.PI);
+  ctx.fillStyle = color;
+  ctx.fill();
 }
 
 /**
@@ -60,11 +67,8 @@ export function drawKeypoints(keypoints, minConfidence, ctx, scale = 1) {
       continue;
     }
 
-    const { y, x } = keypoint.position;
-    ctx.beginPath();
-    ctx.arc(x * scale, y * scale, 3, 0, 2 * Math.PI);
-    ctx.fillStyle = color;
-    ctx.fill();
+    const {y, x} = keypoint.position;
+    drawPoint(ctx, y * scale, x * scale, 3, color);
   }
 }
 
@@ -171,3 +175,5 @@ export function drawOffsetVectors(
       color, scale, ctx);
   }
 }
+
+

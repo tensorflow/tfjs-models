@@ -46,5 +46,22 @@ const connectedPartNames: StringTuple[] = [
   ['leftShoulder', 'rightShoulder'], ['leftHip', 'rightHip']
 ];
 
-export const connectedPartIndeces = connectedPartNames.map(
+/*
+ * Define the skeleton. This defines the parent->child relationships of our
+ * tree. Arbitrarily this defines the nose as the root of the tree, however
+ * since we will infer the displacement for both parent->child and
+ * child->parent, we can define the tree root as any node.
+ */
+export const poseChain: StringTuple[] = [
+  ['nose', 'leftEye'], ['leftEye', 'leftEar'], ['nose', 'rightEye'],
+  ['rightEye', 'rightEar'], ['nose', 'leftShoulder'],
+  ['leftShoulder', 'leftElbow'], ['leftElbow', 'leftWrist'],
+  ['leftShoulder', 'leftHip'], ['leftHip', 'leftKnee'],
+  ['leftKnee', 'leftAnkle'], ['nose', 'rightShoulder'],
+  ['rightShoulder', 'rightElbow'], ['rightElbow', 'rightWrist'],
+  ['rightShoulder', 'rightHip'], ['rightHip', 'rightKnee'],
+  ['rightKnee', 'rightAnkle']
+];
+
+export const connectedPartIndices = connectedPartNames.map(
     ([jointNameA, jointNameB]) => ([partIds[jointNameA], partIds[jointNameB]]));

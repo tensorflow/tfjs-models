@@ -17,6 +17,9 @@
   "[typescript]": {
     "editor.formatOnSave": true
   },
+  "[javascript]": {
+    "editor.formatOnSave": true
+  },
   "clang-format.style": "Google",
   "files.insertFinalNewline": true,
   "editor.detectIndentation": false,

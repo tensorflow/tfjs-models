@@ -15,28 +15,11 @@
  * =============================================================================
  */
 
-import {NumberTuple, partIds, partNames, StringTuple} from '../keypoints';
+import {NumberTuple, partIds, partNames, poseChain} from '../keypoints';
 import {Keypoint, PartWithScore, TensorBuffer3D, Vector2D} from '../types';
 
 import {clamp, getOffsetPoint} from './util';
 import {addVectors, getImageCoords} from './util';
-
-/*
- * Define the skeleton. This defines the parent->child relationships of our
- * tree. Arbitrarily this defines the nose as the root of the tree, however
- * since we will infer the displacement for both parent->child and
- * child->parent, we can define the tree root as any node.
- */
-const poseChain: StringTuple[] = [
-  ['nose', 'leftEye'], ['leftEye', 'leftEar'], ['nose', 'rightEye'],
-  ['rightEye', 'rightEar'], ['nose', 'leftShoulder'],
-  ['leftShoulder', 'leftElbow'], ['leftElbow', 'leftWrist'],
-  ['leftShoulder', 'leftHip'], ['leftHip', 'leftKnee'],
-  ['leftKnee', 'leftAnkle'], ['nose', 'rightShoulder'],
-  ['rightShoulder', 'rightElbow'], ['rightElbow', 'rightWrist'],
-  ['rightShoulder', 'rightHip'], ['rightHip', 'rightKnee'],
-  ['rightKnee', 'rightAnkle']
-];
 
 const parentChildrenTuples: NumberTuple[] = poseChain.map(
     ([parentJoinName, childJoinName]): NumberTuple =>
@@ -51,15 +34,15 @@ const childToParentEdges: number[] =
                              ]) => parentJointId);
 
 function getDisplacement(
-    i: number, point: Vector2D, displacements: TensorBuffer3D): Vector2D {
+    edgeId: number, point: Vector2D, displacements: TensorBuffer3D): Vector2D {
   const numEdges = displacements.shape[2] / 2;
   return {
-    y: displacements.get(point.y, point.x, i),
-    x: displacements.get(point.y, point.x, numEdges + i)
+    y: displacements.get(point.y, point.x, edgeId),
+    x: displacements.get(point.y, point.x, numEdges + edgeId)
   };
 }
 
-function decode(
+function getStridedIndexNearPoint(
     point: Vector2D, outputStride: number, height: number,
     width: number): Vector2D {
   return {
@@ -81,29 +64,30 @@ function traverseToTargetKeypoint(
   const [height, width] = scoresBuffer.shape;
 
   // Nearest neighbor interpolation for the source->target displacements.
-  const sourceKeypointIndeces =
-      decode(sourceKeypoint.position, outputStride, height, width);
+  const sourceKeypointIndices = getStridedIndexNearPoint(
+      sourceKeypoint.position, outputStride, height, width);
 
   const displacement =
-      getDisplacement(edgeId, sourceKeypointIndeces, displacements);
+      getDisplacement(edgeId, sourceKeypointIndices, displacements);
 
   const displacedPoint = addVectors(sourceKeypoint.position, displacement);
 
-  const displacedPointIndeces =
-      decode(displacedPoint, outputStride, height, width);
+  const displacedPointIndices =
+      getStridedIndexNearPoint(displacedPoint, outputStride, height, width);
 
   const offsetPoint = getOffsetPoint(
-      displacedPointIndeces.y, displacedPointIndeces.x, targetKeypointId,
+      displacedPointIndices.y, displacedPointIndices.x, targetKeypointId,
       offsets);
 
-  const targetKeypoint =
-      addVectors(displacedPoint, {x: offsetPoint.x, y: offsetPoint.y});
-
-  const targetKeypointIndeces =
-      decode(targetKeypoint, outputStride, height, width);
-
   const score = scoresBuffer.get(
-      targetKeypointIndeces.y, targetKeypointIndeces.x, targetKeypointId);
+      displacedPointIndices.y, displacedPointIndices.x, targetKeypointId);
+
+  const targetKeypoint = addVectors(
+      {
+        x: displacedPointIndices.x * outputStride,
+        y: displacedPointIndices.y * outputStride
+      },
+      {x: offsetPoint.x, y: offsetPoint.y});
 
   return {position: targetKeypoint, part: partNames[targetKeypointId], score};
 }
