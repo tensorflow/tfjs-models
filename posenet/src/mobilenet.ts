@@ -16,6 +16,7 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
+import { InputType } from './posenet';
 
 export type MobileNetMultiplier = 0.50|0.75|1.0|1.01;
 export type ConvolutionType = 'conv2d'|'separableConv';
@@ -103,6 +104,15 @@ export function assertValidScaleFactor(imageScaleFactor: any) {
       'imageScaleFactor must be between 0.2 and 1.0')
 }
 
+export function assertValidDimensions(input: InputType) {
+  tf.util.assert(
+    typeof input.width === 'number' && input.width > 0,
+    'The width of the input must be a number greater than 0');
+
+  tf.util.assert(
+    typeof input.height === 'number' && input.height > 0,
+    'The height of the input must be a number greater than 0');
+}
 
 export const mobileNetArchitectures:
     {[name: string]: ConvolutionDefinition[]} = {
