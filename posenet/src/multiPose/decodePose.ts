@@ -59,41 +59,13 @@ function getDisplacement(
   };
 }
 
-function decode(
+function getStridedIndexNearPoint(
     point: Vector2D, outputStride: number, height: number,
     width: number): Vector2D {
   return {
     y: clamp(Math.round(point.y / outputStride), 0, height - 1),
     x: clamp(Math.round(point.x / outputStride), 0, width - 1)
   };
-}
-
-const window = 1;
-function findHighestScoreNearPoint(
-    scores: TensorBuffer3D, index: Vector2D, partId: number) {
-  let highestScore = 0;
-  let highestIndex = index;
-
-  for (let y = index.y - window; y <= index.y + window; y++) {
-    if (y < 0 || y > scores.shape[0]) {
-      continue;
-    }
-
-    for (let x = index.x - window; x <= index.x + window; x++) {
-      if (x < 0 || x > scores.shape[1]) {
-        continue;
-      }
-
-      const score = scores.get(y, x, partId);
-
-      if (score > highestScore) {
-        highestScore = score;
-        highestIndex = {y, x};
-      }
-    }
-  }
-
-  return {score: highestScore, highestIndex};
 }
 
 /**
@@ -109,8 +81,8 @@ function traverseToTargetKeypoint(
   const [height, width] = scoresBuffer.shape;
 
   // Nearest neighbor interpolation for the source->target displacements.
-  const sourceKeypointIndeces =
-      decode(sourceKeypoint.position, outputStride, height, width);
+  const sourceKeypointIndeces = getStridedIndexNearPoint(
+      sourceKeypoint.position, outputStride, height, width);
 
   const displacement =
       getDisplacement(edgeId, sourceKeypointIndeces, displacements);
@@ -118,16 +90,20 @@ function traverseToTargetKeypoint(
   const displacedPoint = addVectors(sourceKeypoint.position, displacement);
 
   const displacedPointIndeces =
-      decode(displacedPoint, outputStride, height, width);
+      getStridedIndexNearPoint(displacedPoint, outputStride, height, width);
 
-  const {score, highestIndex} = findHighestScoreNearPoint(
-      scoresBuffer, displacedPointIndeces, targetKeypointId);
+  const offsetPoint = getOffsetPoint(
+      displacedPointIndeces.y, displacedPointIndeces.x, targetKeypointId,
+      offsets);
 
-  const offsetPoint =
-      getOffsetPoint(highestIndex.y, highestIndex.x, targetKeypointId, offsets);
+  const score = scoresBuffer.get(
+      displacedPointIndeces.y, displacedPointIndeces.x, targetKeypointId);
 
   const targetKeypoint = addVectors(
-      {x: highestIndex.x * outputStride, y: highestIndex.y * outputStride},
+      {
+        x: displacedPointIndeces.x * outputStride,
+        y: displacedPointIndeces.y * outputStride
+      },
       {x: offsetPoint.x, y: offsetPoint.y});
 
   return {position: targetKeypoint, part: partNames[targetKeypointId], score};
