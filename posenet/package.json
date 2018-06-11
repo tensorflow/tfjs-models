@@ -38,6 +38,7 @@
   "scripts": {
     "build": "rimraf dist dist-es6 && tsc --project tsconfig-es5.json && tsc && rollup -c && uglifyjs dist/posenet.js -c -m -o dist/posenet.min.js",
     "test": "karma start",
+    "test-travis": "karma start --browsers='bs_firefox_mac,bs_chrome_mac' --singleRun",
     "publish-npm": "yarn build && npm publish",
     "dev": "npm run watch && cd demos && npm run watch",
     "lint": "tslint -p . -t verbose"

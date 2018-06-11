@@ -1,0 +1,9 @@
+language: node_js
+node_js:
+  - '8'
+  - '10'
+script:
+  - yarn build_and_test_all
+cache: yarn
+git:
+  depth: 5

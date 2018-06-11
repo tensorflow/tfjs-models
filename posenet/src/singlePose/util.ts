@@ -71,5 +71,5 @@ export function getOffsetPoints(
         .mul(tf.scalar(outputStride, 'int32'))
         .toFloat()
         .add(offsetVectors);
-  })
+  });
 }

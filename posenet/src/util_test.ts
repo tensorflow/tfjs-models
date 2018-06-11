@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import {getValidResolution} from './util'
+import {getValidResolution} from './util';
 
 describe('util', () => {
   describe('getValidResolution', () => {
@@ -25,7 +25,7 @@ describe('util', () => {
       expect(getValidResolution(0.5, 545, 8) % 2).toEqual(1);
       expect(getValidResolution(0.845, 242, 8) % 2).toEqual(1);
       expect(getValidResolution(0.421, 546, 16) % 2).toEqual(1);
-    })
+    });
 
     it('returns a value that when 1 is subtracted by it is ' +
            'divisible by the output stride',
