@@ -20,7 +20,7 @@ import {load, PoseNet} from './posenet';
 import {decodeSinglePose} from './singlePose/decodeSinglePose';
 
 export {checkpoints} from './checkpoints';
-export {partIds, partNames} from './keypoints';
+export {partIds, partNames, poseChain} from './keypoints';
 export {Keypoint, Pose} from './types';
 // tslint:disable-next-line:max-line-length
 export {getAdjacentKeyPoints, getBoundingBox, getBoundingBoxPoints} from './util';

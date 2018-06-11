@@ -15,28 +15,11 @@
  * =============================================================================
  */
 
-import {NumberTuple, partIds, partNames, StringTuple} from '../keypoints';
+import {NumberTuple, partIds, partNames, poseChain} from '../keypoints';
 import {Keypoint, PartWithScore, TensorBuffer3D, Vector2D} from '../types';
 
 import {clamp, getOffsetPoint} from './util';
 import {addVectors, getImageCoords} from './util';
-
-/*
- * Define the skeleton. This defines the parent->child relationships of our
- * tree. Arbitrarily this defines the nose as the root of the tree, however
- * since we will infer the displacement for both parent->child and
- * child->parent, we can define the tree root as any node.
- */
-const poseChain: StringTuple[] = [
-  ['nose', 'leftEye'], ['leftEye', 'leftEar'], ['nose', 'rightEye'],
-  ['rightEye', 'rightEar'], ['nose', 'leftShoulder'],
-  ['leftShoulder', 'leftElbow'], ['leftElbow', 'leftWrist'],
-  ['leftShoulder', 'leftHip'], ['leftHip', 'leftKnee'],
-  ['leftKnee', 'leftAnkle'], ['nose', 'rightShoulder'],
-  ['rightShoulder', 'rightElbow'], ['rightElbow', 'rightWrist'],
-  ['rightShoulder', 'rightHip'], ['rightHip', 'rightKnee'],
-  ['rightKnee', 'rightAnkle']
-];
 
 const parentChildrenTuples: NumberTuple[] = poseChain.map(
     ([parentJoinName, childJoinName]): NumberTuple =>

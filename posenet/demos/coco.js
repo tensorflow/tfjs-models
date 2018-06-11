@@ -18,7 +18,7 @@ import dat from 'dat.gui';
 import * as tf from '@tensorflow/tfjs';
 import * as posenet from '@tensorflow-models/posenet';
 import { drawKeypoints, drawPoint, drawSegment, drawSkeleton,
-  childToParentEdges, parentToChildEdges, renderImageToCanvas } from './demo_util';
+  renderImageToCanvas } from './demo_util';
 
 const images = [
     'frisbee.jpg',
@@ -47,6 +47,8 @@ const images = [
     'two_on_bench.jpg',
 ];
 
+const { partIds, poseChain } = posenet;
+
 /**
  * Draws a pose if it passes a minimum confidence onto a canvas.
  * Only the pose's keypoints that pass a minPartConfidence are drawn.
@@ -56,11 +58,11 @@ function drawResults(canvas, poses,
     renderImageToCanvas(image, [513, 513], canvas);
     poses.forEach((pose) => {
         if (pose.score >= minPoseConfidence) {
-            if (guiState.visualizeOutputs.showKeypoints)
+            if (guiState.showKeypoints)
               drawKeypoints(pose.keypoints,
                   minPartConfidence, canvas.getContext('2d'));
 
-            if (guiState.visualizeOutputs.showSkeleton)
+            if (guiState.showSkeleton)
               drawSkeleton(pose.keypoints,
                   minPartConfidence, canvas.getContext('2d'));
        }
@@ -124,12 +126,80 @@ function drawMultiplePosesResults(poses) {
 }
 
 /**
- *
- * @param partId The id of the part to draw the heatmap for
- *
- * @param drawOffsetVectors If the offset vectors should be drawn as well.
+ * Define the skeleton by part id. This is used in multi-pose estimation. This defines the parent->child relationships of our
+ * tree. Arbitrarily this defines the nose as the root of the tree.
+**/
+const parentChildrenTuples = poseChain.map(
+    ([parentJoinName, childJoinName]) =>
+        ([partIds[parentJoinName], partIds[childJoinName]]));
+
+/**
+ * Parent to child edges from the skeleton indexed by part id.  Indexes the edge ids
+ * by the part ids.
  */
-function visualizeOutputs(partId, drawHeatmaps = true, drawOffsetVectors = true, drawDisplacements = true, ctx) {
+const parentToChildEdges =
+   parentChildrenTuples.reduce((result, [partId], i) => {
+    if (result[partId])
+      result[partId] = [...result[partId], i];
+    else
+      result[partId] = [i];
+
+    return result;
+   }, {})
+
+/**
+ * Child to parent edges from the skeleton indexed by part id.  Indexes the edge ids
+ * by the part ids.
+ */
+const childToParentEdges =
+   parentChildrenTuples.reduce((result, [, partId], i) => {
+    if (result[partId])
+      result[partId] = [...result[partId], i];
+    else
+      result[partId] = [i];
+
+    return result;
+   }, {})
+
+
+function drawOffsetVector(ctx, y, x, outputStride, offsetsVectorY, offsetsVectorX) {
+  drawSegment(
+    [y * outputStride, x * outputStride],
+    [y * outputStride + offsetsVectorY, x * outputStride + offsetsVectorX],
+    'red',
+    1.,
+    ctx
+  );
+}
+
+function drawDisplacementEdgesFrom(
+  ctx, partId, displacements, outputStride, edges, y, x,
+  offsetsVectorY, offsetsVectorX) {
+  const numEdges = displacements.shape[2] / 2;
+
+  const offsetX = x * outputStride + offsetsVectorX;
+  const offsetY = y * outputStride + offsetsVectorY;
+
+  const edgeIds = edges[partId] || [];
+
+  if (edgeIds.length > 0) {
+    edgeIds.forEach(edgeId => {
+      const displacementY = displacements.get(y, x, edgeId);
+      const displacementX = displacements.get(y, x, edgeId + numEdges);
+
+      drawSegment([offsetY, offsetX], [offsetY + displacementY, offsetX + displacementX], 'blue', 1., ctx);
+    });
+  }
+}
+
+/**
+ * Visualizes the outputs from the model which are used for decoding poses.  Limited
+ * to visualizing the outputs for a single part.
+ *
+ * @param partId The id of the part to visualize
+ *
+ */
+function visualizeOutputs(partId, drawHeatmaps, drawOffsetVectors, drawDisplacements, ctx) {
   const { heatmapScores, offsets, displacementFwd, displacementBwd } = modelOutputs;
   const outputStride = Number(guiState.outputStride);
 
@@ -153,43 +223,20 @@ function visualizeOutputs(partId, drawHeatmaps = true, drawOffsetVectors = true,
       const offsetsVectorX = offsets.get(y, x, partId + 17);
 
       if (drawOffsetVectors) {
-        drawSegment(
-          [y * outputStride, x * outputStride],
-          [y * outputStride + offsetsVectorY, x * outputStride + offsetsVectorX],
-          'red',
-          1.,
-          ctx
-        );
+        drawOffsetVector(ctx, y, x, outputStride, offsetsVectorY, offsetsVectorX);
       }
 
       if (drawDisplacements) {
+        // exponentially affect the alpha of the displacements;
         ctx.globalAlpha *= score;
-        const numEdges = displacementFwd.shape[2] / 2;
 
-        const offsetX = x * outputStride + offsetsVectorX;
-        const offsetY = y * outputStride + offsetsVectorY;
+        drawDisplacementEdgesFrom(
+          ctx, partId, displacementFwd, outputStride, parentToChildEdges,
+          y, x, offsetsVectorY, offsetsVectorX);
 
-        const forwardEdgeIds = parentToChildEdges[partId] || [];
-
-        if (forwardEdgeIds.length > 0) {
-          forwardEdgeIds.forEach(forwardEdgeId => {
-            const forwardY = displacementFwd.get(y, x, forwardEdgeId);
-            const forwardX = displacementFwd.get(y, x, forwardEdgeId + numEdges);
-
-            drawSegment([offsetY, offsetX], [offsetY + forwardY, offsetX + forwardX], 'blue', 1., ctx);
-          });
-        }
-
-        const backwardsEdgeIds = childToParentEdges[partId] || [];
-
-        backwardsEdgeIds.forEach(backwardsEdgeId => {
-          if (typeof backwardsEdgeId !== 'undefined') {
-            const backwardY= displacementBwd.get(y, x, backwardsEdgeId);
-            const backwardX = displacementBwd.get(y, x, backwardsEdgeId + numEdges);
-
-            drawSegment([offsetY, offsetX], [offsetY + backwardY, offsetX + backwardX], 'blue', 1., ctx);
-          }
-        })
+        drawDisplacementEdgesFrom(
+          ctx, partId, displacementBwd, outputStride, childToParentEdges,
+          y, x, offsetsVectorY, offsetsVectorX);
       }
     }
 
@@ -271,8 +318,11 @@ async function testImageAndEstimatePoses(net) {
     // Creates a tensor from an image
     const input = tf.fromPixels(image);
 
-    // Stores the raw model outputs from both single- and multi-pose resutls can
-    // be decoded
+    // Stores the raw model outputs from both single- and multi-pose results can
+    // be decoded.
+    // Normally you would call estimateSinglePose or estimateMultiplePoses,
+    // but by calling this method we can previous the outputs of the model and
+    // visualize them.
     modelOutputs = await net.predictForMultiPose(input, guiState.outputStride);
 
     // Process the model outputs to convert into poses
@@ -304,9 +354,9 @@ function setupGui(net) {
             nmsRadius: 20.0,
             maxDetections: 15,
         },
+        showKeypoints: true,
+        showSkeleton: true,
         visualizeOutputs: {
-          showKeypoints: true,
-          showSkeleton: true,
           part: 0,
           showHeatmap: false,
           showOffsets: false,
@@ -359,12 +409,13 @@ function setupGui(net) {
         .onChange(decodeSinglePoseAndDrawResults);
     singlePoseDetection.open();
 
+    gui.add(guiState, 'showKeypoints')
+      .onChange(decodeSingleAndMultiplePoses);
+    gui.add(guiState, 'showSkeleton')
+      .onChange(decodeSingleAndMultiplePoses);
+
     const visualizeOutputs = gui.addFolder('Visualize Outputs');
 
-    visualizeOutputs.add(guiState.visualizeOutputs, 'showKeypoints')
-      .onChange(decodeSingleAndMultiplePoses);
-    visualizeOutputs.add(guiState.visualizeOutputs, 'showSkeleton')
-      .onChange(decodeSingleAndMultiplePoses);
     visualizeOutputs.add(
       guiState.visualizeOutputs, 'part', posenet.partIds)
       .onChange(decodeSingleAndMultiplePoses);
@@ -377,9 +428,6 @@ function setupGui(net) {
     visualizeOutputs.add(
       guiState.visualizeOutputs, 'showDisplacements')
       .onChange(decodeSingleAndMultiplePoses);
-
-
-
 
     visualizeOutputs.open();
 }
