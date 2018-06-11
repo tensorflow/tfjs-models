@@ -209,7 +209,7 @@ function detectPoseInRealTime(video, net) {
 
       // Load the PoseNet model weights for either the 0.50, 0.75, 1.00, or 1.01
       // version
-      guiState.net = await posenet.load(Number(guiState.changeToArchitecture));
+      guiState.net = await posenet.load(+guiState.changeToArchitecture);
 
       guiState.changeToArchitecture = null;
     }
@@ -220,7 +220,7 @@ function detectPoseInRealTime(video, net) {
     // Scale an image down to a certain factor. Too large of an image will slow
     // down the GPU
     const imageScaleFactor = guiState.input.imageScaleFactor;
-    const outputStride = Number(guiState.input.outputStride);
+    const outputStride = +guiState.input.outputStride;
 
     let poses = [];
     let minPoseConfidence;
@@ -231,10 +231,8 @@ function detectPoseInRealTime(video, net) {
             video, imageScaleFactor, flipHorizontal, outputStride);
         poses.push(pose);
 
-        minPoseConfidence =
-            Number(guiState.singlePoseDetection.minPoseConfidence);
-        minPartConfidence =
-            Number(guiState.singlePoseDetection.minPartConfidence);
+        minPoseConfidence = +guiState.singlePoseDetection.minPoseConfidence;
+        minPartConfidence = +guiState.singlePoseDetection.minPartConfidence;
         break;
       case 'multi-pose':
         poses = await guiState.net.estimateMultiplePoses(
@@ -243,10 +241,8 @@ function detectPoseInRealTime(video, net) {
             guiState.multiPoseDetection.minPartConfidence,
             guiState.multiPoseDetection.nmsRadius);
 
-        minPoseConfidence =
-            Number(guiState.multiPoseDetection.minPoseConfidence);
-        minPartConfidence =
-            Number(guiState.multiPoseDetection.minPartConfidence);
+        minPoseConfidence = +guiState.multiPoseDetection.minPoseConfidence;
+        minPartConfidence = +guiState.multiPoseDetection.minPartConfidence;
         break;
     }
 

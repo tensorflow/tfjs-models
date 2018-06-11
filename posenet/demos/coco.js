@@ -115,7 +115,7 @@ function drawSinglePoseResults(pose) {
   const {part, showHeatmap, showOffsets} = guiState.visualizeOutputs;
   // displacements not used for single pose decoding
   const showDisplacements = false;
-  const partId = Number(part);
+  const partId = +part;
 
   visualizeOutputs(
       partId, showHeatmap, showOffsets, showDisplacements,
@@ -133,7 +133,7 @@ function drawMultiplePosesResults(poses) {
 
   const {part, showHeatmap, showOffsets, showDisplacements} =
       guiState.visualizeOutputs;
-  const partId = Number(part);
+  const partId = +part;
 
   visualizeOutputs(
       partId, showHeatmap, showOffsets, showDisplacements,
@@ -221,7 +221,7 @@ function visualizeOutputs(
     partId, drawHeatmaps, drawOffsetVectors, drawDisplacements, ctx) {
   const {heatmapScores, offsets, displacementFwd, displacementBwd} =
       modelOutputs;
-  const outputStride = Number(guiState.outputStride);
+  const outputStride = +guiState.outputStride;
 
   const [height, width] = heatmapScores.shape;
 
@@ -390,7 +390,7 @@ function setupGui(net) {
   // the higher the accuracy but slower the speed, the higher the value the
   // faster the speed but lower the accuracy.
   gui.add(guiState, 'outputStride', [8, 16, 32]).onChange((outputStride) => {
-    guiState.outputStride = Number(outputStride);
+    guiState.outputStride = +outputStride;
     testImageAndEstimatePoses(net);
   });
   gui.add(guiState, 'image', images)
