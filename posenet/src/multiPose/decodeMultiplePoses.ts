@@ -114,13 +114,14 @@ const kLocalMaximumRadius = 1;
  * @return An array of poses and their scores, each containing keypoints and
  * the corresponding keypoint scores.
  */
-export default async function decodeMultiplePoses(
+export async function decodeMultiplePoses(
     heatmapScores: tf.Tensor3D, offsets: tf.Tensor3D,
     displacementsFwd: tf.Tensor3D, displacementsBwd: tf.Tensor3D,
     outputStride: number, maxPoseDetections: number, scoreThreshold = 0.5,
     nmsRadius = 20): Promise<Pose[]> {
   const poses: Pose[] = [];
 
+  // tslint:disable-next-line:max-line-length
   const [scoresBuffer, offsetsBuffer, displacementsFwdBuffer, displacementsBwdBuffer] =
       await toTensorBuffers3D(
           [heatmapScores, offsets, displacementsFwd, displacementsBwd]);

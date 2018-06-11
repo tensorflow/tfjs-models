@@ -1,6 +1,9 @@
 {
   "name": "tensorflow-models",
   "version": "0.0.1",
+  "scripts": {
+    "build_and_test_all": "cd posenet && yarn && yarn build && yarn lint && yarn test-travis"
+  },
   "devDependencies": {
     "clang-format": "~1.2.2"
   },

@@ -19,9 +19,10 @@ import * as tf from '@tensorflow/tfjs';
 
 import {CheckpointLoader} from './checkpoint_loader';
 import {checkpoints} from './checkpoints';
+// tslint:disable-next-line:max-line-length
 import {assertValidOutputStride, assertValidScaleFactor, MobileNet, MobileNetMultiplier, OutputStride} from './mobilenet';
-import decodeMultiplePoses from './multiPose/decodeMultiplePoses';
-import decodeSinglePose from './singlePose/decodeSinglePose';
+import {decodeMultiplePoses} from './multiPose/decodeMultiplePoses';
+import {decodeSinglePose} from './singlePose/decodeSinglePose';
 import {Pose} from './types';
 import {getValidResolution, scalePose, scalePoses} from './util';
 
@@ -145,8 +146,7 @@ export class PoseNet {
    * positions of the keypoints are in the same scale as the original image
    */
   async estimateSinglePose(
-      input: InputType, imageScaleFactor: number = 0.5,
-      flipHorizontal: boolean = false,
+      input: InputType, imageScaleFactor = 0.5, flipHorizontal = false,
       outputStride: OutputStride = 16): Promise<Pose> {
     assertValidOutputStride(outputStride);
     assertValidScaleFactor(imageScaleFactor);
@@ -212,9 +212,9 @@ export class PoseNet {
    * in the same scale as the original image
    */
   async estimateMultiplePoses(
-      input: InputType, imageScaleFactor: number = 0.5,
-      flipHorizontal: boolean = false, outputStride: OutputStride = 16,
-      maxDetections = 5, scoreThreshold = .5, nmsRadius = 20): Promise<Pose[]> {
+      input: InputType, imageScaleFactor = 0.5, flipHorizontal = false,
+      outputStride: OutputStride = 16, maxDetections = 5, scoreThreshold = .5,
+      nmsRadius = 20): Promise<Pose[]> {
     assertValidOutputStride(outputStride);
     assertValidScaleFactor(imageScaleFactor);
     const resizedHeight =

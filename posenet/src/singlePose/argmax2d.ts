@@ -37,5 +37,5 @@ export function argmax2d(inputs: tf.Tensor3D): tf.Tensor2D {
     const xCoords = mod(coords, width).expandDims(1) as tf.Tensor2D;
 
     return tf.concat([yCoords, xCoords], 1);
-  })
+  });
 }

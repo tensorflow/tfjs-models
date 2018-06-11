@@ -29,7 +29,7 @@ describe('PoseNet', () => {
         })
         .then(done)
         .catch(done.fail);
-  })
+  });
 
   describe('estimateSinglePose', () => {
     it('does not leak memory', done => {
@@ -63,4 +63,4 @@ describe('PoseNet', () => {
           .catch(done.fail);
     });
   });
-})
+});
