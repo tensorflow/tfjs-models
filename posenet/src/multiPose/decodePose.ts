@@ -68,7 +68,7 @@ function decode(
   };
 }
 
-const window = 4;
+const window = 1;
 function findHighestScoreNearPoint(
     scores: TensorBuffer3D, index: Vector2D, partId: number) {
   let highestScore = 0;
