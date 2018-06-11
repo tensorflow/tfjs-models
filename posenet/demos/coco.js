@@ -17,7 +17,8 @@
 import dat from 'dat.gui';
 import * as tf from '@tensorflow/tfjs';
 import * as posenet from '@tensorflow-models/posenet';
-import { drawKeypoints, drawSkeleton, renderImageToCanvas } from './demo_util';
+import { drawKeypoints, drawPoint, drawSegment, drawSkeleton,
+  childToParentEdges, parentToChildEdges, renderImageToCanvas } from './demo_util';
 
 const images = [
     'frisbee.jpg',
@@ -47,7 +48,7 @@ const images = [
 ];
 
 /**
- * Draws a pose if it passes a minimum confidence onto a canvas. 
+ * Draws a pose if it passes a minimum confidence onto a canvas.
  * Only the pose's keypoints that pass a minPartConfidence are drawn.
  */
 function drawResults(canvas, poses,
@@ -55,12 +56,14 @@ function drawResults(canvas, poses,
     renderImageToCanvas(image, [513, 513], canvas);
     poses.forEach((pose) => {
         if (pose.score >= minPoseConfidence) {
-            drawKeypoints(pose.keypoints,
-                minPartConfidence, canvas.getContext('2d'));
+            if (guiState.visualizeOutputs.showKeypoints)
+              drawKeypoints(pose.keypoints,
+                  minPartConfidence, canvas.getContext('2d'));
 
-            drawSkeleton(pose.keypoints,
-                minPartConfidence, canvas.getContext('2d'));
-        }
+            if (guiState.visualizeOutputs.showSkeleton)
+              drawSkeleton(pose.keypoints,
+                  minPartConfidence, canvas.getContext('2d'));
+       }
     });
 }
 
@@ -95,6 +98,13 @@ function drawSinglePoseResults(pose) {
     drawResults(canvas, [pose],
         guiState.singlePoseDetection.minPartConfidence,
         guiState.singlePoseDetection.minPoseConfidence);
+
+    const { part, showHeatmap, showOffsets } = guiState.visualizeOutputs;
+    // displacements not used for single pose decoding
+    const showDisplacements = false;
+    const partId = Number(part);
+
+    visualizeOutputs(partId, showHeatmap, showOffsets, showDisplacements, canvas.getContext('2d'));
 }
 
 /**
@@ -105,6 +115,86 @@ function drawMultiplePosesResults(poses) {
     drawResults(canvas, poses,
         guiState.multiPoseDetection.minPartConfidence,
         guiState.multiPoseDetection.minPoseConfidence);
+
+    const { part, showHeatmap, showOffsets, showDisplacements  } = guiState.visualizeOutputs;
+    const partId = Number(part);
+
+    visualizeOutputs(partId, showHeatmap, showOffsets, showDisplacements, canvas.getContext('2d'));
+
+}
+
+/**
+ *
+ * @param partId The id of the part to draw the heatmap for
+ *
+ * @param drawOffsetVectors If the offset vectors should be drawn as well.
+ */
+function visualizeOutputs(partId, drawHeatmaps = true, drawOffsetVectors = true, drawDisplacements = true, ctx) {
+  const { heatmapScores, offsets, displacementFwd, displacementBwd } = modelOutputs;
+  const outputStride = Number(guiState.outputStride);
+
+  const [ height, width ] = heatmapScores.shape;
+
+  ctx.globalAlpha = 0;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const score = heatmapScores.get(y, x, partId);
+
+      // to save on performance, don't draw anything with a low score.
+      if (score < 0.05) continue;
+
+      // set opacity of drawn elements based on the score
+      ctx.globalAlpha = score;
+
+      if (drawHeatmaps)
+        drawPoint(ctx, y * outputStride, x * outputStride, 2, 'yellow');
+
+      const offsetsVectorY = offsets.get(y, x, partId);
+      const offsetsVectorX = offsets.get(y, x, partId + 17);
+
+      if (drawOffsetVectors) {
+        drawSegment(
+          [y * outputStride, x * outputStride],
+          [y * outputStride + offsetsVectorY, x * outputStride + offsetsVectorX],
+          'red',
+          1.,
+          ctx
+        );
+      }
+
+      if (drawDisplacements) {
+        ctx.globalAlpha *= score;
+        const numEdges = displacementFwd.shape[2] / 2;
+
+        const offsetX = x * outputStride + offsetsVectorX;
+        const offsetY = y * outputStride + offsetsVectorY;
+
+        const forwardEdgeIds = parentToChildEdges[partId] || [];
+
+        if (forwardEdgeIds.length > 0) {
+          forwardEdgeIds.forEach(forwardEdgeId => {
+            const forwardY = displacementFwd.get(y, x, forwardEdgeId);
+            const forwardX = displacementFwd.get(y, x, forwardEdgeId + numEdges);
+
+            drawSegment([offsetY, offsetX], [offsetY + forwardY, offsetX + forwardX], 'blue', 1., ctx);
+          });
+        }
+
+        const backwardsEdgeIds = childToParentEdges[partId] || [];
+
+        backwardsEdgeIds.forEach(backwardsEdgeId => {
+          if (typeof backwardsEdgeId !== 'undefined') {
+            const backwardY= displacementBwd.get(y, x, backwardsEdgeId);
+            const backwardX = displacementBwd.get(y, x, backwardsEdgeId + numEdges);
+
+            drawSegment([offsetY, offsetX], [offsetY + backwardY, offsetX + backwardX], 'blue', 1., ctx);
+          }
+        })
+      }
+    }
+
+    ctx.globalAlpha = 1;
+  }
 }
 
 /**
@@ -139,7 +229,7 @@ async function decodeMultiplePosesAndDrawResults() {
     drawMultiplePosesResults(poses);
 }
 
-async function decodeSingleAndMultiplePoses() {
+function decodeSingleAndMultiplePoses() {
     decodeSinglePoseAndDrawResults();
     decodeMultiplePosesAndDrawResults();
 }
@@ -165,7 +255,7 @@ function disposeModelOutputs() {
 }
 
 /**
- * Loads an image, feeds it into posenet the posenet model, and 
+ * Loads an image, feeds it into posenet the posenet model, and
  * calculates poses based on the model outputs
  */
 async function testImageAndEstimatePoses(net) {
@@ -181,7 +271,7 @@ async function testImageAndEstimatePoses(net) {
     // Creates a tensor from an image
     const input = tf.fromPixels(image);
 
-    // Stores the raw model outputs from both single- and multi-pose resutls can 
+    // Stores the raw model outputs from both single- and multi-pose resutls can
     // be decoded
     modelOutputs = await net.predictForMultiPose(input, guiState.outputStride);
 
@@ -214,11 +304,19 @@ function setupGui(net) {
             nmsRadius: 20.0,
             maxDetections: 15,
         },
+        visualizeOutputs: {
+          showKeypoints: true,
+          showSkeleton: true,
+          part: 0,
+          showHeatmap: false,
+          showOffsets: false,
+          showDisplacements: false
+        }
     };
 
     const gui = new dat.GUI();
-    // Output stride:  Internally, this parameter affects the height and width of the layers 
-    // in the neural network. The lower the value of the output stride the higher the accuracy 
+    // Output stride:  Internally, this parameter affects the height and width of the layers
+    // in the neural network. The lower the value of the output stride the higher the accuracy
     // but slower the speed, the higher the value the faster the speed but lower the accuracy.
     gui.add(guiState, 'outputStride', [8, 16, 32])
         .onChange((outputStride) => {
@@ -228,9 +326,9 @@ function setupGui(net) {
     gui.add(guiState, 'image', images)
         .onChange(() => testImageAndEstimatePoses(net));
 
-    // Pose confidence: the overall confidence in the estimation of a person's 
+    // Pose confidence: the overall confidence in the estimation of a person's
     // pose (i.e. a person detected in a frame)
-    // Min part confidence: the confidence that a particular estimated keypoint 
+    // Min part confidence: the confidence that a particular estimated keypoint
     // position is accurate (i.e. the elbow's position)
 
     const multiPoseDetection = gui.addFolder('Multi Pose Estimation');
@@ -260,6 +358,30 @@ function setupGui(net) {
             guiState.singlePoseDetection, 'minPoseConfidence', 0.0, 1.0)
         .onChange(decodeSinglePoseAndDrawResults);
     singlePoseDetection.open();
+
+    const visualizeOutputs = gui.addFolder('Visualize Outputs');
+
+    visualizeOutputs.add(guiState.visualizeOutputs, 'showKeypoints')
+      .onChange(decodeSingleAndMultiplePoses);
+    visualizeOutputs.add(guiState.visualizeOutputs, 'showSkeleton')
+      .onChange(decodeSingleAndMultiplePoses);
+    visualizeOutputs.add(
+      guiState.visualizeOutputs, 'part', posenet.partIds)
+      .onChange(decodeSingleAndMultiplePoses);
+    visualizeOutputs.add(
+      guiState.visualizeOutputs, 'showHeatmap')
+      .onChange(decodeSingleAndMultiplePoses);
+    visualizeOutputs.add(
+      guiState.visualizeOutputs, 'showOffsets')
+      .onChange(decodeSingleAndMultiplePoses);
+    visualizeOutputs.add(
+      guiState.visualizeOutputs, 'showDisplacements')
+      .onChange(decodeSingleAndMultiplePoses);
+
+
+
+
+    visualizeOutputs.open();
 }
 
 /**
