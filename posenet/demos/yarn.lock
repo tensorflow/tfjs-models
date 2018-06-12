@@ -45,9 +45,9 @@
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@protobufjs/utf8/-/utf8-1.1.0.tgz#a777360b5b39a1a2e5106f8e858f2fd2d060c570"
 
-"@tensorflow-models/posenet@0.1.1":
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/@tensorflow-models/posenet/-/posenet-0.1.1.tgz#da7d6c32114cf678c8cccc3ca42fe11338de3b08"
+"@tensorflow-models/posenet@0.1.2":
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/@tensorflow-models/posenet/-/posenet-0.1.2.tgz#621849eaddc53a6a1fd5a34ccf6a22329addc6ee"
 
 "@tensorflow/tfjs-converter@0.4.1":
   version "0.4.1"
