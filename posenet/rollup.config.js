@@ -17,23 +17,35 @@
 
 import node from 'rollup-plugin-node-resolve';
 import typescript from 'rollup-plugin-typescript2';
+import uglify from 'rollup-plugin-uglify';
 
-export default {
-  input: 'src/index.ts',
-  plugins: [
-    typescript(),
-    node()
-  ],
-  external: [
-    '@tensorflow/tfjs'
-  ],
-  output: {
-    banner: `// @tensorflow/tfjs-models Copyright ${(new Date).getFullYear()} Google`,
-    file: 'dist/posenet.js',
-    format: 'umd',
-    name: 'posenet',
-    globals: {
-      '@tensorflow/tfjs': 'tf'
-    }
-  }
-};
+const PREAMBLE =
+    `// @tensorflow/tfjs-models Copyright ${(new Date).getFullYear()} Google`;
+
+function minify() {
+  return uglify({output: {preamble: PREAMBLE}});
+}
+
+function config({plugins = [], output = {}}) {
+  return {
+    input: 'src/index.ts',
+    plugins: [
+      typescript({tsconfigOverride: {compilerOptions: {module: 'ES2015'}}}),
+      node(), ...plugins
+    ],
+    output: {banner: PREAMBLE, globals: {'@tensorflow/tfjs': 'tf'}, ...output},
+    external: ['@tensorflow/tfjs']
+  };
+}
+
+export default [
+  config({output: {format: 'umd', name: 'posenet', file: 'dist/posenet.js'}}),
+  config({
+    plugins: [minify()],
+    output: {format: 'umd', name: 'posenet', file: 'dist/posenet.min.js'}
+  }),
+  config({
+    plugins: [minify()],
+    output: {format: 'es', file: 'dist/posenet.esm.js'}
+  })
+];
