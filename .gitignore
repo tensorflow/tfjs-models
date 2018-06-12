@@ -1,6 +1,5 @@
 node_modules
 dist/
-dist-es6/
 
 **/*/node_modules
 **/*/coverage

@@ -17,23 +17,36 @@
 
 import node from 'rollup-plugin-node-resolve';
 import typescript from 'rollup-plugin-typescript2';
+import uglify from 'rollup-plugin-uglify';
 
-export default {
-  input: 'index.ts',
-  plugins: [
-    typescript(),
-    node()
-  ],
-  external: [
-    '@tensorflow/tfjs'
-  ],
-  output: {
-    banner: `// @tensorflow/tfjs-models Copyright ${(new Date).getFullYear()} Google`,
-    file: 'dist/mobilenet.js',
-    format: 'umd',
-    name: 'mobilenet',
-    globals: {
-      '@tensorflow/tfjs': 'tf'
-    }
-  }
-};
+const PREAMBLE =
+    `// @tensorflow/tfjs-models Copyright ${(new Date).getFullYear()} Google`;
+
+function minify() {
+  return uglify({output: {preamble: PREAMBLE}});
+}
+
+function config({plugins = [], output = {}}) {
+  return {
+    input: 'src/index.ts',
+    plugins: [
+      typescript({tsconfigOverride: {compilerOptions: {module: 'ES2015'}}}),
+      node(), ...plugins
+    ],
+    output: {banner: PREAMBLE, globals: {'@tensorflow/tfjs': 'tf'}, ...output},
+    external: ['@tensorflow/tfjs']
+  };
+}
+
+export default [
+  config(
+      {output: {format: 'umd', name: 'mobilenet', file: 'dist/mobilenet.js'}}),
+  config({
+    plugins: [minify()],
+    output: {format: 'umd', name: 'mobilenet', file: 'dist/mobilenet.min.js'}
+  }),
+  config({
+    plugins: [minify()],
+    output: {format: 'es', file: 'dist/mobilenet.esm.js'}
+  })
+];
