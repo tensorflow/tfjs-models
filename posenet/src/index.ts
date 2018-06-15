@@ -16,7 +16,7 @@
  */
 
 import {decodeMultiplePoses} from './multiPose/decodeMultiplePoses';
-import {load, PoseNet} from './posenet';
+import {load, PoseNet} from './posenet_model';
 import {decodeSinglePose} from './singlePose/decodeSinglePose';
 
 export {checkpoints} from './checkpoints';

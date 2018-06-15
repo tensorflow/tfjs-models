@@ -17,7 +17,7 @@
 
 import * as tf from '@tensorflow/tfjs';
 
-import {load, PoseNet} from './posenet';
+import {load, PoseNet} from './posenet_model';
 
 describe('PoseNet', () => {
   let net: PoseNet;

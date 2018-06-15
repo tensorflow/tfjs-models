@@ -5,30 +5,30 @@
   "main": "dist/index.js",
   "unpkg": "dist/mobilenet.min.js",
   "jsdelivr": "dist/mobilenet.min.js",
-  "jsnext:main": "dist-es6/index.js",
-  "module": "dist-es6/index.js",
+  "jsnext:main": "dist/mobilenet.esm.js",
+  "module": "dist/mobilenet.esm.js",
   "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs": "~0.11.2"
+    "@tensorflow/tfjs": "~0.11.6"
   },
   "devDependencies": {
-    "@tensorflow/tfjs": "~0.11.2",
+    "@tensorflow/tfjs": "~0.11.6",
     "babel-core": "^6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",
     "rimraf": "~2.6.2",
     "rollup": "~0.58.2",
     "rollup-plugin-node-resolve": "~3.3.0",
     "rollup-plugin-typescript2": "~0.13.0",
+    "rollup-plugin-uglify": "~3.0.0",
     "tslint": "~5.8.0",
-    "typescript": "2.7.2",
-    "uglify-js": "~3.0.28"
+    "typescript": "2.7.2"
   },
   "scripts": {
-    "build": "rimraf dist dist-es6 && tsc --project tsconfig-es5.json && tsc && rollup -c && uglifyjs dist/mobilenet.js -c -m -o dist/mobilenet.min.js",
+    "build": "rimraf dist && tsc && rollup -c",
     "test": "karma start",
     "publish-npm": "yarn build && npm publish",
     "dev": "npm run watch && cs demos && npm run watch",
