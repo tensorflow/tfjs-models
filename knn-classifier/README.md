@@ -80,3 +80,50 @@ Args:
 
 Returns an object with a top classIndex, and confidences mapping the class index
 to the confidence.
+
+#### Misc
+
+##### Clear all examples for a class.
+
+```ts
+classifier.clearClass(classIndex: number)
+```
+
+Args:
+- **classIndex:** The class to clear all examples for.
+
+##### Get the example count for each class
+
+```ts
+classifier.getClassExampleCount(): {[classId: number]: number}
+```
+
+Returns an object that maps classId to example count for that class.
+
+##### Get the full dataset, useful for saving state.
+
+```ts
+classifier.getClassDatasetMatrices(): {[classId: number]: Tensor2D}
+```
+
+##### Set the full dataset, useful for restoring state.
+
+```ts
+classifier.setClassDatasetMatrices(dataset: {[classId: number]: Tensor2D})
+```
+
+Args:
+- **dataset:** The class dataset matrices map. Can be retrieved from
+  getClassDatsetMatrices. Useful for restoring state.
+
+##### Get the total number of classes
+
+```ts
+classifier.getNumClasses(): number
+```
+
+##### Dispose the classifier and all internal state
+
+```ts
+classifier.dispose()
+```
