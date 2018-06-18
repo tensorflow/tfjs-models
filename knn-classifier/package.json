@@ -16,7 +16,6 @@
     "@tensorflow/tfjs": "~0.11.6"
   },
   "devDependencies": {
-    "@tensorflow-models/mobilenet": "^0.1.1",
     "@tensorflow/tfjs": "~0.11.6",
     "babel-core": "^6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",
@@ -32,7 +31,7 @@
     "build": "rimraf dist && tsc && rollup -c",
     "test": "karma start",
     "publish-npm": "yarn build && npm publish",
-    "dev": "npm run watch && cs demos && npm run watch",
+    "dev": "npm run watch && cd demos && npm run watch",
     "lint": "tslint -p . -t verbose"
   },
   "license": "Apache-2.0"

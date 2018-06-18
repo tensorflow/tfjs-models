@@ -14,10 +14,9 @@
  * limitations under the License.
  * =============================================================================
  */
-
-import * as mobilenet from '@tensorflow-models/mobilenet';
 import * as tf from '@tensorflow/tfjs';
-import {Tensor1D, Tensor2D, Tensor3D} from '@tensorflow/tfjs';
+import {Tensor, Tensor1D, Tensor2D, Tensor3D, util} from '@tensorflow/tfjs';
+
 import {concatWithNulls, topK} from './util';
 
 /**
@@ -25,23 +24,18 @@ import {concatWithNulls, topK} from './util';
  * custom model training on top of mobilenet
  */
 class KNNClassifier {
-  private net: mobilenet.MobileNet;
+  private trainDatasetMatrix: Tensor2D;
 
-  private trainLogitsMatrix: Tensor2D;
-
-  private classLogitsMatrices: Tensor2D[] = [];
+  private classDatasetMatrix: Tensor2D[] = [];
   private classExampleCount: number[] = [];
 
-  private squashLogitsDenominator = tf.scalar(300);
+  private exampleShape: number[];
 
-  constructor(
-      private numClasses: number, private k: number, net: mobilenet.MobileNet) {
+  constructor(private numClasses: number) {
     for (let i = 0; i < this.numClasses; i++) {
-      this.classLogitsMatrices.push(null);
+      this.classDatasetMatrix.push(null);
       this.classExampleCount.push(0);
     }
-
-    this.net = net;
   }
 
   /**
@@ -52,39 +46,48 @@ class KNNClassifier {
       throw new Error('Cannot clear invalid class ${classIndex}');
     }
 
-    this.classLogitsMatrices[classIndex] = null;
+    this.classDatasetMatrix[classIndex] = null;
     this.classExampleCount[classIndex] = 0;
-    this.clearTrainLogitsMatrix();
+    this.clearTrainDatasetMatrix();
   }
 
   /**
-   * Adds the provided image to the specified class.
+   * Adds the provided example to the specified class.
    */
-  addImage(image: Tensor3D, classIndex: number): void {
+  addExample(example: Tensor, classIndex: number): void {
     if (classIndex >= this.numClasses) {
       throw new Error('Cannot add to invalid class ${classIndex}');
     }
-    this.clearTrainLogitsMatrix();
+    if (this.exampleShape == null) {
+      this.exampleShape = example.shape;
+    }
+    if (!util.arraysEqual(this.exampleShape, example.shape)) {
+      throw new Error(
+          `Example shape provided, ${example.shape} does not match ` +
+          `previously provided example shapes ${this.exampleShape}.`);
+    }
+
+    this.clearTrainDatasetMatrix();
 
     tf.tidy(() => {
-      // Add the mobilenet logits for the image to the appropriate class
-      // logits matrix.
-      const logits = this.inferNormalizedLogits(image);
-      const logitsSize = logits.shape[0];
+      const normalizedExample =
+          this.normalizeVectorToUnitLength(example.flatten());
+      const exampleSize = normalizedExample.shape[0];
 
-      if (this.classLogitsMatrices[classIndex] == null) {
-        this.classLogitsMatrices[classIndex] = logits.as2D(1, logitsSize);
+      if (this.classDatasetMatrix[classIndex] == null) {
+        this.classDatasetMatrix[classIndex] =
+            normalizedExample.as2D(1, exampleSize);
       } else {
         const newTrainLogitsMatrix =
-            this.classLogitsMatrices[classIndex]
-                .as2D(this.classExampleCount[classIndex], logitsSize)
-                .concat(logits.as2D(1, logitsSize), 0);
+            this.classDatasetMatrix[classIndex]
+                .as2D(this.classExampleCount[classIndex], exampleSize)
+                .concat(normalizedExample.as2D(1, exampleSize), 0);
 
-        this.classLogitsMatrices[classIndex].dispose();
-        this.classLogitsMatrices[classIndex] = newTrainLogitsMatrix;
+        this.classDatasetMatrix[classIndex].dispose();
+        this.classDatasetMatrix[classIndex] = newTrainLogitsMatrix;
       }
 
-      tf.keep(this.classLogitsMatrices[classIndex]);
+      tf.keep(this.classDatasetMatrix[classIndex]);
 
       this.classExampleCount[classIndex]++;
     });
@@ -93,42 +96,36 @@ class KNNClassifier {
   /**
    * This method returns the K-nearest neighbors as distances in the database.
    *
-   * This unfortunately deviates from standard behavior for nearest neighbors
-   * classifiers, making this method relatively useless:
-   * http://scikit-learn.org/stable/modules/neighbors.html
-   *
-   * TODO(nsthorat): Return the class indices once we have GPU kernels for topK
-   * and take. This method is useless on its own, but matches our Model API.
-   *
-   * @param image The input image.
+   * @param example The input example.
    * @returns cosine distances for each entry in the database.
    */
-  calculateKNNDistances(image: Tensor3D): Tensor1D {
+  calculateKNNDistances(example: Tensor3D): Tensor1D {
     return tf.tidy(() => {
-      const logits = this.inferNormalizedLogits(image);
-      const logitsSize = logits.shape[0];
+      const normalizedExample =
+          this.normalizeVectorToUnitLength(example.flatten());
+      const exampleSize = normalizedExample.shape[0];
 
       // Lazily create the logits matrix for all training images if necessary.
-      if (this.trainLogitsMatrix == null) {
+      if (this.trainDatasetMatrix == null) {
         let newTrainLogitsMatrix = null;
 
         for (let i = 0; i < this.numClasses; i++) {
-          newTrainLogitsMatrix = concatWithNulls(
-              newTrainLogitsMatrix, this.classLogitsMatrices[i]);
+          newTrainLogitsMatrix =
+              concatWithNulls(newTrainLogitsMatrix, this.classDatasetMatrix[i]);
         }
-        this.trainLogitsMatrix = newTrainLogitsMatrix;
+        this.trainDatasetMatrix = newTrainLogitsMatrix;
       }
 
-      if (this.trainLogitsMatrix == null) {
+      if (this.trainDatasetMatrix == null) {
         console.warn('Cannot predict without providing training images.');
         return null;
       }
 
-      tf.keep(this.trainLogitsMatrix);
+      tf.keep(this.trainDatasetMatrix);
 
       const numExamples = this.getNumExamples();
-      return this.trainLogitsMatrix.as2D(numExamples, logitsSize)
-          .matMul(logits.as2D(logitsSize, 1))
+      return this.trainDatasetMatrix.as2D(numExamples, exampleSize)
+          .matMul(normalizedExample.as2D(exampleSize, 1))
           .as1D();
     });
   }
@@ -137,15 +134,15 @@ class KNNClassifier {
    * Predicts the class of the provided image using KNN from the previously-
    * added images and their classes.
    *
-   * @param image The image to predict the class for.
+   * @param example The image to predict the class for.
    * @returns A dict of the top class for the image and an array of confidence
    * values for all possible classes.
    */
-  async predictClass(image: Tensor3D):
+  async predictClass(example: Tensor3D, k = 3):
       Promise<{classIndex: number, confidences: number[]}> {
-    const knn = this.calculateKNNDistances(image).asType('float32');
+    const knn = this.calculateKNNDistances(example).asType('float32');
 
-    const kVal = Math.min(this.k, this.getNumExamples());
+    const kVal = Math.min(k, this.getNumExamples());
     const topKIndices = topK(await knn.data() as Float32Array, kVal).indices;
     knn.dispose();
 
@@ -157,14 +154,14 @@ class KNNClassifier {
   }
 
   getClassLogitsMatrices(): Tensor2D[] {
-    return this.classLogitsMatrices;
+    return this.classDatasetMatrix;
   }
 
   setClassLogitsMatrices(classLogitsMatrices: Tensor2D[]) {
-    this.classLogitsMatrices = classLogitsMatrices;
+    this.classDatasetMatrix = classLogitsMatrices;
     this.classExampleCount = classLogitsMatrices.map(
         (tensor: Tensor2D) => tensor != null ? tensor.shape[0] : 0);
-    this.clearTrainLogitsMatrix();
+    this.clearTrainDatasetMatrix();
   }
 
   /**
@@ -214,38 +211,24 @@ class KNNClassifier {
   }
 
   /**
-   * Calculates normalized logits of image
-   * @param image image to pass through mobilenet
-   */
-  private inferNormalizedLogits(image: tf.Tensor<tf.Rank.R3>) {
-    const logits = this.net.infer(image).as1D();
-    return this.normalizeVector(logits);
-  }
-
-  /**
    * Clear the lazily-loaded train logits matrix due to a change in
    * training data.
    */
-  private clearTrainLogitsMatrix() {
-    if (this.trainLogitsMatrix != null) {
-      this.trainLogitsMatrix.dispose();
-      this.trainLogitsMatrix = null;
+  private clearTrainDatasetMatrix() {
+    if (this.trainDatasetMatrix != null) {
+      this.trainDatasetMatrix.dispose();
+      this.trainDatasetMatrix = null;
     }
   }
 
   /**
    * Normalize the provided vector to unit length.
    */
-  private normalizeVector(vec: Tensor1D) {
-    // This hack is here for numerical stability on devices without floating
-    // point textures. We divide by a constant so that the sum doesn't overflow
-    // our fixed point precision. Remove this once we use floating point
-    // intermediates with proper dynamic range quantization.
+  private normalizeVectorToUnitLength(vec: Tensor1D) {
+    // TODO(nsthorat): Use norm().
+    const sqrtSum = vec.square().sum().sqrt();
 
-    const squashedVec = tf.div(vec, this.squashLogitsDenominator);
-    const sqrtSum = squashedVec.square().sum().sqrt();
-
-    return tf.div(squashedVec, sqrtSum);
+    return tf.div(vec, sqrtSum);
   }
 
   private getNumExamples() {
@@ -258,10 +241,9 @@ class KNNClassifier {
   }
 
   dispose() {
-    this.clearTrainLogitsMatrix();
-    this.classLogitsMatrices.forEach(
+    this.clearTrainDatasetMatrix();
+    this.classDatasetMatrix.forEach(
         classLogitsMatrix => classLogitsMatrix.dispose());
-    this.squashLogitsDenominator.dispose();
   }
 }
 
@@ -273,9 +255,8 @@ class KNNClassifier {
  * @param numClasses number of classes to predict
  * @param topK number of neighbors to compare with during prediction
  */
-async function load(numClasses: number, topK: number) {
-  const model = await mobilenet.load();
-  return new KNNClassifier(numClasses, topK, model);
+async function load(numClasses: number) {
+  return new KNNClassifier(numClasses);
 }
 
 export {KNNClassifier, load};
