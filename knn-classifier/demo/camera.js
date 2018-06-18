@@ -16,7 +16,7 @@
  */
 import * as tf from '@tensorflow/tfjs';
 import * as mobilenetModule from '@tensorflow-models/mobilenet';
-import {knnClassifier} from '../src/index';
+import * as knnClassifier from '../src/index';
 import Stats from 'stats.js';
 
 const videoWidth = 300;
@@ -111,7 +111,7 @@ function setupGui() {
  * Load the KNN model
  */
 async function loadKNN() {
-  const model = knnClassifier();
+  const model = knnClassifier.create();
   mobilenet = await mobilenetModule.load();
   return model;
 }

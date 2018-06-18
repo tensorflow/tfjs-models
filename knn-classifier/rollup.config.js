@@ -61,7 +61,7 @@ export default [
   config({
     output: {
       format: 'umd',
-      name: 'knn-classifier',
+      name: 'knnClassifier',
       file: 'dist/knn-classifier.js'
     }
   }),
@@ -69,7 +69,7 @@ export default [
     plugins: [minify()],
     output: {
       format: 'umd',
-      name: 'knn-classifier',
+      name: 'knnClassifier',
       file: 'dist/knn-classifier.min.js'
     }
   }),

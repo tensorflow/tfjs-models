@@ -15,7 +15,7 @@
  * =============================================================================
  */
 import * as tf from '@tensorflow/tfjs';
-import {Tensor, Tensor1D, Tensor2D, Tensor3D, util} from '@tensorflow/tfjs';
+import {Tensor, Tensor1D, Tensor2D, util} from '@tensorflow/tfjs';
 import {isNumber} from 'util';
 
 import {concatWithNulls, topK} from './util';
@@ -98,7 +98,7 @@ export class KNNClassifier {
    * @param example The input example.
    * @returns cosine distances for each entry in the database.
    */
-  knn(example: Tensor3D): Tensor1D {
+  private knn(example: Tensor): Tensor1D {
     return tf.tidy(() => {
       const normalizedExample =
           this.normalizeVectorToUnitLength(example.flatten());
@@ -137,7 +137,7 @@ export class KNNClassifier {
    * @returns A dict of the top class for the image and an array of confidence
    * values for all possible classes.
    */
-  async predictClass(example: Tensor3D, k = 3):
+  async predictClass(example: Tensor, k = 3):
       Promise<{classIndex: number, confidences: {[classId: number]: number}}> {
     const knn = this.knn(example).asType('float32');
 
@@ -231,7 +231,6 @@ export class KNNClassifier {
    */
   private normalizeVectorToUnitLength(vec: Tensor1D) {
     return tf.tidy(() => {
-      // TODO(nsthorat): Use norm().
       const sqrtSum = vec.norm();
 
       return tf.div(vec, sqrtSum);
@@ -255,6 +254,6 @@ export class KNNClassifier {
   }
 }
 
-export function knnClassifier(): KNNClassifier {
+export function create(): KNNClassifier {
   return new KNNClassifier();
 }
