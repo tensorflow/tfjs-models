@@ -11,7 +11,7 @@ The camera demo shows how to create a custom classifier with 3 classes that can 
 cd into the demos folder:
 
 ```sh
-cd knn-image-classifier/demos
+cd knn-classifier/demos
 ```
 
 Install dependencies and prepare the build directory:
@@ -33,9 +33,9 @@ Install yalc:
 npm i -g yalc
 ```
 
-cd into the knn-image-classifier folder:
+cd into the knn-classifier folder:
 ```sh
-cd knn-image-classifier
+cd knn-classifier
 ```
 
 Install dependencies:
@@ -43,7 +43,7 @@ Install dependencies:
 yarn
 ```
 
-Publish knn-image-classifier locally:
+Publish knn-classifier locally:
 ```sh
 yalc push
 ```
@@ -55,9 +55,9 @@ cd demos
 yarn
 ```
 
-Link the local knn-image-classifier to the demos:
+Link the local knn-classifier to the demos:
 ```sh
-yalc link \@tensorflow-models/knn-image-classifier
+yalc link \@tensorflow-models/knn-classifier
 ```
 
 Start the dev demo server:
@@ -65,9 +65,9 @@ Start the dev demo server:
 yarn watch
 ```
 
-To get future updates from the knn-image-classifier source code:
+To get future updates from the knn-classifier source code:
 ```
-# cd up into the knn-image-classifier directory
+# cd up into the knn-classifier directory
 cd ../
 yarn build && yalc push
 ```

@@ -24,7 +24,7 @@ import {concatWithNulls, topK} from './util';
  * A K-nearest neighbors (KNN) image classifier that allows fast
  * custom model training on top of mobilenet
  */
-class KNNImageClassifier {
+class KNNClassifier {
   private net: mobilenet.MobileNet;
 
   private trainLogitsMatrix: Tensor2D;
@@ -275,7 +275,7 @@ class KNNImageClassifier {
  */
 async function load(numClasses: number, topK: number) {
   const model = await mobilenet.load();
-  return new KNNImageClassifier(numClasses, topK, model);
+  return new KNNClassifier(numClasses, topK, model);
 }
 
-export {KNNImageClassifier, load};
+export {KNNClassifier, load};
