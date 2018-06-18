@@ -18,7 +18,12 @@
 import * as mobilenet from '@tensorflow-models/mobilenet';
 import * as tf from '@tensorflow/tfjs';
 import {Tensor1D, Tensor2D, Tensor3D} from '@tensorflow/tfjs';
+import {concatWithNulls, topK} from './util';
 
+/**
+ * A K-nearest neighbors (KNN) image classifier that allows fast
+ * custom model training on top of mobilenet
+ */
 class KNNImageClassifier {
   private net: mobilenet.MobileNet;
 
@@ -44,8 +49,7 @@ class KNNImageClassifier {
    */
   clearClass(classIndex: number) {
     if (classIndex >= this.numClasses) {
-      console.log('Cannot clear invalid class ${classIndex}');
-      return;
+      throw new Error('Cannot clear invalid class ${classIndex}');
     }
 
     this.classLogitsMatrices[classIndex] = null;
@@ -58,19 +62,16 @@ class KNNImageClassifier {
    */
   addImage(image: Tensor3D, classIndex: number): void {
     if (classIndex >= this.numClasses) {
-      console.warn('Cannot add to invalid class ${classIndex}');
+      throw new Error('Cannot add to invalid class ${classIndex}');
     }
     this.clearTrainLogitsMatrix();
 
     tf.tidy(() => {
       // Add the mobilenet logits for the image to the appropriate class
       // logits matrix.
-      const _logits = this.net.infer(image).as1D();
-      const logits = this.normalizeVector(_logits);
-
+      const logits = this.inferNormalizedLogits(image);
       const logitsSize = logits.shape[0];
-      // console.log(logitsSize);
-      console.log(logits, logitsSize, logits.shape);
+
       if (this.classLogitsMatrices[classIndex] == null) {
         this.classLogitsMatrices[classIndex] = logits.as2D(1, logitsSize);
       } else {
@@ -90,8 +91,6 @@ class KNNImageClassifier {
   }
 
   /**
-   * You are probably are looking for "predictClass".
-   *
    * This method returns the K-nearest neighbors as distances in the database.
    *
    * This unfortunately deviates from standard behavior for nearest neighbors
@@ -104,11 +103,9 @@ class KNNImageClassifier {
    * @param image The input image.
    * @returns cosine distances for each entry in the database.
    */
-  predict(image: Tensor3D): Tensor1D {
+  calculateKNNDistances(image: Tensor3D): Tensor1D {
     return tf.tidy(() => {
-      const _logits = this.net.infer(image).as1D();
-      const logits = this.normalizeVector(_logits);
-
+      const logits = this.inferNormalizedLogits(image);
       const logitsSize = logits.shape[0];
 
       // Lazily create the logits matrix for all training images if necessary.
@@ -116,7 +113,7 @@ class KNNImageClassifier {
         let newTrainLogitsMatrix = null;
 
         for (let i = 0; i < this.numClasses; i++) {
-          newTrainLogitsMatrix = this.concatWithNulls(
+          newTrainLogitsMatrix = concatWithNulls(
               newTrainLogitsMatrix, this.classLogitsMatrices[i]);
         }
         this.trainLogitsMatrix = newTrainLogitsMatrix;
@@ -146,17 +143,39 @@ class KNNImageClassifier {
    */
   async predictClass(image: Tensor3D):
       Promise<{classIndex: number, confidences: number[]}> {
+    const knn = this.calculateKNNDistances(image).asType('float32');
+
+    const kVal = Math.min(this.k, this.getNumExamples());
+    const topKIndices = topK(await knn.data() as Float32Array, kVal).indices;
+    knn.dispose();
+
+    return this.calculateTopClass(topKIndices, kVal);
+  }
+
+  getClassExampleCount(): number[] {
+    return this.classExampleCount;
+  }
+
+  getClassLogitsMatrices(): Tensor2D[] {
+    return this.classLogitsMatrices;
+  }
+
+  setClassLogitsMatrices(classLogitsMatrices: Tensor2D[]) {
+    this.classLogitsMatrices = classLogitsMatrices;
+    this.classExampleCount = classLogitsMatrices.map(
+        (tensor: Tensor2D) => tensor != null ? tensor.shape[0] : 0);
+    this.clearTrainLogitsMatrix();
+  }
+
+  /**
+   * Calculates the top class in knn prediction
+   */
+  private calculateTopClass(topKIndices: Int32Array, kVal: number) {
     let imageClass = -1;
     const confidences = new Array<number>(this.numClasses);
 
-    const knn = this.predict(image).asType('float32');
-    const numExamples = this.getNumExamples();
-    const kVal = Math.min(this.k, numExamples);
-    const topK = this.topK(await knn.data() as Float32Array, kVal);
-    knn.dispose();
-    const topKIndices = topK.indices;
-
     if (topKIndices == null) {
+      // No class predicted
       return {classIndex: imageClass, confidences};
     }
 
@@ -194,19 +213,13 @@ class KNNImageClassifier {
     return {classIndex: imageClass, confidences};
   }
 
-  getClassExampleCount(): number[] {
-    return this.classExampleCount;
-  }
-
-  getClassLogitsMatrices(): Tensor2D[] {
-    return this.classLogitsMatrices;
-  }
-
-  setClassLogitsMatrices(classLogitsMatrices: Tensor2D[]) {
-    this.classLogitsMatrices = classLogitsMatrices;
-    this.classExampleCount = classLogitsMatrices.map(
-        (tensor: Tensor2D) => tensor != null ? tensor.shape[0] : 0);
-    this.clearTrainLogitsMatrix();
+  /**
+   * Calculates normalized logits of image
+   * @param image image to pass through mobilenet
+   */
+  private inferNormalizedLogits(image: tf.Tensor<tf.Rank.R3>) {
+    const logits = this.net.infer(image).as1D();
+    return this.normalizeVector(logits);
   }
 
   /**
@@ -218,18 +231,6 @@ class KNNImageClassifier {
       this.trainLogitsMatrix.dispose();
       this.trainLogitsMatrix = null;
     }
-  }
-
-  private concatWithNulls(ndarray1: Tensor2D, ndarray2: Tensor2D): Tensor2D {
-    if (ndarray1 == null && ndarray2 == null) {
-      return null;
-    }
-    if (ndarray1 == null) {
-      return ndarray2.clone();
-    } else if (ndarray2 === null) {
-      return ndarray1.clone();
-    }
-    return ndarray1.concat(ndarray2, 0);
   }
 
   /**
@@ -256,24 +257,6 @@ class KNNImageClassifier {
     return total;
   }
 
-  private topK(values: Float32Array, k: number):
-      {values: Float32Array, indices: Int32Array} {
-    const valuesAndIndices: Array<{value: number, index: number}> = [];
-    for (let i = 0; i < values.length; i++) {
-      valuesAndIndices.push({value: values[i], index: i});
-    }
-    valuesAndIndices.sort((a, b) => {
-      return b.value - a.value;
-    });
-    const topkValues = new Float32Array(k);
-    const topkIndices = new Int32Array(k);
-    for (let i = 0; i < k; i++) {
-      topkValues[i] = valuesAndIndices[i].value;
-      topkIndices[i] = valuesAndIndices[i].index;
-    }
-    return {values: topkValues, indices: topkIndices};
-  }
-
   dispose() {
     this.clearTrainLogitsMatrix();
     this.classLogitsMatrices.forEach(
@@ -282,6 +265,14 @@ class KNNImageClassifier {
   }
 }
 
+/**
+ * Load KNN Model.
+ * This will load mobilenet, and prepare the classifier for a
+ * predifined number of classes
+ *
+ * @param numClasses number of classes to predict
+ * @param topK number of neighbors to compare with during prediction
+ */
 async function load(numClasses: number, topK: number) {
   const model = await mobilenet.load();
   return new KNNImageClassifier(numClasses, topK, model);
