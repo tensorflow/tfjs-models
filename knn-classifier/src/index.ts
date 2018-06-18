@@ -16,6 +16,7 @@
  */
 import * as tf from '@tensorflow/tfjs';
 import {Tensor, Tensor1D, Tensor2D, Tensor3D, util} from '@tensorflow/tfjs';
+import {isNumber} from 'util';
 
 import {concatWithNulls, topK} from './util';
 
@@ -23,31 +24,26 @@ import {concatWithNulls, topK} from './util';
  * A K-nearest neighbors (KNN) image classifier that allows fast
  * custom model training on top of mobilenet
  */
-class KNNClassifier {
+export class KNNClassifier {
   private trainDatasetMatrix: Tensor2D;
 
-  private classDatasetMatrix: Tensor2D[] = [];
-  private classExampleCount: number[] = [];
+  private classDatasetMatrix: {[classId: number]: Tensor2D} = {};
+  private classExampleCount: {[classId: number]: number} = {};
 
   private exampleShape: number[];
-
-  constructor(private numClasses: number) {
-    for (let i = 0; i < this.numClasses; i++) {
-      this.classDatasetMatrix.push(null);
-      this.classExampleCount.push(0);
-    }
-  }
 
   /**
    * Clears the saved images from the specified class.
    */
   clearClass(classIndex: number) {
-    if (classIndex >= this.numClasses) {
+    if (this.classDatasetMatrix[classIndex] == null) {
       throw new Error('Cannot clear invalid class ${classIndex}');
     }
 
     this.classDatasetMatrix[classIndex] = null;
+    delete this.classDatasetMatrix[classIndex];
     this.classExampleCount[classIndex] = 0;
+    delete this.classExampleCount[classIndex];
     this.clearTrainDatasetMatrix();
   }
 
@@ -55,9 +51,6 @@ class KNNClassifier {
    * Adds the provided example to the specified class.
    */
   addExample(example: Tensor, classIndex: number): void {
-    if (classIndex >= this.numClasses) {
-      throw new Error('Cannot add to invalid class ${classIndex}');
-    }
     if (this.exampleShape == null) {
       this.exampleShape = example.shape;
     }
@@ -65,6 +58,9 @@ class KNNClassifier {
       throw new Error(
           `Example shape provided, ${example.shape} does not match ` +
           `previously provided example shapes ${this.exampleShape}.`);
+    }
+    if (!isNumber(classIndex)) {
+      throw new Error(`classIndex must be an integer, got ${classIndex}.`);
     }
 
     this.clearTrainDatasetMatrix();
@@ -89,6 +85,9 @@ class KNNClassifier {
 
       tf.keep(this.classDatasetMatrix[classIndex]);
 
+      if (this.classExampleCount[classIndex] == null) {
+        this.classExampleCount[classIndex] = 0;
+      }
       this.classExampleCount[classIndex]++;
     });
   }
@@ -99,7 +98,7 @@ class KNNClassifier {
    * @param example The input example.
    * @returns cosine distances for each entry in the database.
    */
-  calculateKNNDistances(example: Tensor3D): Tensor1D {
+  knn(example: Tensor3D): Tensor1D {
     return tf.tidy(() => {
       const normalizedExample =
           this.normalizeVectorToUnitLength(example.flatten());
@@ -109,7 +108,7 @@ class KNNClassifier {
       if (this.trainDatasetMatrix == null) {
         let newTrainLogitsMatrix = null;
 
-        for (let i = 0; i < this.numClasses; i++) {
+        for (const i in this.classDatasetMatrix) {
           newTrainLogitsMatrix =
               concatWithNulls(newTrainLogitsMatrix, this.classDatasetMatrix[i]);
         }
@@ -139,8 +138,8 @@ class KNNClassifier {
    * values for all possible classes.
    */
   async predictClass(example: Tensor3D, k = 3):
-      Promise<{classIndex: number, confidences: number[]}> {
-    const knn = this.calculateKNNDistances(example).asType('float32');
+      Promise<{classIndex: number, confidences: {[classId: number]: number}}> {
+    const knn = this.knn(example).asType('float32');
 
     const kVal = Math.min(k, this.getNumExamples());
     const topKIndices = topK(await knn.data() as Float32Array, kVal).indices;
@@ -149,19 +148,25 @@ class KNNClassifier {
     return this.calculateTopClass(topKIndices, kVal);
   }
 
-  getClassExampleCount(): number[] {
+  getClassExampleCount(): {[classId: number]: number} {
     return this.classExampleCount;
   }
 
-  getClassLogitsMatrices(): Tensor2D[] {
+  getClassLogitsMatrices(): {[classId: number]: Tensor2D} {
     return this.classDatasetMatrix;
   }
 
-  setClassLogitsMatrices(classLogitsMatrices: Tensor2D[]) {
-    this.classDatasetMatrix = classLogitsMatrices;
-    this.classExampleCount = classLogitsMatrices.map(
-        (tensor: Tensor2D) => tensor != null ? tensor.shape[0] : 0);
+  getNumClasses(): number {
+    return Object.keys(this.classExampleCount).length;
+  }
+
+  setDataset(classDatasetMatrix: {[classId: number]: Tensor2D}) {
     this.clearTrainDatasetMatrix();
+
+    this.classDatasetMatrix = classDatasetMatrix;
+    for (const i in classDatasetMatrix) {
+      this.classExampleCount[i] = classDatasetMatrix[i].shape[0];
+    }
   }
 
   /**
@@ -169,7 +174,7 @@ class KNNClassifier {
    */
   private calculateTopClass(topKIndices: Int32Array, kVal: number) {
     let imageClass = -1;
-    const confidences = new Array<number>(this.numClasses);
+    const confidences: {[classId: number]: number} = {};
 
     if (topKIndices == null) {
       // No class predicted
@@ -178,11 +183,11 @@ class KNNClassifier {
 
     const indicesForClasses = [];
     const topKCountsForClasses = [];
-    for (let i = 0; i < this.numClasses; i++) {
+    for (const i in this.classDatasetMatrix) {
       topKCountsForClasses.push(0);
       let num = this.classExampleCount[i];
-      if (i > 0) {
-        num += indicesForClasses[i - 1];
+      if (+i > 0) {
+        num += indicesForClasses[+i - 1];
       }
       indicesForClasses.push(num);
     }
@@ -198,11 +203,11 @@ class KNNClassifier {
     }
 
     let topConfidence = 0;
-    for (let i = 0; i < this.numClasses; i++) {
+    for (const i in this.classDatasetMatrix) {
       const probability = topKCountsForClasses[i] / kVal;
       if (probability > topConfidence) {
         topConfidence = probability;
-        imageClass = i;
+        imageClass = +i;
       }
       confidences[i] = probability;
     }
@@ -225,16 +230,18 @@ class KNNClassifier {
    * Normalize the provided vector to unit length.
    */
   private normalizeVectorToUnitLength(vec: Tensor1D) {
-    // TODO(nsthorat): Use norm().
-    const sqrtSum = vec.square().sum().sqrt();
+    return tf.tidy(() => {
+      // TODO(nsthorat): Use norm().
+      const sqrtSum = vec.norm();
 
-    return tf.div(vec, sqrtSum);
+      return tf.div(vec, sqrtSum);
+    });
   }
 
   private getNumExamples() {
     let total = 0;
-    for (let i = 0; i < this.classExampleCount.length; i++) {
-      total += this.classExampleCount[i];
+    for (const i in this.classDatasetMatrix) {
+      total += this.classExampleCount[+i];
     }
 
     return total;
@@ -242,21 +249,12 @@ class KNNClassifier {
 
   dispose() {
     this.clearTrainDatasetMatrix();
-    this.classDatasetMatrix.forEach(
-        classLogitsMatrix => classLogitsMatrix.dispose());
+    for (const i in this.classDatasetMatrix) {
+      this.classDatasetMatrix[i].dispose();
+    }
   }
 }
 
-/**
- * Load KNN Model.
- * This will load mobilenet, and prepare the classifier for a
- * predifined number of classes
- *
- * @param numClasses number of classes to predict
- * @param topK number of neighbors to compare with during prediction
- */
-async function load(numClasses: number) {
-  return new KNNClassifier(numClasses);
+export function knnClassifier(): KNNClassifier {
+  return new KNNClassifier();
 }
-
-export {KNNClassifier, load};

@@ -1,12 +1,12 @@
 {
-  "name": "@tensorflow-models/knn-image-classifier",
+  "name": "@tensorflow-models/knn-classifier",
   "version": "0.1.0",
-  "description": "KNN Image Classifier for TensorFlow.js",
+  "description": "KNN Classifier for TensorFlow.js",
   "main": "dist/index.js",
-  "unpkg": "dist/knn-image-classifier.min.js",
-  "jsdelivr": "dist/knn-image-classifier.min.js",
-  "jsnext:main": "dist/knn-image-classifier.esm.js",
-  "module": "dist/knn-image-classifier.esm.js",
+  "unpkg": "dist/knn-classifier.min.js",
+  "jsdelivr": "dist/knn-classifier.min.js",
+  "jsnext:main": "dist/knn-classifier.esm.js",
+  "module": "dist/knn-classifier.esm.js",
   "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
