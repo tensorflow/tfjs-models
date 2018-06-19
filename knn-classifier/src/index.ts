@@ -90,7 +90,7 @@ export class KNNClassifier {
           this.normalizeVectorToUnitLength(example.flatten());
       const exampleSize = normalizedExample.shape[0];
 
-      // Lazily create the logits matrix for all training images if necessary.
+      // Lazily create the logits matrix for all training examples if necessary.
       if (this.trainDatasetMatrix == null) {
         let newTrainLogitsMatrix = null;
 
@@ -102,7 +102,7 @@ export class KNNClassifier {
       }
 
       if (this.trainDatasetMatrix == null) {
-        console.warn('Cannot predict without providing training images.');
+        console.warn('Cannot predict without providing training examples.');
         return null;
       }
 
@@ -116,16 +116,16 @@ export class KNNClassifier {
   }
 
   /**
-   * Predicts the class of the provided image using KNN from the previously-
-   * added images and their classes.
+   * Predicts the class of the provided input using KNN from the previously-
+   * added inputs and their classes.
    *
-   * @param example The image to predict the class for.
-   * @returns A dict of the top class for the image and an array of confidence
+   * @param input The input to predict the class for.
+   * @returns A dict of the top class for the input and an array of confidence
    * values for all possible classes.
    */
-  async predictClass(example: Tensor, k = 3):
+  async predictClass(input: Tensor, k = 3):
       Promise<{classIndex: number, confidences: {[classId: number]: number}}> {
-    const knn = this.knn(example).asType('float32');
+    const knn = this.knn(input).asType('float32');
 
     const kVal = Math.min(k, this.getNumExamples());
     const topKIndices = topK(await knn.data() as Float32Array, kVal).indices;
@@ -135,7 +135,7 @@ export class KNNClassifier {
   }
 
   /**
-   * Clears the saved images from the specified class.
+   * Clears the saved examples from the specified class.
    */
   clearClass(classIndex: number) {
     if (this.classDatasetMatrices[classIndex] == null) {
@@ -174,12 +174,12 @@ export class KNNClassifier {
    * Calculates the top class in knn prediction
    */
   private calculateTopClass(topKIndices: Int32Array, kVal: number) {
-    let imageClass = -1;
+    let exampleClass = -1;
     const confidences: {[classId: number]: number} = {};
 
     if (topKIndices == null) {
       // No class predicted
-      return {classIndex: imageClass, confidences};
+      return {classIndex: exampleClass, confidences};
     }
 
     const indicesForClasses = [];
@@ -208,12 +208,12 @@ export class KNNClassifier {
       const probability = topKCountsForClasses[i] / kVal;
       if (probability > topConfidence) {
         topConfidence = probability;
-        imageClass = +i;
+        exampleClass = +i;
       }
       confidences[i] = probability;
     }
 
-    return {classIndex: imageClass, confidences};
+    return {classIndex: exampleClass, confidences};
   }
 
   /**

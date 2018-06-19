@@ -14,10 +14,11 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as tf from '@tensorflow/tfjs';
 import * as mobilenetModule from '@tensorflow-models/mobilenet';
-import * as knnClassifier from '../src/index';
+import * as tf from '@tensorflow/tfjs';
 import Stats from 'stats.js';
+
+import * as knnClassifier from '../src/index';
 
 const videoWidth = 300;
 const videoHeight = 250;
@@ -54,7 +55,7 @@ function isMobile() {
 async function setupCamera() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     throw new Error(
-      'Browser API navigator.mediaDevices.getUserMedia not available');
+        'Browser API navigator.mediaDevices.getUserMedia not available');
   }
 
   const video = document.getElementById('video');
@@ -120,7 +121,7 @@ async function loadKNN() {
  * Sets up a frames per second panel on the top-left of the window
  */
 function setupFPS() {
-  stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
+  stats.showPanel(0);  // 0: fps, 1: ms, 2: mb, 3+: custom
   document.body.appendChild(stats.dom);
 }
 
@@ -142,9 +143,9 @@ async function animate() {
     classifier.addExample(logits, training);
   }
 
-  // If any examples have been added, run predict
-  const exampleCount = classifier.getNumClasses();
-  if (exampleCount > 0) {
+  // If the classifier has examples for any classes, make a prediction!
+  const numClasses = classifier.getNumClasses();
+  if (numClasses > 0) {
     logits = infer();
 
     const res = await classifier.predictClass(logits, TOPK);
@@ -197,7 +198,7 @@ export async function bindPage() {
   } catch (e) {
     let info = document.getElementById('info');
     info.textContent = 'this browser does not support video capture,' +
-      'or this device does not have a camera';
+        'or this device does not have a camera';
     info.style.display = 'block';
     throw e;
   }
@@ -207,6 +208,6 @@ export async function bindPage() {
 }
 
 navigator.getUserMedia = navigator.getUserMedia ||
-  navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+    navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 // kick off the demo
 bindPage();
