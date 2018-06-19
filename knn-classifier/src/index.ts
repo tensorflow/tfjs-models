@@ -16,8 +16,6 @@
  */
 import * as tf from '@tensorflow/tfjs';
 import {Tensor, Tensor1D, Tensor2D, util} from '@tensorflow/tfjs';
-import {isNumber} from 'util';
-
 import {concatWithNulls, topK} from './util';
 
 /**
@@ -49,7 +47,7 @@ export class KNNClassifier {
           `Example shape provided, ${example.shape} does not match ` +
           `previously provided example shapes ${this.exampleShape}.`);
     }
-    if (!isNumber(classIndex)) {
+    if (!Number.isInteger(classIndex)) {
       throw new Error(`classIndex must be an integer, got ${classIndex}.`);
     }
 
