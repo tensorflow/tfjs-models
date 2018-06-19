@@ -59,10 +59,3 @@ Start the dev demo server:
 ```sh
 yarn watch
 ```
-
-To get future updates from the knn-classifier source code:
-```
-# cd up into the knn-classifier directory
-cd ../
-yarn build && yalc push
-```
