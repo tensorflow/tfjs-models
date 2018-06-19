@@ -24,13 +24,14 @@ const classifier = knnClassifier.create();
 // Load mobilenet.
 const mobilenet = await mobilenetModule.load();
 
-// Add MobileNet activations to the model repeatedly for all classes. This
-// example only shows adding a single activation, but you would repeat this code
-// block for all examples with different class indices.
-const img = tf.fromPixels(...);
-const logits = mobilenet.infer(img, 'conv_preds');
-const classIndex = 0;
+// Add MobileNet activations to the model repeatedly for all classes.
+const img0 = tf.fromPixels(...);
+const logits0 = mobilenet.infer(img0, 'conv_preds');
 classifier.addExample(logits, 0);
+
+const img1 = tf.fromPixels(...);
+const logits1 = mobilenet.infer(img1, 'conv_preds');
+classifier.addExample(logits, 1);
 
 // Make a prediction.
 const x = tf.fromPixels(...);
