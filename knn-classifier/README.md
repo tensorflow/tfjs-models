@@ -6,11 +6,11 @@ algorithm.
 
 This package is different from the other packages in this repository in that it
 doesn't provide a model with weights, but rather a utility for constructing a
-model another models for embeddings.
+model another models for activations.
 
 You can see example code [here](https://github.com/tensorflow/tfjs-models/tree/master/knn-classifier/demo).
 
-## Usage
+## Usage example
 
 ```js
 import * as tf from '@tensorflow/tfjs';
@@ -23,7 +23,9 @@ const classifier = knnClassifier.create();
 // Load mobilenet.
 const mobilenet = await mobilenetModule.load();
 
-// Add embeddings to the model repeatedly for all classes.
+// Add MobileNet activations to the model repeatedly for all classes. This
+// example only shows adding a single activation, but you would repeat this code
+// block for all examples with different class indices.
 const img = tf.fromPixels(...);
 const logits = mobilenet.infer(img, 'conv_preds');
 const classIndex = 0;
@@ -58,7 +60,7 @@ classifier.addExample(
 ```
 
 Args:
-- **example:** An example to add to the dataset, usually an embedding from
+- **example:** An example to add to the dataset, usually an activation from
   another model.
 - **classIndex:** The class index of the example.
 
@@ -72,11 +74,11 @@ classifier.predictClass(
 ```
 
 Args:
-- **example:** An example to make a prediction on, usually an embedding from
+- **example:** An example to make a prediction on, usually an activation from
   another model.
 - **k:** The K value to use in K-nearest neighbors. Determines how many examples
   from the dataset to truncate nearest values by before voting on the best
-  class. Defaults to 3.
+  class. Defaults to 3. If examples < k, k = examples.
 
 Returns an object with a top classIndex, and confidences mapping the class index
 to the confidence.
@@ -91,6 +93,12 @@ classifier.clearClass(classIndex: number)
 
 Args:
 - **classIndex:** The class to clear all examples for.
+
+##### Clear all examples from all classes
+
+```ts
+classifier.clearAllClasses()
+```
 
 ##### Get the example count for each class
 
@@ -123,6 +131,8 @@ classifier.getNumClasses(): number
 ```
 
 ##### Dispose the classifier and all internal state
+
+Clears up WebGL memory.
 
 ```ts
 classifier.dispose()

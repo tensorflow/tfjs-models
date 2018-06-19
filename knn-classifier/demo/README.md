@@ -55,11 +55,6 @@ cd demos
 yarn
 ```
 
-Link the local knn-classifier to the demos:
-```sh
-yalc link \@tensorflow-models/knn-classifier
-```
-
 Start the dev demo server:
 ```sh
 yarn watch

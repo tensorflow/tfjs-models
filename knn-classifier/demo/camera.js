@@ -134,6 +134,7 @@ async function animate() {
   // Get image data from video element
   const image = tf.fromPixels(video);
   let logits;
+  // 'conv_preds' is the logits activation of MobileNet.
   const infer = () => mobilenet.infer(image, 'conv_preds');
 
   // Train class if one of the buttons is held down

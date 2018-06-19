@@ -79,15 +79,16 @@ export class KNNClassifier {
   }
 
   /**
-   * This method returns the K-nearest neighbors as distances in the database.
+   * This method return distances between the input and all examples in the
+   * dataset.
    *
-   * @param example The input example.
-   * @returns cosine distances for each entry in the database.
+   * @param input The input example.
+   * @returns cosine similarities for each entry in the database.
    */
-  private knn(example: Tensor): Tensor1D {
+  private similarities(input: Tensor): Tensor1D {
     return tf.tidy(() => {
       const normalizedExample =
-          this.normalizeVectorToUnitLength(example.flatten());
+          this.normalizeVectorToUnitLength(input.flatten());
       const exampleSize = normalizedExample.shape[0];
 
       // Lazily create the logits matrix for all training examples if necessary.
@@ -125,7 +126,11 @@ export class KNNClassifier {
    */
   async predictClass(input: Tensor, k = 3):
       Promise<{classIndex: number, confidences: {[classId: number]: number}}> {
-    const knn = this.knn(input).asType('float32');
+    if (k < 1) {
+      throw new Error(
+          `Please provide a positive integer k value to predictClass.`);
+    }
+    const knn = tf.tidy(() => this.similarities(input).asType('float32'));
 
     const kVal = Math.min(k, this.getNumExamples());
     const topKIndices = topK(await knn.data() as Float32Array, kVal).indices;
@@ -147,6 +152,12 @@ export class KNNClassifier {
     this.classExampleCount[classIndex] = 0;
     delete this.classExampleCount[classIndex];
     this.clearTrainDatasetMatrix();
+  }
+
+  clearAllClasses() {
+    for (const i in this.classDatasetMatrices) {
+      this.clearClass(+i);
+    }
   }
 
   getClassExampleCount(): {[classId: number]: number} {
