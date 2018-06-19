@@ -6,8 +6,8 @@ algorithm.
 
 This package is different from the other packages in this repository in that it
 doesn't provide a model with weights, but rather a utility for constructing a
-KNN model using activations from another model or any other tensor data you
-may have.
+KNN model using activations from another model or any other tensors you can
+associate with a class.
 
 You can see example code [here](https://github.com/tensorflow/tfjs-models/tree/master/knn-classifier/demo).
 
