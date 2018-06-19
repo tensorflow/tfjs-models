@@ -109,15 +109,6 @@ function setupGui() {
 }
 
 /**
- * Load the KNN model
- */
-async function loadKNN() {
-  const model = knnClassifier.create();
-  mobilenet = await mobilenetModule.load();
-  return model;
-}
-
-/**
  * Sets up a frames per second panel on the top-left of the window
  */
 function setupFPS() {
@@ -182,8 +173,8 @@ async function animate() {
  * available camera devices, and setting off the animate function.
  */
 export async function bindPage() {
-  // Load the KNN model
-  classifier = await loadKNN();
+  classifier = knnClassifier.create();
+  mobilenet = await mobilenetModule.load();
 
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'block';

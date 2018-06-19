@@ -6,7 +6,8 @@ algorithm.
 
 This package is different from the other packages in this repository in that it
 doesn't provide a model with weights, but rather a utility for constructing a
-model another models for activations.
+KNN model using activations from another model or any other tensor data you
+may have.
 
 You can see example code [here](https://github.com/tensorflow/tfjs-models/tree/master/knn-classifier/demo).
 
@@ -68,20 +69,21 @@ Args:
 
 ```ts
 classifier.predictClass(
-  example: tf.Tensor,
+  input: tf.Tensor,
   k = 3
 ): Promise<{classIndex: number, confidences: {[classId: number]: number}}>;
 ```
 
 Args:
-- **example:** An example to make a prediction on, usually an activation from
+- **input:** An example to make a prediction on, usually an activation from
   another model.
-- **k:** The K value to use in K-nearest neighbors. Determines how many examples
-  from the dataset to truncate nearest values by before voting on the best
-  class. Defaults to 3. If examples < k, k = examples.
+- **k:** The K value to use in K-nearest neighbors. The algorithm will first
+  find the K nearest examples from those it was previously shown, and then choose
+  the class that appears the most as the final prediction for the input example.
+  Defaults to 3. If examples < k, k = examples.
 
-Returns an object with a top classIndex, and confidences mapping the class index
-to the confidence.
+Returns an object with a top classIndex, and confidences mapping all class
+indices to their confidence.
 
 #### Misc
 
@@ -111,13 +113,13 @@ Returns an object that maps classId to example count for that class.
 ##### Get the full dataset, useful for saving state.
 
 ```ts
-classifier.getClassDatasetMatrices(): {[classId: number]: Tensor2D}
+classifier.getClassifierDataset(): {[classId: number]: Tensor2D}
 ```
 
 ##### Set the full dataset, useful for restoring state.
 
 ```ts
-classifier.setClassDatasetMatrices(dataset: {[classId: number]: Tensor2D})
+classifier.setClassifierDataset(dataset: {[classId: number]: Tensor2D})
 ```
 
 Args:
@@ -132,7 +134,8 @@ classifier.getNumClasses(): number
 
 ##### Dispose the classifier and all internal state
 
-Clears up WebGL memory.
+Clears up WebGL memory. Useful if you no longer need the classifier in your
+application.
 
 ```ts
 classifier.dispose()

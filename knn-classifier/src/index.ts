@@ -26,8 +26,12 @@ import {concatWithNulls, topK} from './util';
  * learning with an embedding from another pretrained model.
  */
 export class KNNClassifier {
+  // The full concatenated dataset that is constructed lazily before making a
+  // prediction.
   private trainDatasetMatrix: Tensor2D;
 
+  // Individual class datasets used when adding examples. These get concatenated
+  // into the full trainDatasetMatrix when a prediction is made.
   private classDatasetMatrices: {[classId: number]: Tensor2D} = {};
   private classExampleCount: {[classId: number]: number} = {};
 
@@ -147,9 +151,7 @@ export class KNNClassifier {
       throw new Error('Cannot clear invalid class ${classIndex}');
     }
 
-    this.classDatasetMatrices[classIndex] = null;
     delete this.classDatasetMatrices[classIndex];
-    this.classExampleCount[classIndex] = 0;
     delete this.classExampleCount[classIndex];
     this.clearTrainDatasetMatrix();
   }
@@ -164,7 +166,7 @@ export class KNNClassifier {
     return this.classExampleCount;
   }
 
-  getClassDatasetMatrices(): {[classId: number]: Tensor2D} {
+  getClassifierDataset(): {[classId: number]: Tensor2D} {
     return this.classDatasetMatrices;
   }
 
@@ -172,7 +174,7 @@ export class KNNClassifier {
     return Object.keys(this.classExampleCount).length;
   }
 
-  setClassDatasetMatrices(classDatasetMatrices: {[classId: number]: Tensor2D}) {
+  setClassifierDataset(classDatasetMatrices: {[classId: number]: Tensor2D}) {
     this.clearTrainDatasetMatrix();
 
     this.classDatasetMatrices = classDatasetMatrices;
@@ -183,6 +185,8 @@ export class KNNClassifier {
 
   /**
    * Calculates the top class in knn prediction
+   * @param topKIndices The indices of closest K values.
+   * @param kVal The value of k for the k-nearest neighbors algorithm.
    */
   private calculateTopClass(topKIndices: Int32Array, kVal: number) {
     let exampleClass = -1;
@@ -194,9 +198,7 @@ export class KNNClassifier {
     }
 
     const indicesForClasses = [];
-    const topKCountsForClasses = [];
     for (const i in this.classDatasetMatrices) {
-      topKCountsForClasses.push(0);
       let num = this.classExampleCount[i];
       if (+i > 0) {
         num += indicesForClasses[+i - 1];
@@ -204,16 +206,18 @@ export class KNNClassifier {
       indicesForClasses.push(num);
     }
 
+    const topKCountsForClasses =
+        Array(Object.keys(this.classDatasetMatrices).length).fill(0);
     for (let i = 0; i < topKIndices.length; i++) {
-      for (let classForEntry = 0; classForEntry < indicesForClasses.length;
-           classForEntry++) {
-        if (topKIndices[i] < indicesForClasses[classForEntry]) {
-          topKCountsForClasses[classForEntry]++;
+      for (let classId = 0; classId < indicesForClasses.length; classId++) {
+        if (topKIndices[i] < indicesForClasses[classId]) {
+          topKCountsForClasses[classId]++;
           break;
         }
       }
     }
 
+    // Compute confidences.
     let topConfidence = 0;
     for (const i in this.classDatasetMatrices) {
       const probability = topKCountsForClasses[i] / kVal;
