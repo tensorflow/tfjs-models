@@ -31,7 +31,7 @@
     "build": "rimraf dist && tsc && rollup -c",
     "test": "karma start",
     "publish-npm": "yarn build && npm publish",
-    "dev": "npm run watch && cs demos && npm run watch",
+    "dev": "npm run watch && cd demos && npm run watch",
     "lint": "tslint -p . -t verbose"
   },
   "license": "Apache-2.0"

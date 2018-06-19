@@ -61,23 +61,23 @@ export default [
   config({
     output: {
       format: 'umd',
-      name: 'knn-image-classifier',
-      file: 'dist/knn-image-classifier.js'
+      name: 'knnClassifier',
+      file: 'dist/knn-classifier.js'
     }
   }),
   config({
     plugins: [minify()],
     output: {
       format: 'umd',
-      name: 'knn-image-classifier',
-      file: 'dist/knn-image-classifier.min.js'
+      name: 'knnClassifier',
+      file: 'dist/knn-classifier.min.js'
     }
   }),
   config({
     plugins: [minify()],
     output: {
       format: 'es',
-      file: 'dist/knn-image-classifier.esm.js'
+      file: 'dist/knn-classifier.esm.js'
     }
   })
 ];
