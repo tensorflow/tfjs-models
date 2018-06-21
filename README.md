@@ -10,8 +10,7 @@ To find out about APIs for models, look at the README in each of the respective
 directories. In general, we try to hide tensors so the API can be used by
 non-machine learning experts.
 
-For those intested in contributing a model, please file a GitHub issue to gauge
-interest. We are trying to add models that complement the existing set of models
+For those intested in contributing a model, please file a [GitHub issue on tfjs](https://github.com/tensorflow/tfjs/issues) to gauge interest. We are trying to add models that complement the existing set of models
 and can be used as building blocks in other apps.
 
 ## Models
@@ -21,3 +20,5 @@ and can be used as building blocks in other apps.
   - `npm install @tensorflow-models/mobilenet`
 - [PoseNet](https://github.com/tensorflow/tfjs-models/tree/master/posenet) - Realtime pose detection. Blog post [here](https://medium.com/tensorflow/real-time-human-pose-estimation-in-the-browser-with-tensorflow-js-7dd0bc881cd5).
   - `npm install @tensorflow-models/posenet`
+- [KNN Image Classifier](https://github.com/tensorflow/tfjs-models/tree/master/knn-image-classifier) - Build custom image classifier using a KNN classifier
+  - `npm install @tensorflow-models/knn-image-classifier`
