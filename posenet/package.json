@@ -40,7 +40,7 @@
     "test": "karma start",
     "test-travis": "karma start --browsers='bs_firefox_mac,bs_chrome_mac' --singleRun",
     "publish-npm": "yarn build && npm publish",
-    "dev": "npm run watch && cd demos && npm run watch",
+    "dev": "d demos && yarn watch",
     "lint": "tslint -p . -t verbose"
   },
   "license": "Apache-2.0"

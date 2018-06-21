@@ -45,10 +45,6 @@
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@protobufjs/utf8/-/utf8-1.1.0.tgz#a777360b5b39a1a2e5106f8e858f2fd2d060c570"
 
-"@tensorflow-models/mobilenet@^0.1.1":
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/@tensorflow-models/mobilenet/-/mobilenet-0.1.1.tgz#bfe159b0e0abee31da421cc36e5051e4622bcd03"
-
 "@tensorflow/tfjs-converter@0.4.1":
   version "0.4.1"
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-0.4.1.tgz#faf2e0c4ecf1c67aac59a70f0c8073a04bb23d6a"

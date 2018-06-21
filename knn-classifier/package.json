@@ -1,12 +1,12 @@
 {
-  "name": "@tensorflow-models/knn-image-classifier",
+  "name": "@tensorflow-models/knn-classifier",
   "version": "0.1.0",
-  "description": "KNN Image Classifier for TensorFlow.js",
+  "description": "KNN Classifier for TensorFlow.js",
   "main": "dist/index.js",
-  "unpkg": "dist/knn-image-classifier.min.js",
-  "jsdelivr": "dist/knn-image-classifier.min.js",
-  "jsnext:main": "dist/knn-image-classifier.esm.js",
-  "module": "dist/knn-image-classifier.esm.js",
+  "unpkg": "dist/knn-classifier.min.js",
+  "jsdelivr": "dist/knn-classifier.min.js",
+  "jsnext:main": "dist/knn-classifier.esm.js",
+  "module": "dist/knn-classifier.esm.js",
   "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
@@ -16,7 +16,6 @@
     "@tensorflow/tfjs": "~0.11.6"
   },
   "devDependencies": {
-    "@tensorflow-models/mobilenet": "^0.1.1",
     "@tensorflow/tfjs": "~0.11.6",
     "babel-core": "^6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",
@@ -32,7 +31,6 @@
     "build": "rimraf dist && tsc && rollup -c",
     "test": "karma start",
     "publish-npm": "yarn build && npm publish",
-    "dev": "npm run watch && cs demos && npm run watch",
     "lint": "tslint -p . -t verbose"
   },
   "license": "Apache-2.0"

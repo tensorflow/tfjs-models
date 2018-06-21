@@ -14,9 +14,11 @@
  * limitations under the License.
  * =============================================================================
  */
+import * as mobilenetModule from '@tensorflow-models/mobilenet';
 import * as tf from '@tensorflow/tfjs';
-import * as knn from '@tensorflow-models/knn-image-classifier';
 import Stats from 'stats.js';
+
+import * as knnClassifier from '../src/index';
 
 const videoWidth = 300;
 const videoHeight = 250;
@@ -26,11 +28,12 @@ const stats = new Stats();
 const NUM_CLASSES = 3;
 
 // K value for KNN
-const TOPK = 10;
+const TOPK = 3;
 
 const infoTexts = [];
 let training = -1;
-let model;
+let classifier;
+let mobilenet;
 let video;
 
 function isAndroid() {
@@ -52,7 +55,7 @@ function isMobile() {
 async function setupCamera() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     throw new Error(
-      'Browser API navigator.mediaDevices.getUserMedia not available');
+        'Browser API navigator.mediaDevices.getUserMedia not available');
   }
 
   const video = document.getElementById('video');
@@ -106,60 +109,58 @@ function setupGui() {
 }
 
 /**
- * Load the KNN model
- */
-async function loadKNN() {
-  const model = await knn.load(NUM_CLASSES, TOPK);
-  return model;
-}
-
-/**
  * Sets up a frames per second panel on the top-left of the window
  */
 function setupFPS() {
-  stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
+  stats.showPanel(0);  // 0: fps, 1: ms, 2: mb, 3+: custom
   document.body.appendChild(stats.dom);
 }
 
 /**
  * Animation function called on each frame, running prediction
  */
-function animate() {
+async function animate() {
   stats.begin();
 
   // Get image data from video element
   const image = tf.fromPixels(video);
+  let logits;
+  // 'conv_preds' is the logits activation of MobileNet.
+  const infer = () => mobilenet.infer(image, 'conv_preds');
 
   // Train class if one of the buttons is held down
   if (training != -1) {
+    logits = infer();
     // Add current image to classifier
-    model.addImage(image, training);
+    classifier.addExample(logits, training);
   }
 
-  // If any examples have been added, run predict
-  const exampleCount = model.getClassExampleCount();
-  if (Math.max(...exampleCount) > 0) {
-    model.predictClass(image)
-      .then((res) => {
-        for (let i = 0; i < NUM_CLASSES; i++) {
-          // Make the predicted class bold
-          if (res.classIndex == i) {
-            infoTexts[i].style.fontWeight = 'bold';
-          } else {
-            infoTexts[i].style.fontWeight = 'normal';
-          }
+  // If the classifier has examples for any classes, make a prediction!
+  const numClasses = classifier.getNumClasses();
+  if (numClasses > 0) {
+    logits = infer();
 
-          // Update info text
-          if (exampleCount[i] > 0) {
-            const conf = res.confidences[i] * 100;
-            infoTexts[i].innerText = ` ${exampleCount[i]} examples - ${conf}%`;
-          }
-        }
-      })
-      // Dispose image when done
-      .then(() => image.dispose());
-  } else {
-    image.dispose();
+    const res = await classifier.predictClass(logits, TOPK);
+    for (let i = 0; i < NUM_CLASSES; i++) {
+      // Make the predicted class bold
+      if (res.classIndex == i) {
+        infoTexts[i].style.fontWeight = 'bold';
+      } else {
+        infoTexts[i].style.fontWeight = 'normal';
+      }
+
+      const classExampleCount = classifier.getClassExampleCount();
+      // Update info text
+      if (classExampleCount[i] > 0) {
+        const conf = res.confidences[i] * 100;
+        infoTexts[i].innerText = ` ${classExampleCount[i]} examples - ${conf}%`;
+      }
+    }
+  }
+
+  image.dispose();
+  if (logits != null) {
+    logits.dispose();
   }
 
   stats.end();
@@ -172,8 +173,8 @@ function animate() {
  * available camera devices, and setting off the animate function.
  */
 export async function bindPage() {
-  // Load the KNN model
-  model = await loadKNN();
+  classifier = knnClassifier.create();
+  mobilenet = await mobilenetModule.load();
 
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'block';
@@ -189,7 +190,7 @@ export async function bindPage() {
   } catch (e) {
     let info = document.getElementById('info');
     info.textContent = 'this browser does not support video capture,' +
-      'or this device does not have a camera';
+        'or this device does not have a camera';
     info.style.display = 'block';
     throw e;
   }
@@ -199,6 +200,6 @@ export async function bindPage() {
 }
 
 navigator.getUserMedia = navigator.getUserMedia ||
-  navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+    navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 // kick off the demo
 bindPage();
