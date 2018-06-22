@@ -21,3 +21,18 @@ and can be used as building blocks in other apps.
   - `npm install @tensorflow-models/mobilenet`
 - [PoseNet](https://github.com/tensorflow/tfjs-models/tree/master/posenet) - Realtime pose detection. Blog post [here](https://medium.com/tensorflow/real-time-human-pose-estimation-in-the-browser-with-tensorflow-js-7dd0bc881cd5).
   - `npm install @tensorflow-models/posenet`
+
+
+## Development
+
+You can run the unit tests for any of the models by running the following
+inside a directory:
+
+`yarn test`
+
+New models should have a test NPM script.
+
+To run all of the tests, you can run the following command from the root of this
+repo:
+
+`yarn presubmit`

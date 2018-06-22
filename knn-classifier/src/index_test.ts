@@ -39,7 +39,7 @@ describeWithFlags('KNNClassifier', tf.test_util.CPU_ENVS, () => {
     // Warmup.
     await classifier.predictClass(x0);
 
-    const tensors = tf.memory().numTensors;
+    const numTensorsBefore = tf.memory().numTensors;
 
     const result0 = await classifier.predictClass(x0);
     expect(result0.classIndex).toBe(0);
@@ -47,6 +47,20 @@ describeWithFlags('KNNClassifier', tf.test_util.CPU_ENVS, () => {
     const result1 = await classifier.predictClass(x1);
     expect(result1.classIndex).toBe(1);
 
-    expect(tf.memory().numTensors).toEqual(tensors);
+    expect(tf.memory().numTensors).toEqual(numTensorsBefore);
+  });
+
+  it('calling predictClass before adding example throws', async () => {
+    const classifier = knnClassier.create();
+    const x0 = tf.tensor1d([1.1, 1.1, 1.1, 1.1]);
+
+    let errorMessage;
+    try {
+      await classifier.predictClass(x0);
+    } catch (error) {
+      errorMessage = error.message;
+    }
+    expect(errorMessage)
+        .toMatch(/You have not added any exaples to the KNN classifier/);
   });
 });

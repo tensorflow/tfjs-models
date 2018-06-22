@@ -38,6 +38,10 @@ dirs.forEach(dir => {
   if (pkg['scripts']['test'] != null) {
     console.log(`************ Testing ${dir} ************`);
     shell.exec('yarn test');
+  } else {
+    console.warn(
+        `WARNING: ${dir} has no unit tests! ` +
+        `Please consider adding unit tests to this model directory.`);
   }
 
   shell.cd('../');

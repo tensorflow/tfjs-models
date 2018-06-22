@@ -132,6 +132,11 @@ export class KNNClassifier {
       throw new Error(
           `Please provide a positive integer k value to predictClass.`);
     }
+    if (this.getNumExamples() === 0) {
+      throw new Error(
+          `You have not added any exaples to the KNN classifier. ` +
+          `Please add examples before calling predictClass.`);
+    }
     const knn = tf.tidy(() => this.similarities(input).asType('float32'));
 
     const kVal = Math.min(k, this.getNumExamples());
