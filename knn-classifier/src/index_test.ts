@@ -33,8 +33,20 @@ describeWithFlags('KNNClassifier', tf.test_util.CPU_ENVS, () => {
     x0s.forEach(x0 => classifier.addExample(x0, 0));
     x1s.forEach(x1 => classifier.addExample(x1, 1));
 
-    const result =
-        await classifier.predictClass(tf.tensor1d([-1.1, -1.1, -1.1, -1.1]));
-    console.log(result);
+    const x0 = tf.tensor1d([1.1, 1.1, 1.1, 1.1]);
+    const x1 = tf.tensor1d([-1.1, -1.1, -1.1, -1.1]);
+
+    // Warmup.
+    await classifier.predictClass(x0);
+
+    const tensors = tf.memory().numTensors;
+
+    const result0 = await classifier.predictClass(x0);
+    expect(result0.classIndex).toBe(0);
+
+    const result1 = await classifier.predictClass(x1);
+    expect(result1.classIndex).toBe(1);
+
+    expect(tf.memory().numTensors).toEqual(tensors);
   });
 });
