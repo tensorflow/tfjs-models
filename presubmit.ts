@@ -36,6 +36,7 @@ dirs.forEach(dir => {
 
   const pkg = JSON.parse(fs.readFileSync('package.json').toString());
   if (pkg['scripts']['test'] != null) {
+    console.log(`************ Testing ${dir} ************`);
     shell.exec('yarn test');
   }
 
