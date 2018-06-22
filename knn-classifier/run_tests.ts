@@ -15,18 +15,7 @@
  * =============================================================================
  */
 
-const {statSync, readdirSync} = require('fs');
-const {join} = require('path');
+import * as jasmine_util from '@tensorflow/tfjs-core/dist/jasmine_util';
+import {runTests} from '../test_util';
 
-const dir = '.';
-const dirs = readdirSync(dir)
-                 .filter(f => statSync(join(dir, f)).isDirectory())
-                 .filter(f => !f.startsWith('.') && f !== 'node_modules');
-
-dirs.forEach(dir => {
-  console.log(`${dir}...`);
-  process.chdir(dir);
-  console.log(process.cwd());
-  process.chdir('../')
-  // console.log(dir);
-});
+runTests(jasmine_util);

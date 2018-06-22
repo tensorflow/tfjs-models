@@ -25,11 +25,10 @@
     "rollup-plugin-typescript2": "~0.13.0",
     "rollup-plugin-uglify": "~3.0.0",
     "tslint": "~5.8.0",
-    "typescript": "2.7.2"
+    "typescript": "2.9.2"
   },
   "scripts": {
     "build": "rimraf dist && tsc && rollup -c",
-    "test": "karma start",
     "publish-npm": "yarn build && npm publish",
     "dev": "npm run watch && cd demos && npm run watch",
     "lint": "tslint -p . -t verbose"

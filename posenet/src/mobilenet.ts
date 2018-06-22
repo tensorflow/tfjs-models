@@ -207,8 +207,10 @@ export class MobileNet {
 
   public convToOutput(mobileNetOutput: tf.Tensor3D, outputLayerName: string):
       tf.Tensor3D {
-    return mobileNetOutput.conv2d(this.weights(outputLayerName), 1, 'same')
-               .add(this.biases(outputLayerName)) as tf.Tensor3D;
+    const y = mobileNetOutput.conv2d(this.weights(outputLayerName), 1, 'same')
+                  .add(this.biases(outputLayerName)) as tf.Tensor3D;
+    console.log(y.shape, mobileNetOutput.shape, outputLayerName);
+    return y;
   }
 
   private conv(inputs: tf.Tensor3D, stride: number, blockId: number):

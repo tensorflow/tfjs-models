@@ -16,51 +16,61 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
+import {describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
+import * as posenetModel from './posenet_model';
 
-import {load, PoseNet} from './posenet_model';
-
-describe('PoseNet', () => {
-  let net: PoseNet;
+describeWithFlags('PoseNet', tf.test_util.CPU_ENVS, () => {
+  let net: posenetModel.PoseNet;
 
   beforeAll((done) => {
-    load()
-        .then((posenetInstance: PoseNet) => {
+    // Mock out the actual load so we don't make network requests in the unit
+    // test.
+    spyOn(posenetModel.mobilenetLoader, 'load').and.callFake(() => {
+      return {
+        predict: () => tf.zeros([1000]),
+        convToOutput:
+            (mobileNetOutput: tf.Tensor3D, outputLayerName: string) => {
+              const shapes: {[layer: string]: number[]} = {
+                'heatmap_2': [16, 16, 17],
+                'offset_2': [16, 16, 34],
+                'displacement_fwd_2': [16, 16, 32],
+                'displacement_bwd_2': [16, 16, 32]
+              };
+              return tf.zeros(shapes[outputLayerName]);
+            }
+      };
+    });
+
+    posenetModel.load()
+        .then((posenetInstance: posenetModel.PoseNet) => {
           net = posenetInstance;
         })
         .then(done)
         .catch(done.fail);
   });
 
-  describe('estimateSinglePose', () => {
-    it('does not leak memory', done => {
-      const canvas: HTMLCanvasElement = document.createElement('canvas');
-      canvas.width = 513;
-      canvas.height = 513;
+  it('estimateSinglePose does not leak memory', done => {
+    const input = tf.zeros([513, 513, 3]) as tf.Tensor3D;
 
-      const beforeTensors = tf.memory().numTensors;
+    const beforeTensors = tf.memory().numTensors;
 
-      net.estimateSinglePose(canvas)
-          .then(() => {
-            expect(tf.memory().numTensors).toEqual(beforeTensors);
-          })
-          .then(done)
-          .catch(done.fail);
-    });
+    net.estimateSinglePose(input)
+        .then(() => {
+          expect(tf.memory().numTensors).toEqual(beforeTensors);
+        })
+        .then(done)
+        .catch(done.fail);
   });
 
-  describe('estimateMultiplePoses', () => {
-    it('does not leak memory', done => {
-      const canvas: HTMLCanvasElement = document.createElement('canvas');
-      canvas.width = 513;
-      canvas.height = 513;
+  it('estimateMultiplePoses does not leak memory', done => {
+    const input = tf.zeros([513, 513, 3]) as tf.Tensor3D;
 
-      const beforeTensors = tf.memory().numTensors;
-      net.estimateMultiplePoses(canvas)
-          .then(() => {
-            expect(tf.memory().numTensors).toEqual(beforeTensors);
-          })
-          .then(done)
-          .catch(done.fail);
-    });
+    const beforeTensors = tf.memory().numTensors;
+    net.estimateMultiplePoses(input)
+        .then(() => {
+          expect(tf.memory().numTensors).toEqual(beforeTensors);
+        })
+        .then(done)
+        .catch(done.fail);
   });
 });
