@@ -3,7 +3,7 @@ node_js:
   - '8'
   - '10'
 script:
-  - yarn build_and_test_all
+  - yarn presubmit
 cache: yarn
 git:
   depth: 5

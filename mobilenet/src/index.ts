@@ -69,8 +69,9 @@ export class MobileNet {
     this.endpoints = this.model.layers.map(l => l.name);
 
     // Warmup the model.
-    const result = this.model.predict(
-                       tf.zeros([1, IMAGE_SIZE, IMAGE_SIZE, 3])) as tf.Tensor;
+    const result = tf.tidy(
+                       () => this.model.predict(tf.zeros(
+                           [1, IMAGE_SIZE, IMAGE_SIZE, 3]))) as tf.Tensor;
     await result.data();
     result.dispose();
   }

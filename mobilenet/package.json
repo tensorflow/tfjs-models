@@ -16,23 +16,27 @@
     "@tensorflow/tfjs": "~0.11.6"
   },
   "devDependencies": {
-    "@tensorflow/tfjs": "~0.11.6",
+    "@types/jasmine": "~2.5.53",
+    "@tensorflow/tfjs": "~0.11.7",
     "babel-core": "^6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",
+    "jasmine": "~3.1.0",
+    "jasmine-core": "~3.1.0",
     "rimraf": "~2.6.2",
     "rollup": "~0.58.2",
     "rollup-plugin-node-resolve": "~3.3.0",
     "rollup-plugin-typescript2": "~0.13.0",
     "rollup-plugin-uglify": "~3.0.0",
+    "ts-node": "~5.0.0",
     "tslint": "~5.8.0",
-    "typescript": "2.7.2"
+    "typescript": "2.9.2"
   },
   "scripts": {
     "build": "rimraf dist && tsc && rollup -c",
-    "test": "karma start",
     "publish-npm": "yarn build && npm publish",
     "dev": "npm run watch && cd demos && npm run watch",
-    "lint": "tslint -p . -t verbose"
+    "lint": "tslint -p . -t verbose",
+    "test": "ts-node run_tests.ts"
   },
   "license": "Apache-2.0"
 }

@@ -2,10 +2,20 @@
   "name": "tensorflow-models",
   "version": "0.0.1",
   "scripts": {
-    "build_and_test_all": "cd posenet && yarn && yarn build && yarn lint && yarn test-travis"
+    "build_and_test_all": "cd posenet && yarn && yarn build && yarn lint && yarn test-travis",
+    "link-local": "yalc link",
+    "presubmit": "ts-node presubmit.ts"
   },
   "devDependencies": {
-    "clang-format": "~1.2.2"
+    "@types/node": "~10.3.4",
+    "@types/shelljs": "~0.8.0",
+    "clang-format": "~1.2.2",
+    "fs": "~0.0.1-security",
+    "jasmine": "~3.1.0",
+    "shelljs": "0.8.2",
+    "ts-node": "~5.0.0",
+    "typescript": "~2.9.2",
+    "yalc": "~1.0.0-pre.21"
   },
   "license": "Apache-2.0"
 }

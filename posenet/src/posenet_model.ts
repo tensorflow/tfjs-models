@@ -29,12 +29,12 @@ import {getValidResolution, scalePose, scalePoses} from './util';
 export type PoseNetResolution = 161|193|257|289|321|353|385|417|449|481|513;
 
 export type InputType =
-    ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement;
+    ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement|tf.Tensor3D;
 
 function toInputTensor(
     input: InputType, resizeHeight: number, resizeWidth: number,
     flipHorizontal: boolean): tf.Tensor3D {
-  const imageTensor = tf.fromPixels(input);
+  const imageTensor = input instanceof tf.Tensor ? input : tf.fromPixels(input);
 
   if (flipHorizontal) {
     return imageTensor.reverse(1).resizeBilinear([resizeHeight, resizeWidth]);
@@ -150,10 +150,14 @@ export class PoseNet {
       outputStride: OutputStride = 16): Promise<Pose> {
     assertValidOutputStride(outputStride);
     assertValidScaleFactor(imageScaleFactor);
+
+    const [height, width] = input instanceof tf.Tensor ?
+        [input.shape[0], input.shape[1]] :
+        [input.height, input.width];
     const resizedHeight =
-        getValidResolution(imageScaleFactor, input.height, outputStride);
+        getValidResolution(imageScaleFactor, height, outputStride);
     const resizedWidth =
-        getValidResolution(imageScaleFactor, input.width, outputStride);
+        getValidResolution(imageScaleFactor, width, outputStride);
 
     const {heatmapScores, offsets} = tf.tidy(() => {
       const inputTensor =
@@ -166,8 +170,8 @@ export class PoseNet {
     heatmapScores.dispose();
     offsets.dispose();
 
-    const scaleY = input.height / resizedHeight;
-    const scaleX = input.width / resizedWidth;
+    const scaleY = height / resizedHeight;
+    const scaleX = width / resizedWidth;
 
     return scalePose(pose, scaleY, scaleX);
   }
@@ -217,10 +221,14 @@ export class PoseNet {
       nmsRadius = 20): Promise<Pose[]> {
     assertValidOutputStride(outputStride);
     assertValidScaleFactor(imageScaleFactor);
+
+    const [height, width] = input instanceof tf.Tensor ?
+        [input.shape[0], input.shape[1]] :
+        [input.height, input.width];
     const resizedHeight =
-        getValidResolution(imageScaleFactor, input.height, outputStride);
+        getValidResolution(imageScaleFactor, height, outputStride);
     const resizedWidth =
-        getValidResolution(imageScaleFactor, input.width, outputStride);
+        getValidResolution(imageScaleFactor, width, outputStride);
 
     const {heatmapScores, offsets, displacementFwd, displacementBwd} =
         tf.tidy(() => {
@@ -238,8 +246,8 @@ export class PoseNet {
     displacementFwd.dispose();
     displacementBwd.dispose();
 
-    const scaleY = input.height / resizedHeight;
-    const scaleX = input.width / resizedWidth;
+    const scaleY = height / resizedHeight;
+    const scaleX = width / resizedWidth;
 
     return scalePoses(poses, scaleY, scaleX);
   }
@@ -280,14 +288,19 @@ export async function load(multiplier: MobileNetMultiplier = 1.01):
           multiplier}.  No checkpoint exists for that ` +
           `multiplier. Must be one of ${possibleMultipliers.join(',')}.`);
 
-  // get the checkpoint for the multiplier
-  const checkpoint = checkpoints[multiplier];
-
-  const checkpointLoader = new CheckpointLoader(checkpoint.url);
-
-  const variables = await checkpointLoader.getAllVariables();
-
-  const mobileNet = new MobileNet(variables, checkpoint.architecture);
+  const mobileNet = await mobilenetLoader.load(multiplier);
 
   return new PoseNet(mobileNet);
 }
+
+export const mobilenetLoader = {
+  load: async(multiplier: MobileNetMultiplier): Promise<MobileNet> => {
+    const checkpoint = checkpoints[multiplier];
+
+    const checkpointLoader = new CheckpointLoader(checkpoint.url);
+
+    const variables = await checkpointLoader.getAllVariables();
+
+    return new MobileNet(variables, checkpoint.architecture);
+  }
+};
