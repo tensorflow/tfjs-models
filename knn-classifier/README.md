@@ -13,6 +13,52 @@ You can see example code [here](https://github.com/tensorflow/tfjs-models/tree/m
 
 ## Usage example
 
+##### via Script Tag
+
+```html
+<html>
+  <head>
+    <!-- Load TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.11.7"></script>
+    <!-- Load MobileNet -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@0.1.1"></script>
+    <!-- Load KNN Classifier -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/knn-classifier@0.1.0"></script>
+ </head>
+
+  <body>
+    <img id='class0' src='/images/class0.jpg '/>
+    <img id='class1' src='/images/class1.jpg '/>
+    <img id='test' src='/images/test.jpg '/>
+  </body>
+  <!-- Place your code in the script tag below. You can also use an external .js file -->
+  <script>
+    // Create the classifier.
+    const classifier = knnClassifier.create();
+
+    // Load mobilenet.
+    const mobilenet = await mobilenetModule.load();
+
+    // Add MobileNet activations to the model repeatedly for all classes.
+    const img0 = tf.fromPixels(document.getElementById('class0'));
+    const logits0 = mobilenet.infer(img0, 'conv_preds');
+    classifier.addExample(logits, 0);
+
+    const img1 = tf.fromPixels(document.getElementById('class1'));
+    const logits1 = mobilenet.infer(img1, 'conv_preds');
+    classifier.addExample(logits, 1);
+
+    // Make a prediction.
+    const x = tf.fromPixels(document.getElementById('test'));
+    const xlogits = mobilenet.infer(x, 'conv_preds');
+    console.log('Predictions:');
+    console.log(classifier.predictClass(xlogits));
+  </script>
+</html>
+```
+
+###### via NPM
+
 ```js
 import * as tf from '@tensorflow/tfjs';
 import * as mobilenetModule from '@tensorflow-models/mobilenet';
@@ -26,15 +72,15 @@ const mobilenet = await mobilenetModule.load();
 
 // Add MobileNet activations to the model repeatedly for all classes.
 const img0 = tf.fromPixels(...);
-const logits0 = mobilenet.infer(img0, 'conv_preds');
+const img0 = tf.fromPixels(document.getElementById('class0'));
 classifier.addExample(logits, 0);
 
-const img1 = tf.fromPixels(...);
+const img1 = tf.fromPixels(document.getElementById('class1'));
 const logits1 = mobilenet.infer(img1, 'conv_preds');
 classifier.addExample(logits, 1);
 
 // Make a prediction.
-const x = tf.fromPixels(...);
+const x = tf.fromPixels(document.getElementById('test'));
 const xlogits = mobilenet.infer(x, 'conv_preds');
 console.log('Predictions:');
 console.log(classifier.predictClass(xlogits));

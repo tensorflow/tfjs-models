@@ -98,9 +98,9 @@ It returns a `pose` with a confidence score and an array of keypoints indexed by
 <html>
   <head>
     <!-- Load TensorFlow.js -->
-    <script src="https://unpkg.com/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.11.7"></script>
     <!-- Load Posenet -->
-    <script src="https://unpkg.com/@tensorflow-models/posenet"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/posenet@0.1.2"></script>
  </head>
 
   <body>
