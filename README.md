@@ -24,7 +24,7 @@ and can be used as building blocks in other apps.
 
 ### General utilities
 - [KNN Classifier](https://github.com/tensorflow/tfjs-models/tree/master/knn-classifier) - Create a custom k-nearest neighbors classifier. Can be used for transfer learning.
- - `npm i @tensorflow-models/knn-classifier`
+  - `npm i @tensorflow-models/knn-classifier`
 
 ## Development
 
