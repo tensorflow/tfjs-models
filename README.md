@@ -18,13 +18,13 @@ and can be used as building blocks in other apps.
 
 ### Image classification
 - [MobileNet](https://github.com/tensorflow/tfjs-models/tree/master/mobilenet) - Classify images with labels from the [ImageNet database](http://www.image-net.org/).
-  - `npm install @tensorflow-models/mobilenet`
+  - `npm i @tensorflow-models/mobilenet`
 - [PoseNet](https://github.com/tensorflow/tfjs-models/tree/master/posenet) - Realtime pose detection. Blog post [here](https://medium.com/tensorflow/real-time-human-pose-estimation-in-the-browser-with-tensorflow-js-7dd0bc881cd5).
-  - `npm install @tensorflow-models/posenet`
+  - `npm i @tensorflow-models/posenet`
 
 ### General utilities
 - [KNN Classifier](https://github.com/tensorflow/tfjs-models/tree/master/knn-classifier) - Create a custom k-nearest neighbors classifier. Can be used for transfer learning.
- - `npm install @tensorflow-models/knn-classifier`
+ - `npm i @tensorflow-models/knn-classifier`
 
 ## Development
 
