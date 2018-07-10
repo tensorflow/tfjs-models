@@ -21,10 +21,11 @@
     "experimentalDecorators": true
   },
   "include": [
-    "src/"
+    "src/**/*.ts"
   ],
   "exclude": [
     "node_modules/",
-    "dist/"
+    "dist/",
+    "src/**/*_test.ts"
   ]
 }

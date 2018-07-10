@@ -19,7 +19,7 @@
  * Execute all unit tests in the current directory. Takes a jasmine_util from
  * tfjs-core so that we use the tfjs-core module from the right test directory.
  */
-export function runTests(jasmine_util) {
+export function runTests(jasmine_util): void {
   jasmine_util.setTestBackends(
       jasmine_util.TEST_BACKENDS.filter(x => x.name === 'test-cpu'));
 
