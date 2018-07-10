@@ -44,6 +44,33 @@ dirs.forEach(dir => {
         `Please consider adding unit tests to this model directory.`);
   }
 
+  // Make sure peer dependencies and dev dependencies of tfjs match, and make
+  // sure the version uses ^.
+  const peerDeps = pkg.peerDependencies;
+  const devDeps = pkg.devDependencies;
+  if (peerDeps['@tensorflow/tfjs'] != null && devDeps['@tensorflow/tfjs']) {
+    if (peerDeps['@tensorflow/tfjs'] != devDeps['@tensorflow/tfjs']) {
+      throw new Error(
+          `peerDependency version (${peerDeps['@tensorflow/tfjs']}) and ` +
+          `devDependency version (${devDeps['@tensorflow/tfjs']}) of tfjs ` +
+          `do not match for model ${dir}.`)
+    }
+  }
+  if (peerDeps['@tensorflow/tfjs'] != null) {
+    if (!peerDeps['@tensorflow/tfjs'].startsWith('^')) {
+      throw new Error(
+          `peerDependency version (${peerDeps['@tensorflow/tfjs']}) for ` +
+          `${dir} must start with ^.`)
+    }
+  }
+  if (devDeps['@tensorflow/tfjs'] != null) {
+    if (!devDeps['@tensorflow/tfjs'].startsWith('^')) {
+      throw new Error(
+          `devDependency version (${peerDeps['@tensorflow/tfjs']}) for ${dir}` +
+          `must start with ^.`)
+    }
+  }
+
   shell.cd('../');
   console.log();
   console.log();
