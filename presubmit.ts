@@ -21,6 +21,9 @@ import * as shell from 'shelljs';
 
 // Exit if any commands error.
 shell.set('-e');
+process.on('unhandledRejection', e => {
+  throw e;
+});
 
 const dir = '.';
 const dirs = fs.readdirSync(dir)

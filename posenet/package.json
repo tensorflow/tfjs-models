@@ -36,7 +36,8 @@
     "test": "ts-node run_tests.ts",
     "publish-npm": "yarn build && npm publish",
     "dev": "d demos && yarn watch",
-    "lint": "tslint -p . -t verbose"
+    "lint": "tslint -p . -t verbose",
+    "postinstall": "yarn upgrade --pattern @tensorflow"
   },
   "license": "Apache-2.0"
 }
