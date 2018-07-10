@@ -48,7 +48,8 @@ dirs.forEach(dir => {
   // sure the version uses ^.
   const peerDeps = pkg.peerDependencies;
   const devDeps = pkg.devDependencies;
-  if (peerDeps['@tensorflow/tfjs'] != null && devDeps['@tensorflow/tfjs']) {
+  if (peerDeps['@tensorflow/tfjs'] != null &&
+      devDeps['@tensorflow/tfjs'] != null) {
     if (peerDeps['@tensorflow/tfjs'] != devDeps['@tensorflow/tfjs']) {
       throw new Error(
           `peerDependency version (${peerDeps['@tensorflow/tfjs']}) and ` +

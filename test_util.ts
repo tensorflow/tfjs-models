@@ -14,8 +14,6 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as fs from 'fs';
-import {join} from 'path';
 
 /**
  * Execute all unit tests in the current directory. Takes a jasmine_util from
