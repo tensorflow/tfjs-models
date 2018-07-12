@@ -19,7 +19,7 @@
  * Execute all unit tests in the current directory. Takes a jasmine_util from
  * tfjs-core so that we use the tfjs-core module from the right test directory.
  */
-export function runTests(tf, jasmine_util): void {
+export function runTests(jasmine_util): void {
   // tslint:disable-next-line:no-require-imports
   const jasmineCtor = require('jasmine');
 

@@ -15,9 +15,8 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs-core';
 import * as jasmine_util from '@tensorflow/tfjs-core/dist/jasmine_util';
 
 import {runTests} from '../test_util';
 
-runTests(tf, jasmine_util);
+runTests(jasmine_util);
