@@ -19,7 +19,7 @@ import * as tf from '@tensorflow/tfjs';
 import {describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
 import * as posenetModel from './posenet_model';
 
-describeWithFlags('PoseNet', tf.test_util.CPU_ENVS, () => {
+describeWithFlags('PoseNet', tf.test_util.NODE_ENVS, () => {
   let net: posenetModel.PoseNet;
 
   beforeAll((done) => {

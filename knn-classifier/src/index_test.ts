@@ -19,7 +19,7 @@ import {describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
 import * as knnClassier from './index';
 
-describeWithFlags('KNNClassifier', tf.test_util.CPU_ENVS, () => {
+describeWithFlags('KNNClassifier', tf.test_util.NODE_ENVS, () => {
   it('simple nearest neighbors', async () => {
     const x0s = [
       tf.tensor1d([1, 1, 1, 1]), tf.tensor1d([1.1, .9, 1.2, .8]),

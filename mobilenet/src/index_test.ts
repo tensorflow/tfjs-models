@@ -18,7 +18,7 @@ import * as tf from '@tensorflow/tfjs';
 import {describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
 import {load} from './index';
 
-describeWithFlags('MobileNet', tf.test_util.CPU_ENVS, () => {
+describeWithFlags('MobileNet', tf.test_util.NODE_ENVS, () => {
   beforeAll(() => {
     spyOn(tf, 'loadModel').and.callFake(() => {
       const model = {

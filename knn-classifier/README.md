@@ -54,12 +54,11 @@ You can see example code [here](https://github.com/tensorflow/tfjs-models/tree/m
       const x = tf.fromPixels(document.getElementById('test'));
       const xlogits = mobilenetModule.infer(x, 'conv_preds');
       console.log('Predictions:');
-      classifier.predictClass(xlogits).then((result) => {
-        console.log(result);
-      })
+      const result = await classifier.predictClass(xlogits);
+      console.log(result);
     }
 
-    init()
+    init();
 
   </script>
 </html>
