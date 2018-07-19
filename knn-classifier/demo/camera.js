@@ -16,7 +16,6 @@
  */
 import * as mobilenetModule from '@tensorflow-models/mobilenet';
 import * as tf from '@tensorflow/tfjs';
-import {request} from 'https';
 import Stats from 'stats.js';
 
 import * as knnClassifier from '../src/index';
