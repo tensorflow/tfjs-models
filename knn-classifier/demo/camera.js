@@ -16,6 +16,7 @@
  */
 import * as mobilenetModule from '@tensorflow-models/mobilenet';
 import * as tf from '@tensorflow/tfjs';
+import {request} from 'https';
 import Stats from 'stats.js';
 
 import * as knnClassifier from '../src/index';
@@ -99,6 +100,10 @@ function setupGui() {
     // Listen for mouse events when clicking the button
     button.addEventListener('mousedown', () => training = i);
     button.addEventListener('mouseup', () => training = -1);
+    button.addEventListener('click', () => {
+      training = i;
+      requestAnimationFrame(() => training = -1);
+    });
 
     // Create info text
     const infoText = document.createElement('span');

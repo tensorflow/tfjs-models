@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/mobilenet",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Pretrained MobileNet in TensorFlow.js",
   "main": "dist/index.js",
   "unpkg": "dist/mobilenet.min.js",
@@ -36,8 +36,7 @@
     "publish-npm": "yarn build && npm publish",
     "dev": "npm run watch && cd demos && npm run watch",
     "lint": "tslint -p . -t verbose",
-    "test": "ts-node run_tests.ts",
-    "postinstall": "yarn upgrade --pattern @tensorflow"
+    "test": "ts-node run_tests.ts"
   },
   "license": "Apache-2.0"
 }
