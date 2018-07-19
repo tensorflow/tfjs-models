@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/posenet",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "description": "Pretrained PoseNet model in tensorflow.js",
   "main": "dist/index.js",
   "jsnext:main": "dist/posenet.esm.js",
@@ -36,8 +36,7 @@
     "test": "ts-node run_tests.ts",
     "publish-npm": "yarn build && npm publish",
     "dev": "d demos && yarn watch",
-    "lint": "tslint -p . -t verbose",
-    "postinstall": "yarn upgrade --pattern @tensorflow"
+    "lint": "tslint -p . -t verbose"
   },
   "license": "Apache-2.0"
 }
