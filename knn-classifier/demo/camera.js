@@ -98,8 +98,6 @@ function setupGui() {
     div.appendChild(button);
 
     // Listen for mouse events when clicking the button
-    button.addEventListener('mousedown', () => training = i);
-    button.addEventListener('mouseup', () => training = -1);
     button.addEventListener('click', () => {
       training = i;
       requestAnimationFrame(() => training = -1);
