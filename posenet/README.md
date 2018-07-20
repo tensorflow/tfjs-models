@@ -29,7 +29,7 @@ npm install @tensorflow-models/posenet
 
 ## Usage
 
-Either a single pose our multiple poses can be estimated from an image.
+Either a single pose or multiple poses can be estimated from an image.
 Each methodology has its own algorithm and set of parameters.
 
 ### Keypoints
