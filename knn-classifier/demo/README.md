@@ -28,12 +28,8 @@ yarn watch
 
 ## If you are developing the classifier locally, and want to test the changes in the demos
 
-Install yalc:
-```sh
-npm i -g yalc
-```
+cd into the models/knn-classifier folder:
 
-cd into the knn-classifier folder:
 ```sh
 cd knn-classifier
 ```
@@ -45,14 +41,19 @@ yarn
 
 Publish knn-classifier locally:
 ```sh
-yalc push
+yarn publish-local
 ```
 
-Cd into the demos and install dependencies:
+cd into this directory, models/knn-classifier/demos and install dependencies:
 
 ```sh
 cd demos
 yarn
+```
+
+Link the package published from the publish step above:
+```sh
+yarn link-local
 ```
 
 Start the dev demo server:

@@ -16,7 +16,8 @@
   "scripts": {
     "watch": "NODE_ENV=development parcel --no-hmr --open index.html ",
     "build": "NODE_ENV=production parcel build index.html  --no-minify --public-url ./",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "link-local": "yalc link"
   },
   "devDependencies": {
     "babel-plugin-transform-runtime": "~6.23.0",
@@ -27,7 +28,8 @@
     "dat.gui": "^0.7.1",
     "eslint": "^4.19.1",
     "eslint-config-google": "^0.9.1",
-    "parcel-bundler": "~1.6.2"
+    "parcel-bundler": "~1.6.2",
+    "yalc": "~1.0.0-pre.21"
   },
   "eslintConfig": {
     "extends": "google",

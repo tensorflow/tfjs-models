@@ -35,6 +35,7 @@
   "scripts": {
     "build": "rimraf dist && tsc && rollup -c",
     "publish-npm": "yarn build && npm publish",
+    "publish-local": "yarn build && yalc push",
     "lint": "tslint -p . -t verbose",
     "test": "cd demo && yarn && cd .. && ts-node run_tests.ts"
   },
