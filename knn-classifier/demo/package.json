@@ -17,7 +17,7 @@
     "watch": "NODE_ENV=development parcel --no-hmr --open index.html ",
     "build": "NODE_ENV=production parcel build index.html  --no-minify --public-url ./",
     "lint": "eslint .",
-    "link-local": "yalc link"
+    "link-local": "yalc link @tensorflow-models/knn-classifier"
   },
   "devDependencies": {
     "babel-plugin-transform-runtime": "~6.23.0",
