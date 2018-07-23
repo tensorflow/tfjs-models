@@ -28,7 +28,7 @@ yarn watch
 
 ## If you are developing the classifier locally, and want to test the changes in the demos
 
-cd into the models/knn-classifier folder:
+cd into the knn-classifier/ folder:
 
 ```sh
 cd knn-classifier
@@ -44,7 +44,7 @@ Publish knn-classifier locally:
 yarn publish-local
 ```
 
-cd into this directory, models/knn-classifier/demos and install dependencies:
+cd into this directory, knn-classifier/demos and install dependencies:
 
 ```sh
 cd demos
