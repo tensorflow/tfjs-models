@@ -47,3 +47,13 @@ browser. Overall, the following steps are involved:
 ## Training the TensorFlow.js Model
 
 TODO(cais): Provide details here.
+
+## Development
+
+### Python
+
+To run linting and tests of the Python files in this directory, use script:
+
+```sh
+./py_lint_and_test.sh
+```
