@@ -14,14 +14,10 @@
 # limitations under the License.
 # ==============================================================================
 
+# Run all Python tests in this tfjs-models repository.
+
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-pip install -r "${SCRIPT_DIR}/requirements.txt"
-
-pylint --rcfile="${SCRIPT_DIR}/.pylintrc" ${SCRIPT_DIR}/*.py
-
-for PY_TEST_FILE in ${SCRIPT_DIR}/*_test.py; do
-  python ${PY_TEST_FILE}
-done
+"${SCRIPT_DIR}/speech-commands/training/browser-fft/py_lint_and_test.sh"

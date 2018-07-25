@@ -9,3 +9,5 @@ dist/
 **/*/.yalc
 
 .rpt2_cache/
+
+*.pyc
