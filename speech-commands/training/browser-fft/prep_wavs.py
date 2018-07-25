@@ -345,7 +345,11 @@ if __name__ == '__main__':
       'exist under `output_data_path`. No dupicates are allowed.')
   parser.add_argument(
       '--include_noise', action='store_true',
-      help='Include samples of silence in the data.')
+      help='Include examples of background noise in the data. These '
+      'samples are extracted from the long .wav file recordings of '
+      'various kinds of background noises inside the _background_noise_ '
+      'directory. N.B., these noise samples are separate examples, and _not_ '
+      'additive noises to the word examples.')
   parser.add_argument(
       '--test_split', type=float, default=0.15,
       help='The fraction of files to split out for testing. Must be a '
