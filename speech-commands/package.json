@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Speech-command recognizer in TensorFlow.js",
   "scripts": {
-    "build": "echo 'No-op for now."
+    "build": "echo 'No-op for now.'"
   },
   "license": "Apache-2.0"
 }
