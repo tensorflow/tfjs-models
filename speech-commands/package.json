@@ -2,6 +2,12 @@
   "name": "@tensorflow-models/speech-commands",
   "version": "0.1.0",
   "description": "Speech-command recognizer in TensorFlow.js",
+  "peerDependencies": {
+    "@tensorflow/tfjs": "^0.12.3"
+  },
+  "devDependencies": {
+    "@tensorflow/tfjs": "^0.12.3"
+  },
   "scripts": {
     "build": "echo 'No-op for now.'"
   },
