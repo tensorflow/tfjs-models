@@ -83,6 +83,14 @@
   version "10.5.3"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-10.5.3.tgz#5bcfaf088ad17894232012877669634c06b20cc5"
 
+dct@^0.0.3:
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/dct/-/dct-0.0.3.tgz#19390a834388a1d3a1373f9edfe50622074849d3"
+
+kissfft-js@^0.1.8:
+  version "0.1.8"
+  resolved "https://registry.yarnpkg.com/kissfft-js/-/kissfft-js-0.1.8.tgz#fdc418cd6b8268aad6d2841a7f43db923679e11a"
+
 long@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/long/-/long-4.0.0.tgz#9a7b71cfb7d361a194ea555241c92f7468d5bf28"
