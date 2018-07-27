@@ -8,7 +8,7 @@
   "bin": "./cli",
   "dependencies": {
     "@tensorflow/tfjs": "0.12.3",
-    "@tensorflow/tfjs-node-gpu": "0.1.9",
+    "@tensorflow/tfjs-node": "0.1.9",
     "chalk": "^2.4.1",
     "vorpal": "1.12.0",
     "node-wav": "^0.0.2",

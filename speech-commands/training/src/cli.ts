@@ -16,7 +16,7 @@
  */
 
 // Load the binding
-import '@tensorflow/tfjs-node-gpu';
+import '@tensorflow/tfjs-node';
 
 import chalk from 'chalk';
 import * as ora from 'ora';

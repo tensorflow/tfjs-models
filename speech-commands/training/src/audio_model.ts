@@ -167,7 +167,7 @@ export class AudioModel {
    * @param epochs iteration of the training
    * @param trainCallback
    */
-  train(epochs?: number, trainCallback?: tf.CustomCallbackConfig) {
+  async train(epochs?: number, trainCallback?: tf.CustomCallbackConfig) {
     return this.model.fit(this.dataset.xs, this.dataset.ys, {
       batchSize: 64,
       epochs: epochs || 100,
@@ -186,7 +186,7 @@ export class AudioModel {
   }
 
   /**
-   * Return the size of the dataset in string. 
+   * Return the size of the dataset in string.
    */
   size(): string {
     return this.dataset.xs ?

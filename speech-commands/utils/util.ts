@@ -16,11 +16,21 @@
 
 import * as tf from '@tensorflow/tfjs';
 
-export function labelArrayToString(label: Float32Array, allLabels: string[]) {
-  const [ind, ] = argmax(label);
+
+/**
+ * Find the label string for max score.
+ * @param scores Prediction scores
+ * @param allLabels Label string list
+ * @returns
+ */
+export function labelArrayToString(scores: Float32Array, allLabels: string[]) {
+  const [ind, ] = argmax(scores);
   return allLabels[ind];
 }
 
+/**
+ * Find the index of largest data from the number array.
+ */
 export function argmax(array: Float32Array) {
   let max = -Infinity;
   let argmax = -1;
@@ -33,20 +43,12 @@ export function argmax(array: Float32Array) {
   return [argmax, max];
 }
 
-export function getParameterByName(name: string, url?: string) {
-  if (!url) url = window.location.href;
-  name = name.replace(/[\[\]]/g, '\\$&');
-  const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
-        results = regex.exec(url);
-  if (!results) return null;
-  if (!results[2]) return '';
-  return decodeURIComponent(results[2].replace(/\+/g, ' '));
-}
-
+/**
+ * Interval class to provide more precise timeout function.
+ */
 export class Interval {
   private baseline: number;
-  // tslint:disable-next-line:no-any
-  private timer: any;
+  private timer: number;
   constructor(private duration: number, private fn: Function) {
     this.baseline = undefined;
   }
@@ -70,6 +72,9 @@ export class Interval {
   }
 }
 
+/**
+ * Normalize the intput tensor to have zero mean and 1 standard deviation.
+ */
 export function normalize(x: tf.Tensor) {
   return tf.tidy(() => {
     const mean = tf.mean(x);
@@ -79,11 +84,24 @@ export function normalize(x: tf.Tensor) {
   });
 }
 
+
+/** ]
+ * Next power of two value for the given number.
+ * @param value
+ * @returns
+ */
 export function nextPowerOfTwo(value: number) {
   const exponent = Math.ceil(Math.log2(value));
   return 1 << exponent;
 }
 
+
+/**
+ * Plots spectrogram on the given canvas
+ * @param canvas
+ * @param frequencyData
+ * @returns
+ */
 export function plotSpectrogram(
     canvas: HTMLCanvasElement, frequencyData: Float32Array[]) {
   // Get the maximum and minimum.
@@ -128,6 +146,11 @@ export function plotSpectrogram(
   }
 }
 
+
+/**
+ * Convert Mels spectrogram typed array to input tensor.
+ * @param spec
+ */
 export function melSpectrogramToInput(spec: Float32Array[]): tf.Tensor {
   // Flatten this spectrogram into a 2D array.
   const times = spec.length;
@@ -138,8 +161,6 @@ export function melSpectrogramToInput(spec: Float32Array[]): tf.Tensor {
     const offset = i * freqs;
     data.set(mel, offset);
   }
-  // Normalize the whole input to be in [0, 1].
   const shape: [number, number, number, number] = [1, times, freqs, 1];
-  // this.normalizeInPlace(data, 0, 1);
   return tf.tensor4d(Array.prototype.slice.call(data), shape);
 }

@@ -29,6 +29,11 @@ export class AudioUtils {
 
   constructor() {}
 
+  /**
+   * Gets periodic hann window
+   * @param windowLength size of the hann window
+   * @returns periodic hann map
+   */
   GetPeriodicHann(windowLength: number): number[] {
     if (!hannWindowMap[windowLength]) {
       const window = [];
@@ -40,6 +45,7 @@ export class AudioUtils {
     }
     return hannWindowMap[windowLength];
   }
+
   /**
    * Calculates the FFT for an array buffer. Output is an array.
    */
@@ -59,16 +65,21 @@ export class AudioUtils {
     return transform;
   }
 
-  dct(y: Float32Array) {
-    const scale = Math.sqrt(2.0 / y.length);
-    return DCT(y, scale);
+  /**
+   * Calculate the DCT encoding for spectrogram.
+   * @param y spectrogram data
+   * @returns DCT encoded
+   */
+  dct(y: Float32Array): Float32Array {
+      const scale = Math.sqrt(2.0 / y.length);
+      return DCT(y, scale);
   }
 
   /**
    * Given an interlaced complex array (y_i is real, y_(i+1) is imaginary),
    * calculates the energies. Output is half the size.
    */
-  fftEnergies(y: Float32Array) {
+  fftEnergies(y: Float32Array): Float32Array {
     const out = new Float32Array(y.length / 2);
     for (let i = 0; i < y.length / 2; i++) {
       out[i] = y[i * 2] * y[i * 2] + y[i * 2 + 1] * y[i * 2 + 1];
@@ -76,6 +87,15 @@ export class AudioUtils {
     return out;
   }
 
+  /**
+   * Creates mel filterbank map for the give melCount size
+   * @param fftSize FFT frequence count
+   * @param [melCount] Mel filterbank count
+   * @param [lowHz] low bank filter frequence
+   * @param [highHz] high bank filter frequence
+   * @param [sr] sampling rate
+   * @returns mel filterbank map
+   */
   createMelFilterbank(
       fftSize: number, melCount = 40, lowHz = 20, highHz = 4000,
       sr = SR): Float32Array {
@@ -151,11 +171,13 @@ export class AudioUtils {
       const specVal = Math.sqrt(fftEnergies[i]);
       const weighted = specVal * filterbank[i];
       let channel = this.bandMapper[i];
-      if (channel >= 0)
+      if (channel >= 0) {
         out[channel] += weighted;  // Right side of triangle, downward slope
+      }
       channel++;
-      if (channel < melCount)
+      if (channel < melCount) {
         out[channel] += (specVal - weighted);  // Left side of triangle
+      }
     }
     for (let i = 0; i < out.length; ++i) {
       let val = out[i];
@@ -167,14 +189,24 @@ export class AudioUtils {
     return out;
   }
 
-  hzToMel(hz: number) {
+  private hzToMel(hz: number) {
     return 1127.0 * Math.log(1.0 + hz / 700.0);
   }
 
+  /**
+   * Cepstrums from the energy spectrumgram
+   * @param melEnergies array of melbank energies
+   * @returns
+   */
   cepstrumFromEnergySpectrum(melEnergies: Float32Array) {
     return this.dct(melEnergies);
   }
 
+  /**
+   * Playbacks audio data from array buffer using the given sample rate.
+   * @param buffer audio data
+   * @param [sampleRate] playback sample rate
+   */
   playbackArrayBuffer(buffer: Float32Array, sampleRate?: number) {
     if (!context) {
       context = new AudioContext();
@@ -192,6 +224,12 @@ export class AudioUtils {
     source.start();
   }
 
+  /**
+   * Resamples web audio data by the target sample rate.
+   * @param audioBuffer Audio data
+   * @param targetSr Target sample rate
+   * @returns resampled web audio data
+   */
   resampleWebAudio(audioBuffer: AudioBuffer, targetSr: number):
       Promise<AudioBuffer> {
     const sourceSr = audioBuffer.sampleRate;
