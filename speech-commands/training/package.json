@@ -15,8 +15,7 @@
     "ora": "^2.1.0",
     "ts-node": "7.0.0",
     "dct": "^0.0.3",
-    "kissfft-js": "0.1.8",
-    "eventemitter3": "^2.0.3"
+    "kissfft-js": "0.1.8"
   },
   "scripts": {
     "build": "tsc",

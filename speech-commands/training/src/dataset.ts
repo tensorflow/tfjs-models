@@ -25,6 +25,14 @@ export class Dataset {
   ys: tf.Tensor;
   constructor(public numClasses: number) {}
 
+  /**
+   * Adding data pair to the dataset, examples and labels should have the
+   * matching shape. For example, if the input shape is [2, 20, 20], 2 is the
+   * batch size, the labels shape should be [2,10] (num of classes is 10).
+   *
+   * @param examples Batch of inputs
+   * @param labels Matching labels for inputs
+   */
   addExamples(examples: tf.Tensor, labels: tf.Tensor) {
     if (this.xs == null) {
       // For the first example that gets added, keep example and y so that the

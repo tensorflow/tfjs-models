@@ -1,3 +1,20 @@
+/**
+ * @license
+ * Copyright 2018 Google LLC. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * =============================================================================
+ */
+
 import * as tf from '@tensorflow/tfjs';
 import * as fs from 'fs';
 /// <reference path="./types/node-wav.d.ts" />
@@ -8,17 +25,26 @@ import {Dataset} from './dataset';
 
 import {WavFileFeatureExtractor} from './wav_file_feature_extractor';
 
+/**
+ * Audio Model that creates tf.Model for a fix amount of labels. It requires a
+ * feature extractor to convert the audio stream into input tensors for the
+ * internal tf.Model.
+ * It provide datasets loading, training, and model saving functions.
+ */
 export class AudioModel {
   private model: tf.Model;
-  private dataset: Dataset;
-  private featureExtractor: WavFileFeatureExtractor;
 
-  constructor(inputShape: number[], private labels: string[]) {
-    console.log(tf.getBackend());
-    console.log(inputShape);
-    console.log(labels.length);
-    this.dataset = new Dataset(labels.length);
-    this.featureExtractor = new WavFileFeatureExtractor();
+  /**
+   *
+   * @param inputShape Input tensor shape.
+   * @param labels Audio command label list
+   * @param dataset Dataset class to store the loaded data.
+   * @param featureExtractor converter to extractor features from audio stream
+   * as input tensors
+   */
+  constructor(
+      inputShape: number[], private labels: string[], private dataset: Dataset,
+      private featureExtractor: WavFileFeatureExtractor) {
     this.featureExtractor.config({
       melCount: 40,
       bufferLength: 480,
@@ -27,6 +53,11 @@ export class AudioModel {
       isMfccEnabled: true,
       duration: 1.0
     });
+
+    this.model = this.createModel(inputShape);
+  }
+
+  private createModel(inputShape: number[]): tf.Model {
     const model = tf.sequential();
     model.add(tf.layers.conv2d(
         {filters: 8, kernelSize: [4, 2], activation: 'relu', inputShape}));
@@ -41,9 +72,11 @@ export class AudioModel {
         {filters: 32, kernelSize: [4, 2], activation: 'relu'}));
     model.add(tf.layers.maxPooling2d({poolSize: [2, 2], strides: [1, 2]}));
     model.add(tf.layers.flatten({}));
+    model.add(tf.layers.dropout({rate: 0.25}));
     model.add(tf.layers.dense({units: 2000, activation: 'relu'}));
     model.add(tf.layers.dropout({rate: 0.5}));
-    model.add(tf.layers.dense({units: labels.length, activation: 'softmax'}));
+    model.add(
+        tf.layers.dense({units: this.labels.length, activation: 'softmax'}));
 
     model.compile({
       loss: 'categoricalCrossentropy',
@@ -51,9 +84,16 @@ export class AudioModel {
       metrics: ['accuracy']
     });
     model.summary();
-    this.model = model;
+    return model;
   }
 
+  /**
+   * Load all dataset for the root directory, all the subdirectories that have
+   * matching name to the entries in model label list, contained audio files
+   * will be converted to input tensors and stored in the dataset for training.
+   * @param dir The root directory of the audio dataset
+   * @param callback Callback function for display training logs
+   */
   async loadAll(dir: string, callback: Function) {
     const promises = [];
     this.labels.forEach(async (label, index) => {
@@ -81,6 +121,13 @@ export class AudioModel {
         tf.oneHot(labels, this.labels.length));
   }
 
+  /**
+   * Load one dataset from directory, all contained audio files
+   * will be converted to input tensors and stored in the dataset for training.
+   * @param dir The directory of the audio dataset
+   * @param label The label for the audio dataset
+   * @param callback Callback function for display training logs
+   */
   async loadData(dir: string, label: string, callback: Function) {
     const index = this.labels.indexOf(label);
     const specs = await this.loadDataArray(dir, callback);
@@ -108,11 +155,18 @@ export class AudioModel {
       });
     });
   }
-  decode(filename: string) {
+
+  private decode(filename: string) {
     const result = wav.decode(fs.readFileSync(filename));
     return this.featureExtractor.start(result.channelData[0]);
   }
 
+  /**
+   * Train the model for stored dataset. The method call be called multiple
+   * times.
+   * @param epochs iteration of the training
+   * @param trainCallback
+   */
   train(epochs?: number, trainCallback?: tf.CustomCallbackConfig) {
     return this.model.fit(this.dataset.xs, this.dataset.ys, {
       batchSize: 64,
@@ -123,17 +177,24 @@ export class AudioModel {
     });
   }
 
-  save(filename: string) {
-    return this.model.save('file://' + filename);
+  /**
+   * Save the model to the specified directory.
+   * @param dir Directory to store the model.
+   */
+  save(dir: string): Promise<tf.io.SaveResult> {
+    return this.model.save('file://' + dir);
   }
 
-  size() {
+  /**
+   * Return the size of the dataset in string. 
+   */
+  size(): string {
     return this.dataset.xs ?
         `xs: ${this.dataset.xs.shape} ys: ${this.dataset.ys.shape}` :
-        0;
+        '0';
   }
 
-  splitSpecs(spec: Float32Array[]) {
+  private splitSpecs(spec: Float32Array[]) {
     if (spec.length >= 98) {
       const output = [];
       for (let i = 0; i <= (spec.length - 98); i += 32) {
@@ -144,7 +205,7 @@ export class AudioModel {
     return undefined;
   }
 
-  melSpectrogramToInput(specs: Float32Array[][]): tf.Tensor {
+  private melSpectrogramToInput(specs: Float32Array[][]): tf.Tensor {
     // Flatten this spectrogram into a 2D array.
     const batch = specs.length;
     const times = specs[0].length;

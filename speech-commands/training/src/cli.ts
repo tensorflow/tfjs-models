@@ -1,12 +1,30 @@
-#!/usr/bin/env node
+/**
+ * @license
+ * Copyright 2018 Google LLC. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * =============================================================================
+ */
+
 // Load the binding
 import '@tensorflow/tfjs-node-gpu';
 
 import chalk from 'chalk';
 import * as ora from 'ora';
-import {AudioModel} from './audio_model';
-
 import * as Vorpal from 'vorpal';
+
+import {AudioModel} from './audio_model';
+import {Dataset} from './dataset';
+import {WavFileFeatureExtractor} from './wav_file_feature_extractor';
 
 // tslint:disable-next-line:no-any
 (global as any).AudioContext = class AudioContext {};
@@ -28,19 +46,21 @@ let model: AudioModel;
 let labels: string[];
 const vorpal = new Vorpal();
 let spinner = ora();
-vorpal.command('create [labels...]')
+vorpal.command('create model [labels...]')
     .alias('c')
     .description('create the audio model')
     .action((args, cb) => {
       console.log(args.labels);
       labels = args.labels as string[];
-      model = new AudioModel(MODEL_SHAPE, labels);
+      model = new AudioModel(
+          MODEL_SHAPE, labels, new Dataset(labels.length),
+          new WavFileFeatureExtractor());
       cb();
     });
 
 vorpal
     .command(
-        'load all <dir>',
+        'load dataset all <dir>',
         'Load all the data from the root directory by the labels')
     .alias('la')
     .action((args) => {
@@ -61,7 +81,7 @@ vorpal
     });
 vorpal
     .command(
-        'load <dir> <label>',
+        'load dataset <dir> <label>',
         'Load the dataset from the directory with the label')
     .alias('l')
     .action((args) => {
@@ -106,7 +126,7 @@ vorpal.command('train [epoch]')
           })
           .then(() => spinner.stop());
     });
-vorpal.command('save <filename>')
+vorpal.command('save model <filename>')
     .alias('s')
     .description('save the audio model')
     .action((args) => {

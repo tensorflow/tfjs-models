@@ -16,29 +16,29 @@ yarn
 
 2. Start the CLI program:
 
-```bash
+```none
 yarn start
 ```
 
 Following are command supported by the CLI:
 
-```bash
+```none
   Commands:
 
-    help [command...]   Provides help for a given command.
-    exit                Exits application.
-    create [labels...]  create the audio model
-    load all <dir>      Load all the data from the root directory by the labels
-    load <dir> <label>  Load the dataset from the directory with the label
-    dataset size        Show the size of the dataset
-    train [epoch]       train all audio dataset
-    save <filename>     save the audio model
+    help [command...]           Provides help for a given command.
+    exit                        Exits application.
+    create model [labels...]    create the audio model
+    load dataset all <dir>      Load all the data from the root directory by the labels
+    load dataset <dir> <label>  Load the dataset from the directory with the label
+    dataset size                Show the size of the dataset
+    train [epoch]               train all audio dataset
+    save model <filename>       save the audio model
 
 ```
 
 3. You need to first create a model. For example create a model with four labels (up down left right):
 
-```bash
+```none
 local@piyu~$ create up down left right
 
 _________________________________________________________________
@@ -77,7 +77,7 @@ Non-trainable params: 0
 4. Load the dataset. 
 You can use 'load all' command to load data for all labels that is configure for the previously created model. The root directory is where you untar the dataset file to. Each label should have corresponding directory in that root directory.
 
-```bash
+```none
 local@piyu~$ load all /tmp/audio/data
 
 ✔ finished loading label: up (0)
@@ -89,13 +89,13 @@ local@piyu~$ load all /tmp/audio/data
 
 You can also load data per label using 'load' command. For example loading data for the 'up' label.
 
-```bash
+```none
 local@piyu~$ load /tmp/audio/data/up up
 ```
 
 5. Show the dataset stats. You can review the dataset size and shape by running 'dataset size' command.
 
-```bash
+```none
 local@piyu~$ dataset size
 
 dataset size = xs: 8534,98,40,1 ys: 8534,4
@@ -103,7 +103,7 @@ dataset size = xs: 8534,98,40,1 ys: 8534,4
 
 6. Training the model. You can also specify the epochs for the 'train' command.
 
-```bash
+```none
 local@piyu~$ train 5
 
 ✔ epoch: 0, loss: 1.35054, accuracy: 0.34792, validation accuracy: 0.42740
@@ -116,7 +116,7 @@ local@piyu~$ train 5
 
 7 Save the trained model. 
 
-```bash
+```none
 local@piyu~$ save /tmp/audio_model
 ✔ /tmp/audio_model saved.
 ```

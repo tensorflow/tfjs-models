@@ -1,10 +1,8 @@
-import {EventEmitter} from 'eventemitter3';
-
 import {AudioUtils} from './utils/audio_utils';
 import {Params} from './utils/types';
 import {nextPowerOfTwo} from './utils/util';
 
-export class WavFileFeatureExtractor extends EventEmitter {
+export class WavFileFeatureExtractor {
   private features: Float32Array[];
   // Target sample rate.
   targetSr = 16000;
