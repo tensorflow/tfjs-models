@@ -20,8 +20,8 @@
   "scripts": {
     "build": "tsc",
     "lint": "tslint -p . -t verbose",
-    "start": "nodemon --exec ts-node -- src/cli.ts",
-    "ts-node": "ts-node src/cli.ts"
+    "start": "nodemon --exec ts-node -- cli.ts",
+    "ts-node": "ts-node cli.ts"
   },
   "devDependencies": {
     "@types/chalk": "^2.2.0",

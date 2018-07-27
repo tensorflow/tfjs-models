@@ -27,12 +27,12 @@ Following are command supported by the CLI:
 
     help [command...]           Provides help for a given command.
     exit                        Exits application.
-    create model [labels...]    create the audio model
-    load dataset all <dir>      Load all the data from the root directory by the labels
-    load dataset <dir> <label>  Load the dataset from the directory with the label
+    create_model [labels...]    create the audio model
+    load_dataset all <dir>      Load all the data from the root directory by the labels
+    load_dataset <dir> <label>  Load the dataset from the directory with the label
     dataset size                Show the size of the dataset
     train [epoch]               train all audio dataset
-    save model <filename>       save the audio model
+    save_model <filename>       save the audio model
 
 ```
 
@@ -75,10 +75,10 @@ Non-trainable params: 0
 ```
 
 4. Load the dataset. 
-You can use 'load all' command to load data for all labels that is configure for the previously created model. The root directory is where you untar the dataset file to. Each label should have corresponding directory in that root directory.
+You can use 'load_dataset all' command to load data for all labels that is configure for the previously created model. The root directory is where you untar the dataset file to. Each label should have corresponding directory in that root directory.
 
 ```none
-local@piyu~$ load all /tmp/audio/data
+local@piyu~$ load_dataset all /tmp/audio/data
 
 ✔ finished loading label: up (0)
 ✔ finished loading label: left (2)
@@ -90,7 +90,7 @@ local@piyu~$ load all /tmp/audio/data
 You can also load data per label using 'load' command. For example loading data for the 'up' label.
 
 ```none
-local@piyu~$ load /tmp/audio/data/up up
+local@piyu~$ load_dataset /tmp/audio/data/up up
 ```
 
 5. Show the dataset stats. You can review the dataset size and shape by running 'dataset size' command.
@@ -117,7 +117,8 @@ local@piyu~$ train 5
 7 Save the trained model. 
 
 ```none
-local@piyu~$ save /tmp/audio_model
+local@piyu~$ save_model /tmp/audio_model
+
 ✔ /tmp/audio_model saved.
 ```
 

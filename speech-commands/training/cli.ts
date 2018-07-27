@@ -46,7 +46,7 @@ let model: AudioModel;
 let labels: string[];
 const vorpal = new Vorpal();
 let spinner = ora();
-vorpal.command('create model [labels...]')
+vorpal.command('create_model [labels...]')
     .alias('c')
     .description('create the audio model')
     .action((args, cb) => {
@@ -60,7 +60,7 @@ vorpal.command('create model [labels...]')
 
 vorpal
     .command(
-        'load dataset all <dir>',
+        'load_dataset all <dir>',
         'Load all the data from the root directory by the labels')
     .alias('la')
     .action((args) => {
@@ -81,7 +81,7 @@ vorpal
     });
 vorpal
     .command(
-        'load dataset <dir> <label>',
+        'load_dataset <dir> <label>',
         'Load the dataset from the directory with the label')
     .alias('l')
     .action((args) => {
@@ -126,7 +126,7 @@ vorpal.command('train [epoch]')
           })
           .then(() => spinner.stop());
     });
-vorpal.command('save model <filename>')
+vorpal.command('save_model <filename>')
     .alias('s')
     .description('save the audio model')
     .action((args) => {
