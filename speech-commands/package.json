@@ -6,7 +6,9 @@
     "@tensorflow/tfjs": "^0.12.3"
   },
   "devDependencies": {
-    "@tensorflow/tfjs": "^0.12.3"
+    "@tensorflow/tfjs": "^0.12.3",
+    "dct": "^0.0.3",
+    "kissfft-js": "^0.1.8"
   },
   "scripts": {
     "build": "echo 'No-op for now.'"
