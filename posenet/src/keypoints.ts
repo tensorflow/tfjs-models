@@ -65,3 +65,20 @@ export const poseChain: StringTuple[] = [
 
 export const connectedPartIndices = connectedPartNames.map(
     ([jointNameA, jointNameB]) => ([partIds[jointNameA], partIds[jointNameB]]));
+
+export const partChannels: string[] = [
+  'leftFace',          'rightFace',          'leftUpperArmFront',
+  'leftUpperArmBack',  'rightUpperArmFront', 'rightUpperArmBack',
+  'leftLowerArmFront', 'leftLowerArmBack',   'rightLowerArmFront',
+  'rightLowerArmBack', 'leftHand',           'rightHand',
+  'torsoFront',        'torsoBack',          'leftUpperLegFront',
+  'leftUpperLegBack',  'rightUpperLegFront', 'rightUpperLegBack',
+  'leftLowerLegFront', 'leftLowerLegBack',   'rightLowerLegFront',
+  'rightLowerLegBack', 'leftFeet',           'rightFeet'
+];
+
+export const partChannelIds =
+    partChannels.reduce((result: NumberDict, jointName, i): NumberDict => {
+      result[jointName] = i;
+      return result;
+    }, {}) as NumberDict;

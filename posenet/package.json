@@ -13,7 +13,7 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs": "^0.12.0"
+    "@tensorflow/tfjs": "^0.12.4"
   },
   "devDependencies": {
     "@tensorflow/tfjs": "^0.12.0",

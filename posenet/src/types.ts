@@ -41,7 +41,18 @@ export type Keypoint = {
 
 export type Pose = {
   keypoints: Keypoint[],
-  score: number
+  score: number,
+};
+
+export type PoseWithSegmentationMaskAndColoredPartImage = {
+  pose: Pose,
+  segmentationMask: tf.Tensor2D,
+  coloredPartImage: tf.Tensor3D,
+};
+
+export type SegmentationAndPartMap = {
+  segmentationMap: tf.Tensor2D,
+  partMap: tf.Tensor3D,
 };
 
 export type TensorBuffer3D = tf.TensorBuffer<tf.Rank.R3>;
