@@ -16,13 +16,21 @@
  */
 
 import {decodeMultiplePoses} from './multiPose/decodeMultiplePoses';
+// tslint:disable-next-line:max-line-length
+import {decodeAndScaleSegmentationAndPartMap} from './partMap/decodePartMap';
 import {load, PoseNet} from './posenet_model';
+// tslint:disable-next-line:max-line-length
 import {decodeSinglePose} from './singlePose/decodeSinglePose';
 
 export {checkpoints} from './checkpoints';
-export {partIds, partNames, poseChain} from './keypoints';
+// tslint:disable-next-line:max-line-length
+export {partChannelIds, partChannels, partIds, partNames, poseChain} from './keypoints';
 export {Keypoint, Pose} from './types';
 // tslint:disable-next-line:max-line-length
 export {getAdjacentKeyPoints, getBoundingBox, getBoundingBoxPoints} from './util';
-export {decodeMultiplePoses, decodeSinglePose};
+export {
+  decodeAndScaleSegmentationAndPartMap,
+  decodeMultiplePoses,
+  decodeSinglePose
+};
 export {load, PoseNet};

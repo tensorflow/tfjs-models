@@ -15,7 +15,7 @@
  * =============================================================================
  */
 import * as tf from '@tensorflow/tfjs';
-import * as posenet from '@tensorflow-models/posenet';
+import * as posenet from '../src';
 
 const color = 'aqua';
 const boundingBoxColor = 'red';
@@ -44,16 +44,34 @@ export function drawSegment([ay, ax], [by, bx], color, scale, ctx) {
   ctx.stroke();
 }
 
+export function drawSegmentation(
+    segmentation, segmentationThreshold, outputStride, ctx) {
+  const [height, width] = segmentation.shape;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const value = segmentation.get(y, x);
+      if (value >= segmentationThreshold) {
+        drawPoint(
+            ctx,
+            y,
+            x,
+        )
+      }
+    }
+  }
+}
+
 /**
  * Draws a pose skeleton by looking up all adjacent keypoints/joints
  */
 export function drawSkeleton(keypoints, minConfidence, ctx, scale = 1) {
-  const adjacentKeyPoints = posenet.getAdjacentKeyPoints(
-    keypoints, minConfidence);
+  const adjacentKeyPoints =
+      posenet.getAdjacentKeyPoints(keypoints, minConfidence);
 
   adjacentKeyPoints.forEach((keypoints) => {
-    drawSegment(toTuple(keypoints[0].position),
-      toTuple(keypoints[1].position), color, scale, ctx);
+    drawSegment(
+        toTuple(keypoints[0].position), toTuple(keypoints[1].position), color,
+        scale, ctx);
   });
 }
 
@@ -81,8 +99,9 @@ export function drawKeypoints(keypoints, minConfidence, ctx, scale = 1) {
 export function drawBoundingBox(keypoints, ctx) {
   const boundingBox = posenet.getBoundingBox(keypoints);
 
-  ctx.rect(boundingBox.minX, boundingBox.minY,
-    boundingBox.maxX - boundingBox.minX, boundingBox.maxY - boundingBox.minY);
+  ctx.rect(
+      boundingBox.minX, boundingBox.minY, boundingBox.maxX - boundingBox.minX,
+      boundingBox.maxY - boundingBox.minY);
 
   ctx.strokeStyle = boundingBoxColor;
   ctx.stroke();
@@ -160,9 +179,9 @@ function drawPoints(ctx, points, radius, color) {
  * https://medium.com/tensorflow/real-time-human-pose-estimation-in-the-browser-with-tensorflow-js-7dd0bc881cd5
  */
 export function drawOffsetVectors(
-  heatMapValues, offsets, outputStride, scale = 1, ctx) {
-  const offsetPoints = posenet.singlePose.getOffsetPoints(
-    heatMapValues, outputStride, offsets);
+    heatMapValues, offsets, outputStride, scale = 1, ctx) {
+  const offsetPoints =
+      posenet.singlePose.getOffsetPoints(heatMapValues, outputStride, offsets);
 
   const heatmapData = heatMapValues.buffer().values;
   const offsetPointsData = offsetPoints.buffer().values;
@@ -173,9 +192,36 @@ export function drawOffsetVectors(
     const offsetPointY = offsetPointsData[i];
     const offsetPointX = offsetPointsData[i + 1];
 
-    drawSegment([heatmapY, heatmapX], [offsetPointY, offsetPointX],
-      color, scale, ctx);
+    drawSegment(
+        [heatmapY, heatmapX], [offsetPointY, offsetPointX], color, scale, ctx);
   }
 }
 
-
+// clang-format off
+export const partColors = [
+  [126,	0,	255,],
+  [255,	0,	0,],
+  [0,	102,	255,],
+  [0,	255,	228,],
+  [255,	0,	174,],
+  [255,	0,	138,],
+  [0,	255,	66,],
+  [66,	255,	0,],
+  [255,	162,	0,],
+  [255,	84,	0,],
+  [0,	66,	255,],
+  [0,	36,	255,],
+  [0,	180,	255,],
+  [0,	18,	255,],
+  [150,	255,	0,],
+  [114,	255,	0,],
+  [255,	18,	0,],
+  [156,	0,	255,],
+  [228,	0,	255,],
+  [0,	210,	255,],
+  [0,	255,	102,],
+  [108,	255,	0,],
+  [84,	255,	0,],
+  [255,	144,	0,],
+];
+// clang-format on
