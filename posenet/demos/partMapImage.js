@@ -17,7 +17,8 @@
 import * as tf from '@tensorflow/tfjs';
 import dat from 'dat.gui';
 
-import * as posenet from '../src';
+import * as posenet from '../src/';
+import {partColors} from './demo_util';
 
 // clang-format off
 import {
@@ -25,12 +26,10 @@ import {
   drawPoint,
   drawSegment,
   drawSkeleton,
-  drawBoundingBox,
   renderImageToCanvas,
 } from './demo_util';
 
 // clang-format on
-
 
 const images = [
   'frisbee.jpg',
@@ -66,7 +65,6 @@ const {partIds, poseChain} = posenet;
  * Only the pose's keypoints that pass a minPartConfidence are drawn.
  */
 function drawResults(canvas, poses, minPartConfidence, minPoseConfidence) {
-  renderImageToCanvas(image, [513, 513], canvas);
   poses.forEach((pose) => {
     if (pose.score >= minPoseConfidence) {
       if (guiState.showKeypoints) {
@@ -77,10 +75,6 @@ function drawResults(canvas, poses, minPartConfidence, minPoseConfidence) {
       if (guiState.showSkeleton) {
         drawSkeleton(
             pose.keypoints, minPartConfidence, canvas.getContext('2d'));
-      }
-
-      if (guiState.showBoundingBox) {
-        drawBoundingBox(pose.keypoints, canvas.getContext('2d'));
       }
     }
   });
@@ -106,15 +100,16 @@ function singlePersonCanvas() {
   return document.querySelector('#single canvas');
 }
 
-function multiPersonCanvas() {
-  return document.querySelector('#multi canvas');
-}
-
 /**
  * Draw the results from the single-pose estimation on to a canvas
  */
-function drawSinglePoseResults(pose) {
+async function drawSinglePoseResults(pose, segmentationMask, coloredPartImage) {
   const canvas = singlePersonCanvas();
+  renderImageToCanvas(image, [513, 513], canvas);
+
+  await drawPartHeatmapAndSegmentation(
+      canvas, segmentationMask, coloredPartImage);
+
   drawResults(
       canvas, [pose], guiState.singlePoseDetection.minPartConfidence,
       guiState.singlePoseDetection.minPoseConfidence);
@@ -127,24 +122,48 @@ function drawSinglePoseResults(pose) {
   visualizeOutputs(
       partId, showHeatmap, showOffsets, showDisplacements,
       canvas.getContext('2d'));
+
+  const {partChannel, showSegments, showPartHeatmaps} = guiState.visualizeParts;
+  const partChannelId = +partChannel;
+
+
+  visualizeParts(
+      partChannelId, showSegments, showPartHeatmaps, canvas.getContext('2d'));
 }
 
-/**
- * Draw the results from the multi-pose estimation on to a canvas
- */
-function drawMultiplePosesResults(poses) {
-  const canvas = multiPersonCanvas();
-  drawResults(
-      canvas, poses, guiState.multiPoseDetection.minPartConfidence,
-      guiState.multiPoseDetection.minPoseConfidence);
+const segmentationDarkening = 0.25;
+const partMapDarkening = 0.3;
+async function drawPartHeatmapAndSegmentation(
+    canvas, segmentationMask, partMapImage) {
+  const filteredImage = tf.tidy(() => {
+    let result = tf.fromPixels(canvas);
 
-  const {part, showHeatmap, showOffsets, showDisplacements} =
-      guiState.visualizeOutputs;
-  const partId = +part;
+    if (guiState.showSegments && !guiState.showPartHeatmaps) {
+      const invertedMask = tf.scalar(1, 'int32').sub(segmentationMask);
+      const darkeningMask = invertedMask.cast('float32')
+                                .mul(tf.scalar(segmentationDarkening))
+                                .add(segmentationMask.cast('float32'));
 
-  visualizeOutputs(
-      partId, showHeatmap, showOffsets, showDisplacements,
-      canvas.getContext('2d'));
+      result =
+          result.cast('float32').mul(darkeningMask.expandDims(2)).cast('int32');
+    }
+
+    if (guiState.showPartHeatmaps) {
+      const darkenedImage =
+          result.cast('float32').mul(tf.scalar(partMapDarkening));
+
+      result = darkenedImage
+                   .add(partMapImage.cast('float32').mul(
+                       tf.scalar(1 - partMapDarkening)))
+                   .cast('int32');
+    }
+
+    return result;
+  });
+
+  await tf.toPixels(filteredImage, canvas);
+
+  filteredImage.dispose();
 }
 
 /**
@@ -273,6 +292,36 @@ function visualizeOutputs(
   }
 }
 
+function visualizeParts(partChannelId, showSegments, showPartHeatmaps, ctx) {
+  const {segmentScores, partHeatmapScores} = modelOutputs;
+  const outputStride = +guiState.outputStride;
+
+  const [height, width] = segmentScores.shape;
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const score = segmentScores.get(y, x, 0);
+
+      // to save on performance, don't draw anything with a low score.
+      if (score < 0.05) continue;
+
+      // set opacity of drawn elements based on the score
+      ctx.globalAlpha = score;
+
+      if (showSegments) {
+        drawPoint(ctx, y * outputStride, x * outputStride, 2, 'yellow');
+      }
+
+      if (showPartHeatmaps) {
+        const partScore = partHeatmapScores.get(y, x, partChannelId);
+        ctx.globalAlpha *= partScore;
+        drawPoint(ctx, y * outputStride, x * outputStride, 2, 'red');
+      }
+    }
+  }
+}
+
+const imageSize = 513;
 /**
  * Converts the raw model output results into single-pose estimation results
  */
@@ -280,33 +329,23 @@ async function decodeSinglePoseAndDrawResults() {
   if (!modelOutputs) {
     return;
   }
+  const {segmentationMask, coloredPartImage} =
+      posenet.decodeAndScaleSegmentationAndPartMap(
+          modelOutputs.segmentScores, modelOutputs.partHeatmapScores,
+          guiState.outputStride, [imageSize, imageSize],
+          guiState.segmentationThreshold, partColors);
 
   const pose = await posenet.decodeSinglePose(
       modelOutputs.heatmapScores, modelOutputs.offsets, guiState.outputStride);
 
-  drawSinglePoseResults(pose);
-}
+  drawSinglePoseResults(pose, segmentationMask, coloredPartImage);
 
-/**
- * Converts the raw model output results into multi-pose estimation results
- */
-async function decodeMultiplePosesAndDrawResults() {
-  if (!modelOutputs) {
-    return;
-  }
-
-  const poses = await posenet.decodeMultiplePoses(
-      modelOutputs.heatmapScores, modelOutputs.offsets,
-      modelOutputs.displacementFwd, modelOutputs.displacementBwd,
-      guiState.outputStride, guiState.multiPoseDetection.maxDetections,
-      guiState.multiPoseDetection);
-
-  drawMultiplePosesResults(poses);
+  segmentationMask.dispose();
+  coloredPartImage.dispose();
 }
 
 function decodeSingleAndMultiplePoses() {
   decodeSinglePoseAndDrawResults();
-  decodeMultiplePosesAndDrawResults();
 }
 
 function setStatusText(text) {
@@ -324,8 +363,8 @@ function disposeModelOutputs() {
   if (modelOutputs) {
     modelOutputs.heatmapScores.dispose();
     modelOutputs.offsets.dispose();
-    modelOutputs.displacementFwd.dispose();
-    modelOutputs.displacementBwd.dispose();
+    modelOutputs.segmentScores.dispose();
+    modelOutputs.partHeatmapScores.dispose();
   }
 }
 
@@ -351,7 +390,8 @@ async function testImageAndEstimatePoses(net) {
   // Normally you would call estimateSinglePose or estimateMultiplePoses,
   // but by calling this method we can previous the outputs of the model and
   // visualize them.
-  modelOutputs = await net.predictForMultiPose(input, guiState.outputStride);
+  modelOutputs =
+      await net.predictForSinglePoseWithPartMap(input, guiState.outputStride);
 
   // Process the model outputs to convert into poses
   await decodeSingleAndMultiplePoses();
@@ -383,13 +423,17 @@ function setupGui(net) {
     },
     showKeypoints: true,
     showSkeleton: true,
-    showBoundingBox: false,
+    segmentationThreshold: 0.5,
+    showSegments: true,
+    showPartHeatmaps: true,
     visualizeOutputs: {
       part: 0,
       showHeatmap: false,
       showOffsets: false,
       showDisplacements: false,
     },
+    visualizeParts:
+        {partChannel: 0, showSegments: false, showPartHeatmaps: false}
   };
 
   const gui = new dat.GUI();
@@ -404,30 +448,6 @@ function setupGui(net) {
   gui.add(guiState, 'image', images)
       .onChange(() => testImageAndEstimatePoses(net));
 
-  // Pose confidence: the overall confidence in the estimation of a person's
-  // pose (i.e. a person detected in a frame)
-  // Min part confidence: the confidence that a particular estimated keypoint
-  // position is accurate (i.e. the elbow's position)
-
-  const multiPoseDetection = gui.addFolder('Multi Pose Estimation');
-  multiPoseDetection.open();
-  multiPoseDetection
-      .add(guiState.multiPoseDetection, 'minPartConfidence', 0.0, 1.0)
-      .onChange(decodeMultiplePosesAndDrawResults);
-  multiPoseDetection
-      .add(guiState.multiPoseDetection, 'minPoseConfidence', 0.0, 1.0)
-      .onChange(decodeMultiplePosesAndDrawResults);
-
-  // nms Radius: controls the minimum distance between poses that are returned
-  // defaults to 20, which is probably fine for most use cases
-  multiPoseDetection.add(guiState.multiPoseDetection, 'nmsRadius', 0.0, 40.0)
-      .onChange(decodeMultiplePosesAndDrawResults);
-  multiPoseDetection.add(guiState.multiPoseDetection, 'maxDetections')
-      .min(1)
-      .max(20)
-      .step(1)
-      .onChange(decodeMultiplePosesAndDrawResults);
-
   const singlePoseDetection = gui.addFolder('Single Pose Estimation');
   singlePoseDetection
       .add(guiState.singlePoseDetection, 'minPartConfidence', 0.0, 1.0)
@@ -439,7 +459,10 @@ function setupGui(net) {
 
   gui.add(guiState, 'showKeypoints').onChange(decodeSingleAndMultiplePoses);
   gui.add(guiState, 'showSkeleton').onChange(decodeSingleAndMultiplePoses);
-  gui.add(guiState, 'showBoundingBox').onChange(decodeSingleAndMultiplePoses);
+  gui.add(guiState, 'segmentationThreshold', 0.0, 1.0)
+      .onChange(decodeSingleAndMultiplePoses);
+  gui.add(guiState, 'showSegments').onChange(decodeSingleAndMultiplePoses);
+  gui.add(guiState, 'showPartHeatmaps').onChange(decodeSingleAndMultiplePoses);
 
   const visualizeOutputs = gui.addFolder('Visualize Outputs');
 
@@ -449,10 +472,51 @@ function setupGui(net) {
       .onChange(decodeSingleAndMultiplePoses);
   visualizeOutputs.add(guiState.visualizeOutputs, 'showOffsets')
       .onChange(decodeSingleAndMultiplePoses);
+  visualizeOutputs.add(guiState.visualizeOutputs, 'showHeatmap')
+      .onChange(decodeSingleAndMultiplePoses);
   visualizeOutputs.add(guiState.visualizeOutputs, 'showDisplacements')
       .onChange(decodeSingleAndMultiplePoses);
 
   visualizeOutputs.open();
+
+  const visualizeParts = gui.addFolder('Visualize Part Segmentation');
+  visualizeParts.add(guiState.visualizeParts, 'showSegments')
+      .onChange(decodeSingleAndMultiplePoses);
+  visualizeParts
+      .add(guiState.visualizeParts, 'partChannel', posenet.partChannelIds)
+      .onChange(decodeSingleAndMultiplePoses);
+  visualizeParts.add(guiState.visualizeParts, 'showPartHeatmaps')
+      .onChange(decodeSingleAndMultiplePoses);
+
+  visualizeParts.open();
+}
+
+function drawPartColors() {
+  const colorsDiv = document.getElementById('colors');
+
+  const listHolder = document.createElement('ul');
+
+  const listItems = posenet.partChannels.map((partChannelName, i) => {
+    const listElement = document.createElement('li');
+    const box = document.createElement('div');
+    const color = partColors[i];
+    box.setAttribute('class', 'color');
+    box.setAttribute('style', `background-color: rgb(${color.join(', ')})`);
+
+
+    listElement.appendChild(box);
+
+    const text = document.createElement('div');
+    text.innerText = partChannelName;
+
+    listElement.appendChild(text);
+
+    return listElement;
+  });
+
+  listItems.forEach((listItem) => listHolder.appendChild(listItem));
+
+  colorsDiv.appendChild(listHolder);
 }
 
 /**
@@ -460,9 +524,11 @@ function setupGui(net) {
  * poses on a default image
  */
 export async function bindPage() {
-  const net = await posenet.load();
+  const net = await posenet.load(0.75, true);
 
   setupGui(net);
+
+  drawPartColors();
 
   await testImageAndEstimatePoses(net);
   document.getElementById('loading').style.display = 'none';

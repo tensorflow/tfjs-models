@@ -108,3 +108,9 @@ export function getValidResolution(
 
   return evenResolution - (evenResolution % outputStride) + 1;
 }
+export function resize2d(
+    tensor: tf.Tensor2D, resolution: [number, number]): tf.Tensor2D {
+  return (tensor.expandDims(2) as tf.Tensor3D)
+             .resizeBilinear(resolution)
+             .squeeze() as tf.Tensor2D;
+}
