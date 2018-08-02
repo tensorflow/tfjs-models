@@ -1,5 +1,10 @@
 import {drawPoint, drawRect} from './demo_util';
 
+export const videoDimensions = () => {
+  const video = document.getElementById('video');
+  return ({height: video.height, width: video.width});
+};
+
 // track shoulders (which is higher)
 export function trackShoulders(ctx, keypoints) {
   const shoulderDif = keypoints[9].position.y - keypoints[10].position.y;
@@ -38,12 +43,25 @@ export function trackHips(ctx, keypoints) {
 }
 
 // track feet (apart or together)
-export function trackFeetTogether(ctx, keypoints) {
+export const trackFeetTogether = (ctx, keypoints) => {
+  const feetDist = keypoints[15].position.x - keypoints[16].position.x;
+  const width = videoDimensions().width;
+  const startRect = (width/2)-(width/12);
+
+  if (Math.abs(feetDist) < 25) {
+    console.log('feetDist:', feetDist);
+
+    drawPoint(ctx, 400, 200, 20, 'green');
+    drawRect(ctx, width/6, 500, 'rgba(51, 225, 91, 0.25)', startRect, 0);
+  }
+};
+// track feet left or right side of screen
+export function trackFeet(ctx, keypoints) {
   const feetDist = keypoints[15].position.x - keypoints[16].position.x;
   if (Math.abs(feetDist) < 25) {
     console.log('feetDist:', feetDist);
 
     drawPoint(ctx, 400, 200, 20, 'green');
-    drawRect(ctx, 300, 500, 'rgba(51, 225, 91, 0.15)');
+    drawRect(ctx, 300, 500, 'rgba(51, 225, 91, 0.25)');
   }
 }

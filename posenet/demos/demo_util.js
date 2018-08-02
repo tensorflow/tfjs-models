@@ -31,9 +31,9 @@ export function drawPoint(ctx, y, x, r, color) {
   ctx.fill();
 }
 
-export function drawRect(ctx, w, h, color) {
+export function drawRect(ctx, w, h, color, x=0, y=0) {
   ctx.fillStyle = color;
-  ctx.fillRect(0, 0, w, h);
+  ctx.fillRect(x, y, w, h);
 }
 
 /**
