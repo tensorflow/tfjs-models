@@ -17,10 +17,11 @@
 
 import * as tf from '@tensorflow/tfjs';
 
-export enum FFT_TYPE {
-  BROWSER_FFT = 1,
-  SOFT_FFT
-}
+/**
+ * This file defines the interfaces related to SpeechCommandRecognizer.
+ */
+
+export type FFT_TYPE = 'BROWSER_FFT'|'SOFT_FFT';
 
 export type RecognizerCallback = (result: SpeechCommandRecognizerResult) =>
     Promise<void>;
@@ -71,8 +72,7 @@ export interface SpectrogramData {
   // The float32 data for the spectrogram.
   data: Float32Array;
 
-  // Number of points per frame, i.e., FFT length per
-  // frame.
+  // Number of points per frame, i.e., FFT length per frame.
   frameSize: number;
 }
 
@@ -92,34 +92,45 @@ export interface StreamingRecognitionConfig {
   // overlap between two successive frames, i.e., frames
   // will be taken every 600 ms.
   overlapFactor?: number;
-  // minimum samples of the same label for reliable prediction
+
+  // minimum samples of the same label for reliable prediction.
   minSamples?: number;
-  // amount to time in ms to suppress recognizer after a word is recognized
+
+  // amount to time in ms to suppress recognizer after a word is recognized.
   suppressionTimeInMs?: number;
 }
 
 export interface RecognizerConfigParams {
-  // audio sample window size per spectrogram column
-  bufferLength?: number;
+  // audio sample window size per spectrogram column.
+  columnBufferLength?: number;
+
   // audio sample window hopping size between two consecutive spectrogram
-  // columns
-  hopLength?: number;
-  // total duration per spectragram
-  durationMillis?: number;
-  // FFT encoding size
+  // columns.
+  columnHopLength?: number;
+
+  // total duration per spectragram.
+  SpectrogramDurationMillis?: number;
+
+  // FFT encoding size per spectrogram column.
   fftSize?: number;
-  // Post FFT filter size
+
+  // post FFT filter size for spectorgram column.
   filterSize?: number;
-  // sampling rate in Hz
+
+  // sampling rate in Hz.
   sampleRateHz?: number;
 }
 
 export interface FeatureExtractor {
-  // config the feature extractor
+  // config the feature extractor.
   setConfig(params: RecognizerConfigParams): void;
-  // start the feature extraction from the audio samples
+
+  // start the feature extraction from the audio samples.
   start(samples?: Float32Array): Promise<Float32Array[]>|void;
+
+  // stop the feature extraction.
   stop(): void;
-  // return the extractor features so far
+
+  // return the extractor features collected since last call.
   getFeatures(): Float32Array[];
 }
