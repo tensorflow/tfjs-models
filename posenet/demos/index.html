@@ -1,13 +1,57 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>PoseNet Demos</title>
-  </head>
-  <body>
-    <h1>PoseNet Demos</h1>
-    <ul>
-      <li><a href='camera.html'>Camera feed demo</a></li>
-      <li><a href='coco.html'>Image demo</a></li>
-    </ul>
-  </body>
+
+<head>
+    <title>Movement</title>
+    <style>
+    .footer {
+        position: fixed;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        color: black;
+    }
+
+    .footer-text {
+        max-width: 600px;
+        text-align: center;
+        margin: auto;
+    }
+
+    @media only screen and (max-width: 600px) {
+      .footer-text, .dg {
+        display: none;
+      }
+    }
+    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+    <div id="info" style='display:none'>
+    </div>
+    <div id="loading">
+        Loading the model...
+    </div>
+
+    <div id='main' style='display:none'>
+        <video id="video" playsinline style=" -moz-transform: scaleX(-1);
+        -o-transform: scaleX(-1);
+        -webkit-transform: scaleX(-1);
+        transform: scaleX(-1);
+        display: none;
+        ">
+        </video>
+        <canvas id="output" />
+    </div>
+    <div class="footer">
+        <div class="footer-text">
+            <p>
+                An experiment with movement and coding.
+            </p>
+        </div>
+    </div>
+    <script src="camera.js"></script>
+</body>
+
 </html>
