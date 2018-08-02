@@ -231,6 +231,11 @@ function detectPoseInRealTime(video, net) {
             video, imageScaleFactor, flipHorizontal, outputStride);
         poses.push(pose);
 
+        // added
+        console.log('shoulder diff:', ((pose.keypoints[5].position.y - pose.keypoints[6].position.y) > 1)
+        ? 'left'
+        : 'right');
+
         minPoseConfidence = +guiState.singlePoseDetection.minPoseConfidence;
         minPartConfidence = +guiState.singlePoseDetection.minPartConfidence;
         break;

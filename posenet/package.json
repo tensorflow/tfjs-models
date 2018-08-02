@@ -38,5 +38,8 @@
     "dev": "d demos && yarn watch",
     "lint": "tslint -p . -t verbose"
   },
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "dependencies": {
+    "yarn": "^1.9.2"
+  }
 }
