@@ -17,3 +17,15 @@
         display: none;
       }
     }
+
+    .dg.ac {
+      visibility: hidden
+    }
+
+    #main {
+      z-index: 3
+    }
+
+    body {
+      background-color: black
+    }
