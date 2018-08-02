@@ -17,7 +17,8 @@
 import * as posenet from '@tensorflow-models/posenet';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
-import {drawKeypoints, drawSkeleton, drawPoint} from './demo_util';
+import {drawKeypoints, drawSkeleton} from './demo_util';
+import {trackShoulders, trackFeetTogether, trackHips} from './trackingMovements';
 
 const videoWidth = 600;
 const videoHeight = 500;
@@ -261,22 +262,6 @@ function detectPoseInRealTime(video, net) {
     // and draw the resulting skeleton and keypoints if over certain confidence
     // scores
     poses.forEach(({score, keypoints}) => {
-      // added
-      const shoulderDif = keypoints[5].position.y - keypoints[6].position.y;
-      if (Math.abs(shoulderDif) > 15) {
-        console.log(
-          'higher shoulder:',
-          (shoulderDif > 0)
-            ? 'left'
-            : 'right');
-
-        if (shoulderDif > 0) {
-        drawPoint(ctx, 300, 100, 20, 'red');
-        }
-        if (shoulderDif < 0) {
-        drawPoint(ctx, 300, 500, 20, 'red');
-        }
-      }
 
       if (score >= minPoseConfidence) {
         if (guiState.output.showPoints) {
@@ -285,6 +270,10 @@ function detectPoseInRealTime(video, net) {
         if (guiState.output.showSkeleton) {
           drawSkeleton(keypoints, minPartConfidence, ctx);
         }
+        // added
+        trackShoulders(ctx, keypoints);
+        trackFeetTogether(ctx, keypoints);
+        trackHips(ctx, keypoints);
       }
     });
 

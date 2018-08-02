@@ -31,6 +31,11 @@ export function drawPoint(ctx, y, x, r, color) {
   ctx.fill();
 }
 
+export function drawRect(ctx, w, h, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, w, h);
+}
+
 /**
  * Draws a line on a canvas, i.e. a joint
  */
