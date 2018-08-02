@@ -46,22 +46,31 @@ export function trackHips(ctx, keypoints) {
 export const trackFeetTogether = (ctx, keypoints) => {
   const feetDist = keypoints[15].position.x - keypoints[16].position.x;
   const width = videoDimensions().width;
-  const startRect = (width/2)-(width/12);
+  const startRect = (width/2)-(width/6);
 
   if (Math.abs(feetDist) < 25) {
-    console.log('feetDist:', feetDist);
-
-    drawPoint(ctx, 400, 200, 20, 'green');
-    drawRect(ctx, width/6, 500, 'rgba(51, 225, 91, 0.25)', startRect, 0);
+    drawRect(ctx, width/3, 500, 'rgba(51, 225, 91, 0.25)', startRect, 0);
   }
 };
+
 // track feet left or right side of screen
 export function trackFeet(ctx, keypoints) {
-  const feetDist = keypoints[15].position.x - keypoints[16].position.x;
-  if (Math.abs(feetDist) < 25) {
-    console.log('feetDist:', feetDist);
+  const rightFootX = keypoints[15].position.x;
+  const leftFootX = keypoints[16].position.x;
+  const feetDist = rightFootX - leftFootX;
+  const width = videoDimensions().width;
+  const midpoint = width/2;
 
-    drawPoint(ctx, 400, 200, 20, 'green');
-    drawRect(ctx, 300, 500, 'rgba(51, 225, 91, 0.25)');
+
+  if (Math.abs(feetDist) >= 25) {
+    console.log('rightFoot, leftFoot:', rightFootX, leftFootX);
+
+    if (leftFootX < (midpoint-width/6)) {
+    drawRect(ctx, midpoint-width/6, 500, 'rgba(225, 161, 51, 0.52)', 0, 0);
+    }
+
+    if (rightFootX > (midpoint+width/6)) {
+      drawRect(ctx, midpoint-25, 500, 'rgba(51, 225, 196, 0.52)', midpoint+width/6, 0);
+      };
   }
 }
