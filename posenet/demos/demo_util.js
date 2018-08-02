@@ -17,10 +17,10 @@
 import * as tf from '@tensorflow/tfjs';
 import * as posenet from '@tensorflow-models/posenet';
 
-const color = 'aqua';
+const color = 'turquoise';
 const lineWidth = 2;
 
-function toTuple({y, x}) {
+function toTuple({ y, x }) {
   return [y, x];
 }
 
@@ -67,7 +67,7 @@ export function drawKeypoints(keypoints, minConfidence, ctx, scale = 1) {
       continue;
     }
 
-    const {y, x} = keypoint.position;
+    const { y, x } = keypoint.position;
     drawPoint(ctx, y * scale, x * scale, 3, color);
   }
 }

@@ -10,6 +10,8 @@
         max-width: 600px;
         text-align: center;
         margin: auto;
+        z-index: 10;
+        color: turquoise
     }
 
     @media only screen and (max-width: 600px) {
@@ -17,13 +19,36 @@
         display: none;
       }
     }
+    #buttons{
+      z-index: 200;
+    }
+    #camera{
+      color: turquoise;
+    }
+    #output {
+      position: absolute;
+      margin: auto;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 9;
+      border-color: turquoise;
+      border-style: dashed;
+      border-radius: 20px;
+      border-width: 5px;
+    }
+    #video{
+      /* position: absolute;
+      left: 0;
+      top: 0;
+      z-index: 10;
+      border-style: dotted;
+      border-width: 3px; */
+    }
 
     .dg.ac {
       visibility: hidden
-    }
-
-    #main {
-      z-index: 3
     }
 
     body {
