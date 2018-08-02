@@ -11,7 +11,8 @@
     "kissfft-js": "^0.1.8"
   },
   "scripts": {
-    "build": "echo 'No-op for now.'"
+    "build": "tsc",
+    "lint": "tslint -p . -t verbose"
   },
   "license": "Apache-2.0"
 }
