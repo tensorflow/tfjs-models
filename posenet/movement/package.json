@@ -1,9 +1,8 @@
 {
-  "name": "tfjs-models",
+  "name": "Movement",
   "version": "0.0.1",
-  "description": "",
+  "description": "Exploration of movement, color and coding",
   "main": "index.js",
-  "license": "Apache-2.0",
   "private": true,
   "engines": {
     "node": ">=8.9.0"
@@ -14,10 +13,8 @@
     "stats.js": "^0.17.0"
   },
   "scripts": {
-    "watch": "NODE_ENV=development parcel --no-hmr --open index.html ",
-    "build": "NODE_ENV=production parcel build index.html  --no-minify --public-url ./",
-    "build-camera": "NODE_ENV=production parcel build camera.html  --no-minify --public-url ./",
-    "lint": "eslint ."
+    "watch": "NODE_ENV=development parcel --no-hmr --open public/index.html ",
+    "build": "NODE_ENV=production parcel build public/index.html  --no-minify --public-url ./"
   },
   "devDependencies": {
     "babel-plugin-transform-runtime": "~6.23.0",
