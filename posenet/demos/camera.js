@@ -18,7 +18,7 @@ import * as posenet from '@tensorflow-models/posenet';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 import {drawKeypoints, drawSkeleton} from './demo_util';
-import {trackShoulders, trackFeet, trackFeetTogether, trackHips, videoDimensions} from './trackingMovements';
+import {trackShoulders, trackFeet, trackFeetTogether, trackHips, videoDimensions, trackJump} from './trackingMovements';
 
 const videoWidth = 600;
 const videoHeight = 500;
@@ -274,7 +274,7 @@ function detectPoseInRealTime(video, net) {
         trackShoulders(ctx, keypoints);
         trackFeet(ctx, keypoints);
         trackFeetTogether(ctx, keypoints);
-        videoDimensions();
+        trackJump(ctx, keypoints);
       }
     });
 

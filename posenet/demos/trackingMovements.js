@@ -25,7 +25,6 @@ export function trackShoulders(ctx, keypoints) {
 
 // track hips
 export function trackHips(ctx, keypoints) {
-  const hipDif = keypoints[11].position.y - keypoints[12].position.y;
   const leftHipPastleftFoot = keypoints[11].position.x - keypoints[15].position.x;
   if ((leftHipPastleftFoot) > 5) {
     // console.log(
@@ -46,10 +45,10 @@ export function trackHips(ctx, keypoints) {
 export const trackFeetTogether = (ctx, keypoints) => {
   const feetDist = keypoints[15].position.x - keypoints[16].position.x;
   const width = videoDimensions().width;
-  const startRect = (width/2)-(width/6);
+  const startRect = (width/2)-(width/8);
 
   if (Math.abs(feetDist) < 25) {
-    drawRect(ctx, width/3, 500, 'rgba(51, 225, 91, 0.25)', startRect, 0);
+    drawRect(ctx, width/4, 500, 'rgba(51, 225, 91, 0.25)', startRect, 0);
   }
 };
 
@@ -63,14 +62,35 @@ export function trackFeet(ctx, keypoints) {
 
 
   if (Math.abs(feetDist) >= 25) {
-    console.log('rightFoot, leftFoot:', rightFootX, leftFootX);
 
-    if (leftFootX < (midpoint-width/6)) {
-    drawRect(ctx, midpoint-width/6, 500, 'rgba(225, 161, 51, 0.52)', 0, 0);
+    if (leftFootX < (midpoint-width/8)) {
+    drawRect(ctx, midpoint-width/8, 500, 'rgba(225, 161, 51, 0.52)', 0, 0);
     }
 
-    if (rightFootX > (midpoint+width/6)) {
-      drawRect(ctx, midpoint-25, 500, 'rgba(51, 225, 196, 0.52)', midpoint+width/6, 0);
+    if (rightFootX > (midpoint+width/8)) {
+      drawRect(ctx, midpoint-25, 500, 'rgba(51, 225, 196, 0.52)', midpoint+width/8, 0);
       };
   }
 }
+
+// track jump (both feet above a certain height)
+export const trackJump = (ctx, keypoints) => {
+  const rightFootY = keypoints[15].position.y;
+  const leftFootY = keypoints[16].position.y;
+  const height = videoDimensions().height;
+  const width = videoDimensions().width;
+  const barHeight = height-(height/8);
+
+  console.log('rightFoot, leftFoot:', rightFootY, leftFootY);
+  console.log('barHeight', barHeight);
+
+  if ((rightFootY < barHeight) && (leftFootY < barHeight)) {
+    drawRect(
+      ctx, width, barHeight,
+      'rgba(215, 180, 54, 0.93)',
+      0, barHeight
+    );
+  }
+};
+
+
