@@ -26,7 +26,9 @@ function change() {
 }
 setInterval(change, 1000);
 
-// const color = 'turquoise';
+console.log(color)
+document.getElementById('output').style.borderColor = color;
+
 const lineWidth = 2;
 
 function toTuple({ y, x }) {
@@ -36,12 +38,7 @@ function toTuple({ y, x }) {
 export function drawPoint(ctx, y, x, r, color) {
   ctx.beginPath();
   ctx.arc(x, y, r, 0, 2 * Math.PI);
-  for (let i = 0; i < 6; i++) {
-    for (let j = 0; j < 6; j++) {
-      ctx.fillStyle = 'rgb(' + Math.floor(255 - 42.5 * i) + ', ' +
-        Math.floor(255 - 42.5 * j) + ', 0)';
-    }
-  }
+  ctx.fillStyle = color;
   ctx.fill();
 }
 
@@ -55,6 +52,7 @@ export function drawSegment([ay, ax], [by, bx], color, scale, ctx) {
   ctx.lineWidth = lineWidth;
   ctx.strokeStyle = color;
   ctx.stroke();
+  ctx.fillRect(100, 10, 50, 50)
 }
 
 /**
@@ -160,12 +158,7 @@ function drawPoints(ctx, points, radius, color) {
     if (pointX !== 0 && pointY !== 0) {
       ctx.beginPath();
       ctx.arc(pointX, pointY, radius, 0, 2 * Math.PI);
-      for (let i = 0; i < 6; i++) {
-        for (let j = 0; j < 6; j++) {
-          ctx.fillStyle = 'rgb(' + Math.floor(255 - 42.5 * i) + ', ' +
-            Math.floor(255 - 42.5 * j) + ', 0)';
-        }
-      }
+      ctx.fillStyle = color;
       ctx.fill();
     }
   }
