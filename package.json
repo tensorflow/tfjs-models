@@ -17,5 +17,8 @@
     "typescript": "~2.9.2",
     "yalc": "~1.0.0-pre.21"
   },
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@tensorflow-models/posenet": "^0.2.2"
+  }
 }
