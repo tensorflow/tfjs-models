@@ -16,7 +16,11 @@
 
     <div id='main' style='display:none'>
       <div id='buttons'>
-        <h2 id='camera'>Camera On</h2>
+        <h2 class='button-names'> Camera</h2>
+          <label class="switch">
+              <input id='camera-btn' type="checkbox">
+              <span class="slider round"></span>
+            </label>
     </div>
         <video id="video" playsinline style=" -moz-transform: scaleX(-1);
         -o-transform: scaleX(-1);
@@ -29,9 +33,9 @@
     </div>
     <div class="footer">
         <div class="footer-text">
-            <p>
-                An experiment with movement and coding.
-            </p>
+            <h3>
+                An experiment with movement, color and coding.
+            </h3>
         </div>
     </div>
     <script src="camera.js"></script>

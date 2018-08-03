@@ -22,7 +22,10 @@
     #buttons{
       z-index: 200;
     }
-    #camera{
+    .button-names{
+      color: turquoise;
+    }
+    #camera-btn{
       color: turquoise;
     }
     #output {

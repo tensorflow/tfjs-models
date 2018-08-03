@@ -99,6 +99,12 @@ const guiState = {
   net: null,
 };
 
+
+document.getElementById('camera-btn').addEventListener('click', () => {
+  if (guiState.output.showVideo) guiState.output.showVideo = false;
+  else guiState.output.showVideo = true;
+});
+
 /**
  * Sets up dat.gui controller on the top-right of the window
  */
