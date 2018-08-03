@@ -17,7 +17,16 @@
 import * as tf from '@tensorflow/tfjs';
 import * as posenet from '@tensorflow-models/posenet';
 
-const color = 'turquoise';
+let color;
+let i = 0;
+function change() {
+  let colorArr = ['red', 'orange', 'yellow', 'green', 'blue', 'purple'];
+  color = colorArr[i];
+  i = (i + 1) % color.length;
+}
+setInterval(change, 1000);
+
+// const color = 'turquoise';
 const lineWidth = 2;
 
 function toTuple({ y, x }) {
@@ -27,7 +36,12 @@ function toTuple({ y, x }) {
 export function drawPoint(ctx, y, x, r, color) {
   ctx.beginPath();
   ctx.arc(x, y, r, 0, 2 * Math.PI);
-  ctx.fillStyle = color;
+  for (let i = 0; i < 6; i++) {
+    for (let j = 0; j < 6; j++) {
+      ctx.fillStyle = 'rgb(' + Math.floor(255 - 42.5 * i) + ', ' +
+        Math.floor(255 - 42.5 * j) + ', 0)';
+    }
+  }
   ctx.fill();
 }
 
@@ -146,7 +160,12 @@ function drawPoints(ctx, points, radius, color) {
     if (pointX !== 0 && pointY !== 0) {
       ctx.beginPath();
       ctx.arc(pointX, pointY, radius, 0, 2 * Math.PI);
-      ctx.fillStyle = color;
+      for (let i = 0; i < 6; i++) {
+        for (let j = 0; j < 6; j++) {
+          ctx.fillStyle = 'rgb(' + Math.floor(255 - 42.5 * i) + ', ' +
+            Math.floor(255 - 42.5 * j) + ', 0)';
+        }
+      }
       ctx.fill();
     }
   }
