@@ -78,7 +78,6 @@ const classifier = knnClassifier.create();
 const mobilenet = await mobilenetModule.load();
 
 // Add MobileNet activations to the model repeatedly for all classes.
-// const img = tf.fromPixels(...);
 const img0 = tf.fromPixels(document.getElementById('class0'));
 const logits0 = mobilenet.infer(img0, 'conv_preds');
 classifier.addExample(logits0, 0);
