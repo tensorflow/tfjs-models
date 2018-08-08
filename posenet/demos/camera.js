@@ -17,7 +17,7 @@
 import * as posenet from '@tensorflow-models/posenet';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
-import {drawKeypoints, drawSkeleton} from './demo_util';
+import {drawKeypoints, drawSkeleton, drawBoundingBox} from './demo_util';
 
 const videoWidth = 600;
 const videoHeight = 500;
@@ -95,6 +95,7 @@ const guiState = {
     showVideo: true,
     showSkeleton: true,
     showPoints: true,
+    showBoundingBox: false,
   },
   net: null,
 };
@@ -160,6 +161,7 @@ function setupGui(cameras, net) {
   output.add(guiState.output, 'showVideo');
   output.add(guiState.output, 'showSkeleton');
   output.add(guiState.output, 'showPoints');
+  output.add(guiState.output, 'showBoundingBox');
   output.open();
 
 
@@ -266,6 +268,9 @@ function detectPoseInRealTime(video, net) {
         }
         if (guiState.output.showSkeleton) {
           drawSkeleton(keypoints, minPartConfidence, ctx);
+        }
+        if (guiState.output.showBoundingBox) {
+          drawBoundingBox(keypoints, ctx);
         }
       }
     });
