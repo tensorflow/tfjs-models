@@ -62,7 +62,7 @@ export interface SpeechCommandRecognizer {
   recognize(input: tf.Tensor|Float32Array): SpeechCommandRecognizerResult;
 
   // Getter for word labels.
-  readonly wordLabels: string[];
+  wordLabels(): string[];
 
   // Get the required number of frames.
   readonly params: RecognizerConfigParams;

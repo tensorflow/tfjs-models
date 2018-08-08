@@ -17,16 +17,18 @@
 
 import * as tf from '@tensorflow/tfjs';
 
+import {loadMetadataJson} from './browser_fft_utils';
+// tslint:disable-next-line:max-line-length
 import {RecognizerCallback, RecognizerConfigParams, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig} from './types';
-
-
 
 export class SpeechCommandBrowserFftRecognizer implements
     SpeechCommandRecognizer {
+  // tslint:disable:max-line-length
   readonly DEFAULT_MODEL_JSON_URL =
       'https://storage.googleapis.com/tfjs-speech-command-model-17w/model.json';
   readonly DEFAULT_METADATA_JSON_URL =
       'https://storage.googleapis.com/tfjs-speech-command-model-17w/metadata.json';
+  // tslint:enable:max-line-length
 
   private readonly SAMPLE_RATE_HZ = 44100;
   private readonly FFT_SIZE = 1024;
@@ -59,15 +61,32 @@ export class SpeechCommandBrowserFftRecognizer implements
     if (this.model != null) {
       return;
     }
-    this.model = await tf.loadModel(this.DEFAULT_MODEL_JSON_URL);
+
+    const metadataJSON = await loadMetadataJson(this.DEFAULT_METADATA_JSON_URL);
+
+    const model = await tf.loadModel(this.DEFAULT_MODEL_JSON_URL);
+    // Check the consistency between the word labels and the model's output
+    // shape.
+    const outputShape = model.outputShape as tf.Shape;
+    if (outputShape.length !== 2) {
+      throw new Error(
+          `Expected loaded model to have an output shape of rank 2,` +
+          `but received shape ${JSON.stringify(outputShape)}`);
+    }
+    if (outputShape[1] !== metadataJSON.words.length) {
+      throw new Error(
+          `Mismatch between the last dimension of model's output shape ` +
+          `(${outputShape[1]}) and number of words ` +
+          `(${metadataJSON.words.length}).`);
+    }
+
+    this.words = metadataJSON.words;
+    this.model = model;
+
     const frameDurationMillis =
         this.params.columnBufferLength / this.params.sampleRateHz * 1e3;
     const numFrames = this.model.inputs[0].shape[1];
     this.params.spectrogramDurationMillis = numFrames * frameDurationMillis;
-
-    const metadataJSON =
-        await (await fetch(this.DEFAULT_METADATA_JSON_URL)).json();
-    this.words = metadataJSON.words;
   }
 
   async stopStreaming(): Promise<void> {
@@ -83,11 +102,11 @@ export class SpeechCommandBrowserFftRecognizer implements
     return this.streaming;
   }
 
-  recognize(input: tf.Tensor|Float32Array): SpeechCommandRecognizerResult {
-    return null;  // TODO(cais).
+  wordLabels(): string[] {
+    return this.words;
   }
 
-  get wordLabels(): string[] {
-    return this.words;
+  recognize(input: tf.Tensor|Float32Array): SpeechCommandRecognizerResult {
+    return null;  // TODO(cais).
   }
 }
