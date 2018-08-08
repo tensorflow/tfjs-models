@@ -29,3 +29,12 @@ export function normalize(x: tf.Tensor): tf.Tensor {
     return tf.div(tf.add(x, tf.neg(mean)), std);
   });
 }
+
+export function getAudioContextConstructor(): AudioContext {
+  // tslint:disable-next-line:no-any
+  return (window as any).AudioContext || (window as any).webkitAudioContext;
+}
+
+export async function getAudioMediaStream(): Promise<MediaStream> {
+  return await navigator.mediaDevices.getUserMedia({audio: true, video: false});
+}

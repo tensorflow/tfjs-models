@@ -17,7 +17,9 @@
 
 import * as tf from '@tensorflow/tfjs';
 import {describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
-import {getFrequencyDataFromRotatingBuffer, getInputTensorFromFrequencyData} from './browser_fft_extractor';
+
+import {BrowserFftFeatureExtractor, getFrequencyDataFromRotatingBuffer, getInputTensorFromFrequencyData} from './browser_fft_extractor';
+import * as BrowserFftUtils from './browser_fft_utils';
 
 const testEnvs = tf.test_util.NODE_ENVS;
 
@@ -70,5 +72,100 @@ describeWithFlags('getInputTensorFromFrequencyData', testEnvs, () => {
               1.4638501
             ],
             [1, 6, 2, 1]));
+  });
+});
+
+describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
+  class FakeAudioContext {
+    readonly sampleRate = 44100;
+
+    static createInstance() {
+      return new FakeAudioContext();
+    }
+
+    createMediaStreamSource(): any {
+      return new FakeMediaStreamAudioSourceNode();
+    }
+
+    createAnalyser(): any {
+      return new FakeAnalyser();  // TODO(cais):
+    }
+
+    close(): void {}
+  }
+
+  class FakeAudioMediaStream {
+    constructor() {}
+  }
+
+  class FakeMediaStreamAudioSourceNode {
+    constructor() {}
+
+    connect(node: any): void {}
+  }
+
+  class FakeAnalyser {
+    fftSize: number;
+    smoothingTimeConstant: number;
+    constructor() {}
+
+    getFloatFrequencyData(data: Float32Array) {
+      data.set(new Float32Array(this.fftSize / 2));
+    }
+
+    disconnect(): void {}
+  }
+
+  function setUpFakes() {
+    spyOn(BrowserFftUtils, 'getAudioContextConstructor')
+        .and.callFake(() => FakeAudioContext.createInstance);
+    spyOn(BrowserFftUtils, 'getAudioMediaStream')
+        .and.callFake(() => new FakeAudioMediaStream());
+  }
+
+  it('constructor', () => {
+    setUpFakes();
+
+    const extractor = new BrowserFftFeatureExtractor({
+      spectrogramCallback: (x: tf.Tensor) => false,
+      numFramesPerSpectrogram: 43,
+      columnTruncateLength: 225,
+    });
+
+    expect(extractor.fftSize).toEqual(1024);
+    expect(extractor.numFramesPerSpectrogram).toEqual(43);
+    expect(extractor.columnTruncateLength).toEqual(225);
+    expect(extractor.overlapFactor).toBeCloseTo(0.5);
+  });
+
+  // TODO(cais): Cover error conditions.
+
+  it('start and stop', async done => {
+    setUpFakes();
+
+    const spectrogramTensors: tf.Tensor[] = [];
+    const callbackTimestamps: number[] = [];
+    const extractor = new BrowserFftFeatureExtractor({
+      spectrogramCallback: (x: tf.Tensor) => {
+        callbackTimestamps.push(tf.util.now());
+        console.log('callbackTimestamps:', callbackTimestamps);  // DEBUG
+        spectrogramTensors.push(x);
+        return false;
+      },
+      numFramesPerSpectrogram: 43,
+      columnTruncateLength: 225,
+      columnBufferLength: 1024,
+      columnHopLength: 1024  // Full hop, no overlap.
+    });
+
+    const spectrogramDurationMillis = 1024 / 44100 * 43 * 1e3;
+    await extractor.start();
+
+    setTimeout(async () => {
+      console.log('Calling done');                             // DEBUG
+      console.log('callbackTimestamps:', callbackTimestamps);  // DEBUG
+      await extractor.stop();
+      done();
+    }, spectrogramDurationMillis * 2.5);
   });
 });

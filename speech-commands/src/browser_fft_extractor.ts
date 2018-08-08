@@ -17,7 +17,7 @@
 
 import * as tf from '@tensorflow/tfjs';
 
-import {normalize} from './browser_fft_utils';
+import {getAudioContextConstructor, getAudioMediaStream, normalize} from './browser_fft_utils';
 import {FeatureExtractor, RecognizerConfigParams} from './types';
 
 export type SpectrogramCallback = (x: tf.Tensor) => boolean;
@@ -54,6 +54,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
   readonly sampleRateHz: number;
   readonly fftSize: number;
   readonly columnTruncateLength: number;
+  readonly overlapFactor: number;
 
   private stream: MediaStream;
   private audioContextConstructor: any;
@@ -92,15 +93,28 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     this.sampleRateHz = config.sampleRateHz || 44100;
     this.fftSize = config.fftSize || 1024;
     this.columnTruncateLength = config.columnTruncateLength || this.fftSize;
+    const columnBufferLength = config.columnBufferLength || this.fftSize;
+    const columnHopLength = config.columnHopLength || (this.fftSize / 2);
+    this.overlapFactor = columnHopLength / columnBufferLength;
+    console.log('this.overlapFactor:', this.overlapFactor);  // DEBUG
 
-    this.audioContextConstructor =
-        (window as any).AudioContext || (window as any).webkitAudioContext;
+    if (this.columnTruncateLength > this.fftSize) {
+      throw new Error(
+          `columnTruncateLength ${this.columnTruncateLength} exceeds ` +
+          `fftSize (${this.fftSize}).`);
+    }
+
+    this.audioContextConstructor = getAudioContextConstructor();
   }
 
   async start(samples?: Float32Array): Promise<Float32Array[]|void> {
-    this.stream =
-        await navigator.mediaDevices.getUserMedia({audio: true, video: false});
+    this.stream = await getAudioMediaStream();
+    console.log('this.stream:', this.stream);  // DEBUG
+    console.log(
+        'this.audioContextConstructor:',
+        this.audioContextConstructor);  // DEBUG
     this.audioContext = this.audioContextConstructor() as AudioContext;
+    console.log('this.audioContext', this.audioContext);  // DEBUG
     if (this.audioContext.sampleRate !== this.sampleRateHz) {
       console.warn(
           `Mismatch in sampling rate: ` +
@@ -108,7 +122,9 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
           `Actual: ${this.audioContext.sampleRate}`);
     }
     const streamSource = this.audioContext.createMediaStreamSource(this.stream);
+    console.log('streamSource = ', streamSource);  // DEBUG
     this.analyser = this.audioContext.createAnalyser();
+    console.log('this.analyser:', this.analyser);  // DEBUG
     this.analyser.fftSize = this.fftSize * 2;
     this.analyser.smoothingTimeConstant = 0.0;
     streamSource.connect(this.analyser);
@@ -121,11 +137,13 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
 
     this.frameCount = 0;
 
-    const overlapFactor = 0.5;  // TODO(cais): Get from config.
-    this.tracker = new Tracker(
-        Math.round(this.numFramesPerSpectrogram * (1 - overlapFactor)), 0);
-    this.frameIntervalTask =
-        setInterval(this.onAudioFrame, this.fftSize / this.sampleRateHz * 1e3);
+    console.log(
+        'Calling setInterval with period:',
+        this.fftSize / this.sampleRateHz * 1e3);  // DEBUG
+    this.tracker =
+        new Tracker(Math.round(this.numFramesPerSpectrogram * 0.5), 0);
+    this.frameIntervalTask = setInterval(
+        this.onAudioFrame.bind(this), this.fftSize / this.sampleRateHz * 1e3);
   }
 
   private onAudioFrame() {
@@ -153,6 +171,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
   }
 
   async stop(): Promise<void> {
+    console.log('In stop');  // DEBUG
     if (this.frameIntervalTask == null) {
       throw new Error(
           'Cannot stop because there is no ongoing streaming activity.');
