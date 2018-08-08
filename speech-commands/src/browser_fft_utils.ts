@@ -15,7 +15,17 @@
  * =============================================================================
  */
 
+import * as tf from '@tensorflow/tfjs';
+
 // tslint:disable-next-line:no-any
 export async function loadMetadataJson(url: string): Promise<any> {
   return await (await fetch(url)).json();
+}
+
+export function normalize(x: tf.Tensor): tf.Tensor {
+  return tf.tidy(() => {
+    const mean = tf.mean(x);
+    const std = tf.sqrt(tf.mean(tf.square(tf.add(x, tf.neg(mean)))));
+    return tf.div(tf.add(x, tf.neg(mean)), std);
+  });
 }

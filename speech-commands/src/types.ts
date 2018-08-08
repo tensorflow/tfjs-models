@@ -127,10 +127,10 @@ export interface FeatureExtractor {
   setConfig(params: RecognizerConfigParams): void;
 
   // start the feature extraction from the audio samples.
-  start(samples?: Float32Array): Promise<Float32Array[]>|void;
+  start(samples?: Float32Array): Promise<Float32Array[]|void>;
 
   // stop the feature extraction.
-  stop(): void;
+  stop(): Promise<void>;
 
   // return the extractor features collected since last call.
   getFeatures(): Float32Array[];
