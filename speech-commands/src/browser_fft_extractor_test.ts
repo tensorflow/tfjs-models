@@ -110,7 +110,11 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
     constructor() {}
 
     getFloatFrequencyData(data: Float32Array) {
-      data.set(new Float32Array(this.fftSize / 2));
+      const xs: number[] = [];
+      for (let i = 0; i < this.fftSize / 2; ++i) {
+        xs.push(i);
+      }
+      data.set(new Float32Array(xs));
     }
 
     disconnect(): void {}
@@ -140,7 +144,7 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
 
   // TODO(cais): Cover error conditions.
 
-  it('start and stop', async done => {
+  it('start and stop: overlapFactor = 0', async done => {
     setUpFakes();
 
     const spectrogramTensors: tf.Tensor[] = [];
@@ -148,7 +152,6 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
     const extractor = new BrowserFftFeatureExtractor({
       spectrogramCallback: (x: tf.Tensor) => {
         callbackTimestamps.push(tf.util.now());
-        console.log('callbackTimestamps:', callbackTimestamps);  // DEBUG
         spectrogramTensors.push(x);
         return false;
       },
@@ -162,10 +165,82 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
     await extractor.start();
 
     setTimeout(async () => {
-      console.log('Calling done');                             // DEBUG
-      console.log('callbackTimestamps:', callbackTimestamps);  // DEBUG
       await extractor.stop();
+
+      expect(callbackTimestamps.length).toEqual(3);
+      expect(callbackTimestamps[1] - callbackTimestamps[0])
+          .toBeGreaterThan(spectrogramDurationMillis);
+      expect(callbackTimestamps[1] - callbackTimestamps[0])
+          .toBeLessThan(spectrogramDurationMillis + 100);
+      // Allow 100-ms variability.
+      expect(callbackTimestamps.length).toEqual(3);
+      expect(callbackTimestamps[2] - callbackTimestamps[1])
+          .toBeGreaterThan(spectrogramDurationMillis);
+      expect(callbackTimestamps[2] - callbackTimestamps[1])
+          .toBeLessThan(spectrogramDurationMillis + 100);
+      // Allow 100-ms variability.
+
+      expect(spectrogramTensors.length).toEqual(3);
+      for (let i = 0; i < 3; ++i) {
+        expect(spectrogramTensors[i].shape).toEqual([1, 43, 225, 1]);
+        // Check the spectrogram is normalized.
+        tf.test_util.expectArraysClose(
+            spectrogramTensors[i],
+            BrowserFftUtils.normalize(spectrogramTensors[i]));
+      }
       done();
-    }, spectrogramDurationMillis * 2.5);
+    }, spectrogramDurationMillis * 3.5);
+  });
+
+  it('start and stop: overlapFactor = 0.5', async done => {
+    setUpFakes();
+
+    const spectrogramTensors: tf.Tensor[] = [];
+    const callbackTimestamps: number[] = [];
+    const extractor = new BrowserFftFeatureExtractor({
+      spectrogramCallback: (x: tf.Tensor) => {
+        callbackTimestamps.push(tf.util.now());
+        spectrogramTensors.push(x);
+        return false;
+      },
+      numFramesPerSpectrogram: 43,
+      columnTruncateLength: 225,
+      columnBufferLength: 1024,
+      columnHopLength: 512  // 50% overlapFactor.
+    });
+
+    const spectrogramDurationMillis = 1024 / 44100 * 43 * 1e3;
+    await extractor.start();
+
+    setTimeout(async () => {
+      await extractor.stop();
+
+      expect(callbackTimestamps.length).toEqual(6);
+      expect(callbackTimestamps[1] - callbackTimestamps[0])
+          .toBeGreaterThan(spectrogramDurationMillis * 0.5);
+      expect(callbackTimestamps[1] - callbackTimestamps[0])
+          .toBeLessThan(spectrogramDurationMillis * 0.5 + 100);
+      // Allow 100-ms variability.
+      expect(callbackTimestamps.length).toEqual(6);
+      expect(callbackTimestamps[2] - callbackTimestamps[1])
+          .toBeGreaterThan(spectrogramDurationMillis * 0.5);
+      expect(callbackTimestamps[2] - callbackTimestamps[1])
+          .toBeLessThan(spectrogramDurationMillis * 0.5 + 100);
+      // Allow 100-ms variability.
+
+      expect(spectrogramTensors.length).toEqual(6);
+      for (let i = 0; i < 6; ++i) {
+        expect(spectrogramTensors[i].shape).toEqual([1, 43, 225, 1]);
+        // Check the spectrogram is normalized.
+        tf.test_util.expectArraysClose(
+            spectrogramTensors[i],
+            BrowserFftUtils.normalize(spectrogramTensors[i]));
+      }
+      done();
+    }, spectrogramDurationMillis * 3.5);
+  });
+
+  it('stopping unstarted extractor leads to Error', () => {
+    setUpFakes();
   });
 });

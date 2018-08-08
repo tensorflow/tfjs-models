@@ -96,7 +96,12 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     const columnBufferLength = config.columnBufferLength || this.fftSize;
     const columnHopLength = config.columnHopLength || (this.fftSize / 2);
     this.overlapFactor = columnHopLength / columnBufferLength;
-    console.log('this.overlapFactor:', this.overlapFactor);  // DEBUG
+
+    if (!(this.overlapFactor > 0)) {
+      throw new Error(
+          `Invalid overlapFactor: ${this.overlapFactor}. ` +
+          `Check your columnBufferLength and columnHopLength`);
+    }
 
     if (this.columnTruncateLength > this.fftSize) {
       throw new Error(
@@ -109,12 +114,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
 
   async start(samples?: Float32Array): Promise<Float32Array[]|void> {
     this.stream = await getAudioMediaStream();
-    console.log('this.stream:', this.stream);  // DEBUG
-    console.log(
-        'this.audioContextConstructor:',
-        this.audioContextConstructor);  // DEBUG
     this.audioContext = this.audioContextConstructor() as AudioContext;
-    console.log('this.audioContext', this.audioContext);  // DEBUG
     if (this.audioContext.sampleRate !== this.sampleRateHz) {
       console.warn(
           `Mismatch in sampling rate: ` +
@@ -122,9 +122,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
           `Actual: ${this.audioContext.sampleRate}`);
     }
     const streamSource = this.audioContext.createMediaStreamSource(this.stream);
-    console.log('streamSource = ', streamSource);  // DEBUG
     this.analyser = this.audioContext.createAnalyser();
-    console.log('this.analyser:', this.analyser);  // DEBUG
     this.analyser.fftSize = this.fftSize * 2;
     this.analyser.smoothingTimeConstant = 0.0;
     streamSource.connect(this.analyser);
@@ -137,11 +135,8 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
 
     this.frameCount = 0;
 
-    console.log(
-        'Calling setInterval with period:',
-        this.fftSize / this.sampleRateHz * 1e3);  // DEBUG
-    this.tracker =
-        new Tracker(Math.round(this.numFramesPerSpectrogram * 0.5), 0);
+    this.tracker = new Tracker(
+        Math.round(this.numFramesPerSpectrogram * this.overlapFactor), 0);
     this.frameIntervalTask = setInterval(
         this.onAudioFrame.bind(this), this.fftSize / this.sampleRateHz * 1e3);
   }
@@ -158,8 +153,8 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     this.rotatingBuffer.set(
         freqDataSlice, bufferPos * this.columnTruncateLength);
 
-    this.tracker.tick(true);
-    if (this.tracker.shouldFire()) {
+    const shouldFire = this.tracker.tick();
+    if (shouldFire) {
       const freqData = getFrequencyDataFromRotatingBuffer(
           this.rotatingBuffer, this.numFramesPerSpectrogram,
           this.columnTruncateLength,
@@ -168,6 +163,8 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
           freqData, this.numFramesPerSpectrogram, this.columnTruncateLength);
       this.spectrogramCallback(inputTensor);
     }
+
+    this.frameCount++;
   }
 
   async stop(): Promise<void> {
@@ -228,47 +225,49 @@ export function getInputTensorFromFrequencyData(
 }
 
 export class Tracker {
-  readonly waitingPeriod: number;
+  readonly period: number;
   readonly refractoryPeriod: number;
 
   private counter: number;
   private state: number;
-  private lastTriggerCounter: number;
+  //   private lastFireCounter: number;
 
-  constructor(waitingPeriod: number, refactoryPeriod: number) {
-    this.waitingPeriod = waitingPeriod;
+  constructor(period: number, refactoryPeriod: number) {
+    this.period = period;
     this.refractoryPeriod = refactoryPeriod;
 
     this.counter = 0;
     this.state = 0;
-    this.lastTriggerCounter = -1;
   }
 
   // TODO(cais): What is trigger for anyway?
-  tick(trigger: boolean) {
-    if (this.state === 0) {
-      if (trigger) {
-        this.lastTriggerCounter = this.counter;
-        this.state = 1;
-      }
-    } else if (this.state === 1) {
-      if (this.counter - this.lastTriggerCounter === this.waitingPeriod) {
-        this.state = 2;
-      }
-    } else if (this.state === 2) {
-      if (this.refractoryPeriod === 0) {
-        this.state = 0;
-      } else {
-        this.state = 3;
-      }
-    } else if (this.state === 3) {
-      // In refractory period.
-      if (this.counter - this.lastTriggerCounter >=
-          this.waitingPeriod + 1 + this.refractoryPeriod) {
-        this.state = 0;
-      }
-    }
+  tick(): boolean {
     this.counter++;
+    const shouldFire = this.counter % this.period === 0;
+    // if (shouldFire) {
+    //   this.lastFireCounter = this.counter;
+    // }
+    // if (this.state === 0) {
+    //   this.lastTriggerCounter = this.counter;
+    //   this.state = 1;
+    // } else if (this.state === 1) {
+    //   if (this.counter - this.lastTriggerCounter === this.period) {
+    //     if (this.refractoryPeriod === 0) {
+    //       this.state = 0;
+    //     } else {
+    //       this.state = 2;
+    //     }
+    //     shouldFire = true;
+    //   }
+    // } else if (this.state === 2) {
+    //   // In refractory period.
+    //   if (this.counter - this.lastTriggerCounter >=
+    //       this.period + 1 + this.refractoryPeriod) {
+    //     this.state = 0;
+    //   }
+    // }
+    // this.counter++;
+    return shouldFire;
   }
 
   shouldFire() {
