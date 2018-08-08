@@ -26,7 +26,7 @@ export type FFT_TYPE = 'BROWSER_FFT'|'SOFT_FFT';
 export type RecognizerCallback = (result: SpeechCommandRecognizerResult) =>
     Promise<void>;
 
-export interface SpeechCommandRecognizer<FFT_TYPE> {
+export interface SpeechCommandRecognizer {
   // Start recognition in a streaming fashion.
   //
   // Args:
@@ -61,8 +61,8 @@ export interface SpeechCommandRecognizer<FFT_TYPE> {
   // Throws: Error on incorrect shape or length.
   recognize(input: tf.Tensor|Float32Array): SpeechCommandRecognizerResult;
 
-  // Getter word labels.
-  readonly wordLabels: string;
+  // Getter for word labels.
+  readonly wordLabels: string[];
 
   // Get the required number of frames.
   readonly params: RecognizerConfigParams;
@@ -109,7 +109,7 @@ export interface RecognizerConfigParams {
   columnHopLength?: number;
 
   // total duration per spectragram.
-  SpectrogramDurationMillis?: number;
+  spectrogramDurationMillis?: number;
 
   // FFT encoding size per spectrogram column.
   fftSize?: number;
