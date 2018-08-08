@@ -102,10 +102,21 @@ export class SpeechCommandBrowserFftRecognizer implements
     this.model.inputs[0].shape.slice(1).forEach(
         dimSize => this.elementsPerExample *= dimSize);
 
+    this.warmUpModel();
+
     const frameDurationMillis =
         this.parameters.columnBufferLength / this.parameters.sampleRateHz * 1e3;
     const numFrames = this.model.inputs[0].shape[1];
     this.parameters.spectrogramDurationMillis = numFrames * frameDurationMillis;
+  }
+
+  private warmUpModel() {
+    tf.tidy(() => {
+      const x = tf.zeros([1].concat(this.nonBatchInputShape));
+      for (let i = 0; i < 3; ++i) {
+        this.model.predict(x);
+      }
+    });
   }
 
   async stopStreaming(): Promise<void> {
