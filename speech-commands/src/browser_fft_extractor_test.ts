@@ -240,7 +240,16 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
     }, spectrogramDurationMillis * 3.5);
   });
 
-  it('stopping unstarted extractor leads to Error', () => {
+  it('stopping unstarted extractor leads to Error', async () => {
     setUpFakes();
+
+    const extractor = new BrowserFftFeatureExtractor({
+      spectrogramCallback: (x: tf.Tensor) => false,
+      numFramesPerSpectrogram: 43,
+      columnTruncateLength: 225,
+      columnBufferLength: 1024,
+      columnHopLength: 1024,
+    });
+    await extractor.stop();
   });
 });
