@@ -45,10 +45,10 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
   it('Constructor', () => {
     const recognizer = new SpeechCommandBrowserFftRecognizer();
     expect(recognizer.isStreaming()).toEqual(false);
-    expect(recognizer.params.sampleRateHz).toEqual(44100);
-    expect(recognizer.params.fftSize).toEqual(1024);
-    expect(recognizer.params.columnBufferLength).toEqual(1024);
-    expect(recognizer.params.columnHopLength).toEqual(1024);
+    expect(recognizer.params().sampleRateHz).toEqual(44100);
+    expect(recognizer.params().fftSize).toEqual(1024);
+    expect(recognizer.params().columnBufferLength).toEqual(1024);
+    expect(recognizer.params().columnHopLength).toEqual(1024);
   });
 
   it('ensureModelLoaded succeeds', async () => {
@@ -57,8 +57,9 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     const recognizer = new SpeechCommandBrowserFftRecognizer();
     await recognizer.ensureModelLoaded();
     expect(recognizer.wordLabels()).toEqual(fakeWords);
-    expect(recognizer.params.spectrogramDurationMillis)
+    expect(recognizer.params().spectrogramDurationMillis)
         .toBeCloseTo(42 * 1024 / 44100 * 1e3);
+    expect(recognizer.model instanceof tf.Model).toEqual(true);
   });
 
   it('ensureModelLoaded fails: words - model output mismatch', async () => {
@@ -76,5 +77,66 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     }
     expect(caughtError.message)
         .toMatch(/Mismatch between .* dimension.*12.*17/);
+  });
+
+  it('Offline recognize succeeds with single tf.Tensor', async () => {
+    setUpFakes();
+
+    const spectrogram = tf.zeros([1, 42, 232, 1]);
+    const recognizer = new SpeechCommandBrowserFftRecognizer();
+    const output = await recognizer.recognize(spectrogram);
+    expect(output.scores instanceof Float32Array).toEqual(true);
+    expect(output.scores.length).toEqual(17);
+  });
+
+  it('Offline recognize succeeds with batched tf.Tensor', async () => {
+    setUpFakes();
+
+    // TODO(cais):
+    const spectrogram = tf.zeros([3, 42, 232, 1]);
+    const recognizer = new SpeechCommandBrowserFftRecognizer();
+    const output = await recognizer.recognize(spectrogram);
+    expect(Array.isArray(output.scores)).toEqual(true);
+    expect(output.scores.length).toEqual(3);
+    for (let i = 0; i < 3; ++i) {
+      expect((output.scores[i] as Float32Array).length).toEqual(17);
+    }
+  });
+
+  it('Offline recognize fails due to incorrect shape', async () => {
+    setUpFakes();
+
+    const spectrogram = tf.zeros([1, 42, 232, 2]);
+    const recognizer = new SpeechCommandBrowserFftRecognizer();
+    let caughtError: Error;
+    try {
+      await recognizer.recognize(spectrogram);
+    } catch (err) {
+      caughtError = err;
+    }
+    expect(caughtError.message).toMatch(/Expected .* shape .*, but got shape/);
+  });
+
+  it('Offline recognize succeeds with single Float32Array', async () => {
+    setUpFakes();
+
+    const spectrogram = new Float32Array(42 * 232 * 1);
+    const recognizer = new SpeechCommandBrowserFftRecognizer();
+    const output = await recognizer.recognize(spectrogram);
+    expect(output.scores instanceof Float32Array).toEqual(true);
+    expect(output.scores.length).toEqual(17);
+  });
+
+  it('Offline recognize succeeds with batched Float32Array', async () => {
+    setUpFakes();
+
+    const spectrogram = new Float32Array(2 * 42 * 232 * 1);
+    const recognizer = new SpeechCommandBrowserFftRecognizer();
+    const output = await recognizer.recognize(spectrogram);
+    expect(Array.isArray(output.scores)).toEqual(true);
+    expect(output.scores.length).toEqual(2);
+    for (let i = 0; i < 2; ++i) {
+      expect((output.scores[i] as Float32Array).length).toEqual(17);
+    }
   });
 });

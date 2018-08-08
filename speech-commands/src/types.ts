@@ -57,15 +57,16 @@ export interface SpeechCommandRecognizer {
   //     tf.Model. If a Float32Array, the length must be
   //     equal to (the model’s required FFT length) *
   //     (the model’s required frame count).
-  // Returns: recognition result: the probability scores.
+  // Returns: A Promise of recognition result: the probability scores.
   // Throws: Error on incorrect shape or length.
-  recognize(input: tf.Tensor|Float32Array): SpeechCommandRecognizerResult;
+  recognize(input: tf.Tensor|
+            Float32Array): Promise<SpeechCommandRecognizerResult>;
 
   // Getter for word labels.
   wordLabels(): string[];
 
   // Get the required number of frames.
-  readonly params: RecognizerConfigParams;
+  params(): RecognizerConfigParams;
 }
 
 export interface SpectrogramData {
@@ -78,7 +79,7 @@ export interface SpectrogramData {
 
 export interface SpeechCommandRecognizerResult {
   // Probability scores for the words.
-  scores: Float32Array;
+  scores: Float32Array|Float32Array[];
 
   // Optional spectrogram data.
   spectrogram?: SpectrogramData;

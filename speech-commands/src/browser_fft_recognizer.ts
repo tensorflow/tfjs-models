@@ -33,14 +33,17 @@ export class SpeechCommandBrowserFftRecognizer implements
   private readonly SAMPLE_RATE_HZ = 44100;
   private readonly FFT_SIZE = 1024;
 
-  readonly params: RecognizerConfigParams;
+  model: tf.Model;
+  readonly parameters: RecognizerConfigParams;
   protected words: string[];
-  protected model: tf.Model;
   private streaming: boolean;
+
+  private nonBatchInputShape: [number, number, number];
+  private elementsPerExample: number;
 
   constructor() {
     this.streaming = false;
-    this.params = {
+    this.parameters = {
       sampleRateHz: this.SAMPLE_RATE_HZ,
       fftSize: this.FFT_SIZE,
       columnBufferLength: this.FFT_SIZE,
@@ -65,6 +68,17 @@ export class SpeechCommandBrowserFftRecognizer implements
     const metadataJSON = await loadMetadataJson(this.DEFAULT_METADATA_JSON_URL);
 
     const model = await tf.loadModel(this.DEFAULT_MODEL_JSON_URL);
+    // Check the validity of the model's input shape.
+    if (model.inputs.length !== 1) {
+      throw new Error(
+          `Expected model to have 1 input, but got a model with ` +
+          `${model.inputs.length} inputs`);
+    }
+    if (model.inputs[0].shape.length !== 4) {
+      throw new Error(
+          `Expected model to have an input shape of rank 4, ` +
+          `but got an input shape of rank ${model.inputs[0].shape.length}`);
+    }
     // Check the consistency between the word labels and the model's output
     // shape.
     const outputShape = model.outputShape as tf.Shape;
@@ -82,11 +96,16 @@ export class SpeechCommandBrowserFftRecognizer implements
 
     this.words = metadataJSON.words;
     this.model = model;
+    this.nonBatchInputShape =
+        this.model.inputs[0].shape.slice(1) as [number, number, number];
+    this.elementsPerExample = 1;
+    this.model.inputs[0].shape.slice(1).forEach(
+        dimSize => this.elementsPerExample *= dimSize);
 
     const frameDurationMillis =
-        this.params.columnBufferLength / this.params.sampleRateHz * 1e3;
+        this.parameters.columnBufferLength / this.parameters.sampleRateHz * 1e3;
     const numFrames = this.model.inputs[0].shape[1];
-    this.params.spectrogramDurationMillis = numFrames * frameDurationMillis;
+    this.parameters.spectrogramDurationMillis = numFrames * frameDurationMillis;
   }
 
   async stopStreaming(): Promise<void> {
@@ -106,7 +125,61 @@ export class SpeechCommandBrowserFftRecognizer implements
     return this.words;
   }
 
-  recognize(input: tf.Tensor|Float32Array): SpeechCommandRecognizerResult {
-    return null;  // TODO(cais).
+  params(): RecognizerConfigParams {
+    return this.parameters;
+  }
+
+  async recognize(input: tf.Tensor|
+                  Float32Array): Promise<SpeechCommandRecognizerResult> {
+    await this.ensureModelLoaded();
+
+    let numExamples: number;
+    let inputTensor: tf.Tensor;
+    let outTensor: tf.Tensor;
+    if (input instanceof tf.Tensor) {
+      // Check input shape.
+      this.checkInputTensorShape(input);
+      inputTensor = input;
+      numExamples = input.shape[0];
+    } else {
+      input = input as Float32Array;
+      if (input.length % this.elementsPerExample) {
+        throw new Error(
+            `The length of the input Float32Array ${input.length} ` +
+            `is not divisible by the number of tensor elements per ` +
+            `per example expected by the model ${this.elementsPerExample}.`);
+      }
+
+      numExamples = input.length / this.elementsPerExample;
+
+      inputTensor = tf.tensor4d(input, [
+        numExamples
+      ].concat(this.nonBatchInputShape) as [number, number, number, number]);
+    }
+
+    outTensor = this.model.predict(inputTensor) as tf.Tensor;
+    if (numExamples === 1) {
+      return {scores: outTensor.dataSync() as Float32Array};
+    } else {
+      const unstacked = tf.unstack(outTensor);
+      const scores = unstacked.map(item => item.dataSync() as Float32Array);
+      return {scores};
+    }
+  }
+
+  private checkInputTensorShape(input: tf.Tensor) {
+    const expectedRank = this.model.inputs[0].shape.length;
+    if (input.shape.length !== expectedRank) {
+      throw new Error(
+          `Expected input Tensor to have rank ${expectedRank}, ` +
+          `but got rank ${input.shape.length} that differs `);
+    }
+    const nonBatchedShape = input.shape.slice(1);
+    const expectedNonBatchShape = this.model.inputs[0].shape.slice(1);
+    if (!tf.util.arraysEqual(nonBatchedShape, expectedNonBatchShape)) {
+      throw new Error(
+          `Expected input to have shape [null,${expectedNonBatchShape}], ` +
+          `but got shape [null,${nonBatchedShape}]`);
+    }
   }
 }
