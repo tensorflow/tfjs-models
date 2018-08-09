@@ -22,9 +22,11 @@ import {assert} from '@tensorflow/tfjs-core/dist/util';
 import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
 import {loadMetadataJson} from './browser_fft_utils';
 import {RecognizerCallback, RecognizerConfigParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig} from './types';
-
 // tslint:enable:max-line-length
 
+/**
+ *
+ */
 export class BrowserFftSpeechCommandRecognizer implements
     SpeechCommandRecognizer {
   // tslint:disable:max-line-length
@@ -52,7 +54,6 @@ export class BrowserFftSpeechCommandRecognizer implements
   constructor() {
     // TODO(cais): Call this constructor in a factory function.
     this.streaming = false;
-
     this.parameters = {
       sampleRateHz: this.SAMPLE_RATE_HZ,
       fftSize: this.FFT_SIZE,
@@ -60,11 +61,33 @@ export class BrowserFftSpeechCommandRecognizer implements
     };
   }
 
+  /**
+   * Start streaming recognition.
+   *
+   * To stop the recognition, use `stopStreaming()`.
+   *
+   * Example: TODO(cais): Add exapmle code snippet.
+   *
+   * @param callback The callback invoked whenever a word is recognized
+   *   with a probability score greater than `config.probabilityThreshold`.
+   *   It has the signature:
+   *     (result: SpeechCommandRecognizerResult) => Promise<void>
+   *   wherein result has the two fields:
+   *   - scores: A Float32Array that contains the probability scores for all
+   *     the words.
+   *   - spectrogram: The spectrogram data, provided only if
+   *     `config.includeSpectrogram` is `true`.
+   * @param config The configurations for the streaming recognition to
+   *   be started.
+   * @throws Error, if streaming recognition is already started or
+   *   if `config` contains invalid values.
+   */
   async startStreaming(
       callback: RecognizerCallback,
       config?: StreamingRecognitionConfig): Promise<void> {
     if (this.streaming) {
-      throw new Error('Cannot start streaming because streaming is ongoing.');
+      throw new Error(
+          'Cannot start streaming again when streaming is ongoing.');
     }
 
     await this.ensureModelLoaded();
@@ -87,43 +110,51 @@ export class BrowserFftSpeechCommandRecognizer implements
         Math.round(this.FFT_SIZE * (1 - overlapFactor));
 
     const spectrogramCallback: SpectrogramCallback = (x: tf.Tensor) => {
-      const y = this.model.predict(x) as tf.Tensor;
-      const scores = y.dataSync() as Float32Array;
-      const maxScore = Math.max(...scores);
-      if (maxScore < probabilityThreshold) {
-        return false;
-      } else {
-        let spectrogram: SpectrogramData = undefined;
-        if (config.includeSpectrogram) {
-          spectrogram = {
-            data: x.dataSync() as Float32Array,
-            frameSize: this.parameters.fftSize,
-          };
+      return tf.tidy(() => {
+        const y = this.model.predict(x) as tf.Tensor;
+        const scores = y.dataSync() as Float32Array;
+        const maxScore = Math.max(...scores);
+        if (maxScore < probabilityThreshold) {
+          return false;
+        } else {
+          let spectrogram: SpectrogramData = undefined;
+          if (config.includeSpectrogram) {
+            spectrogram = {
+              data: x.dataSync() as Float32Array,
+              frameSize: this.nonBatchInputShape[1],
+            };
+          }
+          callback({scores, spectrogram});
+          return true;
         }
-        callback({scores, spectrogram});
-        return true;
-      }
+      });
     };
 
     this.audioDataExtractor = new BrowserFftFeatureExtractor({
       sampleRateHz: this.parameters.sampleRateHz,
       columnBufferLength: this.parameters.columnBufferLength,
       columnHopLength: this.parameters.columnHopLength,
-      numFramesPerSpectrogram: this.nonBatchInputShape[1],
-      columnTruncateLength: this.nonBatchInputShape[2],
+      numFramesPerSpectrogram: this.nonBatchInputShape[0],
+      columnTruncateLength: this.nonBatchInputShape[1],
       spectrogramCallback
     });
+
     await this.audioDataExtractor.start();
 
     this.streaming = true;
   }
 
+  /**
+   * Load the underlying tf.Model instance and associated metadata.
+   *
+   * If the model and the metadata are already loaded, do nothing.
+   */
   async ensureModelLoaded() {
     if (this.model != null) {
       return;
     }
 
-    const metadataJSON = await loadMetadataJson(this.DEFAULT_METADATA_JSON_URL);
+    await this.ensureMetadataLoaded();
 
     const model = await tf.loadModel(this.DEFAULT_MODEL_JSON_URL);
     // Check the validity of the model's input shape.
@@ -151,14 +182,13 @@ export class BrowserFftSpeechCommandRecognizer implements
           `Expected loaded model to have an output shape of rank 2,` +
           `but received shape ${JSON.stringify(outputShape)}`);
     }
-    if (outputShape[1] !== metadataJSON.words.length) {
+    if (outputShape[1] !== this.words.length) {
       throw new Error(
           `Mismatch between the last dimension of model's output shape ` +
           `(${outputShape[1]}) and number of words ` +
-          `(${metadataJSON.words.length}).`);
+          `(${this.words.length}).`);
     }
 
-    this.words = metadataJSON.words;
     this.model = model;
     this.nonBatchInputShape =
         this.model.inputs[0].shape.slice(1) as [number, number, number];
@@ -174,6 +204,14 @@ export class BrowserFftSpeechCommandRecognizer implements
     this.parameters.spectrogramDurationMillis = numFrames * frameDurationMillis;
   }
 
+  private async ensureMetadataLoaded() {
+    if (this.words != null) {
+      return;
+    }
+    const metadataJSON = await loadMetadataJson(this.DEFAULT_METADATA_JSON_URL);
+    this.words = metadataJSON.words;
+  }
+
   private warmUpModel() {
     tf.tidy(() => {
       const x = tf.zeros([1].concat(this.nonBatchInputShape));
@@ -183,27 +221,67 @@ export class BrowserFftSpeechCommandRecognizer implements
     });
   }
 
+  /**
+   * Stop streaming recognition.
+   *
+   * @throws Error if there is not ongoing streaming recognition.
+   */
   async stopStreaming(): Promise<void> {
     if (!this.streaming) {
-      throw new Error(
-          'This SpeechCommandBrowserFftRegonizer object is not ' +
-          'currently streaming.');
+      throw new Error('Cannot stop streaming when streaming is not ongoing.');
     }
     await this.audioDataExtractor.stop();
+    this.streaming = false;
   }
 
+  /**
+   * Check if streaming recognition is ongoing.
+   */
   isStreaming(): boolean {
     return this.streaming;
   }
 
+  /**
+   * Get the array of word labels.
+   *
+   * @throws Error If this model is called before the model is loaded.
+   */
   wordLabels(): string[] {
+    if (this.model == null) {
+      throw new Error(
+          'Model is not loaded yet. Call ensureModelLoaded() or ' +
+          'use the model for recognition with startStreaming() or ' +
+          'recognize() first.');
+    }
     return this.words;
   }
 
+  /**
+   * Get the parameters of this instance of BrowserFftSpeechCommandRecognizer.
+   *
+   * @returns Parameters of this instance.
+   */
   params(): RecognizerConfigParams {
     return this.parameters;
   }
 
+  /**
+   * Run offline (non-streaming) recognition on a spectrogram.
+   *
+   * @param input Spectrogram. Either a `tf.Tensor` of a `Float32Array`.
+   *   - If a `tf.Tensor`, must be rank-4 and match the model's expected
+   *     input shape in 2nd dimension (# of spectrogram columns), the 3rd
+   *     dimension (# of frequency-domain points per column), and the 4th
+   *     dimension (always 1). The 1st dimension can be 1, for single-example
+   *     recogntion, or any value >1, for batched recognition.
+   *   - If a `Float32Array`, must have a length divisible by the number
+   *     of elements per spectrogram, i.e.,
+   *     (# of spectrogram columns) * (# of frequency-domain points per column).
+   * @returns Result of the recognition, with the following field:
+   *   scores:
+   *   - A `Float32Array` if there is only one input exapmle.
+   *   - An `Array` of `Float32Array`, if there are multiple input examples.
+   */
   async recognize(input: tf.Tensor|
                   Float32Array): Promise<SpeechCommandRecognizerResult> {
     await this.ensureModelLoaded();
@@ -217,6 +295,7 @@ export class BrowserFftSpeechCommandRecognizer implements
       inputTensor = input;
       numExamples = input.shape[0];
     } else {
+      // `input` is a `Float32Array`.
       input = input as Float32Array;
       if (input.length % this.elementsPerExample) {
         throw new Error(
@@ -226,7 +305,6 @@ export class BrowserFftSpeechCommandRecognizer implements
       }
 
       numExamples = input.length / this.elementsPerExample;
-
       inputTensor = tf.tensor4d(input, [
         numExamples
       ].concat(this.nonBatchInputShape) as [number, number, number, number]);
@@ -236,8 +314,9 @@ export class BrowserFftSpeechCommandRecognizer implements
     if (numExamples === 1) {
       return {scores: outTensor.dataSync() as Float32Array};
     } else {
-      const unstacked = tf.unstack(outTensor);
+      const unstacked = tf.unstack(outTensor) as tf.Tensor[];
       const scores = unstacked.map(item => item.dataSync() as Float32Array);
+      tf.dispose(unstacked);
       return {scores};
     }
   }

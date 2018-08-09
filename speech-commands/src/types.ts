@@ -104,7 +104,7 @@ export interface StreamingRecognitionConfig {
   /**
    * Amount to time in ms to suppress recognizer after a word is recognized.
    */
-  suppressionTimeInMs?: number;
+  suppressionTimeMillis?: number;
 
   /**
    * Threshold for the maximum probability value in a model prediction

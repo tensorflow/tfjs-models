@@ -148,12 +148,13 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
   it('start and stop: overlapFactor = 0', async done => {
     setUpFakes();
 
-    const spectrogramTensors: tf.Tensor[] = [];
+    const numTensors0 = tf.memory().numTensors;
     const callbackTimestamps: number[] = [];
+    const spectrogramTensors: tf.Tensor[] = [];
     const extractor = new BrowserFftFeatureExtractor({
       spectrogramCallback: (x: tf.Tensor) => {
         callbackTimestamps.push(tf.util.now());
-        spectrogramTensors.push(x);
+        spectrogramTensors.push(tf.clone(x));
         return false;
       },
       numFramesPerSpectrogram: 43,
@@ -181,14 +182,21 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
           .toBeLessThan(spectrogramDurationMillis + 100);
       // Allow 100-ms variability.
 
-      expect(spectrogramTensors.length).toEqual(3);
-      for (let i = 0; i < 3; ++i) {
-        expect(spectrogramTensors[i].shape).toEqual([1, 43, 225, 1]);
-        // Check the spectrogram is normalized.
-        tf.test_util.expectArraysClose(
-            spectrogramTensors[i],
-            BrowserFftUtils.normalize(spectrogramTensors[i]));
-      }
+      tf.tidy(() => {
+        expect(spectrogramTensors.length).toEqual(3);
+        for (let i = 0; i < 3; ++i) {
+          expect(spectrogramTensors[i].shape).toEqual([1, 43, 225, 1]);
+          // Check the spectrogram is normalized.
+          tf.test_util.expectArraysClose(
+              spectrogramTensors[i],
+              BrowserFftUtils.normalize(spectrogramTensors[i]));
+        }
+      });
+
+      // Assert no memory leak. The 3 extra ones are due to clone
+      // in the custom callback.
+      tf.dispose(spectrogramTensors);
+      expect(tf.memory().numTensors).toEqual(numTensors0);
       done();
     }, spectrogramDurationMillis * 3.5);
   });
@@ -201,7 +209,7 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
     const extractor = new BrowserFftFeatureExtractor({
       spectrogramCallback: (x: tf.Tensor) => {
         callbackTimestamps.push(tf.util.now());
-        spectrogramTensors.push(x);
+        spectrogramTensors.push(tf.clone(x));
         return false;
       },
       numFramesPerSpectrogram: 43,

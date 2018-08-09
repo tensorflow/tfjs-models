@@ -62,16 +62,6 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(recognizer.params().columnBufferLength).toEqual(1024);
   });
 
-  // it('Constructor: overlapFactor = 0', () => {
-  //   const recognizer =
-  //       new BrowserFftSpeechCommandRecognizer({overlapFactor: 0});
-  //   expect(recognizer.isStreaming()).toEqual(false);
-  //   expect(recognizer.params().sampleRateHz).toEqual(44100);
-  //   expect(recognizer.params().fftSize).toEqual(1024);
-  //   expect(recognizer.params().columnBufferLength).toEqual(1024);
-  //   expect(recognizer.params().columnHopLength).toEqual(1024);
-  // });
-
   it('ensureModelLoaded succeeds', async () => {
     setUpFakes();
 
@@ -225,17 +215,122 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
         .toMatch(/Invalid probabilityThreshold value: -0\.1/);
   });
 
-  // it('startStreaming: overlapFactor = 0', async done => {
-  //   setUpFakes();
-  //   const recognizer = new BrowserFftSpeechCommandRecognizer();
-  //   await recognizer.startStreaming(
-  //       async (result: SpeechCommandRecognizerResult) => {
-  //         console.log('result.scores:', result.scores);  // DEBUG
-  //       },
-  //       {overlapFactor: 0});
+  it('streaming: overlapFactor = 0', async done => {
+    setUpFakes();
+    const recognizer = new BrowserFftSpeechCommandRecognizer();
 
-  //   setTimeout(() => {
-  //     done();
-  //   }, recognizer.params().spectrogramDurationMillis * 2.5)
-  // });
+    const tensorCounts: number[] = [];
+    const scoreArray: Float32Array[] = [];
+    const callbackTimestamps: number[] = [];
+    await recognizer.startStreaming(
+        async (result: SpeechCommandRecognizerResult) => {
+          scoreArray.push(result.scores as Float32Array);
+          callbackTimestamps.push(tf.util.now());
+          tensorCounts.push(tf.memory().numTensors);
+          // spectrogram is not provided by default.
+          expect(result.spectrogram).toBeUndefined();
+        },
+        {overlapFactor: 0});
+
+    const spectrogramDurationMillis =
+        recognizer.params().spectrogramDurationMillis;
+    setTimeout(async () => {
+      await recognizer.stopStreaming();
+
+      expect(callbackTimestamps.length).toEqual(2);
+      expect(callbackTimestamps[1] - callbackTimestamps[0])
+          .toBeGreaterThan(spectrogramDurationMillis);
+
+      expect(scoreArray.length).toEqual(2);
+      expect(scoreArray[0].length).toEqual(fakeNumWords);
+      expect(scoreArray[1].length).toEqual(fakeNumWords);
+
+      // Assert no memory leak.
+      expect(tensorCounts.length).toEqual(2);
+      expect(tensorCounts[1]).toEqual(tensorCounts[0]);
+      done();
+    }, spectrogramDurationMillis * 2.5);
+  });
+
+  it('streaming: overlapFactor = 0.5, includeSpectrogram', async done => {
+    setUpFakes();
+    const recognizer = new BrowserFftSpeechCommandRecognizer();
+
+    const tensorCounts: number[] = [];
+    const scoreArray: Float32Array[] = [];
+    const callbackTimestamps: number[] = [];
+    await recognizer.startStreaming(
+        async (result: SpeechCommandRecognizerResult) => {
+          scoreArray.push(result.scores as Float32Array);
+          callbackTimestamps.push(tf.util.now());
+          tensorCounts.push(tf.memory().numTensors);
+          // spectrogram is not provided by default.
+          expect(result.spectrogram.data.length)
+              .toBe(fakeNumFrames * fakeColumnTruncateLength);
+          expect(result.spectrogram.frameSize).toBe(fakeColumnTruncateLength);
+        },
+        {overlapFactor: 0.5, includeSpectrogram: true});
+
+    const spectrogramDurationMillis =
+        recognizer.params().spectrogramDurationMillis;
+    setTimeout(async () => {
+      await recognizer.stopStreaming();
+
+      expect(callbackTimestamps.length).toEqual(2);
+      expect(callbackTimestamps[1] - callbackTimestamps[0])
+          .toBeGreaterThan(spectrogramDurationMillis * 0.5);
+
+      expect(scoreArray.length).toEqual(2);
+      expect(scoreArray[0].length).toEqual(fakeNumWords);
+      expect(scoreArray[1].length).toEqual(fakeNumWords);
+
+      // Assert no memory leak.
+      expect(tensorCounts.length).toEqual(2);
+      expect(tensorCounts[1]).toEqual(tensorCounts[0]);
+      done();
+    }, spectrogramDurationMillis * 0.5 * 2.5);
+  });
+
+  it('Attempt to start streaming twice leads to Error', async () => {
+    setUpFakes();
+    const recognizer = new BrowserFftSpeechCommandRecognizer();
+    await recognizer.startStreaming(
+        async (result: SpeechCommandRecognizerResult) => {});
+    expect(recognizer.isStreaming()).toEqual(true);
+
+    let caughtError: Error;
+    try {
+      await recognizer.startStreaming(
+          async (result: SpeechCommandRecognizerResult) => {});
+    } catch (err) {
+      caughtError = err;
+    }
+    expect(caughtError.message)
+        .toEqual('Cannot start streaming again when streaming is ongoing.');
+    expect(recognizer.isStreaming()).toEqual(true);
+
+    await recognizer.stopStreaming();
+    expect(recognizer.isStreaming()).toEqual(false);
+  });
+
+  it('Attempt to stop streaming twice leads to Error', async () => {
+    setUpFakes();
+    const recognizer = new BrowserFftSpeechCommandRecognizer();
+    await recognizer.startStreaming(
+        async (result: SpeechCommandRecognizerResult) => {});
+    expect(recognizer.isStreaming()).toEqual(true);
+
+    await recognizer.stopStreaming();
+    expect(recognizer.isStreaming()).toEqual(false);
+
+    let caughtError: Error;
+    try {
+      await recognizer.stopStreaming();
+    } catch (err) {
+      caughtError = err;
+    }
+    expect(caughtError.message)
+        .toEqual('Cannot stop streaming when streaming is not ongoing.');
+    expect(recognizer.isStreaming()).toEqual(false);
+  });
 });

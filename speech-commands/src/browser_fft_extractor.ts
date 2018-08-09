@@ -172,7 +172,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     this.frameCount = 0;
 
     this.tracker = new Tracker(
-        Math.round(this.numFramesPerSpectrogram * this.overlapFactor), 0);
+        Math.round(this.numFramesPerSpectrogram * this.overlapFactor), null);
     this.frameIntervalTask = setInterval(
         this.onAudioFrame.bind(this), this.fftSize / this.sampleRateHz * 1e3);
   }
@@ -198,6 +198,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
       const inputTensor = getInputTensorFromFrequencyData(
           freqData, this.numFramesPerSpectrogram, this.columnTruncateLength);
       this.spectrogramCallback(inputTensor);
+      inputTensor.dispose();
     }
 
     this.frameCount++;
@@ -250,66 +251,56 @@ export function getFrequencyDataFromRotatingBuffer(
 export function getInputTensorFromFrequencyData(
     freqData: Float32Array, numFrames: number, fftLength: number,
     toNormalize = true): tf.Tensor {
-  const size = freqData.length;
-  const tensorBuffer = tf.buffer([size]);
-  for (let i = 0; i < freqData.length; ++i) {
-    tensorBuffer.set(freqData[i], i);
-  }
-  const output = tensorBuffer.toTensor().reshape([1, numFrames, fftLength, 1]);
-  return toNormalize ? normalize(output) : output;
+  return tf.tidy(() => {
+    const size = freqData.length;
+    const tensorBuffer = tf.buffer([size]);
+    for (let i = 0; i < freqData.length; ++i) {
+      tensorBuffer.set(freqData[i], i);
+    }
+    const output =
+        tensorBuffer.toTensor().reshape([1, numFrames, fftLength, 1]);
+    return toNormalize ? normalize(output) : output;
+  });
 }
 
+/**
+ * A class that manages the firing of events based on periods
+ * and suppression time.
+ */
 export class Tracker {
   readonly period: number;
-  readonly refractoryPeriod: number;
+  readonly suppressionPeriod: number;
 
   private counter: number;
-  private state: number;
-  //   private lastFireCounter: number;
 
-  constructor(period: number, refactoryPeriod: number) {
+  /**
+   * Constructor of Tracker.
+   *
+   * @param period The event-firing period, in number of frames.
+   * @param suppressionPeriod The suppression period, in number of frames.
+   */
+  constructor(period: number, suppressionPeriod: number) {
     this.period = period;
-    this.refractoryPeriod = refactoryPeriod;
-
+    this.suppressionPeriod = suppressionPeriod;
     this.counter = 0;
-    this.state = 0;
+
+    tf.util.assert(
+        this.period > 0,
+        `Expected period to be positive, but got ${this.period}`);
+    if (this.suppressionPeriod != null) {
+      throw new Error('Suppression is not implemented yet.');
+    }
   }
 
-  // TODO(cais): What is trigger for anyway?
+  /**
+   * Mark a frame.
+   *
+   * @returns Whether the event should be fired at the current frame.
+   */
   tick(): boolean {
     this.counter++;
     const shouldFire = this.counter % this.period === 0;
-    // if (shouldFire) {
-    //   this.lastFireCounter = this.counter;
-    // }
-    // if (this.state === 0) {
-    //   this.lastTriggerCounter = this.counter;
-    //   this.state = 1;
-    // } else if (this.state === 1) {
-    //   if (this.counter - this.lastTriggerCounter === this.period) {
-    //     if (this.refractoryPeriod === 0) {
-    //       this.state = 0;
-    //     } else {
-    //       this.state = 2;
-    //     }
-    //     shouldFire = true;
-    //   }
-    // } else if (this.state === 2) {
-    //   // In refractory period.
-    //   if (this.counter - this.lastTriggerCounter >=
-    //       this.period + 1 + this.refractoryPeriod) {
-    //     this.state = 0;
-    //   }
-    // }
-    // this.counter++;
+    // TODO(cais): Add logic for suppressionTimeMillis.
     return shouldFire;
-  }
-
-  shouldFire() {
-    return this.state === 2;
-  }
-
-  isResting() {
-    return this.state === 0;
   }
 }
