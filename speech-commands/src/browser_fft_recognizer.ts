@@ -16,7 +16,6 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import {assert} from '@tensorflow/tfjs-core/dist/util';
 
 // tslint:disable:max-line-length
 import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
@@ -97,13 +96,13 @@ export class BrowserFftSpeechCommandRecognizer implements
     }
     const probabilityThreshold =
         config.probabilityThreshold == null ? 0 : config.probabilityThreshold;
-    assert(
+    tf.util.assert(
         probabilityThreshold >= 0 && probabilityThreshold <= 1,
         `Invalid probabilityThreshold value: ${probabilityThreshold}`);
 
     const overlapFactor =
         config.overlapFactor == null ? 0.5 : config.overlapFactor;
-    assert(
+    tf.util.assert(
         overlapFactor >= 0 && overlapFactor < 1,
         `Expected overlapFactor to be >= 0 and < 1, but got ${overlapFactor}`);
     this.parameters.columnHopLength =
