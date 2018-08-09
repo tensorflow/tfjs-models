@@ -16,12 +16,16 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
+import {assert} from '@tensorflow/tfjs-core/dist/util';
 
+// tslint:disable:max-line-length
+import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
 import {loadMetadataJson} from './browser_fft_utils';
-// tslint:disable-next-line:max-line-length
-import {RecognizerCallback, RecognizerConfigParams, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig} from './types';
+import {RecognizerCallback, RecognizerConfigParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig} from './types';
 
-export class SpeechCommandBrowserFftRecognizer implements
+// tslint:enable:max-line-length
+
+export class BrowserFftSpeechCommandRecognizer implements
     SpeechCommandRecognizer {
   // tslint:disable:max-line-length
   readonly DEFAULT_MODEL_JSON_URL =
@@ -40,23 +44,77 @@ export class SpeechCommandBrowserFftRecognizer implements
 
   private nonBatchInputShape: [number, number, number];
   private elementsPerExample: number;
+  private audioDataExtractor: BrowserFftFeatureExtractor;
 
+  /**
+   * Constructor of BrowserFftSpeechCommandRecognizer.
+   */
   constructor() {
+    // TODO(cais): Call this constructor in a factory function.
     this.streaming = false;
+
     this.parameters = {
       sampleRateHz: this.SAMPLE_RATE_HZ,
       fftSize: this.FFT_SIZE,
       columnBufferLength: this.FFT_SIZE,
-      columnHopLength: this.FFT_SIZE
     };
   }
 
   async startStreaming(
       callback: RecognizerCallback,
       config?: StreamingRecognitionConfig): Promise<void> {
+    if (this.streaming) {
+      throw new Error('Cannot start streaming because streaming is ongoing.');
+    }
+
     await this.ensureModelLoaded();
 
-    // TODO(cais): Fill in.
+    if (config == null) {
+      config = {};
+    }
+    const probabilityThreshold =
+        config.probabilityThreshold == null ? 0 : config.probabilityThreshold;
+    assert(
+        probabilityThreshold >= 0 && probabilityThreshold <= 1,
+        `Invalid probabilityThreshold value: ${probabilityThreshold}`);
+
+    const overlapFactor =
+        config.overlapFactor == null ? 0.5 : config.overlapFactor;
+    assert(
+        overlapFactor >= 0 && overlapFactor < 1,
+        `Expected overlapFactor to be >= 0 and < 1, but got ${overlapFactor}`);
+    this.parameters.columnHopLength =
+        Math.round(this.FFT_SIZE * (1 - overlapFactor));
+
+    const spectrogramCallback: SpectrogramCallback = (x: tf.Tensor) => {
+      const y = this.model.predict(x) as tf.Tensor;
+      const scores = y.dataSync() as Float32Array;
+      const maxScore = Math.max(...scores);
+      if (maxScore < probabilityThreshold) {
+        return false;
+      } else {
+        let spectrogram: SpectrogramData = undefined;
+        if (config.includeSpectrogram) {
+          spectrogram = {
+            data: x.dataSync() as Float32Array,
+            frameSize: this.parameters.fftSize,
+          };
+        }
+        callback({scores, spectrogram});
+        return true;
+      }
+    };
+
+    this.audioDataExtractor = new BrowserFftFeatureExtractor({
+      sampleRateHz: this.parameters.sampleRateHz,
+      columnBufferLength: this.parameters.columnBufferLength,
+      columnHopLength: this.parameters.columnHopLength,
+      numFramesPerSpectrogram: this.nonBatchInputShape[1],
+      columnTruncateLength: this.nonBatchInputShape[2],
+      spectrogramCallback
+    });
+    await this.audioDataExtractor.start();
+
     this.streaming = true;
   }
 
@@ -78,6 +136,12 @@ export class SpeechCommandBrowserFftRecognizer implements
       throw new Error(
           `Expected model to have an input shape of rank 4, ` +
           `but got an input shape of rank ${model.inputs[0].shape.length}`);
+    }
+    if (model.inputs[0].shape[3] !== 1) {
+      throw new Error(
+          `Expected model to have an input shape with 1 as the last ` +
+          `dimension, but got input shape` +
+          `${JSON.stringify(model.inputs[0].shape[3])}}`);
     }
     // Check the consistency between the word labels and the model's output
     // shape.
@@ -125,7 +189,7 @@ export class SpeechCommandBrowserFftRecognizer implements
           'This SpeechCommandBrowserFftRegonizer object is not ' +
           'currently streaming.');
     }
-    // TODO(cais): Fill in.
+    await this.audioDataExtractor.stop();
   }
 
   isStreaming(): boolean {

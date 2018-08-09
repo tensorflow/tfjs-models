@@ -86,19 +86,44 @@ export interface SpeechCommandRecognizerResult {
 }
 
 export interface StreamingRecognitionConfig {
-  // Overlap factor. Must be a number between >=0 and <1.
-  // Defaults to 0.5.
-  // For example, if the model takes a frame length of 1000 ms,
-  // and if overlap factor is 0.4, there will be a 400-ms
-  // overlap between two successive frames, i.e., frames
-  // will be taken every 600 ms.
+  /**
+   * Overlap factor. Must be a number between >=0 and <1.
+   * Defaults to 0.5.
+   * For example, if the model takes a frame length of 1000 ms,
+   * and if overlap factor is 0.4, there will be a 400-ms
+   * overlap between two successive frames, i.e., frames
+   * will be taken every 600 ms.
+   */
   overlapFactor?: number;
 
-  // minimum samples of the same label for reliable prediction.
+  /**
+   * Minimum samples of the same label for reliable prediction.
+   */
   minSamples?: number;
 
-  // amount to time in ms to suppress recognizer after a word is recognized.
+  /**
+   * Amount to time in ms to suppress recognizer after a word is recognized.
+   */
   suppressionTimeInMs?: number;
+
+  /**
+   * Threshold for the maximum probability value in a model prediction
+   * output to be greater than or equal to, below which the callback
+   * will not be called.
+   *
+   * Must be a number >=0 and <=1.
+   *
+   * If `null` or `undefined`, will default to `0`.
+   */
+  probabilityThreshold?: number;
+
+  /**
+   * Whether the spectrogram is to be provided in the each recognition
+   * callback call.
+   *
+   * Default: `false`.
+   */
+  includeSpectrogram?: boolean;
 }
 
 export interface RecognizerConfigParams {
