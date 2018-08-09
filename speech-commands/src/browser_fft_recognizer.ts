@@ -204,14 +204,6 @@ export class BrowserFftSpeechCommandRecognizer implements
     this.parameters.spectrogramDurationMillis = numFrames * frameDurationMillis;
   }
 
-  private async ensureMetadataLoaded() {
-    if (this.words != null) {
-      return;
-    }
-    const metadataJSON = await loadMetadataJson(this.DEFAULT_METADATA_JSON_URL);
-    this.words = metadataJSON.words;
-  }
-
   private warmUpModel() {
     tf.tidy(() => {
       const x = tf.zeros([1].concat(this.nonBatchInputShape));
@@ -219,6 +211,14 @@ export class BrowserFftSpeechCommandRecognizer implements
         this.model.predict(x);
       }
     });
+  }
+
+  private async ensureMetadataLoaded() {
+    if (this.words != null) {
+      return;
+    }
+    const metadataJSON = await loadMetadataJson(this.DEFAULT_METADATA_JSON_URL);
+    this.words = metadataJSON.words;
   }
 
   /**

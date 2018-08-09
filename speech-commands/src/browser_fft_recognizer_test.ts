@@ -105,7 +105,6 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
   it('Offline recognize succeeds with batched tf.Tensor', async () => {
     setUpFakes();
 
-    // TODO(cais):
     const spectrogram =
         tf.zeros([3, fakeNumFrames, fakeColumnTruncateLength, 1]);
     const recognizer = new BrowserFftSpeechCommandRecognizer();

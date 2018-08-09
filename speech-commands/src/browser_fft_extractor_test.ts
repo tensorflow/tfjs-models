@@ -172,15 +172,9 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
       expect(callbackTimestamps.length).toEqual(3);
       expect(callbackTimestamps[1] - callbackTimestamps[0])
           .toBeGreaterThan(spectrogramDurationMillis);
-      expect(callbackTimestamps[1] - callbackTimestamps[0])
-          .toBeLessThan(spectrogramDurationMillis + 100);
-      // Allow 100-ms variability.
       expect(callbackTimestamps.length).toEqual(3);
       expect(callbackTimestamps[2] - callbackTimestamps[1])
           .toBeGreaterThan(spectrogramDurationMillis);
-      expect(callbackTimestamps[2] - callbackTimestamps[1])
-          .toBeLessThan(spectrogramDurationMillis + 100);
-      // Allow 100-ms variability.
 
       tf.tidy(() => {
         expect(spectrogramTensors.length).toEqual(3);
@@ -227,15 +221,9 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
       expect(callbackTimestamps.length).toEqual(6);
       expect(callbackTimestamps[1] - callbackTimestamps[0])
           .toBeGreaterThan(spectrogramDurationMillis * 0.5);
-      expect(callbackTimestamps[1] - callbackTimestamps[0])
-          .toBeLessThan(spectrogramDurationMillis * 0.5 + 100);
-      // Allow 100-ms variability.
       expect(callbackTimestamps.length).toEqual(6);
       expect(callbackTimestamps[2] - callbackTimestamps[1])
           .toBeGreaterThan(spectrogramDurationMillis * 0.5);
-      expect(callbackTimestamps[2] - callbackTimestamps[1])
-          .toBeLessThan(spectrogramDurationMillis * 0.5 + 100);
-      // Allow 100-ms variability.
 
       expect(spectrogramTensors.length).toEqual(6);
       for (let i = 0; i < 6; ++i) {
