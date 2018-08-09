@@ -25,7 +25,7 @@ import {RecognizerCallback, RecognizerConfigParams, SpectrogramData, SpeechComma
 // tslint:enable:max-line-length
 
 /**
- *
+ * Speech-Command Recognizer using browser-native (WebAudio) spectral featutres.
  */
 export class BrowserFftSpeechCommandRecognizer implements
     SpeechCommandRecognizer {
