@@ -148,62 +148,66 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
   it('start and stop: overlapFactor = 0', async done => {
     setUpFakes();
 
-    const numTensors0 = tf.memory().numTensors;
+    const spectrogramDurationMillis = 1024 / 44100 * 43 * 1e3;
+    const numCallbacksToComplete = 3;
+    let numCallbacksCompleted = 0;
+    const tensorCounts: number[] = [];
     const callbackTimestamps: number[] = [];
-    const spectrogramTensors: tf.Tensor[] = [];
     const extractor = new BrowserFftFeatureExtractor({
       spectrogramCallback: (x: tf.Tensor) => {
         callbackTimestamps.push(tf.util.now());
-        spectrogramTensors.push(tf.clone(x));
+        if (callbackTimestamps.length > 1) {
+          expect(
+              callbackTimestamps[callbackTimestamps.length - 1] -
+              callbackTimestamps[callbackTimestamps.length - 2])
+              .toBeGreaterThanOrEqual(spectrogramDurationMillis);
+        }
+
+        expect(x.shape).toEqual([1, 43, 225, 1]);
+
+        tensorCounts.push(tf.memory().numTensors);
+        if (tensorCounts.length > 1) {
+          // Assert no memory leak.
+          expect(tensorCounts[tensorCounts.length - 1])
+              .toEqual(tensorCounts[tensorCounts.length - 2]);
+        }
+
+        if (++numCallbacksCompleted >= numCallbacksToComplete) {
+          extractor.stop().then(done);
+        }
         return false;
       },
       numFramesPerSpectrogram: 43,
       columnTruncateLength: 225,
       columnBufferLength: 1024,
-      columnHopLength: 1024  // Full hop, no overlap.
+      columnHopLength: 1024  // Full hop, zero overlap.
     });
-
-    const spectrogramDurationMillis = 1024 / 44100 * 43 * 1e3;
-    await extractor.start();
-
-    setTimeout(async () => {
-      await extractor.stop();
-
-      expect(callbackTimestamps.length).toEqual(3);
-      expect(callbackTimestamps[1] - callbackTimestamps[0])
-          .toBeGreaterThan(spectrogramDurationMillis);
-      expect(callbackTimestamps.length).toEqual(3);
-      expect(callbackTimestamps[2] - callbackTimestamps[1])
-          .toBeGreaterThan(spectrogramDurationMillis);
-
-      tf.tidy(() => {
-        expect(spectrogramTensors.length).toEqual(3);
-        for (let i = 0; i < 3; ++i) {
-          expect(spectrogramTensors[i].shape).toEqual([1, 43, 225, 1]);
-          // Check the spectrogram is normalized.
-          tf.test_util.expectArraysClose(
-              spectrogramTensors[i],
-              BrowserFftUtils.normalize(spectrogramTensors[i]));
-        }
-      });
-
-      // Assert no memory leak. The 3 extra ones are due to clone
-      // in the custom callback.
-      tf.dispose(spectrogramTensors);
-      expect(tf.memory().numTensors).toEqual(numTensors0);
-      done();
-    }, spectrogramDurationMillis * 3.5);
+    extractor.start();
   });
 
   it('start and stop: overlapFactor = 0.5', async done => {
     setUpFakes();
 
+    const numCallbacksToComplete = 5;
+    let numCallbacksCompleted = 0;
     const spectrogramTensors: tf.Tensor[] = [];
     const callbackTimestamps: number[] = [];
+    const spectrogramDurationMillis = 1024 / 44100 * 43 * 1e3;
     const extractor = new BrowserFftFeatureExtractor({
       spectrogramCallback: (x: tf.Tensor) => {
         callbackTimestamps.push(tf.util.now());
+        if (callbackTimestamps.length > 1) {
+          expect(
+              callbackTimestamps[callbackTimestamps.length - 1] -
+              callbackTimestamps[callbackTimestamps.length - 2])
+              .toBeGreaterThanOrEqual(spectrogramDurationMillis * 0.5);
+        }
+        expect(x.shape).toEqual([1, 43, 225, 1]);
         spectrogramTensors.push(tf.clone(x));
+
+        if (++numCallbacksCompleted >= numCallbacksToComplete) {
+          extractor.stop().then(done);
+        }
         return false;
       },
       numFramesPerSpectrogram: 43,
@@ -211,30 +215,7 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
       columnBufferLength: 1024,
       columnHopLength: 512  // 50% overlapFactor.
     });
-
-    const spectrogramDurationMillis = 1024 / 44100 * 43 * 1e3;
-    await extractor.start();
-
-    setTimeout(async () => {
-      await extractor.stop();
-
-      expect(callbackTimestamps.length).toEqual(6);
-      expect(callbackTimestamps[1] - callbackTimestamps[0])
-          .toBeGreaterThan(spectrogramDurationMillis * 0.5);
-      expect(callbackTimestamps.length).toEqual(6);
-      expect(callbackTimestamps[2] - callbackTimestamps[1])
-          .toBeGreaterThan(spectrogramDurationMillis * 0.5);
-
-      expect(spectrogramTensors.length).toEqual(6);
-      for (let i = 0; i < 6; ++i) {
-        expect(spectrogramTensors[i].shape).toEqual([1, 43, 225, 1]);
-        // Check the spectrogram is normalized.
-        tf.test_util.expectArraysClose(
-            spectrogramTensors[i],
-            BrowserFftUtils.normalize(spectrogramTensors[i]));
-      }
-      done();
-    }, spectrogramDurationMillis * 3.5);
+    extractor.start();
   });
 
   it('stopping unstarted extractor leads to Error', async () => {

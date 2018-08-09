@@ -218,76 +218,76 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     setUpFakes();
     const recognizer = new BrowserFftSpeechCommandRecognizer();
 
+    const numCallbacksToComplete = 2;
+    let numCallbacksCompleted = 0;
     const tensorCounts: number[] = [];
-    const scoreArray: Float32Array[] = [];
     const callbackTimestamps: number[] = [];
-    await recognizer.startStreaming(
-        async (result: SpeechCommandRecognizerResult) => {
-          scoreArray.push(result.scores as Float32Array);
-          callbackTimestamps.push(tf.util.now());
-          tensorCounts.push(tf.memory().numTensors);
-          // spectrogram is not provided by default.
-          expect(result.spectrogram).toBeUndefined();
-        },
-        {overlapFactor: 0});
+    recognizer.startStreaming(async (result: SpeechCommandRecognizerResult) => {
+      expect((result.scores as Float32Array).length).toEqual(fakeNumWords);
 
-    const spectrogramDurationMillis =
-        recognizer.params().spectrogramDurationMillis;
-    setTimeout(async () => {
-      await recognizer.stopStreaming();
+      callbackTimestamps.push(tf.util.now());
+      if (callbackTimestamps.length > 1) {
+        expect(
+            callbackTimestamps[callbackTimestamps.length - 1] -
+            callbackTimestamps[callbackTimestamps.length - 2])
+            .toBeGreaterThanOrEqual(
+                recognizer.params().spectrogramDurationMillis);
+      }
 
-      expect(callbackTimestamps.length).toEqual(2);
-      expect(callbackTimestamps[1] - callbackTimestamps[0])
-          .toBeGreaterThan(spectrogramDurationMillis);
+      tensorCounts.push(tf.memory().numTensors);
+      if (tensorCounts.length > 1) {
+        // Assert no memory leak.
+        expect(tensorCounts[tensorCounts.length - 1])
+            .toEqual(tensorCounts[tensorCounts.length - 2]);
+      }
 
-      expect(scoreArray.length).toEqual(2);
-      expect(scoreArray[0].length).toEqual(fakeNumWords);
-      expect(scoreArray[1].length).toEqual(fakeNumWords);
+      // spectrogram is not provided by default.
+      expect(result.spectrogram).toBeUndefined();
 
-      // Assert no memory leak.
-      expect(tensorCounts.length).toEqual(2);
-      expect(tensorCounts[1]).toEqual(tensorCounts[0]);
-      done();
-    }, spectrogramDurationMillis * 2.5);
+      if (++numCallbacksCompleted >= numCallbacksToComplete) {
+        recognizer.stopStreaming().then(done);
+      }
+    }, {overlapFactor: 0});
   });
 
   it('streaming: overlapFactor = 0.5, includeSpectrogram', async done => {
     setUpFakes();
     const recognizer = new BrowserFftSpeechCommandRecognizer();
 
+    const numCallbacksToComplete = 2;
+    let numCallbacksCompleted = 0;
     const tensorCounts: number[] = [];
-    const scoreArray: Float32Array[] = [];
     const callbackTimestamps: number[] = [];
     await recognizer.startStreaming(
         async (result: SpeechCommandRecognizerResult) => {
-          scoreArray.push(result.scores as Float32Array);
+          expect((result.scores as Float32Array).length).toEqual(fakeNumWords);
+
           callbackTimestamps.push(tf.util.now());
+          if (callbackTimestamps.length > 1) {
+            expect(
+                callbackTimestamps[callbackTimestamps.length - 1] -
+                callbackTimestamps[callbackTimestamps.length - 2])
+                .toBeGreaterThanOrEqual(
+                    recognizer.params().spectrogramDurationMillis * 0.5);
+          }
+
           tensorCounts.push(tf.memory().numTensors);
+          if (tensorCounts.length > 1) {
+            // Assert no memory leak.
+            expect(tensorCounts[tensorCounts.length - 1])
+                .toEqual(tensorCounts[tensorCounts.length - 2]);
+          }
+
           // spectrogram is not provided by default.
           expect(result.spectrogram.data.length)
               .toBe(fakeNumFrames * fakeColumnTruncateLength);
           expect(result.spectrogram.frameSize).toBe(fakeColumnTruncateLength);
+
+          if (++numCallbacksCompleted >= numCallbacksToComplete) {
+            recognizer.stopStreaming().then(done);
+          }
         },
         {overlapFactor: 0.5, includeSpectrogram: true});
-
-    const spectrogramDurationMillis =
-        recognizer.params().spectrogramDurationMillis;
-    setTimeout(async () => {
-      await recognizer.stopStreaming();
-
-      expect(callbackTimestamps.length).toEqual(2);
-      expect(callbackTimestamps[1] - callbackTimestamps[0])
-          .toBeGreaterThan(spectrogramDurationMillis * 0.5);
-
-      expect(scoreArray.length).toEqual(2);
-      expect(scoreArray[0].length).toEqual(fakeNumWords);
-      expect(scoreArray[1].length).toEqual(fakeNumWords);
-
-      // Assert no memory leak.
-      expect(tensorCounts.length).toEqual(2);
-      expect(tensorCounts[1]).toEqual(tensorCounts[0]);
-      done();
-    }, spectrogramDurationMillis * 0.5 * 2.5);
   });
 
   it('Attempt to start streaming twice leads to Error', async () => {
