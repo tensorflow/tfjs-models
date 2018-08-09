@@ -127,7 +127,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     if (!(this.overlapFactor > 0)) {
       throw new Error(
           `Invalid overlapFactor: ${this.overlapFactor}. ` +
-          `Check your columnBufferLength and columnHopLength`);
+          `Check your columnBufferLength and columnHopLength.`);
     }
 
     if (this.columnTruncateLength > this.fftSize) {

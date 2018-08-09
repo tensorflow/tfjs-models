@@ -169,6 +169,28 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
         .toThrowError(/Invalid value in numFramesPerSpectrogram: -2/);
   });
 
+  it('constructor errors due to nengative overlapFactor', () => {
+    expect(
+        () => new BrowserFftFeatureExtractor({
+          spectrogramCallback: (x: tf.Tensor) => false,
+          numFramesPerSpectrogram: 43,
+          columnTruncateLength: 225,
+          columnBufferLength: 1024,
+          columnHopLength: -512  // Leads to negative overlapFactor and Error.
+        }))
+        .toThrowError(/Invalid overlapFactor/);
+  });
+
+  it('constructor errors due to columnTruncateLength too large', () => {
+    expect(() => new BrowserFftFeatureExtractor({
+             spectrogramCallback: (x: tf.Tensor) => false,
+             numFramesPerSpectrogram: 43,
+             columnTruncateLength: 1600,  // > 1024 and leads to Error.
+             columnBufferLength: 1024
+           }))
+        .toThrowError(/columnTruncateLength .* exceeds fftSize/);
+  });
+
   it('start and stop: overlapFactor = 0', async done => {
     setUpFakes();
 
