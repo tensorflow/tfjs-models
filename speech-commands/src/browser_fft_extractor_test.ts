@@ -21,6 +21,7 @@ import {describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
 // tslint:disable-next-line:max-line-length
 import {BrowserFftFeatureExtractor, getFrequencyDataFromRotatingBuffer, getInputTensorFromFrequencyData} from './browser_fft_extractor';
 import * as BrowserFftUtils from './browser_fft_utils';
+import {FakeAudioContext, FakeAudioMediaStream} from './browser_test_utils';
 
 const testEnvs = tf.test_util.NODE_ENVS;
 
@@ -77,53 +78,6 @@ describeWithFlags('getInputTensorFromFrequencyData', testEnvs, () => {
 });
 
 describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
-  class FakeAudioContext {
-    readonly sampleRate = 44100;
-
-    static createInstance() {
-      return new FakeAudioContext();
-    }
-
-    // tslint:disable-next-line:no-any
-    createMediaStreamSource(): any {
-      return new FakeMediaStreamAudioSourceNode();
-    }
-
-    // tslint:disable-next-line:no-any
-    createAnalyser(): any {
-      return new FakeAnalyser();
-    }
-
-    close(): void {}
-  }
-
-  class FakeAudioMediaStream {
-    constructor() {}
-  }
-
-  class FakeMediaStreamAudioSourceNode {
-    constructor() {}
-
-    // tslint:disable-next-line:no-any
-    connect(node: any): void {}
-  }
-
-  class FakeAnalyser {
-    fftSize: number;
-    smoothingTimeConstant: number;
-    constructor() {}
-
-    getFloatFrequencyData(data: Float32Array) {
-      const xs: number[] = [];
-      for (let i = 0; i < this.fftSize / 2; ++i) {
-        xs.push(i);
-      }
-      data.set(new Float32Array(xs));
-    }
-
-    disconnect(): void {}
-  }
-
   function setUpFakes() {
     spyOn(BrowserFftUtils, 'getAudioContextConstructor')
         .and.callFake(() => FakeAudioContext.createInstance);

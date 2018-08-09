@@ -15,6 +15,10 @@
  * =============================================================================
  */
 
+/**
+ * Audio FFT Feature Extractor based on Browser-Native FFT.
+ */
+
 import * as tf from '@tensorflow/tfjs';
 
 // tslint:disable-next-line:max-line-length
