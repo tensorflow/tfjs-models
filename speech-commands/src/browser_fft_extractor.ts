@@ -17,11 +17,15 @@
 
 import * as tf from '@tensorflow/tfjs';
 
+// tslint:disable-next-line:max-line-length
 import {getAudioContextConstructor, getAudioMediaStream, normalize} from './browser_fft_utils';
 import {FeatureExtractor, RecognizerConfigParams} from './types';
 
 export type SpectrogramCallback = (x: tf.Tensor) => boolean;
 
+/**
+ * Configurations for constructing BrowserFftFeatureExtractor.
+ */
 export interface BrowserFftFeatureExtractorConfig extends
     RecognizerConfigParams {
   /**
@@ -48,15 +52,32 @@ export interface BrowserFftFeatureExtractorConfig extends
   columnTruncateLength?: number;
 }
 
+/**
+ * Audio feature extractor based on Browser-native FFT.
+ *
+ * Uses AudioContext and analyser node.
+ */
 export class BrowserFftFeatureExtractor implements FeatureExtractor {
-  protected readonly spectrogramCallback: SpectrogramCallback;
+  // Number of frames (i.e., columns) per spectrogram used for classification.
   readonly numFramesPerSpectrogram: number;
+
+  // Audio sampling rate in Hz.
   readonly sampleRateHz: number;
+
+  // The FFT length for each spectrogram column.
   readonly fftSize: number;
+
+  // Truncation length for spectrogram columns.
   readonly columnTruncateLength: number;
+
+  // Overlapping factor: the ratio between the temporal spacing between
+  // consecutive spectrograms and the length of each individual spectrogram.
   readonly overlapFactor: number;
 
+  protected readonly spectrogramCallback: SpectrogramCallback;
+
   private stream: MediaStream;
+  // tslint:disable-next-line:no-any
   private audioContextConstructor: any;
   private audioContext: AudioContext;
   private analyser: AnalyserNode;
@@ -69,8 +90,14 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
   private rotatingBuffer: Float32Array;
 
   private frameCount: number;
+  // tslint:disable-next-line:no-any
   private frameIntervalTask: any;
 
+  /**
+   * Constructor of BrowserFftFeatureExtractor.
+   *
+   * @param config Required configuration object.
+   */
   constructor(config: BrowserFftFeatureExtractorConfig) {
     if (config == null) {
       throw new Error(
@@ -168,7 +195,6 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
   }
 
   async stop(): Promise<void> {
-    console.log('In stop');  // DEBUG
     if (this.frameIntervalTask == null) {
       throw new Error(
           'Cannot stop because there is no ongoing streaming activity.');
@@ -220,7 +246,7 @@ export function getInputTensorFromFrequencyData(
   for (let i = 0; i < freqData.length; ++i) {
     tensorBuffer.set(freqData[i], i);
   }
-  let output = tensorBuffer.toTensor().reshape([1, numFrames, fftLength, 1]);
+  const output = tensorBuffer.toTensor().reshape([1, numFrames, fftLength, 1]);
   return toNormalize ? normalize(output) : output;
 }
 

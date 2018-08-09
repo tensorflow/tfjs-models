@@ -18,6 +18,7 @@
 import * as tf from '@tensorflow/tfjs';
 import {describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
+// tslint:disable-next-line:max-line-length
 import {BrowserFftFeatureExtractor, getFrequencyDataFromRotatingBuffer, getInputTensorFromFrequencyData} from './browser_fft_extractor';
 import * as BrowserFftUtils from './browser_fft_utils';
 
@@ -83,12 +84,14 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
       return new FakeAudioContext();
     }
 
+    // tslint:disable-next-line:no-any
     createMediaStreamSource(): any {
       return new FakeMediaStreamAudioSourceNode();
     }
 
+    // tslint:disable-next-line:no-any
     createAnalyser(): any {
-      return new FakeAnalyser();  // TODO(cais):
+      return new FakeAnalyser();
     }
 
     close(): void {}
@@ -101,6 +104,7 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
   class FakeMediaStreamAudioSourceNode {
     constructor() {}
 
+    // tslint:disable-next-line:no-any
     connect(node: any): void {}
   }
 
@@ -142,7 +146,28 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
     expect(extractor.overlapFactor).toBeCloseTo(0.5);
   });
 
-  // TODO(cais): Cover error conditions.
+  it('constructor errors due to null config', () => {
+    expect(() => new BrowserFftFeatureExtractor(null))
+        .toThrowError(/Required configuration object is missing/);
+  });
+
+  it('constructor errors due to missing spectrogramCallback', () => {
+    expect(() => new BrowserFftFeatureExtractor({
+             spectrogramCallback: null,
+             numFramesPerSpectrogram: 43,
+             columnTruncateLength: 225,
+           }))
+        .toThrowError(/spectrogramCallback cannot be null or undefined/);
+  });
+
+  it('constructor errors due to invalid numFramesPerSpectrogram', () => {
+    expect(() => new BrowserFftFeatureExtractor({
+             spectrogramCallback: (x: tf.Tensor) => false,
+             numFramesPerSpectrogram: -2,
+             columnTruncateLength: 225,
+           }))
+        .toThrowError(/Invalid value in numFramesPerSpectrogram: -2/);
+  });
 
   it('start and stop: overlapFactor = 0', async done => {
     setUpFakes();
@@ -250,6 +275,14 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
       columnBufferLength: 1024,
       columnHopLength: 1024,
     });
-    await extractor.stop();
+
+    let caughtError: Error;
+    try {
+      await extractor.stop();
+    } catch (err) {
+      caughtError = err;
+    }
+    expect(caughtError.message)
+        .toMatch(/Cannot stop because there is no ongoing streaming activity/);
   });
 });
