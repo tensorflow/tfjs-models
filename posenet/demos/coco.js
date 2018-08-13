@@ -24,6 +24,7 @@ import {
   drawPoint,
   drawSegment,
   drawSkeleton,
+  drawBoundingBox,
   renderImageToCanvas,
 } from './demo_util';
 // clang-format on
@@ -74,6 +75,10 @@ function drawResults(canvas, poses, minPartConfidence, minPoseConfidence) {
       if (guiState.showSkeleton) {
         drawSkeleton(
             pose.keypoints, minPartConfidence, canvas.getContext('2d'));
+      }
+
+      if (guiState.showBoundingBox) {
+        drawBoundingBox(pose.keypoints, canvas.getContext('2d'));
       }
     }
   });
@@ -376,6 +381,7 @@ function setupGui(net) {
     },
     showKeypoints: true,
     showSkeleton: true,
+    showBoundingBox: false,
     visualizeOutputs: {
       part: 0,
       showHeatmap: false,
@@ -431,6 +437,7 @@ function setupGui(net) {
 
   gui.add(guiState, 'showKeypoints').onChange(decodeSingleAndMultiplePoses);
   gui.add(guiState, 'showSkeleton').onChange(decodeSingleAndMultiplePoses);
+  gui.add(guiState, 'showBoundingBox').onChange(decodeSingleAndMultiplePoses);
 
   const visualizeOutputs = gui.addFolder('Visualize Outputs');
 
