@@ -11,7 +11,7 @@ The camera demo shows how to create a custom classifier with 3 classes that can 
 cd into the demos folder:
 
 ```sh
-cd knn-classifier/demos
+cd knn-classifier/demo
 ```
 
 Install dependencies and prepare the build directory:
@@ -47,7 +47,7 @@ yarn publish-local
 cd into this directory, knn-classifier/demos and install dependencies:
 
 ```sh
-cd demos
+cd demo
 yarn
 ```
 
