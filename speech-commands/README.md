@@ -68,6 +68,9 @@ shape of the Tensor must match the expectation of the recognizer instance.
 E.g.,
 
 ```js
+import * as tf from '@tensorflow/tfjs';
+import * as SpeechCommands from '@tensorflow-models/speech-commands';
+
 const recognizer = SpeechCommands.create('BROWSER_FFT');
 
 // Inspect the input shape of the recognizer's underlying tf.Model.
@@ -98,7 +101,7 @@ By default, a recognizer object will load the underlying
 tf.Model via HTTP requests to a centralized location, when its
 `startStreaming()` or `recognize()` method is called the first time.
 You can pre-load the model to reduce the latency of the first calls
-to these methods. To do that use the `ensureModelLoaded()` method of the
+to these methods. To do that, use the `ensureModelLoaded()` method of the
 recognizer object.
 
 ## How to run the demo
