@@ -37,3 +37,6 @@ export function create(fftType: FFT_TYPE): SpeechCommandRecognizer {
     throw new Error(`Invalid fftType: '${fftType}'`);
   }
 }
+
+// tslint:disable-next-line:max-line-length
+export {FFT_TYPE, RecognizerConfigParams, SpectrogramData, SpeechCommandRecognizerResult, StreamingRecognitionConfig} from './types';
