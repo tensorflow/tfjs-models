@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>TensorFlow.js Speech Commands Model Demo</title>
+    <style>
+        .control {
+            display: inline-block;
+        }
+        button {
+            color: #ff8300;
+            background-color: #ffffff;
+            border-style: solid;
+            border-width: 2px;
+            border-color: #ff8300;
+            border-radius: 10px;
+            font-size: 35px;
+            height: 80px;
+            min-width: 160px;
+            margin: 5px;
+        }
+        button:disabled {
+            color: #a0a0a0;
+            border-color: #a0a0a0;
+        }
+        input {
+            color: #0000ff;
+            background-color: #ffffff;
+            border-style: solid;
+            border-width: 2px;
+            border-color: #0000ff;
+            border-radius: 10px;
+            font-size: 35px;
+            height: 80px;
+            min-width: 160px;
+            margin: 5px;
+        }
+        textarea {
+            font-size: 20px;
+            width: 90%;
+            height: 80%;
+            border: 2px solid #888;
+            border-radius: 10px;
+            resize: none;
+        }
+        .footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 20%;
+        }
+        .main-model {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+        }
+        .start-stop {
+            position: absolute;
+            top: 10px;
+            left: 40%;
+        }
+        .transfer-learn {
+            position: absolute;
+            top: 40%;
+        }
+        .word-div {
+            border-radius: 10px;
+            margin: 3px;
+        }
+    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+  <div class="footer">
+    <textarea id="status-display" cols="80"></textarea>
+  </div>
+  
+  <div class='main-model'>
+    <button id="create-recognizer">Create Recognizer</button>
+    <div>
+      <canvas id="prediction-canvas" height="250" width="600"></canvas>
+    </div>
+    <canvas id="spectrogram-canvas" height="250" width="600"></canvas>
+  </div>
+
+  <div class="start-stop">
+    <button id="start" disabled="true">Start</button>
+    <button id="stop" disabled="true">Stop</button>
+  </div>
+
+  <script src="index.js"></script>
+</body>
+
+</html>
