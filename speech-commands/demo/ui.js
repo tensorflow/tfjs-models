@@ -17,7 +17,7 @@
 
 /**
  * Log a message to a textarea.
- * 
+ *
  * @param {string} message Message to be logged.
  */
 export function logToStatusDisplay(message) {
@@ -29,7 +29,7 @@ export function logToStatusDisplay(message) {
 
 /**
  * Show an audio spectrogram in a canvas.
- * 
+ *
  * @param {HTMLCanvasElement} canvas The canvas element to draw the
  *   spectrogram in.
  * @param {Float32Array} frequencyData The flat array for the spectrogram
@@ -38,10 +38,8 @@ export function logToStatusDisplay(message) {
  * @param {number} fftDisplaySize Number of frequency points to show. Must be
  *   <= fftSize.
  */
-export function plotSpectrogram(canvas,
-                                frequencyData,
-                                fftSize,
-                                fftDisplaySize) {
+export function plotSpectrogram(
+    canvas, frequencyData, fftSize, fftDisplaySize) {
   if (fftDisplaySize == null) {
     fftDisplaySize = fftSize;
   }
@@ -92,12 +90,12 @@ export function plotSpectrogram(canvas,
 
 /**
  * Plot top-K predictions from a speech command recognizer.
- * 
+ *
  * @param {HTMLCanvasElement} canvas The canvas to render the predictions in.
  * @param {string[]} candidateWords Candidate word array.
  * @param {Float32Array | number[]} probabilities Probability scores from the
  *   speech command recognizer. Must be of the same length as `candidateWords`.
- * @param {number} topK Top _ scores to redner.
+ * @param {number} topK Top _ scores to render.
  */
 export function plotPredictions(canvas, candidateWords, probabilities, topK) {
   if (topK != null) {
@@ -135,10 +133,8 @@ export function plotPredictions(canvas, candidateWords, probabilities, topK) {
   for (let i = 0; i < probabilities.length; ++i) {
     const x = i * (barWidth + barGap);
     context.rect(
-      x,
-      canvas.height * 0.95 * (1 - probabilities[i]),
-      barWidth,
-      canvas.height * 0.95 * probabilities[i]);
+        x, canvas.height * 0.95 * (1 - probabilities[i]), barWidth,
+        canvas.height * 0.95 * probabilities[i]);
   }
   context.stroke();
 }

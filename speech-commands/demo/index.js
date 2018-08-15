@@ -32,8 +32,8 @@ createRecognizerButton.addEventListener('click', async () => {
   logToStatusDisplay('Creating recognizer...');
   recognizer = SpeechCommands.create('BROWSER_FFT');
 
-  // Make sure the tf.Model is loaded through HTTP. If this is not 
-  // called here, the tf.Model will be loaded the first time 
+  // Make sure the tf.Model is loaded through HTTP. If this is not
+  // called here, the tf.Model will be loaded the first time
   // `startStreaming()` is called.
   recognizer.ensureModelLoaded()
       .then(() => {
@@ -48,9 +48,9 @@ createRecognizerButton.addEventListener('click', async () => {
         logToStatusDisplay(
             `spectrogramDurationMillis: ` +
             `${params.spectrogramDurationMillis.toFixed(2)}`);
-        logToStatusDisplay( 
+        logToStatusDisplay(
             `tf.Model input shape: ` +
-            `${JSON.stringify(recognizer.inputShape())}`);
+            `${JSON.stringify(recognizer.modelInputShape())}`);
       })
       .catch(err => {
         logToStatusDisplay(
@@ -59,32 +59,36 @@ createRecognizerButton.addEventListener('click', async () => {
 });
 
 startButton.addEventListener('click', () => {
-  recognizer.startStreaming(result => {
-    plotPredictions(
-        predictionCanvas, recognizer.wordLabels(), result.scores, 3);
-    plotSpectrogram(
-        spectrogramCanvas, result.spectrogram.data,
-        result.spectrogram.frameSize, result.spectrogram.frameSize);
-  }, {
-    includeSpectrogram: true,
-    probabilityThreshold: 0.5
-  }).then(() => {
-    startButton.disabled = true;
-    stopButton.disabled = false;
-    logToStatusDisplay('Streaming recognition started.');
-  }).catch(err => {
-    logToStatusDisplay(
-        'ERROR: Failed to start streaming display: ' + err.message);
-  });
+  recognizer
+      .startStreaming(
+          result => {
+            plotPredictions(
+                predictionCanvas, recognizer.wordLabels(), result.scores, 3);
+            plotSpectrogram(
+                spectrogramCanvas, result.spectrogram.data,
+                result.spectrogram.frameSize, result.spectrogram.frameSize);
+          },
+          {includeSpectrogram: true, probabilityThreshold: 0.5})
+      .then(() => {
+        startButton.disabled = true;
+        stopButton.disabled = false;
+        logToStatusDisplay('Streaming recognition started.');
+      })
+      .catch(err => {
+        logToStatusDisplay(
+            'ERROR: Failed to start streaming display: ' + err.message);
+      });
 });
 
 stopButton.addEventListener('click', () => {
-  recognizer.stopStreaming().then(() => {
-    startButton.disabled = false;
-    stopButton.disabled = true;
-    logToStatusDisplay('Streaming recognition stopped.');
-  }).catch(error => {
-    logToStatusDisplay(
-        'ERROR: Failed to stop streaming display: ' + err.message);
-  });
+  recognizer.stopStreaming()
+      .then(() => {
+        startButton.disabled = false;
+        stopButton.disabled = true;
+        logToStatusDisplay('Streaming recognition stopped.');
+      })
+      .catch(error => {
+        logToStatusDisplay(
+            'ERROR: Failed to stop streaming display: ' + err.message);
+      });
 });

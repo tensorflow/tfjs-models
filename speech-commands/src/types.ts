@@ -62,6 +62,9 @@ export interface SpeechCommandRecognizer {
   recognize(input: tf.Tensor|
             Float32Array): Promise<SpeechCommandRecognizerResult>;
 
+  // Get the input shape of the tf.Model the underlies the recognizer.
+  modelInputShape(): tf.Shape;
+
   // Getter for word labels.
   wordLabels(): string[];
 

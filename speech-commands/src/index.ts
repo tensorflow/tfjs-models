@@ -18,12 +18,21 @@
 import {BrowserFftSpeechCommandRecognizer} from './browser_fft_recognizer';
 import {FFT_TYPE, SpeechCommandRecognizer} from './types';
 
+/**
+ * Create an instance of speech-command recognizer.
+ * 
+ * @param fftType Type of FFT. The currently availble option(s):
+ *   - BROWSER_FFT: Obtains audio spectrograms using browser's native Fourier
+ *     transform.
+ * @returns An instance of SpeechCommandRecognizer.
+ * @throws Error on invalid value of `fftType`.
+ */
 export function create(fftType: FFT_TYPE): SpeechCommandRecognizer {
   if (fftType === 'BROWSER_FFT') {
     return new BrowserFftSpeechCommandRecognizer();
   } else if (fftType === 'SOFT_FFT') {
     throw new Error(
-        'SOFT_FFT SpeechCommandRecognizer has not been implemented yet.')
+        'SOFT_FFT SpeechCommandRecognizer has not been implemented yet.');
   } else {
     throw new Error(`Invalid fftType: '${fftType}'`);
   }

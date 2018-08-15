@@ -1,29 +1,28 @@
 # Speech Command Recognizer 
 
-The Speech Command Recognizer is a JavaScript module that allows you
-to recognize spoken commands comprised of simple isolated English
-words via the web browser's WebAudio API. It is built on top of
-[TensorFlow.js](js.tensorflow.org) and is able to perform inference
-and transfer learning entirely in the browser, using WebGL GPU
-acceleration.
+The Speech Command Recognizer is a JavaScript module that enables
+recognition of spoken commands comprised of simple isolated English
+words from a small vocabulary. It uses the web browser's WebAudio API.
+It is built on top of [TensorFlow.js](https://js.tensorflow.org) and can
+perform inference and transfer learning entirely in the browser, using
+WebGL GPU acceleration.
 
 ## API Usage
 
 A speech command recognizer can be used in two ways:
 
-1. Online streaming recognition, during which the library automatically opens
-   an audio input channel via the browser's `getUserMedia` and WebAudio
-   APIs (requesting permission from user) and performs recognition on
-   the audio input in real time.
-2. Offline recognition, in which you provide a pre-constructed TensorFlow.js
+1. **Online streaming recognition**, during which the library automatically
+   opens an audio input channel using the browser's `getUserMedia` and WebAudio
+   APIs (requesting permission from user) and performs real-time recognition on
+   the audio input.
+2. **Offline recognition**, in which you provide a pre-constructed TensorFlow.js
    [Tensor](https://js.tensorflow.org/api/latest/#tensor) object or a
    `Float32Array` and the recognizer will return the recognition results.
 
 ### Online streaminng recognition
 
 To use the speech-command recognizer, first create a recognizer instance,
-then call its `startStreaming()` method.
-e.g.,
+then start the streaming recognition by calling its `startStreaming()` method.
 
 ```js
 import * as SpeechCommands from '@tensorflow-models/speech-commands';
@@ -95,7 +94,24 @@ tf.tidy(() => {
 
 ### Preloading model
 
-Note that by default, the recognizer instance will load the underlying
-tf.Model via HTTP requests to a centralized location when its `startStreaming`
-or `recognize` method is called the first time. To pre-load the model, you can
-use `ensureModelLoaded`.
+By default, a recognizer object will load the underlying
+tf.Model via HTTP requests to a centralized location, when its
+`startStreaming()` or `recognize()` method is called the first time.
+You can pre-load the model to reduce the latency of the first calls
+to these methods. To do that use the `ensureModelLoaded()` method of the
+recognizer object.
+
+## How to run the demo
+
+The demo/ folder contains a live demo of the speech-command recognizer.
+To run it, do
+
+```sh
+cd speech-commands
+yarn
+yarn publish-local
+cd demo
+yarn
+yarn link-local
+yarn watch
+```

@@ -266,10 +266,15 @@ export class BrowserFftSpeechCommandRecognizer implements
 
   /**
    * Get the input shape of the underlying tf.Model.
-   * 
+   *
    * @returns The input shape.
    */
-  inputShape(): tf.Shape {
+  modelInputShape(): tf.Shape {
+    if (this.model == null) {
+      throw new Error(
+          'Model has not be loaded yet. Load model by calling ' +
+          'ensureModelLoaded(), recognizer(), or startStreaming().');
+    }
     return this.model.inputs[0].shape;
   }
 
