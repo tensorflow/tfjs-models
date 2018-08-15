@@ -15,6 +15,11 @@
  * =============================================================================
  */
 
+const BACKGROUND_NOISE_TAG = '_background_noise_';
+
+const statusDisplay = document.getElementById('status-display');
+const candidateWordsContainer = document.getElementById('candidate-words');
+
 /**
  * Log a message to a textarea.
  *
@@ -22,9 +27,42 @@
  */
 export function logToStatusDisplay(message) {
   const date = new Date();
-  const statusDisplay = document.getElementById('status-display');
   statusDisplay.value += `[${date.toISOString()}] ` + message + '\n';
   statusDisplay.scrollTop = statusDisplay.scrollHeight;
+}
+
+/**
+ * Display candidate words in the UI.
+ *
+ * The background-noise "word" will be omitted.
+ *
+ * @param {*} words Candidate words.
+ */
+export function populateCandidateWords(words) {
+
+  const candidatesLabel = document.createElement('span');
+  candidatesLabel.textContent = 'Words to say: ';
+  candidatesLabel.classList.add('candidate-word');
+  candidatesLabel.classList.add('candidate-word-label');
+  candidateWordsContainer.appendChild(candidatesLabel);
+
+  for (const word of words) {
+    if (word === BACKGROUND_NOISE_TAG) {
+      continue;
+    }
+    const wordSpan = document.createElement('span');
+    wordSpan.textContent = word;
+    wordSpan.classList.add('candidate-word');
+    candidateWordsContainer.appendChild(wordSpan);
+  }
+}
+
+export function showCandidateWords() {
+  candidateWordsContainer.classList.remove('candidate-words-hidden');
+}
+
+export function hideCandidateWords() {
+  candidateWordsContainer.classList.add('candidate-words-hidden');
 }
 
 /**
@@ -122,7 +160,7 @@ export function plotPredictions(canvas, candidateWords, probabilities, topK) {
   context.beginPath();
   for (let i = 0; i < candidateWords.length; ++i) {
     let word = candidateWords[i];
-    if (word === '_background_noise_') {
+    if (word === BACKGROUND_NOISE_TAG) {
       word = 'noise';
     }
     context.fillText(word, i * (barWidth + barGap), 0.95 * canvas.height);
