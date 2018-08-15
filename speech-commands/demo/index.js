@@ -24,6 +24,7 @@ let recognizer;
 
 const createRecognizerButton = document.getElementById('create-recognizer');
 const startButton = document.getElementById('start');
+const stopButton = document.getElementById('stop');
 const statusDisplay = document.getElementById('status-display');
 
 createRecognizerButton.addEventListener('click', () => {
@@ -53,11 +54,25 @@ createRecognizerButton.addEventListener('click', () => {
 startButton.addEventListener('click', () => {
   console.log('Calling startStreaming()');  // DEBUG
   recognizer.startStreaming(result => {
-
+    console.log('In recognition callback: result:', result);  // DEBUG
   }).then(() => {
+    startButton.disabled = true;
+    stopButton.disabled = false;
     logToStatusDisplay('Streaming recognition started.');
   }).catch(err => {
-    logToStatusDisplay('Failed to start streaming display: ' + err.message);
+    logToStatusDisplay(
+        'ERROR: Failed to start streaming display: ' + err.message);
+  });
+});
+
+stopButton.addEventListener('click', () => {
+  recognizer.stopStreaming().then(() => {
+    startButton.disabled = false;
+    stopButton.disabled = true;
+    logToStatusDisplay('Streaming recognition stopped.');
+  }).catch(error => {
+    logToStatusDisplay(
+        'ERROR: Failed to stop streaming display: ' + err.message);
   });
 });
 
