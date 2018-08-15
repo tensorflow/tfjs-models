@@ -88,7 +88,7 @@ console.log(recognizer.params().sampleRateHz);
 console.log(recognizer.params().fftSize);
 
 tf.tidy(() => {
-  const x = tf.tensor(
+  const x = tf.tensor4d(
       mySpectrogramData, [1].concat(recognizer.modelInputShape().slice(1)));
   const output = recognizer.recognize(x);
   // output has the same format as `result` in the online streaming example
