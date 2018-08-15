@@ -15,17 +15,18 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
-import * as SpeechCommands from '../src/index';
+import * as SpeechCommands from '../src';
 
-console.log(SpeechCommands);  // DEBUG
-
-let recognizer;
+import {plotPredictions, plotSpectrogram} from './ui';
 
 const createRecognizerButton = document.getElementById('create-recognizer');
 const startButton = document.getElementById('start');
 const stopButton = document.getElementById('stop');
 const statusDisplay = document.getElementById('status-display');
+const predictionCanvas = document.getElementById('prediction-canvas');
+const spectrogramCanvas = document.getElementById('spectrogram-canvas');
+
+let recognizer;
 
 createRecognizerButton.addEventListener('click', () => {
   createRecognizerButton.disabled = true;
@@ -52,9 +53,15 @@ createRecognizerButton.addEventListener('click', () => {
 });
 
 startButton.addEventListener('click', () => {
-  console.log('Calling startStreaming()');  // DEBUG
   recognizer.startStreaming(result => {
-    console.log('In recognition callback: result:', result);  // DEBUG
+    plotPredictions(
+        predictionCanvas, recognizer.wordLabels(), result.scores, 3);
+    plotSpectrogram(
+        spectrogramCanvas, result.spectrogram.data,
+        result.spectrogram.frameSize, result.spectrogram.frameSize);
+  }, {
+    includeSpectrogram: true,
+    probabilityThreshold: 0.5
   }).then(() => {
     startButton.disabled = true;
     stopButton.disabled = false;
