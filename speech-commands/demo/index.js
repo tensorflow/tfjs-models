@@ -31,6 +31,10 @@ createRecognizerButton.addEventListener('click', async () => {
   createRecognizerButton.disabled = true;
   logToStatusDisplay('Creating recognizer...');
   recognizer = SpeechCommands.create('BROWSER_FFT');
+
+  // Make sure the tf.Model is loaded through HTTP. If this is not 
+  // called here, the tf.Model will be loaded the first time 
+  // `startStreaming()` is called.
   recognizer.ensureModelLoaded()
       .then(() => {
         logToStatusDisplay('Model loaded.');
@@ -44,6 +48,9 @@ createRecognizerButton.addEventListener('click', async () => {
         logToStatusDisplay(
             `spectrogramDurationMillis: ` +
             `${params.spectrogramDurationMillis.toFixed(2)}`);
+        logToStatusDisplay( 
+            `tf.Model input shape: ` +
+            `${JSON.stringify(recognizer.inputShape())}`);
       })
       .catch(err => {
         logToStatusDisplay(

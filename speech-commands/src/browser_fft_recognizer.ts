@@ -265,6 +265,15 @@ export class BrowserFftSpeechCommandRecognizer implements
   }
 
   /**
+   * Get the input shape of the underlying tf.Model.
+   * 
+   * @returns The input shape.
+   */
+  inputShape(): tf.Shape {
+    return this.model.inputs[0].shape;
+  }
+
+  /**
    * Run offline (non-streaming) recognition on a spectrogram.
    *
    * @param input Spectrogram. Either a `tf.Tensor` of a `Float32Array`.
