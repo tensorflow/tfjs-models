@@ -20,7 +20,7 @@ import {FFT_TYPE, SpeechCommandRecognizer} from './types';
 
 /**
  * Create an instance of speech-command recognizer.
- * 
+ *
  * @param fftType Type of FFT. The currently availble option(s):
  *   - BROWSER_FFT: Obtains audio spectrograms using browser's native Fourier
  *     transform.
