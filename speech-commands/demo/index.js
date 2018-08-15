@@ -17,18 +17,17 @@
 
 import * as SpeechCommands from '../src';
 
-import {plotPredictions, plotSpectrogram} from './ui';
+import {logToStatusDisplay, plotPredictions, plotSpectrogram} from './ui';
 
 const createRecognizerButton = document.getElementById('create-recognizer');
 const startButton = document.getElementById('start');
 const stopButton = document.getElementById('stop');
-const statusDisplay = document.getElementById('status-display');
 const predictionCanvas = document.getElementById('prediction-canvas');
 const spectrogramCanvas = document.getElementById('spectrogram-canvas');
 
 let recognizer;
 
-createRecognizerButton.addEventListener('click', () => {
+createRecognizerButton.addEventListener('click', async () => {
   createRecognizerButton.disabled = true;
   logToStatusDisplay('Creating recognizer...');
   recognizer = SpeechCommands.create('BROWSER_FFT');
@@ -82,9 +81,3 @@ stopButton.addEventListener('click', () => {
         'ERROR: Failed to stop streaming display: ' + err.message);
   });
 });
-
-function logToStatusDisplay(message) {
-  const date = new Date();
-  statusDisplay.value += `[${date.toISOString()}] ` + message + '\n';
-  statusDisplay.scrollTop = statusDisplay.scrollHeight;
-}
