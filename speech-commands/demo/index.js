@@ -17,7 +17,7 @@
 
 import * as SpeechCommands from '../src';
 
-import {logToStatusDisplay, plotPredictions, plotSpectrogram} from './ui';
+import {logToStatusDisplay, plotPredictions, plotSpectrogram, populateCandidateWords, showCandidateWords, hideCandidateWords} from './ui';
 
 const createRecognizerButton = document.getElementById('create-recognizer');
 const startButton = document.getElementById('start');
@@ -37,10 +37,12 @@ createRecognizerButton.addEventListener('click', async () => {
   // `startStreaming()` is called.
   recognizer.ensureModelLoaded()
       .then(() => {
+        startButton.disabled = false;
+
         logToStatusDisplay('Model loaded.');
         const wordLabels = recognizer.wordLabels();
         logToStatusDisplay(`${wordLabels.length} word labels: ${wordLabels}`);
-        startButton.disabled = false;
+        populateCandidateWords(wordLabels);
 
         const params = recognizer.params();
         logToStatusDisplay(`sampleRateHz: ${params.sampleRateHz}`);
@@ -72,6 +74,7 @@ startButton.addEventListener('click', () => {
       .then(() => {
         startButton.disabled = true;
         stopButton.disabled = false;
+        showCandidateWords();
         logToStatusDisplay('Streaming recognition started.');
       })
       .catch(err => {
@@ -85,6 +88,7 @@ stopButton.addEventListener('click', () => {
       .then(() => {
         startButton.disabled = false;
         stopButton.disabled = true;
+        hideCandidateWords();
         logToStatusDisplay('Streaming recognition stopped.');
       })
       .catch(error => {

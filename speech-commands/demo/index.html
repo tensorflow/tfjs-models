@@ -67,6 +67,24 @@
             border-radius: 10px;
             margin: 3px;
         }
+        .candidate-word {
+            font-family: monospace;
+            border: 1px solid gray;
+            background-color: lightyellow;
+            margin: 2px;
+            padding-top: 3px;
+            padding-bottom: 3px;
+            padding-left: 5px;
+            padding-right: 5px;
+            border-radius: 3px;
+        }
+        .candidate-word-label {
+            font-weight: bold;
+            background-color: orange;
+        }
+        .candidate-words-hidden {
+            visibility: hidden;
+        }
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
@@ -78,6 +96,8 @@
 
   <div class='main-model'>
     <button id="create-recognizer">Create Recognizer</button>
+    <div id="candidate-words" class="candidate-words-hidden">
+    </div>
     <div>
       <canvas id="prediction-canvas" height="250" width="600"></canvas>
     </div>

@@ -192,6 +192,7 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
     const columnTruncateLength = 225;
     const numCallbacksToComplete = 1;
     let numCallbacksCompleted = 0;
+    // tslint:disable:no-any
     const extractor = new BrowserFftFeatureExtractor({
       spectrogramCallback: (x: tf.Tensor) => {
         expect((extractor as any).rotatingBuffer.length)
@@ -208,6 +209,7 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
       columnBufferLength: 1024,
       columnHopLength: 1024
     });
+    // tslint:enable:no-any
     extractor.start();
   });
 
