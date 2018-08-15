@@ -26,7 +26,7 @@ export type FFT_TYPE = 'BROWSER_FFT'|'SOFT_FFT';
 export type RecognizerCallback = (result: SpeechCommandRecognizerResult) =>
     Promise<void>;
 
-export interface SpeechCommandRecognizer<FFT_TYPE> {
+export interface SpeechCommandRecognizer {
   // Start recognition in a streaming fashion.
   //
   // Args:
@@ -57,15 +57,16 @@ export interface SpeechCommandRecognizer<FFT_TYPE> {
   //     tf.Model. If a Float32Array, the length must be
   //     equal to (the model’s required FFT length) *
   //     (the model’s required frame count).
-  // Returns: recognition result: the probability scores.
+  // Returns: A Promise of recognition result: the probability scores.
   // Throws: Error on incorrect shape or length.
-  recognize(input: tf.Tensor|Float32Array): SpeechCommandRecognizerResult;
+  recognize(input: tf.Tensor|
+            Float32Array): Promise<SpeechCommandRecognizerResult>;
 
-  // Getter word labels.
-  readonly wordLabels: string;
+  // Getter for word labels.
+  wordLabels(): string[];
 
   // Get the required number of frames.
-  readonly params: RecognizerConfigParams;
+  params(): RecognizerConfigParams;
 }
 
 export interface SpectrogramData {
@@ -78,26 +79,51 @@ export interface SpectrogramData {
 
 export interface SpeechCommandRecognizerResult {
   // Probability scores for the words.
-  scores: Float32Array;
+  scores: Float32Array|Float32Array[];
 
   // Optional spectrogram data.
   spectrogram?: SpectrogramData;
 }
 
 export interface StreamingRecognitionConfig {
-  // Overlap factor. Must be a number between >=0 and <1.
-  // Defaults to 0.5.
-  // For example, if the model takes a frame length of 1000 ms,
-  // and if overlap factor is 0.4, there will be a 400-ms
-  // overlap between two successive frames, i.e., frames
-  // will be taken every 600 ms.
+  /**
+   * Overlap factor. Must be a number between >=0 and <1.
+   * Defaults to 0.5.
+   * For example, if the model takes a frame length of 1000 ms,
+   * and if overlap factor is 0.4, there will be a 400-ms
+   * overlap between two successive frames, i.e., frames
+   * will be taken every 600 ms.
+   */
   overlapFactor?: number;
 
-  // minimum samples of the same label for reliable prediction.
+  /**
+   * Minimum samples of the same label for reliable prediction.
+   */
   minSamples?: number;
 
-  // amount to time in ms to suppress recognizer after a word is recognized.
-  suppressionTimeInMs?: number;
+  /**
+   * Amount to time in ms to suppress recognizer after a word is recognized.
+   */
+  suppressionTimeMillis?: number;
+
+  /**
+   * Threshold for the maximum probability value in a model prediction
+   * output to be greater than or equal to, below which the callback
+   * will not be called.
+   *
+   * Must be a number >=0 and <=1.
+   *
+   * If `null` or `undefined`, will default to `0`.
+   */
+  probabilityThreshold?: number;
+
+  /**
+   * Whether the spectrogram is to be provided in the each recognition
+   * callback call.
+   *
+   * Default: `false`.
+   */
+  includeSpectrogram?: boolean;
 }
 
 export interface RecognizerConfigParams {
@@ -109,7 +135,7 @@ export interface RecognizerConfigParams {
   columnHopLength?: number;
 
   // total duration per spectragram.
-  SpectrogramDurationMillis?: number;
+  spectrogramDurationMillis?: number;
 
   // FFT encoding size per spectrogram column.
   fftSize?: number;
@@ -126,10 +152,10 @@ export interface FeatureExtractor {
   setConfig(params: RecognizerConfigParams): void;
 
   // start the feature extraction from the audio samples.
-  start(samples?: Float32Array): Promise<Float32Array[]>|void;
+  start(samples?: Float32Array): Promise<Float32Array[]|void>;
 
   // stop the feature extraction.
-  stop(): void;
+  stop(): Promise<void>;
 
   // return the extractor features collected since last call.
   getFeatures(): Float32Array[];
