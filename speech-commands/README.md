@@ -74,7 +74,7 @@ import * as SpeechCommands from '@tensorflow-models/speech-commands';
 const recognizer = SpeechCommands.create('BROWSER_FFT');
 
 // Inspect the input shape of the recognizer's underlying tf.Model.
-console.log(recognizer.inputShape());
+console.log(recognizer.modelInputShape());
 // You will get something like [null, 43, 232, 1].
 // - The first dimension (null) is an undetermined batch dimension.
 // - The second dimension (43) is the number of audio frames.
@@ -88,7 +88,8 @@ console.log(recognizer.params().sampleRateHz);
 console.log(recognizer.params().fftSize);
 
 tf.tidy(() => {
-  const x = tf.tensor(mySpectrogramData, recognizer.inputShape());
+  const x = tf.tensor4d(
+      mySpectrogramData, [1].concat(recognizer.modelInputShape().slice(1)));
   const output = recognizer.recognize(x);
   // output has the same format as `result` in the online streaming example
   // above: the `scores` field contains the probabilities of the words.
