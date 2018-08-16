@@ -8,7 +8,7 @@ The camera demo shows how to create a custom classifier with 3 classes that can 
 
 ## Setup
 
-cd into the demos folder:
+cd into the demo folder:
 
 ```sh
 cd knn-classifier/demo
