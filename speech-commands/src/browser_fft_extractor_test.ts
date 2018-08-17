@@ -152,12 +152,13 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
 
   it('constructor errors due to negative suppressionTimeMillis', () => {
     expect(() => new BrowserFftFeatureExtractor({
-      spectrogramCallback: (x: tf.Tensor) => false,
-      numFramesPerSpectrogram: 43,
-      columnTruncateLength: 1600,
-      columnBufferLength: 1024,
-      suppressionTimeMillis: -1000    // <0 and leads to Error.
-    })).toThrowError(/Expected suppressionTimeMillis to be >= 0/);
+             spectrogramCallback: (x: tf.Tensor) => false,
+             numFramesPerSpectrogram: 43,
+             columnTruncateLength: 1600,
+             columnBufferLength: 1024,
+             suppressionTimeMillis: -1000  // <0 and leads to Error.
+           }))
+        .toThrowError(/Expected suppressionTimeMillis to be >= 0/);
   });
 
   it('start and stop: overlapFactor = 0', async done => {

@@ -105,7 +105,8 @@ export class BrowserFftSpeechCommandRecognizer implements
         `Invalid probabilityThreshold value: ${probabilityThreshold}`);
     const invokeCallbackOnNoiseAndUnknown =
         config.invokeCallbackOnNoiseAndUnknown == null ?
-        false : config.invokeCallbackOnNoiseAndUnknown;
+        false :
+        config.invokeCallbackOnNoiseAndUnknown;
 
     if (config.suppressionTimeMillis < 0) {
       throw new Error(
@@ -155,9 +156,9 @@ export class BrowserFftSpeechCommandRecognizer implements
       });
     };
 
-    const suppressionTimeMillis =
-        config.suppressionTimeMillis == null ?
-        this.DEFAULT_SUPPRESSION_TIME_MILLIS : config.suppressionTimeMillis;
+    const suppressionTimeMillis = config.suppressionTimeMillis == null ?
+        this.DEFAULT_SUPPRESSION_TIME_MILLIS :
+        config.suppressionTimeMillis;
     this.audioDataExtractor = new BrowserFftFeatureExtractor({
       sampleRateHz: this.parameters.sampleRateHz,
       columnBufferLength: this.parameters.columnBufferLength,

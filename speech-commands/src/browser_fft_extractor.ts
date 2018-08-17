@@ -30,8 +30,7 @@ export type SpectrogramCallback = (x: tf.Tensor) => boolean;
 /**
  * Configurations for constructing BrowserFftFeatureExtractor.
  */
-export interface BrowserFftFeatureExtractorConfig extends
-    RecognizerParams {
+export interface BrowserFftFeatureExtractorConfig extends RecognizerParams {
   /**
    * Number of audio frames (i.e., frequency columns) per spectrogram.
    */
@@ -321,10 +320,9 @@ export class Tracker {
    */
   tick(): boolean {
     this.counter++;
-    const shouldFire =
-      (this.counter % this.period === 0) &&
-      (this.suppressionOnset == null ||
-       this.counter - this.suppressionOnset > this.suppressionTime);
+    const shouldFire = (this.counter % this.period === 0) &&
+        (this.suppressionOnset == null ||
+         this.counter - this.suppressionOnset > this.suppressionTime);
     return shouldFire;
   }
 
