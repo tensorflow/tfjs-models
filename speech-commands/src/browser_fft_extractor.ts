@@ -38,13 +38,21 @@ export interface BrowserFftFeatureExtractorConfig extends
   numFramesPerSpectrogram: number;
 
   /**
+   * Resting period in milliseconds.
+   *
+   * How much time to rest (not call the spectrogramCallback) every time
+   * a word with probability score above threshold is recognized.
+   */
+  suppressionTimeMillis: number;
+
+  /**
    * A callback that is invoked every time a full spectrogram becomes
    * available.
    *
    * `x` is a single-example tf.Tensor instance that includes the batch
    * dimension.
    * The return value is assumed to be whether a flag for whether the
-   * refractory period should initiate, e.g., when a word is recognized.
+   * resting period should initiate, e.g., when a word is recognized.
    */
   spectrogramCallback: SpectrogramCallback;
 
@@ -96,6 +104,9 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
   private frameCount: number;
   // tslint:disable-next-line:no-any
   private frameIntervalTask: any;
+  private frameDurationMillis: number;
+
+  private suppressionTimeMillis: number;
 
   /**
    * Constructor of BrowserFftFeatureExtractor.
@@ -119,10 +130,13 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
           `${config.numFramesPerSpectrogram}`);
     }
 
+    this.suppressionTimeMillis = config.suppressionTimeMillis;
+
     this.spectrogramCallback = config.spectrogramCallback;
     this.numFramesPerSpectrogram = config.numFramesPerSpectrogram;
     this.sampleRateHz = config.sampleRateHz || 44100;
     this.fftSize = config.fftSize || 1024;
+    this.frameDurationMillis = this.fftSize / this.sampleRateHz * 1e3;
     this.columnTruncateLength = config.columnTruncateLength || this.fftSize;
     const columnBufferLength = config.columnBufferLength || this.fftSize;
     const columnHopLength = config.columnHopLength || (this.fftSize / 2);
@@ -173,7 +187,8 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     this.frameCount = 0;
 
     this.tracker = new Tracker(
-        Math.round(this.numFramesPerSpectrogram * this.overlapFactor), null);
+        Math.round(this.numFramesPerSpectrogram * this.overlapFactor),
+        Math.round(this.suppressionTimeMillis / this.frameDurationMillis));
     this.frameIntervalTask = setInterval(
         this.onAudioFrame.bind(this), this.fftSize / this.sampleRateHz * 1e3);
   }
@@ -198,7 +213,10 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
           this.frameCount - this.numFramesPerSpectrogram);
       const inputTensor = getInputTensorFromFrequencyData(
           freqData, this.numFramesPerSpectrogram, this.columnTruncateLength);
-      this.spectrogramCallback(inputTensor);
+      const shouldRest = this.spectrogramCallback(inputTensor);
+      if (shouldRest) {
+        this.tracker.suppress();
+      }
       inputTensor.dispose();
     }
 
@@ -270,9 +288,10 @@ export function getInputTensorFromFrequencyData(
  */
 export class Tracker {
   readonly period: number;
-  readonly suppressionPeriod: number;
+  readonly suppressionTime: number;
 
   private counter: number;
+  private suppressionOnset: number;
 
   /**
    * Constructor of Tracker.
@@ -282,15 +301,12 @@ export class Tracker {
    */
   constructor(period: number, suppressionPeriod: number) {
     this.period = period;
-    this.suppressionPeriod = suppressionPeriod;
+    this.suppressionTime = suppressionPeriod == null ? 0 : suppressionPeriod;
     this.counter = 0;
 
     tf.util.assert(
         this.period > 0,
         `Expected period to be positive, but got ${this.period}`);
-    if (this.suppressionPeriod != null) {
-      throw new Error('Suppression is not implemented yet.');
-    }
   }
 
   /**
@@ -300,8 +316,17 @@ export class Tracker {
    */
   tick(): boolean {
     this.counter++;
-    const shouldFire = this.counter % this.period === 0;
-    // TODO(cais): Add logic for suppressionTimeMillis.
+    const shouldFire =
+      (this.counter % this.period === 0) &&
+      (this.suppressionOnset == null ||
+       this.counter - this.suppressionOnset > this.suppressionTime);
     return shouldFire;
+  }
+
+  /**
+   * Order the beginning of a supression period.
+   */
+  suppress() {
+    this.suppressionOnset = this.counter;
   }
 }

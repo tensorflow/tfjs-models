@@ -37,6 +37,7 @@ export class BrowserFftSpeechCommandRecognizer implements
 
   private readonly SAMPLE_RATE_HZ = 44100;
   private readonly FFT_SIZE = 1024;
+  readonly DEFAULT_SUPPRESSION_TIME_MILLIS = 1000;
 
   model: tf.Model;
   readonly parameters: RecognizerConfigParams;
@@ -100,6 +101,12 @@ export class BrowserFftSpeechCommandRecognizer implements
         probabilityThreshold >= 0 && probabilityThreshold <= 1,
         `Invalid probabilityThreshold value: ${probabilityThreshold}`);
 
+    if (config.suppressionTimeMillis < 0) {
+      throw new Error(
+          `suppressionTimeMillis is expected to be >= 0, ` +
+          `but got ${config.suppressionTimeMillis}`);
+    }
+
     const overlapFactor =
         config.overlapFactor == null ? 0.5 : config.overlapFactor;
     tf.util.assert(
@@ -129,12 +136,16 @@ export class BrowserFftSpeechCommandRecognizer implements
       });
     };
 
+    const suppressionTimeMillis =
+        config.suppressionTimeMillis == null ?
+        this.DEFAULT_SUPPRESSION_TIME_MILLIS : config.suppressionTimeMillis;
     this.audioDataExtractor = new BrowserFftFeatureExtractor({
       sampleRateHz: this.parameters.sampleRateHz,
       columnBufferLength: this.parameters.columnBufferLength,
       columnHopLength: this.parameters.columnHopLength,
       numFramesPerSpectrogram: this.nonBatchInputShape[0],
       columnTruncateLength: this.nonBatchInputShape[1],
+      suppressionTimeMillis,
       spectrogramCallback
     });
 
