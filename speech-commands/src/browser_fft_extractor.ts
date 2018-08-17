@@ -23,7 +23,7 @@ import * as tf from '@tensorflow/tfjs';
 
 // tslint:disable-next-line:max-line-length
 import {getAudioContextConstructor, getAudioMediaStream, normalize} from './browser_fft_utils';
-import {FeatureExtractor, RecognizerConfigParams} from './types';
+import {FeatureExtractor, RecognizerParams} from './types';
 
 export type SpectrogramCallback = (x: tf.Tensor) => boolean;
 
@@ -31,7 +31,7 @@ export type SpectrogramCallback = (x: tf.Tensor) => boolean;
  * Configurations for constructing BrowserFftFeatureExtractor.
  */
 export interface BrowserFftFeatureExtractorConfig extends
-    RecognizerConfigParams {
+    RecognizerParams {
   /**
    * Number of audio frames (i.e., frequency columns) per spectrogram.
    */
@@ -130,6 +130,11 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
           `${config.numFramesPerSpectrogram}`);
     }
 
+    if (config.suppressionTimeMillis < 0) {
+      throw new Error(
+          `Expected suppressionTimeMillis to be >= 0, ` +
+          `but got ${config.suppressionTimeMillis}`);
+    }
     this.suppressionTimeMillis = config.suppressionTimeMillis;
 
     this.spectrogramCallback = config.spectrogramCallback;
@@ -234,7 +239,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     this.audioContext.close();
   }
 
-  setConfig(params: RecognizerConfigParams) {
+  setConfig(params: RecognizerParams) {
     throw new Error(
         'setConfig() is not implemented for BrowserFftFeatureExtractor.');
   }

@@ -69,7 +69,7 @@ export interface SpeechCommandRecognizer {
   wordLabels(): string[];
 
   // Get the required number of frames.
-  params(): RecognizerConfigParams;
+  params(): RecognizerParams;
 }
 
 export interface SpectrogramData {
@@ -129,7 +129,7 @@ export interface StreamingRecognitionConfig {
   includeSpectrogram?: boolean;
 }
 
-export interface RecognizerConfigParams {
+export interface RecognizerParams {
   // audio sample window size per spectrogram column.
   columnBufferLength?: number;
 
@@ -152,7 +152,7 @@ export interface RecognizerConfigParams {
 
 export interface FeatureExtractor {
   // config the feature extractor.
-  setConfig(params: RecognizerConfigParams): void;
+  setConfig(params: RecognizerParams): void;
 
   // start the feature extraction from the audio samples.
   start(samples?: Float32Array): Promise<Float32Array[]|void>;

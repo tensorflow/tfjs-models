@@ -20,7 +20,7 @@ import * as tf from '@tensorflow/tfjs';
 // tslint:disable:max-line-length
 import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
 import {loadMetadataJson} from './browser_fft_utils';
-import {RecognizerCallback, RecognizerConfigParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig} from './types';
+import {RecognizerCallback, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig} from './types';
 // tslint:enable:max-line-length
 
 /**
@@ -40,7 +40,7 @@ export class BrowserFftSpeechCommandRecognizer implements
   readonly DEFAULT_SUPPRESSION_TIME_MILLIS = 1000;
 
   model: tf.Model;
-  readonly parameters: RecognizerConfigParams;
+  readonly parameters: RecognizerParams;
   protected words: string[];
   private streaming: boolean;
 
@@ -271,7 +271,7 @@ export class BrowserFftSpeechCommandRecognizer implements
    *
    * @returns Parameters of this instance.
    */
-  params(): RecognizerConfigParams {
+  params(): RecognizerParams {
     return this.parameters;
   }
 
