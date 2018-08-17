@@ -70,7 +70,7 @@ startButton.addEventListener('click', () => {
                 spectrogramCanvas, result.spectrogram.data,
                 result.spectrogram.frameSize, result.spectrogram.frameSize);
           },
-          {includeSpectrogram: true, probabilityThreshold: 0.9})
+          {includeSpectrogram: true, probabilityThreshold: 0.75})
       .then(() => {
         startButton.disabled = true;
         stopButton.disabled = false;
