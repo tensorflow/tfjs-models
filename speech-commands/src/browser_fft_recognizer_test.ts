@@ -71,6 +71,9 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(recognizer.params().spectrogramDurationMillis)
         .toBeCloseTo(fakeNumFrames * 1024 / 44100 * 1e3);
     expect(recognizer.model instanceof tf.Model).toEqual(true);
+    expect(recognizer.modelInputShape()).toEqual([
+      null, fakeNumFrames, fakeColumnTruncateLength, 1
+    ]);
   });
 
   it('ensureModelLoaded fails: words - model output mismatch', async () => {

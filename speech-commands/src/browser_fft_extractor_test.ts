@@ -185,6 +185,34 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
     extractor.start();
   });
 
+  it('start and stop: correct rotating buffer size', async done => {
+    setUpFakes();
+
+    const numFramesPerSpectrogram = 43;
+    const columnTruncateLength = 225;
+    const numCallbacksToComplete = 1;
+    let numCallbacksCompleted = 0;
+    // tslint:disable:no-any
+    const extractor = new BrowserFftFeatureExtractor({
+      spectrogramCallback: (x: tf.Tensor) => {
+        expect((extractor as any).rotatingBuffer.length)
+            .toEqual(
+                numFramesPerSpectrogram * columnTruncateLength *
+                (extractor as any).ROTATING_BUFFER_SIZE_MULTIPLIER);
+        if (++numCallbacksCompleted >= numCallbacksToComplete) {
+          extractor.stop().then(done);
+        }
+        return false;
+      },
+      numFramesPerSpectrogram,
+      columnTruncateLength,
+      columnBufferLength: 1024,
+      columnHopLength: 1024
+    });
+    // tslint:enable:no-any
+    extractor.start();
+  });
+
   it('start and stop: overlapFactor = 0.5', async done => {
     setUpFakes();
 

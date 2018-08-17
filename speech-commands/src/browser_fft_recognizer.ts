@@ -30,9 +30,9 @@ export class BrowserFftSpeechCommandRecognizer implements
     SpeechCommandRecognizer {
   // tslint:disable:max-line-length
   readonly DEFAULT_MODEL_JSON_URL =
-      'https://storage.googleapis.com/tfjs-speech-command-model-17w/model.json';
+      'https://storage.googleapis.com/tfjs-speech-commands-models/19w/model.json';
   readonly DEFAULT_METADATA_JSON_URL =
-      'https://storage.googleapis.com/tfjs-speech-command-model-17w/metadata.json';
+      'https://storage.googleapis.com/tfjs-speech-commands-models/19w/metadata.json';
   // tslint:enable:max-line-length
 
   private readonly SAMPLE_RATE_HZ = 44100;
@@ -262,6 +262,20 @@ export class BrowserFftSpeechCommandRecognizer implements
    */
   params(): RecognizerConfigParams {
     return this.parameters;
+  }
+
+  /**
+   * Get the input shape of the underlying tf.Model.
+   *
+   * @returns The input shape.
+   */
+  modelInputShape(): tf.Shape {
+    if (this.model == null) {
+      throw new Error(
+          'Model has not be loaded yet. Load model by calling ' +
+          'ensureModelLoaded(), recognizer(), or startStreaming().');
+    }
+    return this.model.inputs[0].shape;
   }
 
   /**
