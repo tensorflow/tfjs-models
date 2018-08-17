@@ -106,6 +106,8 @@ export interface StreamingRecognitionConfig {
 
   /**
    * Amount to time in ms to suppress recognizer after a word is recognized.
+   *
+   * Defaults to 1000 ms.
    */
   suppressionTimeMillis?: number;
 
@@ -119,6 +121,13 @@ export interface StreamingRecognitionConfig {
    * If `null` or `undefined`, will default to `0`.
    */
   probabilityThreshold?: number;
+
+  /**
+   * Invoke the callback for background noise and unknown.
+   *
+   * Default: false.
+   */
+  invokeCallbackOnNoiseAndUnknown?: boolean;
 
   /**
    * Whether the spectrogram is to be provided in the each recognition

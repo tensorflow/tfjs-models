@@ -40,3 +40,4 @@ export function create(fftType: FFT_TYPE): SpeechCommandRecognizer {
 
 // tslint:disable-next-line:max-line-length
 export {FFT_TYPE, RecognizerParams, SpectrogramData, SpeechCommandRecognizerResult, StreamingRecognitionConfig} from './types';
+export {BACKGROUND_NOISE_TAG, UNKNOWN_TAG} from  './browser_fft_recognizer';

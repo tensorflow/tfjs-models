@@ -23,6 +23,9 @@ import {loadMetadataJson} from './browser_fft_utils';
 import {RecognizerCallback, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig} from './types';
 // tslint:enable:max-line-length
 
+export const BACKGROUND_NOISE_TAG = '_background_noise_';
+export const UNKNOWN_TAG = '_unknown_';
+
 /**
  * Speech-Command Recognizer using browser-native (WebAudio) spectral featutres.
  */
@@ -100,6 +103,9 @@ export class BrowserFftSpeechCommandRecognizer implements
     tf.util.assert(
         probabilityThreshold >= 0 && probabilityThreshold <= 1,
         `Invalid probabilityThreshold value: ${probabilityThreshold}`);
+    const invokeCallbackOnNoiseAndUnknown =
+        config.invokeCallbackOnNoiseAndUnknown == null ?
+        false : config.invokeCallbackOnNoiseAndUnknown;
 
     if (config.suppressionTimeMillis < 0) {
       throw new Error(
@@ -118,6 +124,7 @@ export class BrowserFftSpeechCommandRecognizer implements
     const spectrogramCallback: SpectrogramCallback = (x: tf.Tensor) => {
       return tf.tidy(() => {
         const y = this.model.predict(x) as tf.Tensor;
+
         const scores = y.dataSync() as Float32Array;
         const maxScore = Math.max(...scores);
         if (maxScore < probabilityThreshold) {
@@ -130,7 +137,19 @@ export class BrowserFftSpeechCommandRecognizer implements
               frameSize: this.nonBatchInputShape[1],
             };
           }
-          callback({scores, spectrogram});
+
+          let invokeCallback = true;
+          if (!invokeCallbackOnNoiseAndUnknown) {
+            // Skip background noise and unknown tokens.
+            const maxIndex = y.argMax(-1).dataSync()[0];
+            if (this.words[maxIndex] === BACKGROUND_NOISE_TAG ||
+                this.words[maxIndex] === UNKNOWN_TAG) {
+              invokeCallback = false;
+            }
+          }
+          if (invokeCallback) {
+            callback({scores, spectrogram});
+          }
           return true;
         }
       });

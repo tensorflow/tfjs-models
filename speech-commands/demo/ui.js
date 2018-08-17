@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-const BACKGROUND_NOISE_TAG = '_background_noise_';
+import {BACKGROUND_NOISE_TAG, UNKNONW_TAG, UNKNOWN_TAG} from '../src';
 
 const statusDisplay = document.getElementById('status-display');
 const candidateWordsContainer = document.getElementById('candidate-words');
@@ -47,7 +47,7 @@ export function populateCandidateWords(words) {
   candidateWordsContainer.appendChild(candidatesLabel);
 
   for (const word of words) {
-    if (word === BACKGROUND_NOISE_TAG) {
+    if (word === BACKGROUND_NOISE_TAG || word === UNKNOWN_TAG) {
       continue;
     }
     const wordSpan = document.createElement('span');
