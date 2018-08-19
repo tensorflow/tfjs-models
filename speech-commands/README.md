@@ -76,7 +76,7 @@ As the example above shows, you can specify optional parameters when calling
 * `probabilityThreshold`: The callback function will be invoked if and only if
   the maximum probability score of all the words is greater than this threshold.
   Default: `0`.
-* `invokkeCallbackOnNoiseAndUnknown`: Whether the callback function will be
+* `invokeCallbackOnNoiseAndUnknown`: Whether the callback function will be
   invoked if the "word" with the maximum probability score is the "unknown"
   or "background noise" token. Default: `false`.
 
