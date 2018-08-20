@@ -319,7 +319,6 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
       // Due to `invokeCallbackOnNoiseAndUnknown: false` and the fact that the
       // vocabulary contains only _background_noise_ and _unknown_, the callback
       // should have never been called.
-      console.log(`callbackInvokeCount = ${callbackInvokeCount}`);
       expect(callbackInvokeCount).toEqual(0);
       done();
     }, 1000);
@@ -338,7 +337,6 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
 
     setTimeout(() => {
       recognizer.stopStreaming();
-      console.log(`callbackInvokeCount = ${callbackInvokeCount}`);
       // Even though the model predicts only _background_noise_ and _unknown_,
       // the callback should have been invoked because of
       // `invokeCallbackOnNoiseAndUnknown: true`.

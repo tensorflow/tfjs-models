@@ -4,7 +4,8 @@ The Speech Command Recognizer is a JavaScript module that enables
 recognition of spoken commands comprised of simple isolated English
 words from a small vocabulary. The default vocabulary includes the following
 words: the ten digits from "zero" to "nine", "up", "down", "left", "right",
-"go", "stop", "yes", "no", in addition to unknown word and background noise.
+"go", "stop", "yes", "no", as well as the to additional categories of
+"unknown word" and "background noise".
 
 It uses the web browser's
 [WebAudio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API).

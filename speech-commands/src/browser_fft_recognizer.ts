@@ -40,7 +40,7 @@ export class BrowserFftSpeechCommandRecognizer implements
 
   private readonly SAMPLE_RATE_HZ = 44100;
   private readonly FFT_SIZE = 1024;
-  readonly DEFAULT_SUPPRESSION_TIME_MILLIS = 1000;
+  private readonly DEFAULT_SUPPRESSION_TIME_MILLIS = 1000;
 
   model: tf.Model;
   readonly parameters: RecognizerParams;
@@ -356,7 +356,7 @@ export class BrowserFftSpeechCommandRecognizer implements
 
     outTensor = this.model.predict(inputTensor) as tf.Tensor;
     if (numExamples === 1) {
-      return {scores: outTensor.dataSync() as Float32Array};
+      return {scores: await outTensor.data() as Float32Array};
     } else {
       const unstacked = tf.unstack(outTensor) as tf.Tensor[];
       const scores = unstacked.map(item => item.dataSync() as Float32Array);

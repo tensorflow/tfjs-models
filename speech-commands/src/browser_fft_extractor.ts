@@ -37,7 +37,7 @@ export interface BrowserFftFeatureExtractorConfig extends RecognizerParams {
   numFramesPerSpectrogram: number;
 
   /**
-   * Resting period in milliseconds.
+   * Suppression period in milliseconds.
    *
    * How much time to rest (not call the spectrogramCallback) every time
    * a word with probability score above threshold is recognized.
@@ -51,7 +51,7 @@ export interface BrowserFftFeatureExtractorConfig extends RecognizerParams {
    * `x` is a single-example tf.Tensor instance that includes the batch
    * dimension.
    * The return value is assumed to be whether a flag for whether the
-   * resting period should initiate, e.g., when a word is recognized.
+   * suppression period should initiate, e.g., when a word is recognized.
    */
   spectrogramCallback: SpectrogramCallback;
 
