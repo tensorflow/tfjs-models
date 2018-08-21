@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-const BACKGROUND_NOISE_TAG = '_background_noise_';
+import {BACKGROUND_NOISE_TAG, UNKNOWN_TAG} from '../src';
 
 const statusDisplay = document.getElementById('status-display');
 const candidateWordsContainer = document.getElementById('candidate-words');
@@ -31,6 +31,8 @@ export function logToStatusDisplay(message) {
   statusDisplay.scrollTop = statusDisplay.scrollHeight;
 }
 
+let candidateWordSpans;
+
 /**
  * Display candidate words in the UI.
  *
@@ -39,7 +41,7 @@ export function logToStatusDisplay(message) {
  * @param {*} words Candidate words.
  */
 export function populateCandidateWords(words) {
-
+  candidateWordSpans = {};
   const candidatesLabel = document.createElement('span');
   candidatesLabel.textContent = 'Words to say: ';
   candidatesLabel.classList.add('candidate-word');
@@ -47,13 +49,14 @@ export function populateCandidateWords(words) {
   candidateWordsContainer.appendChild(candidatesLabel);
 
   for (const word of words) {
-    if (word === BACKGROUND_NOISE_TAG) {
+    if (word === BACKGROUND_NOISE_TAG || word === UNKNOWN_TAG) {
       continue;
     }
     const wordSpan = document.createElement('span');
     wordSpan.textContent = word;
     wordSpan.classList.add('candidate-word');
     candidateWordsContainer.appendChild(wordSpan);
+    candidateWordSpans[word] = wordSpan;
   }
 }
 
@@ -145,6 +148,16 @@ export function plotPredictions(canvas, candidateWords, probabilities, topK) {
     wordsAndProbs = wordsAndProbs.slice(0, topK);
     candidateWords = wordsAndProbs.map(item => item[0]);
     probabilities = wordsAndProbs.map(item => item[1]);
+
+    // Highlight the top word.
+    const topWord = wordsAndProbs[0][0];
+    for (const word in candidateWordSpans) {
+      if (word === topWord) {
+        candidateWordSpans[word].classList.add('candidate-word-active');
+      } else {
+        candidateWordSpans[word].classList.remove('candidate-word-active');
+      }
+    }
   }
 
   const context = canvas.getContext('2d');

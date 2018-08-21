@@ -17,7 +17,7 @@
 
 import * as SpeechCommands from '../src';
 
-import {logToStatusDisplay, plotPredictions, plotSpectrogram, populateCandidateWords, showCandidateWords, hideCandidateWords} from './ui';
+import {hideCandidateWords, logToStatusDisplay, plotPredictions, plotSpectrogram, populateCandidateWords, showCandidateWords} from './ui';
 
 const createRecognizerButton = document.getElementById('create-recognizer');
 const startButton = document.getElementById('start');
@@ -70,7 +70,7 @@ startButton.addEventListener('click', () => {
                 spectrogramCanvas, result.spectrogram.data,
                 result.spectrogram.frameSize, result.spectrogram.frameSize);
           },
-          {includeSpectrogram: true, probabilityThreshold: 0.75})
+          {includeSpectrogram: true, probabilityThreshold: 0.5})
       .then(() => {
         startButton.disabled = true;
         stopButton.disabled = false;

@@ -4,7 +4,8 @@ The Speech Command Recognizer is a JavaScript module that enables
 recognition of spoken commands comprised of simple isolated English
 words from a small vocabulary. The default vocabulary includes the following
 words: the ten digits from "zero" to "nine", "up", "down", "left", "right",
-"go", "stop", "yes", "no", in addition to background noise.
+"go", "stop", "yes", "no", as well as the to additional categories of
+"unknown word" and "background noise".
 
 It uses the web browser's
 [WebAudio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API).
@@ -65,6 +66,20 @@ recognizer.startStreaming(result => {
 // Stop the recognition in 10 seconds.
 setTimeout(() => recognizer.stopStreaming(), 10e3);
 ```
+
+#### Parameters for online streaming recognition
+
+As the example above shows, you can specify optional parameters when calling
+`startStreaming()`. The supported parameters are:
+
+* `includeSpectrogram`: Let the callback function be invoked with the
+  spectrogram data included in the argument. Default: `false`.
+* `probabilityThreshold`: The callback function will be invoked if and only if
+  the maximum probability score of all the words is greater than this threshold.
+  Default: `0`.
+* `invokeCallbackOnNoiseAndUnknown`: Whether the callback function will be
+  invoked if the "word" with the maximum probability score is the "unknown"
+  or "background noise" token. Default: `false`.
 
 ### Offline recognition
 

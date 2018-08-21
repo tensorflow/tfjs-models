@@ -20,8 +20,11 @@ import * as tf from '@tensorflow/tfjs';
 // tslint:disable:max-line-length
 import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
 import {loadMetadataJson} from './browser_fft_utils';
-import {RecognizerCallback, RecognizerConfigParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig} from './types';
+import {RecognizerCallback, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig} from './types';
 // tslint:enable:max-line-length
+
+export const BACKGROUND_NOISE_TAG = '_background_noise_';
+export const UNKNOWN_TAG = '_unknown_';
 
 /**
  * Speech-Command Recognizer using browser-native (WebAudio) spectral featutres.
@@ -30,16 +33,17 @@ export class BrowserFftSpeechCommandRecognizer implements
     SpeechCommandRecognizer {
   // tslint:disable:max-line-length
   readonly DEFAULT_MODEL_JSON_URL =
-      'https://storage.googleapis.com/tfjs-speech-commands-models/19w/model.json';
+      'https://storage.googleapis.com/tfjs-speech-commands-models/20w/model.json';
   readonly DEFAULT_METADATA_JSON_URL =
-      'https://storage.googleapis.com/tfjs-speech-commands-models/19w/metadata.json';
+      'https://storage.googleapis.com/tfjs-speech-commands-models/20w/metadata.json';
   // tslint:enable:max-line-length
 
   private readonly SAMPLE_RATE_HZ = 44100;
   private readonly FFT_SIZE = 1024;
+  private readonly DEFAULT_SUPPRESSION_TIME_MILLIS = 1000;
 
   model: tf.Model;
-  readonly parameters: RecognizerConfigParams;
+  readonly parameters: RecognizerParams;
   protected words: string[];
   private streaming: boolean;
 
@@ -99,6 +103,16 @@ export class BrowserFftSpeechCommandRecognizer implements
     tf.util.assert(
         probabilityThreshold >= 0 && probabilityThreshold <= 1,
         `Invalid probabilityThreshold value: ${probabilityThreshold}`);
+    const invokeCallbackOnNoiseAndUnknown =
+        config.invokeCallbackOnNoiseAndUnknown == null ?
+        false :
+        config.invokeCallbackOnNoiseAndUnknown;
+
+    if (config.suppressionTimeMillis < 0) {
+      throw new Error(
+          `suppressionTimeMillis is expected to be >= 0, ` +
+          `but got ${config.suppressionTimeMillis}`);
+    }
 
     const overlapFactor =
         config.overlapFactor == null ? 0.5 : config.overlapFactor;
@@ -108,33 +122,50 @@ export class BrowserFftSpeechCommandRecognizer implements
     this.parameters.columnHopLength =
         Math.round(this.FFT_SIZE * (1 - overlapFactor));
 
-    const spectrogramCallback: SpectrogramCallback = (x: tf.Tensor) => {
-      return tf.tidy(() => {
-        const y = this.model.predict(x) as tf.Tensor;
-        const scores = y.dataSync() as Float32Array;
-        const maxScore = Math.max(...scores);
-        if (maxScore < probabilityThreshold) {
-          return false;
-        } else {
-          let spectrogram: SpectrogramData = undefined;
-          if (config.includeSpectrogram) {
-            spectrogram = {
-              data: x.dataSync() as Float32Array,
-              frameSize: this.nonBatchInputShape[1],
-            };
-          }
-          callback({scores, spectrogram});
-          return true;
+    const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
+      const y = tf.tidy(() => this.model.predict(x) as tf.Tensor);
+      const scores = await y.data() as Float32Array;
+      const maxIndexTensor = y.argMax(-1);
+      const maxIndex = (await maxIndexTensor.data())[0];
+      const maxScore = Math.max(...scores);
+      tf.dispose([y, maxIndexTensor]);
+
+      if (maxScore < probabilityThreshold) {
+        return false;
+      } else {
+        let spectrogram: SpectrogramData = undefined;
+        if (config.includeSpectrogram) {
+          spectrogram = {
+            data: await x.data() as Float32Array,
+            frameSize: this.nonBatchInputShape[1],
+          };
         }
-      });
+
+        let invokeCallback = true;
+        if (!invokeCallbackOnNoiseAndUnknown) {
+          // Skip background noise and unknown tokens.
+          if (this.words[maxIndex] === BACKGROUND_NOISE_TAG ||
+              this.words[maxIndex] === UNKNOWN_TAG) {
+            invokeCallback = false;
+          }
+        }
+        if (invokeCallback) {
+          callback({scores, spectrogram});
+        }
+        return true;
+      }
     };
 
+    const suppressionTimeMillis = config.suppressionTimeMillis == null ?
+        this.DEFAULT_SUPPRESSION_TIME_MILLIS :
+        config.suppressionTimeMillis;
     this.audioDataExtractor = new BrowserFftFeatureExtractor({
       sampleRateHz: this.parameters.sampleRateHz,
       columnBufferLength: this.parameters.columnBufferLength,
       columnHopLength: this.parameters.columnHopLength,
       numFramesPerSpectrogram: this.nonBatchInputShape[0],
       columnTruncateLength: this.nonBatchInputShape[1],
+      suppressionTimeMillis,
       spectrogramCallback
     });
 
@@ -260,7 +291,7 @@ export class BrowserFftSpeechCommandRecognizer implements
    *
    * @returns Parameters of this instance.
    */
-  params(): RecognizerConfigParams {
+  params(): RecognizerParams {
     return this.parameters;
   }
 
@@ -325,10 +356,11 @@ export class BrowserFftSpeechCommandRecognizer implements
 
     outTensor = this.model.predict(inputTensor) as tf.Tensor;
     if (numExamples === 1) {
-      return {scores: outTensor.dataSync() as Float32Array};
+      return {scores: await outTensor.data() as Float32Array};
     } else {
       const unstacked = tf.unstack(outTensor) as tf.Tensor[];
-      const scores = unstacked.map(item => item.dataSync() as Float32Array);
+      const scorePromises = unstacked.map(item => item.data());
+      const scores = await Promise.all(scorePromises) as Float32Array[];
       tf.dispose(unstacked);
       return {scores};
     }

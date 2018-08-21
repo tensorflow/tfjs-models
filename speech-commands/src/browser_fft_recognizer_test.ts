@@ -28,24 +28,29 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     '_background_noise_', 'down', 'eight', 'five', 'four', 'go', 'left', 'nine',
     'one', 'right', 'seven', 'six', 'stop', 'three', 'two', 'up', 'zero'
   ];
-  const fakeNumWords = fakeWords.length;
+  const fakeWordsNoiseAndUnknownOnly: string[] =
+      ['_background_noise_', '_unknown_'];
+
   const fakeNumFrames = 42;
   const fakeColumnTruncateLength = 232;
 
-  function setUpFakes(model?: tf.Sequential) {
+  function setUpFakes(model?: tf.Sequential, backgroundAndNoiseOnly = false) {
+    const words =
+        backgroundAndNoiseOnly ? fakeWordsNoiseAndUnknownOnly : fakeWords;
+    const numWords = words.length;
     spyOn(tf, 'loadModel').and.callFake((url: string) => {
       if (model == null) {
         model = tf.sequential();
         model.add(tf.layers.flatten(
             {inputShape: [fakeNumFrames, fakeColumnTruncateLength, 1]}));
-        model.add(
-            tf.layers.dense({units: fakeNumWords, activation: 'softmax'}));
+        model.add(tf.layers.dense(
+            {units: numWords, useBias: false, activation: 'softmax'}));
       }
       return model;
     });
     spyOn(BrowserFftUtils, 'loadMetadataJson')
         .and.callFake(async (url: string) => {
-          return {words: fakeWords};
+          return {words};
         });
 
     spyOn(BrowserFftUtils, 'getAudioContextConstructor')
@@ -226,7 +231,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     const tensorCounts: number[] = [];
     const callbackTimestamps: number[] = [];
     recognizer.startStreaming(async (result: SpeechCommandRecognizerResult) => {
-      expect((result.scores as Float32Array).length).toEqual(fakeNumWords);
+      expect((result.scores as Float32Array).length).toEqual(fakeWords.length);
 
       callbackTimestamps.push(tf.util.now());
       if (callbackTimestamps.length > 1) {
@@ -250,7 +255,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
       if (++numCallbacksCompleted >= numCallbacksToComplete) {
         recognizer.stopStreaming().then(done);
       }
-    }, {overlapFactor: 0});
+    }, {overlapFactor: 0, invokeCallbackOnNoiseAndUnknown: true});
   });
 
   it('streaming: overlapFactor = 0.5, includeSpectrogram', async done => {
@@ -263,7 +268,8 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     const callbackTimestamps: number[] = [];
     await recognizer.startStreaming(
         async (result: SpeechCommandRecognizerResult) => {
-          expect((result.scores as Float32Array).length).toEqual(fakeNumWords);
+          expect((result.scores as Float32Array).length)
+              .toEqual(fakeWords.length);
 
           callbackTimestamps.push(tf.util.now());
           if (callbackTimestamps.length > 1) {
@@ -290,7 +296,53 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
             recognizer.stopStreaming().then(done);
           }
         },
-        {overlapFactor: 0.5, includeSpectrogram: true});
+        {
+          overlapFactor: 0.5,
+          includeSpectrogram: true,
+          invokeCallbackOnNoiseAndUnknown: true
+        });
+  });
+
+  it('streaming: invokeCallbackOnNoiseAndUnknown = false', async done => {
+    setUpFakes(null, true);
+    const recognizer = new BrowserFftSpeechCommandRecognizer();
+
+    let callbackInvokeCount = 0;
+    await recognizer.startStreaming(
+        async (result: SpeechCommandRecognizerResult) => {
+          callbackInvokeCount++;
+        },
+        {overlapFactor: 0.5, invokeCallbackOnNoiseAndUnknown: false});
+
+    setTimeout(() => {
+      recognizer.stopStreaming();
+      // Due to `invokeCallbackOnNoiseAndUnknown: false` and the fact that the
+      // vocabulary contains only _background_noise_ and _unknown_, the callback
+      // should have never been called.
+      expect(callbackInvokeCount).toEqual(0);
+      done();
+    }, 1000);
+  });
+
+  it('streaming: invokeCallbackOnNoiseAndUnknown = true', async done => {
+    setUpFakes(null, true);
+    const recognizer = new BrowserFftSpeechCommandRecognizer();
+
+    let callbackInvokeCount = 0;
+    await recognizer.startStreaming(
+        async (result: SpeechCommandRecognizerResult) => {
+          callbackInvokeCount++;
+        },
+        {overlapFactor: 0.5, invokeCallbackOnNoiseAndUnknown: true});
+
+    setTimeout(() => {
+      recognizer.stopStreaming();
+      // Even though the model predicts only _background_noise_ and _unknown_,
+      // the callback should have been invoked because of
+      // `invokeCallbackOnNoiseAndUnknown: true`.
+      expect(callbackInvokeCount).toBeGreaterThan(0);
+      done();
+    }, 1000);
   });
 
   it('Attempt to start streaming twice leads to Error', async () => {
