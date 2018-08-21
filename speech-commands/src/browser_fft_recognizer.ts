@@ -84,6 +84,9 @@ export class BrowserFftSpeechCommandRecognizer implements
   private transferLearnWords: string[];
   private transferLearnModel: tf.Model;
 
+  private readonly TRANSFER_LEARNING_METADATA_PREFIX =
+      'speech-commands-transfer-learning-metadata';
+
   /**
    * Constructor of BrowserFftSpeechCommandRecognizer.
    */
@@ -159,7 +162,8 @@ export class BrowserFftSpeechCommandRecognizer implements
         Math.round(this.FFT_SIZE * (1 - overlapFactor));
 
     const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
-      const y = tf.tidy(() => this.model.predict(x) as tf.Tensor);
+      const {model, words} = this.getPredictionModelAndWords();
+      const y = tf.tidy(() => model.predict(x) as tf.Tensor);
       const scores = await y.data() as Float32Array;
       const maxIndexTensor = y.argMax(-1);
       const maxIndex = (await maxIndexTensor.data())[0];
@@ -180,8 +184,8 @@ export class BrowserFftSpeechCommandRecognizer implements
         let invokeCallback = true;
         if (!invokeCallbackOnNoiseAndUnknown) {
           // Skip background noise and unknown tokens.
-          if (this.words[maxIndex] === BACKGROUND_NOISE_TAG ||
-              this.words[maxIndex] === UNKNOWN_TAG) {
+          if (words[maxIndex] === BACKGROUND_NOISE_TAG ||
+              words[maxIndex] === UNKNOWN_TAG) {
             invokeCallback = false;
           }
         }
@@ -319,7 +323,8 @@ export class BrowserFftSpeechCommandRecognizer implements
           'use the model for recognition with startStreaming() or ' +
           'recognize() first.');
     }
-    return this.words;
+    const {words} = this.getPredictionModelAndWords();
+    return words;
   }
 
   /**
@@ -390,7 +395,8 @@ export class BrowserFftSpeechCommandRecognizer implements
       ].concat(this.nonBatchInputShape) as [number, number, number, number]);
     }
 
-    outTensor = this.model.predict(inputTensor) as tf.Tensor;
+    const {model} = this.getPredictionModelAndWords();
+    outTensor = model.predict(inputTensor) as tf.Tensor;
     if (numExamples === 1) {
       return {scores: await outTensor.data() as Float32Array};
     } else {
@@ -399,6 +405,14 @@ export class BrowserFftSpeechCommandRecognizer implements
       const scores = await Promise.all(scorePromises) as Float32Array[];
       tf.dispose(unstacked);
       return {scores};
+    }
+  }
+
+  private getPredictionModelAndWords(): {model: tf.Model, words: string[]} {
+    if (this.hasTransferLearningModel()) {
+      return {model: this.transferLearnModel, words: this.transferLearnWords};
+    } else {
+      return {model: this.model, words: this.words};
     }
   }
 
@@ -493,6 +507,46 @@ export class BrowserFftSpeechCommandRecognizer implements
       config = {};
     }
 
+    this.transferLearnModel = this.createTransferLearningModelFromBaseModel();
+
+    // Compile model for training.
+    const optimizer = config.optimizer || 'sgd';
+    this.transferLearnModel.compile(
+        {loss: 'categoricalCrossentropy', optimizer, metrics: ['acc']});
+
+    // Prepare the data.
+    const {xs, ys} = this.collectTransferLearnDataAsTensors();
+
+    const epochs = config.epochs == null ? 50 : config.epochs;
+    const validationSplit =
+        config.validationSplit == null ? 0 : config.validationSplit;
+    try {
+      const history = await this.transferLearnModel.fit(xs, ys, {
+        epochs,
+        validationSplit,
+        batchSize: config.batchSize,
+        callbacks: config.callback == null ? null : [config.callback]
+      });
+      tf.dispose([xs, ys]);
+      if (savePath != null && this.transferLearnModel != null) {
+        // Save the model.
+        await this.transferLearnModel.save(`indexeddb://${savePath}`);
+        // Save the transfer-learning metadata.
+        const transferLearningWordSavePath =
+            this.TRANSFER_LEARNING_METADATA_PREFIX + '/' + savePath;
+        window.localStorage.setItem(
+            transferLearningWordSavePath,
+            JSON.stringify(
+                {transferLearningWords: this.transferLearningWordLabels()}));
+      }
+      return history;
+    } catch (err) {
+      this.transferLearnModel = null;
+      return null;
+    }
+  }
+
+  private createTransferLearningModelFromBaseModel(): tf.Model {
     // Find the second last dense layer.
     const layers = this.model.layers;
     let layerIndex = layers.length - 2;
@@ -509,17 +563,11 @@ export class BrowserFftSpeechCommandRecognizer implements
         {units: this.transferLearnWords.length, activation: 'softmax'});
     const newOutputTensor =
         newDenseLayer.apply(layers[layerIndex].output) as tf.SymbolicTensor;
-    this.transferLearnModel =
-        tf.model({inputs: this.model.inputs, outputs: newOutputTensor});
+    return tf.model({inputs: this.model.inputs, outputs: newOutputTensor});
+  }
 
-    // Compile model for training.
-    const optimizer = config.optimizer || 'sgd';
-    this.transferLearnModel.compile(
-        {loss: 'categoricalCrossentropy', optimizer, metrics: ['acc']});
-
-    // Prepare the data.
-    // TODO(cais): make sure there is no mem leak. DO NOT SUBMIT.
-    const [xs, ys] = tf.tidy(() => {
+  private collectTransferLearnDataAsTensors(): {xs: tf.Tensor, ys: tf.Tensor} {
+    return tf.tidy(() => {
       const xTensors: tf.Tensor[] = [];
       const targetIndices: number[] = [];
       this.transferLearnWords.forEach((word, i) => {
@@ -528,26 +576,44 @@ export class BrowserFftSpeechCommandRecognizer implements
           targetIndices.push(i);
         });
       });
-      return [
-        tf.concat(xTensors, 0),
-        tf.oneHot(
+      return {
+        xs: tf.concat(xTensors, 0),
+        ys: tf.oneHot(
             tf.tensor1d(targetIndices, 'int32'), this.transferLearnWords.length)
-      ];
+      };
     });
-
-    const epochs = config.epochs == null ? 50 : config.epochs;
-    const validationSplit =
-        config.validationSplit == null ? 0 : config.validationSplit;
-    const history = await this.transferLearnModel.fit(xs, ys, {
-      epochs,
-      validationSplit,
-      batchSize: config.batchSize,
-      callbacks: config.callback == null ? null : [config.callback]
-    });
-    return history;
   }
 
-  loadTransferLearningModel(savePath?: string) {}
+  /**
+   * Load transfer learned model from IndexedDB.
+   *
+   * @param savePath A string path for loading model from IndexedDB (e.g.,
+   *   'my-transfer-learning-model/v1');
+   */
+  async loadTransferLearningModel(savePath?: string) {
+    // Load the model.
+    this.transferLearnModel = await tf.loadModel(`indexeddb://${savePath}`);
+    // Load the transfer-learning metadata.
+    const transferLearningWordSavePath =
+        this.TRANSFER_LEARNING_METADATA_PREFIX + '/' + savePath;
+    this.transferLearnWords =
+        JSON.parse(window.localStorage.getItem(transferLearningWordSavePath))
+            .transferLearningWords;
+  }
+
+  /**
+   * Check whether there is a transfer-learned model.
+   */
+  hasTransferLearningModel(): boolean {
+    return this.transferLearnModel != null;
+  }
+
+  /**
+   * Reset (i.e., discard) the transfer-learned model.
+   */
+  resetTransferLearningModel() {
+    this.transferLearnModel = null;
+  }
 
   private collectTransferLearnWords() {
     this.transferLearnWords = Object.keys(this.transferLearnExamples).sort();

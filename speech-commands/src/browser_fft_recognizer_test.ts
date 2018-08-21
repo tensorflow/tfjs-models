@@ -500,9 +500,10 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
        expect(recognizer.isStreaming()).toEqual(false);
      });
 
-  it('trainTranferLearningModel default params', async () => {
+  it('trainTranferLearningModel default params', async done => {
     setUpFakes();
     const recognizer = new BrowserFftSpeechCommandRecognizer();
+    expect(recognizer.hasTransferLearningModel()).toEqual(false);
     for (let i = 0; i < 1; ++i) {
       await recognizer.collectTransferLearningExample('foo');
     }
@@ -512,11 +513,21 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     const history = await recognizer.trainTranferLearningModel();
     expect(history.history.loss.length).toEqual(50);
     expect(history.history.acc.length).toEqual(50);
+    expect(recognizer.hasTransferLearningModel()).toEqual(true);
+
+    // After the transfer learning is complete, startStreaming should give
+    // results only for the transfer-learned model.
+    expect(recognizer.wordLabels()).toEqual(['bar', 'foo']);
+    recognizer.startStreaming(async (result: SpeechCommandRecognizerResult) => {
+      expect((result.scores as Float32Array).length).toEqual(2);
+      recognizer.stopStreaming().then(done);
+    });
   });
 
-  it('trainTranferLearningModel custom params', async () => {
+  it('trainTranferLearningModel custom params', async done => {
     setUpFakes();
     const recognizer = new BrowserFftSpeechCommandRecognizer();
+    expect(recognizer.hasTransferLearningModel()).toEqual(false);
     for (let i = 0; i < 1; ++i) {
       await recognizer.collectTransferLearningExample('foo');
     }
@@ -527,6 +538,15 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
         await recognizer.trainTranferLearningModel({epochs: 10, batchSize: 2});
     expect(history.history.loss.length).toEqual(10);
     expect(history.history.acc.length).toEqual(10);
+    expect(recognizer.hasTransferLearningModel()).toEqual(true);
+
+    // After the transfer learning is complete, startStreaming should give
+    // results only for the transfer-learned model.
+    expect(recognizer.wordLabels()).toEqual(['bar', 'foo']);
+    recognizer.startStreaming(async (result: SpeechCommandRecognizerResult) => {
+      expect((result.scores as Float32Array).length).toEqual(2);
+      recognizer.stopStreaming().then(done);
+    });
   });
 
   it('trainTranferLearningModel custom params and callback', async () => {
@@ -578,4 +598,6 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     }
     expect(errorCaught.message).toMatch(/.*foo.*Requires at least 2/);
   });
+
+  // TODO(cais): Add tests for saving and loading of transfer-learned models.
 });
