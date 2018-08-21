@@ -122,38 +122,36 @@ export class BrowserFftSpeechCommandRecognizer implements
     this.parameters.columnHopLength =
         Math.round(this.FFT_SIZE * (1 - overlapFactor));
 
-    const spectrogramCallback: SpectrogramCallback = (x: tf.Tensor) => {
-      return tf.tidy(() => {
-        const y = this.model.predict(x) as tf.Tensor;
-
-        const scores = y.dataSync() as Float32Array;
-        const maxScore = Math.max(...scores);
-        if (maxScore < probabilityThreshold) {
-          return false;
-        } else {
-          let spectrogram: SpectrogramData = undefined;
-          if (config.includeSpectrogram) {
-            spectrogram = {
-              data: x.dataSync() as Float32Array,
-              frameSize: this.nonBatchInputShape[1],
-            };
-          }
-
-          let invokeCallback = true;
-          if (!invokeCallbackOnNoiseAndUnknown) {
-            // Skip background noise and unknown tokens.
-            const maxIndex = y.argMax(-1).dataSync()[0];
-            if (this.words[maxIndex] === BACKGROUND_NOISE_TAG ||
-                this.words[maxIndex] === UNKNOWN_TAG) {
-              invokeCallback = false;
-            }
-          }
-          if (invokeCallback) {
-            callback({scores, spectrogram});
-          }
-          return true;
+    const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
+      const y = tf.tidy(() => this.model.predict(x) as tf.Tensor);
+      const scores = await y.data() as Float32Array;
+      y.dispose();
+      const maxScore = Math.max(...scores);
+      if (maxScore < probabilityThreshold) {
+        return false;
+      } else {
+        let spectrogram: SpectrogramData = undefined;
+        if (config.includeSpectrogram) {
+          spectrogram = {
+            data: await x.data() as Float32Array,
+            frameSize: this.nonBatchInputShape[1],
+          };
         }
-      });
+
+        let invokeCallback = true;
+        if (!invokeCallbackOnNoiseAndUnknown) {
+          // Skip background noise and unknown tokens.
+          const maxIndex = (await y.argMax(-1).data())[0];
+          if (this.words[maxIndex] === BACKGROUND_NOISE_TAG ||
+              this.words[maxIndex] === UNKNOWN_TAG) {
+            invokeCallback = false;
+          }
+        }
+        if (invokeCallback) {
+          callback({scores, spectrogram});
+        }
+        return true;
+      }
     };
 
     const suppressionTimeMillis = config.suppressionTimeMillis == null ?

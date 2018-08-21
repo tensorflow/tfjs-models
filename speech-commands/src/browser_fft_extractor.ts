@@ -25,7 +25,7 @@ import * as tf from '@tensorflow/tfjs';
 import {getAudioContextConstructor, getAudioMediaStream, normalize} from './browser_fft_utils';
 import {FeatureExtractor, RecognizerParams} from './types';
 
-export type SpectrogramCallback = (x: tf.Tensor) => boolean;
+export type SpectrogramCallback = (x: tf.Tensor) => Promise<boolean>;
 
 /**
  * Configurations for constructing BrowserFftFeatureExtractor.
