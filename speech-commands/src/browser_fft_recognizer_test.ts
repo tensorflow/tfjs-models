@@ -43,6 +43,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
         model = tf.sequential();
         model.add(tf.layers.flatten(
             {inputShape: [fakeNumFrames, fakeColumnTruncateLength, 1]}));
+        model.add(tf.layers.dense({units: 4, activation: 'relu'}));
         model.add(tf.layers.dense(
             {units: numWords, useBias: false, activation: 'softmax'}));
       }
@@ -396,7 +397,6 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(spectrogram.data.length)
         .toEqual(fakeNumFrames * fakeColumnTruncateLength);
     expect(recognizer.transferLearningWordLabels()).toEqual(['foo']);
-    console.log(spectrogram.data);  // DEBUG
 
     spectrogram = await recognizer.collectTransferLearningExample('foo');
     expect(spectrogram.frameSize).toEqual(fakeColumnTruncateLength);
@@ -408,9 +408,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(spectrogram.frameSize).toEqual(fakeColumnTruncateLength);
     expect(spectrogram.data.length)
         .toEqual(fakeNumFrames * fakeColumnTruncateLength);
-    expect(recognizer.transferLearningWordLabels().sort()).toEqual([
-      'bar', 'foo'
-    ]);
+    expect(recognizer.transferLearningWordLabels()).toEqual(['bar', 'foo']);
   });
 
   it('clearTransferLearningExamples', async () => {
@@ -501,4 +499,83 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
        await recognizer.stopStreaming();
        expect(recognizer.isStreaming()).toEqual(false);
      });
+
+  it('trainTranferLearningModel default params', async () => {
+    setUpFakes();
+    const recognizer = new BrowserFftSpeechCommandRecognizer();
+    for (let i = 0; i < 1; ++i) {
+      await recognizer.collectTransferLearningExample('foo');
+    }
+    for (let i = 0; i < 2; ++i) {
+      await recognizer.collectTransferLearningExample('bar');
+    }
+    const history = await recognizer.trainTranferLearningModel();
+    expect(history.history.loss.length).toEqual(50);
+    expect(history.history.acc.length).toEqual(50);
+  });
+
+  it('trainTranferLearningModel custom params', async () => {
+    setUpFakes();
+    const recognizer = new BrowserFftSpeechCommandRecognizer();
+    for (let i = 0; i < 1; ++i) {
+      await recognizer.collectTransferLearningExample('foo');
+    }
+    for (let i = 0; i < 2; ++i) {
+      await recognizer.collectTransferLearningExample('bar');
+    }
+    const history =
+        await recognizer.trainTranferLearningModel({epochs: 10, batchSize: 2});
+    expect(history.history.loss.length).toEqual(10);
+    expect(history.history.acc.length).toEqual(10);
+  });
+
+  it('trainTranferLearningModel custom params and callback', async () => {
+    setUpFakes();
+    const recognizer = new BrowserFftSpeechCommandRecognizer();
+    for (let i = 0; i < 1; ++i) {
+      await recognizer.collectTransferLearningExample('foo');
+    }
+    for (let i = 0; i < 2; ++i) {
+      await recognizer.collectTransferLearningExample('bar');
+    }
+    const callbackEpochs: number[] = [];
+    const history = await recognizer.trainTranferLearningModel({
+      epochs: 5,
+      callback: {
+        onEpochEnd: async (epoch, logs) => {
+          callbackEpochs.push(epoch);
+        }
+      }
+    });
+    expect(history.history.loss.length).toEqual(5);
+    expect(history.history.acc.length).toEqual(5);
+    expect(callbackEpochs).toEqual([0, 1, 2, 3, 4]);
+  });
+
+  it('trainTranferLearningModel fails without any examples', async () => {
+    setUpFakes();
+    const recognizer = new BrowserFftSpeechCommandRecognizer();
+    let errorCaught: Error;
+    try {
+      await recognizer.trainTranferLearningModel();
+    } catch (err) {
+      errorCaught = err;
+    }
+    expect(errorCaught.message)
+        .toMatch(/no transfer learning example has been collected/);
+  });
+
+  it('trainTranferLearningModel fails with only 1 word', async () => {
+    setUpFakes();
+    const recognizer = new BrowserFftSpeechCommandRecognizer();
+    await recognizer.collectTransferLearningExample('foo');
+    await recognizer.collectTransferLearningExample('foo');
+    let errorCaught: Error;
+    try {
+      await recognizer.trainTranferLearningModel();
+    } catch (err) {
+      errorCaught = err;
+    }
+    expect(errorCaught.message).toMatch(/.*foo.*Requires at least 2/);
+  });
 });

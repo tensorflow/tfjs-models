@@ -26,6 +26,35 @@ import {RecognizerCallback, RecognizerParams, SpectrogramData, SpeechCommandReco
 export const BACKGROUND_NOISE_TAG = '_background_noise_';
 export const UNKNOWN_TAG = '_unknown_';
 
+export interface TransferLearnConfig {
+  /**
+   * Number of training epochs (default: 50).
+   */
+  epochs?: number;
+
+  /**
+   * Optimizer to be used for training (default: 'sgd').
+   */
+  optimizer?: string;
+
+  /**
+   * Batch size of training (default: 128).
+   */
+  batchSize?: number;
+
+  /**
+   * Validation split to be used during training (default: 0).
+   *
+   * Must be a number between 0 and 1.
+   */
+  validationSplit?: number;
+
+  /**
+   * tf.Callback to be used during the training.
+   */
+  callback?: tf.CustomCallbackConfig;
+}
+
 /**
  * Speech-Command Recognizer using browser-native (WebAudio) spectral featutres.
  */
@@ -52,6 +81,8 @@ export class BrowserFftSpeechCommandRecognizer implements
   private audioDataExtractor: BrowserFftFeatureExtractor;
 
   private transferLearnExamples: {[word: string]: tf.Tensor[]};
+  private transferLearnWords: string[];
+  private transferLearnModel: tf.Model;
 
   /**
    * Constructor of BrowserFftSpeechCommandRecognizer.
@@ -66,6 +97,7 @@ export class BrowserFftSpeechCommandRecognizer implements
     };
 
     this.transferLearnExamples = {};
+    this.transferLearnWords = [];
   }
 
   /**
@@ -400,9 +432,10 @@ export class BrowserFftSpeechCommandRecognizer implements
         if (this.transferLearnExamples[word] == null) {
           this.transferLearnExamples[word] = [];
         }
-        this.transferLearnExamples[word].push(x);
+        this.transferLearnExamples[word].push(x.clone());
         await this.audioDataExtractor.stop();
         this.streaming = false;
+        this.collectTransferLearnWords();
         resolve({
           data: await x.data() as Float32Array,
           frameSize: this.nonBatchInputShape[1],
@@ -428,10 +461,96 @@ export class BrowserFftSpeechCommandRecognizer implements
   clearTransferLearningExamples(): void {
     tf.dispose(this.transferLearnExamples);
     this.transferLearnExamples = {};
+    this.transferLearnWords = [];
   }
 
+  /**
+   * Get the list of transfer-learning words.
+   *
+   * The words are guaranteed to be sorted.
+   *
+   * @returns {string[]} The list of transfer-learning words collected so far.
+   */
   transferLearningWordLabels(): string[] {
-    return Object.keys(this.transferLearnExamples);
+    return this.transferLearnWords;
+  }
+
+  async trainTranferLearningModel(
+      config?: TransferLearnConfig, savePath?: string): Promise<tf.History> {
+    if (this.transferLearnWords.length === 0) {
+      throw new Error(
+          `Cannot train transfer-learning model because no transfer ` +
+          `learning example has been collected.`);
+    }
+    if (this.transferLearnWords.length === 1) {
+      throw new Error(
+          `Cannot train transfer-learning model because only one ` +
+          `word label ('${this.transferLearnWords[0]}') has been collected ` +
+          `for transfer learning. Requires at least 2.`);
+    }
+
+    if (config == null) {
+      config = {};
+    }
+
+    // Find the second last dense layer.
+    const layers = this.model.layers;
+    let layerIndex = layers.length - 2;
+    while (layerIndex >= 0) {
+      if (layers[layerIndex].getClassName().toLowerCase() === 'dense') {
+        break;
+      }
+      layerIndex--;
+    }
+    if (layerIndex < 0) {
+      throw new Error('Cannot find a hidden dense layer in the base model.');
+    }
+    const newDenseLayer = tf.layers.dense(
+        {units: this.transferLearnWords.length, activation: 'softmax'});
+    const newOutputTensor =
+        newDenseLayer.apply(layers[layerIndex].output) as tf.SymbolicTensor;
+    this.transferLearnModel =
+        tf.model({inputs: this.model.inputs, outputs: newOutputTensor});
+
+    // Compile model for training.
+    const optimizer = config.optimizer || 'sgd';
+    this.transferLearnModel.compile(
+        {loss: 'categoricalCrossentropy', optimizer, metrics: ['acc']});
+
+    // Prepare the data.
+    // TODO(cais): make sure there is no mem leak. DO NOT SUBMIT.
+    const [xs, ys] = tf.tidy(() => {
+      const xTensors: tf.Tensor[] = [];
+      const targetIndices: number[] = [];
+      this.transferLearnWords.forEach((word, i) => {
+        this.transferLearnExamples[word].forEach(wordTensor => {
+          xTensors.push(wordTensor);
+          targetIndices.push(i);
+        });
+      });
+      return [
+        tf.concat(xTensors, 0),
+        tf.oneHot(
+            tf.tensor1d(targetIndices, 'int32'), this.transferLearnWords.length)
+      ];
+    });
+
+    const epochs = config.epochs == null ? 50 : config.epochs;
+    const validationSplit =
+        config.validationSplit == null ? 0 : config.validationSplit;
+    const history = await this.transferLearnModel.fit(xs, ys, {
+      epochs,
+      validationSplit,
+      batchSize: config.batchSize,
+      callbacks: config.callback == null ? null : [config.callback]
+    });
+    return history;
+  }
+
+  loadTransferLearningModel(savePath?: string) {}
+
+  private collectTransferLearnWords() {
+    this.transferLearnWords = Object.keys(this.transferLearnExamples).sort();
   }
 
   private checkInputTensorShape(input: tf.Tensor) {
