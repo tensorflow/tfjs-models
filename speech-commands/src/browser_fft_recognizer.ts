@@ -51,6 +51,8 @@ export class BrowserFftSpeechCommandRecognizer implements
   private elementsPerExample: number;
   private audioDataExtractor: BrowserFftFeatureExtractor;
 
+  private transferLearnExamples: {[word: string]: tf.Tensor[]};
+
   /**
    * Constructor of BrowserFftSpeechCommandRecognizer.
    */
@@ -62,6 +64,8 @@ export class BrowserFftSpeechCommandRecognizer implements
       fftSize: this.FFT_SIZE,
       columnBufferLength: this.FFT_SIZE,
     };
+
+    this.transferLearnExamples = {};
   }
 
   /**
@@ -364,6 +368,70 @@ export class BrowserFftSpeechCommandRecognizer implements
       tf.dispose(unstacked);
       return {scores};
     }
+  }
+
+  /**
+   * Collect an example for transfer learning via WebAudio.
+   *
+   * @param {string} word Name of the word. Must not overlap with any of the
+   *   words the base model is trained to recognize.
+   * @returns {SpectrogramData} The spectrogram of the acquired the example.
+   * @throws Error, if word belongs to the set of words the base model is
+   *   trained to recognize.
+   */
+  async collectTransferLearningExample(word: string): Promise<SpectrogramData> {
+    tf.util.assert(
+        !this.streaming,
+        'Cannot start collection of transfer-learning example because ' +
+            'a streaming recognition or transfer-learning example collection ' +
+            'is ongoing');
+    tf.util.assert(
+        word != null && word.length > 0,
+        `Must provide a non-empty string when collecting transfer-` +
+            `learning example`);
+    this.streaming = true;
+    await this.ensureModelLoaded();
+    tf.util.assert(
+        this.words.indexOf(word) === -1,
+        `Word '${word}' cannot be used to label a transfer-learning example ` +
+            `because it is in the vocabulary of the base model.`);
+    return new Promise<SpectrogramData>((resolve, reject) => {
+      const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
+        if (this.transferLearnExamples[word] == null) {
+          this.transferLearnExamples[word] = [];
+        }
+        this.transferLearnExamples[word].push(x);
+        await this.audioDataExtractor.stop();
+        this.streaming = false;
+        resolve({
+          data: await x.data() as Float32Array,
+          frameSize: this.nonBatchInputShape[1],
+        });
+        return false;
+      };
+      this.audioDataExtractor = new BrowserFftFeatureExtractor({
+        sampleRateHz: this.parameters.sampleRateHz,
+        columnBufferLength: this.parameters.columnBufferLength,
+        columnHopLength: this.parameters.columnBufferLength,
+        numFramesPerSpectrogram: this.nonBatchInputShape[0],
+        columnTruncateLength: this.nonBatchInputShape[1],
+        suppressionTimeMillis: 0,
+        spectrogramCallback
+      });
+      this.audioDataExtractor.start();
+    });
+  }
+
+  /**
+   * Clear all transfer learning examples collected so far.
+   */
+  clearTransferLearningExamples(): void {
+    tf.dispose(this.transferLearnExamples);
+    this.transferLearnExamples = {};
+  }
+
+  transferLearningWordLabels(): string[] {
+    return Object.keys(this.transferLearnExamples);
   }
 
   private checkInputTensorShape(input: tf.Tensor) {
