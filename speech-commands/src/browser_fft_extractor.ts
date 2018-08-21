@@ -197,7 +197,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
         this.onAudioFrame.bind(this), this.fftSize / this.sampleRateHz * 1e3);
   }
 
-  private onAudioFrame() {
+  private async onAudioFrame() {
     this.analyser.getFloatFrequencyData(this.freqData);
     if (this.freqData[0] === -Infinity) {
       // No signal from audio input (microphone). Do nothing.
@@ -217,7 +217,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
           this.frameCount - this.numFramesPerSpectrogram);
       const inputTensor = getInputTensorFromFrequencyData(
           freqData, this.numFramesPerSpectrogram, this.columnTruncateLength);
-      const shouldRest = this.spectrogramCallback(inputTensor);
+      const shouldRest = await this.spectrogramCallback(inputTensor);
       if (shouldRest) {
         this.tracker.suppress();
       }

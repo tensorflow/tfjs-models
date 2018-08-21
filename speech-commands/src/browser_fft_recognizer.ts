@@ -125,8 +125,11 @@ export class BrowserFftSpeechCommandRecognizer implements
     const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
       const y = tf.tidy(() => this.model.predict(x) as tf.Tensor);
       const scores = await y.data() as Float32Array;
-      y.dispose();
+      const maxIndexTensor = y.argMax(-1);
+      const maxIndex = (await maxIndexTensor.data())[0];
       const maxScore = Math.max(...scores);
+      tf.dispose([y, maxIndexTensor]);
+
       if (maxScore < probabilityThreshold) {
         return false;
       } else {
@@ -141,7 +144,6 @@ export class BrowserFftSpeechCommandRecognizer implements
         let invokeCallback = true;
         if (!invokeCallbackOnNoiseAndUnknown) {
           // Skip background noise and unknown tokens.
-          const maxIndex = (await y.argMax(-1).data())[0];
           if (this.words[maxIndex] === BACKGROUND_NOISE_TAG ||
               this.words[maxIndex] === UNKNOWN_TAG) {
             invokeCallback = false;
@@ -357,7 +359,8 @@ export class BrowserFftSpeechCommandRecognizer implements
       return {scores: await outTensor.data() as Float32Array};
     } else {
       const unstacked = tf.unstack(outTensor) as tf.Tensor[];
-      const scores = unstacked.map(item => item.dataSync() as Float32Array);
+      const scorePromises = unstacked.map(item => item.data());
+      const scores = await Promise.all(scorePromises) as Float32Array[];
       tf.dispose(unstacked);
       return {scores};
     }
