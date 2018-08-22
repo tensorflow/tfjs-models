@@ -107,6 +107,7 @@ export class BrowserFftSpeechCommandRecognizer implements
     this.models = {};
     this.words = {};
     this.transferLearnExamples = {};
+    this.transferLearnModelHeads = {};
   }
 
   /**
@@ -153,6 +154,11 @@ export class BrowserFftSpeechCommandRecognizer implements
         false :
         config.invokeCallbackOnNoiseAndUnknown;
 
+    const modelName = config.modelName || this.BASE_MODEL_NAME;
+    if (this.models[modelName] == null) {
+      throw new Error(`There is no model with name ${modelName}`);
+    }
+
     if (config.suppressionTimeMillis < 0) {
       throw new Error(
           `suppressionTimeMillis is expected to be >= 0, ` +
@@ -168,8 +174,7 @@ export class BrowserFftSpeechCommandRecognizer implements
         Math.round(this.FFT_SIZE * (1 - overlapFactor));
 
     const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
-      const {model, words} =
-          this.getModelAndWords(config.modelName || this.BASE_MODEL_NAME);
+      const {model, words} = this.getModelAndWords(modelName);
       const y = tf.tidy(() => model.predict(x) as tf.Tensor);
       const scores = await y.data() as Float32Array;
       const maxIndexTensor = y.argMax(-1);
@@ -259,7 +264,6 @@ export class BrowserFftSpeechCommandRecognizer implements
           `Expected loaded model to have an output shape of rank 2,` +
           `but received shape ${JSON.stringify(outputShape)}`);
     }
-    console.log();
     if (outputShape[1] !== this.words[this.BASE_MODEL_NAME].length) {
       throw new Error(
           `Mismatch between the last dimension of model's output shape ` +
@@ -325,14 +329,13 @@ export class BrowserFftSpeechCommandRecognizer implements
    * @throws Error If this model is called before the model is loaded.
    */
   wordLabels(modelName = this.BASE_MODEL_NAME): string[] {
-    if (this.models[modelName] == null) {
+    if (this.words[this.BASE_MODEL_NAME] == null) {
       throw new Error(
           'Model is not loaded yet. Call ensureModelLoaded() or ' +
           'use the model for recognition with startStreaming() or ' +
           'recognize() first.');
     }
-    const {words} = this.getModelAndWords(modelName);
-    return words;
+    return this.words[modelName];
   }
 
   /**
@@ -451,7 +454,7 @@ export class BrowserFftSpeechCommandRecognizer implements
             `but got ${JSON.stringify(modelName)}`);
     tf.util.assert(
         modelName !== this.BASE_MODEL_NAME,
-        `The name of a transfer-learning model must not be 'base',` +
+        `The name of a transfer-learning model must not be 'base', ` +
             `which is reserved for the base model.`);
     tf.util.assert(
         word != null && word.length > 0,
@@ -460,10 +463,6 @@ export class BrowserFftSpeechCommandRecognizer implements
 
     this.streaming = true;
     await this.ensureModelLoaded();
-    tf.util.assert(
-        this.words[modelName].indexOf(word) === -1,
-        `Word '${word}' cannot be used to label a transfer-learning example ` +
-            `because it is in the vocabulary of the base model.`);
     return new Promise<SpectrogramData>((resolve, reject) => {
       const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
         if (this.transferLearnExamples[modelName] == null) {
@@ -508,35 +507,22 @@ export class BrowserFftSpeechCommandRecognizer implements
     delete this.words[modelName];
   }
 
-  // TODO(cais): Clean up. DO NOT SUBMIT.
-  // /**
-  //  * Get the list of transfer-learning words.
-  //  *
-  //  * The words are guaranteed to be sorted.
-  //  *
-  //  * @returns {string[]} The list of transfer-learning words collected so
-  //  far.
-  //  */
-  // transferLearningWordLabels(modelName: string): string[] {
-  //   return this.transferLearnWords[modelName];
-  // }
-
   /**
    * TODO(cais): Doc string. DO NOT SUBMIT.
    *
    * @param modelNameconfig
    */
-  async trainTranferLearningModel(
+  async trainTransferLearningModel(
       modelName: string, config?: TransferLearnConfig): Promise<tf.History> {
-    if (Object.keys(this.words[modelName]).length === 0) {
+    if (this.words[modelName] == null || this.words[modelName].length === 0) {
       throw new Error(
           `Cannot train transfer-learning model because no transfer ` +
           `learning example has been collected.`);
     }
-    if (Object.keys(this.words[modelName]).length === 1) {
+    if (this.words[modelName].length === 1) {
       throw new Error(
           `Cannot train transfer-learning model because only one ` +
-          `word label ('${Object.keys(this.words[modelName])[0]}') ` +
+          `word label ('${this.words[modelName]}') ` +
           `has been collected for transfer learning. Requires at least 2.`);
     }
 
@@ -591,6 +577,8 @@ export class BrowserFftSpeechCommandRecognizer implements
         this.words[modelName] != null,
         `No word example is available for tranfer-learning model of name ` +
             modelName);
+
+    this.freezeBaseModel();
     // Find the second last dense layer.
     const baseModel = this.models[this.BASE_MODEL_NAME];
     const layers = baseModel.layers;
@@ -618,6 +606,11 @@ export class BrowserFftSpeechCommandRecognizer implements
     this.models[modelName] =
         tf.model({inputs: baseModel.inputs, outputs: transferLearnOutput});
     // TODO(cais): Dispose old model?
+  }
+
+  private freezeBaseModel(): void {
+    const baseModel = this.models[this.BASE_MODEL_NAME];
+    baseModel.trainable = false;
   }
 
   /**
@@ -668,18 +661,20 @@ export class BrowserFftSpeechCommandRecognizer implements
   // }
 
   /**
-   * Check whether there is a transfer-learned model.
+   * List the names of the transfer-learning models.
    */
-  hasTransferLearningModel(): boolean {
-    return this.transferLearnModelHeads != null;
+  transferLearningModelNames(): string[] {
+    const modelNames = Object.keys(this.models);
+    modelNames.splice(modelNames.indexOf(this.BASE_MODEL_NAME), 1);
+    return modelNames;
   }
 
-  /**
-   * Reset (i.e., discard) the transfer-learned model.
-   */
-  resetTransferLearningModel() {
-    this.transferLearnModelHeads = null;
-  }
+  // /**  // TODO(cais): Clean up.
+  //  * Reset (i.e., discard) the transfer-learned model.
+  //  */
+  // resetTransferLearningModel() {
+  //   this.transferLearnModelHeads = null;
+  // }
 
   private collectTransferLearnWords(modelName: string) {
     this.words[modelName] =
