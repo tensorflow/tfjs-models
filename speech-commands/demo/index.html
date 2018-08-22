@@ -57,7 +57,8 @@
         .start-stop {
             position: absolute;
             top: 10px;
-            left: 40%;
+            left: 80%;
+            float: right;
         }
         .transfer-learn {
             position: absolute;
@@ -89,6 +90,19 @@
         .candidate-words-hidden {
             visibility: hidden;
         }
+        #candidate-words {
+            display: inline-block;
+        }
+        .transfer-learn-section {
+            position: absolute;
+            top: 100%;
+        }
+        #learn-words {
+            width: 80%;
+        }
+        .plots {
+            display: inline-block;
+        }
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
@@ -111,6 +125,19 @@
   <div class="start-stop">
     <button id="start" disabled="true">Start</button>
     <button id="stop" disabled="true">Stop</button>
+    <button id="go-to-transfer-learn" style="font-size:25px;">xfer learning ↓</button>
+  </div>
+
+  <div class="transfer-learn-section">
+    <input id="learn-words" size="40" value="_background_noise_,red,green,blue">
+    <button id="enter-learn-words" disabled="true">Enter transfer words</button>
+    <button id="start-transfer-learn" disabled="true">Start transfer learning</button>
+    <div id="transfer-learn-history"></div>
+    <div id="collect-words"></div>
+    <div id="plots">
+      <div id="loss-plot" class="plots"></div>
+      <div id="accuracy-plot" class="plots"></div>
+    </div>
   </div>
 
   <script src="index.js"></script>

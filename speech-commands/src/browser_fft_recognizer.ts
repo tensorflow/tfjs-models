@@ -28,7 +28,7 @@ export const UNKNOWN_TAG = '_unknown_';
 
 export interface TransferLearnConfig {
   /**
-   * Number of training epochs (default: 50).
+   * Number of training epochs (default: 20).
    */
   epochs?: number;
 
@@ -329,6 +329,9 @@ export class BrowserFftSpeechCommandRecognizer implements
    * @throws Error If this model is called before the model is loaded.
    */
   wordLabels(modelName = this.BASE_MODEL_NAME): string[] {
+    if (modelName == null) {
+      modelName = this.BASE_MODEL_NAME;
+    }
     if (this.words[this.BASE_MODEL_NAME] == null) {
       throw new Error(
           'Model is not loaded yet. Call ensureModelLoaded() or ' +
@@ -514,17 +517,19 @@ export class BrowserFftSpeechCommandRecognizer implements
    */
   async trainTransferLearningModel(
       modelName: string, config?: TransferLearnConfig): Promise<tf.History> {
-    if (this.words[modelName] == null || this.words[modelName].length === 0) {
-      throw new Error(
-          `Cannot train transfer-learning model because no transfer ` +
-          `learning example has been collected.`);
-    }
-    if (this.words[modelName].length === 1) {
-      throw new Error(
-          `Cannot train transfer-learning model because only one ` +
-          `word label ('${this.words[modelName]}') ` +
-          `has been collected for transfer learning. Requires at least 2.`);
-    }
+    tf.util.assert(
+        modelName != null && modelName.length > 0,
+        `Must specify a non-empty string as model name when calling ` +
+        `trainTransferLearningModel.`);
+    tf.util.assert(
+        this.words[modelName] != null && this.words[modelName].length > 0,
+        `Cannot train transfer-learning model '${modelName}' because no ` +
+        `transfer learning example has been collected.`);
+    tf.util.assert(
+        this.words[modelName].length > 1,
+        `Cannot train transfer-learning model '${modelName}' because only ` +
+        `1 word label ('${this.words[modelName]}') ` +
+        `has been collected for transfer learning. Requires at least 2.`)
 
     if (config == null) {
       config = {};
@@ -541,7 +546,7 @@ export class BrowserFftSpeechCommandRecognizer implements
     // Prepare the data.
     const {xs, ys} = this.collectTransferLearnDataAsTensors(modelName);
 
-    const epochs = config.epochs == null ? 50 : config.epochs;
+    const epochs = config.epochs == null ? 20 : config.epochs;
     const validationSplit =
         config.validationSplit == null ? 0 : config.validationSplit;
     try {
@@ -639,6 +644,26 @@ export class BrowserFftSpeechCommandRecognizer implements
             Object.keys(this.words[modelName]).length)
       };
     });
+  }
+
+  /**
+   * Get counts of the word examples that have been collected for a
+   * transfer-learning model.
+   *
+   * @param {string} modelName Name of the model.
+   */
+  // TODO(cais): Add unit test; DO NOT SUBMIT.
+  getTransferLearningExampleCounts(modelName: string): {[word: string]: number} {
+    if (this.transferLearnExamples[modelName] == null) {
+      throw new Error(
+          `No examples have been collected for transfer-learning model ` +
+          `named '${modelName}' yet.`);
+    }
+    const counts: {[word: string]: number} = {};
+    for (const word in this.transferLearnExamples[modelName]) {
+      counts[word] = this.transferLearnExamples[modelName][word].length;
+    }
+    return counts;
   }
 
   // TODO(cais): Replace with load().
