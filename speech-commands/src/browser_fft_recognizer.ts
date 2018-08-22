@@ -67,7 +67,9 @@ export class BrowserFftSpeechCommandRecognizer implements
       'https://storage.googleapis.com/tfjs-speech-commands-models/20w/metadata.json';
   // tslint:enable:max-line-length
 
-  private readonly BASE_MODEL_NAME = 'base';
+  // A unique identifier for the base model. None of the transfer-learning
+  // models added may use this name.
+  readonly BASE_MODEL_NAME = 'base';
 
   private readonly SAMPLE_RATE_HZ = 44100;
   private readonly FFT_SIZE = 1024;
@@ -86,8 +88,9 @@ export class BrowserFftSpeechCommandRecognizer implements
       {[modelName: string]: {[word: string]: tf.Tensor[]}};
   private transferLearnModelHeads: {[modelName: string]: tf.Sequential};
 
-  private readonly TRANSFER_LEARNING_METADATA_PREFIX =
-      'speech-commands-transfer-learning-metadata';
+  // TODO(cais): Clean up. DO NOT SUBMIT.
+  // private readonly TRANSFER_LEARNING_METADATA_PREFIX =
+  //     'speech-commands-transfer-learning-metadata';
 
   /**
    * Constructor of BrowserFftSpeechCommandRecognizer.
@@ -101,6 +104,8 @@ export class BrowserFftSpeechCommandRecognizer implements
       columnBufferLength: this.FFT_SIZE,
     };
 
+    this.models = {};
+    this.words = {};
     this.transferLearnExamples = {};
   }
 
@@ -254,11 +259,12 @@ export class BrowserFftSpeechCommandRecognizer implements
           `Expected loaded model to have an output shape of rank 2,` +
           `but received shape ${JSON.stringify(outputShape)}`);
     }
+    console.log();
     if (outputShape[1] !== this.words[this.BASE_MODEL_NAME].length) {
       throw new Error(
           `Mismatch between the last dimension of model's output shape ` +
           `(${outputShape[1]}) and number of words ` +
-          `(${this.words.length}).`);
+          `(${this.words[this.BASE_MODEL_NAME].length}).`);
     }
 
     this.models[this.BASE_MODEL_NAME] = model;
@@ -286,11 +292,11 @@ export class BrowserFftSpeechCommandRecognizer implements
   }
 
   private async ensureMetadataLoaded() {
-    if (this.words != null) {
+    if (this.words[this.BASE_MODEL_NAME] != null) {
       return;
     }
     const metadataJSON = await loadMetadataJson(this.DEFAULT_METADATA_JSON_URL);
-    this.words = metadataJSON.words;
+    this.words[this.BASE_MODEL_NAME] = metadataJSON.words;
   }
 
   /**
