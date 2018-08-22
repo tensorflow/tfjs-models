@@ -88,10 +88,6 @@ export class BrowserFftSpeechCommandRecognizer implements
       {[modelName: string]: {[word: string]: tf.Tensor[]}};
   private transferLearnModelHeads: {[modelName: string]: tf.Sequential};
 
-  // TODO(cais): Clean up. DO NOT SUBMIT.
-  // private readonly TRANSFER_LEARNING_METADATA_PREFIX =
-  //     'speech-commands-transfer-learning-metadata';
-
   /**
    * Constructor of BrowserFftSpeechCommandRecognizer.
    */
@@ -128,6 +124,13 @@ export class BrowserFftSpeechCommandRecognizer implements
    *     `config.includeSpectrogram` is `true`.
    * @param config The configurations for the streaming recognition to
    *   be started.
+   *   The `modelName` field of `config` specifies the model to be used for
+   *   online recognition. If not specified, it defaults to the name of the
+   *   base model ('base'), i.e., the pretrained model not from transfer
+   *   learning. If the recognizer instance has one or more transfer-learning
+   *   models ready (as a result of calls to `collectTransferLearningExample`
+   *   and `trainTransferLearningModel`), you can let this call use that
+   *   model for prediction by specifying the corresponding `modelName`.
    * @throws Error, if streaming recognition is already started or
    *   if `config` contains invalid values.
    */
@@ -511,25 +514,39 @@ export class BrowserFftSpeechCommandRecognizer implements
   }
 
   /**
-   * TODO(cais): Doc string. DO NOT SUBMIT.
+   * Train a transfer-learning model.
    *
-   * @param modelNameconfig
+   * The last dense layer of the base model is replaced with new softmax dense
+   * layer.
+   *
+   * It is assume that at least one category of data has been collected (using
+   * multiple calls to the `collectTransferLearningExample` method).
+   *
+   * @param modelName {string} Name of the transfer-learning model to be
+   *   trained. This must correspond to the modelName used during the
+   *   previous `collectTransferLearningExample` calls.
+   * @param config {TransferLearnConfig} Optional configurations fot the
+   *   training of the transfer-learning model.
+   * @returns {tf.History} A history object with the loss and accuracy values
+   *   from the training of the transfer-learning model.
+   * @throws Error, if `modelName` is invalid or if not sufficient training
+   *   examples have been collected yet.
    */
   async trainTransferLearningModel(
       modelName: string, config?: TransferLearnConfig): Promise<tf.History> {
     tf.util.assert(
         modelName != null && modelName.length > 0,
         `Must specify a non-empty string as model name when calling ` +
-        `trainTransferLearningModel.`);
+            `trainTransferLearningModel.`);
     tf.util.assert(
         this.words[modelName] != null && this.words[modelName].length > 0,
         `Cannot train transfer-learning model '${modelName}' because no ` +
-        `transfer learning example has been collected.`);
+            `transfer learning example has been collected.`);
     tf.util.assert(
         this.words[modelName].length > 1,
         `Cannot train transfer-learning model '${modelName}' because only ` +
-        `1 word label ('${this.words[modelName]}') ` +
-        `has been collected for transfer learning. Requires at least 2.`)
+            `1 word label ('${this.words[modelName]}') ` +
+            `has been collected for transfer learning. Requires at least 2.`);
 
     if (config == null) {
       config = {};
@@ -557,18 +574,6 @@ export class BrowserFftSpeechCommandRecognizer implements
         callbacks: config.callback == null ? null : [config.callback]
       });
       tf.dispose([xs, ys]);
-      // TODO(cais): Move to a different save() method.
-      // if (savePath != null && this.transferLearnModelHeads != null) {
-      //   // Save the model.
-      //   await this.transferLearnModelHeads.save(`indexeddb://${savePath}`);
-      //   // Save the transfer-learning metadata.
-      //   const transferLearningWordSavePath =
-      //       this.TRANSFER_LEARNING_METADATA_PREFIX + '/' + savePath;
-      //   window.localStorage.setItem(
-      //       transferLearningWordSavePath,
-      //       JSON.stringify(
-      //           {transferLearningWords: this.transferLearningWordLabels()}));
-      // }
       return history;
     } catch (err) {
       tf.dispose([xs, ys]);
@@ -610,7 +615,6 @@ export class BrowserFftSpeechCommandRecognizer implements
         transferLearnModelHead.apply(beheadedBaseOutput) as tf.SymbolicTensor;
     this.models[modelName] =
         tf.model({inputs: baseModel.inputs, outputs: transferLearnOutput});
-    // TODO(cais): Dispose old model?
   }
 
   private freezeBaseModel(): void {
@@ -619,8 +623,12 @@ export class BrowserFftSpeechCommandRecognizer implements
   }
 
   /**
-   * TODO(cais): Doc string.
-   * @param modelName
+   * Collect the transfer-learning data as tf.Tensors.
+   *
+   * @param modelName {string} Name of the transfer learning model for which
+   *   the examples are to be collected.
+   * @returns xs: The feature tensors (xs), a 4D tf.Tensor.
+   *          ys: The target tensors (ys), one-hot encoding, a 2D tf.Tensor.
    */
   private collectTransferLearnDataAsTensors(modelName: string):
       {xs: tf.Tensor, ys: tf.Tensor} {
@@ -652,8 +660,8 @@ export class BrowserFftSpeechCommandRecognizer implements
    *
    * @param {string} modelName Name of the model.
    */
-  // TODO(cais): Add unit test; DO NOT SUBMIT.
-  getTransferLearningExampleCounts(modelName: string): {[word: string]: number} {
+  getTransferLearningExampleCounts(modelName: string):
+      {[word: string]: number} {
     if (this.transferLearnExamples[modelName] == null) {
       throw new Error(
           `No examples have been collected for transfer-learning model ` +
@@ -666,25 +674,6 @@ export class BrowserFftSpeechCommandRecognizer implements
     return counts;
   }
 
-  // TODO(cais): Replace with load().
-  // /**
-  //  * Load transfer learned model from IndexedDB.
-  //  *
-  //  * @param savePath A string path for loading model from IndexedDB (e.g.,
-  //  *   'my-transfer-learning-model/v1');
-  //  */
-  // async loadTransferLearningModel(savePath?: string) {
-  //   // Load the model.
-  //   this.transferLearnModelHeads = await
-  //   tf.loadModel(`indexeddb://${savePath}`);
-  //   // Load the transfer-learning metadata.
-  //   const transferLearningWordSavePath =
-  //       this.TRANSFER_LEARNING_METADATA_PREFIX + '/' + savePath;
-  //   this.transferLearnWords =
-  //       JSON.parse(window.localStorage.getItem(transferLearningWordSavePath))
-  //           .transferLearningWords;
-  // }
-
   /**
    * List the names of the transfer-learning models.
    */
@@ -693,13 +682,6 @@ export class BrowserFftSpeechCommandRecognizer implements
     modelNames.splice(modelNames.indexOf(this.BASE_MODEL_NAME), 1);
     return modelNames;
   }
-
-  // /**  // TODO(cais): Clean up.
-  //  * Reset (i.e., discard) the transfer-learned model.
-  //  */
-  // resetTransferLearningModel() {
-  //   this.transferLearnModelHeads = null;
-  // }
 
   private collectTransferLearnWords(modelName: string) {
     this.words[modelName] =
@@ -722,4 +704,6 @@ export class BrowserFftSpeechCommandRecognizer implements
           `but got shape [null,${nonBatchedShape}]`);
     }
   }
+
+  // TODO(cais): Implement model save and load.
 }

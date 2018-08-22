@@ -399,6 +399,9 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(spectrogram.data.length)
         .toEqual(fakeNumFrames * fakeColumnTruncateLength);
     expect(recognizer.wordLabels('xfer1')).toEqual(['foo']);
+    expect(recognizer.getTransferLearningExampleCounts('xfer1')).toEqual({
+      'foo': 1
+    });
 
     spectrogram =
         await recognizer.collectTransferLearningExample('xfer1', 'foo');
@@ -406,6 +409,9 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(spectrogram.data.length)
         .toEqual(fakeNumFrames * fakeColumnTruncateLength);
     expect(recognizer.wordLabels('xfer1')).toEqual(['foo']);
+    expect(recognizer.getTransferLearningExampleCounts('xfer1')).toEqual({
+      'foo': 2
+    });
 
     spectrogram =
         await recognizer.collectTransferLearningExample('xfer1', 'bar');
@@ -413,6 +419,8 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(spectrogram.data.length)
         .toEqual(fakeNumFrames * fakeColumnTruncateLength);
     expect(recognizer.wordLabels('xfer1')).toEqual(['bar', 'foo']);
+    expect(recognizer.getTransferLearningExampleCounts('xfer1'))
+        .toEqual({'bar': 1, 'foo': 2});
   });
 
   it('clearTransferLearningExamples succeeds for 1 model', async () => {
@@ -424,9 +432,13 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(spectrogram.data.length)
         .toEqual(fakeNumFrames * fakeColumnTruncateLength);
     expect(recognizer.wordLabels('xfer1')).toEqual(['foo']);
+    expect(recognizer.getTransferLearningExampleCounts('xfer1')).toEqual({
+      'foo': 1
+    });
 
     recognizer.clearTransferLearningExamples('xfer1');
     expect(recognizer.wordLabels('xfer1')).toBeUndefined();
+    expect(recognizer.getTransferLearningExampleCounts('xfer1')).toEqual({});
 
     spectrogram =
         await recognizer.collectTransferLearningExample('xfer1', 'bar');
@@ -434,6 +446,9 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(spectrogram.data.length)
         .toEqual(fakeNumFrames * fakeColumnTruncateLength);
     expect(recognizer.wordLabels('xfer1')).toEqual(['bar']);
+    expect(recognizer.getTransferLearningExampleCounts('xfer1')).toEqual({
+      'bar': 1
+    });
   });
 
   it('Collect examples for 2 transfer-learning models', async () => {
@@ -584,10 +599,16 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
       await recognizer.collectTransferLearningExample('xfer1', 'bar');
     }
     expect(recognizer.transferLearningModelNames()).toEqual([]);
+
+    recognizer.models['base'].getLayer(null, 1).getWeights()[0].print();
     const history = await recognizer.trainTransferLearningModel('xfer1');
-    expect(history.history.loss.length).toEqual(50);
-    expect(history.history.acc.length).toEqual(50);
+    expect(history.history.loss.length).toEqual(20);
+    expect(history.history.acc.length).toEqual(20);
     expect(recognizer.transferLearningModelNames()).toEqual(['xfer1']);
+    // Verify that the weights of the dense layer in the base model doesn't
+    // change, i.e., is frozen.
+    // TODO(cais): Fix. DO NOT SUBMIT.
+    recognizer.models['base'].getLayer(null, 1).getWeights()[0].print();
 
     // After the transfer learning is complete, startStreaming with the
     // transfer-learned model's name should give scores only for the
