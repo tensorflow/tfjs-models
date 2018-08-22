@@ -136,6 +136,13 @@ export interface StreamingRecognitionConfig {
    * Default: `false`.
    */
   includeSpectrogram?: boolean;
+
+  /**
+   * Identifier for the model to be used for recognition.
+   * 
+   * Optional. If not defined, will default to the 'base' model.
+   */
+  modelName?: string;
 }
 
 export interface RecognizerParams {
