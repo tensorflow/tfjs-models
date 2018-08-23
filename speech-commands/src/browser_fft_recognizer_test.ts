@@ -608,7 +608,6 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     const oldHiddenKernel =
         recognizer.models['base'].getLayer(null, 1).getWeights()[0];
     const numLayers = recognizer.models['xfer1'].layers.length;
-    console.log('numLayer:', numLayers);  // DEBUG
     const oldTransferKernel = recognizer.models['xfer1']
                                   .getLayer(null, numLayers - 1)
                                   .getWeights()[0];
