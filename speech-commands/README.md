@@ -209,7 +209,7 @@ recognizer.startStreaming(result => {
   const words = recognizer.wordLabels(modelName);
   // Due to the `modelName` specified below, `result.scores` contains the
   // scores for the new words, not the original words.
-  for (let i = 0; i < words; ++I) {
+  for (let i = 0; i < words; ++i) {
     console.log(`score for word '${words[i]}' = ${result.scores[i]}`);
   }
 }, {
