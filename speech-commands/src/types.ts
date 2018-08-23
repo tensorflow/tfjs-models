@@ -139,10 +139,39 @@ export interface StreamingRecognitionConfig {
 
   /**
    * Identifier for the model to be used for recognition.
-   * 
+   *
    * Optional. If not defined, will default to the 'base' model.
    */
   modelName?: string;
+}
+
+export interface TransferLearnConfig {
+  /**
+   * Number of training epochs (default: 20).
+   */
+  epochs?: number;
+
+  /**
+   * Optimizer to be used for training (default: 'sgd').
+   */
+  optimizer?: string;
+
+  /**
+   * Batch size of training (default: 128).
+   */
+  batchSize?: number;
+
+  /**
+   * Validation split to be used during training (default: 0).
+   *
+   * Must be a number between 0 and 1.
+   */
+  validationSplit?: number;
+
+  /**
+   * tf.Callback to be used during the training.
+   */
+  callback?: tf.CustomCallbackConfig;
 }
 
 export interface RecognizerParams {

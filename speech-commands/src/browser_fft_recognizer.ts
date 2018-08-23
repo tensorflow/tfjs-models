@@ -20,40 +20,11 @@ import * as tf from '@tensorflow/tfjs';
 // tslint:disable:max-line-length
 import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
 import {loadMetadataJson} from './browser_fft_utils';
-import {RecognizerCallback, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig} from './types';
+import {RecognizerCallback, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig} from './types';
 // tslint:enable:max-line-length
 
 export const BACKGROUND_NOISE_TAG = '_background_noise_';
 export const UNKNOWN_TAG = '_unknown_';
-
-export interface TransferLearnConfig {
-  /**
-   * Number of training epochs (default: 20).
-   */
-  epochs?: number;
-
-  /**
-   * Optimizer to be used for training (default: 'sgd').
-   */
-  optimizer?: string;
-
-  /**
-   * Batch size of training (default: 128).
-   */
-  batchSize?: number;
-
-  /**
-   * Validation split to be used during training (default: 0).
-   *
-   * Must be a number between 0 and 1.
-   */
-  validationSplit?: number;
-
-  /**
-   * tf.Callback to be used during the training.
-   */
-  callback?: tf.CustomCallbackConfig;
-}
 
 /**
  * Speech-Command Recognizer using browser-native (WebAudio) spectral featutres.
