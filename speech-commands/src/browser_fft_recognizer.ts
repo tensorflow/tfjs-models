@@ -92,7 +92,6 @@ export class BrowserFftSpeechCommandRecognizer implements
    * Constructor of BrowserFftSpeechCommandRecognizer.
    */
   constructor() {
-    // TODO(cais): Call this constructor in a factory function.
     this.streaming = false;
     this.parameters = {
       sampleRateHz: this.SAMPLE_RATE_HZ,

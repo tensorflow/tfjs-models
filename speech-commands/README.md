@@ -132,6 +132,95 @@ the model is loaded. "Warm up" means running a few dummy examples through the
 model for inference to make sure that the necessary states are set up, so that
 subsequent inferences can be fast.
 
+### Transfer learning
+
+**Transfer learning** refers to the process of using of a model trained
+previously on a dataset (say dataset A) on a different dataset (say dataset B).
+To achieve transfer learning, the model needs to be slightly modified and
+re-trained on dataset B. However, thanks to the training on
+the original dataset, the training on the new dataset takes much less
+time and computation resource, in addition to requiring a much smaller amount of
+data than the original training data. The modification process involves removing the
+top (output) dense layer of the original model and keeping the "base" of the
+model. Due to its previous training, the base can be used as a good feature
+extractor for any data similar to the original training data.
+The removed dense layer is replaced with a new dense layer configured
+specifically for the new dataset.
+
+The speech-command model is a model suitable for transfer learning on
+previously-unseen spoken words. The original model has been trained a relatively
+large dataset (~50k examples from 20 classes). It can be used for transfer learning on
+words different from the original vocabulary. We provide an API to perform
+this type of transfer learning. The steps are listed in the example
+code snippet below
+
+```js
+const recognizer = SpeechCommands.create('BROWSER_FFT');
+await recognizer.ensureModelLoaded();
+
+// Each instance of speech-command recognizer supports multiple
+// transfer-learning models, each of which can be trained for a different
+// new vocabulary.
+// Therefore we give a name to the transfer-learning model we are about to
+// train.
+const modelName = 'colors';
+
+// Call `collectTransferLearningExample()` to collect a number of audio examples
+// via WebAudio.
+await recognizer.collectTransferLearningExample(modelName, 'red');
+await recognizer.collectTransferLearningExample(modelName, 'green');
+await recognizer.collectTransferLearningExample(modelName, 'blue');
+await recognizer.collectTransferLearningExample(modelName, 'red');
+// Don't forget to collect some background-noise examples, so that the
+// trasnfer-learned model will be able to detect moments of silence.
+await recognizer.collectTransferLearningExample(modelName, '_background_noise_');
+await recognizer.collectTransferLearningExample(modelName, 'green');
+await recognizer.collectTransferLearningExample(modelName, 'blue');
+await recognizer.collectTransferLearningExample(modelName, '_background_noise_');
+// ... You would typically want to put `collectTransferLearningExample`
+//     in the callback of a UI button to allow the user to collect
+//     any desired number of examples in random order.
+
+// You can check the counts of examples for different words that have been
+// collect for this transfer-learning model.
+console.log(recognizer.getTransferLearningExampleCounts(modelName));
+// e.g., {'red': 2, 'green': 2', 'blue': 2, '_background_noise': 2};
+
+// Start training of the transfer-learning model.
+// You can specify `epochs` (number of training epochs) and `callback`
+// (the Model.fit callback to use during training), among other configuration
+// fields.
+await recognizer.trainTransferLearningModel(modelName, {
+  epochs: 25,
+  callback: {
+    onEpochEnd: async (epoch, logs) => {
+      console.log(`Epoch ${epochs}: loss=${logs.loss}, accuracy=${logs.acc}`);
+    }
+  }
+});
+
+// After the transfer learning completes, you can start online streaming
+// recognition using the new model. Be sure to use the `modelName` configuration
+// field. If you don't specify `modelName`, the original model will still be
+// used.
+recognizer.startStreaming(result => {
+  // - result.scores contains the scores for the new vocabulary, which
+  //   can be checked with:
+  const words = recognizer.wordLabels(modelName);
+  // Due to the `modelName` specified below, `result.scores` contains the
+  // scores for the new words, the original words.
+  for (let i = 0; i < words; ++I) {
+    console.log(`score for word '${words[i]}' = ${result.scores[i]}`);
+  }
+}, {
+  modelName,
+  probabilityThreshold: 0.75
+});
+
+// Stop the recognition in 10 seconds.
+setTimeout(() => recognizer.stopStreaming(), 10e3);
+```
+
 ## How to run the demo
 
 The demo/ folder contains a live demo of the speech-command recognizer.
