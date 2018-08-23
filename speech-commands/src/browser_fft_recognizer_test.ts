@@ -600,15 +600,34 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     }
     expect(recognizer.transferLearningModelNames()).toEqual([]);
 
-    recognizer.models['base'].getLayer(null, 1).getWeights()[0].print();
+    // Train transfer-learning model once to make sure model is created first,
+    // so that we can check the change in the transfer-learning model's weights
+    // after a new round of training.
+    await recognizer.trainTransferLearningModel('xfer1', {epochs: 1});
+
+    const oldHiddenKernel =
+        recognizer.models['base'].getLayer(null, 1).getWeights()[0];
+    const numLayers = recognizer.models['xfer1'].layers.length;
+    console.log('numLayer:', numLayers);  // DEBUG
+    const oldTransferKernel = recognizer.models['xfer1']
+                                  .getLayer(null, numLayers - 1)
+                                  .getWeights()[0];
     const history = await recognizer.trainTransferLearningModel('xfer1');
     expect(history.history.loss.length).toEqual(20);
     expect(history.history.acc.length).toEqual(20);
     expect(recognizer.transferLearningModelNames()).toEqual(['xfer1']);
     // Verify that the weights of the dense layer in the base model doesn't
     // change, i.e., is frozen.
-    // TODO(cais): Fix. DO NOT SUBMIT.
-    recognizer.models['base'].getLayer(null, 1).getWeights()[0].print();
+    const newHiddenKernel =
+        recognizer.models['base'].getLayer(null, 1).getWeights()[0];
+    const newTransferKernel = recognizer.models['xfer1']
+                                  .getLayer(null, numLayers - 1)
+                                  .getWeights()[0];
+    tf.test_util.expectArraysClose(newHiddenKernel, oldHiddenKernel);
+    // Verify that the weight of the transfer-learning head model changes after
+    // training.
+    expect(newTransferKernel.sub(oldTransferKernel).abs().max().dataSync()[0])
+        .toBeGreaterThan(1e-3);
 
     // After the transfer learning is complete, startStreaming with the
     // transfer-learned model's name should give scores only for the

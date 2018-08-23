@@ -619,7 +619,9 @@ export class BrowserFftSpeechCommandRecognizer implements
 
   private freezeBaseModel(): void {
     const baseModel = this.models[this.BASE_MODEL_NAME];
-    baseModel.trainable = false;
+    for (const layer of baseModel.layers) {
+      layer.trainable = false;
+    }
   }
 
   /**
