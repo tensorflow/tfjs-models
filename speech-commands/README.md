@@ -203,7 +203,7 @@ await recognizer.trainTransferLearningModel(modelName, {
 // recognition using the new model. Be sure to use the `modelName` configuration
 // field. If you don't specify `modelName`, the original model will still be
 // used.
-recognizer.startStreaming(result => {
+await recognizer.startStreaming(result => {
   // - result.scores contains the scores for the new vocabulary, which
   //   can be checked with:
   const words = recognizer.wordLabels(modelName);
