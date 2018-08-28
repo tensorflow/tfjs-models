@@ -134,12 +134,12 @@ subsequent inferences can be fast.
 
 ### Transfer learning
 
-**Transfer learning** refers to the process of using of a model trained
+**Transfer learning** is the process of using a model trained
 previously on a dataset (say dataset A) on a different dataset (say dataset B).
 To achieve transfer learning, the model needs to be slightly modified and
 re-trained on dataset B. However, thanks to the training on
-the original dataset, the training on the new dataset takes much less
-time and computation resource, in addition to requiring a much smaller amount of
+the original dataset (A), the training on the new dataset (B) takes much less
+time and computational resource, in addition to requiring a much smaller amount of
 data than the original training data. The modification process involves removing the
 top (output) dense layer of the original model and keeping the "base" of the
 model. Due to its previous training, the base can be used as a good feature
@@ -148,7 +148,7 @@ The removed dense layer is replaced with a new dense layer configured
 specifically for the new dataset.
 
 The speech-command model is a model suitable for transfer learning on
-previously-unseen spoken words. The original model has been trained a relatively
+previously unseen spoken words. The original model has been trained on a relatively
 large dataset (~50k examples from 20 classes). It can be used for transfer learning on
 words different from the original vocabulary. We provide an API to perform
 this type of transfer learning. The steps are listed in the example
@@ -165,32 +165,32 @@ await recognizer.ensureModelLoaded();
 // train.
 const modelName = 'colors';
 
-// Call `collectTransferLearningExample()` to collect a number of audio examples
+// Call `collectTransferExample()` to collect a number of audio examples
 // via WebAudio.
-await recognizer.collectTransferLearningExample(modelName, 'red');
-await recognizer.collectTransferLearningExample(modelName, 'green');
-await recognizer.collectTransferLearningExample(modelName, 'blue');
-await recognizer.collectTransferLearningExample(modelName, 'red');
+await recognizer.collectTransferExample(modelName, 'red');
+await recognizer.collectTransferExample(modelName, 'green');
+await recognizer.collectTransferExample(modelName, 'blue');
+await recognizer.collectTransferExample(modelName, 'red');
 // Don't forget to collect some background-noise examples, so that the
 // trasnfer-learned model will be able to detect moments of silence.
-await recognizer.collectTransferLearningExample(modelName, '_background_noise_');
-await recognizer.collectTransferLearningExample(modelName, 'green');
-await recognizer.collectTransferLearningExample(modelName, 'blue');
-await recognizer.collectTransferLearningExample(modelName, '_background_noise_');
-// ... You would typically want to put `collectTransferLearningExample`
+await recognizer.collectTransferExample(modelName, '_background_noise_');
+await recognizer.collectTransferExample(modelName, 'green');
+await recognizer.collectTransferExample(modelName, 'blue');
+await recognizer.collectTransferExample(modelName, '_background_noise_');
+// ... You would typically want to put `collectTransferExample`
 //     in the callback of a UI button to allow the user to collect
 //     any desired number of examples in random order.
 
 // You can check the counts of examples for different words that have been
 // collect for this transfer-learning model.
-console.log(recognizer.getTransferLearningExampleCounts(modelName));
+console.log(recognizer.getTransferExampleCounts(modelName));
 // e.g., {'red': 2, 'green': 2', 'blue': 2, '_background_noise': 2};
 
 // Start training of the transfer-learning model.
 // You can specify `epochs` (number of training epochs) and `callback`
 // (the Model.fit callback to use during training), among other configuration
 // fields.
-await recognizer.trainTransferLearningModel(modelName, {
+await recognizer.trainTransferModel(modelName, {
   epochs: 25,
   callback: {
     onEpochEnd: async (epoch, logs) => {
