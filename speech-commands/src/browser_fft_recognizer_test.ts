@@ -418,6 +418,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(transfer.countExamples()).toEqual({'bar': 1, 'foo': 2});
   });
 
+  // TODO(cais): Test invalid names for createTransfer.
   // TODO(cais): Test calling createTransfer before ensureModelLoaded.
 
   it('clearTransferLearningExamples default transfer model', async () => {
@@ -482,7 +483,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
         .toThrowError(/No transfer learning examples .*xfer1/);
   });
 
-  it('collectExample fails on undefined/null word',  async () => {
+  it('collectExample fails on undefined/null/empty word',  async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();
@@ -500,97 +501,55 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
       errorCaught = err;
     }
     expect(errorCaught.message).toMatch(/non-empty string/);
+    try {
+      await transfer.collectExample('');
+    } catch (err) {
+      errorCaught = err;
+    }
+    expect(errorCaught.message).toMatch(/non-empty string/);
   });
 
-  // it('collectTransferLearningExample fails on undefined/null/empty model
-  // name',
-  //    async () => {
-  //      setUpFakes();
-  //      const recognizer = new BrowserFftSpeechCommandRecognizer();
-  //      let errorCaught: Error;
-  //      try {
-  //        await recognizer.collectTransferExample(undefined, 'foo');
-  //      } catch (err) {
-  //        errorCaught = err;
-  //      }
-  //      expect(errorCaught.message).toMatch(/non-empty string/);
-  //      try {
-  //        await recognizer.collectTransferExample(null, 'foo');
-  //      } catch (err) {
-  //        errorCaught = err;
-  //      }
-  //      expect(errorCaught.message).toMatch(/non-empty string/);
-  //      try {
-  //        await recognizer.collectTransferExample('', 'foo');
-  //      } catch (err) {
-  //        errorCaught = err;
-  //      }
-  //      expect(errorCaught.message).toMatch(/non-empty string/);
-  //    });
+  it('Concurrent collectTransferLearningExample call fails', async done => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer1 = await base.createTransfer('xfer1');
+    transfer1.collectExample('foo').then(() => {
+      done();
+    });
 
-  // it('collectTransferLearningExample fails on empty word', async () => {
-  //   setUpFakes();
-  //   const recognizer = new BrowserFftSpeechCommandRecognizer();
-  //   let errorCaught: Error;
-  //   try {
-  //     await recognizer.collectTransferExample('xfer1', '');
-  //   } catch (err) {
-  //     errorCaught = err;
-  //   }
-  //   expect(errorCaught.message).toMatch(/non-empty string/);
-  // });
+    let caughtError: Error;
+    try {
+      await transfer1.collectExample('foo');
+    } catch (err) {
+      caughtError = err;
+    }
+    expect(caughtError.message)
+        .toMatch(/Cannot start collection of transfer-learning example/);
+  });
 
-  // it('collectTransferLearningExample fails on model name "base"', async ()
-  // => {
-  //   setUpFakes();
-  //   const recognizer = new BrowserFftSpeechCommandRecognizer();
-  //   let errorCaught: Error;
-  //   try {
-  //     await recognizer.collectTransferExample('base', 'foo');
-  //   } catch (err) {
-  //     errorCaught = err;
-  //   }
-  //   expect(errorCaught.message).toMatch(/must not be \'base\'.*reserved/);
-  // });
+  it('Concurrent collectExample+startStreaming fails', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    await base.startStreaming(
+        async (result: SpeechCommandRecognizerResult) => {});
+    expect(base.isStreaming()).toEqual(true);
 
-  // it('Concurrent collectTransferLearningExample call fails', async done => {
-  //   setUpFakes();
-  //   const recognizer = new BrowserFftSpeechCommandRecognizer();
-  //   recognizer.collectTransferExample('xfer1', 'foo').then(() => {
-  //     done();
-  //   });
+    const transfer = base.createTransfer('xfer1');
+    let caughtError: Error;
+    try {
+      await transfer.collectExample('foo');
+    } catch (err) {
+      caughtError = err;
+    }
+    expect(caughtError.message)
+        .toMatch(/Cannot start collection of transfer-learning example/);
+    expect(base.isStreaming()).toEqual(true);
 
-  //   let caughtError: Error;
-  //   try {
-  //     await recognizer.collectTransferExample('xfer1', 'foo');
-  //   } catch (err) {
-  //     caughtError = err;
-  //   }
-  //   expect(caughtError.message)
-  //       .toMatch(/Cannot start collection of transfer-learning example/);
-  // });
-
-  // it('Concurrent collectTransferLearningExample+startStreaming fails',
-  //    async () => {
-  //      setUpFakes();
-  //      const recognizer = new BrowserFftSpeechCommandRecognizer();
-  //      await recognizer.startStreaming(
-  //          async (result: SpeechCommandRecognizerResult) => {});
-  //      expect(recognizer.isStreaming()).toEqual(true);
-
-  //      let caughtError: Error;
-  //      try {
-  //        await recognizer.collectTransferExample('xfer1', 'foo');
-  //      } catch (err) {
-  //        caughtError = err;
-  //      }
-  //      expect(caughtError.message)
-  //          .toMatch(/Cannot start collection of transfer-learning example/);
-  //      expect(recognizer.isStreaming()).toEqual(true);
-
-  //      await recognizer.stopStreaming();
-  //      expect(recognizer.isStreaming()).toEqual(false);
-  //    });
+    await base.stopStreaming();
+    expect(base.isStreaming()).toEqual(false);
+  });
 
   // it('trainTransferLearningModel default params', async done => {
   //   setUpFakes();
