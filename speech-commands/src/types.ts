@@ -209,7 +209,7 @@ export interface TransferLearnConfig {
   /**
    * Optimizer to be used for training (default: 'sgd').
    */
-  optimizer?: string;
+  optimizer?: string | tf.Optimizer;
 
   /**
    * Batch size of training (default: 128).

@@ -458,10 +458,11 @@ export class BrowserFftSpeechCommandRecognizer implements
   // TODO(cais): Implement model save and load.
 }
 
-export class TransferBrowserFftSpeechCommandRecognizer extends
+class TransferBrowserFftSpeechCommandRecognizer extends
     BrowserFftSpeechCommandRecognizer implements
         TransferSpeechCommandRecognizer {
   private transferExamples: {[word: string]: tf.Tensor[]};
+  private transferHead: tf.Sequential;
 
   constructor(
       readonly name: string, readonly parameters: RecognizerParams,
@@ -667,14 +668,14 @@ export class TransferBrowserFftSpeechCommandRecognizer extends
     }
     const beheadedBaseOutput = layers[layerIndex].output as tf.SymbolicTensor;
 
-    const transferHead = tf.sequential();
-    transferHead.add(tf.layers.dense({
+    this.transferHead = tf.sequential();
+    this.transferHead.add(tf.layers.dense({
       units: this.words.length,
       activation: 'softmax',
       inputShape: beheadedBaseOutput.shape.slice(1)
     }));
     const transferOutput =
-        transferHead.apply(beheadedBaseOutput) as tf.SymbolicTensor;
+        this.transferHead.apply(beheadedBaseOutput) as tf.SymbolicTensor;
     this.model =
         tf.model({inputs: this.baseModel.inputs, outputs: transferOutput});
   }
