@@ -147,6 +147,14 @@ export interface StreamingRecognitionConfig {
 
 export interface TransferLearnConfig {
   /**
+   * Name of the transfer-learning model to be trained.
+   * 
+   * If not specified, will default to the default transfer-leanring model name
+   * 'default_transfer'.
+   */
+  modelName?: string;
+
+  /**
    * Number of training epochs (default: 20).
    */
   epochs?: number;

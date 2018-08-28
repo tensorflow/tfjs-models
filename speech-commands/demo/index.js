@@ -155,7 +155,7 @@ enterLearnWordsButton.addEventListener('click', () => {
 
     button.addEventListener('click', async () => {
       disableAllCollectWordButtons();
-      const spectrogram = await recognizer.collectTransferLearningExample(
+      const spectrogram = await recognizer.collectTransferExample(
           XFER_MODEL_NAME, word);
       const exampleCanvas = document.createElement('canvas');
       exampleCanvas.style['display'] = 'inline-block';
@@ -167,8 +167,7 @@ enterLearnWordsButton.addEventListener('click', () => {
       plotSpectrogram(
           exampleCanvas, spectrogram.data, spectrogram.frameSize,
           spectrogram.frameSize);
-      const exampleCounts =
-          recognizer.getTransferLearningExampleCounts(XFER_MODEL_NAME);
+      const exampleCounts = recognizer.getTransferExampleCounts(XFER_MODEL_NAME);
       button.textContent = `Collect "${word}" sample (${exampleCounts[word]})`;
       logToStatusDisplay(`Collect one sample of word "${word}"`);
       enableAllCollectWordButtons();
@@ -226,7 +225,7 @@ startTransferLearnButton.addEventListener('click', async () => {
   }
 
   disableAllCollectWordButtons();
-  await recognizer.trainTransferLearningModel(XFER_MODEL_NAME, {
+  await recognizer.trainTransferModel(XFER_MODEL_NAME, {
     epochs,
     callback: {
       onEpochEnd: async (epoch, logs) => {
