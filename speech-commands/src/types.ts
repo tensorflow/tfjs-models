@@ -36,8 +36,8 @@ export interface SpeechCommandRecognizer {
   // Throws:
   //   Error if there is already ongoing streaming recognition.
   startStreaming(
-      callback: RecognizerCallback,
-      config?: StreamingRecognitionConfig): Promise<void>;
+    callback: RecognizerCallback,
+    config?: StreamingRecognitionConfig): Promise<void>;
 
   // Stop the ongoing streaming recognition (if any).
   //
@@ -70,6 +70,60 @@ export interface SpeechCommandRecognizer {
 
   // Get the required number of frames.
   params(): RecognizerParams;
+
+  /**
+   * TODO(cais): DOC STRING.
+   */
+  createTransfer(name: string): TransferSpeechCommandRecognizer;
+}
+
+// export interface SpeechCommandRecognizer extends CommonSpeechCommandRecognizer {
+//   
+// }
+
+export interface TransferSpeechCommandRecognizer extends SpeechCommandRecognizer {
+  /**
+   * Collect an example for transfer learning via WebAudio.
+   *
+   * @param {string} word Name of the word. Must not overlap with any of the
+   *   words the base model is trained to recognize.
+   * @returns {SpectrogramData} The spectrogram of the acquired the example.
+   * @throws Error, if word belongs to the set of words the base model is
+   *   trained to recognize.
+   */
+  collectExample(word: string): Promise<SpectrogramData>;
+
+  /**
+   * Clear all transfer learning examples collected so far.
+   */
+  clearExamples(): void;
+
+  /**
+   * Get counts of the word examples that have been collected for a
+   * transfer-learning model.
+   *
+   * @returns {{[word: string]: number}} A map from word name to number of
+   *   examples collected for that word so far.
+   */
+  countExamples(): {[word: string]: number};
+
+  /**
+   * Train a transfer-learning model.
+   *
+   * The last dense layer of the base model is replaced with new softmax dense
+   * layer.
+   *
+   * It is assume that at least one category of data has been collected (using
+   * multiple calls to the `collectTransferExample` method).
+
+   * @param config {TransferLearnConfig} Optional configurations fot the
+   *   training of the transfer-learning model.
+   * @returns {tf.History} A history object with the loss and accuracy values
+   *   from the training of the transfer-learning model.
+   * @throws Error, if `modelName` is invalid or if not sufficient training
+   *   examples have been collected yet.
+   */
+  train(config?: TransferLearnConfig): Promise<tf.History>;
 }
 
 export interface SpectrogramData {
@@ -137,23 +191,16 @@ export interface StreamingRecognitionConfig {
    */
   includeSpectrogram?: boolean;
 
-  /**
-   * Identifier for the model to be used for recognition.
-   *
-   * Optional. If not defined, will default to the 'base' model.
-   */
-  modelName?: string;
+  // TODO(cais): Clean up.
+  // /**
+  //  * Identifier for the model to be used for recognition.
+  //  *
+  //  * Optional. If not defined, will default to the 'base' model.
+  //  */
+  // modelName?: string;
 }
 
 export interface TransferLearnConfig {
-  /**
-   * Name of the transfer-learning model to be trained.
-   * 
-   * If not specified, will default to the default transfer-leanring model name
-   * 'default_transfer'.
-   */
-  modelName?: string;
-
   /**
    * Number of training epochs (default: 20).
    */

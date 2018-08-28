@@ -76,8 +76,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(recognizer.wordLabels()).toEqual(fakeWords);
     expect(recognizer.params().spectrogramDurationMillis)
         .toBeCloseTo(fakeNumFrames * 1024 / 44100 * 1e3);
-    expect(recognizer.models[recognizer.BASE_MODEL_NAME] instanceof tf.Model)
-        .toEqual(true);
+    expect(recognizer.model instanceof tf.Model).toEqual(true);
     expect(recognizer.modelInputShape()).toEqual([
       null, fakeNumFrames, fakeColumnTruncateLength, 1
     ]);
@@ -392,128 +391,119 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
 
   it('collectTransferLearningExample default transerf model', async () => {
     setUpFakes();
-    const recognizer = new BrowserFftSpeechCommandRecognizer();
-    let spectrogram = await recognizer.collectTransferExample('foo');
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    let spectrogram = await transfer.collectExample('foo');
     expect(spectrogram.frameSize).toEqual(fakeColumnTruncateLength);
     expect(spectrogram.data.length)
         .toEqual(fakeNumFrames * fakeColumnTruncateLength);
-    expect(recognizer.wordLabels()).toEqual(['foo']);
-    expect(recognizer.getTransferExampleCounts()).toEqual({'foo': 1});
+    expect(transfer.wordLabels()).toEqual(['foo']);
+    // Assert no cross-talk.
+    expect(base.wordLabels()).toEqual(fakeWords);
+    expect(transfer.countExamples()).toEqual({'foo': 1});
 
-    spectrogram = await recognizer.collectTransferExample('foo');
+    spectrogram = await transfer.collectExample('foo');
     expect(spectrogram.frameSize).toEqual(fakeColumnTruncateLength);
     expect(spectrogram.data.length)
         .toEqual(fakeNumFrames * fakeColumnTruncateLength);
-    expect(recognizer.wordLabels()).toEqual(['foo']);
-    expect(recognizer.getTransferExampleCounts()).toEqual({'foo': 2});
+    expect(transfer.wordLabels()).toEqual(['foo']);
+    expect(transfer.countExamples()).toEqual({'foo': 2});
 
-    spectrogram = await recognizer.collectTransferExample('bar');
+    spectrogram = await transfer.collectExample('bar');
     expect(spectrogram.frameSize).toEqual(fakeColumnTruncateLength);
     expect(spectrogram.data.length)
         .toEqual(fakeNumFrames * fakeColumnTruncateLength);
-    expect(recognizer.wordLabels()).toEqual(['bar', 'foo']);
-    expect(recognizer.getTransferExampleCounts())
-        .toEqual({'bar': 1, 'foo': 2});
+    expect(transfer.wordLabels()).toEqual(['bar', 'foo']);
+    expect(transfer.countExamples()).toEqual({'bar': 1, 'foo': 2});
   });
+
+  // TODO(cais): Test calling createTransfer before ensureModelLoaded.
 
   it('clearTransferLearningExamples default transfer model', async () => {
     setUpFakes();
-    const recognizer = new BrowserFftSpeechCommandRecognizer();
-    let spectrogram = await recognizer.collectTransferExample('foo');
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    let spectrogram = await transfer.collectExample('foo');
     expect(spectrogram.frameSize).toEqual(fakeColumnTruncateLength);
     expect(spectrogram.data.length)
         .toEqual(fakeNumFrames * fakeColumnTruncateLength);
-    expect(recognizer.wordLabels()).toEqual(['foo']);
-    expect(recognizer.getTransferExampleCounts()).toEqual({'foo': 1});
+    expect(transfer.wordLabels()).toEqual(['foo']);
+    // Assert no cross-talk.
+    expect(base.wordLabels()).toEqual(fakeWords);
+    expect(transfer.countExamples()).toEqual({'foo': 1});
 
-    recognizer.clearTransferExamples();
-    // With the transfer examples cleared, wordLabel() ought to return the
-    // original words.
-    expect(recognizer.wordLabels()).toEqual(fakeWords);
-    expect(recognizer.getTransferExampleCounts()).toEqual({});
+    transfer.clearExamples();
+    expect(transfer.wordLabels()).toEqual(null);
+    expect(() => transfer.countExamples()).toThrow();
 
-    spectrogram = await recognizer.collectTransferExample('bar');
+    spectrogram = await transfer.collectExample('bar');
     expect(spectrogram.frameSize).toEqual(fakeColumnTruncateLength);
     expect(spectrogram.data.length)
         .toEqual(fakeNumFrames * fakeColumnTruncateLength);
-    expect(recognizer.wordLabels()).toEqual(['bar']);
-    expect(recognizer.wordLabels('base')).toEqual(fakeWords);
-    expect(recognizer.getTransferExampleCounts()).toEqual({'bar': 1});
+    expect(transfer.wordLabels()).toEqual(['bar']);
+    expect(transfer.countExamples()).toEqual({'bar': 1});
   });
 
-  it('Collect examples for 2 custom transfer models', async () => {
+  it('Collect examples for 2 transfer models', async () => {
     setUpFakes();
-    const recognizer = new BrowserFftSpeechCommandRecognizer();
-    let spectrogram = await recognizer.collectTransferExample('foo', 'xfer1');
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer1 = base.createTransfer('xfer1');
+    let spectrogram = await transfer1.collectExample('foo');
     expect(spectrogram.frameSize).toEqual(fakeColumnTruncateLength);
     expect(spectrogram.data.length)
         .toEqual(fakeNumFrames * fakeColumnTruncateLength);
-    expect(recognizer.wordLabels('xfer1')).toEqual(['foo']);
+    expect(transfer1.wordLabels()).toEqual(['foo']);
 
-    spectrogram = await recognizer.collectTransferExample('bar', 'xfer2');
+    const transfer2 = await base.createTransfer('xfer2');
+    spectrogram = await transfer2.collectExample('bar');
     expect(spectrogram.frameSize).toEqual(fakeColumnTruncateLength);
     expect(spectrogram.data.length)
         .toEqual(fakeNumFrames * fakeColumnTruncateLength);
-    expect(recognizer.wordLabels('xfer2')).toEqual(['bar']);
-    expect(recognizer.wordLabels('xfer1')).toEqual(['foo']);
+    expect(transfer2.wordLabels()).toEqual(['bar']);
+    expect(transfer1.wordLabels()).toEqual(['foo']);
 
-    recognizer.clearTransferExamples('xfer1');
-    expect(recognizer.wordLabels('xfer2')).toEqual(['bar']);
-    expect(recognizer.wordLabels('xfer1')).toBeUndefined();
+    transfer1.clearExamples();
+    expect(transfer2.wordLabels()).toEqual(['bar']);
+    expect(transfer1.wordLabels()).toEqual(null);
+    // Assert no cross-talk.
+    expect(base.wordLabels()).toEqual(fakeWords);
   });
 
-  it('Collect examples for default+custom transfer models', async () => {
+
+  it('clearExamples fails if called without examples', async () => {
     setUpFakes();
-    const recognizer = new BrowserFftSpeechCommandRecognizer();
-    let spectrogram = await recognizer.collectTransferExample('foo');
-    expect(spectrogram.frameSize).toEqual(fakeColumnTruncateLength);
-    expect(spectrogram.data.length)
-        .toEqual(fakeNumFrames * fakeColumnTruncateLength);
-    expect(recognizer.wordLabels()).toEqual(['foo']);
-
-    spectrogram = await recognizer.collectTransferExample('bar', 'custom');
-    expect(spectrogram.frameSize).toEqual(fakeColumnTruncateLength);
-    expect(spectrogram.data.length)
-        .toEqual(fakeNumFrames * fakeColumnTruncateLength);
-    expect(recognizer.wordLabels('custom')).toEqual(['bar']);
-    expect(recognizer.wordLabels('default_transfer')).toEqual(['foo']);
-    console.log(recognizer.wordLabels());  // DEBUG
-    // expect(() => recognizer.wordLabels())
-    //     .toThrowError(/non-defaul transfer-learning model.*must specify modelName/);
-
-    // recognizer.clearTransferExamples();
-    // expect(recognizer.wordLabels('custom')).toEqual(['bar']);
-    // expect(() => recognizer.wordLabels())
-    //     .toThrowError(/non-defaul transfer-learning model.*must specify modelName/);
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    expect(() => transfer.clearExamples())
+        .toThrowError(/No transfer learning examples .*xfer1/);
   });
 
-  // it('clearTransferLearningExamples fails if called without examples', () => {
-  //   setUpFakes();
-  //   const recognizer = new BrowserFftSpeechCommandRecognizer();
-  //   expect(() => recognizer.clearTransferExamples('xfer1'))
-  //       .toThrowError(/No transfer learning examples .*xfer1/);
-  // });
+  it('collectExample fails on undefined/null word',  async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    let errorCaught: Error;
+    try {
+      await transfer.collectExample(undefined);
+    } catch (err) {
+      errorCaught = err;
+    }
+    expect(errorCaught.message).toMatch(/non-empty string/);
+    try {
+      await transfer.collectExample(null);
+    } catch (err) {
+      errorCaught = err;
+    }
+    expect(errorCaught.message).toMatch(/non-empty string/);
+  });
 
-  // it('collectTransferLearningExample fails on undefined/null word',
-  //    async () => {
-  //      setUpFakes();
-  //      const recognizer = new BrowserFftSpeechCommandRecognizer();
-  //      let errorCaught: Error;
-  //      try {
-  //        await recognizer.collectTransferExample('xfer1', undefined);
-  //      } catch (err) {
-  //        errorCaught = err;
-  //      }
-  //      expect(errorCaught.message).toMatch(/non-empty string/);
-  //      try {
-  //        await recognizer.collectTransferExample('xfer1', null);
-  //      } catch (err) {
-  //        errorCaught = err;
-  //      }
-  //      expect(errorCaught.message).toMatch(/non-empty string/);
-  //    });
-
-  // it('collectTransferLearningExample fails on undefined/null/empty model name',
+  // it('collectTransferLearningExample fails on undefined/null/empty model
+  // name',
   //    async () => {
   //      setUpFakes();
   //      const recognizer = new BrowserFftSpeechCommandRecognizer();
@@ -550,7 +540,8 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
   //   expect(errorCaught.message).toMatch(/non-empty string/);
   // });
 
-  // it('collectTransferLearningExample fails on model name "base"', async () => {
+  // it('collectTransferLearningExample fails on model name "base"', async ()
+  // => {
   //   setUpFakes();
   //   const recognizer = new BrowserFftSpeechCommandRecognizer();
   //   let errorCaught: Error;
@@ -613,8 +604,10 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
   //   }
   //   expect(recognizer.getTransferModelNames()).toEqual([]);
 
-  //   // Train transfer-learning model once to make sure model is created first,
-  //   // so that we can check the change in the transfer-learning model's weights
+  //   // Train transfer-learning model once to make sure model is created
+  //   first,
+  //   // so that we can check the change in the transfer-learning model's
+  //   weights
   //   // after a new round of training.
   //   await recognizer.trainTransferModel({epochs: 1});
 
@@ -636,7 +629,8 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
   //                                 .getLayer(null, numLayers - 1)
   //                                 .getWeights()[0];
   //   tf.test_util.expectArraysClose(newHiddenKernel, oldHiddenKernel);
-  //   // Verify that the weight of the transfer-learning head model changes after
+  //   // Verify that the weight of the transfer-learning head model changes
+  //   after
   //   // training.
   //   expect(newTransferKernel.sub(oldTransferKernel).abs().max().dataSync()[0])
   //       .toBeGreaterThan(1e-3);
@@ -646,7 +640,8 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
   //   // transfer-learned model.
   //   expect(recognizer.wordLabels()).toEqual(fakeWords);
   //   expect(recognizer.wordLabels('xfer1')).toEqual(['bar', 'foo']);
-  //   recognizer.startStreaming(async (result: SpeechCommandRecognizerResult) => {
+  //   recognizer.startStreaming(async (result: SpeechCommandRecognizerResult)
+  //   => {
   //     expect((result.scores as Float32Array).length).toEqual(2);
   //     recognizer.stopStreaming().then(done);
   //   }, {modelName: 'xfer1'});
@@ -681,8 +676,8 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
   //     await recognizer.collectTransferExample('bar');
   //   }
   //   expect(recognizer.getTransferModelNames()).toEqual([]);
-  //   const history = await recognizer.trainTransferModel({epochs: 10, batchSize: 2});
-  //   expect(history.history.loss.length).toEqual(10);
+  //   const history = await recognizer.trainTransferModel({epochs: 10,
+  //   batchSize: 2}); expect(history.history.loss.length).toEqual(10);
   //   expect(history.history.acc.length).toEqual(10);
   //   expect(recognizer.getTransferModelNames()).toEqual(recognizer.DEFAULT_TRANSFER_MODEL_NAME);
 
@@ -691,7 +686,8 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
   //   // transfer-learned model.
   //   expect(recognizer.wordLabels()).toEqual(fakeWords);
   //   expect(recognizer.wordLabels('xfer1')).toEqual(['bar', 'foo']);
-  //   recognizer.startStreaming(async (result: SpeechCommandRecognizerResult) => {
+  //   recognizer.startStreaming(async (result: SpeechCommandRecognizerResult)
+  //   => {
   //     expect((result.scores as Float32Array).length).toEqual(2);
   //     recognizer.stopStreaming().then(done);
   //   }, {modelName: 'xfer1'});
