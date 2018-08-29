@@ -134,8 +134,9 @@ subsequent inferences can be fast.
 
 ### Transfer learning
 
-**Transfer learning** is the process of using a model trained
-previously on a dataset (say dataset A) on a different dataset (say dataset B).
+**Transfer learning** is the process of taking a model trained
+previously on a dataset (say dataset A) and applying it on a
+different dataset (say dataset B).
 To achieve transfer learning, the model needs to be slightly modified and
 re-trained on dataset B. However, thanks to the training on
 the original dataset (A), the training on the new dataset (B) takes much less
@@ -155,42 +156,42 @@ this type of transfer learning. The steps are listed in the example
 code snippet below
 
 ```js
-const recognizer = SpeechCommands.create('BROWSER_FFT');
-await recognizer.ensureModelLoaded();
+const baseRecognizer = SpeechCommands.create('BROWSER_FFT');
+await baseRecognizer.ensureModelLoaded();
 
 // Each instance of speech-command recognizer supports multiple
 // transfer-learning models, each of which can be trained for a different
 // new vocabulary.
 // Therefore we give a name to the transfer-learning model we are about to
-// train.
-const modelName = 'colors';
+// train ('colors' in this case).
+const transferRecognizer = baseRecognizer.createTransfer('colors');
 
-// Call `collectTransferExample()` to collect a number of audio examples
+// Call `collectExample()` to collect a number of audio examples
 // via WebAudio.
-await recognizer.collectTransferExample(modelName, 'red');
-await recognizer.collectTransferExample(modelName, 'green');
-await recognizer.collectTransferExample(modelName, 'blue');
-await recognizer.collectTransferExample(modelName, 'red');
+await transferRecognizer.collectExample('red');
+await transferRecognizer.collectExample('green');
+await transferRecognizer.collectExample('blue');
+await transferRecognizer.collectExample('red');
 // Don't forget to collect some background-noise examples, so that the
 // trasnfer-learned model will be able to detect moments of silence.
-await recognizer.collectTransferExample(modelName, '_background_noise_');
-await recognizer.collectTransferExample(modelName, 'green');
-await recognizer.collectTransferExample(modelName, 'blue');
-await recognizer.collectTransferExample(modelName, '_background_noise_');
-// ... You would typically want to put `collectTransferExample`
+await transferRecognizer.collectExample('_background_noise_');
+await transferRecognizer.collectExample('green');
+await transferRecognizer.collectExample('blue');
+await transferRecognizer.collectExample('_background_noise_');
+// ... You would typically want to put `collectExample`
 //     in the callback of a UI button to allow the user to collect
 //     any desired number of examples in random order.
 
 // You can check the counts of examples for different words that have been
 // collect for this transfer-learning model.
-console.log(recognizer.getTransferExampleCounts(modelName));
+console.log(transferRecognizer.countExamples());
 // e.g., {'red': 2, 'green': 2', 'blue': 2, '_background_noise': 2};
 
 // Start training of the transfer-learning model.
 // You can specify `epochs` (number of training epochs) and `callback`
 // (the Model.fit callback to use during training), among other configuration
 // fields.
-await recognizer.trainTransferModel(modelName, {
+await transferRecognizer.train({
   epochs: 25,
   callback: {
     onEpochEnd: async (epoch, logs) => {
@@ -200,25 +201,20 @@ await recognizer.trainTransferModel(modelName, {
 });
 
 // After the transfer learning completes, you can start online streaming
-// recognition using the new model. Be sure to use the `modelName` configuration
-// field. If you don't specify `modelName`, the original model will still be
-// used.
-await recognizer.startStreaming(result => {
+// recognition using the new model.
+await transferRecognizer.startStreaming(result => {
   // - result.scores contains the scores for the new vocabulary, which
   //   can be checked with:
-  const words = recognizer.wordLabels(modelName);
-  // Due to the `modelName` specified below, `result.scores` contains the
-  // scores for the new words, not the original words.
+  const words = transferRecognizer.wordLabels();
+  // `result.scores` contains the scores for the new words, not the original
+  // words.
   for (let i = 0; i < words; ++i) {
     console.log(`score for word '${words[i]}' = ${result.scores[i]}`);
   }
-}, {
-  modelName,
-  probabilityThreshold: 0.75
-});
+}, {probabilityThreshold: 0.75});
 
 // Stop the recognition in 10 seconds.
-setTimeout(() => recognizer.stopStreaming(), 10e3);
+setTimeout(() => transferRecognizer.stopStreaming(), 10e3);
 ```
 
 ## How to run the demo
