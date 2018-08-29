@@ -27,6 +27,9 @@ const stopButton = document.getElementById('stop');
 const predictionCanvas = document.getElementById('prediction-canvas');
 const spectrogramCanvas = document.getElementById('spectrogram-canvas');
 
+const probaThresholdInput = document.getElementById('proba-threshold');
+const epochsInput = document.getElementById('epochs');
+
 /**
  * Transfer learning-related UI componenets.
  */
@@ -87,7 +90,10 @@ startButton.addEventListener('click', () => {
                 spectrogramCanvas, result.spectrogram.data,
                 result.spectrogram.frameSize, result.spectrogram.frameSize);
           },
-          {includeSpectrogram: true, probabilityThreshold: 0.75})
+          {
+            includeSpectrogram: true,
+            probabilityThreshold: Number.parseFloat(probaThresholdInput.value)
+          })
       .then(() => {
         startButton.disabled = true;
         stopButton.disabled = false;
@@ -153,8 +159,7 @@ enterLearnWordsButton.addEventListener('click', () => {
 
     button.addEventListener('click', async () => {
       disableAllCollectWordButtons();
-      const spectrogram =
-          await transferRecognizer.collectExample(word);
+      const spectrogram = await transferRecognizer.collectExample(word);
       const exampleCanvas = document.createElement('canvas');
       exampleCanvas.style['display'] = 'inline-block';
       exampleCanvas.style['vertical-align'] = 'middle';
@@ -193,7 +198,7 @@ startTransferLearnButton.addEventListener('click', async () => {
   startTransferLearnButton.disabled = true;
   startButton.disabled = true;
 
-  const epochs = 20;
+  const epochs = Number.parseInt(epochsInput.value);
   const lossValues =
       {x: [], y: [], name: 'train', mode: 'lines', line: {width: 1}};
   const accuracyValues =

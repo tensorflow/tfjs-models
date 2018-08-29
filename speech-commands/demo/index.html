@@ -23,7 +23,7 @@
             color: #a0a0a0;
             border-color: #a0a0a0;
         }
-        input {
+        .transfer-learn-section input {
             color: #0000ff;
             background-color: #ffffff;
             border-style: solid;
@@ -103,6 +103,22 @@
         .plots {
             display: inline-block;
         }
+        .settings {
+            font-family: monospace;
+            font-size: 17px;
+        }
+        .settings input {
+            color: #0000ff;
+            background-color: #ffffff;
+            border-style: solid;
+            border-width: 2px;
+            border-color: #0000ff;
+            border-radius: 10px;
+            height: 40px;
+            min-width: 160px;
+            margin: 5px;
+            font-size: 17px;
+        }
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
@@ -114,6 +130,10 @@
 
   <div class='main-model'>
     <button id="create-recognizer">Create Recognizer</button>
+    <div class="settings">
+      <span>Prob. threshold:</span>
+      <input class="settings" size="5" id="proba-threshold" value="0.75">
+    </div>
     <div id="candidate-words" class="candidate-words-hidden">
     </div>
     <div>
@@ -132,9 +152,14 @@
   <div class="transfer-learn-section">
     <input id="learn-words" size="40" value="_background_noise_,red,green,blue">
     <button id="enter-learn-words" disabled="true">Enter transfer words</button>
-    <button id="start-transfer-learn" disabled="true">Start transfer learning</button>
+
     <div id="transfer-learn-history"></div>
     <div id="collect-words"></div>
+    <div class="settings">
+      <span>Prob. threshold:</span>
+      <input class="settings" size="5" id="epochs" value="20">
+      <button id="start-transfer-learn" disabled="true">Start transfer learning</button>
+    </div>
     <div id="plots">
       <div id="loss-plot" class="plots"></div>
       <div id="accuracy-plot" class="plots"></div>
