@@ -332,7 +332,7 @@ export class BrowserFftSpeechCommandRecognizer implements
   modelInputShape(): tf.Shape {
     if (this.model == null) {
       throw new Error(
-          'Model has not be loaded yet. Load model by calling ' +
+          'Model has not been loaded yet. Load model by calling ' +
           'ensureModelLoaded(), recognizer(), or startStreaming().');
     }
     return this.model.inputs[0].shape;
@@ -398,7 +398,7 @@ export class BrowserFftSpeechCommandRecognizer implements
   createTransfer(name: string): TransferSpeechCommandRecognizer {
     if (this.model == null) {
       throw new Error(
-          'Model has not be loaded yet. Load model by calling ' +
+          'Model has not been loaded yet. Load model by calling ' +
           'ensureModelLoaded(), recognizer(), or startStreaming().');
     }
     tf.util.assert(
@@ -419,15 +419,6 @@ export class BrowserFftSpeechCommandRecognizer implements
       layer.trainable = false;
     }
   }
-
-  /**
-   * List the names of the transfer-learning models.
-   */
-  // getTransferModelNames(): string[] {
-  //   const modelNames = Object.keys(this.models);
-  //   modelNames.splice(modelNames.indexOf(this.BASE_MODEL_NAME), 1);
-  //   return modelNames;
-  // }
 
   private checkInputTensorShape(input: tf.Tensor) {
     const expectedRank = this.model.inputs[0].shape.length;
@@ -701,6 +692,15 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         this.transferHead.apply(beheadedBaseOutput) as tf.SymbolicTensor;
     this.model =
         tf.model({inputs: this.baseModel.inputs, outputs: transferOutput});
+  }
+
+  /**
+   * Get the input shape of the underlying tf.Model.
+   *
+   * @returns The input shape.
+   */
+  modelInputShape(): tf.Shape {
+    return this.baseModel.inputs[0].shape;
   }
 
   /**

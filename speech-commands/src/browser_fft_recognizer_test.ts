@@ -418,8 +418,49 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(transfer.countExamples()).toEqual({'bar': 1, 'foo': 2});
   });
 
-  // TODO(cais): Test invalid names for createTransfer.
-  // TODO(cais): Test calling createTransfer before ensureModelLoaded.
+  it('createTransfer with invalid name leads to Error', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    expect(() => base.createTransfer('')).toThrowError(/non-empty string/);
+    expect(() => base.createTransfer(null)).toThrowError(/non-empty string/);
+    expect(() => base.createTransfer(undefined))
+        .toThrowError(/non-empty string/);
+  });
+
+  it('createTransfer with duplicate name leads to Error', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    base.createTransfer('xfer1');
+    expect(() => base.createTransfer('xfer1'))
+        .toThrowError(
+            /There is already a transfer-learning model named \'xfer1\'/);
+    base.createTransfer('xfer2');
+  });
+
+  it('createTransfer before model loading leads to Error', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    expect(() => base.createTransfer('xfer1'))
+        .toThrowError(/Model has not been loaded yet/);
+  });
+
+  it('transfer recognizer has correct modelInputShape', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    expect(transfer.modelInputShape()).toEqual(base.modelInputShape());
+  });
+
+  it('transfer recognizer has correct params', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    expect(transfer.params()).toEqual(base.params());
+  });
 
   it('clearTransferLearningExamples default transfer model', async () => {
     setUpFakes();
