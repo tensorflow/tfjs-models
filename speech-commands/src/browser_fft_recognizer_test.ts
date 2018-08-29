@@ -652,6 +652,12 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
                .dataSync()[0])
         .toBeGreaterThan(1e-3);
 
+    // Test recognize() with the transfer recognizer.
+    const spectrogram =
+        tf.zeros([1, fakeNumFrames, fakeColumnTruncateLength, 1]);
+    const result = await transfer.recognize(spectrogram);
+    expect(result.scores.length).toEqual(2);
+
     // After the transfer learning is complete, startStreaming with the
     // transfer-learned model's name should give scores only for the
     // transfer-learned model.

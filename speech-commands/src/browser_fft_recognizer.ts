@@ -47,7 +47,6 @@ export class BrowserFftSpeechCommandRecognizer implements
 
   model: tf.Model;
   readonly parameters: RecognizerParams;
-  // protected words: {[modelName: string]: string[]};
   protected words: string[];
 
   protected nonBatchInputShape: [number, number, number];
@@ -56,10 +55,6 @@ export class BrowserFftSpeechCommandRecognizer implements
 
   private transferRecognizers:
       {[name: string]: TransferBrowserFftSpeechCommandRecognizer} = {};
-
-  // private transferExamples:
-  //     {[modelName: string]: {[word: string]: tf.Tensor[]}};
-  // private transferModelHeads: {[modelName: string]: tf.Sequential};
 
   /**
    * Constructor of BrowserFftSpeechCommandRecognizer.
@@ -70,8 +65,6 @@ export class BrowserFftSpeechCommandRecognizer implements
       fftSize: this.FFT_SIZE,
       columnBufferLength: this.FFT_SIZE,
     };
-    // this.transferExamples = {};
-    // this.transferModelHeads = {};
   }
 
   /**
@@ -124,11 +117,6 @@ export class BrowserFftSpeechCommandRecognizer implements
         config.invokeCallbackOnNoiseAndUnknown == null ?
         false :
         config.invokeCallbackOnNoiseAndUnknown;
-
-    // const modelName = config.modelName || this.BASE_MODEL_NAME;
-    // if (this.models[modelName] == null) {
-    //   throw new Error(`There is no model with name ${modelName}`);
-    // }
 
     if (config.suppressionTimeMillis < 0) {
       throw new Error(
@@ -301,17 +289,6 @@ export class BrowserFftSpeechCommandRecognizer implements
    * @throws Error If this model is called before the model is loaded.
    */
   wordLabels(): string[] {
-    // if (modelName == null) {
-    //   if (Object.keys(this.words).length === 2 && this.words != null) {
-    //     modelName = this.DEFAULT_TRANSFER_MODEL_NAME;
-    //   } else if (Object.keys(this.words).length === 1) {
-    //     modelName = this.BASE_MODEL_NAME;
-    //   }
-    // }
-    // tf.util.assert(
-    //     modelName != null,
-    //     `The recognizer has a non-default transfer-learning model. ` +
-    //     `You must specify modelName when calling wordLabels().`);
     return this.words;
   }
 
