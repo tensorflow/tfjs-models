@@ -41,16 +41,6 @@ export class BrowserFftSpeechCommandRecognizer implements
       'https://storage.googleapis.com/tfjs-speech-commands-models/20w/metadata.json';
   // tslint:enable:max-line-length
 
-  // // A unique identifier for the base model. None of the transfer-learning
-  // // models added may use this name.
-  // readonly BASE_MODEL_NAME = 'base';
-  // Name of the default transfer-learning model. It is used when the following
-  // methods are called without a `modelName` argument:
-  //   `collectTransferExample`, `clearTransferExamples`, `trainTransferModel`,
-  //   `getTransferExampleCounts`.
-  // readonly DEFAULT_TRANSFER_MODEL_NAME = 'default_transfer';
-  // TODO(cais): Clean up.
-
   private readonly SAMPLE_RATE_HZ = 44100;
   private readonly FFT_SIZE = 1024;
   private readonly DEFAULT_SUPPRESSION_TIME_MILLIS = 1000;
@@ -458,12 +448,23 @@ export class BrowserFftSpeechCommandRecognizer implements
   // TODO(cais): Implement model save and load.
 }
 
+/**
+ * A subclass of BrowserFftSpeechCommandRecognizer: Transfer-learned model.
+ */
 class TransferBrowserFftSpeechCommandRecognizer extends
     BrowserFftSpeechCommandRecognizer implements
         TransferSpeechCommandRecognizer {
   private transferExamples: {[word: string]: tf.Tensor[]};
-  // private transferHead: tf.Sequential;  // TODO(cais): Clean up.
+  private transferHead: tf.Sequential;
 
+  /**
+   * Constructor of TransferBrowserFftSpeechCommandRecognizer.
+   *
+   * @param name Name of the transfer-learned recognizer. Must be a non-empty
+   *   string.
+   * @param parameters Parameters from the base recognizer.
+   * @param baseModel Model from the base recognizer.
+   */
   constructor(
       readonly name: string, readonly parameters: RecognizerParams,
       readonly baseModel: tf.Model) {
@@ -477,6 +478,15 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     this.words = [];
   }
 
+  /**
+   * Collect an example for transfer learning via WebAudio.
+   *
+   * @param {string} word Name of the word. Must not overlap with any of the
+   *   words the base model is trained to recognize.
+   * @returns {SpectrogramData} The spectrogram of the acquired the example.
+   * @throws Error, if word belongs to the set of words the base model is
+   *   trained to recognize.
+   */
   async collectExample(word: string): Promise<SpectrogramData> {
     tf.util.assert(
         !streaming,
@@ -553,6 +563,11 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     return counts;
   }
 
+  /**
+   * Collect the vocabulary of this transfer-learned recognizer.
+   *
+   * The words are put in an alphabetically sorted order.
+   */
   private collateTransferWords() {
     this.words = Object.keys(this.transferExamples).sort();
   }
@@ -650,6 +665,12 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     }
   }
 
+  /**
+   * Create an instance of tf.Model for transfer learning.
+   *
+   * The top dense layer of the base model is replaced with a new softmax
+   * dense layer.
+   */
   private createTransferModelFromBaseModel(): void {
     tf.util.assert(
         this.words != null,
@@ -670,15 +691,27 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     }
     const beheadedBaseOutput = layers[layerIndex].output as tf.SymbolicTensor;
 
-    // this.transferHead = tf.sequential();
-    const outputLayer = tf.layers.dense({
+    this.transferHead = tf.sequential();
+    this.transferHead.add(tf.layers.dense({
       units: this.words.length,
       activation: 'softmax',
       inputShape: beheadedBaseOutput.shape.slice(1)
-    });
+    }));
     const transferOutput =
-        outputLayer.apply(beheadedBaseOutput) as tf.SymbolicTensor;
+        this.transferHead.apply(beheadedBaseOutput) as tf.SymbolicTensor;
     this.model =
         tf.model({inputs: this.baseModel.inputs, outputs: transferOutput});
+  }
+
+  /**
+   * Overridden method to prevent creating a nested transfer-learning
+   * recognizer.
+   *
+   * @param name
+   */
+  createTransfer(name: string): TransferBrowserFftSpeechCommandRecognizer {
+    throw new Error(
+        'Creating transfer-learned recognizer from a transfer-learned ' +
+        'recognizer is not supported.');
   }
 }

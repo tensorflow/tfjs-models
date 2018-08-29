@@ -555,9 +555,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();
     const transfer = base.createTransfer('xfer1');
-    for (let i = 0; i < 1; ++i) {
-      await transfer.collectExample('foo');
-    }
+    await transfer.collectExample('foo');
     for (let i = 0; i < 2; ++i) {
       await transfer.collectExample('bar');
     }
@@ -581,12 +579,12 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     });
 
     // tslint:disable-next-line:no-any
-    const newModel = (transfer as any).model as tf.Model;
-    const numLayers = newModel.layers.length;
+    const transferHead = (transfer as any).transferHead as tf.Sequential;
+    const numLayers = transferHead.layers.length;
     const oldTransferKernel =
-        newModel.getLayer(null, numLayers - 1).getWeights()[0].dataSync();
+        transferHead.getLayer(null, numLayers - 1).getWeights()[0].dataSync();
 
-    const history = await transfer.train();
+    const history = await transfer.train({optimizer: tf.train.sgd(1)});
     expect(history.history.loss.length).toEqual(20);
     expect(history.history.acc.length).toEqual(20);
     expect(history.history.loss[history.history.loss.length - 1])
@@ -602,7 +600,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     // Verify that the weights of the dense layer in the base model doesn't
     // change, i.e., is frozen.
     const newTransferKernel =
-        newModel.getLayer(null, numLayers - 1).getWeights()[0].dataSync();
+        transferHead.getLayer(null, numLayers - 1).getWeights()[0].dataSync();
     baseModelOldWeightValues.forEach((oldWeight, i) => {
       tf.test_util.expectArraysClose(baseModelNewWeightValues[i], oldWeight);
     });

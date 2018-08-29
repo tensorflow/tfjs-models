@@ -71,9 +71,16 @@ export interface SpeechCommandRecognizer {
   // Get the required number of frames.
   params(): RecognizerParams;
 
-  /**
-   * TODO(cais): DOC STRING.
-   */
+  // Create a new recognizer based on this recognizer, for transfer learning.
+  //
+  // Args:
+  //   name: Required name of the transfer learning recognizer. Must be a
+  //     non-empty string.
+  //
+  // Returns:
+  //   An instance of TransferSpeechCommandRecognizer, which supports
+  //     `collectExample()`, `train()`, as well as the same `startStreaming()`
+  //     `stopStreaming()` and `recognize()` as the base recognizer.
   createTransfer(name: string): TransferSpeechCommandRecognizer;
 }
 
@@ -187,14 +194,6 @@ export interface StreamingRecognitionConfig {
    * Default: `false`.
    */
   includeSpectrogram?: boolean;
-
-  // TODO(cais): Clean up.
-  // /**
-  //  * Identifier for the model to be used for recognition.
-  //  *
-  //  * Optional. If not defined, will default to the 'base' model.
-  //  */
-  // modelName?: string;
 }
 
 export interface TransferLearnConfig {
