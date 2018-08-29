@@ -41,6 +41,7 @@ const gotoTransferLearnSectionButton =
 const XFER_MODEL_NAME = 'xfer-model';
 
 let recognizer;
+let transferRecognizer;
 
 createRecognizerButton.addEventListener('click', async () => {
   createRecognizerButton.disabled = true;
@@ -74,22 +75,21 @@ createRecognizerButton.addEventListener('click', async () => {
 });
 
 startButton.addEventListener('click', () => {
-  const transferModelNames = recognizer.transferLearningModelNames();
-  const modelName =
-      transferModelNames.length > 0 ? transferModelNames[0] : null;
-  populateCandidateWords(recognizer.wordLabels(modelName));
+  const activeRecognizer =
+      transferRecognizer == null ? recognizer : transferRecognizer;
+  populateCandidateWords(activeRecognizer.wordLabels());
 
-  recognizer
+  activeRecognizer
       .startStreaming(
           result => {
             plotPredictions(
-                predictionCanvas, recognizer.wordLabels(modelName),
-                result.scores, 3);
+                predictionCanvas, activeRecognizer.wordLabels(), result.scores,
+                3);
             plotSpectrogram(
                 spectrogramCanvas, result.spectrogram.data,
                 result.spectrogram.frameSize, result.spectrogram.frameSize);
           },
-          {includeSpectrogram: true, probabilityThreshold: 0.75, modelName})
+          {includeSpectrogram: true, probabilityThreshold: 0.75})
       .then(() => {
         startButton.disabled = true;
         stopButton.disabled = false;
@@ -103,7 +103,9 @@ startButton.addEventListener('click', () => {
 });
 
 stopButton.addEventListener('click', () => {
-  recognizer.stopStreaming()
+  const activeRecognizer =
+      transferRecognizer == null ? recognizer : transferRecognizer;
+  activeRecognizer.stopStreaming()
       .then(() => {
         startButton.disabled = false;
         stopButton.disabled = true;
@@ -141,6 +143,8 @@ enterLearnWordsButton.addEventListener('click', () => {
     return;
   }
 
+  transferRecognizer = recognizer.createTransfer(XFER_MODEL_NAME);
+
   for (const word of transferWords) {
     const wordDiv = document.createElement('div');
     const button = document.createElement('button');
@@ -155,8 +159,8 @@ enterLearnWordsButton.addEventListener('click', () => {
 
     button.addEventListener('click', async () => {
       disableAllCollectWordButtons();
-      const spectrogram = await recognizer.collectTransferExample(
-          XFER_MODEL_NAME, word);
+      const spectrogram =
+          await transferRecognizer.collectExample(word);
       const exampleCanvas = document.createElement('canvas');
       exampleCanvas.style['display'] = 'inline-block';
       exampleCanvas.style['vertical-align'] = 'middle';
@@ -167,7 +171,7 @@ enterLearnWordsButton.addEventListener('click', () => {
       plotSpectrogram(
           exampleCanvas, spectrogram.data, spectrogram.frameSize,
           spectrogram.frameSize);
-      const exampleCounts = recognizer.getTransferExampleCounts(XFER_MODEL_NAME);
+      const exampleCounts = transferRecognizer.countExamples();
       button.textContent = `Collect "${word}" sample (${exampleCounts[word]})`;
       logToStatusDisplay(`Collect one sample of word "${word}"`);
       enableAllCollectWordButtons();
@@ -225,7 +229,7 @@ startTransferLearnButton.addEventListener('click', async () => {
   }
 
   disableAllCollectWordButtons();
-  await recognizer.trainTransferModel(XFER_MODEL_NAME, {
+  await transferRecognizer.train({
     epochs,
     callback: {
       onEpochEnd: async (epoch, logs) => {
