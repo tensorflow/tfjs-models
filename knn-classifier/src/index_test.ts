@@ -61,6 +61,6 @@ describeWithFlags('KNNClassifier', tf.test_util.NODE_ENVS, () => {
       errorMessage = error.message;
     }
     expect(errorMessage)
-        .toMatch(/You have not added any exaples to the KNN classifier/);
+        .toMatch(/You have not added any examples to the KNN classifier/);
   });
 });
