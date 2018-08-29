@@ -462,7 +462,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     BrowserFftSpeechCommandRecognizer implements
         TransferSpeechCommandRecognizer {
   private transferExamples: {[word: string]: tf.Tensor[]};
-  private transferHead: tf.Sequential;
+  // private transferHead: tf.Sequential;  // TODO(cais): Clean up.
 
   constructor(
       readonly name: string, readonly parameters: RecognizerParams,
@@ -526,7 +526,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
   clearExamples(): void {
     tf.util.assert(
         this.words != null && this.words.length > 0 &&
-        this.transferExamples != null,
+            this.transferExamples != null,
         `No transfer learning examples exist for model name ${this.name}`);
     tf.dispose(this.transferExamples);
     this.transferExamples = null;
@@ -596,7 +596,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
    *
    * It is assume that at least one category of data has been collected (using
    * multiple calls to the `collectTransferExample` method).
-
+   *
    * @param config {TransferLearnConfig} Optional configurations fot the
    *   training of the transfer-learning model.
    * @returns {tf.History} A history object with the loss and accuracy values
@@ -619,7 +619,9 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       config = {};
     }
 
-    this.createTransferModelFromBaseModel();
+    if (this.model == null) {
+      this.createTransferModelFromBaseModel();
+    }
 
     // Compile model for training.
     const optimizer = config.optimizer || 'sgd';
@@ -668,14 +670,14 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     }
     const beheadedBaseOutput = layers[layerIndex].output as tf.SymbolicTensor;
 
-    this.transferHead = tf.sequential();
-    this.transferHead.add(tf.layers.dense({
+    // this.transferHead = tf.sequential();
+    const outputLayer = tf.layers.dense({
       units: this.words.length,
       activation: 'softmax',
       inputShape: beheadedBaseOutput.shape.slice(1)
-    }));
+    });
     const transferOutput =
-        this.transferHead.apply(beheadedBaseOutput) as tf.SymbolicTensor;
+        outputLayer.apply(beheadedBaseOutput) as tf.SymbolicTensor;
     this.model =
         tf.model({inputs: this.baseModel.inputs, outputs: transferOutput});
   }

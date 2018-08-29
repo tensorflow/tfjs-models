@@ -473,7 +473,6 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(base.wordLabels()).toEqual(fakeWords);
   });
 
-
   it('clearExamples fails if called without examples', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
@@ -483,7 +482,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
         .toThrowError(/No transfer learning examples .*xfer1/);
   });
 
-  it('collectExample fails on undefined/null/empty word',  async () => {
+  it('collectExample fails on undefined/null/empty word', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();
@@ -566,37 +565,55 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     // Train transfer-learning model once to make sure model is created
     // first, so that we can check the change in the transfer-learning model's
     // weights after a new round of training.
-    await transfer.train({epochs: 1});
+    await transfer.train({epochs: 1, optimizer: tf.train.sgd(0)});
 
-    const oldHiddenKernel = base.model.getLayer(null, 1).getWeights()[0];
-    const transferHead = (transfer as any).transferHead as tf.Model;
-    const numLayers = transferHead.layers.length;
-    console.log(`numlayers = ${numLayers}`);  // DEBUG
-    const oldTransferKernel = transferHead
-                                  .getLayer(null, numLayers - 1)
-                                  .getWeights()[0];
-    oldHiddenKernel.print(true);  // DEBUG
-    oldTransferKernel.print(true);  // DEBUG
-    const history = await transfer.train({optimizer: tf.train.sgd(0.1)});
+    const baseModel = base.model;
+    // Assert that the base model has been frozen.
+    for (const layer of baseModel.layers) {
+      expect(layer.trainable).toEqual(false);
+    }
+
+    const baseModelOldWeightValues: Float32Array[] = [];
+    baseModel.layers.forEach(layer => {
+      layer.getWeights().forEach(w => {
+        baseModelOldWeightValues.push(w.dataSync() as Float32Array);
+      });
+    });
+
+    // tslint:disable-next-line:no-any
+    const newModel = (transfer as any).model as tf.Model;
+    const numLayers = newModel.layers.length;
+    const oldTransferKernel =
+        newModel.getLayer(null, numLayers - 1).getWeights()[0].dataSync();
+
+    const history = await transfer.train();
     expect(history.history.loss.length).toEqual(20);
     expect(history.history.acc.length).toEqual(20);
-    console.log(history.history.loss);  // DEBUG
-    console.log(history.history.acc);  // DEBUG
+    expect(history.history.loss[history.history.loss.length - 1])
+        .toBeLessThan(history.history.loss[0] as number);
+
+    const baseModelNewWeightValues: Float32Array[] = [];
+    baseModel.layers.forEach(layer => {
+      layer.getWeights().forEach(w => {
+        baseModelNewWeightValues.push(w.dataSync() as Float32Array);
+      });
+    });
+
     // Verify that the weights of the dense layer in the base model doesn't
     // change, i.e., is frozen.
-    const newHiddenKernel = base.model.getLayer(null, 1).getWeights()[0];
-    const newTransferKernel = transferHead
-                                  .getLayer(null, numLayers - 1)
-                                  .getWeights()[0];
-    newHiddenKernel.print(true);  // DEBUG
-    newTransferKernel.print(true);  // DEBUG
-    tf.test_util.expectArraysClose(newHiddenKernel, oldHiddenKernel);
+    const newTransferKernel =
+        newModel.getLayer(null, numLayers - 1).getWeights()[0].dataSync();
+    baseModelOldWeightValues.forEach((oldWeight, i) => {
+      tf.test_util.expectArraysClose(baseModelNewWeightValues[i], oldWeight);
+    });
     // Verify that the weight of the transfer-learning head model changes
     // after training.
-    newTransferKernel.sub(oldTransferKernel).abs().max().print();  // DEBUG
-    // expect(newTransferKernel.sub(oldTransferKernel).abs().max().dataSync()[0])
-    //     .toBeGreaterThan(1e-3);
-    // TODO(cais): restore. DO NOT SUBMIT.
+    expect(tf.tensor1d(newTransferKernel)
+               .sub(tf.tensor1d(oldTransferKernel))
+               .abs()
+               .max()
+               .dataSync()[0])
+        .toBeGreaterThan(1e-3);
 
     // After the transfer learning is complete, startStreaming with the
     // transfer-learned model's name should give scores only for the
@@ -609,83 +626,83 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     });
   });
 
-  // it('trainTransferLearningModel custom params', async done => {
-  //   setUpFakes();
-  //   const recognizer = new BrowserFftSpeechCommandRecognizer();
-  //   expect(recognizer.getTransferModelNames()).toEqual([]);
-  //   for (let i = 0; i < 1; ++i) {
-  //     await recognizer.collectTransferExample('foo');
-  //   }
-  //   for (let i = 0; i < 2; ++i) {
-  //     await recognizer.collectTransferExample('bar');
-  //   }
-  //   expect(recognizer.getTransferModelNames()).toEqual([]);
-  //   const history = await recognizer.trainTransferModel({epochs: 10,
-  //   batchSize: 2}); expect(history.history.loss.length).toEqual(10);
-  //   expect(history.history.acc.length).toEqual(10);
-  //   expect(recognizer.getTransferModelNames()).toEqual(recognizer.DEFAULT_TRANSFER_MODEL_NAME);
+  it('trainTransferLearningModel custom params', async done => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    await transfer.collectExample('foo');
+    for (let i = 0; i < 2; ++i) {
+      await transfer.collectExample('bar');
+    }
+    const history = await transfer.train({epochs: 10, batchSize: 2});
+    expect(history.history.loss.length).toEqual(10);
+    expect(history.history.acc.length).toEqual(10);
 
-  //   // After the transfer learning is complete, startStreaming with the
-  //   // transfer-learned model's name should give scores only for the
-  //   // transfer-learned model.
-  //   expect(recognizer.wordLabels()).toEqual(fakeWords);
-  //   expect(recognizer.wordLabels('xfer1')).toEqual(['bar', 'foo']);
-  //   recognizer.startStreaming(async (result: SpeechCommandRecognizerResult)
-  //   => {
-  //     expect((result.scores as Float32Array).length).toEqual(2);
-  //     recognizer.stopStreaming().then(done);
-  //   }, {modelName: 'xfer1'});
-  // });
+    // After the transfer learning is complete, startStreaming with the
+    // transfer-learned model's name should give scores only for the
+    // transfer-learned model.
+    expect(base.wordLabels()).toEqual(fakeWords);
+    expect(transfer.wordLabels()).toEqual(['bar', 'foo']);
+    transfer.startStreaming(async (result: SpeechCommandRecognizerResult) => {
+      expect((result.scores as Float32Array).length).toEqual(2);
+      transfer.stopStreaming().then(done);
+    });
+  });
 
-  // it('trainTransferLearningModel custom params and callback', async () => {
-  //   setUpFakes();
-  //   const recognizer = new BrowserFftSpeechCommandRecognizer();
-  //   for (let i = 0; i < 1; ++i) {
-  //     await recognizer.collectTransferExample('foo');
-  //   }
-  //   for (let i = 0; i < 2; ++i) {
-  //     await recognizer.collectTransferExample('bar');
-  //   }
-  //   const callbackEpochs: number[] = [];
-  //   const history = await recognizer.trainTransferModel({
-  //     epochs: 5,
-  //     callback: {
-  //       onEpochEnd: async (epoch, logs) => {
-  //         callbackEpochs.push(epoch);
-  //       }
-  //     }
-  //   });
-  //   expect(history.history.loss.length).toEqual(5);
-  //   expect(history.history.acc.length).toEqual(5);
-  //   expect(callbackEpochs).toEqual([0, 1, 2, 3, 4]);
-  // });
+  it('trainTransferLearningModel custom params and callback', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    await transfer.collectExample('foo');
+    for (let i = 0; i < 2; ++i) {
+      await transfer.collectExample('bar');
+    }
+    const callbackEpochs: number[] = [];
+    const history = await transfer.train({
+      epochs: 5,
+      callback: {
+        onEpochEnd: async (epoch, logs) => {
+          callbackEpochs.push(epoch);
+        }
+      }
+    });
+    expect(history.history.loss.length).toEqual(5);
+    expect(history.history.acc.length).toEqual(5);
+    expect(callbackEpochs).toEqual([0, 1, 2, 3, 4]);
+  });
 
-  // it('trainTransferLearningModel fails without any examples', async () => {
-  //   setUpFakes();
-  //   const recognizer = new BrowserFftSpeechCommandRecognizer();
-  //   let errorCaught: Error;
-  //   try {
-  //     await recognizer.trainTransferModel();
-  //   } catch (err) {
-  //     errorCaught = err;
-  //   }
-  //   expect(errorCaught.message)
-  //       .toMatch(/no transfer learning example has been collected/);
-  // });
+  it('trainTransferLearningModel fails without any examples', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    let errorCaught: Error;
+    try {
+      await transfer.train();
+    } catch (err) {
+      errorCaught = err;
+    }
+    expect(errorCaught.message)
+        .toMatch(/no transfer learning example has been collected/);
+  });
 
-  // it('trainTransferLearningModel fails with only 1 word', async () => {
-  //   setUpFakes();
-  //   const recognizer = new BrowserFftSpeechCommandRecognizer();
-  //   await recognizer.collectTransferExample('foo');
-  //   await recognizer.collectTransferExample('foo');
-  //   let errorCaught: Error;
-  //   try {
-  //     await recognizer.trainTransferModel();
-  //   } catch (err) {
-  //     errorCaught = err;
-  //   }
-  //   expect(errorCaught.message).toMatch(/.*foo.*Requires at least 2/);
-  // });
+  it('trainTransferLearningModel fails with only 1 word', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    await transfer.collectExample('foo');
+    await transfer.collectExample('foo');
+    let errorCaught: Error;
+    try {
+      await transfer.train();
+    } catch (err) {
+      errorCaught = err;
+    }
+    expect(errorCaught.message).toMatch(/.*foo.*Requires at least 2/);
+  });
 
   // TODO(cais): Add tests for saving and loading of transfer-learned models.
 });

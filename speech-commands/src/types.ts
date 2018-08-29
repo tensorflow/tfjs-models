@@ -77,11 +77,8 @@ export interface SpeechCommandRecognizer {
   createTransfer(name: string): TransferSpeechCommandRecognizer;
 }
 
-// export interface SpeechCommandRecognizer extends CommonSpeechCommandRecognizer {
-//   
-// }
-
-export interface TransferSpeechCommandRecognizer extends SpeechCommandRecognizer {
+export interface TransferSpeechCommandRecognizer
+    extends SpeechCommandRecognizer {
   /**
    * Collect an example for transfer learning via WebAudio.
    *
@@ -115,7 +112,7 @@ export interface TransferSpeechCommandRecognizer extends SpeechCommandRecognizer
    *
    * It is assume that at least one category of data has been collected (using
    * multiple calls to the `collectTransferExample` method).
-
+   *
    * @param config {TransferLearnConfig} Optional configurations fot the
    *   training of the transfer-learning model.
    * @returns {tf.History} A history object with the loss and accuracy values
