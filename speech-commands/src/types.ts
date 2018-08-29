@@ -26,64 +26,86 @@ export type FFT_TYPE = 'BROWSER_FFT'|'SOFT_FFT';
 export type RecognizerCallback = (result: SpeechCommandRecognizerResult) =>
     Promise<void>;
 
+/**
+ * Interface for a speech-command recognizer.
+ */
 export interface SpeechCommandRecognizer {
-  // Start recognition in a streaming fashion.
-  //
-  // Args:
-  //   callback: the callback that will be invoked every time
-  //     a recognition result is available.
-  //   options: optional configuration.
-  // Throws:
-  //   Error if there is already ongoing streaming recognition.
+  /**
+   * Start recognition in a streaming fashion.
+   *
+   * @param callback the callback that will be invoked every time
+   *   a recognition result is available.
+   * @param options optional configuration.
+   * @throws Error if there is already ongoing streaming recognition.
+   */
   startStreaming(
     callback: RecognizerCallback,
     config?: StreamingRecognitionConfig): Promise<void>;
 
-  // Stop the ongoing streaming recognition (if any).
-  //
-  // Throws:
-  //   Error if no streaming recognition is ongoing.
+  /**
+   *  Stop the ongoing streaming recognition (if any).
+   *
+   * @throws Error if no streaming recognition is ongoing.
+   */
   stopStreaming(): Promise<void>;
 
-  // Check if this instance is currently performing
-  // streaming recognition.
+  /**
+   * Check if this instance is currently performing
+   * streaming recognition.
+   */
   isStreaming(): boolean;
 
-  // Recognize a single example of audio.
-  //
-  // Args:
-  //   input: tf.Tensor of Float32Array. If a tf.Tensor,
-  //     must match the input shape of the underlying
-  //     tf.Model. If a Float32Array, the length must be
-  //     equal to (the model’s required FFT length) *
-  //     (the model’s required frame count).
-  // Returns: A Promise of recognition result: the probability scores.
-  // Throws: Error on incorrect shape or length.
+  /**
+   * Recognize a single example of audio.
+   *
+   * @param input tf.Tensor of Float32Array. If a tf.Tensor,
+   *     must match the input shape of the underlying
+   *     tf.Model. If a Float32Array, the length must be
+   *     equal to (the model’s required FFT length) *
+   *     (the model’s required frame count).
+   * @returns A Promise of recognition result: the probability scores.
+   * @throws Error on incorrect shape or length.
+   */
   recognize(input: tf.Tensor|
             Float32Array): Promise<SpeechCommandRecognizerResult>;
 
-  // Get the input shape of the tf.Model the underlies the recognizer.
+  /**
+   * Get the input shape of the tf.Model the underlies the recognizer.
+   */
   modelInputShape(): tf.Shape;
 
-  // Getter for word labels.
+  /**
+   * Getter for word labels.
+   *
+   * The word labels are an alphabetically sorted Array of strings.
+   */
   wordLabels(): string[];
 
-  // Get the required number of frames.
+  /**
+   * Get the parameters such as the required number of frames.
+   */
   params(): RecognizerParams;
 
-  // Create a new recognizer based on this recognizer, for transfer learning.
-  //
-  // Args:
-  //   name: Required name of the transfer learning recognizer. Must be a
-  //     non-empty string.
-  //
-  // Returns:
-  //   An instance of TransferSpeechCommandRecognizer, which supports
-  //     `collectExample()`, `train()`, as well as the same `startStreaming()`
-  //     `stopStreaming()` and `recognize()` as the base recognizer.
+  /**
+   * Create a new recognizer based on this recognizer, for transfer learning.
+   *
+   * @param name Required name of the transfer learning recognizer. Must be a
+   *   non-empty string.
+   * @returns An instance of TransferSpeechCommandRecognizer, which supports
+   *     `collectExample()`, `train()`, as well as the same `startStreaming()`
+   *     `stopStreaming()` and `recognize()` as the base recognizer.
+   */
   createTransfer(name: string): TransferSpeechCommandRecognizer;
 }
 
+/**
+ * Interface for a transfer-learning speech command recognizer.
+ *
+ * This inherits the `SpeechCommandRecognizer`. It adds methods for
+ * collecting and clearing examples for transfer learning, methods for
+ * querying the status of example collection, and for performing the
+ * transfer-learning training.
+ */
 export interface TransferSpeechCommandRecognizer
     extends SpeechCommandRecognizer {
   /**
@@ -130,19 +152,41 @@ export interface TransferSpeechCommandRecognizer
   train(config?: TransferLearnConfig): Promise<tf.History>;
 }
 
+/**
+ * Interface for a snippet of audio spectrogram.
+ */
 export interface SpectrogramData {
-  // The float32 data for the spectrogram.
+  /**
+   * The float32 data for the spectrogram.
+   *
+   * Stored frame by frame. For example, the first N elements
+   * belong to the first time frame and the next N elements belong
+   * to the second time frame, and so forth.
+   */
   data: Float32Array;
 
-  // Number of points per frame, i.e., FFT length per frame.
+  /**
+   * Number of points per frame, i.e., FFT length per frame.
+   */
   frameSize: number;
 }
 
+/**
+ * Interface for a result emitted by a speech-command recognizer.
+ *
+ * It is used in the callback of a recognizer's streaming or offline
+ * recognition method. It represents the result for a short snippet of
+ * audio.
+ */
 export interface SpeechCommandRecognizerResult {
-  // Probability scores for the words.
+  /**
+   * Probability scores for the words.
+   */
   scores: Float32Array|Float32Array[];
 
-  // Optional spectrogram data.
+  /**
+   * Optional spectrogram data.
+   */
   spectrogram?: SpectrogramData;
 }
 
@@ -196,6 +240,12 @@ export interface StreamingRecognitionConfig {
   includeSpectrogram?: boolean;
 }
 
+/**
+ * Configurations for the training of a transfer-learning recognizer.
+ *
+ * It is used during calls to the `TransferSpeechCommandRecognizer.train()`
+ * method.
+ */
 export interface TransferLearnConfig {
   /**
    * Number of training epochs (default: 20).
@@ -225,37 +275,63 @@ export interface TransferLearnConfig {
   callback?: tf.CustomCallbackConfig;
 }
 
+/**
+ * Parameters for a speech-command recognizer.
+ */
 export interface RecognizerParams {
-  // audio sample window size per spectrogram column.
+  /**
+   * Audio sample window size per spectrogram column.
+   */
   columnBufferLength?: number;
 
-  // audio sample window hopping size between two consecutive spectrogram
-  // columns.
+  /**
+   * Audio sample window hopping size between two consecutive spectrogram
+   * columns.
+   */
   columnHopLength?: number;
 
-  // total duration per spectragram.
+  /**
+   * Total duration per spectragram, in milliseconds.
+   */
   spectrogramDurationMillis?: number;
 
-  // FFT encoding size per spectrogram column.
+  /**
+   * FFT encoding size per spectrogram column.
+   */
   fftSize?: number;
 
-  // post FFT filter size for spectorgram column.
+  /**
+   * Post FFT filter size for spectorgram column.
+   */
   filterSize?: number;
 
-  // sampling rate in Hz.
+  /**
+   * Sampling rate, in Hz.
+   */
   sampleRateHz?: number;
 }
 
+/**
+ * Interface of an audio feature extractor.
+ */
 export interface FeatureExtractor {
-  // config the feature extractor.
+  /**
+   * Config the feature extractor.
+   */
   setConfig(params: RecognizerParams): void;
 
-  // start the feature extraction from the audio samples.
+  /**
+   * Start the feature extraction from the audio samples.
+   */
   start(samples?: Float32Array): Promise<Float32Array[]|void>;
 
-  // stop the feature extraction.
+  /**
+   * Stop the feature extraction.
+   */
   stop(): Promise<void>;
 
-  // return the extractor features collected since last call.
+  /**
+   * Get the extractor features collected since last call.
+   */
   getFeatures(): Float32Array[];
 }

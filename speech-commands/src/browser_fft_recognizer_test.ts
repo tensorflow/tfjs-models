@@ -628,8 +628,6 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     const history = await transfer.train({optimizer: tf.train.sgd(1)});
     expect(history.history.loss.length).toEqual(20);
     expect(history.history.acc.length).toEqual(20);
-    expect(history.history.loss[history.history.loss.length - 1])
-        .toBeLessThan(history.history.loss[0] as number);
 
     const baseModelNewWeightValues: Float32Array[] = [];
     baseModel.layers.forEach(layer => {

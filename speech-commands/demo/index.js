@@ -35,8 +35,6 @@ const enterLearnWordsButton = document.getElementById('enter-learn-words');
 const collectButtonsDiv = document.getElementById('collect-words');
 const startTransferLearnButton =
     document.getElementById('start-transfer-learn');
-const gotoTransferLearnSectionButton =
-    document.getElementById('go-to-transfer-learn');
 
 const XFER_MODEL_NAME = 'xfer-model';
 
@@ -126,10 +124,6 @@ function scrollToPageBottom() {
   const scrollingElement = (document.scrollingElement || document.body);
   scrollingElement.scrollTop = scrollingElement.scrollHeight;
 }
-
-gotoTransferLearnSectionButton.addEventListener('click', () => {
-  scrollToPageBottom();
-});
 
 let collectWordDivs = {};
 let collectWordButtons = {};
