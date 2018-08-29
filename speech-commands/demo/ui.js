@@ -42,6 +42,10 @@ let candidateWordSpans;
  */
 export function populateCandidateWords(words) {
   candidateWordSpans = {};
+  while (candidateWordsContainer.firstChild) {
+    candidateWordsContainer.removeChild(candidateWordsContainer.firstChild);
+  }
+
   const candidatesLabel = document.createElement('span');
   candidatesLabel.textContent = 'Words to say: ';
   candidatesLabel.classList.add('candidate-word');

@@ -20,11 +20,14 @@ import * as tf from '@tensorflow/tfjs';
 // tslint:disable:max-line-length
 import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
 import {loadMetadataJson} from './browser_fft_utils';
-import {RecognizerCallback, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig} from './types';
+import {RecognizerCallback, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
+
 // tslint:enable:max-line-length
 
 export const BACKGROUND_NOISE_TAG = '_background_noise_';
 export const UNKNOWN_TAG = '_unknown_';
+
+let streaming = false;
 
 /**
  * Speech-Command Recognizer using browser-native (WebAudio) spectral featutres.
@@ -45,18 +48,18 @@ export class BrowserFftSpeechCommandRecognizer implements
   model: tf.Model;
   readonly parameters: RecognizerParams;
   protected words: string[];
-  private streaming: boolean;
 
-  private nonBatchInputShape: [number, number, number];
+  protected nonBatchInputShape: [number, number, number];
   private elementsPerExample: number;
-  private audioDataExtractor: BrowserFftFeatureExtractor;
+  protected audioDataExtractor: BrowserFftFeatureExtractor;
+
+  private transferRecognizers:
+      {[name: string]: TransferBrowserFftSpeechCommandRecognizer} = {};
 
   /**
    * Constructor of BrowserFftSpeechCommandRecognizer.
    */
   constructor() {
-    // TODO(cais): Call this constructor in a factory function.
-    this.streaming = false;
     this.parameters = {
       sampleRateHz: this.SAMPLE_RATE_HZ,
       fftSize: this.FFT_SIZE,
@@ -82,13 +85,20 @@ export class BrowserFftSpeechCommandRecognizer implements
    *     `config.includeSpectrogram` is `true`.
    * @param config The configurations for the streaming recognition to
    *   be started.
+   *   The `modelName` field of `config` specifies the model to be used for
+   *   online recognition. If not specified, it defaults to the name of the
+   *   base model ('base'), i.e., the pretrained model not from transfer
+   *   learning. If the recognizer instance has one or more transfer-learning
+   *   models ready (as a result of calls to `collectTransferExample`
+   *   and `trainTransferModel`), you can let this call use that
+   *   model for prediction by specifying the corresponding `modelName`.
    * @throws Error, if streaming recognition is already started or
    *   if `config` contains invalid values.
    */
   async startStreaming(
       callback: RecognizerCallback,
       config?: StreamingRecognitionConfig): Promise<void> {
-    if (this.streaming) {
+    if (streaming) {
       throw new Error(
           'Cannot start streaming again when streaming is ongoing.');
     }
@@ -171,7 +181,7 @@ export class BrowserFftSpeechCommandRecognizer implements
 
     await this.audioDataExtractor.start();
 
-    this.streaming = true;
+    streaming = true;
   }
 
   /**
@@ -220,17 +230,19 @@ export class BrowserFftSpeechCommandRecognizer implements
     }
 
     this.model = model;
+    this.freezeModel();
+
     this.nonBatchInputShape =
-        this.model.inputs[0].shape.slice(1) as [number, number, number];
+        model.inputs[0].shape.slice(1) as [number, number, number];
     this.elementsPerExample = 1;
-    this.model.inputs[0].shape.slice(1).forEach(
+    model.inputs[0].shape.slice(1).forEach(
         dimSize => this.elementsPerExample *= dimSize);
 
     this.warmUpModel();
 
     const frameDurationMillis =
         this.parameters.columnBufferLength / this.parameters.sampleRateHz * 1e3;
-    const numFrames = this.model.inputs[0].shape[1];
+    const numFrames = model.inputs[0].shape[1];
     this.parameters.spectrogramDurationMillis = numFrames * frameDurationMillis;
   }
 
@@ -257,18 +269,18 @@ export class BrowserFftSpeechCommandRecognizer implements
    * @throws Error if there is not ongoing streaming recognition.
    */
   async stopStreaming(): Promise<void> {
-    if (!this.streaming) {
+    if (!streaming) {
       throw new Error('Cannot stop streaming when streaming is not ongoing.');
     }
     await this.audioDataExtractor.stop();
-    this.streaming = false;
+    streaming = false;
   }
 
   /**
    * Check if streaming recognition is ongoing.
    */
   isStreaming(): boolean {
-    return this.streaming;
+    return streaming;
   }
 
   /**
@@ -277,12 +289,6 @@ export class BrowserFftSpeechCommandRecognizer implements
    * @throws Error If this model is called before the model is loaded.
    */
   wordLabels(): string[] {
-    if (this.model == null) {
-      throw new Error(
-          'Model is not loaded yet. Call ensureModelLoaded() or ' +
-          'use the model for recognition with startStreaming() or ' +
-          'recognize() first.');
-    }
     return this.words;
   }
 
@@ -303,7 +309,7 @@ export class BrowserFftSpeechCommandRecognizer implements
   modelInputShape(): tf.Shape {
     if (this.model == null) {
       throw new Error(
-          'Model has not be loaded yet. Load model by calling ' +
+          'Model has not been loaded yet. Load model by calling ' +
           'ensureModelLoaded(), recognizer(), or startStreaming().');
     }
     return this.model.inputs[0].shape;
@@ -366,6 +372,31 @@ export class BrowserFftSpeechCommandRecognizer implements
     }
   }
 
+  createTransfer(name: string): TransferSpeechCommandRecognizer {
+    if (this.model == null) {
+      throw new Error(
+          'Model has not been loaded yet. Load model by calling ' +
+          'ensureModelLoaded(), recognizer(), or startStreaming().');
+    }
+    tf.util.assert(
+        name != null && typeof name === 'string' && name.length > 1,
+        `Expected the name for a transfer-learning recognized to be a ` +
+            `non-empty string, but got ${JSON.stringify(name)}`);
+    tf.util.assert(
+        this.transferRecognizers[name] == null,
+        `There is already a transfer-learning model named '${name}'`);
+    const transfer = new TransferBrowserFftSpeechCommandRecognizer(
+        name, this.parameters, this.model);
+    this.transferRecognizers[name] = transfer;
+    return transfer;
+  }
+
+  private freezeModel(): void {
+    for (const layer of this.model.layers) {
+      layer.trainable = false;
+    }
+  }
+
   private checkInputTensorShape(input: tf.Tensor) {
     const expectedRank = this.model.inputs[0].shape.length;
     if (input.shape.length !== expectedRank) {
@@ -380,5 +411,284 @@ export class BrowserFftSpeechCommandRecognizer implements
           `Expected input to have shape [null,${expectedNonBatchShape}], ` +
           `but got shape [null,${nonBatchedShape}]`);
     }
+  }
+
+  // TODO(cais): Implement model save and load.
+}
+
+/**
+ * A subclass of BrowserFftSpeechCommandRecognizer: Transfer-learned model.
+ */
+class TransferBrowserFftSpeechCommandRecognizer extends
+    BrowserFftSpeechCommandRecognizer implements
+        TransferSpeechCommandRecognizer {
+  private transferExamples: {[word: string]: tf.Tensor[]};
+  private transferHead: tf.Sequential;
+
+  /**
+   * Constructor of TransferBrowserFftSpeechCommandRecognizer.
+   *
+   * @param name Name of the transfer-learned recognizer. Must be a non-empty
+   *   string.
+   * @param parameters Parameters from the base recognizer.
+   * @param baseModel Model from the base recognizer.
+   */
+  constructor(
+      readonly name: string, readonly parameters: RecognizerParams,
+      readonly baseModel: tf.Model) {
+    super();
+    tf.util.assert(
+        name != null && typeof name === 'string' && name.length > 0,
+        `The name of a transfer model must be a non-empty string, ` +
+            `but got ${JSON.stringify(name)}`);
+    this.nonBatchInputShape =
+        this.baseModel.inputs[0].shape.slice(1) as [number, number, number];
+    this.words = [];
+  }
+
+  /**
+   * Collect an example for transfer learning via WebAudio.
+   *
+   * @param {string} word Name of the word. Must not overlap with any of the
+   *   words the base model is trained to recognize.
+   * @returns {SpectrogramData} The spectrogram of the acquired the example.
+   * @throws Error, if word belongs to the set of words the base model is
+   *   trained to recognize.
+   */
+  async collectExample(word: string): Promise<SpectrogramData> {
+    tf.util.assert(
+        !streaming,
+        'Cannot start collection of transfer-learning example because ' +
+            'a streaming recognition or transfer-learning example collection ' +
+            'is ongoing');
+    tf.util.assert(
+        word != null && typeof word === 'string' && word.length > 0,
+        `Must provide a non-empty string when collecting transfer-` +
+            `learning example`);
+
+    streaming = true;
+    return new Promise<SpectrogramData>((resolve, reject) => {
+      const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
+        if (this.transferExamples == null) {
+          this.transferExamples = {};
+        }
+        if (this.transferExamples[word] == null) {
+          this.transferExamples[word] = [];
+        }
+        this.transferExamples[word].push(x.clone());
+        await this.audioDataExtractor.stop();
+        streaming = false;
+        this.collateTransferWords();
+        resolve({
+          data: await x.data() as Float32Array,
+          frameSize: this.nonBatchInputShape[1],
+        });
+        return false;
+      };
+      this.audioDataExtractor = new BrowserFftFeatureExtractor({
+        sampleRateHz: this.parameters.sampleRateHz,
+        columnBufferLength: this.parameters.columnBufferLength,
+        columnHopLength: this.parameters.columnBufferLength,
+        numFramesPerSpectrogram: this.nonBatchInputShape[0],
+        columnTruncateLength: this.nonBatchInputShape[1],
+        suppressionTimeMillis: 0,
+        spectrogramCallback
+      });
+      this.audioDataExtractor.start();
+    });
+  }
+
+  /**
+   * Clear all transfer learning examples collected so far.
+   */
+  clearExamples(): void {
+    tf.util.assert(
+        this.words != null && this.words.length > 0 &&
+            this.transferExamples != null,
+        `No transfer learning examples exist for model name ${this.name}`);
+    tf.dispose(this.transferExamples);
+    this.transferExamples = null;
+    this.words = null;
+  }
+
+  /**
+   * Get counts of the word examples that have been collected for a
+   * transfer-learning model.
+   *
+   * @returns {{[word: string]: number}} A map from word name to number of
+   *   examples collected for that word so far.
+   */
+  countExamples(): {[word: string]: number} {
+    if (this.transferExamples == null) {
+      throw new Error(
+          `No examples have been collected for transfer-learning model ` +
+          `named '${this.name}' yet.`);
+    }
+    const counts: {[word: string]: number} = {};
+    for (const word in this.transferExamples) {
+      counts[word] = this.transferExamples[word].length;
+    }
+    return counts;
+  }
+
+  /**
+   * Collect the vocabulary of this transfer-learned recognizer.
+   *
+   * The words are put in an alphabetically sorted order.
+   */
+  private collateTransferWords() {
+    this.words = Object.keys(this.transferExamples).sort();
+  }
+
+  /**
+   * Collect the transfer-learning data as tf.Tensors.
+   *
+   * @param modelName {string} Name of the transfer learning model for which
+   *   the examples are to be collected.
+   * @returns xs: The feature tensors (xs), a 4D tf.Tensor.
+   *          ys: The target tensors (ys), one-hot encoding, a 2D tf.Tensor.
+   */
+  private collectTransferDataAsTensors(modelName?: string):
+      {xs: tf.Tensor, ys: tf.Tensor} {
+    tf.util.assert(
+        this.words != null && this.words.length > 0,
+        `No word example is available for tranfer-learning model of name ` +
+            modelName);
+    return tf.tidy(() => {
+      const xTensors: tf.Tensor[] = [];
+      const targetIndices: number[] = [];
+      this.words.forEach((word, i) => {
+        this.transferExamples[word].forEach(wordTensor => {
+          xTensors.push(wordTensor);
+          targetIndices.push(i);
+        });
+      });
+      return {
+        xs: tf.concat(xTensors, 0),
+        ys: tf.oneHot(
+            tf.tensor1d(targetIndices, 'int32'), Object.keys(this.words).length)
+      };
+    });
+  }
+
+  /**
+   * Train the transfer-learning model.
+   *
+   * The last dense layer of the base model is replaced with new softmax dense
+   * layer.
+   *
+   * It is assume that at least one category of data has been collected (using
+   * multiple calls to the `collectTransferExample` method).
+   *
+   * @param config {TransferLearnConfig} Optional configurations fot the
+   *   training of the transfer-learning model.
+   * @returns {tf.History} A history object with the loss and accuracy values
+   *   from the training of the transfer-learning model.
+   * @throws Error, if `modelName` is invalid or if not sufficient training
+   *   examples have been collected yet.
+   */
+  async train(config?: TransferLearnConfig): Promise<tf.History> {
+    tf.util.assert(
+        this.words != null && this.words.length > 0,
+        `Cannot train transfer-learning model '${this.name}' because no ` +
+            `transfer learning example has been collected.`);
+    tf.util.assert(
+        this.words.length > 1,
+        `Cannot train transfer-learning model '${this.name}' because only ` +
+            `1 word label ('${JSON.stringify(this.words)}') ` +
+            `has been collected for transfer learning. Requires at least 2.`);
+
+    if (config == null) {
+      config = {};
+    }
+
+    if (this.model == null) {
+      this.createTransferModelFromBaseModel();
+    }
+
+    // Compile model for training.
+    const optimizer = config.optimizer || 'sgd';
+    this.model.compile(
+        {loss: 'categoricalCrossentropy', optimizer, metrics: ['acc']});
+
+    // Prepare the data.
+    const {xs, ys} = this.collectTransferDataAsTensors();
+
+    const epochs = config.epochs == null ? 20 : config.epochs;
+    const validationSplit =
+        config.validationSplit == null ? 0 : config.validationSplit;
+    try {
+      const history = await this.model.fit(xs, ys, {
+        epochs,
+        validationSplit,
+        batchSize: config.batchSize,
+        callbacks: config.callback == null ? null : [config.callback]
+      });
+      tf.dispose([xs, ys]);
+      return history;
+    } catch (err) {
+      tf.dispose([xs, ys]);
+      this.model = null;
+      return null;
+    }
+  }
+
+  /**
+   * Create an instance of tf.Model for transfer learning.
+   *
+   * The top dense layer of the base model is replaced with a new softmax
+   * dense layer.
+   */
+  private createTransferModelFromBaseModel(): void {
+    tf.util.assert(
+        this.words != null,
+        `No word example is available for tranfer-learning model of name ` +
+            this.name);
+
+    // Find the second last dense layer.
+    const layers = this.baseModel.layers;
+    let layerIndex = layers.length - 2;
+    while (layerIndex >= 0) {
+      if (layers[layerIndex].getClassName().toLowerCase() === 'dense') {
+        break;
+      }
+      layerIndex--;
+    }
+    if (layerIndex < 0) {
+      throw new Error('Cannot find a hidden dense layer in the base model.');
+    }
+    const beheadedBaseOutput = layers[layerIndex].output as tf.SymbolicTensor;
+
+    this.transferHead = tf.sequential();
+    this.transferHead.add(tf.layers.dense({
+      units: this.words.length,
+      activation: 'softmax',
+      inputShape: beheadedBaseOutput.shape.slice(1)
+    }));
+    const transferOutput =
+        this.transferHead.apply(beheadedBaseOutput) as tf.SymbolicTensor;
+    this.model =
+        tf.model({inputs: this.baseModel.inputs, outputs: transferOutput});
+  }
+
+  /**
+   * Get the input shape of the underlying tf.Model.
+   *
+   * @returns The input shape.
+   */
+  modelInputShape(): tf.Shape {
+    return this.baseModel.inputs[0].shape;
+  }
+
+  /**
+   * Overridden method to prevent creating a nested transfer-learning
+   * recognizer.
+   *
+   * @param name
+   */
+  createTransfer(name: string): TransferBrowserFftSpeechCommandRecognizer {
+    throw new Error(
+        'Creating transfer-learned recognizer from a transfer-learned ' +
+        'recognizer is not supported.');
   }
 }

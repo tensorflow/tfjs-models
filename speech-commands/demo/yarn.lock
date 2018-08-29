@@ -3227,6 +3227,10 @@ pkgresolve@^1.1.4:
   dependencies:
     minimist "~1.2.0"
 
+plotly.js-dist@^1.39.4:
+  version "1.40.0"
+  resolved "https://registry.yarnpkg.com/plotly.js-dist/-/plotly.js-dist-1.40.0.tgz#7421236a2422958f5e9b8e50669753e003d93138"
+
 pluralize@^7.0.0:
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/pluralize/-/pluralize-7.0.0.tgz#298b89df8b93b0221dbf421ad2b1b1ea23fc6777"
