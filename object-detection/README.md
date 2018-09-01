@@ -1,14 +1,13 @@
 # Object Detection (coco-ssd)
 
-Object detection model aims to localize and identify multiple objects in a single image. It is an open source framework built on top of TensorFlow that makes it easy to construct, train and deploy object detection models.
+Object detection model aims to localize and identify multiple objects in a single image.
 
 This TensorFlow.js object detection model is built on top of Tensorflow object detection API. For more information about Tensorflow object detection API, check out this readme in
 [tensorflow/object_detection](https://github.com/tensorflow/models/blob/master/research/object_detection/README.md).
 
 This TensorFlow.js model does not require you to know about machine learning.
 It can take as input any browser-based image elements (`<img>`, `<video>`, `<canvas>`
-elements, for example) and returns an array of most likely predictions and
-their confidences.
+elements, for example) and returns an array of most bounding boxes with class name and confidence level.
 
 ## Usage
 
@@ -35,9 +34,8 @@ There are two main ways to get this model in your JavaScript project: via script
   // Load the model.
   objectDetection.load().then(model => {
     // Classify the image.
-    model.detection(img).then(predictions => {
-      console.log('Predictions: ');
-      console.log(predictions);
+    model.detect(img).then(predictions => {
+      console.log('Predictions: ', predictions);
     });
   });
 </script>
@@ -62,6 +60,8 @@ console.log('Predictions: ');
 console.log(predictions);
 ```
 
+You can also take a look at the [demo app](./demo).
+
 ## API
 
 #### Loading the model
@@ -80,21 +80,21 @@ Returns a `model` object.
 
 #### Detecting the objects
 
-You can make a classification with mobilenet without needing to create a Tensor
-with `model.detect`, which takes an input image element and returns an
-array of bounding boxes with classification and score.
+You can detect objects with the model without needing to create a Tensor.
+`model.detect` takes an input image element and returns an array of bounding boxes with class name and confidence level.
 
 This method exists on the model that is loaded from `objectDetection.load`.
 
 ```ts
 model.detect(
   img: tf.Tensor3D | ImageData | HTMLImageElement |
-      HTMLCanvasElement | HTMLVideoElement
+      HTMLCanvasElement | HTMLVideoElement, maxDetectionSize: number
 )
 ```
 
 Args:
 - **img:** A Tensor or an image element to make a detection on.
+- **maxDetectionSize:** The max count of detected objects, default to 20.
 
 Returns an array of classes and probabilities that looks like:
 
@@ -113,8 +113,9 @@ Returns an array of classes and probabilities that looks like:
 ### Preparing the model
 
 This model is based on the TensorFlow object detection API with following some optimizations:
-  1. Removed the post process graph from the original model
-  2. Used single class NonMaxSuppression instead of original multiple classes NonMaxSuppression.
+
+  1. Removed the post process graph from the original model.
+  2. Used single class NonMaxSuppression instead of original multiple classes NonMaxSuppression for faster speed with similar accuracy.
   3. Executes NonMaxSuppression operations on CPU backend instead of WebGL to greatly improve the performance by avoiding the texture downloads.
 
 Here is the converter command for removing the post process graph.
