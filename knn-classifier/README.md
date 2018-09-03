@@ -23,7 +23,7 @@ You can see example code [here](https://github.com/tensorflow/tfjs-models/tree/m
     <!-- Load MobileNet -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@0.1.1"></script>
     <!-- Load KNN Classifier -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/knn-classifier@0.1.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/knn-classifier@latest"></script>
  </head>
 
   <body>
