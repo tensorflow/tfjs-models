@@ -4,7 +4,8 @@ The Speech Command Recognizer is a JavaScript module that enables
 recognition of spoken commands comprised of simple isolated English
 words from a small vocabulary. The default vocabulary includes the following
 words: the ten digits from "zero" to "nine", "up", "down", "left", "right",
-"go", "stop", "yes", "no", in addition to background noise.
+"go", "stop", "yes", "no", as well as the to additional categories of
+"unknown word" and "background noise".
 
 It uses the web browser's
 [WebAudio API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API).
@@ -66,6 +67,20 @@ recognizer.startStreaming(result => {
 setTimeout(() => recognizer.stopStreaming(), 10e3);
 ```
 
+#### Parameters for online streaming recognition
+
+As the example above shows, you can specify optional parameters when calling
+`startStreaming()`. The supported parameters are:
+
+* `includeSpectrogram`: Let the callback function be invoked with the
+  spectrogram data included in the argument. Default: `false`.
+* `probabilityThreshold`: The callback function will be invoked if and only if
+  the maximum probability score of all the words is greater than this threshold.
+  Default: `0`.
+* `invokeCallbackOnNoiseAndUnknown`: Whether the callback function will be
+  invoked if the "word" with the maximum probability score is the "unknown"
+  or "background noise" token. Default: `false`.
+
 ### Offline recognition
 
 To perform offline recognition, you need to have obtained the spectrogram
@@ -116,6 +131,91 @@ recognizer object. The `ensureModelLoaded()` method also "warms up" model after
 the model is loaded. "Warm up" means running a few dummy examples through the
 model for inference to make sure that the necessary states are set up, so that
 subsequent inferences can be fast.
+
+### Transfer learning
+
+**Transfer learning** is the process of taking a model trained
+previously on a dataset (say dataset A) and applying it on a
+different dataset (say dataset B).
+To achieve transfer learning, the model needs to be slightly modified and
+re-trained on dataset B. However, thanks to the training on
+the original dataset (A), the training on the new dataset (B) takes much less
+time and computational resource, in addition to requiring a much smaller amount of
+data than the original training data. The modification process involves removing the
+top (output) dense layer of the original model and keeping the "base" of the
+model. Due to its previous training, the base can be used as a good feature
+extractor for any data similar to the original training data.
+The removed dense layer is replaced with a new dense layer configured
+specifically for the new dataset.
+
+The speech-command model is a model suitable for transfer learning on
+previously unseen spoken words. The original model has been trained on a relatively
+large dataset (~50k examples from 20 classes). It can be used for transfer learning on
+words different from the original vocabulary. We provide an API to perform
+this type of transfer learning. The steps are listed in the example
+code snippet below
+
+```js
+const baseRecognizer = SpeechCommands.create('BROWSER_FFT');
+await baseRecognizer.ensureModelLoaded();
+
+// Each instance of speech-command recognizer supports multiple
+// transfer-learning models, each of which can be trained for a different
+// new vocabulary.
+// Therefore we give a name to the transfer-learning model we are about to
+// train ('colors' in this case).
+const transferRecognizer = baseRecognizer.createTransfer('colors');
+
+// Call `collectExample()` to collect a number of audio examples
+// via WebAudio.
+await transferRecognizer.collectExample('red');
+await transferRecognizer.collectExample('green');
+await transferRecognizer.collectExample('blue');
+await transferRecognizer.collectExample('red');
+// Don't forget to collect some background-noise examples, so that the
+// trasnfer-learned model will be able to detect moments of silence.
+await transferRecognizer.collectExample('_background_noise_');
+await transferRecognizer.collectExample('green');
+await transferRecognizer.collectExample('blue');
+await transferRecognizer.collectExample('_background_noise_');
+// ... You would typically want to put `collectExample`
+//     in the callback of a UI button to allow the user to collect
+//     any desired number of examples in random order.
+
+// You can check the counts of examples for different words that have been
+// collect for this transfer-learning model.
+console.log(transferRecognizer.countExamples());
+// e.g., {'red': 2, 'green': 2', 'blue': 2, '_background_noise': 2};
+
+// Start training of the transfer-learning model.
+// You can specify `epochs` (number of training epochs) and `callback`
+// (the Model.fit callback to use during training), among other configuration
+// fields.
+await transferRecognizer.train({
+  epochs: 25,
+  callback: {
+    onEpochEnd: async (epoch, logs) => {
+      console.log(`Epoch ${epochs}: loss=${logs.loss}, accuracy=${logs.acc}`);
+    }
+  }
+});
+
+// After the transfer learning completes, you can start online streaming
+// recognition using the new model.
+await transferRecognizer.startStreaming(result => {
+  // - result.scores contains the scores for the new vocabulary, which
+  //   can be checked with:
+  const words = transferRecognizer.wordLabels();
+  // `result.scores` contains the scores for the new words, not the original
+  // words.
+  for (let i = 0; i < words; ++i) {
+    console.log(`score for word '${words[i]}' = ${result.scores[i]}`);
+  }
+}, {probabilityThreshold: 0.75});
+
+// Stop the recognition in 10 seconds.
+setTimeout(() => transferRecognizer.stopStreaming(), 10e3);
+```
 
 ## How to run the demo
 

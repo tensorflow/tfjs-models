@@ -134,7 +134,7 @@ export class KNNClassifier {
     }
     if (this.getNumExamples() === 0) {
       throw new Error(
-          `You have not added any exaples to the KNN classifier. ` +
+          `You have not added any examples to the KNN classifier. ` +
           `Please add examples before calling predictClass.`);
     }
     const knn = tf.tidy(() => this.similarities(input).asType('float32'));

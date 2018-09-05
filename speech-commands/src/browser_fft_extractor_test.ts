@@ -89,9 +89,10 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
     setUpFakes();
 
     const extractor = new BrowserFftFeatureExtractor({
-      spectrogramCallback: (x: tf.Tensor) => false,
+      spectrogramCallback: async (x: tf.Tensor) => false,
       numFramesPerSpectrogram: 43,
       columnTruncateLength: 225,
+      suppressionTimeMillis: 1000
     });
 
     expect(extractor.fftSize).toEqual(1024);
@@ -110,15 +111,17 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
              spectrogramCallback: null,
              numFramesPerSpectrogram: 43,
              columnTruncateLength: 225,
+             suppressionTimeMillis: 1000
            }))
         .toThrowError(/spectrogramCallback cannot be null or undefined/);
   });
 
   it('constructor errors due to invalid numFramesPerSpectrogram', () => {
     expect(() => new BrowserFftFeatureExtractor({
-             spectrogramCallback: (x: tf.Tensor) => false,
+             spectrogramCallback: async (x: tf.Tensor) => false,
              numFramesPerSpectrogram: -2,
              columnTruncateLength: 225,
+             suppressionTimeMillis: 1000
            }))
         .toThrowError(/Invalid value in numFramesPerSpectrogram: -2/);
   });
@@ -126,10 +129,11 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
   it('constructor errors due to nengative overlapFactor', () => {
     expect(
         () => new BrowserFftFeatureExtractor({
-          spectrogramCallback: (x: tf.Tensor) => false,
+          spectrogramCallback: async (x: tf.Tensor) => false,
           numFramesPerSpectrogram: 43,
           columnTruncateLength: 225,
           columnBufferLength: 1024,
+          suppressionTimeMillis: 1000,
           columnHopLength: -512  // Leads to negative overlapFactor and Error.
         }))
         .toThrowError(/Invalid overlapFactor/);
@@ -137,12 +141,24 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
 
   it('constructor errors due to columnTruncateLength too large', () => {
     expect(() => new BrowserFftFeatureExtractor({
-             spectrogramCallback: (x: tf.Tensor) => false,
+             spectrogramCallback: async (x: tf.Tensor) => false,
              numFramesPerSpectrogram: 43,
              columnTruncateLength: 1600,  // > 1024 and leads to Error.
-             columnBufferLength: 1024
+             columnBufferLength: 1024,
+             suppressionTimeMillis: 1000
            }))
         .toThrowError(/columnTruncateLength .* exceeds fftSize/);
+  });
+
+  it('constructor errors due to negative suppressionTimeMillis', () => {
+    expect(() => new BrowserFftFeatureExtractor({
+             spectrogramCallback: async (x: tf.Tensor) => false,
+             numFramesPerSpectrogram: 43,
+             columnTruncateLength: 1600,
+             columnBufferLength: 1024,
+             suppressionTimeMillis: -1000  // <0 and leads to Error.
+           }))
+        .toThrowError(/Expected suppressionTimeMillis to be >= 0/);
   });
 
   it('start and stop: overlapFactor = 0', async done => {
@@ -154,7 +170,7 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
     const tensorCounts: number[] = [];
     const callbackTimestamps: number[] = [];
     const extractor = new BrowserFftFeatureExtractor({
-      spectrogramCallback: (x: tf.Tensor) => {
+      spectrogramCallback: async (x: tf.Tensor) => {
         callbackTimestamps.push(tf.util.now());
         if (callbackTimestamps.length > 1) {
           expect(
@@ -180,7 +196,8 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
       numFramesPerSpectrogram: 43,
       columnTruncateLength: 225,
       columnBufferLength: 1024,
-      columnHopLength: 1024  // Full hop, zero overlap.
+      columnHopLength: 1024,  // Full hop, zero overlap.
+      suppressionTimeMillis: 0
     });
     extractor.start();
   });
@@ -194,7 +211,7 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
     let numCallbacksCompleted = 0;
     // tslint:disable:no-any
     const extractor = new BrowserFftFeatureExtractor({
-      spectrogramCallback: (x: tf.Tensor) => {
+      spectrogramCallback: async (x: tf.Tensor) => {
         expect((extractor as any).rotatingBuffer.length)
             .toEqual(
                 numFramesPerSpectrogram * columnTruncateLength *
@@ -207,7 +224,8 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
       numFramesPerSpectrogram,
       columnTruncateLength,
       columnBufferLength: 1024,
-      columnHopLength: 1024
+      columnHopLength: 1024,
+      suppressionTimeMillis: 0
     });
     // tslint:enable:no-any
     extractor.start();
@@ -222,7 +240,7 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
     const callbackTimestamps: number[] = [];
     const spectrogramDurationMillis = 1024 / 44100 * 43 * 1e3;
     const extractor = new BrowserFftFeatureExtractor({
-      spectrogramCallback: (x: tf.Tensor) => {
+      spectrogramCallback: async (x: tf.Tensor) => {
         callbackTimestamps.push(tf.util.now());
         if (callbackTimestamps.length > 1) {
           expect(
@@ -241,8 +259,36 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
       numFramesPerSpectrogram: 43,
       columnTruncateLength: 225,
       columnBufferLength: 1024,
-      columnHopLength: 512  // 50% overlapFactor.
+      columnHopLength: 512,  // 50% overlapFactor.
+      suppressionTimeMillis: 0
     });
+    extractor.start();
+  });
+
+  it('start and stop: suppressionTimeMillis = 1000', async done => {
+    setUpFakes();
+
+    const numCallbacksToComplete = 2;
+    const suppressionTimeMillis = 1500;
+    let numCallbacksCompleted = 0;
+    const extractor = new BrowserFftFeatureExtractor({
+      spectrogramCallback: async (x: tf.Tensor) => {
+        if (++numCallbacksCompleted >= numCallbacksToComplete) {
+          const tEnd = tf.util.now();
+          // Due to the suppression time, the time elapsed between the two
+          // consecutive callbacks should be longer than it.
+          expect(tEnd - tBegin).toBeGreaterThanOrEqual(suppressionTimeMillis);
+          extractor.stop().then(done);
+        }
+        return true;  // Returning true causes suppression.
+      },
+      numFramesPerSpectrogram: 43,
+      columnTruncateLength: 225,
+      columnBufferLength: 256,
+      columnHopLength: 64,
+      suppressionTimeMillis
+    });
+    const tBegin = tf.util.now();
     extractor.start();
   });
 
@@ -250,11 +296,12 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
     setUpFakes();
 
     const extractor = new BrowserFftFeatureExtractor({
-      spectrogramCallback: (x: tf.Tensor) => false,
+      spectrogramCallback: async (x: tf.Tensor) => false,
       numFramesPerSpectrogram: 43,
       columnTruncateLength: 225,
       columnBufferLength: 1024,
       columnHopLength: 1024,
+      suppressionTimeMillis: 1000
     });
 
     let caughtError: Error;
