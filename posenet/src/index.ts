@@ -15,14 +15,25 @@
  * =============================================================================
  */
 
+import {CheckpointLoader} from './checkpoint_loader';
+// tslint:disable-next-line:max-line-length
+import {ConvolutionDefinition, MobileNet, mobileNetArchitectures, MobileNetMultiplier, OutputStride} from './mobilenet';
 import {decodeMultiplePoses} from './multiPose/decodeMultiplePoses';
 import {load, PoseNet} from './posenet_model';
 import {decodeSinglePose} from './singlePose/decodeSinglePose';
 
-export {checkpoints} from './checkpoints';
+export {Checkpoint} from './checkpoints';
 export {partIds, partNames, poseChain} from './keypoints';
 export {Keypoint, Pose} from './types';
 // tslint:disable-next-line:max-line-length
 export {getAdjacentKeyPoints, getBoundingBox, getBoundingBoxPoints} from './util';
+export {
+  ConvolutionDefinition,
+  MobileNet,
+  mobileNetArchitectures,
+  MobileNetMultiplier,
+  OutputStride
+};
+export {CheckpointLoader};
 export {decodeMultiplePoses, decodeSinglePose};
 export {load, PoseNet};
