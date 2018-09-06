@@ -21,5 +21,12 @@
   },
   "include": [
     "src/**/*"
+  ],
+  "exclude": [
+    "node_modules/",
+    "dist/",
+    "src/**/*_test.ts",
+    "src/**/*_test_utils.ts",
+    "training/"
   ]
 }
