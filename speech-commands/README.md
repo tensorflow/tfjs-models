@@ -37,6 +37,7 @@ To use the speech-command recognizer, first create a recognizer instance,
 then start the streaming recognition by calling its `startStreaming()` method.
 
 ```js
+import * as tf from '@tensorflow/tfjs';
 import * as SpeechCommands from '@tensorflow-models/speech-commands';
 
 // When calling `create()`, you must provide the type of the audio input.
