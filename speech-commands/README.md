@@ -47,6 +47,10 @@ import * as speechCommands from '@tensorflow-models/speech-commands';
 //   (not implemented yet).
 const recognizer = speechCommands.create('BROWSER_FFT');
 
+// Make sure that the underlying model and metadata are loaded via HTTPS
+// requests.
+await recognizer.ensureModelLoaded();
+
 // See the array of words that the recognizer is trained to recognize.
 console.log(recognizer.wordLabels());
 
@@ -73,6 +77,10 @@ setTimeout(() => recognizer.stopStreaming(), 10e3);
 As the example above shows, you can specify optional parameters when calling
 `startStreaming()`. The supported parameters are:
 
+* `overlapFactor`: Controls how often the recognizer performs predicton on
+  spectrograms. Must be a number between 0 and 1 (default: 0.5). For example,
+  if each spectrogram is 1000 ms long and `overlapFactor` is set to 0.25,
+  the prediction will happen every 250 ms.
 * `includeSpectrogram`: Let the callback function be invoked with the
   spectrogram data included in the argument. Default: `false`.
 * `probabilityThreshold`: The callback function will be invoked if and only if
