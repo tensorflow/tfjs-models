@@ -37,9 +37,9 @@ export class BrowserFftSpeechCommandRecognizer implements
     SpeechCommandRecognizer {
   // tslint:disable:max-line-length
   readonly DEFAULT_MODEL_JSON_URL =
-      `https://storage.googleapis.com/tfjs-speech-commands-models/v${version}/20w/model.json`;
+      `https://storage.googleapis.com/tfjs-speech-commands-models/v${version}/browser_fft/20w/model.json`;
   readonly DEFAULT_METADATA_JSON_URL =
-      `https://storage.googleapis.com/tfjs-speech-commands-models/v${version}/20w/metadata.json`;
+      `https://storage.googleapis.com/tfjs-speech-commands-models/v${version}/browser_fft/20w/metadata.json`;
   // tslint:enable:max-line-length
 
   private readonly SAMPLE_RATE_HZ = 44100;
