@@ -16,11 +16,11 @@
  */
 
 const packageJSON = require('../package.json');
-import * as SpeechCommands from './index';
+import * as speechCommands from './index';
 
 describe('Public API', () => {
   it('version matches package.json', () => {
-    expect(typeof SpeechCommands.version).toEqual('string');
-    expect(SpeechCommands.version).toEqual(packageJSON.version);
+    expect(typeof speechCommands.version).toEqual('string');
+    expect(speechCommands.version).toEqual(packageJSON.version);
   });
 });

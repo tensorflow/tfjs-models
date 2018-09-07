@@ -38,14 +38,14 @@ then start the streaming recognition by calling its `startStreaming()` method.
 
 ```js
 import * as tf from '@tensorflow/tfjs';
-import * as SpeechCommands from '@tensorflow-models/speech-commands';
+import * as speechCommands from '@tensorflow-models/speech-commands';
 
 // When calling `create()`, you must provide the type of the audio input.
 // The two available options are `BROWSER_FFT` and `SOFT_FFT`.
 // - BROWSER_FFT uses the browser's native Fourier transform.
 // - SOFT_FFT uses JavaScript implementations of Fourier transform
 //   (not implemented yet).
-const recognizer = SpeechCommands.create('BROWSER_FFT');
+const recognizer = speechCommands.create('BROWSER_FFT');
 
 // See the array of words that the recognizer is trained to recognize.
 console.log(recognizer.wordLabels());
@@ -94,9 +94,9 @@ E.g.,
 
 ```js
 import * as tf from '@tensorflow/tfjs';
-import * as SpeechCommands from '@tensorflow-models/speech-commands';
+import * as speechCommands from '@tensorflow-models/speech-commands';
 
-const recognizer = SpeechCommands.create('BROWSER_FFT');
+const recognizer = speechCommands.create('BROWSER_FFT');
 
 // Inspect the input shape of the recognizer's underlying tf.Model.
 console.log(recognizer.modelInputShape());
@@ -157,7 +157,7 @@ this type of transfer learning. The steps are listed in the example
 code snippet below
 
 ```js
-const baseRecognizer = SpeechCommands.create('BROWSER_FFT');
+const baseRecognizer = speechCommands.create('BROWSER_FFT');
 await baseRecognizer.ensureModelLoaded();
 
 // Each instance of speech-command recognizer supports multiple
