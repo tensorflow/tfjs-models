@@ -15,11 +15,12 @@
  * =============================================================================
  */
 
+const packageJSON = require('../package.json');
 import * as SpeechCommands from './index';
 
 describe('Public API', () => {
-  it('version is available', () => {
+  it('version matches package.json', () => {
     expect(typeof SpeechCommands.version).toEqual('string');
-    expect(SpeechCommands.version.length).toBeGreaterThan(0);
+    expect(SpeechCommands.version).toEqual(packageJSON.version);
   });
 });
