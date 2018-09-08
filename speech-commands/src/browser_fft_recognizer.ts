@@ -21,6 +21,7 @@ import * as tf from '@tensorflow/tfjs';
 import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
 import {loadMetadataJson} from './browser_fft_utils';
 import {RecognizerCallback, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
+import {version} from './version';
 
 // tslint:enable:max-line-length
 
@@ -36,9 +37,9 @@ export class BrowserFftSpeechCommandRecognizer implements
     SpeechCommandRecognizer {
   // tslint:disable:max-line-length
   readonly DEFAULT_MODEL_JSON_URL =
-      'https://storage.googleapis.com/tfjs-speech-commands-models/20w/model.json';
+      `https://storage.googleapis.com/tfjs-speech-commands-models/v${version}/browser_fft/20w/model.json`;
   readonly DEFAULT_METADATA_JSON_URL =
-      'https://storage.googleapis.com/tfjs-speech-commands-models/20w/metadata.json';
+      `https://storage.googleapis.com/tfjs-speech-commands-models/v${version}/browser_fft/20w/metadata.json`;
   // tslint:enable:max-line-length
 
   private readonly SAMPLE_RATE_HZ = 44100;

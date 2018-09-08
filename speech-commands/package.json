@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/speech-commands",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Speech-command recognizer in TensorFlow.js",
   "main": "dist/index.js",
   "unpkg": "dist/speech-commands.min.js",
@@ -13,10 +13,10 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs": "^0.12.5"
+    "@tensorflow/tfjs": "^0.12.7"
   },
   "devDependencies": {
-    "@tensorflow/tfjs": "^0.12.5",
+    "@tensorflow/tfjs": "^0.12.7",
     "@types/jasmine": "~2.8.8",
     "babel-core": "~6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",
@@ -34,7 +34,7 @@
     "yalc": "~1.0.0-pre.21"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "rimraf dist && tsc && rollup -c",
     "lint": "tslint -p . -t verbose",
     "publish-local": "yarn build && yalc push",
     "test": "yarn build && ts-node run_tests.ts"
