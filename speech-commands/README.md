@@ -37,14 +37,19 @@ To use the speech-command recognizer, first create a recognizer instance,
 then start the streaming recognition by calling its `startStreaming()` method.
 
 ```js
-import * as SpeechCommands from '@tensorflow-models/speech-commands';
+import * as tf from '@tensorflow/tfjs';
+import * as speechCommands from '@tensorflow-models/speech-commands';
 
 // When calling `create()`, you must provide the type of the audio input.
 // The two available options are `BROWSER_FFT` and `SOFT_FFT`.
 // - BROWSER_FFT uses the browser's native Fourier transform.
 // - SOFT_FFT uses JavaScript implementations of Fourier transform
 //   (not implemented yet).
-const recognizer = SpeechCommands.create('BROWSER_FFT');
+const recognizer = speechCommands.create('BROWSER_FFT');
+
+// Make sure that the underlying model and metadata are loaded via HTTPS
+// requests.
+await recognizer.ensureModelLoaded();
 
 // See the array of words that the recognizer is trained to recognize.
 console.log(recognizer.wordLabels());
@@ -72,6 +77,10 @@ setTimeout(() => recognizer.stopStreaming(), 10e3);
 As the example above shows, you can specify optional parameters when calling
 `startStreaming()`. The supported parameters are:
 
+* `overlapFactor`: Controls how often the recognizer performs predicton on
+  spectrograms. Must be a number between 0 and 1 (default: 0.5). For example,
+  if each spectrogram is 1000 ms long and `overlapFactor` is set to 0.25,
+  the prediction will happen every 250 ms.
 * `includeSpectrogram`: Let the callback function be invoked with the
   spectrogram data included in the argument. Default: `false`.
 * `probabilityThreshold`: The callback function will be invoked if and only if
@@ -93,9 +102,9 @@ E.g.,
 
 ```js
 import * as tf from '@tensorflow/tfjs';
-import * as SpeechCommands from '@tensorflow-models/speech-commands';
+import * as speechCommands from '@tensorflow-models/speech-commands';
 
-const recognizer = SpeechCommands.create('BROWSER_FFT');
+const recognizer = speechCommands.create('BROWSER_FFT');
 
 // Inspect the input shape of the recognizer's underlying tf.Model.
 console.log(recognizer.modelInputShape());
@@ -156,7 +165,7 @@ this type of transfer learning. The steps are listed in the example
 code snippet below
 
 ```js
-const baseRecognizer = SpeechCommands.create('BROWSER_FFT');
+const baseRecognizer = speechCommands.create('BROWSER_FFT');
 await baseRecognizer.ensureModelLoaded();
 
 // Each instance of speech-command recognizer supports multiple

@@ -31,6 +31,13 @@ export type RecognizerCallback = (result: SpeechCommandRecognizerResult) =>
  */
 export interface SpeechCommandRecognizer {
   /**
+   * Load the underlying model instance and associated metadata.
+   *
+   * If the model and the metadata are already loaded, do nothing.
+   */
+  ensureModelLoaded(): Promise<void>;
+
+  /**
    * Start recognition in a streaming fashion.
    *
    * @param callback the callback that will be invoked every time
@@ -39,8 +46,8 @@ export interface SpeechCommandRecognizer {
    * @throws Error if there is already ongoing streaming recognition.
    */
   startStreaming(
-    callback: RecognizerCallback,
-    config?: StreamingRecognitionConfig): Promise<void>;
+      callback: RecognizerCallback,
+      config?: StreamingRecognitionConfig): Promise<void>;
 
   /**
    *  Stop the ongoing streaming recognition (if any).
@@ -106,8 +113,8 @@ export interface SpeechCommandRecognizer {
  * querying the status of example collection, and for performing the
  * transfer-learning training.
  */
-export interface TransferSpeechCommandRecognizer
-    extends SpeechCommandRecognizer {
+export interface TransferSpeechCommandRecognizer extends
+    SpeechCommandRecognizer {
   /**
    * Collect an example for transfer learning via WebAudio.
    *
@@ -255,7 +262,7 @@ export interface TransferLearnConfig {
   /**
    * Optimizer to be used for training (default: 'sgd').
    */
-  optimizer?: string | tf.Optimizer;
+  optimizer?: string|tf.Optimizer;
 
   /**
    * Batch size of training (default: 128).
