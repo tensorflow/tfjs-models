@@ -21,7 +21,9 @@ import {describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
 import {BrowserFftSpeechCommandRecognizer} from './browser_fft_recognizer';
 import * as BrowserFftUtils from './browser_fft_utils';
 import {FakeAudioContext, FakeAudioMediaStream} from './browser_test_utils';
+import {create} from './index';
 import {SpeechCommandRecognizerResult} from './types';
+
 
 describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
   const fakeWords: string[] = [
@@ -745,6 +747,11 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
       errorCaught = err;
     }
     expect(errorCaught.message).toMatch(/.*foo.*Requires at least 2/);
+  });
+
+  it('Invalid vocabulary name leads to Error', () => {
+    expect(() => create('BROWSER_FFT', 'nonsensical_vocab'))
+        .toThrowError(/Invalid vocabulary name.*\'nonsensical_vocab\'/);
   });
 
   // TODO(cais): Add tests for saving and loading of transfer-learned models.

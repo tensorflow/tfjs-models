@@ -35,18 +35,19 @@ let streaming = false;
  */
 export class BrowserFftSpeechCommandRecognizer implements
     SpeechCommandRecognizer {
-  // tslint:disable:max-line-length
-  readonly DEFAULT_MODEL_JSON_URL =
-      `https://storage.googleapis.com/tfjs-speech-commands-models/v${version}/browser_fft/20w/model.json`;
-  readonly DEFAULT_METADATA_JSON_URL =
-      `https://storage.googleapis.com/tfjs-speech-commands-models/v${version}/browser_fft/20w/metadata.json`;
-  // tslint:enable:max-line-length
+  static readonly VALID_VOCABULARY_NAMES: string[] = ['20w', 'directional4w'];
+  static readonly DEFAULT_VOCABULARY_NAME = '20w';
+
+  readonly MODEL_URL_PREFIX =
+      `https://storage.googleapis.com/tfjs-speech-commands-models/v${
+          version}/browser_fft`;
 
   private readonly SAMPLE_RATE_HZ = 44100;
   private readonly FFT_SIZE = 1024;
   private readonly DEFAULT_SUPPRESSION_TIME_MILLIS = 1000;
 
   model: tf.Model;
+  readonly vocabulary: string;
   readonly parameters: RecognizerParams;
   protected words: string[];
 
@@ -60,7 +61,15 @@ export class BrowserFftSpeechCommandRecognizer implements
   /**
    * Constructor of BrowserFftSpeechCommandRecognizer.
    */
-  constructor() {
+  constructor(vocabulary?: string) {
+    if (vocabulary == null) {
+      vocabulary = BrowserFftSpeechCommandRecognizer.DEFAULT_VOCABULARY_NAME;
+    }
+    tf.util.assert(
+        BrowserFftSpeechCommandRecognizer.VALID_VOCABULARY_NAMES.indexOf(
+            vocabulary) !== -1,
+        `Invalid vocabulary name: '${vocabulary}'`);
+    this.vocabulary = vocabulary;
     this.parameters = {
       sampleRateHz: this.SAMPLE_RATE_HZ,
       fftSize: this.FFT_SIZE,
@@ -152,18 +161,21 @@ export class BrowserFftSpeechCommandRecognizer implements
           };
         }
 
-        let invokeCallback = true;
+        let wordDetected = true;
         if (!invokeCallbackOnNoiseAndUnknown) {
           // Skip background noise and unknown tokens.
           if (this.words[maxIndex] === BACKGROUND_NOISE_TAG ||
               this.words[maxIndex] === UNKNOWN_TAG) {
-            invokeCallback = false;
+            wordDetected = false;
           }
         }
-        if (invokeCallback) {
+        if (wordDetected) {
           callback({scores, spectrogram});
         }
-        return true;
+        if (wordDetected) {
+          console.log(`${Date.now()}: suppress`);  // DEBUG; DO NOT SUBMIT.
+        }
+        return wordDetected;
       }
     };
 
@@ -197,7 +209,8 @@ export class BrowserFftSpeechCommandRecognizer implements
 
     await this.ensureMetadataLoaded();
 
-    const model = await tf.loadModel(this.DEFAULT_MODEL_JSON_URL);
+    const model = await tf.loadModel(
+        `${this.MODEL_URL_PREFIX}/${this.vocabulary}/model.json`);
     // Check the validity of the model's input shape.
     if (model.inputs.length !== 1) {
       throw new Error(
@@ -260,7 +273,8 @@ export class BrowserFftSpeechCommandRecognizer implements
     if (this.words != null) {
       return;
     }
-    const metadataJSON = await loadMetadataJson(this.DEFAULT_METADATA_JSON_URL);
+    const metadataJSON = await loadMetadataJson(
+        `${this.MODEL_URL_PREFIX}/${this.vocabulary}/metadata.json`);
     this.words = metadataJSON.words;
   }
 
