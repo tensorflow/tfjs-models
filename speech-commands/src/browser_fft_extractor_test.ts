@@ -251,6 +251,14 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
         expect(x.shape).toEqual([1, 43, 225, 1]);
         spectrogramTensors.push(tf.clone(x));
 
+        if (numCallbacksCompleted === 4) {
+          const xData = x.dataSync();
+          console.log(xData[0]);  // DEBUG
+          console.log(xData[1]);  // DEBUG
+          console.log(xData[2]);  // DEBUG
+          console.log(xData[3]);  // DEBUG
+        }
+
         if (++numCallbacksCompleted >= numCallbacksToComplete) {
           extractor.stop().then(done);
         }
@@ -260,6 +268,35 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
       columnTruncateLength: 225,
       columnBufferLength: 1024,
       columnHopLength: 512,  // 50% overlapFactor.
+      suppressionTimeMillis: 0
+    });
+    extractor.start();
+  });
+
+  it('start and stop: the first frame is captured', async done => {
+    setUpFakes();
+
+    let numCallbacksCompleted = 0;
+    const extractor = new BrowserFftFeatureExtractor({
+      spectrogramCallback: async (x: tf.Tensor) => {
+        expect(x.shape).toEqual([1, 43, 225, 1]);
+
+        const xData = x.dataSync();
+        // Verify that the first frame is not all zero. We don't compare the
+        // values against zero directly, because the spectrogram data is
+        // normalized here. The assertions below are also based on the fact
+        // that the fake audio context outputs linearly increasing sample
+        // values.
+        expect(xData[1]).toBeGreaterThan(xData[0]);
+        expect(xData[2]).toBeGreaterThan(xData[1]);
+
+        extractor.stop().then(done);
+        return false;
+      },
+      numFramesPerSpectrogram: 43,
+      columnTruncateLength: 225,
+      columnBufferLength: 1024,
+      columnHopLength: 1024,
       suppressionTimeMillis: 0
     });
     extractor.start();
