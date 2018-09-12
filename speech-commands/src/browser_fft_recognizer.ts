@@ -172,9 +172,6 @@ export class BrowserFftSpeechCommandRecognizer implements
         if (wordDetected) {
           callback({scores, spectrogram});
         }
-        if (wordDetected) {
-          console.log(`${Date.now()}: suppress`);  // DEBUG; DO NOT SUBMIT.
-        }
         return wordDetected;
       }
     };
