@@ -251,14 +251,6 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
         expect(x.shape).toEqual([1, 43, 225, 1]);
         spectrogramTensors.push(tf.clone(x));
 
-        if (numCallbacksCompleted === 4) {
-          const xData = x.dataSync();
-          console.log(xData[0]);  // DEBUG
-          console.log(xData[1]);  // DEBUG
-          console.log(xData[2]);  // DEBUG
-          console.log(xData[3]);  // DEBUG
-        }
-
         if (++numCallbacksCompleted >= numCallbacksToComplete) {
           extractor.stop().then(done);
         }

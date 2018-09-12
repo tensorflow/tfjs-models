@@ -29,8 +29,8 @@ import {FFT_TYPE, SpeechCommandRecognizer} from './types';
  *     'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven',
  *     'eight', 'nine', 'up', 'down', 'left', 'right', 'go', 'stop',
  *     'yes', and 'no', in addition to '_background_noise_' and '_unknown_'.
- *   - 'directional4w': The four directional words: 'up', 'down', 'left',
- *     'right'.
+ *   - 'directional4w': The four directional words: 'up', 'down', 'left', and
+ *     'right', in addition to '_background_noise_' and '_unknown_'.
  *   Choosing a smaller vocabulary leads to better accuracy on the words of
  *   interest and a slightly smaller model size.
  * @returns An instance of SpeechCommandRecognizer.
