@@ -172,6 +172,8 @@ export class BrowserFftSpeechCommandRecognizer implements
         if (wordDetected) {
           callback({scores, spectrogram});
         }
+        // Trigger suppression only if the word is neither unknown or
+        // background noise.
         return wordDetected;
       }
     };
