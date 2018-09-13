@@ -16,6 +16,11 @@ WebGL GPU acceleration.
 The underlying deep neural network has been trained using the
 [TensorFlow Speech Commands Dataset](https://www.tensorflow.org/tutorials/sequences/audio_recognition).
 
+For more details on the data set, see:
+
+Warden, P. (2018) "Speech commands: A dataset for limited-vocabulary
+speech recognition" https://arxiv.org/pdf/1804.03209.pdf
+
 ## API Usage
 
 A speech command recognizer can be used in two ways:
@@ -71,6 +76,26 @@ recognizer.startStreaming(result => {
 // Stop the recognition in 10 seconds.
 setTimeout(() => recognizer.stopStreaming(), 10e3);
 ```
+
+#### Vocabularies
+
+When calling `speechCommands.create()`, you can specify the vocabulary
+the loaded model will be able to recognize. This is specified as the second,
+optional argument to `speechCommands.create()`. For example:
+
+```js
+const recognizer = speechCommands.create('BROWSER_FFT', 'directional4w');
+```
+
+Currently, the supported vocabularies are:
+ - '18w' (default): The 20 item vocaulbary, consisting of:
+   'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven',
+   'eight', 'nine', 'up', 'down', 'left', 'right', 'go', 'stop',
+   'yes', and 'no', in addition to '_background_noise_' and '_unknown_'.
+ - 'directional4w': The four directional words: 'up', 'down', 'left', and
+   'right', in addition to '_background_noise_' and '_unknown_'.
+
+'18w' is the default vocabulary.
 
 #### Parameters for online streaming recognition
 

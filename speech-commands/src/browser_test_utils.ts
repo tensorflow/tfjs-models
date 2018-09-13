@@ -53,12 +53,15 @@ class FakeMediaStreamAudioSourceNode {
 class FakeAnalyser {
   fftSize: number;
   smoothingTimeConstant: number;
-  constructor() {}
+  private x: number;
+  constructor() {
+    this.x = 0;
+  }
 
   getFloatFrequencyData(data: Float32Array) {
     const xs: number[] = [];
     for (let i = 0; i < this.fftSize / 2; ++i) {
-      xs.push(i);
+      xs.push(this.x++);
     }
     data.set(new Float32Array(xs));
   }

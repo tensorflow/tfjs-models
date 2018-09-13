@@ -200,7 +200,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
   private async onAudioFrame() {
     this.analyser.getFloatFrequencyData(this.freqData);
     if (this.freqData[0] === -Infinity) {
-      // No signal from audio input (microphone). Do nothing.
+      console.warn(`No signal (frame #${this.frameCount})`);
       return;
     }
 
@@ -208,6 +208,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     const bufferPos = this.frameCount % this.rotatingBufferNumFrames;
     this.rotatingBuffer.set(
         freqDataSlice, bufferPos * this.columnTruncateLength);
+    this.frameCount++;
 
     const shouldFire = this.tracker.tick();
     if (shouldFire) {
@@ -223,8 +224,6 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
       }
       inputTensor.dispose();
     }
-
-    this.frameCount++;
   }
 
   async stop(): Promise<void> {
