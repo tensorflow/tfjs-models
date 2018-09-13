@@ -25,7 +25,7 @@ import {FFT_TYPE, SpeechCommandRecognizer} from './types';
  *   - BROWSER_FFT: Obtains audio spectrograms using browser's native Fourier
  *     transform.
  * @param vocabulary The vocabulary of the model to load. Possible options:
- *   - '20w' (default): The 20 item vocaulbary, consisting of:
+ *   - '18w' (default): The 18-word vocaulbary, consisting of:
  *     'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven',
  *     'eight', 'nine', 'up', 'down', 'left', 'right', 'go', 'stop',
  *     'yes', and 'no', in addition to '_background_noise_' and '_unknown_'.

@@ -35,8 +35,8 @@ let streaming = false;
  */
 export class BrowserFftSpeechCommandRecognizer implements
     SpeechCommandRecognizer {
-  static readonly VALID_VOCABULARY_NAMES: string[] = ['20w', 'directional4w'];
-  static readonly DEFAULT_VOCABULARY_NAME = '20w';
+  static readonly VALID_VOCABULARY_NAMES: string[] = ['18w', 'directional4w'];
+  static readonly DEFAULT_VOCABULARY_NAME = '18w';
 
   readonly MODEL_URL_PREFIX =
       `https://storage.googleapis.com/tfjs-speech-commands-models/v${

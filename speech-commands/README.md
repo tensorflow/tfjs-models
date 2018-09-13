@@ -88,14 +88,14 @@ const recognizer = speechCommands.create('BROWSER_FFT', 'directional4w');
 ```
 
 Currently, the supported vocabularies are:
- - '20w' (default): The 20 item vocaulbary, consisting of:
+ - '18w' (default): The 20 item vocaulbary, consisting of:
    'zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven',
    'eight', 'nine', 'up', 'down', 'left', 'right', 'go', 'stop',
    'yes', and 'no', in addition to '_background_noise_' and '_unknown_'.
  - 'directional4w': The four directional words: 'up', 'down', 'left', and
    'right', in addition to '_background_noise_' and '_unknown_'.
 
-'20w' is the default vocabulary.
+'18w' is the default vocabulary.
 
 #### Parameters for online streaming recognition
 
