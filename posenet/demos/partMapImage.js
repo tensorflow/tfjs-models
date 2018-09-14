@@ -103,15 +103,19 @@ function singlePersonCanvas() {
 /**
  * Draw the results from the single-pose estimation on to a canvas
  */
-async function drawSinglePoseResults(pose, segmentationMask, coloredPartImage) {
+async function drawSinglePoseResults(
+    scaledPose, image, segmentationMask, coloredPartImage) {
   const canvas = singlePersonCanvas();
+  canvas.height = guiState.resizedAndPadded.shape[0];
+  canvas.width = guiState.resizedAndPadded.shape[1];
+  // await tf.toPixels(scaledImage, canvas);
   renderImageToCanvas(image, [513, 513], canvas);
 
   await drawPartHeatmapAndSegmentation(
       canvas, segmentationMask, coloredPartImage);
 
   drawResults(
-      canvas, [pose], guiState.singlePoseDetection.minPartConfidence,
+      canvas, [scaledPose], guiState.singlePoseDetection.minPartConfidence,
       guiState.singlePoseDetection.minPoseConfidence);
 
   const {part, showHeatmap, showOffsets} = guiState.visualizeOutputs;
@@ -322,6 +326,10 @@ function visualizeParts(partChannelId, showSegments, showPartHeatmaps, ctx) {
 }
 
 const imageSize = 513;
+
+const resizedHeight = 353;
+const resizedWidth = 257;
+
 /**
  * Converts the raw model output results into single-pose estimation results
  */
@@ -329,16 +337,26 @@ async function decodeSinglePoseAndDrawResults() {
   if (!modelOutputs) {
     return;
   }
+
   const {segmentationMask, coloredPartImage} =
       posenet.decodeAndScaleSegmentationAndPartMap(
           modelOutputs.segmentScores, modelOutputs.partHeatmapScores,
-          guiState.outputStride, [imageSize, imageSize],
-          guiState.segmentationThreshold, partColors);
+          [resizedHeight, resizedWidth], guiState.paddedBy,
+          guiState.originalSize, guiState.segmentationThreshold, partColors);
 
   const pose = await posenet.decodeSinglePose(
       modelOutputs.heatmapScores, modelOutputs.offsets, guiState.outputStride);
 
-  drawSinglePoseResults(pose, segmentationMask, coloredPartImage);
+  const [[padT, padB], [padL, padR]] = guiState.paddedBy;
+  const scaleY = image.height / (resizedHeight - padT - padB);
+  const scaleX = image.width / (resizedWidth - padL - padR);
+
+  const poseWidthPaddingRemovedAndScaled =
+      posenet.translateAndScalePose(pose, -padT, -padL, scaleY, scaleX);
+
+  await drawSinglePoseResults(
+      poseWidthPaddingRemovedAndScaled, image, segmentationMask,
+      coloredPartImage);
 
   segmentationMask.dispose();
   coloredPartImage.dispose();
@@ -366,6 +384,9 @@ function disposeModelOutputs() {
     modelOutputs.segmentScores.dispose();
     modelOutputs.partHeatmapScores.dispose();
   }
+  if (guiState.resizedAndPadded) {
+    guiState.resizedAndPadded.dispose();
+  }
 }
 
 /**
@@ -385,13 +406,21 @@ async function testImageAndEstimatePoses(net) {
   // Creates a tensor from an image
   const input = tf.fromPixels(image);
 
+  const {resizedAndPadded, paddedBy} =
+      posenet.resizeAndPadTo(input, [353, 257]);
+
+  // renderImageToCanvas(resizedAndPadded, [353, 257], singlePersonCanvas());
+  guiState.originalSize = input.shape;
+  guiState.paddedBy = paddedBy;
+  guiState.resizedAndPadded = resizedAndPadded;
+
   // Stores the raw model outputs from both single- and multi-pose results can
   // be decoded.
   // Normally you would call estimateSinglePose or estimateMultiplePoses,
   // but by calling this method we can previous the outputs of the model and
   // visualize them.
-  modelOutputs =
-      await net.predictForSinglePoseWithPartMap(input, guiState.outputStride);
+  modelOutputs = await net.predictForSinglePoseWithPartMap(
+      resizedAndPadded, guiState.outputStride);
 
   // Process the model outputs to convert into poses
   await decodeSingleAndMultiplePoses();
@@ -478,17 +507,6 @@ function setupGui(net) {
       .onChange(decodeSingleAndMultiplePoses);
 
   visualizeOutputs.open();
-
-  const visualizeParts = gui.addFolder('Visualize Part Segmentation');
-  visualizeParts.add(guiState.visualizeParts, 'showSegments')
-      .onChange(decodeSingleAndMultiplePoses);
-  visualizeParts
-      .add(guiState.visualizeParts, 'partChannel', posenet.partChannelIds)
-      .onChange(decodeSingleAndMultiplePoses);
-  visualizeParts.add(guiState.visualizeParts, 'showPartHeatmaps')
-      .onChange(decodeSingleAndMultiplePoses);
-
-  visualizeParts.open();
 }
 
 function drawPartColors() {

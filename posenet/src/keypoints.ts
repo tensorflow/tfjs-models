@@ -67,14 +67,30 @@ export const connectedPartIndices = connectedPartNames.map(
     ([jointNameA, jointNameB]) => ([partIds[jointNameA], partIds[jointNameB]]));
 
 export const partChannels: string[] = [
-  'leftFace',          'rightFace',          'leftUpperArmFront',
-  'leftUpperArmBack',  'rightUpperArmFront', 'rightUpperArmBack',
-  'leftLowerArmFront', 'leftLowerArmBack',   'rightLowerArmFront',
-  'rightLowerArmBack', 'leftHand',           'rightHand',
-  'torsoFront',        'torsoBack',          'leftUpperLegFront',
-  'leftUpperLegBack',  'rightUpperLegFront', 'rightUpperLegBack',
-  'leftLowerLegFront', 'leftLowerLegBack',   'rightLowerLegFront',
-  'rightLowerLegBack', 'leftFeet',           'rightFeet'
+  'left_face',
+  'right_face',
+  'right_upper_leg_front',
+  'right_lower_leg_back',
+  'right_upper_leg_back',
+  'left_lower_leg_front',
+  'left_upper_leg_front',
+  'left_upper_leg_back',
+  'left_lower_leg_back',
+  'right_feet',
+  'right_lower_leg_front',
+  'left_feet',
+  'torso_front',
+  'torso_back',
+  'right_upper_arm_front',
+  'right_upper_arm_back',
+  'right_lower_arm_back',
+  'left_lower_arm_front',
+  'left_upper_arm_front',
+  'left_upper_arm_back',
+  'left_lower_arm_back',
+  'right_hand',
+  'right_lower_arm_front',
+  'left_hand'
 ];
 
 export const partChannelIds =

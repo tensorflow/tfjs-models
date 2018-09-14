@@ -16,8 +16,8 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import {OutputStride} from '../mobilenet';
-import {resize2d} from '../util';
+
+import {removePaddingAndResizeBack, resize2d} from '../util';
 
 /**
  * Takes the sigmoid of the part heatmap output and generates a 2d one-hot
@@ -55,7 +55,8 @@ function decodeColoredPartMap(
 
   const colors = tf.tensor2d(partColors, [numParts, 3], 'int32');
 
-  const coloredPartMapFlattened = flattenedOneHotPartMap.matMul(colors);
+  const coloredPartMapFlattened =
+      flattenedOneHotPartMap.matMul(colors).cast('int32');
 
   return coloredPartMapFlattened.reshape([partMapHeight, partMapWidth, 3]);
 }
@@ -64,37 +65,9 @@ function clipByMask(image: tf.Tensor3D, mask: tf.Tensor2D): tf.Tensor3D {
   return image.mul(mask.expandDims(2)) as tf.Tensor3D;
 }
 
-function toMask(segmentScores: tf.Tensor3D, threshold: number): tf.Tensor2D {
-  return segmentScores.squeeze().greater(tf.scalar(threshold)).cast('int32') as
+function toMask(segmentScores: tf.Tensor2D, threshold: number): tf.Tensor2D {
+  return segmentScores.greater(tf.scalar(threshold)).cast('int32') as
       tf.Tensor2D;
-}
-
-/**
- * Takes a segmentation mask, the sigmoid of the part heatmap output and
- * a list of rgb colors indexed by part channel id, and generates a 3d tensor of
- * an image with the corresponding color at each pixel for the part with the
- * highest value. The color values will be clipped by the segmentation mask.
- * @param partHeatmapScores A 3d-tensor of the sigmoid of the part heatmap
- * output. The third dimension corresponds to the part.
- *
- * @param segmentationMask A 2-tensor of a segmentation mask with 1s where the
- * value was above a threshold.
- * @param partColors An array of rgb color values indexed by part channel id
- * that are used to generate the part map image
- *
- * @returns A 3d tensor of an image with the corresponding color at each pixel
- * for the part with the highest value. The color are clipped by the
- * segmentation mask and its height and width are the output-strided size of the
- * outputs.
- */
-export function decodePartMap(
-    segmentationMask: tf.Tensor2D, partHeatmapScores: tf.Tensor3D,
-    partColors: Array<[number, number, number]>): tf.Tensor3D {
-  return tf.tidy(() => {
-    const coloredPartMap = decodeColoredPartMap(partHeatmapScores, partColors);
-
-    return clipByMask(coloredPartMap, segmentationMask);
-  });
 }
 
 /**
@@ -119,34 +92,35 @@ export function decodePartMap(
  */
 export function decodeAndScaleSegmentationAndPartMap(
     segmentScores: tf.Tensor3D, partHeatmapScores: tf.Tensor3D,
-    outputStride: OutputStride, [imageH, imageW]: [number, number],
-    segmentationThreshold = 0.5, partColors: Array<[number, number, number]>) {
+    [resizeH, resizeW]: [number, number],
+    [[padT, padB], [padL, padR]]: number[][],
+    [imageH, imageW]: [number, number], segmentationThreshold = 0.5,
+    partColors: Array<[number, number, number]>) {
   return tf.tidy(() => {
-    const [height, width] = segmentScores.shape;
+    const scaledSegmentationScores =
+        resize2d(segmentScores.squeeze(), [resizeH, resizeW], true);
 
-    const segmentationMask = toMask(segmentScores, segmentationThreshold);
+    const scaledUpSegmentationScores = removePaddingAndResizeBack(
+        scaledSegmentationScores, [imageH, imageW],
+        [[padT, padB], [padL, padR]]);
+
+    const scaledSegmentationMask =
+        toMask(scaledUpSegmentationScores, segmentationThreshold);
+
+    const scaledPartHeatmapScore =
+        partHeatmapScores.resizeBilinear([imageH, imageW], true);
+
+    const scaledUpPartHeatmapScore = removePaddingAndResizeBack(
+        scaledPartHeatmapScore, [imageH, imageW], [[padT, padB], [padL, padR]]);
 
     const coloredPartMap =
-        decodePartMap(segmentationMask, partHeatmapScores, partColors);
+        decodeColoredPartMap(scaledUpPartHeatmapScore, partColors);
 
-    const targetHeight = height * outputStride;
-    const targetWidth = width * outputStride;
-
-    let scaledSegmentationMask =
-        resize2d(segmentationMask, [targetHeight, targetWidth]);
-    let scaledPartMap =
-        coloredPartMap.resizeBilinear([targetHeight, targetWidth]);
-
-    if (imageH < targetHeight && imageW < targetWidth) {
-      scaledSegmentationMask =
-          scaledSegmentationMask.slice([0, 0], [imageH, imageW]);
-
-      scaledPartMap = scaledPartMap.slice([0, 0, 0], [imageH, imageW, 3]);
-    }
+    const clippedPartMap = clipByMask(coloredPartMap, scaledSegmentationMask);
 
     return {
       segmentationMask: scaledSegmentationMask,
-      coloredPartImage: scaledPartMap
+      coloredPartImage: clippedPartMap
     };
   });
 }

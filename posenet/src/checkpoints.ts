@@ -17,29 +17,47 @@
 
 import {ConvolutionDefinition, mobileNetArchitectures} from './mobilenet';
 
-const GOOGLE_CLOUD_STORAGE_DIR =
+const MULTI_POSE_DIR =
     'https://storage.googleapis.com/tfjs-models/weights/posenet/';
+
+const SEGMENTATION_MODEL_BASE_URL =
+    'https://storage.googleapis.com/tfjs-models/savedmodel/';
 
 export type Checkpoint = {
   url: string,
   architecture: ConvolutionDefinition[]
 };
 
-export const checkpoints: {[multiplier: number]: Checkpoint} = {
+export const multiPoseCheckpoints: {[multiplier: number]: Checkpoint} = {
   1.01: {
-    url: GOOGLE_CLOUD_STORAGE_DIR + 'mobilenet_v1_101/',
+    url: MULTI_POSE_DIR + 'mobilenet_v1_101/',
     architecture: mobileNetArchitectures[100]
   },
   1.0: {
-    url: GOOGLE_CLOUD_STORAGE_DIR + 'mobilenet_v1_100/',
+    url: MULTI_POSE_DIR + 'mobilenet_v1_100/',
     architecture: mobileNetArchitectures[100]
   },
   0.75: {
-    url: GOOGLE_CLOUD_STORAGE_DIR + 'mobilenet_v1_075/',
+    url: MULTI_POSE_DIR + 'mobilenet_v1_075/',
     architecture: mobileNetArchitectures[75]
   },
   0.5: {
-    url: GOOGLE_CLOUD_STORAGE_DIR + 'mobilenet_v1_050/',
+    url: MULTI_POSE_DIR + 'mobilenet_v1_050/',
+    architecture: mobileNetArchitectures[50]
+  }
+};
+
+export const segmentationCheckpoints: {[multiplier: number]: Checkpoint} = {
+  1.0: {
+    url: SEGMENTATION_MODEL_BASE_URL + 'posenet_mobilenet_100_partmap/',
+    architecture: mobileNetArchitectures[100]
+  },
+  0.75: {
+    url: SEGMENTATION_MODEL_BASE_URL + 'posenet_mobilenet_075_partmap/',
+    architecture: mobileNetArchitectures[75]
+  },
+  0.5: {
+    url: SEGMENTATION_MODEL_BASE_URL + 'posenet_mobilenet_050_partmap/',
     architecture: mobileNetArchitectures[50]
   }
 };

@@ -79,11 +79,8 @@ async function loadVideo() {
 
 const guiState = {
   algorithm: 'single-pose',
-  input: {
-    mobileNetArchitecture: isMobile() ? '0.50' : '0.75',
-    outputStride: 16,
-    imageScaleFactor: 0.5,
-  },
+  input:
+      {mobileNetArchitecture: isMobile() ? '0.50' : '1.00', outputStride: 16},
   singlePoseDetection: {
     minPoseConfidence: 0.1,
     minPartConfidence: 0.5,
@@ -136,19 +133,16 @@ function setupGui(cameras, net) {
   // network
   let input = gui.addFolder('Input');
   // Architecture: there are a few PoseNet models varying in size and
-  // accuracy. 1.01 is the largest, but will be the slowest. 0.50 is the
+  // accuracy. 1.00 is the largest, but will be the slowest. 0.50 is the
   // fastest, but least accurate.
-  // const architectureController = input.add(
-  //     guiState.input, 'mobileNetArchitecture',
-  //     ['1.01', '1.00', '0.75', '0.50']);
+  const architectureController = input.add(
+      guiState.input, 'mobileNetArchitecture', ['1.00', '0.75', '0.50']);
   // Output stride:  Internally, this parameter affects the height and width of
   // the layers in the neural network. The lower the value of the output stride
   // the higher the accuracy but slower the speed, the higher the value the
   // faster the speed but lower the accuracy.
   input.add(guiState.input, 'outputStride', [8, 16, 32]);
-  // Image scale factor: What to scale the image by before feeding it through
-  // the network.
-  input.add(guiState.input, 'imageScaleFactor').min(0.2).max(1.0);
+
   input.open();
 
   // Pose confidence: the overall confidence in the estimation of a person's
@@ -170,9 +164,9 @@ function setupGui(cameras, net) {
   output.open();
 
 
-  // architectureController.onChange(function(architecture) {
-  //   guiState.changeToArchitecture = architecture;
-  // });
+  architectureController.onChange(function(architecture) {
+    guiState.changeToArchitecture = architecture;
+  });
 }
 
 const segmentationDarkening = 0.25;
@@ -248,28 +242,24 @@ function detectPoseInRealTime(video, net) {
 
     // Scale an image down to a certain factor. Too large of an image will slow
     // down the GPU
-    const imageScaleFactor = guiState.input.imageScaleFactor;
     const outputStride = +guiState.input.outputStride;
 
     const {pose, segmentationMask, coloredPartImage} =
         await guiState.net.estimateSinglePoseWithSegmentation(
-            video, imageScaleFactor, flipHorizontal, outputStride,
+            video, flipHorizontal, outputStride,
             guiState.singlePoseDetection.segmentationThreshold, partColors);
-
-    const minPoseConfidence = +guiState.singlePoseDetection.minPoseConfidence;
-    const minPartConfidence = +guiState.singlePoseDetection.minPartConfidence;
 
     const videoTensor = tf.fromPixels(video).reverse(1);
 
     await drawPartHeatmapAndSegmentation(
         canvas, videoTensor, segmentationMask, coloredPartImage);
     videoTensor.dispose();
-    if (segmentationMask) {
-      segmentationMask.dispose();
-    }
-    if (coloredPartImage) {
-      coloredPartImage.dispose();
-    }
+
+    segmentationMask.dispose();
+    coloredPartImage.dispose();
+
+    const minPoseConfidence = +guiState.singlePoseDetection.minPoseConfidence;
+    const minPartConfidence = +guiState.singlePoseDetection.minPartConfidence;
 
     // For each pose (i.e. person) detected in an image, loop through the poses
     // and draw the resulting skeleton and keypoints if over certain confidence
@@ -299,7 +289,7 @@ function detectPoseInRealTime(video, net) {
  */
 export async function bindPage() {
   // Load the PoseNet model weights with architecture 0.75
-  const net = await posenet.load(0.75, true);
+  const net = await posenet.load(+guiState.input.mobileNetArchitecture, true);
 
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'block';
