@@ -25,30 +25,14 @@ import {DumpedCheckpointWeights, FrozenGraphModelWeights} from './modelWeights';
 import {decodeMultiplePoses} from './multiPose/decodeMultiplePoses';
 import {decodeAndScaleSegmentationAndPartMap} from './partMap/decodePartMap';
 import {decodeSinglePose} from './singlePose/decodeSinglePose';
-import {Pose, PoseWithSegmentationMaskAndColoredPartImage} from './types';
-import {getValidResolution, resize2d, scalePose, scalePoses} from './util';
+// tslint:disable-next-line:max-line-length
+import {InputType, Pose, PoseWithSegmentationMaskAndColoredPartImage} from './types';
+// tslint:disable-next-line:max-line-length
+import {getInputTensorDimensions, getValidResolution, resizeAndPadTo, scalePoses, toResizedInputTensor, transformPose, translateAndScalePose, translatePose} from './util';
 
 export type PoseNetResolution = 161|193|257|289|321|353|385|417|449|481|513;
 
-export type InputType =
-    ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement|tf.Tensor3D;
-
-function toInputTensor(
-    input: InputType, resizeHeight: number, resizeWidth: number,
-    flipHorizontal: boolean): tf.Tensor3D {
-  const imageTensor = input instanceof tf.Tensor ? input : tf.fromPixels(input);
-
-  if (flipHorizontal) {
-    return imageTensor.reverse(1).resizeBilinear([resizeHeight, resizeWidth]);
-  } else {
-    return imageTensor.resizeBilinear([resizeHeight, resizeWidth]);
-  }
-}
-
-function getInputTensorDimensions(input: InputType): [number, number] {
-  return input instanceof tf.Tensor ? [input.shape[0], input.shape[1]] :
-                                      [input.height, input.width];
-}
+const segmentationModelImageDimensions = [353, 257];
 
 export class PoseNet {
   mobileNet: MobileNet;
@@ -197,8 +181,8 @@ export class PoseNet {
         getValidResolution(imageScaleFactor, width, outputStride);
 
     const {heatmapScores, offsets} = tf.tidy(() => {
-      const inputTensor =
-          toInputTensor(input, resizedHeight, resizedWidth, flipHorizontal);
+      const inputTensor = toResizedInputTensor(
+          input, resizedHeight, resizedWidth, flipHorizontal);
       return this.predictForSinglePose(inputTensor, outputStride);
     });
 
@@ -210,23 +194,20 @@ export class PoseNet {
     heatmapScores.dispose();
     offsets.dispose();
 
-    return scalePose(pose, scaleY, scaleX);
+    return transformPose(pose, scaleY, scaleX);
   }
 
   /**
    * Infer through PoseNet, and estimates a single pose, segmentation mask, and
    * colored part image using the outputs. This does standard ImageNet
-   * pre-processing before inferring through the model. The image should pixels
-   * should have values [0-255]. This method returns a single pose, a
-   * segmentation mask, and colored part map imagee.
+   * pre-processing before inferring through the model. Will resize and crop the
+   * image to 353 x 257 while maintaining the original aspect ratio before
+   * feeding through the network. The image should pixels should have values
+   * [0-255]. This method returns a single pose, a segmentation mask, and
+   * colored part map imagee.
    *
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
-   *
-   * @param imageScaleFactor A number between 0.2 and 1. Defaults to 0.50. What
-   * to scale the image by before feeding it through the network.  Set this
-   * number lower to scale down the image and increase the speed when feeding
-   * through the network at the cost of accuracy.
    *
    * @param flipHorizontal.  Defaults to false.  If the poses should be
    * flipped/mirrored  horizontally.  This should be set to true for videos
@@ -249,39 +230,30 @@ export class PoseNet {
    * positions of the keypoints are in the same scale as the original image
    */
   async estimateSinglePoseWithSegmentation(
-      input: InputType, imageScaleFactor = 0.5, flipHorizontal = false,
-      outputStride: OutputStride = 16, segmentationThreshold = 0.5,
-      partColors: Array<[number, number, number]>):
+      input: InputType, flipHorizontal = false, outputStride: OutputStride = 16,
+      segmentationThreshold = 0.5, partColors: Array<[number, number, number]>):
       Promise<PoseWithSegmentationMaskAndColoredPartImage> {
     assertValidOutputStride(outputStride);
-    assertValidScaleFactor(imageScaleFactor);
 
     const [height, width] = getInputTensorDimensions(input);
-    const resizedHeight =
-        getValidResolution(imageScaleFactor, height, outputStride);
-    const resizedWidth =
-        getValidResolution(imageScaleFactor, width, outputStride);
+
+    const {
+      resizedAndPadded,
+      paddedBy,
+    } = resizeAndPadTo(input, segmentationModelImageDimensions, flipHorizontal);
 
     const {heatmapScores, offsets, segmentScores, partHeatmapScores} =
         tf.tidy(() => {
-          const inputTensor =
-              toInputTensor(input, resizedHeight, resizedWidth, flipHorizontal);
           return this.predictForSinglePoseWithPartMap(
-              inputTensor, outputStride);
+              resizedAndPadded, outputStride);
         });
+
+    const [resizedHeight, resizedWidth] = resizedAndPadded.shape;
 
     const {segmentationMask, coloredPartImage} =
         decodeAndScaleSegmentationAndPartMap(
-            segmentScores, partHeatmapScores, outputStride, [height, width],
-            segmentationThreshold, partColors);
-
-    const scaleY = height / resizedHeight;
-    const scaleX = width / resizedWidth;
-
-    // scale the segmentation and part color image to the original image size;
-    const scaledSegmentationMask = resize2d(segmentationMask, [height, width]);
-    const scaledColoredPartImage =
-        coloredPartImage.resizeBilinear([height, width]);
+            segmentScores, partHeatmapScores, [resizedHeight, resizedWidth],
+            paddedBy, [height, width], segmentationThreshold, partColors);
 
     const pose = await decodeSinglePose(heatmapScores, offsets, outputStride);
 
@@ -290,10 +262,17 @@ export class PoseNet {
     segmentScores.dispose();
     partHeatmapScores.dispose();
 
+    const [[padT, padB], [padL, padR]] = paddedBy;
+    const scaleY = height / (resizedHeight - padT - padB);
+    const scaleX = width / (resizedWidth - padL - padR);
+
+    const poseWidthPaddingRemovedAndScaled =
+        translateAndScalePose(pose, -padT, -padL, scaleY, scaleX);
+
     return {
-      pose: scalePose(pose, scaleY, scaleX),
-      segmentationMask: scaledSegmentationMask,
-      coloredPartImage: scaledColoredPartImage
+      pose: poseWidthPaddingRemovedAndScaled,
+      segmentationMask,
+      coloredPartImage
     };
   }
 
@@ -343,7 +322,6 @@ export class PoseNet {
     assertValidOutputStride(outputStride);
     assertValidScaleFactor(imageScaleFactor);
 
-
     const [height, width] = getInputTensorDimensions(input);
     const resizedHeight =
         getValidResolution(imageScaleFactor, height, outputStride);
@@ -352,8 +330,8 @@ export class PoseNet {
 
     const {heatmapScores, offsets, displacementFwd, displacementBwd} =
         tf.tidy(() => {
-          const inputTensor =
-              toInputTensor(input, resizedHeight, resizedWidth, flipHorizontal);
+          const inputTensor = toResizedInputTensor(
+              input, resizedHeight, resizedWidth, flipHorizontal);
           return this.predictForMultiPose(inputTensor, outputStride);
         });
 

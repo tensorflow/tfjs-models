@@ -19,7 +19,7 @@ import * as tf from '@tensorflow/tfjs';
 
 import {connectedPartIndices} from './keypoints';
 import {OutputStride} from './mobilenet';
-import {Keypoint, Pose, TensorBuffer3D, Vector2D} from './types';
+import {InputType, Keypoint, Pose, TensorBuffer3D, Vector2D} from './types';
 
 function eitherPointDoesntMeetConfidence(
     a: number, b: number, minConfidence: number): boolean {
@@ -81,7 +81,7 @@ export async function toTensorBuffers3D(tensors: tf.Tensor3D[]):
   return Promise.all(tensors.map(tensor => toTensorBuffer(tensor, 'float32')));
 }
 
-export function scalePose(pose: Pose, scaleX: number, scaleY: number): Pose {
+export function scalePose(pose: Pose, scaleY: number, scaleX: number): Pose {
   return {
     score: pose.score,
     keypoints: pose.keypoints.map(
@@ -93,12 +93,28 @@ export function scalePose(pose: Pose, scaleX: number, scaleY: number): Pose {
   };
 }
 
-export function scalePoses(
-    poses: Pose[], scaleY: number, scaleX: number): Pose[] {
-  if (scaleX === 1 && scaleY === 1) {
-    return poses;
-  }
-  return poses.map(pose => scalePose(pose, scaleX, scaleY));
+export function translateAndScalePose(
+    pose: Pose,
+    translateY: number,
+    translateX: number,
+    scaleY: number,
+    scaleX: number,
+) {
+  return {
+    score: pose.score,
+    keypoints: pose.keypoints.map(({score, part, position}) => ({
+                                    score,
+                                    part,
+                                    position: {
+                                      x: (position.x + translateX) * scaleX,
+                                      y: (position.y + translateY) * scaleY
+                                    }
+                                  }))
+  };
+}
+
+export function scalePoses(poses: Pose[], scaleY: number, scaleX: number) {
+  return poses.map(pose => scalePose(pose, scaleY, scaleX));
 }
 
 export function getValidResolution(
@@ -109,8 +125,187 @@ export function getValidResolution(
   return evenResolution - (evenResolution % outputStride) + 1;
 }
 export function resize2d(
-    tensor: tf.Tensor2D, resolution: [number, number]): tf.Tensor2D {
+    tensor: tf.Tensor2D, resolution: [number, number],
+    nearestNeighbor?: boolean): tf.Tensor2D {
   return (tensor.expandDims(2) as tf.Tensor3D)
-             .resizeBilinear(resolution)
+             .resizeBilinear(resolution, nearestNeighbor)
              .squeeze() as tf.Tensor2D;
+}
+
+export function getInputTensorDimensions(input: InputType): [number, number] {
+  return input instanceof tf.Tensor ? [input.shape[0], input.shape[1]] :
+                                      [input.height, input.width];
+}
+
+function toInputTensor(input: InputType) {
+  return input instanceof tf.Tensor ? input : tf.fromPixels(input);
+}
+
+export function toResizedInputTensor(
+    input: InputType, resizeHeight: number, resizeWidth: number,
+    flipHorizontal: boolean): tf.Tensor3D {
+  const imageTensor = toInputTensor(input);
+
+  if (flipHorizontal) {
+    return imageTensor.reverse(1).resizeBilinear([resizeHeight, resizeWidth]);
+  } else {
+    return imageTensor.resizeBilinear([resizeHeight, resizeWidth]);
+  }
+}
+
+export function cropAndResizeTo(
+    input: InputType, [targetHeight, targetWidth]: number[]) {
+  const [height, width] = getInputTensorDimensions(input);
+  const imageTensor = toInputTensor(input);
+
+  const targetAspect = targetWidth / targetHeight;
+  const aspect = width / height;
+
+  let croppedW: number;
+  let croppedH: number;
+
+  if (aspect > targetAspect) {
+    // crop width to get aspect
+    croppedW = Math.round(height * targetAspect);
+    croppedH = height;
+  } else {
+    croppedH = Math.round(width / targetAspect);
+    croppedW = width;
+  }
+
+  const startCropTop = Math.floor((height - croppedH) / 2);
+  const startCropLeft = Math.floor((width - croppedW) / 2);
+
+  const resizedWidth = targetWidth;
+  const resizedHeight = targetHeight;
+
+  const croppedAndResized = tf.tidy(() => {
+    const cropped = tf.slice3d(
+        imageTensor, [startCropTop, startCropLeft, 0], [croppedH, croppedW, 3]);
+
+    return cropped.resizeBilinear([resizedHeight, resizedWidth]);
+  });
+
+  return {
+    croppedAndResized,
+    resizedDimensions: [resizedHeight, resizedWidth],
+    crop: [startCropTop, startCropLeft, croppedH, croppedW]
+  };
+}
+
+export function resizeAndPadTo(
+    input: InputType, [targetH, targetW]: number[], flipHorizontal = false) {
+  const [height, width] = getInputTensorDimensions(input);
+  const imageTensor = toInputTensor(input);
+
+  const targetAspect = targetW / targetH;
+  const aspect = width / height;
+
+  let resizeW: number;
+  let resizeH: number;
+  let padL: number;
+  let padR: number;
+  let padT: number;
+  let padB: number;
+
+  if (aspect > targetAspect) {
+    // resize to have the larger dimension match the shape.
+    resizeW = targetW;
+    resizeH = Math.ceil(resizeW / aspect);
+
+    const padHeight = targetH - resizeH;
+    padL = 0;
+    padR = 0;
+    padT = Math.floor(padHeight / 2);
+    padB = targetH - (resizeH + padT);
+  } else {
+    resizeH = targetH;
+    resizeW = Math.ceil(targetH / aspect);
+
+    const padWidth = targetW - resizeW;
+    padL = Math.floor(padWidth / 2);
+    padR = targetW - (resizeW + padL);
+    padT = 0;
+    padB = 0;
+  }
+
+  const resizedAndPadded = tf.tidy(() => {
+    // resize to have largest dimension match image
+    let resized: tf.Tensor3D;
+    if (flipHorizontal) {
+      resized = imageTensor.reverse(1).resizeBilinear([resizeH, resizeW]);
+    } else {
+      resized = imageTensor.resizeBilinear([resizeH, resizeW]);
+    }
+
+    const padded = tf.pad3d(resized, [[padT, padB], [padL, padR], [0, 0]]);
+
+    return padded;
+  });
+
+  return {resizedAndPadded, paddedBy: [[padT, padB], [padL, padR]]};
+}
+
+export function
+removePaddingAndResizeBack<T extends(tf.Tensor2D | tf.Tensor3D)>(
+    resizedAndPadded: T, [originalHeight, originalWidth]: number[],
+    [[padT, padB], [padL, padR]]: number[][]): T {
+  const [height, width] = resizedAndPadded.shape;
+  // remove padding that was added
+  const cropH = height - (padT + padB);
+  const cropW = width - (padL + padR);
+
+  return tf.tidy(() => {
+    let withPaddingRemoved: T;
+    if (resizedAndPadded.rank === 2) {
+      withPaddingRemoved = tf.slice2d(
+                               resizedAndPadded as tf.Tensor2D, [padT, padL],
+                               [cropH, cropW]) as T;
+    } else {
+      withPaddingRemoved = tf.slice3d(
+                               resizedAndPadded as tf.Tensor3D, [padT, padL, 0],
+                               [cropH, cropW, resizedAndPadded.shape[2]]) as T;
+    }
+
+    const atOriginalSize =
+        resize(withPaddingRemoved, [originalHeight, originalWidth], true);
+
+    return atOriginalSize;
+  });
+}
+
+function resize<T extends(tf.Tensor2D | tf.Tensor3D)>(
+    input: T, [height, width]: number[], nearestNeighbor?: boolean): T {
+  if (input.rank === 2) {
+    return resize2d(input as tf.Tensor2D, [height, width], nearestNeighbor) as
+        T;
+  } else {
+    return (input as tf.Tensor3D)
+               .resizeBilinear([height, width], nearestNeighbor) as T;
+  }
+}
+
+export function unResizeAndCropFrom<T extends tf.Tensor2D|tf.Tensor3D>(
+    input: T, [originalHeight, originalWidth]: number[],
+    [startCropTop, startCropLeft, croppedH, croppedW]: number[]): T {
+  // first resize to cropped height and width
+
+  return tf.tidy(() => {
+    const resizedToCropped = resize(input, [croppedH, croppedW]);
+
+    const padT = startCropTop;
+    const padB = originalHeight - startCropTop - croppedH;
+    const padL = startCropLeft;
+    const padR = originalWidth - startCropLeft - croppedW;
+
+    if (resizedToCropped.rank === 2) {
+      return (tf.pad2d(
+                 resizedToCropped as tf.Tensor2D,
+                 [[padT, padB], [padL, padR]])) as T;
+    } else {
+      return tf.pad3d(
+                 resizedToCropped as tf.Tensor3D,
+                 [[padT, padB], [padL, padR], [0, 0]]) as T;
+    }
+  });
 }

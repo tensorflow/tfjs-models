@@ -79,11 +79,8 @@ async function loadVideo() {
 
 const guiState = {
   algorithm: 'single-pose',
-  input: {
-    mobileNetArchitecture: isMobile() ? '0.50' : '0.75',
-    outputStride: 16,
-    imageScaleFactor: 0.5,
-  },
+  input:
+      {mobileNetArchitecture: isMobile() ? '0.50' : '0.75', outputStride: 16},
   singlePoseDetection: {
     minPoseConfidence: 0.1,
     minPartConfidence: 0.5,
@@ -146,9 +143,7 @@ function setupGui(cameras, net) {
   // the higher the accuracy but slower the speed, the higher the value the
   // faster the speed but lower the accuracy.
   input.add(guiState.input, 'outputStride', [8, 16, 32]);
-  // Image scale factor: What to scale the image by before feeding it through
-  // the network.
-  input.add(guiState.input, 'imageScaleFactor').min(0.2).max(1.0);
+
   input.open();
 
   // Pose confidence: the overall confidence in the estimation of a person's
@@ -248,12 +243,11 @@ function detectPoseInRealTime(video, net) {
 
     // Scale an image down to a certain factor. Too large of an image will slow
     // down the GPU
-    const imageScaleFactor = guiState.input.imageScaleFactor;
     const outputStride = +guiState.input.outputStride;
 
     const {pose, segmentationMask, coloredPartImage} =
         await guiState.net.estimateSinglePoseWithSegmentation(
-            video, imageScaleFactor, flipHorizontal, outputStride,
+            video, flipHorizontal, outputStride,
             guiState.singlePoseDetection.segmentationThreshold, partColors);
 
     const minPoseConfidence = +guiState.singlePoseDetection.minPoseConfidence;
