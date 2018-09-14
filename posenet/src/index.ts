@@ -30,7 +30,7 @@ export {Checkpoint, checkpoints} from './checkpoints';
 export {partChannelIds, partChannels, partIds, partNames, poseChain} from './keypoints';
 export {Keypoint, Pose} from './types';
 // tslint:disable-next-line:max-line-length
-export {getAdjacentKeyPoints, getBoundingBox, getBoundingBoxPoints} from './util';
+export {cropAndResizeTo, getAdjacentKeyPoints, getBoundingBox, getBoundingBoxPoints, removePaddingAndResizeBack, resizeAndPadTo, scalePose, translateAndScalePose, unResizeAndCropFrom} from './util';
 export {
   ConvolutionDefinition,
   decodeAndScaleSegmentationAndPartMap,
