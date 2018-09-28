@@ -18,7 +18,7 @@
 import * as tf from '@tensorflow/tfjs';
 import {ModelWeights} from './modelWeights';
 
-export type MobileNetMultiplier = 0.50|0.75|1.0|1.01;
+export type MobileNetMultiplier = 0.25|0.50|0.75|1.0|1.01;
 export type ConvolutionType = 'conv2d'|'separableConv';
 export type ConvolutionDefinition = [ConvolutionType, number];
 export type OutputStride = 32|16|8;
@@ -74,6 +74,8 @@ const mobileNet50Architecture: ConvolutionDefinition[]  = [
   ['separableConv', 1],
   ['separableConv', 1]
 ];
+
+const mobileNet25Architecture = mobileNet50Architecture;
 // clang-format on
 
 const VALID_OUTPUT_STRIDES = [8, 16, 32];
@@ -111,7 +113,8 @@ export const mobileNetArchitectures:
     {[name: string]: ConvolutionDefinition[]} = {
       100: mobileNet100Architecture,
       75: mobileNet75Architecture,
-      50: mobileNet50Architecture
+      50: mobileNet50Architecture,
+      25: mobileNet25Architecture
     };
 
 type Layer = {

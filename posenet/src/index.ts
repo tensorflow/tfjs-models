@@ -20,20 +20,22 @@ import {CheckpointLoader} from './checkpoint_loader';
 import {ConvolutionDefinition, MobileNet, mobileNetArchitectures, MobileNetMultiplier, OutputStride} from './mobilenet';
 import {decodeMultiplePoses} from './multiPose/decodeMultiplePoses';
 // tslint:disable-next-line:max-line-length
-import {decodeAndScaleSegmentationAndPartMap} from './partMap/decodePartMap';
-import {load, PoseNet} from './posenet_model';
-// tslint:disable-next-line:max-line-length
 import {decodeSinglePose} from './singlePose/decodeSinglePose';
 
-export {Checkpoint, checkpoints} from './checkpoints';
+// tslint:disable-next-line:max-line-length
+export {Checkpoint, multiPoseCheckpoints, segmentationCheckpoints} from './checkpoints';
 // tslint:disable-next-line:max-line-length
 export {partChannelIds, partChannels, partIds, partNames, poseChain} from './keypoints';
+// tslint:disable-next-line:max-line-length
+export {decodeAndClipColoredPartMap, toMask} from './partMap/decodePartMap';
+export {load, PoseNet} from './posenet_model';
+// tslint:disable-next-line:max-line-length
+export {load as loadSegmentation, PoseNetSegmentation} from './posenetSegmentation_model';
 export {Keypoint, Pose} from './types';
 // tslint:disable-next-line:max-line-length
-export {cropAndResizeTo, getAdjacentKeyPoints, getBoundingBox, getBoundingBoxPoints, removePaddingAndResizeBack, resizeAndPadTo, scalePose, translateAndScalePose, unResizeAndCropFrom} from './util';
+export {cropAndResizeTo, getAdjacentKeyPoints, getBoundingBox, getBoundingBoxPoints, removePaddingAndResizeBack, resizeAndPadTo, scaleAndCropToInputTensorShape, scalePose, translateAndScalePose} from './util';
 export {
   ConvolutionDefinition,
-  decodeAndScaleSegmentationAndPartMap,
   decodeMultiplePoses,
   decodeSinglePose,
   MobileNet,
@@ -42,4 +44,3 @@ export {
   OutputStride
 };
 export {CheckpointLoader};
-export {load, PoseNet};
