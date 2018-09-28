@@ -18,21 +18,18 @@
 import * as tf from '@tensorflow/tfjs';
 
 import {CheckpointLoader} from './checkpoint_loader';
-import {multiPoseCheckpoints, segmentationCheckpoints} from './checkpoints';
+import {multiPoseCheckpoints} from './checkpoints';
 // tslint:disable-next-line:max-line-length
 import {assertValidOutputStride, assertValidScaleFactor, MobileNet, MobileNetMultiplier, OutputStride} from './mobilenet';
-import {DumpedCheckpointWeights, FrozenGraphModelWeights} from './modelWeights';
+import {DumpedCheckpointWeights} from './modelWeights';
 import {decodeMultiplePoses} from './multiPose/decodeMultiplePoses';
-import {decodeAndScaleSegmentationAndPartMap} from './partMap/decodePartMap';
 import {decodeSinglePose} from './singlePose/decodeSinglePose';
 // tslint:disable-next-line:max-line-length
-import {InputType, Pose, PoseWithSegmentationMaskAndColoredPartImage} from './types';
+import {InputType, Pose} from './types';
 // tslint:disable-next-line:max-line-length
-import {getInputTensorDimensions, getValidResolution, resizeAndPadTo, scalePose, scalePoses, toResizedInputTensor, translateAndScalePose} from './util';
+import {getInputTensorDimensions, getValidResolution, scalePose, scalePoses, toResizedInputTensor} from './util';
 
 export type PoseNetResolution = 161|193|257|289|321|353|385|417|449|481|513;
-
-const segmentationModelImageDimensions = [353, 257];
 
 export class PoseNet {
   mobileNet: MobileNet;
@@ -65,56 +62,6 @@ export class PoseNet {
       const offsets = this.mobileNet.convToOutput(mobileNetOutput, 'offset_2');
 
       return {heatmapScores: heatmaps.sigmoid(), offsets};
-    });
-  }
-
-  predictForSinglePoseWithPartMap(
-      input: tf.Tensor3D, outputStride: OutputStride = 16): {
-    heatmapScores: tf.Tensor3D,
-    offsets: tf.Tensor3D,
-    segmentScores: tf.Tensor3D,
-    partHeatmapScores: tf.Tensor3D
-  } {
-    assertValidOutputStride(outputStride);
-    return tf.tidy(() => {
-      const mobileNetOutput = this.mobileNet.predict(input, outputStride);
-
-      const heatmaps =
-          this.mobileNet.convToOutput(mobileNetOutput, 'heatmap_2');
-
-      const offsets = this.mobileNet.convToOutput(mobileNetOutput, 'offset_2');
-
-      const segments =
-          this.mobileNet.convToOutput(mobileNetOutput, 'segment_2');
-
-      const partHeatmaps =
-          this.mobileNet.convToOutput(mobileNetOutput, 'part_heatmap_2');
-
-      return {
-        heatmapScores: heatmaps.sigmoid(),
-        offsets,
-        segmentScores: segments.sigmoid(),
-        partHeatmapScores: partHeatmaps.sigmoid()
-      };
-    });
-  }
-
-  predictForSegments(input: tf.Tensor3D, outputStride: OutputStride = 16):
-      {segmentScores: tf.Tensor3D, partHeatmapScores: tf.Tensor3D} {
-    assertValidOutputStride(outputStride);
-    return tf.tidy(() => {
-      const mobileNetOutput = this.mobileNet.predict(input, outputStride);
-
-      const segments =
-          this.mobileNet.convToOutput(mobileNetOutput, 'segment_2');
-
-      const partHeatmaps =
-          this.mobileNet.convToOutput(mobileNetOutput, 'part_heatmap_2');
-
-      return {
-        segmentScores: segments.sigmoid(),
-        partHeatmapScores: partHeatmaps.sigmoid()
-      };
     });
   }
 
@@ -202,6 +149,7 @@ export class PoseNet {
     const {heatmapScores, offsets} = tf.tidy(() => {
       const inputTensor = toResizedInputTensor(
           input, resizedHeight, resizedWidth, flipHorizontal);
+      console.log(inputTensor);
       return this.predictForSinglePose(inputTensor, outputStride);
     });
 
@@ -214,142 +162,6 @@ export class PoseNet {
     offsets.dispose();
 
     return scalePose(pose, scaleY, scaleX);
-  }
-
-  /**
-   * Infer through PoseNet, and estimates a single pose, segmentation mask, and
-   * colored part image using the outputs. This does standard ImageNet
-   * pre-processing before inferring through the model. Will resize and crop the
-   * image to 353 x 257 while maintaining the original aspect ratio before
-   * feeding through the network. The image should pixels should have values
-   * [0-255]. This method returns a single pose, a segmentation mask, and
-   * colored part map imagee.
-   *
-   * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
-   * The input image to feed through the network.
-   *
-   * @param flipHorizontal.  Defaults to false.  If the poses should be
-   * flipped/mirrored  horizontally.  This should be set to true for videos
-   * where the video is by default flipped horizontally (i.e. a webcam), and you
-   * want the poses to be returned in the proper orientation.
-   *
-   * @param outputStride the desired stride for the outputs.  Must be 32, 16,
-   * or 8. Defaults to 16. The output width and height will be will be
-   * (inputDimension - 1)/outputStride + 1
-   *
-   * @param segmentationThreshold The minimum that segmentation values must have
-   * to be considered part of the person.  Affects the generation of the
-   * segmentation mask and the clipping of the colored part image.
-   *
-   * @param partColors An array of rgb color values indexed by part channel id
-   * that are used to generate the part map image
-   *
-   * @return A single pose with a confidence score, which contains an array of
-   * keypoints indexed by part id, each with a score and position.  The
-   * positions of the keypoints are in the same scale as the original image
-   */
-  async estimateSinglePoseWithSegmentation(
-      input: InputType, flipHorizontal = false, outputStride: OutputStride = 16,
-      segmentationThreshold = 0.5, partColors: Array<[number, number, number]>):
-      Promise<PoseWithSegmentationMaskAndColoredPartImage> {
-    assertValidOutputStride(outputStride);
-
-    const [height, width] = getInputTensorDimensions(input);
-
-    const {
-      resizedAndPadded,
-      paddedBy,
-    } = resizeAndPadTo(input, segmentationModelImageDimensions, flipHorizontal);
-
-    const {heatmapScores, offsets, segmentScores, partHeatmapScores} =
-        tf.tidy(() => {
-          return this.predictForSinglePoseWithPartMap(
-              resizedAndPadded, outputStride);
-        });
-
-    const [resizedHeight, resizedWidth] = resizedAndPadded.shape;
-
-    const {segmentationMask, coloredPartImage} =
-        decodeAndScaleSegmentationAndPartMap(
-            segmentScores, partHeatmapScores, [resizedHeight, resizedWidth],
-            paddedBy, [height, width], segmentationThreshold, partColors);
-
-    const pose = await decodeSinglePose(heatmapScores, offsets, outputStride);
-
-    heatmapScores.dispose();
-    offsets.dispose();
-    segmentScores.dispose();
-    partHeatmapScores.dispose();
-
-    const [[padT, padB], [padL, padR]] = paddedBy;
-    const scaleY = height / (resizedHeight - padT - padB);
-    const scaleX = width / (resizedWidth - padL - padR);
-
-    const poseWidthPaddingRemovedAndScaled =
-        translateAndScalePose(pose, -padT, -padL, scaleY, scaleX);
-
-    return {
-      pose: poseWidthPaddingRemovedAndScaled,
-      segmentationMask,
-      coloredPartImage
-    };
-  }
-
-  /**
-   * Infer through PoseNet, and estimates a segmentation mask, and
-   * colored part image using the outputs. This does standard ImageNet
-   * pre-processing before inferring through the model. Will resize and crop the
-   * image to 353 x 257 while maintaining the original aspect ratio before
-   * feeding through the network. The image should pixels should have values
-   * [0-255]. This method returns a single pose, a segmentation mask, and
-   * colored part map imagee.
-   *
-   * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
-   * The input image to feed through the network.
-   *
-   * @param flipHorizontal.  Defaults to false.  If the poses should be
-   * flipped/mirrored  horizontally.  This should be set to true for videos
-   * where the video is by default flipped horizontally (i.e. a webcam), and you
-   * want the poses to be returned in the proper orientation.
-   *
-   * @param outputStride the desired stride for the outputs.  Must be 32, 16,
-   * or 8. Defaults to 16. The output width and height will be will be
-   * (inputDimension - 1)/outputStride + 1
-   *
-   * @param segmentationThreshold The minimum that segmentation values must have
-   * to be considered part of the person.  Affects the generation of the
-   * segmentation mask and the clipping of the colored part image.
-   *
-   * @param partColors An array of rgb color values indexed by part channel id
-   * that are used to generate the part map image
-   *
-   * @return A segmentation mask and colored part image
-   */
-  estimateSegmentation(
-      input: InputType, flipHorizontal = false, outputStride: OutputStride = 16,
-      segmentationThreshold = 0.5, partColors: Array<[number, number, number]>):
-      {segmentationMask: tf.Tensor2D, coloredPartImage: tf.Tensor3D} {
-    assertValidOutputStride(outputStride);
-
-    const [height, width] = getInputTensorDimensions(input);
-
-    return tf.tidy(() => {
-      const {
-        resizedAndPadded,
-        paddedBy,
-      } =
-          resizeAndPadTo(
-              input, segmentationModelImageDimensions, flipHorizontal);
-
-      const {segmentScores, partHeatmapScores} =
-          this.predictForSegments(resizedAndPadded, outputStride);
-
-      const [resizedHeight, resizedWidth] = resizedAndPadded.shape;
-
-      return decodeAndScaleSegmentationAndPartMap(
-          segmentScores, partHeatmapScores, [resizedHeight, resizedWidth],
-          paddedBy, [height, width], segmentationThreshold, partColors);
-    });
   }
 
   /**
@@ -443,18 +255,15 @@ export class PoseNet {
  * a smaller value to increase speed at the cost of accuracy.
  *
  */
-export async function load(
-    multiplier: MobileNetMultiplier = 1.01,
-    segmentationAndPartMap = false): Promise<PoseNet> {
+export async function load(multiplier: MobileNetMultiplier = 1.01):
+    Promise<PoseNet> {
   if (tf == null) {
     throw new Error(
         `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
         `also include @tensorflow/tfjs on the page before using this model.`);
   }
   // TODO: figure out better way to decide below.
-  const checkpoints =
-      segmentationAndPartMap ? segmentationCheckpoints : multiPoseCheckpoints;
-  const possibleMultipliers = Object.keys(checkpoints);
+  const possibleMultipliers = Object.keys(multiPoseCheckpoints);
   tf.util.assert(
       typeof multiplier === 'number',
       `got multiplier type of ${typeof multiplier} when it should be a ` +
@@ -466,43 +275,21 @@ export async function load(
           multiplier}.  No checkpoint exists for that ` +
           `multiplier. Must be one of ${possibleMultipliers.join(',')}.`);
 
-  let mobileNet: MobileNet;
-  // TODO: figure out better way to decide below.
-  if (segmentationAndPartMap) {
-    mobileNet = await mobilenetLoader.loadFromFrozenGraph(multiplier);
-  } else {
-    mobileNet = await mobilenetLoader.loadFromCheckpoint(multiplier);
-  }
+  const mobileNet: MobileNet = await mobilenetLoader.load(multiplier);
 
   return new PoseNet(mobileNet);
 }
 
 export const mobilenetLoader = {
-  loadFromCheckpoint: async(multiplier: MobileNetMultiplier):
-      Promise<MobileNet> => {
-        const checkpoint = multiPoseCheckpoints[multiplier];
+  load: async(multiplier: MobileNetMultiplier): Promise<MobileNet> => {
+    const checkpoint = multiPoseCheckpoints[multiplier];
 
-        const checkpointLoader = new CheckpointLoader(checkpoint.url);
+    const checkpointLoader = new CheckpointLoader(checkpoint.url);
 
-        const variables = await checkpointLoader.getAllVariables();
+    const variables = await checkpointLoader.getAllVariables();
 
-        const weights = new DumpedCheckpointWeights(variables);
-
-        return new MobileNet(weights, checkpoint.architecture);
-      },
-
-  loadFromFrozenGraph: async(
-      multiplier: MobileNetMultiplier): Promise<MobileNet> => {
-    // TODO: move this into a config object, and use the multiplier to select it
-    const checkpoint = segmentationCheckpoints[multiplier];
-
-    const baseUrl = checkpoint.url;
-
-    const model = await tf.loadFrozenModel(
-        `${baseUrl}tensorflowjs_model.pb`, `${baseUrl}weights_manifest.json`);
-
-    const weights = new FrozenGraphModelWeights(model);
+    const weights = new DumpedCheckpointWeights(variables);
 
     return new MobileNet(weights, checkpoint.architecture);
-  }
+  },
 };

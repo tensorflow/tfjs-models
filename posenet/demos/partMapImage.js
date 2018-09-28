@@ -338,11 +338,22 @@ async function decodeSinglePoseAndDrawResults() {
     return;
   }
 
-  const {segmentationMask, coloredPartImage} =
-      posenet.decodeAndScaleSegmentationAndPartMap(
-          modelOutputs.segmentScores, modelOutputs.partHeatmapScores,
-          [resizedHeight, resizedWidth], guiState.paddedBy,
-          guiState.originalSize, guiState.segmentationThreshold, partColors);
+  const [height, width] = [imageSize, imageSize];
+  const {paddedBy} = guiState;
+
+  const scaledSegmentScores = posenet.scaleAndCropToInputTensorShape(
+      modelOutputs.segmentScores, [height, width],
+      [resizedHeight, resizedWidth], paddedBy);
+
+  const segmentationMask = posenet.toMask(
+      scaledSegmentScores.squeeze(), guiState.segmentationThreshold);
+
+  const scaledPartHeatmapScore = posenet.scaleAndCropToInputTensorShape(
+      modelOutputs.partHeatmapScores, [height, width],
+      [resizedHeight, resizedWidth], paddedBy);
+
+  const coloredPartImage = posenet.decodeAndClipColoredPartMap(
+      segmentationMask, scaledPartHeatmapScore, partColors);
 
   const pose = await posenet.decodeSinglePose(
       modelOutputs.heatmapScores, modelOutputs.offsets, guiState.outputStride);
@@ -358,6 +369,8 @@ async function decodeSinglePoseAndDrawResults() {
       poseWidthPaddingRemovedAndScaled, image, segmentationMask,
       coloredPartImage);
 
+  scaledSegmentScores.dispose();
+  scaledPartHeatmapScore.dispose();
   segmentationMask.dispose();
   coloredPartImage.dispose();
 }
@@ -542,7 +555,7 @@ function drawPartColors() {
  * poses on a default image
  */
 export async function bindPage() {
-  const net = await posenet.load(0.75, true);
+  const net = await posenet.loadSegmentation(0.75);
 
   setupGui(net);
 

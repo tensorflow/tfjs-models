@@ -78,27 +78,18 @@ async function loadVideo() {
 }
 
 const guiState = {
-  algorithm: 'single-pose',
+  estimate: 'segmentation',
   input:
-      {mobileNetArchitecture: isMobile() ? '0.50' : '1.00', outputStride: 16},
+      {mobileNetArchitecture: isMobile() ? '0.50' : '0.75', outputStride: 16},
   singlePoseDetection: {
     minPoseConfidence: 0.1,
     minPartConfidence: 0.5,
     segmentationThreshold: 0.5,
-  },
-  multiPoseDetection: {
-    maxPoseDetections: 5,
-    minPoseConfidence: 0.15,
-    minPartConfidence: 0.1,
-    nmsRadius: 30.0,
-  },
-  output: {
-    showVideo: true,
     showSkeleton: true,
     showPoints: true,
-    showSegments: true,
-    showPartHeatmaps: true,
   },
+  segmentation: {segmentationThreshold: 0.5},
+  partMap: {},
   net: null,
 };
 
@@ -126,8 +117,8 @@ function setupGui(cameras, net) {
   // The single-pose algorithm is faster and simpler but requires only one
   // person to be in the frame or results will be innaccurate. Multi-pose works
   // for more than 1 person
-  // const algorithmController =
-  //     gui.add(guiState, 'algorithm', ['single-pose', 'multi-pose']);
+  const estimateController =
+      gui.add(guiState, 'estimate', ['single-pose', 'segmentation', 'partmap']);
 
   // The input parameters have the most effect on accuracy and speed of the
   // network
@@ -136,7 +127,8 @@ function setupGui(cameras, net) {
   // accuracy. 1.00 is the largest, but will be the slowest. 0.50 is the
   // fastest, but least accurate.
   const architectureController = input.add(
-      guiState.input, 'mobileNetArchitecture', ['1.00', '0.75', '0.50']);
+      guiState.input, 'mobileNetArchitecture',
+      ['1.00', '0.75', '0.50', '0.25']);
   // Output stride:  Internally, this parameter affects the height and width of
   // the layers in the neural network. The lower the value of the output stride
   // the higher the accuracy but slower the speed, the higher the value the
@@ -152,51 +144,63 @@ function setupGui(cameras, net) {
   let single = gui.addFolder('Single Pose Detection');
   single.add(guiState.singlePoseDetection, 'minPoseConfidence', 0.0, 1.0);
   single.add(guiState.singlePoseDetection, 'minPartConfidence', 0.0, 1.0);
-  single.add(guiState.singlePoseDetection, 'segmentationThreshold', 0.0, 1.0);
-  single.open();
+  single.add(guiState.singlePoseDetection, 'showSkeleton');
+  single.add(guiState.singlePoseDetection, 'showPoints');
+  single.close();
 
-  let output = gui.addFolder('Output');
-  output.add(guiState.output, 'showVideo');
-  output.add(guiState.output, 'showSkeleton');
-  output.add(guiState.output, 'showPoints');
-  output.add(guiState.output, 'showSegments');
-  output.add(guiState.output, 'showPartHeatmaps');
-  output.open();
+  let segmentation = gui.addFolder('Segmentation');
+  segmentation.add(guiState.segmentation, 'segmentationThreshold', 0.0, 1.0);
+  segmentation.open();
 
+  let partMap = gui.addFolder('Part Map');
 
   architectureController.onChange(function(architecture) {
     guiState.changeToArchitecture = architecture;
+  });
+
+  estimateController.onChange(function(estimationType) {
+    if (estimationType === 'single-pose') {
+      single.open();
+      segmentation.close();
+      partMap.close();
+    } else if (estimationType === 'segmentation') {
+      single.close();
+      segmentation.open();
+      partMap.close();
+    } else {
+      single.close();
+      segmentation.open();
+      partMap.open();
+    }
   });
 }
 
 const segmentationDarkening = 0.25;
 const partMapDarkening = 0.3;
-async function drawPartHeatmapAndSegmentation(
-    canvas, video, segmentation, partMap) {
+async function drawSegmentation(canvas, video, segmentationMask) {
   const filteredImage = tf.tidy(() => {
-    let result = video;
+    const invertedMask = tf.scalar(1, 'int32').sub(segmentationMask);
+    const darkeningMask = invertedMask.cast('float32')
+                              .mul(tf.scalar(segmentationDarkening))
+                              .add(segmentationMask.cast('float32'));
 
-    if (guiState.output.showSegments && !guiState.output.showPartHeatmaps) {
-      const invertedMask = tf.scalar(1, 'int32').sub(segmentation);
-      const darkeningMask = invertedMask.cast('float32')
-                                .mul(tf.scalar(segmentationDarkening))
-                                .add(segmentation.cast('float32'));
+    return video.cast('float32').mul(darkeningMask.expandDims(2)).cast('int32');
+  });
 
-      result =
-          result.cast('float32').mul(darkeningMask.expandDims(2)).cast('int32');
-    }
+  await tf.toPixels(filteredImage, canvas);
 
-    if (guiState.output.showPartHeatmaps) {
-      const darkenedImage =
-          result.cast('float32').mul(tf.scalar(partMapDarkening));
+  filteredImage.dispose();
+}
 
-      result =
-          darkenedImage
-              .add(partMap.cast('float32').mul(tf.scalar(1 - partMapDarkening)))
-              .cast('int32');
-    }
+async function drawColoredPartHeatmap(canvas, video, coloredPartMap) {
+  const filteredImage = tf.tidy(() => {
+    const darkenedImage =
+        video.cast('float32').mul(tf.scalar(partMapDarkening));
 
-    return result;
+    return darkenedImage
+        .add(
+            coloredPartMap.cast('float32').mul(tf.scalar(1 - partMapDarkening)))
+        .cast('int32');
   });
 
   await tf.toPixels(filteredImage, canvas);
@@ -232,7 +236,8 @@ function detectPoseInRealTime(video, net) {
 
       // Load the PoseNet model weights for either the 0.50, 0.75, 1.00, or 1.01
       // version
-      guiState.net = await posenet.load(+guiState.changeToArchitecture, true);
+      guiState.net =
+          await posenet.loadSegmentation(+guiState.changeToArchitecture);
 
       guiState.changeToArchitecture = null;
     }
@@ -244,34 +249,62 @@ function detectPoseInRealTime(video, net) {
     // down the GPU
     const outputStride = +guiState.input.outputStride;
 
-    const {pose, segmentationMask, coloredPartImage} =
-        await guiState.net.estimateSinglePoseWithSegmentation(
+    let videoTensor;
+
+    switch (guiState.estimate) {
+      case 'single-pose':
+        const pose = await guiState.net.estimateSinglePose(
+            video, flipHorizontal, outputStride);
+
+        const minPoseConfidence =
+            +guiState.singlePoseDetection.minPoseConfidence;
+        const minPartConfidence =
+            +guiState.singlePoseDetection.minPartConfidence;
+
+        ctx.clearRect(0, 0, videoWidth, videoHeight);
+
+        ctx.save();
+        ctx.scale(-1, 1);
+        ctx.translate(-videoWidth, 0);
+        ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
+        ctx.restore();
+
+        // For each pose (i.e. person) detected in an image, loop through the
+        // poses and draw the resulting skeleton and keypoints if over certain
+        // confidence scores
+        const {score, keypoints} = pose;
+        if (score >= minPoseConfidence) {
+          if (guiState.singlePoseDetection.showPoints) {
+            drawKeypoints(keypoints, minPartConfidence, ctx);
+          }
+          if (guiState.singlePoseDetection.showSkeleton) {
+            drawSkeleton(keypoints, minPartConfidence, ctx);
+          }
+        }
+        break;
+      case 'segmentation':
+        const segmentationMask = guiState.net.estimateSegmentation(
             video, flipHorizontal, outputStride,
-            guiState.singlePoseDetection.segmentationThreshold, partColors);
+            guiState.segmentation.segmentationThreshold);
+        videoTensor = tf.fromPixels(video).reverse(1);
 
-    const videoTensor = tf.fromPixels(video).reverse(1);
+        await drawSegmentation(canvas, videoTensor, segmentationMask);
+        videoTensor.dispose();
+        segmentationMask.dispose();
+        break;
+      case 'partmap':
+        const coloredPartMap = guiState.net.estimateColoredPartMap(
+            video, flipHorizontal, outputStride,
+            guiState.segmentation.segmentationThreshold, partColors);
 
-    await drawPartHeatmapAndSegmentation(
-        canvas, videoTensor, segmentationMask, coloredPartImage);
-    videoTensor.dispose();
+        videoTensor = tf.fromPixels(video).reverse(1);
+        await drawColoredPartHeatmap(canvas, videoTensor, coloredPartMap);
 
-    segmentationMask.dispose();
-    coloredPartImage.dispose();
-
-    const minPoseConfidence = +guiState.singlePoseDetection.minPoseConfidence;
-    const minPartConfidence = +guiState.singlePoseDetection.minPartConfidence;
-
-    // For each pose (i.e. person) detected in an image, loop through the poses
-    // and draw the resulting skeleton and keypoints if over certain confidence
-    // scores
-    const {score, keypoints} = pose;
-    if (score >= minPoseConfidence) {
-      if (guiState.output.showPoints) {
-        drawKeypoints(keypoints, minPartConfidence, ctx);
-      }
-      if (guiState.output.showSkeleton) {
-        drawSkeleton(keypoints, minPartConfidence, ctx);
-      }
+        videoTensor.dispose();
+        coloredPartMap.dispose();
+        break;
+      default:
+        break;
     }
 
     // End monitoring code for frames per second
@@ -289,7 +322,8 @@ function detectPoseInRealTime(video, net) {
  */
 export async function bindPage() {
   // Load the PoseNet model weights with architecture 0.75
-  const net = await posenet.load(+guiState.input.mobileNetArchitecture, true);
+  const net =
+      await posenet.loadSegmentation(+guiState.input.mobileNetArchitecture);
 
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'block';

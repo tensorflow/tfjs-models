@@ -21,7 +21,8 @@ const MULTI_POSE_DIR =
     'https://storage.googleapis.com/tfjs-models/weights/posenet/';
 
 const SEGMENTATION_MODEL_BASE_URL =
-    'https://storage.googleapis.com/tfjs-models/savedmodel/';
+    // 'https://storage.googleapis.com/tfjs-models/savedmodel/';
+    'http://localhost:8000/savedmodel/';
 
 export type Checkpoint = {
   url: string,
@@ -59,5 +60,9 @@ export const segmentationCheckpoints: {[multiplier: number]: Checkpoint} = {
   0.5: {
     url: SEGMENTATION_MODEL_BASE_URL + 'posenet_mobilenet_050_partmap/',
     architecture: mobileNetArchitectures[50]
+  },
+  0.25: {
+    url: SEGMENTATION_MODEL_BASE_URL + 'posenet_mobilenet_025_partmap/',
+    architecture: mobileNetArchitectures[25]
   }
 };

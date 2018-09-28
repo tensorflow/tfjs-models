@@ -194,7 +194,11 @@ export function cropAndResizeTo(
 }
 
 export function resizeAndPadTo(
-    input: InputType, [targetH, targetW]: number[], flipHorizontal = false) {
+    input: InputType, [targetH, targetW]: [number, number],
+    flipHorizontal = false): {
+  resizedAndPadded: tf.Tensor3D,
+  paddedBy: [[number, number], [number, number]]
+} {
   const [height, width] = getInputTensorDimensions(input);
   const imageTensor = toInputTensor(input);
 
@@ -246,10 +250,24 @@ export function resizeAndPadTo(
   return {resizedAndPadded, paddedBy: [[padT, padB], [padL, padR]]};
 }
 
+export function scaleAndCropToInputTensorShape(
+    tensor: tf.Tensor3D,
+    [inputTensorHeight, inputTensorWidth]: [number, number],
+    [resizedAndPaddedHeight, resizedAndPaddedWidth]: [number, number],
+    [[padT, padB], [padL, padR]]: [[number, number], [number, number]]):
+    tf.Tensor3D {
+  const inResizedAndPaddedSize = tensor.resizeBilinear(
+      [resizedAndPaddedHeight, resizedAndPaddedWidth], true);
+
+  return removePaddingAndResizeBack(
+      inResizedAndPaddedSize, [inputTensorHeight, inputTensorWidth],
+      [[padT, padB], [padL, padR]]);
+}
+
 export function
 removePaddingAndResizeBack<T extends(tf.Tensor2D | tf.Tensor3D)>(
-    resizedAndPadded: T, [originalHeight, originalWidth]: number[],
-    [[padT, padB], [padL, padR]]: number[][]): T {
+    resizedAndPadded: T, [originalHeight, originalWidth]: [number, number],
+    [[padT, padB], [padL, padR]]: [[number, number], [number, number]]): T {
   const [height, width] = resizedAndPadded.shape;
   // remove padding that was added
   const cropH = height - (padT + padB);
@@ -275,7 +293,7 @@ removePaddingAndResizeBack<T extends(tf.Tensor2D | tf.Tensor3D)>(
 }
 
 function resize<T extends(tf.Tensor2D | tf.Tensor3D)>(
-    input: T, [height, width]: number[], nearestNeighbor?: boolean): T {
+    input: T, [height, width]: [number, number], nearestNeighbor?: boolean): T {
   if (input.rank === 2) {
     return resize2d(input as tf.Tensor2D, [height, width], nearestNeighbor) as
         T;
@@ -283,29 +301,4 @@ function resize<T extends(tf.Tensor2D | tf.Tensor3D)>(
     return (input as tf.Tensor3D)
                .resizeBilinear([height, width], nearestNeighbor) as T;
   }
-}
-
-export function unResizeAndCropFrom<T extends tf.Tensor2D|tf.Tensor3D>(
-    input: T, [originalHeight, originalWidth]: number[],
-    [startCropTop, startCropLeft, croppedH, croppedW]: number[]): T {
-  // first resize to cropped height and width
-
-  return tf.tidy(() => {
-    const resizedToCropped = resize(input, [croppedH, croppedW]);
-
-    const padT = startCropTop;
-    const padB = originalHeight - startCropTop - croppedH;
-    const padL = startCropLeft;
-    const padR = originalWidth - startCropLeft - croppedW;
-
-    if (resizedToCropped.rank === 2) {
-      return (tf.pad2d(
-                 resizedToCropped as tf.Tensor2D,
-                 [[padT, padB], [padL, padR]])) as T;
-    } else {
-      return tf.pad3d(
-                 resizedToCropped as tf.Tensor3D,
-                 [[padT, padB], [padL, padR], [0, 0]]) as T;
-    }
-  });
 }
