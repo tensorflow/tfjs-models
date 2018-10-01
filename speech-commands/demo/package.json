@@ -10,7 +10,9 @@
     },
     "dependencies": {
       "@tensorflow/tfjs": "^0.12.7",
-      "stats.js": "^0.17.0"
+      "stats.js": "^0.17.0",
+      "bootstrap": "4.1.1",
+      "jquery": "3.3.1"
     },
     "scripts": {
       "watch": "NODE_ENV=development parcel --no-hmr --open index.html ",
@@ -29,7 +31,9 @@
       "eslint-config-google": "^0.9.1",
       "parcel-bundler": "~1.6.2",
       "plotly.js-dist": "^1.39.4",
-      "yalc": "~1.0.0-pre.21"
+      "yalc": "~1.0.0-pre.21",
+      "browser-sync": "2.24.5",
+      "gulp": "^3.9.1"
     },
     "eslintConfig": {
       "extends": "google",

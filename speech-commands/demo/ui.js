@@ -20,6 +20,26 @@ import {BACKGROUND_NOISE_TAG, UNKNOWN_TAG} from '../src';
 const statusDisplay = document.getElementById('status-display');
 const candidateWordsContainer = document.getElementById('candidate-words');
 
+
+export function srollDown() {
+  console.log('scroll down');
+  console.log(this.hash);
+  // Make sure this.hash has a value before overriding default behavior
+     if (this.hash !== "") {
+       // Store hash
+       var hash = this.hash;
+
+       // Using jQuery's animate() method to add smooth page scroll
+       // The optional number (800) specifies the number of milliseconds it takes to scroll to the specified area
+       $('html, body').animate({
+         scrollTop: $(hash).offset().top
+       }, 800, function(){
+
+         // Add hash (#) to URL when done scrolling (default click behavior)
+         window.location.hash = hash;
+       });
+}
+}
 /**
  * Log a message to a textarea.
  *
@@ -41,10 +61,11 @@ let candidateWordSpans;
  * @param {*} words Candidate words.
  */
 export function populateCandidateWords(words) {
+  console.log('words',words);
   candidateWordSpans = {};
-  while (candidateWordsContainer.firstChild) {
-    candidateWordsContainer.removeChild(candidateWordsContainer.firstChild);
-  }
+  // while (candidateWordsContainer.firstChild) {
+  //   candidateWordsContainer.removeChild(candidateWordsContainer.firstChild);
+  // }
 
   const candidatesLabel = document.createElement('span');
   candidatesLabel.textContent = 'Words to say: ';
