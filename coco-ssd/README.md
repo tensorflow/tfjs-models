@@ -18,8 +18,8 @@ There are two main ways to get this model in your JavaScript project: via script
 ### via Script Tag
 
 ```html
-<!-- Load TensorFlow.js. This is required to use object detection model. -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.12.7"> </script>
+<!-- Load TensorFlow.js. This is required to use coco-ssd model. -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.13.1"> </script>
 <!-- Load the coco-ssd model. -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@0.1.0"> </script>
 
@@ -35,7 +35,7 @@ There are two main ways to get this model in your JavaScript project: via script
 
   // Load the model.
   cocoSsd.load().then(model => {
-    // Classify the image.
+    // detect objects in the image.
     model.detect(img).then(predictions => {
       console.log('Predictions: ', predictions);
     });
@@ -48,12 +48,12 @@ There are two main ways to get this model in your JavaScript project: via script
 ```js
 // Note: you do not need to import @tensorflow/tfjs here.
 
-import * as objectDetection from '@tensorflow-models/coco-ssd';
+import * as cocoSsd from '@tensorflow-models/coco-ssd';
 
 const img = document.getElementById('img');
 
 // Load the model.
-const model = await objectDetection.load();
+const model = await cocoSsd.load();
 
 // Classify the image.
 const predictions = await model.detect(img);
@@ -70,7 +70,7 @@ You can also take a look at the [demo app](./demo).
 `object-detection` is the module name, which is automatically included when you use the `<script src>` method. When using ES6 imports, object-detection is the module.
 
 ```ts
-objectDetection.load(
+cocoSsd.load(
   base?: 'ssd_mobilenet_v1' | 'ssd_mobilenet_v2' | 'ssdlite_mobilenet_v2'
 )
 ```
@@ -78,7 +78,7 @@ objectDetection.load(
 Args:
  **base:** Controls the base cnn model, can be 'ssd_mobilenet_v1', 'ssd_mobilenet_v2' or 'ssdlite_mobilenet_v2'. Defaults to 'ssdlite_mobilenet_v2'.
  ssdlite_mobilenet_v2 is smallest in size, and fastest in inference speed.
- ssdlite_mobilenet_v2 has the highest classification accuracy. 
+ ssdlite_mobilenet_v2 has the highest classification accuracy.
 
 Returns a `model` object.
 
@@ -87,7 +87,7 @@ Returns a `model` object.
 You can detect objects with the model without needing to create a Tensor.
 `model.detect` takes an input image element and returns an array of bounding boxes with class name and confidence level.
 
-This method exists on the model that is loaded from `objectDetection.load`.
+This method exists on the model that is loaded from `cocoSsd.load`.
 
 ```ts
 model.detect(
