@@ -20,8 +20,10 @@ import {CLASSES} from './classes';
 
 const BASE_PATH = 'https://storage.googleapis.com/tfjs-models/savedmodel/';
 
+export {version} from './version';
+
 export type ObjectDetectionBaseModel =
-    'ssd_mobilenet_v1'|'ssd_mobilenet_v2'|'ssdlite_mobilenet_v2';
+    'mobilenet_v1'|'mobilenet_v2'|'lite_mobilenet_v2';
 
 export interface DetectedObject {
   bbox: [number, number, number, number];  // [x, y, width, height]
@@ -30,19 +32,19 @@ export interface DetectedObject {
 }
 
 export async function load(
-    base: ObjectDetectionBaseModel = 'ssdlite_mobilenet_v2') {
+    base: ObjectDetectionBaseModel = 'lite_mobilenet_v2') {
   if (tf == null) {
     throw new Error(
         `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
         `also include @tensorflow/tfjs on the page before using this model.`);
   }
 
-  if (['ssd_mobilenet_v1', 'ssd_mobilenet_v2', 'ssdlite_mobilenet_v2'].indexOf(
-          base) === -1) {
+  if (['mobilenet_v1', 'mobilenet_v2', 'lite_mobilenet_v2'].indexOf(base) ===
+      -1) {
     throw new Error(
         `ObjectDetection constructed with invalid base model ` +
-        `${base}. Valid names are 'ssd_mobilenet_v1',` +
-        ` 'ssd_mobilenet_v2' and 'ssdlite_mobilenet_v2'.`);
+        `${base}. Valid names are 'mobilenet_v1',` +
+        ` 'mobilenet_v2' and 'lite_mobilenet_v2'.`);
   }
 
   const objectDetection = new ObjectDetection(base);
@@ -56,10 +58,14 @@ export class ObjectDetection {
   private model: tf.FrozenModel;
 
   constructor(base: ObjectDetectionBaseModel) {
-    this.modelPath = `${BASE_PATH}${base}/` +
+    this.modelPath = `${BASE_PATH}${this.getPrefix(base)}/` +
         `tensorflowjs_model.pb`;
-    this.weightPath = `${BASE_PATH}${base}/` +
+    this.weightPath = `${BASE_PATH}${this.getPrefix(base)}/` +
         `weights_manifest.json`;
+  }
+
+  private getPrefix(base: ObjectDetectionBaseModel) {
+    return base === 'lite_mobilenet_v2' ? `ssd${base}` : `ssd_${base}`;
   }
 
   async load() {
@@ -91,7 +97,7 @@ export class ObjectDetection {
       }
       // Reshape to a single-element batch so we can pass it to executeAsync.
       return img.expandDims(0);
-    })
+    });
     const height = batched.shape[1];
     const width = batched.shape[2];
 

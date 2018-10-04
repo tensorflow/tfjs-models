@@ -22,7 +22,7 @@ import imageURL from './image1.jpg';
 import image2URL from './image2.jpg';
 
 let modelPromise;
-let baseModel = 'ssdlite_mobilenet_v2';
+let baseModel = 'lite_mobilenet_v2';
 
 window.onload = () => modelPromise = objectDetection.load();
 

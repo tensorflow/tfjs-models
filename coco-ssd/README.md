@@ -19,9 +19,9 @@ There are two main ways to get this model in your JavaScript project: via script
 
 ```html
 <!-- Load TensorFlow.js. This is required to use coco-ssd model. -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.13.1"> </script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"> </script>
 <!-- Load the coco-ssd model. -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@0.1.0"> </script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"> </script>
 
 <!-- Replace this with your image. Make sure CORS settings allow reading the image! -->
 <img id="img" src="cat.jpg"/>
@@ -71,14 +71,14 @@ You can also take a look at the [demo app](./demo).
 
 ```ts
 cocoSsd.load(
-  base?: 'ssd_mobilenet_v1' | 'ssd_mobilenet_v2' | 'ssdlite_mobilenet_v2'
+  base?: 'mobilenet_v1' | 'mobilenet_v2' | 'lite_mobilenet_v2'
 )
 ```
 
 Args:
- **base:** Controls the base cnn model, can be 'ssd_mobilenet_v1', 'ssd_mobilenet_v2' or 'ssdlite_mobilenet_v2'. Defaults to 'ssdlite_mobilenet_v2'.
- ssdlite_mobilenet_v2 is smallest in size, and fastest in inference speed.
- ssdlite_mobilenet_v2 has the highest classification accuracy.
+ **base:** Controls the base cnn model, can be 'mobilenet_v1', 'mobilenet_v2' or 'lite_mobilenet_v2'. Defaults to 'lite_mobilenet_v2'.
+ lite_mobilenet_v2 is smallest in size, and fastest in inference speed.
+ mobilenet_v2 has the highest classification accuracy.
 
 Returns a `model` object.
 

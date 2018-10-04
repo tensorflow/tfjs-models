@@ -30,7 +30,7 @@
     "yalc": "~1.0.0-pre.21"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "rimraf dist && tsc && rollup -c",
     "lint": "tslint -p . -t verbose",
     "publish-local": "yarn build && yalc push",
     "test": "yarn build && ts-node run_tests.ts"
