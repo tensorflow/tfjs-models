@@ -5,11 +5,11 @@ Object detection model aims to localize and identify multiple objects in a singl
 This model is a TensorFlow.js port of the SSD-COCO model. For more information about Tensorflow object detection API, check out this readme in
 [tensorflow/object_detection](https://github.com/tensorflow/models/blob/master/research/object_detection/README.md).
 
-This model detects objects defined in the COCO dataset, which is a large-scale object detection, segmentation, and captioning dataset, you can find more information [here](http://cocodataset.org/#home). The model is capable of detecting [90 classes of objects](./src/classes.ts). SSD stands for Single Shot MultiBox Detection.
+This model detects objects defined in the COCO dataset, which is a large-scale object detection, segmentation, and captioning dataset, you can find more information [here](http://cocodataset.org/#home). The model is capable of detecting [90 classes of objects](./src/classes.ts). (SSD stands for Single Shot MultiBox Detection).
 
 This TensorFlow.js model does not require you to know about machine learning.
-It can take as input any browser-based image elements (`<img>`, `<video>`, `<canvas>`
-elements, for example) and returns an array of most bounding boxes with class name and confidence level.
+It can take input as any browser-based image elements (`<img>`, `<video>`, `<canvas>`
+elements, for example) and returns an array of bounding boxes with class name and confidence level.
 
 ## Usage
 
@@ -18,24 +18,24 @@ There are two main ways to get this model in your JavaScript project: via script
 ### via Script Tag
 
 ```html
-<!-- Load TensorFlow.js. This is required to use object detection model. -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.12.7"> </script>
-<!-- Load the object detection model. -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/object-detection@0.1.0"> </script>
+<!-- Load TensorFlow.js. This is required to use coco-ssd model. -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"> </script>
+<!-- Load the coco-ssd model. -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"> </script>
 
 <!-- Replace this with your image. Make sure CORS settings allow reading the image! -->
 <img id="img" src="cat.jpg"/>
 
 <!-- Place your code in the script tag below. You can also use an external .js file -->
 <script>
-  // Notice there is no 'import' statement. 'objectDetection' and 'tf' is
+  // Notice there is no 'import' statement. 'cocoSsd' and 'tf' is
   // available on the index-page because of the script tag above.
 
   const img = document.getElementById('img');
 
   // Load the model.
-  objectDetection.load().then(model => {
-    // Classify the image.
+  cocoSsd.load().then(model => {
+    // detect objects in the image.
     model.detect(img).then(predictions => {
       console.log('Predictions: ', predictions);
     });
@@ -48,12 +48,12 @@ There are two main ways to get this model in your JavaScript project: via script
 ```js
 // Note: you do not need to import @tensorflow/tfjs here.
 
-import * as objectDetection from '@tensorflow-models/object-detection';
+import * as cocoSsd from '@tensorflow-models/coco-ssd';
 
 const img = document.getElementById('img');
 
 // Load the model.
-const model = await objectDetection.load();
+const model = await cocoSsd.load();
 
 // Classify the image.
 const predictions = await model.detect(img);
@@ -70,15 +70,15 @@ You can also take a look at the [demo app](./demo).
 `object-detection` is the module name, which is automatically included when you use the `<script src>` method. When using ES6 imports, object-detection is the module.
 
 ```ts
-objectDetection.load(
-  base?: 'ssd_mobilenet_v1' | 'ssd_mobilenet_v2' | 'ssdlite_mobilenet_v2'
+cocoSsd.load(
+  base?: 'mobilenet_v1' | 'mobilenet_v2' | 'lite_mobilenet_v2'
 )
 ```
 
 Args:
- **base:** Controls the base cnn model, can be 'ssd_mobilenet_v1', 'ssd_mobilenet_v2' or 'ssdlite_mobilenet_v2'. Defaults to 'ssdlite_mobilenet_v2'.
- ssdlite_mobilenet_v2 is smallest in size, and fastest in inference speed.
- ssdlite_mobilenet_v2 has the highest classification accuracy. 
+ **base:** Controls the base cnn model, can be 'mobilenet_v1', 'mobilenet_v2' or 'lite_mobilenet_v2'. Defaults to 'lite_mobilenet_v2'.
+ lite_mobilenet_v2 is smallest in size, and fastest in inference speed.
+ mobilenet_v2 has the highest classification accuracy.
 
 Returns a `model` object.
 
@@ -87,7 +87,7 @@ Returns a `model` object.
 You can detect objects with the model without needing to create a Tensor.
 `model.detect` takes an input image element and returns an array of bounding boxes with class name and confidence level.
 
-This method exists on the model that is loaded from `objectDetection.load`.
+This method exists on the model that is loaded from `cocoSsd.load`.
 
 ```ts
 model.detect(
