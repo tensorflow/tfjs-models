@@ -27,9 +27,31 @@ const XFER_MODEL_NAME = 'xfer-model';
 let recognizer;
 let transferRecognizer;
 
-function srollDown() {
-  document.body.scrollTop = document.body.scrollTop+ 100;
-  document.documentElement.scrollTop = document.documentElement.scrollTop+ 100;
+function scroll_down() {
+    document.body.scrollTop = document.body.scrollTop + 100;
+    document.documentElement.scrollTop = document.documentElement.scrollTop + 100;
+}
+
+function scroll_up() {
+    document.body.scrollTop = document.body.scrollTop - 100;
+    document.documentElement.scrollTop = document.documentElement.scrollTop - 100;
+}
+
+function recognize_word_index(word_probabilities) {
+    let max_probability;
+    let max_probability_index;
+
+    max_probability = word_probabilities[0];
+    max_probability_index = 0;
+
+    for(let i = 1; i < word_probabilities.length; i++) {
+        if (word_probabilities[i] > max_probability) {
+            max_probability = word_probabilities[i];
+            max_probability_index = i;
+        }
+    }
+
+    return max_probability_index;
 }
 
 const words = [
@@ -64,7 +86,7 @@ createRecognizerButton.addEventListener('click', async () => {
   // `startStreaming()` is called.
   recognizer.ensureModelLoaded()
       .then(() => {
-          console.log('model loaded');
+          console.log('Model loaded');
       })
       .catch(err => {
           console.log('Fail to load model');
@@ -79,8 +101,18 @@ createRecognizerButton.addEventListener('click', async () => {
               result => {
                 console.log('prediction- result', result);
 
+                let word_index = recognize_word_index(result.scores);
+
                 // perform actions based on voice SpeechCommands
-                srollDown();
+                if (words[word_index] === 'down') {
+                    console.log(`Predicted the word 'down', will be scrolling down`);
+                    scroll_down();
+                } else if (words[word_index] === 'up') {
+                    console.log(`Predicted the word 'up', will be scrolling up`);
+                    scroll_up();
+                } else {
+                    console.log(`Predicted the word ${words[word_index]}, neither scrolling up or down`);
+                }
               })
                 // plotPredictions(
                 //     predictionCanvas, activeRecognizer.wordLabels(), result.scores,
@@ -96,7 +128,7 @@ createRecognizerButton.addEventListener('click', async () => {
           .then(() => {
             // startButton.disabled = true;
             // stopButton.disabled = false;
-            console.log('streaming recognition started');
+            console.log('Streaming recognition started');
             // showCandidateWords();
             // logToStatusDisplay('Streaming recognition started.');
           })
@@ -104,7 +136,7 @@ createRecognizerButton.addEventListener('click', async () => {
           //   logToStatusDisplay(
           //       'ERROR: Failed to start streaming display: ' + err.message);
           // });
-          console.log('fail to start streaming display');
+          console.log('Failed to start streaming display');
         });
 });
 

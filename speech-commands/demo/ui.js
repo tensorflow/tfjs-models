@@ -21,13 +21,13 @@ const statusDisplay = document.getElementById('status-display');
 const candidateWordsContainer = document.getElementById('candidate-words');
 
 
-export function srollDown() {
+export function scroll_down() {
   console.log('scroll down');
   console.log(this.hash);
   // Make sure this.hash has a value before overriding default behavior
      if (this.hash !== "") {
        // Store hash
-       var hash = this.hash;
+       let hash = this.hash;
 
        // Using jQuery's animate() method to add smooth page scroll
        // The optional number (800) specifies the number of milliseconds it takes to scroll to the specified area
