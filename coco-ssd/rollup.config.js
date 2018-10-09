@@ -61,7 +61,7 @@ export default [
   config({
     output: {
       format: 'umd',
-      name: 'coco-ssd',
+      name: 'cocoSsd',
       file: 'dist/coco-ssd.js'
     }
   }),
@@ -69,7 +69,7 @@ export default [
     plugins: [minify()],
     output: {
       format: 'umd',
-      name: 'coco-ssd',
+      name: 'cocoSsd',
       file: 'dist/coco-ssd.min.js'
     }
   }),

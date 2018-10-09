@@ -55,7 +55,7 @@
   resolved "https://registry.yarnpkg.com/@protobufjs/utf8/-/utf8-1.1.0.tgz#a777360b5b39a1a2e5106f8e858f2fd2d060c570"
   integrity sha1-p3c2C1s5oaLlEG+OhY8v0tBgxXA=
 
-"@tensorflow-models/coco-ssd@0.0.1":
+"@tensorflow-models/coco-ssd@0.1.0":
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/@tensorflow-models/coco-ssd/-/coco-ssd-0.1.0.tgz#b268df9ee28d1024c429a3306261a84aebbc18d2"
   integrity sha512-wp/yZAEkJiHCyl2fCgAdUB1J4+HNmn6lhXTZZbHlDXTr5ynBV2JutSMWcdt4spFcLwMAQBEJ7VQG2pQe753VnA==
