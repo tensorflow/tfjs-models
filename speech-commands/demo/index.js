@@ -21,7 +21,6 @@ import * as SpeechCommands from '../src';
 
 import {hideCandidateWords, logToStatusDisplay, plotPredictions, plotSpectrogram, populateCandidateWords, showCandidateWords} from './ui';
 
-const createRecognizerButton = document.getElementById('create-recognizer');
 const startButton = document.getElementById('start');
 const stopButton = document.getElementById('stop');
 const predictionCanvas = document.getElementById('prediction-canvas');
@@ -44,8 +43,7 @@ const XFER_MODEL_NAME = 'xfer-model';
 let recognizer;
 let transferRecognizer;
 
-createRecognizerButton.addEventListener('click', async () => {
-  createRecognizerButton.disabled = true;
+(async function() {
   logToStatusDisplay('Creating recognizer...');
   recognizer = SpeechCommands.create('BROWSER_FFT');
 
@@ -73,7 +71,7 @@ createRecognizerButton.addEventListener('click', async () => {
         logToStatusDisplay(
             'Failed to load model for recognizer: ' + err.message);
       });
-});
+})();
 
 startButton.addEventListener('click', () => {
   const activeRecognizer =
@@ -83,12 +81,13 @@ startButton.addEventListener('click', () => {
   activeRecognizer
       .startStreaming(
           result => {
+            console.log(result.spectrogramData);  // DEBUG
             plotPredictions(
                 predictionCanvas, activeRecognizer.wordLabels(), result.scores,
                 3);
-            plotSpectrogram(
-                spectrogramCanvas, result.spectrogram.data,
-                result.spectrogram.frameSize, result.spectrogram.frameSize);
+            // plotSpectrogram(
+            //     spectrogramCanvas, result.spectrogram.data,
+            //     result.spectrogram.frameSize, result.spectrogram.frameSize);
           },
           {
             includeSpectrogram: true,
@@ -150,7 +149,10 @@ enterLearnWordsButton.addEventListener('click', () => {
     const button = document.createElement('button');
     button.style['display'] = 'inline-block';
     button.style['vertical-align'] = 'middle';
-    button.textContent = `Collect "${word}" sample (0)`;
+
+    const displayWord = word === '_background_noise_' ? 'noise' : word;
+
+    button.textContent = `${displayWord} (0)`;
     wordDiv.appendChild(button);
     wordDiv.style['height'] = '100px';
     collectButtonsDiv.appendChild(wordDiv);
@@ -166,12 +168,15 @@ enterLearnWordsButton.addEventListener('click', () => {
       exampleCanvas.style['height'] = '60px';
       exampleCanvas.style['width'] = '80px';
       exampleCanvas.style['padding'] = '3px';
+      if (wordDiv.children.length > 1) {
+        wordDiv.removeChild(wordDiv.children[wordDiv.children.length - 1]);
+      }
       wordDiv.appendChild(exampleCanvas);
       plotSpectrogram(
           exampleCanvas, spectrogram.data, spectrogram.frameSize,
           spectrogram.frameSize);
       const exampleCounts = transferRecognizer.countExamples();
-      button.textContent = `Collect "${word}" sample (${exampleCounts[word]})`;
+      button.textContent = `${displayWord} (${exampleCounts[word]})`;
       logToStatusDisplay(`Collect one sample of word "${word}"`);
       enableAllCollectWordButtons();
       if (Object.keys(exampleCounts).length > 1) {

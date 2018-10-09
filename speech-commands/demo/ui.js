@@ -46,11 +46,11 @@ export function populateCandidateWords(words) {
     candidateWordsContainer.removeChild(candidateWordsContainer.firstChild);
   }
 
-  const candidatesLabel = document.createElement('span');
-  candidatesLabel.textContent = 'Words to say: ';
-  candidatesLabel.classList.add('candidate-word');
-  candidatesLabel.classList.add('candidate-word-label');
-  candidateWordsContainer.appendChild(candidatesLabel);
+  // const candidatesLabel = document.createElement('span');
+  // candidatesLabel.textContent = 'Words to say: ';
+  // candidatesLabel.classList.add('candidate-word');
+  // candidatesLabel.classList.add('candidate-word-label');
+  // candidateWordsContainer.appendChild(candidatesLabel);
 
   for (const word of words) {
     if (word === BACKGROUND_NOISE_TAG || word === UNKNOWN_TAG) {
@@ -164,32 +164,32 @@ export function plotPredictions(canvas, candidateWords, probabilities, topK) {
     }
   }
 
-  const context = canvas.getContext('2d');
-  context.clearRect(0, 0, canvas.width, canvas.height);
-  if (probabilities == null) {
-    return;
-  }
+  // const context = canvas.getContext('2d');
+  // context.clearRect(0, 0, canvas.width, canvas.height);
+  // if (probabilities == null) {
+  //   return;
+  // }
 
-  const barWidth = canvas.width / candidateWords.length * 0.8;
-  const barGap = canvas.width / candidateWords.length * 0.2;
+  // const barWidth = canvas.width / candidateWords.length * 0.8;
+  // const barGap = canvas.width / candidateWords.length * 0.2;
 
-  context.font = '24px Arial';
-  context.beginPath();
-  for (let i = 0; i < candidateWords.length; ++i) {
-    let word = candidateWords[i];
-    if (word === BACKGROUND_NOISE_TAG) {
-      word = 'noise';
-    }
-    context.fillText(word, i * (barWidth + barGap), 0.95 * canvas.height);
-  }
-  context.stroke();
+  // context.font = '24px Arial';
+  // context.beginPath();
+  // for (let i = 0; i < candidateWords.length; ++i) {
+  //   let word = candidateWords[i];
+  //   if (word === BACKGROUND_NOISE_TAG) {
+  //     word = 'noise';
+  //   }
+  //   context.fillText(word, i * (barWidth + barGap), 0.95 * canvas.height);
+  // }
+  // context.stroke();
 
-  context.beginPath();
-  for (let i = 0; i < probabilities.length; ++i) {
-    const x = i * (barWidth + barGap);
-    context.rect(
-        x, canvas.height * 0.95 * (1 - probabilities[i]), barWidth,
-        canvas.height * 0.95 * probabilities[i]);
-  }
-  context.stroke();
+  // context.beginPath();
+  // for (let i = 0; i < probabilities.length; ++i) {
+  //   const x = i * (barWidth + barGap);
+  //   context.rect(
+  //       x, canvas.height * 0.95 * (1 - probabilities[i]), barWidth,
+  //       canvas.height * 0.95 * probabilities[i]);
+  // }
+  // context.stroke();
 }
