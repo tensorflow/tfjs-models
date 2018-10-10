@@ -10,7 +10,7 @@
     },
     "dependencies": {
       "@tensorflow/tfjs": "0.13.1",
-      "@tensorflow-models/coco-ssd": "0.0.1",
+      "@tensorflow-models/coco-ssd": "0.1.0",
       "stats.js": "^0.17.0"       
     },
     "scripts": {
