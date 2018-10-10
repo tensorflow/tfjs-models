@@ -14,18 +14,17 @@
  * limitations under the License.
  * =============================================================================
  */
+import * as posenet from '@tensorflow-models/posenet';
 import * as tf from '@tensorflow/tfjs';
 import dat from 'dat.gui';
 
-import * as posenet from '../src';
-
 // clang-format off
 import {
+  drawBoundingBox,
   drawKeypoints,
   drawPoint,
   drawSegment,
   drawSkeleton,
-  drawBoundingBox,
   renderImageToCanvas,
 } from './demo_util';
 

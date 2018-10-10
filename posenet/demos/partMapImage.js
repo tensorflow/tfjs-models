@@ -14,12 +14,11 @@
  * limitations under the License.
  * =============================================================================
  */
+import * as posenet from '@tensorflow-models/posenet';
 import * as tf from '@tensorflow/tfjs';
 import dat from 'dat.gui';
 
-import * as posenet from '../src/';
 import {partColors} from './demo_util';
-
 // clang-format off
 import {
   drawKeypoints,

@@ -25,22 +25,21 @@ describeWithFlags('PoseNet', tf.test_util.NODE_ENVS, () => {
   beforeAll((done) => {
     // Mock out the actual load so we don't make network requests in the unit
     // test.
-    spyOn(posenetModel.mobilenetLoader, 'loadFromCheckpoint')
-        .and.callFake(() => {
-          return {
-            predict: () => tf.zeros([1000]),
-            convToOutput:
-                (mobileNetOutput: tf.Tensor3D, outputLayerName: string) => {
-                  const shapes: {[layer: string]: number[]} = {
-                    'heatmap_2': [16, 16, 17],
-                    'offset_2': [16, 16, 34],
-                    'displacement_fwd_2': [16, 16, 32],
-                    'displacement_bwd_2': [16, 16, 32]
-                  };
-                  return tf.zeros(shapes[outputLayerName]);
-                }
-          };
-        });
+    spyOn(posenetModel.mobilenetLoader, 'load').and.callFake(() => {
+      return {
+        predict: () => tf.zeros([1000]),
+        convToOutput:
+            (mobileNetOutput: tf.Tensor3D, outputLayerName: string) => {
+              const shapes: {[layer: string]: number[]} = {
+                'heatmap_2': [16, 16, 17],
+                'offset_2': [16, 16, 34],
+                'displacement_fwd_2': [16, 16, 32],
+                'displacement_bwd_2': [16, 16, 32]
+              };
+              return tf.zeros(shapes[outputLayerName]);
+            }
+      };
+    });
 
     posenetModel.load()
         .then((posenetInstance: posenetModel.PoseNet) => {
