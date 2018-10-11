@@ -52,7 +52,7 @@ export class PoseNet {
 
   /**
    * Infer through PoseNet. This does standard ImageNet pre-processing before
-   * inferring through the model. The image should pixels should have values
+   * inferring through the model. The image should have pixels values in the range
    * [0-255]. This method returns the heatmaps and offsets.  Infers through the
    * outputs that are needed for single pose decoding
    *
