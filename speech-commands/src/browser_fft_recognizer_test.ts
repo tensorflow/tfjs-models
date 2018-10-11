@@ -164,7 +164,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     const modelURL = `file://${modelPath}`;
     const metadataURL = `file://${metadataPath}`;
 
-    const recognizer = create(null, modelURL, metadataURL);
+    const recognizer = create('BROWSER_FFT', null, modelURL, metadataURL);
     await recognizer.ensureModelLoaded();
     expect(recognizer.wordLabels()).toEqual([
       '_background_noise_', '_unknown_', 'foo', 'bar'

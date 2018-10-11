@@ -35,6 +35,12 @@ import {FFT_TYPE, SpeechCommandRecognizer} from './types';
  *     'right', in addition to '_background_noise_' and '_unknown_'.
  *   Choosing a smaller vocabulary leads to better accuracy on the words of
  *   interest and a slightly smaller model size.
+ * @param customModelURL A custom model URL pointing to a model.json file.
+ *   Supported schemes: http://, https://, and node.js-only: file://.
+ *   Mutually exclusive with `vocabulary`. If provided, `customMetadatURL`
+ *   most also be provided.
+ * @param customMetadataURL A custom metadata URL pointing to a metadata.json
+ *   file. Must be provided together with `customModelURL`.
  * @returns An instance of SpeechCommandRecognizer.
  * @throws Error on invalid value of `fftType`.
  */
