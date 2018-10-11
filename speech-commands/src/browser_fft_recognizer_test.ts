@@ -15,10 +15,15 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+
 import '@tensorflow/tfjs-node';
 
+import * as tf from '@tensorflow/tfjs';
 import {describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
+import {writeFileSync} from 'fs';
+import {join} from 'path';
+import * as rimraf from 'rimraf';
+import * as tempfile from 'tempfile';
 
 import {BrowserFftSpeechCommandRecognizer} from './browser_fft_recognizer';
 import * as BrowserFftUtils from './browser_fft_utils';
@@ -104,17 +109,53 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
         .toMatch(/Mismatch between .* dimension.*12.*17/);
   });
 
-  fit('Load model and metadata from custom URLs', async () => {
+  it('Load model and metadata from custom URLs', async () => {
     // Construct a fake model
+    const tmpDir = tempfile();
     const model = tf.sequential();
-    model.add(tf.layers.reshape({targetShape: [43 * 232], inputShape: [43, 232, 1]}));
+    model.add(
+        tf.layers.reshape({targetShape: [43 * 232], inputShape: [43, 232, 1]}));
     model.add(tf.layers.dense({units: 4, activation: 'softmax'}));
-    model.summary();
-    const saveResult = await model.save('file:///tmp/swef');
-    console.log(saveResult);  // DEBUG
-    const newModel = await tf.loadModel('file:///tmp/swef/model.json');
-    newModel.summary();
+    await model.save(`file://${tmpDir}`);
+
+    // Construct the metadata.json for the fake model.
+    const metadata: {} = {
+      words: ['_background_noise_', '_unknown_', 'foo', 'bar'],
+      frameSize: 232
+    };
+
+    const modelPath = join(tmpDir, 'model.json');
+    const metadataPath = join(tmpDir, 'metadata.json');
+    const modelURL = `file://${modelPath}`;
+    const metadataURL = `file://${metadataPath}`;
+
+    writeFileSync(metadataPath, JSON.stringify(metadata));
+
+    const recognizer =
+        new BrowserFftSpeechCommandRecognizer(null, modelURL, metadataURL);
+    await recognizer.ensureModelLoaded();
+    expect(recognizer.wordLabels()).toEqual([
+      '_background_noise_', '_unknown_', 'foo', 'bar'
+    ]);
+
+    const recogResult = await recognizer.recognize(tf.zeros([2, 43, 232, 1]));
+    expect(recogResult.scores.length).toEqual(2);
+    expect((recogResult.scores[0] as Float32Array).length).toEqual(4);
+    expect((recogResult.scores[1] as Float32Array).length).toEqual(4);
+    console.log(recogResult);
+
+    rimraf(tmpDir, () => {});
   });
+
+  it('Providing both vocabulary and modelURL leads to Error', () => {
+    expect(
+        () => new BrowserFftSpeechCommandRecognizer(
+            'vocab_1', 'http://localhost/model.json',
+            'http://localhost/metadata.json'))
+        .toThrowError(/vocabulary name must be null or undefined .* modelURL/);
+  });
+
+  // fit('Providing ')
 
   it('Offline recognize succeeds with single tf.Tensor', async () => {
     setUpFakes();

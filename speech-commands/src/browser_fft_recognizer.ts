@@ -73,6 +73,11 @@ export class BrowserFftSpeechCommandRecognizer implements
     if (modelURL == null) {
       if (vocabulary == null) {
         vocabulary = BrowserFftSpeechCommandRecognizer.DEFAULT_VOCABULARY_NAME;
+      } else {
+        tf.util.assert(
+            BrowserFftSpeechCommandRecognizer.VALID_VOCABULARY_NAMES.indexOf(
+                vocabulary) !== -1,
+            `Invalid vocabulary name: '${vocabulary}'`);
       }
       this.modelURL = `${this.MODEL_URL_PREFIX}/${this.vocabulary}/model.json`;
       this.metadataURL =
@@ -86,10 +91,6 @@ export class BrowserFftSpeechCommandRecognizer implements
       this.metadataURL = metadataURL;
     }
 
-    tf.util.assert(
-        BrowserFftSpeechCommandRecognizer.VALID_VOCABULARY_NAMES.indexOf(
-            vocabulary) !== -1,
-        `Invalid vocabulary name: '${vocabulary}'`);
     this.vocabulary = vocabulary;
     this.parameters = {
       sampleRateHz: this.SAMPLE_RATE_HZ,
