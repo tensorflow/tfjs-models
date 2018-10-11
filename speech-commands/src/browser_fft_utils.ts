@@ -19,11 +19,14 @@ import * as tf from '@tensorflow/tfjs';
 
 // tslint:disable-next-line:no-any
 export async function loadMetadataJson(url: string): Promise<any> {
+  const HTTP_SCHEME = 'http://';
+  const HTTPS_SCHEME = 'https://';
   const FILE_SCHEME = 'file://';
-  if (url.indexOf('http://') === 0 || url.indexOf('https://') === 1) {
+  if (url.indexOf(HTTP_SCHEME) === 0 || url.indexOf(HTTPS_SCHEME) === 0) {
     return await (await fetch(url)).json();
   } else if (url.indexOf(FILE_SCHEME) === 0) {
-    const fs = require('fs');
+    // tslint:disable-next-line:no-require-imports
+    const fs = require('fs');  
     const content = JSON.parse(
         fs.readFileSync(url.slice(FILE_SCHEME.length), {encoding: 'utf-8'}));
     return content;

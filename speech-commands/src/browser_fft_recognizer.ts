@@ -71,7 +71,7 @@ export class BrowserFftSpeechCommandRecognizer implements
    *   Mutually exclusive with `vocabulary`. If provided, `customMetadatURL`
    *   most also be provided.
    * @param metadataURL A custom metadata URL pointing to a metadata.json
-  *   file. Must be provided together with `customModelURL`.
+   *   file. Must be provided together with `customModelURL`.
    */
   constructor(vocabulary?: string, modelURL?: string, metadataURL?: string) {
     tf.util.assert(
