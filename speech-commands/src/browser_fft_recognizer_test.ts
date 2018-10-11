@@ -109,27 +109,34 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
         .toMatch(/Mismatch between .* dimension.*12.*17/);
   });
 
-  it('Load model and metadata from custom URLs', async () => {
-    // Construct a fake model
-    const tmpDir = tempfile();
+  async function createFakeModelArtifact(tmpDir: string) {
     const model = tf.sequential();
     model.add(
         tf.layers.reshape({targetShape: [43 * 232], inputShape: [43, 232, 1]}));
     model.add(tf.layers.dense({units: 4, activation: 'softmax'}));
     await model.save(`file://${tmpDir}`);
+  }
 
+  function createFakeMetadataFile(tmpDir: string) {
     // Construct the metadata.json for the fake model.
     const metadata: {} = {
       words: ['_background_noise_', '_unknown_', 'foo', 'bar'],
       frameSize: 232
     };
+    const metadataPath = join(tmpDir, 'metadata.json');
+    writeFileSync(metadataPath, JSON.stringify(metadata));
+  }
+
+  it('Constructing recognize using custom URLs', async () => {
+    // Construct a fake model
+    const tmpDir = tempfile();
+    await createFakeModelArtifact(tmpDir);
+    createFakeMetadataFile(tmpDir);
 
     const modelPath = join(tmpDir, 'model.json');
     const metadataPath = join(tmpDir, 'metadata.json');
     const modelURL = `file://${modelPath}`;
     const metadataURL = `file://${metadataPath}`;
-
-    writeFileSync(metadataPath, JSON.stringify(metadata));
 
     const recognizer =
         new BrowserFftSpeechCommandRecognizer(null, modelURL, metadataURL);
@@ -142,7 +149,31 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(recogResult.scores.length).toEqual(2);
     expect((recogResult.scores[0] as Float32Array).length).toEqual(4);
     expect((recogResult.scores[1] as Float32Array).length).toEqual(4);
-    console.log(recogResult);
+
+    rimraf(tmpDir, () => {});
+  });
+
+  it('Creating recognizer using custom URLs', async () => {
+    // Construct a fake model
+    const tmpDir = tempfile();
+    await createFakeModelArtifact(tmpDir);
+    createFakeMetadataFile(tmpDir);
+
+    const modelPath = join(tmpDir, 'model.json');
+    const metadataPath = join(tmpDir, 'metadata.json');
+    const modelURL = `file://${modelPath}`;
+    const metadataURL = `file://${metadataPath}`;
+
+    const recognizer = create(null, modelURL, metadataURL);
+    await recognizer.ensureModelLoaded();
+    expect(recognizer.wordLabels()).toEqual([
+      '_background_noise_', '_unknown_', 'foo', 'bar'
+    ]);
+
+    const recogResult = await recognizer.recognize(tf.zeros([2, 43, 232, 1]));
+    expect(recogResult.scores.length).toEqual(2);
+    expect((recogResult.scores[0] as Float32Array).length).toEqual(4);
+    expect((recogResult.scores[1] as Float32Array).length).toEqual(4);
 
     rimraf(tmpDir, () => {});
   });
@@ -155,7 +186,12 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
         .toThrowError(/vocabulary name must be null or undefined .* modelURL/);
   });
 
-  // fit('Providing ')
+  it('Providing modelURL without metadataURL leads to Error', () => {
+    expect(
+        () => new BrowserFftSpeechCommandRecognizer(
+            null, 'http://localhost/model.json'))
+        .toThrowError(/modelURL and metadataURL must be both provided/);
+  });
 
   it('Offline recognize succeeds with single tf.Tensor', async () => {
     setUpFakes();

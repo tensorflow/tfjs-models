@@ -53,7 +53,8 @@ export function create(
   }
 
   if (fftType === 'BROWSER_FFT') {
-    return new BrowserFftSpeechCommandRecognizer(vocabulary);
+    return new BrowserFftSpeechCommandRecognizer(
+        vocabulary, customModelURL, customMetadataURL);
   } else if (fftType === 'SOFT_FFT') {
     throw new Error(
         'SOFT_FFT SpeechCommandRecognizer has not been implemented yet.');
