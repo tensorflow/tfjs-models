@@ -15,6 +15,8 @@
  * =============================================================================
  */
 
+import * as tf from '@tensorflow/tfjs';
+
 import {BrowserFftSpeechCommandRecognizer} from './browser_fft_recognizer';
 import {FFT_TYPE, SpeechCommandRecognizer} from './types';
 
@@ -37,7 +39,19 @@ import {FFT_TYPE, SpeechCommandRecognizer} from './types';
  * @throws Error on invalid value of `fftType`.
  */
 export function create(
-    fftType: FFT_TYPE, vocabulary?: string): SpeechCommandRecognizer {
+    fftType: FFT_TYPE, vocabulary?: string, customModelURL?: string,
+    customMetadataURL?: string): SpeechCommandRecognizer {
+  tf.util.assert(
+      customModelURL == null && customMetadataURL == null ||
+          customModelURL != null && customMetadataURL != null,
+      `customModelURL and customMetadataURL must be both provided or ` +
+          `both not provided.`);
+  if (customModelURL != null) {
+    tf.util.assert(
+        vocabulary == null,
+        `vocabulary name must be null or undefined when modelURL is provided`);
+  }
+
   if (fftType === 'BROWSER_FFT') {
     return new BrowserFftSpeechCommandRecognizer(vocabulary);
   } else if (fftType === 'SOFT_FFT') {
