@@ -88,6 +88,7 @@ export class BrowserFftSpeechCommandRecognizer implements
                 vocabulary) !== -1,
             `Invalid vocabulary name: '${vocabulary}'`);
       }
+      this.vocabulary = vocabulary;
       this.modelURL = `${this.MODEL_URL_PREFIX}/${this.vocabulary}/model.json`;
       this.metadataURL =
           `${this.MODEL_URL_PREFIX}/${this.vocabulary}/metadata.json`;
@@ -100,7 +101,6 @@ export class BrowserFftSpeechCommandRecognizer implements
       this.metadataURL = metadataURL;
     }
 
-    this.vocabulary = vocabulary;
     this.parameters = {
       sampleRateHz: this.SAMPLE_RATE_HZ,
       fftSize: this.FFT_SIZE,
