@@ -21,7 +21,7 @@ import * as SpeechCommands from '../src';
 
 import {hideCandidateWords, logToStatusDisplay, plotPredictions, plotSpectrogram, populateCandidateWords, showCandidateWords} from './ui';
 
-const createRecognizerButton = document.getElementById('create-recognizer');
+// const createRecognizerButton = document.getElementById('create-recognizer');
 const XFER_MODEL_NAME = 'xfer-model';
 
 let recognizer;
@@ -76,9 +76,9 @@ const words = [
     "yes",
     "zero"];
 
-createRecognizerButton.addEventListener('click', async () => {
-  createRecognizerButton.disabled = true;
-  console.log('clicked create button');
+window.addEventListener('load', async () => {
+  // createRecognizerButton.disabled = true;
+  console.log('Loading module on page load');
   recognizer = SpeechCommands.create('BROWSER_FFT');
 
   // Make sure the tf.Model is loaded through HTTP. If this is not
@@ -99,7 +99,7 @@ createRecognizerButton.addEventListener('click', async () => {
       activeRecognizer
           .startStreaming(
               result => {
-                console.log('prediction- result', result);
+                console.log('Prediction- result: ', result);
 
                 let word_index = recognize_word_index(result.scores);
 
