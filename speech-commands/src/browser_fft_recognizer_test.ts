@@ -16,6 +16,8 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
+import '@tensorflow/tfjs-node';
+
 import {describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
 import {BrowserFftSpeechCommandRecognizer} from './browser_fft_recognizer';
@@ -100,6 +102,18 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     }
     expect(caughtError.message)
         .toMatch(/Mismatch between .* dimension.*12.*17/);
+  });
+
+  fit('Load model and metadata from custom URLs', async () => {
+    // Construct a fake model
+    const model = tf.sequential();
+    model.add(tf.layers.reshape({targetShape: [43 * 232], inputShape: [43, 232, 1]}));
+    model.add(tf.layers.dense({units: 4, activation: 'softmax'}));
+    model.summary();
+    const saveResult = await model.save('file:///tmp/swef');
+    console.log(saveResult);  // DEBUG
+    const newModel = await tf.loadModel('file:///tmp/swef/model.json');
+    newModel.summary();
   });
 
   it('Offline recognize succeeds with single tf.Tensor', async () => {
