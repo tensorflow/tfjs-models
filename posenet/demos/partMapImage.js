@@ -117,15 +117,6 @@ async function drawSinglePoseResults(
       canvas, [scaledPose], guiState.singlePoseDetection.minPartConfidence,
       guiState.singlePoseDetection.minPoseConfidence);
 
-  const {part, showHeatmap, showOffsets} = guiState.visualizeOutputs;
-  // displacements not used for single pose decoding
-  const showDisplacements = false;
-  const partId = +part;
-
-  visualizeOutputs(
-      partId, showHeatmap, showOffsets, showDisplacements,
-      canvas.getContext('2d'));
-
   const {partChannel, showSegments, showPartHeatmaps} = guiState.visualizeParts;
   const partChannelId = +partChannel;
 
@@ -193,22 +184,6 @@ const parentToChildEdges =
       return result;
     }, {});
 
-/**
- * Child to parent edges from the skeleton indexed by part id.  Indexes the edge
- * ids by the part ids.
- */
-const childToParentEdges =
-    parentChildrenTuples.reduce((result, [, partId], i) => {
-      if (result[partId]) {
-        result[partId] = [...result[partId], i];
-      } else {
-        result[partId] = [i];
-      }
-
-      return result;
-    }, {});
-
-
 function drawOffsetVector(
     ctx, y, x, outputStride, offsetsVectorY, offsetsVectorX) {
   drawSegment(
@@ -236,62 +211,6 @@ function drawDisplacementEdgesFrom(
           [offsetY, offsetX],
           [offsetY + displacementY, offsetX + displacementX], 'blue', 1., ctx);
     });
-  }
-}
-
-/**
- * Visualizes the outputs from the model which are used for decoding poses.
- * Limited to visualizing the outputs for a single part.
- *
- * @param partId The id of the part to visualize
- *
- */
-function visualizeOutputs(
-    partId, drawHeatmaps, drawOffsetVectors, drawDisplacements, ctx) {
-  const {heatmapScores, offsets, displacementFwd, displacementBwd} =
-      modelOutputs;
-  const outputStride = +guiState.outputStride;
-
-  const [height, width] = heatmapScores.shape;
-
-  ctx.globalAlpha = 0;
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const score = heatmapScores.get(y, x, partId);
-
-      // to save on performance, don't draw anything with a low score.
-      if (score < 0.05) continue;
-
-      // set opacity of drawn elements based on the score
-      ctx.globalAlpha = score;
-
-      if (drawHeatmaps) {
-        drawPoint(ctx, y * outputStride, x * outputStride, 2, 'yellow');
-      }
-
-      const offsetsVectorY = offsets.get(y, x, partId);
-      const offsetsVectorX = offsets.get(y, x, partId + 17);
-
-      if (drawOffsetVectors) {
-        drawOffsetVector(
-            ctx, y, x, outputStride, offsetsVectorY, offsetsVectorX);
-      }
-
-      if (drawDisplacements) {
-        // exponentially affect the alpha of the displacements;
-        ctx.globalAlpha *= score;
-
-        drawDisplacementEdgesFrom(
-            ctx, partId, displacementFwd, outputStride, parentToChildEdges, y,
-            x, offsetsVectorY, offsetsVectorX);
-
-        drawDisplacementEdgesFrom(
-            ctx, partId, displacementBwd, outputStride, childToParentEdges, y,
-            x, offsetsVectorY, offsetsVectorX);
-      }
-    }
-
-    ctx.globalAlpha = 1;
   }
 }
 
@@ -467,12 +386,6 @@ function setupGui(net) {
     segmentationThreshold: 0.5,
     showSegments: true,
     showPartHeatmaps: true,
-    visualizeOutputs: {
-      part: 0,
-      showHeatmap: false,
-      showOffsets: false,
-      showDisplacements: false,
-    },
     visualizeParts:
         {partChannel: 0, showSegments: false, showPartHeatmaps: false}
   };
@@ -504,21 +417,6 @@ function setupGui(net) {
       .onChange(decodeSingleAndMultiplePoses);
   gui.add(guiState, 'showSegments').onChange(decodeSingleAndMultiplePoses);
   gui.add(guiState, 'showPartHeatmaps').onChange(decodeSingleAndMultiplePoses);
-
-  const visualizeOutputs = gui.addFolder('Visualize Outputs');
-
-  visualizeOutputs.add(guiState.visualizeOutputs, 'part', posenet.partIds)
-      .onChange(decodeSingleAndMultiplePoses);
-  visualizeOutputs.add(guiState.visualizeOutputs, 'showHeatmap')
-      .onChange(decodeSingleAndMultiplePoses);
-  visualizeOutputs.add(guiState.visualizeOutputs, 'showOffsets')
-      .onChange(decodeSingleAndMultiplePoses);
-  visualizeOutputs.add(guiState.visualizeOutputs, 'showHeatmap')
-      .onChange(decodeSingleAndMultiplePoses);
-  visualizeOutputs.add(guiState.visualizeOutputs, 'showDisplacements')
-      .onChange(decodeSingleAndMultiplePoses);
-
-  visualizeOutputs.open();
 }
 
 function drawPartColors() {

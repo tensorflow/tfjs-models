@@ -19,14 +19,11 @@ import * as tf from '@tensorflow/tfjs';
 
 import {CheckpointLoader} from './checkpoint_loader';
 import {multiPoseCheckpoints} from './checkpoints';
-// tslint:disable-next-line:max-line-length
 import {assertValidOutputStride, assertValidScaleFactor, MobileNet, MobileNetMultiplier, OutputStride} from './mobilenet';
 import {DumpedCheckpointWeights} from './modelWeights';
 import {decodeMultiplePoses} from './multiPose/decodeMultiplePoses';
 import {decodeSinglePose} from './singlePose/decodeSinglePose';
-// tslint:disable-next-line:max-line-length
-import {InputType, Pose} from './types';
-// tslint:disable-next-line:max-line-length
+import {Pose, PosenetInput} from './types';
 import {getInputTensorDimensions, getValidResolution, scalePose, scalePoses, toResizedInputTensor} from './util';
 
 export type PoseNetResolution = 161|193|257|289|321|353|385|417|449|481|513;
@@ -134,7 +131,7 @@ export class PoseNet {
    * positions of the keypoints are in the same scale as the original image
    */
   async estimateSinglePose(
-      input: InputType, imageScaleFactor = 0.5, flipHorizontal = false,
+      input: PosenetInput, imageScaleFactor = 0.5, flipHorizontal = false,
       outputStride: OutputStride = 16): Promise<Pose> {
     assertValidOutputStride(outputStride);
     assertValidScaleFactor(imageScaleFactor);
@@ -204,7 +201,7 @@ export class PoseNet {
    * in the same scale as the original image
    */
   async estimateMultiplePoses(
-      input: InputType, imageScaleFactor = 0.5, flipHorizontal = false,
+      input: PosenetInput, imageScaleFactor = 0.5, flipHorizontal = false,
       outputStride: OutputStride = 16, maxDetections = 5, scoreThreshold = .5,
       nmsRadius = 20): Promise<Pose[]> {
     assertValidOutputStride(outputStride);

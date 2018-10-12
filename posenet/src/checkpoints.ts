@@ -22,7 +22,6 @@ const MULTI_POSE_DIR =
 
 const SEGMENTATION_MODEL_BASE_URL =
     'https://storage.googleapis.com/tfjs-models/savedmodel/';
-// 'http://localhost:8000/savedmodel/';
 
 export type Checkpoint = {
   url: string,

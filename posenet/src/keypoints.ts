@@ -92,9 +92,3 @@ export const partChannels: string[] = [
   'right_lower_arm_front',
   'left_hand'
 ];
-
-export const partChannelIds =
-    partChannels.reduce((result: NumberDict, jointName, i): NumberDict => {
-      result[jointName] = i;
-      return result;
-    }, {}) as NumberDict;

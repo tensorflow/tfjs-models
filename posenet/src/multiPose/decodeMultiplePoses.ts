@@ -121,7 +121,6 @@ export async function decodeMultiplePoses(
     nmsRadius = 20): Promise<Pose[]> {
   const poses: Pose[] = [];
 
-  // tslint:disable-next-line:max-line-length
   const [scoresBuffer, offsetsBuffer, displacementsFwdBuffer, displacementsBwdBuffer] =
       await toTensorBuffers3D(
           [heatmapScores, offsets, displacementsFwd, displacementsBwd]);

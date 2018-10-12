@@ -44,18 +44,7 @@ export type Pose = {
   score: number,
 };
 
-export type PoseWithSegmentationMaskAndColoredPartImage = {
-  pose: Pose,
-  segmentationMask: tf.Tensor2D,
-  coloredPartImage: tf.Tensor3D
-};
-
-export type SegmentationAndPartMap = {
-  segmentationMap: tf.Tensor2D,
-  partMap: tf.Tensor3D,
-};
-
-export type InputType =
+export type PosenetInput =
     ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement|tf.Tensor3D;
 
 export type TensorBuffer3D = tf.TensorBuffer<tf.Rank.R3>;

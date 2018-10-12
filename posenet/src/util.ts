@@ -16,10 +16,11 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
+import {tidy} from '@tensorflow/tfjs';
 
 import {connectedPartIndices} from './keypoints';
 import {OutputStride} from './mobilenet';
-import {InputType, Keypoint, Pose, TensorBuffer3D, Vector2D} from './types';
+import {Keypoint, Pose, PosenetInput, TensorBuffer3D, Vector2D} from './types';
 
 function eitherPointDoesntMeetConfidence(
     a: number, b: number, minConfidence: number): boolean {
@@ -127,34 +128,38 @@ export function getValidResolution(
 export function resize2d(
     tensor: tf.Tensor2D, resolution: [number, number],
     nearestNeighbor?: boolean): tf.Tensor2D {
-  return (tensor.expandDims(2) as tf.Tensor3D)
-             .resizeBilinear(resolution, nearestNeighbor)
-             .squeeze() as tf.Tensor2D;
+  return tf.tidy(
+      () => (tensor.expandDims(2) as tf.Tensor3D)
+                .resizeBilinear(resolution, nearestNeighbor)
+                .squeeze() as tf.Tensor2D);
 }
 
-export function getInputTensorDimensions(input: InputType): [number, number] {
+export function getInputTensorDimensions(input: PosenetInput):
+    [number, number] {
   return input instanceof tf.Tensor ? [input.shape[0], input.shape[1]] :
                                       [input.height, input.width];
 }
 
-function toInputTensor(input: InputType) {
+function toInputTensor(input: PosenetInput) {
   return input instanceof tf.Tensor ? input : tf.fromPixels(input);
 }
 
 export function toResizedInputTensor(
-    input: InputType, resizeHeight: number, resizeWidth: number,
+    input: PosenetInput, resizeHeight: number, resizeWidth: number,
     flipHorizontal: boolean): tf.Tensor3D {
-  const imageTensor = toInputTensor(input);
+  return tf.tidy(() => {
+    const imageTensor = toInputTensor(input);
 
-  if (flipHorizontal) {
-    return imageTensor.reverse(1).resizeBilinear([resizeHeight, resizeWidth]);
-  } else {
-    return imageTensor.resizeBilinear([resizeHeight, resizeWidth]);
-  }
+    if (flipHorizontal) {
+      return imageTensor.reverse(1).resizeBilinear([resizeHeight, resizeWidth]);
+    } else {
+      return imageTensor.resizeBilinear([resizeHeight, resizeWidth]);
+    }
+  });
 }
 
 export function cropAndResizeTo(
-    input: InputType, [targetHeight, targetWidth]: number[]) {
+    input: PosenetInput, [targetHeight, targetWidth]: number[]) {
   const [height, width] = getInputTensorDimensions(input);
   const imageTensor = toInputTensor(input);
 
@@ -194,7 +199,7 @@ export function cropAndResizeTo(
 }
 
 export function resizeAndPadTo(
-    input: InputType, [targetH, targetW]: [number, number],
+    input: PosenetInput, [targetH, targetW]: [number, number],
     flipHorizontal = false): {
   resizedAndPadded: tf.Tensor3D,
   paddedBy: [[number, number], [number, number]]
@@ -256,12 +261,14 @@ export function scaleAndCropToInputTensorShape(
     [resizedAndPaddedHeight, resizedAndPaddedWidth]: [number, number],
     [[padT, padB], [padL, padR]]: [[number, number], [number, number]]):
     tf.Tensor3D {
-  const inResizedAndPaddedSize = tensor.resizeBilinear(
-      [resizedAndPaddedHeight, resizedAndPaddedWidth], true);
+  return tf.tidy(() => {
+    const inResizedAndPaddedSize = tensor.resizeBilinear(
+        [resizedAndPaddedHeight, resizedAndPaddedWidth], true);
 
-  return removePaddingAndResizeBack(
-      inResizedAndPaddedSize, [inputTensorHeight, inputTensorWidth],
-      [[padT, padB], [padL, padR]]);
+    return removePaddingAndResizeBack(
+        inResizedAndPaddedSize, [inputTensorHeight, inputTensorWidth],
+        [[padT, padB], [padL, padR]]);
+  });
 }
 
 export function

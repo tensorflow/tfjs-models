@@ -189,7 +189,7 @@ export class MobileNet {
 
   predict(input: tf.Tensor3D, outputStride: OutputStride): tf.Tensor3D {
     // Normalize the pixels [0, 255] to be between [-1, 1].
-    const normalized = tf.div(input.asType('float32'), this.PREPROCESS_DIVISOR);
+    const normalized = tf.div(input.toFloat(), this.PREPROCESS_DIVISOR);
 
     const preprocessedInput = tf.sub(normalized, this.ONE) as tf.Tensor3D;
 

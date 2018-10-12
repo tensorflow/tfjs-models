@@ -19,14 +19,11 @@
 import * as tf from '@tensorflow/tfjs';
 
 import {segmentationCheckpoints} from './checkpoints';
-// tslint:disable-next-line:max-line-length
 import {assertValidOutputStride, MobileNet, MobileNetMultiplier, OutputStride} from './mobilenet';
 import {FrozenGraphModelWeights} from './modelWeights';
 import {decodeAndClipColoredPartMap, toMask} from './partMap/decodePartMap';
 import {decodeSinglePose} from './singlePose/decodeSinglePose';
-// tslint:disable-next-line:max-line-length
-import {InputType, Pose} from './types';
-// tslint:disable-next-line:max-line-length
+import {Pose, PosenetInput} from './types';
 import {getInputTensorDimensions, resizeAndPadTo, scaleAndCropToInputTensorShape, translateAndScalePose} from './util';
 
 const segmentationModelImageDimensions: [number, number] = [353, 257];
@@ -149,7 +146,7 @@ export class PoseNetSegmentation {
    * positions of the keypoints are in the same scale as the original image
    */
   async estimateSinglePose(
-      input: InputType, flipHorizontal = false,
+      input: PosenetInput, flipHorizontal = false,
       outputStride: OutputStride = 16): Promise<Pose> {
     assertValidOutputStride(outputStride);
 
@@ -183,7 +180,8 @@ export class PoseNetSegmentation {
   }
 
   estimateSegmentation(
-      input: InputType, flipHorizontal = false, outputStride: OutputStride = 16,
+      input: PosenetInput, flipHorizontal = false,
+      outputStride: OutputStride = 16,
       segmentationThreshold = 0.5): tf.Tensor2D {
     assertValidOutputStride(outputStride);
 
@@ -241,8 +239,8 @@ export class PoseNetSegmentation {
    * @return A segmentation mask and colored part image
    */
   estimateColoredPartMap(
-      input: InputType, flipHorizontal = false, outputStride: OutputStride = 16,
-      segmentationThreshold = 0.5,
+      input: PosenetInput, flipHorizontal = false,
+      outputStride: OutputStride = 16, segmentationThreshold = 0.5,
       partColors: Array<[number, number, number]>): tf.Tensor3D {
     assertValidOutputStride(outputStride);
 
@@ -296,7 +294,7 @@ export class PoseNetSegmentation {
  * a smaller value to increase speed at the cost of accuracy.
  *
  */
-export async function load(multiplier: MobileNetMultiplier = 0.75):
+export async function loadSegmentation(multiplier: MobileNetMultiplier = 0.75):
     Promise<PoseNetSegmentation> {
   if (tf == null) {
     throw new Error(
