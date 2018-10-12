@@ -22,7 +22,8 @@ import {decodeSinglePose} from './single_pose/decode_single_pose';
 
 export {Checkpoint, multiPoseCheckpoints, segmentationCheckpoints} from './checkpoints';
 export {partChannels, partIds, partNames, poseChain} from './keypoints';
-export {decodeAndClipColoredPartMap, toMask} from './part_map/decode_part_map';
+export {decodePartSegmentation, toMask} from './part_map/decode_part_map';
+export {drawColoredPartImageOnCanvas, maskAndDrawImageOnCanvas} from './part_map/util';
 export {load, PoseNet} from './posenet_model';
 export {loadSegmentation, PoseNetSegmentation} from './posenet_segmentation_model';
 export {Keypoint, Pose} from './types';

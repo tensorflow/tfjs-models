@@ -21,7 +21,7 @@ import * as tf from '@tensorflow/tfjs';
 import {segmentationCheckpoints} from './checkpoints';
 import {assertValidOutputStride, MobileNet, MobileNetMultiplier, OutputStride} from './mobilenet';
 import {FrozenGraphModelWeights} from './model_weights';
-import {decodeAndClipColoredPartMap, toMask} from './part_map/decode_part_map';
+import {decodePartSegmentation, toMask} from './part_map/decode_part_map';
 import {decodeSinglePose} from './single_pose/decode_single_pose';
 import {Pose, PosenetInput} from './types';
 import {getInputTensorDimensions, resizeAndPadTo, scaleAndCropToInputTensorShape, translateAndScalePose} from './util';
@@ -179,15 +179,47 @@ export class PoseNetSegmentation {
     return poseWidthPaddingRemovedAndScaled;
   }
 
-  estimateSegmentation(
+  /**
+   * Infer through PoseNet, and segmentation for a single
+   * person. This does standard ImageNet pre-processing before inferring through
+   * the model. Will resize and crop the image to 353 x 257 while maintaining
+   * the original aspect ratio before feeding through the network. The image
+   * should pixels should have values [0-255]. This method returns an array with
+   * values 0 or 1 corresponding to if a person was estimated to be in each
+   * pixel. The array size corresponds to the number of pixels in the image. See
+   * the readme for the body part ids.  If a value is 1, a person was estimated
+   * to be in the corresponding pixel.
+   *
+   * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
+   * The input image to feed through the network.
+   *
+   * @param flipHorizontal.  Defaults to false.  If the poses should be
+   * flipped/mirrored  horizontally.  This should be set to true for videos
+   * where the video is by default flipped horizontally (i.e. a webcam), and you
+   * want the poses to be returned in the proper orientation.
+   *
+   * @param outputStride the desired stride for the outputs.  Must be 32, 16,
+   * or 8. Defaults to 16. The output width and height will be will be
+   * (inputDimension - 1)/outputStride + 1
+   *
+   * @param segmentationThreshold The minimum that segmentation values must have
+   * to be considered part of the person.  Affects the generation of the
+   * segmentation mask and the clipping of the colored part image.
+   *
+   * @return An array with values 0 or 1 corresponding to if a person was
+   * estimated to be in each pixel. The array size corresponds to the number of
+   * pixels in the image. See the readme for the body part ids.  If a value is
+   * 1, a person was estimated to be in the corresponding pixel.
+   */
+  async estimatePersonSegmentation(
       input: PosenetInput, flipHorizontal = false,
       outputStride: OutputStride = 16,
-      segmentationThreshold = 0.5): tf.Tensor2D {
+      segmentationThreshold = 0.5): Promise<Int32Array> {
     assertValidOutputStride(outputStride);
 
     const [height, width] = getInputTensorDimensions(input);
 
-    return tf.tidy(() => {
+    const segmentation = tf.tidy(() => {
       const {
         resizedAndPadded,
         paddedBy,
@@ -206,16 +238,22 @@ export class PoseNetSegmentation {
 
       return toMask(scaledSegmentScores.squeeze(), segmentationThreshold);
     });
+
+    const result = await segmentation.data() as Int32Array;
+
+    return result;
   }
 
   /**
-   * Infer through PoseNet, and estimates a segmentation mask, and
-   * colored part image using the outputs. This does standard ImageNet
-   * pre-processing before inferring through the model. Will resize and crop the
-   * image to 353 x 257 while maintaining the original aspect ratio before
-   * feeding through the network. The image should pixels should have values
-   * [0-255]. This method returns a single pose, a segmentation mask, and
-   * colored part map imagee.
+   * Infer through PoseNet, and estimate body part segmentations for a single
+   * person. This does standard ImageNet pre-processing before inferring through
+   * the model. Will resize and crop the image to 353 x 257 while maintaining
+   * the original aspect ratio before feeding through the network. The image
+   * should pixels should have values [0-255]. This method returns an array with
+   * values 0-24 corresponding to the body part for each pixel.  The array size
+   * corresponds to the number of pixels in the image. See the readme for the
+   * body part ids.  If a value is -1, no body part was estimated to be in that
+   * pixel.
    *
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
@@ -233,20 +271,20 @@ export class PoseNetSegmentation {
    * to be considered part of the person.  Affects the generation of the
    * segmentation mask and the clipping of the colored part image.
    *
-   * @param partColors An array of rgb color values indexed by part channel id
-   * that are used to generate the part map image
-   *
-   * @return A segmentation mask and colored part image
+   * @return An array with values 0-24 corresponding to the body part for each
+   * pixel, indexed by pixel h, w.  The array size corresponds to the number of
+   * pixels in the image. See the readme for the body part ids.  If a value is
+   * -1, no body part was estimated to be in that pixel.
    */
-  estimateColoredPartMap(
+  async estimatePartSegmentation(
       input: PosenetInput, flipHorizontal = false,
-      outputStride: OutputStride = 16, segmentationThreshold = 0.5,
-      partColors: Array<[number, number, number]>): tf.Tensor3D {
+      outputStride: OutputStride = 16,
+      segmentationThreshold = 0.5): Promise<Int32Array> {
     assertValidOutputStride(outputStride);
 
     const [height, width] = getInputTensorDimensions(input);
 
-    return tf.tidy(() => {
+    const partSegmentation = tf.tidy(() => {
       const {
         resizedAndPadded,
         paddedBy,
@@ -270,11 +308,14 @@ export class PoseNetSegmentation {
       const segmentationMask =
           toMask(scaledSegmentScores.squeeze(), segmentationThreshold);
 
-      const coloredPartImage = decodeAndClipColoredPartMap(
-          segmentationMask, scaledPartHeatmapScore, partColors);
-
-      return coloredPartImage;
+      return decodePartSegmentation(segmentationMask, scaledPartHeatmapScore);
     });
+
+    const result = await partSegmentation.data() as Int32Array;
+
+    partSegmentation.dispose();
+
+    return result;
   }
 
   public dispose() {

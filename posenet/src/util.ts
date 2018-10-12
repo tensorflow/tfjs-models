@@ -139,7 +139,7 @@ export function getInputTensorDimensions(input: PosenetInput):
                                       [input.height, input.width];
 }
 
-function toInputTensor(input: PosenetInput) {
+export function toInputTensor(input: PosenetInput) {
   return input instanceof tf.Tensor ? input : tf.fromPixels(input);
 }
 

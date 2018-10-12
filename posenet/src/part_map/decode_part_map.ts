@@ -23,7 +23,7 @@ import * as tf from '@tensorflow/tfjs';
  *
  * @param partHeatmapScores
  */
-function toFlattenedOneHotPartMap(partHeatmapScores: tf.Tensor3D) {
+function toFlattenedOneHotPartMap(partHeatmapScores: tf.Tensor3D): tf.Tensor2D {
   const [, , numParts] = partHeatmapScores.shape;
   const partMapLocations = partHeatmapScores.argMax(2);
 
@@ -32,37 +32,23 @@ function toFlattenedOneHotPartMap(partHeatmapScores: tf.Tensor3D) {
   return tf.oneHot(partMapFlattened, numParts);
 }
 
+function clipByMask2d(image: tf.Tensor2D, mask: tf.Tensor2D): tf.Tensor2D {
+  return image.mul(mask);
+}
+
 /**
- * Takes the sigmoid of the part heatmap output and a list of rgb colors indexed
- * by part channel id, and generates a 3d tensor of an image with the
- * corresponding color at each pixel for the part with the highest value.
- * @param partHeatmapScores A 3d-tensor of the part heatmap output. The third
- * dimension corresponds to the part.
+ * Takes the sigmoid of the segmentation output, and generates a segmentation
+ * mask with a 1 or 0 at each pixel where there is a person or not a person. The
+ * segmentation threshold determines the threshold of a score for a pixel for it
+ * to be considered part of a person.
+ * @param segmentScores A 3d-tensor of the sigmoid of the segmentation output.
+ * @param segmentationThreshold The minimum that segmentation values must have
+ * to be considered part of the person.  Affects the generation of the
+ * segmentation mask and the clipping of the colored part image.
  *
- * @param partColors An array of rgb color values indexed by part channel id
- *
- * @returns A 3d tensor of an image with the corresponding color at each pixel
- * for the part with the highest value. Its height and width are the
- * output-strided size of the outputs.
+ * @returns A segmentation mask with a 1 or 0 at each pixel where there is a
+ * person or not a person.
  */
-function decodeColoredPartMap(
-    partHeatmapScores: tf.Tensor3D,
-    partColors: Array<[number, number, number]>): tf.Tensor3D {
-  const [partMapHeight, partMapWidth, numParts] = partHeatmapScores.shape;
-  const flattenedOneHotPartMap = toFlattenedOneHotPartMap(partHeatmapScores);
-
-  const colors = tf.tensor2d(partColors, [numParts, 3], 'int32');
-
-  const coloredPartMapFlattened =
-      flattenedOneHotPartMap.matMul(colors).cast('int32');
-
-  return coloredPartMapFlattened.reshape([partMapHeight, partMapWidth, 3]);
-}
-
-function clipByMask(image: tf.Tensor3D, mask: tf.Tensor2D): tf.Tensor3D {
-  return image.mul(mask.expandDims(2)) as tf.Tensor3D;
-}
-
 export function toMask(
     segmentScores: tf.Tensor2D, threshold: number): tf.Tensor2D {
   return segmentScores.greater(tf.scalar(threshold)).cast('int32') as
@@ -70,32 +56,37 @@ export function toMask(
 }
 
 /**
- * Takes the sigmoid of the segmentation mask and part heatmap output, and a
- * list of rgb colors indexed by part channel id, and generates a segmentation
- * mask and 3d tensor of an image with the corresponding color at each pixel
- * for the part with the highest value. The color values of the image are
- * clipped by the segmentation mask.
+ * Takes the sigmoid of the segmentation mask and part heatmap output, 2d tensor
+ * of an image with the corresponding value at each pixel corresponding to the
+ * part with the highest value. These part ids are clipped by the segmentation
+ * mask. Wherever the a pixel is clipped by the segmentation mask, its value
+ * will set to -1, indicating that there is no part in that pixel.
  * @param segmentScores A 3d-tensor of the sigmoid of the segmentation output.
  * @param partHeatmapScores A 3d-tensor of the sigmoid of the part heatmap
  * output. The third dimension corresponds to the part.
- * @param segmentationThreshold The minimum that segmentation values must have
- * to be considered part of the person.  Affects the generation of the
- * segmentation mask and the clipping of the colored part image.
  *
- * @param partColors An array of rgb color values indexed by part channel id
- *
- * @returns A segmentatino mask, and a 3d tensor of an image with the
- * corresponding color at each pixel for the part with the highest value. The
- * color values of the image are clipped by the segmentation mask.  Both
- * tensors returned are resized and cropped to the original image's width and
- * height.
+ * @returns A 2d tensor of an image with the corresponding value at each pixel
+ * corresponding to the part with the highest value. These part ids are clipped
+ * by the segmentation mask.  It will have values of -1 for pixels that are
+ * outside of the body and do not have a corresponding part.
  */
-export function decodeAndClipColoredPartMap(
-    segmentationMask: tf.Tensor2D, partHeatmapScores: tf.Tensor3D,
-    partColors: Array<[number, number, number]>) {
+export function decodePartSegmentation(
+    segmentationMask: tf.Tensor2D,
+    partHeatmapScores: tf.Tensor3D): tf.Tensor2D {
+  const [partMapHeight, partMapWidth, numParts] = partHeatmapScores.shape;
   return tf.tidy(() => {
-    const coloredPartMap = decodeColoredPartMap(partHeatmapScores, partColors);
+    const flattenedMap = toFlattenedOneHotPartMap(partHeatmapScores);
+    const partNumbers = tf.range(0, numParts, 1, 'int32').expandDims(1);
 
-    return clipByMask(coloredPartMap, segmentationMask);
+    const partMapFlattened = flattenedMap.matMul(partNumbers);
+
+    const partMap =
+        partMapFlattened.reshape([partMapHeight, partMapWidth]) as tf.Tensor2D;
+
+    const partMapShiftedUpForClipping =
+        partMap.add(tf.scalar(1, 'int32')) as tf.Tensor2D;
+
+    return clipByMask2d(partMapShiftedUpForClipping, segmentationMask)
+        .sub(tf.scalar(1, 'int32'));
   });
 }

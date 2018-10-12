@@ -19,7 +19,7 @@ import * as tf from '@tensorflow/tfjs';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 
-import {drawKeypoints, drawSkeleton, partColors} from './demo_util';
+import {drawKeypoints, drawSkeleton, partColors, renderImageToCanvas} from './demo_util';
 
 const stats = new Stats();
 const videoWidth = 640;
@@ -207,6 +207,21 @@ async function drawColoredPartHeatmap(canvas, video, coloredPartMap) {
   filteredImage.dispose();
 }
 
+function renderToCanvas(canvas, video) {
+  const videoWidth = video.width;
+  const videoHeight = video.height;
+  const ctx = canvas.getContext('2d');
+
+  canvas.width = videoWidth;
+  canvas.height = videoHeight;
+  ctx.clearRect(0, 0, videoWidth, videoHeight);
+  ctx.save();
+  ctx.scale(-1, 1);
+  ctx.translate(-videoWidth, 0);
+  ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
+  ctx.restore();
+}
+
 /**
  * Sets up a frames per second panel on the top-left of the window
  */
@@ -224,9 +239,6 @@ function detectPoseInRealTime(video, net) {
   const ctx = canvas.getContext('2d');
   // since images are being fed from a webcam
   const flipHorizontal = true;
-
-  canvas.width = videoWidth;
-  canvas.height = videoHeight;
 
   async function poseDetectionFrame() {
     if (guiState.changeToArchitecture) {
@@ -248,7 +260,7 @@ function detectPoseInRealTime(video, net) {
     // down the GPU
     const outputStride = +guiState.input.outputStride;
 
-    let videoTensor;
+    // renderToCanvas(canvas, video);
 
     switch (guiState.estimate) {
       case 'single-pose':
@@ -260,14 +272,7 @@ function detectPoseInRealTime(video, net) {
         const minPartConfidence =
             +guiState.singlePoseDetection.minPartConfidence;
 
-        ctx.clearRect(0, 0, videoWidth, videoHeight);
-
-        ctx.save();
-        ctx.scale(-1, 1);
-        ctx.translate(-videoWidth, 0);
-        ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
-        ctx.restore();
-
+        renderToCanvas(canvas, video);
         // For each pose (i.e. person) detected in an image, loop through the
         // poses and draw the resulting skeleton and keypoints if over certain
         // confidence scores
@@ -282,25 +287,23 @@ function detectPoseInRealTime(video, net) {
         }
         break;
       case 'segmentation':
-        const segmentationMask = guiState.net.estimateSegmentation(
-            video, flipHorizontal, outputStride,
-            guiState.segmentation.segmentationThreshold);
-        videoTensor = tf.fromPixels(video).reverse(1);
+        const personSegmentation =
+            await guiState.net.estimatePersonSegmentation(
+                video, flipHorizontal, outputStride,
+                guiState.segmentation.segmentationThreshold);
 
-        await drawSegmentation(canvas, videoTensor, segmentationMask);
-        videoTensor.dispose();
-        segmentationMask.dispose();
+        await posenet.maskAndDrawImageOnCanvas(
+            canvas, video, personSegmentation);
+
         break;
       case 'partmap':
-        const coloredPartMap = guiState.net.estimateColoredPartMap(
+        const partSegmentation = await guiState.net.estimatePartSegmentation(
             video, flipHorizontal, outputStride,
-            guiState.segmentation.segmentationThreshold, partColors);
+            guiState.segmentation.segmentationThreshold);
 
-        videoTensor = tf.fromPixels(video).reverse(1);
-        await drawColoredPartHeatmap(canvas, videoTensor, coloredPartMap);
+        await posenet.drawColoredPartImageOnCanvas(
+            canvas, video, partSegmentation, partColors);
 
-        videoTensor.dispose();
-        coloredPartMap.dispose();
         break;
       default:
         break;

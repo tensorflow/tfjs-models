@@ -100,7 +100,7 @@ function singlePersonCanvas() {
  * Draw the results from the single-pose estimation on to a canvas
  */
 async function drawSinglePoseResults(
-    scaledPose, image, segmentationMask, coloredPartImage) {
+    scaledPose, image, segmentationMask, partSegmentation) {
   const canvas = singlePersonCanvas();
   canvas.height = guiState.resizedAndPadded.shape[0];
   canvas.width = guiState.resizedAndPadded.shape[1];
@@ -108,7 +108,7 @@ async function drawSinglePoseResults(
   renderImageToCanvas(image, [513, 513], canvas);
 
   await drawPartHeatmapAndSegmentation(
-      canvas, segmentationMask, coloredPartImage);
+      canvas, segmentationMask, partSegmentation);
 
   drawResults(
       canvas, [scaledPose], guiState.singlePoseDetection.minPartConfidence,
@@ -122,39 +122,19 @@ async function drawSinglePoseResults(
       partChannelId, showSegments, showPartHeatmaps, canvas.getContext('2d'));
 }
 
-const segmentationDarkening = 0.25;
-const partMapDarkening = 0.3;
 async function drawPartHeatmapAndSegmentation(
-    canvas, segmentationMask, partMapImage) {
-  const filteredImage = tf.tidy(() => {
-    let result = tf.fromPixels(canvas);
+    canvas, segmentationMask, partSegmentation) {
+  if (guiState.showSegments && !guiState.showPartHeatmaps) {
+    const segmentationMaskArray = await segmentationMask.data();
 
-    if (guiState.showSegments && !guiState.showPartHeatmaps) {
-      const invertedMask = tf.scalar(1, 'int32').sub(segmentationMask);
-      const darkeningMask = invertedMask.cast('float32')
-                                .mul(tf.scalar(segmentationDarkening))
-                                .add(segmentationMask.cast('float32'));
+    await posenet.maskAndDrawImageOnCanvas(
+        canvas, image, segmentationMaskArray, 0.3, false);
+  } else if (guiState.showPartHeatmaps) {
+    const partMapArray = await partSegmentation.data();
 
-      result =
-          result.cast('float32').mul(darkeningMask.expandDims(2)).cast('int32');
-    }
-
-    if (guiState.showPartHeatmaps) {
-      const darkenedImage =
-          result.cast('float32').mul(tf.scalar(partMapDarkening));
-
-      result = darkenedImage
-                   .add(partMapImage.cast('float32').mul(
-                       tf.scalar(1 - partMapDarkening)))
-                   .cast('int32');
-    }
-
-    return result;
-  });
-
-  await tf.toPixels(filteredImage, canvas);
-
-  filteredImage.dispose();
+    await posenet.drawColoredPartImageOnCanvas(
+        canvas, image, partMapArray, partColors, 0.3, false);
+  }
 }
 
 function visualizeParts(partChannelId, showSegments, showPartHeatmaps, ctx) {
@@ -213,8 +193,8 @@ async function decodeSinglePoseAndDrawResults() {
       modelOutputs.partHeatmapScores, [height, width],
       [resizedHeight, resizedWidth], paddedBy);
 
-  const coloredPartImage = posenet.decodeAndClipColoredPartMap(
-      segmentationMask, scaledPartHeatmapScore, partColors);
+  const partSegmentation = await posenet.decodePartSegmentation(
+      segmentationMask, scaledPartHeatmapScore);
 
   const pose = await posenet.decodeSinglePose(
       modelOutputs.heatmapScores, modelOutputs.offsets, guiState.outputStride);
@@ -228,13 +208,13 @@ async function decodeSinglePoseAndDrawResults() {
 
   await drawSinglePoseResults(
       poseWidthPaddingRemovedAndScaled, image, segmentationMask,
-      coloredPartImage);
+      partSegmentation);
 
   scaledSegmentScores.dispose();
   scaledPartHeatmapScore.dispose();
   segmentationMask.dispose();
-  coloredPartImage.dispose();
 }
+
 
 function decodeSingleAndMultiplePoses() {
   decodeSinglePoseAndDrawResults();
@@ -334,10 +314,10 @@ function setupGui(net) {
   };
 
   const gui = new dat.GUI();
-  // Output stride:  Internally, this parameter affects the height and width of
-  // the layers in the neural network. The lower the value of the output stride
-  // the higher the accuracy but slower the speed, the higher the value the
-  // faster the speed but lower the accuracy.
+  // Output stride:  Internally, this parameter affects the height and width
+  // of the layers in the neural network. The lower the value of the output
+  // stride the higher the accuracy but slower the speed, the higher the value
+  // the faster the speed but lower the accuracy.
   gui.add(guiState, 'outputStride', [8, 16, 32]).onChange((outputStride) => {
     guiState.outputStride = +outputStride;
     testImageAndEstimatePoses(net);
