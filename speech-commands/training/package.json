@@ -7,7 +7,7 @@
   "private": true,
   "bin": "./cli",
   "dependencies": {
-    "@tensorflow/tfjs": "0.12.3",
+    "@tensorflow/tfjs": "0.13.1",
     "@tensorflow/tfjs-node": "0.1.9",
     "chalk": "^2.4.1",
     "vorpal": "1.12.0",

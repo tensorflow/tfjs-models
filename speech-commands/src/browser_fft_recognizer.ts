@@ -58,18 +58,49 @@ export class BrowserFftSpeechCommandRecognizer implements
   private transferRecognizers:
       {[name: string]: TransferBrowserFftSpeechCommandRecognizer} = {};
 
+  private modelURL: string;
+  private metadataURL: string;
+
   /**
    * Constructor of BrowserFftSpeechCommandRecognizer.
+   *
+   * @param vocabulary An optional vocabulary specifier. Mutually exclusive
+   *   with `modelURL` and `metadataURL`.
+   * @param modelURL An optional, custom model URL pointing to a model.json
+   *   file. Supported schemes: http://, https://, and node.js-only: file://.
+   *   Mutually exclusive with `vocabulary`. If provided, `metadatURL`
+   *   most also be provided.
+   * @param metadataURL A custom metadata URL pointing to a metadata.json
+   *   file. Must be provided together with `modelURL`.
    */
-  constructor(vocabulary?: string) {
-    if (vocabulary == null) {
-      vocabulary = BrowserFftSpeechCommandRecognizer.DEFAULT_VOCABULARY_NAME;
-    }
+  constructor(vocabulary?: string, modelURL?: string, metadataURL?: string) {
     tf.util.assert(
-        BrowserFftSpeechCommandRecognizer.VALID_VOCABULARY_NAMES.indexOf(
-            vocabulary) !== -1,
-        `Invalid vocabulary name: '${vocabulary}'`);
-    this.vocabulary = vocabulary;
+        modelURL == null && metadataURL == null ||
+            modelURL != null && metadataURL != null,
+        `modelURL and metadataURL must be both provided or ` +
+            `both not provided.`);
+    if (modelURL == null) {
+      if (vocabulary == null) {
+        vocabulary = BrowserFftSpeechCommandRecognizer.DEFAULT_VOCABULARY_NAME;
+      } else {
+        tf.util.assert(
+            BrowserFftSpeechCommandRecognizer.VALID_VOCABULARY_NAMES.indexOf(
+                vocabulary) !== -1,
+            `Invalid vocabulary name: '${vocabulary}'`);
+      }
+      this.vocabulary = vocabulary;
+      this.modelURL = `${this.MODEL_URL_PREFIX}/${this.vocabulary}/model.json`;
+      this.metadataURL =
+          `${this.MODEL_URL_PREFIX}/${this.vocabulary}/metadata.json`;
+    } else {
+      tf.util.assert(
+          vocabulary == null,
+          `vocabulary name must be null or undefined when modelURL is ` +
+              `provided`);
+      this.modelURL = modelURL;
+      this.metadataURL = metadataURL;
+    }
+
     this.parameters = {
       sampleRateHz: this.SAMPLE_RATE_HZ,
       fftSize: this.FFT_SIZE,
@@ -208,8 +239,7 @@ export class BrowserFftSpeechCommandRecognizer implements
 
     await this.ensureMetadataLoaded();
 
-    const model = await tf.loadModel(
-        `${this.MODEL_URL_PREFIX}/${this.vocabulary}/model.json`);
+    const model = await tf.loadModel(this.modelURL);
     // Check the validity of the model's input shape.
     if (model.inputs.length !== 1) {
       throw new Error(
@@ -272,8 +302,7 @@ export class BrowserFftSpeechCommandRecognizer implements
     if (this.words != null) {
       return;
     }
-    const metadataJSON = await loadMetadataJson(
-        `${this.MODEL_URL_PREFIX}/${this.vocabulary}/metadata.json`);
+    const metadataJSON = await loadMetadataJson(this.metadataURL);
     this.words = metadataJSON.words;
   }
 
