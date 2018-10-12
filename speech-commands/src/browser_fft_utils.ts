@@ -26,12 +26,15 @@ export async function loadMetadataJson(url: string): Promise<any> {
     return await (await fetch(url)).json();
   } else if (url.indexOf(FILE_SCHEME) === 0) {
     // tslint:disable-next-line:no-require-imports
-    const fs = require('fs');  
+    const fs = require('fs');
     const content = JSON.parse(
         fs.readFileSync(url.slice(FILE_SCHEME.length), {encoding: 'utf-8'}));
     return content;
   } else {
-    throw new Error(`Unsupported URL scheme in metadata URL: ${url}`);
+    throw new Error(
+        `Unsupported URL scheme in metadata URL: ${url}. ` +
+        `Supported schemes are: http://, https://, and ` +
+        `(node.js-only) file://`);
   }
 }
 

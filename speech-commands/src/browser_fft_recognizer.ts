@@ -63,15 +63,15 @@ export class BrowserFftSpeechCommandRecognizer implements
 
   /**
    * Constructor of BrowserFftSpeechCommandRecognizer.
-   * 
+   *
    * @param vocabulary An optional vocabulary specifier. Mutually exclusive
    *   with `modelURL` and `metadataURL`.
    * @param modelURL An optional, custom model URL pointing to a model.json
    *   file. Supported schemes: http://, https://, and node.js-only: file://.
-   *   Mutually exclusive with `vocabulary`. If provided, `customMetadatURL`
+   *   Mutually exclusive with `vocabulary`. If provided, `metadatURL`
    *   most also be provided.
    * @param metadataURL A custom metadata URL pointing to a metadata.json
-   *   file. Must be provided together with `customModelURL`.
+   *   file. Must be provided together with `modelURL`.
    */
   constructor(vocabulary?: string, modelURL?: string, metadataURL?: string) {
     tf.util.assert(
