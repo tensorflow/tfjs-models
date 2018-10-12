@@ -26,6 +26,8 @@ const XFER_MODEL_NAME = 'xfer-model';
 
 let recognizer;
 let transferRecognizer;
+let current_activation_word = 'go';
+let expected_activation_word = 'stop';
 
 function scroll_down() {
     document.body.scrollTop = document.body.scrollTop + 100;
@@ -99,19 +101,32 @@ window.addEventListener('load', async () => {
       activeRecognizer
           .startStreaming(
               result => {
-                console.log('Prediction- result: ', result);
 
                 let word_index = recognize_word_index(result.scores);
+                console.log('Result object is: ', result);
+                console.log('Predicted the word: ', words[word_index]);
 
                 // perform actions based on voice SpeechCommands
-                if (words[word_index] === 'down') {
-                    console.log(`Predicted the word 'down', will be scrolling down`);
-                    scroll_down();
-                } else if (words[word_index] === 'up') {
-                    console.log(`Predicted the word 'up', will be scrolling up`);
-                    scroll_up();
-                } else {
-                    console.log(`Predicted the word ${words[word_index]}, neither scrolling up or down`);
+                if (words[word_index] === expected_activation_word) {
+                    if (current_activation_word === 'go') {
+                        current_activation_word = 'stop';
+                        expected_activation_word = 'go';
+                    } else if (current_activation_word === 'stop') {
+                        current_activation_word = 'go';
+                        expected_activation_word = 'stop';
+                    }
+                }
+
+                if (current_activation_word === 'go') {
+                    if (words[word_index] === 'down') {
+                        console.log(`Predicted the word 'down', will be scrolling down`);
+                        scroll_down();
+                    } else if (words[word_index] === 'up') {
+                        console.log(`Predicted the word 'up', will be scrolling up`);
+                        scroll_up();
+                    } else {
+                        console.log(`Predicted the word ${words[word_index]}, neither scrolling up or down`);
+                    }
                 }
               })
                 // plotPredictions(
