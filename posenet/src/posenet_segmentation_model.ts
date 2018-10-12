@@ -20,9 +20,9 @@ import * as tf from '@tensorflow/tfjs';
 
 import {segmentationCheckpoints} from './checkpoints';
 import {assertValidOutputStride, MobileNet, MobileNetMultiplier, OutputStride} from './mobilenet';
-import {FrozenGraphModelWeights} from './modelWeights';
-import {decodeAndClipColoredPartMap, toMask} from './partMap/decodePartMap';
-import {decodeSinglePose} from './singlePose/decodeSinglePose';
+import {FrozenGraphModelWeights} from './model_weights';
+import {decodeAndClipColoredPartMap, toMask} from './part_map/decode_part_map';
+import {decodeSinglePose} from './single_pose/decode_single_pose';
 import {Pose, PosenetInput} from './types';
 import {getInputTensorDimensions, resizeAndPadTo, scaleAndCropToInputTensorShape, translateAndScalePose} from './util';
 

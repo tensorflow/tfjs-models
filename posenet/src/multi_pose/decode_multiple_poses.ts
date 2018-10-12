@@ -20,8 +20,8 @@ import * as tf from '@tensorflow/tfjs';
 import {Keypoint, Pose} from '../types';
 import {toTensorBuffers3D} from '../util';
 
-import {buildPartWithScoreQueue} from './buildPartWithScoreQueue';
-import {decodePose} from './decodePose';
+import {buildPartWithScoreQueue} from './build_part_with_score_queue';
+import {decodePose} from './decode_pose';
 import {getImageCoords, squaredDistance} from './util';
 
 function withinNmsRadiusOfCorrespondingPoint(

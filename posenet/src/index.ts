@@ -17,14 +17,14 @@
 
 import {CheckpointLoader} from './checkpoint_loader';
 import {ConvolutionDefinition, MobileNet, mobileNetArchitectures, MobileNetMultiplier, OutputStride} from './mobilenet';
-import {decodeMultiplePoses} from './multiPose/decodeMultiplePoses';
-import {decodeSinglePose} from './singlePose/decodeSinglePose';
+import {decodeMultiplePoses} from './multi_pose/decode_multiple_poses';
+import {decodeSinglePose} from './single_pose/decode_single_pose';
 
 export {Checkpoint, multiPoseCheckpoints, segmentationCheckpoints} from './checkpoints';
 export {partChannels, partIds, partNames, poseChain} from './keypoints';
-export {decodeAndClipColoredPartMap, toMask} from './partMap/decodePartMap';
+export {decodeAndClipColoredPartMap, toMask} from './part_map/decode_part_map';
 export {load, PoseNet} from './posenet_model';
-export {loadSegmentation, PoseNetSegmentation} from './posenetSegmentation_model';
+export {loadSegmentation, PoseNetSegmentation} from './posenet_segmentation_model';
 export {Keypoint, Pose} from './types';
 export {cropAndResizeTo, getAdjacentKeyPoints, getBoundingBox, getBoundingBoxPoints, removePaddingAndResizeBack, resizeAndPadTo, scaleAndCropToInputTensorShape, scalePose, translateAndScalePose} from './util';
 export {

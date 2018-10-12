@@ -23,7 +23,6 @@ import {partColors} from './demo_util';
 import {
   drawKeypoints,
   drawPoint,
-  drawSegment,
   drawSkeleton,
   renderImageToCanvas,
 } from './demo_util';
@@ -56,8 +55,6 @@ const images = [
   'tennis_in_crowd.jpg',
   'two_on_bench.jpg',
 ];
-
-const {partIds, poseChain} = posenet;
 
 /**
  * Draws a pose if it passes a minimum confidence onto a canvas.
@@ -158,60 +155,6 @@ async function drawPartHeatmapAndSegmentation(
   await tf.toPixels(filteredImage, canvas);
 
   filteredImage.dispose();
-}
-
-/**
- * Define the skeleton by part id. This is used in multi-pose estimation. This
- *defines the parent->child relationships of our tree. Arbitrarily this defines
- *the nose as the root of the tree.
- **/
-const parentChildrenTuples = poseChain.map(
-    ([parentJoinName, childJoinName]) =>
-        ([partIds[parentJoinName], partIds[childJoinName]]));
-
-/**
- * Parent to child edges from the skeleton indexed by part id.  Indexes the edge
- * ids by the part ids.
- */
-const parentToChildEdges =
-    parentChildrenTuples.reduce((result, [partId], i) => {
-      if (result[partId]) {
-        result[partId] = [...result[partId], i];
-      } else {
-        result[partId] = [i];
-      }
-
-      return result;
-    }, {});
-
-function drawOffsetVector(
-    ctx, y, x, outputStride, offsetsVectorY, offsetsVectorX) {
-  drawSegment(
-      [y * outputStride, x * outputStride],
-      [y * outputStride + offsetsVectorY, x * outputStride + offsetsVectorX],
-      'red', 1., ctx);
-}
-
-function drawDisplacementEdgesFrom(
-    ctx, partId, displacements, outputStride, edges, y, x, offsetsVectorY,
-    offsetsVectorX) {
-  const numEdges = displacements.shape[2] / 2;
-
-  const offsetX = x * outputStride + offsetsVectorX;
-  const offsetY = y * outputStride + offsetsVectorY;
-
-  const edgeIds = edges[partId] || [];
-
-  if (edgeIds.length > 0) {
-    edgeIds.forEach((edgeId) => {
-      const displacementY = displacements.get(y, x, edgeId);
-      const displacementX = displacements.get(y, x, edgeId + numEdges);
-
-      drawSegment(
-          [offsetY, offsetX],
-          [offsetY + displacementY, offsetX + displacementX], 'blue', 1., ctx);
-    });
-  }
 }
 
 function visualizeParts(partChannelId, showSegments, showPartHeatmaps, ctx) {

@@ -17,7 +17,7 @@
 
 import {PartWithScore, TensorBuffer3D} from '../types';
 
-import {MaxHeap} from './maxHeap';
+import {MaxHeap} from './max_heap';
 
 function scoreIsMaximumInLocalWindow(
     keypointId: number, score: number, heatmapY: number, heatmapX: number,

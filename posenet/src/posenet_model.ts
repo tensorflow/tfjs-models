@@ -20,9 +20,9 @@ import * as tf from '@tensorflow/tfjs';
 import {CheckpointLoader} from './checkpoint_loader';
 import {multiPoseCheckpoints} from './checkpoints';
 import {assertValidOutputStride, assertValidScaleFactor, MobileNet, MobileNetMultiplier, OutputStride} from './mobilenet';
-import {DumpedCheckpointWeights} from './modelWeights';
-import {decodeMultiplePoses} from './multiPose/decodeMultiplePoses';
-import {decodeSinglePose} from './singlePose/decodeSinglePose';
+import {DumpedCheckpointWeights} from './model_weights';
+import {decodeMultiplePoses} from './multi_pose/decode_multiple_poses';
+import {decodeSinglePose} from './single_pose/decode_single_pose';
 import {Pose, PosenetInput} from './types';
 import {getInputTensorDimensions, getValidResolution, scalePose, scalePoses, toResizedInputTensor} from './util';
 

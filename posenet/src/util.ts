@@ -16,7 +16,6 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import {tidy} from '@tensorflow/tfjs';
 
 import {connectedPartIndices} from './keypoints';
 import {OutputStride} from './mobilenet';
