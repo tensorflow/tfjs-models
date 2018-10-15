@@ -9,9 +9,8 @@ function createOffScreenCanvas() {
   document.body.append(offScreenCanvas);
 }
 
-const blurAmount = 4;
-
-function drawBlurredImageToOffscreenCanvas(image, flipHorizontal) {
+function drawBlurredImageToOffscreenCanvas(
+    image, bokehBlurAmount, flipHorizontal) {
   const {height, width} = image;
   const ctx = offScreenCanvas.getContext('2d');
   offScreenCanvas.width = width;
@@ -22,18 +21,18 @@ function drawBlurredImageToOffscreenCanvas(image, flipHorizontal) {
     ctx.scale(-1, 1);
     ctx.translate(-width, 0);
   }
-  ctx.filter = `blur(${blurAmount}px)`;
+  ctx.filter = `blur(${bokehBlurAmount}px)`;
   ctx.drawImage(video, 0, 0, width, height);
   ctx.restore();
 }
 
 export async function applyBokehEffect(
-    canvas, input, mask, flipHorizontal = true) {
+    canvas, input, mask, bokehBlurAmount = 3, flipHorizontal = true) {
   if (!offScreenCanvas) {
     createOffScreenCanvas();
   }
 
-  drawBlurredImageToOffscreenCanvas(input, flipHorizontal);
+  drawBlurredImageToOffscreenCanvas(input, bokehBlurAmount, flipHorizontal);
 
   const bokehedImage = tf.tidy(() => {
     const blurredImage = tf.fromPixels(offScreenCanvas);

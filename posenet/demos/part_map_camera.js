@@ -88,7 +88,8 @@ const guiState = {
     showSkeleton: true,
     showPoints: true,
   },
-  segmentation: {segmentationThreshold: 0.5, effect: 'mask'},
+  segmentation:
+      {segmentationThreshold: 0.5, effect: 'mask', bokehBlurAmount: 3},
   partMap: {},
   net: null,
 };
@@ -151,6 +152,14 @@ function setupGui(cameras, net) {
   let segmentation = gui.addFolder('Segmentation');
   segmentation.add(guiState.segmentation, 'segmentationThreshold', 0.0, 1.0);
   segmentation.add(guiState.segmentation, 'effect', ['mask', 'bokeh']);
+  segmentation
+      .add(
+          guiState.segmentation,
+          'bokehBlurAmount',
+          )
+      .min(1)
+      .max(20)
+      .step(1);
   segmentation.open();
 
   let partMap = gui.addFolder('Part Map');
@@ -300,7 +309,9 @@ function detectPoseInRealTime(video, net) {
                 canvas, video, personSegmentation);
             break;
           case 'bokeh':
-            await applyBokehEffect(canvas, video, personSegmentation);
+            await applyBokehEffect(
+                canvas, video, personSegmentation,
+                +guiState.segmentation.bokehBlurAmount);
             break;
         }
         break;
