@@ -19,7 +19,8 @@ import * as tf from '@tensorflow/tfjs';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 
-import {drawKeypoints, drawSkeleton, partColors, renderImageToCanvas} from './demo_util';
+import {drawKeypoints, drawSkeleton, partColors} from './demo_util';
+import {applyBokehEffect} from './segmentation_demo_util';
 
 const stats = new Stats();
 const videoWidth = 640;
@@ -87,7 +88,7 @@ const guiState = {
     showSkeleton: true,
     showPoints: true,
   },
-  segmentation: {segmentationThreshold: 0.5},
+  segmentation: {segmentationThreshold: 0.5, effect: 'mask'},
   partMap: {},
   net: null,
 };
@@ -149,6 +150,7 @@ function setupGui(cameras, net) {
 
   let segmentation = gui.addFolder('Segmentation');
   segmentation.add(guiState.segmentation, 'segmentationThreshold', 0.0, 1.0);
+  segmentation.add(guiState.segmentation, 'effect', ['mask', 'bokeh']);
   segmentation.open();
 
   let partMap = gui.addFolder('Part Map');
@@ -292,9 +294,15 @@ function detectPoseInRealTime(video, net) {
                 video, flipHorizontal, outputStride,
                 guiState.segmentation.segmentationThreshold);
 
-        await posenet.maskAndDrawImageOnCanvas(
-            canvas, video, personSegmentation);
-
+        switch (guiState.segmentation.effect) {
+          case 'mask':
+            await posenet.maskAndDrawImageOnCanvas(
+                canvas, video, personSegmentation);
+            break;
+          case 'bokeh':
+            await applyBokehEffect(canvas, video, personSegmentation);
+            break;
+        }
         break;
       case 'partmap':
         const partSegmentation = await guiState.net.estimatePartSegmentation(
