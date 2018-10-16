@@ -3,172 +3,148 @@
 <html>
 
 <head>
-    <meta charset="UTF-8">
-    <title>TensorFlow.js Speech Commands Model Demo</title>
-    <style>
-        .control {
-            display: inline-block;
-        }
-        button {
-            color: #ff8300;
-            background-color: #ffffff;
-            border-style: solid;
-            border-width: 2px;
-            border-color: #ff8300;
-            border-radius: 10px;
-            font-size: 35px;
-            height: 80px;
-            min-width: 160px;
-            margin: 5px;
-        }
-        button:disabled {
-            color: #a0a0a0;
-            border-color: #a0a0a0;
-        }
-        .transfer-learn-section input {
-            color: #0000ff;
-            background-color: #ffffff;
-            border-style: solid;
-            border-width: 2px;
-            border-color: #0000ff;
-            border-radius: 10px;
-            font-size: 35px;
-            height: 80px;
-            min-width: 160px;
-            margin: 5px;
-            position: relative;
-            width: 100%;
-        }
-        textarea {
-            font-size: 20px;
-            width: 90%;
-            height: 80%;
-            border: 2px solid #888;
-            border-radius: 10px;
-            resize: none;
-        }
-        .footer {
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            height: 20%;
-        }
-        .main-model {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-        }
-        .start-stop {
-            position: absolute;
-            top: 10px;
-            left: 0%;
-            float: right;
-        }
-        .transfer-learn {
-            position: absolute;
-            top: 40%;
-        }
-        .word-div {
-            border-radius: 10px;
-            margin: 3px;
-        }
-        .candidate-word {
-            display: inline-block;
-            font-family: monospace;
-            border: 1px solid gray;
-            background-color: lightyellow;
-            margin: 5px;
-            border-radius: 3px;
-            width: 10vw;
-            padding-top: 30px;
-            padding-bottom: 30px;
-            padding-left: 25px;
-            padding-right: 50px;
-            text-align: center;
-        }
-        .candidate-word-active {
-            border: 2px solid gray;
-            background-color: lightgreen;
-        }
-        .candidate-word-label {
-            font-weight: bold;
-            background-color: orange;
-            width: 250px;
-        }
-        .candidate-words-hidden {
-            visibility: hidden;
-        }
-        #candidate-words {
-            display: inline-block;
-            font-size: 200%;
-            position: absolute;
-            top: 20%;
-            width: 100%;
-        }
-        .transfer-learn-section {
-            position: relative;
-            /* top: 100%; */
-            top: 100vh;
-            width: 100%;
-        }
-        #collect-words {
-            display: inline-block;
-            position: relative;
-            width: 100%;
-        }
-        #learn-words {
-            width: 100%;
-        }
-        .plots {
-            display: inline-block;
-        }
-        .settings {
-            font-family: monospace;
-            font-size: 17px;
-        }
-        .settings input {
-            color: #0000ff;
-            background-color: #ffffff;
-            border-style: solid;
-            border-width: 2px;
-            border-color: #0000ff;
-            border-radius: 10px;
-            height: 40px;
-            min-width: 160px;
-            margin: 5px;
-            font-size: 17px;
-        }
-    </style>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
+  <title>TensorFlow.js Speech Commands Model Demo</title>
+  <style>
+    body {
+      margin: 30px 0 0 30px;
+      font: 400 11px system-ui;
+    }
+
+    button {
+      color: #ff8300;
+      background-color: #ffffff;
+      border-style: solid;
+      border-width: 2px;
+      border-color: #ff8300;
+      border-radius: 10px;
+      font-size: 20px;
+      margin: 5px;
+      padding: 15px;
+    }
+
+    button:disabled {
+      color: #a0a0a0;
+      border-color: #a0a0a0;
+    }
+
+    .transfer-learn-section input {
+      color: #0000ff;
+      background-color: #ffffff;
+      border-style: solid;
+      border-width: 2px;
+      border-color: #0000ff;
+      border-radius: 10px;
+      font-size: 20px;
+      margin: 5px;
+      padding: 15px;
+      position: relative;
+    }
+
+    textarea {
+      font-size: 20px;
+      width: 90%;
+      height: 80%;
+      border: 2px solid #888;
+      border-radius: 10px;
+      resize: none;
+    }
+
+    .footer {
+      height: 20%;
+    }
+
+    .transfer-learn {
+      position: absolute;
+      top: 40%;
+    }
+
+    .word-div {
+      border-radius: 10px;
+      margin: 3px;
+    }
+
+    .candidate-word {
+      border: 1px solid gray;
+      background-color: lightyellow;
+      margin: 5px;
+      border-radius: 3px;
+      width: 10vw;
+      padding: 15px;
+      text-align: center;
+    }
+
+    .candidate-word-active {
+      border: 2px solid gray;
+      background-color: lightgreen;
+    }
+
+    .candidate-word-label {
+      font-weight: bold;
+      background-color: orange;
+      width: 250px;
+    }
+
+    .candidate-words-hidden {
+      display: none !important;
+    }
+
+    #candidate-words {
+      display: flex;
+      flex-wrap: wrap;
+      font-size: 20px;
+    }
+
+    #collect-words {
+      display: flex;
+      flex-wrap: wrap;
+      flex-direction: column;
+    }
+
+    #plots {
+      display: flex;
+    }
+
+    .settings {
+      font-size: 17px;
+    }
+
+    .settings input {
+      color: #0000ff;
+      background-color: #ffffff;
+      border-style: solid;
+      border-width: 2px;
+      border-color: #0000ff;
+      border-radius: 10px;
+      margin: 5px;
+      font-size: 17px;
+    }
+    .transfer-word {
+      display: flex;
+      width: 330px;
+      justify-content: space-between;
+    }
+  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 
 <body>
-  <div class="footer">
-    <textarea id="status-display" style="visibility: hidden" cols="80" readonly="true"></textarea>
-  </div>
-
-  <div class='main-model'>
-    <div class="settings">
-      <span style="visibility:hidden">Prob. threshold:</span>
-      <input style="visibility:hidden" class="settings" size="5" id="proba-threshold" value="0.75">
-    </div>
-    <div id="candidate-words" class="candidate-words-hidden">
-    </div>
-    <div>
-      <canvas id="prediction-canvas" height="250" width="600"></canvas>
-    </div>
-    <canvas id="spectrogram-canvas" height="250" width="600"></canvas>
-  </div>
-
   <div class="start-stop">
     <button id="start" disabled="true">Start</button>
     <button id="stop" disabled="true">Stop</button>
-    <!-- <a href="#transfer-learning"><button id="go-to-transfer-learn" style="font-size:25px;">Transfer learning ↓</button></a> -->
   </div>
-
-  <a name="transfer-learning">
+  <div class='main-model'>
+    <div class="settings">
+      <span style="display:none">Prob. threshold:</span>
+      <input style="display:none" class="settings" size="5" id="proba-threshold" value="0.75">
+    </div>
+    <div id="candidate-words" class="candidate-words-hidden"></div>
+  </div>
+  <div class="footer" style="display: none;">
+    <textarea id="status-display" style="display: none" cols="80" readonly="true"></textarea>
+  </div>
   <div class="transfer-learn-section">
-    <input id="learn-words" size="40" value="_background_noise_,一,二,三,四,上,下,左,右">
+    <input id="learn-words" size="40" value="_background_noise_,hi,awesome,bye">
     <button id="enter-learn-words" disabled="true">Enter transfer words</button>
 
     <div id="transfer-learn-history"></div>
