@@ -154,7 +154,7 @@ enterLearnWordsButton.addEventListener('click', () => {
 
     button.textContent = `${displayWord} (0)`;
     wordDiv.appendChild(button);
-    wordDiv.style['height'] = '100px';
+    wordDiv.className = 'transfer-word';
     collectButtonsDiv.appendChild(wordDiv);
     collectWordDivs[word] = wordDiv;
     collectWordButtons[word] = button;
