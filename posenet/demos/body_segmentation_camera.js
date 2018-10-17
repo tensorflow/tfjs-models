@@ -18,7 +18,8 @@ import * as posenet from '@tensorflow-models/posenet';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 
-import {drawKeypoints, drawSkeleton, partColors} from './demo_util';
+import {drawKeypoints, drawSkeleton} from './demo_util';
+import * as partColorScales from './part_color_scales';
 import {applyBokehEffect} from './segmentation_demo_util';
 
 const stats = new Stats();
@@ -89,7 +90,7 @@ const guiState = {
   },
   segmentation:
       {segmentationThreshold: 0.5, effect: 'mask', bokehBlurAmount: 3},
-  partMap: {},
+  partMap: {colorScale: 'warm'},
   net: null,
 };
 
@@ -162,6 +163,7 @@ function setupGui(cameras, net) {
   segmentation.open();
 
   let partMap = gui.addFolder('Part Map');
+  partMap.add(guiState.partMap, 'colorScale', Object.keys(partColorScales));
 
   architectureController.onChange(function(architecture) {
     guiState.changeToArchitecture = architecture;
@@ -285,7 +287,8 @@ function segmentBodyInRealTime(video, net) {
             guiState.segmentation.segmentationThreshold);
 
         await posenet.drawColoredPartImageOnCanvas(
-            canvas, video, partSegmentation, partColors);
+            canvas, video, partSegmentation,
+            partColorScales[guiState.partMap.colorScale]);
 
         break;
       default:

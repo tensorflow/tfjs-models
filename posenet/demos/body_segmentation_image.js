@@ -18,7 +18,6 @@ import * as posenet from '@tensorflow-models/posenet';
 import * as tf from '@tensorflow/tfjs';
 import dat from 'dat.gui';
 
-import {partColors} from './demo_util';
 // clang-format off
 import {
   drawKeypoints,
@@ -26,6 +25,7 @@ import {
   drawSkeleton,
   renderImageToCanvas,
 } from './demo_util';
+import * as partColorScales from './part_color_scales';
 
 // clang-format on
 
@@ -132,8 +132,10 @@ async function drawPartHeatmapAndSegmentation(
   } else if (guiState.showPartHeatmaps) {
     const partMapArray = await partSegmentation.data();
 
+    const scale = partColorScales[guiState.partColorScale];
+    drawPartColors(scale);
     await posenet.drawColoredPartImageOnCanvas(
-        canvas, image, partMapArray, partColors, 0.3, false);
+        canvas, image, partMapArray, scale, 0.3, false);
   }
 }
 
@@ -309,8 +311,7 @@ function setupGui(net) {
     segmentationThreshold: 0.5,
     showSegments: true,
     showPartHeatmaps: true,
-    visualizeParts:
-        {partChannel: 0, showSegments: false, showPartHeatmaps: false}
+    partColorScale: 'rainbow'
   };
 
   const gui = new dat.GUI();
@@ -340,17 +341,21 @@ function setupGui(net) {
       .onChange(decodeSingleAndMultiplePoses);
   gui.add(guiState, 'showSegments').onChange(decodeSingleAndMultiplePoses);
   gui.add(guiState, 'showPartHeatmaps').onChange(decodeSingleAndMultiplePoses);
+
+  gui.add(guiState, 'partColorScale', Object.keys(partColorScales))
+      .onChange(decodeSingleAndMultiplePoses);
 }
 
-function drawPartColors() {
+function drawPartColors(colorScale) {
   const colorsDiv = document.getElementById('colors');
+  colorsDiv.innerHTML = '';
 
   const listHolder = document.createElement('ul');
 
   const listItems = posenet.partChannels.map((partChannelName, i) => {
     const listElement = document.createElement('li');
     const box = document.createElement('div');
-    const color = partColors[i];
+    const color = colorScale[i];
     box.setAttribute('class', 'color');
     box.setAttribute('style', `background-color: rgb(${color.join(', ')})`);
 
@@ -379,7 +384,6 @@ export async function bindPage() {
 
   setupGui(net);
 
-  drawPartColors();
 
   await testImageAndEstimatePoses(net);
   document.getElementById('loading').style.display = 'none';
