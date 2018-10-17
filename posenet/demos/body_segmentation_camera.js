@@ -15,7 +15,6 @@
  * =============================================================================
  */
 import * as posenet from '@tensorflow-models/posenet';
-import * as tf from '@tensorflow/tfjs';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 
@@ -185,39 +184,6 @@ function setupGui(cameras, net) {
   });
 }
 
-const segmentationDarkening = 0.25;
-const partMapDarkening = 0.3;
-async function drawSegmentation(canvas, video, segmentationMask) {
-  const filteredImage = tf.tidy(() => {
-    const invertedMask = tf.scalar(1, 'int32').sub(segmentationMask);
-    const darkeningMask = invertedMask.cast('float32')
-                              .mul(tf.scalar(segmentationDarkening))
-                              .add(segmentationMask.cast('float32'));
-
-    return video.cast('float32').mul(darkeningMask.expandDims(2)).cast('int32');
-  });
-
-  await tf.toPixels(filteredImage, canvas);
-
-  filteredImage.dispose();
-}
-
-async function drawColoredPartHeatmap(canvas, video, coloredPartMap) {
-  const filteredImage = tf.tidy(() => {
-    const darkenedImage =
-        video.cast('float32').mul(tf.scalar(partMapDarkening));
-
-    return darkenedImage
-        .add(
-            coloredPartMap.cast('float32').mul(tf.scalar(1 - partMapDarkening)))
-        .cast('int32');
-  });
-
-  await tf.toPixels(filteredImage, canvas);
-
-  filteredImage.dispose();
-}
-
 function renderToCanvas(canvas, video) {
   const videoWidth = video.width;
   const videoHeight = video.height;
@@ -245,13 +211,13 @@ function setupFPS() {
  * Feeds an image to posenet to estimate poses - this is where the magic
  * happens. This function loops with a requestAnimationFrame method.
  */
-function detectPoseInRealTime(video, net) {
+function segmentBodyInRealTime(video, net) {
   const canvas = document.getElementById('output');
   const ctx = canvas.getContext('2d');
   // since images are being fed from a webcam
   const flipHorizontal = true;
 
-  async function poseDetectionFrame() {
+  async function bodySegmentationFrame() {
     if (guiState.changeToArchitecture) {
       // Important to purge variables and free up GPU memory
       guiState.net.dispose();
@@ -270,8 +236,6 @@ function detectPoseInRealTime(video, net) {
     // Scale an image down to a certain factor. Too large of an image will slow
     // down the GPU
     const outputStride = +guiState.input.outputStride;
-
-    // renderToCanvas(canvas, video);
 
     switch (guiState.estimate) {
       case 'single-pose':
@@ -331,10 +295,10 @@ function detectPoseInRealTime(video, net) {
     // End monitoring code for frames per second
     stats.end();
 
-    requestAnimationFrame(poseDetectionFrame);
+    requestAnimationFrame(bodySegmentationFrame);
   }
 
-  poseDetectionFrame();
+  bodySegmentationFrame();
 }
 
 /**
@@ -364,7 +328,7 @@ export async function bindPage() {
   setupFPS();
   setupGui([], net);
   setupFPS();
-  detectPoseInRealTime(video, net);
+  segmentBodyInRealTime(video, net);
 }
 
 navigator.getUserMedia = navigator.getUserMedia ||

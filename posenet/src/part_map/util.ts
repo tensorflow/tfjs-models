@@ -54,7 +54,8 @@ export function toColorMap(
 
 export function applyColorMap(
     image: tf.Tensor3D, partMap: number[],
-    partColors: Array<[number, number, number]>, partMapDarkening = 0.3) {
+    partColors: Array<[number, number, number]>,
+    partMapDarkening = 0.3): tf.Tensor3D {
   return tf.tidy(() => {
     const darkenedImage = image.toFloat().mul(tf.scalar(partMapDarkening));
 

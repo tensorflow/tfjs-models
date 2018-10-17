@@ -1,4 +1,3 @@
-import * as posenet from '@tensorflow-models/posenet';
 import * as tf from '@tensorflow/tfjs';
 
 let offScreenCanvas;

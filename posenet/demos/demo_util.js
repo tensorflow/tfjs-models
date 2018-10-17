@@ -14,8 +14,8 @@
  * limitations under the License.
  * =============================================================================
  */
+import * as posenet from '@tensorflow-models/posenet';
 import * as tf from '@tensorflow/tfjs';
-import * as posenet from '../src';
 
 const color = 'aqua';
 const boundingBoxColor = 'red';
@@ -42,23 +42,6 @@ export function drawSegment([ay, ax], [by, bx], color, scale, ctx) {
   ctx.lineWidth = lineWidth;
   ctx.strokeStyle = color;
   ctx.stroke();
-}
-
-export function drawSegmentation(
-    segmentation, segmentationThreshold, outputStride, ctx) {
-  const [height, width] = segmentation.shape;
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const value = segmentation.get(y, x);
-      if (value >= segmentationThreshold) {
-        drawPoint(
-            ctx,
-            y,
-            x,
-        )
-      }
-    }
-  }
 }
 
 /**

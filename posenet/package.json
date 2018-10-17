@@ -21,7 +21,7 @@
     "babel-core": "^6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",
     "jasmine": "^3.2.0",
-    "jasmine-core": "^3.1.0",
+    "jasmine-core": "~3.1.0",
     "rimraf": "~2.6.2",
     "rollup": "~0.58.2",
     "rollup-plugin-node-resolve": "~3.3.0",
