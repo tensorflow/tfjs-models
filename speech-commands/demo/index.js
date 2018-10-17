@@ -92,7 +92,8 @@ startButton.addEventListener('click', () => {
           },
           {
             includeSpectrogram: true,
-            probabilityThreshold: Number.parseFloat(probaThresholdInput.value)
+            probabilityThreshold: Number.parseFloat(probaThresholdInput.value),
+            delayWindows: 2
           })
       .then(() => {
         startButton.disabled = true;

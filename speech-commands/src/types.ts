@@ -245,6 +245,18 @@ export interface StreamingRecognitionConfig {
    * Default: `false`.
    */
   includeSpectrogram?: boolean;
+
+  /**
+   * Number of windows to take the maximum winning probability score over.
+   *
+   * Among the `delayWinndows` consecutive windows, the window with
+   * the highest probability score is used to call the callback function.
+   * This can help ensure that the early part of a words doesn't get recognized
+   * as wrong words and sporadically trigger the callback.
+   *
+   * Default: 1.
+   */
+  delayWindows?: number;
 }
 
 /**
