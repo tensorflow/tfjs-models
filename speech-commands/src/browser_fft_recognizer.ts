@@ -157,8 +157,6 @@ export class BrowserFftSpeechCommandRecognizer implements
   async startStreaming(
       callback: RecognizerCallback,
       config?: StreamingRecognitionConfig): Promise<void> {
-    console.log('config:', config);  // DEBUG
-
     if (streaming) {
       throw new Error(
           'Cannot start streaming again when streaming is ongoing.');
@@ -197,7 +195,7 @@ export class BrowserFftSpeechCommandRecognizer implements
     tf.util.assert(
         delayWindows > 0 && Number.isInteger(delayWindows),
         `If specified, delayWindows is expected to be a positive integer, ` +
-        `but got ${delayWindows}`);
+            `but got ${delayWindows}`);
     // Pre-populate the delayWinningProbs Array.
     this.winningScoresOverWindows = [];
     this.winningIndicesOverWindows = [];
@@ -205,7 +203,6 @@ export class BrowserFftSpeechCommandRecognizer implements
       this.winningScoresOverWindows.push(-Infinity);
       this.winningIndicesOverWindows.push(-1);
     }
-    console.log(`delayWindows = ${delayWindows}`);  // DEBUG
 
     const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
       const y = tf.tidy(() => this.model.predict(x) as tf.Tensor);
@@ -218,14 +215,12 @@ export class BrowserFftSpeechCommandRecognizer implements
       // Rotate the delayWinningScores Array.
       // Keep in mind that its last element is the most recent one.
       for (let i = 0; i < delayWindows - 1; ++i) {
-        this.winningScoresOverWindows[i] =
-            this.winningScoresOverWindows[i + 1];
+        this.winningScoresOverWindows[i] = this.winningScoresOverWindows[i + 1];
         this.winningIndicesOverWindows[i] =
             this.winningIndicesOverWindows[i + 1];
       }
       this.winningScoresOverWindows[delayWindows - 1] = maxScore;
       this.winningIndicesOverWindows[delayWindows - 1] = maxIndex;
-      console.log(this.winningScoresOverWindows);  // DEBUG
 
       const winningScores = this.winningScoresOverWindows.slice();
       if (!invokeCallbackOnNoiseAndUnknown) {
@@ -242,8 +237,9 @@ export class BrowserFftSpeechCommandRecognizer implements
 
       const {maxValue: maxScoreOverWindows, maxIndex: maxIndicesOverWindows} =
           arrayMax(winningScores);
-      console.log(maxScoreOverWindows);  // DEBUG
-      console.log(maxIndicesOverWindows);  // DEBUG
+      // TODO(cais): Add unit test for delayWindows > 1.
+      // TODO(cais): Right now the spectrogram provided in the callback isn't
+      //   quite right. Fix it.
 
       if (maxScoreOverWindows < probabilityThreshold) {
         return false;
@@ -259,8 +255,8 @@ export class BrowserFftSpeechCommandRecognizer implements
         let wordDetected = true;
         if (!invokeCallbackOnNoiseAndUnknown) {
           // Skip background noise and unknown tokens.
-          if (this.words[maxIndex] === BACKGROUND_NOISE_TAG ||
-              this.words[maxIndex] === UNKNOWN_TAG) {
+          if (this.words[maxIndicesOverWindows] === BACKGROUND_NOISE_TAG ||
+              this.words[maxIndicesOverWindows] === UNKNOWN_TAG) {
             wordDetected = false;
           }
         }
