@@ -14,13 +14,12 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as posenet from '@tensorflow-models/posenet';
+import * as personSegmentation from '@tensorflow-models/person-segmentation';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 
-import {drawKeypoints, drawSkeleton} from './demo_util';
 import * as partColorScales from './part_color_scales';
-import {applyBokehEffect} from './segmentation_demo_util';
+import {applyBokehEffect} from './util.js';
 
 const stats = new Stats();
 const videoWidth = 640;
@@ -119,7 +118,7 @@ function setupGui(cameras, net) {
   // person to be in the frame or results will be innaccurate. Multi-pose works
   // for more than 1 person
   const estimateController =
-      gui.add(guiState, 'estimate', ['single-pose', 'segmentation', 'partmap']);
+      gui.add(guiState, 'estimate', ['segmentation', 'partmap']);
 
   // The input parameters have the most effect on accuracy and speed of the
   // network
@@ -186,21 +185,6 @@ function setupGui(cameras, net) {
   });
 }
 
-function renderToCanvas(canvas, video) {
-  const videoWidth = video.width;
-  const videoHeight = video.height;
-  const ctx = canvas.getContext('2d');
-
-  canvas.width = videoWidth;
-  canvas.height = videoHeight;
-  ctx.clearRect(0, 0, videoWidth, videoHeight);
-  ctx.save();
-  ctx.scale(-1, 1);
-  ctx.translate(-videoWidth, 0);
-  ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
-  ctx.restore();
-}
-
 /**
  * Sets up a frames per second panel on the top-left of the window
  */
@@ -215,7 +199,6 @@ function setupFPS() {
  */
 function segmentBodyInRealTime(video, net) {
   const canvas = document.getElementById('output');
-  const ctx = canvas.getContext('2d');
   // since images are being fed from a webcam
   const flipHorizontal = true;
 
@@ -227,7 +210,7 @@ function segmentBodyInRealTime(video, net) {
       // Load the PoseNet model weights for either the 0.50, 0.75, 1.00, or 1.01
       // version
       guiState.net =
-          await posenet.loadSegmentation(+guiState.changeToArchitecture);
+          await personSegmentation.load(+guiState.changeToArchitecture);
 
       guiState.changeToArchitecture = null;
     }
@@ -240,43 +223,19 @@ function segmentBodyInRealTime(video, net) {
     const outputStride = +guiState.input.outputStride;
 
     switch (guiState.estimate) {
-      case 'single-pose':
-        const pose = await guiState.net.estimateSinglePose(
-            video, flipHorizontal, outputStride);
-
-        const minPoseConfidence =
-            +guiState.singlePoseDetection.minPoseConfidence;
-        const minPartConfidence =
-            +guiState.singlePoseDetection.minPartConfidence;
-
-        renderToCanvas(canvas, video);
-        // For each pose (i.e. person) detected in an image, loop through the
-        // poses and draw the resulting skeleton and keypoints if over certain
-        // confidence scores
-        const {score, keypoints} = pose;
-        if (score >= minPoseConfidence) {
-          if (guiState.singlePoseDetection.showPoints) {
-            drawKeypoints(keypoints, minPartConfidence, ctx);
-          }
-          if (guiState.singlePoseDetection.showSkeleton) {
-            drawSkeleton(keypoints, minPartConfidence, ctx);
-          }
-        }
-        break;
       case 'segmentation':
-        const personSegmentation =
-            await guiState.net.estimatePersonSegmentation(
-                video, flipHorizontal, outputStride,
-                guiState.segmentation.segmentationThreshold);
+        const bodySegmentation = await guiState.net.estimatePersonSegmentation(
+            video, flipHorizontal, outputStride,
+            guiState.segmentation.segmentationThreshold);
 
         switch (guiState.segmentation.effect) {
           case 'mask':
-            await posenet.maskAndDrawImageOnCanvas(
-                canvas, video, personSegmentation);
+            await personSegmentation.maskAndDrawImageOnCanvas(
+                canvas, video, bodySegmentation);
             break;
           case 'bokeh':
             await applyBokehEffect(
-                canvas, video, personSegmentation,
+                canvas, video, bodySegmentation,
                 +guiState.segmentation.bokehBlurAmount);
             break;
         }
@@ -286,7 +245,7 @@ function segmentBodyInRealTime(video, net) {
             video, flipHorizontal, outputStride,
             guiState.segmentation.segmentationThreshold);
 
-        await posenet.drawColoredPartImageOnCanvas(
+        await personSegmentation.drawColoredPartImageOnCanvas(
             canvas, video, partSegmentation,
             partColorScales[guiState.partMap.colorScale]);
 
@@ -309,9 +268,9 @@ function segmentBodyInRealTime(video, net) {
  * available camera devices, and setting off the detectPoseInRealTime function.
  */
 export async function bindPage() {
-  // Load the PoseNet model weights with architecture 0.75
+  // Load the PersonSegmentation model weights with architecture 0.75
   const net =
-      await posenet.loadSegmentation(+guiState.input.mobileNetArchitecture);
+      await personSegmentation.load(+guiState.input.mobileNetArchitecture);
 
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'block';

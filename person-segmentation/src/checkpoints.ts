@@ -17,7 +17,7 @@
 
 import {ConvolutionDefinition, mobileNetArchitectures} from './mobilenet';
 
-const BASE_URL = 'https://storage.googleapis.com/tfjs-models/weights/posenet/';
+const BASE_URL = 'https://storage.googleapis.com/tfjs-models/savedmodel/';
 
 export type Checkpoint = {
   url: string,
@@ -25,20 +25,20 @@ export type Checkpoint = {
 };
 
 export const checkpoints: {[multiplier: number]: Checkpoint} = {
-  1.01: {
-    url: BASE_URL + 'mobilenet_v1_101/',
-    architecture: mobileNetArchitectures[100]
-  },
   1.0: {
-    url: BASE_URL + 'mobilenet_v1_100/',
+    url: BASE_URL + 'posenet_mobilenet_100_partmap/',
     architecture: mobileNetArchitectures[100]
   },
   0.75: {
-    url: BASE_URL + 'mobilenet_v1_075/',
+    url: BASE_URL + 'posenet_mobilenet_075_partmap/',
     architecture: mobileNetArchitectures[75]
   },
   0.5: {
-    url: BASE_URL + 'mobilenet_v1_050/',
+    url: BASE_URL + 'posenet_mobilenet_050_partmap/',
     architecture: mobileNetArchitectures[50]
+  },
+  0.25: {
+    url: BASE_URL + 'posenet_mobilenet_025_partmap/',
+    architecture: mobileNetArchitectures[25]
   }
 };

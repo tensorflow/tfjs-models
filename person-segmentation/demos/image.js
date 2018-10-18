@@ -14,18 +14,15 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as posenet from '@tensorflow-models/posenet';
+import * as personSegmentation from '@tensorflow-models/person-segmentation';
 import * as tf from '@tensorflow/tfjs';
 import dat from 'dat.gui';
 
+import * as partColorScales from './part_color_scales';
 // clang-format off
 import {
-  drawKeypoints,
-  drawPoint,
-  drawSkeleton,
   renderImageToCanvas,
-} from './demo_util';
-import * as partColorScales from './part_color_scales';
+} from './util';
 
 // clang-format on
 
@@ -56,26 +53,6 @@ const images = [
   'two_on_bench.jpg',
 ];
 
-/**
- * Draws a pose if it passes a minimum confidence onto a canvas.
- * Only the pose's keypoints that pass a minPartConfidence are drawn.
- */
-function drawResults(canvas, poses, minPartConfidence, minPoseConfidence) {
-  poses.forEach((pose) => {
-    if (pose.score >= minPoseConfidence) {
-      if (guiState.showKeypoints) {
-        drawKeypoints(
-            pose.keypoints, minPartConfidence, canvas.getContext('2d'));
-      }
-
-      if (guiState.showSkeleton) {
-        drawSkeleton(
-            pose.keypoints, minPartConfidence, canvas.getContext('2d'));
-      }
-    }
-  });
-}
-
 const imageBucket =
     'https://storage.googleapis.com/tfjs-models/assets/posenet/';
 
@@ -99,8 +76,7 @@ function singlePersonCanvas() {
 /**
  * Draw the results from the single-pose estimation on to a canvas
  */
-async function drawSinglePoseResults(
-    scaledPose, image, segmentationMask, partSegmentation) {
+async function drawResults(image, segmentationMask, partSegmentation) {
   const canvas = singlePersonCanvas();
   canvas.height = guiState.resizedAndPadded.shape[0];
   canvas.width = guiState.resizedAndPadded.shape[1];
@@ -109,17 +85,6 @@ async function drawSinglePoseResults(
 
   await drawPartHeatmapAndSegmentation(
       canvas, segmentationMask, partSegmentation);
-
-  drawResults(
-      canvas, [scaledPose], guiState.singlePoseDetection.minPartConfidence,
-      guiState.singlePoseDetection.minPoseConfidence);
-
-  const {partChannel, showSegments, showPartHeatmaps} = guiState.visualizeParts;
-  const partChannelId = +partChannel;
-
-
-  visualizeParts(
-      partChannelId, showSegments, showPartHeatmaps, canvas.getContext('2d'));
 }
 
 async function drawPartHeatmapAndSegmentation(
@@ -127,44 +92,15 @@ async function drawPartHeatmapAndSegmentation(
   if (guiState.showSegments && !guiState.showPartHeatmaps) {
     const segmentationMaskArray = await segmentationMask.data();
 
-    await posenet.maskAndDrawImageOnCanvas(
+    await personSegmentation.maskAndDrawImageOnCanvas(
         canvas, image, segmentationMaskArray, 0.3, false);
   } else if (guiState.showPartHeatmaps) {
     const partMapArray = await partSegmentation.data();
 
     const scale = partColorScales[guiState.partColorScale];
     drawPartColors(scale);
-    await posenet.drawColoredPartImageOnCanvas(
+    await personSegmentation.drawColoredPartImageOnCanvas(
         canvas, image, partMapArray, scale, 0.3, false);
-  }
-}
-
-function visualizeParts(partChannelId, showSegments, showPartHeatmaps, ctx) {
-  const {segmentScores, partHeatmapScores} = modelOutputs;
-  const outputStride = +guiState.outputStride;
-
-  const [height, width] = segmentScores.shape;
-
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const score = segmentScores.get(y, x, 0);
-
-      // to save on performance, don't draw anything with a low score.
-      if (score < 0.05) continue;
-
-      // set opacity of drawn elements based on the score
-      ctx.globalAlpha = score;
-
-      if (showSegments) {
-        drawPoint(ctx, y * outputStride, x * outputStride, 2, 'yellow');
-      }
-
-      if (showPartHeatmaps) {
-        const partScore = partHeatmapScores.get(y, x, partChannelId);
-        ctx.globalAlpha *= partScore;
-        drawPoint(ctx, y * outputStride, x * outputStride, 2, 'red');
-      }
-    }
   }
 }
 
@@ -184,33 +120,22 @@ async function decodeSinglePoseAndDrawResults() {
   const [height, width] = [imageSize, imageSize];
   const {paddedBy} = guiState;
 
-  const scaledSegmentScores = posenet.scaleAndCropToInputTensorShape(
+  const scaledSegmentScores = personSegmentation.scaleAndCropToInputTensorShape(
       modelOutputs.segmentScores, [height, width],
       [resizedHeight, resizedWidth], paddedBy);
 
-  const segmentationMask = posenet.toMask(
+  const segmentationMask = personSegmentation.toMask(
       scaledSegmentScores.squeeze(), guiState.segmentationThreshold);
 
-  const scaledPartHeatmapScore = posenet.scaleAndCropToInputTensorShape(
-      modelOutputs.partHeatmapScores, [height, width],
-      [resizedHeight, resizedWidth], paddedBy);
+  const scaledPartHeatmapScore =
+      personSegmentation.scaleAndCropToInputTensorShape(
+          modelOutputs.partHeatmapScores, [height, width],
+          [resizedHeight, resizedWidth], paddedBy);
 
-  const partSegmentation = await posenet.decodePartSegmentation(
+  const partSegmentation = await personSegmentation.decodePartSegmentation(
       segmentationMask, scaledPartHeatmapScore);
 
-  const pose = await posenet.decodeSinglePose(
-      modelOutputs.heatmapScores, modelOutputs.offsets, guiState.outputStride);
-
-  const [[padT, padB], [padL, padR]] = guiState.paddedBy;
-  const scaleY = image.height / (resizedHeight - padT - padB);
-  const scaleX = image.width / (resizedWidth - padL - padR);
-
-  const poseWidthPaddingRemovedAndScaled =
-      posenet.translateAndScalePose(pose, -padT, -padL, scaleY, scaleX);
-
-  await drawSinglePoseResults(
-      poseWidthPaddingRemovedAndScaled, image, segmentationMask,
-      partSegmentation);
+  await drawResults(image, segmentationMask, partSegmentation);
 
   scaledSegmentScores.dispose();
   scaledPartHeatmapScore.dispose();
@@ -235,8 +160,6 @@ let modelOutputs = null;
  */
 function disposeModelOutputs() {
   if (modelOutputs) {
-    modelOutputs.heatmapScores.dispose();
-    modelOutputs.offsets.dispose();
     modelOutputs.segmentScores.dispose();
     modelOutputs.partHeatmapScores.dispose();
   }
@@ -263,7 +186,7 @@ async function testImageAndEstimatePoses(net) {
   const input = tf.fromPixels(image);
 
   const {resizedAndPadded, paddedBy} =
-      posenet.resizeAndPadTo(input, [353, 257]);
+      personSegmentation.resizeAndPadTo(input, [353, 257]);
 
   // renderImageToCanvas(resizedAndPadded, [353, 257], singlePersonCanvas());
   guiState.originalSize = input.shape;
@@ -275,8 +198,8 @@ async function testImageAndEstimatePoses(net) {
   // Normally you would call estimateSinglePose or estimateMultiplePoses,
   // but by calling this method we can previous the outputs of the model and
   // visualize them.
-  modelOutputs = await net.predictForSinglePoseWithPartMap(
-      resizedAndPadded, guiState.outputStride);
+  modelOutputs =
+      await net.predictForPartMap(resizedAndPadded, guiState.outputStride);
 
   // Process the model outputs to convert into poses
   await decodeSingleAndMultiplePoses();
@@ -295,19 +218,6 @@ function setupGui(net) {
     detectPoseButton: () => {
       testImageAndEstimatePoses(net);
     },
-    singlePoseDetection: {
-      minPartConfidence: 0.5,
-      minPoseConfidence: 0.5,
-    },
-    multiPoseDetection: {
-      minPartConfidence: 0.5,
-      minPoseConfidence: 0.5,
-      scoreThreshold: 0.5,
-      nmsRadius: 20.0,
-      maxDetections: 15,
-    },
-    showKeypoints: true,
-    showSkeleton: true,
     segmentationThreshold: 0.5,
     showSegments: true,
     showPartHeatmaps: true,
@@ -326,17 +236,6 @@ function setupGui(net) {
   gui.add(guiState, 'image', images)
       .onChange(() => testImageAndEstimatePoses(net));
 
-  const singlePoseDetection = gui.addFolder('Single Pose Estimation');
-  singlePoseDetection
-      .add(guiState.singlePoseDetection, 'minPartConfidence', 0.0, 1.0)
-      .onChange(decodeSinglePoseAndDrawResults);
-  singlePoseDetection
-      .add(guiState.singlePoseDetection, 'minPoseConfidence', 0.0, 1.0)
-      .onChange(decodeSinglePoseAndDrawResults);
-  singlePoseDetection.open();
-
-  gui.add(guiState, 'showKeypoints').onChange(decodeSingleAndMultiplePoses);
-  gui.add(guiState, 'showSkeleton').onChange(decodeSingleAndMultiplePoses);
   gui.add(guiState, 'segmentationThreshold', 0.0, 1.0)
       .onChange(decodeSingleAndMultiplePoses);
   gui.add(guiState, 'showSegments').onChange(decodeSingleAndMultiplePoses);
@@ -352,23 +251,24 @@ function drawPartColors(colorScale) {
 
   const listHolder = document.createElement('ul');
 
-  const listItems = posenet.partChannels.map((partChannelName, i) => {
-    const listElement = document.createElement('li');
-    const box = document.createElement('div');
-    const color = colorScale[i];
-    box.setAttribute('class', 'color');
-    box.setAttribute('style', `background-color: rgb(${color.join(', ')})`);
+  const listItems =
+      personSegmentation.partChannels.map((partChannelName, i) => {
+        const listElement = document.createElement('li');
+        const box = document.createElement('div');
+        const color = colorScale[i];
+        box.setAttribute('class', 'color');
+        box.setAttribute('style', `background-color: rgb(${color.join(', ')})`);
 
 
-    listElement.appendChild(box);
+        listElement.appendChild(box);
 
-    const text = document.createElement('div');
-    text.innerText = partChannelName;
+        const text = document.createElement('div');
+        text.innerText = partChannelName;
 
-    listElement.appendChild(text);
+        listElement.appendChild(text);
 
-    return listElement;
-  });
+        return listElement;
+      });
 
   listItems.forEach((listItem) => listHolder.appendChild(listItem));
 
@@ -376,11 +276,11 @@ function drawPartColors(colorScale) {
 }
 
 /**
- * Kicks off the demo by loading the posenet model and estimating
+ * Kicks off the demo by loading the person segmentation model and estimating
  * poses on a default image
  */
 export async function bindPage() {
-  const net = await posenet.loadSegmentation(0.75);
+  const net = await personSegmentation.load(0.75);
 
   setupGui(net);
 

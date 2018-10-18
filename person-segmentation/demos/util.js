@@ -57,3 +57,15 @@ export async function applyBokehEffect(
 
   bokehedImage.dispose();
 }
+
+
+/**
+ * Draw an image on a canvas
+ */
+export function renderImageToCanvas(image, size, canvas) {
+  canvas.width = size[0];
+  canvas.height = size[1];
+  const ctx = canvas.getContext('2d');
+
+  ctx.drawImage(image, 0, 0);
+}

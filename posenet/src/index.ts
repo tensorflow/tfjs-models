@@ -20,14 +20,11 @@ import {ConvolutionDefinition, MobileNet, mobileNetArchitectures, MobileNetMulti
 import {decodeMultiplePoses} from './multi_pose/decode_multiple_poses';
 import {decodeSinglePose} from './single_pose/decode_single_pose';
 
-export {Checkpoint, multiPoseCheckpoints, segmentationCheckpoints} from './checkpoints';
+export {Checkpoint, checkpoints} from './checkpoints';
 export {partChannels, partIds, partNames, poseChain} from './keypoints';
-export {decodePartSegmentation, toMask} from './part_map/decode_part_map';
-export {drawColoredPartImageOnCanvas, maskAndDrawImageOnCanvas} from './part_map/util';
 export {load, PoseNet} from './posenet_model';
-export {loadSegmentation, PoseNetSegmentation} from './posenet_segmentation_model';
 export {Keypoint, Pose} from './types';
-export {cropAndResizeTo, getAdjacentKeyPoints, getBoundingBox, getBoundingBoxPoints, removePaddingAndResizeBack, resizeAndPadTo, scaleAndCropToInputTensorShape, scalePose, translateAndScalePose} from './util';
+export {getAdjacentKeyPoints, getBoundingBox, getBoundingBoxPoints, scalePose} from './util';
 export {
   ConvolutionDefinition,
   decodeMultiplePoses,

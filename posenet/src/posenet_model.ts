@@ -18,7 +18,7 @@
 import * as tf from '@tensorflow/tfjs';
 
 import {CheckpointLoader} from './checkpoint_loader';
-import {multiPoseCheckpoints} from './checkpoints';
+import {checkpoints} from './checkpoints';
 import {assertValidOutputStride, assertValidScaleFactor, MobileNet, MobileNetMultiplier, OutputStride} from './mobilenet';
 import {DumpedCheckpointWeights} from './model_weights';
 import {decodeMultiplePoses} from './multi_pose/decode_multiple_poses';
@@ -260,7 +260,7 @@ export async function load(multiplier: MobileNetMultiplier = 1.01):
         `also include @tensorflow/tfjs on the page before using this model.`);
   }
   // TODO: figure out better way to decide below.
-  const possibleMultipliers = Object.keys(multiPoseCheckpoints);
+  const possibleMultipliers = Object.keys(checkpoints);
   tf.util.assert(
       typeof multiplier === 'number',
       `got multiplier type of ${typeof multiplier} when it should be a ` +
@@ -279,7 +279,7 @@ export async function load(multiplier: MobileNetMultiplier = 1.01):
 
 export const mobilenetLoader = {
   load: async(multiplier: MobileNetMultiplier): Promise<MobileNet> => {
-    const checkpoint = multiPoseCheckpoints[multiplier];
+    const checkpoint = checkpoints[multiplier];
 
     const checkpointLoader = new CheckpointLoader(checkpoint.url);
 
