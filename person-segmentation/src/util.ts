@@ -223,7 +223,7 @@ export function applyColorMap(
   });
 }
 
-export async function drawColoredPartImageOnCanvas(
+export async function drawBodySegmentsOnCanvas(
     canvas: HTMLCanvasElement, input: PersonSegmentationInput,
     partSegmentation: number[], partColors: Array<[number, number, number]>,
     partMapDarkening = 0.3, flipHorizontal = true) {

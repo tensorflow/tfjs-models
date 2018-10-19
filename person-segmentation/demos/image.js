@@ -19,12 +19,7 @@ import * as tf from '@tensorflow/tfjs';
 import dat from 'dat.gui';
 
 import * as partColorScales from './part_color_scales';
-// clang-format off
-import {
-  renderImageToCanvas,
-} from './util';
-
-// clang-format on
+import {renderImageToCanvas,} from './util';
 
 const images = [
   'frisbee.jpg',
@@ -73,15 +68,16 @@ function singlePersonCanvas() {
   return document.querySelector('#single canvas');
 }
 
+const imageSize = 513;
+
 /**
- * Draw the results from the single-pose estimation on to a canvas
+ * Draw the results from the segmentation estimation on to a canvas
  */
 async function drawResults(image, segmentationMask, partSegmentation) {
   const canvas = singlePersonCanvas();
   canvas.height = guiState.resizedAndPadded.shape[0];
   canvas.width = guiState.resizedAndPadded.shape[1];
-  // await tf.toPixels(scaledImage, canvas);
-  renderImageToCanvas(image, [513, 513], canvas);
+  renderImageToCanvas(image, [imageSize, imageSize], canvas);
 
   await drawPartHeatmapAndSegmentation(
       canvas, segmentationMask, partSegmentation);
@@ -92,27 +88,27 @@ async function drawPartHeatmapAndSegmentation(
   if (guiState.showSegments && !guiState.showPartHeatmaps) {
     const segmentationMaskArray = await segmentationMask.data();
 
-    await personSegmentation.maskAndDrawImageOnCanvas(
+    await personSegmentation.drawBodyMaskOnCanvas(
         canvas, image, segmentationMaskArray, 0.3, false);
   } else if (guiState.showPartHeatmaps) {
     const partMapArray = await partSegmentation.data();
 
     const scale = partColorScales[guiState.partColorScale];
     drawPartColors(scale);
-    await personSegmentation.drawColoredPartImageOnCanvas(
+    await personSegmentation.drawBodySegmentsOnCanvas(
         canvas, image, partMapArray, scale, 0.3, false);
   }
 }
 
-const imageSize = 513;
 
 const resizedHeight = 353;
 const resizedWidth = 257;
 
 /**
- * Converts the raw model output results into single-pose estimation results
+ * Converts the model outputs into segmentation and part maps, and visualizes
+ * them
  */
-async function decodeSinglePoseAndDrawResults() {
+async function decodeAndDrawResults() {
   if (!modelOutputs) {
     return;
   }
@@ -144,7 +140,7 @@ async function decodeSinglePoseAndDrawResults() {
 
 
 function decodeSingleAndMultiplePoses() {
-  decodeSinglePoseAndDrawResults();
+  decodeAndDrawResults();
 }
 
 function setStatusText(text) {
@@ -188,16 +184,15 @@ async function testImageAndEstimatePoses(net) {
   const {resizedAndPadded, paddedBy} =
       personSegmentation.resizeAndPadTo(input, [353, 257]);
 
-  // renderImageToCanvas(resizedAndPadded, [353, 257], singlePersonCanvas());
   guiState.originalSize = input.shape;
   guiState.paddedBy = paddedBy;
   guiState.resizedAndPadded = resizedAndPadded;
 
-  // Stores the raw model outputs from both single- and multi-pose results can
-  // be decoded.
-  // Normally you would call estimateSinglePose or estimateMultiplePoses,
-  // but by calling this method we can previous the outputs of the model and
-  // visualize them.
+  // Stores the raw model outputs from person segmentation results that can
+  // be decoded later.
+  // Normally you would call estimatePersonSegmenation or
+  // estimatePartSegmenation, but by calling this method we can preserve the
+  // outputs of the model and visualize them.
   modelOutputs =
       await net.predictForPartMap(resizedAndPadded, guiState.outputStride);
 

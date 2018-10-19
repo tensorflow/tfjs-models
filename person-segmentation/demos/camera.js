@@ -230,7 +230,7 @@ function segmentBodyInRealTime(video, net) {
 
         switch (guiState.segmentation.effect) {
           case 'mask':
-            await personSegmentation.maskAndDrawImageOnCanvas(
+            await personSegmentation.drawBodyMaskOnCanvas(
                 canvas, video, bodySegmentation);
             break;
           case 'bokeh':
@@ -245,7 +245,7 @@ function segmentBodyInRealTime(video, net) {
             video, flipHorizontal, outputStride,
             guiState.segmentation.segmentationThreshold);
 
-        await personSegmentation.drawColoredPartImageOnCanvas(
+        await personSegmentation.drawBodySegmentsOnCanvas(
             canvas, video, partSegmentation,
             partColorScales[guiState.partMap.colorScale]);
 

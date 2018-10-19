@@ -16,11 +16,12 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
+import {Model} from '@tensorflow/tfjs';
 
 import {CheckpointLoader} from './checkpoint_loader';
 import {checkpoints} from './checkpoints';
 import {assertValidOutputStride, assertValidScaleFactor, MobileNet, MobileNetMultiplier, OutputStride} from './mobilenet';
-import {DumpedCheckpointWeights} from './model_weights';
+import {ModelWeights} from './model_weights';
 import {decodeMultiplePoses} from './multi_pose/decode_multiple_poses';
 import {decodeSinglePose} from './single_pose/decode_single_pose';
 import {Pose, PosenetInput} from './types';
@@ -285,7 +286,7 @@ export const mobilenetLoader = {
 
     const variables = await checkpointLoader.getAllVariables();
 
-    const weights = new DumpedCheckpointWeights(variables);
+    const weights = new ModelWeights(variables);
 
     return new MobileNet(weights, checkpoint.architecture);
   },

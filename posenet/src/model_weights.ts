@@ -17,50 +17,7 @@
 
 import * as tf from '@tensorflow/tfjs';
 
-export interface ModelWeights {
-  weights: (layerName: string) => tf.Tensor4D;
-  convBias: (layerName: string, doublePrefix: boolean) => tf.Tensor1D;
-  depthwiseBias: (layerName: string) => tf.Tensor1D;
-  depthwiseWeights: (layerName: string) => tf.Tensor4D;
-  dispose: () => void;
-}
-
-export class FrozenGraphModelWeights implements ModelWeights {
-  private frozenModel: tf.FrozenModel;
-
-  constructor(frozenModel: tf.FrozenModel) {
-    this.frozenModel = frozenModel;
-  }
-
-  weights(layerName: string) {
-    return this.getVariable(`MobilenetV1/${layerName}/weights`) as tf.Tensor4D;
-  }
-
-  convBias(layerName: string, doublePrefix = true) {
-    return this.getVariable(`MobilenetV1/${layerName}/Conv2D_bias`) as
-        tf.Tensor1D;
-  }
-
-  depthwiseBias(layerName: string) {
-    return this.getVariable(`MobilenetV1/${layerName}/depthwise_bias`) as
-        tf.Tensor1D;
-  }
-
-  depthwiseWeights(layerName: string) {
-    return this.getVariable(`MobilenetV1/${layerName}/depthwise_weights`) as
-        tf.Tensor4D;
-  }
-
-  private getVariable(name: string) {
-    return this.frozenModel.weights[`${name}`][0];
-  }
-
-  dispose() {
-    this.frozenModel.dispose();
-  }
-}
-
-export class DumpedCheckpointWeights implements ModelWeights {
+export class ModelWeights {
   private variables: {[varName: string]: tf.Tensor};
 
   constructor(variables: {[varName: string]: tf.Tensor}) {

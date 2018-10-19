@@ -66,33 +66,24 @@
   <div id='main'>
     <div id="status"></div>
     <div id='results' style='display:none'>
-      <!-- <div id="multi">
-        <h4>Multiple Poses Estimation</h4>
-        <canvas /></canvas>
-      </div> -->
       <div id="single">
-        <h4>Pose Estimation</h4>
+        <h4>Person Segmentation</h4>
         <canvas ></canvas>
       </div>
       <div id="colors">
         <h4>Part Colors</h4>
       </div>
-
    </div>
   </div>
   <div class="footer">
     <div class="footer-text">
       <p>
-        PoseNet runs with either a
-        <strong>single-pose</strong> or
-        <strong>multi-pose</strong> detection algorithm. The single person pose detector is faster and more accurate but requires
-        only one subject present in the image.
+        The Person Segmentation model can estimate which pixels in an image are part of a person, and which pixels
+        are part of each of 24 body parts.  It works on a single person.
         <br>
         <br> The
-        <strong>output stride</strong> and
-        <strong>input image resolution</strong> have the largest effects on accuracy/speed. A
-        <i>higher</i> output stride results in lower accuracy but higher speed. A
-        <i>higher</i> input image resolution results in higher accuracy but lower speed.
+        <strong>output stride</strong> has the largest effect on accuracy/speed. A
+        <i>higher</i> output stride results in lower accuracy but higher speed.
       </p>
     </div>
   </div>
