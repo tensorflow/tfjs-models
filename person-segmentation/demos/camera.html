@@ -47,9 +47,10 @@
     <div class="footer">
         <div class="footer-text">
             <p>
-                PoseNet runs with either a <strong>single-pose</strong> or <strong>multi-pose</strong> detection algorithm. The single person pose detector is faster and more accurate but requires only one subject present in the image.
+              The Person Segmentation model can estimate which pixels in an image are part of a person, and which pixels
+              are part of each of 24 body parts.  It works on a single person, and such <strong>works best</strong> when <strong>one person is present</strong> in an image.
                 <br>
-                <br> The <strong>output stride</strong> and <strong>image scale factor</strong> have the largest effects on accuracy/speed. A <i>higher</i> output stride results in lower accuracy but higher speed. A <i>higher</i> image scale factor results in higher accuracy but lower speed.
+                <br> The <strong>output stride</strong> and <strong>model (indicated by mobileNetArchitecture)</strong> have the largest effects on accuracy/speed. A <i>higher</i> output stride results in lower accuracy but higher speed. A <i>larger</i> model, indicated by the <i>mobileNetArchitecture</i> dropdown, results in higher accuracy but lower speed.
             </p>
         </div>
     </div>
