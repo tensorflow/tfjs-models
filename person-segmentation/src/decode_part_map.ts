@@ -51,8 +51,10 @@ function clipByMask2d(image: tf.Tensor2D, mask: tf.Tensor2D): tf.Tensor2D {
  */
 export function toMask(
     segmentScores: tf.Tensor2D, threshold: number): tf.Tensor2D {
-  return segmentScores.greater(tf.scalar(threshold)).cast('int32') as
-      tf.Tensor2D;
+  return tf.tidy(
+      () =>
+          (segmentScores.greater(tf.scalar(threshold)).cast('int32') as
+           tf.Tensor2D));
 }
 
 /**
@@ -78,7 +80,7 @@ export function decodePartSegmentation(
     const flattenedMap = toFlattenedOneHotPartMap(partHeatmapScores);
     const partNumbers = tf.range(0, numParts, 1, 'int32').expandDims(1);
 
-    const partMapFlattened = flattenedMap.matMul(partNumbers);
+    const partMapFlattened = flattenedMap.matMul(partNumbers).toInt();
 
     const partMap =
         partMapFlattened.reshape([partMapHeight, partMapWidth]) as tf.Tensor2D;

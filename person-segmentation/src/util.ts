@@ -16,7 +16,6 @@ export function toInputTensor(input: PersonSegmentationInput) {
 export function cropAndResizeTo(
     input: PersonSegmentationInput, [targetHeight, targetWidth]: number[]) {
   const [height, width] = getInputTensorDimensions(input);
-  const imageTensor = toInputTensor(input);
 
   const targetAspect = targetWidth / targetHeight;
   const aspect = width / height;
@@ -40,6 +39,7 @@ export function cropAndResizeTo(
   const resizedHeight = targetHeight;
 
   const croppedAndResized = tf.tidy(() => {
+    const imageTensor = toInputTensor(input);
     const cropped = tf.slice3d(
         imageTensor, [startCropTop, startCropLeft, 0], [croppedH, croppedW, 3]);
 
@@ -60,7 +60,6 @@ export function resizeAndPadTo(
   paddedBy: [[number, number], [number, number]]
 } {
   const [height, width] = getInputTensorDimensions(input);
-  const imageTensor = toInputTensor(input);
 
   const targetAspect = targetW / targetH;
   const aspect = width / height;
@@ -94,6 +93,7 @@ export function resizeAndPadTo(
   }
 
   const resizedAndPadded = tf.tidy(() => {
+    const imageTensor = toInputTensor(input);
     // resize to have largest dimension match image
     let resized: tf.Tensor3D;
     if (flipHorizontal) {
@@ -174,8 +174,7 @@ export function applyDarkeningMask(
   });
 }
 
-
-export async function maskAndDrawImageOnCanvas(
+export async function drawBodyMaskOnCanvas(
     canvas: HTMLCanvasElement, input: PersonSegmentationInput, mask: number[],
     darkLevel = 0.3, flipHorizontal = true) {
   const maskedImage = tf.tidy(() => {
