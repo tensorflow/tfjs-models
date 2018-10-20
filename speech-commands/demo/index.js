@@ -91,6 +91,7 @@ startButton.addEventListener('click', () => {
                 result.spectrogram.frameSize, result.spectrogram.frameSize);
           },
           {
+            overlapFactor: 0.5,
             includeSpectrogram: true,
             probabilityThreshold: Number.parseFloat(probaThresholdInput.value),
             delayWindows: 2

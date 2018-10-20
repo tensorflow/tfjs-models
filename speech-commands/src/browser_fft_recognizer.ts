@@ -223,27 +223,35 @@ export class BrowserFftSpeechCommandRecognizer implements
       this.winningIndicesOverWindows[delayWindows - 1] = maxIndex;
 
       const winningScores = this.winningScoresOverWindows.slice();
+      let numValid = delayWindows;
       if (!invokeCallbackOnNoiseAndUnknown) {
         // If the callback is not to be called over noise and unknown, remove
         // Set the scores corresponding to the noise and unknown to -Infinity.
+        numValid = 0;
         for (let i = 0; i < delayWindows; ++i) {
           const index = this.winningIndicesOverWindows[i];
           if (this.words[index] === BACKGROUND_NOISE_TAG ||
               this.words[index] === UNKNOWN_TAG) {
             winningScores[i] = -Infinity;
+          } else {
+            numValid++;
           }
         }
       }
 
-      const {maxValue: maxScoreOverWindows, maxIndex: maxIndicesOverWindows} =
+      const {maxValue: maxScoreOverWindows, maxIndex: maxWindowIndex} =
           arrayMax(winningScores);
       // TODO(cais): Add unit test for delayWindows > 1.
-      // TODO(cais): Right now the spectrogram provided in the callback isn't
-      //   quite right. Fix it.
+      // console.log(`maxScoreOverWindows = ${maxScoreOverWindows}`);  // DEBUG
+      // console.log(`maxWindowIndex = ${maxWindowIndex}`);  // DEBUG
+      // console.log(`numValid = ${numValid}`);  // DEBUG
 
-      if (maxScoreOverWindows < probabilityThreshold) {
+      if (numValid < delayWindows || maxScoreOverWindows < probabilityThreshold) {
         return false;
       } else {
+        const winningWordOverWindows =
+            this.words[this.winningIndicesOverWindows[maxWindowIndex]];
+        // console.log(`winningWordOverWindows = ${winningWordOverWindows}`);  // DEBUG
         let spectrogram: SpectrogramData = undefined;
         if (config.includeSpectrogram) {
           spectrogram = {
@@ -253,10 +261,11 @@ export class BrowserFftSpeechCommandRecognizer implements
         }
 
         let wordDetected = true;
+        // TODO(cais): This check may be redundant. If so, remove it.
         if (!invokeCallbackOnNoiseAndUnknown) {
           // Skip background noise and unknown tokens.
-          if (this.words[maxIndicesOverWindows] === BACKGROUND_NOISE_TAG ||
-              this.words[maxIndicesOverWindows] === UNKNOWN_TAG) {
+          if (winningWordOverWindows === BACKGROUND_NOISE_TAG ||
+              winningWordOverWindows === UNKNOWN_TAG) {
             wordDetected = false;
           }
         }
