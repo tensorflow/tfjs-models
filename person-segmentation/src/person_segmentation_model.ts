@@ -100,7 +100,7 @@ export class PersonSegmentation {
   async estimatePersonSegmentation(
       input: PersonSegmentationInput, flipHorizontal = false,
       outputStride: OutputStride = 16,
-      segmentationThreshold = 0.5): Promise<Int32Array> {
+      segmentationThreshold = 0.5): Promise<Uint8Array> {
     assertValidOutputStride(outputStride);
 
     const [height, width] = getInputTensorDimensions(input);
@@ -122,10 +122,16 @@ export class PersonSegmentation {
           segmentScores, [height, width], [resizedHeight, resizedWidth],
           paddedBy);
 
-      return toMask(scaledSegmentScores.squeeze(), segmentationThreshold);
+      const mask = toMask(scaledSegmentScores.squeeze(), segmentationThreshold);
+
+      if (flipHorizontal) {
+        return mask.reverse(1);
+      } else {
+        return mask;
+      }
     });
 
-    const result = await segmentation.data() as Int32Array;
+    const result = await segmentation.data() as Uint8Array;
 
     return result;
   }
@@ -194,7 +200,14 @@ export class PersonSegmentation {
       const segmentationMask =
           toMask(scaledSegmentScores.squeeze(), segmentationThreshold);
 
-      return decodePartSegmentation(segmentationMask, scaledPartHeatmapScore);
+      const partSegmentation =
+          decodePartSegmentation(segmentationMask, scaledPartHeatmapScore);
+
+      if (flipHorizontal) {
+        return partSegmentation.reverse(1);
+      } else {
+        return partSegmentation;
+      }
     });
 
     const result = await partSegmentation.data() as Int32Array;

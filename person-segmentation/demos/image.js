@@ -19,7 +19,6 @@ import * as tf from '@tensorflow/tfjs';
 import dat from 'dat.gui';
 
 import * as partColorScales from './part_color_scales';
-import {renderImageToCanvas,} from './util';
 
 const images = [
   'frisbee.jpg',

@@ -19,7 +19,6 @@ import dat from 'dat.gui';
 import Stats from 'stats.js';
 
 import * as partColorScales from './part_color_scales';
-import {applyBokehEffect} from './util.js';
 
 const stats = new Stats();
 const videoWidth = 640;
@@ -230,11 +229,12 @@ function segmentBodyInRealTime(video, net) {
 
         switch (guiState.segmentation.effect) {
           case 'mask':
-            await personSegmentation.drawBodyMaskOnCanvas(
-                canvas, video, bodySegmentation);
+            personSegmentation.drawBodyMaskOnCanvas(
+                video, bodySegmentation, canvas);
+
             break;
           case 'bokeh':
-            await applyBokehEffect(
+            personSegmentation.drawBokehEffectOnCanvas(
                 canvas, video, bodySegmentation,
                 +guiState.segmentation.bokehBlurAmount);
             break;
@@ -245,7 +245,7 @@ function segmentBodyInRealTime(video, net) {
             video, flipHorizontal, outputStride,
             guiState.segmentation.segmentationThreshold);
 
-        await personSegmentation.drawBodySegmentsOnCanvas(
+        personSegmentation.drawBodySegmentsOnCanvas(
             canvas, video, partSegmentation,
             partColorScales[guiState.partMap.colorScale]);
 
