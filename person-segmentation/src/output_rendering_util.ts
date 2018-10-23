@@ -15,9 +15,12 @@
  * =============================================================================
  */
 
+import {gBlur} from './blur';
 const offScreenCanvases: {[name: string]: HTMLCanvasElement} = {};
 
 type ImageType = HTMLImageElement|HTMLVideoElement;
+
+const isSafari = (/^((?!chrome|android).)*safari/i.test(navigator.userAgent));
 
 function flipCanvasHorizontal(canvas: HTMLCanvasElement) {
   const ctx = canvas.getContext('2d');
@@ -47,14 +50,17 @@ function ensureOffscreenCanvasCreated(id: string): HTMLCanvasElement {
 function drawBlurredImageToCanvas(
     image: ImageType, bokehBlurAmount: number, canvas: HTMLCanvasElement) {
   const {height, width} = image;
-  const ctx = canvas.getContext('2d');
   canvas.width = width;
   canvas.height = height;
-  ctx.clearRect(0, 0, width, height);
+  const ctx = canvas.getContext('2d');
   ctx.save();
-  // tslint:disable-next-line:no-any
-  (ctx as any).filter = `blur(${bokehBlurAmount}px)`;
-  ctx.drawImage(image, 0, 0, width, height);
+  // safair does not support the filter property; use the more expensive op
+  if (isSafari) {
+    gBlur(canvas, image, bokehBlurAmount);
+  } else {
+    // tslint:disable-next-line:no-any
+    (ctx as any).filter = `blur(${bokehBlurAmount}px);`;
+  }
   ctx.restore();
 }
 
@@ -191,7 +197,7 @@ function toColoredPartImage(
       bytes[j + 0] = color[0];
       bytes[j + 1] = color[1];
       bytes[j + 2] = color[2];
-      bytes[j + 3] = Math.round(255 * .7);
+      bytes[j + 3] = Math.round(255 * alpha);
     }
   }
 
