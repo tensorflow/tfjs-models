@@ -34,8 +34,6 @@ function compost(
 
 function createOffScreenCanvas(): HTMLCanvasElement {
   const offScreenCanvas = document.createElement('canvas');
-  offScreenCanvas.style.display = 'none';
-  document.body.appendChild(offScreenCanvas);
   return offScreenCanvas;
 }
 

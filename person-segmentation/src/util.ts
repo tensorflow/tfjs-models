@@ -12,46 +12,6 @@ export function toInputTensor(input: PersonSegmentationInput) {
   return input instanceof tf.Tensor ? input : tf.fromPixels(input);
 }
 
-export function cropAndResizeTo(
-    input: PersonSegmentationInput, [targetHeight, targetWidth]: number[]) {
-  const [height, width] = getInputTensorDimensions(input);
-
-  const targetAspect = targetWidth / targetHeight;
-  const aspect = width / height;
-
-  let croppedW: number;
-  let croppedH: number;
-
-  if (aspect > targetAspect) {
-    // crop width to get aspect
-    croppedW = Math.round(height * targetAspect);
-    croppedH = height;
-  } else {
-    croppedH = Math.round(width / targetAspect);
-    croppedW = width;
-  }
-
-  const startCropTop = Math.floor((height - croppedH) / 2);
-  const startCropLeft = Math.floor((width - croppedW) / 2);
-
-  const resizedWidth = targetWidth;
-  const resizedHeight = targetHeight;
-
-  const croppedAndResized = tf.tidy(() => {
-    const imageTensor = toInputTensor(input);
-    const cropped = tf.slice3d(
-        imageTensor, [startCropTop, startCropLeft, 0], [croppedH, croppedW, 3]);
-
-    return cropped.resizeBilinear([resizedHeight, resizedWidth]);
-  });
-
-  return {
-    croppedAndResized,
-    resizedDimensions: [resizedHeight, resizedWidth],
-    crop: [startCropTop, startCropLeft, croppedH, croppedW]
-  };
-}
-
 export function resizeAndPadTo(
     input: PersonSegmentationInput, [targetH, targetW]: [number, number],
     flipHorizontal = false): {

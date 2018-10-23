@@ -213,7 +213,7 @@ export class MobileNet {
   public convToOutput(mobileNetOutput: tf.Tensor3D, outputLayerName: string):
       tf.Tensor3D {
     return mobileNetOutput.conv2d(this.weights(outputLayerName), 1, 'same')
-               .add(this.convBias(outputLayerName, false)) as tf.Tensor3D;
+               .add(this.convBias(outputLayerName)) as tf.Tensor3D;
   }
 
   private conv(inputs: tf.Tensor3D, stride: number, blockId: number):
@@ -251,8 +251,8 @@ export class MobileNet {
     return this.modelWeights.weights(layerName);
   }
 
-  private convBias(layerName: string, doublePrefix = true): tf.Tensor1D {
-    return this.modelWeights.convBias(layerName, doublePrefix);
+  private convBias(layerName: string): tf.Tensor1D {
+    return this.modelWeights.convBias(layerName);
   }
 
   private depthwiseBias(layerName: string) {

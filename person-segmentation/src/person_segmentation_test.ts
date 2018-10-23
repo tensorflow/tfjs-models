@@ -17,15 +17,15 @@
 
 import * as tf from '@tensorflow/tfjs';
 import {describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
-import * as personSegmentation from './person_segmentation_model';
+import {load, mobilenetLoader, PersonSegmentation} from './person_segmentation_model';
 
-describeWithFlags('PoseNet', tf.test_util.NODE_ENVS, () => {
-  let net: personSegmentation.PersonSegmentation;
+describeWithFlags('PersonSegmentation', tf.test_util.NODE_ENVS, () => {
+  let net: PersonSegmentation;
 
   beforeAll((done) => {
     // Mock out the actual load so we don't make network requests in the unit
     // test.
-    spyOn(personSegmentation.mobilenetLoader, 'load').and.callFake(() => {
+    spyOn(mobilenetLoader, 'load').and.callFake(() => {
       return {
         predict: () => tf.zeros([1000]),
         convToOutput:
@@ -39,9 +39,9 @@ describeWithFlags('PoseNet', tf.test_util.NODE_ENVS, () => {
       };
     });
 
-    personSegmentation.load()
-        .then((posenetInstance: personSegmentation.PersonSegmentation) => {
-          net = posenetInstance;
+    load()
+        .then((model: PersonSegmentation) => {
+          net = model;
         })
         .then(done)
         .catch(done.fail);

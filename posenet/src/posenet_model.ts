@@ -16,7 +16,6 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import {Model} from '@tensorflow/tfjs';
 
 import {CheckpointLoader} from './checkpoint_loader';
 import {checkpoints} from './checkpoints';
@@ -147,7 +146,7 @@ export class PoseNet {
     const {heatmapScores, offsets} = tf.tidy(() => {
       const inputTensor = toResizedInputTensor(
           input, resizedHeight, resizedWidth, flipHorizontal);
-      console.log(inputTensor);
+
       return this.predictForSinglePose(inputTensor, outputStride);
     });
 

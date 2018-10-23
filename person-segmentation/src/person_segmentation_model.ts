@@ -66,15 +66,12 @@ export class PersonSegmentation {
   }
 
   /**
-   * Infer through PersonSegmentation, and segmentation for a single
-   * person. This does standard ImageNet pre-processing before inferring through
-   * the model. Will resize and crop the image to 353 x 257 while maintaining
-   * the original aspect ratio before feeding through the network. The image
-   * should pixels should have values [0-255]. This method returns an array with
-   * values 0 or 1 corresponding to if a person was estimated to be in each
-   * pixel. The array size corresponds to the number of pixels in the image. See
-   * the readme for the body part ids.  If a value is 1, a person was estimated
-   * to be in the corresponding pixel.
+   * Given an image with a person, returns a binary array with 1 for the pixels
+   * that are part of the person, and 0 otherwise. This does
+   * standard ImageNet pre-processing before inferring through the model. Will
+   * resize and crop the image to 353 x 257 while maintaining the original
+   * aspect ratio before feeding through the network. The image pixels
+   * should have values [0-255].
    *
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
@@ -92,10 +89,9 @@ export class PersonSegmentation {
    * to be considered part of the person.  Affects the generation of the
    * segmentation mask and the clipping of the colored part image.
    *
-   * @return An array with values 0 or 1 corresponding to if a person was
-   * estimated to be in each pixel. The array size corresponds to the number of
-   * pixels in the image. See the readme for the body part ids.  If a value is
-   * 1, a person was estimated to be in the corresponding pixel.
+   * @return A binary array with 1 for the pixels that are part of the person,
+   * and 0 otherwise. The array size corresponds to the number of pixels in the
+   * image.
    */
   async estimatePersonSegmentation(
       input: PersonSegmentationInput, flipHorizontal = false,
@@ -137,15 +133,12 @@ export class PersonSegmentation {
   }
 
   /**
-   * Infer through PersonSegmentation, and estimate body part segmentations for
-   * a single person. This does standard ImageNet pre-processing before
-   * inferring through the model. Will resize and crop the image to 353 x 257
-   * while maintaining the original aspect ratio before feeding through the
-   * network. The image should pixels should have values [0-255]. This method
-   * returns an array with values 0-24 corresponding to the body part for each
-   * pixel.  The array size corresponds to the number of pixels in the image.
-   * See the readme for the body part ids.  If a value is -1, no body part was
-   * estimated to be in that pixel.
+   * Given an image with a person, returns an array with a part id from 0-24 for
+   * the pixels that are part of a corresponding body part, and -1 otherwise.
+   * This does standard ImageNet pre-processing before inferring through the
+   * model. Will resize and crop the image to 353 x 257 while maintaining the
+   * original aspect ratio before feeding through the network. The image should
+   * pixels should have values [0-255].
    *
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
@@ -163,10 +156,9 @@ export class PersonSegmentation {
    * to be considered part of the person.  Affects the generation of the
    * segmentation mask and the clipping of the colored part image.
    *
-   * @return An array with values 0-24 corresponding to the body part for each
-   * pixel, indexed by pixel h, w.  The array size corresponds to the number of
-   * pixels in the image. See the readme for the body part ids.  If a value is
-   * -1, no body part was estimated to be in that pixel.
+   * @return An array with a part id from 0-24 for the pixels that are part of a
+   * corresponding body part, and -1 otherwise. The array size corresponds to
+   * the number of pixels in the image. See the readme for the body part ids.
    */
   async estimatePartSegmentation(
       input: PersonSegmentationInput, flipHorizontal = false,
@@ -250,8 +242,8 @@ export async function load(multiplier: MobileNetMultiplier = 0.75):
 
   tf.util.assert(
       possibleMultipliers.indexOf(multiplier.toString()) >= 0,
-      `invalid multiplier value of ${
-          multiplier}.  No checkpoint exists for that ` +
+      `invalid multiplier value of ` + multiplier +
+          `.  No checkpoint exists for that ` +
           `multiplier. Must be one of ${possibleMultipliers.join(',')}.`);
 
   const mobileNet = await mobilenetLoader.load(multiplier);

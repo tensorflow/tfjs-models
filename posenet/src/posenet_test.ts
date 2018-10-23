@@ -54,7 +54,7 @@ describeWithFlags('PoseNet', tf.test_util.NODE_ENVS, () => {
 
     const beforeTensors = tf.memory().numTensors;
 
-    net.estimateSinglePose(input, 0.5, false, 16)
+    net.estimateSinglePose(input)
         .then(() => {
           expect(tf.memory().numTensors).toEqual(beforeTensors);
         })

@@ -94,6 +94,9 @@ export function scalePose(pose: Pose, scaleY: number, scaleX: number): Pose {
 }
 
 export function scalePoses(poses: Pose[], scaleY: number, scaleX: number) {
+  if (scaleX === 0 && scaleY === 0) {
+    return poses;
+  }
   return poses.map(pose => scalePose(pose, scaleY, scaleX));
 }
 
