@@ -464,7 +464,7 @@ This produces the output:
       }
     ],
   },
-  // pose 2
+  // pose 3
   {
     // pose score
     "score": 0.13461434583673,
