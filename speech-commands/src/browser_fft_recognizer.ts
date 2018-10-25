@@ -175,6 +175,7 @@ export class BrowserFftSpeechCommandRecognizer implements
 
     let numFramesPerSpectrogram = this.nonBatchInputShape[0];
     if (config.frameLengthScalingFactor != null) {
+      // TODO(cais): Add unit tests for this. DO NOT SUBMIT.
       tf.util.assert(
           config.frameLengthScalingFactor > 0,
           `If specified, frameLengthScalingFactor must be positive, but ` +
