@@ -245,6 +245,20 @@ export interface StreamingRecognitionConfig {
    * Default: `false`.
    */
   includeSpectrogram?: boolean;
+
+  /**
+   * Scaling factor for number of columns per frame (i.e., per spectrogram).
+   *
+   * Optional. If specified, must be a positive integer.
+   *
+   * For example, if the model expects 43 columns per spectrogram and
+   * `frameLengthScalingFactor` is 1.5, there will be
+   * `Math.ceil(43 * 1.5) = 65` columns per spectrogram. During each
+   * frame callback, `tf.image.resizeBilinear` will be used to resample
+   * the spectrogram along the time axis, so the tensor shape can fit
+   * the requirement of the model.
+   */
+  frameLengthScalingFactor?: number;
 }
 
 /**

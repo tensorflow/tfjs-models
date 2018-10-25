@@ -173,8 +173,26 @@ export class BrowserFftSpeechCommandRecognizer implements
     this.parameters.columnHopLength =
         Math.round(this.FFT_SIZE * (1 - overlapFactor));
 
+    let numFramesPerSpectrogram = this.nonBatchInputShape[0];
+    if (config.frameLengthScalingFactor != null) {
+      tf.util.assert(
+          config.frameLengthScalingFactor > 0,
+          `If specified, frameLengthScalingFactor must be positive, but ` +
+              `got ${config.frameLengthScalingFactor}`);
+      numFramesPerSpectrogram = Math.ceil(
+          this.nonBatchInputShape[0] * config.frameLengthScalingFactor);
+    }
+
     const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
-      const y = tf.tidy(() => this.model.predict(x) as tf.Tensor);
+      let resizedX: tf.Tensor;
+      if (x.shape[1] !== this.model.inputs[0].shape[1]) {
+        resizedX = tf.image.resizeBilinear(
+            x as tf.Tensor4D,
+            [this.model.inputs[0].shape[1], this.model.inputs[0].shape[2]]);
+      }
+      const y = tf.tidy(
+          () =>
+              this.model.predict(resizedX == null ? x : resizedX) as tf.Tensor);
       const scores = await y.data() as Float32Array;
       const maxIndexTensor = y.argMax(-1);
       const maxIndex = (await maxIndexTensor.data())[0];
@@ -182,12 +200,14 @@ export class BrowserFftSpeechCommandRecognizer implements
       tf.dispose([y, maxIndexTensor]);
 
       if (maxScore < probabilityThreshold) {
+        tf.dispose(resizedX);
         return false;
       } else {
         let spectrogram: SpectrogramData = undefined;
         if (config.includeSpectrogram) {
           spectrogram = {
-            data: await x.data() as Float32Array,
+            data: await (resizedX == null ? x : resizedX).data() as
+                Float32Array,
             frameSize: this.nonBatchInputShape[1],
           };
         }
@@ -205,6 +225,7 @@ export class BrowserFftSpeechCommandRecognizer implements
         }
         // Trigger suppression only if the word is neither unknown or
         // background noise.
+        tf.dispose(resizedX);
         return wordDetected;
       }
     };
@@ -212,12 +233,13 @@ export class BrowserFftSpeechCommandRecognizer implements
     const suppressionTimeMillis = config.suppressionTimeMillis == null ?
         this.DEFAULT_SUPPRESSION_TIME_MILLIS :
         config.suppressionTimeMillis;
+
     this.audioDataExtractor = new BrowserFftFeatureExtractor({
       sampleRateHz: this.parameters.sampleRateHz,
       columnBufferLength: this.parameters.columnBufferLength,
       columnHopLength: this.parameters.columnHopLength,
-      numFramesPerSpectrogram: this.nonBatchInputShape[0],
       columnTruncateLength: this.nonBatchInputShape[1],
+      numFramesPerSpectrogram,
       suppressionTimeMillis,
       spectrogramCallback
     });
@@ -528,6 +550,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         });
         return false;
       };
+
       this.audioDataExtractor = new BrowserFftFeatureExtractor({
         sampleRateHz: this.parameters.sampleRateHz,
         columnBufferLength: this.parameters.columnBufferLength,
