@@ -129,6 +129,8 @@ export class PersonSegmentation {
 
     const result = await segmentation.data() as Uint8Array;
 
+    segmentation.dispose();
+
     return result;
   }
 
