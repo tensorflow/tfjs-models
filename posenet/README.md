@@ -68,7 +68,7 @@ const net = await posenet.load(multiplier);
 
 * **multiplier** - An optional number with values: `1.01`, `1.0`, `0.75`, or `0.50`. Defaults to `1.01`.   It is the float multiplier for the depth (number of channels) for all convolution operations. The value corresponds to a MobileNet architecture and checkpoint.  The larger the value, the larger the size of the layers, and more accurate the model at the cost of speed.  Set this to a smaller value to increase speed at the cost of accuracy.
 
-**By default,** PoseNet loads a model with a **`1.01`** multiplier.  This is recommended for computers with **powerful GPUs.**  A model with a **`0.75`** muliplier is recommended for computers with **mid-range/lower-end GPUS.** A model with a **`0.50`** architecture is recommended for **mobile.**
+**By default,** PoseNet loads a model with a **`0.75`** multiplier.  This is recommended for computers with **mid-range/lower-end GPUS.**  A model with a **`1.00`** muliplier is recommended for computers with **powerful GPUS.**  A model with a **`0.50`** architecture is recommended for **mobile.**
 
 ### Single-Person Pose Estimation
 
@@ -98,9 +98,9 @@ It returns a `pose` with a confidence score and an array of keypoints indexed by
 <html>
   <head>
     <!-- Load TensorFlow.js -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.11.7"></script>
+    <script src="https://unpkg.com/@tensorflow/tfjs"></script>
     <!-- Load Posenet -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/posenet@0.1.2"></script>
+    <script src="https://unpkg.com/@tensorflow-models/posenet"></script>
  </head>
 
   <body>

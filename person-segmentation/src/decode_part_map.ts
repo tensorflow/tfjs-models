@@ -53,12 +53,11 @@ export function toMask(
     segmentScores: tf.Tensor2D, threshold: number): tf.Tensor2D {
   return tf.tidy(
       () =>
-          (segmentScores.greater(tf.scalar(threshold)).cast('int32') as
-           tf.Tensor2D));
+          (segmentScores.greater(tf.scalar(threshold)).toInt() as tf.Tensor2D));
 }
 
 /**
- * Takes the sigmoid of the segmentation mask and part heatmap output, 2d tensor
+ * Takes the sigmoid of the person and part map output, and returns a 2d tensor
  * of an image with the corresponding value at each pixel corresponding to the
  * part with the highest value. These part ids are clipped by the segmentation
  * mask. Wherever the a pixel is clipped by the segmentation mask, its value

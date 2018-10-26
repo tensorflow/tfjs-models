@@ -87,7 +87,7 @@ export class PersonSegmentation {
    *
    * @param segmentationThreshold The minimum that segmentation values must have
    * to be considered part of the person.  Affects the generation of the
-   * segmentation mask and the clipping of the colored part image.
+   * segmentation mask.
    *
    * @return A binary array with 1 for the pixels that are part of the person,
    * and 0 otherwise. The array size corresponds to the number of pixels in the
@@ -155,8 +155,8 @@ export class PersonSegmentation {
    * (inputDimension - 1)/outputStride + 1
    *
    * @param segmentationThreshold The minimum that segmentation values must have
-   * to be considered part of the person.  Affects the generation of the
-   * segmentation mask and the clipping of the colored part image.
+   * to be considered part of the person.  Affects the clipping of the colored
+   * part image.
    *
    * @return An array with a part id from 0-24 for the pixels that are part of a
    * corresponding body part, and -1 otherwise. The array size corresponds to
