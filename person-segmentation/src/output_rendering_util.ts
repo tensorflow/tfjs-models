@@ -15,12 +15,14 @@
  * =============================================================================
  */
 
-import {gBlur} from './blur';
+import {cpuBlur} from './blur';
 const offScreenCanvases: {[name: string]: HTMLCanvasElement} = {};
 
 type ImageType = HTMLImageElement|HTMLVideoElement;
 
-const isSafari = (/^((?!chrome|android).)*safari/i.test(navigator.userAgent));
+function isSafari() {
+  return (/^((?!chrome|android).)*safari/i.test(navigator.userAgent));
+}
 
 function flipCanvasHorizontal(canvas: HTMLCanvasElement) {
   const ctx = canvas.getContext('2d');
@@ -50,16 +52,17 @@ function ensureOffscreenCanvasCreated(id: string): HTMLCanvasElement {
 function drawBlurredImageToCanvas(
     image: ImageType, bokehBlurAmount: number, canvas: HTMLCanvasElement) {
   const {height, width} = image;
+  const ctx = canvas.getContext('2d');
   canvas.width = width;
   canvas.height = height;
-  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, width, height);
   ctx.save();
-  // safair does not support the filter property; use the more expensive op
-  if (isSafari) {
-    gBlur(canvas, image, bokehBlurAmount);
+  if (isSafari()) {
+    cpuBlur(canvas, image, bokehBlurAmount);
   } else {
-    // tslint:disable-next-line:no-any
-    (ctx as any).filter = `blur(${bokehBlurAmount}px);`;
+    // tslint:disable:no-any
+    (ctx as any).filter = `blur(${bokehBlurAmount}px)`;
+    ctx.drawImage(image, 0, 0, width, height);
   }
   ctx.restore();
 }
@@ -121,8 +124,8 @@ export function drawBodyMaskOnCanvas(
     flipCanvasHorizontal(canvas);
   }
   ctx.drawImage(image, 0, 0);
-  // 'source-atop' - 'The new shape is only drawn where it overlaps the existing
-  // canvas content.'
+  // 'source-atop' - 'The new shape is only drawn where it overlaps the
+  // existing canvas content.'
   compost(ctx, maskCanvas, 'source-atop');
   ctx.restore();
 }
@@ -147,9 +150,8 @@ export function drawBokehEffectOnCanvas(
 
   const blurredCtx = blurredCanvas.getContext('2d');
   blurredCtx.save();
-  // "destination-out" - "The existing content is kept where it doesn't overlap
-  // the new shape."
-  // crop person using the mask from the blurred image
+  // "destination-out" - "The existing content is kept where it doesn't
+  // overlap the new shape." crop person using the mask from the blurred image
   compost(blurredCtx, maskWhatsNotThePersonCanvas, 'destination-out');
   blurredCtx.restore();
 
@@ -160,15 +162,14 @@ export function drawBokehEffectOnCanvas(
   }
   // draw the original image on the final canvas
   ctx.drawImage(image, 0, 0);
-  // "destination-in" - "The existing canvas content is kept where both the new
-  // shape and existing canvas content overlap. Everything else is made
+  // "destination-in" - "The existing canvas content is kept where both the
+  // new shape and existing canvas content overlap. Everything else is made
   // transparent."
   // crop what's not the person using the mask from the blurred image
   compost(ctx, maskWhatsNotThePersonCanvas, 'destination-in');
-  // "source-over" - "This is the default setting and draws new shapes on top of
-  // the existing canvas content."
-  // draw the blurred image without the person on top of the image with the
-  // person
+  // "source-over" - "This is the default setting and draws new shapes on top
+  // of the existing canvas content." draw the blurred image without the
+  // person on top of the image with the person
   compost(ctx, blurredCanvas, 'source-over');
   ctx.restore();
 }
