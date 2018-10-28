@@ -42,7 +42,7 @@ export default [
   config({
     output: {
       format: 'umd',
-      name: 'person-segmentation',
+      name: 'personSegmentation',
       file: 'dist/person-segmentation.js'
     }
   }),
@@ -50,7 +50,7 @@ export default [
     plugins: [minify()],
     output: {
       format: 'umd',
-      name: 'person-segmentation',
+      name: 'personSegmentation',
       file: 'dist/person-segmentation.min.js'
     }
   }),

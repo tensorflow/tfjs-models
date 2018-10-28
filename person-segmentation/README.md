@@ -1,4 +1,4 @@
-# Person Semengation in the Browser: PersonSegmentation model
+# Person Segmentation in the Browser
 
 This package contains a standalone model called PersonSegmentation, as well as some demos, for running real-time person and body part segmentation in the browser using TensorFlow.js.
 
@@ -10,8 +10,6 @@ This model can be used to segment an image into pixels that are and are not part
 pixels that belong to each of twenty-four body parts.  It works for a single person, and its ideal use case is for when there is only one person centered in an input image or video.  It can be combined with a person
 detector to segment multiple people in an image by first cropping boxes for each detected person then estimating segmentation in each of those crops, but that responsibility is currently outside of the scope of this model.
 
-[Refer to this blog post](https://medium.com/tensorflow/real-time-human-pose-estimation-in-the-browser-with-tensorflow-js-7dd0bc881cd5) for a high-level description of PersonSegmetation running on Tensorflow.js.
-
 To keep track of issues we use the [tensorflow/tfjs](https://github.com/tensorflow/tfjs) Github repo.
 
 ## Installation
@@ -19,8 +17,8 @@ To keep track of issues we use the [tensorflow/tfjs](https://github.com/tensorfl
 You can use this as standalone es5 bundle like this:
 
 ```html
-  <script src="https://unpkg.com/@tensorflow/tfjs"></script>
-  <script src="https://unpkg.com/@tensorflow-models/person-segmentation"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.13.3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/person-segmentation@0.0.1"></script>
 ```
 
 Or you can install it via npm for use in a TypeScript / ES6 project.
@@ -46,7 +44,7 @@ const net = await personSegmentation.load(multiplier);
 
 * **multiplier** - An optional number with values: `1.0`, `0.75`, or `0.50`, `0.25`. Defaults to `0.75`.   It is the float multiplier for the depth (number of channels) for all convolution operations. The value corresponds to a MobileNet architecture and checkpoint.  The larger the value, the larger the size of the layers, and more accurate the model at the cost of speed.  Set this to a smaller value to increase speed at the cost of accuracy.
 
-**By default,** PersonSegmenation loads a model with a **`0.75`** multiplier.  This is recommended for computers with **mid-range/lower-end GPUS.**  A model with a **`1.00`** muliplier is recommended for computers with **poserful GPUS.** A model with a **`0.50`** or **`0.25`** architecture is recommended for **mobile.**
+**By default,** PersonSegmenation loads a model with a **`0.75`** multiplier.  This is recommended for computers with **mid-range/lower-end GPUS.**  A model with a **`1.00`** muliplier is recommended for computers with **powerful GPUS.** A model with a **`0.50`** or **`0.25`** architecture is recommended for **mobile.**
 
 ### Person Segmentation
 
@@ -56,6 +54,8 @@ It returns a binary array with 1 for the pixels that are part of the person, and
 TODO: animated gif showing segmentation
 
 ```javascript
+const net = await personSegmentation.load();
+
 const segmentation = await personSegmentation.estimatePersonSegmentation(image, flipHorizontal, outputStride, segmentationThreshold);
 ```
 
@@ -81,9 +81,9 @@ A binary array with 1 for the pixels that are part of the person, and 0 otherwis
 <html>
   <head>
     <!-- Load TensorFlow.js -->
-    <script src="https://unpkg.com/@tensorflow/tfjs"></script>
-    <!-- Load Posenet -->
-    <script src="https://unpkg.com/@tensorflow-models/person-segmentation"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.13.3"></script>
+    <!-- Load PersonSegmentation -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/person-segmentation@0.0.1"></script>
  </head>
 
   <body>
@@ -97,7 +97,7 @@ A binary array with 1 for the pixels that are part of the person, and 0 otherwis
 
     var imageElement = document.getElementById('cat');
 
-    posenet.load().then(function(net){
+    personSegmentation.load().then(function(net){
       return net.estimatePersonSegmentation(imageElement, flipHorizontal, outputStride, segmentationThreshold)
     }).then(function(segmentation){
       console.log(segmentation);
@@ -117,7 +117,7 @@ const segmentationThreshold = 0.5;
 
 const imageElement = document.getElementById('cat');
 
-// load the posenet model from a checkpoint
+// load the PersonSegmentation model from a checkpoint
 const net = await personSegmentation.load();
 
 const segmentation = await net.estimatePersonSegmentation(imageElement, flipHorizontal, outputStride, segmentationThreshold);
@@ -144,7 +144,9 @@ It returns an array with a part id from 0-24 for the pixels that are part of a c
 TODO: animated gif showing part segmentation
 
 ```javascript
-const partSegmentation = await personSegmentation.estimatePartSegmentation(image, flipHorizontal, outputStride, segmentationThreshold);
+const net = await personSegmentation.load();
+
+const partSegmentation = await net.estimatePartSegmentation(image, flipHorizontal, outputStride, segmentationThreshold);
 ```
 
 #### Inputs
@@ -169,9 +171,9 @@ An array with a part id from 0-24 for the pixels that are part of a correspondin
 <html>
   <head>
     <!-- Load TensorFlow.js -->
-    <script src="https://unpkg.com/@tensorflow/tfjs"></script>
-    <!-- Load Posenet -->
-    <script src="https://unpkg.com/@tensorflow-models/person-segmentation"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.13.3"></script>
+    <!-- Load PersonSegmentation -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/person-segmentation@0.0.1"></script>
  </head>
 
   <body>
@@ -185,7 +187,7 @@ An array with a part id from 0-24 for the pixels that are part of a correspondin
 
     var imageElement = document.getElementById('cat');
 
-    posenet.load().then(function(net){
+    personSegmentation.load().then(function(net){
       return net.estimatePartSegmentation(imageElement, flipHorizontal, outputStride, segmentationThreshold)
     }).then(function(partSegmentation){
       console.log(partSegmentation);
@@ -205,7 +207,7 @@ const segmentationThreshold = 0.5;
 
 const imageElement = document.getElementById('cat');
 
-// load the posenet model from a checkpoint
+// load the person segmentation model from a checkpoint
 const net = await personSegmentation.load();
 
 const segmentation = await net.estimatePartSegmentation(imageElement, flipHorizontal, outputStride, segmentationThreshold);
@@ -222,10 +224,6 @@ Float32Array(307200) [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -
 // an array of 307200 values are returned, one for each pixel of the 640x480 image that was passed to the function.
 ```
 
-TODO: write about helper methods
-
 ## Developing the Demos
 
 Details for how to run the demos are included in the `demos/` folder.
-
-TODO: Add demo readme

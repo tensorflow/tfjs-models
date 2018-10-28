@@ -2,17 +2,7 @@
 
 ## Contents
 
-### Demo 1: Camera
-
-The camera demo shows how to estimate segmentation in real-time from a webcam video stream.
-
-TODO: Image;
-
-### Demo 2: Coco Images
-
-The [images](http://cocodataset.org/#home) demo shows how to estimate segmentation in images.
-
-TODO: Image;
+The demo shows how to estimate segmentation in real-time from a webcam video stream.
 
 ## Setup
 
