@@ -11,7 +11,7 @@
     "dependencies": {
       "@tensorflow/tfjs": "0.13.1",
       "@tensorflow-models/coco-ssd": "0.1.0",
-      "stats.js": "^0.17.0"       
+      "stats.js": "^0.17.0"
     },
     "scripts": {
       "watch": "NODE_ENV=development parcel --no-hmr --open index.html ",
@@ -29,7 +29,7 @@
       "dat.gui": "^0.7.1",
       "eslint": "^4.19.1",
       "eslint-config-google": "^0.9.1",
-      "parcel-bundler": "~1.6.2",
+      "parcel-bundler": "~1.10.3",
       "yalc": "~1.0.0-pre.21"
     },
     "eslintConfig": {
