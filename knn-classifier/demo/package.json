@@ -14,12 +14,13 @@
     "stats.js": "^0.17.0"
   },
   "scripts": {
-    "watch": "cross-env NODE_ENV=development parcel --no-hmr --open index.html ",
+    "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr --open",
     "build": "cross-env NODE_ENV=production parcel build index.html  --no-minify --public-url ./",
     "lint": "eslint .",
     "link-local": "yalc link @tensorflow-models/knn-classifier"
   },
   "devDependencies": {
+    "babel-core": "^6.26.3",
     "babel-plugin-transform-runtime": "~6.23.0",
     "babel-polyfill": "~6.26.0",
     "babel-preset-env": "~1.6.1",
@@ -29,7 +30,7 @@
     "dat.gui": "^0.7.1",
     "eslint": "^4.19.1",
     "eslint-config-google": "^0.9.1",
-    "parcel-bundler": "~1.6.2",
+    "parcel-bundler": "~1.10.3",
     "yalc": "~1.0.0-pre.21"
   },
   "eslintConfig": {
