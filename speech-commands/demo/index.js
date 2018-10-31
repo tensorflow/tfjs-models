@@ -118,15 +118,35 @@ window.addEventListener('load', async () => {
                 }
 
                 if (current_activation_word === 'go') {
+                    document.getElementById("stop").style.display = "none";
+                    document.getElementById("go").style.display = "block";
+                    document.getElementById("Text").textContent = "GO!";
                     if (words[word_index] === 'down') {
                         console.log(`Predicted the word 'down', will be scrolling down`);
+                        var down = document.getElementById("up");
+                        down.style.transform = "rotate(180deg)";
+                        down.style.visibility = "visible";
+                        console.log("down:");
+                        console.log(down);
+                        setTimeout(stopUp,2000);
                         scroll_down();
                     } else if (words[word_index] === 'up') {
                         console.log(`Predicted the word 'up', will be scrolling up`);
+                        var up = document.getElementById("up");
+                        up.style.transform = "";
+                        up.style.visibility = "visible";
+                        console.log("up:");
+                        console.log(up);
+                        setTimeout(stopUp,2000);
                         scroll_up();
                     } else {
                         console.log(`Predicted the word ${words[word_index]}, neither scrolling up or down`);
                     }
+                }
+                else if(current_activation_word === 'stop'){
+                    document.getElementById("go").style.display = "none";
+                    document.getElementById("stop").style.display = "block";
+                    document.getElementById("Text").textContent = "STOP!";
                 }
               })
                 // plotPredictions(
@@ -155,6 +175,11 @@ window.addEventListener('load', async () => {
         });
 });
 
+
+function stopUp(){
+    var up = document.getElementById("up");
+    up.style.visibility="hidden";
+}
 
 // createRecognizerButton.addEventListener('click', async () => {
 //   createRecognizerButton.disabled = true;
