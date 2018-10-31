@@ -81,13 +81,9 @@ startButton.addEventListener('click', () => {
   activeRecognizer
       .startStreaming(
           result => {
-            console.log(result.spectrogramData);  // DEBUG
             plotPredictions(
                 predictionCanvas, activeRecognizer.wordLabels(), result.scores,
                 3);
-            // plotSpectrogram(
-            //     spectrogramCanvas, result.spectrogram.data,
-            //     result.spectrogram.frameSize, result.spectrogram.frameSize);
           },
           {
             includeSpectrogram: true,
