@@ -177,15 +177,12 @@ enterLearnWordsButton.addEventListener('click', () => {
           spectrogram.frameSize);
       const exampleCounts = transferRecognizer.countExamples();
       const classNames = Object.keys(exampleCounts);
-      console.log(exampleCounts);  // DEBUG
       let minCountByClass = Infinity;
       for (const className of classNames) {
-        console.log(exampleCounts[className]);  // DEBUG
         if (exampleCounts[className] < minCountByClass) {
           minCountByClass = exampleCounts[className];
         }
       }
-      console.log(`minCountByClass = ${minCountByClass}`);  // DEBUG
       button.textContent = `${displayWord} (${exampleCounts[word]})`;
       logToStatusDisplay(`Collect one sample of word "${word}"`);
       enableAllCollectWordButtons();
@@ -218,23 +215,31 @@ startTransferLearnButton.addEventListener('click', async () => {
   startButton.disabled = true;
 
   const epochs = Number.parseInt(epochsInput.value);
-  const lossValues =
+  const trainLossValues =
       {x: [], y: [], name: 'train', mode: 'lines', line: {width: 1}};
-  const accuracyValues =
+  const valLossValues =
+      {x: [], y: [], name: 'val', mode: 'lines', line: {width: 1}};
+  const trainAccValues =
       {x: [], y: [], name: 'train', mode: 'lines', line: {width: 1}};
-  function plotLossAndAccuracy(epoch, loss, acc) {
-    lossValues.x.push(epoch);
-    lossValues.y.push(loss);
-    accuracyValues.x.push(epoch);
-    accuracyValues.y.push(acc);
-    Plotly.newPlot('loss-plot', [lossValues], {
+  const valAccValues =
+      {x: [], y: [], name: 'val', mode: 'lines', line: {width: 1}};
+  function plotLossAndAccuracy(epoch, loss, acc, val_loss, val_acc) {
+    trainLossValues.x.push(epoch);
+    trainLossValues.y.push(loss);
+    trainAccValues.x.push(epoch);
+    trainAccValues.y.push(acc);
+    valLossValues.x.push(epoch);
+    valLossValues.y.push(val_loss);
+    valAccValues.x.push(epoch);
+    valAccValues.y.push(val_acc);
+    Plotly.newPlot('loss-plot', [trainLossValues, valLossValues], {
       width: 360,
       height: 300,
       xaxis: {title: 'Epoch #'},
       yaxis: {title: 'Loss'},
       font: {size: 18}
     });
-    Plotly.newPlot('accuracy-plot', [accuracyValues], {
+    Plotly.newPlot('accuracy-plot', [trainAccValues, valAccValues], {
       width: 360,
       height: 300,
       xaxis: {title: 'Epoch #'},
@@ -252,9 +257,9 @@ startTransferLearnButton.addEventListener('click', async () => {
     validationSplit: 0.25,
     callback: {
       onEpochEnd: async (epoch, logs) => {
-        plotLossAndAccuracy(epoch, logs.loss, logs.acc);
-        console.log(logs.val_loss, logs.val_acc);  // DEBUG
-        // TODO(cais): Plot validation losses.
+        plotLossAndAccuracy(
+            epoch, logs.loss, logs.acc, logs.val_loss, logs.val_acc);
+        // TODO(cais): Plot fine-tune values.
       }
     }
   });
