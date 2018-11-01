@@ -231,9 +231,11 @@ startTransferLearnButton.addEventListener('click', async () => {
   disableAllCollectWordButtons();
   await transferRecognizer.train({
     epochs,
+    validationSplit: 0.25,
     callback: {
       onEpochEnd: async (epoch, logs) => {
         plotLossAndAccuracy(epoch, logs.loss, logs.acc);
+        console.log(logs.val_loss, logs.val_acc);  // DEBUG
       }
     }
   });

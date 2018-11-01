@@ -20,6 +20,7 @@ import * as tf from '@tensorflow/tfjs';
 // tslint:disable:max-line-length
 import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
 import {loadMetadataJson} from './browser_fft_utils';
+import {splitTrainingDataByClass} from './training_utils';
 import {RecognizerCallback, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
 import {version} from './version';
 
@@ -660,17 +661,30 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     const epochs = config.epochs == null ? 20 : config.epochs;
     const validationSplit =
         config.validationSplit == null ? 0 : config.validationSplit;
+
+    let trainXs, trainYs, valXs, valYs;
     try {
-      const history = await this.model.fit(xs, ys, {
+      console.log('ys:');  // DEBUG
+      await ys.print();  // DEBUG
+
+      const splits = splitTrainingDataByClass(xs, ys, validationSplit);
+      trainXs = splits.trainXs;
+      trainYs = splits.trainYs;
+      valXs = splits.valXs;
+      valYs = splits.valYs;
+      console.log('trainXs shape:', trainXs.shape);  // DEBUG
+      console.log('valXs shape:', valXs.shape);  // DEBUG
+
+      const history = await this.model.fit(trainXs, trainYs, {
         epochs,
-        validationSplit,
+        validationData: [valXs, valYs],
         batchSize: config.batchSize,
         callbacks: config.callback == null ? null : [config.callback]
       });
-      tf.dispose([xs, ys]);
+      tf.dispose([xs, ys, trainXs, trainYs, valXs, valYs]);
       return history;
     } catch (err) {
-      tf.dispose([xs, ys]);
+      tf.dispose([xs, ys, trainXs, trainYs, valXs, valYs]);
       this.model = null;
       return null;
     }
