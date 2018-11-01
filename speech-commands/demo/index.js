@@ -235,7 +235,7 @@ startTransferLearnButton.addEventListener('click', async () => {
     callback: {
       onEpochEnd: async (epoch, logs) => {
         plotLossAndAccuracy(epoch, logs.loss, logs.acc);
-        console.log(logs.val_loss, logs.val_acc);  // DEBUG
+        // TODO(cais): Plot validation losses.
       }
     }
   });

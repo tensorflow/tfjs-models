@@ -20,7 +20,7 @@ import * as tf from '@tensorflow/tfjs';
 // tslint:disable:max-line-length
 import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
 import {loadMetadataJson} from './browser_fft_utils';
-import {splitTrainingDataByClass} from './training_utils';
+import {balancedTrainValSplit} from './training_utils';
 import {RecognizerCallback, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
 import {version} from './version';
 
@@ -659,34 +659,30 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     const {xs, ys} = this.collectTransferDataAsTensors();
 
     const epochs = config.epochs == null ? 20 : config.epochs;
-    const validationSplit =
-        config.validationSplit == null ? 0 : config.validationSplit;
 
-    let trainXs, trainYs, valXs, valYs;
+    let trainXs: tf.Tensor;
+    let trainYs: tf.Tensor;
+    let valData: [tf.Tensor, tf.Tensor];
     try {
-      console.log('ys:');  // DEBUG
-      await ys.print();  // DEBUG
-
-      const splits = splitTrainingDataByClass(xs, ys, validationSplit);
-      trainXs = splits.trainXs;
-      trainYs = splits.trainYs;
-      valXs = splits.valXs;
-      valYs = splits.valYs;
-      console.log('trainXs shape:', trainXs.shape);  // DEBUG
-      console.log('valXs shape:', valXs.shape);  // DEBUG
+      if (config.validationSplit != null) {
+        const splits = balancedTrainValSplit(xs, ys, config.validationSplit);
+        trainXs = splits.trainXs;
+        trainYs = splits.trainYs;
+        valData = [splits.valXs, splits.valYs];
+      } else {
+        trainXs = xs;
+        trainYs = ys;
+      }
 
       const history = await this.model.fit(trainXs, trainYs, {
         epochs,
-        validationData: [valXs, valYs],
+        validationData: valData,
         batchSize: config.batchSize,
         callbacks: config.callback == null ? null : [config.callback]
       });
-      tf.dispose([xs, ys, trainXs, trainYs, valXs, valYs]);
       return history;
-    } catch (err) {
-      tf.dispose([xs, ys, trainXs, trainYs, valXs, valYs]);
-      this.model = null;
-      return null;
+    } finally {
+      tf.dispose([xs, ys, trainXs, trainYs, valData]);
     }
   }
 

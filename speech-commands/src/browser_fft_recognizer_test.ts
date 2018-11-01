@@ -786,6 +786,33 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     });
   });
 
+  it('trainTransferLearningModel with validationSplit', async done => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    for (let i = 0; i < 2; ++i) {
+      await transfer.collectExample('foo');
+      await transfer.collectExample('bar');
+    }
+    const history =
+        await transfer.train({epochs: 3, batchSize: 2, validationSplit: 0.5});
+    expect(history.history.loss.length).toEqual(3);
+    expect(history.history.acc.length).toEqual(3);
+    expect(history.history.val_loss.length).toEqual(3);
+    expect(history.history.val_acc.length).toEqual(3);
+
+    // After the transfer learning is complete, startStreaming with the
+    // transfer-learned model's name should give scores only for the
+    // transfer-learned model.
+    expect(base.wordLabels()).toEqual(fakeWords);
+    expect(transfer.wordLabels()).toEqual(['bar', 'foo']);
+    transfer.startStreaming(async (result: SpeechCommandRecognizerResult) => {
+      expect((result.scores as Float32Array).length).toEqual(2);
+      transfer.stopStreaming().then(done);
+    });
+  });
+
   it('trainTransferLearningModel custom params and callback', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();

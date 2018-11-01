@@ -37,7 +37,7 @@ import * as tf from '@tensorflow/tfjs';
  *   tensor; valXs: validation features tensor; valYs: validation targets
  *   tensor.
  */
-export function splitTrainingDataByClass(
+export function balancedTrainValSplit(
     xs: tf.Tensor, ys: tf.Tensor, valSplit: number): {
   trainXs: tf.Tensor,
   trainYs: tf.Tensor,
