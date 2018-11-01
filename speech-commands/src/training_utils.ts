@@ -25,8 +25,12 @@ import * as tf from '@tensorflow/tfjs';
 /**
  * Split feature and target tensors into train and validation (val) splits.
  *
+ * Given sufficent number of examples, the train and val sets will be
+ * balanced with respect to the classes.
+ *
  * @param xs Features tensor, of shape [numExamples, ...].
- * @param ys Targets tensors, of shape [numExamples, ...].
+ * @param ys Targets tensors, of shape [numExamples, numClasses]. Assumed to be
+ *   one-hot categorical encoding.
  * @param valSplit A number > 0 and < 1, fraction of examples to use
  *   as the validation set.
  * @returns trainXs: training features tensor; trainYs: training targets
