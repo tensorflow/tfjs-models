@@ -270,9 +270,15 @@ export interface TransferLearnConfig {
   batchSize?: number;
 
   /**
-   * Validation split to be used during training (default: 0).
+   * Validation split to be used during training.
    *
-   * Must be a number between 0 and 1.
+   * Default: null (no validation split).
+   *
+   * Note that this is split is different from the basic validation-split
+   * paradigm in TensorFlow.js. It makes sure that the distribution of the
+   * classes in the training and validation sets are approximately balanced.
+   *
+   * If specified, must be a number > 0 and < 1.
    */
   validationSplit?: number;
 

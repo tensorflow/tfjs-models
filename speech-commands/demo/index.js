@@ -40,6 +40,10 @@ const startTransferLearnButton =
 
 const XFER_MODEL_NAME = 'xfer-model';
 
+// Minimum required number of examples per class for transfer learning.
+// TODO(cais): Change to 8 before submitting. DO NOT SUBMIT.
+const MIN_EXAPMLES_PER_CLASS = 4;
+
 let recognizer;
 let transferRecognizer;
 
@@ -172,11 +176,25 @@ enterLearnWordsButton.addEventListener('click', () => {
           exampleCanvas, spectrogram.data, spectrogram.frameSize,
           spectrogram.frameSize);
       const exampleCounts = transferRecognizer.countExamples();
+      const classNames = Object.keys(exampleCounts);
+      console.log(exampleCounts);  // DEBUG
+      let minCountByClass = Infinity;
+      for (const className of classNames) {
+        console.log(exampleCounts[className]);  // DEBUG
+        if (exampleCounts[className] < minCountByClass) {
+          minCountByClass = exampleCounts[className];
+        }
+      }
+      console.log(`minCountByClass = ${minCountByClass}`);  // DEBUG
       button.textContent = `${displayWord} (${exampleCounts[word]})`;
       logToStatusDisplay(`Collect one sample of word "${word}"`);
       enableAllCollectWordButtons();
-      if (Object.keys(exampleCounts).length > 1) {
+      if (classNames.length > 1 && minCountByClass >= MIN_EXAPMLES_PER_CLASS) {
+        startTransferLearnButton.textContent = 'Start transfer learning';
         startTransferLearnButton.disabled = false;
+      } else {
+        startTransferLearnButton.textContent =
+            `Need at least ${MIN_EXAPMLES_PER_CLASS} examples per word`;
       }
     });
   }
@@ -235,6 +253,7 @@ startTransferLearnButton.addEventListener('click', async () => {
     callback: {
       onEpochEnd: async (epoch, logs) => {
         plotLossAndAccuracy(epoch, logs.loss, logs.acc);
+        console.log(logs.val_loss, logs.val_acc);  // DEBUG
         // TODO(cais): Plot validation losses.
       }
     }
