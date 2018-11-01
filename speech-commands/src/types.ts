@@ -156,7 +156,8 @@ export interface TransferSpeechCommandRecognizer extends
    * @throws Error, if `modelName` is invalid or if not sufficient training
    *   examples have been collected yet.
    */
-  train(config?: TransferLearnConfig): Promise<tf.History>;
+  train(config?: TransferLearnConfig):
+      Promise<tf.History|[tf.History, tf.History]>;
 }
 
 /**
@@ -283,9 +284,41 @@ export interface TransferLearnConfig {
   validationSplit?: number;
 
   /**
-   * tf.Callback to be used during the training.
+   * Number of fine-tuning epochs to run after the initial `epochs` epochs
+   * of transfer-learning training.
+   *
+   * During the fine-tuning, the last dense layer of the decapitated base
+   * model (i.e., the second-last dense layer of the original model) is
+   * unfrozen and updated through backpropagation.
+   *
+   * If specified, must be an integer > 0.
+   */
+  fineTuningEpochs?: number;
+
+  /**
+   * The optimizer for fine-tuning after the initial transfer-learning
+   * training.
+   *
+   * This parameter is used only if `fineTuningEpochs` is specified
+   * and is a positive integre.
+   *
+   * Default: 'sgd'.
+   */
+  fineTuningOptimizer?: string|tf.Optimizer;
+
+  /**
+   * tf.Callback to be used during the initial training (i.e., not
+   * the fine-tuning phase).
    */
   callback?: tf.CustomCallbackConfig;
+
+  /**
+   * tf.Callback to be used durnig the fine-tuning phase.
+   *
+   * This parameter is used only if `fineTuningEpochs` is specified
+   * and is a positive integer.
+   */
+  fineTuningCallback?: tf.CustomCallbackConfig;
 }
 
 /**
