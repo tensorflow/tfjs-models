@@ -261,6 +261,13 @@ startTransferLearnButton.addEventListener('click', async () => {
             epoch, logs.loss, logs.acc, logs.val_loss, logs.val_acc);
         // TODO(cais): Plot fine-tune values.
       }
+    },
+    fineTuningEpochs: 100,
+    fineTuningCallback: {
+      onEpochEnd: async (epoch, logs) => {
+        // DEBUG
+        console.log('Fine-tuning:', epoch, logs.val_loss, logs.val_acc);
+      }
     }
   });
   startTransferLearnButton.textContent = 'Transfer learning complete.';

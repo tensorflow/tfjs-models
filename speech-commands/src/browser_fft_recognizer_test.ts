@@ -43,6 +43,8 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
   const fakeNumFrames = 42;
   const fakeColumnTruncateLength = 232;
 
+  let secondLastBaseDenseLayer: tf.layers.Layer;
+
   function setUpFakes(model?: tf.Sequential, backgroundAndNoiseOnly = false) {
     const words =
         backgroundAndNoiseOnly ? fakeWordsNoiseAndUnknownOnly : fakeWords;
@@ -52,7 +54,9 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
         model = tf.sequential();
         model.add(tf.layers.flatten(
             {inputShape: [fakeNumFrames, fakeColumnTruncateLength, 1]}));
-        model.add(tf.layers.dense({units: 4, activation: 'relu'}));
+        secondLastBaseDenseLayer =
+            tf.layers.dense({units: 4, activation: 'relu'});
+        model.add(secondLastBaseDenseLayer);
         model.add(tf.layers.dense(
             {units: numWords, useBias: false, activation: 'softmax'}));
       }
@@ -718,7 +722,8 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     const oldTransferKernel =
         transferHead.getLayer(null, numLayers - 1).getWeights()[0].dataSync();
 
-    const history = await transfer.train({optimizer: tf.train.sgd(1)});
+    const history =
+        await transfer.train({optimizer: tf.train.sgd(1)}) as tf.History;
     expect(history.history.loss.length).toEqual(20);
     expect(history.history.acc.length).toEqual(20);
 
@@ -771,7 +776,8 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     for (let i = 0; i < 2; ++i) {
       await transfer.collectExample('bar');
     }
-    const history = await transfer.train({epochs: 10, batchSize: 2});
+    const history =
+        await transfer.train({epochs: 10, batchSize: 2}) as tf.History;
     expect(history.history.loss.length).toEqual(10);
     expect(history.history.acc.length).toEqual(10);
 
@@ -796,7 +802,8 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
       await transfer.collectExample('bar');
     }
     const history =
-        await transfer.train({epochs: 3, batchSize: 2, validationSplit: 0.5});
+        await transfer.train({epochs: 3, batchSize: 2, validationSplit: 0.5}) as
+        tf.History;
     expect(history.history.loss.length).toEqual(3);
     expect(history.history.acc.length).toEqual(3);
     expect(history.history.val_loss.length).toEqual(3);
@@ -811,6 +818,56 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
       expect((result.scores as Float32Array).length).toEqual(2);
       transfer.stopStreaming().then(done);
     });
+  });
+
+  fit('trainTransferLearningModel with fine-tuning + callback', async done => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    for (let i = 0; i < 2; ++i) {
+      await transfer.collectExample('foo');
+      await transfer.collectExample('bar');
+    }
+
+    const oldKernel = secondLastBaseDenseLayer.getWeights()[0].dataSync();
+
+    const historyObjects = await transfer.train({
+      epochs: 3,
+      batchSize: 2,
+      fineTuningEpochs: 2,
+      fineTuningOptimizer: 'adam'
+    }) as tf.History[];
+    expect(historyObjects.length).toEqual(2);
+    expect(historyObjects[0].history.loss.length).toEqual(3);
+    expect(historyObjects[0].history.acc.length).toEqual(3);
+    expect(historyObjects[1].history.loss.length).toEqual(2);
+    expect(historyObjects[1].history.acc.length).toEqual(2);
+
+    // Assert that the kernel has changed as a result of the fine-tuning.
+    const newKernel = secondLastBaseDenseLayer.getWeights()[0].dataSync();
+
+    let diffSumSquare = 0;
+    for (let i = 0; i < newKernel.length; ++i) {
+      const diff = newKernel[i] - oldKernel[i];
+      diffSumSquare += diff * diff;
+    }
+    expect(diffSumSquare).toBeGreaterThan(1e-4);
+
+    // const kernelChange = newKernel.sub(oldKernel).abs();
+    // kernelChange.print();
+
+    // After the transfer learning is complete, startStreaming with the
+    // transfer-learned model's name should give scores only for the
+    // transfer-learned model.
+    expect(base.wordLabels()).toEqual(fakeWords);
+    expect(transfer.wordLabels()).toEqual(['bar', 'foo']);
+    done();
+    // transfer.startStreaming(async (result: SpeechCommandRecognizerResult)
+    // => {
+    //   expect((result.scores as Float32Array).length).toEqual(2);
+    //   transfer.stopStreaming().then(done);
+    // });
   });
 
   it('trainTransferLearningModel custom params and callback', async () => {
@@ -830,7 +887,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
           callbackEpochs.push(epoch);
         }
       }
-    });
+    }) as tf.History;
     expect(history.history.loss.length).toEqual(5);
     expect(history.history.acc.length).toEqual(5);
     expect(callbackEpochs).toEqual([0, 1, 2, 3, 4]);

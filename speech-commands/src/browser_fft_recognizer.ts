@@ -62,8 +62,9 @@ export class BrowserFftSpeechCommandRecognizer implements
   private modelURL: string;
   private metadataURL: string;
 
+  // The second-last dense layer in the base model.
   // To be used for unfreezing during fine-tuning.
-  protected secondLastDenseLayer: tf.layers.Layer;
+  protected secondLastBaseDenseLayer: tf.layers.Layer;
 
   /**
    * Constructor of BrowserFftSpeechCommandRecognizer.
@@ -661,6 +662,11 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       this.createTransferModelFromBaseModel();
     }
 
+    // This layer needs to be freezed for the initial phase of the
+    // transfer learning. During subsequent fine-tuning (if any), it will
+    // be unfrozen.
+    this.secondLastBaseDenseLayer.trainable = false;
+
     // Compile model for training.
     const optimizer = config.optimizer || 'sgd';
     this.model.compile(
@@ -693,8 +699,12 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       });
 
       if (config.fineTuningEpochs != null) {
+        // DEBUG
+        console.log('Performing fine-tuning.',  config.fineTuningEpochs);
         // Fine tuning.
-        this.secondLastDenseLayer.trainable = true;
+        this.secondLastBaseDenseLayer.trainable = true;
+
+        console.log('Unfreezing done.');  // DEBUG
 
         // Recompile model after unfreezing layer.
         const fineTuningOptimizer: string|tf.Optimizer =
@@ -705,6 +715,10 @@ class TransferBrowserFftSpeechCommandRecognizer extends
           optimizer: fineTuningOptimizer,
           metrics: ['acc']
         });
+
+        console.log('compile() done');
+        console.log('valData:', valData);
+
         const fineTuningHistory = await this.model.fit(trainXs, trainYs, {
           epochs: config.fineTuningEpochs,
           validationData: valData,
@@ -713,6 +727,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
               null :
               [config.fineTuningCallback]
         });
+        console.log('fineTuningHistory:', fineTuningHistory);
         return [history, fineTuningHistory];
       } else {
         return history;
@@ -749,9 +764,9 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     if (layerIndex < 0) {
       throw new Error('Cannot find a hidden dense layer in the base model.');
     }
-    this.secondLastDenseLayer = layers[layerIndex];
+    this.secondLastBaseDenseLayer = layers[layerIndex];
     const beheadedBaseOutput =
-        this.secondLastDenseLayer.output as tf.SymbolicTensor;
+        this.secondLastBaseDenseLayer.output as tf.SymbolicTensor;
 
     this.transferHead = tf.sequential();
     this.transferHead.add(tf.layers.dense({
