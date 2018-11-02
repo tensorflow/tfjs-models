@@ -215,7 +215,7 @@ function segmentBodyInRealTime(video, net) {
     }
 
     // Begin monitoring code for frames per second
-    stats.begin();
+    // stats.begin();
 
     // Scale an image down to a certain factor. Too large of an image will slow
     // down the GPU
@@ -255,7 +255,7 @@ function segmentBodyInRealTime(video, net) {
     }
 
     // End monitoring code for frames per second
-    stats.end();
+    // stats.end();
 
     requestAnimationFrame(bodySegmentationFrame);
   }
@@ -287,9 +287,9 @@ export async function bindPage() {
     throw e;
   }
 
-  setupFPS();
+  // setupFPS();
   setupGui([], net);
-  setupFPS();
+  // setupFPS();
   segmentBodyInRealTime(video, net);
 }
 
