@@ -820,7 +820,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     });
   });
 
-  fit('trainTransferLearningModel with fine-tuning + callback', async done => {
+  it('trainTransferLearningModel with fine-tuning + callback', async done => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();
@@ -854,20 +854,16 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     }
     expect(diffSumSquare).toBeGreaterThan(1e-4);
 
-    // const kernelChange = newKernel.sub(oldKernel).abs();
-    // kernelChange.print();
-
     // After the transfer learning is complete, startStreaming with the
     // transfer-learned model's name should give scores only for the
     // transfer-learned model.
     expect(base.wordLabels()).toEqual(fakeWords);
     expect(transfer.wordLabels()).toEqual(['bar', 'foo']);
-    done();
-    // transfer.startStreaming(async (result: SpeechCommandRecognizerResult)
-    // => {
-    //   expect((result.scores as Float32Array).length).toEqual(2);
-    //   transfer.stopStreaming().then(done);
-    // });
+
+    transfer.startStreaming(async (result: SpeechCommandRecognizerResult) => {
+      expect((result.scores as Float32Array).length).toEqual(2);
+      transfer.stopStreaming().then(done);
+    });
   });
 
   it('trainTransferLearningModel custom params and callback', async () => {

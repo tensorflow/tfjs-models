@@ -700,7 +700,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
 
       if (config.fineTuningEpochs != null) {
         // DEBUG
-        console.log('Performing fine-tuning.',  config.fineTuningEpochs);
+        console.log('Performing fine-tuning.', config.fineTuningEpochs);
         // Fine tuning.
         this.secondLastBaseDenseLayer.trainable = true;
 
