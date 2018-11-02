@@ -4,7 +4,7 @@ This package contains a standalone model called PersonSegmentation, as well as s
 
 [Try the demo here!](https://storage.googleapis.com/tfjs-models/demos/person-segmentation/camera.html)
 
-TODO: animated gifs
+![Person Segmentation](person-segmentation.gif)
 
 This model can be used to segment an image into pixels that are and are not part of a person, and into
 pixels that belong to each of twenty-four body parts.  It works for a single person, and its ideal use case is for when there is only one person centered in an input image or video.  It can be combined with a person
@@ -51,7 +51,8 @@ const net = await personSegmentation.load(multiplier);
 Person segmentation segments an image into pixels that are and aren't part of a person.
 It returns a binary array with 1 for the pixels that are part of the person, and 0 otherwise. The array size corresponds to the number of pixels in the image.
 
-TODO: animated gif showing segmentation
+
+![Segmentation](segmentation.gif)
 
 ```javascript
 const net = await personSegmentation.load();
@@ -134,14 +135,18 @@ Uint8Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 
 // an array of 307200 values are returned, one for each pixel of the 640x480 image that was passed to the function.
 ```
 
-TODO: write about helper methods
+An example of applying a [bokeh effect](https://www.nikonusa.com/en/learn-and-explore/a/tips-and-techniques/bokeh-for-beginners.html) can be seen by running the [demo](https://storage.googleapis.com/tfjs-models/demos/person-segmentation/camera.html):
+
+
+![Bokeh](bokeh.gif)
+
 
 ### Body Part Segmentation
 
 Body part segmentation segments an image into pixels that are part of one of twenty-four body parts of a person, and to those that are not part of a person.
 It returns an array with a part id from 0-24 for the pixels that are part of a corresponding body part, and -1 otherwise. The array size corresponds to the number of pixels in the image.
 
-TODO: animated gif showing part segmentation
+![Colored Part Image](colored-parts.gif)
 
 ```javascript
 const net = await personSegmentation.load();
