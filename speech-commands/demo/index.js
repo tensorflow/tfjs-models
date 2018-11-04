@@ -111,7 +111,7 @@ stopButton.addEventListener('click', () => {
         hideCandidateWords();
         logToStatusDisplay('Streaming recognition stopped.');
       })
-      .catch(error => {
+      .catch(err => {
         logToStatusDisplay(
             'ERROR: Failed to stop streaming display: ' + err.message);
       });
