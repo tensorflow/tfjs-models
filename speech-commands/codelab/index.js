@@ -87,7 +87,7 @@ function listen() {
 async function app() {
   console.log('Loading speech commands...')
   // Load the model.
-  recognizer = speechCommands.create('BROWSER_FFT');
+  recognizer = SpeechCommands.create('BROWSER_FFT');
   await recognizer.ensureModelLoaded();
   console.log('Sucessfully loaded model');
 
