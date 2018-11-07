@@ -18,7 +18,7 @@ You can use this as standalone es5 bundle like this:
 
 ```html
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.13.3"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/person-segmentation@0.0.1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/person-segmentation@0.0.4"></script>
 ```
 
 Or you can install it via npm for use in a TypeScript / ES6 project.
@@ -84,7 +84,7 @@ A binary array with 1 for the pixels that are part of the person, and 0 otherwis
     <!-- Load TensorFlow.js -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.13.3"></script>
     <!-- Load PersonSegmentation -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/person-segmentation@0.0.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/person-segmentation@0.0.4"></script>
  </head>
 
   <body>
@@ -178,7 +178,7 @@ An array with a part id from 0-24 for the pixels that are part of a correspondin
     <!-- Load TensorFlow.js -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.13.3"></script>
     <!-- Load PersonSegmentation -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/person-segmentation@0.0.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/person-segmentation@0.0.4"></script>
  </head>
 
   <body>

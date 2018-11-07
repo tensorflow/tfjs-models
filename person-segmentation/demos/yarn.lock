@@ -695,8 +695,10 @@
   resolved "https://registry.yarnpkg.com/@protobufjs/utf8/-/utf8-1.1.0.tgz#a777360b5b39a1a2e5106f8e858f2fd2d060c570"
   integrity sha1-p3c2C1s5oaLlEG+OhY8v0tBgxXA=
 
-"@tensorflow-models/person-segmentation@../":
-  version "0.0.1"
+"@tensorflow-models/person-segmentation@0.0.4":
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/@tensorflow-models/person-segmentation/-/person-segmentation-0.0.4.tgz#f8c7726051007266f59db0c4163ebd50a7b91bd5"
+  integrity sha512-LBBUi9DCj1um3iHd9ZXJWmqsHwBdZVh4Ixm5TFw0Bt8xXN0t2kPyq2/6W1n+j+EKhGwm68qBcoWKDZiDZ/eckQ==
 
 "@tensorflow/tfjs-converter@0.6.5":
   version "0.6.5"

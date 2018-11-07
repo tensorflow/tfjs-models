@@ -10,6 +10,9 @@ demos/
 karma.conf.js
 *.tgz
 *.log
+*.jpg
+*.png
+*.gif
 .travis.yml
 CONTRIBUTING.md
 tslint.json
