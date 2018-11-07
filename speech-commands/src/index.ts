@@ -15,6 +15,8 @@
  * =============================================================================
  */
 
+import * as tf from '@tensorflow/tfjs';
+
 import {BrowserFftSpeechCommandRecognizer} from './browser_fft_recognizer';
 import {FFT_TYPE, SpeechCommandRecognizer} from './types';
 
@@ -33,13 +35,32 @@ import {FFT_TYPE, SpeechCommandRecognizer} from './types';
  *     'right', in addition to '_background_noise_' and '_unknown_'.
  *   Choosing a smaller vocabulary leads to better accuracy on the words of
  *   interest and a slightly smaller model size.
+ * @param customModelURL A custom model URL pointing to a model.json file.
+ *   Supported schemes: http://, https://, and node.js-only: file://.
+ *   Mutually exclusive with `vocabulary`. If provided, `customMetadatURL`
+ *   most also be provided.
+ * @param customMetadataURL A custom metadata URL pointing to a metadata.json
+ *   file. Must be provided together with `customModelURL`.
  * @returns An instance of SpeechCommandRecognizer.
  * @throws Error on invalid value of `fftType`.
  */
 export function create(
-    fftType: FFT_TYPE, vocabulary?: string): SpeechCommandRecognizer {
+    fftType: FFT_TYPE, vocabulary?: string, customModelURL?: string,
+    customMetadataURL?: string): SpeechCommandRecognizer {
+  tf.util.assert(
+      customModelURL == null && customMetadataURL == null ||
+          customModelURL != null && customMetadataURL != null,
+      `customModelURL and customMetadataURL must be both provided or ` +
+          `both not provided.`);
+  if (customModelURL != null) {
+    tf.util.assert(
+        vocabulary == null,
+        `vocabulary name must be null or undefined when modelURL is provided`);
+  }
+
   if (fftType === 'BROWSER_FFT') {
-    return new BrowserFftSpeechCommandRecognizer(vocabulary);
+    return new BrowserFftSpeechCommandRecognizer(
+        vocabulary, customModelURL, customMetadataURL);
   } else if (fftType === 'SOFT_FFT') {
     throw new Error(
         'SOFT_FFT SpeechCommandRecognizer has not been implemented yet.');
