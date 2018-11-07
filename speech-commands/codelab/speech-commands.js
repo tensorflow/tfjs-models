@@ -1,8 +1,23 @@
-// @tensorflow/tfjs-models Copyright 2018 Google
+/**
+ * @license
+ * Copyright 2018 Google LLC. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * =============================================================================
+ */
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@tensorflow/tfjs')) :
     typeof define === 'function' && define.amd ? define(['exports', '@tensorflow/tfjs'], factory) :
-    (factory((global.SpeechCommands = {}),global.tf));
+    (factory((global.speechCommands = {}),global.tf));
 }(this, (function (exports,tf) { 'use strict';
 
     /*! *****************************************************************************
@@ -21,9 +36,12 @@
     ***************************************************************************** */
     /* global Reflect, Promise */
 
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    var extendStatics = function(d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
 
     function __extends(d, b) {
         extendStatics(d, b);
@@ -179,10 +197,8 @@
             this.frameDurationMillis = this.fftSize / this.sampleRateHz * 1e3;
             this.columnTruncateLength = config.columnTruncateLength || this.fftSize;
             this.overlapFactor = config.overlapFactor;
-            if (!(this.overlapFactor >= 0)) {
-                throw new Error("Invalid overlapFactor: " + this.overlapFactor + ". " +
-                    "Check your columnBufferLength and columnHopLength.");
-            }
+            tf.util.assert(this.overlapFactor >= 0 && this.overlapFactor < 1, "Expected overlapFactor to be >= 0 and < 1, " +
+                ("but got " + this.overlapFactor));
             if (this.columnTruncateLength > this.fftSize) {
                 throw new Error("columnTruncateLength " + this.columnTruncateLength + " exceeds " +
                     ("fftSize (" + this.fftSize + ")."));
@@ -459,7 +475,7 @@
         };
         BrowserFftSpeechCommandRecognizer.prototype.ensureModelLoaded = function () {
             return __awaiter(this, void 0, void 0, function () {
-                var model, outputShape;
+                var model, outputShape, frameDurationMillis, numFrames;
                 var _this = this;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
@@ -503,6 +519,9 @@
                             this.elementsPerExample = 1;
                             model.inputs[0].shape.slice(1).forEach(function (dimSize) { return _this.elementsPerExample *= dimSize; });
                             this.warmUpModel();
+                            frameDurationMillis = this.parameters.fftSize / this.parameters.sampleRateHz * 1e3;
+                            numFrames = model.inputs[0].shape[1];
+                            this.parameters.spectrogramDurationMillis = numFrames * frameDurationMillis;
                             return [2];
                     }
                 });
@@ -867,3 +886,4 @@
     Object.defineProperty(exports, '__esModule', { value: true });
 
 })));
+//# sourceMappingURL=speech-commands.js.map
