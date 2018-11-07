@@ -209,11 +209,6 @@ export interface StreamingRecognitionConfig {
   overlapFactor?: number;
 
   /**
-   * Minimum samples of the same label for reliable prediction.
-   */
-  minSamples?: number;
-
-  /**
    * Amount to time in ms to suppress recognizer after a word is recognized.
    *
    * Defaults to 1000 ms.
@@ -290,11 +285,6 @@ export interface RecognizerParams {
    * FFT encoding size per spectrogram column.
    */
   fftSize?: number;
-
-  /**
-   * Post FFT filter size for spectorgram column.
-   */
-  filterSize?: number;
 
   /**
    * Sampling rate, in Hz.

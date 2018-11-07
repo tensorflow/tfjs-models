@@ -315,9 +315,22 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
 
     const numCallbacksToComplete = 2;
     let numCallbacksCompleted = 0;
+    const spectroDurationMillis = 1000;
     const tensorCounts: number[] = [];
+    const callbackTimestamps: number[] = [];
     recognizer.startStreaming(async (result: SpeechCommandRecognizerResult) => {
       expect((result.scores as Float32Array).length).toEqual(fakeWords.length);
+
+      callbackTimestamps.push(tf.util.now());
+      if (callbackTimestamps.length > 1) {
+        const timeBetweenCallbacks =
+            callbackTimestamps[callbackTimestamps.length - 1] -
+            callbackTimestamps[callbackTimestamps.length - 2];
+        const cond = timeBetweenCallbacks > spectroDurationMillis &&
+            timeBetweenCallbacks < 1.3 * spectroDurationMillis;
+        expect(cond).toBe(true);
+      }
+
       tensorCounts.push(tf.memory().numTensors);
       if (tensorCounts.length > 1) {
         // Assert no memory leak.
@@ -340,11 +353,23 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
 
     const numCallbacksToComplete = 2;
     let numCallbacksCompleted = 0;
+    const spectroDurationMillis = 1000;
     const tensorCounts: number[] = [];
+    const callbackTimestamps: number[] = [];
     await recognizer.startStreaming(
         async (result: SpeechCommandRecognizerResult) => {
           expect((result.scores as Float32Array).length)
               .toEqual(fakeWords.length);
+
+          callbackTimestamps.push(tf.util.now());
+          if (callbackTimestamps.length > 1) {
+            const timeBetweenCallbacks =
+                callbackTimestamps[callbackTimestamps.length - 1] -
+                callbackTimestamps[callbackTimestamps.length - 2];
+            const cond = timeBetweenCallbacks > 0.5 * spectroDurationMillis &&
+                timeBetweenCallbacks < 0.7 * spectroDurationMillis;
+            expect(cond).toBe(true);
+          }
 
           tensorCounts.push(tf.memory().numTensors);
           if (tensorCounts.length > 1) {

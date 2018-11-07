@@ -151,11 +151,10 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     this.columnTruncateLength = config.columnTruncateLength || this.fftSize;
     this.overlapFactor = config.overlapFactor;
 
-    if (!(this.overlapFactor >= 0)) {
-      throw new Error(
-          `Invalid overlapFactor: ${this.overlapFactor}. ` +
-          `Check your columnBufferLength and columnHopLength.`);
-    }
+    tf.util.assert(
+        this.overlapFactor >= 0 && this.overlapFactor < 1,
+        `Expected overlapFactor to be >= 0 and < 1, ` +
+            `but got ${this.overlapFactor}`);
 
     if (this.columnTruncateLength > this.fftSize) {
       throw new Error(
