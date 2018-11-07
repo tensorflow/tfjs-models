@@ -31,7 +31,7 @@
     "rimraf": "2.6.2",
     "rollup": "~0.60.7",
     "rollup-plugin-node-resolve": "~3.3.0",
-    "rollup-plugin-typescript2": "~0.15.0",
+    "rollup-plugin-typescript2": "~0.13.0",
     "rollup-plugin-uglify": "~3.0.0",
     "tempfile": "2.0.0",
     "ts-node": "~5.0.0",
