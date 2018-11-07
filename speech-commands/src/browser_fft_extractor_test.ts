@@ -91,13 +91,13 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
       numFramesPerSpectrogram: 43,
       columnTruncateLength: 225,
       suppressionTimeMillis: 1000,
-      overlapFactor: 0.5
+      overlapFactor: 0
     });
 
     expect(extractor.fftSize).toEqual(1024);
     expect(extractor.numFramesPerSpectrogram).toEqual(43);
     expect(extractor.columnTruncateLength).toEqual(225);
-    expect(extractor.overlapFactor).toBeCloseTo(0.5);
+    expect(extractor.overlapFactor).toBeCloseTo(0);
   });
 
   it('constructor errors due to null config', () => {
@@ -305,7 +305,7 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
       },
       numFramesPerSpectrogram: 43,
       columnTruncateLength: 225,
-      overlapFactor: 0,
+      overlapFactor: 0.25,
       suppressionTimeMillis
     });
     const tBegin = tf.util.now();
