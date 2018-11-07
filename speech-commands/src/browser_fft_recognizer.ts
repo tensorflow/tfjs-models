@@ -273,6 +273,10 @@ export class BrowserFftSpeechCommandRecognizer implements
     model.inputs[0].shape.slice(1).forEach(
         dimSize => this.elementsPerExample *= dimSize);
     this.warmUpModel();
+    const frameDurationMillis =
+        this.parameters.fftSize / this.parameters.sampleRateHz * 1e3;
+    const numFrames = model.inputs[0].shape[1];
+    this.parameters.spectrogramDurationMillis = numFrames * frameDurationMillis;
   }
 
   private warmUpModel() {

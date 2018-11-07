@@ -282,6 +282,11 @@ export interface TransferLearnConfig {
  */
 export interface RecognizerParams {
   /**
+   * Total duration per spectragram, in milliseconds.
+   */
+  spectrogramDurationMillis?: number;
+
+  /**
    * FFT encoding size per spectrogram column.
    */
   fftSize?: number;
