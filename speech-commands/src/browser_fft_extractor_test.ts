@@ -135,7 +135,7 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
              overlapFactor: -0.1,
              suppressionTimeMillis: 1000
            }))
-        .toThrowError(/Invalid overlapFactor/);
+        .toThrowError(/Expected overlapFactor/);
   });
 
   it('constructor errors due to columnTruncateLength too large', () => {
