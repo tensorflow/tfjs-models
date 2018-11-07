@@ -287,22 +287,6 @@ export interface TransferLearnConfig {
  */
 export interface RecognizerParams {
   /**
-   * Audio sample window size per spectrogram column.
-   */
-  columnBufferLength?: number;
-
-  /**
-   * Audio sample window hopping size between two consecutive spectrogram
-   * columns.
-   */
-  columnHopLength?: number;
-
-  /**
-   * Total duration per spectragram, in milliseconds.
-   */
-  spectrogramDurationMillis?: number;
-
-  /**
    * FFT encoding size per spectrogram column.
    */
   fftSize?: number;

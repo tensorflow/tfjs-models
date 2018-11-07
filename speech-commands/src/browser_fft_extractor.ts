@@ -61,6 +61,8 @@ export interface BrowserFftFeatureExtractorConfig extends RecognizerParams {
    * If `null` or `undefined`, will do no truncation.
    */
   columnTruncateLength?: number;
+
+  overlapFactor: number;
 }
 
 /**
@@ -142,11 +144,9 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     this.fftSize = config.fftSize || 1024;
     this.frameDurationMillis = this.fftSize / this.sampleRateHz * 1e3;
     this.columnTruncateLength = config.columnTruncateLength || this.fftSize;
-    const columnBufferLength = config.columnBufferLength || this.fftSize;
-    const columnHopLength = config.columnHopLength || (this.fftSize / 2);
-    this.overlapFactor = columnHopLength / columnBufferLength;
+    this.overlapFactor = config.overlapFactor;
 
-    if (!(this.overlapFactor > 0)) {
+    if (!(this.overlapFactor >= 0)) {
       throw new Error(
           `Invalid overlapFactor: ${this.overlapFactor}. ` +
           `Check your columnBufferLength and columnHopLength.`);
@@ -190,8 +190,10 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
 
     this.frameCount = 0;
 
+    const period = Math.max(1,
+      Math.round(this.numFramesPerSpectrogram * (1-this.overlapFactor)));
     this.tracker = new Tracker(
-        Math.round(this.numFramesPerSpectrogram * this.overlapFactor),
+        period,
         Math.round(this.suppressionTimeMillis / this.frameDurationMillis));
     this.frameIntervalTask = setInterval(
         this.onAudioFrame.bind(this), this.fftSize / this.sampleRateHz * 1e3);
@@ -200,7 +202,6 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
   private async onAudioFrame() {
     this.analyser.getFloatFrequencyData(this.freqData);
     if (this.freqData[0] === -Infinity) {
-      console.warn(`No signal (frame #${this.frameCount})`);
       return;
     }
 

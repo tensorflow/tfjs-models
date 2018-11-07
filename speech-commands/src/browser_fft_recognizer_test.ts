@@ -15,22 +15,18 @@
  * =============================================================================
  */
 
-
 import '@tensorflow/tfjs-node';
-
 import * as tf from '@tensorflow/tfjs';
 import {describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
 import {writeFileSync} from 'fs';
 import {join} from 'path';
 import * as rimraf from 'rimraf';
 import * as tempfile from 'tempfile';
-
 import {BrowserFftSpeechCommandRecognizer} from './browser_fft_recognizer';
 import * as BrowserFftUtils from './browser_fft_utils';
 import {FakeAudioContext, FakeAudioMediaStream} from './browser_test_utils';
 import {create} from './index';
 import {SpeechCommandRecognizerResult} from './types';
-
 
 describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
   const fakeWords: string[] = [
@@ -74,7 +70,6 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(recognizer.isStreaming()).toEqual(false);
     expect(recognizer.params().sampleRateHz).toEqual(44100);
     expect(recognizer.params().fftSize).toEqual(1024);
-    expect(recognizer.params().columnBufferLength).toEqual(1024);
   });
 
   it('ensureModelLoaded succeeds', async () => {
@@ -83,8 +78,6 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     const recognizer = new BrowserFftSpeechCommandRecognizer();
     await recognizer.ensureModelLoaded();
     expect(recognizer.wordLabels()).toEqual(fakeWords);
-    expect(recognizer.params().spectrogramDurationMillis)
-        .toBeCloseTo(fakeNumFrames * 1024 / 44100 * 1e3);
     expect(recognizer.model instanceof tf.Model).toEqual(true);
     expect(recognizer.modelInputShape()).toEqual([
       null, fakeNumFrames, fakeColumnTruncateLength, 1
@@ -323,19 +316,8 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     const numCallbacksToComplete = 2;
     let numCallbacksCompleted = 0;
     const tensorCounts: number[] = [];
-    const callbackTimestamps: number[] = [];
     recognizer.startStreaming(async (result: SpeechCommandRecognizerResult) => {
       expect((result.scores as Float32Array).length).toEqual(fakeWords.length);
-
-      callbackTimestamps.push(tf.util.now());
-      if (callbackTimestamps.length > 1) {
-        expect(
-            callbackTimestamps[callbackTimestamps.length - 1] -
-            callbackTimestamps[callbackTimestamps.length - 2])
-            .toBeGreaterThanOrEqual(
-                recognizer.params().spectrogramDurationMillis);
-      }
-
       tensorCounts.push(tf.memory().numTensors);
       if (tensorCounts.length > 1) {
         // Assert no memory leak.
@@ -359,20 +341,10 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     const numCallbacksToComplete = 2;
     let numCallbacksCompleted = 0;
     const tensorCounts: number[] = [];
-    const callbackTimestamps: number[] = [];
     await recognizer.startStreaming(
         async (result: SpeechCommandRecognizerResult) => {
           expect((result.scores as Float32Array).length)
               .toEqual(fakeWords.length);
-
-          callbackTimestamps.push(tf.util.now());
-          if (callbackTimestamps.length > 1) {
-            expect(
-                callbackTimestamps[callbackTimestamps.length - 1] -
-                callbackTimestamps[callbackTimestamps.length - 2])
-                .toBeGreaterThanOrEqual(
-                    recognizer.params().spectrogramDurationMillis * 0.5);
-          }
 
           tensorCounts.push(tf.memory().numTensors);
           if (tensorCounts.length > 1) {

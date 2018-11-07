@@ -44,7 +44,7 @@ export class BrowserFftSpeechCommandRecognizer implements
 
   private readonly SAMPLE_RATE_HZ = 44100;
   private readonly FFT_SIZE = 1024;
-  private readonly DEFAULT_SUPPRESSION_TIME_MILLIS = 1000;
+  private readonly DEFAULT_SUPPRESSION_TIME_MILLIS = 0;
 
   model: tf.Model;
   readonly vocabulary: string;
@@ -103,8 +103,7 @@ export class BrowserFftSpeechCommandRecognizer implements
 
     this.parameters = {
       sampleRateHz: this.SAMPLE_RATE_HZ,
-      fftSize: this.FFT_SIZE,
-      columnBufferLength: this.FFT_SIZE,
+      fftSize: this.FFT_SIZE
     };
   }
 
@@ -170,8 +169,6 @@ export class BrowserFftSpeechCommandRecognizer implements
     tf.util.assert(
         overlapFactor >= 0 && overlapFactor < 1,
         `Expected overlapFactor to be >= 0 and < 1, but got ${overlapFactor}`);
-    this.parameters.columnHopLength =
-        Math.round(this.FFT_SIZE * (1 - overlapFactor));
 
     const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
       const y = tf.tidy(() => this.model.predict(x) as tf.Tensor);
@@ -214,12 +211,11 @@ export class BrowserFftSpeechCommandRecognizer implements
         config.suppressionTimeMillis;
     this.audioDataExtractor = new BrowserFftFeatureExtractor({
       sampleRateHz: this.parameters.sampleRateHz,
-      columnBufferLength: this.parameters.columnBufferLength,
-      columnHopLength: this.parameters.columnHopLength,
       numFramesPerSpectrogram: this.nonBatchInputShape[0],
       columnTruncateLength: this.nonBatchInputShape[1],
       suppressionTimeMillis,
-      spectrogramCallback
+      spectrogramCallback,
+      overlapFactor
     });
 
     await this.audioDataExtractor.start();
@@ -280,13 +276,7 @@ export class BrowserFftSpeechCommandRecognizer implements
     this.elementsPerExample = 1;
     model.inputs[0].shape.slice(1).forEach(
         dimSize => this.elementsPerExample *= dimSize);
-
     this.warmUpModel();
-
-    const frameDurationMillis =
-        this.parameters.columnBufferLength / this.parameters.sampleRateHz * 1e3;
-    const numFrames = model.inputs[0].shape[1];
-    this.parameters.spectrogramDurationMillis = numFrames * frameDurationMillis;
   }
 
   private warmUpModel() {
@@ -530,12 +520,11 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       };
       this.audioDataExtractor = new BrowserFftFeatureExtractor({
         sampleRateHz: this.parameters.sampleRateHz,
-        columnBufferLength: this.parameters.columnBufferLength,
-        columnHopLength: this.parameters.columnBufferLength,
         numFramesPerSpectrogram: this.nonBatchInputShape[0],
         columnTruncateLength: this.nonBatchInputShape[1],
         suppressionTimeMillis: 0,
-        spectrogramCallback
+        spectrogramCallback,
+        overlapFactor: 0
       });
       this.audioDataExtractor.start();
     });

@@ -5,7 +5,6 @@ let newModel;
 let recognizer;
 let spectrogram;
 let isListening = false;
-let last;
 const activations = [];
 const labels = [];
 
@@ -61,25 +60,27 @@ function listen() {
   // 2. A configuration object with adjustable fields such a
   //    - includeSpectrogram
   //    - probabilityThreshold
-  
+
   recognizer.startStreaming(async result => {
-    const now = performance.now();
-    console.log('time between predictions', now - last);
-    last = now;
-    // - result.scores contains the probability scores that correspond to
-    //   recognizer.wordLabels().
-    // - result.spectrogram contains the spectrogram of the recognized word.
     const inputShape = recognizer.modelInputShape();
     inputShape[0] = 1;
     const input = tf.tensor(result.spectrogram.data, inputShape);
     const activation = await origModel.predict(input);
-    const predictedTensor = newModel.predict(activation).argMax(1);
+    const predictions = newModel.predict(activation);
+    const probs = await predictions.data();
+    const maxProb = probs.reduce((prev, curr) => {
+      return Math.max(prev, curr);
+    });
+    if (maxProb < 0.8) {
+      return showPrediction('');
+    }
+    const predictedTensor = predictions.argMax(1);
     const predictedLabel = (await predictedTensor.data())[0];
     showPrediction(predictedLabel);
   }, {
     includeSpectrogram: true,
     invokeCallbackOnNoiseAndUnknown: true,
-    overlapFactor: 0.5
+    overlapFactor: 0.9
   });
 
 }
