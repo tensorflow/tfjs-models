@@ -415,6 +415,30 @@ export class BrowserFftSpeechCommandRecognizer implements
     }
   }
 
+  async recordSpectrogram(): Promise<SpectrogramData> {
+    await this.ensureModelLoaded();
+
+    return new Promise<SpectrogramData>((resolve, reject) => {
+      const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
+        resolve({
+          data: await x.data() as Float32Array,
+          frameSize: this.nonBatchInputShape[1],
+        });
+        return false;
+      };
+      this.audioDataExtractor = new BrowserFftFeatureExtractor({
+        sampleRateHz: this.parameters.sampleRateHz,
+        columnBufferLength: this.parameters.columnBufferLength,
+        columnHopLength: this.parameters.columnBufferLength,
+        numFramesPerSpectrogram: this.nonBatchInputShape[0],
+        columnTruncateLength: this.nonBatchInputShape[1],
+        suppressionTimeMillis: 0,
+        spectrogramCallback
+      });
+      this.audioDataExtractor.start();
+    });
+  }
+
   createTransfer(name: string): TransferSpeechCommandRecognizer {
     if (this.model == null) {
       throw new Error(

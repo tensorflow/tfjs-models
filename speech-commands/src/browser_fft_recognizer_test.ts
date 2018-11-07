@@ -482,6 +482,15 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(recognizer.isStreaming()).toEqual(false);
   });
 
+  it('recordSpectrogram succeeds', async() => {
+    setUpFakes();
+    const recognizer = new BrowserFftSpeechCommandRecognizer();
+
+    const out = await recognizer.recordSpectrogram();
+    expect(out.data.length).toEqual(fakeNumFrames * fakeColumnTruncateLength);
+    expect(out.frameSize).toEqual(fakeColumnTruncateLength);
+  });
+
   it('collectTransferLearningExample default transerf model', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();

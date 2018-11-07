@@ -81,8 +81,10 @@ export interface SpeechCommandRecognizer {
    *
    * The shape of the Tensor matches the input shape of the underlying model
    * and can be stored for future training and offline inference purposes.
+   *
+   * @returns A Promise of `SpectrogramData`.
    */
-  collectSpectrogram(): Promise<SpectrogramData>;
+  recordSpectrogram(): Promise<SpectrogramData>;
 
   /**
    * Get the input shape of the tf.Model the underlies the recognizer.
@@ -256,7 +258,7 @@ export interface StreamingRecognitionConfig {
 
   /**
    * Whether to include the embedding (internal activation).
-   * 
+   *
    * Default: `false`.
    */
   includeEmbedding?: boolean;
