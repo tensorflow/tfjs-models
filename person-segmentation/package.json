@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/person-segmentation",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Pretrained Person Segmentation model in tensorflow.js",
   "main": "dist/index.js",
   "jsnext:main": "dist/person-segmentation.esm.js",
