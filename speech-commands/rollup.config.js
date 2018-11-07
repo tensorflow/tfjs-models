@@ -61,23 +61,23 @@ export default [
   config({
     output: {
       format: 'umd',
-      name: 'SpeechCommands',
+      name: 'speechCommands',
       file: 'dist/speech-commands.js'
     }
   }),
-  // config({
-  //   plugins: [minify()],
-  //   output: {
-  //     format: 'umd',
-  //     name: 'SpeechCommands',
-  //     file: 'dist/speech-commands.min.js'
-  //   }
-  // }),
-  // config({
-  //   plugins: [minify()],
-  //   output: {
-  //     format: 'es',
-  //     file: 'dist/speech-commands.esm.js'
-  //   }
-  // })
+  config({
+    plugins: [minify()],
+    output: {
+      format: 'umd',
+      name: 'speechCommands',
+      file: 'dist/speech-commands.min.js'
+    }
+  }),
+  config({
+    plugins: [minify()],
+    output: {
+      format: 'es',
+      file: 'dist/speech-commands.esm.js'
+    }
+  })
 ];

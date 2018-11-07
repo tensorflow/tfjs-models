@@ -20,8 +20,6 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-
-// tslint:disable-next-line:max-line-length
 import {getAudioContextConstructor, getAudioMediaStream, normalize} from './browser_fft_utils';
 import {FeatureExtractor, RecognizerParams} from './types';
 
@@ -62,6 +60,13 @@ export interface BrowserFftFeatureExtractorConfig extends RecognizerParams {
    */
   columnTruncateLength?: number;
 
+  /**
+   * Overlap factor. Must be a number between >=0 and <1.
+   * For example, if the model takes a frame length of 1000 ms,
+   * and if overlap factor is 0.4, there will be a 400-ms
+   * overlap between two successive frames, i.e., frames
+   * will be taken every 600 ms.
+   */
   overlapFactor: number;
 }
 
@@ -190,8 +195,8 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
 
     this.frameCount = 0;
 
-    const period = Math.max(1,
-      Math.round(this.numFramesPerSpectrogram * (1-this.overlapFactor)));
+    const period = Math.max(
+        1, Math.round(this.numFramesPerSpectrogram * (1 - this.overlapFactor)));
     this.tracker = new Tracker(
         period,
         Math.round(this.suppressionTimeMillis / this.frameDurationMillis));
