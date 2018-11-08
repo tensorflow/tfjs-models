@@ -199,10 +199,10 @@ export interface SpeechCommandRecognizerResult {
 
 export interface StreamingRecognitionConfig {
   /**
-   * Overlap factor. Must be a number between >=0 and <1.
+   * Overlap factor. Must be >=0 and <1.
    * Defaults to 0.5.
    * For example, if the model takes a frame length of 1000 ms,
-   * and if overlap factor is 0.4, there will be a 400-ms
+   * and if overlap factor is 0.4, there will be a 400ms
    * overlap between two successive frames, i.e., frames
    * will be taken every 600 ms.
    */
