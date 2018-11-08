@@ -6,12 +6,21 @@ let isListening = false;
 const activations = [];
 const labels = [];
 
-async function addExample(label) {
+// async function addExample(label) {
+//   toggleButtons(false);
+//   const example = await recognizer.recognize(null, {includeEmbedding: true});
+//   toggleButtons(true);
+//   activations.push(example.embedding);
+//   labels.push(label);
+// }
+
+async function addExample(ev) {
+  document.getElementById('status').style.left = ev.offsetX + 'px';
   toggleButtons(false);
   const example = await recognizer.recognize(null, {includeEmbedding: true});
   toggleButtons(true);
   activations.push(example.embedding);
-  labels.push(label);
+  labels.push(ev.offsetX / ev.target.offsetWidth);
 }
 
 function toggleButtons(enable) {
@@ -20,7 +29,7 @@ function toggleButtons(enable) {
 
 async function train() {
   toggleButtons(false);
-  await newModel.fit(tf.concat(activations), tf.oneHot(labels, 3), {
+  await newModel.fit(tf.concat(activations), tf.tensor2d(labels, [labels.length, 1]), {
     batchSize: 1,
     epochs: 10,
     callbacks: {
@@ -32,9 +41,12 @@ async function train() {
   toggleButtons(true);
 }
 
-function showPrediction(label) {
-  const classes = ['A', 'B', 'C'];
-  document.getElementById('prediction').textContent = classes[label];
+function showPrediction(value) {
+ // const classes = ['A', 'B', 'C'];
+  //document.getElementById('prediction').textContent = classes[label];
+  console.log(value);
+  const offset = value * document.getElementById('controller').offsetWidth;
+  document.getElementById('status').style.left = offset + 'px';
 }
 
 function listen() {
@@ -53,12 +65,12 @@ function listen() {
 
   recognizer.startStreaming(async result => {
     const probs = newModel.predict(result.embedding);
-    const maxProb = (await probs.max().data())[0];
-    if (maxProb < 0.8) {
-      return showPrediction('');
-    }
-    const predictedLabel = (await probs.argMax(1).data())[0];
-    showPrediction(predictedLabel);
+    //const maxProb = (await probs.max().data())[0];
+    //if (maxProb < 0.8) {
+    //  return showPrediction('');
+    //}
+    //const predictedLabel = (await probs.argMax(1).data())[0];
+    showPrediction((await probs.data())[0]);
   }, {
     overlapFactor: 0.95,
     includeEmbedding: true
@@ -74,21 +86,34 @@ async function app() {
   console.log('Sucessfully loaded model');
 
   // Setup the UI.
-  document.getElementById('class-a').addEventListener('click', () => addExample(0));
-  document.getElementById('class-b').addEventListener('click', () => addExample(1));
-  document.getElementById('class-c').addEventListener('click', () => addExample(2));
+  //document.getElementById('class-a').addEventListener('click', () => addExample(0));
+  //document.getElementById('class-b').addEventListener('click', () => addExample(1));
+  //document.getElementById('class-c').addEventListener('click', () => addExample(2));
+  document.getElementById('controller').addEventListener('click', ev => addExample(ev));
   document.getElementById('train').addEventListener('click', () => train());
   document.getElementById('listen').addEventListener('click', () => listen());
 
   // Create a new model.
   newModel = tf.sequential();
+
   newModel.add(tf.layers.dense({
-    units: 3,
-    inputShape: [2000],
-    activation: 'softmax'
+    units: 100,
+    inputShape: [2000]
+  }));
+  newModel.add(tf.layers.dense({
+    units: 100
+  }));
+  newModel.add(tf.layers.dense({
+    units: 100
+  }));
+  newModel.add(tf.layers.dense({
+    units: 100
+  }));
+  newModel.add(tf.layers.dense({
+    units: 1
   }));
   const optimizer = tf.train.sgd(0.001);
-  newModel.compile({optimizer, loss: 'categoricalCrossentropy'});
+  newModel.compile({optimizer, loss: 'meanSquaredError'});
 }
 
 app();

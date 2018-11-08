@@ -5,11 +5,28 @@
     <!-- <script src="https://unpkg.com/@tensorflow-models/speech-commands"></script> -->
     <script src="speech-commands.js"></script>
   </head>
+  <style>
+    #controller {
+      width: 800px;
+      height: 30px;
+      border: 1px solid #666;
+    }
+    #status {
+      height: 30px;
+      width: 2px;
+      background-color: #090;
+      position: relative;
+    }
+  </style>
   <body>
     <div id="console"></div>
-    <button id="class-a">Add A</button>
+    <!--<button id="class-a">Add A</button>
     <button id="class-b">Add B</button>
-    <button id="class-c">Add C</button>
+    <button id="class-c">Add C</button>-->
+
+    <div id="controller">
+      <div id="status"></div>
+    </div>
     <br/><br/>
     <button id="train">Train</button>
     <br/><br/>
