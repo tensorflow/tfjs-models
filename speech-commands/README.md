@@ -39,7 +39,7 @@ A speech command recognizer can be used in two ways:
 ### Online streaming recognition
 
 To use the speech-command recognizer, first create a recognizer instance,
-then start the streaming recognition by calling its `startStreaming()` method.
+then start the streaming recognition by calling its `listen()` method.
 
 ```js
 import * as tf from '@tensorflow/tfjs';
@@ -59,12 +59,12 @@ await recognizer.ensureModelLoaded();
 // See the array of words that the recognizer is trained to recognize.
 console.log(recognizer.wordLabels());
 
-// `startStreaming()` takes two arguments:
+// `listen()` takes two arguments:
 // 1. A callback function that is invoked anytime a word is recognized.
 // 2. A configuration object with adjustable fields such a
 //    - includeSpectrogram
 //    - probabilityThreshold
-recognizer.startStreaming(result => {
+recognizer.listen(result => {
   // - result.scores contains the probability scores that correspond to
   //   recognizer.wordLabels().
   // - result.spectrogram contains the spectrogram of the recognized word.
@@ -100,7 +100,7 @@ Currently, the supported vocabularies are:
 #### Parameters for online streaming recognition
 
 As the example above shows, you can specify optional parameters when calling
-`startStreaming()`. The supported parameters are:
+`listen()`. The supported parameters are:
 
 * `overlapFactor`: Controls how often the recognizer performs prediction on
   spectrograms. Must be >=0 and <1 (default: 0.5). For example,
@@ -158,7 +158,7 @@ tf.tidy(() => {
 
 By default, a recognizer object will load the underlying
 tf.Model via HTTP requests to a centralized location, when its
-`startStreaming()` or `recognize()` method is called the first time.
+`listen()` or `recognize()` method is called the first time.
 You can pre-load the model to reduce the latency of the first calls
 to these methods. To do that, use the `ensureModelLoaded()` method of the
 recognizer object. The `ensureModelLoaded()` method also "warms up" model after
@@ -236,7 +236,7 @@ await transferRecognizer.train({
 
 // After the transfer learning completes, you can start online streaming
 // recognition using the new model.
-await transferRecognizer.startStreaming(result => {
+await transferRecognizer.listen(result => {
   // - result.scores contains the scores for the new vocabulary, which
   //   can be checked with:
   const words = transferRecognizer.wordLabels();

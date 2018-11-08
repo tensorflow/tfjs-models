@@ -35,7 +35,7 @@ export class BrowserFftSpeechCommandRecognizer implements
   static readonly DEFAULT_VOCABULARY_NAME = '18w';
 
   readonly MODEL_URL_PREFIX =
-      `https://storage.googleapis.com/tfjs-speech-commands-models/v${
+      `https://storage.googleapis.com/tfjs-models/tfjs/speech-commands/v${
           version}/browser_fft`;
 
   private readonly SAMPLE_RATE_HZ = 44100;
@@ -107,7 +107,7 @@ export class BrowserFftSpeechCommandRecognizer implements
   /**
    * Start streaming recognition.
    *
-   * To stop the recognition, use `stopStreaming()`.
+   * To stop the recognition, use `stopListening()`.
    *
    * Example: TODO(cais): Add exapmle code snippet.
    *
@@ -132,9 +132,8 @@ export class BrowserFftSpeechCommandRecognizer implements
    * @throws Error, if streaming recognition is already started or
    *   if `config` contains invalid values.
    */
-  async startStreaming(
-      callback: RecognizerCallback,
-      config?: StreamingRecognitionConfig): Promise<void> {
+  async listen(callback: RecognizerCallback,
+               config?: StreamingRecognitionConfig): Promise<void> {
     if (streaming) {
       throw new Error(
           'Cannot start streaming again when streaming is ongoing.');
@@ -355,7 +354,7 @@ export class BrowserFftSpeechCommandRecognizer implements
    *
    * @throws Error if there is not ongoing streaming recognition.
    */
-  async stopStreaming(): Promise<void> {
+  async stopListening(): Promise<void> {
     if (!streaming) {
       throw new Error('Cannot stop streaming when streaming is not ongoing.');
     }
@@ -366,7 +365,7 @@ export class BrowserFftSpeechCommandRecognizer implements
   /**
    * Check if streaming recognition is ongoing.
    */
-  isStreaming(): boolean {
+  isListening(): boolean {
     return streaming;
   }
 
@@ -397,7 +396,7 @@ export class BrowserFftSpeechCommandRecognizer implements
     if (this.model == null) {
       throw new Error(
           'Model has not been loaded yet. Load model by calling ' +
-          'ensureModelLoaded(), recognizer(), or startStreaming().');
+          'ensureModelLoaded(), recognize(), or listen().');
     }
     return this.model.inputs[0].shape;
   }
@@ -507,7 +506,7 @@ export class BrowserFftSpeechCommandRecognizer implements
     if (this.model == null) {
       throw new Error(
           'Model has not been loaded yet. Load model by calling ' +
-          'ensureModelLoaded(), recognizer(), or startStreaming().');
+          'ensureModelLoaded(), recognizer(), or listen().');
     }
     tf.util.assert(
         name != null && typeof name === 'string' && name.length > 1,
