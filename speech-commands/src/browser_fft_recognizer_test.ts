@@ -309,7 +309,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
         .toMatch(/Invalid probabilityThreshold value: -0\.1/);
   });
 
-  it('streaming: overlapFactor = 0', async done => {
+  it('streaming: overlapFactor = 0', done => {
     setUpFakes();
     const recognizer = new BrowserFftSpeechCommandRecognizer();
 
@@ -343,12 +343,13 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
       expect(result.spectrogram).toBeUndefined();
 
       if (++numCallbacksCompleted >= numCallbacksToComplete) {
-        recognizer.stopStreaming().then(done);
+        await recognizer.stopStreaming();
+        done();
       }
     }, {overlapFactor: 0, invokeCallbackOnNoiseAndUnknown: true});
   });
 
-  it('streaming: overlapFactor = 0.5, includeSpectrogram', async done => {
+  it('streaming: overlapFactor = 0.5, includeSpectrogram', done => {
     setUpFakes();
     const recognizer = new BrowserFftSpeechCommandRecognizer();
 
@@ -357,55 +358,51 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     const spectroDurationMillis = 1000;
     const tensorCounts: number[] = [];
     const callbackTimestamps: number[] = [];
-    await recognizer.startStreaming(
-        async (result: SpeechCommandRecognizerResult) => {
-          expect((result.scores as Float32Array).length)
-              .toEqual(fakeWords.length);
+    recognizer.startStreaming(async (result: SpeechCommandRecognizerResult) => {
+      expect((result.scores as Float32Array).length).toEqual(fakeWords.length);
 
-          callbackTimestamps.push(tf.util.now());
-          if (callbackTimestamps.length > 1) {
-            const timeBetweenCallbacks =
-                callbackTimestamps[callbackTimestamps.length - 1] -
-                callbackTimestamps[callbackTimestamps.length - 2];
-            expect(
-                timeBetweenCallbacks > 0.5 * spectroDurationMillis &&
-                timeBetweenCallbacks < 0.7 * spectroDurationMillis)
-                .toBe(true);
-          }
+      callbackTimestamps.push(tf.util.now());
+      if (callbackTimestamps.length > 1) {
+        const timeBetweenCallbacks =
+            callbackTimestamps[callbackTimestamps.length - 1] -
+            callbackTimestamps[callbackTimestamps.length - 2];
+        expect(
+            timeBetweenCallbacks > 0.5 * spectroDurationMillis &&
+            timeBetweenCallbacks < 0.7 * spectroDurationMillis)
+            .toBe(true);
+      }
 
-          tensorCounts.push(tf.memory().numTensors);
-          if (tensorCounts.length > 1) {
-            // Assert no memory leak.
-            expect(tensorCounts[tensorCounts.length - 1])
-                .toEqual(tensorCounts[tensorCounts.length - 2]);
-          }
+      tensorCounts.push(tf.memory().numTensors);
+      if (tensorCounts.length > 1) {
+        // Assert no memory leak.
+        expect(tensorCounts[tensorCounts.length - 1])
+            .toEqual(tensorCounts[tensorCounts.length - 2]);
+      }
 
-          // spectrogram is not provided by default.
-          expect(result.spectrogram.data.length)
-              .toBe(fakeNumFrames * fakeColumnTruncateLength);
-          expect(result.spectrogram.frameSize).toBe(fakeColumnTruncateLength);
+      // spectrogram is not provided by default.
+      expect(result.spectrogram.data.length)
+          .toBe(fakeNumFrames * fakeColumnTruncateLength);
+      expect(result.spectrogram.frameSize).toBe(fakeColumnTruncateLength);
 
-          if (++numCallbacksCompleted >= numCallbacksToComplete) {
-            recognizer.stopStreaming().then(done);
-          }
-        },
-        {
-          overlapFactor: 0.5,
-          includeSpectrogram: true,
-          invokeCallbackOnNoiseAndUnknown: true
-        });
+      if (++numCallbacksCompleted >= numCallbacksToComplete) {
+        await recognizer.stopStreaming();
+        done();
+      }
+    }, {
+      overlapFactor: 0.5,
+      includeSpectrogram: true,
+      invokeCallbackOnNoiseAndUnknown: true
+    });
   });
 
-  it('streaming: invokeCallbackOnNoiseAndUnknown = false', async done => {
+  it('streaming: invokeCallbackOnNoiseAndUnknown = false', done => {
     setUpFakes(null, true);
     const recognizer = new BrowserFftSpeechCommandRecognizer();
 
     let callbackInvokeCount = 0;
-    await recognizer.startStreaming(
-        async (result: SpeechCommandRecognizerResult) => {
-          callbackInvokeCount++;
-        },
-        {overlapFactor: 0.5, invokeCallbackOnNoiseAndUnknown: false});
+    recognizer.startStreaming(async (result: SpeechCommandRecognizerResult) => {
+      callbackInvokeCount++;
+    }, {overlapFactor: 0.5, invokeCallbackOnNoiseAndUnknown: false});
 
     setTimeout(() => {
       recognizer.stopStreaming();
@@ -417,16 +414,14 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     }, 1000);
   });
 
-  it('streaming: invokeCallbackOnNoiseAndUnknown = true', async done => {
+  it('streaming: invokeCallbackOnNoiseAndUnknown = true', done => {
     setUpFakes(null, true);
     const recognizer = new BrowserFftSpeechCommandRecognizer();
 
     let callbackInvokeCount = 0;
-    await recognizer.startStreaming(
-        async (result: SpeechCommandRecognizerResult) => {
-          callbackInvokeCount++;
-        },
-        {overlapFactor: 0.5, invokeCallbackOnNoiseAndUnknown: true});
+    recognizer.startStreaming(async (result: SpeechCommandRecognizerResult) => {
+      callbackInvokeCount++;
+    }, {overlapFactor: 0.5, invokeCallbackOnNoiseAndUnknown: true});
 
     setTimeout(() => {
       recognizer.stopStreaming();
@@ -757,7 +752,8 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(transfer.wordLabels()).toEqual(['bar', 'foo']);
     transfer.startStreaming(async (result: SpeechCommandRecognizerResult) => {
       expect((result.scores as Float32Array).length).toEqual(2);
-      transfer.stopStreaming().then(done);
+      await transfer.stopStreaming();
+      done();
     });
   });
 
@@ -781,7 +777,8 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(transfer.wordLabels()).toEqual(['bar', 'foo']);
     transfer.startStreaming(async (result: SpeechCommandRecognizerResult) => {
       expect((result.scores as Float32Array).length).toEqual(2);
-      transfer.stopStreaming().then(done);
+      await transfer.stopStreaming();
+      done();
     });
   });
 
