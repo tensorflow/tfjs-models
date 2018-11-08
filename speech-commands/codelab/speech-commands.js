@@ -400,10 +400,16 @@
                                 config = {};
                             }
                             probabilityThreshold = config.probabilityThreshold == null ? 0 : config.probabilityThreshold;
+                            if (config.includeEmbedding) {
+                                probabilityThreshold = 0;
+                            }
                             tf.util.assert(probabilityThreshold >= 0 && probabilityThreshold <= 1, "Invalid probabilityThreshold value: " + probabilityThreshold);
                             invokeCallbackOnNoiseAndUnknown = config.invokeCallbackOnNoiseAndUnknown == null ?
                                 false :
                                 config.invokeCallbackOnNoiseAndUnknown;
+                            if (config.includeEmbedding) {
+                                invokeCallbackOnNoiseAndUnknown = true;
+                            }
                             if (config.suppressionTimeMillis < 0) {
                                 throw new Error("suppressionTimeMillis is expected to be >= 0, " +
                                     ("but got " + config.suppressionTimeMillis));
@@ -411,34 +417,43 @@
                             overlapFactor = config.overlapFactor == null ? 0.5 : config.overlapFactor;
                             tf.util.assert(overlapFactor >= 0 && overlapFactor < 1, "Expected overlapFactor to be >= 0 and < 1, but got " + overlapFactor);
                             spectrogramCallback = function (x) { return __awaiter(_this, void 0, void 0, function () {
-                                var y, scores, maxIndexTensor, maxIndex, maxScore, spectrogram, _a, wordDetected;
-                                var _this = this;
-                                return __generator(this, function (_b) {
-                                    switch (_b.label) {
-                                        case 0:
-                                            y = tf.tidy(function () { return _this.model.predict(x); });
-                                            return [4, y.data()];
+                                var _a, y, embedding, scores, maxIndexTensor, maxIndex, maxScore, spectrogram, _b, wordDetected;
+                                return __generator(this, function (_c) {
+                                    switch (_c.label) {
+                                        case 0: return [4, this.ensureModelWithEmbeddingOutputCreated()];
                                         case 1:
-                                            scores = _b.sent();
+                                            _c.sent();
+                                            if (!config.includeEmbedding) return [3, 3];
+                                            return [4, this.ensureModelWithEmbeddingOutputCreated()];
+                                        case 2:
+                                            _c.sent();
+                                            _a = __read(this.modelWithEmbeddingOutput.predict(x), 2), y = _a[0], embedding = _a[1];
+                                            return [3, 4];
+                                        case 3:
+                                            y = this.model.predict(x);
+                                            _c.label = 4;
+                                        case 4: return [4, y.data()];
+                                        case 5:
+                                            scores = _c.sent();
                                             maxIndexTensor = y.argMax(-1);
                                             return [4, maxIndexTensor.data()];
-                                        case 2:
-                                            maxIndex = (_b.sent())[0];
+                                        case 6:
+                                            maxIndex = (_c.sent())[0];
                                             maxScore = Math.max.apply(Math, __spread(scores));
                                             tf.dispose([y, maxIndexTensor]);
-                                            if (!(maxScore < probabilityThreshold)) return [3, 3];
+                                            if (!(maxScore < probabilityThreshold)) return [3, 7];
                                             return [2, false];
-                                        case 3:
+                                        case 7:
                                             spectrogram = undefined;
-                                            if (!config.includeSpectrogram) return [3, 5];
-                                            _a = {};
+                                            if (!config.includeSpectrogram) return [3, 9];
+                                            _b = {};
                                             return [4, x.data()];
-                                        case 4:
-                                            spectrogram = (_a.data = (_b.sent()),
-                                                _a.frameSize = this.nonBatchInputShape[1],
-                                                _a);
-                                            _b.label = 5;
-                                        case 5:
+                                        case 8:
+                                            spectrogram = (_b.data = (_c.sent()),
+                                                _b.frameSize = this.nonBatchInputShape[1],
+                                                _b);
+                                            _c.label = 9;
+                                        case 9:
                                             wordDetected = true;
                                             if (!invokeCallbackOnNoiseAndUnknown) {
                                                 if (this.words[maxIndex] === BACKGROUND_NOISE_TAG ||
@@ -447,7 +462,7 @@
                                                 }
                                             }
                                             if (wordDetected) {
-                                                callback({ scores: scores, spectrogram: spectrogram });
+                                                callback({ scores: scores, spectrogram: spectrogram, embedding: embedding });
                                             }
                                             return [2, wordDetected];
                                     }
@@ -527,6 +542,38 @@
                 });
             });
         };
+        BrowserFftSpeechCommandRecognizer.prototype.ensureModelWithEmbeddingOutputCreated = function () {
+            return __awaiter(this, void 0, void 0, function () {
+                var secondLastDenseLayer, i;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            if (this.modelWithEmbeddingOutput != null) {
+                                return [2];
+                            }
+                            return [4, this.ensureModelLoaded()];
+                        case 1:
+                            _a.sent();
+                            for (i = this.model.layers.length - 2; i >= 0; --i) {
+                                if (this.model.layers[i].getClassName() === 'Dense') {
+                                    secondLastDenseLayer = this.model.layers[i];
+                                    break;
+                                }
+                            }
+                            if (secondLastDenseLayer == null) {
+                                throw new Error('Failed to find second last dense layer in the original model.');
+                            }
+                            this.modelWithEmbeddingOutput = tf.model({
+                                inputs: this.model.inputs,
+                                outputs: [
+                                    this.model.outputs[0], secondLastDenseLayer.output
+                                ]
+                            });
+                            return [2];
+                    }
+                });
+            });
+        };
         BrowserFftSpeechCommandRecognizer.prototype.warmUpModel = function () {
             var _this = this;
             tf.tidy(function () {
@@ -587,14 +634,25 @@
             }
             return this.model.inputs[0].shape;
         };
-        BrowserFftSpeechCommandRecognizer.prototype.recognize = function (input) {
+        BrowserFftSpeechCommandRecognizer.prototype.recognize = function (input, config) {
             return __awaiter(this, void 0, void 0, function () {
-                var numExamples, inputTensor, outTensor, _a, unstacked, scorePromises, scores;
-                return __generator(this, function (_b) {
-                    switch (_b.label) {
-                        case 0: return [4, this.ensureModelLoaded()];
+                var spectrogramData, numExamples, inputTensor, outTensor, output, outAndEmbedding, _a, unstacked, scorePromises, _b;
+                return __generator(this, function (_c) {
+                    switch (_c.label) {
+                        case 0:
+                            if (config == null) {
+                                config = {};
+                            }
+                            return [4, this.ensureModelLoaded()];
                         case 1:
-                            _b.sent();
+                            _c.sent();
+                            if (!(input == null)) return [3, 3];
+                            return [4, this.recognizeOnline()];
+                        case 2:
+                            spectrogramData = _c.sent();
+                            input = spectrogramData.data;
+                            _c.label = 3;
+                        case 3:
                             if (input instanceof tf.Tensor) {
                                 this.checkInputTensorShape(input);
                                 inputTensor = input;
@@ -612,20 +670,70 @@
                                     numExamples
                                 ].concat(this.nonBatchInputShape));
                             }
+                            output = { scores: null };
+                            if (!config.includeEmbedding) return [3, 5];
+                            return [4, this.ensureModelWithEmbeddingOutputCreated()];
+                        case 4:
+                            _c.sent();
+                            outAndEmbedding = this.modelWithEmbeddingOutput.predict(inputTensor);
+                            outTensor = outAndEmbedding[0];
+                            output.embedding = outAndEmbedding[1];
+                            return [3, 6];
+                        case 5:
                             outTensor = this.model.predict(inputTensor);
-                            if (!(numExamples === 1)) return [3, 3];
-                            _a = {};
+                            _c.label = 6;
+                        case 6:
+                            if (!(numExamples === 1)) return [3, 8];
+                            _a = output;
                             return [4, outTensor.data()];
-                        case 2: return [2, (_a.scores = (_b.sent()), _a)];
-                        case 3:
+                        case 7:
+                            _a.scores = (_c.sent());
+                            return [3, 10];
+                        case 8:
                             unstacked = tf.unstack(outTensor);
                             scorePromises = unstacked.map(function (item) { return item.data(); });
+                            _b = output;
                             return [4, Promise.all(scorePromises)];
-                        case 4:
-                            scores = _b.sent();
+                        case 9:
+                            _b.scores = (_c.sent());
                             tf.dispose(unstacked);
-                            return [2, { scores: scores }];
+                            _c.label = 10;
+                        case 10: return [2, output];
                     }
+                });
+            });
+        };
+        BrowserFftSpeechCommandRecognizer.prototype.recognizeOnline = function () {
+            return __awaiter(this, void 0, void 0, function () {
+                var _this = this;
+                return __generator(this, function (_a) {
+                    return [2, new Promise(function (resolve, reject) {
+                            var spectrogramCallback = function (x) { return __awaiter(_this, void 0, void 0, function () {
+                                var _a, _b;
+                                return __generator(this, function (_c) {
+                                    switch (_c.label) {
+                                        case 0:
+                                            _a = resolve;
+                                            _b = {};
+                                            return [4, x.data()];
+                                        case 1:
+                                            _a.apply(void 0, [(_b.data = (_c.sent()),
+                                                    _b.frameSize = this.nonBatchInputShape[1],
+                                                    _b)]);
+                                            return [2, false];
+                                    }
+                                });
+                            }); };
+                            _this.audioDataExtractor = new BrowserFftFeatureExtractor({
+                                sampleRateHz: _this.parameters.sampleRateHz,
+                                numFramesPerSpectrogram: _this.nonBatchInputShape[0],
+                                columnTruncateLength: _this.nonBatchInputShape[1],
+                                suppressionTimeMillis: 0,
+                                spectrogramCallback: spectrogramCallback,
+                                overlapFactor: 0
+                            });
+                            _this.audioDataExtractor.start();
+                        })];
                 });
             });
         };

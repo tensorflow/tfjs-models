@@ -9,14 +9,12 @@ const activations = [];
 const labels = [];
 
 async function addExample(label) {
-  const inputShape = recognizer.modelInputShape();
-  inputShape[0] = 1;
   toggleButtons(false);
-  const example = await spectrogram.collectExample('test');
+  const example = await recognizer.recognize(null, {includeEmbedding: true});
+  console.log(example);
+  return;
   toggleButtons(true);
-  const input = tf.tensor(example.data, inputShape);
-  const activation = await origModel.predict(input);
-  activations.push(activation.squeeze());
+  activations.push(example.embedding);
   labels.push(label);
 }
 
