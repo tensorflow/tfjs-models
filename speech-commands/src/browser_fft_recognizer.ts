@@ -493,12 +493,11 @@ export class BrowserFftSpeechCommandRecognizer implements
       };
       this.audioDataExtractor = new BrowserFftFeatureExtractor({
         sampleRateHz: this.parameters.sampleRateHz,
-        columnBufferLength: this.parameters.columnBufferLength,
-        columnHopLength: this.parameters.columnBufferLength,
         numFramesPerSpectrogram: this.nonBatchInputShape[0],
         columnTruncateLength: this.nonBatchInputShape[1],
         suppressionTimeMillis: 0,
-        spectrogramCallback
+        spectrogramCallback,
+        overlapFactor: 0
       });
       this.audioDataExtractor.start();
     });
