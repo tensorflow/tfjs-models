@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/person-segmentation",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "description": "Pretrained Person Segmentation model in tensorflow.js",
   "main": "dist/index.js",
   "jsnext:main": "dist/person-segmentation.esm.js",
@@ -13,14 +13,12 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs": "^0.13.0"
+    "@tensorflow/tfjs": "^0.13.3"
   },
   "devDependencies": {
-    "@tensorflow/tfjs": "^0.13.0",
+    "@tensorflow/tfjs": "^0.13.3",
     "@types/jasmine": "~2.5.53",
-    "babel-core": "^6.26.0",
-    "babel-plugin-transform-runtime": "~6.23.0",
-    "jasmine": "^3.2.0",
+    "jasmine": "~3.2.0",
     "jasmine-core": "~3.1.0",
     "rimraf": "~2.6.2",
     "rollup": "~0.58.2",
@@ -32,9 +30,10 @@
     "typescript": "2.9.2"
   },
   "scripts": {
-    "build": "rimraf dist && tsc && rollup -c",
+    "build": "rimraf dist && tsc",
+    "publish-local": "yarn build && yalc push",
     "test": "ts-node run_tests.ts",
-    "publish-npm": "yarn build && npm publish",
+    "publish-npm": "yarn build && rollup -c && npm publish",
     "lint": "tslint -p . -t verbose"
   },
   "license": "Apache-2.0"
