@@ -326,9 +326,10 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
         const timeBetweenCallbacks =
             callbackTimestamps[callbackTimestamps.length - 1] -
             callbackTimestamps[callbackTimestamps.length - 2];
-        const cond = timeBetweenCallbacks > spectroDurationMillis &&
-            timeBetweenCallbacks < 1.3 * spectroDurationMillis;
-        expect(cond).toBe(true);
+        expect(
+            timeBetweenCallbacks > spectroDurationMillis &&
+            timeBetweenCallbacks < 1.3 * spectroDurationMillis)
+            .toBe(true);
       }
 
       tensorCounts.push(tf.memory().numTensors);
@@ -366,9 +367,10 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
             const timeBetweenCallbacks =
                 callbackTimestamps[callbackTimestamps.length - 1] -
                 callbackTimestamps[callbackTimestamps.length - 2];
-            const cond = timeBetweenCallbacks > 0.5 * spectroDurationMillis &&
-                timeBetweenCallbacks < 0.7 * spectroDurationMillis;
-            expect(cond).toBe(true);
+            expect(
+                timeBetweenCallbacks > 0.5 * spectroDurationMillis &&
+                timeBetweenCallbacks < 0.7 * spectroDurationMillis)
+                .toBe(true);
           }
 
           tensorCounts.push(tf.memory().numTensors);
