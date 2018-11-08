@@ -66,7 +66,7 @@ export interface SpeechCommandRecognizer {
    * Recognize a single example of audio.
    *
    * If `input` is provided, will perform offline prediction.
-   * If `input` is `undefined` or `null`, a single frame of audio
+   * If `input` is not provided, a single frame of audio
    *   will be collected from the microhpone via WebAudio and predictions
    *   will be made on it.
    *
@@ -75,7 +75,11 @@ export interface SpeechCommandRecognizer {
    *     underlying tf.Model. If a Float32Array, the length must be
    *     equal to (the model’s required FFT length) *
    *     (the model’s required frame count).
-   * @returns A Promise of recognition result: the probability scores.
+   * @returns A Promise of recognition result, with the following fields:
+   *   - scores: the probability scores.
+   *   - embedding: the embedding for the input audio (i.e., an internal
+   *     activation from the model). Provided if and only if `includeEmbedding`
+   *     is `true` in `config`.
    * @throws Error on incorrect shape or length.
    */
   recognize(input?: tf.Tensor|Float32Array, config?: RecognizeConfig):
@@ -240,6 +244,8 @@ export interface StreamingRecognitionConfig {
    *
    * Must be a number >=0 and <=1.
    *
+   * The value will be overridden to `0` if `includeEmbedding` is `true`.
+   *
    * If `null` or `undefined`, will default to `0`.
    */
   probabilityThreshold?: number;
@@ -247,7 +253,9 @@ export interface StreamingRecognitionConfig {
   /**
    * Invoke the callback for background noise and unknown.
    *
-   * Default: false.
+   * The value will be overridden to `true` if `includeEmbedding` is `true`.
+   *
+   * Default: `false`.
    */
   invokeCallbackOnNoiseAndUnknown?: boolean;
 
@@ -261,6 +269,12 @@ export interface StreamingRecognitionConfig {
 
   /**
    * Whether to include the embedding (internal activation).
+   *
+   * If set as `true`, the values of the following configuration fields
+   * in this object will be overridden:
+   *
+   * - `probabilityThreshold` will be overridden to 0.
+   * - `invokeCallbackOnNoiseAndUnknown` will be overridden to `true`.
    *
    * Default: `false`.
    */

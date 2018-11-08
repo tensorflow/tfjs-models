@@ -150,15 +150,24 @@ export class BrowserFftSpeechCommandRecognizer implements
     if (config == null) {
       config = {};
     }
-    const probabilityThreshold =
+    let probabilityThreshold =
         config.probabilityThreshold == null ? 0 : config.probabilityThreshold;
+    if (config.includeEmbedding) {
+      // Override probability threshold to 0 if includeEmbedding is true.
+      probabilityThreshold = 0;
+    }
     tf.util.assert(
         probabilityThreshold >= 0 && probabilityThreshold <= 1,
         `Invalid probabilityThreshold value: ${probabilityThreshold}`);
-    const invokeCallbackOnNoiseAndUnknown =
+    let invokeCallbackOnNoiseAndUnknown =
         config.invokeCallbackOnNoiseAndUnknown == null ?
         false :
         config.invokeCallbackOnNoiseAndUnknown;
+    if (config.includeEmbedding) {
+      // Override invokeCallbackOnNoiseAndUnknown threshold to true if
+      // includeEmbedding is true.
+      invokeCallbackOnNoiseAndUnknown = true;
+    }
 
     if (config.suppressionTimeMillis < 0) {
       throw new Error(
@@ -181,12 +190,10 @@ export class BrowserFftSpeechCommandRecognizer implements
       let embedding: tf.Tensor;
       if (config.includeEmbedding) {
         await this.ensureModelWithEmbeddingOutputCreated();
-        const yAndEmbedding =
+        [y, embedding] =
             this.modelWithEmbeddingOutput.predict(x) as tf.Tensor[];
-        y = yAndEmbedding[0];
-        embedding = yAndEmbedding[1];
       } else {
-        y = tf.tidy(() => this.model.predict(x) as tf.Tensor);
+        y = this.model.predict(x) as tf.Tensor;
       }
 
       const scores = await y.data() as Float32Array;
