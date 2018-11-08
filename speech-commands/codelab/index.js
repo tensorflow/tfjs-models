@@ -1,9 +1,7 @@
 'use strict';
 
-let origModel;
 let newModel;
 let recognizer;
-let spectrogram;
 let isListening = false;
 const activations = [];
 const labels = [];
@@ -11,8 +9,6 @@ const labels = [];
 async function addExample(label) {
   toggleButtons(false);
   const example = await recognizer.recognize(null, {includeEmbedding: true});
-  console.log(example);
-  return;
   toggleButtons(true);
   activations.push(example.embedding);
   labels.push(label);
@@ -24,7 +20,7 @@ function toggleButtons(enable) {
 
 async function train() {
   toggleButtons(false);
-  await newModel.fit(tf.stack(activations), tf.oneHot(labels, 3), {
+  await newModel.fit(tf.concat(activations), tf.oneHot(labels, 3), {
     batchSize: 1,
     epochs: 10,
     callbacks: {
@@ -53,32 +49,19 @@ function listen() {
   toggleButtons(false);
   document.getElementById('listen').textContent = 'Stop';
   document.getElementById('listen').disabled = false;
-  // `startStreaming()` takes two arguments:
-  // 1. A callback function that is invoked anytime a word is recognized.
-  // 2. A configuration object with adjustable fields such a
-  //    - includeSpectrogram
-  //    - probabilityThreshold
+
 
   recognizer.startStreaming(async result => {
-    const inputShape = recognizer.modelInputShape();
-    inputShape[0] = 1;
-    const input = tf.tensor(result.spectrogram.data, inputShape);
-    const activation = await origModel.predict(input);
-    const predictions = newModel.predict(activation);
-    const probs = await predictions.data();
-    const maxProb = probs.reduce((prev, curr) => {
-      return Math.max(prev, curr);
-    });
+    const probs = newModel.predict(result.embedding);
+    const maxProb = (await probs.max().data())[0];
     if (maxProb < 0.8) {
       return showPrediction('');
     }
-    const predictedTensor = predictions.argMax(1);
-    const predictedLabel = (await predictedTensor.data())[0];
+    const predictedLabel = (await probs.argMax(1).data())[0];
     showPrediction(predictedLabel);
   }, {
-    includeSpectrogram: true,
-    invokeCallbackOnNoiseAndUnknown: true,
-    overlapFactor: 0.9
+    overlapFactor: 0.95,
+    includeEmbedding: true
   });
 
 }
@@ -90,12 +73,7 @@ async function app() {
   await recognizer.ensureModelLoaded();
   console.log('Sucessfully loaded model');
 
-  spectrogram = recognizer.createTransfer('codelab');
-  origModel = tf.model({
-    inputs: recognizer.model.inputs,
-    outputs: recognizer.model.getLayer('dense_1').output
-  });
-
+  // Setup the UI.
   document.getElementById('class-a').addEventListener('click', () => addExample(0));
   document.getElementById('class-b').addEventListener('click', () => addExample(1));
   document.getElementById('class-c').addEventListener('click', () => addExample(2));
