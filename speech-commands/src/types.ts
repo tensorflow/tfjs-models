@@ -65,26 +65,21 @@ export interface SpeechCommandRecognizer {
   /**
    * Recognize a single example of audio.
    *
-   * @param input tf.Tensor of Float32Array. If a tf.Tensor,
-   *     must match the input shape of the underlying
-   *     tf.Model. If a Float32Array, the length must be
+   * If `input` is provided, will perform offline prediction.
+   * If `input` is `undefined` or `null`, a single frame of audio
+   *   will be collected from the microhpone via WebAudio and predictions
+   *   will be made on it.
+   *
+   * @param input (Optional) tf.Tensor of Float32Array.
+   *     If provided and a tf.Tensor, must match the input shape of the
+   *     underlying tf.Model. If a Float32Array, the length must be
    *     equal to (the model’s required FFT length) *
    *     (the model’s required frame count).
    * @returns A Promise of recognition result: the probability scores.
    * @throws Error on incorrect shape or length.
    */
-  recognize(input: tf.Tensor|
-            Float32Array): Promise<SpeechCommandRecognizerResult>;
-
-  /**
-   * Collect a sample snippet of audio and return its spectrogram as a Tensor.
-   *
-   * The shape of the Tensor matches the input shape of the underlying model
-   * and can be stored for future training and offline inference purposes.
-   *
-   * @returns A Promise of `SpectrogramData`.
-   */
-  recordSpectrogram(): Promise<SpectrogramData>;
+  recognize(input?: tf.Tensor|Float32Array, config?: RecognizeConfig):
+      Promise<SpeechCommandRecognizerResult>;
 
   /**
    * Get the input shape of the tf.Model the underlies the recognizer.
@@ -205,6 +200,14 @@ export interface SpeechCommandRecognizerResult {
    * Optional spectrogram data.
    */
   spectrogram?: SpectrogramData;
+
+  /**
+   * Embedding (internal activation) for the input.
+   *
+   * This field is populated if and only if `includeEmbedding`
+   * is `true` in the configuration object used during the `recognize` call.
+   */
+  embedding?: tf.Tensor;
 }
 
 export interface StreamingRecognitionConfig {
@@ -258,6 +261,18 @@ export interface StreamingRecognitionConfig {
 
   /**
    * Whether to include the embedding (internal activation).
+   *
+   * Default: `false`.
+   */
+  includeEmbedding?: boolean;
+}
+
+export interface RecognizeConfig {
+  /**
+   * Whether to include the embedding (internal activation).
+   *
+   * The internal activation is taken from the second-last
+   * dense layer of the speech-commands convnet
    *
    * Default: `false`.
    */
