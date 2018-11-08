@@ -42,7 +42,7 @@ export interface SpeechCommandRecognizer {
    *
    * @param callback the callback that will be invoked every time
    *   a recognition result is available.
-   * @param options optional configuration.
+   * @param config optional configuration.
    * @throws Error if there is already ongoing streaming recognition.
    */
   startStreaming(
@@ -270,9 +270,6 @@ export interface StreamingRecognitionConfig {
 export interface RecognizeConfig {
   /**
    * Whether to include the embedding (internal activation).
-   *
-   * The internal activation is taken from the second-last
-   * dense layer of the speech-commands convnet
    *
    * Default: `false`.
    */
