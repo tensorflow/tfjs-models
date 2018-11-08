@@ -19,29 +19,14 @@ import * as tf from '@tensorflow/tfjs';
 
 import {CheckpointLoader} from './checkpoint_loader';
 import {checkpoints} from './checkpoints';
-// tslint:disable-next-line:max-line-length
 import {assertValidOutputStride, assertValidScaleFactor, MobileNet, MobileNetMultiplier, OutputStride} from './mobilenet';
-import {decodeMultiplePoses} from './multiPose/decodeMultiplePoses';
-import {decodeSinglePose} from './singlePose/decodeSinglePose';
-import {Pose} from './types';
-import {getValidResolution, scalePose, scalePoses} from './util';
+import {ModelWeights} from './model_weights';
+import {decodeMultiplePoses} from './multi_pose/decode_multiple_poses';
+import {decodeSinglePose} from './single_pose/decode_single_pose';
+import {Pose, PosenetInput} from './types';
+import {getInputTensorDimensions, getValidResolution, scalePose, scalePoses, toResizedInputTensor} from './util';
 
 export type PoseNetResolution = 161|193|257|289|321|353|385|417|449|481|513;
-
-export type InputType =
-    ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement|tf.Tensor3D;
-
-function toInputTensor(
-    input: InputType, resizeHeight: number, resizeWidth: number,
-    flipHorizontal: boolean): tf.Tensor3D {
-  const imageTensor = input instanceof tf.Tensor ? input : tf.fromPixels(input);
-
-  if (flipHorizontal) {
-    return imageTensor.reverse(1).resizeBilinear([resizeHeight, resizeWidth]);
-  } else {
-    return imageTensor.resizeBilinear([resizeHeight, resizeWidth]);
-  }
-}
 
 export class PoseNet {
   mobileNet: MobileNet;
@@ -146,32 +131,32 @@ export class PoseNet {
    * positions of the keypoints are in the same scale as the original image
    */
   async estimateSinglePose(
-      input: InputType, imageScaleFactor = 0.5, flipHorizontal = false,
+      input: PosenetInput, imageScaleFactor = 0.5, flipHorizontal = false,
       outputStride: OutputStride = 16): Promise<Pose> {
     assertValidOutputStride(outputStride);
     assertValidScaleFactor(imageScaleFactor);
 
-    const [height, width] = input instanceof tf.Tensor ?
-        [input.shape[0], input.shape[1]] :
-        [input.height, input.width];
+    const [height, width] = getInputTensorDimensions(input);
+
     const resizedHeight =
         getValidResolution(imageScaleFactor, height, outputStride);
     const resizedWidth =
         getValidResolution(imageScaleFactor, width, outputStride);
 
     const {heatmapScores, offsets} = tf.tidy(() => {
-      const inputTensor =
-          toInputTensor(input, resizedHeight, resizedWidth, flipHorizontal);
+      const inputTensor = toResizedInputTensor(
+          input, resizedHeight, resizedWidth, flipHorizontal);
+
       return this.predictForSinglePose(inputTensor, outputStride);
     });
 
     const pose = await decodeSinglePose(heatmapScores, offsets, outputStride);
 
-    heatmapScores.dispose();
-    offsets.dispose();
-
     const scaleY = height / resizedHeight;
     const scaleX = width / resizedWidth;
+
+    heatmapScores.dispose();
+    offsets.dispose();
 
     return scalePose(pose, scaleY, scaleX);
   }
@@ -216,15 +201,13 @@ export class PoseNet {
    * in the same scale as the original image
    */
   async estimateMultiplePoses(
-      input: InputType, imageScaleFactor = 0.5, flipHorizontal = false,
+      input: PosenetInput, imageScaleFactor = 0.5, flipHorizontal = false,
       outputStride: OutputStride = 16, maxDetections = 5, scoreThreshold = .5,
       nmsRadius = 20): Promise<Pose[]> {
     assertValidOutputStride(outputStride);
     assertValidScaleFactor(imageScaleFactor);
 
-    const [height, width] = input instanceof tf.Tensor ?
-        [input.shape[0], input.shape[1]] :
-        [input.height, input.width];
+    const [height, width] = getInputTensorDimensions(input);
     const resizedHeight =
         getValidResolution(imageScaleFactor, height, outputStride);
     const resizedWidth =
@@ -232,8 +215,8 @@ export class PoseNet {
 
     const {heatmapScores, offsets, displacementFwd, displacementBwd} =
         tf.tidy(() => {
-          const inputTensor =
-              toInputTensor(input, resizedHeight, resizedWidth, flipHorizontal);
+          const inputTensor = toResizedInputTensor(
+              input, resizedHeight, resizedWidth, flipHorizontal);
           return this.predictForMultiPose(inputTensor, outputStride);
         });
 
@@ -265,8 +248,8 @@ export class PoseNet {
  * 0.50. Defaults to 1.01. It is the float multiplier for the depth (number of
  * channels) for all convolution ops. The value corresponds to a MobileNet
  * architecture and checkpoint.  The larger the value, the larger the size of
- * the layers, and more accurate the model at the cost of speed.  Set this to a
- * smaller value to increase speed at the cost of accuracy.
+ * the layers, and more accurate the model at the cost of speed.  Set this to
+ * a smaller value to increase speed at the cost of accuracy.
  *
  */
 export async function load(multiplier: MobileNetMultiplier = 1.01):
@@ -276,6 +259,7 @@ export async function load(multiplier: MobileNetMultiplier = 1.01):
         `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
         `also include @tensorflow/tfjs on the page before using this model.`);
   }
+  // TODO: figure out better way to decide below.
   const possibleMultipliers = Object.keys(checkpoints);
   tf.util.assert(
       typeof multiplier === 'number',
@@ -288,7 +272,7 @@ export async function load(multiplier: MobileNetMultiplier = 1.01):
           multiplier}.  No checkpoint exists for that ` +
           `multiplier. Must be one of ${possibleMultipliers.join(',')}.`);
 
-  const mobileNet = await mobilenetLoader.load(multiplier);
+  const mobileNet: MobileNet = await mobilenetLoader.load(multiplier);
 
   return new PoseNet(mobileNet);
 }
@@ -301,6 +285,8 @@ export const mobilenetLoader = {
 
     const variables = await checkpointLoader.getAllVariables();
 
-    return new MobileNet(variables, checkpoint.architecture);
-  }
+    const weights = new ModelWeights(variables);
+
+    return new MobileNet(weights, checkpoint.architecture);
+  },
 };

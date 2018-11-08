@@ -17,8 +17,8 @@
 
 import * as tf from '@tensorflow/tfjs';
 
-// tslint:disable-next-line:no-any
-export async function loadMetadataJson(url: string): Promise<any> {
+export async function loadMetadataJson(url: string):
+    Promise<{words: string[]}> {
   const HTTP_SCHEME = 'http://';
   const HTTPS_SCHEME = 'https://';
   const FILE_SCHEME = 'file://';

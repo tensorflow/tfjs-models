@@ -103,7 +103,7 @@ As the example above shows, you can specify optional parameters when calling
 `startStreaming()`. The supported parameters are:
 
 * `overlapFactor`: Controls how often the recognizer performs prediction on
-  spectrograms. Must be a number between 0 and 1 (default: 0.5). For example,
+  spectrograms. Must be >=0 and <1 (default: 0.5). For example,
   if each spectrogram is 1000 ms long and `overlapFactor` is set to 0.25,
   the prediction will happen every 250 ms.
 * `includeSpectrogram`: Let the callback function be invoked with the
