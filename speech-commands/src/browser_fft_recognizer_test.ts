@@ -218,6 +218,25 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     }
   });
 
+  it('Offline recognize call: includeEmbedding', async () => {
+    setUpFakes();
+
+    // A batch of examples.
+    const numExamples = 3;
+    const spectrogram =
+        tf.zeros([numExamples, fakeNumFrames, fakeColumnTruncateLength, 1]);
+    const recognizer = new BrowserFftSpeechCommandRecognizer();
+    const output =
+        await recognizer.recognize(spectrogram, {includeEmbedding: true});
+    expect(Array.isArray(output.scores)).toEqual(true);
+    expect(output.scores.length).toEqual(3);
+    for (let i = 0; i < 3; ++i) {
+      expect((output.scores[i] as Float32Array).length).toEqual(17);
+    }
+    expect(output.embedding.rank).toEqual(2);
+    expect(output.embedding.shape[0]).toEqual(numExamples);
+  });
+
   it('Offline recognize fails due to incorrect shape', async () => {
     setUpFakes();
 
@@ -346,10 +365,56 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
       // spectrogram is not provided by default.
       expect(result.spectrogram).toBeUndefined();
 
+      // Embedding should not be included by default.
+      expect(result.embedding).toBeUndefined();
+
       if (++numCallbacksCompleted >= numCallbacksToComplete) {
-        recognizer.stopStreaming().then(done);
+        await recognizer.stopStreaming();
+        done();
       }
     }, {overlapFactor: 0, invokeCallbackOnNoiseAndUnknown: true});
+  });
+
+  it('streaming: overlapFactor = 0, includeEmbedding', async done => {
+    setUpFakes();
+    const recognizer = new BrowserFftSpeechCommandRecognizer();
+
+    const numCallbacksToComplete = 2;
+    let numCallbacksCompleted = 0;
+    const tensorCounts: number[] = [];
+    const callbackTimestamps: number[] = [];
+    recognizer.startStreaming(async (result: SpeechCommandRecognizerResult) => {
+      expect((result.scores as Float32Array).length).toEqual(fakeWords.length);
+
+      callbackTimestamps.push(tf.util.now());
+      if (callbackTimestamps.length > 1) {
+        expect(
+            callbackTimestamps[callbackTimestamps.length - 1] -
+            callbackTimestamps[callbackTimestamps.length - 2])
+            .toBeGreaterThanOrEqual(
+                recognizer.params().spectrogramDurationMillis);
+      }
+
+      tensorCounts.push(tf.memory().numTensors);
+
+      // spectrogram is not provided by default.
+      expect(result.spectrogram).toBeUndefined();
+
+      // Embedding should not be included by default.
+      expect(result.embedding.rank).toEqual(2);
+      expect(result.embedding.shape[0]).toEqual(1);
+      // The number of units of the hidden dense layer.
+      expect(result.embedding.shape[1]).toEqual(4);
+
+      if (++numCallbacksCompleted >= numCallbacksToComplete) {
+        await recognizer.stopStreaming();
+        done();
+      }
+    }, {
+      overlapFactor: 0,
+      invokeCallbackOnNoiseAndUnknown: true,
+      includeEmbedding: true
+    });
   });
 
   it('streaming: overlapFactor = 0.5, includeSpectrogram', async done => {
@@ -480,6 +545,31 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(caughtError.message)
         .toEqual('Cannot stop streaming when streaming is not ongoing.');
     expect(recognizer.isStreaming()).toEqual(false);
+  });
+
+  it('Online recognize() call succeeds', async () => {
+    setUpFakes();
+    const recognizer = new BrowserFftSpeechCommandRecognizer();
+
+    for (let i = 0; i < 2; ++i) {
+      // No-arg call: online recognition.
+      const output = await recognizer.recognize();
+      expect(output.scores.length).toEqual(fakeWords.length);
+      expect(output.embedding).toBeUndefined();
+    }
+  });
+
+  it('Online recognize() call with includeEmbedding succeeds', async () => {
+    setUpFakes();
+    const recognizer = new BrowserFftSpeechCommandRecognizer();
+
+    for (let i = 0; i < 2; ++i) {
+      // No-arg call: online recognition.
+      const output = await recognizer.recognize(null, {includeEmbedding: true});
+      expect(output.scores.length).toEqual(fakeWords.length);
+      expect(output.embedding.rank).toEqual(2);
+      expect(output.embedding.shape[0]).toEqual(1);
+    }
   });
 
   it('collectTransferLearningExample default transerf model', async () => {
