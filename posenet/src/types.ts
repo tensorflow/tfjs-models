@@ -41,7 +41,10 @@ export type Keypoint = {
 
 export type Pose = {
   keypoints: Keypoint[],
-  score: number
+  score: number,
 };
+
+export type PosenetInput =
+    ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement|tf.Tensor3D;
 
 export type TensorBuffer3D = tf.TensorBuffer<tf.Rank.R3>;

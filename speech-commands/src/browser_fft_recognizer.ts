@@ -18,7 +18,7 @@
 import * as tf from '@tensorflow/tfjs';
 import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
 import {loadMetadataJson} from './browser_fft_utils';
-import {RecognizerCallback, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
+import {RecognizeConfig, RecognizerCallback, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
 import {version} from './version';
 
 export const BACKGROUND_NOISE_TAG = '_background_noise_';
@@ -43,6 +43,7 @@ export class BrowserFftSpeechCommandRecognizer implements
   private readonly DEFAULT_SUPPRESSION_TIME_MILLIS = 0;
 
   model: tf.Model;
+  modelWithEmbeddingOutput: tf.Model;
   readonly vocabulary: string;
   readonly parameters: RecognizerParams;
   protected words: string[];
@@ -144,15 +145,24 @@ export class BrowserFftSpeechCommandRecognizer implements
     if (config == null) {
       config = {};
     }
-    const probabilityThreshold =
+    let probabilityThreshold =
         config.probabilityThreshold == null ? 0 : config.probabilityThreshold;
+    if (config.includeEmbedding) {
+      // Override probability threshold to 0 if includeEmbedding is true.
+      probabilityThreshold = 0;
+    }
     tf.util.assert(
         probabilityThreshold >= 0 && probabilityThreshold <= 1,
         `Invalid probabilityThreshold value: ${probabilityThreshold}`);
-    const invokeCallbackOnNoiseAndUnknown =
+    let invokeCallbackOnNoiseAndUnknown =
         config.invokeCallbackOnNoiseAndUnknown == null ?
         false :
         config.invokeCallbackOnNoiseAndUnknown;
+    if (config.includeEmbedding) {
+      // Override invokeCallbackOnNoiseAndUnknown threshold to true if
+      // includeEmbedding is true.
+      invokeCallbackOnNoiseAndUnknown = true;
+    }
 
     if (config.suppressionTimeMillis < 0) {
       throw new Error(
@@ -167,7 +177,18 @@ export class BrowserFftSpeechCommandRecognizer implements
         `Expected overlapFactor to be >= 0 and < 1, but got ${overlapFactor}`);
 
     const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
-      const y = tf.tidy(() => this.model.predict(x) as tf.Tensor);
+      await this.ensureModelWithEmbeddingOutputCreated();
+
+      let y: tf.Tensor;
+      let embedding: tf.Tensor;
+      if (config.includeEmbedding) {
+        await this.ensureModelWithEmbeddingOutputCreated();
+        [y, embedding] =
+            this.modelWithEmbeddingOutput.predict(x) as tf.Tensor[];
+      } else {
+        y = this.model.predict(x) as tf.Tensor;
+      }
+
       const scores = await y.data() as Float32Array;
       const maxIndexTensor = y.argMax(-1);
       const maxIndex = (await maxIndexTensor.data())[0];
@@ -194,7 +215,7 @@ export class BrowserFftSpeechCommandRecognizer implements
           }
         }
         if (wordDetected) {
-          callback({scores, spectrogram});
+          callback({scores, spectrogram, embedding});
         }
         // Trigger suppression only if the word is neither unknown or
         // background noise.
@@ -279,6 +300,39 @@ export class BrowserFftSpeechCommandRecognizer implements
     this.parameters.spectrogramDurationMillis = numFrames * frameDurationMillis;
   }
 
+  /**
+   * Construct a two-output model that includes the following outputs:
+   *
+   * 1. The same softmax probability output as the original model's output
+   * 2. The embedding, i.e., activation from the second-last dense layer of
+   *    the original model.
+   */
+  protected async ensureModelWithEmbeddingOutputCreated() {
+    if (this.modelWithEmbeddingOutput != null) {
+      return;
+    }
+    await this.ensureModelLoaded();
+
+    // Find the second last dense layer of the original model.
+    let secondLastDenseLayer: tf.layers.Layer;
+    for (let i = this.model.layers.length - 2; i >= 0; --i) {
+      if (this.model.layers[i].getClassName() === 'Dense') {
+        secondLastDenseLayer = this.model.layers[i];
+        break;
+      }
+    }
+    if (secondLastDenseLayer == null) {
+      throw new Error(
+          'Failed to find second last dense layer in the original model.');
+    }
+    this.modelWithEmbeddingOutput = tf.model({
+      inputs: this.model.inputs,
+      outputs: [
+        this.model.outputs[0], secondLastDenseLayer.output as tf.SymbolicTensor
+      ]
+    });
+  }
+
   private warmUpModel() {
     tf.tidy(() => {
       const x = tf.zeros([1].concat(this.nonBatchInputShape));
@@ -360,14 +414,26 @@ export class BrowserFftSpeechCommandRecognizer implements
    *   - If a `Float32Array`, must have a length divisible by the number
    *     of elements per spectrogram, i.e.,
    *     (# of spectrogram columns) * (# of frequency-domain points per column).
+   * @param config Optional configuration object.
    * @returns Result of the recognition, with the following field:
    *   scores:
    *   - A `Float32Array` if there is only one input exapmle.
    *   - An `Array` of `Float32Array`, if there are multiple input examples.
    */
-  async recognize(input: tf.Tensor|
-                  Float32Array): Promise<SpeechCommandRecognizerResult> {
+  async recognize(input?: tf.Tensor|Float32Array, config?: RecognizeConfig):
+      Promise<SpeechCommandRecognizerResult> {
+    if (config == null) {
+      config = {};
+    }
+
     await this.ensureModelLoaded();
+
+    if (input == null) {
+      // If `input` is not provided, draw audio data from WebAudio and us it
+      // for recognition.
+      const spectrogramData = await this.recognizeOnline();
+      input = spectrogramData.data;
+    }
 
     let numExamples: number;
     let inputTensor: tf.Tensor;
@@ -393,16 +459,49 @@ export class BrowserFftSpeechCommandRecognizer implements
       ].concat(this.nonBatchInputShape) as [number, number, number, number]);
     }
 
-    outTensor = this.model.predict(inputTensor) as tf.Tensor;
+    const output: SpeechCommandRecognizerResult = {scores: null};
+    if (config.includeEmbedding) {
+      // Optional inclusion of embedding (internal activation).
+      await this.ensureModelWithEmbeddingOutputCreated();
+      const outAndEmbedding =
+          this.modelWithEmbeddingOutput.predict(inputTensor) as tf.Tensor[];
+      outTensor = outAndEmbedding[0];
+      output.embedding = outAndEmbedding[1];
+    } else {
+      outTensor = this.model.predict(inputTensor) as tf.Tensor;
+    }
+
     if (numExamples === 1) {
-      return {scores: await outTensor.data() as Float32Array};
+      output.scores = await outTensor.data() as Float32Array;
     } else {
       const unstacked = tf.unstack(outTensor) as tf.Tensor[];
       const scorePromises = unstacked.map(item => item.data());
-      const scores = await Promise.all(scorePromises) as Float32Array[];
+      output.scores = await Promise.all(scorePromises) as Float32Array[];
       tf.dispose(unstacked);
-      return {scores};
     }
+    return output;
+  }
+
+  protected async recognizeOnline(): Promise<SpectrogramData> {
+    return new Promise<SpectrogramData>((resolve, reject) => {
+      const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
+        resolve({
+          data: await x.data() as Float32Array,
+          frameSize: this.nonBatchInputShape[1],
+        });
+        return false;
+      };
+      this.audioDataExtractor = new BrowserFftFeatureExtractor({
+        sampleRateHz: this.parameters.sampleRateHz,
+        columnBufferLength: this.parameters.columnBufferLength,
+        columnHopLength: this.parameters.columnBufferLength,
+        numFramesPerSpectrogram: this.nonBatchInputShape[0],
+        columnTruncateLength: this.nonBatchInputShape[1],
+        suppressionTimeMillis: 0,
+        spectrogramCallback
+      });
+      this.audioDataExtractor.start();
+    });
   }
 
   createTransfer(name: string): TransferSpeechCommandRecognizer {

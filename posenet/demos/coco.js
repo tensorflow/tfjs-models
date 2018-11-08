@@ -20,13 +20,14 @@ import dat from 'dat.gui';
 
 // clang-format off
 import {
+  drawBoundingBox,
   drawKeypoints,
   drawPoint,
   drawSegment,
   drawSkeleton,
-  drawBoundingBox,
   renderImageToCanvas,
 } from './demo_util';
+
 // clang-format on
 
 

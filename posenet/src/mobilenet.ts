@@ -16,8 +16,9 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
+import {ModelWeights} from './model_weights';
 
-export type MobileNetMultiplier = 0.50|0.75|1.0|1.01;
+export type MobileNetMultiplier = 0.25|0.50|0.75|1.0|1.01;
 export type ConvolutionType = 'conv2d'|'separableConv';
 export type ConvolutionDefinition = [ConvolutionType, number];
 export type OutputStride = 32|16|8;
@@ -73,6 +74,8 @@ const mobileNet50Architecture: ConvolutionDefinition[]  = [
   ['separableConv', 1],
   ['separableConv', 1]
 ];
+
+const mobileNet25Architecture = mobileNet50Architecture;
 // clang-format on
 
 const VALID_OUTPUT_STRIDES = [8, 16, 32];
@@ -110,7 +113,8 @@ export const mobileNetArchitectures:
     {[name: string]: ConvolutionDefinition[]} = {
       100: mobileNet100Architecture,
       75: mobileNet75Architecture,
-      50: mobileNet50Architecture
+      50: mobileNet50Architecture,
+      25: mobileNet25Architecture
     };
 
 type Layer = {
@@ -169,24 +173,25 @@ function toOutputStridedLayers(
 }
 
 export class MobileNet {
-  private variables: {[varName: string]: tf.Tensor};
+  private modelWeights: ModelWeights;
+  // private model: tf.NamedTensorMap;
   private convolutionDefinitions: ConvolutionDefinition[];
 
   private PREPROCESS_DIVISOR = tf.scalar(255.0 / 2);
-  private ONE = tf.scalar(1);
+  private ONE = tf.scalar(1.0);
 
   constructor(
-      variables: {[varName: string]: tf.Tensor},
+      modelWeights: ModelWeights,
       convolutionDefinitions: ConvolutionDefinition[]) {
-    this.variables = variables;
+    this.modelWeights = modelWeights;
     this.convolutionDefinitions = convolutionDefinitions;
   }
 
-  predict(input: tf.Tensor3D, outputStride: OutputStride) {
+  predict(input: tf.Tensor3D, outputStride: OutputStride): tf.Tensor3D {
     // Normalize the pixels [0, 255] to be between [-1, 1].
-    const preprocessedInput =
-        tf.cast(input, 'float32').div(this.PREPROCESS_DIVISOR).sub(this.ONE) as
-        tf.Tensor3D;
+    const normalized = tf.div(input.toFloat(), this.PREPROCESS_DIVISOR);
+
+    const preprocessedInput = tf.sub(normalized, this.ONE) as tf.Tensor3D;
 
     const layers =
         toOutputStridedLayers(this.convolutionDefinitions, outputStride);
@@ -208,17 +213,16 @@ export class MobileNet {
   public convToOutput(mobileNetOutput: tf.Tensor3D, outputLayerName: string):
       tf.Tensor3D {
     return mobileNetOutput.conv2d(this.weights(outputLayerName), 1, 'same')
-               .add(this.biases(outputLayerName)) as tf.Tensor3D;
+               .add(this.convBias(outputLayerName)) as tf.Tensor3D;
   }
 
   private conv(inputs: tf.Tensor3D, stride: number, blockId: number):
       tf.Tensor3D {
-    return inputs
-               .conv2d(
-                   this.weights(`Conv2d_${String(blockId)}`), stride, 'same')
-               .add(this.biases(`Conv2d_${String(blockId)}`))
-               // relu6
-               .clipByValue(0, 6) as tf.Tensor3D;
+    const weights = this.weights(`Conv2d_${String(blockId)}`);
+    const a = inputs.conv2d(weights, stride, 'same');
+    const b = a.add(this.convBias(`Conv2d_${String(blockId)}`));
+    // relu6
+    return b.clipByValue(0, 6) as tf.Tensor3D;
   }
 
   private separableConv(
@@ -231,34 +235,35 @@ export class MobileNet {
                    .depthwiseConv2D(
                        this.depthwiseWeights(dwLayer), stride, 'same', 'NHWC',
                        dilations)
-                   .add(this.biases(dwLayer))
+                   .add(this.depthwiseBias(dwLayer))
                    // relu6
                    .clipByValue(0, 6) as tf.Tensor3D;
 
     const x2 = x1.conv2d(this.weights(pwLayer), [1, 1], 'same')
-                   .add(this.biases(pwLayer))
+                   .add(this.convBias(pwLayer))
                    // relu6
                    .clipByValue(0, 6) as tf.Tensor3D;
 
     return x2;
   }
 
-  private weights(layerName: string) {
-    return this.variables[`MobilenetV1/${layerName}/weights`] as tf.Tensor4D;
+  private weights(layerName: string): tf.Tensor4D {
+    return this.modelWeights.weights(layerName);
   }
 
-  private biases(layerName: string) {
-    return this.variables[`MobilenetV1/${layerName}/biases`] as tf.Tensor1D;
+  private convBias(layerName: string): tf.Tensor1D {
+    return this.modelWeights.convBias(layerName);
+  }
+
+  private depthwiseBias(layerName: string) {
+    return this.modelWeights.depthwiseBias(layerName);
   }
 
   private depthwiseWeights(layerName: string) {
-    return this.variables[`MobilenetV1/${layerName}/depthwise_weights`] as
-        tf.Tensor4D;
+    return this.modelWeights.depthwiseWeights(layerName);
   }
 
   dispose() {
-    for (const varName in this.variables) {
-      this.variables[varName].dispose();
-    }
+    this.modelWeights.dispose();
   }
 }
