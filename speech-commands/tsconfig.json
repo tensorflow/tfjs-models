@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
       "module": "commonjs",
+      "moduleResolution": "node",
       "noImplicitAny": true,
       "sourceMap": true,
       "removeComments": true,
@@ -20,12 +21,6 @@
       "downlevelIteration": true
   },
   "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "dist/",
-    "src/**/*_test.ts",
-    "src/**/*_test_utils.ts",
-    "training/"
+    "src/"
   ]
 }

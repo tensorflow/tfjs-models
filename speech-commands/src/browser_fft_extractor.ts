@@ -20,8 +20,6 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-
-// tslint:disable-next-line:max-line-length
 import {getAudioContextConstructor, getAudioMediaStream, normalize} from './browser_fft_utils';
 import {FeatureExtractor, RecognizerParams} from './types';
 
@@ -61,6 +59,15 @@ export interface BrowserFftFeatureExtractorConfig extends RecognizerParams {
    * If `null` or `undefined`, will do no truncation.
    */
   columnTruncateLength?: number;
+
+  /**
+   * Overlap factor. Must be >=0 and <1.
+   * For example, if the model takes a frame length of 1000 ms,
+   * and if overlap factor is 0.4, there will be a 400ms
+   * overlap between two successive frames, i.e., frames
+   * will be taken every 600 ms.
+   */
+  overlapFactor: number;
 }
 
 /**
@@ -142,15 +149,12 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     this.fftSize = config.fftSize || 1024;
     this.frameDurationMillis = this.fftSize / this.sampleRateHz * 1e3;
     this.columnTruncateLength = config.columnTruncateLength || this.fftSize;
-    const columnBufferLength = config.columnBufferLength || this.fftSize;
-    const columnHopLength = config.columnHopLength || (this.fftSize / 2);
-    this.overlapFactor = columnHopLength / columnBufferLength;
+    this.overlapFactor = config.overlapFactor;
 
-    if (!(this.overlapFactor > 0)) {
-      throw new Error(
-          `Invalid overlapFactor: ${this.overlapFactor}. ` +
-          `Check your columnBufferLength and columnHopLength.`);
-    }
+    tf.util.assert(
+        this.overlapFactor >= 0 && this.overlapFactor < 1,
+        `Expected overlapFactor to be >= 0 and < 1, ` +
+            `but got ${this.overlapFactor}`);
 
     if (this.columnTruncateLength > this.fftSize) {
       throw new Error(
@@ -190,8 +194,10 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
 
     this.frameCount = 0;
 
+    const period = Math.max(
+        1, Math.round(this.numFramesPerSpectrogram * (1 - this.overlapFactor)));
     this.tracker = new Tracker(
-        Math.round(this.numFramesPerSpectrogram * this.overlapFactor),
+        period,
         Math.round(this.suppressionTimeMillis / this.frameDurationMillis));
     this.frameIntervalTask = setInterval(
         this.onAudioFrame.bind(this), this.fftSize / this.sampleRateHz * 1e3);
@@ -200,7 +206,6 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
   private async onAudioFrame() {
     this.analyser.getFloatFrequencyData(this.freqData);
     if (this.freqData[0] === -Infinity) {
-      console.warn(`No signal (frame #${this.frameCount})`);
       return;
     }
 

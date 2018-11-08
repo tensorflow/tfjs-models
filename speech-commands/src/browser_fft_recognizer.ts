@@ -16,14 +16,10 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-
-// tslint:disable:max-line-length
 import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
 import {loadMetadataJson} from './browser_fft_utils';
 import {RecognizeConfig, RecognizerCallback, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
 import {version} from './version';
-
-// tslint:enable:max-line-length
 
 export const BACKGROUND_NOISE_TAG = '_background_noise_';
 export const UNKNOWN_TAG = '_unknown_';
@@ -44,7 +40,7 @@ export class BrowserFftSpeechCommandRecognizer implements
 
   private readonly SAMPLE_RATE_HZ = 44100;
   private readonly FFT_SIZE = 1024;
-  private readonly DEFAULT_SUPPRESSION_TIME_MILLIS = 1000;
+  private readonly DEFAULT_SUPPRESSION_TIME_MILLIS = 0;
 
   model: tf.Model;
   modelWithEmbeddingOutput: tf.Model;
@@ -104,8 +100,7 @@ export class BrowserFftSpeechCommandRecognizer implements
 
     this.parameters = {
       sampleRateHz: this.SAMPLE_RATE_HZ,
-      fftSize: this.FFT_SIZE,
-      columnBufferLength: this.FFT_SIZE,
+      fftSize: this.FFT_SIZE
     };
   }
 
@@ -180,8 +175,6 @@ export class BrowserFftSpeechCommandRecognizer implements
     tf.util.assert(
         overlapFactor >= 0 && overlapFactor < 1,
         `Expected overlapFactor to be >= 0 and < 1, but got ${overlapFactor}`);
-    this.parameters.columnHopLength =
-        Math.round(this.FFT_SIZE * (1 - overlapFactor));
 
     const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
       await this.ensureModelWithEmbeddingOutputCreated();
@@ -235,12 +228,11 @@ export class BrowserFftSpeechCommandRecognizer implements
         config.suppressionTimeMillis;
     this.audioDataExtractor = new BrowserFftFeatureExtractor({
       sampleRateHz: this.parameters.sampleRateHz,
-      columnBufferLength: this.parameters.columnBufferLength,
-      columnHopLength: this.parameters.columnHopLength,
       numFramesPerSpectrogram: this.nonBatchInputShape[0],
       columnTruncateLength: this.nonBatchInputShape[1],
       suppressionTimeMillis,
-      spectrogramCallback
+      spectrogramCallback,
+      overlapFactor
     });
 
     await this.audioDataExtractor.start();
@@ -301,11 +293,9 @@ export class BrowserFftSpeechCommandRecognizer implements
     this.elementsPerExample = 1;
     model.inputs[0].shape.slice(1).forEach(
         dimSize => this.elementsPerExample *= dimSize);
-
     this.warmUpModel();
-
     const frameDurationMillis =
-        this.parameters.columnBufferLength / this.parameters.sampleRateHz * 1e3;
+        this.parameters.fftSize / this.parameters.sampleRateHz * 1e3;
     const numFrames = model.inputs[0].shape[1];
     this.parameters.spectrogramDurationMillis = numFrames * frameDurationMillis;
   }
@@ -503,12 +493,11 @@ export class BrowserFftSpeechCommandRecognizer implements
       };
       this.audioDataExtractor = new BrowserFftFeatureExtractor({
         sampleRateHz: this.parameters.sampleRateHz,
-        columnBufferLength: this.parameters.columnBufferLength,
-        columnHopLength: this.parameters.columnBufferLength,
         numFramesPerSpectrogram: this.nonBatchInputShape[0],
         columnTruncateLength: this.nonBatchInputShape[1],
         suppressionTimeMillis: 0,
-        spectrogramCallback
+        spectrogramCallback,
+        overlapFactor: 0
       });
       this.audioDataExtractor.start();
     });
@@ -629,12 +618,11 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       };
       this.audioDataExtractor = new BrowserFftFeatureExtractor({
         sampleRateHz: this.parameters.sampleRateHz,
-        columnBufferLength: this.parameters.columnBufferLength,
-        columnHopLength: this.parameters.columnBufferLength,
         numFramesPerSpectrogram: this.nonBatchInputShape[0],
         columnTruncateLength: this.nonBatchInputShape[1],
         suppressionTimeMillis: 0,
-        spectrogramCallback
+        spectrogramCallback,
+        overlapFactor: 0
       });
       this.audioDataExtractor.start();
     });

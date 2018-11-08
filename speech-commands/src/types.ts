@@ -216,19 +216,14 @@ export interface SpeechCommandRecognizerResult {
 
 export interface StreamingRecognitionConfig {
   /**
-   * Overlap factor. Must be a number between >=0 and <1.
+   * Overlap factor. Must be >=0 and <1.
    * Defaults to 0.5.
    * For example, if the model takes a frame length of 1000 ms,
-   * and if overlap factor is 0.4, there will be a 400-ms
+   * and if overlap factor is 0.4, there will be a 400ms
    * overlap between two successive frames, i.e., frames
    * will be taken every 600 ms.
    */
   overlapFactor?: number;
-
-  /**
-   * Minimum samples of the same label for reliable prediction.
-   */
-  minSamples?: number;
 
   /**
    * Amount to time in ms to suppress recognizer after a word is recognized.
@@ -330,17 +325,6 @@ export interface TransferLearnConfig {
  */
 export interface RecognizerParams {
   /**
-   * Audio sample window size per spectrogram column.
-   */
-  columnBufferLength?: number;
-
-  /**
-   * Audio sample window hopping size between two consecutive spectrogram
-   * columns.
-   */
-  columnHopLength?: number;
-
-  /**
    * Total duration per spectragram, in milliseconds.
    */
   spectrogramDurationMillis?: number;
@@ -349,11 +333,6 @@ export interface RecognizerParams {
    * FFT encoding size per spectrogram column.
    */
   fftSize?: number;
-
-  /**
-   * Post FFT filter size for spectorgram column.
-   */
-  filterSize?: number;
 
   /**
    * Sampling rate, in Hz.
