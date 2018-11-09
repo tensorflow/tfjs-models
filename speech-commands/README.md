@@ -115,6 +115,11 @@ As the example above shows, you can specify optional parameters when calling
 * `invokeCallbackOnNoiseAndUnknown`: Whether the callback function will be
   invoked if the "word" with the maximum probability score is the "unknown"
   or "background noise" token. Default: `false`.
+* `includeEmbedding`: Whether an internal activation from the underlying model
+  will be included in the callback argument, in addition to the probability
+  scores. Note: if this field is set as `true`, the value of
+  `invokeCallbackOnNoiseAndUnknown` will be overridden to `true` and the
+  value of `probabilityThreshold` will be overridden to `0`.
 
 ### Offline recognition
 
