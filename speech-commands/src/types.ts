@@ -278,6 +278,14 @@ export interface StreamingRecognitionConfig {
 
 export interface RecognizeConfig {
   /**
+   * Whether the spectrogram is to be provided in the each recognition
+   * callback call.
+   *
+   * Default: `false`.
+   */
+  includeSpectrogram?: boolean;
+
+  /**
    * Whether to include the embedding (internal activation).
    *
    * Default: `false`.

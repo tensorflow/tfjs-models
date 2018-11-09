@@ -483,6 +483,15 @@ export class BrowserFftSpeechCommandRecognizer implements
       output.scores = await Promise.all(scorePromises) as Float32Array[];
       tf.dispose(unstacked);
     }
+
+    if (config.includeSpectrogram) {
+      output.spectrogram = {
+        data: (input instanceof tf.Tensor ?
+            await input.data() : input) as Float32Array,
+        frameSize: this.nonBatchInputShape[1],
+      };
+    }
+
     return output;
   }
 

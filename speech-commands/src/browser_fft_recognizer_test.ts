@@ -572,6 +572,23 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
       expect(output.scores.length).toEqual(fakeWords.length);
       expect(output.embedding.rank).toEqual(2);
       expect(output.embedding.shape[0]).toEqual(1);
+      expect(output.spectrogram).toBeUndefined();
+    }
+  });
+
+  it('Online recognize() call with includeSpectrogram succeeds', async () => {
+    setUpFakes();
+    const recognizer = new BrowserFftSpeechCommandRecognizer();
+
+    for (let i = 0; i < 2; ++i) {
+      // No-arg call: online recognition.
+      const output =
+          await recognizer.recognize(null, {includeSpectrogram: true});
+      expect(output.scores.length).toEqual(fakeWords.length);
+      expect(output.embedding).toBeUndefined();
+      expect(output.spectrogram.frameSize).toEqual(fakeColumnTruncateLength);
+      expect(output.spectrogram.data.length)
+          .toEqual(fakeColumnTruncateLength * fakeNumFrames);
     }
   });
 
