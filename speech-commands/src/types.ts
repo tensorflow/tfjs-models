@@ -38,29 +38,29 @@ export interface SpeechCommandRecognizer {
   ensureModelLoaded(): Promise<void>;
 
   /**
-   * Start recognition in a streaming fashion.
+   * Start listening continuously to microphone input and perform recognition
+   * in a streaming fashion.
    *
    * @param callback the callback that will be invoked every time
    *   a recognition result is available.
    * @param config optional configuration.
    * @throws Error if there is already ongoing streaming recognition.
    */
-  startStreaming(
-      callback: RecognizerCallback,
-      config?: StreamingRecognitionConfig): Promise<void>;
+  listen(callback: RecognizerCallback,
+         config?: StreamingRecognitionConfig): Promise<void>;
 
   /**
    *  Stop the ongoing streaming recognition (if any).
    *
    * @throws Error if no streaming recognition is ongoing.
    */
-  stopStreaming(): Promise<void>;
+  stopListening(): Promise<void>;
 
   /**
    * Check if this instance is currently performing
    * streaming recognition.
    */
-  isStreaming(): boolean;
+  isListening(): boolean;
 
   /**
    * Recognize a single example of audio.
@@ -108,8 +108,8 @@ export interface SpeechCommandRecognizer {
    * @param name Required name of the transfer learning recognizer. Must be a
    *   non-empty string.
    * @returns An instance of TransferSpeechCommandRecognizer, which supports
-   *     `collectExample()`, `train()`, as well as the same `startStreaming()`
-   *     `stopStreaming()` and `recognize()` as the base recognizer.
+   *     `collectExample()`, `train()`, as well as the same `listen()`
+   *     `stopListening()` and `recognize()` as the base recognizer.
    */
   createTransfer(name: string): TransferSpeechCommandRecognizer;
 }
@@ -277,6 +277,14 @@ export interface StreamingRecognitionConfig {
 }
 
 export interface RecognizeConfig {
+  /**
+   * Whether the spectrogram is to be provided in the each recognition
+   * callback call.
+   *
+   * Default: `false`.
+   */
+  includeSpectrogram?: boolean;
+
   /**
    * Whether to include the embedding (internal activation).
    *
