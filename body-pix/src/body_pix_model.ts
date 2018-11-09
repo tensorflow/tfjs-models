@@ -22,12 +22,12 @@ import {checkpoints} from './checkpoints';
 import {decodePartSegmentation, toMask} from './decode_part_map';
 import {assertValidOutputStride, MobileNet, MobileNetMultiplier, OutputStride} from './mobilenet';
 import {ModelWeights} from './model_weights';
-import {PersonSegmentationInput} from './types';
+import {BodyPixInput} from './types';
 import {getInputTensorDimensions, resizeAndPadTo, scaleAndCropToInputTensorShape} from './util';
 
 const segmentationModelImageDimensions: [number, number] = [353, 257];
 
-export class PersonSegmentation {
+export class BodyPix {
   mobileNet: MobileNet;
 
   constructor(mobileNet: MobileNet) {
@@ -94,7 +94,7 @@ export class PersonSegmentation {
    * image.
    */
   async estimatePersonSegmentation(
-      input: PersonSegmentationInput, flipHorizontal = false,
+      input: BodyPixInput, flipHorizontal = false,
       outputStride: OutputStride = 16,
       segmentationThreshold = 0.5): Promise<Uint8Array> {
     assertValidOutputStride(outputStride);
@@ -163,7 +163,7 @@ export class PersonSegmentation {
    * the number of pixels in the image. See the readme for the body part ids.
    */
   async estimatePartSegmentation(
-      input: PersonSegmentationInput, flipHorizontal = false,
+      input: BodyPixInput, flipHorizontal = false,
       outputStride: OutputStride = 16,
       segmentationThreshold = 0.5): Promise<Int32Array> {
     assertValidOutputStride(outputStride);
@@ -217,7 +217,7 @@ export class PersonSegmentation {
 }
 
 /**
- * Loads the PersonSegmentation model instance from a checkpoint, with the
+ * Loads the BodyPix model instance from a checkpoint, with the
  * MobileNet architecture specified by the multiplier.
  *
  * @param multiplier An optional number with values: 1.01, 1.0, 0.75, or
@@ -229,7 +229,7 @@ export class PersonSegmentation {
  *
  */
 export async function load(multiplier: MobileNetMultiplier = 0.75):
-    Promise<PersonSegmentation> {
+    Promise<BodyPix> {
   if (tf == null) {
     throw new Error(
         `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
@@ -250,7 +250,7 @@ export async function load(multiplier: MobileNetMultiplier = 0.75):
 
   const mobileNet = await mobilenetLoader.load(multiplier);
 
-  return new PersonSegmentation(mobileNet);
+  return new BodyPix(mobileNet);
 }
 
 export const mobilenetLoader = {
