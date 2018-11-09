@@ -26,6 +26,11 @@ export const UNKNOWN_TAG = '_unknown_';
 
 let streaming = false;
 
+export function getMajorAndMinorVersion(version: string) {
+  const versionItems = version.split('.');
+  return versionItems.slice(0, 2).join('.');
+}
+
 /**
  * Speech-Command Recognizer using browser-native (WebAudio) spectral featutres.
  */
@@ -36,7 +41,7 @@ export class BrowserFftSpeechCommandRecognizer implements
 
   readonly MODEL_URL_PREFIX =
       `https://storage.googleapis.com/tfjs-models/tfjs/speech-commands/v${
-          version}/browser_fft`;
+         getMajorAndMinorVersion(version)}/browser_fft`;
 
   private readonly SAMPLE_RATE_HZ = 44100;
   private readonly FFT_SIZE = 1024;

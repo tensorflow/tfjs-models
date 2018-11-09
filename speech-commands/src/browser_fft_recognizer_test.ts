@@ -22,11 +22,21 @@ import {writeFileSync} from 'fs';
 import {join} from 'path';
 import * as rimraf from 'rimraf';
 import * as tempfile from 'tempfile';
-import {BrowserFftSpeechCommandRecognizer} from './browser_fft_recognizer';
+import {BrowserFftSpeechCommandRecognizer, getMajorAndMinorVersion} from './browser_fft_recognizer';
 import * as BrowserFftUtils from './browser_fft_utils';
 import {FakeAudioContext, FakeAudioMediaStream} from './browser_test_utils';
 import {create} from './index';
 import {SpeechCommandRecognizerResult} from './types';
+
+describe('getMajorAndMinorVersion', () => {
+  it('Correct results', () => {
+    expect(getMajorAndMinorVersion('0.1.3')).toEqual('0.1');
+    expect(getMajorAndMinorVersion('1.0.9')).toEqual('1.0');
+    expect(getMajorAndMinorVersion('2.0.0rc0')).toEqual('2.0');
+    expect(getMajorAndMinorVersion('2.0.9999999')).toEqual('2.0');
+    expect(getMajorAndMinorVersion('3.0')).toEqual('3.0');
+  });
+});
 
 describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
   const fakeWords: string[] = [
