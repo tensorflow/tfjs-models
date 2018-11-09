@@ -64,6 +64,7 @@ console.log(recognizer.wordLabels());
 // 2. A configuration object with adjustable fields such a
 //    - includeSpectrogram
 //    - probabilityThreshold
+//    - includeEmbedding
 recognizer.listen(result => {
   // - result.scores contains the probability scores that correspond to
   //   recognizer.wordLabels().
@@ -153,6 +154,11 @@ tf.tidy(() => {
   // above: the `scores` field contains the probabilities of the words.
 });
 ```
+
+Note that you must provide a spectrogram value to the `recognize()` call
+in order to perform the offline recognition. If `recognzie()` as called
+without a first argument, it will perform one-shot online recognition
+by collecting a frame of audio via WebAudio.
 
 ### Preloading model
 

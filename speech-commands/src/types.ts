@@ -38,7 +38,8 @@ export interface SpeechCommandRecognizer {
   ensureModelLoaded(): Promise<void>;
 
   /**
-   * Start recognition in a streaming fashion.
+   * Start listening continuously to microphone input and perform recognition
+   * in a streaming fashion.
    *
    * @param callback the callback that will be invoked every time
    *   a recognition result is available.
