@@ -2,7 +2,6 @@
 
 let newModel;
 let recognizer;
-let isListening = false;
 const activations = [];
 const labels = [];
 
@@ -38,14 +37,12 @@ function showPrediction(label) {
 }
 
 function listen() {
-  if (isListening) {
-    isListening = false;
+  if (recognizer.isStreaming()) {
     recognizer.stopStreaming();
     toggleButtons(true);
     document.getElementById('listen').textContent = 'Listen';
     return;
   }
-  isListening = true;
   toggleButtons(false);
   document.getElementById('listen').textContent = 'Stop';
   document.getElementById('listen').disabled = false;
@@ -59,11 +56,7 @@ function listen() {
     }
     const predictedLabel = (await probs.argMax(1).data())[0];
     showPrediction(predictedLabel);
-  }, {
-    overlapFactor: 0.95,
-    includeEmbedding: true
-  });
-
+  }, {overlapFactor: 0.95, includeEmbedding: true});
 }
 
 async function app() {
@@ -74,19 +67,19 @@ async function app() {
   console.log('Sucessfully loaded model');
 
   // Setup the UI.
-  document.getElementById('class-a').addEventListener('click', () => addExample(0));
-  document.getElementById('class-b').addEventListener('click', () => addExample(1));
-  document.getElementById('class-c').addEventListener('click', () => addExample(2));
+  document.getElementById('class-a').addEventListener(
+      'click', () => addExample(0));
+  document.getElementById('class-b').addEventListener(
+      'click', () => addExample(1));
+  document.getElementById('class-c').addEventListener(
+      'click', () => addExample(2));
   document.getElementById('train').addEventListener('click', () => train());
   document.getElementById('listen').addEventListener('click', () => listen());
 
   // Create a new model.
   newModel = tf.sequential();
-  newModel.add(tf.layers.dense({
-    units: 3,
-    inputShape: [2000],
-    activation: 'softmax'
-  }));
+  newModel.add(
+      tf.layers.dense({units: 3, inputShape: [2000], activation: 'softmax'}));
   const optimizer = tf.train.sgd(0.001);
   newModel.compile({optimizer, loss: 'categoricalCrossentropy'});
 }
