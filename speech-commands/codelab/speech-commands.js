@@ -150,11 +150,24 @@
             });
         });
     }
-    function normalize(x) {
-        return tf.tidy(function () {
-            var mean = tf.mean(x);
-            var std = tf.sqrt(tf.mean(tf.square(tf.add(x, tf.neg(mean)))));
-            return tf.div(tf.add(x, tf.neg(mean)), std);
+    function normalize(vals) {
+        return __awaiter(this, void 0, void 0, function () {
+            var res, data;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        res = tf.tidy(function () {
+                            var x = tf.tensor1d(vals);
+                            var _a = tf.moments(x), mean = _a.mean, variance = _a.variance;
+                            return x.sub(mean).div(variance.sqrt());
+                        });
+                        return [4, res.data()];
+                    case 1:
+                        data = _a.sent();
+                        res.dispose();
+                        return [2, data];
+                }
+            });
         });
     }
     function getAudioContextConstructor() {
@@ -173,7 +186,6 @@
 
     var BrowserFftFeatureExtractor = (function () {
         function BrowserFftFeatureExtractor(config) {
-            this.ROTATING_BUFFER_SIZE_MULTIPLIER = 2;
             if (config == null) {
                 throw new Error("Required configuration object is missing for " +
                     "BrowserFftFeatureExtractor constructor");
@@ -191,7 +203,7 @@
             }
             this.suppressionTimeMillis = config.suppressionTimeMillis;
             this.spectrogramCallback = config.spectrogramCallback;
-            this.numFramesPerSpectrogram = config.numFramesPerSpectrogram;
+            this.numFrames = config.numFramesPerSpectrogram;
             this.sampleRateHz = config.sampleRateHz || 44100;
             this.fftSize = config.fftSize || 1024;
             this.frameDurationMillis = this.fftSize / this.sampleRateHz * 1e3;
@@ -205,9 +217,9 @@
             }
             this.audioContextConstructor = getAudioContextConstructor();
         }
-        BrowserFftFeatureExtractor.prototype.start = function (samples) {
+        BrowserFftFeatureExtractor.prototype.start = function () {
             return __awaiter(this, void 0, void 0, function () {
-                var _a, streamSource, rotatingBufferSize, period;
+                var _a, streamSource, period;
                 return __generator(this, function (_b) {
                     switch (_b.label) {
                         case 0:
@@ -229,13 +241,9 @@
                             this.analyser.fftSize = this.fftSize * 2;
                             this.analyser.smoothingTimeConstant = 0.0;
                             streamSource.connect(this.analyser);
+                            this.queue = [];
                             this.freqData = new Float32Array(this.fftSize);
-                            this.rotatingBufferNumFrames =
-                                this.numFramesPerSpectrogram * this.ROTATING_BUFFER_SIZE_MULTIPLIER;
-                            rotatingBufferSize = this.columnTruncateLength * this.rotatingBufferNumFrames;
-                            this.rotatingBuffer = new Float32Array(rotatingBufferSize);
-                            this.frameCount = 0;
-                            period = Math.max(1, Math.round(this.numFramesPerSpectrogram * (1 - this.overlapFactor)));
+                            period = Math.max(1, Math.round(this.numFrames * (1 - this.overlapFactor)));
                             this.tracker = new Tracker(period, Math.round(this.suppressionTimeMillis / this.frameDurationMillis));
                             this.frameIntervalTask = setInterval(this.onAudioFrame.bind(this), this.fftSize / this.sampleRateHz * 1e3);
                             return [2];
@@ -245,7 +253,7 @@
         };
         BrowserFftFeatureExtractor.prototype.onAudioFrame = function () {
             return __awaiter(this, void 0, void 0, function () {
-                var freqDataSlice, bufferPos, shouldFire, freqData, inputTensor, shouldRest;
+                var shouldFire, freqData, inputTensor, shouldRest;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
@@ -253,23 +261,25 @@
                             if (this.freqData[0] === -Infinity) {
                                 return [2];
                             }
-                            freqDataSlice = this.freqData.slice(0, this.columnTruncateLength);
-                            bufferPos = this.frameCount % this.rotatingBufferNumFrames;
-                            this.rotatingBuffer.set(freqDataSlice, bufferPos * this.columnTruncateLength);
-                            this.frameCount++;
+                            this.queue.push(this.freqData.slice(0, this.columnTruncateLength));
+                            if (this.queue.length > this.numFrames) {
+                                this.queue.shift();
+                            }
                             shouldFire = this.tracker.tick();
-                            if (!shouldFire) return [3, 2];
-                            freqData = getFrequencyDataFromRotatingBuffer(this.rotatingBuffer, this.numFramesPerSpectrogram, this.columnTruncateLength, this.frameCount - this.numFramesPerSpectrogram);
-                            inputTensor = getInputTensorFromFrequencyData(freqData, this.numFramesPerSpectrogram, this.columnTruncateLength);
-                            return [4, this.spectrogramCallback(inputTensor)];
+                            if (!shouldFire) return [3, 3];
+                            freqData = flattenQueue(this.queue);
+                            return [4, getInputTensorFromFrequencyData(freqData, [1, this.numFrames, this.columnTruncateLength, 1])];
                         case 1:
+                            inputTensor = _a.sent();
+                            return [4, this.spectrogramCallback(inputTensor)];
+                        case 2:
                             shouldRest = _a.sent();
                             if (shouldRest) {
                                 this.tracker.suppress();
                             }
                             inputTensor.dispose();
-                            _a.label = 2;
-                        case 2: return [2];
+                            _a.label = 3;
+                        case 3: return [2];
                     }
                 });
             });
@@ -298,31 +308,34 @@
         };
         return BrowserFftFeatureExtractor;
     }());
-    function getFrequencyDataFromRotatingBuffer(rotatingBuffer, numFrames, fftLength, frameCount) {
-        var size = numFrames * fftLength;
-        var freqData = new Float32Array(size);
-        var rotatingBufferSize = rotatingBuffer.length;
-        var rotatingBufferNumFrames = rotatingBufferSize / fftLength;
-        while (frameCount < 0) {
-            frameCount += rotatingBufferNumFrames;
-        }
-        var indexBegin = (frameCount % rotatingBufferNumFrames) * fftLength;
-        var indexEnd = indexBegin + size;
-        for (var i = indexBegin; i < indexEnd; ++i) {
-            freqData[i - indexBegin] = rotatingBuffer[i % rotatingBufferSize];
-        }
+    function flattenQueue(queue) {
+        var frameSize = queue[0].length;
+        var freqData = new Float32Array(queue.length * frameSize);
+        queue.forEach(function (data, i) { return freqData.set(data, i * frameSize); });
         return freqData;
     }
-    function getInputTensorFromFrequencyData(freqData, numFrames, fftLength, toNormalize) {
+    function getInputTensorFromFrequencyData(freqData, shape, toNormalize) {
         if (toNormalize === void 0) { toNormalize = true; }
-        return tf.tidy(function () {
-            var size = freqData.length;
-            var tensorBuffer = tf.buffer([size]);
-            for (var i = 0; i < freqData.length; ++i) {
-                tensorBuffer.set(freqData[i], i);
-            }
-            var output = tensorBuffer.toTensor().reshape([1, numFrames, fftLength, 1]);
-            return toNormalize ? normalize(output) : output;
+        return __awaiter(this, void 0, void 0, function () {
+            var _a, vals;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        if (!toNormalize) return [3, 2];
+                        return [4, normalize(freqData)];
+                    case 1:
+                        _a = _b.sent();
+                        return [3, 3];
+                    case 2:
+                        _a = freqData;
+                        _b.label = 3;
+                    case 3:
+                        freqData = _a;
+                        vals = new Float32Array(tf.util.sizeFromShape(shape));
+                        vals.set(freqData, vals.length - freqData.length);
+                        return [2, tf.tensor(vals, shape)];
+                }
+            });
         });
     }
     var Tracker = (function () {
@@ -345,14 +358,18 @@
         return Tracker;
     }());
 
-    var version = '0.1.3';
+    var version = '0.2.0';
 
     var BACKGROUND_NOISE_TAG = '_background_noise_';
     var UNKNOWN_TAG = '_unknown_';
     var streaming = false;
+    function getMajorAndMinorVersion(version$$1) {
+        var versionItems = version$$1.split('.');
+        return versionItems.slice(0, 2).join('.');
+    }
     var BrowserFftSpeechCommandRecognizer = (function () {
         function BrowserFftSpeechCommandRecognizer(vocabulary, modelURL, metadataURL) {
-            this.MODEL_URL_PREFIX = "https://storage.googleapis.com/tfjs-speech-commands-models/v" + version + "/browser_fft";
+            this.MODEL_URL_PREFIX = "https://storage.googleapis.com/tfjs-models/tfjs/speech-commands/v" + getMajorAndMinorVersion(version) + "/browser_fft";
             this.SAMPLE_RATE_HZ = 44100;
             this.FFT_SIZE = 1024;
             this.DEFAULT_SUPPRESSION_TIME_MILLIS = 0;
@@ -383,7 +400,7 @@
                 fftSize: this.FFT_SIZE
             };
         }
-        BrowserFftSpeechCommandRecognizer.prototype.startStreaming = function (callback, config) {
+        BrowserFftSpeechCommandRecognizer.prototype.listen = function (callback, config) {
             return __awaiter(this, void 0, void 0, function () {
                 var probabilityThreshold, invokeCallbackOnNoiseAndUnknown, overlapFactor, spectrogramCallback, suppressionTimeMillis;
                 var _this = this;
@@ -601,7 +618,7 @@
                 });
             });
         };
-        BrowserFftSpeechCommandRecognizer.prototype.stopStreaming = function () {
+        BrowserFftSpeechCommandRecognizer.prototype.stopListening = function () {
             return __awaiter(this, void 0, void 0, function () {
                 return __generator(this, function (_a) {
                     switch (_a.label) {
@@ -618,7 +635,7 @@
                 });
             });
         };
-        BrowserFftSpeechCommandRecognizer.prototype.isStreaming = function () {
+        BrowserFftSpeechCommandRecognizer.prototype.isListening = function () {
             return streaming;
         };
         BrowserFftSpeechCommandRecognizer.prototype.wordLabels = function () {
@@ -630,28 +647,28 @@
         BrowserFftSpeechCommandRecognizer.prototype.modelInputShape = function () {
             if (this.model == null) {
                 throw new Error('Model has not been loaded yet. Load model by calling ' +
-                    'ensureModelLoaded(), recognizer(), or startStreaming().');
+                    'ensureModelLoaded(), recognize(), or listen().');
             }
             return this.model.inputs[0].shape;
         };
         BrowserFftSpeechCommandRecognizer.prototype.recognize = function (input, config) {
             return __awaiter(this, void 0, void 0, function () {
-                var spectrogramData, numExamples, inputTensor, outTensor, output, outAndEmbedding, _a, unstacked, scorePromises, _b;
-                return __generator(this, function (_c) {
-                    switch (_c.label) {
+                var spectrogramData, numExamples, inputTensor, outTensor, output, outAndEmbedding, _a, unstacked, scorePromises, _b, _c, _d, _e;
+                return __generator(this, function (_f) {
+                    switch (_f.label) {
                         case 0:
                             if (config == null) {
                                 config = {};
                             }
                             return [4, this.ensureModelLoaded()];
                         case 1:
-                            _c.sent();
+                            _f.sent();
                             if (!(input == null)) return [3, 3];
                             return [4, this.recognizeOnline()];
                         case 2:
-                            spectrogramData = _c.sent();
+                            spectrogramData = _f.sent();
                             input = spectrogramData.data;
-                            _c.label = 3;
+                            _f.label = 3;
                         case 3:
                             if (input instanceof tf.Tensor) {
                                 this.checkInputTensorShape(input);
@@ -674,20 +691,20 @@
                             if (!config.includeEmbedding) return [3, 5];
                             return [4, this.ensureModelWithEmbeddingOutputCreated()];
                         case 4:
-                            _c.sent();
+                            _f.sent();
                             outAndEmbedding = this.modelWithEmbeddingOutput.predict(inputTensor);
                             outTensor = outAndEmbedding[0];
                             output.embedding = outAndEmbedding[1];
                             return [3, 6];
                         case 5:
                             outTensor = this.model.predict(inputTensor);
-                            _c.label = 6;
+                            _f.label = 6;
                         case 6:
                             if (!(numExamples === 1)) return [3, 8];
                             _a = output;
                             return [4, outTensor.data()];
                         case 7:
-                            _a.scores = (_c.sent());
+                            _a.scores = (_f.sent());
                             return [3, 10];
                         case 8:
                             unstacked = tf.unstack(outTensor);
@@ -695,10 +712,27 @@
                             _b = output;
                             return [4, Promise.all(scorePromises)];
                         case 9:
-                            _b.scores = (_c.sent());
+                            _b.scores = (_f.sent());
                             tf.dispose(unstacked);
-                            _c.label = 10;
-                        case 10: return [2, output];
+                            _f.label = 10;
+                        case 10:
+                            if (!config.includeSpectrogram) return [3, 14];
+                            _c = output;
+                            _d = {};
+                            if (!(input instanceof tf.Tensor)) return [3, 12];
+                            return [4, input.data()];
+                        case 11:
+                            _e = _f.sent();
+                            return [3, 13];
+                        case 12:
+                            _e = input;
+                            _f.label = 13;
+                        case 13:
+                            _c.spectrogram = (_d.data = (_e),
+                                _d.frameSize = this.nonBatchInputShape[1],
+                                _d);
+                            _f.label = 14;
+                        case 14: return [2, output];
                     }
                 });
             });
@@ -712,11 +746,13 @@
                                 var _a, _b;
                                 return __generator(this, function (_c) {
                                     switch (_c.label) {
-                                        case 0:
+                                        case 0: return [4, this.audioDataExtractor.stop()];
+                                        case 1:
+                                            _c.sent();
                                             _a = resolve;
                                             _b = {};
                                             return [4, x.data()];
-                                        case 1:
+                                        case 2:
                                             _a.apply(void 0, [(_b.data = (_c.sent()),
                                                     _b.frameSize = this.nonBatchInputShape[1],
                                                     _b)]);
@@ -740,7 +776,7 @@
         BrowserFftSpeechCommandRecognizer.prototype.createTransfer = function (name) {
             if (this.model == null) {
                 throw new Error('Model has not been loaded yet. Load model by calling ' +
-                    'ensureModelLoaded(), recognizer(), or startStreaming().');
+                    'ensureModelLoaded(), recognizer(), or listen().');
             }
             tf.util.assert(name != null && typeof name === 'string' && name.length > 1, "Expected the name for a transfer-learning recognized to be a " +
                 ("non-empty string, but got " + JSON.stringify(name)));

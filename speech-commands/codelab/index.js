@@ -25,20 +25,27 @@ function load() {
   console.log(`Loaded ${activations.length} activations.`);
 }
 
+// function normalize(x) {
+//   const mean = -100;
+//   const std = 22;
+//   return x.map(x => (x - mean) / std);
+// }
 
-const NUM_FRAMES = 2;
+const NUM_FRAMES = 3;
 const INPUT_SHAPE = [NUM_FRAMES, 232, 1];
 
 function collect(label) {
   if (label == null) {
-    return recognizer.stopStreaming();
+    return recognizer.stopListening();
   }
-  recognizer.startStreaming(async ({spectrogram: {frameSize, data}}) => {
+  recognizer.listen(async ({spectrogram: {frameSize, data}}) => {
     const vals = data.subarray(-frameSize * NUM_FRAMES);
+    //const {mean, variance} = tf.moments(vals);
+    //console.log('mean', mean.get(), '\tvariance', variance.get());
     activations.push(tf.tensor(vals, [1, ...INPUT_SHAPE]));
     labels.push(label);
   }, {
-    overlapFactor: 0.95,
+    overlapFactor: 0.999,
     includeSpectrogram: true,
     invokeCallbackOnNoiseAndUnknown: true
   });
@@ -50,20 +57,12 @@ function toggleButtons(enable) {
 
 async function train() {
   toggleButtons(false);
-  let start = performance.now();
   const ys = tf.oneHot(labels, 3);
-  ys.dataSync();
-  console.log('oneHot took', performance.now() - start);
-
-  start = performance.now();
   const xs = tf.concat(activations);
-  xs.dataSync();
-  console.log('concat took', performance.now() - start);
 
-  console.log('done data prep');
   await newModel.fit(xs, ys, {
-    batchSize: 10,
-    epochs: 30,
+    batchSize: 16,
+    epochs: 10,
     callbacks: {
       onEpochEnd: (epoch, logs) => {
         console.log(epoch, logs.acc.toFixed(3));
@@ -78,17 +77,17 @@ let delta = 0.1;
 
 async function moveSlider(labelTensor) {
   const label = (await labelTensor.data())[0];
-  const prevValue = +document.getElementById('output').value;
   if (label == 2) {
     return;
   }
+  const prevValue = +document.getElementById('output').value;
   document.getElementById('output').value =
       prevValue + delta * (label === 0 ? 1 : -1);
 }
 
 function listen() {
-  if (recognizer.isStreaming()) {
-    recognizer.stopStreaming();
+  if (recognizer.isListening()) {
+    recognizer.stopListening();
     toggleButtons(true);
     document.getElementById('listen').textContent = 'Listen';
     return;
@@ -98,7 +97,7 @@ function listen() {
   document.getElementById('listen').disabled = false;
 
 
-  recognizer.startStreaming(async ({spectrogram: {frameSize, data}}) => {
+  recognizer.listen(async ({spectrogram: {frameSize, data}}) => {
     const vals = data.subarray(-frameSize * NUM_FRAMES);
     const input = tf.tensor(vals, [1, ...INPUT_SHAPE]);
     const probs = newModel.predict(input);
@@ -106,7 +105,7 @@ function listen() {
     await moveSlider(predLabel);
     tf.dispose([input, probs, predLabel]);
   }, {
-    overlapFactor: 0.95,
+    overlapFactor: 0.999,
     includeSpectrogram: true,
     invokeCallbackOnNoiseAndUnknown: true
   });

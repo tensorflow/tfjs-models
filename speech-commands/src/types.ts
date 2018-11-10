@@ -360,7 +360,7 @@ export interface FeatureExtractor {
   /**
    * Start the feature extraction from the audio samples.
    */
-  start(samples?: Float32Array): Promise<Float32Array[]|void>;
+  start(): Promise<Float32Array[]|void>;
 
   /**
    * Stop the feature extraction.

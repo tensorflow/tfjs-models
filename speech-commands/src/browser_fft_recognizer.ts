@@ -499,6 +499,7 @@ export class BrowserFftSpeechCommandRecognizer implements
   protected async recognizeOnline(): Promise<SpectrogramData> {
     return new Promise<SpectrogramData>((resolve, reject) => {
       const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
+        await this.audioDataExtractor.stop();
         resolve({
           data: await x.data() as Float32Array,
           frameSize: this.nonBatchInputShape[1],
