@@ -2,15 +2,38 @@
 
 let newModel;
 let recognizer;
-const activations = [];
-const labels = [];
+let activations = [];
+let labels = [];
 
-async function addExample(label) {
-  toggleButtons(false);
-  const example = await recognizer.recognize(null, {includeEmbedding: true});
-  toggleButtons(true);
-  activations.push(example.embedding);
-  labels.push(label);
+function save() {
+  const activationsJson = activations.map(activation => {
+    return {
+      shape: activation.shape,
+      values: Array.from(activation.dataSync())
+    }
+  });
+  sessionStorage.setItem('activations', JSON.stringify(activationsJson));
+  sessionStorage.setItem('labels', JSON.stringify(labels));
+  console.log(`Saved ${activations.length} activations.`);
+}
+function load() {
+  const activationsJson = JSON.parse(sessionStorage.getItem('activations'));
+  activations = activationsJson.map(activationJson => {
+    return tf.tensor(activationJson.values, activationJson.shape);
+  });
+  labels = JSON.parse(sessionStorage.getItem('labels'));
+  console.log(`Loaded ${activations.length} activations.`);
+}
+
+
+function collect(label) {
+  if (label == null) {
+    return recognizer.stopStreaming();
+  }
+  recognizer.startStreaming(example => {
+    activations.push(example.embedding);
+    labels.push(label);
+  }, {overlapFactor: 0.95, includeEmbedding: true});
 }
 
 function toggleButtons(enable) {
@@ -19,21 +42,40 @@ function toggleButtons(enable) {
 
 async function train() {
   toggleButtons(false);
-  await newModel.fit(tf.concat(activations), tf.oneHot(labels, 3), {
-    batchSize: 1,
-    epochs: 10,
+  let start = performance.now();
+  const ys = tf.oneHot(labels, 3);
+  ys.dataSync();
+  console.log('oneHot took', performance.now() - start);
+
+  start = performance.now();
+  const xs = tf.concat(activations);
+  xs.dataSync();
+  console.log('concat took', performance.now() - start);
+
+  console.log('done data prep');
+  await newModel.fit(xs, ys, {
+    batchSize: 10,
+    epochs: 15,
     callbacks: {
-      onBatchEnd: (batch, logs) => {
-        console.log(batch, logs.loss.toFixed(3));
+      onEpochEnd: (epoch, logs) => {
+        console.log(epoch, logs.loss.toFixed(3));
       }
     }
   });
+  tf.dispose([xs, ys]);
   toggleButtons(true);
 }
 
-function showPrediction(label) {
-  const classes = ['A', 'B', 'C'];
-  document.getElementById('prediction').textContent = classes[label];
+let delta = 0.1;
+
+async function moveSlider(labelTensor) {
+  const label = (await labelTensor.data())[0];
+  const prevValue = +document.getElementById('output').value;
+  if (label == 2) {
+    return;
+  }
+  document.getElementById('output').value =
+      prevValue + delta * (label === 0 ? 1 : -1);
 }
 
 function listen() {
@@ -50,12 +92,9 @@ function listen() {
 
   recognizer.startStreaming(async result => {
     const probs = newModel.predict(result.embedding);
-    const maxProb = (await probs.max().data())[0];
-    if (maxProb < 0.8) {
-      return showPrediction('');
-    }
-    const predictedLabel = (await probs.argMax(1).data())[0];
-    showPrediction(predictedLabel);
+    const predLabel = probs.argMax(1);
+    await moveSlider(predLabel);
+    tf.dispose([result, probs, predLabel]);
   }, {overlapFactor: 0.95, includeEmbedding: true});
 }
 
@@ -64,24 +103,32 @@ async function app() {
   // Load the model.
   recognizer = speechCommands.create('BROWSER_FFT');
   await recognizer.ensureModelLoaded();
+  // Warmup.
+  await recognizer.recognize(null, {includeEmbedding: true});
   console.log('Sucessfully loaded model');
+  // load();
 
   // Setup the UI.
-  document.getElementById('class-a').addEventListener(
-      'click', () => addExample(0));
-  document.getElementById('class-b').addEventListener(
-      'click', () => addExample(1));
-  document.getElementById('class-c').addEventListener(
-      'click', () => addExample(2));
-  document.getElementById('train').addEventListener('click', () => train());
-  document.getElementById('listen').addEventListener('click', () => listen());
+  document.getElementById('up').onmousedown = () => collect(0);
+  document.getElementById('up').onmouseup = () => collect(null);
+
+  document.getElementById('down').onmousedown = () => collect(1);
+  document.getElementById('down').onmouseup = () => collect(null);
+
+  document.getElementById('noise').onmousedown = () => collect(2);
+  document.getElementById('noise').onmouseup = () => collect(null);
+
+  document.getElementById('train').onmousedown = () => train();
+  document.getElementById('listen').onmouseup = () => listen();
 
   // Create a new model.
   newModel = tf.sequential();
   newModel.add(
       tf.layers.dense({units: 3, inputShape: [2000], activation: 'softmax'}));
-  const optimizer = tf.train.sgd(0.001);
+  const optimizer = tf.train.sgd(0.1);
   newModel.compile({optimizer, loss: 'categoricalCrossentropy'});
+  // Warmup the new model.
+  tf.tidy(() => newModel.predict(tf.zeros([1, 2000])));
 }
 
 app();
