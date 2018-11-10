@@ -26,14 +26,22 @@ function load() {
 }
 
 
+const NUM_FRAMES = 2;
+const INPUT_SHAPE = [NUM_FRAMES, 232, 1];
+
 function collect(label) {
   if (label == null) {
     return recognizer.stopStreaming();
   }
-  recognizer.startStreaming(example => {
-    activations.push(example.embedding);
+  recognizer.startStreaming(async ({spectrogram: {frameSize, data}}) => {
+    const vals = data.subarray(-frameSize * NUM_FRAMES);
+    activations.push(tf.tensor(vals, [1, ...INPUT_SHAPE]));
     labels.push(label);
-  }, {overlapFactor: 0.95, includeEmbedding: true});
+  }, {
+    overlapFactor: 0.95,
+    includeSpectrogram: true,
+    invokeCallbackOnNoiseAndUnknown: true
+  });
 }
 
 function toggleButtons(enable) {
@@ -55,10 +63,10 @@ async function train() {
   console.log('done data prep');
   await newModel.fit(xs, ys, {
     batchSize: 10,
-    epochs: 15,
+    epochs: 30,
     callbacks: {
       onEpochEnd: (epoch, logs) => {
-        console.log(epoch, logs.loss.toFixed(3));
+        console.log(epoch, logs.acc.toFixed(3));
       }
     }
   });
@@ -90,12 +98,18 @@ function listen() {
   document.getElementById('listen').disabled = false;
 
 
-  recognizer.startStreaming(async result => {
-    const probs = newModel.predict(result.embedding);
+  recognizer.startStreaming(async ({spectrogram: {frameSize, data}}) => {
+    const vals = data.subarray(-frameSize * NUM_FRAMES);
+    const input = tf.tensor(vals, [1, ...INPUT_SHAPE]);
+    const probs = newModel.predict(input);
     const predLabel = probs.argMax(1);
     await moveSlider(predLabel);
-    tf.dispose([result, probs, predLabel]);
-  }, {overlapFactor: 0.95, includeEmbedding: true});
+    tf.dispose([input, probs, predLabel]);
+  }, {
+    overlapFactor: 0.95,
+    includeSpectrogram: true,
+    invokeCallbackOnNoiseAndUnknown: true
+  });
 }
 
 async function app() {
@@ -106,7 +120,7 @@ async function app() {
   // Warmup.
   await recognizer.recognize(null, {includeEmbedding: true});
   console.log('Sucessfully loaded model');
-  // load();
+  load();
 
   // Setup the UI.
   document.getElementById('up').onmousedown = () => collect(0);
@@ -123,12 +137,25 @@ async function app() {
 
   // Create a new model.
   newModel = tf.sequential();
-  newModel.add(
-      tf.layers.dense({units: 3, inputShape: [2000], activation: 'softmax'}));
-  const optimizer = tf.train.sgd(0.1);
-  newModel.compile({optimizer, loss: 'categoricalCrossentropy'});
+  newModel.add(tf.layers.depthwiseConv2d(
+    {depthMultiplier: 8, kernelSize: [NUM_FRAMES, 3], activation: 'relu', inputShape: INPUT_SHAPE}));
+  newModel.add(tf.layers.maxPooling2d({poolSize: [1, 2], strides: [2, 2]}));
+  newModel.add(tf.layers.depthwiseConv2d(
+      {depthMultiplier: 2, kernelSize: [1, 3], activation: 'relu'}));
+  newModel.add(tf.layers.maxPooling2d({poolSize: [1, 2], strides: [2, 2]}));
+  newModel.add(tf.layers.depthwiseConv2d(
+      {depthMultiplier: 2, kernelSize: [1, 3], activation: 'relu'}));
+  newModel.add(tf.layers.maxPooling2d({poolSize: [1, 2], strides: [2, 2]}));
+  newModel.add(tf.layers.flatten());
+  newModel.add(tf.layers.dense({units: 3, activation: 'softmax'}));
+  const optimizer = tf.train.adam(0.01);
+  newModel.compile({
+    optimizer,
+    loss: 'categoricalCrossentropy',
+    metrics: ['accuracy']
+  });
   // Warmup the new model.
-  tf.tidy(() => newModel.predict(tf.zeros([1, 2000])));
+  tf.tidy(() => newModel.predict(tf.zeros([1, ...INPUT_SHAPE])));
 }
 
 app();
