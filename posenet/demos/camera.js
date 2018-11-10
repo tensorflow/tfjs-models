@@ -17,7 +17,8 @@
 import * as posenet from '@tensorflow-models/posenet';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
-import {drawKeypoints, drawSkeleton, drawBoundingBox} from './demo_util';
+
+import {drawBoundingBox, drawKeypoints, drawSkeleton} from './demo_util';
 
 const videoWidth = 600;
 const videoHeight = 500;
@@ -187,7 +188,7 @@ function setupGui(cameras, net) {
  * Sets up a frames per second panel on the top-left of the window
  */
 function setupFPS() {
-  stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
+  stats.showPanel(0);  // 0: fps, 1: ms, 2: mb, 3+: custom
   document.body.appendChild(stats.dom);
 }
 

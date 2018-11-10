@@ -17,8 +17,8 @@ To keep track of issues we use the [tensorflow/tfjs](https://github.com/tensorfl
 You can use this as standalone es5 bundle like this:
 
 ```html
-  <script src="https://unpkg.com/@tensorflow/tfjs"></script>
-  <script src="https://unpkg.com/@tensorflow-models/posenet"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.13.3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/posenet@0.2.3"></script>
 ```
 
 Or you can install it via npm for use in a TypeScript / ES6 project.
@@ -68,14 +68,16 @@ const net = await posenet.load(multiplier);
 
 * **multiplier** - An optional number with values: `1.01`, `1.0`, `0.75`, or `0.50`. Defaults to `1.01`.   It is the float multiplier for the depth (number of channels) for all convolution operations. The value corresponds to a MobileNet architecture and checkpoint.  The larger the value, the larger the size of the layers, and more accurate the model at the cost of speed.  Set this to a smaller value to increase speed at the cost of accuracy.
 
-**By default,** PoseNet loads a model with a **`1.01`** multiplier.  This is recommended for computers with **powerful GPUs.**  A model with a **`0.75`** muliplier is recommended for computers with **mid-range/lower-end GPUS.** A model with a **`0.50`** architecture is recommended for **mobile.**
+**By default,** PoseNet loads a model with a **`0.75`** multiplier.  This is recommended for computers with **mid-range/lower-end GPUS.**  A model with a **`1.00`** muliplier is recommended for computers with **powerful GPUS.**  A model with a **`0.50`** architecture is recommended for **mobile.**
 
 ### Single-Person Pose Estimation
 
 Single pose estimation is the simpler and faster of the two algorithms. Its ideal use case is for when there is only one person in the image. The disadvantage is that if there are multiple persons in an image, keypoints from both persons will likely be estimated as being part of the same single pose—meaning, for example, that person #1’s left arm and person #2’s right knee might be conflated by the algorithm as belonging to the same pose.
 
 ```javascript
-const pose = await poseNet.estimateSinglePose(image, imageScaleFactor, flipHorizontal, outputStride);
+const net = await posenet.load();
+
+const pose = await net.estimateSinglePose(image, imageScaleFactor, flipHorizontal, outputStride);
 ```
 
 #### Inputs
@@ -98,9 +100,9 @@ It returns a `pose` with a confidence score and an array of keypoints indexed by
 <html>
   <head>
     <!-- Load TensorFlow.js -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.11.7"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.13.3"></script>
     <!-- Load Posenet -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/posenet@0.1.2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/posenet@0.2.3"></script>
  </head>
 
   <body>
@@ -299,6 +301,8 @@ which would produce the output:
 Multiple Pose estimation can decode multiple poses in an image. It is more complex and slightly slower than the single pose-algorithm, but has the advantage that if multiple people appear in an image, their detected keypoints are less likely to be associated with the wrong pose. Even if the use case is to detect a single person’s pose, this algorithm may be more desirable in that the accidental effect of two poses being joined together won’t occur when multiple people appear in the image. It uses the `Fast greedy decoding` algorithm from the research paper [PersonLab: Person Pose Estimation and Instance Segmentation with a Bottom-Up, Part-Based, Geometric Embedding Model](https://arxiv.org/pdf/1803.08225.pdf).
 
 ```javascript
+const net = await posenet.load();
+
 const poses = await net.estimateMultiplePoses(image, imageScaleFactor, flipHorizontal, outputStride, maxPoseDetections, scoreThreshold, nmsRadius);
 ```
 
@@ -323,9 +327,9 @@ It returns a `promise` that resolves with an array of `poses`, each with a confi
 <html>
   <head>
     <!-- Load TensorFlow.js -->
-    <script src="https://unpkg.com/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.13.3"></script>
     <!-- Load Posenet -->
-    <script src="https://unpkg.com/@tensorflow-models/posenet"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/posenet@0.2.3"></script>
  </head>
 
   <body>
