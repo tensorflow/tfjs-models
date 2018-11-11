@@ -6,18 +6,16 @@ const INPUT_SHAPE = [NUM_FRAMES, 232, 1];
 let model;
 let recognizer;
 let examples = [];
-let labels = [];
 
 function save() {
-  sessionStorage.setItem('examples',
-      JSON.stringify(examples.map(vals => Array.from(vals))));
-  sessionStorage.setItem('labels', JSON.stringify(labels));
+  const jsonExamples =
+      examples.map(e => ({label: e.label, vals: Array.from(e.vals)}));
+  sessionStorage.setItem('examples', JSON.stringify(jsonExamples));
   console.log(`Saved ${examples.length} examples.`);
 }
 function load() {
   examples = JSON.parse(sessionStorage.getItem('examples'))
-    .map(vals => new Float32Array(vals));
-  labels = JSON.parse(sessionStorage.getItem('labels'));
+    .map(e => ({label: e.label, vals: new Float32Array(e.vals)}));
   console.log(`Loaded ${examples.length} examples.`);
 }
 
@@ -40,8 +38,7 @@ function collect(label) {
   }
   recognizer.listen(async ({spectrogram: {frameSize, data}}) => {
     let vals = normalize(data.subarray(-frameSize * NUM_FRAMES));
-    examples.push(vals);
-    labels.push(label);
+    examples.push({vals, label});
   }, {
     overlapFactor: 0.999,
     includeSpectrogram: true,
@@ -55,9 +52,9 @@ function toggleButtons(enable) {
 
 async function train() {
   toggleButtons(false);
-  const ys = tf.oneHot(labels, 3);
+  const ys = tf.oneHot(examples.map(e => e.label), 3);
   const xsShape = [examples.length, ...INPUT_SHAPE];
-  const xs = tf.tensor(flatten(examples), xsShape);
+  const xs = tf.tensor(flatten(examples.map(e => e.vals)), xsShape);
 
   await model.fit(xs, ys, {
     batchSize: 16,
