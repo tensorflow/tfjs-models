@@ -41,30 +41,13 @@ describeWithFlags('flattenQueue', testEnvs, () => {
 });
 
 describeWithFlags('getInputTensorFromFrequencyData', testEnvs, () => {
-  it('Unnormalized', () => {
-    const freqData = new Float32Array([1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6]);
-    const numFrames = 6;
-    const fftSize = 2;
-    const tensor = getInputTensorFromFrequencyData(
-        freqData, [1, numFrames, fftSize, 1], false);
-    tf.test_util.expectArraysClose(tensor, tf.tensor4d(freqData, [1, 6, 2, 1]));
-  });
-
-  it('Normalized', () => {
+  it('6 frames, 2 vals each', () => {
     const freqData = new Float32Array([1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6]);
     const numFrames = 6;
     const fftSize = 2;
     const tensor =
         getInputTensorFromFrequencyData(freqData, [1, numFrames, fftSize, 1]);
-    tf.test_util.expectArraysClose(
-        tensor,
-        tf.tensor4d(
-            [
-              -1.4638501, -1.4638501, -0.8783101, -0.8783101, -0.29277,
-              -0.29277, 0.29277, 0.29277, 0.8783101, 0.8783101, 1.4638501,
-              1.4638501
-            ],
-            [1, 6, 2, 1]));
+    tf.test_util.expectArraysClose(tensor, tf.tensor4d(freqData, [1, 6, 2, 1]));
   });
 });
 

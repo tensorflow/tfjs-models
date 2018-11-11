@@ -17,7 +17,7 @@
 
 import * as tf from '@tensorflow/tfjs';
 import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
-import {loadMetadataJson} from './browser_fft_utils';
+import {loadMetadataJson, normalize} from './browser_fft_utils';
 import {RecognizeConfig, RecognizerCallback, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
 import {version} from './version';
 
@@ -184,21 +184,22 @@ export class BrowserFftSpeechCommandRecognizer implements
     const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
       await this.ensureModelWithEmbeddingOutputCreated();
 
+      const normalizedX = normalize(x);
       let y: tf.Tensor;
       let embedding: tf.Tensor;
       if (config.includeEmbedding) {
         await this.ensureModelWithEmbeddingOutputCreated();
         [y, embedding] =
-            this.modelWithEmbeddingOutput.predict(x) as tf.Tensor[];
+            this.modelWithEmbeddingOutput.predict(normalizedX) as tf.Tensor[];
       } else {
-        y = this.model.predict(x) as tf.Tensor;
+        y = this.model.predict(normalizedX) as tf.Tensor;
       }
 
       const scores = await y.data() as Float32Array;
       const maxIndexTensor = y.argMax(-1);
       const maxIndex = (await maxIndexTensor.data())[0];
       const maxScore = Math.max(...scores);
-      tf.dispose([y, maxIndexTensor]);
+      tf.dispose([y, maxIndexTensor, normalizedX]);
 
       if (maxScore < probabilityThreshold) {
         return false;
@@ -496,14 +497,16 @@ export class BrowserFftSpeechCommandRecognizer implements
     return output;
   }
 
-  protected async recognizeOnline(): Promise<SpectrogramData> {
+  private async recognizeOnline(): Promise<SpectrogramData> {
     return new Promise<SpectrogramData>((resolve, reject) => {
       const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
+        const normalizedX = normalize(x);
         await this.audioDataExtractor.stop();
         resolve({
-          data: await x.data() as Float32Array,
+          data: await normalizedX.data() as Float32Array,
           frameSize: this.nonBatchInputShape[1],
         });
+        normalizedX.dispose();
         return false;
       };
       this.audioDataExtractor = new BrowserFftFeatureExtractor({
@@ -613,7 +616,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
             `learning example`);
 
     streaming = true;
-    return new Promise<SpectrogramData>((resolve, reject) => {
+    return new Promise<SpectrogramData>(resolve => {
       const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
         if (this.transferExamples == null) {
           this.transferExamples = {};
@@ -621,7 +624,9 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         if (this.transferExamples[word] == null) {
           this.transferExamples[word] = [];
         }
-        this.transferExamples[word].push(x.clone());
+        const normalizedX = normalize(x);
+        this.transferExamples[word].push(normalizedX.clone());
+        normalizedX.dispose();
         await this.audioDataExtractor.stop();
         streaming = false;
         this.collateTransferWords();

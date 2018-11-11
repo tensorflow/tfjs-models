@@ -20,7 +20,7 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import {getAudioContextConstructor, getAudioMediaStream, normalize} from './browser_fft_utils';
+import {getAudioContextConstructor, getAudioMediaStream} from './browser_fft_utils';
 import {FeatureExtractor, RecognizerParams} from './types';
 
 export type SpectrogramCallback = (x: tf.Tensor) => Promise<boolean>;
@@ -92,7 +92,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
   // consecutive spectrograms and the length of each individual spectrogram.
   readonly overlapFactor: number;
 
-  protected readonly spectrogramCallback: SpectrogramCallback;
+  private readonly spectrogramCallback: SpectrogramCallback;
 
   private stream: MediaStream;
   // tslint:disable-next-line:no-any
@@ -204,7 +204,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     const shouldFire = this.tracker.tick();
     if (shouldFire) {
       const freqData = flattenQueue(this.queue);
-      const inputTensor = await getInputTensorFromFrequencyData(
+      const inputTensor = getInputTensorFromFrequencyData(
           freqData, [1, this.numFrames, this.columnTruncateLength, 1]);
       const shouldRest = await this.spectrogramCallback(inputTensor);
       if (shouldRest) {
@@ -245,10 +245,8 @@ export function flattenQueue(queue: Float32Array[]): Float32Array {
   return freqData;
 }
 
-export async function getInputTensorFromFrequencyData(
-    freqData: Float32Array, shape: number[],
-    toNormalize = true): Promise<tf.Tensor> {
-  freqData = toNormalize ? await normalize(freqData) : freqData;
+export function getInputTensorFromFrequencyData(
+    freqData: Float32Array, shape: number[]): tf.Tensor {
   const vals = new Float32Array(tf.util.sizeFromShape(shape));
   vals.set(freqData, vals.length - freqData.length);
   return tf.tensor(vals, shape);

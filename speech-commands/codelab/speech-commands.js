@@ -150,24 +150,10 @@
             });
         });
     }
-    function normalize(vals) {
-        return __awaiter(this, void 0, void 0, function () {
-            var res, data;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        res = tf.tidy(function () {
-                            var x = tf.tensor1d(vals);
-                            var _a = tf.moments(x), mean = _a.mean, variance = _a.variance;
-                            return x.sub(mean).div(variance.sqrt());
-                        });
-                        return [4, res.data()];
-                    case 1:
-                        data = _a.sent();
-                        res.dispose();
-                        return [2, data];
-                }
-            });
+    function normalize(x) {
+        return tf.tidy(function () {
+            var _a = tf.moments(x), mean = _a.mean, variance = _a.variance;
+            return x.sub(mean).div(variance.sqrt());
         });
     }
     function getAudioContextConstructor() {
@@ -266,20 +252,18 @@
                                 this.queue.shift();
                             }
                             shouldFire = this.tracker.tick();
-                            if (!shouldFire) return [3, 3];
+                            if (!shouldFire) return [3, 2];
                             freqData = flattenQueue(this.queue);
-                            return [4, getInputTensorFromFrequencyData(freqData, [1, this.numFrames, this.columnTruncateLength, 1])];
-                        case 1:
-                            inputTensor = _a.sent();
+                            inputTensor = getInputTensorFromFrequencyData(freqData, [1, this.numFrames, this.columnTruncateLength, 1]);
                             return [4, this.spectrogramCallback(inputTensor)];
-                        case 2:
+                        case 1:
                             shouldRest = _a.sent();
                             if (shouldRest) {
                                 this.tracker.suppress();
                             }
                             inputTensor.dispose();
-                            _a.label = 3;
-                        case 3: return [2];
+                            _a.label = 2;
+                        case 2: return [2];
                     }
                 });
             });
@@ -314,29 +298,10 @@
         queue.forEach(function (data, i) { return freqData.set(data, i * frameSize); });
         return freqData;
     }
-    function getInputTensorFromFrequencyData(freqData, shape, toNormalize) {
-        if (toNormalize === void 0) { toNormalize = true; }
-        return __awaiter(this, void 0, void 0, function () {
-            var _a, vals;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
-                    case 0:
-                        if (!toNormalize) return [3, 2];
-                        return [4, normalize(freqData)];
-                    case 1:
-                        _a = _b.sent();
-                        return [3, 3];
-                    case 2:
-                        _a = freqData;
-                        _b.label = 3;
-                    case 3:
-                        freqData = _a;
-                        vals = new Float32Array(tf.util.sizeFromShape(shape));
-                        vals.set(freqData, vals.length - freqData.length);
-                        return [2, tf.tensor(vals, shape)];
-                }
-            });
-        });
+    function getInputTensorFromFrequencyData(freqData, shape) {
+        var vals = new Float32Array(tf.util.sizeFromShape(shape));
+        vals.set(freqData, vals.length - freqData.length);
+        return tf.tensor(vals, shape);
     }
     var Tracker = (function () {
         function Tracker(period, suppressionPeriod) {
@@ -434,20 +399,21 @@
                             overlapFactor = config.overlapFactor == null ? 0.5 : config.overlapFactor;
                             tf.util.assert(overlapFactor >= 0 && overlapFactor < 1, "Expected overlapFactor to be >= 0 and < 1, but got " + overlapFactor);
                             spectrogramCallback = function (x) { return __awaiter(_this, void 0, void 0, function () {
-                                var _a, y, embedding, scores, maxIndexTensor, maxIndex, maxScore, spectrogram, _b, wordDetected;
+                                var _a, normalizedX, y, embedding, scores, maxIndexTensor, maxIndex, maxScore, spectrogram, _b, wordDetected;
                                 return __generator(this, function (_c) {
                                     switch (_c.label) {
                                         case 0: return [4, this.ensureModelWithEmbeddingOutputCreated()];
                                         case 1:
                                             _c.sent();
+                                            normalizedX = normalize(x);
                                             if (!config.includeEmbedding) return [3, 3];
                                             return [4, this.ensureModelWithEmbeddingOutputCreated()];
                                         case 2:
                                             _c.sent();
-                                            _a = __read(this.modelWithEmbeddingOutput.predict(x), 2), y = _a[0], embedding = _a[1];
+                                            _a = __read(this.modelWithEmbeddingOutput.predict(normalizedX), 2), y = _a[0], embedding = _a[1];
                                             return [3, 4];
                                         case 3:
-                                            y = this.model.predict(x);
+                                            y = this.model.predict(normalizedX);
                                             _c.label = 4;
                                         case 4: return [4, y.data()];
                                         case 5:
@@ -457,7 +423,7 @@
                                         case 6:
                                             maxIndex = (_c.sent())[0];
                                             maxScore = Math.max.apply(Math, __spread(scores));
-                                            tf.dispose([y, maxIndexTensor]);
+                                            tf.dispose([y, maxIndexTensor, normalizedX]);
                                             if (!(maxScore < probabilityThreshold)) return [3, 7];
                                             return [2, false];
                                         case 7:
@@ -743,19 +709,22 @@
                 return __generator(this, function (_a) {
                     return [2, new Promise(function (resolve, reject) {
                             var spectrogramCallback = function (x) { return __awaiter(_this, void 0, void 0, function () {
-                                var _a, _b;
+                                var normalizedX, _a, _b;
                                 return __generator(this, function (_c) {
                                     switch (_c.label) {
-                                        case 0: return [4, this.audioDataExtractor.stop()];
+                                        case 0:
+                                            normalizedX = normalize(x);
+                                            return [4, this.audioDataExtractor.stop()];
                                         case 1:
                                             _c.sent();
                                             _a = resolve;
                                             _b = {};
-                                            return [4, x.data()];
+                                            return [4, normalizedX.data()];
                                         case 2:
                                             _a.apply(void 0, [(_b.data = (_c.sent()),
                                                     _b.frameSize = this.nonBatchInputShape[1],
                                                     _b)]);
+                                            normalizedX.dispose();
                                             return [2, false];
                                     }
                                 });
@@ -842,9 +811,9 @@
                     tf.util.assert(word != null && typeof word === 'string' && word.length > 0, "Must provide a non-empty string when collecting transfer-" +
                         "learning example");
                     streaming = true;
-                    return [2, new Promise(function (resolve, reject) {
+                    return [2, new Promise(function (resolve) {
                             var spectrogramCallback = function (x) { return __awaiter(_this, void 0, void 0, function () {
-                                var _a, _b;
+                                var normalizedX, _a, _b;
                                 return __generator(this, function (_c) {
                                     switch (_c.label) {
                                         case 0:
@@ -854,7 +823,9 @@
                                             if (this.transferExamples[word] == null) {
                                                 this.transferExamples[word] = [];
                                             }
-                                            this.transferExamples[word].push(x.clone());
+                                            normalizedX = normalize(x);
+                                            this.transferExamples[word].push(normalizedX.clone());
+                                            normalizedX.dispose();
                                             return [4, this.audioDataExtractor.stop()];
                                         case 1:
                                             _c.sent();

@@ -38,15 +38,11 @@ export async function loadMetadataJson(url: string):
   }
 }
 
-export async function normalize(vals: Float32Array): Promise<Float32Array> {
-  const res = tf.tidy(() => {
-    const x = tf.tensor1d(vals);
+export function normalize(x: tf.Tensor): tf.Tensor {
+  return tf.tidy(() => {
     const {mean, variance} = tf.moments(x);
     return x.sub(mean).div(variance.sqrt());
   });
-  const data = await res.data() as Float32Array;
-  res.dispose();
-  return data;
 }
 
 export function getAudioContextConstructor(): AudioContext {

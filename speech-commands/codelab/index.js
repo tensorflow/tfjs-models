@@ -1,48 +1,46 @@
 'use strict';
 
+const NUM_FRAMES = 3;
+const INPUT_SHAPE = [NUM_FRAMES, 232, 1];
+
 let newModel;
 let recognizer;
-let activations = [];
+let examples = [];
 let labels = [];
 
 function save() {
-  const activationsJson = activations.map(activation => {
-    return {
-      shape: activation.shape,
-      values: Array.from(activation.dataSync())
-    }
-  });
-  sessionStorage.setItem('activations', JSON.stringify(activationsJson));
+  sessionStorage.setItem('examples',
+      JSON.stringify(examples.map(vals => Array.from(vals))));
   sessionStorage.setItem('labels', JSON.stringify(labels));
-  console.log(`Saved ${activations.length} activations.`);
+  console.log(`Saved ${examples.length} examples.`);
 }
 function load() {
-  const activationsJson = JSON.parse(sessionStorage.getItem('activations'));
-  activations = activationsJson.map(activationJson => {
-    return tf.tensor(activationJson.values, activationJson.shape);
-  });
+  examples = JSON.parse(sessionStorage.getItem('examples'))
+    .map(vals => new Float32Array(vals));
   labels = JSON.parse(sessionStorage.getItem('labels'));
-  console.log(`Loaded ${activations.length} activations.`);
+  console.log(`Loaded ${examples.length} examples.`);
 }
 
-// function normalize(x) {
-//   const mean = -100;
-//   const std = 22;
-//   return x.map(x => (x - mean) / std);
-// }
+function normalize(x) {
+  const mean = -100;
+  const std = 10;
+  return x.map(x => (x - mean) / std);
+}
 
-const NUM_FRAMES = 3;
-const INPUT_SHAPE = [NUM_FRAMES, 232, 1];
+function flatten(tensors) {
+  const size = tensors[0].length;
+  const result = new Float32Array(tensors.length * size);
+  tensors.forEach((arr, i) => result.set(arr, i * size));
+  return result;
+}
 
 function collect(label) {
   if (label == null) {
     return recognizer.stopListening();
   }
   recognizer.listen(async ({spectrogram: {frameSize, data}}) => {
-    const vals = data.subarray(-frameSize * NUM_FRAMES);
-    //const {mean, variance} = tf.moments(vals);
-    //console.log('mean', mean.get(), '\tvariance', variance.get());
-    activations.push(tf.tensor(vals, [1, ...INPUT_SHAPE]));
+    let vals = normalize(data.subarray(-frameSize * NUM_FRAMES));
+    examples.push(vals);
     labels.push(label);
   }, {
     overlapFactor: 0.999,
@@ -58,7 +56,8 @@ function toggleButtons(enable) {
 async function train() {
   toggleButtons(false);
   const ys = tf.oneHot(labels, 3);
-  const xs = tf.concat(activations);
+  const xsShape = [examples.length, ...INPUT_SHAPE];
+  const xs = tf.tensor(flatten(examples), xsShape);
 
   await newModel.fit(xs, ys, {
     batchSize: 16,
@@ -73,13 +72,12 @@ async function train() {
   toggleButtons(true);
 }
 
-let delta = 0.1;
-
 async function moveSlider(labelTensor) {
   const label = (await labelTensor.data())[0];
   if (label == 2) {
     return;
   }
+  let delta = 0.1;
   const prevValue = +document.getElementById('output').value;
   document.getElementById('output').value =
       prevValue + delta * (label === 0 ? 1 : -1);
@@ -98,7 +96,7 @@ function listen() {
 
 
   recognizer.listen(async ({spectrogram: {frameSize, data}}) => {
-    const vals = data.subarray(-frameSize * NUM_FRAMES);
+    const vals = normalize(data.subarray(-frameSize * NUM_FRAMES));
     const input = tf.tensor(vals, [1, ...INPUT_SHAPE]);
     const probs = newModel.predict(input);
     const predLabel = probs.argMax(1);
