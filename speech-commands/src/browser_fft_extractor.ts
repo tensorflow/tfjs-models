@@ -223,6 +223,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     this.frameIntervalTask = null;
     this.analyser.disconnect();
     this.audioContext.close();
+    this.stream.getTracks()[0].stop();
   }
 
   setConfig(params: RecognizerParams) {

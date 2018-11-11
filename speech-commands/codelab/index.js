@@ -3,7 +3,7 @@
 const NUM_FRAMES = 3;
 const INPUT_SHAPE = [NUM_FRAMES, 232, 1];
 
-let newModel;
+let model;
 let recognizer;
 let examples = [];
 let labels = [];
@@ -59,7 +59,7 @@ async function train() {
   const xsShape = [examples.length, ...INPUT_SHAPE];
   const xs = tf.tensor(flatten(examples), xsShape);
 
-  await newModel.fit(xs, ys, {
+  await model.fit(xs, ys, {
     batchSize: 16,
     epochs: 10,
     callbacks: {
@@ -98,7 +98,7 @@ function listen() {
   recognizer.listen(async ({spectrogram: {frameSize, data}}) => {
     const vals = normalize(data.subarray(-frameSize * NUM_FRAMES));
     const input = tf.tensor(vals, [1, ...INPUT_SHAPE]);
-    const probs = newModel.predict(input);
+    const probs = model.predict(input);
     const predLabel = probs.argMax(1);
     await moveSlider(predLabel);
     tf.dispose([input, probs, predLabel]);
@@ -109,17 +109,30 @@ function listen() {
   });
 }
 
-async function app() {
-  console.log('Loading speech commands...')
-  // Load the model.
-  recognizer = speechCommands.create('BROWSER_FFT');
-  await recognizer.ensureModelLoaded();
-  // Warmup.
-  await recognizer.recognize(null, {includeEmbedding: true});
-  console.log('Sucessfully loaded model');
-  load();
+function buildModel() {
+  model = tf.sequential();
+  model.add(tf.layers.depthwiseConv2d(
+    {depthMultiplier: 8, kernelSize: [NUM_FRAMES, 3], activation: 'relu', inputShape: INPUT_SHAPE}));
+  model.add(tf.layers.maxPooling2d({poolSize: [1, 2], strides: [2, 2]}));
+  // newModel.add(tf.layers.depthwiseConv2d(
+  //     {depthMultiplier: 2, kernelSize: [1, 3], activation: 'relu'}));
+  // newModel.add(tf.layers.maxPooling2d({poolSize: [1, 2], strides: [2, 2]}));
+  // newModel.add(tf.layers.depthwiseConv2d(
+  //     {depthMultiplier: 2, kernelSize: [1, 3], activation: 'relu'}));
+  // newModel.add(tf.layers.maxPooling2d({poolSize: [1, 2], strides: [2, 2]}));
+  model.add(tf.layers.flatten());
+  model.add(tf.layers.dense({units: 3, activation: 'softmax'}));
+  const optimizer = tf.train.adam(0.01);
+  model.compile({
+    optimizer,
+    loss: 'categoricalCrossentropy',
+    metrics: ['accuracy']
+  });
+  // Warmup the new model.
+  tf.tidy(() => model.predict(tf.zeros([1, ...INPUT_SHAPE])));
+}
 
-  // Setup the UI.
+function setupUI() {
   document.getElementById('up').onmousedown = () => collect(0);
   document.getElementById('up').onmouseup = () => collect(null);
 
@@ -131,28 +144,18 @@ async function app() {
 
   document.getElementById('train').onmousedown = () => train();
   document.getElementById('listen').onmouseup = () => listen();
+}
 
-  // Create a new model.
-  newModel = tf.sequential();
-  newModel.add(tf.layers.depthwiseConv2d(
-    {depthMultiplier: 8, kernelSize: [NUM_FRAMES, 3], activation: 'relu', inputShape: INPUT_SHAPE}));
-  newModel.add(tf.layers.maxPooling2d({poolSize: [1, 2], strides: [2, 2]}));
-  newModel.add(tf.layers.depthwiseConv2d(
-      {depthMultiplier: 2, kernelSize: [1, 3], activation: 'relu'}));
-  newModel.add(tf.layers.maxPooling2d({poolSize: [1, 2], strides: [2, 2]}));
-  newModel.add(tf.layers.depthwiseConv2d(
-      {depthMultiplier: 2, kernelSize: [1, 3], activation: 'relu'}));
-  newModel.add(tf.layers.maxPooling2d({poolSize: [1, 2], strides: [2, 2]}));
-  newModel.add(tf.layers.flatten());
-  newModel.add(tf.layers.dense({units: 3, activation: 'softmax'}));
-  const optimizer = tf.train.adam(0.01);
-  newModel.compile({
-    optimizer,
-    loss: 'categoricalCrossentropy',
-    metrics: ['accuracy']
-  });
-  // Warmup the new model.
-  tf.tidy(() => newModel.predict(tf.zeros([1, ...INPUT_SHAPE])));
+async function app() {
+  // Load the model.
+  recognizer = speechCommands.create('BROWSER_FFT');
+  await recognizer.ensureModelLoaded();
+  // Warmup.
+  await recognizer.recognize(null);
+
+  load();
+  setupUI();
+  buildModel();
 }
 
 app();

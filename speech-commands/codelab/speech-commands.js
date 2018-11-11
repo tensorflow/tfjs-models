@@ -278,6 +278,7 @@
                     this.frameIntervalTask = null;
                     this.analyser.disconnect();
                     this.audioContext.close();
+                    this.stream.getTracks()[0].stop();
                     return [2];
                 });
             });
