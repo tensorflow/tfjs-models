@@ -1,5 +1,6 @@
 'use strict';
 
+// One frame is ~23ms of audio.
 const NUM_FRAMES = 3;
 const INPUT_SHAPE = [NUM_FRAMES, 232, 1];
 
@@ -82,7 +83,6 @@ function listen() {
   document.getElementById('listen').textContent = 'Stop';
   document.getElementById('listen').disabled = false;
 
-
   recognizer.listen(async ({spectrogram: {frameSize, data}}) => {
     const vals = normalize(data.subarray(-frameSize * NUM_FRAMES));
     const input = tf.tensor(vals, [1, ...INPUT_SHAPE]);
@@ -115,7 +115,6 @@ function buildModel() {
     metrics: ['accuracy']
   });
 }
-
 
 async function app() {
   recognizer = speechCommands.create('BROWSER_FFT');
