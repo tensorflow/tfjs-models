@@ -198,7 +198,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
 
     this.queue.push(this.freqData.slice(0, this.columnTruncateLength));
     if (this.queue.length > this.numFrames) {
-      // Lose the oldest frame (least recent).
+      // Drop the oldest frame (least recent).
       this.queue.shift();
     }
     const shouldFire = this.tracker.tick();
@@ -251,6 +251,7 @@ export function flattenQueue(queue: Float32Array[]): Float32Array {
 export function getInputTensorFromFrequencyData(
     freqData: Float32Array, shape: number[]): tf.Tensor {
   const vals = new Float32Array(tf.util.sizeFromShape(shape));
+  // If the data is less than the output shape, the rest is padded with zeros.
   vals.set(freqData, vals.length - freqData.length);
   return tf.tensor(vals, shape);
 }
