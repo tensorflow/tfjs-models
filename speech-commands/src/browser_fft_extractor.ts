@@ -101,7 +101,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
   private analyser: AnalyserNode;
   private tracker: Tracker;
   private freqData: Float32Array;
-  private queue: Float32Array[];
+  private freqDataQueue: Float32Array[];
   // tslint:disable-next-line:no-any
   private frameIntervalTask: any;
   private frameDurationMillis: number;
@@ -179,7 +179,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     this.analyser.smoothingTimeConstant = 0.0;
     streamSource.connect(this.analyser);
     // Reset the queue.
-    this.queue = [];
+    this.freqDataQueue = [];
     this.freqData = new Float32Array(this.fftSize);
     const period =
         Math.max(1, Math.round(this.numFrames * (1 - this.overlapFactor)));
@@ -196,14 +196,14 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
       return;
     }
 
-    this.queue.push(this.freqData.slice(0, this.columnTruncateLength));
-    if (this.queue.length > this.numFrames) {
+    this.freqDataQueue.push(this.freqData.slice(0, this.columnTruncateLength));
+    if (this.freqDataQueue.length > this.numFrames) {
       // Drop the oldest frame (least recent).
-      this.queue.shift();
+      this.freqDataQueue.shift();
     }
     const shouldFire = this.tracker.tick();
     if (shouldFire) {
-      const freqData = flattenQueue(this.queue);
+      const freqData = flattenQueue(this.freqDataQueue);
       const inputTensor = getInputTensorFromFrequencyData(
           freqData, [1, this.numFrames, this.columnTruncateLength, 1]);
       const shouldRest = await this.spectrogramCallback(inputTensor);
