@@ -69,7 +69,7 @@ async function moveSlider(labelTensor) {
   let delta = 0.1;
   const prevValue = +document.getElementById('output').value;
   document.getElementById('output').value =
-      prevValue + delta * (label === 0 ? 1 : -1);
+      prevValue + delta * (label === 0 ? -1 : 1);
 }
 
 function listen() {
