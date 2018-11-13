@@ -17,61 +17,37 @@
 
 import * as tf from '@tensorflow/tfjs';
 import {describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
-import {BrowserFftFeatureExtractor, getFrequencyDataFromRotatingBuffer, getInputTensorFromFrequencyData} from './browser_fft_extractor';
+import {BrowserFftFeatureExtractor, flattenQueue, getInputTensorFromFrequencyData} from './browser_fft_extractor';
 import * as BrowserFftUtils from './browser_fft_utils';
 import {FakeAudioContext, FakeAudioMediaStream} from './browser_test_utils';
 
 const testEnvs = tf.test_util.NODE_ENVS;
 
-describeWithFlags('getFrequencyDataFromRotatingBuffer', testEnvs, () => {
-  it('getFrequencyDataFromRotatingBuffer', () => {
-    const rotBuffer = new Float32Array([1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6]);
-    const numFrames = 3;
-    const fftLength = 2;
-    expect(
-        getFrequencyDataFromRotatingBuffer(rotBuffer, numFrames, fftLength, 0))
-        .toEqual(new Float32Array([1, 1, 2, 2, 3, 3]));
+describeWithFlags('flattenQueue', testEnvs, () => {
+  it('3 frames, 2 values each', () => {
+    const queue = [[1, 1], [2, 2], [3, 3]].map(x => new Float32Array(x));
+    expect(flattenQueue(queue)).toEqual(new Float32Array([1, 1, 2, 2, 3, 3]));
+  });
 
-    expect(
-        getFrequencyDataFromRotatingBuffer(rotBuffer, numFrames, fftLength, 1))
-        .toEqual(new Float32Array([2, 2, 3, 3, 4, 4]));
-    expect(
-        getFrequencyDataFromRotatingBuffer(rotBuffer, numFrames, fftLength, 3))
-        .toEqual(new Float32Array([4, 4, 5, 5, 6, 6]));
-    expect(
-        getFrequencyDataFromRotatingBuffer(rotBuffer, numFrames, fftLength, 4))
-        .toEqual(new Float32Array([5, 5, 6, 6, 1, 1]));
-    expect(
-        getFrequencyDataFromRotatingBuffer(rotBuffer, numFrames, fftLength, 6))
-        .toEqual(new Float32Array([1, 1, 2, 2, 3, 3]));
+  it('2 frames, 2 values each', () => {
+    const queue = [[1, 1], [2, 2]].map(x => new Float32Array(x));
+    expect(flattenQueue(queue)).toEqual(new Float32Array([1, 1, 2, 2]));
+  });
+
+  it('1 frame, 2 values each', () => {
+    const queue = [[1, 1]].map(x => new Float32Array(x));
+    expect(flattenQueue(queue)).toEqual(new Float32Array([1, 1]));
   });
 });
 
 describeWithFlags('getInputTensorFromFrequencyData', testEnvs, () => {
-  it('Unnormalized', () => {
+  it('6 frames, 2 vals each', () => {
     const freqData = new Float32Array([1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6]);
     const numFrames = 6;
     const fftSize = 2;
     const tensor =
-        getInputTensorFromFrequencyData(freqData, numFrames, fftSize, false);
+        getInputTensorFromFrequencyData(freqData, [1, numFrames, fftSize, 1]);
     tf.test_util.expectArraysClose(tensor, tf.tensor4d(freqData, [1, 6, 2, 1]));
-  });
-
-  it('Normalized', () => {
-    const freqData = new Float32Array([1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6]);
-    const numFrames = 6;
-    const fftSize = 2;
-    const tensor =
-        getInputTensorFromFrequencyData(freqData, numFrames, fftSize);
-    tf.test_util.expectArraysClose(
-        tensor,
-        tf.tensor4d(
-            [
-              -1.4638501, -1.4638501, -0.8783101, -0.8783101, -0.29277,
-              -0.29277, 0.29277, 0.29277, 0.8783101, 0.8783101, 1.4638501,
-              1.4638501
-            ],
-            [1, 6, 2, 1]));
   });
 });
 
@@ -95,7 +71,7 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
     });
 
     expect(extractor.fftSize).toEqual(1024);
-    expect(extractor.numFramesPerSpectrogram).toEqual(43);
+    expect(extractor.numFrames).toEqual(43);
     expect(extractor.columnTruncateLength).toEqual(225);
     expect(extractor.overlapFactor).toBeCloseTo(0);
   });

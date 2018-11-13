@@ -46,8 +46,8 @@ export interface SpeechCommandRecognizer {
    * @param config optional configuration.
    * @throws Error if there is already ongoing streaming recognition.
    */
-  listen(callback: RecognizerCallback,
-         config?: StreamingRecognitionConfig): Promise<void>;
+  listen(callback: RecognizerCallback, config?: StreamingRecognitionConfig):
+      Promise<void>;
 
   /**
    *  Stop the ongoing streaming recognition (if any).
@@ -360,7 +360,7 @@ export interface FeatureExtractor {
   /**
    * Start the feature extraction from the audio samples.
    */
-  start(samples?: Float32Array): Promise<Float32Array[]|void>;
+  start(): Promise<Float32Array[]|void>;
 
   /**
    * Stop the feature extraction.

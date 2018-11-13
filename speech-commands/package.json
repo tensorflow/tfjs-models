@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/speech-commands",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Speech-command recognizer in TensorFlow.js",
   "main": "dist/index.js",
   "unpkg": "dist/speech-commands.min.js",

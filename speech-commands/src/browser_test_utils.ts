@@ -39,6 +39,9 @@ export class FakeAudioContext {
 
 export class FakeAudioMediaStream {
   constructor() {}
+  getTracks(): Array<{}> {
+    return [];
+  }
 }
 
 class FakeMediaStreamAudioSourceNode {

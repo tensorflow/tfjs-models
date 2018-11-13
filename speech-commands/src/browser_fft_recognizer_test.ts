@@ -775,8 +775,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();
-    await base.listen(
-        async (result: SpeechCommandRecognizerResult) => {});
+    await base.listen(async (result: SpeechCommandRecognizerResult) => {});
     expect(base.isListening()).toEqual(true);
 
     const transfer = base.createTransfer('xfer1');

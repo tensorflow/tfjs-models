@@ -20,7 +20,7 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import {getAudioContextConstructor, getAudioMediaStream, normalize} from './browser_fft_utils';
+import {getAudioContextConstructor, getAudioMediaStream} from './browser_fft_utils';
 import {FeatureExtractor, RecognizerParams} from './types';
 
 export type SpectrogramCallback = (x: tf.Tensor) => Promise<boolean>;
@@ -77,7 +77,7 @@ export interface BrowserFftFeatureExtractorConfig extends RecognizerParams {
  */
 export class BrowserFftFeatureExtractor implements FeatureExtractor {
   // Number of frames (i.e., columns) per spectrogram used for classification.
-  readonly numFramesPerSpectrogram: number;
+  readonly numFrames: number;
 
   // Audio sampling rate in Hz.
   readonly sampleRateHz: number;
@@ -92,22 +92,16 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
   // consecutive spectrograms and the length of each individual spectrogram.
   readonly overlapFactor: number;
 
-  protected readonly spectrogramCallback: SpectrogramCallback;
+  private readonly spectrogramCallback: SpectrogramCallback;
 
   private stream: MediaStream;
   // tslint:disable-next-line:no-any
   private audioContextConstructor: any;
   private audioContext: AudioContext;
   private analyser: AnalyserNode;
-
   private tracker: Tracker;
-
-  private readonly ROTATING_BUFFER_SIZE_MULTIPLIER = 2;
   private freqData: Float32Array;
-  private rotatingBufferNumFrames: number;
-  private rotatingBuffer: Float32Array;
-
-  private frameCount: number;
+  private freqDataQueue: Float32Array[];
   // tslint:disable-next-line:no-any
   private frameIntervalTask: any;
   private frameDurationMillis: number;
@@ -144,7 +138,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     this.suppressionTimeMillis = config.suppressionTimeMillis;
 
     this.spectrogramCallback = config.spectrogramCallback;
-    this.numFramesPerSpectrogram = config.numFramesPerSpectrogram;
+    this.numFrames = config.numFramesPerSpectrogram;
     this.sampleRateHz = config.sampleRateHz || 44100;
     this.fftSize = config.fftSize || 1024;
     this.frameDurationMillis = this.fftSize / this.sampleRateHz * 1e3;
@@ -165,7 +159,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     this.audioContextConstructor = getAudioContextConstructor();
   }
 
-  async start(samples?: Float32Array): Promise<Float32Array[]|void> {
+  async start(): Promise<Float32Array[]|void> {
     if (this.frameIntervalTask != null) {
       throw new Error(
           'Cannot start already-started BrowserFftFeatureExtractor');
@@ -184,18 +178,11 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     this.analyser.fftSize = this.fftSize * 2;
     this.analyser.smoothingTimeConstant = 0.0;
     streamSource.connect(this.analyser);
-
+    // Reset the queue.
+    this.freqDataQueue = [];
     this.freqData = new Float32Array(this.fftSize);
-    this.rotatingBufferNumFrames =
-        this.numFramesPerSpectrogram * this.ROTATING_BUFFER_SIZE_MULTIPLIER;
-    const rotatingBufferSize =
-        this.columnTruncateLength * this.rotatingBufferNumFrames;
-    this.rotatingBuffer = new Float32Array(rotatingBufferSize);
-
-    this.frameCount = 0;
-
-    const period = Math.max(
-        1, Math.round(this.numFramesPerSpectrogram * (1 - this.overlapFactor)));
+    const period =
+        Math.max(1, Math.round(this.numFrames * (1 - this.overlapFactor)));
     this.tracker = new Tracker(
         period,
         Math.round(this.suppressionTimeMillis / this.frameDurationMillis));
@@ -209,20 +196,16 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
       return;
     }
 
-    const freqDataSlice = this.freqData.slice(0, this.columnTruncateLength);
-    const bufferPos = this.frameCount % this.rotatingBufferNumFrames;
-    this.rotatingBuffer.set(
-        freqDataSlice, bufferPos * this.columnTruncateLength);
-    this.frameCount++;
-
+    this.freqDataQueue.push(this.freqData.slice(0, this.columnTruncateLength));
+    if (this.freqDataQueue.length > this.numFrames) {
+      // Drop the oldest frame (least recent).
+      this.freqDataQueue.shift();
+    }
     const shouldFire = this.tracker.tick();
     if (shouldFire) {
-      const freqData = getFrequencyDataFromRotatingBuffer(
-          this.rotatingBuffer, this.numFramesPerSpectrogram,
-          this.columnTruncateLength,
-          this.frameCount - this.numFramesPerSpectrogram);
+      const freqData = flattenQueue(this.freqDataQueue);
       const inputTensor = getInputTensorFromFrequencyData(
-          freqData, this.numFramesPerSpectrogram, this.columnTruncateLength);
+          freqData, [1, this.numFrames, this.columnTruncateLength, 1]);
       const shouldRest = await this.spectrogramCallback(inputTensor);
       if (shouldRest) {
         this.tracker.suppress();
@@ -240,6 +223,9 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     this.frameIntervalTask = null;
     this.analyser.disconnect();
     this.audioContext.close();
+    if (this.stream != null && this.stream.getTracks().length > 0) {
+      this.stream.getTracks()[0].stop();
+    }
   }
 
   setConfig(params: RecognizerParams) {
@@ -255,39 +241,19 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
   }
 }
 
-export function getFrequencyDataFromRotatingBuffer(
-    rotatingBuffer: Float32Array, numFrames: number, fftLength: number,
-    frameCount: number): Float32Array {
-  const size = numFrames * fftLength;
-  const freqData = new Float32Array(size);
-
-  const rotatingBufferSize = rotatingBuffer.length;
-  const rotatingBufferNumFrames = rotatingBufferSize / fftLength;
-  while (frameCount < 0) {
-    frameCount += rotatingBufferNumFrames;
-  }
-  const indexBegin = (frameCount % rotatingBufferNumFrames) * fftLength;
-  const indexEnd = indexBegin + size;
-
-  for (let i = indexBegin; i < indexEnd; ++i) {
-    freqData[i - indexBegin] = rotatingBuffer[i % rotatingBufferSize];
-  }
+export function flattenQueue(queue: Float32Array[]): Float32Array {
+  const frameSize = queue[0].length;
+  const freqData = new Float32Array(queue.length * frameSize);
+  queue.forEach((data, i) => freqData.set(data, i * frameSize));
   return freqData;
 }
 
 export function getInputTensorFromFrequencyData(
-    freqData: Float32Array, numFrames: number, fftLength: number,
-    toNormalize = true): tf.Tensor {
-  return tf.tidy(() => {
-    const size = freqData.length;
-    const tensorBuffer = tf.buffer([size]);
-    for (let i = 0; i < freqData.length; ++i) {
-      tensorBuffer.set(freqData[i], i);
-    }
-    const output =
-        tensorBuffer.toTensor().reshape([1, numFrames, fftLength, 1]);
-    return toNormalize ? normalize(output) : output;
-  });
+    freqData: Float32Array, shape: number[]): tf.Tensor {
+  const vals = new Float32Array(tf.util.sizeFromShape(shape));
+  // If the data is less than the output shape, the rest is padded with zeros.
+  vals.set(freqData, vals.length - freqData.length);
+  return tf.tensor(vals, shape);
 }
 
 /**
