@@ -16,6 +16,8 @@
  */
 
 import {cpuBlur} from './blur';
+import {PartSegmentation, PersonSegmentation} from './types';
+
 const offScreenCanvases: {[name: string]: HTMLCanvasElement} = {};
 
 type ImageType = HTMLImageElement|HTMLVideoElement;
@@ -71,16 +73,15 @@ function drawBlurredImageToCanvas(
  * Draw an image on a canvas
  */
 export function renderImageToCanvas(
-    image: ImageData, width: number, height: number,
-    canvas: HTMLCanvasElement) {
-  canvas.width = width;
-  canvas.height = height;
+    image: ImageData, canvas: HTMLCanvasElement) {
+  canvas.width = image.width;
+  canvas.height = image.height;
   const ctx = canvas.getContext('2d');
 
   ctx.putImageData(image, 0, 0);
 }
 
-function toMaskImageData(
+export function toMaskImageData(
     mask: Uint8Array, height: number, width: number, invertMask: boolean,
     darknessLevel = 0.7): ImageData {
   const bytes = new Uint8ClampedArray(width * height * 4);
@@ -102,18 +103,20 @@ function toMaskImageData(
 
   return new ImageData(bytes, width, height);
 }
+
 export function drawBodyMaskOnCanvas(
-    image: ImageType, segmentation: Uint8Array, canvas: HTMLCanvasElement,
-    flipHorizontal = true) {
-  const {height, width} = image;
+    image: ImageType, segmentation: PersonSegmentation,
+    canvas: HTMLCanvasElement, flipHorizontal = true) {
+  const {height, width} = segmentation;
 
   const invertMask = true;
 
-  const maskImage = toMaskImageData(segmentation, height, width, invertMask);
+  const maskImage =
+      toMaskImageData(segmentation.data, height, width, invertMask);
 
   const maskCanvas = ensureOffscreenCanvasCreated('mask');
 
-  renderImageToCanvas(maskImage, width, height, maskCanvas);
+  renderImageToCanvas(maskImage, maskCanvas);
 
   canvas.width = width;
   canvas.height = height;
@@ -131,9 +134,10 @@ export function drawBodyMaskOnCanvas(
 }
 
 export function drawBokehEffectOnCanvas(
-    canvas: HTMLCanvasElement, image: ImageType, segmentation: Uint8Array,
-    bokehBlurAmount = 3, flipHorizontal = true) {
-  const {height, width} = image;
+    canvas: HTMLCanvasElement, image: ImageType,
+    segmentation: PersonSegmentation, bokehBlurAmount = 3,
+    flipHorizontal = true) {
+  const {height, width} = segmentation;
   const blurredCanvas = ensureOffscreenCanvasCreated('blur');
 
   drawBlurredImageToCanvas(image, bokehBlurAmount, blurredCanvas);
@@ -141,12 +145,11 @@ export function drawBokehEffectOnCanvas(
   const invertMask = false;
   const darknessLevel = 1.;
 
-  const invertedMaskImage =
-      toMaskImageData(segmentation, height, width, invertMask, darknessLevel);
+  const invertedMaskImage = toMaskImageData(
+      segmentation.data, height, width, invertMask, darknessLevel);
 
   const maskWhatsNotThePersonCanvas = ensureOffscreenCanvasCreated('mask');
-  renderImageToCanvas(
-      invertedMaskImage, width, height, maskWhatsNotThePersonCanvas);
+  renderImageToCanvas(invertedMaskImage, maskWhatsNotThePersonCanvas);
 
   const blurredCtx = blurredCanvas.getContext('2d');
   blurredCtx.save();
@@ -206,18 +209,20 @@ function toColoredPartImage(
 }
 
 export function drawBodySegmentsOnCanvas(
-    canvas: HTMLCanvasElement, input: ImageType, partSegmentation: Int32Array,
+    canvas: HTMLCanvasElement, input: ImageType,
+    partSegmentation: PartSegmentation,
     partColors: Array<[number, number, number]>, coloredPartImageAlpha = 0.7,
     flipHorizontal = true) {
-  const {height, width} = input;
+  const {height, width} = partSegmentation;
   canvas.width = width;
   canvas.height = height;
+  // tslint:disable-next-line:no-debugger
   const coloredPartImage: ImageData = toColoredPartImage(
-      partSegmentation, partColors, width, height, coloredPartImageAlpha);
+      partSegmentation.data, partColors, width, height, coloredPartImageAlpha);
 
   const partImageCanvas = ensureOffscreenCanvasCreated('partImage');
 
-  renderImageToCanvas(coloredPartImage, width, height, partImageCanvas);
+  renderImageToCanvas(coloredPartImage, partImageCanvas);
 
   const ctx = canvas.getContext('2d');
   ctx.save();

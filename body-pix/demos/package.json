@@ -9,7 +9,7 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow-models/body-pix": "0.0.4",
+    "@tensorflow-models/body-pix": "0.0.5",
     "@tensorflow/tfjs": "0.13.3",
     "stats.js": "0.17.0"
   },
