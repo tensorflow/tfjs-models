@@ -182,8 +182,6 @@ export class BrowserFftSpeechCommandRecognizer implements
         `Expected overlapFactor to be >= 0 and < 1, but got ${overlapFactor}`);
 
     const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
-      await this.ensureModelWithEmbeddingOutputCreated();
-
       const normalizedX = normalize(x);
       let y: tf.Tensor;
       let embedding: tf.Tensor;
