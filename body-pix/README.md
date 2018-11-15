@@ -32,7 +32,7 @@ npm install @tensorflow-models/body-pix
 Either a person or part of the body can be segmented in an image.
 Each methodology has similar input parameters with different outputs.
 
-### Loading a pre-trained PersonSegmenation Model
+### Loading a pre-trained BodyPix Model
 
 In the first step of segmentation, an image is fed through a pre-trained model.  BodyPix **comes with a few different versions of the model,** each corresponding to a MobileNet v1 architecture with a specific multiplier. To get started, a model must be loaded from a checkpoint, with the MobileNet architecture specified by the multiplier:
 

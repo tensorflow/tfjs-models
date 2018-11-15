@@ -55,7 +55,7 @@ yarn
 
 Link the local body-pix to the demos:
 ```sh
-yalc link \@tensorflow-models/body-pix
+yalc link @tensorflow-models/body-pix
 ```
 
 Start the dev demo server:
