@@ -19,7 +19,7 @@ import * as tf from '@tensorflow/tfjs';
 
 import {connectedPartIndices} from './keypoints';
 import {OutputStride} from './mobilenet';
-import {Keypoint, Pose, TensorBuffer3D, Vector2D} from './types';
+import {Keypoint, Pose, PosenetInput, TensorBuffer3D, Vector2D} from './types';
 
 function eitherPointDoesntMeetConfidence(
     a: number, b: number, minConfidence: number): boolean {
@@ -81,7 +81,7 @@ export async function toTensorBuffers3D(tensors: tf.Tensor3D[]):
   return Promise.all(tensors.map(tensor => toTensorBuffer(tensor, 'float32')));
 }
 
-export function scalePose(pose: Pose, scaleX: number, scaleY: number): Pose {
+export function scalePose(pose: Pose, scaleY: number, scaleX: number): Pose {
   return {
     score: pose.score,
     keypoints: pose.keypoints.map(
@@ -93,12 +93,11 @@ export function scalePose(pose: Pose, scaleX: number, scaleY: number): Pose {
   };
 }
 
-export function scalePoses(
-    poses: Pose[], scaleY: number, scaleX: number): Pose[] {
+export function scalePoses(poses: Pose[], scaleY: number, scaleX: number) {
   if (scaleX === 1 && scaleY === 1) {
     return poses;
   }
-  return poses.map(pose => scalePose(pose, scaleX, scaleY));
+  return poses.map(pose => scalePose(pose, scaleY, scaleX));
 }
 
 export function getValidResolution(
@@ -107,4 +106,28 @@ export function getValidResolution(
   const evenResolution = inputDimension * imageScaleFactor - 1;
 
   return evenResolution - (evenResolution % outputStride) + 1;
+}
+
+export function getInputTensorDimensions(input: PosenetInput):
+    [number, number] {
+  return input instanceof tf.Tensor ? [input.shape[0], input.shape[1]] :
+                                      [input.height, input.width];
+}
+
+export function toInputTensor(input: PosenetInput) {
+  return input instanceof tf.Tensor ? input : tf.fromPixels(input);
+}
+
+export function toResizedInputTensor(
+    input: PosenetInput, resizeHeight: number, resizeWidth: number,
+    flipHorizontal: boolean): tf.Tensor3D {
+  return tf.tidy(() => {
+    const imageTensor = toInputTensor(input);
+
+    if (flipHorizontal) {
+      return imageTensor.reverse(1).resizeBilinear([resizeHeight, resizeWidth]);
+    } else {
+      return imageTensor.resizeBilinear([resizeHeight, resizeWidth]);
+    }
+  });
 }

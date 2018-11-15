@@ -17,8 +17,8 @@
 
 import * as tf from '@tensorflow/tfjs';
 
-// tslint:disable-next-line:no-any
-export async function loadMetadataJson(url: string): Promise<any> {
+export async function loadMetadataJson(url: string):
+    Promise<{words: string[]}> {
   const HTTP_SCHEME = 'http://';
   const HTTPS_SCHEME = 'https://';
   const FILE_SCHEME = 'file://';
@@ -40,9 +40,8 @@ export async function loadMetadataJson(url: string): Promise<any> {
 
 export function normalize(x: tf.Tensor): tf.Tensor {
   return tf.tidy(() => {
-    const mean = tf.mean(x);
-    const std = tf.sqrt(tf.mean(tf.square(tf.add(x, tf.neg(mean)))));
-    return tf.div(tf.add(x, tf.neg(mean)), std);
+    const {mean, variance} = tf.moments(x);
+    return x.sub(mean).div(variance.sqrt());
   });
 }
 

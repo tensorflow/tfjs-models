@@ -17,63 +17,37 @@
 
 import * as tf from '@tensorflow/tfjs';
 import {describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
-
-// tslint:disable-next-line:max-line-length
-import {BrowserFftFeatureExtractor, getFrequencyDataFromRotatingBuffer, getInputTensorFromFrequencyData} from './browser_fft_extractor';
+import {BrowserFftFeatureExtractor, flattenQueue, getInputTensorFromFrequencyData} from './browser_fft_extractor';
 import * as BrowserFftUtils from './browser_fft_utils';
 import {FakeAudioContext, FakeAudioMediaStream} from './browser_test_utils';
 
 const testEnvs = tf.test_util.NODE_ENVS;
 
-describeWithFlags('getFrequencyDataFromRotatingBuffer', testEnvs, () => {
-  it('getFrequencyDataFromRotatingBuffer', () => {
-    const rotBuffer = new Float32Array([1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6]);
-    const numFrames = 3;
-    const fftLength = 2;
-    expect(
-        getFrequencyDataFromRotatingBuffer(rotBuffer, numFrames, fftLength, 0))
-        .toEqual(new Float32Array([1, 1, 2, 2, 3, 3]));
+describeWithFlags('flattenQueue', testEnvs, () => {
+  it('3 frames, 2 values each', () => {
+    const queue = [[1, 1], [2, 2], [3, 3]].map(x => new Float32Array(x));
+    expect(flattenQueue(queue)).toEqual(new Float32Array([1, 1, 2, 2, 3, 3]));
+  });
 
-    expect(
-        getFrequencyDataFromRotatingBuffer(rotBuffer, numFrames, fftLength, 1))
-        .toEqual(new Float32Array([2, 2, 3, 3, 4, 4]));
-    expect(
-        getFrequencyDataFromRotatingBuffer(rotBuffer, numFrames, fftLength, 3))
-        .toEqual(new Float32Array([4, 4, 5, 5, 6, 6]));
-    expect(
-        getFrequencyDataFromRotatingBuffer(rotBuffer, numFrames, fftLength, 4))
-        .toEqual(new Float32Array([5, 5, 6, 6, 1, 1]));
-    expect(
-        getFrequencyDataFromRotatingBuffer(rotBuffer, numFrames, fftLength, 6))
-        .toEqual(new Float32Array([1, 1, 2, 2, 3, 3]));
+  it('2 frames, 2 values each', () => {
+    const queue = [[1, 1], [2, 2]].map(x => new Float32Array(x));
+    expect(flattenQueue(queue)).toEqual(new Float32Array([1, 1, 2, 2]));
+  });
+
+  it('1 frame, 2 values each', () => {
+    const queue = [[1, 1]].map(x => new Float32Array(x));
+    expect(flattenQueue(queue)).toEqual(new Float32Array([1, 1]));
   });
 });
 
 describeWithFlags('getInputTensorFromFrequencyData', testEnvs, () => {
-  it('Unnormalized', () => {
+  it('6 frames, 2 vals each', () => {
     const freqData = new Float32Array([1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6]);
     const numFrames = 6;
     const fftSize = 2;
     const tensor =
-        getInputTensorFromFrequencyData(freqData, numFrames, fftSize, false);
+        getInputTensorFromFrequencyData(freqData, [1, numFrames, fftSize, 1]);
     tf.test_util.expectArraysClose(tensor, tf.tensor4d(freqData, [1, 6, 2, 1]));
-  });
-
-  it('Normalized', () => {
-    const freqData = new Float32Array([1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6]);
-    const numFrames = 6;
-    const fftSize = 2;
-    const tensor =
-        getInputTensorFromFrequencyData(freqData, numFrames, fftSize);
-    tf.test_util.expectArraysClose(
-        tensor,
-        tf.tensor4d(
-            [
-              -1.4638501, -1.4638501, -0.8783101, -0.8783101, -0.29277,
-              -0.29277, 0.29277, 0.29277, 0.8783101, 0.8783101, 1.4638501,
-              1.4638501
-            ],
-            [1, 6, 2, 1]));
   });
 });
 
@@ -92,13 +66,14 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
       spectrogramCallback: async (x: tf.Tensor) => false,
       numFramesPerSpectrogram: 43,
       columnTruncateLength: 225,
-      suppressionTimeMillis: 1000
+      suppressionTimeMillis: 1000,
+      overlapFactor: 0
     });
 
     expect(extractor.fftSize).toEqual(1024);
-    expect(extractor.numFramesPerSpectrogram).toEqual(43);
+    expect(extractor.numFrames).toEqual(43);
     expect(extractor.columnTruncateLength).toEqual(225);
-    expect(extractor.overlapFactor).toBeCloseTo(0.5);
+    expect(extractor.overlapFactor).toBeCloseTo(0);
   });
 
   it('constructor errors due to null config', () => {
@@ -111,7 +86,8 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
              spectrogramCallback: null,
              numFramesPerSpectrogram: 43,
              columnTruncateLength: 225,
-             suppressionTimeMillis: 1000
+             suppressionTimeMillis: 1000,
+             overlapFactor: 0
            }))
         .toThrowError(/spectrogramCallback cannot be null or undefined/);
   });
@@ -121,22 +97,21 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
              spectrogramCallback: async (x: tf.Tensor) => false,
              numFramesPerSpectrogram: -2,
              columnTruncateLength: 225,
+             overlapFactor: 0,
              suppressionTimeMillis: 1000
            }))
         .toThrowError(/Invalid value in numFramesPerSpectrogram: -2/);
   });
 
-  it('constructor errors due to nengative overlapFactor', () => {
-    expect(
-        () => new BrowserFftFeatureExtractor({
-          spectrogramCallback: async (x: tf.Tensor) => false,
-          numFramesPerSpectrogram: 43,
-          columnTruncateLength: 225,
-          columnBufferLength: 1024,
-          suppressionTimeMillis: 1000,
-          columnHopLength: -512  // Leads to negative overlapFactor and Error.
-        }))
-        .toThrowError(/Invalid overlapFactor/);
+  it('constructor errors due to negative overlapFactor', () => {
+    expect(() => new BrowserFftFeatureExtractor({
+             spectrogramCallback: async (x: tf.Tensor) => false,
+             numFramesPerSpectrogram: 43,
+             columnTruncateLength: 225,
+             overlapFactor: -0.1,
+             suppressionTimeMillis: 1000
+           }))
+        .toThrowError(/Expected overlapFactor/);
   });
 
   it('constructor errors due to columnTruncateLength too large', () => {
@@ -144,7 +119,7 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
              spectrogramCallback: async (x: tf.Tensor) => false,
              numFramesPerSpectrogram: 43,
              columnTruncateLength: 1600,  // > 1024 and leads to Error.
-             columnBufferLength: 1024,
+             overlapFactor: 0,
              suppressionTimeMillis: 1000
            }))
         .toThrowError(/columnTruncateLength .* exceeds fftSize/);
@@ -155,13 +130,13 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
              spectrogramCallback: async (x: tf.Tensor) => false,
              numFramesPerSpectrogram: 43,
              columnTruncateLength: 1600,
-             columnBufferLength: 1024,
+             overlapFactor: 0,
              suppressionTimeMillis: -1000  // <0 and leads to Error.
            }))
         .toThrowError(/Expected suppressionTimeMillis to be >= 0/);
   });
 
-  it('start and stop: overlapFactor = 0', async done => {
+  it('start and stop: overlapFactor = 0', done => {
     setUpFakes();
 
     const spectrogramDurationMillis = 1024 / 44100 * 43 * 1e3;
@@ -189,49 +164,43 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
         }
 
         if (++numCallbacksCompleted >= numCallbacksToComplete) {
-          extractor.stop().then(done);
+          await extractor.stop();
+          done();
         }
         return false;
       },
       numFramesPerSpectrogram: 43,
       columnTruncateLength: 225,
-      columnBufferLength: 1024,
-      columnHopLength: 1024,  // Full hop, zero overlap.
+      overlapFactor: 0,
       suppressionTimeMillis: 0
     });
     extractor.start();
   });
 
-  it('start and stop: correct rotating buffer size', async done => {
+  it('start and stop: correct rotating buffer size', done => {
     setUpFakes();
 
     const numFramesPerSpectrogram = 43;
     const columnTruncateLength = 225;
     const numCallbacksToComplete = 1;
     let numCallbacksCompleted = 0;
-    // tslint:disable:no-any
     const extractor = new BrowserFftFeatureExtractor({
       spectrogramCallback: async (x: tf.Tensor) => {
-        expect((extractor as any).rotatingBuffer.length)
-            .toEqual(
-                numFramesPerSpectrogram * columnTruncateLength *
-                (extractor as any).ROTATING_BUFFER_SIZE_MULTIPLIER);
         if (++numCallbacksCompleted >= numCallbacksToComplete) {
-          extractor.stop().then(done);
+          await extractor.stop();
+          done();
         }
         return false;
       },
       numFramesPerSpectrogram,
       columnTruncateLength,
-      columnBufferLength: 1024,
-      columnHopLength: 1024,
+      overlapFactor: 0,
       suppressionTimeMillis: 0
     });
-    // tslint:enable:no-any
     extractor.start();
   });
 
-  it('start and stop: overlapFactor = 0.5', async done => {
+  it('start and stop: overlapFactor = 0.5', done => {
     setUpFakes();
 
     const numCallbacksToComplete = 5;
@@ -252,23 +221,21 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
         spectrogramTensors.push(tf.clone(x));
 
         if (++numCallbacksCompleted >= numCallbacksToComplete) {
-          extractor.stop().then(done);
+          await extractor.stop();
+          done();
         }
         return false;
       },
       numFramesPerSpectrogram: 43,
       columnTruncateLength: 225,
-      columnBufferLength: 1024,
-      columnHopLength: 512,  // 50% overlapFactor.
+      overlapFactor: 0.5,
       suppressionTimeMillis: 0
     });
     extractor.start();
   });
 
-  it('start and stop: the first frame is captured', async done => {
+  it('start and stop: the first frame is captured', done => {
     setUpFakes();
-
-    let numCallbacksCompleted = 0;
     const extractor = new BrowserFftFeatureExtractor({
       spectrogramCallback: async (x: tf.Tensor) => {
         expect(x.shape).toEqual([1, 43, 225, 1]);
@@ -282,19 +249,19 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
         expect(xData[1]).toBeGreaterThan(xData[0]);
         expect(xData[2]).toBeGreaterThan(xData[1]);
 
-        extractor.stop().then(done);
+        await extractor.stop();
+        done();
         return false;
       },
       numFramesPerSpectrogram: 43,
       columnTruncateLength: 225,
-      columnBufferLength: 1024,
-      columnHopLength: 1024,
+      overlapFactor: 0,
       suppressionTimeMillis: 0
     });
     extractor.start();
   });
 
-  it('start and stop: suppressionTimeMillis = 1000', async done => {
+  it('start and stop: suppressionTimeMillis = 1000', done => {
     setUpFakes();
 
     const numCallbacksToComplete = 2;
@@ -307,14 +274,14 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
           // Due to the suppression time, the time elapsed between the two
           // consecutive callbacks should be longer than it.
           expect(tEnd - tBegin).toBeGreaterThanOrEqual(suppressionTimeMillis);
-          extractor.stop().then(done);
+          await extractor.stop();
+          done();
         }
         return true;  // Returning true causes suppression.
       },
       numFramesPerSpectrogram: 43,
       columnTruncateLength: 225,
-      columnBufferLength: 256,
-      columnHopLength: 64,
+      overlapFactor: 0.25,
       suppressionTimeMillis
     });
     const tBegin = tf.util.now();
@@ -328,8 +295,7 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
       spectrogramCallback: async (x: tf.Tensor) => false,
       numFramesPerSpectrogram: 43,
       columnTruncateLength: 225,
-      columnBufferLength: 1024,
-      columnHopLength: 1024,
+      overlapFactor: 0,
       suppressionTimeMillis: 1000
     });
 
