@@ -49,7 +49,7 @@ let transferRecognizer;
 
   // Make sure the tf.Model is loaded through HTTP. If this is not
   // called here, the tf.Model will be loaded the first time
-  // `startStreaming()` is called.
+  // `listen()` is called.
   recognizer.ensureModelLoaded()
       .then(() => {
         startButton.disabled = false;
@@ -79,7 +79,7 @@ startButton.addEventListener('click', () => {
   populateCandidateWords(activeRecognizer.wordLabels());
 
   activeRecognizer
-      .startStreaming(
+      .listen(
           result => {
             plotPredictions(
                 predictionCanvas, activeRecognizer.wordLabels(), result.scores,
@@ -104,7 +104,7 @@ startButton.addEventListener('click', () => {
 stopButton.addEventListener('click', () => {
   const activeRecognizer =
       transferRecognizer == null ? recognizer : transferRecognizer;
-  activeRecognizer.stopStreaming()
+  activeRecognizer.stopListening()
       .then(() => {
         startButton.disabled = false;
         stopButton.disabled = true;

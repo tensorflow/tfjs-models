@@ -17,7 +17,7 @@
 
 import * as tf from '@tensorflow/tfjs';
 import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
-import {loadMetadataJson} from './browser_fft_utils';
+import {loadMetadataJson, normalize} from './browser_fft_utils';
 import {RecognizeConfig, RecognizerCallback, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
 import {version} from './version';
 
@@ -25,6 +25,11 @@ export const BACKGROUND_NOISE_TAG = '_background_noise_';
 export const UNKNOWN_TAG = '_unknown_';
 
 let streaming = false;
+
+export function getMajorAndMinorVersion(version: string) {
+  const versionItems = version.split('.');
+  return versionItems.slice(0, 2).join('.');
+}
 
 /**
  * Speech-Command Recognizer using browser-native (WebAudio) spectral featutres.
@@ -35,8 +40,8 @@ export class BrowserFftSpeechCommandRecognizer implements
   static readonly DEFAULT_VOCABULARY_NAME = '18w';
 
   readonly MODEL_URL_PREFIX =
-      `https://storage.googleapis.com/tfjs-speech-commands-models/v${
-          version}/browser_fft`;
+      `https://storage.googleapis.com/tfjs-models/tfjs/speech-commands/v${
+          getMajorAndMinorVersion(version)}/browser_fft`;
 
   private readonly SAMPLE_RATE_HZ = 44100;
   private readonly FFT_SIZE = 1024;
@@ -107,7 +112,7 @@ export class BrowserFftSpeechCommandRecognizer implements
   /**
    * Start streaming recognition.
    *
-   * To stop the recognition, use `stopStreaming()`.
+   * To stop the recognition, use `stopListening()`.
    *
    * Example: TODO(cais): Add exapmle code snippet.
    *
@@ -132,7 +137,7 @@ export class BrowserFftSpeechCommandRecognizer implements
    * @throws Error, if streaming recognition is already started or
    *   if `config` contains invalid values.
    */
-  async startStreaming(
+  async listen(
       callback: RecognizerCallback,
       config?: StreamingRecognitionConfig): Promise<void> {
     if (streaming) {
@@ -179,21 +184,22 @@ export class BrowserFftSpeechCommandRecognizer implements
     const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
       await this.ensureModelWithEmbeddingOutputCreated();
 
+      const normalizedX = normalize(x);
       let y: tf.Tensor;
       let embedding: tf.Tensor;
       if (config.includeEmbedding) {
         await this.ensureModelWithEmbeddingOutputCreated();
         [y, embedding] =
-            this.modelWithEmbeddingOutput.predict(x) as tf.Tensor[];
+            this.modelWithEmbeddingOutput.predict(normalizedX) as tf.Tensor[];
       } else {
-        y = this.model.predict(x) as tf.Tensor;
+        y = this.model.predict(normalizedX) as tf.Tensor;
       }
 
       const scores = await y.data() as Float32Array;
       const maxIndexTensor = y.argMax(-1);
       const maxIndex = (await maxIndexTensor.data())[0];
       const maxScore = Math.max(...scores);
-      tf.dispose([y, maxIndexTensor]);
+      tf.dispose([y, maxIndexTensor, normalizedX]);
 
       if (maxScore < probabilityThreshold) {
         return false;
@@ -355,7 +361,7 @@ export class BrowserFftSpeechCommandRecognizer implements
    *
    * @throws Error if there is not ongoing streaming recognition.
    */
-  async stopStreaming(): Promise<void> {
+  async stopListening(): Promise<void> {
     if (!streaming) {
       throw new Error('Cannot stop streaming when streaming is not ongoing.');
     }
@@ -366,7 +372,7 @@ export class BrowserFftSpeechCommandRecognizer implements
   /**
    * Check if streaming recognition is ongoing.
    */
-  isStreaming(): boolean {
+  isListening(): boolean {
     return streaming;
   }
 
@@ -397,7 +403,7 @@ export class BrowserFftSpeechCommandRecognizer implements
     if (this.model == null) {
       throw new Error(
           'Model has not been loaded yet. Load model by calling ' +
-          'ensureModelLoaded(), recognizer(), or startStreaming().');
+          'ensureModelLoaded(), recognize(), or listen().');
     }
     return this.model.inputs[0].shape;
   }
@@ -479,16 +485,28 @@ export class BrowserFftSpeechCommandRecognizer implements
       output.scores = await Promise.all(scorePromises) as Float32Array[];
       tf.dispose(unstacked);
     }
+
+    if (config.includeSpectrogram) {
+      output.spectrogram = {
+        data: (input instanceof tf.Tensor ? await input.data() : input) as
+            Float32Array,
+        frameSize: this.nonBatchInputShape[1],
+      };
+    }
+
     return output;
   }
 
-  protected async recognizeOnline(): Promise<SpectrogramData> {
+  private async recognizeOnline(): Promise<SpectrogramData> {
     return new Promise<SpectrogramData>((resolve, reject) => {
       const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
+        const normalizedX = normalize(x);
+        await this.audioDataExtractor.stop();
         resolve({
-          data: await x.data() as Float32Array,
+          data: await normalizedX.data() as Float32Array,
           frameSize: this.nonBatchInputShape[1],
         });
+        normalizedX.dispose();
         return false;
       };
       this.audioDataExtractor = new BrowserFftFeatureExtractor({
@@ -507,7 +525,7 @@ export class BrowserFftSpeechCommandRecognizer implements
     if (this.model == null) {
       throw new Error(
           'Model has not been loaded yet. Load model by calling ' +
-          'ensureModelLoaded(), recognizer(), or startStreaming().');
+          'ensureModelLoaded(), recognizer(), or listen().');
     }
     tf.util.assert(
         name != null && typeof name === 'string' && name.length > 1,
@@ -598,7 +616,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
             `learning example`);
 
     streaming = true;
-    return new Promise<SpectrogramData>((resolve, reject) => {
+    return new Promise<SpectrogramData>(resolve => {
       const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
         if (this.transferExamples == null) {
           this.transferExamples = {};
@@ -606,7 +624,9 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         if (this.transferExamples[word] == null) {
           this.transferExamples[word] = [];
         }
-        this.transferExamples[word].push(x.clone());
+        const normalizedX = normalize(x);
+        this.transferExamples[word].push(normalizedX.clone());
+        normalizedX.dispose();
         await this.audioDataExtractor.stop();
         streaming = false;
         this.collateTransferWords();
