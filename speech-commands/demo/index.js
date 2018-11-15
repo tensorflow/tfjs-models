@@ -24,7 +24,6 @@ import {hideCandidateWords, logToStatusDisplay, plotPredictions, plotSpectrogram
 const startButton = document.getElementById('start');
 const stopButton = document.getElementById('stop');
 const predictionCanvas = document.getElementById('prediction-canvas');
-const spectrogramCanvas = document.getElementById('spectrogram-canvas');
 
 const probaThresholdInput = document.getElementById('proba-threshold');
 const epochsInput = document.getElementById('epochs');
@@ -87,6 +86,7 @@ startButton.addEventListener('click', () => {
           },
           {
             includeSpectrogram: true,
+            suppressionTimeMillis: 1000,
             probabilityThreshold: Number.parseFloat(probaThresholdInput.value)
           })
       .then(() => {
