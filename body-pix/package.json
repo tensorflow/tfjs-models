@@ -1,7 +1,7 @@
 {
   "name": "@tensorflow-models/body-pix",
-  "version": "0.0.4",
-  "description": "Pretrained BodyPix model in tensorflow.js",
+  "version": "0.0.1",
+  "description": "Pretrained BodyPix model in TensorFlow.js",
   "main": "dist/index.js",
   "jsnext:main": "dist/body-pix.esm.js",
   "module": "dist/body-pix.esm.js",
