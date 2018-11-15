@@ -184,7 +184,7 @@ enterLearnWordsButton.addEventListener('click', () => {
       button.textContent = `${displayWord} (${exampleCounts[word]})`;
       logToStatusDisplay(`Collect one sample of word "${word}"`);
       enableAllCollectWordButtons();
-      if (classNames.length > 1 && minCountByClass >= MIN_EXAPMLES_PER_CLASS) {
+      if (minCountByClass >= MIN_EXAPMLES_PER_CLASS) {
         startTransferLearnButton.textContent = 'Start transfer learning';
         startTransferLearnButton.disabled = false;
       } else {
