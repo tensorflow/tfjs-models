@@ -18,6 +18,7 @@
 import * as tf from '@tensorflow/tfjs';
 import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
 import {loadMetadataJson, normalize} from './browser_fft_utils';
+import {balancedTrainValSplit} from './training_utils';
 import {RecognizeConfig, RecognizerCallback, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
 import {version} from './version';
 
@@ -62,6 +63,10 @@ export class BrowserFftSpeechCommandRecognizer implements
 
   private modelURL: string;
   private metadataURL: string;
+
+  // The second-last dense layer in the base model.
+  // To be used for unfreezing during fine-tuning.
+  protected secondLastBaseDenseLayer: tf.layers.Layer;
 
   /**
    * Constructor of BrowserFftSpeechCommandRecognizer.
@@ -538,7 +543,7 @@ export class BrowserFftSpeechCommandRecognizer implements
     return transfer;
   }
 
-  private freezeModel(): void {
+  protected freezeModel(): void {
     for (const layer of this.model.layers) {
       layer.trainable = false;
     }
@@ -735,7 +740,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
    * @throws Error, if `modelName` is invalid or if not sufficient training
    *   examples have been collected yet.
    */
-  async train(config?: TransferLearnConfig): Promise<tf.History> {
+  async train(config?: TransferLearnConfig):
+      Promise<tf.History|[tf.History, tf.History]> {
     tf.util.assert(
         this.words != null && this.words.length > 0,
         `Cannot train transfer-learning model '${this.name}' because no ` +
@@ -745,6 +751,13 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         `Cannot train transfer-learning model '${this.name}' because only ` +
             `1 word label ('${JSON.stringify(this.words)}') ` +
             `has been collected for transfer learning. Requires at least 2.`);
+    if (config.fineTuningEpochs != null) {
+      tf.util.assert(
+          config.fineTuningEpochs >= 0 &&
+              Number.isInteger(config.fineTuningEpochs),
+          `If specified, fineTuningEpochs must be a non-negative integer, ` +
+              `but received ${config.fineTuningEpochs}`);
+    }
 
     if (config == null) {
       config = {};
@@ -754,30 +767,70 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       this.createTransferModelFromBaseModel();
     }
 
+    // This layer needs to be frozen for the initial phase of the
+    // transfer learning. During subsequent fine-tuning (if any), it will
+    // be unfrozen.
+    this.secondLastBaseDenseLayer.trainable = false;
+
     // Compile model for training.
-    const optimizer = config.optimizer || 'sgd';
-    this.model.compile(
-        {loss: 'categoricalCrossentropy', optimizer, metrics: ['acc']});
+    this.model.compile({
+      loss: 'categoricalCrossentropy',
+      optimizer: config.optimizer || 'sgd',
+      metrics: ['acc']
+    });
 
     // Prepare the data.
     const {xs, ys} = this.collectTransferDataAsTensors();
 
-    const epochs = config.epochs == null ? 20 : config.epochs;
-    const validationSplit =
-        config.validationSplit == null ? 0 : config.validationSplit;
+    let trainXs: tf.Tensor;
+    let trainYs: tf.Tensor;
+    let valData: [tf.Tensor, tf.Tensor];
     try {
-      const history = await this.model.fit(xs, ys, {
-        epochs,
-        validationSplit,
+      if (config.validationSplit != null) {
+        const splits = balancedTrainValSplit(xs, ys, config.validationSplit);
+        trainXs = splits.trainXs;
+        trainYs = splits.trainYs;
+        valData = [splits.valXs, splits.valYs];
+      } else {
+        trainXs = xs;
+        trainYs = ys;
+      }
+
+      const history = await this.model.fit(trainXs, trainYs, {
+        epochs: config.epochs == null ? 20 : config.epochs,
+        validationData: valData,
         batchSize: config.batchSize,
         callbacks: config.callback == null ? null : [config.callback]
       });
-      tf.dispose([xs, ys]);
-      return history;
-    } catch (err) {
-      tf.dispose([xs, ys]);
-      this.model = null;
-      return null;
+
+      if (config.fineTuningEpochs != null && config.fineTuningEpochs > 0) {
+        // Fine tuning: unfreeze the second-last dense layer of the base model.
+        this.secondLastBaseDenseLayer.trainable = true;
+
+        // Recompile model after unfreezing layer.
+        const fineTuningOptimizer: string|tf.Optimizer =
+            config.fineTuningOptimizer == null ? 'sgd' :
+                                                 config.fineTuningOptimizer;
+        this.model.compile({
+          loss: 'categoricalCrossentropy',
+          optimizer: fineTuningOptimizer,
+          metrics: ['acc']
+        });
+
+        const fineTuningHistory = await this.model.fit(trainXs, trainYs, {
+          epochs: config.fineTuningEpochs,
+          validationData: valData,
+          batchSize: config.batchSize,
+          callbacks: config.fineTuningCallback == null ?
+              null :
+              [config.fineTuningCallback]
+        });
+        return [history, fineTuningHistory];
+      } else {
+        return history;
+      }
+    } finally {
+      tf.dispose([xs, ys, trainXs, trainYs, valData]);
     }
   }
 
@@ -805,16 +858,18 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     if (layerIndex < 0) {
       throw new Error('Cannot find a hidden dense layer in the base model.');
     }
-    const beheadedBaseOutput = layers[layerIndex].output as tf.SymbolicTensor;
+    this.secondLastBaseDenseLayer = layers[layerIndex];
+    const decapitatedBaseOutput =
+        this.secondLastBaseDenseLayer.output as tf.SymbolicTensor;
 
     this.transferHead = tf.sequential();
     this.transferHead.add(tf.layers.dense({
       units: this.words.length,
       activation: 'softmax',
-      inputShape: beheadedBaseOutput.shape.slice(1)
+      inputShape: decapitatedBaseOutput.shape.slice(1)
     }));
     const transferOutput =
-        this.transferHead.apply(beheadedBaseOutput) as tf.SymbolicTensor;
+        this.transferHead.apply(decapitatedBaseOutput) as tf.SymbolicTensor;
     this.model =
         tf.model({inputs: this.baseModel.inputs, outputs: transferOutput});
   }
