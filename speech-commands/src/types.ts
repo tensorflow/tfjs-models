@@ -333,7 +333,7 @@ export interface TransferLearnConfig {
    * Number of fine-tuning epochs to run after the initial `epochs` epochs
    * of transfer-learning training.
    *
-   * During the fine-tuning, the last dense layer of the decapitated base
+   * During the fine-tuning, the last dense layer of the truncated base
    * model (i.e., the second-last dense layer of the original model) is
    * unfrozen and updated through backpropagation.
    *

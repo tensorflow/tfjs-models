@@ -859,17 +859,17 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       throw new Error('Cannot find a hidden dense layer in the base model.');
     }
     this.secondLastBaseDenseLayer = layers[layerIndex];
-    const decapitatedBaseOutput =
+    const truncatedBaseOutput =
         this.secondLastBaseDenseLayer.output as tf.SymbolicTensor;
 
     this.transferHead = tf.sequential();
     this.transferHead.add(tf.layers.dense({
       units: this.words.length,
       activation: 'softmax',
-      inputShape: decapitatedBaseOutput.shape.slice(1)
+      inputShape: truncatedBaseOutput.shape.slice(1)
     }));
     const transferOutput =
-        this.transferHead.apply(decapitatedBaseOutput) as tf.SymbolicTensor;
+        this.transferHead.apply(truncatedBaseOutput) as tf.SymbolicTensor;
     this.model =
         tf.model({inputs: this.baseModel.inputs, outputs: transferOutput});
   }
