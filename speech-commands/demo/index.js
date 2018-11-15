@@ -176,18 +176,10 @@ enterLearnWordsButton.addEventListener('click', () => {
           exampleCanvas, spectrogram.data, spectrogram.frameSize,
           spectrogram.frameSize);
       const exampleCounts = transferRecognizer.countExamples();
-      const classNames = Object.keys(exampleCounts);
-      let minCountByClass;
-      if (classNames.length < transferWords.length) {
-        minCountByClass = 0;
-      } else {
-        minCountByClass = Infinity;
-        for (const className of classNames) {
-          if (exampleCounts[className] < minCountByClass) {
-            minCountByClass = exampleCounts[className];
-          }
-        }
-      }
+
+      const minCountByClass =
+          transferWords.map(word => exampleCounts[word] || 0)
+              .reduce((prev, current) => current < prev ? current : prev);
 
       button.textContent = `${displayWord} (${exampleCounts[word]})`;
       logToStatusDisplay(`Collect one sample of word "${word}"`);

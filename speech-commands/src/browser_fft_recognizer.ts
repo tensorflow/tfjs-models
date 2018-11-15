@@ -805,6 +805,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
 
       if (config.fineTuningEpochs != null && config.fineTuningEpochs > 0) {
         // Fine tuning: unfreeze the second-last dense layer of the base model.
+        const originalTrainableValue = this.secondLastBaseDenseLayer.trainable;
         this.secondLastBaseDenseLayer.trainable = true;
 
         // Recompile model after unfreezing layer.
@@ -825,6 +826,10 @@ class TransferBrowserFftSpeechCommandRecognizer extends
               null :
               [config.fineTuningCallback]
         });
+
+        // Set the trainable attribute of the fine-tuning layer to its
+        // previous value.
+        this.secondLastBaseDenseLayer.trainable = originalTrainableValue;
         return [history, fineTuningHistory];
       } else {
         return history;
