@@ -165,7 +165,8 @@ export interface TransferSpeechCommandRecognizer extends
    * @throws Error, if `modelName` is invalid or if not sufficient training
    *   examples have been collected yet.
    */
-  train(config?: TransferLearnConfig): Promise<tf.History>;
+  train(config?: TransferLearnConfig):
+      Promise<tf.History|[tf.History, tf.History]>;
 }
 
 /**
@@ -316,16 +317,54 @@ export interface TransferLearnConfig {
   batchSize?: number;
 
   /**
-   * Validation split to be used during training (default: 0).
+   * Validation split to be used during training.
    *
-   * Must be a number between 0 and 1.
+   * Default: null (no validation split).
+   *
+   * Note that this is split is different from the basic validation-split
+   * paradigm in TensorFlow.js. It makes sure that the distribution of the
+   * classes in the training and validation sets are approximately balanced.
+   *
+   * If specified, must be a number > 0 and < 1.
    */
   validationSplit?: number;
 
   /**
-   * tf.Callback to be used during the training.
+   * Number of fine-tuning epochs to run after the initial `epochs` epochs
+   * of transfer-learning training.
+   *
+   * During the fine-tuning, the last dense layer of the truncated base
+   * model (i.e., the second-last dense layer of the original model) is
+   * unfrozen and updated through backpropagation.
+   *
+   * If specified, must be an integer > 0.
+   */
+  fineTuningEpochs?: number;
+
+  /**
+   * The optimizer for fine-tuning after the initial transfer-learning
+   * training.
+   *
+   * This parameter is used only if `fineTuningEpochs` is specified
+   * and is a positive integre.
+   *
+   * Default: 'sgd'.
+   */
+  fineTuningOptimizer?: string|tf.Optimizer;
+
+  /**
+   * tf.Callback to be used during the initial training (i.e., not
+   * the fine-tuning phase).
    */
   callback?: tf.CustomCallbackConfig;
+
+  /**
+   * tf.Callback to be used durnig the fine-tuning phase.
+   *
+   * This parameter is used only if `fineTuningEpochs` is specified
+   * and is a positive integer.
+   */
+  fineTuningCallback?: tf.CustomCallbackConfig;
 }
 
 /**
