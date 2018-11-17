@@ -14,9 +14,9 @@
     "stats.js": "^0.17.0"
   },
   "scripts": {
-    "watch": "NODE_ENV=development parcel index.html --no-hmr --open ",
-    "build": "NODE_ENV=production parcel build index.html --no-minify --public-url ./",
-    "build-camera": "NODE_ENV=production parcel build camera.html  --no-minify --public-url ./",
+    "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr --open ",
+    "build": "cross-env NODE_ENV=production parcel build index.html --no-minify --public-url ./",
+    "build-camera": "cross-env NODE_ENV=production parcel build camera.html  --no-minify --public-url ./",
     "lint": "eslint ."
   },
   "devDependencies": {
@@ -26,6 +26,7 @@
     "babel-preset-env": "~1.6.1",
     "babel-preset-es2017": "^6.24.1",
     "clang-format": "~1.2.2",
+    "cross-env": "^5.2.0",
     "dat.gui": "^0.7.2",
     "eslint": "^4.19.1",
     "eslint-config-google": "^0.9.1",
