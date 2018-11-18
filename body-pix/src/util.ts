@@ -1,19 +1,19 @@
 import * as tf from '@tensorflow/tfjs';
 
-import {PersonSegmentationInput} from './types';
+import {BodyPixInput} from './types';
 
-export function getInputTensorDimensions(input: PersonSegmentationInput):
+export function getInputTensorDimensions(input: BodyPixInput):
     [number, number] {
   return input instanceof tf.Tensor ? [input.shape[0], input.shape[1]] :
                                       [input.height, input.width];
 }
 
-export function toInputTensor(input: PersonSegmentationInput) {
+export function toInputTensor(input: BodyPixInput) {
   return input instanceof tf.Tensor ? input : tf.fromPixels(input);
 }
 
 export function resizeAndPadTo(
-    input: PersonSegmentationInput, [targetH, targetW]: [number, number],
+    input: BodyPixInput, [targetH, targetW]: [number, number],
     flipHorizontal = false): {
   resizedAndPadded: tf.Tensor3D,
   paddedBy: [[number, number], [number, number]]

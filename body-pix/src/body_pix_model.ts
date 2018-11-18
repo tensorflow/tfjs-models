@@ -22,12 +22,12 @@ import {checkpoints} from './checkpoints';
 import {decodePartSegmentation, toMask} from './decode_part_map';
 import {assertValidOutputStride, MobileNet, MobileNetMultiplier, OutputStride} from './mobilenet';
 import {ModelWeights} from './model_weights';
-import {PersonSegmentationInput} from './types';
+import {BodyPixInput, PartSegmentation, PersonSegmentation} from './types';
 import {getInputTensorDimensions, resizeAndPadTo, scaleAndCropToInputTensorShape} from './util';
 
 const segmentationModelImageDimensions: [number, number] = [353, 257];
 
-export class PersonSegmentation {
+export class BodyPix {
   mobileNet: MobileNet;
 
   constructor(mobileNet: MobileNet) {
@@ -89,14 +89,16 @@ export class PersonSegmentation {
    * to be considered part of the person.  Affects the generation of the
    * segmentation mask.
    *
-   * @return A binary array with 1 for the pixels that are part of the person,
-   * and 0 otherwise. The array size corresponds to the number of pixels in the
-   * image.
+   * @return An object containing a width, height, and a binary array with 1 for
+   * the pixels that are part of the person, and 0 otherwise. The array size
+   * corresponds to the number of pixels in the image.  The width and height
+   * correspond to the dimensions of the image the binary array is shaped to,
+   * which are the same dimensions of the input image.
    */
   async estimatePersonSegmentation(
-      input: PersonSegmentationInput, flipHorizontal = false,
+      input: BodyPixInput, flipHorizontal = false,
       outputStride: OutputStride = 16,
-      segmentationThreshold = 0.5): Promise<Uint8Array> {
+      segmentationThreshold = 0.5): Promise<PersonSegmentation> {
     assertValidOutputStride(outputStride);
 
     const [height, width] = getInputTensorDimensions(input);
@@ -131,7 +133,7 @@ export class PersonSegmentation {
 
     segmentation.dispose();
 
-    return result;
+    return {height, width, data: result};
   }
 
   /**
@@ -158,14 +160,16 @@ export class PersonSegmentation {
    * to be considered part of the person.  Affects the clipping of the colored
    * part image.
    *
-   * @return An array with a part id from 0-24 for the pixels that are part of a
-   * corresponding body part, and -1 otherwise. The array size corresponds to
-   * the number of pixels in the image. See the readme for the body part ids.
+   * @return A object containing a width, height, and an array with a part id
+   * from 0-24 for the pixels that are part of a corresponding body part, and -1
+   * otherwise. The array size corresponds to the number of pixels in the image.
+   * The width and height correspond to the dimensions of the image the array is
+   * shaped to, which are the same dimensions of the input image.
    */
   async estimatePartSegmentation(
-      input: PersonSegmentationInput, flipHorizontal = false,
+      input: BodyPixInput, flipHorizontal = false,
       outputStride: OutputStride = 16,
-      segmentationThreshold = 0.5): Promise<Int32Array> {
+      segmentationThreshold = 0.5): Promise<PartSegmentation> {
     assertValidOutputStride(outputStride);
 
     const [height, width] = getInputTensorDimensions(input);
@@ -204,11 +208,11 @@ export class PersonSegmentation {
       }
     });
 
-    const result = await partSegmentation.data() as Int32Array;
+    const data = await partSegmentation.data() as Int32Array;
 
     partSegmentation.dispose();
 
-    return result;
+    return {height, width, data};
   }
 
   public dispose() {
@@ -217,7 +221,7 @@ export class PersonSegmentation {
 }
 
 /**
- * Loads the PersonSegmentation model instance from a checkpoint, with the
+ * Loads the BodyPix model instance from a checkpoint, with the
  * MobileNet architecture specified by the multiplier.
  *
  * @param multiplier An optional number with values: 1.01, 1.0, 0.75, or
@@ -229,7 +233,7 @@ export class PersonSegmentation {
  *
  */
 export async function load(multiplier: MobileNetMultiplier = 0.75):
-    Promise<PersonSegmentation> {
+    Promise<BodyPix> {
   if (tf == null) {
     throw new Error(
         `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
@@ -250,7 +254,7 @@ export async function load(multiplier: MobileNetMultiplier = 0.75):
 
   const mobileNet = await mobilenetLoader.load(multiplier);
 
-  return new PersonSegmentation(mobileNet);
+  return new BodyPix(mobileNet);
 }
 
 export const mobilenetLoader = {

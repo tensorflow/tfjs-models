@@ -1,4 +1,4 @@
-# person-segmentation Demos
+# body-pix Demos
 
 ## Contents
 
@@ -9,7 +9,7 @@ The demo shows how to estimate segmentation in real-time from a webcam video str
 cd into the demos folder:
 
 ```sh
-cd person-segmentation/demos
+cd body-pix/demos
 ```
 
 Install dependencies and prepare the build directory:
@@ -24,16 +24,16 @@ To watch files for changes, and launch a dev server:
 yarn watch
 ```
 
-## If you are developing person-segmentation locally, and want to test the changes in the demos
+## If you are developing body-pix locally, and want to test the changes in the demos
 
 Install yalc:
 ```sh
 npm i -g yalc
 ```
 
-cd into the person-segmentation folder:
+cd into the body-pix folder:
 ```sh
-cd person-segmentation
+cd body-pix
 ```
 
 Install dependencies:
@@ -41,7 +41,7 @@ Install dependencies:
 yarn
 ```
 
-Publish person-segmentation locally:
+Publish body-pix locally:
 ```sh
 yalc push
 ```
@@ -53,9 +53,9 @@ cd demos
 yarn
 ```
 
-Link the local person-segmentation to the demos:
+Link the local body-pix to the demos:
 ```sh
-yalc link \@tensorflow-models/person-segmentation
+yalc link @tensorflow-models/body-pix
 ```
 
 Start the dev demo server:
@@ -63,9 +63,9 @@ Start the dev demo server:
 yarn watch
 ```
 
-To get future updates from the person-segmentation source code:
+To get future updates from the body-pix source code:
 ```
-# cd up into the person-segmentation directory
+# cd up into the body-pix directory
 cd ../
 yarn build && yalc push
 ```
