@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as personSegmentation from '@tensorflow-models/person-segmentation';
+import * as bodyPix from '@tensorflow-models/body-pix';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 
@@ -208,8 +208,7 @@ function segmentBodyInRealTime(video, net) {
 
       // Load the PoseNet model weights for either the 0.50, 0.75, 1.00, or 1.01
       // version
-      guiState.net =
-          await personSegmentation.load(+guiState.changeToArchitecture);
+      guiState.net = await bodyPix.load(+guiState.changeToArchitecture);
 
       guiState.changeToArchitecture = null;
     }
@@ -229,12 +228,11 @@ function segmentBodyInRealTime(video, net) {
 
         switch (guiState.segmentation.effect) {
           case 'mask':
-            personSegmentation.drawBodyMaskOnCanvas(
-                video, bodySegmentation, canvas);
+            bodyPix.drawBodyMaskOnCanvas(video, bodySegmentation, canvas);
 
             break;
           case 'bokeh':
-            personSegmentation.drawBokehEffectOnCanvas(
+            bodyPix.drawBokehEffectOnCanvas(
                 canvas, video, bodySegmentation,
                 +guiState.segmentation.bokehBlurAmount);
             break;
@@ -245,7 +243,7 @@ function segmentBodyInRealTime(video, net) {
             video, flipHorizontal, outputStride,
             guiState.segmentation.segmentationThreshold);
 
-        personSegmentation.drawBodySegmentsOnCanvas(
+        bodyPix.drawBodySegmentsOnCanvas(
             canvas, video, partSegmentation,
             partColorScales[guiState.partMap.colorScale]);
 
@@ -268,9 +266,8 @@ function segmentBodyInRealTime(video, net) {
  * available camera devices, and setting off the detectPoseInRealTime function.
  */
 export async function bindPage() {
-  // Load the PersonSegmentation model weights with architecture 0.75
-  const net =
-      await personSegmentation.load(+guiState.input.mobileNetArchitecture);
+  // Load the BodyPix model weights with architecture 0.75
+  const net = await bodyPix.load(+guiState.input.mobileNetArchitecture);
 
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'block';

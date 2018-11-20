@@ -39,23 +39,13 @@ function config({plugins = [], output = {}}) {
 }
 
 export default [
+  config({output: {format: 'umd', name: 'bodyPix', file: 'dist/body-pix.js'}}),
   config({
-    output: {
-      format: 'umd',
-      name: 'personSegmentation',
-      file: 'dist/person-segmentation.js'
-    }
+    plugins: [minify()],
+    output: {format: 'umd', name: 'bodyPix', file: 'dist/body-pix.min.js'}
   }),
   config({
     plugins: [minify()],
-    output: {
-      format: 'umd',
-      name: 'personSegmentation',
-      file: 'dist/person-segmentation.min.js'
-    }
-  }),
-  config({
-    plugins: [minify()],
-    output: {format: 'es', file: 'dist/person-segmentation.esm.js'}
+    output: {format: 'es', file: 'dist/body-pix.esm.js'}
   })
 ];

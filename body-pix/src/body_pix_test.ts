@@ -17,10 +17,11 @@
 
 import * as tf from '@tensorflow/tfjs';
 import {describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
-import {load, mobilenetLoader, PersonSegmentation} from './person_segmentation_model';
 
-describeWithFlags('PersonSegmentation', tf.test_util.NODE_ENVS, () => {
-  let net: PersonSegmentation;
+import {BodyPix, load, mobilenetLoader} from './body_pix_model';
+
+describeWithFlags('BodyPix', tf.test_util.NODE_ENVS, () => {
+  let net: BodyPix;
 
   beforeAll((done) => {
     // Mock out the actual load so we don't make network requests in the unit
@@ -40,7 +41,7 @@ describeWithFlags('PersonSegmentation', tf.test_util.NODE_ENVS, () => {
     });
 
     load()
-        .then((model: PersonSegmentation) => {
+        .then((model: BodyPix) => {
           net = model;
         })
         .then(done)

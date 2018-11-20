@@ -144,14 +144,16 @@
     <textarea id="status-display" style="display: none" cols="80" readonly="true"></textarea>
   </div>
   <div class="transfer-learn-section">
-    <input id="learn-words" size="40" value="_background_noise_,hi,awesome,bye">
+    <input id="learn-words" size="40" value="_background_noise_,red,green">
     <button id="enter-learn-words" disabled="true">Enter transfer words</button>
 
     <div id="transfer-learn-history"></div>
     <div id="collect-words"></div>
     <div class="settings">
       <span>Epochs:</span>
-      <input class="settings" size="5" id="epochs" value="40">
+      <input class="settings" size="5" id="epochs" value="100">
+      <span>Fine-tuning (FT) epochs:</span>
+      <input class="settings" size="5" id="fine-tuning-epochs" value="0">
       <button id="start-transfer-learn" disabled="true">Start transfer learning</button>
     </div>
     <div id="plots">
