@@ -188,6 +188,12 @@ export interface SpectrogramData {
   frameSize: number;
 }
 
+export interface RawAudioData {
+  data: Float32Array;
+
+  samplingRateHz: number;
+}
+
 /**
  * Interface for a result emitted by a speech-command recognizer.
  *
@@ -410,4 +416,23 @@ export interface FeatureExtractor {
    * Get the extractor features collected since last call.
    */
   getFeatures(): Float32Array[];
+}
+
+export interface ExampleSpec {
+  label: string;
+  spectrogramNumFrames: number;
+  spectrogramFrameSize: number;
+  rawAudioNumSamples?: number;
+  rawAudioSapmlingRateHz?: number;
+}
+
+export interface Example extends ExampleSpec {
+  label: string;
+  spectrogram: SpectrogramData;
+  rawAudio?: RawAudioData;
+}
+
+export interface SerializedDataset {
+  manifest: ExampleSpec[];
+  data: ArrayBuffer;
 }
