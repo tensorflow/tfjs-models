@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import *  as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs';
 
 import {Example, SerializedDataset} from './types';
 
@@ -38,10 +38,15 @@ export class Dataset {
     }
   }
 
-  addExample(example: Example) {
-
+  addExample(example: Example): string {
+    tf.util.assert(example != null, 'Got null or undefined example');
+    tf.util.assert(
+        example.label != null && example.label.length > 0,
+        `Expected label to be a non-empty string, ` +
+            `but got ${JSON.stringify(example.label)}`);
     const uid = getUID();
     this.examples[uid] = example;
+    return uid;
   }
 
   getExampleCounts(): {[label: string]: number} {
@@ -57,6 +62,18 @@ export class Dataset {
   }
 
   removeExample(uid: string): void {
+    if (!(uid in this.examples)) {
+      throw new Error(`Nonexisting example UID: ${uid}`);
+    }
+    delete this.examples[uid];
+  }
+
+  size(): number {
+    return Object.keys(this.examples).length;
+  }
+
+  empty(): boolean {
+    return this.size() === 0;
   }
 
   getVocabulary(): string[] {

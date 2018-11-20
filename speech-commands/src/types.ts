@@ -426,7 +426,7 @@ export interface ExampleSpec {
   rawAudioSapmlingRateHz?: number;
 }
 
-export interface Example extends ExampleSpec {
+export interface Example {
   label: string;
   spectrogram: SpectrogramData;
   rawAudio?: RawAudioData;
