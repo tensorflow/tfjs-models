@@ -67,7 +67,7 @@ yarn
 
 Link the local posenet to the demos:
 ```sh
-yalc link \@tensorflow-models/posenet
+yalc link @tensorflow-models/posenet
 ```
 
 Start the dev demo server:
