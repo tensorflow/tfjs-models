@@ -19,8 +19,9 @@ import * as tf from '@tensorflow/tfjs';
 import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
 import {loadMetadataJson, normalize} from './browser_fft_utils';
 import {balancedTrainValSplit} from './training_utils';
-import {RecognizeConfig, RecognizerCallback, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
+import {RecognizeConfig, RecognizerCallback, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer, Example} from './types';
 import {version} from './version';
+import { Dataset } from './dataset';
 
 export const BACKGROUND_NOISE_TAG = '_background_noise_';
 export const UNKNOWN_TAG = '_unknown_';
@@ -574,7 +575,8 @@ export class BrowserFftSpeechCommandRecognizer implements
 class TransferBrowserFftSpeechCommandRecognizer extends
     BrowserFftSpeechCommandRecognizer implements
         TransferSpeechCommandRecognizer {
-  private transferExamples: {[word: string]: tf.Tensor[]};
+  // private transferExamples: {[word: string]: tf.Tensor[]};
+  private dataset: Dataset;
   private transferHead: tf.Sequential;
 
   /**
@@ -595,7 +597,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
             `but got ${JSON.stringify(name)}`);
     this.nonBatchInputShape =
         this.baseModel.inputs[0].shape.slice(1) as [number, number, number];
-    this.words = [];
+    this.words = null;
+    this.dataset = new Dataset();
   }
 
   /**
@@ -621,14 +624,14 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     streaming = true;
     return new Promise<SpectrogramData>(resolve => {
       const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
-        if (this.transferExamples == null) {
-          this.transferExamples = {};
-        }
-        if (this.transferExamples[word] == null) {
-          this.transferExamples[word] = [];
-        }
         const normalizedX = normalize(x);
-        this.transferExamples[word].push(normalizedX.clone());
+        this.dataset.addExample({
+          label: word,
+          spectrogram: {
+            data: await normalizedX.data() as Float32Array,
+            frameSize: this.nonBatchInputShape[1],
+          }
+        });
         normalizedX.dispose();
         await this.audioDataExtractor.stop();
         streaming = false;
@@ -656,11 +659,11 @@ class TransferBrowserFftSpeechCommandRecognizer extends
    */
   clearExamples(): void {
     tf.util.assert(
-        this.words != null && this.words.length > 0 &&
-            this.transferExamples != null,
+        this.words != null && this.words.length > 0 && !this.dataset.empty(),
         `No transfer learning examples exist for model name ${this.name}`);
-    tf.dispose(this.transferExamples);
-    this.transferExamples = null;
+    this.dataset.clear();
+    // tf.dispose(this.transferExamples);
+    // this.transferExamples = null;
     this.words = null;
   }
 
@@ -672,16 +675,12 @@ class TransferBrowserFftSpeechCommandRecognizer extends
    *   examples collected for that word so far.
    */
   countExamples(): {[word: string]: number} {
-    if (this.transferExamples == null) {
+    if (this.dataset.empty()) {
       throw new Error(
           `No examples have been collected for transfer-learning model ` +
           `named '${this.name}' yet.`);
     }
-    const counts: {[word: string]: number} = {};
-    for (const word in this.transferExamples) {
-      counts[word] = this.transferExamples[word].length;
-    }
-    return counts;
+    return this.dataset.getExampleCounts();
   }
 
   /**
@@ -690,7 +689,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
    * The words are put in an alphabetically sorted order.
    */
   private collateTransferWords() {
-    this.words = Object.keys(this.transferExamples).sort();
+    this.words = this.dataset.getVocabulary();
   }
 
   /**
@@ -711,8 +710,11 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       const xTensors: tf.Tensor[] = [];
       const targetIndices: number[] = [];
       this.words.forEach((word, i) => {
-        this.transferExamples[word].forEach(wordTensor => {
-          xTensors.push(wordTensor);
+        this.dataset.getExamples(word).forEach(example => {
+          const data = example.spectrogram.data;
+          const frameSize = example.spectrogram.frameSize;
+          const numFrames = data.length / frameSize;
+          xTensors.push(tf.tensor4d(data, [1, numFrames, frameSize, 1]));
           targetIndices.push(i);
         });
       });

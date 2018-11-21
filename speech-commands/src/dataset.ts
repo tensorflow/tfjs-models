@@ -29,10 +29,12 @@ function getUID(): string {
 
 export class Dataset {
   private examples: {[id: string]: Example};
+  private label2Ids: {[label: string]: string[]};
 
   constructor(artifacts?: SerializedDataset) {
     if (artifacts == null) {
       this.examples = {};
+      this.label2Ids = {};
     } else {
       throw new Error('Not implemented yet');
     }
@@ -46,6 +48,10 @@ export class Dataset {
             `but got ${JSON.stringify(example.label)}`);
     const uid = getUID();
     this.examples[uid] = example;
+    if (!(example.label in this.label2Ids)) {
+      this.label2Ids[example.label] = [];
+    }
+    this.label2Ids[example.label].push(uid);
     return uid;
   }
 
@@ -59,6 +65,23 @@ export class Dataset {
       counts[example.label]++;
     }
     return counts;
+  }
+
+  /**
+   * Get all examples of a given label.
+   *
+   * @param label The requested label.
+   * @return All examples of the given `label`.
+   * @throws Error if label is `null` or `undefined`.
+   */
+  getExamples(label: string): Example[] {
+    tf.util.assert(
+       label != null,
+       `Expected label to be a string, but got ${JSON.stringify(label)}`);
+    if (!(label in this.label2Ids)) {
+      throw new Error(`There are no examples of label "${label}"`);
+    }
+    return this.label2Ids[label].map(id => this.examples[id]);
   }
 
   removeExample(uid: string): void {
@@ -76,13 +99,19 @@ export class Dataset {
     return this.size() === 0;
   }
 
+  clear(): void {
+    this.examples = {};
+  }
+
   getVocabulary(): string[] {
     const vocab = new Set<string>();
     for (const uid in this.examples) {
       const example = this.examples[uid];
       vocab.add(example.label);
     }
-    return [...vocab];
+    const sortedVocab = [...vocab];
+    sortedVocab.sort();
+    return sortedVocab;
   }
 
   serialize(): SerializedDataset {

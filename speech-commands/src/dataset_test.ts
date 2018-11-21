@@ -23,7 +23,7 @@ function getRandomExample(label: string): Example {
   const frameSize = 16;
   const spectrogramData = [];
   for (let i = 0; i < numFrames * frameSize; ++i) {
-    spectrogramData.push(Math.random())
+    spectrogramData.push(Math.random());
   }
   return {
     label,

@@ -596,7 +596,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     }
   });
 
-  it('collectTransferLearningExample default transerf model', async () => {
+  it('collectTransferLearningExample default transfer model', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();
