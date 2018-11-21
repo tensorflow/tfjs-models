@@ -24,7 +24,7 @@ import {Example} from './types';
 describe('Dataset', () => {
   const fakeNumFrames = 4;
   const fakeFrameSize = 16;
-  
+
   function getRandomExample(label: string): Example {
     const spectrogramData = [];
     for (let i = 0; i < fakeNumFrames * fakeFrameSize; ++i) {
@@ -32,19 +32,18 @@ describe('Dataset', () => {
     }
     return {
       label,
-      spectrogram: {
-        data: new Float32Array(spectrogramData),
-        frameSize: fakeFrameSize
-      }
+      spectrogram:
+          {data: new Float32Array(spectrogramData), frameSize: fakeFrameSize}
     };
   }
 
-  function addThreeExamplesToDataset(dataset: Dataset): string[] {
-    const ex1 = getRandomExample('a');
+  function addThreeExamplesToDataset(
+      dataset: Dataset, labelA = 'a', labelB = 'b'): string[] {
+    const ex1 = getRandomExample(labelA);
     const uid1 = dataset.addExample(ex1);
-    const ex2 = getRandomExample('a');
+    const ex2 = getRandomExample(labelA);
     const uid2 = dataset.addExample(ex2);
-    const ex3 = getRandomExample('b');
+    const ex3 = getRandomExample(labelB);
     const uid3 = dataset.addExample(ex3);
     return [uid1, uid2, uid3];
   }
@@ -115,7 +114,7 @@ describe('Dataset', () => {
 
   it('getExapmles with nonexistent label fails', () => {
     const dataset = new Dataset();
-    const [uid1, uid2, uid3] = addThreeExamplesToDataset(dataset);
+    addThreeExamplesToDataset(dataset);
     expect(() => dataset.getExamples('labelC'))
         .toThrowError(/No example .*labelC.* exists/);
   });
@@ -185,13 +184,7 @@ describe('Dataset', () => {
 
   it('getSpectrogramsAsTensors with label', () => {
     const dataset = new Dataset();
-
-    const ex1 = getRandomExample('a');
-    dataset.addExample(ex1);
-    const ex2 = getRandomExample('a');
-    dataset.addExample(ex2);
-    const ex3 = getRandomExample('b');
-    dataset.addExample(ex3);
+    addThreeExamplesToDataset(dataset);
 
     const out1 = dataset.getSpectrogramsAsTensors('a');
     expect(out1.xs.shape).toEqual([2, fakeNumFrames, fakeFrameSize, 1]);
@@ -203,13 +196,7 @@ describe('Dataset', () => {
 
   it('getSpectrogramsAsTensors without label', () => {
     const dataset = new Dataset();
-
-    const ex1 = getRandomExample('a');
-    dataset.addExample(ex1);
-    const ex2 = getRandomExample('a');
-    dataset.addExample(ex2);
-    const ex3 = getRandomExample('b');
-    dataset.addExample(ex3);
+    addThreeExamplesToDataset(dataset);
 
     const out = dataset.getSpectrogramsAsTensors();
     expect(out.xs.shape).toEqual([3, fakeNumFrames, fakeFrameSize, 1]);
@@ -218,13 +205,7 @@ describe('Dataset', () => {
 
   it('getSpectrogramsAsTensors on nonexistent label fails', () => {
     const dataset = new Dataset();
-
-    const ex1 = getRandomExample('label1');
-    dataset.addExample(ex1);
-    const ex2 = getRandomExample('label1');
-    dataset.addExample(ex2);
-    const ex3 = getRandomExample('label2');
-    dataset.addExample(ex3);
+    addThreeExamplesToDataset(dataset);
 
     expect(() => dataset.getSpectrogramsAsTensors('label3'))
         .toThrowError(/Label label3 is not in the vocabulary/);
