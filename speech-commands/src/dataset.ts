@@ -17,8 +17,11 @@
 
 import * as tf from '@tensorflow/tfjs';
 
-import {Example, SerializedDataset} from './types';
+import {Example, SerializedExamples} from './types';
 
+/**
+ * Generate a pseudo-random UID.
+ */
 function getUID(): string {
   function s4() {
     return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
@@ -27,19 +30,40 @@ function getUID(): string {
       s4() + s4();
 }
 
+/**
+ * A serializable, mutable set of speech/audio `Example`s;
+ */
 export class Dataset {
   private examples: {[id: string]: Example};
   private label2Ids: {[label: string]: string[]};
 
-  constructor(artifacts?: SerializedDataset) {
+  /**
+   * Constructor of `Dataset`.
+   *
+   * If called with no arguments (i.e., `artifacts` == null), an empty dataset
+   * will be constructed.
+   *
+   * Else, the dataset will be deserialized from `artifacts`.
+   *
+   * @param artifacts Optional serialization artifacts to deserialize.
+   */
+  constructor(artifacts?: SerializedExamples) {
     if (artifacts == null) {
       this.examples = {};
       this.label2Ids = {};
     } else {
-      throw new Error('Not implemented yet');
+      // TODO(cais): Implement deserialization.
+      throw new Error('Deserialization is not implemented yet');
     }
   }
 
+  /**
+   * Add an `Example` to the `Dataset`
+   *
+   * @param example A `Example`, with a label. The label must be a non-empty
+   *   string.
+   * @returns The UID for the added `Example`.
+   */
   addExample(example: Example): string {
     tf.util.assert(example != null, 'Got null or undefined example');
     tf.util.assert(
@@ -55,6 +79,11 @@ export class Dataset {
     return uid;
   }
 
+  /**
+   * Get a map from `Example` label to number of `Example`s with the label.
+   *
+   * @returns A map from label to number of example counts under that label.
+   */
   getExampleCounts(): {[label: string]: number} {
     const counts: {[label: string]: number} = {};
     for (const uid in this.examples) {
@@ -84,6 +113,12 @@ export class Dataset {
     return this.label2Ids[label].map(id => this.examples[id]);
   }
 
+  /**
+   * Remove an example from the `Dataset`.
+   *
+   * @param uid The UID of the example to remove.
+   * @throws Error if the UID doesn't exist in the `Dataset`.
+   */
   removeExample(uid: string): void {
     if (!(uid in this.examples)) {
       throw new Error(`Nonexisting example UID: ${uid}`);
@@ -91,18 +126,39 @@ export class Dataset {
     delete this.examples[uid];
   }
 
+  /**
+   * Get the total number of `Example` currently held by the `Dataset`.
+   *
+   * @returns Total `Example` count.
+   */
   size(): number {
     return Object.keys(this.examples).length;
   }
 
+  /**
+   * Query whether the `Dataset` is currently empty.
+   *
+   * I.e., holds zero examples.
+   *
+   * @returns Whether the `Dataset` is currently empty.
+   */
   empty(): boolean {
     return this.size() === 0;
   }
 
+  /**
+   * Remove all `Example`s from the `Dataset`.
+   */
   clear(): void {
     this.examples = {};
   }
 
+  /**
+   * Get the list of labels among all `Example`s the `Dataset` currently holds.
+   *
+   * @returns A sorted Array of labels, for the unique labels that belong to all
+   *   `Example`s currently held by the `Dataset`.
+   */
   getVocabulary(): string[] {
     const vocab = new Set<string>();
     for (const uid in this.examples) {
@@ -114,7 +170,12 @@ export class Dataset {
     return sortedVocab;
   }
 
-  serialize(): SerializedDataset {
+  /**
+   * Serialize the `Dataset`
+   *
+   * @returns A `SerializedDataset` object amenable to transmission and storage.
+   */
+  serialize(): SerializedExamples {
     return null;
   }
 }

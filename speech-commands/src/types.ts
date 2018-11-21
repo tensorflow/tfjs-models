@@ -418,21 +418,91 @@ export interface FeatureExtractor {
   getFeatures(): Float32Array[];
 }
 
-export interface ExampleSpec {
-  label: string;
-  spectrogramNumFrames: number;
-  spectrogramFrameSize: number;
-  rawAudioNumSamples?: number;
-  rawAudioSapmlingRateHz?: number;
-}
-
+/**
+ * An short, labeled snippet of speech or audio.
+ *
+ * This can be used for training a transfer model based on the base
+ * speech-commands model, among other things.
+ *
+ * A set of `Example`s can make up a dataset.
+ */
 export interface Example {
+  /**
+   * A label for the example.
+   */
   label: string;
+
+  /**
+   * Spectrogram data.
+   */
   spectrogram: SpectrogramData;
+
+  /**
+   * Raw audio in PCM (pulse-code modulation) format.
+   *
+   * Optional.
+   */
   rawAudio?: RawAudioData;
 }
 
-export interface SerializedDataset {
+/**
+ * Specification for an `Example` (see above).
+ *
+ * Used for serialization of `Example`.
+ */
+export interface ExampleSpec {
+  /**
+   * A label for the example.
+   */
+  label: string;
+
+  /**
+   * Number of frames in the spectrogram.
+   */
+  spectrogramNumFrames: number;
+
+  /**
+   * The length of each frame in the spectrogram.
+   */
+  spectrogramFrameSize: number;
+
+  /**
+   * Number of samples in the raw PCM-format audio (if any).
+   */
+  rawAudioNumSamples?: number;
+
+  /**
+   * Sampling rate of the raw audio (if any).
+   */
+  rawAudioSapmlingRateHz?: number;
+}
+
+/**
+ * Serialized Dataset, containing a number `Example`s in their
+ * serialized format.
+ *
+ * This format consists of a plain-old JSON object as the manifest,
+ * along with a flattened binary ArrayBuffer. The format facilitates
+ * storage and transmission.
+ */
+export interface SerializedExamples {
+  /**
+   * Specifications of the serialized `Example`s.
+   */
   manifest: ExampleSpec[];
+
+  /**
+   * Serialized binary data from the `Example`s.
+   *
+   * Including the spectrograms and the raw audio (if any).
+   *
+   * For example, assuming `manifest.length` is `N`, the format of the
+   * `ArrayBuffer` is as follows:
+   *
+   *   [spectrogramData1, rawAudio1 (if any),
+   *    spectrogramData2, rawAudio2 (if any),
+   *    ...
+   *    spectrogramDataN, rawAudioN (if any)]
+   */
   data: ArrayBuffer;
 }
