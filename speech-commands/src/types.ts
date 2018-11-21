@@ -424,7 +424,7 @@ export interface RawAudioData {
   /**
    * Sampling rate, in Hz.
    */
-  samplingRateHz: number;
+  sampleRateHz: number;
 }
 
 /**
@@ -483,7 +483,7 @@ export interface ExampleSpec {
   /**
    * Sampling rate of the raw audio (if any).
    */
-  rawAudioSapmlingRateHz?: number;
+  rawAudioSampleRateHz?: number;
 }
 
 /**

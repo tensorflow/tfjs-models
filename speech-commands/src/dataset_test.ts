@@ -16,10 +16,10 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
+import {expectArraysClose, expectArraysEqual, expectPromiseToFail} from '@tensorflow/tfjs-core/dist/test_util';
 
-import {Dataset} from './dataset';
-import {Example} from './types';
+import {Dataset, deserializeExample, serializeExample} from './dataset';
+import {Example, RawAudioData} from './types';
 
 describe('Dataset', () => {
   const fakeNumFrames = 4;
@@ -146,7 +146,7 @@ describe('Dataset', () => {
     expect(out1[0].example.label).toEqual('a');
     expect(out1[1].uid).toEqual(uid2);
     expect(out1[1].example.label).toEqual('a');
-    
+
     dataset.removeExample(uid1);
     const out2 = dataset.getExamples('a');
     expect(out2.length).toEqual(1);
@@ -167,7 +167,7 @@ describe('Dataset', () => {
     expect(out1[0].example.label).toEqual('a');
     expect(out1[1].uid).toEqual(uid2);
     expect(out1[1].example.label).toEqual('a');
-    
+
     dataset.removeExample(uid1);
     const out2 = dataset.getExamples('a');
     expect(out2.length).toEqual(1);
@@ -302,7 +302,7 @@ describe('Dataset', () => {
     expect(() => dataset.getSpectrogramsAsTensors())
         .toThrowError(/requires .* at least two words/);
   });
-  
+
   it('getSpectrogramsAsTensors without label', () => {
     const dataset = new Dataset();
     addThreeExamplesToDataset(dataset);
@@ -324,5 +324,168 @@ describe('Dataset', () => {
     const dataset = new Dataset();
     expect(() => dataset.getSpectrogramsAsTensors())
         .toThrowError(/Cannot get spectrograms as tensors because.*empty/);
+  });
+});
+
+describe('Dataset serialization', () => {
+  function getRandomExample(
+      label: string, numFrames: number, frameSize: number,
+      rawAudioNumSamples?: number, rawAudioSampleRateHz?: number): Example {
+    const spectrogramData = [];
+    for (let i = 0; i < numFrames * frameSize; ++i) {
+      spectrogramData.push(Math.random());
+    }
+    const output: Example = {
+      label,
+      spectrogram: {data: new Float32Array(spectrogramData), frameSize}
+    };
+    if (rawAudioNumSamples != null) {
+      const rawAudioData: number[] = [];
+      for (let i = 0; i < rawAudioNumSamples; ++i) {
+        rawAudioData.push(Math.random());
+      }
+      const rawAudio: RawAudioData = {
+        data: new Float32Array(rawAudioData),
+        sampleRateHz: rawAudioSampleRateHz
+      };
+      output.rawAudio = rawAudio;
+    }
+    return output;
+  }
+
+  it('serializeExample-deserializeExapmle round trip, no raw audio', () => {
+    const label = 'foo';
+    const numFrames = 10;
+    const frameSize = 16;
+    const ex = getRandomExample(label, numFrames, frameSize);
+    const artifacts = serializeExample(ex);
+    expect(artifacts.spec.label).toEqual(label);
+    expect(artifacts.spec.spectrogramNumFrames).toEqual(numFrames);
+    expect(artifacts.spec.spectrogramFrameSize).toEqual(frameSize);
+    expect(artifacts.spec.rawAudioNumSamples).toBeUndefined();
+    expect(artifacts.spec.rawAudioSampleRateHz).toBeUndefined();
+    expect(artifacts.data.byteLength).toEqual(4 * numFrames * frameSize);
+
+    const exPrime = deserializeExample(artifacts);
+    expect(exPrime.label).toEqual(ex.label);
+    expect(exPrime.spectrogram.frameSize).toEqual(ex.spectrogram.frameSize);
+    expectArraysEqual(exPrime.spectrogram.data, ex.spectrogram.data);
+  });
+
+  it('serializeExample-deserializeExapmle round trip, with raw audio', () => {
+    const label = 'foo';
+    const numFrames = 10;
+    const frameSize = 16;
+    const rawAudioNumSamples = 200;
+    const rawAudioSampleRateHz = 48000;
+    const ex = getRandomExample(
+        label, numFrames, frameSize, rawAudioNumSamples, rawAudioSampleRateHz);
+    const artifacts = serializeExample(ex);
+    expect(artifacts.spec.label).toEqual(label);
+    expect(artifacts.spec.spectrogramNumFrames).toEqual(numFrames);
+    expect(artifacts.spec.spectrogramFrameSize).toEqual(frameSize);
+    expect(artifacts.spec.rawAudioNumSamples).toEqual(rawAudioNumSamples);
+    expect(artifacts.spec.rawAudioSampleRateHz).toEqual(rawAudioSampleRateHz);
+    expect(artifacts.data.byteLength)
+        .toEqual(4 * (numFrames * frameSize + rawAudioNumSamples));
+
+    const exPrime = deserializeExample(artifacts);
+    expect(exPrime.label).toEqual(ex.label);
+    expect(exPrime.spectrogram.frameSize).toEqual(ex.spectrogram.frameSize);
+    expect(exPrime.rawAudio.sampleRateHz).toEqual(ex.rawAudio.sampleRateHz);
+    expectArraysEqual(exPrime.spectrogram.data, ex.spectrogram.data);
+    expectArraysEqual(exPrime.rawAudio.data, ex.rawAudio.data);
+  });
+
+  it('Dataset.serialize()', () => {
+    const dataset = new Dataset();
+    const ex1 = getRandomExample('foo', 10, 16);
+    const ex2 = getRandomExample('bar', 12, 16);
+    const ex3 = getRandomExample('qux', 14, 16);
+    const ex4 = getRandomExample('foo', 13, 16);
+    dataset.addExample(ex1);
+    dataset.addExample(ex2);
+    dataset.addExample(ex3);
+    dataset.addExample(ex4);
+    const {manifest, data} = dataset.serialize();
+    expect(manifest).toEqual([
+      {label: 'bar', spectrogramNumFrames: 12, spectrogramFrameSize: 16},
+      {label: 'foo', spectrogramNumFrames: 10, spectrogramFrameSize: 16},
+      {label: 'foo', spectrogramNumFrames: 13, spectrogramFrameSize: 16},
+      {label: 'qux', spectrogramNumFrames: 14, spectrogramFrameSize: 16}
+    ]);
+    expect(data.byteLength).toEqual(4 * (10 + 12 + 14 + 13) * 16);
+  });
+
+  it('Dataset serialize-deserialize round trip', () => {
+    const dataset = new Dataset();
+    const ex1 = getRandomExample('foo', 10, 16);
+    const ex2 = getRandomExample('bar', 10, 16);
+    const ex3 = getRandomExample('qux', 10, 16);
+    const ex4 = getRandomExample('foo', 10, 16);
+    dataset.addExample(ex1);
+    dataset.addExample(ex2);
+    dataset.addExample(ex3);
+    dataset.addExample(ex4);
+
+    const artifacts = dataset.serialize();
+    const datasetPrime = new Dataset(artifacts);
+
+    expect(datasetPrime.empty()).toEqual(false);
+    expect(datasetPrime.size()).toEqual(4);
+    expect(datasetPrime.getVocabulary()).toEqual(['bar', 'foo', 'qux']);
+    expect(dataset.getExampleCounts()).toEqual({'bar': 1, 'foo': 2, 'qux': 1});
+
+    expect(dataset.getExamples('bar').length).toEqual(1);
+    expect(dataset.getExamples('foo').length).toEqual(2);
+    expect(dataset.getExamples('qux').length).toEqual(1);
+
+    const ex1Prime = datasetPrime.getExamples('foo')[0].example;
+    expect(ex1Prime.label).toEqual('foo');
+    expect(ex1Prime.spectrogram.frameSize).toEqual(16);
+    expectArraysEqual(ex1Prime.spectrogram.data, ex1.spectrogram.data);
+
+    const ex2Prime = datasetPrime.getExamples('bar')[0].example;
+    expect(ex2Prime.label).toEqual('bar');
+    expect(ex2Prime.spectrogram.frameSize).toEqual(16);
+    expectArraysEqual(ex2Prime.spectrogram.data, ex2.spectrogram.data);
+
+    const ex3Prime = datasetPrime.getExamples('qux')[0].example;
+    expect(ex3Prime.label).toEqual('qux');
+    expect(ex3Prime.spectrogram.frameSize).toEqual(16);
+    expectArraysEqual(ex3Prime.spectrogram.data, ex3.spectrogram.data);
+
+    const ex4Prime = datasetPrime.getExamples('foo')[1].example;
+    expect(ex4Prime.label).toEqual('foo');
+    expect(ex4Prime.spectrogram.frameSize).toEqual(16);
+    expectArraysEqual(ex4Prime.spectrogram.data, ex4.spectrogram.data);
+
+    const {xs, ys} = datasetPrime.getSpectrogramsAsTensors();
+    expect(xs.shape).toEqual([4, 10, 16, 1]);
+    expectArraysClose(
+        ys, tf.tensor2d([[1, 0, 0], [0, 1, 0], [0, 1, 0], [0, 0, 1]]));
+  });
+
+  it('Deserialized dataset supports removeExample', () => {
+    const dataset = new Dataset();
+    const ex1 = getRandomExample('foo', 10, 16);
+    const ex2 = getRandomExample('bar', 10, 16);
+    const ex3 = getRandomExample('qux', 10, 16);
+    const ex4 = getRandomExample('foo', 10, 16);
+    dataset.addExample(ex1);
+    dataset.addExample(ex2);
+    dataset.addExample(ex3);
+    dataset.addExample(ex4);
+
+    const artifacts = dataset.serialize();
+    const datasetPrime = new Dataset(artifacts);
+
+    const examples = datasetPrime.getExamples('foo');
+    datasetPrime.removeExample(examples[0].uid);
+
+    const {xs, ys} = datasetPrime.getSpectrogramsAsTensors();
+    expect(xs.shape).toEqual([3, 10, 16, 1]);
+    expectArraysClose(
+        ys, tf.tensor2d([[1, 0, 0], [0, 1, 0], [0, 0, 1]]));
   });
 });
