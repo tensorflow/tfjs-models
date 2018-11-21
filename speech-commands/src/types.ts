@@ -412,7 +412,6 @@ export interface FeatureExtractor {
   getFeatures(): Float32Array[];
 }
 
-
 /** 
  * Snippet of pulse-code modulation (PCM) audio data.
  */

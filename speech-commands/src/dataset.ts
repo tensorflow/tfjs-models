@@ -97,22 +97,24 @@ export class Dataset {
   }
 
   /**
-   * Get all examples of a given label.
+   * Get all examples of a given label, with their UIDs.
    *
    * @param label The requested label.
-   * @return All examples of the given `label`.
+   * @return All examples of the given `label`, along with their UIDs.
+   *   The examples are sorted in the order in which they are added to the
+   *   `Dataset`.
    * @throws Error if label is `null` or `undefined`.
    */
-  getExamples(label: string): {[uid: string]: Example} {
+  getExamples(label: string): Array<{uid: string, example: Example}> {
     tf.util.assert(
         label != null,
         `Expected label to be a string, but got ${JSON.stringify(label)}`);
     tf.util.assert(
         label in this.label2Ids,
         `No example of label "${label}" exists in dataset`);
-    const output: {[uid: string]: Example} = {};
+    const output: Array<{uid: string, example: Example}> = [];
     this.label2Ids[label].forEach(id => {
-      output[id] = this.examples[id];
+      output.push({uid: id, example: this.examples[id]});
     });
     return output;
   }
@@ -149,12 +151,19 @@ export class Dataset {
         `Cannot get spectrograms as tensors because the dataset is empty`);
     const vocab = this.getVocabulary();
     if (label != null) {
-      if (vocab.indexOf(label) === -1) {
-        throw new Error(`Label ${label} is not in the vocabulary (${
-            JSON.stringify(vocab)})`);
-      }
+      tf.util.assert(
+          vocab.indexOf(label) !== -1,
+          `Label ${label} is not in the vocabulary ` +
+          `(${JSON.stringify(vocab)})`);
+    } else {
+      // If all words are requested, there must be at least two words in the
+      // vocabulary to make one-hot encoding possible.
+      tf.util.assert(
+          vocab.length > 1,
+          `One-hot encoding of labels requires the vocabulary to have ` +
+          `at least two words, but it has only ${vocab.length } word.`);
     }
-
+ 
     return tf.tidy(() => {
       const xTensors: tf.Tensor3D[] = [];
       const labelIndices: number[] = [];
@@ -212,7 +221,13 @@ export class Dataset {
     if (!(uid in this.examples)) {
       throw new Error(`Nonexistent example UID: ${uid}`);
     }
+    const label = this.examples[uid].label;
     delete this.examples[uid];
+    const index = this.label2Ids[label].indexOf(uid);
+    this.label2Ids[label].splice(index, 1);
+    if (this.label2Ids[label].length === 0) {
+      delete this.label2Ids[label];
+    }
   }
 
   /**
