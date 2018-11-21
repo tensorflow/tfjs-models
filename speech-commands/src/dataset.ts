@@ -103,14 +103,100 @@ export class Dataset {
    * @return All examples of the given `label`.
    * @throws Error if label is `null` or `undefined`.
    */
+  // TODO(cais): Change to map from UUID to example. DO NOT SUBMIT.
   getExamples(label: string): Example[] {
     tf.util.assert(
-       label != null,
-       `Expected label to be a string, but got ${JSON.stringify(label)}`);
+        label != null,
+        `Expected label to be a string, but got ${JSON.stringify(label)}`);
     if (!(label in this.label2Ids)) {
       throw new Error(`There are no examples of label "${label}"`);
     }
     return this.label2Ids[label].map(id => this.examples[id]);
+  }
+
+  /**
+   * Get all examples and labels as tensors.
+   *
+   * - If `label` is provided and exists in the vocabulary of the `Dataset`,
+   *   the spectrograms of all `Exapmle`s under the `label` will be returned
+   *   as a 4D `tf.Tensor` as `xs`. The shape of the `tf.Tensor` will be
+   *     `[numExamples, numFrames, frameSize, 1]`
+   *   where
+   *     - `numExamples` is the number of `Example`s with the label
+   *     - `numFrames` is the number of frames in each spectrogram
+   *     - `frameSize` is the size of each spectrogram frame.
+   *   No label Tensor will be returned.
+   * - If `label` is provided, all `Example`s will be returned as `xs`.
+   *   In addition, `ys` will contain a one-hot encoded list of labels.
+   *   - The shape of `xs` will be: `[numExamples, numFrames, frameSize, 1]`
+   *   - The shape of `ys` will be: `[numExamples, vocabularySize]`.
+   *
+   * @returns `xs` and `ys` tensors. See description above.
+   * @throws Error
+   *   - if not all the involved spectrograms have matching `numFrames` and
+   *     `frameSize`, or
+   *   - if `label` is provided and is not present in the vocabulary of the
+   *     `Dataset`, or
+   *   - if the `Dataset` is currently empty.
+   */
+  getSpectrogramsAsTensors(label?: string):
+      {xs: tf.Tensor4D, ys?: tf.Tensor2D} {
+    tf.util.assert(
+        this.size() > 0,
+        `Cannot get spectrograms as tensors because the dataset is empty`);
+    const vocab = this.getVocabulary();
+    if (label != null) {
+      if (vocab.indexOf(label) === -1) {
+        throw new Error(`Label ${label} is not in the vocabulary (${
+            JSON.stringify(vocab)})`);
+      }
+    }
+
+    return tf.tidy(() => {
+      const xTensors: tf.Tensor3D[] = [];
+      const labelIndices: number[] = [];
+      let uniqueNumFrames: number;
+      let uniqueFrameSize: number;
+      for (let i = 0; i < vocab.length; ++i) {
+        const currentLabel = vocab[i];
+        if (label != null && label !== currentLabel) {
+          continue;
+        }
+        const ids = this.label2Ids[currentLabel];
+        for (const id of ids) {
+          const spectrogram = this.examples[id].spectrogram;
+          const frameSize = spectrogram.frameSize;
+          const numFrames = spectrogram.data.length / frameSize;
+          if (uniqueNumFrames == null) {
+            uniqueNumFrames = numFrames;
+          } else {
+            tf.util.assert(
+                numFrames === uniqueNumFrames,
+                `Mismatch in numFrames (${numFrames} vs ${uniqueNumFrames})`);
+          }
+          if (uniqueFrameSize == null) {
+            uniqueFrameSize = frameSize;
+          } else {
+            tf.util.assert(
+                frameSize === uniqueFrameSize,
+                `Mismatch in frameSize  ` +
+                    `(${frameSize} vs ${uniqueFrameSize})`);
+          }
+          xTensors.push(
+              tf.tensor3d(spectrogram.data, [numFrames, frameSize, 1]));
+          if (label == null) {
+            labelIndices.push(i);
+          }
+        }
+      }
+      return {
+        xs: tf.stack(xTensors) as tf.Tensor4D,
+        ys: label == null ?
+            tf.oneHot(tf.tensor1d(labelIndices, 'int32'), vocab.length)
+                .asType('float32') :
+            undefined
+      };
+    });
   }
 
   /**
@@ -121,7 +207,7 @@ export class Dataset {
    */
   removeExample(uid: string): void {
     if (!(uid in this.examples)) {
-      throw new Error(`Nonexisting example UID: ${uid}`);
+      throw new Error(`Nonexistent example UID: ${uid}`);
     }
     delete this.examples[uid];
   }

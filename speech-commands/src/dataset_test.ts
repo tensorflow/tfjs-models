@@ -15,23 +15,30 @@
  * =============================================================================
  */
 
+import * as tf from '@tensorflow/tfjs';
+import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
+
 import {Dataset} from './dataset';
 import {Example} from './types';
 
-function getRandomExample(label: string): Example {
-  const numFrames = 4;
-  const frameSize = 16;
-  const spectrogramData = [];
-  for (let i = 0; i < numFrames * frameSize; ++i) {
-    spectrogramData.push(Math.random());
-  }
-  return {
-    label,
-    spectrogram: {data: new Float32Array(spectrogramData), frameSize}
-  };
-}
-
 describe('Dataset', () => {
+  const fakeNumFrames = 4;
+  const fakeFrameSize = 16;
+  
+  function getRandomExample(label: string): Example {
+    const spectrogramData = [];
+    for (let i = 0; i < fakeNumFrames * fakeFrameSize; ++i) {
+      spectrogramData.push(Math.random());
+    }
+    return {
+      label,
+      spectrogram: {
+        data: new Float32Array(spectrogramData),
+        frameSize: fakeFrameSize
+      }
+    };
+  }
+
   it('Constructor', () => {
     const dataset = new Dataset();
     expect(dataset.empty()).toEqual(true);
@@ -121,6 +128,16 @@ describe('Dataset', () => {
     expect(dataset.getExampleCounts()).toEqual({});
   });
 
+  it('removeExample with nonexistent UID fails', () => {
+    const dataset = new Dataset();
+
+    const ex1 = getRandomExample('a');
+    const uid1 = dataset.addExample(ex1);
+    dataset.removeExample(uid1);
+    expect(() => dataset.removeExample(uid1))
+        .toThrowError(/Nonexistent example UID/);
+  });
+
   it('getVocabulary', () => {
     const dataset = new Dataset();
     expect(dataset.getVocabulary()).toEqual([]);
@@ -135,5 +152,58 @@ describe('Dataset', () => {
     expect(dataset.getVocabulary()).toEqual(['a']);
     dataset.addExample(ex3);
     expect(dataset.getVocabulary()).toEqual(['a', 'b']);
+  });
+
+  it('getSpectrogramsAsTensors with label', () => {
+    const dataset = new Dataset();
+
+    const ex1 = getRandomExample('a');
+    dataset.addExample(ex1);
+    const ex2 = getRandomExample('a');
+    dataset.addExample(ex2);
+    const ex3 = getRandomExample('b');
+    dataset.addExample(ex3);
+
+    const out1 = dataset.getSpectrogramsAsTensors('a');
+    expect(out1.xs.shape).toEqual([2, fakeNumFrames, fakeFrameSize, 1]);
+    expect(out1.ys).toBeUndefined();
+    const out2 = dataset.getSpectrogramsAsTensors('b');
+    expect(out2.xs.shape).toEqual([1, fakeNumFrames, fakeFrameSize, 1]);
+    expect(out2.ys).toBeUndefined();
+  });
+
+  it('getSpectrogramsAsTensors without label', () => {
+    const dataset = new Dataset();
+
+    const ex1 = getRandomExample('a');
+    dataset.addExample(ex1);
+    const ex2 = getRandomExample('a');
+    dataset.addExample(ex2);
+    const ex3 = getRandomExample('b');
+    dataset.addExample(ex3);
+
+    const out = dataset.getSpectrogramsAsTensors();
+    expect(out.xs.shape).toEqual([3, fakeNumFrames, fakeFrameSize, 1]);
+    expectArraysClose(out.ys, tf.tensor2d([[1, 0], [1, 0], [0, 1]]))
+  });
+
+  it('getSpectrogramsAsTensors on nonexistent label fails', () => {
+    const dataset = new Dataset();
+
+    const ex1 = getRandomExample('label1');
+    dataset.addExample(ex1);
+    const ex2 = getRandomExample('label1');
+    dataset.addExample(ex2);
+    const ex3 = getRandomExample('label2');
+    dataset.addExample(ex3);
+
+    expect(() => dataset.getSpectrogramsAsTensors('label3'))
+        .toThrowError(/Label label3 is not in the vocabulary/);
+  });
+
+  it('getSpectrogramsAsTensors on empty Dataset fails', () => {
+    const dataset = new Dataset();
+    expect(() => dataset.getSpectrogramsAsTensors())
+        .toThrowError(/Cannot get spectrograms as tensors because.*empty/);
   });
 });

@@ -575,7 +575,6 @@ export class BrowserFftSpeechCommandRecognizer implements
 class TransferBrowserFftSpeechCommandRecognizer extends
     BrowserFftSpeechCommandRecognizer implements
         TransferSpeechCommandRecognizer {
-  // private transferExamples: {[word: string]: tf.Tensor[]};
   private dataset: Dataset;
   private transferHead: tf.Sequential;
 
@@ -662,8 +661,6 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         this.words != null && this.words.length > 0 && !this.dataset.empty(),
         `No transfer learning examples exist for model name ${this.name}`);
     this.dataset.clear();
-    // tf.dispose(this.transferExamples);
-    // this.transferExamples = null;
     this.words = null;
   }
 
@@ -702,28 +699,11 @@ class TransferBrowserFftSpeechCommandRecognizer extends
    */
   private collectTransferDataAsTensors(modelName?: string):
       {xs: tf.Tensor, ys: tf.Tensor} {
-    tf.util.assert(
-        this.words != null && this.words.length > 0,
-        `No word example is available for tranfer-learning model of name ` +
-            modelName);
-    return tf.tidy(() => {
-      const xTensors: tf.Tensor[] = [];
-      const targetIndices: number[] = [];
-      this.words.forEach((word, i) => {
-        this.dataset.getExamples(word).forEach(example => {
-          const data = example.spectrogram.data;
-          const frameSize = example.spectrogram.frameSize;
-          const numFrames = data.length / frameSize;
-          xTensors.push(tf.tensor4d(data, [1, numFrames, frameSize, 1]));
-          targetIndices.push(i);
-        });
-      });
-      return {
-        xs: tf.concat(xTensors, 0),
-        ys: tf.oneHot(
-            tf.tensor1d(targetIndices, 'int32'), Object.keys(this.words).length)
-      };
-    });
+    const out =  this.dataset.getSpectrogramsAsTensors();
+    return {
+      xs: out.xs,
+      ys: out.ys as tf.Tensor
+    };
   }
 
   /**
