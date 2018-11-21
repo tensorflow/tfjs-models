@@ -16,7 +16,7 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import {expectArraysClose, expectArraysEqual, expectPromiseToFail} from '@tensorflow/tfjs-core/dist/test_util';
+import {expectArraysClose, expectArraysEqual} from '@tensorflow/tfjs-core/dist/test_util';
 
 import {Dataset, deserializeExample, serializeExample} from './dataset';
 import {Example, RawAudioData} from './types';
