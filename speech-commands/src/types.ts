@@ -188,12 +188,6 @@ export interface SpectrogramData {
   frameSize: number;
 }
 
-export interface RawAudioData {
-  data: Float32Array;
-
-  samplingRateHz: number;
-}
-
 /**
  * Interface for a result emitted by a speech-command recognizer.
  *
@@ -416,6 +410,22 @@ export interface FeatureExtractor {
    * Get the extractor features collected since last call.
    */
   getFeatures(): Float32Array[];
+}
+
+
+/** 
+ * Snippet of pulse-code modulation (PCM) audio data.
+ */
+export interface RawAudioData {
+  /**
+   * Samples of the snippet.
+   */
+  data: Float32Array;
+
+  /**
+   * Sampling rate, in Hz.
+   */
+  samplingRateHz: number;
 }
 
 /**

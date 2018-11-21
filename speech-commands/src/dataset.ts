@@ -265,6 +265,7 @@ export class Dataset {
    * @returns A `SerializedDataset` object amenable to transmission and storage.
    */
   serialize(): SerializedExamples {
+    // TOOD(cais): Implement serialization.
     throw new Error('Dataset.serialize() is not implemented yet.');
   }
 }
