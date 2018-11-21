@@ -200,7 +200,7 @@ describe('Dataset', () => {
 
     const out = dataset.getSpectrogramsAsTensors();
     expect(out.xs.shape).toEqual([3, fakeNumFrames, fakeFrameSize, 1]);
-    expectArraysClose(out.ys, tf.tensor2d([[1, 0], [1, 0], [0, 1]]))
+    expectArraysClose(out.ys, tf.tensor2d([[1, 0], [1, 0], [0, 1]]));
   });
 
   it('getSpectrogramsAsTensors on nonexistent label fails', () => {
