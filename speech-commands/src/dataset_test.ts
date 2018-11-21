@@ -18,7 +18,7 @@
 import {Dataset} from './dataset';
 import {Example} from './types';
 
-function generateRandomExample(label: string): Example {
+function getRandomExample(label: string): Example {
   const numFrames = 4;
   const frameSize = 16;
   const spectrogramData = [];
@@ -31,7 +31,7 @@ function generateRandomExample(label: string): Example {
   };
 }
 
-fdescribe('Dataset', () => {
+describe('Dataset', () => {
   it('Constructor', () => {
     const dataset = new Dataset();
     expect(dataset.empty()).toEqual(true);
@@ -42,7 +42,7 @@ fdescribe('Dataset', () => {
     const dataset = new Dataset();
 
     const uids: string[] = [];
-    const ex1 = generateRandomExample('a');
+    const ex1 = getRandomExample('a');
     const uid1 = dataset.addExample(ex1);
     expect(uid1.length).toBeGreaterThan(0);
     uids.push(uid1);
@@ -51,7 +51,7 @@ fdescribe('Dataset', () => {
     expect(dataset.size()).toEqual(1);
     expect(dataset.getExampleCounts()).toEqual({'a': 1});
 
-    const ex2 = generateRandomExample('a');
+    const ex2 = getRandomExample('a');
     const uid2 = dataset.addExample(ex2);
     expect(uids.indexOf(uid2)).toEqual(-1);
     uids.push(uid2);
@@ -59,7 +59,7 @@ fdescribe('Dataset', () => {
     expect(dataset.size()).toEqual(2);
     expect(dataset.getExampleCounts()).toEqual({'a': 2});
 
-    const ex3 = generateRandomExample('b');
+    const ex3 = getRandomExample('b');
     const uid3 = dataset.addExample(ex3);
     expect(uids.indexOf(uid3)).toEqual(-1);
     uids.push(uid3);
@@ -74,18 +74,66 @@ fdescribe('Dataset', () => {
         .toThrowError('Got null or undefined example');
   });
 
+  it('addExample with invalid label fails', () => {
+    const dataset = new Dataset();
+    expect(() => dataset.addExample(getRandomExample(null)))
+        .toThrowError(/Expected label to be a non-empty string.*null/);
+    expect(() => dataset.addExample(getRandomExample(undefined)))
+        .toThrowError(/Expected label to be a non-empty string.*undefined/);
+    expect(() => dataset.addExample(getRandomExample('')))
+        .toThrowError(/Expected label to be a non-empty string/);
+  });
+
   it('removeExample', () => {
     const dataset = new Dataset();
 
-    const ex1 = generateRandomExample('a');
+    const ex1 = getRandomExample('a');
     const uid1 = dataset.addExample(ex1);
     expect(dataset.empty()).toEqual(false);
     expect(dataset.size()).toEqual(1);
     expect(dataset.getExampleCounts()).toEqual({'a': 1});
 
+    const ex2 = getRandomExample('a');
+    const uid2 = dataset.addExample(ex2);
+    expect(dataset.empty()).toEqual(false);
+    expect(dataset.size()).toEqual(2);
+    expect(dataset.getExampleCounts()).toEqual({'a': 2});
+
+    const ex3 = getRandomExample('b');
+    const uid3 = dataset.addExample(ex3);
+    expect(dataset.empty()).toEqual(false);
+    expect(dataset.size()).toEqual(3);
+    expect(dataset.getExampleCounts()).toEqual({'a': 2, 'b': 1});
+
     dataset.removeExample(uid1);
+    expect(dataset.empty()).toEqual(false);
+    expect(dataset.size()).toEqual(2);
+    expect(dataset.getExampleCounts()).toEqual({'a': 1, 'b': 1});
+
+    dataset.removeExample(uid2);
+    expect(dataset.empty()).toEqual(false);
+    expect(dataset.size()).toEqual(1);
+    expect(dataset.getExampleCounts()).toEqual({'b': 1});
+
+    dataset.removeExample(uid3);
     expect(dataset.empty()).toEqual(true);
     expect(dataset.size()).toEqual(0);
     expect(dataset.getExampleCounts()).toEqual({});
+  });
+
+  it('getVocabulary', () => {
+    const dataset = new Dataset();
+    expect(dataset.getVocabulary()).toEqual([]);
+
+    const ex1 = getRandomExample('a');
+    const ex2 = getRandomExample('a');
+    const ex3 = getRandomExample('b');
+
+    dataset.addExample(ex1);
+    expect(dataset.getVocabulary()).toEqual(['a']);
+    dataset.addExample(ex2);
+    expect(dataset.getVocabulary()).toEqual(['a']);
+    dataset.addExample(ex3);
+    expect(dataset.getVocabulary()).toEqual(['a', 'b']);
   });
 });
