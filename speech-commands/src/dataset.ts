@@ -17,7 +17,7 @@
 
 import * as tf from '@tensorflow/tfjs';
 
-import {Example, ExampleSpec, RawAudioData, SerializedExamples, SpectrogramData} from './types';
+import {Example, ExampleSpec, SerializedExamples, SpectrogramData} from './types';
 
 /**
  * Generate a pseudo-random UID.
@@ -312,6 +312,9 @@ export class Dataset {
   }
 }
 
+/**
+ * Serialize an `Example`.
+ */
 export function serializeExample(example: Example):
     {spec: ExampleSpec, data: ArrayBuffer} {
   const hasRawAudio = example.rawAudio != null;
@@ -333,6 +336,9 @@ export function serializeExample(example: Example):
   return {spec, data};
 }
 
+/**
+ * Deserialize an `Example`.
+ */
 export function deserializeExample(
     artifact: {spec: ExampleSpec, data: ArrayBuffer}): Example {
   const spectrogram: SpectrogramData = {
