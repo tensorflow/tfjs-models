@@ -103,15 +103,18 @@ export class Dataset {
    * @return All examples of the given `label`.
    * @throws Error if label is `null` or `undefined`.
    */
-  // TODO(cais): Change to map from UUID to example. DO NOT SUBMIT.
-  getExamples(label: string): Example[] {
+  getExamples(label: string): {[uid: string]: Example} {
     tf.util.assert(
         label != null,
         `Expected label to be a string, but got ${JSON.stringify(label)}`);
-    if (!(label in this.label2Ids)) {
-      throw new Error(`There are no examples of label "${label}"`);
-    }
-    return this.label2Ids[label].map(id => this.examples[id]);
+    tf.util.assert(
+        label in this.label2Ids,
+        `No example of label "${label}" exists in dataset`);
+    const output: {[uid: string]: Example} = {};
+    this.label2Ids[label].forEach(id => {
+      output[id] = this.examples[id];
+    });
+    return output;
   }
 
   /**
@@ -262,6 +265,6 @@ export class Dataset {
    * @returns A `SerializedDataset` object amenable to transmission and storage.
    */
   serialize(): SerializedExamples {
-    return null;
+    throw new Error('Dataset.serialize() is not implemented yet.');
   }
 }

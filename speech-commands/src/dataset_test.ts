@@ -39,6 +39,16 @@ describe('Dataset', () => {
     };
   }
 
+  function addThreeExamplesToDataset(dataset: Dataset): string[] {
+    const ex1 = getRandomExample('a');
+    const uid1 = dataset.addExample(ex1);
+    const ex2 = getRandomExample('a');
+    const uid2 = dataset.addExample(ex2);
+    const ex3 = getRandomExample('b');
+    const uid3 = dataset.addExample(ex3);
+    return [uid1, uid2, uid3];
+  }
+
   it('Constructor', () => {
     const dataset = new Dataset();
     expect(dataset.empty()).toEqual(true);
@@ -89,6 +99,25 @@ describe('Dataset', () => {
         .toThrowError(/Expected label to be a non-empty string.*undefined/);
     expect(() => dataset.addExample(getRandomExample('')))
         .toThrowError(/Expected label to be a non-empty string/);
+  });
+
+  it('getExapmles', () => {
+    const dataset = new Dataset();
+    const [uid1, uid2, uid3] = addThreeExamplesToDataset(dataset);
+    const out1 = dataset.getExamples('a');
+    expect(Object.keys(out1).length).toEqual(2);
+    expect(out1[uid1].label).toEqual('a');
+    expect(out1[uid2].label).toEqual('a');
+    const out2 = dataset.getExamples('b');
+    expect(Object.keys(out2).length).toEqual(1);
+    expect(out2[uid3].label).toEqual('b');
+  });
+
+  it('getExapmles with nonexistent label fails', () => {
+    const dataset = new Dataset();
+    const [uid1, uid2, uid3] = addThreeExamplesToDataset(dataset);
+    expect(() => dataset.getExamples('labelC'))
+        .toThrowError(/No example .*labelC.* exists/);
   });
 
   it('removeExample', () => {
