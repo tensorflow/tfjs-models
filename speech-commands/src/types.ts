@@ -412,7 +412,7 @@ export interface FeatureExtractor {
   getFeatures(): Float32Array[];
 }
 
-/** 
+/**
  * Snippet of pulse-code modulation (PCM) audio data.
  */
 export interface RawAudioData {
@@ -483,7 +483,7 @@ export interface ExampleSpec {
   /**
    * Sampling rate of the raw audio (if any).
    */
-  rawAudioSapmlingRateHz?: number;
+  rawAudioSapmleRateHz?: number;
 }
 
 /**
