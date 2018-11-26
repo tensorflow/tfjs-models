@@ -428,7 +428,7 @@ export interface RawAudioData {
 }
 
 /**
- * An short, labeled snippet of speech or audio.
+ * A short, labeled snippet of speech or audio.
  *
  * This can be used for training a transfer model based on the base
  * speech-commands model, among other things.
