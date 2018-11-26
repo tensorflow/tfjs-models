@@ -182,10 +182,19 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
 
     const numFramesPerSpectrogram = 43;
     const columnTruncateLength = 225;
-    const numCallbacksToComplete = 1;
+    const numCallbacksToComplete = 3;
     let numCallbacksCompleted = 0;
     const extractor = new BrowserFftFeatureExtractor({
       spectrogramCallback: async (x: tf.Tensor) => {
+        const xData = await x.data();
+        // Verify the correctness of the spectrogram data.
+        for (let i = 0; i < xData.length; ++i) {
+          const segment = Math.floor(i / columnTruncateLength);
+          const expected =
+            segment * 1024 + (i % columnTruncateLength) +
+            1024 * numFramesPerSpectrogram * numCallbacksCompleted;
+          expect(xData[i]).toEqual(expected);
+        }
         if (++numCallbacksCompleted >= numCallbacksToComplete) {
           await extractor.stop();
           done();
@@ -208,6 +217,8 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
     const spectrogramTensors: tf.Tensor[] = [];
     const callbackTimestamps: number[] = [];
     const spectrogramDurationMillis = 1024 / 44100 * 43 * 1e3;
+    const numFramesPerSpectrogram = 43;
+    const columnTruncateLength = 225;
     const extractor = new BrowserFftFeatureExtractor({
       spectrogramCallback: async (x: tf.Tensor) => {
         callbackTimestamps.push(tf.util.now());
@@ -216,6 +227,10 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
               callbackTimestamps[callbackTimestamps.length - 1] -
               callbackTimestamps[callbackTimestamps.length - 2])
               .toBeGreaterThanOrEqual(spectrogramDurationMillis * 0.5);
+          // Verify the content of the spectrogram data.
+          const xData = await x.data();
+          expect(xData[xData.length - 1])
+              .toEqual(callbackTimestamps.length * 22 * 1024 - 800);
         }
         expect(x.shape).toEqual([1, 43, 225, 1]);
         spectrogramTensors.push(tf.clone(x));
@@ -226,8 +241,8 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
         }
         return false;
       },
-      numFramesPerSpectrogram: 43,
-      columnTruncateLength: 225,
+      numFramesPerSpectrogram,
+      columnTruncateLength,
       overlapFactor: 0.5,
       suppressionTimeMillis: 0
     });
