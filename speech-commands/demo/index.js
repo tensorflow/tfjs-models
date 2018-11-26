@@ -91,6 +91,7 @@ startButton.addEventListener('click', () => {
           },
           {
             includeSpectrogram: true,
+            suppressionTimeMillis: 1000,
             probabilityThreshold: Number.parseFloat(probaThresholdInput.value)
           })
       .then(() => {
