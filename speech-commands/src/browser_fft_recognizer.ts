@@ -21,7 +21,7 @@ import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_ext
 import {loadMetadataJson, normalize} from './browser_fft_utils';
 import {Dataset} from './dataset';
 import {balancedTrainValSplit} from './training_utils';
-import {RecognizeConfig, RecognizerCallback, RecognizerParams, SerializedExamples, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
+import {RecognizeConfig, RecognizerCallback, RecognizerParams, SerializedExamples, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer, Example} from './types';
 import {version} from './version';
 
 export const BACKGROUND_NOISE_TAG = '_background_noise_';
@@ -681,6 +681,10 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     return this.dataset.getExampleCounts();
   }
 
+  getExamples(label: string): Array<{uid: string, example: Example}> {
+    return this.dataset.getExamples(label);
+  }
+
   /**
    * Load an array of serialized examples.
    *
@@ -702,6 +706,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         this.dataset.addExample(example.example);
       }
     }
+
+    this.collateTransferWords();
   }
 
   /** Serialize the existing examples. */

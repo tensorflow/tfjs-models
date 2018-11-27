@@ -47,7 +47,7 @@ const startTransferLearnButton =
 const XFER_MODEL_NAME = 'xfer-model';
 
 // Minimum required number of examples per class for transfer learning.
-const MIN_EXAPMLES_PER_CLASS = 4;
+const MIN_EXAPMLES_PER_CLASS = 8;
 
 let recognizer;
 let transferRecognizer;
@@ -131,27 +131,78 @@ stopButton.addEventListener('click', () => {
  * Transfer learning logic.
  */
 
+ /** Scroll to the bottom of the page */
 function scrollToPageBottom() {
   const scrollingElement = (document.scrollingElement || document.body);
   scrollingElement.scrollTop = scrollingElement.scrollHeight;
 }
 
-let collectWordDivs = {};
-let collectWordButtons = {};
-
-enterLearnWordsButton.addEventListener('click', () => {
-  enterLearnWordsButton.disabled = true;
-  const transferWords =
-      learnWordsInput.value.trim().split(',').map(w => w.trim());
-  if (transferWords == null || transferWords.length <= 1) {
-    logToStatusDisplay('ERROR: Invalid list of transfer words.');
-    return;
+/**
+ * Add an example to the UI, record the example via WebAudio if necessary.
+ *
+ * @param {HTMLDivElement} wordDiv The div element for the word. It is assumed
+ *   that it contains the word button as the first child and the canvas as the
+ *   second.
+ * @param {string} word The word of the example being added.
+ * @param {SpectrogramData} spectrogram Optional spectrogram data.
+ *   If provided, will use it as is. If not provided, will use WebAudio
+ *   to collect an example.
+ */
+async function addExample(wordDiv, word, spectrogram) {
+  if (spectrogram == null) {
+    // Collect an example online.
+    spectrogram = await transferRecognizer.collectExample(word);
   }
 
-  transferRecognizer = recognizer.createTransfer(XFER_MODEL_NAME);
+  const exampleCanvas = document.createElement('canvas');
+  exampleCanvas.style['display'] = 'inline-block';
+  exampleCanvas.style['vertical-align'] = 'middle';
+  exampleCanvas.style['height'] = '60px';
+  exampleCanvas.style['width'] = '80px';
+  exampleCanvas.style['padding'] = '3px';
+  if (wordDiv.children.length > 1) {
+    wordDiv.removeChild(wordDiv.children[wordDiv.children.length - 1]);
+  }
+  wordDiv.appendChild(exampleCanvas);
+  plotSpectrogram(
+      exampleCanvas, spectrogram.data, spectrogram.frameSize,
+      spectrogram.frameSize);
 
+  const button = wordDiv.children[0];
+  const displayWord = word === BACKGROUND_NOISE_TAG ? 'noise' : word;
+  const exampleCounts = transferRecognizer.countExamples();
+  button.textContent = `${displayWord} (${exampleCounts[word]})`;
+}
+
+function updateButtonStateAccordingToTransferRecognizer(transferWords) {
+  const exampleCounts = transferRecognizer.countExamples();
+  const minCountByClass =
+      transferWords.map(word => exampleCounts[word] || 0)
+          .reduce((prev, current) => current < prev ? current : prev);
+
+  if (minCountByClass >= MIN_EXAPMLES_PER_CLASS) {
+    startTransferLearnButton.textContent = 'Start transfer learning';
+    startTransferLearnButton.disabled = false;
+  } else {
+    startTransferLearnButton.textContent =
+        `Need at least ${MIN_EXAPMLES_PER_CLASS} examples per word`;
+  }
+  downloadFilesButton.disabled = false;
+}
+
+let collectWordButtons = {};
+
+/**
+ * Create div elements for transfer words.
+ *
+ * @param {string[]} transferWords The array of transfer words.
+ * @returns {Object} An object mapping word to th div element created for it.
+ */
+function createWordDivs(transferWords) {
+  const wordDivs = {};
   for (const word of transferWords) {
     const wordDiv = document.createElement('div');
+    wordDivs[word] = wordDiv;
     const button = document.createElement('button');
     button.style['display'] = 'inline-block';
     button.style['vertical-align'] = 'middle';
@@ -162,45 +213,36 @@ enterLearnWordsButton.addEventListener('click', () => {
     wordDiv.appendChild(button);
     wordDiv.className = 'transfer-word';
     collectButtonsDiv.appendChild(wordDiv);
-    collectWordDivs[word] = wordDiv;
     collectWordButtons[word] = button;
 
     button.addEventListener('click', async () => {
       disableAllCollectWordButtons();
-      const spectrogram = await transferRecognizer.collectExample(word);
-      const exampleCanvas = document.createElement('canvas');
-      exampleCanvas.style['display'] = 'inline-block';
-      exampleCanvas.style['vertical-align'] = 'middle';
-      exampleCanvas.style['height'] = '60px';
-      exampleCanvas.style['width'] = '80px';
-      exampleCanvas.style['padding'] = '3px';
-      if (wordDiv.children.length > 1) {
-        wordDiv.removeChild(wordDiv.children[wordDiv.children.length - 1]);
-      }
-      wordDiv.appendChild(exampleCanvas);
-      plotSpectrogram(
-          exampleCanvas, spectrogram.data, spectrogram.frameSize,
-          spectrogram.frameSize);
-      const exampleCounts = transferRecognizer.countExamples();
-
-      const minCountByClass =
-          transferWords.map(word => exampleCounts[word] || 0)
-              .reduce((prev, current) => current < prev ? current : prev);
-
-      button.textContent = `${displayWord} (${exampleCounts[word]})`;
-      logToStatusDisplay(`Collect one sample of word "${word}"`);
+      await addExample(wordDiv, word);
+      updateButtonStateAccordingToTransferRecognizer(transferWords);
       enableAllCollectWordButtons();
-      if (minCountByClass >= MIN_EXAPMLES_PER_CLASS) {
-        startTransferLearnButton.textContent = 'Start transfer learning';
-        startTransferLearnButton.disabled = false;
-      } else {
-        startTransferLearnButton.textContent =
-            `Need at least ${MIN_EXAPMLES_PER_CLASS} examples per word`;
-      }
-
-      downloadFilesButton.disabled = false;
     });
   }
+  return wordDivs;
+}
+
+enterLearnWordsButton.addEventListener('click', () => {
+  // We disable the option to upload an existing dataset from files
+  // once the "Enter transfer words" button has been clicked.
+  // However, the user can still load an existing dataset from
+  // files first and keep appending examples to it.
+  disableFileUploadControls();
+
+  enterLearnWordsButton.disabled = true;
+  const transferWords =
+      learnWordsInput.value.trim().split(',').map(w => w.trim());
+  if (transferWords == null || transferWords.length <= 1) {
+    logToStatusDisplay('ERROR: Invalid list of transfer words.');
+    return;
+  }
+
+  transferRecognizer = recognizer.createTransfer(XFER_MODEL_NAME);
+  createWordDivs(transferWords);
+
   scrollToPageBottom();
 });
 
@@ -214,6 +256,11 @@ function enableAllCollectWordButtons() {
   for (const word in collectWordButtons) {
     collectWordButtons[word].disabled = false;
   }
+}
+
+function disableFileUploadControls() {
+  datasetFilesInput.disabled = true;
+  uploadFilesButton.disabled = true;
 }
 
 startTransferLearnButton.addEventListener('click', async () => {
@@ -334,15 +381,10 @@ startTransferLearnButton.addEventListener('click', async () => {
 
 downloadFilesButton.addEventListener('click', () => {
   const basename = getDatasetFileBasename();
-  console.log(`basename = ${basename}`);  // DEBUG
   const artifacts = transferRecognizer.serializeExamples();
-  console.log(artifacts);  /// DEBUG
 
   const manifestAnchor = document.createElement('a');
   manifestAnchor.download = `${basename}.json`;
-  // manifestAnchor.href = window.URL.createObjectURL(new Blob(
-  //   [JSON.stringify(artifacts.manifest)],
-  //   {type: 'application/json'}));
   manifestAnchor.href = window.URL.createObjectURL(
       new Blob([artifacts.manifest], {type: 'application/json'}));
   manifestAnchor.click();
@@ -369,7 +411,7 @@ function getDatasetFileBasename() {
   return items.join('-');
 }
 
-uploadFilesButton.addEventListener('click', () => {
+uploadFilesButton.addEventListener('click', async () => {
   const files = datasetFilesInput.files;
   if (files.length !== 2) {
     throw new Error('Must select exactly two files.');
@@ -390,16 +432,12 @@ uploadFilesButton.addEventListener('click', () => {
   const manifestReader = new FileReader();
   manifestReader.onload = event => {
     const manifest = event.target.result;
-    // TODO(cais): Error checking.
-    console.log(manifest);
 
     const dataReader = new FileReader();
-    dataReader.onload = event => {
+    dataReader.onload = async event => {
       // tslint:disable-next-line:no-any
       const data = event.target.result;
-      console.log(data);  //  DEBUG
-      const dataset = new SpeechCommands.Dataset({manifest, data});
-      console.log(dataset);  // DEBUG
+      await loadDatasetInTransferRecognizer({manifest, data});
     };
     dataReader.onerror = () => console.error(
         `Failed to binary data from file '${dataFile.name}'.`);
@@ -409,3 +447,26 @@ uploadFilesButton.addEventListener('click', () => {
       `Failed to read manifest JSON from file '${manifestFile.name}'.`);
   manifestReader.readAsText(manifestFile);
 });
+
+async function loadDatasetInTransferRecognizer(artifacts) {
+  if (transferRecognizer == null) {
+    transferRecognizer = recognizer.createTransfer(XFER_MODEL_NAME);
+  }
+  transferRecognizer.loadExamples(artifacts);
+  const exampleCounts = transferRecognizer.countExamples();
+  const transferWords = [];
+  for (const label in exampleCounts) {
+    transferWords.push(label);
+  }
+  transferWords.sort();
+  learnWordsInput.value = transferWords.join(',');
+
+  const wordDivs = createWordDivs(transferWords);
+  for (const word of transferWords) {
+    const examples = transferRecognizer.getExamples(word);
+    for (const example of examples) {
+      await addExample(wordDivs[word], word, example.example.spectrogram);
+    }
+  }
+  updateButtonStateAccordingToTransferRecognizer(transferWords);
+}
