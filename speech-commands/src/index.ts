@@ -69,6 +69,7 @@ export function create(
   }
 }
 
-export {FFT_TYPE, RecognizerParams, SpectrogramData, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig} from './types';
+export {Dataset} from './dataset';
+export {Example, FFT_TYPE, RecognizerParams, SpectrogramData, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig} from './types';
 export {BACKGROUND_NOISE_TAG, UNKNOWN_TAG} from './browser_fft_recognizer';
 export {version} from './version';
