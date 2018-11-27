@@ -476,9 +476,9 @@ export interface ExampleSpec {
  */
 export interface SerializedExamples {
   /**
-   * Specifications of the serialized `Example`s.
+   * Specifications of the serialized `Example`s, serialized as a string.
    */
-  manifest: ExampleSpec[];
+  manifest: string;
 
   /**
    * Serialized binary data from the `Example`s.

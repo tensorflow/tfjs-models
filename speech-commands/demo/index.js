@@ -30,6 +30,8 @@ const epochsInput = document.getElementById('epochs');
 const fineTuningEpochsInput = document.getElementById('fine-tuning-epochs');
 
 const downloadFilesButton = document.getElementById('download-dataset');
+const datasetFilesInput = document.getElementById('dataset-files-input');
+const uploadFilesButton = document.getElementById('upload-dataset');
 
 const BACKGROUND_NOISE_TAG = '_background_noise_';
 
@@ -341,14 +343,14 @@ downloadFilesButton.addEventListener('click', () => {
   // manifestAnchor.href = window.URL.createObjectURL(new Blob(
   //   [JSON.stringify(artifacts.manifest)],
   //   {type: 'application/json'}));
-  manifestAnchor.href = window.URL.createObjectURL(new Blob(
-    [artifacts.manifestString], {type: 'application/json'}));
+  manifestAnchor.href = window.URL.createObjectURL(
+      new Blob([artifacts.manifest], {type: 'application/json'}));
   manifestAnchor.click();
 
   const weightDataAnchor = document.createElement('a');
   weightDataAnchor.download = `${basename}.bin`;
-  weightDataAnchor.href = window.URL.createObjectURL(new Blob(
-    [artifacts.data], {type: 'application/octet-stream'}));
+  weightDataAnchor.href = window.URL.createObjectURL(
+      new Blob([artifacts.data], {type: 'application/octet-stream'}));
   weightDataAnchor.click();
 });
 
@@ -366,3 +368,44 @@ function getDatasetFileBasename() {
   }
   return items.join('-');
 }
+
+uploadFilesButton.addEventListener('click', () => {
+  const files = datasetFilesInput.files;
+  if (files.length !== 2) {
+    throw new Error('Must select exactly two files.');
+  }
+
+  let manifestFile;
+  let dataFile;
+  if (files[0].name.endsWith('.json') && files[1].name.endsWith('.bin')) {
+    manifestFile = files[0];
+    dataFile = files[1];
+  } else if (files[0].name.endsWith('.bin') && files[1].name.endsWith('.json')) {
+    manifestFile = files[1];
+    dataFile = files[0];
+  } else {
+    throw new Error('Must select a .json file and a .bin file');
+  }
+
+  const manifestReader = new FileReader();
+  manifestReader.onload = event => {
+    const manifest = event.target.result;
+    // TODO(cais): Error checking.
+    console.log(manifest);
+
+    const dataReader = new FileReader();
+    dataReader.onload = event => {
+      // tslint:disable-next-line:no-any
+      const data = event.target.result;
+      console.log(data);  //  DEBUG
+      const dataset = new SpeechCommands.Dataset({manifest, data});
+      console.log(dataset);  // DEBUG
+    };
+    dataReader.onerror = () => console.error(
+        `Failed to binary data from file '${dataFile.name}'.`);
+    dataReader.readAsArrayBuffer(dataFile);
+  };
+  manifestReader.onerror = () => console.error(
+      `Failed to read manifest JSON from file '${manifestFile.name}'.`);
+  manifestReader.readAsText(manifestFile);
+});

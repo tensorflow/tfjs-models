@@ -407,7 +407,7 @@ describe('Dataset serialization', () => {
     dataset.addExample(ex3);
     dataset.addExample(ex4);
     const {manifest, data} = dataset.serialize();
-    expect(manifest).toEqual([
+    expect(JSON.parse(manifest)).toEqual([
       {label: 'bar', spectrogramNumFrames: 12, spectrogramFrameSize: 16},
       {label: 'foo', spectrogramNumFrames: 10, spectrogramFrameSize: 16},
       {label: 'foo', spectrogramNumFrames: 13, spectrogramFrameSize: 16},

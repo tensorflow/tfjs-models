@@ -52,10 +52,11 @@ export class Dataset {
     this.label2Ids = {};
     if (artifacts != null) {
       // Deserialize from the provided artifacts.
-      const numExamples = artifacts.manifest.length;
+      const manifest = JSON.parse(artifacts.manifest);
+      const numExamples = manifest.length;
       let offset = 0;
       for (let i = 0; i < numExamples; ++i) {
-        const spec = artifacts.manifest[i];
+        const spec = manifest[i];
         let byteLen = spec.spectrogramNumFrames * spec.spectrogramFrameSize;
         if (spec.rawAudioNumSamples != null) {
           byteLen += spec.rawAudioNumSamples;
@@ -309,8 +310,10 @@ export class Dataset {
         buffers.push(artifact.data);
       }
     }
-    // TODO(cais): Restore.
-    return {manifest, data: concatenateArrayBuffers(buffers), manifestString: JSON.stringify(manifest)};
+    return {
+      manifest: JSON.stringify(manifest),
+      data: concatenateArrayBuffers(buffers)
+    };
   }
 }
 
