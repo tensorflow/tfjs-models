@@ -412,18 +412,12 @@ export interface FeatureExtractor {
   getFeatures(): Float32Array[];
 }
 
-/**
- * Snippet of pulse-code modulation (PCM) audio data.
- */
+/** Snippet of pulse-code modulation (PCM) audio data. */
 export interface RawAudioData {
-  /**
-   * Samples of the snippet.
-   */
+  /** Samples of the snippet. */
   data: Float32Array;
 
-  /**
-   * Sampling rate, in Hz.
-   */
+  /** Sampling rate, in Hz. */
   samplingRateHz: number;
 }
 
@@ -436,14 +430,10 @@ export interface RawAudioData {
  * A set of `Example`s can make up a dataset.
  */
 export interface Example {
-  /**
-   * A label for the example.
-   */
+  /** A label for the example. */
   label: string;
 
-  /**
-   * Spectrogram data.
-   */
+  /** Spectrogram data. */
   spectrogram: SpectrogramData;
 
   /**
@@ -460,29 +450,19 @@ export interface Example {
  * Used for serialization of `Example`.
  */
 export interface ExampleSpec {
-  /**
-   * A label for the example.
-   */
+  /** A label for the example. */
   label: string;
 
-  /**
-   * Number of frames in the spectrogram.
-   */
+  /** Number of frames in the spectrogram. */
   spectrogramNumFrames: number;
 
-  /**
-   * The length of each frame in the spectrogram.
-   */
+  /** The length of each frame in the spectrogram. */
   spectrogramFrameSize: number;
 
-  /**
-   * Number of samples in the raw PCM-format audio (if any).
-   */
+  /** Number of samples in the raw PCM-format audio (if any). */
   rawAudioNumSamples?: number;
 
-  /**
-   * Sampling rate of the raw audio (if any).
-   */
+  /** Sampling rate of the raw audio (if any). */
   rawAudioSapmleRateHz?: number;
 }
 

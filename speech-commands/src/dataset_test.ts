@@ -22,18 +22,18 @@ import {Dataset} from './dataset';
 import {Example} from './types';
 
 describe('Dataset', () => {
-  const fakeNumFrames = 4;
-  const fakeFrameSize = 16;
+  const FAKE_NUM_FRAMES = 4;
+  const FAKE_FRAME_SIZE = 16;
 
   function getRandomExample(label: string): Example {
     const spectrogramData = [];
-    for (let i = 0; i < fakeNumFrames * fakeFrameSize; ++i) {
+    for (let i = 0; i < FAKE_NUM_FRAMES * FAKE_FRAME_SIZE; ++i) {
       spectrogramData.push(Math.random());
     }
     return {
       label,
       spectrogram:
-          {data: new Float32Array(spectrogramData), frameSize: fakeFrameSize}
+          {data: new Float32Array(spectrogramData), frameSize: FAKE_FRAME_SIZE}
     };
   }
 
@@ -60,9 +60,8 @@ describe('Dataset', () => {
     const uids: string[] = [];
     const ex1 = getRandomExample('a');
     const uid1 = dataset.addExample(ex1);
-    expect(uid1.length).toBeGreaterThan(0);
+    expect(uid1).toMatch(/^([0-9a-f]+\-)+[0-9a-f]+$/);
     uids.push(uid1);
-    console.log(uid1);
     expect(dataset.empty()).toEqual(false);
     expect(dataset.size()).toEqual(1);
     expect(dataset.getExampleCounts()).toEqual({'a': 1});
@@ -146,7 +145,7 @@ describe('Dataset', () => {
     expect(out1[0].example.label).toEqual('a');
     expect(out1[1].uid).toEqual(uid2);
     expect(out1[1].example.label).toEqual('a');
-    
+
     dataset.removeExample(uid1);
     const out2 = dataset.getExamples('a');
     expect(out2.length).toEqual(1);
@@ -167,7 +166,7 @@ describe('Dataset', () => {
     expect(out1[0].example.label).toEqual('a');
     expect(out1[1].uid).toEqual(uid2);
     expect(out1[1].example.label).toEqual('a');
-    
+
     dataset.removeExample(uid1);
     const out2 = dataset.getExamples('a');
     expect(out2.length).toEqual(1);
@@ -266,10 +265,10 @@ describe('Dataset', () => {
     addThreeExamplesToDataset(dataset);
 
     const out1 = dataset.getSpectrogramsAsTensors('a');
-    expect(out1.xs.shape).toEqual([2, fakeNumFrames, fakeFrameSize, 1]);
+    expect(out1.xs.shape).toEqual([2, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
     expect(out1.ys).toBeUndefined();
     const out2 = dataset.getSpectrogramsAsTensors('b');
-    expect(out2.xs.shape).toEqual([1, fakeNumFrames, fakeFrameSize, 1]);
+    expect(out2.xs.shape).toEqual([1, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
     expect(out2.ys).toBeUndefined();
   });
 
@@ -279,18 +278,18 @@ describe('Dataset', () => {
 
     dataset.removeExample(uid1);
     const out1 = dataset.getSpectrogramsAsTensors();
-    expect(out1.xs.shape).toEqual([2, fakeNumFrames, fakeFrameSize, 1]);
+    expect(out1.xs.shape).toEqual([2, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
     expectArraysClose(out1.ys, tf.tensor2d([[1, 0], [0, 1]]));
 
     const out2 = dataset.getSpectrogramsAsTensors('a');
-    expect(out2.xs.shape).toEqual([1, fakeNumFrames, fakeFrameSize, 1]);
+    expect(out2.xs.shape).toEqual([1, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
 
     dataset.removeExample(uid2);
     expect(() => dataset.getSpectrogramsAsTensors('a'))
         .toThrowError(/Label a is not in the vocabulary/);
 
     const out3 = dataset.getSpectrogramsAsTensors('b');
-    expect(out3.xs.shape).toEqual([1, fakeNumFrames, fakeFrameSize, 1]);
+    expect(out3.xs.shape).toEqual([1, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
   });
 
   it('getSpectrogramsAsTensors w/o label on one-word vocabulary fails', () => {
@@ -302,13 +301,13 @@ describe('Dataset', () => {
     expect(() => dataset.getSpectrogramsAsTensors())
         .toThrowError(/requires .* at least two words/);
   });
-  
+
   it('getSpectrogramsAsTensors without label', () => {
     const dataset = new Dataset();
     addThreeExamplesToDataset(dataset);
 
     const out = dataset.getSpectrogramsAsTensors();
-    expect(out.xs.shape).toEqual([3, fakeNumFrames, fakeFrameSize, 1]);
+    expect(out.xs.shape).toEqual([3, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
     expectArraysClose(out.ys, tf.tensor2d([[1, 0], [1, 0], [0, 1]]));
   });
 
