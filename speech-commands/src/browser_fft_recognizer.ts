@@ -689,13 +689,13 @@ class TransferBrowserFftSpeechCommandRecognizer extends
    * Load an array of serialized examples.
    *
    * @param examples The examples in their serialized form.
-   * @param clearExistingExamples Whether to clear the existing examples while
+   * @param clearExisting Whether to clear the existing examples while
    *   performing the loading (default: false).
    */
-  loadExamples(examples: SerializedExamples, clearExistingExamples = false):
+  loadExamples(examples: SerializedExamples, clearExisting = false):
       void {
     const incomingDataset = new Dataset(examples);
-    if (clearExistingExamples) {
+    if (clearExisting) {
       this.clearExamples();
     }
 

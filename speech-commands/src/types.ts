@@ -167,6 +167,18 @@ export interface TransferSpeechCommandRecognizer extends
    */
   train(config?: TransferLearnConfig):
       Promise<tf.History|[tf.History, tf.History]>;
+
+  /**
+   * Load an array of serialized examples.
+   *
+   * @param examples The examples in their serialized form.
+   * @param clearExisting Whether to clear the existing examples while
+   *   performing the loading (default: false).
+   */
+  loadExamples(examples: SerializedExamples, clearExisting?: boolean): void;
+
+  /** Serialize the existing examples. */
+  serializeExamples(): SerializedExamples;
 }
 
 /**
