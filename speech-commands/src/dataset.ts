@@ -51,6 +51,7 @@ export class Dataset {
     this.examples = {};
     this.label2Ids = {};
     if (artifacts != null) {
+      // Deserialize from the provided artifacts.
       const numExamples = artifacts.manifest.length;
       let offset = 0;
       for (let i = 0; i < numExamples; ++i) {
@@ -296,7 +297,7 @@ export class Dataset {
    */
   serialize(): SerializedExamples {
     const vocab = this.getVocabulary();
-    tf.util.assert(vocab.length > 0, `Cannot serialize empty Dataset`);
+    tf.util.assert(!this.empty(), `Cannot serialize empty Dataset`);
 
     const manifest: ExampleSpec[] = [];
     const buffers: ArrayBuffer[] = [];
@@ -312,9 +313,7 @@ export class Dataset {
   }
 }
 
-/**
- * Serialize an `Example`.
- */
+/** Serialize an `Example`. */
 export function serializeExample(example: Example):
     {spec: ExampleSpec, data: ArrayBuffer} {
   const hasRawAudio = example.rawAudio != null;
@@ -336,9 +335,7 @@ export function serializeExample(example: Example):
   return {spec, data};
 }
 
-/**
- * Deserialize an `Example`.
- */
+/** Deserialize an `Example`. */
 export function deserializeExample(
     artifact: {spec: ExampleSpec, data: ArrayBuffer}): Example {
   const spectrogram: SpectrogramData = {

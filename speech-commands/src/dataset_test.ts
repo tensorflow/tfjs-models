@@ -465,6 +465,12 @@ describe('Dataset serialization', () => {
         ys, tf.tensor2d([[1, 0, 0], [0, 1, 0], [0, 1, 0], [0, 0, 1]]));
   });
 
+  it('Calling serialize() on empty dataset fails', () => {
+    const dataset = new Dataset();
+    expect(() => dataset.serialize())
+        .toThrowError(/Cannot serialize empty Dataset/);
+  });
+
   it('Deserialized dataset supports removeExample', () => {
     const dataset = new Dataset();
     const ex1 = getRandomExample('foo', 10, 16);
