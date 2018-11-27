@@ -309,7 +309,8 @@ export class Dataset {
         buffers.push(artifact.data);
       }
     }
-    return {manifest, data: concatenateArrayBuffers(buffers)};
+    // TODO(cais): Restore.
+    return {manifest, data: concatenateArrayBuffers(buffers), manifestString: JSON.stringify(manifest)};
   }
 }
 

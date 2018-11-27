@@ -15,7 +15,6 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
 import Plotly from 'plotly.js-dist';
 
 import * as SpeechCommands from '../src';
@@ -30,6 +29,10 @@ const probaThresholdInput = document.getElementById('proba-threshold');
 const epochsInput = document.getElementById('epochs');
 const fineTuningEpochsInput = document.getElementById('fine-tuning-epochs');
 
+const downloadFilesButton = document.getElementById('download-dataset');
+
+const BACKGROUND_NOISE_TAG = '_background_noise_';
+
 /**
  * Transfer learning-related UI componenets.
  */
@@ -42,7 +45,7 @@ const startTransferLearnButton =
 const XFER_MODEL_NAME = 'xfer-model';
 
 // Minimum required number of examples per class for transfer learning.
-const MIN_EXAPMLES_PER_CLASS = 8;
+const MIN_EXAPMLES_PER_CLASS = 4;
 
 let recognizer;
 let transferRecognizer;
@@ -151,7 +154,7 @@ enterLearnWordsButton.addEventListener('click', () => {
     button.style['display'] = 'inline-block';
     button.style['vertical-align'] = 'middle';
 
-    const displayWord = word === '_background_noise_' ? 'noise' : word;
+    const displayWord = word === BACKGROUND_NOISE_TAG ? 'noise' : word;
 
     button.textContent = `${displayWord} (0)`;
     wordDiv.appendChild(button);
@@ -192,6 +195,8 @@ enterLearnWordsButton.addEventListener('click', () => {
         startTransferLearnButton.textContent =
             `Need at least ${MIN_EXAPMLES_PER_CLASS} examples per word`;
       }
+
+      downloadFilesButton.disabled = false;
     });
   }
   scrollToPageBottom();
@@ -324,3 +329,40 @@ startTransferLearnButton.addEventListener('click', async () => {
   startTransferLearnButton.textContent = 'Transfer learning complete.';
   startButton.disabled = false;
 });
+
+downloadFilesButton.addEventListener('click', () => {
+  const basename = getDatasetFileBasename();
+  console.log(`basename = ${basename}`);  // DEBUG
+  const artifacts = transferRecognizer.serializeExamples();
+  console.log(artifacts);  /// DEBUG
+
+  const manifestAnchor = document.createElement('a');
+  manifestAnchor.download = `${basename}.json`;
+  // manifestAnchor.href = window.URL.createObjectURL(new Blob(
+  //   [JSON.stringify(artifacts.manifest)],
+  //   {type: 'application/json'}));
+  manifestAnchor.href = window.URL.createObjectURL(new Blob(
+    [artifacts.manifestString], {type: 'application/json'}));
+  manifestAnchor.click();
+
+  const weightDataAnchor = document.createElement('a');
+  weightDataAnchor.download = `${basename}.bin`;
+  weightDataAnchor.href = window.URL.createObjectURL(new Blob(
+    [artifacts.data], {type: 'application/octet-stream'}));
+  weightDataAnchor.click();
+});
+
+function getDatasetFileBasename() {
+  if (transferRecognizer == null) {
+    throw new Error('Transfer model is unset.');
+  }
+  const items = [];
+  const exampleCounts = transferRecognizer.countExamples();
+  const labels = Object.keys(exampleCounts);
+  labels.sort();
+  for (const label of labels) {
+    const count = exampleCounts[label];
+    items.push(`${count}${label}`);
+  }
+  return items.join('-');
+}
