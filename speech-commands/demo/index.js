@@ -174,8 +174,9 @@ async function addExample(wordDiv, word, spectrogram) {
   button.textContent = `${displayWord} (${exampleCounts[word]})`;
 }
 
-function updateButtonStateAccordingToTransferRecognizer(transferWords) {
+function updateButtonStateAccordingToTransferRecognizer() {
   const exampleCounts = transferRecognizer.countExamples();
+  const transferWords = Object.keys(exampleCounts);  // DEBUG
   const minCountByClass =
       transferWords.map(word => exampleCounts[word] || 0)
           .reduce((prev, current) => current < prev ? current : prev);
@@ -218,7 +219,7 @@ function createWordDivs(transferWords) {
     button.addEventListener('click', async () => {
       disableAllCollectWordButtons();
       await addExample(wordDiv, word);
-      updateButtonStateAccordingToTransferRecognizer(transferWords);
+      updateButtonStateAccordingToTransferRecognizer();
       enableAllCollectWordButtons();
     });
   }
@@ -468,5 +469,5 @@ async function loadDatasetInTransferRecognizer(artifacts) {
       await addExample(wordDivs[word], word, example.example.spectrogram);
     }
   }
-  updateButtonStateAccordingToTransferRecognizer(transferWords);
+  updateButtonStateAccordingToTransferRecognizer();
 }

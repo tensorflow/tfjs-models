@@ -1041,7 +1041,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     const transfer = base.createTransfer('xfer1');
     await transfer.collectExample('bar');
     await transfer.collectExample('foo');
-    await transfer.collectExample('bar');    
+    await transfer.collectExample('bar');
     const artifacts = transfer.serializeExamples();
     const manifest = JSON.parse(artifacts.manifest);
 
@@ -1088,7 +1088,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(transfer2.countExamples()).toEqual({'bar': 1, 'foo': 1, 'qux': 1});
   });
 
-  it('loadExapmles, from nonmpty state, clearExisting = false', async () => {
+  it('loadExapmles, from nonempty state, clearExisting = false', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();
@@ -1102,7 +1102,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(transfer2.countExamples()).toEqual({'bar': 1, 'foo': 1, 'qux': 1});
   });
 
-  it('loadExapmles, from nonmpty state, clearExisting = true', async () => {
+  it('loadExapmles, from nonempty state, clearExisting = true', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();
