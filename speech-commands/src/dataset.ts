@@ -133,7 +133,7 @@ export class Dataset {
    * Get all examples and labels as tensors.
    *
    * - If `label` is provided and exists in the vocabulary of the `Dataset`,
-   *   the spectrograms of all `Exapmle`s under the `label` will be returned
+   *   the spectrograms of all `Example`s under the `label` will be returned
    *   as a 4D `tf.Tensor` as `xs`. The shape of the `tf.Tensor` will be
    *     `[numExamples, numFrames, frameSize, 1]`
    *   where
@@ -141,7 +141,7 @@ export class Dataset {
    *     - `numFrames` is the number of frames in each spectrogram
    *     - `frameSize` is the size of each spectrogram frame.
    *   No label Tensor will be returned.
-   * - If `label` is provided, all `Example`s will be returned as `xs`.
+   * - If `label` is not provided, all `Example`s will be returned as `xs`.
    *   In addition, `ys` will contain a one-hot encoded list of labels.
    *   - The shape of `xs` will be: `[numExamples, numFrames, frameSize, 1]`
    *   - The shape of `ys` will be: `[numExamples, vocabularySize]`.
