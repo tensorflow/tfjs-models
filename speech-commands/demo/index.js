@@ -176,7 +176,7 @@ async function addExample(wordDiv, word, spectrogram) {
 
 function updateButtonStateAccordingToTransferRecognizer() {
   const exampleCounts = transferRecognizer.countExamples();
-  const transferWords = Object.keys(exampleCounts);  // DEBUG
+  const transferWords = Object.keys(exampleCounts);
   const minCountByClass =
       transferWords.map(word => exampleCounts[word] || 0)
           .reduce((prev, current) => current < prev ? current : prev);
@@ -384,12 +384,14 @@ downloadFilesButton.addEventListener('click', () => {
   const basename = getDatasetFileBasename();
   const artifacts = transferRecognizer.serializeExamples();
 
+  // Trigger downloading of the manifest .json file.
   const manifestAnchor = document.createElement('a');
   manifestAnchor.download = `${basename}.json`;
   manifestAnchor.href = window.URL.createObjectURL(
       new Blob([artifacts.manifest], {type: 'application/json'}));
   manifestAnchor.click();
 
+  // Trigger downloading of the data .bin file.
   const weightDataAnchor = document.createElement('a');
   weightDataAnchor.download = `${basename}.bin`;
   weightDataAnchor.href = window.URL.createObjectURL(
@@ -397,6 +399,7 @@ downloadFilesButton.addEventListener('click', () => {
   weightDataAnchor.click();
 });
 
+/** Get the base name of the downloaded files based on current dataset. */
 function getDatasetFileBasename() {
   if (transferRecognizer == null) {
     throw new Error('Transfer model is unset.');
@@ -462,6 +465,7 @@ async function loadDatasetInTransferRecognizer(artifacts) {
   transferWords.sort();
   learnWordsInput.value = transferWords.join(',');
 
+  // Update the UI state based on the loaded dataset.
   const wordDivs = createWordDivs(transferWords);
   for (const word of transferWords) {
     const examples = transferRecognizer.getExamples(word);
