@@ -27,6 +27,7 @@ import * as BrowserFftUtils from './browser_fft_utils';
 import {FakeAudioContext, FakeAudioMediaStream} from './browser_test_utils';
 import {create} from './index';
 import {SpeechCommandRecognizerResult} from './types';
+import { arrayBuffer2SerializedExamples } from './dataset';
 
 describe('getMajorAndMinorVersion', () => {
   it('Correct results', () => {
@@ -1062,11 +1063,11 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     await transfer.collectExample('bar');
     await transfer.collectExample('foo');
     await transfer.collectExample('bar');
-    const artifacts = transfer.serializeExamples();
-    const manifest = JSON.parse(artifacts.manifest);
+    const artifacts =
+        arrayBuffer2SerializedExamples(transfer.serializeExamples());
 
     // The examples are sorted alphabetically by their label.
-    expect(manifest).toEqual([{
+    expect(artifacts.manifest).toEqual([{
       label: 'bar',
       spectrogramNumFrames: fakeNumFrames,
       spectrogramFrameSize: fakeColumnTruncateLength

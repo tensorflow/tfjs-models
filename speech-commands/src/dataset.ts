@@ -17,17 +17,71 @@
 
 import * as tf from '@tensorflow/tfjs';
 
-import {Example, ExampleSpec, SerializedExamples, SpectrogramData} from './types';
+import {arrayBuffer2String, concatenateArrayBuffers, getUID, string2ArrayBuffer} from './generic_utils';
+import {Example, SpectrogramData} from './types';
+
+// Descriptor for serialized dataset files: stands for:
+//   TensorFlow.js Speech-Commands Dataset.
+// DO NOT EVER CHANGE THIS!
+export const DATASET_SERIALIZATION_DESCRIPTOR = 'TFJSSCDS';
+
+// A version number for the serialization. Since this needs
+// to be encoded within a length-1 Uint8 array, it must be
+//   1. an positive integer.
+//   2. monotonically increasing over its change history.
+// Item 1 is checked by unit tests.
+export const DATASET_SERIALIZATION_VERSION = 1;
 
 /**
- * Generate a pseudo-random UID.
+ * Specification for an `Example` (see above).
+ *
+ * Used for serialization of `Example`.
  */
-function getUID(): string {
-  function s4() {
-    return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
-  }
-  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() +
-      s4() + s4();
+export interface ExampleSpec {
+  /** A label for the example. */
+  label: string;
+
+  /** Number of frames in the spectrogram. */
+  spectrogramNumFrames: number;
+
+  /** The length of each frame in the spectrogram. */
+  spectrogramFrameSize: number;
+
+  /** Number of samples in the raw PCM-format audio (if any). */
+  rawAudioNumSamples?: number;
+
+  /** Sampling rate of the raw audio (if any). */
+  rawAudioSampleRateHz?: number;
+}
+
+/**
+ * Serialized Dataset, containing a number `Example`s in their
+ * serialized format.
+ *
+ * This format consists of a plain-old JSON object as the manifest,
+ * along with a flattened binary ArrayBuffer. The format facilitates
+ * storage and transmission.
+ */
+export interface SerializedExamples {
+  /**
+   * Specifications of the serialized `Example`s, serialized as a string.
+   */
+  manifest: ExampleSpec[];
+
+  /**
+   * Serialized binary data from the `Example`s.
+   *
+   * Including the spectrograms and the raw audio (if any).
+   *
+   * For example, assuming `manifest.length` is `N`, the format of the
+   * `ArrayBuffer` is as follows:
+   *
+   *   [spectrogramData1, rawAudio1 (if any),
+   *    spectrogramData2, rawAudio2 (if any),
+   *    ...
+   *    spectrogramDataN, rawAudioN (if any)]
+   */
+  data: ArrayBuffer;
 }
 
 /**
@@ -45,18 +99,17 @@ export class Dataset {
    *
    * Else, the dataset will be deserialized from `artifacts`.
    *
-   * @param artifacts Optional serialization artifacts to deserialize.
+   * @param serialized Optional serialization artifacts to deserialize.
    */
-  constructor(artifacts?: SerializedExamples) {
+  constructor(serialized?: ArrayBuffer) {
     this.examples = {};
     this.label2Ids = {};
-    if (artifacts != null) {
+    if (serialized != null) {
       // Deserialize from the provided artifacts.
-      const manifest = JSON.parse(artifacts.manifest);
-      const numExamples = manifest.length;
+      const artifacts = arrayBuffer2SerializedExamples(serialized);
       let offset = 0;
-      for (let i = 0; i < numExamples; ++i) {
-        const spec = manifest[i];
+      for (let i = 0; i < artifacts.manifest.length; ++i) {
+        const spec = artifacts.manifest[i];
         let byteLen = spec.spectrogramNumFrames * spec.spectrogramFrameSize;
         if (spec.rawAudioNumSamples != null) {
           byteLen += spec.rawAudioNumSamples;
@@ -296,7 +349,7 @@ export class Dataset {
    *
    * @returns A `SerializedDataset` object amenable to transmission and storage.
    */
-  serialize(): SerializedExamples {
+  serialize(): ArrayBuffer {
     const vocab = this.getVocabulary();
     tf.util.assert(!this.empty(), `Cannot serialize empty Dataset`);
 
@@ -310,10 +363,8 @@ export class Dataset {
         buffers.push(artifact.data);
       }
     }
-    return {
-      manifest: JSON.stringify(manifest),
-      data: concatenateArrayBuffers(buffers)
-    };
+    return serializedExamples2ArrayBuffer(
+        {manifest, data: concatenateArrayBuffers(buffers)});
   }
 }
 
@@ -361,23 +412,57 @@ export function deserializeExample(
   return ex;
 }
 
-/**
- * Concatenate a number of ArrayBuffers into one.
+/** 
+ * Encode intermediate serialization format as an ArrayBuffer. 
  *
- * @param buffers A number of array buffers to concatenate.
- * @returns Result of concatenating `buffers` in order.
+ * Format of the binary ArrayBuffer:
+ *   1. An 8-byte descriptor (see above).
+ *   2. A 4-byte version number as Uint32.
+ *   3. A 4-byte number for the byte length of the JSON manifest.
+ *   4. The encoded JSON manifest
+ *   5. The binary data of the spectrograms, and raw audio (if any).
+ *
+ * @param serialized: Intermediate serialization format of a dataset.
+ * @returns The binary conversion result as an ArrayBuffer.
  */
-function concatenateArrayBuffers(buffers: ArrayBuffer[]): ArrayBuffer {
-  let totalByteLength = 0;
-  buffers.forEach((buffer: ArrayBuffer) => {
-    totalByteLength += buffer.byteLength;
-  });
+function serializedExamples2ArrayBuffer(serialized: SerializedExamples):
+    ArrayBuffer {
+  const manifestBuffer =
+      string2ArrayBuffer(JSON.stringify(serialized.manifest));
 
-  const temp = new Uint8Array(totalByteLength);
+  const descriptorBuffer = string2ArrayBuffer(DATASET_SERIALIZATION_DESCRIPTOR);
+  const version = new Uint32Array([DATASET_SERIALIZATION_VERSION]);
+  const manifestLength = new Uint32Array([manifestBuffer.byteLength]);
+  const headerBuffer = concatenateArrayBuffers(
+      [descriptorBuffer, version.buffer, manifestLength.buffer]);
+
+  return concatenateArrayBuffers(
+      [headerBuffer, manifestBuffer, serialized.data]);
+}
+
+/** Decode an ArrayBuffer as intermediate serialization format. */
+export function arrayBuffer2SerializedExamples(buffer: ArrayBuffer):
+    SerializedExamples {
+  tf.util.assert(buffer != null, 'Received null or undefined buffer');
+  // Check descriptor.
   let offset = 0;
-  buffers.forEach((buffer: ArrayBuffer) => {
-    temp.set(new Uint8Array(buffer), offset);
-    offset += buffer.byteLength;
-  });
-  return temp.buffer;
+  const descriptor = arrayBuffer2String(
+      buffer.slice(offset, DATASET_SERIALIZATION_DESCRIPTOR.length));
+  tf.util.assert(
+      descriptor === DATASET_SERIALIZATION_DESCRIPTOR,
+      `Deserialization error: Invalid descriptor`);
+  offset += DATASET_SERIALIZATION_DESCRIPTOR.length;
+  // Skip the version part for now. It may be used in the future.
+  offset += 4;
+
+  // Extract the length of the encoded manifest JSON as a Uint32.
+  const manifestLength = new Uint32Array(buffer, offset, 1);
+  offset += 4;
+  const manifestBeginByte = offset;
+  offset = manifestBeginByte + manifestLength[0];
+  const manifestBytes = buffer.slice(manifestBeginByte, offset);
+  const manifestString = arrayBuffer2String(manifestBytes);
+  const manifest = JSON.parse(manifestString);
+  const data = buffer.slice(offset);
+  return {manifest, data};
 }

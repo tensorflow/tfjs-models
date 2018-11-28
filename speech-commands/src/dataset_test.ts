@@ -18,7 +18,8 @@
 import * as tf from '@tensorflow/tfjs';
 import {expectArraysClose, expectArraysEqual} from '@tensorflow/tfjs-core/dist/test_util';
 
-import {Dataset, deserializeExample, serializeExample} from './dataset';
+import {arrayBuffer2SerializedExamples, Dataset, DATASET_SERIALIZATION_DESCRIPTOR, DATASET_SERIALIZATION_VERSION, deserializeExample, serializeExample} from './dataset';
+import {string2ArrayBuffer} from './generic_utils';
 import {Example, RawAudioData} from './types';
 
 describe('Dataset', () => {
@@ -406,8 +407,9 @@ describe('Dataset serialization', () => {
     dataset.addExample(ex2);
     dataset.addExample(ex3);
     dataset.addExample(ex4);
-    const {manifest, data} = dataset.serialize();
-    expect(JSON.parse(manifest)).toEqual([
+    const buffer = dataset.serialize();
+    const {manifest, data} = arrayBuffer2SerializedExamples(buffer);
+    expect(manifest).toEqual([
       {label: 'bar', spectrogramNumFrames: 12, spectrogramFrameSize: 16},
       {label: 'foo', spectrogramNumFrames: 10, spectrogramFrameSize: 16},
       {label: 'foo', spectrogramNumFrames: 13, spectrogramFrameSize: 16},
@@ -482,15 +484,32 @@ describe('Dataset serialization', () => {
     dataset.addExample(ex3);
     dataset.addExample(ex4);
 
-    const artifacts = dataset.serialize();
-    const datasetPrime = new Dataset(artifacts);
+    const serialized = dataset.serialize();
+    const datasetPrime = new Dataset(serialized);
 
     const examples = datasetPrime.getExamples('foo');
     datasetPrime.removeExample(examples[0].uid);
 
     const {xs, ys} = datasetPrime.getSpectrogramsAsTensors();
     expect(xs.shape).toEqual([3, 10, 16, 1]);
-    expectArraysClose(
-        ys, tf.tensor2d([[1, 0, 0], [0, 1, 0], [0, 0, 1]]));
+    expectArraysClose(ys, tf.tensor2d([[1, 0, 0], [0, 1, 0], [0, 0, 1]]));
+  });
+
+  it('Attempt to load invalid ArrayBuffer errors out', () => {
+    const invalidBuffer = string2ArrayBuffer('INVALID_[{}]0000000');
+    expect(() => new Dataset(invalidBuffer))
+        .toThrowError('Deserialization error: Invalid descriptor');
+  });
+
+  it('DATASET_SERIALIZATION_DESCRIPTOR has right length', () => {
+    expect(DATASET_SERIALIZATION_DESCRIPTOR.length).toEqual(8);
+    expect(string2ArrayBuffer(DATASET_SERIALIZATION_DESCRIPTOR).byteLength)
+        .toEqual(8);
+  });
+
+  it('Version number satisfies requirements', () => {
+    expect(typeof DATASET_SERIALIZATION_VERSION === 'number').toEqual(true);
+    expect(Number.isInteger(DATASET_SERIALIZATION_VERSION)).toEqual(true);
+    expect(DATASET_SERIALIZATION_VERSION).toBeGreaterThan(0);
   });
 });
