@@ -149,6 +149,8 @@ export function plotPredictions(canvas, candidateWords, probabilities, topK) {
 
     // Highlight the top word.
     const topWord = wordsAndProbs[0][0];
+    console.log(
+        `Word recognized: ${topWord} (p = ${wordsAndProbs[0][1].toFixed(6)})`);
     for (const word in candidateWordSpans) {
       if (word === topWord) {
         candidateWordSpans[word].classList.add('candidate-word-active');

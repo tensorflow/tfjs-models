@@ -17,7 +17,7 @@
 
 import * as tf from '@tensorflow/tfjs';
 
-import {Example, SerializedExamples} from './types';
+import {Example, ExampleSpec, SerializedExamples, SpectrogramData} from './types';
 
 /**
  * Generate a pseudo-random UID.
@@ -48,12 +48,24 @@ export class Dataset {
    * @param artifacts Optional serialization artifacts to deserialize.
    */
   constructor(artifacts?: SerializedExamples) {
-    if (artifacts == null) {
-      this.examples = {};
-      this.label2Ids = {};
-    } else {
-      // TODO(cais): Implement deserialization.
-      throw new Error('Deserialization is not implemented yet');
+    this.examples = {};
+    this.label2Ids = {};
+    if (artifacts != null) {
+      // Deserialize from the provided artifacts.
+      const manifest = JSON.parse(artifacts.manifest);
+      const numExamples = manifest.length;
+      let offset = 0;
+      for (let i = 0; i < numExamples; ++i) {
+        const spec = manifest[i];
+        let byteLen = spec.spectrogramNumFrames * spec.spectrogramFrameSize;
+        if (spec.rawAudioNumSamples != null) {
+          byteLen += spec.rawAudioNumSamples;
+        }
+        byteLen *= 4;
+        this.addExample(deserializeExample(
+            {spec, data: artifacts.data.slice(offset, offset + byteLen)}));
+        offset += byteLen;
+      }
     }
   }
 
@@ -154,16 +166,16 @@ export class Dataset {
       tf.util.assert(
           vocab.indexOf(label) !== -1,
           `Label ${label} is not in the vocabulary ` +
-          `(${JSON.stringify(vocab)})`);
+              `(${JSON.stringify(vocab)})`);
     } else {
       // If all words are requested, there must be at least two words in the
       // vocabulary to make one-hot encoding possible.
       tf.util.assert(
           vocab.length > 1,
           `One-hot encoding of labels requires the vocabulary to have ` +
-          `at least two words, but it has only ${vocab.length } word.`);
+              `at least two words, but it has only ${vocab.length} word.`);
     }
- 
+
     return tf.tidy(() => {
       const xTensors: tf.Tensor3D[] = [];
       const labelIndices: number[] = [];
@@ -275,12 +287,97 @@ export class Dataset {
   }
 
   /**
-   * Serialize the `Dataset`
+   * Serialize the `Dataset`.
+   *
+   * The `Examples` are sorted in the following order:
+   *   - First, the labels in the vocabulary are sorted.
+   *   - Second, the `Example`s for every label are sorted by the order in
+   *     which they are added to this `Dataset`.
    *
    * @returns A `SerializedDataset` object amenable to transmission and storage.
    */
   serialize(): SerializedExamples {
-    // TOOD(cais): Implement serialization.
-    throw new Error('Dataset.serialize() is not implemented yet.');
+    const vocab = this.getVocabulary();
+    tf.util.assert(!this.empty(), `Cannot serialize empty Dataset`);
+
+    const manifest: ExampleSpec[] = [];
+    const buffers: ArrayBuffer[] = [];
+    for (const label of vocab) {
+      const ids = this.label2Ids[label];
+      for (const id of ids) {
+        const artifact = serializeExample(this.examples[id]);
+        manifest.push(artifact.spec);
+        buffers.push(artifact.data);
+      }
+    }
+    return {
+      manifest: JSON.stringify(manifest),
+      data: concatenateArrayBuffers(buffers)
+    };
   }
+}
+
+/** Serialize an `Example`. */
+export function serializeExample(example: Example):
+    {spec: ExampleSpec, data: ArrayBuffer} {
+  const hasRawAudio = example.rawAudio != null;
+  const spec: ExampleSpec = {
+    label: example.label,
+    spectrogramNumFrames:
+        example.spectrogram.data.length / example.spectrogram.frameSize,
+    spectrogramFrameSize: example.spectrogram.frameSize,
+  };
+
+  let data = example.spectrogram.data.buffer.slice(0);
+  if (hasRawAudio) {
+    spec.rawAudioNumSamples = example.rawAudio.data.length;
+    spec.rawAudioSampleRateHz = example.rawAudio.sampleRateHz;
+
+    // Account for the fact that the data are all float32.
+    data = concatenateArrayBuffers([data, example.rawAudio.data.buffer]);
+  }
+  return {spec, data};
+}
+
+/** Deserialize an `Example`. */
+export function deserializeExample(
+    artifact: {spec: ExampleSpec, data: ArrayBuffer}): Example {
+  const spectrogram: SpectrogramData = {
+    frameSize: artifact.spec.spectrogramFrameSize,
+    data: new Float32Array(artifact.data.slice(
+        0,
+        4 * artifact.spec.spectrogramFrameSize *
+            artifact.spec.spectrogramNumFrames))
+  };
+  const ex: Example = {label: artifact.spec.label, spectrogram};
+  if (artifact.spec.rawAudioNumSamples != null) {
+    ex.rawAudio = {
+      sampleRateHz: artifact.spec.rawAudioSampleRateHz,
+      data: new Float32Array(artifact.data.slice(
+          4 * artifact.spec.spectrogramFrameSize *
+          artifact.spec.spectrogramNumFrames))
+    };
+  }
+  return ex;
+}
+
+/**
+ * Concatenate a number of ArrayBuffers into one.
+ *
+ * @param buffers A number of array buffers to concatenate.
+ * @returns Result of concatenating `buffers` in order.
+ */
+function concatenateArrayBuffers(buffers: ArrayBuffer[]): ArrayBuffer {
+  let totalByteLength = 0;
+  buffers.forEach((buffer: ArrayBuffer) => {
+    totalByteLength += buffer.byteLength;
+  });
+
+  const temp = new Uint8Array(totalByteLength);
+  let offset = 0;
+  buffers.forEach((buffer: ArrayBuffer) => {
+    temp.set(new Uint8Array(buffer), offset);
+    offset += buffer.byteLength;
+  });
+  return temp.buffer;
 }

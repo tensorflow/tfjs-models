@@ -16,11 +16,12 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
+
 import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
 import {loadMetadataJson, normalize} from './browser_fft_utils';
 import {Dataset} from './dataset';
 import {balancedTrainValSplit} from './training_utils';
-import {RecognizeConfig, RecognizerCallback, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
+import {RecognizeConfig, RecognizerCallback, RecognizerParams, SerializedExamples, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer, Example} from './types';
 import {version} from './version';
 
 export const BACKGROUND_NOISE_TAG = '_background_noise_';
@@ -681,6 +682,46 @@ class TransferBrowserFftSpeechCommandRecognizer extends
   }
 
   /**
+   * Get examples currently held by the transfer-learning recognizer.
+   *
+   * @param label Label requested.
+   * @returns An array of `Example`s, along with their UIDs.
+   */
+  getExamples(label: string): Array<{uid: string, example: Example}> {
+    return this.dataset.getExamples(label);
+  }
+
+  /**
+   * Load an array of serialized examples.
+   *
+   * @param examples The examples in their serialized form.
+   * @param clearExisting Whether to clear the existing examples while
+   *   performing the loading (default: false).
+   */
+  loadExamples(examples: SerializedExamples, clearExisting = false):
+      void {
+    const incomingDataset = new Dataset(examples);
+    if (clearExisting) {
+      this.clearExamples();
+    }
+
+    const incomingVocab = incomingDataset.getVocabulary();
+    for (const label of incomingVocab) {
+      const examples = incomingDataset.getExamples(label);
+      for (const example of examples) {
+        this.dataset.addExample(example.example);
+      }
+    }
+
+    this.collateTransferWords();
+  }
+
+  /** Serialize the existing examples. */
+  serializeExamples(): SerializedExamples {
+    return this.dataset.serialize();
+  }
+
+  /**
    * Collect the vocabulary of this transfer-learned recognizer.
    *
    * The words are put in an alphabetically sorted order.
@@ -699,11 +740,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
    */
   private collectTransferDataAsTensors(modelName?: string):
       {xs: tf.Tensor, ys: tf.Tensor} {
-    const out =  this.dataset.getSpectrogramsAsTensors();
-    return {
-      xs: out.xs,
-      ys: out.ys as tf.Tensor
-    };
+    const out = this.dataset.getSpectrogramsAsTensors();
+    return {xs: out.xs, ys: out.ys as tf.Tensor};
   }
 
   /**

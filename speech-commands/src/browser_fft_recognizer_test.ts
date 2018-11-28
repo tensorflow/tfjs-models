@@ -1034,5 +1034,107 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
         .toThrowError(/Invalid vocabulary name.*\'nonsensical_vocab\'/);
   });
 
+  it('getExamples()', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    await transfer.collectExample('bar');
+    await transfer.collectExample('foo');
+    await transfer.collectExample('bar');
+    const barOut = transfer.getExamples('bar');
+    expect(barOut.length).toEqual(2);
+    expect(barOut[0].uid).toMatch(/^([0-9a-f]+\-)+[0-9a-f]+$/);
+    expect(barOut[0].example.label).toEqual('bar');
+    expect(barOut[1].uid).toMatch(/^([0-9a-f]+\-)+[0-9a-f]+$/);
+    expect(barOut[1].example.label).toEqual('bar');
+    const fooOut = transfer.getExamples('foo');
+    expect(fooOut.length).toEqual(1);
+    expect(fooOut[0].uid).toMatch(/^([0-9a-f]+\-)+[0-9a-f]+$/);
+    expect(fooOut[0].example.label).toEqual('foo');
+  });
+
+  it('serializeExamples', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    await transfer.collectExample('bar');
+    await transfer.collectExample('foo');
+    await transfer.collectExample('bar');
+    const artifacts = transfer.serializeExamples();
+    const manifest = JSON.parse(artifacts.manifest);
+
+    // The examples are sorted alphabetically by their label.
+    expect(manifest).toEqual([{
+      label: 'bar',
+      spectrogramNumFrames: fakeNumFrames,
+      spectrogramFrameSize: fakeColumnTruncateLength
+    }, {
+      label: 'bar',
+      spectrogramNumFrames: fakeNumFrames,
+      spectrogramFrameSize: fakeColumnTruncateLength
+    }, {
+      label: 'foo',
+      spectrogramNumFrames: fakeNumFrames,
+      spectrogramFrameSize: fakeColumnTruncateLength
+    }]);
+    expect(artifacts.data.byteLength).toEqual(
+        fakeNumFrames * fakeColumnTruncateLength * 4 * 3);
+  });
+
+  it('serializeExamples fails on empty data', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    expect(() => transfer.serializeExamples()).toThrow();
+  });
+
+  it('loadExapmles, from empty state', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer1 = base.createTransfer('xfer1');
+    await transfer1.collectExample('foo');
+    await transfer1.collectExample('bar');
+    const transfer2 = base.createTransfer('xfer2');
+    transfer2.loadExamples(transfer1.serializeExamples());
+
+    expect(transfer2.countExamples()).toEqual({'bar': 1, 'foo': 1});
+
+    // Assert that transfer2 can continue to collect new examples.
+    await transfer2.collectExample('qux');
+    expect(transfer2.countExamples()).toEqual({'bar': 1, 'foo': 1, 'qux': 1});
+  });
+
+  it('loadExapmles, from nonempty state, clearExisting = false', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer1 = base.createTransfer('xfer1');
+    await transfer1.collectExample('foo');
+    await transfer1.collectExample('bar');
+    const transfer2 = base.createTransfer('xfer2');
+    await transfer2.collectExample('qux');
+    transfer2.loadExamples(transfer1.serializeExamples());
+
+    expect(transfer2.countExamples()).toEqual({'bar': 1, 'foo': 1, 'qux': 1});
+  });
+
+  it('loadExapmles, from nonempty state, clearExisting = true', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer1 = base.createTransfer('xfer1');
+    await transfer1.collectExample('foo');
+    await transfer1.collectExample('bar');
+    const transfer2 = base.createTransfer('xfer2');
+    await transfer2.collectExample('qux');
+    transfer2.loadExamples(transfer1.serializeExamples(), true);
+
+    expect(transfer2.countExamples()).toEqual({'bar': 1, 'foo': 1});
+  });
+
   // TODO(cais): Add tests for saving and loading of transfer-learned models.
 });

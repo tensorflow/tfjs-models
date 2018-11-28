@@ -167,6 +167,26 @@ export interface TransferSpeechCommandRecognizer extends
    */
   train(config?: TransferLearnConfig):
       Promise<tf.History|[tf.History, tf.History]>;
+
+  /**
+   * Get examples currently held by the transfer-learning recognizer.
+   *
+   * @param label Label requested.
+   * @returns An array of `Example`s, along with their UIDs.
+   */
+  getExamples(label: string): Array<{uid: string, example: Example}>;
+
+  /**
+   * Load an array of serialized examples.
+   *
+   * @param examples The examples in their serialized form.
+   * @param clearExisting Whether to clear the existing examples while
+   *   performing the loading (default: false).
+   */
+  loadExamples(examples: SerializedExamples, clearExisting?: boolean): void;
+
+  /** Serialize the existing examples. */
+  serializeExamples(): SerializedExamples;
 }
 
 /**
@@ -418,7 +438,7 @@ export interface RawAudioData {
   data: Float32Array;
 
   /** Sampling rate, in Hz. */
-  samplingRateHz: number;
+  sampleRateHz: number;
 }
 
 /**
@@ -463,7 +483,7 @@ export interface ExampleSpec {
   rawAudioNumSamples?: number;
 
   /** Sampling rate of the raw audio (if any). */
-  rawAudioSapmleRateHz?: number;
+  rawAudioSampleRateHz?: number;
 }
 
 /**
@@ -476,9 +496,9 @@ export interface ExampleSpec {
  */
 export interface SerializedExamples {
   /**
-   * Specifications of the serialized `Example`s.
+   * Specifications of the serialized `Example`s, serialized as a string.
    */
-  manifest: ExampleSpec[];
+  manifest: string;
 
   /**
    * Serialized binary data from the `Example`s.
