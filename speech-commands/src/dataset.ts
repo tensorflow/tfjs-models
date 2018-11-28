@@ -424,7 +424,7 @@ export function deserializeExample(
  *
  * @param serialized: Intemediate serialization format of a dataset.
  * @returns The binary conversion result as an ArrayBuffer.
- * */
+ */
 function serializedExamples2ArrayBuffer(serialized: SerializedExamples):
     ArrayBuffer {
   const manifestBuffer =
