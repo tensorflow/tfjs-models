@@ -18,10 +18,9 @@
 import * as tf from '@tensorflow/tfjs';
 import {expectArraysClose, expectArraysEqual} from '@tensorflow/tfjs-core/dist/test_util';
 
-import {arrayBuffer2SerializedExamples, Dataset, DATASET_SERIALIZATION_DESCRIPTOR, deserializeExample, serializeExample} from './dataset';
+import {arrayBuffer2SerializedExamples, Dataset, DATASET_SERIALIZATION_DESCRIPTOR, deserializeExample, serializeExample, DATASET_SERIALIZATION_VERSION} from './dataset';
 import {string2ArrayBuffer} from './generic_utils';
 import {Example, RawAudioData} from './types';
-import { ftruncate } from 'fs';
 
 describe('Dataset', () => {
   const FAKE_NUM_FRAMES = 4;
@@ -398,7 +397,7 @@ describe('Dataset serialization', () => {
     expectArraysEqual(exPrime.rawAudio.data, ex.rawAudio.data);
   });
 
-  fit('Dataset.serialize()', () => {
+  it('Dataset.serialize()', () => {
     const dataset = new Dataset();
     const ex1 = getRandomExample('foo', 10, 16);
     const ex2 = getRandomExample('bar', 12, 16);
@@ -419,7 +418,7 @@ describe('Dataset serialization', () => {
     expect(data.byteLength).toEqual(4 * (10 + 12 + 14 + 13) * 16);
   });
 
-  fit('Dataset serialize-deserialize round trip', () => {
+  it('Dataset serialize-deserialize round trip', () => {
     const dataset = new Dataset();
     const ex1 = getRandomExample('foo', 10, 16);
     const ex2 = getRandomExample('bar', 10, 16);
@@ -468,13 +467,13 @@ describe('Dataset serialization', () => {
         ys, tf.tensor2d([[1, 0, 0], [0, 1, 0], [0, 1, 0], [0, 0, 1]]));
   });
 
-  fit('Calling serialize() on empty dataset fails', () => {
+  it('Calling serialize() on empty dataset fails', () => {
     const dataset = new Dataset();
     expect(() => dataset.serialize())
         .toThrowError(/Cannot serialize empty Dataset/);
   });
 
-  fit('Deserialized dataset supports removeExample', () => {
+  it('Deserialized dataset supports removeExample', () => {
     const dataset = new Dataset();
     const ex1 = getRandomExample('foo', 10, 16);
     const ex2 = getRandomExample('bar', 10, 16);
@@ -496,15 +495,21 @@ describe('Dataset serialization', () => {
     expectArraysClose(ys, tf.tensor2d([[1, 0, 0], [0, 1, 0], [0, 0, 1]]));
   });
 
-  fit('Attempt to load invalid ArrayBuffer errors out', () => {
+  it('Attempt to load invalid ArrayBuffer errors out', () => {
     const invalidBuffer = string2ArrayBuffer('INVALID_[{}]0000000');
     expect(() => new Dataset(invalidBuffer))
         .toThrowError('Deserialization error: Invalid descriptor');
   });
 
-  fit('DATASET_SERIALIZATION_DESCRIPTOR has right length', () => {
+  it('DATASET_SERIALIZATION_DESCRIPTOR has right length', () => {
     expect(DATASET_SERIALIZATION_DESCRIPTOR.length).toEqual(8);
     expect(string2ArrayBuffer(DATASET_SERIALIZATION_DESCRIPTOR).byteLength)
         .toEqual(8);
+  });
+
+  it('Version number satisfies requirements', () => {
+    expect(typeof DATASET_SERIALIZATION_VERSION === 'number').toEqual(true);
+    expect(Number.isInteger(DATASET_SERIALIZATION_VERSION)).toEqual(true);
+    expect(DATASET_SERIALIZATION_VERSION).toBeGreaterThan(0);
   });
 });
