@@ -17,22 +17,13 @@
 
 import * as tf from '@tensorflow/tfjs';
 
-import {arrayBuffer2String, concatenateArrayBuffers, string2ArrayBuffer} from './generic_utils';
+import {arrayBuffer2String, concatenateArrayBuffers, getUID, string2ArrayBuffer} from './generic_utils';
 import {Example, SpectrogramData} from './types';
 
-/** Generate a pseudo-random UID. */
-function getUID(): string {
-  function s4() {
-    return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
-  }
-  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() +
-      s4() + s4();
-}
-
 // Descriptor for serialized dataset files: stands for:
-//   TensorFlow.js Speech-Commands Model.
+//   TensorFlow.js Speech-Commands Dataset.
 // DO NOT EVER CHANGE THIS!
-export const DATASET_SERIALIZATION_DESCRIPTOR = 'TFJS-SCM';
+export const DATASET_SERIALIZATION_DESCRIPTOR = 'TFJSSCDS';
 
 // A version number for the serialization. Since this needs
 // to be encoded within a length-1 Uint8 array, it must be

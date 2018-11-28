@@ -30,7 +30,7 @@ const epochsInput = document.getElementById('epochs');
 const fineTuningEpochsInput = document.getElementById('fine-tuning-epochs');
 
 const downloadFilesButton = document.getElementById('download-dataset');
-const datasetFilesInput = document.getElementById('dataset-files-input');
+const datasetFileInput = document.getElementById('dataset-file-input');
 const uploadFilesButton = document.getElementById('upload-dataset');
 
 const BACKGROUND_NOISE_TAG = '_background_noise_';
@@ -260,7 +260,7 @@ function enableAllCollectWordButtons() {
 }
 
 function disableFileUploadControls() {
-  datasetFilesInput.disabled = true;
+  datasetFileInput.disabled = true;
   uploadFilesButton.disabled = true;
 }
 
@@ -384,19 +384,12 @@ downloadFilesButton.addEventListener('click', () => {
   const basename = getDatasetFileBasename();
   const artifacts = transferRecognizer.serializeExamples();
 
-  // Trigger downloading of the manifest .json file.
-  const manifestAnchor = document.createElement('a');
-  manifestAnchor.download = `${basename}.json`;
-  manifestAnchor.href = window.URL.createObjectURL(
-      new Blob([artifacts.manifest], {type: 'application/json'}));
-  manifestAnchor.click();
-
   // Trigger downloading of the data .bin file.
-  const weightDataAnchor = document.createElement('a');
-  weightDataAnchor.download = `${basename}.bin`;
-  weightDataAnchor.href = window.URL.createObjectURL(
-      new Blob([artifacts.data], {type: 'application/octet-stream'}));
-  weightDataAnchor.click();
+  const anchor = document.createElement('a');
+  anchor.download = `${basename}.bin`;
+  anchor.href = window.URL.createObjectURL(
+      new Blob([artifacts], {type: 'application/octet-stream'}));
+  anchor.click();
 });
 
 /** Get the base name of the downloaded files based on current dataset. */
@@ -411,54 +404,40 @@ function getDatasetFileBasename() {
   if (day.lenght < 2) {
     day = `0${day}`;
   }
-  const hour = d.getHours();
-  const minute = d.getMinutes();
-  const second = d.getSeconds();
+  let hour = `${d.getHours()}`;
+  if (hour.length < 2) {
+    hour = `0${hour}`;
+  }
+  let minute = `${d.getMinutes()}`;
+  if (minute.length < 2) {
+    minute = `0${minute}`;
+  }
+  let second = `${d.getSeconds()}`;
+  if (second.length < 2) {
+    second = `0${second}`;
+  }
   return `${year}-${month}-${day}T${hour}.${minute}.${second}`;
 }
 
 uploadFilesButton.addEventListener('click', async () => {
-  const files = datasetFilesInput.files;
-  if (files.length !== 2) {
-    throw new Error('Must select exactly two files.');
+  const files = datasetFileInput.files;
+  if (files == null || files.length !== 1) {
+    throw new Error('Must select exactly one file.');
   }
-
-  let manifestFile;
-  let dataFile;
-  if (files[0].name.endsWith('.json') && files[1].name.endsWith('.bin')) {
-    manifestFile = files[0];
-    dataFile = files[1];
-  } else if (files[0].name.endsWith('.bin') && files[1].name.endsWith('.json')) {
-    manifestFile = files[1];
-    dataFile = files[0];
-  } else {
-    throw new Error('Must select a .json file and a .bin file');
-  }
-
-  const manifestReader = new FileReader();
-  manifestReader.onload = event => {
-    const manifest = event.target.result;
-
-    const dataReader = new FileReader();
-    dataReader.onload = async event => {
-      // tslint:disable-next-line:no-any
-      const data = event.target.result;
-      await loadDatasetInTransferRecognizer({manifest, data});
-    };
-    dataReader.onerror = () => console.error(
-        `Failed to binary data from file '${dataFile.name}'.`);
-    dataReader.readAsArrayBuffer(dataFile);
+  const datasetFileReader = new FileReader();
+  datasetFileReader.onload = async event => {
+    await loadDatasetInTransferRecognizer(event.target.result);
   };
-  manifestReader.onerror = () => console.error(
-      `Failed to read manifest JSON from file '${manifestFile.name}'.`);
-  manifestReader.readAsText(manifestFile);
+  datasetFileReader.onerror = () => console.error(
+      `Failed to binary data from file '${dataFile.name}'.`);
+  datasetFileReader.readAsArrayBuffer(files[0]);
 });
 
-async function loadDatasetInTransferRecognizer(artifacts) {
+async function loadDatasetInTransferRecognizer(serialized) {
   if (transferRecognizer == null) {
     transferRecognizer = recognizer.createTransfer(XFER_MODEL_NAME);
   }
-  transferRecognizer.loadExamples(artifacts);
+  transferRecognizer.loadExamples(serialized);
   const exampleCounts = transferRecognizer.countExamples();
   const transferWords = [];
   for (const label in exampleCounts) {

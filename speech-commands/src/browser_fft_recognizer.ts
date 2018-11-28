@@ -19,7 +19,7 @@ import * as tf from '@tensorflow/tfjs';
 
 import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
 import {loadMetadataJson, normalize} from './browser_fft_utils';
-import {Dataset, SerializedExamples} from './dataset';
+import {Dataset} from './dataset';
 import {balancedTrainValSplit} from './training_utils';
 import {Example, RecognizeConfig, RecognizerCallback, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
 import {version} from './version';
