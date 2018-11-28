@@ -646,7 +646,7 @@ isobject@^2.0.0:
   dependencies:
     isarray "1.0.0"
 
-jasmine-core@^3.1.0:
+jasmine-core@~3.1.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/jasmine-core/-/jasmine-core-3.1.0.tgz#a4785e135d5df65024dfc9224953df585bd2766c"
   integrity sha1-pHheE11d9lAk38kiSVPfWFvSdmw=

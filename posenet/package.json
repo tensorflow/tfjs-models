@@ -35,7 +35,7 @@
     "build": "rimraf dist && tsc && rollup -c",
     "test": "ts-node run_tests.ts",
     "publish-npm": "yarn build && npm publish",
-    "dev": "d demos && yarn watch",
+    "dev": "cd demos && yarn watch",
     "lint": "tslint -p . -t verbose"
   },
   "license": "Apache-2.0"
