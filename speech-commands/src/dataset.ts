@@ -421,6 +421,7 @@ export function deserializeExample(
   return ex;
 }
 
+/** Encode intermediate serialization format as an ArrayBuffer. */
 function serializedExamples2ArrayBuffer(serialized: SerializedExamples):
     ArrayBuffer {
   const manifestBuffer =
@@ -440,6 +441,7 @@ function serializedExamples2ArrayBuffer(serialized: SerializedExamples):
       [headerBuffer, manifestBuffer, serialized.data]);
 }
 
+/** Decode an ArrayBuffer as intermediate serialization format. */
 export function arrayBuffer2SerializedExamples(buffer: ArrayBuffer):
     SerializedExamples {
   tf.util.assert(buffer != null, 'Received null or undefined buffer');
@@ -447,18 +449,16 @@ export function arrayBuffer2SerializedExamples(buffer: ArrayBuffer):
   let offset = 0;
   const descriptor = arrayBuffer2String(
       buffer.slice(offset, DATASET_SERIALIZATION_DESCRIPTOR.length));
-  offset += DATASET_SERIALIZATION_DESCRIPTOR.length;
-  // Skip the version part for now. It may be used in the future.
-  offset += 4;
   tf.util.assert(
       descriptor === DATASET_SERIALIZATION_DESCRIPTOR,
       `Deserialization error: Invalid descriptor`);
+  offset += DATASET_SERIALIZATION_DESCRIPTOR.length;
+  // Skip the version part for now. It may be used in the future.
+  offset += 4;
 
   // Extract the length of the encoded manifest JSON as a Uint32.
   const manifestLength = new Uint32Array(buffer, offset, 1);
   offset += 4;
-  // Take into accont the descriptor, version, and JSON length at the
-  // beginning of the buffer.
   const manifestBeginByte = offset;
   offset = manifestBeginByte + manifestLength[0];
   const manifestBytes = buffer.slice(manifestBeginByte, offset);

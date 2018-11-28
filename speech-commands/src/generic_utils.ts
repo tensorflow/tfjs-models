@@ -36,6 +36,7 @@ export function concatenateArrayBuffers(buffers: ArrayBuffer[]): ArrayBuffer {
   return temp.buffer;
 }
 
+/** Encode a string as an ArrayBuffer. */
 export function string2ArrayBuffer(str: string): ArrayBuffer {
   if (str == null) {
     throw new Error('Received null or undefind string');
@@ -50,6 +51,7 @@ export function string2ArrayBuffer(str: string): ArrayBuffer {
   return buf.buffer;
 }
 
+/** Decode an ArrayBuffer as a string. */
 export function arrayBuffer2String(buffer: ArrayBuffer): string {
   if (buffer == null) {
     throw new Error('Received null or undefind buffer');

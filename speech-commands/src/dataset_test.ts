@@ -18,7 +18,7 @@
 import * as tf from '@tensorflow/tfjs';
 import {expectArraysClose, expectArraysEqual} from '@tensorflow/tfjs-core/dist/test_util';
 
-import {arrayBuffer2SerializedExamples, Dataset, DATASET_SERIALIZATION_DESCRIPTOR, deserializeExample, serializeExample, DATASET_SERIALIZATION_VERSION} from './dataset';
+import {arrayBuffer2SerializedExamples, Dataset, DATASET_SERIALIZATION_DESCRIPTOR, DATASET_SERIALIZATION_VERSION, deserializeExample, serializeExample} from './dataset';
 import {string2ArrayBuffer} from './generic_utils';
 import {Example, RawAudioData} from './types';
 
