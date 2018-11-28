@@ -352,7 +352,7 @@ describe('Dataset serialization', () => {
     return output;
   }
 
-  it('serializeExample-deserializeExapmle round trip, no raw audio', () => {
+  it('serializeExample-deserializeExample round trip, no raw audio', () => {
     const label = 'foo';
     const numFrames = 10;
     const frameSize = 16;
@@ -371,7 +371,7 @@ describe('Dataset serialization', () => {
     expectArraysEqual(exPrime.spectrogram.data, ex.spectrogram.data);
   });
 
-  it('serializeExample-deserializeExapmle round trip, with raw audio', () => {
+  it('serializeExample-deserializeExample round trip, with raw audio', () => {
     const label = 'foo';
     const numFrames = 10;
     const frameSize = 16;
