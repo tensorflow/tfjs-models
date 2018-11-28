@@ -18,7 +18,7 @@
 import * as tf from '@tensorflow/tfjs';
 import {expectArraysClose, expectArraysEqual} from '@tensorflow/tfjs-core/dist/test_util';
 
-import {Dataset, deserializeExample, serializeExample} from './dataset';
+import {arrayBuffer2SerializedExamples, Dataset, deserializeExample, serializeExample} from './dataset';
 import {Example, RawAudioData} from './types';
 
 describe('Dataset', () => {
@@ -406,8 +406,9 @@ describe('Dataset serialization', () => {
     dataset.addExample(ex2);
     dataset.addExample(ex3);
     dataset.addExample(ex4);
-    const {manifest, data} = dataset.serialize();
-    expect(JSON.parse(manifest)).toEqual([
+    const buffer = dataset.serialize();
+    const {manifest, data} = arrayBuffer2SerializedExamples(buffer);
+    expect(manifest).toEqual([
       {label: 'bar', spectrogramNumFrames: 12, spectrogramFrameSize: 16},
       {label: 'foo', spectrogramNumFrames: 10, spectrogramFrameSize: 16},
       {label: 'foo', spectrogramNumFrames: 13, spectrogramFrameSize: 16},
@@ -490,7 +491,6 @@ describe('Dataset serialization', () => {
 
     const {xs, ys} = datasetPrime.getSpectrogramsAsTensors();
     expect(xs.shape).toEqual([3, 10, 16, 1]);
-    expectArraysClose(
-        ys, tf.tensor2d([[1, 0, 0], [0, 1, 0], [0, 0, 1]]));
+    expectArraysClose(ys, tf.tensor2d([[1, 0, 0], [0, 1, 0], [0, 0, 1]]));
   });
 });

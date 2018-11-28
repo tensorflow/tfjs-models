@@ -19,9 +19,9 @@ import * as tf from '@tensorflow/tfjs';
 
 import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
 import {loadMetadataJson, normalize} from './browser_fft_utils';
-import {Dataset} from './dataset';
+import {Dataset, SerializedExamples} from './dataset';
 import {balancedTrainValSplit} from './training_utils';
-import {RecognizeConfig, RecognizerCallback, RecognizerParams, SerializedExamples, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer, Example} from './types';
+import {Example, RecognizeConfig, RecognizerCallback, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
 import {version} from './version';
 
 export const BACKGROUND_NOISE_TAG = '_background_noise_';
@@ -694,13 +694,12 @@ class TransferBrowserFftSpeechCommandRecognizer extends
   /**
    * Load an array of serialized examples.
    *
-   * @param examples The examples in their serialized form.
+   * @param serialized The examples in their serialized format.
    * @param clearExisting Whether to clear the existing examples while
    *   performing the loading (default: false).
    */
-  loadExamples(examples: SerializedExamples, clearExisting = false):
-      void {
-    const incomingDataset = new Dataset(examples);
+  loadExamples(serialized: ArrayBuffer, clearExisting = false): void {
+    const incomingDataset = new Dataset(serialized);
     if (clearExisting) {
       this.clearExamples();
     }
@@ -717,7 +716,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
   }
 
   /** Serialize the existing examples. */
-  serializeExamples(): SerializedExamples {
+  serializeExamples(): ArrayBuffer {
     return this.dataset.serialize();
   }
 

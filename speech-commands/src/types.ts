@@ -179,14 +179,14 @@ export interface TransferSpeechCommandRecognizer extends
   /**
    * Load an array of serialized examples.
    *
-   * @param examples The examples in their serialized form.
+   * @param serialized The examples in their serialized format.
    * @param clearExisting Whether to clear the existing examples while
    *   performing the loading (default: false).
    */
-  loadExamples(examples: SerializedExamples, clearExisting?: boolean): void;
+  loadExamples(serialized: ArrayBuffer, clearExisting?: boolean): void;
 
   /** Serialize the existing examples. */
-  serializeExamples(): SerializedExamples;
+  serializeExamples(): ArrayBuffer;
 }
 
 /**
@@ -462,56 +462,4 @@ export interface Example {
    * Optional.
    */
   rawAudio?: RawAudioData;
-}
-
-/**
- * Specification for an `Example` (see above).
- *
- * Used for serialization of `Example`.
- */
-export interface ExampleSpec {
-  /** A label for the example. */
-  label: string;
-
-  /** Number of frames in the spectrogram. */
-  spectrogramNumFrames: number;
-
-  /** The length of each frame in the spectrogram. */
-  spectrogramFrameSize: number;
-
-  /** Number of samples in the raw PCM-format audio (if any). */
-  rawAudioNumSamples?: number;
-
-  /** Sampling rate of the raw audio (if any). */
-  rawAudioSampleRateHz?: number;
-}
-
-/**
- * Serialized Dataset, containing a number `Example`s in their
- * serialized format.
- *
- * This format consists of a plain-old JSON object as the manifest,
- * along with a flattened binary ArrayBuffer. The format facilitates
- * storage and transmission.
- */
-export interface SerializedExamples {
-  /**
-   * Specifications of the serialized `Example`s, serialized as a string.
-   */
-  manifest: string;
-
-  /**
-   * Serialized binary data from the `Example`s.
-   *
-   * Including the spectrograms and the raw audio (if any).
-   *
-   * For example, assuming `manifest.length` is `N`, the format of the
-   * `ArrayBuffer` is as follows:
-   *
-   *   [spectrogramData1, rawAudio1 (if any),
-   *    spectrogramData2, rawAudio2 (if any),
-   *    ...
-   *    spectrogramDataN, rawAudioN (if any)]
-   */
-  data: ArrayBuffer;
 }
