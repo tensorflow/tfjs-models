@@ -412,17 +412,25 @@ export function deserializeExample(
   return ex;
 }
 
-/** Encode intermediate serialization format as an ArrayBuffer. */
+/** 
+ * Encode intermediate serialization format as an ArrayBuffer. 
+ *
+ * Format of the binary ArrayBuffer:
+ *   1. An 8-byte descriptor (see above).
+ *   2. A 4-byte version number as Uint32.
+ *   3. A 4-byte number for the byte length of the JSON manifest.
+ *   4. The encoded JSON manifest
+ *   5. The binary data of the spectrograms, and raw audio (if any).
+ *
+ * @param serialized: Intemediate serialization format of a dataset.
+ * @returns The binary conversion result as an ArrayBuffer.
+ * */
 function serializedExamples2ArrayBuffer(serialized: SerializedExamples):
     ArrayBuffer {
   const manifestBuffer =
       string2ArrayBuffer(JSON.stringify(serialized.manifest));
 
   const descriptorBuffer = string2ArrayBuffer(DATASET_SERIALIZATION_DESCRIPTOR);
-  // Header buffer contains:
-  //   1. A 1-byte field for serialization version.
-  //   2. A 4-byte (length-1 Uint32Array) field for length of the encoded
-  //      manifest JSON.
   const version = new Uint32Array([DATASET_SERIALIZATION_VERSION]);
   const manifestLength = new Uint32Array([manifestBuffer.byteLength]);
   const headerBuffer = concatenateArrayBuffers(
