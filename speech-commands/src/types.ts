@@ -169,6 +169,14 @@ export interface TransferSpeechCommandRecognizer extends
       Promise<tf.History|[tf.History, tf.History]>;
 
   /**
+   * Get examples currently held by the transfer-learning recognizer.
+   *
+   * @param label Label requested.
+   * @returns An array of `Example`s, along with their UIDs.
+   */
+  getExamples(label: string): Array<{uid: string, example: Example}>;
+
+  /**
    * Load an array of serialized examples.
    *
    * @param examples The examples in their serialized form.

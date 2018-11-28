@@ -401,18 +401,20 @@ downloadFilesButton.addEventListener('click', () => {
 
 /** Get the base name of the downloaded files based on current dataset. */
 function getDatasetFileBasename() {
-  if (transferRecognizer == null) {
-    throw new Error('Transfer model is unset.');
+  const d = new Date();
+  const year = `${d.getFullYear()}`;
+  let month = `${d.getMonth() + 1}`;
+  let day = `${d.getDate()}`;
+  if (month.length < 2) {
+    month = `0${month}`;
   }
-  const items = [];
-  const exampleCounts = transferRecognizer.countExamples();
-  const labels = Object.keys(exampleCounts);
-  labels.sort();
-  for (const label of labels) {
-    const count = exampleCounts[label];
-    items.push(`${count}${label}`);
+  if (day.lenght < 2) {
+    day = `0${day}`;
   }
-  return items.join('-');
+  const hour = d.getHours();
+  const minute = d.getMinutes();
+  const second = d.getSeconds();
+  return `${year}-${month}-${day}T${hour}.${minute}.${second}`;
 }
 
 uploadFilesButton.addEventListener('click', async () => {

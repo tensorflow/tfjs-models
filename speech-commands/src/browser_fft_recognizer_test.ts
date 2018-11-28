@@ -1034,6 +1034,26 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
         .toThrowError(/Invalid vocabulary name.*\'nonsensical_vocab\'/);
   });
 
+  it('getExamples()', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    await transfer.collectExample('bar');
+    await transfer.collectExample('foo');
+    await transfer.collectExample('bar');
+    const barOut = transfer.getExamples('bar');
+    expect(barOut.length).toEqual(2);
+    expect(barOut[0].uid).toMatch(/^([0-9a-f]+\-)+[0-9a-f]+$/);
+    expect(barOut[0].example.label).toEqual('bar');
+    expect(barOut[1].uid).toMatch(/^([0-9a-f]+\-)+[0-9a-f]+$/);
+    expect(barOut[1].example.label).toEqual('bar');
+    const fooOut = transfer.getExamples('foo');
+    expect(fooOut.length).toEqual(1);
+    expect(fooOut[0].uid).toMatch(/^([0-9a-f]+\-)+[0-9a-f]+$/);
+    expect(fooOut[0].example.label).toEqual('foo');
+  });
+
   it('serializeExamples', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();

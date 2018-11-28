@@ -681,6 +681,12 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     return this.dataset.getExampleCounts();
   }
 
+  /**
+   * Get examples currently held by the transfer-learning recognizer.
+   *
+   * @param label Label requested.
+   * @returns An array of `Example`s, along with their UIDs.
+   */
   getExamples(label: string): Array<{uid: string, example: Example}> {
     return this.dataset.getExamples(label);
   }
