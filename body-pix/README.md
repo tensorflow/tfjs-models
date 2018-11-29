@@ -2,7 +2,7 @@
 
 This package contains a standalone model called BodyPix, as well as some demos, for running real-time person and body part segmentation in the browser using TensorFlow.js.
 
-[Try the demo here!](https://storage.googleapis.com/tfjs-models/demos/body-pix/camera.html)
+[Try the demo here!](https://storage.googleapis.com/tfjs-models/demos/body-pix/index.html)
 
 ![BodyPix](body-pix.gif)
 
