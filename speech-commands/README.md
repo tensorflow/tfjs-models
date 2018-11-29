@@ -240,7 +240,7 @@ await transferRecognizer.train({
   epochs: 25,
   callback: {
     onEpochEnd: async (epoch, logs) => {
-      console.log(`Epoch ${epochs}: loss=${logs.loss}, accuracy=${logs.acc}`);
+      console.log(`Epoch ${epoch}: loss=${logs.loss}, accuracy=${logs.acc}`);
     }
   }
 });
