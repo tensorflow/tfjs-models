@@ -21,7 +21,7 @@ import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_ext
 import {loadMetadataJson, normalize} from './browser_fft_utils';
 import {Dataset} from './dataset';
 import {balancedTrainValSplit} from './training_utils';
-import {Example, RecognizeConfig, RecognizerCallback, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
+import {Example, RecognizeConfig, RecognizerCallback, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer, ExampleCollectionOptions} from './types';
 import {version} from './version';
 
 export const BACKGROUND_NOISE_TAG = '_background_noise_';
@@ -606,11 +606,13 @@ class TransferBrowserFftSpeechCommandRecognizer extends
    *
    * @param {string} word Name of the word. Must not overlap with any of the
    *   words the base model is trained to recognize.
+   * @param {ExampleCollectionOptions}
    * @returns {SpectrogramData} The spectrogram of the acquired the example.
    * @throws Error, if word belongs to the set of words the base model is
    *   trained to recognize.
    */
-  async collectExample(word: string): Promise<SpectrogramData> {
+  async collectExample(word: string, options?: ExampleCollectionOptions):
+      Promise<SpectrogramData> {
     tf.util.assert(
         !streaming,
         'Cannot start collection of transfer-learning example because ' +
@@ -620,6 +622,16 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         word != null && typeof word === 'string' && word.length > 0,
         `Must provide a non-empty string when collecting transfer-` +
             `learning example`);
+
+    if (options == null) {
+      options = {};
+    }
+    const durationMultiplier =
+        options.durationMultiplier == null ? 1 : options.durationMultiplier;
+    tf.util.assert(
+        durationMultiplier >= 1,
+        `Expected duration multiplier to be >= 1, ` +
+        `but got ${durationMultiplier}`);
 
     streaming = true;
     return new Promise<SpectrogramData>(resolve => {
@@ -644,7 +656,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       };
       this.audioDataExtractor = new BrowserFftFeatureExtractor({
         sampleRateHz: this.parameters.sampleRateHz,
-        numFramesPerSpectrogram: this.nonBatchInputShape[0],
+        numFramesPerSpectrogram:
+            Math.round(this.nonBatchInputShape[0] * durationMultiplier),
         columnTruncateLength: this.nonBatchInputShape[1],
         suppressionTimeMillis: 0,
         spectrogramCallback,

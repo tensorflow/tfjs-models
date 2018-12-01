@@ -114,6 +114,21 @@ export interface SpeechCommandRecognizer {
   createTransfer(name: string): TransferSpeechCommandRecognizer;
 }
 
+export interface ExampleCollectionOptions {
+  /**
+   * Multiplier for the duration.
+   *
+   * This is the ratio between the duration of the to-be-collected
+   * example and the duration of each input example accepted by the
+   * underlying convnet.
+   *
+   * If not provided, will default to 1.
+   *
+   * Must be a number >=1.
+   */
+  durationMultiplier?: number;
+}
+
 /**
  * Interface for a transfer-learning speech command recognizer.
  *
@@ -133,7 +148,8 @@ export interface TransferSpeechCommandRecognizer extends
    * @throws Error, if word belongs to the set of words the base model is
    *   trained to recognize.
    */
-  collectExample(word: string): Promise<SpectrogramData>;
+  collectExample(word: string, options?: ExampleCollectionOptions):
+      Promise<SpectrogramData>;
 
   /**
    * Clear all transfer learning examples collected so far.
