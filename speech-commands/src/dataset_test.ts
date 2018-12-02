@@ -18,7 +18,7 @@
 import * as tf from '@tensorflow/tfjs';
 import {expectArraysClose, expectArraysEqual} from '@tensorflow/tfjs-core/dist/test_util';
 
-import {arrayBuffer2SerializedExamples, Dataset, DATASET_SERIALIZATION_DESCRIPTOR, DATASET_SERIALIZATION_VERSION, deserializeExample, getValidWindows, serializeExample, spectrogram2IntensityCurve, getMaxIntensityFrameIndex} from './dataset';
+import {arrayBuffer2SerializedExamples, Dataset, DATASET_SERIALIZATION_DESCRIPTOR, DATASET_SERIALIZATION_VERSION, deserializeExample, getMaxIntensityFrameIndex, getValidWindows, serializeExample, spectrogram2IntensityCurve} from './dataset';
 import {string2ArrayBuffer} from './generic_utils';
 import {Example, RawAudioData, SpectrogramData} from './types';
 
@@ -26,15 +26,19 @@ describe('Dataset', () => {
   const FAKE_NUM_FRAMES = 4;
   const FAKE_FRAME_SIZE = 16;
 
-  function getRandomExample(label: string): Example {
-    const spectrogramData = [];
-    for (let i = 0; i < FAKE_NUM_FRAMES * FAKE_FRAME_SIZE; ++i) {
-      spectrogramData.push(Math.random());
+  function getRandomExample(
+      label: string, numFrames = FAKE_NUM_FRAMES, frameSize = FAKE_FRAME_SIZE,
+      spectrogramData?: number[]): Example {
+    if (spectrogramData == null) {
+      spectrogramData = [];
+      let counter = 0;
+      for (let i = 0; i < numFrames * frameSize; ++i) {
+        spectrogramData.push(counter++);
+      }
     }
     return {
       label,
-      spectrogram:
-          {data: new Float32Array(spectrogramData), frameSize: FAKE_FRAME_SIZE}
+      spectrogram: {data: new Float32Array(spectrogramData), frameSize}
     };
   }
 
@@ -325,6 +329,50 @@ describe('Dataset', () => {
     expect(() => dataset.getSpectrogramsAsTensors())
         .toThrowError(/Cannot get spectrograms as tensors because.*empty/);
   });
+
+  fit('Ragged example lengths and one window per example', () => {
+    const dataset = new Dataset();
+    dataset.addExample(getRandomExample('foo', 5));
+    dataset.addExample(getRandomExample('bar', 6));
+    dataset.addExample(getRandomExample('foo', 7));
+
+    const {xs, ys} =
+        dataset.getSpectrogramsAsTensors(null, {numFrames: 5, hopFrames: 5});
+    expect(xs.shape).toEqual([3, 5, FAKE_FRAME_SIZE, 1]);
+    expectArraysClose(ys, tf.tensor2d([[1, 0], [0, 1], [0, 1]]));
+  });
+
+  fit('Ragged example lengths and multiple windows per example', () => {
+    console.log('=== BEGIN ===');  // DEBUG
+    const dataset = new Dataset();
+    dataset.addExample(getRandomExample(
+        'foo', 6, 2, [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
+    dataset.addExample(
+        getRandomExample('bar', 5, 2, [1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
+
+    const {xs, ys} =
+        dataset.getSpectrogramsAsTensors(null, {numFrames: 3, hopFrames: 1});
+    const windows = tf.unstack(xs);
+
+    // console.log(xs.shape);  // DEBUG
+    expect(windows.length).toEqual(6);
+    expectArraysClose(windows[0], tf.tensor3d([1, 1, 2, 2, 3, 3], [3, 2, 1]));
+    expectArraysClose(windows[1], tf.tensor3d([2, 2, 3, 3, 2, 2], [3, 2, 1]));
+    expectArraysClose(windows[2], tf.tensor3d([3, 3, 2, 2, 1, 1], [3, 2, 1]));
+    expectArraysClose(
+        windows[3], tf.tensor3d([10, 10, 20, 20, 30, 30], [3, 2, 1]));
+    expectArraysClose(
+        windows[4], tf.tensor3d([20, 20, 30, 30, 20, 20], [3, 2, 1]));
+    expectArraysClose(
+        windows[5], tf.tensor3d([30, 30, 20, 20, 10, 10], [3, 2, 1]));
+    expectArraysClose(
+        ys, tf.tensor2d([[1, 0], [1, 0], [1, 0], [0, 1], [0, 1], [0, 1]]));
+  });
+
+  // TODO(cais): numFrames exceeds shortest length.
+  // TODO(cais): Uniform example length, short numFrames)
+  // TODO(cais): Ragged example lengths and no numFrames leads to Error.
+  // TODO(cais): Ragged example lengths and no hopFrames leads to Error.
 });
 
 describe('Dataset serialization', () => {
@@ -633,7 +681,7 @@ describe('getValidWindows', () => {
         .toEqual([[0, 10], [2, 12]]);
     focusIndex = 8;
     expect(getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
-        .toEqual([[1, 11]]);
+        .toEqual([[0, 10], [2, 12]]);
     focusIndex = 9;
     expect(getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
         .toEqual([[0, 10], [2, 12]]);
@@ -728,10 +776,8 @@ describe('getValidWindows', () => {
 describe('spectrogram2IntensityCurve', () => {
   it('Correctness', () => {
     const x = tf.tensor2d([[1, 2], [3, 4], [5, 6]]);
-    const spectrogram: SpectrogramData = {
-      data: x.dataSync() as Float32Array,
-      frameSize: 2
-    };
+    const spectrogram:
+        SpectrogramData = {data: x.dataSync() as Float32Array, frameSize: 2};
     const intensityCurve = spectrogram2IntensityCurve(spectrogram);
     expectArraysClose(intensityCurve, tf.tensor1d([1.5, 3.5, 5.5]));
   });
@@ -740,20 +786,16 @@ describe('spectrogram2IntensityCurve', () => {
 describe('getMaxIntensityFrameIndex', () => {
   it('Multiple frames', () => {
     const x = tf.tensor2d([[1, 2], [11, 12], [3, 4], [51, 52], [5, 6]]);
-    const spectrogram: SpectrogramData = {
-      data: x.dataSync() as Float32Array,
-      frameSize: 2
-    };
+    const spectrogram:
+        SpectrogramData = {data: x.dataSync() as Float32Array, frameSize: 2};
     const maxIntensityFrameIndex = getMaxIntensityFrameIndex(spectrogram);
     expectArraysClose(maxIntensityFrameIndex, tf.scalar(3, 'int32'));
   });
 
   it('Only one frames', () => {
     const x = tf.tensor2d([[11, 12]]);
-    const spectrogram: SpectrogramData = {
-      data: x.dataSync() as Float32Array,
-      frameSize: 2
-    };
+    const spectrogram:
+        SpectrogramData = {data: x.dataSync() as Float32Array, frameSize: 2};
     const maxIntensityFrameIndex = getMaxIntensityFrameIndex(spectrogram);
     expectArraysClose(maxIntensityFrameIndex, tf.scalar(0, 'int32'));
   });
@@ -764,7 +806,7 @@ describe('getMaxIntensityFrameIndex', () => {
     const windowHop = 20;
     const windows =
         getValidWindows(snippetLength, null, windowLength, windowHop);
-    expect(windows).toEqual([[0, 40],  [20, 60], [40, 80], [60, 100]]);
+    expect(windows).toEqual([[0, 40], [20, 60], [40, 80], [60, 100]]);
   });
 
   it('No focus frame: return one window', () => {
