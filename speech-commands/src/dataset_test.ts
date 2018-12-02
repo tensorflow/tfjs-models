@@ -18,9 +18,9 @@
 import * as tf from '@tensorflow/tfjs';
 import {expectArraysClose, expectArraysEqual} from '@tensorflow/tfjs-core/dist/test_util';
 
-import {arrayBuffer2SerializedExamples, Dataset, DATASET_SERIALIZATION_DESCRIPTOR, DATASET_SERIALIZATION_VERSION, deserializeExample, getValidWindows, serializeExample} from './dataset';
+import {arrayBuffer2SerializedExamples, Dataset, DATASET_SERIALIZATION_DESCRIPTOR, DATASET_SERIALIZATION_VERSION, deserializeExample, getValidWindows, serializeExample, spectrogram2IntensityCurve, getMaxIntensityFrameIndex} from './dataset';
 import {string2ArrayBuffer} from './generic_utils';
-import {Example, RawAudioData} from './types';
+import {Example, RawAudioData, SpectrogramData} from './types';
 
 describe('Dataset', () => {
   const FAKE_NUM_FRAMES = 4;
@@ -722,5 +722,29 @@ describe('getValidWindows', () => {
         () =>
             getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
         .toThrow();
+  });
+});
+
+describe('spectrogram2IntensityCurvev', () => {
+  it('Correctness', () => {
+    const x = tf.tensor2d([[1, 2], [3, 4], [5, 6]]);
+    const spectrogram: SpectrogramData = {
+      data: x.dataSync() as Float32Array,
+      frameSize: 2
+    };
+    const intensityCurve = spectrogram2IntensityCurve(spectrogram);
+    expectArraysClose(intensityCurve, tf.tensor1d([1.5, 3.5, 5.5]));
+  });
+});
+
+describe('getMaxIntensityFrameIndex', () => {
+  it('Multiple frames', () => {
+    const x = tf.tensor2d([[1, 2], [11, 12], [3, 4], [51, 52], [5, 6]]);
+    const spectrogram: SpectrogramData = {
+      data: x.dataSync() as Float32Array,
+      frameSize: 2
+    };
+    const maxIntensityFrameIndex = getMaxIntensityFrameIndex(spectrogram);
+    expectArraysClose(maxIntensityFrameIndex, tf.scalar(3, 'int32'));
   });
 });

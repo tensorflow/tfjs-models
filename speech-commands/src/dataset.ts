@@ -527,3 +527,26 @@ export function getValidWindows(
   }
   return windows;
 }
+
+/**
+ * TODO(cais): Doc string. DO NOT SUBMIT.
+ * @param spectrogram
+ * @returns
+ */
+export function spectrogram2IntensityCurve(spectrogram: SpectrogramData):
+    tf.Tensor {
+  return tf.tidy(() => {
+    const numFrames = spectrogram.data.length / spectrogram.frameSize;
+    const x = tf.tensor2d(spectrogram.data, [numFrames, spectrogram.frameSize]);
+    return x.mean(-1);
+  });
+}
+
+/**
+ * TODO(cais): Doc string. DO NOT SUBMIT.
+ * @param spectrogram
+ * @returns
+ */
+export function getMaxIntensityFrameIndex(spectrogram: SpectrogramData): tf.Scalar {
+  return tf.tidy(() => spectrogram2IntensityCurve(spectrogram).argMax());
+}
