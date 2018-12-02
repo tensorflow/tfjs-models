@@ -499,7 +499,7 @@ export function getValidWindows(
       `focusIndex (${focusIndex}) equals or exceeds snippetLength ` +
           `(${snippetLength})`);
 
-  if (windowLength == snippetLength) {
+  if (windowLength === snippetLength) {
     return [[0, snippetLength]];
   }
 
