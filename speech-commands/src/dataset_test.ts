@@ -747,4 +747,14 @@ describe('getMaxIntensityFrameIndex', () => {
     const maxIntensityFrameIndex = getMaxIntensityFrameIndex(spectrogram);
     expectArraysClose(maxIntensityFrameIndex, tf.scalar(3, 'int32'));
   });
+
+  it('Only one frames', () => {
+    const x = tf.tensor2d([[11, 12]]);
+    const spectrogram: SpectrogramData = {
+      data: x.dataSync() as Float32Array,
+      frameSize: 2
+    };
+    const maxIntensityFrameIndex = getMaxIntensityFrameIndex(spectrogram);
+    expectArraysClose(maxIntensityFrameIndex, tf.scalar(0, 'int32'));
+  });
 });

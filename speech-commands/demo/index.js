@@ -151,22 +151,29 @@ function scrollToPageBottom() {
 async function addExample(wordDiv, word, spectrogram) {
   if (spectrogram == null) {
     // Collect an example online.
-    spectrogram = await transferRecognizer.collectExample(word);
+    spectrogram = await transferRecognizer.collectExample(word, {
+      durationMultiplier: 2
+    });
   }
 
   const exampleCanvas = document.createElement('canvas');
   exampleCanvas.style['display'] = 'inline-block';
   exampleCanvas.style['vertical-align'] = 'middle';
-  exampleCanvas.style['height'] = '60px';
-  exampleCanvas.style['width'] = '80px';
+  exampleCanvas.height = 60;
+  exampleCanvas.width = 80;
   exampleCanvas.style['padding'] = '3px';
   if (wordDiv.children.length > 1) {
     wordDiv.removeChild(wordDiv.children[wordDiv.children.length - 1]);
   }
   wordDiv.appendChild(exampleCanvas);
-  plotSpectrogram(
+
+  const modelNumFrames = recognizer.modelInputShape()[1];
+  await plotSpectrogram(
       exampleCanvas, spectrogram.data, spectrogram.frameSize,
-      spectrogram.frameSize);
+      spectrogram.frameSize, {
+        pixelsPerFrame: exampleCanvas.width / modelNumFrames,
+        markMaxIntensityFrame: true
+      });
 
   const button = wordDiv.children[0];
   const displayWord = word === BACKGROUND_NOISE_TAG ? 'noise' : word;
