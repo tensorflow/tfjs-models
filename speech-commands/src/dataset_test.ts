@@ -725,7 +725,7 @@ describe('getValidWindows', () => {
   });
 });
 
-describe('spectrogram2IntensityCurvev', () => {
+describe('spectrogram2IntensityCurve', () => {
   it('Correctness', () => {
     const x = tf.tensor2d([[1, 2], [3, 4], [5, 6]]);
     const spectrogram: SpectrogramData = {
