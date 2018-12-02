@@ -330,7 +330,7 @@ describe('Dataset', () => {
         .toThrowError(/Cannot get spectrograms as tensors because.*empty/);
   });
 
-  fit('Ragged example lengths and one window per example', () => {
+  it('Ragged example lengths and one window per example', () => {
     const dataset = new Dataset();
     dataset.addExample(getRandomExample('foo', 5));
     dataset.addExample(getRandomExample('bar', 6));
@@ -342,7 +342,19 @@ describe('Dataset', () => {
     expectArraysClose(ys, tf.tensor2d([[1, 0], [0, 1], [0, 1]]));
   });
 
-  fit('Ragged example lengths and multiple windows per example', () => {
+  it('Ragged example lengths and one window per example, with label', () => {
+    const dataset = new Dataset();
+    dataset.addExample(getRandomExample('foo', 5));
+    dataset.addExample(getRandomExample('bar', 6));
+    dataset.addExample(getRandomExample('foo', 7));
+
+    const {xs, ys} =
+        dataset.getSpectrogramsAsTensors('foo', {numFrames: 5, hopFrames: 5});
+    expect(xs.shape).toEqual([2, 5, FAKE_FRAME_SIZE, 1]);
+    expect(ys).toBeUndefined();
+  });
+
+  it('Ragged example lengths and multiple windows per example', () => {
     const dataset = new Dataset();
     dataset.addExample(getRandomExample(
         'foo', 6, 2, [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
@@ -367,7 +379,7 @@ describe('Dataset', () => {
         ys, tf.tensor2d([[1, 0], [1, 0], [1, 0], [0, 1], [0, 1], [0, 1]]));
   });
 
-  fit('Uniform example lengths and multiple windows per example', () => {
+  it('Uniform example lengths and multiple windows per example', () => {
     const dataset = new Dataset();
     dataset.addExample(getRandomExample(
         'foo', 6, 2, [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
@@ -391,7 +403,7 @@ describe('Dataset', () => {
     expectArraysClose(ys, tf.tensor2d([[1, 0], [1, 0], [0, 1], [0, 1]]));
   });
 
-  fit('numFrames exceeding minmum example length leads to Error', () => {
+  it('numFrames exceeding minmum example length leads to Error', () => {
     const dataset = new Dataset();
     dataset.addExample(getRandomExample(
         'foo', 6, 2, [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
@@ -403,7 +415,7 @@ describe('Dataset', () => {
     })).toThrowError(/.*6.*exceeds the minimum numFrames .*5.*/);
   });
 
-  fit('Ragged examples with no numFrames leads to Error', () => {
+  it('Ragged examples with no numFrames leads to Error', () => {
     const dataset = new Dataset();
     dataset.addExample(getRandomExample(
         'foo', 6, 2, [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
@@ -413,7 +425,7 @@ describe('Dataset', () => {
         .toThrowError(/numFrames is required/);
   });
 
-  fit('Ragged examples with no hopFrames leads to Error', () => {
+  it('Ragged examples with no hopFrames leads to Error', () => {
     const dataset = new Dataset();
     dataset.addExample(getRandomExample(
         'foo', 6, 2, [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
@@ -611,7 +623,7 @@ describe('Dataset serialization', () => {
   });
 });
 
-fdescribe('getValidWindows', () => {
+describe('getValidWindows', () => {
   it('Left and right sides open, odd windowLength', () => {
     const snippetLength = 100;
     const focusIndex = 50;

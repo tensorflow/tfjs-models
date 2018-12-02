@@ -330,16 +330,8 @@ export class Dataset {
           // TODO(cais): See if we can get rid of dataSync();
           const focusIndex = maxIntensityFrame.dataSync()[0];
 
-          console.log(
-              `spectrogram length = ${spectrogram.data.length}; ` +
-              `snippetLength = ${snippetLength}; ` +
-              `numFrames = ${numFrames}; ` +
-              `hopFrames = ${hopFrames}; ` +
-              `focusIndex = ${focusIndex}`);  // DEBUG
           const windows =
               getValidWindows(snippetLength, focusIndex, numFrames, hopFrames);
-          console.log(`Label = ${currentLabel}: windows = ${
-              JSON.stringify(windows)}`);  // DEBUG
 
           const snippet =
               tf.tensor3d(spectrogram.data, [snippetLength, frameSize, 1]);
@@ -595,7 +587,7 @@ export function getValidWindows(
       Number.isInteger(windowLength) && windowLength > 0,
       `windowLength must be a positive integer, but got ${windowLength}`);
   tf.util.assert(
-      Number.isInteger(windowHop) && windowLength > 0,
+      Number.isInteger(windowHop) && windowHop > 0,
       `windowHop must be a positive integer, but got ${windowHop}`);
   tf.util.assert(
       windowLength <= snippetLength,
@@ -616,9 +608,10 @@ export function getValidWindows(
     // Deal with the special case of no focus frame:
     // Output an array of evenly-spaced windows, starting from
     // the first possible location.
-    const begin = 0;
+    let begin = 0;
     while (begin + windowLength <= snippetLength) {
       windows.push([begin, begin + windowLength]);
+      begin += windowHop;
     }
     return windows;
   }
@@ -628,7 +621,6 @@ export function getValidWindows(
   if (left < 0) {
     left = 0;
   } else if (left + windowLength > snippetLength) {
-    console.log('Adjusting...');  // DEBUG
     left = snippetLength - windowLength;
   }
 
