@@ -1137,7 +1137,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(transfer2.countExamples()).toEqual({'bar': 1, 'foo': 1});
   });
 
-  fit('collectExample with durationMultiplier = 1.5', async () => {
+  it('collectExample with durationMultiplier = 1.5', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();

@@ -412,8 +412,8 @@ export function deserializeExample(
   return ex;
 }
 
-/** 
- * Encode intermediate serialization format as an ArrayBuffer. 
+/**
+ * Encode intermediate serialization format as an ArrayBuffer.
  *
  * Format of the binary ArrayBuffer:
  *   1. An 8-byte descriptor (see above).
@@ -465,4 +465,65 @@ export function arrayBuffer2SerializedExamples(buffer: ArrayBuffer):
   const manifest = JSON.parse(manifestString);
   const data = buffer.slice(offset);
   return {manifest, data};
+}
+
+/**
+ * TODO(cais): Doc string. DO NOT SUBMIT.
+ *
+ * TODO(cais): Unit tests. DO NOT SUBMIT.
+ * @param snippetLength
+ * @param focusIndex
+ * @param windowLength
+ */
+export function getValidWindows(
+    snippetLength: number, focusIndex: number, windowLength: number,
+    windowHop: number): Array<[number, number]> {
+  tf.util.assert(
+      Number.isInteger(snippetLength) && snippetLength > 0,
+      `snippetLength must be a positive integer, but got ${snippetLength}`);
+  tf.util.assert(
+      Number.isInteger(focusIndex) && focusIndex >= 0,
+      `focusIndex must be a non-negative integer, but got ${focusIndex}`);
+  tf.util.assert(
+      Number.isInteger(windowLength) && windowLength > 0,
+      `windowLength must be a positive integer, but got ${windowLength}`);
+  tf.util.assert(
+      Number.isInteger(windowHop) && windowLength > 0,
+      `windowHop must be a positive integer, but got ${windowHop}`);
+  tf.util.assert(
+      windowLength <= snippetLength,
+      `windowLength (${windowLength}) exceeds snippetLength ` +
+          `(${snippetLength})`);
+  tf.util.assert(
+      focusIndex < snippetLength,
+      `focusIndex (${focusIndex}) equals or exceeds snippetLength ` +
+          `(${snippetLength})`);
+
+  if (windowLength == snippetLength) {
+    return [[0, snippetLength]];
+  }
+
+  const leftHalf = Math.floor(windowLength / 2);
+  let left = focusIndex - leftHalf;
+  if (left < 0) {
+    left = 0;
+  } else {
+    while (true) {
+      if (left - windowHop < 0 ||
+          focusIndex >= left - windowHop + windowLength) {
+        break;
+      }
+      left -= windowHop;
+    }
+  }
+
+  const windows: Array<[number, number]> = [];
+  while (left + windowLength <= snippetLength) {
+    if (focusIndex < left) {
+      break;
+    }
+    windows.push([left, left + windowLength]);
+    left += windowHop;
+  }
+  return windows;
 }

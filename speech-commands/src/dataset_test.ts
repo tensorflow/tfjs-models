@@ -18,7 +18,7 @@
 import * as tf from '@tensorflow/tfjs';
 import {expectArraysClose, expectArraysEqual} from '@tensorflow/tfjs-core/dist/test_util';
 
-import {arrayBuffer2SerializedExamples, Dataset, DATASET_SERIALIZATION_DESCRIPTOR, DATASET_SERIALIZATION_VERSION, deserializeExample, serializeExample} from './dataset';
+import {arrayBuffer2SerializedExamples, Dataset, DATASET_SERIALIZATION_DESCRIPTOR, DATASET_SERIALIZATION_VERSION, deserializeExample, getValidWindows, serializeExample} from './dataset';
 import {string2ArrayBuffer} from './generic_utils';
 import {Example, RawAudioData} from './types';
 
@@ -511,5 +511,216 @@ describe('Dataset serialization', () => {
     expect(typeof DATASET_SERIALIZATION_VERSION === 'number').toEqual(true);
     expect(Number.isInteger(DATASET_SERIALIZATION_VERSION)).toEqual(true);
     expect(DATASET_SERIALIZATION_VERSION).toBeGreaterThan(0);
+  });
+});
+
+describe('getValidWindows', () => {
+  fit('Left and right sides open, odd windowLength', () => {
+    const snippetLength = 100;
+    const focusIndex = 50;
+    const windowLength = 21;
+    const windowHop = 5;
+    const windows =
+        getValidWindows(snippetLength, focusIndex, windowLength, windowHop);
+    expect(windows).toEqual([[30, 51], [35, 56], [40, 61], [45, 66], [50, 71]]);
+  });
+
+  fit('Left and right sides open, even windowLength', () => {
+    const snippetLength = 100;
+    const focusIndex = 50;
+    const windowLength = 20;
+    const windowHop = 5;
+    const windows =
+        getValidWindows(snippetLength, focusIndex, windowLength, windowHop);
+    expect(windows).toEqual([[35, 55], [40, 60], [45, 65], [50, 70]]);
+  });
+
+  fit('Left side truncation, right side open', () => {
+    const snippetLength = 100;
+    const focusIndex = 8;
+    const windowLength = 20;
+    const windowHop = 5;
+    const windows =
+        getValidWindows(snippetLength, focusIndex, windowLength, windowHop);
+    expect(windows).toEqual([[0, 20], [5, 25]]);
+  });
+
+  fit('Left side truncation extreme, right side open', () => {
+    const snippetLength = 100;
+    const focusIndex = 0;
+    const windowLength = 21;
+    const windowHop = 5;
+    const windows =
+        getValidWindows(snippetLength, focusIndex, windowLength, windowHop);
+    expect(windows).toEqual([[0, 21]]);
+  });
+
+  fit('Right side truncation, left side open', () => {
+    const snippetLength = 100;
+    const focusIndex = 95;
+    const windowLength = 20;
+    const windowHop = 5;
+    const windows =
+        getValidWindows(snippetLength, focusIndex, windowLength, windowHop);
+    expect(windows).toEqual([[80, 100]]);
+  });
+
+  fit('Right side truncation extreme, left side open', () => {
+    const snippetLength = 100;
+    const focusIndex = 99;
+    const windowLength = 21;
+    const windowHop = 5;
+    const windows =
+        getValidWindows(snippetLength, focusIndex, windowLength, windowHop);
+    expect(windows).toEqual([[79, 100]]);
+  });
+
+  fit('Neither side has enough room for another hop 1', () => {
+    const snippetLength = 100;
+    const focusIndex = 50;
+    const windowLength = 21;
+    const windowHop = 35;
+    const windows =
+        getValidWindows(snippetLength, focusIndex, windowLength, windowHop);
+    expect(windows).toEqual([[40, 61]]);
+  });
+
+  fit('Neither side has enough room for another hop 2', () => {
+    const snippetLength = 100;
+    const focusIndex = 50;
+    const windowLength = 91;
+    const windowHop = 35;
+    const windows =
+        getValidWindows(snippetLength, focusIndex, windowLength, windowHop);
+    expect(windows).toEqual([[5, 96]]);
+  });
+
+  fit('Exact match', () => {
+    const snippetLength = 10;
+    const windowLength = 10;
+    const windowHop = 2;
+
+    let focusIndex = 0;
+    expect(getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toEqual([[0, 10]]);
+    focusIndex = 1;
+    expect(getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toEqual([[0, 10]]);
+    focusIndex = 5;
+    expect(getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toEqual([[0, 10]]);
+    focusIndex = 8;
+    expect(getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toEqual([[0, 10]]);
+    focusIndex = 9;
+    expect(getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toEqual([[0, 10]]);
+  });
+
+  fit('Almost exact match', () => {
+    const snippetLength = 12;
+    const windowLength = 10;
+    const windowHop = 2;
+
+    let focusIndex = 0;
+    expect(getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toEqual([[0, 10]]);
+    focusIndex = 1;
+    expect(getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toEqual([[0, 10]]);
+    focusIndex = 5;
+    expect(getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toEqual([[0, 10], [2, 12]]);
+    focusIndex = 8;
+    expect(getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toEqual([[1, 11]]);
+    focusIndex = 9;
+    expect(getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toEqual([[0, 10], [2, 12]]);
+  });
+
+  fit('Non-positive integer snippetLength values lead to errors', () => {
+    const windowLength = 10;
+    const focusIndex = 5;
+    const windowHop = 2;
+    let snippetLength = 0;
+    expect(
+        () =>
+            getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toThrow();
+    snippetLength = -2;
+    expect(
+        () =>
+            getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toThrow();
+    snippetLength = 10.5;
+    expect(
+        () =>
+            getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toThrow();
+  });
+
+  fit('Non-positive integer windowLength values lead to errors', () => {
+    const snippetLength = 10;
+    const focusIndex = 5;
+    const windowHop = 2;
+    let windowLength = 0;
+    expect(
+        () =>
+            getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toThrow();
+    windowLength = -2;
+    expect(
+        () =>
+            getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toThrow();
+    windowLength = 3.5;
+    expect(
+        () =>
+            getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toThrow();
+  });
+
+  fit('Negative or non-integer focusIndex values lead to errors', () => {
+    const snippetLength = 10;
+    const windowLength = 10;
+    const windowHop = 2;
+    let focusIndex = -5;
+    expect(
+        () =>
+            getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toThrow();
+    focusIndex = 1.5;
+    expect(
+        () =>
+            getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toThrow();
+  });
+
+  fit('Out-of-bound focusIndex leads to error', () => {
+    const snippetLength = 10;
+    const windowLength = 10;
+    const windowHop = 2;
+    let focusIndex = 10;
+    expect(
+        () =>
+            getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toThrow();
+    focusIndex = 11;
+    expect(
+        () =>
+            getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toThrow();
+  });
+
+  fit('Out-of-bound windowLength leads to error', () => {
+    const snippetLength = 10;
+    const windowLength = 12;
+    const windowHop = 2;
+    const focusIndex = 5;
+    expect(
+        () =>
+            getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toThrow();
   });
 });
