@@ -18,7 +18,7 @@
 import * as tf from '@tensorflow/tfjs';
 import {expectArraysClose, expectArraysEqual} from '@tensorflow/tfjs-core/dist/test_util';
 
-import {arrayBuffer2SerializedExamples, Dataset, DATASET_SERIALIZATION_DESCRIPTOR, DATASET_SERIALIZATION_VERSION, deserializeExample, getMaxIntensityFrameIndex, getValidWindows, serializeExample, spectrogram2IntensityCurve} from './dataset';
+import {arrayBuffer2SerializedExamples, BACKGROUND_NOISE_TAG, Dataset, DATASET_SERIALIZATION_DESCRIPTOR, DATASET_SERIALIZATION_VERSION, deserializeExample, getMaxIntensityFrameIndex, getValidWindows, serializeExample, spectrogram2IntensityCurve} from './dataset';
 import {string2ArrayBuffer} from './generic_utils';
 import {Example, RawAudioData, SpectrogramData} from './types';
 
@@ -403,6 +403,27 @@ describe('Dataset', () => {
     expectArraysClose(ys, tf.tensor2d([[1, 0], [1, 0], [0, 1], [0, 1]]));
   });
 
+  it('Ragged examples containing background noise', () => {
+    const dataset = new Dataset();
+    dataset.addExample(getRandomExample(
+        BACKGROUND_NOISE_TAG, 7, 2,
+        [0, 0, 10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
+    dataset.addExample(
+        getRandomExample('bar', 6, 2, [0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
+    const {xs, ys} =
+        dataset.getSpectrogramsAsTensors(null, {numFrames: 3, hopFrames: 2});
+    const windows = tf.unstack(xs);
+    expect(windows.length).toEqual(4);
+    expectArraysClose(
+        windows[0], tf.tensor3d([0, 0, 10, 10, 20, 20], [3, 2, 1]));
+    expectArraysClose(
+        windows[1], tf.tensor3d([20, 20, 30, 30, 20, 20], [3, 2, 1]));
+    expectArraysClose(
+        windows[2], tf.tensor3d([20, 20, 10, 10, 0, 0], [3, 2, 1]));
+    expectArraysClose(windows[3], tf.tensor3d([2, 2, 3, 3, 2, 2], [3, 2, 1]));
+    expectArraysClose(ys, tf.tensor2d([[1, 0], [1, 0], [1, 0], [0, 1]]));
+  });
+
   it('numFrames exceeding minmum example length leads to Error', () => {
     const dataset = new Dataset();
     dataset.addExample(getRandomExample(
@@ -431,8 +452,9 @@ describe('Dataset', () => {
         'foo', 6, 2, [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
     dataset.addExample(
         getRandomExample('bar', 5, 2, [1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
-    expect(() => dataset.getSpectrogramsAsTensors(null, {numFrames: 4}))
-        .toThrowError(/hopFrames is required/);
+    expect(() => dataset.getSpectrogramsAsTensors(null, {
+      numFrames: 4
+    })).toThrowError(/hopFrames is required/);
   });
 });
 

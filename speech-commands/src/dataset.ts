@@ -324,11 +324,10 @@ export class Dataset {
           }
 
           const snippetLength = spectrogram.data.length / frameSize;
-          const maxIntensityFrame = currentLabel === BACKGROUND_NOISE_TAG ?
+          const focusIndex = currentLabel === BACKGROUND_NOISE_TAG ?
               null :
-              getMaxIntensityFrameIndex(spectrogram);
+              getMaxIntensityFrameIndex(spectrogram).dataSync()[0];
           // TODO(cais): See if we can get rid of dataSync();
-          const focusIndex = maxIntensityFrame.dataSync()[0];
 
           const windows =
               getValidWindows(snippetLength, focusIndex, numFrames, hopFrames);

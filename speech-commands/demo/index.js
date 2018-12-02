@@ -47,7 +47,8 @@ const startTransferLearnButton =
 const XFER_MODEL_NAME = 'xfer-model';
 
 // Minimum required number of examples per class for transfer learning.
-const MIN_EXAPMLES_PER_CLASS = 8;
+// TODO(cais): Change back to 8. DO NOT SUBMIT.
+const MIN_EXAPMLES_PER_CLASS = 4;
 
 let recognizer;
 let transferRecognizer;
