@@ -757,4 +757,22 @@ describe('getMaxIntensityFrameIndex', () => {
     const maxIntensityFrameIndex = getMaxIntensityFrameIndex(spectrogram);
     expectArraysClose(maxIntensityFrameIndex, tf.scalar(0, 'int32'));
   });
+
+  it('No focus frame: return multiple windows', () => {
+    const snippetLength = 100;
+    const windowLength = 40;
+    const windowHop = 20;
+    const windows =
+        getValidWindows(snippetLength, null, windowLength, windowHop);
+    expect(windows).toEqual([[0, 40],  [20, 60], [40, 80], [60, 100]]);
+  });
+
+  it('No focus frame: return one window', () => {
+    const snippetLength = 10;
+    const windowLength = 10;
+    const windowHop = 2;
+    const windows =
+        getValidWindows(snippetLength, null, windowLength, windowHop);
+    expect(windows).toEqual([[0, 10]]);
+  });
 });

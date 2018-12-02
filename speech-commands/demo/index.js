@@ -33,7 +33,7 @@ const downloadFilesButton = document.getElementById('download-dataset');
 const datasetFileInput = document.getElementById('dataset-file-input');
 const uploadFilesButton = document.getElementById('upload-dataset');
 
-const BACKGROUND_NOISE_TAG = '_background_noise_';
+const BACKGROUND_NOISE_TAG = SpeechCommands.BACKGROUND_NOISE_TAG;
 
 /**
  * Transfer learning-related UI componenets.

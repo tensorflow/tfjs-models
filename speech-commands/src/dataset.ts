@@ -84,6 +84,42 @@ export interface SerializedExamples {
   data: ArrayBuffer;
 }
 
+export const BACKGROUND_NOISE_TAG = '_background_noise_';
+
+/**
+ * Configuration for getting spectrograms as tensors.
+ */
+export interface GetSepctrogramsAsTensorsConfig {
+  /**
+   * Number of frames.
+   *
+   * This must be smaller than or equal to the # of frames of each
+   * example held by the dataset.
+   *
+   * If the # of frames of an example is greater than this number,
+   * the following heuristics will be used to extra >= 1 examples
+   * of length numFrames from the original example:
+   *
+   *   - If the label of the example is `BAKCGROUND_NOISE_TAG`,
+   *     the example will be splitted into multiple examples using the
+   *     `hopFrames` parameter (see below).
+   *   - If the label of the example is not `BACKGROUND_NOISE_TAG`,
+   *     the example will be splitted into multiple examples that
+   *     all contain the maximum-intensity frame using the `hopFrames`
+   *     parameter.
+   */
+  numFrames?: number;
+
+  /**
+   * Hop length in number of frames.
+   *
+   * Used when splitting a long example into multiple shorter ones.
+   *
+   * Must be provided if any such long examples exist.
+   */
+  hopFrames?: number;
+}
+
 /**
  * A serializable, mutable set of speech/audio `Example`s;
  */
@@ -472,7 +508,9 @@ export function arrayBuffer2SerializedExamples(buffer: ArrayBuffer):
  *
  * TODO(cais): Unit tests. DO NOT SUBMIT.
  * @param snippetLength
- * @param focusIndex
+ * @param focusIndex Optional. If `null` or `undefined`, an array of
+ *   evenly-spaced windows will be generated. The array of windows will
+ *   start from the first possible location (i.e., [0, windowLength]).
  * @param windowLength
  */
 export function getValidWindows(
@@ -481,9 +519,11 @@ export function getValidWindows(
   tf.util.assert(
       Number.isInteger(snippetLength) && snippetLength > 0,
       `snippetLength must be a positive integer, but got ${snippetLength}`);
-  tf.util.assert(
-      Number.isInteger(focusIndex) && focusIndex >= 0,
-      `focusIndex must be a non-negative integer, but got ${focusIndex}`);
+  if (focusIndex != null) {
+    tf.util.assert(
+        Number.isInteger(focusIndex) && focusIndex >= 0,
+        `focusIndex must be a non-negative integer, but got ${focusIndex}`);
+  }
   tf.util.assert(
       Number.isInteger(windowLength) && windowLength > 0,
       `windowLength must be a positive integer, but got ${windowLength}`);
@@ -503,6 +543,19 @@ export function getValidWindows(
     return [[0, snippetLength]];
   }
 
+  const windows: Array<[number, number]> = [];
+
+  if (focusIndex == null) {
+    // Deal with the special case of no focus frame:
+    // Output an array of evenly-spaced windows, starting from
+    // the first possible location.
+    const begin = 0;
+    while (begin + windowLength <= snippetLength) {
+      windows.push([begin, begin + windowLength]);
+    }
+    return windows;
+  }
+
   const leftHalf = Math.floor(windowLength / 2);
   let left = focusIndex - leftHalf;
   if (left < 0) {
@@ -517,7 +570,6 @@ export function getValidWindows(
     }
   }
 
-  const windows: Array<[number, number]> = [];
   while (left + windowLength <= snippetLength) {
     if (focusIndex < left) {
       break;
