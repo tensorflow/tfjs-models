@@ -276,8 +276,9 @@ export class Dataset {
     let numFrames: number;
     let hopFrames: number;
     if (sortedUniqueNumFrames.length === 1) {
-      numFrames = sortedUniqueNumFrames[0];
-      hopFrames = 1;
+      numFrames = config.numFrames == null ? sortedUniqueNumFrames[0] :
+                                             config.numFrames;
+      hopFrames = config.hopFrames == null ? 1 : config.hopFrames;
     } else {
       numFrames = config.numFrames;
       tf.util.assert(
@@ -296,7 +297,7 @@ export class Dataset {
           hopFrames != null && Number.isInteger(hopFrames) && hopFrames > 0,
           `There are ${sortedUniqueNumFrames.length} unique lengths among ` +
               `the ${this.size()} examples of this Dataset, hence hopFrames ` +
-              `must be provided. But it is not provided.`);
+              `is required. But it is not provided.`);
     }
 
     return tf.tidy(() => {
@@ -333,6 +334,7 @@ export class Dataset {
               `spectrogram length = ${spectrogram.data.length}; ` +
               `snippetLength = ${snippetLength}; ` +
               `numFrames = ${numFrames}; ` +
+              `hopFrames = ${hopFrames}; ` +
               `focusIndex = ${focusIndex}`);  // DEBUG
           const windows =
               getValidWindows(snippetLength, focusIndex, numFrames, hopFrames);

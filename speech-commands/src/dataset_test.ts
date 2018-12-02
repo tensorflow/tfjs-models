@@ -343,7 +343,6 @@ describe('Dataset', () => {
   });
 
   fit('Ragged example lengths and multiple windows per example', () => {
-    console.log('=== BEGIN ===');  // DEBUG
     const dataset = new Dataset();
     dataset.addExample(getRandomExample(
         'foo', 6, 2, [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
@@ -354,7 +353,6 @@ describe('Dataset', () => {
         dataset.getSpectrogramsAsTensors(null, {numFrames: 3, hopFrames: 1});
     const windows = tf.unstack(xs);
 
-    // console.log(xs.shape);  // DEBUG
     expect(windows.length).toEqual(6);
     expectArraysClose(windows[0], tf.tensor3d([1, 1, 2, 2, 3, 3], [3, 2, 1]));
     expectArraysClose(windows[1], tf.tensor3d([2, 2, 3, 3, 2, 2], [3, 2, 1]));
@@ -369,10 +367,61 @@ describe('Dataset', () => {
         ys, tf.tensor2d([[1, 0], [1, 0], [1, 0], [0, 1], [0, 1], [0, 1]]));
   });
 
-  // TODO(cais): numFrames exceeds shortest length.
-  // TODO(cais): Uniform example length, short numFrames)
-  // TODO(cais): Ragged example lengths and no numFrames leads to Error.
-  // TODO(cais): Ragged example lengths and no hopFrames leads to Error.
+  fit('Uniform example lengths and multiple windows per example', () => {
+    const dataset = new Dataset();
+    dataset.addExample(getRandomExample(
+        'foo', 6, 2, [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
+    dataset.addExample(
+        getRandomExample('bar', 6, 2, [0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
+
+    const {xs, ys} =
+        dataset.getSpectrogramsAsTensors(null, {numFrames: 5, hopFrames: 1});
+    const windows = tf.unstack(xs);
+    expect(windows.length).toEqual(4);
+    expectArraysClose(
+        windows[0], tf.tensor3d([0, 0, 1, 1, 2, 2, 3, 3, 2, 2], [5, 2, 1]));
+    expectArraysClose(
+        windows[1], tf.tensor3d([1, 1, 2, 2, 3, 3, 2, 2, 1, 1], [5, 2, 1]));
+    expectArraysClose(
+        windows[2],
+        tf.tensor3d([10, 10, 20, 20, 30, 30, 20, 20, 10, 10], [5, 2, 1]));
+    expectArraysClose(
+        windows[3],
+        tf.tensor3d([20, 20, 30, 30, 20, 20, 10, 10, 0, 0], [5, 2, 1]));
+    expectArraysClose(ys, tf.tensor2d([[1, 0], [1, 0], [0, 1], [0, 1]]));
+  });
+
+  fit('numFrames exceeding minmum example length leads to Error', () => {
+    const dataset = new Dataset();
+    dataset.addExample(getRandomExample(
+        'foo', 6, 2, [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
+    dataset.addExample(
+        getRandomExample('bar', 5, 2, [1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
+    expect(() => dataset.getSpectrogramsAsTensors(null, {
+      numFrames: 6,
+      hopFrames: 2
+    })).toThrowError(/.*6.*exceeds the minimum numFrames .*5.*/);
+  });
+
+  fit('Ragged examples with no numFrames leads to Error', () => {
+    const dataset = new Dataset();
+    dataset.addExample(getRandomExample(
+        'foo', 6, 2, [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
+    dataset.addExample(
+        getRandomExample('bar', 5, 2, [1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
+    expect(() => dataset.getSpectrogramsAsTensors(null))
+        .toThrowError(/numFrames is required/);
+  });
+
+  fit('Ragged examples with no hopFrames leads to Error', () => {
+    const dataset = new Dataset();
+    dataset.addExample(getRandomExample(
+        'foo', 6, 2, [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
+    dataset.addExample(
+        getRandomExample('bar', 5, 2, [1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
+    expect(() => dataset.getSpectrogramsAsTensors(null, {numFrames: 4}))
+        .toThrowError(/hopFrames is required/);
+  });
 });
 
 describe('Dataset serialization', () => {
@@ -562,7 +611,7 @@ describe('Dataset serialization', () => {
   });
 });
 
-describe('getValidWindows', () => {
+fdescribe('getValidWindows', () => {
   it('Left and right sides open, odd windowLength', () => {
     const snippetLength = 100;
     const focusIndex = 50;
