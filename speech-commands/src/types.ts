@@ -401,6 +401,20 @@ export interface TransferLearnConfig {
    * and is a positive integer.
    */
   fineTuningCallback?: tf.CustomCallbackConfig;
+
+  /**
+   * Ratio between the window hop and the window width.
+   *
+   * Used during extraction of multiple spectrograms matching the underlying
+   * model's input shape from a longer spectroram.
+   *
+   * Defaults to 0.25.
+   *
+   * For example, if the spectrogram window accepted by the underlying model
+   * is 43 frames long, then the default windowHopRatio 0.25 will lead to
+   * a hop of Math.round(43 * 0.25) = 11 frames.
+   */
+  windowHopRatio?: number;
 }
 
 /**

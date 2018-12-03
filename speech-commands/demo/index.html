@@ -28,6 +28,18 @@
       border-color: #a0a0a0;
     }
 
+    select {
+      color: #ff8300;
+      background-color: #ffffff;
+      border-style: solid;
+      border-width: 2px;
+      border-color: #ff8300;
+      border-radius: 10px;
+      font-size: 20px;
+      margin: 5px;
+      padding: 15px;
+    }
+
     .transfer-learn-section input {
       color: #0000ff;
       background-color: #ffffff;
@@ -146,7 +158,12 @@
   </div>
   <div class="transfer-learn-section">
     <input id="learn-words" size="40" value="_background_noise_,red,green">
+    <select id="duration-multiplier">
+      <option value="1">Duration x1</option>
+      <option value="2">Duration x2</option>
+    </select>
     <button id="enter-learn-words" disabled="true">Enter transfer words</button>
+
 
     <div id="transfer-learn-history"></div>
     <div id="collect-words"></div>

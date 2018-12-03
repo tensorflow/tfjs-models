@@ -562,14 +562,22 @@ export function arrayBuffer2SerializedExamples(buffer: ArrayBuffer):
 }
 
 /**
- * TODO(cais): Doc string. DO NOT SUBMIT.
+ * Get valid windows in a long snippet.
  *
- * TODO(cais): Unit tests. DO NOT SUBMIT.
- * @param snippetLength
+ * Each window is represented by an inclusive left index and an exclusive
+ * right index.
+ *
+ * @param snippetLength Long of the entire snippet. Must be a positive
+ *   integer.
  * @param focusIndex Optional. If `null` or `undefined`, an array of
  *   evenly-spaced windows will be generated. The array of windows will
  *   start from the first possible location (i.e., [0, windowLength]).
- * @param windowLength
+ *   If not `null` or `undefined`, must be an integer >= 0 and < snippetLength.
+ * @param windowLength Length of each window. Must be a positive integer and
+ *   <= snippetLength.
+ * @param windowHop Hops between successsive windows. Must be a positive
+ *   integer.
+ * @returns An array of [beginIndex, endIndex] pairs.
  */
 export function getValidWindows(
     snippetLength: number, focusIndex: number, windowLength: number,
@@ -641,9 +649,14 @@ export function getValidWindows(
 }
 
 /**
- * TODO(cais): Doc string. DO NOT SUBMIT.
- * @param spectrogram
- * @returns
+ * Calculate an intensity profile from a spectrogram.
+ *
+ * The intensity at each time frame is caclulated by simply averaging all the
+ * spectral values that belong to that time frame.
+ *
+ * @param spectrogram The input spectrogram.
+ * @returns The temporal profile of the intensity as a 1D tf.Tensor of shape
+ *   `[numFrames]`.
  */
 export function spectrogram2IntensityCurve(spectrogram: SpectrogramData):
     tf.Tensor {
@@ -655,9 +668,13 @@ export function spectrogram2IntensityCurve(spectrogram: SpectrogramData):
 }
 
 /**
- * TODO(cais): Doc string. DO NOT SUBMIT.
- * @param spectrogram
- * @returns
+ * Get the index to the maximum intensity frame.
+ *
+ * The intensity of each time frame is calculated as the arithmetic mean of
+ * all the spectral values belonging to that time frame.
+ *
+ * @param spectrogram The input spectrogram.
+ * @returns The index to the time frame containing the maximum intensity.
  */
 export function getMaxIntensityFrameIndex(spectrogram: SpectrogramData):
     tf.Scalar {

@@ -39,6 +39,7 @@ const BACKGROUND_NOISE_TAG = SpeechCommands.BACKGROUND_NOISE_TAG;
  * Transfer learning-related UI componenets.
  */
 const learnWordsInput = document.getElementById('learn-words');
+const durationMultiplierSelect = document.getElementById('duration-multiplier');
 const enterLearnWordsButton = document.getElementById('enter-learn-words');
 const collectButtonsDiv = document.getElementById('collect-words');
 const startTransferLearnButton =
@@ -47,11 +48,14 @@ const startTransferLearnButton =
 const XFER_MODEL_NAME = 'xfer-model';
 
 // Minimum required number of examples per class for transfer learning.
-// TODO(cais): Change back to 8. DO NOT SUBMIT.
-const MIN_EXAPMLES_PER_CLASS = 4;
+// TODO(cais): Test uploading of durationMultiplier === 2 datasets. DO NOT
+// SUBMIT.
+const MIN_EXAMPLES_PER_CLASS = 8;
 
 let recognizer;
+let transferWords;
 let transferRecognizer;
+let transferDurationMultiplier;
 
 (async function() {
   logToStatusDisplay('Creating recognizer...');
@@ -132,7 +136,7 @@ stopButton.addEventListener('click', () => {
  * Transfer learning logic.
  */
 
- /** Scroll to the bottom of the page */
+/** Scroll to the bottom of the page */
 function scrollToPageBottom() {
   const scrollingElement = (document.scrollingElement || document.body);
   scrollingElement.scrollTop = scrollingElement.scrollHeight;
@@ -152,9 +156,8 @@ function scrollToPageBottom() {
 async function addExample(wordDiv, word, spectrogram) {
   if (spectrogram == null) {
     // Collect an example online.
-    spectrogram = await transferRecognizer.collectExample(word, {
-      durationMultiplier: 2
-    });
+    spectrogram = await transferRecognizer.collectExample(
+        word, {durationMultiplier: transferDurationMultiplier});
   }
 
   const exampleCanvas = document.createElement('canvas');
@@ -173,7 +176,8 @@ async function addExample(wordDiv, word, spectrogram) {
       exampleCanvas, spectrogram.data, spectrogram.frameSize,
       spectrogram.frameSize, {
         pixelsPerFrame: exampleCanvas.width / modelNumFrames,
-        markMaxIntensityFrame: true
+        markMaxIntensityFrame:
+            transferDurationMultiplier > 1 && word != BACKGROUND_NOISE_TAG
       });
 
   const button = wordDiv.children[0];
@@ -184,17 +188,21 @@ async function addExample(wordDiv, word, spectrogram) {
 
 function updateButtonStateAccordingToTransferRecognizer() {
   const exampleCounts = transferRecognizer.countExamples();
-  const transferWords = Object.keys(exampleCounts);
+  if (transferWords == null) {
+    transferWords = Object.keys(exampleCounts);
+  }
   const minCountByClass =
       transferWords.map(word => exampleCounts[word] || 0)
           .reduce((prev, current) => current < prev ? current : prev);
 
-  if (minCountByClass >= MIN_EXAPMLES_PER_CLASS) {
+  const requiredMinCountPerClass =
+      Math.ceil(MIN_EXAMPLES_PER_CLASS / transferDurationMultiplier);
+  if (minCountByClass >= requiredMinCountPerClass) {
     startTransferLearnButton.textContent = 'Start transfer learning';
     startTransferLearnButton.disabled = false;
   } else {
     startTransferLearnButton.textContent =
-        `Need at least ${MIN_EXAPMLES_PER_CLASS} examples per word`;
+        `Need at least ${requiredMinCountPerClass} examples per word`;
   }
   downloadFilesButton.disabled = false;
 }
@@ -241,9 +249,10 @@ enterLearnWordsButton.addEventListener('click', () => {
   // files first and keep appending examples to it.
   disableFileUploadControls();
 
+  transferDurationMultiplier = durationMultiplierSelect.value;
+
   enterLearnWordsButton.disabled = true;
-  const transferWords =
-      learnWordsInput.value.trim().split(',').map(w => w.trim());
+  transferWords = learnWordsInput.value.trim().split(',').map(w => w.trim());
   if (transferWords == null || transferWords.length <= 1) {
     logToStatusDisplay('ERROR: Invalid list of transfer words.');
     return;
@@ -435,9 +444,12 @@ uploadFilesButton.addEventListener('click', async () => {
   const datasetFileReader = new FileReader();
   datasetFileReader.onload = async event => {
     await loadDatasetInTransferRecognizer(event.target.result);
+    durationMultiplierSelect.value = `${transferDurationMultiplier}`;
+    durationMultiplierSelect.disabled = true;
+    enterLearnWordsButton.disabled = true;
   };
-  datasetFileReader.onerror = () => console.error(
-      `Failed to binary data from file '${dataFile.name}'.`);
+  datasetFileReader.onerror = () =>
+      console.error(`Failed to binary data from file '${dataFile.name}'.`);
   datasetFileReader.readAsArrayBuffer(files[0]);
 });
 
@@ -459,7 +471,17 @@ async function loadDatasetInTransferRecognizer(serialized) {
   for (const word of transferWords) {
     const examples = transferRecognizer.getExamples(word);
     for (const example of examples) {
-      await addExample(wordDivs[word], word, example.example.spectrogram);
+      const spectrogram = example.example.spectrogram;
+      if (transferDurationMultiplier == null) {
+        const modelNumFrames = transferRecognizer.modelInputShape()[1];
+        console.log('spectrogram:', spectrogram);  //  DEBUG
+        transferDurationMultiplier = Math.round(
+            spectrogram.data.length / spectrogram.frameSize / modelNumFrames);
+        console.log(
+            `Inferred transferDurationMultiplier from uploaded file: ` +
+            `${transferDurationMultiplier}`);
+      }
+      await addExample(wordDivs[word], word, spectrogram);
     }
   }
   updateButtonStateAccordingToTransferRecognizer();

@@ -34,6 +34,12 @@ export function getMajorAndMinorVersion(version: string) {
 }
 
 /**
+ * Default window hop ratio used for extracting multiple
+ * windows from a long spectrogram.
+ */
+const DEFAULT_WINDOW_HOP_RATIO = 0.25;
+
+/**
  * Speech-Command Recognizer using browser-native (WebAudio) spectral featutres.
  */
 export class BrowserFftSpeechCommandRecognizer implements
@@ -744,27 +750,20 @@ class TransferBrowserFftSpeechCommandRecognizer extends
   /**
    * Collect the transfer-learning data as tf.Tensors.
    *
-   * @param modelName {string} Name of the transfer learning model for which
+   * @param modelName Name of the transfer learning model for which
    *   the examples are to be collected.
+   * @param windowHopRatio Ratio betwen hop length in number of frames and the
+   *   number of frames in a long spectrogram. Used during extraction
+   *   of multiple windows from the long spectrogram.
    * @returns xs: The feature tensors (xs), a 4D tf.Tensor.
    *          ys: The target tensors (ys), one-hot encoding, a 2D tf.Tensor.
    */
-  private collectTransferDataAsTensors(modelName?: string):
+  private collectTransferDataAsTensors(
+      modelName?: string, windowHopRatio?: number):
       {xs: tf.Tensor, ys: tf.Tensor} {
     const numFrames = this.nonBatchInputShape[0];
-    const frameDurationSec =
-        this.parameters.fftSize / this.parameters.sampleRateHz;
-    // TODO(cais): DO NOT hard code 0.2 sec. DO NOT SUBMIT.
-    let hopFrames = Math.round(0.2 / frameDurationSec);
-    if (hopFrames < 1) {
-      hopFrames = 1;
-    }
-
-    // DEBUG
-    console.log(`collectTransferDataAsTensors(): numFrames = ${numFrames}`);
-    console.log(`  frameDurationSec = ${frameDurationSec}`);  // DEBUG
-    console.log(`  hopFrames = ${hopFrames}`);  // DEBUG
-
+    windowHopRatio = windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
+    const hopFrames = Math.round(windowHopRatio * numFrames);
     const out =
         this.dataset.getSpectrogramsAsTensors(null, {numFrames, hopFrames});
     return {xs: out.xs, ys: out.ys as tf.Tensor};
@@ -826,7 +825,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     });
 
     // Prepare the data.
-    const {xs, ys} = this.collectTransferDataAsTensors();
+    const windowHopRatio = config.windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
+    const {xs, ys} = this.collectTransferDataAsTensors(null, windowHopRatio);
     console.log(
         `Training data: xs.shape = ${xs.shape}, ys.shape = ${ys.shape}`);
 
@@ -834,9 +834,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     let trainYs: tf.Tensor;
     let valData: [tf.Tensor, tf.Tensor];
     try {
-      // TODO(cais): The balanced split here should be pushed down to the level
+      // TODO(cais): The balanced split may need to be pushed down to the level
       //   of the Dataset class to avoid leaks between train and val splits.
-      // DO NOT SUBMIT.
       if (config.validationSplit != null) {
         const splits = balancedTrainValSplit(xs, ys, config.validationSplit);
         trainXs = splits.trainXs;
