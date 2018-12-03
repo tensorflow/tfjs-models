@@ -48,8 +48,6 @@ const startTransferLearnButton =
 const XFER_MODEL_NAME = 'xfer-model';
 
 // Minimum required number of examples per class for transfer learning.
-// TODO(cais): Test uploading of durationMultiplier === 2 datasets. DO NOT
-// SUBMIT.
 const MIN_EXAMPLES_PER_CLASS = 8;
 
 let recognizer;
@@ -474,7 +472,6 @@ async function loadDatasetInTransferRecognizer(serialized) {
       const spectrogram = example.example.spectrogram;
       if (transferDurationMultiplier == null) {
         const modelNumFrames = transferRecognizer.modelInputShape()[1];
-        console.log('spectrogram:', spectrogram);  //  DEBUG
         transferDurationMultiplier = Math.round(
             spectrogram.data.length / spectrogram.frameSize / modelNumFrames);
         console.log(
