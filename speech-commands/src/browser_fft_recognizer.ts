@@ -19,12 +19,11 @@ import * as tf from '@tensorflow/tfjs';
 
 import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
 import {loadMetadataJson, normalize} from './browser_fft_utils';
-import {Dataset} from './dataset';
+import {BACKGROUND_NOISE_TAG, Dataset} from './dataset';
 import {balancedTrainValSplit} from './training_utils';
-import {Example, RecognizeConfig, RecognizerCallback, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
+import {Example, RecognizeConfig, RecognizerCallback, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer, ExampleCollectionOptions} from './types';
 import {version} from './version';
 
-export const BACKGROUND_NOISE_TAG = '_background_noise_';
 export const UNKNOWN_TAG = '_unknown_';
 
 let streaming = false;
@@ -33,6 +32,12 @@ export function getMajorAndMinorVersion(version: string) {
   const versionItems = version.split('.');
   return versionItems.slice(0, 2).join('.');
 }
+
+/**
+ * Default window hop ratio used for extracting multiple
+ * windows from a long spectrogram.
+ */
+const DEFAULT_WINDOW_HOP_RATIO = 0.25;
 
 /**
  * Speech-Command Recognizer using browser-native (WebAudio) spectral featutres.
@@ -606,11 +611,13 @@ class TransferBrowserFftSpeechCommandRecognizer extends
    *
    * @param {string} word Name of the word. Must not overlap with any of the
    *   words the base model is trained to recognize.
+   * @param {ExampleCollectionOptions}
    * @returns {SpectrogramData} The spectrogram of the acquired the example.
    * @throws Error, if word belongs to the set of words the base model is
    *   trained to recognize.
    */
-  async collectExample(word: string): Promise<SpectrogramData> {
+  async collectExample(word: string, options?: ExampleCollectionOptions):
+      Promise<SpectrogramData> {
     tf.util.assert(
         !streaming,
         'Cannot start collection of transfer-learning example because ' +
@@ -620,6 +627,16 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         word != null && typeof word === 'string' && word.length > 0,
         `Must provide a non-empty string when collecting transfer-` +
             `learning example`);
+
+    if (options == null) {
+      options = {};
+    }
+    const durationMultiplier =
+        options.durationMultiplier == null ? 1 : options.durationMultiplier;
+    tf.util.assert(
+        durationMultiplier >= 1,
+        `Expected duration multiplier to be >= 1, ` +
+        `but got ${durationMultiplier}`);
 
     streaming = true;
     return new Promise<SpectrogramData>(resolve => {
@@ -644,7 +661,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       };
       this.audioDataExtractor = new BrowserFftFeatureExtractor({
         sampleRateHz: this.parameters.sampleRateHz,
-        numFramesPerSpectrogram: this.nonBatchInputShape[0],
+        numFramesPerSpectrogram:
+            Math.round(this.nonBatchInputShape[0] * durationMultiplier),
         columnTruncateLength: this.nonBatchInputShape[1],
         suppressionTimeMillis: 0,
         spectrogramCallback,
@@ -732,14 +750,22 @@ class TransferBrowserFftSpeechCommandRecognizer extends
   /**
    * Collect the transfer-learning data as tf.Tensors.
    *
-   * @param modelName {string} Name of the transfer learning model for which
+   * @param modelName Name of the transfer learning model for which
    *   the examples are to be collected.
+   * @param windowHopRatio Ratio betwen hop length in number of frames and the
+   *   number of frames in a long spectrogram. Used during extraction
+   *   of multiple windows from the long spectrogram.
    * @returns xs: The feature tensors (xs), a 4D tf.Tensor.
    *          ys: The target tensors (ys), one-hot encoding, a 2D tf.Tensor.
    */
-  private collectTransferDataAsTensors(modelName?: string):
+  private collectTransferDataAsTensors(
+      modelName?: string, windowHopRatio?: number):
       {xs: tf.Tensor, ys: tf.Tensor} {
-    const out = this.dataset.getSpectrogramsAsTensors();
+    const numFrames = this.nonBatchInputShape[0];
+    windowHopRatio = windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
+    const hopFrames = Math.round(windowHopRatio * numFrames);
+    const out =
+        this.dataset.getSpectrogramsAsTensors(null, {numFrames, hopFrames});
     return {xs: out.xs, ys: out.ys as tf.Tensor};
   }
 
@@ -799,12 +825,17 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     });
 
     // Prepare the data.
-    const {xs, ys} = this.collectTransferDataAsTensors();
+    const windowHopRatio = config.windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
+    const {xs, ys} = this.collectTransferDataAsTensors(null, windowHopRatio);
+    console.log(
+        `Training data: xs.shape = ${xs.shape}, ys.shape = ${ys.shape}`);
 
     let trainXs: tf.Tensor;
     let trainYs: tf.Tensor;
     let valData: [tf.Tensor, tf.Tensor];
     try {
+      // TODO(cais): The balanced split may need to be pushed down to the level
+      //   of the Dataset class to avoid leaks between train and val splits.
       if (config.validationSplit != null) {
         const splits = balancedTrainValSplit(xs, ys, config.validationSplit);
         trainXs = splits.trainXs;

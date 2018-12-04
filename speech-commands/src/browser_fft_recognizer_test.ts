@@ -1137,5 +1137,17 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(transfer2.countExamples()).toEqual({'bar': 1, 'foo': 1});
   });
 
+  it('collectExample with durationMultiplier = 1.5', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    const spectrogram =
+        await transfer.collectExample('foo', {durationMultiplier: 1.5});
+    expect(spectrogram.frameSize).toEqual(fakeColumnTruncateLength);
+    const numFrames = spectrogram.data.length / fakeColumnTruncateLength;
+    expect(numFrames).toEqual(fakeNumFrames * 1.5);
+  });
+
   // TODO(cais): Add tests for saving and loading of transfer-learned models.
 });

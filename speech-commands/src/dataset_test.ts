@@ -18,23 +18,27 @@
 import * as tf from '@tensorflow/tfjs';
 import {expectArraysClose, expectArraysEqual} from '@tensorflow/tfjs-core/dist/test_util';
 
-import {arrayBuffer2SerializedExamples, Dataset, DATASET_SERIALIZATION_DESCRIPTOR, DATASET_SERIALIZATION_VERSION, deserializeExample, serializeExample} from './dataset';
+import {arrayBuffer2SerializedExamples, BACKGROUND_NOISE_TAG, Dataset, DATASET_SERIALIZATION_DESCRIPTOR, DATASET_SERIALIZATION_VERSION, deserializeExample, getMaxIntensityFrameIndex, getValidWindows, serializeExample, spectrogram2IntensityCurve} from './dataset';
 import {string2ArrayBuffer} from './generic_utils';
-import {Example, RawAudioData} from './types';
+import {Example, RawAudioData, SpectrogramData} from './types';
 
 describe('Dataset', () => {
   const FAKE_NUM_FRAMES = 4;
   const FAKE_FRAME_SIZE = 16;
 
-  function getRandomExample(label: string): Example {
-    const spectrogramData = [];
-    for (let i = 0; i < FAKE_NUM_FRAMES * FAKE_FRAME_SIZE; ++i) {
-      spectrogramData.push(Math.random());
+  function getRandomExample(
+      label: string, numFrames = FAKE_NUM_FRAMES, frameSize = FAKE_FRAME_SIZE,
+      spectrogramData?: number[]): Example {
+    if (spectrogramData == null) {
+      spectrogramData = [];
+      let counter = 0;
+      for (let i = 0; i < numFrames * frameSize; ++i) {
+        spectrogramData.push(counter++);
+      }
     }
     return {
       label,
-      spectrogram:
-          {data: new Float32Array(spectrogramData), frameSize: FAKE_FRAME_SIZE}
+      spectrogram: {data: new Float32Array(spectrogramData), frameSize}
     };
   }
 
@@ -325,6 +329,133 @@ describe('Dataset', () => {
     expect(() => dataset.getSpectrogramsAsTensors())
         .toThrowError(/Cannot get spectrograms as tensors because.*empty/);
   });
+
+  it('Ragged example lengths and one window per example', () => {
+    const dataset = new Dataset();
+    dataset.addExample(getRandomExample('foo', 5));
+    dataset.addExample(getRandomExample('bar', 6));
+    dataset.addExample(getRandomExample('foo', 7));
+
+    const {xs, ys} =
+        dataset.getSpectrogramsAsTensors(null, {numFrames: 5, hopFrames: 5});
+    expect(xs.shape).toEqual([3, 5, FAKE_FRAME_SIZE, 1]);
+    expectArraysClose(ys, tf.tensor2d([[1, 0], [0, 1], [0, 1]]));
+  });
+
+  it('Ragged example lengths and one window per example, with label', () => {
+    const dataset = new Dataset();
+    dataset.addExample(getRandomExample('foo', 5));
+    dataset.addExample(getRandomExample('bar', 6));
+    dataset.addExample(getRandomExample('foo', 7));
+
+    const {xs, ys} =
+        dataset.getSpectrogramsAsTensors('foo', {numFrames: 5, hopFrames: 5});
+    expect(xs.shape).toEqual([2, 5, FAKE_FRAME_SIZE, 1]);
+    expect(ys).toBeUndefined();
+  });
+
+  it('Ragged example lengths and multiple windows per example', () => {
+    const dataset = new Dataset();
+    dataset.addExample(getRandomExample(
+        'foo', 6, 2, [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
+    dataset.addExample(
+        getRandomExample('bar', 5, 2, [1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
+
+    const {xs, ys} =
+        dataset.getSpectrogramsAsTensors(null, {numFrames: 3, hopFrames: 1});
+    const windows = tf.unstack(xs);
+
+    expect(windows.length).toEqual(6);
+    expectArraysClose(windows[0], tf.tensor3d([1, 1, 2, 2, 3, 3], [3, 2, 1]));
+    expectArraysClose(windows[1], tf.tensor3d([2, 2, 3, 3, 2, 2], [3, 2, 1]));
+    expectArraysClose(windows[2], tf.tensor3d([3, 3, 2, 2, 1, 1], [3, 2, 1]));
+    expectArraysClose(
+        windows[3], tf.tensor3d([10, 10, 20, 20, 30, 30], [3, 2, 1]));
+    expectArraysClose(
+        windows[4], tf.tensor3d([20, 20, 30, 30, 20, 20], [3, 2, 1]));
+    expectArraysClose(
+        windows[5], tf.tensor3d([30, 30, 20, 20, 10, 10], [3, 2, 1]));
+    expectArraysClose(
+        ys, tf.tensor2d([[1, 0], [1, 0], [1, 0], [0, 1], [0, 1], [0, 1]]));
+  });
+
+  it('Uniform example lengths and multiple windows per example', () => {
+    const dataset = new Dataset();
+    dataset.addExample(getRandomExample(
+        'foo', 6, 2, [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
+    dataset.addExample(
+        getRandomExample('bar', 6, 2, [0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
+
+    const {xs, ys} =
+        dataset.getSpectrogramsAsTensors(null, {numFrames: 5, hopFrames: 1});
+    const windows = tf.unstack(xs);
+    expect(windows.length).toEqual(4);
+    expectArraysClose(
+        windows[0], tf.tensor3d([0, 0, 1, 1, 2, 2, 3, 3, 2, 2], [5, 2, 1]));
+    expectArraysClose(
+        windows[1], tf.tensor3d([1, 1, 2, 2, 3, 3, 2, 2, 1, 1], [5, 2, 1]));
+    expectArraysClose(
+        windows[2],
+        tf.tensor3d([10, 10, 20, 20, 30, 30, 20, 20, 10, 10], [5, 2, 1]));
+    expectArraysClose(
+        windows[3],
+        tf.tensor3d([20, 20, 30, 30, 20, 20, 10, 10, 0, 0], [5, 2, 1]));
+    expectArraysClose(ys, tf.tensor2d([[1, 0], [1, 0], [0, 1], [0, 1]]));
+  });
+
+  it('Ragged examples containing background noise', () => {
+    const dataset = new Dataset();
+    dataset.addExample(getRandomExample(
+        BACKGROUND_NOISE_TAG, 7, 2,
+        [0, 0, 10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
+    dataset.addExample(
+        getRandomExample('bar', 6, 2, [0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
+    const {xs, ys} =
+        dataset.getSpectrogramsAsTensors(null, {numFrames: 3, hopFrames: 2});
+    const windows = tf.unstack(xs);
+    expect(windows.length).toEqual(4);
+    expectArraysClose(
+        windows[0], tf.tensor3d([0, 0, 10, 10, 20, 20], [3, 2, 1]));
+    expectArraysClose(
+        windows[1], tf.tensor3d([20, 20, 30, 30, 20, 20], [3, 2, 1]));
+    expectArraysClose(
+        windows[2], tf.tensor3d([20, 20, 10, 10, 0, 0], [3, 2, 1]));
+    expectArraysClose(windows[3], tf.tensor3d([2, 2, 3, 3, 2, 2], [3, 2, 1]));
+    expectArraysClose(ys, tf.tensor2d([[1, 0], [1, 0], [1, 0], [0, 1]]));
+  });
+
+  it('numFrames exceeding minmum example length leads to Error', () => {
+    const dataset = new Dataset();
+    dataset.addExample(getRandomExample(
+        'foo', 6, 2, [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
+    dataset.addExample(
+        getRandomExample('bar', 5, 2, [1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
+    expect(() => dataset.getSpectrogramsAsTensors(null, {
+      numFrames: 6,
+      hopFrames: 2
+    })).toThrowError(/.*6.*exceeds the minimum numFrames .*5.*/);
+  });
+
+  it('Ragged examples with no numFrames leads to Error', () => {
+    const dataset = new Dataset();
+    dataset.addExample(getRandomExample(
+        'foo', 6, 2, [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
+    dataset.addExample(
+        getRandomExample('bar', 5, 2, [1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
+    expect(() => dataset.getSpectrogramsAsTensors(null))
+        .toThrowError(/numFrames is required/);
+  });
+
+  it('Ragged examples with no hopFrames leads to Error', () => {
+    const dataset = new Dataset();
+    dataset.addExample(getRandomExample(
+        'foo', 6, 2, [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
+    dataset.addExample(
+        getRandomExample('bar', 5, 2, [1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
+    expect(() => dataset.getSpectrogramsAsTensors(null, {
+      numFrames: 4
+    })).toThrowError(/hopFrames is required/);
+  });
 });
 
 describe('Dataset serialization', () => {
@@ -511,5 +642,262 @@ describe('Dataset serialization', () => {
     expect(typeof DATASET_SERIALIZATION_VERSION === 'number').toEqual(true);
     expect(Number.isInteger(DATASET_SERIALIZATION_VERSION)).toEqual(true);
     expect(DATASET_SERIALIZATION_VERSION).toBeGreaterThan(0);
+  });
+});
+
+describe('getValidWindows', () => {
+  it('Left and right sides open, odd windowLength', () => {
+    const snippetLength = 100;
+    const focusIndex = 50;
+    const windowLength = 21;
+    const windowHop = 5;
+    const windows =
+        getValidWindows(snippetLength, focusIndex, windowLength, windowHop);
+    expect(windows).toEqual([[30, 51], [35, 56], [40, 61], [45, 66], [50, 71]]);
+  });
+
+  it('Left and right sides open, even windowLength', () => {
+    const snippetLength = 100;
+    const focusIndex = 50;
+    const windowLength = 20;
+    const windowHop = 5;
+    const windows =
+        getValidWindows(snippetLength, focusIndex, windowLength, windowHop);
+    expect(windows).toEqual([[35, 55], [40, 60], [45, 65], [50, 70]]);
+  });
+
+  it('Left side truncation, right side open', () => {
+    const snippetLength = 100;
+    const focusIndex = 8;
+    const windowLength = 20;
+    const windowHop = 5;
+    const windows =
+        getValidWindows(snippetLength, focusIndex, windowLength, windowHop);
+    expect(windows).toEqual([[0, 20], [5, 25]]);
+  });
+
+  it('Left side truncation extreme, right side open', () => {
+    const snippetLength = 100;
+    const focusIndex = 0;
+    const windowLength = 21;
+    const windowHop = 5;
+    const windows =
+        getValidWindows(snippetLength, focusIndex, windowLength, windowHop);
+    expect(windows).toEqual([[0, 21]]);
+  });
+
+  it('Right side truncation, left side open', () => {
+    const snippetLength = 100;
+    const focusIndex = 95;
+    const windowLength = 20;
+    const windowHop = 5;
+    const windows =
+        getValidWindows(snippetLength, focusIndex, windowLength, windowHop);
+    expect(windows).toEqual([[80, 100]]);
+  });
+
+  it('Right side truncation extreme, left side open', () => {
+    const snippetLength = 100;
+    const focusIndex = 99;
+    const windowLength = 21;
+    const windowHop = 5;
+    const windows =
+        getValidWindows(snippetLength, focusIndex, windowLength, windowHop);
+    expect(windows).toEqual([[79, 100]]);
+  });
+
+  it('Neither side has enough room for another hop 1', () => {
+    const snippetLength = 100;
+    const focusIndex = 50;
+    const windowLength = 21;
+    const windowHop = 35;
+    const windows =
+        getValidWindows(snippetLength, focusIndex, windowLength, windowHop);
+    expect(windows).toEqual([[40, 61]]);
+  });
+
+  it('Neither side has enough room for another hop 2', () => {
+    const snippetLength = 100;
+    const focusIndex = 50;
+    const windowLength = 91;
+    const windowHop = 35;
+    const windows =
+        getValidWindows(snippetLength, focusIndex, windowLength, windowHop);
+    expect(windows).toEqual([[5, 96]]);
+  });
+
+  it('Exact match', () => {
+    const snippetLength = 10;
+    const windowLength = 10;
+    const windowHop = 2;
+
+    let focusIndex = 0;
+    expect(getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toEqual([[0, 10]]);
+    focusIndex = 1;
+    expect(getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toEqual([[0, 10]]);
+    focusIndex = 5;
+    expect(getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toEqual([[0, 10]]);
+    focusIndex = 8;
+    expect(getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toEqual([[0, 10]]);
+    focusIndex = 9;
+    expect(getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toEqual([[0, 10]]);
+  });
+
+  it('Almost exact match', () => {
+    const snippetLength = 12;
+    const windowLength = 10;
+    const windowHop = 2;
+
+    let focusIndex = 0;
+    expect(getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toEqual([[0, 10]]);
+    focusIndex = 1;
+    expect(getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toEqual([[0, 10]]);
+    focusIndex = 5;
+    expect(getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toEqual([[0, 10], [2, 12]]);
+    focusIndex = 8;
+    expect(getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toEqual([[0, 10], [2, 12]]);
+    focusIndex = 9;
+    expect(getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toEqual([[0, 10], [2, 12]]);
+  });
+
+  it('Non-positive integer snippetLength values lead to errors', () => {
+    const windowLength = 10;
+    const focusIndex = 5;
+    const windowHop = 2;
+    let snippetLength = 0;
+    expect(
+        () =>
+            getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toThrow();
+    snippetLength = -2;
+    expect(
+        () =>
+            getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toThrow();
+    snippetLength = 10.5;
+    expect(
+        () =>
+            getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toThrow();
+  });
+
+  it('Non-positive integer windowLength values lead to errors', () => {
+    const snippetLength = 10;
+    const focusIndex = 5;
+    const windowHop = 2;
+    let windowLength = 0;
+    expect(
+        () =>
+            getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toThrow();
+    windowLength = -2;
+    expect(
+        () =>
+            getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toThrow();
+    windowLength = 3.5;
+    expect(
+        () =>
+            getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toThrow();
+  });
+
+  it('Negative or non-integer focusIndex values lead to errors', () => {
+    const snippetLength = 10;
+    const windowLength = 10;
+    const windowHop = 2;
+    let focusIndex = -5;
+    expect(
+        () =>
+            getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toThrow();
+    focusIndex = 1.5;
+    expect(
+        () =>
+            getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toThrow();
+  });
+
+  it('Out-of-bound focusIndex leads to error', () => {
+    const snippetLength = 10;
+    const windowLength = 10;
+    const windowHop = 2;
+    let focusIndex = 10;
+    expect(
+        () =>
+            getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toThrow();
+    focusIndex = 11;
+    expect(
+        () =>
+            getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toThrow();
+  });
+
+  it('Out-of-bound windowLength leads to error', () => {
+    const snippetLength = 10;
+    const windowLength = 12;
+    const windowHop = 2;
+    const focusIndex = 5;
+    expect(
+        () =>
+            getValidWindows(snippetLength, focusIndex, windowLength, windowHop))
+        .toThrow();
+  });
+});
+
+describe('spectrogram2IntensityCurve', () => {
+  it('Correctness', () => {
+    const x = tf.tensor2d([[1, 2], [3, 4], [5, 6]]);
+    const spectrogram:
+        SpectrogramData = {data: x.dataSync() as Float32Array, frameSize: 2};
+    const intensityCurve = spectrogram2IntensityCurve(spectrogram);
+    expectArraysClose(intensityCurve, tf.tensor1d([1.5, 3.5, 5.5]));
+  });
+});
+
+describe('getMaxIntensityFrameIndex', () => {
+  it('Multiple frames', () => {
+    const x = tf.tensor2d([[1, 2], [11, 12], [3, 4], [51, 52], [5, 6]]);
+    const spectrogram:
+        SpectrogramData = {data: x.dataSync() as Float32Array, frameSize: 2};
+    const maxIntensityFrameIndex = getMaxIntensityFrameIndex(spectrogram);
+    expectArraysClose(maxIntensityFrameIndex, tf.scalar(3, 'int32'));
+  });
+
+  it('Only one frames', () => {
+    const x = tf.tensor2d([[11, 12]]);
+    const spectrogram:
+        SpectrogramData = {data: x.dataSync() as Float32Array, frameSize: 2};
+    const maxIntensityFrameIndex = getMaxIntensityFrameIndex(spectrogram);
+    expectArraysClose(maxIntensityFrameIndex, tf.scalar(0, 'int32'));
+  });
+
+  it('No focus frame: return multiple windows', () => {
+    const snippetLength = 100;
+    const windowLength = 40;
+    const windowHop = 20;
+    const windows =
+        getValidWindows(snippetLength, null, windowLength, windowHop);
+    expect(windows).toEqual([[0, 40], [20, 60], [40, 80], [60, 100]]);
+  });
+
+  it('No focus frame: return one window', () => {
+    const snippetLength = 10;
+    const windowLength = 10;
+    const windowHop = 2;
+    const windows =
+        getValidWindows(snippetLength, null, windowLength, windowHop);
+    expect(windows).toEqual([[0, 10]]);
   });
 });

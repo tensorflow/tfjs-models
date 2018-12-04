@@ -114,6 +114,21 @@ export interface SpeechCommandRecognizer {
   createTransfer(name: string): TransferSpeechCommandRecognizer;
 }
 
+export interface ExampleCollectionOptions {
+  /**
+   * Multiplier for the duration.
+   *
+   * This is the ratio between the duration of the to-be-collected
+   * example and the duration of each input example accepted by the
+   * underlying convnet.
+   *
+   * If not provided, will default to 1.
+   *
+   * Must be a number >=1.
+   */
+  durationMultiplier?: number;
+}
+
 /**
  * Interface for a transfer-learning speech command recognizer.
  *
@@ -133,7 +148,8 @@ export interface TransferSpeechCommandRecognizer extends
    * @throws Error, if word belongs to the set of words the base model is
    *   trained to recognize.
    */
-  collectExample(word: string): Promise<SpectrogramData>;
+  collectExample(word: string, options?: ExampleCollectionOptions):
+      Promise<SpectrogramData>;
 
   /**
    * Clear all transfer learning examples collected so far.
@@ -385,6 +401,20 @@ export interface TransferLearnConfig {
    * and is a positive integer.
    */
   fineTuningCallback?: tf.CustomCallbackConfig;
+
+  /**
+   * Ratio between the window hop and the window width.
+   *
+   * Used during extraction of multiple spectrograms matching the underlying
+   * model's input shape from a longer spectroram.
+   *
+   * Defaults to 0.25.
+   *
+   * For example, if the spectrogram window accepted by the underlying model
+   * is 43 frames long, then the default windowHopRatio 0.25 will lead to
+   * a hop of Math.round(43 * 0.25) = 11 frames.
+   */
+  windowHopRatio?: number;
 }
 
 /**

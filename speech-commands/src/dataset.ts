@@ -84,6 +84,42 @@ export interface SerializedExamples {
   data: ArrayBuffer;
 }
 
+export const BACKGROUND_NOISE_TAG = '_background_noise_';
+
+/**
+ * Configuration for getting spectrograms as tensors.
+ */
+export interface GetSpectrogramsAsTensorsConfig {
+  /**
+   * Number of frames.
+   *
+   * This must be smaller than or equal to the # of frames of each
+   * example held by the dataset.
+   *
+   * If the # of frames of an example is greater than this number,
+   * the following heuristics will be used to extra >= 1 examples
+   * of length numFrames from the original example:
+   *
+   *   - If the label of the example is `BAKCGROUND_NOISE_TAG`,
+   *     the example will be splitted into multiple examples using the
+   *     `hopFrames` parameter (see below).
+   *   - If the label of the example is not `BACKGROUND_NOISE_TAG`,
+   *     the example will be splitted into multiple examples that
+   *     all contain the maximum-intensity frame using the `hopFrames`
+   *     parameter.
+   */
+  numFrames?: number;
+
+  /**
+   * Hop length in number of frames.
+   *
+   * Used when splitting a long example into multiple shorter ones.
+   *
+   * Must be provided if any such long examples exist.
+   */
+  hopFrames?: number;
+}
+
 /**
  * A serializable, mutable set of speech/audio `Example`s;
  */
@@ -209,7 +245,8 @@ export class Dataset {
    *     `Dataset`, or
    *   - if the `Dataset` is currently empty.
    */
-  getSpectrogramsAsTensors(label?: string):
+  getSpectrogramsAsTensors(
+      label?: string, config?: GetSpectrogramsAsTensorsConfig):
       {xs: tf.Tensor4D, ys?: tf.Tensor2D} {
     tf.util.assert(
         this.size() > 0,
@@ -229,28 +266,54 @@ export class Dataset {
               `at least two words, but it has only ${vocab.length} word.`);
     }
 
+    if (config == null) {
+      config = {};
+    }
+
+    // Get the numFrames lengths of all the examples currently held by the
+    // dataset.
+    const sortedUniqueNumFrames = this.getSortedUniqueNumFrames();
+    let numFrames: number;
+    let hopFrames: number;
+    if (sortedUniqueNumFrames.length === 1) {
+      numFrames = config.numFrames == null ? sortedUniqueNumFrames[0] :
+                                             config.numFrames;
+      hopFrames = config.hopFrames == null ? 1 : config.hopFrames;
+    } else {
+      numFrames = config.numFrames;
+      tf.util.assert(
+          numFrames != null && Number.isInteger(numFrames) && numFrames > 0,
+          `There are ${sortedUniqueNumFrames.length} unique lengths among ` +
+              `the ${this.size()} examples of this Dataset, hence numFrames ` +
+              `is required. But it is not provided.`);
+      tf.util.assert(
+          numFrames <= sortedUniqueNumFrames[0],
+          `numFrames (${numFrames}) exceeds the minimum numFrames ` +
+              `(${sortedUniqueNumFrames[0]}) among the examples of ` +
+              `the Dataset.`);
+
+      hopFrames = config.hopFrames;
+      tf.util.assert(
+          hopFrames != null && Number.isInteger(hopFrames) && hopFrames > 0,
+          `There are ${sortedUniqueNumFrames.length} unique lengths among ` +
+              `the ${this.size()} examples of this Dataset, hence hopFrames ` +
+              `is required. But it is not provided.`);
+    }
+
     return tf.tidy(() => {
       const xTensors: tf.Tensor3D[] = [];
       const labelIndices: number[] = [];
-      let uniqueNumFrames: number;
+      // let uniqueNumFrames: number;  // TODO(cais): Remove.
       let uniqueFrameSize: number;
       for (let i = 0; i < vocab.length; ++i) {
         const currentLabel = vocab[i];
-        if (label != null && label !== currentLabel) {
+        if (label != null && currentLabel !== label) {
           continue;
         }
         const ids = this.label2Ids[currentLabel];
         for (const id of ids) {
           const spectrogram = this.examples[id].spectrogram;
           const frameSize = spectrogram.frameSize;
-          const numFrames = spectrogram.data.length / frameSize;
-          if (uniqueNumFrames == null) {
-            uniqueNumFrames = numFrames;
-          } else {
-            tf.util.assert(
-                numFrames === uniqueNumFrames,
-                `Mismatch in numFrames (${numFrames} vs ${uniqueNumFrames})`);
-          }
           if (uniqueFrameSize == null) {
             uniqueFrameSize = frameSize;
           } else {
@@ -259,10 +322,24 @@ export class Dataset {
                 `Mismatch in frameSize  ` +
                     `(${frameSize} vs ${uniqueFrameSize})`);
           }
-          xTensors.push(
-              tf.tensor3d(spectrogram.data, [numFrames, frameSize, 1]));
-          if (label == null) {
-            labelIndices.push(i);
+
+          const snippetLength = spectrogram.data.length / frameSize;
+          const focusIndex = currentLabel === BACKGROUND_NOISE_TAG ?
+              null :
+              getMaxIntensityFrameIndex(spectrogram).dataSync()[0];
+          // TODO(cais): See if we can get rid of dataSync();
+
+          const windows =
+              getValidWindows(snippetLength, focusIndex, numFrames, hopFrames);
+
+          const snippet =
+              tf.tensor3d(spectrogram.data, [snippetLength, frameSize, 1]);
+          for (const window of windows) {
+            xTensors.push(snippet.slice(
+                [window[0], 0, 0], [window[1] - window[0], -1, -1]));
+            if (label == null) {
+              labelIndices.push(i);
+            }
           }
         }
       }
@@ -274,6 +351,23 @@ export class Dataset {
             undefined
       };
     });
+  }
+
+  private getSortedUniqueNumFrames(): number[] {
+    const numFramesSet = new Set<number>();
+    const vocab = this.getVocabulary();
+    for (let i = 0; i < vocab.length; ++i) {
+      const label = vocab[i];
+      const ids = this.label2Ids[label];
+      for (const id of ids) {
+        const spectrogram = this.examples[id].spectrogram;
+        const numFrames = spectrogram.data.length / spectrogram.frameSize;
+        numFramesSet.add(numFrames);
+      }
+    }
+    const uniqueNumFrames = [...numFramesSet];
+    uniqueNumFrames.sort();
+    return uniqueNumFrames;
   }
 
   /**
@@ -412,8 +506,8 @@ export function deserializeExample(
   return ex;
 }
 
-/** 
- * Encode intermediate serialization format as an ArrayBuffer. 
+/**
+ * Encode intermediate serialization format as an ArrayBuffer.
  *
  * Format of the binary ArrayBuffer:
  *   1. An 8-byte descriptor (see above).
@@ -465,4 +559,124 @@ export function arrayBuffer2SerializedExamples(buffer: ArrayBuffer):
   const manifest = JSON.parse(manifestString);
   const data = buffer.slice(offset);
   return {manifest, data};
+}
+
+/**
+ * Get valid windows in a long snippet.
+ *
+ * Each window is represented by an inclusive left index and an exclusive
+ * right index.
+ *
+ * @param snippetLength Long of the entire snippet. Must be a positive
+ *   integer.
+ * @param focusIndex Optional. If `null` or `undefined`, an array of
+ *   evenly-spaced windows will be generated. The array of windows will
+ *   start from the first possible location (i.e., [0, windowLength]).
+ *   If not `null` or `undefined`, must be an integer >= 0 and < snippetLength.
+ * @param windowLength Length of each window. Must be a positive integer and
+ *   <= snippetLength.
+ * @param windowHop Hops between successsive windows. Must be a positive
+ *   integer.
+ * @returns An array of [beginIndex, endIndex] pairs.
+ */
+export function getValidWindows(
+    snippetLength: number, focusIndex: number, windowLength: number,
+    windowHop: number): Array<[number, number]> {
+  tf.util.assert(
+      Number.isInteger(snippetLength) && snippetLength > 0,
+      `snippetLength must be a positive integer, but got ${snippetLength}`);
+  if (focusIndex != null) {
+    tf.util.assert(
+        Number.isInteger(focusIndex) && focusIndex >= 0,
+        `focusIndex must be a non-negative integer, but got ${focusIndex}`);
+  }
+  tf.util.assert(
+      Number.isInteger(windowLength) && windowLength > 0,
+      `windowLength must be a positive integer, but got ${windowLength}`);
+  tf.util.assert(
+      Number.isInteger(windowHop) && windowHop > 0,
+      `windowHop must be a positive integer, but got ${windowHop}`);
+  tf.util.assert(
+      windowLength <= snippetLength,
+      `windowLength (${windowLength}) exceeds snippetLength ` +
+          `(${snippetLength})`);
+  tf.util.assert(
+      focusIndex < snippetLength,
+      `focusIndex (${focusIndex}) equals or exceeds snippetLength ` +
+          `(${snippetLength})`);
+
+  if (windowLength === snippetLength) {
+    return [[0, snippetLength]];
+  }
+
+  const windows: Array<[number, number]> = [];
+
+  if (focusIndex == null) {
+    // Deal with the special case of no focus frame:
+    // Output an array of evenly-spaced windows, starting from
+    // the first possible location.
+    let begin = 0;
+    while (begin + windowLength <= snippetLength) {
+      windows.push([begin, begin + windowLength]);
+      begin += windowHop;
+    }
+    return windows;
+  }
+
+  const leftHalf = Math.floor(windowLength / 2);
+  let left = focusIndex - leftHalf;
+  if (left < 0) {
+    left = 0;
+  } else if (left + windowLength > snippetLength) {
+    left = snippetLength - windowLength;
+  }
+
+  while (true) {
+    if (left - windowHop < 0 || focusIndex >= left - windowHop + windowLength) {
+      break;
+    }
+    left -= windowHop;
+  }
+
+  while (left + windowLength <= snippetLength) {
+    if (focusIndex < left) {
+      break;
+    }
+    windows.push([left, left + windowLength]);
+    left += windowHop;
+  }
+  return windows;
+}
+
+/**
+ * Calculate an intensity profile from a spectrogram.
+ *
+ * The intensity at each time frame is caclulated by simply averaging all the
+ * spectral values that belong to that time frame.
+ *
+ * @param spectrogram The input spectrogram.
+ * @returns The temporal profile of the intensity as a 1D tf.Tensor of shape
+ *   `[numFrames]`.
+ */
+export function spectrogram2IntensityCurve(spectrogram: SpectrogramData):
+    tf.Tensor {
+  return tf.tidy(() => {
+    const numFrames = spectrogram.data.length / spectrogram.frameSize;
+    const x = tf.tensor2d(spectrogram.data, [numFrames, spectrogram.frameSize]);
+    return x.mean(-1);
+  });
+}
+
+/**
+ * Get the index to the maximum intensity frame.
+ *
+ * The intensity of each time frame is calculated as the arithmetic mean of
+ * all the spectral values belonging to that time frame.
+ *
+ * @param spectrogram The input spectrogram.
+ * @returns The index to the time frame containing the maximum intensity.
+ */
+export function getMaxIntensityFrameIndex(spectrogram: SpectrogramData):
+    tf.Scalar {
+  return tf.tidy(() => spectrogram2IntensityCurve(spectrogram).argMax());
 }

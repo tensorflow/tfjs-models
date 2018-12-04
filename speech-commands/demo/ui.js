@@ -15,6 +15,8 @@
  * =============================================================================
  */
 
+import * as SpeechCommands from '../src';
+
 import {BACKGROUND_NOISE_TAG, UNKNOWN_TAG} from '../src';
 
 const statusDisplay = document.getElementById('status-display');
@@ -66,6 +68,7 @@ export function hideCandidateWords() {
   candidateWordsContainer.classList.add('candidate-words-hidden');
 }
 
+
 /**
  * Show an audio spectrogram in a canvas.
  *
@@ -75,12 +78,21 @@ export function hideCandidateWords() {
  *   data.
  * @param {number} fftSize Number of frequency points per frame.
  * @param {number} fftDisplaySize Number of frequency points to show. Must be
+ * @param {Object} config Optional configuration object, with the following
+ *   supported fields:
+ *   - pixelsPerFrame {number} Number of pixels along the width dimension of
+ *     the canvas for each frame of spectrogram.
+ *   - markMaxIntensityFrame {bool} Whether to mark the index of the frame
+ *     with the maximum intensity.
  *   <= fftSize.
  */
-export function plotSpectrogram(
-    canvas, frequencyData, fftSize, fftDisplaySize) {
+export async function plotSpectrogram(
+    canvas, frequencyData, fftSize, fftDisplaySize, config) {
   if (fftDisplaySize == null) {
     fftDisplaySize = fftSize;
+  }
+  if (config == null) {
+    config = {};
   }
 
   // Get the maximum and minimum.
@@ -104,10 +116,15 @@ export function plotSpectrogram(
   const context = canvas.getContext('2d');
   context.clearRect(0, 0, canvas.width, canvas.height);
 
-  const numTimeSteps = frequencyData.length / fftSize;
-  const pixelWidth = canvas.width / numTimeSteps;
+  const numFrames = frequencyData.length / fftSize;
+  if (config.pixelsPerFrame != null) {
+    const realWidth = Math.round(config.pixelsPerFrame * numFrames);
+    canvas.width = realWidth;
+  }
+
+  const pixelWidth = canvas.width / numFrames;
   const pixelHeight = canvas.height / fftDisplaySize;
-  for (let i = 0; i < numTimeSteps; ++i) {
+  for (let i = 0; i < numFrames; ++i) {
     const x = pixelWidth * i;
     const spectrum = frequencyData.subarray(i * fftSize, (i + 1) * fftSize);
     if (spectrum[0] === -Infinity) {
@@ -124,6 +141,24 @@ export function plotSpectrogram(
       context.fillStyle = fillStyle;
       context.fillRect(x, y, pixelWidth, pixelHeight);
     }
+  }
+
+  if (config.markMaxIntensityFrame) {
+    const maxIntensityFrameIndex =
+        await SpeechCommands.getMaxIntensityFrameIndex({
+          data: frequencyData,
+          frameSize: fftSize
+        }).data();
+    // Draw lines to mark the maximum-intensity frame.
+    context.strokeStyle = 'black';
+    context.beginPath();
+    context.moveTo(pixelWidth * maxIntensityFrameIndex, 0);
+    context.lineTo(pixelWidth * maxIntensityFrameIndex, canvas.height * 0.1);
+    context.stroke();
+    context.beginPath();
+    context.moveTo(pixelWidth * maxIntensityFrameIndex, canvas.height * 0.9);
+    context.lineTo(pixelWidth * maxIntensityFrameIndex, canvas.height);
+    context.stroke();
   }
 }
 
