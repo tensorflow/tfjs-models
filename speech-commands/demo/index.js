@@ -90,16 +90,17 @@ startButton.addEventListener('click', () => {
       transferRecognizer == null ? recognizer : transferRecognizer;
   populateCandidateWords(activeRecognizer.wordLabels());
 
+  const suppressionTimeMillis = 1000;
   activeRecognizer
       .listen(
           result => {
             plotPredictions(
                 predictionCanvas, activeRecognizer.wordLabels(), result.scores,
-                3);
+                3, suppressionTimeMillis);
           },
           {
             includeSpectrogram: true,
-            suppressionTimeMillis: 1000,
+            suppressionTimeMillis,
             probabilityThreshold: Number.parseFloat(probaThresholdInput.value)
           })
       .then(() => {

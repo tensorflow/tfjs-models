@@ -169,9 +169,13 @@ export async function plotSpectrogram(
  * @param {string[]} candidateWords Candidate word array.
  * @param {Float32Array | number[]} probabilities Probability scores from the
  *   speech command recognizer. Must be of the same length as `candidateWords`.
+ * @param {number} timeToLiveMillis Optional time to live for the active label
+ *   highlighting. If not provided, will the highlighting will live
+ *   indefinitely till the next highlighting.
  * @param {number} topK Top _ scores to render.
  */
-export function plotPredictions(canvas, candidateWords, probabilities, topK) {
+export function plotPredictions(
+    canvas, candidateWords, probabilities, topK, timeToLiveMillis) {
   if (topK != null) {
     let wordsAndProbs = [];
     for (let i = 0; i < candidateWords.length; ++i) {
@@ -189,6 +193,12 @@ export function plotPredictions(canvas, candidateWords, probabilities, topK) {
     for (const word in candidateWordSpans) {
       if (word === topWord) {
         candidateWordSpans[word].classList.add('candidate-word-active');
+        if (timeToLiveMillis != null) {
+          setTimeout(
+              () => candidateWordSpans[word].classList.remove(
+                  'candidate-word-active'),
+              timeToLiveMillis);
+        }
       } else {
         candidateWordSpans[word].classList.remove('candidate-word-active');
       }
