@@ -89,7 +89,7 @@ export const BACKGROUND_NOISE_TAG = '_background_noise_';
 /**
  * Configuration for getting spectrograms as tensors.
  */
-export interface GetSepctrogramsAsTensorsConfig {
+export interface GetSpectrogramsAsTensorsConfig {
   /**
    * Number of frames.
    *
@@ -246,7 +246,7 @@ export class Dataset {
    *   - if the `Dataset` is currently empty.
    */
   getSpectrogramsAsTensors(
-      label?: string, config?: GetSepctrogramsAsTensorsConfig):
+      label?: string, config?: GetSpectrogramsAsTensorsConfig):
       {xs: tf.Tensor4D, ys?: tf.Tensor2D} {
     tf.util.assert(
         this.size() > 0,
