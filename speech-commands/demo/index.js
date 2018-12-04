@@ -33,6 +33,10 @@ const downloadFilesButton = document.getElementById('download-dataset');
 const datasetFileInput = document.getElementById('dataset-file-input');
 const uploadFilesButton = document.getElementById('upload-dataset');
 
+const loadTransferModelButton = document.getElementById('load-transfer-model');
+const saveTransferModelButton = document.getElementById('save-transfer-model');
+const savedTransferModelsSelect = document.getElementById('saved-transfer-models');
+
 const BACKGROUND_NOISE_TAG = SpeechCommands.BACKGROUND_NOISE_TAG;
 
 /**
@@ -58,6 +62,8 @@ let transferDurationMultiplier;
 (async function() {
   logToStatusDisplay('Creating recognizer...');
   recognizer = SpeechCommands.create('BROWSER_FFT');
+
+  await populateSavedTransferModelsSelect();
 
   // Make sure the tf.Model is loaded through HTTP. If this is not
   // called here, the tf.Model will be loaded the first time
@@ -88,6 +94,7 @@ let transferDurationMultiplier;
 startButton.addEventListener('click', () => {
   const activeRecognizer =
       transferRecognizer == null ? recognizer : transferRecognizer;
+  console.log(`activeRecognizer = ${activeRecognizer}`);  // DEBUG
   populateCandidateWords(activeRecognizer.wordLabels());
 
   activeRecognizer
@@ -246,9 +253,11 @@ enterLearnWordsButton.addEventListener('click', () => {
   // However, the user can still load an existing dataset from
   // files first and keep appending examples to it.
   disableFileUploadControls();
+  enterLearnWordsButton.disabled = true;
 
   transferDurationMultiplier = durationMultiplierSelect.value;
 
+  learnWordsInput.disabled = true;
   enterLearnWordsButton.disabled = true;
   transferWords = learnWordsInput.value.trim().split(',').map(w => w.trim());
   if (transferWords == null || transferWords.length <= 1) {
@@ -391,6 +400,8 @@ startTransferLearnButton.addEventListener('click', async () => {
       }
     }
   });
+  console.log(`await transferRecognizer.save()`);  // DEBUG
+  await transferRecognizer.save();
   startTransferLearnButton.textContent = 'Transfer learning complete.';
   startButton.disabled = false;
 });
@@ -483,3 +494,32 @@ async function loadDatasetInTransferRecognizer(serialized) {
   }
   updateButtonStateAccordingToTransferRecognizer();
 }
+
+async function populateSavedTransferModelsSelect() {
+  const savedModelKeys = await SpeechCommands.listSavedTransferModels();
+  while (savedTransferModelsSelect.firstChild) {
+    savedTransferModelsSelect.removeChild(
+        savedTransferModelsSelect.firstChild);
+  }
+  if (savedModelKeys.length > 0) {
+    for (const key of savedModelKeys) {
+      const option = document.createElement('option');
+      option.textContent = key;
+      option.id = key;
+      savedTransferModelsSelect.appendChild(option);
+    }
+    loadTransferModelButton.disabled = false;
+  }
+}
+
+loadTransferModelButton.addEventListener('click', async () => {
+  const transferModelName = savedTransferModelsSelect.value;
+  await recognizer.ensureModelLoaded();
+  transferRecognizer = recognizer.createTransfer(transferModelName);
+  console.log(transferRecognizer);  // DEBUG
+  await transferRecognizer.load();
+  learnWordsInput.value = transferRecognizer.wordLabels().join(',');
+  learnWordsInput.disabled = true;
+  durationMultiplierSelect.disabled = true;
+  enterLearnWordsButton.disabled = true;
+});

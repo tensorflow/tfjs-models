@@ -26,6 +26,11 @@ import {version} from './version';
 
 export const UNKNOWN_TAG = '_unknown_';
 
+// Key to the local-storage item that holds a map from model name to word
+// list.
+export const SAVED_MODEL_WORD_MAP_KEY = 'tfjs-speech-commands-model-words';
+export const SAVE_PATH_PREFIX = 'indexeddb://tfjs-speech-commands-model/';
+
 let streaming = false;
 
 export function getMajorAndMinorVersion(version: string) {
@@ -938,6 +943,56 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     return this.baseModel.inputs[0].shape;
   }
 
+  private getCanonicalSavePath(): string {
+    // console.log(  // DEBUG
+    //     `${SAVE_PATH_PREFIX}${this.wordLabels().join(',')}/${this.name}`);
+    // // We include the word list in the path of the saved model.
+    // return `${SAVE_PATH_PREFIX}${this.wordLabels().join(',')}/${this.name}`;
+    return `${SAVE_PATH_PREFIX}${this.name}`;
+  }
+
+  async save(handlerOrURL?: string | tf.io.IOHandler):
+      Promise<tf.io.SaveResult> {
+    if (handlerOrURL == null) {
+      handlerOrURL = this.getCanonicalSavePath();
+    }
+    console.log(`transfer model save(): ${handlerOrURL}`);  // DEBUG
+    // First, save the words.
+    let wordMap = JSON.parse(
+        window.localStorage.getItem(SAVED_MODEL_WORD_MAP_KEY));
+    if (wordMap == null) {
+      wordMap = {};
+    }
+    wordMap[this.name] = this.wordLabels();
+    console.log('wordMap:', wordMap);  // DEBUG
+    window.localStorage.setItem(
+        SAVED_MODEL_WORD_MAP_KEY, JSON.stringify(wordMap));
+    return this.model.save(handlerOrURL);
+  }
+
+  async load(handlerOrURL?: string | tf.io.IOHandler): Promise<void> {
+    if (handlerOrURL == null) {
+      handlerOrURL = this.getCanonicalSavePath();
+    }
+    // First, load the words.
+    const wordMap = JSON.parse(
+        window.localStorage.getItem(SAVED_MODEL_WORD_MAP_KEY));
+    if (wordMap == null || wordMap[this.name] == null) {
+      throw new Error(
+          `Cannot find saved word labels for transfer model named "${this.name}"`);
+    }
+    this.words = wordMap[this.name];
+    console.log(
+        `Loaded word list for model named ${this.name}: ${this.words}`);
+    this.model = await tf.loadModel(handlerOrURL);
+    console.log(`Loaded model from ${handlerOrURL}:`);
+    this.model.summary();
+  }
+
+  async deleteSaved() {
+    await tf.io.removeModel(this.getCanonicalSavePath());
+  }
+
   /**
    * Overridden method to prevent creating a nested transfer-learning
    * recognizer.
@@ -949,4 +1004,15 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         'Creating transfer-learned recognizer from a transfer-learned ' +
         'recognizer is not supported.');
   }
+}
+
+export async function listSavedTransferModels(): Promise<string[]> {
+  const models = await tf.io.listModels();
+  const keys = [];
+  for (const key in models) {
+    if (key.startsWith(SAVE_PATH_PREFIX)) {
+      keys.push(key.slice(SAVE_PATH_PREFIX.length))
+    }
+  }
+  return keys;
 }

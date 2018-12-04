@@ -28,6 +28,16 @@
       border-color: #a0a0a0;
     }
 
+    input:disabled {
+      color: #a0a0a0;
+      border-color: #a0a0a0;
+    }
+
+    select:disabled {
+      color: #a0a0a0;
+      border-color: #a0a0a0;
+    }
+
     select {
       color: #ff8300;
       background-color: #ffffff;
@@ -121,6 +131,14 @@
       font-size: 17px;
     }
 
+    .transfer-model-save-load {
+      font-size: 17px;
+    }
+
+    .start-stop {
+      font-size: 17px;
+    }
+
     .settings input {
       color: #0000ff;
       background-color: #ffffff;
@@ -145,6 +163,7 @@
   <div class="start-stop">
     <button id="start" disabled="true">Start</button>
     <button id="stop" disabled="true">Stop</button>
+    <span id="inference-model-name">Base model</span>
   </div>
   <div class='main-model'>
     <div class="settings">
@@ -163,7 +182,6 @@
       <option value="2">Duration x2</option>
     </select>
     <button id="enter-learn-words" disabled="true">Enter transfer words</button>
-
 
     <div id="transfer-learn-history"></div>
     <div id="collect-words"></div>
@@ -184,6 +202,16 @@
     <div id="plots">
       <div id="loss-plot" class="plots"></div>
       <div id="accuracy-plot" class="plots"></div>
+    </div>
+
+    <div class="transfer-model-save-load">
+      <button id="load-transfer-model" disabled="true">Load transfer model from:</button>
+      <select id="saved-transfer-models">
+        <option value="1"></option>
+      </select>
+
+      <button id="save-transfer-model" disabled="true">Save transfer model to:</button>
+      <input id="transfer-model-name" size="20" value="xfer-model">
     </div>
   </div>
 
