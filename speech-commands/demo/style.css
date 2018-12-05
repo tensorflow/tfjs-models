@@ -1,0 +1,165 @@
+body {
+  margin: 30px 0 0 30px;
+  font: 400 11px system-ui;
+}
+
+button {
+  color: #ff8300;
+  background-color: #ffffff;
+  border-style: solid;
+  border-width: 2px;
+  border-color: #ff8300;
+  border-radius: 10px;
+  font-size: 20px;
+  margin: 5px;
+  padding: 15px;
+}
+
+button:disabled {
+  color: #a0a0a0;
+  border-color: #a0a0a0;
+}
+
+input:disabled {
+  color: #a0a0a0;
+  border-color: #a0a0a0;
+}
+
+select:disabled {
+  color: #a0a0a0;
+  border-color: #a0a0a0;
+}
+
+select {
+  color: #ff8300;
+  background-color: #ffffff;
+  border-style: solid;
+  border-width: 2px;
+  border-color: #ff8300;
+  border-radius: 10px;
+  font-size: 20px;
+  margin: 5px;
+  padding: 15px;
+}
+
+.transfer-learn-section input {
+  color: #0000ff;
+  background-color: #ffffff;
+  border-style: solid;
+  border-width: 2px;
+  border-color: #0000ff;
+  border-radius: 10px;
+  font-size: 20px;
+  margin: 5px;
+  padding: 15px;
+  position: relative;
+}
+
+textarea {
+  font-size: 20px;
+  width: 90%;
+  height: 80%;
+  border: 2px solid #888;
+  border-radius: 10px;
+  resize: none;
+}
+
+.footer {
+  height: 20%;
+}
+
+.transfer-learn {
+  position: absolute;
+  top: 40%;
+}
+
+.word-div {
+  border-radius: 10px;
+  margin: 3px;
+}
+
+.candidate-word {
+  border: 1px solid gray;
+  background-color: lightyellow;
+  margin: 5px;
+  border-radius: 3px;
+  width: 10vw;
+  padding: 15px;
+  text-align: center;
+}
+
+.candidate-word-active {
+  border: 2px solid gray;
+  background-color: lightgreen;
+}
+
+.candidate-word-label {
+  font-weight: bold;
+  background-color: orange;
+  width: 250px;
+}
+
+.candidate-words-hidden {
+  display: none !important;
+}
+
+#candidate-words {
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 20px;
+}
+
+#collect-words {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: column;
+}
+
+#plots {
+  display: flex;
+}
+
+.settings {
+  font-size: 17px;
+}
+
+.collapsible-region {
+  font-size: 17px;
+  border-style: solid;
+  border-width: 1px;
+  border-color: #808080;
+  border-radius: 10px;
+}
+
+.collapsible-region-inner {
+  display: none;
+}
+
+#model-io {
+  vertical-align: top;
+}
+
+#dataset-io {
+  vertical-align: top;
+}
+
+.start-stop {
+  font-size: 17px;
+}
+
+.settings input {
+  color: #0000ff;
+  background-color: #ffffff;
+  border-style: solid;
+  border-width: 2px;
+  border-color: #0000ff;
+  border-radius: 10px;
+  margin: 5px;
+  font-size: 17px;
+}
+
+.transfer-word {
+  display: flex;
+  width: 330px;
+  justify-content: space-between;
+}

@@ -33,6 +33,11 @@ export const SAVE_PATH_PREFIX = 'indexeddb://tfjs-speech-commands-model/';
 
 let streaming = false;
 
+// Export a variable for injection during unit testing.
+// tslint:disable-next-line:no-any
+export let localStorageObj: Storage =
+    typeof window === 'undefined' ? null : window.localStorage;
+
 export function getMajorAndMinorVersion(version: string) {
   const versionItems = version.split('.');
   return versionItems.slice(0, 2).join('.');
@@ -941,28 +946,19 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     return this.baseModel.inputs[0].shape;
   }
 
-  private getCanonicalSavePath(name: string): string {
-    // console.log(  // DEBUG
-    //     `${SAVE_PATH_PREFIX}${this.wordLabels().join(',')}/${this.name}`);
-    // // We include the word list in the path of the saved model.
-    // return `${SAVE_PATH_PREFIX}${this.wordLabels().join(',')}/${this.name}`;
-    return `${SAVE_PATH_PREFIX}${name}`;
-  }
-
   async save(name?: string):
       Promise<tf.io.SaveResult> {
     name = name || this.name;
 
     // First, save the words.
     let wordMap = JSON.parse(
-        window.localStorage.getItem(SAVED_MODEL_WORD_MAP_KEY));
+        localStorageObj.getItem(SAVED_MODEL_WORD_MAP_KEY));
     if (wordMap == null) {
       wordMap = {};
     }
     wordMap[name] = this.wordLabels();
-    window.localStorage.setItem(
-        SAVED_MODEL_WORD_MAP_KEY, JSON.stringify(wordMap));
-    const savePath = this.getCanonicalSavePath(name);
+    localStorageObj.setItem(SAVED_MODEL_WORD_MAP_KEY, JSON.stringify(wordMap));
+    const savePath = getCanonicalSavePath(name);
     console.log(`Saving model to ${savePath}`);
     return this.model.save(savePath);
   }
@@ -970,34 +966,18 @@ class TransferBrowserFftSpeechCommandRecognizer extends
   async load(name?: string): Promise<void> {
     name = name || this.name;
     // First, load the words.
-    const wordMap = JSON.parse(
-        window.localStorage.getItem(SAVED_MODEL_WORD_MAP_KEY));
+    const wordMap =
+        JSON.parse(localStorageObj.getItem(SAVED_MODEL_WORD_MAP_KEY));
     if (wordMap == null || wordMap[name] == null) {
       throw new Error(
           `Cannot find saved word labels for transfer model named "${name}"`);
     }
     this.words = wordMap[name];
     console.log(`Loaded word list for model named ${name}: ${this.words}`);
-    const savePath = this.getCanonicalSavePath(name);
+    const savePath = getCanonicalSavePath(name);
     this.model = await tf.loadModel(savePath);
     console.log(`Loaded model from ${savePath}:`);
     this.model.summary();
-  }
-
-  async deleteSaved(name: string): Promise<void> {
-    name = name || this.name;
-    // Delete the words from local storage.
-    let wordMap = JSON.parse(
-        window.localStorage.getItem(SAVED_MODEL_WORD_MAP_KEY));
-    if (wordMap == null) {
-      wordMap = {};
-    }
-    if (wordMap[name] != null) {
-      delete wordMap[name];
-    }
-    window.localStorage.setItem(
-        SAVED_MODEL_WORD_MAP_KEY, JSON.stringify(wordMap));
-    await tf.io.removeModel(this.getCanonicalSavePath(name));
   }
 
   /**
@@ -1013,13 +993,32 @@ class TransferBrowserFftSpeechCommandRecognizer extends
   }
 }
 
+function getCanonicalSavePath(name: string): string {
+  return `${SAVE_PATH_PREFIX}${name}`;
+}
+
 export async function listSavedTransferModels(): Promise<string[]> {
   const models = await tf.io.listModels();
   const keys = [];
   for (const key in models) {
     if (key.startsWith(SAVE_PATH_PREFIX)) {
-      keys.push(key.slice(SAVE_PATH_PREFIX.length))
+      keys.push(key.slice(SAVE_PATH_PREFIX.length));
     }
   }
   return keys;
+}
+
+export async function deleteSaved(name: string): Promise<void> {
+  // Delete the words from local storage.
+  let wordMap = JSON.parse(
+      localStorageObj.getItem(SAVED_MODEL_WORD_MAP_KEY));
+  if (wordMap == null) {
+    wordMap = {};
+  }
+  if (wordMap[name] != null) {
+    delete wordMap[name];
+  }
+  localStorageObj.setItem(
+      SAVED_MODEL_WORD_MAP_KEY, JSON.stringify(wordMap));
+  await tf.io.removeModel(getCanonicalSavePath(name));
 }

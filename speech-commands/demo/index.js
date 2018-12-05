@@ -21,7 +21,6 @@ import * as SpeechCommands from '../src';
 
 import {hideCandidateWords, logToStatusDisplay, plotPredictions, plotSpectrogram, populateCandidateWords, showCandidateWords} from './ui';
 
-const inferenceModelNameSpan = document.getElementById('inference-model-name');
 const startButton = document.getElementById('start');
 const stopButton = document.getElementById('stop');
 const predictionCanvas = document.getElementById('prediction-canvas');
@@ -41,7 +40,6 @@ const transferModelSaveLoadInnerDiv = document.getElementById('transfer-model-sa
 const loadTransferModelButton = document.getElementById('load-transfer-model');
 const saveTransferModelButton = document.getElementById('save-transfer-model');
 const savedTransferModelsSelect = document.getElementById('saved-transfer-models');
-const saveTransferModelNameInput = document.getElementById('transfer-model-name');
 const deleteTransferModelButton = document.getElementById('delete-transfer-model');
 
 const BACKGROUND_NOISE_TAG = SpeechCommands.BACKGROUND_NOISE_TAG;
@@ -49,6 +47,7 @@ const BACKGROUND_NOISE_TAG = SpeechCommands.BACKGROUND_NOISE_TAG;
 /**
  * Transfer learning-related UI componenets.
  */
+const transferModelNameInput = document.getElementById('transfer-model-name');
 const learnWordsInput = document.getElementById('learn-words');
 const durationMultiplierSelect = document.getElementById('duration-multiplier');
 const enterLearnWordsButton = document.getElementById('enter-learn-words');
@@ -257,6 +256,15 @@ function createWordDivs(transferWords) {
 }
 
 enterLearnWordsButton.addEventListener('click', () => {
+  const modelName = transferModelNameInput.value;
+  if (modelName == null || modelName.length === 0) {
+    enterLearnWordsButton.textContent = 'Need model name!';
+    setTimeout(() => {
+      enterLearnWordsButton.textContent = 'Enter transfer words';
+    }, 2000);
+    return;
+  }
+
   // We disable the option to upload an existing dataset from files
   // once the "Enter transfer words" button has been clicked.
   // However, the user can still load an existing dataset from
@@ -274,7 +282,7 @@ enterLearnWordsButton.addEventListener('click', () => {
     return;
   }
 
-  transferRecognizer = recognizer.createTransfer(XFER_MODEL_NAME);
+  transferRecognizer = recognizer.createTransfer(modelName);
   createWordDivs(transferWords);
 
   scrollToPageBottom();
@@ -410,10 +418,10 @@ startTransferLearnButton.addEventListener('click', async () => {
     }
   });
   saveTransferModelButton.disabled = false;
-  inferenceModelNameSpan.textContent = transferRecognizer.name;
+  transferModelNameInput.value = transferRecognizer.name;
+  transferModelNameInput.disabled = true;
   startTransferLearnButton.textContent = 'Transfer learning complete.';
-  saveTransferModelNameInput.disabled = false;
-  saveTransferModelNameInput.value = `transfer-model-${getDateString()}`;
+  transferModelNameInput.disabled = false;
   startButton.disabled = false;
 });
 
@@ -463,7 +471,15 @@ uploadFilesButton.addEventListener('click', async () => {
   }
   const datasetFileReader = new FileReader();
   datasetFileReader.onload = async event => {
-    await loadDatasetInTransferRecognizer(event.target.result);
+    try {
+      await loadDatasetInTransferRecognizer(event.target.result);
+    } catch (err) {
+      const originalTextContent = uploadFilesButton.textContent;
+      uploadFilesButton.textContent = err.message;
+      setTimeout(() => {
+        uploadFilesButton.textContent = originalTextContent;
+      }, 2000);
+    }
     durationMultiplierSelect.value = `${transferDurationMultiplier}`;
     durationMultiplierSelect.disabled = true;
     enterLearnWordsButton.disabled = true;
@@ -474,8 +490,13 @@ uploadFilesButton.addEventListener('click', async () => {
 });
 
 async function loadDatasetInTransferRecognizer(serialized) {
+  const modelName = transferModelNameInput.value;
+  if (modelName == null || modelName.length === 0) {
+    throw new Error('Need model name!');
+  }
+
   if (transferRecognizer == null) {
-    transferRecognizer = recognizer.createTransfer(XFER_MODEL_NAME);
+    transferRecognizer = recognizer.createTransfer(modelName);
   }
   transferRecognizer.loadExamples(serialized);
   const exampleCounts = transferRecognizer.countExamples();
@@ -524,7 +545,7 @@ async function populateSavedTransferModelsSelect() {
 }
 
 saveTransferModelButton.addEventListener('click', async () => {
-  await transferRecognizer.save(saveTransferModelNameInput.value.trim());
+  await transferRecognizer.save();
   await populateSavedTransferModelsSelect();
   saveTransferModelButton.textContent = 'Model saved!';
   saveTransferModelButton.disabled = true;
@@ -535,7 +556,8 @@ loadTransferModelButton.addEventListener('click', async () => {
   await recognizer.ensureModelLoaded();
   transferRecognizer = recognizer.createTransfer(transferModelName);
   await transferRecognizer.load();
-  inferenceModelNameSpan.textContent = transferModelName;
+  transferModelNameInput.value = transferModelName;
+  transferModelNameInput.disabled = true;
   learnWordsInput.value = transferRecognizer.wordLabels().join(',');
   learnWordsInput.disabled = true;
   durationMultiplierSelect.disabled = true;
@@ -561,7 +583,7 @@ deleteTransferModelButton.addEventListener('click', async () => {
   const transferModelName = savedTransferModelsSelect.value;
   await recognizer.ensureModelLoaded();
   transferRecognizer = recognizer.createTransfer(transferModelName);
-  await transferRecognizer.deleteSaved(transferModelName);
+  await SpeechCommands.deleteSaved(transferModelName);
   deleteTransferModelButton.disabled = true;
   deleteTransferModelButton.textContent = `Deleted "${transferModelName}"`;
   await populateSavedTransferModelsSelect();
