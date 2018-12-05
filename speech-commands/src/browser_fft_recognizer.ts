@@ -28,7 +28,7 @@ export const UNKNOWN_TAG = '_unknown_';
 
 // Key to the local-storage item that holds a map from model name to word
 // list.
-export const SAVED_MODEL_WORD_MAP_KEY = 'tfjs-speech-commands-model-words';
+export const SAVED_MODEL_METADATA_KEY = 'tfjs-speech-commands-saved-model-metadata';
 export const SAVE_PATH_PREFIX = 'indexeddb://tfjs-speech-commands-model/';
 
 let streaming = false;
@@ -946,18 +946,33 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     return this.baseModel.inputs[0].shape;
   }
 
+  private getMetadata(): {
+    tfjsSpeechCommandsVersion: string,
+    modelName: string,
+    timeStamp: string,
+    wordLabels: string[]
+  } {
+    return {
+      tfjsSpeechCommandsVersion: version,
+      modelName: this.name,
+      timeStamp: new Date().toISOString(),
+      wordLabels: this.wordLabels()
+    }
+  }
+
   async save(handlerOrURL?: string | tf.io.IOHandler):
       Promise<tf.io.SaveResult> {
     handlerOrURL = handlerOrURL || getCanonicalSavePath(this.name);
 
     // First, save the words.
-    let wordMap = JSON.parse(
-        localStorageObj.getItem(SAVED_MODEL_WORD_MAP_KEY));
-    if (wordMap == null) {
-      wordMap = {};
+    let metadataMap = JSON.parse(
+        localStorageObj.getItem(SAVED_MODEL_METADATA_KEY));
+    if (metadataMap == null) {
+      metadataMap = {};
     }
-    wordMap[this.name] = this.wordLabels();
-    localStorageObj.setItem(SAVED_MODEL_WORD_MAP_KEY, JSON.stringify(wordMap));
+    metadataMap[this.name] = this.getMetadata();
+    localStorageObj.setItem(
+        SAVED_MODEL_METADATA_KEY, JSON.stringify(metadataMap));
     console.log(`Saving model to ${handlerOrURL}`);
     return this.model.save(handlerOrURL);
   }
@@ -966,14 +981,13 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     handlerOrURL = handlerOrURL || getCanonicalSavePath(this.name);
 
     // First, load the words.
-    const wordMap =
-        JSON.parse(localStorageObj.getItem(SAVED_MODEL_WORD_MAP_KEY));
-    if (wordMap == null || wordMap[this.name] == null) {
+    const metadataMap =
+        JSON.parse(localStorageObj.getItem(SAVED_MODEL_METADATA_KEY));
+    if (metadataMap == null || metadataMap[this.name] == null) {
       throw new Error(
-          `Cannot find saved word labels for transfer model named ` +
-          `"${this.name}"`);
+          `Cannot find metadata for transfer model named ${this.name}"`);
     }
-    this.words = wordMap[this.name];
+    this.words = metadataMap[this.name].wordLabels;
     console.log(
         `Loaded word list for model named ${this.name}: ${this.words}`);
     this.model = await tf.loadModel(handlerOrURL);
@@ -1022,15 +1036,15 @@ export async function listSavedTransferModels(): Promise<string[]> {
  */
 export async function deleteSaved(name: string): Promise<void> {
   // Delete the words from local storage.
-  let wordMap = JSON.parse(
-      localStorageObj.getItem(SAVED_MODEL_WORD_MAP_KEY));
-  if (wordMap == null) {
-    wordMap = {};
+  let metadataMap = JSON.parse(
+      localStorageObj.getItem(SAVED_MODEL_METADATA_KEY));
+  if (metadataMap == null) {
+    metadataMap = {};
   }
-  if (wordMap[name] != null) {
-    delete wordMap[name];
+  if (metadataMap[name] != null) {
+    delete metadataMap[name];
   }
   localStorageObj.setItem(
-      SAVED_MODEL_WORD_MAP_KEY, JSON.stringify(wordMap));
+      SAVED_MODEL_METADATA_KEY, JSON.stringify(metadataMap));
   await tf.io.removeModel(getCanonicalSavePath(name));
 }
