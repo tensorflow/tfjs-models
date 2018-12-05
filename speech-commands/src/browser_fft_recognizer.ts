@@ -35,8 +35,9 @@ let streaming = false;
 
 // Export a variable for injection during unit testing.
 // tslint:disable-next-line:no-any
-export let localStorageObj: Storage =
-    typeof window === 'undefined' ? null : window.localStorage;
+export let localStorageWrapper = {
+  localStorage: typeof window === 'undefined' ? null : window.localStorage
+};
 
 export function getMajorAndMinorVersion(version: string) {
   const versionItems = version.split('.');
@@ -957,7 +958,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       modelName: this.name,
       timeStamp: new Date().toISOString(),
       wordLabels: this.wordLabels()
-    }
+    };
   }
 
   async save(handlerOrURL?: string | tf.io.IOHandler):
@@ -965,13 +966,13 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     handlerOrURL = handlerOrURL || getCanonicalSavePath(this.name);
 
     // First, save the words.
-    let metadataMap = JSON.parse(
-        localStorageObj.getItem(SAVED_MODEL_METADATA_KEY));
-    if (metadataMap == null) {
-      metadataMap = {};
-    }
+    const metadataMapStr =
+        localStorageWrapper.localStorage.getItem(SAVED_MODEL_METADATA_KEY);
+    console.log('metadataMapStr:', metadataMapStr);  // DEBUG
+    const metadataMap =
+        metadataMapStr == null ? {} : JSON.parse(metadataMapStr);
     metadataMap[this.name] = this.getMetadata();
-    localStorageObj.setItem(
+    localStorageWrapper.localStorage.setItem(
         SAVED_MODEL_METADATA_KEY, JSON.stringify(metadataMap));
     console.log(`Saving model to ${handlerOrURL}`);
     return this.model.save(handlerOrURL);
@@ -981,8 +982,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     handlerOrURL = handlerOrURL || getCanonicalSavePath(this.name);
 
     // First, load the words.
-    const metadataMap =
-        JSON.parse(localStorageObj.getItem(SAVED_MODEL_METADATA_KEY));
+    const metadataMap = JSON.parse(
+        localStorageWrapper.localStorage.getItem(SAVED_MODEL_METADATA_KEY));
     if (metadataMap == null || metadataMap[this.name] == null) {
       throw new Error(
           `Cannot find metadata for transfer model named ${this.name}"`);
@@ -1037,14 +1038,14 @@ export async function listSavedTransferModels(): Promise<string[]> {
 export async function deleteSaved(name: string): Promise<void> {
   // Delete the words from local storage.
   let metadataMap = JSON.parse(
-      localStorageObj.getItem(SAVED_MODEL_METADATA_KEY));
+      localStorageWrapper.localStorage.getItem(SAVED_MODEL_METADATA_KEY));
   if (metadataMap == null) {
     metadataMap = {};
   }
   if (metadataMap[name] != null) {
     delete metadataMap[name];
   }
-  localStorageObj.setItem(
+  localStorageWrapper.localStorage.setItem(
       SAVED_MODEL_METADATA_KEY, JSON.stringify(metadataMap));
   await tf.io.removeModel(getCanonicalSavePath(name));
 }

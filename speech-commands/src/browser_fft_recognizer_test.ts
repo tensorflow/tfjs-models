@@ -22,12 +22,12 @@ import {writeFileSync} from 'fs';
 import {join} from 'path';
 import * as rimraf from 'rimraf';
 import * as tempfile from 'tempfile';
-import {BrowserFftSpeechCommandRecognizer, getMajorAndMinorVersion} from './browser_fft_recognizer';
+import {BrowserFftSpeechCommandRecognizer, getMajorAndMinorVersion, localStorageWrapper} from './browser_fft_recognizer';
 import * as BrowserFftUtils from './browser_fft_utils';
 import {FakeAudioContext, FakeAudioMediaStream} from './browser_test_utils';
 import {create} from './index';
 import {SpeechCommandRecognizerResult} from './types';
-import { arrayBuffer2SerializedExamples } from './dataset';
+import {arrayBuffer2SerializedExamples} from './dataset';
 
 describe('getMajorAndMinorVersion', () => {
   it('Correct results', () => {
@@ -1147,6 +1147,67 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(spectrogram.frameSize).toEqual(fakeColumnTruncateLength);
     const numFrames = spectrogram.data.length / fakeColumnTruncateLength;
     expect(numFrames).toEqual(fakeNumFrames * 1.5);
+  });
+
+  function setUpFakeLocalStorage() {
+    const store: {[key: string]: string} = {};
+
+    // tslint:disable:no-any
+    localStorageWrapper.localStorage = {
+      getItem: (key: string) => {
+        console.log('fake getItem()');  // DEBUG
+        console.log('  returning:', store[key]);  // DEBUG
+        return store[key];
+      },
+      setItem: (key: string, value: string) => {
+        console.log('fake setItem()');
+        store[key] = value;
+      }
+    } as any;
+    // tslint:enable:no-any
+  }
+
+  function setUpFakeIndexedDB() {
+    class FakeIndexedDBHandler implements tf.io.IOHandler {
+      constructor() {}
+
+      async save(artifacts: tf.io.ModelArtifacts): Promise<tf.io.SaveResult> {
+        console.log(`In fake IndexedDB.save()`);  // DEBUG
+        return null;
+      }
+
+      async load(): Promise<tf.io.ModelArtifacts> {
+        console.log(`In fake IndexedDB.load()`);  // DEBUG
+        return null;
+      }
+    }
+
+    function fakeIndexedDBRouter(url: string): tf.io.IOHandler {
+      if (url.startsWith('indexeddb://')) {
+        return new FakeIndexedDBHandler();
+      } else {
+        return null;
+      }
+    }
+
+    tf.io.registerLoadRouter(fakeIndexedDBRouter);
+    tf.io.registerSaveRouter(fakeIndexedDBRouter);
+  }
+
+  fit('Save and load transfer model', async () => {
+    setUpFakes();
+    setUpFakeLocalStorage();
+    setUpFakeIndexedDB();
+
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    await transfer.collectExample('foo');
+    await transfer.collectExample('bar');
+    await transfer.train({epochs: 1});
+
+    const saveResult = await transfer.save();
+    console.log(saveResult);  // DEBUG
   });
 
   // TODO(cais): Add tests for saving and loading of transfer-learned models.
