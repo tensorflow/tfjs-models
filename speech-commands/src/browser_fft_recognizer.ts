@@ -998,6 +998,12 @@ function getCanonicalSavePath(name: string): string {
   return `${SAVE_PATH_PREFIX}${name}`;
 }
 
+/**
+ * List the model that are currently saved locally in the browser.
+ *
+ * @returns An array of transfer-learned speech-commands models
+ *   that are currently saved in the browser locally.
+ */
 export async function listSavedTransferModels(): Promise<string[]> {
   const models = await tf.io.listModels();
   const keys = [];
@@ -1009,6 +1015,11 @@ export async function listSavedTransferModels(): Promise<string[]> {
   return keys;
 }
 
+/**
+ * Delete a locally-saved, transfer-learned speech-commands model.
+ *
+ * @param name The name of the transfer-learned model to be deleted.
+ */
 export async function deleteSaved(name: string): Promise<void> {
   // Delete the words from local storage.
   let wordMap = JSON.parse(

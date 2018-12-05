@@ -205,14 +205,39 @@ export interface TransferSpeechCommandRecognizer extends
   serializeExamples(): ArrayBuffer;
 
   /**
-   * TODO(cais): DOC STRING. DO NOT SUBMIT.
-   * @param handlerOrURL
+   * Save the transfer-learned model.
+   *
+   * By default, the model's topology and weights are saved to browser
+   * IndexedDB, and the associated metadata are saved to browser LocalStorage.
+   *
+   * The saved metadata includes (among other things) the word list.
+   *
+   * To save the model to another destination, use the optional argument
+   * `handlerOrURL`. Note that if you use the custom route, you'll
+   * currently have to handle the metadata (e.g., word list) saving yourself.
+   *
+   * @param handlerOrURL Optional custom save URL or IOHandler object. E.g.,
+   *   `'downloads://my-file-name'`.
+   * @returns A `Promise` of a `SaveResult` object that summarizes the
+   *   saving result.
    */
   save(handlerOrURL?: string | tf.io.IOHandler): Promise<tf.io.SaveResult>;
 
   /**
-   * TODO(cais): DOC STRING. DO NOT SUBMIT.
-   * @param handlerOrURL
+   * Load the transfer-learned model.
+   *
+   * By default, the model's topology and weights are loaded from browser
+   * IndexedDB and the associated metadata are loaded from browser
+   * LocalStorage.
+   *
+   * To load the model from another destination, use the optional
+   * argument. Note that if you load the model from a custom URL or
+   * IOHandler, you'll currently have to load the metadata (e.g., word
+   * list) yourself.
+   *
+   * @param handlerOrURL Optional custom source URL or IOHandler object
+   *   to load the data from. E.g.,
+   *   `tf.io.browserFiles([modelJSONFile, weightsFile])`
    */
   load(handlerOrURL?: string | tf.io.IOHandler): Promise<void>;
 }
