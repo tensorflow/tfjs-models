@@ -946,9 +946,9 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     return this.baseModel.inputs[0].shape;
   }
 
-  async save(name?: string):
+  async save(handlerOrURL?: string | tf.io.IOHandler):
       Promise<tf.io.SaveResult> {
-    name = name || this.name;
+    handlerOrURL = handlerOrURL || getCanonicalSavePath(this.name);
 
     // First, save the words.
     let wordMap = JSON.parse(
@@ -956,27 +956,28 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     if (wordMap == null) {
       wordMap = {};
     }
-    wordMap[name] = this.wordLabels();
+    wordMap[this.name] = this.wordLabels();
     localStorageObj.setItem(SAVED_MODEL_WORD_MAP_KEY, JSON.stringify(wordMap));
-    const savePath = getCanonicalSavePath(name);
-    console.log(`Saving model to ${savePath}`);
-    return this.model.save(savePath);
+    console.log(`Saving model to ${handlerOrURL}`);
+    return this.model.save(handlerOrURL);
   }
 
-  async load(name?: string): Promise<void> {
-    name = name || this.name;
+  async load(handlerOrURL?: string | tf.io.IOHandler): Promise<void> {
+    handlerOrURL = handlerOrURL || getCanonicalSavePath(this.name);
+
     // First, load the words.
     const wordMap =
         JSON.parse(localStorageObj.getItem(SAVED_MODEL_WORD_MAP_KEY));
-    if (wordMap == null || wordMap[name] == null) {
+    if (wordMap == null || wordMap[this.name] == null) {
       throw new Error(
-          `Cannot find saved word labels for transfer model named "${name}"`);
+          `Cannot find saved word labels for transfer model named ` +
+          `"${this.name}"`);
     }
-    this.words = wordMap[name];
-    console.log(`Loaded word list for model named ${name}: ${this.words}`);
-    const savePath = getCanonicalSavePath(name);
-    this.model = await tf.loadModel(savePath);
-    console.log(`Loaded model from ${savePath}:`);
+    this.words = wordMap[this.name];
+    console.log(
+        `Loaded word list for model named ${this.name}: ${this.words}`);
+    this.model = await tf.loadModel(handlerOrURL);
+    console.log(`Loaded model from ${handlerOrURL}:`);
     this.model.summary();
   }
 
