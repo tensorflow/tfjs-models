@@ -208,13 +208,13 @@ export interface TransferSpeechCommandRecognizer extends
    * TODO(cais): DOC STRING. DO NOT SUBMIT.
    * @param handlerOrURL
    */
-  save(handlerOrURL?: string | tf.io.IOHandler): Promise<tf.io.SaveResult>;
+  save(name?: string): Promise<tf.io.SaveResult>;
 
   /**
    * TODO(cais): DOC STRING. DO NOT SUBMIT.
    * @param handlerOrURL
    */
-  load(handlerOrURL?: string | tf.io.IOHandler): Promise<void>;
+  load(name?: string): Promise<void>;
 
   // /**
   //  * TODO(cais): DOC STRING. DO NOT SUBMIT.

@@ -133,6 +133,18 @@
 
     .transfer-model-save-load {
       font-size: 17px;
+      border-style: solid;
+      border-width: 1px;
+      border-color: #808080;
+      border-radius: 10px;
+    }
+
+    #transfer-model-save-load-inner {
+      display: none;
+    }
+
+    #model-io {
+      vertical-align: top;
     }
 
     .start-stop {
@@ -205,13 +217,20 @@
     </div>
 
     <div class="transfer-model-save-load">
-      <button id="load-transfer-model" disabled="true">Load transfer model from:</button>
-      <select id="saved-transfer-models">
-        <option value="1"></option>
-      </select>
-
-      <button id="save-transfer-model" disabled="true">Save transfer model to:</button>
-      <input id="transfer-model-name" size="20" value="xfer-model">
+      <button id="model-io">Model IO >></button>
+      <div id="transfer-model-save-load-inner">
+        <div>
+          <button id="load-transfer-model" disabled="true">Load:</button>
+          <select id="saved-transfer-models">
+            <option value="1"></option>
+          </select>
+          <button id="delete-transfer-model" disabled="true">Delete</button>
+        </div>
+        <div>
+          <button id="save-transfer-model" disabled="true">Save to:</button>
+          <input id="transfer-model-name" size="20" value="" disabled="true">
+        </div>
+      </div>
     </div>
   </div>
 

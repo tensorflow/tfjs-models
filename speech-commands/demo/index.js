@@ -33,9 +33,12 @@ const downloadFilesButton = document.getElementById('download-dataset');
 const datasetFileInput = document.getElementById('dataset-file-input');
 const uploadFilesButton = document.getElementById('upload-dataset');
 
+const modelIOButton = document.getElementById('model-io');
+const transferModelSaveLoadInnerDiv = document.getElementById('transfer-model-save-load-inner');
 const loadTransferModelButton = document.getElementById('load-transfer-model');
 const saveTransferModelButton = document.getElementById('save-transfer-model');
 const savedTransferModelsSelect = document.getElementById('saved-transfer-models');
+const saveTransferModelNameInput = document.getElementById('transfer-model-name');
 
 const BACKGROUND_NOISE_TAG = SpeechCommands.BACKGROUND_NOISE_TAG;
 
@@ -94,7 +97,6 @@ let transferDurationMultiplier;
 startButton.addEventListener('click', () => {
   const activeRecognizer =
       transferRecognizer == null ? recognizer : transferRecognizer;
-  console.log(`activeRecognizer = ${activeRecognizer}`);  // DEBUG
   populateCandidateWords(activeRecognizer.wordLabels());
 
   activeRecognizer
@@ -400,14 +402,15 @@ startTransferLearnButton.addEventListener('click', async () => {
       }
     }
   });
-  console.log(`await transferRecognizer.save()`);  // DEBUG
-  await transferRecognizer.save();
+  saveTransferModelButton.disabled = false;
   startTransferLearnButton.textContent = 'Transfer learning complete.';
+  saveTransferModelNameInput.disabled = false;
+  saveTransferModelNameInput.value = `transfer-model-${getDateString()}`;
   startButton.disabled = false;
 });
 
 downloadFilesButton.addEventListener('click', () => {
-  const basename = getDatasetFileBasename();
+  const basename = getDateString();
   const artifacts = transferRecognizer.serializeExamples();
 
   // Trigger downloading of the data .bin file.
@@ -419,7 +422,7 @@ downloadFilesButton.addEventListener('click', () => {
 });
 
 /** Get the base name of the downloaded files based on current dataset. */
-function getDatasetFileBasename() {
+function getDateString() {
   const d = new Date();
   const year = `${d.getFullYear()}`;
   let month = `${d.getMonth() + 1}`;
@@ -427,7 +430,7 @@ function getDatasetFileBasename() {
   if (month.length < 2) {
     month = `0${month}`;
   }
-  if (day.lenght < 2) {
+  if (day.length < 2) {
     day = `0${day}`;
   }
   let hour = `${d.getHours()}`;
@@ -512,14 +515,35 @@ async function populateSavedTransferModelsSelect() {
   }
 }
 
+saveTransferModelButton.addEventListener('click', async () => {
+  await transferRecognizer.save(saveTransferModelNameInput.value.trim());
+  await populateSavedTransferModelsSelect();
+  saveTransferModelButton.textContent = 'Model saved!';
+  saveTransferModelButton.disabled = true;
+});
+
 loadTransferModelButton.addEventListener('click', async () => {
   const transferModelName = savedTransferModelsSelect.value;
   await recognizer.ensureModelLoaded();
   transferRecognizer = recognizer.createTransfer(transferModelName);
-  console.log(transferRecognizer);  // DEBUG
   await transferRecognizer.load();
   learnWordsInput.value = transferRecognizer.wordLabels().join(',');
   learnWordsInput.disabled = true;
   durationMultiplierSelect.disabled = true;
   enterLearnWordsButton.disabled = true;
+  saveTransferModelButton.disabled = true;
+  loadTransferModelButton.disabled = true;
+  loadTransferModelButton.textContent = 'Model loaded!';
+});
+
+modelIOButton.addEventListener('click', () => {
+  if (modelIOButton.textContent.endsWith(' >>')) {
+    transferModelSaveLoadInnerDiv.style.display = 'inline-block';
+    modelIOButton.textContent =
+        modelIOButton.textContent.replace(' >>', ' <<');
+  } else {
+    transferModelSaveLoadInnerDiv.style.display = 'none';
+    modelIOButton.textContent =
+        modelIOButton.textContent.replace(' <<', ' >>');
+  }
 });

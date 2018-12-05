@@ -576,8 +576,6 @@ export class BrowserFftSpeechCommandRecognizer implements
           `but got shape [null,${nonBatchedShape}]`);
     }
   }
-
-  // TODO(cais): Implement model save and load.
 }
 
 /**
@@ -943,54 +941,63 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     return this.baseModel.inputs[0].shape;
   }
 
-  private getCanonicalSavePath(): string {
+  private getCanonicalSavePath(name: string): string {
     // console.log(  // DEBUG
     //     `${SAVE_PATH_PREFIX}${this.wordLabels().join(',')}/${this.name}`);
     // // We include the word list in the path of the saved model.
     // return `${SAVE_PATH_PREFIX}${this.wordLabels().join(',')}/${this.name}`;
-    return `${SAVE_PATH_PREFIX}${this.name}`;
+    return `${SAVE_PATH_PREFIX}${name}`;
   }
 
-  async save(handlerOrURL?: string | tf.io.IOHandler):
+  async save(name?: string):
       Promise<tf.io.SaveResult> {
-    if (handlerOrURL == null) {
-      handlerOrURL = this.getCanonicalSavePath();
-    }
-    console.log(`transfer model save(): ${handlerOrURL}`);  // DEBUG
+    name = name || this.name;
+
     // First, save the words.
     let wordMap = JSON.parse(
         window.localStorage.getItem(SAVED_MODEL_WORD_MAP_KEY));
     if (wordMap == null) {
       wordMap = {};
     }
-    wordMap[this.name] = this.wordLabels();
-    console.log('wordMap:', wordMap);  // DEBUG
+    wordMap[name] = this.wordLabels();
     window.localStorage.setItem(
         SAVED_MODEL_WORD_MAP_KEY, JSON.stringify(wordMap));
-    return this.model.save(handlerOrURL);
+    const savePath = this.getCanonicalSavePath(name);
+    console.log(`Saving model to ${savePath}`);
+    return this.model.save(savePath);
   }
 
-  async load(handlerOrURL?: string | tf.io.IOHandler): Promise<void> {
-    if (handlerOrURL == null) {
-      handlerOrURL = this.getCanonicalSavePath();
-    }
+  async load(name?: string): Promise<void> {
+    name = name || this.name;
     // First, load the words.
     const wordMap = JSON.parse(
         window.localStorage.getItem(SAVED_MODEL_WORD_MAP_KEY));
-    if (wordMap == null || wordMap[this.name] == null) {
+    if (wordMap == null || wordMap[name] == null) {
       throw new Error(
-          `Cannot find saved word labels for transfer model named "${this.name}"`);
+          `Cannot find saved word labels for transfer model named "${name}"`);
     }
-    this.words = wordMap[this.name];
-    console.log(
-        `Loaded word list for model named ${this.name}: ${this.words}`);
-    this.model = await tf.loadModel(handlerOrURL);
-    console.log(`Loaded model from ${handlerOrURL}:`);
+    this.words = wordMap[name];
+    console.log(`Loaded word list for model named ${name}: ${this.words}`);
+    const savePath = this.getCanonicalSavePath(name);
+    this.model = await tf.loadModel(savePath);
+    console.log(`Loaded model from ${savePath}:`);
     this.model.summary();
   }
 
-  async deleteSaved() {
-    await tf.io.removeModel(this.getCanonicalSavePath());
+  async deleteSaved(name: string): Promise<void> {
+    name = name || this.name;
+    // Delete the words from local storage.
+    let wordMap = JSON.parse(
+        window.localStorage.getItem(SAVED_MODEL_WORD_MAP_KEY));
+    if (wordMap == null) {
+      wordMap = {};
+    }
+    if (wordMap[name] != null) {
+      delete wordMap[name];
+    }
+    window.localStorage.setItem(
+        SAVED_MODEL_WORD_MAP_KEY, JSON.stringify(wordMap));
+    await tf.io.removeModel(this.getCanonicalSavePath(name));
   }
 
   /**
