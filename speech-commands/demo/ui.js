@@ -194,10 +194,12 @@ export function plotPredictions(
       if (word === topWord) {
         candidateWordSpans[word].classList.add('candidate-word-active');
         if (timeToLiveMillis != null) {
-          setTimeout(
-              () => candidateWordSpans[word].classList.remove(
-                  'candidate-word-active'),
-              timeToLiveMillis);
+          setTimeout(() => {
+            if (candidateWordSpans[word]) {
+              candidateWordSpans[word].classList.remove(
+                  'candidate-word-active');
+            }
+          }, timeToLiveMillis);
         }
       } else {
         candidateWordSpans[word].classList.remove('candidate-word-active');
