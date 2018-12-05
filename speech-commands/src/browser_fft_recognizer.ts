@@ -979,6 +979,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
   }
 
   async load(handlerOrURL?: string | tf.io.IOHandler): Promise<void> {
+    console.log('In load() 1...');  // DEBUG
     handlerOrURL = handlerOrURL || getCanonicalSavePath(this.name);
 
     // First, load the words.
@@ -988,10 +989,12 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       throw new Error(
           `Cannot find metadata for transfer model named ${this.name}"`);
     }
+    console.log('In load() 20...');  // DEBUG
     this.words = metadataMap[this.name].wordLabels;
     console.log(
         `Loaded word list for model named ${this.name}: ${this.words}`);
     this.model = await tf.loadModel(handlerOrURL);
+    console.log('In load() 30...');  // DEBUG
     console.log(`Loaded model from ${handlerOrURL}:`);
     this.model.summary();
   }

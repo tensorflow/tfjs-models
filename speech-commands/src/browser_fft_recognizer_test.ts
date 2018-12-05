@@ -22,7 +22,7 @@ import {writeFileSync} from 'fs';
 import {join} from 'path';
 import * as rimraf from 'rimraf';
 import * as tempfile from 'tempfile';
-import {BrowserFftSpeechCommandRecognizer, getMajorAndMinorVersion, localStorageWrapper} from './browser_fft_recognizer';
+import {BrowserFftSpeechCommandRecognizer, getMajorAndMinorVersion, localStorageWrapper, SAVED_MODEL_METADATA_KEY} from './browser_fft_recognizer';
 import * as BrowserFftUtils from './browser_fft_utils';
 import {FakeAudioContext, FakeAudioMediaStream} from './browser_test_utils';
 import {create} from './index';
@@ -1149,42 +1149,38 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(numFrames).toEqual(fakeNumFrames * 1.5);
   });
 
-  function setUpFakeLocalStorage() {
-    const store: {[key: string]: string} = {};
-
+  function setUpFakeLocalStorage(store: {[key: string]: string}) {
     // tslint:disable:no-any
     localStorageWrapper.localStorage = {
       getItem: (key: string) => {
-        console.log('fake getItem()');  // DEBUG
-        console.log('  returning:', store[key]);  // DEBUG
         return store[key];
       },
       setItem: (key: string, value: string) => {
-        console.log('fake setItem()');
         store[key] = value;
       }
     } as any;
     // tslint:enable:no-any
   }
 
-  function setUpFakeIndexedDB() {
+  function setUpFakeIndexedDB(artifactStore: tf.io.ModelArtifacts[]) {
     class FakeIndexedDBHandler implements tf.io.IOHandler {
-      constructor() {}
+      constructor(readonly artifactStore: tf.io.ModelArtifacts[]) {}
 
       async save(artifacts: tf.io.ModelArtifacts): Promise<tf.io.SaveResult> {
-        console.log(`In fake IndexedDB.save()`);  // DEBUG
+        console.log('*** In save()');  // DEBUG
+        this.artifactStore.push(artifacts);
         return null;
       }
 
       async load(): Promise<tf.io.ModelArtifacts> {
-        console.log(`In fake IndexedDB.load()`);  // DEBUG
-        return null;
+        console.log('*** In load()');  // DEBUG
+        return this.artifactStore[this.artifactStore.length - 1];
       }
     }
 
     function fakeIndexedDBRouter(url: string): tf.io.IOHandler {
       if (url.startsWith('indexeddb://')) {
-        return new FakeIndexedDBHandler();
+        return new FakeIndexedDBHandler(artifactStore);
       } else {
         return null;
       }
@@ -1196,8 +1192,10 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
 
   fit('Save and load transfer model', async () => {
     setUpFakes();
-    setUpFakeLocalStorage();
-    setUpFakeIndexedDB();
+    const localStore: {[key: string]: string} = {};
+    setUpFakeLocalStorage(localStore);
+    const indexedDBStore: tf.io.ModelArtifacts[] = [];
+    setUpFakeIndexedDB(indexedDBStore);
 
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();
@@ -1205,9 +1203,33 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     await transfer.collectExample('foo');
     await transfer.collectExample('bar');
     await transfer.train({epochs: 1});
+    (transfer as any).model.summary();  // DEBUG
 
-    const saveResult = await transfer.save();
-    console.log(saveResult);  // DEBUG
+    const xs = tf.ones([1, fakeNumFrames, fakeColumnTruncateLength, 1]);
+    const out0 = await transfer.recognize(xs);
+    console.log(out0.scores);  // DEBUG
+
+    await transfer.save();
+
+    const savedMetadata = JSON.parse(localStore[SAVED_MODEL_METADATA_KEY]);
+    expect(savedMetadata['xfer1']['modelName']).toEqual('xfer1');
+    expect(savedMetadata['xfer1']['wordLabels']).toEqual(['bar', 'foo']);
+    expect(indexedDBStore.length).toEqual(1);
+    const modelPrime = await tf.models.modelFromJSON(
+        indexedDBStore[0].modelTopology as {});
+    expect(modelPrime.layers.length).toEqual(4);
+    expect(indexedDBStore[0].weightSpecs.length).toEqual(4);
+
+    // Load the transfer model back.
+    const base2 = new BrowserFftSpeechCommandRecognizer();
+    await base2.ensureModelLoaded();
+    const transfer2 = base2.createTransfer('xfer1');
+    console.log(await transfer.recognize(xs));  // DEBUG
+    console.log('===========================');  // DEBUG
+    console.log('Calling load()');  // DEBUG
+    await transfer2.load();
+    expect(transfer2.wordLabels()).toEqual(['bar', 'foo']);
+    // console.log(out1.scores);  // DEBUG
   });
 
   // TODO(cais): Add tests for saving and loading of transfer-learned models.
