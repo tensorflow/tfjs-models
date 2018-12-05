@@ -21,6 +21,7 @@ import * as SpeechCommands from '../src';
 
 import {hideCandidateWords, logToStatusDisplay, plotPredictions, plotSpectrogram, populateCandidateWords, showCandidateWords} from './ui';
 
+const inferenceModelNameSpan = document.getElementById('inference-model-name');
 const startButton = document.getElementById('start');
 const stopButton = document.getElementById('stop');
 const predictionCanvas = document.getElementById('prediction-canvas');
@@ -29,6 +30,8 @@ const probaThresholdInput = document.getElementById('proba-threshold');
 const epochsInput = document.getElementById('epochs');
 const fineTuningEpochsInput = document.getElementById('fine-tuning-epochs');
 
+const datasetIOButton = document.getElementById('dataset-io');
+const datasetIOInnerDiv = document.getElementById('dataset-io-inner');
 const downloadFilesButton = document.getElementById('download-dataset');
 const datasetFileInput = document.getElementById('dataset-file-input');
 const uploadFilesButton = document.getElementById('upload-dataset');
@@ -39,6 +42,7 @@ const loadTransferModelButton = document.getElementById('load-transfer-model');
 const saveTransferModelButton = document.getElementById('save-transfer-model');
 const savedTransferModelsSelect = document.getElementById('saved-transfer-models');
 const saveTransferModelNameInput = document.getElementById('transfer-model-name');
+const deleteTransferModelButton = document.getElementById('delete-transfer-model');
 
 const BACKGROUND_NOISE_TAG = SpeechCommands.BACKGROUND_NOISE_TAG;
 
@@ -75,6 +79,8 @@ let transferDurationMultiplier;
       .then(() => {
         startButton.disabled = false;
         enterLearnWordsButton.disabled = false;
+        loadTransferModelButton.disabled = false;
+        deleteTransferModelButton.disabled = false;
 
         logToStatusDisplay('Model loaded.');
 
@@ -403,6 +409,7 @@ startTransferLearnButton.addEventListener('click', async () => {
     }
   });
   saveTransferModelButton.disabled = false;
+  inferenceModelNameSpan.textContent = transferRecognizer.name;
   startTransferLearnButton.textContent = 'Transfer learning complete.';
   saveTransferModelNameInput.disabled = false;
   saveTransferModelNameInput.value = `transfer-model-${getDateString()}`;
@@ -527,6 +534,7 @@ loadTransferModelButton.addEventListener('click', async () => {
   await recognizer.ensureModelLoaded();
   transferRecognizer = recognizer.createTransfer(transferModelName);
   await transferRecognizer.load();
+  inferenceModelNameSpan.textContent = transferModelName;
   learnWordsInput.value = transferRecognizer.wordLabels().join(',');
   learnWordsInput.disabled = true;
   durationMultiplierSelect.disabled = true;
@@ -547,3 +555,26 @@ modelIOButton.addEventListener('click', () => {
         modelIOButton.textContent.replace(' <<', ' >>');
   }
 });
+
+deleteTransferModelButton.addEventListener('click', async () => {
+  const transferModelName = savedTransferModelsSelect.value;
+  await recognizer.ensureModelLoaded();
+  transferRecognizer = recognizer.createTransfer(transferModelName);
+  await transferRecognizer.deleteSaved(transferModelName);
+  deleteTransferModelButton.disabled = true;
+  deleteTransferModelButton.textContent = `Deleted "${transferModelName}"`;
+  await populateSavedTransferModelsSelect();
+});
+
+datasetIOButton.addEventListener('click', () => {
+  if (datasetIOButton.textContent.endsWith(' >>')) {
+    datasetIOInnerDiv.style.display = 'inline-block';
+    datasetIOButton.textContent =
+        datasetIOButton.textContent.replace(' >>', ' <<');
+  } else {
+    datasetIOInnerDiv.style.display = 'none';
+    datasetIOButton.textContent =
+        datasetIOButton.textContent.replace(' <<', ' >>');
+  }
+});
+
