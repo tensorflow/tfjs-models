@@ -28,6 +28,7 @@ import {FakeAudioContext, FakeAudioMediaStream} from './browser_test_utils';
 import {create} from './index';
 import {SpeechCommandRecognizerResult} from './types';
 import {arrayBuffer2SerializedExamples} from './dataset';
+import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
 
 describe('getMajorAndMinorVersion', () => {
   it('Correct results', () => {
@@ -51,12 +52,13 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
   const fakeColumnTruncateLength = 232;
 
   let secondLastBaseDenseLayer: tf.layers.Layer;
+  let tfLoadModelSpy: jasmine.Spy;
 
   function setUpFakes(model?: tf.Sequential, backgroundAndNoiseOnly = false) {
     const words =
         backgroundAndNoiseOnly ? fakeWordsNoiseAndUnknownOnly : fakeWords;
     const numWords = words.length;
-    spyOn(tf, 'loadModel').and.callFake((url: string) => {
+    tfLoadModelSpy = spyOn(tf, 'loadModel').and.callFake((url: string) => {
       if (model == null) {
         model = tf.sequential();
         model.add(tf.layers.flatten(
@@ -1167,30 +1169,28 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
       constructor(readonly artifactStore: tf.io.ModelArtifacts[]) {}
 
       async save(artifacts: tf.io.ModelArtifacts): Promise<tf.io.SaveResult> {
-        console.log('*** In save()');  // DEBUG
         this.artifactStore.push(artifacts);
         return null;
       }
 
       async load(): Promise<tf.io.ModelArtifacts> {
-        console.log('*** In load()');  // DEBUG
         return this.artifactStore[this.artifactStore.length - 1];
       }
     }
 
-    function fakeIndexedDBRouter(url: string): tf.io.IOHandler {
-      if (url.startsWith('indexeddb://')) {
-        return new FakeIndexedDBHandler(artifactStore);
+    const handler = new FakeIndexedDBHandler(artifactStore);
+    function fakeIndexedDBRouter(url: string|string[]): tf.io.IOHandler {
+      if (!Array.isArray(url) && url.startsWith('indexeddb://')) {
+        return handler;
       } else {
         return null;
       }
     }
-
-    tf.io.registerLoadRouter(fakeIndexedDBRouter);
     tf.io.registerSaveRouter(fakeIndexedDBRouter);
+    tf.io.registerLoadRouter(fakeIndexedDBRouter);
   }
 
-  fit('Save and load transfer model', async () => {
+  it('Save and load transfer model', async () => {
     setUpFakes();
     const localStore: {[key: string]: string} = {};
     setUpFakeLocalStorage(localStore);
@@ -1203,11 +1203,9 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     await transfer.collectExample('foo');
     await transfer.collectExample('bar');
     await transfer.train({epochs: 1});
-    (transfer as any).model.summary();  // DEBUG
 
     const xs = tf.ones([1, fakeNumFrames, fakeColumnTruncateLength, 1]);
     const out0 = await transfer.recognize(xs);
-    console.log(out0.scores);  // DEBUG
 
     await transfer.save();
 
@@ -1223,13 +1221,18 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     // Load the transfer model back.
     const base2 = new BrowserFftSpeechCommandRecognizer();
     await base2.ensureModelLoaded();
+    // Disable the spy on tf.loadModel() first, so the subsequent
+    // tf.loadModel() call during the load() call can use the fake
+    // IndexedDB handler created above.
+    tfLoadModelSpy.and.callThrough();
     const transfer2 = base2.createTransfer('xfer1');
-    console.log(await transfer.recognize(xs));  // DEBUG
-    console.log('===========================');  // DEBUG
-    console.log('Calling load()');  // DEBUG
     await transfer2.load();
     expect(transfer2.wordLabels()).toEqual(['bar', 'foo']);
-    // console.log(out1.scores);  // DEBUG
+    const out1 = await transfer2.recognize(xs);
+    // The new prediction scores from the loaded transfer model should match
+    // the prediction scores from the original transfer model.
+    expect(out1.scores).toEqual(out0.scores);
+
   });
 
   // TODO(cais): Add tests for saving and loading of transfer-learned models.
