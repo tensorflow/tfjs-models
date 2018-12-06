@@ -1160,7 +1160,6 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     // tslint:disable:no-any
     localStorageWrapper.localStorage = {
       getItem: (key: string) => {
-        console.log('getItem():', key, store[key]);  // DEBUG
         return store[key];
       },
       setItem: (key: string, value: string) => {
