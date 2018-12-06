@@ -28,7 +28,6 @@ import {FakeAudioContext, FakeAudioMediaStream} from './browser_test_utils';
 import {create} from './index';
 import {SpeechCommandRecognizerResult} from './types';
 import {arrayBuffer2SerializedExamples} from './dataset';
-import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
 
 describe('getMajorAndMinorVersion', () => {
   it('Correct results', () => {
@@ -1190,7 +1189,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     tf.io.registerLoadRouter(fakeIndexedDBRouter);
   }
 
-  it('Save and load transfer model', async () => {
+  it('Save and load transfer model via indexeddb://', async () => {
     setUpFakes();
     const localStore: {[key: string]: string} = {};
     setUpFakeLocalStorage(localStore);
@@ -1232,8 +1231,30 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     // The new prediction scores from the loaded transfer model should match
     // the prediction scores from the original transfer model.
     expect(out1.scores).toEqual(out0.scores);
-
   });
 
-  // TODO(cais): Add tests for saving and loading of transfer-learned models.
+  it('Save model via custom file:// route', async () => {
+    setUpFakes();
+
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    await transfer.collectExample('foo');
+    await transfer.collectExample('bar');
+    await transfer.train({epochs: 1});
+
+    const tempSavePath = tempfile();
+    await transfer.save(`file://${tempSavePath}`);
+
+    // Disable the spy on tf.loadModel() first, so the subsequent
+    // tf.loadModel() call during the load() call can use the fake
+    // IndexedDB handler created above.
+    tfLoadModelSpy.and.callThrough();
+    const modelPrime = await tf.loadModel(`file://${tempSavePath}/model.json`);
+    expect(modelPrime.outputs.length).toEqual(1);
+    expect(modelPrime.outputs[0].shape).toEqual([null, 2]);
+
+    rimraf(tempSavePath, () => {});
+  });
+
 });

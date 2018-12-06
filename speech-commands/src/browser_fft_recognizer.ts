@@ -963,35 +963,42 @@ class TransferBrowserFftSpeechCommandRecognizer extends
 
   async save(handlerOrURL?: string | tf.io.IOHandler):
       Promise<tf.io.SaveResult> {
+    const isCustomPath = handlerOrURL != null;
     handlerOrURL = handlerOrURL || getCanonicalSavePath(this.name);
 
-    // First, save the words.
-    const metadataMapStr =
-        localStorageWrapper.localStorage.getItem(SAVED_MODEL_METADATA_KEY);
-    const metadataMap =
-        metadataMapStr == null ? {} : JSON.parse(metadataMapStr);
-    metadataMap[this.name] = this.getMetadata();
-    localStorageWrapper.localStorage.setItem(
-        SAVED_MODEL_METADATA_KEY, JSON.stringify(metadataMap));
+    if (!isCustomPath) {
+      // First, save the words and other metadata.
+      const metadataMapStr =
+          localStorageWrapper.localStorage.getItem(SAVED_MODEL_METADATA_KEY);
+      const metadataMap =
+          metadataMapStr == null ? {} : JSON.parse(metadataMapStr);
+      metadataMap[this.name] = this.getMetadata();
+      localStorageWrapper.localStorage.setItem(
+          SAVED_MODEL_METADATA_KEY, JSON.stringify(metadataMap));
+    }
     console.log(`Saving model to ${handlerOrURL}`);
     return this.model.save(handlerOrURL);
   }
 
   async load(handlerOrURL?: string | tf.io.IOHandler): Promise<void> {
+    const isCustomPath = handlerOrURL != null;
     handlerOrURL = handlerOrURL || getCanonicalSavePath(this.name);
 
-    // First, load the words.
-    const metadataMap = JSON.parse(
-        localStorageWrapper.localStorage.getItem(SAVED_MODEL_METADATA_KEY));
-    if (metadataMap == null || metadataMap[this.name] == null) {
-      throw new Error(
-          `Cannot find metadata for transfer model named ${this.name}"`);
+    if (!isCustomPath) {
+      // First, load the words and other metadata.
+      const metadataMap = JSON.parse(
+          localStorageWrapper.localStorage.getItem(SAVED_MODEL_METADATA_KEY));
+      if (metadataMap == null || metadataMap[this.name] == null) {
+        throw new Error(
+            `Cannot find metadata for transfer model named ${this.name}"`);
+      }
+      this.words = metadataMap[this.name].wordLabels;
+      console.log(
+          `Loaded word list for model named ${this.name}: ${this.words}`);
     }
-    this.words = metadataMap[this.name].wordLabels;
-    console.log(
-        `Loaded word list for model named ${this.name}: ${this.words}`);
     this.model = await tf.loadModel(handlerOrURL);
     console.log(`Loaded model from ${handlerOrURL}:`);
+    this.model.summary();
   }
 
   /**
