@@ -1040,7 +1040,7 @@ export async function listSavedTransferModels(): Promise<string[]> {
  *
  * @param name The name of the transfer-learned model to be deleted.
  */
-export async function deleteSaved(name: string): Promise<void> {
+export async function deleteSavedTransferModel(name: string): Promise<void> {
   // Delete the words from local storage.
   let metadataMap = JSON.parse(
       localStorageWrapper.localStorage.getItem(SAVED_MODEL_METADATA_KEY));

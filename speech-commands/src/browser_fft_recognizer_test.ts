@@ -16,18 +16,20 @@
  */
 
 import '@tensorflow/tfjs-node';
+
 import * as tf from '@tensorflow/tfjs';
 import {describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
 import {writeFileSync} from 'fs';
 import {join} from 'path';
 import * as rimraf from 'rimraf';
 import * as tempfile from 'tempfile';
-import {BrowserFftSpeechCommandRecognizer, getMajorAndMinorVersion, localStorageWrapper, SAVED_MODEL_METADATA_KEY} from './browser_fft_recognizer';
+
+import {BrowserFftSpeechCommandRecognizer, deleteSavedTransferModel, getMajorAndMinorVersion, listSavedTransferModels, localStorageWrapper, SAVED_MODEL_METADATA_KEY} from './browser_fft_recognizer';
 import * as BrowserFftUtils from './browser_fft_utils';
 import {FakeAudioContext, FakeAudioMediaStream} from './browser_test_utils';
+import {arrayBuffer2SerializedExamples} from './dataset';
 import {create} from './index';
 import {SpeechCommandRecognizerResult} from './types';
-import {arrayBuffer2SerializedExamples} from './dataset';
 
 describe('getMajorAndMinorVersion', () => {
   it('Correct results', () => {
@@ -1068,21 +1070,25 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
         arrayBuffer2SerializedExamples(transfer.serializeExamples());
 
     // The examples are sorted alphabetically by their label.
-    expect(artifacts.manifest).toEqual([{
-      label: 'bar',
-      spectrogramNumFrames: fakeNumFrames,
-      spectrogramFrameSize: fakeColumnTruncateLength
-    }, {
-      label: 'bar',
-      spectrogramNumFrames: fakeNumFrames,
-      spectrogramFrameSize: fakeColumnTruncateLength
-    }, {
-      label: 'foo',
-      spectrogramNumFrames: fakeNumFrames,
-      spectrogramFrameSize: fakeColumnTruncateLength
-    }]);
-    expect(artifacts.data.byteLength).toEqual(
-        fakeNumFrames * fakeColumnTruncateLength * 4 * 3);
+    expect(artifacts.manifest).toEqual([
+      {
+        label: 'bar',
+        spectrogramNumFrames: fakeNumFrames,
+        spectrogramFrameSize: fakeColumnTruncateLength
+      },
+      {
+        label: 'bar',
+        spectrogramNumFrames: fakeNumFrames,
+        spectrogramFrameSize: fakeColumnTruncateLength
+      },
+      {
+        label: 'foo',
+        spectrogramNumFrames: fakeNumFrames,
+        spectrogramFrameSize: fakeColumnTruncateLength
+      }
+    ]);
+    expect(artifacts.data.byteLength)
+        .toEqual(fakeNumFrames * fakeColumnTruncateLength * 4 * 3);
   });
 
   it('serializeExamples fails on empty data', async () => {
@@ -1154,6 +1160,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     // tslint:disable:no-any
     localStorageWrapper.localStorage = {
       getItem: (key: string) => {
+        console.log('getItem():', key, store[key]);  // DEBUG
         return store[key];
       },
       setItem: (key: string, value: string) => {
@@ -1212,8 +1219,8 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(savedMetadata['xfer1']['modelName']).toEqual('xfer1');
     expect(savedMetadata['xfer1']['wordLabels']).toEqual(['bar', 'foo']);
     expect(indexedDBStore.length).toEqual(1);
-    const modelPrime = await tf.models.modelFromJSON(
-        indexedDBStore[0].modelTopology as {});
+    const modelPrime =
+        await tf.models.modelFromJSON(indexedDBStore[0].modelTopology as {});
     expect(modelPrime.layers.length).toEqual(4);
     expect(indexedDBStore[0].weightSpecs.length).toEqual(4);
 
@@ -1255,6 +1262,35 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(modelPrime.outputs[0].shape).toEqual([null, 2]);
 
     rimraf(tempSavePath, () => {});
+  });
+
+  it('listSavedTransferModels', async () => {
+    spyOn(tf.io, 'listModels').and.callFake(() => {
+      return {
+        'indexeddb://tfjs-speech-commands-model/model1':
+            {'dateSaved': '2018-12-06T04:25:08.153Z'}
+      };
+    });
+    expect(await listSavedTransferModels()).toEqual(['model1']);
+  });
+
+  it('deleteSavedTransferModel', async () => {
+    const localStore: {[key: string]: string} = {
+      'tfjs-speech-commands-saved-model-metadata':
+          JSON.stringify({'foo': {'wordLabels': ['a', 'b']}})
+    };
+    setUpFakeLocalStorage(localStore);
+    const removedModelPaths: string[] = [];
+    spyOn(tf.io, 'removeModel').and.callFake((modelPath: string) => {
+      removedModelPaths.push(modelPath);
+    });
+    await deleteSavedTransferModel('foo');
+    expect(removedModelPaths).toEqual([
+      'indexeddb://tfjs-speech-commands-model/foo'
+    ]);
+    expect(localStore).toEqual({
+      'tfjs-speech-commands-saved-model-metadata': '{}'
+    });
   });
 
 });

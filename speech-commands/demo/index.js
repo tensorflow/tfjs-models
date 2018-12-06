@@ -583,7 +583,7 @@ deleteTransferModelButton.addEventListener('click', async () => {
   const transferModelName = savedTransferModelsSelect.value;
   await recognizer.ensureModelLoaded();
   transferRecognizer = recognizer.createTransfer(transferModelName);
-  await SpeechCommands.deleteSaved(transferModelName);
+  await SpeechCommands.deleteSavedTransferModel(transferModelName);
   deleteTransferModelButton.disabled = true;
   deleteTransferModelButton.textContent = `Deleted "${transferModelName}"`;
   await populateSavedTransferModelsSelect();
