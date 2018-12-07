@@ -5,139 +5,7 @@
 <head>
   <meta charset="UTF-8">
   <title>TensorFlow.js Speech Commands Model Demo</title>
-  <style>
-    body {
-      margin: 30px 0 0 30px;
-      font: 400 11px system-ui;
-    }
-
-    button {
-      color: #ff8300;
-      background-color: #ffffff;
-      border-style: solid;
-      border-width: 2px;
-      border-color: #ff8300;
-      border-radius: 10px;
-      font-size: 20px;
-      margin: 5px;
-      padding: 15px;
-    }
-
-    button:disabled {
-      color: #a0a0a0;
-      border-color: #a0a0a0;
-    }
-
-    select {
-      color: #ff8300;
-      background-color: #ffffff;
-      border-style: solid;
-      border-width: 2px;
-      border-color: #ff8300;
-      border-radius: 10px;
-      font-size: 20px;
-      margin: 5px;
-      padding: 15px;
-    }
-
-    .transfer-learn-section input {
-      color: #0000ff;
-      background-color: #ffffff;
-      border-style: solid;
-      border-width: 2px;
-      border-color: #0000ff;
-      border-radius: 10px;
-      font-size: 20px;
-      margin: 5px;
-      padding: 15px;
-      position: relative;
-    }
-
-    textarea {
-      font-size: 20px;
-      width: 90%;
-      height: 80%;
-      border: 2px solid #888;
-      border-radius: 10px;
-      resize: none;
-    }
-
-    .footer {
-      height: 20%;
-    }
-
-    .transfer-learn {
-      position: absolute;
-      top: 40%;
-    }
-
-    .word-div {
-      border-radius: 10px;
-      margin: 3px;
-    }
-
-    .candidate-word {
-      border: 1px solid gray;
-      background-color: lightyellow;
-      margin: 5px;
-      border-radius: 3px;
-      width: 10vw;
-      padding: 15px;
-      text-align: center;
-    }
-
-    .candidate-word-active {
-      border: 2px solid gray;
-      background-color: lightgreen;
-    }
-
-    .candidate-word-label {
-      font-weight: bold;
-      background-color: orange;
-      width: 250px;
-    }
-
-    .candidate-words-hidden {
-      display: none !important;
-    }
-
-    #candidate-words {
-      display: flex;
-      flex-wrap: wrap;
-      font-size: 20px;
-    }
-
-    #collect-words {
-      display: flex;
-      flex-wrap: wrap;
-      flex-direction: column;
-    }
-
-    #plots {
-      display: flex;
-    }
-
-    .settings {
-      font-size: 17px;
-    }
-
-    .settings input {
-      color: #0000ff;
-      background-color: #ffffff;
-      border-style: solid;
-      border-width: 2px;
-      border-color: #0000ff;
-      border-radius: 10px;
-      margin: 5px;
-      font-size: 17px;
-    }
-    .transfer-word {
-      display: flex;
-      width: 330px;
-      justify-content: space-between;
-    }
-
-  </style>
+  <link href="style.css" rel="stylesheet" type="text/css">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 
@@ -157,13 +25,13 @@
     <textarea id="status-display" style="display: none" cols="80" readonly="true"></textarea>
   </div>
   <div class="transfer-learn-section">
-    <input id="learn-words" size="40" value="_background_noise_,red,green">
+    <input id="transfer-model-name" size="10" placeholder="model name">
+    <input id="learn-words" size="36" value="_background_noise_,red,green">
     <select id="duration-multiplier">
       <option value="1">Duration x1</option>
       <option value="2">Duration x2</option>
     </select>
     <button id="enter-learn-words" disabled="true">Enter transfer words</button>
-
 
     <div id="transfer-learn-history"></div>
     <div id="collect-words"></div>
@@ -174,16 +42,39 @@
       <input class="settings" size="5" id="fine-tuning-epochs" value="0">
       <button id="start-transfer-learn" disabled="true">Start transfer learning</button>
     </div>
-    <div>
-      <button id="download-dataset" disabled="true">↓ Download dataset as file</button>
-      <div>
-        <input type="file" id="dataset-file-input">
-        <button id="upload-dataset">↑ Upload dataset</button>
+
+    <div class="collapsible-region">
+      <button id="dataset-io">Dataset IO >></button>
+      <div class="collapsible-region-inner" id="dataset-io-inner">
+        <div>
+          <button id="download-dataset" disabled="true">↓ Download dataset as file</button>
+          <div>
+            <input type="file" id="dataset-file-input">
+            <button id="upload-dataset">↑ Upload dataset</button>
+          </div>
+        </div>
       </div>
     </div>
+
     <div id="plots">
       <div id="loss-plot" class="plots"></div>
       <div id="accuracy-plot" class="plots"></div>
+    </div>
+
+    <div class="collapsible-region">
+      <button id="model-io">Model IO >></button>
+      <div class="collapsible-region-inner" id="transfer-model-save-load-inner">
+        <div>
+          <button id="load-transfer-model" disabled="true">Load:</button>
+          <select id="saved-transfer-models">
+            <option value="1"></option>
+          </select>
+          <button id="delete-transfer-model" disabled="true">Delete</button>
+        </div>
+        <div>
+          <button id="save-transfer-model" disabled="true">Save model</button>
+        </div>
+      </div>
     </div>
   </div>
 

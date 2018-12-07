@@ -16,18 +16,20 @@
  */
 
 import '@tensorflow/tfjs-node';
+
 import * as tf from '@tensorflow/tfjs';
 import {describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
 import {writeFileSync} from 'fs';
 import {join} from 'path';
 import * as rimraf from 'rimraf';
 import * as tempfile from 'tempfile';
-import {BrowserFftSpeechCommandRecognizer, getMajorAndMinorVersion} from './browser_fft_recognizer';
+
+import {BrowserFftSpeechCommandRecognizer, deleteSavedTransferModel, getMajorAndMinorVersion, listSavedTransferModels, localStorageWrapper, SAVED_MODEL_METADATA_KEY} from './browser_fft_recognizer';
 import * as BrowserFftUtils from './browser_fft_utils';
 import {FakeAudioContext, FakeAudioMediaStream} from './browser_test_utils';
+import {arrayBuffer2SerializedExamples} from './dataset';
 import {create} from './index';
 import {SpeechCommandRecognizerResult} from './types';
-import { arrayBuffer2SerializedExamples } from './dataset';
 
 describe('getMajorAndMinorVersion', () => {
   it('Correct results', () => {
@@ -51,12 +53,13 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
   const fakeColumnTruncateLength = 232;
 
   let secondLastBaseDenseLayer: tf.layers.Layer;
+  let tfLoadModelSpy: jasmine.Spy;
 
   function setUpFakes(model?: tf.Sequential, backgroundAndNoiseOnly = false) {
     const words =
         backgroundAndNoiseOnly ? fakeWordsNoiseAndUnknownOnly : fakeWords;
     const numWords = words.length;
-    spyOn(tf, 'loadModel').and.callFake((url: string) => {
+    tfLoadModelSpy = spyOn(tf, 'loadModel').and.callFake((url: string) => {
       if (model == null) {
         model = tf.sequential();
         model.add(tf.layers.flatten(
@@ -1067,21 +1070,25 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
         arrayBuffer2SerializedExamples(transfer.serializeExamples());
 
     // The examples are sorted alphabetically by their label.
-    expect(artifacts.manifest).toEqual([{
-      label: 'bar',
-      spectrogramNumFrames: fakeNumFrames,
-      spectrogramFrameSize: fakeColumnTruncateLength
-    }, {
-      label: 'bar',
-      spectrogramNumFrames: fakeNumFrames,
-      spectrogramFrameSize: fakeColumnTruncateLength
-    }, {
-      label: 'foo',
-      spectrogramNumFrames: fakeNumFrames,
-      spectrogramFrameSize: fakeColumnTruncateLength
-    }]);
-    expect(artifacts.data.byteLength).toEqual(
-        fakeNumFrames * fakeColumnTruncateLength * 4 * 3);
+    expect(artifacts.manifest).toEqual([
+      {
+        label: 'bar',
+        spectrogramNumFrames: fakeNumFrames,
+        spectrogramFrameSize: fakeColumnTruncateLength
+      },
+      {
+        label: 'bar',
+        spectrogramNumFrames: fakeNumFrames,
+        spectrogramFrameSize: fakeColumnTruncateLength
+      },
+      {
+        label: 'foo',
+        spectrogramNumFrames: fakeNumFrames,
+        spectrogramFrameSize: fakeColumnTruncateLength
+      }
+    ]);
+    expect(artifacts.data.byteLength)
+        .toEqual(fakeNumFrames * fakeColumnTruncateLength * 4 * 3);
   });
 
   it('serializeExamples fails on empty data', async () => {
@@ -1149,5 +1156,140 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(numFrames).toEqual(fakeNumFrames * 1.5);
   });
 
-  // TODO(cais): Add tests for saving and loading of transfer-learned models.
+  function setUpFakeLocalStorage(store: {[key: string]: string}) {
+    // tslint:disable:no-any
+    localStorageWrapper.localStorage = {
+      getItem: (key: string) => {
+        return store[key];
+      },
+      setItem: (key: string, value: string) => {
+        store[key] = value;
+      }
+    } as any;
+    // tslint:enable:no-any
+  }
+
+  function setUpFakeIndexedDB(artifactStore: tf.io.ModelArtifacts[]) {
+    class FakeIndexedDBHandler implements tf.io.IOHandler {
+      constructor(readonly artifactStore: tf.io.ModelArtifacts[]) {}
+
+      async save(artifacts: tf.io.ModelArtifacts): Promise<tf.io.SaveResult> {
+        this.artifactStore.push(artifacts);
+        return null;
+      }
+
+      async load(): Promise<tf.io.ModelArtifacts> {
+        return this.artifactStore[this.artifactStore.length - 1];
+      }
+    }
+
+    const handler = new FakeIndexedDBHandler(artifactStore);
+    function fakeIndexedDBRouter(url: string|string[]): tf.io.IOHandler {
+      if (!Array.isArray(url) && url.startsWith('indexeddb://')) {
+        return handler;
+      } else {
+        return null;
+      }
+    }
+    tf.io.registerSaveRouter(fakeIndexedDBRouter);
+    tf.io.registerLoadRouter(fakeIndexedDBRouter);
+  }
+
+  it('Save and load transfer model via indexeddb://', async () => {
+    setUpFakes();
+    const localStore: {[key: string]: string} = {};
+    setUpFakeLocalStorage(localStore);
+    const indexedDBStore: tf.io.ModelArtifacts[] = [];
+    setUpFakeIndexedDB(indexedDBStore);
+
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    await transfer.collectExample('foo');
+    await transfer.collectExample('bar');
+    await transfer.train({epochs: 1});
+
+    const xs = tf.ones([1, fakeNumFrames, fakeColumnTruncateLength, 1]);
+    const out0 = await transfer.recognize(xs);
+
+    await transfer.save();
+
+    const savedMetadata = JSON.parse(localStore[SAVED_MODEL_METADATA_KEY]);
+    expect(savedMetadata['xfer1']['modelName']).toEqual('xfer1');
+    expect(savedMetadata['xfer1']['wordLabels']).toEqual(['bar', 'foo']);
+    expect(indexedDBStore.length).toEqual(1);
+    const modelPrime =
+        await tf.models.modelFromJSON(indexedDBStore[0].modelTopology as {});
+    expect(modelPrime.layers.length).toEqual(4);
+    expect(indexedDBStore[0].weightSpecs.length).toEqual(4);
+
+    // Load the transfer model back.
+    const base2 = new BrowserFftSpeechCommandRecognizer();
+    await base2.ensureModelLoaded();
+    // Disable the spy on tf.loadModel() first, so the subsequent
+    // tf.loadModel() call during the load() call can use the fake
+    // IndexedDB handler created above.
+    tfLoadModelSpy.and.callThrough();
+    const transfer2 = base2.createTransfer('xfer1');
+    await transfer2.load();
+    expect(transfer2.wordLabels()).toEqual(['bar', 'foo']);
+    const out1 = await transfer2.recognize(xs);
+    // The new prediction scores from the loaded transfer model should match
+    // the prediction scores from the original transfer model.
+    expect(out1.scores).toEqual(out0.scores);
+  });
+
+  it('Save model via custom file:// route', async () => {
+    setUpFakes();
+
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    await transfer.collectExample('foo');
+    await transfer.collectExample('bar');
+    await transfer.train({epochs: 1});
+
+    const tempSavePath = tempfile();
+    await transfer.save(`file://${tempSavePath}`);
+
+    // Disable the spy on tf.loadModel() first, so the subsequent
+    // tf.loadModel() call during the load() call can use the fake
+    // IndexedDB handler created above.
+    tfLoadModelSpy.and.callThrough();
+    const modelPrime = await tf.loadModel(`file://${tempSavePath}/model.json`);
+    expect(modelPrime.outputs.length).toEqual(1);
+    expect(modelPrime.outputs[0].shape).toEqual([null, 2]);
+
+    rimraf(tempSavePath, () => {});
+  });
+
+  it('listSavedTransferModels', async () => {
+    spyOn(tf.io, 'listModels').and.callFake(() => {
+      return {
+        'indexeddb://tfjs-speech-commands-model/model1':
+            {'dateSaved': '2018-12-06T04:25:08.153Z'}
+      };
+    });
+    expect(await listSavedTransferModels()).toEqual(['model1']);
+  });
+
+  it('deleteSavedTransferModel', async () => {
+    const localStore: {[key: string]: string} = {
+      'tfjs-speech-commands-saved-model-metadata':
+          JSON.stringify({'foo': {'wordLabels': ['a', 'b']}})
+    };
+    setUpFakeLocalStorage(localStore);
+    const removedModelPaths: string[] = [];
+    spyOn(tf.io, 'removeModel').and.callFake((modelPath: string) => {
+      removedModelPaths.push(modelPath);
+    });
+    await deleteSavedTransferModel('foo');
+    expect(removedModelPaths).toEqual([
+      'indexeddb://tfjs-speech-commands-model/foo'
+    ]);
+    expect(localStore).toEqual({
+      'tfjs-speech-commands-saved-model-metadata': '{}'
+    });
+  });
+
 });

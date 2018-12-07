@@ -29,15 +29,25 @@ const probaThresholdInput = document.getElementById('proba-threshold');
 const epochsInput = document.getElementById('epochs');
 const fineTuningEpochsInput = document.getElementById('fine-tuning-epochs');
 
+const datasetIOButton = document.getElementById('dataset-io');
+const datasetIOInnerDiv = document.getElementById('dataset-io-inner');
 const downloadFilesButton = document.getElementById('download-dataset');
 const datasetFileInput = document.getElementById('dataset-file-input');
 const uploadFilesButton = document.getElementById('upload-dataset');
+
+const modelIOButton = document.getElementById('model-io');
+const transferModelSaveLoadInnerDiv = document.getElementById('transfer-model-save-load-inner');
+const loadTransferModelButton = document.getElementById('load-transfer-model');
+const saveTransferModelButton = document.getElementById('save-transfer-model');
+const savedTransferModelsSelect = document.getElementById('saved-transfer-models');
+const deleteTransferModelButton = document.getElementById('delete-transfer-model');
 
 const BACKGROUND_NOISE_TAG = SpeechCommands.BACKGROUND_NOISE_TAG;
 
 /**
  * Transfer learning-related UI componenets.
  */
+const transferModelNameInput = document.getElementById('transfer-model-name');
 const learnWordsInput = document.getElementById('learn-words');
 const durationMultiplierSelect = document.getElementById('duration-multiplier');
 const enterLearnWordsButton = document.getElementById('enter-learn-words');
@@ -59,6 +69,8 @@ let transferDurationMultiplier;
   logToStatusDisplay('Creating recognizer...');
   recognizer = SpeechCommands.create('BROWSER_FFT');
 
+  await populateSavedTransferModelsSelect();
+
   // Make sure the tf.Model is loaded through HTTP. If this is not
   // called here, the tf.Model will be loaded the first time
   // `listen()` is called.
@@ -66,6 +78,8 @@ let transferDurationMultiplier;
       .then(() => {
         startButton.disabled = false;
         enterLearnWordsButton.disabled = false;
+        loadTransferModelButton.disabled = false;
+        deleteTransferModelButton.disabled = false;
 
         logToStatusDisplay('Model loaded.');
 
@@ -242,14 +256,25 @@ function createWordDivs(transferWords) {
 }
 
 enterLearnWordsButton.addEventListener('click', () => {
+  const modelName = transferModelNameInput.value;
+  if (modelName == null || modelName.length === 0) {
+    enterLearnWordsButton.textContent = 'Need model name!';
+    setTimeout(() => {
+      enterLearnWordsButton.textContent = 'Enter transfer words';
+    }, 2000);
+    return;
+  }
+
   // We disable the option to upload an existing dataset from files
   // once the "Enter transfer words" button has been clicked.
   // However, the user can still load an existing dataset from
   // files first and keep appending examples to it.
   disableFileUploadControls();
+  enterLearnWordsButton.disabled = true;
 
   transferDurationMultiplier = durationMultiplierSelect.value;
 
+  learnWordsInput.disabled = true;
   enterLearnWordsButton.disabled = true;
   transferWords = learnWordsInput.value.trim().split(',').map(w => w.trim());
   if (transferWords == null || transferWords.length <= 1) {
@@ -257,7 +282,7 @@ enterLearnWordsButton.addEventListener('click', () => {
     return;
   }
 
-  transferRecognizer = recognizer.createTransfer(XFER_MODEL_NAME);
+  transferRecognizer = recognizer.createTransfer(modelName);
   createWordDivs(transferWords);
 
   scrollToPageBottom();
@@ -392,12 +417,16 @@ startTransferLearnButton.addEventListener('click', async () => {
       }
     }
   });
+  saveTransferModelButton.disabled = false;
+  transferModelNameInput.value = transferRecognizer.name;
+  transferModelNameInput.disabled = true;
   startTransferLearnButton.textContent = 'Transfer learning complete.';
+  transferModelNameInput.disabled = false;
   startButton.disabled = false;
 });
 
 downloadFilesButton.addEventListener('click', () => {
-  const basename = getDatasetFileBasename();
+  const basename = getDateString();
   const artifacts = transferRecognizer.serializeExamples();
 
   // Trigger downloading of the data .bin file.
@@ -409,7 +438,7 @@ downloadFilesButton.addEventListener('click', () => {
 });
 
 /** Get the base name of the downloaded files based on current dataset. */
-function getDatasetFileBasename() {
+function getDateString() {
   const d = new Date();
   const year = `${d.getFullYear()}`;
   let month = `${d.getMonth() + 1}`;
@@ -417,7 +446,7 @@ function getDatasetFileBasename() {
   if (month.length < 2) {
     month = `0${month}`;
   }
-  if (day.lenght < 2) {
+  if (day.length < 2) {
     day = `0${day}`;
   }
   let hour = `${d.getHours()}`;
@@ -442,7 +471,15 @@ uploadFilesButton.addEventListener('click', async () => {
   }
   const datasetFileReader = new FileReader();
   datasetFileReader.onload = async event => {
-    await loadDatasetInTransferRecognizer(event.target.result);
+    try {
+      await loadDatasetInTransferRecognizer(event.target.result);
+    } catch (err) {
+      const originalTextContent = uploadFilesButton.textContent;
+      uploadFilesButton.textContent = err.message;
+      setTimeout(() => {
+        uploadFilesButton.textContent = originalTextContent;
+      }, 2000);
+    }
     durationMultiplierSelect.value = `${transferDurationMultiplier}`;
     durationMultiplierSelect.disabled = true;
     enterLearnWordsButton.disabled = true;
@@ -453,8 +490,13 @@ uploadFilesButton.addEventListener('click', async () => {
 });
 
 async function loadDatasetInTransferRecognizer(serialized) {
+  const modelName = transferModelNameInput.value;
+  if (modelName == null || modelName.length === 0) {
+    throw new Error('Need model name!');
+  }
+
   if (transferRecognizer == null) {
-    transferRecognizer = recognizer.createTransfer(XFER_MODEL_NAME);
+    transferRecognizer = recognizer.createTransfer(modelName);
   }
   transferRecognizer.loadExamples(serialized);
   const exampleCounts = transferRecognizer.countExamples();
@@ -484,3 +526,78 @@ async function loadDatasetInTransferRecognizer(serialized) {
   }
   updateButtonStateAccordingToTransferRecognizer();
 }
+
+async function populateSavedTransferModelsSelect() {
+  const savedModelKeys = await SpeechCommands.listSavedTransferModels();
+  while (savedTransferModelsSelect.firstChild) {
+    savedTransferModelsSelect.removeChild(
+        savedTransferModelsSelect.firstChild);
+  }
+  if (savedModelKeys.length > 0) {
+    for (const key of savedModelKeys) {
+      const option = document.createElement('option');
+      option.textContent = key;
+      option.id = key;
+      savedTransferModelsSelect.appendChild(option);
+    }
+    loadTransferModelButton.disabled = false;
+  }
+}
+
+saveTransferModelButton.addEventListener('click', async () => {
+  await transferRecognizer.save();
+  await populateSavedTransferModelsSelect();
+  saveTransferModelButton.textContent = 'Model saved!';
+  saveTransferModelButton.disabled = true;
+});
+
+loadTransferModelButton.addEventListener('click', async () => {
+  const transferModelName = savedTransferModelsSelect.value;
+  await recognizer.ensureModelLoaded();
+  transferRecognizer = recognizer.createTransfer(transferModelName);
+  await transferRecognizer.load();
+  transferModelNameInput.value = transferModelName;
+  transferModelNameInput.disabled = true;
+  learnWordsInput.value = transferRecognizer.wordLabels().join(',');
+  learnWordsInput.disabled = true;
+  durationMultiplierSelect.disabled = true;
+  enterLearnWordsButton.disabled = true;
+  saveTransferModelButton.disabled = true;
+  loadTransferModelButton.disabled = true;
+  loadTransferModelButton.textContent = 'Model loaded!';
+});
+
+modelIOButton.addEventListener('click', () => {
+  if (modelIOButton.textContent.endsWith(' >>')) {
+    transferModelSaveLoadInnerDiv.style.display = 'inline-block';
+    modelIOButton.textContent =
+        modelIOButton.textContent.replace(' >>', ' <<');
+  } else {
+    transferModelSaveLoadInnerDiv.style.display = 'none';
+    modelIOButton.textContent =
+        modelIOButton.textContent.replace(' <<', ' >>');
+  }
+});
+
+deleteTransferModelButton.addEventListener('click', async () => {
+  const transferModelName = savedTransferModelsSelect.value;
+  await recognizer.ensureModelLoaded();
+  transferRecognizer = recognizer.createTransfer(transferModelName);
+  await SpeechCommands.deleteSavedTransferModel(transferModelName);
+  deleteTransferModelButton.disabled = true;
+  deleteTransferModelButton.textContent = `Deleted "${transferModelName}"`;
+  await populateSavedTransferModelsSelect();
+});
+
+datasetIOButton.addEventListener('click', () => {
+  if (datasetIOButton.textContent.endsWith(' >>')) {
+    datasetIOInnerDiv.style.display = 'inline-block';
+    datasetIOButton.textContent =
+        datasetIOButton.textContent.replace(' >>', ' <<');
+  } else {
+    datasetIOInnerDiv.style.display = 'none';
+    datasetIOButton.textContent =
+        datasetIOButton.textContent.replace(' <<', ' >>');
+  }
+});
+

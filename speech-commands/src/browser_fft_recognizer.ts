@@ -26,7 +26,18 @@ import {version} from './version';
 
 export const UNKNOWN_TAG = '_unknown_';
 
+// Key to the local-storage item that holds a map from model name to word
+// list.
+export const SAVED_MODEL_METADATA_KEY = 'tfjs-speech-commands-saved-model-metadata';
+export const SAVE_PATH_PREFIX = 'indexeddb://tfjs-speech-commands-model/';
+
 let streaming = false;
+
+// Export a variable for injection during unit testing.
+// tslint:disable-next-line:no-any
+export let localStorageWrapper = {
+  localStorage: typeof window === 'undefined' ? null : window.localStorage
+};
 
 export function getMajorAndMinorVersion(version: string) {
   const versionItems = version.split('.');
@@ -571,8 +582,6 @@ export class BrowserFftSpeechCommandRecognizer implements
           `but got shape [null,${nonBatchedShape}]`);
     }
   }
-
-  // TODO(cais): Implement model save and load.
 }
 
 /**
@@ -938,6 +947,60 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     return this.baseModel.inputs[0].shape;
   }
 
+  private getMetadata(): {
+    tfjsSpeechCommandsVersion: string,
+    modelName: string,
+    timeStamp: string,
+    wordLabels: string[]
+  } {
+    return {
+      tfjsSpeechCommandsVersion: version,
+      modelName: this.name,
+      timeStamp: new Date().toISOString(),
+      wordLabels: this.wordLabels()
+    };
+  }
+
+  async save(handlerOrURL?: string | tf.io.IOHandler):
+      Promise<tf.io.SaveResult> {
+    const isCustomPath = handlerOrURL != null;
+    handlerOrURL = handlerOrURL || getCanonicalSavePath(this.name);
+
+    if (!isCustomPath) {
+      // First, save the words and other metadata.
+      const metadataMapStr =
+          localStorageWrapper.localStorage.getItem(SAVED_MODEL_METADATA_KEY);
+      const metadataMap =
+          metadataMapStr == null ? {} : JSON.parse(metadataMapStr);
+      metadataMap[this.name] = this.getMetadata();
+      localStorageWrapper.localStorage.setItem(
+          SAVED_MODEL_METADATA_KEY, JSON.stringify(metadataMap));
+    }
+    console.log(`Saving model to ${handlerOrURL}`);
+    return this.model.save(handlerOrURL);
+  }
+
+  async load(handlerOrURL?: string | tf.io.IOHandler): Promise<void> {
+    const isCustomPath = handlerOrURL != null;
+    handlerOrURL = handlerOrURL || getCanonicalSavePath(this.name);
+
+    if (!isCustomPath) {
+      // First, load the words and other metadata.
+      const metadataMap = JSON.parse(
+          localStorageWrapper.localStorage.getItem(SAVED_MODEL_METADATA_KEY));
+      if (metadataMap == null || metadataMap[this.name] == null) {
+        throw new Error(
+            `Cannot find metadata for transfer model named ${this.name}"`);
+      }
+      this.words = metadataMap[this.name].wordLabels;
+      console.log(
+          `Loaded word list for model named ${this.name}: ${this.words}`);
+    }
+    this.model = await tf.loadModel(handlerOrURL);
+    console.log(`Loaded model from ${handlerOrURL}:`);
+    this.model.summary();
+  }
+
   /**
    * Overridden method to prevent creating a nested transfer-learning
    * recognizer.
@@ -949,4 +1012,45 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         'Creating transfer-learned recognizer from a transfer-learned ' +
         'recognizer is not supported.');
   }
+}
+
+function getCanonicalSavePath(name: string): string {
+  return `${SAVE_PATH_PREFIX}${name}`;
+}
+
+/**
+ * List the model that are currently saved locally in the browser.
+ *
+ * @returns An array of transfer-learned speech-commands models
+ *   that are currently saved in the browser locally.
+ */
+export async function listSavedTransferModels(): Promise<string[]> {
+  const models = await tf.io.listModels();
+  const keys = [];
+  for (const key in models) {
+    if (key.startsWith(SAVE_PATH_PREFIX)) {
+      keys.push(key.slice(SAVE_PATH_PREFIX.length));
+    }
+  }
+  return keys;
+}
+
+/**
+ * Delete a locally-saved, transfer-learned speech-commands model.
+ *
+ * @param name The name of the transfer-learned model to be deleted.
+ */
+export async function deleteSavedTransferModel(name: string): Promise<void> {
+  // Delete the words from local storage.
+  let metadataMap = JSON.parse(
+      localStorageWrapper.localStorage.getItem(SAVED_MODEL_METADATA_KEY));
+  if (metadataMap == null) {
+    metadataMap = {};
+  }
+  if (metadataMap[name] != null) {
+    delete metadataMap[name];
+  }
+  localStorageWrapper.localStorage.setItem(
+      SAVED_MODEL_METADATA_KEY, JSON.stringify(metadataMap));
+  await tf.io.removeModel(getCanonicalSavePath(name));
 }
