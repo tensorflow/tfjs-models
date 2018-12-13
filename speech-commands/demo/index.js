@@ -81,6 +81,8 @@ let transferDurationMultiplier;
         loadTransferModelButton.disabled = false;
         deleteTransferModelButton.disabled = false;
 
+        transferModelNameInput.value = `model-${getDateString()}`;
+
         logToStatusDisplay('Model loaded.');
 
         const params = recognizer.params();
@@ -166,20 +168,31 @@ function scrollToPageBottom() {
  *   If provided, will use it as is. If not provided, will use WebAudio
  *   to collect an example.
  */
-async function addExample(wordDiv, word, spectrogram) {
+async function addExample(wordDiv, word, spectrogram, uid) {
+  console.log('In addExample()');  // DEBUG
+  let exampleUID;
   if (spectrogram == null) {
     // Collect an example online.
     spectrogram = await transferRecognizer.collectExample(
         word, {durationMultiplier: transferDurationMultiplier});
+    const examples = transferRecognizer.getExamples(word)
+    exampleUID = examples[examples.length - 1].uid;
+    console.log(`exampleUID = ${exampleUID}`);  // DEBUG
+  } else {
+    if (uid == null) {
+      throw new Error('Error: UID is not provided for pre-existing example.');
+    }
+    exampleUID = uid;
   }
 
+  // Spectrogram canvas.
   const exampleCanvas = document.createElement('canvas');
   exampleCanvas.style['display'] = 'inline-block';
   exampleCanvas.style['vertical-align'] = 'middle';
   exampleCanvas.height = 60;
   exampleCanvas.width = 80;
   exampleCanvas.style['padding'] = '3px';
-  if (wordDiv.children.length > 1) {
+  while (wordDiv.children.length > 1) {
     wordDiv.removeChild(wordDiv.children[wordDiv.children.length - 1]);
   }
   wordDiv.appendChild(exampleCanvas);
@@ -192,6 +205,42 @@ async function addExample(wordDiv, word, spectrogram) {
         markMaxIntensityFrame:
             transferDurationMultiplier > 1 && word != BACKGROUND_NOISE_TAG
       });
+
+  // Create Delete button.
+  const deleteButton = document.createElement('button');
+  deleteButton.textContent = 'X';
+  wordDiv.appendChild(deleteButton);
+
+  // Callback for delete button.
+  deleteButton.addEventListener('click', () => {
+    console.log(`deleteButton clicked: word = ${word}`);  // DEBUG
+    const examples0 = transferRecognizer.getExamples(word);  // DEBUG
+    console.log(`Before: num examples = ${examples0.length}`);  // DEBUG
+    console.log(`deleting UID: ${exampleUID}`);
+    transferRecognizer.removeExample(exampleUID);
+
+    console.log(`global transferWords = ${transferWords}`);  // DEBUG
+    redrawDataset(transferWords);
+
+    // let remainingExamples = [];
+    // // DEBUG
+    // console.log(`After: wordLabels: ${transferRecognizer.wordLabels()}`);
+    // if (transferRecognizer.wordLabels().indexOf(word) !== -1) {
+    //   remainingExamples = transferRecognizer.getExamples(word);  // DEBUG
+    //   console.log(`After: num examples = ${remainingExamples.length}`);  // DEBUG
+    // } else {
+    //   console.log(`After: no more examples for word ${word}`);  // DEBUG
+    // }
+
+    // while (wordDiv.children.length > 1) {
+    //   wordDiv.removeChild(wordDiv.children[wordDiv.children.length - 1]);
+    // }
+    // if (remainingExamples.length > 0) {
+    //   const lastExample = remainingExamples[remainingExamples.length - 1];
+    //   console.log(`Rendering the last remaining`);  // DEBUG
+    //   addExample(wordDiv, word, lastExample.example.spectrogram);
+    // }
+  });
 
   const button = wordDiv.children[0];
   const displayWord = word === BACKGROUND_NOISE_TAG ? 'noise' : word;
@@ -216,6 +265,7 @@ function updateButtonStateAccordingToTransferRecognizer() {
   } else {
     startTransferLearnButton.textContent =
         `Need at least ${requiredMinCountPerClass} examples per word`;
+    startTransferLearnButton.disabled = true;
   }
   downloadFilesButton.disabled = false;
 }
@@ -229,6 +279,11 @@ let collectWordButtons = {};
  * @returns {Object} An object mapping word to th div element created for it.
  */
 function createWordDivs(transferWords) {
+  // Clear wordDiv first.
+  while (collectButtonsDiv.firstChild) {
+    collectButtonsDiv.removeChild(collectButtonsDiv.firstChild);
+  }
+
   const wordDivs = {};
   for (const word of transferWords) {
     const wordDiv = document.createElement('div');
@@ -277,6 +332,7 @@ enterLearnWordsButton.addEventListener('click', () => {
   learnWordsInput.disabled = true;
   enterLearnWordsButton.disabled = true;
   transferWords = learnWordsInput.value.trim().split(',').map(w => w.trim());
+  transferWords.sort();
   if (transferWords == null || transferWords.length <= 1) {
     logToStatusDisplay('ERROR: Invalid list of transfer words.');
     return;
@@ -500,7 +556,7 @@ async function loadDatasetInTransferRecognizer(serialized) {
   }
   transferRecognizer.loadExamples(serialized);
   const exampleCounts = transferRecognizer.countExamples();
-  const transferWords = [];
+  transferWords = [];
   for (const label in exampleCounts) {
     transferWords.push(label);
   }
@@ -508,8 +564,20 @@ async function loadDatasetInTransferRecognizer(serialized) {
   learnWordsInput.value = transferWords.join(',');
 
   // Update the UI state based on the loaded dataset.
-  const wordDivs = createWordDivs(transferWords);
-  for (const word of transferWords) {
+  redrawDataset(transferWords);  // TODO(cais): Confirm.
+}
+
+async function redrawDataset(words) {
+  words.sort();
+  const wordDivs = createWordDivs(words);
+
+  console.log(`transferWords = ${words}`);  // DEBUG
+  const transferRecognizerVocab = transferRecognizer.wordLabels();
+  console.log(`transferRecognizerVocab = ${transferRecognizerVocab}`);  // DEBUG
+  for (const word of words) {
+    if (transferRecognizerVocab.indexOf(word) === -1) {
+      continue;
+    }
     const examples = transferRecognizer.getExamples(word);
     for (const example of examples) {
       const spectrogram = example.example.spectrogram;
@@ -521,9 +589,11 @@ async function loadDatasetInTransferRecognizer(serialized) {
             `Inferred transferDurationMultiplier from uploaded file: ` +
             `${transferDurationMultiplier}`);
       }
-      await addExample(wordDivs[word], word, spectrogram);
+      console.log(`Drawing example for word ${word}: ${example.uid}`)
+      await addExample(wordDivs[word], word, spectrogram, example.uid);
     }
   }
+
   updateButtonStateAccordingToTransferRecognizer();
 }
 

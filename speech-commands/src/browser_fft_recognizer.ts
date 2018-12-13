@@ -719,6 +719,15 @@ class TransferBrowserFftSpeechCommandRecognizer extends
   }
 
   /**
+   * Remove an example from the current dataset.
+   *
+   * @param uid The UID of the example to remove.
+   */
+  removeExample(uid: string): void {
+    this.dataset.removeExample(uid);
+  }
+
+  /**
    * Load an array of serialized examples.
    *
    * @param serialized The examples in their serialized format.
