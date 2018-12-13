@@ -723,8 +723,18 @@ class TransferBrowserFftSpeechCommandRecognizer extends
    *
    * @param uid The UID of the example to remove.
    */
-  removeExample(uid: string): void {
+  removeExample(uid: string): void {  // TODO(cais): Unit tests. DO NOT SUBMIT.
     this.dataset.removeExample(uid);
+    this.collateTransferWords();
+  }
+
+  /**
+   * Check whether the underlying dataset is empty.
+   *
+   * @returns A boolean indicating whether the underlying dataset is empty.
+   */
+  isDatasetEmpty(): boolean {  // TODO(cais): Unit tests. DO NOT SUBMIT.
+    return this.dataset.empty();
   }
 
   /**

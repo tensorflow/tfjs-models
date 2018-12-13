@@ -169,7 +169,6 @@ function scrollToPageBottom() {
  *   to collect an example.
  */
 async function addExample(wordDiv, word, spectrogram, uid) {
-  console.log('In addExample()');  // DEBUG
   let exampleUID;
   if (spectrogram == null) {
     // Collect an example online.
@@ -177,7 +176,6 @@ async function addExample(wordDiv, word, spectrogram, uid) {
         word, {durationMultiplier: transferDurationMultiplier});
     const examples = transferRecognizer.getExamples(word)
     exampleUID = examples[examples.length - 1].uid;
-    console.log(`exampleUID = ${exampleUID}`);  // DEBUG
   } else {
     if (uid == null) {
       throw new Error('Error: UID is not provided for pre-existing example.');
@@ -213,33 +211,8 @@ async function addExample(wordDiv, word, spectrogram, uid) {
 
   // Callback for delete button.
   deleteButton.addEventListener('click', () => {
-    console.log(`deleteButton clicked: word = ${word}`);  // DEBUG
-    const examples0 = transferRecognizer.getExamples(word);  // DEBUG
-    console.log(`Before: num examples = ${examples0.length}`);  // DEBUG
-    console.log(`deleting UID: ${exampleUID}`);
     transferRecognizer.removeExample(exampleUID);
-
-    console.log(`global transferWords = ${transferWords}`);  // DEBUG
     redrawDataset(transferWords);
-
-    // let remainingExamples = [];
-    // // DEBUG
-    // console.log(`After: wordLabels: ${transferRecognizer.wordLabels()}`);
-    // if (transferRecognizer.wordLabels().indexOf(word) !== -1) {
-    //   remainingExamples = transferRecognizer.getExamples(word);  // DEBUG
-    //   console.log(`After: num examples = ${remainingExamples.length}`);  // DEBUG
-    // } else {
-    //   console.log(`After: no more examples for word ${word}`);  // DEBUG
-    // }
-
-    // while (wordDiv.children.length > 1) {
-    //   wordDiv.removeChild(wordDiv.children[wordDiv.children.length - 1]);
-    // }
-    // if (remainingExamples.length > 0) {
-    //   const lastExample = remainingExamples[remainingExamples.length - 1];
-    //   console.log(`Rendering the last remaining`);  // DEBUG
-    //   addExample(wordDiv, word, lastExample.example.spectrogram);
-    // }
   });
 
   const button = wordDiv.children[0];
@@ -249,7 +222,8 @@ async function addExample(wordDiv, word, spectrogram, uid) {
 }
 
 function updateButtonStateAccordingToTransferRecognizer() {
-  const exampleCounts = transferRecognizer.countExamples();
+  const exampleCounts = transferRecognizer.isDatasetEmpty() ?
+      {} : transferRecognizer.countExamples();
   if (transferWords == null) {
     transferWords = Object.keys(exampleCounts);
   }
@@ -564,16 +538,14 @@ async function loadDatasetInTransferRecognizer(serialized) {
   learnWordsInput.value = transferWords.join(',');
 
   // Update the UI state based on the loaded dataset.
-  redrawDataset(transferWords);  // TODO(cais): Confirm.
+  redrawDataset(transferWords);
 }
 
 async function redrawDataset(words) {
   words.sort();
   const wordDivs = createWordDivs(words);
 
-  console.log(`transferWords = ${words}`);  // DEBUG
   const transferRecognizerVocab = transferRecognizer.wordLabels();
-  console.log(`transferRecognizerVocab = ${transferRecognizerVocab}`);  // DEBUG
   for (const word of words) {
     if (transferRecognizerVocab.indexOf(word) === -1) {
       continue;
