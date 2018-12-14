@@ -35,10 +35,16 @@ export class DatasetViz {
    * @param {HTMLDivElement} topLevelContainer The div element that
    *   holds the div elements for the individual words. It is assumed
    *   that each element has its "word" attribute set to the word.
-   * @param {*} minExamplesPerClass
-   * @param {*} startTransferLearnButton
-   * @param {*} downloadAsFileButton
-   * @param {*} transferDurationMultiplier
+   * @param {number} minExamplesPerClass Minimum number of examples
+   *   per word class required for the start-transfer-learning button
+   *   to be enabled.
+   * @param {HTMLButtonElement} startTransferLearnButton The button
+   *   which starts the transfer learning when clicked.
+   * @param {HTMLBUttonElement} downloadAsFileButton The button
+   *   that triggers downloading of the dataset as a file when clicked.
+   * @param {number} transferDurationMultiplier Optional duration
+   *   multiplier (the ratio between the length of the example
+   *   and the length expected by the model.) Defaults to 1.
    */
   constructor(transferRecognizer,
               topLevelContainer,
@@ -157,6 +163,14 @@ export class DatasetViz {
     }
   }
 
+  /**
+   * Redraw the spectrogram and buttons for a word.
+   *
+   * @param {string} word The word being redrawn. This must belong to the
+   *   vocabulary currently held by the transferRecognizer.
+   * @param {string} uid Optional UID for the example to render. If not
+   *   specified, the last available example of the dataset will be drawn.
+   */
   async redraw(word, uid) {
     if (word == null) {
       throw new Error('word is not specified');
@@ -199,12 +213,18 @@ export class DatasetViz {
     this.updateButtons_();
   }
 
+  /**
+   * Redraw the spectrograms and buttons for all words.
+   *
+   * For each word, the last available example is rendered.
+   **/
   redrawAll() {
     for (const word of this.words_()) {
       this.redraw(word);
     }
   }
 
+  /** Update the button states according to the state of transferRecognizer. */
   updateButtons_() {
     const exampleCounts = this.transferRecognizer.isDatasetEmpty() ?
         {} : this.transferRecognizer.countExamples();
