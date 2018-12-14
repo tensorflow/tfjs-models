@@ -1,5 +1,3 @@
-import { ConnectableObservable } from "rx";
-
 /**
  * @license
  * Copyright 2018 Google Inc. All Rights Reserved.

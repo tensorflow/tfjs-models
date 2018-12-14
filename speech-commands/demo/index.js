@@ -476,8 +476,6 @@ async function loadDatasetInTransferRecognizer(serialized) {
       `Deteremined transferDurationMultiplier from uploaded ` +
       `dataset: ${transferDurationMultiplier}`);
 
-  // TODO(cais): Support appending to existing tarnsferRecognizer's
-  // dataset.
   createWordDivs(transferWords);
   datasetViz.redrawAll();
 }

@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@tensorflow/tfjs": "^0.13.1",
-    "rx": "^4.1.0",
     "stats.js": "^0.17.0"
   },
   "scripts": {
