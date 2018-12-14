@@ -67,10 +67,6 @@ export class DatasetViz {
   }
 
   /**
-   * UI Component for Visualizing and Manipulating Examples in Dataset.
-   */
-
-  /**
    * Draw an example to the UI, record the example via WebAudio if necessary.
    *
    * @param {HTMLDivElement} wordDiv The div element for the word. It is assumed
