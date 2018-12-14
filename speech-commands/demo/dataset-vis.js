@@ -32,6 +32,9 @@ export class DatasetViz {
     this.startTransferLearnButton = startTransferLearnButton;
     this.downloadAsFileButton = downloadAsFileButton;
     this.transferDurationMultiplier = transferDurationMultiplier;
+
+    // Navigation indices for the words.
+    this.navIndices = {};
   }
 
   words_() {
@@ -62,6 +65,39 @@ export class DatasetViz {
       throw new Error('Error: UID is not provided for pre-existing example.');
     }
 
+    this.removeDisplayedExample_(wordDiv);
+
+    // Create the left and right nav buttons.
+    const leftButton = document.createElement('button');
+    leftButton.textContent = '←';
+    wordDiv.appendChild(leftButton);
+
+    const rightButton = document.createElement('button');
+    rightButton.textContent = '→';
+    wordDiv.appendChild(rightButton);
+
+    // Determine the position of the example in the word of the dataset.
+    const exampleUIDs =
+        this.transferRecognizer.getExamples(word).map(ex => ex.uid);
+    const position = exampleUIDs.indexOf(uid);
+    this.navIndices[word] = exampleUIDs.indexOf(uid);
+
+    if (position > 0) {
+      leftButton.addEventListener('click', () => {
+        this.redraw(word, exampleUIDs[position - 1]);
+      });
+    } else {
+      leftButton.disabled = true;
+    }
+
+    if (position < exampleUIDs.length - 1) {
+      rightButton.addEventListener('click', () => {
+        this.redraw(word, exampleUIDs[position + 1]);
+      });
+    } else {
+      rightButton.disabled = true;
+    }
+
     // Spectrogram canvas.
     const exampleCanvas = document.createElement('canvas');
     exampleCanvas.style['display'] = 'inline-block';
@@ -69,7 +105,6 @@ export class DatasetViz {
     exampleCanvas.height = 60;
     exampleCanvas.width = 80;
     exampleCanvas.style['padding'] = '3px';
-    this.removeDisplayedExample_(wordDiv);
     wordDiv.appendChild(exampleCanvas);
 
     const modelNumFrames = this.transferRecognizer.modelInputShape()[1];
@@ -90,6 +125,8 @@ export class DatasetViz {
     // Callback for delete button.
     deleteButton.addEventListener('click', () => {
       this.transferRecognizer.removeExample(uid);
+      // TODO(cais): Smarter logic for which example to draw after deletion.
+      // Right now it always redraws the last available one.
       this.redraw(word);
     });
 
@@ -103,7 +140,7 @@ export class DatasetViz {
     }
   }
 
-  async redraw(word) {
+  async redraw(word, uid) {
     if (word == null) {
       throw new Error('word is not specified');
     }
@@ -122,9 +159,20 @@ export class DatasetViz {
 
     if (word in exampleCounts) {
       const examples = this.transferRecognizer.getExamples(word);
-      const example = examples[examples.length - 1];
-      // TODO(cais): Logic for which example to draw, depending on navigation
-      // history.
+      let example;
+      if (uid == null) {
+        // Example UID is not specified. Draw the last one available.
+        example = examples[examples.length - 1];
+      } else {
+        // Example UID is specified. Find the example and update navigation
+        // indices.
+        for (let index = 0; index < examples.length; ++index) {
+          if (examples[index].uid === uid) {
+            example = examples[index];
+          }
+        }
+      }
+
       const spectrogram = example.example.spectrogram;
       await this.drawExample(wordDiv, word, spectrogram, example.uid);
     } else {
@@ -153,7 +201,12 @@ export class DatasetViz {
       const displayWord = word ===
         speechCommands.BACKGROUND_NOISE_TAG ? 'noise' : word;
       const exampleCount = exampleCounts[word] || 0;
-      button.textContent = `${displayWord} (${exampleCount})`;
+      if (exampleCount === 0) {
+        button.textContent = `${displayWord} (${exampleCount})`;
+      } else {
+        const pos = this.navIndices[word] + 1;
+        button.textContent = `${displayWord} (${pos}/${exampleCount})`;
+      }
     }
 
     const requiredMinCountPerClass =
