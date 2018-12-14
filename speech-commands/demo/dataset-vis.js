@@ -28,7 +28,6 @@ export class DatasetViz {
               startTransferLearnButton,
               downloadAsFileButton,
               transferDurationMultiplier = 1) {
-    console.log('In DataViz ctor()');  // DEBUG
     this.transferRecognizer = transferRecognizer;
     this.container = topLevelContainer;
     this.minExamplesPerClass = minExamplesPerClass;
@@ -42,7 +41,6 @@ export class DatasetViz {
     for (const element of this.container.children) {
       words.push(element.getAttribute('word'));
     }
-    console.log(`words = ${JSON.stringify(words)}`);  // DEBUG
     return words;
   }
 
@@ -86,7 +84,6 @@ export class DatasetViz {
     wordDiv.appendChild(exampleCanvas);
 
     const modelNumFrames = this.transferRecognizer.modelInputShape()[1];
-    console.log(`modelNumFrames = ${modelNumFrames}`);  // DEBUG
     await plotSpectrogram(
         exampleCanvas, spectrogram.data, spectrogram.frameSize,
         spectrogram.frameSize, {
@@ -102,15 +99,11 @@ export class DatasetViz {
     wordDiv.appendChild(deleteButton);
 
     // Callback for delete button.
-    console.log('1:', this.transferRecognizer.countExamples());  // DEBUG
     deleteButton.addEventListener('click', () => {
       this.transferRecognizer.removeExample(uid);
-      this.redraw(word);  // TODO(cais): Remove.
+      this.redraw(word);
     });
 
-    // TODO(cais): Confirm removal.
-    // const button = wordDiv.children[0];
-    // const exampleCounts = this.transferRecognizer.countExamples();
     this.updateButtons_();
   }
 
@@ -122,49 +115,40 @@ export class DatasetViz {
   }
 
   async redraw(word) {
-    console.log(`In redraw: word = ${word}`);  // DEBUG
+    if (word == null) {
+      throw new Error('word is not specified');
+    }
     let divIndex;
     for (divIndex = 0; divIndex < this.container.children.length; ++divIndex) {
       if (this.container.children[divIndex].getAttribute('word') === word) {
         break;
       }
     }
-    if (divIndex) {
-      console.log(`divIndex = ${divIndex}`);  // DEBUG
+    if (divIndex === this.container.children.length) {
+      throw new Error(`Cannot find div corresponding to word ${word}`);
     }
-    // TODO(cais): What is wordDiv is not found?
     const wordDiv = this.container.children[divIndex];
-    console.log(`wordDiv =`, wordDiv);  // DEBUG
-    // TODO(cais): Deal with this.transferRecognizer.isEmpty();
     const exampleCounts = this.transferRecognizer.isDatasetEmpty() ?
         {} : this.transferRecognizer.countExamples();
-    // TODO(cais): What is wordDiv is not found?
 
-    // TODO(cais): Remove div.
-    // if (transferRecognizerVocab.indexOf(word) === -1) {
-    //   return;
-    // }
     if (word in exampleCounts) {
       const examples = this.transferRecognizer.getExamples(word);
       const example = examples[examples.length - 1];
-      // TODO(cais): Logic for which example to draw, depending on history.
+      // TODO(cais): Logic for which example to draw, depending on navigation
+      // history.
       const spectrogram = example.example.spectrogram;
-      // TODO(cais): This inference logic needs to be redone. DO NOT SUBMIT.
-      // if (this.transferDurationMultiplier == null) {
-      //   const modelNumFrames = this.transferRecognizer.modelInputShape()[1];
-      //   transferDurationMultiplier = Math.round(
-      //       spectrogram.data.length / spectrogram.frameSize / modelNumFrames);
-      //   console.log(
-      //       `Inferred transferDurationMultiplier from uploaded file: ` +
-      //       `${transferDurationMultiplier}`);
-      // }
-      console.log(`Drawing example for word ${word}: ${example.uid}`);  // DEBUG
       await this.drawExample(wordDiv, word, spectrogram, example.uid);
     } else {
       this.removeDisplayedExample_(wordDiv);
     }
 
     this.updateButtons_();
+  }
+
+  redrawAll() {
+    for (const word of this.words_()) {
+      this.redraw(word);
+    }
   }
 
   updateButtons_() {

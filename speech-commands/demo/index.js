@@ -202,10 +202,7 @@ function createWordDivs(transferWords) {
           word, {durationMultiplier: transferDurationMultiplier});
       const examples = transferRecognizer.getExamples(word)
       const exampleUID = examples[examples.length - 1].uid;
-      console.log(transferRecognizer.countExamples());  // DEBUG
       await datasetViz.drawExample(wordDiv, word, spectrogram, exampleUID);
-      // TODO(cais): Remove.
-      // updateButtonStateAccordingToTransferRecognizer();
       enableAllCollectWordButtons();
     });
   }
@@ -459,44 +456,31 @@ async function loadDatasetInTransferRecognizer(serialized) {
   transferRecognizer.loadExamples(serialized);
   const exampleCounts = transferRecognizer.countExamples();
   transferWords = [];
-  for (const label in exampleCounts) {
-    transferWords.push(label);
+  const modelNumFrames = transferRecognizer.modelInputShape()[1];
+  const durationMultipliers = [];
+  for (const word in exampleCounts) {
+    transferWords.push(word);
+    const examples = transferRecognizer.getExamples(word);
+    for (const example of examples) {
+      const spectrogram = example.example.spectrogram;
+      durationMultipliers.push(Math.round(
+          spectrogram.data.length / spectrogram.frameSize / modelNumFrames));
+    }
   }
   transferWords.sort();
   learnWordsInput.value = transferWords.join(',');
 
-  // Update the UI state based on the loaded dataset.
-  // redrawDataset(transferWords);  // TODO(cais): Remove.
+  // Determine the transferDurationMultiplier value from the dataset.
+  transferDurationMultiplier = Math.max(...durationMultipliers);
+  console.log(
+      `Deteremined transferDurationMultiplier from uploaded ` +
+      `dataset: ${transferDurationMultiplier}`);
+
+  // TODO(cais): Support appending to existing tarnsferRecognizer's
+  // dataset.
+  createWordDivs(transferWords);
+  datasetViz.redrawAll();
 }
-
-// TODO(cais): Remove.
-// async function redrawDataset(words) {
-//   words.sort();
-//   const wordDivs = createWordDivs(words);
-
-//   const transferRecognizerVocab = transferRecognizer.wordLabels();
-//   for (const word of words) {
-//     if (transferRecognizerVocab.indexOf(word) === -1) {
-//       continue;
-//     }
-//     const examples = transferRecognizer.getExamples(word);
-//     for (const example of examples) {
-//       const spectrogram = example.example.spectrogram;
-//       if (transferDurationMultiplier == null) {
-//         const modelNumFrames = transferRecognizer.modelInputShape()[1];
-//         transferDurationMultiplier = Math.round(
-//             spectrogram.data.length / spectrogram.frameSize / modelNumFrames);
-//         console.log(
-//             `Inferred transferDurationMultiplier from uploaded file: ` +
-//             `${transferDurationMultiplier}`);
-//       }
-//       console.log(`Drawing example for word ${word}: ${example.uid}`)
-//       await addExample(wordDivs[word], word, spectrogram, example.uid);
-//     }
-//   }
-
-//   updateButtonStateAccordingToTransferRecognizer();
-// }
 
 async function populateSavedTransferModelsSelect() {
   const savedModelKeys = await SpeechCommands.listSavedTransferModels();
