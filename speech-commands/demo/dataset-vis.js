@@ -73,7 +73,7 @@ export class DatasetViz {
   }
 
   /**
-   * Draw an example to the UI, record the example via WebAudio if necessary.
+   * Draw an example.
    *
    * @param {HTMLDivElement} wordDiv The div element for the word. It is assumed
    *   that it contains the word button as the first child and the canvas as the
@@ -82,6 +82,8 @@ export class DatasetViz {
    * @param {SpectrogramData} spectrogram Optional spectrogram data.
    *   If provided, will use it as is. If not provided, will use WebAudio
    *   to collect an example.
+   * @param {string} uid UID of the example being drawn. Must match the UID
+   *   of the example from `this.transferRecognizer`.
    */
   async drawExample(wordDiv, word, spectrogram, uid) {
     if (uid == null) {
