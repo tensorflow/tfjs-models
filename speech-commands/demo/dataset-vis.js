@@ -19,7 +19,27 @@ import * as speechCommands from '../src';
 
 import {plotSpectrogram} from './ui';
 
+/**
+ * Dataset visualizer that supports
+ *
+ * - Display of words and spectrograms
+ * - Navigation through examples
+ * - Deletion of examples
+ */
 export class DatasetViz {
+  /**
+   * Constructor of DatasetViz
+   *
+   * @param {Object} transferRecognizer An instance of
+   *   `speechCommands.TransferSpeechCommandRecognizer`.
+   * @param {HTMLDivElement} topLevelContainer The div element that
+   *   holds the div elements for the individual words. It is assumed
+   *   that each element has its "word" attribute set to the word.
+   * @param {*} minExamplesPerClass
+   * @param {*} startTransferLearnButton
+   * @param {*} downloadAsFileButton
+   * @param {*} transferDurationMultiplier
+   */
   constructor(transferRecognizer,
               topLevelContainer,
               minExamplesPerClass,
@@ -37,6 +57,7 @@ export class DatasetViz {
     this.navIndices = {};
   }
 
+  /** Get the set of words in the dataset visualizer. */
   words_() {
     const words = [];
     for (const element of this.container.children) {
