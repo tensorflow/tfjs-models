@@ -60,18 +60,9 @@ export class DatasetViz {
    *   to collect an example.
    */
   async drawExample(wordDiv, word, spectrogram, uid) {
-    // if (spectrogram == null) {
-    //   // Collect an example online.
-    //   // TODO(cais): Remove.
-    //   // spectrogram = await transferRecognizer.collectExample(
-    //   //     word, {durationMultiplier: transferDurationMultiplier});
-    //   // const examples = transferRecognizer.getExamples(word)
-    //   // exampleUID = examples[examples.length - 1].uid;
-    // } else {
     if (uid == null) {
       throw new Error('Error: UID is not provided for pre-existing example.');
     }
-    // }
 
     // Spectrogram canvas.
     const exampleCanvas = document.createElement('canvas');
