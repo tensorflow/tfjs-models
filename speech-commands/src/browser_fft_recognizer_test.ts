@@ -1091,6 +1091,29 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
         .toEqual(fakeNumFrames * fakeColumnTruncateLength * 4 * 3);
   });
 
+  it('removeExample & isDatasetEmpty', async() => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    expect(transfer.isDatasetEmpty()).toEqual(true);
+    await transfer.collectExample('bar');
+    await transfer.collectExample('foo');
+    await transfer.collectExample('bar');
+    const fooExamples = transfer.getExamples('foo');
+    transfer.removeExample(fooExamples[0].uid);
+    expect(transfer.isDatasetEmpty()).toEqual(false);
+    expect(transfer.countExamples()).toEqual({'bar': 2});
+    expect(() => transfer.getExamples('foo')).toThrowError(
+        'No example of label "foo" exists in dataset');
+    const barExamples = transfer.getExamples('bar');
+    transfer.removeExample(barExamples[0].uid);
+    expect(transfer.isDatasetEmpty()).toEqual(false);
+    expect(transfer.countExamples()).toEqual({'bar': 1});
+    transfer.removeExample(barExamples[1].uid);
+    expect(transfer.isDatasetEmpty()).toEqual(true);
+  });
+
   it('serializeExamples fails on empty data', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();

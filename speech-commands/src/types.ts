@@ -204,6 +204,19 @@ export interface TransferSpeechCommandRecognizer extends
   /** Serialize the existing examples. */
   serializeExamples(): ArrayBuffer;
 
+  /** Remove an example from the dataset of the transfer recognizer.
+   *
+   * @param uid The UID for the example to be removed.
+   */
+  removeExample(uid: string): void;
+
+  /**
+   * Check whether the dataset underlying this transfer recognizer is empty.
+   *
+   * @returns A boolean indicating whether the underlying dataset is empty.
+   */
+  isDatasetEmpty(): boolean;
+
   /**
    * Save the transfer-learned model.
    *

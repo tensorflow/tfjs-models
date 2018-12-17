@@ -19,7 +19,8 @@ import Plotly from 'plotly.js-dist';
 
 import * as SpeechCommands from '../src';
 
-import {hideCandidateWords, logToStatusDisplay, plotPredictions, plotSpectrogram, populateCandidateWords, showCandidateWords} from './ui';
+import {hideCandidateWords, logToStatusDisplay, plotPredictions, populateCandidateWords, showCandidateWords} from './ui';
+import {DatasetViz} from './dataset-vis';
 
 const startButton = document.getElementById('start');
 const stopButton = document.getElementById('stop');
@@ -31,7 +32,7 @@ const fineTuningEpochsInput = document.getElementById('fine-tuning-epochs');
 
 const datasetIOButton = document.getElementById('dataset-io');
 const datasetIOInnerDiv = document.getElementById('dataset-io-inner');
-const downloadFilesButton = document.getElementById('download-dataset');
+const downloadAsFileButton = document.getElementById('download-dataset');
 const datasetFileInput = document.getElementById('dataset-file-input');
 const uploadFilesButton = document.getElementById('upload-dataset');
 
@@ -80,6 +81,8 @@ let transferDurationMultiplier;
         enterLearnWordsButton.disabled = false;
         loadTransferModelButton.disabled = false;
         deleteTransferModelButton.disabled = false;
+
+        transferModelNameInput.value = `model-${getDateString()}`;
 
         logToStatusDisplay('Model loaded.');
 
@@ -155,72 +158,8 @@ function scrollToPageBottom() {
   scrollingElement.scrollTop = scrollingElement.scrollHeight;
 }
 
-/**
- * Add an example to the UI, record the example via WebAudio if necessary.
- *
- * @param {HTMLDivElement} wordDiv The div element for the word. It is assumed
- *   that it contains the word button as the first child and the canvas as the
- *   second.
- * @param {string} word The word of the example being added.
- * @param {SpectrogramData} spectrogram Optional spectrogram data.
- *   If provided, will use it as is. If not provided, will use WebAudio
- *   to collect an example.
- */
-async function addExample(wordDiv, word, spectrogram) {
-  if (spectrogram == null) {
-    // Collect an example online.
-    spectrogram = await transferRecognizer.collectExample(
-        word, {durationMultiplier: transferDurationMultiplier});
-  }
-
-  const exampleCanvas = document.createElement('canvas');
-  exampleCanvas.style['display'] = 'inline-block';
-  exampleCanvas.style['vertical-align'] = 'middle';
-  exampleCanvas.height = 60;
-  exampleCanvas.width = 80;
-  exampleCanvas.style['padding'] = '3px';
-  if (wordDiv.children.length > 1) {
-    wordDiv.removeChild(wordDiv.children[wordDiv.children.length - 1]);
-  }
-  wordDiv.appendChild(exampleCanvas);
-
-  const modelNumFrames = recognizer.modelInputShape()[1];
-  await plotSpectrogram(
-      exampleCanvas, spectrogram.data, spectrogram.frameSize,
-      spectrogram.frameSize, {
-        pixelsPerFrame: exampleCanvas.width / modelNumFrames,
-        markMaxIntensityFrame:
-            transferDurationMultiplier > 1 && word != BACKGROUND_NOISE_TAG
-      });
-
-  const button = wordDiv.children[0];
-  const displayWord = word === BACKGROUND_NOISE_TAG ? 'noise' : word;
-  const exampleCounts = transferRecognizer.countExamples();
-  button.textContent = `${displayWord} (${exampleCounts[word]})`;
-}
-
-function updateButtonStateAccordingToTransferRecognizer() {
-  const exampleCounts = transferRecognizer.countExamples();
-  if (transferWords == null) {
-    transferWords = Object.keys(exampleCounts);
-  }
-  const minCountByClass =
-      transferWords.map(word => exampleCounts[word] || 0)
-          .reduce((prev, current) => current < prev ? current : prev);
-
-  const requiredMinCountPerClass =
-      Math.ceil(MIN_EXAMPLES_PER_CLASS / transferDurationMultiplier);
-  if (minCountByClass >= requiredMinCountPerClass) {
-    startTransferLearnButton.textContent = 'Start transfer learning';
-    startTransferLearnButton.disabled = false;
-  } else {
-    startTransferLearnButton.textContent =
-        `Need at least ${requiredMinCountPerClass} examples per word`;
-  }
-  downloadFilesButton.disabled = false;
-}
-
 let collectWordButtons = {};
+let datasetViz;
 
 /**
  * Create div elements for transfer words.
@@ -229,10 +168,22 @@ let collectWordButtons = {};
  * @returns {Object} An object mapping word to th div element created for it.
  */
 function createWordDivs(transferWords) {
+  // Clear collectButtonsDiv first.
+  while (collectButtonsDiv.firstChild) {
+    collectButtonsDiv.removeChild(collectButtonsDiv.firstChild);
+  }
+  datasetViz = new DatasetViz(transferRecognizer,
+                              collectButtonsDiv,
+                              MIN_EXAMPLES_PER_CLASS,
+                              startTransferLearnButton,
+                              downloadAsFileButton,
+                              transferDurationMultiplier);
+
   const wordDivs = {};
   for (const word of transferWords) {
     const wordDiv = document.createElement('div');
     wordDivs[word] = wordDiv;
+    wordDiv.setAttribute('word', word);
     const button = document.createElement('button');
     button.style['display'] = 'inline-block';
     button.style['vertical-align'] = 'middle';
@@ -247,8 +198,11 @@ function createWordDivs(transferWords) {
 
     button.addEventListener('click', async () => {
       disableAllCollectWordButtons();
-      await addExample(wordDiv, word);
-      updateButtonStateAccordingToTransferRecognizer();
+      const spectrogram = await transferRecognizer.collectExample(
+          word, {durationMultiplier: transferDurationMultiplier});
+      const examples = transferRecognizer.getExamples(word)
+      const exampleUID = examples[examples.length - 1].uid;
+      await datasetViz.drawExample(wordDiv, word, spectrogram, exampleUID);
       enableAllCollectWordButtons();
     });
   }
@@ -277,6 +231,7 @@ enterLearnWordsButton.addEventListener('click', () => {
   learnWordsInput.disabled = true;
   enterLearnWordsButton.disabled = true;
   transferWords = learnWordsInput.value.trim().split(',').map(w => w.trim());
+  transferWords.sort();
   if (transferWords == null || transferWords.length <= 1) {
     logToStatusDisplay('ERROR: Invalid list of transfer words.');
     return;
@@ -425,7 +380,7 @@ startTransferLearnButton.addEventListener('click', async () => {
   startButton.disabled = false;
 });
 
-downloadFilesButton.addEventListener('click', () => {
+downloadAsFileButton.addEventListener('click', () => {
   const basename = getDateString();
   const artifacts = transferRecognizer.serializeExamples();
 
@@ -500,31 +455,29 @@ async function loadDatasetInTransferRecognizer(serialized) {
   }
   transferRecognizer.loadExamples(serialized);
   const exampleCounts = transferRecognizer.countExamples();
-  const transferWords = [];
-  for (const label in exampleCounts) {
-    transferWords.push(label);
+  transferWords = [];
+  const modelNumFrames = transferRecognizer.modelInputShape()[1];
+  const durationMultipliers = [];
+  for (const word in exampleCounts) {
+    transferWords.push(word);
+    const examples = transferRecognizer.getExamples(word);
+    for (const example of examples) {
+      const spectrogram = example.example.spectrogram;
+      durationMultipliers.push(Math.round(
+          spectrogram.data.length / spectrogram.frameSize / modelNumFrames));
+    }
   }
   transferWords.sort();
   learnWordsInput.value = transferWords.join(',');
 
-  // Update the UI state based on the loaded dataset.
-  const wordDivs = createWordDivs(transferWords);
-  for (const word of transferWords) {
-    const examples = transferRecognizer.getExamples(word);
-    for (const example of examples) {
-      const spectrogram = example.example.spectrogram;
-      if (transferDurationMultiplier == null) {
-        const modelNumFrames = transferRecognizer.modelInputShape()[1];
-        transferDurationMultiplier = Math.round(
-            spectrogram.data.length / spectrogram.frameSize / modelNumFrames);
-        console.log(
-            `Inferred transferDurationMultiplier from uploaded file: ` +
-            `${transferDurationMultiplier}`);
-      }
-      await addExample(wordDivs[word], word, spectrogram);
-    }
-  }
-  updateButtonStateAccordingToTransferRecognizer();
+  // Determine the transferDurationMultiplier value from the dataset.
+  transferDurationMultiplier = Math.max(...durationMultipliers);
+  console.log(
+      `Deteremined transferDurationMultiplier from uploaded ` +
+      `dataset: ${transferDurationMultiplier}`);
+
+  createWordDivs(transferWords);
+  datasetViz.redrawAll();
 }
 
 async function populateSavedTransferModelsSelect() {
