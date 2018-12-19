@@ -137,6 +137,7 @@ export class DatasetViz {
         exampleCanvas, spectrogram.data, spectrogram.frameSize,
         spectrogram.frameSize, {
           pixelsPerFrame: exampleCanvas.width / modelNumFrames,
+          maxPixelWidth: Math.round(0.4 * window.innerWidth),
           markMaxIntensityFrame:
               this.transferDurationMultiplier > 1 &&
                   word !== speechCommands.BACKGROUND_NOISE_TAG
@@ -160,7 +161,10 @@ export class DatasetViz {
 
   removeDisplayedExample_(wordDiv) {
     // Preserve the first element, which is the button.
-    while (wordDiv.children.length > 1) {
+    const baseElementCount =
+        wordDiv.getAttribute('word') === speechCommands.BACKGROUND_NOISE_TAG ?
+        3 : 1;
+    while (wordDiv.children.length > baseElementCount) {
       wordDiv.removeChild(wordDiv.children[wordDiv.children.length - 1]);
     }
   }

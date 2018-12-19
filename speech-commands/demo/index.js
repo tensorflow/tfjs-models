@@ -16,11 +16,13 @@
  */
 
 import Plotly from 'plotly.js-dist';
+import * as tf from '@tensorflow/tfjs';
 
 import * as SpeechCommands from '../src';
 
 import {hideCandidateWords, logToStatusDisplay, plotPredictions, populateCandidateWords, showCandidateWords} from './ui';
 import {DatasetViz} from './dataset-vis';
+import { someAncestor } from 'tslint';
 
 const startButton = document.getElementById('start');
 const stopButton = document.getElementById('stop');
@@ -196,10 +198,25 @@ function createWordDivs(transferWords) {
     collectButtonsDiv.appendChild(wordDiv);
     collectWordButtons[word] = button;
 
+    let durationInput;
+    if (word === BACKGROUND_NOISE_TAG) {
+      durationInput = document.createElement('input');
+      durationInput.value = '30';
+      durationInput.style['width'] = '100px';
+      wordDiv.appendChild(durationInput);
+      const timeUnitSpan = document.createElement('span');
+      timeUnitSpan.textContent = 's';
+      wordDiv.appendChild(timeUnitSpan);
+    }
+
     button.addEventListener('click', async () => {
       disableAllCollectWordButtons();
+      const durationMultiplier =
+          word === BACKGROUND_NOISE_TAG ?
+          Number.parseFloat(durationInput.value) : transferDurationMultiplier;
+      console.log(`durationMultiplier = ${durationMultiplier}`);  // DEBUG
       const spectrogram = await transferRecognizer.collectExample(
-          word, {durationMultiplier: transferDurationMultiplier});
+          word, {durationMultiplier});
       const examples = transferRecognizer.getExamples(word)
       const exampleUID = examples[examples.length - 1].uid;
       await datasetViz.drawExample(wordDiv, word, spectrogram, exampleUID);
@@ -356,6 +373,7 @@ startTransferLearnButton.addEventListener('click', async () => {
   await transferRecognizer.train({
     epochs,
     validationSplit: 0.25,
+    optimizer: tf.train.adam(1e-3),
     callback: {
       onEpochEnd: async (epoch, logs) => {
         plotLossAndAccuracy(
@@ -363,6 +381,7 @@ startTransferLearnButton.addEventListener('click', async () => {
             INITIAL_PHASE);
       }
     },
+    fineTuningOptimizer: tf.train.adam(5e-4),
     fineTuningEpochs,
     fineTuningCallback: {
       onEpochEnd: async (epoch, logs) => {
