@@ -373,7 +373,7 @@ startTransferLearnButton.addEventListener('click', async () => {
   await transferRecognizer.train({
     epochs,
     validationSplit: 0.25,
-    optimizer: tf.train.adam(1e-3),
+    // optimizer: tf.train.adam(1e-3),
     callback: {
       onEpochEnd: async (epoch, logs) => {
         plotLossAndAccuracy(
@@ -381,7 +381,7 @@ startTransferLearnButton.addEventListener('click', async () => {
             INITIAL_PHASE);
       }
     },
-    fineTuningOptimizer: tf.train.adam(5e-4),
+    // fineTuningOptimizer: tf.train.adam(5e-4),
     fineTuningEpochs,
     fineTuningCallback: {
       onEpochEnd: async (epoch, logs) => {
@@ -494,6 +494,8 @@ async function loadDatasetInTransferRecognizer(serialized) {
   console.log(
       `Deteremined transferDurationMultiplier from uploaded ` +
       `dataset: ${transferDurationMultiplier}`);
+  // TODO(cais): This ought to ignore the long noise recordings.
+  // DO NOT SUBMIT
 
   createWordDivs(transferWords);
   datasetViz.redrawAll();
