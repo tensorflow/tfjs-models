@@ -430,10 +430,36 @@ startTransferLearnButton.addEventListener('click', async () => {
 });
 
 evalModelOnDataButton.addEventListener('click', async () => {
-  const results = await transferRecognizer.evaluate({
-    windowHopRatio: 0.25
+  const evalResult = await transferRecognizer.evaluate({
+    windowHopRatio: 0.25,
+    wordProbThresholds: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
   });
-  console.log(results);  // DEBUG
+
+  // Plot the ROC curve.
+  const rocDataForPlot = {
+    x: [],
+    y: []
+  };
+  evalResult.rocCurve.forEach(item => {
+    rocDataForPlot.x.push(item.fpr);
+    rocDataForPlot.y.push(item.tpr);
+  });
+  console.log(rocDataForPlot);  // DEBUG
+  Plotly.newPlot(
+      'roc-plot',
+      [rocDataForPlot],
+      {
+        width: 360,
+        height: 360,
+        mode: 'markers',
+        marker: {
+          size: 7
+        },
+        xaxis: {title: 'False positive rate (FPR)', range: [0, 1]},
+        yaxis: {title: 'True positive rate (TPR)', range: [0, 1]},
+        font: {size: 18}
+      });
+  console.log(evalResult);  // DEBUG
 });
 
 downloadAsFileButton.addEventListener('click', () => {

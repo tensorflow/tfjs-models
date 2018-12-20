@@ -1091,7 +1091,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
         .toEqual(fakeNumFrames * fakeColumnTruncateLength * 4 * 3);
   });
 
-  it('removeExample & isDatasetEmpty', async() => {
+  it('removeExample & isDatasetEmpty', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();
@@ -1104,8 +1104,8 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     transfer.removeExample(fooExamples[0].uid);
     expect(transfer.isDatasetEmpty()).toEqual(false);
     expect(transfer.countExamples()).toEqual({'bar': 2});
-    expect(() => transfer.getExamples('foo')).toThrowError(
-        'No example of label "foo" exists in dataset');
+    expect(() => transfer.getExamples('foo'))
+        .toThrowError('No example of label "foo" exists in dataset');
     const barExamples = transfer.getExamples('bar');
     transfer.removeExample(barExamples[0].uid);
     expect(transfer.isDatasetEmpty()).toEqual(false);
@@ -1314,5 +1314,4 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
       'tfjs-speech-commands-saved-model-metadata': '{}'
     });
   });
-
 });

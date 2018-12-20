@@ -196,7 +196,7 @@ export interface TransferSpeechCommandRecognizer extends
    * TODO(cais): Doc string.
    * TODO(cais): Settle on signature. DO NOT SUBMIT.
    */
-  evaluate(config: EvaluateConfig): Promise<number[]>;
+  evaluate(config: EvaluateConfig): Promise<EvaluateResult>;
 
   /**
    * Get examples currently held by the transfer-learning recognizer.
@@ -481,6 +481,26 @@ export interface TransferLearnConfig {
   windowHopRatio?: number;
 }
 
+/**
+ * Type for a Receiver operating characteristics (ROC) Curve.
+ */
+export type ROCCurve = Array<{
+  probThreshold?: number,  /** Probability threshold */
+  fpr: number,  /** False positive rate (FP / N) */
+  tpr: number   /** True positive rate (TP / P) */
+  falsePositivesPerHour?: number  /** FPR converted to per hour rate */
+}>;
+
+/**
+ * Model evaluation result.
+ */
+export interface EvaluateResult {
+  rocCurve?: ROCCurve;
+}
+
+/**
+ * Model evaluation configuration.
+ */
 export interface EvaluateConfig {
   /**
    * Ratio between the window hop and the window width.
@@ -488,13 +508,18 @@ export interface EvaluateConfig {
    * Used during extraction of multiple spectrograms matching the underlying
    * model's input shape from a longer spectroram.
    *
-   * Defaults to 0.25.
-   *
    * For example, if the spectrogram window accepted by the underlying model
    * is 43 frames long, then the default windowHopRatio 0.25 will lead to
    * a hop of Math.round(43 * 0.25) = 11 frames.
    */
-  windowHopRatio?: number;
+  windowHopRatio: number;
+
+  /**
+   * Word probability score thresholds, used to calculate the ROC.
+   *
+   * E.g., [0, 0.2, 0.4, 0.6, 0.8, 1.0].
+   */
+  wordProbThresholds: number[];
 };
 
 /**

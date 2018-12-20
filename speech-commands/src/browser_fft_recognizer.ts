@@ -21,14 +21,15 @@ import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_ext
 import {loadMetadataJson, normalize} from './browser_fft_utils';
 import {BACKGROUND_NOISE_TAG, Dataset} from './dataset';
 import {balancedTrainValSplit} from './training_utils';
-import {EvaluateConfig, Example, RecognizeConfig, RecognizerCallback, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer, ExampleCollectionOptions} from './types';
+import {EvaluateConfig, EvaluateResult, Example, ExampleCollectionOptions, RecognizeConfig, RecognizerCallback, RecognizerParams, ROCCurve, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
 import {version} from './version';
 
 export const UNKNOWN_TAG = '_unknown_';
 
 // Key to the local-storage item that holds a map from model name to word
 // list.
-export const SAVED_MODEL_METADATA_KEY = 'tfjs-speech-commands-saved-model-metadata';
+export const SAVED_MODEL_METADATA_KEY =
+    'tfjs-speech-commands-saved-model-metadata';
 export const SAVE_PATH_PREFIX = 'indexeddb://tfjs-speech-commands-model/';
 
 let streaming = false;
@@ -660,7 +661,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       tf.util.assert(
           options.durationMultiplier >= 1,
           `Expected duration multiplier to be >= 1, ` +
-          `but got ${options.durationMultiplier}`);
+              `but got ${options.durationMultiplier}`);
       numFramesPerSpectrogram =
           Math.round(this.nonBatchInputShape[0] * options.durationMultiplier);
     } else {
@@ -806,8 +807,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
    *          ys: The target tensors (ys), one-hot encoding, a 2D tf.Tensor.
    */
   private collectTransferDataAsTensors(
-      modelName?: string, windowHopRatio?: number):
-      {xs: tf.Tensor, ys: tf.Tensor} {
+      modelName?: string,
+      windowHopRatio?: number): {xs: tf.Tensor, ys: tf.Tensor} {
     const numFrames = this.nonBatchInputShape[0];
     windowHopRatio = windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
     const hopFrames = Math.round(windowHopRatio * numFrames);
@@ -938,31 +939,40 @@ class TransferBrowserFftSpeechCommandRecognizer extends
 
   // TODO(cais): Settle on return type.
   // TODO(cais): Unit test.  DO NOT SUBMIT.
-  async evaluate(config: EvaluateConfig): Promise<number[]> {
+  async evaluate(config: EvaluateConfig): Promise<EvaluateResult> {
     tf.util.assert(
-        this.words[0] === BACKGROUND_NOISE_TAG,
-        `Cannot perform evaluation when the first tag is not ` +
-        `${BACKGROUND_NOISE_TAG}`);  // TODO(cais): Maybe relax this.
-    const NOISE_CLASS_INDEX = 0;
+        config.wordProbThresholds != null &&
+            config.wordProbThresholds.length > 0,
+        `Received null or empty wordProbThresholds`);
 
-    const probThreshods = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8];
+    // TODO(cais): Maybe relax this requirement.
+    const NOISE_CLASS_INDEX = 0;
+    tf.util.assert(
+        this.words[NOISE_CLASS_INDEX] === BACKGROUND_NOISE_TAG,
+        `Cannot perform evaluation when the first tag is not ` +
+            `${BACKGROUND_NOISE_TAG}`);
+
     // TODO(cais): Use wordProbThresholds.
-    tf.tidy(() => {
-      const {xs, ys} = this.collectTransferDataAsTensors(
-          null, config.windowHopRatio);
-      console.log(xs.shape);  // DEBUG
-      console.log(ys.shape);  // DEBUG
+    return tf.tidy(() => {
+      const rocCurve: ROCCurve = [];
+      const {xs, ys} =
+          this.collectTransferDataAsTensors(null, config.windowHopRatio);
       const indices = ys.argMax(-1).dataSync();
-      // TODO(cais): Memory clean up. DO NOT SUBMIT. Unit test.
+      // TODO(cais): DO NOT SUBMIT. Unit test.
       const probs = this.model.predict(xs) as tf.Tensor;
 
-      for (const thresh of probThreshods) {
-        const noiseProbs = probs.slice([0, 0], [probs.shape[0], 1]);
-        // TODO(cais): Smarter logic about calling something noise.
-        const isNoise = noiseProbs.greater(tf.scalar(thresh)).dataSync();
-        console.log(isNoise);  // DEBUG
+      // To calcaulte ROC, we collapse all word probabilites into a single
+      // positive class, while _background_noise_ is treated as the
+      // negative class.
+      const maxWordProbs =
+          probs.slice([0, 1], [probs.shape[0], probs.shape[1] - 1]).max(-1);
+      const total = probs.shape[0];
 
-        const total = isNoise.length;
+      // Calculate ROC curve.
+      for (const probThreshold of config.wordProbThresholds) {
+        const isWord =
+            maxWordProbs.greater(tf.scalar(probThreshold)).dataSync();
+
         let negatives = 0;
         let positives = 0;
         let falsePositives = 0;
@@ -970,23 +980,24 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         for (let i = 0; i < total; ++i) {
           if (indices[i] === NOISE_CLASS_INDEX) {
             negatives++;
-            if (!isNoise[i]) {
+            if (isWord[i]) {
               falsePositives++;
             }
           } else {
             positives++;
-            if (!isNoise[i]) {
+            if (isWord[i]) {
               truePositives++;
             }
           }
         }
         const fpr = falsePositives / negatives;
         const tpr = truePositives / positives;
-        console.log(
-            `thresh=${thresh}: total=${total}, fpr=${fpr}, tpr=${tpr}`);
+        rocCurve.push({probThreshold, fpr, tpr});
+        console.log(`ROC thresh=${probThreshold}: fpr=${fpr}, tpr=${tpr}`);
       }
+      console.log('returning', rocCurve);  // DEBUG
+      return {rocCurve};
     });
-    return [];
   }
 
   /**
@@ -1052,8 +1063,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     };
   }
 
-  async save(handlerOrURL?: string | tf.io.IOHandler):
-      Promise<tf.io.SaveResult> {
+  async save(handlerOrURL?: string|tf.io.IOHandler): Promise<tf.io.SaveResult> {
     const isCustomPath = handlerOrURL != null;
     handlerOrURL = handlerOrURL || getCanonicalSavePath(this.name);
 
@@ -1071,7 +1081,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     return this.model.save(handlerOrURL);
   }
 
-  async load(handlerOrURL?: string | tf.io.IOHandler): Promise<void> {
+  async load(handlerOrURL?: string|tf.io.IOHandler): Promise<void> {
     const isCustomPath = handlerOrURL != null;
     handlerOrURL = handlerOrURL || getCanonicalSavePath(this.name);
 
