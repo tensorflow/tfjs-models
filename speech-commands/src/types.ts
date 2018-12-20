@@ -193,6 +193,12 @@ export interface TransferSpeechCommandRecognizer extends
       Promise<tf.History|[tf.History, tf.History]>;
 
   /**
+   * TODO(cais): Doc string.
+   * TODO(cais): Settle on signature. DO NOT SUBMIT.
+   */
+  evaluate(config: EvaluateConfig): Promise<number[]>;
+
+  /**
    * Get examples currently held by the transfer-learning recognizer.
    *
    * @param label Label requested.
@@ -474,6 +480,22 @@ export interface TransferLearnConfig {
    */
   windowHopRatio?: number;
 }
+
+export interface EvaluateConfig {
+  /**
+   * Ratio between the window hop and the window width.
+   *
+   * Used during extraction of multiple spectrograms matching the underlying
+   * model's input shape from a longer spectroram.
+   *
+   * Defaults to 0.25.
+   *
+   * For example, if the spectrogram window accepted by the underlying model
+   * is 43 frames long, then the default windowHopRatio 0.25 will lead to
+   * a hop of Math.round(43 * 0.25) = 11 frames.
+   */
+  windowHopRatio?: number;
+};
 
 /**
  * Parameters for a speech-command recognizer.

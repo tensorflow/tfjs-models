@@ -57,6 +57,7 @@ const enterLearnWordsButton = document.getElementById('enter-learn-words');
 const collectButtonsDiv = document.getElementById('collect-words');
 const startTransferLearnButton =
     document.getElementById('start-transfer-learn');
+const evalModelOnDataButton = document.getElementById('eval-model-on-data');
 
 const XFER_MODEL_NAME = 'xfer-model';
 
@@ -424,6 +425,15 @@ startTransferLearnButton.addEventListener('click', async () => {
   startTransferLearnButton.textContent = 'Transfer learning complete.';
   transferModelNameInput.disabled = false;
   startButton.disabled = false;
+  evalModelOnDataButton.disabled = false;
+  // TODO(cais): The button should also be enabled after a model load.
+});
+
+evalModelOnDataButton.addEventListener('click', async () => {
+  const results = await transferRecognizer.evaluate({
+    windowHopRatio: 0.25
+  });
+  console.log(results);  // DEBUG
 });
 
 downloadAsFileButton.addEventListener('click', () => {

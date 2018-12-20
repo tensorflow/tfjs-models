@@ -21,7 +21,7 @@ import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_ext
 import {loadMetadataJson, normalize} from './browser_fft_utils';
 import {BACKGROUND_NOISE_TAG, Dataset} from './dataset';
 import {balancedTrainValSplit} from './training_utils';
-import {Example, RecognizeConfig, RecognizerCallback, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer, ExampleCollectionOptions} from './types';
+import {EvaluateConfig, Example, RecognizeConfig, RecognizerCallback, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer, ExampleCollectionOptions} from './types';
 import {version} from './version';
 
 export const UNKNOWN_TAG = '_unknown_';
@@ -934,6 +934,59 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     } finally {
       tf.dispose([xs, ys, trainXs, trainYs, valData]);
     }
+  }
+
+  // TODO(cais): Settle on return type.
+  // TODO(cais): Unit test.  DO NOT SUBMIT.
+  async evaluate(config: EvaluateConfig): Promise<number[]> {
+    tf.util.assert(
+        this.words[0] === BACKGROUND_NOISE_TAG,
+        `Cannot perform evaluation when the first tag is not ` +
+        `${BACKGROUND_NOISE_TAG}`);  // TODO(cais): Maybe relax this.
+    const NOISE_CLASS_INDEX = 0;
+
+    const probThreshods = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8];
+    // TODO(cais): Use wordProbThresholds.
+    tf.tidy(() => {
+      const {xs, ys} = this.collectTransferDataAsTensors(
+          null, config.windowHopRatio);
+      console.log(xs.shape);  // DEBUG
+      console.log(ys.shape);  // DEBUG
+      const indices = ys.argMax(-1).dataSync();
+      // TODO(cais): Memory clean up. DO NOT SUBMIT. Unit test.
+      const probs = this.model.predict(xs) as tf.Tensor;
+
+      for (const thresh of probThreshods) {
+        const noiseProbs = probs.slice([0, 0], [probs.shape[0], 1]);
+        // TODO(cais): Smarter logic about calling something noise.
+        const isNoise = noiseProbs.greater(tf.scalar(thresh)).dataSync();
+        console.log(isNoise);  // DEBUG
+
+        const total = isNoise.length;
+        let negatives = 0;
+        let positives = 0;
+        let falsePositives = 0;
+        let truePositives = 0;
+        for (let i = 0; i < total; ++i) {
+          if (indices[i] === NOISE_CLASS_INDEX) {
+            negatives++;
+            if (!isNoise[i]) {
+              falsePositives++;
+            }
+          } else {
+            positives++;
+            if (!isNoise[i]) {
+              truePositives++;
+            }
+          }
+        }
+        const fpr = falsePositives / negatives;
+        const tpr = truePositives / positives;
+        console.log(
+            `thresh=${thresh}: total=${total}, fpr=${fpr}, tpr=${tpr}`);
+      }
+    });
+    return [];
   }
 
   /**

@@ -169,17 +169,6 @@ export class DatasetViz {
     this.updateButtons_();
   }
 
-  // TODO(cais): Remove.
-  // removeDisplayedExample_(wordDiv) {
-  //   // Preserve the first element, which is the button.
-  //   const baseElementCount =
-  //       wordDiv.getAttribute('word') === speechCommands.BACKGROUND_NOISE_TAG ?
-  //       3 : 1;
-  //   while (wordDiv.children.length > baseElementCount) {
-  //     wordDiv.removeChild(wordDiv.children[wordDiv.children.length - 1]);
-  //   }
-  // }
-
   /**
    * Redraw the spectrogram and buttons for a word.
    *
