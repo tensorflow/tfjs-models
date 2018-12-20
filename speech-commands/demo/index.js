@@ -509,20 +509,21 @@ async function loadDatasetInTransferRecognizer(serialized) {
     const examples = transferRecognizer.getExamples(word);
     for (const example of examples) {
       const spectrogram = example.example.spectrogram;
-      durationMultipliers.push(Math.round(
-          spectrogram.data.length / spectrogram.frameSize / modelNumFrames));
+      if (word !== BACKGROUND_NOISE_TAG) {
+        durationMultipliers.push(Math.round(
+            spectrogram.data.length / spectrogram.frameSize / modelNumFrames));
+      }
     }
   }
   transferWords.sort();
   learnWordsInput.value = transferWords.join(',');
 
   // Determine the transferDurationMultiplier value from the dataset.
-  transferDurationMultiplier = Math.max(...durationMultipliers);
+  transferDurationMultiplier =
+      durationMultipliers.length > 0 ? Math.max(...durationMultipliers) : 1;
   console.log(
       `Deteremined transferDurationMultiplier from uploaded ` +
       `dataset: ${transferDurationMultiplier}`);
-  // TODO(cais): This ought to ignore the long noise recordings.
-  // DO NOT SUBMIT
 
   createWordDivs(transferWords);
   datasetViz.redrawAll();
