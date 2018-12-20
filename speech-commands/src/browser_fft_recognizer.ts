@@ -936,7 +936,13 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     }
   }
 
-  // TODO(cais): Settle on return type.
+  /**
+   * Perform evaluation of the model using the examples that the model
+   * has loaded.
+   *
+   * @param config Configuration object for the evaluation.
+   * @returns A Promise of the result of evaluation.
+   */
   async evaluate(config: EvaluateConfig): Promise<EvaluateResult> {
     tf.util.assert(
         config.wordProbThresholds != null &&
@@ -950,14 +956,12 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         `Cannot perform evaluation when the first tag is not ` +
             `${BACKGROUND_NOISE_TAG}`);
 
-    // TODO(cais): Use wordProbThresholds.
     return tf.tidy(() => {
       const rocCurve: ROCCurve = [];
       let auc = 0;
       const {xs, ys} =
           this.collectTransferDataAsTensors(null, config.windowHopRatio);
       const indices = ys.argMax(-1).dataSync();
-      // TODO(cais): DO NOT SUBMIT. Unit test.
       const probs = this.model.predict(xs) as tf.Tensor;
 
       // To calcaulte ROC, we collapse all word probabilites into a single
@@ -1004,7 +1008,6 @@ class TransferBrowserFftSpeechCommandRecognizer extends
               (rocCurve[i - 1].tpr + rocCurve[i].tpr) / 2;
         }
       }
-      console.log('returning', rocCurve);  // DEBUG
       return {rocCurve, auc};
     });
   }

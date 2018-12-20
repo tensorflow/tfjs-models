@@ -951,15 +951,14 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     });
   });
 
-  it('trainTransferLearningModel with validationSplit', async done => {
+  it('train and evaluate with validationSplit', async done => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();
     const transfer = base.createTransfer('xfer1');
-    for (let i = 0; i < 2; ++i) {
-      await transfer.collectExample('foo');
-      await transfer.collectExample('bar');
-    }
+    await transfer.collectExample('_background_noise_');
+    await transfer.collectExample('bar');
+    await transfer.collectExample('bar');
     const history =
         await transfer.train({epochs: 3, batchSize: 2, validationSplit: 0.5}) as
         tf.History;
@@ -972,11 +971,29 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     // transfer-learned model's name should give scores only for the
     // transfer-learned model.
     expect(base.wordLabels()).toEqual(fakeWords);
-    expect(transfer.wordLabels()).toEqual(['bar', 'foo']);
+    expect(transfer.wordLabels()).toEqual(['_background_noise_', 'bar']);
     transfer.listen(async (result: SpeechCommandRecognizerResult) => {
       expect((result.scores as Float32Array).length).toEqual(2);
       transfer.stopListening().then(done);
     });
+
+    // Test evaluation: ROC Curve and AUC.
+    const wordProbThresholds = [0, 0.25, 0.5, 0.75, 1];
+    const numTensors0 = tf.memory().numTensors;
+    const {rocCurve, auc} =
+        await transfer.evaluate({windowHopRatio: 0.25, wordProbThresholds});
+    // Assert no memory leak.
+    expect(tf.memory().numTensors).toEqual(numTensors0);
+    expect(rocCurve.length).toEqual(wordProbThresholds.length);
+    for (let i = 0; i < rocCurve.length; ++i) {
+      expect(rocCurve[i].probThreshold).toEqual(wordProbThresholds[i]);
+      expect(rocCurve[i].fpr).toBeGreaterThanOrEqual(0);
+      expect(rocCurve[i].fpr).toBeLessThanOrEqual(1);
+      expect(rocCurve[i].tpr).toBeGreaterThanOrEqual(0);
+      expect(rocCurve[i].tpr).toBeLessThanOrEqual(1);
+    }
+    expect(auc).toBeGreaterThanOrEqual(0);
+    expect(auc).toBeLessThanOrEqual(1);
   });
 
   it('trainTransferLearningModel with fine-tuning + callback', async done => {

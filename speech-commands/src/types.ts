@@ -193,8 +193,15 @@ export interface TransferSpeechCommandRecognizer extends
       Promise<tf.History|[tf.History, tf.History]>;
 
   /**
-   * TODO(cais): Doc string.
-   * TODO(cais): Settle on signature. DO NOT SUBMIT.
+   * Perform evaluation of the model using the examples that the model
+   * has loaded.
+   * 
+   * The evaluation calcuates an ROC curve by lumping the non-background-noise
+   * classes into a positive category and treating the background-noise
+   * class as the negative category.
+   *
+   * @param config Configuration object for the evaluation.
+   * @returns A Promise of the result of evaluation.
    */
   evaluate(config: EvaluateConfig): Promise<EvaluateResult>;
 
