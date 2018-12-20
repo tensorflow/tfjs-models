@@ -193,7 +193,8 @@ export function plotPredictions(
     // Highlight the top word.
     const topWord = wordsAndProbs[0][0];
     console.log(
-        `Word recognized: ${topWord} (p = ${wordsAndProbs[0][1].toFixed(6)})`);
+        `"${topWord}" (p=${wordsAndProbs[0][1].toFixed(6)}) @ ` +
+        new Date().toTimeString());
     for (const word in candidateWordSpans) {
       if (word === topWord) {
         candidateWordSpans[word].classList.add('candidate-word-active');
