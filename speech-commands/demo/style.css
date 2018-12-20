@@ -160,6 +160,9 @@ textarea {
 
 .transfer-word {
   display: flex;
-  width: 330px;
-  justify-content: space-between;
+  width: 100%;
+  justify-content: left;
+  vertical-align: middle;
+  text-align: center;
 }
+

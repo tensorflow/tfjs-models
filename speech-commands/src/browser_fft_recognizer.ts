@@ -656,9 +656,6 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       numFramesPerSpectrogram =
           Math.ceil(options.durationSec / frameDurationSec);
       // TODO(cais): Add unit test. DO NOT SUBMIT.
-      // DEBUG
-      console.log(`frameDurationSec = ${frameDurationSec}; ` +
-                  `numFramesPerSpectrogram = ${numFramesPerSpectrogram}`);
     } else if (options.durationMultiplier != null) {
       tf.util.assert(
           options.durationMultiplier >= 1,

@@ -68,7 +68,6 @@ export function hideCandidateWords() {
   candidateWordsContainer.classList.add('candidate-words-hidden');
 }
 
-
 /**
  * Show an audio spectrogram in a canvas.
  *

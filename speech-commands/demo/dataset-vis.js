@@ -19,6 +19,16 @@ import * as speechCommands from '../src';
 
 import {plotSpectrogram} from './ui';
 
+export function removeNonFixedChildrenFromWordDiv(wordDiv) {
+  for (let i = wordDiv.children.length - 1; i >=0; --i) {
+    if (wordDiv.children[i].getAttribute('isFixed') == null) {
+      wordDiv.removeChild(wordDiv.children[i]);
+    } else {
+      break;
+    }
+  }
+}
+
 /**
  * Dataset visualizer that supports
  *
@@ -90,7 +100,7 @@ export class DatasetViz {
       throw new Error('Error: UID is not provided for pre-existing example.');
     }
 
-    this.removeDisplayedExample_(wordDiv);
+    removeNonFixedChildrenFromWordDiv(wordDiv);
 
     // Create the left and right nav buttons.
     const leftButton = document.createElement('button');
@@ -159,15 +169,16 @@ export class DatasetViz {
     this.updateButtons_();
   }
 
-  removeDisplayedExample_(wordDiv) {
-    // Preserve the first element, which is the button.
-    const baseElementCount =
-        wordDiv.getAttribute('word') === speechCommands.BACKGROUND_NOISE_TAG ?
-        3 : 1;
-    while (wordDiv.children.length > baseElementCount) {
-      wordDiv.removeChild(wordDiv.children[wordDiv.children.length - 1]);
-    }
-  }
+  // TODO(cais): Remove.
+  // removeDisplayedExample_(wordDiv) {
+  //   // Preserve the first element, which is the button.
+  //   const baseElementCount =
+  //       wordDiv.getAttribute('word') === speechCommands.BACKGROUND_NOISE_TAG ?
+  //       3 : 1;
+  //   while (wordDiv.children.length > baseElementCount) {
+  //     wordDiv.removeChild(wordDiv.children[wordDiv.children.length - 1]);
+  //   }
+  // }
 
   /**
    * Redraw the spectrogram and buttons for a word.
@@ -213,7 +224,7 @@ export class DatasetViz {
       const spectrogram = example.example.spectrogram;
       await this.drawExample(wordDiv, word, spectrogram, example.uid);
     } else {
-      this.removeDisplayedExample_(wordDiv);
+      removeNonFixedChildrenFromWordDiv(wordDiv);
     }
 
     this.updateButtons_();

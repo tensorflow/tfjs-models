@@ -21,7 +21,7 @@ import * as tf from '@tensorflow/tfjs';
 import * as SpeechCommands from '../src';
 
 import {hideCandidateWords, logToStatusDisplay, plotPredictions, populateCandidateWords, showCandidateWords} from './ui';
-import {DatasetViz} from './dataset-vis';
+import {DatasetViz, removeNonFixedChildrenFromWordDiv} from './dataset-vis';
 import { someAncestor } from 'tslint';
 
 const startButton = document.getElementById('start');
@@ -184,9 +184,11 @@ function createWordDivs(transferWords) {
   const wordDivs = {};
   for (const word of transferWords) {
     const wordDiv = document.createElement('div');
+    wordDiv.classList.add('word-div');
     wordDivs[word] = wordDiv;
     wordDiv.setAttribute('word', word);
     const button = document.createElement('button');
+    button.setAttribute('isFixed', 'true');
     button.style['display'] = 'inline-block';
     button.style['vertical-align'] = 'middle';
 
@@ -201,11 +203,14 @@ function createWordDivs(transferWords) {
     let durationInput;
     if (word === BACKGROUND_NOISE_TAG) {
       durationInput = document.createElement('input');
-      durationInput.value = '20';
+      durationInput.setAttribute('isFixed', 'true');
+      durationInput.value = '10';
       durationInput.style['width'] = '100px';
       wordDiv.appendChild(durationInput);
       const timeUnitSpan = document.createElement('span');
+      timeUnitSpan.setAttribute('isFixed', 'true');
       timeUnitSpan.classList.add('settings');
+      timeUnitSpan.style['vertical-align'] = 'middle';
       timeUnitSpan.textContent = 'seconds';
       wordDiv.appendChild(timeUnitSpan);
     }
@@ -213,14 +218,32 @@ function createWordDivs(transferWords) {
     button.addEventListener('click', async () => {
       disableAllCollectWordButtons();
       const collectExampleOptions = {};
+      let durationSec;
       if (word === BACKGROUND_NOISE_TAG) {
         collectExampleOptions.durationSec =
             Number.parseFloat(durationInput.value);
+        durationSec = collectExampleOptions.durationSec;
       } else {
         collectExampleOptions.durationMultiplier = transferDurationMultiplier;
+        durationSec = 2;
       }
+
+      // Show collection progress bar.
+      removeNonFixedChildrenFromWordDiv(wordDiv);
+      const progressBar = document.createElement('progress');
+      progressBar.value = 0;
+      progressBar.style['width'] = `${Math.round(window.innerWidth * 0.25)}px`;
+      // Update progress bar in increments of 10%.
+      const intervalJob = setInterval(() => {
+        progressBar.value += 0.05;
+      }, durationSec * 1e3 / 20);
+      wordDiv.appendChild(progressBar);
+
       const spectrogram = await transferRecognizer.collectExample(
           word, collectExampleOptions);
+
+      clearInterval(intervalJob);
+      wordDiv.removeChild(progressBar);
       const examples = transferRecognizer.getExamples(word)
       const exampleUID = examples[examples.length - 1].uid;
       await datasetViz.drawExample(wordDiv, word, spectrogram, exampleUID);
