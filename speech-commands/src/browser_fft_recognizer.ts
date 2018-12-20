@@ -937,7 +937,6 @@ class TransferBrowserFftSpeechCommandRecognizer extends
   }
 
   // TODO(cais): Settle on return type.
-  // TODO(cais): Unit test.  DO NOT SUBMIT.
   async evaluate(config: EvaluateConfig): Promise<EvaluateResult> {
     tf.util.assert(
         config.wordProbThresholds != null &&
@@ -954,6 +953,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     // TODO(cais): Use wordProbThresholds.
     return tf.tidy(() => {
       const rocCurve: ROCCurve = [];
+      let auc = 0;
       const {xs, ys} =
           this.collectTransferDataAsTensors(null, config.windowHopRatio);
       const indices = ys.argMax(-1).dataSync();
@@ -968,7 +968,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       const total = probs.shape[0];
 
       // Calculate ROC curve.
-      for (const probThreshold of config.wordProbThresholds) {
+      for (let i = 0; i < config.wordProbThresholds.length; ++i) {
+        const probThreshold = config.wordProbThresholds[i];
         const isWord =
             maxWordProbs.greater(tf.scalar(probThreshold)).dataSync();
 
@@ -991,11 +992,20 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         }
         const fpr = falsePositives / negatives;
         const tpr = truePositives / positives;
+
         rocCurve.push({probThreshold, fpr, tpr});
-        console.log(`ROC thresh=${probThreshold}: fpr=${fpr}, tpr=${tpr}`);
+        console.log(
+            `ROC thresh=${probThreshold}: ` +
+            `fpr=${fpr.toFixed(4)}, tpr=${tpr.toFixed(4)}`);
+
+        if (i > 0) {
+          // Accumuulate to AUC.
+          auc += Math.abs((rocCurve[i - 1].fpr - rocCurve[i].fpr)) *
+              (rocCurve[i - 1].tpr + rocCurve[i].tpr) / 2;
+        }
       }
       console.log('returning', rocCurve);  // DEBUG
-      return {rocCurve};
+      return {rocCurve, auc};
     });
   }
 

@@ -495,7 +495,15 @@ export type ROCCurve = Array<{
  * Model evaluation result.
  */
 export interface EvaluateResult {
+  /**
+   * ROC curve.
+   */
   rocCurve?: ROCCurve;
+
+  /**
+   * Area under the (ROC) curve.
+   */
+  auc?: number;
 }
 
 /**
@@ -520,7 +528,7 @@ export interface EvaluateConfig {
    * E.g., [0, 0.2, 0.4, 0.6, 0.8, 1.0].
    */
   wordProbThresholds: number[];
-};
+}
 
 /**
  * Parameters for a speech-command recognizer.

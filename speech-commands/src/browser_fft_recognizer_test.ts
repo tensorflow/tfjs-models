@@ -600,7 +600,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     }
   });
 
-  fit('collectExample with durationSec', async () => {
+  it('collectExample with durationSec', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();
@@ -613,7 +613,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
         .toEqual(2);
   });
 
-  fit('collectExample with 0 durationSec errors', async done => {
+  it('collectExample with 0 durationSec errors', async done => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();
@@ -628,7 +628,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     }
   });
 
-  fit('collectExample: durationMultiplier&durationSec errors', async done => {
+  it('collectExample: durationMultiplier&durationSec errors', async done => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();

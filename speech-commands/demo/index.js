@@ -16,13 +16,11 @@
  */
 
 import Plotly from 'plotly.js-dist';
-import * as tf from '@tensorflow/tfjs';
 
 import * as SpeechCommands from '../src';
 
 import {hideCandidateWords, logToStatusDisplay, plotPredictions, populateCandidateWords, showCandidateWords} from './ui';
 import {DatasetViz, removeNonFixedChildrenFromWordDiv} from './dataset-vis';
-import { someAncestor } from 'tslint';
 
 const startButton = document.getElementById('start');
 const stopButton = document.getElementById('stop');
@@ -37,6 +35,9 @@ const datasetIOInnerDiv = document.getElementById('dataset-io-inner');
 const downloadAsFileButton = document.getElementById('download-dataset');
 const datasetFileInput = document.getElementById('dataset-file-input');
 const uploadFilesButton = document.getElementById('upload-dataset');
+
+const evalModelOnDatasetButton = document.getElementById('eval-model-on-dataset');
+const evalResultsSpan = document.getElementById('eval-results');
 
 const modelIOButton = document.getElementById('model-io');
 const transferModelSaveLoadInnerDiv = document.getElementById('transfer-model-save-load-inner');
@@ -57,7 +58,6 @@ const enterLearnWordsButton = document.getElementById('enter-learn-words');
 const collectButtonsDiv = document.getElementById('collect-words');
 const startTransferLearnButton =
     document.getElementById('start-transfer-learn');
-const evalModelOnDataButton = document.getElementById('eval-model-on-data');
 
 const XFER_MODEL_NAME = 'xfer-model';
 
@@ -203,11 +203,13 @@ function createWordDivs(transferWords) {
 
     let durationInput;
     if (word === BACKGROUND_NOISE_TAG) {
+      // Create noise duration input.
       durationInput = document.createElement('input');
       durationInput.setAttribute('isFixed', 'true');
       durationInput.value = '10';
       durationInput.style['width'] = '100px';
       wordDiv.appendChild(durationInput);
+      // Create time-unit span for noise duration.
       const timeUnitSpan = document.createElement('span');
       timeUnitSpan.setAttribute('isFixed', 'true');
       timeUnitSpan.classList.add('settings');
@@ -425,41 +427,8 @@ startTransferLearnButton.addEventListener('click', async () => {
   startTransferLearnButton.textContent = 'Transfer learning complete.';
   transferModelNameInput.disabled = false;
   startButton.disabled = false;
-  evalModelOnDataButton.disabled = false;
+  evalModelOnDatasetButton.disabled = false;
   // TODO(cais): The button should also be enabled after a model load.
-});
-
-evalModelOnDataButton.addEventListener('click', async () => {
-  const evalResult = await transferRecognizer.evaluate({
-    windowHopRatio: 0.25,
-    wordProbThresholds: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-  });
-
-  // Plot the ROC curve.
-  const rocDataForPlot = {
-    x: [],
-    y: []
-  };
-  evalResult.rocCurve.forEach(item => {
-    rocDataForPlot.x.push(item.fpr);
-    rocDataForPlot.y.push(item.tpr);
-  });
-  console.log(rocDataForPlot);  // DEBUG
-  Plotly.newPlot(
-      'roc-plot',
-      [rocDataForPlot],
-      {
-        width: 360,
-        height: 360,
-        mode: 'markers',
-        marker: {
-          size: 7
-        },
-        xaxis: {title: 'False positive rate (FPR)', range: [0, 1]},
-        yaxis: {title: 'True positive rate (TPR)', range: [0, 1]},
-        font: {size: 18}
-      });
-  console.log(evalResult);  // DEBUG
 });
 
 downloadAsFileButton.addEventListener('click', () => {
@@ -564,6 +533,65 @@ async function loadDatasetInTransferRecognizer(serialized) {
   createWordDivs(transferWords);
   datasetViz.redrawAll();
 }
+
+evalModelOnDatasetButton.addEventListener('click', async () => {
+  const files = datasetFileInput.files;
+  if (files == null || files.length !== 1) {
+    throw new Error('Must select exactly one file.');
+  }
+  evalModelOnDatasetButton.disabled = true;
+  const datasetFileReader = new FileReader();
+  datasetFileReader.onload = async event => {
+    try {
+      if (transferRecognizer == null) {
+        throw new Error('There is no model!');
+      }
+
+      transferRecognizer.loadExamples(event.target.result);
+      const evalResult = await transferRecognizer.evaluate({
+        windowHopRatio: 0.25,
+        wordProbThresholds:
+            [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5,
+             0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0]
+      });
+      // Plot the ROC curve.
+      const rocDataForPlot = {
+        x: [],
+        y: []
+      };
+      evalResult.rocCurve.forEach(item => {
+        rocDataForPlot.x.push(item.fpr);
+        rocDataForPlot.y.push(item.tpr);
+      });
+
+      Plotly.newPlot(
+          'roc-plot',
+          [rocDataForPlot],
+          {
+            width: 360,
+            height: 360,
+            mode: 'markers',
+            marker: {
+              size: 7
+            },
+            xaxis: {title: 'False positive rate (FPR)', range: [0, 1]},
+            yaxis: {title: 'True positive rate (TPR)', range: [0, 1]},
+            font: {size: 18}
+          });
+      evalResultsSpan.textContent = `AUC = ${evalResult.auc}`;
+    } catch (err) {
+      const originalTextContent = evalModelOnDatasetButton.textContent;
+      evalModelOnDatasetButton.textContent = err.message;
+      setTimeout(() => {
+        evalModelOnDatasetButton.textContent = originalTextContent;
+      }, 2000);
+    }
+    evalModelOnDatasetButton.disabled = false;
+  };
+  datasetFileReader.onerror = () =>
+      console.error(`Failed to binary data from file '${dataFile.name}'.`);
+  datasetFileReader.readAsArrayBuffer(files[0]);
+});
 
 async function populateSavedTransferModelsSelect() {
   const savedModelKeys = await SpeechCommands.listSavedTransferModels();
