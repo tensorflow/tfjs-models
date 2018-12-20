@@ -994,6 +994,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
             }
           }
         }
+
+        // TODO(cais): Calculate per-hour false-positive rate.
         const fpr = falsePositives / negatives;
         const tpr = truePositives / positives;
 
@@ -1003,7 +1005,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
             `fpr=${fpr.toFixed(4)}, tpr=${tpr.toFixed(4)}`);
 
         if (i > 0) {
-          // Accumuulate to AUC.
+          // Accumulate to AUC.
           auc += Math.abs((rocCurve[i - 1].fpr - rocCurve[i].fpr)) *
               (rocCurve[i - 1].tpr + rocCurve[i].tpr) / 2;
         }

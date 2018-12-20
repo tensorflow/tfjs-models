@@ -489,7 +489,7 @@ export interface TransferLearnConfig {
 }
 
 /**
- * Type for a Receiver operating characteristics (ROC) Curve.
+ * Type for a Receiver Operating Characteristics (ROC) curve.
  */
 export type ROCCurve = Array<{
   probThreshold?: number,  /** Probability threshold */

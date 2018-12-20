@@ -222,6 +222,8 @@ function createWordDivs(transferWords) {
       disableAllCollectWordButtons();
       const collectExampleOptions = {};
       let durationSec;
+      // _background_noise_ examples are special, in that user can specify
+      // the length of the recording (in seconds).
       if (word === BACKGROUND_NOISE_TAG) {
         collectExampleOptions.durationSec =
             Number.parseFloat(durationInput.value);
@@ -236,7 +238,7 @@ function createWordDivs(transferWords) {
       const progressBar = document.createElement('progress');
       progressBar.value = 0;
       progressBar.style['width'] = `${Math.round(window.innerWidth * 0.25)}px`;
-      // Update progress bar in increments of 10%.
+      // Update progress bar in increments.
       const intervalJob = setInterval(() => {
         progressBar.value += 0.05;
       }, durationSec * 1e3 / 20);
@@ -403,7 +405,6 @@ startTransferLearnButton.addEventListener('click', async () => {
   await transferRecognizer.train({
     epochs,
     validationSplit: 0.25,
-    // optimizer: tf.train.adam(1e-3),
     callback: {
       onEpochEnd: async (epoch, logs) => {
         plotLossAndAccuracy(
@@ -411,7 +412,6 @@ startTransferLearnButton.addEventListener('click', async () => {
             INITIAL_PHASE);
       }
     },
-    // fineTuningOptimizer: tf.train.adam(5e-4),
     fineTuningEpochs,
     fineTuningCallback: {
       onEpochEnd: async (epoch, logs) => {
@@ -428,7 +428,6 @@ startTransferLearnButton.addEventListener('click', async () => {
   transferModelNameInput.disabled = false;
   startButton.disabled = false;
   evalModelOnDatasetButton.disabled = false;
-  // TODO(cais): The button should also be enabled after a model load.
 });
 
 downloadAsFileButton.addEventListener('click', () => {
@@ -514,6 +513,8 @@ async function loadDatasetInTransferRecognizer(serialized) {
     const examples = transferRecognizer.getExamples(word);
     for (const example of examples) {
       const spectrogram = example.example.spectrogram;
+      // Ignore _background_noise_ examples when determining the duration
+      // multiplier of the dataset.
       if (word !== BACKGROUND_NOISE_TAG) {
         durationMultipliers.push(Math.round(
             spectrogram.data.length / spectrogram.frameSize / modelNumFrames));
@@ -547,6 +548,8 @@ evalModelOnDatasetButton.addEventListener('click', async () => {
         throw new Error('There is no model!');
       }
 
+      // Load the dataset and perform evaluation of the transfer
+      // model using the dataset.
       transferRecognizer.loadExamples(event.target.result);
       const evalResult = await transferRecognizer.evaluate({
         windowHopRatio: 0.25,
