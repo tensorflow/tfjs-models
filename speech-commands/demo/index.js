@@ -201,22 +201,26 @@ function createWordDivs(transferWords) {
     let durationInput;
     if (word === BACKGROUND_NOISE_TAG) {
       durationInput = document.createElement('input');
-      durationInput.value = '30';
+      durationInput.value = '20';
       durationInput.style['width'] = '100px';
       wordDiv.appendChild(durationInput);
       const timeUnitSpan = document.createElement('span');
-      timeUnitSpan.textContent = 's';
+      timeUnitSpan.classList.add('settings');
+      timeUnitSpan.textContent = 'seconds';
       wordDiv.appendChild(timeUnitSpan);
     }
 
     button.addEventListener('click', async () => {
       disableAllCollectWordButtons();
-      const durationMultiplier =
-          word === BACKGROUND_NOISE_TAG ?
-          Number.parseFloat(durationInput.value) : transferDurationMultiplier;
-      console.log(`durationMultiplier = ${durationMultiplier}`);  // DEBUG
+      const collectExampleOptions = {};
+      if (word === BACKGROUND_NOISE_TAG) {
+        collectExampleOptions.durationSec =
+            Number.parseFloat(durationInput.value);
+      } else {
+        collectExampleOptions.durationMultiplier = transferDurationMultiplier;
+      }
       const spectrogram = await transferRecognizer.collectExample(
-          word, {durationMultiplier});
+          word, collectExampleOptions);
       const examples = transferRecognizer.getExamples(word)
       const exampleUID = examples[examples.length - 1].uid;
       await datasetViz.drawExample(wordDiv, word, spectrogram, exampleUID);

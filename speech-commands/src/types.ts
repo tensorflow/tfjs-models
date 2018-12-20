@@ -127,6 +127,14 @@ export interface ExampleCollectionOptions {
    * Must be a number >=1.
    */
   durationMultiplier?: number;
+
+  /**
+   * Duration in seconds.
+   *
+   * Mutually exclusive with durationMultiplier.
+   * If specified, must be >0.
+   */
+  durationSec?: number;
 }
 
 /**

@@ -640,12 +640,35 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     if (options == null) {
       options = {};
     }
-    const durationMultiplier =
-        options.durationMultiplier == null ? 1 : options.durationMultiplier;
-    tf.util.assert(
-        durationMultiplier >= 1,
-        `Expected duration multiplier to be >= 1, ` +
-        `but got ${durationMultiplier}`);
+    if (options.durationMultiplier != null && options.durationSec != null) {
+      throw new Error(
+          `durationMultiplier and durationSec are mutually exclusive, ` +
+          `but are both specified.`);
+    }
+
+    let numFramesPerSpectrogram: number;
+    if (options.durationSec != null) {
+      tf.util.assert(
+          options.durationSec > 0,
+          `Expected durationSec to be > 0, but got ${options.durationSec}`);
+      const frameDurationSec =
+          this.parameters.fftSize / this.parameters.sampleRateHz;
+      numFramesPerSpectrogram =
+          Math.ceil(options.durationSec / frameDurationSec);
+      // TODO(cais): Add unit test. DO NOT SUBMIT.
+      // DEBUG
+      console.log(`frameDurationSec = ${frameDurationSec}; ` +
+                  `numFramesPerSpectrogram = ${numFramesPerSpectrogram}`);
+    } else if (options.durationMultiplier != null) {
+      tf.util.assert(
+          options.durationMultiplier >= 1,
+          `Expected duration multiplier to be >= 1, ` +
+          `but got ${options.durationMultiplier}`);
+      numFramesPerSpectrogram =
+          Math.round(this.nonBatchInputShape[0] * options.durationMultiplier);
+    } else {
+      numFramesPerSpectrogram = this.nonBatchInputShape[0];
+    }
 
     streaming = true;
     return new Promise<SpectrogramData>(resolve => {
@@ -670,8 +693,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       };
       this.audioDataExtractor = new BrowserFftFeatureExtractor({
         sampleRateHz: this.parameters.sampleRateHz,
-        numFramesPerSpectrogram:
-            Math.round(this.nonBatchInputShape[0] * durationMultiplier),
+        numFramesPerSpectrogram,
         columnTruncateLength: this.nonBatchInputShape[1],
         suppressionTimeMillis: 0,
         spectrogramCallback,
