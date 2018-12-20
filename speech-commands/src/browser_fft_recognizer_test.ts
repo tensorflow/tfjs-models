@@ -600,6 +600,50 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     }
   });
 
+  fit('collectExample with durationSec', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    const params = transfer.params();
+    // Double the length of the spectrogram.
+    const durationSec = params.spectrogramDurationMillis * 2 / 1e3;
+    const spectrogram = await transfer.collectExample('foo', {durationSec});
+    expect(spectrogram.data.length / fakeColumnTruncateLength / fakeNumFrames)
+        .toEqual(2);
+  });
+
+  fit('collectExample with 0 durationSec errors', async done => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    const durationSec = 0;
+    try {
+      await transfer.collectExample('foo', {durationSec});
+      done.fail('Failed to catch expected error');
+    } catch (err) {
+      expect(err.message).toMatch(/Expected durationSec to be > 0/);
+      done();
+    }
+  });
+
+  fit('collectExample: durationMultiplier&durationSec errors', async done => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    const durationSec = 1;
+    const durationMultiplier = 2;
+    try {
+      await transfer.collectExample('foo', {durationSec, durationMultiplier});
+      done.fail('Failed to catch expected error');
+    } catch (err) {
+      expect(err.message).toMatch(/are mutually exclusive/);
+      done();
+    }
+  });
+
   it('collectTransferLearningExample default transfer model', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
