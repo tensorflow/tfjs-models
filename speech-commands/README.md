@@ -75,7 +75,7 @@ recognizer.listen(result => {
 });
 
 // Stop the recognition in 10 seconds.
-setTimeout(() => recognizer.stopStreaming(), 10e3);
+setTimeout(() => recognizer.stopListening(), 10e3);
 ```
 
 #### Vocabularies
@@ -259,7 +259,7 @@ await transferRecognizer.listen(result => {
 }, {probabilityThreshold: 0.75});
 
 // Stop the recognition in 10 seconds.
-setTimeout(() => transferRecognizer.stopStreaming(), 10e3);
+setTimeout(() => transferRecognizer.stopListening(), 10e3);
 ```
 
 ## How to run the demo
