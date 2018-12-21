@@ -64,11 +64,15 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
         model = tf.sequential();
         model.add(tf.layers.flatten(
             {inputShape: [fakeNumFrames, fakeColumnTruncateLength, 1]}));
-        secondLastBaseDenseLayer =
-            tf.layers.dense({units: 4, activation: 'relu'});
+        secondLastBaseDenseLayer = tf.layers.dense(
+            {units: 4, activation: 'relu', kernelInitializer: 'leCunNormal'});
         model.add(secondLastBaseDenseLayer);
-        model.add(tf.layers.dense(
-            {units: numWords, useBias: false, activation: 'softmax'}));
+        model.add(tf.layers.dense({
+          units: numWords,
+          useBias: false,
+          kernelInitializer: 'leCunNormal',
+          activation: 'softmax'
+        }));
       }
       return model;
     });
@@ -951,7 +955,37 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     });
   });
 
-  it('train and evaluate with validationSplit', async done => {
+  it('train and evaluate', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    await transfer.collectExample('_background_noise_');
+    await transfer.collectExample('bar');
+    await transfer.collectExample('bar');
+    await transfer.train({epochs: 3, batchSize: 2, validationSplit: 0.5});
+
+    const wordProbThresholds = [0, 0.25, 0.5, 0.75, 1];
+    // Burn-in run for evaluate() memory tracking:
+    await transfer.evaluate({windowHopRatio: 0.25, wordProbThresholds});
+    const numTensors0 = tf.memory().numTensors;
+    const {rocCurve, auc} =
+        await transfer.evaluate({windowHopRatio: 0.25, wordProbThresholds});
+    // Assert no memory leak.
+    expect(tf.memory().numTensors).toEqual(numTensors0);
+    expect(rocCurve.length).toEqual(wordProbThresholds.length);
+    for (let i = 0; i < rocCurve.length; ++i) {
+      expect(rocCurve[i].probThreshold).toEqual(wordProbThresholds[i]);
+      expect(rocCurve[i].fpr).toBeGreaterThanOrEqual(0);
+      expect(rocCurve[i].fpr).toBeLessThanOrEqual(1);
+      expect(rocCurve[i].tpr).toBeGreaterThanOrEqual(0);
+      expect(rocCurve[i].tpr).toBeLessThanOrEqual(1);
+    }
+    expect(auc).toBeGreaterThanOrEqual(0);
+    expect(auc).toBeLessThanOrEqual(1);
+  });
+
+  it('train with validationSplit and listen', async done => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();
@@ -974,26 +1008,9 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(transfer.wordLabels()).toEqual(['_background_noise_', 'bar']);
     transfer.listen(async (result: SpeechCommandRecognizerResult) => {
       expect((result.scores as Float32Array).length).toEqual(2);
-      transfer.stopListening().then(done);
+      await transfer.stopListening();
+      done();
     });
-
-    // Test evaluation: ROC Curve and AUC.
-    const wordProbThresholds = [0, 0.25, 0.5, 0.75, 1];
-    const numTensors0 = tf.memory().numTensors;
-    const {rocCurve, auc} =
-        await transfer.evaluate({windowHopRatio: 0.25, wordProbThresholds});
-    // Assert no memory leak.
-    expect(tf.memory().numTensors).toEqual(numTensors0);
-    expect(rocCurve.length).toEqual(wordProbThresholds.length);
-    for (let i = 0; i < rocCurve.length; ++i) {
-      expect(rocCurve[i].probThreshold).toEqual(wordProbThresholds[i]);
-      expect(rocCurve[i].fpr).toBeGreaterThanOrEqual(0);
-      expect(rocCurve[i].fpr).toBeLessThanOrEqual(1);
-      expect(rocCurve[i].tpr).toBeGreaterThanOrEqual(0);
-      expect(rocCurve[i].tpr).toBeLessThanOrEqual(1);
-    }
-    expect(auc).toBeGreaterThanOrEqual(0);
-    expect(auc).toBeLessThanOrEqual(1);
   });
 
   it('trainTransferLearningModel with fine-tuning + callback', async done => {
