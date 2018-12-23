@@ -983,7 +983,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     const validationSplit =
         config.validationSplit == null ? 0.25 : config.validationSplit;
     // TODO(cais): DO NOT HARDCODE 32 and 0.25.
-    const [trainIter] = this.dataset.getSpectrogramIterators(
+    const [trainIter, valIter] = this.dataset.getSpectrogramIterators(
         {batchSize, validationSplit, numFrames, hopFrames});
 
     const epochs = config.epochs == null ? 20 : config.epochs;
@@ -1004,14 +1004,38 @@ class TransferBrowserFftSpeechCommandRecognizer extends
           break;
         }
       }
+      trainIter.reset();
       const trainLoss = trainTotalLoss / trainNumSeen;
       const trainAcc = trainTotalAcc / trainNumSeen;
+
+      // Perform validation.
+      console.log('Running val...');  // DEBUG
+      let valNumSeen = 0;
+      let valTotalLoss = 0;
+      let valTotalAcc = 0;
+      while (true) {
+        const iterOut = valIter.next();
+        const numExamples = iterOut.value[0].shape[0];
+        const evalOuts = this.model.evaluate(
+                             iterOut.value[0], iterOut.value[1]) as tf.Scalar[];
+        const loss = (await evalOuts[0].data())[0];
+        const acc = (await evalOuts[1].data())[0];
+        tf.dispose([iterOut.value, evalOuts]);
+        valNumSeen += numExamples;
+        valTotalLoss += loss * numExamples;
+        valTotalAcc += acc * numExamples;
+        if (iterOut.done) {
+          break;
+        }
+      }
+      valIter.reset();
+      const valLoss = valTotalLoss / valNumSeen;
+      const valAcc = valTotalAcc / valNumSeen;
       console.log(
           `epoch ${epoch + 1}/${epochs}: ` +
-          `loss=${trainLoss.toFixed(6)}; acc=${trainAcc.toFixed(6)}`);
-      trainIter.reset();
+          `loss=${trainLoss.toFixed(6)}; acc=${trainAcc.toFixed(6)}; ` +
+          `val_loss=${valLoss.toFixed(6)}; val_acc=${valAcc.toFixed(6)};`);
     }
-    // TODO(cais): Perform validation using evaluate.
 
     if (config.fineTuningEpochs != null && config.fineTuningEpochs > 0) {
       throw new Error(`fineTuning is not implemented yet`);

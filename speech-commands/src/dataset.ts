@@ -472,7 +472,8 @@ export class Dataset {
     // DEBUG
     console.log(
         `trainXs.length=${trainXs.length}, ` +
-        `trainYs.length=${trainYs.length}`);
+        `trainYs.length=${trainYs.length}, ` +
+        `valXs.length=${valXs.length}, valYs.length=${valYs.length}`);
 
     // TODO(cais): Maybe move out of this function.
     class SplitSpectrogramTensorIterators implements SpectrogramTensorIterator {
