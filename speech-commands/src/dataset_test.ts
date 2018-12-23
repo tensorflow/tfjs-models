@@ -22,7 +22,7 @@ import {arrayBuffer2SerializedExamples, BACKGROUND_NOISE_TAG, Dataset, DATASET_S
 import {string2ArrayBuffer} from './generic_utils';
 import {Example, RawAudioData, SpectrogramData} from './types';
 
-describe('Dataset', () => {
+fdescribe('Dataset', () => {
   const FAKE_NUM_FRAMES = 4;
   const FAKE_FRAME_SIZE = 16;
 
@@ -455,6 +455,75 @@ describe('Dataset', () => {
     expect(() => dataset.getSpectrogramsAsTensors(null, {
       numFrames: 4
     })).toThrowError(/hopFrames is required/);
+  });
+
+  it('getSpectrogramIterators complete batches', () => {
+    const dataset = new Dataset();
+    dataset.addExample(getRandomExample(
+        'foo', 4, 2, [10, 10, 20, 20, 30, 30, 40, 40]));
+    dataset.addExample(getRandomExample(
+        'foo', 4, 2, [10, 10, 20, 20, 30, 30, 40, 40]));
+    dataset.addExample(getRandomExample(
+        'foo', 4, 2, [-10, -10, -20, -20, -30, -30, -40, -40]));
+    dataset.addExample(getRandomExample(
+        'foo', 4, 2, [-10, -10, -20, -20, -30, -30, -40, -40]));
+    dataset.addExample(getRandomExample(
+        'bar', 4, 2, [1, 1, 2, 2, 3, 3, 4, 4]));
+    dataset.addExample(getRandomExample(
+        'bar', 4, 2, [1, 1, 2, 2, 3, 3, 4, 4]));
+    dataset.addExample(getRandomExample(
+        'bar', 4, 2, [-1, -1, -2, -2, -3, -3, -4, -4]));
+    dataset.addExample(getRandomExample(
+        'bar', 4, 2, [-1, -1, -2, -2, -3, -3, -4, -4]));
+
+    const [trainIter, valIter] = dataset.getSpectrogramIterators({
+      batchSize: 2,
+      validationSplit: 0.5,
+      numFrames: 4,
+      hopFrames: 1
+    });
+
+    let trainOut = trainIter.next();
+    expect(trainOut.done).toEqual(false);
+    expect(trainOut.value[0].shape).toEqual([2, 4, 2, 1]);
+    expect(trainOut.value[1].shape).toEqual([2, 2]);
+    expect(trainOut.value[0].max().dataSync()[0]).toBeGreaterThan(0);
+    trainOut = trainIter.next();
+    expect(trainOut.done).toEqual(true);
+    expect(trainOut.value[0].shape).toEqual([2, 4, 2, 1]);
+    expect(trainOut.value[1].shape).toEqual([2, 2]);
+    expect(trainOut.value[0].max().dataSync()[0]).toBeGreaterThan(0);
+    trainOut = trainIter.next();
+    expect(trainOut.done).toEqual(true);
+
+    let valOut = valIter.next();
+    expect(valOut.done).toEqual(false);
+    expect(valOut.value[0].shape).toEqual([2, 4, 2, 1]);
+    expect(valOut.value[1].shape).toEqual([2, 2]);
+    expect(valOut.value[0].max().dataSync()[0]).toBeLessThan(0);
+    valOut = valIter.next();
+    expect(valOut.done).toEqual(true);
+    expect(valOut.value[0].shape).toEqual([2, 4, 2, 1]);
+    expect(valOut.value[1].shape).toEqual([2, 2]);
+    expect(valOut.value[0].max().dataSync()[0]).toBeLessThan(0);
+    valOut = valIter.next();
+    expect(valOut.done).toEqual(true);
+
+    // Reset validation iterator.
+    valIter.reset();
+
+    valOut = valIter.next();
+    expect(valOut.done).toEqual(false);
+    expect(valOut.value[0].shape).toEqual([2, 4, 2, 1]);
+    expect(valOut.value[1].shape).toEqual([2, 2]);
+    expect(valOut.value[0].max().dataSync()[0]).toBeLessThan(0);
+    valOut = valIter.next();
+    expect(valOut.done).toEqual(true);
+    expect(valOut.value[0].shape).toEqual([2, 4, 2, 1]);
+    expect(valOut.value[1].shape).toEqual([2, 2]);
+    expect(valOut.value[0].max().dataSync()[0]).toBeLessThan(0);
+    valOut = valIter.next();
+    expect(valOut.done).toEqual(true);
   });
 });
 

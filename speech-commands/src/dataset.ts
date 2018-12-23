@@ -87,9 +87,9 @@ export interface SerializedExamples {
 export const BACKGROUND_NOISE_TAG = '_background_noise_';
 
 /**
- * Configuration for getting spectrograms as tensors.
+ * Configuration for getting spectrograms as tensors or iterators.
  */
-export interface GetSpectrogramsAsTensorsConfig {
+export interface GetSpectrogramsConfig {
   /**
    * Number of frames.
    *
@@ -118,6 +118,28 @@ export interface GetSpectrogramsAsTensorsConfig {
    * Must be provided if any such long examples exist.
    */
   hopFrames?: number;
+}
+
+/**
+ * TODO(cais): This should make use of tf.Model.fitDataset() once it
+ * supports generators.
+ */
+export interface GetSpectrogramIteratorsConfig extends GetSpectrogramsConfig {
+  /**
+   * TODO(cais): Doc string.
+   */
+  batchSize: number;
+
+  /**
+   * TODO(cais): Doc string.
+   */
+  validationSplit: number;
+}
+
+export interface SpectrogramTensorIterator {
+  next(): {done: boolean, value: [tf.Tensor4D, tf.Tensor2D]};
+
+  reset(): void;
 }
 
 /**
@@ -245,8 +267,7 @@ export class Dataset {
    *     `Dataset`, or
    *   - if the `Dataset` is currently empty.
    */
-  getSpectrogramsAsTensors(
-      label?: string, config?: GetSpectrogramsAsTensorsConfig):
+  getSpectrogramsAsTensors(label?: string, config?: GetSpectrogramsConfig):
       {xs: tf.Tensor4D, ys?: tf.Tensor2D} {
     tf.util.assert(
         this.size() > 0,
@@ -350,6 +371,169 @@ export class Dataset {
             undefined
       };
     });
+  }
+
+  /**
+   * Get a training iterator and a validation iterator.
+   * TODO(cais): Doc string.
+   * @param config
+   */
+  getSpectrogramIterators(config: GetSpectrogramIteratorsConfig):
+      [SpectrogramTensorIterator, SpectrogramTensorIterator] {
+    tf.util.assert(
+        this.size() > 0,
+        `Cannot get spectrograms as tensors because the dataset is empty`);
+    tf.util.assert(
+        config.batchSize > 0 && Number.isInteger(config.batchSize),
+        `Expected config.batchSize to be a positive integer, ` +
+            `but got ${config.batchSize}`);
+    tf.util.assert(
+        config.validationSplit > 0 && config.validationSplit < 1,
+        `Expected validationSplit to be >0 and <1, ` +
+            `but got ${config.validationSplit}`);
+
+    // TODO(cais): Deduplication.
+    const sortedUniqueNumFrames = this.getSortedUniqueNumFrames();
+    let numFrames: number;
+    let hopFrames: number;
+    if (sortedUniqueNumFrames.length === 1) {
+      numFrames = config.numFrames == null ? sortedUniqueNumFrames[0] :
+                                             config.numFrames;
+      hopFrames = config.hopFrames == null ? 1 : config.hopFrames;
+    } else {
+      numFrames = config.numFrames;
+      tf.util.assert(
+          numFrames != null && Number.isInteger(numFrames) && numFrames > 0,
+          `There are ${sortedUniqueNumFrames.length} unique lengths among ` +
+              `the ${this.size()} examples of this Dataset, hence numFrames ` +
+              `is required. But it is not provided.`);
+      tf.util.assert(
+          numFrames <= sortedUniqueNumFrames[0],
+          `numFrames (${numFrames}) exceeds the minimum numFrames ` +
+              `(${sortedUniqueNumFrames[0]}) among the examples of ` +
+              `the Dataset.`);
+
+      hopFrames = config.hopFrames;
+      tf.util.assert(
+          hopFrames != null && Number.isInteger(hopFrames) && hopFrames > 0,
+          `There are ${sortedUniqueNumFrames.length} unique lengths among ` +
+              `the ${this.size()} examples of this Dataset, hence hopFrames ` +
+              `is required. But it is not provided.`);
+    }
+
+    // Split the data into train and val subsets.
+    const trainXs: Float32Array[] = [];
+    const valXs: Float32Array[] = [];
+    const trainYs: number[] = [];
+    const valYs: number[] = [];
+    const vocab = this.getVocabulary();
+    const vocabSize = vocab.length;
+    let uniqueFrameSize: number;
+    for (let n = 0; n < vocabSize; ++n) {
+      const label = vocab[n];
+      const ids = this.label2Ids[label];
+      const numVal = Math.ceil(ids.length * config.validationSplit);
+      const numTrain = ids.length - numVal;
+      for (let i = 0; i < ids.length; ++i) {
+        const id = ids[i];
+        const spectrogram = this.examples[id].spectrogram;
+        const frameSize = spectrogram.frameSize;
+        if (uniqueFrameSize == null) {
+          uniqueFrameSize = frameSize;
+        } else {
+          tf.util.assert(
+              frameSize === uniqueFrameSize,
+              `Mismatch in frameSize ` +
+                  `(${frameSize} vs ${uniqueFrameSize})`);
+        }
+        const snippetLength = spectrogram.data.length / frameSize;
+        const focusIndex = label === BACKGROUND_NOISE_TAG ?
+            null :
+            getMaxIntensityFrameIndex(spectrogram).dataSync()[0];
+        // TODO(cais): See if we can get rid of dataSync();
+
+        const windows =
+            getValidWindows(snippetLength, focusIndex, numFrames, hopFrames);
+        for (const window of windows) {
+          const data = spectrogram.data.slice(
+              window[0] * frameSize, window[1] * frameSize);
+
+          if (i < numTrain) {
+            trainXs.push(data);
+            trainYs.push(n);
+          } else {
+            valXs.push(data);
+            valYs.push(n);
+          }
+        }
+      }
+    }
+
+    // TODO(cais): Maybe move out of this function.
+    class SplitSpectrogramTensorIterators implements SpectrogramTensorIterator {
+      private index: number;
+      private xyData: Array<[Float32Array, number]>;
+      private done: boolean;
+      constructor(
+          readonly xData: Float32Array[], readonly yData: number[],
+          readonly batchSize: number) {
+        tf.util.assert(xData.length > 0, `Empty dataset`);
+        tf.util.assert(
+            xData.length === yData.length,
+            `Mismatch in feature data and label lengths`);
+        this.xyData = [];
+        for (let i = 0; i < this.xData.length; ++i) {
+          this.xyData.push([this.xData[i], this.yData[i]]);
+        }
+        this.reset();
+      }
+
+      reset(): void {
+        this.shuffleData();
+        this.index = 0;
+        this.done = false;
+      }
+
+      private shuffleData() {
+        tf.util.shuffle(this.xyData);
+      }
+
+      next(): {done: boolean; value: [tf.Tensor4D, tf.Tensor2D]} {
+        if (this.done) {
+          return {done: true, value: null};
+        }
+
+        const begin = this.index;
+        let end = this.index + this.batchSize;
+        if (end > this.xyData.length) {
+          end = this.xyData.length;
+        }
+        const numExamples = end - begin;
+
+        const xs: number[][] = [];
+        const ys: number[] = [];
+        for (let i = begin; i < end; ++i) {
+          xs.push(Array.from(this.xData[i]));  // TODO(cais): Performance?
+          ys.push(this.yData[i]);
+        }
+
+        const xTensor: tf.Tensor4D = tf.tensor2d(xs).reshape(
+            [numExamples, numFrames, uniqueFrameSize, 1]);
+        const yTensor: tf.Tensor2D =
+            tf.oneHot(tf.tensor1d(ys, 'int32'), vocabSize);
+
+        this.index += this.batchSize;
+        console.log(this.index, this.xyData.length);  // DEBUG
+        this.done = this.index >= this.xyData.length;
+        return {done: this.done, value: [xTensor, yTensor]};
+        // TODO(cais): Unit test for no memory leak.
+      }
+    }
+
+    return [
+      new SplitSpectrogramTensorIterators(trainXs, trainYs, config.batchSize),
+      new SplitSpectrogramTensorIterators(valXs, valYs, config.batchSize)
+    ];
   }
 
   private getSortedUniqueNumFrames(): number[] {

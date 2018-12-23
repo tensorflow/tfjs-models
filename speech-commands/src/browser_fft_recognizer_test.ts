@@ -849,7 +849,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(base.isListening()).toEqual(false);
   });
 
-  it('trainTransferLearningModel default params', async done => {
+  fit('trainTransferLearningModel default params', async done => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();
