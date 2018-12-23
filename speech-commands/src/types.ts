@@ -193,9 +193,15 @@ export interface TransferSpeechCommandRecognizer extends
       Promise<tf.History|[tf.History, tf.History]>;
 
   /**
+   * TODO(cais): Fix return type. Add doc string.
+   * @param config
+   */
+  trainWithIterators(config?: TransferLearnConfig): Promise<void>;
+
+  /**
    * Perform evaluation of the model using the examples that the model
    * has loaded.
-   * 
+   *
    * The evaluation calcuates an ROC curve by lumping the non-background-noise
    * classes into a positive category and treating the background-noise
    * class as the negative category.

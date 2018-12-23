@@ -936,6 +936,88 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     }
   }
 
+  async trainWithIterators(config?: TransferLearnConfig): Promise<void> {
+    tf.util.assert(
+        this.words != null && this.words.length > 0,
+        `Cannot train transfer-learning model '${this.name}' because no ` +
+            `transfer learning example has been collected.`);
+    tf.util.assert(
+        this.words.length > 1,
+        `Cannot train transfer-learning model '${this.name}' because only ` +
+            `1 word label ('${JSON.stringify(this.words)}') ` +
+            `has been collected for transfer learning. Requires at least 2.`);
+    if (config.fineTuningEpochs != null) {
+      tf.util.assert(
+          config.fineTuningEpochs >= 0 &&
+              Number.isInteger(config.fineTuningEpochs),
+          `If specified, fineTuningEpochs must be a non-negative integer, ` +
+              `but received ${config.fineTuningEpochs}`);
+    }
+
+    if (config == null) {
+      config = {};
+    }
+
+    if (this.model == null) {
+      this.createTransferModelFromBaseModel();
+    }
+
+    // This layer needs to be frozen for the initial phase of the
+    // transfer learning. During subsequent fine-tuning (if any), it will
+    // be unfrozen.
+    this.secondLastBaseDenseLayer.trainable = false;
+
+    // Compile model for training.
+    this.model.compile({
+      loss: 'categoricalCrossentropy',
+      optimizer: config.optimizer || 'sgd',
+      metrics: ['acc']
+    });
+
+    // Prepare the data.
+    const windowHopRatio = config.windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
+    const numFrames = this.nonBatchInputShape[0];
+    const hopFrames = Math.round(windowHopRatio * numFrames);
+    // const {xs, ys} = this.collectTransferDataAsTensors(null, windowHopRatio);
+    const batchSize = config.batchSize == null ? 32 : config.batchSize;
+    const validationSplit =
+        config.validationSplit == null ? 0.25 : config.validationSplit;
+    // TODO(cais): DO NOT HARDCODE 32 and 0.25.
+    const [trainIter] = this.dataset.getSpectrogramIterators(
+        {batchSize, validationSplit, numFrames, hopFrames});
+
+    const epochs = config.epochs == null ? 20 : config.epochs;
+    for (let epoch = 0; epoch < epochs; ++epoch) {
+      let trainNumSeen = 0;
+      let trainTotalLoss = 0;
+      let trainTotalAcc = 0;
+      while (true) {
+        const iterOut = trainIter.next();
+        const numExamples = iterOut.value[0].shape[0];
+        const [loss, acc] = await this.model.trainOnBatch(
+                                iterOut.value[0], iterOut.value[1]) as number[];
+        trainNumSeen += numExamples;
+        trainTotalLoss += loss * numExamples;
+        trainTotalAcc += acc * numExamples;
+        tf.dispose(iterOut.value);
+        if (iterOut.done) {
+          break;
+        }
+      }
+      const trainLoss = trainTotalLoss / trainNumSeen;
+      const trainAcc = trainTotalAcc / trainNumSeen;
+      console.log(
+          `epoch ${epoch + 1}/${epochs}: ` +
+          `loss=${trainLoss.toFixed(6)}; acc=${trainAcc.toFixed(6)}`);
+      trainIter.reset();
+    }
+    // TODO(cais): Perform validation using evaluate.
+
+    if (config.fineTuningEpochs != null && config.fineTuningEpochs > 0) {
+      throw new Error(`fineTuning is not implemented yet`);
+    }
+  }
+
   /**
    * Perform evaluation of the model using the examples that the model
    * has loaded.

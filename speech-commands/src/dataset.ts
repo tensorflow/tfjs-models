@@ -469,6 +469,11 @@ export class Dataset {
       }
     }
 
+    // DEBUG
+    console.log(
+        `trainXs.length=${trainXs.length}, ` +
+        `trainYs.length=${trainYs.length}`);
+
     // TODO(cais): Maybe move out of this function.
     class SplitSpectrogramTensorIterators implements SpectrogramTensorIterator {
       private index: number;
@@ -523,7 +528,6 @@ export class Dataset {
             tf.oneHot(tf.tensor1d(ys, 'int32'), vocabSize);
 
         this.index += this.batchSize;
-        console.log(this.index, this.xyData.length);  // DEBUG
         this.done = this.index >= this.xyData.length;
         return {done: this.done, value: [xTensor, yTensor]};
         // TODO(cais): Unit test for no memory leak.

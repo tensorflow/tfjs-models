@@ -849,7 +849,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(base.isListening()).toEqual(false);
   });
 
-  fit('trainTransferLearningModel default params', async done => {
+  it('train default params', async done => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();
@@ -953,6 +953,22 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
       await transfer.stopListening();
       done();
     });
+  });
+
+  fit('trainWithIterators default params', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    for (let i = 0; i < 2; ++i) {
+      await transfer.collectExample('foo');
+      await transfer.collectExample('bar');
+    }
+
+    // Train transfer-learning model once to make sure model is created
+    // first, so that we can check the change in the transfer-learning model's
+    // weights after a new round of training.
+    await transfer.trainWithIterators({epochs: 2, validationSplit: 0.5});
   });
 
   it('train and evaluate', async () => {

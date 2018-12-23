@@ -402,8 +402,29 @@ startTransferLearnButton.addEventListener('click', async () => {
   }
 
   disableAllCollectWordButtons();
-  await transferRecognizer.train({
+  // await transferRecognizer.train({
+  //   epochs,
+  //   validationSplit: 0.25,
+  //   callback: {
+  //     onEpochEnd: async (epoch, logs) => {
+  //       plotLossAndAccuracy(
+  //           epoch, logs.loss, logs.acc, logs.val_loss, logs.val_acc,
+  //           INITIAL_PHASE);
+  //     }
+  //   },
+  //   fineTuningEpochs,
+  //   fineTuningCallback: {
+  //     onEpochEnd: async (epoch, logs) => {
+  //       plotLossAndAccuracy(
+  //           epoch, logs.loss, logs.acc, logs.val_loss, logs.val_acc,
+  //           FINE_TUNING_PHASE);
+  //     }
+  //   }
+  // });
+  console.log(`Calling trainWithIterators()`);  // DEBUG
+  await transferRecognizer.trainWithIterators({
     epochs,
+    batchSize: 64,
     validationSplit: 0.25,
     callback: {
       onEpochEnd: async (epoch, logs) => {
@@ -411,16 +432,9 @@ startTransferLearnButton.addEventListener('click', async () => {
             epoch, logs.loss, logs.acc, logs.val_loss, logs.val_acc,
             INITIAL_PHASE);
       }
-    },
-    fineTuningEpochs,
-    fineTuningCallback: {
-      onEpochEnd: async (epoch, logs) => {
-        plotLossAndAccuracy(
-            epoch, logs.loss, logs.acc, logs.val_loss, logs.val_acc,
-            FINE_TUNING_PHASE);
-      }
     }
   });
+
   saveTransferModelButton.disabled = false;
   transferModelNameInput.value = transferRecognizer.name;
   transferModelNameInput.disabled = true;
