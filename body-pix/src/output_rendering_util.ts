@@ -21,9 +21,23 @@ import {PartSegmentation, PersonSegmentation} from './types';
 const offScreenCanvases: {[name: string]: HTMLCanvasElement} = {};
 
 type ImageType = HTMLImageElement|HTMLVideoElement;
+type HasDimensions = {
+  width: number,
+  height: number
+};
 
 function isSafari() {
   return (/^((?!chrome|android).)*safari/i.test(navigator.userAgent));
+}
+
+function assertSameDimensions(
+    {width: widthA, height: heightA}: HasDimensions,
+    {width: widthB, height: heightB}: HasDimensions, nameA: string,
+    nameB: string) {
+  if (widthA !== widthB || heightA !== heightB) {
+    throw new Error(`error: dimensions must match. ${nameA} has dimensions ${
+        widthA}x${heightA}, ${nameB} has dimensions ${widthB}x${heightB}`);
+  }
 }
 
 function flipCanvasHorizontal(canvas: HTMLCanvasElement) {
@@ -32,7 +46,7 @@ function flipCanvasHorizontal(canvas: HTMLCanvasElement) {
   ctx.translate(-canvas.width, 0);
 }
 
-function compost(
+function drawWithCompositing(
     ctx: CanvasRenderingContext2D, image: HTMLCanvasElement|ImageType,
     compostOperation: string) {
   ctx.globalCompositeOperation = compostOperation;
@@ -51,8 +65,8 @@ function ensureOffscreenCanvasCreated(id: string): HTMLCanvasElement {
   return offScreenCanvases[id];
 }
 
-function drawBlurredImageToCanvas(
-    image: ImageType, bokehBlurAmount: number, canvas: HTMLCanvasElement) {
+function drawAndBlurImageOnCanvas(
+    image: ImageType, blurAmount: number, canvas: HTMLCanvasElement) {
   const {height, width} = image;
   const ctx = canvas.getContext('2d');
   canvas.width = width;
@@ -60,10 +74,10 @@ function drawBlurredImageToCanvas(
   ctx.clearRect(0, 0, width, height);
   ctx.save();
   if (isSafari()) {
-    cpuBlur(canvas, image, bokehBlurAmount);
+    cpuBlur(canvas, image, blurAmount);
   } else {
     // tslint:disable:no-any
-    (ctx as any).filter = `blur(${bokehBlurAmount}px)`;
+    (ctx as any).filter = `blur(${blurAmount}px)`;
     ctx.drawImage(image, 0, 0, width, height);
   }
   ctx.restore();
@@ -72,8 +86,7 @@ function drawBlurredImageToCanvas(
 /**
  * Draw an image on a canvas
  */
-export function renderImageToCanvas(
-    image: ImageData, canvas: HTMLCanvasElement) {
+function drawImageOnCanvas(image: ImageData, canvas: HTMLCanvasElement) {
   canvas.width = image.width;
   canvas.height = image.height;
   const ctx = canvas.getContext('2d');
@@ -82,15 +95,16 @@ export function renderImageToCanvas(
 }
 
 export function toMaskImageData(
-    mask: Uint8Array, height: number, width: number, invertMask: boolean,
+    segmentation: PersonSegmentation, invertMask: boolean,
     darknessLevel = 0.7): ImageData {
+  const {width, height, data} = segmentation;
   const bytes = new Uint8ClampedArray(width * height * 4);
 
   const multiplier = Math.round(255 * darknessLevel);
 
   for (let i = 0; i < height * width; ++i) {
     // invert mask.  Invert the segmentatino mask.
-    const shouldMask = invertMask ? 1 - mask[i] : mask[i];
+    const shouldMask = invertMask ? 1 - data[i] : data[i];
     // alpha will determine how dark the mask should be.
     const alpha = shouldMask * multiplier;
 
@@ -104,32 +118,27 @@ export function toMaskImageData(
   return new ImageData(bytes, width, height);
 }
 
-export function drawBodyMaskOnCanvas(
-    image: ImageType, segmentation: PersonSegmentation,
-    canvas: HTMLCanvasElement, flipHorizontal = true) {
-  const {height, width} = segmentation;
-
-  const invertMask = true;
-
-  const maskImage =
-      toMaskImageData(segmentation.data, height, width, invertMask);
+export function drawImageWithMaskOnCanvas(
+    canvas: HTMLCanvasElement, image: ImageType, mask: ImageData,
+    flipHorizontal = true) {
+  assertSameDimensions(image, mask, 'image', 'mask');
 
   const maskCanvas = ensureOffscreenCanvasCreated('mask');
+  drawImageOnCanvas(mask, maskCanvas);
 
-  renderImageToCanvas(maskImage, maskCanvas);
-
-  canvas.width = width;
-  canvas.height = height;
+  canvas.width = mask.width;
+  canvas.height = mask.height;
 
   const ctx = canvas.getContext('2d');
   ctx.save();
   if (flipHorizontal) {
     flipCanvasHorizontal(canvas);
   }
+
   ctx.drawImage(image, 0, 0);
   // 'source-atop' - 'The new shape is only drawn where it overlaps the
   // existing canvas content.'
-  compost(ctx, maskCanvas, 'source-atop');
+  drawWithCompositing(ctx, maskCanvas, 'source-over');
   ctx.restore();
 }
 
@@ -137,25 +146,26 @@ export function drawBokehEffectOnCanvas(
     canvas: HTMLCanvasElement, image: ImageType,
     segmentation: PersonSegmentation, bokehBlurAmount = 3,
     flipHorizontal = true) {
-  const {height, width} = segmentation;
+  assertSameDimensions(image, segmentation, 'image', 'segmentation');
+
   const blurredCanvas = ensureOffscreenCanvasCreated('blur');
 
-  drawBlurredImageToCanvas(image, bokehBlurAmount, blurredCanvas);
+  drawAndBlurImageOnCanvas(image, bokehBlurAmount, blurredCanvas);
 
   const invertMask = false;
   const darknessLevel = 1.;
 
-  const invertedMaskImage = toMaskImageData(
-      segmentation.data, height, width, invertMask, darknessLevel);
+  const backgroundMaskImage =
+      toMaskImageData(segmentation, invertMask, darknessLevel);
 
-  const maskWhatsNotThePersonCanvas = ensureOffscreenCanvasCreated('mask');
-  renderImageToCanvas(invertedMaskImage, maskWhatsNotThePersonCanvas);
+  const backgroundMask = ensureOffscreenCanvasCreated('mask');
+  drawImageOnCanvas(backgroundMaskImage, backgroundMask);
 
   const blurredCtx = blurredCanvas.getContext('2d');
   blurredCtx.save();
   // "destination-out" - "The existing content is kept where it doesn't
   // overlap the new shape." crop person using the mask from the blurred image
-  compost(blurredCtx, maskWhatsNotThePersonCanvas, 'destination-out');
+  drawWithCompositing(blurredCtx, backgroundMask, 'destination-out');
   blurredCtx.restore();
 
   const ctx = canvas.getContext('2d');
@@ -168,23 +178,24 @@ export function drawBokehEffectOnCanvas(
   // "destination-in" - "The existing canvas content is kept where both the
   // new shape and existing canvas content overlap. Everything else is made
   // transparent."
-  // crop what's not the person using the mask from the blurred image
-  compost(ctx, maskWhatsNotThePersonCanvas, 'destination-in');
+  // crop what's not the person using the mask from the original image
+  drawWithCompositing(ctx, backgroundMask, 'destination-in');
   // "source-over" - "This is the default setting and draws new shapes on top
-  // of the existing canvas content." draw the blurred image without the
-  // person on top of the image with the person
-  compost(ctx, blurredCanvas, 'source-over');
+  // of the existing canvas content." draw the blurred background on top
+  // of that.
+  drawWithCompositing(ctx, blurredCanvas, 'source-over');
   ctx.restore();
 }
 
-function toColoredPartImage(
-    partSegmentation: Int32Array, partColors: Array<[number, number, number]>,
-    width: number, height: number, alpha: number): ImageData {
+export function toColoredPartImageData(
+    partSegmentation: PartSegmentation,
+    partColors: Array<[number, number, number]>, alpha: number): ImageData {
+  const {width, height, data} = partSegmentation;
   const bytes = new Uint8ClampedArray(width * height * 4);
 
   for (let i = 0; i < height * width; ++i) {
     // invert mask.  Invert the segmentatino mask.
-    const partId = Math.round(partSegmentation[i]);
+    const partId = Math.round(data[i]);
     const j = i * 4;
 
     if (partId === -1) {
@@ -208,29 +219,56 @@ function toColoredPartImage(
   return new ImageData(bytes, width, height);
 }
 
-export function drawBodySegmentsOnCanvas(
-    canvas: HTMLCanvasElement, input: ImageType,
-    partSegmentation: PartSegmentation,
-    partColors: Array<[number, number, number]>, coloredPartImageAlpha = 0.7,
-    flipHorizontal = true) {
-  const {height, width} = partSegmentation;
-  canvas.width = width;
-  canvas.height = height;
-  // tslint:disable-next-line:no-debugger
-  const coloredPartImage: ImageData = toColoredPartImage(
-      partSegmentation.data, partColors, width, height, coloredPartImageAlpha);
+export function drawPersonWithBackgroundRemoved(
+    canvas: HTMLCanvasElement, image: ImageType,
+    segmentation: PersonSegmentation, flipHorizontal = true) {
+  assertSameDimensions(image, segmentation, 'image', 'segmentation');
 
-  const partImageCanvas = ensureOffscreenCanvasCreated('partImage');
+  canvas.width = image.width;
+  canvas.height = image.height;
 
-  renderImageToCanvas(coloredPartImage, partImageCanvas);
+  const invertMask = false;
+  const darknessLevel = 1.0;
+  const personMaskImageData =
+      toMaskImageData(segmentation, invertMask, darknessLevel);
+  const personMask = ensureOffscreenCanvasCreated('person-mask');
+  drawImageOnCanvas(personMaskImageData, personMask);
 
   const ctx = canvas.getContext('2d');
   ctx.save();
+  canvas.width = segmentation.width;
+  canvas.height = segmentation.height;
   if (flipHorizontal) {
     flipCanvasHorizontal(canvas);
   }
-  ctx.drawImage(input, 0, 0);
-  // "source-over: "draws new shapes on top of the existing canvas content."
-  compost(ctx, partImageCanvas, 'source-over');
+  // draw the original image on the final canvas
+  ctx.drawImage(image, 0, 0);
+  // "destination-in" - "The existing canvas content is kept where both the
+  // new shape and existing canvas content overlap. Everything else is made
+  // transparent."
+  // crop what's not the person using the mask from the original image
+  drawWithCompositing(ctx, personMask, 'destination-in');
+  ctx.restore();
+}
+
+export function drawPersonWithBackgroundReplaced(
+    canvas: HTMLCanvasElement, image: ImageType,
+    segmentation: PersonSegmentation, newBackground: ImageType,
+    flipHorizontal = true) {
+  assertSameDimensions(image, segmentation, 'image', 'segmentation');
+  assertSameDimensions(image, newBackground, 'image', 'newBackground');
+
+  canvas.width = image.width;
+  canvas.height = image.height;
+
+  drawPersonWithBackgroundRemoved(canvas, image, segmentation, flipHorizontal);
+
+  const ctx = canvas.getContext('2d');
+  ctx.save();
+  // "source-out" - The new shape is drawn where it doesn't overlap the existing
+  // canvas content."
+  // draw the background where it doesnt overlap the cropped person
+  drawWithCompositing(ctx, newBackground, 'source-out');
+
   ctx.restore();
 }

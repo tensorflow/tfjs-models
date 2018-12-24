@@ -79,15 +79,12 @@ const guiState = {
   estimate: 'segmentation',
   input:
       {mobileNetArchitecture: isMobile() ? '0.50' : '0.75', outputStride: 16},
-  singlePoseDetection: {
-    minPoseConfidence: 0.1,
-    minPartConfidence: 0.5,
+  segmentation: {
     segmentationThreshold: 0.5,
-    showSkeleton: true,
-    showPoints: true,
+    effect: 'mask',
+    darknessLevel: 0.7,
+    bokehBlurAmount: 3
   },
-  segmentation:
-      {segmentationThreshold: 0.5, effect: 'mask', bokehBlurAmount: 3},
   partMap: {colorScale: 'warm'},
   net: null,
 };
@@ -136,29 +133,37 @@ function setupGui(cameras, net) {
 
   input.open();
 
-  // Pose confidence: the overall confidence in the estimation of a person's
-  // pose (i.e. a person detected in a frame)
-  // Min part confidence: the confidence that a particular estimated keypoint
-  // position is accurate (i.e. the elbow's position)
-  let single = gui.addFolder('Single Pose Detection');
-  single.add(guiState.singlePoseDetection, 'minPoseConfidence', 0.0, 1.0);
-  single.add(guiState.singlePoseDetection, 'minPartConfidence', 0.0, 1.0);
-  single.add(guiState.singlePoseDetection, 'showSkeleton');
-  single.add(guiState.singlePoseDetection, 'showPoints');
-  single.close();
-
   let segmentation = gui.addFolder('Segmentation');
   segmentation.add(guiState.segmentation, 'segmentationThreshold', 0.0, 1.0);
-  segmentation.add(guiState.segmentation, 'effect', ['mask', 'bokeh']);
-  segmentation
-      .add(
-          guiState.segmentation,
-          'bokehBlurAmount',
-          )
-      .min(1)
-      .max(20)
-      .step(1);
+  const segmentationEffectController =
+      segmentation.add(guiState.segmentation, 'effect', ['mask', 'bokeh']);
   segmentation.open();
+
+  let darknessLevel =
+      segmentation.add(guiState.segmentation, 'darknessLevel', 0.0, 1.0);
+
+  let bokehBlurAmount;
+  segmentationEffectController.onChange(function(effectType) {
+    if (effectType === 'mask') {
+      if (bokehBlurAmount) {
+        bokehBlurAmount.remove();
+      }
+      darknessLevel =
+          segmentation.add(guiState.segmentation, 'darknessLevel', 0.0, 1.0);
+    } else if (effectType === 'bokeh') {
+      if (darknessLevel) {
+        darknessLevel.remove();
+      }
+      bokehBlurAmount = segmentation
+                            .add(
+                                guiState.segmentation,
+                                'bokehBlurAmount',
+                                )
+                            .min(1)
+                            .max(20)
+                            .step(1);
+    }
+  });
 
   let partMap = gui.addFolder('Part Map');
   partMap.add(guiState.partMap, 'colorScale', Object.keys(partColorScales));
@@ -168,17 +173,11 @@ function setupGui(cameras, net) {
   });
 
   estimateController.onChange(function(estimationType) {
-    if (estimationType === 'single-pose') {
-      single.open();
-      segmentation.close();
-      partMap.close();
-    } else if (estimationType === 'segmentation') {
-      single.close();
+    if (estimationType === 'segmentation') {
       segmentation.open();
       partMap.close();
     } else {
-      single.close();
-      segmentation.open();
+      segmentation.close();
       partMap.open();
     }
   });
@@ -206,34 +205,39 @@ function segmentBodyInRealTime(video, net) {
       // Important to purge variables and free up GPU memory
       guiState.net.dispose();
 
-      // Load the PoseNet model weights for either the 0.50, 0.75, 1.00, or 1.01
-      // version
+      // Load the PoseNet model weights for either the 0.50, 0.75, 1.00,
+      // or 1.01 version
       guiState.net = await bodyPix.load(+guiState.changeToArchitecture);
 
       guiState.changeToArchitecture = null;
     }
 
     // Begin monitoring code for frames per second
-    // stats.begin();
+    stats.begin();
 
-    // Scale an image down to a certain factor. Too large of an image will slow
-    // down the GPU
+    // Scale an image down to a certain factor. Too large of an image will
+    // slow down the GPU
     const outputStride = +guiState.input.outputStride;
 
     switch (guiState.estimate) {
       case 'segmentation':
-        const bodySegmentation = await guiState.net.estimatePersonSegmentation(
-            video, flipHorizontal, outputStride,
-            guiState.segmentation.segmentationThreshold);
+        const personSegmentation =
+            await guiState.net.estimatePersonSegmentation(
+                video, flipHorizontal, outputStride,
+                guiState.segmentation.segmentationThreshold);
 
         switch (guiState.segmentation.effect) {
           case 'mask':
-            bodyPix.drawBodyMaskOnCanvas(video, bodySegmentation, canvas);
+            const invert = true;
+            const mask = bodyPix.toMaskImageData(
+                personSegmentation, invert,
+                guiState.segmentation.darknessLevel);
+            bodyPix.drawImageWithMaskOnCanvas(canvas, video, mask);
 
             break;
           case 'bokeh':
             bodyPix.drawBokehEffectOnCanvas(
-                canvas, video, bodySegmentation,
+                canvas, video, personSegmentation,
                 +guiState.segmentation.bokehBlurAmount);
             break;
         }
@@ -243,9 +247,12 @@ function segmentBodyInRealTime(video, net) {
             video, flipHorizontal, outputStride,
             guiState.segmentation.segmentationThreshold);
 
-        bodyPix.drawBodySegmentsOnCanvas(
-            canvas, video, partSegmentation,
-            partColorScales[guiState.partMap.colorScale]);
+        const coloredPartImageAlpha = 0.7;
+        const coloredPartImageData = bodyPix.toColoredPartImageData(
+            partSegmentation, partColorScales[guiState.partMap.colorScale],
+            coloredPartImageAlpha);
+
+        bodyPix.drawImageWithMaskOnCanvas(canvas, video, coloredPartImageData);
 
         break;
       default:
@@ -253,7 +260,7 @@ function segmentBodyInRealTime(video, net) {
     }
 
     // End monitoring code for frames per second
-    // stats.end();
+    stats.end();
 
     requestAnimationFrame(bodySegmentationFrame);
   }
@@ -284,9 +291,8 @@ export async function bindPage() {
     throw e;
   }
 
-  // setupFPS();
+  setupFPS();
   setupGui([], net);
-  // setupFPS();
   segmentBodyInRealTime(video, net);
 }
 
