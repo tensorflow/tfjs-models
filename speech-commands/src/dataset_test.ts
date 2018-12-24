@@ -525,6 +525,36 @@ describe('Dataset', () => {
     valOut = valIter.next();
     expect(valOut.done).toEqual(true);
   });
+
+  fit('getSpectrogramIterators valSplit=0', () => {
+    const dataset = new Dataset();
+    dataset.addExample(
+        getRandomExample('foo', 4, 2, [10, 10, 20, 20, 30, 30, 40, 40]));
+    dataset.addExample(
+        getRandomExample('foo', 4, 2, [10, 10, 20, 20, 30, 30, 40, 40]));
+    dataset.addExample(getRandomExample(
+        'foo', 4, 2, [-10, -10, -20, -20, -30, -30, -40, -40]));
+    dataset.addExample(getRandomExample(
+        'foo', 4, 2, [-10, -10, -20, -20, -30, -30, -40, -40]));
+    dataset.addExample(getRandomExample('bar', 4, 2, [1, 1, 2, 2, 3, 3, 4, 4]));
+    dataset.addExample(getRandomExample('bar', 4, 2, [1, 1, 2, 2, 3, 3, 4, 4]));
+    dataset.addExample(
+        getRandomExample('bar', 4, 2, [-1, -1, -2, -2, -3, -3, -4, -4]));
+    dataset.addExample(
+        getRandomExample('bar', 4, 2, [-1, -1, -2, -2, -3, -3, -4, -4]));
+
+    const [trainIter, valIter] = dataset.getSpectrogramIterators(
+        {batchSize: 5, validationSplit: 0, numFrames: 4});
+    expect(valIter).toBeNull();
+    let out = trainIter.next();
+    expect(out.done).toEqual(false);
+    expect(out.value[0].shape).toEqual([5, 4, 2, 1]);
+    expect(out.value[1].shape).toEqual([5, 2]);
+    out = trainIter.next();
+    expect(out.done).toEqual(true);
+    expect(out.value[0].shape).toEqual([3, 4, 2, 1]);
+    expect(out.value[1].shape).toEqual([3, 2]);
+  });
 });
 
 describe('Dataset serialization', () => {

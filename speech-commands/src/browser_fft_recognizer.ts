@@ -978,7 +978,6 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     const windowHopRatio = config.windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
     const numFrames = this.nonBatchInputShape[0];
     const hopFrames = Math.round(windowHopRatio * numFrames);
-    // const {xs, ys} = this.collectTransferDataAsTensors(null, windowHopRatio);
     const batchSize = config.batchSize == null ? 32 : config.batchSize;
     const validationSplit =
         config.validationSplit == null ? 0.25 : config.validationSplit;
@@ -1072,6 +1071,102 @@ class TransferBrowserFftSpeechCommandRecognizer extends
           this.collectTransferDataAsTensors(null, config.windowHopRatio);
       const indices = ys.argMax(-1).dataSync();
       const probs = this.model.predict(xs) as tf.Tensor;
+
+      // To calcaulte ROC, we collapse all word probabilites into a single
+      // positive class, while _background_noise_ is treated as the
+      // negative class.
+      const maxWordProbs =
+          probs.slice([0, 1], [probs.shape[0], probs.shape[1] - 1]).max(-1);
+      const total = probs.shape[0];
+
+      // Calculate ROC curve.
+      for (let i = 0; i < config.wordProbThresholds.length; ++i) {
+        const probThreshold = config.wordProbThresholds[i];
+        const isWord =
+            maxWordProbs.greater(tf.scalar(probThreshold)).dataSync();
+
+        let negatives = 0;
+        let positives = 0;
+        let falsePositives = 0;
+        let truePositives = 0;
+        for (let i = 0; i < total; ++i) {
+          if (indices[i] === NOISE_CLASS_INDEX) {
+            negatives++;
+            if (isWord[i]) {
+              falsePositives++;
+            }
+          } else {
+            positives++;
+            if (isWord[i]) {
+              truePositives++;
+            }
+          }
+        }
+
+        // TODO(cais): Calculate per-hour false-positive rate.
+        const fpr = falsePositives / negatives;
+        const tpr = truePositives / positives;
+
+        rocCurve.push({probThreshold, fpr, tpr});
+        console.log(
+            `ROC thresh=${probThreshold}: ` +
+            `fpr=${fpr.toFixed(4)}, tpr=${tpr.toFixed(4)}`);
+
+        if (i > 0) {
+          // Accumulate to AUC.
+          auc += Math.abs((rocCurve[i - 1].fpr - rocCurve[i].fpr)) *
+              (rocCurve[i - 1].tpr + rocCurve[i].tpr) / 2;
+        }
+      }
+      return {rocCurve, auc};
+    });
+  }
+
+  /**
+   * TODO(cais): Use evaluateDataset() with generator when available.
+   * @param config
+   */
+  async evaluateWithIterators(config: EvaluateConfig): Promise<EvaluateResult> {
+    tf.util.assert(
+        config.wordProbThresholds != null &&
+            config.wordProbThresholds.length > 0,
+        `Received null or empty wordProbThresholds`);
+
+    // TODO(cais): Maybe relax this requirement.
+    const NOISE_CLASS_INDEX = 0;
+    tf.util.assert(
+        this.words[NOISE_CLASS_INDEX] === BACKGROUND_NOISE_TAG,
+        `Cannot perform evaluation when the first tag is not ` +
+            `${BACKGROUND_NOISE_TAG}`);
+
+    return tf.tidy(() => {
+      const rocCurve: ROCCurve = [];
+      let auc = 0;
+      const windowHopRatio = config.windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
+      const numFrames = this.nonBatchInputShape[0];
+      const hopFrames = Math.round(windowHopRatio * numFrames);
+      const batchSize = 128;  // TODO(cais): Do not hardcode.
+      const validationSplit = 0;
+      const [iterator] = this.dataset.getSpectrogramIterators(
+          {batchSize, validationSplit, numFrames, hopFrames});
+
+      const probTensors: tf.Tensor[] = [];
+      const trueOneHotTensors: tf.Tensor[] = [];
+      while (true) {
+        const iterOut = iterator.next();
+        const batchProbs = this.model.predict(iterOut.value[0]) as tf.Tensor;
+        console.log(`New eval batch: numExamples = ${batchProbs.shape[0]}`);
+        probTensors.push(batchProbs);
+        trueOneHotTensors.push(iterOut.value[1]);
+        if (iterOut.done) {
+          break;
+        }
+      }
+      const probs = tf.concat(probTensors, 0);
+      const ys = tf.concat(trueOneHotTensors, 0);
+      console.log('probs.shape =', probs.shape);  // DEBUG
+      console.log('ys.shape =', ys.shape);        // DEBUG
+      const indices = ys.argMax(-1).dataSync();
 
       // To calcaulte ROC, we collapse all word probabilites into a single
       // positive class, while _background_noise_ is treated as the

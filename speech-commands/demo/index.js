@@ -565,7 +565,8 @@ evalModelOnDatasetButton.addEventListener('click', async () => {
       // Load the dataset and perform evaluation of the transfer
       // model using the dataset.
       transferRecognizer.loadExamples(event.target.result);
-      const evalResult = await transferRecognizer.evaluate({
+      console.log('Calling evaluateWithIterators()');  // DEBUG
+      const evalResult = await transferRecognizer.evaluateWithIterators({
         windowHopRatio: 0.25,
         wordProbThresholds:
             [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5,
@@ -597,6 +598,7 @@ evalModelOnDatasetButton.addEventListener('click', async () => {
           });
       evalResultsSpan.textContent = `AUC = ${evalResult.auc}`;
     } catch (err) {
+      console.error(err.message);
       const originalTextContent = evalModelOnDatasetButton.textContent;
       evalModelOnDatasetButton.textContent = err.message;
       setTimeout(() => {

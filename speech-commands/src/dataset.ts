@@ -388,8 +388,8 @@ export class Dataset {
         `Expected config.batchSize to be a positive integer, ` +
             `but got ${config.batchSize}`);
     tf.util.assert(
-        config.validationSplit > 0 && config.validationSplit < 1,
-        `Expected validationSplit to be >0 and <1, ` +
+        config.validationSplit >= 0 && config.validationSplit < 1,
+        `Expected validationSplit to be >=0 and <1, ` +
             `but got ${config.validationSplit}`);
 
     // TODO(cais): Deduplication.
@@ -432,7 +432,9 @@ export class Dataset {
     for (let n = 0; n < vocabSize; ++n) {
       const label = vocab[n];
       const ids = this.label2Ids[label];
-      const numVal = Math.ceil(ids.length * config.validationSplit);
+      const numVal = config.validationSplit === 0 ?
+          0 :
+          Math.ceil(ids.length * config.validationSplit);
       const numTrain = ids.length - numVal;
       for (let i = 0; i < ids.length; ++i) {
         const id = ids[i];
@@ -536,10 +538,12 @@ export class Dataset {
       }
     }
 
-    return [
-      new SplitSpectrogramTensorIterators(trainXs, trainYs, config.batchSize),
-      new SplitSpectrogramTensorIterators(valXs, valYs, config.batchSize)
-    ];
+    const trainIterator =
+        new SplitSpectrogramTensorIterators(trainXs, trainYs, config.batchSize);
+    const valIterator = config.validationSplit === 0 ?
+        null :
+        new SplitSpectrogramTensorIterators(valXs, valYs, config.batchSize);
+    return [trainIterator, valIterator];
   }
 
   private getSortedUniqueNumFrames(): number[] {

@@ -212,6 +212,12 @@ export interface TransferSpeechCommandRecognizer extends
   evaluate(config: EvaluateConfig): Promise<EvaluateResult>;
 
   /**
+   * TODO(cais): Use evaluateDataset once generator is working.
+   * @param config
+   */
+  evaluateWithIterators(config: EvaluateConfig): Promise<EvaluateResult>;
+
+  /**
    * Get examples currently held by the transfer-learning recognizer.
    *
    * @param label Label requested.
