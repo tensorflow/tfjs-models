@@ -523,10 +523,11 @@ export class Dataset {
           ys.push(this.yData[i]);
         }
 
-        const xTensor: tf.Tensor4D = tf.tensor2d(xs).reshape(
-            [numExamples, numFrames, uniqueFrameSize, 1]);
+        const xTensor: tf.Tensor4D = tf.tidy(
+            () => tf.tensor2d(xs).reshape(
+                [numExamples, numFrames, uniqueFrameSize, 1]));
         const yTensor: tf.Tensor2D =
-            tf.oneHot(tf.tensor1d(ys, 'int32'), vocabSize);
+            tf.tidy(() => tf.oneHot(tf.tensor1d(ys, 'int32'), vocabSize));
 
         this.index += this.batchSize;
         this.done = this.index >= this.xyData.length;

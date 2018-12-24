@@ -988,6 +988,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
 
     const epochs = config.epochs == null ? 20 : config.epochs;
     for (let epoch = 0; epoch < epochs; ++epoch) {
+      const t0 = tf.util.now();
       let trainNumSeen = 0;
       let trainTotalLoss = 0;
       let trainTotalAcc = 0;
@@ -1007,9 +1008,10 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       trainIter.reset();
       const trainLoss = trainTotalLoss / trainNumSeen;
       const trainAcc = trainTotalAcc / trainNumSeen;
+      const t1 = tf.util.now();
+      const trainExamplesPerSec = trainNumSeen / ((t1 - t0) / 1e3);
 
       // Perform validation.
-      console.log('Running val...');  // DEBUG
       let valNumSeen = 0;
       let valTotalLoss = 0;
       let valTotalAcc = 0;
@@ -1034,6 +1036,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       console.log(
           `epoch ${epoch + 1}/${epochs}: ` +
           `loss=${trainLoss.toFixed(6)}; acc=${trainAcc.toFixed(6)}; ` +
+          `(train: ${trainExamplesPerSec.toFixed(1)} examples/s) ` +
           `val_loss=${valLoss.toFixed(6)}; val_acc=${valAcc.toFixed(6)};`);
     }
 

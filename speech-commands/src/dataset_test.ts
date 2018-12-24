@@ -457,42 +457,42 @@ describe('Dataset', () => {
     })).toThrowError(/hopFrames is required/);
   });
 
-  it('getSpectrogramIterators complete batches', () => {
+  fit('getSpectrogramIterators complete batches', () => {
     const dataset = new Dataset();
-    dataset.addExample(getRandomExample(
-        'foo', 4, 2, [10, 10, 20, 20, 30, 30, 40, 40]));
-    dataset.addExample(getRandomExample(
-        'foo', 4, 2, [10, 10, 20, 20, 30, 30, 40, 40]));
-    dataset.addExample(getRandomExample(
-        'foo', 4, 2, [-10, -10, -20, -20, -30, -30, -40, -40]));
+    dataset.addExample(
+        getRandomExample('foo', 4, 2, [10, 10, 20, 20, 30, 30, 40, 40]));
+    dataset.addExample(
+        getRandomExample('foo', 4, 2, [10, 10, 20, 20, 30, 30, 40, 40]));
     dataset.addExample(getRandomExample(
         'foo', 4, 2, [-10, -10, -20, -20, -30, -30, -40, -40]));
     dataset.addExample(getRandomExample(
-        'bar', 4, 2, [1, 1, 2, 2, 3, 3, 4, 4]));
-    dataset.addExample(getRandomExample(
-        'bar', 4, 2, [1, 1, 2, 2, 3, 3, 4, 4]));
-    dataset.addExample(getRandomExample(
-        'bar', 4, 2, [-1, -1, -2, -2, -3, -3, -4, -4]));
-    dataset.addExample(getRandomExample(
-        'bar', 4, 2, [-1, -1, -2, -2, -3, -3, -4, -4]));
+        'foo', 4, 2, [-10, -10, -20, -20, -30, -30, -40, -40]));
+    dataset.addExample(getRandomExample('bar', 4, 2, [1, 1, 2, 2, 3, 3, 4, 4]));
+    dataset.addExample(getRandomExample('bar', 4, 2, [1, 1, 2, 2, 3, 3, 4, 4]));
+    dataset.addExample(
+        getRandomExample('bar', 4, 2, [-1, -1, -2, -2, -3, -3, -4, -4]));
+    dataset.addExample(
+        getRandomExample('bar', 4, 2, [-1, -1, -2, -2, -3, -3, -4, -4]));
 
-    const [trainIter, valIter] = dataset.getSpectrogramIterators({
-      batchSize: 2,
-      validationSplit: 0.5,
-      numFrames: 4,
-      hopFrames: 1
-    });
+    const [trainIter, valIter] = dataset.getSpectrogramIterators(
+        {batchSize: 2, validationSplit: 0.5, numFrames: 4, hopFrames: 1});
 
     let trainOut = trainIter.next();
     expect(trainOut.done).toEqual(false);
     expect(trainOut.value[0].shape).toEqual([2, 4, 2, 1]);
     expect(trainOut.value[1].shape).toEqual([2, 2]);
     expect(trainOut.value[0].max().dataSync()[0]).toBeGreaterThan(0);
+
+    const numTensors0 = tf.memory().numTensors;
     trainOut = trainIter.next();
+    const numTensors1 = tf.memory().numTensors;
+    // Assert no memory leak. (trainOut contains two newly created tensors.)
+    expect(numTensors1).toEqual(numTensors0 + 2);
     expect(trainOut.done).toEqual(true);
     expect(trainOut.value[0].shape).toEqual([2, 4, 2, 1]);
     expect(trainOut.value[1].shape).toEqual([2, 2]);
     expect(trainOut.value[0].max().dataSync()[0]).toBeGreaterThan(0);
+
     trainOut = trainIter.next();
     expect(trainOut.done).toEqual(true);
 

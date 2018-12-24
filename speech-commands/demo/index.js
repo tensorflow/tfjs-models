@@ -424,7 +424,7 @@ startTransferLearnButton.addEventListener('click', async () => {
   console.log(`Calling trainWithIterators()`);  // DEBUG
   await transferRecognizer.trainWithIterators({
     epochs,
-    batchSize: 64,
+    batchSize: 128,
     validationSplit: 0.25,
     callback: {
       onEpochEnd: async (epoch, logs) => {
