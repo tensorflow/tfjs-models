@@ -86,8 +86,8 @@ const guiState = {
   segmentation: {
     segmentationThreshold: 0.5,
     effect: 'mask',
-    darknessLevel: 0.7,
-    bokehBlurAmount: 3,
+    opacity: 0.7,
+    backgroundBlurAmount: 3,
     // on safari, blurring happens on the cpu, thus reducing performance, so
     // default to turning this off for safari
     edgeBlurAmount: isSafari() ? 0 : 3
@@ -155,7 +155,7 @@ function setupGui(cameras, net) {
         bokehBlurAmount.remove();
       }
       darknessLevel =
-          segmentation.add(guiState.segmentation, 'darknessLevel', 0.0, 1.0);
+          segmentation.add(guiState.segmentation, 'opacity', 0.0, 1.0);
     } else if (effectType === 'bokeh') {
       if (darknessLevel) {
         darknessLevel.remove();
@@ -163,7 +163,7 @@ function setupGui(cameras, net) {
       bokehBlurAmount = segmentation
                             .add(
                                 guiState.segmentation,
-                                'bokehBlurAmount',
+                                'backgroundBlurAmount',
                                 )
                             .min(1)
                             .max(20)
@@ -231,6 +231,8 @@ function segmentBodyInRealTime(video, net) {
 
     // canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
 
+    const flipHorizontal = true;
+
     switch (guiState.estimate) {
       case 'segmentation':
         const personSegmentation =
@@ -241,17 +243,19 @@ function segmentBodyInRealTime(video, net) {
         switch (guiState.segmentation.effect) {
           case 'mask':
             const invert = true;
-            const mask = bodyPix.toMaskImageData(personSegmentation, invert);
+            const backgroundDarkeningMask =
+                bodyPix.toMaskImageData(personSegmentation, invert);
             bodyPix.drawImageWithMask(
-                canvas, video, mask, guiState.segmentation.darknessLevel, true,
-                guiState.segmentation.edgeBlurAmount);
+                canvas, video, backgroundDarkeningMask,
+                guiState.segmentation.opacity,
+                guiState.segmentation.edgeBlurAmount, flipHorizontal);
 
             break;
           case 'bokeh':
             bodyPix.drawBokehEffect(
                 canvas, video, personSegmentation,
-                +guiState.segmentation.bokehBlurAmount, true,
-                guiState.segmentation.edgeBlurAmount);
+                +guiState.segmentation.backgroundBlurAmount,
+                guiState.segmentation.edgeBlurAmount, flipHorizontal);
             break;
         }
         break;
@@ -265,8 +269,8 @@ function segmentBodyInRealTime(video, net) {
             partSegmentation, partColorScales[guiState.partMap.colorScale]);
 
         bodyPix.drawImageWithMask(
-            canvas, video, coloredPartImageData, coloredPartImageOpacity, true,
-            0);
+            canvas, video, coloredPartImageData, coloredPartImageOpacity, 0,
+            flipHorizontal);
 
         break;
       default:

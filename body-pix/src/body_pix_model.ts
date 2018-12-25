@@ -160,7 +160,7 @@ export class BodyPix {
    * to be considered part of the person.  Affects the clipping of the colored
    * part image.
    *
-   * @return A object containing a width, height, and an array with a part id
+   * @return An object containing a width, height, and an array with a part id
    * from 0-24 for the pixels that are part of a corresponding body part, and -1
    * otherwise. The array size corresponds to the number of pixels in the image.
    * The width and height correspond to the dimensions of the image the array is

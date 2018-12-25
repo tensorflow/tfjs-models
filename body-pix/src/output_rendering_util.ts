@@ -234,13 +234,14 @@ const CANVAS_NAMES = {
  * to false.
  *
  * @param maskOpacity The opacity when drawing the mask on top of the image.
+ * Defaults to 0.7. Should be a float between 0 and 1.
  *
- * @param edgeBlurAmount How much the edges of the mask should be blurred by.
- * Defaults to 0.
+ * @param edgeBlurAmount How many pixels to blur on the edge between the person
+ * and the background by.  Defaults to 0. Should be an integer between 0 and 20.
  */
 export function drawImageWithMask(
     canvas: HTMLCanvasElement, image: ImageType, maskImage: ImageData,
-    maskOpacity = 0.7, flipHorizontal = true, edgeBlurAmount = 0) {
+    maskOpacity = 0.7, edgeBlurAmount = 0, flipHorizontal = true) {
   assertSameDimensions(image, maskImage, 'image', 'mask');
 
   const mask = renderImageDataToOffScreenCanvas(maskImage, CANVAS_NAMES.mask);
@@ -279,24 +280,33 @@ function createBackgroundMask(
 }
 
 /**
- * Draws an image onto a canvas with the background, where there is not a
- * person, blurred.
+ * Given a personSegmentation and in image, applies a gaussian blur to the
+ * background.
  *
- * @param canvas
- * @param image
- * @param segmentation
- * @param bokehBlurAmount
- * @param flipHorizontal
- * @param edgeBlurAmount
+ * @param canvas The canvas to draw the bokeh effect image onto.
+ *
+ * @param image The image to blur the background of.
+ *
+ * @param segmentation A personSegmentation object, a binary array with 1 for
+ * the pixels that are part of the person, and 0 otherwise.  Must have the same
+ * dimensions as the image.
+ *
+ * @param backgroundBlurAmount How many pixels in the background blend into each
+ * other.  Defaults to 3. Should be an integer between 1 and 20.
+ *
+ * @param edgeBlurAmount How many pixels to blur on the edge between the person
+ * and the background by.  Defaults to 3. Should be an integer between 0 and 20.
+ *
+ * @param flipHorizontal If the output should be flipped horizontally.
  */
 export function drawBokehEffect(
     canvas: HTMLCanvasElement, image: ImageType,
-    segmentation: PersonSegmentation, bokehBlurAmount = 3,
-    flipHorizontal = true, edgeBlurAmount = 3) {
+    segmentation: PersonSegmentation, backgroundBlurAmount = 3,
+    edgeBlurAmount = 3, flipHorizontal = true) {
   assertSameDimensions(image, segmentation, 'image', 'segmentation');
 
   const blurredImage = drawAndBlurImageOnOffScreenCanvas(
-      image, bokehBlurAmount, CANVAS_NAMES.blurred);
+      image, backgroundBlurAmount, CANVAS_NAMES.blurred);
 
   const backgroundMask = createBackgroundMask(segmentation, edgeBlurAmount);
 
