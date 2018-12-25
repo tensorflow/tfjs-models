@@ -237,7 +237,7 @@ which would produce the output:
 
 ### Output Utility Functions
 
-BodyPix contains utility functions to help with drawing and composting the outputs. **These API methods are experimental and subject to change.**
+BodyPix contains utility functions to help with drawing and compositing using the outputs. **These API methods are experimental and subject to change.**
 
 #### `toMaskImageData`
 
