@@ -84,7 +84,9 @@ const guiState = {
     effect: 'mask',
     darknessLevel: 0.7,
     bokehBlurAmount: 3,
-    edgeBlurAmount: 3
+    // on safari, blurring happens on the cpu, thus reducing performance, so
+    // default to turning this off for safari
+    edgeBlurAmount: isSafari() ? 0 : 3
   },
   partMap: {colorScale: 'warm'},
   net: null,
