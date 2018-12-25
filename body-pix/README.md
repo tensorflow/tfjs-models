@@ -135,7 +135,7 @@ which would produce the output:
   height: 480,
   data: Uint8Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, …]
 }
-// an array of 307200 values is returned, one for each pixel of the 640x480 image that was passed to the function.
+// the array contains 307200 values, one for each pixel of the 640x480 image that was passed to the function.
 ```
 
 An example of applying a [bokeh effect](https://www.nikonusa.com/en/learn-and-explore/a/tips-and-techniques/bokeh-for-beginners.html) can be seen by running the [demo](https://storage.googleapis.com/tfjs-models/demos/body-pix/camera.html):
@@ -232,7 +232,138 @@ which would produce the output:
   height: 480,
   data: Int32Array(307200) [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 3, 3, 3, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 1, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 15, 15, 15, 15, 16, 16, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 23, 23, 23, 22, 22, -1, -1, -1, -1,  …]
 }
-// an array of 307200 values is returned, one for each pixel of the 640x480 image that was passed to the function.
+// the array contains 307200 values, one for each pixel of the 640x480 image that was passed to the function.
+```
+
+### Output Utility Functions
+
+BodyPix contains utility functions to help with drawing and composting the outputs. **These API methods are experimental and subject to change.**
+
+#### `toMaskImageData`
+
+Given the output from estimating person segmentation, generates a black image with opacity and transparency at each pixel determined by the corresponding binary segmentation value at the pixel from the output.  In other words, pixels where there is a person will be opaque and where there is not a person will be transparent, and visa-versa when 'invertMask' is set to true. This can be used as a mask to crop a person or the background when compositing.
+
+##### Inputs
+
+* **segmentation** The output from estimagePersonSegmentation.
+* **invertMask** If the mask should be inverted. Defaults to false.  When set to true, pixels where there is a person are transparent and where there is no person become opaque.
+
+##### Returns
+
+An [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) with the same width and height of the personSegmentation, with opacity and transparency at each pixel determined by the corresponding binary segmentation value at the pixel from the output.
+
+#### `toColoredPartImageData`
+
+Given the output from estimating part segmentation, and an array of colors indexed by part id, generates an image with the corresponding color for each part at each pixel, and black pixels where there is no part.
+
+##### Inputs
+
+* **partSegmentation** The output from estimatePartSegmentation.
+
+* **partColors** A multi-dimensional array of rgb colors indexed by part id.  Must have 24 colors, one for every part.
+
+##### Returns
+
+An [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) with the same width and height of the partSegmentation, with the corresponding color for each part at each pixel, and black pixels where there is no part.
+
+##### Example usage
+
+```javascript
+const imageElement = document.getElementById('cat');
+
+const net = await bodyPix.load();
+const partSegmentation = await net.estimatePartSegmentation(imageElement);
+
+const rainbow = [
+  [110, 64, 170], [143, 61, 178], [178, 60, 178], [210, 62, 167],
+  [238, 67, 149], [255, 78, 125], [255, 94, 99],  [255, 115, 75],
+  [255, 140, 56], [239, 167, 47], [217, 194, 49], [194, 219, 64],
+  [175, 240, 91], [135, 245, 87], [96, 247, 96],  [64, 243, 115],
+  [40, 234, 141], [28, 219, 169], [26, 199, 194], [33, 176, 213],
+  [47, 150, 224], [65, 125, 224], [84, 101, 214], [99, 81, 195]
+];
+
+const invert = true;
+
+// the colored part image is an rgb image with a corresponding color from thee rainbow colors for each part at each pixel, and black pixels where there is no part.
+const coloredPartImage = bodyPix.toColoredPartImageData(partSegmentation, rainbow);
+const opacity = 0.7;
+const flipHorizontal = true;
+const edgeBlurAmount = 0;
+const canvas = document.getElementById('canvas');
+// draw the colored part image on top of the original image onto a canvas.  The colored part image will be drawn semi-transparent, with an opacity of 0.7, allowing for the original image to be visible under.
+bodyPix.drawImageWithMask(
+    canvas, video, coloredPartImageData, opacity, edgeBlurAmount,
+    flipHorizontal);
+```
+
+#### `drawImageWithMask`
+
+Draws an image with a mask on top of it onto a canvas, essentially applying the mask to the image.
+
+##### Inputs
+
+* **canvas** The canvas to be drawn onto.
+* **image** The original image to apply the mask to.
+* **maskImage** An ImageData containing the mask.  Ideally this should be generated by `toMaskImageData` or `toColoredPartImageData.`
+* **flipHorizontal** If the result should be flipped horizontally.  Defaults to false.
+* **maskOpacity** The opacity when drawing the mask on top of the image. Defaults to 0.7. Should be a float between 0 and 1.
+* **edgeBlurAmount** How many pixels to blur on the edge between the person and the background by.  Defaults to 0. Should be an integer between 0 and 20.
+
+##### Example usage
+
+```javascript
+const imageElement = document.getElementById('cat');
+
+const net = await bodyPix.load();
+const segmentation = await net.estimatePersonSegmentation(imageElement);
+
+const invert = true;
+// Convert the personSegmentation into a mask to darken the background.
+// Since invert is set to true, there will be 1s where the background is and 0s where the person is.
+const backgroundDarkeningMask = bodyPix.toMaskImageData(personSegmentation, invert);
+
+const opacity = 0.7;
+const edgeBlurAmount = 3;
+const flipHorizontal = true;
+
+const canvas = document.getElementById('canvas');
+// draw the mask onto the image on a canvas.  With opacity set to 0.7 and edgeBlurAmount set to 3, this will darken the background and blur the darkened background edge.
+bodyPix.drawImageWithMask(
+    canvas, imageElement, backgroundDarkeningMask, opacity, edgeBlurAmount, flipHorizontal);
+```
+
+#### `drawBokehEffect`
+
+Uses the personSegmentation output to apply a [bokeh effect](https://en.wikipedia.org/wiki/Bokeh) to an image by applying a gaussian blur to the background.
+
+##### Inputs
+
+* **canvas** The canvas to draw the bokeh effect image onto.
+* **image** The image to blur the background of.
+* **segmentation** The output from estimatePersonSegmentation.
+* **backgroundBlurAmount** How many pixels in the background blend into each
+other.  Defaults to 3. Should be an integer between 1 and 20.
+* **edgeBlurAmount** How many pixels to blur on the edge between the person
+and the background by.  Defaults to 3. Should be an integer between 0 and 20.
+* **flipHorizontal** If the output should be flipped horizontally.
+
+##### Example Usage
+
+```javascript
+const imageElement = document.getElementById('cat');
+
+const net = await bodyPix.load();
+const personSegmentation = await net.estimatePersonSegmentation(imageElement);
+
+const backgroundBlurAmount = 3;
+const edgeBlurAmount = 3;
+const flipHorizontal = true;
+
+const canvas = document.getElementById('canvas');
+// draw the image with the background blurred onto the canvas. The edge between the person and blurred background is blurred by 3 pixels.
+bodyPix.drawBokehEffect(
+  canvas, video, personSegmentation, backgroundBlurAmount, edgeBlurAmount, flipHorizontal);
 ```
 
 ## Developing the Demos

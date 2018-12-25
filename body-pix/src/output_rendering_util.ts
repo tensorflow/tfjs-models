@@ -48,8 +48,8 @@ function flipCanvasHorizontal(canvas: HTMLCanvasElement) {
 
 function drawWithCompositing(
     ctx: CanvasRenderingContext2D, image: HTMLCanvasElement|ImageType,
-    compostOperation: string) {
-  ctx.globalCompositeOperation = compostOperation;
+    compositOperation: string) {
+  ctx.globalCompositeOperation = compositOperation;
   ctx.drawImage(image, 0, 0);
 }
 
@@ -128,7 +128,7 @@ function renderImageDataToOffScreenCanvas(
  * binary segmentation value at the pixel from the output.  In other words,
  * pixels where there is a person will be opaque and where there is not a person
  * will be transparent, and visa-versa when 'invertMask' is set to true. This
- * can be used as a mask to crop a person or the background when composting.
+ * can be used as a mask to crop a person or the background when compositing.
  *
  * @param segmentation The output from estimagePersonSegmentation; an object
  * containing a width, height, and a binary array with 1 for the pixels that are
@@ -287,9 +287,9 @@ function createBackgroundMask(
  *
  * @param image The image to blur the background of.
  *
- * @param segmentation A personSegmentation object, a binary array with 1 for
- * the pixels that are part of the person, and 0 otherwise.  Must have the same
- * dimensions as the image.
+ * @param personSegmentation A personSegmentation object, a binary array with 1
+ * for the pixels that are part of the person, and 0 otherwise.  Must have the
+ * same dimensions as the image.
  *
  * @param backgroundBlurAmount How many pixels in the background blend into each
  * other.  Defaults to 3. Should be an integer between 1 and 20.
@@ -301,14 +301,15 @@ function createBackgroundMask(
  */
 export function drawBokehEffect(
     canvas: HTMLCanvasElement, image: ImageType,
-    segmentation: PersonSegmentation, backgroundBlurAmount = 3,
+    personSegmentation: PersonSegmentation, backgroundBlurAmount = 3,
     edgeBlurAmount = 3, flipHorizontal = true) {
-  assertSameDimensions(image, segmentation, 'image', 'segmentation');
+  assertSameDimensions(image, personSegmentation, 'image', 'segmentation');
 
   const blurredImage = drawAndBlurImageOnOffScreenCanvas(
       image, backgroundBlurAmount, CANVAS_NAMES.blurred);
 
-  const backgroundMask = createBackgroundMask(segmentation, edgeBlurAmount);
+  const backgroundMask =
+      createBackgroundMask(personSegmentation, edgeBlurAmount);
 
   const ctx = canvas.getContext('2d');
   ctx.save();
