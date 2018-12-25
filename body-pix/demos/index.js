@@ -258,10 +258,10 @@ function segmentBodyInRealTime(video, net) {
             video, flipHorizontal, outputStride,
             guiState.segmentation.segmentationThreshold);
 
-        const coloredPartImageAlpha = 0.7;
+        const coloredPartImageOpacity = 0.7;
         const coloredPartImageData = bodyPix.toColoredPartImageData(
             partSegmentation, partColorScales[guiState.partMap.colorScale],
-            coloredPartImageAlpha);
+            coloredPartImageOpacity);
 
         bodyPix.drawImageWithMask(canvas, video, coloredPartImageData, true, 0);
 
