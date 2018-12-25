@@ -138,25 +138,22 @@ function renderImageDataToOffScreenCanvas(
  * set to true, pixels where there is a person are transparent and where there
  * is no person become opaque.
  *
- * @param opacity The opacity of the pixels that are opaque.  Defaults to 1.
- *
  * @returns An ImageData with the same width and height of the
  * personSegmentation, with opacity and transparency at each pixel determined by
  * the corresponding binary segmentation value at the pixel from the output.
  */
 export function toMaskImageData(
-    segmentation: PersonSegmentation, invertMask = false,
-    opacity = 1): ImageData {
+    segmentation: PersonSegmentation, invertMask = false): ImageData {
   const {width, height, data} = segmentation;
   const bytes = new Uint8ClampedArray(width * height * 4);
 
-  const multiplier = Math.round(255 * opacity);
+  // const multiplier = Math.round(255 * opacity);
 
   for (let i = 0; i < height * width; ++i) {
     // invert mask.  Invert the segmentation mask.
     const shouldMask = invertMask ? 1 - data[i] : data[i];
     // alpha will determine how dark the mask should be.
-    const alpha = shouldMask * multiplier;
+    const alpha = shouldMask * 255;
 
     const j = i * 4;
     bytes[j + 0] = 0;
@@ -180,15 +177,13 @@ export function toMaskImageData(
  * @param partColors A multi-dimensional array of rgb colors indexed by
  * part id.  Must have 24 colors, one for every part.
  *
- * @param opacity The opacity of the resulting image.
- *
  * @returns An ImageData with the same width and height of the partSegmentation,
  * with the corresponding color for each part at each pixel, and black pixels
  * where there is no part.
  */
 export function toColoredPartImageData(
     partSegmentation: PartSegmentation,
-    partColors: Array<[number, number, number]>, opacity: number): ImageData {
+    partColors: Array<[number, number, number]>): ImageData {
   const {width, height, data} = partSegmentation;
   const bytes = new Uint8ClampedArray(width * height * 4);
 
@@ -201,7 +196,7 @@ export function toColoredPartImageData(
       bytes[j + 0] = 0;
       bytes[j + 1] = 0;
       bytes[j + 2] = 0;
-      bytes[j + 3] = Math.round(255 * opacity);
+      bytes[j + 3] = 255;
     } else {
       const color = partColors[partId];
 
@@ -211,7 +206,7 @@ export function toColoredPartImageData(
       bytes[j + 0] = color[0];
       bytes[j + 1] = color[1];
       bytes[j + 2] = color[2];
-      bytes[j + 3] = Math.round(255 * opacity);
+      bytes[j + 3] = 255;
     }
   }
 
@@ -238,20 +233,22 @@ const CANVAS_NAMES = {
  * @param flipHorizontal If the result should be flipped horizontally.  Defaults
  * to false.
  *
+ * @param maskOpacity The opacity when drawing the mask on top of the image.
+ *
  * @param edgeBlurAmount How much the edges of the mask should be blurred by.
  * Defaults to 0.
  */
 export function drawImageWithMask(
     canvas: HTMLCanvasElement, image: ImageType, maskImage: ImageData,
-    flipHorizontal = true, edgeBlurAmount = 0) {
+    maskOpacity = 0.7, flipHorizontal = true, edgeBlurAmount = 0) {
   assertSameDimensions(image, maskImage, 'image', 'mask');
 
   const mask = renderImageDataToOffScreenCanvas(maskImage, CANVAS_NAMES.mask);
-  const blurredMask = drawAndBlurImageOnOffScreenCanvas(
+  const edgeBlurredMask = drawAndBlurImageOnOffScreenCanvas(
       mask, edgeBlurAmount, CANVAS_NAMES.blurredMask);
 
-  canvas.width = blurredMask.width;
-  canvas.height = blurredMask.height;
+  canvas.width = edgeBlurredMask.width;
+  canvas.height = edgeBlurredMask.height;
 
   const ctx = canvas.getContext('2d');
   ctx.save();
@@ -260,7 +257,8 @@ export function drawImageWithMask(
   }
 
   ctx.drawImage(image, 0, 0);
-  ctx.drawImage(blurredMask, 0, 0);
+  ctx.globalAlpha = maskOpacity;
+  ctx.drawImage(edgeBlurredMask, 0, 0);
   ctx.restore();
 }
 
@@ -268,9 +266,7 @@ function createBackgroundMask(
     segmentation: PersonSegmentation,
     edgeBlurAmount: number): HTMLCanvasElement {
   const invertMask = false;
-  const darknessLevel = 1.;
-  const backgroundMaskImage =
-      toMaskImageData(segmentation, invertMask, darknessLevel);
+  const backgroundMaskImage = toMaskImageData(segmentation, invertMask);
 
   const backgroundMask =
       renderImageDataToOffScreenCanvas(backgroundMaskImage, CANVAS_NAMES.mask);

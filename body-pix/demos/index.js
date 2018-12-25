@@ -36,6 +36,10 @@ function isMobile() {
   return isAndroid() || isiOS();
 }
 
+function isSafari() {
+  return (/^((?!chrome|android).)*safari/i.test(navigator.userAgent));
+}
+
 /**
  * Loads a the camera to be used in the demo
  *
@@ -237,11 +241,9 @@ function segmentBodyInRealTime(video, net) {
         switch (guiState.segmentation.effect) {
           case 'mask':
             const invert = true;
-            const mask = bodyPix.toMaskImageData(
-                personSegmentation, invert,
-                guiState.segmentation.darknessLevel);
+            const mask = bodyPix.toMaskImageData(personSegmentation, invert);
             bodyPix.drawImageWithMask(
-                canvas, video, mask, true,
+                canvas, video, mask, guiState.segmentation.darknessLevel, true,
                 guiState.segmentation.edgeBlurAmount);
 
             break;
@@ -260,10 +262,11 @@ function segmentBodyInRealTime(video, net) {
 
         const coloredPartImageOpacity = 0.7;
         const coloredPartImageData = bodyPix.toColoredPartImageData(
-            partSegmentation, partColorScales[guiState.partMap.colorScale],
-            coloredPartImageOpacity);
+            partSegmentation, partColorScales[guiState.partMap.colorScale]);
 
-        bodyPix.drawImageWithMask(canvas, video, coloredPartImageData, true, 0);
+        bodyPix.drawImageWithMask(
+            canvas, video, coloredPartImageData, coloredPartImageOpacity, true,
+            0);
 
         break;
       default:
