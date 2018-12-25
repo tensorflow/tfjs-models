@@ -83,7 +83,8 @@ const guiState = {
     segmentationThreshold: 0.5,
     effect: 'mask',
     darknessLevel: 0.7,
-    bokehBlurAmount: 3
+    bokehBlurAmount: 3,
+    edgeBlurAmount: 3
   },
   partMap: {colorScale: 'warm'},
   net: null,
@@ -110,39 +111,38 @@ function setupGui(cameras, net) {
 
   const gui = new dat.GUI({width: 300});
 
-  // The single-pose algorithm is faster and simpler but requires only one
-  // person to be in the frame or results will be innaccurate. Multi-pose works
-  // for more than 1 person
-  const estimateController =
-      gui.add(guiState, 'estimate', ['segmentation', 'partmap']);
-
-  // The input parameters have the most effect on accuracy and speed of the
-  // network
-  let input = gui.addFolder('Input');
   // Architecture: there are a few PoseNet models varying in size and
   // accuracy. 1.00 is the largest, but will be the slowest. 0.50 is the
   // fastest, but least accurate.
-  const architectureController = input.add(
+  const architectureController = gui.add(
       guiState.input, 'mobileNetArchitecture',
       ['1.00', '0.75', '0.50', '0.25']);
   // Output stride:  Internally, this parameter affects the height and width of
   // the layers in the neural network. The lower the value of the output stride
   // the higher the accuracy but slower the speed, the higher the value the
   // faster the speed but lower the accuracy.
-  input.add(guiState.input, 'outputStride', [8, 16, 32]);
+  gui.add(guiState.input, 'outputStride', [8, 16, 32]);
 
-  input.open();
+  // The single-pose algorithm is faster and simpler but requires only one
+  // person to be in the frame or results will be innaccurate. Multi-pose works
+  // for more than 1 person
+  const estimateController =
+      gui.add(guiState, 'estimate', ['segmentation', 'partmap']);
+
 
   let segmentation = gui.addFolder('Segmentation');
   segmentation.add(guiState.segmentation, 'segmentationThreshold', 0.0, 1.0);
   const segmentationEffectController =
       segmentation.add(guiState.segmentation, 'effect', ['mask', 'bokeh']);
+  segmentation.add(guiState.segmentation, 'edgeBlurAmount')
+      .min(0)
+      .max(20)
+      .step(1);
   segmentation.open();
 
-  let darknessLevel =
-      segmentation.add(guiState.segmentation, 'darknessLevel', 0.0, 1.0);
-
+  let darknessLevel;
   let bokehBlurAmount;
+
   segmentationEffectController.onChange(function(effectType) {
     if (effectType === 'mask') {
       if (bokehBlurAmount) {
@@ -164,6 +164,10 @@ function setupGui(cameras, net) {
                             .step(1);
     }
   });
+
+  // set the mask value in the segmentation effect so that the options are
+  // shown.
+  segmentationEffectController.setValue(guiState.segmentation.effect);
 
   let partMap = gui.addFolder('Part Map');
   partMap.add(guiState.partMap, 'colorScale', Object.keys(partColorScales));
@@ -219,6 +223,8 @@ function segmentBodyInRealTime(video, net) {
     // slow down the GPU
     const outputStride = +guiState.input.outputStride;
 
+    // canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+
     switch (guiState.estimate) {
       case 'segmentation':
         const personSegmentation =
@@ -232,13 +238,16 @@ function segmentBodyInRealTime(video, net) {
             const mask = bodyPix.toMaskImageData(
                 personSegmentation, invert,
                 guiState.segmentation.darknessLevel);
-            bodyPix.drawImageWithMaskOnCanvas(canvas, video, mask);
+            bodyPix.drawImageWithMask(
+                canvas, video, mask, true,
+                guiState.segmentation.edgeBlurAmount);
 
             break;
           case 'bokeh':
-            bodyPix.drawBokehEffectOnCanvas(
+            bodyPix.drawBokehEffect(
                 canvas, video, personSegmentation,
-                +guiState.segmentation.bokehBlurAmount);
+                +guiState.segmentation.bokehBlurAmount, true,
+                guiState.segmentation.edgeBlurAmount);
             break;
         }
         break;
@@ -252,7 +261,7 @@ function segmentBodyInRealTime(video, net) {
             partSegmentation, partColorScales[guiState.partMap.colorScale],
             coloredPartImageAlpha);
 
-        bodyPix.drawImageWithMaskOnCanvas(canvas, video, coloredPartImageData);
+        bodyPix.drawImageWithMask(canvas, video, coloredPartImageData, true, 0);
 
         break;
       default:

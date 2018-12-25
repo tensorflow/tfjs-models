@@ -20,7 +20,7 @@ import {PartSegmentation, PersonSegmentation} from './types';
 
 const offScreenCanvases: {[name: string]: HTMLCanvasElement} = {};
 
-type ImageType = HTMLImageElement|HTMLVideoElement;
+type ImageType = HTMLImageElement|HTMLVideoElement|HTMLCanvasElement;
 type HasDimensions = {
   width: number,
   height: number
@@ -83,15 +83,43 @@ function drawAndBlurImageOnCanvas(
   ctx.restore();
 }
 
+function drawAndBlurImageOnOffScreenCanvas(
+    image: ImageType, blurAmount: number,
+    offscreenCanvasName: string): HTMLCanvasElement {
+  const canvas = ensureOffscreenCanvasCreated(offscreenCanvasName);
+  if (blurAmount === 0) {
+    renderImageToCanvas(image, canvas);
+  } else {
+    drawAndBlurImageOnCanvas(image, blurAmount, canvas);
+  }
+  return canvas;
+}
+
+function renderImageToCanvas(image: ImageType, canvas: HTMLCanvasElement) {
+  const {width, height} = image;
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+
+  ctx.drawImage(image, 0, 0, width, height);
+}
 /**
  * Draw an image on a canvas
  */
-function drawImageOnCanvas(image: ImageData, canvas: HTMLCanvasElement) {
+function renderImageDataToCanvas(image: ImageData, canvas: HTMLCanvasElement) {
   canvas.width = image.width;
   canvas.height = image.height;
   const ctx = canvas.getContext('2d');
 
   ctx.putImageData(image, 0, 0);
+}
+
+function renderImageDataToOffScreenCanvas(
+    image: ImageData, canvasName: string): HTMLCanvasElement {
+  const canvas = ensureOffscreenCanvasCreated(canvasName);
+  renderImageDataToCanvas(image, canvas);
+
+  return canvas;
 }
 
 export function toMaskImageData(
@@ -118,16 +146,17 @@ export function toMaskImageData(
   return new ImageData(bytes, width, height);
 }
 
-export function drawImageWithMaskOnCanvas(
-    canvas: HTMLCanvasElement, image: ImageType, mask: ImageData,
-    flipHorizontal = true) {
-  assertSameDimensions(image, mask, 'image', 'mask');
+export function drawImageWithMask(
+    canvas: HTMLCanvasElement, image: ImageType, maskImage: ImageData,
+    flipHorizontal = true, edgeBlurAmount = 3) {
+  assertSameDimensions(image, maskImage, 'image', 'mask');
 
-  const maskCanvas = ensureOffscreenCanvasCreated('mask');
-  drawImageOnCanvas(mask, maskCanvas);
+  const mask = renderImageDataToOffScreenCanvas(maskImage, 'mask');
+  const blurredMask =
+      drawAndBlurImageOnOffScreenCanvas(mask, edgeBlurAmount, 'blurred-mask');
 
-  canvas.width = mask.width;
-  canvas.height = mask.height;
+  canvas.width = blurredMask.width;
+  canvas.height = blurredMask.height;
 
   const ctx = canvas.getContext('2d');
   ctx.save();
@@ -136,37 +165,42 @@ export function drawImageWithMaskOnCanvas(
   }
 
   ctx.drawImage(image, 0, 0);
-  // 'source-atop' - 'The new shape is only drawn where it overlaps the
-  // existing canvas content.'
-  drawWithCompositing(ctx, maskCanvas, 'source-over');
+  ctx.drawImage(blurredMask, 0, 0);
   ctx.restore();
 }
 
-export function drawBokehEffectOnCanvas(
-    canvas: HTMLCanvasElement, image: ImageType,
-    segmentation: PersonSegmentation, bokehBlurAmount = 3,
-    flipHorizontal = true) {
-  assertSameDimensions(image, segmentation, 'image', 'segmentation');
+const CANVAS_NAMES = {
+  blurred: 'blurred'
+};
 
-  const blurredCanvas = ensureOffscreenCanvasCreated('blur');
-
-  drawAndBlurImageOnCanvas(image, bokehBlurAmount, blurredCanvas);
-
+function createBackgroundMask(
+    segmentation: PersonSegmentation,
+    edgeBlurAmount: number): HTMLCanvasElement {
   const invertMask = false;
   const darknessLevel = 1.;
-
   const backgroundMaskImage =
       toMaskImageData(segmentation, invertMask, darknessLevel);
 
-  const backgroundMask = ensureOffscreenCanvasCreated('mask');
-  drawImageOnCanvas(backgroundMaskImage, backgroundMask);
+  const backgroundMask =
+      renderImageDataToOffScreenCanvas(backgroundMaskImage, 'mask');
+  if (edgeBlurAmount === 0) {
+    return backgroundMask;
+  } else {
+    return drawAndBlurImageOnOffScreenCanvas(
+        backgroundMask, edgeBlurAmount, 'blurred-mask');
+  }
+}
 
-  const blurredCtx = blurredCanvas.getContext('2d');
-  blurredCtx.save();
-  // "destination-out" - "The existing content is kept where it doesn't
-  // overlap the new shape." crop person using the mask from the blurred image
-  drawWithCompositing(blurredCtx, backgroundMask, 'destination-out');
-  blurredCtx.restore();
+export function drawBokehEffect(
+    canvas: HTMLCanvasElement, image: ImageType,
+    segmentation: PersonSegmentation, bokehBlurAmount = 3,
+    flipHorizontal = true, edgeBlurAmount = 3) {
+  assertSameDimensions(image, segmentation, 'image', 'segmentation');
+
+  const blurredImage = drawAndBlurImageOnOffScreenCanvas(
+      image, bokehBlurAmount, CANVAS_NAMES.blurred);
+
+  const backgroundMask = createBackgroundMask(segmentation, edgeBlurAmount);
 
   const ctx = canvas.getContext('2d');
   ctx.save();
@@ -183,7 +217,7 @@ export function drawBokehEffectOnCanvas(
   // "source-over" - "This is the default setting and draws new shapes on top
   // of the existing canvas content." draw the blurred background on top
   // of that.
-  drawWithCompositing(ctx, blurredCanvas, 'source-over');
+  drawWithCompositing(ctx, blurredImage, 'destination-over');
   ctx.restore();
 }
 
@@ -232,7 +266,7 @@ export function drawPersonWithBackgroundRemoved(
   const personMaskImageData =
       toMaskImageData(segmentation, invertMask, darknessLevel);
   const personMask = ensureOffscreenCanvasCreated('person-mask');
-  drawImageOnCanvas(personMaskImageData, personMask);
+  renderImageDataToCanvas(personMaskImageData, personMask);
 
   const ctx = canvas.getContext('2d');
   ctx.save();
@@ -265,9 +299,9 @@ export function drawPersonWithBackgroundReplaced(
 
   const ctx = canvas.getContext('2d');
   ctx.save();
-  // "source-out" - The new shape is drawn where it doesn't overlap the existing
-  // canvas content."
-  // draw the background where it doesnt overlap the cropped person
+  // "source-out" - The new shape is drawn where it doesn't overlap the
+  // existing canvas content." draw the background where it doesnt overlap the
+  // cropped person
   drawWithCompositing(ctx, newBackground, 'source-out');
 
   ctx.restore();
