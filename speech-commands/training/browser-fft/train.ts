@@ -32,7 +32,7 @@ import {Dataset} from '../../src/dataset';
  *   frameSize is the size of the frequency dimension of the spectrogram.
  *   1 is the dummy "channels" dimension.
  * @param numClasses Number of output classes.
- * @returns A compiled tf.Model object.
+ * @returns An uncompiled tf.Model object.
  */
 function createBrowserFFTModel(
     inputShape: tf.Shape, numClasses: number): tf.Model {
@@ -55,11 +55,6 @@ function createBrowserFFTModel(
   model.add(tf.layers.dropout({rate: 0.5}));
   model.add(tf.layers.dense({units: numClasses, activation: 'softmax'}));
 
-  model.compile({
-    loss: 'categoricalCrossentropy',
-    optimizer: tf.train.sgd(2e-3),
-    metrics: ['accuracy']
-  });
   return model;
 }
 
@@ -112,13 +107,18 @@ async function main() {
   });
   parser.addArgument('--batchSize', {
     type: 'int',
-    defaultValue: 128,
+    defaultValue: 512,
     help: 'Batch size for training'
   });
   parser.addArgument('--validationSplit', {
     type: 'float',
     defaultValue: 0.15,
     help: 'Validation split for training'
+  });
+  parser.addArgument('--learningRate', {
+    type: 'float',
+    defaultValue: 3e-4,
+    help: 'Learning rate for training'
   });
   const args = parser.parseArgs();
 
@@ -145,6 +145,11 @@ async function main() {
   ys.print(true);  // DEBUG
 
   const model = createBrowserFFTModel(xs.shape.slice(1), vocab.length);
+  model.compile({
+    loss: 'categoricalCrossentropy',
+    optimizer: tf.train.adam(args.learningRate),
+    metrics: ['accuracy']
+  });
   model.summary();
 
   await model.fit(xs, ys, {
