@@ -21,8 +21,6 @@ import Stats from 'stats.js';
 import * as partColorScales from './part_color_scales';
 
 const stats = new Stats();
-const videoWidth = 640;
-const videoHeight = 480;
 
 function isAndroid() {
   return /Android/i.test(navigator.userAgent);
@@ -51,22 +49,17 @@ async function setupCamera() {
   }
 
   const video = document.getElementById('video');
-  video.width = videoWidth;
-  video.height = videoHeight;
 
-  const mobile = isMobile();
   const stream = await navigator.mediaDevices.getUserMedia({
     'audio': false,
-    'video': {
-      facingMode: 'user',
-      width: mobile ? undefined : videoWidth,
-      height: mobile ? undefined : videoHeight,
-    },
+    'video': {facingMode: 'user', width: 640},
   });
   video.srcObject = stream;
 
   return new Promise((resolve) => {
     video.onloadedmetadata = () => {
+      video.width = video.videoWidth;
+      video.height = video.videoHeight;
       resolve(video);
     };
   });

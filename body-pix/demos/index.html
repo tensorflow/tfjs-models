@@ -4,6 +4,11 @@
 <head>
     <title>BodyPix - With a Webcam Demo</title>
     <style>
+    body {
+      margin: 0;
+      width: 100%;
+    }
+
     .footer {
         position: fixed;
         left: 0;
@@ -18,12 +23,13 @@
         margin: auto;
     }
 
-    @media only screen and (max-width: 600px) {
-      .footer-text, .dg {
+    @media only screen and (max-height: 900px) {
+      .footer-text {
         display: none;
       }
     }
-    </style>
+
+   </style>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 
