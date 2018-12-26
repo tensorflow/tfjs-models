@@ -104,6 +104,39 @@ describe('Dataset', () => {
         .toThrowError(/Expected label to be a non-empty string/);
   });
 
+  it('merge two non-empty datasets', () => {
+    const dataset = new Dataset();
+    addThreeExamplesToDataset(dataset);
+    const datasetPrime = new Dataset();
+    addThreeExamplesToDataset(datasetPrime);
+    const ex = getRandomExample('foo');
+    datasetPrime.addExample(ex);
+    dataset.merge(datasetPrime);
+    expect(dataset.getExampleCounts()).toEqual({a: 4, b: 2, foo: 1});
+    // Check that the content of the incoming dataset is not affected.
+    expect(datasetPrime.getExampleCounts()).toEqual({a: 2, b: 1, foo: 1});
+  });
+
+  it('merge non-empty dataset into an empty one', () => {
+    const dataset = new Dataset();
+    const datasetPrime = new Dataset();
+    addThreeExamplesToDataset(datasetPrime);
+    dataset.merge(datasetPrime);
+    expect(dataset.getExampleCounts()).toEqual({a: 2, b: 1});
+    // Check that the content of the incoming dataset is not affected.
+    expect(datasetPrime.getExampleCounts()).toEqual({a: 2, b: 1});
+  });
+
+  it('merge empty dataset into an non-empty one', () => {
+    const dataset = new Dataset();
+    addThreeExamplesToDataset(dataset);
+    const datasetPrime = new Dataset();
+    dataset.merge(datasetPrime);
+    expect(dataset.getExampleCounts()).toEqual({a: 2, b: 1});
+    // Check that the content of the incoming dataset is not affected.
+    expect(datasetPrime.empty()).toEqual(true);
+  });
+
   it('getExamples', () => {
     const dataset = new Dataset();
     const [uid1, uid2, uid3] = addThreeExamplesToDataset(dataset);
@@ -282,7 +315,7 @@ describe('Dataset', () => {
     const [uid1, uid2] = addThreeExamplesToDataset(dataset);
 
     dataset.removeExample(uid1);
-    const out1 = dataset.getSpectrogramsAsTensors();
+    const out1 = dataset.getSpectrogramsAsTensors(null, {shuffle: false});
     expect(out1.xs.shape).toEqual([2, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
     expectArraysClose(out1.ys, tf.tensor2d([[1, 0], [0, 1]]));
 
@@ -311,7 +344,7 @@ describe('Dataset', () => {
     const dataset = new Dataset();
     addThreeExamplesToDataset(dataset);
 
-    const out = dataset.getSpectrogramsAsTensors();
+    const out = dataset.getSpectrogramsAsTensors(null, {shuffle: false});
     expect(out.xs.shape).toEqual([3, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
     expectArraysClose(out.ys, tf.tensor2d([[1, 0], [1, 0], [0, 1]]));
   });
@@ -337,7 +370,7 @@ describe('Dataset', () => {
     dataset.addExample(getRandomExample('foo', 7));
 
     const {xs, ys} =
-        dataset.getSpectrogramsAsTensors(null, {numFrames: 5, hopFrames: 5});
+        dataset.getSpectrogramsAsTensors(null, {numFrames: 5, hopFrames: 5, shuffle: false});
     expect(xs.shape).toEqual([3, 5, FAKE_FRAME_SIZE, 1]);
     expectArraysClose(ys, tf.tensor2d([[1, 0], [0, 1], [0, 1]]));
   });
@@ -362,7 +395,7 @@ describe('Dataset', () => {
         getRandomExample('bar', 5, 2, [1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
 
     const {xs, ys} =
-        dataset.getSpectrogramsAsTensors(null, {numFrames: 3, hopFrames: 1});
+        dataset.getSpectrogramsAsTensors(null, {numFrames: 3, hopFrames: 1, shuffle: false});
     const windows = tf.unstack(xs);
 
     expect(windows.length).toEqual(6);
@@ -387,7 +420,7 @@ describe('Dataset', () => {
         getRandomExample('bar', 6, 2, [0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
 
     const {xs, ys} =
-        dataset.getSpectrogramsAsTensors(null, {numFrames: 5, hopFrames: 1});
+        dataset.getSpectrogramsAsTensors(null, {numFrames: 5, hopFrames: 1, shuffle: false});
     const windows = tf.unstack(xs);
     expect(windows.length).toEqual(4);
     expectArraysClose(
@@ -411,7 +444,7 @@ describe('Dataset', () => {
     dataset.addExample(
         getRandomExample('bar', 6, 2, [0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
     const {xs, ys} =
-        dataset.getSpectrogramsAsTensors(null, {numFrames: 3, hopFrames: 2});
+        dataset.getSpectrogramsAsTensors(null, {numFrames: 3, hopFrames: 2, shuffle: false});
     const windows = tf.unstack(xs);
     expect(windows.length).toEqual(4);
     expectArraysClose(
