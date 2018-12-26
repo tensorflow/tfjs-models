@@ -57,7 +57,7 @@ It returns a binary array with 1 for the pixels that are part of the person, and
 ```javascript
 const net = await bodyPix.load();
 
-const segmentation = await net.estimatePersonSegmentation(image, flipHorizontal, outputStride, segmentationThreshold);
+const segmentation = await net.estimatePersonSegmentation(image, outputStride, segmentationThreshold);
 ```
 
 #### Inputs

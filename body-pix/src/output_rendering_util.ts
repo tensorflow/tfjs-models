@@ -281,13 +281,13 @@ export function drawMask(
  *
  * @param flipHorizontal If the result should be flipped horizontally.  Defaults
  * to false.
- * 
+ *
  * @param pixelCellWidth The width of each pixel cell. Default to 10 px.
  */
 export function drawPixelatedMask(
-  canvas: HTMLCanvasElement, image: ImageType, maskImage: ImageData,
-  maskOpacity = 0.7, maskBlurAmount = 0, flipHorizontal = false,
-  pixelCellWidth = 10.0) {
+    canvas: HTMLCanvasElement, image: ImageType, maskImage: ImageData,
+    maskOpacity = 0.7, maskBlurAmount = 0, flipHorizontal = false,
+    pixelCellWidth = 10.0) {
   assertSameDimensions(image, maskImage, 'image', 'mask');
 
   const mask = renderImageDataToOffScreenCanvas(maskImage, CANVAS_NAMES.mask);
@@ -303,19 +303,20 @@ export function drawPixelatedMask(
     flipCanvasHorizontal(canvas);
   }
 
-  const offscreenCanvas = ensureOffscreenCanvasCreated(CANVAS_NAMES.lowresPartMask);
+  const offscreenCanvas =
+      ensureOffscreenCanvasCreated(CANVAS_NAMES.lowresPartMask);
   const offscreenCanvasCtx = offscreenCanvas.getContext('2d');
   offscreenCanvas.width = blurredMask.width * (1.0 / pixelCellWidth);
   offscreenCanvas.height = blurredMask.height * (1.0 / pixelCellWidth);
-  offscreenCanvasCtx.drawImage(blurredMask,
-    0, 0, blurredMask.width, blurredMask.height,
-    0, 0,  offscreenCanvas.width, offscreenCanvas.height);
+  offscreenCanvasCtx.drawImage(
+      blurredMask, 0, 0, blurredMask.width, blurredMask.height, 0, 0,
+      offscreenCanvas.width, offscreenCanvas.height);
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(offscreenCanvas,
-    0, 0, offscreenCanvas.width, offscreenCanvas.height,
-    0, 0, canvas.width, canvas.height);
+  ctx.drawImage(
+      offscreenCanvas, 0, 0, offscreenCanvas.width, offscreenCanvas.height, 0,
+      0, canvas.width, canvas.height);
 
-  // Draws vertical grid lines that are `pixelCellWidth` apart from each other. 
+  // Draws vertical grid lines that are `pixelCellWidth` apart from each other.
   for (let i = 0; i < offscreenCanvas.width; i++) {
     ctx.beginPath();
     ctx.strokeStyle = '#ffffff';
@@ -324,7 +325,8 @@ export function drawPixelatedMask(
     ctx.stroke();
   }
 
-  // Draws horizontal grid lines that are `pixelCellWidth` apart from each other.
+  // Draws horizontal grid lines that are `pixelCellWidth` apart from each
+  // other.
   for (let i = 0; i < offscreenCanvas.height; i++) {
     ctx.beginPath();
     ctx.strokeStyle = '#ffffff';
