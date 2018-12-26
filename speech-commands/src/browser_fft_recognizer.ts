@@ -281,6 +281,7 @@ export class BrowserFftSpeechCommandRecognizer implements
     await this.ensureMetadataLoaded();
 
     const model = await tf.loadModel(this.modelURL);
+    model.summary();
     // Check the validity of the model's input shape.
     if (model.inputs.length !== 1) {
       throw new Error(
