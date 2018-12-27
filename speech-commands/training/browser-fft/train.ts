@@ -15,11 +15,11 @@
  * =============================================================================
  */
 
+import * as tf from '@tensorflow/tfjs';
+import * as argparse from 'argparse';
 import * as fs from 'fs';
 import * as path from 'path';
-
-import * as argparse from 'argparse';
-import * as tf from '@tensorflow/tfjs';
+import * as shelljs from 'shelljs';
 
 import {Dataset} from '../../src/dataset';
 
@@ -100,36 +100,45 @@ async function main() {
     help: 'Path to an input data directory. The directory is expected to ' +
         'contain .bin files in the TFJSSCDS format in a nested fashion.'
   });
-  parser.addArgument('--epochs', {
-    type: 'int',
-    defaultValue: 100,
-    help: 'Number of training epochs'
+  parser.addArgument('modelSavePath', {
+    type: 'string',
+    help: 'Path to directory in which the trained model will be saved, ' +
+        'e.g., "./my_18w_model'
   });
-  parser.addArgument('--batchSize', {
-    type: 'int',
-    defaultValue: 512,
-    help: 'Batch size for training'
+  parser.addArgument('--gpu', {
+    action: 'storeTrue',
+    help: 'Perform training using tfjs-node-gpu (Requires CUDA and CuDNN)'
   });
+  parser.addArgument(
+      '--epochs',
+      {type: 'int', defaultValue: 100, help: 'Number of training epochs'});
+  parser.addArgument(
+      '--batchSize',
+      {type: 'int', defaultValue: 512, help: 'Batch size for training'});
   parser.addArgument('--validationSplit', {
     type: 'float',
     defaultValue: 0.15,
     help: 'Validation split for training'
   });
-  parser.addArgument('--learningRate', {
-    type: 'float',
-    defaultValue: 3e-4,
-    help: 'Learning rate for training'
-  });
+  parser.addArgument(
+      '--learningRate',
+      {type: 'float', defaultValue: 5e-4, help: 'Learning rate for training'});
   const args = parser.parseArgs();
 
-  require('@tensorflow/tfjs-node-gpu');
+  if (args.gpu) {
+    console.log('Training using GPU.');
+    require('@tensorflow/tfjs-node-gpu');
+  } else {
+    console.log('Training using CPU.');
+    require('@tensorflow/tfjs-node');
+  }
 
   const dataset = loadDataset(args.dataPath);
   const vocab = dataset.getVocabulary();
   tf.util.assert(
       vocab.length > 1,
       `Expected vocabulary to have at least two words, but ` +
-      `got vocabulary: ${JSON.stringify(vocab)}`);
+          `got vocabulary: ${JSON.stringify(vocab)}`);
   console.log(`vocab.length = ${vocab.length}`);  // DEBUG
 
   const {xs, ys} = dataset.getSpectrogramsAsTensors();
@@ -152,14 +161,26 @@ async function main() {
   });
   model.summary();
 
+  // Train the model.
   await model.fit(xs, ys, {
     epochs: args.epochs,
     batchSize: args.batchSize,
     validationSplit: args.validationSplit
   });
 
-  // TODO(cais): Save model.
-  // TODO(cais): Save metadata.
+  // Save the trained model.
+  const saveDir = path.dirname(args.modelSavePath);
+  if (!fs.existsSync(saveDir)) {
+    shelljs.mkdir('-p', saveDir);
+  }
+  await model.save(`file://${args.modelSavePath}`);
+  console.log(`Saved model to: ${args.modelSavePath}`);
+
+  // Sava the metadata for the model.
+  const metadata: {} = {words: vocab, frameSize: xs.shape[2]};
+  const metadataPath = path.join(args.modelSavePath, 'metadata.json');
+  fs.writeFileSync(metadataPath, JSON.stringify(metadata));
+  console.log(`Saved metadata to: ${metadataPath}`);
 }
 
 main();
