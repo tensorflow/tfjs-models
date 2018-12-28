@@ -200,13 +200,15 @@ async function main() {
   // Evaluate the model.
   const testDataset = loadDataset(path.join(args.dataPath, 'test'));
   const {xs: testXs, ys: testYs} = testDataset.getSpectrogramsAsTensors();
-  const [evalLossScalar, evalAccScalar] =
+  console.log(`\n# of test examples: ${testXs.shape[0]}`);
+
+  const [testLossScalar, testAccScalar] =
       model.evaluate(testXs, testYs, {batchSize: args.batchSize}) as
       tf.Tensor[];
-  const evalLoss = (await evalLossScalar.data())[0];
-  const evalAcc = (await evalAccScalar.data())[0];
-  console.log(`Evaluation loss: ${evalLoss.toFixed(6)}`);
-  console.log(`Evaluation accuracy: ${evalAcc.toFixed(6)}`);
+  const testLoss = (await testLossScalar.data())[0];
+  const testAcc = (await testAccScalar.data())[0];
+  console.log(`Test loss: ${testLoss.toFixed(6)}`);
+  console.log(`Test accuracy: ${testAcc.toFixed(6)}`);
   tf.dispose([testXs, testYs]);
 
   // Save the trained model.
