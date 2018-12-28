@@ -78,11 +78,10 @@ function loadDataset(inputPath): Dataset {
     const fullPath = path.join(inputPath, item);
     let incomingDataset: Dataset;
     if (fs.lstatSync(fullPath).isDirectory()) {
-      console.log(`Recursive call @ ${fullPath}`);  // DEBUG
       incomingDataset = loadDataset(fullPath);
     } else {
       // A file.
-      console.log(`Reading file ${fullPath}`);  // DEBUG
+      console.log(`Reading file ${fullPath}`); 
       const arrayBuffer = fs.readFileSync(fullPath).buffer;
       incomingDataset = new Dataset(arrayBuffer);
     }
@@ -139,7 +138,7 @@ async function main() {
       vocab.length > 1,
       `Expected vocabulary to have at least two words, but ` +
           `got vocabulary: ${JSON.stringify(vocab)}`);
-  console.log(`vocab.length = ${vocab.length}`);  // DEBUG
+  console.log(`vocabulary size: ${vocab.length}`);
 
   const {xs, ys} = dataset.getSpectrogramsAsTensors();
   tf.util.assert(
@@ -148,10 +147,6 @@ async function main() {
   tf.util.assert(
       ys.rank === 2,
       `Expected ys tensor to be rank-2, but got rank ${ys.rank}`);
-  console.log(xs.shape);  // DEBUG
-  console.log(ys.shape);  // DEBUG
-
-  ys.print(true);  // DEBUG
 
   const model = createBrowserFFTModel(xs.shape.slice(1), vocab.length);
   model.compile({
