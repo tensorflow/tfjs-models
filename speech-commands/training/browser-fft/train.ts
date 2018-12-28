@@ -78,10 +78,10 @@ function loadDataset(inputPath): Dataset {
     const fullPath = path.join(inputPath, item);
     let incomingDataset: Dataset;
     if (fs.lstatSync(fullPath).isDirectory()) {
+      // A directory. Call recursively.
       incomingDataset = loadDataset(fullPath);
     } else {
       // A file.
-      console.log(`Reading file ${fullPath}`);
       const arrayBuffer = fs.readFileSync(fullPath).buffer;
       incomingDataset = new Dataset(arrayBuffer);
     }
@@ -136,15 +136,15 @@ async function main() {
     require('@tensorflow/tfjs-node');
   }
 
-  const dataset = loadDataset(args.dataPath);
-  const vocab = dataset.getVocabulary();
+  const trainDataset = loadDataset(path.join(args.dataPath, 'train'));
+  const vocab = trainDataset.getVocabulary();
   tf.util.assert(
       vocab.length > 1,
       `Expected vocabulary to have at least two words, but ` +
           `got vocabulary: ${JSON.stringify(vocab)}`);
-  console.log(`vocabulary size: ${vocab.length}`);
+  console.log(`Vocabulary size: ${vocab.length} (${JSON.stringify(vocab)})`);
 
-  let {xs, ys} = dataset.getSpectrogramsAsTensors();
+  let {xs, ys} = trainDataset.getSpectrogramsAsTensors();
   tf.util.assert(
       xs.rank === 4,
       `Expected xs tensor to be rank-4, but got rank ${xs.rank}`);
@@ -158,7 +158,7 @@ async function main() {
   if (args.validationSplit > 0) {
     const numExamples = xs.shape[0];
     const xsData = xs.dataSync();
-    const ysData = xs.dataSync();
+    const ysData = ys.dataSync();
     xs.dispose();
     ys.dispose();
 
@@ -193,11 +193,21 @@ async function main() {
   model.summary();
 
   // Train the model.
-  await model.fit(xs, ys, {
-    epochs: args.epochs,
-    batchSize: args.batchSize,
-    validationData
-  });
+  await model.fit(
+      xs, ys, {epochs: args.epochs, batchSize: args.batchSize, validationData});
+  tf.dispose([xs, ys, validationData]);  // For memory efficiency.
+
+  // Evaluate the model.
+  const testDataset = loadDataset(path.join(args.dataPath, 'test'));
+  const {xs: testXs, ys: testYs} = testDataset.getSpectrogramsAsTensors();
+  const [evalLossScalar, evalAccScalar] =
+      model.evaluate(testXs, testYs, {batchSize: args.batchSize}) as
+      tf.Tensor[];
+  const evalLoss = (await evalLossScalar.data())[0];
+  const evalAcc = (await evalAccScalar.data())[0];
+  console.log(`Evaluation loss: ${evalLoss.toFixed(6)}`);
+  console.log(`Evaluation accuracy: ${evalAcc.toFixed(6)}`);
+  tf.dispose([testXs, testYs]);
 
   // Save the trained model.
   const saveDir = path.dirname(args.modelSavePath);
