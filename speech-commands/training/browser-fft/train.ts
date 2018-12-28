@@ -81,7 +81,7 @@ function loadDataset(inputPath): Dataset {
       incomingDataset = loadDataset(fullPath);
     } else {
       // A file.
-      console.log(`Reading file ${fullPath}`); 
+      console.log(`Reading file ${fullPath}`);
       const arrayBuffer = fs.readFileSync(fullPath).buffer;
       incomingDataset = new Dataset(arrayBuffer);
     }
@@ -91,7 +91,7 @@ function loadDataset(inputPath): Dataset {
   return dataset;
 }
 
-async function main() {
+function parseArguments(): any {
   const parser = new argparse.ArgumentParser(
       {description: 'Training a browser-FFT speech-commands model'});
   parser.addArgument('dataPath', {
@@ -122,7 +122,11 @@ async function main() {
   parser.addArgument(
       '--learningRate',
       {type: 'float', defaultValue: 5e-4, help: 'Learning rate for training'});
-  const args = parser.parseArgs();
+  return parser.parseArgs();
+}
+
+async function main() {
+  const args = parseArguments();
 
   if (args.gpu) {
     console.log('Training using GPU.');
@@ -140,13 +144,45 @@ async function main() {
           `got vocabulary: ${JSON.stringify(vocab)}`);
   console.log(`vocabulary size: ${vocab.length}`);
 
-  const {xs, ys} = dataset.getSpectrogramsAsTensors();
+  let {xs, ys} = dataset.getSpectrogramsAsTensors();
   tf.util.assert(
       xs.rank === 4,
       `Expected xs tensor to be rank-4, but got rank ${xs.rank}`);
   tf.util.assert(
       ys.rank === 2,
       `Expected ys tensor to be rank-2, but got rank ${ys.rank}`);
+
+  // Split the data manually into the training and validation subsets.
+  // We do this manually for memory efficiency.
+  let validationData: [tf.Tensor, tf.Tensor] = null;
+  if (args.validationSplit > 0) {
+    const numExamples = xs.shape[0];
+    const xsData = xs.dataSync();
+    const ysData = xs.dataSync();
+    xs.dispose();
+    ys.dispose();
+
+    const numValExamples = Math.round(numExamples * args.validationSplit);
+    const numTrainExamples = numExamples - numValExamples;
+    console.log(`# of training examples: ${numTrainExamples}`);
+    console.log(`# of validation examples: ${numValExamples}`);
+
+    const spectrogramSize = xs.shape[1] * xs.shape[2];
+    xs = tf.tensor4d(
+        xsData.slice(0, numTrainExamples * spectrogramSize),
+        [numTrainExamples, xs.shape[1], xs.shape[2], 1]);
+    ys = tf.tensor2d(
+        ysData.slice(0, numTrainExamples * ys.shape[1]),
+        [numTrainExamples, ys.shape[1]]);
+    const valXs = tf.tensor4d(
+        xsData.slice(
+            numTrainExamples * spectrogramSize, numExamples * spectrogramSize),
+        [numValExamples, xs.shape[1], xs.shape[2], 1]);
+    const valYs = tf.tensor2d(
+        ysData.slice(numTrainExamples * ys.shape[1], numExamples * ys.shape[1]),
+        [numValExamples, ys.shape[1]]);
+    validationData = [valXs, valYs];
+  }
 
   const model = createBrowserFFTModel(xs.shape.slice(1), vocab.length);
   model.compile({
@@ -160,7 +196,7 @@ async function main() {
   await model.fit(xs, ys, {
     epochs: args.epochs,
     batchSize: args.batchSize,
-    validationSplit: args.validationSplit
+    validationData
   });
 
   // Save the trained model.
