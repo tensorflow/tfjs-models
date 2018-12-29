@@ -119,6 +119,11 @@ function parseArguments(): any {
     defaultValue: 0.1,
     help: 'Validation split for training'
   });
+  parser.addArgument('--optimizer', {
+    type: 'string',
+    defaultValue: 'rmsprop',
+    help: 'Optimizer name for training (e.g., adam, rmsprop)'
+  });
   parser.addArgument(
       '--learningRate',
       {type: 'float', defaultValue: 1e-3, help: 'Learning rate for training'});
@@ -189,8 +194,7 @@ async function main() {
   const model = createBrowserFFTModel(xs.shape.slice(1), vocab.length);
   model.compile({
     loss: 'categoricalCrossentropy',
-    optimizer: tf.train.adam(args.learningRate),
-    // optimizer: tf.train.sgd(0.01),
+    optimizer: tf.train[args.optimizer](args.learningRate),
     metrics: ['accuracy']
   });
   model.summary();
