@@ -120,9 +120,20 @@ export interface GetSpectrogramsAsTensorsConfig {
   hopFrames?: number;
 
   /**
+   * Whether the spectrogram of each example will be normalized.
+   *
+   * Normalization means:
+   * - Subtracting the mean, and
+   * - Dividing the result by the standard deviation.
+   *
+   * Default: `true`.
+   */
+  normalize?: boolean;
+
+  /**
    * Whether the examples will be shuffled prior to merged into
    * `tf.Tensor`s.
-   * 
+   *
    * Default: `true`.
    */
   shuffle?: boolean;
@@ -190,7 +201,7 @@ export class Dataset {
 
   /**
    * Merge the incoming datast into this dataset
-   * 
+   *
    * @param dataset The incoming dataset to be merged into this dataset.
    */
   merge(dataset: Dataset): void {
@@ -324,6 +335,9 @@ export class Dataset {
               `is required. But it is not provided.`);
     }
 
+    // Normalization is performed by default.
+    const normalize = config.normalize == null ? true : config.normalize;
+
     return tf.tidy(() => {
       let xTensors: tf.Tensor3D[] = [];
       let labelIndices: number[] = [];
@@ -355,8 +369,20 @@ export class Dataset {
           const windows =
               getValidWindows(snippetLength, focusIndex, numFrames, hopFrames);
 
-          const snippet =
-              tf.tensor3d(spectrogram.data, [snippetLength, frameSize, 1]);
+          let snippet = tf.tidy(() => {
+            const EPSILON = 1e-5;
+            let spectrogramTensor =
+                tf.tensor3d(spectrogram.data, [snippetLength, frameSize, 1]);
+            if (normalize) {
+              // Normalize the spectrogram.
+              const {mean, variance} = tf.moments(spectrogramTensor);
+              const std = tf.sqrt(variance);
+              spectrogramTensor =
+                  spectrogramTensor.sub(mean).div(std.add(EPSILON));
+            }
+            return spectrogramTensor;
+          });
+
           for (const window of windows) {
             xTensors.push(snippet.slice(
                 [window[0], 0, 0], [window[1] - window[0], -1, -1]));
@@ -367,6 +393,7 @@ export class Dataset {
         }
       }
 
+      // Shuffle the data.
       const shuffle = config.shuffle == null ? true : config.shuffle;
       if (shuffle) {
         console.log(`Shuffling data!`);  // DEBUG
