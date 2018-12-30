@@ -17,6 +17,7 @@
 import * as bodyPix from '@tensorflow-models/body-pix';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
+import {getLeadingCommentRanges} from 'typescript';
 
 import * as partColorScales from './part_color_scales';
 
@@ -38,38 +39,113 @@ function isSafari() {
   return (/^((?!chrome|android).)*safari/i.test(navigator.userAgent));
 }
 
+async function getVideoInputs() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+    console.log('enumerateDevices() not supported.');
+    return [];
+  }
+
+  const devices = await navigator.mediaDevices.enumerateDevices();
+
+  const videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+  return videoDevices;
+}
+
+let stream;
+
+function stopExistingStream() {
+  if (stream) {
+    stream.getTracks().forEach(track => {
+      track.stop();
+    })
+  }
+}
+
+async function getDeviceIdForLabel(cameraLabel) {
+  const videoInputs = await getVideoInputs();
+
+  for (let i = 0; i < videoInputs.length; i++) {
+    const videoInput = videoInputs[i];
+    if (videoInput.label === cameraLabel) {
+      return videoInput.deviceId;
+    }
+  }
+
+  return null;
+}
+
+function getFacingMode(cameraLabel) {
+  if (!cameraLabel) {
+    return null;
+  }
+  if (cameraLabel.toLowerCase().includes('back')) {
+    return 'environment';
+  } else {
+    return 'user';
+  }
+}
+
+
+async function getConstraints(cameraLabel) {
+  if (!cameraLabel) {
+    return {}
+  };
+  if (isiOS()) {
+    return {facingMode: getFacingMode(cameraLabel)};
+  } else {
+    const deviceId = await getDeviceIdForLabel(cameraLabel);
+    return {
+      deviceId
+    }
+  }
+}
+
+
 /**
  * Loads a the camera to be used in the demo
  *
  */
-async function setupCamera() {
+async function setupCamera(cameraLabel) {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     throw new Error(
         'Browser API navigator.mediaDevices.getUserMedia not available');
   }
 
-  const video = document.getElementById('video');
+  const videoElement = document.getElementById('video');
 
-  const stream = await navigator.mediaDevices.getUserMedia({
-    'audio': false,
-    'video': {facingMode: 'user', width: 640},
-  });
-  video.srcObject = stream;
+  stopExistingStream();
+
+  const videoConstraints = await getConstraints(cameraLabel);
+
+  stream = await navigator.mediaDevices.getUserMedia(
+      {'audio': false, 'video': videoConstraints});
+  videoElement.srcObject = stream;
 
   return new Promise((resolve) => {
-    video.onloadedmetadata = () => {
-      video.width = video.videoWidth;
-      video.height = video.videoHeight;
-      resolve(video);
+    videoElement.onloadedmetadata = () => {
+      videoElement.width = videoElement.videoWidth;
+      videoElement.height = videoElement.videoHeight;
+      resolve(videoElement);
     };
   });
 }
 
-async function loadVideo() {
-  const video = await setupCamera();
-  video.play();
 
-  return video;
+let video;
+
+async function loadVideo(cameraLabel) {
+  try {
+    video = await setupCamera(cameraLabel);
+  } catch (e) {
+    let info = document.getElementById('info');
+    info.textContent = 'this browser does not support video capture,' +
+        'or this device does not have a camera';
+    info.style.display = 'block';
+    throw e;
+  }
+
+  video.play();
 }
 
 const guiState = {
@@ -87,6 +163,8 @@ const guiState = {
   },
   partMap: {colorScale: 'warm'},
   net: null,
+  camera: null,
+  flipHorizontal: true
 };
 
 
@@ -98,33 +176,68 @@ function setupFPS() {
   document.body.appendChild(stats.dom);
 }
 
+function toCameraOptions(cameras) {
+  const result = {default: null};
+
+  cameras.forEach(camera => {
+    result[camera.label] = camera.label;
+  })
+
+  return result;
+}
+
 /**
  * Sets up dat.gui controller on the top-right of the window
  */
 function setupGui(cameras, net) {
   guiState.net = net;
 
-  if (cameras.length > 0) {
-    guiState.camera = cameras[0].deviceId;
-  }
-
+  console.log(stream, video, cameras);
   const gui = new dat.GUI({width: 300});
+
+  gui.add(guiState, 'camera', toCameraOptions(cameras))
+      .onChange(async function(cameraLabel) {
+        guiState.changingCamera = true;
+
+        if (cameraLabel && cameraLabel.toLowerCase().includes('back')) {
+          guiState.flipHorizontal = false;
+        }
+
+        await loadVideo(cameraLabel);
+
+        guiState.changingCamera = false;
+      });
 
   // Architecture: there are a few PoseNet models varying in size and
   // accuracy. 1.00 is the largest, but will be the slowest. 0.50 is the
   // fastest, but least accurate.
   const architectureController = gui.add(
-      guiState.input, 'mobileNetArchitecture',
-      ['1.00', '0.75', '0.50', '0.25']);
-  // Output stride:  Internally, this parameter affects the height and width of
-  // the layers in the neural network. The lower the value of the output stride
-  // the higher the accuracy but slower the speed, the higher the value the
-  // faster the speed but lower the accuracy.
+                                        guiState.input, 'mobileNetArchitecture',
+                                        ['1.00', '0.75', '0.50', '0.25'])
+                                     .onChange(async function(architecture) {
+                                       guiState.changingArchitecture = true;
+                                       // Important to purge variables and free
+                                       // up GPU memory
+                                       guiState.net.dispose();
+
+                                       // Load the PoseNet model weights for
+                                       // either the 0.50, 0.75, 1.00, or 1.01
+                                       // version
+                                       guiState.net =
+                                           await bodyPix.load(+architecture);
+
+                                       guiState.changingArchitecture = false;
+                                     });
+  ;
+  // Output stride:  Internally, this parameter affects the height and width
+  // of the layers in the neural network. The lower the value of the output
+  // stride the higher the accuracy but slower the speed, the higher the value
+  // the faster the speed but lower the accuracy.
   gui.add(guiState.input, 'outputStride', [8, 16, 32]);
 
   // The single-pose algorithm is faster and simpler but requires only one
-  // person to be in the frame or results will be innaccurate. Multi-pose works
-  // for more than 1 person
+  // person to be in the frame or results will be innaccurate. Multi-pose
+  // works for more than 1 person
   const estimateController =
       gui.add(guiState, 'estimate', ['segmentation', 'partmap']);
 
@@ -171,10 +284,6 @@ function setupGui(cameras, net) {
   let partMap = gui.addFolder('Part Map');
   partMap.add(guiState.partMap, 'colorScale', Object.keys(partColorScales));
 
-  architectureController.onChange(function(architecture) {
-    guiState.changeToArchitecture = architecture;
-  });
-
   estimateController.onChange(function(estimationType) {
     if (estimationType === 'segmentation') {
       segmentation.open();
@@ -198,21 +307,15 @@ function setupFPS() {
  * Feeds an image to posenet to estimate poses - this is where the magic
  * happens. This function loops with a requestAnimationFrame method.
  */
-function segmentBodyInRealTime(video, net) {
+function segmentBodyInRealTime() {
   const canvas = document.getElementById('output');
   // since images are being fed from a webcam
-  const flipHorizontal = true;
 
   async function bodySegmentationFrame() {
-    if (guiState.changeToArchitecture) {
-      // Important to purge variables and free up GPU memory
-      guiState.net.dispose();
-
-      // Load the PoseNet model weights for either the 0.50, 0.75, 1.00,
-      // or 1.01 version
-      guiState.net = await bodyPix.load(+guiState.changeToArchitecture);
-
-      guiState.changeToArchitecture = null;
+    // if changing the model or the camera, wait a second and try again.
+    if (guiState.changingArchitecture || guiState.changingCamera) {
+      setTimeout(bodySegmentationFrame, 1000);
+      return;
     }
 
     // Begin monitoring code for frames per second
@@ -224,7 +327,7 @@ function segmentBodyInRealTime(video, net) {
 
     // canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
 
-    const flipHorizontal = true;
+    const flipHorizontal = guiState.flipHorizontal;
 
     switch (guiState.estimate) {
       case 'segmentation':
@@ -281,7 +384,8 @@ function segmentBodyInRealTime(video, net) {
 
 /**
  * Kicks off the demo by loading the posenet model, finding and loading
- * available camera devices, and setting off the detectPoseInRealTime function.
+ * available camera devices, and setting off the detectPoseInRealTime
+ * function.
  */
 export async function bindPage() {
   // Load the BodyPix model weights with architecture 0.75
@@ -290,22 +394,16 @@ export async function bindPage() {
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'block';
 
-  let video;
+  await loadVideo();
 
-  try {
-    video = await loadVideo();
-  } catch (e) {
-    let info = document.getElementById('info');
-    info.textContent = 'this browser does not support video capture,' +
-        'or this device does not have a camera';
-    info.style.display = 'block';
-    throw e;
-  }
+  let cameras = await getVideoInputs();
 
   setupFPS();
-  setupGui([], net);
-  segmentBodyInRealTime(video, net);
+  setupGui(cameras, net);
+
+  segmentBodyInRealTime();
 }
+
 
 navigator.getUserMedia = navigator.getUserMedia ||
     navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
