@@ -129,12 +129,8 @@ function setupGui(cameras, net) {
   // faster the speed but lower the accuracy.
   gui.add(guiState.input, 'outputStride', [8, 16, 32]);
 
-  // The single-pose algorithm is faster and simpler but requires only one
-  // person to be in the frame or results will be innaccurate. Multi-pose works
-  // for more than 1 person
   const estimateController =
       gui.add(guiState, 'estimate', ['segmentation', 'partmap']);
-
 
   let segmentation = gui.addFolder('Segmentation');
   segmentation.add(guiState.segmentation, 'segmentationThreshold', 0.0, 1.0);
@@ -202,7 +198,7 @@ function setupFPS() {
 }
 
 /**
- * Feeds an image to posenet to estimate poses - this is where the magic
+ * Feeds an image to BodyPix to estimate segmentation - this is where the magic
  * happens. This function loops with a requestAnimationFrame method.
  */
 function segmentBodyInRealTime(video, net) {
@@ -228,8 +224,6 @@ function segmentBodyInRealTime(video, net) {
     // Scale an image down to a certain factor. Too large of an image will
     // slow down the GPU
     const outputStride = +guiState.input.outputStride;
-
-    // canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
 
     const flipHorizontal = true;
 
@@ -287,8 +281,7 @@ function segmentBodyInRealTime(video, net) {
 }
 
 /**
- * Kicks off the demo by loading the posenet model, finding and loading
- * available camera devices, and setting off the detectPoseInRealTime function.
+ * Kicks off the demo.
  */
 export async function bindPage() {
   // Load the BodyPix model weights with architecture 0.75
