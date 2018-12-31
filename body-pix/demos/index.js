@@ -92,7 +92,7 @@ const guiState = {
     // default to turning this off for safari
     edgeBlurAmount: isSafari() ? 0 : 3
   },
-  partMap: {colorScale: 'warm'},
+  partMap: {colorScale: 'warm', segmentationThreshold: 0.5},
   net: null,
 };
 
@@ -172,6 +172,7 @@ function setupGui(cameras, net) {
   segmentationEffectController.setValue(guiState.segmentation.effect);
 
   let partMap = gui.addFolder('Part Map');
+  partMap.add(guiState.partMap, 'segmentationThreshold', 0.0, 1.0);
   partMap.add(guiState.partMap, 'colorScale', Object.keys(partColorScales));
 
   architectureController.onChange(function(architecture) {
@@ -203,8 +204,6 @@ function setupFPS() {
  */
 function segmentBodyInRealTime(video, net) {
   const canvas = document.getElementById('output');
-  // since images are being fed from a webcam
-  const flipHorizontal = true;
 
   async function bodySegmentationFrame() {
     if (guiState.changeToArchitecture) {
@@ -256,7 +255,7 @@ function segmentBodyInRealTime(video, net) {
       case 'partmap':
         const partSegmentation = await guiState.net.estimatePartSegmentation(
             video, flipHorizontal, outputStride,
-            guiState.segmentation.segmentationThreshold);
+            guiState.partMap.segmentationThreshold);
 
         const coloredPartImageOpacity = 0.7;
         const coloredPartImageData = bodyPix.toColoredPartImageData(
