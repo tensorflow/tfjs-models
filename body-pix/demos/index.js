@@ -17,7 +17,6 @@
 import * as bodyPix from '@tensorflow-models/body-pix';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
-import {getLeadingCommentRanges} from 'typescript';
 
 import * as partColorScales from './part_color_scales';
 
@@ -66,6 +65,10 @@ function stopExistingStream() {
     state.stream.getTracks().forEach(track => {
       track.stop();
     })
+
+    if (state.video) {
+      state.video.srcObject = null;
+    }
   }
 }
 
@@ -81,18 +84,6 @@ async function getDeviceIdForLabel(cameraLabel) {
 
   return null;
 }
-
-function getFacingMode(cameraLabel) {
-  if (!cameraLabel) {
-    return null;
-  }
-  if (cameraLabel.toLowerCase().includes('back')) {
-    return 'environment';
-  } else {
-    return 'user';
-  }
-}
-
 
 async function getConstraints(cameraLabel, facingMode) {
   let deviceId;
@@ -116,7 +107,7 @@ async function setupCamera(cameraLabel, facingMode) {
 
   const videoElement = document.getElementById('video');
 
-  stopExistingStream();
+  await stopExistingStream();
 
   const videoConstraints = await getConstraints(cameraLabel, facingMode);
 
@@ -168,24 +159,16 @@ const guiState = {
     segmentationThreshold: 0.5,
     effect: 'mask',
     opacity: 0.7,
-    backgroundBlurAmount: 3,
+    backgroundBlurAmount: 5,
     // on safari, blurring happens on the cpu, thus reducing performance, so
     // default to turning this off for safari
-    edgeBlurAmount: isSafari() ? 0 : 3
+    edgeBlurAmount: 3
   },
   partMap: {colorScale: 'warm'},
   net: null,
-  camera: null
+  camera: null,
+  showFps: !isMobile()
 };
-
-
-/**
- * Sets up a frames per second panel on the top-left of the window
- */
-function setupFPS() {
-  stats.showPanel(0);
-  document.body.appendChild(stats.dom);
-}
 
 function toCameraOptions(cameras) {
   const result = {default: null};
@@ -296,6 +279,14 @@ function setupDesktopGui(cameras) {
       partMap.open();
     }
   });
+
+  gui.add(guiState, 'showFps').onChange(showFps => {
+    if (showFps) {
+      document.body.appendChild(stats.dom);
+    } else {
+      document.body.removeChild(stats.dom);
+    }
+  })
 }
 
 function getMobileButton(buttonFunction) {
@@ -350,7 +341,9 @@ function setupMobileGui() {
  */
 function setupFPS() {
   stats.showPanel(0);  // 0: fps, 1: ms, 2: mb, 3+: custom
-  document.body.appendChild(stats.dom);
+  if (guiState.showFps) {
+    document.body.appendChild(stats.dom);
+  }
 }
 
 /**
