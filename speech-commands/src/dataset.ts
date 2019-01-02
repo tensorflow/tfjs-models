@@ -303,7 +303,6 @@ export class Dataset {
     return tf.tidy(() => {
       const xTensors: tf.Tensor3D[] = [];
       const labelIndices: number[] = [];
-      // let uniqueNumFrames: number;  // TODO(cais): Remove.
       let uniqueFrameSize: number;
       for (let i = 0; i < vocab.length; ++i) {
         const currentLabel = vocab[i];

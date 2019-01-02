@@ -20,7 +20,7 @@ import Plotly from 'plotly.js-dist';
 import * as SpeechCommands from '../src';
 
 import {hideCandidateWords, logToStatusDisplay, plotPredictions, populateCandidateWords, showCandidateWords} from './ui';
-import {DatasetViz} from './dataset-vis';
+import {DatasetViz, removeNonFixedChildrenFromWordDiv} from './dataset-vis';
 
 const startButton = document.getElementById('start');
 const stopButton = document.getElementById('stop');
@@ -35,6 +35,9 @@ const datasetIOInnerDiv = document.getElementById('dataset-io-inner');
 const downloadAsFileButton = document.getElementById('download-dataset');
 const datasetFileInput = document.getElementById('dataset-file-input');
 const uploadFilesButton = document.getElementById('upload-dataset');
+
+const evalModelOnDatasetButton = document.getElementById('eval-model-on-dataset');
+const evalResultsSpan = document.getElementById('eval-results');
 
 const modelIOButton = document.getElementById('model-io');
 const transferModelSaveLoadInnerDiv = document.getElementById('transfer-model-save-load-inner');
@@ -182,9 +185,11 @@ function createWordDivs(transferWords) {
   const wordDivs = {};
   for (const word of transferWords) {
     const wordDiv = document.createElement('div');
+    wordDiv.classList.add('word-div');
     wordDivs[word] = wordDiv;
     wordDiv.setAttribute('word', word);
     const button = document.createElement('button');
+    button.setAttribute('isFixed', 'true');
     button.style['display'] = 'inline-block';
     button.style['vertical-align'] = 'middle';
 
@@ -196,10 +201,54 @@ function createWordDivs(transferWords) {
     collectButtonsDiv.appendChild(wordDiv);
     collectWordButtons[word] = button;
 
+    let durationInput;
+    if (word === BACKGROUND_NOISE_TAG) {
+      // Create noise duration input.
+      durationInput = document.createElement('input');
+      durationInput.setAttribute('isFixed', 'true');
+      durationInput.value = '10';
+      durationInput.style['width'] = '100px';
+      wordDiv.appendChild(durationInput);
+      // Create time-unit span for noise duration.
+      const timeUnitSpan = document.createElement('span');
+      timeUnitSpan.setAttribute('isFixed', 'true');
+      timeUnitSpan.classList.add('settings');
+      timeUnitSpan.style['vertical-align'] = 'middle';
+      timeUnitSpan.textContent = 'seconds';
+      wordDiv.appendChild(timeUnitSpan);
+    }
+
     button.addEventListener('click', async () => {
       disableAllCollectWordButtons();
+      const collectExampleOptions = {};
+      let durationSec;
+      // _background_noise_ examples are special, in that user can specify
+      // the length of the recording (in seconds).
+      if (word === BACKGROUND_NOISE_TAG) {
+        collectExampleOptions.durationSec =
+            Number.parseFloat(durationInput.value);
+        durationSec = collectExampleOptions.durationSec;
+      } else {
+        collectExampleOptions.durationMultiplier = transferDurationMultiplier;
+        durationSec = 2;
+      }
+
+      // Show collection progress bar.
+      removeNonFixedChildrenFromWordDiv(wordDiv);
+      const progressBar = document.createElement('progress');
+      progressBar.value = 0;
+      progressBar.style['width'] = `${Math.round(window.innerWidth * 0.25)}px`;
+      // Update progress bar in increments.
+      const intervalJob = setInterval(() => {
+        progressBar.value += 0.05;
+      }, durationSec * 1e3 / 20);
+      wordDiv.appendChild(progressBar);
+
       const spectrogram = await transferRecognizer.collectExample(
-          word, {durationMultiplier: transferDurationMultiplier});
+          word, collectExampleOptions);
+
+      clearInterval(intervalJob);
+      wordDiv.removeChild(progressBar);
       const examples = transferRecognizer.getExamples(word)
       const exampleUID = examples[examples.length - 1].uid;
       await datasetViz.drawExample(wordDiv, word, spectrogram, exampleUID);
@@ -378,6 +427,7 @@ startTransferLearnButton.addEventListener('click', async () => {
   startTransferLearnButton.textContent = 'Transfer learning complete.';
   transferModelNameInput.disabled = false;
   startButton.disabled = false;
+  evalModelOnDatasetButton.disabled = false;
 });
 
 downloadAsFileButton.addEventListener('click', () => {
@@ -463,15 +513,20 @@ async function loadDatasetInTransferRecognizer(serialized) {
     const examples = transferRecognizer.getExamples(word);
     for (const example of examples) {
       const spectrogram = example.example.spectrogram;
-      durationMultipliers.push(Math.round(
-          spectrogram.data.length / spectrogram.frameSize / modelNumFrames));
+      // Ignore _background_noise_ examples when determining the duration
+      // multiplier of the dataset.
+      if (word !== BACKGROUND_NOISE_TAG) {
+        durationMultipliers.push(Math.round(
+            spectrogram.data.length / spectrogram.frameSize / modelNumFrames));
+      }
     }
   }
   transferWords.sort();
   learnWordsInput.value = transferWords.join(',');
 
   // Determine the transferDurationMultiplier value from the dataset.
-  transferDurationMultiplier = Math.max(...durationMultipliers);
+  transferDurationMultiplier =
+      durationMultipliers.length > 0 ? Math.max(...durationMultipliers) : 1;
   console.log(
       `Deteremined transferDurationMultiplier from uploaded ` +
       `dataset: ${transferDurationMultiplier}`);
@@ -479,6 +534,67 @@ async function loadDatasetInTransferRecognizer(serialized) {
   createWordDivs(transferWords);
   datasetViz.redrawAll();
 }
+
+evalModelOnDatasetButton.addEventListener('click', async () => {
+  const files = datasetFileInput.files;
+  if (files == null || files.length !== 1) {
+    throw new Error('Must select exactly one file.');
+  }
+  evalModelOnDatasetButton.disabled = true;
+  const datasetFileReader = new FileReader();
+  datasetFileReader.onload = async event => {
+    try {
+      if (transferRecognizer == null) {
+        throw new Error('There is no model!');
+      }
+
+      // Load the dataset and perform evaluation of the transfer
+      // model using the dataset.
+      transferRecognizer.loadExamples(event.target.result);
+      const evalResult = await transferRecognizer.evaluate({
+        windowHopRatio: 0.25,
+        wordProbThresholds:
+            [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5,
+             0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0]
+      });
+      // Plot the ROC curve.
+      const rocDataForPlot = {
+        x: [],
+        y: []
+      };
+      evalResult.rocCurve.forEach(item => {
+        rocDataForPlot.x.push(item.fpr);
+        rocDataForPlot.y.push(item.tpr);
+      });
+
+      Plotly.newPlot(
+          'roc-plot',
+          [rocDataForPlot],
+          {
+            width: 360,
+            height: 360,
+            mode: 'markers',
+            marker: {
+              size: 7
+            },
+            xaxis: {title: 'False positive rate (FPR)', range: [0, 1]},
+            yaxis: {title: 'True positive rate (TPR)', range: [0, 1]},
+            font: {size: 18}
+          });
+      evalResultsSpan.textContent = `AUC = ${evalResult.auc}`;
+    } catch (err) {
+      const originalTextContent = evalModelOnDatasetButton.textContent;
+      evalModelOnDatasetButton.textContent = err.message;
+      setTimeout(() => {
+        evalModelOnDatasetButton.textContent = originalTextContent;
+      }, 2000);
+    }
+    evalModelOnDatasetButton.disabled = false;
+  };
+  datasetFileReader.onerror = () =>
+      console.error(`Failed to binary data from file '${dataFile.name}'.`);
+  datasetFileReader.readAsArrayBuffer(files[0]);
+});
 
 async function populateSavedTransferModelsSelect() {
   const savedModelKeys = await SpeechCommands.listSavedTransferModels();

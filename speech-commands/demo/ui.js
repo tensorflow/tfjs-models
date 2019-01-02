@@ -68,7 +68,6 @@ export function hideCandidateWords() {
   candidateWordsContainer.classList.add('candidate-words-hidden');
 }
 
-
 /**
  * Show an audio spectrogram in a canvas.
  *
@@ -82,8 +81,10 @@ export function hideCandidateWords() {
  *   supported fields:
  *   - pixelsPerFrame {number} Number of pixels along the width dimension of
  *     the canvas for each frame of spectrogram.
+ *   - maxPixelWidth {number} Maximum width in pixels.
  *   - markMaxIntensityFrame {bool} Whether to mark the index of the frame
  *     with the maximum intensity.
+ *
  *   <= fftSize.
  */
 export async function plotSpectrogram(
@@ -118,7 +119,10 @@ export async function plotSpectrogram(
 
   const numFrames = frequencyData.length / fftSize;
   if (config.pixelsPerFrame != null) {
-    const realWidth = Math.round(config.pixelsPerFrame * numFrames);
+    let realWidth = Math.round(config.pixelsPerFrame * numFrames);
+    if (config.maxPixelWidth != null && realWidth > config.maxPixelWidth) {
+      realWidth = config.maxPixelWidth;
+    }
     canvas.width = realWidth;
   }
 
@@ -189,7 +193,8 @@ export function plotPredictions(
     // Highlight the top word.
     const topWord = wordsAndProbs[0][0];
     console.log(
-        `Word recognized: ${topWord} (p = ${wordsAndProbs[0][1].toFixed(6)})`);
+        `"${topWord}" (p=${wordsAndProbs[0][1].toFixed(6)}) @ ` +
+        new Date().toTimeString());
     for (const word in candidateWordSpans) {
       if (word === topWord) {
         candidateWordSpans[word].classList.add('candidate-word-active');

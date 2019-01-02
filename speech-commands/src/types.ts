@@ -127,6 +127,14 @@ export interface ExampleCollectionOptions {
    * Must be a number >=1.
    */
   durationMultiplier?: number;
+
+  /**
+   * Duration in seconds.
+   *
+   * Mutually exclusive with durationMultiplier.
+   * If specified, must be >0.
+   */
+  durationSec?: number;
 }
 
 /**
@@ -183,6 +191,19 @@ export interface TransferSpeechCommandRecognizer extends
    */
   train(config?: TransferLearnConfig):
       Promise<tf.History|[tf.History, tf.History]>;
+
+  /**
+   * Perform evaluation of the model using the examples that the model
+   * has loaded.
+   * 
+   * The evaluation calcuates an ROC curve by lumping the non-background-noise
+   * classes into a positive category and treating the background-noise
+   * class as the negative category.
+   *
+   * @param config Configuration object for the evaluation.
+   * @returns A Promise of the result of evaluation.
+   */
+  evaluate(config: EvaluateConfig): Promise<EvaluateResult>;
 
   /**
    * Get examples currently held by the transfer-learning recognizer.
@@ -465,6 +486,55 @@ export interface TransferLearnConfig {
    * a hop of Math.round(43 * 0.25) = 11 frames.
    */
   windowHopRatio?: number;
+}
+
+/**
+ * Type for a Receiver Operating Characteristics (ROC) curve.
+ */
+export type ROCCurve = Array<{
+  probThreshold?: number,  /** Probability threshold */
+  fpr: number,  /** False positive rate (FP / N) */
+  tpr: number   /** True positive rate (TP / P) */
+  falsePositivesPerHour?: number  /** FPR converted to per hour rate */
+}>;
+
+/**
+ * Model evaluation result.
+ */
+export interface EvaluateResult {
+  /**
+   * ROC curve.
+   */
+  rocCurve?: ROCCurve;
+
+  /**
+   * Area under the (ROC) curve.
+   */
+  auc?: number;
+}
+
+/**
+ * Model evaluation configuration.
+ */
+export interface EvaluateConfig {
+  /**
+   * Ratio between the window hop and the window width.
+   *
+   * Used during extraction of multiple spectrograms matching the underlying
+   * model's input shape from a longer spectroram.
+   *
+   * For example, if the spectrogram window accepted by the underlying model
+   * is 43 frames long, then the default windowHopRatio 0.25 will lead to
+   * a hop of Math.round(43 * 0.25) = 11 frames.
+   */
+  windowHopRatio: number;
+
+  /**
+   * Word probability score thresholds, used to calculate the ROC.
+   *
+   * E.g., [0, 0.2, 0.4, 0.6, 0.8, 1.0].
+   */
+  wordProbThresholds: number[];
 }
 
 /**
