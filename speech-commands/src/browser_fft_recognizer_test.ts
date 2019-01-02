@@ -1008,8 +1008,10 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(transfer.wordLabels()).toEqual(['_background_noise_', 'bar']);
     transfer.listen(async (result: SpeechCommandRecognizerResult) => {
       expect((result.scores as Float32Array).length).toEqual(2);
-      await transfer.stopListening();
-      done();
+      transfer.stopListening().then(done);
+    }, {
+      probabilityThreshold: 0,
+      invokeCallbackOnNoiseAndUnknown: true
     });
   });
 
