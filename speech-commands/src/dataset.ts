@@ -369,7 +369,7 @@ export class Dataset {
           const windows =
               getValidWindows(snippetLength, focusIndex, numFrames, hopFrames);
 
-          let snippet = tf.tidy(() => {
+          const snippet = tf.tidy(() => {
             const EPSILON = 1e-5;
             let spectrogramTensor =
                 tf.tensor3d(spectrogram.data, [snippetLength, frameSize, 1]);
@@ -396,7 +396,6 @@ export class Dataset {
       // Shuffle the data.
       const shuffle = config.shuffle == null ? true : config.shuffle;
       if (shuffle) {
-        console.log(`Shuffling data!`);  // DEBUG
         const zipped: Array<{x: tf.Tensor3D, y: number}> = [];
         xTensors.forEach((xTensor, i) => {
           zipped.push({x: xTensor, y: labelIndices[i]});

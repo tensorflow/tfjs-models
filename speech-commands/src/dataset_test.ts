@@ -369,8 +369,8 @@ describe('Dataset', () => {
     dataset.addExample(getRandomExample('bar', 6));
     dataset.addExample(getRandomExample('foo', 7));
 
-    const {xs, ys} =
-        dataset.getSpectrogramsAsTensors(null, {numFrames: 5, hopFrames: 5, shuffle: false});
+    const {xs, ys} = dataset.getSpectrogramsAsTensors(
+        null, {numFrames: 5, hopFrames: 5, shuffle: false});
     expect(xs.shape).toEqual([3, 5, FAKE_FRAME_SIZE, 1]);
     expectArraysClose(ys, tf.tensor2d([[1, 0], [0, 1], [0, 1]]));
   });
@@ -394,8 +394,8 @@ describe('Dataset', () => {
     dataset.addExample(
         getRandomExample('bar', 5, 2, [1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
 
-    const {xs, ys} =
-        dataset.getSpectrogramsAsTensors(null, {numFrames: 3, hopFrames: 1, shuffle: false});
+    const {xs, ys} = dataset.getSpectrogramsAsTensors(
+        null, {numFrames: 3, hopFrames: 1, shuffle: false});
     const windows = tf.unstack(xs);
 
     expect(windows.length).toEqual(6);
@@ -419,8 +419,8 @@ describe('Dataset', () => {
     dataset.addExample(
         getRandomExample('bar', 6, 2, [0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
 
-    const {xs, ys} =
-        dataset.getSpectrogramsAsTensors(null, {numFrames: 5, hopFrames: 1, shuffle: false});
+    const {xs, ys} = dataset.getSpectrogramsAsTensors(
+        null, {numFrames: 5, hopFrames: 1, shuffle: false});
     const windows = tf.unstack(xs);
     expect(windows.length).toEqual(4);
     expectArraysClose(
@@ -443,8 +443,8 @@ describe('Dataset', () => {
         [0, 0, 10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
     dataset.addExample(
         getRandomExample('bar', 6, 2, [0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
-    const {xs, ys} =
-        dataset.getSpectrogramsAsTensors(null, {numFrames: 3, hopFrames: 2, shuffle: false});
+    const {xs, ys} = dataset.getSpectrogramsAsTensors(
+        null, {numFrames: 3, hopFrames: 2, shuffle: false});
     const windows = tf.unstack(xs);
     expect(windows.length).toEqual(4);
     expectArraysClose(
