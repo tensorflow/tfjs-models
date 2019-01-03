@@ -17,6 +17,7 @@
 
 import * as tf from '@tensorflow/tfjs';
 
+import {normalize} from './browser_fft_utils';
 import {arrayBuffer2String, concatenateArrayBuffers, getUID, string2ArrayBuffer} from './generic_utils';
 import {Example, SpectrogramData} from './types';
 
@@ -118,6 +119,25 @@ export interface GetSpectrogramsConfig {
    * Must be provided if any such long examples exist.
    */
   hopFrames?: number;
+
+  /**
+   * Whether the spectrogram of each example will be normalized.
+   *
+   * Normalization means:
+   * - Subtracting the mean, and
+   * - Dividing the result by the standard deviation.
+   *
+   * Default: `true`.
+   */
+  normalize?: boolean;
+
+  /**
+   * Whether the examples will be shuffled prior to merged into
+   * `tf.Tensor`s.
+   *
+   * Default: `true`.
+   */
+  shuffle?: boolean;
 }
 
 /**
@@ -200,6 +220,22 @@ export class Dataset {
     }
     this.label2Ids[example.label].push(uid);
     return uid;
+  }
+
+  /**
+   * Merge the incoming datast into this dataset
+   *
+   * @param dataset The incoming dataset to be merged into this dataset.
+   */
+  merge(dataset: Dataset): void {
+    tf.util.assert(dataset !== this, 'Cannot merge a dataset into itself');
+    const vocab = dataset.getVocabulary();
+    for (const word of vocab) {
+      const examples = dataset.getExamples(word);
+      for (const example of examples) {
+        this.addExample(example.example);
+      }
+    }
   }
 
   /**
@@ -321,9 +357,12 @@ export class Dataset {
               `is required. But it is not provided.`);
     }
 
+    // Normalization is performed by default.
+    const toNormalize = config.normalize == null ? true : config.normalize;
+
     return tf.tidy(() => {
-      const xTensors: tf.Tensor3D[] = [];
-      const labelIndices: number[] = [];
+      let xTensors: tf.Tensor3D[] = [];
+      let labelIndices: number[] = [];
       let uniqueFrameSize: number;
       for (let i = 0; i < vocab.length; ++i) {
         const currentLabel = vocab[i];
@@ -349,20 +388,36 @@ export class Dataset {
               getMaxIntensityFrameIndex(spectrogram).dataSync()[0];
           // TODO(cais): See if we can get rid of dataSync();
 
-          const windows =
-              getValidWindows(snippetLength, focusIndex, numFrames, hopFrames);
-
           const snippet =
               tf.tensor3d(spectrogram.data, [snippetLength, frameSize, 1]);
+          const windows =
+              getValidWindows(snippetLength, focusIndex, numFrames, hopFrames);
           for (const window of windows) {
-            xTensors.push(snippet.slice(
-                [window[0], 0, 0], [window[1] - window[0], -1, -1]));
+            const windowedSnippet = tf.tidy(() => {
+              const output = snippet.slice(
+                  [window[0], 0, 0], [window[1] - window[0], -1, -1]);
+              return toNormalize ? normalize(output) : output;
+            });
+            xTensors.push(windowedSnippet as tf.Tensor3D);
             if (label == null) {
               labelIndices.push(i);
             }
           }
         }
       }
+
+      // Shuffle the data.
+      const shuffle = config.shuffle == null ? true : config.shuffle;
+      if (shuffle) {
+        const zipped: Array<{x: tf.Tensor3D, y: number}> = [];
+        xTensors.forEach((xTensor, i) => {
+          zipped.push({x: xTensor, y: labelIndices[i]});
+        });
+        tf.util.shuffle(zipped);
+        xTensors = zipped.map(item => item.x);
+        labelIndices = zipped.map(item => item.y);
+      }
+
       return {
         xs: tf.stack(xTensors) as tf.Tensor4D,
         ys: label == null ?
