@@ -34,7 +34,7 @@ import {Dataset} from '../../src/dataset';
  * @param numClasses Number of output classes.
  * @returns An uncompiled tf.Model object.
  */
-function createBrowserFFTModel(
+export function createBrowserFFTModel(
     inputShape: tf.Shape, numClasses: number): tf.Model {
   const model = tf.sequential();
   model.add(tf.layers.conv2d(
@@ -238,4 +238,6 @@ async function main() {
   console.log(`Saved metadata to: ${metadataPath}`);
 }
 
-main();
+if (require.main === module) {
+  main();
+}
