@@ -367,15 +367,17 @@ export class Dataset {
               getMaxIntensityFrameIndex(spectrogram).dataSync()[0];
           // TODO(cais): See if we can get rid of dataSync();
 
-          const windows =
-              getValidWindows(snippetLength, focusIndex, numFrames, hopFrames);
-
           const snippet =
               tf.tensor3d(spectrogram.data, [snippetLength, frameSize, 1]);
+          const windows =
+              getValidWindows(snippetLength, focusIndex, numFrames, hopFrames);
           for (const window of windows) {
-            xTensors.push(normalize(snippet.slice([window[0], 0, 0], [
-                            window[1] - window[0], -1, -1
-                          ])) as tf.Tensor3D);
+            const windowedSnippet = tf.tidy(() => {
+              const output = snippet.slice(
+                  [window[0], 0, 0], [window[1] - window[0], -1, -1]);
+              return toNormalize ? normalize(output) : output;
+            });
+            xTensors.push(windowedSnippet as tf.Tensor3D);
             if (label == null) {
               labelIndices.push(i);
             }
