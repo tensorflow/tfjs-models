@@ -17,6 +17,7 @@
 
 import * as tf from '@tensorflow/tfjs';
 
+import {normalize} from './browser_fft_utils';
 import {arrayBuffer2String, concatenateArrayBuffers, getUID, string2ArrayBuffer} from './generic_utils';
 import {Example, SpectrogramData} from './types';
 
@@ -336,7 +337,7 @@ export class Dataset {
     }
 
     // Normalization is performed by default.
-    const normalize = config.normalize == null ? true : config.normalize;
+    const toNormalize = config.normalize == null ? true : config.normalize;
 
     return tf.tidy(() => {
       let xTensors: tf.Tensor3D[] = [];
@@ -369,23 +370,12 @@ export class Dataset {
           const windows =
               getValidWindows(snippetLength, focusIndex, numFrames, hopFrames);
 
-          const snippet = tf.tidy(() => {
-            const EPSILON = 1e-5;
-            let spectrogramTensor =
-                tf.tensor3d(spectrogram.data, [snippetLength, frameSize, 1]);
-            if (normalize) {
-              // Normalize the spectrogram.
-              const {mean, variance} = tf.moments(spectrogramTensor);
-              const std = tf.sqrt(variance);
-              spectrogramTensor =
-                  spectrogramTensor.sub(mean).div(std.add(EPSILON));
-            }
-            return spectrogramTensor;
-          });
-
+          const snippet =
+              tf.tensor3d(spectrogram.data, [snippetLength, frameSize, 1]);
           for (const window of windows) {
-            xTensors.push(snippet.slice(
-                [window[0], 0, 0], [window[1] - window[0], -1, -1]));
+            xTensors.push(normalize(snippet.slice([window[0], 0, 0], [
+                            window[1] - window[0], -1, -1
+                          ])) as tf.Tensor3D);
             if (label == null) {
               labelIndices.push(i);
             }

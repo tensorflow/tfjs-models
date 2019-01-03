@@ -39,9 +39,10 @@ export async function loadMetadataJson(url: string):
 }
 
 export function normalize(x: tf.Tensor): tf.Tensor {
+  const EPSILON = tf.ENV.get('EPSILON');
   return tf.tidy(() => {
     const {mean, variance} = tf.moments(x);
-    return x.sub(mean).div(variance.sqrt());
+    return x.sub(mean).div(variance.sqrt().add(EPSILON));
   });
 }
 
