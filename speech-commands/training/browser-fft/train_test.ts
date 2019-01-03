@@ -20,6 +20,7 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
+import '@tensorflow/tfjs-node';
 import {createBrowserFFTModel} from './train';
 
 describe('Model and training', () => {
