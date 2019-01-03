@@ -55,13 +55,20 @@ The following steps are involved:
    tar xzvf speech-commands-data-v0.02-browser.tar.gz
    ```
 
-2. Start training. If using CPU (tfjs-node):
+2. Start training. First, download JavaScript dependencies using:
+
+   ```sh
+   yarn
+   ```
+
+   Then, to train the model using CPU (tfjs-node):
 
    ```sh
    yarn train speech-commands-data-v0.02-browser/ ./my-model/
    ```
 
-   If using GPU (tfjs-node-gpu, requires CUDA-enabled GPU and drivers)
+   Or, to train the model using a GPU (tfjs-node-gpu,
+   requires CUDA-enabled GPU and drivers):
 
    ```sh
    yarn train --gpu speech-commands-data-v0.02-browser/ ./my-model/
