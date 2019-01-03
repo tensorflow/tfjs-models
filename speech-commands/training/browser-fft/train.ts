@@ -151,6 +151,7 @@ async function main() {
           `got vocabulary: ${JSON.stringify(vocab)}`);
   console.log(`Vocabulary size: ${vocab.length} (${JSON.stringify(vocab)})`);
 
+  console.log('Collecting spectrogram and targets data...');
   let {xs, ys} = trainDataset.getSpectrogramsAsTensors(null, {shuffle: true});
   tf.util.assert(
       xs.rank === 4,
@@ -161,6 +162,7 @@ async function main() {
 
   // Split the data manually into the training and validation subsets.
   // We do this manually for memory efficiency.
+  console.log('Splitting data into training and validation subsets...');
   let validationData: [tf.Tensor, tf.Tensor] = null;
   if (args.validationSplit > 0) {
     const numExamples = xs.shape[0];

@@ -382,6 +382,7 @@ export class Dataset {
               labelIndices.push(i);
             }
           }
+          tf.dispose(snippet);  // For memory saving.
         }
       }
 
