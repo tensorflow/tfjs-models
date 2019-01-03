@@ -38,10 +38,15 @@ export async function loadMetadataJson(url: string):
   }
 }
 
+let EPSILON: number = null;
+
 export function normalize(x: tf.Tensor): tf.Tensor {
-  const EPSILON = tf.ENV.get('EPSILON');
+  if (EPSILON == null) {
+    EPSILON = tf.ENV.get('EPSILON');
+  }
   return tf.tidy(() => {
     const {mean, variance} = tf.moments(x);
+    // Add an EPSILON to the denominator to prevent division-by-zero.
     return x.sub(mean).div(variance.sqrt().add(EPSILON));
   });
 }
