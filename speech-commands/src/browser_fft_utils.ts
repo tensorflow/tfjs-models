@@ -40,6 +40,15 @@ export async function loadMetadataJson(url: string):
 
 let EPSILON: number = null;
 
+/**
+ * Normalize the input into zero mean and unit standard deviation.
+ *
+ * This function is safe against divison-by-zero: In case the standard
+ * deviation is zero, the output will be all-zero.
+ *
+ * @param x Input tensor.
+ * @param y Output normalized tensor.
+ */
 export function normalize(x: tf.Tensor): tf.Tensor {
   if (EPSILON == null) {
     EPSILON = tf.ENV.get('EPSILON');
