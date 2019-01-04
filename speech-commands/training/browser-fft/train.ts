@@ -62,9 +62,10 @@ export function createBrowserFFTModel(
  * Load dataset from a processed data directory.
  *
  * @param inputPath Path to the input directory, expcted to contain
- *   a set of TFJSSCDS-format (.bin) files in a nested fashion.
- * @return A Dataset objects, which includes the data from all the TFJSSCDS
- *   (.bin) files combined.
+ *   a set of TFJSSCDS-format (.bin) files in a nested fashion. See
+ *   `../../src/dataset.ts` for the definition of the TFJSSCDS format.
+ * @return A Dataset object, which includes the data from all the TFJSSCDS
+ *   (.bin) files under `inputPath` combined.
  */
 function loadDataset(inputPath): Dataset {
   if (!fs.lstatSync(inputPath).isDirectory()) {

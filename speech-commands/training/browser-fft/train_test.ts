@@ -19,6 +19,8 @@
  * Unit test for model training script: train.ts.
  */
 
+import * as tf from '@tensorflow/tfjs';
+import '@tensorflow/tfjs-node';
 import {createBrowserFFTModel} from './train';
 
 describe('Model and training', () => {
@@ -36,8 +38,7 @@ describe('Model and training', () => {
   // it('Fit model', async () => {
   //   const model = createBrowserFFTModel([43, 232, 1], 4);
   //   model.compile(
-  //       {loss: 'categoricalCrossentropy', optimizer: 'sgd',
-  //        metrics: ['acc']});
+  //       {loss: 'categoricalCrossentropy', optimizer: 'sgd', metrics: ['acc']});
   //   const xs = tf.randomNormal([10, 43, 232, 1]);
   //   const ys =
   //       tf.oneHot(tf.tensor1d([0, 1, 2, 3, 0, 1, 2, 3, 0, 1], 'int32'), 4);
