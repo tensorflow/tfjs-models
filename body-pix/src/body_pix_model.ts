@@ -248,7 +248,7 @@ export async function load(multiplier: MobileNetMultiplier = 0.75):
 
   tf.util.assert(
       possibleMultipliers.indexOf(multiplier.toString()) >= 0,
-      `invalid multiplier value of ` + multiplier +
+      `invalid multiplier value of ${multiplier}` +
           `.  No checkpoint exists for that ` +
           `multiplier. Must be one of ${possibleMultipliers.join(',')}.`);
 
