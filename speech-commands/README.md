@@ -264,7 +264,7 @@ setTimeout(() => transferRecognizer.stopListening(), 10e3);
 
 ## Live demo
 
-A developer-oriented live demo is available
+A developer-oriented live demo is available at
 [this address](https://storage.googleapis.com/tfjs-speech-model-test/2019-01-03a/dist/index.html).
 
 ## How to run the demo from source code
