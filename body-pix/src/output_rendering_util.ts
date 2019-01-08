@@ -322,9 +322,11 @@ export function drawBokehEffect(
   // transparent."
   // crop what's not the person using the mask from the original image
   drawWithCompositing(ctx, backgroundMask, 'destination-in');
-  // "source-over" - "This is the default setting and draws new shapes on top
-  // of the existing canvas content." draw the blurred background on top
-  // of that.
+  // "destination-over" - "The existing canvas content is kept where both the
+  // new shape and existing canvas content overlap. Everything else is made
+  // transparent."
+  // draw the blurred background on top of the original image where it doesn't
+  // overlap.
   drawWithCompositing(ctx, blurredImage, 'destination-over');
   ctx.restore();
 }
