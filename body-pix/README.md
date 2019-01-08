@@ -147,7 +147,7 @@ An example of applying a [bokeh effect](https://www.nikonusa.com/en/learn-and-ex
 ### Body Part Segmentation
 
 Body part segmentation segments an image into pixels that are part of one of twenty-four body parts of a person, and to those that are not part of a person.
-It returns an array with a part id from 0-24 for the pixels that are part of a corresponding body part, and -1 otherwise. The array size corresponds to the number of pixels in the image.
+It returns an object containing an array with a part id from 0-24 for the pixels that are part of a corresponding body part, and -1 otherwise. The array size corresponds to the number of pixels in the image.
 
 ![Colored Part Image](colored-parts.gif)
 
@@ -156,6 +156,38 @@ const net = await bodyPix.load();
 
 const partSegmentation = await net.estimatePartSegmentation(image, flipHorizontal, outputStride, segmentationThreshold);
 ```
+
+#### The Body Parts
+
+As stated above, the result contains an array with ids for one of 24 body parts, or -1 if there is no body part:
+
+| Part Id | Part Name          |
+|---------|--------------------|
+| -1      | (no body part)     |
+| 0       | leftFace           |
+| 1       | rightFace          |
+| 2       | rightUpperLegFront |
+| 3       | rightLowerLegBack  |
+| 4       | rightUpperLegBack  |
+| 5       | leftLowerLegFront  |
+| 6       | leftUpperLegFront  |
+| 7       | leftUpperLegBack   |
+| 8       | leftLowerLegBack   |
+| 9       | rightFeet          |
+| 10      | rightLowerLegFront |
+| 11      | leftFeet           |
+| 12      | torsoFront         |
+| 13      | torsoBack          |
+| 14      | rightUpperArmFront |
+| 15      | rightUpperArmBack  |
+| 16      | rightLowerArmBack  |
+| 17      | leftLowerArmFront  |
+| 18      | leftUpperArmFront  |
+| 19      | leftUpperArmBack   |
+| 20      | leftLowerArmBack   |
+| 21      | rightHand          |
+| 22      | rightLowerArmFront |
+| 23      | leftHand           |
 
 #### Inputs
 
@@ -252,6 +284,22 @@ Given the output from estimating person segmentation, generates a black image wi
 
 An [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) with the same width and height of the personSegmentation, with opacity and transparency at each pixel determined by the corresponding binary segmentation value at the pixel from the output.
 
+##### Example Usage
+
+```javascript
+const imageElement = documet.getElementById('person');
+
+const net = await bodyPix.load();
+const personSegmentation = await net.estimatePersonSegmentation(imageElement);
+
+const invertMask = false;
+const maskImage = bodyBix.toMaskImageData(personSegmentation, invertMask);
+```
+
+![MaskImageData](./images/toMaskImageData.jpg)
+
+*With the output from `estimatePersonSegmentation` on the first image above, `toMaskImageData` will produce an [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) that either looks like the second image above if `invertMask` is set to false (by default), or the third image if `invertMask` is set to true.  This can be used to mask either the person or the background in the method `drawMask`.*
+
 #### `toColoredPartImageData`
 
 Given the output from estimating part segmentation, and an array of colors indexed by part id, generates an image with the corresponding color for each part at each pixel, and black pixels where there is no part.
@@ -260,7 +308,7 @@ Given the output from estimating part segmentation, and an array of colors index
 
 * **partSegmentation** The output from estimatePartSegmentation.
 
-* **partColors** A multi-dimensional array of rgb colors indexed by part id.  Must have 24 colors, one for every part.
+* **partColors** A multi-dimensional array of rgb colors indexed by part id.  Must have 24 colors, one for every part.  For some sample `partColors` check out [the ones used in the demo.](./demos/part_color_scales.js)
 
 ##### Returns
 
@@ -274,14 +322,15 @@ const imageElement = document.getElementById('person');
 const net = await bodyPix.load();
 const partSegmentation = await net.estimatePartSegmentation(imageElement);
 
-const rainbow = [
-  [110, 64, 170], [143, 61, 178], [178, 60, 178], [210, 62, 167],
-  [238, 67, 149], [255, 78, 125], [255, 94, 99],  [255, 115, 75],
-  [255, 140, 56], [239, 167, 47], [217, 194, 49], [194, 219, 64],
-  [175, 240, 91], [135, 245, 87], [96, 247, 96],  [64, 243, 115],
-  [40, 234, 141], [28, 219, 169], [26, 199, 194], [33, 176, 213],
-  [47, 150, 224], [65, 125, 224], [84, 101, 214], [99, 81, 195]
+const warm = [
+  [110, 64, 170], [106, 72, 183], [100, 81, 196], [92, 91, 206],
+  [84, 101, 214], [75, 113, 221], [66, 125, 224], [56, 138, 226],
+  [48, 150, 224], [40, 163, 220], [33, 176, 214], [29, 188, 205],
+  [26, 199, 194], [26, 210, 182], [28, 219, 169], [33, 227, 155],
+  [41, 234, 141], [51, 240, 128], [64, 243, 116], [79, 246, 105],
+  [96, 247, 97],  [115, 246, 91], [134, 245, 88], [155, 243, 88]
 ];
+
 
 const invert = true;
 
@@ -297,10 +346,13 @@ bodyPix.drawMask(
     flipHorizontal);
 ```
 
+![toColoredPartImageData](./images/toColoredPartImage.png)
+
+*With the output from `estimatePartSegmentation` on the first image above, and a 'warm' color scale, `toColoredPartImageData` will produce an ImageData that looks like the second image above.  The colored part image can be drawn on top of the original image with an `opacity` of 0.7  onto a canvas using `drawMask`; the result is is shown in the third image above.*
+
 #### `drawMask`
 
-Given a personSegmentation and an image, draws the image with a mask on top
-of it onto a canvas.
+Draws an image onto a canvas and draws an `ImageData` containing a mask on top of it with a specified opacity; The `ImageData` is typically generated using `toMaskImageData` or `toColoredPartImageData`.
 
 ##### Inputs
 
