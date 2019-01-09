@@ -185,7 +185,11 @@ function setupGui(cameras, net) {
 
   let partMap = gui.addFolder('Part Map');
   partMap.add(guiState.partMap, 'segmentationThreshold', 0.0, 1.0);
-  partMap.add(guiState.partMap, 'colorScale', Object.keys(partColorScales));
+  partMap.add(guiState.partMap, 'colorScale', Object.keys(partColorScales))
+      .onChange(colorScale => {
+        setShownPartColorScales(colorScale);
+      });
+  setShownPartColorScales(guiState.partMap.colorScale);
 
   architectureController.onChange(function(architecture) {
     guiState.changeToArchitecture = architecture;
@@ -195,11 +199,33 @@ function setupGui(cameras, net) {
     if (estimationType === 'segmentation') {
       segmentation.open();
       partMap.close();
+      document.getElementById('colors').style.display = 'none';
     } else {
       segmentation.close();
       partMap.open();
+      document.getElementById('colors').style.display = 'inline-block';
     }
   });
+}
+
+function setShownPartColorScales(colorScale) {
+  const colors = document.getElementById('colors');
+  colors.innerHTML = '';
+
+  const partColors = partColorScales[colorScale];
+  const partNames = bodyPix.partChannels;
+
+  for (let i = 0; i < partColors.length; i++) {
+    const partColor = partColors[i];
+    const child = document.createElement('li');
+
+    child.innerHTML = `
+        <div class='color' style='background-color:rgb(${partColor[0]},${
+        partColor[1]},${partColor[2]})' ></div>
+        ${partNames[i]}`;
+
+    colors.appendChild(child);
+  }
 }
 
 /**
@@ -297,7 +323,7 @@ export async function bindPage() {
   const net = await bodyPix.load(+guiState.input.mobileNetArchitecture);
 
   document.getElementById('loading').style.display = 'none';
-  document.getElementById('main').style.display = 'block';
+  document.getElementById('main').style.display = 'inline-block';
 
   let video;
 
