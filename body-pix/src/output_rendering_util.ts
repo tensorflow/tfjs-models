@@ -126,30 +126,30 @@ function renderImageDataToOffScreenCanvas(
  * Given the output from estimating person segmentation, generates a black image
  * with opacity and transparency at each pixel determined by the corresponding
  * binary segmentation value at the pixel from the output.  In other words,
- * pixels where there is a person will be opaque and where there is not a person
- * will be transparent, and visa-versa when 'invertMask' is set to true. This
- * can be used as a mask to crop a person or the background when compositing.
+ * pixels where there is a person will be transparent and where there is not a
+ * person will be opaque, and visa-versa when 'maskBackground' is set to
+ * false. This can be used as a mask to crop a person or the background when
+ * compositing.
  *
  * @param segmentation The output from estimagePersonSegmentation; an object
  * containing a width, height, and a binary array with 1 for the pixels that are
  * part of the person, and 0 otherwise.
  *
- * @param invertMask If the mask should be inverted. Defaults to false.  When
- * set to true, pixels where there is a person are transparent and where there
- * is no person become opaque.
+ * @param maskBackground If the mask should be opaque where the background is.
+ * Defaults to true. When set to true, pixels where there is a person are
+ * transparent and where there is no person become opaque.
  *
  * @returns An ImageData with the same width and height of the
  * personSegmentation, with opacity and transparency at each pixel determined by
  * the corresponding binary segmentation value at the pixel from the output.
  */
 export function toMaskImageData(
-    segmentation: PersonSegmentation, invertMask = false): ImageData {
+    segmentation: PersonSegmentation, maskBackground = true): ImageData {
   const {width, height, data} = segmentation;
   const bytes = new Uint8ClampedArray(width * height * 4);
 
   for (let i = 0; i < height * width; ++i) {
-    // invert mask.  Invert the segmentation mask.
-    const shouldMask = invertMask ? 1 - data[i] : data[i];
+    const shouldMask = maskBackground ? 1 - data[i] : data[i];
     // alpha will determine how dark the mask should be.
     const alpha = shouldMask * 255;
 
@@ -261,11 +261,11 @@ export function drawMask(
   ctx.restore();
 }
 
-function createBackgroundMask(
+function createPersonMask(
     segmentation: PersonSegmentation,
     edgeBlurAmount: number): HTMLCanvasElement {
-  const invertMask = false;
-  const backgroundMaskImage = toMaskImageData(segmentation, invertMask);
+  const maskBackground = false;
+  const backgroundMaskImage = toMaskImageData(segmentation, maskBackground);
 
   const backgroundMask =
       renderImageDataToOffScreenCanvas(backgroundMaskImage, CANVAS_NAMES.mask);
@@ -307,8 +307,7 @@ export function drawBokehEffect(
   const blurredImage = drawAndBlurImageOnOffScreenCanvas(
       image, backgroundBlurAmount, CANVAS_NAMES.blurred);
 
-  const backgroundMask =
-      createBackgroundMask(personSegmentation, edgeBlurAmount);
+  const personMask = createPersonMask(personSegmentation, edgeBlurAmount);
 
   const ctx = canvas.getContext('2d');
   ctx.save();
@@ -321,7 +320,7 @@ export function drawBokehEffect(
   // new shape and existing canvas content overlap. Everything else is made
   // transparent."
   // crop what's not the person using the mask from the original image
-  drawWithCompositing(ctx, backgroundMask, 'destination-in');
+  drawWithCompositing(ctx, personMask, 'destination-in');
   // "destination-over" - "The existing canvas content is kept where both the
   // new shape and existing canvas content overlap. Everything else is made
   // transparent."

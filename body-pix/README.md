@@ -273,12 +273,12 @@ BodyPix contains utility functions to help with drawing and compositing using th
 
 #### `toMaskImageData`
 
-Given the output from estimating person segmentation, generates a black image with opacity and transparency at each pixel determined by the corresponding binary segmentation value at the pixel from the output.  In other words, pixels where there is a person will be opaque and where there is not a person will be transparent, and visa-versa when 'invertMask' is set to true. This can be used as a mask to crop a person or the background when compositing.
+Given the output from estimating person segmentation, generates a black image with opacity and transparency at each pixel determined by the corresponding binary segmentation value at the pixel from the output.  In other words, pixels where there is a person will be transparent and where there is not a person will be opaque, and visa-versa when `maskBackground` is set to false. This can be used as a mask to crop a person or the background when compositing.
 
 ##### Inputs
 
 * **segmentation** The output from estimagePersonSegmentation.
-* **invertMask** If the mask should be inverted. Defaults to false.  When set to true, pixels where there is a person are transparent and where there is no person become opaque.
+* **maskBackground** If the mask should be opaque where the background is. Defaults to true. When set to true, pixels where there is a person are transparent and where there is no person become opaque.
 
 ##### Returns
 
@@ -298,7 +298,7 @@ const maskImage = bodyBix.toMaskImageData(personSegmentation, invertMask);
 
 ![MaskImageData](./images/toMaskImageData.jpg)
 
-*With the output from `estimatePersonSegmentation` on the first image above, `toMaskImageData` will produce an [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) that either looks like the second image above if `invertMask` is set to false (by default), or the third image if `invertMask` is set to true.  This can be used to mask either the person or the background in the method `drawMask`.*
+*With the output from `estimatePersonSegmentation` on the first image above, `toMaskImageData` will produce an [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) that either looks like the second image above if `maskBackground` is set to true (by default), or the third image if `maskBackground` is set to false.  This can be used to mask either the person or the background using the method `drawMask`.*
 
 #### `toColoredPartImageData`
 
@@ -371,10 +371,10 @@ const imageElement = document.getElementById('image');
 const net = await bodyPix.load();
 const segmentation = await net.estimatePersonSegmentation(imageElement);
 
-const invert = true;
+const maskBackground = true;
 // Convert the personSegmentation into a mask to darken the background.
 // Since invert is set to true, there will be 1s where the background is and 0s where the person is.
-const backgroundDarkeningMask = bodyPix.toMaskImageData(personSegmentation, invert);
+const backgroundDarkeningMask = bodyPix.toMaskImageData(personSegmentation, maskBackground);
 
 const opacity = 0.7;
 const maskBlurAmount = 3;

@@ -86,6 +86,7 @@ const guiState = {
   segmentation: {
     segmentationThreshold: 0.5,
     effect: 'mask',
+    maskBackground: true,
     opacity: 0.7,
     backgroundBlurAmount: 3,
     maskBlurAmount: 0,
@@ -136,6 +137,7 @@ function setupGui(cameras, net) {
   let bokehBlurAmount;
   let edgeBlurAmount;
   let maskBlurAmount;
+  let maskBackground;
 
   segmentationEffectController.onChange(function(effectType) {
     if (effectType === 'mask') {
@@ -151,12 +153,17 @@ function setupGui(cameras, net) {
                            .min(0)
                            .max(20)
                            .step(1);
+      maskBackground =
+          segmentation.add(guiState.segmentation, 'maskBackground');
     } else if (effectType === 'bokeh') {
       if (darknessLevel) {
         darknessLevel.remove();
       }
       if (maskBlurAmount) {
         maskBlurAmount.remove();
+      }
+      if (maskBackground) {
+        maskBackground.remove();
       }
       bokehBlurAmount = segmentation
                             .add(
@@ -240,12 +247,10 @@ function segmentBodyInRealTime(video, net) {
 
         switch (guiState.segmentation.effect) {
           case 'mask':
-            const invert = true;
-            const backgroundDarkeningMask =
-                bodyPix.toMaskImageData(personSegmentation, invert);
+            const mask = bodyPix.toMaskImageData(
+                personSegmentation, guiState.segmentation.maskBackground);
             bodyPix.drawMask(
-                canvas, video, backgroundDarkeningMask,
-                guiState.segmentation.opacity,
+                canvas, video, mask, guiState.segmentation.opacity,
                 guiState.segmentation.maskBlurAmount, flipHorizontal);
 
             break;
