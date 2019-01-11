@@ -64,11 +64,15 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
         model = tf.sequential();
         model.add(tf.layers.flatten(
             {inputShape: [fakeNumFrames, fakeColumnTruncateLength, 1]}));
-        secondLastBaseDenseLayer =
-            tf.layers.dense({units: 4, activation: 'relu'});
+        secondLastBaseDenseLayer = tf.layers.dense(
+            {units: 4, activation: 'relu', kernelInitializer: 'leCunNormal'});
         model.add(secondLastBaseDenseLayer);
-        model.add(tf.layers.dense(
-            {units: numWords, useBias: false, activation: 'softmax'}));
+        model.add(tf.layers.dense({
+          units: numWords,
+          useBias: false,
+          kernelInitializer: 'leCunNormal',
+          activation: 'softmax'
+        }));
       }
       return model;
     });
@@ -600,6 +604,50 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     }
   });
 
+  it('collectExample with durationSec', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    const params = transfer.params();
+    // Double the length of the spectrogram.
+    const durationSec = params.spectrogramDurationMillis * 2 / 1e3;
+    const spectrogram = await transfer.collectExample('foo', {durationSec});
+    expect(spectrogram.data.length / fakeColumnTruncateLength / fakeNumFrames)
+        .toEqual(2);
+  });
+
+  it('collectExample with 0 durationSec errors', async done => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    const durationSec = 0;
+    try {
+      await transfer.collectExample('foo', {durationSec});
+      done.fail('Failed to catch expected error');
+    } catch (err) {
+      expect(err.message).toMatch(/Expected durationSec to be > 0/);
+      done();
+    }
+  });
+
+  it('collectExample: durationMultiplier&durationSec errors', async done => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    const durationSec = 1;
+    const durationMultiplier = 2;
+    try {
+      await transfer.collectExample('foo', {durationSec, durationMultiplier});
+      done.fail('Failed to catch expected error');
+    } catch (err) {
+      expect(err.message).toMatch(/are mutually exclusive/);
+      done();
+    }
+  });
+
   it('collectTransferLearningExample default transfer model', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
@@ -907,15 +955,44 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     });
   });
 
-  it('trainTransferLearningModel with validationSplit', async done => {
+  it('train and evaluate', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();
     const transfer = base.createTransfer('xfer1');
-    for (let i = 0; i < 2; ++i) {
-      await transfer.collectExample('foo');
-      await transfer.collectExample('bar');
+    await transfer.collectExample('_background_noise_');
+    await transfer.collectExample('bar');
+    await transfer.collectExample('bar');
+    await transfer.train({epochs: 3, batchSize: 2, validationSplit: 0.5});
+
+    const wordProbThresholds = [0, 0.25, 0.5, 0.75, 1];
+    // Burn-in run for evaluate() memory tracking:
+    await transfer.evaluate({windowHopRatio: 0.25, wordProbThresholds});
+    const numTensors0 = tf.memory().numTensors;
+    const {rocCurve, auc} =
+        await transfer.evaluate({windowHopRatio: 0.25, wordProbThresholds});
+    // Assert no memory leak.
+    expect(tf.memory().numTensors).toEqual(numTensors0);
+    expect(rocCurve.length).toEqual(wordProbThresholds.length);
+    for (let i = 0; i < rocCurve.length; ++i) {
+      expect(rocCurve[i].probThreshold).toEqual(wordProbThresholds[i]);
+      expect(rocCurve[i].fpr).toBeGreaterThanOrEqual(0);
+      expect(rocCurve[i].fpr).toBeLessThanOrEqual(1);
+      expect(rocCurve[i].tpr).toBeGreaterThanOrEqual(0);
+      expect(rocCurve[i].tpr).toBeLessThanOrEqual(1);
     }
+    expect(auc).toBeGreaterThanOrEqual(0);
+    expect(auc).toBeLessThanOrEqual(1);
+  });
+
+  it('train with validationSplit and listen', async done => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    await transfer.collectExample('_background_noise_');
+    await transfer.collectExample('bar');
+    await transfer.collectExample('bar');
     const history =
         await transfer.train({epochs: 3, batchSize: 2, validationSplit: 0.5}) as
         tf.History;
@@ -928,10 +1005,13 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     // transfer-learned model's name should give scores only for the
     // transfer-learned model.
     expect(base.wordLabels()).toEqual(fakeWords);
-    expect(transfer.wordLabels()).toEqual(['bar', 'foo']);
+    expect(transfer.wordLabels()).toEqual(['_background_noise_', 'bar']);
     transfer.listen(async (result: SpeechCommandRecognizerResult) => {
       expect((result.scores as Float32Array).length).toEqual(2);
       transfer.stopListening().then(done);
+    }, {
+      probabilityThreshold: 0,
+      invokeCallbackOnNoiseAndUnknown: true
     });
   });
 
@@ -1091,7 +1171,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
         .toEqual(fakeNumFrames * fakeColumnTruncateLength * 4 * 3);
   });
 
-  it('removeExample & isDatasetEmpty', async() => {
+  it('removeExample & isDatasetEmpty', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();
@@ -1104,8 +1184,8 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     transfer.removeExample(fooExamples[0].uid);
     expect(transfer.isDatasetEmpty()).toEqual(false);
     expect(transfer.countExamples()).toEqual({'bar': 2});
-    expect(() => transfer.getExamples('foo')).toThrowError(
-        'No example of label "foo" exists in dataset');
+    expect(() => transfer.getExamples('foo'))
+        .toThrowError('No example of label "foo" exists in dataset');
     const barExamples = transfer.getExamples('bar');
     transfer.removeExample(barExamples[0].uid);
     expect(transfer.isDatasetEmpty()).toEqual(false);
@@ -1314,5 +1394,4 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
       'tfjs-speech-commands-saved-model-metadata': '{}'
     });
   });
-
 });

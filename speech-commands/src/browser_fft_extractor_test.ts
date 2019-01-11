@@ -190,9 +190,8 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
         // Verify the correctness of the spectrogram data.
         for (let i = 0; i < xData.length; ++i) {
           const segment = Math.floor(i / columnTruncateLength);
-          const expected =
-            segment * 1024 + (i % columnTruncateLength) +
-            1024 * numFramesPerSpectrogram * numCallbacksCompleted;
+          const expected = segment * 1024 + (i % columnTruncateLength) +
+              1024 * numFramesPerSpectrogram * numCallbacksCompleted;
           expect(xData[i]).toEqual(expected);
         }
         if (++numCallbacksCompleted >= numCallbacksToComplete) {

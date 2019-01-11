@@ -38,10 +38,25 @@ export async function loadMetadataJson(url: string):
   }
 }
 
+let EPSILON: number = null;
+
+/**
+ * Normalize the input into zero mean and unit standard deviation.
+ *
+ * This function is safe against divison-by-zero: In case the standard
+ * deviation is zero, the output will be all-zero.
+ *
+ * @param x Input tensor.
+ * @param y Output normalized tensor.
+ */
 export function normalize(x: tf.Tensor): tf.Tensor {
+  if (EPSILON == null) {
+    EPSILON = tf.ENV.get('EPSILON');
+  }
   return tf.tidy(() => {
     const {mean, variance} = tf.moments(x);
-    return x.sub(mean).div(variance.sqrt());
+    // Add an EPSILON to the denominator to prevent division-by-zero.
+    return x.sub(mean).div(variance.sqrt().add(EPSILON));
   });
 }
 

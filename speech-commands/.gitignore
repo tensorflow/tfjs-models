@@ -13,3 +13,7 @@ dist/
 bazel-*
 
 *.pyc
+
+model.json
+metadata.json
+weights.bin
