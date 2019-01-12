@@ -303,10 +303,10 @@ describe('Dataset', () => {
     const dataset = new Dataset();
     addThreeExamplesToDataset(dataset);
 
-    const out1 = dataset.getSpectrogramsAsTensors('a');
+    const out1 = dataset.getData('a');
     expect(out1.xs.shape).toEqual([2, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
     expect(out1.ys).toBeUndefined();
-    const out2 = dataset.getSpectrogramsAsTensors('b');
+    const out2 = dataset.getData('b');
     expect(out2.xs.shape).toEqual([1, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
     expect(out2.ys).toBeUndefined();
   });
@@ -316,18 +316,18 @@ describe('Dataset', () => {
     const [uid1, uid2] = addThreeExamplesToDataset(dataset);
 
     dataset.removeExample(uid1);
-    const out1 = dataset.getSpectrogramsAsTensors(null, {shuffle: false});
+    const out1 = dataset.getData(null, {shuffle: false});
     expect(out1.xs.shape).toEqual([2, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
     expectArraysClose(out1.ys, tf.tensor2d([[1, 0], [0, 1]]));
 
-    const out2 = dataset.getSpectrogramsAsTensors('a');
+    const out2 = dataset.getData('a');
     expect(out2.xs.shape).toEqual([1, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
 
     dataset.removeExample(uid2);
-    expect(() => dataset.getSpectrogramsAsTensors('a'))
+    expect(() => dataset.getData('a'))
         .toThrowError(/Label a is not in the vocabulary/);
 
-    const out3 = dataset.getSpectrogramsAsTensors('b');
+    const out3 = dataset.getData('b');
     expect(out3.xs.shape).toEqual([1, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
   });
 
@@ -337,7 +337,7 @@ describe('Dataset', () => {
     dataset.removeExample(uid1);
     dataset.removeExample(uid2);
 
-    expect(() => dataset.getSpectrogramsAsTensors())
+    expect(() => dataset.getData())
         .toThrowError(/requires .* at least two words/);
   });
 
@@ -345,7 +345,7 @@ describe('Dataset', () => {
     const dataset = new Dataset();
     addThreeExamplesToDataset(dataset);
 
-    const out = dataset.getSpectrogramsAsTensors(null, {shuffle: false});
+    const out = dataset.getData(null, {shuffle: false});
     expect(out.xs.shape).toEqual([3, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
     expectArraysClose(out.ys, tf.tensor2d([[1, 0], [1, 0], [0, 1]]));
   });
@@ -354,13 +354,13 @@ describe('Dataset', () => {
     const dataset = new Dataset();
     addThreeExamplesToDataset(dataset);
 
-    expect(() => dataset.getSpectrogramsAsTensors('label3'))
+    expect(() => dataset.getData('label3'))
         .toThrowError(/Label label3 is not in the vocabulary/);
   });
 
   it('getSpectrogramsAsTensors on empty Dataset fails', () => {
     const dataset = new Dataset();
-    expect(() => dataset.getSpectrogramsAsTensors())
+    expect(() => dataset.getData())
         .toThrowError(/Cannot get spectrograms as tensors because.*empty/);
   });
 
@@ -370,7 +370,7 @@ describe('Dataset', () => {
     dataset.addExample(getFakeExample('bar', 6));
     dataset.addExample(getFakeExample('foo', 7));
 
-    const {xs, ys} = dataset.getSpectrogramsAsTensors(
+    const {xs, ys} = dataset.getData(
         null, {numFrames: 5, hopFrames: 5, shuffle: false});
     expect(xs.shape).toEqual([3, 5, FAKE_FRAME_SIZE, 1]);
     expectArraysClose(ys, tf.tensor2d([[1, 0], [0, 1], [0, 1]]));
@@ -383,7 +383,7 @@ describe('Dataset', () => {
     dataset.addExample(getFakeExample('foo', 7));
 
     const {xs, ys} =
-        dataset.getSpectrogramsAsTensors('foo', {numFrames: 5, hopFrames: 5});
+        dataset.getData('foo', {numFrames: 5, hopFrames: 5});
     expect(xs.shape).toEqual([2, 5, FAKE_FRAME_SIZE, 1]);
     expect(ys).toBeUndefined();
   });
@@ -395,7 +395,7 @@ describe('Dataset', () => {
     dataset.addExample(
         getFakeExample('bar', 5, 2, [1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
 
-    const {xs, ys} = dataset.getSpectrogramsAsTensors(
+    const {xs, ys} = dataset.getData(
         null, {numFrames: 3, hopFrames: 1, shuffle: false, normalize: false});
     const windows = tf.unstack(xs);
 
@@ -421,7 +421,7 @@ describe('Dataset', () => {
         getFakeExample('bar', 5, 2, [1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
 
     // `normalize` is `true` by default.
-    const {xs, ys} = dataset.getSpectrogramsAsTensors(
+    const {xs, ys} = dataset.getData(
         null, {numFrames: 3, hopFrames: 1, shuffle: false});
     const windows = tf.unstack(xs);
 
@@ -461,7 +461,7 @@ describe('Dataset', () => {
     for (let i = 0; i < 5; ++i) {
       // `shuffle` is `true` by default.
       const {ys} =
-          dataset.getSpectrogramsAsTensors(null, {numFrames: 3, hopFrames: 1});
+          dataset.getData(null, {numFrames: 3, hopFrames: 1});
       // Use `argMax()` to convert the one-hot-encoded `ys` to indices.
       argMaxTensors.push(ys.argMax(-1));
     }
@@ -485,7 +485,7 @@ describe('Dataset', () => {
 
     const argMaxTensors: tf.Tensor[] = [];
     for (let i = 0; i < 5; ++i) {
-      const {ys} = dataset.getSpectrogramsAsTensors(
+      const {ys} = dataset.getData(
           null, {numFrames: 3, hopFrames: 1, shuffle: false});
       argMaxTensors.push(ys.argMax(-1));
     }
@@ -507,7 +507,7 @@ describe('Dataset', () => {
     dataset.addExample(
         getFakeExample('bar', 6, 2, [0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
 
-    const {xs, ys} = dataset.getSpectrogramsAsTensors(
+    const {xs, ys} = dataset.getData(
         null, {numFrames: 5, hopFrames: 1, shuffle: false, normalize: false});
     const windows = tf.unstack(xs);
     expect(windows.length).toEqual(4);
@@ -531,7 +531,7 @@ describe('Dataset', () => {
         [0, 0, 10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
     dataset.addExample(
         getFakeExample('bar', 6, 2, [0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
-    const {xs, ys} = dataset.getSpectrogramsAsTensors(
+    const {xs, ys} = dataset.getData(
         null, {numFrames: 3, hopFrames: 2, shuffle: false, normalize: false});
     const windows = tf.unstack(xs);
     expect(windows.length).toEqual(4);
@@ -551,7 +551,7 @@ describe('Dataset', () => {
         'foo', 6, 2, [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
     dataset.addExample(
         getFakeExample('bar', 5, 2, [1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
-    expect(() => dataset.getSpectrogramsAsTensors(null, {
+    expect(() => dataset.getData(null, {
       numFrames: 6,
       hopFrames: 2
     })).toThrowError(/.*6.*exceeds the minimum numFrames .*5.*/);
@@ -563,7 +563,7 @@ describe('Dataset', () => {
         'foo', 6, 2, [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
     dataset.addExample(
         getFakeExample('bar', 5, 2, [1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
-    expect(() => dataset.getSpectrogramsAsTensors(null))
+    expect(() => dataset.getData(null))
         .toThrowError(/numFrames is required/);
   });
 
@@ -573,7 +573,7 @@ describe('Dataset', () => {
         'foo', 6, 2, [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
     dataset.addExample(
         getFakeExample('bar', 5, 2, [1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
-    expect(() => dataset.getSpectrogramsAsTensors(null, {
+    expect(() => dataset.getData(null, {
       numFrames: 4
     })).toThrowError(/hopFrames is required/);
   });
@@ -714,7 +714,7 @@ describe('Dataset serialization', () => {
     expectArraysEqual(ex4Prime.spectrogram.data, ex4.spectrogram.data);
 
     const {xs, ys} =
-        datasetPrime.getSpectrogramsAsTensors(null, {shuffle: false});
+        datasetPrime.getData(null, {shuffle: false});
     expect(xs.shape).toEqual([4, 10, 16, 1]);
     expectArraysClose(
         ys, tf.tensor2d([[1, 0, 0], [0, 1, 0], [0, 1, 0], [0, 0, 1]]));
@@ -744,7 +744,7 @@ describe('Dataset serialization', () => {
     datasetPrime.removeExample(examples[0].uid);
 
     const {xs, ys} =
-        datasetPrime.getSpectrogramsAsTensors(null, {shuffle: false});
+        datasetPrime.getData(null, {shuffle: false});
     expect(xs.shape).toEqual([3, 10, 16, 1]);
     expectArraysClose(ys, tf.tensor2d([[1, 0, 0], [0, 1, 0], [0, 0, 1]]));
   });

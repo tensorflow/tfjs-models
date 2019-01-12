@@ -86,3 +86,59 @@ export function balancedTrainValSplit(
     return {trainXs, trainYs, valXs, valYs};
   });
 }
+
+export function balancedTrainValSplitNumArrays(
+    xs: number[][], ys: number[], valSplit: number): {
+  trainXs: number[][],
+  trainYs: number[],
+  valXs: number[][],
+  valYs: number[]
+} {
+  tf.util.assert(
+      valSplit > 0 && valSplit < 1,
+      `validationSplit is expected to be >0 and <1, ` +
+          `but got ${valSplit}`);
+
+  const classIndices = ys;
+
+  const indicesByClasses: number[][] = [];
+  for (let i = 0; i < classIndices.length; ++i) {
+    const classIndex = classIndices[i];
+    if (indicesByClasses[classIndex] == null) {
+      indicesByClasses[classIndex] = [];
+    }
+    indicesByClasses[classIndex].push(i);
+  }
+  const numClasses = indicesByClasses.length;
+
+  const trainIndices: number[] = [];
+  const valIndices: number[] = [];
+
+  // Randomly shuffle the list of indices in each array.
+  indicesByClasses.map(classIndices => tf.util.shuffle(classIndices));
+  for (let i = 0; i < numClasses; ++i) {
+    const classIndices = indicesByClasses[i];
+    const cutoff = Math.round(classIndices.length * (1 - valSplit));
+    for (let j = 0; j < classIndices.length; ++j) {
+      if (j < cutoff) {
+        trainIndices.push(classIndices[j]);
+      } else {
+        valIndices.push(classIndices[j]);
+      }
+    }
+  }
+
+  const trainXs: number[][] = [];
+  const trainYs: number[] = [];
+  const valXs: number[][] = [];
+  const valYs: number[] = [];
+  for (const index of trainIndices) {
+    trainXs.push(xs[index]);
+    trainYs.push(ys[index]);
+  }
+  for (const index of valIndices) {
+    valXs.push(xs[index]);
+    valYs.push(ys[index]);
+  }
+  return {trainXs, trainYs, valXs, valYs};
+}

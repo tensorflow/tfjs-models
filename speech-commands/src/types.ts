@@ -195,7 +195,7 @@ export interface TransferSpeechCommandRecognizer extends
   /**
    * Perform evaluation of the model using the examples that the model
    * has loaded.
-   * 
+   *
    * The evaluation calcuates an ROC curve by lumping the non-background-noise
    * classes into a positive category and treating the background-noise
    * class as the negative category.
@@ -293,6 +293,11 @@ export interface SpectrogramData {
    * Number of points per frame, i.e., FFT length per frame.
    */
   frameSize: number;
+
+  /**
+   * Duration of each frame in milliseconds.
+   */
+  frameDurationMillis?: number;
 }
 
 /**
@@ -486,6 +491,14 @@ export interface TransferLearnConfig {
    * a hop of Math.round(43 * 0.25) = 11 frames.
    */
   windowHopRatio?: number;
+
+  /**
+   * The threshold for the total duration of the dataset above which
+   * `fitDataset()` will be used in lieu of `fit()`.
+   *
+   * Default: 240e3.
+   */
+  fitDatasetDurationMillisThreshold?: number;
 }
 
 /**

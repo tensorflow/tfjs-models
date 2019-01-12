@@ -16,6 +16,7 @@
  */
 
 import Plotly from 'plotly.js-dist';
+import * as tf from '@tensorflow/tfjs';
 
 import * as SpeechCommands from '../src';
 
@@ -312,6 +313,8 @@ function disableFileUploadControls() {
 startTransferLearnButton.addEventListener('click', async () => {
   startTransferLearnButton.disabled = true;
   startButton.disabled = true;
+  startTransferLearnButton.textContent = 'Transfer learning starting...';
+  await tf.nextFrame();
 
   const INITIAL_PHASE = 'initial';
   const FINE_TUNING_PHASE = 'fineTuningPhase';
