@@ -17,8 +17,8 @@
 
 // method copied from bGlur in https://codepen.io/zhaojun/pen/zZmRQe
 export function cpuBlur(
-    canvas: HTMLCanvasElement, image: HTMLImageElement|HTMLVideoElement,
-    blur: number) {
+    canvas: HTMLCanvasElement,
+    image: HTMLImageElement|HTMLVideoElement|HTMLCanvasElement, blur: number) {
   const ctx = canvas.getContext('2d');
 
   let sum = 0;

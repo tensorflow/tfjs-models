@@ -5,17 +5,40 @@
     <title>BodyPix - With a Webcam Demo</title>
     <style>
     .footer {
-        position: fixed;
-        left: 0;
-        bottom: 0;
-        width: 100%;
-        color: black;
+      position: fixed;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      color: black;
     }
 
     .footer-text {
         max-width: 600px;
         text-align: center;
         margin: auto;
+    }
+
+    .footer-text, #colors {
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    #colors {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    #colors li {
+      margin: 0;
+    }
+
+    #colors .color {
+      width: 50px;
+      height: 1em;
+    }
+
+    #colors li div {
+      display: inline-block;
     }
 
     @media only screen and (max-width: 600px) {
@@ -44,6 +67,7 @@
         </video>
         <canvas id="output" />
     </div>
+    <ul id="colors" style="display: none" ></ul>
     <div class="footer">
         <div class="footer-text">
             <p>

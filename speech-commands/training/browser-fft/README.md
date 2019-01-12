@@ -46,9 +46,33 @@ The following steps are involved:
 3. Run WebAudio FFT on the `.dat` files generated in step 2 in the browser.
    TODO(cais): Provide more details here.
 
-## Training the TensorFlow.js Model
+## Training the TensorFlow.js Model in tfjs-node or tfjs-node-gpu
 
-TODO(cais): Provide details here.
+1. Download and extract the browser-FFT version of the speech-commands dataset:
+
+   ```sh
+   curl -fSsL https://storage.googleapis.com/learnjs-data/speech-commands/speech-commands-data-v0.02-browser.tar.gz  -o speech-commands-data-v0.02-browser.tar.gz && \
+   tar xzvf speech-commands-data-v0.02-browser.tar.gz
+   ```
+
+2. Start training. First, download JavaScript dependencies using:
+
+   ```sh
+   yarn
+   ```
+
+   Then, to train the model using CPU (tfjs-node):
+
+   ```sh
+   yarn train speech-commands-data-v0.02-browser/ ./my-model/
+   ```
+
+   Or, to train the model using a GPU (tfjs-node-gpu,
+   requires CUDA-enabled GPU and drivers):
+
+   ```sh
+   yarn train --gpu speech-commands-data-v0.02-browser/ ./my-model/
+   ```
 
 ## Development
 

@@ -262,7 +262,12 @@ await transferRecognizer.listen(result => {
 setTimeout(() => transferRecognizer.stopListening(), 10e3);
 ```
 
-## How to run the demo
+## Live demo
+
+A developer-oriented live demo is available at
+[this address](https://storage.googleapis.com/tfjs-speech-model-test/2019-01-03a/dist/index.html).
+
+## How to run the demo from source code
 
 The demo/ folder contains a live demo of the speech-command recognizer.
 To run it, do

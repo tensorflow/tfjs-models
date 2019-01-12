@@ -56,11 +56,11 @@ export interface ExampleSpec {
 }
 
 /**
- * Serialized Dataset, containing a number `Example`s in their
+ * Serialized Dataset, containing a number of `Example`s in their
  * serialized format.
  *
  * This format consists of a plain-old JSON object as the manifest,
- * along with a flattened binary ArrayBuffer. The format facilitates
+ * along with a flattened binary `ArrayBuffer`. The format facilitates
  * storage and transmission.
  */
 export interface SerializedExamples {
@@ -223,7 +223,7 @@ export class Dataset {
   }
 
   /**
-   * Merge the incoming datast into this dataset
+   * Merge the incoming dataset into this dataset
    *
    * @param dataset The incoming dataset to be merged into this dataset.
    */
@@ -403,6 +403,7 @@ export class Dataset {
               labelIndices.push(i);
             }
           }
+          tf.dispose(snippet);  // For memory saving.
         }
       }
 

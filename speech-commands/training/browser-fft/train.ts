@@ -34,7 +34,7 @@ import {Dataset} from '../../src/dataset';
  * @param numClasses Number of output classes.
  * @returns An uncompiled tf.Model object.
  */
-function createBrowserFFTModel(
+export function createBrowserFFTModel(
     inputShape: tf.Shape, numClasses: number): tf.Model {
   const model = tf.sequential();
   model.add(tf.layers.conv2d(
@@ -62,9 +62,10 @@ function createBrowserFFTModel(
  * Load dataset from a processed data directory.
  *
  * @param inputPath Path to the input directory, expcted to contain
- *   a set of TFJSSCDS-format (.bin) files in a nested fashion.
- * @return A Dataset objects, which includes the data from all the TFJSSCDS
- *   (.bin) files combined.
+ *   a set of TFJSSCDS-format (.bin) files in a nested fashion. See
+ *   `../../src/dataset.ts` for the definition of the TFJSSCDS format.
+ * @return A Dataset object, which includes the data from all the TFJSSCDS
+ *   (.bin) files under `inputPath` combined.
  */
 function loadDataset(inputPath): Dataset {
   if (!fs.lstatSync(inputPath).isDirectory()) {
@@ -151,6 +152,7 @@ async function main() {
           `got vocabulary: ${JSON.stringify(vocab)}`);
   console.log(`Vocabulary size: ${vocab.length} (${JSON.stringify(vocab)})`);
 
+  console.log('Collecting spectrogram and targets data...');
   let {xs, ys} = trainDataset.getSpectrogramsAsTensors(null, {shuffle: true});
   tf.util.assert(
       xs.rank === 4,
@@ -161,6 +163,7 @@ async function main() {
 
   // Split the data manually into the training and validation subsets.
   // We do this manually for memory efficiency.
+  console.log('Splitting data into training and validation subsets...');
   let validationData: [tf.Tensor, tf.Tensor] = null;
   if (args.validationSplit > 0) {
     const numExamples = xs.shape[0];
@@ -236,4 +239,6 @@ async function main() {
   console.log(`Saved metadata to: ${metadataPath}`);
 }
 
-main();
+if (require.main === module) {
+  main();
+}
