@@ -110,11 +110,7 @@ describe('Dataset', () => {
     addThreeExamplesToDataset(dataset);
     const datasetPrime = new Dataset();
     addThreeExamplesToDataset(datasetPrime);
-<<<<<<< HEAD
     const ex = getFakeExample('foo');
-=======
-    const ex = getFakeExample('foo');
->>>>>>> master
     datasetPrime.addExample(ex);
     dataset.merge(datasetPrime);
     expect(dataset.getExampleCounts()).toEqual({a: 4, b: 2, foo: 1});
