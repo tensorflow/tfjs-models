@@ -4,7 +4,7 @@ This package contains a standalone model called BodyPix, as well as some demos, 
 
 [Try the demo here!](https://storage.googleapis.com/tfjs-models/demos/body-pix/index.html)
 
-![BodyPix](body-pix.gif)
+![BodyPix](./images/body-pix.gif)
 
 This model can be used to segment an image into pixels that are and are not part of a person, and into
 pixels that belong to each of twenty-four body parts.  It works for a single person, and its ideal use case is for when there is only one person centered in an input image or video.  It can be combined with a person
@@ -52,7 +52,7 @@ Person segmentation segments an image into pixels that are and aren't part of a 
 It returns a binary array with 1 for the pixels that are part of the person, and 0 otherwise. The array size corresponds to the number of pixels in the image.
 
 
-![Segmentation](segmentation.gif)
+![Segmentation](./images/segmentation.gif)
 
 ```javascript
 const net = await bodyPix.load();
@@ -141,7 +141,7 @@ which would produce the output:
 An example of applying a [bokeh effect](https://www.nikonusa.com/en/learn-and-explore/a/tips-and-techniques/bokeh-for-beginners.html) can be seen by running the [demo](https://storage.googleapis.com/tfjs-models/demos/body-pix/camera.html):
 
 
-![Bokeh](bokeh.gif)
+![Bokeh](./images/bokeh.gif)
 
 
 ### Body Part Segmentation
@@ -149,7 +149,7 @@ An example of applying a [bokeh effect](https://www.nikonusa.com/en/learn-and-ex
 Body part segmentation segments an image into pixels that are part of one of twenty-four body parts of a person, and to those that are not part of a person.
 It returns an object containing an array with a part id from 0-24 for the pixels that are part of a corresponding body part, and -1 otherwise. The array size corresponds to the number of pixels in the image.
 
-![Colored Part Image](colored-parts.gif)
+![Colored Part Image](./images/colored-parts.gif)
 
 ```javascript
 const net = await bodyPix.load();
