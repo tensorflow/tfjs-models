@@ -48,6 +48,9 @@ export interface ExampleSpec {
   /** The length of each frame in the spectrogram. */
   spectrogramFrameSize: number;
 
+  /** The key frame index of the spectrogram. */
+  spectrogramKeyFrameIndex?: number;
+
   /** Number of samples in the raw PCM-format audio (if any). */
   rawAudioNumSamples?: number;
 
@@ -350,7 +353,8 @@ export class Dataset {
         }
         const ids = this.label2Ids[currentLabel];
         for (const id of ids) {
-          const spectrogram = this.examples[id].spectrogram;
+          const example = this.examples[id];
+          const spectrogram = example.spectrogram;
           const frameSize = spectrogram.frameSize;
           if (uniqueFrameSize == null) {
             uniqueFrameSize = frameSize;
@@ -362,9 +366,12 @@ export class Dataset {
           }
 
           const snippetLength = spectrogram.data.length / frameSize;
-          const focusIndex = currentLabel === BACKGROUND_NOISE_TAG ?
-              null :
-              getMaxIntensityFrameIndex(spectrogram).dataSync()[0];
+          let focusIndex = null;
+          if (currentLabel !== BACKGROUND_NOISE_TAG) {
+            focusIndex = spectrogram.keyFrameIndex == null ?
+                getMaxIntensityFrameIndex(spectrogram).dataSync()[0] :
+                spectrogram.keyFrameIndex;
+          }
           // TODO(cais): See if we can get rid of dataSync();
 
           const snippet =
@@ -442,6 +449,29 @@ export class Dataset {
     if (this.label2Ids[label].length === 0) {
       delete this.label2Ids[label];
     }
+  }
+
+  /**
+   * Set the key frame index of a given example.
+   *
+   * @param uid The UID of the example of which the `keyFrameIndex` is to be
+   *   set.
+   * @param keyFrameIndex The desired value of the `keyFrameIndex`. Must
+   *   be >= 0, < the number of frames of the example, and an integer.
+   * @throws Error If the UID and/or the `keyFrameIndex` value is invalid.
+   */
+  setExampleKeyFrameIndex(uid: string, keyFrameIndex: number) {
+    if (!(uid in this.examples)) {
+      throw new Error(`Nonexistent example UID: ${uid}`);
+    }
+    const spectrogram = this.examples[uid].spectrogram;
+    const numFrames = spectrogram.data.length / spectrogram.frameSize;
+    tf.util.assert(
+        keyFrameIndex >= 0 && keyFrameIndex < numFrames &&
+        Number.isInteger(keyFrameIndex),
+        `Invalid keyFrameIndex: ${keyFrameIndex}. ` +
+        `Must be >= 0, < ${numFrames}, and an integer.`);
+    spectrogram.keyFrameIndex = keyFrameIndex;
   }
 
   /**
@@ -527,6 +557,9 @@ export function serializeExample(example: Example):
         example.spectrogram.data.length / example.spectrogram.frameSize,
     spectrogramFrameSize: example.spectrogram.frameSize,
   };
+  if (example.spectrogram.keyFrameIndex != null) {
+    spec.spectrogramKeyFrameIndex = example.spectrogram.keyFrameIndex;
+  }
 
   let data = example.spectrogram.data.buffer.slice(0);
   if (hasRawAudio) {
@@ -549,6 +582,9 @@ export function deserializeExample(
         4 * artifact.spec.spectrogramFrameSize *
             artifact.spec.spectrogramNumFrames))
   };
+  if (artifact.spec.spectrogramKeyFrameIndex != null) {
+    spectrogram.keyFrameIndex = artifact.spec.spectrogramKeyFrameIndex;
+  }
   const ex: Example = {label: artifact.spec.label, spectrogram};
   if (artifact.spec.rawAudioNumSamples != null) {
     ex.rawAudio = {

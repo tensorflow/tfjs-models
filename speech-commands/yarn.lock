@@ -88,7 +88,7 @@
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-layers/-/tfjs-layers-0.9.1.tgz#685b741cf5c42aa9b2621485ffafdcc43c8db699"
   integrity sha512-TZTi59E3rGdVTJCf/AEX1arigPp0426FJLGfiKzTXp3skEuubwDM9XlwiXWcB5+l+Pjvwg4FMNXwEyajXIxX2w==
 
-"@tensorflow/tfjs-node@^0.2.1":
+"@tensorflow/tfjs-node@0.2.1":
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-node/-/tfjs-node-0.2.1.tgz#a4d75f464fa2e4a5827f847ecc47273151faee50"
   integrity sha512-cFSY+zJCfSb5mXSZdH/kEMkhVsPz9UmnTx6ahC9oe/1kIZhSrhs7nPMMyH/Q+RYJ6DEUhPKK40hy0TlUf4Tmqw==
@@ -102,7 +102,7 @@
     rimraf "^2.6.2"
     tar "^4.4.6"
 
-"@tensorflow/tfjs@^0.14.1", "@tensorflow/tfjs@~0.14.1":
+"@tensorflow/tfjs@0.14.1", "@tensorflow/tfjs@~0.14.1":
   version "0.14.1"
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs/-/tfjs-0.14.1.tgz#d9b198c26eb1f154c5c27228800c9df7630d2cbf"
   integrity sha512-fo68B4FNh/JBYAjArlLFsx2etE1kxCHG11bzsy01b2jZLrM9HE+jgmiNUGuHqN7aLu/CVqB76wDAtlBT4AnPsg==
