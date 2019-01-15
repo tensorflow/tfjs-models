@@ -483,7 +483,7 @@ export interface TransferLearnConfig {
    * tf.Callback to be used during the initial training (i.e., not
    * the fine-tuning phase).
    */
-  callback?: tf.CustomCallbackConfig;
+  callback?: tf.CustomCallbackArgs;
 
   /**
    * tf.Callback to be used durnig the fine-tuning phase.
@@ -491,7 +491,7 @@ export interface TransferLearnConfig {
    * This parameter is used only if `fineTuningEpochs` is specified
    * and is a positive integer.
    */
-  fineTuningCallback?: tf.CustomCallbackConfig;
+  fineTuningCallback?: tf.CustomCallbackArgs;
 
   /**
    * Ratio between the window hop and the window width.

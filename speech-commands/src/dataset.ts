@@ -405,12 +405,13 @@ export class Dataset {
         labelIndices = zipped.map(item => item.y);
       }
 
+      const targets = label == null ?
+          tf.oneHot(tf.tensor1d(labelIndices, 'int32'), vocab.length)
+              .asType('float32') :
+          undefined;
       return {
         xs: tf.stack(xTensors) as tf.Tensor4D,
-        ys: label == null ?
-            tf.oneHot(tf.tensor1d(labelIndices, 'int32'), vocab.length)
-                .asType('float32') :
-            undefined
+        ys: targets as tf.Tensor2D
       };
     });
   }
