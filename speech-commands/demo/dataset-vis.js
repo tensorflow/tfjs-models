@@ -31,6 +31,26 @@ export function removeNonFixedChildrenFromWordDiv(wordDiv) {
 }
 
 /**
+ * Get the relative x-coordinate of a click event in a canvas.
+ *
+ * @param {HTMLCanvasElement} canvasElement The canvas in which the click
+ *   event happened.
+ * @param {Event} event The click event object.
+ * @return {number} The relative x-coordinate: a `number` between 0 and 1.
+ */
+function getCanvasClickRelativeXCoordinate(canvasElement, event) {
+  let x;
+  if (event.pageX) {
+    x = event.pageX;
+  } else {
+    x = event.clientX + document.body.scrollLeft +
+        document.documentElement.scrollLeft;
+  }
+  x -= canvasElement.offsetLeft;
+  return x / canvasElement.width;
+}
+
+/**
  * Dataset visualizer that supports
  *
  * - Display of words and spectrograms
@@ -141,6 +161,23 @@ export class DatasetViz {
     exampleCanvas.height = 60;
     exampleCanvas.width = 80;
     exampleCanvas.style['padding'] = '3px';
+
+    // Set up the click callback for the spectrogram canvas. When clicked,
+    // the keyFrameIndex will be set.
+    if (word !== speechCommands.BACKGROUND_NOISE_TAG) {
+      exampleCanvas.addEventListener('click', event => {
+        const relativeX =
+            getCanvasClickRelativeXCoordinate(exampleCanvas, event);
+        const numFrames = spectrogram.data.length / spectrogram.frameSize;
+        const keyFrameIndex = Math.floor(numFrames * relativeX);
+        console.log(
+            `relativeX=${relativeX}; ` +
+            `changed keyFrameIndex to ${keyFrameIndex}`);
+        this.transferRecognizer.setExampleKeyFrameIndex(uid, keyFrameIndex);
+        this.redraw(word, uid);
+      });
+    }
+
     wordDiv.appendChild(exampleCanvas);
 
     const modelNumFrames = this.transferRecognizer.modelInputShape()[1];
@@ -149,9 +186,10 @@ export class DatasetViz {
         spectrogram.frameSize, {
           pixelsPerFrame: exampleCanvas.width / modelNumFrames,
           maxPixelWidth: Math.round(0.4 * window.innerWidth),
-          markMaxIntensityFrame:
+          markKeyFrame:
               this.transferDurationMultiplier > 1 &&
-                  word !== speechCommands.BACKGROUND_NOISE_TAG
+                  word !== speechCommands.BACKGROUND_NOISE_TAG,
+          keyFrameIndex: spectrogram.keyFrameIndex
         });
 
     // Create Delete button.

@@ -1072,7 +1072,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     const history = await transfer.train({
       epochs: 5,
       callback: {
-        onEpochEnd: async (epoch, logs) => {
+        onEpochEnd: async (epoch: number, logs: tf.Logs) => {
           callbackEpochs.push(epoch);
         }
       }

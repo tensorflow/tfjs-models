@@ -276,6 +276,71 @@ describe('Dataset', () => {
         .toThrowError(/Nonexistent example UID/);
   });
 
+  it('setExampleKeyFrameIndex: works`', () => {
+    const dataset = new Dataset();
+
+    const ex1 = getFakeExample('a');
+    const uid1 = dataset.addExample(ex1);
+    dataset.setExampleKeyFrameIndex(uid1, 1);
+    expect(ex1.spectrogram.keyFrameIndex).toEqual(1);
+    const numFrames = ex1.spectrogram.data.length / ex1.spectrogram.frameSize;
+    dataset.setExampleKeyFrameIndex(uid1, numFrames - 1);
+    expect(ex1.spectrogram.keyFrameIndex).toEqual(numFrames - 1);
+  });
+
+  it('setExampleFrameIndex: serialization-deserialization', () => {
+    const dataset = new Dataset();
+
+    const ex1 = getFakeExample('a');
+    const uid1 = dataset.addExample(ex1);
+    const numFrames = ex1.spectrogram.data.length / ex1.spectrogram.frameSize;
+    dataset.setExampleKeyFrameIndex(uid1, numFrames - 1);
+    expect(ex1.spectrogram.keyFrameIndex).toEqual(numFrames - 1);
+
+    const datasetPrime = new Dataset(dataset.serialize());
+    const ex1Prime = datasetPrime.getExamples('a')[0];
+    expect(ex1Prime.example.spectrogram.keyFrameIndex).toEqual(numFrames - 1);
+  });
+
+  it('setExampleKeyFrameIndex: Invalid example UID leads to error`', () => {
+    const dataset = new Dataset();
+
+    const ex1 = getFakeExample('a');
+    const uid1 = dataset.addExample(ex1);
+    expect(() => dataset.setExampleKeyFrameIndex(uid1 + '_foo', 0))
+        .toThrowError(/Nonexistent example UID/);
+  });
+
+  it('setExampleKeyFrameIndex: Negative index leads to error`', () => {
+    const dataset = new Dataset();
+
+    const ex1 = getFakeExample('a');
+    const uid1 = dataset.addExample(ex1);
+    expect(() => dataset.setExampleKeyFrameIndex(uid1, -1))
+        .toThrowError(/Invalid keyFrameIndex/);
+  });
+
+  it('setExampleKeyFrameIndex: Too large index leads to error`', () => {
+    const dataset = new Dataset();
+
+    const ex1 = getFakeExample('a');
+    const numFrames = ex1.spectrogram.data.length / ex1.spectrogram.frameSize;
+    const uid1 = dataset.addExample(ex1);
+    expect(() => dataset.setExampleKeyFrameIndex(uid1, numFrames))
+        .toThrowError(/Invalid keyFrameIndex/);
+    expect(() => dataset.setExampleKeyFrameIndex(uid1, numFrames + 1))
+        .toThrowError(/Invalid keyFrameIndex/);
+  });
+
+  it('setExampleKeyFrameIndex: Non-integr value leads to error`', () => {
+    const dataset = new Dataset();
+
+    const ex1 = getFakeExample('a');
+    const uid1 = dataset.addExample(ex1);
+    expect(() => dataset.setExampleKeyFrameIndex(uid1, 0.5))
+        .toThrowError(/Invalid keyFrameIndex/);
+  });
+
   it('getVocabulary', () => {
     const dataset = new Dataset();
     expect(dataset.getVocabulary()).toEqual([]);

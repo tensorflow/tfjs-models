@@ -195,7 +195,7 @@ export interface TransferSpeechCommandRecognizer extends
   /**
    * Perform evaluation of the model using the examples that the model
    * has loaded.
-   * 
+   *
    * The evaluation calcuates an ROC curve by lumping the non-background-noise
    * classes into a positive category and treating the background-noise
    * class as the negative category.
@@ -212,6 +212,9 @@ export interface TransferSpeechCommandRecognizer extends
    * @returns An array of `Example`s, along with their UIDs.
    */
   getExamples(label: string): Array<{uid: string, example: Example}>;
+
+  /** Set the key frame index of a given example. */
+  setExampleKeyFrameIndex(uid: string, keyFrameIndex: number): void;
 
   /**
    * Load an array of serialized examples.
@@ -293,6 +296,23 @@ export interface SpectrogramData {
    * Number of points per frame, i.e., FFT length per frame.
    */
   frameSize: number;
+
+  /**
+   * Index to the key frame (0-based).
+   *
+   * A key frame is a frame in the spectrogram that belongs to
+   * the utterance of interest. It is used to distinguish the
+   * utterance part from the background-noise part.
+   *
+   * A typical use of key frame index: when multiple training examples are
+   * extracted from a spectroram, every example is guaranteed to include
+   * the key frame.
+   *
+   * Key frame is not required. If it is missing, heuristics algorithms
+   * (e.g., finding the highest-intensity frame) can be used to calculate
+   * the key frame.
+   */
+  keyFrameIndex?: number;
 }
 
 /**
@@ -463,7 +483,7 @@ export interface TransferLearnConfig {
    * tf.Callback to be used during the initial training (i.e., not
    * the fine-tuning phase).
    */
-  callback?: tf.CustomCallbackConfig;
+  callback?: tf.CustomCallbackArgs;
 
   /**
    * tf.Callback to be used durnig the fine-tuning phase.
@@ -471,7 +491,7 @@ export interface TransferLearnConfig {
    * This parameter is used only if `fineTuningEpochs` is specified
    * and is a positive integer.
    */
-  fineTuningCallback?: tf.CustomCallbackConfig;
+  fineTuningCallback?: tf.CustomCallbackArgs;
 
   /**
    * Ratio between the window hop and the window width.
