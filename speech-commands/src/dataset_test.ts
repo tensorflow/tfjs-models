@@ -455,7 +455,7 @@ describe('Dataset', () => {
     expect(numVal).toEqual(1);
   });
 
-  fit('getSpectrogramsAsTensors with invalid valSplit leads to error', () => {
+  it('getSpectrogramsAsTensors with invalid valSplit leads to error', () => {
     const dataset = new Dataset();
     addThreeExamplesToDataset(dataset);
     expect(() => dataset.getData(null, {

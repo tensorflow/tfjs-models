@@ -425,8 +425,6 @@ export class Dataset {
             });
             if (config.getDataset) {
               // TODO(cais): See if we can do away with dataSync();
-              // TODO(cais): Array.from() might be very memory-wasteful.
-              //   Look into preserving the TypedArray once supported.
               // TODO(cais): Shuffling?
               xArrays.push(windowedSnippet.dataSync() as Float32Array);
               yArrays.push(i);
@@ -464,8 +462,12 @@ export class Dataset {
         const {trainXs, trainYs, valXs, valYs} =
             balancedTrainValSplitNumArrays(xArrays, yArrays, valSplit);
 
-        const xTrain = tf.data.array(trainXs).map(
-            x => tf.tensor3d(x, [numFrames, uniqueFrameSize, 1]));
+        // TODO(cais): The typing around Float32Array is not working properly
+        // for tf.data currently. Tighten the types when the tf.data bug is
+        // fixed.
+        // tslint:disable:no-any
+        const xTrain = tf.data.array(trainXs as any).map(
+            x => tf.tensor3d(x as any, [numFrames, uniqueFrameSize, 1]));
         const yTrain = tf.data.array(trainYs).map(
             y => tf.oneHot([y], vocab.length).squeeze([0]));
         // TODO(cais): See if we can tighten the typing.
@@ -476,12 +478,13 @@ export class Dataset {
         }
         trainDataset = trainDataset.batch(batchSize).prefetch(4);
 
-        const xVal = tf.data.array(valXs).map(
-            x => tf.tensor3d(x, [numFrames, uniqueFrameSize, 1]));
+        const xVal = tf.data.array(valXs as any).map(
+            x => tf.tensor3d(x as any, [numFrames, uniqueFrameSize, 1]));
         const yVal = tf.data.array(valYs).map(
             y => tf.oneHot([y], vocab.length).squeeze([0]));
         let valDataset = tf.data.zip([xVal, yVal]);
         valDataset = valDataset.batch(batchSize).prefetch(4);
+        // tslint:enable:no-any
 
         // tslint:disable-next-line:no-any
         return [trainDataset, valDataset] as any;
