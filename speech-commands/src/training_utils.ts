@@ -87,6 +87,9 @@ export function balancedTrainValSplit(
   });
 }
 
+/**
+ * Same as balancedTrainValSplit, but for number arrays or Float32Arrays.
+ **/
 export function balancedTrainValSplitNumArrays(
     xs: number[][] | Float32Array[], ys: number[], valSplit: number): {
   trainXs: number[][] | Float32Array[],
