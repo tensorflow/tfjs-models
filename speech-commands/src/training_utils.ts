@@ -88,16 +88,17 @@ export function balancedTrainValSplit(
 }
 
 export function balancedTrainValSplitNumArrays(
-    xs: number[][], ys: number[], valSplit: number): {
-  trainXs: number[][],
+    xs: number[][] | Float32Array[], ys: number[], valSplit: number): {
+  trainXs: number[][] | Float32Array[],
   trainYs: number[],
-  valXs: number[][],
+  valXs: number[][] | Float32Array[],
   valYs: number[]
 } {
   tf.util.assert(
       valSplit > 0 && valSplit < 1,
       `validationSplit is expected to be >0 and <1, ` +
           `but got ${valSplit}`);
+  const isXsFloat32Array = !Array.isArray(xs[0]);
 
   const classIndices = ys;
 
@@ -128,17 +129,33 @@ export function balancedTrainValSplitNumArrays(
     }
   }
 
-  const trainXs: number[][] = [];
-  const trainYs: number[] = [];
-  const valXs: number[][] = [];
-  const valYs: number[] = [];
-  for (const index of trainIndices) {
-    trainXs.push(xs[index]);
-    trainYs.push(ys[index]);
+  if (isXsFloat32Array) {
+    const trainXs: Float32Array[] = [];
+    const trainYs: number[] = [];
+    const valXs: Float32Array[] = [];
+    const valYs: number[] = [];
+    for (const index of trainIndices) {
+      trainXs.push(xs[index] as Float32Array);
+      trainYs.push(ys[index]);
+    }
+    for (const index of valIndices) {
+      valXs.push(xs[index] as Float32Array);
+      valYs.push(ys[index]);
+    }
+    return {trainXs, trainYs, valXs, valYs};
+  } else {
+    const trainXs: number[][] = [];
+    const trainYs: number[] = [];
+    const valXs: number[][] = [];
+    const valYs: number[] = [];
+    for (const index of trainIndices) {
+      trainXs.push(xs[index] as number[]);
+      trainYs.push(ys[index]);
+    }
+    for (const index of valIndices) {
+      valXs.push(xs[index] as number[]);
+      valYs.push(ys[index]);
+    }
+    return {trainXs, trainYs, valXs, valYs};
   }
-  for (const index of valIndices) {
-    valXs.push(xs[index]);
-    valYs.push(ys[index]);
-  }
-  return {trainXs, trainYs, valXs, valYs};
 }

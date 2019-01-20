@@ -833,7 +833,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
    * @param batchSize
    */
   private collectTransferDataAsTfDataset(
-      windowHopRatio?: number, batchSize = 32):
+      windowHopRatio?: number, validationSplit = 0.15, batchSize = 32):
       [tf.data.Dataset<TensorContainer>, tf.data.Dataset<TensorContainer>] {
     const numFrames = this.nonBatchInputShape[0];
     windowHopRatio = windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
@@ -842,7 +842,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       numFrames,
       hopFrames,
       getDataset: true,
-      datasetBatchSize: batchSize
+      datasetBatchSize: batchSize,
+      datasetValidationSplit: validationSplit
     }) as [tf.data.Dataset<TensorContainer>, tf.data.Dataset<TensorContainer>];
     // TODO(cais): See if we can tighten the typing.
   }
@@ -919,12 +920,12 @@ class TransferBrowserFftSpeechCommandRecognizer extends
           `Training transfer model using fitDataset() instead of fit()`);
       const batchSize = config.batchSize == null ? 32 : config.batchSize;
       // TODO(cais): Need balanced split.
-      const [trainDataset, valDataset] =
-          this.collectTransferDataAsTfDataset(windowHopRatio, batchSize);
+      const [trainDataset, valDataset] = this.collectTransferDataAsTfDataset(
+          windowHopRatio, config.validationSplit, batchSize);
       const t0 = tf.util.now();
       const history = await this.model.fitDataset(trainDataset, {
         epochs: config.epochs,
-        validationData: valDataset,
+        validationData: config.validationSplit > 0 ? valDataset : null,
         callbacks: config.callback == null ? null : [config.callback]
       });
       console.log(`fitDataset() took ${tf.util.now() - t0} ms`);

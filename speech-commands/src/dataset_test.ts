@@ -435,7 +435,9 @@ describe('Dataset', () => {
       const x = xAndY[0] as tf.Tensor;
       const y = xAndY[1] as tf.Tensor;
       expect(x.shape).toEqual([1, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
+      expect(x.isDisposed).toEqual(false);
       expect(y.shape).toEqual([1, 2]);
+      expect(y.isDisposed).toEqual(false);
     });
     expect(numTrain).toEqual(2);
     let numVal = 0;
@@ -446,11 +448,20 @@ describe('Dataset', () => {
       const x = xAndY[0] as tf.Tensor;
       const y = xAndY[1] as tf.Tensor;
       expect(x.shape).toEqual([1, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
+      expect(x.isDisposed).toEqual(false);
       expect(y.shape).toEqual([1, 2]);
+      expect(y.isDisposed).toEqual(false);
     });
     expect(numVal).toEqual(1);
-    // expect(out.xs.shape).toEqual([3, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
-    // expectArraysClose(out.ys, tf.tensor2d([[1, 0], [1, 0], [0, 1]]));
+  });
+
+  fit('getSpectrogramsAsTensors with invalid valSplit leads to error', () => {
+    const dataset = new Dataset();
+    addThreeExamplesToDataset(dataset);
+    expect(() => dataset.getData(null, {
+      getDataset: true,
+      datasetValidationSplit: 1.2
+    })).toThrowError(/Invalid dataset validation split/);
   });
 
   it('getSpectrogramsAsTensors on nonexistent label fails', () => {

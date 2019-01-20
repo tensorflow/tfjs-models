@@ -380,7 +380,7 @@ export class Dataset {
 
     return tf.tidy(() => {
       let xTensors: tf.Tensor3D[] = [];
-      let xArrays: number[][] = [];
+      let xArrays: Float32Array[] = [];
       let yArrays: number[] = [];
 
       let labelIndices: number[] = [];
@@ -428,7 +428,7 @@ export class Dataset {
               // TODO(cais): Array.from() might be very memory-wasteful.
               //   Look into preserving the TypedArray once supported.
               // TODO(cais): Shuffling?
-              xArrays.push(Array.from(windowedSnippet.dataSync()));
+              xArrays.push(windowedSnippet.dataSync() as Float32Array);
               yArrays.push(i);
             } else {
               xTensors.push(windowedSnippet as tf.Tensor3D);
@@ -450,16 +450,15 @@ export class Dataset {
         const valSplit = config.datasetValidationSplit == null ?
             0.15 :
             config.datasetValidationSplit;
-        // TODO(cais): Support validationSplit ==== 0.
         tf.util.assert(
             valSplit > 0 && valSplit < 1,
-            `Invalid dataset validation spplit: ${valSplit}`);
+            `Invalid dataset validation split: ${valSplit}`);
 
         const zippedXandYArrays =
             xArrays.map((xArray, i) => [xArray, yArrays[i]]);
         tf.util.shuffle(
             zippedXandYArrays);  // Shuffle the data before splitting.
-        xArrays = zippedXandYArrays.map(item => item[0]) as number[][];
+        xArrays = zippedXandYArrays.map(item => item[0]) as Float32Array[];
         yArrays = zippedXandYArrays.map(item => item[1]) as number[];
 
         const {trainXs, trainYs, valXs, valYs} =

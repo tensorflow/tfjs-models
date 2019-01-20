@@ -1015,11 +1015,12 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     });
   });
 
-  fit('train with tf.data.Dataset', async () => {
+  it('train with tf.data.Dataset', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();
     const transfer = base.createTransfer('xfer1');
+    await transfer.collectExample('_background_noise_');
     await transfer.collectExample('_background_noise_');
     await transfer.collectExample('bar');
     await transfer.collectExample('bar');
@@ -1028,7 +1029,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     const fitDatasetDurationMillisThreshold = 0;
     const history = await transfer.train({
       epochs: 3,
-      batchSize: 2,
+      batchSize: 1,
       validationSplit: 0.5,
       fitDatasetDurationMillisThreshold
     }) as tf.History;
