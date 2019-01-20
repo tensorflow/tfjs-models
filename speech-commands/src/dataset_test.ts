@@ -106,9 +106,18 @@ describe('Dataset', () => {
         .toThrowError(/Expected label to be a non-empty string/);
   });
 
-  fit('durationMillis', () => {
+  it('durationMillis', () => {
     const dataset = new Dataset();
-    expect(dataset.durationMillis).toEqual(0);
+    expect(dataset.durationMillis()).toEqual(0);
+    const ex1 = getFakeExample('a');
+    dataset.addExample(ex1);
+    const durationPerExample = dataset.durationMillis();
+    expect(durationPerExample).toBeGreaterThan(0);
+    const ex2 = getFakeExample('b');
+    dataset.addExample(ex2);
+    expect(dataset.durationMillis()).toEqual(durationPerExample * 2);
+    dataset.clear();
+    expect(dataset.durationMillis()).toEqual(0);
   });
 
   it('merge two non-empty datasets', () => {
@@ -118,10 +127,13 @@ describe('Dataset', () => {
     addThreeExamplesToDataset(datasetPrime);
     const ex = getFakeExample('foo');
     datasetPrime.addExample(ex);
+    const duration0 = dataset.durationMillis();
     dataset.merge(datasetPrime);
     expect(dataset.getExampleCounts()).toEqual({a: 4, b: 2, foo: 1});
     // Check that the content of the incoming dataset is not affected.
     expect(datasetPrime.getExampleCounts()).toEqual({a: 2, b: 1, foo: 1});
+    expect(dataset.durationMillis()).toEqual(
+        duration0 + datasetPrime.durationMillis());
   });
 
   it('merge non-empty dataset into an empty one', () => {

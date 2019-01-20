@@ -1015,7 +1015,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     });
   });
 
-  fit('train with tf.data.Dataset, with fine-tuning', async () => {
+  it('train with tf.data.Dataset, with fine-tuning', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();
