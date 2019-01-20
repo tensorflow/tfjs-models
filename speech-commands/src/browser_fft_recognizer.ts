@@ -919,7 +919,6 @@ class TransferBrowserFftSpeechCommandRecognizer extends
           `${datasetDurationMillisThreshold} ms. ` +
           `Training transfer model using fitDataset() instead of fit()`);
       const batchSize = config.batchSize == null ? 32 : config.batchSize;
-      // TODO(cais): Need balanced split.
       const [trainDataset, valDataset] = this.collectTransferDataAsTfDataset(
           windowHopRatio, config.validationSplit, batchSize);
       const t0 = tf.util.now();
@@ -929,7 +928,17 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         callbacks: config.callback == null ? null : [config.callback]
       });
       console.log(`fitDataset() took ${tf.util.now() - t0} ms`);
-      return history;
+
+      if (config.fineTuningEpochs != null && config.fineTuningEpochs > 0) {
+        // Perform fine-tuning.
+        const t0 = tf.util.now();
+        const fineTuningHistory = await this.fineTuningUsingTfDatasets(
+            config, trainDataset, valDataset);
+        console.log(`fitDataset() (fine-tuning) took ${tf.util.now() - t0} ms`);
+        return [history, fineTuningHistory];
+      } else {
+        return history;
+      }
     } else {
       // Prepare the data.
       const {xs, ys} = this.collectTransferDataAsTensors(windowHopRatio);
@@ -963,32 +972,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         if (config.fineTuningEpochs != null && config.fineTuningEpochs > 0) {
           // Fine tuning: unfreeze the second-last dense layer of the base
           // model.
-          const originalTrainableValue =
-              this.secondLastBaseDenseLayer.trainable;
-          this.secondLastBaseDenseLayer.trainable = true;
-
-          // Recompile model after unfreezing layer.
-          const fineTuningOptimizer: string|tf.Optimizer =
-              config.fineTuningOptimizer == null ? 'sgd' :
-                                                  config.fineTuningOptimizer;
-          this.model.compile({
-            loss: 'categoricalCrossentropy',
-            optimizer: fineTuningOptimizer,
-            metrics: ['acc']
-          });
-
-          const fineTuningHistory = await this.model.fit(trainXs, trainYs, {
-            epochs: config.fineTuningEpochs,
-            validationData: valData,
-            batchSize: config.batchSize,
-            callbacks: config.fineTuningCallback == null ?
-                null :
-                [config.fineTuningCallback]
-          });
-
-          // Set the trainable attribute of the fine-tuning layer to its
-          // previous value.
-          this.secondLastBaseDenseLayer.trainable = originalTrainableValue;
+          const fineTuningHistory = await this.fineTuningUsingTensors(
+              config, trainXs, trainYs, valData);
           return [history, fineTuningHistory];
         } else {
           return history;
@@ -997,6 +982,62 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         tf.dispose([xs, ys, trainXs, trainYs, valData]);
       }
     }
+  }
+
+  private async fineTuningUsingTfDatasets(
+      config: TransferLearnConfig,
+      trainDataset: tf.data.Dataset<TensorContainer>,
+      valDataset: tf.data.Dataset<TensorContainer>): Promise<tf.History> {
+    const originalTrainableValue = this.secondLastBaseDenseLayer.trainable;
+    this.secondLastBaseDenseLayer.trainable = true;
+
+    // Recompile model after unfreezing layer.
+    const fineTuningOptimizer: string|tf.Optimizer =
+        config.fineTuningOptimizer == null ? 'sgd' : config.fineTuningOptimizer;
+    this.model.compile({
+      loss: 'categoricalCrossentropy',
+      optimizer: fineTuningOptimizer,
+      metrics: ['acc']
+    });
+
+    const fineTuningHistory = await this.model.fitDataset(trainDataset, {
+      epochs: config.fineTuningEpochs,
+      validationData: valDataset,
+      callbacks: config.callback == null ? null : [config.callback]
+    });
+    // Set the trainable attribute of the fine-tuning layer to its
+    // previous value.
+    this.secondLastBaseDenseLayer.trainable = originalTrainableValue;
+    return fineTuningHistory;
+  }
+
+  private async fineTuningUsingTensors(
+      config: TransferLearnConfig, trainXs: tf.Tensor, trainYs: tf.Tensor,
+      valData: [tf.Tensor, tf.Tensor]): Promise<tf.History> {
+    const originalTrainableValue = this.secondLastBaseDenseLayer.trainable;
+    this.secondLastBaseDenseLayer.trainable = true;
+
+    // Recompile model after unfreezing layer.
+    const fineTuningOptimizer: string|tf.Optimizer =
+        config.fineTuningOptimizer == null ? 'sgd' : config.fineTuningOptimizer;
+    this.model.compile({
+      loss: 'categoricalCrossentropy',
+      optimizer: fineTuningOptimizer,
+      metrics: ['acc']
+    });
+
+    const fineTuningHistory = await this.model.fit(trainXs, trainYs, {
+      epochs: config.fineTuningEpochs,
+      validationData: valData,
+      batchSize: config.batchSize,
+      callbacks: config.fineTuningCallback == null ?
+          null :
+          [config.fineTuningCallback]
+    });
+    // Set the trainable attribute of the fine-tuning layer to its
+    // previous value.
+    this.secondLastBaseDenseLayer.trainable = originalTrainableValue;
+    return fineTuningHistory;
   }
 
   /**
