@@ -833,7 +833,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
    */
   private collectTransferDataAsTfDataset(
       windowHopRatio?: number, batchSize = 32):
-     [tf.data.Dataset<any>, tf.data.Dataset<any>] {
+      // tslint:disable-next-line:no-any
+      [tf.data.Dataset<any>, tf.data.Dataset<any>] {
     const numFrames = this.nonBatchInputShape[0];
     windowHopRatio = windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
     const hopFrames = Math.round(windowHopRatio * numFrames);
@@ -842,6 +843,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       hopFrames,
       getDataset: true,
       datasetBatchSize: 32
+      // tslint:disable-next-line:no-any
     }) as [tf.data.Dataset<any>, tf.data.Dataset<any>];
     // TODO(cais): See if we can tighten the typing.
   }
@@ -903,9 +905,11 @@ class TransferBrowserFftSpeechCommandRecognizer extends
 
     const windowHopRatio = config.windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
 
+    // Use `tf.data.Dataset` objects for training of the total duration of
+    // the recordings exceeds 60 seconds. Otherwise, use `tf.Tensor` objects.
     const datasetDurationMillisThreshold =
         config.fitDatasetDurationMillisThreshold == null ?
-        120e3 : config.fitDatasetDurationMillisThreshold;
+        60e3 : config.fitDatasetDurationMillisThreshold;
     if (this.dataset.durationMillis() > datasetDurationMillisThreshold) {
       tf.util.assert(config.epochs > 0, `Invalid config.epochs`);
       // Train transfer-learning model using fitDataset

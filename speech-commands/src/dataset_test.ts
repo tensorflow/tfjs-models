@@ -19,7 +19,7 @@ import * as tf from '@tensorflow/tfjs';
 import {expectArraysClose, expectArraysEqual} from '@tensorflow/tfjs-core/dist/test_util';
 
 import {normalize} from './browser_fft_utils';
-import {arrayBuffer2SerializedExamples, BACKGROUND_NOISE_TAG, Dataset, DATASET_SERIALIZATION_DESCRIPTOR, DATASET_SERIALIZATION_VERSION, deserializeExample, getMaxIntensityFrameIndex, getValidWindows, serializeExample, spectrogram2IntensityCurve} from './dataset';
+import {arrayBuffer2SerializedExamples, BACKGROUND_NOISE_TAG, Dataset, DATASET_SERIALIZATION_DESCRIPTOR, DATASET_SERIALIZATION_VERSION, deserializeExample, getMaxIntensityFrameIndex, getValidWindows, serializeExample, spectrogram2IntensityCurve, SpectrogramAndTargetsTfDataset} from './dataset';
 import {string2ArrayBuffer} from './generic_utils';
 import {Example, RawAudioData, SpectrogramData} from './types';
 
@@ -368,10 +368,10 @@ describe('Dataset', () => {
     const dataset = new Dataset();
     addThreeExamplesToDataset(dataset);
 
-    const out1 = dataset.getData('a');
+    const out1 = dataset.getData('a') as {xs: tf.Tensor, ys: tf.Tensor};
     expect(out1.xs.shape).toEqual([2, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
     expect(out1.ys).toBeUndefined();
-    const out2 = dataset.getData('b');
+    const out2 = dataset.getData('b') as {xs: tf.Tensor, ys: tf.Tensor};
     expect(out2.xs.shape).toEqual([1, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
     expect(out2.ys).toBeUndefined();
   });
@@ -381,18 +381,19 @@ describe('Dataset', () => {
     const [uid1, uid2] = addThreeExamplesToDataset(dataset);
 
     dataset.removeExample(uid1);
-    const out1 = dataset.getData(null, {shuffle: false});
+    const out1 = dataset.getData(null, {shuffle: false}) as
+        {xs: tf.Tensor, ys: tf.Tensor};
     expect(out1.xs.shape).toEqual([2, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
     expectArraysClose(out1.ys, tf.tensor2d([[1, 0], [0, 1]]));
 
-    const out2 = dataset.getData('a');
+    const out2 = dataset.getData('a') as {xs: tf.Tensor, ys: tf.Tensor};
     expect(out2.xs.shape).toEqual([1, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
 
     dataset.removeExample(uid2);
     expect(() => dataset.getData('a'))
         .toThrowError(/Label a is not in the vocabulary/);
 
-    const out3 = dataset.getData('b');
+    const out3 = dataset.getData('b') as {xs: tf.Tensor, ys: tf.Tensor};
     expect(out3.xs.shape).toEqual([1, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
   });
 
@@ -410,9 +411,43 @@ describe('Dataset', () => {
     const dataset = new Dataset();
     addThreeExamplesToDataset(dataset);
 
-    const out = dataset.getData(null, {shuffle: false});
+    const out = dataset.getData(null, {shuffle: false}) as
+        {xs: tf.Tensor, ys: tf.Tensor};
     expect(out.xs.shape).toEqual([3, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
     expectArraysClose(out.ys, tf.tensor2d([[1, 0], [1, 0], [0, 1]]));
+  });
+
+  it('getSpectrogramsAsTensors without label as tf.data.Dataset', async () => {
+    const dataset = new Dataset();
+    addThreeExamplesToDataset(dataset);
+
+    const [trainDataset, valDataset] = dataset.getData(null, {
+      getDataset: true,
+      datasetBatchSize: 1,
+      datasetValidationSplit: 1 / 3
+    }) as [SpectrogramAndTargetsTfDataset, SpectrogramAndTargetsTfDataset];
+    let numTrain = 0;
+    await trainDataset.forEach(xAndY => {
+      numTrain++;
+      expect(xAndY.length).toEqual(2);
+      const x = xAndY[0];
+      const y = xAndY[1];
+      expect(x.shape).toEqual([1, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
+      expect(y.shape).toEqual([1, 2]);
+    });
+    expect(numTrain).toEqual(2);
+    let numVal = 0;
+    await valDataset.forEach(xAndY => {
+      numVal++;
+      expect(xAndY.length).toEqual(2);
+      const x = xAndY[0];
+      const y = xAndY[1];
+      expect(x.shape).toEqual([1, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
+      expect(y.shape).toEqual([1, 2]);
+    });
+    expect(numVal).toEqual(1);
+    // expect(out.xs.shape).toEqual([3, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
+    // expectArraysClose(out.ys, tf.tensor2d([[1, 0], [1, 0], [0, 1]]));
   });
 
   it('getSpectrogramsAsTensors on nonexistent label fails', () => {
@@ -435,8 +470,9 @@ describe('Dataset', () => {
     dataset.addExample(getFakeExample('bar', 6));
     dataset.addExample(getFakeExample('foo', 7));
 
-    const {xs, ys} = dataset.getData(
-        null, {numFrames: 5, hopFrames: 5, shuffle: false});
+    const {xs, ys} =
+        dataset.getData(null, {numFrames: 5, hopFrames: 5, shuffle: false}) as
+        {xs: tf.Tensor, ys: tf.Tensor};
     expect(xs.shape).toEqual([3, 5, FAKE_FRAME_SIZE, 1]);
     expectArraysClose(ys, tf.tensor2d([[1, 0], [0, 1], [0, 1]]));
   });
@@ -447,8 +483,8 @@ describe('Dataset', () => {
     dataset.addExample(getFakeExample('bar', 6));
     dataset.addExample(getFakeExample('foo', 7));
 
-    const {xs, ys} =
-        dataset.getData('foo', {numFrames: 5, hopFrames: 5});
+    const {xs, ys} = dataset.getData('foo', {numFrames: 5, hopFrames: 5}) as
+        {xs: tf.Tensor, ys: tf.Tensor};
     expect(xs.shape).toEqual([2, 5, FAKE_FRAME_SIZE, 1]);
     expect(ys).toBeUndefined();
   });
@@ -460,8 +496,11 @@ describe('Dataset', () => {
     dataset.addExample(
         getFakeExample('bar', 5, 2, [1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
 
-    const {xs, ys} = dataset.getData(
-        null, {numFrames: 3, hopFrames: 1, shuffle: false, normalize: false});
+    const {xs, ys} =
+        dataset.getData(
+            null,
+            {numFrames: 3, hopFrames: 1, shuffle: false, normalize: false}) as
+        {xs: tf.Tensor, ys: tf.Tensor};
     const windows = tf.unstack(xs);
 
     expect(windows.length).toEqual(6);
@@ -486,8 +525,9 @@ describe('Dataset', () => {
         getFakeExample('bar', 5, 2, [1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
 
     // `normalize` is `true` by default.
-    const {xs, ys} = dataset.getData(
-        null, {numFrames: 3, hopFrames: 1, shuffle: false});
+    const {xs, ys} =
+        dataset.getData(null, {numFrames: 3, hopFrames: 1, shuffle: false}) as
+        {xs: tf.Tensor, ys: tf.Tensor};
     const windows = tf.unstack(xs);
 
     expect(windows.length).toEqual(6);
@@ -525,8 +565,8 @@ describe('Dataset', () => {
     const argMaxTensors: tf.Tensor[] = [];
     for (let i = 0; i < 5; ++i) {
       // `shuffle` is `true` by default.
-      const {ys} =
-          dataset.getData(null, {numFrames: 3, hopFrames: 1});
+      const {ys} = dataset.getData(null, {numFrames: 3, hopFrames: 1}) as
+          {xs: tf.Tensor, ys: tf.Tensor};
       // Use `argMax()` to convert the one-hot-encoded `ys` to indices.
       argMaxTensors.push(ys.argMax(-1));
     }
@@ -550,8 +590,9 @@ describe('Dataset', () => {
 
     const argMaxTensors: tf.Tensor[] = [];
     for (let i = 0; i < 5; ++i) {
-      const {ys} = dataset.getData(
-          null, {numFrames: 3, hopFrames: 1, shuffle: false});
+      const {ys} =
+          dataset.getData(null, {numFrames: 3, hopFrames: 1, shuffle: false}) as
+          {xs: tf.Tensor, ys: tf.Tensor};
       argMaxTensors.push(ys.argMax(-1));
     }
     // `argMaxTensors` are the indices for the targets.
@@ -572,8 +613,11 @@ describe('Dataset', () => {
     dataset.addExample(
         getFakeExample('bar', 6, 2, [0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
 
-    const {xs, ys} = dataset.getData(
-        null, {numFrames: 5, hopFrames: 1, shuffle: false, normalize: false});
+    const {xs, ys} =
+        dataset.getData(
+            null,
+            {numFrames: 5, hopFrames: 1, shuffle: false, normalize: false}) as
+        {xs: tf.Tensor, ys: tf.Tensor};
     const windows = tf.unstack(xs);
     expect(windows.length).toEqual(4);
     expectArraysClose(
@@ -596,8 +640,11 @@ describe('Dataset', () => {
         [0, 0, 10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
     dataset.addExample(
         getFakeExample('bar', 6, 2, [0, 0, 1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
-    const {xs, ys} = dataset.getData(
-        null, {numFrames: 3, hopFrames: 2, shuffle: false, normalize: false});
+    const {xs, ys} =
+        dataset.getData(
+            null,
+            {numFrames: 3, hopFrames: 2, shuffle: false, normalize: false}) as
+        {xs: tf.Tensor, ys: tf.Tensor};
     const windows = tf.unstack(xs);
     expect(windows.length).toEqual(4);
     expectArraysClose(
@@ -616,10 +663,8 @@ describe('Dataset', () => {
         'foo', 6, 2, [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
     dataset.addExample(
         getFakeExample('bar', 5, 2, [1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
-    expect(() => dataset.getData(null, {
-      numFrames: 6,
-      hopFrames: 2
-    })).toThrowError(/.*6.*exceeds the minimum numFrames .*5.*/);
+    expect(() => dataset.getData(null, {numFrames: 6, hopFrames: 2}))
+        .toThrowError(/.*6.*exceeds the minimum numFrames .*5.*/);
   });
 
   it('Ragged examples with no numFrames leads to Error', () => {
@@ -628,8 +673,7 @@ describe('Dataset', () => {
         'foo', 6, 2, [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
     dataset.addExample(
         getFakeExample('bar', 5, 2, [1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
-    expect(() => dataset.getData(null))
-        .toThrowError(/numFrames is required/);
+    expect(() => dataset.getData(null)).toThrowError(/numFrames is required/);
   });
 
   it('Ragged examples with no hopFrames leads to Error', () => {
@@ -778,8 +822,8 @@ describe('Dataset serialization', () => {
     expect(ex4Prime.spectrogram.frameSize).toEqual(16);
     expectArraysEqual(ex4Prime.spectrogram.data, ex4.spectrogram.data);
 
-    const {xs, ys} =
-        datasetPrime.getData(null, {shuffle: false});
+    const {xs, ys} = datasetPrime.getData(null, {shuffle: false}) as
+        {xs: tf.Tensor, ys: tf.Tensor};
     expect(xs.shape).toEqual([4, 10, 16, 1]);
     expectArraysClose(
         ys, tf.tensor2d([[1, 0, 0], [0, 1, 0], [0, 1, 0], [0, 0, 1]]));
@@ -808,8 +852,8 @@ describe('Dataset serialization', () => {
     const examples = datasetPrime.getExamples('foo');
     datasetPrime.removeExample(examples[0].uid);
 
-    const {xs, ys} =
-        datasetPrime.getData(null, {shuffle: false});
+    const {xs, ys} = datasetPrime.getData(null, {shuffle: false}) as
+        {xs: tf.Tensor, ys: tf.Tensor};
     expect(xs.shape).toEqual([3, 10, 16, 1]);
     expectArraysClose(ys, tf.tensor2d([[1, 0, 0], [0, 1, 0], [0, 0, 1]]));
   });

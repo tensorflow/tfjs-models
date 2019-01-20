@@ -69,7 +69,7 @@ export function create(
   }
 }
 
-export {BACKGROUND_NOISE_TAG, Dataset, GetDataConfig as GetSpectrogramsAsTensorsConfig, getMaxIntensityFrameIndex, spectrogram2IntensityCurve, SpectrogramAndTargetsDataset} from './dataset';
+export {BACKGROUND_NOISE_TAG, Dataset, GetDataConfig as GetSpectrogramsAsTensorsConfig, getMaxIntensityFrameIndex, spectrogram2IntensityCurve, SpectrogramAndTargetsTfDataset} from './dataset';
 export {Example, FFT_TYPE, RecognizerParams, SpectrogramData, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig} from './types';
 export {deleteSavedTransferModel, listSavedTransferModels, UNKNOWN_TAG} from './browser_fft_recognizer';
 export {version} from './version';

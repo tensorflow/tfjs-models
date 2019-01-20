@@ -172,6 +172,7 @@ export interface GetDataConfig {
   datasetValidationSplit?: number;
 }
 
+// tslint:disable-next-line:no-any
 export type SpectrogramAndTargetsTfDataset = tf.data.Dataset<any>;
 
 /**
@@ -503,7 +504,7 @@ export class Dataset {
         return {
           xs: tf.stack(xTensors) as tf.Tensor4D,
           ys: targets as tf.Tensor2D
-        }
+        };
       }
     });
   }
