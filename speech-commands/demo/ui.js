@@ -82,8 +82,9 @@ export function hideCandidateWords() {
  *   - pixelsPerFrame {number} Number of pixels along the width dimension of
  *     the canvas for each frame of spectrogram.
  *   - maxPixelWidth {number} Maximum width in pixels.
- *   - markMaxIntensityFrame {bool} Whether to mark the index of the frame
- *     with the maximum intensity.
+ *   - markKeyFrame {bool} Whether to mark the index of the frame
+ *     with the maximum intensity or a predetermined key frame.
+ *   - keyFrameIndex {index?} Predetermined key frame index.
  *
  *   <= fftSize.
  */
@@ -147,21 +148,22 @@ export async function plotSpectrogram(
     }
   }
 
-  if (config.markMaxIntensityFrame) {
-    const maxIntensityFrameIndex =
+  if (config.markKeyFrame) {
+    const keyFrameIndex =
+        config.keyFrameIndex == null ?
         await SpeechCommands.getMaxIntensityFrameIndex({
           data: frequencyData,
           frameSize: fftSize
-        }).data();
+        }).data() : config.keyFrameIndex;
     // Draw lines to mark the maximum-intensity frame.
     context.strokeStyle = 'black';
     context.beginPath();
-    context.moveTo(pixelWidth * maxIntensityFrameIndex, 0);
-    context.lineTo(pixelWidth * maxIntensityFrameIndex, canvas.height * 0.1);
+    context.moveTo(pixelWidth * keyFrameIndex, 0);
+    context.lineTo(pixelWidth * keyFrameIndex, canvas.height * 0.1);
     context.stroke();
     context.beginPath();
-    context.moveTo(pixelWidth * maxIntensityFrameIndex, canvas.height * 0.9);
-    context.lineTo(pixelWidth * maxIntensityFrameIndex, canvas.height);
+    context.moveTo(pixelWidth * keyFrameIndex, canvas.height * 0.9);
+    context.lineTo(pixelWidth * keyFrameIndex, canvas.height);
     context.stroke();
   }
 }

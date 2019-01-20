@@ -737,6 +737,11 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     return this.dataset.getExamples(label);
   }
 
+  /** Set the key frame index of a given example. */
+  setExampleKeyFrameIndex(uid: string, keyFrameIndex: number): void {
+    this.dataset.setExampleKeyFrameIndex(uid, keyFrameIndex);
+  }
+
   /**
    * Remove an example from the current dataset.
    *
