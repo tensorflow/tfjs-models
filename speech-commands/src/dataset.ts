@@ -16,6 +16,7 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
+import {TensorContainer} from '@tensorflow/tfjs-core/dist/tensor_types';
 
 import {normalize} from './browser_fft_utils';
 import {arrayBuffer2String, concatenateArrayBuffers, getUID, string2ArrayBuffer} from './generic_utils';
@@ -173,7 +174,7 @@ export interface GetDataConfig {
 }
 
 // tslint:disable-next-line:no-any
-export type SpectrogramAndTargetsTfDataset = tf.data.Dataset<any>;
+export type SpectrogramAndTargetsTfDataset = tf.data.Dataset<TensorContainer>;
 
 /**
  * A serializable, mutable set of speech/audio `Example`s;

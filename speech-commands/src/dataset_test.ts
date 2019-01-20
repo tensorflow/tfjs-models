@@ -16,6 +16,7 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
+import {TensorContainer} from '@tensorflow/tfjs-core/dist/tensor_types';
 import {expectArraysClose, expectArraysEqual} from '@tensorflow/tfjs-core/dist/test_util';
 
 import {normalize} from './browser_fft_utils';
@@ -427,21 +428,23 @@ describe('Dataset', () => {
       datasetValidationSplit: 1 / 3
     }) as [SpectrogramAndTargetsTfDataset, SpectrogramAndTargetsTfDataset];
     let numTrain = 0;
-    await trainDataset.forEach(xAndY => {
+    await trainDataset.forEach((xAndY: TensorContainer) => {
       numTrain++;
+      xAndY = xAndY as tf.Tensor[];
       expect(xAndY.length).toEqual(2);
-      const x = xAndY[0];
-      const y = xAndY[1];
+      const x = xAndY[0] as tf.Tensor;
+      const y = xAndY[1] as tf.Tensor;
       expect(x.shape).toEqual([1, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
       expect(y.shape).toEqual([1, 2]);
     });
     expect(numTrain).toEqual(2);
     let numVal = 0;
-    await valDataset.forEach(xAndY => {
+    await valDataset.forEach((xAndY: TensorContainer) => {
       numVal++;
+      xAndY = xAndY as tf.Tensor[];
       expect(xAndY.length).toEqual(2);
-      const x = xAndY[0];
-      const y = xAndY[1];
+      const x = xAndY[0] as tf.Tensor;
+      const y = xAndY[1] as tf.Tensor;
       expect(x.shape).toEqual([1, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
       expect(y.shape).toEqual([1, 2]);
     });

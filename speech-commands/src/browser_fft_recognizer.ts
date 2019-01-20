@@ -16,6 +16,7 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
+import {TensorContainer} from '@tensorflow/tfjs-core/dist/tensor_types';
 
 import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
 import {loadMetadataJson, normalize} from './browser_fft_utils';
@@ -833,8 +834,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
    */
   private collectTransferDataAsTfDataset(
       windowHopRatio?: number, batchSize = 32):
-      // tslint:disable-next-line:no-any
-      [tf.data.Dataset<any>, tf.data.Dataset<any>] {
+      [tf.data.Dataset<TensorContainer>, tf.data.Dataset<TensorContainer>] {
     const numFrames = this.nonBatchInputShape[0];
     windowHopRatio = windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
     const hopFrames = Math.round(windowHopRatio * numFrames);
@@ -842,9 +842,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       numFrames,
       hopFrames,
       getDataset: true,
-      datasetBatchSize: 32
-      // tslint:disable-next-line:no-any
-    }) as [tf.data.Dataset<any>, tf.data.Dataset<any>];
+      datasetBatchSize: batchSize
+    }) as [tf.data.Dataset<TensorContainer>, tf.data.Dataset<TensorContainer>];
     // TODO(cais): See if we can tighten the typing.
   }
 

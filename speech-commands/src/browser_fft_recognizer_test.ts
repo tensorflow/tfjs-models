@@ -1015,6 +1015,29 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     });
   });
 
+  fit('train with tf.data.Dataset', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    await transfer.collectExample('_background_noise_');
+    await transfer.collectExample('bar');
+    await transfer.collectExample('bar');
+    // Set the duration threshold to 0 to force using tf.data.Dataset
+    // for training.
+    const fitDatasetDurationMillisThreshold = 0;
+    const history = await transfer.train({
+      epochs: 3,
+      batchSize: 2,
+      validationSplit: 0.5,
+      fitDatasetDurationMillisThreshold
+    }) as tf.History;
+    expect(history.history.loss.length).toEqual(3);
+    expect(history.history.acc.length).toEqual(3);
+    expect(history.history.val_loss.length).toEqual(3);
+    expect(history.history.val_acc.length).toEqual(3);
+  });
+
   it('trainTransferLearningModel with fine-tuning + callback', async done => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
