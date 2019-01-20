@@ -516,7 +516,7 @@ export interface TransferLearnConfig {
    * The threshold for the total duration of the dataset above which
    * `fitDataset()` will be used in lieu of `fit()`.
    *
-   * Default: 240e3.
+   * Default: 60e3 (1 minute).
    */
   fitDatasetDurationMillisThreshold?: number;
 }

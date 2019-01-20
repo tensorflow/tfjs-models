@@ -106,6 +106,11 @@ describe('Dataset', () => {
         .toThrowError(/Expected label to be a non-empty string/);
   });
 
+  fit('durationMillis', () => {
+    const dataset = new Dataset();
+    expect(dataset.durationMillis).toEqual(0);
+  });
+
   it('merge two non-empty datasets', () => {
     const dataset = new Dataset();
     addThreeExamplesToDataset(dataset);
