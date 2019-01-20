@@ -795,7 +795,10 @@ class TransferBrowserFftSpeechCommandRecognizer extends
   }
 
   /**
-   * Collect the transfer-learning data as tf.Tensors.
+   * Collect the transfer-learning data as `tf.Tensor`s.
+   *
+   * Used for training and evaluation when the amount of data is relatively
+   * small.
    *
    * @param windowHopRatio Ratio betwen hop length in number of frames and the
    *   number of frames in a long spectrogram. Used during extraction
@@ -815,6 +818,14 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     return {xs: out.xs, ys: out.ys as tf.Tensor};
   }
 
+  /**
+   * Same as `collectTransferDataAsTensors`, but returns `tf.data.Dataset`s.
+   *
+   * Used for training and evaluation when the amount of data is large.
+   *
+   * @param windowHopRatio
+   * @param batchSize
+   */
   private collectTransferDataAsTfDataset(
       windowHopRatio?: number, batchSize = 32):
      [tf.data.Dataset<any>, tf.data.Dataset<any>] {

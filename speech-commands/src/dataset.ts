@@ -304,7 +304,9 @@ export class Dataset {
    *   - The shape of `xs` will be: `[numExamples, numFrames, frameSize, 1]`
    *   - The shape of `ys` will be: `[numExamples, vocabularySize]`.
    *
-   * @returns `xs` and `ys` tensors. See description above.
+   * @returns If `config.getDataset` is `true`, returns two `tf.data.Dataset`
+   *   objects, one for training and one for validation.
+   *   Else, xs` and `ys` tensors. See description above.
    * @throws Error
    *   - if not all the involved spectrograms have matching `numFrames` and
    *     `frameSize`, or
