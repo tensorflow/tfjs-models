@@ -829,8 +829,17 @@ class TransferBrowserFftSpeechCommandRecognizer extends
    *
    * Used for training and evaluation when the amount of data is large.
    *
-   * @param windowHopRatio
-   * @param batchSize
+   * @param windowHopRatio Ratio betwen hop length in number of frames and the
+   *   number of frames in a long spectrogram. Used during extraction
+   *   of multiple windows from the long spectrogram.
+   * @param validationSplit The validation split to be used for splitting
+   *   the raw data between the `tf.data.Dataset` objects for training and
+   *   validation.
+   * @param batchSize Batch size used for the `tf.data.Dataset.batch()` call
+   *   during the creation of the dataset objects.
+   * @return Two `tf.data.Dataset` objects, one for training and one for
+   *   validation. Each of the objects may be directly fed into
+   *   `this.model.fitDataset`.
    */
   private collectTransferDataAsTfDataset(
       windowHopRatio?: number, validationSplit = 0.15, batchSize = 32):
