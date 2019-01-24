@@ -298,6 +298,11 @@ export interface SpectrogramData {
   frameSize: number;
 
   /**
+   * Duration of each frame in milliseconds.
+   */
+  frameDurationMillis?: number;
+
+  /**
    * Index to the key frame (0-based).
    *
    * A key frame is a frame in the spectrogram that belongs to
@@ -506,6 +511,14 @@ export interface TransferLearnConfig {
    * a hop of Math.round(43 * 0.25) = 11 frames.
    */
   windowHopRatio?: number;
+
+  /**
+   * The threshold for the total duration of the dataset above which
+   * `fitDataset()` will be used in lieu of `fit()`.
+   *
+   * Default: 60e3 (1 minute).
+   */
+  fitDatasetDurationMillisThreshold?: number;
 }
 
 /**

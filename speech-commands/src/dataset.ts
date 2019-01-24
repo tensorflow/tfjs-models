@@ -16,9 +16,11 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
+import {TensorContainer} from '@tensorflow/tfjs-core/dist/tensor_types';
 
 import {normalize} from './browser_fft_utils';
 import {arrayBuffer2String, concatenateArrayBuffers, getUID, string2ArrayBuffer} from './generic_utils';
+import {balancedTrainValSplitNumArrays} from './training_utils';
 import {Example, SpectrogramData} from './types';
 
 // Descriptor for serialized dataset files: stands for:
@@ -93,7 +95,7 @@ export const BACKGROUND_NOISE_TAG = '_background_noise_';
 /**
  * Configuration for getting spectrograms as tensors.
  */
-export interface GetSpectrogramsAsTensorsConfig {
+export interface GetDataConfig {
   /**
    * Number of frames.
    *
@@ -141,7 +143,38 @@ export interface GetSpectrogramsAsTensorsConfig {
    * Default: `true`.
    */
   shuffle?: boolean;
+
+  /**
+   * Whether to obtain a `tf.data.Datasaet` object.
+   *
+   * Default: `false`.
+   */
+  getDataset?: boolean;
+
+  /**
+   * Batch size for dataset.
+   *
+   * Applicable only if `getDataset === true`.
+   */
+  datasetBatchSize?: number;
+
+  /**
+   * Validation split for the datasaet.
+   *
+   * Applicable only if `getDataset === true`.
+   *
+   * The data will be divided into two fractions of relative sizes
+   * `[1 - datasetValidationSplit, datasetValidationSplit]`, for the
+   * training and validation `tf.data.Dataset` objects, respectively.
+   *
+   * Must be a number between 0 and 1.
+   * Default: 0.15.
+   */
+  datasetValidationSplit?: number;
 }
+
+// tslint:disable-next-line:no-any
+export type SpectrogramAndTargetsTfDataset = tf.data.Dataset<TensorContainer>;
 
 /**
  * A serializable, mutable set of speech/audio `Example`s;
@@ -276,7 +309,9 @@ export class Dataset {
    *   - The shape of `xs` will be: `[numExamples, numFrames, frameSize, 1]`
    *   - The shape of `ys` will be: `[numExamples, vocabularySize]`.
    *
-   * @returns `xs` and `ys` tensors. See description above.
+   * @returns If `config.getDataset` is `true`, returns two `tf.data.Dataset`
+   *   objects, one for training and one for validation.
+   *   Else, xs` and `ys` tensors. See description above.
    * @throws Error
    *   - if not all the involved spectrograms have matching `numFrames` and
    *     `frameSize`, or
@@ -284,9 +319,10 @@ export class Dataset {
    *     `Dataset`, or
    *   - if the `Dataset` is currently empty.
    */
-  getSpectrogramsAsTensors(
-      label?: string, config?: GetSpectrogramsAsTensorsConfig):
-      {xs: tf.Tensor4D, ys?: tf.Tensor2D} {
+  getData(label?: string, config?: GetDataConfig): {
+    xs: tf.Tensor4D,
+    ys?: tf.Tensor2D
+  }|[SpectrogramAndTargetsTfDataset, SpectrogramAndTargetsTfDataset] {
     tf.util.assert(
         this.size() > 0,
         `Cannot get spectrograms as tensors because the dataset is empty`);
@@ -344,6 +380,9 @@ export class Dataset {
 
     return tf.tidy(() => {
       let xTensors: tf.Tensor3D[] = [];
+      let xArrays: Float32Array[] = [];
+      let yArrays: number[] = [];
+
       let labelIndices: number[] = [];
       let uniqueFrameSize: number;
       for (let i = 0; i < vocab.length; ++i) {
@@ -384,7 +423,14 @@ export class Dataset {
                   [window[0], 0, 0], [window[1] - window[0], -1, -1]);
               return toNormalize ? normalize(output) : output;
             });
-            xTensors.push(windowedSnippet as tf.Tensor3D);
+            if (config.getDataset) {
+              // TODO(cais): See if we can do away with dataSync();
+              // TODO(cais): Shuffling?
+              xArrays.push(windowedSnippet.dataSync() as Float32Array);
+              yArrays.push(i);
+            } else {
+              xTensors.push(windowedSnippet as tf.Tensor3D);
+            }
             if (label == null) {
               labelIndices.push(i);
             }
@@ -393,26 +439,76 @@ export class Dataset {
         }
       }
 
-      // Shuffle the data.
       const shuffle = config.shuffle == null ? true : config.shuffle;
-      if (shuffle) {
-        const zipped: Array<{x: tf.Tensor3D, y: number}> = [];
-        xTensors.forEach((xTensor, i) => {
-          zipped.push({x: xTensor, y: labelIndices[i]});
-        });
-        tf.util.shuffle(zipped);
-        xTensors = zipped.map(item => item.x);
-        labelIndices = zipped.map(item => item.y);
-      }
+      if (config.getDataset) {
+        const batchSize =
+            config.datasetBatchSize == null ? 32 : config.datasetBatchSize;
 
-      const targets = label == null ?
-          tf.oneHot(tf.tensor1d(labelIndices, 'int32'), vocab.length)
-              .asType('float32') :
-          undefined;
-      return {
-        xs: tf.stack(xTensors) as tf.Tensor4D,
-        ys: targets as tf.Tensor2D
-      };
+        // Split the data into two splits: training and validation.
+        const valSplit = config.datasetValidationSplit == null ?
+            0.15 :
+            config.datasetValidationSplit;
+        tf.util.assert(
+            valSplit > 0 && valSplit < 1,
+            `Invalid dataset validation split: ${valSplit}`);
+
+        const zippedXandYArrays =
+            xArrays.map((xArray, i) => [xArray, yArrays[i]]);
+        tf.util.shuffle(
+            zippedXandYArrays);  // Shuffle the data before splitting.
+        xArrays = zippedXandYArrays.map(item => item[0]) as Float32Array[];
+        yArrays = zippedXandYArrays.map(item => item[1]) as number[];
+
+        const {trainXs, trainYs, valXs, valYs} =
+            balancedTrainValSplitNumArrays(xArrays, yArrays, valSplit);
+
+        // TODO(cais): The typing around Float32Array is not working properly
+        // for tf.data currently. Tighten the types when the tf.data bug is
+        // fixed.
+        // tslint:disable:no-any
+        const xTrain = tf.data.array(trainXs as any).map(
+            x => tf.tensor3d(x as any, [numFrames, uniqueFrameSize, 1]));
+        const yTrain = tf.data.array(trainYs).map(
+            y => tf.oneHot([y], vocab.length).squeeze([0]));
+        // TODO(cais): See if we can tighten the typing.
+        let trainDataset = tf.data.zip([xTrain, yTrain]);
+        if (shuffle) {
+          // Shuffle the dataset.
+          trainDataset = trainDataset.shuffle(xArrays.length);
+        }
+        trainDataset = trainDataset.batch(batchSize).prefetch(4);
+
+        const xVal = tf.data.array(valXs as any).map(
+            x => tf.tensor3d(x as any, [numFrames, uniqueFrameSize, 1]));
+        const yVal = tf.data.array(valYs).map(
+            y => tf.oneHot([y], vocab.length).squeeze([0]));
+        let valDataset = tf.data.zip([xVal, yVal]);
+        valDataset = valDataset.batch(batchSize).prefetch(4);
+        // tslint:enable:no-any
+
+        // tslint:disable-next-line:no-any
+        return [trainDataset, valDataset] as any;
+      } else {
+        if (shuffle) {
+          // Shuffle the data.
+          const zipped: Array<{x: tf.Tensor3D, y: number}> = [];
+          xTensors.forEach((xTensor, i) => {
+            zipped.push({x: xTensor, y: labelIndices[i]});
+          });
+          tf.util.shuffle(zipped);
+          xTensors = zipped.map(item => item.x);
+          labelIndices = zipped.map(item => item.y);
+        }
+
+        const targets = label == null ?
+            tf.oneHot(tf.tensor1d(labelIndices, 'int32'), vocab.length)
+                .asType('float32') :
+            undefined;
+        return {
+          xs: tf.stack(xTensors) as tf.Tensor4D,
+          ys: targets as tf.Tensor2D
+        };
+      }
     });
   }
 
@@ -482,6 +578,26 @@ export class Dataset {
    */
   size(): number {
     return Object.keys(this.examples).length;
+  }
+
+  /**
+   * Get the total duration of the `Example` currently held by `Dataset`,
+   *
+   * in milliseconds.
+   *
+   * @return Total duration in milliseconds.
+   */
+  durationMillis(): number {
+    let durMillis = 0;
+    const DEFAULT_FRAME_DUR_MILLIS = 23.22;
+    for (const key in this.examples) {
+      const spectrogram = this.examples[key].spectrogram;
+      const frameDurMillis =
+          spectrogram.frameDurationMillis | DEFAULT_FRAME_DUR_MILLIS;
+      durMillis +=
+          spectrogram.data.length / spectrogram.frameSize * frameDurMillis;
+    }
+    return durMillis;
   }
 
   /**
