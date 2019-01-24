@@ -912,84 +912,99 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       metrics: ['acc']
     });
 
-    const windowHopRatio = config.windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
-
     // Use `tf.data.Dataset` objects for training of the total duration of
     // the recordings exceeds 60 seconds. Otherwise, use `tf.Tensor` objects.
     const datasetDurationMillisThreshold =
         config.fitDatasetDurationMillisThreshold == null ?
         60e3 : config.fitDatasetDurationMillisThreshold;
+    console.log(
+        `Detected large dataset: total duration = ` +
+        `${this.dataset.durationMillis()} ms > ` +
+        `${datasetDurationMillisThreshold} ms. ` +
+        `Training transfer model using fitDataset() instead of fit()`);
     if (this.dataset.durationMillis() > datasetDurationMillisThreshold) {
-      tf.util.assert(config.epochs > 0, `Invalid config.epochs`);
-      // Train transfer-learning model using fitDataset
-      console.log(
-          `Detected large dataset: total duration = ` +
-          `${this.dataset.durationMillis()} ms > ` +
-          `${datasetDurationMillisThreshold} ms. ` +
-          `Training transfer model using fitDataset() instead of fit()`);
-      const batchSize = config.batchSize == null ? 32 : config.batchSize;
-      const [trainDataset, valDataset] = this.collectTransferDataAsTfDataset(
-          windowHopRatio, config.validationSplit, batchSize);
+      return await this.trainOnDataset(config);
+    } else {
+      return await this.trainOnTensors(config);
+    }
+  }
+
+  /** Helper function for training on tf.data.Dataset objects. */
+  private async trainOnDataset(config?: TransferLearnConfig):
+      Promise<tf.History|[tf.History, tf.History]> {
+    tf.util.assert(config.epochs > 0, `Invalid config.epochs`);
+    // Train transfer-learning model using fitDataset
+
+    const batchSize = config.batchSize == null ? 32 : config.batchSize;
+    const windowHopRatio = config.windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
+    const [trainDataset, valDataset] = this.collectTransferDataAsTfDataset(
+        windowHopRatio, config.validationSplit, batchSize);
+    const t0 = tf.util.now();
+    const history = await this.model.fitDataset(trainDataset, {
+      epochs: config.epochs,
+      validationData: config.validationSplit > 0 ? valDataset : null,
+      callbacks: config.callback == null ? null : [config.callback]
+    });
+    console.log(`fitDataset() took ${(tf.util.now() - t0).toFixed(2)} ms`);
+
+    if (config.fineTuningEpochs != null && config.fineTuningEpochs > 0) {
+      // Perform fine-tuning.
       const t0 = tf.util.now();
-      const history = await this.model.fitDataset(trainDataset, {
-        epochs: config.epochs,
-        validationData: config.validationSplit > 0 ? valDataset : null,
+      const fineTuningHistory = await this.fineTuningUsingTfDatasets(
+          config, trainDataset, valDataset);
+      console.log(
+          `fitDataset() (fine-tuning) took ` +
+          `${(tf.util.now() - t0).toFixed(2)} ms`);
+      return [history, fineTuningHistory];
+    } else {
+      return history;
+    }
+  }
+
+  /** Helper function for training on tf.Tensor objects. */
+  private async trainOnTensors(config?: TransferLearnConfig):
+      Promise<tf.History|[tf.History, tf.History]> {
+    // Prepare the data.
+    const windowHopRatio = config.windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
+    const {xs, ys} = this.collectTransferDataAsTensors(windowHopRatio);
+    console.log(
+        `Training data: xs.shape = ${xs.shape}, ys.shape = ${ys.shape}`);
+
+    let trainXs: tf.Tensor;
+    let trainYs: tf.Tensor;
+    let valData: [tf.Tensor, tf.Tensor];
+    try {
+      // TODO(cais): The balanced split may need to be pushed down to the
+      //   level of the Dataset class to avoid leaks between train and val
+      //   splits.
+      if (config.validationSplit != null) {
+        const splits = balancedTrainValSplit(xs, ys, config.validationSplit);
+        trainXs = splits.trainXs;
+        trainYs = splits.trainYs;
+        valData = [splits.valXs, splits.valYs];
+      } else {
+        trainXs = xs;
+        trainYs = ys;
+      }
+
+      const history = await this.model.fit(trainXs, trainYs, {
+        epochs: config.epochs == null ? 20 : config.epochs,
+        validationData: valData,
+        batchSize: config.batchSize,
         callbacks: config.callback == null ? null : [config.callback]
       });
-      console.log(`fitDataset() took ${tf.util.now() - t0} ms`);
 
       if (config.fineTuningEpochs != null && config.fineTuningEpochs > 0) {
-        // Perform fine-tuning.
-        const t0 = tf.util.now();
-        const fineTuningHistory = await this.fineTuningUsingTfDatasets(
-            config, trainDataset, valDataset);
-        console.log(`fitDataset() (fine-tuning) took ${tf.util.now() - t0} ms`);
+        // Fine tuning: unfreeze the second-last dense layer of the base
+        // model.
+        const fineTuningHistory = await this.fineTuningUsingTensors(
+            config, trainXs, trainYs, valData);
         return [history, fineTuningHistory];
       } else {
         return history;
       }
-    } else {
-      // Prepare the data.
-      const {xs, ys} = this.collectTransferDataAsTensors(windowHopRatio);
-      console.log(
-          `Training data: xs.shape = ${xs.shape}, ys.shape = ${ys.shape}`);
-
-      let trainXs: tf.Tensor;
-      let trainYs: tf.Tensor;
-      let valData: [tf.Tensor, tf.Tensor];
-      try {
-        // TODO(cais): The balanced split may need to be pushed down to the
-        //   level of the Dataset class to avoid leaks between train and val
-        //   splits.
-        if (config.validationSplit != null) {
-          const splits = balancedTrainValSplit(xs, ys, config.validationSplit);
-          trainXs = splits.trainXs;
-          trainYs = splits.trainYs;
-          valData = [splits.valXs, splits.valYs];
-        } else {
-          trainXs = xs;
-          trainYs = ys;
-        }
-
-        const history = await this.model.fit(trainXs, trainYs, {
-          epochs: config.epochs == null ? 20 : config.epochs,
-          validationData: valData,
-          batchSize: config.batchSize,
-          callbacks: config.callback == null ? null : [config.callback]
-        });
-
-        if (config.fineTuningEpochs != null && config.fineTuningEpochs > 0) {
-          // Fine tuning: unfreeze the second-last dense layer of the base
-          // model.
-          const fineTuningHistory = await this.fineTuningUsingTensors(
-              config, trainXs, trainYs, valData);
-          return [history, fineTuningHistory];
-        } else {
-          return history;
-        }
-      } finally {
-        tf.dispose([xs, ys, trainXs, trainYs, valData]);
-      }
+    } finally {
+      tf.dispose([xs, ys, trainXs, trainYs, valData]);
     }
   }
 
