@@ -1,24 +1,6 @@
-/**
- * @license
- * Copyright 2018 Google Inc. All Rights Reserved.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * =============================================================================
- */
-import * as tf from '@tensorflow/tfjs';
-import {Tensor, Tensor1D, Tensor2D, util} from '@tensorflow/tfjs';
-import {concatWithNulls, topK, kMeans, assignToNearest} from './util';
-
-
+import * as tfc from '@tensorflow/tfjs-core'
+import {Tensor, Tensor1D, Tensor2D, Scalar, tidy, util} from '@tensorflow/tfjs';
+import {kMeans, assignToNearest} from './util';
 
 // ALL_DISTANCES
 // CLUSTER_CENTERS_VAR_NAME
@@ -37,27 +19,24 @@ import {concatWithNulls, topK, kMeans, assignToNearest} from './util';
 // transform
 // predict
 
-
-
 /**
  * A K-nearest neighbors (KNN) classifier that allows fast
  * custom model training on top of any tensor input. Useful for transfer
  * learning with an embedding from another pretrained model.
  */
-export class KMeansClustering {
+export class KMeansClusteringModel implements tfc.InferenceModel {
   // // The full concatenated dataset that is constructed lazily before making a
   // // prediction.
   // private trainDatasetMatrix: Tensor2D;
-  //
-  // // Individual class datasets used when adding examples. These get concatenated
-  // // into the full trainDatasetMatrix when a prediction is made.
-  // private classDatasetMatrices: {[classId: number]: Tensor2D} = {};
-  // private classExampleCount: {[classId: number]: number} = {};
-  //
-  // private exampleShape: number[];
-  // ///----------------------------
-  // private centroids: Tensor2D;
-  // private nClusters: number;
+
+  // A public property that can be set by Callbacks to order early stopping
+  // during `fit()` calls.
+  private stopTraining_: boolean;
+  private isTraining: boolean;
+
+  metrics: string[]|{[outputName: string]: string};
+  metricsNames: string[];
+
   private nClusters: number;
   private init: string;
   private nInit: number;
@@ -68,6 +47,7 @@ export class KMeansClustering {
   clusterCenters: Tensor;
 
   constructor({nClusters = 8, init='k-means++', nInit=10, maxIter=300, tol=0.0001, precomputeDistances='auto', algorithm='auto'}) {
+    this.isTraining = false;
     this.nClusters = nClusters;
     this.init = init;
     this.nInit = nInit;
@@ -81,8 +61,15 @@ export class KMeansClustering {
     this.nClusters = k;
   }
 
-  // follow other tfjs layer conventions to write async fit / predict / ...
-  async fit(X: number[][]): Promise<History> {
+  // todo: read about how compile is implemented in Model
+  evaluate(
+      x: Tensor|Tensor[], y: Tensor|Tensor[]): Scalar|Scalar[] {
+
+  }
+
+  // why fit is async while predict / evaluate are not
+  async fit(
+      x: Tensor|Tensor[], y: Tensor|Tensor[]): Promise<History> {
     this.clusterCenters = kMeans(X, this.nClusters, this.maxIter, this.tol);
     return
   }
