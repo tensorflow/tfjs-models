@@ -304,9 +304,10 @@ function segmentBodyInRealTime(video, net) {
             partSegmentation, partColorScales[guiState.partMap.colorScale]);
 
         if (guiState.partMap.applyPixelation) {
+          const pixelCellWidth = 10.0;
           bodyPix.drawPixelatedMask(
               canvas, video, coloredPartImageData, guiState.partMap.opacity, 0,
-              flipHorizontal, 10.0);
+              flipHorizontal, pixelCellWidth);
         } else {
           bodyPix.drawMask(
             canvas, video, coloredPartImageData, guiState.opacity, 0, flipHorizontal);

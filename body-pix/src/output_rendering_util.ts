@@ -214,7 +214,8 @@ export function toColoredPartImageData(
 const CANVAS_NAMES = {
   blurred: 'blurred',
   blurredMask: 'blurred-mask',
-  mask: 'mask'
+  mask: 'mask',
+  lowresPartMask: 'lowres-part-mask',
 };
 
 /**
@@ -302,27 +303,29 @@ export function drawPixelatedMask(
     flipCanvasHorizontal(canvas);
   }
 
-  var oc = document.createElement('canvas');
-  var octx = oc.getContext('2d');
-  oc.width = blurredMask.width * (1.0 / pixelCellWidth);
-  oc.height = blurredMask.height * (1.0 / pixelCellWidth);
-  octx.drawImage(blurredMask,
+  const offscreenCanvas = ensureOffscreenCanvasCreated(CANVAS_NAMES.lowresPartMask);
+  const offscreenCanvasCtx = offscreenCanvas.getContext('2d');
+  offscreenCanvas.width = blurredMask.width * (1.0 / pixelCellWidth);
+  offscreenCanvas.height = blurredMask.height * (1.0 / pixelCellWidth);
+  offscreenCanvasCtx.drawImage(blurredMask,
     0, 0, blurredMask.width, blurredMask.height,
-    0, 0, oc.width, oc.height);
+    0, 0,  offscreenCanvas.width, offscreenCanvas.height);
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(oc,
-    0, 0, oc.width, oc.height,
+  ctx.drawImage(offscreenCanvas,
+    0, 0, offscreenCanvas.width, offscreenCanvas.height,
     0, 0, canvas.width, canvas.height);
 
-  for (let i = 0; i < oc.width; i++) {
+  // Draws vertical grid lines that are `pixelCellWidth` apart from each other. 
+  for (let i = 0; i < offscreenCanvas.width; i++) {
     ctx.beginPath();
     ctx.strokeStyle = '#ffffff';
-    ctx.moveTo(10 * i, 0);
-    ctx.lineTo(10 * i, canvas.height);
+    ctx.moveTo(pixelCellWidth * i, 0);
+    ctx.lineTo(pixelCellWidth * i, canvas.height);
     ctx.stroke();
   }
 
-  for (let i = 0; i < oc.height; i++) {
+  // Draws horizontal grid lines that are `pixelCellWidth` apart from each other.
+  for (let i = 0; i < offscreenCanvas.height; i++) {
     ctx.beginPath();
     ctx.strokeStyle = '#ffffff';
     ctx.moveTo(0, pixelCellWidth * i);
@@ -334,7 +337,6 @@ export function drawPixelatedMask(
   ctx.drawImage(image, 0, 0);
   ctx.restore();
 }
-
 
 function createPersonMask(
     segmentation: PersonSegmentation,
