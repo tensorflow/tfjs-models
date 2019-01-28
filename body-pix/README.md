@@ -434,9 +434,9 @@ bodyPix.drawPixelatedMask(
     flipHorizontal, pixelCellWidth);
 ```
 
-![toColoredPartImageData](./images/toColoredPartImage.png)
+![drawPixelatedMask](./images/drawPixelatedMask.png)
 
-*With the output from `estimatePartSegmentation` on the first image above, and a 'warm' color scale, `toColoredPartImageData` will produce an `ImageData` that looks like the second image above.  The colored part image can be drawn on top of the original image with an `opacity` of 0.7 onto a canvas using `drawMask`; the result is shown in the third image above.*
+*The pixelation effect is applied to part image using `drawPixelatedMask`; the result is shown in the image above.*
 
 #### `drawBokehEffect`
 
