@@ -76,11 +76,6 @@ export class BodyPix {
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
    *
-   * @param flipHorizontal.  Defaults to false.  If the poses should be
-   * flipped/mirrored  horizontally.  This should be set to true for videos
-   * where the video is by default flipped horizontally (i.e. a webcam), and you
-   * want the poses to be returned in the proper orientation.
-   *
    * @param outputStride the desired stride for the outputs.  Must be 32, 16,
    * or 8. Defaults to 16. The output width and height will be will be
    * (inputDimension - 1)/outputStride + 1
@@ -96,7 +91,7 @@ export class BodyPix {
    * which are the same dimensions of the input image.
    */
   async estimatePersonSegmentation(
-      input: BodyPixInput, flipHorizontal = false,
+      input: BodyPixInput,
       outputStride: OutputStride = 16,
       segmentationThreshold = 0.5): Promise<PersonSegmentation> {
     assertValidOutputStride(outputStride);
@@ -107,9 +102,7 @@ export class BodyPix {
       const {
         resizedAndPadded,
         paddedBy,
-      } =
-          resizeAndPadTo(
-              input, segmentationModelImageDimensions, flipHorizontal);
+      } = resizeAndPadTo(input, segmentationModelImageDimensions);
 
       const segmentScores =
           this.predictForSegmentation(resizedAndPadded, outputStride);
@@ -120,13 +113,8 @@ export class BodyPix {
           segmentScores, [height, width], [resizedHeight, resizedWidth],
           paddedBy);
 
-      const mask = toMask(scaledSegmentScores.squeeze(), segmentationThreshold);
-
-      if (flipHorizontal) {
-        return mask.reverse(1);
-      } else {
-        return mask;
-      }
+      return toMask(scaledSegmentScores.squeeze(), segmentationThreshold);
+      
     });
 
     const result = await segmentation.data() as Uint8Array;
@@ -147,10 +135,6 @@ export class BodyPix {
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
    *
-   * @param flipHorizontal.  Defaults to false.  If the input video or image is 
-   * flipped/mirrored horizontally, then this should be set to true. Normally 
-   * this should be set to false for all webcam, video and image input usecase.
-   *
    * @param outputStride the desired stride for the outputs.  Must be 32, 16,
    * or 8. Defaults to 16. The output width and height will be will be
    * (inputDimension - 1)/outputStride + 1
@@ -166,7 +150,7 @@ export class BodyPix {
    * shaped to, which are the same dimensions of the input image.
    */
   async estimatePartSegmentation(
-      input: BodyPixInput, flipHorizontal = false,
+      input: BodyPixInput,
       outputStride: OutputStride = 16,
       segmentationThreshold = 0.5): Promise<PartSegmentation> {
     assertValidOutputStride(outputStride);
@@ -178,8 +162,7 @@ export class BodyPix {
         resizedAndPadded,
         paddedBy,
       } =
-          resizeAndPadTo(
-              input, segmentationModelImageDimensions, flipHorizontal);
+          resizeAndPadTo(input, segmentationModelImageDimensions);
 
       const {segmentScores, partHeatmapScores} =
           this.predictForPartMap(resizedAndPadded, outputStride);
@@ -197,14 +180,7 @@ export class BodyPix {
       const segmentationMask =
           toMask(scaledSegmentScores.squeeze(), segmentationThreshold);
 
-      const partSegmentation =
-          decodePartSegmentation(segmentationMask, scaledPartHeatmapScore);
-
-      if (flipHorizontal) {
-        return partSegmentation.reverse(1);
-      } else {
-        return partSegmentation;
-      }
+      return decodePartSegmentation(segmentationMask, scaledPartHeatmapScore);
     });
 
     const data = await partSegmentation.data() as Int32Array;

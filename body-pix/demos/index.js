@@ -269,18 +269,15 @@ function segmentBodyInRealTime(video, net) {
     // slow down the GPU
     const outputStride = +guiState.input.outputStride;
 
-    const isInputFlipped = false;
-
     // This should be set to true when user-facing webcam is used 
     // and set to false when image and back-facing camera is used.
-    const flipVisualization = true;
+    const flipHorizontally = true;
 
     switch (guiState.estimate) {
       case 'segmentation':
         const personSegmentation =
             await guiState.net.estimatePersonSegmentation(
-                video, isInputFlipped, outputStride,
-                guiState.segmentation.segmentationThreshold);
+                video, outputStride, guiState.segmentation.segmentationThreshold);
 
         switch (guiState.segmentation.effect) {
           case 'mask':
@@ -288,21 +285,20 @@ function segmentBodyInRealTime(video, net) {
                 personSegmentation, guiState.segmentation.maskBackground);
             bodyPix.drawMask(
                 canvas, video, mask, guiState.segmentation.opacity,
-                guiState.segmentation.maskBlurAmount, flipVisualization);
+                guiState.segmentation.maskBlurAmount, flipHorizontally);
 
             break;
           case 'bokeh':
             bodyPix.drawBokehEffect(
                 canvas, video, personSegmentation,
                 +guiState.segmentation.backgroundBlurAmount,
-                guiState.segmentation.edgeBlurAmount, flipVisualization);
+                guiState.segmentation.edgeBlurAmount, flipHorizontally);
             break;
         }
         break;
       case 'partmap':
         const partSegmentation = await guiState.net.estimatePartSegmentation(
-            video, isInputFlipped, outputStride,
-            guiState.partMap.segmentationThreshold);
+            video, outputStride, guiState.partMap.segmentationThreshold);
 
         const coloredPartImageData = bodyPix.toColoredPartImageData(
             partSegmentation, partColorScales[guiState.partMap.colorScale]);
@@ -313,11 +309,11 @@ function segmentBodyInRealTime(video, net) {
          
           bodyPix.drawPixelatedMask(
               canvas, video, coloredPartImageData, guiState.partMap.opacity, maskBlurAmount,
-              flipVisualization, pixelCellWidth);
+              flipHorizontally, pixelCellWidth);
         } else {
           bodyPix.drawMask(
               canvas, video, coloredPartImageData, guiState.opacity, maskBlurAmount, 
-              flipVisualization);
+              flipHorizontally);
         }
 
         break;
