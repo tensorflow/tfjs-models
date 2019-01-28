@@ -269,13 +269,17 @@ function segmentBodyInRealTime(video, net) {
     // slow down the GPU
     const outputStride = +guiState.input.outputStride;
 
-    const flipHorizontal = true;
+    const isInputFlipped = false;
+
+    // This should be set to true when user-facing webcam is used 
+    // and set to false when image and back-facing camera is used.
+    const flipVisualization = true;
 
     switch (guiState.estimate) {
       case 'segmentation':
         const personSegmentation =
             await guiState.net.estimatePersonSegmentation(
-                video, flipHorizontal, outputStride,
+                video, isInputFlipped, outputStride,
                 guiState.segmentation.segmentationThreshold);
 
         switch (guiState.segmentation.effect) {
@@ -284,34 +288,36 @@ function segmentBodyInRealTime(video, net) {
                 personSegmentation, guiState.segmentation.maskBackground);
             bodyPix.drawMask(
                 canvas, video, mask, guiState.segmentation.opacity,
-                guiState.segmentation.maskBlurAmount, flipHorizontal);
+                guiState.segmentation.maskBlurAmount, flipVisualization);
 
             break;
           case 'bokeh':
             bodyPix.drawBokehEffect(
                 canvas, video, personSegmentation,
                 +guiState.segmentation.backgroundBlurAmount,
-                guiState.segmentation.edgeBlurAmount, flipHorizontal);
+                guiState.segmentation.edgeBlurAmount, flipVisualization);
             break;
         }
         break;
       case 'partmap':
         const partSegmentation = await guiState.net.estimatePartSegmentation(
-            video, flipHorizontal, outputStride,
+            video, isInputFlipped, outputStride,
             guiState.partMap.segmentationThreshold);
 
         const coloredPartImageData = bodyPix.toColoredPartImageData(
             partSegmentation, partColorScales[guiState.partMap.colorScale]);
 
+        const maskBlurAmount = 0;
         if (guiState.partMap.applyPixelation) {
           const pixelCellWidth = 10.0;
-          const maskBlurAmount = 0;
+         
           bodyPix.drawPixelatedMask(
               canvas, video, coloredPartImageData, guiState.partMap.opacity, maskBlurAmount,
-              flipHorizontal, pixelCellWidth);
+              flipVisualization, pixelCellWidth);
         } else {
           bodyPix.drawMask(
-            canvas, video, coloredPartImageData, guiState.opacity, 0, flipHorizontal);
+              canvas, video, coloredPartImageData, guiState.opacity, maskBlurAmount, 
+              flipVisualization);
         }
 
         break;

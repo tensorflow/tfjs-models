@@ -147,10 +147,9 @@ export class BodyPix {
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
    *
-   * @param flipHorizontal.  Defaults to false.  If the poses should be
-   * flipped/mirrored  horizontally.  This should be set to true for videos
-   * where the video is by default flipped horizontally (i.e. a webcam), and you
-   * want the poses to be returned in the proper orientation.
+   * @param flipHorizontal.  Defaults to false.  If the input video or image is 
+   * flipped/mirrored horizontally, then this should be set to true. Normally 
+   * this should be set to false for all webcam, video and image input usecase.
    *
    * @param outputStride the desired stride for the outputs.  Must be 32, 16,
    * or 8. Defaults to 16. The output width and height will be will be
