@@ -97,7 +97,7 @@ const guiState = {
   partMap: {
     colorScale: 'rainbow', 
     segmentationThreshold: 0.5,
-    applyPixelation: true,
+    applyPixelation: false,
     opacity: 0.9,
   },
   net: null,
@@ -305,8 +305,9 @@ function segmentBodyInRealTime(video, net) {
 
         if (guiState.partMap.applyPixelation) {
           const pixelCellWidth = 10.0;
+          const maskBlurAmount = 0;
           bodyPix.drawPixelatedMask(
-              canvas, video, coloredPartImageData, guiState.partMap.opacity, 0,
+              canvas, video, coloredPartImageData, guiState.partMap.opacity, maskBlurAmount,
               flipHorizontal, pixelCellWidth);
         } else {
           bodyPix.drawMask(

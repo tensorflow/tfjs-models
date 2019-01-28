@@ -166,7 +166,7 @@ export function toMaskImageData(
 /**
  * Given the output from estimating part segmentation, and an array of colors
  * indexed by part id, generates an image with the corresponding color for each
- * part at each pixel, and black pixels where there is no part.
+ * part at each pixel, and white pixels where there is no part.
  *
  * @param partSegmentation   The output from estimatePartSegmentation; an object
  * containing a width, height, and an array with a part id from 0-24 for the
