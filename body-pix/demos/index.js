@@ -94,7 +94,12 @@ const guiState = {
     // default to turning this off for safari
     edgeBlurAmount: isSafari() ? 0 : 3
   },
-  partMap: {colorScale: 'warm', segmentationThreshold: 0.5},
+  partMap: {
+    colorScale: 'rainbow', 
+    segmentationThreshold: 0.5,
+    applyPixelation: false,
+    opacity: 0.9,
+  },
   net: null,
 };
 
@@ -185,6 +190,8 @@ function setupGui(cameras, net) {
 
   let partMap = gui.addFolder('Part Map');
   partMap.add(guiState.partMap, 'segmentationThreshold', 0.0, 1.0);
+  partMap.add(guiState.partMap, 'applyPixelation');
+  partMap.add(guiState.partMap, 'opacity', 0.0, 1.0);
   partMap.add(guiState.partMap, 'colorScale', Object.keys(partColorScales))
       .onChange(colorScale => {
         setShownPartColorScales(colorScale);
@@ -293,13 +300,19 @@ function segmentBodyInRealTime(video, net) {
             video, flipHorizontal, outputStride,
             guiState.partMap.segmentationThreshold);
 
-        const coloredPartImageOpacity = 0.7;
         const coloredPartImageData = bodyPix.toColoredPartImageData(
             partSegmentation, partColorScales[guiState.partMap.colorScale]);
 
-        bodyPix.drawMask(
-            canvas, video, coloredPartImageData, coloredPartImageOpacity, 0,
-            flipHorizontal);
+        if (guiState.partMap.applyPixelation) {
+          const pixelCellWidth = 10.0;
+          const maskBlurAmount = 0;
+          bodyPix.drawPixelatedMask(
+              canvas, video, coloredPartImageData, guiState.partMap.opacity, maskBlurAmount,
+              flipHorizontal, pixelCellWidth);
+        } else {
+          bodyPix.drawMask(
+            canvas, video, coloredPartImageData, guiState.opacity, 0, flipHorizontal);
+        }
 
         break;
       default:
