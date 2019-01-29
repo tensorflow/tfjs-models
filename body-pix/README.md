@@ -4,7 +4,7 @@ This package contains a standalone model called BodyPix, as well as some demos, 
 
 [Try the demo here!](https://storage.googleapis.com/tfjs-models/demos/body-pix/index.html)
 
-![BodyPix](body-pix.gif)
+![BodyPix](images/body-pix.gif)
 
 This model can be used to segment an image into pixels that are and are not part of a person, and into
 pixels that belong to each of twenty-four body parts.  It works for a single person, and its ideal use case is for when there is only one person centered in an input image or video.  It can be combined with a person
@@ -18,7 +18,7 @@ You can use this as standalone es5 bundle like this:
 
 ```html
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.13.3"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@0.0.4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix"></script>
 ```
 
 Or you can install it via npm for use in a TypeScript / ES6 project.
@@ -52,12 +52,12 @@ Person segmentation segments an image into pixels that are and aren't part of a 
 It returns a binary array with 1 for the pixels that are part of the person, and 0 otherwise. The array size corresponds to the number of pixels in the image.
 
 
-![Segmentation](segmentation.gif)
+![Segmentation](./images/segmentation.gif)
 
 ```javascript
 const net = await bodyPix.load();
 
-const segmentation = await net.estimatePersonSegmentation(image, flipHorizontal, outputStride, segmentationThreshold);
+const segmentation = await net.estimatePersonSegmentation(image, outputStride, segmentationThreshold);
 ```
 
 #### Inputs
@@ -134,12 +134,6 @@ which would produce the output:
 }
 // the array contains 307200 values, one for each pixel of the 640x480 image that was passed to the function.
 ```
-
-An example of applying a [bokeh effect](https://www.nikonusa.com/en/learn-and-explore/a/tips-and-techniques/bokeh-for-beginners.html) can be seen by running the [demo](https://storage.googleapis.com/tfjs-models/demos/body-pix/camera.html):
-
-
-![Bokeh](bokeh.gif)
-
 
 ### Body Part Segmentation
 
@@ -272,7 +266,7 @@ Given the output from estimating person segmentation, generates a black image wi
 ##### Inputs
 
 * **segmentation** The output from estimagePersonSegmentation.
-* **maskBackground** If the mask should be opaque where the background is. Defaults to true. When set to true, pixels where there is a person are transparent and where there is no person become opaque.
+* **maskBackground** If the mask should be opaque where the background is. Defaults to true. When set to true, pixels where there is a person are transparent and where there is a background become opaque, and visa-versa when set to false.
 
 ##### Returns
 
@@ -286,8 +280,9 @@ const imageElement = documet.getElementById('person');
 const net = await bodyPix.load();
 const personSegmentation = await net.estimatePersonSegmentation(imageElement);
 
-const invertMask = false;
-const maskImage = bodyBix.toMaskImageData(personSegmentation, invertMask);
+// by setting maskBackground to false, the maskImage that is generated will be opaque where there is a person and transparent where there is a background.
+const maskBackground = false;
+const maskImage = bodyBix.toMaskImageData(personSegmentation, maskBackground);
 ```
 
 ![MaskImageData](./images/toMaskImageData.jpg)
@@ -367,7 +362,7 @@ const segmentation = await net.estimatePersonSegmentation(imageElement);
 
 const maskBackground = true;
 // Convert the personSegmentation into a mask to darken the background.
-// Since invert is set to true, there will be 1s where the background is and 0s where the person is.
+// Since maskBackground is set to true, there will be 1s where the background is and 0s where the person is.
 const backgroundDarkeningMask = bodyPix.toMaskImageData(personSegmentation, maskBackground);
 
 const opacity = 0.7;
@@ -437,6 +432,11 @@ bodyPix.drawPixelatedMask(
 Given a personSegmentation and an image, draws the image with its background
 blurred onto a canvas.
 
+An example of applying a [bokeh effect](https://www.nikonusa.com/en/learn-and-explore/a/tips-and-techniques/bokeh-for-beginners.html) can be seen in this [demo](https://storage.googleapis.com/tfjs-models/demos/body-pix/camera.html):
+
+![Bokeh](./images/bokeh.gif)
+
+
 ##### Inputs
 
 * **canvas** The canvas to draw the background-blurred image onto.
@@ -466,9 +466,9 @@ bodyPix.drawBokehEffect(
   canvas, imageElement, personSegmentation, backgroundBlurAmount, edgeBlurAmount, flipHorizontal);
 ```
 
-![bokeh](./images/bokeh.jpg)
+![bokeh](./images/bokehimage.png)
 
-*The above shows the process of applying a 'bokeh' effect to an image (the left-most one) with `drawBokehEffect`.  An **inverted** mask is generated from a `personSegmentation`.  The original image is then drawn onto the canvas, and using the [canvas compositing](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/globalCompositeOperation) operation `destination-over` the mask is drawn onto the canvas, causing the background to be removed.  The original image is blurred and drawn onto the canvas where it doesn't overlap with the existing image using the compositing operation `destination-over`.  The result is seen in the right-most image.
+*The above shows the process of applying a 'bokeh' effect to an image (the left-most one) with `drawBokehEffect`.  An **inverted** mask is generated from a `personSegmentation`.  The original image is then drawn onto the canvas, and using the [canvas compositing](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/globalCompositeOperation) operation `destination-over` the mask is drawn onto the canvas, causing the background to be removed.  The original image is blurred and drawn onto the canvas where it doesn't overlap with the existing image using the compositing operation `destination-over`.  The result is seen in the right-most image.*
 
 ## Developing the Demos
 
