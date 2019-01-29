@@ -1015,6 +1015,35 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     });
   });
 
+  it('train with tf.data.Dataset, with fine-tuning', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    await transfer.collectExample('_background_noise_');
+    await transfer.collectExample('_background_noise_');
+    await transfer.collectExample('bar');
+    await transfer.collectExample('bar');
+    // Set the duration threshold to 0 to force using tf.data.Dataset
+    // for training.
+    const fitDatasetDurationMillisThreshold = 0;
+    const [history, fineTuneHistory] = await transfer.train({
+      epochs: 3,
+      batchSize: 1,
+      validationSplit: 0.5,
+      fitDatasetDurationMillisThreshold,
+      fineTuningEpochs: 2
+    }) as [tf.History, tf.History];
+    expect(history.history.loss.length).toEqual(3);
+    expect(history.history.acc.length).toEqual(3);
+    expect(history.history.val_loss.length).toEqual(3);
+    expect(history.history.val_acc.length).toEqual(3);
+    expect(fineTuneHistory.history.loss.length).toEqual(2);
+    expect(fineTuneHistory.history.acc.length).toEqual(2);
+    expect(fineTuneHistory.history.val_loss.length).toEqual(2);
+    expect(fineTuneHistory.history.val_acc.length).toEqual(2);
+  });
+
   it('trainTransferLearningModel with fine-tuning + callback', async done => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
@@ -1072,7 +1101,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     const history = await transfer.train({
       epochs: 5,
       callback: {
-        onEpochEnd: async (epoch, logs) => {
+        onEpochEnd: async (epoch: number, logs: tf.Logs) => {
           callbackEpochs.push(epoch);
         }
       }

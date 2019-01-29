@@ -42,7 +42,7 @@ export function resizeAndPadTo(
     padB = targetH - (resizeH + padT);
   } else {
     resizeH = targetH;
-    resizeW = Math.ceil(targetH / aspect);
+    resizeW = Math.ceil(targetH * aspect);
 
     const padWidth = targetW - resizeW;
     padL = Math.floor(padWidth / 2);

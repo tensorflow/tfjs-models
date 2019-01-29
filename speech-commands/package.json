@@ -13,11 +13,11 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs": "^0.14.1"
+    "@tensorflow/tfjs": "^0.14.2"
   },
   "devDependencies": {
-    "@tensorflow/tfjs": "^0.14.1",
-    "@tensorflow/tfjs-node": "^0.2.1",
+    "@tensorflow/tfjs": "^0.14.2",
+    "@tensorflow/tfjs-node": "^0.2.3",
     "@types/jasmine": "~2.8.8",
     "@types/rimraf": "^2.0.2",
     "@types/tempfile": "^2.0.0",
@@ -41,10 +41,10 @@
     "yalc": "~1.0.0-pre.21"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "rimraf node_modules/@tensorflow/tfjs-node && tsc",
     "lint": "tslint -p . -t verbose",
     "publish-local": "rimraf dist && yarn build && rollup -c && yalc push",
-    "test": "ts-node run_tests.ts"
+    "test": "rimraf node_modules && yarn && ts-node run_tests.ts"
   },
   "license": "Apache-2.0"
 }

@@ -16,6 +16,7 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
+import {TensorContainer} from '@tensorflow/tfjs-core/dist/tensor_types';
 
 import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
 import {loadMetadataJson, normalize} from './browser_fft_utils';
@@ -737,6 +738,11 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     return this.dataset.getExamples(label);
   }
 
+  /** Set the key frame index of a given example. */
+  setExampleKeyFrameIndex(uid: string, keyFrameIndex: number): void {
+    this.dataset.setExampleKeyFrameIndex(uid, keyFrameIndex);
+  }
+
   /**
    * Remove an example from the current dataset.
    *
@@ -795,25 +801,60 @@ class TransferBrowserFftSpeechCommandRecognizer extends
   }
 
   /**
-   * Collect the transfer-learning data as tf.Tensors.
+   * Collect the transfer-learning data as `tf.Tensor`s.
    *
-   * @param modelName Name of the transfer learning model for which
-   *   the examples are to be collected.
+   * Used for training and evaluation when the amount of data is relatively
+   * small.
+   *
    * @param windowHopRatio Ratio betwen hop length in number of frames and the
    *   number of frames in a long spectrogram. Used during extraction
    *   of multiple windows from the long spectrogram.
    * @returns xs: The feature tensors (xs), a 4D tf.Tensor.
    *          ys: The target tensors (ys), one-hot encoding, a 2D tf.Tensor.
    */
-  private collectTransferDataAsTensors(
-      modelName?: string,
-      windowHopRatio?: number): {xs: tf.Tensor, ys: tf.Tensor} {
+  private collectTransferDataAsTensors(windowHopRatio?: number):
+      {xs: tf.Tensor, ys: tf.Tensor} {
     const numFrames = this.nonBatchInputShape[0];
     windowHopRatio = windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
     const hopFrames = Math.round(windowHopRatio * numFrames);
-    const out =
-        this.dataset.getSpectrogramsAsTensors(null, {numFrames, hopFrames});
+    const out = this.dataset.getData(null, {
+      numFrames,
+      hopFrames
+    }) as {xs: tf.Tensor4D, ys?: tf.Tensor2D};
     return {xs: out.xs, ys: out.ys as tf.Tensor};
+  }
+
+  /**
+   * Same as `collectTransferDataAsTensors`, but returns `tf.data.Dataset`s.
+   *
+   * Used for training and evaluation when the amount of data is large.
+   *
+   * @param windowHopRatio Ratio betwen hop length in number of frames and the
+   *   number of frames in a long spectrogram. Used during extraction
+   *   of multiple windows from the long spectrogram.
+   * @param validationSplit The validation split to be used for splitting
+   *   the raw data between the `tf.data.Dataset` objects for training and
+   *   validation.
+   * @param batchSize Batch size used for the `tf.data.Dataset.batch()` call
+   *   during the creation of the dataset objects.
+   * @return Two `tf.data.Dataset` objects, one for training and one for
+   *   validation. Each of the objects may be directly fed into
+   *   `this.model.fitDataset`.
+   */
+  private collectTransferDataAsTfDataset(
+      windowHopRatio?: number, validationSplit = 0.15, batchSize = 32):
+      [tf.data.Dataset<TensorContainer>, tf.data.Dataset<TensorContainer>] {
+    const numFrames = this.nonBatchInputShape[0];
+    windowHopRatio = windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
+    const hopFrames = Math.round(windowHopRatio * numFrames);
+    return this.dataset.getData(null, {
+      numFrames,
+      hopFrames,
+      getDataset: true,
+      datasetBatchSize: batchSize,
+      datasetValidationSplit: validationSplit
+    }) as [tf.data.Dataset<TensorContainer>, tf.data.Dataset<TensorContainer>];
+    // TODO(cais): See if we can tighten the typing.
   }
 
   /**
@@ -871,9 +912,61 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       metrics: ['acc']
     });
 
+    // Use `tf.data.Dataset` objects for training of the total duration of
+    // the recordings exceeds 60 seconds. Otherwise, use `tf.Tensor` objects.
+    const datasetDurationMillisThreshold =
+        config.fitDatasetDurationMillisThreshold == null ?
+        60e3 : config.fitDatasetDurationMillisThreshold;
+    console.log(
+        `Detected large dataset: total duration = ` +
+        `${this.dataset.durationMillis()} ms > ` +
+        `${datasetDurationMillisThreshold} ms. ` +
+        `Training transfer model using fitDataset() instead of fit()`);
+    if (this.dataset.durationMillis() > datasetDurationMillisThreshold) {
+      return await this.trainOnDataset(config);
+    } else {
+      return await this.trainOnTensors(config);
+    }
+  }
+
+  /** Helper function for training on tf.data.Dataset objects. */
+  private async trainOnDataset(config?: TransferLearnConfig):
+      Promise<tf.History|[tf.History, tf.History]> {
+    tf.util.assert(config.epochs > 0, `Invalid config.epochs`);
+    // Train transfer-learning model using fitDataset
+
+    const batchSize = config.batchSize == null ? 32 : config.batchSize;
+    const windowHopRatio = config.windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
+    const [trainDataset, valDataset] = this.collectTransferDataAsTfDataset(
+        windowHopRatio, config.validationSplit, batchSize);
+    const t0 = tf.util.now();
+    const history = await this.model.fitDataset(trainDataset, {
+      epochs: config.epochs,
+      validationData: config.validationSplit > 0 ? valDataset : null,
+      callbacks: config.callback == null ? null : [config.callback]
+    });
+    console.log(`fitDataset() took ${(tf.util.now() - t0).toFixed(2)} ms`);
+
+    if (config.fineTuningEpochs != null && config.fineTuningEpochs > 0) {
+      // Perform fine-tuning.
+      const t0 = tf.util.now();
+      const fineTuningHistory = await this.fineTuningUsingTfDatasets(
+          config, trainDataset, valDataset);
+      console.log(
+          `fitDataset() (fine-tuning) took ` +
+          `${(tf.util.now() - t0).toFixed(2)} ms`);
+      return [history, fineTuningHistory];
+    } else {
+      return history;
+    }
+  }
+
+  /** Helper function for training on tf.Tensor objects. */
+  private async trainOnTensors(config?: TransferLearnConfig):
+      Promise<tf.History|[tf.History, tf.History]> {
     // Prepare the data.
     const windowHopRatio = config.windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
-    const {xs, ys} = this.collectTransferDataAsTensors(null, windowHopRatio);
+    const {xs, ys} = this.collectTransferDataAsTensors(windowHopRatio);
     console.log(
         `Training data: xs.shape = ${xs.shape}, ys.shape = ${ys.shape}`);
 
@@ -881,8 +974,9 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     let trainYs: tf.Tensor;
     let valData: [tf.Tensor, tf.Tensor];
     try {
-      // TODO(cais): The balanced split may need to be pushed down to the level
-      //   of the Dataset class to avoid leaks between train and val splits.
+      // TODO(cais): The balanced split may need to be pushed down to the
+      //   level of the Dataset class to avoid leaks between train and val
+      //   splits.
       if (config.validationSplit != null) {
         const splits = balancedTrainValSplit(xs, ys, config.validationSplit);
         trainXs = splits.trainXs;
@@ -901,32 +995,10 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       });
 
       if (config.fineTuningEpochs != null && config.fineTuningEpochs > 0) {
-        // Fine tuning: unfreeze the second-last dense layer of the base model.
-        const originalTrainableValue = this.secondLastBaseDenseLayer.trainable;
-        this.secondLastBaseDenseLayer.trainable = true;
-
-        // Recompile model after unfreezing layer.
-        const fineTuningOptimizer: string|tf.Optimizer =
-            config.fineTuningOptimizer == null ? 'sgd' :
-                                                 config.fineTuningOptimizer;
-        this.model.compile({
-          loss: 'categoricalCrossentropy',
-          optimizer: fineTuningOptimizer,
-          metrics: ['acc']
-        });
-
-        const fineTuningHistory = await this.model.fit(trainXs, trainYs, {
-          epochs: config.fineTuningEpochs,
-          validationData: valData,
-          batchSize: config.batchSize,
-          callbacks: config.fineTuningCallback == null ?
-              null :
-              [config.fineTuningCallback]
-        });
-
-        // Set the trainable attribute of the fine-tuning layer to its
-        // previous value.
-        this.secondLastBaseDenseLayer.trainable = originalTrainableValue;
+        // Fine tuning: unfreeze the second-last dense layer of the base
+        // model.
+        const fineTuningHistory = await this.fineTuningUsingTensors(
+            config, trainXs, trainYs, valData);
         return [history, fineTuningHistory];
       } else {
         return history;
@@ -934,6 +1006,62 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     } finally {
       tf.dispose([xs, ys, trainXs, trainYs, valData]);
     }
+  }
+
+  private async fineTuningUsingTfDatasets(
+      config: TransferLearnConfig,
+      trainDataset: tf.data.Dataset<TensorContainer>,
+      valDataset: tf.data.Dataset<TensorContainer>): Promise<tf.History> {
+    const originalTrainableValue = this.secondLastBaseDenseLayer.trainable;
+    this.secondLastBaseDenseLayer.trainable = true;
+
+    // Recompile model after unfreezing layer.
+    const fineTuningOptimizer: string|tf.Optimizer =
+        config.fineTuningOptimizer == null ? 'sgd' : config.fineTuningOptimizer;
+    this.model.compile({
+      loss: 'categoricalCrossentropy',
+      optimizer: fineTuningOptimizer,
+      metrics: ['acc']
+    });
+
+    const fineTuningHistory = await this.model.fitDataset(trainDataset, {
+      epochs: config.fineTuningEpochs,
+      validationData: valDataset,
+      callbacks: config.callback == null ? null : [config.callback]
+    });
+    // Set the trainable attribute of the fine-tuning layer to its
+    // previous value.
+    this.secondLastBaseDenseLayer.trainable = originalTrainableValue;
+    return fineTuningHistory;
+  }
+
+  private async fineTuningUsingTensors(
+      config: TransferLearnConfig, trainXs: tf.Tensor, trainYs: tf.Tensor,
+      valData: [tf.Tensor, tf.Tensor]): Promise<tf.History> {
+    const originalTrainableValue = this.secondLastBaseDenseLayer.trainable;
+    this.secondLastBaseDenseLayer.trainable = true;
+
+    // Recompile model after unfreezing layer.
+    const fineTuningOptimizer: string|tf.Optimizer =
+        config.fineTuningOptimizer == null ? 'sgd' : config.fineTuningOptimizer;
+    this.model.compile({
+      loss: 'categoricalCrossentropy',
+      optimizer: fineTuningOptimizer,
+      metrics: ['acc']
+    });
+
+    const fineTuningHistory = await this.model.fit(trainXs, trainYs, {
+      epochs: config.fineTuningEpochs,
+      validationData: valData,
+      batchSize: config.batchSize,
+      callbacks: config.fineTuningCallback == null ?
+          null :
+          [config.fineTuningCallback]
+    });
+    // Set the trainable attribute of the fine-tuning layer to its
+    // previous value.
+    this.secondLastBaseDenseLayer.trainable = originalTrainableValue;
+    return fineTuningHistory;
   }
 
   /**
@@ -960,7 +1088,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       const rocCurve: ROCCurve = [];
       let auc = 0;
       const {xs, ys} =
-          this.collectTransferDataAsTensors(null, config.windowHopRatio);
+          this.collectTransferDataAsTensors(config.windowHopRatio);
       const indices = ys.argMax(-1).dataSync();
       const probs = this.model.predict(xs) as tf.Tensor;
 

@@ -94,7 +94,12 @@ const guiState = {
     // default to turning this off for safari
     edgeBlurAmount: isSafari() ? 0 : 3
   },
-  partMap: {colorScale: 'warm', segmentationThreshold: 0.5},
+  partMap: {
+    colorScale: 'rainbow', 
+    segmentationThreshold: 0.5,
+    applyPixelation: false,
+    opacity: 0.9,
+  },
   net: null,
 };
 
@@ -185,6 +190,8 @@ function setupGui(cameras, net) {
 
   let partMap = gui.addFolder('Part Map');
   partMap.add(guiState.partMap, 'segmentationThreshold', 0.0, 1.0);
+  partMap.add(guiState.partMap, 'applyPixelation');
+  partMap.add(guiState.partMap, 'opacity', 0.0, 1.0);
   partMap.add(guiState.partMap, 'colorScale', Object.keys(partColorScales))
       .onChange(colorScale => {
         setShownPartColorScales(colorScale);
@@ -262,14 +269,15 @@ function segmentBodyInRealTime(video, net) {
     // slow down the GPU
     const outputStride = +guiState.input.outputStride;
 
-    const flipHorizontal = true;
+    // This should be set to true when user-facing webcam is used 
+    // and set to false when image and back-facing camera is used.
+    const flipHorizontally = true;
 
     switch (guiState.estimate) {
       case 'segmentation':
         const personSegmentation =
             await guiState.net.estimatePersonSegmentation(
-                video, flipHorizontal, outputStride,
-                guiState.segmentation.segmentationThreshold);
+                video, outputStride, guiState.segmentation.segmentationThreshold);
 
         switch (guiState.segmentation.effect) {
           case 'mask':
@@ -277,29 +285,36 @@ function segmentBodyInRealTime(video, net) {
                 personSegmentation, guiState.segmentation.maskBackground);
             bodyPix.drawMask(
                 canvas, video, mask, guiState.segmentation.opacity,
-                guiState.segmentation.maskBlurAmount, flipHorizontal);
+                guiState.segmentation.maskBlurAmount, flipHorizontally);
 
             break;
           case 'bokeh':
             bodyPix.drawBokehEffect(
                 canvas, video, personSegmentation,
                 +guiState.segmentation.backgroundBlurAmount,
-                guiState.segmentation.edgeBlurAmount, flipHorizontal);
+                guiState.segmentation.edgeBlurAmount, flipHorizontally);
             break;
         }
         break;
       case 'partmap':
         const partSegmentation = await guiState.net.estimatePartSegmentation(
-            video, flipHorizontal, outputStride,
-            guiState.partMap.segmentationThreshold);
+            video, outputStride, guiState.partMap.segmentationThreshold);
 
-        const coloredPartImageOpacity = 0.7;
         const coloredPartImageData = bodyPix.toColoredPartImageData(
             partSegmentation, partColorScales[guiState.partMap.colorScale]);
 
-        bodyPix.drawMask(
-            canvas, video, coloredPartImageData, coloredPartImageOpacity, 0,
-            flipHorizontal);
+        const maskBlurAmount = 0;
+        if (guiState.partMap.applyPixelation) {
+          const pixelCellWidth = 10.0;
+         
+          bodyPix.drawPixelatedMask(
+              canvas, video, coloredPartImageData, guiState.partMap.opacity, maskBlurAmount,
+              flipHorizontally, pixelCellWidth);
+        } else {
+          bodyPix.drawMask(
+              canvas, video, coloredPartImageData, guiState.opacity, maskBlurAmount, 
+              flipHorizontally);
+        }
 
         break;
       default:
