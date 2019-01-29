@@ -64,7 +64,6 @@ const segmentation = await net.estimatePersonSegmentation(image, flipHorizontal,
 
 * **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
   The input image to feed through the network.
-* **flipHorizontal** - Defaults to false.  If the pixels should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the poses to be returned in the proper orientation.
 * **outputStride** - the desired stride for the outputs when feeding the image through the model.  Must be 32, 16, 8.  Defaults to 16.  The higher the number, the faster the performance but slower the accuracy, and visa versa.
 * **segmentationTreshold** - Must be between 0 and 1. For each pixel, the model estimates a score between 0 and 1 that indicates how confident it is that part of a person is displayed in that pixel.  This *segmentationThreshold* is used to convert these values
 to binary 0 or 1s by determining the minimum value a pixel's score must have to be considered part of a person.  In essence, a higher value will create a tighter crop
@@ -93,13 +92,12 @@ An object containing a width, height, and a binary array with 1 for the pixels t
   <!-- Place your code in the script tag below. You can also use an external .js file -->
   <script>
     var outputStride = 16;
-    var flipHorizontal = false;
     var segmentationThreshold = 0.5;
 
     var imageElement = document.getElementById('image');
 
     bodyPix.load().then(function(net){
-      return net.estimatePersonSegmentation(imageElement, flipHorizontal, outputStride, segmentationThreshold)
+      return net.estimatePersonSegmentation(imageElement, outputStride, segmentationThreshold)
     }).then(function(segmentation){
       console.log(segmentation);
     })
@@ -113,7 +111,6 @@ An object containing a width, height, and a binary array with 1 for the pixels t
 import * as bodyPix from '@tensorflow-models/body-pix';
 
 const outputStride = 16;
-const flipHorizontal = false;
 const segmentationThreshold = 0.5;
 
 const imageElement = document.getElementById('image');
@@ -121,7 +118,7 @@ const imageElement = document.getElementById('image');
 // load the BodyPix model from a checkpoint
 const net = await bodyPix.load();
 
-const segmentation = await net.estimatePersonSegmentation(imageElement, flipHorizontal, outputStride, segmentationThreshold);
+const segmentation = await net.estimatePersonSegmentation(imageElement, outputStride, segmentationThreshold);
 
 console.log(segmentation);
 
@@ -154,7 +151,7 @@ It returns an object containing an array with a part id from 0-24 for the pixels
 ```javascript
 const net = await bodyPix.load();
 
-const partSegmentation = await net.estimatePartSegmentation(image, flipHorizontal, outputStride, segmentationThreshold);
+const partSegmentation = await net.estimatePartSegmentation(image, outputStride, segmentationThreshold);
 ```
 
 #### The Body Parts
@@ -193,7 +190,6 @@ As stated above, the result contains an array with ids for one of 24 body parts,
 
 * **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
   The input image to feed through the network.
-* **flipHorizontal** - Defaults to false.  If the pixels should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the poses to be returned in the proper orientation.
 * **outputStride** - the desired stride for the outputs when feeding the image through the model.  Must be 32, 16, 8.  Defaults to 16.  The higher the number, the faster the performance but slower the accuracy, and visa versa.
 * **segmentationTreshold** - Must be between 0 and 1. For each pixel, the model estimates a score between 0 and 1 that indicates how confident it is that part of a person is displayed in that pixel.  In part segmentation, this *segmentationThreshold* is used to convert these values
 to binary 0 or 1s by determining the minimum value a pixel's score must have to be considered part of a person, and clips the estimated part ids for each pixel by setting their values to -1 if the corresponding mask pixel value had a value of 0. In essence, a higher value will create a tighter crop
@@ -222,13 +218,12 @@ An object containing a width, height, and an array with a part id from 0-24 for 
   <!-- Place your code in the script tag below. You can also use an external .js file -->
   <script>
     var outputStride = 16;
-    var flipHorizontal = false;
     var segmentationThreshold = 0.5;
 
     var imageElement = document.getElementById('image');
 
     bodyPix.load().then(function(net){
-      return net.estimatePartSegmentation(imageElement, flipHorizontal, outputStride, segmentationThreshold)
+      return net.estimatePartSegmentation(imageElement, outputStride, segmentationThreshold)
     }).then(function(partSegmentation){
       console.log(partSegmentation);
     })
@@ -242,7 +237,6 @@ An object containing a width, height, and an array with a part id from 0-24 for 
 import * as bodyPix from '@tensorflow-models/body-pix';
 
 const outputStride = 16;
-const flipHorizontal = false;
 const segmentationThreshold = 0.5;
 
 const imageElement = document.getElementById('image');
@@ -250,7 +244,7 @@ const imageElement = document.getElementById('image');
 // load the person segmentation model from a checkpoint
 const net = await bodyPix.load();
 
-const segmentation = await net.estimatePartSegmentation(imageElement, flipHorizontal, outputStride, segmentationThreshold);
+const segmentation = await net.estimatePartSegmentation(imageElement, outputStride, segmentationThreshold);
 
 console.log(segmentation);
 
