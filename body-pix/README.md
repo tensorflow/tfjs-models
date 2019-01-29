@@ -18,7 +18,7 @@ You can use this as standalone es5 bundle like this:
 
 ```html
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.13.3"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix"></script>
 ```
 
 Or you can install it via npm for use in a TypeScript / ES6 project.
@@ -286,7 +286,7 @@ const imageElement = documet.getElementById('person');
 const net = await bodyPix.load();
 const personSegmentation = await net.estimatePersonSegmentation(imageElement);
 
-// by setting maskBackground to false, the maskImage that is generated will be opaque where there is a person and opaque where there is a background.
+// by setting maskBackground to false, the maskImage that is generated will be opaque where there is a person and transparent where there is a background.
 const maskBackground = false;
 const maskImage = bodyBix.toMaskImageData(personSegmentation, maskBackground);
 ```
@@ -390,7 +390,7 @@ bodyPix.drawMask(
 Given a personSegmentation and an image, draws the image with its background
 blurred onto a canvas.
 
-An example of applying a [bokeh effect](https://www.nikonusa.com/en/learn-and-explore/a/tips-and-techniques/bokeh-for-beginners.html) can be seen by running the [demo](https://storage.googleapis.com/tfjs-models/demos/body-pix/camera.html):
+An example of applying a [bokeh effect](https://www.nikonusa.com/en/learn-and-explore/a/tips-and-techniques/bokeh-for-beginners.html) can be seen in this [demo](https://storage.googleapis.com/tfjs-models/demos/body-pix/camera.html):
 
 ![Bokeh](./images/bokeh.gif)
 
