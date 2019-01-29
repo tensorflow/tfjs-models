@@ -53,7 +53,7 @@ describeWithFlags('BodyPix', tf.test_util.NODE_ENVS, () => {
 
     const beforeTensors = tf.memory().numTensors;
 
-    net.estimatePersonSegmentation(input, false, 16)
+    net.estimatePersonSegmentation(input, 16)
         .then(() => {
           expect(tf.memory().numTensors).toEqual(beforeTensors);
         })
