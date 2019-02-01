@@ -22,7 +22,7 @@ type OutputNode = [string[], number, number];
 
 class TrieNode {
   public parent: TrieNode;
-  public end: Boolean;
+  public end: boolean;
   public children: {[firstSymbol: string]: TrieNode};
   public score: number;
   public index: number;
@@ -51,7 +51,7 @@ class TrieNode {
   }
 }
 
-class Trie {
+export class Trie {
   private root: TrieNode;
 
   constructor() {
@@ -66,7 +66,7 @@ class Trie {
       }
     }
 
-    for (let child in node.children) {
+    for (const child in node.children) {
       this.findAllCommonPrefixes(ss, node.children[child], arr);
     }
   }
@@ -103,5 +103,3 @@ class Trie {
     return output;
   }
 }
-
-export default Trie;

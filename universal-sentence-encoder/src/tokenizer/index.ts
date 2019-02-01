@@ -17,7 +17,7 @@
 
 import {spreadSymbols} from '../util';
 
-import Trie from './trie';
+import {Trie} from './trie';
 
 function processInput(str: string): string {
   const normalized = str.normalize('NFKC');
@@ -32,7 +32,7 @@ type Score = {
   index: number
 };
 
-class Tokenizer {
+export class Tokenizer {
   vocabulary: Vocabulary;
   trie: Trie;
 
@@ -50,7 +50,7 @@ class Tokenizer {
   }
 
   encode(input: string) {
-    const nodes: {[index: number]: Score[]}[] = [];
+    const nodes: Array<{[index: number]: Score[]}> = [];
     const words: number[] = [];
     const best: number[] = [];
 
@@ -80,9 +80,8 @@ class Tokenizer {
       }
     }
 
-
     for (let endPos = 0; endPos <= symbols.length; endPos++) {
-      for (let startPos in nodes[endPos]) {
+      for (const startPos in nodes[endPos]) {
         const arr = nodes[endPos][startPos];
 
         for (let j = 0; j < arr.length; j++) {
@@ -120,5 +119,3 @@ class Tokenizer {
     return merged.reverse();
   }
 }
-
-export default Tokenizer;

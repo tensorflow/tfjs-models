@@ -17,7 +17,7 @@
 
 import * as tf from '@tensorflow/tfjs';
 
-import Tokenizer from './tokenizer';
+import {Tokenizer} from './tokenizer';
 import {flatten} from './util';
 
 const BASE_PATH = 'https://s3.amazonaws.com/universalsentenceencoder';
@@ -31,8 +31,6 @@ export async function load() {
 export class UniversalSentenceEncoder {
   private model: tf.FrozenModel;
   private tokenizer: Tokenizer;
-
-  constructor() {}
 
   async loadModel() {
     return await tf.loadFrozenModel(

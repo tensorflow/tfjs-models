@@ -15,7 +15,9 @@
  * =============================================================================
  */
 
+// tslint:disable-next-line:no-any
 export const flatten = (arr: any[][]) =>
+    // tslint:disable-next-line:no-any
     arr.reduce((acc: any[], curr) => acc.concat(curr), []);
 
 // unicode-aware iteration
@@ -25,4 +27,4 @@ export const spreadSymbols = (input: string): string[] => {
     symbols.push(symbol);
   }
   return symbols;
-}
+};
