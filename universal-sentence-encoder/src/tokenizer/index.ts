@@ -28,7 +28,7 @@ import {Trie} from './trie';
 
 function processInput(str: string): string {
   const normalized = str.normalize('NFKC');
-  return '▁' + normalized.replace(/ /g, '▁');
+  return '\u2581' + normalized.replace(/ /g, '\u2581');
 }
 
 // The first tokens are reserved for unk, control symbols, and user-defined
