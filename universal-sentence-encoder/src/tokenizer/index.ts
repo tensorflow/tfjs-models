@@ -15,6 +15,13 @@
  * =============================================================================
  */
 
+/**
+ * Tokenizer.encode() is a port of `EncodeAsIds` from the SentencePiece library
+ * (https://github.com/google/sentencepiece). Encode uses the Viterbi algorithm
+ * to find the most likely sequence of tokens that comprise the input. For more
+ * details, refer to https://arxiv.org/pdf/1804.10959.pdf.
+ */
+
 import {spreadSymbols} from '../util';
 
 import {Trie} from './trie';
@@ -49,7 +56,7 @@ export class Tokenizer {
     }
   }
 
-  encode(input: string) {
+  encode(input: string): number[] {
     const nodes: Array<{[index: number]: Score[]}> = [];
     const words: number[] = [];
     const best: number[] = [];
@@ -64,6 +71,7 @@ export class Tokenizer {
       best.push(0);
     }
 
+    // Construct the lattice.
     for (let i = 0; i < symbols.length; i++) {
       const matches = this.trie.commonPrefixSearch(symbols.slice(i));
 
@@ -98,6 +106,7 @@ export class Tokenizer {
 
     const results: number[] = [];
 
+    // Backward pass.
     let iter = words.length - 1;
     while (iter > 0) {
       results.push(words[iter]);

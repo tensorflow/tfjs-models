@@ -51,7 +51,14 @@ export class UniversalSentenceEncoder {
     this.tokenizer = new Tokenizer(vocabulary);
   }
 
-  async embed(inputs: string[]) {
+  /**
+   *
+   * Returns a 2D Tensor of shape [input.length, 512] that contains the
+   * Universal Sentence Encoder embeddings for each input.
+   *
+   * @param inputs An array of strings to embed.
+   */
+  async embed(inputs: string[]): Promise<tf.Tensor2D> {
     const encodings = inputs.map(d => this.tokenizer.encode(d));
 
     const indices =
@@ -60,6 +67,6 @@ export class UniversalSentenceEncoder {
     return await this.model.executeAsync({
       indices: tf.tensor2d(flatten(indices), [indices.length, 2], 'int32'),
       values: tf.tensor1d(flatten(encodings), 'int32')
-    });
+    }) as tf.Tensor2D;
   }
 }

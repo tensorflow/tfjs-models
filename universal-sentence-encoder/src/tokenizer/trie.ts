@@ -36,6 +36,9 @@ class TrieNode {
     this.end = false;
   }
 
+  /**
+   * Traverse upwards through the trie to construct the token.
+   */
   getWord(): OutputNode {
     const output: string[] = [];
     let node: TrieNode = this;
@@ -58,6 +61,13 @@ export class Trie {
     this.root = new TrieNode(null);
   }
 
+  /**
+   * Checks whether a node starts with ss.
+   *
+   * @param ss The prefix.
+   * @param node The node currently being considered.
+   * @param arr An array of the matching tokens uncovered so far.
+   */
   findAllCommonPrefixes(ss: string[], node: TrieNode, arr: OutputNode[]) {
     if (node.end) {
       const word = node.getWord();
@@ -71,6 +81,9 @@ export class Trie {
     }
   }
 
+  /**
+   * Inserts a token into the trie.
+   */
   insert(word: string, score: number, index: number) {
     let node = this.root;
 
@@ -92,7 +105,12 @@ export class Trie {
     }
   }
 
-  commonPrefixSearch(ss: string[]) {
+  /**
+   * Returns an array of all tokens starting with ss.
+   *
+   * @param ss The prefix to match on.
+   */
+  commonPrefixSearch(ss: string[]): OutputNode[] {
     const node = this.root.children[ss[0]];
     const output: OutputNode[] = [];
     if (node) {
