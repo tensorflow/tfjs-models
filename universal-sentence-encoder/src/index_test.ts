@@ -21,18 +21,21 @@ import {Tokenizer} from './tokenizer';
 describeWithFlags('Universal Sentence Encoder', tf.test_util.NODE_ENVS, () => {
   let tokenizer: Tokenizer;
   beforeAll(() => {
-    tokenizer = new Tokenizer([[], [], [], [], [], [], ['a', -1], ['ç', -2]]);
+    tokenizer = new Tokenizer([
+      ['�', 0], ['<s>', 0], ['</s>', 0], ['extra_token_id_1', 0],
+      ['extra_token_id_2', 0], ['extra_token_id_3', 0], ['a', -1], ['ç', -2]
+    ]);
   });
 
   it('should normalize inputs', () => {
-    expect(tokenizer.encode('ça').toEqual(tokenizer.encode('c\u0327a')));
+    expect(tokenizer.encode('ça')).toEqual(tokenizer.encode('c\u0327a'));
   });
 
   it('should handle unknown inputs', () => {
-    expect(tokenizer.encode('😹').toNotThrow());
+    expect(tokenizer.encode('😹')).not.toThrow();
   });
 
   it('should treat contiguous unknown inputs as a single word', () => {
-    expect(tokenizer.encode('a😹😹').toEqual([6, 0]));
+    expect(tokenizer.encode('a😹😹')).toEqual([6, 0]);
   });
 });
