@@ -32,10 +32,11 @@ describeWithFlags('Universal Sentence Encoder', tf.test_util.NODE_ENVS, () => {
   });
 
   it('should handle unknown inputs', () => {
-    expect(tokenizer.encode('😹')).not.toThrow();
+    expect(() => tokenizer.encode('😹')).not.toThrow();
   });
 
   it('should treat contiguous unknown inputs as a single word', () => {
+    console.log('hi', tokenizer.encode('a😹😹'));
     expect(tokenizer.encode('a😹😹')).toEqual([6, 0]);
   });
 });
