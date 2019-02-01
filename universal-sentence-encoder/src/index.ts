@@ -16,11 +16,11 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
+
 import Tokenizer from './tokenizer';
+import {flatten} from './util';
 
 const BASE_PATH = 'https://s3.amazonaws.com/universalsentenceencoder';
-
-const flatten = arr => arr.reduce((acc, curr) => acc.concat(curr), []);
 
 export async function load() {
   const use = new UniversalSentenceEncoder();
