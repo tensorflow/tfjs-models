@@ -18,7 +18,6 @@
 import * as tf from '@tensorflow/tfjs';
 
 import {Tokenizer} from './tokenizer';
-import {flatten} from './util';
 
 const BASE_PATH =
     'https://storage.googleapis.com/tfjs-models/savedmodel/universal_sentence_encoder/';
@@ -67,10 +66,18 @@ export class UniversalSentenceEncoder {
     const encodings = inputs.map(d => this.tokenizer.encode(d));
 
     const indicesArr =
-        flatten(encodings.map((arr, i) => arr.map((d, index) => [i, index])));
-    const indices =
-        tf.tensor2d(flatten(indicesArr), [indicesArr.length, 2], 'int32');
-    const values = tf.tensor1d(flatten(encodings), 'int32');
+        encodings.map((arr, i) => arr.map((d, index) => [i, index]));
+
+    let flattenedIndicesArr: Array<[number, number]> = [];
+    for (let i = 0; i < indicesArr.length; i++) {
+      flattenedIndicesArr =
+          flattenedIndicesArr.concat(indicesArr[i] as Array<[number, number]>);
+    }
+
+    const indices = tf.tensor2d(
+        tf.util.flatten(flattenedIndicesArr) as number[],
+        [flattenedIndicesArr.length, 2], 'int32');
+    const values = tf.tensor1d(tf.util.flatten(encodings) as number[], 'int32');
 
     const embeddings = await this.model.executeAsync({indices, values});
     indices.dispose();
