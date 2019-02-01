@@ -26,16 +26,14 @@ describeWithFlags('Universal Sentence Encoder', tf.test_util.NODE_ENVS, () => {
     });
 
     spyOn(window, 'fetch').and.callFake(async () => {
-      return {
-        json: () => [1, 2, 3]
-      }
+      return {json: () => [1, 2, 3]};
     });
   });
 
   it('Universal Sentence Encoder doesn\'t leak', async () => {
     const model = await load();
 
-    const numTensorsBefore = tf.memory().numTensors;
+    const numTensorsBefore: number = tf.memory().numTensors;
 
     await model.embed(['']);
 
