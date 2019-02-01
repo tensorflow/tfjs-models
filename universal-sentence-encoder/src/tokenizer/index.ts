@@ -26,6 +26,12 @@ function processInput(str: string): string {
 
 type Vocabulary = Array<[string, number]>;
 
+type Score = {
+  key: string,
+  score: number,
+  index: number
+};
+
 class Tokenizer {
   vocabulary: Vocabulary;
   trie: Trie;
@@ -44,7 +50,7 @@ class Tokenizer {
   }
 
   encode(input: string) {
-    const nodes: any[] = [];
+    const nodes: {[index: number]: Score[]}[] = [];
     const words: number[] = [];
     const best: number[] = [];
 

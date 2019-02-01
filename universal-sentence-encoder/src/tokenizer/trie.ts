@@ -17,17 +17,28 @@
 
 import {spreadSymbols} from '../util';
 
+// [token, score, index]
+type OutputNode = [string[], number, number];
+
 class TrieNode {
-  constructor(key) {
+  public parent: TrieNode;
+  public end: Boolean;
+  public children: {[firstSymbol: string]: TrieNode};
+  public score: number;
+  public index: number;
+
+  private key: string;
+
+  constructor(key: string) {
     this.key = key;
     this.parent = null;
     this.children = {};
     this.end = false;
   }
 
-  getWord() {
-    const output = [];
-    let node = this;
+  getWord(): OutputNode {
+    const output: string[] = [];
+    let node: TrieNode = this;
 
     while (node !== null) {
       if (node.key !== null) {
@@ -41,11 +52,13 @@ class TrieNode {
 }
 
 class Trie {
+  private root: TrieNode;
+
   constructor() {
     this.root = new TrieNode(null);
   }
 
-  findAllCommonPrefixes(ss, node, arr) {
+  findAllCommonPrefixes(ss: string[], node: TrieNode, arr: OutputNode[]) {
     if (node.end) {
       const word = node.getWord();
       if (ss.slice(0, word[0].length).join('') === word[0].join('')) {
@@ -58,7 +71,7 @@ class Trie {
     }
   }
 
-  insert(word, score, index) {
+  insert(word: string, score: number, index: number) {
     let node = this.root;
 
     const symbols = spreadSymbols(word);
@@ -79,13 +92,13 @@ class Trie {
     }
   }
 
-  commonPrefixSearch(ss) {
+  commonPrefixSearch(ss: string[]) {
     const node = this.root.children[ss[0]];
-    const output = [];
+    const output: OutputNode[] = [];
     if (node) {
       this.findAllCommonPrefixes(ss, node, output);
     } else {
-      output.push([ss[0], 0, 0]);  // unknown token
+      output.push([[ss[0]], 0, 0]);  // unknown token
     }
     return output;
   }
