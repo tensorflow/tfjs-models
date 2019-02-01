@@ -20,7 +20,8 @@ import * as tf from '@tensorflow/tfjs';
 import {Tokenizer} from './tokenizer';
 import {flatten} from './util';
 
-const BASE_PATH = 'https://s3.amazonaws.com/universalsentenceencoder';
+const BASE_PATH =
+    'https://storage.googleapis.com/tfjs-models/savedmodel/universal_sentence_encoder/';
 
 export async function load() {
   const use = new UniversalSentenceEncoder();
@@ -34,12 +35,12 @@ export class UniversalSentenceEncoder {
 
   async loadModel() {
     return await tf.loadFrozenModel(
-        `${BASE_PATH}/tensorflowjs_model.pb`,
-        `${BASE_PATH}/weights_manifest.json`);
+        `${BASE_PATH}tensorflowjs_model.pb`,
+        `${BASE_PATH}weights_manifest.json`);
   }
 
   async loadVocabulary() {
-    const vocabulary = await fetch(`${BASE_PATH}/vocab.json`);
+    const vocabulary = await fetch(`${BASE_PATH}vocab.json`);
     return await vocabulary.json();
   }
 
