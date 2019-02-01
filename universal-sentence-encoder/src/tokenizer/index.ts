@@ -27,7 +27,7 @@ function processInput(str: string): string {
 type Vocabulary = Array<[string, number]>;
 
 type Score = {
-  key: string,
+  key: string[],
   score: number,
   index: number
 };
@@ -71,7 +71,7 @@ class Tokenizer {
         const piece = matches[j];
         const obj = {key: piece[0], score: piece[1], index: piece[2]};
 
-        const endPos = spreadSymbols(piece[0]).length;
+        const endPos = piece[0].length;
         if (nodes[i + endPos][i] == null) {
           nodes[i + endPos][i] = [];
         }

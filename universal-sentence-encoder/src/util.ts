@@ -15,7 +15,8 @@
  * =============================================================================
  */
 
-export const flatten = arr => arr.reduce((acc, curr) => acc.concat(curr), []);
+export const flatten = (arr: any[][]) =>
+    arr.reduce((acc: any[], curr) => acc.concat(curr), []);
 
 // unicode-aware iteration
 export const spreadSymbols = (input: string): string[] => {
