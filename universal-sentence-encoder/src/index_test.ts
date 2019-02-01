@@ -24,6 +24,12 @@ describeWithFlags('Universal Sentence Encoder', tf.test_util.NODE_ENVS, () => {
       const model = {executeAsync: (inputs: string[]) => tf.zeros([1, 512])};
       return model;
     });
+
+    spyOn(window, 'fetch').and.callFake(async () => {
+      return {
+        json: () => []
+      }
+    });
   });
 
   it('Universal Sentence Encoder doesn\'t leak', async () => {
@@ -33,6 +39,6 @@ describeWithFlags('Universal Sentence Encoder', tf.test_util.NODE_ENVS, () => {
 
     await model.embed(['']);
 
-    expect(tf.memory().numTensors).toBe(numTensorsBefore);
+    expect(tf.memory().numTensors).toBe(numTensorsBefore + 1);
   });
 });
