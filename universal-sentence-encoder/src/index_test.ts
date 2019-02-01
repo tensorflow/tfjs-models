@@ -23,7 +23,8 @@ describeWithFlags('Universal Sentence Encoder', tf.test_util.NODE_ENVS, () => {
   beforeAll(() => {
     tokenizer = new Tokenizer([
       ['�', 0], ['<s>', 0], ['</s>', 0], ['extra_token_id_1', 0],
-      ['extra_token_id_2', 0], ['extra_token_id_3', 0], ['a', -1], ['ç', -2]
+      ['extra_token_id_2', 0], ['extra_token_id_3', 0], ['▁', -1], ['▁a', -1],
+      ['▁ç', -2], ['a', -3]
     ]);
   });
 
@@ -36,7 +37,6 @@ describeWithFlags('Universal Sentence Encoder', tf.test_util.NODE_ENVS, () => {
   });
 
   it('should treat contiguous unknown inputs as a single word', () => {
-    console.log('hi', tokenizer.encode('a😹😹'));
-    expect(tokenizer.encode('a😹😹')).toEqual([6, 0]);
+    expect(tokenizer.encode('a😹😹')).toEqual([7, 0]);
   });
 });
