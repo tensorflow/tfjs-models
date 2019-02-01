@@ -27,7 +27,7 @@ describeWithFlags('Universal Sentence Encoder', tf.test_util.NODE_ENVS, () => {
 
     spyOn(window, 'fetch').and.callFake(async () => {
       return {
-        json: () => []
+        json: () => [1, 2, 3]
       }
     });
   });
