@@ -16,27 +16,23 @@
  */
 import * as tf from '@tensorflow/tfjs';
 import {describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
-import {load} from './index';
+import {Tokenizer} from './tokenizer';
 
 describeWithFlags('Universal Sentence Encoder', tf.test_util.NODE_ENVS, () => {
+  let tokenizer: Tokenizer;
   beforeAll(() => {
-    spyOn(tf, 'loadFrozenModel').and.callFake(() => {
-      const model = {executeAsync: (inputs: string[]) => tf.zeros([1, 512])};
-      return model;
-    });
-
-    spyOn(window, 'fetch').and.callFake(async () => {
-      return {json: () => [1, 2, 3]};
-    });
+    tokenizer = new Tokenizer([[], [], [], [], [], [], ['a', -1], ['ç', -2]]);
   });
 
-  it('Universal Sentence Encoder doesn\'t leak', async () => {
-    const model = await load();
+  it('should normalize inputs', () => {
+    expect(tokenizer.encode('ça').toEqual(tokenizer.encode('c\u0327a')));
+  });
 
-    const numTensorsBefore: number = tf.memory().numTensors;
+  it('should handle unknown inputs', () => {
+    expect(tokenizer.encode('😹').toNotThrow());
+  });
 
-    await model.embed(['']);
-
-    expect(tf.memory().numTensors).toBe(numTensorsBefore + 1);
+  it('should treat contiguous unknown inputs as a single word', () => {
+    expect(tokenizer.encode('a😹😹').toEqual([6, 0]));
   });
 });
