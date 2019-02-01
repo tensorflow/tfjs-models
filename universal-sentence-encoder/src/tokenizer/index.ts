@@ -31,6 +31,10 @@ function processInput(str: string): string {
   return '▁' + normalized.replace(/ /g, '▁');
 }
 
+// The first tokens are reserved for unk, control symbols, and user-defined
+// symbols.
+const RESERVED_SYMBOLS_COUNT = 6;
+
 type Vocabulary = Array<[string, number]>;
 
 type Score = {
@@ -47,11 +51,7 @@ export class Tokenizer {
     this.vocabulary = vocabulary;
     this.trie = new Trie();
 
-    // The first five tokens are reserved for unk, control symbols, and
-    // user-defined symbols.
-    const reservedSymbolsCount = 6;
-
-    for (let i = reservedSymbolsCount; i < this.vocabulary.length; i++) {
+    for (let i = RESERVED_SYMBOLS_COUNT; i < this.vocabulary.length; i++) {
       this.trie.insert(this.vocabulary[i][0], this.vocabulary[i][1], i);
     }
   }
