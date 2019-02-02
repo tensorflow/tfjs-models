@@ -26,9 +26,12 @@ import {spreadSymbols} from '../util';
 
 import {Trie} from './trie';
 
+const separator =
+    '\u2581';  // This is the unicode character 'lower one eighth block'.
+
 function processInput(str: string): string {
   const normalized = str.normalize('NFKC');
-  return '\u2581' + normalized.replace(/ /g, '\u2581');
+  return separator + normalized.replace(/ /g, separator);
 }
 
 // The first tokens are reserved for unk, control symbols, and user-defined
@@ -113,7 +116,7 @@ export class Tokenizer {
       iter -= this.vocabulary[words[iter]][0].length;
     }
 
-    // Merge contiguous unks.
+    // Merge consecutive unks.
     const merged = [];
     let isPreviousUnk = false;
     for (let i = 0; i < results.length; i++) {
