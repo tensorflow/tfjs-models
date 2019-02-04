@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@tensorflow-models/body-pix": "0.0.1",
-    "@tensorflow/tfjs": "0.13.3",
+    "@tensorflow/tfjs": "0.15.0",
     "stats.js": "0.17.0"
   },
   "scripts": {

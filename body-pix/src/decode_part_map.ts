@@ -29,7 +29,7 @@ function toFlattenedOneHotPartMap(partHeatmapScores: tf.Tensor3D): tf.Tensor2D {
 
   const partMapFlattened = partMapLocations.reshape([-1]) as tf.Tensor1D;
 
-  return tf.oneHot(partMapFlattened, numParts);
+  return tf.oneHot(partMapFlattened, numParts) as tf.Tensor2D;
 }
 
 function clipByMask2d(image: tf.Tensor2D, mask: tf.Tensor2D): tf.Tensor2D {
@@ -77,7 +77,8 @@ export function decodePartSegmentation(
   const [partMapHeight, partMapWidth, numParts] = partHeatmapScores.shape;
   return tf.tidy(() => {
     const flattenedMap = toFlattenedOneHotPartMap(partHeatmapScores);
-    const partNumbers = tf.range(0, numParts, 1, 'int32').expandDims(1);
+    const partNumbers =
+        tf.range(0, numParts, 1, 'int32').expandDims(1) as tf.Tensor2D;
 
     const partMapFlattened = flattenedMap.matMul(partNumbers).toInt();
 
