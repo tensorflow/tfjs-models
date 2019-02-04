@@ -33,14 +33,14 @@ export class UniversalSentenceEncoder {
   private tokenizer: Tokenizer;
 
   async loadModel() {
-    return await tf.loadFrozenModel(
+    return tf.loadFrozenModel(
         `${BASE_PATH}tensorflowjs_model.pb`,
         `${BASE_PATH}weights_manifest.json`);
   }
 
   async loadVocabulary() {
     const vocabulary = await fetch(`${BASE_PATH}vocab.json`);
-    return await vocabulary.json();
+    return vocabulary.json();
   }
 
   async load() {
@@ -75,8 +75,8 @@ export class UniversalSentenceEncoder {
     }
 
     const indices = tf.tensor2d(
-        tf.util.flatten(flattenedIndicesArr) as number[],
-        [flattenedIndicesArr.length, 2], 'int32');
+        flattenedIndicesArr as number[], [flattenedIndicesArr.length, 2],
+        'int32');
     const values = tf.tensor1d(tf.util.flatten(encodings) as number[], 'int32');
 
     const embeddings = await this.model.executeAsync({indices, values});
@@ -86,3 +86,5 @@ export class UniversalSentenceEncoder {
     return embeddings as tf.Tensor2D;
   }
 }
+
+export {Tokenizer};

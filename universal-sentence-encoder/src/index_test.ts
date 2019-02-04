@@ -36,7 +36,7 @@ describeWithFlags('Universal Sentence Encoder', tf.test_util.NODE_ENVS, () => {
     expect(() => tokenizer.encode('😹')).not.toThrow();
   });
 
-  it('should treat contiguous unknown inputs as a single word', () => {
+  it('should treat consecutive unknown inputs as a single word', () => {
     expect(tokenizer.encode('a😹😹')).toEqual([7, 0]);
   });
 });

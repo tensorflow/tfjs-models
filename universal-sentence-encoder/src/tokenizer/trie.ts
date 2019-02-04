@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import {spreadSymbols} from '../util';
+import {stringToChars} from '../util';
 
 // [token, score, index]
 type OutputNode = [string[], number, number];
@@ -87,7 +87,7 @@ export class Trie {
   insert(word: string, score: number, index: number) {
     let node = this.root;
 
-    const symbols = spreadSymbols(word);
+    const symbols = stringToChars(word);
 
     for (let i = 0; i < symbols.length; i++) {
       if (!node.children[symbols[i]]) {

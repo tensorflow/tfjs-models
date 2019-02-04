@@ -22,7 +22,7 @@
  * details, refer to https://arxiv.org/pdf/1804.10959.pdf.
  */
 
-import {spreadSymbols} from '../util';
+import {stringToChars} from '../util';
 
 import {Trie} from './trie';
 
@@ -66,7 +66,7 @@ export class Tokenizer {
 
     input = processInput(input);
 
-    const symbols = spreadSymbols(input);
+    const symbols = stringToChars(input);
 
     for (let i = 0; i <= symbols.length; i++) {
       nodes.push({});
