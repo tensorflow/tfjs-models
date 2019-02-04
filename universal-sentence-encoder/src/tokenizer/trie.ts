@@ -55,7 +55,7 @@ class TrieNode {
 }
 
 export class Trie {
-  private root: TrieNode;
+  public root: TrieNode;
 
   constructor() {
     this.root = new TrieNode(null);

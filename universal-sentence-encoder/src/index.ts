@@ -75,8 +75,7 @@ export class UniversalSentenceEncoder {
     }
 
     const indices = tf.tensor2d(
-        flattenedIndicesArr as number[], [flattenedIndicesArr.length, 2],
-        'int32');
+        flattenedIndicesArr, [flattenedIndicesArr.length, 2], 'int32');
     const values = tf.tensor1d(tf.util.flatten(encodings) as number[], 'int32');
 
     const embeddings = await this.model.executeAsync({indices, values});
