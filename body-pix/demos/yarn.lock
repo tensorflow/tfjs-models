@@ -700,37 +700,48 @@
   resolved "https://registry.yarnpkg.com/@tensorflow-models/body-pix/-/body-pix-0.0.1.tgz#4a5520bd0b59ed77822e8818c24b41d50d8dc9e5"
   integrity sha512-nh4SqnsThTpcImQni6FqwKTqaHIqp0SH+7siLvwOorGggw5lI4W7yZ1HCWsWZFTpeXAsesBx1W3epaZTcDX5PQ==
 
-"@tensorflow/tfjs-converter@0.6.5":
-  version "0.6.5"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-0.6.5.tgz#71d28889e4236e8178d8cb849e741751011cb1f7"
-  integrity sha512-jbmxtRtRV/7JZNmhkjZsPJ651ntrWlxPfzTYF10vPWnS2Tz+u0RjJj9pXRYoO4jfsvFz//kNtXKMhb/Icbp5BA==
+"@tensorflow/tfjs-converter@0.8.0":
+  version "0.8.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-0.8.0.tgz#d6c07a64ca376d7d4f4f57623e9ba35d074ca2d5"
+  integrity sha512-OcraKdqO6M6vPgzcexER0cLXTsy7dM3URvko90Z6Vv9blP36BKZXRQYwqm91J0FbuLDrFJZ3uKubUVsIMbKAMQ==
   dependencies:
     "@types/long" "~3.0.32"
+    js-base64 "2.4.9"
     protobufjs "~6.8.6"
 
-"@tensorflow/tfjs-core@0.13.8":
-  version "0.13.8"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-core/-/tfjs-core-0.13.8.tgz#90f73107df6ad7f1c13ff9d765a3d3d3997af1cb"
-  integrity sha512-Vp0dU6wRisXZRUOEb7w5lPybJkJw2iR32sTlv1ZY42fReMgP7nYKPVoNaByjJ7VFmJe6fK0yURklI+vc+u8SEQ==
+"@tensorflow/tfjs-core@0.15.0":
+  version "0.15.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-core/-/tfjs-core-0.15.0.tgz#c85f1141e42ce5103ae73fdf170b2d4736038533"
+  integrity sha512-YITCsLeF8lqFQdepdv+a0wRQ4sVtg31cvqRzsuQBeQHyR04Xb3CH0kgKcwTj8FUXn+IlDsjE7m+v8Gier7YfuA==
   dependencies:
     "@types/seedrandom" "2.4.27"
     "@types/webgl-ext" "0.0.30"
     "@types/webgl2" "0.0.4"
     seedrandom "2.4.3"
 
-"@tensorflow/tfjs-layers@0.8.3":
-  version "0.8.3"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-layers/-/tfjs-layers-0.8.3.tgz#b3995e668afecf37a1382deeea57e40eee6519b4"
-  integrity sha512-RHnTtXx7bE6d+x0byLi90nejy44caBKhYqBR0zmCVzxagxDSln9wd28ojHEh1/6gQyBejhMEQ3gUK4SsKTpjIw==
-
-"@tensorflow/tfjs@0.13.3":
-  version "0.13.3"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs/-/tfjs-0.13.3.tgz#a44ce32ada34e464d8c596cee10695e0a0ebb5de"
-  integrity sha512-7WXS6wfCnX/5s2CmAYelRRiRvRkpDbdoL/U+qZ+08lS2NWFWT2y+ga/nWq6brNHUEShLpXNdZ8S++UcG2q2t0g==
+"@tensorflow/tfjs-data@0.2.0":
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-data/-/tfjs-data-0.2.0.tgz#c66c73e634b56f46c7a17db0af6c3be8b9cc4428"
+  integrity sha512-ut7TpdJE8I1YoaROKGs/AwZXa9d8GqOeBd/l2JFLQwzLVhA9LLh0fzCdIBnUGa6Gp5MdwD+3OoysV+neMDAs2w==
   dependencies:
-    "@tensorflow/tfjs-converter" "0.6.5"
-    "@tensorflow/tfjs-core" "0.13.8"
-    "@tensorflow/tfjs-layers" "0.8.3"
+    "@types/node-fetch" "^2.1.2"
+    node-fetch "~2.1.2"
+    seedrandom "~2.4.3"
+
+"@tensorflow/tfjs-layers@0.10.0":
+  version "0.10.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-layers/-/tfjs-layers-0.10.0.tgz#a282ad3f533ac20645b23b0eaf5d15039ec91b5d"
+  integrity sha512-O24iUscjutLFjRmJj55FASXtssD2Tldkz6n+MJ64gN0Etq+zA9A+Sbz3pWIjvDaKDhcXHsy4kmSbENF9Cztqqw==
+
+"@tensorflow/tfjs@0.15.0":
+  version "0.15.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs/-/tfjs-0.15.0.tgz#bd8d7c109f25ba06c5686deca79bb0fff93507bc"
+  integrity sha512-MP8N8vptlL1sTxH1K8m64SE+8Kw6FBmGtRMOY8R/AVEWW4Z1DD+crsMHUePzxXwU83HHeZPXJauKyzX/U1CgCQ==
+  dependencies:
+    "@tensorflow/tfjs-converter" "0.8.0"
+    "@tensorflow/tfjs-core" "0.15.0"
+    "@tensorflow/tfjs-data" "0.2.0"
+    "@tensorflow/tfjs-layers" "0.10.0"
 
 "@types/long@^4.0.0":
   version "4.0.0"
@@ -741,6 +752,18 @@
   version "3.0.32"
   resolved "https://registry.yarnpkg.com/@types/long/-/long-3.0.32.tgz#f4e5af31e9e9b196d8e5fca8a5e2e20aa3d60b69"
   integrity sha512-ZXyOOm83p7X8p3s0IYM3VeueNmHpkk/yMlP8CLeOnEcu6hIwPH7YjZBvhQkR0ZFS2DqZAxKtJ/M5fcuv3OU5BA==
+
+"@types/node-fetch@^2.1.2":
+  version "2.1.4"
+  resolved "https://registry.yarnpkg.com/@types/node-fetch/-/node-fetch-2.1.4.tgz#093d1beae11541aef25999d70aa09286fd025b1a"
+  integrity sha512-tR1ekaXUGpmzOcDXWU9BW73YfA2/VW1DF1FH+wlJ82BbCSnWTbdX+JkqWQXWKIGsFPnPsYadbXfNgz28g+ccWg==
+  dependencies:
+    "@types/node" "*"
+
+"@types/node@*":
+  version "10.12.21"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-10.12.21.tgz#7e8a0c34cf29f4e17a36e9bd0ea72d45ba03908e"
+  integrity sha512-CBgLNk4o3XMnqMc0rhb6lc77IwShMEglz05deDcn2lQxyXEZivfwgYJu7SMha9V5XcrP6qZuevTHV/QrN2vjKQ==
 
 "@types/node@^10.1.0":
   version "10.10.1"
@@ -3758,6 +3781,11 @@ isobject@^3.0.0, isobject@^3.0.1:
   resolved "https://registry.yarnpkg.com/isobject/-/isobject-3.0.1.tgz#4e431e92b11a9731636aa1f9c8d1ccbcfdab78df"
   integrity sha1-TkMekrEalzFjaqH5yNHMvP2reN8=
 
+js-base64@2.4.9:
+  version "2.4.9"
+  resolved "https://registry.yarnpkg.com/js-base64/-/js-base64-2.4.9.tgz#748911fb04f48a60c4771b375cac45a80df11c03"
+  integrity sha512-xcinL3AuDJk7VSzsHgb9DvvIXayBbadtMZ4HFPx8rUszbW1MuNMlwYVC4zzCZ6e1sqZpnNS5ZFYOhXqA39T7LQ==
+
 js-base64@^2.1.9:
   version "2.4.5"
   resolved "https://registry.yarnpkg.com/js-base64/-/js-base64-2.4.5.tgz#e293cd3c7c82f070d700fc7a1ca0a2e69f101f92"
@@ -4201,6 +4229,11 @@ nice-try@^1.0.4:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/nice-try/-/nice-try-1.0.4.tgz#d93962f6c52f2c1558c0fbda6d512819f1efe1c4"
   integrity sha512-2NpiFHqC87y/zFke0fC0spBXL3bBsoh/p5H1EFhshxjCR5+0g2d6BiXbUFz9v1sAcxsk2htp2eQnNIci2dIYcA==
+
+node-fetch@~2.1.2:
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.1.2.tgz#ab884e8e7e57e38a944753cec706f788d1768bb5"
+  integrity sha1-q4hOjn5X44qUR1POxwb3iNF2i7U=
 
 node-forge@^0.7.1:
   version "0.7.5"
@@ -5738,6 +5771,11 @@ seedrandom@2.4.3:
   version "2.4.3"
   resolved "https://registry.yarnpkg.com/seedrandom/-/seedrandom-2.4.3.tgz#2438504dad33917314bff18ac4d794f16d6aaecc"
   integrity sha1-JDhQTa0zkXMUv/GKxNeU8W1qrsw=
+
+seedrandom@~2.4.3:
+  version "2.4.4"
+  resolved "https://registry.yarnpkg.com/seedrandom/-/seedrandom-2.4.4.tgz#b25ea98632c73e45f58b77cfaa931678df01f9ba"
+  integrity sha512-9A+PDmgm+2du77B5i0Ip2cxOqqHjgNxnBgglxLcX78A2D6c2rTo61z4jnVABpF4cKeDMDG+cmXXvdnqse2VqMA==
 
 "semver@2 || 3 || 4 || 5":
   version "5.6.0"

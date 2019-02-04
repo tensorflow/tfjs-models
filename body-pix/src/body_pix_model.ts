@@ -91,8 +91,7 @@ export class BodyPix {
    * which are the same dimensions of the input image.
    */
   async estimatePersonSegmentation(
-      input: BodyPixInput,
-      outputStride: OutputStride = 16,
+      input: BodyPixInput, outputStride: OutputStride = 16,
       segmentationThreshold = 0.5): Promise<PersonSegmentation> {
     assertValidOutputStride(outputStride);
 
@@ -114,7 +113,6 @@ export class BodyPix {
           paddedBy);
 
       return toMask(scaledSegmentScores.squeeze(), segmentationThreshold);
-      
     });
 
     const result = await segmentation.data() as Uint8Array;
@@ -150,8 +148,7 @@ export class BodyPix {
    * shaped to, which are the same dimensions of the input image.
    */
   async estimatePartSegmentation(
-      input: BodyPixInput,
-      outputStride: OutputStride = 16,
+      input: BodyPixInput, outputStride: OutputStride = 16,
       segmentationThreshold = 0.5): Promise<PartSegmentation> {
     assertValidOutputStride(outputStride);
 
@@ -161,8 +158,7 @@ export class BodyPix {
       const {
         resizedAndPadded,
         paddedBy,
-      } =
-          resizeAndPadTo(input, segmentationModelImageDimensions);
+      } = resizeAndPadTo(input, segmentationModelImageDimensions);
 
       const {segmentScores, partHeatmapScores} =
           this.predictForPartMap(resizedAndPadded, outputStride);
@@ -240,7 +236,8 @@ export const mobilenetLoader = {
     const baseUrl = checkpoint.url;
 
     const model = await tf.loadFrozenModel(
-        `${baseUrl}tensorflowjs_model.pb`, `${baseUrl}weights_manifest.json`);
+                      `${baseUrl}tensorflowjs_model.pb`,
+                      `${baseUrl}weights_manifest.json`) as tf.FrozenModel;
 
     const weights = new ModelWeights(model);
 
