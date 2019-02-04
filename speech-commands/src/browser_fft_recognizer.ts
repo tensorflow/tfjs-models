@@ -917,12 +917,12 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     const datasetDurationMillisThreshold =
         config.fitDatasetDurationMillisThreshold == null ?
         60e3 : config.fitDatasetDurationMillisThreshold;
-    console.log(
-        `Detected large dataset: total duration = ` +
-        `${this.dataset.durationMillis()} ms > ` +
-        `${datasetDurationMillisThreshold} ms. ` +
-        `Training transfer model using fitDataset() instead of fit()`);
     if (this.dataset.durationMillis() > datasetDurationMillisThreshold) {
+      console.log(
+          `Detected large dataset: total duration = ` +
+          `${this.dataset.durationMillis()} ms > ` +
+          `${datasetDurationMillisThreshold} ms. ` +
+          `Training transfer model using fitDataset() instead of fit()`);
       return await this.trainOnDataset(config);
     } else {
       return await this.trainOnTensors(config);
