@@ -17,7 +17,7 @@ To keep track of issues we use the [tensorflow/tfjs](https://github.com/tensorfl
 You can use this as standalone es5 bundle like this:
 
 ```html
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.13.3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.15.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix"></script>
 ```
 
