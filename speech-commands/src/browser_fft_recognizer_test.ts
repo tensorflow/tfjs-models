@@ -880,8 +880,9 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     // tslint:disable-next-line:no-any
     const transferHead = (transfer as any).transferHead as tf.Sequential;
     const numLayers = transferHead.layers.length;
-    const oldTransferKernel =
-        transferHead.getLayer(null, numLayers - 1).getWeights()[0].dataSync();
+    const oldTransferWeightValues =
+        transferHead.getLayer(null, numLayers - 1).getWeights()
+        .map(weight => weight.dataSync());
 
     const history =
         await transfer.train({optimizer: tf.train.sgd(1)}) as tf.History;
@@ -897,19 +898,21 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
 
     // Verify that the weights of the dense layer in the base model doesn't
     // change, i.e., is frozen.
-    const newTransferKernel =
-        transferHead.getLayer(null, numLayers - 1).getWeights()[0].dataSync();
+    const newTransferWeightValues =
+        transferHead.getLayer(null, numLayers - 1).getWeights()
+        .map(weight => weight.dataSync());
     baseModelOldWeightValues.forEach((oldWeight, i) => {
       tf.test_util.expectArraysClose(baseModelNewWeightValues[i], oldWeight);
     });
     // Verify that the weight of the transfer-learning head model changes
     // after training.
-    expect(tf.tensor1d(newTransferKernel)
-               .sub(tf.tensor1d(oldTransferKernel))
-               .abs()
-               .max()
-               .dataSync()[0])
-        .toBeGreaterThan(1e-3);
+    const maxWeightChanges = newTransferWeightValues.map(
+        (newValues, i) => tf.tensor1d(newValues)
+            .sub(tf.tensor1d(oldTransferWeightValues[i]))
+            .abs()
+            .max()
+            .dataSync()[0]);
+    expect(Math.max(...maxWeightChanges)).toBeGreaterThan(1e-3);
 
     // Test recognize() with the transfer recognizer.
     const spectrogram =
