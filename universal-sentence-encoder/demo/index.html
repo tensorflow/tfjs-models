@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Universal Sentence Encoder lite demo</title>
+    <style>
+      #main {
+        max-width: 960px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      #sentences-container {
+        background: blue;
+        flex: 1 1 auto;
+      }
+
+      #container {
+        display: flex;
+        flex-direction: row;
+      }
+
+      #self-similarity-matrix {
+        background: red;
+      }
+
+      #description {
+        background: orange;
+      }
+   </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+  <div id='main'>
+    <div id="loading">
+        Loading the model...
+    </div>
+    <div id="description">Description</div>
+    <div id="container">
+      <div id="sentences-container">lolol</div>
+      <div id="self-similarity-matrix"><canvas></canvas></div>
+    </div>
+  </div>
+  <script src="index.js"></script>
+</body>
+
+</html>
