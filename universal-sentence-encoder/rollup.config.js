@@ -40,10 +40,10 @@ function config({plugins = [], output = {}}) {
 
 export default [
   config(
-      {output: {format: 'umd', name: 'universal-sentence-encoder', file: 'dist/universal-sentence-encoder.js'}}),
+      {output: {format: 'umd', name: 'use', file: 'dist/universal-sentence-encoder.js'}}),
   config({
     plugins: [minify()],
-    output: {format: 'umd', name: 'universal-sentence-encoder', file: 'dist/universal-sentence-encoder.min.js'}
+    output: {format: 'umd', name: 'use', file: 'dist/universal-sentence-encoder.min.js'}
   }),
   config({
     plugins: [minify()],
