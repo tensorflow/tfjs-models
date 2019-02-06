@@ -704,6 +704,11 @@
   resolved "https://registry.yarnpkg.com/@protobufjs/utf8/-/utf8-1.1.0.tgz#a777360b5b39a1a2e5106f8e858f2fd2d060c570"
   integrity sha1-p3c2C1s5oaLlEG+OhY8v0tBgxXA=
 
+"@tensorflow-models/universal-sentence-encoder@0.0.1":
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/@tensorflow-models/universal-sentence-encoder/-/universal-sentence-encoder-0.0.1.tgz#ba0d79f470ecae431ed1cc761939947c9f6afbf4"
+  integrity sha512-jG6N8ldnjpGURFsq8Ghhf2dTRxvE3EIcngrAPUR88GYcW2u5xMqEWeFq9qrGtPohjrOEBSR0namBI30UKc/biw==
+
 "@tensorflow/tfjs-converter@0.8.0":
   version "0.8.0"
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-0.8.0.tgz#d6c07a64ca376d7d4f4f57623e9ba35d074ca2d5"
@@ -737,7 +742,7 @@
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-layers/-/tfjs-layers-0.10.0.tgz#a282ad3f533ac20645b23b0eaf5d15039ec91b5d"
   integrity sha512-O24iUscjutLFjRmJj55FASXtssD2Tldkz6n+MJ64gN0Etq+zA9A+Sbz3pWIjvDaKDhcXHsy4kmSbENF9Cztqqw==
 
-"@tensorflow/tfjs@0.15.0":
+"@tensorflow/tfjs@^0.15.0":
   version "0.15.0"
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs/-/tfjs-0.15.0.tgz#bd8d7c109f25ba06c5686deca79bb0fff93507bc"
   integrity sha512-MP8N8vptlL1sTxH1K8m64SE+8Kw6FBmGtRMOY8R/AVEWW4Z1DD+crsMHUePzxXwU83HHeZPXJauKyzX/U1CgCQ==

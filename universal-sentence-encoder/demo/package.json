@@ -9,7 +9,8 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow/tfjs": "0.15.0"
+    "@tensorflow-models/universal-sentence-encoder": "0.0.1",
+    "@tensorflow/tfjs": "^0.15.0"
   },
   "scripts": {
     "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr --open ",
