@@ -16,9 +16,9 @@ const sentences = [
 ];
 
 const renderSentences = () => {
-  sentences.forEach(sentence => {
+  sentences.forEach((sentence, i) => {
     const sentenceDom = document.createElement('div');
-    sentenceDom.textContent = sentence;
+    sentenceDom.textContent = `${i + 1}) ${sentence}`;
     document.querySelector('#sentences-container').appendChild(sentenceDom);
   });
 };
@@ -36,15 +36,6 @@ const init = async () => {
     embeddingsArr.push(embeddingsData.slice(i * 512, i * 512 + 512));
   }
 
-  const selfSimilarity = [];
-  for (let i = 0; i < sentences.length; i++) {
-    selfSimilarity.push([]);
-    for (let j = i; j < sentences.length; j++) {
-      let score = dot(embeddingsArr[i], embeddingsArr[j]);
-      selfSimilarity[i].push(score);
-    }
-  }
-
   const matrixSize = 250;
   const cellSize = matrixSize / sentences.length;
   const canvas = document.querySelector('canvas');
@@ -53,15 +44,27 @@ const init = async () => {
 
   const ctx = canvas.getContext('2d');
 
-  for (let i = 0; i < sentences.length; i++) {
-    for (let j = 0; j < sentences.length; j++) {
-      let val = selfSimilarity[i][j];
+  const xLabelsContainer = document.querySelector('.x-axis');
+  const yLabelsContainer = document.querySelector('.y-axis');
 
-      ctx.fillStyle = interpolateReds(val);
-      ctx.fillRect(
-          i * cellSize + j * cellSize, i * cellSize, cellSize, cellSize);
-      ctx.fillRect(
-          i * cellSize, i * cellSize + j * cellSize, cellSize, cellSize);
+  for (let i = 0; i < sentences.length; i++) {
+    const labelXDom = document.createElement('div');
+    const labelYDom = document.createElement('div');
+
+    labelXDom.textContent = i + 1;
+    labelYDom.textContent = i + 1;
+    labelXDom.style.left = (i * cellSize + cellSize / 2) + 'px';
+    labelYDom.style.top = (i * cellSize + cellSize / 2) + 'px';
+
+    xLabelsContainer.appendChild(labelXDom);
+    yLabelsContainer.appendChild(labelYDom);
+
+    for (let j = i; j < sentences.length; j++) {
+      let score = dot(embeddingsArr[i], embeddingsArr[j]);
+
+      ctx.fillStyle = interpolateReds(score);
+      ctx.fillRect(j * cellSize, i * cellSize, cellSize, cellSize);
+      ctx.fillRect(i * cellSize, j * cellSize, cellSize, cellSize);
     }
   }
 };
