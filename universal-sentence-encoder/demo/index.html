@@ -10,7 +10,6 @@
         margin-right: auto;
       }
       #sentences-container {
-        background: blue;
         flex: 1 1 auto;
       }
 
@@ -20,11 +19,9 @@
       }
 
       #self-similarity-matrix {
-        background: red;
       }
 
       #description {
-        background: orange;
       }
    </style>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -32,12 +29,13 @@
 
 <body>
   <div id='main'>
+    <h1>Universal Sentence Encoder lite demo</h1>
     <div id="loading">
         Loading the model...
     </div>
-    <div id="description">Description</div>
+    <div id="description"></div>
     <div id="container">
-      <div id="sentences-container">lolol</div>
+      <div id="sentences-container"></div>
       <div id="self-similarity-matrix"><canvas></canvas></div>
     </div>
   </div>
