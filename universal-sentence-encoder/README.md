@@ -6,10 +6,22 @@ This module is a TensorFlow.js [`FrozenModel`](https://js.tensorflow.org/api/lat
 
 ## Usage
 
+To import in npm:
+
 ```js
-
 import * as use from '@tensorflow-models/universal-sentence-encoder';
+```
 
+or as a standalone script tag:
+
+```js
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/universal-sentence-encoder"></script>
+```
+
+Then: 
+
+```js
 // Load the model.
 const model = await use.load();
 
