@@ -5,13 +5,15 @@
     <title>Universal Sentence Encoder lite demo</title>
     <style>
       h1 {
-        margin-bottom: 45px;
+        margin-bottom: 35px;
       }
 
       #main {
         padding-top: 30px;
         font-family: Helvetica, sans-serif;
         max-width: 960px;
+        min-width: 600px;
+        width: 60vw;
         margin-left: auto;
         margin-right: auto;
       }
@@ -61,6 +63,8 @@
       }
 
       #description {
+        margin-bottom: 50px;
+        line-height: 1.6;
       }
    </style>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -69,10 +73,10 @@
 <body>
   <div id='main'>
     <h1>Universal Sentence Encoder lite demo</h1>
+    <div id="description">This demo is taken from the <a href="https://colab.sandbox.google.com/github/tensorflow/hub/blob/master/examples/colab/semantic_similarity_with_tf_hub_universal_encoder_lite.ipynb#scrollTo=_GSCW5QIBKVe">TensorFlow Hub Universal Sentence Encoder lite colab</a>. It shows the model's ability to group sentences by semantic similarity usings their embeddings. The matrix on the right shows self-similarity scores (dot products) between the embeddings for the sentences on the left. The redder the cell, the higher the similarity score.</div>
     <div id="loading">
         Loading the model...
     </div>
-    <div id="description"></div>
     <div id="container">
       <div id="sentences-container"></div>
       <div id="self-similarity-matrix">
