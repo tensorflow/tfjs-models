@@ -19,23 +19,20 @@ or as a standalone script tag:
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/universal-sentence-encoder"></script>
 ```
 
-Then: 
+Then:
 
 ```js
 // Load the model.
-const model = await use.load();
-
-// Embed an array of sentences.
-const sentences = [
-  'Hello.',
-  'How are you?'
-];
-
-const embeddings = await model.embed(sentences);
-
-// `embeddings` is a 2D tensor consisting of the 512-dimensional embeddings for each sentence.
-// So in this example `embeddings` has the shape [2, 512].
-const verbose = true;
-embeddings.print(verbose);
-
+use.load().then(model => {
+  // Embed an array of sentences.
+  const sentences = [
+    'Hello.',
+    'How are you?'
+  ];
+  model.embed(sentences).then(embeddings => {
+    // `embeddings` is a 2D tensor consisting of the 512-dimensional embeddings for each sentence.
+    // So in this example `embeddings` has the shape [2, 512].
+    embeddings.print(true /* verbose */);
+  });
+});
 ```
