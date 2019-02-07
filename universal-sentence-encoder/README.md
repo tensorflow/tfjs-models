@@ -4,9 +4,11 @@ The Universal Sentence Encoder ([Cer et al., 2018](https://arxiv.org/pdf/1803.11
 
 This module is a TensorFlow.js [`FrozenModel`](https://js.tensorflow.org/api/latest/#loadFrozenModel) converted from the USE lite ([module on TFHub](https://tfhub.dev/google/universal-sentence-encoder-lite/2)), a lightweight version of the original. The lite model is based on the Transformer ([Vaswani et al, 2017](https://arxiv.org/pdf/1706.03762.pdf)) architecture, and uses an 8k word piece [vocabulary](https://storage.googleapis.com/tfjs-models/savedmodel/universal_sentence_encoder/vocab.json).
 
-In [this demo](./demo/index.js), we embed six sentences with the USE, and render their self-similarity scores in a matrix (redder means more similar).
+In [this demo](./demo/index.js) we embed six sentences with the USE, and render their self-similarity scores in a matrix (redder means more similar):
 
 ![selfsimilarity](./images/self_similarity.jpg)
+
+*The matrix shows that USE embeddings can be used to cluster sentences by similarity.*
 
 The sentences (taken from the [TensorFlow Hub USE lite colab](https://colab.sandbox.google.com/github/tensorflow/hub/blob/master/examples/colab/semantic_similarity_with_tf_hub_universal_encoder_lite.ipynb#scrollTo=_GSCW5QIBKVe)):
 1. I like my phone.
