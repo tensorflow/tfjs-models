@@ -1,0 +1,107 @@
+<!-- Copyright 2019 Google LLC. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================-->
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>TensorFlow.js Universal Sentence Encoder lite demo</title>
+    <style>
+      h1 {
+        margin-bottom: 35px;
+      }
+
+      #main {
+        padding-top: 30px;
+        font-family: Helvetica, sans-serif;
+        max-width: 960px;
+        min-width: 600px;
+        width: 60vw;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      #sentences-container {
+        flex: 1 1 auto;
+      }
+
+      #sentences-container > div {
+        margin-bottom: 10px;
+      }
+
+      #container {
+        display: flex;
+        flex-direction: row;
+      }
+
+      #self-similarity-matrix {
+        position: relative;
+      }
+
+      .labels {
+        position: absolute;
+      }
+
+      .x-axis {
+        bottom: 100%;
+        width: 100%;
+        height: 20px;
+      }
+
+      .x-axis > div {
+        transform: translateX(-50%);
+      }
+
+      .y-axis {
+        right: 100%;
+        height: 100%;
+        width: 20px;
+      }
+
+      .y-axis > div {
+        transform: translateY(-50%);
+      }
+
+      .labels > div {
+        position: absolute;
+      }
+
+      #description {
+        margin-bottom: 50px;
+        line-height: 1.6;
+      }
+   </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+  <div id='main'>
+    <h1>Universal Sentence Encoder lite demo</h1>
+    <div id="description">This demo is taken from the <a target="_blank" href="https://colab.sandbox.google.com/github/tensorflow/hub/blob/master/examples/colab/semantic_similarity_with_tf_hub_universal_encoder_lite.ipynb#scrollTo=_GSCW5QIBKVe">TensorFlow Hub Universal Sentence Encoder lite colab</a>. It shows the model's ability to group sentences by semantic similarity usings their embeddings. The matrix on the right shows self-similarity scores (dot products) between the embeddings for the sentences on the left. The redder the cell, the higher the similarity score.</div>
+    <div id="loading">
+        Loading the model...
+    </div>
+    <div id="container">
+      <div id="sentences-container"></div>
+      <div id="self-similarity-matrix">
+        <div class="labels y-axis"></div>
+        <div class="labels x-axis"></div>
+        <canvas></canvas>
+      </div>
+    </div>
+  </div>
+  <script src="index.js"></script>
+</body>
+
+</html>
