@@ -55,7 +55,7 @@ yarn
 
 Publish posenet locally:
 ```sh
-yalc push
+yarn build && yalc push
 ```
 
 Cd into the demos and install dependencies:
