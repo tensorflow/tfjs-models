@@ -73,7 +73,7 @@ export async function toTensorBuffer<rank extends tf.Rank>(
     type: 'float32'|'int32' = 'float32'): Promise<tf.TensorBuffer<rank>> {
   const tensorData = await tensor.data();
 
-  return new tf.TensorBuffer<rank>(tensor.shape, type, tensorData);
+  return tf.buffer<rank, 'float32'>(tensor.shape, type as 'float32', tensorData as Float32Array);
 }
 
 export async function toTensorBuffers3D(tensors: tf.Tensor3D[]):
