@@ -15,7 +15,6 @@
  * =============================================================================
  */
 
-console.log("lol");
 import * as use from '@tensorflow-models/universal-sentence-encoder';
 const BASE_DIR = 'https://s3.amazonaws.com/tfjstoxicity/';
 const MODEL_URL = BASE_DIR + 'model.json';
@@ -35,6 +34,41 @@ const samples = [
   }
 ];
 
+// const labels = ['TOXICITY', 'SEVERE_TOXICITY', 'IDENTITY_ATTACK', 'INSULT', 'THREAT', 'SEXUALLY_EXPLICIT'];
+const labels = ['TOXICITY', 'IDENTITY_ATTACK', 'INSULT', 'THREAT', 'SEXUALLY_EXPLICIT'];
+
+// const nameToLabel = name => {
+//   if(name === 'frac_neg') {
+//     return labels[0];
+//   } else if(name === 'frac_very_neg') {
+//     return labels[1];
+//   } else if(name === 'identity_hate') {
+//     return labels[2];
+//   } else if(name === 'insult') {
+//     return labels[3];
+//   } else if(name === 'threat') {
+//     return labels[4];
+//   } else if(name === 'sexual_explicit') {
+//     return labels[5];
+//   }
+//   return false;
+// }
+
+const nameToLabel = name => {
+  if(name === 'frac_neg') {
+    return labels[0];
+  } else if(name === 'identity_hate') {
+    return labels[1];
+  } else if(name === 'insult') {
+    return labels[2];
+  } else if(name === 'threat') {
+    return labels[3];
+  } else if(name === 'sexual_explicit') {
+    return labels[4];
+  }
+  return false;
+}
+
 const loadVocabulary = async() => {
   const vocabulary = await fetch(`https://storage.googleapis.com/tfjs-models/savedmodel/universal_sentence_encoder/vocab.json`);
   return vocabulary.json();
@@ -44,11 +78,8 @@ const predict = async () => {
   const vocabulary = await loadVocabulary();
   const model = await tf.loadFrozenModel(MODEL_URL);
 
-  console.log("hi");
-  console.log(use);
   const tokenizer = new use.Tokenizer(vocabulary);
   const encodings = samples.map(d => tokenizer.encode(d.text));
-  console.log(encodings);
 
   const indicesArr =
       encodings.map((arr, i) => arr.map((d, index) => [i, index]));
@@ -62,23 +93,50 @@ const predict = async () => {
   const indices = tf.tensor2d(
       flattenedIndicesArr, [flattenedIndicesArr.length, 2], 'int32');
   const values = tf.tensor1d(tf.util.flatten(encodings), 'int32');
-  const embeddings = await model.executeAsync({
+  let results = await model.executeAsync({
     Placeholder_1: indices,
     Placeholder: values
   });
 
-  console.log("MODEL OUTPUTS");
-  /*
-  12 - one for each category
-   */
-  console.log(model.outputs);
+  results = results.map((d, i) => ({
+    name: model.outputs[i].name,
+    data: d.dataSync()
+  }));
 
-  embeddings.forEach((x, i) => {
-    console.log('-------');
-    console.log(model.outputs[i]);
-    console.log(x);
+  const predictions = samples.map((d, sampleIndex) => {
+    const obj = {
+      'text': d.text
+    };
+
+    results.forEach((classification, i) => {
+      const label = nameToLabel(classification.name.split('/')[0]);
+
+      if(label) {
+        const prediction = classification.data.slice(sampleIndex * 2, sampleIndex * 2 + 2);
+        obj[label] = prediction[0] > prediction[1] ? false : true;
+      }
+    });
+
+    return obj;
   });
 
+  const tableWrapper = document.querySelector('#table-wrapper');
+  tableWrapper.insertAdjacentHTML('beforeend', `<div class="row">
+    <div class="text">TEXT</div>
+    ${labels.map(label => {
+      return `<div class="label">${label.replace('_', ' ')}</div>`;
+    }).join('')}
+  </div>`);
+
+  predictions.forEach(d => {
+    const predictionDom = `<div class="row">
+      <div class="text">${d.text}</div>
+      ${labels.map(label => {
+        return `<div class="${'label' + (d[label] === true ? ' positive' : '')}">${d[label]}</div>`
+      }).join('')}
+    </div>`;
+    tableWrapper.insertAdjacentHTML('beforeEnd', predictionDom);
+  });
 };
 
 predict();
