@@ -21,16 +21,20 @@ const MODEL_URL = BASE_DIR + 'model.json';
 
 const samples = [
   {
-    'id': '',
-    'text': 'You suck.'
+    'id': '002261b0415c4f9d',
+    'text': 'We\'re dudes on computers, moron.  You are quite astonishingly stupid.'
   },
   {
-    'id': '',
-    'text': 'I thought it was an excellent movie.'
+    'id': '0027160ca62626bc',
+    'text': 'Please stop. If you continue to vandalize Wikipedia, as you did to Kmart, you will be blocked from editing.'
   },
   {
-    'id': '',
-    'text': 'This ice cream is delicious.'
+    'id': '002fb627b19c4c0b',
+    'text': 'I respect your point of view, and when this discussion originated on 8th April I would have tended to agree with you.'
+  },
+  {
+    'id': '01ced7301be2a32d',
+    'text': 'now join the anti gay hitler rebellion now!'
   }
 ];
 
