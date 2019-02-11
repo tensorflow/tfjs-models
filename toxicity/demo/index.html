@@ -21,10 +21,16 @@ limitations under the License.
       body {
         font-family: 'Helvetica Neue', sans-serif;
         box-sizing: border-box;
+        line-height: 1.5;
       }
 
       h1 {
-        margin-bottom: 50px;
+        margin-bottom: 30px;
+        font-size: 34px;
+      }
+
+      .description {
+        margin-bottom: 60px;
       }
 
       #main {
@@ -68,7 +74,42 @@ limitations under the License.
 
       .text, .label {
         padding: 10px;
-        line-height: 1.5;
+      }
+
+      #classify-new-text-input {
+        border: none;
+        border-bottom: solid 1px #ccc;
+        font-size: 14px;
+        line-height: 2;
+        width: 827px;
+        margin-right: 15px;
+        padding-left: 5px;
+        padding-right: 5px;
+        padding-top: 4px;
+        padding-bottom: 4px;
+      }
+      #classify-new-text, #classify-new-text-input {
+        display: inline-block;
+        vertical-align: top;
+      }
+
+      #classify-new-text {
+        cursor: pointer;
+        border: solid 1px #ccc;
+        text-transform: uppercase;
+        padding: 7px 12px 7px 13px;
+        font-size: 14px;
+        border-radius: 3px;
+        font-weight: bold;
+        letter-spacing: 1px;
+      }
+
+      #table-wrapper {
+        margin-bottom: 60px;
+      }
+
+      p {
+        font-weight: bold;
       }
    </style>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -77,10 +118,11 @@ limitations under the License.
 <body>
   <div id='main'>
     <h1>TensorFlow.js toxicity classifier demo</h1>
-    <div></div>
+    <div class="description">This is a demo of the TensorFlow.js toxicity model, which classifies text according to whether it exhibits offensive attributes (i.e. profanity, sexual explicitness). The samples in the table below were taken from this <a href="https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge/data">Kaggle dataset</a>.</div>
     <div id="table-wrapper"></div>
+    <p>Enter text below and click 'Classify' to add it to the table.</p>
     <div>
-      <input id="classify-new-text-input" placeholder='enter text'></input>
+      <input id="classify-new-text-input" placeholder="i.e. 'you suck'">
       <div id="classify-new-text">Classify</div>
     </div>
   </div>
