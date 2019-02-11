@@ -16,43 +16,69 @@
  */
 
 console.log("lol");
-// import * as use from '@tensorflow-models/universal-sentence-encoder';
+import * as use from '@tensorflow-models/universal-sentence-encoder';
 const BASE_DIR = 'https://s3.amazonaws.com/tfjstoxicity/';
 const MODEL_URL = BASE_DIR + 'model.json';
 
-const predict = async () => {
-  const model = await tf.loadFrozenModel(MODEL_URL);
-  console.log(model.inputs);
-  // const input = {
-  //   //'dense_shape': tf.tensor1d([3, 7], 'int32'),
-  //   'Placeholder_1': tf.tensor2d([[0, 0],
-  //   [0, 1],
-  //   [0, 2],
-  //   [0, 3],
-  //   [0, 4],
-  //   [0, 5],
-  //   [0, 6],
-  //   [1, 0],
-  //   [1, 1],
-  //   [1, 2],
-  //   [1, 3],
-  //   [2, 0],
-  //   [2, 1],
-  //   [2, 2],
-  //   [2, 3]]).asType('int32'),
-  //   'Placeholder': tf.tensor1d([87, 11, 241, 56, 1857, 3305, 17, 19, 31, 58, 6888,
-  //     32, 11, 746, 221], 'float32')
-  // };
-  // console.time('First prediction');
-  // let result = await model.executeAsync(input);
-  // result.forEach((x, i) => { console.log(model.outputs[i].name); x.print() });
-  // console.timeEnd('First prediction');
+const samples = [
+  {
+    'id': '',
+    'text': 'You suck.'
+  },
+  {
+    'id': '',
+    'text': 'I thought it was an excellent movie.'
+  },
+  {
+    'id': '',
+    'text': 'This ice cream is delicious.'
+  }
+];
 
-  // for (let i = 0; i < 10; i ++) {
-  //   console.time('new prediction' + i);
-  //   result = await model.executeAsync(input);
-  //   console.timeEnd('new prediction' + i);
-  // }
+const loadVocabulary = async() => {
+  const vocabulary = await fetch(`https://storage.googleapis.com/tfjs-models/savedmodel/universal_sentence_encoder/vocab.json`);
+  return vocabulary.json();
+}
+
+const predict = async () => {
+  const vocabulary = await loadVocabulary();
+  const model = await tf.loadFrozenModel(MODEL_URL);
+
+  console.log("hi");
+  console.log(use);
+  const tokenizer = new use.Tokenizer(vocabulary);
+  const encodings = samples.map(d => tokenizer.encode(d.text));
+  console.log(encodings);
+
+  const indicesArr =
+      encodings.map((arr, i) => arr.map((d, index) => [i, index]));
+
+  let flattenedIndicesArr = [];
+  for (let i = 0; i < indicesArr.length; i++) {
+    flattenedIndicesArr =
+        flattenedIndicesArr.concat(indicesArr[i]);
+  }
+
+  const indices = tf.tensor2d(
+      flattenedIndicesArr, [flattenedIndicesArr.length, 2], 'int32');
+  const values = tf.tensor1d(tf.util.flatten(encodings), 'int32');
+  const embeddings = await model.executeAsync({
+    Placeholder_1: indices,
+    Placeholder: values
+  });
+
+  console.log("MODEL OUTPUTS");
+  /*
+  12 - one for each category
+   */
+  console.log(model.outputs);
+
+  embeddings.forEach((x, i) => {
+    console.log('-------');
+    console.log(model.outputs[i]);
+    console.log(x);
+  });
+
 };
 
 predict();
