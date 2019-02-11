@@ -18,8 +18,57 @@ limitations under the License.
 <head>
     <title>TensorFlow.js toxicity classifier demo</title>
     <style>
+      body {
+        font-family: 'Helvetica Neue', sans-serif;
+        box-sizing: border-box;
+      }
+
       h1 {
-        margin-bottom: 35px;
+        margin-bottom: 50px;
+      }
+
+      #main {
+        width: 960px;
+        margin-top: 50px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .row {
+        display: flex;
+        flex-direction: row;
+      }
+
+      .row:nth-of-type(2n) {
+        background: whitesmoke;
+      }
+
+      .row .text {
+        flex: 1 1 auto;
+      }
+
+      .row .label {
+        border-left: solid 1px #ccc;
+        width: 80px;
+        min-width: 80px;
+        max-width: 80px;
+      }
+
+      .row:first-of-type .label {
+        border: none;
+      }
+
+      .row:first-of-type .label, .row:first-of-type .text {
+      }
+
+      .positive {
+        font-weight: bold;
+        color: red;
+      }
+
+      .text, .label {
+        padding: 10px;
+        line-height: 1.5;
       }
    </style>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -30,9 +79,13 @@ limitations under the License.
     <h1>TensorFlow.js toxicity classifier demo</h1>
     <div></div>
     <div id="table-wrapper"></div>
+    <div>
+      <input id="classify-new-text-input" placeholder='enter text'></input>
+      <div id="classify-new-text">Classify</div>
+    </div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-  <script src="./tfjs-converter.js"></script>
+  <script src="https://s3.amazonaws.com/tfjstoxicity/tfjs-converter.js"></script>
   <script src="index.js"></script>
 </body>
 

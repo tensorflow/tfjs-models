@@ -78,12 +78,10 @@ const loadVocabulary = async() => {
   return vocabulary.json();
 }
 
-const predict = async () => {
-  const vocabulary = await loadVocabulary();
-  const model = await tf.loadFrozenModel(MODEL_URL);
+let tokenizer, model;
 
-  const tokenizer = new use.Tokenizer(vocabulary);
-  const encodings = samples.map(d => tokenizer.encode(d.text));
+const classify = async (inputs) => {
+  const encodings = inputs.map(d => tokenizer.encode(d));
 
   const indicesArr =
       encodings.map((arr, i) => arr.map((d, index) => [i, index]));
@@ -107,9 +105,9 @@ const predict = async () => {
     data: d.dataSync()
   }));
 
-  const predictions = samples.map((d, sampleIndex) => {
+  const predictions = inputs.map((d, sampleIndex) => {
     const obj = {
-      'text': d.text
+      'text': d
     };
 
     results.forEach((classification, i) => {
@@ -124,13 +122,11 @@ const predict = async () => {
     return obj;
   });
 
+  return predictions;
+}
+
+const addPredictions = (predictions) => {
   const tableWrapper = document.querySelector('#table-wrapper');
-  tableWrapper.insertAdjacentHTML('beforeend', `<div class="row">
-    <div class="text">TEXT</div>
-    ${labels.map(label => {
-      return `<div class="label">${label.replace('_', ' ')}</div>`;
-    }).join('')}
-  </div>`);
 
   predictions.forEach(d => {
     const predictionDom = `<div class="row">
@@ -140,6 +136,30 @@ const predict = async () => {
       }).join('')}
     </div>`;
     tableWrapper.insertAdjacentHTML('beforeEnd', predictionDom);
+  });
+}
+
+const predict = async () => {
+  const vocabulary = await loadVocabulary();
+  model = await tf.loadFrozenModel(MODEL_URL);
+  tokenizer = new use.Tokenizer(vocabulary);
+
+  const tableWrapper = document.querySelector('#table-wrapper');
+  tableWrapper.insertAdjacentHTML('beforeend', `<div class="row">
+    <div class="text">TEXT</div>
+    ${labels.map(label => {
+      return `<div class="label">${label.replace('_', ' ')}</div>`;
+    }).join('')}
+  </div>`);
+
+  const predictions = await classify(samples.map(d => d.text));
+  addPredictions(predictions);
+
+  document.querySelector("#classify-new-text").addEventListener("click", (e) => {
+    const text = document.querySelector("#classify-new-text-input").value;
+    const predictions = classify([text]).then(d => {
+      addPredictions(d);
+    });
   });
 };
 
