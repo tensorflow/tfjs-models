@@ -16,7 +16,8 @@
  */
 
 import * as use from '@tensorflow-models/universal-sentence-encoder';
-const BASE_DIR = 'https://s3.amazonaws.com/tfjstoxicity/';
+const BASE_DIR =
+    'https://storage.googleapis.com/tfjs-models/savedmodel/toxicity/';
 const MODEL_URL = BASE_DIR + 'model.json';
 
 const samples = [
@@ -41,56 +42,33 @@ const samples = [
   }
 ];
 
-// const labels = ['TOXICITY', 'SEVERE_TOXICITY', 'IDENTITY_ATTACK', 'INSULT',
-// 'THREAT', 'SEXUALLY_EXPLICIT'];
 const labels =
     ['TOXICITY', 'IDENTITY_ATTACK', 'INSULT', 'THREAT', 'SEXUALLY_EXPLICIT'];
 
-// const nameToLabel = name => {
-//   if(name === 'frac_neg') {
-//     return labels[0];
-//   } else if(name === 'frac_very_neg') {
-//     return labels[1];
-//   } else if(name === 'identity_hate') {
-//     return labels[2];
-//   } else if(name === 'insult') {
-//     return labels[3];
-//   } else if(name === 'threat') {
-//     return labels[4];
-//   } else if(name === 'sexual_explicit') {
-//     return labels[5];
-//   }
-//   return false;
-// }
+const nameToLabel = name => {
+  if (name === 'toxicity') {
+    return labels[0];
+  } else if (name === 'identity_attack') {
+    return labels[1];
+  } else if (name === 'insult') {
+    return labels[2];
+  } else if (name === 'threat') {
+    return labels[3];
+  } else if (name === 'sexual_explicit') {
+    return labels[4];
+  }
+  return false;
+};
 
-const nameToLabel =
-    name => {
-      if (name === 'frac_neg') {
-        return labels[0];
-      } else if (name === 'identity_hate') {
-        return labels[1];
-      } else if (name === 'insult') {
-        return labels[2];
-      } else if (name === 'threat') {
-        return labels[3];
-      } else if (name === 'sexual_explicit') {
-        return labels[4];
-      }
-      return false;
-    }
-
-const loadVocabulary =
-    async () => {
+const loadVocabulary = async () => {
   const vocabulary = await fetch(
       `https://storage.googleapis.com/tfjs-models/savedmodel/universal_sentence_encoder/vocab.json`);
   return vocabulary.json();
-}
+};
 
-let tokenizer,
-      model;
+let tokenizer, model;
 
-const classify =
-    async (inputs) => {
+const classify = async (inputs) => {
   const encodings = inputs.map(d => tokenizer.encode(d));
 
   const indicesArr =
@@ -127,27 +105,26 @@ const classify =
   });
 
   return predictions;
-}
+};
 
-const addPredictions =
-    (predictions) => {
-      const tableWrapper = document.querySelector('#table-wrapper');
+const addPredictions = (predictions) => {
+  const tableWrapper = document.querySelector('#table-wrapper');
 
-      predictions.forEach(d => {
-        const predictionDom = `<div class="row">
+  predictions.forEach(d => {
+    const predictionDom = `<div class="row">
       <div class="text">${d.text}</div>
       ${
-            labels
-                .map(
-                    label => {return `<div class="${
-                                     'label' +
-                        (d[label] === true ? ' positive' :
-                                             '')}">${d[label]}</div>`})
-                .join('')}
+        labels
+            .map(
+                label => {return `<div class="${
+                                 'label' +
+                    (d[label] === true ? ' positive' :
+                                         '')}">${d[label]}</div>`})
+            .join('')}
     </div>`;
-        tableWrapper.insertAdjacentHTML('beforeEnd', predictionDom);
-      });
-    }
+    tableWrapper.insertAdjacentHTML('beforeEnd', predictionDom);
+  });
+};
 
 const predict = async () => {
   const vocabulary = await loadVocabulary();
