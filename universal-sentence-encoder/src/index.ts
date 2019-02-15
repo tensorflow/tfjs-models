@@ -28,6 +28,12 @@ export async function load() {
   return use;
 }
 
+// Separated so the Tokenizer can be used on its own.
+export async function loadVocabulary() {
+  const vocabulary = await fetch(`${BASE_PATH}vocab.json`);
+  return vocabulary.json();
+}
+
 export class UniversalSentenceEncoder {
   private model: tf.FrozenModel;
   private tokenizer: Tokenizer;
@@ -38,14 +44,9 @@ export class UniversalSentenceEncoder {
         `${BASE_PATH}weights_manifest.json`);
   }
 
-  async loadVocabulary() {
-    const vocabulary = await fetch(`${BASE_PATH}vocab.json`);
-    return vocabulary.json();
-  }
-
   async load() {
     const [model, vocabulary] =
-        await Promise.all([this.loadModel(), this.loadVocabulary()]);
+        await Promise.all([this.loadModel(), loadVocabulary()]);
 
     this.model = model;
     this.tokenizer = new Tokenizer(vocabulary);
