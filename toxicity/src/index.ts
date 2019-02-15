@@ -17,6 +17,7 @@
 
 import * as use from '@tensorflow-models/universal-sentence-encoder';
 import * as tf from '@tensorflow/tfjs';
+import {padInputs} from './util';
 
 const BASE_PATH =
     'https://storage.googleapis.com/tfjs-models/savedmodel/toxicity/';
@@ -60,7 +61,7 @@ export class ToxicityClassifier {
       inputs = [inputs];
     }
 
-    const encodings = inputs.map(d => this.tokenizer.encode(d));
+    const encodings = padInputs(inputs.map(d => this.tokenizer.encode(d)));
 
     const indicesArr =
         encodings.map((arr, i) => arr.map((d, index) => [i, index]));

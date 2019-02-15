@@ -52,23 +52,19 @@ let tokenizer, model;
 const classify = async (inputs) => {
   let results = await model.classify(inputs);
 
-  console.log('hi');
   console.log(results);
 
-  results = results.map(
-      (d, i) => ({name: model.outputs[i].name, data: d.dataSync()}));
+  results.forEach((d, i) => d.data = d.data.dataSync());
+  console.log(results);
 
   const predictions = inputs.map((d, sampleIndex) => {
     const obj = {'text': d};
 
     results.forEach((classification, i) => {
-      const label = classification.name.split('/')[0];
-
-      if (label) {
-        const prediction =
-            classification.data.slice(sampleIndex * 2, sampleIndex * 2 + 2);
-        obj[label] = prediction[0] > prediction[1] ? false : true;
-      }
+      const prediction =
+          classification.data.slice(sampleIndex * 2, sampleIndex * 2 + 2);
+      obj[classification.label] = prediction[0] > prediction[1] ? false : true;
+      console.log(obj);
     });
 
     return obj;
