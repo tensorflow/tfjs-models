@@ -28,12 +28,24 @@ export async function load() {
   return use;
 }
 
+
+/**
+ * Load the Tokenizer for use independently from the UniversalSentenceEncoder.
+ *
+ * @param pathToVocabulary (optional) Provide a path to the vocabulary file.
+ */
 export async function loadTokenizer(pathToVocabulary?: string) {
   const vocabulary = await loadVocabulary(pathToVocabulary);
   const tokenizer = new Tokenizer(vocabulary);
   return tokenizer;
 }
 
+/**
+ * Load a vocabulary for the Tokenizer.
+ *
+ * @param pathToVocabulary Defaults to the path to the 8k vocabulary used by the
+ * UniversalSentenceEncoder.
+ */
 async function loadVocabulary(pathToVocabulary = `${BASE_PATH}vocab.json`) {
   const vocabulary = await fetch(pathToVocabulary);
   return vocabulary.json();
