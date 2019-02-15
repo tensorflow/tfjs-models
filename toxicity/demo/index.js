@@ -42,23 +42,10 @@ const samples = [
   }
 ];
 
-const labels =
-    ['TOXICITY', 'IDENTITY_ATTACK', 'INSULT', 'THREAT', 'SEXUALLY_EXPLICIT'];
-
-const nameToLabel = name => {
-  if (name === 'toxicity') {
-    return labels[0];
-  } else if (name === 'identity_attack') {
-    return labels[1];
-  } else if (name === 'insult') {
-    return labels[2];
-  } else if (name === 'threat') {
-    return labels[3];
-  } else if (name === 'sexual_explicit') {
-    return labels[4];
-  }
-  return false;
-};
+const labels = [
+  'toxicity', 'severe_toxicity', 'identity_attack', 'insult', 'threat',
+  'sexual_explicit', 'obscene'
+];
 
 const loadVocabulary = async () => {
   const vocabulary = await fetch(
@@ -92,7 +79,7 @@ const classify = async (inputs) => {
     const obj = {'text': d};
 
     results.forEach((classification, i) => {
-      const label = nameToLabel(classification.name.split('/')[0]);
+      const label = classification.name.split('/')[0];
 
       if (label) {
         const prediction =
