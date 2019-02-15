@@ -39,7 +39,7 @@ export async function loadMetadataJson(url: string):
           `Supported schemes are: http://, https://, and ` +
           `(node.js-only) file://`));
     }
-  });
+  }) as Promise<{words: string[]}>;
 }
 
 let EPSILON: number = null;
