@@ -28,15 +28,14 @@ export async function load() {
   return use;
 }
 
-export async function loadTokenizer() {
-  let vocabulary = await fetch(`${BASE_PATH}vocab.json`);
-  vocabulary = await vocabulary.json();
+export async function loadTokenizer(pathToVocabulary?: string) {
+  const vocabulary = await loadVocabulary(pathToVocabulary);
   const tokenizer = new Tokenizer(vocabulary);
   return tokenizer;
 }
 
-async function loadVocabulary() {
-  const vocabulary = await fetch(`${BASE_PATH}vocab.json`);
+async function loadVocabulary(pathToVocabulary = `${BASE_PATH}vocab.json`) {
+  const vocabulary = await fetch(pathToVocabulary);
   return vocabulary.json();
 }
 
