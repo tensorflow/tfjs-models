@@ -17,6 +17,7 @@
 
 import * as use from '@tensorflow-models/universal-sentence-encoder';
 import * as tf from '@tensorflow/tfjs';
+
 import {padInputs} from './util';
 
 const BASE_PATH =
@@ -32,6 +33,13 @@ export class ToxicityClassifier {
   private tokenizer: use.Tokenizer;
   private model: tf.FrozenModel;
   private labels: string[];
+  private threshold: number;
+  private includeHeads: string[];
+
+  constructor(threshold = 0.6, includeHeads: string[] = []) {
+    this.threshold = threshold;
+    this.includeHeads = includeHeads;
+  }
 
   async loadModel() {
     return tf.loadFrozenModel(`${BASE_PATH}model.json`);
@@ -42,26 +50,30 @@ export class ToxicityClassifier {
   }
 
   async load() {
-    // TEMPORARY WHILE PARCEL IS NOT WORKING
-    // const [model, tokenizer] =
-    //     await Promise.all([this.loadModel(), this.loadTokenizer()]);
-    const model = await this.loadModel();
-    const tokenizer = await this.loadTokenizer();
+    const [model, tokenizer] =
+        await Promise.all([this.loadModel(), this.loadTokenizer()]);
 
     this.model = model;
     this.tokenizer = tokenizer;
 
     this.labels =
         model.outputs.map((d: {name: string}) => d.name.split('/')[0]);
+
+    if (this.includeHeads.length === 0) {
+      this.includeHeads = this.labels;
+    }
   }
 
-  async classify(inputs: string[]|
-                 string): Promise<Array<{label: string, data: tf.Tensor2D}>> {
+  async classify(inputs: string[]|string): Promise<Array<{
+    label: string,
+    results: Array<{probabilities: Float32Array, match: boolean}>
+  }>> {
     if (typeof inputs === 'string') {
       inputs = [inputs];
     }
 
-    const encodings = padInputs(inputs.map(d => this.tokenizer.encode(d)));
+    // const encodings = padInputs(inputs.map(d => this.tokenizer.encode(d)));
+    const encodings = inputs.map(d => this.tokenizer.encode(d));
 
     const indicesArr =
         encodings.map((arr, i) => arr.map((d, index) => [i, index]));
@@ -83,6 +95,25 @@ export class ToxicityClassifier {
     values.dispose();
 
     return (labels as Array<tf.Tensor2D>)
-        .map((d: tf.Tensor2D, i: number) => ({label: this.labels[i], data: d}));
+        .filter(
+            (d, i) => this.includeHeads.find(label => label === this.labels[i]))
+        .map((d: tf.Tensor2D, i: number) => {
+          const data = d.dataSync() as Float32Array;
+          const results = [];
+          for (let input = 0; input < inputs.length; input++) {
+            const probabilities = data.slice(input * 2, input * 2 + 2);
+            let match = null;
+
+            if (Math.max(probabilities[0], probabilities[1]) > this.threshold) {
+              match = probabilities[0] < probabilities[1]
+            }
+
+            results.push({probabilities, match});
+          }
+
+          return {
+            label: this.labels[i], results
+          }
+        });
   }
 }
