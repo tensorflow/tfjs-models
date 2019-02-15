@@ -28,8 +28,14 @@ export async function load() {
   return use;
 }
 
-// Separated so the Tokenizer can be used on its own.
-export async function loadVocabulary() {
+export async function loadTokenizer() {
+  let vocabulary = await fetch(`${BASE_PATH}vocab.json`);
+  vocabulary = await vocabulary.json();
+  const tokenizer = new Tokenizer(vocabulary);
+  return tokenizer;
+}
+
+async function loadVocabulary() {
   const vocabulary = await fetch(`${BASE_PATH}vocab.json`);
   return vocabulary.json();
 }

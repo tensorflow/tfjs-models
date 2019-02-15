@@ -54,7 +54,7 @@ use.load().then(model => {
 To use the Tokenizer separately:
 
 ```js
-const vocabulary = use.loadVocabulary();
-const tokenizer = new use.Tokenizer(vocabulary);
-const wordpieceIds = tokenizer.encode('Hello, how are you?'); // [341, 4125, 8, 140, 31, 19, 54]
+use.loadTokenizer().then(tokenizer => {
+  tokenizer.encode('Hello, how are you?'); // [341, 4125, 8, 140, 31, 19, 54]
+});
 ```
