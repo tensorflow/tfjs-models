@@ -50,3 +50,11 @@ use.load().then(model => {
   });
 });
 ```
+
+To use the Tokenizer separately:
+
+```js
+use.loadTokenizer().then(tokenizer => {
+  tokenizer.encode('Hello, how are you?'); // [341, 4125, 8, 140, 31, 19, 54]
+});
+```

@@ -28,6 +28,29 @@ export async function load() {
   return use;
 }
 
+
+/**
+ * Load the Tokenizer for use independently from the UniversalSentenceEncoder.
+ *
+ * @param pathToVocabulary (optional) Provide a path to the vocabulary file.
+ */
+export async function loadTokenizer(pathToVocabulary?: string) {
+  const vocabulary = await loadVocabulary(pathToVocabulary);
+  const tokenizer = new Tokenizer(vocabulary);
+  return tokenizer;
+}
+
+/**
+ * Load a vocabulary for the Tokenizer.
+ *
+ * @param pathToVocabulary Defaults to the path to the 8k vocabulary used by the
+ * UniversalSentenceEncoder.
+ */
+async function loadVocabulary(pathToVocabulary = `${BASE_PATH}vocab.json`) {
+  const vocabulary = await fetch(pathToVocabulary);
+  return vocabulary.json();
+}
+
 export class UniversalSentenceEncoder {
   private model: tf.FrozenModel;
   private tokenizer: Tokenizer;
@@ -38,14 +61,9 @@ export class UniversalSentenceEncoder {
         `${BASE_PATH}weights_manifest.json`);
   }
 
-  async loadVocabulary() {
-    const vocabulary = await fetch(`${BASE_PATH}vocab.json`);
-    return vocabulary.json();
-  }
-
   async load() {
     const [model, vocabulary] =
-        await Promise.all([this.loadModel(), this.loadVocabulary()]);
+        await Promise.all([this.loadModel(), loadVocabulary()]);
 
     this.model = model;
     this.tokenizer = new Tokenizer(vocabulary);
