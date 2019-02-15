@@ -15,16 +15,13 @@
  * =============================================================================
  */
 
-// We pad inputs with 0's to limit the number of different shapes that the model
-// uses. This enables texture reuse for performance.
-export const padInputs = (inputs: number[][]): number[][] => {
-  const longest = Math.max(...inputs.map(d => d.length));
-  let nearestBucket = 8;
-  while (nearestBucket < longest) {
+// We pad inputs with 0's to decrease the number of different shapes that the
+// model uses. This enables texture reuse for performance.
+export const padInput = (input: number[]): number[] => {
+  let nearestBucket = 4;
+  while (nearestBucket < input.length) {
     nearestBucket *= 2;
   }
-
-  return inputs.map(
-      d => {return d.concat(
-          Array.from({length: nearestBucket - d.length}, () => 0))});
+  return input.concat(
+      Array.from({length: nearestBucket - input.length}, () => 0))
 };
