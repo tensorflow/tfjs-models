@@ -16,10 +16,15 @@
  */
 import * as tf from '@tensorflow/tfjs';
 import {describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
+import {padInputs} from './util';
 
-describeWithFlags('Toxicity classifier', tf.test_util.NODE_ENVS, () => {
-  it('pads inputs',
-     () => {
+describeWithFlags('Toxicity classifier util', tf.test_util.NODE_ENVS, () => {
+  it('should pad inputs of different lengths', () => {
+    const inputs = [[1, 2, 3], [1, 2, 3, 4], [1, 2, 3, 4, 5]];
 
-     });
+    expect(padInputs(inputs)).toEqual([
+      [1, 2, 3, 4, 5, 6, 7, 8], [1, 2, 3, 4, 5, 6, 7, 8],
+      [1, 2, 3, 4, 5, 6, 7, 8]
+    ]);
+  });
 });
