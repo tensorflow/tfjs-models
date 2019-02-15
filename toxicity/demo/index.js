@@ -15,10 +15,8 @@
  * =============================================================================
  */
 
-import * as use from '@tensorflow-models/universal-sentence-encoder';
-
 // TODO: CHANGE TO REAL IMPORT ONCE TOXICITY MODEL IS PUBLISHED
-import * as toxicity from '../dist/index.js';
+import * as toxicity from './src';
 
 const samples = [
   {
@@ -47,30 +45,17 @@ const labels = [
   'sexual_explicit', 'obscene'
 ];
 
-let tokenizer, model;
+let model;
 
 const classify = async (inputs) => {
-  let results = await model.classify(inputs);
-
-  console.log(results);
-
-  results.forEach((d, i) => d.data = d.data.dataSync());
-  console.log(results);
-
-  const predictions = inputs.map((d, sampleIndex) => {
+  const results = await model.classify(inputs);
+  return inputs.map((d, i) => {
     const obj = {'text': d};
-
-    results.forEach((classification, i) => {
-      const prediction =
-          classification.data.slice(sampleIndex * 2, sampleIndex * 2 + 2);
-      obj[classification.label] = prediction[0] > prediction[1] ? false : true;
-      console.log(obj);
+    results.forEach((classification) => {
+      obj[classification.label] = classification.results[i].match;
     });
-
     return obj;
   });
-
-  return predictions;
 };
 
 const addPredictions = (predictions) => {
