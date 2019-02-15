@@ -30,11 +30,10 @@ export async function load() {
 export class ToxicityClassifier {
   private tokenizer: use.Tokenizer;
   private model: tf.FrozenModel;
+  private labels: string[];
 
   async loadModel() {
-    return tf.loadFrozenModel(
-        `${BASE_PATH}tensorflowjs_model.pb`,
-        `${BASE_PATH}weights_manifest.json`);
+    return tf.loadFrozenModel(`${BASE_PATH}model.json`);
   }
 
   async loadTokenizer() {
@@ -42,14 +41,21 @@ export class ToxicityClassifier {
   }
 
   async load() {
-    const [model, tokenizer] =
-        await Promise.all([this.loadModel(), this.loadTokenizer()]);
+    // TEMPORARY WHILE PARCEL IS NOT WORKING
+    // const [model, tokenizer] =
+    //     await Promise.all([this.loadModel(), this.loadTokenizer()]);
+    const model = await this.loadModel();
+    const tokenizer = await this.loadTokenizer();
 
     this.model = model;
     this.tokenizer = tokenizer;
+
+    this.labels =
+        model.outputs.map((d: {name: string}) => d.name.split('/')[0]);
   }
 
-  async classify(inputs: string[]|string): Promise<tf.Tensor2D> {
+  async classify(inputs: string[]|
+                 string): Promise<Array<{label: string, data: tf.Tensor2D}>> {
     if (typeof inputs === 'string') {
       inputs = [inputs];
     }
@@ -69,10 +75,13 @@ export class ToxicityClassifier {
         flattenedIndicesArr, [flattenedIndicesArr.length, 2], 'int32');
     const values = tf.tensor1d(tf.util.flatten(encodings) as number[], 'int32');
 
-    const labels = await this.model.executeAsync({indices, values});
+    const labels = await this.model.executeAsync(
+        {Placeholder_1: indices, Placeholder: values});
+
     indices.dispose();
     values.dispose();
 
-    return labels as tf.Tensor2D;
+    return (labels as Array<tf.Tensor2D>)
+        .map((d: tf.Tensor2D, i: number) => ({label: this.labels[i], data: d}));
   }
 }

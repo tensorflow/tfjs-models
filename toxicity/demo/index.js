@@ -16,9 +16,9 @@
  */
 
 import * as use from '@tensorflow-models/universal-sentence-encoder';
-const BASE_DIR =
-    'https://storage.googleapis.com/tfjs-models/savedmodel/toxicity/';
-const MODEL_URL = BASE_DIR + 'model.json';
+
+// TODO: CHANGE TO REAL IMPORT ONCE TOXICITY MODEL IS PUBLISHED
+import * as toxicity from '../dist/index.js';
 
 const samples = [
   {
@@ -47,30 +47,13 @@ const labels = [
   'sexual_explicit', 'obscene'
 ];
 
-const loadVocabulary = async () => {
-  const vocabulary = await fetch(
-      `https://storage.googleapis.com/tfjs-models/savedmodel/universal_sentence_encoder/vocab.json`);
-  return vocabulary.json();
-};
-
 let tokenizer, model;
 
 const classify = async (inputs) => {
-  const encodings = inputs.map(d => tokenizer.encode(d));
+  let results = await model.classify(inputs);
 
-  const indicesArr =
-      encodings.map((arr, i) => arr.map((d, index) => [i, index]));
-
-  let flattenedIndicesArr = [];
-  for (let i = 0; i < indicesArr.length; i++) {
-    flattenedIndicesArr = flattenedIndicesArr.concat(indicesArr[i]);
-  }
-
-  const indices = tf.tensor2d(
-      flattenedIndicesArr, [flattenedIndicesArr.length, 2], 'int32');
-  const values = tf.tensor1d(tf.util.flatten(encodings), 'int32');
-  let results =
-      await model.executeAsync({Placeholder_1: indices, Placeholder: values});
+  console.log('hi');
+  console.log(results);
 
   results = results.map(
       (d, i) => ({name: model.outputs[i].name, data: d.dataSync()}));
@@ -114,9 +97,7 @@ const addPredictions = (predictions) => {
 };
 
 const predict = async () => {
-  const vocabulary = await loadVocabulary();
-  model = await tf.loadFrozenModel(MODEL_URL);
-  tokenizer = new use.Tokenizer(vocabulary);
+  model = await toxicity.load();
 
   const tableWrapper = document.querySelector('#table-wrapper');
   tableWrapper.insertAdjacentHTML(
