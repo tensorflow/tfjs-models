@@ -41,9 +41,9 @@ Install dependencies:
 yarn
 ```
 
-Publish body-pix locally:
+Build and publish the body-pix locally:
 ```sh
-yalc push
+yarn publish-local
 ```
 
 Cd into the demos and install dependencies:

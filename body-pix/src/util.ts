@@ -9,7 +9,7 @@ export function getInputTensorDimensions(input: BodyPixInput):
 }
 
 export function toInputTensor(input: BodyPixInput) {
-  return input instanceof tf.Tensor ? input : tf.fromPixels(input);
+  return input instanceof tf.Tensor ? input : tf.browser.fromPixels(input);
 }
 
 export function resizeAndPadTo(
