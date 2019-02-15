@@ -19,23 +19,27 @@ import * as tf from '@tensorflow/tfjs';
 
 export async function loadMetadataJson(url: string):
     Promise<{words: string[]}> {
-  const HTTP_SCHEME = 'http://';
-  const HTTPS_SCHEME = 'https://';
-  const FILE_SCHEME = 'file://';
-  if (url.indexOf(HTTP_SCHEME) === 0 || url.indexOf(HTTPS_SCHEME) === 0) {
-    return await (await fetch(url)).json();
-  } else if (url.indexOf(FILE_SCHEME) === 0) {
-    // tslint:disable-next-line:no-require-imports
-    const fs = require('fs');
-    const content = JSON.parse(
-        fs.readFileSync(url.slice(FILE_SCHEME.length), {encoding: 'utf-8'}));
-    return content;
-  } else {
-    throw new Error(
-        `Unsupported URL scheme in metadata URL: ${url}. ` +
-        `Supported schemes are: http://, https://, and ` +
-        `(node.js-only) file://`);
-  }
+  return new Promise((resolve, reject) => {
+    const HTTP_SCHEME = 'http://';
+    const HTTPS_SCHEME = 'https://';
+    const FILE_SCHEME = 'file://';
+    if (url.indexOf(HTTP_SCHEME) === 0 || url.indexOf(HTTPS_SCHEME) === 0) {
+      fetch(url).then(response => {
+        response.json().then(parsed => resolve(parsed));
+      });
+    } else if (url.indexOf(FILE_SCHEME) === 0) {
+      // tslint:disable-next-line:no-require-imports
+      const fs = require('fs');
+      fs.readFile(
+          url.slice(FILE_SCHEME.length), {encoding: 'utf-8'},
+          (err: Error, data: string) => resolve(JSON.parse(data)));
+    } else {
+      reject(new Error(
+          `Unsupported URL scheme in metadata URL: ${url}. ` +
+          `Supported schemes are: http://, https://, and ` +
+          `(node.js-only) file://`));
+    }
+  }) as Promise<{words: string[]}>;
 }
 
 let EPSILON: number = null;
