@@ -15,8 +15,7 @@
  * =============================================================================
  */
 
-// TODO: CHANGE TO REAL IMPORT ONCE TOXICITY MODEL IS PUBLISHED
-import * as toxicity from './src';
+import * as toxicity from '@tensorflow-models/toxicity';
 
 const samples = [
   {
@@ -40,12 +39,7 @@ const samples = [
   }
 ];
 
-const labels = [
-  'toxicity', 'severe_toxicity', 'identity_attack', 'insult', 'threat',
-  'sexual_explicit', 'obscene'
-];
-
-let model;
+let model, labels;
 
 const classify = async (inputs) => {
   const results = await model.classify(inputs);
@@ -79,6 +73,7 @@ const addPredictions = (predictions) => {
 
 const predict = async () => {
   model = await toxicity.load();
+  labels = model.model.outputNodes.map(d => d.split('/')[0]);
 
   const tableWrapper = document.querySelector('#table-wrapper');
   tableWrapper.insertAdjacentHTML(
