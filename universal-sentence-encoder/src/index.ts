@@ -55,9 +55,7 @@ export class UniversalSentenceEncoder {
   private tokenizer: Tokenizer;
 
   async loadModel() {
-    return tf.loadFrozenModel(
-        `${BASE_PATH}tensorflowjs_model.pb`,
-        `${BASE_PATH}weights_manifest.json`);
+    return tf.loadGraphModel(`${BASE_PATH}tensorflowjs_model.pb`);
   }
 
   async load() {

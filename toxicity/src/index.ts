@@ -50,7 +50,7 @@ export class ToxicityClassifier {
   }
 
   async loadModel() {
-    return tf.loadFrozenModel(`${BASE_PATH}model.json`);
+    return tf.loadGraphModel(`${BASE_PATH}model.json`);
   }
 
   async loadTokenizer() {
