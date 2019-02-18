@@ -18,13 +18,13 @@
 import * as use from '@tensorflow-models/universal-sentence-encoder';
 import * as tf from '@tensorflow/tfjs';
 
-import {padInput} from './util';
+// import {padInput} from './util';
 
 const BASE_PATH =
     'https://storage.googleapis.com/tfjs-models/savedmodel/toxicity/';
 
-export async function load() {
-  const model = new ToxicityClassifier();
+export async function load(threshold: number, includeHeads: string[]) {
+  const model = new ToxicityClassifier(threshold, includeHeads);
   await model.load();
   return model;
 }
@@ -96,13 +96,15 @@ export class ToxicityClassifier {
     values.dispose();
 
     return (labels as Array<tf.Tensor2D>)
+        .map((d: tf.Tensor2D, i: number) => ({data: d, headIndex: i}))
         .filter(
-            (d, i) => this.includeHeads.find(label => label === this.labels[i]))
-        .map((d: tf.Tensor2D, i: number) => {
-          const data = d.dataSync() as Float32Array;
+            (d: {headIndex: number}) =>
+                this.includeHeads.indexOf(this.labels[d.headIndex]) > -1)
+        .map((d: {headIndex: number, data: tf.Tensor2D}) => {
+          const prediction = d.data.dataSync() as Float32Array;
           const results = [];
           for (let input = 0; input < inputs.length; input++) {
-            const probabilities = data.slice(input * 2, input * 2 + 2);
+            const probabilities = prediction.slice(input * 2, input * 2 + 2);
             let match = null;
 
             if (Math.max(probabilities[0], probabilities[1]) > this.threshold) {
@@ -113,7 +115,7 @@ export class ToxicityClassifier {
           }
 
           return {
-            label: this.labels[i], results
+            label: this.labels[d.headIndex], results
           }
         });
   }
