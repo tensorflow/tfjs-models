@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-// We pad inputs with 0's to decrease the number of different shapes that the
+// We pad inputs to decrease the number of different shapes that the
 // model uses. This enables texture reuse for performance.
 export const padInput = (input: number[]): number[] => {
   let nearestBucket = 4;

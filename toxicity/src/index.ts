@@ -72,7 +72,9 @@ export class ToxicityClassifier {
       inputs = [inputs];
     }
 
-    const encodings = inputs.map(d => padInput(this.tokenizer.encode(d)));
+    const encodings = inputs.map(d => this.tokenizer.encode(d));
+    // TODO: revive once the model is robust to padding
+    // const encodings = inputs.map(d => padInput(this.tokenizer.encode(d)));
 
     const indicesArr =
         encodings.map((arr, i) => arr.map((d, index) => [i, index]));
