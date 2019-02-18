@@ -23,6 +23,14 @@ import * as tf from '@tensorflow/tfjs';
 const BASE_PATH =
     'https://storage.googleapis.com/tfjs-models/savedmodel/toxicity/';
 
+/**
+ * Load the toxicity model.
+ *
+ * @param threshold A prediction is considered valid only if its confidence
+ * exceeds the threshold. Defaults to 0.6.
+ * @param includeHeads An array of strings indicating which prediction heads to
+ * return. If this argument is empty all heads are returned.
+ */
 export async function load(threshold: number, includeHeads: string[]) {
   const model = new ToxicityClassifier(threshold, includeHeads);
   await model.load();
@@ -61,9 +69,22 @@ export class ToxicityClassifier {
 
     if (this.includeHeads.length === 0) {
       this.includeHeads = this.labels;
+    } else {
+      tf.util.assert(
+          this.includeHeads.every(d => this.labels.indexOf(d) > -1),
+          `includeHeads argument must contain only items from the model ` +
+              `heads ${this.labels.join(', ')}, ` +
+              `got ${this.includeHeads.join(', ')}`);
     }
   }
 
+  /**
+   * Returns an array of objects, one for each prediction head, that contains
+   * the raw probabilities for each input along with the final prediction
+   * boolean given the threshold.
+   *
+   * @param inputs A string or an array of strings to classify.
+   */
   async classify(inputs: string[]|string): Promise<Array<{
     label: string,
     results: Array<{probabilities: Float32Array, match: boolean}>
