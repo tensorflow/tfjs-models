@@ -95,7 +95,7 @@ export class ToxicityClassifier {
     indices.dispose();
     values.dispose();
 
-    return (labels as Array<tf.Tensor2D>)
+    return (labels as tf.Tensor2D[])
         .map((d: tf.Tensor2D, i: number) => ({data: d, headIndex: i}))
         .filter(
             (d: {headIndex: number}) =>
@@ -108,15 +108,13 @@ export class ToxicityClassifier {
             let match = null;
 
             if (Math.max(probabilities[0], probabilities[1]) > this.threshold) {
-              match = probabilities[0] < probabilities[1]
+              match = probabilities[0] < probabilities[1];
             }
 
             results.push({probabilities, match});
           }
 
-          return {
-            label: this.labels[d.headIndex], results
-          }
+          return {label: this.labels[d.headIndex], results};
         });
   }
 }

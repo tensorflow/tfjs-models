@@ -23,5 +23,5 @@ export const padInput = (input: number[]): number[] => {
     nearestBucket *= 2;
   }
   return input.concat(
-      Array.from({length: nearestBucket - input.length}, () => 0))
+      Array.from({length: nearestBucket - input.length}, () => 0));
 };
