@@ -1,7 +1,5 @@
 # Toxicity classifier
 
-[Try the demo here.](https://storage.googleapis.com/tfjs-models/demos/toxicity/index.html)
-
 This TensorFlow.js module is a multi-head toxicity classifier built on top of the Universal Sentence Encoder ([Cer et al., 2018](https://arxiv.org/pdf/1803.11175.pdf)). The classifier predicts whether the input text should be assigned any of the seven following labels (prediction heads):
 
 `toxicity`
@@ -13,6 +11,12 @@ This TensorFlow.js module is a multi-head toxicity classifier built on top of th
 `obscene`
 
 More information about how each label was calibrated can be found [here](https://github.com/conversationai/conversationai.github.io/blob/master/crowdsourcing_annotation_schemes/toxicity_with_subattributes.md).
+
+[Try the demo here.](https://storage.googleapis.com/tfjs-models/demos/toxicity/index.html)
+
+![demo](./images/demo.jpg)
+
+In this demo, we predict the toxicity of several sentences taken from this [Kaggle dataset](https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge/data). Users can also input their own text for classification.
 
 ## Usage
 
