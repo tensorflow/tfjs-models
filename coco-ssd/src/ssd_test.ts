@@ -20,7 +20,7 @@ import {load} from './index';
 
 describeWithFlags('ObjectDetection', tf.test_util.NODE_ENVS, () => {
   beforeEach(() => {
-    spyOn(tf, 'loadFrozenModel').and.callFake(() => {
+    spyOn(tf, 'loadGraphModel').and.callFake(() => {
       const model = {
         executeAsync:
             (x: tf.Tensor) => [tf.ones([1, 1917, 90]), tf.ones([1, 1917, 1, 4])]
