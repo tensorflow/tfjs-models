@@ -39,10 +39,10 @@ function config({plugins = [], output = {}}) {
 }
 
 export default [
-  config({output: {format: 'umd', name: 'use', file: 'dist/toxicity.js'}}),
+  config({output: {format: 'umd', name: 'toxicity', file: 'dist/toxicity.js'}}),
   config({
     plugins: [minify()],
-    output: {format: 'umd', name: 'use', file: 'dist/toxicity.min.js'}
+    output: {format: 'umd', name: 'toxicity', file: 'dist/toxicity.min.js'}
   }),
   config({
     plugins: [minify()],

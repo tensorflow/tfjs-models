@@ -26,11 +26,6 @@ yarn watch
 
 ## If you are developing toxicity locally, and want to test the changes in the demos
 
-Install yalc:
-```sh
-npm i -g yalc
-```
-
 cd into the toxicity folder:
 ```sh
 cd toxicity
@@ -43,7 +38,7 @@ yarn
 
 Publish toxicity locally:
 ```sh
-yalc push
+yarn yalc push
 ```
 
 Cd into the demos and install dependencies:
@@ -55,7 +50,7 @@ yarn
 
 Link the local toxicity to the demos:
 ```sh
-yalc link @tensorflow-models/toxicity
+yarn yalc link @tensorflow-models/toxicity
 ```
 
 Start the dev demo server:

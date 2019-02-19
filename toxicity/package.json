@@ -13,7 +13,6 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow-models/universal-sentence-encoder": "0.0.2",
     "@tensorflow/tfjs": "^1.0.0-alpha3"
   },
   "devDependencies": {
@@ -30,11 +29,12 @@
     "rollup-plugin-uglify": "~3.0.0",
     "ts-node": "~5.0.0",
     "tslint": "~5.8.0",
-    "typescript": "2.9.2"
+    "typescript": "2.9.2",
+    "yalc": "~1.0.0-pre.23"
   },
   "scripts": {
     "build": "rimraf dist && tsc",
-    "publish-local": "yarn build && yalc push",
+    "publish-local": "yarn build && rollup -c && yalc push",
     "test": "ts-node run_tests.ts",
     "publish-npm": "yarn build && rollup -c && npm publish",
     "lint": "tslint -p . -t verbose"
