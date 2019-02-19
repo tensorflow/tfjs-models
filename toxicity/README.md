@@ -1,6 +1,6 @@
 # Toxicity classifier
 
-This TensorFlow.js module contains a toxicity model which detects whether text contains toxic content such as threatening language, insults, obscenities, identity-based hate, or sexually explicit language. The model was trained on the civil comments dataset: [https://figshare.com/articles/data_json/7376747](https://figshare.com/articles/data_json/7376747) which contains ~2 million comments labeled for toxicity. The model is built on top of the Universal Sentence Encoder ([Cer et al., 2018](https://arxiv.org/pdf/1803.11175.pdf)).
+The toxicity model detects whether text contains toxic content such as threatening language, insults, obscenities, identity-based hate, or sexually explicit language. The model was trained on the civil comments dataset: [https://figshare.com/articles/data_json/7376747](https://figshare.com/articles/data_json/7376747) which contains ~2 million comments labeled for toxicity. The model is built on top of the Universal Sentence Encoder ([Cer et al., 2018](https://arxiv.org/pdf/1803.11175.pdf)).
 
 More information about how the toxicity labels were calibrated can be found [here](https://github.com/conversationai/conversationai.github.io/blob/master/crowdsourcing_annotation_schemes/toxicity_with_subattributes.md).
 
