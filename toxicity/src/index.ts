@@ -28,11 +28,13 @@ const BASE_PATH =
  *
  * @param threshold A prediction is considered valid only if its confidence
  * exceeds the threshold. Defaults to 0.6.
- * @param includeHeads An array of strings indicating which prediction heads to
- * return. If this argument is empty all heads are returned.
+ * @param toxicityLabels An array of strings indicating which types of toxicity
+ * to detect. Labels must be one of `toxicity` | `severe_toxicity` |
+ * `identity_attack` | `insult` | `threat` | `sexual_explicit` | `obscene`.
+ * Defaults to all labels.
  */
-export async function load(threshold: number, includeHeads: string[]) {
-  const model = new ToxicityClassifier(threshold, includeHeads);
+export async function load(threshold: number, toxicityLabels: string[]) {
+  const model = new ToxicityClassifier(threshold, toxicityLabels);
   await model.load();
   return model;
 }
@@ -42,11 +44,11 @@ export class ToxicityClassifier {
   private model: tf.FrozenModel;
   private labels: string[];
   private threshold: number;
-  private includeHeads: string[];
+  private toxicityLabels: string[];
 
-  constructor(threshold = 0.6, includeHeads: string[] = []) {
+  constructor(threshold = 0.6, toxicityLabels: string[] = []) {
     this.threshold = threshold;
-    this.includeHeads = includeHeads;
+    this.toxicityLabels = toxicityLabels;
   }
 
   async loadModel() {
@@ -67,19 +69,19 @@ export class ToxicityClassifier {
     this.labels =
         model.outputs.map((d: {name: string}) => d.name.split('/')[0]);
 
-    if (this.includeHeads.length === 0) {
-      this.includeHeads = this.labels;
+    if (this.toxicityLabels.length === 0) {
+      this.toxicityLabels = this.labels;
     } else {
       tf.util.assert(
-          this.includeHeads.every(d => this.labels.indexOf(d) > -1),
-          `includeHeads argument must contain only items from the model ` +
+          this.toxicityLabels.every(d => this.labels.indexOf(d) > -1),
+          `toxicityLabels argument must contain only items from the model ` +
               `heads ${this.labels.join(', ')}, ` +
-              `got ${this.includeHeads.join(', ')}`);
+              `got ${this.toxicityLabels.join(', ')}`);
     }
   }
 
   /**
-   * Returns an array of objects, one for each prediction head, that contains
+   * Returns an array of objects, one for each label, that contains
    * the raw probabilities for each input along with the final prediction
    * boolean given the threshold. If a prediction falls below the threshold,
    * `null` is returned.
@@ -121,7 +123,7 @@ export class ToxicityClassifier {
         .map((d: tf.Tensor2D, i: number) => ({data: d, headIndex: i}))
         .filter(
             (d: {headIndex: number}) =>
-                this.includeHeads.indexOf(this.labels[d.headIndex]) > -1)
+                this.toxicityLabels.indexOf(this.labels[d.headIndex]) > -1)
         .map((d: {headIndex: number, data: tf.Tensor2D}) => {
           const prediction = d.data.dataSync() as Float32Array;
           const results = [];
