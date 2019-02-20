@@ -18,6 +18,16 @@ The sentences (taken from the [TensorFlow Hub USE lite colab](https://colab.sand
 5. An apple a day, keeps the doctors away.
 6. Eating strawberries is healthy.
 
+## Installation
+
+Using `yarn`:
+
+    $ yarn add @tensorflow/tfjs@1.0.0-alpha3 @tensorflow-models/universal-sentence-encoder
+
+Using `npm`:
+
+    $ npm install @tensorflow/tfjs@1.0.0-alpha3 @tensorflow-models/universal-sentence-encoder
+
 ## Usage
 
 To import in npm:
@@ -29,7 +39,7 @@ import * as use from '@tensorflow-models/universal-sentence-encoder';
 or as a standalone script tag:
 
 ```js
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.0-alpha3"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/universal-sentence-encoder"></script>
 ```
 

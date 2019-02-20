@@ -8,6 +8,16 @@ More information about how the toxicity labels were calibrated can be found [her
 
 Check out our [demo](https://storage.googleapis.com/tfjs-models/demos/toxicity/index.html), which uses the toxicity model to predict the toxicity of several sentences taken from this [Kaggle dataset](https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge/data). Users can also input their own text for classification.
 
+## Installation
+
+Using `yarn`:
+
+    $ yarn add @tensorflow/tfjs@1.0.0-alpha3 @tensorflow-models/toxicity
+
+Using `npm`:
+
+    $ npm install @tensorflow/tfjs@1.0.0-alpha3 @tensorflow-models/toxicity
+
 ## Usage
 
 To import in npm:
@@ -19,7 +29,7 @@ import * as toxicity from '@tensorflow-models/toxicity';
 or as a standalone script tag:
 
 ```js
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.0-alpha3"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/toxicity"></script>
 ```
 
