@@ -1,0 +1,14 @@
+.vscode/
+.rpt2_cache/
+demo/
+src/
+coverage/
+package/
+node_modules/
+karma.conf.js
+*.tgz
+.travis.yml
+.npmignore
+tslint.json
+yarn.lock
+images/

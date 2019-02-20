@@ -1,0 +1,136 @@
+<!-- Copyright 2019 Google LLC. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================-->
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>TensorFlow.js toxicity classifier demo</title>
+    <style>
+      body {
+        font-family: 'Helvetica Neue', sans-serif;
+        box-sizing: border-box;
+        line-height: 1.5;
+      }
+
+      h1 {
+        margin-bottom: 30px;
+        font-size: 34px;
+      }
+
+      .description {
+        margin-bottom: 60px;
+      }
+
+      #main {
+        width: 1000px;
+        margin-top: 50px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .row {
+        display: flex;
+        flex-direction: row;
+      }
+
+      .row:nth-of-type(2n) {
+        background: whitesmoke;
+      }
+
+      .row .text {
+        flex: 1 1 auto;
+      }
+
+      .row .label {
+        border-left: solid 1px #ccc;
+        width: 60px;
+        min-width: 60px;
+        max-width: 60px;
+      }
+
+      .row:first-of-type .label {
+        border: none;
+      }
+
+      .row:first-of-type .label, .row:first-of-type .text {
+        font-weight: bold;
+        text-transform: lowercase;
+        line-height: 1.4;
+        padding-bottom: 20px;
+      }
+
+      .positive {
+        font-weight: bold;
+        color: red;
+      }
+
+      .text, .label {
+        padding: 10px;
+      }
+
+      #classify-new-text-input {
+        border: none;
+        border-bottom: solid 1px #ccc;
+        font-size: 14px;
+        line-height: 2;
+        width: calc(100% - 127px);
+        margin-right: 15px;
+        padding-left: 5px;
+        padding-right: 5px;
+        padding-top: 4px;
+        padding-bottom: 4px;
+      }
+      #classify-new-text, #classify-new-text-input {
+        display: inline-block;
+        vertical-align: top;
+      }
+
+      #classify-new-text {
+        cursor: pointer;
+        text-transform: uppercase;
+        padding: 9px 14px 9px 14px;
+        font-size: 13px;
+        border-radius: 3px;
+        letter-spacing: 1px;
+        background: #0277bd;
+        color: white;
+      }
+
+      #table-wrapper {
+        margin-bottom: 60px;
+      }
+
+      p {
+        font-weight: bold;
+      }
+   </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+  <div id='main'>
+    <h1>TensorFlow.js toxicity classifier demo</h1>
+    <div class="description">This is a demo of the TensorFlow.js toxicity model, which classifies text according to whether it exhibits offensive attributes (i.e. profanity, sexual explicitness). The samples in the table below were taken from this <a href="https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge/data">Kaggle dataset</a>.</div>
+    <div id="table-wrapper"></div>
+    <p>Enter text below and click 'Classify' to add it to the table.</p>
+    <div>
+      <input id="classify-new-text-input" placeholder="i.e. 'you suck'">
+      <div id="classify-new-text">Classify</div>
+    </div>
+  </div>
+  <script src="index.js"></script>
+</body>
+
+</html>

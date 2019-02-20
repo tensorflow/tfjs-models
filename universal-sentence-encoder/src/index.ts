@@ -28,7 +28,6 @@ export async function load() {
   return use;
 }
 
-
 /**
  * Load the Tokenizer for use independently from the UniversalSentenceEncoder.
  *
@@ -56,9 +55,7 @@ export class UniversalSentenceEncoder {
   private tokenizer: Tokenizer;
 
   async loadModel() {
-    return tf.loadFrozenModel(
-        `${BASE_PATH}tensorflowjs_model.pb`,
-        `${BASE_PATH}weights_manifest.json`);
+    return tf.loadGraphModel(`${BASE_PATH}tensorflowjs_model.pb`);
   }
 
   async load() {
