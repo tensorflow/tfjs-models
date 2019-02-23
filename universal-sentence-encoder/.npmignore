@@ -11,3 +11,4 @@ karma.conf.js
 .npmignore
 tslint.json
 yarn.lock
+.cache/
