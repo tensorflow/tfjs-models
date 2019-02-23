@@ -12,3 +12,4 @@ karma.conf.js
 tslint.json
 yarn.lock
 images/
+.cache/
