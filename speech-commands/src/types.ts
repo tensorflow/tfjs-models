@@ -300,6 +300,12 @@ export interface TransferSpeechCommandRecognizer extends
    */
   load(handlerOrURL?: string | tf.io.IOHandler): Promise<void>;
 
+  /**
+   * Get metadata about the transfer recognizer.
+   * 
+   * The metadata includes but is not limited to: speech-commands library
+   * version, word labels that correspond to the model's probability outputs.
+   */
   getMetadata(): SpeechCommandRecognizerMetadata;
 }
 
