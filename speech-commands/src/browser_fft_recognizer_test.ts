@@ -30,6 +30,7 @@ import {FakeAudioContext, FakeAudioMediaStream} from './browser_test_utils';
 import {arrayBuffer2SerializedExamples} from './dataset';
 import {create} from './index';
 import {SpeechCommandRecognizerResult} from './types';
+import {version} from './version';
 
 describe('getMajorAndMinorVersion', () => {
   it('Correct results', () => {
@@ -1018,7 +1019,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     });
   });
 
-  fit('getMetadata works after transfer learning', async () => {
+  it('getMetadata works after transfer learning', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();
@@ -1027,8 +1028,12 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     await transfer.collectExample('bar');
     await transfer.collectExample('bar');
     await transfer.train({epochs: 1, batchSize: 2, validationSplit: 0.5});
+
     const metadata = transfer.getMetadata();
-    console.log(metadata);  // DEBUG
+    expect(metadata.tfjsSpeechCommandsVersion).toEqual(version);
+    expect(metadata.modelName).toEqual('xfer1');
+    expect(metadata.timeStamp != null).toEqual(true);
+    expect(metadata.wordLabels).toEqual(['_background_noise_', 'bar']);
   });
 
   it('train with tf.data.Dataset, with fine-tuning', async () => {
