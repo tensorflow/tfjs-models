@@ -138,6 +138,28 @@ export interface ExampleCollectionOptions {
 }
 
 /**
+ * Metadata for a speech-comamnds recognizer.
+ */
+export interface SpeechCommandRecognizerMetadata {
+  /** Version of the speech-commands library. */
+  tfjsSpeechCommandsVersion: string;
+
+  /** Name of the model. */
+  modelName?: string;
+
+  /** A time stamp for when this metadata is generatd. */
+  timeStamp?: string;
+
+  /**
+   * Word labels for the recognizer model's output probability scores.
+   *
+   * The length of this array should be equal to the size of the last dimension
+   * of the model's output.
+   */
+  wordLabels: string[];
+}
+
+/**
  * Interface for a transfer-learning speech command recognizer.
  *
  * This inherits the `SpeechCommandRecognizer`. It adds methods for
@@ -277,6 +299,8 @@ export interface TransferSpeechCommandRecognizer extends
    *   `tf.io.browserFiles([modelJSONFile, weightsFile])`
    */
   load(handlerOrURL?: string | tf.io.IOHandler): Promise<void>;
+
+  getMetadata(): SpeechCommandRecognizerMetadata;
 }
 
 /**

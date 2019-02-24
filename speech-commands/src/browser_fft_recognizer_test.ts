@@ -1018,6 +1018,19 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     });
   });
 
+  fit('getMetadata works after transfer learning', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    await transfer.collectExample('_background_noise_');
+    await transfer.collectExample('bar');
+    await transfer.collectExample('bar');
+    await transfer.train({epochs: 1, batchSize: 2, validationSplit: 0.5});
+    const metadata = transfer.getMetadata();
+    console.log(metadata);  // DEBUG
+  });
+
   it('train with tf.data.Dataset, with fine-tuning', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
