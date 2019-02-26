@@ -432,7 +432,7 @@ bodyPix.drawPixelatedMask(
 Given a personSegmentation and an image, draws the image with its background
 blurred onto a canvas.
 
-An example of applying a [bokeh effect](https://www.nikonusa.com/en/learn-and-explore/a/tips-and-techniques/bokeh-for-beginners.html) can be seen in this [demo](https://storage.googleapis.com/tfjs-models/demos/body-pix/camera.html):
+An example of applying a [bokeh effect](https://www.nikonusa.com/en/learn-and-explore/a/tips-and-techniques/bokeh-for-beginners.html) can be seen in this [demo](https://storage.googleapis.com/tfjs-models/demos/body-pix/index.html):
 
 ![Bokeh](./images/bokeh.gif)
 
