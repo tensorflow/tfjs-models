@@ -17,7 +17,7 @@
   },
   "devDependencies": {
     "@tensorflow/tfjs": "^0.15.3",
-    "@tensorflow/tfjs-node": "^0.2.3",
+    "@tensorflow/tfjs-node": "^0.3.0",
     "@types/jasmine": "~2.8.8",
     "@types/rimraf": "^2.0.2",
     "@types/tempfile": "^2.0.0",

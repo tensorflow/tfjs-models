@@ -443,7 +443,7 @@ describe('Dataset', () => {
       datasetValidationSplit: 1 / 3
     }) as [SpectrogramAndTargetsTfDataset, SpectrogramAndTargetsTfDataset];
     let numTrain = 0;
-    await trainDataset.forEach(xAndY => {
+    await trainDataset.forEachAsync(xAndY => {
       numTrain++;
       const tuple = xAndY as {} as [tf.Tensor, tf.Tensor];
       expect(tuple.length).toEqual(2);
@@ -456,7 +456,7 @@ describe('Dataset', () => {
     });
     expect(numTrain).toEqual(2);
     let numVal = 0;
-    await valDataset.forEach(xAndY => {
+    await valDataset.forEachAsync(xAndY => {
       numVal++;
       const tuple = xAndY as {} as tf.Tensor[];
       expect(tuple.length).toEqual(2);
