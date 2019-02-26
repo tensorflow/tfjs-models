@@ -38,12 +38,7 @@ yarn watch
 
 ## If you are developing posenet locally, and want to test the changes in the demos
 
-Install yalc:
-```sh
-npm i -g yalc
-```
-
-cd into the posenet folder:
+Cd into the posenet folder:
 ```sh
 cd posenet
 ```
@@ -55,7 +50,7 @@ yarn
 
 Publish posenet locally:
 ```sh
-yarn build && yalc push
+yarn build && yalc publish
 ```
 
 Cd into the demos and install dependencies:
@@ -67,7 +62,7 @@ yarn
 
 Link the local posenet to the demos:
 ```sh
-yalc link @tensorflow-models/posenet
+yarn yalc link @tensorflow-models/posenet
 ```
 
 Start the dev demo server:

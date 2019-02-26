@@ -73,7 +73,8 @@ export async function toTensorBuffer<rank extends tf.Rank>(
     type: 'float32'|'int32' = 'float32'): Promise<tf.TensorBuffer<rank>> {
   const tensorData = await tensor.data();
 
-  return new tf.TensorBuffer<rank>(tensor.shape, type, tensorData);
+  return tf.buffer(tensor.shape, type, tensorData as Float32Array) as
+      tf.TensorBuffer<rank>;
 }
 
 export async function toTensorBuffers3D(tensors: tf.Tensor3D[]):
@@ -115,7 +116,7 @@ export function getInputTensorDimensions(input: PosenetInput):
 }
 
 export function toInputTensor(input: PosenetInput) {
-  return input instanceof tf.Tensor ? input : tf.fromPixels(input);
+  return input instanceof tf.Tensor ? input : tf.browser.fromPixels(input);
 }
 
 export function toResizedInputTensor(

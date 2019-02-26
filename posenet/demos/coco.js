@@ -205,9 +205,10 @@ function drawDisplacementEdgesFrom(
   const edgeIds = edges[partId] || [];
 
   if (edgeIds.length > 0) {
+    const displArr = displacements.arraySync();
     edgeIds.forEach((edgeId) => {
-      const displacementY = displacements.get(y, x, edgeId);
-      const displacementX = displacements.get(y, x, edgeId + numEdges);
+      const displacementY = displArr[y][x][edgeId];
+      const displacementX = displArr[y][x][edgeId + numEdges];
 
       drawSegment(
           [offsetY, offsetX],
@@ -232,9 +233,12 @@ function visualizeOutputs(
   const [height, width] = heatmapScores.shape;
 
   ctx.globalAlpha = 0;
+  const heatmapScoresArr = heatmapScores.arraySync();
+  const offsetsArr = offsets.arraySync();
+
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      const score = heatmapScores.get(y, x, partId);
+      const score = heatmapScoresArr[y][x][partId];
 
       // to save on performance, don't draw anything with a low score.
       if (score < 0.05) continue;
@@ -246,8 +250,8 @@ function visualizeOutputs(
         drawPoint(ctx, y * outputStride, x * outputStride, 2, 'yellow');
       }
 
-      const offsetsVectorY = offsets.get(y, x, partId);
-      const offsetsVectorX = offsets.get(y, x, partId + 17);
+      const offsetsVectorY = offsetsArr[y][x][partId];
+      const offsetsVectorX = offsetsArr[y][x][partId + 17];
 
       if (drawOffsetVectors) {
         drawOffsetVector(
@@ -343,7 +347,7 @@ async function testImageAndEstimatePoses(net) {
   image = await loadImage(guiState.image);
 
   // Creates a tensor from an image
-  const input = tf.fromPixels(image);
+  const input = tf.browser.fromPixels(image);
 
   // Stores the raw model outputs from both single- and multi-pose results can
   // be decoded.

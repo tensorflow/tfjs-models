@@ -54,14 +54,10 @@ export async function load(
 
 export class ObjectDetection {
   private modelPath: string;
-  private weightPath: string;
-  private model: tf.FrozenModel;
+  private model: tf.GraphModel;
 
   constructor(base: ObjectDetectionBaseModel) {
-    this.modelPath = `${BASE_PATH}${this.getPrefix(base)}/` +
-        `tensorflowjs_model.pb`;
-    this.weightPath = `${BASE_PATH}${this.getPrefix(base)}/` +
-        `weights_manifest.json`;
+    this.modelPath = `${BASE_PATH}${this.getPrefix(base)}/model.json`;
   }
 
   private getPrefix(base: ObjectDetectionBaseModel) {
@@ -69,7 +65,7 @@ export class ObjectDetection {
   }
 
   async load() {
-    this.model = await tf.loadFrozenModel(this.modelPath, this.weightPath);
+    this.model = await tf.loadGraphModel(this.modelPath);
 
     // Warmup the model.
     const result = await this.model.executeAsync(tf.zeros([1, 300, 300, 3])) as
@@ -93,7 +89,7 @@ export class ObjectDetection {
       maxNumBoxes: number): Promise<DetectedObject[]> {
     const batched = tf.tidy(() => {
       if (!(img instanceof tf.Tensor)) {
-        img = tf.fromPixels(img);
+        img = tf.browser.fromPixels(img);
       }
       // Reshape to a single-element batch so we can pass it to executeAsync.
       return img.expandDims(0);

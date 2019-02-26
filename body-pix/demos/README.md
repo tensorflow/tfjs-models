@@ -26,12 +26,7 @@ yarn watch
 
 ## If you are developing body-pix locally, and want to test the changes in the demos
 
-Install yalc:
-```sh
-npm i -g yalc
-```
-
-cd into the body-pix folder:
+Cd into the body-pix folder:
 ```sh
 cd body-pix
 ```
@@ -55,7 +50,7 @@ yarn
 
 Link the local body-pix to the demos:
 ```sh
-yalc link @tensorflow-models/body-pix
+yarn yalc link @tensorflow-models/body-pix
 ```
 
 Start the dev demo server:

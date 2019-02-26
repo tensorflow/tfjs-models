@@ -20,7 +20,7 @@ import {load} from './index';
 
 describeWithFlags('ObjectDetection', tf.test_util.NODE_ENVS, () => {
   beforeEach(() => {
-    spyOn(tf, 'loadFrozenModel').and.callFake(() => {
+    spyOn(tf, 'loadGraphModel').and.callFake(() => {
       const model = {
         executeAsync:
             (x: tf.Tensor) => [tf.ones([1, 1917, 90]), tf.ones([1, 1917, 1, 4])]
@@ -33,7 +33,7 @@ describeWithFlags('ObjectDetection', tf.test_util.NODE_ENVS, () => {
     const objectDetection = await load();
     const x = tf.zeros([227, 227, 3]) as tf.Tensor3D;
     const numOfTensorsBefore = tf.memory().numTensors;
-    
+
     await objectDetection.detect(x, 1);
 
     expect(tf.memory().numTensors).toEqual(numOfTensorsBefore);

@@ -65,7 +65,7 @@ export class MobileNet {
   }
 
   async load() {
-    this.model = await tf.loadModel(this.path);
+    this.model = await tf.loadLayersModel(this.path);
     this.endpoints = this.model.layers.map(l => l.name);
 
     // Warmup the model.
@@ -97,7 +97,7 @@ export class MobileNet {
 
     return tf.tidy(() => {
       if (!(img instanceof tf.Tensor)) {
-        img = tf.fromPixels(img);
+        img = tf.browser.fromPixels(img);
       }
 
       // Normalize the image from [0, 255] to [-1, 1].
