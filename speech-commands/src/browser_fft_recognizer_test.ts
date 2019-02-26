@@ -60,23 +60,27 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     const words =
         backgroundAndNoiseOnly ? fakeWordsNoiseAndUnknownOnly : fakeWords;
     const numWords = words.length;
-    tfLoadModelSpy = spyOn(tf, 'loadModel').and.callFake((url: string) => {
-      if (model == null) {
-        model = tf.sequential();
-        model.add(tf.layers.flatten(
-            {inputShape: [fakeNumFrames, fakeColumnTruncateLength, 1]}));
-        secondLastBaseDenseLayer = tf.layers.dense(
-            {units: 4, activation: 'relu', kernelInitializer: 'leCunNormal'});
-        model.add(secondLastBaseDenseLayer);
-        model.add(tf.layers.dense({
-          units: numWords,
-          useBias: false,
-          kernelInitializer: 'leCunNormal',
-          activation: 'softmax'
-        }));
-      }
-      return model;
-    });
+    tfLoadModelSpy =
+        spyOn(tf, 'loadLayersModel').and.callFake((url: string) => {
+          if (model == null) {
+            model = tf.sequential();
+            model.add(tf.layers.flatten(
+                {inputShape: [fakeNumFrames, fakeColumnTruncateLength, 1]}));
+            secondLastBaseDenseLayer = tf.layers.dense({
+              units: 4,
+              activation: 'relu',
+              kernelInitializer: 'leCunNormal'
+            });
+            model.add(secondLastBaseDenseLayer);
+            model.add(tf.layers.dense({
+              units: numWords,
+              useBias: false,
+              kernelInitializer: 'leCunNormal',
+              activation: 'softmax'
+            }));
+          }
+          return model;
+        });
     spyOn(BrowserFftUtils, 'loadMetadataJson')
         .and.callFake(async (url: string) => {
           return {words};
@@ -881,9 +885,9 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     // tslint:disable-next-line:no-any
     const transferHead = (transfer as any).transferHead as tf.Sequential;
     const numLayers = transferHead.layers.length;
-    const oldTransferWeightValues =
-        transferHead.getLayer(null, numLayers - 1).getWeights()
-        .map(weight => weight.dataSync());
+    const oldTransferWeightValues = transferHead.getLayer(null, numLayers - 1)
+                                        .getWeights()
+                                        .map(weight => weight.dataSync());
 
     const history =
         await transfer.train({optimizer: tf.train.sgd(1)}) as tf.History;
@@ -899,9 +903,9 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
 
     // Verify that the weights of the dense layer in the base model doesn't
     // change, i.e., is frozen.
-    const newTransferWeightValues =
-        transferHead.getLayer(null, numLayers - 1).getWeights()
-        .map(weight => weight.dataSync());
+    const newTransferWeightValues = transferHead.getLayer(null, numLayers - 1)
+                                        .getWeights()
+                                        .map(weight => weight.dataSync());
     baseModelOldWeightValues.forEach((oldWeight, i) => {
       tf.test_util.expectArraysClose(baseModelNewWeightValues[i], oldWeight);
     });
@@ -909,10 +913,10 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     // after training.
     const maxWeightChanges = newTransferWeightValues.map(
         (newValues, i) => tf.tensor1d(newValues)
-            .sub(tf.tensor1d(oldTransferWeightValues[i]))
-            .abs()
-            .max()
-            .dataSync()[0]);
+                              .sub(tf.tensor1d(oldTransferWeightValues[i]))
+                              .abs()
+                              .max()
+                              .dataSync()[0]);
     expect(Math.max(...maxWeightChanges)).toBeGreaterThan(1e-3);
 
     // Test recognize() with the transfer recognizer.
@@ -1013,10 +1017,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     transfer.listen(async (result: SpeechCommandRecognizerResult) => {
       expect((result.scores as Float32Array).length).toEqual(2);
       transfer.stopListening().then(done);
-    }, {
-      probabilityThreshold: 0,
-      invokeCallbackOnNoiseAndUnknown: true
-    });
+    }, {probabilityThreshold: 0, invokeCallbackOnNoiseAndUnknown: true});
   });
 
   it('getMetadata works after transfer learning', async () => {
@@ -1379,8 +1380,8 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     // Load the transfer model back.
     const base2 = new BrowserFftSpeechCommandRecognizer();
     await base2.ensureModelLoaded();
-    // Disable the spy on tf.loadModel() first, so the subsequent
-    // tf.loadModel() call during the load() call can use the fake
+    // Disable the spy on tf.loadLayersModel() first, so the subsequent
+    // tf.loadLayersModel() call during the load() call can use the fake
     // IndexedDB handler created above.
     tfLoadModelSpy.and.callThrough();
     const transfer2 = base2.createTransfer('xfer1');
@@ -1405,11 +1406,12 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     const tempSavePath = tempfile();
     await transfer.save(`file://${tempSavePath}`);
 
-    // Disable the spy on tf.loadModel() first, so the subsequent
-    // tf.loadModel() call during the load() call can use the fake
+    // Disable the spy on tf.loadLayersModel() first, so the subsequent
+    // tf.loadLayersModel() call during the load() call can use the fake
     // IndexedDB handler created above.
     tfLoadModelSpy.and.callThrough();
-    const modelPrime = await tf.loadModel(`file://${tempSavePath}/model.json`);
+    const modelPrime =
+        await tf.loadLayersModel(`file://${tempSavePath}/model.json`);
     expect(modelPrime.outputs.length).toEqual(1);
     expect(modelPrime.outputs[0].shape).toEqual([null, 2]);
 

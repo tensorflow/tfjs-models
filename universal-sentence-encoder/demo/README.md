@@ -26,11 +26,6 @@ yarn watch
 
 ## If you are developing universal-sentence-encoder locally, and want to test the changes in the demos
 
-Install yalc:
-```sh
-npm i -g yalc
-```
-
 cd into the universal-sentence-encoder folder:
 ```sh
 cd universal-sentence-encoder
@@ -41,9 +36,9 @@ Install dependencies:
 yarn
 ```
 
-Publish universal-sentence-encoder locally:
+Build and publish universal-sentence-encoder locally:
 ```sh
-yalc push
+yarn publish-local
 ```
 
 Cd into the demos and install dependencies:
@@ -55,7 +50,7 @@ yarn
 
 Link the local universal-sentence-encoder to the demos:
 ```sh
-yalc link @tensorflow-models/universal-sentence-encoder
+yarn link-local
 ```
 
 Start the dev demo server:
@@ -67,5 +62,5 @@ To get future updates from the universal-sentence-encoder source code:
 ```
 # cd up into the universal-sentence-encoder directory
 cd ../
-yarn build && yalc push
+yarn publish-local
 ```

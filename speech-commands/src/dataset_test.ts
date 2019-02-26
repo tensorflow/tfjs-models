@@ -16,9 +16,7 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import {TensorContainer} from '@tensorflow/tfjs-core/dist/tensor_types';
-import {expectArraysClose, expectArraysEqual} from '@tensorflow/tfjs-core/dist/test_util';
-
+import {test_util} from '@tensorflow/tfjs';
 import {normalize} from './browser_fft_utils';
 import {arrayBuffer2SerializedExamples, BACKGROUND_NOISE_TAG, Dataset, DATASET_SERIALIZATION_DESCRIPTOR, DATASET_SERIALIZATION_VERSION, deserializeExample, getMaxIntensityFrameIndex, getValidWindows, serializeExample, spectrogram2IntensityCurve, SpectrogramAndTargetsTfDataset} from './dataset';
 import {string2ArrayBuffer} from './generic_utils';
@@ -132,8 +130,8 @@ describe('Dataset', () => {
     expect(dataset.getExampleCounts()).toEqual({a: 4, b: 2, foo: 1});
     // Check that the content of the incoming dataset is not affected.
     expect(datasetPrime.getExampleCounts()).toEqual({a: 2, b: 1, foo: 1});
-    expect(dataset.durationMillis()).toEqual(
-        duration0 + datasetPrime.durationMillis());
+    expect(dataset.durationMillis())
+        .toEqual(duration0 + datasetPrime.durationMillis());
   });
 
   it('merge non-empty dataset into an empty one', () => {
@@ -402,7 +400,7 @@ describe('Dataset', () => {
     const out1 = dataset.getData(null, {shuffle: false}) as
         {xs: tf.Tensor, ys: tf.Tensor};
     expect(out1.xs.shape).toEqual([2, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
-    expectArraysClose(out1.ys, tf.tensor2d([[1, 0], [0, 1]]));
+    test_util.expectArraysClose(out1.ys, tf.tensor2d([[1, 0], [0, 1]]));
 
     const out2 = dataset.getData('a') as {xs: tf.Tensor, ys: tf.Tensor};
     expect(out2.xs.shape).toEqual([1, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
@@ -432,7 +430,7 @@ describe('Dataset', () => {
     const out = dataset.getData(null, {shuffle: false}) as
         {xs: tf.Tensor, ys: tf.Tensor};
     expect(out.xs.shape).toEqual([3, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
-    expectArraysClose(out.ys, tf.tensor2d([[1, 0], [1, 0], [0, 1]]));
+    test_util.expectArraysClose(out.ys, tf.tensor2d([[1, 0], [1, 0], [0, 1]]));
   });
 
   it('getSpectrogramsAsTensors without label as tf.data.Dataset', async () => {
@@ -445,12 +443,12 @@ describe('Dataset', () => {
       datasetValidationSplit: 1 / 3
     }) as [SpectrogramAndTargetsTfDataset, SpectrogramAndTargetsTfDataset];
     let numTrain = 0;
-    await trainDataset.forEach((xAndY: TensorContainer) => {
+    await trainDataset.forEach(xAndY => {
       numTrain++;
-      xAndY = xAndY as tf.Tensor[];
-      expect(xAndY.length).toEqual(2);
-      const x = xAndY[0] as tf.Tensor;
-      const y = xAndY[1] as tf.Tensor;
+      const tuple = xAndY as {} as [tf.Tensor, tf.Tensor];
+      expect(tuple.length).toEqual(2);
+      const x = tuple[0] as tf.Tensor;
+      const y = tuple[1] as tf.Tensor;
       expect(x.shape).toEqual([1, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
       expect(x.isDisposed).toEqual(false);
       expect(y.shape).toEqual([1, 2]);
@@ -458,12 +456,12 @@ describe('Dataset', () => {
     });
     expect(numTrain).toEqual(2);
     let numVal = 0;
-    await valDataset.forEach((xAndY: TensorContainer) => {
+    await valDataset.forEach(xAndY => {
       numVal++;
-      xAndY = xAndY as tf.Tensor[];
-      expect(xAndY.length).toEqual(2);
-      const x = xAndY[0] as tf.Tensor;
-      const y = xAndY[1] as tf.Tensor;
+      const tuple = xAndY as {} as tf.Tensor[];
+      expect(tuple.length).toEqual(2);
+      const x = tuple[0] as tf.Tensor;
+      const y = tuple[1] as tf.Tensor;
       expect(x.shape).toEqual([1, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
       expect(x.isDisposed).toEqual(false);
       expect(y.shape).toEqual([1, 2]);
@@ -505,7 +503,7 @@ describe('Dataset', () => {
         dataset.getData(null, {numFrames: 5, hopFrames: 5, shuffle: false}) as
         {xs: tf.Tensor, ys: tf.Tensor};
     expect(xs.shape).toEqual([3, 5, FAKE_FRAME_SIZE, 1]);
-    expectArraysClose(ys, tf.tensor2d([[1, 0], [0, 1], [0, 1]]));
+    test_util.expectArraysClose(ys, tf.tensor2d([[1, 0], [0, 1], [0, 1]]));
   });
 
   it('Ragged example lengths and one window per example, with label', () => {
@@ -535,16 +533,19 @@ describe('Dataset', () => {
     const windows = tf.unstack(xs);
 
     expect(windows.length).toEqual(6);
-    expectArraysClose(windows[0], tf.tensor3d([1, 1, 2, 2, 3, 3], [3, 2, 1]));
-    expectArraysClose(windows[1], tf.tensor3d([2, 2, 3, 3, 2, 2], [3, 2, 1]));
-    expectArraysClose(windows[2], tf.tensor3d([3, 3, 2, 2, 1, 1], [3, 2, 1]));
-    expectArraysClose(
+    test_util.expectArraysClose(
+        windows[0], tf.tensor3d([1, 1, 2, 2, 3, 3], [3, 2, 1]));
+    test_util.expectArraysClose(
+        windows[1], tf.tensor3d([2, 2, 3, 3, 2, 2], [3, 2, 1]));
+    test_util.expectArraysClose(
+        windows[2], tf.tensor3d([3, 3, 2, 2, 1, 1], [3, 2, 1]));
+    test_util.expectArraysClose(
         windows[3], tf.tensor3d([10, 10, 20, 20, 30, 30], [3, 2, 1]));
-    expectArraysClose(
+    test_util.expectArraysClose(
         windows[4], tf.tensor3d([20, 20, 30, 30, 20, 20], [3, 2, 1]));
-    expectArraysClose(
+    test_util.expectArraysClose(
         windows[5], tf.tensor3d([30, 30, 20, 20, 10, 10], [3, 2, 1]));
-    expectArraysClose(
+    test_util.expectArraysClose(
         ys, tf.tensor2d([[1, 0], [1, 0], [1, 0], [0, 1], [0, 1], [0, 1]]));
   });
 
@@ -564,25 +565,25 @@ describe('Dataset', () => {
     expect(windows.length).toEqual(6);
     for (let i = 0; i < 6; ++i) {
       const {mean, variance} = tf.moments(windows[0]);
-      expectArraysClose(mean, tf.scalar(0));
-      expectArraysClose(variance, tf.scalar(1));
+      test_util.expectArraysClose(mean, tf.scalar(0));
+      test_util.expectArraysClose(variance, tf.scalar(1));
     }
-    expectArraysClose(
+    test_util.expectArraysClose(
         windows[0], normalize(tf.tensor3d([1, 1, 2, 2, 3, 3], [3, 2, 1])));
-    expectArraysClose(
+    test_util.expectArraysClose(
         windows[1], normalize(tf.tensor3d([2, 2, 3, 3, 2, 2], [3, 2, 1])));
-    expectArraysClose(
+    test_util.expectArraysClose(
         windows[2], normalize(tf.tensor3d([3, 3, 2, 2, 1, 1], [3, 2, 1])));
-    expectArraysClose(
+    test_util.expectArraysClose(
         windows[3],
         normalize(tf.tensor3d([10, 10, 20, 20, 30, 30], [3, 2, 1])));
-    expectArraysClose(
+    test_util.expectArraysClose(
         windows[4],
         normalize(tf.tensor3d([20, 20, 30, 30, 20, 20], [3, 2, 1])));
-    expectArraysClose(
+    test_util.expectArraysClose(
         windows[5],
         normalize(tf.tensor3d([30, 30, 20, 20, 10, 10], [3, 2, 1])));
-    expectArraysClose(
+    test_util.expectArraysClose(
         ys, tf.tensor2d([[1, 0], [1, 0], [1, 0], [0, 1], [0, 1], [0, 1]]));
   });
 
@@ -651,17 +652,18 @@ describe('Dataset', () => {
         {xs: tf.Tensor, ys: tf.Tensor};
     const windows = tf.unstack(xs);
     expect(windows.length).toEqual(4);
-    expectArraysClose(
+    test_util.expectArraysClose(
         windows[0], tf.tensor3d([0, 0, 1, 1, 2, 2, 3, 3, 2, 2], [5, 2, 1]));
-    expectArraysClose(
+    test_util.expectArraysClose(
         windows[1], tf.tensor3d([1, 1, 2, 2, 3, 3, 2, 2, 1, 1], [5, 2, 1]));
-    expectArraysClose(
+    test_util.expectArraysClose(
         windows[2],
         tf.tensor3d([10, 10, 20, 20, 30, 30, 20, 20, 10, 10], [5, 2, 1]));
-    expectArraysClose(
+    test_util.expectArraysClose(
         windows[3],
         tf.tensor3d([20, 20, 30, 30, 20, 20, 10, 10, 0, 0], [5, 2, 1]));
-    expectArraysClose(ys, tf.tensor2d([[1, 0], [1, 0], [0, 1], [0, 1]]));
+    test_util.expectArraysClose(
+        ys, tf.tensor2d([[1, 0], [1, 0], [0, 1], [0, 1]]));
   });
 
   it('Ragged examples containing background noise', () => {
@@ -678,14 +680,16 @@ describe('Dataset', () => {
         {xs: tf.Tensor, ys: tf.Tensor};
     const windows = tf.unstack(xs);
     expect(windows.length).toEqual(4);
-    expectArraysClose(
+    test_util.expectArraysClose(
         windows[0], tf.tensor3d([0, 0, 10, 10, 20, 20], [3, 2, 1]));
-    expectArraysClose(
+    test_util.expectArraysClose(
         windows[1], tf.tensor3d([20, 20, 30, 30, 20, 20], [3, 2, 1]));
-    expectArraysClose(
+    test_util.expectArraysClose(
         windows[2], tf.tensor3d([20, 20, 10, 10, 0, 0], [3, 2, 1]));
-    expectArraysClose(windows[3], tf.tensor3d([2, 2, 3, 3, 2, 2], [3, 2, 1]));
-    expectArraysClose(ys, tf.tensor2d([[1, 0], [1, 0], [1, 0], [0, 1]]));
+    test_util.expectArraysClose(
+        windows[3], tf.tensor3d([2, 2, 3, 3, 2, 2], [3, 2, 1]));
+    test_util.expectArraysClose(
+        ys, tf.tensor2d([[1, 0], [1, 0], [1, 0], [0, 1]]));
   });
 
   it('numFrames exceeding minmum example length leads to Error', () => {
@@ -761,7 +765,7 @@ describe('Dataset serialization', () => {
     const exPrime = deserializeExample(artifacts);
     expect(exPrime.label).toEqual(ex.label);
     expect(exPrime.spectrogram.frameSize).toEqual(ex.spectrogram.frameSize);
-    expectArraysEqual(exPrime.spectrogram.data, ex.spectrogram.data);
+    test_util.expectArraysEqual(exPrime.spectrogram.data, ex.spectrogram.data);
   });
 
   it('serializeExample-deserializeExample round trip, with raw audio', () => {
@@ -785,8 +789,8 @@ describe('Dataset serialization', () => {
     expect(exPrime.label).toEqual(ex.label);
     expect(exPrime.spectrogram.frameSize).toEqual(ex.spectrogram.frameSize);
     expect(exPrime.rawAudio.sampleRateHz).toEqual(ex.rawAudio.sampleRateHz);
-    expectArraysEqual(exPrime.spectrogram.data, ex.spectrogram.data);
-    expectArraysEqual(exPrime.rawAudio.data, ex.rawAudio.data);
+    test_util.expectArraysEqual(exPrime.spectrogram.data, ex.spectrogram.data);
+    test_util.expectArraysEqual(exPrime.rawAudio.data, ex.rawAudio.data);
   });
 
   it('Dataset.serialize()', () => {
@@ -836,27 +840,31 @@ describe('Dataset serialization', () => {
     const ex1Prime = datasetPrime.getExamples('foo')[0].example;
     expect(ex1Prime.label).toEqual('foo');
     expect(ex1Prime.spectrogram.frameSize).toEqual(16);
-    expectArraysEqual(ex1Prime.spectrogram.data, ex1.spectrogram.data);
+    test_util.expectArraysEqual(
+        ex1Prime.spectrogram.data, ex1.spectrogram.data);
 
     const ex2Prime = datasetPrime.getExamples('bar')[0].example;
     expect(ex2Prime.label).toEqual('bar');
     expect(ex2Prime.spectrogram.frameSize).toEqual(16);
-    expectArraysEqual(ex2Prime.spectrogram.data, ex2.spectrogram.data);
+    test_util.expectArraysEqual(
+        ex2Prime.spectrogram.data, ex2.spectrogram.data);
 
     const ex3Prime = datasetPrime.getExamples('qux')[0].example;
     expect(ex3Prime.label).toEqual('qux');
     expect(ex3Prime.spectrogram.frameSize).toEqual(16);
-    expectArraysEqual(ex3Prime.spectrogram.data, ex3.spectrogram.data);
+    test_util.expectArraysEqual(
+        ex3Prime.spectrogram.data, ex3.spectrogram.data);
 
     const ex4Prime = datasetPrime.getExamples('foo')[1].example;
     expect(ex4Prime.label).toEqual('foo');
     expect(ex4Prime.spectrogram.frameSize).toEqual(16);
-    expectArraysEqual(ex4Prime.spectrogram.data, ex4.spectrogram.data);
+    test_util.expectArraysEqual(
+        ex4Prime.spectrogram.data, ex4.spectrogram.data);
 
     const {xs, ys} = datasetPrime.getData(null, {shuffle: false}) as
         {xs: tf.Tensor, ys: tf.Tensor};
     expect(xs.shape).toEqual([4, 10, 16, 1]);
-    expectArraysClose(
+    test_util.expectArraysClose(
         ys, tf.tensor2d([[1, 0, 0], [0, 1, 0], [0, 1, 0], [0, 0, 1]]));
   });
 
@@ -886,7 +894,8 @@ describe('Dataset serialization', () => {
     const {xs, ys} = datasetPrime.getData(null, {shuffle: false}) as
         {xs: tf.Tensor, ys: tf.Tensor};
     expect(xs.shape).toEqual([3, 10, 16, 1]);
-    expectArraysClose(ys, tf.tensor2d([[1, 0, 0], [0, 1, 0], [0, 0, 1]]));
+    test_util.expectArraysClose(
+        ys, tf.tensor2d([[1, 0, 0], [0, 1, 0], [0, 0, 1]]));
   });
 
   it('Attempt to load invalid ArrayBuffer errors out', () => {
@@ -1125,7 +1134,7 @@ describe('spectrogram2IntensityCurve', () => {
     const spectrogram:
         SpectrogramData = {data: x.dataSync() as Float32Array, frameSize: 2};
     const intensityCurve = spectrogram2IntensityCurve(spectrogram);
-    expectArraysClose(intensityCurve, tf.tensor1d([1.5, 3.5, 5.5]));
+    test_util.expectArraysClose(intensityCurve, tf.tensor1d([1.5, 3.5, 5.5]));
   });
 });
 
@@ -1135,7 +1144,7 @@ describe('getMaxIntensityFrameIndex', () => {
     const spectrogram:
         SpectrogramData = {data: x.dataSync() as Float32Array, frameSize: 2};
     const maxIntensityFrameIndex = getMaxIntensityFrameIndex(spectrogram);
-    expectArraysClose(maxIntensityFrameIndex, tf.scalar(3, 'int32'));
+    test_util.expectArraysClose(maxIntensityFrameIndex, tf.scalar(3, 'int32'));
   });
 
   it('Only one frames', () => {
@@ -1143,7 +1152,7 @@ describe('getMaxIntensityFrameIndex', () => {
     const spectrogram:
         SpectrogramData = {data: x.dataSync() as Float32Array, frameSize: 2};
     const maxIntensityFrameIndex = getMaxIntensityFrameIndex(spectrogram);
-    expectArraysClose(maxIntensityFrameIndex, tf.scalar(0, 'int32'));
+    test_util.expectArraysClose(maxIntensityFrameIndex, tf.scalar(0, 'int32'));
   });
 
   it('No focus frame: return multiple windows', () => {
