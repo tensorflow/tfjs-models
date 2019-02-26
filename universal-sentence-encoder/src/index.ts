@@ -51,7 +51,7 @@ async function loadVocabulary(pathToVocabulary = `${BASE_PATH}vocab.json`) {
 }
 
 export class UniversalSentenceEncoder {
-  private model: tf.FrozenModel;
+  private model: tf.GraphModel;
   private tokenizer: Tokenizer;
 
   async loadModel() {
