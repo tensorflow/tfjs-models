@@ -16,7 +16,7 @@
     "@tensorflow/tfjs": "^1.0.0-alpha3"
   },
   "dependencies": {
-    "@tensorflow-models/universal-sentence-encoder": "0.0.2"
+    "@tensorflow-models/universal-sentence-encoder": "0.0.4"
   },
   "devDependencies": {
     "@tensorflow/tfjs": "^1.0.0-alpha3",

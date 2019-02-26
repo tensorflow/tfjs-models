@@ -235,9 +235,8 @@ export const mobilenetLoader = {
 
     const baseUrl = checkpoint.url;
 
-    const model = await tf.loadFrozenModel(
-                      `${baseUrl}tensorflowjs_model.pb`,
-                      `${baseUrl}weights_manifest.json`) as tf.FrozenModel;
+    const model =
+        await tf.loadGraphModel(`${baseUrl}model.json`) as tf.GraphModel;
 
     const weights = new ModelWeights(model);
 

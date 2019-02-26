@@ -16,8 +16,6 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import {TensorContainer} from '@tensorflow/tfjs-core/dist/tensor_types';
-
 import {normalize} from './browser_fft_utils';
 import {arrayBuffer2String, concatenateArrayBuffers, getUID, string2ArrayBuffer} from './generic_utils';
 import {balancedTrainValSplitNumArrays} from './training_utils';
@@ -174,7 +172,7 @@ export interface GetDataConfig {
 }
 
 // tslint:disable-next-line:no-any
-export type SpectrogramAndTargetsTfDataset = tf.data.Dataset<TensorContainer>;
+export type SpectrogramAndTargetsTfDataset = tf.data.Dataset<{}>;
 
 /**
  * A serializable, mutable set of speech/audio `Example`s;
@@ -466,8 +464,10 @@ export class Dataset {
         // for tf.data currently. Tighten the types when the tf.data bug is
         // fixed.
         // tslint:disable:no-any
-        const xTrain = tf.data.array(trainXs as any).map(
-            x => tf.tensor3d(x as any, [numFrames, uniqueFrameSize, 1]));
+        const xTrain =
+            tf.data.array(trainXs as any).map(x => tf.tensor3d(x as any, [
+              numFrames, uniqueFrameSize, 1
+            ]));
         const yTrain = tf.data.array(trainYs).map(
             y => tf.oneHot([y], vocab.length).squeeze([0]));
         // TODO(cais): See if we can tighten the typing.
@@ -478,8 +478,10 @@ export class Dataset {
         }
         trainDataset = trainDataset.batch(batchSize).prefetch(4);
 
-        const xVal = tf.data.array(valXs as any).map(
-            x => tf.tensor3d(x as any, [numFrames, uniqueFrameSize, 1]));
+        const xVal =
+            tf.data.array(valXs as any).map(x => tf.tensor3d(x as any, [
+              numFrames, uniqueFrameSize, 1
+            ]));
         const yVal = tf.data.array(valYs).map(
             y => tf.oneHot([y], vocab.length).squeeze([0]));
         let valDataset = tf.data.zip([xVal, yVal]);
@@ -565,9 +567,9 @@ export class Dataset {
     const numFrames = spectrogram.data.length / spectrogram.frameSize;
     tf.util.assert(
         keyFrameIndex >= 0 && keyFrameIndex < numFrames &&
-        Number.isInteger(keyFrameIndex),
+            Number.isInteger(keyFrameIndex),
         `Invalid keyFrameIndex: ${keyFrameIndex}. ` +
-        `Must be >= 0, < ${numFrames}, and an integer.`);
+            `Must be >= 0, < ${numFrames}, and an integer.`);
     spectrogram.keyFrameIndex = keyFrameIndex;
   }
 

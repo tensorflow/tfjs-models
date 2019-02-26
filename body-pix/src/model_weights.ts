@@ -18,10 +18,10 @@
 import * as tf from '@tensorflow/tfjs';
 
 export class ModelWeights {
-  private frozenModel: tf.FrozenModel;
+  private graphModel: tf.GraphModel;
 
-  constructor(frozenModel: tf.FrozenModel) {
-    this.frozenModel = frozenModel;
+  constructor(graphModel: tf.GraphModel) {
+    this.graphModel = graphModel;
   }
 
   weights(layerName: string) {
@@ -44,10 +44,10 @@ export class ModelWeights {
   }
 
   private getVariable(name: string) {
-    return this.frozenModel.weights[`${name}`][0];
+    return this.graphModel.weights[`${name}`][0];
   }
 
   dispose() {
-    this.frozenModel.dispose();
+    this.graphModel.dispose();
   }
 }

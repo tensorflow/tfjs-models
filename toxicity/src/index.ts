@@ -41,7 +41,7 @@ export async function load(threshold: number, toxicityLabels: string[]) {
 
 export class ToxicityClassifier {
   private tokenizer: use.Tokenizer;
-  private model: tf.FrozenModel;
+  private model: tf.GraphModel;
   private labels: string[];
   private threshold: number;
   private toxicityLabels: string[];

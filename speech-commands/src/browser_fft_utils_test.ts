@@ -16,8 +16,7 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
-
+import {test_util} from '@tensorflow/tfjs';
 import {normalize} from './browser_fft_utils';
 
 describe('normalize', () => {
@@ -27,18 +26,18 @@ describe('normalize', () => {
     const y = normalize(x);
     // Assert no memory leak.
     expect(tf.memory().numTensors).toEqual(numTensors0 + 1);
-    expectArraysClose(
+    test_util.expectArraysClose(
         y,
         tf.tensor4d(
             [-1.3416406, -0.4472135, 0.4472135, 1.3416406], [1, 2, 2, 1]));
     const {mean, variance} = tf.moments(y);
-    expectArraysClose(mean, tf.scalar(0));
-    expectArraysClose(variance, tf.scalar(1));
+    test_util.expectArraysClose(mean, tf.scalar(0));
+    test_util.expectArraysClose(variance, tf.scalar(1));
   });
 
   it('Constant value', () => {
     const x = tf.tensor4d([42, 42, 42, 42], [1, 2, 2, 1]);
     const y = normalize(x);
-    expectArraysClose(y, tf.tensor4d([0, 0, 0, 0], [1, 2, 2, 1]));
+    test_util.expectArraysClose(y, tf.tensor4d([0, 0, 0, 0], [1, 2, 2, 1]));
   });
 });

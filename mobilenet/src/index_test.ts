@@ -20,7 +20,7 @@ import {load} from './index';
 
 describeWithFlags('MobileNet', tf.test_util.NODE_ENVS, () => {
   beforeAll(() => {
-    spyOn(tf, 'loadModel').and.callFake(() => {
+    spyOn(tf, 'loadLayersModel').and.callFake(() => {
       const model = {
         predict: (x: tf.Tensor) => tf.zeros([x.shape[0], 1000]),
         layers: ['']

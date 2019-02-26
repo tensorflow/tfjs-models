@@ -36,9 +36,9 @@ Install dependencies:
 yarn
 ```
 
-Publish toxicity locally:
+Build and publish toxicity locally:
 ```sh
-yarn yalc push
+yarn publish-local
 ```
 
 Cd into the demos and install dependencies:
@@ -50,7 +50,7 @@ yarn
 
 Link the local toxicity to the demos:
 ```sh
-yarn yalc link @tensorflow-models/toxicity
+yarn link-local
 ```
 
 Start the dev demo server:
@@ -62,5 +62,5 @@ To get future updates from the toxicity source code:
 ```
 # cd up into the toxicity directory
 cd ../
-yarn build && yalc push
+yarn publish-local
 ```

@@ -16,13 +16,11 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import {TensorContainer} from '@tensorflow/tfjs-core/dist/tensor_types';
-
 import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
 import {loadMetadataJson, normalize} from './browser_fft_utils';
 import {BACKGROUND_NOISE_TAG, Dataset} from './dataset';
 import {balancedTrainValSplit} from './training_utils';
-import {EvaluateConfig, EvaluateResult, Example, ExampleCollectionOptions, RecognizeConfig, RecognizerCallback, RecognizerParams, ROCCurve, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer, SpeechCommandRecognizerMetadata} from './types';
+import {EvaluateConfig, EvaluateResult, Example, ExampleCollectionOptions, RecognizeConfig, RecognizerCallback, RecognizerParams, ROCCurve, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerMetadata, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
 import {version} from './version';
 
 export const UNKNOWN_TAG = '_unknown_';
@@ -281,7 +279,7 @@ export class BrowserFftSpeechCommandRecognizer implements
 
     await this.ensureMetadataLoaded();
 
-    const model = await tf.loadModel(this.modelURL);
+    const model = await tf.loadLayersModel(this.modelURL);
     // Check the validity of the model's input shape.
     if (model.inputs.length !== 1) {
       throw new Error(
@@ -817,10 +815,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     const numFrames = this.nonBatchInputShape[0];
     windowHopRatio = windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
     const hopFrames = Math.round(windowHopRatio * numFrames);
-    const out = this.dataset.getData(null, {
-      numFrames,
-      hopFrames
-    }) as {xs: tf.Tensor4D, ys?: tf.Tensor2D};
+    const out = this.dataset.getData(null, {numFrames, hopFrames}) as
+        {xs: tf.Tensor4D, ys?: tf.Tensor2D};
     return {xs: out.xs, ys: out.ys as tf.Tensor};
   }
 
@@ -842,8 +838,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
    *   `this.model.fitDataset`.
    */
   private collectTransferDataAsTfDataset(
-      windowHopRatio?: number, validationSplit = 0.15, batchSize = 32):
-      [tf.data.Dataset<TensorContainer>, tf.data.Dataset<TensorContainer>] {
+      windowHopRatio?: number, validationSplit = 0.15,
+      batchSize = 32): [tf.data.Dataset<{}>, tf.data.Dataset<{}>] {
     const numFrames = this.nonBatchInputShape[0];
     windowHopRatio = windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
     const hopFrames = Math.round(windowHopRatio * numFrames);
@@ -853,7 +849,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       getDataset: true,
       datasetBatchSize: batchSize,
       datasetValidationSplit: validationSplit
-    }) as [tf.data.Dataset<TensorContainer>, tf.data.Dataset<TensorContainer>];
+    }) as [tf.data.Dataset<{}>, tf.data.Dataset<{}>];
     // TODO(cais): See if we can tighten the typing.
   }
 
@@ -916,7 +912,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     // the recordings exceeds 60 seconds. Otherwise, use `tf.Tensor` objects.
     const datasetDurationMillisThreshold =
         config.fitDatasetDurationMillisThreshold == null ?
-        60e3 : config.fitDatasetDurationMillisThreshold;
+        60e3 :
+        config.fitDatasetDurationMillisThreshold;
     if (this.dataset.durationMillis() > datasetDurationMillisThreshold) {
       console.log(
           `Detected large dataset: total duration = ` +
@@ -1009,9 +1006,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
   }
 
   private async fineTuningUsingTfDatasets(
-      config: TransferLearnConfig,
-      trainDataset: tf.data.Dataset<TensorContainer>,
-      valDataset: tf.data.Dataset<TensorContainer>): Promise<tf.History> {
+      config: TransferLearnConfig, trainDataset: tf.data.Dataset<{}>,
+      valDataset: tf.data.Dataset<{}>): Promise<tf.History> {
     const originalTrainableValue = this.secondLastBaseDenseLayer.trainable;
     this.secondLastBaseDenseLayer.trainable = true;
 
@@ -1054,9 +1050,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       epochs: config.fineTuningEpochs,
       validationData: valData,
       batchSize: config.batchSize,
-      callbacks: config.fineTuningCallback == null ?
-          null :
-          [config.fineTuningCallback]
+      callbacks: config.fineTuningCallback == null ? null :
+                                                     [config.fineTuningCallback]
     });
     // Set the trainable attribute of the fine-tuning layer to its
     // previous value.
@@ -1087,8 +1082,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     return tf.tidy(() => {
       const rocCurve: ROCCurve = [];
       let auc = 0;
-      const {xs, ys} =
-          this.collectTransferDataAsTensors(config.windowHopRatio);
+      const {xs, ys} = this.collectTransferDataAsTensors(config.windowHopRatio);
       const indices = ys.argMax(-1).dataSync();
       const probs = this.model.predict(xs) as tf.Tensor;
 
@@ -1234,7 +1228,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       console.log(
           `Loaded word list for model named ${this.name}: ${this.words}`);
     }
-    this.model = await tf.loadModel(handlerOrURL);
+    this.model = await tf.loadLayersModel(handlerOrURL);
     console.log(`Loaded model from ${handlerOrURL}:`);
     this.model.summary();
   }

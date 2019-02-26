@@ -125,7 +125,7 @@ async function animate() {
   stats.begin();
 
   // Get image data from video element
-  const image = tf.fromPixels(video);
+  const image = tf.browser.fromPixels(video);
   let logits;
   // 'conv_preds' is the logits activation of MobileNet.
   const infer = () => mobilenet.infer(image, 'conv_preds');
