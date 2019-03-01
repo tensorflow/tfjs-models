@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/toxicity",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "Toxicity model in TensorFlow.js",
   "main": "dist/index.js",
   "jsnext:main": "dist/toxicity.esm.js",
