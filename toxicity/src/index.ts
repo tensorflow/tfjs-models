@@ -27,7 +27,7 @@ const BASE_PATH =
  * Load the toxicity model.
  *
  * @param threshold A prediction is considered valid only if its confidence
- * exceeds the threshold. Defaults to 0.6.
+ * exceeds the threshold. Defaults to 0.85.
  * @param toxicityLabels An array of strings indicating which types of toxicity
  * to detect. Labels must be one of `toxicity` | `severe_toxicity` |
  * `identity_attack` | `insult` | `threat` | `sexual_explicit` | `obscene`.
@@ -46,7 +46,7 @@ export class ToxicityClassifier {
   private threshold: number;
   private toxicityLabels: string[];
 
-  constructor(threshold = 0.6, toxicityLabels: string[] = []) {
+  constructor(threshold = 0.85, toxicityLabels: string[] = []) {
     this.threshold = threshold;
     this.toxicityLabels = toxicityLabels;
   }
