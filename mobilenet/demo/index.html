@@ -7,26 +7,28 @@
 
 <script>
   const img = document.getElementById('img');
-
   const version = 2;
   const alpha = 0.5;
 
-  // Load the model.
-  mobilenet.load(version, alpha).then(model => {
-    window.model = model;
+  async function run() {
+    // Load the model.
+    const model = await mobilenet.load(version, alpha);
+
     // Classify the image.
-    model.classify(img).then(predictions => {
-      console.log('Predictions');
-      console.log(predictions);
+    const predictions = await model.classify(img);
+    console.log('Predictions');
+    console.log(predictions);
 
-      const logits = model.infer(img);
-      console.log('Logits');
-      logits.print(true);
+    // Get the logits.
+    const logits = model.infer(img);
+    console.log('Logits');
+    logits.print(true);
 
-      const start = performance.now()
-      const embedding = model.infer(img, true);
-      console.log('Embedding');
-      embedding.print(true);
-    });
-  });
+
+    // Get the embedding.
+    const embedding = model.infer(img, true);
+    console.log('Embedding');
+    embedding.print(true);
+  }
+  run();
 </script>
