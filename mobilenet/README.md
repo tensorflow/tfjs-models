@@ -120,20 +120,18 @@ Returns an array of classes and probabilities that looks like:
 }]
 ```
 
-#### Getting activations
+#### Getting embeddings
 
-You can also use this model to get intermediate activations or logits as
-TensorFlow.js tensors.
-
-This method exists on the model that is loaded from `mobilenet.load`.
+You can also get the embedding of an image to do transfer learning. The size
+of the embedding depends on the alpha (width) of the model.
 
 ```ts
 model.infer(
   img: tf.Tensor3D | ImageData | HTMLImageElement |
       HTMLCanvasElement | HTMLVideoElement,
-  endpoint?: string
+  embedding = false
 )
 ```
 
 - **img:** A Tensor or an image element to make a classification on.
-- **endpoint:** The optional endpoint to predict through. You can list all the endpoints with `model.endpoints`. These correspond to layers of the MobileNet model. If undefined, will return 1000D unnormalized logits.
+- **embedding:** If true, it returns the embedding. Otherwise it returns the 1000-dim unnormalized logits.

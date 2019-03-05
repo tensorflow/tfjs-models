@@ -18,11 +18,36 @@
 import * as tf from '@tensorflow/tfjs';
 import {IMAGENET_CLASSES} from './imagenet_classes';
 
-const BASE_PATH = 'https://storage.googleapis.com/tfjs-models/tfjs/';
 const IMAGE_SIZE = 224;
 
 export type MobileNetVersion = 1;
 export type MobileNetAlpha = 0.25|0.50|0.75|1.0;
+
+const EMBEDDING_NODES: {[version: string]: string} = {
+  '1.00': 'module_apply_default/MobilenetV1/Logits/global_pool',
+  '2.00': 'module_apply_default/MobilenetV2/Logits/AvgPool'
+};
+
+const MODEL_INFO: {[version: string]: {[alpha: string]: string}} = {
+  '1.00': {
+    '0.25':
+        'https://tfhub.dev/google/imagenet/mobilenet_v1_025_224/classification/1',
+    '0.50':
+        'https://tfhub.dev/google/imagenet/mobilenet_v1_050_224/classification/1',
+    '0.75':
+        'https://tfhub.dev/google/imagenet/mobilenet_v1_075_224/classification/1',
+    '1.00':
+        'https://tfhub.dev/google/imagenet/mobilenet_v1_100_224/classification/1'
+  },
+  '2.00': {
+    '0.50':
+        'https://tfhub.dev/google/imagenet/mobilenet_v2_050_224/classification/2',
+    '0.75':
+        'https://tfhub.dev/google/imagenet/mobilenet_v2_075_224/classification/2',
+    '1.00':
+        'https://tfhub.dev/google/imagenet/mobilenet_v2_100_224/classification/2'
+  }
+};
 
 export async function load(
     version: MobileNetVersion = 1, alpha: MobileNetAlpha = 1.0) {
@@ -31,42 +56,38 @@ export async function load(
         `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
         `also include @tensorflow/tfjs on the page before using this model.`);
   }
-  if (version !== 1) {
+
+  const versionStr = version.toFixed(2);
+  const alphaStr = alpha.toFixed(2);
+  if (!(versionStr in MODEL_INFO)) {
     throw new Error(
-        `Currently only MobileNet V1 is supported. Got version ${version}.`);
+        `Invalid version of MobileNet. Valid versions are: ` +
+        `${Object.keys(MODEL_INFO)}`);
   }
-  if ([0.25, 0.50, 0.75, 1.0].indexOf(alpha) === -1) {
+  if (!(alphaStr in MODEL_INFO[versionStr])) {
     throw new Error(
-        `MobileNet constructed with invalid alpha ` +
-        `${alpha}. Valid multipliers are 0.25, 0.50, 0.75, and 1.0.`);
+        `MobileNet constructed with invalid alpha ${alpha}. Valid ` +
+        `multipliers for this version are: ` +
+        `${Object.keys(MODEL_INFO[versionStr])}.`);
   }
 
-  const mobilenet = new MobileNet(version, alpha);
+  const mobilenet = new MobileNet(versionStr, alphaStr);
   await mobilenet.load();
   return mobilenet;
 }
 
 export class MobileNet {
-  public endpoints: string[];
-
-  private path: string;
-  private model: tf.Model;
-  private intermediateModels: {[layerName: string]: tf.Model} = {};
+  model: tf.GraphModel;
 
   private normalizationOffset: tf.Scalar;
 
-  constructor(version: MobileNetVersion, alpha: MobileNetAlpha) {
-    const multiplierStr =
-        ({0.25: '0.25', 0.50: '0.50', 0.75: '0.75', 1.0: '1.0'})[alpha];
-    this.path =
-        `${BASE_PATH}mobilenet_v${version}_${multiplierStr}_${IMAGE_SIZE}/` +
-        `model.json`;
+  constructor(public version: string, public alpha: string) {
     this.normalizationOffset = tf.scalar(127.5);
   }
 
   async load() {
-    this.model = await tf.loadLayersModel(this.path);
-    this.endpoints = this.model.layers.map(l => l.name);
+    const url = MODEL_INFO[this.version][this.alpha];
+    this.model = await tf.loadGraphModel(url, {fromTFHub: true});
 
     // Warmup the model.
     const result = tf.tidy(
@@ -77,24 +98,17 @@ export class MobileNet {
   }
 
   /**
-   * Infers through the model. Optionally takes an endpoint to return an
-   * intermediate activation.
+   * Computes the logits (or the embedding) for the provided image.
    *
    * @param img The image to classify. Can be a tensor or a DOM element image,
-   * video, or canvas.
-   * @param endpoint The endpoint to infer through. If not defined, returns
-   * logits.
+   *     video, or canvas.
+   * @param embedding If true, it returns the embedding. Otherwise it returns
+   *     the 1000-dim logits.
    */
   infer(
-      img: tf.Tensor3D|ImageData|HTMLImageElement|HTMLCanvasElement|
+      img: tf.Tensor|ImageData|HTMLImageElement|HTMLCanvasElement|
       HTMLVideoElement,
-      endpoint?: string): tf.Tensor {
-    if (endpoint != null && this.endpoints.indexOf(endpoint) === -1) {
-      throw new Error(
-          `Unknown endpoint ${endpoint}. Available endpoints: ` +
-          `${this.endpoints}.`);
-    }
-
+      embedding = false): tf.Tensor {
     return tf.tidy(() => {
       if (!(img instanceof tf.Tensor)) {
         img = tf.browser.fromPixels(img);
@@ -113,22 +127,23 @@ export class MobileNet {
             normalized, [IMAGE_SIZE, IMAGE_SIZE], alignCorners);
       }
 
-      // Reshape to a single-element batch so we can pass it to predict.
-      const batched = resized.reshape([1, IMAGE_SIZE, IMAGE_SIZE, 3]);
+      // Reshape so we can pass it to predict.
+      const batched = resized.reshape([-1, IMAGE_SIZE, IMAGE_SIZE, 3]);
 
-      let model: tf.Model;
-      if (endpoint == null) {
-        model = this.model;
+      let result: tf.Tensor2D;
+
+      if (embedding) {
+        const embeddingName = EMBEDDING_NODES[this.version];
+        const internal =
+            this.model.execute(batched, embeddingName) as tf.Tensor4D;
+        result = internal.squeeze([1, 2]);
       } else {
-        if (this.intermediateModels[endpoint] == null) {
-          const layer = this.model.layers.find(l => l.name === endpoint);
-          this.intermediateModels[endpoint] =
-              tf.model({inputs: this.model.inputs, outputs: layer.output});
-        }
-        model = this.intermediateModels[endpoint];
+        const logits1001 = this.model.predict(batched) as tf.Tensor2D;
+        // Remove the very first logit (background noise).
+        result = logits1001.slice([0, 1], [-1, 1000]);
       }
 
-      return model.predict(batched) as tf.Tensor2D;
+      return result;
     });
   }
 
@@ -156,7 +171,9 @@ export class MobileNet {
 
 async function getTopKClasses(logits: tf.Tensor2D, topK: number):
     Promise<Array<{className: string, probability: number}>> {
-  const values = await logits.data();
+  const softmax = logits.softmax();
+  const values = await softmax.data();
+  softmax.dispose();
 
   const valuesAndIndices = [];
   for (let i = 0; i < values.length; i++) {
