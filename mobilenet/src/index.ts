@@ -81,7 +81,6 @@ export class MobileNet {
 
   private normalizationOffset: tf.Scalar;
 
-
   constructor(public version: string, public alpha: string) {
     this.normalizationOffset = tf.scalar(127.5);
   }
@@ -107,7 +106,7 @@ export class MobileNet {
    *     the 1000-dim logits.
    */
   infer(
-      img: tf.Tensor3D|ImageData|HTMLImageElement|HTMLCanvasElement|
+      img: tf.Tensor|ImageData|HTMLImageElement|HTMLCanvasElement|
       HTMLVideoElement,
       embedding = false): tf.Tensor {
     return tf.tidy(() => {
@@ -172,7 +171,9 @@ export class MobileNet {
 
 async function getTopKClasses(logits: tf.Tensor2D, topK: number):
     Promise<Array<{className: string, probability: number}>> {
-  const values = await logits.softmax().data();
+  const softmax = logits.softmax();
+  const values = await softmax.data();
+  softmax.dispose();
 
   const valuesAndIndices = [];
   for (let i = 0; i < values.length; i++) {
