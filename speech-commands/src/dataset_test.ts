@@ -443,7 +443,8 @@ describe('Dataset', () => {
       datasetValidationSplit: 1 / 3
     }) as [SpectrogramAndTargetsTfDataset, SpectrogramAndTargetsTfDataset];
     let numTrain = 0;
-    await trainDataset.forEachAsync(({xs, ys}) => {
+    await trainDataset.forEachAsync((xAndY: { xs: tf.Tensor2D, ys: tf.Tensor2D }) => {
+      const {xs, ys} = xAndY;
       numTrain++;
       expect(xs.shape).toEqual([1, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
       expect(xs.isDisposed).toEqual(false);
@@ -452,16 +453,13 @@ describe('Dataset', () => {
     });
     expect(numTrain).toEqual(2);
     let numVal = 0;
-    await valDataset.forEachAsync(xAndY => {
+    await valDataset.forEachAsync((xAndY: { xs: tf.Tensor2D, ys: tf.Tensor2D }) => {
+      const {xs, ys} = xAndY;
       numVal++;
-      const tuple = xAndY as {} as tf.Tensor[];
-      expect(tuple.length).toEqual(2);
-      const x = tuple[0] as tf.Tensor;
-      const y = tuple[1] as tf.Tensor;
-      expect(x.shape).toEqual([1, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
-      expect(x.isDisposed).toEqual(false);
-      expect(y.shape).toEqual([1, 2]);
-      expect(y.isDisposed).toEqual(false);
+      expect(xs.shape).toEqual([1, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
+      expect(xs.isDisposed).toEqual(false);
+      expect(ys.shape).toEqual([1, 2]);
+      expect(ys.isDisposed).toEqual(false);
     });
     expect(numVal).toEqual(1);
   });
