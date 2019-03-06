@@ -50,12 +50,13 @@ export function create(
   tf.util.assert(
       customModelURL == null && customMetadataURL == null ||
           customModelURL != null && customMetadataURL != null,
-      `customModelURL and customMetadataURL must be both provided or ` +
+      () => `customModelURL and customMetadataURL must be both provided or ` +
           `both not provided.`);
   if (customModelURL != null) {
     tf.util.assert(
         vocabulary == null,
-        `vocabulary name must be null or undefined when modelURL is provided`);
+        () => `vocabulary name must be null or undefined when modelURL ` +
+            `is provided.`);
   }
 
   if (fftType === 'BROWSER_FFT') {

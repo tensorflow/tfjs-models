@@ -46,7 +46,7 @@ export function balancedTrainValSplit(
 } {
   tf.util.assert(
       valSplit > 0 && valSplit < 1,
-      `validationSplit is expected to be >0 and <1, ` +
+      () => `validationSplit is expected to be >0 and <1, ` +
           `but got ${valSplit}`);
 
   return tf.tidy(() => {
@@ -91,15 +91,15 @@ export function balancedTrainValSplit(
  * Same as balancedTrainValSplit, but for number arrays or Float32Arrays.
  */
 export function balancedTrainValSplitNumArrays(
-    xs: number[][] | Float32Array[], ys: number[], valSplit: number): {
-  trainXs: number[][] | Float32Array[],
+    xs: number[][]|Float32Array[], ys: number[], valSplit: number): {
+  trainXs: number[][]|Float32Array[],
   trainYs: number[],
-  valXs: number[][] | Float32Array[],
+  valXs: number[][]|Float32Array[],
   valYs: number[]
 } {
   tf.util.assert(
       valSplit > 0 && valSplit < 1,
-      `validationSplit is expected to be >0 and <1, ` +
+      () => `validationSplit is expected to be >0 and <1, ` +
           `but got ${valSplit}`);
   const isXsFloat32Array = !Array.isArray(xs[0]);
 
