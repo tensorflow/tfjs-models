@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/speech-commands",
-  "version": "0.2.6",
+  "version": "0.3.0",
   "description": "Speech-command recognizer in TensorFlow.js",
   "main": "dist/index.js",
   "unpkg": "dist/speech-commands.min.js",
@@ -13,11 +13,11 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs": "^0.15.3"
+    "@tensorflow/tfjs": "^1.0.0"
   },
   "devDependencies": {
-    "@tensorflow/tfjs": "^0.15.3",
-    "@tensorflow/tfjs-node": "^0.3.0",
+    "@tensorflow/tfjs": "^1.0.0",
+    "@tensorflow/tfjs-node": "1.0.0-alpha2",
     "@types/jasmine": "~2.8.8",
     "@types/rimraf": "^2.0.2",
     "@types/tempfile": "^2.0.0",
@@ -44,6 +44,7 @@
     "build": "rimraf node_modules/@tensorflow/tfjs-node && tsc",
     "lint": "tslint -p . -t verbose",
     "publish-local": "rimraf dist && yarn build && rollup -c && yalc push",
+    "publish-npm": "yarn build && rollup -c && npm publish",
     "test": "rimraf node_modules && yarn && ts-node run_tests.ts"
   },
   "license": "Apache-2.0"

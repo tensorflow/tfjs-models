@@ -147,7 +147,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
 
     tf.util.assert(
         this.overlapFactor >= 0 && this.overlapFactor < 1,
-        `Expected overlapFactor to be >= 0 and < 1, ` +
+        () => `Expected overlapFactor to be >= 0 and < 1, ` +
             `but got ${this.overlapFactor}`);
 
     if (this.columnTruncateLength > this.fftSize) {
@@ -280,7 +280,7 @@ export class Tracker {
 
     tf.util.assert(
         this.period > 0,
-        `Expected period to be positive, but got ${this.period}`);
+        () => `Expected period to be positive, but got ${this.period}`);
   }
 
   /**
