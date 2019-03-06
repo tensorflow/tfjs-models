@@ -116,12 +116,12 @@
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-layers/-/tfjs-layers-1.0.0.tgz#e4344e9221001850eb1615184fa5ca2499f75254"
   integrity sha512-+RB5TKM/L7qLn17ic8da/G2qg8EFhRvZIoRA6uCCs5OMUJAUQqhDqBNaoWiy0pYtXDzfZJu3ZOkDbAg2Xv2YOQ==
 
-"@tensorflow/tfjs-node@^0.3.0":
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-node/-/tfjs-node-0.3.0.tgz#dfb70d9b85b80e8118ed78df5db601fade0169c7"
-  integrity sha512-dLQ2jLWywsmYlMlCqXcnG5GPdsYv0Ggy/e4FKN+Vcsa3S0YngOdvpPtzVDx74JP9W9kO00OpNkXxDBSIiEFrJg==
+"@tensorflow/tfjs-node@^0.3.1":
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-node/-/tfjs-node-0.3.1.tgz#de09b5929130f119cd21f60569e1e0effd65c2b9"
+  integrity sha512-enjW/piTvgldfOdDu/kI/dqdCb/b5DQoYTfaG6NR1IjGDPLk6E8FJecJP+7jteWVa96+PkeqjFrO/20nyA1wLg==
   dependencies:
-    "@tensorflow/tfjs" "~0.15.1"
+    "@tensorflow/tfjs" "~0.15.3"
     adm-zip "^0.4.11"
     bindings "~1.3.0"
     https-proxy-agent "^2.2.1"
@@ -130,7 +130,7 @@
     rimraf "^2.6.2"
     tar "^4.4.6"
 
-"@tensorflow/tfjs@~0.15.1":
+"@tensorflow/tfjs@~0.15.3":
   version "0.15.3"
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs/-/tfjs-0.15.3.tgz#6608833952858c8984f20962eb86624f99196f06"
   integrity sha512-NBAs+iGBNBxprm98mk488EfTDl2kA/lzNguoQGEMeIPWVHTbadSn2QV5xXKAf/fcOat+JwVfqe2vxHBbTjHMOw==
