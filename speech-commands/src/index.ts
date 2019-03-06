@@ -55,8 +55,8 @@ export function create(
   if (customModelURL != null) {
     tf.util.assert(
         vocabulary == null,
-        () =>
-            `vocabulary name must be null or undefined when modelURL is provided`);
+        () => `vocabulary name must be null or undefined when modelURL ` +
+            `is provided.`);
   }
 
   if (fftType === 'BROWSER_FFT') {

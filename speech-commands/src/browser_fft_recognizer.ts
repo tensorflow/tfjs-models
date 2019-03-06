@@ -890,8 +890,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
           config.fineTuningEpochs >= 0 &&
               Number.isInteger(config.fineTuningEpochs),
           () =>
-              `If specified, fineTuningEpochs must be a non-negative integer, ` +
-              `but received ${config.fineTuningEpochs}`);
+              `If specified, fineTuningEpochs must be a non-negative ` +
+              `integer, but received ${config.fineTuningEpochs}`);
     }
 
     if (config == null) {
