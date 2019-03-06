@@ -82,31 +82,33 @@ const VALID_OUTPUT_STRIDES = [8, 16, 32];
 // tslint:disable-next-line:no-any
 export function assertValidOutputStride(outputStride: any) {
   tf.util.assert(
-      typeof outputStride === 'number', 'outputStride is not a number');
+      typeof outputStride === 'number', () => 'outputStride is not a number');
   tf.util.assert(
       VALID_OUTPUT_STRIDES.indexOf(outputStride) >= 0,
-      `outputStride of ${outputStride} is invalid. ` +
+      () => `outputStride of ${outputStride} is invalid. ` +
           `It must be either 8, 16, or 32`);
 }
 
 // tslint:disable-next-line:no-any
 export function assertValidResolution(resolution: any, outputStride: number) {
-  tf.util.assert(typeof resolution === 'number', 'resolution is not a number');
+  tf.util.assert(
+      typeof resolution === 'number', () => 'resolution is not a number');
 
   tf.util.assert(
       (resolution - 1) % outputStride === 0,
-      `resolution of ${resolution} is invalid for output stride ` +
+      () => `resolution of ${resolution} is invalid for output stride ` +
           `${outputStride}.`);
 }
 
 // tslint:disable-next-line:no-any
 export function assertValidScaleFactor(imageScaleFactor: any) {
   tf.util.assert(
-      typeof imageScaleFactor === 'number', 'imageScaleFactor is not a number');
+      typeof imageScaleFactor === 'number',
+      () => 'imageScaleFactor is not a number');
 
   tf.util.assert(
       imageScaleFactor >= 0.2 && imageScaleFactor <= 1.0,
-      'imageScaleFactor must be between 0.2 and 1.0');
+      () => 'imageScaleFactor must be between 0.2 and 1.0');
 }
 
 export const mobileNetArchitectures:
