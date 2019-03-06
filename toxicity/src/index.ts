@@ -74,7 +74,7 @@ export class ToxicityClassifier {
     } else {
       tf.util.assert(
           this.toxicityLabels.every(d => this.labels.indexOf(d) > -1),
-          `toxicityLabels argument must contain only items from the model ` +
+          () => `toxicityLabels argument must contain only items from the model ` +
               `heads ${this.labels.join(', ')}, ` +
               `got ${this.toxicityLabels.join(', ')}`);
     }
