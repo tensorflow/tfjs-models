@@ -263,13 +263,13 @@ export async function load(multiplier: MobileNetMultiplier = 1.01):
   const possibleMultipliers = Object.keys(checkpoints);
   tf.util.assert(
       typeof multiplier === 'number',
-      `got multiplier type of ${typeof multiplier} when it should be a ` +
+      () => `got multiplier type of ${typeof multiplier} when it should be a ` +
           `number.`);
 
   tf.util.assert(
       possibleMultipliers.indexOf(multiplier.toString()) >= 0,
-      `invalid multiplier value of ${
-          multiplier}.  No checkpoint exists for that ` +
+      () => `invalid multiplier value of ${
+                multiplier}.  No checkpoint exists for that ` +
           `multiplier. Must be one of ${possibleMultipliers.join(',')}.`);
 
   const mobileNet: MobileNet = await mobilenetLoader.load(multiplier);
