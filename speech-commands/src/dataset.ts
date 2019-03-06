@@ -476,7 +476,7 @@ export class Dataset {
         const yTrain = tf.data.array(trainYs).map(
             y => tf.oneHot([y], vocab.length).squeeze([0]));
         // TODO(cais): See if we can tighten the typing.
-        let trainDataset = tf.data.zip([xTrain, yTrain]);
+        let trainDataset = tf.data.zip({xs: xTrain, ys: yTrain});
         if (shuffle) {
           // Shuffle the dataset.
           trainDataset = trainDataset.shuffle(xArrays.length);
@@ -489,7 +489,7 @@ export class Dataset {
             ]));
         const yVal = tf.data.array(valYs).map(
             y => tf.oneHot([y], vocab.length).squeeze([0]));
-        let valDataset = tf.data.zip([xVal, yVal]);
+        let valDataset = tf.data.zip({xs: xVal, ys: yVal});
         valDataset = valDataset.batch(batchSize).prefetch(4);
         // tslint:enable:no-any
 
