@@ -24,10 +24,10 @@ function scoreIsMaximumInLocalWindow(
     localMaximumRadius: number, scores: TensorBuffer3D): boolean {
   const [height, width] = scores.shape;
 
-  const xStart = Math.max(heatmapX - localMaximumRadius, 0);
-  const xEnd = Math.min(heatmapX + localMaximumRadius + 1, width);
   const yStart = Math.max(heatmapY - localMaximumRadius, 0);
   const yEnd = Math.min(heatmapY + localMaximumRadius + 1, height);
+  const xStart = Math.max(heatmapX - localMaximumRadius, 0);
+  const xEnd = Math.min(heatmapX + localMaximumRadius + 1, width);
 
   let localMaximum = true;
   for (let yCurrent = yStart; yCurrent < yEnd; ++yCurrent) {
