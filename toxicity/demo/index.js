@@ -32,10 +32,6 @@ const samples = [
     'id': '002fb627b19c4c0b',
     'text':
         'I respect your point of view, and when this discussion originated on 8th April I would have tended to agree with you.'
-  },
-  {
-    'id': '01ced7301be2a32d',
-    'text': 'now join the anti gay hitler rebellion now!'
   }
 ];
 
