@@ -13,11 +13,11 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs": "^1.0.0"
+    "@tensorflow/tfjs": "^1.0.1"
   },
   "devDependencies": {
-    "@tensorflow/tfjs": "^1.0.0",
-    "@tensorflow/tfjs-node": "1.0.0-alpha2",
+    "@tensorflow/tfjs": "^1.0.1",
+    "@tensorflow/tfjs-node": "1.0.1",
     "@types/jasmine": "~2.8.8",
     "@types/rimraf": "^2.0.2",
     "@types/tempfile": "^2.0.0",
@@ -37,15 +37,15 @@
     "ts-node": "~5.0.0",
     "tslint": "~5.10.0",
     "tslint-no-circular-imports": "^0.6.1",
-    "typescript": "2.9.2",
+    "typescript": "3.3.3333",
     "yalc": "~1.0.0-pre.21"
   },
   "scripts": {
-    "build": "rimraf node_modules/@tensorflow/tfjs-node && tsc",
+    "build": "tsc",
     "lint": "tslint -p . -t verbose",
-    "publish-local": "rimraf dist && yarn build && rollup -c && yalc push",
+    "publish-local": "yarn build && rollup -c && yalc push",
     "publish-npm": "yarn build && rollup -c && npm publish",
-    "test": "rimraf node_modules && yarn && ts-node run_tests.ts"
+    "test": "rm $(find node_modules/@tensorflow -name *_test.ts) && ts-node run_tests.ts"
   },
   "license": "Apache-2.0"
 }
