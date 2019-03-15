@@ -1,8 +1,10 @@
-import * as knnClassifier from "../src";
+import {kmeans} from '../src';
 import {genRandomSamples} from '../src/util';
+import * as tf from '@tensorflow/tfjs';
 
 const nClusters = 4;
 const nFeatures = 2;
+let model;
 
 async function prepareData(nSamplesPerCluster) {
   const {centroids, samples} = genRandomSamples(nClusters, nSamplesPerCluster, nFeatures);
@@ -30,35 +32,51 @@ function convertTensorArrayToChartData(arr, nDims) {
   return res;
 }
 
-export function plotClusters(samplesArr, centroids, nSamplesPerCluster) {
-  const ctx = document.getElementById("myChart").getContext('2d');
+function plotClusters(samplesArr, centroids, nSamplesPerCluster) {
+  const ctx = document.getElementById('myChart').getContext('2d');
   const backgroundColors = ['red', 'yellow', 'blue', 'green'];
 
   const datasets = samplesArr.map((arr, i) => ({
     label: `Cluster ${i}`,
     data: convertTensorArrayToChartData(arr, nFeatures),
-    backgroundColor: backgroundColors[i]
+    backgroundColor: backgroundColors[i],
   }));
   const myChart = new Chart(ctx, {
     type: 'scatter',
     data: {
-      datasets
+      datasets,
     },
     options: {
       scales: {
-        xAxes: [{
-          type: 'linear',
-          position: 'bottom'
-        }]
-      }
-    }
+        xAxes: [
+          {
+            type: 'linear',
+            position: 'bottom',
+          },
+        ],
+      },
+    },
   });
 }
 
+function fitData(data) {
+  model.fitPredict(data);
+}
+
 async function onPageLoad() {
+  // create model
+  model = kmeans({nClusters});
+
+  // plot initial data
   const nSamplesPerCluster = 200;
   const {samplesArr, allCentroids} = await prepareData(nSamplesPerCluster);
-  plotClusters(samplesArr, allCentroids, nSamplesPerCluster)
+  plotClusters(samplesArr, allCentroids, nSamplesPerCluster);
+
+  // set up event listener
+  const fitButton = document.getElementById('fit');
+  fitButton.addEventListener('click', () => {
+    fitData(tf.tensor2d(samplesArr, [nSamplesPerCluster, nFeatures]));
+  });
 }
 
 onPageLoad();

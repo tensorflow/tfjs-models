@@ -45,10 +45,16 @@
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@protobufjs/utf8/-/utf8-1.1.0.tgz#a777360b5b39a1a2e5106f8e858f2fd2d060c570"
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
 "@tensorflow-models/mobilenet@^0.2":
   version "0.2.2"
   resolved "https://registry.yarnpkg.com/@tensorflow-models/mobilenet/-/mobilenet-0.2.2.tgz#a91d7120c0717ba657070036946ccf060fc10818"
 
+>>>>>>> 9647a2b... added kmeans computation functions, display clusters in demo
+=======
+>>>>>>> 31a3499... added kmeans class
 "@tensorflow/tfjs-converter@0.5.2":
   version "0.5.2"
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-0.5.2.tgz#27bbe662b016e3c6ec09fb5f5f21f2bf8479399b"
@@ -4060,10 +4066,16 @@ static-module@^2.2.0:
     static-eval "^2.0.0"
     through2 "~2.0.3"
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
 stats.js@^0.17.0:
   version "0.17.0"
   resolved "https://registry.yarnpkg.com/stats.js/-/stats.js-0.17.0.tgz#b1c3dc46d94498b578b7fd3985b81ace7131cc7d"
 
+>>>>>>> 9647a2b... added kmeans computation functions, display clusters in demo
+=======
+>>>>>>> 31a3499... added kmeans class
 "statuses@>= 1.4.0 < 2":
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/statuses/-/statuses-1.5.0.tgz#161c7dac177659fd9811f43771fa99381478628c"
