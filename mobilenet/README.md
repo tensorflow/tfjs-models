@@ -78,7 +78,7 @@ mobilenet.load(
 ```
 
 Args:
-- **version:** The MobileNet version number. Currently only accepts and defaults to version 1. In the future we will support MobileNet V2.
+- **version:** The MobileNet version number. Use 1 for [MobileNetV1](https://github.com/tensorflow/models/blob/master/research/slim/nets/mobilenet_v1.md), and 2 for [MobileNetV2](https://github.com/tensorflow/models/tree/master/research/slim/nets/mobilenet). Defaults to 1.
 - **alpha:** Controls the width of the network, trading accuracy for performance. A smaller alpha decreases accuracy and increases performance. Defaults to 1.0.
 
 Returns a `model` object.
