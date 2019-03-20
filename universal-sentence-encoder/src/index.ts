@@ -19,6 +19,11 @@ import * as tf from '@tensorflow/tfjs';
 
 import {Tokenizer} from './tokenizer';
 
+let nodeFetch: Function;
+if (!tf.ENV.get('IS_BROWSER')) {
+  nodeFetch = require('node-fetch');
+}
+
 const BASE_PATH =
     'https://storage.googleapis.com/tfjs-models/savedmodel/universal_sentence_encoder/';
 
@@ -48,7 +53,6 @@ export async function loadTokenizer(pathToVocabulary?: string) {
 async function loadVocabulary(pathToVocabulary = `${BASE_PATH}vocab.json`) {
   let vocabulary;
   if (!tf.ENV.get('IS_BROWSER')) {
-    const nodeFetch = require('node-fetch');
     vocabulary = await nodeFetch(pathToVocabulary);
   } else {
     vocabulary = await fetch(pathToVocabulary);
@@ -62,6 +66,10 @@ export class UniversalSentenceEncoder {
   private tokenizer: Tokenizer;
 
   async loadModel() {
+    if (!tf.ENV.get('IS_BROWSER')) {
+      return tf.loadGraphModel(
+          `${BASE_PATH}model.json`, {fetchFunc: nodeFetch});
+    }
     return tf.loadGraphModel(`${BASE_PATH}model.json`);
   }
 
