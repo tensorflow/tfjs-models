@@ -1175,7 +1175,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     this.transferHead.add(tf.layers.dense({
       units: this.words.length,
       activation: 'softmax',
-      inputShape: truncatedBaseOutput.shape.slice(1)
+      inputShape: truncatedBaseOutput.shape.slice(1),
+      name: 'NewHeadDense'
     }));
     const transferOutput =
         this.transferHead.apply(truncatedBaseOutput) as tf.SymbolicTensor;
