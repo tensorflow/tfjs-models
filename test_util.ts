@@ -33,6 +33,6 @@ export function runTests(jasmine_util): void {
       [{name: 'node', factory: jasmine_util.CPU_FACTORY, features: {}}]);
 
   const runner = new jasmineCtor();
-  runner.loadConfig({spec_files: ['**/*_test.ts'], random: false});
+  runner.loadConfig({spec_files: ['src/**/*_test.ts'], random: false});
   runner.execute();
 }
