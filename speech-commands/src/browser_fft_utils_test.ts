@@ -17,7 +17,7 @@
 
 import * as tf from '@tensorflow/tfjs';
 import {test_util} from '@tensorflow/tfjs';
-import {normalize} from './browser_fft_utils';
+import {normalize, normalizeFloat32Array} from './browser_fft_utils';
 
 describe('normalize', () => {
   it('Non-constant value; no memory leak', () => {
@@ -39,5 +39,14 @@ describe('normalize', () => {
     const x = tf.tensor4d([42, 42, 42, 42], [1, 2, 2, 1]);
     const y = normalize(x);
     test_util.expectArraysClose(y, tf.tensor4d([0, 0, 0, 0], [1, 2, 2, 1]));
+  });
+});
+
+describe('normalizeFloat32Array', () => {
+  it('Length-4 input', () => {
+    const xs = new Float32Array([1, 2, 3, 4]);
+    const ys = normalizeFloat32Array(xs);
+    test_util.expectArraysClose(
+        ys, new Float32Array([-1.3416406, -0.4472135, 0.4472135, 1.3416406]));
   });
 });
