@@ -72,7 +72,7 @@ let transferDurationMultiplier;
 
 (async function() {
   logToStatusDisplay('Creating recognizer...');
-  recognizer = SpeechCommands.create('BROWSER_FFT');
+  recognizer = SpeechCommands.create('BROWSER_FFT', undefined, undefined, undefined, "ed2d90061cd1370e2159e98c884a97e796e69045fcb48ae1ebbaa1e7bbcfd4f0");
 
   await populateSavedTransferModelsSelect();
 

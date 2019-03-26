@@ -68,6 +68,7 @@ export interface BrowserFftFeatureExtractorConfig extends RecognizerParams {
    * will be taken every 600 ms.
    */
   overlapFactor: number;
+  micId?: string;
 }
 
 /**
@@ -107,6 +108,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
   private frameDurationMillis: number;
 
   private suppressionTimeMillis: number;
+  private micId: string;
 
   /**
    * Constructor of BrowserFftFeatureExtractor.
@@ -144,6 +146,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     this.frameDurationMillis = this.fftSize / this.sampleRateHz * 1e3;
     this.columnTruncateLength = config.columnTruncateLength || this.fftSize;
     this.overlapFactor = config.overlapFactor;
+    this.micId = config.micId ? config.micId : 'default';
 
     tf.util.assert(
         this.overlapFactor >= 0 && this.overlapFactor < 1,
@@ -164,8 +167,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
       throw new Error(
           'Cannot start already-started BrowserFftFeatureExtractor');
     }
-
-    this.stream = await getAudioMediaStream();
+    this.stream = await getAudioMediaStream(this.micId);
     this.audioContext = new this.audioContextConstructor() as AudioContext;
     if (this.audioContext.sampleRate !== this.sampleRateHz) {
       console.warn(

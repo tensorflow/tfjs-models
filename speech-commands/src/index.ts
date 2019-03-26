@@ -46,7 +46,7 @@ import {FFT_TYPE, SpeechCommandRecognizer} from './types';
  */
 export function create(
     fftType: FFT_TYPE, vocabulary?: string, customModelURL?: string,
-    customMetadataURL?: string): SpeechCommandRecognizer {
+    customMetadataURL?: string, micId?: string): SpeechCommandRecognizer {
   tf.util.assert(
       customModelURL == null && customMetadataURL == null ||
           customModelURL != null && customMetadataURL != null,
@@ -61,7 +61,7 @@ export function create(
 
   if (fftType === 'BROWSER_FFT') {
     return new BrowserFftSpeechCommandRecognizer(
-        vocabulary, customModelURL, customMetadataURL);
+        vocabulary, customModelURL, customMetadataURL, micId);
   } else if (fftType === 'SOFT_FFT') {
     throw new Error(
         'SOFT_FFT SpeechCommandRecognizer has not been implemented yet.');

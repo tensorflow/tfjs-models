@@ -82,6 +82,8 @@ export class BrowserFftSpeechCommandRecognizer implements
   private modelURL: string;
   private metadataURL: string;
 
+  protected micId: string;
+
   // The second-last dense layer in the base model.
   // To be used for unfreezing during fine-tuning.
   protected secondLastBaseDenseLayer: tf.layers.Layer;
@@ -98,7 +100,8 @@ export class BrowserFftSpeechCommandRecognizer implements
    * @param metadataURL A custom metadata URL pointing to a metadata.json
    *   file. Must be provided together with `modelURL`.
    */
-  constructor(vocabulary?: string, modelURL?: string, metadataURL?: string) {
+  constructor(vocabulary?: string, modelURL?: string, metadataURL?: string, micId?: string) {
+    this.micId = micId ? micId : 'default';
     tf.util.assert(
         modelURL == null && metadataURL == null ||
             modelURL != null && metadataURL != null,
@@ -260,7 +263,8 @@ export class BrowserFftSpeechCommandRecognizer implements
       columnTruncateLength: this.nonBatchInputShape[1],
       suppressionTimeMillis,
       spectrogramCallback,
-      overlapFactor
+      overlapFactor,
+      micId: this.micId
     });
 
     await this.audioDataExtractor.start();
@@ -537,7 +541,8 @@ export class BrowserFftSpeechCommandRecognizer implements
         columnTruncateLength: this.nonBatchInputShape[1],
         suppressionTimeMillis: 0,
         spectrogramCallback,
-        overlapFactor: 0
+        overlapFactor: 0,
+        micId: this.micId
       });
       this.audioDataExtractor.start();
     });
@@ -695,7 +700,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         columnTruncateLength: this.nonBatchInputShape[1],
         suppressionTimeMillis: 0,
         spectrogramCallback,
-        overlapFactor: 0
+        overlapFactor: 0,
+        micId: this.micId
       });
       this.audioDataExtractor.start();
     });
