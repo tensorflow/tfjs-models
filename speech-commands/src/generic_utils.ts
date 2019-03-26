@@ -36,6 +36,25 @@ export function concatenateArrayBuffers(buffers: ArrayBuffer[]): ArrayBuffer {
   return temp.buffer;
 }
 
+/**
+ * Concatenate Float32Arrays.
+ *
+ * @param xs Float32Arrays to concatenate.
+ * @return The result of the concatenation.
+ */
+export function concatenateFloat32Arrays(xs: Float32Array[]): Float32Array {
+  // TODO(cais): Add unit test.
+  let totalLength = 0;
+  xs.forEach(x => totalLength += x.length);
+  const concatenated = new Float32Array(totalLength);
+  let index = 0;
+  xs.forEach(x => {
+    concatenated.set(x, index);
+    index += x.length;
+  });
+  return concatenated;
+}
+
 /** Encode a string as an ArrayBuffer. */
 export function string2ArrayBuffer(str: string): ArrayBuffer {
   if (str == null) {

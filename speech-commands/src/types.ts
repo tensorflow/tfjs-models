@@ -135,6 +135,20 @@ export interface ExampleCollectionOptions {
    * If specified, must be >0.
    */
   durationSec?: number;
+
+  /**
+   * Optional snipppet duration in seconds.
+   * 
+   * Must be supplied if `snippetCallback` is specified.
+   */
+  snippetDurationSec?: number;
+
+  /**
+   * Optional snippet callback.
+   * 
+   * Must be supplied if `snippetDurationSec` is specified.
+   */
+  snippetCallback?: (spectrogram: SpectrogramData) => Promise<void>;
 }
 
 /**

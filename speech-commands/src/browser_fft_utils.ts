@@ -64,6 +64,28 @@ export function normalize(x: tf.Tensor): tf.Tensor {
   });
 }
 
+/**
+ * Z-Normalize the elements of a Float32Array.
+ * 
+ * Subtract the mean and divide the result by the standard deviation.
+ * 
+ * @param x The Float32Array to normalize.
+ * @return Noramlzied Float32Array.
+ */
+export function normalizeFloat32Array(x: Float32Array): Float32Array {
+  if (EPSILON == null) {
+    EPSILON = tf.ENV.get('EPSILON');
+  }
+  return tf.tidy(() => {
+    const {mean, variance} = tf.moments(tf.tensor1d(x));
+    const meanVal = mean.arraySync() as number;
+    const stdVal = Math.sqrt(variance.arraySync() as number);
+    const yArray = Array.from(x).map(
+        y => (y - meanVal) / (stdVal + EPSILON));
+    return new Float32Array(yArray);
+  });
+}
+
 export function getAudioContextConstructor(): AudioContext {
   // tslint:disable-next-line:no-any
   return (window as any).AudioContext || (window as any).webkitAudioContext;
