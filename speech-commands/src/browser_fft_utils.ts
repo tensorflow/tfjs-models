@@ -70,7 +70,7 @@ export function getAudioContextConstructor(): AudioContext {
 }
 
 export async function getAudioMediaStream(
-    audioTrackConstraints: MediaTrackConstraints): Promise<MediaStream> {
+    audioTrackConstraints?: MediaTrackConstraints): Promise<MediaStream> {
   return await navigator.mediaDevices.getUserMedia({
     audio: audioTrackConstraints == null ? true : audioTrackConstraints,
     video: false

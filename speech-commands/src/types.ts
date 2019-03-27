@@ -135,6 +135,14 @@ export interface ExampleCollectionOptions {
    * If specified, must be >0.
    */
   durationSec?: number;
+
+  /**
+   * Optional constraints for the audio track.
+   * 
+   * E.g., this can be used to select a microphone when multiple microphones
+   * are available on the system: `{deviceId: 'deadbeef'}`.
+   */
+  audioTrackConstraints?: MediaTrackConstraints;
 }
 
 /**
@@ -378,6 +386,14 @@ export interface SpeechCommandRecognizerResult {
 }
 
 export interface StreamingRecognitionConfig {
+  /**
+   * Optional constraints for the audio track.
+   * 
+   * E.g., this can be used to select a microphone when multiple microphones
+   * are available on the system: `{deviceId: 'deadbeef'}`.
+   */
+  audioTrackConstraints?: MediaTrackConstraints;
+
   /**
    * Overlap factor. Must be >=0 and <1.
    * Defaults to 0.5.
@@ -632,7 +648,8 @@ export interface FeatureExtractor {
   /**
    * Start the feature extraction from the audio samples.
    */
-  start(): Promise<Float32Array[]|void>;
+  start(audioTrackConstraints?: MediaTrackConstraints):
+      Promise<Float32Array[]|void>;
 
   /**
    * Stop the feature extraction.
