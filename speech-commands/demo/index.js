@@ -20,7 +20,7 @@ import * as tf from '@tensorflow/tfjs';
 
 import * as SpeechCommands from '../src';
 
-import {hideCandidateWords, logToStatusDisplay, plotPredictions, populateCandidateWords, showCandidateWords} from './ui';
+import {hideCandidateWords, logToStatusDisplay, plotPredictions, plotSpectrogram, populateCandidateWords, showCandidateWords} from './ui';
 import {DatasetViz, removeNonFixedChildrenFromWordDiv} from './dataset-vis';
 
 const startButton = document.getElementById('start');
@@ -63,7 +63,7 @@ const startTransferLearnButton =
 const XFER_MODEL_NAME = 'xfer-model';
 
 // Minimum required number of examples per class for transfer learning.
-const MIN_EXAMPLES_PER_CLASS = 8;
+const MIN_EXAMPLES_PER_CLASS = 16;
 
 let recognizer;
 let transferWords;
@@ -221,35 +221,65 @@ function createWordDivs(transferWords) {
 
     button.addEventListener('click', async () => {
       disableAllCollectWordButtons();
+      removeNonFixedChildrenFromWordDiv(wordDiv);
+
       const collectExampleOptions = {};
       let durationSec;
-      // _background_noise_ examples are special, in that user can specify
-      // the length of the recording (in seconds).
+      let intervalJob;
+      let progressBar;
+
       if (word === BACKGROUND_NOISE_TAG) {
+        // If the word type is background noise, display a progress bar during
+        // sound collection and do not show an incrementally updating
+        // spectrogram.
+        // _background_noise_ examples are special, in that user can specify
+        // the length of the recording (in seconds).
         collectExampleOptions.durationSec =
             Number.parseFloat(durationInput.value);
         durationSec = collectExampleOptions.durationSec;
-      } else {
-        collectExampleOptions.durationMultiplier = transferDurationMultiplier;
-        durationSec = 2;
-      }
 
-      // Show collection progress bar.
-      removeNonFixedChildrenFromWordDiv(wordDiv);
-      const progressBar = document.createElement('progress');
-      progressBar.value = 0;
-      progressBar.style['width'] = `${Math.round(window.innerWidth * 0.25)}px`;
-      // Update progress bar in increments.
-      const intervalJob = setInterval(() => {
-        progressBar.value += 0.05;
-      }, durationSec * 1e3 / 20);
-      wordDiv.appendChild(progressBar);
+        progressBar = document.createElement('progress');
+        progressBar.value = 0;
+        progressBar.style['width'] = `${Math.round(window.innerWidth * 0.25)}px`;
+        // Update progress bar in increments.
+        intervalJob = setInterval(() => {
+          progressBar.value += 0.05;
+        }, durationSec * 1e3 / 20);
+        wordDiv.appendChild(progressBar);
+      } else {
+        // If this is not a background-noise word type, show incrementally
+        // updating spectrogram in real time.
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.style['margin-left'] = '132px';
+        tempCanvas.height = 50;
+        wordDiv.appendChild(tempCanvas);
+
+        let tempSpectrogramData;
+        collectExampleOptions.durationSec = 2;
+        collectExampleOptions.snippetDurationSec = 0.1;
+        collectExampleOptions.snippetCallback = async (spectrogram) => {
+          if (tempSpectrogramData == null) {
+            tempSpectrogramData = spectrogram.data;
+          } else {
+            tempSpectrogramData = SpeechCommands.utils.concatenateFloat32Arrays(
+                [tempSpectrogramData, spectrogram.data]);
+          }
+
+          plotSpectrogram(
+              tempCanvas, tempSpectrogramData, spectrogram.frameSize,
+              spectrogram.frameSize, {pixelsPerFrame: 2});
+        }
+      }
 
       const spectrogram = await transferRecognizer.collectExample(
           word, collectExampleOptions);
 
-      clearInterval(intervalJob);
-      wordDiv.removeChild(progressBar);
+      if (intervalJob != null) {
+        clearInterval(intervalJob);
+      }
+      if (progressBar != null) {
+        wordDiv.removeChild(progressBar);
+      }
       const examples = transferRecognizer.getExamples(word)
       const exampleUID = examples[examples.length - 1].uid;
       await datasetViz.drawExample(wordDiv, word, spectrogram, exampleUID);
