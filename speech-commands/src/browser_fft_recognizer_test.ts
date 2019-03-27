@@ -668,13 +668,15 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
         snippetLengths.push(spectrogram.data.length);
       }
     });
-    expect(snippetLengths.length).toEqual(10);
+    expect(snippetLengths.length).toEqual(11);
     expect(snippetLengths[0]).toEqual(927);
+    // First audio sample is zero and should have been skipped.
     for (let i = 1; i < snippetLengths.length; ++i) {
       expect(snippetLengths[i]).toEqual(928);
     }
     expect(finalSpectrogram.data.length)
        .toEqual(snippetLengths.reduce((x, prev) => x + prev));
+    expect(finalSpectrogram.data.length).toEqual(10208 - 1);
   });
 
   it('collectExample w/ invalid durationSec leads to error',  async done => {

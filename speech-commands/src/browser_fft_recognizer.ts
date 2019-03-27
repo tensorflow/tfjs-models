@@ -736,7 +736,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
             });
           }
 
-          if (++callbackCount === callbackCountTarget) {
+          if (callbackCount++ === callbackCountTarget) {
             await this.audioDataExtractor.stop();
             streaming = false;
             this.collateTransferWords();

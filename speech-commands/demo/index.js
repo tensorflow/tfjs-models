@@ -258,29 +258,23 @@ function createWordDivs(transferWords) {
         // multiplier is >1 (> ~1 s recoding), show an incrementally
         // updating spectrogram in real time.
         collectExampleOptions.durationMultiplier = transferDurationMultiplier;
-        if (transferDurationMultiplier > 1) {
-          let tempSpectrogramData;
-          const tempCanvas = document.createElement('canvas');
-          tempCanvas.style['margin-left'] = '132px';
-          tempCanvas.height = 50;
-          wordDiv.appendChild(tempCanvas);
+        let tempSpectrogramData;
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.style['margin-left'] = '132px';
+        tempCanvas.height = 50;
+        wordDiv.appendChild(tempCanvas);
 
-          collectExampleOptions.snippetDurationSec = 0.1;
-          collectExampleOptions.snippetCallback = async (spectrogram) => {
-            if (tempSpectrogramData == null) {
-              tempSpectrogramData = spectrogram.data;
-            } else {
-              tempSpectrogramData = SpeechCommands.utils.concatenateFloat32Arrays(
-                  [tempSpectrogramData, spectrogram.data]);
-            }
-            plotSpectrogram(
-                tempCanvas, tempSpectrogramData, spectrogram.frameSize,
-                spectrogram.frameSize, {pixelsPerFrame: 2});
+        collectExampleOptions.snippetDurationSec = 0.1;
+        collectExampleOptions.snippetCallback = async (spectrogram) => {
+          if (tempSpectrogramData == null) {
+            tempSpectrogramData = spectrogram.data;
+          } else {
+            tempSpectrogramData = SpeechCommands.utils.concatenateFloat32Arrays(
+                [tempSpectrogramData, spectrogram.data]);
           }
-        } else {
-          const barAndJob = createProgressBarAndIntervalJob(wordDiv, 1);
-          progressBar = barAndJob.progressBar;
-          intervalJob = barAndJob.intervalJob;
+          plotSpectrogram(
+              tempCanvas, tempSpectrogramData, spectrogram.frameSize,
+              spectrogram.frameSize, {pixelsPerFrame: 2});
         }
       }
 
