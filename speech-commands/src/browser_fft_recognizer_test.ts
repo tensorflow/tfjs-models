@@ -653,6 +653,31 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     }
   });
 
+  it('collectExample with snippetCallback', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    const durationSec = 1;
+    const snippetDurationSec = 0.1;
+    const snippetLengths: number[] = [];
+    const finalSpectrogram = await transfer.collectExample('foo', {
+      durationSec,
+      snippetDurationSec,
+      snippetCallback: async spectrogram => {
+        snippetLengths.push(spectrogram.data.length);
+      }
+    });
+    expect(snippetLengths.length).toEqual(10);
+    expect(snippetLengths[0]).toEqual(927);
+    for (let i = 1; i < snippetLengths.length; ++i) {
+      expect(snippetLengths[i]).toEqual(928);
+    }
+    expect(finalSpectrogram.data.length)
+       .toEqual(snippetLengths.reduce((prev, x) => x + prev));
+    console.log(finalSpectrogram.data.length);
+  });
+
   it('collectTransferLearningExample default transfer model', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();

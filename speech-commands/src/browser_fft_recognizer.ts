@@ -678,7 +678,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
               `is provided.`);
     }
     if (options.snippetCallback != null) {
-      tf.util.assert(options.snippetDurationSec != null, 
+      tf.util.assert(options.snippetDurationSec != null,
           () => `snippetDurationSec must be supplied if snippetCallback ` +
               `is provided.`);
     }
@@ -688,7 +688,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
 
     streaming = true;
     return new Promise<SpectrogramData>(resolve => {
-      const stepFactor = options.snippetDurationSec == null ? 
+      const stepFactor = options.snippetDurationSec == null ?
           1 : options.snippetDurationSec / totalDurationSec;
       const overlapFactor = 1 - stepFactor;
       const callbackCountTarget = Math.round(1 / stepFactor);
@@ -763,7 +763,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         columnTruncateLength: this.nonBatchInputShape[1],
         suppressionTimeMillis: 0,
         spectrogramCallback,
-        overlapFactor: 0
+        overlapFactor
       });
       this.audioDataExtractor.start();
     });
