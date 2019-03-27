@@ -653,7 +653,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     }
   });
 
-  it('collectExample with snippetCallback', async () => {
+  it('collectExample with onSnippet', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();
@@ -664,7 +664,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     const finalSpectrogram = await transfer.collectExample('foo', {
       durationSec,
       snippetDurationSec,
-      snippetCallback: async spectrogram => {
+      onSnippet: async spectrogram => {
         snippetLengths.push(spectrogram.data.length);
       }
     });
@@ -698,7 +698,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     }
   });
 
-  it('collectExample w/ snippetCallback w/o snippetDurationSec error',
+  it('collectExample w/ onSnippet w/o snippetDurationSec error',
       async done => {
         setUpFakes();
         const base = new BrowserFftSpeechCommandRecognizer();
@@ -708,12 +708,12 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
         try {
           await transfer.collectExample('foo', {
             durationSec,
-            snippetCallback: async spectrogram => {}
+            onSnippet: async spectrogram => {}
           });
           done.fail();
         } catch (error) {
           expect(error.message).toMatch(
-              /snippetDurationSec must be provided if snippetCallback/);
+              /snippetDurationSec must be provided if onSnippet/);
           done();
         }
       });
@@ -734,7 +734,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
           done.fail();
         } catch (error) {
           expect(error.message).toMatch(
-              /snippetCallback must be provided if snippetDurationSec/);
+              /onSnippet must be provided if snippetDurationSec/);
           done();
         }
       });

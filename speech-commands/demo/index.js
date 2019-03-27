@@ -265,7 +265,7 @@ function createWordDivs(transferWords) {
         wordDiv.appendChild(tempCanvas);
 
         collectExampleOptions.snippetDurationSec = 0.1;
-        collectExampleOptions.snippetCallback = async (spectrogram) => {
+        collectExampleOptions.onSnippet = async (spectrogram) => {
           if (tempSpectrogramData == null) {
             tempSpectrogramData = spectrogram.data;
           } else {

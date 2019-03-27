@@ -673,13 +673,13 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       tf.util.assert(options.snippetDurationSec > 0,
           () => `snippetDurationSec is expected to be > 0, but got ` +
               `${options.snippetDurationSec}`);
-      tf.util.assert(options.snippetCallback != null,
-          () => `snippetCallback must be provided if snippetDurationSec ` +
+      tf.util.assert(options.onSnippet != null,
+          () => `onSnippet must be provided if snippetDurationSec ` +
               `is provided.`);
     }
-    if (options.snippetCallback != null) {
+    if (options.onSnippet != null) {
       tf.util.assert(options.snippetDurationSec != null,
-          () => `snippetDurationSec must be provided if snippetCallback ` +
+          () => `snippetDurationSec must be provided if onSnippet ` +
               `is provided.`);
     }
     const frameDurationSec =
@@ -698,7 +698,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
 
       const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
         // TODO(cais): can we consolidate the logic in the two branches?
-        if (options.snippetCallback == null) {
+        if (options.onSnippet == null) {
           const normalizedX = normalize(x);
           this.dataset.addExample({
             label: word,
@@ -729,8 +729,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
           const snippetData = data.slice(data.length - increment, data.length);
           spectrogramSnippets.push(snippetData);
 
-          if (options.snippetCallback != null) {
-            options.snippetCallback({
+          if (options.onSnippet != null) {
+            options.onSnippet({
               data: snippetData,
               frameSize: this.nonBatchInputShape[1]
             });

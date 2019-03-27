@@ -139,20 +139,22 @@ export interface ExampleCollectionOptions {
   /**
    * Optional snipppet duration in seconds.
    *
-   * Must be supplied if `snippetCallback` is specified.
+   * Must be supplied if `onSnippet` is specified.
    */
   snippetDurationSec?: number;
 
   /**
    * Optional snippet callback.
    *
-   * Must be supplied if `snippetDurationSec` is specified.
+   * Must be provided if `snippetDurationSec` is specified.
    *
-   * Each invocation of the callback with be conducted with `spectogram`
-   * being the cumulative spectrogram that has been collected since the
-   * beginning of the `collectExample()` call.
+   * The callback will be invoked every `snippetDurationSec` seconds.
+   * Each invocation of the callback with be done with `spectogram`
+   * being the a short spectrogram of duration `snippetDurationSec`.
+   * It is the spectrogram accumulated since the last invocation of the
+   * callback (or for the first time, since when `collectExample()` is started).
    */
-  snippetCallback?: (spectrogram: SpectrogramData) => Promise<void>;
+  onSnippet?: (spectrogram: SpectrogramData) => Promise<void>;
 }
 
 /**
