@@ -674,9 +674,68 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
       expect(snippetLengths[i]).toEqual(928);
     }
     expect(finalSpectrogram.data.length)
-       .toEqual(snippetLengths.reduce((prev, x) => x + prev));
-    console.log(finalSpectrogram.data.length);
+       .toEqual(snippetLengths.reduce((x, prev) => x + prev));
   });
+
+  it('collectExample w/ invalid durationSec leads to error',  async done => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    const durationSec = 1;
+    const snippetDurationSec = 0;
+    try {
+      await transfer.collectExample('foo', {
+        durationSec,
+        snippetDurationSec
+      });
+      done.fail();
+    } catch (error) {
+      expect(error.message).toMatch(/snippetDurationSec is expected to be > 0/);
+      done();
+    }
+  });
+
+  it('collectExample w/ snippetCallback w/o snippetDurationSec error',
+      async done => {
+        setUpFakes();
+        const base = new BrowserFftSpeechCommandRecognizer();
+        await base.ensureModelLoaded();
+        const transfer = base.createTransfer('xfer1');
+        const durationSec = 1;
+        try {
+          await transfer.collectExample('foo', {
+            durationSec,
+            snippetCallback: async spectrogram => {}
+          });
+          done.fail();
+        } catch (error) {
+          expect(error.message).toMatch(
+              /snippetDurationSec must be provided if snippetCallback/);
+          done();
+        }
+      });
+
+  it('collectExample w/ snippetDurationSec w/o callback errors',
+      async done => {
+        setUpFakes();
+        const base = new BrowserFftSpeechCommandRecognizer();
+        await base.ensureModelLoaded();
+        const transfer = base.createTransfer('xfer1');
+        const durationSec = 1;
+        const snippetDurationSec = 0.1;
+        try {
+          await transfer.collectExample('foo', {
+            durationSec,
+            snippetDurationSec
+          });
+          done.fail();
+        } catch (error) {
+          expect(error.message).toMatch(
+              /snippetCallback must be provided if snippetDurationSec/);
+          done();
+        }
+      });
 
   it('collectTransferLearningExample default transfer model', async () => {
     setUpFakes();

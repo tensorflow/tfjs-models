@@ -671,15 +671,15 @@ class TransferBrowserFftSpeechCommandRecognizer extends
 
     if (options.snippetDurationSec != null) {
       tf.util.assert(options.snippetDurationSec > 0,
-          () => `snipppetDuration is expected to be > 0, but got ` +
+          () => `snippetDurationSec is expected to be > 0, but got ` +
               `${options.snippetDurationSec}`);
       tf.util.assert(options.snippetCallback != null,
-          () => `snippetCallback must be supplied if snippetDuration ` +
+          () => `snippetCallback must be provided if snippetDurationSec ` +
               `is provided.`);
     }
     if (options.snippetCallback != null) {
       tf.util.assert(options.snippetDurationSec != null,
-          () => `snippetDurationSec must be supplied if snippetCallback ` +
+          () => `snippetDurationSec must be provided if snippetCallback ` +
               `is provided.`);
     }
     const frameDurationSec =

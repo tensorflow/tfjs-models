@@ -147,6 +147,10 @@ export interface ExampleCollectionOptions {
    * Optional snippet callback.
    *
    * Must be supplied if `snippetDurationSec` is specified.
+   *
+   * Each invocation of the callback with be conducted with `spectogram`
+   * being the cumulative spectrogram that has been collected since the
+   * beginning of the `collectExample()` call.
    */
   snippetCallback?: (spectrogram: SpectrogramData) => Promise<void>;
 }
