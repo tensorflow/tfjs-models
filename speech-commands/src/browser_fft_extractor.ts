@@ -146,7 +146,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     this.frameDurationMillis = this.fftSize / this.sampleRateHz * 1e3;
     this.columnTruncateLength = config.columnTruncateLength || this.fftSize;
     this.overlapFactor = config.overlapFactor;
-    this.micId = config.micId ? config.micId : 'default';
+    this.micId = config.micId;
 
     tf.util.assert(
         this.overlapFactor >= 0 && this.overlapFactor < 1,

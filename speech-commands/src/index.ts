@@ -41,6 +41,7 @@ import {FFT_TYPE, SpeechCommandRecognizer} from './types';
  *   most also be provided.
  * @param customMetadataURL A custom metadata URL pointing to a metadata.json
  *   file. Must be provided together with `customModelURL`.
+ * @param micId specific micId to be used for streaming.
  * @returns An instance of SpeechCommandRecognizer.
  * @throws Error on invalid value of `fftType`.
  */

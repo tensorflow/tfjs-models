@@ -31,7 +31,7 @@ export const SAVED_MODEL_METADATA_KEY =
     'tfjs-speech-commands-saved-model-metadata';
 export const SAVE_PATH_PREFIX = 'indexeddb://tfjs-speech-commands-model/';
 
-let streaming = false;
+// let streaming = false;
 
 // Export a variable for injection during unit testing.
 // tslint:disable-next-line:no-any
@@ -57,6 +57,7 @@ export class BrowserFftSpeechCommandRecognizer implements
     SpeechCommandRecognizer {
   static readonly VALID_VOCABULARY_NAMES: string[] = ['18w', 'directional4w'];
   static readonly DEFAULT_VOCABULARY_NAME = '18w';
+  static readonly DEFAULT_MIC_ID = 'default';
 
   readonly MODEL_URL_PREFIX =
       `https://storage.googleapis.com/tfjs-models/tfjs/speech-commands/v${
@@ -83,6 +84,7 @@ export class BrowserFftSpeechCommandRecognizer implements
   private metadataURL: string;
 
   protected micId: string;
+  protected streaming: boolean;
 
   // The second-last dense layer in the base model.
   // To be used for unfreezing during fine-tuning.
@@ -99,14 +101,18 @@ export class BrowserFftSpeechCommandRecognizer implements
    *   most also be provided.
    * @param metadataURL A custom metadata URL pointing to a metadata.json
    *   file. Must be provided together with `modelURL`.
+   * @param micId specific micId to be used for streaming. Defaults to "default".
    */
   constructor(vocabulary?: string, modelURL?: string, metadataURL?: string, micId?: string) {
-    this.micId = micId ? micId : 'default';
     tf.util.assert(
         modelURL == null && metadataURL == null ||
             modelURL != null && metadataURL != null,
         () => `modelURL and metadataURL must be both provided or ` +
             `both not provided.`);
+    if (micId == null) {
+      micId = BrowserFftSpeechCommandRecognizer.DEFAULT_MIC_ID;
+    }
+    this.micId = micId;
     if (modelURL == null) {
       if (vocabulary == null) {
         vocabulary = BrowserFftSpeechCommandRecognizer.DEFAULT_VOCABULARY_NAME;
@@ -133,6 +139,7 @@ export class BrowserFftSpeechCommandRecognizer implements
       sampleRateHz: this.SAMPLE_RATE_HZ,
       fftSize: this.FFT_SIZE
     };
+    this.streaming = false;
   }
 
   /**
@@ -166,7 +173,7 @@ export class BrowserFftSpeechCommandRecognizer implements
   async listen(
       callback: RecognizerCallback,
       config?: StreamingRecognitionConfig): Promise<void> {
-    if (streaming) {
+    if (this.streaming) {
       throw new Error(
           'Cannot start streaming again when streaming is ongoing.');
     }
@@ -269,7 +276,7 @@ export class BrowserFftSpeechCommandRecognizer implements
 
     await this.audioDataExtractor.start();
 
-    streaming = true;
+    this.streaming = true;
   }
 
   /**
@@ -388,18 +395,18 @@ export class BrowserFftSpeechCommandRecognizer implements
    * @throws Error if there is not ongoing streaming recognition.
    */
   async stopListening(): Promise<void> {
-    if (!streaming) {
+    if (!this.streaming) {
       throw new Error('Cannot stop streaming when streaming is not ongoing.');
     }
     await this.audioDataExtractor.stop();
-    streaming = false;
+    this.streaming = false;
   }
 
   /**
    * Check if streaming recognition is ongoing.
    */
   isListening(): boolean {
-    return streaming;
+    return this.streaming;
   }
 
   /**
@@ -634,7 +641,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
   async collectExample(word: string, options?: ExampleCollectionOptions):
       Promise<SpectrogramData> {
     tf.util.assert(
-        !streaming,
+        !this.streaming,
         () => 'Cannot start collection of transfer-learning example because ' +
             'a streaming recognition or transfer-learning example collection ' +
             'is ongoing');
@@ -673,7 +680,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       numFramesPerSpectrogram = this.nonBatchInputShape[0];
     }
 
-    streaming = true;
+    this.streaming = true;
     return new Promise<SpectrogramData>(resolve => {
       const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
         const normalizedX = normalize(x);
@@ -686,7 +693,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         });
         normalizedX.dispose();
         await this.audioDataExtractor.stop();
-        streaming = false;
+        this.streaming = false;
         this.collateTransferWords();
         resolve({
           data: await x.data() as Float32Array,
