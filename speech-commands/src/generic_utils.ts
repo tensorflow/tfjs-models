@@ -43,7 +43,6 @@ export function concatenateArrayBuffers(buffers: ArrayBuffer[]): ArrayBuffer {
  * @return The result of the concatenation.
  */
 export function concatenateFloat32Arrays(xs: Float32Array[]): Float32Array {
-  // TODO(cais): Add unit test.
   let totalLength = 0;
   xs.forEach(x => totalLength += x.length);
   const concatenated = new Float32Array(totalLength);

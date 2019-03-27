@@ -45,7 +45,10 @@ describe('normalize', () => {
 describe('normalizeFloat32Array', () => {
   it('Length-4 input', () => {
     const xs = new Float32Array([1, 2, 3, 4]);
+    const numTensors0 = tf.memory().numTensors;
     const ys = normalizeFloat32Array(xs);
+    // Assert no memory leak.
+    expect(tf.memory().numTensors).toEqual(numTensors0);
     test_util.expectArraysClose(
         ys, new Float32Array([-1.3416406, -0.4472135, 0.4472135, 1.3416406]));
   });
