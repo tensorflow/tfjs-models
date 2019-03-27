@@ -69,10 +69,10 @@ export function getAudioContextConstructor(): AudioContext {
   return (window as any).AudioContext || (window as any).webkitAudioContext;
 }
 
-export async function getAudioMediaStream(micId: string): Promise<MediaStream> {
+export async function getAudioMediaStream(deviceId?: string): Promise<MediaStream> {
     return await navigator.mediaDevices.getUserMedia({
         audio: {
-            deviceId: micId
+            deviceId: deviceId ? deviceId : "default"
         },
         video: false
     });

@@ -31,7 +31,6 @@ export const SAVED_MODEL_METADATA_KEY =
     'tfjs-speech-commands-saved-model-metadata';
 export const SAVE_PATH_PREFIX = 'indexeddb://tfjs-speech-commands-model/';
 
-// let streaming = false;
 
 // Export a variable for injection during unit testing.
 // tslint:disable-next-line:no-any
@@ -57,7 +56,7 @@ export class BrowserFftSpeechCommandRecognizer implements
     SpeechCommandRecognizer {
   static readonly VALID_VOCABULARY_NAMES: string[] = ['18w', 'directional4w'];
   static readonly DEFAULT_VOCABULARY_NAME = '18w';
-  static readonly DEFAULT_MIC_ID = 'default';
+  static readonly DEFAULT_DEVICE_ID = 'default';
 
   readonly MODEL_URL_PREFIX =
       `https://storage.googleapis.com/tfjs-models/tfjs/speech-commands/v${
@@ -83,7 +82,7 @@ export class BrowserFftSpeechCommandRecognizer implements
   private modelURL: string;
   private metadataURL: string;
 
-  protected micId: string;
+  protected deviceId: string;
   protected streaming: boolean;
 
   // The second-last dense layer in the base model.
@@ -101,18 +100,19 @@ export class BrowserFftSpeechCommandRecognizer implements
    *   most also be provided.
    * @param metadataURL A custom metadata URL pointing to a metadata.json
    *   file. Must be provided together with `modelURL`.
-   * @param micId specific micId to be used for streaming. Defaults to "default".
+   * @param deviceId The specific string id of the device to be used for streaming.
+   *   If none specified the default will be "default".
    */
-  constructor(vocabulary?: string, modelURL?: string, metadataURL?: string, micId?: string) {
+  constructor(vocabulary?: string, modelURL?: string, metadataURL?: string, deviceId?: string) {
     tf.util.assert(
         modelURL == null && metadataURL == null ||
             modelURL != null && metadataURL != null,
         () => `modelURL and metadataURL must be both provided or ` +
             `both not provided.`);
-    if (micId == null) {
-      micId = BrowserFftSpeechCommandRecognizer.DEFAULT_MIC_ID;
+    if (deviceId == null) {
+      deviceId = BrowserFftSpeechCommandRecognizer.DEFAULT_DEVICE_ID;
     }
-    this.micId = micId;
+    this.deviceId = deviceId;
     if (modelURL == null) {
       if (vocabulary == null) {
         vocabulary = BrowserFftSpeechCommandRecognizer.DEFAULT_VOCABULARY_NAME;
@@ -271,7 +271,7 @@ export class BrowserFftSpeechCommandRecognizer implements
       suppressionTimeMillis,
       spectrogramCallback,
       overlapFactor,
-      micId: this.micId
+      deviceId: this.deviceId
     });
 
     await this.audioDataExtractor.start();
@@ -549,7 +549,7 @@ export class BrowserFftSpeechCommandRecognizer implements
         suppressionTimeMillis: 0,
         spectrogramCallback,
         overlapFactor: 0,
-        micId: this.micId
+        deviceId: this.deviceId
       });
       this.audioDataExtractor.start();
     });
@@ -708,7 +708,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         suppressionTimeMillis: 0,
         spectrogramCallback,
         overlapFactor: 0,
-        micId: this.micId
+        deviceId: this.deviceId
       });
       this.audioDataExtractor.start();
     });
