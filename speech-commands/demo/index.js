@@ -63,7 +63,7 @@ const startTransferLearnButton =
 const XFER_MODEL_NAME = 'xfer-model';
 
 // Minimum required number of examples per class for transfer learning.
-const MIN_EXAMPLES_PER_CLASS = 16;
+const MIN_EXAMPLES_PER_CLASS = 8;
 
 let recognizer;
 let transferWords;
@@ -165,6 +165,18 @@ function scrollToPageBottom() {
 let collectWordButtons = {};
 let datasetViz;
 
+function createProgressBarAndIntervalJob(parentElement, durationSec) {
+  const progressBar = document.createElement('progress');
+  progressBar.value = 0;
+  progressBar.style['width'] = `${Math.round(window.innerWidth * 0.25)}px`;
+  // Update progress bar in increments.
+  const intervalJob = setInterval(() => {
+    progressBar.value += 0.05;
+  }, durationSec * 1e3 / 20);
+  parentElement.appendChild(progressBar);
+  return {progressBar, intervalJob};
+}
+
 /**
  * Create div elements for transfer words.
  *
@@ -238,36 +250,37 @@ function createWordDivs(transferWords) {
             Number.parseFloat(durationInput.value);
         durationSec = collectExampleOptions.durationSec;
 
-        progressBar = document.createElement('progress');
-        progressBar.value = 0;
-        progressBar.style['width'] = `${Math.round(window.innerWidth * 0.25)}px`;
-        // Update progress bar in increments.
-        intervalJob = setInterval(() => {
-          progressBar.value += 0.05;
-        }, durationSec * 1e3 / 20);
-        wordDiv.appendChild(progressBar);
+        const barAndJob = createProgressBarAndIntervalJob(wordDiv, durationSec);
+        progressBar = barAndJob.progressBar;
+        intervalJob = barAndJob.intervalJob;
       } else {
-        // If this is not a background-noise word type, show incrementally
+        // If this is not a background-noise word type and if the duration
+        // multiplier is >1 (> ~1 s recoding), show an incrementally
         // updating spectrogram in real time.
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.style['margin-left'] = '132px';
-        tempCanvas.height = 50;
-        wordDiv.appendChild(tempCanvas);
+        collectExampleOptions.durationMultiplier = transferDurationMultiplier;
+        if (transferDurationMultiplier > 1) {
+          let tempSpectrogramData;
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.style['margin-left'] = '132px';
+          tempCanvas.height = 50;
+          wordDiv.appendChild(tempCanvas);
 
-        let tempSpectrogramData;
-        collectExampleOptions.durationSec = 2;
-        collectExampleOptions.snippetDurationSec = 0.1;
-        collectExampleOptions.snippetCallback = async (spectrogram) => {
-          if (tempSpectrogramData == null) {
-            tempSpectrogramData = spectrogram.data;
-          } else {
-            tempSpectrogramData = SpeechCommands.utils.concatenateFloat32Arrays(
-                [tempSpectrogramData, spectrogram.data]);
+          collectExampleOptions.snippetDurationSec = 0.1;
+          collectExampleOptions.snippetCallback = async (spectrogram) => {
+            if (tempSpectrogramData == null) {
+              tempSpectrogramData = spectrogram.data;
+            } else {
+              tempSpectrogramData = SpeechCommands.utils.concatenateFloat32Arrays(
+                  [tempSpectrogramData, spectrogram.data]);
+            }
+            plotSpectrogram(
+                tempCanvas, tempSpectrogramData, spectrogram.frameSize,
+                spectrogram.frameSize, {pixelsPerFrame: 2});
           }
-
-          plotSpectrogram(
-              tempCanvas, tempSpectrogramData, spectrogram.frameSize,
-              spectrogram.frameSize, {pixelsPerFrame: 2});
+        } else {
+          const barAndJob = createProgressBarAndIntervalJob(wordDiv, 1);
+          progressBar = barAndJob.progressBar;
+          intervalJob = barAndJob.intervalJob;
         }
       }
 
