@@ -135,6 +135,25 @@ export interface ExampleCollectionOptions {
    * If specified, must be >0.
    */
   durationSec?: number;
+
+  /**
+   * Optional snipppet duration in seconds.
+   *
+   * Must be supplied if `onSnippet` is specified.
+   */
+  snippetDurationSec?: number;
+
+  /**
+   * Optional snippet callback.
+   *
+   * Must be provided if `snippetDurationSec` is specified.
+   *
+   * Gets called every snippetDurationSec with a latest slice of the
+   * spectrogram. It is the spectrogram accumulated since the last invocation of
+   * the callback (or for the first time, since when `collectExample()` is
+   * started).
+   */
+  onSnippet?: (spectrogram: SpectrogramData) => Promise<void>;
 }
 
 /**
@@ -302,7 +321,7 @@ export interface TransferSpeechCommandRecognizer extends
 
   /**
    * Get metadata about the transfer recognizer.
-   * 
+   *
    * The metadata includes but is not limited to: speech-commands library
    * version, word labels that correspond to the model's probability outputs.
    */

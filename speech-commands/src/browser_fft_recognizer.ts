@@ -17,8 +17,9 @@
 
 import * as tf from '@tensorflow/tfjs';
 import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
-import {loadMetadataJson, normalize} from './browser_fft_utils';
+import {loadMetadataJson, normalize, normalizeFloat32Array} from './browser_fft_utils';
 import {BACKGROUND_NOISE_TAG, Dataset} from './dataset';
+import {concatenateFloat32Arrays} from './generic_utils';
 import {balancedTrainValSplit} from './training_utils';
 import {EvaluateConfig, EvaluateResult, Example, ExampleCollectionOptions, RecognizeConfig, RecognizerCallback, RecognizerParams, ROCCurve, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerMetadata, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
 import {version} from './version';
@@ -668,25 +669,92 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       numFramesPerSpectrogram = this.nonBatchInputShape[0];
     }
 
+    if (options.snippetDurationSec != null) {
+      tf.util.assert(options.snippetDurationSec > 0,
+          () => `snippetDurationSec is expected to be > 0, but got ` +
+              `${options.snippetDurationSec}`);
+      tf.util.assert(options.onSnippet != null,
+          () => `onSnippet must be provided if snippetDurationSec ` +
+              `is provided.`);
+    }
+    if (options.onSnippet != null) {
+      tf.util.assert(options.snippetDurationSec != null,
+          () => `snippetDurationSec must be provided if onSnippet ` +
+              `is provided.`);
+    }
+    const frameDurationSec =
+        this.parameters.fftSize / this.parameters.sampleRateHz;
+    const totalDurationSec = frameDurationSec * numFramesPerSpectrogram;
+
     streaming = true;
     return new Promise<SpectrogramData>(resolve => {
+      const stepFactor = options.snippetDurationSec == null ?
+          1 : options.snippetDurationSec / totalDurationSec;
+      const overlapFactor = 1 - stepFactor;
+      const callbackCountTarget = Math.round(1 / stepFactor);
+      let callbackCount = 0;
+      let lastIndex = -1;
+      const spectrogramSnippets: Float32Array[] = [];
+
       const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
-        const normalizedX = normalize(x);
-        this.dataset.addExample({
-          label: word,
-          spectrogram: {
-            data: await normalizedX.data() as Float32Array,
+        // TODO(cais): can we consolidate the logic in the two branches?
+        if (options.onSnippet == null) {
+          const normalizedX = normalize(x);
+          this.dataset.addExample({
+            label: word,
+            spectrogram: {
+              data: await normalizedX.data() as Float32Array,
+              frameSize: this.nonBatchInputShape[1],
+            }
+          });
+          normalizedX.dispose();
+          await this.audioDataExtractor.stop();
+          streaming = false;
+          this.collateTransferWords();
+          resolve({
+            data: await x.data() as Float32Array,
             frameSize: this.nonBatchInputShape[1],
+          });
+        } else {
+          const data = await x.data() as Float32Array;
+          if (lastIndex === -1) {
+            lastIndex = data.length;
           }
-        });
-        normalizedX.dispose();
-        await this.audioDataExtractor.stop();
-        streaming = false;
-        this.collateTransferWords();
-        resolve({
-          data: await x.data() as Float32Array,
-          frameSize: this.nonBatchInputShape[1],
-        });
+          let i = lastIndex - 1;
+          while (data[i] !== 0 && i >= 0) {
+            i--;
+          }
+          const increment = lastIndex - i - 1;
+          lastIndex = i + 1;
+          const snippetData = data.slice(data.length - increment, data.length);
+          spectrogramSnippets.push(snippetData);
+
+          if (options.onSnippet != null) {
+            options.onSnippet({
+              data: snippetData,
+              frameSize: this.nonBatchInputShape[1]
+            });
+          }
+
+          if (callbackCount++ === callbackCountTarget) {
+            await this.audioDataExtractor.stop();
+            streaming = false;
+            this.collateTransferWords();
+
+            const normalized = normalizeFloat32Array(
+                concatenateFloat32Arrays(spectrogramSnippets));
+            const finalSpectrogram: SpectrogramData = {
+              data: normalized,
+              frameSize: this.nonBatchInputShape[1]
+            };
+            this.dataset.addExample({
+              label: word,
+              spectrogram: finalSpectrogram
+            });
+            // TODO(cais): Fix 1-tensor memory leak.
+            resolve(finalSpectrogram);
+          }
+        }
         return false;
       };
       this.audioDataExtractor = new BrowserFftFeatureExtractor({
@@ -695,7 +763,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         columnTruncateLength: this.nonBatchInputShape[1],
         suppressionTimeMillis: 0,
         spectrogramCallback,
-        overlapFactor: 0
+        overlapFactor
       });
       this.audioDataExtractor.start();
     });

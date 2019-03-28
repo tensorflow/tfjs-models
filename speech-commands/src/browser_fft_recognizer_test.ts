@@ -653,6 +653,92 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     }
   });
 
+  it('collectExample with onSnippet', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    const durationSec = 1;
+    const snippetDurationSec = 0.1;
+    const snippetLengths: number[] = [];
+    const finalSpectrogram = await transfer.collectExample('foo', {
+      durationSec,
+      snippetDurationSec,
+      onSnippet: async spectrogram => {
+        snippetLengths.push(spectrogram.data.length);
+      }
+    });
+    expect(snippetLengths.length).toEqual(11);
+    expect(snippetLengths[0]).toEqual(927);
+    // First audio sample is zero and should have been skipped.
+    for (let i = 1; i < snippetLengths.length; ++i) {
+      expect(snippetLengths[i]).toEqual(928);
+    }
+    expect(finalSpectrogram.data.length)
+       .toEqual(snippetLengths.reduce((x, prev) => x + prev));
+    expect(finalSpectrogram.data.length).toEqual(10208 - 1);
+  });
+
+  it('collectExample w/ invalid durationSec leads to error',  async done => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    const durationSec = 1;
+    const snippetDurationSec = 0;
+    try {
+      await transfer.collectExample('foo', {
+        durationSec,
+        snippetDurationSec
+      });
+      done.fail();
+    } catch (error) {
+      expect(error.message).toMatch(/snippetDurationSec is expected to be > 0/);
+      done();
+    }
+  });
+
+  it('collectExample w/ onSnippet w/o snippetDurationSec error',
+      async done => {
+        setUpFakes();
+        const base = new BrowserFftSpeechCommandRecognizer();
+        await base.ensureModelLoaded();
+        const transfer = base.createTransfer('xfer1');
+        const durationSec = 1;
+        try {
+          await transfer.collectExample('foo', {
+            durationSec,
+            onSnippet: async spectrogram => {}
+          });
+          done.fail();
+        } catch (error) {
+          expect(error.message).toMatch(
+              /snippetDurationSec must be provided if onSnippet/);
+          done();
+        }
+      });
+
+  it('collectExample w/ snippetDurationSec w/o callback errors',
+      async done => {
+        setUpFakes();
+        const base = new BrowserFftSpeechCommandRecognizer();
+        await base.ensureModelLoaded();
+        const transfer = base.createTransfer('xfer1');
+        const durationSec = 1;
+        const snippetDurationSec = 0.1;
+        try {
+          await transfer.collectExample('foo', {
+            durationSec,
+            snippetDurationSec
+          });
+          done.fail();
+        } catch (error) {
+          expect(error.message).toMatch(
+              /onSnippet must be provided if snippetDurationSec/);
+          done();
+        }
+      });
+
   it('collectTransferLearningExample default transfer model', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
