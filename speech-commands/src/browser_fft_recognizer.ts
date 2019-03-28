@@ -697,7 +697,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         columnTruncateLength: this.nonBatchInputShape[1],
         suppressionTimeMillis: 0,
         spectrogramCallback,
-        overlapFactor: 0,
+        overlapFactor: 0
       });
       this.audioDataExtractor.start(options.audioTrackConstraints);
     });
