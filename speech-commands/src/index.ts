@@ -41,13 +41,12 @@ import {FFT_TYPE, SpeechCommandRecognizer} from './types';
  *   most also be provided.
  * @param customMetadataURL A custom metadata URL pointing to a metadata.json
  *   file. Must be provided together with `customModelURL`.
- * @param deviceId specific string id of the device to be used for streaming audio.
  * @returns An instance of SpeechCommandRecognizer.
  * @throws Error on invalid value of `fftType`.
  */
 export function create(
     fftType: FFT_TYPE, vocabulary?: string, customModelURL?: string,
-    customMetadataURL?: string, deviceId?: string): SpeechCommandRecognizer {
+    customMetadataURL?: string): SpeechCommandRecognizer {
   tf.util.assert(
       customModelURL == null && customMetadataURL == null ||
           customModelURL != null && customMetadataURL != null,
@@ -62,7 +61,7 @@ export function create(
 
   if (fftType === 'BROWSER_FFT') {
     return new BrowserFftSpeechCommandRecognizer(
-        vocabulary, customModelURL, customMetadataURL, deviceId);
+        vocabulary, customModelURL, customMetadataURL);
   } else if (fftType === 'SOFT_FFT') {
     throw new Error(
         'SOFT_FFT SpeechCommandRecognizer has not been implemented yet.');

@@ -68,11 +68,6 @@ export interface BrowserFftFeatureExtractorConfig extends RecognizerParams {
    * will be taken every 600 ms.
    */
   overlapFactor: number;
-  /**
-   * deviceId. String Id of the device to be used for audio streaming.
-   * defaults to "default".
-   */
-  deviceId?: string;
 }
 
 /**
@@ -112,8 +107,6 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
   private frameDurationMillis: number;
 
   private suppressionTimeMillis: number;
-  // id of device to be used for audio streaming
-  private deviceId: string;
 
   /**
    * Constructor of BrowserFftFeatureExtractor.
@@ -151,7 +144,6 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     this.frameDurationMillis = this.fftSize / this.sampleRateHz * 1e3;
     this.columnTruncateLength = config.columnTruncateLength || this.fftSize;
     this.overlapFactor = config.overlapFactor;
-    this.deviceId = config.deviceId;
 
     tf.util.assert(
         this.overlapFactor >= 0 && this.overlapFactor < 1,
@@ -167,21 +159,13 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     this.audioContextConstructor = getAudioContextConstructor();
   }
 
-  async start(): Promise<Float32Array[]|void> {
+  async start(audioTrackConstraints?: MediaTrackConstraints): Promise<Float32Array[]|void> {
     if (this.frameIntervalTask != null) {
       throw new Error(
           'Cannot start already-started BrowserFftFeatureExtractor');
     }
 
-    try {
-      this.stream = await getAudioMediaStream(this.deviceId);
-    } catch(err) {
-      if (err.name == "NotFoundError" || err.name == "DevicesNotFoundError") {
-        throw new Error(`Device not found for deviceId: ${this.deviceId}`)
-      } else if (err.name == "NotAllowedError" || err.name == "PermissionDeniedError") {
-        throw new Error(`Permission denied for deviceId: ${this.deviceId}`)
-      }
-    }
+    this.stream = await getAudioMediaStream(audioTrackConstraints);
 
     this.audioContext = new this.audioContextConstructor() as AudioContext;
     if (this.audioContext.sampleRate !== this.sampleRateHz) {

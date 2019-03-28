@@ -56,7 +56,6 @@ export class BrowserFftSpeechCommandRecognizer implements
     SpeechCommandRecognizer {
   static readonly VALID_VOCABULARY_NAMES: string[] = ['18w', 'directional4w'];
   static readonly DEFAULT_VOCABULARY_NAME = '18w';
-  static readonly DEFAULT_DEVICE_ID = 'default';
 
   readonly MODEL_URL_PREFIX =
       `https://storage.googleapis.com/tfjs-models/tfjs/speech-commands/v${
@@ -82,7 +81,6 @@ export class BrowserFftSpeechCommandRecognizer implements
   private modelURL: string;
   private metadataURL: string;
 
-  protected deviceId: string;
   protected streaming: boolean;
 
   // The second-last dense layer in the base model.
@@ -100,19 +98,13 @@ export class BrowserFftSpeechCommandRecognizer implements
    *   most also be provided.
    * @param metadataURL A custom metadata URL pointing to a metadata.json
    *   file. Must be provided together with `modelURL`.
-   * @param deviceId The specific string id of the device to be used for streaming.
-   *   If none specified the default will be "default".
    */
-  constructor(vocabulary?: string, modelURL?: string, metadataURL?: string, deviceId?: string) {
+  constructor(vocabulary?: string, modelURL?: string, metadataURL?: string) {
     tf.util.assert(
         modelURL == null && metadataURL == null ||
             modelURL != null && metadataURL != null,
         () => `modelURL and metadataURL must be both provided or ` +
             `both not provided.`);
-    if (deviceId == null) {
-      deviceId = BrowserFftSpeechCommandRecognizer.DEFAULT_DEVICE_ID;
-    }
-    this.deviceId = deviceId;
     if (modelURL == null) {
       if (vocabulary == null) {
         vocabulary = BrowserFftSpeechCommandRecognizer.DEFAULT_VOCABULARY_NAME;
@@ -270,11 +262,10 @@ export class BrowserFftSpeechCommandRecognizer implements
       columnTruncateLength: this.nonBatchInputShape[1],
       suppressionTimeMillis,
       spectrogramCallback,
-      overlapFactor,
-      deviceId: this.deviceId
+      overlapFactor
     });
 
-    await this.audioDataExtractor.start();
+    await this.audioDataExtractor.start(config.audioTrackConstraints);
 
     this.streaming = true;
   }
@@ -548,8 +539,7 @@ export class BrowserFftSpeechCommandRecognizer implements
         columnTruncateLength: this.nonBatchInputShape[1],
         suppressionTimeMillis: 0,
         spectrogramCallback,
-        overlapFactor: 0,
-        deviceId: this.deviceId
+        overlapFactor: 0
       });
       this.audioDataExtractor.start();
     });
@@ -708,9 +698,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         suppressionTimeMillis: 0,
         spectrogramCallback,
         overlapFactor: 0,
-        deviceId: this.deviceId
       });
-      this.audioDataExtractor.start();
+      this.audioDataExtractor.start(options.audioTrackConstraints);
     });
   }
 
