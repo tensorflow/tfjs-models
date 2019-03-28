@@ -66,13 +66,17 @@ export function normalize(x: tf.Tensor): tf.Tensor {
 
 /**
  * Z-Normalize the elements of a Float32Array.
- * 
+ *
  * Subtract the mean and divide the result by the standard deviation.
- * 
+ *
  * @param x The Float32Array to normalize.
  * @return Noramlzied Float32Array.
  */
 export function normalizeFloat32Array(x: Float32Array): Float32Array {
+  if (x.length < 2) {
+    throw new Error(
+        'Cannot normalize a Float32Array with fewer than 2 elements.');
+  }
   if (EPSILON == null) {
     EPSILON = tf.ENV.get('EPSILON');
   }
