@@ -135,6 +135,7 @@ export interface ExampleCollectionOptions {
    * If specified, must be >0.
    */
   durationSec?: number;
+
   /**
    * Optional constraints for the audio track.
    *
