@@ -159,7 +159,8 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     this.audioContextConstructor = getAudioContextConstructor();
   }
 
-  async start(audioTrackConstraints?: MediaTrackConstraints): Promise<Float32Array[]|void> {
+  async start(audioTrackConstraints?: MediaTrackConstraints):
+      Promise<Float32Array[]|void> {
     if (this.frameIntervalTask != null) {
       throw new Error(
           'Cannot start already-started BrowserFftFeatureExtractor');

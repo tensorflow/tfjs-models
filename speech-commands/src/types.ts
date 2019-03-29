@@ -653,11 +653,6 @@ export interface RecognizerParams {
    * Sampling rate, in Hz.
    */
   sampleRateHz?: number;
-
-  /**
-   * Whether or not there is an active stream.
-   */
-  streaming?: boolean;
 }
 
 /**
