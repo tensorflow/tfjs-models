@@ -32,7 +32,6 @@ export const SAVED_MODEL_METADATA_KEY =
     'tfjs-speech-commands-saved-model-metadata';
 export const SAVE_PATH_PREFIX = 'indexeddb://tfjs-speech-commands-model/';
 
-
 // Export a variable for injection during unit testing.
 // tslint:disable-next-line:no-any
 export let localStorageWrapper = {
@@ -71,6 +70,8 @@ export class BrowserFftSpeechCommandRecognizer implements
   readonly vocabulary: string;
   readonly parameters: RecognizerParams;
   protected words: string[];
+
+  protected streaming = false;
 
   protected nonBatchInputShape: [number, number, number];
   private elementsPerExample: number;
@@ -128,8 +129,7 @@ export class BrowserFftSpeechCommandRecognizer implements
 
     this.parameters = {
       sampleRateHz: this.SAMPLE_RATE_HZ,
-      fftSize: this.FFT_SIZE,
-      streaming: false
+      fftSize: this.FFT_SIZE
     };
   }
 
@@ -164,7 +164,7 @@ export class BrowserFftSpeechCommandRecognizer implements
   async listen(
       callback: RecognizerCallback,
       config?: StreamingRecognitionConfig): Promise<void> {
-    if (this.parameters.streaming) {
+    if (this.streaming) {
       throw new Error(
           'Cannot start streaming again when streaming is ongoing.');
     }
@@ -266,7 +266,7 @@ export class BrowserFftSpeechCommandRecognizer implements
 
     await this.audioDataExtractor.start(config.audioTrackConstraints);
 
-    this.parameters.streaming = true;
+    this.streaming = true;
   }
 
   /**
@@ -385,18 +385,18 @@ export class BrowserFftSpeechCommandRecognizer implements
    * @throws Error if there is not ongoing streaming recognition.
    */
   async stopListening(): Promise<void> {
-    if (!this.parameters.streaming) {
+    if (!this.streaming) {
       throw new Error('Cannot stop streaming when streaming is not ongoing.');
     }
     await this.audioDataExtractor.stop();
-    this.parameters.streaming = false;
+    this.streaming = false;
   }
 
   /**
    * Check if streaming recognition is ongoing.
    */
   isListening(): boolean {
-    return this.parameters.streaming;
+    return this.streaming;
   }
 
   /**
@@ -630,7 +630,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
   async collectExample(word: string, options?: ExampleCollectionOptions):
       Promise<SpectrogramData> {
     tf.util.assert(
-        !this.parameters.streaming,
+        !this.streaming,
         () => 'Cannot start collection of transfer-learning example because ' +
             'a streaming recognition or transfer-learning example collection ' +
             'is ongoing');
@@ -686,7 +686,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         this.parameters.fftSize / this.parameters.sampleRateHz;
     const totalDurationSec = frameDurationSec * numFramesPerSpectrogram;
 
-    this.parameters.streaming = true;
+    this.streaming = true;
     return new Promise<SpectrogramData>(resolve => {
       const stepFactor = options.snippetDurationSec == null ?
           1 : options.snippetDurationSec / totalDurationSec;
@@ -709,7 +709,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
           });
           normalizedX.dispose();
           await this.audioDataExtractor.stop();
-          this.parameters.streaming = false;
+          this.streaming = false;
           this.collateTransferWords();
           resolve({
             data: await x.data() as Float32Array,
@@ -738,7 +738,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
 
           if (callbackCount++ === callbackCountTarget) {
             await this.audioDataExtractor.stop();
-            this.parameters.streaming = false;
+            this.streaming = false;
             this.collateTransferWords();
 
             const normalized = normalizeFloat32Array(
