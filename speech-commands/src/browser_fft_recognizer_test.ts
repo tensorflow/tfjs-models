@@ -926,15 +926,10 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(base.isListening()).toEqual(true);
 
     const transfer = base.createTransfer('xfer1');
-    let caughtError: Error;
-    try {
-      await transfer.collectExample('foo');
-    } catch (err) {
-      caughtError = err;
-    }
-    expect(caughtError.message)
-        .toMatch(/Cannot start collection of transfer-learning example/);
-    expect(base.isListening()).toEqual(true);
+    // Concurrent with the ongoing listening (started by the listen() call
+    // above).
+    const example = await transfer.collectExample('foo');
+    expect(example.frameSize).toEqual(232);
 
     await base.stopListening();
     expect(base.isListening()).toEqual(false);
