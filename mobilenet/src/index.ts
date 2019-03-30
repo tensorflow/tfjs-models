@@ -20,7 +20,7 @@ import {IMAGENET_CLASSES} from './imagenet_classes';
 
 const IMAGE_SIZE = 224;
 
-export type MobileNetVersion = 1;
+export type MobileNetVersion = 1|2;
 export type MobileNetAlpha = 0.25|0.50|0.75|1.0;
 
 const EMBEDDING_NODES: {[version: string]: string} = {
