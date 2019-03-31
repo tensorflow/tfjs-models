@@ -24,7 +24,7 @@ import {ModelWeights} from './model_weights';
 import {decodeMultiplePoses} from './multi_pose/decode_multiple_poses';
 import {decodeSinglePose} from './single_pose/decode_single_pose';
 import {Pose, PosenetInput} from './types';
-import {getInputTensorDimensions, getValidResolution, scalePose, scalePoses, toResizedInputTensor} from './util';
+import {getInputTensorDimensions, getValidResolution, scalePose, scalePoses, toResizedInputTensor, toTensorBuffers3D} from './util';
 
 export type PoseNetResolution = 161|193|257|289|321|353|385|417|449|481|513;
 
@@ -220,9 +220,14 @@ export class PoseNet {
           return this.predictForMultiPose(inputTensor, outputStride);
         });
 
+    const [scoresBuffer, offsetsBuffer, displacementsFwdBuffer, displacementsBwdBuffer] =
+        await toTensorBuffers3D(
+            [heatmapScores, offsets, displacementFwd, displacementBwd]);
+
     const poses = await decodeMultiplePoses(
-        heatmapScores, offsets, displacementFwd, displacementBwd, outputStride,
-        maxDetections, scoreThreshold, nmsRadius);
+        scoresBuffer, offsetsBuffer, displacementsFwdBuffer,
+        displacementsBwdBuffer, outputStride, maxDetections, scoreThreshold,
+        nmsRadius);
 
     heatmapScores.dispose();
     offsets.dispose();
