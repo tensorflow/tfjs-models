@@ -282,7 +282,7 @@ const personSegmentation = await net.estimatePersonSegmentation(imageElement);
 
 // by setting maskBackground to false, the maskImage that is generated will be opaque where there is a person and transparent where there is a background.
 const maskBackground = false;
-const maskImage = bodyBix.toMaskImageData(personSegmentation, maskBackground);
+const maskImage = bodyPix.toMaskImageData(personSegmentation, maskBackground);
 ```
 
 ![MaskImageData](./images/toMaskImageData.jpg)
