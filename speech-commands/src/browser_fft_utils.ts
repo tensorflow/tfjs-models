@@ -18,7 +18,7 @@
 import * as tf from '@tensorflow/tfjs';
 
 export async function loadMetadataJson(url: string):
-    Promise<{words: string[]}> {
+    Promise<{wordLabels: string[]}> {
   return new Promise((resolve, reject) => {
     const HTTP_SCHEME = 'http://';
     const HTTPS_SCHEME = 'https://';
@@ -39,7 +39,7 @@ export async function loadMetadataJson(url: string):
           `Supported schemes are: http://, https://, and ` +
           `(node.js-only) file://`));
     }
-  }) as Promise<{words: string[]}>;
+  }) as Promise<{wordLabels: string[]}>;
 }
 
 let EPSILON: number = null;
