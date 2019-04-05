@@ -140,6 +140,16 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
   function createFakeMetadataFile(tmpDir: string) {
     // Construct the metadata.json for the fake model.
     const metadata: {} = {
+      wordLabels: ['_background_noise_', '_unknown_', 'foo', 'bar'],
+      frameSize: 232
+    };
+    const metadataPath = join(tmpDir, 'metadata.json');
+    writeFileSync(metadataPath, JSON.stringify(metadata));
+  }
+
+  function createFakeMetadataFileWithLegacyWordsField(tmpDir: string) {
+    // Construct the metadata.json for the fake model.
+    const metadata: {} = {
       words: ['_background_noise_', '_unknown_', 'foo', 'bar'],
       frameSize: 232
     };
@@ -147,11 +157,37 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     writeFileSync(metadataPath, JSON.stringify(metadata));
   }
 
-  it('Constructing recognize using custom URLs', async () => {
+  it('Constructing recognizer: custom URLs', async () => {
     // Construct a fake model
     const tmpDir = tempfile();
     await createFakeModelArtifact(tmpDir);
     createFakeMetadataFile(tmpDir);
+
+    const modelPath = join(tmpDir, 'model.json');
+    const metadataPath = join(tmpDir, 'metadata.json');
+    const modelURL = `file://${modelPath}`;
+    const metadataURL = `file://${metadataPath}`;
+
+    const recognizer =
+        new BrowserFftSpeechCommandRecognizer(null, modelURL, metadataURL);
+    await recognizer.ensureModelLoaded();
+    expect(recognizer.wordLabels()).toEqual([
+      '_background_noise_', '_unknown_', 'foo', 'bar'
+    ]);
+
+    const recogResult = await recognizer.recognize(tf.zeros([2, 43, 232, 1]));
+    expect(recogResult.scores.length).toEqual(2);
+    expect((recogResult.scores[0] as Float32Array).length).toEqual(4);
+    expect((recogResult.scores[1] as Float32Array).length).toEqual(4);
+
+    rimraf(tmpDir, () => {});
+  });
+
+  it('Constructing recognizer: custom URLs, legacy words format', async () => {
+    // Construct a fake model
+    const tmpDir = tempfile();
+    await createFakeModelArtifact(tmpDir);
+    createFakeMetadataFileWithLegacyWordsField(tmpDir);
 
     const modelPath = join(tmpDir, 'model.json');
     const metadataPath = join(tmpDir, 'metadata.json');

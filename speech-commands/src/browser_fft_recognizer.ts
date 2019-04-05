@@ -376,7 +376,21 @@ export class BrowserFftSpeechCommandRecognizer implements
       return;
     }
     const metadataJSON = await loadMetadataJson(this.metadataURL);
-    this.words = metadataJSON.words;
+
+    if (metadataJSON.wordLabels == null) {
+      // In some legacy formats, the field 'words', instead of 'wordLabels',
+      // was populated. This branch ensures backward compatibility with those
+      // formats.
+      // tslint:disable-next-line:no-any
+      const legacyWords = (metadataJSON as any)['words'] as string[];
+      if (legacyWords == null) {
+        throw new Error(
+            'Cannot find field "words" or "wordLabels" in metadata JSON file');
+      }
+      this.words = legacyWords;
+    } else {
+      this.words = metadataJSON.wordLabels;
+    }
   }
 
   /**
