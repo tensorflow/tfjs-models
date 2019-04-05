@@ -385,7 +385,7 @@ export class BrowserFftSpeechCommandRecognizer implements
       const legacyWords = (metadataJSON as any)['words'] as string[];
       if (legacyWords == null) {
         throw new Error(
-            'Cannot find field "word" or "wordLabels" in metadata JSON file');
+            'Cannot find field "words" or "wordLabels" in metadata JSON file');
       }
       this.words = legacyWords;
     } else {
