@@ -498,11 +498,12 @@ export interface AudioDataAugmentationOptions {
    *
    * If not `null` or `undefined`, will cause extra word spectrograms to be
    * created through the equation:
-   *   (normalziedWordSpectrogram +
+   *   (normalizedWordSpectrogram +
    *    augmentByMixingNoiseRatio * normalizedNoiseSpectrogram)
    *
    * The normalizedNoiseSpectrogram will be drawn randomly from all noise
-   * snippets.
+   * snippets available. If no noise snippet is available, an Error will
+   * be thrown.
    *
    * Default: `undefined`.
    */
