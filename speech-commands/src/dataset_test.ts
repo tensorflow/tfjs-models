@@ -545,6 +545,36 @@ describe('Dataset', () => {
         ys, tf.tensor2d([[1, 0], [1, 0], [1, 0], [0, 1], [0, 1], [0, 1]]));
   });
 
+  fit('getData with mixing-noise augmentation', () => {
+    const dataset = new Dataset();
+    dataset.addExample(getFakeExample(
+        BACKGROUND_NOISE_TAG, 6, 2,
+        [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
+    dataset.addExample(
+        getFakeExample('bar', 5, 2, [1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
+
+    const {xs, ys} = dataset.getData(null, {
+      numFrames: 3,
+      hopFrames: 1,
+      shuffle: false,
+      normalize: false,
+      augmentByMixingNoise: true
+    }) as {xs: tf.Tensor, ys: tf.Tensor};
+
+    // 3 of the newly-generated ones at the end are from the augmentation.
+    expect(xs.shape).toEqual([10, 3, 2, 1]);
+    expect(ys.shape).toEqual([10, 2]);
+    const indices = ys.argMax(-1).dataSync();
+    const backgroundNoiseIndex = indices[0];
+    for (let i = 0; i < 3; ++i) {
+      expect(indices[indices.length - 1 - i] === backgroundNoiseIndex)
+          .toEqual(false);
+    }
+  });
+
+  // TODO(cais): Test that augmentByNoise without BACKGROUND_NOISE tag leads to
+  // Error.
+
   it('getSpectrogramsAsTensors: normalize=true', () => {
     const dataset = new Dataset();
     dataset.addExample(getFakeExample(

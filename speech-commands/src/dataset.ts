@@ -17,7 +17,7 @@
 
 import * as tf from '@tensorflow/tfjs';
 import {normalize} from './browser_fft_utils';
-import {arrayBuffer2String, concatenateArrayBuffers, getUID, string2ArrayBuffer} from './generic_utils';
+import {arrayBuffer2String, concatenateArrayBuffers, getRandomInteger, getUID, string2ArrayBuffer} from './generic_utils';
 import {balancedTrainValSplitNumArrays} from './training_utils';
 import {Example, SpectrogramData} from './types';
 
@@ -169,6 +169,19 @@ export interface GetDataConfig {
    * Default: 0.15.
    */
   datasetValidationSplit?: number;
+
+  /**
+   * Augment the data by mixing the word spectrograms with background-noise
+   * ones.
+   *
+   * TODO(cais): Say something more about the SNRs used in the mixing.
+   *
+   * Default: `false`.
+   */
+  augmentByMixingNoise?: boolean;
+
+  // TODO(cais): Add other augmentation options, including augmentByReverb,
+  // augmentByTempoShift and augmentByFrequencyShift.
 }
 
 // tslint:disable-next-line:no-any
@@ -442,6 +455,12 @@ export class Dataset {
         }
       }
 
+      // console.log(`xTensors:`, xTensors);  // DEBUG
+      // console.log(`labelIndices:`, labelIndices);  // DEBUG
+      if (config.augmentByMixingNoise) {
+        this.augmentByMixingNoise(xTensors, labelIndices);
+      }
+
       const shuffle = config.shuffle == null ? true : config.shuffle;
       if (config.getDataset) {
         const batchSize =
@@ -517,6 +536,42 @@ export class Dataset {
         };
       }
     });
+  }
+
+  private augmentByMixingNoise(
+      xTensors: tf.Tensor[], labelIndices: number[]): void {
+    const vocab = this.getVocabulary();
+    const noiseExampleIndices: number[] = [];
+    const wordExampleIndices: number[] = [];
+    for (let i = 0; i < labelIndices.length; ++i) {
+      if (vocab[labelIndices[i]] === BACKGROUND_NOISE_TAG) {
+        noiseExampleIndices.push(i);
+      } else {
+        wordExampleIndices.push(i);
+      }
+    }
+    if (noiseExampleIndices.length === 0) {
+      throw new Error(
+          `Cannot perform augmentation by mixing with noise when ` +
+          `there is no example with label ${BACKGROUND_NOISE_TAG}`);
+    }
+
+    const mixedXTensors: tf.Tensor[] = [];
+    const mixedLabelIndices: number[] = [];
+    wordExampleIndices.forEach(index => {
+      const noiseIndex =  // Randomly sample from the noises, with replacement.
+          noiseExampleIndices[getRandomInteger(0, noiseExampleIndices.length)];
+      console.log(`Augmenting index:`, index, noiseIndex);  // DEBUG
+      const mixed =
+          tf.tidy(() => normalize(xTensors[index].add(xTensors[noiseIndex])));
+      mixedXTensors.push(mixed);
+      mixedLabelIndices.push(labelIndices[index]);
+    });
+    console.log(
+        `Data augmentation: mixing noise: added ${mixedXTensors.length} ` +
+        `examples`);
+    xTensors.push(...mixedXTensors);
+    labelIndices.push(...mixedLabelIndices);
   }
 
   private getSortedUniqueNumFrames(): number[] {
