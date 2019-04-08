@@ -27,7 +27,7 @@ import * as tempfile from 'tempfile';
 import {BrowserFftSpeechCommandRecognizer, deleteSavedTransferModel, getMajorAndMinorVersion, listSavedTransferModels, localStorageWrapper, SAVED_MODEL_METADATA_KEY} from './browser_fft_recognizer';
 import * as BrowserFftUtils from './browser_fft_utils';
 import {FakeAudioContext, FakeAudioMediaStream} from './browser_test_utils';
-import {arrayBuffer2SerializedExamples} from './dataset';
+import {arrayBuffer2SerializedExamples, BACKGROUND_NOISE_TAG} from './dataset';
 import {create} from './index';
 import {SpeechCommandRecognizerResult} from './types';
 import {version} from './version';
@@ -1078,6 +1078,27 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
       await transfer.stopListening();
       done();
     });
+  });
+
+  it('trainTransferLearningModel w/ mixing-noise augmentation', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    await transfer.collectExample('foo');
+    for (let i = 0; i < 2; ++i) {
+      await transfer.collectExample(BACKGROUND_NOISE_TAG);
+    }
+    const history = await transfer.train({
+      epochs: 10,
+      batchSize: 2,
+      augmentByMixingNoiseRatio: 0.5
+    }) as tf.History;
+    expect(history.history.loss.length).toEqual(10);
+    expect(history.history.acc.length).toEqual(10);
+
+    expect(base.wordLabels()).toEqual(fakeWords);
+    expect(transfer.wordLabels()).toEqual([BACKGROUND_NOISE_TAG, 'foo']);
   });
 
   it('train and evaluate', async () => {

@@ -384,7 +384,6 @@ export class Dataset {
     return tf.tidy(() => {
       let xTensors: tf.Tensor3D[] = [];
       let xArrays: Float32Array[] = [];
-      let yArrays: number[] = [];
 
       let labelIndices: number[] = [];
       let uniqueFrameSize: number;
@@ -430,7 +429,6 @@ export class Dataset {
               // TODO(cais): See if we can do away with dataSync();
               // TODO(cais): Shuffling?
               xArrays.push(windowedSnippet.dataSync() as Float32Array);
-              yArrays.push(i);
             } else {
               xTensors.push(windowedSnippet as tf.Tensor3D);
             }
@@ -462,14 +460,15 @@ export class Dataset {
             () => `Invalid dataset validation split: ${valSplit}`);
 
         const zippedXandYArrays =
-            xArrays.map((xArray, i) => [xArray, yArrays[i]]);
+            xArrays.map((xArray, i) => [xArray, labelIndices[i]]);
         tf.util.shuffle(
             zippedXandYArrays);  // Shuffle the data before splitting.
         xArrays = zippedXandYArrays.map(item => item[0]) as Float32Array[];
-        yArrays = zippedXandYArrays.map(item => item[1]) as number[];
-
+        const yArrays = zippedXandYArrays.map(item => item[1]) as number[];
         const {trainXs, trainYs, valXs, valYs} =
             balancedTrainValSplitNumArrays(xArrays, yArrays, valSplit);
+        console.log(trainXs.length);
+        console.log(valXs.length);
 
         // TODO(cais): The typing around Float32Array is not working properly
         // for tf.data currently. Tighten the types when the tf.data bug is
