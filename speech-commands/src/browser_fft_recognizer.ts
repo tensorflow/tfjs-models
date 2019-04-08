@@ -18,10 +18,10 @@
 import * as tf from '@tensorflow/tfjs';
 import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
 import {loadMetadataJson, normalize, normalizeFloat32Array} from './browser_fft_utils';
-import {BACKGROUND_NOISE_TAG, Dataset} from './dataset';
+import {BACKGROUND_NOISE_TAG, Dataset, GetDataConfig} from './dataset';
 import {concatenateFloat32Arrays} from './generic_utils';
 import {balancedTrainValSplit} from './training_utils';
-import {EvaluateConfig, EvaluateResult, Example, ExampleCollectionOptions, RecognizeConfig, RecognizerCallback, RecognizerParams, ROCCurve, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerMetadata, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
+import {EvaluateConfig, EvaluateResult, Example, ExampleCollectionOptions, RecognizeConfig, RecognizerCallback, RecognizerParams, ROCCurve, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerMetadata, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer, AudioDataAugmentationOptions} from './types';
 import {version} from './version';
 
 export const UNKNOWN_TAG = '_unknown_';
@@ -895,13 +895,18 @@ class TransferBrowserFftSpeechCommandRecognizer extends
    * @returns xs: The feature tensors (xs), a 4D tf.Tensor.
    *          ys: The target tensors (ys), one-hot encoding, a 2D tf.Tensor.
    */
-  private collectTransferDataAsTensors(windowHopRatio?: number):
+  private collectTransferDataAsTensors(
+      windowHopRatio?: number,
+      augmentationOptions?: AudioDataAugmentationOptions):
       {xs: tf.Tensor, ys: tf.Tensor} {
     const numFrames = this.nonBatchInputShape[0];
     windowHopRatio = windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
     const hopFrames = Math.round(windowHopRatio * numFrames);
-    const out = this.dataset.getData(null, {numFrames, hopFrames}) as
-        {xs: tf.Tensor4D, ys?: tf.Tensor2D};
+    const out = this.dataset.getData(null, {
+      numFrames,
+      hopFrames,
+      ...augmentationOptions
+    }) as {xs: tf.Tensor4D, ys?: tf.Tensor2D};
     return {xs: out.xs, ys: out.ys as tf.Tensor};
   }
 
@@ -924,7 +929,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
    */
   private collectTransferDataAsTfDataset(
       windowHopRatio?: number, validationSplit = 0.15,
-      batchSize = 32): [tf.data.Dataset<{}>, tf.data.Dataset<{}>] {
+      batchSize = 32, augmentationOptions?: AudioDataAugmentationOptions):
+      [tf.data.Dataset<{}>, tf.data.Dataset<{}>] {
     const numFrames = this.nonBatchInputShape[0];
     windowHopRatio = windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
     const hopFrames = Math.round(windowHopRatio * numFrames);
@@ -933,7 +939,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       hopFrames,
       getDataset: true,
       datasetBatchSize: batchSize,
-      datasetValidationSplit: validationSplit
+      datasetValidationSplit: validationSplit,
+      ...augmentationOptions
     }) as [tf.data.Dataset<{}>, tf.data.Dataset<{}>];
     // TODO(cais): See if we can tighten the typing.
   }
@@ -1023,7 +1030,9 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     const batchSize = config.batchSize == null ? 32 : config.batchSize;
     const windowHopRatio = config.windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
     const [trainDataset, valDataset] = this.collectTransferDataAsTfDataset(
-        windowHopRatio, config.validationSplit, batchSize);
+        windowHopRatio, config.validationSplit, batchSize, {
+          augmentByMixingNoiseRatio: config.augmentByMixingNoiseRatio
+        });
     const t0 = tf.util.now();
     const history = await this.model.fitDataset(trainDataset, {
       epochs: config.epochs,
@@ -1051,7 +1060,9 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       Promise<tf.History|[tf.History, tf.History]> {
     // Prepare the data.
     const windowHopRatio = config.windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
-    const {xs, ys} = this.collectTransferDataAsTensors(windowHopRatio);
+    const {xs, ys} = this.collectTransferDataAsTensors(windowHopRatio, {
+      augmentByMixingNoiseRatio: config.augmentByMixingNoiseRatio
+    });
     console.log(
         `Training data: xs.shape = ${xs.shape}, ys.shape = ${ys.shape}`);
 

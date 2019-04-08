@@ -19,7 +19,7 @@ import * as tf from '@tensorflow/tfjs';
 import {normalize} from './browser_fft_utils';
 import {arrayBuffer2String, concatenateArrayBuffers, getRandomInteger, getUID, string2ArrayBuffer} from './generic_utils';
 import {balancedTrainValSplitNumArrays} from './training_utils';
-import {Example, SpectrogramData} from './types';
+import {AudioDataAugmentationOptions, Example, SpectrogramData} from './types';
 
 // Descriptor for serialized dataset files: stands for:
 //   TensorFlow.js Speech-Commands Dataset.
@@ -93,7 +93,7 @@ export const BACKGROUND_NOISE_TAG = '_background_noise_';
 /**
  * Configuration for getting spectrograms as tensors.
  */
-export interface GetDataConfig {
+export interface GetDataConfig extends AudioDataAugmentationOptions {
   /**
    * Number of frames.
    *
@@ -169,19 +169,6 @@ export interface GetDataConfig {
    * Default: 0.15.
    */
   datasetValidationSplit?: number;
-
-  /**
-   * Augment the data by mixing the word spectrograms with background-noise
-   * ones.
-   *
-   * TODO(cais): Say something more about the SNRs used in the mixing.
-   *
-   * Default: `false`.
-   */
-  augmentByMixingNoise?: boolean;
-
-  // TODO(cais): Add other augmentation options, including augmentByReverb,
-  // augmentByTempoShift and augmentByFrequencyShift.
 }
 
 // tslint:disable-next-line:no-any
@@ -455,10 +442,10 @@ export class Dataset {
         }
       }
 
-      // console.log(`xTensors:`, xTensors);  // DEBUG
-      // console.log(`labelIndices:`, labelIndices);  // DEBUG
-      if (config.augmentByMixingNoise) {
-        this.augmentByMixingNoise(xTensors, labelIndices);
+      if (config.augmentByMixingNoiseRatio != null) {
+        this.augmentByMixingNoise(
+            config.getDataset ? xArrays : xTensors, labelIndices,
+            config.augmentByMixingNoiseRatio);
       }
 
       const shuffle = config.shuffle == null ? true : config.shuffle;
@@ -538,8 +525,14 @@ export class Dataset {
     });
   }
 
-  private augmentByMixingNoise(
-      xTensors: tf.Tensor[], labelIndices: number[]): void {
+  private augmentByMixingNoise<T extends tf.Tensor | Float32Array>(
+      xs: T[], labelIndices: number[], ratio: number): void {
+    if (xs == null || xs.length === 0) {
+      throw new Error(
+          `Cannot perform augmentation because data is null or empty`);
+    }
+    const isTypedArray = xs[0] instanceof Float32Array;
+
     const vocab = this.getVocabulary();
     const noiseExampleIndices: number[] = [];
     const wordExampleIndices: number[] = [];
@@ -556,21 +549,29 @@ export class Dataset {
           `there is no example with label ${BACKGROUND_NOISE_TAG}`);
     }
 
-    const mixedXTensors: tf.Tensor[] = [];
+    const mixedXTensors: Array<tf.Tensor | Float32Array> = [];
     const mixedLabelIndices: number[] = [];
-    wordExampleIndices.forEach(index => {
+    for (const index of wordExampleIndices) {
       const noiseIndex =  // Randomly sample from the noises, with replacement.
           noiseExampleIndices[getRandomInteger(0, noiseExampleIndices.length)];
-      console.log(`Augmenting index:`, index, noiseIndex);  // DEBUG
-      const mixed =
-          tf.tidy(() => normalize(xTensors[index].add(xTensors[noiseIndex])));
-      mixedXTensors.push(mixed);
+      const signalTensor = isTypedArray ?
+          tf.tensor1d(xs[index] as Float32Array) : xs[index] as tf.Tensor;
+      const noiseTensor = isTypedArray ?
+          tf.tensor1d(xs[noiseIndex] as Float32Array) :
+          xs[noiseIndex] as tf.Tensor;
+      const mixed: tf.Tensor = tf.tidy(() =>
+          normalize(signalTensor.add(noiseTensor.mul(ratio))));
+      if (isTypedArray) {
+        mixedXTensors.push(mixed.dataSync() as Float32Array);
+      } else {
+        mixedXTensors.push(mixed);
+      }
       mixedLabelIndices.push(labelIndices[index]);
-    });
+    }
     console.log(
         `Data augmentation: mixing noise: added ${mixedXTensors.length} ` +
         `examples`);
-    xTensors.push(...mixedXTensors);
+    mixedXTensors.forEach(tensor => xs.push(tensor as T));
     labelIndices.push(...mixedLabelIndices);
   }
 

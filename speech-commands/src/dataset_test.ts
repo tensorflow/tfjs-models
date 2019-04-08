@@ -558,7 +558,7 @@ describe('Dataset', () => {
       hopFrames: 1,
       shuffle: false,
       normalize: false,
-      augmentByMixingNoise: true
+      augmentByMixingNoiseRatio: 0.5
     }) as {xs: tf.Tensor, ys: tf.Tensor};
 
     // 3 of the newly-generated ones at the end are from the augmentation.

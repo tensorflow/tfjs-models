@@ -169,3 +169,7 @@ textarea {
 .eval-results {
   font-size: 17px;
 }
+
+input[type=checkbox] {
+  transform: scale(2);
+}
