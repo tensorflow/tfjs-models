@@ -467,8 +467,6 @@ export class Dataset {
         const yArrays = zippedXandYArrays.map(item => item[1]) as number[];
         const {trainXs, trainYs, valXs, valYs} =
             balancedTrainValSplitNumArrays(xArrays, yArrays, valSplit);
-        console.log(trainXs.length);
-        console.log(valXs.length);
 
         // TODO(cais): The typing around Float32Array is not working properly
         // for tf.data currently. Tighten the types when the tf.data bug is

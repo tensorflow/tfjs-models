@@ -484,7 +484,6 @@ describe('Dataset', () => {
       datasetValidationSplit: 1 / 3
     }) as [SpectrogramAndTargetsTfDataset, SpectrogramAndTargetsTfDataset];
 
-    console.log(trainDataset);
     let numTrain = 0;
     await trainDataset.forEachAsync(
         (xAndY: {xs: tf.Tensor2D, ys: tf.Tensor2D}) => {
