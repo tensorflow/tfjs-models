@@ -85,6 +85,7 @@ const guiState = {
   singlePoseDetection: {
     minPoseConfidence: 0.1,
     minPartConfidence: 0.5,
+    smoothing: 'none',
   },
   multiPoseDetection: {
     maxPoseDetections: 5,
@@ -145,6 +146,7 @@ function setupGui(cameras, net) {
   let single = gui.addFolder('Single Pose Detection');
   single.add(guiState.singlePoseDetection, 'minPoseConfidence', 0.0, 1.0);
   single.add(guiState.singlePoseDetection, 'minPartConfidence', 0.0, 1.0);
+  single.add(guiState.singlePoseDetection, 'smoothing', ['none', 2, 3, 4, 5]);
 
   let multi = gui.addFolder('Multi Pose Detection');
   multi.add(guiState.multiPoseDetection, 'maxPoseDetections')
@@ -204,6 +206,7 @@ function detectPoseInRealTime(video, net) {
 
   canvas.width = videoWidth;
   canvas.height = videoHeight;
+  let poseHistory = [];
 
   async function poseDetectionFrame() {
     if (guiState.changeToArchitecture) {
@@ -233,6 +236,12 @@ function detectPoseInRealTime(video, net) {
         const pose = await guiState.net.estimateSinglePose(
             video, imageScaleFactor, flipHorizontal, outputStride);
         poses.push(pose);
+        if (guiState.singlePoseDetection.smoothing !== 'none') {
+          poseHistory.push(pose);
+          if (poseHistory.length > parseInt(+guiState.singlePoseDetection.smoothing)) {
+            poseHistory.shift();
+          }
+        }
 
         minPoseConfidence = +guiState.singlePoseDetection.minPoseConfidence;
         minPartConfidence = +guiState.singlePoseDetection.minPartConfidence;
@@ -263,6 +272,31 @@ function detectPoseInRealTime(video, net) {
     // and draw the resulting skeleton and keypoints if over certain confidence
     // scores
     poses.forEach(({score, keypoints}) => {
+      // If smoothing is enabled, take the average of the last few poses here
+      if (guiState.algorithm === 'multi' && 
+      guiState.singlePoseDetection.smoothing !== 'none') {
+        let sumPoses = poseHistory.reduce((avg, pose) => {
+          if (avg.score === undefined) {
+            avg.score = pose.score;
+            avg.keypoints = pose.keypoints;
+          } else {
+            avg.score += pose.score;
+            Array.from(Array(17).keys()).forEach(n => {
+              avg.keypoints[n].score += pose.keypoints[n].score;
+              avg.keypoints[n].position.x += pose.keypoints[n].position.x;
+              avg.keypoints[n].position.y += pose.keypoints[n].position.y;
+            })
+          }
+          return avg;
+        }, {});
+        score = sumPoses.score / poseHistory.length;
+        sumPoses.keypoints.map(sumKeyPoints => {
+          sumKeyPoints.score /= poseHistory.length;
+          sumKeyPoints.position.x /= poseHistory.length;
+          sumKeyPoints.position.y /= poseHistory.length;
+        });
+        keypoints = sumPoses.keypoints;
+      }
       if (score >= minPoseConfidence) {
         if (guiState.output.showPoints) {
           drawKeypoints(keypoints, minPartConfidence, ctx);
