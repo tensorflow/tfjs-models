@@ -18,7 +18,7 @@
 import * as tf from '@tensorflow/tfjs';
 import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
 import {loadMetadataJson, normalize, normalizeFloat32Array} from './browser_fft_utils';
-import {BACKGROUND_NOISE_TAG, Dataset, GetDataConfig} from './dataset';
+import {BACKGROUND_NOISE_TAG, Dataset} from './dataset';
 import {concatenateFloat32Arrays} from './generic_utils';
 import {balancedTrainValSplit} from './training_utils';
 import {EvaluateConfig, EvaluateResult, Example, ExampleCollectionOptions, RecognizeConfig, RecognizerCallback, RecognizerParams, ROCCurve, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerMetadata, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer, AudioDataAugmentationOptions} from './types';
