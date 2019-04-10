@@ -35,6 +35,12 @@ export class KNNClassifier {
 
   private exampleShape: number[];
 
+  // The following 3 properties are used to map between the user-provided class
+  // index, and the internal 0-based class index.
+  private mapClassId: {[label: number]: number} = {};
+  private unmapClassId: {[classId: number]: number} = {};
+  private nextClassId = 0;
+
   /**
    * Adds the provided example to the specified class.
    */
@@ -51,6 +57,13 @@ export class KNNClassifier {
       throw new Error(`classIndex must be an integer, got ${classIndex}.`);
     }
 
+    if (!(classIndex in this.mapClassId)) {
+      this.mapClassId[classIndex] = this.nextClassId;
+      this.unmapClassId[this.nextClassId] = classIndex;
+      this.nextClassId++;
+    }
+    // Map the user-provided class index to the internal 0-based class index.
+    classIndex = this.mapClassId[classIndex];
     this.clearTrainDatasetMatrix();
 
     tf.tidy(() => {
@@ -143,7 +156,15 @@ export class KNNClassifier {
     const topKIndices = topK(await knn.data() as Float32Array, kVal).indices;
     knn.dispose();
 
-    return this.calculateTopClass(topKIndices, kVal);
+    const res = this.calculateTopClass(topKIndices, kVal);
+    // Unmap the internal class index into the user-provided one.
+    res.classIndex = this.unmapClassId[res.classIndex];
+    const newConfidences: {[label: number]: number} = {};
+    for (const classId in res.confidences) {
+      newConfidences[this.unmapClassId[classId]] = res.confidences[classId];
+    }
+    res.confidences = newConfidences;
+    return res;
   }
 
   /**

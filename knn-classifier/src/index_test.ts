@@ -17,7 +17,7 @@
 import * as tf from '@tensorflow/tfjs';
 import {describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
-import * as knnClassier from './index';
+import * as knnClassifier from './index';
 
 describeWithFlags('KNNClassifier', tf.test_util.NODE_ENVS, () => {
   it('simple nearest neighbors', async () => {
@@ -29,7 +29,7 @@ describeWithFlags('KNNClassifier', tf.test_util.NODE_ENVS, () => {
       tf.tensor1d([-1, -1, -1, -1]), tf.tensor1d([-1.1, -.9, -1.2, -.8]),
       tf.tensor1d([-1.2, -.8, -1.3, -.7])
     ];
-    const classifier = knnClassier.create();
+    const classifier = knnClassifier.create();
     x0s.forEach(x0 => classifier.addExample(x0, 0));
     x1s.forEach(x1 => classifier.addExample(x1, 1));
 
@@ -51,7 +51,7 @@ describeWithFlags('KNNClassifier', tf.test_util.NODE_ENVS, () => {
   });
 
   it('calling predictClass before adding example throws', async () => {
-    const classifier = knnClassier.create();
+    const classifier = knnClassifier.create();
     const x0 = tf.tensor1d([1.1, 1.1, 1.1, 1.1]);
 
     let errorMessage;
@@ -62,5 +62,25 @@ describeWithFlags('KNNClassifier', tf.test_util.NODE_ENVS, () => {
     }
     expect(errorMessage)
         .toMatch(/You have not added any examples to the KNN classifier/);
+  });
+
+  it('examples with classId that does not start at 0 works', async () => {
+    const classifier = knnClassifier.create();
+    classifier.addExample(tf.tensor2d([5, 2], [2, 1]), 1);
+    classifier.addExample(tf.tensor2d([6, 1], [2, 1]), 2);
+    const result = await classifier.predictClass(tf.tensor2d([3, 3], [2, 1]));
+    expect(result.classIndex).toBe(1);
+    expect(result.confidences).toEqual({1: 0.5, 2: 0.5});
+  });
+
+  it('examples with classId 5, 7 and 9', async () => {
+    const classifier = knnClassifier.create();
+    classifier.addExample(tf.tensor1d([5, 5]), 5);
+    classifier.addExample(tf.tensor1d([7, 7]), 7);
+    classifier.addExample(tf.tensor1d([5, 5]), 5);
+    classifier.addExample(tf.tensor1d([9, 9]), 9);
+    const result = await classifier.predictClass(tf.tensor1d([5, 5]));
+    expect(result.classIndex).toBe(5);
+    expect(result.confidences).toEqual({5: 2/3, 7: 1/3, 9: 0});
   });
 });

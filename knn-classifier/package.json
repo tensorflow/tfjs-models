@@ -37,7 +37,7 @@
     "publish-npm": "yarn build && npm publish",
     "publish-local": "yarn build && yalc push",
     "lint": "tslint -p . -t verbose",
-    "test": "cd demo && yarn && cd .. && ts-node run_tests.ts"
+    "test": "ts-node run_tests.ts"
   },
   "license": "Apache-2.0"
 }
