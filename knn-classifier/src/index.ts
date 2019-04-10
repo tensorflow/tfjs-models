@@ -156,15 +156,7 @@ export class KNNClassifier {
     const topKIndices = topK(await knn.data() as Float32Array, kVal).indices;
     knn.dispose();
 
-    const res = this.calculateTopClass(topKIndices, kVal);
-    // Unmap the internal class index into the user-provided one.
-    res.classIndex = this.unmapClassId[res.classIndex];
-    const newConfidences: {[label: number]: number} = {};
-    for (const classId in res.confidences) {
-      newConfidences[this.unmapClassId[classId]] = res.confidences[classId];
-    }
-    res.confidences = newConfidences;
-    return res;
+    return this.calculateTopClass(topKIndices, kVal);
   }
 
   /**
@@ -247,9 +239,9 @@ export class KNNClassifier {
       const probability = topKCountsForClasses[i] / kVal;
       if (probability > topConfidence) {
         topConfidence = probability;
-        exampleClass = +i;
+        exampleClass = this.unmapClassId[+i];
       }
-      confidences[i] = probability;
+      confidences[this.unmapClassId[+i]] = probability;
     }
 
     return {classIndex: exampleClass, confidences};
