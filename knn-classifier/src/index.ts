@@ -35,12 +35,6 @@ export class KNNClassifier {
 
   private exampleShape: number[];
 
-  // The following 3 properties are used to map between the user-provided class
-  // index, and the internal 0-based class index.
-  private mapClassId: {[label: number]: number} = {};
-  private unmapClassId: {[classId: number]: number} = {};
-  private nextClassId = 0;
-
   /**
    * Adds the provided example to the specified class.
    */
@@ -57,13 +51,6 @@ export class KNNClassifier {
       throw new Error(`classIndex must be an integer, got ${classIndex}.`);
     }
 
-    if (!(classIndex in this.mapClassId)) {
-      this.mapClassId[classIndex] = this.nextClassId;
-      this.unmapClassId[this.nextClassId] = classIndex;
-      this.nextClassId++;
-    }
-    // Map the user-provided class index to the internal 0-based class index.
-    classIndex = this.mapClassId[classIndex];
     this.clearTrainDatasetMatrix();
 
     tf.tidy(() => {
@@ -110,9 +97,9 @@ export class KNNClassifier {
       if (this.trainDatasetMatrix == null) {
         let newTrainLogitsMatrix = null;
 
-        for (const i in this.classDatasetMatrices) {
+        for (const classId in this.classDatasetMatrices) {
           newTrainLogitsMatrix = concatWithNulls(
-              newTrainLogitsMatrix, this.classDatasetMatrices[i]);
+              newTrainLogitsMatrix, this.classDatasetMatrices[classId]);
         }
         this.trainDatasetMatrix = newTrainLogitsMatrix;
       }
@@ -151,7 +138,6 @@ export class KNNClassifier {
           `Please add examples before calling predictClass.`);
     }
     const knn = tf.tidy(() => this.similarities(input).asType('float32'));
-
     const kVal = Math.min(k, this.getNumExamples());
     const topKIndices = topK(await knn.data() as Float32Array, kVal).indices;
     knn.dispose();
@@ -173,8 +159,8 @@ export class KNNClassifier {
   }
 
   clearAllClasses() {
-    for (const i in this.classDatasetMatrices) {
-      this.clearClass(+i);
+    for (const classId in this.classDatasetMatrices) {
+      this.clearClass(+classId);
     }
   }
 
@@ -194,8 +180,8 @@ export class KNNClassifier {
     this.clearTrainDatasetMatrix();
 
     this.classDatasetMatrices = classDatasetMatrices;
-    for (const i in classDatasetMatrices) {
-      this.classExampleCount[i] = classDatasetMatrices[i].shape[0];
+    for (const classId in classDatasetMatrices) {
+      this.classExampleCount[classId] = classDatasetMatrices[classId].shape[0];
     }
   }
 
@@ -213,21 +199,21 @@ export class KNNClassifier {
       return {classIndex: exampleClass, confidences};
     }
 
-    const indicesForClasses = [];
-    for (const i in this.classDatasetMatrices) {
-      let num = this.classExampleCount[i];
-      if (+i > 0) {
-        num += indicesForClasses[+i - 1];
-      }
-      indicesForClasses.push(num);
+    const classOffsets: {[classId: number]: number} = {};
+    let offset = 0;
+    for (const classId in this.classDatasetMatrices) {
+      offset += this.classExampleCount[classId];
+      classOffsets[classId] = offset;
     }
-
-    const topKCountsForClasses =
-        Array(Object.keys(this.classDatasetMatrices).length).fill(0);
+    const votesPerClass: {[classId: number]: number} = {};
+    for (const classId in this.classDatasetMatrices) {
+      votesPerClass[classId] = 0;
+    }
     for (let i = 0; i < topKIndices.length; i++) {
-      for (let classId = 0; classId < indicesForClasses.length; classId++) {
-        if (topKIndices[i] < indicesForClasses[classId]) {
-          topKCountsForClasses[classId]++;
+      const index = topKIndices[i];
+      for (const classId in this.classDatasetMatrices) {
+        if (index < classOffsets[classId]) {
+          votesPerClass[classId]++;
           break;
         }
       }
@@ -235,13 +221,13 @@ export class KNNClassifier {
 
     // Compute confidences.
     let topConfidence = 0;
-    for (const i in this.classDatasetMatrices) {
-      const probability = topKCountsForClasses[i] / kVal;
+    for (const classId in this.classDatasetMatrices) {
+      const probability = votesPerClass[classId] / kVal;
       if (probability > topConfidence) {
         topConfidence = probability;
-        exampleClass = this.unmapClassId[+i];
+        exampleClass = +classId;
       }
-      confidences[this.unmapClassId[+i]] = probability;
+      confidences[+classId] = probability;
     }
 
     return {classIndex: exampleClass, confidences};
@@ -271,8 +257,8 @@ export class KNNClassifier {
 
   private getNumExamples() {
     let total = 0;
-    for (const i in this.classDatasetMatrices) {
-      total += this.classExampleCount[+i];
+    for (const classId in this.classDatasetMatrices) {
+      total += this.classExampleCount[+classId];
     }
 
     return total;
@@ -280,8 +266,8 @@ export class KNNClassifier {
 
   dispose() {
     this.clearTrainDatasetMatrix();
-    for (const i in this.classDatasetMatrices) {
-      this.classDatasetMatrices[i].dispose();
+    for (const classId in this.classDatasetMatrices) {
+      this.classDatasetMatrices[classId].dispose();
     }
   }
 }

@@ -81,6 +81,6 @@ describeWithFlags('KNNClassifier', tf.test_util.NODE_ENVS, () => {
     classifier.addExample(tf.tensor1d([9, 9]), 9);
     const result = await classifier.predictClass(tf.tensor1d([5, 5]));
     expect(result.classIndex).toBe(5);
-    expect(result.confidences).toEqual({5: 2/3, 7: 1/3, 9: 0});
+    expect(result.confidences).toEqual({5: 2 / 3, 7: 1 / 3, 9: 0});
   });
 });
