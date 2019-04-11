@@ -16,6 +16,7 @@
  */
 import * as tf from '@tensorflow/tfjs';
 import {describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
+import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
 
 import * as knnClassifier from './index';
 
@@ -71,6 +72,7 @@ describeWithFlags('KNNClassifier', tf.test_util.NODE_ENVS, () => {
     const result = await classifier.predictClass(tf.tensor2d([3, 3], [2, 1]));
     expect(result.classIndex).toBe(1);
     expect(result.confidences).toEqual({1: 0.5, 2: 0.5});
+    expect(classifier.getClassExampleCount()).toEqual({1: 1, 2: 1});
   });
 
   it('examples with classId 5, 7 and 9', async () => {
@@ -82,5 +84,38 @@ describeWithFlags('KNNClassifier', tf.test_util.NODE_ENVS, () => {
     const result = await classifier.predictClass(tf.tensor1d([5, 5]));
     expect(result.classIndex).toBe(5);
     expect(result.confidences).toEqual({5: 2 / 3, 7: 1 / 3, 9: 0});
+    expect(classifier.getClassExampleCount()).toEqual({5: 2, 7: 1, 9: 1});
+  });
+
+  it('getClassifierDataset', () => {
+    const classifier = knnClassifier.create();
+    classifier.addExample(tf.tensor1d([5, 5.1]), 5);
+    classifier.addExample(tf.tensor1d([7, 7]), 7);
+    classifier.addExample(tf.tensor1d([5.2, 5.3]), 5);
+    classifier.addExample(tf.tensor1d([9, 9]), 9);
+
+    const dataset = classifier.getClassifierDataset();
+    expect(Object.keys(dataset)).toEqual(['5', '7', '9']);
+    expect(dataset[5].shape).toEqual([2, 2]);
+    expect(dataset[7].shape).toEqual([1, 2]);
+    expect(dataset[9].shape).toEqual([1, 2]);
+  });
+
+  it('clearClass', async () => {
+    const classifier = knnClassifier.create();
+    classifier.addExample(tf.tensor1d([5, 5]), 5);
+    classifier.addExample(tf.tensor1d([7, 7]), 7);
+    classifier.addExample(tf.tensor1d([5, 5]), 5);
+    classifier.addExample(tf.tensor1d([9, 9]), 9);
+    expect(classifier.getClassExampleCount()).toEqual({5: 2, 7: 1, 9: 1});
+    expect(classifier.getNumClasses()).toBe(3);
+
+    classifier.clearClass(5);
+    expect(classifier.getClassExampleCount()).toEqual({7: 1, 9: 1});
+    expect(classifier.getNumClasses()).toBe(2);
+
+    classifier.clearAllClasses();
+    expect(classifier.getClassExampleCount()).toEqual({});
+    expect(classifier.getNumClasses()).toBe(0);
   });
 });
