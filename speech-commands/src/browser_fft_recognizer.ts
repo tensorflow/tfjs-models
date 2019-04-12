@@ -17,8 +17,9 @@
 
 import * as tf from '@tensorflow/tfjs';
 import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
-import {loadMetadataJson, normalize} from './browser_fft_utils';
+import {loadMetadataJson, normalize, normalizeFloat32Array} from './browser_fft_utils';
 import {BACKGROUND_NOISE_TAG, Dataset} from './dataset';
+import {concatenateFloat32Arrays} from './generic_utils';
 import {balancedTrainValSplit} from './training_utils';
 import {EvaluateConfig, EvaluateResult, Example, ExampleCollectionOptions, RecognizeConfig, RecognizerCallback, RecognizerParams, ROCCurve, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerMetadata, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
 import {version} from './version';
@@ -30,8 +31,6 @@ export const UNKNOWN_TAG = '_unknown_';
 export const SAVED_MODEL_METADATA_KEY =
     'tfjs-speech-commands-saved-model-metadata';
 export const SAVE_PATH_PREFIX = 'indexeddb://tfjs-speech-commands-model/';
-
-let streaming = false;
 
 // Export a variable for injection during unit testing.
 // tslint:disable-next-line:no-any
@@ -71,6 +70,8 @@ export class BrowserFftSpeechCommandRecognizer implements
   readonly vocabulary: string;
   readonly parameters: RecognizerParams;
   protected words: string[];
+
+  protected streaming = false;
 
   protected nonBatchInputShape: [number, number, number];
   private elementsPerExample: number;
@@ -163,7 +164,7 @@ export class BrowserFftSpeechCommandRecognizer implements
   async listen(
       callback: RecognizerCallback,
       config?: StreamingRecognitionConfig): Promise<void> {
-    if (streaming) {
+    if (this.streaming) {
       throw new Error(
           'Cannot start streaming again when streaming is ongoing.');
     }
@@ -263,9 +264,9 @@ export class BrowserFftSpeechCommandRecognizer implements
       overlapFactor
     });
 
-    await this.audioDataExtractor.start();
+    await this.audioDataExtractor.start(config.audioTrackConstraints);
 
-    streaming = true;
+    this.streaming = true;
   }
 
   /**
@@ -375,7 +376,21 @@ export class BrowserFftSpeechCommandRecognizer implements
       return;
     }
     const metadataJSON = await loadMetadataJson(this.metadataURL);
-    this.words = metadataJSON.words;
+
+    if (metadataJSON.wordLabels == null) {
+      // In some legacy formats, the field 'words', instead of 'wordLabels',
+      // was populated. This branch ensures backward compatibility with those
+      // formats.
+      // tslint:disable-next-line:no-any
+      const legacyWords = (metadataJSON as any)['words'] as string[];
+      if (legacyWords == null) {
+        throw new Error(
+            'Cannot find field "words" or "wordLabels" in metadata JSON file');
+      }
+      this.words = legacyWords;
+    } else {
+      this.words = metadataJSON.wordLabels;
+    }
   }
 
   /**
@@ -384,18 +399,18 @@ export class BrowserFftSpeechCommandRecognizer implements
    * @throws Error if there is not ongoing streaming recognition.
    */
   async stopListening(): Promise<void> {
-    if (!streaming) {
+    if (!this.streaming) {
       throw new Error('Cannot stop streaming when streaming is not ongoing.');
     }
     await this.audioDataExtractor.stop();
-    streaming = false;
+    this.streaming = false;
   }
 
   /**
    * Check if streaming recognition is ongoing.
    */
   isListening(): boolean {
-    return streaming;
+    return this.streaming;
   }
 
   /**
@@ -629,7 +644,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
   async collectExample(word: string, options?: ExampleCollectionOptions):
       Promise<SpectrogramData> {
     tf.util.assert(
-        !streaming,
+        !this.streaming,
         () => 'Cannot start collection of transfer-learning example because ' +
             'a streaming recognition or transfer-learning example collection ' +
             'is ongoing');
@@ -668,25 +683,92 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       numFramesPerSpectrogram = this.nonBatchInputShape[0];
     }
 
-    streaming = true;
+    if (options.snippetDurationSec != null) {
+      tf.util.assert(options.snippetDurationSec > 0,
+          () => `snippetDurationSec is expected to be > 0, but got ` +
+              `${options.snippetDurationSec}`);
+      tf.util.assert(options.onSnippet != null,
+          () => `onSnippet must be provided if snippetDurationSec ` +
+              `is provided.`);
+    }
+    if (options.onSnippet != null) {
+      tf.util.assert(options.snippetDurationSec != null,
+          () => `snippetDurationSec must be provided if onSnippet ` +
+              `is provided.`);
+    }
+    const frameDurationSec =
+        this.parameters.fftSize / this.parameters.sampleRateHz;
+    const totalDurationSec = frameDurationSec * numFramesPerSpectrogram;
+
+    this.streaming = true;
     return new Promise<SpectrogramData>(resolve => {
+      const stepFactor = options.snippetDurationSec == null ?
+          1 : options.snippetDurationSec / totalDurationSec;
+      const overlapFactor = 1 - stepFactor;
+      const callbackCountTarget = Math.round(1 / stepFactor);
+      let callbackCount = 0;
+      let lastIndex = -1;
+      const spectrogramSnippets: Float32Array[] = [];
+
       const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
-        const normalizedX = normalize(x);
-        this.dataset.addExample({
-          label: word,
-          spectrogram: {
-            data: await normalizedX.data() as Float32Array,
+        // TODO(cais): can we consolidate the logic in the two branches?
+        if (options.onSnippet == null) {
+          const normalizedX = normalize(x);
+          this.dataset.addExample({
+            label: word,
+            spectrogram: {
+              data: await normalizedX.data() as Float32Array,
+              frameSize: this.nonBatchInputShape[1],
+            }
+          });
+          normalizedX.dispose();
+          await this.audioDataExtractor.stop();
+          this.streaming = false;
+          this.collateTransferWords();
+          resolve({
+            data: await x.data() as Float32Array,
             frameSize: this.nonBatchInputShape[1],
+          });
+        } else {
+          const data = await x.data() as Float32Array;
+          if (lastIndex === -1) {
+            lastIndex = data.length;
           }
-        });
-        normalizedX.dispose();
-        await this.audioDataExtractor.stop();
-        streaming = false;
-        this.collateTransferWords();
-        resolve({
-          data: await x.data() as Float32Array,
-          frameSize: this.nonBatchInputShape[1],
-        });
+          let i = lastIndex - 1;
+          while (data[i] !== 0 && i >= 0) {
+            i--;
+          }
+          const increment = lastIndex - i - 1;
+          lastIndex = i + 1;
+          const snippetData = data.slice(data.length - increment, data.length);
+          spectrogramSnippets.push(snippetData);
+
+          if (options.onSnippet != null) {
+            options.onSnippet({
+              data: snippetData,
+              frameSize: this.nonBatchInputShape[1]
+            });
+          }
+
+          if (callbackCount++ === callbackCountTarget) {
+            await this.audioDataExtractor.stop();
+            this.streaming = false;
+            this.collateTransferWords();
+
+            const normalized = normalizeFloat32Array(
+                concatenateFloat32Arrays(spectrogramSnippets));
+            const finalSpectrogram: SpectrogramData = {
+              data: normalized,
+              frameSize: this.nonBatchInputShape[1]
+            };
+            this.dataset.addExample({
+              label: word,
+              spectrogram: finalSpectrogram
+            });
+            // TODO(cais): Fix 1-tensor memory leak.
+            resolve(finalSpectrogram);
+          }
+        }
         return false;
       };
       this.audioDataExtractor = new BrowserFftFeatureExtractor({
@@ -695,9 +777,9 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         columnTruncateLength: this.nonBatchInputShape[1],
         suppressionTimeMillis: 0,
         spectrogramCallback,
-        overlapFactor: 0
+        overlapFactor
       });
-      this.audioDataExtractor.start();
+      this.audioDataExtractor.start(options.audioTrackConstraints);
     });
   }
 
@@ -1175,7 +1257,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     this.transferHead.add(tf.layers.dense({
       units: this.words.length,
       activation: 'softmax',
-      inputShape: truncatedBaseOutput.shape.slice(1)
+      inputShape: truncatedBaseOutput.shape.slice(1),
+      name: 'NewHeadDense'
     }));
     const transferOutput =
         this.transferHead.apply(truncatedBaseOutput) as tf.SymbolicTensor;

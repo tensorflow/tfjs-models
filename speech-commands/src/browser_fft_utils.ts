@@ -18,7 +18,7 @@
 import * as tf from '@tensorflow/tfjs';
 
 export async function loadMetadataJson(url: string):
-    Promise<{words: string[]}> {
+    Promise<{wordLabels: string[]}> {
   return new Promise((resolve, reject) => {
     const HTTP_SCHEME = 'http://';
     const HTTPS_SCHEME = 'https://';
@@ -39,7 +39,7 @@ export async function loadMetadataJson(url: string):
           `Supported schemes are: http://, https://, and ` +
           `(node.js-only) file://`));
     }
-  }) as Promise<{words: string[]}>;
+  }) as Promise<{wordLabels: string[]}>;
 }
 
 let EPSILON: number = null;
@@ -64,11 +64,40 @@ export function normalize(x: tf.Tensor): tf.Tensor {
   });
 }
 
+/**
+ * Z-Normalize the elements of a Float32Array.
+ *
+ * Subtract the mean and divide the result by the standard deviation.
+ *
+ * @param x The Float32Array to normalize.
+ * @return Noramlzied Float32Array.
+ */
+export function normalizeFloat32Array(x: Float32Array): Float32Array {
+  if (x.length < 2) {
+    throw new Error(
+        'Cannot normalize a Float32Array with fewer than 2 elements.');
+  }
+  if (EPSILON == null) {
+    EPSILON = tf.ENV.get('EPSILON');
+  }
+  return tf.tidy(() => {
+    const {mean, variance} = tf.moments(tf.tensor1d(x));
+    const meanVal = mean.arraySync() as number;
+    const stdVal = Math.sqrt(variance.arraySync() as number);
+    const yArray = Array.from(x).map(
+        y => (y - meanVal) / (stdVal + EPSILON));
+    return new Float32Array(yArray);
+  });
+}
+
 export function getAudioContextConstructor(): AudioContext {
   // tslint:disable-next-line:no-any
   return (window as any).AudioContext || (window as any).webkitAudioContext;
 }
 
-export async function getAudioMediaStream(): Promise<MediaStream> {
-  return await navigator.mediaDevices.getUserMedia({audio: true, video: false});
+export async function getAudioMediaStream(audioTrackConstraints?: MediaTrackConstraints): Promise<MediaStream> {
+    return await navigator.mediaDevices.getUserMedia({
+        audio: audioTrackConstraints == null ? true : audioTrackConstraints,
+        video: false
+    });
 }

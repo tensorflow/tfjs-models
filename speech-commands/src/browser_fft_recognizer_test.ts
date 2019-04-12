@@ -140,6 +140,16 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
   function createFakeMetadataFile(tmpDir: string) {
     // Construct the metadata.json for the fake model.
     const metadata: {} = {
+      wordLabels: ['_background_noise_', '_unknown_', 'foo', 'bar'],
+      frameSize: 232
+    };
+    const metadataPath = join(tmpDir, 'metadata.json');
+    writeFileSync(metadataPath, JSON.stringify(metadata));
+  }
+
+  function createFakeMetadataFileWithLegacyWordsField(tmpDir: string) {
+    // Construct the metadata.json for the fake model.
+    const metadata: {} = {
       words: ['_background_noise_', '_unknown_', 'foo', 'bar'],
       frameSize: 232
     };
@@ -147,11 +157,37 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     writeFileSync(metadataPath, JSON.stringify(metadata));
   }
 
-  it('Constructing recognize using custom URLs', async () => {
+  it('Constructing recognizer: custom URLs', async () => {
     // Construct a fake model
     const tmpDir = tempfile();
     await createFakeModelArtifact(tmpDir);
     createFakeMetadataFile(tmpDir);
+
+    const modelPath = join(tmpDir, 'model.json');
+    const metadataPath = join(tmpDir, 'metadata.json');
+    const modelURL = `file://${modelPath}`;
+    const metadataURL = `file://${metadataPath}`;
+
+    const recognizer =
+        new BrowserFftSpeechCommandRecognizer(null, modelURL, metadataURL);
+    await recognizer.ensureModelLoaded();
+    expect(recognizer.wordLabels()).toEqual([
+      '_background_noise_', '_unknown_', 'foo', 'bar'
+    ]);
+
+    const recogResult = await recognizer.recognize(tf.zeros([2, 43, 232, 1]));
+    expect(recogResult.scores.length).toEqual(2);
+    expect((recogResult.scores[0] as Float32Array).length).toEqual(4);
+    expect((recogResult.scores[1] as Float32Array).length).toEqual(4);
+
+    rimraf(tmpDir, () => {});
+  });
+
+  it('Constructing recognizer: custom URLs, legacy words format', async () => {
+    // Construct a fake model
+    const tmpDir = tempfile();
+    await createFakeModelArtifact(tmpDir);
+    createFakeMetadataFileWithLegacyWordsField(tmpDir);
 
     const modelPath = join(tmpDir, 'model.json');
     const metadataPath = join(tmpDir, 'metadata.json');
@@ -653,6 +689,92 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     }
   });
 
+  it('collectExample with onSnippet', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    const durationSec = 1;
+    const snippetDurationSec = 0.1;
+    const snippetLengths: number[] = [];
+    const finalSpectrogram = await transfer.collectExample('foo', {
+      durationSec,
+      snippetDurationSec,
+      onSnippet: async spectrogram => {
+        snippetLengths.push(spectrogram.data.length);
+      }
+    });
+    expect(snippetLengths.length).toEqual(11);
+    expect(snippetLengths[0]).toEqual(927);
+    // First audio sample is zero and should have been skipped.
+    for (let i = 1; i < snippetLengths.length; ++i) {
+      expect(snippetLengths[i]).toEqual(928);
+    }
+    expect(finalSpectrogram.data.length)
+       .toEqual(snippetLengths.reduce((x, prev) => x + prev));
+    expect(finalSpectrogram.data.length).toEqual(10208 - 1);
+  });
+
+  it('collectExample w/ invalid durationSec leads to error',  async done => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    const durationSec = 1;
+    const snippetDurationSec = 0;
+    try {
+      await transfer.collectExample('foo', {
+        durationSec,
+        snippetDurationSec
+      });
+      done.fail();
+    } catch (error) {
+      expect(error.message).toMatch(/snippetDurationSec is expected to be > 0/);
+      done();
+    }
+  });
+
+  it('collectExample w/ onSnippet w/o snippetDurationSec error',
+      async done => {
+        setUpFakes();
+        const base = new BrowserFftSpeechCommandRecognizer();
+        await base.ensureModelLoaded();
+        const transfer = base.createTransfer('xfer1');
+        const durationSec = 1;
+        try {
+          await transfer.collectExample('foo', {
+            durationSec,
+            onSnippet: async spectrogram => {}
+          });
+          done.fail();
+        } catch (error) {
+          expect(error.message).toMatch(
+              /snippetDurationSec must be provided if onSnippet/);
+          done();
+        }
+      });
+
+  it('collectExample w/ snippetDurationSec w/o callback errors',
+      async done => {
+        setUpFakes();
+        const base = new BrowserFftSpeechCommandRecognizer();
+        await base.ensureModelLoaded();
+        const transfer = base.createTransfer('xfer1');
+        const durationSec = 1;
+        const snippetDurationSec = 0.1;
+        try {
+          await transfer.collectExample('foo', {
+            durationSec,
+            snippetDurationSec
+          });
+          done.fail();
+        } catch (error) {
+          expect(error.message).toMatch(
+              /onSnippet must be provided if snippetDurationSec/);
+          done();
+        }
+      });
+
   it('collectTransferLearningExample default transfer model', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
@@ -840,15 +962,10 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     expect(base.isListening()).toEqual(true);
 
     const transfer = base.createTransfer('xfer1');
-    let caughtError: Error;
-    try {
-      await transfer.collectExample('foo');
-    } catch (err) {
-      caughtError = err;
-    }
-    expect(caughtError.message)
-        .toMatch(/Cannot start collection of transfer-learning example/);
-    expect(base.isListening()).toEqual(true);
+    // Concurrent with the ongoing listening (started by the listen() call
+    // above).
+    const example = await transfer.collectExample('foo');
+    expect(example.frameSize).toEqual(232);
 
     await base.stopListening();
     expect(base.isListening()).toEqual(false);

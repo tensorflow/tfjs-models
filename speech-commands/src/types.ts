@@ -135,6 +135,33 @@ export interface ExampleCollectionOptions {
    * If specified, must be >0.
    */
   durationSec?: number;
+
+  /**
+   * Optional constraints for the audio track.
+   *
+   * E.g., this can be used to select a microphone when multiple microphones
+   * are available on the system: `{deviceId: 'deadbeef'}`.
+   */
+  audioTrackConstraints?: MediaTrackConstraints;
+
+  /**
+   * Optional snipppet duration in seconds.
+   *
+   * Must be supplied if `onSnippet` is specified.
+   */
+  snippetDurationSec?: number;
+
+  /**
+   * Optional snippet callback.
+   *
+   * Must be provided if `snippetDurationSec` is specified.
+   *
+   * Gets called every snippetDurationSec with a latest slice of the
+   * spectrogram. It is the spectrogram accumulated since the last invocation of
+   * the callback (or for the first time, since when `collectExample()` is
+   * started).
+   */
+  onSnippet?: (spectrogram: SpectrogramData) => Promise<void>;
 }
 
 /**
@@ -302,7 +329,7 @@ export interface TransferSpeechCommandRecognizer extends
 
   /**
    * Get metadata about the transfer recognizer.
-   * 
+   *
    * The metadata includes but is not limited to: speech-commands library
    * version, word labels that correspond to the model's probability outputs.
    */
@@ -437,6 +464,14 @@ export interface StreamingRecognitionConfig {
    * Default: `false`.
    */
   includeEmbedding?: boolean;
+
+  /**
+   * Optional constraints for the audio track.
+   *
+   * E.g., this can be used to select a microphone when multiple microphones
+   * are available on the system: `{deviceId: 'deadbeef'}`.
+   */
+  audioTrackConstraints?: MediaTrackConstraints;
 }
 
 export interface RecognizeConfig {
@@ -632,7 +667,8 @@ export interface FeatureExtractor {
   /**
    * Start the feature extraction from the audio samples.
    */
-  start(): Promise<Float32Array[]|void>;
+  start(audioTrackConstraints?: MediaTrackConstraints):
+      Promise<Float32Array[]|void>;
 
   /**
    * Stop the feature extraction.
