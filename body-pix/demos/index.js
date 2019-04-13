@@ -133,10 +133,30 @@ async function setupCamera(cameraLabel) {
   });
 }
 
+/**
+ * Loads a video to be used in the demo
+ *
+ */
+function setupVideofile(file) {
+  const video = document.getElementById('video');
+  video.width = videoWidth;
+  video.height = videoHeight;
 
-async function loadVideo(cameraLabel) {
+  video.src = file;
+  video.load();
+  video.loop = true;
+
+  return new Promise((resolve) => {
+    video.onloadedmetadata = () => {
+      resolve(video);
+    };
+  });
+}
+
+
+async function loadVideo(cameraLabel, liveCamera = true) {
   try {
-    state.video = await setupCamera(cameraLabel);
+    state.video = liveCamera ? await setupCamera(cameraLabel) : await setUpVideofile(file);
   } catch (e) {
     let info = document.getElementById('info');
     info.textContent = 'this browser does not support video capture,' +
@@ -346,6 +366,35 @@ function setupFPS() {
   }
 }
 
+window.addEventListener("dragover", function (e) {
+  e = e || event;
+  e.preventDefault();
+}, false);
+window.addEventListener("drop", function (e) {
+  e = e || event;
+  e.preventDefault();
+}, false);
+
+document.getElementById('output').addEventListener('drop', dragAndDropVideo, false);
+document.getElementById('output').addEventListener('click', bindPage, false);
+
+function dragAndDropVideo(e) {
+  e.stopPropagation();
+  e.preventDefault();
+
+  stopPage();
+
+  var files = e.dataTransfer.files;
+  const file = files[0];
+
+  if (file.type.indexOf('video') === -1) {
+    alert("Please select a video");
+    return false;
+  }
+
+  loadVideo(false, URL.createObjectURL(file));
+}
+
 /**
  * Feeds an image to BodyPix to estimate segmentation - this is where the
  * magic happens. This function loops with a requestAnimationFrame method.
@@ -424,9 +473,12 @@ function segmentBodyInRealTime() {
 
     requestAnimationFrame(bodySegmentationFrame);
   }
-
-  bodySegmentationFrame();
+  if (loopActive)
+    bodySegmentationFrame();
 }
+
+let loopActive;
+let initial = true;
 
 /**
  * Kicks off the demo.
@@ -443,7 +495,8 @@ export async function bindPage() {
   let cameras = await getVideoInputs();
 
   setupFPS();
-  setupGui(cameras);
+  if (initial)
+    setupGui(cameras);
 
   segmentBodyInRealTime();
 }
@@ -453,3 +506,11 @@ navigator.getUserMedia = navigator.getUserMedia ||
     navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 // kick off the demo
 bindPage();
+
+function stopPage() {
+  loopActive = false;
+  if (document.getElementById('video').srcObject) {
+    document.getElementById('video').srcObject.getTracks()[0].stop();
+    document.getElementById('video').srcObject = null;
+  }
+}
