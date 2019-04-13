@@ -18,7 +18,7 @@ import * as posenet from '@tensorflow-models/posenet';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 
-import {drawBoundingBox, drawKeypoints, drawSkeleton} from './demo_util';
+import { drawBoundingBox, drawKeypoints, drawSkeleton } from './demo_util';
 
 const videoWidth = 600;
 const videoHeight = 500;
@@ -43,7 +43,7 @@ function isMobile() {
 async function setupCamera() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     throw new Error(
-        'Browser API navigator.mediaDevices.getUserMedia not available');
+      'Browser API navigator.mediaDevices.getUserMedia not available');
   }
 
   const video = document.getElementById('video');
@@ -68,8 +68,57 @@ async function setupCamera() {
   });
 }
 
-async function loadVideo() {
-  const video = await setupCamera();
+/**
+ * Loads a video to be used in the demo
+ *
+ */
+function setupVideofile(file) {
+  const video = document.getElementById('video');
+  video.width = videoWidth;
+  video.height = videoHeight;
+
+  video.src = file;
+  video.load();
+  video.loop = true;
+
+  return new Promise((resolve) => {
+    video.onloadedmetadata = () => {
+      resolve(video);
+    };
+  });
+}
+
+window.addEventListener("dragover", function (e) {
+  e = e || event;
+  e.preventDefault();
+}, false);
+window.addEventListener("drop", function (e) {
+  e = e || event;
+  e.preventDefault();
+}, false);
+
+document.getElementById('output').addEventListener('drop', dragAndDropVideo, false);
+document.getElementById('output').addEventListener('click', bindPage, false);
+
+function dragAndDropVideo(e) {
+  e.stopPropagation();
+  e.preventDefault();
+
+  stopPage();
+
+  var files = e.dataTransfer.files;
+  const file = files[0];
+
+  if (file.type.indexOf('video') === -1) {
+    alert("Please select a video");
+    return false;
+  }
+
+  loadVideo(false, URL.createObjectURL(file));
+}
+
+async function loadVideo(liveCamera = true, file) {
+  const video = liveCamera ? await setupCamera() : await setupVideofile(file);
   video.play();
 
   return video;
@@ -112,13 +161,13 @@ function setupGui(cameras, net) {
     guiState.camera = cameras[0].deviceId;
   }
 
-  const gui = new dat.GUI({width: 300});
+  const gui = new dat.GUI({ width: 300 });
 
   // The single-pose algorithm is faster and simpler but requires only one
   // person to be in the frame or results will be innaccurate. Multi-pose works
   // for more than 1 person
   const algorithmController =
-      gui.add(guiState, 'algorithm', ['single-pose', 'multi-pose']);
+    gui.add(guiState, 'algorithm', ['single-pose', 'multi-pose']);
 
   // The input parameters have the most effect on accuracy and speed of the
   // network
@@ -127,8 +176,8 @@ function setupGui(cameras, net) {
   // accuracy. 1.01 is the largest, but will be the slowest. 0.50 is the
   // fastest, but least accurate.
   const architectureController = input.add(
-      guiState.input, 'mobileNetArchitecture',
-      ['1.01', '1.00', '0.75', '0.50']);
+    guiState.input, 'mobileNetArchitecture',
+    ['1.01', '1.00', '0.75', '0.50']);
   // Output stride:  Internally, this parameter affects the height and width of
   // the layers in the neural network. The lower the value of the output stride
   // the higher the accuracy but slower the speed, the higher the value the
@@ -150,9 +199,9 @@ function setupGui(cameras, net) {
 
   let multi = gui.addFolder('Multi Pose Detection');
   multi.add(guiState.multiPoseDetection, 'maxPoseDetections')
-      .min(1)
-      .max(20)
-      .step(1);
+    .min(1)
+    .max(20)
+    .step(1);
   multi.add(guiState.multiPoseDetection, 'minPoseConfidence', 0.0, 1.0);
   multi.add(guiState.multiPoseDetection, 'minPartConfidence', 0.0, 1.0);
   // nms Radius: controls the minimum distance between poses that are returned
@@ -168,11 +217,11 @@ function setupGui(cameras, net) {
   output.open();
 
 
-  architectureController.onChange(function(architecture) {
+  architectureController.onChange(function (architecture) {
     guiState.changeToArchitecture = architecture;
   });
 
-  algorithmController.onChange(function(value) {
+  algorithmController.onChange(function (value) {
     switch (guiState.algorithm) {
       case 'single-pose':
         multi.close();
@@ -234,7 +283,7 @@ function detectPoseInRealTime(video, net) {
     switch (guiState.algorithm) {
       case 'single-pose':
         const pose = await guiState.net.estimateSinglePose(
-            video, imageScaleFactor, flipHorizontal, outputStride);
+          video, imageScaleFactor, flipHorizontal, outputStride);
         poses.push(pose);
         if (guiState.singlePoseDetection.smoothing !== 'none') {
           poseHistory.push(pose);
@@ -248,10 +297,10 @@ function detectPoseInRealTime(video, net) {
         break;
       case 'multi-pose':
         poses = await guiState.net.estimateMultiplePoses(
-            video, imageScaleFactor, flipHorizontal, outputStride,
-            guiState.multiPoseDetection.maxPoseDetections,
-            guiState.multiPoseDetection.minPartConfidence,
-            guiState.multiPoseDetection.nmsRadius);
+          video, imageScaleFactor, flipHorizontal, outputStride,
+          guiState.multiPoseDetection.maxPoseDetections,
+          guiState.multiPoseDetection.minPartConfidence,
+          guiState.multiPoseDetection.nmsRadius);
 
         minPoseConfidence = +guiState.multiPoseDetection.minPoseConfidence;
         minPartConfidence = +guiState.multiPoseDetection.minPartConfidence;
@@ -271,10 +320,10 @@ function detectPoseInRealTime(video, net) {
     // For each pose (i.e. person) detected in an image, loop through the poses
     // and draw the resulting skeleton and keypoints if over certain confidence
     // scores
-    poses.forEach(({score, keypoints}) => {
+    poses.forEach(({ score, keypoints }) => {
       // If smoothing is enabled, take the average of the last few poses here
-      if (guiState.algorithm === 'multi' && 
-      guiState.singlePoseDetection.smoothing !== 'none') {
+      if (guiState.algorithm === 'multi' &&
+        guiState.singlePoseDetection.smoothing !== 'none') {
         let sumPoses = poseHistory.reduce((avg, pose) => {
           if (avg.score === undefined) {
             avg.score = pose.score;
@@ -316,8 +365,12 @@ function detectPoseInRealTime(video, net) {
     requestAnimationFrame(poseDetectionFrame);
   }
 
-  poseDetectionFrame();
+  if (loopActive)
+    poseDetectionFrame();
 }
+
+let loopActive;
+let initial = true;
 
 /**
  * Kicks off the demo by loading the posenet model, finding and loading
@@ -325,6 +378,7 @@ function detectPoseInRealTime(video, net) {
  */
 export async function bindPage() {
   // Load the PoseNet model weights with architecture 0.75
+  loopActive = true;
   const net = await posenet.load(0.75);
 
   document.getElementById('loading').style.display = 'none';
@@ -337,17 +391,28 @@ export async function bindPage() {
   } catch (e) {
     let info = document.getElementById('info');
     info.textContent = 'this browser does not support video capture,' +
-        'or this device does not have a camera';
+      'or this device does not have a camera';
     info.style.display = 'block';
     throw e;
   }
 
-  setupGui([], net);
+  if (initial) {
+    setupGui([], net);
+    initial = false;
+  }
   setupFPS();
   detectPoseInRealTime(video, net);
 }
 
 navigator.getUserMedia = navigator.getUserMedia ||
-    navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+  navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 // kick off the demo
 bindPage();
+
+function stopPage() {
+  loopActive = false;
+  if (document.getElementById('video').srcObject) {
+    document.getElementById('video').srcObject.getTracks()[0].stop();
+    document.getElementById('video').srcObject = null;
+  }
+}
