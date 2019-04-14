@@ -442,8 +442,9 @@ export class Dataset {
 
       if (config.augmentByMixingNoiseRatio != null) {
         this.augmentByMixingNoise(
-            config.getDataset ? xArrays : xTensors, labelIndices,
-            config.augmentByMixingNoiseRatio);
+            config.getDataset ? xArrays : xTensors as
+                Array<Float32Array | tf.Tensor>,
+            labelIndices, config.augmentByMixingNoiseRatio);
       }
 
       const shuffle = config.shuffle == null ? true : config.shuffle;
