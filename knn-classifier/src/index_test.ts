@@ -16,8 +16,6 @@
  */
 import * as tf from '@tensorflow/tfjs';
 import {describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
-import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
-
 import * as knnClassifier from './index';
 
 describeWithFlags('KNNClassifier', tf.test_util.NODE_ENVS, () => {
@@ -70,21 +68,36 @@ describeWithFlags('KNNClassifier', tf.test_util.NODE_ENVS, () => {
     classifier.addExample(tf.tensor2d([5, 2], [2, 1]), 1);
     classifier.addExample(tf.tensor2d([6, 1], [2, 1]), 2);
     const result = await classifier.predictClass(tf.tensor2d([3, 3], [2, 1]));
-    expect(result.classIndex).toBe(1);
-    expect(result.confidences).toEqual({1: 0.5, 2: 0.5});
+    expect(result.classIndex).toBe(0);
+    expect(result.label).toBe('1');
+    expect(result.confidences).toEqual({'1': 0.5, '2': 0.5});
     expect(classifier.getClassExampleCount()).toEqual({1: 1, 2: 1});
   });
 
   it('examples with classId 5, 7 and 9', async () => {
     const classifier = knnClassifier.create();
-    classifier.addExample(tf.tensor1d([5, 5]), 5);
     classifier.addExample(tf.tensor1d([7, 7]), 7);
     classifier.addExample(tf.tensor1d([5, 5]), 5);
     classifier.addExample(tf.tensor1d([9, 9]), 9);
+    classifier.addExample(tf.tensor1d([5, 5]), 5);
     const result = await classifier.predictClass(tf.tensor1d([5, 5]));
-    expect(result.classIndex).toBe(5);
+    expect(result.classIndex).toBe(1);
+    expect(result.label).toBe('5');
     expect(result.confidences).toEqual({5: 2 / 3, 7: 1 / 3, 9: 0});
     expect(classifier.getClassExampleCount()).toEqual({5: 2, 7: 1, 9: 1});
+  });
+
+  it('examples with string labels', async () => {
+    const classifier = knnClassifier.create();
+    classifier.addExample(tf.tensor1d([7, 7]), 'a');
+    classifier.addExample(tf.tensor1d([5, 5]), 'b');
+    classifier.addExample(tf.tensor1d([9, 9]), 'c');
+    classifier.addExample(tf.tensor1d([5, 5]), 'b');
+    const result = await classifier.predictClass(tf.tensor1d([5, 5]));
+    expect(result.classIndex).toBe(1);
+    expect(result.label).toBe('b');
+    expect(result.confidences).toEqual({'b': 2 / 3, 'a': 1 / 3, 'c': 0});
+    expect(classifier.getClassExampleCount()).toEqual({'b': 2, 'a': 1, 'c': 1});
   });
 
   it('getClassifierDataset', () => {
