@@ -656,56 +656,55 @@
   resolved "https://registry.yarnpkg.com/@tensorflow-models/posenet/-/posenet-1.0.0.tgz#c2ee32f35f9f03d6e92039d7b110a8f6df621e45"
   integrity sha512-uq/evoEMn3rD4J+yYIEp9S62bXn7mbMTEpSnnBz+rCEuzEEQkwNJByy99+K+OZfFPP71OtIkngDvrBhZxRe0OQ==
 
-"@tensorflow/tfjs-converter@1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-1.0.0.tgz#cdd7bbf9f39fde93156fb1bddeac16a8ab157d6d"
-  integrity sha512-BGiR2U2BEKL+Gwf2Pqu7fZZw+z3ptMORTeS/rIxVnpIbeb7jsD7q25ibvfX1yuk21GM7igfZ53c4FPwqa24G9Q==
+"@tensorflow/tfjs-converter@1.0.4":
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-1.0.4.tgz#824f546bf47ceaedf7affbadff3bdd151b530066"
+  integrity sha512-r619cIleJy9btVN12KoFCi0HIgi4qzzgxjxQCDxaVgi7Axas7MwBtAKGTZppR4+eK7eLOVYT1ah95JUDdFNGRw==
 
-"@tensorflow/tfjs-core@1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-core/-/tfjs-core-1.0.0.tgz#1be6240efc5b2f270f90a032713dfac666fa1533"
-  integrity sha512-YiGjDJODPXI9S9AEizf6rdkYFFFCBCqwOmFqBY2MderPaDJ71rqhTzWQkWCMXV4Jhz5J+TEqtr8ishl3Zyid6A==
+"@tensorflow/tfjs-core@1.0.4":
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-core/-/tfjs-core-1.0.4.tgz#98365d04d179b3244ec59a270ec5e31e21de3b35"
+  integrity sha512-PpdrCozkvRx3hFyHogZFjbZUmE1t/SB/iiE8yj195aCy3X2D8T66+aLS2iUkdU2tr+1bccyvPkBktwX6/lKtAw==
   dependencies:
     "@types/seedrandom" "2.4.27"
     "@types/webgl-ext" "0.0.30"
     "@types/webgl2" "0.0.4"
     seedrandom "2.4.3"
 
-"@tensorflow/tfjs-data@1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-data/-/tfjs-data-1.0.0.tgz#ccdc4fe713ca903cdc61135f7c361effaea4e670"
-  integrity sha512-pWn0OH5x67Qa98FWiBO1UvcglEsDFf57Tv7amtC+WxlMrH5hUHSaR30dBaW1qpdOEJkDRJtUg6tNTG2av6mqVQ==
+"@tensorflow/tfjs-data@1.0.4":
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-data/-/tfjs-data-1.0.4.tgz#1229a3217b529933a97b577004c95dce060a49e7"
+  integrity sha512-Rf7M8ctirYfuKh+hu96pXi6g6yChEEELOvlCa1ta4JWqbQhpsu77DL7SrEtKeWzL+aD/GdCxmwuyofSnRSO7JA==
   dependencies:
     "@types/node-fetch" "^2.1.2"
     node-fetch "~2.1.2"
-    seedrandom "~2.4.3"
 
-"@tensorflow/tfjs-layers@1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-layers/-/tfjs-layers-1.0.0.tgz#e4344e9221001850eb1615184fa5ca2499f75254"
-  integrity sha512-+RB5TKM/L7qLn17ic8da/G2qg8EFhRvZIoRA6uCCs5OMUJAUQqhDqBNaoWiy0pYtXDzfZJu3ZOkDbAg2Xv2YOQ==
+"@tensorflow/tfjs-layers@1.0.4":
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-layers/-/tfjs-layers-1.0.4.tgz#4ebeb3183b3705f7dd00f1cd47a33ff3a0c46213"
+  integrity sha512-X/iH0dh7AODZO1k44cx0YO19kHAItgUc9LEf5ZYH7bWaqrL0O+J4JYONqW5xzjLHunOFkKsvtNvZi9hIyemjGA==
 
 "@tensorflow/tfjs@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs/-/tfjs-1.0.0.tgz#a4a181c59e1b82ad8b09b5d1da5cafc9a457b83a"
-  integrity sha512-ZnX4GvIpKBywybBCOXi0ym04LVosJwvZN2hOKatvO6/P1HkOw5Qfu+rwQLuKsZMrcdzJXzNN8L0NiJiPu6AStw==
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs/-/tfjs-1.0.4.tgz#b571df49419e46753c6aa054d32c10787e83d928"
+  integrity sha512-lTKYfk8VHG/acun7xRWz/A8FFsf2FK6aI0TvKrenmiaW4OZue8BYrFNbhLKdscSaEGvYZ7/RFWaOQkA2nrcI3Q==
   dependencies:
-    "@tensorflow/tfjs-converter" "1.0.0"
-    "@tensorflow/tfjs-core" "1.0.0"
-    "@tensorflow/tfjs-data" "1.0.0"
-    "@tensorflow/tfjs-layers" "1.0.0"
+    "@tensorflow/tfjs-converter" "1.0.4"
+    "@tensorflow/tfjs-core" "1.0.4"
+    "@tensorflow/tfjs-data" "1.0.4"
+    "@tensorflow/tfjs-layers" "1.0.4"
 
 "@types/node-fetch@^2.1.2":
-  version "2.1.6"
-  resolved "https://registry.yarnpkg.com/@types/node-fetch/-/node-fetch-2.1.6.tgz#4326288b49f352a142f03c63526ebce0f4c50877"
-  integrity sha512-Hv1jgh3pfpUEl2F2mqUd1AfLSk1YbUCeBJFaP36t7esAO617dErqdxWb5cdG2NfJGOofkmBW36fdx0dVewxDRg==
+  version "2.3.2"
+  resolved "https://registry.yarnpkg.com/@types/node-fetch/-/node-fetch-2.3.2.tgz#e01893b176c6fa1367743726380d65bce5d6576b"
+  integrity sha512-yW0EOebSsQme9yKu09XbdDfle4/SmWZMK4dfteWcSLCYNQQcF+YOv0kIrvm+9pO11/ghA4E6A+RNQqvYj4Nr3A==
   dependencies:
     "@types/node" "*"
 
 "@types/node@*":
-  version "11.10.4"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-11.10.4.tgz#3f5fc4f0f322805f009e00ab35a2ff3d6b778e42"
-  integrity sha512-wa09itaLE8L705aXd8F80jnFpxz3Y1/KRHfKsYL2bPc0XF+wEWu8sR9n5bmeu8Ba1N9z2GRNzm/YdHcghLkLKg==
+  version "11.13.4"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-11.13.4.tgz#f83ec3c3e05b174b7241fadeb6688267fe5b22ca"
+  integrity sha512-+rabAZZ3Yn7tF/XPGHupKIL5EcAbrLxnTr/hgQICxbeuAfWtT0UZSfULE+ndusckBItcv4o6ZeOJplQikVcLvQ==
 
 "@types/node@^10.11.7":
   version "10.12.29"
@@ -5543,11 +5542,6 @@ seedrandom@2.4.3:
   version "2.4.3"
   resolved "https://registry.yarnpkg.com/seedrandom/-/seedrandom-2.4.3.tgz#2438504dad33917314bff18ac4d794f16d6aaecc"
   integrity sha1-JDhQTa0zkXMUv/GKxNeU8W1qrsw=
-
-seedrandom@~2.4.3:
-  version "2.4.4"
-  resolved "https://registry.yarnpkg.com/seedrandom/-/seedrandom-2.4.4.tgz#b25ea98632c73e45f58b77cfaa931678df01f9ba"
-  integrity sha512-9A+PDmgm+2du77B5i0Ip2cxOqqHjgNxnBgglxLcX78A2D6c2rTo61z4jnVABpF4cKeDMDG+cmXXvdnqse2VqMA==
 
 "semver@2 || 3 || 4 || 5", semver@^5.3.0, semver@^5.4.1, semver@^5.5.0, semver@^5.6.0:
   version "5.6.0"
