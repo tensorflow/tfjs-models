@@ -151,13 +151,13 @@ export class KNNClassifier {
   /**
    * Clears the saved examples from the specified class.
    */
-  clearClass(classIndex: number) {
-    if (this.classDatasetMatrices[classIndex] == null) {
-      throw new Error('Cannot clear invalid class ${classIndex}');
+  clearClass(label: number|string) {
+    if (this.classDatasetMatrices[label] == null) {
+      throw new Error(`Cannot clear invalid class ${label}`);
     }
 
-    delete this.classDatasetMatrices[classIndex];
-    delete this.classExampleCount[classIndex];
+    delete this.classDatasetMatrices[label];
+    delete this.classExampleCount[label];
     this.clearTrainDatasetMatrix();
   }
 
