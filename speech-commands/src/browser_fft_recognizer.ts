@@ -684,15 +684,18 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     }
 
     if (options.snippetDurationSec != null) {
-      tf.util.assert(options.snippetDurationSec > 0,
+      tf.util.assert(
+          options.snippetDurationSec > 0,
           () => `snippetDurationSec is expected to be > 0, but got ` +
               `${options.snippetDurationSec}`);
-      tf.util.assert(options.onSnippet != null,
+      tf.util.assert(
+          options.onSnippet != null,
           () => `onSnippet must be provided if snippetDurationSec ` +
               `is provided.`);
     }
     if (options.onSnippet != null) {
-      tf.util.assert(options.snippetDurationSec != null,
+      tf.util.assert(
+          options.snippetDurationSec != null,
           () => `snippetDurationSec must be provided if onSnippet ` +
               `is provided.`);
     }
@@ -703,7 +706,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     this.streaming = true;
     return new Promise<SpectrogramData>(resolve => {
       const stepFactor = options.snippetDurationSec == null ?
-          1 : options.snippetDurationSec / totalDurationSec;
+          1 :
+          options.snippetDurationSec / totalDurationSec;
       const overlapFactor = 1 - stepFactor;
       const callbackCountTarget = Math.round(1 / stepFactor);
       let callbackCount = 0;
@@ -744,10 +748,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
           spectrogramSnippets.push(snippetData);
 
           if (options.onSnippet != null) {
-            options.onSnippet({
-              data: snippetData,
-              frameSize: this.nonBatchInputShape[1]
-            });
+            options.onSnippet(
+                {data: snippetData, frameSize: this.nonBatchInputShape[1]});
           }
 
           if (callbackCount++ === callbackCountTarget) {
@@ -761,10 +763,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
               data: normalized,
               frameSize: this.nonBatchInputShape[1]
             };
-            this.dataset.addExample({
-              label: word,
-              spectrogram: finalSpectrogram
-            });
+            this.dataset.addExample(
+                {label: word, spectrogram: finalSpectrogram});
             // TODO(cais): Fix 1-tensor memory leak.
             resolve(finalSpectrogram);
           }
@@ -869,9 +869,17 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     this.collateTransferWords();
   }
 
-  /** Serialize the existing examples. */
-  serializeExamples(): ArrayBuffer {
-    return this.dataset.serialize();
+  /**
+   * Serialize the existing examples.
+   *
+   * @param wordLabels Optional word label(s) to serialize. If specified, only
+   *   the examples with labels matching the argument will be serialized. If
+   *   any specified word label does not exist in the vocabulary of this
+   *   transfer recognizer, an Error will be thrown.
+   * @returns An `ArrayBuffer` object amenable to transmission and storage.
+   */
+  serializeExamples(wordLabels?: string|string[]): ArrayBuffer {
+    return this.dataset.serialize(wordLabels);
   }
 
   /**
@@ -971,8 +979,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       tf.util.assert(
           config.fineTuningEpochs >= 0 &&
               Number.isInteger(config.fineTuningEpochs),
-          () =>
-              `If specified, fineTuningEpochs must be a non-negative ` +
+          () => `If specified, fineTuningEpochs must be a non-negative ` +
               `integer, but received ${config.fineTuningEpochs}`);
     }
 
