@@ -22,10 +22,11 @@ import {checkpoints} from './checkpoints';
 import {assertValidOutputStride, assertValidScaleFactor, MobileNet, MobileNetMultiplier, OutputStride} from './mobilenet';
 import {ModelWeights} from './model_weights';
 import {decodeMultiplePoses} from './multi_pose/decode_multiple_poses';
+import {decodeSinglePose} from './single_pose/decode_single_pose';
 import ResNet from './resnet';
 // import {decodeSinglePose} from './single_pose/decode_single_pose';
 import {Pose, PosenetInput} from './types';
-import {getInputTensorDimensions, getValidResolution, resizeAndPadTo, /*scalePose,*/ scalePoses, /*toResizedInputTensor, */ toTensorBuffers3D} from './util';
+import {getInputTensorDimensions, /*getValidResolution,*/ /*resizeAndPadTo,*/ resizeTo, /*scalePose,*/ /*scalePoses,*/ /*toResizedInputTensor, */ toTensorBuffers3D} from './util';
 
 export type PoseNetResolution = 161|193|257|289|321|353|385|417|449|481|513;
 
@@ -207,43 +208,70 @@ export class PoseNet {
   async estimateMultiplePoses(
       input: PosenetInput, imageScaleFactor = 0.5, flipHorizontal = false,
       outputStride: OutputStride = 16, maxDetections = 5, scoreThreshold = .5,
-      nmsRadius = 20): Promise<Pose[]> {
+      nmsRadius = 20): Promise<[Float32Array, Float32Array, 
+        Float32Array, Float32Array, Pose, Pose[]]> {
     assertValidOutputStride(outputStride);
     assertValidScaleFactor(imageScaleFactor);
 
     const [height, width] = getInputTensorDimensions(input);
-    const resizedHeight =
-        getValidResolution(imageScaleFactor, height, outputStride);
-    const resizedWidth =
-        getValidResolution(imageScaleFactor, width, outputStride);
+    // const resizedHeight = getValidResolution(imageScaleFactor, height, outputStride);
+    // const resizedWidth = getValidResolution(imageScaleFactor, width, outputStride);
+    const resizedHeight = 513;
+    const resizedWidth = 513;
+    console.log('h, w', height, width);
+    console.log('h_new, w_new', resizedHeight, resizedWidth);
 
     const {heatmapScores, offsets, displacementFwd, displacementBwd} =
         tf.tidy(() => {
-          const resizedAndPadded =
-              resizeAndPadTo(input, this.resnet.inputDimensions);
-          return this.resnet.predict(resizedAndPadded.resizedAndPadded);
+          const resized = resizeTo(input, [513, 513], true);
+          return this.resnet.predict(resized.resized);
         });
 
+    console.log('heatmap shape', heatmapScores.shape);
+    // 1. Heatmaps Good Quality [YES]
+    const result = await heatmapScores.data() as Float32Array;
+    // 2. Offsets Good Quality [YES]
+    const result2 = await offsets.data() as Float32Array;
+    // 3. DisplacementFwd Good Quality [YES]
+    const result3 = await displacementFwd.data() as Float32Array;
+    // 4. DisplacementBwd Good Quality [YES]
+    const result4 = await displacementBwd.data() as Float32Array;
+
+    console.log('decode multi pose');
     const [scoresBuffer, offsetsBuffer, displacementsFwdBuffer, displacementsBwdBuffer] =
         await toTensorBuffers3D(
             [heatmapScores, offsets, displacementFwd, displacementBwd]);
-
+    
     const poses = await decodeMultiplePoses(
         scoresBuffer, offsetsBuffer, displacementsFwdBuffer,
-        displacementsBwdBuffer, outputStride, maxDetections, scoreThreshold,
+        displacementsBwdBuffer, 32 as OutputStride,
+        maxDetections, scoreThreshold,
         nmsRadius);
+    console.log('multi_pose', poses);
+    
+    console.log('decode single pose');
+    const pose = await decodeSinglePose(
+      heatmapScores, offsets, 32 as OutputStride);
+    console.log('single_pose', pose);
 
-    console.log('poses', poses);
+    // const scaleY = height / resizedHeight;
+    // const scaleX = width / resizedWidth;
+    // let newPoses = scalePoses(poses, scaleY, scaleX);
+
+    // console.log('multi_poses', newPoses);
+    // const poses: Pose[] = [];
 
     heatmapScores.dispose();
     offsets.dispose();
     displacementFwd.dispose();
     displacementBwd.dispose();
 
-    const scaleY = height / resizedHeight;
-    const scaleX = width / resizedWidth;
+    return [result, result2, result3, result4, pose, poses];
 
-    return scalePoses(poses, scaleY, scaleX);
+
+    // const scaleY = height / resizedHeight;
+    // const scaleX = width / resizedWidth;
+    // return scalePoses(poses, scaleY, scaleX);
   }
 
   public dispose() {
@@ -296,6 +324,7 @@ export async function load(outputStride: OutputStride): Promise<PoseNet> {
   const graphModel =
       await tf.loadGraphModel('http://localhost:8080/model.json');
   console.log('lodaed. done');
+  console.log('tylerzhu testing')
 
   const resnet = new ResNet(graphModel, outputStride)
 

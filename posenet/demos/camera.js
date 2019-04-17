@@ -97,6 +97,7 @@ const guiState = {
     showSkeleton: true,
     showPoints: true,
     showBoundingBox: false,
+    showFeaturemaps: true,
   },
   net: null,
 };
@@ -163,6 +164,7 @@ function setupGui(cameras, net) {
   output.add(guiState.output, 'showSkeleton');
   output.add(guiState.output, 'showPoints');
   output.add(guiState.output, 'showBoundingBox');
+  output.add(guiState.output, 'showFeaturemaps');
   output.open();
 
 
@@ -210,10 +212,8 @@ function detectPoseInRealTime(video, net) {
       // Important to purge variables and free up GPU memory
       guiState.net.dispose();
 
-      // Load the PoseNet model weights for either the 0.50, 0.75, 1.00, or 1.01
-      // version
+      // Load the ResNet50 PoseNet model
       guiState.net = await posenet.load(+guiState.changeToArchitecture);
-
       guiState.changeToArchitecture = null;
     }
 
@@ -233,17 +233,157 @@ function detectPoseInRealTime(video, net) {
         const pose = await guiState.net.estimateSinglePose(
             video, imageScaleFactor, flipHorizontal, outputStride);
         poses.push(pose);
+        
 
         minPoseConfidence = +guiState.singlePoseDetection.minPoseConfidence;
         minPartConfidence = +guiState.singlePoseDetection.minPartConfidence;
         break;
       case 'multi-pose':
-        poses = await guiState.net.estimateMultiplePoses(
+        // let heatmap_array = await guiState.net.estimateMultiplePoses(
+        //     video, imageScaleFactor, flipHorizontal, outputStride,
+        //     guiState.multiPoseDetection.maxPoseDetections,
+        //     guiState.multiPoseDetection.minPartConfidence,
+        //     guiState.multiPoseDetection.nmsRadius);
+
+        // edges of parent kpt to child kpt.
+        let edges = [[0, 1],
+                     [1, 3],
+                     [0, 2],
+                     [2, 4],
+                     [0, 5],
+                     [5, 7],
+                     [7, 9],
+                     [5, 11],
+                     [11, 13],
+                     [13, 15],
+                     [0, 6],
+                     [6, 8],
+                     [8, 10],
+                     [6, 12],
+                     [12, 14],
+                     [14, 16]];
+
+        let edges_bwd = [[1, 0],
+                         [3, 1],
+                         [2, 0],
+                         [4, 2],
+                         [5, 0],
+                         [7, 5],
+                         [9, 7],
+                         [11, 5],
+                         [13, 11],
+                         [15, 13],
+                         [6, 0],
+                         [8, 6],
+                         [10, 8],
+                         [12, 6],
+                         [14, 12],
+                         [16, 14]];
+
+        let outputs = await guiState.net.estimateMultiplePoses(
             video, imageScaleFactor, flipHorizontal, outputStride,
             guiState.multiPoseDetection.maxPoseDetections,
             guiState.multiPoseDetection.minPartConfidence,
             guiState.multiPoseDetection.nmsRadius);
 
+        let heatmap_array = outputs[0];
+        let offsets_array = outputs[1];
+        let displacement_fwd_array = outputs[2];
+        let displacement_bwd_array = outputs[3];
+        let single_pose = outputs[4];
+        let all_poses = outputs[5];
+
+        // poses.push(single_pose);
+        console.log('[visualize] num_poses_to_add', all_poses.length);
+        poses = poses.concat(all_poses);
+        console.log('[visualize] num_poses', poses.length);
+
+        var canvas = document.getElementById('heatmap');
+        var ctx2 = canvas.getContext('2d');
+        var imageData = ctx2.createImageData(513, 513);
+        for (let i = 0; i < imageData.height * imageData.width; i++) {
+          imageData.data[4 * i + 0] = 0;
+          imageData.data[4 * i + 1] = 0;
+          imageData.data[4 * i + 2] = 0;
+          imageData.data[4 * i + 3] = 255;
+        }
+
+        if (guiState.output.showFeaturemaps) {
+          for (let i = 0; i < imageData.height * imageData.width; i++) {
+            let max_p = 0;
+            for (let k = 0; k < 17; k++) {
+              let p = Math.round(255 * heatmap_array[17 * i + k]);
+              if (p > max_p) {
+                max_p = p;
+              }
+            }
+            imageData.data[4 * i + 0] = max_p;
+            imageData.data[4 * i + 1] = 0;
+            imageData.data[4 * i + 2] = 0;
+            imageData.data[4 * i + 3] = 255;
+          }
+        }
+
+        ctx2.putImageData(imageData, 0, 0, 0, 0, 1000, 1000);
+
+        if (guiState.output.showFeaturemaps) {
+          for (let i = 0; i < 513; i += 10) {
+            for (let j = 0; j < 513; j += 10) {
+              let n = i * 513 + j;
+              let max_p = 0.0;
+              let max_p_k = -1;
+              for (let k = 0; k < 17; k++) {
+                let p = heatmap_array[17 * n + k];
+                if (p > max_p) {
+                  max_p = p;
+                  max_p_k = k;
+                }
+              }
+              // if (max_p > 0.3 && max_p_k >= 0) {
+              //   // find offsets
+              //   let dy = offsets_array[17 * (2 * n) + max_p_k];
+              //   let dx = offsets_array[17 * (2 * n + 1) + max_p_k];
+
+              //   ctx2.beginPath();
+              //   ctx2.moveTo(j, i);
+              //   ctx2.lineTo(j + dx, i + dy);
+              //   ctx2.strokeStyle = "white";
+              //   ctx2.stroke();
+              // }
+              if (max_p > 0.3 && max_p_k >= 0) {
+                for (let m = 0; m < edges.length; m++) {
+                  let p_id = edges[m][0];
+                  let c_id = edges[m][1];
+                  if (p_id == max_p_k) {
+                    // find displacement fwd
+                    let dy = displacement_fwd_array[16 * (2 * n) + m];
+                    let dx = displacement_fwd_array[16 * (2 * n + 1) + m];
+                    ctx2.beginPath();
+                    ctx2.moveTo(j, i);
+                    ctx2.lineTo(j + dx, i + dy);
+                    ctx2.strokeStyle = "white";
+                    ctx2.stroke();
+                  }
+                }
+
+                for (let m = 0; m < edges_bwd.length; m++) {
+                  let p_id = edges_bwd[m][0];
+                  let c_id = edges_bwd[m][1];
+                  if (p_id == max_p_k) {
+                    // find displacement bwd
+                    let dy = displacement_bwd_array[16 * (2 * n) + m];
+                    let dx = displacement_bwd_array[16 * (2 * n + 1) + m];
+                    ctx2.beginPath();
+                    ctx2.moveTo(j, i);
+                    ctx2.lineTo(j + dx, i + dy);
+                    ctx2.strokeStyle = "green";
+                    ctx2.stroke();
+                  }
+                }
+              }
+            }
+          }
+        }
         minPoseConfidence = +guiState.multiPoseDetection.minPoseConfidence;
         minPartConfidence = +guiState.multiPoseDetection.minPartConfidence;
         break;
@@ -259,19 +399,24 @@ function detectPoseInRealTime(video, net) {
       ctx.restore();
     }
 
+
+
     // For each pose (i.e. person) detected in an image, loop through the poses
     // and draw the resulting skeleton and keypoints if over certain confidence
     // scores
     poses.forEach(({score, keypoints}) => {
       if (score >= minPoseConfidence) {
         if (guiState.output.showPoints) {
-          drawKeypoints(keypoints, minPartConfidence, ctx);
+          // drawKeypoints(keypoints, minPartConfidence, ctx);
+          drawKeypoints(keypoints, minPartConfidence, ctx2);
         }
         if (guiState.output.showSkeleton) {
-          drawSkeleton(keypoints, minPartConfidence, ctx);
+          // drawSkeleton(keypoints, minPartConfidence, ctx);
+          drawSkeleton(keypoints, minPartConfidence, ctx2);
         }
         if (guiState.output.showBoundingBox) {
-          drawBoundingBox(keypoints, ctx);
+          // drawBoundingBox(keypoints, ctx);
+          drawBoundingBox(keypoints, minPartConfidence, ctx2);
         }
       }
     });

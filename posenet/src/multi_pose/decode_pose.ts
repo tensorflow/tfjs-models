@@ -102,12 +102,14 @@ export function decodePose(
     root: PartWithScore, scores: TensorBuffer3D, offsets: TensorBuffer3D,
     outputStride: number, displacementsFwd: TensorBuffer3D,
     displacementsBwd: TensorBuffer3D): Keypoint[] {
+  console.log('[decoding pose from root]');
   const numParts = scores.shape[2];
   const numEdges = parentToChildEdges.length;
 
   const instanceKeypoints: Keypoint[] = new Array(numParts);
   // Start a new detection instance at the position of the root.
   const {part: rootPart, score: rootScore} = root;
+
   const rootPoint = getImageCoords(rootPart, outputStride, offsets);
 
   instanceKeypoints[rootPart.id] = {

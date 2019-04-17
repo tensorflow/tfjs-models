@@ -189,3 +189,22 @@ export function resizeAndPadTo(
 
   return {resizedAndPadded, paddedBy: [[padT, padB], [padL, padR]]};
 }
+
+export function resizeTo(
+  input: PosenetInput, [targetH, targetW]: [number, number],
+  flipHorizontal = false): {resized: tf.Tensor3D} {
+
+const resized = tf.tidy(() => {
+  const imageTensor = toInputTensor(input);
+  // resize to have largest dimension match image
+  let resized: tf.Tensor3D;
+  if (flipHorizontal) {
+    resized = imageTensor.reverse(1).resizeBilinear([targetH, targetW]);
+  } else {
+    resized = imageTensor.resizeBilinear([targetH, targetW]);
+  }
+  return resized;
+});
+
+return {resized};
+}
