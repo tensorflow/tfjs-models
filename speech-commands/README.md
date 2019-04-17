@@ -281,10 +281,11 @@ transfer recognizer's vocabulary, e.g.,
 
 ```js
 const serializedWithOnlyFoo = transferRecognizer.serializeExamples('foo');
+// Or
 const serializedWithOnlyFooAndBar = transferRecognizer.serializeExamples(['foo', 'bar']);
 ```
 
-The serialized examples can be later loaded into another instance of
+The serialized examples can later be loaded into another instance of
 transfer recognizer with the `loadExamples()` method, e.g.,
 
 ```js
@@ -294,6 +295,7 @@ newTransferRecognizer.loadExamples(serialized, clearExisting);
 
 Theo `clearExisting` flag ensures that the examples that `newTransferRecognizer`
 already holds are preserved. If `true`, the existing exampels will be cleared.
+If `clearExisting` is not specified, it'll default to `false`.
 
 ## Live demo
 
