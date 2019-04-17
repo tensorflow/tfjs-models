@@ -810,6 +810,74 @@ describe('Dataset serialization', () => {
     expect(data.byteLength).toEqual(4 * (10 + 12 + 14 + 13) * 16);
   });
 
+  it('Dataset.serialize(): limited singleton word labels', () => {
+    const dataset = new Dataset();
+    const ex1 = getRandomExample('foo', 10, 16);
+    const ex2 = getRandomExample('bar', 12, 16);
+    const ex3 = getRandomExample('qux', 14, 16);
+    const ex4 = getRandomExample('foo', 13, 16);
+    dataset.addExample(ex1);
+    dataset.addExample(ex2);
+    dataset.addExample(ex3);
+    dataset.addExample(ex4);
+
+    let buffer = dataset.serialize('foo');
+    let loaded = arrayBuffer2SerializedExamples(buffer);
+    expect(loaded.manifest).toEqual([
+      {label: 'foo', spectrogramNumFrames: 10, spectrogramFrameSize: 16},
+      {label: 'foo', spectrogramNumFrames: 13, spectrogramFrameSize: 16}
+    ]);
+    expect(loaded.data.byteLength).toEqual(4 * (10 + 13) * 16);
+
+    buffer = dataset.serialize('bar');
+    loaded = arrayBuffer2SerializedExamples(buffer);
+    expect(loaded.manifest).toEqual([
+      {label: 'bar', spectrogramNumFrames: 12, spectrogramFrameSize: 16}
+    ]);
+    expect(loaded.data.byteLength).toEqual(4 * 12 * 16);
+  });
+
+  it('Dataset.serialize(): limited array word label', () => {
+    const dataset = new Dataset();
+    const ex1 = getRandomExample('foo', 10, 16);
+    const ex2 = getRandomExample('bar', 12, 16);
+    const ex3 = getRandomExample('qux', 14, 16);
+    const ex4 = getRandomExample('foo', 13, 16);
+    dataset.addExample(ex1);
+    dataset.addExample(ex2);
+    dataset.addExample(ex3);
+    dataset.addExample(ex4);
+
+    const buffer = dataset.serialize(['foo', 'qux']);
+    const loaded = arrayBuffer2SerializedExamples(buffer);
+    expect(loaded.manifest).toEqual([
+      {label: 'foo', spectrogramNumFrames: 10, spectrogramFrameSize: 16},
+      {label: 'foo', spectrogramNumFrames: 13, spectrogramFrameSize: 16},
+      {label: 'qux', spectrogramNumFrames: 14, spectrogramFrameSize: 16}
+    ]);
+    expect(loaded.data.byteLength).toEqual(4 * (10 + 13 + 14) * 16);
+  });
+
+  it('Dataset.serialize(): nonexistent singleton word label errors', () => {
+    const dataset = new Dataset();
+    const ex1 = getRandomExample('foo', 10, 16);
+    const ex2 = getRandomExample('bar', 12, 16);
+    const ex3 = getRandomExample('qux', 14, 16);
+    const ex4 = getRandomExample('foo', 13, 16);
+    dataset.addExample(ex1);
+    dataset.addExample(ex2);
+    dataset.addExample(ex3);
+    dataset.addExample(ex4);
+
+    expect(() => dataset.serialize('gralk'))
+        .toThrowError(/\"gralk\" does not exist/);
+    expect(() => dataset.serialize(['gralk']))
+        .toThrowError(/\"gralk\" does not exist/);
+    expect(() => dataset.serialize([
+      'foo', 'gralk'
+    ])).toThrowError(/\"gralk\" does not exist/);
+  });
+
   it('Dataset serialize-deserialize round trip', () => {
     const dataset = new Dataset();
     const ex1 = getRandomExample('foo', 10, 16);

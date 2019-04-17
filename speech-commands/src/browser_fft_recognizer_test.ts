@@ -711,11 +711,11 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
       expect(snippetLengths[i]).toEqual(928);
     }
     expect(finalSpectrogram.data.length)
-       .toEqual(snippetLengths.reduce((x, prev) => x + prev));
+        .toEqual(snippetLengths.reduce((x, prev) => x + prev));
     expect(finalSpectrogram.data.length).toEqual(10208 - 1);
   });
 
-  it('collectExample w/ invalid durationSec leads to error',  async done => {
+  it('collectExample w/ invalid durationSec leads to error', async done => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();
@@ -723,10 +723,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     const durationSec = 1;
     const snippetDurationSec = 0;
     try {
-      await transfer.collectExample('foo', {
-        durationSec,
-        snippetDurationSec
-      });
+      await transfer.collectExample('foo', {durationSec, snippetDurationSec});
       done.fail();
     } catch (error) {
       expect(error.message).toMatch(/snippetDurationSec is expected to be > 0/);
@@ -734,46 +731,39 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     }
   });
 
-  it('collectExample w/ onSnippet w/o snippetDurationSec error',
-      async done => {
-        setUpFakes();
-        const base = new BrowserFftSpeechCommandRecognizer();
-        await base.ensureModelLoaded();
-        const transfer = base.createTransfer('xfer1');
-        const durationSec = 1;
-        try {
-          await transfer.collectExample('foo', {
-            durationSec,
-            onSnippet: async spectrogram => {}
-          });
-          done.fail();
-        } catch (error) {
-          expect(error.message).toMatch(
-              /snippetDurationSec must be provided if onSnippet/);
-          done();
-        }
-      });
+  it('collectExample w/ onSnippet w/o snippetDurationSec error', async done => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    const durationSec = 1;
+    try {
+      await transfer.collectExample(
+          'foo', {durationSec, onSnippet: async spectrogram => {}});
+      done.fail();
+    } catch (error) {
+      expect(error.message)
+          .toMatch(/snippetDurationSec must be provided if onSnippet/);
+      done();
+    }
+  });
 
-  it('collectExample w/ snippetDurationSec w/o callback errors',
-      async done => {
-        setUpFakes();
-        const base = new BrowserFftSpeechCommandRecognizer();
-        await base.ensureModelLoaded();
-        const transfer = base.createTransfer('xfer1');
-        const durationSec = 1;
-        const snippetDurationSec = 0.1;
-        try {
-          await transfer.collectExample('foo', {
-            durationSec,
-            snippetDurationSec
-          });
-          done.fail();
-        } catch (error) {
-          expect(error.message).toMatch(
-              /onSnippet must be provided if snippetDurationSec/);
-          done();
-        }
-      });
+  it('collectExample w/ snippetDurationSec w/o callback errors', async done => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    const durationSec = 1;
+    const snippetDurationSec = 0.1;
+    try {
+      await transfer.collectExample('foo', {durationSec, snippetDurationSec});
+      done.fail();
+    } catch (error) {
+      expect(error.message)
+          .toMatch(/onSnippet must be provided if snippetDurationSec/);
+      done();
+    }
+  });
 
   it('collectTransferLearningExample default transfer model', async () => {
     setUpFakes();
@@ -1337,6 +1327,34 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     ]);
     expect(artifacts.data.byteLength)
         .toEqual(fakeNumFrames * fakeColumnTruncateLength * 4 * 3);
+  });
+
+  it('serializeExamples: limited word labels', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    await transfer.collectExample('bar');
+    await transfer.collectExample('foo');
+    await transfer.collectExample('bar');
+    const artifacts =
+        arrayBuffer2SerializedExamples(transfer.serializeExamples('bar'));
+
+    // The examples are sorted alphabetically by their label.
+    expect(artifacts.manifest).toEqual([
+      {
+        label: 'bar',
+        spectrogramNumFrames: fakeNumFrames,
+        spectrogramFrameSize: fakeColumnTruncateLength
+      },
+      {
+        label: 'bar',
+        spectrogramNumFrames: fakeNumFrames,
+        spectrogramFrameSize: fakeColumnTruncateLength
+      }
+    ]);
+    expect(artifacts.data.byteLength)
+        .toEqual(fakeNumFrames * fakeColumnTruncateLength * 4 * 2);
   });
 
   it('removeExample & isDatasetEmpty', async () => {

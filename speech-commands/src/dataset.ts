@@ -650,15 +650,36 @@ export class Dataset {
    *   - Second, the `Example`s for every label are sorted by the order in
    *     which they are added to this `Dataset`.
    *
-   * @returns A `SerializedDataset` object amenable to transmission and storage.
+   * @param wordLabels Optional word label(s) to serialize. If specified, only
+   *   the examples with labels matching the argument will be serialized. If
+   *   any specified word label does not exist in the vocabulary of this
+   *   dataset, an Error will be thrown.
+   * @returns A `ArrayBuffer` object amenable to transmission and storage.
    */
-  serialize(): ArrayBuffer {
+  serialize(wordLabels?: string|string[]): ArrayBuffer {
     const vocab = this.getVocabulary();
     tf.util.assert(!this.empty(), () => `Cannot serialize empty Dataset`);
+
+    if (wordLabels != null) {
+      if (!Array.isArray(wordLabels)) {
+        wordLabels = [wordLabels];
+      }
+      wordLabels.forEach(wordLabel => {
+        if (vocab.indexOf(wordLabel) === -1) {
+          throw new Error(
+              `Word label "${wordLabel}" does not exist in the ` +
+              `vocabulary of this dataset. The vocabulary is: ` +
+              `${JSON.stringify(vocab)}.`);
+        }
+      });
+    }
 
     const manifest: ExampleSpec[] = [];
     const buffers: ArrayBuffer[] = [];
     for (const label of vocab) {
+      if (wordLabels != null && wordLabels.indexOf(label) === -1) {
+        continue;
+      }
       const ids = this.label2Ids[label];
       for (const id of ids) {
         const artifact = serializeExample(this.examples[id]);

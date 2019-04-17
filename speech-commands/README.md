@@ -262,6 +262,41 @@ await transferRecognizer.listen(result => {
 setTimeout(() => transferRecognizer.stopListening(), 10e3);
 ```
 
+### Serialize examples from a transfer recognizer.
+
+Once examples has been collected with a transfer recognizer,
+you can export the examples in serialized form with the `serielizedExamples()`
+method, e.g.,
+
+```js
+const serialized = transferRecognizer.serializeExamples();
+```
+
+`serialized` is a binary `ArrayBuffer` amenable to storage and transmission.
+It contains the spectrogram data of the examples, as well as metadata such
+as word labels.
+
+You can also serialize the examples from a subset of the words in the
+transfer recognizer's vocabulary, e.g.,
+
+```js
+const serializedWithOnlyFoo = transferRecognizer.serializeExamples('foo');
+// Or
+const serializedWithOnlyFooAndBar = transferRecognizer.serializeExamples(['foo', 'bar']);
+```
+
+The serialized examples can later be loaded into another instance of
+transfer recognizer with the `loadExamples()` method, e.g.,
+
+```js
+const clearExisting = false;
+newTransferRecognizer.loadExamples(serialized, clearExisting);
+```
+
+Theo `clearExisting` flag ensures that the examples that `newTransferRecognizer`
+already holds are preserved. If `true`, the existing exampels will be cleared.
+If `clearExisting` is not specified, it'll default to `false`.
+
 ## Live demo
 
 A developer-oriented live demo is available at
