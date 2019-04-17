@@ -442,9 +442,13 @@ startTransferLearnButton.addEventListener('click', async () => {
   }
 
   disableAllCollectWordButtons();
+  const augmentByMixingNoiseRatio =
+      document.getElementById('augment-by-mixing-noise').checked ? 0.5 : null;
+  console.log(`augmentByMixingNoiseRatio = ${augmentByMixingNoiseRatio}`);
   await transferRecognizer.train({
     epochs,
     validationSplit: 0.25,
+    augmentByMixingNoiseRatio,
     callback: {
       onEpochEnd: async (epoch, logs) => {
         plotLossAndAccuracy(

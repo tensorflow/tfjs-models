@@ -17,9 +17,9 @@
 
 import * as tf from '@tensorflow/tfjs';
 import {normalize} from './browser_fft_utils';
-import {arrayBuffer2String, concatenateArrayBuffers, getUID, string2ArrayBuffer} from './generic_utils';
+import {arrayBuffer2String, concatenateArrayBuffers, getRandomInteger, getUID, string2ArrayBuffer} from './generic_utils';
 import {balancedTrainValSplitNumArrays} from './training_utils';
-import {Example, SpectrogramData} from './types';
+import {AudioDataAugmentationOptions, Example, SpectrogramData} from './types';
 
 // Descriptor for serialized dataset files: stands for:
 //   TensorFlow.js Speech-Commands Dataset.
@@ -93,7 +93,7 @@ export const BACKGROUND_NOISE_TAG = '_background_noise_';
 /**
  * Configuration for getting spectrograms as tensors.
  */
-export interface GetDataConfig {
+export interface GetDataConfig extends AudioDataAugmentationOptions {
   /**
    * Number of frames.
    *
@@ -384,7 +384,6 @@ export class Dataset {
     return tf.tidy(() => {
       let xTensors: tf.Tensor3D[] = [];
       let xArrays: Float32Array[] = [];
-      let yArrays: number[] = [];
 
       let labelIndices: number[] = [];
       let uniqueFrameSize: number;
@@ -430,7 +429,6 @@ export class Dataset {
               // TODO(cais): See if we can do away with dataSync();
               // TODO(cais): Shuffling?
               xArrays.push(windowedSnippet.dataSync() as Float32Array);
-              yArrays.push(i);
             } else {
               xTensors.push(windowedSnippet as tf.Tensor3D);
             }
@@ -440,6 +438,13 @@ export class Dataset {
           }
           tf.dispose(snippet);  // For memory saving.
         }
+      }
+
+      if (config.augmentByMixingNoiseRatio != null) {
+        this.augmentByMixingNoise(
+            config.getDataset ? xArrays : xTensors as
+                Array<Float32Array | tf.Tensor>,
+            labelIndices, config.augmentByMixingNoiseRatio);
       }
 
       const shuffle = config.shuffle == null ? true : config.shuffle;
@@ -456,12 +461,11 @@ export class Dataset {
             () => `Invalid dataset validation split: ${valSplit}`);
 
         const zippedXandYArrays =
-            xArrays.map((xArray, i) => [xArray, yArrays[i]]);
+            xArrays.map((xArray, i) => [xArray, labelIndices[i]]);
         tf.util.shuffle(
             zippedXandYArrays);  // Shuffle the data before splitting.
         xArrays = zippedXandYArrays.map(item => item[0]) as Float32Array[];
-        yArrays = zippedXandYArrays.map(item => item[1]) as number[];
-
+        const yArrays = zippedXandYArrays.map(item => item[1]) as number[];
         const {trainXs, trainYs, valXs, valYs} =
             balancedTrainValSplitNumArrays(xArrays, yArrays, valSplit);
 
@@ -517,6 +521,56 @@ export class Dataset {
         };
       }
     });
+  }
+
+  private augmentByMixingNoise<T extends tf.Tensor | Float32Array>(
+      xs: T[], labelIndices: number[], ratio: number): void {
+    if (xs == null || xs.length === 0) {
+      throw new Error(
+          `Cannot perform augmentation because data is null or empty`);
+    }
+    const isTypedArray = xs[0] instanceof Float32Array;
+
+    const vocab = this.getVocabulary();
+    const noiseExampleIndices: number[] = [];
+    const wordExampleIndices: number[] = [];
+    for (let i = 0; i < labelIndices.length; ++i) {
+      if (vocab[labelIndices[i]] === BACKGROUND_NOISE_TAG) {
+        noiseExampleIndices.push(i);
+      } else {
+        wordExampleIndices.push(i);
+      }
+    }
+    if (noiseExampleIndices.length === 0) {
+      throw new Error(
+          `Cannot perform augmentation by mixing with noise when ` +
+          `there is no example with label ${BACKGROUND_NOISE_TAG}`);
+    }
+
+    const mixedXTensors: Array<tf.Tensor | Float32Array> = [];
+    const mixedLabelIndices: number[] = [];
+    for (const index of wordExampleIndices) {
+      const noiseIndex =  // Randomly sample from the noises, with replacement.
+          noiseExampleIndices[getRandomInteger(0, noiseExampleIndices.length)];
+      const signalTensor = isTypedArray ?
+          tf.tensor1d(xs[index] as Float32Array) : xs[index] as tf.Tensor;
+      const noiseTensor = isTypedArray ?
+          tf.tensor1d(xs[noiseIndex] as Float32Array) :
+          xs[noiseIndex] as tf.Tensor;
+      const mixed: tf.Tensor = tf.tidy(() =>
+          normalize(signalTensor.add(noiseTensor.mul(ratio))));
+      if (isTypedArray) {
+        mixedXTensors.push(mixed.dataSync() as Float32Array);
+      } else {
+        mixedXTensors.push(mixed);
+      }
+      mixedLabelIndices.push(labelIndices[index]);
+    }
+    console.log(
+        `Data augmentation: mixing noise: added ${mixedXTensors.length} ` +
+        `examples`);
+    mixedXTensors.forEach(tensor => xs.push(tensor as T));
+    labelIndices.push(...mixedLabelIndices);
   }
 
   private getSortedUniqueNumFrames(): number[] {

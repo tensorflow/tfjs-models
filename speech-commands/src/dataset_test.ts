@@ -466,6 +466,68 @@ describe('Dataset', () => {
     expect(numVal).toEqual(1);
   });
 
+  it('getData w/ mixing-noise augmentation: get tf.data.Dataset', async () => {
+    const dataset = new Dataset();
+    dataset.addExample(getFakeExample(
+        BACKGROUND_NOISE_TAG, 6, 2,
+        [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
+    dataset.addExample(
+        getFakeExample('bar', 5, 2, [1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
+
+    const numFrames = 3;
+    const [trainDataset, valDataset] = dataset.getData(null, {
+      numFrames,
+      hopFrames: 1,
+      augmentByMixingNoiseRatio: 0.5,
+      getDataset: true,
+      datasetBatchSize: 1,
+      datasetValidationSplit: 1 / 3
+    }) as [SpectrogramAndTargetsTfDataset, SpectrogramAndTargetsTfDataset];
+
+    let numTrain = 0;
+    await trainDataset.forEachAsync(
+        (xAndY: {xs: tf.Tensor2D, ys: tf.Tensor2D}) => {
+          const {xs, ys} = xAndY;
+          numTrain++;
+          expect(xs.shape).toEqual([1, numFrames, 2, 1]);
+          expect(xs.isDisposed).toEqual(false);
+          expect(ys.shape).toEqual([1, 2]);
+          expect(ys.isDisposed).toEqual(false);
+        });
+    let numVal = 0;
+    await valDataset.forEachAsync(
+        (xAndY: {xs: tf.Tensor2D, ys: tf.Tensor2D}) => {
+          const {xs, ys} = xAndY;
+          numVal++;
+          expect(xs.shape).toEqual([1, numFrames, 2, 1]);
+          expect(xs.isDisposed).toEqual(false);
+          expect(ys.shape).toEqual([1, 2]);
+          expect(ys.isDisposed).toEqual(false);
+        });
+    expect(numTrain).toEqual(7);  // Without augmentation, it'd be 5.
+    expect(numVal).toEqual(3);  // Without augmentation, it'd be 2.
+  });
+
+  it('getData w/ mixing-noise augmentation w/o noise tag errors', async () => {
+    const dataset = new Dataset();
+    dataset.addExample(getFakeExample(
+        'foo', 6, 2,
+        [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
+    dataset.addExample(
+        getFakeExample('bar', 5, 2, [1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
+    // Lacks BACKGROUND_NOISE_TAG.
+
+    const numFrames = 3;
+    expect(() => dataset.getData(null, {
+      numFrames,
+      hopFrames: 1,
+      augmentByMixingNoiseRatio: 0.5,
+      getDataset: true,
+      datasetBatchSize: 1,
+      datasetValidationSplit: 1 / 3
+    })).toThrowError(/Cannot perform augmentation .* no example .*noise/);
+  });
+
   it('getSpectrogramsAsTensors with invalid valSplit leads to error', () => {
     const dataset = new Dataset();
     addThreeExamplesToDataset(dataset);
@@ -544,6 +606,36 @@ describe('Dataset', () => {
     test_util.expectArraysClose(
         ys, tf.tensor2d([[1, 0], [1, 0], [1, 0], [0, 1], [0, 1], [0, 1]]));
   });
+
+  it('getData with mixing-noise augmentation: get tensors', () => {
+    const dataset = new Dataset();
+    dataset.addExample(getFakeExample(
+        BACKGROUND_NOISE_TAG, 6, 2,
+        [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
+    dataset.addExample(
+        getFakeExample('bar', 5, 2, [1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
+
+    const {xs, ys} = dataset.getData(null, {
+      numFrames: 3,
+      hopFrames: 1,
+      shuffle: false,
+      normalize: false,
+      augmentByMixingNoiseRatio: 0.5
+    }) as {xs: tf.Tensor, ys: tf.Tensor};
+
+    // 3 of the newly-generated ones at the end are from the augmentation.
+    expect(xs.shape).toEqual([10, 3, 2, 1]);
+    expect(ys.shape).toEqual([10, 2]);
+    const indices = ys.argMax(-1).dataSync();
+    const backgroundNoiseIndex = indices[0];
+    for (let i = 0; i < 3; ++i) {
+      expect(indices[indices.length - 1 - i] === backgroundNoiseIndex)
+          .toEqual(false);
+    }
+  });
+
+  // TODO(cais): Test that augmentByNoise without BACKGROUND_NOISE tag leads to
+  // Error.
 
   it('getSpectrogramsAsTensors: normalize=true', () => {
     const dataset = new Dataset();
