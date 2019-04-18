@@ -320,10 +320,7 @@ export async function load(architecture: string,
    outputStride: OutputStride = 16): Promise<PoseNet> {
   console.log('---', architecture);
   if (architecture.includes('ResNet50')) {
-    // Uncomment this when the model is ready on GCP.
-    const resnet50_checkpoint = resnet50_checkpoints[outputStride];
-    console.log(resnet50_checkpoint);
-    const checkpoint = 'http://localhost:8080/model.json';
+    const checkpoint = resnet50_checkpoints[outputStride];
     const graphModel = await tf.loadGraphModel(checkpoint);
     const resnet = new ResNet(graphModel, outputStride)
     return new PoseNet(resnet);

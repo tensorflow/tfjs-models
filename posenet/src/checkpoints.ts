@@ -18,6 +18,7 @@
 import {ConvolutionDefinition, mobileNetArchitectures} from './mobilenet';
 
 const BASE_URL = 'https://storage.googleapis.com/tfjs-models/weights/posenet/';
+const RESNET50_BASE_URL = 'https://storage.googleapis.com/tfjs-models/savedmodel/posenet_resnet50/';
 
 export type Checkpoint = {
   url: string,
@@ -47,7 +48,7 @@ export const checkpoints: {[multiplier: number]: Checkpoint} = {
 // slightly different than the old format used by MobileNetV1 models. Thus we 
 // define a new data structure to contain them.
 export const resnet50_checkpoints: {[multiplier: number]: string} = {
-  32: BASE_URL + '/web_model_resnet50_no_hypercolumn_513x513_stride32.json',
-  16: BASE_URL + '/web_model_resnet50_no_hypercolumn_513x513_stride16.json',
-  8:  BASE_URL + '/web_model_resnet50_no_hypercolumn_513x513_stride8.json',
+  32: RESNET50_BASE_URL + 'model-513x513-stride32.json',
+  16: RESNET50_BASE_URL + 'model-513x513-stride16.json',
+  8:  RESNET50_BASE_URL + 'model-513x513-stride8.json',
 };
