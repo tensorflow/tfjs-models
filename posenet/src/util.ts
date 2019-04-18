@@ -82,23 +82,26 @@ export async function toTensorBuffers3D(tensors: tf.Tensor3D[]):
   return Promise.all(tensors.map(tensor => toTensorBuffer(tensor, 'float32')));
 }
 
-export function scalePose(pose: Pose, scaleY: number, scaleX: number): Pose {
+export function scalePose(pose: Pose, scaleY: number, scaleX: number,
+   offsetY: number = 0, offsetX: number = 0): Pose {
   return {
     score: pose.score,
     keypoints: pose.keypoints.map(
         ({score, part, position}) => ({
           score,
           part,
-          position: {x: position.x * scaleX, y: position.y * scaleY}
+          position: {x: position.x * scaleX + offsetX,
+                     y: position.y * scaleY + offsetY}
         }))
   };
 }
 
-export function scalePoses(poses: Pose[], scaleY: number, scaleX: number) {
-  if (scaleX === 1 && scaleY === 1) {
+export function scalePoses(poses: Pose[], scaleY: number, scaleX: number, 
+  offsetY: number = 0, offsetX: number = 0) {
+  if (scaleX === 1 && scaleY === 1 && offsetY === 0 && offsetX === 0) {
     return poses;
   }
-  return poses.map(pose => scalePose(pose, scaleY, scaleX));
+  return poses.map(pose => scalePose(pose, scaleY, scaleX, offsetY, offsetX));
 }
 
 export function getValidResolution(
@@ -190,21 +193,37 @@ export function resizeAndPadTo(
   return {resizedAndPadded, paddedBy: [[padT, padB], [padL, padR]]};
 }
 
-export function resizeTo(
+export function padAndResizeTo(
   input: PosenetInput, [targetH, targetW]: [number, number],
-  flipHorizontal = false): {resized: tf.Tensor3D} {
+  flipHorizontal = false): {
+    resized: tf.Tensor3D,
+    paddedBy: [[number, number], [number, number]]} {
 
-const resized = tf.tidy(() => {
-  const imageTensor = toInputTensor(input);
-  // resize to have largest dimension match image
+  const [height, width] = getInputTensorDimensions(input);
+  const targetAspect = targetW / targetH;
+  const aspect = width / height;
+  let [padT, padB, padL, padR] = [0, 0, 0, 0];
+  if (aspect < targetAspect) {
+    // pads the width
+    padT = 0;
+    padB = 0;
+    padL = Math.round(0.5 * (targetAspect * height - width));
+    padR = Math.round(0.5 * (targetAspect * height - width));
+  } else {
+    // pads the height
+    padT = Math.round(0.5 * ((1.0 / targetAspect) * width - height));
+    padB = Math.round(0.5 * ((1.0 / targetAspect) * width - height));
+    padL = 0;
+    padR = 0;
+  }
+
+  let imageTensor = toInputTensor(input);
+  imageTensor = tf.pad3d(imageTensor, [[padT, padB], [padL, padR], [0, 0]]);
   let resized: tf.Tensor3D;
   if (flipHorizontal) {
     resized = imageTensor.reverse(1).resizeBilinear([targetH, targetW]);
   } else {
     resized = imageTensor.resizeBilinear([targetH, targetW]);
   }
-  return resized;
-});
-
-return {resized};
+  return {resized, paddedBy: [[padT, padB], [padL, padR]]};
 }

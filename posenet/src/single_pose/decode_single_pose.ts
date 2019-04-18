@@ -60,11 +60,7 @@ export async function decodeSinglePose(
     heatmapScores: tf.Tensor3D, offsets: tf.Tensor3D,
     outputStride: OutputStride): Promise<Pose> {
   let totalScore = 0.0;
-
-  console.log('argmax2d');
   const heatmapValues = argmax2d(heatmapScores);
-  console.log('argmax done');
-
   const [scoresBuffer, offsetsBuffer, heatmapValuesBuffer] = await Promise.all([
     toTensorBuffer(heatmapScores), toTensorBuffer(offsets),
     toTensorBuffer(heatmapValues, 'int32')

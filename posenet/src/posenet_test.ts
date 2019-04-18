@@ -41,7 +41,7 @@ describeWithFlags('PoseNet', tf.test_util.NODE_ENVS, () => {
       };
     });
 
-    posenetModel.load(8)
+    posenetModel.load('ResNet50', 8)
         .then((posenetInstance: posenetModel.PoseNet) => {
           net = posenetInstance;
         })
