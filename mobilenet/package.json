@@ -32,8 +32,9 @@
     "typescript": "2.9.2"
   },
   "scripts": {
-    "build": "rimraf dist && tsc && rollup -c",
-    "publish-npm": "yarn build && npm publish",
+    "build": "rimraf dist && tsc",
+    "publish-local": "yarn build && rollup -c && yalc push",
+    "publish-npm": "yarn build && rollup -c && npm publish",
     "lint": "tslint -p . -t verbose",
     "test": "ts-node run_tests.ts"
   },
