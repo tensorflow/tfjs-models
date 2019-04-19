@@ -33,9 +33,9 @@
     "yalc": "~1.0.0-pre.21"
   },
   "scripts": {
-    "build": "rimraf dist && tsc && rollup -c",
-    "publish-npm": "yarn build && npm publish",
-    "publish-local": "yarn build && yalc push",
+    "build": "rimraf dist && tsc",
+    "publish-npm": "yarn build && rollup -c && npm publish",
+    "publish-local": "yarn build && rollup -c && yalc push",
     "lint": "tslint -p . -t verbose",
     "test": "ts-node run_tests.ts"
   },
