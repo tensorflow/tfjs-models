@@ -16,7 +16,7 @@
  */
 import * as tf from '@tensorflow/tfjs';
 import {describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
-import {load} from './index';
+import {load, MobileNetVersion} from './index';
 
 describeWithFlags('MobileNet', tf.test_util.NODE_ENVS, () => {
   beforeAll(() => {
@@ -30,35 +30,39 @@ describeWithFlags('MobileNet', tf.test_util.NODE_ENVS, () => {
     });
   });
 
-  it('batched input logits', async () => {
-    const mobilenet = await load();
-    const img = tf.zeros([3, 227, 227, 3]) as tf.Tensor4D;
-    const logits = mobilenet.infer(img);
-    expect(logits.shape).toEqual([3, 1000]);
-  });
+  const modelVersions: MobileNetVersion[] = [1, 2];
 
-  it('batched input embeddings', async () => {
-    const mobilenet = await load();
-    const img = tf.zeros([3, 227, 227, 3]) as tf.Tensor4D;
-    const embedding = mobilenet.infer(img, true /* embedding */);
-    expect(embedding.shape).toEqual([3, 1024]);
-  });
+  modelVersions.forEach(v => {
+    it('batched input logits', async () => {
+      const mobilenet = await load(v);
+      const img = tf.zeros([3, 227, 227, 3]) as tf.Tensor4D;
+      const logits = mobilenet.infer(img);
+      expect(logits.shape).toEqual([3, 1000]);
+    });
 
-  it('MobileNet classify doesn\'t leak', async () => {
-    const mobilenet = await load();
-    const x = tf.zeros([227, 227, 3]) as tf.Tensor3D;
-    const numTensorsBefore = tf.memory().numTensors;
-    await mobilenet.classify(x);
+    it('batched input embeddings', async () => {
+      const mobilenet = await load(v);
+      const img = tf.zeros([3, 227, 227, 3]) as tf.Tensor4D;
+      const embedding = mobilenet.infer(img, true /* embedding */);
+      expect(embedding.shape).toEqual([3, 1024]);
+    });
 
-    expect(tf.memory().numTensors).toBe(numTensorsBefore);
-  });
+    it('MobileNet classify doesn\'t leak', async () => {
+      const mobilenet = await load(v);
+      const x = tf.zeros([227, 227, 3]) as tf.Tensor3D;
+      const numTensorsBefore = tf.memory().numTensors;
+      await mobilenet.classify(x);
 
-  it('MobileNet infer doesn\'t leak', async () => {
-    const mobilenet = await load();
-    const x = tf.zeros([227, 227, 3]) as tf.Tensor3D;
-    const numTensorsBefore = tf.memory().numTensors;
-    mobilenet.infer(x);
+      expect(tf.memory().numTensors).toBe(numTensorsBefore);
+    });
 
-    expect(tf.memory().numTensors).toBe(numTensorsBefore + 1);
+    it('MobileNet infer doesn\'t leak', async () => {
+      const mobilenet = await load(v);
+      const x = tf.zeros([227, 227, 3]) as tf.Tensor3D;
+      const numTensorsBefore = tf.memory().numTensors;
+      mobilenet.infer(x);
+
+      expect(tf.memory().numTensors).toBe(numTensorsBefore + 1);
+    });
   });
 });
