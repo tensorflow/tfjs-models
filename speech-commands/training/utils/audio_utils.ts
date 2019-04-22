@@ -70,8 +70,8 @@ export class AudioUtils {
    * @returns DCT encoded
    */
   dct(y: Float32Array): Float32Array {
-      const scale = Math.sqrt(2.0 / y.length);
-      return DCT(y, scale);
+    const scale = Math.sqrt(2.0 / y.length);
+    return DCT(y, scale);
   }
 
   /**
@@ -253,7 +253,7 @@ export class AudioUtils {
  * @param value
  * @returns
  */
-function nextPowerOfTwo(value: number) {
+export function nextPowerOfTwo(value: number) {
   const exponent = Math.ceil(Math.log2(value));
   return 1 << exponent;
 }

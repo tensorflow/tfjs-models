@@ -7,8 +7,8 @@
   "private": true,
   "bin": "./cli",
   "dependencies": {
-    "@tensorflow/tfjs": "0.13.1",
-    "@tensorflow/tfjs-node": "0.1.9",
+    "@tensorflow/tfjs": "^1.1.0",
+    "@tensorflow/tfjs-node": "^1.1.0",
     "chalk": "^2.4.1",
     "vorpal": "1.12.0",
     "node-wav": "^0.0.2",
@@ -30,7 +30,7 @@
     "@types/inquirer": "^0.0.42",
     "@types/minimist": "^1.2.0",
     "clang-format": "~1.2.2",
-    "typescript": "^2.8.3",
+    "typescript": "3.3.3333",
     "nodemon": "1.18.2",
     "tslint": "~5.8.0",
     "tslint-no-circular-imports": "~0.5.0"
