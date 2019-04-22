@@ -18,7 +18,7 @@
 import '@tensorflow/tfjs-node';
 
 import * as tf from '@tensorflow/tfjs';
-import {describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
+import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 import {writeFileSync} from 'fs';
 import {join} from 'path';
 import * as rimraf from 'rimraf';
@@ -42,7 +42,7 @@ describe('getMajorAndMinorVersion', () => {
   });
 });
 
-describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
+describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
   const fakeWords: string[] = [
     '_background_noise_', 'down', 'eight', 'five', 'four', 'go', 'left', 'nine',
     'one', 'right', 'seven', 'six', 'stop', 'three', 'two', 'up', 'zero'
@@ -495,7 +495,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
             callbackTimestamps[callbackTimestamps.length - 2];
         expect(
             timeBetweenCallbacks > 0.5 * spectroDurationMillis &&
-            timeBetweenCallbacks < 0.7 * spectroDurationMillis)
+            timeBetweenCallbacks < 0.8 * spectroDurationMillis)
             .toBe(true);
       }
 
@@ -1079,11 +1079,10 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     for (let i = 0; i < 2; ++i) {
       await transfer.collectExample(BACKGROUND_NOISE_TAG);
     }
-    const history = await transfer.train({
-      epochs: 10,
-      batchSize: 2,
-      augmentByMixingNoiseRatio: 0.5
-    }) as tf.History;
+    const history =
+        await transfer.train(
+            {epochs: 10, batchSize: 2, augmentByMixingNoiseRatio: 0.5}) as
+        tf.History;
     expect(history.history.loss.length).toEqual(10);
     expect(history.history.acc.length).toEqual(10);
 

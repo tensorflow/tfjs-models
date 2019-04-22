@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@tensorflow-models/posenet": "^1.0.0",
-    "@tensorflow/tfjs": "^1.0.0",
+    "@tensorflow/tfjs": "^1.1.0",
     "stats.js": "^0.17.0"
   },
   "scripts": {

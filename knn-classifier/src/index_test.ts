@@ -15,10 +15,10 @@
  * =============================================================================
  */
 import * as tf from '@tensorflow/tfjs';
-import {describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
+import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 import * as knnClassifier from './index';
 
-describeWithFlags('KNNClassifier', tf.test_util.NODE_ENVS, () => {
+describeWithFlags('KNNClassifier', NODE_ENVS, () => {
   it('simple nearest neighbors', async () => {
     const x0s = [
       tf.tensor1d([1, 1, 1, 1]), tf.tensor1d([1.1, .9, 1.2, .8]),
