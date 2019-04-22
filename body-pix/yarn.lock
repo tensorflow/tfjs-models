@@ -54,16 +54,16 @@
   integrity sha512-B9YofFbUljs19g5gBKUYeLIulsh31U5AK70F41BImQRHEZQGm4GcN922UvnYwkduMqbC/NH+9fruWa/zrqvHIg==
 
 "@types/node-fetch@^2.1.2":
-  version "2.1.6"
-  resolved "https://registry.yarnpkg.com/@types/node-fetch/-/node-fetch-2.1.6.tgz#4326288b49f352a142f03c63526ebce0f4c50877"
-  integrity sha512-Hv1jgh3pfpUEl2F2mqUd1AfLSk1YbUCeBJFaP36t7esAO617dErqdxWb5cdG2NfJGOofkmBW36fdx0dVewxDRg==
+  version "2.3.2"
+  resolved "https://registry.yarnpkg.com/@types/node-fetch/-/node-fetch-2.3.2.tgz#e01893b176c6fa1367743726380d65bce5d6576b"
+  integrity sha512-yW0EOebSsQme9yKu09XbdDfle4/SmWZMK4dfteWcSLCYNQQcF+YOv0kIrvm+9pO11/ghA4E6A+RNQqvYj4Nr3A==
   dependencies:
     "@types/node" "*"
 
 "@types/node@*":
-  version "11.10.4"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-11.10.4.tgz#3f5fc4f0f322805f009e00ab35a2ff3d6b778e42"
-  integrity sha512-wa09itaLE8L705aXd8F80jnFpxz3Y1/KRHfKsYL2bPc0XF+wEWu8sR9n5bmeu8Ba1N9z2GRNzm/YdHcghLkLKg==
+  version "11.13.6"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-11.13.6.tgz#37ec75690830acb0d74ce3c6c43caab787081e85"
+  integrity sha512-Xoo/EBzEe8HxTSwaZNLZjaW6M6tA/+GmD3/DZ6uo8qSaolE/9Oarko0oV1fVfrLqOz0tx0nXJB4rdD5c+vixLw==
 
 "@types/seedrandom@2.4.27":
   version "2.4.27"

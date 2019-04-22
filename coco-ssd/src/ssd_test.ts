@@ -15,15 +15,16 @@
  * =============================================================================
  */
 import * as tf from '@tensorflow/tfjs';
-import {describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
+import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 import {load} from './index';
 
-describeWithFlags('ObjectDetection', tf.test_util.NODE_ENVS, () => {
+describeWithFlags('ObjectDetection', NODE_ENVS, () => {
   beforeEach(() => {
     spyOn(tf, 'loadGraphModel').and.callFake(() => {
       const model = {
-        executeAsync:
-            (x: tf.Tensor) => [tf.ones([1, 1917, 90]), tf.ones([1, 1917, 1, 4])]
+        executeAsync: (
+            x: tf
+                .Tensor) => [tf.ones([1, 1917, 90]), tf.ones([1, 1917, 1, 4])]
       };
       return model;
     });
