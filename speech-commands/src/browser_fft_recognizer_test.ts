@@ -495,7 +495,7 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
             callbackTimestamps[callbackTimestamps.length - 2];
         expect(
             timeBetweenCallbacks > 0.5 * spectroDurationMillis &&
-            timeBetweenCallbacks < 0.7 * spectroDurationMillis)
+            timeBetweenCallbacks < 0.8 * spectroDurationMillis)
             .toBe(true);
       }
 
