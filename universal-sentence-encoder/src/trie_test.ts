@@ -15,12 +15,10 @@
  * =============================================================================
  */
 
-import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
-
 import {stubbedTokenizerVocab} from './test_util';
 import {Tokenizer} from './tokenizer';
 
-describeWithFlags('Universal Sentence Encoder tokenizer', NODE_ENVS, () => {
+describe('Universal Sentence Encoder tokenizer', () => {
   let tokenizer: Tokenizer;
   beforeAll(() => {
     tokenizer = new Tokenizer(stubbedTokenizerVocab as Array<[string, number]>);
