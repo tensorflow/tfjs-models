@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/toxicity",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Toxicity model in TensorFlow.js",
   "main": "dist/index.js",
   "jsnext:main": "dist/toxicity.esm.js",
@@ -16,7 +16,7 @@
     "@tensorflow/tfjs": "^1.1.0"
   },
   "dependencies": {
-    "@tensorflow-models/universal-sentence-encoder": "^1.0.2"
+    "@tensorflow-models/universal-sentence-encoder": "^1.0.3"
   },
   "devDependencies": {
     "@tensorflow/tfjs": "^1.1.0",
