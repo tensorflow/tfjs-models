@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@tensorflow-models/universal-sentence-encoder@^1.0.2":
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/@tensorflow-models/universal-sentence-encoder/-/universal-sentence-encoder-1.0.2.tgz#a317c96b90ee2a32e079c0f36f0585e599a2b434"
-  integrity sha512-1XcVvYEgMU2Fhu83Rya2iKuBhfHF3gagSG+NfonzoxeOg30eOOeabWg1iLmKFCY55b9ECZ4Rj441rK18rEa70g==
+"@tensorflow-models/universal-sentence-encoder@^1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@tensorflow-models/universal-sentence-encoder/-/universal-sentence-encoder-1.0.3.tgz#40e6fe8b167837479107414b7dfdff197c25f043"
+  integrity sha512-x0abY4U1bzZUfPYID45UMe1Wt0y+kGE7aOloKQE7FtnORZErZX8qWTdpjUDJBJWTwGYACxUSlJHC/DmR8p/ZNw==
 
 "@tensorflow/tfjs-converter@1.1.0":
   version "1.1.0"
