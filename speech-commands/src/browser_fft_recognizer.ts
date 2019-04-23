@@ -208,7 +208,7 @@ export class BrowserFftSpeechCommandRecognizer implements
             overlapFactor}`);
 
     const spectrogramCallback: SpectrogramCallback =
-        async (x: tf.Tensor, timeData: tf.Tensor) => {
+        async (x: tf.Tensor, timeData?: tf.Tensor) => {
       const normalizedX = normalize(x);
       let y: tf.Tensor;
       let embedding: tf.Tensor;

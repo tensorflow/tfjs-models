@@ -69,6 +69,14 @@ export interface BrowserFftFeatureExtractorConfig extends RecognizerParams {
    * will be taken every 600 ms.
    */
   overlapFactor: number;
+
+  /**
+   * Whether to collect the raw time-domain audio waveform in addition to the
+   * spectrogram.
+   *
+   * Default: `false`.
+   */
+  getTimeDomainWaveform?: boolean;
 }
 
 /**
@@ -92,6 +100,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
   // Overlapping factor: the ratio between the temporal spacing between
   // consecutive spectrograms and the length of each individual spectrogram.
   readonly overlapFactor: number;
+  readonly getTimeDomainWaveform: boolean;
 
   private readonly spectrogramCallback: SpectrogramCallback;
 
@@ -147,6 +156,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     this.frameDurationMillis = this.fftSize / this.sampleRateHz * 1e3;
     this.columnTruncateLength = config.columnTruncateLength || this.fftSize;
     this.overlapFactor = config.overlapFactor;
+    this.getTimeDomainWaveform = config.getTimeDomainWaveform;
 
     tf.util.assert(
         this.overlapFactor >= 0 && this.overlapFactor < 1,
@@ -185,9 +195,11 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     streamSource.connect(this.analyser);
     // Reset the queue.
     this.freqDataQueue = [];
-    this.timeDataQueue = [];
     this.freqData = new Float32Array(this.fftSize);
-    this.timeData = new Float32Array(this.fftSize);
+    if (this.getTimeDomainWaveform) {
+      this.timeDataQueue = [];
+      this.timeData = new Float32Array(this.fftSize);
+    }
     const period =
         Math.max(1, Math.round(this.numFrames * (1 - this.overlapFactor)));
     this.tracker = new Tracker(
@@ -199,13 +211,15 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
 
   private async onAudioFrame() {
     this.analyser.getFloatFrequencyData(this.freqData);
-    this.analyser.getFloatTimeDomainData(this.timeData);
     if (this.freqData[0] === -Infinity) {
       return;
     }
 
     this.freqDataQueue.push(this.freqData.slice(0, this.columnTruncateLength));
-    this.timeDataQueue.push(this.timeData.slice());
+    if (this.getTimeDomainWaveform) {
+      this.analyser.getFloatTimeDomainData(this.timeData);
+      this.timeDataQueue.push(this.timeData.slice());
+    }
     if (this.freqDataQueue.length > this.numFrames) {
       // Drop the oldest frame (least recent).
       this.freqDataQueue.shift();
@@ -214,23 +228,21 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     if (shouldFire) {
       // console.log('shouldFire:', this.tracker.counter);  // DEBUG
       const freqData = flattenQueue(this.freqDataQueue);
-      const timeData = flattenQueue(this.timeDataQueue);
       const freqDataTensor = getInputTensorFromFrequencyData(
           freqData, [1, this.numFrames, this.columnTruncateLength, 1]);
-      const timeDataTensor = getInputTensorFromFrequencyData(
-          timeData, [1, this.numFrames * this.fftSize]);
+      let timeDataTensor: tf.Tensor;
+      if (this.getTimeDomainWaveform) {
+        const timeData = flattenQueue(this.timeDataQueue);
+        timeDataTensor = getInputTensorFromFrequencyData(
+            timeData, [1, this.numFrames * this.fftSize]);
+      }
       const shouldRest =
           await this.spectrogramCallback(freqDataTensor, timeDataTensor);
       if (shouldRest) {
         this.tracker.suppress();
       }
-      freqDataTensor.dispose();
-      timeDataTensor.dispose();
+      tf.dispose([freqDataTensor, timeDataTensor]);
     }
-  }
-
-  getTimeDomainData(float32Array: Float32Array) {
-    return this.analyser.getFloatTimeDomainData(float32Array);
   }
 
   async stop(): Promise<void> {
@@ -283,7 +295,7 @@ export class Tracker {
   readonly period: number;
   readonly suppressionTime: number;
 
-  private counter_: number;
+  private counter: number;
   private suppressionOnset: number;
 
   /**
@@ -295,7 +307,7 @@ export class Tracker {
   constructor(period: number, suppressionPeriod: number) {
     this.period = period;
     this.suppressionTime = suppressionPeriod == null ? 0 : suppressionPeriod;
-    this.counter_ = 0;
+    this.counter = 0;
 
     tf.util.assert(
         this.period > 0,
@@ -308,10 +320,10 @@ export class Tracker {
    * @returns Whether the event should be fired at the current frame.
    */
   tick(): boolean {
-    this.counter_++;
-    const shouldFire = (this.counter_ % this.period === 0) &&
+    this.counter++;
+    const shouldFire = (this.counter % this.period === 0) &&
         (this.suppressionOnset == null ||
-         this.counter_ - this.suppressionOnset > this.suppressionTime);
+         this.counter - this.suppressionOnset > this.suppressionTime);
     return shouldFire;
   }
 
@@ -319,10 +331,6 @@ export class Tracker {
    * Order the beginning of a supression period.
    */
   suppress() {
-    this.suppressionOnset = this.counter_;
-  }
-
-  get counter(): number {
-    return this.counter_;
+    this.suppressionOnset = this.counter;
   }
 }
