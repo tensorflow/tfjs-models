@@ -23,7 +23,7 @@ import * as tf from '@tensorflow/tfjs';
 import {getAudioContextConstructor, getAudioMediaStream} from './browser_fft_utils';
 import {FeatureExtractor, RecognizerParams} from './types';
 
-export type SpectrogramCallback = (x: tf.Tensor, timeData?: tf.Tensor) =>
+export type SpectrogramCallback = (freqData: tf.Tensor, timeData?: tf.Tensor) =>
     Promise<boolean>;
 
 /**

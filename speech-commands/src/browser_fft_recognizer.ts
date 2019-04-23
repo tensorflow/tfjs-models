@@ -772,8 +772,6 @@ class TransferBrowserFftSpeechCommandRecognizer extends
             };
             console.log(
                 'final spectrogram length =', normalized.length);  // DEBUG
-            const timeDomainDataLength = normalized.length / 232 * 1024;
-            console.log('time domain length:', timeDomainDataLength);  // DEBUG
             this.dataset.addExample(
                 {label: word, spectrogram: finalSpectrogram});
             // TODO(cais): Fix 1-tensor memory leak.
