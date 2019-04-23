@@ -162,6 +162,14 @@ export interface ExampleCollectionOptions {
    * started).
    */
   onSnippet?: (spectrogram: SpectrogramData) => Promise<void>;
+
+  /**
+   * Whether to collect the raw time-domain audio waveform in addition to the
+   * spectrogram.
+   *
+   * Default: `false`.
+   */
+  includeTimeDomainWaveform?: boolean;
 }
 
 /**

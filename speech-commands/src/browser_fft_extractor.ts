@@ -76,7 +76,7 @@ export interface BrowserFftFeatureExtractorConfig extends RecognizerParams {
    *
    * Default: `false`.
    */
-  getTimeDomainWaveform?: boolean;
+  includeTimeDomainWaveform?: boolean;
 }
 
 /**
@@ -100,7 +100,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
   // Overlapping factor: the ratio between the temporal spacing between
   // consecutive spectrograms and the length of each individual spectrogram.
   readonly overlapFactor: number;
-  readonly getTimeDomainWaveform: boolean;
+  readonly includeTimeDomainWaveform: boolean;
 
   private readonly spectrogramCallback: SpectrogramCallback;
 
@@ -156,7 +156,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     this.frameDurationMillis = this.fftSize / this.sampleRateHz * 1e3;
     this.columnTruncateLength = config.columnTruncateLength || this.fftSize;
     this.overlapFactor = config.overlapFactor;
-    this.getTimeDomainWaveform = config.getTimeDomainWaveform;
+    this.includeTimeDomainWaveform = config.includeTimeDomainWaveform;
 
     tf.util.assert(
         this.overlapFactor >= 0 && this.overlapFactor < 1,
@@ -196,7 +196,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     // Reset the queue.
     this.freqDataQueue = [];
     this.freqData = new Float32Array(this.fftSize);
-    if (this.getTimeDomainWaveform) {
+    if (this.includeTimeDomainWaveform) {
       this.timeDataQueue = [];
       this.timeData = new Float32Array(this.fftSize);
     }
@@ -216,7 +216,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     }
 
     this.freqDataQueue.push(this.freqData.slice(0, this.columnTruncateLength));
-    if (this.getTimeDomainWaveform) {
+    if (this.includeTimeDomainWaveform) {
       this.analyser.getFloatTimeDomainData(this.timeData);
       this.timeDataQueue.push(this.timeData.slice());
     }
@@ -226,12 +226,11 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     }
     const shouldFire = this.tracker.tick();
     if (shouldFire) {
-      // console.log('shouldFire:', this.tracker.counter);  // DEBUG
       const freqData = flattenQueue(this.freqDataQueue);
       const freqDataTensor = getInputTensorFromFrequencyData(
           freqData, [1, this.numFrames, this.columnTruncateLength, 1]);
       let timeDataTensor: tf.Tensor;
-      if (this.getTimeDomainWaveform) {
+      if (this.includeTimeDomainWaveform) {
         const timeData = flattenQueue(this.timeDataQueue);
         timeDataTensor = getInputTensorFromFrequencyData(
             timeData, [1, this.numFrames * this.fftSize]);

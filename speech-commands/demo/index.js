@@ -56,6 +56,8 @@ const transferModelNameInput = document.getElementById('transfer-model-name');
 const learnWordsInput = document.getElementById('learn-words');
 const durationMultiplierSelect = document.getElementById('duration-multiplier');
 const enterLearnWordsButton = document.getElementById('enter-learn-words');
+const includeTimeDomainWaveformCheckbox =
+  document.getElementById('include-audio-waveform');
 const collectButtonsDiv = document.getElementById('collect-words');
 const startTransferLearnButton =
     document.getElementById('start-transfer-learn');
@@ -278,6 +280,8 @@ function createWordDivs(transferWords) {
         }
       }
 
+      collectExampleOptions.includeTimeDomainWaveform =
+          includeTimeDomainWaveformCheckbox.checked;
       const spectrogram = await transferRecognizer.collectExample(
           word, collectExampleOptions);
 
@@ -312,6 +316,7 @@ enterLearnWordsButton.addEventListener('click', () => {
   // files first and keep appending examples to it.
   disableFileUploadControls();
   enterLearnWordsButton.disabled = true;
+  includeTimeDomainWaveformCheckbox.disabled = true;
 
   transferDurationMultiplier = durationMultiplierSelect.value;
 

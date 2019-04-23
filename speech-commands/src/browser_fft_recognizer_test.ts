@@ -656,6 +656,8 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
     const spectrogram = await transfer.collectExample('foo', {durationSec});
     expect(spectrogram.data.length / fakeColumnTruncateLength / fakeNumFrames)
         .toEqual(2);
+    const example = transfer.getExamples('foo')[0];
+    expect(example.example.rawAudio).toBeUndefined();
   });
 
   it('collectExample with 0 durationSec errors', async done => {
@@ -763,6 +765,43 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
           .toMatch(/onSnippet must be provided if snippetDurationSec/);
       done();
     }
+  });
+
+  it('collectExample: includeTimeDomainWaveform, no snippets', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    const durationSec = 1.5;
+    const includeTimeDomainWaveform = true;
+    await transfer.collectExample(
+        'foo', {durationSec, includeTimeDomainWaveform});
+    const examples = transfer.getExamples('foo');
+    expect(examples.length).toEqual(1);
+    expect(examples[0].example.rawAudio.sampleRateHz).toEqual(44100);
+    expect(examples[0].example.rawAudio.data.length / (durationSec * 44100))
+        .toBeCloseTo(1, 1e-3);
+  });
+
+  it('collectExample: includeTimeDomainWaveform, with snippets', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    const durationSec = 1.5;
+    const snippetDurationSec = 0.1;
+    const includeTimeDomainWaveform = true;
+    await transfer.collectExample('foo', {
+      durationSec,
+      includeTimeDomainWaveform,
+      snippetDurationSec,
+      onSnippet: async spectrogram => {}
+    });
+    const examples = transfer.getExamples('foo');
+    expect(examples.length).toEqual(1);
+    expect(examples[0].example.rawAudio.sampleRateHz).toEqual(44100);
+    expect(examples[0].example.rawAudio.data.length / (durationSec * 44100))
+        .toBeCloseTo(1, 1e-3);
   });
 
   it('collectTransferLearningExample default transfer model', async () => {

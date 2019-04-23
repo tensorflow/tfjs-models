@@ -717,31 +717,47 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       const spectrogramSnippets: Float32Array[] = [];
 
       const spectrogramCallback: SpectrogramCallback =
-          async (x: tf.Tensor, timeData: tf.Tensor) => {
-        console.log(`x.shape = ${x.shape}`);                          // DEBUG
-        console.log(`timeData.shape = ${timeData.shape}`);            // DEBUG
-        const timeDataArray = Array.from(timeData.dataSync());        // DEBUG
-        console.log(timeDataArray.map(x => x.toFixed(4)).join(','));  // DEBUG
+          async (freqData: tf.Tensor, timeData?: tf.Tensor) => {
+        // if (timeData != null) {
+        //   console.log(`x.shape = ${freqData.shape}`);                   //
+        //   DEBUG console.log(`timeData.shape = ${timeData.shape}`); // DEBUG
+        //   const timeDataArray = Array.from(timeData.dataSync());        //
+        //   DEBUG console.log(timeDataArray.map(x => x.toFixed(4)).join(','));
+        //   // DEBUG
+        // }
         // TODO(cais): can we consolidate the logic in the two branches?
         if (options.onSnippet == null) {
-          const normalizedX = normalize(x);
+          const normalizedX = normalize(freqData);
           this.dataset.addExample({
             label: word,
             spectrogram: {
               data: await normalizedX.data() as Float32Array,
               frameSize: this.nonBatchInputShape[1],
-            }
+            },
+            rawAudio: options.includeTimeDomainWaveform ? {
+              data: await timeData.data() as Float32Array,
+              sampleRateHz: this.audioDataExtractor.sampleRateHz
+            } :
+                                                          undefined
           });
+          // if (options.includeTimeDomainWaveform) {
+          //   console.log(
+          //       'audio waveform length:',
+          //       (await timeData.data()).length);  // DEBUG
+          //   console.log(
+          //       'extractor sample rate:',
+          //       this.audioDataExtractor.sampleRateHz);  // DEBUG
+          // }
           normalizedX.dispose();
           await this.audioDataExtractor.stop();
           this.streaming = false;
           this.collateTransferWords();
           resolve({
-            data: await x.data() as Float32Array,
+            data: await freqData.data() as Float32Array,
             frameSize: this.nonBatchInputShape[1],
           });
         } else {
-          const data = await x.data() as Float32Array;
+          const data = await freqData.data() as Float32Array;
           if (lastIndex === -1) {
             lastIndex = data.length;
           }
@@ -770,10 +786,15 @@ class TransferBrowserFftSpeechCommandRecognizer extends
               data: normalized,
               frameSize: this.nonBatchInputShape[1]
             };
-            console.log(
-                'final spectrogram length =', normalized.length);  // DEBUG
-            this.dataset.addExample(
-                {label: word, spectrogram: finalSpectrogram});
+            this.dataset.addExample({
+              label: word,
+              spectrogram: finalSpectrogram,
+              rawAudio: options.includeTimeDomainWaveform ? {
+                data: await timeData.data() as Float32Array,
+                sampleRateHz: this.audioDataExtractor.sampleRateHz
+              } :
+                                                            undefined
+            });
             // TODO(cais): Fix 1-tensor memory leak.
             resolve(finalSpectrogram);
           }
@@ -786,7 +807,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         columnTruncateLength: this.nonBatchInputShape[1],
         suppressionTimeMillis: 0,
         spectrogramCallback,
-        overlapFactor
+        overlapFactor,
+        includeTimeDomainWaveform: options.includeTimeDomainWaveform
       });
       this.audioDataExtractor.start(options.audioTrackConstraints);
     });
