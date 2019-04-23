@@ -16,12 +16,13 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
+
 import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
 import {loadMetadataJson, normalize, normalizeFloat32Array} from './browser_fft_utils';
 import {BACKGROUND_NOISE_TAG, Dataset} from './dataset';
 import {concatenateFloat32Arrays} from './generic_utils';
 import {balancedTrainValSplit} from './training_utils';
-import {EvaluateConfig, EvaluateResult, Example, ExampleCollectionOptions, RecognizeConfig, RecognizerCallback, RecognizerParams, ROCCurve, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerMetadata, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer, AudioDataAugmentationOptions} from './types';
+import {AudioDataAugmentationOptions, EvaluateConfig, EvaluateResult, Example, ExampleCollectionOptions, RecognizeConfig, RecognizerCallback, RecognizerParams, ROCCurve, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerMetadata, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
 import {version} from './version';
 
 export const UNKNOWN_TAG = '_unknown_';
@@ -910,11 +911,9 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     const numFrames = this.nonBatchInputShape[0];
     windowHopRatio = windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
     const hopFrames = Math.round(windowHopRatio * numFrames);
-    const out = this.dataset.getData(null, {
-      numFrames,
-      hopFrames,
-      ...augmentationOptions
-    }) as {xs: tf.Tensor4D, ys?: tf.Tensor2D};
+    const out = this.dataset.getData(
+                    null, {numFrames, hopFrames, ...augmentationOptions}) as
+        {xs: tf.Tensor4D, ys?: tf.Tensor2D};
     return {xs: out.xs, ys: out.ys as tf.Tensor};
   }
 
@@ -936,8 +935,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
    *   `this.model.fitDataset`.
    */
   private collectTransferDataAsTfDataset(
-      windowHopRatio?: number, validationSplit = 0.15,
-      batchSize = 32, augmentationOptions?: AudioDataAugmentationOptions):
+      windowHopRatio?: number, validationSplit = 0.15, batchSize = 32,
+      augmentationOptions?: AudioDataAugmentationOptions):
       [tf.data.Dataset<{}>, tf.data.Dataset<{}>] {
     const numFrames = this.nonBatchInputShape[0];
     windowHopRatio = windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
@@ -1037,9 +1036,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     const batchSize = config.batchSize == null ? 32 : config.batchSize;
     const windowHopRatio = config.windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
     const [trainDataset, valDataset] = this.collectTransferDataAsTfDataset(
-        windowHopRatio, config.validationSplit, batchSize, {
-          augmentByMixingNoiseRatio: config.augmentByMixingNoiseRatio
-        });
+        windowHopRatio, config.validationSplit, batchSize,
+        {augmentByMixingNoiseRatio: config.augmentByMixingNoiseRatio});
     const t0 = tf.util.now();
     const history = await this.model.fitDataset(trainDataset, {
       epochs: config.epochs,
@@ -1067,9 +1065,9 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       Promise<tf.History|[tf.History, tf.History]> {
     // Prepare the data.
     const windowHopRatio = config.windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
-    const {xs, ys} = this.collectTransferDataAsTensors(windowHopRatio, {
-      augmentByMixingNoiseRatio: config.augmentByMixingNoiseRatio
-    });
+    const {xs, ys} = this.collectTransferDataAsTensors(
+        windowHopRatio,
+        {augmentByMixingNoiseRatio: config.augmentByMixingNoiseRatio});
     console.log(
         `Training data: xs.shape = ${xs.shape}, ys.shape = ${ys.shape}`);
 

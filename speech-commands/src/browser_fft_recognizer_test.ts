@@ -1453,6 +1453,22 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
     expect(transfer2.countExamples()).toEqual({'bar': 1, 'foo': 1});
   });
 
+  it('loadExapmles, from a word-filtered dataset', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer1 = base.createTransfer('xfer1');
+    await transfer1.collectExample('foo');
+    await transfer1.collectExample('bar');
+    const serialized = transfer1.serializeExamples('foo');
+    const transfer2 = base.createTransfer('xfer2');
+    transfer2.loadExamples(serialized);
+    expect(transfer2.countExamples()).toEqual({'foo': 1});
+    const examples = transfer2.getExamples('foo');
+    expect(examples.length).toEqual(1);
+    expect(examples[0].example.label).toEqual('foo');
+  });
+
   it('collectExample with durationMultiplier = 1.5', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
