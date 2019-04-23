@@ -46,7 +46,7 @@ export async function loadTokenizer(pathToVocabulary?: string) {
  * UniversalSentenceEncoder.
  */
 async function loadVocabulary(pathToVocabulary = `${BASE_PATH}vocab.json`) {
-  const vocabulary = await fetch(pathToVocabulary);
+  const vocabulary = await tf.util.fetch(pathToVocabulary);
   return vocabulary.json();
 }
 
