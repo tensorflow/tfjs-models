@@ -718,13 +718,6 @@ class TransferBrowserFftSpeechCommandRecognizer extends
 
       const spectrogramCallback: SpectrogramCallback =
           async (freqData: tf.Tensor, timeData?: tf.Tensor) => {
-        // if (timeData != null) {
-        //   console.log(`x.shape = ${freqData.shape}`);                   //
-        //   DEBUG console.log(`timeData.shape = ${timeData.shape}`); // DEBUG
-        //   const timeDataArray = Array.from(timeData.dataSync());        //
-        //   DEBUG console.log(timeDataArray.map(x => x.toFixed(4)).join(','));
-        //   // DEBUG
-        // }
         // TODO(cais): can we consolidate the logic in the two branches?
         if (options.onSnippet == null) {
           const normalizedX = normalize(freqData);
@@ -740,14 +733,6 @@ class TransferBrowserFftSpeechCommandRecognizer extends
             } :
                                                           undefined
           });
-          // if (options.includeTimeDomainWaveform) {
-          //   console.log(
-          //       'audio waveform length:',
-          //       (await timeData.data()).length);  // DEBUG
-          //   console.log(
-          //       'extractor sample rate:',
-          //       this.audioDataExtractor.sampleRateHz);  // DEBUG
-          // }
           normalizedX.dispose();
           await this.audioDataExtractor.stop();
           this.streaming = false;

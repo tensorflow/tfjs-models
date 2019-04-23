@@ -285,6 +285,7 @@ function createWordDivs(transferWords) {
       const spectrogram = await transferRecognizer.collectExample(
           word, collectExampleOptions);
 
+
       if (intervalJob != null) {
         clearInterval(intervalJob);
       }
@@ -292,8 +293,9 @@ function createWordDivs(transferWords) {
         wordDiv.removeChild(progressBar);
       }
       const examples = transferRecognizer.getExamples(word)
-      const exampleUID = examples[examples.length - 1].uid;
-      await datasetViz.drawExample(wordDiv, word, spectrogram, exampleUID);
+      const example = examples[examples.length - 1];
+      await datasetViz.drawExample(
+          wordDiv, word, spectrogram, example.example.rawAudio, example.uid);
       enableAllCollectWordButtons();
     });
   }
@@ -316,7 +318,6 @@ enterLearnWordsButton.addEventListener('click', () => {
   // files first and keep appending examples to it.
   disableFileUploadControls();
   enterLearnWordsButton.disabled = true;
-  includeTimeDomainWaveformCheckbox.disabled = true;
 
   transferDurationMultiplier = durationMultiplierSelect.value;
 
