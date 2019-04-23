@@ -207,7 +207,8 @@ export class BrowserFftSpeechCommandRecognizer implements
         () => `Expected overlapFactor to be >= 0 and < 1, but got ${
             overlapFactor}`);
 
-    const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
+    const spectrogramCallback: SpectrogramCallback =
+        async (x: tf.Tensor, timeData: tf.Tensor) => {
       const normalizedX = normalize(x);
       let y: tf.Tensor;
       let embedding: tf.Tensor;
@@ -715,7 +716,12 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       let lastIndex = -1;
       const spectrogramSnippets: Float32Array[] = [];
 
-      const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
+      const spectrogramCallback: SpectrogramCallback =
+          async (x: tf.Tensor, timeData: tf.Tensor) => {
+        console.log(`x.shape = ${x.shape}`);                          // DEBUG
+        console.log(`timeData.shape = ${timeData.shape}`);            // DEBUG
+        const timeDataArray = Array.from(timeData.dataSync());        // DEBUG
+        console.log(timeDataArray.map(x => x.toFixed(4)).join(','));  // DEBUG
         // TODO(cais): can we consolidate the logic in the two branches?
         if (options.onSnippet == null) {
           const normalizedX = normalize(x);
@@ -764,6 +770,10 @@ class TransferBrowserFftSpeechCommandRecognizer extends
               data: normalized,
               frameSize: this.nonBatchInputShape[1]
             };
+            console.log(
+                'final spectrogram length =', normalized.length);  // DEBUG
+            const timeDomainDataLength = normalized.length / 232 * 1024;
+            console.log('time domain length:', timeDomainDataLength);  // DEBUG
             this.dataset.addExample(
                 {label: word, spectrogram: finalSpectrogram});
             // TODO(cais): Fix 1-tensor memory leak.
