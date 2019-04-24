@@ -10,7 +10,7 @@ To find out about APIs for models, look at the README in each of the respective
 directories. In general, we try to hide tensors so the API can be used by
 non-machine learning experts.
 
-For those intested in contributing a model, please file a [GitHub issue on tfjs](https://github.com/tensorflow/tfjs/issues) to gauge
+For those intrested in contributing a model, please file a [GitHub issue on tfjs](https://github.com/tensorflow/tfjs/issues) to gauge
 interest. We are trying to add models that complement the existing set of models
 and can be used as building blocks in other apps.
 
