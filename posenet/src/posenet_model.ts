@@ -219,21 +219,15 @@ export class PoseNet {
     const [height, width] = getInputTensorDimensions(input);
     const [resizedHeight, resizedWidth] = [inputResolution, inputResolution];
     let [padTop, padBottom, padLeft, padRight] = [0, 0, 0, 0];
-    console.log(height, width);
     const {heatmapScores, offsets, displacementFwd, displacementBwd} =
         tf.tidy(() => {
-          // const resizedOutput = resizeAndPadTo(input, [resizedHeight, resizedWidth], true);
           const resizedOutput = padAndResizeTo(input, [resizedHeight, resizedWidth], true);
           padTop = resizedOutput.paddedBy[0][0];
           padBottom = resizedOutput.paddedBy[0][1];
           padLeft = resizedOutput.paddedBy[1][0];
           padRight = resizedOutput.paddedBy[1][1];
-          // return this.resnet.predict(resizedOutput.resizedAndPadded);
-          console.log(resizedOutput.resized.shape);
           return this.resnet.predict(resizedOutput.resized);
         });
-    console.log(padTop, padBottom, padLeft, padRight);
-
     const [scoresBuffer, offsetsBuffer, displacementsFwdBuffer, displacementsBwdBuffer] =
         await toTensorBuffers3D(
             [heatmapScores, offsets, displacementFwd, displacementBwd]);

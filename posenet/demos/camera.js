@@ -291,7 +291,6 @@ function detectPoseInRealTime(video, net) {
         minPartConfidence = +guiState.singlePoseDetection.minPartConfidence;
         break;
       case 'multi-pose':
-        console.log(typeof(guiState.inputResolution));
         let all_poses = await guiState.net.estimateMultiplePoses(
             video, imageScaleFactor, flipHorizontal, outputStride,
             guiState.multiPoseDetection.maxPoseDetections,
