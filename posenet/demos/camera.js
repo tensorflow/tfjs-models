@@ -80,6 +80,7 @@ const guiState = {
   input: {
     architecture: 'ResNet50',
     outputStride: 32,
+    inputResolution: 513,
     imageScaleFactor: 0.5,
   },
   singlePoseDetection: {
@@ -141,7 +142,13 @@ function setupGui(cameras, net) {
   // faster the speed but lower the accuracy.
   // TOOD(tylerzhu): Adds back 16, 8 when ready. 
   const outputStrideController = input.add(
-    guiState.input, 'outputStride', [32]);
+    guiState.input, 'outputStride', [32, 16]);
+  // Input resolution:  Internally, this parameter affects the height and width of
+  // the layers in the neural network. The higher the value of the input resolution
+  // the better the accuracy but slower the speed.
+  // TOOD(tylerzhu): Adds back 16, 8 when ready. 
+  const inputResolutionController = input.add(
+    guiState.input, 'inputResolution', [513, 257]);
   // Image scale factor: What to scale the image by before feeding it through
   // the network.
   input.add(guiState.input, 'imageScaleFactor').min(0.2).max(1.0);
@@ -181,6 +188,10 @@ function setupGui(cameras, net) {
 
   outputStrideController.onChange(function(outputStride) {
     guiState.changeToOutputStride = outputStride;
+  });
+
+  inputResolutionController.onChange(function(inputResolution) {
+    guiState.changeToInputResolution = inputResolution;
   });
 
   algorithmController.onChange(function(value) {
@@ -223,8 +234,40 @@ function detectPoseInRealTime(video, net) {
       // Important to purge variables and free up GPU memory
       guiState.net.dispose();
       // Load the ResNet50 PoseNet model
-      guiState.net = await posenet.load(guiState.changeToArchitecture);
+      guiState.net = await posenet.load(
+        guiState.changeToArchitecture,
+        guiState.outputStride,
+        guiState.inputResolution);
+      guiState.architecture = guiState.changeToArchitecture;
       guiState.changeToArchitecture = null;
+      
+    }
+
+    if (guiState.changeToOutputStride) {
+      // Important to purge variables and free up GPU memory
+      console.log('change stride...',
+       guiState.architecture,
+       guiState.changeToOutputStride);
+
+      guiState.net.dispose();
+      // Load the ResNet50 PoseNet model
+      guiState.net = await posenet.load(
+        guiState.architecture,
+        guiState.changeToOutputStride);
+      guiState.outputStride = guiState.changeToOutputStride;
+      guiState.changeToOutputStride = null;
+    }
+
+    if (guiState.changeToInputResolution) {
+      guiState.net.dispose();
+      // Load the ResNet50 PoseNet model
+      console.log(guiState.architecture);
+      guiState.net = await posenet.load(
+       guiState.architecture,
+       guiState.outputStride,
+       guiState.changeToInputResolution);
+      guiState.inputResolution = guiState.changeToInputResolution;
+      guiState.changeToInputResolution = null;     
     }
 
     // Begin monitoring code for frames per second
@@ -234,6 +277,7 @@ function detectPoseInRealTime(video, net) {
     // down the GPU
     const imageScaleFactor = guiState.input.imageScaleFactor;
     const outputStride = +guiState.input.outputStride;
+    const resolution = +guiState.input.inputResolution;
 
     let poses = [];
     let minPoseConfidence;
@@ -247,11 +291,13 @@ function detectPoseInRealTime(video, net) {
         minPartConfidence = +guiState.singlePoseDetection.minPartConfidence;
         break;
       case 'multi-pose':
+        console.log(typeof(guiState.inputResolution));
         let all_poses = await guiState.net.estimateMultiplePoses(
             video, imageScaleFactor, flipHorizontal, outputStride,
             guiState.multiPoseDetection.maxPoseDetections,
             guiState.multiPoseDetection.minPartConfidence,
-            guiState.multiPoseDetection.nmsRadius);
+            guiState.multiPoseDetection.nmsRadius,
+            resolution);
 
         poses = poses.concat(all_poses);
         minPoseConfidence = +guiState.multiPoseDetection.minPoseConfidence;
@@ -304,7 +350,9 @@ function detectPoseInRealTime(video, net) {
 export async function bindPage() {
   // Load the PoseNet model weights with MobileNetV1 075 architecture.
   const net = await posenet.load('ResNet50', 32);
-
+  guiState.architecture = 'ResNet50';
+  guiState.outputStride = 32;
+  guiState.inputResolution = 513;
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'block';
 

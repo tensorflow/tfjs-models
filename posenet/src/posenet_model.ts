@@ -94,8 +94,8 @@ export class PoseNet {
       const heatmaps =
           this.mobileNet.convToOutput(mobileNetOutput, 'heatmap_2');
 
-      const offsets = this.mobileNet.convToOutput(mobileNetOutput,
-      'offset_2');
+      const offsets = this.mobileNet.convToOutput(
+        mobileNetOutput, 'offset_2');
 
       const displacementFwd =
           this.mobileNet.convToOutput(mobileNetOutput, 'displacement_fwd_2');
@@ -212,12 +212,12 @@ export class PoseNet {
   async estimateMultiplePoses(
       input: PosenetInput, imageScaleFactor = 0.5, flipHorizontal = false,
       outputStride: OutputStride = 16, maxDetections = 5, scoreThreshold = .5,
-      nmsRadius = 20): Promise<Pose[]> {
+      nmsRadius = 20, inputResolution = 513): Promise<Pose[]> {
     assertValidOutputStride(outputStride);
     assertValidScaleFactor(imageScaleFactor);
 
     const [height, width] = getInputTensorDimensions(input);
-    const [resizedHeight, resizedWidth] = [513, 513];
+    const [resizedHeight, resizedWidth] = [inputResolution, inputResolution];
     let [padTop, padBottom, padLeft, padRight] = [0, 0, 0, 0];
     console.log(height, width);
     const {heatmapScores, offsets, displacementFwd, displacementBwd} =
@@ -229,6 +229,7 @@ export class PoseNet {
           padLeft = resizedOutput.paddedBy[1][0];
           padRight = resizedOutput.paddedBy[1][1];
           // return this.resnet.predict(resizedOutput.resizedAndPadded);
+          console.log(resizedOutput.resized.shape);
           return this.resnet.predict(resizedOutput.resized);
         });
     console.log(padTop, padBottom, padLeft, padRight);
@@ -317,10 +318,11 @@ export const mobilenetLoader = {
 };
 
 export async function load(architecture: string,
-   outputStride: OutputStride = 16): Promise<PoseNet> {
+   outputStride: OutputStride = 16, resolution : 257|513 = 513): Promise<PoseNet> {
   console.log('---', architecture);
   if (architecture.includes('ResNet50')) {
-    const checkpoint = resnet50_checkpoints[outputStride];
+    const checkpoint = resnet50_checkpoints[resolution][outputStride];
+    console.log('---', checkpoint);
     const graphModel = await tf.loadGraphModel(checkpoint);
     const resnet = new ResNet(graphModel, outputStride)
     return new PoseNet(resnet);
