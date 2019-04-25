@@ -18,7 +18,7 @@
 import '@tensorflow/tfjs-node';
 
 import * as tf from '@tensorflow/tfjs';
-import {describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
+import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 import {writeFileSync} from 'fs';
 import {join} from 'path';
 import * as rimraf from 'rimraf';
@@ -27,7 +27,7 @@ import * as tempfile from 'tempfile';
 import {BrowserFftSpeechCommandRecognizer, deleteSavedTransferModel, getMajorAndMinorVersion, listSavedTransferModels, localStorageWrapper, SAVED_MODEL_METADATA_KEY} from './browser_fft_recognizer';
 import * as BrowserFftUtils from './browser_fft_utils';
 import {FakeAudioContext, FakeAudioMediaStream} from './browser_test_utils';
-import {arrayBuffer2SerializedExamples} from './dataset';
+import {arrayBuffer2SerializedExamples, BACKGROUND_NOISE_TAG} from './dataset';
 import {create} from './index';
 import {SpeechCommandRecognizerResult} from './types';
 import {version} from './version';
@@ -42,7 +42,7 @@ describe('getMajorAndMinorVersion', () => {
   });
 });
 
-describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
+describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
   const fakeWords: string[] = [
     '_background_noise_', 'down', 'eight', 'five', 'four', 'go', 'left', 'nine',
     'one', 'right', 'seven', 'six', 'stop', 'three', 'two', 'up', 'zero'
@@ -495,7 +495,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
             callbackTimestamps[callbackTimestamps.length - 2];
         expect(
             timeBetweenCallbacks > 0.5 * spectroDurationMillis &&
-            timeBetweenCallbacks < 0.7 * spectroDurationMillis)
+            timeBetweenCallbacks < 0.8 * spectroDurationMillis)
             .toBe(true);
       }
 
@@ -711,11 +711,11 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
       expect(snippetLengths[i]).toEqual(928);
     }
     expect(finalSpectrogram.data.length)
-       .toEqual(snippetLengths.reduce((x, prev) => x + prev));
+        .toEqual(snippetLengths.reduce((x, prev) => x + prev));
     expect(finalSpectrogram.data.length).toEqual(10208 - 1);
   });
 
-  it('collectExample w/ invalid durationSec leads to error',  async done => {
+  it('collectExample w/ invalid durationSec leads to error', async done => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();
@@ -723,10 +723,7 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     const durationSec = 1;
     const snippetDurationSec = 0;
     try {
-      await transfer.collectExample('foo', {
-        durationSec,
-        snippetDurationSec
-      });
+      await transfer.collectExample('foo', {durationSec, snippetDurationSec});
       done.fail();
     } catch (error) {
       expect(error.message).toMatch(/snippetDurationSec is expected to be > 0/);
@@ -734,46 +731,39 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     }
   });
 
-  it('collectExample w/ onSnippet w/o snippetDurationSec error',
-      async done => {
-        setUpFakes();
-        const base = new BrowserFftSpeechCommandRecognizer();
-        await base.ensureModelLoaded();
-        const transfer = base.createTransfer('xfer1');
-        const durationSec = 1;
-        try {
-          await transfer.collectExample('foo', {
-            durationSec,
-            onSnippet: async spectrogram => {}
-          });
-          done.fail();
-        } catch (error) {
-          expect(error.message).toMatch(
-              /snippetDurationSec must be provided if onSnippet/);
-          done();
-        }
-      });
+  it('collectExample w/ onSnippet w/o snippetDurationSec error', async done => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    const durationSec = 1;
+    try {
+      await transfer.collectExample(
+          'foo', {durationSec, onSnippet: async spectrogram => {}});
+      done.fail();
+    } catch (error) {
+      expect(error.message)
+          .toMatch(/snippetDurationSec must be provided if onSnippet/);
+      done();
+    }
+  });
 
-  it('collectExample w/ snippetDurationSec w/o callback errors',
-      async done => {
-        setUpFakes();
-        const base = new BrowserFftSpeechCommandRecognizer();
-        await base.ensureModelLoaded();
-        const transfer = base.createTransfer('xfer1');
-        const durationSec = 1;
-        const snippetDurationSec = 0.1;
-        try {
-          await transfer.collectExample('foo', {
-            durationSec,
-            snippetDurationSec
-          });
-          done.fail();
-        } catch (error) {
-          expect(error.message).toMatch(
-              /onSnippet must be provided if snippetDurationSec/);
-          done();
-        }
-      });
+  it('collectExample w/ snippetDurationSec w/o callback errors', async done => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    const durationSec = 1;
+    const snippetDurationSec = 0.1;
+    try {
+      await transfer.collectExample('foo', {durationSec, snippetDurationSec});
+      done.fail();
+    } catch (error) {
+      expect(error.message)
+          .toMatch(/onSnippet must be provided if snippetDurationSec/);
+      done();
+    }
+  });
 
   it('collectTransferLearningExample default transfer model', async () => {
     setUpFakes();
@@ -1080,6 +1070,26 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     });
   });
 
+  it('trainTransferLearningModel w/ mixing-noise augmentation', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    await transfer.collectExample('foo');
+    for (let i = 0; i < 2; ++i) {
+      await transfer.collectExample(BACKGROUND_NOISE_TAG);
+    }
+    const history =
+        await transfer.train(
+            {epochs: 10, batchSize: 2, augmentByMixingNoiseRatio: 0.5}) as
+        tf.History;
+    expect(history.history.loss.length).toEqual(10);
+    expect(history.history.acc.length).toEqual(10);
+
+    expect(base.wordLabels()).toEqual(fakeWords);
+    expect(transfer.wordLabels()).toEqual([BACKGROUND_NOISE_TAG, 'foo']);
+  });
+
   it('train and evaluate', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
@@ -1337,6 +1347,34 @@ describeWithFlags('Browser FFT recognizer', tf.test_util.NODE_ENVS, () => {
     ]);
     expect(artifacts.data.byteLength)
         .toEqual(fakeNumFrames * fakeColumnTruncateLength * 4 * 3);
+  });
+
+  it('serializeExamples: limited word labels', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    await transfer.collectExample('bar');
+    await transfer.collectExample('foo');
+    await transfer.collectExample('bar');
+    const artifacts =
+        arrayBuffer2SerializedExamples(transfer.serializeExamples('bar'));
+
+    // The examples are sorted alphabetically by their label.
+    expect(artifacts.manifest).toEqual([
+      {
+        label: 'bar',
+        spectrogramNumFrames: fakeNumFrames,
+        spectrogramFrameSize: fakeColumnTruncateLength
+      },
+      {
+        label: 'bar',
+        spectrogramNumFrames: fakeNumFrames,
+        spectrogramFrameSize: fakeColumnTruncateLength
+      }
+    ]);
+    expect(artifacts.data.byteLength)
+        .toEqual(fakeNumFrames * fakeColumnTruncateLength * 4 * 2);
   });
 
   it('removeExample & isDatasetEmpty', async () => {

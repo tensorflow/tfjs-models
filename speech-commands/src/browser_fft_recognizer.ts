@@ -21,7 +21,7 @@ import {loadMetadataJson, normalize, normalizeFloat32Array} from './browser_fft_
 import {BACKGROUND_NOISE_TAG, Dataset} from './dataset';
 import {concatenateFloat32Arrays} from './generic_utils';
 import {balancedTrainValSplit} from './training_utils';
-import {EvaluateConfig, EvaluateResult, Example, ExampleCollectionOptions, RecognizeConfig, RecognizerCallback, RecognizerParams, ROCCurve, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerMetadata, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
+import {EvaluateConfig, EvaluateResult, Example, ExampleCollectionOptions, RecognizeConfig, RecognizerCallback, RecognizerParams, ROCCurve, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerMetadata, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer, AudioDataAugmentationOptions} from './types';
 import {version} from './version';
 
 export const UNKNOWN_TAG = '_unknown_';
@@ -684,15 +684,18 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     }
 
     if (options.snippetDurationSec != null) {
-      tf.util.assert(options.snippetDurationSec > 0,
+      tf.util.assert(
+          options.snippetDurationSec > 0,
           () => `snippetDurationSec is expected to be > 0, but got ` +
               `${options.snippetDurationSec}`);
-      tf.util.assert(options.onSnippet != null,
+      tf.util.assert(
+          options.onSnippet != null,
           () => `onSnippet must be provided if snippetDurationSec ` +
               `is provided.`);
     }
     if (options.onSnippet != null) {
-      tf.util.assert(options.snippetDurationSec != null,
+      tf.util.assert(
+          options.snippetDurationSec != null,
           () => `snippetDurationSec must be provided if onSnippet ` +
               `is provided.`);
     }
@@ -703,7 +706,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     this.streaming = true;
     return new Promise<SpectrogramData>(resolve => {
       const stepFactor = options.snippetDurationSec == null ?
-          1 : options.snippetDurationSec / totalDurationSec;
+          1 :
+          options.snippetDurationSec / totalDurationSec;
       const overlapFactor = 1 - stepFactor;
       const callbackCountTarget = Math.round(1 / stepFactor);
       let callbackCount = 0;
@@ -744,10 +748,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
           spectrogramSnippets.push(snippetData);
 
           if (options.onSnippet != null) {
-            options.onSnippet({
-              data: snippetData,
-              frameSize: this.nonBatchInputShape[1]
-            });
+            options.onSnippet(
+                {data: snippetData, frameSize: this.nonBatchInputShape[1]});
           }
 
           if (callbackCount++ === callbackCountTarget) {
@@ -761,10 +763,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
               data: normalized,
               frameSize: this.nonBatchInputShape[1]
             };
-            this.dataset.addExample({
-              label: word,
-              spectrogram: finalSpectrogram
-            });
+            this.dataset.addExample(
+                {label: word, spectrogram: finalSpectrogram});
             // TODO(cais): Fix 1-tensor memory leak.
             resolve(finalSpectrogram);
           }
@@ -869,9 +869,17 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     this.collateTransferWords();
   }
 
-  /** Serialize the existing examples. */
-  serializeExamples(): ArrayBuffer {
-    return this.dataset.serialize();
+  /**
+   * Serialize the existing examples.
+   *
+   * @param wordLabels Optional word label(s) to serialize. If specified, only
+   *   the examples with labels matching the argument will be serialized. If
+   *   any specified word label does not exist in the vocabulary of this
+   *   transfer recognizer, an Error will be thrown.
+   * @returns An `ArrayBuffer` object amenable to transmission and storage.
+   */
+  serializeExamples(wordLabels?: string|string[]): ArrayBuffer {
+    return this.dataset.serialize(wordLabels);
   }
 
   /**
@@ -895,13 +903,18 @@ class TransferBrowserFftSpeechCommandRecognizer extends
    * @returns xs: The feature tensors (xs), a 4D tf.Tensor.
    *          ys: The target tensors (ys), one-hot encoding, a 2D tf.Tensor.
    */
-  private collectTransferDataAsTensors(windowHopRatio?: number):
+  private collectTransferDataAsTensors(
+      windowHopRatio?: number,
+      augmentationOptions?: AudioDataAugmentationOptions):
       {xs: tf.Tensor, ys: tf.Tensor} {
     const numFrames = this.nonBatchInputShape[0];
     windowHopRatio = windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
     const hopFrames = Math.round(windowHopRatio * numFrames);
-    const out = this.dataset.getData(null, {numFrames, hopFrames}) as
-        {xs: tf.Tensor4D, ys?: tf.Tensor2D};
+    const out = this.dataset.getData(null, {
+      numFrames,
+      hopFrames,
+      ...augmentationOptions
+    }) as {xs: tf.Tensor4D, ys?: tf.Tensor2D};
     return {xs: out.xs, ys: out.ys as tf.Tensor};
   }
 
@@ -924,7 +937,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
    */
   private collectTransferDataAsTfDataset(
       windowHopRatio?: number, validationSplit = 0.15,
-      batchSize = 32): [tf.data.Dataset<{}>, tf.data.Dataset<{}>] {
+      batchSize = 32, augmentationOptions?: AudioDataAugmentationOptions):
+      [tf.data.Dataset<{}>, tf.data.Dataset<{}>] {
     const numFrames = this.nonBatchInputShape[0];
     windowHopRatio = windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
     const hopFrames = Math.round(windowHopRatio * numFrames);
@@ -933,7 +947,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       hopFrames,
       getDataset: true,
       datasetBatchSize: batchSize,
-      datasetValidationSplit: validationSplit
+      datasetValidationSplit: validationSplit,
+      ...augmentationOptions
     }) as [tf.data.Dataset<{}>, tf.data.Dataset<{}>];
     // TODO(cais): See if we can tighten the typing.
   }
@@ -971,8 +986,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       tf.util.assert(
           config.fineTuningEpochs >= 0 &&
               Number.isInteger(config.fineTuningEpochs),
-          () =>
-              `If specified, fineTuningEpochs must be a non-negative ` +
+          () => `If specified, fineTuningEpochs must be a non-negative ` +
               `integer, but received ${config.fineTuningEpochs}`);
     }
 
@@ -1023,7 +1037,9 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     const batchSize = config.batchSize == null ? 32 : config.batchSize;
     const windowHopRatio = config.windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
     const [trainDataset, valDataset] = this.collectTransferDataAsTfDataset(
-        windowHopRatio, config.validationSplit, batchSize);
+        windowHopRatio, config.validationSplit, batchSize, {
+          augmentByMixingNoiseRatio: config.augmentByMixingNoiseRatio
+        });
     const t0 = tf.util.now();
     const history = await this.model.fitDataset(trainDataset, {
       epochs: config.epochs,
@@ -1051,7 +1067,9 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       Promise<tf.History|[tf.History, tf.History]> {
     // Prepare the data.
     const windowHopRatio = config.windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
-    const {xs, ys} = this.collectTransferDataAsTensors(windowHopRatio);
+    const {xs, ys} = this.collectTransferDataAsTensors(windowHopRatio, {
+      augmentByMixingNoiseRatio: config.augmentByMixingNoiseRatio
+    });
     console.log(
         `Training data: xs.shape = ${xs.shape}, ys.shape = ${ys.shape}`);
 

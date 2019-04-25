@@ -86,3 +86,7 @@ export function getUID(): string {
   return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() +
       s4() + s4();
 }
+
+export function getRandomInteger(min: number, max: number): number {
+  return Math.floor((max - min) * Math.random()) + min;
+}

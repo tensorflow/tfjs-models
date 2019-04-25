@@ -1,6 +1,6 @@
 import {AudioUtils} from './utils/audio_utils';
 import {Params} from './utils/types';
-import {nextPowerOfTwo} from './utils/util';
+import {nextPowerOfTwo} from './utils/audio_utils';
 
 export class WavFileFeatureExtractor {
   private features: Float32Array[];
