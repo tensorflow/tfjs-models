@@ -131,27 +131,33 @@ function setupGui(cameras, net) {
   // consolidated.
   const architectureController = input.add(
       guiState.input, 'architecture',
-      [/*'MobileNetV1 1.01',
-         'MobileNetV1 1.00', 
-         'MobileNetV1 0.75',
-         'MobileNetV1 0.50',*/
+      ['MobileNetV1 1.01',
+       'MobileNetV1 1.00', 
+       'MobileNetV1 0.75',
+       'MobileNetV1 0.50',
        'ResNet50']);
   // Output stride:  Internally, this parameter affects the height and width of
   // the layers in the neural network. The lower the value of the output stride
   // the higher the accuracy but slower the speed, the higher the value the
-  // faster the speed but lower the accuracy.
-  // TOOD(tylerzhu): Adds back 16, 8 when ready. 
-  const outputStrideController = input.add(
-    guiState.input, 'outputStride', [32, 16]);
+  // faster the speed but lower the accuracy. 
+  let outputStrideController = input.add(
+    guiState.input, 'outputStride', [32]);
+  outputStrideController.onChange(function(outputStride) {
+      guiState.changeToOutputStride = outputStride;
+  });
   // Input resolution:  Internally, this parameter affects the height and width of
   // the layers in the neural network. The higher the value of the input resolution
   // the better the accuracy but slower the speed.
   // TOOD(tylerzhu): Adds back 16, 8 when ready. 
-  const inputResolutionController = input.add(
+  let inputResolutionController = input.add(
     guiState.input, 'inputResolution', [513, 257]);
+  inputResolutionController.onChange(function(inputResolution) {
+    guiState.changeToInputResolution = inputResolution;
+  });
+
   // Image scale factor: What to scale the image by before feeding it through
   // the network.
-  input.add(guiState.input, 'imageScaleFactor').min(0.2).max(1.0);
+  let imageScaleFactorController;
   input.open();
 
   // Pose confidence: the overall confidence in the estimation of a person's
@@ -183,15 +189,38 @@ function setupGui(cameras, net) {
 
 
   architectureController.onChange(function(architecture) {
+    // if architecture is ResNet50, then show ResNet50 options
+    if (architecture.includes('ResNet50')) {
+      imageScaleFactorController.remove();
+
+      inputResolutionController = input.add(
+        guiState.input, 'inputResolution', [513, 257]);
+      inputResolutionController.onChange(function(inputResolution) {
+        guiState.changeToInputResolution = inputResolution;
+      });
+
+      outputStrideController.remove();
+      outputStrideController = input.add(
+        guiState.input, 'outputStride', [32]);
+      outputStrideController.onChange(function(outputStride) {
+          guiState.changeToOutputStride = outputStride;
+      });
+    } else {  // if architecture is MobileNet, then show MobileNet options
+      inputResolutionController.remove();
+      imageScaleFactorController = input.add(
+        guiState.input, 'imageScaleFactor').min(0.2).max(1.0);
+      
+      outputStrideController.remove();
+      guiState.outputStride = 16;
+      guiState.input.outputStride = 16;
+      outputStrideController = input.add(
+          guiState.input, 'outputStride', [8, 16]);
+      outputStrideController.onChange(function(outputStride) {
+          guiState.changeToOutputStride = outputStride;
+      });
+      guiState.input.outputStride = 16;
+    }
     guiState.changeToArchitecture = architecture;
-  });
-
-  outputStrideController.onChange(function(outputStride) {
-    guiState.changeToOutputStride = outputStride;
-  });
-
-  inputResolutionController.onChange(function(inputResolution) {
-    guiState.changeToInputResolution = inputResolution;
   });
 
   algorithmController.onChange(function(value) {
