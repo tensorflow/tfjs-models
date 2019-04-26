@@ -28,6 +28,7 @@ import {Pose, PosenetInput} from './types';
 import {getInputTensorDimensions, getValidResolution, /*resizeAndPadTo,*/ /*resizeTo,*/ scalePose, scalePoses, toResizedInputTensor, toTensorBuffers3D, /*resizeAndPadTo,*/ padAndResizeTo} from './util';
 
 export type PoseNetResolution = 161|193|257|289|321|353|385|417|449|481|513;
+export type PoseNetResNetResolution = 257|513;
 
 export class PoseNet {
   resnet: ResNet; // Holds the resnet model.
@@ -88,6 +89,7 @@ export class PoseNet {
     displacementFwd: tf.Tensor3D,
     displacementBwd: tf.Tensor3D
   } {
+    
     return tf.tidy(() => {
       const mobileNetOutput = this.mobileNet.predict(input, outputStride);
 
@@ -312,11 +314,9 @@ export const mobilenetLoader = {
 };
 
 export async function load(architecture: string,
-   outputStride: OutputStride = 16, resolution : 257|513 = 513): Promise<PoseNet> {
-  console.log('---', architecture);
+   outputStride: OutputStride = 16, resolution : PoseNetResNetResolution = 513): Promise<PoseNet> {
   if (architecture.includes('ResNet50')) {
     const checkpoint = resnet50_checkpoints[resolution][outputStride];
-    console.log('---', checkpoint);
     const graphModel = await tf.loadGraphModel(checkpoint);
     const resnet = new ResNet(graphModel, outputStride)
     return new PoseNet(resnet);
@@ -325,5 +325,4 @@ export async function load(architecture: string,
     return loadMobileNet(+multiplier as MobileNetMultiplier);
   }
 }
-
 

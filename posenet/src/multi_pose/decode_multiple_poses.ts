@@ -118,8 +118,6 @@ export function decodeMultiplePoses(
     maxPoseDetections: number, scoreThreshold = 0.5, nmsRadius = 20): Pose[] {
   const poses: Pose[] = [];
 
-  console.log('[queue]: build score queue');
-  console.log('[queue]: scoresBuffer size: ', scoresBuffer.shape);
   const queue = buildPartWithScoreQueue(
       scoreThreshold, kLocalMaximumRadius, scoresBuffer);
 
@@ -136,22 +134,15 @@ export function decodeMultiplePoses(
     const rootImageCoords =
         getImageCoords(root.part, outputStride, offsetsBuffer);
 
-    console.log(
-      '[queue]: root_id: ', root.part.id,
-      ' xy: [', root.part.heatmapY, root.part.heatmapX, ']',
-      ' xy_img: [', rootImageCoords.x, rootImageCoords.y, ']');
-      
     if (withinNmsRadiusOfCorrespondingPoint(
             poses, squaredNmsRadius, rootImageCoords, root.part.id)) {
       continue;
     }
-    // console.log('pass NMS test');
 
     // Start a new detection instance at the position of the root.
     const keypoints = decodePose(
         root, scoresBuffer, offsetsBuffer, outputStride, displacementsFwdBuffer,
         displacementsBwdBuffer);
-    // console.log('keypoints decoding done');
 
     const score = getInstanceScore(poses, squaredNmsRadius, keypoints);
 
