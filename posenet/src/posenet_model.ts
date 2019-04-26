@@ -146,12 +146,12 @@ export class PoseNet {
       outputStride: OutputStride = 16, inputResolution = 513): Promise<Pose> {
         assertValidOutputStride(outputStride);
         assertValidScaleFactor(imageScaleFactor);
-    
+
         const [height, width] = getInputTensorDimensions(input);
         let [resizedHeight, resizedWidth] = [0, 0];
         let [padTop, padBottom, padLeft, padRight] = [0, 0, 0, 0];
         let heatmapScores, offsets;
-       
+
         // ResNet
         if (this.resnet) {
           resizedHeight = inputResolution;
@@ -168,14 +168,14 @@ export class PoseNet {
           heatmapScores = outputs.heatmapScores;
           offsets = outputs.offsets;
         }
-        
+
         // MobileNet
         if (this.mobileNet) {
           resizedHeight =
             getValidResolution(imageScaleFactor, height, outputStride);
           resizedWidth =
             getValidResolution(imageScaleFactor, width, outputStride);
-    
+
           const outputs =
             tf.tidy(() => {
               const resizedOutput = padAndResizeTo(
@@ -189,13 +189,13 @@ export class PoseNet {
           heatmapScores = outputs.heatmapScores;
           offsets = outputs.offsets;
         }
-        
+
         const pose = await decodeSinglePose(heatmapScores, offsets, outputStride);
-    
+
         const scaleY = (height + padTop + padBottom) / (resizedHeight);
         const scaleX = (width + padLeft + padRight) / (resizedWidth);
         let scaledPose = scalePose(pose, scaleY, scaleX, -padTop, -padLeft);
-  
+
         heatmapScores.dispose();
         offsets.dispose();
         return scaledPose;
@@ -251,7 +251,7 @@ export class PoseNet {
     let [resizedHeight, resizedWidth] = [0, 0];
     let [padTop, padBottom, padLeft, padRight] = [0, 0, 0, 0];
     let heatmapScores, offsets, displacementFwd, displacementBwd;
-   
+
     // ResNet
     if (this.resnet) {
       resizedHeight = inputResolution;
@@ -270,7 +270,7 @@ export class PoseNet {
       displacementFwd = outputs.displacementFwd;
       displacementBwd = outputs.displacementBwd;
     }
-    
+
     // MobileNet
     if (this.mobileNet) {
       resizedHeight =
@@ -297,7 +297,7 @@ export class PoseNet {
     const [scoresBuffer, offsetsBuffer, displacementsFwdBuffer, displacementsBwdBuffer] =
         await toTensorBuffers3D(
             [heatmapScores, offsets, displacementFwd, displacementBwd]);
-    
+
     const poses = await decodeMultiplePoses(
         scoresBuffer, offsetsBuffer, displacementsFwdBuffer,
         displacementsBwdBuffer, outputStride,
@@ -383,7 +383,7 @@ export const mobilenetLoader = {
 };
 
 export async function load(architecture: string,
-   outputStride: OutputStride = 32, 
+   outputStride: OutputStride = 32,
    resolution: PoseNetResNetResolution = 513): Promise<PoseNet> {
   if (architecture.includes('ResNet50')) {
     const checkpoint = resnet50_checkpoints[resolution][outputStride];
