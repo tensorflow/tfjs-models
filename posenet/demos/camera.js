@@ -200,6 +200,8 @@ function setupGui(cameras, net) {
       });
 
       outputStrideController.remove();
+      guiState.outputStride = 32;
+      guiState.input.outputStride = 32;
       outputStrideController = input.add(
         guiState.input, 'outputStride', [32]);
       outputStrideController.onChange(function(outputStride) {
