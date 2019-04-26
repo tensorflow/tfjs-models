@@ -128,12 +128,12 @@ export function decodeMultiplePoses(
   while (poses.length < maxPoseDetections && !queue.empty()) {
     // The top element in the queue is the next root candidate.
     const root = queue.dequeue();
+
     // Part-based non-maximum suppression: We reject a root candidate if it
     // is within a disk of `nmsRadius` pixels from the corresponding part of
     // a previously detected instance.
     const rootImageCoords =
         getImageCoords(root.part, outputStride, offsetsBuffer);
-
     if (withinNmsRadiusOfCorrespondingPoint(
             poses, squaredNmsRadius, rootImageCoords, root.part.id)) {
       continue;

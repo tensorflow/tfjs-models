@@ -108,7 +108,6 @@ export function decodePose(
   const instanceKeypoints: Keypoint[] = new Array(numParts);
   // Start a new detection instance at the position of the root.
   const {part: rootPart, score: rootScore} = root;
-
   const rootPoint = getImageCoords(rootPart, outputStride, offsets);
 
   instanceKeypoints[rootPart.id] = {

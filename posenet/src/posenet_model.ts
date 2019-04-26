@@ -25,7 +25,7 @@ import {decodeMultiplePoses} from './multi_pose/decode_multiple_poses';
 import ResNet from './resnet';
 import {decodeSinglePose} from './single_pose/decode_single_pose';
 import {Pose, PosenetInput} from './types';
-import {getInputTensorDimensions, getValidResolution, /*resizeAndPadTo,*/ /*resizeTo,*/ scalePose, scalePoses, /*toResizedInputTensor,*/ toTensorBuffers3D, /*resizeAndPadTo,*/ padAndResizeTo} from './util';
+import {getInputTensorDimensions, getValidResolution, scalePose, scalePoses, toTensorBuffers3D, padAndResizeTo} from './util';
 
 export type PoseNetResolution = 161|193|257|289|321|353|385|417|449|481|513;
 export type PoseNetResNetResolution = 257|513;
@@ -65,8 +65,7 @@ export class PoseNet {
       const heatmaps =
           this.mobileNet.convToOutput(mobileNetOutput, 'heatmap_2');
 
-      const offsets = this.mobileNet.convToOutput(mobileNetOutput,
-      'offset_2');
+      const offsets = this.mobileNet.convToOutput(mobileNetOutput, 'offset_2');
 
       return {heatmapScores: heatmaps.sigmoid(), offsets};
     });
@@ -344,16 +343,15 @@ export async function loadMobileNet(multiplier: MobileNetMultiplier = 1.01):
     Promise<PoseNet> {
   if (tf == null) {
     throw new Error(
-        `Cannot find TensorFlow.js. If you are using a <script> tag, please `
-        + `also include @tensorflow/tfjs on the page before using this
+        `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
+        `also include @tensorflow/tfjs on the page before using this
         model.`);
   }
   // TODO: figure out better way to decide below.
   const possibleMultipliers = Object.keys(checkpoints);
   tf.util.assert(
       typeof multiplier === 'number',
-      () => `got multiplier type of ${typeof multiplier} when it should be a
-      ` +
+      () => `got multiplier type of ${typeof multiplier} when it should be a ` +
           `number.`);
 
   tf.util.assert(

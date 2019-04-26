@@ -127,19 +127,17 @@ function setupGui(cameras, net) {
   // Architecture: there are a few PoseNet models varying in size and
   // accuracy. 1.01 is the largest, but will be the slowest. 0.50 is the
   // fastest, but least accurate.
-  // TODO(tylerzhu) Adds MobileNetV1 models back when prediction APIs are
-  // consolidated.
   const architectureController = input.add(
       guiState.input, 'architecture',
       ['MobileNetV1 1.01',
-       'MobileNetV1 1.00', 
+       'MobileNetV1 1.00',
        'MobileNetV1 0.75',
        'MobileNetV1 0.50',
        'ResNet50']);
   // Output stride:  Internally, this parameter affects the height and width of
   // the layers in the neural network. The lower the value of the output stride
   // the higher the accuracy but slower the speed, the higher the value the
-  // faster the speed but lower the accuracy. 
+  // faster the speed but lower the accuracy.
   let outputStrideController = input.add(
     guiState.input, 'outputStride', [32]);
   outputStrideController.onChange(function(outputStride) {
@@ -148,7 +146,6 @@ function setupGui(cameras, net) {
   // Input resolution:  Internally, this parameter affects the height and width of
   // the layers in the neural network. The higher the value of the input resolution
   // the better the accuracy but slower the speed.
-  // TOOD(tylerzhu): Adds back 16, 8 when ready. 
   let inputResolutionController = input.add(
     guiState.input, 'inputResolution', [513, 257]);
   inputResolutionController.onChange(function(inputResolution) {
@@ -213,7 +210,7 @@ function setupGui(cameras, net) {
       inputResolutionController.remove();
       imageScaleFactorController = input.add(
         guiState.input, 'imageScaleFactor').min(0.2).max(1.0);
-      
+
       outputStrideController.remove();
       guiState.outputStride = 16;
       guiState.input.outputStride = 16;
@@ -273,7 +270,6 @@ function detectPoseInRealTime(video, net) {
         guiState.inputResolution);
       guiState.architecture = guiState.changeToArchitecture;
       guiState.changeToArchitecture = null;
-      
     }
 
     if (guiState.changeToOutputStride) {
@@ -300,7 +296,7 @@ function detectPoseInRealTime(video, net) {
        guiState.outputStride,
        guiState.changeToInputResolution);
       guiState.inputResolution = guiState.changeToInputResolution;
-      guiState.changeToInputResolution = null;     
+      guiState.changeToInputResolution = null;
     }
 
     // Begin monitoring code for frames per second
@@ -318,9 +314,9 @@ function detectPoseInRealTime(video, net) {
     switch (guiState.algorithm) {
       case 'single-pose':
         const pose = await guiState.net.estimateSinglePose(
-            video, imageScaleFactor, flipHorizontal, outputStride,
-            resolution);
+            video, imageScaleFactor, flipHorizontal, outputStride, resolution);
         poses.push(pose);
+
         minPoseConfidence = +guiState.singlePoseDetection.minPoseConfidence;
         minPartConfidence = +guiState.singlePoseDetection.minPartConfidence;
         break;
@@ -347,6 +343,7 @@ function detectPoseInRealTime(video, net) {
       ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
       ctx.restore();
     }
+
     // For each pose (i.e. person) detected in an image, loop through the poses
     // and draw the resulting skeleton and keypoints if over certain confidence
     // scores
@@ -383,6 +380,7 @@ export async function bindPage() {
   guiState.architecture = 'ResNet50';
   guiState.outputStride = 32;
   guiState.inputResolution = 513;
+
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'block';
 
