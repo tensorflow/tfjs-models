@@ -96,8 +96,7 @@ export class PoseNet {
       const heatmaps =
           this.mobileNet.convToOutput(mobileNetOutput, 'heatmap_2');
 
-      const offsets = this.mobileNet.convToOutput(
-        mobileNetOutput, 'offset_2');
+      const offsets = this.mobileNet.convToOutput(mobileNetOutput, 'offset_2');
 
       const displacementFwd =
           this.mobileNet.convToOutput(mobileNetOutput, 'displacement_fwd_2');

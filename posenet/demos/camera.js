@@ -98,7 +98,6 @@ const guiState = {
     showSkeleton: true,
     showPoints: true,
     showBoundingBox: false,
-    showFeaturemaps: true,
   },
   net: null,
 };
