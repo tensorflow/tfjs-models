@@ -25,7 +25,7 @@ import {decodeMultiplePoses} from './multi_pose/decode_multiple_poses';
 import ResNet from './resnet';
 import {decodeSinglePose} from './single_pose/decode_single_pose';
 import {Pose, PosenetInput} from './types';
-import {getInputTensorDimensions, getValidResolution, /*resizeAndPadTo,*/ /*resizeTo,*/ scalePose, scalePoses, toResizedInputTensor, toTensorBuffers3D, /*resizeAndPadTo,*/ padAndResizeTo} from './util';
+import {getInputTensorDimensions, getValidResolution, /*resizeAndPadTo,*/ /*resizeTo,*/ scalePose, scalePoses, /*toResizedInputTensor,*/ toTensorBuffers3D, /*resizeAndPadTo,*/ padAndResizeTo} from './util';
 
 export type PoseNetResolution = 161|193|257|289|321|353|385|417|449|481|513;
 export type PoseNetResNetResolution = 257|513;
@@ -143,34 +143,62 @@ export class PoseNet {
    */
   async estimateSinglePose(
       input: PosenetInput, imageScaleFactor = 0.5, flipHorizontal = false,
-      outputStride: OutputStride = 16): Promise<Pose> {
-    assertValidOutputStride(outputStride);
-    assertValidScaleFactor(imageScaleFactor);
-
-    const [height, width] = getInputTensorDimensions(input);
-
-    const resizedHeight =
-        getValidResolution(imageScaleFactor, height, outputStride);
-    const resizedWidth =
-        getValidResolution(imageScaleFactor, width, outputStride);
-
-    const {heatmapScores, offsets} = tf.tidy(() => {
-      const inputTensor = toResizedInputTensor(
-          input, resizedHeight, resizedWidth, flipHorizontal);
-
-      return this.predictForSinglePose(inputTensor, outputStride);
-    });
-
-    const pose = await decodeSinglePose(heatmapScores, offsets,
-    outputStride);
-
-    const scaleY = height / resizedHeight;
-    const scaleX = width / resizedWidth;
-
-    heatmapScores.dispose();
-    offsets.dispose();
-
-    return scalePose(pose, scaleY, scaleX);
+      outputStride: OutputStride = 16, inputResolution = 513): Promise<Pose> {
+        assertValidOutputStride(outputStride);
+        assertValidScaleFactor(imageScaleFactor);
+    
+        const [height, width] = getInputTensorDimensions(input);
+        let [resizedHeight, resizedWidth] = [0, 0];
+        let [padTop, padBottom, padLeft, padRight] = [0, 0, 0, 0];
+        let heatmapScores, offsets;
+       
+        // ResNet
+        if (this.resnet) {
+          resizedHeight = inputResolution;
+          resizedWidth = inputResolution;
+          const outputs =
+            tf.tidy(() => {
+              const resizedOutput = padAndResizeTo(input, [resizedHeight, resizedWidth], true);
+              padTop = resizedOutput.paddedBy[0][0];
+              padBottom = resizedOutput.paddedBy[0][1];
+              padLeft = resizedOutput.paddedBy[1][0];
+              padRight = resizedOutput.paddedBy[1][1];
+              return this.resnet.predict(resizedOutput.resized);
+            });
+          heatmapScores = outputs.heatmapScores;
+          offsets = outputs.offsets;
+        }
+        
+        // MobileNet
+        if (this.mobileNet) {
+          resizedHeight =
+            getValidResolution(imageScaleFactor, height, outputStride);
+          resizedWidth =
+            getValidResolution(imageScaleFactor, width, outputStride);
+    
+          const outputs =
+            tf.tidy(() => {
+              const resizedOutput = padAndResizeTo(
+                input, [resizedHeight, resizedWidth], flipHorizontal);
+              padTop = resizedOutput.paddedBy[0][0];
+              padBottom = resizedOutput.paddedBy[0][1];
+              padLeft = resizedOutput.paddedBy[1][0];
+              padRight = resizedOutput.paddedBy[1][1];
+              return this.predictForSinglePose(resizedOutput.resized, outputStride);
+            });
+          heatmapScores = outputs.heatmapScores;
+          offsets = outputs.offsets;
+        }
+        
+        const pose = await decodeSinglePose(heatmapScores, offsets, outputStride);
+    
+        const scaleY = (height + padTop + padBottom) / (resizedHeight);
+        const scaleX = (width + padLeft + padRight) / (resizedWidth);
+        let scaledPose = scalePose(pose, scaleY, scaleX, -padTop, -padLeft);
+  
+        heatmapScores.dispose();
+        offsets.dispose();
+        return scaledPose;
   }
 
   /**

@@ -318,7 +318,8 @@ function detectPoseInRealTime(video, net) {
     switch (guiState.algorithm) {
       case 'single-pose':
         const pose = await guiState.net.estimateSinglePose(
-            video, imageScaleFactor, flipHorizontal, outputStride);
+            video, imageScaleFactor, flipHorizontal, outputStride,
+            resolution);
         poses.push(pose);
         minPoseConfidence = +guiState.singlePoseDetection.minPoseConfidence;
         minPartConfidence = +guiState.singlePoseDetection.minPartConfidence;
@@ -352,16 +353,13 @@ function detectPoseInRealTime(video, net) {
     poses.forEach(({score, keypoints}) => {
       if (score >= minPoseConfidence) {
         if (guiState.output.showPoints) {
-          // drawKeypoints(keypoints, minPartConfidence, ctx);
           drawKeypoints(keypoints, minPartConfidence, ctx);
         }
         if (guiState.output.showSkeleton) {
-          // drawSkeleton(keypoints, minPartConfidence, ctx);
           drawSkeleton(keypoints, minPartConfidence, ctx);
         }
         if (guiState.output.showBoundingBox) {
-          // drawBoundingBox(keypoints, ctx);
-          drawBoundingBox(keypoints, minPartConfidence, ctx);
+          drawBoundingBox(keypoints, ctx);
         }
       }
     });
