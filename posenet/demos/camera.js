@@ -193,6 +193,8 @@ function setupGui(cameras, net) {
     if (architecture.includes('ResNet50')) {
       imageScaleFactorController.remove();
 
+      guiState.inputResolution = 513;
+      guiState.input.inputResolution = 513;
       inputResolutionController = input.add(
         guiState.input, 'inputResolution', [513, 257]);
       inputResolutionController.onChange(function(inputResolution) {
