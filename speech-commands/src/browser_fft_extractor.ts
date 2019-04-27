@@ -20,6 +20,7 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
+
 import {getAudioContextConstructor, getAudioMediaStream} from './browser_fft_utils';
 import {FeatureExtractor, RecognizerParams} from './types';
 
@@ -76,7 +77,7 @@ export interface BrowserFftFeatureExtractorConfig extends RecognizerParams {
    *
    * Default: `false`.
    */
-  includeTimeDomainWaveform?: boolean;
+  includeRawAudio?: boolean;
 }
 
 /**
@@ -100,7 +101,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
   // Overlapping factor: the ratio between the temporal spacing between
   // consecutive spectrograms and the length of each individual spectrogram.
   readonly overlapFactor: number;
-  readonly includeTimeDomainWaveform: boolean;
+  readonly includeRawAudio: boolean;
 
   private readonly spectrogramCallback: SpectrogramCallback;
 
@@ -156,7 +157,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     this.frameDurationMillis = this.fftSize / this.sampleRateHz * 1e3;
     this.columnTruncateLength = config.columnTruncateLength || this.fftSize;
     this.overlapFactor = config.overlapFactor;
-    this.includeTimeDomainWaveform = config.includeTimeDomainWaveform;
+    this.includeRawAudio = config.includeRawAudio;
 
     tf.util.assert(
         this.overlapFactor >= 0 && this.overlapFactor < 1,
@@ -196,7 +197,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     // Reset the queue.
     this.freqDataQueue = [];
     this.freqData = new Float32Array(this.fftSize);
-    if (this.includeTimeDomainWaveform) {
+    if (this.includeRawAudio) {
       this.timeDataQueue = [];
       this.timeData = new Float32Array(this.fftSize);
     }
@@ -216,7 +217,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     }
 
     this.freqDataQueue.push(this.freqData.slice(0, this.columnTruncateLength));
-    if (this.includeTimeDomainWaveform) {
+    if (this.includeRawAudio) {
       this.analyser.getFloatTimeDomainData(this.timeData);
       this.timeDataQueue.push(this.timeData.slice());
     }
@@ -230,7 +231,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
       const freqDataTensor = getInputTensorFromFrequencyData(
           freqData, [1, this.numFrames, this.columnTruncateLength, 1]);
       let timeDataTensor: tf.Tensor;
-      if (this.includeTimeDomainWaveform) {
+      if (this.includeRawAudio) {
         const timeData = flattenQueue(this.timeDataQueue);
         timeDataTensor = getInputTensorFromFrequencyData(
             timeData, [1, this.numFrames * this.fftSize]);

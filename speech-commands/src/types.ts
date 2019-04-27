@@ -169,7 +169,7 @@ export interface ExampleCollectionOptions {
    *
    * Default: `false`.
    */
-  includeTimeDomainWaveform?: boolean;
+  includeRawAudio?: boolean;
 }
 
 /**

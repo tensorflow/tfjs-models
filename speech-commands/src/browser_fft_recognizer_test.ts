@@ -767,15 +767,14 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
     }
   });
 
-  it('collectExample: includeTimeDomainWaveform, no snippets', async () => {
+  it('collectExample: includeRawAudio, no snippets', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();
     const transfer = base.createTransfer('xfer1');
     const durationSec = 1.5;
-    const includeTimeDomainWaveform = true;
-    await transfer.collectExample(
-        'foo', {durationSec, includeTimeDomainWaveform});
+    const includeRawAudio = true;
+    await transfer.collectExample('foo', {durationSec, includeRawAudio});
     const examples = transfer.getExamples('foo');
     expect(examples.length).toEqual(1);
     expect(examples[0].example.rawAudio.sampleRateHz).toEqual(44100);
@@ -783,17 +782,17 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
         .toBeCloseTo(1, 1e-3);
   });
 
-  it('collectExample: includeTimeDomainWaveform, with snippets', async () => {
+  it('collectExample: includeRawAudio, with snippets', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();
     const transfer = base.createTransfer('xfer1');
     const durationSec = 1.5;
     const snippetDurationSec = 0.1;
-    const includeTimeDomainWaveform = true;
+    const includeRawAudio = true;
     await transfer.collectExample('foo', {
       durationSec,
-      includeTimeDomainWaveform,
+      includeRawAudio,
       snippetDurationSec,
       onSnippet: async spectrogram => {}
     });

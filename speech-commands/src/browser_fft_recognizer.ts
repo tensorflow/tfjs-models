@@ -727,11 +727,11 @@ class TransferBrowserFftSpeechCommandRecognizer extends
               data: await normalizedX.data() as Float32Array,
               frameSize: this.nonBatchInputShape[1],
             },
-            rawAudio: options.includeTimeDomainWaveform ? {
+            rawAudio: options.includeRawAudio ? {
               data: await timeData.data() as Float32Array,
               sampleRateHz: this.audioDataExtractor.sampleRateHz
             } :
-                                                          undefined
+                                                undefined
           });
           normalizedX.dispose();
           await this.audioDataExtractor.stop();
@@ -774,11 +774,11 @@ class TransferBrowserFftSpeechCommandRecognizer extends
             this.dataset.addExample({
               label: word,
               spectrogram: finalSpectrogram,
-              rawAudio: options.includeTimeDomainWaveform ? {
+              rawAudio: options.includeRawAudio ? {
                 data: await timeData.data() as Float32Array,
                 sampleRateHz: this.audioDataExtractor.sampleRateHz
               } :
-                                                            undefined
+                                                  undefined
             });
             // TODO(cais): Fix 1-tensor memory leak.
             resolve(finalSpectrogram);
@@ -793,7 +793,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         suppressionTimeMillis: 0,
         spectrogramCallback,
         overlapFactor,
-        includeTimeDomainWaveform: options.includeTimeDomainWaveform
+        includeRawAudio: options.includeRawAudio
       });
       this.audioDataExtractor.start(options.audioTrackConstraints);
     });

@@ -280,7 +280,7 @@ function createWordDivs(transferWords) {
         }
       }
 
-      collectExampleOptions.includeTimeDomainWaveform =
+      collectExampleOptions.includeRawAudio =
           includeTimeDomainWaveformCheckbox.checked;
       const spectrogram = await transferRecognizer.collectExample(
           word, collectExampleOptions);

@@ -198,7 +198,8 @@ export class DatasetViz {
       playButton.textContent = '▶️';
       playButton.addEventListener('click', () => {
         playButton.disabled = true;
-        playRawAudio(rawAudio, () => playButton.disabled = false);
+        speechCommands.utils.playRawAudio(
+            rawAudio, () => playButton.disabled = false);
       });
       wordDiv.appendChild(playButton);
     }
@@ -316,23 +317,4 @@ export class DatasetViz {
 
     this.downloadAsFileButton.disabled = this.transferRecognizer.isDatasetEmpty();
   }
-}
-
-function playRawAudio(rawAudio, onEnded) {
-  const audioContextConstructor =
-      window.AudioContext || window.webkitAudioContext;
-  const audioContext = new audioContextConstructor();
-  const arrayBuffer = audioContext.createBuffer(
-      1, rawAudio.data.length, rawAudio.sampleRateHz);
-  const nowBuffering = arrayBuffer.getChannelData(0);
-  nowBuffering.set(rawAudio.data);
-  const source = audioContext.createBufferSource();
-  source.buffer = arrayBuffer;
-  source.connect(audioContext.destination);
-  source.start();
-  source.onended = () => {
-    if (onEnded != null) {
-      onEnded();
-    }
-  };
 }
