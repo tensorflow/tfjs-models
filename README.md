@@ -30,7 +30,7 @@ and can be used as building blocks in other apps.
   
 ### Text
 - [Universal sentence encoder](./universal-sentence-encoder) - A model that encodes English text into 512-dimensional embeddings.
-- [Toxic Text Classifier](./toxicity) - Detects toxic content such as threats, insults, and obscenities in English text.
+- [Toxic Text Classifier](./toxicity) - Detects and classifies otoxic content such as threats, insults, and obscenities in English text.
 
 ### General utilities
 - [KNN Classifier](https://github.com/tensorflow/tfjs-models/tree/master/knn-classifier) - Create a custom k-nearest neighbors classifier. Can be used for transfer learning.
