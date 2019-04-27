@@ -29,7 +29,7 @@ and can be used as building blocks in other apps.
   - `npm i @tensorflow-models/speech-commands`
   
 ### Text
-- [Universal Sentence eEcoder](./universal-sentence-encoder) - A model that encodes English text into 512-dimensional embeddings.
+- [Universal Sentence Encoder](./universal-sentence-encoder) - A model that encodes English text into 512-dimensional embeddings.
 - [Text Toxicity](./toxicity) - Detects and classifies toxic content such as threats, insults, and obscenities in English text inputs.
 
 ### General utilities
