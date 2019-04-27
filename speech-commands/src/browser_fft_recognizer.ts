@@ -16,12 +16,13 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
+
 import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
 import {loadMetadataJson, normalize, normalizeFloat32Array} from './browser_fft_utils';
 import {BACKGROUND_NOISE_TAG, Dataset} from './dataset';
 import {concatenateFloat32Arrays} from './generic_utils';
 import {balancedTrainValSplit} from './training_utils';
-import {EvaluateConfig, EvaluateResult, Example, ExampleCollectionOptions, RecognizeConfig, RecognizerCallback, RecognizerParams, ROCCurve, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerMetadata, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer, AudioDataAugmentationOptions} from './types';
+import {AudioDataAugmentationOptions, EvaluateConfig, EvaluateResult, Example, ExampleCollectionOptions, RecognizeConfig, RecognizerCallback, RecognizerParams, ROCCurve, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerMetadata, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
 import {version} from './version';
 
 export const UNKNOWN_TAG = '_unknown_';
@@ -206,7 +207,8 @@ export class BrowserFftSpeechCommandRecognizer implements
         () => `Expected overlapFactor to be >= 0 and < 1, but got ${
             overlapFactor}`);
 
-    const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
+    const spectrogramCallback: SpectrogramCallback =
+        async (x: tf.Tensor, timeData?: tf.Tensor) => {
       const normalizedX = normalize(x);
       let y: tf.Tensor;
       let embedding: tf.Tensor;
@@ -714,27 +716,33 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       let lastIndex = -1;
       const spectrogramSnippets: Float32Array[] = [];
 
-      const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
+      const spectrogramCallback: SpectrogramCallback =
+          async (freqData: tf.Tensor, timeData?: tf.Tensor) => {
         // TODO(cais): can we consolidate the logic in the two branches?
         if (options.onSnippet == null) {
-          const normalizedX = normalize(x);
+          const normalizedX = normalize(freqData);
           this.dataset.addExample({
             label: word,
             spectrogram: {
               data: await normalizedX.data() as Float32Array,
               frameSize: this.nonBatchInputShape[1],
-            }
+            },
+            rawAudio: options.includeRawAudio ? {
+              data: await timeData.data() as Float32Array,
+              sampleRateHz: this.audioDataExtractor.sampleRateHz
+            } :
+                                                undefined
           });
           normalizedX.dispose();
           await this.audioDataExtractor.stop();
           this.streaming = false;
           this.collateTransferWords();
           resolve({
-            data: await x.data() as Float32Array,
+            data: await freqData.data() as Float32Array,
             frameSize: this.nonBatchInputShape[1],
           });
         } else {
-          const data = await x.data() as Float32Array;
+          const data = await freqData.data() as Float32Array;
           if (lastIndex === -1) {
             lastIndex = data.length;
           }
@@ -763,8 +771,15 @@ class TransferBrowserFftSpeechCommandRecognizer extends
               data: normalized,
               frameSize: this.nonBatchInputShape[1]
             };
-            this.dataset.addExample(
-                {label: word, spectrogram: finalSpectrogram});
+            this.dataset.addExample({
+              label: word,
+              spectrogram: finalSpectrogram,
+              rawAudio: options.includeRawAudio ? {
+                data: await timeData.data() as Float32Array,
+                sampleRateHz: this.audioDataExtractor.sampleRateHz
+              } :
+                                                  undefined
+            });
             // TODO(cais): Fix 1-tensor memory leak.
             resolve(finalSpectrogram);
           }
@@ -777,7 +792,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         columnTruncateLength: this.nonBatchInputShape[1],
         suppressionTimeMillis: 0,
         spectrogramCallback,
-        overlapFactor
+        overlapFactor,
+        includeRawAudio: options.includeRawAudio
       });
       this.audioDataExtractor.start(options.audioTrackConstraints);
     });
@@ -910,11 +926,9 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     const numFrames = this.nonBatchInputShape[0];
     windowHopRatio = windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
     const hopFrames = Math.round(windowHopRatio * numFrames);
-    const out = this.dataset.getData(null, {
-      numFrames,
-      hopFrames,
-      ...augmentationOptions
-    }) as {xs: tf.Tensor4D, ys?: tf.Tensor2D};
+    const out = this.dataset.getData(
+                    null, {numFrames, hopFrames, ...augmentationOptions}) as
+        {xs: tf.Tensor4D, ys?: tf.Tensor2D};
     return {xs: out.xs, ys: out.ys as tf.Tensor};
   }
 
@@ -936,8 +950,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
    *   `this.model.fitDataset`.
    */
   private collectTransferDataAsTfDataset(
-      windowHopRatio?: number, validationSplit = 0.15,
-      batchSize = 32, augmentationOptions?: AudioDataAugmentationOptions):
+      windowHopRatio?: number, validationSplit = 0.15, batchSize = 32,
+      augmentationOptions?: AudioDataAugmentationOptions):
       [tf.data.Dataset<{}>, tf.data.Dataset<{}>] {
     const numFrames = this.nonBatchInputShape[0];
     windowHopRatio = windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
@@ -1037,9 +1051,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     const batchSize = config.batchSize == null ? 32 : config.batchSize;
     const windowHopRatio = config.windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
     const [trainDataset, valDataset] = this.collectTransferDataAsTfDataset(
-        windowHopRatio, config.validationSplit, batchSize, {
-          augmentByMixingNoiseRatio: config.augmentByMixingNoiseRatio
-        });
+        windowHopRatio, config.validationSplit, batchSize,
+        {augmentByMixingNoiseRatio: config.augmentByMixingNoiseRatio});
     const t0 = tf.util.now();
     const history = await this.model.fitDataset(trainDataset, {
       epochs: config.epochs,
@@ -1067,9 +1080,9 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       Promise<tf.History|[tf.History, tf.History]> {
     // Prepare the data.
     const windowHopRatio = config.windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
-    const {xs, ys} = this.collectTransferDataAsTensors(windowHopRatio, {
-      augmentByMixingNoiseRatio: config.augmentByMixingNoiseRatio
-    });
+    const {xs, ys} = this.collectTransferDataAsTensors(
+        windowHopRatio,
+        {augmentByMixingNoiseRatio: config.augmentByMixingNoiseRatio});
     console.log(
         `Training data: xs.shape = ${xs.shape}, ys.shape = ${ys.shape}`);
 

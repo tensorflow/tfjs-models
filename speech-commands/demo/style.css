@@ -173,3 +173,11 @@ textarea {
 input[type=checkbox] {
   transform: scale(2);
 }
+
+#include-audio-waveform {
+  margin-left: 20px;
+}
+
+#include-audio-waveform-label {
+  font-size: 17px;
+}
