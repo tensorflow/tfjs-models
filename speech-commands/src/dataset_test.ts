@@ -505,14 +505,13 @@ describe('Dataset', () => {
           expect(ys.isDisposed).toEqual(false);
         });
     expect(numTrain).toEqual(7);  // Without augmentation, it'd be 5.
-    expect(numVal).toEqual(3);  // Without augmentation, it'd be 2.
+    expect(numVal).toEqual(3);    // Without augmentation, it'd be 2.
   });
 
   it('getData w/ mixing-noise augmentation w/o noise tag errors', async () => {
     const dataset = new Dataset();
     dataset.addExample(getFakeExample(
-        'foo', 6, 2,
-        [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
+        'foo', 6, 2, [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
     dataset.addExample(
         getFakeExample('bar', 5, 2, [1, 1, 2, 2, 3, 3, 2, 2, 1, 1]));
     // Lacks BACKGROUND_NOISE_TAG.
