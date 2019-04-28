@@ -280,11 +280,10 @@ function detectPoseInRealTime(video, net) {
     if (guiState.changeToInputResolution) {
       guiState.net.dispose();
       // Load the ResNet50 PoseNet model
-      console.log(guiState.architecture);
       guiState.net = await posenet.load(
        guiState.architecture,
        guiState.outputStride,
-       guiState.changeToInputResolution);
+       +guiState.changeToInputResolution);
       guiState.inputResolution = guiState.changeToInputResolution;
       guiState.changeToInputResolution = null;
     }

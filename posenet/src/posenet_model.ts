@@ -260,14 +260,50 @@ export const mobilenetLoader = {
 
 };
 
+/**
+ * Loads the PoseNet model instance from a checkpoint, with the ResNet
+ * architecture.
+ *
+ * @param outputStride Specifies the output stride of the ResNet model.
+ * The smaller the value, the larger the output resolution, and more accurate the model
+ * at the cost of speed.  Set this to a larger value to increase speed at the cost of accuracy.
+ * Currently only 32 is supported for ResNet.
+ *
+ * @param resolution Specifies the input resolution of the ResNet model.
+ * The larger the value, more accurate the model at the cost of speed.
+ * Set this to a smaller value to increase speed at the cost of accuracy.
+ * Currently only input resolution 257 and 513 are supported for ResNet.
+ *
+ */
+export async function loadResNet(outputStride: OutputStride, resolution: PoseNetResolution):
+    Promise<PoseNet> {
+  if (tf == null) {
+    throw new Error(
+        `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
+        `also include @tensorflow/tfjs on the page before using this
+        model.`);
+  }
+
+  tf.util.assert(
+      [32].indexOf(outputStride) >= 0,
+    () => `invalid stride value of ${outputStride}.  No checkpoint exists for that ` +
+        `stride. Currently must be one of [32].`);
+
+  tf.util.assert(
+    [513, 257].indexOf(resolution) >= 0,
+    () => `invalid resolution value of ${resolution}.  No checkpoint exists for that ` +
+        `resolution. Currently must be one of [513, 257].`);
+
+  const graphModel = await tf.loadGraphModel(resnet50_checkpoints[resolution][outputStride]);
+  const resnet = new ResNet(graphModel, outputStride)
+  return new PoseNet(resnet);
+}
+
 export async function load(architecture: string,
    outputStride: OutputStride = 32,
    resolution: PoseNetResolution = 513): Promise<PoseNet> {
   if (architecture.includes('ResNet50')) {
-    const checkpoint = resnet50_checkpoints[resolution][outputStride];
-    const graphModel = await tf.loadGraphModel(checkpoint);
-    const resnet = new ResNet(graphModel, outputStride)
-    return new PoseNet(resnet);
+    return loadResNet(outputStride, resolution);
   } else {
     const multiplier = architecture.split(' ')[1];
     return loadMobileNet(+multiplier as MobileNetMultiplier);

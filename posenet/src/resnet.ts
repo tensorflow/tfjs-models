@@ -5,8 +5,8 @@ import { OutputStride } from '.';
 function toFloatIfInt(input: tf.Tensor3D): tf.Tensor3D {
   return tf.tidy(() => {
     if (input.dtype === 'int32')
-      return input.toFloat().add(tf.scalar(-122.0, 'float32'));
-    return input;
+      input = input.toFloat();
+    return input.add(tf.scalar(-122.0, 'float32'));
   })
 }
 
