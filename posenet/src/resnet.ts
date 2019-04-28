@@ -1,4 +1,6 @@
 import * as tf from '@tensorflow/tfjs';
+import {BackboneInterface} from './posenet_model';
+import { OutputStride } from '.';
 
 function toFloatIfInt(input: tf.Tensor3D): tf.Tensor3D {
   return tf.tidy(() => {
@@ -8,7 +10,7 @@ function toFloatIfInt(input: tf.Tensor3D): tf.Tensor3D {
   })
 }
 
-export default class ResNet {
+export default class ResNet implements BackboneInterface {
   readonly model: tf.GraphModel
   readonly outputStride: number
   readonly inputDimensions: [number, number]
@@ -20,7 +22,7 @@ export default class ResNet {
     this.inputDimensions = [inputShape[1], inputShape[2]];
   }
 
-  predict(input: tf.Tensor3D) {
+  predict(input: tf.Tensor3D, outputStride: OutputStride = 32): {[key: string]: tf.Tensor3D} {
     return tf.tidy(() => {
       const asFloat = toFloatIfInt(input);
       const asBatch = asFloat.expandDims(0);
@@ -32,7 +34,7 @@ export default class ResNet {
       const offsets = offsets4d.squeeze() as tf.Tensor3D;
       const displacementFwd = displacementFwd4d.squeeze() as tf.Tensor3D;
       const displacementBwd = displacementBwd4d.squeeze() as tf.Tensor3D;
-      
+
       return {
         heatmapScores, offsets: offsets as tf.Tensor3D,
             displacementFwd: displacementFwd as tf.Tensor3D,

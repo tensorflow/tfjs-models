@@ -17,6 +17,7 @@
 
 import * as tf from '@tensorflow/tfjs';
 import {ModelWeights} from './model_weights';
+import {BackboneInterface} from './posenet_model';
 
 export type MobileNetMultiplier = 0.25|0.50|0.75|1.0|1.01;
 export type ConvolutionType = 'conv2d'|'separableConv';
@@ -174,7 +175,7 @@ function toOutputStridedLayers(
   });
 }
 
-export class MobileNet {
+export class MobileNet implements BackboneInterface{
   private modelWeights: ModelWeights;
   // private model: tf.NamedTensorMap;
   private convolutionDefinitions: ConvolutionDefinition[];
@@ -189,7 +190,7 @@ export class MobileNet {
     this.convolutionDefinitions = convolutionDefinitions;
   }
 
-  predict(input: tf.Tensor3D, outputStride: OutputStride): tf.Tensor3D {
+  predict(input: tf.Tensor3D, outputStride: OutputStride): {[key: string]: tf.Tensor3D} {
     // Normalize the pixels [0, 255] to be between [-1, 1].
     const normalized = tf.div(input.toFloat(), this.PREPROCESS_DIVISOR);
 
@@ -198,7 +199,8 @@ export class MobileNet {
     const layers =
         toOutputStridedLayers(this.convolutionDefinitions, outputStride);
 
-    return layers.reduce(
+    return tf.tidy(() => {
+      const mobileNetOutput = layers.reduce(
         (previousLayer: tf.Tensor3D,
          {blockId, stride, convType, rate}: Layer) => {
           if (convType === 'conv2d') {
@@ -208,8 +210,26 @@ export class MobileNet {
           } else {
             throw Error(`Unknown conv type of ${convType}`);
           }
-        },
-        preprocessedInput);
+        }, preprocessedInput);
+
+      const heatmaps =
+          this.convToOutput(mobileNetOutput, 'heatmap_2');
+
+      const offsets = this.convToOutput(mobileNetOutput, 'offset_2');
+
+      const displacementFwd =
+          this.convToOutput(mobileNetOutput, 'displacement_fwd_2');
+
+      const displacementBwd =
+          this.convToOutput(mobileNetOutput, 'displacement_bwd_2');
+
+      return {
+        heatmapScores: heatmaps.sigmoid(),
+        offsets,
+        displacementFwd,
+        displacementBwd
+      };
+    });
   }
 
   public convToOutput(mobileNetOutput: tf.Tensor3D, outputLayerName: string):
