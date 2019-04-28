@@ -17,7 +17,7 @@
 
 import * as tf from '@tensorflow/tfjs';
 import {ModelWeights} from './model_weights';
-import {BackboneInterface} from './posenet_model';
+import {BackboneInterface, PoseNetResolution} from './posenet_model';
 
 export type MobileNetMultiplier = 0.25|0.50|0.75|1.0|1.01;
 export type ConvolutionType = 'conv2d'|'separableConv';
@@ -101,17 +101,6 @@ export function assertValidResolution(resolution: any, outputStride: number) {
           `${outputStride}.`);
 }
 
-// tslint:disable-next-line:no-any
-export function assertValidScaleFactor(imageScaleFactor: any) {
-  tf.util.assert(
-      typeof imageScaleFactor === 'number',
-      () => 'imageScaleFactor is not a number');
-
-  tf.util.assert(
-      imageScaleFactor >= 0.2 && imageScaleFactor <= 1.0,
-      () => 'imageScaleFactor must be between 0.2 and 1.0');
-}
-
 export const mobileNetArchitectures:
     {[name: string]: ConvolutionDefinition[]} = {
       100: mobileNet100Architecture,
@@ -177,17 +166,19 @@ function toOutputStridedLayers(
 
 export class MobileNet implements BackboneInterface{
   private modelWeights: ModelWeights;
-  // private model: tf.NamedTensorMap;
   private convolutionDefinitions: ConvolutionDefinition[];
 
   private PREPROCESS_DIVISOR = tf.scalar(255.0 / 2);
   private ONE = tf.scalar(1.0);
+
+  SUPPORTED_RESOLUTION: Array<PoseNetResolution> = [161, 193, 257, 289, 321, 353, 385, 417, 449, 481, 513];
 
   constructor(
       modelWeights: ModelWeights,
       convolutionDefinitions: ConvolutionDefinition[]) {
     this.modelWeights = modelWeights;
     this.convolutionDefinitions = convolutionDefinitions;
+
   }
 
   predict(input: tf.Tensor3D, outputStride: OutputStride): {[key: string]: tf.Tensor3D} {

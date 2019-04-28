@@ -1,5 +1,5 @@
 import * as tf from '@tensorflow/tfjs';
-import {BackboneInterface} from './posenet_model';
+import {BackboneInterface, PoseNetResolution} from './posenet_model';
 import { OutputStride } from '.';
 
 function toFloatIfInt(input: tf.Tensor3D): tf.Tensor3D {
@@ -14,6 +14,8 @@ export default class ResNet implements BackboneInterface {
   readonly model: tf.GraphModel
   readonly outputStride: number
   readonly inputDimensions: [number, number]
+
+  SUPPORTED_RESOLUTION: Array<PoseNetResolution> = [257, 513];
 
   constructor(model: tf.GraphModel, outputStride: number) {
     this.model = model;

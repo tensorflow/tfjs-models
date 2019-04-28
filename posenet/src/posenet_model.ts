@@ -19,20 +19,20 @@ import * as tf from '@tensorflow/tfjs';
 
 import {CheckpointLoader} from './checkpoint_loader';
 import {checkpoints, resnet50_checkpoints} from './checkpoints';
-import {assertValidOutputStride, assertValidScaleFactor, MobileNet, MobileNetMultiplier, OutputStride} from './mobilenet';
+import {assertValidOutputStride, MobileNet, MobileNetMultiplier, OutputStride, assertValidResolution} from './mobilenet';
 import {ModelWeights} from './model_weights';
 import {decodeMultiplePoses} from './multi_pose/decode_multiple_poses';
 import ResNet from './resnet';
 import {decodeSinglePose} from './single_pose/decode_single_pose';
 import {Pose, PosenetInput} from './types';
-import {getInputTensorDimensions, getValidResolution, scalePose, scalePoses, toTensorBuffers3D, padAndResizeTo} from './util';
+import {getInputTensorDimensions, scalePose, scalePoses, toTensorBuffers3D, padAndResizeTo} from './util';
 
 export type PoseNetResolution = 161|193|257|289|321|353|385|417|449|481|513;
-export type PoseNetResNetResolution = 257|513;
 
 export interface BackboneInterface {
   predict(input: tf.Tensor3D, outputStride: OutputStride): {[key: string]: tf.Tensor3D};
   dispose(): void;
+  SUPPORTED_RESOLUTION: Array<PoseNetResolution>;
 }
 
 
@@ -70,10 +70,10 @@ export class PoseNet {
    * positions of the keypoints are in the same scale as the original image
    */
   async estimateSinglePose(
-      input: PosenetInput, imageScaleFactor = 0.5, flipHorizontal = false,
-      outputStride: OutputStride = 16, inputResolution = 513): Promise<Pose> {
+      input: PosenetInput, inputResolution = 513, flipHorizontal = false,
+      outputStride: OutputStride = 16): Promise<Pose> {
         assertValidOutputStride(outputStride);
-        assertValidScaleFactor(imageScaleFactor);
+        assertValidResolution(inputResolution, outputStride);
 
         const [height, width] = getInputTensorDimensions(input);
         let [resizedHeight, resizedWidth] = [0, 0];
@@ -81,15 +81,8 @@ export class PoseNet {
         let heatmapScores, offsets;
 
 
-        if (this.backbone instanceof ResNet) {  // ResNet
-          resizedHeight = inputResolution;
-          resizedWidth = inputResolution;
-        } else {  // MobileNet
-          resizedHeight =
-            getValidResolution(imageScaleFactor, height, outputStride);
-          resizedWidth =
-            getValidResolution(imageScaleFactor, width, outputStride);
-        }
+        resizedHeight = inputResolution;
+        resizedWidth = inputResolution;
 
         const outputs =
           tf.tidy(() => {
@@ -155,26 +148,19 @@ export class PoseNet {
    * in the same scale as the original image
    */
   async estimateMultiplePoses(
-      input: PosenetInput, imageScaleFactor = 0.5, flipHorizontal = false,
+      input: PosenetInput, inputResolution = 513, flipHorizontal = false,
       outputStride: OutputStride = 16, maxDetections = 5, scoreThreshold = .5,
-      nmsRadius = 20, inputResolution = 513): Promise<Pose[]> {
+      nmsRadius = 20): Promise<Pose[]> {
     assertValidOutputStride(outputStride);
-    assertValidScaleFactor(imageScaleFactor);
+    assertValidResolution(inputResolution, outputStride);
 
     const [height, width] = getInputTensorDimensions(input);
     let [resizedHeight, resizedWidth] = [0, 0];
     let [padTop, padBottom, padLeft, padRight] = [0, 0, 0, 0];
     let heatmapScores, offsets, displacementFwd, displacementBwd;
 
-    if (this.backbone instanceof ResNet) {  // ResNet
-      resizedHeight = inputResolution;
-      resizedWidth = inputResolution;
-    } else {  // MobileNet
-      resizedHeight =
-        getValidResolution(imageScaleFactor, height, outputStride);
-      resizedWidth =
-        getValidResolution(imageScaleFactor, width, outputStride);
-    }
+    resizedHeight = inputResolution;
+    resizedWidth = inputResolution;
 
     const outputs =
       tf.tidy(() => {
@@ -276,7 +262,7 @@ export const mobilenetLoader = {
 
 export async function load(architecture: string,
    outputStride: OutputStride = 32,
-   resolution: PoseNetResNetResolution = 513): Promise<PoseNet> {
+   resolution: PoseNetResolution = 513): Promise<PoseNet> {
   if (architecture.includes('ResNet50')) {
     const checkpoint = resnet50_checkpoints[resolution][outputStride];
     const graphModel = await tf.loadGraphModel(checkpoint);

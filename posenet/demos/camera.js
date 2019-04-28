@@ -81,7 +81,6 @@ const guiState = {
     architecture: 'ResNet50',
     outputStride: 32,
     inputResolution: 513,
-    imageScaleFactor: 0.5,
   },
   singlePoseDetection: {
     minPoseConfidence: 0.1,
@@ -150,12 +149,7 @@ function setupGui(cameras, net) {
   inputResolutionController.onChange(function(inputResolution) {
     guiState.changeToInputResolution = inputResolution;
   });
-
-  // Image scale factor: What to scale the image by before feeding it through
-  // the network.
-  let imageScaleFactorController;
   input.open();
-
   // Pose confidence: the overall confidence in the estimation of a person's
   // pose (i.e. a person detected in a frame)
   // Min part confidence: the confidence that a particular estimated keypoint
@@ -187,8 +181,6 @@ function setupGui(cameras, net) {
   architectureController.onChange(function(architecture) {
     // if architecture is ResNet50, then show ResNet50 options
     if (architecture.includes('ResNet50')) {
-      imageScaleFactorController.remove();
-
       guiState.inputResolution = 513;
       guiState.input.inputResolution = 513;
       inputResolutionController = input.add(
@@ -207,9 +199,8 @@ function setupGui(cameras, net) {
       });
     } else {  // if architecture is MobileNet, then show MobileNet options
       inputResolutionController.remove();
-      imageScaleFactorController = input.add(
-        guiState.input, 'imageScaleFactor').min(0.2).max(1.0);
-
+      inputResolutionController = input.add(
+        guiState.input, 'inputResolution', [257, 353, 449, 513]);
       outputStrideController.remove();
       guiState.outputStride = 16;
       guiState.input.outputStride = 16;
@@ -301,9 +292,8 @@ function detectPoseInRealTime(video, net) {
     // Begin monitoring code for frames per second
     stats.begin();
 
-    // Scale an image down to a certain factor. Too large of an image will slow
-    // down the GPU
-    const imageScaleFactor = guiState.input.imageScaleFactor;
+    // Scale down image based on selected resolution,
+    // since too large of an image will slow down the GPU
     const outputStride = +guiState.input.outputStride;
     const resolution = +guiState.input.inputResolution;
 
@@ -313,7 +303,7 @@ function detectPoseInRealTime(video, net) {
     switch (guiState.algorithm) {
       case 'single-pose':
         const pose = await guiState.net.estimateSinglePose(
-            video, imageScaleFactor, flipHorizontal, outputStride, resolution);
+            video, resolution, flipHorizontal, outputStride, resolution);
         poses.push(pose);
 
         minPoseConfidence = +guiState.singlePoseDetection.minPoseConfidence;
@@ -321,11 +311,10 @@ function detectPoseInRealTime(video, net) {
         break;
       case 'multi-pose':
         let all_poses = await guiState.net.estimateMultiplePoses(
-            video, imageScaleFactor, flipHorizontal, outputStride,
+            video, resolution, flipHorizontal, outputStride,
             guiState.multiPoseDetection.maxPoseDetections,
             guiState.multiPoseDetection.minPartConfidence,
-            guiState.multiPoseDetection.nmsRadius,
-            resolution);
+            guiState.multiPoseDetection.nmsRadius);
 
         poses = poses.concat(all_poses);
         minPoseConfidence = +guiState.multiPoseDetection.minPoseConfidence;
