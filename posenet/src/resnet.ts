@@ -6,7 +6,8 @@ function toFloatIfInt(input: tf.Tensor3D): tf.Tensor3D {
   return tf.tidy(() => {
     if (input.dtype === 'int32')
       input = input.toFloat();
-    return input.add(tf.scalar(-122.0, 'float32'));
+    const ImageNetMean = tf.tensor([-123.15, -115.90, -103.06]);
+    return input.add(ImageNetMean);
   })
 }
 

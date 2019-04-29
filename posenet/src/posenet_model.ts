@@ -164,12 +164,13 @@ export class PoseNet {
 
     const outputs =
       tf.tidy(() => {
-        const resizedOutput = padAndResizeTo(input, [resizedHeight, resizedWidth], true);
-        padTop = resizedOutput.paddedBy[0][0];
-        padBottom = resizedOutput.paddedBy[0][1];
-        padLeft = resizedOutput.paddedBy[1][0];
-        padRight = resizedOutput.paddedBy[1][1];
-        return this.backbone.predict(resizedOutput.resized, outputStride);
+        const {resized, paddedBy} = padAndResizeTo(
+          input, [resizedHeight, resizedWidth], true);
+        padTop = paddedBy[0][0];
+        padBottom = paddedBy[0][1];
+        padLeft = paddedBy[1][0];
+        padRight = paddedBy[1][1];
+        return this.backbone.predict(resized, outputStride);
       });
     heatmapScores = outputs.heatmapScores;
     offsets = outputs.offsets;
