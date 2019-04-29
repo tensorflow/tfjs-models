@@ -243,8 +243,12 @@ function setupFPS() {
 function detectPoseInRealTime(video, net) {
   const canvas = document.getElementById('output');
   const ctx = canvas.getContext('2d');
-  // since images are being fed from a webcam
-  const flipHorizontal = true;
+
+  // since images are being fed from a webcam, we want to feed in the
+  // original image and then just flip the keypoints' x coordinates. If instead
+  // we flip the image, then correcting left-right keypoint pairs requires a
+  // permutation on all the keypoints.
+  const flipPoseHorizontal = true;
 
   canvas.width = videoWidth;
   canvas.height = videoHeight;
@@ -302,7 +306,7 @@ function detectPoseInRealTime(video, net) {
     switch (guiState.algorithm) {
       case 'single-pose':
         const pose = await guiState.net.estimateSinglePose(
-            video, resolution, flipHorizontal, outputStride, resolution);
+            video, resolution, flipPoseHorizontal, outputStride, resolution);
         poses.push(pose);
 
         minPoseConfidence = +guiState.singlePoseDetection.minPoseConfidence;
@@ -310,7 +314,7 @@ function detectPoseInRealTime(video, net) {
         break;
       case 'multi-pose':
         let all_poses = await guiState.net.estimateMultiplePoses(
-            video, resolution, flipHorizontal, outputStride,
+            video, resolution, flipPoseHorizontal, outputStride,
             guiState.multiPoseDetection.maxPoseDetections,
             guiState.multiPoseDetection.minPartConfidence,
             guiState.multiPoseDetection.nmsRadius);

@@ -104,6 +104,26 @@ export function scalePoses(poses: Pose[], scaleY: number, scaleX: number,
   return poses.map(pose => scalePose(pose, scaleY, scaleX, offsetY, offsetX));
 }
 
+export function flipPoseHorizontal(pose: Pose, imageWidth : number): Pose {
+ return {
+   score: pose.score,
+   keypoints: pose.keypoints.map(
+       ({score, part, position}) => ({
+         score,
+         part,
+         position: {x: imageWidth - 1 - position.x,
+                    y: position.y}
+       }))
+ };
+}
+
+export function flipPosesHorizontal(poses: Pose[], imageWidth: number) {
+ if (imageWidth <= 0) {
+   return poses;
+ }
+ return poses.map(pose => flipPoseHorizontal(pose, imageWidth));
+}
+
 export function getValidResolution(
     imageScaleFactor: number, inputDimension: number,
     outputStride: OutputStride): number {

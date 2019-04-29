@@ -25,7 +25,7 @@ import {decodeMultiplePoses} from './multi_pose/decode_multiple_poses';
 import ResNet from './resnet';
 import {decodeSinglePose} from './single_pose/decode_single_pose';
 import {Pose, PosenetInput} from './types';
-import {getInputTensorDimensions, scalePose, scalePoses, toTensorBuffers3D, padAndResizeTo} from './util';
+import {getInputTensorDimensions, flipPoseHorizontal, flipPosesHorizontal, scalePose, scalePoses, toTensorBuffers3D, padAndResizeTo} from './util';
 
 export type PoseNetResolution = 161|193|257|289|321|353|385|417|449|481|513;
 
@@ -34,7 +34,6 @@ export interface BackboneInterface {
   dispose(): void;
   SUPPORTED_RESOLUTION: Array<PoseNetResolution>;
 }
-
 
 export class PoseNet {
   backbone: BackboneInterface;
@@ -86,12 +85,13 @@ export class PoseNet {
 
         const outputs =
           tf.tidy(() => {
-            const resizedOutput = padAndResizeTo(input, [resizedHeight, resizedWidth], true);
-            padTop = resizedOutput.paddedBy[0][0];
-            padBottom = resizedOutput.paddedBy[0][1];
-            padLeft = resizedOutput.paddedBy[1][0];
-            padRight = resizedOutput.paddedBy[1][1];
-            return this.backbone.predict(resizedOutput.resized, outputStride);
+            const {resized, paddedBy} = padAndResizeTo(
+              input, [resizedHeight, resizedWidth]);
+            padTop = paddedBy[0][0];
+            padBottom = paddedBy[0][1];
+            padLeft = paddedBy[1][0];
+            padRight = paddedBy[1][1];
+            return this.backbone.predict(resized, outputStride);
           });
 
         heatmapScores = outputs.heatmapScores;
@@ -101,6 +101,10 @@ export class PoseNet {
         const scaleY = (height + padTop + padBottom) / (resizedHeight);
         const scaleX = (width + padLeft + padRight) / (resizedWidth);
         let scaledPose = scalePose(pose, scaleY, scaleX, -padTop, -padLeft);
+
+        if (flipHorizontal) {
+          scaledPose = flipPoseHorizontal(scaledPose, width)
+        }
 
         heatmapScores.dispose();
         offsets.dispose();
@@ -165,7 +169,7 @@ export class PoseNet {
     const outputs =
       tf.tidy(() => {
         const {resized, paddedBy} = padAndResizeTo(
-          input, [resizedHeight, resizedWidth], true);
+          input, [resizedHeight, resizedWidth]);
         padTop = paddedBy[0][0];
         padBottom = paddedBy[0][1];
         padLeft = paddedBy[1][0];
@@ -192,6 +196,9 @@ export class PoseNet {
     const scaleX = (width + padLeft + padRight) / (resizedWidth);
     let scaledPoses = scalePoses(poses, scaleY, scaleX, -padTop, -padLeft);
 
+    if (flipHorizontal) {
+      scaledPoses = flipPosesHorizontal(scaledPoses, width)
+    }
 
     heatmapScores.dispose();
     offsets.dispose();
