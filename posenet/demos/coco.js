@@ -181,7 +181,7 @@ function setupGui(net) {
     net: net,
     model: {
       architecture: 'ResNet50',
-      inputResolution: 513,
+      inputResolution: 257,
       outputStride: 32,
     },
     image: 'tennis_in_crowd.jpg',
@@ -241,7 +241,7 @@ function setupGui(net) {
      'ResNet50']).onChange(async function(architecture) {
         console.log('architecture change', architecture);
         if (architecture.includes('ResNet50')) {
-          guiState.model.inputResolution = 513;
+          guiState.model.inputResolution = 257;
           guiState.model.outputStride = 32;
           updateGuiInputResolution([257, 513]);
           updateGuiOutputStride([32]);
@@ -294,7 +294,7 @@ function setupGui(net) {
  * poses on a default image
  */
 export async function bindPage() {
-  const net = await posenet.load('ResNet50', 32);
+  const net = await posenet.load('ResNet50', 32, 257);
 
   setupGui(net);
 

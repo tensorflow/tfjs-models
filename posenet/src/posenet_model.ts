@@ -69,7 +69,7 @@ export class PoseNet {
    * positions of the keypoints are in the same scale as the original image
    */
   async estimateSinglePose(
-      input: PosenetInput, inputResolution = 513, flipHorizontal = false,
+      input: PosenetInput, inputResolution = 257, flipHorizontal = false,
       outputStride: OutputStride = 32): Promise<Pose> {
         assertValidOutputStride(outputStride);
         assertValidResolution(inputResolution, outputStride);
@@ -152,7 +152,7 @@ export class PoseNet {
    * in the same scale as the original image
    */
   async estimateMultiplePoses(
-      input: PosenetInput, inputResolution = 513, flipHorizontal = false,
+      input: PosenetInput, inputResolution = 257, flipHorizontal = false,
       outputStride: OutputStride = 32, maxDetections = 5, scoreThreshold = .5,
       nmsRadius = 20): Promise<Pose[]> {
     assertValidOutputStride(outputStride);
@@ -309,7 +309,7 @@ export async function loadResNet(outputStride: OutputStride, resolution: PoseNet
 
 export async function load(architecture: string,
    outputStride: OutputStride = 32,
-   resolution: PoseNetResolution = 513): Promise<PoseNet> {
+   resolution: PoseNetResolution = 257): Promise<PoseNet> {
   if (architecture.includes('ResNet50')) {
     return loadResNet(outputStride, resolution);
   } else {

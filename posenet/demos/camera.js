@@ -80,7 +80,7 @@ const guiState = {
   input: {
     architecture: 'ResNet50',
     outputStride: 32,
-    inputResolution: 513,
+    inputResolution: 257,
   },
   singlePoseDetection: {
     minPoseConfidence: 0.1,
@@ -370,7 +370,7 @@ export async function bindPage() {
   const net = await posenet.load('ResNet50', 32);
   guiState.architecture = 'ResNet50';
   guiState.outputStride = 32;
-  guiState.inputResolution = 513;
+  guiState.inputResolution = 257;
 
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'block';
