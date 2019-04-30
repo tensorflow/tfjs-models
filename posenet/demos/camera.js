@@ -132,6 +132,14 @@ function setupGui(cameras, net) {
        'MobileNetV1 0.75',
        'MobileNetV1 0.50',
        'ResNet50']);
+  // Input resolution:  Internally, this parameter affects the height and width of
+  // the layers in the neural network. The higher the value of the input resolution
+  // the better the accuracy but slower the speed.
+  let inputResolutionController = input.add(
+    guiState.input, 'inputResolution', [257, 513]);
+  inputResolutionController.onChange(function(inputResolution) {
+    guiState.changeToInputResolution = inputResolution;
+  });
   // Output stride:  Internally, this parameter affects the height and width of
   // the layers in the neural network. The lower the value of the output stride
   // the higher the accuracy but slower the speed, the higher the value the
@@ -140,14 +148,6 @@ function setupGui(cameras, net) {
     guiState.input, 'outputStride', [32]);
   outputStrideController.onChange(function(outputStride) {
       guiState.changeToOutputStride = outputStride;
-  });
-  // Input resolution:  Internally, this parameter affects the height and width of
-  // the layers in the neural network. The higher the value of the input resolution
-  // the better the accuracy but slower the speed.
-  let inputResolutionController = input.add(
-    guiState.input, 'inputResolution', [257, 513]);
-  inputResolutionController.onChange(function(inputResolution) {
-    guiState.changeToInputResolution = inputResolution;
   });
   input.open();
   // Pose confidence: the overall confidence in the estimation of a person's
@@ -181,8 +181,9 @@ function setupGui(cameras, net) {
   architectureController.onChange(function(architecture) {
     // if architecture is ResNet50, then show ResNet50 options
     if (architecture.includes('ResNet50')) {
-      guiState.inputResolution = 513;
-      guiState.input.inputResolution = 513;
+      inputResolutionController.remove();
+      guiState.inputResolution = 257;
+      guiState.input.inputResolution = 257;
       inputResolutionController = input.add(
         guiState.input, 'inputResolution', [257, 513]);
       inputResolutionController.onChange(function(inputResolution) {
@@ -201,6 +202,7 @@ function setupGui(cameras, net) {
       inputResolutionController.remove();
       inputResolutionController = input.add(
         guiState.input, 'inputResolution', [257, 353, 449, 513]);
+
       outputStrideController.remove();
       guiState.outputStride = 16;
       guiState.input.outputStride = 16;
@@ -209,7 +211,6 @@ function setupGui(cameras, net) {
       outputStrideController.onChange(function(outputStride) {
           guiState.changeToOutputStride = outputStride;
       });
-      guiState.input.outputStride = 16;
     }
     guiState.changeToArchitecture = architecture;
   });
@@ -257,7 +258,6 @@ function detectPoseInRealTime(video, net) {
     if (guiState.changeToArchitecture) {
       // Important to purge variables and free up GPU memory
       guiState.net.dispose();
-      // Load the ResNet50 PoseNet model
       guiState.net = await posenet.load(
         guiState.changeToArchitecture,
         guiState.outputStride,
@@ -268,12 +268,7 @@ function detectPoseInRealTime(video, net) {
 
     if (guiState.changeToOutputStride) {
       // Important to purge variables and free up GPU memory
-      console.log('change stride...',
-       guiState.architecture,
-       guiState.changeToOutputStride);
-
       guiState.net.dispose();
-      // Load the ResNet50 PoseNet model
       guiState.net = await posenet.load(
         guiState.architecture,
         guiState.changeToOutputStride);
@@ -282,8 +277,8 @@ function detectPoseInRealTime(video, net) {
     }
 
     if (guiState.changeToInputResolution) {
+      // Important to purge variables and free up GPU memory
       guiState.net.dispose();
-      // Load the ResNet50 PoseNet model
       guiState.net = await posenet.load(
        guiState.architecture,
        guiState.outputStride,
