@@ -41,7 +41,13 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
       };
     });
 
-    posenetModel.load('ResNet50', 8)
+    const config = {
+      architecture: 'ResNet50',
+      outputStride: 8,
+      inputResolution: 257
+    } as posenetModel.ModelConfig;
+
+    posenetModel.load(config)
         .then((posenetInstance: posenetModel.PoseNet) => {
           net = posenetInstance;
         })

@@ -28,6 +28,9 @@ import {Pose, PosenetInput} from './types';
 import {flipPoseHorizontal, flipPosesHorizontal, getInputTensorDimensions, padAndResizeTo, scalePose, scalePoses, toTensorBuffers3D} from './util';
 
 export type PoseNetResolution = 161|193|257|289|321|353|385|417|449|481|513;
+export type PoseNetArchitecture = 'ResNet50'|'MobileNetV1 1.01'|
+    'MobileNetV1 1.00'|'MobileNetV1 0.75'|'MobileNetV1 0.50';
+export type PoseNetDecoding = 'single-person'|'multi-person';
 
 export interface BaseModel {
   predict(input: tf.Tensor3D, outputStride: OutputStride):
@@ -307,13 +310,18 @@ export async function loadResNet(
   return new PoseNet(resnet);
 }
 
-export async function load(
-    architecture: string, outputStride: OutputStride = 32,
-    resolution: PoseNetResolution = 257): Promise<PoseNet> {
-  if (architecture.includes('ResNet50')) {
-    return loadResNet(outputStride, resolution);
-  } else {
-    const multiplier = architecture.split(' ')[1];
+export interface ModelConfig {
+  architecture: PoseNetArchitecture, outputStride: OutputStride,
+      inputResolution: PoseNetResolution
+}
+
+export async function load(config: ModelConfig): Promise<PoseNet> {
+  if (config.architecture === 'ResNet50') {
+    return loadResNet(config.outputStride, config.inputResolution);
+  } else if (config.architecture.includes('MobileNetV1')) {
+    const multiplier = config.architecture.split(' ')[1];
     return loadMobileNet(+multiplier as MobileNetMultiplier);
+  } else {
+    return null;
   }
 }

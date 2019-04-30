@@ -78,13 +78,11 @@ function drawResults(canvas, poses, minPartConfidence, minPoseConfidence) {
   poses.forEach((pose) => {
     if (pose.score >= minPoseConfidence) {
       if (guiState.showKeypoints) {
-        drawKeypoints(
-            pose.keypoints, minPartConfidence, ctx);
+        drawKeypoints(pose.keypoints, minPartConfidence, ctx);
       }
 
       if (guiState.showSkeleton) {
-        drawSkeleton(
-            pose.keypoints, minPartConfidence, ctx);
+        drawSkeleton(pose.keypoints, minPartConfidence, ctx);
       }
 
       if (guiState.showBoundingBox) {
@@ -160,8 +158,8 @@ async function testImageAndEstimatePoses(net) {
 
   // Estimates poses
   const poses = await net.estimateMultiplePoses(
-    input, guiState.model.inputResolution, false,
-    guiState.model.outputStride);
+      input, guiState.model.inputResolution, false,
+      guiState.model.outputStride);
   predictedPoses = poses;
 
   // Draw poses.
@@ -180,17 +178,19 @@ async function reloadNetTestImageAndEstimatePoses(net) {
   if (guiState.net) {
     guiState.net.dispose();
   }
-  guiState.net = await posenet.load(
-    guiState.model.architecture, guiState.model.outputStride,
-    guiState.model.inputResolution);
+  guiState.net = await posenet.load({
+    architecture: guiState.model.architecture,
+    outputStride: guiState.model.outputStride,
+    inputResolution: guiState.model.inputResolution
+  });
   testImageAndEstimatePoses(guiState.net);
 }
 
 let guiState = {
   net: null,
   model: {
-    architecture: isMobile()? 'MobileNetV1 0.50' : 'ResNet50',
-    outputStride: isMobile()? 16 : 32,
+    architecture: isMobile() ? 'MobileNetV1 0.50' : 'ResNet50',
+    outputStride: isMobile() ? 16 : 32,
     inputResolution: 257,
   },
   image: 'tennis_in_crowd.jpg',
@@ -208,9 +208,9 @@ let guiState = {
 function setupGui(net) {
   guiState.net = net;
   const gui = new dat.GUI();
-  // Input resolution:  Internally, this parameter affects the height and width of
-  // the layers in the neural network. The higher the value of the input resolution
-  // the better the accuracy but slower the speed.
+  // Input resolution:  Internally, this parameter affects the height and width
+  // of the layers in the neural network. The higher the value of the input
+  // resolution the better the accuracy but slower the speed.
   const model = gui.addFolder('Model');
   model.open();
   let inputResolutionController = null;
@@ -218,8 +218,8 @@ function setupGui(net) {
     if (inputResolutionController) {
       inputResolutionController.remove();
     }
-    inputResolutionController = model.add(
-      guiState.model, 'inputResolution', inputResolutionArray);
+    inputResolutionController =
+        model.add(guiState.model, 'inputResolution', inputResolutionArray);
     inputResolutionController.onChange(async function(inputResolution) {
       guiState.model.inputResolution = +inputResolution;
       reloadNetTestImageAndEstimatePoses(guiState.net);
@@ -234,8 +234,8 @@ function setupGui(net) {
     if (outputStrideController) {
       outputStrideController.remove();
     }
-    outputStrideController = model.add(
-      guiState.model, 'outputStride', outputStrideArray);
+    outputStrideController =
+        model.add(guiState.model, 'outputStride', outputStrideArray);
     outputStrideController.onChange((outputStride) => {
       guiState.model.outputStride = +outputStride;
       reloadNetTestImageAndEstimatePoses(guiState.net);
@@ -244,12 +244,14 @@ function setupGui(net) {
   // Architecture: there are a few PoseNet models varying in size and
   // accuracy. 1.01 is the largest, but will be the slowest. 0.50 is the
   // fastest, but least accurate.
-  model.add(guiState.model, 'architecture',
-    ['MobileNetV1 1.01',
-     'MobileNetV1 1.00',
-     'MobileNetV1 0.75',
-     'MobileNetV1 0.50',
-     'ResNet50']).onChange(async function(architecture) {
+  model
+      .add(
+          guiState.model, 'architecture',
+          [
+            'MobileNetV1 1.01', 'MobileNetV1 1.00', 'MobileNetV1 0.75',
+            'MobileNetV1 0.50', 'ResNet50'
+          ])
+      .onChange(async function(architecture) {
         console.log('architecture change', architecture);
         if (architecture.includes('ResNet50')) {
           guiState.model.inputResolution = 257;
@@ -264,7 +266,7 @@ function setupGui(net) {
         }
         guiState.model.architecture = architecture;
         reloadNetTestImageAndEstimatePoses(guiState.net);
-     });
+      });
   updateGuiInputResolution([257, 513]);
   updateGuiOutputStride([32]);
 
@@ -292,12 +294,9 @@ function setupGui(net) {
       .max(20)
       .step(1)
       .onChange(() => testImageAndEstimatePoses(guiState.net));
-  gui.add(guiState, 'showKeypoints')
-     .onChange(drawMultiplePosesResults);
-  gui.add(guiState, 'showSkeleton')
-     .onChange(drawMultiplePosesResults);
-  gui.add(guiState, 'showBoundingBox')
-     .onChange(drawMultiplePosesResults);
+  gui.add(guiState, 'showKeypoints').onChange(drawMultiplePosesResults);
+  gui.add(guiState, 'showSkeleton').onChange(drawMultiplePosesResults);
+  gui.add(guiState, 'showBoundingBox').onChange(drawMultiplePosesResults);
 }
 
 /**
@@ -305,10 +304,11 @@ function setupGui(net) {
  * poses on a default image
  */
 export async function bindPage() {
-  const net = await posenet.load(
-    guiState.model.architecture,
-    guiState.model.outputStride,
-    guiState.model.inputResolution);
+  const net = await posenet.load({
+    architecture: guiState.model.architecture,
+    outputStride: guiState.model.outputStride,
+    inputResolution: guiState.model.inputResolution
+  });
 
   setupGui(net);
 
