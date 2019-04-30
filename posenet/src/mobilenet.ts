@@ -17,7 +17,7 @@
 
 import * as tf from '@tensorflow/tfjs';
 import {ModelWeights} from './model_weights';
-import {BackboneInterface, PoseNetResolution} from './posenet_model';
+import {BaseModel} from './posenet_model';
 
 export type MobileNetMultiplier = 0.25|0.50|0.75|1.0|1.01;
 export type ConvolutionType = 'conv2d'|'separableConv';
@@ -164,15 +164,12 @@ function toOutputStridedLayers(
   });
 }
 
-export class MobileNet implements BackboneInterface {
+export class MobileNet implements BaseModel {
   private modelWeights: ModelWeights;
   private convolutionDefinitions: ConvolutionDefinition[];
 
   private PREPROCESS_DIVISOR = tf.scalar(255.0 / 2);
   private ONE = tf.scalar(1.0);
-
-  SUPPORTED_RESOLUTION: Array<PoseNetResolution> =
-      [161, 193, 257, 289, 321, 353, 385, 417, 449, 481, 513];
 
   constructor(
       modelWeights: ModelWeights,

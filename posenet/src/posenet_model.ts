@@ -19,26 +19,26 @@ import * as tf from '@tensorflow/tfjs';
 
 import {CheckpointLoader} from './checkpoint_loader';
 import {checkpoints, resnet50_checkpoints} from './checkpoints';
-import {assertValidOutputStride, MobileNet, MobileNetMultiplier, OutputStride, assertValidResolution} from './mobilenet';
+import {assertValidOutputStride, assertValidResolution, MobileNet, MobileNetMultiplier, OutputStride} from './mobilenet';
 import {ModelWeights} from './model_weights';
 import {decodeMultiplePoses} from './multi_pose/decode_multiple_poses';
 import ResNet from './resnet';
 import {decodeSinglePose} from './single_pose/decode_single_pose';
 import {Pose, PosenetInput} from './types';
-import {getInputTensorDimensions, flipPoseHorizontal, flipPosesHorizontal, scalePose, scalePoses, toTensorBuffers3D, padAndResizeTo} from './util';
+import {flipPoseHorizontal, flipPosesHorizontal, getInputTensorDimensions, padAndResizeTo, scalePose, scalePoses, toTensorBuffers3D} from './util';
 
 export type PoseNetResolution = 161|193|257|289|321|353|385|417|449|481|513;
 
-export interface BackboneInterface {
-  predict(input: tf.Tensor3D, outputStride: OutputStride): {[key: string]: tf.Tensor3D};
+export interface BaseModel {
+  predict(input: tf.Tensor3D, outputStride: OutputStride):
+      {[key: string]: tf.Tensor3D};
   dispose(): void;
-  SUPPORTED_RESOLUTION: Array<PoseNetResolution>;
 }
 
 export class PoseNet {
-  backbone: BackboneInterface;
+  backbone: BaseModel;
 
-  constructor(net: BackboneInterface) {
+  constructor(net: BaseModel) {
     this.backbone = net;
   }
 
@@ -71,45 +71,44 @@ export class PoseNet {
   async estimateSinglePose(
       input: PosenetInput, inputResolution = 257, flipHorizontal = false,
       outputStride: OutputStride = 32): Promise<Pose> {
-        assertValidOutputStride(outputStride);
-        assertValidResolution(inputResolution, outputStride);
+    assertValidOutputStride(outputStride);
+    assertValidResolution(inputResolution, outputStride);
 
-        const [height, width] = getInputTensorDimensions(input);
-        let [resizedHeight, resizedWidth] = [0, 0];
-        let [padTop, padBottom, padLeft, padRight] = [0, 0, 0, 0];
-        let heatmapScores, offsets;
+    const [height, width] = getInputTensorDimensions(input);
+    let [resizedHeight, resizedWidth] = [0, 0];
+    let [padTop, padBottom, padLeft, padRight] = [0, 0, 0, 0];
+    let heatmapScores, offsets;
 
 
-        resizedHeight = inputResolution;
-        resizedWidth = inputResolution;
+    resizedHeight = inputResolution;
+    resizedWidth = inputResolution;
 
-        const outputs =
-          tf.tidy(() => {
-            const {resized, paddedBy} = padAndResizeTo(
-              input, [resizedHeight, resizedWidth]);
-            padTop = paddedBy[0][0];
-            padBottom = paddedBy[0][1];
-            padLeft = paddedBy[1][0];
-            padRight = paddedBy[1][1];
-            return this.backbone.predict(resized, outputStride);
-          });
+    const outputs = tf.tidy(() => {
+      const {resized, paddedBy} =
+          padAndResizeTo(input, [resizedHeight, resizedWidth]);
+      padTop = paddedBy[0][0];
+      padBottom = paddedBy[0][1];
+      padLeft = paddedBy[1][0];
+      padRight = paddedBy[1][1];
+      return this.backbone.predict(resized, outputStride);
+    });
 
-        heatmapScores = outputs.heatmapScores;
-        offsets = outputs.offsets;
+    heatmapScores = outputs.heatmapScores;
+    offsets = outputs.offsets;
 
-        const pose = await decodeSinglePose(heatmapScores, offsets, outputStride);
-        const scaleY = (height + padTop + padBottom) / (resizedHeight);
-        const scaleX = (width + padLeft + padRight) / (resizedWidth);
-        let scaledPose = scalePose(pose, scaleY, scaleX, -padTop, -padLeft);
+    const pose = await decodeSinglePose(heatmapScores, offsets, outputStride);
+    const scaleY = (height + padTop + padBottom) / (resizedHeight);
+    const scaleX = (width + padLeft + padRight) / (resizedWidth);
+    let scaledPose = scalePose(pose, scaleY, scaleX, -padTop, -padLeft);
 
-        if (flipHorizontal) {
-          scaledPose = flipPoseHorizontal(scaledPose, width)
-        }
+    if (flipHorizontal) {
+      scaledPose = flipPoseHorizontal(scaledPose, width)
+    }
 
-        heatmapScores.dispose();
-        offsets.dispose();
+    heatmapScores.dispose();
+    offsets.dispose();
 
-        return scaledPose;
+    return scaledPose;
   }
 
   /**
@@ -166,16 +165,15 @@ export class PoseNet {
     resizedHeight = inputResolution;
     resizedWidth = inputResolution;
 
-    const outputs =
-      tf.tidy(() => {
-        const {resized, paddedBy} = padAndResizeTo(
-          input, [resizedHeight, resizedWidth]);
-        padTop = paddedBy[0][0];
-        padBottom = paddedBy[0][1];
-        padLeft = paddedBy[1][0];
-        padRight = paddedBy[1][1];
-        return this.backbone.predict(resized, outputStride);
-      });
+    const outputs = tf.tidy(() => {
+      const {resized, paddedBy} =
+          padAndResizeTo(input, [resizedHeight, resizedWidth]);
+      padTop = paddedBy[0][0];
+      padBottom = paddedBy[0][1];
+      padLeft = paddedBy[1][0];
+      padRight = paddedBy[1][1];
+      return this.backbone.predict(resized, outputStride);
+    });
     heatmapScores = outputs.heatmapScores;
     offsets = outputs.offsets;
     displacementFwd = outputs.displacementFwd;
@@ -188,8 +186,7 @@ export class PoseNet {
 
     const poses = await decodeMultiplePoses(
         scoresBuffer, offsetsBuffer, displacementsFwdBuffer,
-        displacementsBwdBuffer, outputStride,
-        maxDetections, scoreThreshold,
+        displacementsBwdBuffer, outputStride, maxDetections, scoreThreshold,
         nmsRadius);
 
     const scaleY = (height + padTop + padBottom) / (resizedHeight);
@@ -226,8 +223,7 @@ export class PoseNet {
  * a smaller value to increase speed at the cost of accuracy.
  *
  */
-export async function loadMobileNet(
-  multiplier: MobileNetMultiplier = 1.01):
+export async function loadMobileNet(multiplier: MobileNetMultiplier = 1.01):
     Promise<PoseNet> {
   if (tf == null) {
     throw new Error(
@@ -273,9 +269,9 @@ export const mobilenetLoader = {
  * architecture.
  *
  * @param outputStride Specifies the output stride of the ResNet model.
- * The smaller the value, the larger the output resolution, and more accurate the model
- * at the cost of speed.  Set this to a larger value to increase speed at the cost of accuracy.
- * Currently only 32 is supported for ResNet.
+ * The smaller the value, the larger the output resolution, and more accurate
+ * the model at the cost of speed.  Set this to a larger value to increase speed
+ * at the cost of accuracy. Currently only 32 is supported for ResNet.
  *
  * @param resolution Specifies the input resolution of the ResNet model.
  * The larger the value, more accurate the model at the cost of speed.
@@ -283,8 +279,9 @@ export const mobilenetLoader = {
  * Currently only input resolution 257 and 513 are supported for ResNet.
  *
  */
-export async function loadResNet(outputStride: OutputStride, resolution: PoseNetResolution):
-    Promise<PoseNet> {
+export async function loadResNet(
+    outputStride: OutputStride,
+    resolution: PoseNetResolution): Promise<PoseNet> {
   if (tf == null) {
     throw new Error(
         `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
@@ -294,22 +291,25 @@ export async function loadResNet(outputStride: OutputStride, resolution: PoseNet
 
   tf.util.assert(
       [32].indexOf(outputStride) >= 0,
-    () => `invalid stride value of ${outputStride}.  No checkpoint exists for that ` +
-        `stride. Currently must be one of [32].`);
+      () => `invalid stride value of ${
+                outputStride}.  No checkpoint exists for that ` +
+          `stride. Currently must be one of [32].`);
 
   tf.util.assert(
-    [513, 257].indexOf(resolution) >= 0,
-    () => `invalid resolution value of ${resolution}.  No checkpoint exists for that ` +
-        `resolution. Currently must be one of [513, 257].`);
+      [513, 257].indexOf(resolution) >= 0,
+      () => `invalid resolution value of ${
+                resolution}.  No checkpoint exists for that ` +
+          `resolution. Currently must be one of [513, 257].`);
 
-  const graphModel = await tf.loadGraphModel(resnet50_checkpoints[resolution][outputStride]);
+  const graphModel =
+      await tf.loadGraphModel(resnet50_checkpoints[resolution][outputStride]);
   const resnet = new ResNet(graphModel, outputStride)
   return new PoseNet(resnet);
 }
 
-export async function load(architecture: string,
-   outputStride: OutputStride = 32,
-   resolution: PoseNetResolution = 257): Promise<PoseNet> {
+export async function load(
+    architecture: string, outputStride: OutputStride = 32,
+    resolution: PoseNetResolution = 257): Promise<PoseNet> {
   if (architecture.includes('ResNet50')) {
     return loadResNet(outputStride, resolution);
   } else {
@@ -317,4 +317,3 @@ export async function load(architecture: string,
     return loadMobileNet(+multiplier as MobileNetMultiplier);
   }
 }
-
