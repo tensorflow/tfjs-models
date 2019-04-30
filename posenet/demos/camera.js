@@ -78,8 +78,8 @@ async function loadVideo() {
 const guiState = {
   algorithm: 'multi-pose',
   input: {
-    architecture: 'ResNet50',
-    outputStride: 32,
+    architecture: isMobile()? 'MobileNetV1 0.50' : 'ResNet50',
+    outputStride: isMobile()? 16 : 32,
     inputResolution: 257,
   },
   singlePoseDetection: {
@@ -145,7 +145,7 @@ function setupGui(cameras, net) {
   // the layers in the neural network. The higher the value of the input resolution
   // the better the accuracy but slower the speed.
   let inputResolutionController = input.add(
-    guiState.input, 'inputResolution', [513, 257]);
+    guiState.input, 'inputResolution', [257, 513]);
   inputResolutionController.onChange(function(inputResolution) {
     guiState.changeToInputResolution = inputResolution;
   });
@@ -184,7 +184,7 @@ function setupGui(cameras, net) {
       guiState.inputResolution = 513;
       guiState.input.inputResolution = 513;
       inputResolutionController = input.add(
-        guiState.input, 'inputResolution', [513, 257]);
+        guiState.input, 'inputResolution', [257, 513]);
       inputResolutionController.onChange(function(inputResolution) {
         guiState.changeToInputResolution = inputResolution;
       });
@@ -366,11 +366,10 @@ function detectPoseInRealTime(video, net) {
  * available camera devices, and setting off the detectPoseInRealTime function.
  */
 export async function bindPage() {
-  // Load the PoseNet model weights with MobileNetV1 075 architecture.
-  const net = await posenet.load('ResNet50', 32);
-  guiState.architecture = 'ResNet50';
-  guiState.outputStride = 32;
-  guiState.inputResolution = 257;
+  const net = await posenet.load(
+    guiState.input.architecture,
+    guiState.input.outputStride,
+    guiState.input.inputResolution);
 
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'block';

@@ -56,6 +56,18 @@ const images = [
   'two_on_bench.jpg',
 ];
 
+function isAndroid() {
+  return /Android/i.test(navigator.userAgent);
+}
+
+function isiOS() {
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+function isMobile() {
+  return isAndroid() || isiOS();
+}
+
 /**
  * Draws a pose if it passes a minimum confidence onto a canvas.
  * Only the pose's keypoints that pass a minPartConfidence are drawn.
@@ -174,28 +186,27 @@ async function reloadNetTestImageAndEstimatePoses(net) {
   testImageAndEstimatePoses(guiState.net);
 }
 
-let guiState;
+let guiState = {
+  net: null,
+  model: {
+    architecture: isMobile()? 'MobileNetV1 0.50' : 'ResNet50',
+    outputStride: isMobile()? 16 : 32,
+    inputResolution: 257,
+  },
+  image: 'tennis_in_crowd.jpg',
+  multiPoseDetection: {
+    minPartConfidence: 0.0,
+    minPoseConfidence: 0.2,
+    nmsRadius: 20.0,
+    maxDetections: 15,
+  },
+  showKeypoints: true,
+  showSkeleton: true,
+  showBoundingBox: false,
+};
 
 function setupGui(net) {
-  guiState = {
-    net: net,
-    model: {
-      architecture: 'ResNet50',
-      inputResolution: 257,
-      outputStride: 32,
-    },
-    image: 'tennis_in_crowd.jpg',
-    multiPoseDetection: {
-      minPartConfidence: 0.0,
-      minPoseConfidence: 0.2,
-      nmsRadius: 20.0,
-      maxDetections: 15,
-    },
-    showKeypoints: true,
-    showSkeleton: true,
-    showBoundingBox: false,
-  };
-
+  guiState.net = net;
   const gui = new dat.GUI();
   // Input resolution:  Internally, this parameter affects the height and width of
   // the layers in the neural network. The higher the value of the input resolution
@@ -294,7 +305,10 @@ function setupGui(net) {
  * poses on a default image
  */
 export async function bindPage() {
-  const net = await posenet.load('ResNet50', 32, 257);
+  const net = await posenet.load(
+    guiState.model.architecture,
+    guiState.model.outputStride,
+    guiState.model.inputResolution);
 
   setupGui(net);
 
