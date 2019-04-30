@@ -36,10 +36,10 @@ export interface BaseModel {
 }
 
 export class PoseNet {
-  backbone: BaseModel;
+  baseModel: BaseModel;
 
   constructor(net: BaseModel) {
-    this.backbone = net;
+    this.baseModel = net;
   }
 
   /**
@@ -90,7 +90,7 @@ export class PoseNet {
       padBottom = paddedBy[0][1];
       padLeft = paddedBy[1][0];
       padRight = paddedBy[1][1];
-      return this.backbone.predict(resized, outputStride);
+      return this.baseModel.predict(resized, outputStride);
     });
 
     heatmapScores = outputs.heatmapScores;
@@ -172,7 +172,7 @@ export class PoseNet {
       padBottom = paddedBy[0][1];
       padLeft = paddedBy[1][0];
       padRight = paddedBy[1][1];
-      return this.backbone.predict(resized, outputStride);
+      return this.baseModel.predict(resized, outputStride);
     });
     heatmapScores = outputs.heatmapScores;
     offsets = outputs.offsets;
@@ -206,7 +206,7 @@ export class PoseNet {
   }
 
   public dispose() {
-    this.backbone.dispose();
+    this.baseModel.dispose();
   }
 }
 
