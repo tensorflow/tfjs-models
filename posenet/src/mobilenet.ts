@@ -164,24 +164,25 @@ function toOutputStridedLayers(
   });
 }
 
-export class MobileNet implements BackboneInterface{
+export class MobileNet implements BackboneInterface {
   private modelWeights: ModelWeights;
   private convolutionDefinitions: ConvolutionDefinition[];
 
   private PREPROCESS_DIVISOR = tf.scalar(255.0 / 2);
   private ONE = tf.scalar(1.0);
 
-  SUPPORTED_RESOLUTION: Array<PoseNetResolution> = [161, 193, 257, 289, 321, 353, 385, 417, 449, 481, 513];
+  SUPPORTED_RESOLUTION: Array<PoseNetResolution> =
+      [161, 193, 257, 289, 321, 353, 385, 417, 449, 481, 513];
 
   constructor(
       modelWeights: ModelWeights,
       convolutionDefinitions: ConvolutionDefinition[]) {
     this.modelWeights = modelWeights;
     this.convolutionDefinitions = convolutionDefinitions;
-
   }
 
-  predict(input: tf.Tensor3D, outputStride: OutputStride): {[key: string]: tf.Tensor3D} {
+  predict(input: tf.Tensor3D, outputStride: OutputStride):
+      {[key: string]: tf.Tensor3D} {
     // Normalize the pixels [0, 255] to be between [-1, 1].
     const normalized = tf.div(input.toFloat(), this.PREPROCESS_DIVISOR);
 
@@ -192,19 +193,19 @@ export class MobileNet implements BackboneInterface{
 
     return tf.tidy(() => {
       const mobileNetOutput = layers.reduce(
-        (previousLayer: tf.Tensor3D,
-         {blockId, stride, convType, rate}: Layer) => {
-          if (convType === 'conv2d') {
-            return this.conv(previousLayer, stride, blockId);
-          } else if (convType === 'separableConv') {
-            return this.separableConv(previousLayer, stride, blockId, rate);
-          } else {
-            throw Error(`Unknown conv type of ${convType}`);
-          }
-        }, preprocessedInput);
+          (previousLayer: tf.Tensor3D,
+           {blockId, stride, convType, rate}: Layer) => {
+            if (convType === 'conv2d') {
+              return this.conv(previousLayer, stride, blockId);
+            } else if (convType === 'separableConv') {
+              return this.separableConv(previousLayer, stride, blockId, rate);
+            } else {
+              throw Error(`Unknown conv type of ${convType}`);
+            }
+          },
+          preprocessedInput);
 
-      const heatmaps =
-          this.convToOutput(mobileNetOutput, 'heatmap_2');
+      const heatmaps = this.convToOutput(mobileNetOutput, 'heatmap_2');
 
       const offsets = this.convToOutput(mobileNetOutput, 'offset_2');
 
