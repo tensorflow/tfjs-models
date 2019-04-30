@@ -70,7 +70,7 @@ export class PoseNet {
    */
   async estimateSinglePose(
       input: PosenetInput, inputResolution = 513, flipHorizontal = false,
-      outputStride: OutputStride = 16): Promise<Pose> {
+      outputStride: OutputStride = 32): Promise<Pose> {
         assertValidOutputStride(outputStride);
         assertValidResolution(inputResolution, outputStride);
 
@@ -153,7 +153,7 @@ export class PoseNet {
    */
   async estimateMultiplePoses(
       input: PosenetInput, inputResolution = 513, flipHorizontal = false,
-      outputStride: OutputStride = 16, maxDetections = 5, scoreThreshold = .5,
+      outputStride: OutputStride = 32, maxDetections = 5, scoreThreshold = .5,
       nmsRadius = 20): Promise<Pose[]> {
     assertValidOutputStride(outputStride);
     assertValidResolution(inputResolution, outputStride);
