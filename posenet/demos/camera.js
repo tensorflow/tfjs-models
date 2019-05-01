@@ -330,7 +330,6 @@ function detectPoseInRealTime(video, net) {
       guiState.changeToInputResolution = null;
     }
 
-
     // Begin monitoring code for frames per second
     stats.begin();
 
@@ -343,8 +342,7 @@ function detectPoseInRealTime(video, net) {
           flipHorizontal: flipPoseHorizontal,
           decodingMethod: 'single-person'
         });
-        poses.concat(pose);
-
+        poses = poses.concat(pose);
         minPoseConfidence = +guiState.singlePoseDetection.minPoseConfidence;
         minPartConfidence = +guiState.singlePoseDetection.minPartConfidence;
         break;

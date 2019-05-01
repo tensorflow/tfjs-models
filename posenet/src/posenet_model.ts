@@ -183,7 +183,7 @@ export class PoseNet {
  * a smaller value to increase speed at the cost of accuracy.
  *
  */
-export async function loadMobileNet(config: ModelConfig): Promise<PoseNet> {
+async function loadMobileNet(config: ModelConfig): Promise<PoseNet> {
   const multiplier = config.multiplier;
   if (tf == null) {
     throw new Error(
@@ -241,7 +241,7 @@ export const mobilenetLoader = {
  * Currently only input resolution 257 and 513 are supported for ResNet.
  *
  */
-export async function loadResNet(config: ModelConfig): Promise<PoseNet> {
+async function loadResNet(config: ModelConfig): Promise<PoseNet> {
   const inputResolution = config.inputResolution;
   const outputStride = config.outputStride;
   if (tf == null) {
@@ -274,14 +274,7 @@ export interface ModelConfig {
       inputResolution: PoseNetResolution, multiplier?: MobileNetMultiplier
 }
 
-export const DEFAULT_RESNET_CONFIG = {
-  architecture: 'ResNet50',
-  outputStride: 32,
-  inputResolution: 257,
-  multiplier: 1.0  // multiplier is not used by ResNet
-} as ModelConfig;
-
-export const DEFAULT_MOBILENET_V1_CONFIG = {
+const DEFAULT_MOBILENET_V1_CONFIG = {
   architecture: 'MobileNetV1',
   outputStride: 16,
   inputResolution: 513,
