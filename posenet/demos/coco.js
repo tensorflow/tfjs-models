@@ -157,9 +157,7 @@ async function testImageAndEstimatePoses(net) {
   const input = tf.browser.fromPixels(image);
 
   // Estimates poses
-  const poses = await net.estimateMultiplePoses(
-      input, guiState.model.inputResolution, false,
-      guiState.model.outputStride);
+  const poses = await net.estimateMultiplePoses(input, false);
   predictedPoses = poses;
 
   // Draw poses.

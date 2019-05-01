@@ -90,9 +90,10 @@ export class PoseNet {
    * keypoints indexed by part id, each with a score and position.  The
    * positions of the keypoints are in the same scale as the original image
    */
-  async estimateSinglePose(
-      input: PosenetInput, inputResolution = 257, flipHorizontal = false,
-      outputStride: OutputStride = 32): Promise<Pose> {
+  async estimateSinglePose(input: PosenetInput, flipHorizontal = false):
+      Promise<Pose> {
+    const outputStride = this.baseModel.outputStride;
+    const inputResolution = this.baseModel.inputResolution;
     assertValidOutputStride(outputStride);
     assertValidResolution(inputResolution, outputStride);
 
@@ -173,11 +174,12 @@ export class PoseNet {
    * in the same scale as the original image
    */
   async estimateMultiplePoses(
-      input: PosenetInput, inputResolution = 257, flipHorizontal = false,
-      outputStride: OutputStride = 32, maxDetections = 5, scoreThreshold = .5,
-      nmsRadius = 20): Promise<Pose[]> {
+      input: PosenetInput, flipHorizontal = false, maxDetections = 5,
+      scoreThreshold = .5, nmsRadius = 20): Promise<Pose[]> {
+    const outputStride = this.baseModel.outputStride;
+    const inputResolution = this.baseModel.inputResolution;
     assertValidOutputStride(outputStride);
-    assertValidResolution(inputResolution, outputStride);
+    assertValidResolution(this.baseModel.inputResolution, outputStride);
 
     const [height, width] = getInputTensorDimensions(input);
     let [resizedHeight, resizedWidth] = [0, 0];
