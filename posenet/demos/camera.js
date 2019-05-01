@@ -78,9 +78,10 @@ async function loadVideo() {
 const guiState = {
   algorithm: 'multi-pose',
   input: {
-    architecture: isMobile() ? 'MobileNetV1 0.50' : 'ResNet50',
+    architecture: isMobile() ? 'MobileNetV1' : 'ResNet50',
     outputStride: isMobile() ? 16 : 32,
     inputResolution: 257,
+    multiplier: isMobile() ? 0.50 : 1.0,
   },
   singlePoseDetection: {
     minPoseConfidence: 0.1,
@@ -125,26 +126,74 @@ function setupGui(cameras, net) {
   // Architecture: there are a few PoseNet models varying in size and
   // accuracy. 1.01 is the largest, but will be the slowest. 0.50 is the
   // fastest, but least accurate.
-  const architectureController = input.add(guiState.input, 'architecture', [
-    'MobileNetV1 1.01', 'MobileNetV1 1.00', 'MobileNetV1 0.75',
-    'MobileNetV1 0.50', 'ResNet50'
-  ]);
+  const architectureController =
+      input.add(guiState.input, 'architecture', ['MobileNetV1', 'ResNet50']);
   // Input resolution:  Internally, this parameter affects the height and width
   // of the layers in the neural network. The higher the value of the input
   // resolution the better the accuracy but slower the speed.
-  let inputResolutionController =
-      input.add(guiState.input, 'inputResolution', [257, 513]);
-  inputResolutionController.onChange(function(inputResolution) {
-    guiState.changeToInputResolution = inputResolution;
-  });
+  let inputResolutionController = null;
+  function updateGuiInputResolution(
+      inputResolution,
+      inputResolutionArray,
+  ) {
+    if (inputResolutionController) {
+      inputResolutionController.remove();
+    }
+    guiState.inputResolution = inputResolution;
+    guiState.input.inputResolution = inputResolution;
+    inputResolutionController =
+        input.add(guiState.input, 'inputResolution', inputResolutionArray);
+    inputResolutionController.onChange(function(inputResolution) {
+      guiState.changeToInputResolution = inputResolution;
+    });
+  }
+
+
   // Output stride:  Internally, this parameter affects the height and width of
   // the layers in the neural network. The lower the value of the output stride
   // the higher the accuracy but slower the speed, the higher the value the
   // faster the speed but lower the accuracy.
-  let outputStrideController = input.add(guiState.input, 'outputStride', [32]);
-  outputStrideController.onChange(function(outputStride) {
-    guiState.changeToOutputStride = outputStride;
-  });
+  let outputStrideController = null;
+  function updateGuiOutputStride(outputStride, outputStrideArray) {
+    if (outputStrideController) {
+      outputStrideController.remove();
+    }
+    guiState.outputStride = outputStride;
+    guiState.input.outputStride = outputStride;
+    outputStrideController =
+        input.add(guiState.input, 'outputStride', outputStrideArray);
+    outputStrideController.onChange(function(outputStride) {
+      guiState.changeToOutputStride = outputStride;
+    });
+  }
+
+  // Multiplier: this parameter affects the number of feature map channels in
+  // the MobileNet. The higher the value, the higher the accuracy but slower the
+  // speed, the lower the value the faster the speed but lower the accuracy.
+  let multiplierController = null;
+  function updateGuiMultiplier(multiplier, multiplierArray) {
+    if (multiplierController) {
+      multiplierController.remove();
+    }
+    guiState.multiplier = multiplier;
+    guiState.input.multiplier = multiplier;
+    multiplierController =
+        input.add(guiState.input, 'multiplier', multiplierArray);
+    multiplierController.onChange(function(multiplier) {
+      guiState.changeToMultiplier = multiplier;
+    });
+  }
+
+  if (isMobile()) {
+    updateGuiInputResolution(513, [257, 353, 449, 513]);
+    updateGuiOutputStride(16, [8, 16]);
+    updateGuiMultiplier(0.50, [0.50, 0.75, 1.0, 1.01])
+  } else {
+    updateGuiInputResolution(257, [257, 513]);
+    updateGuiOutputStride(32, [32]);
+    updateGuiMultiplier(1.0, [1.0]);
+  }
+
   input.open();
   // Pose confidence: the overall confidence in the estimation of a person's
   // pose (i.e. a person detected in a frame)
@@ -177,35 +226,13 @@ function setupGui(cameras, net) {
   architectureController.onChange(function(architecture) {
     // if architecture is ResNet50, then show ResNet50 options
     if (architecture.includes('ResNet50')) {
-      inputResolutionController.remove();
-      guiState.inputResolution = 257;
-      guiState.input.inputResolution = 257;
-      inputResolutionController =
-          input.add(guiState.input, 'inputResolution', [257, 513]);
-      inputResolutionController.onChange(function(inputResolution) {
-        guiState.changeToInputResolution = inputResolution;
-      });
-
-      outputStrideController.remove();
-      guiState.outputStride = 32;
-      guiState.input.outputStride = 32;
-      outputStrideController = input.add(guiState.input, 'outputStride', [32]);
-      outputStrideController.onChange(function(outputStride) {
-        guiState.changeToOutputStride = outputStride;
-      });
+      updateGuiInputResolution(257, [257, 513]);
+      updateGuiOutputStride(32, [32]);
+      updateGuiMultiplier(1.0, [1.0]);
     } else {  // if architecture is MobileNet, then show MobileNet options
-      inputResolutionController.remove();
-      inputResolutionController =
-          input.add(guiState.input, 'inputResolution', [257, 353, 449, 513]);
-
-      outputStrideController.remove();
-      guiState.outputStride = 16;
-      guiState.input.outputStride = 16;
-      outputStrideController =
-          input.add(guiState.input, 'outputStride', [8, 16]);
-      outputStrideController.onChange(function(outputStride) {
-        guiState.changeToOutputStride = outputStride;
-      });
+      updateGuiInputResolution(513, [257, 353, 449, 513]);
+      updateGuiOutputStride(16, [8, 16]);
+      updateGuiMultiplier(0.50, [0.50, 0.75, 1.0, 1.01])
     }
     guiState.changeToArchitecture = architecture;
   });
@@ -256,10 +283,23 @@ function detectPoseInRealTime(video, net) {
       guiState.net = await posenet.load({
         architecture: guiState.changeToArchitecture,
         outputStride: guiState.outputStride,
-        inputResolution: guiState.inputResolution
+        inputResolution: guiState.inputResolution,
+        multiplier: guiState.multiplier,
       });
       guiState.architecture = guiState.changeToArchitecture;
       guiState.changeToArchitecture = null;
+    }
+
+    if (guiState.changeToMultiplier) {
+      guiState.net.dispose();
+      guiState.net = await posenet.load({
+        architecture: guiState.architecture,
+        outputStride: guiState.outputStride,
+        inputResolution: guiState.inputResolution,
+        multiplier: +guiState.changeToMultiplier
+      });
+      guiState.multiplier = +guiState.changeToMultiplier;
+      guiState.changeToMultiplier = null;
     }
 
     if (guiState.changeToOutputStride) {
@@ -267,9 +307,11 @@ function detectPoseInRealTime(video, net) {
       guiState.net.dispose();
       guiState.net = await posenet.load({
         architecture: guiState.architecture,
-        outputStride: guiState.changeToOutputStride
+        outputStride: +guiState.changeToOutputStride,
+        inputResolution: guiState.inputResolution,
+        multiplier: guiState.multiplier
       });
-      guiState.outputStride = guiState.changeToOutputStride;
+      guiState.outputStride = +guiState.changeToOutputStride;
       guiState.changeToOutputStride = null;
     }
 
@@ -279,11 +321,13 @@ function detectPoseInRealTime(video, net) {
       guiState.net = await posenet.load({
         architecture: guiState.architecture,
         outputStride: guiState.outputStride,
-        inputResolution: +guiState.changeToInputResolution
+        inputResolution: +guiState.changeToInputResolution,
+        multiplier: guiState.multiplier
       });
-      guiState.inputResolution = guiState.changeToInputResolution;
+      guiState.inputResolution = +guiState.changeToInputResolution;
       guiState.changeToInputResolution = null;
     }
+
 
     // Begin monitoring code for frames per second
     stats.begin();
@@ -362,7 +406,8 @@ export async function bindPage() {
   const net = await posenet.load({
     architecture: guiState.input.architecture,
     outputStride: guiState.input.outputStride,
-    inputResolution: guiState.input.inputResolution
+    inputResolution: guiState.input.inputResolution,
+    multiplier: guiState.input.multiplier
   });
 
   document.getElementById('loading').style.display = 'none';

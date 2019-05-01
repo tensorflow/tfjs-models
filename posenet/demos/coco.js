@@ -181,7 +181,8 @@ async function reloadNetTestImageAndEstimatePoses(net) {
   guiState.net = await posenet.load({
     architecture: guiState.model.architecture,
     outputStride: guiState.model.outputStride,
-    inputResolution: guiState.model.inputResolution
+    inputResolution: guiState.model.inputResolution,
+    multiplier: guiState.model.multiplier
   });
   testImageAndEstimatePoses(guiState.net);
 }
@@ -192,6 +193,7 @@ let guiState = {
     architecture: isMobile() ? 'MobileNetV1 0.50' : 'ResNet50',
     outputStride: isMobile() ? 16 : 32,
     inputResolution: 257,
+    multiplier: isMobile() ? 0.5 : 1.0
   },
   image: 'tennis_in_crowd.jpg',
   multiPoseDetection: {
@@ -241,16 +243,27 @@ function setupGui(net) {
       reloadNetTestImageAndEstimatePoses(guiState.net);
     });
   }
+
+  // Multiplier: this parameter affects the number of feature map channels in
+  // the MobileNet. The higher the value, the higher the accuracy but slower the
+  // speed, the lower the value the faster the speed but lower the accuracy.
+  let multiplierController = null;
+  function updateGuiMultiplier(multiplierArray) {
+    if (multiplierController) {
+      multiplierController.remove();
+    }
+    multiplierController =
+        model.add(guiState.model, 'multiplier', multiplierArray);
+    multiplierController.onChange((multiplier) => {
+      guiState.model.multiplier = +multiplier;
+      reloadNetTestImageAndEstimatePoses(guiState.net);
+    });
+  }
+
   // Architecture: there are a few PoseNet models varying in size and
   // accuracy. 1.01 is the largest, but will be the slowest. 0.50 is the
   // fastest, but least accurate.
-  model
-      .add(
-          guiState.model, 'architecture',
-          [
-            'MobileNetV1 1.01', 'MobileNetV1 1.00', 'MobileNetV1 0.75',
-            'MobileNetV1 0.50', 'ResNet50'
-          ])
+  model.add(guiState.model, 'architecture', ['MobileNetV1', 'ResNet50'])
       .onChange(async function(architecture) {
         console.log('architecture change', architecture);
         if (architecture.includes('ResNet50')) {
@@ -258,17 +271,28 @@ function setupGui(net) {
           guiState.model.outputStride = 32;
           updateGuiInputResolution([257, 513]);
           updateGuiOutputStride([32]);
+          updateGuiMultiplier([1.0]);
         } else {
           guiState.model.inputResolution = 513;
           guiState.model.outputStride = 16;
           updateGuiInputResolution([257, 353, 449, 513]);
           updateGuiOutputStride([8, 16]);
+          updateGuiMultiplier([0.5, 0.75, 1.0]);
         }
         guiState.model.architecture = architecture;
         reloadNetTestImageAndEstimatePoses(guiState.net);
       });
-  updateGuiInputResolution([257, 513]);
-  updateGuiOutputStride([32]);
+
+  if (isMobile()) {
+    updateGuiInputResolution([257, 513]);
+    updateGuiOutputStride([8, 16]);
+    updateGuiMultiplier([0.5, 0.75, 1.0]);
+  } else {
+    updateGuiInputResolution([257, 513]);
+    updateGuiOutputStride([32]);
+    updateGuiMultiplier([1.0]);
+  }
+
 
   gui.add(guiState, 'image', images)
       .onChange(() => testImageAndEstimatePoses(guiState.net));
@@ -307,7 +331,8 @@ export async function bindPage() {
   const net = await posenet.load({
     architecture: guiState.model.architecture,
     outputStride: guiState.model.outputStride,
-    inputResolution: guiState.model.inputResolution
+    inputResolution: guiState.model.inputResolution,
+    multiplier: guiState.model.multiplier
   });
 
   setupGui(net);

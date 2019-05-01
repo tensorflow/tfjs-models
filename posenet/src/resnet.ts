@@ -1,7 +1,7 @@
 import * as tf from '@tensorflow/tfjs';
 
 import {OutputStride} from '.';
-import {BaseModel} from './posenet_model';
+import {BaseModel, PoseNetResolution} from './posenet_model';
 
 function toFloatIfInt(input: tf.Tensor3D): tf.Tensor3D {
   return tf.tidy(() => {
@@ -13,19 +13,27 @@ function toFloatIfInt(input: tf.Tensor3D): tf.Tensor3D {
 
 export default class ResNet implements BaseModel {
   readonly model: tf.GraphModel
-  readonly outputStride: number
-  readonly inputDimensions: [number, number]
 
-  constructor(model: tf.GraphModel, outputStride: number) {
+  readonly outputStride: OutputStride
+  readonly inputResolution: PoseNetResolution;
+
+  constructor(
+      model: tf.GraphModel, inputResolution: PoseNetResolution,
+      outputStride: OutputStride) {
     this.model = model;
-    this.outputStride = outputStride;
     const inputShape =
         this.model.inputs[0].shape as [number, number, number, number];
-    this.inputDimensions = [inputShape[1], inputShape[2]];
+    [inputShape[1], inputShape[2]];
+    tf.util.assert(
+        (inputShape[1] === inputResolution) &&
+            (inputShape[2] === inputResolution),
+        () => `Input shape [${inputShape[1]}, ${inputShape[2]}] ` +
+            `must both be equal to ${inputResolution}`);
+    this.inputResolution = inputResolution;
+    this.outputStride = outputStride;
   }
 
-  predict(input: tf.Tensor3D, outputStride: OutputStride = 32):
-      {[key: string]: tf.Tensor3D} {
+  predict(input: tf.Tensor3D): {[key: string]: tf.Tensor3D} {
     return tf.tidy(() => {
       const asFloat = toFloatIfInt(input);
       const asBatch = asFloat.expandDims(0);

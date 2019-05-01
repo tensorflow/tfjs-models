@@ -17,7 +17,7 @@
 
 import * as tf from '@tensorflow/tfjs';
 import {ModelWeights} from './model_weights';
-import {BaseModel} from './posenet_model';
+import {BaseModel, PoseNetResolution} from './posenet_model';
 
 export type MobileNetMultiplier = 0.25|0.50|0.75|1.0|1.01;
 export type ConvolutionType = 'conv2d'|'separableConv';
@@ -171,22 +171,27 @@ export class MobileNet implements BaseModel {
   private PREPROCESS_DIVISOR = tf.scalar(255.0 / 2);
   private ONE = tf.scalar(1.0);
 
+  readonly inputResolution: PoseNetResolution;
+  readonly outputStride: OutputStride;
+
   constructor(
       modelWeights: ModelWeights,
-      convolutionDefinitions: ConvolutionDefinition[]) {
+      convolutionDefinitions: ConvolutionDefinition[],
+      inputResolution: PoseNetResolution, outputStride: OutputStride) {
     this.modelWeights = modelWeights;
     this.convolutionDefinitions = convolutionDefinitions;
+    this.inputResolution = inputResolution;
+    this.outputStride = outputStride;
   }
 
-  predict(input: tf.Tensor3D, outputStride: OutputStride):
-      {[key: string]: tf.Tensor3D} {
+  predict(input: tf.Tensor3D): {[key: string]: tf.Tensor3D} {
     // Normalize the pixels [0, 255] to be between [-1, 1].
     const normalized = tf.div(input.toFloat(), this.PREPROCESS_DIVISOR);
 
     const preprocessedInput = tf.sub(normalized, this.ONE) as tf.Tensor3D;
 
     const layers =
-        toOutputStridedLayers(this.convolutionDefinitions, outputStride);
+        toOutputStridedLayers(this.convolutionDefinitions, this.outputStride);
 
     return tf.tidy(() => {
       const mobileNetOutput = layers.reduce(

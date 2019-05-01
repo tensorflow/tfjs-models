@@ -28,14 +28,33 @@ import {Pose, PosenetInput} from './types';
 import {flipPoseHorizontal, flipPosesHorizontal, getInputTensorDimensions, padAndResizeTo, scalePose, scalePoses, toTensorBuffers3D} from './util';
 
 export type PoseNetResolution = 161|193|257|289|321|353|385|417|449|481|513;
-export type PoseNetArchitecture = 'ResNet50'|'MobileNetV1 1.01'|
-    'MobileNetV1 1.00'|'MobileNetV1 0.75'|'MobileNetV1 0.50';
-export type PoseNetDecoding = 'single-person'|'multi-person';
+export type PoseNetArchitecture = 'ResNet50'|'MobileNetV1';
+export type PoseNetDecodingMethod = 'single-person'|'multi-person';
 
 export interface BaseModel {
-  predict(input: tf.Tensor3D, outputStride: OutputStride):
-      {[key: string]: tf.Tensor3D};
+  readonly inputResolution: PoseNetResolution;
+  readonly outputStride: OutputStride;
+
+  predict(input: tf.Tensor3D): {[key: string]: tf.Tensor3D};
   dispose(): void;
+}
+
+export interface InferenceConfig {
+  flipHorizontal: boolean, decodingMethod: PoseNetDecodingMethod,
+      maxDetections?: Number, scoreThreshold?: Number, nmsRadius?: Number
+}
+
+export const SINGLE_PERSON_INFERENCE_CONFIG = {
+  flipHorizontal: false,
+  decodingMethod: 'single-person',
+}
+
+export const MULTI_PERSON_INFERENCE_CONFIG = {
+  flipHorizontal: false,
+  decodingMethod: 'multi-person',
+  maxDetections: 5,
+  scoreThreshold: 0.5,
+  nmsRadius: 20
 }
 
 export class PoseNet {
@@ -93,7 +112,7 @@ export class PoseNet {
       padBottom = paddedBy[0][1];
       padLeft = paddedBy[1][0];
       padRight = paddedBy[1][1];
-      return this.baseModel.predict(resized, outputStride);
+      return this.baseModel.predict(resized);
     });
 
     heatmapScores = outputs.heatmapScores;
@@ -175,7 +194,7 @@ export class PoseNet {
       padBottom = paddedBy[0][1];
       padLeft = paddedBy[1][0];
       padRight = paddedBy[1][1];
-      return this.baseModel.predict(resized, outputStride);
+      return this.baseModel.predict(resized);
     });
     heatmapScores = outputs.heatmapScores;
     offsets = outputs.offsets;
@@ -218,16 +237,15 @@ export class PoseNet {
  * architecture specified by the multiplier.
  *
  * @param multiplier An optional number with values: 1.01, 1.0, 0.75, or
- * 0.50. Defaults to 1.01. It is the float multiplier for the depth (number
- of
+ * 0.50. Defaults to 1.01. It is the float multiplier for the depth (number of
  * channels) for all convolution ops. The value corresponds to a MobileNet
  * architecture and checkpoint.  The larger the value, the larger the size of
  * the layers, and more accurate the model at the cost of speed.  Set this to
  * a smaller value to increase speed at the cost of accuracy.
  *
  */
-export async function loadMobileNet(multiplier: MobileNetMultiplier = 1.01):
-    Promise<PoseNet> {
+export async function loadMobileNet(config: ModelConfig): Promise<PoseNet> {
+  const multiplier = config.multiplier;
   if (tf == null) {
     throw new Error(
         `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
@@ -247,14 +265,14 @@ export async function loadMobileNet(multiplier: MobileNetMultiplier = 1.01):
                 multiplier}.  No checkpoint exists for that ` +
           `multiplier. Must be one of ${possibleMultipliers.join(',')}.`);
 
-  const mobileNet: MobileNet = await mobilenetLoader.load(multiplier);
+  const mobileNet: MobileNet = await mobilenetLoader.load(config);
 
   return new PoseNet(mobileNet);
 }
 
 export const mobilenetLoader = {
-  load: async(multiplier: MobileNetMultiplier): Promise<MobileNet> => {
-    const checkpoint = checkpoints[multiplier];
+  load: async(config: ModelConfig): Promise<MobileNet> => {
+    const checkpoint = checkpoints[config.multiplier];
 
     const checkpointLoader = new CheckpointLoader(checkpoint.url);
 
@@ -262,7 +280,9 @@ export const mobilenetLoader = {
 
     const weights = new ModelWeights(variables);
 
-    return new MobileNet(weights, checkpoint.architecture);
+    return new MobileNet(
+        weights, checkpoint.architecture, config.inputResolution,
+        config.outputStride);
   },
 
 };
@@ -282,9 +302,9 @@ export const mobilenetLoader = {
  * Currently only input resolution 257 and 513 are supported for ResNet.
  *
  */
-export async function loadResNet(
-    outputStride: OutputStride,
-    resolution: PoseNetResolution): Promise<PoseNet> {
+export async function loadResNet(config: ModelConfig): Promise<PoseNet> {
+  const inputResolution = config.inputResolution;
+  const outputStride = config.outputStride;
   if (tf == null) {
     throw new Error(
         `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
@@ -299,28 +319,42 @@ export async function loadResNet(
           `stride. Currently must be one of [32].`);
 
   tf.util.assert(
-      [513, 257].indexOf(resolution) >= 0,
+      [513, 257].indexOf(inputResolution) >= 0,
       () => `invalid resolution value of ${
-                resolution}.  No checkpoint exists for that ` +
+                inputResolution}.  No checkpoint exists for that ` +
           `resolution. Currently must be one of [513, 257].`);
 
-  const graphModel =
-      await tf.loadGraphModel(resnet50_checkpoints[resolution][outputStride]);
-  const resnet = new ResNet(graphModel, outputStride)
+  const graphModel = await tf.loadGraphModel(
+      resnet50_checkpoints[inputResolution][outputStride]);
+  const resnet = new ResNet(graphModel, inputResolution, outputStride);
   return new PoseNet(resnet);
 }
 
 export interface ModelConfig {
   architecture: PoseNetArchitecture, outputStride: OutputStride,
-      inputResolution: PoseNetResolution
+      inputResolution: PoseNetResolution, multiplier?: MobileNetMultiplier
 }
 
-export async function load(config: ModelConfig): Promise<PoseNet> {
+export const DEFAULT_RESNET_CONFIG = {
+  architecture: 'ResNet50',
+  outputStride: 32,
+  inputResolution: 257,
+  multiplier: 1.0  // multiplier is not used by ResNet
+} as ModelConfig;
+
+export const DEFAULT_MOBILENET_V1_CONFIG = {
+  architecture: 'MobileNetV1',
+  outputStride: 16,
+  inputResolution: 513,
+  multiplier: 0.75
+} as ModelConfig;
+
+export async function load(config: ModelConfig = DEFAULT_MOBILENET_V1_CONFIG):
+    Promise<PoseNet> {
   if (config.architecture === 'ResNet50') {
-    return loadResNet(config.outputStride, config.inputResolution);
-  } else if (config.architecture.includes('MobileNetV1')) {
-    const multiplier = config.architecture.split(' ')[1];
-    return loadMobileNet(+multiplier as MobileNetMultiplier);
+    return loadResNet(config);
+  } else if (config.architecture === 'MobileNetV1') {
+    return loadMobileNet(config);
   } else {
     return null;
   }
