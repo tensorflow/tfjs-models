@@ -60,7 +60,8 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
 
     const beforeTensors = tf.memory().numTensors;
 
-    net.estimateSinglePose(input)
+    net.estimatePoses(
+           input, {flipHorizontal: false, decodingMethod: 'single-person'})
         .then(() => {
           expect(tf.memory().numTensors).toEqual(beforeTensors);
         })
@@ -72,7 +73,13 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
     const input = tf.zeros([513, 513, 3]) as tf.Tensor3D;
 
     const beforeTensors = tf.memory().numTensors;
-    net.estimateMultiplePoses(input)
+    net.estimatePoses(input, {
+         flipHorizontal: false,
+         decodingMethod: 'multi-person',
+         maxDetections: 5,
+         scoreThreshold: 0.5,
+         nmsRadius: 20
+       })
         .then(() => {
           expect(tf.memory().numTensors).toEqual(beforeTensors);
         })

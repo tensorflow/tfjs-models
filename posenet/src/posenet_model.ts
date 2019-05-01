@@ -25,7 +25,7 @@ import {decodeMultiplePoses} from './multi_pose/decode_multiple_poses';
 import ResNet from './resnet';
 import {decodeSinglePose} from './single_pose/decode_single_pose';
 import {Pose, PosenetInput} from './types';
-import {flipPoseHorizontal, flipPosesHorizontal, getInputTensorDimensions, padAndResizeTo, scalePose, scalePoses, toTensorBuffers3D} from './util';
+import {flipPosesHorizontal, getInputTensorDimensions, padAndResizeTo, scalePoses, toTensorBuffers3D} from './util';
 
 export type PoseNetResolution = 161|193|257|289|321|353|385|417|449|481|513;
 export type PoseNetArchitecture = 'ResNet50'|'MobileNetV1';
@@ -41,13 +41,13 @@ export interface BaseModel {
 
 export interface InferenceConfig {
   flipHorizontal: boolean, decodingMethod: PoseNetDecodingMethod,
-      maxDetections?: Number, scoreThreshold?: Number, nmsRadius?: Number
+      maxDetections?: number, scoreThreshold?: number, nmsRadius?: number
 }
 
 export const SINGLE_PERSON_INFERENCE_CONFIG = {
   flipHorizontal: false,
   decodingMethod: 'single-person',
-}
+} as InferenceConfig;
 
 export const MULTI_PERSON_INFERENCE_CONFIG = {
   flipHorizontal: false,
@@ -55,83 +55,13 @@ export const MULTI_PERSON_INFERENCE_CONFIG = {
   maxDetections: 5,
   scoreThreshold: 0.5,
   nmsRadius: 20
-}
+} as InferenceConfig;
 
 export class PoseNet {
   baseModel: BaseModel;
 
   constructor(net: BaseModel) {
     this.baseModel = net;
-  }
-
-  /**
-   * Infer through PoseNet, and estimates a single pose using the outputs. This
-   * does standard ImageNet pre-processing before inferring through the model.
-   * The image should pixels should have values [0-255].
-   * This method returns a single pose.
-   *
-   * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
-   * The input image to feed through the network.
-   *
-   * @param imageScaleFactor A number between 0.2 and 1. Defaults to 0.50. What
-   * to scale the image by before feeding it through the network.  Set this
-   * number lower to scale down the image and increase the speed when feeding
-   * through the network at the cost of accuracy.
-   *
-   * @param flipHorizontal.  Defaults to false.  If the poses should be
-   * flipped/mirrored  horizontally.  This should be set to true for videos
-   * where the video is by default flipped horizontally (i.e. a webcam), and you
-   * want the poses to be returned in the proper orientation.
-   *
-   * @param outputStride the desired stride for the outputs.  Must be 32, 16,
-   * or 8. Defaults to 16. The output width and height will be will be
-   * (inputDimension - 1)/outputStride + 1
-   * @return A single pose with a confidence score, which contains an array of
-   * keypoints indexed by part id, each with a score and position.  The
-   * positions of the keypoints are in the same scale as the original image
-   */
-  async estimateSinglePose(input: PosenetInput, flipHorizontal = false):
-      Promise<Pose> {
-    const outputStride = this.baseModel.outputStride;
-    const inputResolution = this.baseModel.inputResolution;
-    assertValidOutputStride(outputStride);
-    assertValidResolution(inputResolution, outputStride);
-
-    const [height, width] = getInputTensorDimensions(input);
-    let [resizedHeight, resizedWidth] = [0, 0];
-    let [padTop, padBottom, padLeft, padRight] = [0, 0, 0, 0];
-    let heatmapScores, offsets;
-
-
-    resizedHeight = inputResolution;
-    resizedWidth = inputResolution;
-
-    const outputs = tf.tidy(() => {
-      const {resized, paddedBy} =
-          padAndResizeTo(input, [resizedHeight, resizedWidth]);
-      padTop = paddedBy[0][0];
-      padBottom = paddedBy[0][1];
-      padLeft = paddedBy[1][0];
-      padRight = paddedBy[1][1];
-      return this.baseModel.predict(resized);
-    });
-
-    heatmapScores = outputs.heatmapScores;
-    offsets = outputs.offsets;
-
-    const pose = await decodeSinglePose(heatmapScores, offsets, outputStride);
-    const scaleY = (height + padTop + padBottom) / (resizedHeight);
-    const scaleX = (width + padLeft + padRight) / (resizedWidth);
-    let scaledPose = scalePose(pose, scaleY, scaleX, -padTop, -padLeft);
-
-    if (flipHorizontal) {
-      scaledPose = flipPoseHorizontal(scaledPose, width)
-    }
-
-    heatmapScores.dispose();
-    offsets.dispose();
-
-    return scaledPose;
   }
 
   /**
@@ -173,9 +103,10 @@ export class PoseNet {
    * the corresponding keypoint scores.  The positions of the keypoints are
    * in the same scale as the original image
    */
-  async estimateMultiplePoses(
-      input: PosenetInput, flipHorizontal = false, maxDetections = 5,
-      scoreThreshold = .5, nmsRadius = 20): Promise<Pose[]> {
+  async estimatePoses(
+      input: PosenetInput,
+      config: InferenceConfig = MULTI_PERSON_INFERENCE_CONFIG):
+      Promise<Pose[]> {
     const outputStride = this.baseModel.outputStride;
     const inputResolution = this.baseModel.inputResolution;
     assertValidOutputStride(outputStride);
@@ -208,16 +139,22 @@ export class PoseNet {
         await toTensorBuffers3D(
             [heatmapScores, offsets, displacementFwd, displacementBwd]);
 
-    const poses = await decodeMultiplePoses(
-        scoresBuffer, offsetsBuffer, displacementsFwdBuffer,
-        displacementsBwdBuffer, outputStride, maxDetections, scoreThreshold,
-        nmsRadius);
+    let poses;
+    if (config.decodingMethod === 'multi-person') {
+      poses = await decodeMultiplePoses(
+          scoresBuffer, offsetsBuffer, displacementsFwdBuffer,
+          displacementsBwdBuffer, outputStride, config.maxDetections,
+          config.scoreThreshold, config.nmsRadius);
+    } else {
+      const pose = await decodeSinglePose(heatmapScores, offsets, outputStride);
+      poses = [pose];
+    }
 
     const scaleY = (height + padTop + padBottom) / (resizedHeight);
     const scaleX = (width + padLeft + padRight) / (resizedWidth);
     let scaledPoses = scalePoses(poses, scaleY, scaleX, -padTop, -padLeft);
 
-    if (flipHorizontal) {
+    if (config.flipHorizontal) {
       scaledPoses = flipPosesHorizontal(scaledPoses, width)
     }
 

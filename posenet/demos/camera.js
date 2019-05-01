@@ -339,19 +339,23 @@ function detectPoseInRealTime(video, net) {
     let minPartConfidence;
     switch (guiState.algorithm) {
       case 'single-pose':
-        const pose =
-            await guiState.net.estimateSinglePose(video, flipPoseHorizontal);
-        poses.push(pose);
+        const pose = await guiState.net.estimatePoses(video, {
+          flipHorizontal: flipPoseHorizontal,
+          decodingMethod: 'single-person'
+        });
+        poses.concat(pose);
 
         minPoseConfidence = +guiState.singlePoseDetection.minPoseConfidence;
         minPartConfidence = +guiState.singlePoseDetection.minPartConfidence;
         break;
       case 'multi-pose':
-        let all_poses = await guiState.net.estimateMultiplePoses(
-            video, flipPoseHorizontal,
-            guiState.multiPoseDetection.maxPoseDetections,
-            guiState.multiPoseDetection.minPartConfidence,
-            guiState.multiPoseDetection.nmsRadius);
+        let all_poses = await guiState.net.estimatePoses(video, {
+          flipHorizontal: flipPoseHorizontal,
+          decodingMethod: 'multi-person',
+          maxDetections: guiState.multiPoseDetection.maxPoseDetections,
+          scoreThreshold: guiState.multiPoseDetection.minPartConfidence,
+          nmsRadius: guiState.multiPoseDetection.nmsRadius
+        });
 
         poses = poses.concat(all_poses);
         minPoseConfidence = +guiState.multiPoseDetection.minPoseConfidence;
