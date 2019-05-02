@@ -82,7 +82,7 @@ export interface BaseModel {
  * The larger the value, more accurate the model at the cost of speed.
  * Set this to a smaller value to increase speed at the cost of accuracy.
  * Input resolution 257 and 513 are supported for ResNet and any resolution in
- * PoseNetResolution .
+ * PoseNetResolution are supported for MobileNetV1.
  *
  * `multiplier`: An optional number with values: 1.01, 1.0, 0.75, or
  * 0.50. The value is used only by MobileNet architecture. It is the float

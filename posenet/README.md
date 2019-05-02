@@ -58,17 +58,33 @@ All keypoints are indexed by part id.  The parts and their ids are:
 
 ### Loading a pre-trained PoseNet Model
 
-In the first step of pose estimation, an image is fed through a pre-trained model.  PoseNet **comes with a few different versions of the model,** each corresponding to a MobileNet v1 architecture with a specific multiplier. To get started, a model must be loaded from a checkpoint, with the MobileNet architecture specified by the multiplier:
+In the first step of pose estimation, an image is fed through a pre-trained model.  PoseNet **comes with a few different versions of the model,** corresponding to variances of MobileNet v1 architecture and ResNet50 architecture. To get started, a model must be loaded from a checkpoint:
 
 ```javascript
-const net = await posenet.load(multiplier);
+const net = await posenet.load();
+```
+
+By default posenet loads a MobileNetV1. To load a customized model, one can specify requirements via the ModelConfig argument:
+
+```javascript
+const net = await posenet.load({
+  architecture: 'ResNet50',
+  outputStride: 32,
+  inputResolution: 257,
+});
 ```
 
 #### Inputs
 
-* **multiplier** - An optional number with values: `1.01`, `1.0`, `0.75`, or `0.50`. Defaults to `1.01`.   It is the float multiplier for the depth (number of channels) for all convolution operations. The value corresponds to a MobileNet architecture and checkpoint.  The larger the value, the larger the size of the layers, and more accurate the model at the cost of speed.  Set this to a smaller value to increase speed at the cost of accuracy.
+ * **architecture** - PoseNetArchitecture. It determines wich PoseNet architecture to load. The supported architectures are: `MobileNetV1` and `ResNet50`.
 
-**By default,** PoseNet loads a model with a **`0.75`** multiplier.  This is recommended for computers with **mid-range/lower-end GPUS.**  A model with a **`1.00`** muliplier is recommended for computers with **powerful GPUS.**  A model with a **`0.50`** architecture is recommended for **mobile.**
+ * **outputStride** - Specifies the output stride of the PoseNet model. The smaller the value, the larger the output resolution, and more accurate the model at the cost of speed.  Set this to a larger value to increase speed at the cost of accuracy. Stride `32` is supported for ResNet and stride `8`, `16`, `32` are supported for various MobileNetV1 models.
+
+ * **inputResolution** - Specifies the input resolution of the PoseNet model. The larger the value, more accurate the model at the cost of speed. Set this to a smaller value to increase speed at the cost of accuracy. Input resolution `257` and `513` are supported for ResNet and `any` resolution in `161`, `193`, `257`, `289`, `321`, `353`, `385`, `417`, `449`, `481`, and `513` are supported for MobileNetV1.
+
+ * **multiplier** - An optional number with values: `1.01`, `1.0`, `0.75`, or `0.50`. The value is used only by MobileNet architecture. It is the float multiplier for the depth (number of channels) for all convolution ops. The larger the value, the larger the size of the layers, and more accurate the model at the cost of speed. Set this to a smaller value to increase speed at the cost of accuracy.
+
+**By default,** PoseNet loads a MobileNetV1 model with a **`0.75`** multiplier.  This is recommended for computers with **mid-range/lower-end GPUs.**  A model with a **`1.00`** muliplier is recommended for computers with **powerful GPUs.**  A model with a **`0.50`** architecture is recommended for **mobile.**. A ResNet50 model is recommended for computers with **even more powerful GPUs**.
 
 ### Single-Person Pose Estimation
 
