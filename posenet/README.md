@@ -121,7 +121,7 @@ const pose = await net.estimatePoses(image, {
 
 #### Returns
 
-It returns an array containing **only one** `pose`. The `pose` has a confidence score and an array of keypoints indexed by part id, each with a score and position.
+It returns a `promise` that resolves with an array containing **only one** `pose`. The `pose` has a confidence score and an array of keypoints indexed by part id, each with a score and position.
 
 #### Example Usage
 
@@ -161,14 +161,12 @@ It returns an array containing **only one** `pose`. The `pose` has a confidence 
 ```javascript
 import * as posenet from '@tensorflow-models/posenet';
 
-const flipHorizontal = false;
-
 async function estimatePoseOnImage(imageElement) {
   // load the posenet model from a checkpoint
   const net = await posenet.load();
 
   const pose = await net.estimatePoses(imageElement, {
-    flipHorizontal: flipHorizontal,
+    flipHorizontal: false,
     decodingMethod: 'single-person'})[0];
 
   return pose;
@@ -330,28 +328,31 @@ which would produce the output:
 
 ### Multi-Person Pose Estimation
 
-Multiple Pose estimation can decode multiple poses in an image. It is more complex and slightly slower than the single pose-algorithm, but has the advantage that if multiple people appear in an image, their detected keypoints are less likely to be associated with the wrong pose. Even if the use case is to detect a single person’s pose, this algorithm may be more desirable in that the accidental effect of two poses being joined together won’t occur when multiple people appear in the image. It uses the `Fast greedy decoding` algorithm from the research paper [PersonLab: Person Pose Estimation and Instance Segmentation with a Bottom-Up, Part-Based, Geometric Embedding Model](https://arxiv.org/pdf/1803.08225.pdf).
+Multiple Pose estimation can decode multiple poses in an image. It is more complex and slightly slower than the single person algorithm, but has the advantage that if multiple people appear in an image, their detected keypoints are less likely to be associated with the wrong pose. Even if the usecase is to detect a single person’s pose, this algorithm may be more desirable in that the accidental effect of two poses being joined together won’t occur when multiple people appear in the image. It uses the `Fast greedy decoding` algorithm from the research paper [PersonLab: Person Pose Estimation and Instance Segmentation with a Bottom-Up, Part-Based, Geometric Embedding Model](https://arxiv.org/pdf/1803.08225.pdf). Both MobileNetV1 and ResNet architecture support multi-person pose estimation. One can enable multi-person estimation algorithm by simply **setting the `decodingMethod` to 'multi-person' via the InferenceConfig argument of the `estimatePoses` function**. The returned array will have **multiple `pose`s**:
 
 ```javascript
 const net = await posenet.load();
 
-const poses = await net.estimateMultiplePoses(image, imageScaleFactor, flipHorizontal, outputStride, maxPoseDetections, scoreThreshold, nmsRadius);
+const poses = await net.estimatePoses(image, {
+  flipHorizontal: false,
+  decodingMethod: 'multi-person',
+  maxPoseDetections: 5,
+  scoreThreshold: 0.5,
+  nmsRadius: 20);
 ```
 
 #### Inputs
 
 * **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
    The input image to feed through the network.
-* **imageScaleFactor** - A number between 0.2 and 1.0. Defaults to 0.50.   What to scale the image by before feeding it through the network.  Set this number lower to scale down the image and increase the speed when feeding through the network at the cost of accuracy.
 * **flipHorizontal** - Defaults to false.  If the poses should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the poses to be returned in the proper orientation.
-* **outputStride** - the desired stride for the outputs when feeding the image through the model.  Must be 32, 16, 8.  Defaults to 16.  The higher the number, the faster the performance but slower the accuracy, and visa versa.
-* **maxPoseDetections** (optional) - the maximum number of poses to detect. Defaults to 5.
-* **scoreThreshold** (optional) - Only return instance detections that have root part score greater or equal to this value. Defaults to 0.5.
-* **nmsRadius** (optional) - Non-maximum suppression part distance. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away. Defaults to 20.
+* **maxPoseDetections** - the maximum number of poses to detect. Defaults to 5.
+* **scoreThreshold** - Only return instance detections that have root part score greater or equal to this value. Defaults to 0.5.
+* **nmsRadius** - Non-maximum suppression part distance. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away. Defaults to 20.
 
 #### Returns
 
-It returns a `promise` that resolves with an array of `poses`, each with a confidence score and an array of `keypoints` indexed by part id, each with a score and position.
+It returns a `promise` that resolves with an array of `pose`s, each with a confidence score and an array of `keypoints` indexed by part id, each with a score and position.
 
 ##### via Script Tag
 
@@ -369,15 +370,14 @@ It returns a `promise` that resolves with an array of `poses`, each with a confi
   </body>
   <!-- Place your code in the script tag below. You can also use an external .js file -->
   <script>
-    var imageScaleFactor = 0.5;
-    var flipHorizontal = false;
-    var outputStride = 16;
-    var maxPoseDetections = 2;
-
     var imageElement = document.getElementById('cat');
 
     posenet.load().then(function(net){
-      return net.estimateMultiplePoses(imageElement, 0.5, flipHorizontal, outputStride, maxPoseDetections)
+      return net.estimatePoses(imageElement, {
+        flipHorizontal: false,
+        maxPoseDetections: 2,
+        scoreThreshold: 0.6,
+        nmsRadius: 20})
     }).then(function(poses){
       console.log(poses);
     })
@@ -390,17 +390,15 @@ It returns a `promise` that resolves with an array of `poses`, each with a confi
 ```javascript
 import * as posenet from '@tensorflow-models/posenet';
 
-const imageScaleFactor = 0.5;
-const outputStride = 16;
-const flipHorizontal = false;
-const maxPoseDetections = 2;
-
 async function estimateMultiplePosesOnImage(imageElement) {
   const net = await posenet.load();
 
   // estimate poses
-  const poses = await net.estimateMultiplePoses(imageElement,
-    imageScaleFactor, flipHorizontal, outputStride, maxPoseDetections);
+  const poses = await net.estimatePoses(imageElement, {
+        flipHorizontal: false,
+        maxPoseDetections: 2,
+        scoreThreshold: 0.6,
+        nmsRadius: 20});
 
   return poses;
 }
