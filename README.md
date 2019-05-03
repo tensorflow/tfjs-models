@@ -25,8 +25,12 @@ and can be used as building blocks in other apps.
   - `npm i @tensorflow-models/coco-ssd`
 
 ### Audio
-- [Speech commands](https://github.com/tensorflow/tfjs-models/tree/master/speech-commands) - Classify 1 second audio snippets from the [speech commands dataset](https://www.tensorflow.org/tutorials/sequences/audio_recognition).
+- [Speech Commands](https://github.com/tensorflow/tfjs-models/tree/master/speech-commands) - Classify 1 second audio snippets from the [speech commands dataset](https://www.tensorflow.org/tutorials/sequences/audio_recognition).
   - `npm i @tensorflow-models/speech-commands`
+  
+### Text
+- [Universal Sentence Encoder](./universal-sentence-encoder) - A model that encodes English text into 512-dimensional embeddings.
+- [Text Toxicity](./toxicity) - Detects and classifies toxic content such as threats, insults, and obscenities in English text inputs.
 
 ### General utilities
 - [KNN Classifier](https://github.com/tensorflow/tfjs-models/tree/master/knn-classifier) - Create a custom k-nearest neighbors classifier. Can be used for transfer learning.
