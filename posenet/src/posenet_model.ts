@@ -115,6 +115,63 @@ const MOBILENET_V1_CONFIG = {
   multiplier: 0.75
 } as ModelConfig;
 
+function validateModelConfig(config: ModelConfig) {
+  config = config || MOBILENET_V1_CONFIG;
+
+  const VALID_ARCHITECTURE = ['MobileNetV1', 'ResNet50'];
+  const VALID_STRIDE = {'MobileNetV1': [8, 16, 32], 'ResNet50': [32]};
+  const VALID_RESOLUTION = {
+    'MobileNetV1': [161, 193, 257, 289, 321, 353, 385, 417, 449, 481, 513],
+    'ResNet50': [257, 513]
+  };
+  const VALID_MULTIPLIER = {
+    'MobileNetV1': [0.25, 0.50, 0.75, 1.0, 1.01],
+    'ResNet50': [1.0]
+  };
+
+  if (config.architecture == null) {
+    config.architecture = 'MobileNetV1';
+  }
+  if (VALID_ARCHITECTURE.indexOf(config.architecture) < 0) {
+    throw new Error(
+        `Invalid architecture ${config.architecture}. ` +
+        `Should be one of ${VALID_ARCHITECTURE}`);
+  }
+
+  if (config.outputStride == null) {
+    config.outputStride = 16;
+  }
+  if (VALID_STRIDE[config.architecture].indexOf(config.outputStride) < 0) {
+    throw new Error(
+        `Invalid outputStride ${config.outputStride}. ` +
+        `Should be one of ${VALID_STRIDE[config.architecture]} ` +
+        `for architecutre ${config.architecture}.`);
+  }
+
+  if (config.inputResolution == null) {
+    config.inputResolution = 513;
+  }
+  if (VALID_RESOLUTION[config.architecture].indexOf(config.inputResolution) <
+      0) {
+    throw new Error(
+        `Invalid inputResolution ${config.inputResolution}. ` +
+        `Should be one of ${VALID_RESOLUTION[config.architecture]} ` +
+        `for architecutre ${config.architecture}.`);
+  }
+
+  if (config.multiplier == null) {
+    config.multiplier = 1.0;
+  }
+  if (VALID_MULTIPLIER[config.architecture].indexOf(config.multiplier) < 0) {
+    throw new Error(
+        `Invalid multiplier ${config.multiplier}. ` +
+        `Should be one of ${VALID_MULTIPLIER[config.architecture]} ` +
+        `for architecutre ${config.architecture}.`);
+  }
+
+  return config;
+}
+
 /**
  * PoseNet inference is configurable using the following config dictionary.
  *
@@ -156,6 +213,56 @@ export const MULTI_PERSON_INFERENCE_CONFIG = {
   nmsRadius: 20
 } as InferenceConfig;
 
+function validateInferenceConfig(config: InferenceConfig) {
+  config = config || MULTI_PERSON_INFERENCE_CONFIG;
+  const VALID_DECODING_METHOD = ['single-person', 'multi-person'];
+
+  if (config.flipHorizontal == null) {
+    config.flipHorizontal = false;
+  }
+
+  if (config.decodingMethod == null) {
+    config.decodingMethod = 'multi-person';
+  }
+  if (VALID_DECODING_METHOD.indexOf(config.decodingMethod) < 0) {
+    throw new Error(
+        `Invalid decoding method ${config.decodingMethod}. ` +
+        `Should be one of ${VALID_DECODING_METHOD}`);
+  }
+
+  // Validates parameters used only by multi-person decoding.
+  if (config.decodingMethod == 'multi-person') {
+    if (config.maxDetections == null) {
+      config.maxDetections = 5;
+    }
+    if (config.maxDetections <= 0) {
+      throw new Error(
+          `Invalid maxDetections ${config.maxDetections}. ` +
+          `Should be > 0 for decodingMethod ${config.decodingMethod}.`);
+    }
+
+    if (config.scoreThreshold == null) {
+      config.scoreThreshold = 0.5;
+    }
+    if (config.scoreThreshold < 0.0 || config.scoreThreshold > 1.0) {
+      throw new Error(
+          `Invalid scoreThreshold ${config.scoreThreshold}. ` +
+          `Should be in range [0.0, 1.0] for decodingMethod ${
+              config.decodingMethod}.`);
+    }
+
+    if (config.nmsRadius == null) {
+      config.nmsRadius = 20;
+    }
+    if (config.nmsRadius <= 0) {
+      throw new Error(
+          `Invalid nmsRadius ${config.nmsRadius}. ` +
+          `Should be positive for decodingMethod ${config.decodingMethod}.`);
+    }
+  }
+  return config;
+}
+
 export class PoseNet {
   baseModel: BaseModel;
 
@@ -189,6 +296,7 @@ export class PoseNet {
       input: PosenetInput,
       config: InferenceConfig = MULTI_PERSON_INFERENCE_CONFIG):
       Promise<Pose[]> {
+    config = validateInferenceConfig(config);
     const outputStride = this.baseModel.outputStride;
     const inputResolution = this.baseModel.inputResolution;
     assertValidOutputStride(outputStride);
@@ -338,6 +446,7 @@ async function loadResNet(config: ModelConfig): Promise<PoseNet> {
  */
 export async function load(config: ModelConfig = MOBILENET_V1_CONFIG):
     Promise<PoseNet> {
+  config = validateModelConfig(config);
   if (config.architecture === 'ResNet50') {
     return loadResNet(config);
   } else if (config.architecture === 'MobileNetV1') {

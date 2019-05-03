@@ -64,7 +64,7 @@ In the first step of pose estimation, an image is fed through a pre-trained mode
 const net = await posenet.load();
 ```
 
-By default posenet loads a MobileNetV1. To load a customized model, one can specify requirements via the ModelConfig argument:
+By default, `posenet.load()` loads a faster and smaller model that is based on MobileNetV1 architecture and has a lower accuracy. If you want to load the larger and more accurate model, specify the architecture explicitly in `posenet.load()` using a `ModelConfig` dictionary:
 
 
 ```javascript
@@ -90,27 +90,28 @@ const net = await posenet.load({
 
 #### Inputs
 
- * **architecture** - PoseNetArchitecture. It determines wich PoseNet architecture to load. The supported architectures are: `MobileNetV1` and `ResNet50`.
+ * **architecture** - Can be either `MobileNetV1` or `ResNet50`. It determines which PoseNet architecture to load.
 
- * **outputStride** - Specifies the output stride of the PoseNet model. The smaller the value, the larger the output resolution, and more accurate the model at the cost of speed.  Set this to a larger value to increase speed at the cost of accuracy. Stride `32` is supported for ResNet and stride `8`, `16`, `32` are supported for various MobileNetV1 models.
+ * **outputStride** - Can be one of `8`, `16`, `32` (Stride `32` is supported for the ResNet architecture and stride `8`, `16`, `32` are supported for the MobileNetV1 architecture). It specifies the output stride of the PoseNet model. The smaller the value, the larger the output resolution, and more accurate the model at the cost of speed. Set this to a larger value to increase speed at the cost of accuracy.
 
- * **inputResolution** - Specifies the input resolution of the PoseNet model. The larger the value, more accurate the model at the cost of speed. Set this to a smaller value to increase speed at the cost of accuracy. Input resolution `257` and `513` are supported for ResNet and `any` resolution in `161`, `193`, `257`, `289`, `321`, `353`, `385`, `417`, `449`, `481`, and `513` are supported for MobileNetV1.
+ * **inputResolution** - Can be one of `161`, `193`, `257`, `289`, `321`, `353`, `385`, `417`, `449`, `481`, and `513`. (*Only* input resolution *`257`* and *`513`* are supported for the *ResNet architecture* and *all* input resolution are supported for the MoibleNetV1 architecture). It specifies the input resolution of the PoseNet model. The larger the value, the more accurate the model at the cost of speed. Set this to a smaller value to increase speed at the cost of accuracy.
 
- * **multiplier** - An optional number with values: `1.01`, `1.0`, `0.75`, or `0.50`. The value is used only by MobileNet architecture. It is the float multiplier for the depth (number of channels) for all convolution ops. The larger the value, the larger the size of the layers, and more accurate the model at the cost of speed. Set this to a smaller value to increase speed at the cost of accuracy.
+ * **multiplier** - Can be one of `1.01`, `1.0`, `0.75`, or `0.50`. The value is used *only* by the MobileNetV1 architecture and not by the ResNet architecture. It is the float multiplier for the depth (number of channels) for all convolution ops. The larger the value, the larger the size of the layers, and more accurate the model at the cost of speed. Set this to a smaller value to increase speed at the cost of accuracy.
 
-**By default,** PoseNet loads a MobileNetV1 model with a **`0.75`** multiplier.  This is recommended for computers with **mid-range/lower-end GPUs.**  A model with a **`1.00`** muliplier is recommended for computers with **powerful GPUs.**  A model with a **`0.50`** architecture is recommended for **mobile.** A ResNet50 model is recommended for computers with **even more powerful GPUs**.
+**By default,** PoseNet loads a MobileNetV1 architecture with a **`0.75`** multiplier.  This is recommended for computers with **mid-range/lower-end GPUs.**  A model with a **`1.00`** multiplier is recommended for computers with **powerful GPUs.**  A model with a **`0.50`** multiplier is recommended for **mobile.** The ResNet achitecture is recommended for computers with **even more powerful GPUs**.
 
 ### Single-Person Pose Estimation
 
-Single pose estimation is the simpler and faster of the two algorithms. Its ideal use case is for when there is only one person in the image. The disadvantage is that if there are multiple persons in an image, keypoints from both persons will likely be estimated as being part of the same single pose—meaning, for example, that person #1’s left arm and person #2’s right knee might be conflated by the algorithm as belonging to the same pose. Both MobileNetV1 and ResNet architecture support single-person pose estimation.
-One can enable single-person estimation algorithm by simply **setting the `decodingMethod` to 'single-person' via the InferenceConfig argument of the `estimatePoses` function**. The returned array will have **one and only one `pose`**:
+Single pose estimation is the simpler and faster of the two algorithms. Its ideal use case is for when there is only one person in the image. The disadvantage is that if there are multiple persons in an image, keypoints from both persons will likely be estimated as being part of the same single pose—meaning, for example, that person #1’s left arm and person #2’s right knee might be conflated by the algorithm as belonging to the same pose. Both the MobileNetV1 and the ResNet architecture support single-person pose estimation. To enable single-person estimation algorithm, **set the `decodingMethod` to 'single-person' in `estimatePoses` using an `InferenceConfig` dictionary**. The returned array will have **one and only one `pose`**:
 
 ```javascript
 const net = await posenet.load();
 
-const pose = await net.estimatePoses(image, {
+const poses = await net.estimatePoses(image, {
   flipHorizontal: false,
-  decodingMethod: 'single-person'})[0];
+  decodingMethod: 'single-person'
+});
+const pose = poses[0];
 ```
 
 #### Inputs
@@ -121,7 +122,7 @@ const pose = await net.estimatePoses(image, {
 
 #### Returns
 
-It returns a `promise` that resolves with an array containing **only one** `pose`. The `pose` has a confidence score and an array of keypoints indexed by part id, each with a score and position.
+It returns a `Promise` that resolves with an array containing **only one** `pose`. The `pose` has a confidence score and an array of keypoints indexed by part id, each with a score and position.
 
 #### Example Usage
 
@@ -145,10 +146,13 @@ It returns a `promise` that resolves with an array containing **only one** `pose
 
     var imageElement = document.getElementById('cat');
 
-    posenet.load().then(function(net){
-      return net.estimatePoses(imageElement, {
+    posenet.load().then(function(net) {
+      const poses = net.estimatePoses(imageElement, {
         flipHorizontal: flipHorizontal,
-        decodingMethod: 'single-person'})[0]
+        decodingMethod: 'single-person'
+      });
+      const pose = poses[0];
+      return pose;
     }).then(function(pose){
       console.log(pose);
     })
@@ -165,10 +169,11 @@ async function estimatePoseOnImage(imageElement) {
   // load the posenet model from a checkpoint
   const net = await posenet.load();
 
-  const pose = await net.estimatePoses(imageElement, {
+  const poses = await net.estimatePoses(imageElement, {
     flipHorizontal: false,
-    decodingMethod: 'single-person'})[0];
-
+    decodingMethod: 'single-person'
+  });
+  const pose = poses[0]
   return pose;
 }
 
@@ -328,7 +333,7 @@ which would produce the output:
 
 ### Multi-Person Pose Estimation
 
-Multiple Pose estimation can decode multiple poses in an image. It is more complex and slightly slower than the single person algorithm, but has the advantage that if multiple people appear in an image, their detected keypoints are less likely to be associated with the wrong pose. Even if the usecase is to detect a single person’s pose, this algorithm may be more desirable in that the accidental effect of two poses being joined together won’t occur when multiple people appear in the image. It uses the `Fast greedy decoding` algorithm from the research paper [PersonLab: Person Pose Estimation and Instance Segmentation with a Bottom-Up, Part-Based, Geometric Embedding Model](https://arxiv.org/pdf/1803.08225.pdf). Both MobileNetV1 and ResNet architecture support multi-person pose estimation. One can enable multi-person estimation algorithm by simply **setting the `decodingMethod` to 'multi-person' via the InferenceConfig argument of the `estimatePoses` function**. The returned array will have **multiple `pose`s**:
+Multiple Pose estimation can decode multiple poses in an image. It is more complex and slightly slower than the single person algorithm, but has the advantage that if multiple people appear in an image, their detected keypoints are less likely to be associated with the wrong pose. Even if the usecase is to detect a single person’s pose, this algorithm may be more desirable in that the accidental effect of two poses being joined together won’t occur when multiple people appear in the image. It uses the `Fast greedy decoding` algorithm from the research paper [PersonLab: Person Pose Estimation and Instance Segmentation with a Bottom-Up, Part-Based, Geometric Embedding Model](https://arxiv.org/pdf/1803.08225.pdf). Both MobileNetV1 and ResNet architecture support multi-person pose estimation. To enable multi-person pose estimation algorithm, **set the `decodingMethod` to 'multi-person' in `estimatePoses` function using an `InferenceConfig` dictionary**. The returned array will have **multiple `pose`s**:
 
 ```javascript
 const net = await posenet.load();
@@ -338,7 +343,8 @@ const poses = await net.estimatePoses(image, {
   decodingMethod: 'multi-person',
   maxPoseDetections: 5,
   scoreThreshold: 0.5,
-  nmsRadius: 20);
+  nmsRadius: 20
+});
 ```
 
 #### Inputs
