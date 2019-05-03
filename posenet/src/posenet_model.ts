@@ -22,7 +22,7 @@ import {checkpoints, resnet50_checkpoints} from './checkpoints';
 import {assertValidOutputStride, assertValidResolution, MobileNet, MobileNetMultiplier, OutputStride} from './mobilenet';
 import {ModelWeights} from './model_weights';
 import {decodeMultiplePoses} from './multi_pose/decode_multiple_poses';
-import ResNet from './resnet';
+import {ResNet} from './resnet';
 import {decodeSinglePose} from './single_pose/decode_single_pose';
 import {Pose, PosenetInput} from './types';
 import {flipPosesHorizontal, getInputTensorDimensions, padAndResizeTo, scalePoses, toTensorBuffers3D} from './util';
@@ -114,8 +114,6 @@ const MOBILENET_V1_CONFIG = {
   inputResolution: 513,
   multiplier: 0.75
 } as ModelConfig;
-
-
 
 /**
  * PoseNet inference is configurable using the following config dictionary.

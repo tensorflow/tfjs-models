@@ -11,7 +11,7 @@ function toFloatIfInt(input: tf.Tensor3D): tf.Tensor3D {
   })
 }
 
-export default class ResNet implements BaseModel {
+export class ResNet implements BaseModel {
   readonly model: tf.GraphModel
 
   readonly outputStride: OutputStride
