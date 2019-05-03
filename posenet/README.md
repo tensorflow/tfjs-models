@@ -66,7 +66,21 @@ const net = await posenet.load();
 
 By default posenet loads a MobileNetV1. To load a customized model, one can specify requirements via the ModelConfig argument:
 
+
 ```javascript
+// Loads MobileNetV1 based PoseNet
+const net = await posenet.load({
+  architecture: 'MobileNetV1',
+  outputStride: 16,
+  inputResolution: 513,
+  multiplier: 0.75
+});
+```
+
+or
+
+```javascript
+// Loads ResNet based PoseNet
 const net = await posenet.load({
   architecture: 'ResNet50',
   outputStride: 32,
@@ -84,29 +98,30 @@ const net = await posenet.load({
 
  * **multiplier** - An optional number with values: `1.01`, `1.0`, `0.75`, or `0.50`. The value is used only by MobileNet architecture. It is the float multiplier for the depth (number of channels) for all convolution ops. The larger the value, the larger the size of the layers, and more accurate the model at the cost of speed. Set this to a smaller value to increase speed at the cost of accuracy.
 
-**By default,** PoseNet loads a MobileNetV1 model with a **`0.75`** multiplier.  This is recommended for computers with **mid-range/lower-end GPUs.**  A model with a **`1.00`** muliplier is recommended for computers with **powerful GPUs.**  A model with a **`0.50`** architecture is recommended for **mobile.**. A ResNet50 model is recommended for computers with **even more powerful GPUs**.
+**By default,** PoseNet loads a MobileNetV1 model with a **`0.75`** multiplier.  This is recommended for computers with **mid-range/lower-end GPUs.**  A model with a **`1.00`** muliplier is recommended for computers with **powerful GPUs.**  A model with a **`0.50`** architecture is recommended for **mobile.** A ResNet50 model is recommended for computers with **even more powerful GPUs**.
 
 ### Single-Person Pose Estimation
 
-Single pose estimation is the simpler and faster of the two algorithms. Its ideal use case is for when there is only one person in the image. The disadvantage is that if there are multiple persons in an image, keypoints from both persons will likely be estimated as being part of the same single pose—meaning, for example, that person #1’s left arm and person #2’s right knee might be conflated by the algorithm as belonging to the same pose.
+Single pose estimation is the simpler and faster of the two algorithms. Its ideal use case is for when there is only one person in the image. The disadvantage is that if there are multiple persons in an image, keypoints from both persons will likely be estimated as being part of the same single pose—meaning, for example, that person #1’s left arm and person #2’s right knee might be conflated by the algorithm as belonging to the same pose. Both MobileNetV1 and ResNet architecture support single-person pose estimation.
+One can enable single-person estimation algorithm by simply **setting the `decodingMethod` to 'single-person' via the InferenceConfig argument of the `estimatePoses` function**. The returned array will have **one and only one `pose`**:
 
 ```javascript
 const net = await posenet.load();
 
-const pose = await net.estimateSinglePose(image, imageScaleFactor, flipHorizontal, outputStride);
+const pose = await net.estimatePoses(image, {
+  flipHorizontal: false,
+  decodingMethod: 'single-person'})[0];
 ```
 
 #### Inputs
 
 * **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
    The input image to feed through the network.
-* **imageScaleFactor** - A number between 0.2 and 1.0. Defaults to 0.50.   What to scale the image by before feeding it through the network.  Set this number lower to scale down the image and increase the speed when feeding through the network at the cost of accuracy.
 * **flipHorizontal** - Defaults to false.  If the poses should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the poses to be returned in the proper orientation.
-* **outputStride** - the desired stride for the outputs when feeding the image through the model.  Must be 32, 16, 8.  Defaults to 16.  The higher the number, the faster the performance but slower the accuracy, and visa versa.
 
 #### Returns
 
-It returns a `pose` with a confidence score and an array of keypoints indexed by part id, each with a score and position.
+It returns an array containing **only one** `pose`. The `pose` has a confidence score and an array of keypoints indexed by part id, each with a score and position.
 
 #### Example Usage
 
@@ -126,14 +141,14 @@ It returns a `pose` with a confidence score and an array of keypoints indexed by
   </body>
   <!-- Place your code in the script tag below. You can also use an external .js file -->
   <script>
-    var imageScaleFactor = 0.5;
-    var outputStride = 16;
     var flipHorizontal = false;
 
     var imageElement = document.getElementById('cat');
 
     posenet.load().then(function(net){
-      return net.estimateSinglePose(imageElement, imageScaleFactor, flipHorizontal, outputStride)
+      return net.estimatePoses(imageElement, {
+        flipHorizontal: flipHorizontal,
+        decodingMethod: 'single-person'})[0]
     }).then(function(pose){
       console.log(pose);
     })
@@ -145,15 +160,16 @@ It returns a `pose` with a confidence score and an array of keypoints indexed by
 
 ```javascript
 import * as posenet from '@tensorflow-models/posenet';
-const imageScaleFactor = 0.5;
-const outputStride = 16;
+
 const flipHorizontal = false;
 
 async function estimatePoseOnImage(imageElement) {
   // load the posenet model from a checkpoint
   const net = await posenet.load();
 
-  const pose = await net.estimateSinglePose(imageElement, imageScaleFactor, flipHorizontal, outputStride);
+  const pose = await net.estimatePoses(imageElement, {
+    flipHorizontal: flipHorizontal,
+    decodingMethod: 'single-person'})[0];
 
   return pose;
 }
