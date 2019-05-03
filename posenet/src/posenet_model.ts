@@ -97,6 +97,17 @@ export interface ModelConfig {
 }
 
 // The default configuration for loading MobileNetV1 based PoseNet.
+//
+// (And for references, the default configuration for loading ResNet
+// based PoseNet is also included).
+//
+// ```
+// const RESNET_CONFIG = {
+//   architecture: 'ResNet50',
+//   outputStride: 32,
+//   inputResolution: 257,
+// } as ModelConfig;
+// ```
 const MOBILENET_V1_CONFIG = {
   architecture: 'MobileNetV1',
   outputStride: 16,
@@ -104,12 +115,7 @@ const MOBILENET_V1_CONFIG = {
   multiplier: 0.75
 } as ModelConfig;
 
-// The default configuration for loading ResNet based PoseNet.
-const RESNET_CONFIG = {
-  architecture: 'ResNet50',
-  outputStride: 32,
-  inputResolution: 257,
-} as ModelConfig;
+
 
 /**
  * PoseNet inference is configurable using the following config dictionary.
