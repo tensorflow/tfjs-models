@@ -1,3 +1,4 @@
+.yalc/
 .vscode/
 .rpt2_cache/
 demo/
@@ -13,3 +14,4 @@ tslint.json
 yarn.lock
 images/
 .cache/
+yalc.lock
