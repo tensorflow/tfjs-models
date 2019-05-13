@@ -15,6 +15,8 @@
  * =============================================================================
  */
 import * as posenet from '@tensorflow-models/posenet';
+import * as tf from '@tensorflow/tfjs';
+
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 
@@ -391,7 +393,7 @@ function detectPoseInRealTime(video, net) {
     // End monitoring code for frames per second
     stats.end();
 
-    requestAnimationFrame(poseDetectionFrame);
+    // requestAnimationFrame(poseDetectionFrame);
   }
 
   poseDetectionFrame();
@@ -402,6 +404,7 @@ function detectPoseInRealTime(video, net) {
  * available camera devices, and setting off the detectPoseInRealTime function.
  */
 export async function bindPage() {
+  tf.enableDebugMode();
   const net = await posenet.load({
     architecture: guiState.input.architecture,
     outputStride: guiState.input.outputStride,
