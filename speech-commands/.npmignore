@@ -1,3 +1,4 @@
+.yalc/
 .vscode/
 .rpt2_cache/
 demo/
@@ -13,3 +14,4 @@ dist/**/*.js.map
 .npmignore
 tslint.json
 yarn.lock
+yalc.lock

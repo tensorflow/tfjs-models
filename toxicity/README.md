@@ -28,7 +28,7 @@ import * as toxicity from '@tensorflow-models/toxicity';
 
 or as a standalone script tag:
 
-```js
+```html
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/toxicity"></script>
 ```
