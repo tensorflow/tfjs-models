@@ -18,7 +18,7 @@
 import * as tf from '@tensorflow/tfjs';
 
 import {CheckpointLoader} from './checkpoint_loader';
-import {checkpoints} from './checkpoints';
+import {checkpoints, BASE_URL} from './checkpoints';
 import {assertValidOutputStride, assertValidScaleFactor, MobileNet, MobileNetMultiplier, OutputStride} from './mobilenet';
 import {ModelWeights} from './model_weights';
 import {decodeMultiplePoses} from './multi_pose/decode_multiple_poses';
@@ -250,10 +250,15 @@ export class PoseNet {
  * architecture and checkpoint.  The larger the value, the larger the size of
  * the layers, and more accurate the model at the cost of speed.  Set this to
  * a smaller value to increase speed at the cost of accuracy.
+ * 
+ * @param weightBaseUrl An optinal URL string for setting custom model weights storage.
  *
  */
-export async function load(multiplier: MobileNetMultiplier = 1.01):
+export async function load(multiplier: MobileNetMultiplier = 1.01, weightBaseUrl?: string):
     Promise<PoseNet> {
+  if (weightBaseUrl == null) {
+    weightBaseUrl = BASE_URL;
+  } 
   if (tf == null) {
     throw new Error(
         `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
@@ -272,16 +277,16 @@ export async function load(multiplier: MobileNetMultiplier = 1.01):
                 multiplier}.  No checkpoint exists for that ` +
           `multiplier. Must be one of ${possibleMultipliers.join(',')}.`);
 
-  const mobileNet: MobileNet = await mobilenetLoader.load(multiplier);
+  const mobileNet: MobileNet = await mobilenetLoader.load(multiplier, weightBaseUrl);
 
   return new PoseNet(mobileNet);
 }
 
 export const mobilenetLoader = {
-  load: async(multiplier: MobileNetMultiplier): Promise<MobileNet> => {
+  load: async(multiplier: MobileNetMultiplier, weightBaseUrl: string): Promise<MobileNet> => {
     const checkpoint = checkpoints[multiplier];
 
-    const checkpointLoader = new CheckpointLoader(checkpoint.url);
+    const checkpointLoader = new CheckpointLoader(weightBaseUrl + checkpoint.url);
 
     const variables = await checkpointLoader.getAllVariables();
 
