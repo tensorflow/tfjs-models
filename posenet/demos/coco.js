@@ -274,7 +274,7 @@ function setupGui(net) {
           guiState.model.inputResolution = 257;
           guiState.model.outputStride = 32;
           updateGuiInputResolution([257, 513]);
-          updateGuiOutputStride([32]);
+          updateGuiOutputStride([32, 16]);
           updateGuiMultiplier([1.0]);
         } else {
           guiState.model.inputResolution = 513;
@@ -293,7 +293,7 @@ function setupGui(net) {
     updateGuiMultiplier([0.5, 0.75, 1.0]);
   } else {
     updateGuiInputResolution([257, 513]);
-    updateGuiOutputStride([32]);
+    updateGuiOutputStride([32, 16]);
     updateGuiMultiplier([1.0]);
   }
 
