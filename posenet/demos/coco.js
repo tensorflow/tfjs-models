@@ -201,7 +201,7 @@ let guiState = {
   },
   image: 'tennis_in_crowd.jpg',
   multiPoseDetection: {
-    minPartConfidence: 0.0,
+    minPartConfidence: 0.1,
     minPoseConfidence: 0.2,
     nmsRadius: 20.0,
     maxDetections: 15,

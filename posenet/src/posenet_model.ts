@@ -119,7 +119,7 @@ function validateModelConfig(config: ModelConfig) {
   config = config || MOBILENET_V1_CONFIG;
 
   const VALID_ARCHITECTURE = ['MobileNetV1', 'ResNet50'];
-  const VALID_STRIDE = {'MobileNetV1': [8, 16, 32], 'ResNet50': [32]};
+  const VALID_STRIDE = {'MobileNetV1': [8, 16, 32], 'ResNet50': [32, 16]};
   const VALID_RESOLUTION = {
     'MobileNetV1': [161, 193, 257, 289, 321, 353, 385, 417, 449, 481, 513],
     'ResNet50': [257, 513]
@@ -401,7 +401,6 @@ export const mobilenetLoader = {
         weights, checkpoint.architecture, config.inputResolution,
         config.outputStride);
   },
-
 };
 
 async function loadResNet(config: ModelConfig): Promise<PoseNet> {
@@ -413,18 +412,6 @@ async function loadResNet(config: ModelConfig): Promise<PoseNet> {
         `also include @tensorflow/tfjs on the page before using this
         model.`);
   }
-
-  tf.util.assert(
-      [32].indexOf(outputStride) >= 0,
-      () => `invalid stride value of ${
-                outputStride}.  No checkpoint exists for that ` +
-          `stride. Currently must be one of [32].`);
-
-  tf.util.assert(
-      [513, 257].indexOf(inputResolution) >= 0,
-      () => `invalid resolution value of ${
-                inputResolution}.  No checkpoint exists for that ` +
-          `resolution. Currently must be one of [513, 257].`);
 
   const graphModel = await tf.loadGraphModel(
       resnet50_checkpoints[inputResolution][outputStride]);

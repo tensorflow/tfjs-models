@@ -90,7 +90,7 @@ const guiState = {
   multiPoseDetection: {
     maxPoseDetections: 5,
     minPoseConfidence: 0.15,
-    minPartConfidence: 0.0,
+    minPartConfidence: 0.1,
     nmsRadius: 30.0,
   },
   output: {
@@ -191,7 +191,7 @@ function setupGui(cameras, net) {
     updateGuiMultiplier(0.50, [0.50, 0.75, 1.0, 1.01])
   } else {  // guiState.input.architecture === "ResNet50"
     updateGuiInputResolution(257, [257, 513]);
-    updateGuiOutputStride(32, [32]);
+    updateGuiOutputStride(32, [32, 16]);
     updateGuiMultiplier(1.0, [1.0]);
   }
 
@@ -228,7 +228,7 @@ function setupGui(cameras, net) {
     // if architecture is ResNet50, then show ResNet50 options
     if (architecture.includes('ResNet50')) {
       updateGuiInputResolution(257, [257, 513]);
-      updateGuiOutputStride(32, [32]);
+      updateGuiOutputStride(32, [32, 16]);
       updateGuiMultiplier(1.0, [1.0]);
     } else {  // if architecture is MobileNet, then show MobileNet options
       updateGuiInputResolution(513, [257, 353, 449, 513]);
