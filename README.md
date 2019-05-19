@@ -27,10 +27,12 @@ and can be used as building blocks in other apps.
 ### Audio
 - [Speech Commands](https://github.com/tensorflow/tfjs-models/tree/master/speech-commands) - Classify 1 second audio snippets from the [speech commands dataset](https://www.tensorflow.org/tutorials/sequences/audio_recognition).
   - `npm i @tensorflow-models/speech-commands`
-  
+
 ### Text
 - [Universal Sentence Encoder](./universal-sentence-encoder) - A model that encodes English text into 512-dimensional embeddings.
+  - `npm i @tensorflow-models/universal-sentence-encoder`
 - [Text Toxicity](./toxicity) - Detects and classifies toxic content such as threats, insults, and obscenities in English text inputs.
+  - `npm i @tensorflow-models/toxicity`
 
 ### General utilities
 - [KNN Classifier](https://github.com/tensorflow/tfjs-models/tree/master/knn-classifier) - Create a custom k-nearest neighbors classifier. Can be used for transfer learning.
@@ -43,7 +45,7 @@ inside a directory:
 
 `yarn test`
 
-New models should have a test NPM script.
+New models should have a test NPM script (see [this](https://github.com/tensorflow/tfjs-models/blob/master/mobilenet/package.json) `package.json` and `run_tests.ts` [helper](https://github.com/tensorflow/tfjs-models/blob/master/mobilenet/run_tests.ts) for reference).
 
 To run all of the tests, you can run the following command from the root of this
 repo:
