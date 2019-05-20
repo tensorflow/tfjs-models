@@ -258,7 +258,7 @@ export class BrowserFftSpeechCommandRecognizer implements
     const suppressionTimeMillis = config.suppressionTimeMillis == null ?
         this.DEFAULT_SUPPRESSION_TIME_MILLIS :
         config.suppressionTimeMillis;
-    await tf.data.microphone({
+    this.microphoneIterator = await tf.data.microphone({
       // sampleRateHz: this.parameters.sampleRateHz,
       numFramesPerSpectrogram: this.nonBatchInputShape[0],
       columnTruncateLength: this.nonBatchInputShape[1],
@@ -414,7 +414,6 @@ export class BrowserFftSpeechCommandRecognizer implements
       throw new Error('Cannot stop streaming when streaming is not ongoing.');
     }
     // await this.audioDataExtractor.stop();
-    console.log('stop');
     this.microphoneIterator.stop();
     this.streaming = false;
   }
@@ -548,7 +547,7 @@ export class BrowserFftSpeechCommandRecognizer implements
   }
 
   private async recognizeOnline(): Promise<SpectrogramData> {
-    return new Promise<SpectrogramData>((resolve, reject) => {
+    return new Promise<SpectrogramData>(async (resolve, reject) => {
       const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
         const normalizedX = normalize(x);
         // await this.audioDataExtractor.stop();
@@ -560,7 +559,7 @@ export class BrowserFftSpeechCommandRecognizer implements
         normalizedX.dispose();
         return false;
       };
-      tf.data.microphone({
+      this.microphoneIterator = await tf.data.microphone({
         // sampleRateHz: this.parameters.sampleRateHz,
         numFramesPerSpectrogram: this.nonBatchInputShape[0],
         columnTruncateLength: this.nonBatchInputShape[1],
@@ -726,7 +725,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     const totalDurationSec = frameDurationSec * numFramesPerSpectrogram;
 
     this.streaming = true;
-    return new Promise<SpectrogramData>(resolve => {
+    return new Promise<SpectrogramData>(async resolve => {
       const stepFactor = options.snippetDurationSec == null ?
           1 :
           options.snippetDurationSec / totalDurationSec;
@@ -808,7 +807,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         }
         return false;
       };
-      tf.data.microphone({
+      this.microphoneIterator = await tf.data.microphone({
         // sampleRateHz: this.parameters.sampleRateHz,
         numFramesPerSpectrogram,
         columnTruncateLength: this.nonBatchInputShape[1],
