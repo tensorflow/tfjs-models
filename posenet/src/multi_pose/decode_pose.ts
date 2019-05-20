@@ -55,12 +55,13 @@ function getStridedIndexNearPoint(
  * We get a new keypoint along the `edgeId` for the pose instance, assuming
  * that the position of the `idSource` part is already known. For this, we
  * follow the displacement vector from the source to target part (stored in
- * the `i`-t channel of the displacement tensor).
+ * the `i`-t channel of the displacement tensor). The displaced keypoint
+ * vector is refined using the offset vector by `offsetRefineStep` times.
  */
 function traverseToTargetKeypoint(
     edgeId: number, sourceKeypoint: Keypoint, targetKeypointId: number,
     scoresBuffer: TensorBuffer3D, offsets: TensorBuffer3D, outputStride: number,
-    displacements: TensorBuffer3D): Keypoint {
+    displacements: TensorBuffer3D, offsetRefineStep = 2): Keypoint {
   const [height, width] = scoresBuffer.shape;
 
   // Nearest neighbor interpolation for the source->target displacements.
@@ -70,24 +71,27 @@ function traverseToTargetKeypoint(
   const displacement =
       getDisplacement(edgeId, sourceKeypointIndices, displacements);
 
-  const displacedPoint = addVectors(sourceKeypoint.position, displacement);
+  let displacedPoint = addVectors(sourceKeypoint.position, displacement);
+  let targetKeypoint = displacedPoint;
+  for (let i = 0; i < offsetRefineStep; i++) {
+    const targetKeypointIndices =
+        getStridedIndexNearPoint(targetKeypoint, outputStride, height, width);
 
-  const displacedPointIndices =
-      getStridedIndexNearPoint(displacedPoint, outputStride, height, width);
+    const offsetPoint = getOffsetPoint(
+        targetKeypointIndices.y, targetKeypointIndices.x, targetKeypointId,
+        offsets);
 
-  const offsetPoint = getOffsetPoint(
-      displacedPointIndices.y, displacedPointIndices.x, targetKeypointId,
-      offsets);
-
+    targetKeypoint = addVectors(
+        {
+          x: targetKeypointIndices.x * outputStride,
+          y: targetKeypointIndices.y * outputStride
+        },
+        {x: offsetPoint.x, y: offsetPoint.y});
+  }
+  const targetKeyPointIndices =
+      getStridedIndexNearPoint(targetKeypoint, outputStride, height, width);
   const score = scoresBuffer.get(
-      displacedPointIndices.y, displacedPointIndices.x, targetKeypointId);
-
-  const targetKeypoint = addVectors(
-      {
-        x: displacedPointIndices.x * outputStride,
-        y: displacedPointIndices.y * outputStride
-      },
-      {x: offsetPoint.x, y: offsetPoint.y});
+      targetKeyPointIndices.y, targetKeyPointIndices.x, targetKeypointId);
 
   return {position: targetKeypoint, part: partNames[targetKeypointId], score};
 }
