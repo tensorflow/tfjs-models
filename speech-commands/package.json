@@ -42,6 +42,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "link-local": "yalc link",
     "lint": "tslint -p . -t verbose",
     "publish-local": "yarn build && rollup -c && yalc push",
     "publish-npm": "yarn build && rollup -c && npm publish",

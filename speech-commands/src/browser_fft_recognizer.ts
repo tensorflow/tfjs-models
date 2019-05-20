@@ -17,7 +17,7 @@
 
 import * as tf from '@tensorflow/tfjs';
 
-import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
+import {SpectrogramCallback} from './browser_fft_extractor';
 import {loadMetadataJson, normalize, normalizeFloat32Array} from './browser_fft_utils';
 import {BACKGROUND_NOISE_TAG, Dataset} from './dataset';
 import {concatenateFloat32Arrays} from './generic_utils';
@@ -76,7 +76,8 @@ export class BrowserFftSpeechCommandRecognizer implements
 
   protected nonBatchInputShape: [number, number, number];
   private elementsPerExample: number;
-  protected audioDataExtractor: BrowserFftFeatureExtractor;
+  // protected audioDataExtractor: BrowserFftFeatureExtractor;
+  protected microphoneIterator: tf.data.MicrophoneIterator;
 
   private transferRecognizers:
       {[name: string]: TransferBrowserFftSpeechCommandRecognizer} = {};
@@ -257,16 +258,24 @@ export class BrowserFftSpeechCommandRecognizer implements
     const suppressionTimeMillis = config.suppressionTimeMillis == null ?
         this.DEFAULT_SUPPRESSION_TIME_MILLIS :
         config.suppressionTimeMillis;
-    this.audioDataExtractor = new BrowserFftFeatureExtractor({
-      sampleRateHz: this.parameters.sampleRateHz,
+    await tf.data.microphone({
+      // sampleRateHz: this.parameters.sampleRateHz,
       numFramesPerSpectrogram: this.nonBatchInputShape[0],
       columnTruncateLength: this.nonBatchInputShape[1],
       suppressionTimeMillis,
       spectrogramCallback,
       overlapFactor
     });
+    // this.audioDataExtractor = new BrowserFftFeatureExtractor({
+    //   sampleRateHz: this.parameters.sampleRateHz,
+    //   numFramesPerSpectrogram: this.nonBatchInputShape[0],
+    //   columnTruncateLength: this.nonBatchInputShape[1],
+    //   suppressionTimeMillis,
+    //   spectrogramCallback,
+    //   overlapFactor
+    // });
 
-    await this.audioDataExtractor.start(config.audioTrackConstraints);
+    // await this.audioDataExtractor.start(config.audioTrackConstraints);
 
     this.streaming = true;
   }
@@ -404,7 +413,9 @@ export class BrowserFftSpeechCommandRecognizer implements
     if (!this.streaming) {
       throw new Error('Cannot stop streaming when streaming is not ongoing.');
     }
-    await this.audioDataExtractor.stop();
+    // await this.audioDataExtractor.stop();
+    console.log('stop');
+    this.microphoneIterator.stop();
     this.streaming = false;
   }
 
@@ -540,7 +551,8 @@ export class BrowserFftSpeechCommandRecognizer implements
     return new Promise<SpectrogramData>((resolve, reject) => {
       const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
         const normalizedX = normalize(x);
-        await this.audioDataExtractor.stop();
+        // await this.audioDataExtractor.stop();
+        this.microphoneIterator.stop();
         resolve({
           data: await normalizedX.data() as Float32Array,
           frameSize: this.nonBatchInputShape[1],
@@ -548,15 +560,23 @@ export class BrowserFftSpeechCommandRecognizer implements
         normalizedX.dispose();
         return false;
       };
-      this.audioDataExtractor = new BrowserFftFeatureExtractor({
-        sampleRateHz: this.parameters.sampleRateHz,
+      tf.data.microphone({
+        // sampleRateHz: this.parameters.sampleRateHz,
         numFramesPerSpectrogram: this.nonBatchInputShape[0],
         columnTruncateLength: this.nonBatchInputShape[1],
         suppressionTimeMillis: 0,
         spectrogramCallback,
         overlapFactor: 0
       });
-      this.audioDataExtractor.start();
+      // this.audioDataExtractor = new BrowserFftFeatureExtractor({
+      //   sampleRateHz: this.parameters.sampleRateHz,
+      //   numFramesPerSpectrogram: this.nonBatchInputShape[0],
+      //   columnTruncateLength: this.nonBatchInputShape[1],
+      //   suppressionTimeMillis: 0,
+      //   spectrogramCallback,
+      //   overlapFactor: 0
+      // });
+      // this.audioDataExtractor.start();
     });
   }
 
@@ -729,12 +749,13 @@ class TransferBrowserFftSpeechCommandRecognizer extends
             },
             rawAudio: options.includeRawAudio ? {
               data: await timeData.data() as Float32Array,
-              sampleRateHz: this.audioDataExtractor.sampleRateHz
+              sampleRateHz: 44100  // this.audioDataExtractor.sampleRateHz
             } :
                                                 undefined
           });
           normalizedX.dispose();
-          await this.audioDataExtractor.stop();
+          // await this.audioDataExtractor.stop();
+          this.microphoneIterator.stop();
           this.streaming = false;
           this.collateTransferWords();
           resolve({
@@ -761,7 +782,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
           }
 
           if (callbackCount++ === callbackCountTarget) {
-            await this.audioDataExtractor.stop();
+            // await this.audioDataExtractor.stop();
+            this.microphoneIterator.stop();
             this.streaming = false;
             this.collateTransferWords();
 
@@ -776,7 +798,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
               spectrogram: finalSpectrogram,
               rawAudio: options.includeRawAudio ? {
                 data: await timeData.data() as Float32Array,
-                sampleRateHz: this.audioDataExtractor.sampleRateHz
+                sampleRateHz: 44100  // this.audioDataExtractor.sampleRateHz
               } :
                                                   undefined
             });
@@ -786,16 +808,25 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         }
         return false;
       };
-      this.audioDataExtractor = new BrowserFftFeatureExtractor({
-        sampleRateHz: this.parameters.sampleRateHz,
+      tf.data.microphone({
+        // sampleRateHz: this.parameters.sampleRateHz,
         numFramesPerSpectrogram,
         columnTruncateLength: this.nonBatchInputShape[1],
         suppressionTimeMillis: 0,
         spectrogramCallback,
         overlapFactor,
-        includeRawAudio: options.includeRawAudio
+        // includeRawAudio: options.includeRawAudio
       });
-      this.audioDataExtractor.start(options.audioTrackConstraints);
+      // this.audioDataExtractor = new BrowserFftFeatureExtractor({
+      //   sampleRateHz: this.parameters.sampleRateHz,
+      //   numFramesPerSpectrogram,
+      //   columnTruncateLength: this.nonBatchInputShape[1],
+      //   suppressionTimeMillis: 0,
+      //   spectrogramCallback,
+      //   overlapFactor,
+      //   includeRawAudio: options.includeRawAudio
+      // });
+      // this.audioDataExtractor.start(options.audioTrackConstraints);
     });
   }
 
