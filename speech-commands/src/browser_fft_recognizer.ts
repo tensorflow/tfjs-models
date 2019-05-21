@@ -130,8 +130,7 @@ export class BrowserFftSpeechCommandRecognizer implements
 
     this.parameters = {
       sampleRateHz: this.SAMPLE_RATE_HZ,
-      fftSize: this.FFT_SIZE,
-      audioSamplesPerWindow: this.nonBatchInputShape[0] * this.FFT_SIZE
+      fftSize: this.FFT_SIZE
     };
   }
 
@@ -322,6 +321,8 @@ export class BrowserFftSpeechCommandRecognizer implements
 
     this.nonBatchInputShape =
         model.inputs[0].shape.slice(1) as [number, number, number];
+    this.parameters.audioSamplesPerWindow =
+        this.nonBatchInputShape[0] * this.FFT_SIZE;
     this.elementsPerExample = 1;
     model.inputs[0].shape.slice(1).forEach(
         dimSize => this.elementsPerExample *= dimSize);
