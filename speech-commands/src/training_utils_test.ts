@@ -20,10 +20,11 @@ import '@tensorflow/tfjs-node';
 import * as tf from '@tensorflow/tfjs';
 import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
+import {expectTensorsClose} from './test_utils';
 import {balancedTrainValSplit} from './training_utils';
 
 describeWithFlags('balancedTrainValSplit', NODE_ENVS, () => {
-  it('Enough data for split', () => {
+  it('Enough data for split', async () => {
     const xs = tf.randomNormal([8, 3]);
     const ys = tf.oneHot(tf.tensor1d([0, 0, 0, 0, 1, 1, 1, 1], 'int32'), 2);
     const {trainXs, trainYs, valXs, valYs} =
@@ -32,9 +33,8 @@ describeWithFlags('balancedTrainValSplit', NODE_ENVS, () => {
     expect(trainYs.shape).toEqual([6, 2]);
     expect(valXs.shape).toEqual([2, 3]);
     expect(valYs.shape).toEqual([2, 2]);
-    tf.test_util.expectArraysClose(
-        trainYs.sum(0), tf.tensor1d([3, 3], 'int32'));
-    tf.test_util.expectArraysClose(valYs.sum(0), tf.tensor1d([1, 1], 'int32'));
+    await expectTensorsClose(trainYs.sum(0), tf.tensor1d([3, 3], 'int32'));
+    await expectTensorsClose(valYs.sum(0), tf.tensor1d([1, 1], 'int32'));
   });
 
   it('Not enough data for split', () => {

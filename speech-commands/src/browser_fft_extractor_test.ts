@@ -20,6 +20,7 @@ import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_u
 import {BrowserFftFeatureExtractor, flattenQueue, getInputTensorFromFrequencyData} from './browser_fft_extractor';
 import * as BrowserFftUtils from './browser_fft_utils';
 import {FakeAudioContext, FakeAudioMediaStream} from './browser_test_utils';
+import {expectTensorsClose} from './test_utils';
 
 const testEnvs = NODE_ENVS;
 
@@ -41,13 +42,13 @@ describeWithFlags('flattenQueue', testEnvs, () => {
 });
 
 describeWithFlags('getInputTensorFromFrequencyData', testEnvs, () => {
-  it('6 frames, 2 vals each', () => {
+  it('6 frames, 2 vals each', async () => {
     const freqData = new Float32Array([1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6]);
     const numFrames = 6;
     const fftSize = 2;
     const tensor =
         getInputTensorFromFrequencyData(freqData, [1, numFrames, fftSize, 1]);
-    tf.test_util.expectArraysClose(tensor, tf.tensor4d(freqData, [1, 6, 2, 1]));
+    await expectTensorsClose(tensor, tf.tensor4d(freqData, [1, 6, 2, 1]));
   });
 });
 
