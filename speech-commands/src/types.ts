@@ -712,7 +712,7 @@ export type ROCCurve =
     /**
      * Number of PCM audio samples per window.
      */
-    audioSamplesPerWindow: number;
+    audioSamplesPerWindow?: number;
   }
 
   /**
