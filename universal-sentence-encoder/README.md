@@ -38,7 +38,7 @@ import * as use from '@tensorflow-models/universal-sentence-encoder';
 
 or as a standalone script tag:
 
-```js
+```html
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/universal-sentence-encoder"></script>
 ```

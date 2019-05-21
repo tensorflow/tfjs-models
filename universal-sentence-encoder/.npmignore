@@ -1,3 +1,4 @@
+.yalc/
 .vscode/
 .rpt2_cache/
 demo/
@@ -12,3 +13,4 @@ karma.conf.js
 tslint.json
 yarn.lock
 .cache/
+yalc.lock

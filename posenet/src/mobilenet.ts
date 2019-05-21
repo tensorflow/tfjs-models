@@ -17,6 +17,7 @@
 
 import * as tf from '@tensorflow/tfjs';
 import {ModelWeights} from './model_weights';
+import {BaseModel, PoseNetResolution} from './posenet_model';
 
 export type MobileNetMultiplier = 0.25|0.50|0.75|1.0|1.01;
 export type ConvolutionType = 'conv2d'|'separableConv';
@@ -100,17 +101,6 @@ export function assertValidResolution(resolution: any, outputStride: number) {
           `${outputStride}.`);
 }
 
-// tslint:disable-next-line:no-any
-export function assertValidScaleFactor(imageScaleFactor: any) {
-  tf.util.assert(
-      typeof imageScaleFactor === 'number',
-      () => 'imageScaleFactor is not a number');
-
-  tf.util.assert(
-      imageScaleFactor >= 0.2 && imageScaleFactor <= 1.0,
-      () => 'imageScaleFactor must be between 0.2 and 1.0');
-}
-
 export const mobileNetArchitectures:
     {[name: string]: ConvolutionDefinition[]} = {
       100: mobileNet100Architecture,
@@ -174,42 +164,66 @@ function toOutputStridedLayers(
   });
 }
 
-export class MobileNet {
+export class MobileNet implements BaseModel {
   private modelWeights: ModelWeights;
-  // private model: tf.NamedTensorMap;
   private convolutionDefinitions: ConvolutionDefinition[];
 
   private PREPROCESS_DIVISOR = tf.scalar(255.0 / 2);
   private ONE = tf.scalar(1.0);
 
+  readonly inputResolution: PoseNetResolution;
+  readonly outputStride: OutputStride;
+
   constructor(
       modelWeights: ModelWeights,
-      convolutionDefinitions: ConvolutionDefinition[]) {
+      convolutionDefinitions: ConvolutionDefinition[],
+      inputResolution: PoseNetResolution, outputStride: OutputStride) {
     this.modelWeights = modelWeights;
     this.convolutionDefinitions = convolutionDefinitions;
+    this.inputResolution = inputResolution;
+    this.outputStride = outputStride;
   }
 
-  predict(input: tf.Tensor3D, outputStride: OutputStride): tf.Tensor3D {
+  predict(input: tf.Tensor3D): {[key: string]: tf.Tensor3D} {
     // Normalize the pixels [0, 255] to be between [-1, 1].
     const normalized = tf.div(input.toFloat(), this.PREPROCESS_DIVISOR);
 
     const preprocessedInput = tf.sub(normalized, this.ONE) as tf.Tensor3D;
 
     const layers =
-        toOutputStridedLayers(this.convolutionDefinitions, outputStride);
+        toOutputStridedLayers(this.convolutionDefinitions, this.outputStride);
 
-    return layers.reduce(
-        (previousLayer: tf.Tensor3D,
-         {blockId, stride, convType, rate}: Layer) => {
-          if (convType === 'conv2d') {
-            return this.conv(previousLayer, stride, blockId);
-          } else if (convType === 'separableConv') {
-            return this.separableConv(previousLayer, stride, blockId, rate);
-          } else {
-            throw Error(`Unknown conv type of ${convType}`);
-          }
-        },
-        preprocessedInput);
+    return tf.tidy(() => {
+      const mobileNetOutput = layers.reduce(
+          (previousLayer: tf.Tensor3D,
+           {blockId, stride, convType, rate}: Layer) => {
+            if (convType === 'conv2d') {
+              return this.conv(previousLayer, stride, blockId);
+            } else if (convType === 'separableConv') {
+              return this.separableConv(previousLayer, stride, blockId, rate);
+            } else {
+              throw Error(`Unknown conv type of ${convType}`);
+            }
+          },
+          preprocessedInput);
+
+      const heatmaps = this.convToOutput(mobileNetOutput, 'heatmap_2');
+
+      const offsets = this.convToOutput(mobileNetOutput, 'offset_2');
+
+      const displacementFwd =
+          this.convToOutput(mobileNetOutput, 'displacement_fwd_2');
+
+      const displacementBwd =
+          this.convToOutput(mobileNetOutput, 'displacement_bwd_2');
+
+      return {
+        heatmapScores: heatmaps.sigmoid(),
+        offsets,
+        displacementFwd,
+        displacementBwd
+      };
+    });
   }
 
   public convToOutput(mobileNetOutput: tf.Tensor3D, outputLayerName: string):
