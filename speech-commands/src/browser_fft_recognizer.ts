@@ -16,7 +16,6 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-
 import {SpectrogramCallback} from './browser_fft_extractor';
 import {loadMetadataJson, normalize, normalizeFloat32Array} from './browser_fft_utils';
 import {BACKGROUND_NOISE_TAG, Dataset} from './dataset';
@@ -24,6 +23,7 @@ import {concatenateFloat32Arrays} from './generic_utils';
 import {balancedTrainValSplit} from './training_utils';
 import {AudioDataAugmentationOptions, EvaluateConfig, EvaluateResult, Example, ExampleCollectionOptions, RecognizeConfig, RecognizerCallback, RecognizerParams, ROCCurve, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerMetadata, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
 import {version} from './version';
+
 
 export const UNKNOWN_TAG = '_unknown_';
 
@@ -263,9 +263,15 @@ export class BrowserFftSpeechCommandRecognizer implements
       numFramesPerSpectrogram: this.nonBatchInputShape[0],
       columnTruncateLength: this.nonBatchInputShape[1],
       suppressionTimeMillis,
-      spectrogramCallback,
+      // spectrogramCallback,
       overlapFactor
     });
+
+    setInterval(async () => {
+      const inputTensor = await this.microphoneIterator.next();
+      await spectrogramCallback(inputTensor);
+      inputTensor.dispose();
+    }, 1024 / 44100 * 1e3);
     // this.audioDataExtractor = new BrowserFftFeatureExtractor({
     //   sampleRateHz: this.parameters.sampleRateHz,
     //   numFramesPerSpectrogram: this.nonBatchInputShape[0],
@@ -564,9 +570,15 @@ export class BrowserFftSpeechCommandRecognizer implements
         numFramesPerSpectrogram: this.nonBatchInputShape[0],
         columnTruncateLength: this.nonBatchInputShape[1],
         suppressionTimeMillis: 0,
-        spectrogramCallback,
+        // spectrogramCallback,
         overlapFactor: 0
       });
+
+      setInterval(async () => {
+        const inputTensor = await this.microphoneIterator.next();
+        await spectrogramCallback(inputTensor);
+        inputTensor.dispose();
+      }, 1024 / 44100 * 1e3);
       // this.audioDataExtractor = new BrowserFftFeatureExtractor({
       //   sampleRateHz: this.parameters.sampleRateHz,
       //   numFramesPerSpectrogram: this.nonBatchInputShape[0],
@@ -812,10 +824,15 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         numFramesPerSpectrogram,
         columnTruncateLength: this.nonBatchInputShape[1],
         suppressionTimeMillis: 0,
-        spectrogramCallback,
+        // spectrogramCallback,
         overlapFactor,
         // includeRawAudio: options.includeRawAudio
       });
+      setInterval(async () => {
+        const inputTensor = await this.microphoneIterator.next();
+        await spectrogramCallback(inputTensor);
+        inputTensor.dispose();
+      }, 1024 / 44100 * 1e3);
       // this.audioDataExtractor = new BrowserFftFeatureExtractor({
       //   sampleRateHz: this.parameters.sampleRateHz,
       //   numFramesPerSpectrogram,
