@@ -217,6 +217,22 @@ export interface TransferSpeechCommandRecognizer extends
       Promise<SpectrogramData>;
 
   /**
+   * Add a pulse-coded modulation (PCM) audio waveform as an example.
+   *
+   * @param word The label for the word.
+   * @param waveform PCM waveform of the audio. Assumed to
+   *   1. match the sampling
+   *      rate of this `TransferSpeechCommandRecognizer` instance `recognizer`
+   *      (accessible via the `recognizer.parameters.sampleRateHz` field).
+   *   2. have a length of exactly
+   *      `recognizer.parameters.audioSamplesPerWindow`.
+   *      If 2 doesn't hold, an Error will be thrown.
+   * @returns {SpectrogramData} The spectrogram of the acquired the example.
+   */
+  addWaveformAsExample(word: string, waveform: Float32Array):
+      Promise<SpectrogramData>;
+
+  /**
    * Clear all transfer learning examples collected so far.
    */
   clearExamples(): void;
@@ -692,6 +708,11 @@ export type ROCCurve =
      * Sampling rate, in Hz.
      */
     sampleRateHz?: number;
+
+    /**
+     * Number of PCM audio samples per window.
+     */
+    audioSamplesPerWindow: number;
   }
 
   /**

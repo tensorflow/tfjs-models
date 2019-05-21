@@ -130,7 +130,8 @@ export class BrowserFftSpeechCommandRecognizer implements
 
     this.parameters = {
       sampleRateHz: this.SAMPLE_RATE_HZ,
-      fftSize: this.FFT_SIZE
+      fftSize: this.FFT_SIZE,
+      audioSamplesPerWindow: this.nonBatchInputShape[0] * this.FFT_SIZE
     };
   }
 
