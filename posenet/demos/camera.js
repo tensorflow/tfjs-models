@@ -78,9 +78,10 @@ async function loadVideo() {
 const guiState = {
   algorithm: 'multi-pose',
   input: {
-    mobileNetArchitecture: isMobile() ? '0.50' : '0.75',
-    outputStride: 16,
-    imageScaleFactor: 0.5,
+    architecture: isMobile() ? 'MobileNetV1' : 'ResNet50',
+    outputStride: isMobile() ? 16 : 32,
+    inputResolution: 257,
+    multiplier: isMobile() ? 0.50 : 1.0,
   },
   singlePoseDetection: {
     minPoseConfidence: 0.1,
@@ -125,19 +126,76 @@ function setupGui(cameras, net) {
   // Architecture: there are a few PoseNet models varying in size and
   // accuracy. 1.01 is the largest, but will be the slowest. 0.50 is the
   // fastest, but least accurate.
-  const architectureController = input.add(
-      guiState.input, 'mobileNetArchitecture',
-      ['1.01', '1.00', '0.75', '0.50']);
+  const architectureController =
+      input.add(guiState.input, 'architecture', ['MobileNetV1', 'ResNet50']);
+  guiState.architecture = guiState.input.architecture;
+  // Input resolution:  Internally, this parameter affects the height and width
+  // of the layers in the neural network. The higher the value of the input
+  // resolution the better the accuracy but slower the speed.
+  let inputResolutionController = null;
+  function updateGuiInputResolution(
+      inputResolution,
+      inputResolutionArray,
+  ) {
+    if (inputResolutionController) {
+      inputResolutionController.remove();
+    }
+    guiState.inputResolution = inputResolution;
+    guiState.input.inputResolution = inputResolution;
+    inputResolutionController =
+        input.add(guiState.input, 'inputResolution', inputResolutionArray);
+    inputResolutionController.onChange(function(inputResolution) {
+      guiState.changeToInputResolution = inputResolution;
+    });
+  }
+
+
   // Output stride:  Internally, this parameter affects the height and width of
   // the layers in the neural network. The lower the value of the output stride
   // the higher the accuracy but slower the speed, the higher the value the
   // faster the speed but lower the accuracy.
-  input.add(guiState.input, 'outputStride', [8, 16, 32]);
-  // Image scale factor: What to scale the image by before feeding it through
-  // the network.
-  input.add(guiState.input, 'imageScaleFactor').min(0.2).max(1.0);
-  input.open();
+  let outputStrideController = null;
+  function updateGuiOutputStride(outputStride, outputStrideArray) {
+    if (outputStrideController) {
+      outputStrideController.remove();
+    }
+    guiState.outputStride = outputStride;
+    guiState.input.outputStride = outputStride;
+    outputStrideController =
+        input.add(guiState.input, 'outputStride', outputStrideArray);
+    outputStrideController.onChange(function(outputStride) {
+      guiState.changeToOutputStride = outputStride;
+    });
+  }
 
+  // Multiplier: this parameter affects the number of feature map channels in
+  // the MobileNet. The higher the value, the higher the accuracy but slower the
+  // speed, the lower the value the faster the speed but lower the accuracy.
+  let multiplierController = null;
+  function updateGuiMultiplier(multiplier, multiplierArray) {
+    if (multiplierController) {
+      multiplierController.remove();
+    }
+    guiState.multiplier = multiplier;
+    guiState.input.multiplier = multiplier;
+    multiplierController =
+        input.add(guiState.input, 'multiplier', multiplierArray);
+    multiplierController.onChange(function(multiplier) {
+      guiState.changeToMultiplier = multiplier;
+    });
+  }
+
+  if (guiState.input.architecture === 'MobileNetV1') {
+    updateGuiInputResolution(513, [257, 353, 449, 513]);
+    updateGuiOutputStride(16, [8, 16]);
+    updateGuiMultiplier(0.50, [0.50, 0.75, 1.0, 1.01])
+  } else {  // guiState.input.architecture === "ResNet50"
+    updateGuiInputResolution(257, [257, 513]);
+    updateGuiOutputStride(32, [32, 16]);
+    updateGuiMultiplier(1.0, [1.0]);
+  }
+
+  input.open();
   // Pose confidence: the overall confidence in the estimation of a person's
   // pose (i.e. a person detected in a frame)
   // Min part confidence: the confidence that a particular estimated keypoint
@@ -167,6 +225,16 @@ function setupGui(cameras, net) {
 
 
   architectureController.onChange(function(architecture) {
+    // if architecture is ResNet50, then show ResNet50 options
+    if (architecture.includes('ResNet50')) {
+      updateGuiInputResolution(257, [257, 513]);
+      updateGuiOutputStride(32, [32, 16]);
+      updateGuiMultiplier(1.0, [1.0]);
+    } else {  // if architecture is MobileNet, then show MobileNet options
+      updateGuiInputResolution(513, [257, 353, 449, 513]);
+      updateGuiOutputStride(16, [8, 16]);
+      updateGuiMultiplier(0.50, [0.50, 0.75, 1.0, 1.01])
+    }
     guiState.changeToArchitecture = architecture;
   });
 
@@ -199,8 +267,12 @@ function setupFPS() {
 function detectPoseInRealTime(video, net) {
   const canvas = document.getElementById('output');
   const ctx = canvas.getContext('2d');
-  // since images are being fed from a webcam
-  const flipHorizontal = true;
+
+  // since images are being fed from a webcam, we want to feed in the
+  // original image and then just flip the keypoints' x coordinates. If instead
+  // we flip the image, then correcting left-right keypoint pairs requires a
+  // permutation on all the keypoints.
+  const flipPoseHorizontal = true;
 
   canvas.width = videoWidth;
   canvas.height = videoHeight;
@@ -209,41 +281,81 @@ function detectPoseInRealTime(video, net) {
     if (guiState.changeToArchitecture) {
       // Important to purge variables and free up GPU memory
       guiState.net.dispose();
-
-      // Load the PoseNet model weights for either the 0.50, 0.75, 1.00, or 1.01
-      // version
-      guiState.net = await posenet.load(+guiState.changeToArchitecture);
-
+      guiState.net = await posenet.load({
+        architecture: guiState.changeToArchitecture,
+        outputStride: guiState.outputStride,
+        inputResolution: guiState.inputResolution,
+        multiplier: guiState.multiplier,
+      });
+      guiState.architecture = guiState.changeToArchitecture;
       guiState.changeToArchitecture = null;
+    }
+
+    if (guiState.changeToMultiplier) {
+      guiState.net.dispose();
+      guiState.net = await posenet.load({
+        architecture: guiState.architecture,
+        outputStride: guiState.outputStride,
+        inputResolution: guiState.inputResolution,
+        multiplier: +guiState.changeToMultiplier
+      });
+      guiState.multiplier = +guiState.changeToMultiplier;
+      guiState.changeToMultiplier = null;
+    }
+
+    if (guiState.changeToOutputStride) {
+      // Important to purge variables and free up GPU memory
+      guiState.net.dispose();
+      guiState.net = await posenet.load({
+        architecture: guiState.architecture,
+        outputStride: +guiState.changeToOutputStride,
+        inputResolution: guiState.inputResolution,
+        multiplier: guiState.multiplier
+      });
+      guiState.outputStride = +guiState.changeToOutputStride;
+      guiState.changeToOutputStride = null;
+    }
+
+    if (guiState.changeToInputResolution) {
+      // Important to purge variables and free up GPU memory
+      guiState.net.dispose();
+
+      guiState.net = await posenet.load({
+        architecture: guiState.architecture,
+        outputStride: guiState.outputStride,
+        inputResolution: +guiState.changeToInputResolution,
+        multiplier: guiState.multiplier
+      });
+      guiState.inputResolution = +guiState.changeToInputResolution;
+      guiState.changeToInputResolution = null;
     }
 
     // Begin monitoring code for frames per second
     stats.begin();
-
-    // Scale an image down to a certain factor. Too large of an image will slow
-    // down the GPU
-    const imageScaleFactor = guiState.input.imageScaleFactor;
-    const outputStride = +guiState.input.outputStride;
 
     let poses = [];
     let minPoseConfidence;
     let minPartConfidence;
     switch (guiState.algorithm) {
       case 'single-pose':
-        const pose = await guiState.net.estimateSinglePose(
-            video, imageScaleFactor, flipHorizontal, outputStride);
-        poses.push(pose);
-
+        const pose = await guiState.net.estimatePoses(video, {
+          flipHorizontal: flipPoseHorizontal,
+          decodingMethod: 'single-person'
+        });
+        poses = poses.concat(pose);
         minPoseConfidence = +guiState.singlePoseDetection.minPoseConfidence;
         minPartConfidence = +guiState.singlePoseDetection.minPartConfidence;
         break;
       case 'multi-pose':
-        poses = await guiState.net.estimateMultiplePoses(
-            video, imageScaleFactor, flipHorizontal, outputStride,
-            guiState.multiPoseDetection.maxPoseDetections,
-            guiState.multiPoseDetection.minPartConfidence,
-            guiState.multiPoseDetection.nmsRadius);
+        let all_poses = await guiState.net.estimatePoses(video, {
+          flipHorizontal: flipPoseHorizontal,
+          decodingMethod: 'multi-person',
+          maxDetections: guiState.multiPoseDetection.maxPoseDetections,
+          scoreThreshold: guiState.multiPoseDetection.minPartConfidence,
+          nmsRadius: guiState.multiPoseDetection.nmsRadius
+        });
 
+        poses = poses.concat(all_poses);
         minPoseConfidence = +guiState.multiPoseDetection.minPoseConfidence;
         minPartConfidence = +guiState.multiPoseDetection.minPartConfidence;
         break;
@@ -290,8 +402,12 @@ function detectPoseInRealTime(video, net) {
  * available camera devices, and setting off the detectPoseInRealTime function.
  */
 export async function bindPage() {
-  // Load the PoseNet model weights with architecture 0.75
-  const net = await posenet.load(0.75);
+  const net = await posenet.load({
+    architecture: guiState.input.architecture,
+    outputStride: guiState.input.outputStride,
+    inputResolution: guiState.input.inputResolution,
+    multiplier: guiState.input.multiplier
+  });
 
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'block';
