@@ -20,25 +20,25 @@ import {normalize, normalizeFloat32Array} from './browser_fft_utils';
 import {expectTensorsClose} from './test_utils';
 
 describe('normalize', () => {
-  it('Non-constant value; no memory leak', async () => {
+  it('Non-constant value; no memory leak', () => {
     const x = tf.tensor4d([1, 2, 3, 4], [1, 2, 2, 1]);
     const numTensors0 = tf.memory().numTensors;
     const y = normalize(x);
     // Assert no memory leak.
     expect(tf.memory().numTensors).toEqual(numTensors0 + 1);
-    await expectTensorsClose(
+    expectTensorsClose(
         y,
         tf.tensor4d(
             [-1.3416406, -0.4472135, 0.4472135, 1.3416406], [1, 2, 2, 1]));
     const {mean, variance} = tf.moments(y);
-    await expectTensorsClose(mean, tf.scalar(0));
-    await expectTensorsClose(variance, tf.scalar(1));
+    expectTensorsClose(mean, tf.scalar(0));
+    expectTensorsClose(variance, tf.scalar(1));
   });
 
-  it('Constant value', async () => {
+  it('Constant value', () => {
     const x = tf.tensor4d([42, 42, 42, 42], [1, 2, 2, 1]);
     const y = normalize(x);
-    await expectTensorsClose(y, tf.tensor4d([0, 0, 0, 0], [1, 2, 2, 1]));
+    expectTensorsClose(y, tf.tensor4d([0, 0, 0, 0], [1, 2, 2, 1]));
   });
 });
 
