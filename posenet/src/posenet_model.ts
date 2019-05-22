@@ -18,8 +18,8 @@
 import * as tf from '@tensorflow/tfjs';
 
 import {CheckpointLoader} from './checkpoint_loader';
-import {checkpoints, resnet50_checkpoints, BASE_URL, RESNET_BASE_URL} from './checkpoints';
-import {assertValidOutputStride, assertValidScaleFactor, MobileNet, MobileNetMultiplier, OutputStride} from './mobilenet';
+import {checkpoints, resnet50_checkpoints, BASE_URL, RESNET50_BASE_URL} from './checkpoints';
+import {assertValidOutputStride, assertValidResolution, MobileNet, MobileNetMultiplier, OutputStride} from './mobilenet';
 import {ModelWeights} from './model_weights';
 import {decodeMultiplePoses} from './multi_pose/decode_multiple_poses';
 import {ResNet} from './resnet';
@@ -90,10 +90,14 @@ export interface BaseModel {
  * The larger the value, the larger the size of the layers, and more accurate
  * the model at the cost of speed. Set this to a smaller value to increase speed
  * at the cost of accuracy.
+ *
+ * `weightBaseUrl`: An optional string that specifies custom base url of the
+ * weight files.
  */
 export interface ModelConfig {
   architecture: PoseNetArchitecture, outputStride: OutputStride,
-      inputResolution: PoseNetResolution, multiplier?: MobileNetMultiplier
+      inputResolution: PoseNetResolution, multiplier?: MobileNetMultiplier,
+      weightBaseUrl?: string
 }
 
 // The default configuration for loading MobileNetV1 based PoseNet.
@@ -112,7 +116,8 @@ const MOBILENET_V1_CONFIG = {
   architecture: 'MobileNetV1',
   outputStride: 16,
   inputResolution: 513,
-  multiplier: 0.75
+  multiplier: 0.75,
+  weightBaseUrl: BASE_URL
 } as ModelConfig;
 
 function validateModelConfig(config: ModelConfig) {
@@ -169,6 +174,13 @@ function validateModelConfig(config: ModelConfig) {
         `for architecutre ${config.architecture}.`);
   }
 
+  if (config.weightBaseUrl == null) {
+    if (config.architecture === 'ResNet50') {
+      config.weightBaseUrl = RESNET50_BASE_URL;
+    } else {
+      config.weightBaseUrl = BASE_URL;
+    }
+  }
   return config;
 }
 
@@ -362,7 +374,7 @@ export class PoseNet {
 }
 
 
-async function loadMobileNet(config: ModelConfig, weightBaseUrl?: string): Promise<PoseNet> {
+async function loadMobileNet(config: ModelConfig): Promise<PoseNet> {
   const multiplier = config.multiplier;
   if (tf == null) {
     throw new Error(
@@ -383,16 +395,17 @@ async function loadMobileNet(config: ModelConfig, weightBaseUrl?: string): Promi
                 multiplier}.  No checkpoint exists for that ` +
           `multiplier. Must be one of ${possibleMultipliers.join(',')}.`);
 
-  const mobileNet: MobileNet = await mobilenetLoader.load(config, weightBaseUrl || BASE_URL);
+  const mobileNet: MobileNet = await mobilenetLoader.load(config);
 
   return new PoseNet(mobileNet);
 }
 
 export const mobilenetLoader = {
-  load: async(config: ModelConfig, weightBaseUrl: string): Promise<MobileNet> => {
+  load: async(config: ModelConfig): Promise<MobileNet> => {
     const checkpoint = checkpoints[config.multiplier];
 
-    const checkpointLoader = new CheckpointLoader(weightBaseUrl + checkpoint.url);
+    const checkpointLoader = new CheckpointLoader(
+        config.weightBaseUrl + checkpoint.url);
 
     const variables = await checkpointLoader.getAllVariables();
 
@@ -404,7 +417,7 @@ export const mobilenetLoader = {
   },
 };
 
-async function loadResNet(config: ModelConfig, weightBaseUrl?: string): Promise<PoseNet> {
+async function loadResNet(config: ModelConfig): Promise<PoseNet> {
   const inputResolution = config.inputResolution;
   const outputStride = config.outputStride;
   if (tf == null) {
@@ -415,7 +428,7 @@ async function loadResNet(config: ModelConfig, weightBaseUrl?: string): Promise<
   }
 
   const graphModel = await tf.loadGraphModel(
-      (weightBaseUrl || RESNET_BASE_URL) + resnet50_checkpoints[inputResolution][outputStride]);
+      config.weightBaseUrl + resnet50_checkpoints[inputResolution][outputStride]);
   const resnet = new ResNet(graphModel, inputResolution, outputStride);
   return new PoseNet(resnet);
 }
@@ -432,7 +445,7 @@ async function loadResNet(config: ModelConfig, weightBaseUrl?: string): Promise<
  * `MOBILENET_V1_CONFIG` and `RESNET_CONFIG` can also be used as references
  * for defining your customized config.
  */
-export async function load(config: ModelConfig = MOBILENET_V1_CONFIG, weightBaseUrl?: string):
+export async function load(config: ModelConfig = MOBILENET_V1_CONFIG):
     Promise<PoseNet> {
   config = validateModelConfig(config);
   if (config.architecture === 'ResNet50') {
