@@ -18,6 +18,8 @@ import * as posenet from '@tensorflow-models/posenet';
 import * as tf from '@tensorflow/tfjs';
 import dat from 'dat.gui';
 
+import {TRY_RESNET50_BUTTON_TEXT} from './demo_util';
+
 // clang-format off
 import {
   drawBoundingBox,
@@ -191,13 +193,21 @@ async function reloadNetTestImageAndEstimatePoses(net) {
   testImageAndEstimatePoses(guiState.net);
 }
 
+const defaultMobileNetMultiplier = isMobile() ? 0.50 : 0.75;
+const defaultMobileNetStride = 16;
+const defaultMobileNetInputResolution = 513;
+
+const defaultResNetMultiplier = 1.0;
+const defaultResNetStride = 32;
+const defaultResNetInputResolution = 257;
+
 let guiState = {
   net: null,
   model: {
-    architecture: isMobile() ? 'MobileNetV1 0.50' : 'ResNet50',
-    outputStride: isMobile() ? 16 : 32,
-    inputResolution: 257,
-    multiplier: isMobile() ? 0.5 : 1.0
+    architecture: 'MobileNetV1',
+    outputStride: defaultMobileNetStride,
+    inputResolution: defaultMobileNetInputResolution,
+    multiplier: defaultMobileNetMultiplier
   },
   image: 'tennis_in_crowd.jpg',
   multiPoseDetection: {
@@ -267,34 +277,40 @@ function setupGui(net) {
   // Architecture: there are a few PoseNet models varying in size and
   // accuracy. 1.01 is the largest, but will be the slowest. 0.50 is the
   // fastest, but least accurate.
-  model.add(guiState.model, 'architecture', ['MobileNetV1', 'ResNet50'])
-      .onChange(async function(architecture) {
-        console.log('architecture change', architecture);
-        if (architecture.includes('ResNet50')) {
-          guiState.model.inputResolution = 257;
-          guiState.model.outputStride = 32;
-          updateGuiInputResolution([257, 513]);
-          updateGuiOutputStride([32, 16]);
-          updateGuiMultiplier([1.0]);
-        } else {
-          guiState.model.inputResolution = 513;
-          guiState.model.outputStride = 16;
-          updateGuiInputResolution([257, 353, 449, 513]);
-          updateGuiOutputStride([8, 16]);
-          updateGuiMultiplier([0.5, 0.75, 1.0]);
-        }
-        guiState.model.architecture = architecture;
-        reloadNetTestImageAndEstimatePoses(guiState.net);
-      });
+  const architectureController =
+      model.add(guiState.model, 'architecture', ['MobileNetV1', 'ResNet50']);
+  architectureController.onChange(async function(architecture) {
+    if (architecture.includes('ResNet50')) {
+      guiState.model.inputResolution = defaultResNetInputResolution;
+      guiState.model.outputStride = defaultResNetStride;
+      guiState.model.multiplier = defaultResNetMultiplier;
+      updateGuiInputResolution([257, 513]);
+      updateGuiOutputStride([32, 16]);
+      updateGuiMultiplier([1.0]);
+    } else {
+      guiState.model.inputResolution = defaultMobileNetInputResolution;
+      guiState.model.outputStride = defaultMobileNetStride;
+      guiState.model.multiplier = defaultMobileNetMultiplier;
+      updateGuiInputResolution([257, 353, 449, 513]);
+      updateGuiOutputStride([8, 16]);
+      updateGuiMultiplier([0.5, 0.75, 1.0]);
+    }
+    guiState.model.architecture = architecture;
+    reloadNetTestImageAndEstimatePoses(guiState.net);
+  });
+  guiState[TRY_RESNET50_BUTTON_TEXT] = function() {
+    architectureController.setValue('ResNet50')
+  };
+  gui.add(guiState, TRY_RESNET50_BUTTON_TEXT);
 
-  if (isMobile()) {
-    updateGuiInputResolution([257, 513]);
-    updateGuiOutputStride([8, 16]);
-    updateGuiMultiplier([0.5, 0.75, 1.0]);
-  } else {
+  if (guiState.model.architecture.includes('ResNet50')) {
     updateGuiInputResolution([257, 513]);
     updateGuiOutputStride([32, 16]);
     updateGuiMultiplier([1.0]);
+  } else {
+    updateGuiInputResolution([257, 513]);
+    updateGuiOutputStride([8, 16]);
+    updateGuiMultiplier([0.5, 0.75, 1.0]);
   }
 
 
