@@ -15,11 +15,32 @@
  * =============================================================================
  */
 
-import {Tensor} from '@tensorflow/tfjs';
-import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
+import {Tensor, test_util, util} from '@tensorflow/tfjs';
 
-export async function expectTensorsClose(value: Tensor, ref: Tensor) {
-  expect(value.dtype).toEqual(ref.dtype);
-  expect(value.shape).toEqual(ref.shape);
-  expectArraysClose(await value.data(), await ref.data());
+export function expectTensorsClose(
+    actual: Tensor|number[], expected: Tensor|number[], epsilon?: number) {
+  if (actual == null) {
+    throw new Error(
+        'First argument to expectTensorsClose() is not defined.');
+  }
+  if (expected == null) {
+    throw new Error(
+        'Second argument to expectTensorsClose() is not defined.');
+  }
+  if (actual instanceof Tensor && expected instanceof Tensor) {
+    if (actual.dtype !== expected.dtype) {
+      throw new Error(
+          `Data types do not match. Actual: '${actual.dtype}'. ` +
+          `Expected: '${expected.dtype}'`);
+    }
+    if (!util.arraysEqual(actual.shape, expected.shape)) {
+      throw new Error(
+          `Shapes do not match. Actual: [${actual.shape}]. ` +
+          `Expected: [${expected.shape}].`);
+    }
+  }
+  const actualData = actual instanceof Tensor ? actual.dataSync() : actual;
+  const expectedData =
+      expected instanceof Tensor ? expected.dataSync() : expected;
+  test_util.expectArraysClose(actualData, expectedData, epsilon);
 }
