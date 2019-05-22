@@ -18,7 +18,7 @@ import * as posenet from '@tensorflow-models/posenet';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 
-import {drawBoundingBox, drawKeypoints, drawSkeleton} from './demo_util';
+import {drawBoundingBox, drawKeypoints, drawSkeleton, TRY_RESNET50_BUTTON_TEXT} from './demo_util';
 
 const videoWidth = 600;
 const videoHeight = 500;
@@ -75,13 +75,21 @@ async function loadVideo() {
   return video;
 }
 
+const defaultMobileNetMultiplier = isMobile() ? 0.50 : 0.75;
+const defaultMobileNetStride = 16;
+const defaultMobileNetInputResolution = 513;
+
+const defaultResNetMultiplier = 1.0;
+const defaultResNetStride = 32;
+const defaultResNetInputResolution = 257;
+
 const guiState = {
   algorithm: 'multi-pose',
   input: {
-    architecture: isMobile() ? 'MobileNetV1' : 'ResNet50',
-    outputStride: isMobile() ? 16 : 32,
-    inputResolution: 257,
-    multiplier: isMobile() ? 0.50 : 1.0,
+    architecture: 'MobileNetV1',
+    outputStride: defaultMobileNetStride,
+    inputResolution: defaultMobileNetInputResolution,
+    multiplier: defaultMobileNetMultiplier,
   },
   singlePoseDetection: {
     minPoseConfidence: 0.1,
@@ -129,6 +137,10 @@ function setupGui(cameras, net) {
   const architectureController =
       input.add(guiState.input, 'architecture', ['MobileNetV1', 'ResNet50']);
   guiState.architecture = guiState.input.architecture;
+  guiState[TRY_RESNET50_BUTTON_TEXT] = function() {
+    architectureController.setValue('ResNet50')
+  };
+  gui.add(guiState, TRY_RESNET50_BUTTON_TEXT);
   // Input resolution:  Internally, this parameter affects the height and width
   // of the layers in the neural network. The higher the value of the input
   // resolution the better the accuracy but slower the speed.
@@ -186,13 +198,14 @@ function setupGui(cameras, net) {
   }
 
   if (guiState.input.architecture === 'MobileNetV1') {
-    updateGuiInputResolution(513, [257, 353, 449, 513]);
-    updateGuiOutputStride(16, [8, 16]);
-    updateGuiMultiplier(0.50, [0.50, 0.75, 1.0, 1.01])
+    updateGuiInputResolution(
+        defaultMobileNetInputResolution, [257, 353, 449, 513]);
+    updateGuiOutputStride(defaultMobileNetStride, [8, 16]);
+    updateGuiMultiplier(defaultMobileNetMultiplier, [0.50, 0.75, 1.0, 1.01])
   } else {  // guiState.input.architecture === "ResNet50"
-    updateGuiInputResolution(257, [257, 513]);
-    updateGuiOutputStride(32, [32, 16]);
-    updateGuiMultiplier(1.0, [1.0]);
+    updateGuiInputResolution(defaultResNetInputResolution, [257, 513]);
+    updateGuiOutputStride(defaultResNetStride, [32, 16]);
+    updateGuiMultiplier(defaultResNetMultiplier, [1.0]);
   }
 
   input.open();
@@ -227,13 +240,14 @@ function setupGui(cameras, net) {
   architectureController.onChange(function(architecture) {
     // if architecture is ResNet50, then show ResNet50 options
     if (architecture.includes('ResNet50')) {
-      updateGuiInputResolution(257, [257, 513]);
-      updateGuiOutputStride(32, [32, 16]);
-      updateGuiMultiplier(1.0, [1.0]);
+      updateGuiInputResolution(defaultResNetInputResolution, [257, 513]);
+      updateGuiOutputStride(defaultResNetStride, [32, 16]);
+      updateGuiMultiplier(defaultResNetMultiplier, [1.0]);
     } else {  // if architecture is MobileNet, then show MobileNet options
-      updateGuiInputResolution(513, [257, 353, 449, 513]);
-      updateGuiOutputStride(16, [8, 16]);
-      updateGuiMultiplier(0.50, [0.50, 0.75, 1.0, 1.01])
+      updateGuiInputResolution(
+          defaultMobileNetInputResolution, [257, 353, 449, 513]);
+      updateGuiOutputStride(defaultMobileNetStride, [8, 16]);
+      updateGuiMultiplier(defaultMobileNetMultiplier, [0.50, 0.75, 1.0, 1.01])
     }
     guiState.changeToArchitecture = architecture;
   });
