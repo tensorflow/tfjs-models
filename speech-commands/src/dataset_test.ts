@@ -394,7 +394,7 @@ describe('Dataset', () => {
     expect(out2.ys).toBeUndefined();
   });
 
-  it('getSpectrogramsAsTensors after removeExample', async () => {
+  it('getSpectrogramsAsTensors after removeExample', () => {
     const dataset = new Dataset();
     const [uid1, uid2] = addThreeExamplesToDataset(dataset);
 
@@ -402,7 +402,7 @@ describe('Dataset', () => {
     const out1 = dataset.getData(null, {shuffle: false}) as
         {xs: tf.Tensor, ys: tf.Tensor};
     expect(out1.xs.shape).toEqual([2, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
-    await expectTensorsClose(out1.ys, tf.tensor2d([[1, 0], [0, 1]]));
+    expectTensorsClose(out1.ys, tf.tensor2d([[1, 0], [0, 1]]));
 
     const out2 = dataset.getData('a') as {xs: tf.Tensor, ys: tf.Tensor};
     expect(out2.xs.shape).toEqual([1, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
@@ -425,14 +425,14 @@ describe('Dataset', () => {
         .toThrowError(/requires .* at least two words/);
   });
 
-  it('getSpectrogramsAsTensors without label', async () => {
+  it('getSpectrogramsAsTensors without label', () => {
     const dataset = new Dataset();
     addThreeExamplesToDataset(dataset);
 
     const out = dataset.getData(null, {shuffle: false}) as
         {xs: tf.Tensor, ys: tf.Tensor};
     expect(out.xs.shape).toEqual([3, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
-    await expectTensorsClose(out.ys, tf.tensor2d([[1, 0], [1, 0], [0, 1]]));
+    expectTensorsClose(out.ys, tf.tensor2d([[1, 0], [1, 0], [0, 1]]));
   });
 
   it('getSpectrogramsAsTensors without label as tf.data.Dataset', async () => {
@@ -552,7 +552,7 @@ describe('Dataset', () => {
         .toThrowError(/Cannot get spectrograms as tensors because.*empty/);
   });
 
-  it('Ragged example lengths and one window per example', async () => {
+  it('Ragged example lengths and one window per example', () => {
     const dataset = new Dataset();
     dataset.addExample(getFakeExample('foo', 5));
     dataset.addExample(getFakeExample('bar', 6));
@@ -562,7 +562,7 @@ describe('Dataset', () => {
         dataset.getData(null, {numFrames: 5, hopFrames: 5, shuffle: false}) as
         {xs: tf.Tensor, ys: tf.Tensor};
     expect(xs.shape).toEqual([3, 5, FAKE_FRAME_SIZE, 1]);
-    await expectTensorsClose(ys, tf.tensor2d([[1, 0], [0, 1], [0, 1]]));
+    expectTensorsClose(ys, tf.tensor2d([[1, 0], [0, 1], [0, 1]]));
   });
 
   it('Ragged example lengths and one window per example, with label', () => {
@@ -577,7 +577,7 @@ describe('Dataset', () => {
     expect(ys).toBeUndefined();
   });
 
-  it('Ragged example lengths and multiple windows per example', async () => {
+  it('Ragged example lengths and multiple windows per example', () => {
     const dataset = new Dataset();
     dataset.addExample(getFakeExample(
         'foo', 6, 2, [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
@@ -592,19 +592,19 @@ describe('Dataset', () => {
     const windows = tf.unstack(xs);
 
     expect(windows.length).toEqual(6);
-    await expectTensorsClose(
+    expectTensorsClose(
         windows[0], tf.tensor3d([1, 1, 2, 2, 3, 3], [3, 2, 1]));
-    await expectTensorsClose(
+    expectTensorsClose(
         windows[1], tf.tensor3d([2, 2, 3, 3, 2, 2], [3, 2, 1]));
-    await expectTensorsClose(
+    expectTensorsClose(
         windows[2], tf.tensor3d([3, 3, 2, 2, 1, 1], [3, 2, 1]));
-    await expectTensorsClose(
+    expectTensorsClose(
         windows[3], tf.tensor3d([10, 10, 20, 20, 30, 30], [3, 2, 1]));
-    await expectTensorsClose(
+    expectTensorsClose(
         windows[4], tf.tensor3d([20, 20, 30, 30, 20, 20], [3, 2, 1]));
-    await expectTensorsClose(
+    expectTensorsClose(
         windows[5], tf.tensor3d([30, 30, 20, 20, 10, 10], [3, 2, 1]));
-    await expectTensorsClose(
+    expectTensorsClose(
         ys, tf.tensor2d([[1, 0], [1, 0], [1, 0], [0, 1], [0, 1], [0, 1]]));
   });
 
@@ -638,7 +638,7 @@ describe('Dataset', () => {
   // TODO(cais): Test that augmentByNoise without BACKGROUND_NOISE tag leads to
   // Error.
 
-  it('getSpectrogramsAsTensors: normalize=true', async () => {
+  it('getSpectrogramsAsTensors: normalize=true', () => {
     const dataset = new Dataset();
     dataset.addExample(getFakeExample(
         'foo', 6, 2, [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
@@ -654,25 +654,25 @@ describe('Dataset', () => {
     expect(windows.length).toEqual(6);
     for (let i = 0; i < 6; ++i) {
       const {mean, variance} = tf.moments(windows[0]);
-      await expectTensorsClose(mean, tf.scalar(0));
-      await expectTensorsClose(variance, tf.scalar(1));
+      expectTensorsClose(mean, tf.scalar(0));
+      expectTensorsClose(variance, tf.scalar(1));
     }
-    await expectTensorsClose(
+    expectTensorsClose(
         windows[0], normalize(tf.tensor3d([1, 1, 2, 2, 3, 3], [3, 2, 1])));
-    await expectTensorsClose(
+    expectTensorsClose(
         windows[1], normalize(tf.tensor3d([2, 2, 3, 3, 2, 2], [3, 2, 1])));
-    await expectTensorsClose(
+    expectTensorsClose(
         windows[2], normalize(tf.tensor3d([3, 3, 2, 2, 1, 1], [3, 2, 1])));
-    await expectTensorsClose(
+    expectTensorsClose(
         windows[3],
         normalize(tf.tensor3d([10, 10, 20, 20, 30, 30], [3, 2, 1])));
-    await expectTensorsClose(
+    expectTensorsClose(
         windows[4],
         normalize(tf.tensor3d([20, 20, 30, 30, 20, 20], [3, 2, 1])));
-    await expectTensorsClose(
+    expectTensorsClose(
         windows[5],
         normalize(tf.tensor3d([30, 30, 20, 20, 10, 10], [3, 2, 1])));
-    await expectTensorsClose(
+    expectTensorsClose(
         ys, tf.tensor2d([[1, 0], [1, 0], [1, 0], [0, 1], [0, 1], [0, 1]]));
   });
 
@@ -727,7 +727,7 @@ describe('Dataset', () => {
     expect(variance.max().dataSync()[0]).toEqual(0);
   });
 
-  it('Uniform example lengths and multiple windows per example', async () => {
+  it('Uniform example lengths and multiple windows per example', () => {
     const dataset = new Dataset();
     dataset.addExample(getFakeExample(
         'foo', 6, 2, [10, 10, 20, 20, 30, 30, 20, 20, 10, 10, 0, 0]));
@@ -741,20 +741,20 @@ describe('Dataset', () => {
         {xs: tf.Tensor, ys: tf.Tensor};
     const windows = tf.unstack(xs);
     expect(windows.length).toEqual(4);
-    await expectTensorsClose(
+    expectTensorsClose(
         windows[0], tf.tensor3d([0, 0, 1, 1, 2, 2, 3, 3, 2, 2], [5, 2, 1]));
-    await expectTensorsClose(
+    expectTensorsClose(
         windows[1], tf.tensor3d([1, 1, 2, 2, 3, 3, 2, 2, 1, 1], [5, 2, 1]));
-    await expectTensorsClose(
+    expectTensorsClose(
         windows[2],
         tf.tensor3d([10, 10, 20, 20, 30, 30, 20, 20, 10, 10], [5, 2, 1]));
-    await expectTensorsClose(
+    expectTensorsClose(
         windows[3],
         tf.tensor3d([20, 20, 30, 30, 20, 20, 10, 10, 0, 0], [5, 2, 1]));
-    await expectTensorsClose(ys, tf.tensor2d([[1, 0], [1, 0], [0, 1], [0, 1]]));
+    expectTensorsClose(ys, tf.tensor2d([[1, 0], [1, 0], [0, 1], [0, 1]]));
   });
 
-  it('Ragged examples containing background noise', async () => {
+  it('Ragged examples containing background noise', () => {
     const dataset = new Dataset();
     dataset.addExample(getFakeExample(
         BACKGROUND_NOISE_TAG, 7, 2,
@@ -768,15 +768,15 @@ describe('Dataset', () => {
         {xs: tf.Tensor, ys: tf.Tensor};
     const windows = tf.unstack(xs);
     expect(windows.length).toEqual(4);
-    await expectTensorsClose(
+    expectTensorsClose(
         windows[0], tf.tensor3d([0, 0, 10, 10, 20, 20], [3, 2, 1]));
-    await expectTensorsClose(
+    expectTensorsClose(
         windows[1], tf.tensor3d([20, 20, 30, 30, 20, 20], [3, 2, 1]));
-    await expectTensorsClose(
+    expectTensorsClose(
         windows[2], tf.tensor3d([20, 20, 10, 10, 0, 0], [3, 2, 1]));
-    await expectTensorsClose(
+    expectTensorsClose(
         windows[3], tf.tensor3d([2, 2, 3, 3, 2, 2], [3, 2, 1]));
-    await expectTensorsClose(ys, tf.tensor2d([[1, 0], [1, 0], [1, 0], [0, 1]]));
+    expectTensorsClose(ys, tf.tensor2d([[1, 0], [1, 0], [1, 0], [0, 1]]));
   });
 
   it('numFrames exceeding minmum example length leads to Error', () => {
@@ -969,7 +969,7 @@ describe('Dataset serialization', () => {
     ])).toThrowError(/\"gralk\" does not exist/);
   });
 
-  it('Dataset serialize-deserialize round trip', async () => {
+  it('Dataset serialize-deserialize round trip', () => {
     const dataset = new Dataset();
     const ex1 = getRandomExample('foo', 10, 16);
     const ex2 = getRandomExample('bar', 10, 16);
@@ -1019,7 +1019,7 @@ describe('Dataset serialization', () => {
     const {xs, ys} = datasetPrime.getData(null, {shuffle: false}) as
         {xs: tf.Tensor, ys: tf.Tensor};
     expect(xs.shape).toEqual([4, 10, 16, 1]);
-    await expectTensorsClose(
+    expectTensorsClose(
         ys, tf.tensor2d([[1, 0, 0], [0, 1, 0], [0, 1, 0], [0, 0, 1]]));
   });
 
@@ -1029,7 +1029,7 @@ describe('Dataset serialization', () => {
         .toThrowError(/Cannot serialize empty Dataset/);
   });
 
-  it('Deserialized dataset supports removeExample', async () => {
+  it('Deserialized dataset supports removeExample', () => {
     const dataset = new Dataset();
     const ex1 = getRandomExample('foo', 10, 16);
     const ex2 = getRandomExample('bar', 10, 16);
@@ -1049,7 +1049,7 @@ describe('Dataset serialization', () => {
     const {xs, ys} = datasetPrime.getData(null, {shuffle: false}) as
         {xs: tf.Tensor, ys: tf.Tensor};
     expect(xs.shape).toEqual([3, 10, 16, 1]);
-    await expectTensorsClose(
+    expectTensorsClose(
         ys, tf.tensor2d([[1, 0, 0], [0, 1, 0], [0, 0, 1]]));
   });
 
@@ -1284,30 +1284,30 @@ describe('getValidWindows', () => {
 });
 
 describe('spectrogram2IntensityCurve', () => {
-  it('Correctness', async () => {
+  it('Correctness', () => {
     const x = tf.tensor2d([[1, 2], [3, 4], [5, 6]]);
     const spectrogram:
         SpectrogramData = {data: x.dataSync() as Float32Array, frameSize: 2};
     const intensityCurve = spectrogram2IntensityCurve(spectrogram);
-    await expectTensorsClose(intensityCurve, tf.tensor1d([1.5, 3.5, 5.5]));
+    expectTensorsClose(intensityCurve, tf.tensor1d([1.5, 3.5, 5.5]));
   });
 });
 
 describe('getMaxIntensityFrameIndex', () => {
-  it('Multiple frames', async () => {
+  it('Multiple frames', () => {
     const x = tf.tensor2d([[1, 2], [11, 12], [3, 4], [51, 52], [5, 6]]);
     const spectrogram:
         SpectrogramData = {data: x.dataSync() as Float32Array, frameSize: 2};
     const maxIntensityFrameIndex = getMaxIntensityFrameIndex(spectrogram);
-    await expectTensorsClose(maxIntensityFrameIndex, tf.scalar(3, 'int32'));
+    expectTensorsClose(maxIntensityFrameIndex, tf.scalar(3, 'int32'));
   });
 
-  it('Only one frames', async () => {
+  it('Only one frames', () => {
     const x = tf.tensor2d([[11, 12]]);
     const spectrogram:
         SpectrogramData = {data: x.dataSync() as Float32Array, frameSize: 2};
     const maxIntensityFrameIndex = getMaxIntensityFrameIndex(spectrogram);
-    await expectTensorsClose(maxIntensityFrameIndex, tf.scalar(0, 'int32'));
+    expectTensorsClose(maxIntensityFrameIndex, tf.scalar(0, 'int32'));
   });
 
   it('No focus frame: return multiple windows', () => {
