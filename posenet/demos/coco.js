@@ -22,8 +22,6 @@ import dat from 'dat.gui';
 import {
   drawBoundingBox,
   drawKeypoints,
-  drawPoint,
-  drawSegment,
   drawSkeleton,
   renderImageToCanvas,
 } from './demo_util';
@@ -58,7 +56,17 @@ const images = [
   'two_on_bench.jpg',
 ];
 
-const {partIds, poseChain} = posenet;
+function isAndroid() {
+  return /Android/i.test(navigator.userAgent);
+}
+
+function isiOS() {
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+function isMobile() {
+  return isAndroid() || isiOS();
+}
 
 /**
  * Draws a pose if it passes a minimum confidence onto a canvas.
@@ -66,20 +74,19 @@ const {partIds, poseChain} = posenet;
  */
 function drawResults(canvas, poses, minPartConfidence, minPoseConfidence) {
   renderImageToCanvas(image, [513, 513], canvas);
+  const ctx = canvas.getContext('2d');
   poses.forEach((pose) => {
     if (pose.score >= minPoseConfidence) {
       if (guiState.showKeypoints) {
-        drawKeypoints(
-            pose.keypoints, minPartConfidence, canvas.getContext('2d'));
+        drawKeypoints(pose.keypoints, minPartConfidence, ctx);
       }
 
       if (guiState.showSkeleton) {
-        drawSkeleton(
-            pose.keypoints, minPartConfidence, canvas.getContext('2d'));
+        drawSkeleton(pose.keypoints, minPartConfidence, ctx);
       }
 
       if (guiState.showBoundingBox) {
-        drawBoundingBox(pose.keypoints, canvas.getContext('2d'));
+        drawBoundingBox(pose.keypoints, ctx);
       }
     }
   });
@@ -101,215 +108,21 @@ async function loadImage(imagePath) {
   return promise;
 }
 
-function singlePersonCanvas() {
-  return document.querySelector('#single canvas');
-}
-
 function multiPersonCanvas() {
   return document.querySelector('#multi canvas');
 }
 
-/**
- * Draw the results from the single-pose estimation on to a canvas
- */
-function drawSinglePoseResults(pose) {
-  const canvas = singlePersonCanvas();
-  drawResults(
-      canvas, [pose], guiState.singlePoseDetection.minPartConfidence,
-      guiState.singlePoseDetection.minPoseConfidence);
-
-  const {part, showHeatmap, showOffsets} = guiState.visualizeOutputs;
-  // displacements not used for single pose decoding
-  const showDisplacements = false;
-  const partId = +part;
-
-  visualizeOutputs(
-      partId, showHeatmap, showOffsets, showDisplacements,
-      canvas.getContext('2d'));
-}
+let image = null;
+let predictedPoses = null;
 
 /**
  * Draw the results from the multi-pose estimation on to a canvas
  */
-function drawMultiplePosesResults(poses) {
+function drawMultiplePosesResults() {
   const canvas = multiPersonCanvas();
   drawResults(
-      canvas, poses, guiState.multiPoseDetection.minPartConfidence,
+      canvas, predictedPoses, guiState.multiPoseDetection.minPartConfidence,
       guiState.multiPoseDetection.minPoseConfidence);
-
-  const {part, showHeatmap, showOffsets, showDisplacements} =
-      guiState.visualizeOutputs;
-  const partId = +part;
-
-  visualizeOutputs(
-      partId, showHeatmap, showOffsets, showDisplacements,
-      canvas.getContext('2d'));
-}
-
-/**
- * Define the skeleton by part id. This is used in multi-pose estimation. This
- *defines the parent->child relationships of our tree. Arbitrarily this defines
- *the nose as the root of the tree.
- **/
-const parentChildrenTuples = poseChain.map(
-    ([parentJoinName, childJoinName]) =>
-        ([partIds[parentJoinName], partIds[childJoinName]]));
-
-/**
- * Parent to child edges from the skeleton indexed by part id.  Indexes the edge
- * ids by the part ids.
- */
-const parentToChildEdges =
-    parentChildrenTuples.reduce((result, [partId], i) => {
-      if (result[partId]) {
-        result[partId] = [...result[partId], i];
-      } else {
-        result[partId] = [i];
-      }
-
-      return result;
-    }, {});
-
-/**
- * Child to parent edges from the skeleton indexed by part id.  Indexes the edge
- * ids by the part ids.
- */
-const childToParentEdges =
-    parentChildrenTuples.reduce((result, [, partId], i) => {
-      if (result[partId]) {
-        result[partId] = [...result[partId], i];
-      } else {
-        result[partId] = [i];
-      }
-
-      return result;
-    }, {});
-
-
-function drawOffsetVector(
-    ctx, y, x, outputStride, offsetsVectorY, offsetsVectorX) {
-  drawSegment(
-      [y * outputStride, x * outputStride],
-      [y * outputStride + offsetsVectorY, x * outputStride + offsetsVectorX],
-      'red', 1., ctx);
-}
-
-function drawDisplacementEdgesFrom(
-    ctx, partId, displacements, outputStride, edges, y, x, offsetsVectorY,
-    offsetsVectorX) {
-  const numEdges = displacements.shape[2] / 2;
-
-  const offsetX = x * outputStride + offsetsVectorX;
-  const offsetY = y * outputStride + offsetsVectorY;
-
-  const edgeIds = edges[partId] || [];
-
-  if (edgeIds.length > 0) {
-    const displArr = displacements.arraySync();
-    edgeIds.forEach((edgeId) => {
-      const displacementY = displArr[y][x][edgeId];
-      const displacementX = displArr[y][x][edgeId + numEdges];
-
-      drawSegment(
-          [offsetY, offsetX],
-          [offsetY + displacementY, offsetX + displacementX], 'blue', 1., ctx);
-    });
-  }
-}
-
-/**
- * Visualizes the outputs from the model which are used for decoding poses.
- * Limited to visualizing the outputs for a single part.
- *
- * @param partId The id of the part to visualize
- *
- */
-function visualizeOutputs(
-    partId, drawHeatmaps, drawOffsetVectors, drawDisplacements, ctx) {
-  const {heatmapScores, offsets, displacementFwd, displacementBwd} =
-      modelOutputs;
-  const outputStride = +guiState.outputStride;
-
-  const [height, width] = heatmapScores.shape;
-
-  ctx.globalAlpha = 0;
-  const heatmapScoresArr = heatmapScores.arraySync();
-  const offsetsArr = offsets.arraySync();
-
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const score = heatmapScoresArr[y][x][partId];
-
-      // to save on performance, don't draw anything with a low score.
-      if (score < 0.05) continue;
-
-      // set opacity of drawn elements based on the score
-      ctx.globalAlpha = score;
-
-      if (drawHeatmaps) {
-        drawPoint(ctx, y * outputStride, x * outputStride, 2, 'yellow');
-      }
-
-      const offsetsVectorY = offsetsArr[y][x][partId];
-      const offsetsVectorX = offsetsArr[y][x][partId + 17];
-
-      if (drawOffsetVectors) {
-        drawOffsetVector(
-            ctx, y, x, outputStride, offsetsVectorY, offsetsVectorX);
-      }
-
-      if (drawDisplacements) {
-        // exponentially affect the alpha of the displacements;
-        ctx.globalAlpha *= score;
-
-        drawDisplacementEdgesFrom(
-            ctx, partId, displacementFwd, outputStride, parentToChildEdges, y,
-            x, offsetsVectorY, offsetsVectorX);
-
-        drawDisplacementEdgesFrom(
-            ctx, partId, displacementBwd, outputStride, childToParentEdges, y,
-            x, offsetsVectorY, offsetsVectorX);
-      }
-    }
-
-    ctx.globalAlpha = 1;
-  }
-}
-
-/**
- * Converts the raw model output results into single-pose estimation results
- */
-async function decodeSinglePoseAndDrawResults() {
-  if (!modelOutputs) {
-    return;
-  }
-
-  const pose = await posenet.decodeSinglePose(
-      modelOutputs.heatmapScores, modelOutputs.offsets, guiState.outputStride);
-
-  drawSinglePoseResults(pose);
-}
-
-/**
- * Converts the raw model output results into multi-pose estimation results
- */
-async function decodeMultiplePosesAndDrawResults() {
-  if (!modelOutputs) {
-    return;
-  }
-
-  const poses = await posenet.decodeMultiplePoses(
-      modelOutputs.heatmapScores, modelOutputs.offsets,
-      modelOutputs.displacementFwd, modelOutputs.displacementBwd,
-      guiState.outputStride, guiState.multiPoseDetection.maxDetections,
-      guiState.multiPoseDetection);
-
-  drawMultiplePosesResults(poses);
-}
-
-function decodeSingleAndMultiplePoses() {
-  decodeSinglePoseAndDrawResults();
-  decodeMultiplePosesAndDrawResults();
 }
 
 function setStatusText(text) {
@@ -317,18 +130,12 @@ function setStatusText(text) {
   resultElement.innerText = text;
 }
 
-let image = null;
-let modelOutputs = null;
-
 /**
  * Purges variables and frees up GPU memory using dispose() method
  */
-function disposeModelOutputs() {
-  if (modelOutputs) {
-    modelOutputs.heatmapScores.dispose();
-    modelOutputs.offsets.dispose();
-    modelOutputs.displacementFwd.dispose();
-    modelOutputs.displacementBwd.dispose();
+function disposePoses() {
+  if (predictedPoses) {
+    predictedPoses = null;
   }
 }
 
@@ -341,7 +148,7 @@ async function testImageAndEstimatePoses(net) {
   document.getElementById('results').style.display = 'none';
 
   // Purge prevoius variables and free up GPU memory
-  disposeModelOutputs();
+  disposePoses();
 
   // Load an example image
   image = await loadImage(guiState.image);
@@ -349,113 +156,175 @@ async function testImageAndEstimatePoses(net) {
   // Creates a tensor from an image
   const input = tf.browser.fromPixels(image);
 
-  // Stores the raw model outputs from both single- and multi-pose results can
-  // be decoded.
-  // Normally you would call estimateSinglePose or estimateMultiplePoses,
-  // but by calling this method we can previous the outputs of the model and
-  // visualize them.
-  modelOutputs = await net.predictForMultiPose(input, guiState.outputStride);
+  // Estimates poses
+  const poses = await net.estimatePoses(input, {
+    flipHorizontal: false,
+    decodingMethod: 'multi-person',
+    maxDetections: guiState.multiPoseDetection.maxDetections,
+    scoreThreshold: guiState.multiPoseDetection.minPartConfidence,
+    nmsRadius: guiState.multiPoseDetection.nmsRadius
+  });
+  predictedPoses = poses;
 
-  // Process the model outputs to convert into poses
-  await decodeSingleAndMultiplePoses();
+  // Draw poses.
+  drawMultiplePosesResults();
 
   setStatusText('');
   document.getElementById('results').style.display = 'block';
   input.dispose();
 }
 
-let guiState;
+/**
+ * Reloads PoseNet, then loads an image, feeds it into posenet, and
+ * calculates poses based on the model outputs
+ */
+async function reloadNetTestImageAndEstimatePoses(net) {
+  if (guiState.net) {
+    guiState.net.dispose();
+  }
+  guiState.net = await posenet.load({
+    architecture: guiState.model.architecture,
+    outputStride: guiState.model.outputStride,
+    inputResolution: guiState.model.inputResolution,
+    multiplier: guiState.model.multiplier
+  });
+  testImageAndEstimatePoses(guiState.net);
+}
+
+let guiState = {
+  net: null,
+  model: {
+    architecture: isMobile() ? 'MobileNetV1 0.50' : 'ResNet50',
+    outputStride: isMobile() ? 16 : 32,
+    inputResolution: 257,
+    multiplier: isMobile() ? 0.5 : 1.0
+  },
+  image: 'tennis_in_crowd.jpg',
+  multiPoseDetection: {
+    minPartConfidence: 0.1,
+    minPoseConfidence: 0.2,
+    nmsRadius: 20.0,
+    maxDetections: 15,
+  },
+  showKeypoints: true,
+  showSkeleton: true,
+  showBoundingBox: false,
+};
 
 function setupGui(net) {
-  guiState = {
-    outputStride: 16,
-    image: 'tennis_in_crowd.jpg',
-    detectPoseButton: () => {
-      testImageAndEstimatePoses(net);
-    },
-    singlePoseDetection: {
-      minPartConfidence: 0.5,
-      minPoseConfidence: 0.5,
-    },
-    multiPoseDetection: {
-      minPartConfidence: 0.5,
-      minPoseConfidence: 0.5,
-      scoreThreshold: 0.5,
-      nmsRadius: 20.0,
-      maxDetections: 15,
-    },
-    showKeypoints: true,
-    showSkeleton: true,
-    showBoundingBox: false,
-    visualizeOutputs: {
-      part: 0,
-      showHeatmap: false,
-      showOffsets: false,
-      showDisplacements: false,
-    },
-  };
-
+  guiState.net = net;
   const gui = new dat.GUI();
+  // Input resolution:  Internally, this parameter affects the height and width
+  // of the layers in the neural network. The higher the value of the input
+  // resolution the better the accuracy but slower the speed.
+  const model = gui.addFolder('Model');
+  model.open();
+  let inputResolutionController = null;
+  function updateGuiInputResolution(inputResolutionArray) {
+    if (inputResolutionController) {
+      inputResolutionController.remove();
+    }
+    inputResolutionController =
+        model.add(guiState.model, 'inputResolution', inputResolutionArray);
+    inputResolutionController.onChange(async function(inputResolution) {
+      guiState.model.inputResolution = +inputResolution;
+      reloadNetTestImageAndEstimatePoses(guiState.net);
+    });
+  }
   // Output stride:  Internally, this parameter affects the height and width of
   // the layers in the neural network. The lower the value of the output stride
   // the higher the accuracy but slower the speed, the higher the value the
   // faster the speed but lower the accuracy.
-  gui.add(guiState, 'outputStride', [8, 16, 32]).onChange((outputStride) => {
-    guiState.outputStride = +outputStride;
-    testImageAndEstimatePoses(net);
-  });
-  gui.add(guiState, 'image', images)
-      .onChange(() => testImageAndEstimatePoses(net));
+  let outputStrideController = null;
+  function updateGuiOutputStride(outputStrideArray) {
+    if (outputStrideController) {
+      outputStrideController.remove();
+    }
+    outputStrideController =
+        model.add(guiState.model, 'outputStride', outputStrideArray);
+    outputStrideController.onChange((outputStride) => {
+      guiState.model.outputStride = +outputStride;
+      reloadNetTestImageAndEstimatePoses(guiState.net);
+    });
+  }
 
+  // Multiplier: this parameter affects the number of feature map channels in
+  // the MobileNet. The higher the value, the higher the accuracy but slower the
+  // speed, the lower the value the faster the speed but lower the accuracy.
+  let multiplierController = null;
+  function updateGuiMultiplier(multiplierArray) {
+    if (multiplierController) {
+      multiplierController.remove();
+    }
+    multiplierController =
+        model.add(guiState.model, 'multiplier', multiplierArray);
+    multiplierController.onChange((multiplier) => {
+      guiState.model.multiplier = +multiplier;
+      reloadNetTestImageAndEstimatePoses(guiState.net);
+    });
+  }
+
+  // Architecture: there are a few PoseNet models varying in size and
+  // accuracy. 1.01 is the largest, but will be the slowest. 0.50 is the
+  // fastest, but least accurate.
+  model.add(guiState.model, 'architecture', ['MobileNetV1', 'ResNet50'])
+      .onChange(async function(architecture) {
+        console.log('architecture change', architecture);
+        if (architecture.includes('ResNet50')) {
+          guiState.model.inputResolution = 257;
+          guiState.model.outputStride = 32;
+          updateGuiInputResolution([257, 513]);
+          updateGuiOutputStride([32, 16]);
+          updateGuiMultiplier([1.0]);
+        } else {
+          guiState.model.inputResolution = 513;
+          guiState.model.outputStride = 16;
+          updateGuiInputResolution([257, 353, 449, 513]);
+          updateGuiOutputStride([8, 16]);
+          updateGuiMultiplier([0.5, 0.75, 1.0]);
+        }
+        guiState.model.architecture = architecture;
+        reloadNetTestImageAndEstimatePoses(guiState.net);
+      });
+
+  if (isMobile()) {
+    updateGuiInputResolution([257, 513]);
+    updateGuiOutputStride([8, 16]);
+    updateGuiMultiplier([0.5, 0.75, 1.0]);
+  } else {
+    updateGuiInputResolution([257, 513]);
+    updateGuiOutputStride([32, 16]);
+    updateGuiMultiplier([1.0]);
+  }
+
+
+  gui.add(guiState, 'image', images)
+      .onChange(() => testImageAndEstimatePoses(guiState.net));
   // Pose confidence: the overall confidence in the estimation of a person's
   // pose (i.e. a person detected in a frame)
   // Min part confidence: the confidence that a particular estimated keypoint
   // position is accurate (i.e. the elbow's position)
-
   const multiPoseDetection = gui.addFolder('Multi Pose Estimation');
   multiPoseDetection.open();
   multiPoseDetection
       .add(guiState.multiPoseDetection, 'minPartConfidence', 0.0, 1.0)
-      .onChange(decodeMultiplePosesAndDrawResults);
+      .onChange(drawMultiplePosesResults);
   multiPoseDetection
       .add(guiState.multiPoseDetection, 'minPoseConfidence', 0.0, 1.0)
-      .onChange(decodeMultiplePosesAndDrawResults);
+      .onChange(drawMultiplePosesResults);
 
   // nms Radius: controls the minimum distance between poses that are returned
   // defaults to 20, which is probably fine for most use cases
   multiPoseDetection.add(guiState.multiPoseDetection, 'nmsRadius', 0.0, 40.0)
-      .onChange(decodeMultiplePosesAndDrawResults);
+      .onChange(() => testImageAndEstimatePoses(guiState.net));
   multiPoseDetection.add(guiState.multiPoseDetection, 'maxDetections')
       .min(1)
       .max(20)
       .step(1)
-      .onChange(decodeMultiplePosesAndDrawResults);
-
-  const singlePoseDetection = gui.addFolder('Single Pose Estimation');
-  singlePoseDetection
-      .add(guiState.singlePoseDetection, 'minPartConfidence', 0.0, 1.0)
-      .onChange(decodeSinglePoseAndDrawResults);
-  singlePoseDetection
-      .add(guiState.singlePoseDetection, 'minPoseConfidence', 0.0, 1.0)
-      .onChange(decodeSinglePoseAndDrawResults);
-  singlePoseDetection.open();
-
-  gui.add(guiState, 'showKeypoints').onChange(decodeSingleAndMultiplePoses);
-  gui.add(guiState, 'showSkeleton').onChange(decodeSingleAndMultiplePoses);
-  gui.add(guiState, 'showBoundingBox').onChange(decodeSingleAndMultiplePoses);
-
-  const visualizeOutputs = gui.addFolder('Visualize Outputs');
-
-  visualizeOutputs.add(guiState.visualizeOutputs, 'part', posenet.partIds)
-      .onChange(decodeSingleAndMultiplePoses);
-  visualizeOutputs.add(guiState.visualizeOutputs, 'showHeatmap')
-      .onChange(decodeSingleAndMultiplePoses);
-  visualizeOutputs.add(guiState.visualizeOutputs, 'showOffsets')
-      .onChange(decodeSingleAndMultiplePoses);
-  visualizeOutputs.add(guiState.visualizeOutputs, 'showDisplacements')
-      .onChange(decodeSingleAndMultiplePoses);
-
-  visualizeOutputs.open();
+      .onChange(() => testImageAndEstimatePoses(guiState.net));
+  gui.add(guiState, 'showKeypoints').onChange(drawMultiplePosesResults);
+  gui.add(guiState, 'showSkeleton').onChange(drawMultiplePosesResults);
+  gui.add(guiState, 'showBoundingBox').onChange(drawMultiplePosesResults);
 }
 
 /**
@@ -463,11 +332,17 @@ function setupGui(net) {
  * poses on a default image
  */
 export async function bindPage() {
-  const net = await posenet.load();
+  const net = await posenet.load({
+    architecture: guiState.model.architecture,
+    outputStride: guiState.model.outputStride,
+    inputResolution: guiState.model.inputResolution,
+    multiplier: guiState.model.multiplier
+  });
 
   setupGui(net);
 
   await testImageAndEstimatePoses(net);
+
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'block';
 }
