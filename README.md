@@ -17,23 +17,29 @@ and can be used as building blocks in other apps.
 ## Models
 
 ### Image
-- [MobileNet](https://github.com/tensorflow/tfjs-models/tree/master/mobilenet) - Classify images with labels from the [ImageNet database](http://www.image-net.org/).
+
+- [MobileNet](./mobilenet) - Classify images with labels from the [ImageNet database](http://www.image-net.org/).
   - `npm i @tensorflow-models/mobilenet`
-- [PoseNet](https://github.com/tensorflow/tfjs-models/tree/master/posenet) - Realtime pose detection. Blog post [here](https://medium.com/tensorflow/real-time-human-pose-estimation-in-the-browser-with-tensorflow-js-7dd0bc881cd5).
+- [PoseNet](./posenet) - Realtime pose detection. Blog post [here](https://medium.com/tensorflow/real-time-human-pose-estimation-in-the-browser-with-tensorflow-js-7dd0bc881cd5).
   - `npm i @tensorflow-models/posenet`
-- [Coco SSD](https://github.com/tensorflow/tfjs-models/tree/master/coco-ssd) - Object detection based on the [TensorFlow object detection API](https://github.com/tensorflow/models/blob/master/research/object_detection/README.md).
+- [Coco SSD](./coco-ssd) - Object detection based on the [TensorFlow object detection API](https://github.com/tensorflow/models/blob/master/research/object_detection/README.md).
   - `npm i @tensorflow-models/coco-ssd`
 
 ### Audio
-- [Speech Commands](https://github.com/tensorflow/tfjs-models/tree/master/speech-commands) - Classify 1 second audio snippets from the [speech commands dataset](https://www.tensorflow.org/tutorials/sequences/audio_recognition).
+
+- [Speech Commands](./speech-commands) - Classify 1 second audio snippets from the [speech commands dataset](https://www.tensorflow.org/tutorials/sequences/audio_recognition).
   - `npm i @tensorflow-models/speech-commands`
-  
+
 ### Text
+
 - [Universal Sentence Encoder](./universal-sentence-encoder) - A model that encodes English text into 512-dimensional embeddings.
+  - `npm i @tensorflow-models/universal-sentence-encoder`
 - [Text Toxicity](./toxicity) - Detects and classifies toxic content such as threats, insults, and obscenities in English text inputs.
+  - `npm i @tensorflow-models/toxicity`
 
 ### General utilities
-- [KNN Classifier](https://github.com/tensorflow/tfjs-models/tree/master/knn-classifier) - Create a custom k-nearest neighbors classifier. Can be used for transfer learning.
+
+- [KNN Classifier](./knn-classifier) - Create a custom k-nearest neighbors classifier. Can be used for transfer learning.
   - `npm i @tensorflow-models/knn-classifier`
 
 ## Development
@@ -43,7 +49,7 @@ inside a directory:
 
 `yarn test`
 
-New models should have a test NPM script.
+New models should have a test NPM script (see [this](./mobilenet/package.json) `package.json` and `run_tests.ts` [helper](./mobilenet/run_tests.ts) for reference).
 
 To run all of the tests, you can run the following command from the root of this
 repo:
