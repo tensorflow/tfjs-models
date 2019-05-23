@@ -18,7 +18,7 @@ import * as posenet from '@tensorflow-models/posenet';
 import * as tf from '@tensorflow/tfjs';
 import dat from 'dat.gui';
 
-import {TRY_RESNET50_BUTTON_TEXT} from './demo_util';
+import {setDatGuiPropertyCss} from './demo_util';
 
 // clang-format off
 import {
@@ -224,6 +224,20 @@ let guiState = {
 function setupGui(net) {
   guiState.net = net;
   const gui = new dat.GUI();
+
+  let architectureController = null;
+  const tryResNetButtonName = 'tryResNetButton';
+  const tryResNetButtonText = '[New] Try ResNet50';
+  const tryResNetButtonTextCss = 'width:100%;text-decoration:underline;';
+  const tryResNetButtonBackgroundCss = 'background:#e61d5f;';
+  guiState[tryResNetButtonName] = function() {
+    architectureController.setValue('ResNet50')
+  };
+  gui.add(guiState, tryResNetButtonName).name(tryResNetButtonText);
+  setDatGuiPropertyCss(
+      tryResNetButtonText, tryResNetButtonBackgroundCss,
+      tryResNetButtonTextCss);
+
   // Input resolution:  Internally, this parameter affects the height and width
   // of the layers in the neural network. The higher the value of the input
   // resolution the better the accuracy but slower the speed.
@@ -277,7 +291,7 @@ function setupGui(net) {
   // Architecture: there are a few PoseNet models varying in size and
   // accuracy. 1.01 is the largest, but will be the slowest. 0.50 is the
   // fastest, but least accurate.
-  const architectureController =
+  architectureController =
       model.add(guiState.model, 'architecture', ['MobileNetV1', 'ResNet50']);
   architectureController.onChange(async function(architecture) {
     if (architecture.includes('ResNet50')) {
@@ -298,10 +312,6 @@ function setupGui(net) {
     guiState.model.architecture = architecture;
     reloadNetTestImageAndEstimatePoses(guiState.net);
   });
-  guiState[TRY_RESNET50_BUTTON_TEXT] = function() {
-    architectureController.setValue('ResNet50')
-  };
-  gui.add(guiState, TRY_RESNET50_BUTTON_TEXT);
 
   if (guiState.model.architecture.includes('ResNet50')) {
     updateGuiInputResolution([257, 513]);

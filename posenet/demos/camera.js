@@ -18,7 +18,7 @@ import * as posenet from '@tensorflow-models/posenet';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 
-import {drawBoundingBox, drawKeypoints, drawSkeleton, TRY_RESNET50_BUTTON_TEXT} from './demo_util';
+import {drawBoundingBox, drawKeypoints, drawSkeleton, setDatGuiPropertyCss} from './demo_util';
 
 const videoWidth = 600;
 const videoHeight = 500;
@@ -122,6 +122,19 @@ function setupGui(cameras, net) {
 
   const gui = new dat.GUI({width: 300});
 
+  let architectureController = null;
+  const tryResNetButtonName = 'tryResNetButton';
+  const tryResNetButtonText = '[New] Try ResNet50';
+  const tryResNetButtonTextCss = 'width:100%;text-decoration:underline;';
+  const tryResNetButtonBackgroundCss = 'background:#e61d5f;';
+  guiState[tryResNetButtonName] = function() {
+    architectureController.setValue('ResNet50')
+  };
+  gui.add(guiState, tryResNetButtonName).name(tryResNetButtonText);
+  setDatGuiPropertyCss(
+      tryResNetButtonText, tryResNetButtonBackgroundCss,
+      tryResNetButtonTextCss);
+
   // The single-pose algorithm is faster and simpler but requires only one
   // person to be in the frame or results will be innaccurate. Multi-pose works
   // for more than 1 person
@@ -134,13 +147,9 @@ function setupGui(cameras, net) {
   // Architecture: there are a few PoseNet models varying in size and
   // accuracy. 1.01 is the largest, but will be the slowest. 0.50 is the
   // fastest, but least accurate.
-  const architectureController =
+  architectureController =
       input.add(guiState.input, 'architecture', ['MobileNetV1', 'ResNet50']);
   guiState.architecture = guiState.input.architecture;
-  guiState[TRY_RESNET50_BUTTON_TEXT] = function() {
-    architectureController.setValue('ResNet50')
-  };
-  gui.add(guiState, TRY_RESNET50_BUTTON_TEXT);
   // Input resolution:  Internally, this parameter affects the height and width
   // of the layers in the neural network. The higher the value of the input
   // resolution the better the accuracy but slower the speed.
@@ -160,7 +169,6 @@ function setupGui(cameras, net) {
       guiState.changeToInputResolution = inputResolution;
     });
   }
-
 
   // Output stride:  Internally, this parameter affects the height and width of
   // the layers in the neural network. The lower the value of the output stride
