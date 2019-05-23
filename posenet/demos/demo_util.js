@@ -23,6 +23,20 @@ const color = 'aqua';
 const boundingBoxColor = 'red';
 const lineWidth = 2;
 
+export function setDatGuiPropertyCss(
+    propertyName, liCssString, spanCssString = '') {
+  var spans = document.getElementsByClassName('property-name');
+  for (var i = 0; i < spans.length; i++) {
+    var text = spans[i].textContent || spans[i].innerText;
+    if (text == propertyName) {
+      spans[i].parentNode.parentNode.style = liCssString;
+      if (spanCssString !== '') {
+        spans[i].style = spanCssString;
+      }
+    }
+  }
+}
+
 function toTuple({y, x}) {
   return [y, x];
 }
