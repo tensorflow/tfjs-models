@@ -18,8 +18,10 @@ MODEL_DIR=$(mktemp -d)
 SCRIPT_DIR=$(pwd)
 
 DIST_DIR='./dist'
+
 trap 'rm -rf -- "$MODEL_DIR"' INT TERM HUP EXIT
 
+mkdir -p $SCRIPT_DIR/$1 && \
 cd $MODEL_DIR && \
 pyenv local 3.6.8 && \
 virtualenv --no-site-packages venv && \
