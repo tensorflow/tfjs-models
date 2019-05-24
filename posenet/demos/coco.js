@@ -18,7 +18,7 @@ import * as posenet from '@tensorflow-models/posenet';
 import * as tf from '@tensorflow/tfjs';
 import dat from 'dat.gui';
 
-import {setDatGuiPropertyCss} from './demo_util';
+import {isMobile, tryResNetButtonName, tryResNetButtonText, updateTryResNetButtonDatGuiCss} from './demo_util';
 
 // clang-format off
 import {
@@ -57,18 +57,6 @@ const images = [
   'tennis_in_crowd.jpg',
   'two_on_bench.jpg',
 ];
-
-function isAndroid() {
-  return /Android/i.test(navigator.userAgent);
-}
-
-function isiOS() {
-  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
-}
-
-function isMobile() {
-  return isAndroid() || isiOS();
-}
 
 /**
  * Draws a pose if it passes a minimum confidence onto a canvas.
@@ -226,17 +214,11 @@ function setupGui(net) {
   const gui = new dat.GUI();
 
   let architectureController = null;
-  const tryResNetButtonName = 'tryResNetButton';
-  const tryResNetButtonText = '[New] Try ResNet50';
-  const tryResNetButtonTextCss = 'width:100%;text-decoration:underline;';
-  const tryResNetButtonBackgroundCss = 'background:#e61d5f;';
   guiState[tryResNetButtonName] = function() {
     architectureController.setValue('ResNet50')
   };
   gui.add(guiState, tryResNetButtonName).name(tryResNetButtonText);
-  setDatGuiPropertyCss(
-      tryResNetButtonText, tryResNetButtonBackgroundCss,
-      tryResNetButtonTextCss);
+  updateTryResNetButtonDatGuiCss();
 
   // Input resolution:  Internally, this parameter affects the height and width
   // of the layers in the neural network. The higher the value of the input

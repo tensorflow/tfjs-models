@@ -18,23 +18,11 @@ import * as posenet from '@tensorflow-models/posenet';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 
-import {drawBoundingBox, drawKeypoints, drawSkeleton, setDatGuiPropertyCss} from './demo_util';
+import {drawBoundingBox, drawKeypoints, drawSkeleton, isMobile, tryResNetButtonName, tryResNetButtonText, updateTryResNetButtonDatGuiCss} from './demo_util';
 
 const videoWidth = 600;
 const videoHeight = 500;
 const stats = new Stats();
-
-function isAndroid() {
-  return /Android/i.test(navigator.userAgent);
-}
-
-function isiOS() {
-  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
-}
-
-function isMobile() {
-  return isAndroid() || isiOS();
-}
 
 /**
  * Loads a the camera to be used in the demo
@@ -123,17 +111,11 @@ function setupGui(cameras, net) {
   const gui = new dat.GUI({width: 300});
 
   let architectureController = null;
-  const tryResNetButtonName = 'tryResNetButton';
-  const tryResNetButtonText = '[New] Try ResNet50';
-  const tryResNetButtonTextCss = 'width:100%;text-decoration:underline;';
-  const tryResNetButtonBackgroundCss = 'background:#e61d5f;';
   guiState[tryResNetButtonName] = function() {
     architectureController.setValue('ResNet50')
   };
   gui.add(guiState, tryResNetButtonName).name(tryResNetButtonText);
-  setDatGuiPropertyCss(
-      tryResNetButtonText, tryResNetButtonBackgroundCss,
-      tryResNetButtonTextCss);
+  updateTryResNetButtonDatGuiCss();
 
   // The single-pose algorithm is faster and simpler but requires only one
   // person to be in the frame or results will be innaccurate. Multi-pose works
