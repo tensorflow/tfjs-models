@@ -5,7 +5,7 @@ import {
 } from "@tensorflow/tfjs-core/dist/jasmine_util";
 import DummyModel from ".";
 
-describeWithFlags("ObjectDetection", NODE_ENVS, () => {
+describeWithFlags("SemanticSegmentation", NODE_ENVS, () => {
   it("DummyModel detect method should generate no output", async () => {
     const dummy = new DummyModel();
     const x = tf.zeros([227, 227, 3]) as tf.Tensor3D;
