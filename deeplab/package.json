@@ -1,15 +1,15 @@
 {
-  "name": "model-name",
+  "name": "deeplab",
   "version": "0.1.0",
   "description": "Model starter in TensorFlow.js",
   "main": "dist/index.js",
-  "jsnext:main": "dist/model-name.esm.js",
-  "module": "dist/model-name.esm.js",
-  "unpkg": "dist/model-name.min.js",
-  "jsdelivr": "dist/model-name.min.js",
+  "jsnext:main": "dist/deeplab.esm.js",
+  "module": "dist/deeplab.esm.js",
+  "unpkg": "dist/deeplab.min.js",
+  "jsdelivr": "dist/deeplab.min.js",
   "types": "dist/index.d.ts",
   "model": {
-    "name": "model-name"
+    "name": "deeplab"
   },
   "repository": {
     "type": "git",
