@@ -1,4 +1,4 @@
-import { Color, Label } from './model';
+import { Color, Label } from './types';
 
 const DATASET_MAX_ENTRIES = {
     PASCAL: 256,
@@ -45,8 +45,3 @@ export const LABELS: Label[] = [
     'train',
     'TV',
 ];
-
-// for shift in reversed(range(8)):
-// for channel in range(3):
-//   colormap[:, channel] |= ((ind >> channel) & 1) << shift
-// ind >>= 3
