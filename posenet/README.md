@@ -100,6 +100,9 @@ const net = await posenet.load({
 
 **By default,** PoseNet loads a MobileNetV1 architecture with a **`0.75`** multiplier.  This is recommended for computers with **mid-range/lower-end GPUs.**  A model with a **`1.00`** multiplier is recommended for computers with **powerful GPUs.**  A model with a **`0.50`** multiplier is recommended for **mobile.** The ResNet achitecture is recommended for computers with **even more powerful GPUs**.
 
+* **quantBytes** - Can be one of `1`, `2`, `4`. The value is used
+ *only* by ResNet50 architecture. This parameter affects weight quantization in the ResNet50 model. The available options are 1 byte, 2 bytes, and 4 bytes. The higher the value, the larger the model size and thus the longer the loading time, the lower the value, the shorter the loading time but lower the accuracy.
+
 ### Single-Person Pose Estimation
 
 Single pose estimation is the simpler and faster of the two algorithms. Its ideal use case is for when there is only one person in the image. The disadvantage is that if there are multiple persons in an image, keypoints from both persons will likely be estimated as being part of the same single pose—meaning, for example, that person #1’s left arm and person #2’s right knee might be conflated by the algorithm as belonging to the same pose. Both the MobileNetV1 and the ResNet architecture support single-person pose estimation. To enable single-person estimation algorithm, **set the `decodingMethod` to 'single-person' in `estimatePoses` using an `InferenceConfig` dictionary**. The returned array will have **one and only one `pose`**:

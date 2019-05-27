@@ -176,7 +176,8 @@ async function reloadNetTestImageAndEstimatePoses(net) {
     architecture: guiState.model.architecture,
     outputStride: guiState.model.outputStride,
     inputResolution: guiState.model.inputResolution,
-    multiplier: guiState.model.multiplier
+    multiplier: guiState.model.multiplier,
+    quantBytes: guiState.model.quantBytes,
   });
   testImageAndEstimatePoses(guiState.net);
 }
@@ -184,10 +185,12 @@ async function reloadNetTestImageAndEstimatePoses(net) {
 const defaultMobileNetMultiplier = isMobile() ? 0.50 : 0.75;
 const defaultMobileNetStride = 16;
 const defaultMobileNetInputResolution = 513;
+const defaultMobileNetQuantBytes = 4;
 
 const defaultResNetMultiplier = 1.0;
 const defaultResNetStride = 32;
 const defaultResNetInputResolution = 257;
+const defaultResNetQuantBytes = 2;
 
 let guiState = {
   net: null,
@@ -195,7 +198,8 @@ let guiState = {
     architecture: 'MobileNetV1',
     outputStride: defaultMobileNetStride,
     inputResolution: defaultMobileNetInputResolution,
-    multiplier: defaultMobileNetMultiplier
+    multiplier: defaultMobileNetMultiplier,
+    quantBytes: defaultMobileNetQuantBytes,
   },
   image: 'tennis_in_crowd.jpg',
   multiPoseDetection: {
@@ -270,6 +274,23 @@ function setupGui(net) {
     });
   }
 
+  // QuantBytes: this parameter affects weight quantization in the ResNet50
+  // model. The available options are 1 byte, 2 bytes, and 4 bytes. The higher
+  // the value, the larger the model size and thus the longer the loading time,
+  // the lower the value, the shorter the loading time but lower the accuracy.
+  let quantBytesController = null;
+  function updateQuantBytes(quantBytesArray) {
+    if (quantBytesController) {
+      quantBytesController.remove();
+    }
+    quantBytesController =
+        model.add(guiState.model, 'quantBytes', quantBytesArray);
+    quantBytesController.onChange((quantBytes) => {
+      guiState.model.quantBytes = +quantBytes;
+      reloadNetTestImageAndEstimatePoses(guiState.net);
+    });
+  }
+
   // Architecture: there are a few PoseNet models varying in size and
   // accuracy. 1.01 is the largest, but will be the slowest. 0.50 is the
   // fastest, but least accurate.
@@ -280,16 +301,20 @@ function setupGui(net) {
       guiState.model.inputResolution = defaultResNetInputResolution;
       guiState.model.outputStride = defaultResNetStride;
       guiState.model.multiplier = defaultResNetMultiplier;
+      guiState.model.quantBytes = defaultResNetQuantBytes;
       updateGuiInputResolution([257, 513]);
       updateGuiOutputStride([32, 16]);
       updateGuiMultiplier([1.0]);
+      updateQuantBytes([1, 2, 4])
     } else {
       guiState.model.inputResolution = defaultMobileNetInputResolution;
       guiState.model.outputStride = defaultMobileNetStride;
       guiState.model.multiplier = defaultMobileNetMultiplier;
+      guiState.model.quantBytes = defaultMobileNetQuantBytes;
       updateGuiInputResolution([257, 353, 449, 513]);
       updateGuiOutputStride([8, 16]);
       updateGuiMultiplier([0.5, 0.75, 1.0]);
+      updateQuantBytes([4]);
     }
     guiState.model.architecture = architecture;
     reloadNetTestImageAndEstimatePoses(guiState.net);
@@ -299,10 +324,12 @@ function setupGui(net) {
     updateGuiInputResolution([257, 513]);
     updateGuiOutputStride([32, 16]);
     updateGuiMultiplier([1.0]);
+    updateQuantBytes([1, 2, 4]);
   } else {
     updateGuiInputResolution([257, 513]);
     updateGuiOutputStride([8, 16]);
     updateGuiMultiplier([0.5, 0.75, 1.0]);
+    updateQuantBytes([4]);
   }
 
 
@@ -344,7 +371,8 @@ export async function bindPage() {
     architecture: guiState.model.architecture,
     outputStride: guiState.model.outputStride,
     inputResolution: guiState.model.inputResolution,
-    multiplier: guiState.model.multiplier
+    multiplier: guiState.model.multiplier,
+    quantBytes: guiState.model.quantBytes
   });
 
   setupGui(net);
