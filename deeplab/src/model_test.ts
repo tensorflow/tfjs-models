@@ -3,8 +3,8 @@ import {
   describeWithFlags,
   NODE_ENVS
 } from "@tensorflow/tfjs-core/dist/jasmine_util";
-import DummyModel from ".";
-import { COLORMAP } from "./labels";
+import SemanticSegmentation from ".";
+import { COLORMAP } from "./settings";
 
 describeWithFlags("SemanticSegmentation", NODE_ENVS, () => {
     it('The PASCAL colormap coincides with the original.', () => {
@@ -267,8 +267,18 @@ describeWithFlags("SemanticSegmentation", NODE_ENVS, () => {
             [224, 224, 192],
         ]);
     });
-  it("DummyModel detect method should generate no output", async () => {
-    const dummy = new DummyModel();
+
+  it("SemanticSegmentation detect method should generate no output", async () => {
+    const dummy = new SemanticSegmentation();
+    const x = tf.zeros([227, 227, 3]) as tf.Tensor3D;
+
+    const data = await dummy.predict(x);
+
+    expect(data).toEqual();
+  });
+
+  it("SemanticSegmentation detect method should generate no output", async () => {
+    const dummy = new SemanticSegmentation();
     const x = tf.zeros([227, 227, 3]) as tf.Tensor3D;
 
     const data = await dummy.predict(x);
