@@ -22,9 +22,14 @@ import {Tokenizer} from './tokenizer';
 const BASE_PATH =
     'https://storage.googleapis.com/tfjs-models/savedmodel/universal_sentence_encoder/';
 
-export async function load() {
+/**
+ * Load the UniversalSentenceEncoder.
+ *
+ * @param  basePath (optional) Provide the base url for the model and vocabulary.
+ */
+export async function load(basePath: string = BASE_PATH) {
   const use = new UniversalSentenceEncoder();
-  await use.load();
+  await use.load(basePath);
   return use;
 }
 
@@ -54,13 +59,15 @@ export class UniversalSentenceEncoder {
   private model: tf.GraphModel;
   private tokenizer: Tokenizer;
 
-  async loadModel() {
-    return tf.loadGraphModel(`${BASE_PATH}model.json`);
+  async loadModel(basePath: string = BASE_PATH) {
+    return tf.loadGraphModel(`${basePath}model.json`);
   }
 
-  async load() {
-    const [model, vocabulary] =
-        await Promise.all([this.loadModel(), loadVocabulary()]);
+  async load(basePath: string = BASE_PATH) {
+    const [model, vocabulary] = await Promise.all([
+      this.loadModel(basePath),
+      loadVocabulary(`${basePath}vocab.json`),
+    ]);
 
     this.model = model;
     this.tokenizer = new Tokenizer(vocabulary);
