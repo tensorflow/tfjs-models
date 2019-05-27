@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import {Tensor} from '@tensorflow/tfjs';
+import {Tensor, tensor, util} from '@tensorflow/tfjs';
 
 /**
  * @hidden
@@ -45,19 +45,18 @@ export class CheckpointLoader {
   }
 
   private loadManifest(): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open('GET', this.urlPath + MANIFEST_FILE);
-
-      xhr.onload = () => {
-        this.checkpointManifest = JSON.parse(xhr.responseText);
+    return new Promise<void>(async (resolve, reject) => {
+      try {
+        const response = await util.fetch(this.urlPath + MANIFEST_FILE);
+        if (!response.ok) {
+          throw new Error(`Not found manifest ${this.urlPath + MANIFEST_FILE}`);
+        }
+        this.checkpointManifest = await response.json();
         resolve();
-      };
-      xhr.onerror = (error) => {
+      } catch (error) {
         throw new Error(
-            `${MANIFEST_FILE} not found at ${this.urlPath}. ${error}`);
-      };
-      xhr.send();
+            `${MANIFEST_FILE} not found at ${this.urlPath}. ${error}`)
+      }
     });
   }
 
@@ -108,26 +107,21 @@ export class CheckpointLoader {
     }
 
     const variableRequestPromiseMethod =
-        (resolve: (tensor: Tensor) => void, reject: () => void) => {
-          const xhr = new XMLHttpRequest();
-          xhr.responseType = 'arraybuffer';
-          const fname = this.checkpointManifest[varName].filename;
-          xhr.open('GET', this.urlPath + fname);
-
-          xhr.onload = () => {
-            if (xhr.status === 404) {
-              throw new Error(`Not found variable ${varName}`);
-            }
-            const values = new Float32Array(xhr.response);
-            const tensor =
-                Tensor.make(this.checkpointManifest[varName].shape, {values});
-            resolve(tensor);
-          };
-          xhr.onerror = (error) => {
-            throw new Error(`Could not fetch variable ${varName}: ${error}`);
-          };
-          xhr.send();
-        };
+        async (resolve: (tensor: Tensor) => void, reject: () => void) => {
+      const fname = this.checkpointManifest[varName].filename;
+      try {
+        const response = await util.fetch(this.urlPath + fname);
+        if (!response.ok) {
+          throw new Error(`Not found variable ${varName}`);
+        }
+        const values = new Float32Array(await response.arrayBuffer());
+        const checkpointTensor =
+            tensor(values, this.checkpointManifest[varName].shape, 'float32');
+        resolve(checkpointTensor);
+      } catch (error) {
+        throw new Error(`Could not fetch variable ${varName}: ${error}`);
+      };
+    };
 
     if (this.checkpointManifest == null) {
       return new Promise<Tensor>((resolve, reject) => {

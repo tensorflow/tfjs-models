@@ -10,7 +10,7 @@ To find out about APIs for models, look at the README in each of the respective
 directories. In general, we try to hide tensors so the API can be used by
 non-machine learning experts.
 
-For those intested in contributing a model, please file a [GitHub issue on tfjs](https://github.com/tensorflow/tfjs/issues) to gauge
+For those interested in contributing a model, please file a [GitHub issue on tfjs](https://github.com/tensorflow/tfjs/issues) to gauge
 interest. We are trying to add models that complement the existing set of models
 and can be used as building blocks in other apps.
 
@@ -25,8 +25,12 @@ and can be used as building blocks in other apps.
   - `npm i @tensorflow-models/coco-ssd`
 
 ### Audio
-- [Speech commands](https://github.com/tensorflow/tfjs-models/tree/master/speech-commands) - Classify 1 second audio snippets from the [speech commands dataset](https://www.tensorflow.org/tutorials/sequences/audio_recognition).
+- [Speech Commands](https://github.com/tensorflow/tfjs-models/tree/master/speech-commands) - Classify 1 second audio snippets from the [speech commands dataset](https://www.tensorflow.org/tutorials/sequences/audio_recognition).
   - `npm i @tensorflow-models/speech-commands`
+  
+### Text
+- [Universal Sentence Encoder](./universal-sentence-encoder) - A model that encodes English text into 512-dimensional embeddings.
+- [Text Toxicity](./toxicity) - Detects and classifies toxic content such as threats, insults, and obscenities in English text inputs.
 
 ### General utilities
 - [KNN Classifier](https://github.com/tensorflow/tfjs-models/tree/master/knn-classifier) - Create a custom k-nearest neighbors classifier. Can be used for transfer learning.

@@ -31,6 +31,10 @@
       <option value="1">Duration x1</option>
       <option value="2" selected="true">Duration x2</option>
     </select>
+
+    <input type="checkbox" id="include-audio-waveform">
+    <span id="include-audio-waveform-label">Include audio waveform</span>
+
     <button id="enter-learn-words" disabled="true">Enter transfer words</button>
 
     <div id="transfer-learn-history"></div>
@@ -55,6 +59,8 @@
       <input class="settings" size="5" id="epochs" value="100">
       <span>Fine-tuning (FT) epochs:</span>
       <input class="settings" size="5" id="fine-tuning-epochs" value="0">
+      <span>Augment by mixing noise:</span>
+      <input type="checkbox" id="augment-by-mixing-noise">
       <button id="start-transfer-learn" disabled="true">Start transfer learning</button>
     </div>
 

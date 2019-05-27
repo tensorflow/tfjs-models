@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/coco-ssd",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Object detection model (coco-ssd) in TensorFlow.js",
   "main": "dist/index.js",
   "unpkg": "dist/coco-ssd.min.js",
@@ -13,10 +13,10 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs": "^1.0.0"
+    "@tensorflow/tfjs": "^1.1.0"
   },
   "devDependencies": {
-    "@tensorflow/tfjs": "^1.0.0",
+    "@tensorflow/tfjs": "^1.1.0",
     "@types/jasmine": "~2.8.8",
     "babel-core": "~6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",
@@ -28,13 +28,14 @@
     "rollup-plugin-uglify": "~3.0.0",
     "ts-node": "~5.0.0",
     "tslint": "~5.10.0",
-    "typescript": "2.9.2",
+    "typescript": "3.3.3333",
     "yalc": "~1.0.0-pre.21"
   },
   "scripts": {
-    "build": "rimraf dist && tsc && rollup -c",
+    "build": "rimraf dist && tsc",
     "lint": "tslint -p . -t verbose",
-    "publish-local": "yarn build && yalc push",
+    "publish-local": "yarn build && rollup -c && yalc push",
+    "publish-npm": "yarn build && rollup -c && npm publish",
     "test": "yarn build && ts-node run_tests.ts"
   },
   "license": "Apache-2.0"

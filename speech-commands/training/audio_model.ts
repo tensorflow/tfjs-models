@@ -32,7 +32,7 @@ import {WavFileFeatureExtractor} from './wav_file_feature_extractor';
  * It provide datasets loading, training, and model saving functions.
  */
 export class AudioModel {
-  private model: tf.Model;
+  private model: tf.LayersModel;
 
   /**
    *
@@ -57,7 +57,7 @@ export class AudioModel {
     this.model = this.createModel(inputShape);
   }
 
-  private createModel(inputShape: number[]): tf.Model {
+  private createModel(inputShape: number[]): tf.LayersModel {
     const model = tf.sequential();
     model.add(tf.layers.conv2d(
         {filters: 8, kernelSize: [4, 2], activation: 'relu', inputShape}));
@@ -167,7 +167,7 @@ export class AudioModel {
    * @param epochs iteration of the training
    * @param trainCallback
    */
-  async train(epochs?: number, trainCallback?: tf.CustomCallbackConfig) {
+  async train(epochs?: number, trainCallback?: tf.CustomCallbackArgs) {
     return this.model.fit(this.dataset.xs, this.dataset.ys, {
       batchSize: 64,
       epochs: epochs || 100,

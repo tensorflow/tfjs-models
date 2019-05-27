@@ -50,7 +50,7 @@ yarn
 
 Publish posenet locally:
 ```sh
-yarn build && yalc publish
+yarn build && yarn yalc publish
 ```
 
 Cd into the demos and install dependencies:
@@ -74,5 +74,5 @@ To get future updates from the posenet source code:
 ```
 # cd up into the posenet directory
 cd ../
-yarn build && yalc push
+yarn build && yarn yalc push
 ```

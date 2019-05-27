@@ -18,14 +18,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-if [[ -z "${TRAVIS_BUILD_NUMBER}" ]]; then
-  pip install -r "${SCRIPT_DIR}/requirements.txt"
-else
-  # If in Travis, use the `--user` flag when performing `pip install` of
-  # dependencies.
-  pip install --user -r "${SCRIPT_DIR}/requirements.txt"
-fi
-
+pip install -r "${SCRIPT_DIR}/requirements.txt"
 pylint --rcfile="${SCRIPT_DIR}/.pylintrc" ${SCRIPT_DIR}/*.py
 
 for PY_TEST_FILE in ${SCRIPT_DIR}/*_test.py; do

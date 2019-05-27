@@ -16,11 +16,11 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import {describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
+import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
 import {BodyPix, load, mobilenetLoader} from './body_pix_model';
 
-describeWithFlags('BodyPix', tf.test_util.NODE_ENVS, () => {
+describeWithFlags('BodyPix', NODE_ENVS, () => {
   let net: BodyPix;
 
   beforeAll((done) => {

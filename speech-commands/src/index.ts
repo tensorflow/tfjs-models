@@ -18,6 +18,7 @@
 import * as tf from '@tensorflow/tfjs';
 
 import {BrowserFftSpeechCommandRecognizer} from './browser_fft_recognizer';
+import {playRawAudio} from './browser_fft_utils';
 import {concatenateFloat32Arrays} from './generic_utils';
 import {FFT_TYPE, SpeechCommandRecognizer} from './types';
 
@@ -71,10 +72,13 @@ export function create(
   }
 }
 
-const utils = {concatenateFloat32Arrays};
+const utils = {
+  concatenateFloat32Arrays,
+  playRawAudio
+};
 
 export {BACKGROUND_NOISE_TAG, Dataset, GetDataConfig as GetSpectrogramsAsTensorsConfig, getMaxIntensityFrameIndex, spectrogram2IntensityCurve, SpectrogramAndTargetsTfDataset} from './dataset';
-export {Example, FFT_TYPE, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerMetadata, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
+export {AudioDataAugmentationOptions, Example, FFT_TYPE, RawAudioData, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerMetadata, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
 export {deleteSavedTransferModel, listSavedTransferModels, UNKNOWN_TAG} from './browser_fft_recognizer';
 export {utils};
 export {version} from './version';
