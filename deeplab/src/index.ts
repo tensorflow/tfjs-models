@@ -16,16 +16,18 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
+import { SemanticSegmentationBaseModel } from './types';
+import { BASE_PATH } from './settings';
 
 export default class SemanticSegmentation {
-  private modelPath: string;
-  private model: tf.GraphModel;
-  public async load(){
-    this.model = await tf.loadGraphModel(this.modelPath);
-
-    const result = await this.model.executeAsync(tf.zeros([1, 300, 300, 3])) as tf.Tensor[]
-    result.map(async (t) => await t.data());
-    result.map(async (t) => t.dispose());
-  }
-  public predict(X: any) {}
+    private modelPath: string;
+    private model: tf.GraphModel;
+    constructor(base: SemanticSegmentationBaseModel) {
+        this.modelPath = `${BASE_PATH}${base}/model.json`;
+    }
+    public async load() {
+        this.model = await tf.loadGraphModel(this.modelPath);
+        return !!this.model;
+    }
+    public predict(X: any) {}
 }

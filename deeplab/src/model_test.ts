@@ -1,12 +1,12 @@
-import * as tf from "@tensorflow/tfjs";
+import * as tf from '@tensorflow/tfjs';
 import {
-  describeWithFlags,
-  NODE_ENVS
-} from "@tensorflow/tfjs-core/dist/jasmine_util";
-import SemanticSegmentation from ".";
-import { COLORMAP } from "./settings";
+    describeWithFlags,
+    NODE_ENVS,
+} from '@tensorflow/tfjs-core/dist/jasmine_util';
+import SemanticSegmentation from '.';
+import { COLORMAP } from './settings';
 
-describeWithFlags("SemanticSegmentation", NODE_ENVS, () => {
+describeWithFlags('SemanticSegmentation', NODE_ENVS, () => {
     it('The PASCAL colormap coincides with the original.', () => {
         expect(COLORMAP).toEqual([
             [0, 0, 0],
@@ -268,21 +268,33 @@ describeWithFlags("SemanticSegmentation", NODE_ENVS, () => {
         ]);
     });
 
-  it("SemanticSegmentation detect method should generate no output", async () => {
-    const dummy = new SemanticSegmentation();
-    const x = tf.zeros([227, 227, 3]) as tf.Tensor3D;
+    it('SemanticSegmentation detect method should generate no output', async () => {
+        const model = new SemanticSegmentation('pascal');
+        const x = tf.zeros([227, 227, 3]) as tf.Tensor3D;
 
-    const data = await dummy.predict(x);
+        const data = await model.predict(x);
 
-    expect(data).toEqual();
-  });
+        expect(data).toEqual();
+    });
 
-  it("SemanticSegmentation detect method should generate no output", async () => {
-    const dummy = new SemanticSegmentation();
-    const x = tf.zeros([227, 227, 3]) as tf.Tensor3D;
+    it("SemanticSegmentation('pascal') should load", async () => {
+        const model = new SemanticSegmentation('pascal');
 
-    const data = await dummy.predict(x);
+        const isSuccessful = await model.load();
+        expect(isSuccessful).toEqual(true);
+    });
 
-    expect(data).toEqual();
-  });
+    it("SemanticSegmentation('cityscapes') should load", async () => {
+        const model = new SemanticSegmentation('cityscapes');
+
+        const isSuccessful = await model.load();
+        expect(isSuccessful).toEqual(true);
+    });
+
+    it("SemanticSegmentation('ade20k') should load", async () => {
+        const model = new SemanticSegmentation('ade20k');
+
+        const isSuccessful = await model.load();
+        expect(isSuccessful).toEqual(true);
+    });
 });

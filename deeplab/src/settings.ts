@@ -1,5 +1,8 @@
 import { Color, Label } from './types';
 
+export const BASE_PATH =
+    'https://storage.googleapis.com/gsoc-tfjs/models/deeplab/';
+
 const DATASET_MAX_ENTRIES = {
     PASCAL: 256,
 };
