@@ -68,3 +68,11 @@ use.loadTokenizer().then(tokenizer => {
   tokenizer.encode('Hello, how are you?'); // [341, 4125, 8, 140, 31, 19, 54]
 });
 ```
+
+To load the model from a custom url:
+
+```js
+use.load('https://example.com/universal-sentence-encoder/').then(model => {
+  // Use model...
+});
+```
