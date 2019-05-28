@@ -1,3 +1,7 @@
+import * as tf from '@tensorflow/tfjs';
+import { DeepLabInput } from './types';
+import config from './settings';
+
 /**
  * @license
  * Copyright 2019 Google LLC. All Rights Reserved.
@@ -14,14 +18,14 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as tf from '@tensorflow/tfjs';
 
-export type Label = string;
-export type Color = [number, number, number];
-export type SemanticSegmentationBaseModel = 'pascal' | 'cityscapes' | 'ade20k';
-export type DeepLabInput =
-    | ImageData
-    | HTMLImageElement
-    | HTMLCanvasElement
-    | HTMLVideoElement
-    | tf.Tensor3D;
+export function toInputTensor(input: DeepLabInput) {
+    const image =
+        input instanceof tf.Tensor ? input : tf.browser.fromPixels(input);
+    const [height, width] = image.shape;
+    const resizeRatio = config['CROP_SIZE'] / Math.max(width, height);
+    const targetSize = [height, width].map(side =>
+        Math.round(side * resizeRatio)
+    );
+    return image.resizeBilinear(targetSize as [number, number]);
+}

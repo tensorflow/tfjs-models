@@ -1,34 +1,26 @@
+/**
+ * @license
+ * Copyright 2019 Google LLC. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * =============================================================================
+ */
+
 module.exports = {
-    useTabs: false, // Indent lines with tabs instead of spaces.
-    printWidth: 80, // Specify the length of line that the printer will wrap on.
-    tabWidth: 4, // Specify the number of spaces per indentation-level.
-    singleQuote: true, // Use single quotes instead of double quotes.
-    /**
-     * Print trailing commas wherever possible.
-     * Valid options:
-     *   - "none" - no trailing commas
-     *   - "es5" - trailing commas where valid in ES5 (objects, arrays, etc)
-     *   - "all" - trailing commas wherever possible (function arguments)
-     */
+    useTabs: false,
+    printWidth: 80,
+    tabWidth: 4,
+    singleQuote: true,
     trailingComma: 'es5',
-    /**
-     * Do not print spaces between brackets.
-     * If true, puts the > of a multi-line jsx element at the end of the last line instead of being
-     * alone on the next line
-     */
     jsxBracketSameLine: false,
-    /**
-     * Specify which parse to use.
-     * Valid options:
-     *   - "flow"
-     *   - "babylon"
-     */
-    parser: 'typescript',
-    /**
-     * Do not print semicolons, except at the beginning of lines which may need them.
-     * Valid options:
-     * - true - add a semicolon at the end of every line
-     * - false - only add semicolons at the beginning of lines that may introduce ASI failures
-     */
     noSemi: true,
 };

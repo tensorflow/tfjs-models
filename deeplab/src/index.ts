@@ -17,17 +17,35 @@
 
 import * as tf from '@tensorflow/tfjs';
 import { SemanticSegmentationBaseModel } from './types';
-import { BASE_PATH } from './settings';
+import config from './settings';
 
 export default class SemanticSegmentation {
     private modelPath: string;
     private model: tf.GraphModel;
     constructor(base: SemanticSegmentationBaseModel) {
-        this.modelPath = `${BASE_PATH}${base}/model.json`;
+        if (['pascal', 'cityscapes', 'ade20k'].indexOf(base) === -1) {
+            throw new Error(
+                `SemanticSegmentation cannot be constructed ` +
+                    `with an invalid base model ${base}. ` +
+                    `Try one of 'pascal', 'cityscapes' and 'ade20k'.`
+            );
+        }
+        this.modelPath = `${config['BASE_PATH']}${base}/model.json`;
     }
     public async load() {
         this.model = await tf.loadGraphModel(this.modelPath);
         return !!this.model;
     }
     public predict(X: any) {}
+
+    /**
+     * Dispose of the tensors allocated by the model.
+     * You should call this when you are done with the model.
+     */
+
+    public dispose() {
+        if (this.model) {
+            this.model.dispose();
+        }
+    }
 }
