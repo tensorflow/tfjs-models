@@ -12,6 +12,10 @@ PoseNet can be used to estimate either a single pose or multiple poses, meaning 
 
 To keep track of issues we use the [tensorflow/tfjs](https://github.com/tensorflow/tfjs) Github repo.
 
+## Documentation Note
+
+>> Th README and demos you see here is out of sync with the published package as we prepare the launch of the 2.0 version. Please look at the [README published on NPM](https://www.npmjs.com/package/@tensorflow-models/posenet) for instructions specific to the latest published version.
+
 ## Installation
 
 You can use this as standalone es5 bundle like this:
