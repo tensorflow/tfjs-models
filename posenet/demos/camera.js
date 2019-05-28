@@ -74,10 +74,10 @@ const defaultResNetInputResolution = 257;
 const guiState = {
   algorithm: 'multi-pose',
   input: {
-    architecture: 'MobileNetV1',
-    outputStride: defaultMobileNetStride,
-    inputResolution: defaultMobileNetInputResolution,
-    multiplier: defaultMobileNetMultiplier,
+    architecture: 'ResNet50',
+    outputStride: defaultResNetStride,
+    inputResolution: defaultResNetInputResolution,
+    multiplier: defaultResNetMultiplier,
   },
   singlePoseDetection: {
     minPoseConfidence: 0.1,
