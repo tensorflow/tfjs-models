@@ -213,7 +213,6 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
   private async onAudioFrame() {
     this.analyser.getFloatFrequencyData(this.freqData);
     if (this.freqData[0] === -Infinity) {
-      console.log('this.freqData[0]', this.freqData[0]);
       return;
     }
 
@@ -228,14 +227,6 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     }
     const shouldFire = this.tracker.tick();
     if (shouldFire) {
-      console.log('1e3', 1e3);
-      console.log('numFrames', this.numFrames);
-      console.log('fftSize', this.fftSize);
-      console.log('sampleRateHz', this.sampleRateHz);
-      console.log('frameDurationMillis', this.frameDurationMillis);
-      console.log('overlapFactor', this.overlapFactor);
-      console.log('suppressionTimeMillis', this.suppressionTimeMillis);
-
       const freqData = flattenQueue(this.freqDataQueue);
       const freqDataTensor = getInputTensorFromFrequencyData(
           freqData, [1, this.numFrames, this.columnTruncateLength, 1]);

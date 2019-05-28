@@ -16,7 +16,7 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import {SpectrogramCallback} from './browser_fft_extractor';
+import {SpectrogramCallback, Tracker} from './browser_fft_extractor';
 import {loadMetadataJson, normalize, normalizeFloat32Array} from './browser_fft_utils';
 import {BACKGROUND_NOISE_TAG, Dataset} from './dataset';
 import {concatenateFloat32Arrays} from './generic_utils';
@@ -89,6 +89,12 @@ export class BrowserFftSpeechCommandRecognizer implements
   // To be used for unfreezing during fine-tuning.
   protected secondLastBaseDenseLayer: tf.layers.Layer;
 
+  // tslint:disable-next-line:no-any
+  protected inferenceInterval: any;
+
+  protected spectrogramCallback: SpectrogramCallback;
+  protected tracker: Tracker;
+
   /**
    * Constructor of BrowserFftSpeechCommandRecognizer.
    *
@@ -133,6 +139,12 @@ export class BrowserFftSpeechCommandRecognizer implements
       sampleRateHz: this.SAMPLE_RATE_HZ,
       fftSize: this.FFT_SIZE
     };
+
+    const period = Math.max(1, Math.round(42 * (1 - 0.5)));
+    this.tracker = new Tracker(
+        period,
+        Math.round(
+            this.DEFAULT_SUPPRESSION_TIME_MILLIS / (1024 / 44100 * 1e3)));
   }
 
   /**
@@ -208,8 +220,7 @@ export class BrowserFftSpeechCommandRecognizer implements
         () => `Expected overlapFactor to be >= 0 and < 1, but got ${
             overlapFactor}`);
 
-    const spectrogramCallback: SpectrogramCallback =
-        async (x: tf.Tensor, timeData?: tf.Tensor) => {
+    this.spectrogramCallback = async (x: tf.Tensor, timeData?: tf.Tensor) => {
       const normalizedX = normalize(x);
       let y: tf.Tensor;
       let embedding: tf.Tensor;
@@ -267,10 +278,11 @@ export class BrowserFftSpeechCommandRecognizer implements
       overlapFactor
     });
 
-    setInterval(async () => {
-      const inputTensor = await this.microphoneIterator.next();
-      await spectrogramCallback(inputTensor);
-      inputTensor.dispose();
+    const self = this;
+    this.inferenceInterval = setTimeout(function run() {
+      self.doInference().then(() => {
+        self.inferenceInterval = setTimeout(run, 1024 / 44100 * 1e3);
+      })
     }, 1024 / 44100 * 1e3);
     // this.audioDataExtractor = new BrowserFftFeatureExtractor({
     //   sampleRateHz: this.parameters.sampleRateHz,
@@ -284,6 +296,23 @@ export class BrowserFftSpeechCommandRecognizer implements
     // await this.audioDataExtractor.start(config.audioTrackConstraints);
 
     this.streaming = true;
+  }
+
+  private async doInference() {
+    console.log('doInference');
+    const shouldFire = this.tracker.tick();
+    if (shouldFire) {
+      console.log('should fire');
+      const inputTensor = (await this.microphoneIterator.next()).value;
+      if (inputTensor != null) {
+        const shouldRest = await this.spectrogramCallback(inputTensor);
+        if (shouldRest) {
+          console.log('should rest');
+          this.tracker.suppress();
+        }
+        inputTensor.dispose();
+      }
+    }
   }
 
   /**
@@ -422,6 +451,7 @@ export class BrowserFftSpeechCommandRecognizer implements
     // await this.audioDataExtractor.stop();
     this.microphoneIterator.stop();
     this.streaming = false;
+    clearInterval(this.inferenceInterval);
   }
 
   /**
@@ -558,6 +588,7 @@ export class BrowserFftSpeechCommandRecognizer implements
         const normalizedX = normalize(x);
         // await this.audioDataExtractor.stop();
         this.microphoneIterator.stop();
+        clearInterval(this.inferenceInterval);
         resolve({
           data: await normalizedX.data() as Float32Array,
           frameSize: this.nonBatchInputShape[1],
@@ -574,10 +605,16 @@ export class BrowserFftSpeechCommandRecognizer implements
         overlapFactor: 0
       });
 
-      setInterval(async () => {
-        const inputTensor = await this.microphoneIterator.next();
-        await spectrogramCallback(inputTensor);
-        inputTensor.dispose();
+      this.inferenceInterval = setInterval(async () => {
+        const shouldFire = this.tracker.tick();
+        if (shouldFire) {
+          const inputTensor = (await this.microphoneIterator.next()).value;
+          const shouldRest = await spectrogramCallback(inputTensor);
+          if (shouldRest) {
+            this.tracker.suppress();
+          }
+          inputTensor.dispose();
+        }
       }, 1024 / 44100 * 1e3);
       // this.audioDataExtractor = new BrowserFftFeatureExtractor({
       //   sampleRateHz: this.parameters.sampleRateHz,
@@ -768,6 +805,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
           // await this.audioDataExtractor.stop();
           this.microphoneIterator.stop();
           this.streaming = false;
+          clearInterval(this.inferenceInterval);
           this.collateTransferWords();
           resolve({
             data: await freqData.data() as Float32Array,
@@ -796,6 +834,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
             // await this.audioDataExtractor.stop();
             this.microphoneIterator.stop();
             this.streaming = false;
+            clearInterval(this.inferenceInterval);
             this.collateTransferWords();
 
             const normalized = normalizeFloat32Array(
@@ -828,10 +867,16 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         overlapFactor,
         // includeRawAudio: options.includeRawAudio
       });
-      setInterval(async () => {
-        const inputTensor = await this.microphoneIterator.next();
-        await spectrogramCallback(inputTensor);
-        inputTensor.dispose();
+      this.inferenceInterval = setInterval(async () => {
+        const shouldFire = this.tracker.tick();
+        if (shouldFire) {
+          const inputTensor = (await this.microphoneIterator.next()).value;
+          const shouldRest = await spectrogramCallback(inputTensor);
+          if (shouldRest) {
+            this.tracker.suppress();
+          }
+          inputTensor.dispose();
+        }
       }, 1024 / 44100 * 1e3);
       // this.audioDataExtractor = new BrowserFftFeatureExtractor({
       //   sampleRateHz: this.parameters.sampleRateHz,
