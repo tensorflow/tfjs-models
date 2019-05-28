@@ -20,12 +20,16 @@ import config from './settings';
  */
 
 export function toInputTensor(input: DeepLabInput) {
-    const image =
-        input instanceof tf.Tensor ? input : tf.browser.fromPixels(input);
-    const [height, width] = image.shape;
-    const resizeRatio = config['CROP_SIZE'] / Math.max(width, height);
-    const targetSize = [height, width].map(side =>
-        Math.round(side * resizeRatio)
-    );
-    return image.resizeBilinear(targetSize as [number, number]);
+    return tf.tidy(() => {
+        const image =
+            input instanceof tf.Tensor ? input : tf.browser.fromPixels(input);
+        const [height, width] = image.shape;
+        const resizeRatio = config['CROP_SIZE'] / Math.max(width, height);
+        const targetSize = [height, width].map(side =>
+            Math.round(side * resizeRatio)
+        );
+        return tf.image
+            .resizeBilinear(image, targetSize as [number, number])
+            .expandDims(0);
+    });
 }

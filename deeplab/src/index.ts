@@ -16,12 +16,13 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import { SemanticSegmentationBaseModel } from './types';
+import { SemanticSegmentationBaseModel, DeepLabInput } from './types';
 import config from './settings';
+import { toInputTensor } from './utils';
 
 export default class SemanticSegmentation {
     private modelPath: string;
-    private model: tf.GraphModel;
+    private model: Promise<tf.GraphModel>;
     constructor(base: SemanticSegmentationBaseModel) {
         if (['pascal', 'cityscapes', 'ade20k'].indexOf(base) === -1) {
             throw new Error(
@@ -31,12 +32,19 @@ export default class SemanticSegmentation {
             );
         }
         this.modelPath = `${config['BASE_PATH']}${base}/model.json`;
+        this.model = tf.loadGraphModel(this.modelPath);
     }
-    public async load() {
-        this.model = await tf.loadGraphModel(this.modelPath);
-        return !!this.model;
+
+    public async predict(input: DeepLabInput) {
+        const model = await this.model;
+        const segmentationMap = tf.tidy(() => {
+            const data = toInputTensor(input);
+            const result = model.execute(data) as tf.Tensor;
+            return result.dataSync() as Int32Array;
+        });
+        this.dispose();
+        return segmentationMap;
     }
-    public predict(X: any) {}
 
     /**
      * Dispose of the tensors allocated by the model.
@@ -44,8 +52,8 @@ export default class SemanticSegmentation {
      */
 
     public dispose() {
-        if (this.model) {
-            this.model.dispose();
-        }
+        this.model.then(model => {
+            model.dispose();
+        });
     }
 }
