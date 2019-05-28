@@ -18,7 +18,7 @@
 import * as tf from '@tensorflow/tfjs';
 
 import {CheckpointLoader} from './checkpoint_loader';
-import {checkpoints, resnet50_checkpoints, BASE_URL} from './checkpoints';
+import {checkpoints, resnet50_checkpoints} from './checkpoints';
 import {assertValidOutputStride, assertValidResolution, MobileNet, MobileNetMultiplier, OutputStride} from './mobilenet';
 import {ModelWeights} from './model_weights';
 import {decodeMultiplePoses} from './multi_pose/decode_multiple_poses';
@@ -111,12 +111,11 @@ export interface ModelConfig {
 //   inputResolution: 257,
 // } as ModelConfig;
 // ```
-const MOBILENET_V1_CONFIG = {
+const MOBILENET_V1_CONFIG: ModelConfig = {
   architecture: 'MobileNetV1',
   outputStride: 16,
   inputResolution: 513,
-  multiplier: 0.75,
-  weightBaseUrl: BASE_URL
+  multiplier: 0.75
 } as ModelConfig;
 
 function validateModelConfig(config: ModelConfig) {
@@ -173,11 +172,6 @@ function validateModelConfig(config: ModelConfig) {
         `for architecutre ${config.architecture}.`);
   }
 
-  if (config.modelUrl == null) {
-    if (config.architecture === 'MobileNetV1') {
-      config.modelUrl = BASE_URL;
-    }
-  }
   return config;
 }
 
@@ -401,8 +395,8 @@ export const mobilenetLoader = {
   load: async(config: ModelConfig): Promise<MobileNet> => {
     const checkpoint = checkpoints[config.multiplier];
 
-    const checkpointLoader = new CheckpointLoader(
-        config.modelUrl + checkpoint.url);
+    const checkpointLoader =
+        new CheckpointLoader(config.modelUrl || checkpoint.url);
 
     const variables = await checkpointLoader.getAllVariables();
 
