@@ -15,8 +15,11 @@
  * =============================================================================
  */
 import * as posenet from '@tensorflow-models/posenet';
+import * as tfjswebgpu from '@tensorflow/tfjs-backend-webgpu';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
+
+console.log(tfjswebgpu);
 
 import {drawBoundingBox, drawKeypoints, drawSkeleton, isMobile, tryResNetButtonName, tryResNetButtonText, updateTryResNetButtonDatGuiCss} from './demo_util';
 

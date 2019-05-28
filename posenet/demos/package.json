@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@tensorflow-models/posenet": "^1.0.2",
+    "@tensorflow/tfjs-backend-webgpu": "file:../../../tfjs-core/src/backends/webgpu",
     "@tensorflow/tfjs": "^1.1.0",
     "stats.js": "^0.17.0"
   },
@@ -17,7 +18,8 @@
     "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr --open ",
     "build": "cross-env NODE_ENV=production parcel build index.html --no-minify --public-url ./",
     "build-camera": "cross-env NODE_ENV=production parcel build camera.html  --no-minify --public-url ./",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "link-local": "yalc link"
   },
   "devDependencies": {
     "babel-core": "^6.26.3",

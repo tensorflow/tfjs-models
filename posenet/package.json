@@ -37,6 +37,7 @@
     "test": "ts-node run_tests.ts",
     "publish-local": "yarn build && rollup -c && yalc push",
     "publish-npm": "yarn build && rollup -c && npm publish",
+    "link-local": "yalc link",
     "dev": "cd demos && yarn watch",
     "lint": "tslint -p . -t verbose"
   },

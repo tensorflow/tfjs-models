@@ -433,6 +433,9 @@ async function loadResNet(config: ModelConfig): Promise<PoseNet> {
  */
 export async function load(config: ModelConfig = MOBILENET_V1_CONFIG):
     Promise<PoseNet> {
+  console.log('LOAD POSENET MODEL');
+  await tf.ready();
+
   config = validateModelConfig(config);
   if (config.architecture === 'ResNet50') {
     return loadResNet(config);
