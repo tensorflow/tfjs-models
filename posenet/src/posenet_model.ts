@@ -18,7 +18,7 @@
 import * as tf from '@tensorflow/tfjs';
 
 import {CheckpointLoader} from './checkpoint_loader';
-import {checkpoints, resnet50_checkpoints, BASE_URL, RESNET50_BASE_URL} from './checkpoints';
+import {checkpoints, resnet50_checkpoints, BASE_URL} from './checkpoints';
 import {assertValidOutputStride, assertValidResolution, MobileNet, MobileNetMultiplier, OutputStride} from './mobilenet';
 import {ModelWeights} from './model_weights';
 import {decodeMultiplePoses} from './multi_pose/decode_multiple_poses';
@@ -91,13 +91,12 @@ export interface BaseModel {
  * the model at the cost of speed. Set this to a smaller value to increase speed
  * at the cost of accuracy.
  *
- * `weightBaseUrl`: An optional string that specifies custom base url of the
- * weight files.
+ * `modelUrl`: An optional string that specifies custom url of the model.
  */
 export interface ModelConfig {
   architecture: PoseNetArchitecture, outputStride: OutputStride,
       inputResolution: PoseNetResolution, multiplier?: MobileNetMultiplier,
-      weightBaseUrl?: string
+      modelUrl?: string
 }
 
 // The default configuration for loading MobileNetV1 based PoseNet.
@@ -174,11 +173,9 @@ function validateModelConfig(config: ModelConfig) {
         `for architecutre ${config.architecture}.`);
   }
 
-  if (config.weightBaseUrl == null) {
-    if (config.architecture === 'ResNet50') {
-      config.weightBaseUrl = RESNET50_BASE_URL;
-    } else {
-      config.weightBaseUrl = BASE_URL;
+  if (config.modelUrl == null) {
+    if (config.architecture === 'MobileNetV1') {
+      config.modelUrl = BASE_URL;
     }
   }
   return config;
@@ -405,7 +402,7 @@ export const mobilenetLoader = {
     const checkpoint = checkpoints[config.multiplier];
 
     const checkpointLoader = new CheckpointLoader(
-        config.weightBaseUrl + checkpoint.url);
+        config.modelUrl + checkpoint.url);
 
     const variables = await checkpointLoader.getAllVariables();
 
@@ -428,7 +425,7 @@ async function loadResNet(config: ModelConfig): Promise<PoseNet> {
   }
 
   const graphModel = await tf.loadGraphModel(
-      config.weightBaseUrl + resnet50_checkpoints[inputResolution][outputStride]);
+      config.modelUrl || resnet50_checkpoints[inputResolution][outputStride]);
   const resnet = new ResNet(graphModel, inputResolution, outputStride);
   return new PoseNet(resnet);
 }

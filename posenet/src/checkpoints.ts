@@ -18,8 +18,6 @@
 import {ConvolutionDefinition, mobileNetArchitectures} from './mobilenet';
 
 export const BASE_URL = 'https://storage.googleapis.com/tfjs-models/weights/posenet/';
-export const RESNET50_BASE_URL =
-    'https://storage.googleapis.com/tfjs-models/savedmodel/posenet_resnet50/quant2/';
 
 export type Checkpoint = {
   url: string,
@@ -51,15 +49,15 @@ export const checkpoints: {[multiplier: number]: Checkpoint} = {
 export const resnet50_checkpoints:
     {[resolution: number]: {[multiplier: number]: string}} = {
       801: {
-        32: 'model-513x513-stride32.json',
-        16: 'model-513x513-stride16.json',
+        32: 'https://storage.googleapis.com/tfjs-models/savedmodel/posenet_resnet50/quant2/model-513x513-stride32.json',
+        16: 'https://storage.googleapis.com/tfjs-models/savedmodel/posenet_resnet50/quant2/model-513x513-stride16.json',
       },
       513: {
-        32: 'model-513x513-stride32.json',
-        16: 'model-513x513-stride16.json',
+        32: 'https://storage.googleapis.com/tfjs-models/savedmodel/posenet_resnet50/quant2/model-513x513-stride32.json',
+        16: 'https://storage.googleapis.com/tfjs-models/savedmodel/posenet_resnet50/quant2/model-513x513-stride16.json',
       },
       257: {
-        32: 'model-257x257-stride32.json',
-        16: 'model-257x257-stride16.json',
+        32: 'https://storage.googleapis.com/tfjs-models/savedmodel/posenet_resnet50/quant2/model-257x257-stride32.json',
+        16: 'https://storage.googleapis.com/tfjs-models/savedmodel/posenet_resnet50/quant2/model-257x257-stride16.json',
       }
     };
