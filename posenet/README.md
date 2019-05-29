@@ -102,6 +102,14 @@ const net = await posenet.load({
 
  * **multiplier** - Can be one of `1.01`, `1.0`, `0.75`, or `0.50`. The value is used *only* by the MobileNetV1 architecture and not by the ResNet architecture. It is the float multiplier for the depth (number of channels) for all convolution ops. The larger the value, the larger the size of the layers, and more accurate the model at the cost of speed. Set this to a smaller value to increase speed at the cost of accuracy.
 
+ * **quantBytes** - This argument controls the bytes used for weight quantization. It is *only* used by the ResNet50 model. The available options are:
+
+   - `4`. 4 bytes per float (no quantization). Leads to highest accuracy and original model size (~90MB).
+
+   - `2`. 2 bytes per float. Leads to slightly lower accuracy and 2x model size reduction (~45MB).
+   - `1`. 1 byte per float. Leads to lower accuracy and 4x model size reduction (~22MB).
+
+
 **By default,** PoseNet loads a MobileNetV1 architecture with a **`0.75`** multiplier.  This is recommended for computers with **mid-range/lower-end GPUs.**  A model with a **`1.00`** multiplier is recommended for computers with **powerful GPUs.**  A model with a **`0.50`** multiplier is recommended for **mobile.** The ResNet achitecture is recommended for computers with **even more powerful GPUs**.
 
 ### Single-Person Pose Estimation
