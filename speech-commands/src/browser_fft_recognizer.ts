@@ -257,6 +257,7 @@ export class BrowserFftSpeechCommandRecognizer implements
             wordDetected = false;
           }
         }
+        console.log('wordDetected');
         if (wordDetected) {
           callback({scores, spectrogram, embedding});
         }
@@ -278,12 +279,8 @@ export class BrowserFftSpeechCommandRecognizer implements
       overlapFactor
     });
 
-    const self = this;
-    this.inferenceInterval = setTimeout(function run() {
-      self.doInference().then(() => {
-        self.inferenceInterval = setTimeout(run, 1024 / 44100 * 1e3);
-      })
-    }, 1024 / 44100 * 1e3);
+    this.inferenceInterval =
+        setInterval(this.doInference.bind(this), 1024 / 44100 * 1e3);
     // this.audioDataExtractor = new BrowserFftFeatureExtractor({
     //   sampleRateHz: this.parameters.sampleRateHz,
     //   numFramesPerSpectrogram: this.nonBatchInputShape[0],
@@ -304,8 +301,10 @@ export class BrowserFftSpeechCommandRecognizer implements
     if (shouldFire) {
       console.log('should fire');
       const inputTensor = (await this.microphoneIterator.next()).value;
+      console.log('getInputTensor', inputTensor);
       if (inputTensor != null) {
         const shouldRest = await this.spectrogramCallback(inputTensor);
+        console.log('callback finish', shouldRest);
         if (shouldRest) {
           console.log('should rest');
           this.tracker.suppress();
