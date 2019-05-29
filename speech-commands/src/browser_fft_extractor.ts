@@ -230,13 +230,11 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
       const freqData = flattenQueue(this.freqDataQueue);
       const freqDataTensor = getInputTensorFromFrequencyData(
           freqData, [1, this.numFrames, this.columnTruncateLength, 1]);
-      console.log('freqDataTensor.shape', freqDataTensor.shape);
       let timeDataTensor: tf.Tensor;
       if (this.includeRawAudio) {
         const timeData = flattenQueue(this.timeDataQueue);
         timeDataTensor = getInputTensorFromFrequencyData(
             timeData, [1, this.numFrames * this.fftSize]);
-        console.log('timeDataTensor.shape', timeDataTensor.shape);
       }
       const shouldRest =
           await this.spectrogramCallback(freqDataTensor, timeDataTensor);
@@ -324,9 +322,13 @@ export class Tracker {
    */
   tick(): boolean {
     this.counter++;
+    // console.log(
+    //     this.counter, this.period, this.suppressionOnset,
+    //     this.suppressionTime);
     const shouldFire = (this.counter % this.period === 0) &&
         (this.suppressionOnset == null ||
          this.counter - this.suppressionOnset > this.suppressionTime);
+    console.log(this.counter, this.suppressionOnset);
     return shouldFire;
   }
 

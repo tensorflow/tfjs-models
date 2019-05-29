@@ -141,10 +141,7 @@ export class BrowserFftSpeechCommandRecognizer implements
     };
 
     const period = Math.max(1, Math.round(42 * (1 - 0.5)));
-    this.tracker = new Tracker(
-        period,
-        Math.round(
-            this.DEFAULT_SUPPRESSION_TIME_MILLIS / (1024 / 44100 * 1e3)));
+    this.tracker = new Tracker(period, 43);
   }
 
   /**
@@ -257,7 +254,6 @@ export class BrowserFftSpeechCommandRecognizer implements
             wordDetected = false;
           }
         }
-        console.log('wordDetected');
         if (wordDetected) {
           callback({scores, spectrogram, embedding});
         }
@@ -296,15 +292,12 @@ export class BrowserFftSpeechCommandRecognizer implements
   }
 
   async doInference() {
-    console.log('doInference');
     const shouldFire = this.tracker.tick();
     if (shouldFire) {
       console.log('should fire');
       const inputTensor = (await this.microphoneIterator.next()).value;
-      console.log('getInputTensor', inputTensor);
       if (inputTensor != null) {
         const shouldRest = await this.spectrogramCallback(inputTensor);
-        console.log('callback finish', shouldRest);
         if (shouldRest) {
           console.log('should rest');
           this.tracker.suppress();
