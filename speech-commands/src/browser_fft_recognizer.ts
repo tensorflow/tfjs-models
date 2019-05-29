@@ -295,7 +295,7 @@ export class BrowserFftSpeechCommandRecognizer implements
     this.streaming = true;
   }
 
-  private async doInference() {
+  async doInference() {
     console.log('doInference');
     const shouldFire = this.tracker.tick();
     if (shouldFire) {
@@ -308,6 +308,7 @@ export class BrowserFftSpeechCommandRecognizer implements
         if (shouldRest) {
           console.log('should rest');
           this.tracker.suppress();
+          console.log('suppress');
         }
         inputTensor.dispose();
       }
@@ -604,17 +605,19 @@ export class BrowserFftSpeechCommandRecognizer implements
         overlapFactor: 0
       });
 
-      this.inferenceInterval = setInterval(async () => {
-        const shouldFire = this.tracker.tick();
-        if (shouldFire) {
-          const inputTensor = (await this.microphoneIterator.next()).value;
-          const shouldRest = await spectrogramCallback(inputTensor);
-          if (shouldRest) {
-            this.tracker.suppress();
-          }
-          inputTensor.dispose();
-        }
-      }, 1024 / 44100 * 1e3);
+      // this.inferenceInterval = setInterval(async () => {
+      //   const shouldFire = this.tracker.tick();
+      //   if (shouldFire) {
+      //     const inputTensor = (await this.microphoneIterator.next()).value;
+      //     const shouldRest = await spectrogramCallback(inputTensor);
+      //     if (shouldRest) {
+      //       this.tracker.suppress();
+      //     }
+      //     inputTensor.dispose();
+      //   }
+      // }, 1024 / 44100 * 1e3);
+      this.inferenceInterval =
+          setInterval(this.doInference.bind(this), 1024 / 44100 * 1e3);
       // this.audioDataExtractor = new BrowserFftFeatureExtractor({
       //   sampleRateHz: this.parameters.sampleRateHz,
       //   numFramesPerSpectrogram: this.nonBatchInputShape[0],
@@ -866,17 +869,20 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         overlapFactor,
         // includeRawAudio: options.includeRawAudio
       });
-      this.inferenceInterval = setInterval(async () => {
-        const shouldFire = this.tracker.tick();
-        if (shouldFire) {
-          const inputTensor = (await this.microphoneIterator.next()).value;
-          const shouldRest = await spectrogramCallback(inputTensor);
-          if (shouldRest) {
-            this.tracker.suppress();
-          }
-          inputTensor.dispose();
-        }
-      }, 1024 / 44100 * 1e3);
+      // this.inferenceInterval = setInterval(async () => {
+      //   const shouldFire = this.tracker.tick();
+      //   if (shouldFire) {
+      //     const inputTensor = (await this.microphoneIterator.next()).value;
+      //     const shouldRest = await spectrogramCallback(inputTensor);
+      //     if (shouldRest) {
+      //       this.tracker.suppress();
+      //       console.log('suppress');
+      //     }
+      //     inputTensor.dispose();
+      //   }
+      // }, 1024 / 44100 * 1e3);
+      this.inferenceInterval =
+          setInterval(this.doInference.bind(this), 1024 / 44100 * 1e3);
       // this.audioDataExtractor = new BrowserFftFeatureExtractor({
       //   sampleRateHz: this.parameters.sampleRateHz,
       //   numFramesPerSpectrogram,
