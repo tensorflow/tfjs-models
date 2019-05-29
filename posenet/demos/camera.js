@@ -63,7 +63,7 @@ async function loadVideo() {
   return video;
 }
 
-const defaultMobileNetMultiplier = isMobile() ? 0.50 : 0.75;
+const defaultMobileNetMultiplier = isMobile() ? 0.50 : 1.00;
 const defaultMobileNetStride = 16;
 const defaultMobileNetInputResolution = 513;
 const defaultMobileNetQuantBytes = 4;

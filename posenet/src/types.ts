@@ -48,3 +48,6 @@ export type PosenetInput =
     ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement|tf.Tensor3D;
 
 export type TensorBuffer3D = tf.TensorBuffer<tf.Rank.R3>;
+
+export type MobileNetMultiplier = 0.25|0.50|0.75|1.0|1.01;
+export type OutputStride = 32|16|8;

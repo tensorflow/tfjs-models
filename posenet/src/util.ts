@@ -18,8 +18,7 @@
 import * as tf from '@tensorflow/tfjs';
 
 import {connectedPartIndices} from './keypoints';
-import {OutputStride} from './mobilenet';
-import {Keypoint, Pose, PosenetInput, TensorBuffer3D, Vector2D} from './types';
+import {Keypoint, OutputStride, Pose, PosenetInput, TensorBuffer3D, Vector2D} from './types';
 
 function eitherPointDoesntMeetConfidence(
     a: number, b: number, minConfidence: number): boolean {
@@ -82,46 +81,48 @@ export async function toTensorBuffers3D(tensors: tf.Tensor3D[]):
   return Promise.all(tensors.map(tensor => toTensorBuffer(tensor, 'float32')));
 }
 
-export function scalePose(pose: Pose, scaleY: number, scaleX: number,
-   offsetY: number = 0, offsetX: number = 0): Pose {
+export function scalePose(
+    pose: Pose, scaleY: number, scaleX: number, offsetY: number = 0,
+    offsetX: number = 0): Pose {
   return {
     score: pose.score,
-    keypoints: pose.keypoints.map(
-        ({score, part, position}) => ({
-          score,
-          part,
-          position: {x: position.x * scaleX + offsetX,
-                     y: position.y * scaleY + offsetY}
-        }))
+    keypoints: pose.keypoints.map(({score, part, position}) => ({
+                                    score,
+                                    part,
+                                    position: {
+                                      x: position.x * scaleX + offsetX,
+                                      y: position.y * scaleY + offsetY
+                                    }
+                                  }))
   };
 }
 
-export function scalePoses(poses: Pose[], scaleY: number, scaleX: number,
-  offsetY: number = 0, offsetX: number = 0) {
+export function scalePoses(
+    poses: Pose[], scaleY: number, scaleX: number, offsetY: number = 0,
+    offsetX: number = 0) {
   if (scaleX === 1 && scaleY === 1 && offsetY === 0 && offsetX === 0) {
     return poses;
   }
   return poses.map(pose => scalePose(pose, scaleY, scaleX, offsetY, offsetX));
 }
 
-export function flipPoseHorizontal(pose: Pose, imageWidth : number): Pose {
- return {
-   score: pose.score,
-   keypoints: pose.keypoints.map(
-       ({score, part, position}) => ({
-         score,
-         part,
-         position: {x: imageWidth - 1 - position.x,
-                    y: position.y}
-       }))
- };
+export function flipPoseHorizontal(pose: Pose, imageWidth: number): Pose {
+  return {
+    score: pose.score,
+    keypoints: pose.keypoints.map(
+        ({score, part, position}) => ({
+          score,
+          part,
+          position: {x: imageWidth - 1 - position.x, y: position.y}
+        }))
+  };
 }
 
 export function flipPosesHorizontal(poses: Pose[], imageWidth: number) {
- if (imageWidth <= 0) {
-   return poses;
- }
- return poses.map(pose => flipPoseHorizontal(pose, imageWidth));
+  if (imageWidth <= 0) {
+    return poses;
+  }
+  return poses.map(pose => flipPoseHorizontal(pose, imageWidth));
 }
 
 export function getValidResolution(
@@ -157,11 +158,9 @@ export function toResizedInputTensor(
 }
 
 export function padAndResizeTo(
-  input: PosenetInput, [targetH, targetW]: [number, number],
-  flipHorizontal = false): {
-    resized: tf.Tensor3D,
-    paddedBy: [[number, number], [number, number]]} {
-
+    input: PosenetInput, [targetH, targetW]: [number, number],
+    flipHorizontal = false):
+    {resized: tf.Tensor3D, paddedBy: [[number, number], [number, number]]} {
   const [height, width] = getInputTensorDimensions(input);
   const targetAspect = targetW / targetH;
   const aspect = width / height;
@@ -189,4 +188,26 @@ export function padAndResizeTo(
     resized = imageTensor.resizeBilinear([targetH, targetW]);
   }
   return {resized, paddedBy: [[padT, padB], [padL, padR]]};
+}
+
+const VALID_OUTPUT_STRIDES = [8, 16, 32];
+// tslint:disable-next-line:no-any
+export function assertValidOutputStride(outputStride: any) {
+  tf.util.assert(
+      typeof outputStride === 'number', () => 'outputStride is not a number');
+  tf.util.assert(
+      VALID_OUTPUT_STRIDES.indexOf(outputStride) >= 0,
+      () => `outputStride of ${outputStride} is invalid. ` +
+          `It must be either 8, 16, or 32`);
+}
+
+// tslint:disable-next-line:no-any
+export function assertValidResolution(resolution: any, outputStride: number) {
+  tf.util.assert(
+      typeof resolution === 'number', () => 'resolution is not a number');
+
+  tf.util.assert(
+      (resolution - 1) % outputStride === 0,
+      () => `resolution of ${resolution} is invalid for output stride ` +
+          `${outputStride}.`);
 }

@@ -17,15 +17,13 @@
 
 import * as tf from '@tensorflow/tfjs';
 
-import {CheckpointLoader} from './checkpoint_loader';
-import {checkpoints, resNet50Checkpoint} from './checkpoints';
-import {assertValidOutputStride, assertValidResolution, MobileNet, MobileNetMultiplier, OutputStride} from './mobilenet';
-import {ModelWeights} from './model_weights';
+import {mobilenetCheckpoints, resNet50Checkpoint} from './checkpoints';
+import {MobileNet} from './mobilenet';
 import {decodeMultiplePoses} from './multi_pose/decode_multiple_poses';
 import {ResNet} from './resnet';
 import {decodeSinglePose} from './single_pose/decode_single_pose';
-import {Pose, PosenetInput} from './types';
-import {flipPosesHorizontal, getInputTensorDimensions, padAndResizeTo, scalePoses, toTensorBuffers3D} from './util';
+import {MobileNetMultiplier, OutputStride, Pose, PosenetInput} from './types';
+import {assertValidOutputStride, assertValidResolution, flipPosesHorizontal, getInputTensorDimensions, padAndResizeTo, scalePoses, toTensorBuffers3D} from './util';
 
 export type PoseNetResolution = 161|193|257|289|321|353|385|417|449|481|513;
 export type PoseNetArchitecture = 'ResNet50'|'MobileNetV1';
@@ -391,7 +389,7 @@ async function loadMobileNet(config: ModelConfig): Promise<PoseNet> {
         model.`);
   }
   // TODO: figure out better way to decide below.
-  const possibleMultipliers = Object.keys(checkpoints);
+  const possibleMultipliers = Object.keys(mobilenetCheckpoints);
   tf.util.assert(
       typeof multiplier === 'number',
       () => `got multiplier type of ${typeof multiplier} when it should be a ` +
@@ -403,24 +401,25 @@ async function loadMobileNet(config: ModelConfig): Promise<PoseNet> {
                 multiplier}.  No checkpoint exists for that ` +
           `multiplier. Must be one of ${possibleMultipliers.join(',')}.`);
 
-  const mobileNet: MobileNet = await mobilenetLoader.load(config);
-
-  return new PoseNet(mobileNet);
+  return await mobilenetLoader.load(config);
 }
 
 export const mobilenetLoader = {
-  load: async(config: ModelConfig): Promise<MobileNet> => {
-    const checkpoint = checkpoints[config.multiplier];
+  load: async(config: ModelConfig): Promise<PoseNet> => {
+    const inputResolution = config.inputResolution;
+    const outputStride = config.outputStride;
+    if (tf == null) {
+      throw new Error(
+          `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
+          `also include @tensorflow/tfjs on the page before using this
+        model.`);
+    }
 
-    const checkpointLoader = new CheckpointLoader(checkpoint.url);
-
-    const variables = await checkpointLoader.getAllVariables();
-
-    const weights = new ModelWeights(variables);
-
-    return new MobileNet(
-        weights, checkpoint.architecture, config.inputResolution,
-        config.outputStride);
+    // TODO: load model from checkpoint.
+    const graphModel = await tf.loadGraphModel(
+        'http://localhost:8080/mobilenet_100_16/model.json');
+    const mobilenet = new MobileNet(graphModel, inputResolution, outputStride);
+    return new PoseNet(mobilenet);
   },
 };
 
