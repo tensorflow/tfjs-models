@@ -16,9 +16,13 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import { SemanticSegmentationBaseModel, DeepLabInput } from './types';
+import {
+    SemanticSegmentationBaseModel,
+    DeepLabInput,
+    SegmentationMap,
+} from './types';
 import config from './settings';
-import { toInputTensor } from './utils';
+import { toInputTensor, toSegmentationMap } from './utils';
 
 export default class SemanticSegmentation {
     private modelPath: string;
@@ -35,14 +39,18 @@ export default class SemanticSegmentation {
         this.model = tf.loadGraphModel(this.modelPath);
     }
 
-    public async predict(input: DeepLabInput) {
+    public async predict(input: DeepLabInput): Promise<SegmentationMap> {
         const model = await this.model;
-        const segmentationMap = tf.tidy(() => {
+        const segmentationMapTensor = tf.tidy(() => {
             const data = toInputTensor(input);
-            const result = model.execute(data) as tf.Tensor;
-            return result.dataSync() as Int32Array;
-        });
+            return tf.squeeze(model.execute(data) as tf.Tensor);
+        }) as tf.Tensor2D;
+
+        const segmentationMap = toSegmentationMap(segmentationMapTensor);
+
+        segmentationMapTensor.dispose();
         this.dispose();
+
         return segmentationMap;
     }
 

@@ -1,6 +1,6 @@
 import * as tf from '@tensorflow/tfjs';
-import { DeepLabInput } from './types';
-import config from './settings';
+import { DeepLabInput, SegmentationMap } from './types';
+import config, { createPascalColormap } from './settings';
 
 /**
  * @license
@@ -32,4 +32,48 @@ export function toInputTensor(input: DeepLabInput) {
             .resizeBilinear(image, targetSize as [number, number])
             .expandDims(0);
     });
+}
+
+export async function toSegmentationMap(
+    segmentationMapTensor: tf.Tensor2D
+): Promise<SegmentationMap> {
+    const [height, width] = segmentationMapTensor.shape;
+    const colormap = createPascalColormap();
+    const channels = Array<tf.TensorBuffer<tf.Rank, 'int32'>>(3).fill(
+        tf.buffer(segmentationMapTensor.shape)
+    );
+    const segmentationMap = (segmentationMapTensor.array() as Promise<
+        number[][]
+    >)
+        .then(segmentationMapArray => {
+            return tf.tidy(() => {
+                for (let columnIndex = 0; columnIndex < height; ++columnIndex) {
+                    for (let rowIndex = 0; rowIndex < width; ++rowIndex) {
+                        colormap[
+                            segmentationMapArray[columnIndex][rowIndex]
+                        ].forEach((depth, channel) => {
+                            channels[channel].set(depth, columnIndex, rowIndex);
+                        });
+                    }
+                }
+
+                const channelTensors = channels.map(buffer =>
+                    buffer.toTensor()
+                );
+                const translatedSegmentationMapTensor = tf.concat(
+                    channelTensors
+                ) as tf.Tensor3D;
+
+                return translatedSegmentationMapTensor;
+            });
+        })
+        .then(async translatedSegmentationMapTensor => {
+            const segmentationMap = await tf.browser.toPixels(
+                translatedSegmentationMapTensor
+            );
+            translatedSegmentationMapTensor.dispose();
+            return segmentationMap;
+        });
+
+    return segmentationMap;
 }
