@@ -32,23 +32,4 @@ describeWithFlags('SemanticSegmentation', NODE_ENVS, () => {
 
         expect(tf.memory().numTensors).toEqual(numOfTensorsBefore);
     });
-
-    // it('SemanticSegmentation detect method should generate no output', async () => {
-    //     const model = new SemanticSegmentation('pascal');
-    //     const x = tf.zeros([227, 227, 3]) as tf.Tensor3D;
-
-    //     const data = await model.predict(x);
-
-    //     expect(data).toEqual();
-    // });
-
-    // it("SemanticSegmentation('cityscapes') should load", async () => {
-    //     const model = new SemanticSegmentation('cityscapes');
-
-    // });
-
-    // it("SemanticSegmentation('ade20k') should load", async () => {
-    //     const model = new SemanticSegmentation('ade20k');
-
-    // });
 });

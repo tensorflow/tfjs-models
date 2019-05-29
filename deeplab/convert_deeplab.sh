@@ -26,10 +26,7 @@ cd $MODEL_DIR && \
 pyenv local 3.6.8 && \
 virtualenv --no-site-packages venv && \
 source venv/bin/activate && \
-# hack around the ImportError
-pip install tensorflowjs==0.8.5 && \
-yes | pip uninstall numpy && \
-yes | pip install numpy && \
+pip install tensorflowjs==0.8.6 && \
 echo "Downloading models to $MODEL_DIR..."
 
 for MODEL_NAME in "${MODELS[@]}"
