@@ -12,7 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * =============================================================================
+ *
+ =============================================================================
  */
 
 import * as tf from '@tensorflow/tfjs';
@@ -27,7 +28,8 @@ describe('argmax2d', () => {
 
     const expectedResult = tf.tensor2d([1, 1], [1, 2], 'int32');
 
-    tf.test_util.expectArraysClose(result, expectedResult);
+    tf.test_util.expectArraysClose(
+        result.dataSync(), expectedResult.dataSync());
   });
 
   it('x = [3, 3, 1]', () => {
@@ -36,10 +38,12 @@ describe('argmax2d', () => {
         tf.tensor3d([.5, .2, .9, 4.3, .2, .7, .6, -0.11, 1.4], [3, 3, 1]);
 
     tf.test_util.expectArraysClose(
-        argmax2d(input1), tf.tensor2d([2, 1], [1, 2], 'int32'));
+        argmax2d(input1).dataSync(),
+        tf.tensor2d([2, 1], [1, 2], 'int32').dataSync());
 
     tf.test_util.expectArraysClose(
-        argmax2d(input2), tf.tensor2d([1, 0], [1, 2], 'int32'));
+        argmax2d(input2).dataSync(),
+        tf.tensor2d([1, 0], [1, 2], 'int32').dataSync());
   });
 
   it('x = [3, 3, 3]', () => {
@@ -53,6 +57,7 @@ describe('argmax2d', () => {
 
     const expectedResult = tf.tensor2d([2, 1, 1, 0, 2, 1], [3, 2], 'int32');
 
-    tf.test_util.expectArraysClose(result, expectedResult);
+    tf.test_util.expectArraysClose(
+        result.dataSync(), expectedResult.dataSync());
   });
 });
