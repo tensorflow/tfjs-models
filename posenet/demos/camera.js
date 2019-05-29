@@ -18,23 +18,11 @@ import * as posenet from '@tensorflow-models/posenet';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 
-import {drawBoundingBox, drawKeypoints, drawSkeleton} from './demo_util';
+import {drawBoundingBox, drawKeypoints, drawSkeleton, isMobile, tryResNetButtonName, tryResNetButtonText, updateTryResNetButtonDatGuiCss} from './demo_util';
 
 const videoWidth = 600;
 const videoHeight = 500;
 const stats = new Stats();
-
-function isAndroid() {
-  return /Android/i.test(navigator.userAgent);
-}
-
-function isiOS() {
-  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
-}
-
-function isMobile() {
-  return isAndroid() || isiOS();
-}
 
 /**
  * Loads a the camera to be used in the demo
@@ -75,13 +63,24 @@ async function loadVideo() {
   return video;
 }
 
+const defaultMobileNetMultiplier = isMobile() ? 0.50 : 0.75;
+const defaultMobileNetStride = 16;
+const defaultMobileNetInputResolution = 513;
+const defaultMobileNetQuantBytes = 4;
+
+const defaultResNetMultiplier = 1.0;
+const defaultResNetStride = 32;
+const defaultResNetInputResolution = 257;
+const defaultResNetQuantBytes = 2;
+
 const guiState = {
   algorithm: 'multi-pose',
   input: {
-    architecture: isMobile() ? 'MobileNetV1' : 'ResNet50',
-    outputStride: isMobile() ? 16 : 32,
-    inputResolution: 257,
-    multiplier: isMobile() ? 0.50 : 1.0,
+    architecture: 'MobileNetV1',
+    outputStride: defaultMobileNetStride,
+    inputResolution: defaultMobileNetInputResolution,
+    multiplier: defaultMobileNetMultiplier,
+    quantBytes: defaultMobileNetQuantBytes
   },
   singlePoseDetection: {
     minPoseConfidence: 0.1,
@@ -114,6 +113,13 @@ function setupGui(cameras, net) {
 
   const gui = new dat.GUI({width: 300});
 
+  let architectureController = null;
+  guiState[tryResNetButtonName] = function() {
+    architectureController.setValue('ResNet50')
+  };
+  gui.add(guiState, tryResNetButtonName).name(tryResNetButtonText);
+  updateTryResNetButtonDatGuiCss();
+
   // The single-pose algorithm is faster and simpler but requires only one
   // person to be in the frame or results will be innaccurate. Multi-pose works
   // for more than 1 person
@@ -126,7 +132,7 @@ function setupGui(cameras, net) {
   // Architecture: there are a few PoseNet models varying in size and
   // accuracy. 1.01 is the largest, but will be the slowest. 0.50 is the
   // fastest, but least accurate.
-  const architectureController =
+  architectureController =
       input.add(guiState.input, 'architecture', ['MobileNetV1', 'ResNet50']);
   guiState.architecture = guiState.input.architecture;
   // Input resolution:  Internally, this parameter affects the height and width
@@ -148,7 +154,6 @@ function setupGui(cameras, net) {
       guiState.changeToInputResolution = inputResolution;
     });
   }
-
 
   // Output stride:  Internally, this parameter affects the height and width of
   // the layers in the neural network. The lower the value of the output stride
@@ -185,14 +190,35 @@ function setupGui(cameras, net) {
     });
   }
 
+  // QuantBytes: this parameter affects weight quantization in the ResNet50
+  // model. The available options are 1 byte, 2 bytes, and 4 bytes. The higher
+  // the value, the larger the model size and thus the longer the loading time,
+  // the lower the value, the shorter the loading time but lower the accuracy.
+  let quantBytesController = null;
+  function updateGuiQuantBytes(quantBytes, quantBytesArray) {
+    if (quantBytesController) {
+      quantBytesController.remove();
+    }
+    guiState.quantBytes = +quantBytes;
+    guiState.input.quantBytes = +quantBytes;
+    quantBytesController =
+        input.add(guiState.input, 'quantBytes', quantBytesArray);
+    quantBytesController.onChange(function(quantBytes) {
+      guiState.changeToQuantBytes = +quantBytes;
+    });
+  }
+
   if (guiState.input.architecture === 'MobileNetV1') {
-    updateGuiInputResolution(513, [257, 353, 449, 513]);
-    updateGuiOutputStride(16, [8, 16]);
-    updateGuiMultiplier(0.50, [0.50, 0.75, 1.0, 1.01])
+    updateGuiInputResolution(
+        defaultMobileNetInputResolution, [257, 353, 449, 513]);
+    updateGuiOutputStride(defaultMobileNetStride, [8, 16]);
+    updateGuiMultiplier(defaultMobileNetMultiplier, [0.50, 0.75, 1.0, 1.01])
+    updateGuiQuantBytes(defaultMobileNetQuantBytes, [4]);
   } else {  // guiState.input.architecture === "ResNet50"
-    updateGuiInputResolution(257, [257, 513]);
-    updateGuiOutputStride(32, [32, 16]);
-    updateGuiMultiplier(1.0, [1.0]);
+    updateGuiInputResolution(defaultResNetInputResolution, [257, 513]);
+    updateGuiOutputStride(defaultResNetStride, [32, 16]);
+    updateGuiMultiplier(defaultResNetMultiplier, [1.0]);
+    updateGuiQuantBytes(defaultResNetQuantBytes, [1, 2, 4]);
   }
 
   input.open();
@@ -227,13 +253,16 @@ function setupGui(cameras, net) {
   architectureController.onChange(function(architecture) {
     // if architecture is ResNet50, then show ResNet50 options
     if (architecture.includes('ResNet50')) {
-      updateGuiInputResolution(257, [257, 513]);
-      updateGuiOutputStride(32, [32, 16]);
-      updateGuiMultiplier(1.0, [1.0]);
+      updateGuiInputResolution(defaultResNetInputResolution, [257, 513]);
+      updateGuiOutputStride(defaultResNetStride, [32, 16]);
+      updateGuiMultiplier(defaultResNetMultiplier, [1.0]);
+      updateGuiQuantBytes(defaultResNetQuantBytes, [1, 2, 4]);
     } else {  // if architecture is MobileNet, then show MobileNet options
-      updateGuiInputResolution(513, [257, 353, 449, 513]);
-      updateGuiOutputStride(16, [8, 16]);
-      updateGuiMultiplier(0.50, [0.50, 0.75, 1.0, 1.01])
+      updateGuiInputResolution(
+          defaultMobileNetInputResolution, [257, 353, 449, 513]);
+      updateGuiOutputStride(defaultMobileNetStride, [8, 16]);
+      updateGuiMultiplier(defaultMobileNetMultiplier, [0.50, 0.75, 1.0, 1.01]);
+      updateGuiQuantBytes(defaultMobileNetQuantBytes, [4]);
     }
     guiState.changeToArchitecture = architecture;
   });
@@ -297,7 +326,8 @@ function detectPoseInRealTime(video, net) {
         architecture: guiState.architecture,
         outputStride: guiState.outputStride,
         inputResolution: guiState.inputResolution,
-        multiplier: +guiState.changeToMultiplier
+        multiplier: +guiState.changeToMultiplier,
+        quantBytes: guiState.quantBytes
       });
       guiState.multiplier = +guiState.changeToMultiplier;
       guiState.changeToMultiplier = null;
@@ -310,7 +340,8 @@ function detectPoseInRealTime(video, net) {
         architecture: guiState.architecture,
         outputStride: +guiState.changeToOutputStride,
         inputResolution: guiState.inputResolution,
-        multiplier: guiState.multiplier
+        multiplier: guiState.multiplier,
+        quantBytes: guiState.quantBytes
       });
       guiState.outputStride = +guiState.changeToOutputStride;
       guiState.changeToOutputStride = null;
@@ -324,10 +355,26 @@ function detectPoseInRealTime(video, net) {
         architecture: guiState.architecture,
         outputStride: guiState.outputStride,
         inputResolution: +guiState.changeToInputResolution,
-        multiplier: guiState.multiplier
+        multiplier: guiState.multiplier,
+        quantBytes: guiState.quantBytes
       });
       guiState.inputResolution = +guiState.changeToInputResolution;
       guiState.changeToInputResolution = null;
+    }
+
+    if (guiState.changeToQuantBytes) {
+      // Important to purge variables and free up GPU memory
+      guiState.net.dispose();
+
+      guiState.net = await posenet.load({
+        architecture: guiState.architecture,
+        outputStride: guiState.outputStride,
+        inputResolution: guiState.inputResolution,
+        multiplier: guiState.multiplier,
+        quantBytes: guiState.changeToQuantBytes
+      });
+      guiState.quantBytes = guiState.changeToQuantBytes;
+      guiState.changeToQuantBytes = null;
     }
 
     // Begin monitoring code for frames per second
@@ -406,7 +453,8 @@ export async function bindPage() {
     architecture: guiState.input.architecture,
     outputStride: guiState.input.outputStride,
     inputResolution: guiState.input.inputResolution,
-    multiplier: guiState.input.multiplier
+    multiplier: guiState.input.multiplier,
+    quantBytes: guiState.input.quantBytes
   });
 
   document.getElementById('loading').style.display = 'none';

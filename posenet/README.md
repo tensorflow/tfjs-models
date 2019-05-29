@@ -12,6 +12,10 @@ PoseNet can be used to estimate either a single pose or multiple poses, meaning 
 
 To keep track of issues we use the [tensorflow/tfjs](https://github.com/tensorflow/tfjs) Github repo.
 
+## Documentation Note
+
+>> Th README and demos you see here is out of sync with the published package as we prepare the launch of the 2.0 version. Please look at the [README published on NPM](https://www.npmjs.com/package/@tensorflow-models/posenet) for instructions specific to the latest published version.
+
 ## Installation
 
 You can use this as standalone es5 bundle like this:
@@ -97,6 +101,14 @@ const net = await posenet.load({
  * **inputResolution** - Can be one of `161`, `193`, `257`, `289`, `321`, `353`, `385`, `417`, `449`, `481`, and `513`. (*Only* input resolution *`257`* and *`513`* are supported for the *ResNet architecture* and *all* input resolution are supported for the MoibleNetV1 architecture). It specifies the input resolution of the PoseNet model. The larger the value, the more accurate the model at the cost of speed. Set this to a smaller value to increase speed at the cost of accuracy.
 
  * **multiplier** - Can be one of `1.01`, `1.0`, `0.75`, or `0.50`. The value is used *only* by the MobileNetV1 architecture and not by the ResNet architecture. It is the float multiplier for the depth (number of channels) for all convolution ops. The larger the value, the larger the size of the layers, and more accurate the model at the cost of speed. Set this to a smaller value to increase speed at the cost of accuracy.
+
+ * **quantBytes** - This argument controls the bytes used for weight quantization. It is *only* used by the ResNet50 model. The available options are:
+
+   - `4`. 4 bytes per float (no quantization). Leads to highest accuracy and original model size (~90MB).
+
+   - `2`. 2 bytes per float. Leads to slightly lower accuracy and 2x model size reduction (~45MB).
+   - `1`. 1 byte per float. Leads to lower accuracy and 4x model size reduction (~22MB).
+
 
 **By default,** PoseNet loads a MobileNetV1 architecture with a **`0.75`** multiplier.  This is recommended for computers with **mid-range/lower-end GPUs.**  A model with a **`1.00`** multiplier is recommended for computers with **powerful GPUs.**  A model with a **`0.50`** multiplier is recommended for **mobile.** The ResNet achitecture is recommended for computers with **even more powerful GPUs**.
 
