@@ -28,7 +28,7 @@ and can be used as building blocks in other apps.
   <!-- ** MobileNet -->
   <tr>
     <td rowspan="8"><b>Images</b></td>
-    <td rowspan="2"><b><a href="./mobilenet"><img src="https://www.tensorflow.org/site-assets/images/marketing/icon/tile_model_image.png"  width="72" style='vertical-align:middle;max-width="72px";max-height="72px"'/><div style='vertical-align:middle; display:inline;'>MobileNet</div></a></b></td>
+    <td rowspan="2"><b><a style="white-space:nowrap;"href="./mobilenet"><img src="https://www.tensorflow.org/site-assets/images/marketing/icon/tile_model_image.png"  width="72" style='vertical-align:middle;max-width="72px";max-height="72px"'/><div style='vertical-align:middle; display:inline;'>MobileNet</div></a></b></td>
     <td><a href=""></a></td>
     <td rowspan="2">Classify images with labels from the <a href="http://www.image-net.org/">ImageNet database</a>.</td>
     <td rowspan="2"><code>npm i @tensorflow-models/mobilenet</code></td>
@@ -38,7 +38,7 @@ and can be used as building blocks in other apps.
   </tr>
   <!-- ** PoseNet -->
   <tr>
-    <td rowspan="2"><b><a href="./posenet"><img src="https://www.tensorflow.org/site-assets/images/marketing/icon/tile_model_pose.png"  width="72" style='vertical-align:middle;max-width="72px";max-height="72px"'/><div style='vertical-align:middle; display:inline;'>PoseNet</div></a></b></td>
+    <td rowspan="2"><b><a style="white-space:nowrap;"href="./posenet"><img src="https://www.tensorflow.org/site-assets/images/marketing/icon/tile_model_pose.png"  width="72" style='vertical-align:middle;max-width="72px";max-height="72px"'/><div style='vertical-align:middle; display:inline;'>PoseNet</div></a></b></td>
     <td><a href="https://storage.googleapis.com/tfjs-models/demos/posenet/camera.html">live</a></td>
     <td rowspan="2">A machine learning model which allows for real-time human pose estimation in the browser. See a detailed description <a href="https://medium.com/tensorflow/real-time-human-pose-estimation-in-the-browser-with-tensorflow-js-7dd0bc881cd5">here</a>.</td>
     <td rowspan="2"><code>npm i @tensorflow-models/posenet</code></td>
@@ -48,7 +48,7 @@ and can be used as building blocks in other apps.
   </tr>
   <!-- ** Coco SSD -->
   <tr>
-    <td rowspan="2"><b><a href="./coco-ssd"><img src="https://www.tensorflow.org/site-assets/images/marketing/icon/tile_model_shapes.png"  width="72" style='vertical-align:middle;max-width="72px";max-height="72px"'/><div style='vertical-align:middle; display:inline;'>Coco SSD</div></a></b></td>
+    <td rowspan="2"><b><a style="white-space:nowrap;"href="./coco-ssd"><img src="https://www.tensorflow.org/site-assets/images/marketing/icon/tile_model_shapes.png"  width="72" style='vertical-align:middle;max-width="72px";max-height="72px"'/><div style='vertical-align:middle; display:inline;'>Coco SSD</div></a></b></td>
     <td><a href=""></a></td>
     <td rowspan="2">Object detection model that aims to localize and identify multiple objects in a single image. Based on the <a href="https://github.com/tensorflow/models/blob/master/research/object_detection/README.md">TensorFlow object detection API</a>.</td>
     <td rowspan="2"><code>npm i @tensorflow-models/coco-ssd</code></td>
@@ -58,7 +58,7 @@ and can be used as building blocks in other apps.
   </tr>
   <!-- ** BodyPix -->
   <tr>
-    <td rowspan="2"><b><a href="./body-pix"><img src="https://www.tensorflow.org/site-assets/images/marketing/icon/tile_model_people.png"  width="72" style='vertical-align:middle;max-width="72px";max-height="72px"'/><div style='vertical-align:middle; display:inline;'>BodyPix</div></a></b></td>
+    <td rowspan="2"><b><a style="white-space:nowrap;"href="./body-pix"><img src="https://www.tensorflow.org/site-assets/images/marketing/icon/tile_model_people.png"  width="72" style='vertical-align:middle;max-width="72px";max-height="72px"'/><div style='vertical-align:middle; display:inline;'>BodyPix</div></a></b></td>
     <td><a href="https://storage.googleapis.com/tfjs-models/demos/body-pix/index.html">live</a></td>
     <td rowspan="2">Real-time person and body part segmentation in the browser using TensorFlow.js.</td>
     <td rowspan="2"><code>npm i @tensorflow-models/body-pix</code></td>
@@ -70,7 +70,7 @@ and can be used as building blocks in other apps.
   <!-- ** Speech Commands -->
   <tr>
     <td rowspan="2"><b>Audio</b></td>
-    <td rowspan="2"><b><a href="./speech-commands"><img src="https://www.tensorflow.org/site-assets/images/marketing/icon/tile_model_audio.png"  width="72" style='vertical-align:middle;max-width="72px";max-height="72px"'/><div style='vertical-align:middle; display:inline;'>Speech Commands</div></a></b></td>
+    <td rowspan="2"><b><a style="white-space:nowrap;"href="./speech-commands"><img src="https://www.tensorflow.org/site-assets/images/marketing/icon/tile_model_audio.png"  width="72" style='vertical-align:middle;max-width="72px";max-height="72px"'/><div style='vertical-align:middle; display:inline;'>Speech Commands</div></a></b></td>
     <td><a href="https://storage.googleapis.com/tfjs-speech-model-test/2019-01-03a/dist/index.html">live</a></td>
     <td rowspan="2">Classify 1 second audio snippets from the <a href="https://www.tensorflow.org/tutorials/sequences/audio_recognition">speech commands dataset</a>.</td>
     <td rowspan="2"><code>npm i @tensorflow-models/speech-commands</code></td>
@@ -82,7 +82,7 @@ and can be used as building blocks in other apps.
   <!-- ** Universal Sentence Encoder -->
   <tr>
     <td rowspan="4"><b>Text</b></td>
-    <td rowspan="2"><b><a href="./universal-sentence-encoder"><img src="https://www.tensorflow.org/site-assets/images/marketing/icon/tile_model_text.png"  width="72" style='vertical-align:middle;max-width="72px";max-height="72px"'/><div style='vertical-align:middle; display:inline;'>Universal Sentence Encoder</div></a></b></td>
+    <td rowspan="2"><b><a style="white-space:nowrap;"href="./universal-sentence-encoder"><img src="https://www.tensorflow.org/site-assets/images/marketing/icon/tile_model_text.png"  width="72" style='vertical-align:middle;max-width="72px";max-height="72px"'/><div style='vertical-align:middle; display:inline;'>Universal Sentence Encoder</div></a></b></td>
     <td><a href=""></a></td>
     <td rowspan="2">Encode text into a 512-dimensional embedding to be used as inputs to natural language processing tasks such as sentiment classification and textual similarity.</td>
     <td rowspan="2"><code>npm i @tensorflow-models/universal-sentence-encoder</code></td>
@@ -92,7 +92,7 @@ and can be used as building blocks in other apps.
   </tr>
   <!-- ** Text Toxicity -->
   <tr>
-    <td rowspan="2"><b><a href="./toxicity"><img src="https://www.tensorflow.org/site-assets/images/marketing/icon/tile_model_faces.png"  width="72" style='vertical-align:middle;max-width="72px";max-height="72px"'/><div style='vertical-align:middle; display:inline;'>Text Toxicity</div></a></b></td>
+    <td rowspan="2"><b><a style="white-space:nowrap;"href="./toxicity"><img src="https://www.tensorflow.org/site-assets/images/marketing/icon/tile_model_faces.png"  width="72" style='vertical-align:middle;max-width="72px";max-height="72px"'/><div style='vertical-align:middle; display:inline;'>Text Toxicity</div></a></b></td>
     <td><a href="https://storage.googleapis.com/tfjs-models/demos/toxicity/index.html">live</a></td>
     <td rowspan="2">Score the perceived impact a comment might have on a conversation, from "Very toxic" to "Very healthy".</td>
     <td rowspan="2"><code>npm i @tensorflow-models/toxicity</code></td>
@@ -104,7 +104,7 @@ and can be used as building blocks in other apps.
   <tr>
     <td rowspan="2"><b>General Utilities</b></td>
   <!-- ** KNN Classifier -->
-    <td rowspan="2"><b><a href="./knn-classifier"><img src="https://www.tensorflow.org/site-assets/images/marketing/icon/tile_model_other.png"  width="72" style='vertical-align:middle;max-width="72px";max-height="72px"'/><div style='vertical-align:middle; display:inline;'>KNN Classifier</div></a></b></td>
+    <td rowspan="2"><b><a style="white-space:nowrap;"href="./knn-classifier"><img src="https://www.tensorflow.org/site-assets/images/marketing/icon/tile_model_other.png"  width="72" style='vertical-align:middle;max-width="72px";max-height="72px"'/><div style='vertical-align:middle; display:inline;'>KNN Classifier</div></a></b></td>
     <td><a href=""></a></td>
     <td rowspan="2">This package provides a utility for creating a classifier using the K-Nearest Neighbors algorithm. Can be used for transfer learning.</td>
     <td rowspan="2"><code>npm i @tensorflow-models/knn-classifier</code></td>
