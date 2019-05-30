@@ -92,6 +92,7 @@ export interface BaseModel {
  * the model at the cost of speed. Set this to a smaller value to increase speed
  * at the cost of accuracy.
  *
+ * `modelUrl`: An optional string that specifies custom url of the model.
  * `quantBytes`: An opional number with values: 1, 2, or 4. The value is used
  * only by ResNet50 architecture. This parameter affects weight quantization
  * in the ResNet50 model. The available options are 1 byte, 2 bytes, and 4
@@ -102,6 +103,7 @@ export interface BaseModel {
 export interface ModelConfig {
   architecture: PoseNetArchitecture, outputStride: OutputStride,
       inputResolution: PoseNetResolution, multiplier?: MobileNetMultiplier,
+      modelUrl?: string
       quantBytes?: PoseNetQuantBytes
 }
 
@@ -118,7 +120,7 @@ export interface ModelConfig {
 //   quantBytes: 2,
 // } as ModelConfig;
 // ```
-const MOBILENET_V1_CONFIG = {
+const MOBILENET_V1_CONFIG: ModelConfig = {
   architecture: 'MobileNetV1',
   outputStride: 16,
   inputResolution: 513,
@@ -382,6 +384,7 @@ export class PoseNet {
   }
 }
 
+
 async function loadMobileNet(config: ModelConfig): Promise<PoseNet> {
   const multiplier = config.multiplier;
   if (tf == null) {
@@ -412,7 +415,8 @@ export const mobilenetLoader = {
   load: async(config: ModelConfig): Promise<MobileNet> => {
     const checkpoint = checkpoints[config.multiplier];
 
-    const checkpointLoader = new CheckpointLoader(checkpoint.url);
+    const checkpointLoader =
+        new CheckpointLoader(config.modelUrl || checkpoint.url);
 
     const variables = await checkpointLoader.getAllVariables();
 
@@ -436,7 +440,7 @@ async function loadResNet(config: ModelConfig): Promise<PoseNet> {
   }
 
   const url = resNet50Checkpoint(inputResolution, outputStride, quantBytes);
-  const graphModel = await tf.loadGraphModel(url);
+  const graphModel = await tf.loadGraphModel(config.modelUrl || url);
   const resnet = new ResNet(graphModel, inputResolution, outputStride);
   return new PoseNet(resnet);
 }
