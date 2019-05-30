@@ -18,7 +18,7 @@ import * as posenet from '@tensorflow-models/posenet';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 
-import {drawBoundingBox, drawKeypoints, drawSkeleton, isMobile, tryResNetButtonName, tryResNetButtonText, updateTryResNetButtonDatGuiCss} from './demo_util';
+import {drawBoundingBox, drawKeypoints, drawSkeleton, isMobile, toggleLoadingUI, tryResNetButtonName, tryResNetButtonText, updateTryResNetButtonDatGuiCss} from './demo_util';
 
 const videoWidth = 600;
 const videoHeight = 500;
@@ -286,7 +286,7 @@ function setupGui(cameras, net) {
  */
 function setupFPS() {
   stats.showPanel(0);  // 0: fps, 1: ms, 2: mb, 3+: custom
-  document.body.appendChild(stats.dom);
+  document.getElementById('main').appendChild(stats.dom);
 }
 
 /**
@@ -310,18 +310,21 @@ function detectPoseInRealTime(video, net) {
     if (guiState.changeToArchitecture) {
       // Important to purge variables and free up GPU memory
       guiState.net.dispose();
+      toggleLoadingUI(true);
       guiState.net = await posenet.load({
         architecture: guiState.changeToArchitecture,
         outputStride: guiState.outputStride,
         inputResolution: guiState.inputResolution,
         multiplier: guiState.multiplier,
       });
+      toggleLoadingUI(false);
       guiState.architecture = guiState.changeToArchitecture;
       guiState.changeToArchitecture = null;
     }
 
     if (guiState.changeToMultiplier) {
       guiState.net.dispose();
+      toggleLoadingUI(true);
       guiState.net = await posenet.load({
         architecture: guiState.architecture,
         outputStride: guiState.outputStride,
@@ -329,6 +332,7 @@ function detectPoseInRealTime(video, net) {
         multiplier: +guiState.changeToMultiplier,
         quantBytes: guiState.quantBytes
       });
+      toggleLoadingUI(false);
       guiState.multiplier = +guiState.changeToMultiplier;
       guiState.changeToMultiplier = null;
     }
@@ -336,6 +340,7 @@ function detectPoseInRealTime(video, net) {
     if (guiState.changeToOutputStride) {
       // Important to purge variables and free up GPU memory
       guiState.net.dispose();
+      toggleLoadingUI(true);
       guiState.net = await posenet.load({
         architecture: guiState.architecture,
         outputStride: +guiState.changeToOutputStride,
@@ -343,6 +348,7 @@ function detectPoseInRealTime(video, net) {
         multiplier: guiState.multiplier,
         quantBytes: guiState.quantBytes
       });
+      toggleLoadingUI(false);
       guiState.outputStride = +guiState.changeToOutputStride;
       guiState.changeToOutputStride = null;
     }
@@ -350,7 +356,7 @@ function detectPoseInRealTime(video, net) {
     if (guiState.changeToInputResolution) {
       // Important to purge variables and free up GPU memory
       guiState.net.dispose();
-
+      toggleLoadingUI(true);
       guiState.net = await posenet.load({
         architecture: guiState.architecture,
         outputStride: guiState.outputStride,
@@ -358,6 +364,7 @@ function detectPoseInRealTime(video, net) {
         multiplier: guiState.multiplier,
         quantBytes: guiState.quantBytes
       });
+      toggleLoadingUI(false);
       guiState.inputResolution = +guiState.changeToInputResolution;
       guiState.changeToInputResolution = null;
     }
@@ -365,7 +372,7 @@ function detectPoseInRealTime(video, net) {
     if (guiState.changeToQuantBytes) {
       // Important to purge variables and free up GPU memory
       guiState.net.dispose();
-
+      toggleLoadingUI(true);
       guiState.net = await posenet.load({
         architecture: guiState.architecture,
         outputStride: guiState.outputStride,
@@ -373,6 +380,7 @@ function detectPoseInRealTime(video, net) {
         multiplier: guiState.multiplier,
         quantBytes: guiState.changeToQuantBytes
       });
+      toggleLoadingUI(false);
       guiState.quantBytes = guiState.changeToQuantBytes;
       guiState.changeToQuantBytes = null;
     }
@@ -449,6 +457,7 @@ function detectPoseInRealTime(video, net) {
  * available camera devices, and setting off the detectPoseInRealTime function.
  */
 export async function bindPage() {
+  toggleLoadingUI(true);
   const net = await posenet.load({
     architecture: guiState.input.architecture,
     outputStride: guiState.input.outputStride,
@@ -456,9 +465,7 @@ export async function bindPage() {
     multiplier: guiState.input.multiplier,
     quantBytes: guiState.input.quantBytes
   });
-
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('main').style.display = 'block';
+  toggleLoadingUI(false);
 
   let video;
 

@@ -18,8 +18,7 @@ import * as posenet from '@tensorflow-models/posenet';
 import * as tf from '@tensorflow/tfjs';
 import dat from 'dat.gui';
 
-import {isMobile, tryResNetButtonName, tryResNetButtonText, updateTryResNetButtonDatGuiCss} from './demo_util';
-
+import {isMobile, toggleLoadingUI, tryResNetButtonName, tryResNetButtonText, updateTryResNetButtonDatGuiCss} from './demo_util';
 // clang-format off
 import {
   drawBoundingBox,
@@ -172,6 +171,7 @@ async function reloadNetTestImageAndEstimatePoses(net) {
   if (guiState.net) {
     guiState.net.dispose();
   }
+  toggleLoadingUI(true);
   guiState.net = await posenet.load({
     architecture: guiState.model.architecture,
     outputStride: guiState.model.outputStride,
@@ -179,6 +179,7 @@ async function reloadNetTestImageAndEstimatePoses(net) {
     multiplier: guiState.model.multiplier,
     quantBytes: guiState.model.quantBytes,
   });
+  toggleLoadingUI(false);
   testImageAndEstimatePoses(guiState.net);
 }
 
@@ -367,6 +368,7 @@ function setupGui(net) {
  * poses on a default image
  */
 export async function bindPage() {
+  toggleLoadingUI(true);
   const net = await posenet.load({
     architecture: guiState.model.architecture,
     outputStride: guiState.model.outputStride,
@@ -374,13 +376,9 @@ export async function bindPage() {
     multiplier: guiState.model.multiplier,
     quantBytes: guiState.model.quantBytes
   });
-
+  toggleLoadingUI(false);
   setupGui(net);
-
   await testImageAndEstimatePoses(net);
-
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('main').style.display = 'block';
 }
 
 bindPage();
