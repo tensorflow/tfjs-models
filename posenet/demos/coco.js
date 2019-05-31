@@ -303,7 +303,7 @@ function setupGui(net) {
       guiState.model.outputStride = defaultResNetStride;
       guiState.model.multiplier = defaultResNetMultiplier;
       guiState.model.quantBytes = defaultResNetQuantBytes;
-      updateGuiInputResolution([257, 513]);
+      updateGuiInputResolution([257, 353, 449, 513, 801]);
       updateGuiOutputStride([32, 16]);
       updateGuiMultiplier([1.0]);
       updateQuantBytes([1, 2, 4])
@@ -312,7 +312,7 @@ function setupGui(net) {
       guiState.model.outputStride = defaultMobileNetStride;
       guiState.model.multiplier = defaultMobileNetMultiplier;
       guiState.model.quantBytes = defaultMobileNetQuantBytes;
-      updateGuiInputResolution([257, 353, 449, 513]);
+      updateGuiInputResolution([257, 353, 449, 513, 801]);
       updateGuiOutputStride([8, 16]);
       updateGuiMultiplier([0.5, 0.75, 1.0]);
       updateQuantBytes([4]);
@@ -322,12 +322,12 @@ function setupGui(net) {
   });
 
   if (guiState.model.architecture.includes('ResNet50')) {
-    updateGuiInputResolution([257, 513]);
+    updateGuiInputResolution([257, 353, 449, 513, 801]);
     updateGuiOutputStride([32, 16]);
     updateGuiMultiplier([1.0]);
     updateQuantBytes([1, 2, 4]);
   } else {
-    updateGuiInputResolution([257, 513]);
+    updateGuiInputResolution([257, 353, 449, 513, 801]);
     updateGuiOutputStride([8, 16]);
     updateGuiMultiplier([0.5, 0.75, 1.0]);
     updateQuantBytes([4]);

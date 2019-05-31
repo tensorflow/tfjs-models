@@ -23,12 +23,11 @@ export class ResNet implements BaseModel {
     this.model = model;
     const inputShape =
         this.model.inputs[0].shape as [number, number, number, number];
-    [inputShape[1], inputShape[2]];
     tf.util.assert(
-        (inputShape[1] === inputResolution) &&
-            (inputShape[2] === inputResolution),
+        (inputShape[1] === inputResolution || inputShape[1] === -1) &&
+            (inputShape[2] === inputResolution || inputShape[2] === -1),
         () => `Input shape [${inputShape[1]}, ${inputShape[2]}] ` +
-            `must both be equal to ${inputResolution}`);
+            `must both be equal to ${inputResolution} or -1`);
     this.inputResolution = inputResolution;
     this.outputStride = outputStride;
   }

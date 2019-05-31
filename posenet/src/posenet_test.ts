@@ -12,11 +12,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * =============================================================================
+ *
+ =============================================================================
  */
 
 import * as tf from '@tensorflow/tfjs';
 import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
+
+import * as mobilenet from './mobilenet';
 import * as posenetModel from './posenet_model';
 import * as resnet from './resnet';
 
@@ -26,6 +29,7 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
   const inputResolution = 513;
   const outputStride = 32;
   const multiplier = 1.0;
+  const quantBytes = 4;
   const outputResolution = (inputResolution - 1) / outputStride + 1;
   const numKeypoints = 17;
 
@@ -35,14 +39,16 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
     const resNetConfig = {
       architecture: 'ResNet50',
       outputStride: outputStride,
-      inputResolution: inputResolution
+      inputResolution: inputResolution,
+      quantBytes: quantBytes
     } as posenetModel.ModelConfig;
 
     const mobileNetConfig = {
       architecture: 'MobileNetV1',
       outputStride: outputStride,
       inputResolution: inputResolution,
-      multiplier: multiplier
+      multiplier: multiplier,
+      quantBytes: quantBytes
     } as posenetModel.ModelConfig;
 
     spyOn(resnet, 'ResNet').and.callFake(() => {
@@ -65,7 +71,7 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
       };
     });
 
-    spyOn(posenetModel.mobilenetLoader, 'load').and.callFake(() => {
+    spyOn(mobilenet, 'MobileNet').and.callFake(() => {
       return {
         inputResolution: inputResolution,
         outputStride: outputStride,
