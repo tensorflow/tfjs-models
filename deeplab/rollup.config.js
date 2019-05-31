@@ -15,16 +15,18 @@
  * =============================================================================
  */
 
-import node from "rollup-plugin-node-resolve";
-import typescript from "rollup-plugin-typescript2";
-import uglify from "rollup-plugin-uglify";
-import configuration from "package.json";
+import node from 'rollup-plugin-node-resolve';
+import typescript from 'rollup-plugin-typescript2';
+import json from 'rollup-plugin-json';
+import { terser } from 'rollup-plugin-terser';
 
-const settings = configuration["model"];
+const settings = {
+    name: 'deeplab',
+};
 
 const PREAMBLE = `/**
  * @license
- * Copyright ${(new Date).getFullYear()} Google LLC. All Rights Reserved.
+ * Copyright ${new Date().getFullYear()} Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -40,59 +42,65 @@ const PREAMBLE = `/**
  */`;
 
 function minify() {
-  return uglify({
-    output: {
-      preamble: PREAMBLE
-    }
-  });
+    return terser({
+        output: {
+            preamble: PREAMBLE,
+        },
+    });
 }
 
 function config({ plugins = [], output = {} }) {
-  return {
-    input: "src/index.ts",
-    plugins: [
-      typescript({
-        tsconfigOverride: {
-          compilerOptions: {
-            module: "ES2015"
-          }
-        }
-      }),
-      node(),
-      ...plugins
-    ],
-    output: {
-      banner: settings["preamble"],
-      globals: {
-        "@tensorflow/tfjs": "tf"
-      },
-      ...output
-    },
-    external: ["@tensorflow/tfjs"]
-  };
+    return {
+        input: 'src/index.ts',
+        plugins: [
+            json({
+                preferConst: true,
+                indent: '  ',
+                compact: true,
+                namedExports: true,
+            }),
+            typescript({
+                tsconfigOverride: {
+                    compilerOptions: {
+                        module: 'ES2015',
+                    },
+                },
+            }),
+            node(),
+            ...plugins,
+        ],
+        output: {
+            banner: PREAMBLE,
+            globals: {
+                '@tensorflow/tfjs': 'tf',
+            },
+            ...output,
+        },
+        external: ['@tensorflow/tfjs'],
+    };
 }
 
 export default [
-  config({
-    output: {
-      format: "umd",
-      name: settings["name"],
-      file: `dist/${settings["name"]}.js`
-    }
-  }),
-  config({
-    plugins: [minify()],
-    output: {
-      format: "umd",
-      name: "cocoSsd",
-      file: `dist/${settings["name"]}.min.js`
-    }
-  }),
-  config({
-    plugins: [minify()],
-    output: {
-      format: "es",
-      file: `dist/${settings["name"]}.esm.js`
-    }
-  })
+    config({
+        output: {
+            format: 'umd',
+            name: settings['name'],
+            file: `dist/${settings['name']}.js`,
+        },
+    }),
+    config({
+        plugins: [minify()],
+        output: {
+            format: 'umd',
+            name: settings['name'],
+            file: `dist/${settings['name']}.min.js`,
+        },
+    }),
+    config({
+        plugins: [minify()],
+        output: {
+            format: 'es',
+            file: `dist/${settings['name']}.esm.js`,
+        },
+    }),
 ];
