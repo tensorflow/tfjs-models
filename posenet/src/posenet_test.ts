@@ -51,6 +51,10 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
       quantBytes: quantBytes
     } as posenetModel.ModelConfig;
 
+    spyOn(tf, 'loadGraphModel').and.callFake((): tf.GraphModel => {
+      return null;
+    })
+
     spyOn(resnet, 'ResNet').and.callFake(() => {
       return {
         inputResolution: inputResolution,
