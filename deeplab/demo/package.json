@@ -2,7 +2,7 @@
     "name": "deeplab-demo",
     "version": "0.0.1",
     "description": "",
-    "main": "index.js",
+    "main": "src/index.js",
     "license": "Apache-2.0",
     "private": true,
     "engines": {
@@ -17,8 +17,8 @@
         "stats.js": "^0.17.0"
     },
     "scripts": {
-        "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr --open ",
-        "build": "cross-env NODE_ENV=production parcel build index.html --no-minify --public-url ./",
+        "watch": "cross-env NODE_ENV=development parcel src/index.html --no-hmr --open ",
+        "build": "cross-env NODE_ENV=production parcel build src/index.html --no-minify --public-url ./",
         "lint": "eslint .",
         "link-local": "yalc link @tensorflow-models/deeplab"
     },

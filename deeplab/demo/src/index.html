@@ -1,0 +1,123 @@
+<!-- Copyright 2019 Google LLC. All Rights Reserved.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+============================================================================= -->
+<!doctype html>
+<html>
+
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">
+            <h1 class="navbar-item">
+                <img src="tfjs-logo.png">
+                <span class="tag is-white is-medium">
+                    <b>DeepLab Demo</b>
+                </span>
+            </h1>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="section">
+            <article class="message">
+                <div class="message-header">
+                    <p>Three types of pre-trained weights are available:</p>
+                </div>
+                <div class="message-body">
+                    <div class="row columns">
+                        <div class="column is-one-third">
+                            <div class="card large">
+                                <div class="card-content">
+                                    <div class="content">
+                                        <b>DeepLab
+                                            <a
+                                                href="https://github.com/tensorflow/models/blob/master/research/deeplab/g3doc/pascal.md">
+                                                Pascal
+                                            </a>
+                                        </b>
+                                    </div>
+                                </div>
+                                <footer class="card-footer">
+                                    <span class="card-footer-item is-unselectable">Toggle image</span>
+                                    <span class="card-footer-item is-unselectable">Run</span>
+                                </footer>
+                            </div>
+                        </div>
+                        <div class="column is-one-third">
+                            <div class="card large">
+                                <div class="card-content">
+                                    <div class="content">
+                                        <b>DeepLab
+                                            <a
+                                                href="https://github.com/tensorflow/models/blob/master/research/deeplab/g3doc/cityscapes.md">
+                                                CityScapes
+                                            </a>
+                                        </b>
+                                    </div>
+                                </div>
+                                <footer class="card-footer">
+                                    <span class="card-footer-item is-unselectable">Toggle image</span>
+                                    <span class="card-footer-item is-unselectable">Run</span>
+                                </footer>
+                            </div>
+                        </div>
+                        <div class="column is-one-third">
+                            <div class="card large">
+                                <div class="card-content">
+                                    <div class="content">
+                                        <b>DeepLab
+                                            <a
+                                                href="https://github.com/tensorflow/models/blob/master/research/deeplab/g3doc/ade20k.md">
+                                                ADE20K
+                                            </a>
+                                        </b>
+                                    </div>
+                                </div>
+                                <footer class="card-footer">
+                                    <span class="card-footer-item is-unselectable">Toggle image</span>
+                                    <span class="card-footer-item is-unselectable">Run</span>
+                                </footer>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </article>
+            <div class="columns is-mobile is-centered">
+                <div class="column is-half">
+                    <div class="card large">
+                        <div class="card-content is-hidden">
+                            <div class="content">
+                                <img id="image" />
+                            </div>
+                        </div>
+                        <footer class="card-footer">
+                            <span class="card-footer-item is-unselectable">Upload image</span>
+                        </footer>
+                    </div>
+                </div>
+                <div class="column is-half">
+                    <div class="card large is-invisible">
+                        <div class="card-content is-hidden">
+                            <div class="content">
+                                <canvas id="canvas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script src="index.js"></script>
+
+</html>
