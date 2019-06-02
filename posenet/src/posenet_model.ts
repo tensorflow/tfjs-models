@@ -18,7 +18,7 @@
 import * as tf from '@tensorflow/tfjs';
 
 import {CheckpointLoader} from './checkpoint_loader';
-import {checkpoints, resnet50_checkpoints} from './checkpoints';
+import {checkpoints, resNet50Checkpoint} from './checkpoints';
 import {assertValidOutputStride, assertValidResolution, MobileNet, MobileNetMultiplier, OutputStride} from './mobilenet';
 import {ModelWeights} from './model_weights';
 import {decodeMultiplePoses} from './multi_pose/decode_multiple_poses';
@@ -30,6 +30,7 @@ import {flipPosesHorizontal, getInputTensorDimensions, padAndResizeTo, scalePose
 export type PoseNetResolution = 161|193|257|289|321|353|385|417|449|481|513;
 export type PoseNetArchitecture = 'ResNet50'|'MobileNetV1';
 export type PoseNetDecodingMethod = 'single-person'|'multi-person';
+export type PoseNetQuantBytes = 1|2|4;
 
 /**
  * PoseNet supports using various convolution neural network models
@@ -90,10 +91,20 @@ export interface BaseModel {
  * The larger the value, the larger the size of the layers, and more accurate
  * the model at the cost of speed. Set this to a smaller value to increase speed
  * at the cost of accuracy.
+ *
+ * `modelUrl`: An optional string that specifies custom url of the model.
+ * `quantBytes`: An opional number with values: 1, 2, or 4. The value is used
+ * only by ResNet50 architecture. This parameter affects weight quantization
+ * in the ResNet50 model. The available options are 1 byte, 2 bytes, and 4
+ * bytes. The higher the value, the larger the model size and thus the longer
+ * the loading time, the lower the value, the shorter the loading time but lower
+ * the accuracy.
  */
 export interface ModelConfig {
   architecture: PoseNetArchitecture, outputStride: OutputStride,
-      inputResolution: PoseNetResolution, multiplier?: MobileNetMultiplier
+      inputResolution: PoseNetResolution, multiplier?: MobileNetMultiplier,
+      modelUrl?: string
+      quantBytes?: PoseNetQuantBytes
 }
 
 // The default configuration for loading MobileNetV1 based PoseNet.
@@ -106,13 +117,14 @@ export interface ModelConfig {
 //   architecture: 'ResNet50',
 //   outputStride: 32,
 //   inputResolution: 257,
+//   quantBytes: 2,
 // } as ModelConfig;
 // ```
-const MOBILENET_V1_CONFIG = {
+const MOBILENET_V1_CONFIG: ModelConfig = {
   architecture: 'MobileNetV1',
   outputStride: 16,
   inputResolution: 513,
-  multiplier: 0.75
+  multiplier: 0.75,
 } as ModelConfig;
 
 function validateModelConfig(config: ModelConfig) {
@@ -128,6 +140,7 @@ function validateModelConfig(config: ModelConfig) {
     'MobileNetV1': [0.25, 0.50, 0.75, 1.0, 1.01],
     'ResNet50': [1.0]
   };
+  const VALID_QUANT_BYTES = {'MobileNetV1': [4], 'ResNet50': [1, 2, 4]};
 
   if (config.architecture == null) {
     config.architecture = 'MobileNetV1';
@@ -166,6 +179,16 @@ function validateModelConfig(config: ModelConfig) {
     throw new Error(
         `Invalid multiplier ${config.multiplier}. ` +
         `Should be one of ${VALID_MULTIPLIER[config.architecture]} ` +
+        `for architecutre ${config.architecture}.`);
+  }
+
+  if (config.quantBytes == null) {
+    config.quantBytes = 4;
+  }
+  if (VALID_QUANT_BYTES[config.architecture].indexOf(config.quantBytes) < 0) {
+    throw new Error(
+        `Invalid quantBytes ${config.quantBytes}. ` +
+        `Should be one of ${VALID_QUANT_BYTES[config.architecture]} ` +
         `for architecutre ${config.architecture}.`);
   }
 
@@ -361,6 +384,7 @@ export class PoseNet {
   }
 }
 
+
 async function loadMobileNet(config: ModelConfig): Promise<PoseNet> {
   const multiplier = config.multiplier;
   if (tf == null) {
@@ -391,7 +415,8 @@ export const mobilenetLoader = {
   load: async(config: ModelConfig): Promise<MobileNet> => {
     const checkpoint = checkpoints[config.multiplier];
 
-    const checkpointLoader = new CheckpointLoader(checkpoint.url);
+    const checkpointLoader =
+        new CheckpointLoader(config.modelUrl || checkpoint.url);
 
     const variables = await checkpointLoader.getAllVariables();
 
@@ -406,6 +431,7 @@ export const mobilenetLoader = {
 async function loadResNet(config: ModelConfig): Promise<PoseNet> {
   const inputResolution = config.inputResolution;
   const outputStride = config.outputStride;
+  const quantBytes = config.quantBytes;
   if (tf == null) {
     throw new Error(
         `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
@@ -413,8 +439,8 @@ async function loadResNet(config: ModelConfig): Promise<PoseNet> {
         model.`);
   }
 
-  const graphModel = await tf.loadGraphModel(
-      resnet50_checkpoints[inputResolution][outputStride]);
+  const url = resNet50Checkpoint(inputResolution, outputStride, quantBytes);
+  const graphModel = await tf.loadGraphModel(config.modelUrl || url);
   const resnet = new ResNet(graphModel, inputResolution, outputStride);
   return new PoseNet(resnet);
 }
