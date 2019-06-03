@@ -328,7 +328,6 @@ export class Tracker {
     const shouldFire = (this.counter % this.period === 0) &&
         (this.suppressionOnset == null ||
          this.counter - this.suppressionOnset > this.suppressionTime);
-    console.log(this.counter, this.suppressionOnset);
     return shouldFire;
   }
 

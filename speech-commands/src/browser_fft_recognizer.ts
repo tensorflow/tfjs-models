@@ -274,26 +274,23 @@ export class BrowserFftSpeechCommandRecognizer implements
       overlapFactor
     });
 
-    this.inferenceInterval =
-        setInterval(this.doInference.bind(this), 1024 / 44100 * 1e3);
+    this.inferenceInterval = setInterval(this.doInference.bind(this), 25);
 
     this.streaming = true;
   }
 
   async doInference() {
     const shouldFire = this.tracker.tick();
-    console.log('do inference');
     if (shouldFire) {
-      console.log('should fire');
       const inputTensor = (await this.microphoneIterator.next()).value;
       if (inputTensor != null) {
         const shouldRest = await this.spectrogramCallback(inputTensor);
         if (shouldRest) {
-          console.log('should rest');
           this.tracker.suppress();
-          console.log('suppress');
         }
         inputTensor.dispose();
+      } else {
+        console.log('no tensor');
       }
     }
   }
