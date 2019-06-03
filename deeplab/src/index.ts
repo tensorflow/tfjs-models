@@ -24,34 +24,49 @@ import {
 import config from './settings';
 import { toInputTensor, toSegmentationMap } from './utils';
 
-export default class SemanticSegmentation {
+export async function load(base: SemanticSegmentationBaseModel = 'pascal') {
+    if (tf == null) {
+        throw new Error(
+            `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
+                `also include @tensorflow/tfjs on the page before using this model.`
+        );
+    }
+    if (['pascal', 'cityscapes', 'ade20k'].indexOf(base) === -1) {
+        throw new Error(
+            `SemanticSegmentation cannot be constructed ` +
+                `with an invalid base model ${base}. ` +
+                `Try one of 'pascal', 'cityscapes' and 'ade20k'.`
+        );
+    }
+    const semanticSegmentation = new SemanticSegmentation(base);
+    await semanticSegmentation.load();
+    return semanticSegmentation;
+}
+
+export class SemanticSegmentation {
     private modelPath: string;
-    private model: Promise<tf.GraphModel>;
+    private model: tf.GraphModel;
     constructor(base: SemanticSegmentationBaseModel) {
-        if (['pascal', 'cityscapes', 'ade20k'].indexOf(base) === -1) {
-            throw new Error(
-                `SemanticSegmentation cannot be constructed ` +
-                    `with an invalid base model ${base}. ` +
-                    `Try one of 'pascal', 'cityscapes' and 'ade20k'.`
-            );
-        }
         this.modelPath = `${config['BASE_PATH']}${base}/model.json`;
-        this.model = tf.loadGraphModel(this.modelPath);
+    }
+
+    public async load() {
+        this.model = await tf.loadGraphModel(this.modelPath);
     }
 
     public async predict(input: DeepLabInput): Promise<SegmentationMap> {
-        const model = await this.model;
         const segmentationMapTensor = tf.tidy(() => {
             const data = toInputTensor(input);
-            return tf.squeeze(model.execute(data) as tf.Tensor);
+            return tf.squeeze(this.model.execute(data) as tf.Tensor);
         }) as tf.Tensor2D;
 
-        const segmentationMap = toSegmentationMap(segmentationMapTensor);
+        const [height, width] = segmentationMapTensor.shape;
+        const segmentationMapData = toSegmentationMap(segmentationMapTensor);
 
         segmentationMapTensor.dispose();
         this.dispose();
 
-        return segmentationMap;
+        return [height, width, segmentationMapData];
     }
 
     /**
@@ -60,8 +75,8 @@ export default class SemanticSegmentation {
      */
 
     public dispose() {
-        this.model.then(model => {
-            model.dispose();
-        });
+        if (this.model) {
+            this.model.dispose();
+        }
     }
 }

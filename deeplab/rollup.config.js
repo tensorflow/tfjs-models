@@ -43,6 +43,7 @@ const PREAMBLE = `/**
 
 function minify() {
     return terser({
+        ecma: 8,
         output: {
             preamble: PREAMBLE,
         },
@@ -62,7 +63,7 @@ function config({ plugins = [], output = {} }) {
             typescript({
                 tsconfigOverride: {
                     compilerOptions: {
-                        module: 'ES2015',
+                        module: 'ESNext',
                     },
                 },
             }),

@@ -19,11 +19,11 @@ import {
     describeWithFlags,
     NODE_ENVS,
 } from '@tensorflow/tfjs-core/dist/jasmine_util';
-import SemanticSegmentation from '.';
+import { load } from '.';
 
 describeWithFlags('SemanticSegmentation', NODE_ENVS, () => {
     it('SemanticSegmentation predict method should not leak', async () => {
-        const model = new SemanticSegmentation('pascal');
+        const model = await load('pascal');
         const x = tf.zeros([227, 500, 3]) as tf.Tensor3D;
         const numOfTensorsBefore = tf.memory().numTensors;
 
