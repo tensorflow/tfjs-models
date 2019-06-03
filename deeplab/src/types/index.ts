@@ -26,4 +26,4 @@ export type DeepLabInput =
     | HTMLVideoElement
     | tf.Tensor3D;
 
-export type SegmentationMap = [number, number, Promise<Uint8ClampedArray>];
+export type SegmentationMap = Uint8ClampedArray;

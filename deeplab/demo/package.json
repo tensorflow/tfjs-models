@@ -9,30 +9,30 @@
         "node": ">=8.9.0"
     },
     "dependencies": {
-        "@tensorflow-models/deeplab": "file:.yalc/@tensorflow-models/deeplab",
+        "@tensorflow-models/deeplab": "link:.yalc/@tensorflow-models/deeplab",
         "@tensorflow/tfjs": "^1.1.0",
         "bulma": "^0.7.5",
         "stats.js": "^0.17.0"
     },
     "scripts": {
-        "watch": "cross-env NODE_ENV=development parcel src/index.html --no-hmr --open",
+        "watch": "cross-env NODE_ENV=development parcel src/index.html --no-hmr --open --no-cache",
         "build": "cross-env NODE_ENV=production parcel build src/index.html --no-minify --public-url ./",
         "lint": "eslint .",
-        "link-local": "yalc link @tensorflow-models/deeplab"
+        "link-local": "yalc add --link @tensorflow-models/deeplab"
     },
     "devDependencies": {
         "babel-core": "^6.26.3",
         "babel-plugin-transform-runtime": "~6.23.0",
         "babel-polyfill": "~6.26.0",
-        "babel-preset-env": "~1.6.1",
+        "babel-preset-env": "~1.7.0",
         "babel-preset-es2017": "^6.24.1",
         "clang-format": "~1.2.2",
         "cross-env": "^5.2.0",
         "dat.gui": "^0.7.2",
-        "eslint": "^4.19.1",
-        "eslint-config-google": "^0.9.1",
-        "parcel-bundler": "~1.10.3",
-        "yalc": "~1.0.0-pre.27"
+        "eslint": "^5.16.0",
+        "eslint-config-google": "^0.13.0",
+        "parcel-bundler": "~1.12.3",
+        "yalc": "~1.0.0-pre.29"
     },
     "eslintConfig": {
         "extends": "google",

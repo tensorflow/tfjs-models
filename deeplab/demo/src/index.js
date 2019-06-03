@@ -16,7 +16,7 @@
  */
 
 import 'bulma/css/bulma.css';
-import * as Deeplab from '@tensorflow-models/deeplab';
+import { SemanticSegmentation } from '@tensorflow-models/deeplab';
 
 const deeplab = {
     pascal: undefined,
@@ -26,7 +26,7 @@ const deeplab = {
 
 const initialiseModels = () => {
     Object.keys(deeplab).forEach(modelName => {
-        const model = Deeplab.load(modelName);
+        const model = new SemanticSegmentation(modelName);
         deeplab[modelName] = model;
     });
 };
@@ -39,6 +39,7 @@ const processImage = file => {
     reader.onload = event => {
         const image = document.createElement('img');
         image.src = event.target.result;
+        document.appendChild(image);
     };
 };
 

@@ -71,7 +71,7 @@ export async function toSegmentationMap(
             const segmentationMap = await tf.browser.toPixels(
                 translatedSegmentationMapTensor
             );
-            translatedSegmentationMapTensor.dispose();
+            tf.dispose(translatedSegmentationMapTensor);
             return segmentationMap;
         });
 
