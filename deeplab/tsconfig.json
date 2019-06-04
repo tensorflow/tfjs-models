@@ -8,7 +8,7 @@
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
         "lib": ["es2015", "dom"],
-        "module": "es2015",
+        "module": "commonjs",
         "resolveJsonModule": true,
         "esModuleInterop": true,
         "moduleResolution": "node",
