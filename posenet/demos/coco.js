@@ -183,15 +183,15 @@ async function reloadNetTestImageAndEstimatePoses(net) {
   testImageAndEstimatePoses(guiState.net);
 }
 
+const defaultQuantBytes = 2;
+
 const defaultMobileNetMultiplier = isMobile() ? 0.50 : 0.75;
 const defaultMobileNetStride = 16;
 const defaultMobileNetInputResolution = 513;
-const defaultMobileNetQuantBytes = 4;
 
 const defaultResNetMultiplier = 1.0;
 const defaultResNetStride = 32;
 const defaultResNetInputResolution = 257;
-const defaultResNetQuantBytes = 2;
 
 let guiState = {
   net: null,
@@ -200,7 +200,7 @@ let guiState = {
     outputStride: defaultMobileNetStride,
     inputResolution: defaultMobileNetInputResolution,
     multiplier: defaultMobileNetMultiplier,
-    quantBytes: defaultMobileNetQuantBytes,
+    quantBytes: defaultQuantBytes,
   },
   image: 'tennis_in_crowd.jpg',
   multiPoseDetection: {
@@ -298,35 +298,32 @@ function setupGui(net) {
   architectureController =
       model.add(guiState.model, 'architecture', ['MobileNetV1', 'ResNet50']);
   architectureController.onChange(async function(architecture) {
+    guiState.model.quantBytes = defaultQuantBytes;
     if (architecture.includes('ResNet50')) {
       guiState.model.inputResolution = defaultResNetInputResolution;
       guiState.model.outputStride = defaultResNetStride;
       guiState.model.multiplier = defaultResNetMultiplier;
-      guiState.model.quantBytes = defaultResNetQuantBytes;
       updateGuiOutputStride([32, 16]);
       updateGuiMultiplier([1.0]);
     } else {
       guiState.model.inputResolution = defaultMobileNetInputResolution;
       guiState.model.outputStride = defaultMobileNetStride;
       guiState.model.multiplier = defaultMobileNetMultiplier;
-      guiState.model.quantBytes = defaultMobileNetQuantBytes;
       updateGuiOutputStride([8, 16]);
       updateGuiMultiplier([0.5, 0.75, 1.0]);
     }
     guiState.model.architecture = architecture;
     reloadNetTestImageAndEstimatePoses(guiState.net);
   });
-
   updateGuiInputResolution([257, 353, 449, 513, 801]);
-  updateGuiQuantBytes([1, 2, 4])
   if (guiState.model.architecture.includes('ResNet50')) {
     updateGuiOutputStride([32, 16]);
     updateGuiMultiplier([1.0]);
-  }
-  else {
+  } else {
     updateGuiOutputStride([8, 16]);
     updateGuiMultiplier([0.5, 0.75, 1.0]);
   }
+  updateGuiQuantBytes([1, 2, 4])
 
 
   gui.add(guiState, 'image', images)

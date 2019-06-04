@@ -63,15 +63,15 @@ async function loadVideo() {
   return video;
 }
 
+const defaultQuantBytes = 2;
+
 const defaultMobileNetMultiplier = isMobile() ? 0.50 : 0.75;
 const defaultMobileNetStride = 16;
 const defaultMobileNetInputResolution = 513;
-const defaultMobileNetQuantBytes = 4;
 
 const defaultResNetMultiplier = 1.0;
 const defaultResNetStride = 32;
 const defaultResNetInputResolution = 257;
-const defaultResNetQuantBytes = 2;
 
 const guiState = {
   algorithm: 'multi-pose',
@@ -80,7 +80,7 @@ const guiState = {
     outputStride: defaultMobileNetStride,
     inputResolution: defaultMobileNetInputResolution,
     multiplier: defaultMobileNetMultiplier,
-    quantBytes: defaultMobileNetQuantBytes
+    quantBytes: defaultQuantBytes
   },
   singlePoseDetection: {
     minPoseConfidence: 0.1,
@@ -208,17 +208,18 @@ function setupGui(cameras, net) {
     });
   }
 
-  updateGuiInputResolution(
-      defaultMobileNetInputResolution, [257, 353, 449, 513, 801]);
-  updateGuiQuantBytes(defaultMobileNetQuantBytes, [1, 2, 4]);
   if (guiState.input.architecture === 'MobileNetV1') {
+    updateGuiInputResolution(
+        defaultMobileNetInputResolution, [257, 353, 449, 513, 801]);
     updateGuiOutputStride(defaultMobileNetStride, [8, 16]);
     updateGuiMultiplier(defaultMobileNetMultiplier, [0.50, 0.75, 1.0])
-
   } else {  // guiState.input.architecture === "ResNet50"
+    updateGuiInputResolution(
+        defaultResNetInputResolution, [257, 353, 449, 513, 801]);
     updateGuiOutputStride(defaultResNetStride, [32, 16]);
     updateGuiMultiplier(defaultResNetMultiplier, [1.0]);
   }
+  updateGuiQuantBytes(defaultQuantBytes, [1, 2, 4]);
 
   input.open();
   // Pose confidence: the overall confidence in the estimation of a person's

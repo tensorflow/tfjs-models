@@ -386,7 +386,6 @@ async function loadMobileNet(config: ModelConfig): Promise<PoseNet> {
   const outputStride = config.outputStride;
   const quantBytes = config.quantBytes;
   const multiplier = config.multiplier;
-  console.log('loadMobileNet');
   if (tf == null) {
     throw new Error(
         `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
