@@ -16,10 +16,10 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import {BaseModel, PoseNetResolution} from './posenet_model';
+import {BaseModel, PoseNetResolution, PoseNetOutputStride} from './posenet_model';
 
-export type OutputStride = 32|16|8;
-export type MobileNetMultiplier = 0.25|0.50|0.75|1.0|1.01;
+
+export type MobileNetMultiplier = 0.50|0.75|1.0;
 
 const VALID_OUTPUT_STRIDES = [8, 16, 32];
 // tslint:disable-next-line:no-any
@@ -54,12 +54,12 @@ function toFloatIfInt(input: tf.Tensor3D): tf.Tensor3D {
 
 export class MobileNet implements BaseModel {
   readonly model: tf.GraphModel
-  readonly outputStride: OutputStride
+  readonly outputStride: PoseNetOutputStride
   readonly inputResolution: PoseNetResolution;
 
   constructor(
       model: tf.GraphModel, inputResolution: PoseNetResolution,
-      outputStride: OutputStride) {
+      outputStride: PoseNetOutputStride) {
     this.model = model;
     const inputShape =
         this.model.inputs[0].shape as [number, number, number, number];

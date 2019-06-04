@@ -208,18 +208,16 @@ function setupGui(cameras, net) {
     });
   }
 
+  updateGuiInputResolution(
+      defaultMobileNetInputResolution, [257, 353, 449, 513, 801]);
+  updateGuiQuantBytes(defaultMobileNetQuantBytes, [1, 2, 4]);
   if (guiState.input.architecture === 'MobileNetV1') {
-    updateGuiInputResolution(
-        defaultMobileNetInputResolution, [257, 353, 449, 513, 801]);
     updateGuiOutputStride(defaultMobileNetStride, [8, 16]);
     updateGuiMultiplier(defaultMobileNetMultiplier, [0.50, 0.75, 1.0])
-    updateGuiQuantBytes(defaultMobileNetQuantBytes, [1, 2, 4]);
+
   } else {  // guiState.input.architecture === "ResNet50"
-    updateGuiInputResolution(
-        defaultResNetInputResolution, [257, 353, 449, 513, 801]);
     updateGuiOutputStride(defaultResNetStride, [32, 16]);
     updateGuiMultiplier(defaultResNetMultiplier, [1.0]);
-    updateGuiQuantBytes(defaultResNetQuantBytes, [1, 2, 4]);
   }
 
   input.open();
@@ -254,17 +252,11 @@ function setupGui(cameras, net) {
   architectureController.onChange(function(architecture) {
     // if architecture is ResNet50, then show ResNet50 options
     if (architecture.includes('ResNet50')) {
-      updateGuiInputResolution(
-          defaultResNetInputResolution, [257, 353, 449, 513, 801]);
       updateGuiOutputStride(defaultResNetStride, [32, 16]);
       updateGuiMultiplier(defaultResNetMultiplier, [1.0]);
-      updateGuiQuantBytes(defaultResNetQuantBytes, [1, 2, 4]);
     } else {  // if architecture is MobileNet, then show MobileNet options
-      updateGuiInputResolution(
-          defaultMobileNetInputResolution, [257, 353, 449, 513, 801]);
       updateGuiOutputStride(defaultMobileNetStride, [8, 16]);
       updateGuiMultiplier(defaultMobileNetMultiplier, [0.50, 0.75, 1.0, 1.01]);
-      updateGuiQuantBytes(defaultMobileNetQuantBytes, [1, 2, 4]);
     }
     guiState.changeToArchitecture = architecture;
   });

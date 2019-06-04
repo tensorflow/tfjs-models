@@ -280,7 +280,7 @@ function setupGui(net) {
   // the value, the larger the model size and thus the longer the loading time,
   // the lower the value, the shorter the loading time but lower the accuracy.
   let quantBytesController = null;
-  function updateQuantBytes(quantBytesArray) {
+  function updateGuiQuantBytes(quantBytesArray) {
     if (quantBytesController) {
       quantBytesController.remove();
     }
@@ -303,34 +303,29 @@ function setupGui(net) {
       guiState.model.outputStride = defaultResNetStride;
       guiState.model.multiplier = defaultResNetMultiplier;
       guiState.model.quantBytes = defaultResNetQuantBytes;
-      updateGuiInputResolution([257, 353, 449, 513, 801]);
       updateGuiOutputStride([32, 16]);
       updateGuiMultiplier([1.0]);
-      updateQuantBytes([1, 2, 4])
     } else {
       guiState.model.inputResolution = defaultMobileNetInputResolution;
       guiState.model.outputStride = defaultMobileNetStride;
       guiState.model.multiplier = defaultMobileNetMultiplier;
       guiState.model.quantBytes = defaultMobileNetQuantBytes;
-      updateGuiInputResolution([257, 353, 449, 513, 801]);
       updateGuiOutputStride([8, 16]);
       updateGuiMultiplier([0.5, 0.75, 1.0]);
-      updateQuantBytes([4]);
     }
     guiState.model.architecture = architecture;
     reloadNetTestImageAndEstimatePoses(guiState.net);
   });
 
+  updateGuiInputResolution([257, 353, 449, 513, 801]);
+  updateGuiQuantBytes([1, 2, 4])
   if (guiState.model.architecture.includes('ResNet50')) {
-    updateGuiInputResolution([257, 353, 449, 513, 801]);
     updateGuiOutputStride([32, 16]);
     updateGuiMultiplier([1.0]);
-    updateQuantBytes([1, 2, 4]);
-  } else {
-    updateGuiInputResolution([257, 353, 449, 513, 801]);
+  }
+  else {
     updateGuiOutputStride([8, 16]);
     updateGuiMultiplier([0.5, 0.75, 1.0]);
-    updateQuantBytes([4]);
   }
 
 

@@ -18,7 +18,7 @@
 import * as tf from '@tensorflow/tfjs';
 
 import {mobileNetCheckpoint, resNet50Checkpoint} from './checkpoints';
-import {assertValidOutputStride, assertValidResolution, MobileNet, MobileNetMultiplier, OutputStride} from './mobilenet';
+import {assertValidOutputStride, assertValidResolution, MobileNet, MobileNetMultiplier} from './mobilenet';
 import {decodeMultiplePoses} from './multi_pose/decode_multiple_poses';
 import {ResNet} from './resnet';
 import {decodeSinglePose} from './single_pose/decode_single_pose';
@@ -27,6 +27,7 @@ import {flipPosesHorizontal, getInputTensorDimensions, padAndResizeTo, scalePose
 
 export type PoseNetResolution =
     161|193|257|289|321|353|385|417|449|481|513|801|1217;
+export type PoseNetOutputStride = 32|16|8;
 export type PoseNetArchitecture = 'ResNet50'|'MobileNetV1';
 export type PoseNetDecodingMethod = 'single-person'|'multi-person';
 export type PoseNetQuantBytes = 1|2|4;
@@ -44,7 +45,7 @@ export interface BaseModel {
   // The input resolution (unit: pixel) of the base model.
   readonly inputResolution: PoseNetResolution;
   // The output stride of the base model.
-  readonly outputStride: OutputStride;
+  readonly outputStride: PoseNetOutputStride;
 
   /**
    * Predicts intermediate Tensor representations.
@@ -92,15 +93,15 @@ export interface BaseModel {
  * at the cost of accuracy.
  *
  * `modelUrl`: An optional string that specifies custom url of the model.
- * `quantBytes`: An opional number with values: 1, 2, or 4. The value is used
- * only by ResNet50 architecture. This parameter affects weight quantization
- * in the ResNet50 model. The available options are 1 byte, 2 bytes, and 4
- * bytes. The higher the value, the larger the model size and thus the longer
- * the loading time, the lower the value, the shorter the loading time but lower
- * the accuracy.
+ *
+ * `quantBytes`: An opional number with values: 1, 2, or 4.  This parameter
+ * affects weight quantization in the models. The available options are
+ * 1 byte, 2 bytes, and 4 bytes. The higher the value, the larger the model size
+ * and thus the longer the loading time, the lower the value, the shorter the
+ * loading time but lower the accuracy.
  */
 export interface ModelConfig {
-  architecture: PoseNetArchitecture, outputStride: OutputStride,
+  architecture: PoseNetArchitecture, outputStride: PoseNetOutputStride,
       inputResolution: PoseNetResolution, multiplier?: MobileNetMultiplier,
       modelUrl?: string, quantBytes?: PoseNetQuantBytes
 }

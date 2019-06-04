@@ -103,7 +103,7 @@ const net = await posenet.load({
 
  * **multiplier** - Can be one of `1.01`, `1.0`, `0.75`, or `0.50` (The value is used *only* by the MobileNetV1 architecture and not by the ResNet architecture). It is the float multiplier for the depth (number of channels) for all convolution ops. The larger the value, the larger the size of the layers, and more accurate the model at the cost of speed. Set this to a smaller value to increase speed at the cost of accuracy.
 
- * **quantBytes** - This argument controls the bytes used for weight quantization (The value is *only* used by the ResNet50 model). The available options are:
+ * **quantBytes** - This argument controls the bytes used for weight quantization. The available options are:
 
    - `4`. 4 bytes per float (no quantization). Leads to highest accuracy and original model size (~90MB).
 
