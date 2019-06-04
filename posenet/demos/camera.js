@@ -208,19 +208,22 @@ function setupGui(cameras, net) {
     });
   }
 
-  if (guiState.input.architecture === 'MobileNetV1') {
-    updateGuiInputResolution(
-        defaultMobileNetInputResolution, [257, 353, 449, 513, 801]);
-    updateGuiOutputStride(defaultMobileNetStride, [8, 16]);
-    updateGuiMultiplier(defaultMobileNetMultiplier, [0.50, 0.75, 1.0])
-  } else {  // guiState.input.architecture === "ResNet50"
-    updateGuiInputResolution(
-        defaultResNetInputResolution, [257, 353, 449, 513, 801]);
-    updateGuiOutputStride(defaultResNetStride, [32, 16]);
-    updateGuiMultiplier(defaultResNetMultiplier, [1.0]);
+  function updateGui() {
+    if (guiState.input.architecture === 'MobileNetV1') {
+      updateGuiInputResolution(
+          defaultMobileNetInputResolution, [257, 353, 449, 513, 801]);
+      updateGuiOutputStride(defaultMobileNetStride, [8, 16]);
+      updateGuiMultiplier(defaultMobileNetMultiplier, [0.50, 0.75, 1.0])
+    } else {  // guiState.input.architecture === "ResNet50"
+      updateGuiInputResolution(
+          defaultResNetInputResolution, [257, 353, 449, 513, 801]);
+      updateGuiOutputStride(defaultResNetStride, [32, 16]);
+      updateGuiMultiplier(defaultResNetMultiplier, [1.0]);
+    }
+    updateGuiQuantBytes(defaultQuantBytes, [1, 2, 4]);
   }
-  updateGuiQuantBytes(defaultQuantBytes, [1, 2, 4]);
 
+  updateGui();
   input.open();
   // Pose confidence: the overall confidence in the estimation of a person's
   // pose (i.e. a person detected in a frame)
@@ -252,13 +255,7 @@ function setupGui(cameras, net) {
 
   architectureController.onChange(function(architecture) {
     // if architecture is ResNet50, then show ResNet50 options
-    if (architecture.includes('ResNet50')) {
-      updateGuiOutputStride(defaultResNetStride, [32, 16]);
-      updateGuiMultiplier(defaultResNetMultiplier, [1.0]);
-    } else {  // if architecture is MobileNet, then show MobileNet options
-      updateGuiOutputStride(defaultMobileNetStride, [8, 16]);
-      updateGuiMultiplier(defaultMobileNetMultiplier, [0.50, 0.75, 1.0, 1.01]);
-    }
+    updateGui();
     guiState.changeToArchitecture = architecture;
   });
 

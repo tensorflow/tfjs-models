@@ -292,39 +292,40 @@ function setupGui(net) {
     });
   }
 
+  function updateGui() {
+    updateGuiInputResolution([257, 353, 449, 513, 801]);
+    if (guiState.model.architecture.includes('ResNet50')) {
+      updateGuiOutputStride([32, 16]);
+      updateGuiMultiplier([1.0]);
+    } else {
+      updateGuiOutputStride([8, 16]);
+      updateGuiMultiplier([0.5, 0.75, 1.0]);
+    }
+    updateGuiQuantBytes([1, 2, 4])
+  }
+
   // Architecture: there are a few PoseNet models varying in size and
   // accuracy. 1.01 is the largest, but will be the slowest. 0.50 is the
   // fastest, but least accurate.
   architectureController =
       model.add(guiState.model, 'architecture', ['MobileNetV1', 'ResNet50']);
   architectureController.onChange(async function(architecture) {
-    guiState.model.quantBytes = defaultQuantBytes;
     if (architecture.includes('ResNet50')) {
       guiState.model.inputResolution = defaultResNetInputResolution;
       guiState.model.outputStride = defaultResNetStride;
       guiState.model.multiplier = defaultResNetMultiplier;
-      updateGuiOutputStride([32, 16]);
-      updateGuiMultiplier([1.0]);
     } else {
       guiState.model.inputResolution = defaultMobileNetInputResolution;
       guiState.model.outputStride = defaultMobileNetStride;
       guiState.model.multiplier = defaultMobileNetMultiplier;
-      updateGuiOutputStride([8, 16]);
-      updateGuiMultiplier([0.5, 0.75, 1.0]);
     }
+    guiState.model.quantBytes = defaultQuantBytes;
     guiState.model.architecture = architecture;
+    updateGui()
     reloadNetTestImageAndEstimatePoses(guiState.net);
   });
-  updateGuiInputResolution([257, 353, 449, 513, 801]);
-  if (guiState.model.architecture.includes('ResNet50')) {
-    updateGuiOutputStride([32, 16]);
-    updateGuiMultiplier([1.0]);
-  } else {
-    updateGuiOutputStride([8, 16]);
-    updateGuiMultiplier([0.5, 0.75, 1.0]);
-  }
-  updateGuiQuantBytes([1, 2, 4])
 
+  updateGui();
 
   gui.add(guiState, 'image', images)
       .onChange(() => testImageAndEstimatePoses(guiState.net));
