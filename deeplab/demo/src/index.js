@@ -17,6 +17,9 @@
 
 import 'bulma/css/bulma.css';
 import { SemanticSegmentation } from '@tensorflow-models/deeplab';
+import pascalExampleImage from './examples/pascal.jpg';
+import cityscapesExampleImage from './examples/cityscapes.jpg';
+import ade20kExampleImage from './examples/ade20k.jpg';
 
 const deeplab = {
     pascal: undefined,
@@ -24,11 +27,28 @@ const deeplab = {
     ade20k: undefined,
 };
 
+const deeplabExampleImages = {
+    pascal: pascalExampleImage,
+    cityscapes: cityscapesExampleImage,
+    ade20k: ade20kExampleImage,
+};
+
 const initialiseModels = () => {
     Object.keys(deeplab).forEach(modelName => {
         const model = new SemanticSegmentation(modelName);
         deeplab[modelName] = model;
+        const toggler = document.getElementById(`toggle-${modelName}-image`);
+        toggler.onclick = () => setImage(deeplabExampleImages[modelName]);
+        const runner = document.getElementById(`run-${modelName}`);
+        runner.onclick = () => runDeeplab(modelName);
     });
+};
+
+const setImage = src => {
+    const image = document.getElementById('input-image');
+    image.src = src;
+    const imageContainer = document.getElementById('input-card');
+    imageContainer.classList.remove('is-invisible');
 };
 
 const processImage = file => {
@@ -37,10 +57,9 @@ const processImage = file => {
     }
     const reader = new FileReader();
     reader.onload = event => {
-        const image = document.createElement('img');
-        image.src = event.target.result;
-        document.appendChild(image);
+        setImage(event.target.result);
     };
+    reader.readAsDataURL(file);
 };
 
 const processImages = event => {
@@ -48,26 +67,32 @@ const processImages = event => {
     Array.from(files).forEach(processImage);
 };
 
-const getImage = () => {
-    const image = document.getElementById('input-image');
-    if (!image) {
-        alert('Please pass a valid input image.');
-    }
-    return image;
+const displaySegmentationMap = ([height, width, segmentationMap]) => {
+    console.log(segmentationMap);
+    const canvas = document.getElementById('output-image');
+    const ctx = canvas.getContext('2d');
+    const segmentationMapData = new ImageData(segmentationMap, width, height);
+    ctx.putImageData(segmentationMapData, 0, 0);
+    const imageContainer = document.getElementById('output-card');
+    imageContainer.classList.remove('is-invisible');
 };
 
-const displayResult = result => {};
+const runDeeplab = async modelName => {
+    const input = document.getElementById('input-image');
+    if (!input.src || !input.src.length || input.src.length === 0) {
+        alert('Please load an image first.');
+        return;
+    }
 
-const runModel = async modelName => {
     const model = deeplab[modelName];
-    const input = getImage();
     if (input.complete && input.naturalHeight !== 0) {
-        displayResult(await model.predict(input));
+        displaySegmentationMap(await model.predict(input));
     } else {
         input.onload = async () => {
-            displayResult(await model.predict(input));
+            displaySegmentationMap(await model.predict(input));
         };
     }
+    console.log('DONE');
 };
 
 window.onload = initialiseModels;

@@ -1,6 +1,6 @@
 import * as tf from '@tensorflow/tfjs';
 import config, { createPascalColormap } from './settings';
-import { DeepLabInput } from './types';
+import { DeepLabInput, SegmentationMap } from './types';
 
 /**
  * @license
@@ -36,11 +36,11 @@ export function toInputTensor(input: DeepLabInput) {
 
 export async function toSegmentationMap(
     segmentationMapTensor: tf.Tensor2D
-): Promise<Uint8ClampedArray> {
+): Promise<SegmentationMap> {
     const [height, width] = segmentationMapTensor.shape;
     const colormap = createPascalColormap();
     const channels = Array<tf.TensorBuffer<tf.Rank, 'int32'>>(3).fill(
-        tf.buffer(segmentationMapTensor.shape)
+        tf.buffer(segmentationMapTensor.shape, 'int32')
     );
     const segmentationMap = (segmentationMapTensor.array() as Promise<
         number[][]
@@ -60,8 +60,9 @@ export async function toSegmentationMap(
                 const channelTensors = channels.map(buffer =>
                     buffer.toTensor()
                 );
-                const translatedSegmentationMapTensor = tf.concat(
-                    channelTensors
+                const translatedSegmentationMapTensor = tf.stack(
+                    channelTensors,
+                    2
                 ) as tf.Tensor3D;
 
                 return translatedSegmentationMapTensor;

@@ -16,12 +16,12 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import {
-    SemanticSegmentationBaseModel,
-    DeepLabInput,
-    SegmentationMap,
-} from './types';
 import config from './settings';
+import {
+    DeepLabInput,
+    DeepLabOutput,
+    SemanticSegmentationBaseModel,
+} from './types';
 import { toInputTensor, toSegmentationMap } from './utils';
 
 export class SemanticSegmentation {
@@ -45,23 +45,22 @@ export class SemanticSegmentation {
         this.model = tf.loadGraphModel(this.modelPath);
     }
 
-    public async load() {}
-
-    public async predict(input: DeepLabInput): Promise<SegmentationMap> {
+    public async predict(input: DeepLabInput): Promise<DeepLabOutput> {
         const model = await this.model;
         const segmentationMapTensor = tf.tidy(() => {
             const data = toInputTensor(input);
             return tf.squeeze(model.execute(data) as tf.Tensor);
         }) as tf.Tensor2D;
 
+        const [height, width] = segmentationMapTensor.shape;
+
         const segmentationMapData = await toSegmentationMap(
             segmentationMapTensor
         );
 
         tf.dispose(segmentationMapTensor);
-        this.dispose();
 
-        return segmentationMapData;
+        return [height, width, segmentationMapData];
     }
 
     /**
@@ -69,9 +68,7 @@ export class SemanticSegmentation {
      * You should call this when you are done with the model.
      */
 
-    public dispose() {
-        this.model.then(model => {
-            model.dispose();
-        });
+    public async dispose() {
+        (await this.model).dispose();
     }
 }

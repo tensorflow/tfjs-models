@@ -23,7 +23,7 @@ import { SemanticSegmentation } from '.';
 
 describeWithFlags('SemanticSegmentation', NODE_ENVS, () => {
     beforeAll(function() {
-        jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
+        jasmine.DEFAULT_TIMEOUT_INTERVAL = 20000;
     });
     it('SemanticSegmentation predict method should not leak', async () => {
         const model = new SemanticSegmentation('pascal');
@@ -31,7 +31,7 @@ describeWithFlags('SemanticSegmentation', NODE_ENVS, () => {
         const numOfTensorsBefore = tf.memory().numTensors;
 
         await model.predict(x);
-        model.dispose();
+        await model.dispose();
         expect(tf.memory().numTensors).toEqual(numOfTensorsBefore);
     });
 });

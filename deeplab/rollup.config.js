@@ -18,6 +18,7 @@
 import node from 'rollup-plugin-node-resolve';
 import typescript from 'rollup-plugin-typescript2';
 import json from 'rollup-plugin-json';
+import babel from 'rollup-plugin-babel';
 import { terser } from 'rollup-plugin-terser';
 
 const settings = {
@@ -46,6 +47,10 @@ function minify() {
         output: {
             preamble: PREAMBLE,
         },
+        ecma: 5,
+        module: true,
+        compress: false,
+        mangle: false,
     });
 }
 
@@ -53,20 +58,35 @@ function config({ plugins = [], output = {} }) {
     return {
         input: 'src/index.ts',
         plugins: [
+            typescript({
+                tsconfigOverride: {
+                    compilerOptions: {
+                        module: 'ES2015',
+                    },
+                },
+            }),
             json({
-                preferConst: true,
+                preferConst: false,
                 indent: '  ',
                 compact: true,
                 namedExports: true,
             }),
-            typescript({
-                tsconfigOverride: {
-                    compilerOptions: {
-                        module: 'ESNext',
-                    },
-                },
-            }),
             node(),
+            babel({
+                exclude: 'node_modules/**',
+                babelrc: false,
+                presets: [
+                    [
+                        '@babel/preset-env',
+                        {
+                            modules: false,
+                            targets: {
+                                browsers: ['last 2 versions'],
+                            },
+                        },
+                    ],
+                ],
+            }),
             ...plugins,
         ],
         output: {

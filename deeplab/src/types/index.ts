@@ -27,3 +27,4 @@ export type DeepLabInput =
     | tf.Tensor3D;
 
 export type SegmentationMap = Uint8ClampedArray;
+export type DeepLabOutput = [number, number, SegmentationMap];

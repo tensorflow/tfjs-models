@@ -15,8 +15,8 @@
  * =============================================================================
  */
 
-import { Color } from './types';
 import config from './config.json';
+import { Color } from './types';
 
 export const createPascalColormap = (): Color[] => {
     const colormap = new Array(config['DATASET_MAX_ENTRIES']['PASCAL']);
