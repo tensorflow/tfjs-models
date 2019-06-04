@@ -1,4 +1,4 @@
-import { createPascalColormap } from './settings';
+import { createPascalColormap } from './utils';
 
 describe('Utilities', () => {
     it('The PASCAL colormap coincides with the original.', () => {

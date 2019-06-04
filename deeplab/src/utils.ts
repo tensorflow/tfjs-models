@@ -1,6 +1,13 @@
 import * as tf from '@tensorflow/tfjs';
-import config, { createPascalColormap } from './settings';
-import { DeepLabInput, SegmentationMap } from './types';
+import {
+    DeepLabInput,
+    Label,
+    SegmentationData,
+    RawSegmentationMap,
+    Color,
+    Legend,
+} from './types';
+import config from './config';
 
 /**
  * @license
@@ -19,6 +26,27 @@ import { DeepLabInput, SegmentationMap } from './types';
  * =============================================================================
  */
 
+export const createPascalColormap = (): Color[] => {
+    const colormap = new Array(config['DATASET_MAX_ENTRIES']['PASCAL']);
+    for (let idx = 0; idx < config['DATASET_MAX_ENTRIES']['PASCAL']; ++idx) {
+        colormap[idx] = new Array(3);
+    }
+    for (let shift = 7; shift > 4; --shift) {
+        const indexShift = 3 * (7 - shift);
+        for (let channel = 0; channel < 3; ++channel) {
+            for (
+                let idx = 0;
+                idx < config['DATASET_MAX_ENTRIES']['PASCAL'];
+                ++idx
+            ) {
+                colormap[idx][channel] |=
+                    ((idx >> (channel + indexShift)) & 1) << shift;
+            }
+        }
+    }
+    return colormap;
+};
+
 export function toInputTensor(input: DeepLabInput) {
     return tf.tidy(() => {
         const image =
@@ -34,47 +62,47 @@ export function toInputTensor(input: DeepLabInput) {
     });
 }
 
-export async function toSegmentationMap(
-    segmentationMapTensor: tf.Tensor2D
-): Promise<SegmentationMap> {
+export async function processSegmentationMap(
+    segmentationMapTensor: RawSegmentationMap
+): Promise<SegmentationData> {
     const [height, width] = segmentationMapTensor.shape;
     const colormap = createPascalColormap();
     const channels = Array<tf.TensorBuffer<tf.Rank, 'int32'>>(3).fill(
         tf.buffer(segmentationMapTensor.shape, 'int32')
     );
-    const segmentationMap = (segmentationMapTensor.array() as Promise<
-        number[][]
-    >)
-        .then(segmentationMapArray => {
-            return tf.tidy(() => {
-                for (let columnIndex = 0; columnIndex < height; ++columnIndex) {
-                    for (let rowIndex = 0; rowIndex < width; ++rowIndex) {
-                        colormap[
-                            segmentationMapArray[columnIndex][rowIndex]
-                        ].forEach((depth, channel) => {
-                            channels[channel].set(depth, columnIndex, rowIndex);
-                        });
-                    }
-                }
-
-                const channelTensors = channels.map(buffer =>
-                    buffer.toTensor()
-                );
-                const translatedSegmentationMapTensor = tf.stack(
-                    channelTensors,
-                    2
-                ) as tf.Tensor3D;
-
-                return translatedSegmentationMapTensor;
+    const segmentationMapArray = (await segmentationMapTensor.array()) as number[][];
+    const labels = new Set<Label>();
+    for (let columnIndex = 0; columnIndex < height; ++columnIndex) {
+        for (let rowIndex = 0; rowIndex < width; ++rowIndex) {
+            const label: Label = segmentationMapArray[columnIndex][rowIndex];
+            labels.add(label);
+            colormap[label].forEach((depth, channel) => {
+                channels[channel].set(depth, columnIndex, rowIndex);
             });
-        })
-        .then(async translatedSegmentationMapTensor => {
-            const segmentationMap = await tf.browser.toPixels(
-                translatedSegmentationMapTensor
-            );
-            tf.dispose(translatedSegmentationMapTensor);
-            return segmentationMap;
-        });
+        }
+    }
+    const translatedSegmentationMapTensor = tf.tidy(() => {
+        const channelTensors = channels.map(buffer => buffer.toTensor());
+        const translatedSegmentationMapTensor = tf.stack(
+            channelTensors,
+            2
+        ) as tf.Tensor3D;
 
-    return segmentationMap;
+        return translatedSegmentationMapTensor;
+    });
+    const segmentationMap = await tf.browser.toPixels(
+        translatedSegmentationMapTensor
+    );
+    tf.dispose(translatedSegmentationMapTensor);
+
+    const labelNames = config['LABELS'];
+    const legend: Legend = Array.from(labels).reduce(
+        (accumulator, label) => ({
+            ...accumulator,
+            [labelNames[label]]: colormap[label],
+        }),
+        {}
+    );
+
+    return [legend, segmentationMap];
 }

@@ -16,13 +16,15 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import config from './settings';
 import {
     DeepLabInput,
     DeepLabOutput,
     SemanticSegmentationBaseModel,
+    RawSegmentationMap,
+    SegmentationData,
 } from './types';
-import { toInputTensor, toSegmentationMap } from './utils';
+import { toInputTensor, processSegmentationMap } from './utils';
+import config from './config';
 
 export class SemanticSegmentation {
     private modelPath: string;
@@ -45,22 +47,31 @@ export class SemanticSegmentation {
         this.model = tf.loadGraphModel(this.modelPath);
     }
 
-    public async predict(input: DeepLabInput): Promise<DeepLabOutput> {
+    public async segment(input: DeepLabInput): Promise<RawSegmentationMap> {
         const model = await this.model;
-        const segmentationMapTensor = tf.tidy(() => {
+        return tf.tidy(() => {
             const data = toInputTensor(input);
             return tf.squeeze(model.execute(data) as tf.Tensor);
-        }) as tf.Tensor2D;
+        }) as RawSegmentationMap;
+    }
 
-        const [height, width] = segmentationMapTensor.shape;
+    public async translate(
+        rawSegmentationMap: RawSegmentationMap
+    ): Promise<SegmentationData> {
+        return processSegmentationMap(rawSegmentationMap);
+    }
 
-        const segmentationMapData = await toSegmentationMap(
-            segmentationMapTensor
+    public async predict(input: DeepLabInput): Promise<DeepLabOutput> {
+        const rawSegmentationMap = await this.segment(input);
+
+        const [height, width] = rawSegmentationMap.shape;
+        const [legend, segmentationMap] = await processSegmentationMap(
+            rawSegmentationMap
         );
 
-        tf.dispose(segmentationMapTensor);
+        tf.dispose(rawSegmentationMap);
 
-        return [height, width, segmentationMapData];
+        return [legend, height, width, segmentationMap];
     }
 
     /**

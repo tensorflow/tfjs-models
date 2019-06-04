@@ -67,14 +67,37 @@ const processImages = event => {
     Array.from(files).forEach(processImage);
 };
 
-const displaySegmentationMap = ([height, width, segmentationMap]) => {
-    console.log(segmentationMap);
+const displaySegmentationMap = deeplabOutput => {
+    const [legend, height, width, segmentationMap] = deeplabOutput;
+    console.log(legend);
     const canvas = document.getElementById('output-image');
     const ctx = canvas.getContext('2d');
+
     const segmentationMapData = new ImageData(segmentationMap, width, height);
     ctx.putImageData(segmentationMapData, 0, 0);
-    const imageContainer = document.getElementById('output-card');
-    imageContainer.classList.remove('is-invisible');
+
+    const outputContainer = document.getElementById('output-card');
+    outputContainer.classList.remove('is-invisible');
+
+    const legendList = document.getElementById('legend');
+    // Work around the parcel failure with Object.keys
+    for (const label in legend) {
+        if (legend.hasOwnProperty(label)) {
+            const tag = document.createElement('span');
+            tag.innerHTML = label;
+            const [red, green, blue] = legend[label];
+            tag.classList.add('column');
+            tag.style.backgroundColor = `rgb(${red}, ${green}, ${blue})`;
+            tag.style.padding = '1em';
+            tag.style.margin = '1em';
+            tag.style.color = '#ffffff';
+
+            legendList.appendChild(tag);
+        }
+    }
+
+    const legendContainer = document.getElementById('legend-card');
+    legendContainer.classList.remove('is-invisible');
 };
 
 const runDeeplab = async modelName => {
@@ -92,7 +115,6 @@ const runDeeplab = async modelName => {
             displaySegmentationMap(await model.predict(input));
         };
     }
-    console.log('DONE');
 };
 
 window.onload = initialiseModels;

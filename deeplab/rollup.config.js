@@ -15,10 +15,8 @@
  * =============================================================================
  */
 
-import node from 'rollup-plugin-node-resolve';
+import resolve from 'rollup-plugin-node-resolve';
 import typescript from 'rollup-plugin-typescript2';
-import json from 'rollup-plugin-json';
-import babel from 'rollup-plugin-babel';
 import { terser } from 'rollup-plugin-terser';
 
 const settings = {
@@ -65,28 +63,7 @@ function config({ plugins = [], output = {} }) {
                     },
                 },
             }),
-            json({
-                preferConst: false,
-                indent: '  ',
-                compact: true,
-                namedExports: true,
-            }),
-            node(),
-            babel({
-                exclude: 'node_modules/**',
-                babelrc: false,
-                presets: [
-                    [
-                        '@babel/preset-env',
-                        {
-                            modules: false,
-                            targets: {
-                                browsers: ['last 2 versions'],
-                            },
-                        },
-                    ],
-                ],
-            }),
+            resolve(),
             ...plugins,
         ],
         output: {
@@ -119,7 +96,7 @@ export default [
     config({
         plugins: [minify()],
         output: {
-            format: 'es',
+            format: 'esm',
             file: `dist/${settings['name']}.esm.js`,
         },
     }),

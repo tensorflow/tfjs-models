@@ -16,8 +16,9 @@
  */
 import * as tf from '@tensorflow/tfjs';
 
-export type Label = string;
+export type Label = number;
 export type Color = [number, number, number];
+export type Legend = { [name: string]: Color };
 export type SemanticSegmentationBaseModel = 'pascal' | 'cityscapes' | 'ade20k';
 export type DeepLabInput =
     | ImageData
@@ -26,5 +27,7 @@ export type DeepLabInput =
     | HTMLVideoElement
     | tf.Tensor3D;
 
+export type RawSegmentationMap = tf.Tensor2D;
 export type SegmentationMap = Uint8ClampedArray;
-export type DeepLabOutput = [number, number, SegmentationMap];
+export type SegmentationData = [Legend, SegmentationMap];
+export type DeepLabOutput = [Legend, number, number, SegmentationMap];
