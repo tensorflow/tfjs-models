@@ -27,124 +27,134 @@ limitations under the License.
   </nav>
   <div class="container">
     <div class="section">
-      <article class="message">
-        <div class="message-header">
-          <p>Three types of pre-trained weights are available:</p>
-        </div>
-        <div class="message-body">
-          <div class="columns">
-            <div class="column">
-              <div class="card large">
-                <div class="card-content">
-                  <div class="content">
-                    <b>DeepLab
-                      <a href="https://github.com/tensorflow/models/blob/master/research/deeplab/g3doc/pascal.md">
-                        Pascal
-                      </a>
-                    </b>
+      <div class="columns is-multiline">
+        <div class="column is-four-fifths">
+          <article class="message">
+            <div class="message-header">
+              <p>Three types of pre-trained weights are available:</p>
+            </div>
+            <div class="message-body">
+              <div class="columns">
+                <div class="column">
+                  <div class="card large">
+                    <div class="card-content">
+                      <div class="content">
+                        <b>DeepLab
+                          <a href="https://github.com/tensorflow/models/blob/master/research/deeplab/g3doc/pascal.md">
+                            Pascal
+                          </a>
+                        </b>
+                      </div>
+                    </div>
+                    <footer class="card-footer">
+                      <span class="card-footer-item is-unselectable" id="toggle-pascal-image">Toggle example</span>
+                      <span class="card-footer-item is-unselectable" id="run-pascal">Run</span>
+                    </footer>
                   </div>
                 </div>
-                <footer class="card-footer">
-                  <span class="card-footer-item is-unselectable" id="toggle-pascal-image">Toggle example</span>
-                  <span class="card-footer-item is-unselectable" id="run-pascal">Run</span>
-                </footer>
-              </div>
-            </div>
-            <div class="column">
-              <div class="card large">
-                <div class="card-content">
-                  <div class="content">
-                    <b>DeepLab
-                      <a href="https://github.com/tensorflow/models/blob/master/research/deeplab/g3doc/cityscapes.md">
-                        CityScapes
-                      </a>
-                    </b>
+                <div class="column">
+                  <div class="card large">
+                    <div class="card-content">
+                      <div class="content">
+                        <b>DeepLab
+                          <a
+                            href="https://github.com/tensorflow/models/blob/master/research/deeplab/g3doc/cityscapes.md">
+                            CityScapes
+                          </a>
+                        </b>
+                      </div>
+                    </div>
+                    <footer class="card-footer">
+                      <span class="card-footer-item is-unselectable" id="toggle-cityscapes-image">Toggle example</span>
+                      <span class="card-footer-item is-unselectable" id="run-cityscapes">Run</span>
+                    </footer>
                   </div>
                 </div>
-                <footer class="card-footer">
-                  <span class="card-footer-item is-unselectable" id="toggle-cityscapes-image">Toggle example</span>
-                  <span class="card-footer-item is-unselectable" id="run-cityscapes">Run</span>
-                </footer>
-              </div>
-            </div>
-            <div class="column">
-              <div class="card large">
-                <div class="card-content">
-                  <div class="content">
-                    <b>DeepLab
-                      <a href="https://github.com/tensorflow/models/blob/master/research/deeplab/g3doc/ade20k.md">
-                        ADE20K
-                      </a>
-                    </b>
+                <div class="column">
+                  <div class="card large">
+                    <div class="card-content">
+                      <div class="content">
+                        <b>DeepLab
+                          <a href="https://github.com/tensorflow/models/blob/master/research/deeplab/g3doc/ade20k.md">
+                            ADE20K
+                          </a>
+                        </b>
+                      </div>
+                    </div>
+                    <footer class="card-footer">
+                      <span class="card-footer-item is-unselectable" id="toggle-ade20k-image">Toggle example</span>
+                      <span class="card-footer-item is-unselectable" id="run-ade20k">Run</span>
+                    </footer>
                   </div>
                 </div>
-                <footer class="card-footer">
-                  <span class="card-footer-item is-unselectable" id="toggle-ade20k-image">Toggle example</span>
-                  <span class="card-footer-item is-unselectable" id="run-ade20k">Run</span>
-                </footer>
               </div>
             </div>
-          </div>
+          </article>
         </div>
-      </article>
-
-      <div class="row is-centered">
-        <div class="file card-footer-item is-boxed">
-          <label class="file-label">
-            <input class="file-input" type="file" name="image" id="upload-image">
-            <span class="file-cta">
-              <span class="file-label">
-                Upload an image
-              </span>
-            </span>
-          </label>
-        </div>
-      </div>
-      <div class="section">
-        <div class="row columns">
-          <div class="column is-two-fifths">
-            <div class="card large is-invisible" id="input-card">
-              <header class="card-header">
-                <p class="card-header-title">
-                  Input image
-                </p>
-              </header>
-              <div class="card-content">
-                <figure class="image">
-                  <img id="input-image" />
-                </figure>
-              </div>
+        <div class="column is-one-fifth">
+          <div class="card large">
+            <div class="card-content">
+              <div class="content">
+                For best performance, upload images with objects (chairs, plants) or animals (humans,
+                cats).</div>
             </div>
-          </div>
-          <div class="column is-two-fifths">
-            <div class="card large is-invisible" id="output-card">
-              <header class="card-header">
-                <p class="card-header-title">
-                  Segmentation map
-                </p>
-              </header>
-              <div class="card-content">
-                <figure class="image">
-                  <canvas id="output-image"></canvas>
-                </figure>
+            <footer class="card-footer">
+              <div class="file card-footer-item">
+                <label class="file-label">
+                  <input class="file-input" type="file" name="image" id="upload-image">
+                  <span class="file-cta">
+                    <span class="file-label">
+                      Upload an image
+                    </span>
+                  </span>
+                </label>
               </div>
-            </div>
-          </div>
-          <div class="column is-one-fifth">
-            <div class="card large is-invisible" id="legend-card">
-              <header class="card-header">
-                <p class="card-header-title">
-                  Legend
-                </p>
-              </header>
-              <div class="card-content">
-                <div id="legend" class="columns is-multiline"></div>
-              </div>
-            </div>
+            </footer>
           </div>
         </div>
       </div>
-
+      <div class="row columns">
+        <div class="column is-two-fifths">
+          <div class="card large is-invisible" id="input-card">
+            <header class="card-header">
+              <p class="card-header-title">
+                Input image
+              </p>
+            </header>
+            <div class="card-content">
+              <figure class="image">
+                <img id="input-image" />
+              </figure>
+            </div>
+          </div>
+        </div>
+        <div class="column is-two-fifths">
+          <div class="card large is-invisible" id="output-card">
+            <header class="card-header">
+              <p class="card-header-title">
+                Segmentation map
+              </p>
+            </header>
+            <div class="card-content">
+              <figure class="image">
+                <canvas id="output-image"></canvas>
+              </figure>
+            </div>
+          </div>
+        </div>
+        <div class="column is-one-fifth">
+          <div class="card large is-invisible" id="legend-card">
+            <header class="card-header">
+              <p class="card-header-title">
+                Legend
+              </p>
+            </header>
+            <div class="card-content">
+              <div id="legend" class="columns is-multiline"></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 </body>
 
