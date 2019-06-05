@@ -53,6 +53,10 @@ const initialiseModels = async () => {
 };
 
 const setImage = src => {
+    const outputContainer = document.getElementById('output-card');
+    outputContainer.classList.add('is-invisible');
+    const legendContainer = document.getElementById('legend-card');
+    legendContainer.classList.add('is-invisible');
     const image = document.getElementById('input-image');
     image.src = src;
     const imageContainer = document.getElementById('input-card');
