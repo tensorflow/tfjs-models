@@ -61,6 +61,7 @@ const setImage = src => {
     image.src = src;
     const imageContainer = document.getElementById('input-card');
     imageContainer.classList.remove('is-invisible');
+    status('Waiting until the model is picked...');
 };
 
 const processImage = file => {
