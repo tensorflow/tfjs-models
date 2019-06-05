@@ -80,6 +80,10 @@ const displaySegmentationMap = deeplabOutput => {
     outputContainer.classList.remove('is-invisible');
 
     const legendList = document.getElementById('legend');
+    while (legendList.firstChild) {
+        legendList.removeChild(legendList.firstChild);
+    }
+
     // Work around the parcel failure with Object.keys
     for (const label in legend) {
         if (legend.hasOwnProperty(label)) {
