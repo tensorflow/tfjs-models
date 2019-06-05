@@ -40,7 +40,12 @@ const initialiseModels = () => {
         const toggler = document.getElementById(`toggle-${modelName}-image`);
         toggler.onclick = () => setImage(deeplabExampleImages[modelName]);
         const runner = document.getElementById(`run-${modelName}`);
-        runner.onclick = () => runDeeplab(modelName);
+        runner.onclick = async () => {
+            runner.classList.add('is-loading');
+            await sleep(100);
+            runDeeplab(modelName);
+            runner.classList.remove('is-loading');
+        };
     });
 };
 
@@ -107,7 +112,11 @@ const displaySegmentationMap = deeplabOutput => {
     legendContainer.classList.remove('is-invisible');
 };
 
-const runDeeplab = async modelName => {
+const sleep = ms => {
+    return new Promise(resolve => setTimeout(resolve, ms));
+};
+
+const runDeeplab = modelName => {
     const input = document.getElementById('input-image');
     if (!input.src || !input.src.length || input.src.length === 0) {
         alert('Please load an image first.');
@@ -116,10 +125,14 @@ const runDeeplab = async modelName => {
 
     const model = deeplab[modelName];
     if (input.complete && input.naturalHeight !== 0) {
-        displaySegmentationMap(await model.predict(input));
+        model.predict(input).then(output => {
+            displaySegmentationMap(output);
+        });
     } else {
-        input.onload = async () => {
-            displaySegmentationMap(await model.predict(input));
+        input.onload = () => {
+            model.predict(input).then(output => {
+                displaySegmentationMap(output);
+            });
         };
     }
 };
