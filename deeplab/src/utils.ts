@@ -83,10 +83,9 @@ export async function processSegmentationMap(
     }
     const translatedSegmentationMapTensor = tf.tidy(() => {
         const channelTensors = channels.map(buffer => buffer.toTensor());
-        const translatedSegmentationMapTensor = tf.stack(
-            channelTensors,
-            2
-        ) as tf.Tensor3D;
+        const translatedSegmentationMapTensor = tf
+            .stack(channelTensors, 0)
+            .transpose([1, 2, 0]) as tf.Tensor3D;
 
         return translatedSegmentationMapTensor;
     });

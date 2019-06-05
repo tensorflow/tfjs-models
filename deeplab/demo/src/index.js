@@ -73,11 +73,14 @@ const displaySegmentationMap = deeplabOutput => {
     const canvas = document.getElementById('output-image');
     const ctx = canvas.getContext('2d');
 
-    const segmentationMapData = new ImageData(segmentationMap, width, height);
-    ctx.putImageData(segmentationMapData, 0, 0);
-
     const outputContainer = document.getElementById('output-card');
     outputContainer.classList.remove('is-invisible');
+    const segmentationMapData = new ImageData(segmentationMap, width, height);
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.width = width;
+    canvas.height = height;
+    ctx.putImageData(segmentationMapData, 0, 0);
 
     const legendList = document.getElementById('legend');
     while (legendList.firstChild) {

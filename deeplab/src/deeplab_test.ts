@@ -30,8 +30,7 @@ describeWithFlags('SemanticSegmentation', NODE_ENVS, () => {
         const x = tf.zeros([227, 500, 3]) as tf.Tensor3D;
         const numOfTensorsBefore = tf.memory().numTensors;
 
-        const data = await model.predict(x);
-        console.log(data[0]);
+        await model.predict(x);
         await model.dispose();
         expect(tf.memory().numTensors).toEqual(numOfTensorsBefore);
     });
