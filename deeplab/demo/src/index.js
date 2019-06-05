@@ -33,7 +33,7 @@ const deeplabExampleImages = {
     ade20k: ade20kExampleImage,
 };
 
-const initialiseModels = () => {
+const initialiseModels = async () => {
     Object.keys(deeplab).forEach(modelName => {
         const model = new SemanticSegmentation(modelName);
         deeplab[modelName] = model;
@@ -47,6 +47,9 @@ const initialiseModels = () => {
             runner.classList.remove('is-loading');
         };
     });
+    const uploader = document.getElementById('upload-image');
+    uploader.addEventListener('change', processImages);
+    status('Initialised models, waiting for input...');
 };
 
 const setImage = src => {
@@ -116,7 +119,13 @@ const sleep = ms => {
     return new Promise(resolve => setTimeout(resolve, ms));
 };
 
+const status = message => {
+    const statusMessage = document.getElementById('status-message');
+    statusMessage.innerText = message;
+};
+
 const runDeeplab = modelName => {
+    const initialisationStart = performance.now();
     const input = document.getElementById('input-image');
     if (!input.src || !input.src.length || input.src.length === 0) {
         alert('Please load an image first.');
@@ -127,17 +136,16 @@ const runDeeplab = modelName => {
     if (input.complete && input.naturalHeight !== 0) {
         model.predict(input).then(output => {
             displaySegmentationMap(output);
+            status(`Ran in ${performance.now() - initialisationStart} ms`);
         });
     } else {
         input.onload = () => {
             model.predict(input).then(output => {
                 displaySegmentationMap(output);
+                status(`Ran in ${performance.now() - initialisationStart} ms`);
             });
         };
     }
 };
 
 window.onload = initialiseModels;
-
-const uploader = document.getElementById('upload-image');
-uploader.addEventListener('change', processImages);
