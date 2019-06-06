@@ -82,7 +82,6 @@ const processImages = event => {
 
 const displaySegmentationMap = deeplabOutput => {
     const [legend, height, width, segmentationMap] = deeplabOutput;
-    console.log(legend);
     const canvas = document.getElementById('output-image');
     const ctx = canvas.getContext('2d');
 
