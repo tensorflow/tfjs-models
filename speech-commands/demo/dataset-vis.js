@@ -113,10 +113,11 @@ export class DatasetViz {
    * @param {SpectrogramData} spectrogram Optional spectrogram data.
    *   If provided, will use it as is. If not provided, will use WebAudio
    *   to collect an example.
+   * @param {RawAudio} rawAudio Raw audio waveform. Optional
    * @param {string} uid UID of the example being drawn. Must match the UID
    *   of the example from `this.transferRecognizer`.
    */
-  async drawExample(wordDiv, word, spectrogram, uid) {
+  async drawExample(wordDiv, word, spectrogram, rawAudio, uid) {
     if (uid == null) {
       throw new Error('Error: UID is not provided for pre-existing example.');
     }
@@ -192,6 +193,17 @@ export class DatasetViz {
           keyFrameIndex: spectrogram.keyFrameIndex
         });
 
+    if (rawAudio != null) {
+      const playButton = document.createElement('button');
+      playButton.textContent = '▶️';
+      playButton.addEventListener('click', () => {
+        playButton.disabled = true;
+        speechCommands.utils.playRawAudio(
+            rawAudio, () => playButton.disabled = false);
+      });
+      wordDiv.appendChild(playButton);
+    }
+
     // Create Delete button.
     const deleteButton = document.createElement('button');
     deleteButton.textContent = 'X';
@@ -250,7 +262,8 @@ export class DatasetViz {
       }
 
       const spectrogram = example.example.spectrogram;
-      await this.drawExample(wordDiv, word, spectrogram, example.uid);
+      await this.drawExample(
+          wordDiv, word, spectrogram, example.example.rawAudio, example.uid);
     } else {
       removeNonFixedChildrenFromWordDiv(wordDiv);
     }

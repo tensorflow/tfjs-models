@@ -656,6 +656,8 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
     const spectrogram = await transfer.collectExample('foo', {durationSec});
     expect(spectrogram.data.length / fakeColumnTruncateLength / fakeNumFrames)
         .toEqual(2);
+    const example = transfer.getExamples('foo')[0];
+    expect(example.example.rawAudio).toBeUndefined();
   });
 
   it('collectExample with 0 durationSec errors', async done => {
@@ -763,6 +765,42 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
           .toMatch(/onSnippet must be provided if snippetDurationSec/);
       done();
     }
+  });
+
+  it('collectExample: includeRawAudio, no snippets', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    const durationSec = 1.5;
+    const includeRawAudio = true;
+    await transfer.collectExample('foo', {durationSec, includeRawAudio});
+    const examples = transfer.getExamples('foo');
+    expect(examples.length).toEqual(1);
+    expect(examples[0].example.rawAudio.sampleRateHz).toEqual(44100);
+    expect(examples[0].example.rawAudio.data.length / (durationSec * 44100))
+        .toBeCloseTo(1, 1e-3);
+  });
+
+  it('collectExample: includeRawAudio, with snippets', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer = base.createTransfer('xfer1');
+    const durationSec = 1.5;
+    const snippetDurationSec = 0.1;
+    const includeRawAudio = true;
+    await transfer.collectExample('foo', {
+      durationSec,
+      includeRawAudio,
+      snippetDurationSec,
+      onSnippet: async spectrogram => {}
+    });
+    const examples = transfer.getExamples('foo');
+    expect(examples.length).toEqual(1);
+    expect(examples[0].example.rawAudio.sampleRateHz).toEqual(44100);
+    expect(examples[0].example.rawAudio.data.length / (durationSec * 44100))
+        .toBeCloseTo(1, 1e-3);
   });
 
   it('collectTransferLearningExample default transfer model', async () => {
@@ -1451,6 +1489,22 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
     transfer2.loadExamples(transfer1.serializeExamples(), true);
 
     expect(transfer2.countExamples()).toEqual({'bar': 1, 'foo': 1});
+  });
+
+  it('loadExapmles, from a word-filtered dataset', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    await base.ensureModelLoaded();
+    const transfer1 = base.createTransfer('xfer1');
+    await transfer1.collectExample('foo');
+    await transfer1.collectExample('bar');
+    const serialized = transfer1.serializeExamples('foo');
+    const transfer2 = base.createTransfer('xfer2');
+    transfer2.loadExamples(serialized);
+    expect(transfer2.countExamples()).toEqual({'foo': 1});
+    const examples = transfer2.getExamples('foo');
+    expect(examples.length).toEqual(1);
+    expect(examples[0].example.label).toEqual('foo');
   });
 
   it('collectExample with durationMultiplier = 1.5', async () => {

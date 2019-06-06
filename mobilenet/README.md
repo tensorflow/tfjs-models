@@ -105,7 +105,7 @@ Args:
 - **img:** A Tensor or an image element to make a classification on.
 - **topk:** How many of the top probabilities to return. Defaults to 3.
 
-Returns an array of classes and probabilities that looks like:
+Returns a Promise that resolves to an array of classes and probabilities that looks like:
 
 ```js
 [{

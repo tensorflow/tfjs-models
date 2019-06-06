@@ -56,6 +56,8 @@ const transferModelNameInput = document.getElementById('transfer-model-name');
 const learnWordsInput = document.getElementById('learn-words');
 const durationMultiplierSelect = document.getElementById('duration-multiplier');
 const enterLearnWordsButton = document.getElementById('enter-learn-words');
+const includeTimeDomainWaveformCheckbox =
+  document.getElementById('include-audio-waveform');
 const collectButtonsDiv = document.getElementById('collect-words');
 const startTransferLearnButton =
     document.getElementById('start-transfer-learn');
@@ -278,8 +280,11 @@ function createWordDivs(transferWords) {
         }
       }
 
+      collectExampleOptions.includeRawAudio =
+          includeTimeDomainWaveformCheckbox.checked;
       const spectrogram = await transferRecognizer.collectExample(
           word, collectExampleOptions);
+
 
       if (intervalJob != null) {
         clearInterval(intervalJob);
@@ -288,8 +293,9 @@ function createWordDivs(transferWords) {
         wordDiv.removeChild(progressBar);
       }
       const examples = transferRecognizer.getExamples(word)
-      const exampleUID = examples[examples.length - 1].uid;
-      await datasetViz.drawExample(wordDiv, word, spectrogram, exampleUID);
+      const example = examples[examples.length - 1];
+      await datasetViz.drawExample(
+          wordDiv, word, spectrogram, example.example.rawAudio, example.uid);
       enableAllCollectWordButtons();
     });
   }

@@ -57,10 +57,18 @@ class FakeAnalyser {
     this.x = 0;
   }
 
-  getFloatFrequencyData(data: Float32Array) {
+  getFloatFrequencyData(data: Float32Array): void {
     const xs: number[] = [];
     for (let i = 0; i < this.fftSize / 2; ++i) {
       xs.push(this.x++);
+    }
+    data.set(new Float32Array(xs));
+  }
+
+  getFloatTimeDomainData(data: Float32Array): void {
+    const xs: number[] = [];
+    for (let i = 0; i < this.fftSize / 2; ++i) {
+      xs.push(-(this.x++));
     }
     data.set(new Float32Array(xs));
   }
