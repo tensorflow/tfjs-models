@@ -20,6 +20,7 @@ import '@tensorflow/tfjs-node';
 import * as tf from '@tensorflow/tfjs';
 import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
+import {expectTensorsClose} from './test_utils';
 import {balancedTrainValSplit} from './training_utils';
 
 describeWithFlags('balancedTrainValSplit', NODE_ENVS, () => {
@@ -32,9 +33,8 @@ describeWithFlags('balancedTrainValSplit', NODE_ENVS, () => {
     expect(trainYs.shape).toEqual([6, 2]);
     expect(valXs.shape).toEqual([2, 3]);
     expect(valYs.shape).toEqual([2, 2]);
-    tf.test_util.expectArraysClose(
-        trainYs.sum(0), tf.tensor1d([3, 3], 'int32'));
-    tf.test_util.expectArraysClose(valYs.sum(0), tf.tensor1d([1, 1], 'int32'));
+    expectTensorsClose(trainYs.sum(0), tf.tensor1d([3, 3], 'int32'));
+    expectTensorsClose(valYs.sum(0), tf.tensor1d([1, 1], 'int32'));
   });
 
   it('Not enough data for split', () => {
