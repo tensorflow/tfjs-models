@@ -21,6 +21,10 @@ import pascalExampleImage from './examples/pascal.jpg';
 import cityscapesExampleImage from './examples/cityscapes.jpg';
 import ade20kExampleImage from './examples/ade20k.jpg';
 
+const state = {
+    isQuantized: true,
+};
+
 const deeplab = {
     pascal: undefined,
     cityscapes: undefined,
@@ -35,7 +39,7 @@ const deeplabExampleImages = {
 
 const initialiseModels = async () => {
     Object.keys(deeplab).forEach(modelName => {
-        const model = new SemanticSegmentation(modelName);
+        const model = new SemanticSegmentation(modelName, state.isQuantized);
         deeplab[modelName] = model;
         const toggler = document.getElementById(`toggle-${modelName}-image`);
         toggler.onclick = () => setImage(deeplabExampleImages[modelName]);
@@ -43,7 +47,7 @@ const initialiseModels = async () => {
         runner.onclick = async () => {
             runner.classList.add('is-loading');
             await sleep(100);
-            runDeeplab(modelName);
+            await runDeeplab(modelName);
             runner.classList.remove('is-loading');
         };
     });
@@ -128,11 +132,22 @@ const status = message => {
     statusMessage.innerText = message;
 };
 
-const runDeeplab = modelName => {
+const runDeeplab = async modelName => {
+    status(`Running the inference...`);
+    await sleep(100);
     const initialisationStart = performance.now();
+    const isQuantizationDisabled = document.getElementById(
+        'is-quantization-disabled'
+    ).checked;
+    if (!(isQuantizationDisabled ^ state.isQuantized)) {
+        state.isQuantized = !isQuantizationDisabled;
+        initialiseModels();
+        sleep(100);
+    }
+    console.log(state.isQuantized);
     const input = document.getElementById('input-image');
     if (!input.src || !input.src.length || input.src.length === 0) {
-        alert('Please load an image first.');
+        status('Failed! Please load an image first.');
         return;
     }
 

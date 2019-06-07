@@ -29,7 +29,7 @@ import config from './config';
 export class SemanticSegmentation {
     private modelPath: string;
     private model: Promise<tf.GraphModel>;
-    constructor(base: SemanticSegmentationBaseModel) {
+    constructor(base: SemanticSegmentationBaseModel, isQuantized = false) {
         if (tf == null) {
             throw new Error(
                 `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
@@ -43,7 +43,13 @@ export class SemanticSegmentation {
                     `Try one of 'pascal', 'cityscapes' and 'ade20k'.`
             );
         }
-        this.modelPath = `${config['BASE_PATH']}${base}/model.json`;
+        if (isQuantized) {
+            this.modelPath = `${
+                config['BASE_PATH']
+            }/quantized/${base}/model.json`;
+        } else {
+            this.modelPath = `${config['BASE_PATH']}/${base}/model.json`;
+        }
         this.model = tf.loadGraphModel(this.modelPath);
     }
 

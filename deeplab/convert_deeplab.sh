@@ -1,4 +1,20 @@
 #!/usr/bin/env bash
+# =============================================================================
+# Copyright 2019 Google Inc. All Rights Reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# =============================================================================
+
+# Make sure that you run Python 3.6, not 3.7
 
 if [ -z "$1" ]
   then
@@ -6,6 +22,7 @@ if [ -z "$1" ]
     exit 1
 fi
 
+MODEL_NAME="deeplab"
 URL_PREFIX="http://download.tensorflow.org/models"
 MODELS=(
   "deeplabv3_mnv2_dm05_pascal_trainaug_2018_10_01"
@@ -21,7 +38,7 @@ DIST_DIR='./dist'
 
 trap 'rm -rf -- "$MODEL_DIR"' INT TERM HUP EXIT
 
-mkdir -p $SCRIPT_DIR/$1/deeplab && \
+mkdir -p $SCRIPT_DIR/$1/$MODEL_NAME/quantized && \
 cd $MODEL_DIR && \
 pyenv local 3.6.8 && \
 virtualenv --no-site-packages venv && \
@@ -29,21 +46,21 @@ source venv/bin/activate && \
 pip install tensorflowjs==0.8.6 && \
 echo "Downloading models to $MODEL_DIR..."
 
-for MODEL_NAME in "${MODELS[@]}"
+for MODEL_URL in "${MODELS[@]}"
 do
-  wget -P $MODEL_DIR $URL_PREFIX/$MODEL_NAME$URL_SUFFIX && \
-  mkdir -p $MODEL_DIR/$MODEL_NAME && \
-  tar -xvzf $MODEL_DIR/$MODEL_NAME$URL_SUFFIX -C $MODEL_DIR/$MODEL_NAME --strip-components 1 && \
+  wget -P $MODEL_DIR $URL_PREFIX/$MODEL_URL$URL_SUFFIX && \
+  mkdir -p $MODEL_DIR/$MODEL_URL && \
+  tar -xvzf $MODEL_DIR/$MODEL_URL$URL_SUFFIX -C $MODEL_DIR/$MODEL_URL --strip-components 1 && \
 
   OUTPUT_DIR=""
 
-  if [[ $MODEL_NAME == *"pascal"* ]]
+  if [[ $MODEL_URL == *"pascal"* ]]
   then
     OUTPUT_DIR="pascal"
-  elif [[ $MODEL_NAME == *"cityscapes"* ]]
+  elif [[ $MODEL_URL == *"cityscapes"* ]]
   then
     OUTPUT_DIR="cityscapes"
-  elif [[ $MODEL_NAME == *"ade20k"* ]]
+  elif [[ $MODEL_URL == *"ade20k"* ]]
   then
     OUTPUT_DIR="ade20k"
   else
@@ -56,6 +73,16 @@ do
     --output_json=true \
     --saved_model_tags=serve \
     --output_node_names='SemanticPredictions' \
-    $MODEL_DIR/$MODEL_NAME/frozen_inference_graph.pb \
-    $SCRIPT_DIR/$1/deeplab/$OUTPUT_DIR
+    $MODEL_DIR/$MODEL_URL/frozen_inference_graph.pb \
+    $SCRIPT_DIR/$1/$MODEL_NAME/$OUTPUT_DIR
+
+  tensorflowjs_converter \
+    --input_format=tf_frozen_model \
+    --output_json=true \
+    --saved_model_tags=serve \
+    --output_node_names='SemanticPredictions' \
+    --quantization_bytes 2 \
+    $MODEL_DIR/$MODEL_URL/frozen_inference_graph.pb \
+    $SCRIPT_DIR/$1/$MODEL_NAME/quantized/$OUTPUT_DIR
 done
+echo "Success!"
