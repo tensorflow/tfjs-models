@@ -15,7 +15,8 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
+import * as tfc from '@tensorflow/tfjs-converter';
 
 import {CheckpointLoader} from './checkpoint_loader';
 import {checkpoints, resNet50Checkpoint} from './checkpoints';
@@ -101,10 +102,12 @@ export interface BaseModel {
  * the accuracy.
  */
 export interface ModelConfig {
-  architecture: PoseNetArchitecture, outputStride: OutputStride,
-      inputResolution: PoseNetResolution, multiplier?: MobileNetMultiplier,
-      modelUrl?: string
-      quantBytes?: PoseNetQuantBytes
+  architecture: PoseNetArchitecture;
+  outputStride: OutputStride;
+  inputResolution: PoseNetResolution; 
+  multiplier?: MobileNetMultiplier;
+  modelUrl?: string;
+  quantBytes?: PoseNetQuantBytes;
 }
 
 // The default configuration for loading MobileNetV1 based PoseNet.
@@ -219,8 +222,11 @@ function validateModelConfig(config: ModelConfig) {
  * than `nmsRadius` pixels away. Defaults to 20.
  */
 export interface InferenceConfig {
-  flipHorizontal: boolean, decodingMethod: PoseNetDecodingMethod,
-      maxDetections?: number, scoreThreshold?: number, nmsRadius?: number
+  flipHorizontal: boolean;
+  decodingMethod: PoseNetDecodingMethod;
+  maxDetections?: number;
+  scoreThreshold?: number; 
+  nmsRadius?: number;
 }
 
 export const SINGLE_PERSON_INFERENCE_CONFIG = {
@@ -254,7 +260,7 @@ function validateInferenceConfig(config: InferenceConfig) {
   }
 
   // Validates parameters used only by multi-person decoding.
-  if (config.decodingMethod == 'multi-person') {
+  if (config.decodingMethod === 'multi-person') {
     if (config.maxDetections == null) {
       config.maxDetections = 5;
     }
@@ -347,7 +353,6 @@ export class PoseNet {
     displacementFwd = outputs.displacementFwd;
     displacementBwd = outputs.displacementBwd;
 
-
     const [scoresBuffer, offsetsBuffer, displacementsFwdBuffer, displacementsBwdBuffer] =
         await toTensorBuffers3D(
             [heatmapScores, offsets, displacementFwd, displacementBwd]);
@@ -368,7 +373,7 @@ export class PoseNet {
     let scaledPoses = scalePoses(poses, scaleY, scaleX, -padTop, -padLeft);
 
     if (config.flipHorizontal) {
-      scaledPoses = flipPosesHorizontal(scaledPoses, width)
+      scaledPoses = flipPosesHorizontal(scaledPoses, width);
     }
 
     heatmapScores.dispose();
@@ -383,7 +388,6 @@ export class PoseNet {
     this.baseModel.dispose();
   }
 }
-
 
 async function loadMobileNet(config: ModelConfig): Promise<PoseNet> {
   const multiplier = config.multiplier;
@@ -440,7 +444,7 @@ async function loadResNet(config: ModelConfig): Promise<PoseNet> {
   }
 
   const url = resNet50Checkpoint(inputResolution, outputStride, quantBytes);
-  const graphModel = await tf.loadGraphModel(config.modelUrl || url);
+  const graphModel = await tfc.loadGraphModel(config.modelUrl || url);
   const resnet = new ResNet(graphModel, inputResolution, outputStride);
   return new PoseNet(resnet);
 }
