@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
 
 import {connectedPartIndices} from './keypoints';
 import {OutputStride} from './mobilenet';
@@ -83,7 +83,7 @@ export async function toTensorBuffers3D(tensors: tf.Tensor3D[]):
 }
 
 export function scalePose(pose: Pose, scaleY: number, scaleX: number,
-   offsetY: number = 0, offsetX: number = 0): Pose {
+   offsetY = 0, offsetX = 0): Pose {
   return {
     score: pose.score,
     keypoints: pose.keypoints.map(
@@ -97,7 +97,7 @@ export function scalePose(pose: Pose, scaleY: number, scaleX: number,
 }
 
 export function scalePoses(poses: Pose[], scaleY: number, scaleX: number,
-  offsetY: number = 0, offsetX: number = 0) {
+  offsetY = 0, offsetX = 0) {
   if (scaleX === 1 && scaleY === 1 && offsetY === 0 && offsetX === 0) {
     return poses;
   }

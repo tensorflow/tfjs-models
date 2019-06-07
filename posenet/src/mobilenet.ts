@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
 import {ModelWeights} from './model_weights';
 import {BaseModel, PoseNetResolution} from './posenet_model';
 
