@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import {Tensor, tensor, util} from '@tensorflow/tfjs';
+import {Tensor, tensor, util} from '@tensorflow/tfjs-core';
 
 /**
  * @hidden
@@ -55,7 +55,7 @@ export class CheckpointLoader {
         resolve();
       } catch (error) {
         throw new Error(
-            `${MANIFEST_FILE} not found at ${this.urlPath}. ${error}`)
+            `${MANIFEST_FILE} not found at ${this.urlPath}. ${error}`);
       }
     });
   }
@@ -120,7 +120,7 @@ export class CheckpointLoader {
         resolve(checkpointTensor);
       } catch (error) {
         throw new Error(`Could not fetch variable ${varName}: ${error}`);
-      };
+      }
     };
 
     if (this.checkpointManifest == null) {

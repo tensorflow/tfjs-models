@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
 import {NUM_KEYPOINTS} from '../keypoints';
 import {Vector2D} from '../types';
 
