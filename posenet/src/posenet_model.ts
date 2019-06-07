@@ -15,7 +15,8 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tfc from '@tensorflow/tfjs-converter';
+import * as tf from '@tensorflow/tfjs-core';
 
 import {mobileNetCheckpoint, resNet50Checkpoint} from './checkpoints';
 import {assertValidOutputStride, assertValidResolution, MobileNet, MobileNetMultiplier} from './mobilenet';
@@ -92,7 +93,9 @@ export interface BaseModel {
  * the model at the cost of speed. Set this to a smaller value to increase speed
  * at the cost of accuracy.
  *
- * `modelUrl`: An optional string that specifies custom url of the model.
+ * `modelUrl`: An optional string that specifies custom url of the model. This
+ * is useful for area/countries that don't have access to the model hosted on
+ * GCP.
  *
  * `quantBytes`: An opional number with values: 1, 2, or 4.  This parameter
  * affects weight quantization in the models. The available options are
@@ -101,9 +104,12 @@ export interface BaseModel {
  * loading time but lower the accuracy.
  */
 export interface ModelConfig {
-  architecture: PoseNetArchitecture, outputStride: PoseNetOutputStride,
-      inputResolution: PoseNetResolution, multiplier?: MobileNetMultiplier,
-      modelUrl?: string, quantBytes?: PoseNetQuantBytes
+  architecture: PoseNetArchitecture;
+  outputStride: PoseNetOutputStride;
+  inputResolution: PoseNetResolution;
+  multiplier?: MobileNetMultiplier;
+  modelUrl?: string;
+  quantBytes?: PoseNetQuantBytes;
 }
 
 // The default configuration for loading MobileNetV1 based PoseNet.
@@ -215,8 +221,11 @@ function validateModelConfig(config: ModelConfig) {
  * than `nmsRadius` pixels away. Defaults to 20.
  */
 export interface InferenceConfig {
-  flipHorizontal: boolean, decodingMethod: PoseNetDecodingMethod,
-      maxDetections?: number, scoreThreshold?: number, nmsRadius?: number
+  flipHorizontal: boolean;
+  decodingMethod: PoseNetDecodingMethod;
+  maxDetections?: number;
+  scoreThreshold?: number;
+  nmsRadius?: number;
 }
 
 export const SINGLE_PERSON_INFERENCE_CONFIG = {
@@ -250,7 +259,7 @@ function validateInferenceConfig(config: InferenceConfig) {
   }
 
   // Validates parameters used only by multi-person decoding.
-  if (config.decodingMethod == 'multi-person') {
+  if (config.decodingMethod === 'multi-person') {
     if (config.maxDetections == null) {
       config.maxDetections = 5;
     }
@@ -343,7 +352,6 @@ export class PoseNet {
     displacementFwd = outputs.displacementFwd;
     displacementBwd = outputs.displacementBwd;
 
-
     const [scoresBuffer, offsetsBuffer, displacementsFwdBuffer, displacementsBwdBuffer] =
         await toTensorBuffers3D(
             [heatmapScores, offsets, displacementFwd, displacementBwd]);
@@ -364,7 +372,7 @@ export class PoseNet {
     let scaledPoses = scalePoses(poses, scaleY, scaleX, -padTop, -padLeft);
 
     if (config.flipHorizontal) {
-      scaledPoses = flipPosesHorizontal(scaledPoses, width)
+      scaledPoses = flipPosesHorizontal(scaledPoses, width);
     }
 
     heatmapScores.dispose();
@@ -380,7 +388,6 @@ export class PoseNet {
   }
 }
 
-
 async function loadMobileNet(config: ModelConfig): Promise<PoseNet> {
   const inputResolution = config.inputResolution;
   const outputStride = config.outputStride;
@@ -395,7 +402,7 @@ async function loadMobileNet(config: ModelConfig): Promise<PoseNet> {
 
   const url = mobileNetCheckpoint(
       inputResolution, outputStride, multiplier, quantBytes);
-  const graphModel = await tf.loadGraphModel(config.modelUrl || url);
+  const graphModel = await tfc.loadGraphModel(config.modelUrl || url);
   const mobilenet = new MobileNet(graphModel, inputResolution, outputStride);
   return new PoseNet(mobilenet);
 }
@@ -412,7 +419,7 @@ async function loadResNet(config: ModelConfig): Promise<PoseNet> {
   }
 
   const url = resNet50Checkpoint(outputStride, quantBytes);
-  const graphModel = await tf.loadGraphModel(config.modelUrl || url);
+  const graphModel = await tfc.loadGraphModel(config.modelUrl || url);
   const resnet = new ResNet(graphModel, inputResolution, outputStride);
   return new PoseNet(resnet);
 }

@@ -1,23 +1,25 @@
-import * as tf from '@tensorflow/tfjs';
+import * as tfc from '@tensorflow/tfjs-converter';
+import * as tf from '@tensorflow/tfjs-core';
 
 import {BaseModel, PoseNetOutputStride, PoseNetResolution} from './posenet_model';
 
 function toFloatIfInt(input: tf.Tensor3D): tf.Tensor3D {
   return tf.tidy(() => {
-    if (input.dtype === 'int32') input = input.toFloat();
-    const ImageNetMean = tf.tensor([-123.15, -115.90, -103.06]);
-    return input.add(ImageNetMean);
-  })
+    if (input.dtype === 'int32') {
+      input = input.toFloat();
+    }
+    const imageNetMean = tf.tensor([-123.15, -115.90, -103.06]);
+    return input.add(imageNetMean);
+  });
 }
 
 export class ResNet implements BaseModel {
-  readonly model: tf.GraphModel
-
-  readonly outputStride: PoseNetOutputStride
+  readonly model: tfc.GraphModel;
+  readonly outputStride: PoseNetOutputStride;
   readonly inputResolution: PoseNetResolution;
 
   constructor(
-      model: tf.GraphModel, inputResolution: PoseNetResolution,
+      model: tfc.GraphModel, inputResolution: PoseNetResolution,
       outputStride: PoseNetOutputStride) {
     this.model = model;
     const inputShape =
@@ -36,7 +38,7 @@ export class ResNet implements BaseModel {
       const asFloat = toFloatIfInt(input);
       const asBatch = asFloat.expandDims(0);
       const [displacementFwd4d, displacementBwd4d, offsets4d, heatmaps4d] =
-          this.model.predict(asBatch) as tf.Tensor<tf.Rank>[];
+          this.model.predict(asBatch) as tf.Tensor[];
 
       const heatmaps = heatmaps4d.squeeze() as tf.Tensor3D;
       const heatmapScores = heatmaps.sigmoid();
@@ -45,10 +47,11 @@ export class ResNet implements BaseModel {
       const displacementBwd = displacementBwd4d.squeeze() as tf.Tensor3D;
 
       return {
-        heatmapScores, offsets: offsets as tf.Tensor3D,
-            displacementFwd: displacementFwd as tf.Tensor3D,
-            displacementBwd: displacementBwd as tf.Tensor3D
-      }
+        heatmapScores,
+        offsets: offsets as tf.Tensor3D,
+        displacementFwd: displacementFwd as tf.Tensor3D,
+        displacementBwd: displacementBwd as tf.Tensor3D
+      };
     });
   }
 

@@ -16,7 +16,8 @@
  =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tfc from '@tensorflow/tfjs-converter';
+import * as tf from '@tensorflow/tfjs-core';
 import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
 import * as mobilenet from './mobilenet';
@@ -51,15 +52,15 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
       quantBytes: quantBytes
     } as posenetModel.ModelConfig;
 
-    spyOn(tf, 'loadGraphModel').and.callFake((): tf.GraphModel => {
+    spyOn(tfc, 'loadGraphModel').and.callFake((): tfc.GraphModel => {
       return null;
     })
 
     spyOn(resnet, 'ResNet').and.callFake(() => {
       return {
-        inputResolution: inputResolution,
-        outputStride: outputStride,
-        predict: function(input: tf.Tensor3D) {
+        inputResolution,
+        outputStride,
+        predict: (input: tf.Tensor3D) => {
           return {
             heatmapScores:
                 tf.zeros([outputResolution, outputResolution, numKeypoints]),
@@ -71,15 +72,15 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
                 [outputResolution, outputResolution, 2 * (numKeypoints - 1)])
           };
         },
-        dipose: function() {}
+        dipose: () => {}
       };
     });
 
     spyOn(mobilenet, 'MobileNet').and.callFake(() => {
       return {
-        inputResolution: inputResolution,
-        outputStride: outputStride,
-        predict: function(input: tf.Tensor3D) {
+        inputResolution,
+        outputStride,
+        predict: (input: tf.Tensor3D) => {
           return {
             heatmapScores:
                 tf.zeros([outputResolution, outputResolution, numKeypoints]),
@@ -91,7 +92,7 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
                 [outputResolution, outputResolution, 2 * (numKeypoints - 1)])
           };
         },
-        dipose: function() {}
+        dipose: () => {}
       };
     });
 
@@ -99,7 +100,7 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
         .then((posenetInstance: posenetModel.PoseNet) => {
           resNet = posenetInstance;
         })
-        .then(() => {return posenetModel.load(mobileNetConfig)})
+        .then(() => posenetModel.load(mobileNetConfig))
         .then((posenetInstance: posenetModel.PoseNet) => {
           mobileNet = posenetInstance;
         })
@@ -117,10 +118,11 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
        resNet
            .estimatePoses(
                input, {flipHorizontal: false, decodingMethod: 'single-person'})
-           .then(
-               () => {return mobileNet.estimatePoses(
-                   input,
-                   {flipHorizontal: false, decodingMethod: 'single-person'})})
+           .then(() => {
+             return mobileNet.estimatePoses(
+                 input,
+                 {flipHorizontal: false, decodingMethod: 'single-person'});
+           })
            .then(() => {
              expect(tf.memory().numTensors).toEqual(beforeTensors);
            })
@@ -142,13 +144,15 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
              scoreThreshold: 0.5,
              nmsRadius: 20
            })
-           .then(() => {return mobileNet.estimatePoses(input, {
-                   flipHorizontal: false,
-                   decodingMethod: 'multi-person',
-                   maxDetections: 5,
-                   scoreThreshold: 0.5,
-                   nmsRadius: 20
-                 })})
+           .then(() => {
+             return mobileNet.estimatePoses(input, {
+               flipHorizontal: false,
+               decodingMethod: 'multi-person',
+               maxDetections: 5,
+               scoreThreshold: 0.5,
+               nmsRadius: 20
+             });
+           })
            .then(() => {
              expect(tf.memory().numTensors).toEqual(beforeTensors);
            })

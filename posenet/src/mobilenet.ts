@@ -15,8 +15,9 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
-import {BaseModel, PoseNetResolution, PoseNetOutputStride} from './posenet_model';
+import * as tfc from '@tensorflow/tfjs-converter';
+import * as tf from '@tensorflow/tfjs-core';
+import {BaseModel, PoseNetOutputStride, PoseNetResolution} from './posenet_model';
 
 
 export type MobileNetMultiplier = 0.50|0.75|1.0;
@@ -53,12 +54,12 @@ function toFloatIfInt(input: tf.Tensor3D): tf.Tensor3D {
 }
 
 export class MobileNet implements BaseModel {
-  readonly model: tf.GraphModel
+  readonly model: tfc.GraphModel
   readonly outputStride: PoseNetOutputStride
   readonly inputResolution: PoseNetResolution;
 
   constructor(
-      model: tf.GraphModel, inputResolution: PoseNetResolution,
+      model: tfc.GraphModel, inputResolution: PoseNetResolution,
       outputStride: PoseNetOutputStride) {
     this.model = model;
     const inputShape =
