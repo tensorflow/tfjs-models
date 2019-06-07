@@ -15,7 +15,8 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
+import * as tfc from '@tensorflow/tfjs-converter';
 
 import {CheckpointLoader} from './checkpoint_loader';
 import {checkpoints, resnet50_checkpoints, BASE_URL} from './checkpoints';
@@ -424,7 +425,7 @@ async function loadResNet(config: ModelConfig): Promise<PoseNet> {
         model.`);
   }
 
-  const graphModel = await tf.loadGraphModel(
+  const graphModel = await tfc.loadGraphModel(
       config.modelUrl || resnet50_checkpoints[inputResolution][outputStride]);
   const resnet = new ResNet(graphModel, inputResolution, outputStride);
   return new PoseNet(resnet);

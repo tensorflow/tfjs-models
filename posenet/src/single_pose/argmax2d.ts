@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
 
 function mod(a: tf.Tensor1D, b: number): tf.Tensor1D {
   return tf.tidy(() => {

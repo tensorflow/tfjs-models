@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
 
 import {connectedPartIndices} from './keypoints';
 import {OutputStride} from './mobilenet';

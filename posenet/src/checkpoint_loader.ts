@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import {Tensor, tensor, util} from '@tensorflow/tfjs';
+import {Tensor, tensor, util} from '@tensorflow/tfjs-core';
 
 /**
  * @hidden
