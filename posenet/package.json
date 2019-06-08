@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/posenet",
-  "version": "1.0.3",
+  "version": "2.0.0",
   "description": "Pretrained PoseNet model in TensorFlow.js",
   "main": "dist/index.js",
   "jsnext:main": "dist/posenet.esm.js",
