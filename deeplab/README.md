@@ -56,7 +56,23 @@ Pass an optional canvas element as `canvas` to draw the output as a side effect.
 
 #### Segmentation output
 
-* **[Legend, height, width, Uint8ClampedArray]** :: Promise<DeepLabOutput | [{ [name: string]: [number, number, number] }, number, number, Uint8ClampedArray]>
+The output is a promise of DeepLabOutput, an array of four elements:
+
+* **Legend** :: { [name: string]: [number, number, number] }
+
+The legend is a dictionary of objects recognized in the image and their colors.
+
+* **height** :: number
+
+The new height of the processed image.
+
+* **width** :: number
+
+The new height of the processed image.
+
+* **SegmentationMap** :: Uint8ClampedArray
+
+The colored segmentation map as Uint8ClampedArray which can be [fed](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Pixel_manipulation_with_canvas) into ImageData and mapped to a canvas.
 
 #### Segmentation example
 
@@ -78,7 +94,7 @@ To segment an arbitrary image and generate a two-dimensional tensor with class l
 
 #### `model.segment` output
 
-* **rawSegmentationMap** :: Promise<RawSegmentationMap> | Promise<tf.Tensor2D>
+* **rawSegmentationMap** :: Promise<RawSegmentationMap | tf.Tensor2D>
 
 #### `model.segment` example
 
@@ -99,7 +115,15 @@ To transform the segmentation map into a coloured image, use the `translate` met
 
 #### `model.translate` output
 
-* **rawSegmentationMap** :: Promise<SegmentationData> | Promise<[{ [name: string]: [ number, number, number] }, Uint8ClampedArray]>
+The returned promise is the future of an array typed as `SegmentationData` that contains two objects:
+
+* **Legend** :: { [name: string]: [number, number, number] }
+
+The legend is a dictionary of objects recognized in the image and their colors.
+
+* **SegmentationMap** :: Uint8ClampedArray
+
+The colored segmentation map as Uint8ClampedArray which can be [fed](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Pixel_manipulation_with_canvas) into ImageData and mapped to a canvas.
 
 #### `model.translate` example
 
