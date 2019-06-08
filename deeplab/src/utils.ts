@@ -63,7 +63,8 @@ export function toInputTensor(input: DeepLabInput) {
 }
 
 export async function processSegmentationMap(
-    segmentationMapTensor: RawSegmentationMap
+    segmentationMapTensor: RawSegmentationMap,
+    canvas?: HTMLCanvasElement
 ): Promise<SegmentationData> {
     const [height, width] = segmentationMapTensor.shape;
     const colormap = createPascalColormap();
@@ -90,7 +91,8 @@ export async function processSegmentationMap(
     const translatedSegmentationMapTensor = translatedSegmentationMapBuffer.toTensor() as tf.Tensor3D;
 
     const segmentationMap = await tf.browser.toPixels(
-        translatedSegmentationMapTensor
+        translatedSegmentationMapTensor,
+        canvas
     );
 
     tf.dispose(translatedSegmentationMapTensor);

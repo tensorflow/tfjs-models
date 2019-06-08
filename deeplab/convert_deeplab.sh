@@ -14,7 +14,12 @@
 # limitations under the License.
 # =============================================================================
 
-# Make sure that you run Python 3.6, not 3.7
+# Make sure that we run Python 3.6, not 3.7
+PYTHON_VERSION=$(python -V 2>&1 | sed 's/.* \([0-9]\).\([0-9]\).*/\1\2/')
+if [ "$PYTHON_VERSION" -gt "36" ]; then
+    echo "This script requires python 3.6 or older."
+    # exit 1
+fi
 
 if [ -z "$1" ]
   then
@@ -68,6 +73,7 @@ do
     exit 1
   fi
 
+  echo "Converting the model to JSON..."
   tensorflowjs_converter \
     --input_format=tf_frozen_model \
     --output_json=true \
@@ -76,6 +82,7 @@ do
     $MODEL_DIR/$MODEL_URL/frozen_inference_graph.pb \
     $SCRIPT_DIR/$1/$MODEL_NAME/$OUTPUT_DIR
 
+  echo "Converting the model to quantized JSON..."
   tensorflowjs_converter \
     --input_format=tf_frozen_model \
     --output_json=true \

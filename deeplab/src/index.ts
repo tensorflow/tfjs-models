@@ -62,17 +62,22 @@ export class SemanticSegmentation {
     }
 
     public async translate(
-        rawSegmentationMap: RawSegmentationMap
+        rawSegmentationMap: RawSegmentationMap,
+        canvas?: HTMLCanvasElement
     ): Promise<SegmentationData> {
-        return processSegmentationMap(rawSegmentationMap);
+        return processSegmentationMap(rawSegmentationMap, canvas);
     }
 
-    public async predict(input: DeepLabInput): Promise<DeepLabOutput> {
+    public async predict(
+        input: DeepLabInput,
+        canvas?: HTMLCanvasElement
+    ): Promise<DeepLabOutput> {
         const rawSegmentationMap = await this.segment(input);
 
         const [height, width] = rawSegmentationMap.shape;
-        const [legend, segmentationMap] = await processSegmentationMap(
-            rawSegmentationMap
+        const [legend, segmentationMap] = await this.translate(
+            rawSegmentationMap,
+            canvas
         );
 
         tf.dispose(rawSegmentationMap);
