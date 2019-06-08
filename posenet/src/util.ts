@@ -18,7 +18,7 @@
 import * as tf from '@tensorflow/tfjs-core';
 
 import {connectedPartIndices} from './keypoints';
-import {OutputStride} from './mobilenet';
+import {PoseNetOutputStride} from './posenet_model';
 import {Keypoint, Pose, PosenetInput, TensorBuffer3D, Vector2D} from './types';
 
 function eitherPointDoesntMeetConfidence(
@@ -82,51 +82,52 @@ export async function toTensorBuffers3D(tensors: tf.Tensor3D[]):
   return Promise.all(tensors.map(tensor => toTensorBuffer(tensor, 'float32')));
 }
 
-export function scalePose(pose: Pose, scaleY: number, scaleX: number,
-   offsetY = 0, offsetX = 0): Pose {
+export function scalePose(
+    pose: Pose, scaleY: number, scaleX: number, offsetY = 0,
+    offsetX = 0): Pose {
   return {
     score: pose.score,
-    keypoints: pose.keypoints.map(
-        ({score, part, position}) => ({
-          score,
-          part,
-          position: {x: position.x * scaleX + offsetX,
-                     y: position.y * scaleY + offsetY}
-        }))
+    keypoints: pose.keypoints.map(({score, part, position}) => ({
+                                    score,
+                                    part,
+                                    position: {
+                                      x: position.x * scaleX + offsetX,
+                                      y: position.y * scaleY + offsetY
+                                    }
+                                  }))
   };
 }
 
-export function scalePoses(poses: Pose[], scaleY: number, scaleX: number,
-  offsetY = 0, offsetX = 0) {
+export function scalePoses(
+    poses: Pose[], scaleY: number, scaleX: number, offsetY = 0, offsetX = 0) {
   if (scaleX === 1 && scaleY === 1 && offsetY === 0 && offsetX === 0) {
     return poses;
   }
   return poses.map(pose => scalePose(pose, scaleY, scaleX, offsetY, offsetX));
 }
 
-export function flipPoseHorizontal(pose: Pose, imageWidth : number): Pose {
- return {
-   score: pose.score,
-   keypoints: pose.keypoints.map(
-       ({score, part, position}) => ({
-         score,
-         part,
-         position: {x: imageWidth - 1 - position.x,
-                    y: position.y}
-       }))
- };
+export function flipPoseHorizontal(pose: Pose, imageWidth: number): Pose {
+  return {
+    score: pose.score,
+    keypoints: pose.keypoints.map(
+        ({score, part, position}) => ({
+          score,
+          part,
+          position: {x: imageWidth - 1 - position.x, y: position.y}
+        }))
+  };
 }
 
 export function flipPosesHorizontal(poses: Pose[], imageWidth: number) {
- if (imageWidth <= 0) {
-   return poses;
- }
- return poses.map(pose => flipPoseHorizontal(pose, imageWidth));
+  if (imageWidth <= 0) {
+    return poses;
+  }
+  return poses.map(pose => flipPoseHorizontal(pose, imageWidth));
 }
 
 export function getValidResolution(
     imageScaleFactor: number, inputDimension: number,
-    outputStride: OutputStride): number {
+    outputStride: PoseNetOutputStride): number {
   const evenResolution = inputDimension * imageScaleFactor - 1;
 
   return evenResolution - (evenResolution % outputStride) + 1;
@@ -157,11 +158,9 @@ export function toResizedInputTensor(
 }
 
 export function padAndResizeTo(
-  input: PosenetInput, [targetH, targetW]: [number, number],
-  flipHorizontal = false): {
-    resized: tf.Tensor3D,
-    paddedBy: [[number, number], [number, number]]} {
-
+    input: PosenetInput, [targetH, targetW]: [number, number],
+    flipHorizontal = false):
+    {resized: tf.Tensor3D, paddedBy: [[number, number], [number, number]]} {
   const [height, width] = getInputTensorDimensions(input);
   const targetAspect = targetW / targetH;
   const aspect = width / height;

@@ -1,8 +1,7 @@
-import * as tf from '@tensorflow/tfjs-core';
 import * as tfc from '@tensorflow/tfjs-converter';
+import * as tf from '@tensorflow/tfjs-core';
 
-import {OutputStride} from '.';
-import {BaseModel, PoseNetResolution} from './posenet_model';
+import {BaseModel, PoseNetOutputStride, PoseNetResolution} from './posenet_model';
 
 function toFloatIfInt(input: tf.Tensor3D): tf.Tensor3D {
   return tf.tidy(() => {
@@ -16,20 +15,20 @@ function toFloatIfInt(input: tf.Tensor3D): tf.Tensor3D {
 
 export class ResNet implements BaseModel {
   readonly model: tfc.GraphModel;
-  readonly outputStride: OutputStride;
+  readonly outputStride: PoseNetOutputStride;
   readonly inputResolution: PoseNetResolution;
 
   constructor(
       model: tfc.GraphModel, inputResolution: PoseNetResolution,
-      outputStride: OutputStride) {
+      outputStride: PoseNetOutputStride) {
     this.model = model;
     const inputShape =
         this.model.inputs[0].shape as [number, number, number, number];
     tf.util.assert(
-        (inputShape[1] === inputResolution) &&
-            (inputShape[2] === inputResolution),
+        (inputShape[1] === inputResolution || inputShape[1] === -1) &&
+            (inputShape[2] === inputResolution || inputShape[2] === -1),
         () => `Input shape [${inputShape[1]}, ${inputShape[2]}] ` +
-            `must both be equal to ${inputResolution}`);
+            `must both be equal to ${inputResolution} or -1`);
     this.inputResolution = inputResolution;
     this.outputStride = outputStride;
   }
@@ -48,9 +47,10 @@ export class ResNet implements BaseModel {
       const displacementBwd = displacementBwd4d.squeeze() as tf.Tensor3D;
 
       return {
-        heatmapScores, offsets: offsets as tf.Tensor3D,
-            displacementFwd: displacementFwd as tf.Tensor3D,
-            displacementBwd: displacementBwd as tf.Tensor3D
+        heatmapScores,
+        offsets: offsets as tf.Tensor3D,
+        displacementFwd: displacementFwd as tf.Tensor3D,
+        displacementBwd: displacementBwd as tf.Tensor3D
       };
     });
   }
