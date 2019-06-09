@@ -18,7 +18,7 @@
 import * as tf from '@tensorflow/tfjs-core';
 
 import {partNames} from '../keypoints';
-import {OutputStride} from '../mobilenet';
+import {PoseNetOutputStride} from '../posenet_model';
 import {Keypoint, Pose} from '../types';
 import {toTensorBuffer} from '../util';
 
@@ -58,7 +58,7 @@ import {getOffsetPoints, getPointsConfidence} from './util';
  */
 export async function decodeSinglePose(
     heatmapScores: tf.Tensor3D, offsets: tf.Tensor3D,
-    outputStride: OutputStride): Promise<Pose> {
+    outputStride: PoseNetOutputStride): Promise<Pose> {
   let totalScore = 0.0;
 
   const heatmapValues = argmax2d(heatmapScores);
