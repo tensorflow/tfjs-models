@@ -27,7 +27,7 @@ and can be used as building blocks in other apps.
   <!-- Images -->
   <!-- ** MobileNet -->
   <tr>
-    <td rowspan="8"><b>Images</b></td>
+    <td rowspan="10"><b>Images</b></td>
     <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./mobilenet"><div style='vertical-align:middle; display:inline;'>MobileNet</div></a></b></td>
     <td><a href=""></a></td>
     <td rowspan="2">Classify images with labels from the <a href="http://www.image-net.org/">ImageNet database</a>.</td>
