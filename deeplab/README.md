@@ -60,7 +60,7 @@ The output is a promise of DeepLabOutput, an array of four elements:
 
 * **Legend** :: { [name: string]: [number, number, number] }
 
-The legend is a dictionary of objects recognized in the image and their colors.
+The legend is a dictionary of objects recognized in the image and their colors in RGB format.
 
 * **height** :: number
 
@@ -139,4 +139,8 @@ Please see the demo [documentation](./demo/README.md).
 
 ## Technical Details
 
-This model is based on the TensorFlow [implementation](https://github.com/tensorflow/models/tree/master/research/deeplab) of DeepLab v3. You might want to inspect the [conversion script](./convert_deeplab.sh), or download original pre-trained weights [here](https://github.com/tensorflow/models/blob/master/research/deeplab/g3doc/model_zoo.md).
+This model is based on the TensorFlow [implementation](https://github.com/tensorflow/models/tree/master/research/deeplab) of DeepLab v3. You might want to inspect the [conversion script](./convert_deeplab.sh), or download original pre-trained weights [here](https://github.com/tensorflow/models/blob/master/research/deeplab/g3doc/model_zoo.md). To convert the weights locally, run the script as follows, replacing `dist` with the target directory:
+
+```bash
+./utils/convert_deeplab.sh dist
+```
