@@ -22,9 +22,10 @@ import {
 import { SemanticSegmentation } from '.';
 
 describeWithFlags('SemanticSegmentation', NODE_ENVS, () => {
-  beforeAll(function() {
+  beforeAll(() => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 20000;
   });
+
   it('SemanticSegmentation predict method should not leak', async () => {
     const model = new SemanticSegmentation('pascal');
     const x = tf.zeros([227, 500, 3]) as tf.Tensor3D;
@@ -33,5 +34,25 @@ describeWithFlags('SemanticSegmentation', NODE_ENVS, () => {
     await model.predict(x);
     await model.dispose();
     expect(tf.memory().numTensors).toEqual(numOfTensorsBefore);
+  });
+
+  it('SemanticSegmentation map has matching dimensions', async () => {
+    const model = new SemanticSegmentation('pascal');
+    const x = tf.zeros([513, 500, 3]) as tf.Tensor3D;
+
+    const segmentationMapTensor = await model.segment(x);
+    const [height, width] = segmentationMapTensor.shape;
+    segmentationMapTensor.dispose();
+    await model.dispose();
+    expect([height, width]).toEqual([513, 500]);
+  });
+
+  it('SemanticSegmentation predict method generates valid output', async () => {
+    const model = new SemanticSegmentation('pascal');
+    const x = tf.zeros([300, 500, 3]) as tf.Tensor3D;
+
+    const [legend] = await model.predict(x);
+    await model.dispose();
+    expect(Object.keys(legend)).toContain('background');
   });
 });

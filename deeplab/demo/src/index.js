@@ -39,6 +39,9 @@ const deeplabExampleImages = {
 
 const initialiseModels = async () => {
   Object.keys(deeplab).forEach(modelName => {
+    if (deeplab[modelName]) {
+      deeplab[modelName].dispose();
+    }
     const model = new SemanticSegmentation(modelName, state.isQuantized);
     deeplab[modelName] = model;
     const toggler = document.getElementById(`toggle-${modelName}-image`);
@@ -144,7 +147,6 @@ const runDeeplab = async modelName => {
     initialiseModels();
     sleep(100);
   }
-  console.log(state.isQuantized);
   const input = document.getElementById('input-image');
   if (!input.src || !input.src.length || input.src.length === 0) {
     status('Failed! Please load an image first.');
