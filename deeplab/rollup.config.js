@@ -20,7 +20,7 @@ import typescript from 'rollup-plugin-typescript2';
 import { terser } from 'rollup-plugin-terser';
 
 const settings = {
-    name: 'deeplab',
+  name: 'deeplab',
 };
 
 const PREAMBLE = `/**
@@ -41,63 +41,63 @@ const PREAMBLE = `/**
  */`;
 
 function minify() {
-    return terser({
-        output: {
-            preamble: PREAMBLE,
-        },
-        ecma: 8,
-        module: true,
-        compress: true,
-        mangle: false,
-    });
+  return terser({
+    output: {
+      preamble: PREAMBLE,
+    },
+    ecma: 8,
+    module: true,
+    compress: true,
+    mangle: false,
+  });
 }
 
 function config({ plugins = [], output = {} }) {
-    return {
-        input: 'src/index.ts',
-        plugins: [
-            typescript({
-                tsconfigOverride: {
-                    compilerOptions: {
-                        module: 'ES2015',
-                    },
-                },
-            }),
-            resolve(),
-            ...plugins,
-        ],
-        output: {
-            banner: PREAMBLE,
-            globals: {
-                '@tensorflow/tfjs': 'tf',
-            },
-            ...output,
+  return {
+    input: 'src/index.ts',
+    plugins: [
+      typescript({
+        tsconfigOverride: {
+          compilerOptions: {
+            module: 'ES2015',
+          },
         },
-        external: ['@tensorflow/tfjs'],
-    };
+      }),
+      resolve(),
+      ...plugins,
+    ],
+    output: {
+      banner: PREAMBLE,
+      globals: {
+        '@tensorflow/tfjs': 'tf',
+      },
+      ...output,
+    },
+    external: ['@tensorflow/tfjs'],
+  };
 }
 
 export default [
-    config({
-        output: {
-            format: 'umd',
-            name: settings['name'],
-            file: `dist/${settings['name']}.js`,
-        },
-    }),
-    config({
-        plugins: [minify()],
-        output: {
-            format: 'umd',
-            name: settings['name'],
-            file: `dist/${settings['name']}.min.js`,
-        },
-    }),
-    config({
-        plugins: [minify()],
-        output: {
-            format: 'esm',
-            file: `dist/${settings['name']}.esm.js`,
-        },
-    }),
+  config({
+    output: {
+      format: 'umd',
+      name: settings['name'],
+      file: `dist/${settings['name']}.js`,
+    },
+  }),
+  config({
+    plugins: [minify()],
+    output: {
+      format: 'umd',
+      name: settings['name'],
+      file: `dist/${settings['name']}.min.js`,
+    },
+  }),
+  config({
+    plugins: [minify()],
+    output: {
+      format: 'esm',
+      file: `dist/${settings['name']}.esm.js`,
+    },
+  }),
 ];

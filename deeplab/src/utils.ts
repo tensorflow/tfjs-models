@@ -1,11 +1,11 @@
 import * as tf from '@tensorflow/tfjs';
 import {
-    DeepLabInput,
-    Label,
-    SegmentationData,
-    RawSegmentationMap,
-    Color,
-    Legend,
+  DeepLabInput,
+  Label,
+  SegmentationData,
+  RawSegmentationMap,
+  Color,
+  Legend,
 } from './types';
 import config from './config';
 
@@ -27,84 +27,80 @@ import config from './config';
  */
 
 export const createPascalColormap = (): Color[] => {
-    const colormap = new Array(config['DATASET_MAX_ENTRIES']['PASCAL']);
-    for (let idx = 0; idx < config['DATASET_MAX_ENTRIES']['PASCAL']; ++idx) {
-        colormap[idx] = new Array(3);
+  const colormap = new Array(config['DATASET_MAX_ENTRIES']['PASCAL']);
+  for (let idx = 0; idx < config['DATASET_MAX_ENTRIES']['PASCAL']; ++idx) {
+    colormap[idx] = new Array(3);
+  }
+  for (let shift = 7; shift > 4; --shift) {
+    const indexShift = 3 * (7 - shift);
+    for (let channel = 0; channel < 3; ++channel) {
+      for (let idx = 0; idx < config['DATASET_MAX_ENTRIES']['PASCAL']; ++idx) {
+        colormap[idx][channel] |=
+          ((idx >> (channel + indexShift)) & 1) << shift;
+      }
     }
-    for (let shift = 7; shift > 4; --shift) {
-        const indexShift = 3 * (7 - shift);
-        for (let channel = 0; channel < 3; ++channel) {
-            for (
-                let idx = 0;
-                idx < config['DATASET_MAX_ENTRIES']['PASCAL'];
-                ++idx
-            ) {
-                colormap[idx][channel] |=
-                    ((idx >> (channel + indexShift)) & 1) << shift;
-            }
-        }
-    }
-    return colormap;
+  }
+  return colormap;
 };
 
 export function toInputTensor(input: DeepLabInput) {
-    return tf.tidy(() => {
-        const image =
-            input instanceof tf.Tensor ? input : tf.browser.fromPixels(input);
-        const [height, width] = image.shape;
-        const resizeRatio = config['CROP_SIZE'] / Math.max(width, height);
-        const targetSize = [height, width].map(side =>
-            Math.round(side * resizeRatio)
-        );
-        return tf.image
-            .resizeBilinear(image, targetSize as [number, number])
-            .expandDims(0);
-    });
+  return tf.tidy(() => {
+    const image =
+      input instanceof tf.Tensor ? input : tf.browser.fromPixels(input);
+    const [height, width] = image.shape;
+    const resizeRatio = config['CROP_SIZE'] / Math.max(width, height);
+    const targetSize = [height, width].map(side =>
+      Math.round(side * resizeRatio)
+    );
+    return tf.image
+      .resizeBilinear(image, targetSize as [number, number])
+      .expandDims(0);
+  });
 }
 
 export async function processSegmentationMap(
-    segmentationMapTensor: RawSegmentationMap,
-    canvas?: HTMLCanvasElement
+  segmentationMapTensor: RawSegmentationMap,
+  canvas?: HTMLCanvasElement
 ): Promise<SegmentationData> {
-    const [height, width] = segmentationMapTensor.shape;
-    const colormap = createPascalColormap();
-    const translatedSegmentationMapBuffer = tf.buffer(
-        [height, width, 3],
-        'int32'
-    );
-    const segmentationMapArray = (await segmentationMapTensor.array()) as number[][];
-    const labels = new Set<Label>();
-    for (let columnIndex = 0; columnIndex < height; ++columnIndex) {
-        for (let rowIndex = 0; rowIndex < width; ++rowIndex) {
-            const label: Label = segmentationMapArray[columnIndex][rowIndex];
-            labels.add(label);
-            colormap[label].forEach((depth, channel) => {
-                translatedSegmentationMapBuffer.set(
-                    depth,
-                    columnIndex,
-                    rowIndex,
-                    channel
-                );
-            });
-        }
+  const [height, width] = segmentationMapTensor.shape;
+  const colormap = createPascalColormap();
+  const translatedSegmentationMapBuffer = tf.buffer(
+    [height, width, 3],
+    'int32'
+  );
+  const segmentationMapArray = (await segmentationMapTensor.array()) as number[][];
+  const labels = new Set<Label>();
+  for (let columnIndex = 0; columnIndex < height; ++columnIndex) {
+    for (let rowIndex = 0; rowIndex < width; ++rowIndex) {
+      const label: Label = segmentationMapArray[columnIndex][rowIndex];
+      labels.add(label);
+      colormap[label].forEach((depth, channel) => {
+        translatedSegmentationMapBuffer.set(
+          depth,
+          columnIndex,
+          rowIndex,
+          channel
+        );
+      });
     }
-    const translatedSegmentationMapTensor = translatedSegmentationMapBuffer.toTensor() as tf.Tensor3D;
+  }
+  const translatedSegmentationMapTensor = translatedSegmentationMapBuffer.toTensor() as tf.Tensor3D;
 
-    const segmentationMap = await tf.browser.toPixels(
-        translatedSegmentationMapTensor,
-        canvas
-    );
+  const segmentationMap = await tf.browser.toPixels(
+    translatedSegmentationMapTensor,
+    canvas
+  );
 
-    tf.dispose(translatedSegmentationMapTensor);
+  tf.dispose(translatedSegmentationMapTensor);
 
-    const labelNames = config['LABELS'];
-    const legend: Legend = Array.from(labels).reduce(
-        (accumulator, label) => ({
-            ...accumulator,
-            [labelNames[label]]: colormap[label],
-        }),
-        {}
-    );
+  const labelNames = config['LABELS'];
+  const legend: Legend = Array.from(labels).reduce(
+    (accumulator, label) => ({
+      ...accumulator,
+      [labelNames[label]]: colormap[label],
+    }),
+    {}
+  );
 
-    return [legend, segmentationMap];
+  return [legend, segmentationMap];
 }

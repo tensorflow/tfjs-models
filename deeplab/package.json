@@ -1,47 +1,47 @@
 {
-    "name": "@tensorflow-models/deeplab",
-    "version": "0.1.0",
-    "description": "Model starter in TensorFlow.js",
-    "main": "dist/index.js",
-    "jsnext:main": "dist/deeplab.esm.js",
-    "module": "dist/deeplab.esm.js",
-    "unpkg": "dist/deeplab.min.js",
-    "jsdelivr": "dist/deeplab.min.js",
-    "types": "dist/index.d.ts",
-    "model": {
-        "name": "deeplab"
-    },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/sdll/tfjs-model-starter"
-    },
-    "peerDependencies": {
-        "@tensorflow/tfjs": "^1.1.0"
-    },
-    "devDependencies": {
-        "@tensorflow/tfjs": "^1.1.0",
-        "@types/jasmine": "~3.3.13",
-        "jasmine": "^3.2.0",
-        "jasmine-core": "~3.4.0",
-        "rimraf": "~2.6.2",
-        "rollup": "~1.13.1",
-        "rollup-plugin-node-resolve": "~5.0.1",
-        "rollup-plugin-terser": "^5.0.0",
-        "rollup-plugin-typescript2": "~0.21.1",
-        "ts-node": "~8.2.0",
-        "tslint": "~5.17.0",
-        "typescript": "3.5.1",
-        "yalc": "~1.0.0-pre.29"
-    },
-    "scripts": {
-        "build": "rimraf dist && tsc",
-        "test": "ts-node run_tests.ts",
-        "publish-local": "yarn build && rollup -c && yalc push",
-        "publish-npm": "yarn build && rollup -c && npm publish",
-        "lint": "tslint -p . -t verbose"
-    },
-    "license": "Apache-2.0",
-    "dependencies": {
-        "@babel/runtime-corejs2": "^7.4.5"
-    }
+  "name": "@tensorflow-models/deeplab",
+  "version": "0.1.0",
+  "description": "Model starter in TensorFlow.js",
+  "main": "dist/index.js",
+  "jsnext:main": "dist/deeplab.esm.js",
+  "module": "dist/deeplab.esm.js",
+  "unpkg": "dist/deeplab.min.js",
+  "jsdelivr": "dist/deeplab.min.js",
+  "types": "dist/index.d.ts",
+  "model": {
+    "name": "deeplab"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sdll/tfjs-model-starter"
+  },
+  "peerDependencies": {
+    "@tensorflow/tfjs": "^1.1.0"
+  },
+  "devDependencies": {
+    "@tensorflow/tfjs": "^1.1.0",
+    "@types/jasmine": "~3.3.13",
+    "jasmine": "^3.2.0",
+    "jasmine-core": "~3.4.0",
+    "rimraf": "~2.6.2",
+    "rollup": "~1.13.1",
+    "rollup-plugin-node-resolve": "~5.0.1",
+    "rollup-plugin-terser": "^5.0.0",
+    "rollup-plugin-typescript2": "~0.21.1",
+    "ts-node": "~8.2.0",
+    "tslint": "~5.17.0",
+    "typescript": "3.5.1",
+    "yalc": "~1.0.0-pre.29"
+  },
+  "scripts": {
+    "build": "rimraf dist && tsc",
+    "test": "ts-node run_tests.ts",
+    "publish-local": "yarn build && rollup -c && yalc push",
+    "publish-npm": "yarn build && rollup -c && npm publish",
+    "lint": "tslint -p . -t verbose"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@babel/runtime-corejs2": "^7.4.5"
+  }
 }

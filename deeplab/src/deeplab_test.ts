@@ -16,22 +16,22 @@
  */
 import * as tf from '@tensorflow/tfjs';
 import {
-    describeWithFlags,
-    NODE_ENVS,
+  describeWithFlags,
+  NODE_ENVS,
 } from '@tensorflow/tfjs-core/dist/jasmine_util';
 import { SemanticSegmentation } from '.';
 
 describeWithFlags('SemanticSegmentation', NODE_ENVS, () => {
-    beforeAll(function() {
-        jasmine.DEFAULT_TIMEOUT_INTERVAL = 20000;
-    });
-    it('SemanticSegmentation predict method should not leak', async () => {
-        const model = new SemanticSegmentation('pascal');
-        const x = tf.zeros([227, 500, 3]) as tf.Tensor3D;
-        const numOfTensorsBefore = tf.memory().numTensors;
+  beforeAll(function() {
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 20000;
+  });
+  it('SemanticSegmentation predict method should not leak', async () => {
+    const model = new SemanticSegmentation('pascal');
+    const x = tf.zeros([227, 500, 3]) as tf.Tensor3D;
+    const numOfTensorsBefore = tf.memory().numTensors;
 
-        await model.predict(x);
-        await model.dispose();
-        expect(tf.memory().numTensors).toEqual(numOfTensorsBefore);
-    });
+    await model.predict(x);
+    await model.dispose();
+    expect(tf.memory().numTensors).toEqual(numOfTensorsBefore);
+  });
 });

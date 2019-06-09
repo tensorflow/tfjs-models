@@ -45,7 +45,6 @@ trap 'rm -rf -- "$MODEL_DIR"' INT TERM HUP EXIT
 
 mkdir -p $SCRIPT_DIR/$1/$MODEL_NAME/quantized && \
 cd $MODEL_DIR && \
-pyenv local 3.6.8 && \
 virtualenv --no-site-packages venv && \
 source venv/bin/activate && \
 pip install tensorflowjs==0.8.6 && \

@@ -1,4 +1,4 @@
-# Semantic Segmentation in the Browser: DeepLab Model
+# Semantic Segmentation in the Browser: DeepLab v3 Model
 
 This package contains a standalone implementation of the DeepLab inference pipeline, as well as a [demo](./demo), for running semantic segmentation using TensorFlow.js.
 
@@ -139,4 +139,4 @@ Please see the demo [documentation](./demo/README.md).
 
 ## Technical Details
 
-This model is based on the TensorFlow [implementation](https://github.com/tensorflow/models/tree/master/research/deeplab) of DeepLab. You might want to inspect the [conversion script](./convert_deeplab.sh), or download original pre-trained weights [here](https://github.com/tensorflow/models/blob/master/research/deeplab/g3doc/model_zoo.md).
+This model is based on the TensorFlow [implementation](https://github.com/tensorflow/models/tree/master/research/deeplab) of DeepLab v3. You might want to inspect the [conversion script](./convert_deeplab.sh), or download original pre-trained weights [here](https://github.com/tensorflow/models/blob/master/research/deeplab/g3doc/model_zoo.md).
