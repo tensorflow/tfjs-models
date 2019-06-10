@@ -135,7 +135,7 @@ const status = message => {
   statusMessage.innerText = message;
 };
 
-const runPrediction = (model, initialisationStart) => {
+const runPrediction = (model, input, initialisationStart) => {
   model.predict(input).then(output => {
     displaySegmentationMap(output);
     status(`Ran in ${performance.now() - initialisationStart} ms`);
@@ -162,10 +162,10 @@ const runDeeplab = async modelName => {
 
   const model = deeplab[modelName];
   if (input.complete && input.naturalHeight !== 0) {
-    runPrediction(model, initialisationStart);
+    runPrediction(model, input, initialisationStart);
   } else {
     input.onload = () => {
-      runPrediction(model, initialisationStart);
+      runPrediction(model, input, initialisationStart);
     };
   }
 };
