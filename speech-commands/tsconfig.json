@@ -21,7 +21,6 @@
       "downlevelIteration": true
   },
   "include": [
-    "src/",
-    "run_tests.ts"
+    "src/"
   ]
 }

@@ -17,6 +17,8 @@
 
 import * as tf from '@tensorflow/tfjs';
 
+import {RawAudioData} from './types';
+
 export async function loadMetadataJson(url: string):
     Promise<{wordLabels: string[]}> {
   return new Promise((resolve, reject) => {
@@ -101,4 +103,30 @@ export async function getAudioMediaStream(
     audio: audioTrackConstraints == null ? true : audioTrackConstraints,
     video: false
   });
+}
+
+/**
+ * Play raw audio waveform
+ * @param rawAudio Raw audio data, including the waveform and the sampling rate.
+ * @param onEnded Callback function to execute when the playing ends.
+ */
+export function playRawAudio(
+    rawAudio: RawAudioData, onEnded: () => void|Promise<void>): void {
+  const audioContextConstructor =
+      // tslint:disable-next-line:no-any
+      (window as any).AudioContext || (window as any).webkitAudioContext;
+  const audioContext: AudioContext = new audioContextConstructor();
+  const arrayBuffer =
+      audioContext.createBuffer(1, rawAudio.data.length, rawAudio.sampleRateHz);
+  const nowBuffering = arrayBuffer.getChannelData(0);
+  nowBuffering.set(rawAudio.data);
+  const source = audioContext.createBufferSource();
+  source.buffer = arrayBuffer;
+  source.connect(audioContext.destination);
+  source.start();
+  source.onended = () => {
+    if (onEnded != null) {
+      onEnded();
+    }
+  };
 }

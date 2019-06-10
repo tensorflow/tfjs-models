@@ -12,11 +12,11 @@ Check out our [demo](https://storage.googleapis.com/tfjs-models/demos/toxicity/i
 
 Using `yarn`:
 
-    $ yarn add @tensorflow/tfjs@1.0.0 @tensorflow-models/toxicity
+    $ yarn add @tensorflow/tfjs @tensorflow-models/toxicity
 
 Using `npm`:
 
-    $ npm install @tensorflow/tfjs@1.0.0 @tensorflow-models/toxicity
+    $ npm install @tensorflow/tfjs @tensorflow-models/toxicity
 
 ## Usage
 
@@ -28,8 +28,8 @@ import * as toxicity from '@tensorflow-models/toxicity';
 
 or as a standalone script tag:
 
-```js
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.0"></script>
+```html
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/toxicity"></script>
 ```
 
