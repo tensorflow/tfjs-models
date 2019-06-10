@@ -88,7 +88,7 @@ const processImages = event => {
 };
 
 const displaySegmentationMap = deeplabOutput => {
-  const [legend, height, width, segmentationMap] = deeplabOutput;
+  const { legend, height, width, segmentationMap } = deeplabOutput;
   const canvas = document.getElementById('output-image');
   const ctx = canvas.getContext('2d');
 
@@ -135,6 +135,13 @@ const status = message => {
   statusMessage.innerText = message;
 };
 
+const runPrediction = (model, initialisationStart) => {
+  model.predict(input).then(output => {
+    displaySegmentationMap(output);
+    status(`Ran in ${performance.now() - initialisationStart} ms`);
+  });
+};
+
 const runDeeplab = async modelName => {
   status(`Running the inference...`);
   await sleep(100);
@@ -155,16 +162,10 @@ const runDeeplab = async modelName => {
 
   const model = deeplab[modelName];
   if (input.complete && input.naturalHeight !== 0) {
-    model.predict(input).then(output => {
-      displaySegmentationMap(output);
-      status(`Ran in ${performance.now() - initialisationStart} ms`);
-    });
+    runPrediction(model, initialisationStart);
   } else {
     input.onload = () => {
-      model.predict(input).then(output => {
-        displaySegmentationMap(output);
-        status(`Ran in ${performance.now() - initialisationStart} ms`);
-      });
+      runPrediction(model, initialisationStart);
     };
   }
 };

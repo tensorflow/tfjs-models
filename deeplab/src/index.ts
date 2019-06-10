@@ -73,14 +73,14 @@ export class SemanticSegmentation {
     const rawSegmentationMap = await this.segment(input);
 
     const [height, width] = rawSegmentationMap.shape;
-    const [legend, segmentationMap] = await this.translate(
+    const { legend, segmentationMap } = await this.translate(
       rawSegmentationMap,
       canvas
     );
 
     tf.dispose(rawSegmentationMap);
 
-    return [legend, height, width, segmentationMap];
+    return { legend, height, width, segmentationMap };
   }
 
   /**

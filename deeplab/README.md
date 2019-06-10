@@ -14,10 +14,10 @@ To get started, pick the model name from `pascal`, `cityscapes` and `ade20k`, an
 import { SemanticSegmentation } from '@tensorflow-models/deeplab';
 const model = 'pascal';   // set to your preferred model, out of `pascal`, `cityscapes` and `ade20k`
 const isQuantized = true; // set to your preference
-const deeplab = SemanticSegmentation(model, isQuantized);
+const deeplab = new SemanticSegmentation(model, isQuantized);
 ```
 
-The download of weights begins automatically.
+The download of weights begins automatically. You can start using the model immediately.
 
 ### Segmenting an Image
 
@@ -51,30 +51,30 @@ Pass an optional canvas element as `canvas` to draw the output as a side effect.
 
 #### Segmentation input
 
-* **image** :: DeepLabInput | ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | tf.Tensor3D;
-* **canvas** (optional) :: HTMLCanvasElement
+* **image** :: `DeepLabInput | ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | tf.Tensor3D`;
+* **canvas** (optional) :: `HTMLCanvasElement`
 
 #### Segmentation output
 
 The output is a promise of DeepLabOutput, an array of four elements:
 
-* **Legend** :: { [name: string]: [number, number, number] }
+* **Legend** :: `{ [name: string]: [number, number, number] }`
 
 The legend is a dictionary of objects recognized in the image and their colors in RGB format.
 
-* **height** :: number
+* **height** :: `number`
 
 The new height of the processed image.
 
-* **width** :: number
+* **width** :: `number`
 
-The new height of the processed image.
+The new width of the processed image.
 
-* **SegmentationMap** :: Uint8ClampedArray
+* **SegmentationMap** :: `Uint8ClampedArray`
 
 The colored segmentation map as Uint8ClampedArray which can be [fed](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Pixel_manipulation_with_canvas) into ImageData and mapped to a canvas.
 
-#### Segmentation example
+#### Prediction example
 
 ```typescript
 const classify = async (image) => {
@@ -90,11 +90,11 @@ To segment an arbitrary image and generate a two-dimensional tensor with class l
 
 #### `model.segment` input
 
-* **image** :: DeepLabInput | ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | tf.Tensor3D;
+* **image** :: `DeepLabInput | ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | tf.Tensor3D`;
 
 #### `model.segment` output
 
-* **rawSegmentationMap** :: Promise<RawSegmentationMap | tf.Tensor2D>
+* **rawSegmentationMap** :: `Promise<RawSegmentationMap | tf.Tensor2D>`
 
 #### `model.segment` example
 
@@ -110,18 +110,18 @@ To transform the segmentation map into a coloured image, use the `translate` met
 
 #### `model.translate` input
 
-* **segmentationMap** :: RawSegmentationMap | tf.Tensor2D
-* **canvas** (optional) :: HTMLCanvasElement
+* **segmentationMap** :: `RawSegmentationMap | tf.Tensor2D`
+* **canvas** (optional) :: `HTMLCanvasElement`
 
 #### `model.translate` output
 
 The returned promise is the future of an array typed as `SegmentationData` that contains two objects:
 
-* **Legend** :: { [name: string]: [number, number, number] }
+* **Legend** :: `{ [name: string]: [number, number, number] }`
 
 The legend is a dictionary of objects recognized in the image and their colors.
 
-* **SegmentationMap** :: Uint8ClampedArray
+* **SegmentationMap** :: `Uint8ClampedArray`
 
 The colored segmentation map as Uint8ClampedArray which can be [fed](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Pixel_manipulation_with_canvas) into ImageData and mapped to a canvas.
 
@@ -139,8 +139,8 @@ Please see the demo [documentation](./demo/README.md).
 
 ## Technical Details
 
-This model is based on the TensorFlow [implementation](https://github.com/tensorflow/models/tree/master/research/deeplab) of DeepLab v3. You might want to inspect the [conversion script](./convert_deeplab.sh), or download original pre-trained weights [here](https://github.com/tensorflow/models/blob/master/research/deeplab/g3doc/model_zoo.md). To convert the weights locally, run the script as follows, replacing `dist` with the target directory:
+This model is based on the TensorFlow [implementation](https://github.com/tensorflow/models/tree/master/research/deeplab) of DeepLab v3. You might want to inspect the [conversion script](./scripts/convert_deeplab.sh), or download original pre-trained weights [here](https://github.com/tensorflow/models/blob/master/research/deeplab/g3doc/model_zoo.md). To convert the weights locally, run the script as follows, replacing `dist` with the target directory:
 
 ```bash
-./utils/convert_deeplab.sh dist
+./scripts/convert_deeplab.sh dist
 ```

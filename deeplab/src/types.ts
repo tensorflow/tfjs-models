@@ -29,5 +29,13 @@ export type DeepLabInput =
 
 export type RawSegmentationMap = tf.Tensor2D;
 export type SegmentationMap = Uint8ClampedArray;
-export type SegmentationData = [Legend, SegmentationMap];
-export type DeepLabOutput = [Legend, number, number, SegmentationMap];
+export type SegmentationData = {
+  legend: Legend;
+  segmentationMap: SegmentationMap;
+};
+export type DeepLabOutput = {
+  legend: Legend;
+  height: number;
+  width: number;
+  segmentationMap: SegmentationMap;
+};

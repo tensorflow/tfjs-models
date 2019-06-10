@@ -1,14 +1,3 @@
-import * as tf from '@tensorflow/tfjs';
-import {
-  DeepLabInput,
-  Label,
-  SegmentationData,
-  RawSegmentationMap,
-  Color,
-  Legend,
-} from './types';
-import config from './config';
-
 /**
  * @license
  * Copyright 2019 Google LLC. All Rights Reserved.
@@ -26,15 +15,27 @@ import config from './config';
  * =============================================================================
  */
 
+import * as tf from '@tensorflow/tfjs';
+import {
+  DeepLabInput,
+  Label,
+  SegmentationData,
+  RawSegmentationMap,
+  Color,
+  Legend,
+} from './types';
+import config from './config';
+
+const pascalColormapMaxEntriesNum = config['DATASET_MAX_ENTRIES']['PASCAL'];
 export const createPascalColormap = (): Color[] => {
-  const colormap = new Array(config['DATASET_MAX_ENTRIES']['PASCAL']);
-  for (let idx = 0; idx < config['DATASET_MAX_ENTRIES']['PASCAL']; ++idx) {
+  const colormap = new Array(pascalColormapMaxEntriesNum);
+  for (let idx = 0; idx < pascalColormapMaxEntriesNum; ++idx) {
     colormap[idx] = new Array(3);
   }
   for (let shift = 7; shift > 4; --shift) {
     const indexShift = 3 * (7 - shift);
     for (let channel = 0; channel < 3; ++channel) {
-      for (let idx = 0; idx < config['DATASET_MAX_ENTRIES']['PASCAL']; ++idx) {
+      for (let idx = 0; idx < pascalColormapMaxEntriesNum; ++idx) {
         colormap[idx][channel] |=
           ((idx >> (channel + indexShift)) & 1) << shift;
       }
@@ -64,34 +65,27 @@ export async function processSegmentationMap(
 ): Promise<SegmentationData> {
   const [height, width] = segmentationMapTensor.shape;
   const colormap = createPascalColormap();
-  const translatedSegmentationMapBuffer = tf.buffer(
-    [height, width, 3],
-    'int32'
-  );
-  const segmentationMapArray = (await segmentationMapTensor.array()) as number[][];
+  const translatedMapBuffer = tf.buffer([height, width, 3], 'int32');
+  const mapData = (await segmentationMapTensor.array()) as number[][];
   const labels = new Set<Label>();
   for (let columnIndex = 0; columnIndex < height; ++columnIndex) {
     for (let rowIndex = 0; rowIndex < width; ++rowIndex) {
-      const label: Label = segmentationMapArray[columnIndex][rowIndex];
+      const label: Label = mapData[columnIndex][rowIndex];
       labels.add(label);
       colormap[label].forEach((depth, channel) => {
-        translatedSegmentationMapBuffer.set(
-          depth,
-          columnIndex,
-          rowIndex,
-          channel
-        );
+        translatedMapBuffer.set(depth, columnIndex, rowIndex, channel);
       });
     }
   }
-  const translatedSegmentationMapTensor = translatedSegmentationMapBuffer.toTensor() as tf.Tensor3D;
+
+  const translatedMapTensor = translatedMapBuffer.toTensor() as tf.Tensor3D;
 
   const segmentationMap = await tf.browser.toPixels(
-    translatedSegmentationMapTensor,
+    translatedMapTensor,
     canvas
   );
 
-  tf.dispose(translatedSegmentationMapTensor);
+  tf.dispose(translatedMapTensor);
 
   const labelNames = config['LABELS'];
   const legend: Legend = Array.from(labels).reduce(
@@ -102,5 +96,5 @@ export async function processSegmentationMap(
     {}
   );
 
-  return [legend, segmentationMap];
+  return { legend, segmentationMap };
 }

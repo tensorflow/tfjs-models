@@ -1,7 +1,7 @@
 {
   "name": "@tensorflow-models/deeplab",
   "version": "0.1.0",
-  "description": "Model starter in TensorFlow.js",
+  "description": "Semantic Segmentation in the Browser: DeepLab v3 Model",
   "main": "dist/index.js",
   "jsnext:main": "dist/deeplab.esm.js",
   "module": "dist/deeplab.esm.js",
@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/sdll/tfjs-model-starter"
+    "url": "https://github.com/tensorflow/tfjs-models"
   },
   "peerDependencies": {
     "@tensorflow/tfjs": "^1.1.0"

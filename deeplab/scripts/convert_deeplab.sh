@@ -43,6 +43,10 @@ DIST_DIR='./dist'
 
 trap 'rm -rf -- "$MODEL_DIR"' INT TERM HUP EXIT
 
+printf -- '=%.0s' {1..80}; echo ""
+echo "Setting up the installation environment..."
+printf -- '=%.0s' {1..80}; echo ""
+
 mkdir -p $SCRIPT_DIR/$1/$MODEL_NAME/quantized && \
 cd $MODEL_DIR && \
 virtualenv --no-site-packages venv && \
@@ -52,6 +56,12 @@ echo "Downloading models to $MODEL_DIR..."
 
 for MODEL_URL in "${MODELS[@]}"
 do
+  printf -- '=%.0s' {1..80}; echo ""
+
+  printf -- '-%.0s' {1..80}; echo ""
+  echo "Downloading and extracting the model from $URL_PREFIX/$MODEL_URL$URL_SUFFIX..."
+  printf -- '-%.0s' {1..80}; echo ""
+
   wget -P $MODEL_DIR $URL_PREFIX/$MODEL_URL$URL_SUFFIX && \
   mkdir -p $MODEL_DIR/$MODEL_URL && \
   tar -xvzf $MODEL_DIR/$MODEL_URL$URL_SUFFIX -C $MODEL_DIR/$MODEL_URL --strip-components 1 && \
@@ -68,11 +78,16 @@ do
   then
     OUTPUT_DIR="ade20k"
   else
+    printf -- '!%.0s' {1..80}; echo ""
     echo "The model is not supported, aborting."
+    printf -- '!%.0s' {1..80}; echo ""
     exit 1
   fi
 
+  printf -- '-%.0s' {1..80}; echo ""
   echo "Converting the model to JSON..."
+  printf -- '-%.0s' {1..80}; echo ""
+
   tensorflowjs_converter \
     --input_format=tf_frozen_model \
     --output_json=true \
@@ -81,7 +96,10 @@ do
     $MODEL_DIR/$MODEL_URL/frozen_inference_graph.pb \
     $SCRIPT_DIR/$1/$MODEL_NAME/$OUTPUT_DIR
 
+  printf -- '-%.0s' {1..80}; echo ""
   echo "Converting the model to quantized JSON..."
+  printf -- '-%.0s' {1..80}; echo ""
+
   tensorflowjs_converter \
     --input_format=tf_frozen_model \
     --output_json=true \
@@ -90,5 +108,8 @@ do
     --quantization_bytes 2 \
     $MODEL_DIR/$MODEL_URL/frozen_inference_graph.pb \
     $SCRIPT_DIR/$1/$MODEL_NAME/quantized/$OUTPUT_DIR
+
+  printf -- '=%.0s' {1..80}; echo ""
 done
+
 echo "Success!"

@@ -51,7 +51,7 @@ describeWithFlags('SemanticSegmentation', NODE_ENVS, () => {
     const model = new SemanticSegmentation('pascal');
     const x = tf.zeros([300, 500, 3]) as tf.Tensor3D;
 
-    const [legend] = await model.predict(x);
+    const { legend } = await model.predict(x);
     await model.dispose();
     expect(Object.keys(legend)).toContain('background');
   });
