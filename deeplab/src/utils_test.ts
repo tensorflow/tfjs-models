@@ -1,6 +1,6 @@
 import { getColormap, translateLabels } from './utils';
-import { SemanticSegmentationBaseModel } from '../demo/.yalc/@tensorflow-models/deeplab/dist/types';
 import { config } from './config';
+import { SemanticSegmentationBaseModel } from './types';
 
 describe('Utilities', () => {
   it('Colormaps and labels must match in length.', () => {
