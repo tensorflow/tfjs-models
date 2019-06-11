@@ -24,14 +24,14 @@
     "jasmine": "^3.2.0",
     "jasmine-core": "~3.4.0",
     "rimraf": "~2.6.2",
-    "rollup": "~1.13.1",
+    "rollup": "~1.15.0",
     "rollup-plugin-node-resolve": "~5.0.1",
     "rollup-plugin-terser": "^5.0.0",
     "rollup-plugin-typescript2": "~0.21.1",
     "ts-node": "~8.2.0",
     "tslint": "~5.17.0",
     "typescript": "3.5.1",
-    "yalc": "~1.0.0-pre.29"
+    "yalc": "~1.0.0-pre.31"
   },
   "scripts": {
     "build": "rimraf dist && tsc",
