@@ -1,8 +1,28 @@
-import { createPascalColormap } from './utils';
+import { getColormap, translateLabels } from './utils';
+import { SemanticSegmentationBaseModel } from '../demo/.yalc/@tensorflow-models/deeplab/dist/types';
+import { config } from './config';
 
 describe('Utilities', () => {
+  it('Colormaps and labels must match in length.', () => {
+    const bases = ['pascal', 'cityscapes', 'ade20k'];
+
+    const colormapLengths = bases.map(base => {
+      return getColormap(base as SemanticSegmentationBaseModel).length;
+    });
+
+    // Make an exception for pascal, which has a palette larger than
+    // the number of labels
+    const labelsLengths = bases.map(base => {
+      return base === 'pascal'
+        ? config['DATASET_MAX_ENTRIES']['PASCAL']
+        : translateLabels(base as SemanticSegmentationBaseModel).length;
+    });
+
+    expect(colormapLengths).toEqual(labelsLengths);
+  });
+
   it('The PASCAL colormap coincides with the original.', () => {
-    expect(createPascalColormap()).toEqual([
+    expect(getColormap('pascal')).toEqual([
       [0, 0, 0],
       [128, 0, 0],
       [0, 128, 0],

@@ -16,19 +16,22 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
+import { config } from './config';
 import {
   DeepLabInput,
   DeepLabOutput,
-  SemanticSegmentationBaseModel,
+  Label,
+  Legend,
   RawSegmentationMap,
   SegmentationData,
+  SemanticSegmentationBaseModel,
 } from './types';
-import { toInputTensor, processSegmentationMap } from './utils';
-import config from './config';
+import { getColormap, toInputTensor, translateLabels } from './utils';
 
 export class SemanticSegmentation {
-  private modelPath: string;
+  private base: SemanticSegmentationBaseModel;
   private model: Promise<tf.GraphModel>;
+  private modelPath: string;
   constructor(base: SemanticSegmentationBaseModel, isQuantized = false) {
     if (tf == null) {
       throw new Error(
@@ -43,11 +46,12 @@ export class SemanticSegmentation {
           `Try one of 'pascal', 'cityscapes' and 'ade20k'.`
       );
     }
-    if (isQuantized) {
-      this.modelPath = `${config['BASE_PATH']}/quantized/${base}/model.json`;
-    } else {
-      this.modelPath = `${config['BASE_PATH']}/${base}/model.json`;
-    }
+    this.base = base;
+
+    this.modelPath = `${config['BASE_PATH']}/${
+      isQuantized ? 'quantized/' : ''
+    }${base}/model.json`;
+
     this.model = tf.loadGraphModel(this.modelPath);
   }
 
@@ -63,7 +67,40 @@ export class SemanticSegmentation {
     rawSegmentationMap: RawSegmentationMap,
     canvas?: HTMLCanvasElement
   ): Promise<SegmentationData> {
-    return processSegmentationMap(rawSegmentationMap, canvas);
+    const [height, width] = rawSegmentationMap.shape;
+    const colormap = getColormap(this.base);
+    const translatedMapBuffer = tf.buffer([height, width, 3], 'int32');
+    const mapData = (await rawSegmentationMap.array()) as number[][];
+    const labels = new Set<Label>();
+    for (let columnIndex = 0; columnIndex < height; ++columnIndex) {
+      for (let rowIndex = 0; rowIndex < width; ++rowIndex) {
+        const label: Label = mapData[columnIndex][rowIndex];
+        labels.add(label);
+        colormap[label].forEach((depth, channel) => {
+          translatedMapBuffer.set(depth, columnIndex, rowIndex, channel);
+        });
+      }
+    }
+
+    const translatedMapTensor = translatedMapBuffer.toTensor() as tf.Tensor3D;
+
+    const segmentationMap = await tf.browser.toPixels(
+      translatedMapTensor,
+      canvas
+    );
+
+    tf.dispose(translatedMapTensor);
+
+    const labelNames = translateLabels(this.base);
+    const legend: Legend = Array.from(labels).reduce(
+      (accumulator, label) => ({
+        ...accumulator,
+        [labelNames[label]]: colormap[label],
+      }),
+      {}
+    );
+
+    return { legend, segmentationMap };
   }
 
   public async predict(

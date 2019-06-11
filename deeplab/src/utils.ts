@@ -16,18 +16,11 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import {
-  DeepLabInput,
-  Label,
-  SegmentationData,
-  RawSegmentationMap,
-  Color,
-  Legend,
-} from './types';
-import config from './config';
+import { config } from './config';
+import { Color, DeepLabInput, SemanticSegmentationBaseModel } from './types';
 
 const pascalColormapMaxEntriesNum = config['DATASET_MAX_ENTRIES']['PASCAL'];
-export const createPascalColormap = (): Color[] => {
+const createPascalColormap = (): Color[] => {
   const colormap = new Array(pascalColormapMaxEntriesNum);
   for (let idx = 0; idx < pascalColormapMaxEntriesNum; ++idx) {
     colormap[idx] = new Array(3);
@@ -44,6 +37,44 @@ export const createPascalColormap = (): Color[] => {
   return colormap;
 };
 
+const createADE20KColormap = (): Color[] => {
+  return config['COLORMAPS']['ADE20K'] as Color[];
+};
+
+const createCityscapesColormap = (): Color[] => {
+  return config['COLORMAPS']['CITYSCAPES'] as Color[];
+};
+
+export const getColormap = (base: SemanticSegmentationBaseModel) => {
+  if (base === 'pascal') {
+    return createPascalColormap();
+  } else if (base === 'ade20k') {
+    return createADE20KColormap();
+  } else if (base === 'cityscapes') {
+    return createCityscapesColormap();
+  }
+  throw new Error(
+    `SemanticSegmentation cannot be constructed ` +
+      `with an invalid base model ${base}. ` +
+      `Try one of 'pascal', 'cityscapes' and 'ade20k'.`
+  );
+};
+
+export const translateLabels = (base: SemanticSegmentationBaseModel) => {
+  if (base === 'pascal') {
+    return config['LABELS']['PASCAL'];
+  } else if (base === 'ade20k') {
+    return config['LABELS']['ADE20K'];
+  } else if (base === 'cityscapes') {
+    return config['LABELS']['CITYSCAPES'];
+  }
+  throw new Error(
+    `SemanticSegmentation cannot be constructed ` +
+      `with an invalid base model ${base}. ` +
+      `Try one of 'pascal', 'cityscapes' and 'ade20k'.`
+  );
+};
+
 export function toInputTensor(input: DeepLabInput) {
   return tf.tidy(() => {
     const image =
@@ -57,44 +88,4 @@ export function toInputTensor(input: DeepLabInput) {
       .resizeBilinear(image, targetSize as [number, number])
       .expandDims(0);
   });
-}
-
-export async function processSegmentationMap(
-  segmentationMapTensor: RawSegmentationMap,
-  canvas?: HTMLCanvasElement
-): Promise<SegmentationData> {
-  const [height, width] = segmentationMapTensor.shape;
-  const colormap = createPascalColormap();
-  const translatedMapBuffer = tf.buffer([height, width, 3], 'int32');
-  const mapData = (await segmentationMapTensor.array()) as number[][];
-  const labels = new Set<Label>();
-  for (let columnIndex = 0; columnIndex < height; ++columnIndex) {
-    for (let rowIndex = 0; rowIndex < width; ++rowIndex) {
-      const label: Label = mapData[columnIndex][rowIndex];
-      labels.add(label);
-      colormap[label].forEach((depth, channel) => {
-        translatedMapBuffer.set(depth, columnIndex, rowIndex, channel);
-      });
-    }
-  }
-
-  const translatedMapTensor = translatedMapBuffer.toTensor() as tf.Tensor3D;
-
-  const segmentationMap = await tf.browser.toPixels(
-    translatedMapTensor,
-    canvas
-  );
-
-  tf.dispose(translatedMapTensor);
-
-  const labelNames = config['LABELS'];
-  const legend: Legend = Array.from(labels).reduce(
-    (accumulator, label) => ({
-      ...accumulator,
-      [labelNames[label]]: colormap[label],
-    }),
-    {}
-  );
-
-  return { legend, segmentationMap };
 }
