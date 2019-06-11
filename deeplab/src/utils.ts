@@ -21,6 +21,11 @@ import { Color, DeepLabInput, SemanticSegmentationBaseModel } from './types';
 
 const pascalColormapMaxEntriesNum = config['DATASET_MAX_ENTRIES']['PASCAL'];
 const createPascalColormap = (): Color[] => {
+  /**
+   * Generates the colormap matching the Pascal VOC dev guidelines.
+   * The original implementation in Python: https://git.io/fjgw5
+   */
+
   const colormap = new Array(pascalColormapMaxEntriesNum);
   for (let idx = 0; idx < pascalColormapMaxEntriesNum; ++idx) {
     colormap[idx] = new Array(3);
