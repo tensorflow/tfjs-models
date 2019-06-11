@@ -20,6 +20,7 @@ import { SemanticSegmentation } from '@tensorflow-models/deeplab';
 import pascalExampleImage from './examples/pascal.jpg';
 import cityscapesExampleImage from './examples/cityscapes.jpg';
 import ade20kExampleImage from './examples/ade20k.jpg';
+import * as tf from '@tensorflow/tfjs';
 
 const state = {
   isQuantized: true,
@@ -56,6 +57,7 @@ const initializeModels = async () => {
       runner.classList.add('is-loading');
       toggleInvisible('output-card', true);
       toggleInvisible('legend-card', true);
+      await tf.nextFrame();
       await runDeeplab(modelName);
     };
   });
@@ -132,10 +134,6 @@ const displaySegmentationMap = (modelName, deeplabOutput) => {
   inputContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 };
 
-const sleep = ms => {
-  return new Promise(resolve => setTimeout(resolve, ms));
-};
-
 const status = message => {
   const statusMessage = document.getElementById('status-message');
   statusMessage.innerText = message;
@@ -151,8 +149,7 @@ const runPrediction = (modelName, input, initialisationStart) => {
 
 const runDeeplab = async modelName => {
   status(`Running the inference...`);
-  // Wait until the css changes take place
-  await sleep(100);
+  await tf.nextFrame();
   const initialisationStart = performance.now();
   const isQuantizationDisabled = document.getElementById(
     'is-quantization-disabled'
