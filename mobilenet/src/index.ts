@@ -50,7 +50,7 @@ const MODEL_INFO: {[version: string]: {[alpha: string]: string}} = {
 };
 
 export async function load(
-    version: MobileNetVersion = 1, alpha: MobileNetAlpha = 1.0) {
+    version: MobileNetVersion = 1, alpha: MobileNetAlpha = 1.0, modelUrl?: string) {
   if (tf == null) {
     throw new Error(
         `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
@@ -71,7 +71,7 @@ export async function load(
         `${Object.keys(MODEL_INFO[versionStr])}.`);
   }
 
-  const mobilenet = new MobileNet(versionStr, alphaStr);
+  const mobilenet = new MobileNet(versionStr, alphaStr, modelUrl);
   await mobilenet.load();
   return mobilenet;
 }
@@ -81,12 +81,13 @@ export class MobileNet {
 
   private normalizationOffset: tf.Scalar;
 
-  constructor(public version: string, public alpha: string) {
+  constructor(public version: string,
+              public alpha: string, public modelUrl: string) {
     this.normalizationOffset = tf.scalar(127.5);
   }
 
   async load() {
-    const url = MODEL_INFO[this.version][this.alpha];
+    const url = this.modelUrl || MODEL_INFO[this.version][this.alpha];
     this.model = await tf.loadGraphModel(url, {fromTFHub: true});
 
     // Warmup the model.
