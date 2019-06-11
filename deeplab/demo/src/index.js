@@ -37,7 +37,12 @@ const deeplabExampleImages = {
   ade20k: ade20kExampleImage,
 };
 
-const initialiseModels = async () => {
+const toggleInvisible = (elementId, force = undefined) => {
+  const outputContainer = document.getElementById(elementId);
+  outputContainer.classList.toggle('is-invisible', force);
+};
+
+const initializeModels = async () => {
   Object.keys(deeplab).forEach(modelName => {
     if (deeplab[modelName]) {
       deeplab[modelName].dispose();
@@ -49,9 +54,9 @@ const initialiseModels = async () => {
     const runner = document.getElementById(`run-${modelName}`);
     runner.onclick = async () => {
       runner.classList.add('is-loading');
-      await sleep(100);
+      toggleInvisible('output-card', true);
+      toggleInvisible('legend-card', true);
       await runDeeplab(modelName);
-      runner.classList.remove('is-loading');
     };
   });
   const uploader = document.getElementById('upload-image');
@@ -60,14 +65,11 @@ const initialiseModels = async () => {
 };
 
 const setImage = src => {
-  const outputContainer = document.getElementById('output-card');
-  outputContainer.classList.add('is-invisible');
-  const legendContainer = document.getElementById('legend-card');
-  legendContainer.classList.add('is-invisible');
+  toggleInvisible('output-card', true);
+  toggleInvisible('legend-card', true);
   const image = document.getElementById('input-image');
   image.src = src;
-  const imageContainer = document.getElementById('input-card');
-  imageContainer.classList.remove('is-invisible');
+  toggleInvisible('input-card', false);
   status('Waiting until the model is picked...');
 };
 
@@ -87,13 +89,12 @@ const processImages = event => {
   Array.from(files).forEach(processImage);
 };
 
-const displaySegmentationMap = deeplabOutput => {
+const displaySegmentationMap = (modelName, deeplabOutput) => {
   const { legend, height, width, segmentationMap } = deeplabOutput;
   const canvas = document.getElementById('output-image');
   const ctx = canvas.getContext('2d');
 
-  const outputContainer = document.getElementById('output-card');
-  outputContainer.classList.remove('is-invisible');
+  toggleInvisible('output-card', false);
   const segmentationMapData = new ImageData(segmentationMap, width, height);
   canvas.style.width = '100%';
   canvas.style.height = '100%';
@@ -122,8 +123,13 @@ const displaySegmentationMap = deeplabOutput => {
     }
   }
 
-  const legendContainer = document.getElementById('legend-card');
-  legendContainer.classList.remove('is-invisible');
+  toggleInvisible('legend-card', false);
+
+  const runner = document.getElementById(`run-${modelName}`);
+  runner.classList.remove('is-loading');
+
+  const inputContainer = document.getElementById('input-card');
+  inputContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 };
 
 const sleep = ms => {
@@ -135,15 +141,17 @@ const status = message => {
   statusMessage.innerText = message;
 };
 
-const runPrediction = (model, input, initialisationStart) => {
+const runPrediction = (modelName, input, initialisationStart) => {
+  const model = deeplab[modelName];
   model.predict(input).then(output => {
-    displaySegmentationMap(output);
+    displaySegmentationMap(modelName, output);
     status(`Ran in ${performance.now() - initialisationStart} ms`);
   });
 };
 
 const runDeeplab = async modelName => {
   status(`Running the inference...`);
+  // Wait until the css changes take place
   await sleep(100);
   const initialisationStart = performance.now();
   const isQuantizationDisabled = document.getElementById(
@@ -151,23 +159,23 @@ const runDeeplab = async modelName => {
   ).checked;
   if (!(isQuantizationDisabled ^ state.isQuantized)) {
     state.isQuantized = !isQuantizationDisabled;
-    initialiseModels();
-    sleep(100);
+    await initializeModels();
   }
   const input = document.getElementById('input-image');
   if (!input.src || !input.src.length || input.src.length === 0) {
     status('Failed! Please load an image first.');
+    const runner = document.getElementById(`run-${modelName}`);
+    runner.classList.remove('is-loading');
     return;
   }
 
-  const model = deeplab[modelName];
   if (input.complete && input.naturalHeight !== 0) {
-    runPrediction(model, input, initialisationStart);
+    runPrediction(modelName, input, initialisationStart);
   } else {
     input.onload = () => {
-      runPrediction(model, input, initialisationStart);
+      runPrediction(modelName, input, initialisationStart);
     };
   }
 };
 
-window.onload = initialiseModels;
+window.onload = initializeModels;
