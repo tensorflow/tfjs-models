@@ -17,10 +17,10 @@
 
 import 'bulma/css/bulma.css';
 import { SemanticSegmentation } from '@tensorflow-models/deeplab';
-import pascalExampleImage from './examples/pascal.jpg';
-import cityscapesExampleImage from './examples/cityscapes.jpg';
-import ade20kExampleImage from './examples/ade20k.jpg';
 import * as tf from '@tensorflow/tfjs';
+import ade20kExampleImage from './examples/ade20k.jpg';
+import cityscapesExampleImage from './examples/cityscapes.jpg';
+import pascalExampleImage from './examples/pascal.jpg';
 
 const state = {
   isQuantized: true,
