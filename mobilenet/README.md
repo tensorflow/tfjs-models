@@ -71,17 +71,18 @@ console.log(predictions);
 the <script src> method. When using ES6 imports, mobilenet is the module.
 
 ```ts
-mobilenet.load(
-  version?: 1,
-  alpha?: 0.25 | .50 | .75 | 1.0,
-  modelUrl?: string
+mobilenet.load({
+    version?: 1,
+    alpha?: 0.25 | .50 | .75 | 1.0,
+    modelUrl?: string
+  }
 )
 ```
 
 Args:
 - **version:** The MobileNet version number. Use 1 for [MobileNetV1](https://github.com/tensorflow/models/blob/master/research/slim/nets/mobilenet_v1.md), and 2 for [MobileNetV2](https://github.com/tensorflow/models/tree/master/research/slim/nets/mobilenet). Defaults to 1.
 - **alpha:** Controls the width of the network, trading accuracy for performance. A smaller alpha decreases accuracy and increases performance. Defaults to 1.0.
-- **modelUrl:** Optional param for specifying the custom model url.
+- **modelUrl:** Optional param for specifying the custom model url or `tf.io.IOHandler` object.
 Returns a `model` object.
 
 #### Making a classification
