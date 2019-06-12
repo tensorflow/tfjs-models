@@ -16,7 +16,7 @@
  */
 
 import 'bulma/css/bulma.css';
-import { SemanticSegmentation } from '@tensorflow-models/deeplab';
+import {SemanticSegmentation} from '@tensorflow-models/deeplab';
 import * as tf from '@tensorflow/tfjs';
 import ade20kExampleImage from './examples/ade20k.jpg';
 import cityscapesExampleImage from './examples/cityscapes.jpg';
@@ -44,7 +44,7 @@ const toggleInvisible = (elementId, force = undefined) => {
 };
 
 const initializeModels = async () => {
-  Object.keys(deeplab).forEach(modelName => {
+  Object.keys(deeplab).forEach((modelName) => {
     if (deeplab[modelName]) {
       deeplab[modelName].dispose();
     }
@@ -66,7 +66,7 @@ const initializeModels = async () => {
   status('Initialised models, waiting for input...');
 };
 
-const setImage = src => {
+const setImage = (src) => {
   toggleInvisible('output-card', true);
   toggleInvisible('legend-card', true);
   const image = document.getElementById('input-image');
@@ -75,24 +75,24 @@ const setImage = src => {
   status('Waiting until the model is picked...');
 };
 
-const processImage = file => {
+const processImage = (file) => {
   if (!file.type.match('image.*')) {
     return;
   }
   const reader = new FileReader();
-  reader.onload = event => {
+  reader.onload = (event) => {
     setImage(event.target.result);
   };
   reader.readAsDataURL(file);
 };
 
-const processImages = event => {
+const processImages = (event) => {
   const files = event.target.files;
   Array.from(files).forEach(processImage);
 };
 
 const displaySegmentationMap = (modelName, deeplabOutput) => {
-  const { legend, height, width, segmentationMap } = deeplabOutput;
+  const {legend, height, width, segmentationMap} = deeplabOutput;
   const canvas = document.getElementById('output-image');
   const ctx = canvas.getContext('2d');
 
@@ -131,28 +131,28 @@ const displaySegmentationMap = (modelName, deeplabOutput) => {
   runner.classList.remove('is-loading');
 
   const inputContainer = document.getElementById('input-card');
-  inputContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  inputContainer.scrollIntoView({behavior: 'smooth', block: 'nearest'});
 };
 
-const status = message => {
+const status = (message) => {
   const statusMessage = document.getElementById('status-message');
   statusMessage.innerText = message;
 };
 
 const runPrediction = (modelName, input, initialisationStart) => {
   const model = deeplab[modelName];
-  model.predict(input).then(output => {
+  model.predict(input).then((output) => {
     displaySegmentationMap(modelName, output);
     status(`Ran in ${performance.now() - initialisationStart} ms`);
   });
 };
 
-const runDeeplab = async modelName => {
+const runDeeplab = async (modelName) => {
   status(`Running the inference...`);
   await tf.nextFrame();
   const initialisationStart = performance.now();
   const isQuantizationDisabled = document.getElementById(
-    'is-quantization-disabled'
+      'is-quantization-disabled'
   ).checked;
   if (!(isQuantizationDisabled ^ state.isQuantized)) {
     state.isQuantized = !isQuantizationDisabled;
