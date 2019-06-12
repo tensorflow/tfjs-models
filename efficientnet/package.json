@@ -1,0 +1,48 @@
+{
+  "name": "efficientnet",
+  "version": "0.1.0",
+  "description": "EfficientNet: Low-Power, Low-Latency Image Classification in the Browser",
+  "main": "dist/index.js",
+  "jsnext:main": "dist/efficientnet.esm.js",
+  "module": "dist/efficientnet.esm.js",
+  "unpkg": "dist/efficientnet.min.js",
+  "jsdelivr": "dist/efficientnet.min.js",
+  "types": "dist/index.d.ts",
+  "model": {
+    "name": "efficientnet"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tensorflow/tfjs-models"
+  },
+  "peerDependencies": {
+    "@tensorflow/tfjs": "^1.1.0"
+  },
+  "devDependencies": {
+    "@tensorflow/tfjs": "^1.1.0",
+    "@types/jasmine": "~3.3.13",
+    "babel-core": "^6.26.0",
+    "babel-plugin-transform-runtime": "~6.23.0",
+    "jasmine": "^3.2.0",
+    "jasmine-core": "~3.4.0",
+    "prettier-eslint": "^8.8.2",
+    "rimraf": "~2.6.2",
+    "rollup": "~1.15.1",
+    "rollup-plugin-json": "^4.0.0",
+    "rollup-plugin-node-resolve": "~5.0.1",
+    "rollup-plugin-terser": "^5.0.0",
+    "rollup-plugin-typescript2": "~0.21.1",
+    "ts-node": "~8.2.0",
+    "tslint": "~5.17.0",
+    "typescript": "3.5.1",
+    "yalc": "~1.0.0-pre.31"
+  },
+  "scripts": {
+    "build": "rimraf dist && tsc",
+    "test": "ts-node run_tests.ts",
+    "publish-local": "yarn build && rollup -c && yalc push",
+    "publish-npm": "yarn build && rollup -c && npm publish",
+    "lint": "tslint -p . -t verbose"
+  },
+  "license": "Apache-2.0"
+}
