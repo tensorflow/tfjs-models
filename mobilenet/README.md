@@ -71,7 +71,7 @@ console.log(predictions);
 
 ```ts
 mobilenet.load({
-    version?: 1,
+    version: 1,
     alpha?: 0.25 | .50 | .75 | 1.0,
     modelUrl?: string
   }

@@ -7,7 +7,7 @@
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-1.1.2.tgz#2400ac77b30f973f1fcb26c912b28271f7f4d605"
   integrity sha512-KuLIIJYzmRmtJXcjBH3inQVhTHbABj2TNAVS3ss12hzDiEE/RiRb/LZKo8XV2WczuZXTq+gxep84PWXSH/HQXA==
 
-"@tensorflow/tfjs-core@^1.2.1":
+"@tensorflow/tfjs-core@^1.1.2":
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-core/-/tfjs-core-1.2.1.tgz#0ff54aa7fd412b8c17e39f6ec5a97bf032e8f530"
   integrity sha512-cpSHl+tP7cketq0cAyJPbIGxNlPV7mR6lkMLLDvZAmZUTBSyBufCdJg/KwgjHMZksE/KqjL4/RyccOGBAQcb7g==
