@@ -15,30 +15,31 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs-core';
 import * as tfc from '@tensorflow/tfjs-converter';
+import * as tf from '@tensorflow/tfjs-core';
+
 import {IMAGENET_CLASSES} from './imagenet_classes';
 
 const IMAGE_SIZE = 224;
 
-export type MobileNetVersion = 1 | 2;
+export type MobileNetVersion = 1|2;
 export type MobileNetAlpha = 0.25|0.50|0.75|1.0;
 
 /**
-  * Mobilenet model loading configuration
-  *
-  * @param version The MobileNet version number. Use 1 for MobileNetV1, and 2
-  * for MobileNetV2. Defaults to 1.
-  * @param alpha Controls the width of the network, trading accuracy for
-  * performance. A smaller alpha decreases accuracy and increases performance.
-  * Defaults to 1.0.
-  * @param modelUrl Optional param for specifying the custom model url or
-  * an `tf.io.IOHandler` object.
-  */
+ * Mobilenet model loading configuration
+ *
+ * @param version The MobileNet version number. Use 1 for MobileNetV1, and 2
+ * for MobileNetV2. Defaults to 1.
+ * @param alpha Controls the width of the network, trading accuracy for
+ * performance. A smaller alpha decreases accuracy and increases performance.
+ * Defaults to 1.0.
+ * @param modelUrl Optional param for specifying the custom model url or
+ * an `tf.io.IOHandler` object.
+ */
 export interface ModelConfig {
   version: MobileNetVersion;
   alpha?: MobileNetAlpha;
-  modelUrl?: string | tf.io.IOHandler;
+  modelUrl?: string|tf.io.IOHandler;
 }
 
 const EMBEDDING_NODES: {[version: string]: string} = {
@@ -67,15 +68,18 @@ const MODEL_INFO: {[version: string]: {[alpha: string]: string}} = {
   }
 };
 
-export async function load(modelConfig: ModelConfig = {version: 1, alpha: 1.0}) {
+export async function load(modelConfig: ModelConfig = {
+  version: 1,
+  alpha: 1.0
+}) {
   if (tf == null) {
     throw new Error(
         `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
         `also include @tensorflow/tfjs on the page before using this model.`);
   }
+  const versionStr = modelConfig.version.toFixed(2);
+  const alphaStr = modelConfig.alpha ? modelConfig.alpha.toFixed(2) : '';
   if (modelConfig.modelUrl == null) {
-    const versionStr = modelConfig.version.toFixed(2);
-    const alphaStr = modelConfig.alpha.toFixed(2);
     if (!(versionStr in MODEL_INFO)) {
       throw new Error(
           `Invalid version of MobileNet. Valid versions are: ` +
@@ -83,13 +87,14 @@ export async function load(modelConfig: ModelConfig = {version: 1, alpha: 1.0}) 
     }
     if (!(alphaStr in MODEL_INFO[versionStr])) {
       throw new Error(
-          `MobileNet constructed with invalid alpha ${modelConfig.alpha}. Valid ` +
+          `MobileNet constructed with invalid alpha ${
+              modelConfig.alpha}. Valid ` +
           `multipliers for this version are: ` +
           `${Object.keys(MODEL_INFO[versionStr])}.`);
     }
   }
 
-  const mobilenet = new MobileNet(modelConfig);
+  const mobilenet = new MobileNet(versionStr, alphaStr, modelConfig.modelUrl);
   await mobilenet.load();
   return mobilenet;
 }
@@ -99,15 +104,17 @@ export class MobileNet {
 
   private normalizationOffset: tf.Scalar;
 
-  constructor(public modelConfig: ModelConfig) {
+  constructor(
+      public version: string, public alpha: string,
+      public modelUrl: string|tf.io.IOHandler) {
     this.normalizationOffset = tf.scalar(127.5);
   }
 
   async load() {
-    if (this.modelConfig.modelUrl) {
-      this.model = await tfc.loadGraphModel(this.modelConfig.modelUrl);
+    if (this.modelUrl) {
+      this.model = await tfc.loadGraphModel(this.modelUrl);
     } else {
-      const url = MODEL_INFO[this.modelConfig.version][this.modelConfig.alpha];
+      const url = MODEL_INFO[this.version][this.alpha];
       this.model = await tfc.loadGraphModel(url, {fromTFHub: true});
     }
 
@@ -155,7 +162,7 @@ export class MobileNet {
       let result: tf.Tensor2D;
 
       if (embedding) {
-        const embeddingName = EMBEDDING_NODES[this.modelConfig.version];
+        const embeddingName = EMBEDDING_NODES[this.version];
         const internal =
             this.model.execute(batched, embeddingName) as tf.Tensor4D;
         result = internal.squeeze([1, 2]);
