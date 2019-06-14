@@ -18,8 +18,7 @@ import * as posenet from '@tensorflow-models/posenet';
 import * as tf from '@tensorflow/tfjs';
 import dat from 'dat.gui';
 
-import {isMobile, tryResNetButtonName, tryResNetButtonText, updateTryResNetButtonDatGuiCss} from './demo_util';
-
+import {isMobile, toggleLoadingUI, tryResNetButtonName, tryResNetButtonText, updateTryResNetButtonDatGuiCss} from './demo_util';
 // clang-format off
 import {
   drawBoundingBox,
@@ -172,6 +171,7 @@ async function reloadNetTestImageAndEstimatePoses(net) {
   if (guiState.net) {
     guiState.net.dispose();
   }
+  toggleLoadingUI(true);
   guiState.net = await posenet.load({
     architecture: guiState.model.architecture,
     outputStride: guiState.model.outputStride,
@@ -179,18 +179,19 @@ async function reloadNetTestImageAndEstimatePoses(net) {
     multiplier: guiState.model.multiplier,
     quantBytes: guiState.model.quantBytes,
   });
+  toggleLoadingUI(false);
   testImageAndEstimatePoses(guiState.net);
 }
+
+const defaultQuantBytes = 2;
 
 const defaultMobileNetMultiplier = isMobile() ? 0.50 : 0.75;
 const defaultMobileNetStride = 16;
 const defaultMobileNetInputResolution = 513;
-const defaultMobileNetQuantBytes = 4;
 
 const defaultResNetMultiplier = 1.0;
 const defaultResNetStride = 32;
 const defaultResNetInputResolution = 257;
-const defaultResNetQuantBytes = 2;
 
 let guiState = {
   net: null,
@@ -199,7 +200,7 @@ let guiState = {
     outputStride: defaultMobileNetStride,
     inputResolution: defaultMobileNetInputResolution,
     multiplier: defaultMobileNetMultiplier,
-    quantBytes: defaultMobileNetQuantBytes,
+    quantBytes: defaultQuantBytes,
   },
   image: 'tennis_in_crowd.jpg',
   multiPoseDetection: {
@@ -279,7 +280,7 @@ function setupGui(net) {
   // the value, the larger the model size and thus the longer the loading time,
   // the lower the value, the shorter the loading time but lower the accuracy.
   let quantBytesController = null;
-  function updateQuantBytes(quantBytesArray) {
+  function updateGuiQuantBytes(quantBytesArray) {
     if (quantBytesController) {
       quantBytesController.remove();
     }
@@ -289,6 +290,18 @@ function setupGui(net) {
       guiState.model.quantBytes = +quantBytes;
       reloadNetTestImageAndEstimatePoses(guiState.net);
     });
+  }
+
+  function updateGui() {
+    updateGuiInputResolution([257, 353, 449, 513, 801]);
+    if (guiState.model.architecture.includes('ResNet50')) {
+      updateGuiOutputStride([32, 16]);
+      updateGuiMultiplier([1.0]);
+    } else {
+      updateGuiOutputStride([8, 16]);
+      updateGuiMultiplier([0.5, 0.75, 1.0]);
+    }
+    updateGuiQuantBytes([1, 2, 4])
   }
 
   // Architecture: there are a few PoseNet models varying in size and
@@ -301,37 +314,18 @@ function setupGui(net) {
       guiState.model.inputResolution = defaultResNetInputResolution;
       guiState.model.outputStride = defaultResNetStride;
       guiState.model.multiplier = defaultResNetMultiplier;
-      guiState.model.quantBytes = defaultResNetQuantBytes;
-      updateGuiInputResolution([257, 513]);
-      updateGuiOutputStride([32, 16]);
-      updateGuiMultiplier([1.0]);
-      updateQuantBytes([1, 2, 4])
     } else {
       guiState.model.inputResolution = defaultMobileNetInputResolution;
       guiState.model.outputStride = defaultMobileNetStride;
       guiState.model.multiplier = defaultMobileNetMultiplier;
-      guiState.model.quantBytes = defaultMobileNetQuantBytes;
-      updateGuiInputResolution([257, 353, 449, 513]);
-      updateGuiOutputStride([8, 16]);
-      updateGuiMultiplier([0.5, 0.75, 1.0]);
-      updateQuantBytes([4]);
     }
+    guiState.model.quantBytes = defaultQuantBytes;
     guiState.model.architecture = architecture;
+    updateGui()
     reloadNetTestImageAndEstimatePoses(guiState.net);
   });
 
-  if (guiState.model.architecture.includes('ResNet50')) {
-    updateGuiInputResolution([257, 513]);
-    updateGuiOutputStride([32, 16]);
-    updateGuiMultiplier([1.0]);
-    updateQuantBytes([1, 2, 4]);
-  } else {
-    updateGuiInputResolution([257, 513]);
-    updateGuiOutputStride([8, 16]);
-    updateGuiMultiplier([0.5, 0.75, 1.0]);
-    updateQuantBytes([4]);
-  }
-
+  updateGui();
 
   gui.add(guiState, 'image', images)
       .onChange(() => testImageAndEstimatePoses(guiState.net));
@@ -367,6 +361,7 @@ function setupGui(net) {
  * poses on a default image
  */
 export async function bindPage() {
+  toggleLoadingUI(true);
   const net = await posenet.load({
     architecture: guiState.model.architecture,
     outputStride: guiState.model.outputStride,
@@ -374,13 +369,9 @@ export async function bindPage() {
     multiplier: guiState.model.multiplier,
     quantBytes: guiState.model.quantBytes
   });
-
+  toggleLoadingUI(false);
   setupGui(net);
-
   await testImageAndEstimatePoses(net);
-
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('main').style.display = 'block';
 }
 
 bindPage();
