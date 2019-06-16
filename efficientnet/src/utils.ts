@@ -22,6 +22,7 @@ import { config } from './config';
 const normalize = (image: tf.Tensor3D) => {
   const [height, width] = image.shape;
   const imageData = image.arraySync() as number[][][];
+  image.dispose();
   const meanRGB = config['MEAN_RGB'].map(depth => depth * 255);
   const stddevRGB = config['STDDEV_RGB'].map(depth => depth * 255);
   for (let columnIndex = 0; columnIndex < height; ++columnIndex) {
@@ -31,6 +32,7 @@ const normalize = (image: tf.Tensor3D) => {
       );
     }
   }
+  return tf.tensor3d(imageData);
 };
 
 const cropAndResize = (
@@ -38,10 +40,8 @@ const cropAndResize = (
   input: EfficientNetInput
 ): tf.Tensor3D => {
   return tf.tidy(() => {
-    const image: tf.Tensor4D = (input instanceof tf.Tensor
-      ? input
-      : tf.browser.fromPixels(input)
-    ).expandDims(0);
+    const image: tf.Tensor3D =
+      input instanceof tf.Tensor ? input : tf.browser.fromPixels(input);
 
     const [height, width] = image.shape;
 
@@ -55,7 +55,7 @@ const cropAndResize = (
 
     return tf.image
       .cropAndResize(
-        image,
+        image.expandDims(0),
         [
           [
             offsetHeight,
@@ -77,6 +77,6 @@ export const toInputTensor = async (
 ) => {
   return tf.tidy(() => {
     const croppedAndResizedImage = cropAndResize(base, input);
-    return normalize(croppedAndResizedImage);
+    return normalize(croppedAndResizedImage).expandDims(0);
   });
 };
