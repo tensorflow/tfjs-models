@@ -15,6 +15,54 @@
  * =============================================================================
  */
 
+import * as tf from '@tensorflow/tfjs';
+import { config } from './config';
+import {
+  EfficientNetBaseModel,
+  EfficientNetInput,
+  EfficientNetOutput,
+} from './types';
+
 export class EfficientNet {
-  public predict(X: any) {}
+  private base: EfficientNetBaseModel;
+  private model: Promise<tf.GraphModel>;
+  private modelPath: string;
+  constructor(base: EfficientNetBaseModel, isQuantized = true) {
+    if (tf == null) {
+      throw new Error(
+        `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
+          `also include @tensorflow/tfjs on the page before using this model.`
+      );
+    }
+    if (['b0', 'b3'].indexOf(base) === -1) {
+      throw new Error(
+        `EfficientNet cannot be constructed ` +
+          `with an invalid base model ${base}. ` +
+          `Try one of 'b0' or 'b3'.`
+      );
+    }
+    this.base = base;
+
+    this.modelPath = `${config['BASE_PATH']}/${
+      isQuantized ? 'quantized/' : ''
+    }${base}/model.json`;
+
+    this.model = tf.loadGraphModel(this.modelPath);
+  }
+
+  public async predict(
+    input: EfficientNetInput,
+    canvas?: HTMLCanvasElement
+  ): Promise<EfficientNetOutput> {
+    return [];
+  }
+
+  /**
+   * Dispose of the tensors allocated by the model.
+   * You should call this when you are done with the model.
+   */
+
+  public async dispose() {
+    (await this.model).dispose();
+  }
 }
