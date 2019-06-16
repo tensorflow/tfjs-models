@@ -15,7 +15,8 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
+import * as tfc from '@tensorflow/tfjs-converter';
 import {CLASSES} from './classes';
 
 const BASE_PATH = 'https://storage.googleapis.com/tfjs-models/savedmodel/';
@@ -54,7 +55,7 @@ export async function load(
 
 export class ObjectDetection {
   private modelPath: string;
-  private model: tf.GraphModel;
+  private model: tfc.GraphModel;
 
   constructor(base: ObjectDetectionBaseModel) {
     this.modelPath = `${BASE_PATH}${this.getPrefix(base)}/model.json`;
@@ -65,7 +66,7 @@ export class ObjectDetection {
   }
 
   async load() {
-    this.model = await tf.loadGraphModel(this.modelPath);
+    this.model = await tfc.loadGraphModel(this.modelPath);
 
     // Warmup the model.
     const result = await this.model.executeAsync(tf.zeros([1, 300, 300, 3])) as
