@@ -105,6 +105,8 @@ export class BrowserFftSpeechCommandRecognizer implements
   constructor(
       vocabulary?: string, modelArtifactsOrURL?: tf.io.ModelArtifacts|string,
       metadataOrURL?: SpeechCommandRecognizerMetadata|string) {
+    // TODO(cais): Consolidate the fields into a single config object when
+    // upgrading to v1.0.
     tf.util.assert(
         modelArtifactsOrURL == null && metadataOrURL == null ||
             modelArtifactsOrURL != null && metadataOrURL != null,
