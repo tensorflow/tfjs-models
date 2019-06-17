@@ -112,7 +112,7 @@ export interface MobileNet {
       topk?: number): Promise<Array<{className: string, probability: number}>>;
 }
 
-export class MobileNetImpl implements MobileNet {
+class MobileNetImpl implements MobileNet {
   model: tfc.GraphModel;
 
   private normalizationOffset: tf.Scalar;
