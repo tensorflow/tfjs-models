@@ -352,12 +352,12 @@ export class PoseNet {
     displacementFwd = outputs.displacementFwd;
     displacementBwd = outputs.displacementBwd;
 
-    const [scoresBuffer, offsetsBuffer, displacementsFwdBuffer, displacementsBwdBuffer] =
-        await toTensorBuffers3D(
-            [heatmapScores, offsets, displacementFwd, displacementBwd]);
-
     let poses;
     if (config.decodingMethod === 'multi-person') {
+      const [scoresBuffer, offsetsBuffer, displacementsFwdBuffer, displacementsBwdBuffer] =
+          await toTensorBuffers3D(
+              [heatmapScores, offsets, displacementFwd, displacementBwd]);
+
       poses = await decodeMultiplePoses(
           scoresBuffer, offsetsBuffer, displacementsFwdBuffer,
           displacementsBwdBuffer, outputStride, config.maxDetections,
