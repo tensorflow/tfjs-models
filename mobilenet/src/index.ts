@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import * as tfc from '@tensorflow/tfjs-converter';
+import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
 import {IMAGENET_CLASSES} from './imagenet_classes';
@@ -100,7 +100,7 @@ export async function load(modelConfig: ModelConfig = {
 }
 
 export class MobileNet {
-  model: tfc.GraphModel;
+  model: tfconv.GraphModel;
 
   private normalizationOffset: tf.Scalar;
 
@@ -112,10 +112,10 @@ export class MobileNet {
 
   async load() {
     if (this.modelUrl) {
-      this.model = await tfc.loadGraphModel(this.modelUrl);
+      this.model = await tfconv.loadGraphModel(this.modelUrl);
     } else {
       const url = MODEL_INFO[this.version][this.alpha];
-      this.model = await tfc.loadGraphModel(url, {fromTFHub: true});
+      this.model = await tfconv.loadGraphModel(url, {fromTFHub: true});
     }
 
     // Warmup the model.

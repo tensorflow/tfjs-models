@@ -14,9 +14,10 @@
  * limitations under the License.
  * =============================================================================
  */
+import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
-import * as tfc from '@tensorflow/tfjs-converter';
 import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
+
 import {load} from './index';
 
 describeWithFlags('ObjectDetection', NODE_ENVS, () => {
