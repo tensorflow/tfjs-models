@@ -651,10 +651,8 @@
   resolved "https://registry.yarnpkg.com/@nodelib/fs.stat/-/fs.stat-1.1.3.tgz#2b5a3ab3f918cca48a8c754c08168e3f03eba61b"
   integrity sha512-shAmDyaQC4H92APFoIaVDHCx5bStIocgvbwQyxPRrbUY20V1EYTbSDchWbuwlMG3V17cprZhA6+78JfB+3DTPw==
 
-"@tensorflow-models/coco-ssd@1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@tensorflow-models/coco-ssd/-/coco-ssd-1.0.1.tgz#7b038f08d7e23528c52491e4e80b946bcf30bae8"
-  integrity sha512-3oHdEYUAvQu6rbCu08K0j2tI3K+C/p9HVi8OWs2mrhAj8/b91nEz/ZKqmRG10AJffOJCFM5T0FWzr5xadBxOdw==
+"@tensorflow-models/coco-ssd@file:.yalc/@tensorflow-models/coco-ssd":
+  version "1.0.2-b75c3e2b"
 
 "@tensorflow/tfjs-converter@1.1.0":
   version "1.1.0"
