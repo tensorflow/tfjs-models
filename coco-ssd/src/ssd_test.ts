@@ -14,13 +14,14 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
+import * as tfc from '@tensorflow/tfjs-converter';
 import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 import {load} from './index';
 
 describeWithFlags('ObjectDetection', NODE_ENVS, () => {
   beforeEach(() => {
-    spyOn(tf, 'loadGraphModel').and.callFake(() => {
+    spyOn(tfc, 'loadGraphModel').and.callFake(() => {
       const model = {
         executeAsync: (
             x: tf
