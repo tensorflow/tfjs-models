@@ -71,7 +71,7 @@ const MODEL_INFO: {[version: string]: {[alpha: string]: string}} = {
 export async function load(modelConfig: ModelConfig = {
   version: 1,
   alpha: 1.0
-}) {
+}): Promise<MobileNet> {
   if (tf == null) {
     throw new Error(
         `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
@@ -94,12 +94,25 @@ export async function load(modelConfig: ModelConfig = {
     }
   }
 
-  const mobilenet = new MobileNet(versionStr, alphaStr, modelConfig.modelUrl);
+  const mobilenet =
+      new MobileNetImpl(versionStr, alphaStr, modelConfig.modelUrl);
   await mobilenet.load();
   return mobilenet;
 }
 
-export class MobileNet {
+export interface MobileNet {
+  load(): Promise<void>;
+  infer(
+      img: tf.Tensor|ImageData|HTMLImageElement|HTMLCanvasElement|
+      HTMLVideoElement,
+      embedding?: boolean): tf.Tensor;
+  classify(
+      img: tf.Tensor3D|ImageData|HTMLImageElement|HTMLCanvasElement|
+      HTMLVideoElement,
+      topk?: number): Promise<Array<{className: string, probability: number}>>;
+}
+
+class MobileNetImpl implements MobileNet {
   model: tfc.GraphModel;
 
   private normalizationOffset: tf.Scalar;
