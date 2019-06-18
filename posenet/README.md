@@ -14,7 +14,7 @@ To keep track of issues we use the [tensorflow/tfjs](https://github.com/tensorfl
 
 ## Documentation Note
 
->> Th README and demos you see here is out of sync with the published package as we prepare the launch of the 2.0 version. Please look at the [README published on NPM](https://www.npmjs.com/package/@tensorflow-models/posenet) for instructions specific to the latest published version.
+>> The README you see here is for the [PoseNet 2.0 version](https://www.npmjs.com/package/@tensorflow-models/posenet). For README of the previous 1.0 version, please look at the [README published on NPM](https://www.npmjs.com/package/@tensorflow-models/posenet/v/1.0.3).
 
 ## Installation
 
