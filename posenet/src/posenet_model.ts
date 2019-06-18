@@ -211,6 +211,22 @@ function validateModelConfig(config: ModelConfig) {
  * person in the input image and "multi-person" decoding works even when there
  * are many people in the input image.
  *
+ */
+export interface InferenceConfig {
+  flipHorizontal: boolean;
+}
+
+
+/**
+ * Single Person Inference Config
+ */
+export interface SinglePersonInterfaceConfig extends InferenceConfig {
+  decodingMethod: 'single-person';
+}
+
+/**
+ * Multiple Person Inference Config
+ *
  * `maxDetections`: Maximum number of returned instance detections per image.
  *
  * `scoreThreshold`: Only return instance detections that have root part
@@ -219,29 +235,65 @@ function validateModelConfig(config: ModelConfig) {
  * `nmsRadius`: Non-maximum suppression part distance in pixels. It needs
  * to be strictly positive. Two parts suppress each other if they are less
  * than `nmsRadius` pixels away. Defaults to 20.
- */
-export interface InferenceConfig {
-  flipHorizontal: boolean;
-  decodingMethod: PoseNetDecodingMethod;
+ **/
+export interface MultiPersonInferenceConfig extends InferenceConfig {
+  decodingMethod: 'multi-person';
   maxDetections?: number;
   scoreThreshold?: number;
   nmsRadius?: number;
 }
 
-export const SINGLE_PERSON_INFERENCE_CONFIG = {
-  flipHorizontal: false,
+export const SINGLE_PERSON_INFERENCE_CONFIG: SinglePersonInterfaceConfig = {
   decodingMethod: 'single-person',
-} as InferenceConfig;
-
-export const MULTI_PERSON_INFERENCE_CONFIG = {
   flipHorizontal: false,
+};
+
+export const MULTI_PERSON_INFERENCE_CONFIG: MultiPersonInferenceConfig = {
   decodingMethod: 'multi-person',
+  flipHorizontal: false,
   maxDetections: 5,
   scoreThreshold: 0.5,
   nmsRadius: 20
-} as InferenceConfig;
+};
 
-function validateInferenceConfig(config: InferenceConfig) {
+function validateSinglePersonInferenceConfig(
+    config: SinglePersonInterfaceConfig): SinglePersonInterfaceConfig {
+  return config;
+}
+
+
+function validateMultiPersonInputConfig(config: MultiPersonInferenceConfig):
+    MultiPersonInferenceConfig {
+  const maxDetections = config.maxDetections || 5;
+
+  if (maxDetections <= 0) {
+    throw new Error(
+        `Invalid maxDetections ${maxDetections}. ` +
+        `Should be > 0`);
+  }
+
+  const scoreThreshold = config.scoreThreshold || 0.5;
+
+  if (scoreThreshold < 0.0 || scoreThreshold > 1.0) {
+    throw new Error(
+        `Invalid scoreThreshold ${scoreThreshold}. ` +
+        `Should be in range [0.0, 1.0] for decodingMethod ${
+            config.decodingMethod}.`);
+  }
+
+  const nmsRadius = config.nmsRadius || 20;
+
+  if (nmsRadius <= 0) {
+    throw new Error(
+        `Invalid nmsRadius ${config.nmsRadius}. ` +
+        `Should be positive for decodingMethod ${config.decodingMethod}.`);
+  }
+
+  return {...config, maxDetections, scoreThreshold, nmsRadius};
+}
+
+function validateInferenceConfig(config: SinglePersonInterfaceConfig|
+                                 MultiPersonInferenceConfig) {
   config = config || MULTI_PERSON_INFERENCE_CONFIG;
   const VALID_DECODING_METHOD = ['single-person', 'multi-person'];
 
@@ -258,37 +310,11 @@ function validateInferenceConfig(config: InferenceConfig) {
         `Should be one of ${VALID_DECODING_METHOD}`);
   }
 
-  // Validates parameters used only by multi-person decoding.
-  if (config.decodingMethod === 'multi-person') {
-    if (config.maxDetections == null) {
-      config.maxDetections = 5;
-    }
-    if (config.maxDetections <= 0) {
-      throw new Error(
-          `Invalid maxDetections ${config.maxDetections}. ` +
-          `Should be > 0 for decodingMethod ${config.decodingMethod}.`);
-    }
-
-    if (config.scoreThreshold == null) {
-      config.scoreThreshold = 0.5;
-    }
-    if (config.scoreThreshold < 0.0 || config.scoreThreshold > 1.0) {
-      throw new Error(
-          `Invalid scoreThreshold ${config.scoreThreshold}. ` +
-          `Should be in range [0.0, 1.0] for decodingMethod ${
-              config.decodingMethod}.`);
-    }
-
-    if (config.nmsRadius == null) {
-      config.nmsRadius = 20;
-    }
-    if (config.nmsRadius <= 0) {
-      throw new Error(
-          `Invalid nmsRadius ${config.nmsRadius}. ` +
-          `Should be positive for decodingMethod ${config.decodingMethod}.`);
-    }
+  if (config.decodingMethod === 'single-person') {
+    return validateSinglePersonInferenceConfig(config);
+  } else {
+    return validateMultiPersonInputConfig(config);
   }
-  return config;
 }
 
 export class PoseNet {
@@ -322,7 +348,8 @@ export class PoseNet {
    */
   async estimatePoses(
       input: PosenetInput,
-      config: InferenceConfig = MULTI_PERSON_INFERENCE_CONFIG):
+      config: SinglePersonInterfaceConfig|
+      MultiPersonInferenceConfig = MULTI_PERSON_INFERENCE_CONFIG):
       Promise<Pose[]> {
     config = validateInferenceConfig(config);
     const outputStride = this.baseModel.outputStride;
