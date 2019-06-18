@@ -22,7 +22,7 @@ import {load} from './index';
 
 describeWithFlags('ObjectDetection', NODE_ENVS, () => {
   beforeEach(() => {
-    spyOn(tfc, 'loadGraphModel').and.callFake(() => {
+    spyOn(tfconv, 'loadGraphModel').and.callFake(() => {
       const model = {
         executeAsync: (
             x: tf
