@@ -131,7 +131,9 @@ const pose = poses[0];
 
 * **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
    The input image to feed through the network.
-* **flipHorizontal** - Defaults to false.  If the poses should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the poses to be returned in the proper orientation.
+* **inferenceConfig** - an object containing:
+  * **decodingMethod** - 'single-person'.  Set this to 'single-person' for single-person pose estimation.
+  * **flipHorizontal** - Defaults to false.  If the poses should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the poses to be returned in the proper orientation.
 
 #### Returns
 
@@ -354,7 +356,7 @@ const net = await posenet.load();
 const poses = await net.estimatePoses(image, {
   flipHorizontal: false,
   decodingMethod: 'multi-person',
-  maxPoseDetections: 5,
+  maxDetections: 5,
   scoreThreshold: 0.5,
   nmsRadius: 20
 });
@@ -364,10 +366,12 @@ const poses = await net.estimatePoses(image, {
 
 * **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
    The input image to feed through the network.
-* **flipHorizontal** - Defaults to false.  If the poses should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the poses to be returned in the proper orientation.
-* **maxPoseDetections** - the maximum number of poses to detect. Defaults to 5.
-* **scoreThreshold** - Only return instance detections that have root part score greater or equal to this value. Defaults to 0.5.
-* **nmsRadius** - Non-maximum suppression part distance. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away. Defaults to 20.
+* **inferenceConfig** - an object containing:
+  * **decodingMethod** - 'multi-person'.  Set this to 'multi-person' for multi-person pose estimation.
+  * **flipHorizontal** - Defaults to false.  If the poses should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the poses to be returned in the proper orientation.
+  * **maxDetections** - the maximum number of poses to detect. Defaults to 5.
+  * **scoreThreshold** - Only return instance detections that have root part score greater or equal to this value. Defaults to 0.5.
+  * **nmsRadius** - Non-maximum suppression part distance. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away. Defaults to 20.
 
 #### Returns
 
@@ -394,7 +398,7 @@ It returns a `promise` that resolves with an array of `pose`s, each with a confi
     posenet.load().then(function(net){
       return net.estimatePoses(imageElement, {
         flipHorizontal: false,
-        maxPoseDetections: 2,
+        maxDetections: 2,
         scoreThreshold: 0.6,
         nmsRadius: 20})
     }).then(function(poses){
@@ -415,7 +419,7 @@ async function estimateMultiplePosesOnImage(imageElement) {
   // estimate poses
   const poses = await net.estimatePoses(imageElement, {
         flipHorizontal: false,
-        maxPoseDetections: 2,
+        maxDetections: 2,
         scoreThreshold: 0.6,
         nmsRadius: 20});
 
