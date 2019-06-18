@@ -755,10 +755,8 @@
     "@parcel/utils" "^1.11.0"
     physical-cpu-count "^2.0.0"
 
-"@tensorflow-models/body-pix@1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@tensorflow-models/body-pix/-/body-pix-1.0.1.tgz#bcf0b680b14dd65f7249a922d16a5afb132c1549"
-  integrity sha512-s63eE+ns6ArGZ6MiX7t95yzUPUxdUkEUFwG8jWkhAlDSANiqFFM1rmNcIp2iF2ldojftFRr2y7vwHGocFYrDdQ==
+"@tensorflow-models/body-pix@file:.yalc/@tensorflow-models/body-pix":
+  version "1.0.1-5c8afa55"
 
 "@tensorflow/tfjs-converter@1.1.0":
   version "1.1.0"
