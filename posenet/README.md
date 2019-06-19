@@ -158,7 +158,7 @@ It returns a `Promise` that resolves with a  **single** `pose`. The `pose` has a
     var imageElement = document.getElementById('cat');
 
     posenet.load().then(function(net) {
-      const pose = net.estimateSinglePose(imageElement,
+      const pose = net.estimateSinglePose(imageElement, {
         flipHorizontal: true
       });
       return pose;

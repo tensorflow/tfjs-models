@@ -112,7 +112,6 @@ export interface ModelConfig {
 // const RESNET_CONFIG = {
 //   architecture: 'ResNet50',
 //   outputStride: 32,
-//   inputResolution: 257,
 //   quantBytes: 2,
 // } as ModelConfig;
 // ```
@@ -188,7 +187,7 @@ function validateModelConfig(config: ModelConfig) {
  * horizontally (i.e. a webcam), and you want the poses to be returned in the
  * proper orientation.
  *
- * `inputResolution`: Specifies the size the input image is scaled to before
+ * `inputResolution`:Specifies the size the input image is scaled to before
  * feeding it through the PoseNet model.  The larger the value, more accurate
  * the model at the cost of speed. Set this to a smaller value to increase
  * speed at the cost of accuracy.

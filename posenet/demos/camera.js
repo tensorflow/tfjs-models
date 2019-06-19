@@ -347,7 +347,7 @@ function detectPoseInRealTime(video, net) {
     switch (guiState.algorithm) {
       case 'single-pose':
         const pose = await guiState.net.estimateSinglePose(
-            video, {flipHorizontal: flipPoseHorizontal, inputResolution});
+            video, {inputResolution, flipHorizontal: flipPoseHorizontal});
         poses = poses.concat(pose);
         minPoseConfidence = +guiState.singlePoseDetection.minPoseConfidence;
         minPartConfidence = +guiState.singlePoseDetection.minPartConfidence;
