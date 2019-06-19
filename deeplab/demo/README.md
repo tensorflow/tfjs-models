@@ -22,43 +22,45 @@ Launch the development server watching the files for changes.
 yarn watch
 ```
 
-## If you are developing the model locally and want to test the changes in the demo
+## Development
 
-`cd` into the deeplab/ folder:
+If you are developing the model locally and want to test the changes in the demo, proceed as follows:
+
+### Change the directory to the `deeplab` folder
 
 ```sh
 cd deeplab
 ```
 
-Install dependencies:
+### Install dependencies
 
 ```sh
 yarn
 ```
 
-Publish deeplab locally:
+### Publish a local copy of deeplab
 
 ```sh
 yarn publish-local
 ```
 
-`cd` into this directory (deeplab/demo) and install dependencies:
+### Change into the demo directory (`deeplab/demo`) and install dependencies
 
 ```sh
 cd demo
 yarn
 ```
 
-Link the package published from the publish step above:
+### Link the package published from the publish step above
 
 ```sh
 yarn link-local
 ```
 
-Start the dev demo server:
+### Start the dev demo server
+
 ```sh
 yarn watch
 ```
 
-To get future updates from the `deeplab` source code, just run `yarn publish-local` in the `deeplab`
-folder again.
+**Note**: *To get future updates from the `deeplab` source code, just run `yarn publish-local` in the `deeplab` folder again.*

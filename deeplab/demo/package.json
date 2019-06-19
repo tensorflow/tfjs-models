@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@tensorflow-models/deeplab": "link:.yalc/@tensorflow-models/deeplab",
-    "@tensorflow/tfjs": "^1.1.0",
+    "@tensorflow/tfjs": "^1.2.1",
     "bulma": "^0.7.5",
     "stats.js": "^0.17.0"
   },
@@ -31,7 +31,7 @@
     "eslint": "^5.16.0",
     "eslint-config-google": "^0.13.0",
     "parcel-bundler": "~1.12.3",
-    "yalc": "~1.0.0-pre.31"
+    "yalc": "~1.0.0-pre.32"
   },
   "eslintConfig": {
     "extends": "google",

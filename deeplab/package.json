@@ -19,19 +19,19 @@
     "@tensorflow/tfjs": "^1.1.0"
   },
   "devDependencies": {
-    "@tensorflow/tfjs": "^1.1.0",
+    "@tensorflow/tfjs": "^1.2.1",
     "@types/jasmine": "~3.3.13",
     "jasmine": "^3.2.0",
     "jasmine-core": "~3.4.0",
     "rimraf": "~2.6.2",
-    "rollup": "~1.15.0",
-    "rollup-plugin-node-resolve": "~5.0.1",
+    "rollup": "~1.15.6",
+    "rollup-plugin-node-resolve": "~5.0.3",
     "rollup-plugin-terser": "^5.0.0",
-    "rollup-plugin-typescript2": "~0.21.1",
-    "ts-node": "~8.2.0",
+    "rollup-plugin-typescript2": "~0.21.2",
+    "ts-node": "~8.3.0",
     "tslint": "~5.17.0",
-    "typescript": "3.5.1",
-    "yalc": "~1.0.0-pre.31"
+    "typescript": "3.5.2",
+    "yalc": "~1.0.0-pre.32"
   },
   "scripts": {
     "build": "rimraf dist && tsc",

@@ -72,7 +72,7 @@ The new width of the processed image.
 
 * **SegmentationMap** :: `Uint8ClampedArray`
 
-The colored segmentation map as Uint8ClampedArray which can be [fed](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Pixel_manipulation_with_canvas) into ImageData and mapped to a canvas.
+The colored segmentation map as `Uint8ClampedArray` which can be [fed](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Pixel_manipulation_with_canvas) into `ImageData` and mapped to a canvas.
 
 #### Prediction example
 
@@ -123,7 +123,7 @@ The legend is a dictionary of objects recognized in the image and their colors.
 
 * **SegmentationMap** :: `Uint8ClampedArray`
 
-The colored segmentation map as Uint8ClampedArray which can be [fed](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Pixel_manipulation_with_canvas) into ImageData and mapped to a canvas.
+The colored segmentation map as `Uint8ClampedArray` which can be [fed](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Pixel_manipulation_with_canvas) into `ImageData` and mapped to a canvas.
 
 #### `model.translate` example
 

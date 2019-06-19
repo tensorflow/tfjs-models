@@ -26,7 +26,7 @@ import {
   SegmentationData,
   SemanticSegmentationBaseModel,
 } from './types';
-import { getColormap, toInputTensor, translateLabels } from './utils';
+import { getColormap, toInputTensor } from './utils';
 
 export class SemanticSegmentation {
   private base: SemanticSegmentationBaseModel;
@@ -63,6 +63,21 @@ export class SemanticSegmentation {
     }) as RawSegmentationMap;
   }
 
+  static translateLabels(base: SemanticSegmentationBaseModel) {
+    if (base === 'pascal') {
+      return config['LABELS']['PASCAL'];
+    } else if (base === 'ade20k') {
+      return config['LABELS']['ADE20K'];
+    } else if (base === 'cityscapes') {
+      return config['LABELS']['CITYSCAPES'];
+    }
+    throw new Error(
+      `SemanticSegmentation cannot be constructed ` +
+        `with an invalid base model ${base}. ` +
+        `Try one of 'pascal', 'cityscapes' and 'ade20k'.`
+    );
+  }
+
   public async translate(
     rawSegmentationMap: RawSegmentationMap,
     canvas?: HTMLCanvasElement
@@ -91,7 +106,7 @@ export class SemanticSegmentation {
 
     tf.dispose(translatedMapTensor);
 
-    const labelNames = translateLabels(this.base);
+    const labelNames = SemanticSegmentation.translateLabels(this.base);
     const legend: Legend = Array.from(labels).reduce(
       (accumulator, label) => ({
         ...accumulator,

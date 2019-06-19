@@ -109,7 +109,9 @@ const displaySegmentationMap = (modelName, deeplabOutput) => {
     legendList.removeChild(legendList.firstChild);
   }
 
-  // Work around the parcel failure with Object.keys
+  // #TODO: Fix this
+  // Using for works around the parcel failure with Object.keys
+  // "Uncaught (in promise) ReferenceError: _Object$keys is not defined"
   for (const label in legend) {
     if (legend.hasOwnProperty(label)) {
       const tag = document.createElement('span');

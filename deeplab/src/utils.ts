@@ -65,21 +65,6 @@ export const getColormap = (base: SemanticSegmentationBaseModel) => {
   );
 };
 
-export const translateLabels = (base: SemanticSegmentationBaseModel) => {
-  if (base === 'pascal') {
-    return config['LABELS']['PASCAL'];
-  } else if (base === 'ade20k') {
-    return config['LABELS']['ADE20K'];
-  } else if (base === 'cityscapes') {
-    return config['LABELS']['CITYSCAPES'];
-  }
-  throw new Error(
-    `SemanticSegmentation cannot be constructed ` +
-      `with an invalid base model ${base}. ` +
-      `Try one of 'pascal', 'cityscapes' and 'ade20k'.`
-  );
-};
-
 export function toInputTensor(input: DeepLabInput) {
   return tf.tidy(() => {
     const image =
