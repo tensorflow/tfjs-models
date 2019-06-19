@@ -148,6 +148,7 @@ async function testImageAndEstimatePoses(net) {
   // Estimates poses
   const poses = await net.estimateMultiplePoses(input, {
     flipHorizontal: false,
+    inputResolution: +guiState.multiPoseDetection.inputResolution,
     scoreThreshold: guiState.multiPoseDetection.minPartConfidence,
     nmsRadius: guiState.multiPoseDetection.nmsRadius
   });
@@ -185,23 +186,22 @@ const defaultQuantBytes = 2;
 
 const defaultMobileNetMultiplier = isMobile() ? 0.50 : 0.75;
 const defaultMobileNetStride = 16;
-const defaultMobileNetInputResolution = 513;
+const defaultInputResolution = 513;
 
 const defaultResNetMultiplier = 1.0;
 const defaultResNetStride = 32;
-const defaultResNetInputResolution = 257;
 
 let guiState = {
   net: null,
   model: {
     architecture: 'MobileNetV1',
     outputStride: defaultMobileNetStride,
-    inputResolution: defaultMobileNetInputResolution,
     multiplier: defaultMobileNetMultiplier,
     quantBytes: defaultQuantBytes,
   },
   image: 'tennis_in_crowd.jpg',
   multiPoseDetection: {
+    inputResolution: defaultInputResolution,
     minPartConfidence: 0.1,
     minPoseConfidence: 0.2,
     nmsRadius: 20.0,
@@ -228,18 +228,6 @@ function setupGui(net) {
   // resolution the better the accuracy but slower the speed.
   const model = gui.addFolder('Model');
   model.open();
-  let inputResolutionController = null;
-  function updateGuiInputResolution(inputResolutionArray) {
-    if (inputResolutionController) {
-      inputResolutionController.remove();
-    }
-    inputResolutionController =
-        model.add(guiState.model, 'inputResolution', inputResolutionArray);
-    inputResolutionController.onChange(async function(inputResolution) {
-      guiState.model.inputResolution = +inputResolution;
-      reloadNetTestImageAndEstimatePoses(guiState.net);
-    });
-  }
   // Output stride:  Internally, this parameter affects the height and width of
   // the layers in the neural network. The lower the value of the output stride
   // the higher the accuracy but slower the speed, the higher the value the
@@ -291,7 +279,6 @@ function setupGui(net) {
   }
 
   function updateGui() {
-    updateGuiInputResolution([257, 353, 449, 513, 801]);
     if (guiState.model.architecture.includes('ResNet50')) {
       updateGuiOutputStride([32, 16]);
       updateGuiMultiplier([1.0]);
@@ -309,11 +296,9 @@ function setupGui(net) {
       model.add(guiState.model, 'architecture', ['MobileNetV1', 'ResNet50']);
   architectureController.onChange(async function(architecture) {
     if (architecture.includes('ResNet50')) {
-      guiState.model.inputResolution = defaultResNetInputResolution;
       guiState.model.outputStride = defaultResNetStride;
       guiState.model.multiplier = defaultResNetMultiplier;
     } else {
-      guiState.model.inputResolution = defaultMobileNetInputResolution;
       guiState.model.outputStride = defaultMobileNetStride;
       guiState.model.multiplier = defaultMobileNetMultiplier;
     }
@@ -333,6 +318,12 @@ function setupGui(net) {
   // position is accurate (i.e. the elbow's position)
   const multiPoseDetection = gui.addFolder('Multi Pose Estimation');
   multiPoseDetection.open();
+  multiPoseDetection
+      .add(
+          guiState.multiPoseDetection, 'inputResolution',
+          posenet.VALID_INPUT_RESOLUTION)
+      .onChange(() => testImageAndEstimatePoses(guiState.net));
+
   multiPoseDetection
       .add(guiState.multiPoseDetection, 'minPartConfidence', 0.0, 1.0)
       .onChange(drawMultiplePosesResults);
@@ -363,7 +354,6 @@ export async function bindPage() {
   const net = await posenet.load({
     architecture: guiState.model.architecture,
     outputStride: guiState.model.outputStride,
-    inputResolution: guiState.model.inputResolution,
     multiplier: guiState.model.multiplier,
     quantBytes: guiState.model.quantBytes
   });

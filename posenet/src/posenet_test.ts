@@ -47,7 +47,6 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
     const mobileNetConfig = {
       architecture: 'MobileNetV1',
       outputStride: outputStride,
-      inputResolution: inputResolution,
       multiplier: multiplier,
       quantBytes: quantBytes
     } as posenetModel.ModelConfig;
@@ -58,7 +57,6 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
 
     spyOn(resnet, 'ResNet').and.callFake(() => {
       return {
-        inputResolution,
         outputStride,
         predict: (input: tf.Tensor3D) => {
           return {
@@ -78,7 +76,6 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
 
     spyOn(mobilenet, 'MobileNet').and.callFake(() => {
       return {
-        inputResolution,
         outputStride,
         predict: (input: tf.Tensor3D) => {
           return {
@@ -114,9 +111,10 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
 
     const beforeTensors = tf.memory().numTensors;
 
-    resNet.estimateSinglePose(input, {flipHorizontal: false})
+    resNet.estimateSinglePose(input, {flipHorizontal: false, inputResolution})
         .then(() => {
-          return mobileNet.estimateSinglePose(input, {flipHorizontal: false});
+          return mobileNet.estimateSinglePose(
+              input, {flipHorizontal: false, inputResolution});
         })
         .then(() => {
           expect(tf.memory().numTensors).toEqual(beforeTensors);
@@ -133,6 +131,7 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
     resNet
         .estimateMultiplePoses(input, {
           flipHorizontal: false,
+          inputResolution,
           maxDetections: 5,
           scoreThreshold: 0.5,
           nmsRadius: 20
@@ -140,6 +139,7 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
         .then(() => {
           return mobileNet.estimateMultiplePoses(input, {
             flipHorizontal: false,
+            inputResolution,
             maxDetections: 5,
             scoreThreshold: 0.5,
             nmsRadius: 20

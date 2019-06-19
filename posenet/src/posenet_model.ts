@@ -26,7 +26,7 @@ import {decodeSinglePose} from './single_pose/decode_single_pose';
 import {Pose, PosenetInput} from './types';
 import {getInputTensorDimensions, padAndResizeTo, scaleAndFlipPoses, toTensorBuffers3D} from './util';
 
-export type PoseNetResolution =
+export type PoseNetInputResolution =
     161|193|257|289|321|353|385|417|449|481|513|801|1217;
 export type PoseNetOutputStride = 32|16|8;
 export type PoseNetArchitecture = 'ResNet50'|'MobileNetV1';
@@ -43,8 +43,6 @@ export type PoseNetQuantBytes = 1|2|4;
  * added to PoseNet.
  */
 export interface BaseModel {
-  // The input resolution (unit: pixel) of the base model.
-  readonly inputResolution: PoseNetResolution;
   // The output stride of the base model.
   readonly outputStride: PoseNetOutputStride;
 
@@ -104,7 +102,6 @@ export interface BaseModel {
 export interface ModelConfig {
   architecture: PoseNetArchitecture;
   outputStride: PoseNetOutputStride;
-  inputResolution: PoseNetResolution;
   multiplier?: MobileNetMultiplier;
   modelUrl?: string;
   quantBytes?: PoseNetQuantBytes;
@@ -126,7 +123,6 @@ export interface ModelConfig {
 const MOBILENET_V1_CONFIG: ModelConfig = {
   architecture: 'MobileNetV1',
   outputStride: 16,
-  inputResolution: 513,
   multiplier: 0.75,
 } as ModelConfig;
 
@@ -135,7 +131,7 @@ const VALID_STRIDE = {
   'MobileNetV1': [8, 16, 32],
   'ResNet50': [32, 16]
 };
-const VALID_RESOLUTION =
+export const VALID_INPUT_RESOLUTION =
     [161, 193, 257, 289, 321, 353, 385, 417, 449, 481, 513, 801];
 const VALID_MULTIPLIER = {
   'MobileNetV1': [0.50, 0.75, 1.0],
@@ -162,16 +158,6 @@ function validateModelConfig(config: ModelConfig) {
     throw new Error(
         `Invalid outputStride ${config.outputStride}. ` +
         `Should be one of ${VALID_STRIDE[config.architecture]} ` +
-        `for architecutre ${config.architecture}.`);
-  }
-
-  if (config.inputResolution == null) {
-    config.inputResolution = 513;
-  }
-  if (VALID_RESOLUTION.indexOf(config.inputResolution) < 0) {
-    throw new Error(
-        `Invalid inputResolution ${config.inputResolution}. ` +
-        `Should be one of ${VALID_RESOLUTION} ` +
         `for architecutre ${config.architecture}.`);
   }
 
@@ -209,6 +195,7 @@ function validateModelConfig(config: ModelConfig) {
  */
 export interface InferenceConfig {
   flipHorizontal: boolean;
+  inputResolution: PoseNetInputResolution;
 }
 
 
@@ -237,24 +224,35 @@ export interface MultiPersonInferenceConfig extends InferenceConfig {
 
 export const SINGLE_PERSON_INFERENCE_CONFIG: SinglePersonInterfaceConfig = {
   flipHorizontal: false,
+  inputResolution: 513
 };
 
 export const MULTI_PERSON_INFERENCE_CONFIG: MultiPersonInferenceConfig = {
   flipHorizontal: false,
+  inputResolution: 513,
   maxDetections: 5,
   scoreThreshold: 0.5,
   nmsRadius: 20
 };
 
+function validateBaseInferenceConfig({inputResolution}: InferenceConfig) {
+  if (VALID_INPUT_RESOLUTION.indexOf(inputResolution) < 0) {
+    throw new Error(
+        `Invalid inputResolution ${inputResolution}. ` +
+        `Should be one of ${VALID_INPUT_RESOLUTION}`);
+  }
+}
+
 function validateSinglePersonInferenceConfig(
-    config: SinglePersonInterfaceConfig): SinglePersonInterfaceConfig {
-  return config;
+    config: SinglePersonInterfaceConfig) {
+  validateBaseInferenceConfig(config);
 }
 
 
-function validateMultiPersonInputConfig(config: MultiPersonInferenceConfig):
-    MultiPersonInferenceConfig {
-  const maxDetections = config.maxDetections || 5;
+function validateMultiPersonInputConfig(config: MultiPersonInferenceConfig) {
+  validateBaseInferenceConfig(config);
+
+  const {maxDetections, scoreThreshold, nmsRadius} = config;
 
   if (maxDetections <= 0) {
     throw new Error(
@@ -262,21 +260,16 @@ function validateMultiPersonInputConfig(config: MultiPersonInferenceConfig):
         `Should be > 0`);
   }
 
-  const scoreThreshold = config.scoreThreshold || 0.5;
-
   if (scoreThreshold < 0.0 || scoreThreshold > 1.0) {
     throw new Error(
         `Invalid scoreThreshold ${scoreThreshold}. ` +
         `Should be in range [0.0, 1.0]`);
   }
 
-  const nmsRadius = config.nmsRadius || 20;
 
   if (nmsRadius <= 0) {
-    throw new Error(`Invalid nmsRadius ${config.nmsRadius}.`);
+    throw new Error(`Invalid nmsRadius ${nmsRadius}.`);
   }
-
-  return {...config, maxDetections, scoreThreshold, nmsRadius};
 }
 
 export class PoseNet {
@@ -292,11 +285,12 @@ export class PoseNet {
    * model. The image should pixels should have values [0-255]. It detects
    * multiple poses and finds their parts from part scores and displacement
    * vectors using a fast greedy decoding algorithm.  It returns up to
-   * `config.maxDetections` object instance detections in decreasing root score
-   *  order.
+   * `config.maxDetections` object instance detections in decreasing root
+   * score order.
    *
-   * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
-   * The input image to feed through the network.
+   * @param input
+   * ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement) The input
+   * image to feed through the network.
    *
    * @param config MultiPoseEstimationConfig object that contains parameters
    * for the PoseNet inference using multiple pose estimation.
@@ -309,12 +303,18 @@ export class PoseNet {
       input: PosenetInput,
       config: MultiPersonInferenceConfig = MULTI_PERSON_INFERENCE_CONFIG):
       Promise<Pose[]> {
-    const configWithDefaults = validateMultiPersonInputConfig(config);
+    const configWithDefaults: MultiPersonInferenceConfig = {
+      ...MULTI_PERSON_INFERENCE_CONFIG,
+      ...config
+    };
+
+    validateMultiPersonInputConfig(config);
 
     const outputStride = this.baseModel.outputStride;
-    const inputResolution = this.baseModel.inputResolution;
+    const inputResolution = configWithDefaults.inputResolution;
+
     assertValidOutputStride(outputStride);
-    assertValidResolution(this.baseModel.inputResolution, outputStride);
+    assertValidResolution(configWithDefaults.inputResolution, outputStride);
 
     const [height, width] = getInputTensorDimensions(input);
 
@@ -353,11 +353,12 @@ export class PoseNet {
    * multiple poses and finds their parts from part scores and displacement
    * vectors using a fast greedy decoding algorithm.  It returns a single pose
    *
-   * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
-   * The input image to feed through the network.
+   * @param input
+   * ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement) The input
+   * image to feed through the network.
    *
-   * @param config SinglePersonEstimationConfig object that contains parameters
-   * for the PoseNet inference using single pose estimation.
+   * @param config SinglePersonEstimationConfig object that contains
+   * parameters for the PoseNet inference using single pose estimation.
    *
    * @return An pose and its scores, containing keypoints and
    * the corresponding keypoint scores.  The positions of the keypoints are
@@ -367,12 +368,14 @@ export class PoseNet {
       input: PosenetInput,
       config: SinglePersonInterfaceConfig = SINGLE_PERSON_INFERENCE_CONFIG):
       Promise<Pose> {
-    const configWithDefaults = validateSinglePersonInferenceConfig(config);
+    const configWithDefaults = {...SINGLE_PERSON_INFERENCE_CONFIG, config};
+
+    validateSinglePersonInferenceConfig(configWithDefaults);
 
     const outputStride = this.baseModel.outputStride;
-    const inputResolution = this.baseModel.inputResolution;
+    const inputResolution = configWithDefaults.inputResolution;
     assertValidOutputStride(outputStride);
-    assertValidResolution(this.baseModel.inputResolution, outputStride);
+    assertValidResolution(inputResolution, outputStride);
 
     const [height, width] = getInputTensorDimensions(input);
 
@@ -404,7 +407,6 @@ export class PoseNet {
 }
 
 async function loadMobileNet(config: ModelConfig): Promise<PoseNet> {
-  const inputResolution = config.inputResolution;
   const outputStride = config.outputStride;
   const quantBytes = config.quantBytes;
   const multiplier = config.multiplier;
@@ -415,15 +417,13 @@ async function loadMobileNet(config: ModelConfig): Promise<PoseNet> {
         model.`);
   }
 
-  const url = mobileNetCheckpoint(
-      inputResolution, outputStride, multiplier, quantBytes);
+  const url = mobileNetCheckpoint(outputStride, multiplier, quantBytes);
   const graphModel = await tfc.loadGraphModel(config.modelUrl || url);
-  const mobilenet = new MobileNet(graphModel, inputResolution, outputStride);
+  const mobilenet = new MobileNet(graphModel, outputStride);
   return new PoseNet(mobilenet);
 }
 
 async function loadResNet(config: ModelConfig): Promise<PoseNet> {
-  const inputResolution = config.inputResolution;
   const outputStride = config.outputStride;
   const quantBytes = config.quantBytes;
   if (tf == null) {
@@ -435,7 +435,7 @@ async function loadResNet(config: ModelConfig): Promise<PoseNet> {
 
   const url = resNet50Checkpoint(outputStride, quantBytes);
   const graphModel = await tfc.loadGraphModel(config.modelUrl || url);
-  const resnet = new ResNet(graphModel, inputResolution, outputStride);
+  const resnet = new ResNet(graphModel, outputStride);
   return new PoseNet(resnet);
 }
 
