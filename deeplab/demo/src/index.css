@@ -1,0 +1,12 @@
+.is-on-top {
+  z-index: 100;
+}
+.is-vcentered-column {
+  align-items: center;
+  flex-direction: column;
+}
+
+.is-concise-message {
+  padding: 0.7em;
+  display: block;
+}
