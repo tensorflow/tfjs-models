@@ -78,10 +78,6 @@ export interface BaseModel {
  * at the cost of accuracy. Stride 32 is supported for ResNet and
  * stride 8,16,32 are supported for various MobileNetV1 models.
  *
- * `inputResolution`: Specifies the input resolution of the PoseNet model.
- * The larger the value, more accurate the model at the cost of speed.
- * Set this to a smaller value to increase speed at the cost of accuracy.
- *
  * `multiplier`: An optional number with values: 1.01, 1.0, 0.75, or
  * 0.50. The value is used only by MobileNet architecture. It is the float
  * multiplier for the depth (number of channels) for all convolution ops.
@@ -192,12 +188,16 @@ function validateModelConfig(config: ModelConfig) {
  * horizontally (i.e. a webcam), and you want the poses to be returned in the
  * proper orientation.
  *
+ * `inputResolution`: Specifies the size the input image is scaled to before
+ * feeding it through the PoseNet model.  The larger the value, more accurate
+ * the model at the cost of speed. Set this to a smaller value to increase
+ * speed at the cost of accuracy.
+ *
  */
 export interface InferenceConfig {
   flipHorizontal: boolean;
   inputResolution: PoseNetInputResolution;
 }
-
 
 /**
  * Single Person Inference Config
@@ -222,14 +222,25 @@ export interface MultiPersonInferenceConfig extends InferenceConfig {
   nmsRadius?: number;
 }
 
+// these added back to not break the existing api.
+export interface LegacyMultiPersonInferenceConfig extends
+    MultiPersonInferenceConfig {
+  decodingMethod: 'multi-person'
+}
+
+export interface LegacySinglePersonInferenceConfig extends
+    SinglePersonInterfaceConfig {
+  decodingMethod: 'single-person'
+}
+
 export const SINGLE_PERSON_INFERENCE_CONFIG: SinglePersonInterfaceConfig = {
   flipHorizontal: false,
-  inputResolution: 513
+  inputResolution: 257
 };
 
 export const MULTI_PERSON_INFERENCE_CONFIG: MultiPersonInferenceConfig = {
   flipHorizontal: false,
-  inputResolution: 513,
+  inputResolution: 257,
   maxDetections: 5,
   scoreThreshold: 0.5,
   nmsRadius: 20
@@ -399,6 +410,18 @@ export class PoseNet {
     resized.dispose();
 
     return resultPoses[0];
+  }
+
+  /** Deprecated: Use either estimateSinglePose or estimateMultiplePoses */
+  async estimatePoses(
+      input: PosenetInput,
+      config: LegacySinglePersonInferenceConfig|
+      LegacyMultiPersonInferenceConfig) {
+    if (config.decodingMethod == 'single-person') {
+      return this.estimateSinglePose(input, config);
+    } else {
+      return this.estimateMultiplePoses(input, config);
+    }
   }
 
   public dispose() {
