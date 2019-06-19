@@ -115,14 +115,13 @@ const net = await posenet.load({
 
 ### Single-Person Pose Estimation
 
-Single pose estimation is the simpler and faster of the two algorithms. Its ideal use case is for when there is only one person in the image. The disadvantage is that if there are multiple persons in an image, keypoints from both persons will likely be estimated as being part of the same single pose—meaning, for example, that person #1’s left arm and person #2’s right knee might be conflated by the algorithm as belonging to the same pose. Both the MobileNetV1 and the ResNet architecture support single-person pose estimation. To enable single-person estimation algorithm, **set the `decodingMethod` to 'single-person' in `estimatePoses` using an `InferenceConfig` dictionary**. The returned array will have **one and only one `pose`**:
+Single pose estimation is the simpler and faster of the two algorithms. Its ideal use case is for when there is only one person in the image. The disadvantage is that if there are multiple persons in an image, keypoints from both persons will likely be estimated as being part of the same single pose—meaning, for example, that person #1’s left arm and person #2’s right knee might be conflated by the algorithm as belonging to the same pose. Both the MobileNetV1 and the ResNet architecture support single-person pose estimation. The method returns a **single pose**:
 
 ```javascript
 const net = await posenet.load();
 
-const poses = await net.estimatePoses(image, {
-  flipHorizontal: false,
-  decodingMethod: 'single-person'
+const poses = await net.estimateSinglePose(image, {
+  flipHorizontal: false
 });
 const pose = poses[0];
 ```
@@ -132,12 +131,11 @@ const pose = poses[0];
 * **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
    The input image to feed through the network.
 * **inferenceConfig** - an object containing:
-  * **decodingMethod** - 'single-person'.  Set this to 'single-person' for single-person pose estimation.
-  * **flipHorizontal** - Defaults to false.  If the poses should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the poses to be returned in the proper orientation.
+  * **flipHorizontal** - Defaults to false.  If the pose should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the poses to be returned in the proper orientation.
 
 #### Returns
 
-It returns a `Promise` that resolves with an array containing **only one** `pose`. The `pose` has a confidence score and an array of keypoints indexed by part id, each with a score and position.
+It returns a `Promise` that resolves with a  **single** `pose`. The `pose` has a confidence score and an array of keypoints indexed by part id, each with a score and position.
 
 #### Example Usage
 
@@ -162,11 +160,9 @@ It returns a `Promise` that resolves with an array containing **only one** `pose
     var imageElement = document.getElementById('cat');
 
     posenet.load().then(function(net) {
-      const poses = net.estimatePoses(imageElement, {
-        flipHorizontal: flipHorizontal,
-        decodingMethod: 'single-person'
+      const pose = net.estimateSinglePose(imageElement,
+        flipHorizontal: true
       });
-      const pose = poses[0];
       return pose;
     }).then(function(pose){
       console.log(pose);
@@ -184,11 +180,9 @@ async function estimatePoseOnImage(imageElement) {
   // load the posenet model from a checkpoint
   const net = await posenet.load();
 
-  const poses = await net.estimatePoses(imageElement, {
-    flipHorizontal: false,
-    decodingMethod: 'single-person'
+  const pose = await net.estimateSinglePose(imageElement, {
+    flipHorizontal: false
   });
-  const pose = poses[0]
   return pose;
 }
 
@@ -348,14 +342,13 @@ which would produce the output:
 
 ### Multi-Person Pose Estimation
 
-Multiple Pose estimation can decode multiple poses in an image. It is more complex and slightly slower than the single person algorithm, but has the advantage that if multiple people appear in an image, their detected keypoints are less likely to be associated with the wrong pose. Even if the usecase is to detect a single person’s pose, this algorithm may be more desirable in that the accidental effect of two poses being joined together won’t occur when multiple people appear in the image. It uses the `Fast greedy decoding` algorithm from the research paper [PersonLab: Person Pose Estimation and Instance Segmentation with a Bottom-Up, Part-Based, Geometric Embedding Model](https://arxiv.org/pdf/1803.08225.pdf). Both MobileNetV1 and ResNet architecture support multi-person pose estimation. To enable multi-person pose estimation algorithm, **set the `decodingMethod` to 'multi-person' in `estimatePoses` function using an `InferenceConfig` dictionary**. The returned array will have **multiple `pose`s**:
+Multiple Pose estimation can decode multiple poses in an image. It is more complex and slightly slower than the single person algorithm, but has the advantage that if multiple people appear in an image, their detected keypoints are less likely to be associated with the wrong pose. Even if the usecase is to detect a single person’s pose, this algorithm may be more desirable in that the accidental effect of two poses being joined together won’t occur when multiple people appear in the image. It uses the `Fast greedy decoding` algorithm from the research paper [PersonLab: Person Pose Estimation and Instance Segmentation with a Bottom-Up, Part-Based, Geometric Embedding Model](https://arxiv.org/pdf/1803.08225.pdf). Both MobileNetV1 and ResNet architecture support multi-person pose estimation. Returns a **promise** that resolves with an **array of poses.**
 
 ```javascript
 const net = await posenet.load();
 
-const poses = await net.estimatePoses(image, {
+const poses = await net.estimateMultiplePoses(image, {
   flipHorizontal: false,
-  decodingMethod: 'multi-person',
   maxDetections: 5,
   scoreThreshold: 0.5,
   nmsRadius: 20
@@ -367,7 +360,6 @@ const poses = await net.estimatePoses(image, {
 * **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
    The input image to feed through the network.
 * **inferenceConfig** - an object containing:
-  * **decodingMethod** - 'multi-person'.  Set this to 'multi-person' for multi-person pose estimation.
   * **flipHorizontal** - Defaults to false.  If the poses should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the poses to be returned in the proper orientation.
   * **maxDetections** - the maximum number of poses to detect. Defaults to 5.
   * **scoreThreshold** - Only return instance detections that have root part score greater or equal to this value. Defaults to 0.5.
@@ -396,7 +388,7 @@ It returns a `promise` that resolves with an array of `pose`s, each with a confi
     var imageElement = document.getElementById('cat');
 
     posenet.load().then(function(net){
-      return net.estimatePoses(imageElement, {
+      return net.estimateMultiplePoses(imageElement, {
         flipHorizontal: false,
         maxDetections: 2,
         scoreThreshold: 0.6,
@@ -417,7 +409,7 @@ async function estimateMultiplePosesOnImage(imageElement) {
   const net = await posenet.load();
 
   // estimate poses
-  const poses = await net.estimatePoses(imageElement, {
+  const poses = await net.estimateMultiplePoses(imageElement, {
         flipHorizontal: false,
         maxDetections: 2,
         scoreThreshold: 0.6,

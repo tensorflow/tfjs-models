@@ -24,7 +24,7 @@ import {decodeMultiplePoses} from './multi_pose/decode_multiple_poses';
 import {ResNet} from './resnet';
 import {decodeSinglePose} from './single_pose/decode_single_pose';
 import {Pose, PosenetInput} from './types';
-import {flipPosesHorizontal, getInputTensorDimensions, padAndResizeTo, scalePoses, toTensorBuffers3D} from './util';
+import {getInputTensorDimensions, padAndResizeTo, scaleAndFlipPoses, toTensorBuffers3D} from './util';
 
 export type PoseNetResolution =
     161|193|257|289|321|353|385|417|449|481|513|801|1217;
@@ -83,8 +83,6 @@ export interface BaseModel {
  * `inputResolution`: Specifies the input resolution of the PoseNet model.
  * The larger the value, more accurate the model at the cost of speed.
  * Set this to a smaller value to increase speed at the cost of accuracy.
- * Input resolution 257 and 513 are supported for ResNet and any resolution in
- * PoseNetResolution are supported for MobileNetV1.
  *
  * `multiplier`: An optional number with values: 1.01, 1.0, 0.75, or
  * 0.50. The value is used only by MobileNet architecture. It is the float
@@ -132,18 +130,21 @@ const MOBILENET_V1_CONFIG: ModelConfig = {
   multiplier: 0.75,
 } as ModelConfig;
 
+const VALID_ARCHITECTURE = ['MobileNetV1', 'ResNet50'];
+const VALID_STRIDE = {
+  'MobileNetV1': [8, 16, 32],
+  'ResNet50': [32, 16]
+};
+const VALID_RESOLUTION =
+    [161, 193, 257, 289, 321, 353, 385, 417, 449, 481, 513, 801];
+const VALID_MULTIPLIER = {
+  'MobileNetV1': [0.50, 0.75, 1.0],
+  'ResNet50': [1.0]
+};
+const VALID_QUANT_BYTES = [1, 2, 4];
+
 function validateModelConfig(config: ModelConfig) {
   config = config || MOBILENET_V1_CONFIG;
-
-  const VALID_ARCHITECTURE = ['MobileNetV1', 'ResNet50'];
-  const VALID_STRIDE = {'MobileNetV1': [8, 16, 32], 'ResNet50': [32, 16]};
-  const VALID_RESOLUTION =
-      [161, 193, 257, 289, 321, 353, 385, 417, 449, 481, 513, 801];
-  const VALID_MULTIPLIER = {
-    'MobileNetV1': [0.50, 0.75, 1.0],
-    'ResNet50': [1.0]
-  };
-  const VALID_QUANT_BYTES = [1, 2, 4];
 
   if (config.architecture == null) {
     config.architecture = 'MobileNetV1';
@@ -205,12 +206,6 @@ function validateModelConfig(config: ModelConfig) {
  * horizontally (i.e. a webcam), and you want the poses to be returned in the
  * proper orientation.
  *
- * `decodingMethod`: PoseNetDecodingMethod. Whether to use "single-person" or
- * "multi-person" PoseNet decoding algorithm to decode the predicted
- * intermediate tensors. "single-person" decoding works only when there is one
- * person in the input image and "multi-person" decoding works even when there
- * are many people in the input image.
- *
  */
 export interface InferenceConfig {
   flipHorizontal: boolean;
@@ -220,9 +215,7 @@ export interface InferenceConfig {
 /**
  * Single Person Inference Config
  */
-export interface SinglePersonInterfaceConfig extends InferenceConfig {
-  decodingMethod: 'single-person';
-}
+export interface SinglePersonInterfaceConfig extends InferenceConfig {}
 
 /**
  * Multiple Person Inference Config
@@ -237,19 +230,16 @@ export interface SinglePersonInterfaceConfig extends InferenceConfig {
  * than `nmsRadius` pixels away. Defaults to 20.
  **/
 export interface MultiPersonInferenceConfig extends InferenceConfig {
-  decodingMethod: 'multi-person';
   maxDetections?: number;
   scoreThreshold?: number;
   nmsRadius?: number;
 }
 
 export const SINGLE_PERSON_INFERENCE_CONFIG: SinglePersonInterfaceConfig = {
-  decodingMethod: 'single-person',
   flipHorizontal: false,
 };
 
 export const MULTI_PERSON_INFERENCE_CONFIG: MultiPersonInferenceConfig = {
-  decodingMethod: 'multi-person',
   flipHorizontal: false,
   maxDetections: 5,
   scoreThreshold: 0.5,
@@ -277,44 +267,16 @@ function validateMultiPersonInputConfig(config: MultiPersonInferenceConfig):
   if (scoreThreshold < 0.0 || scoreThreshold > 1.0) {
     throw new Error(
         `Invalid scoreThreshold ${scoreThreshold}. ` +
-        `Should be in range [0.0, 1.0] for decodingMethod ${
-            config.decodingMethod}.`);
+        `Should be in range [0.0, 1.0]`);
   }
 
   const nmsRadius = config.nmsRadius || 20;
 
   if (nmsRadius <= 0) {
-    throw new Error(
-        `Invalid nmsRadius ${config.nmsRadius}. ` +
-        `Should be positive for decodingMethod ${config.decodingMethod}.`);
+    throw new Error(`Invalid nmsRadius ${config.nmsRadius}.`);
   }
 
   return {...config, maxDetections, scoreThreshold, nmsRadius};
-}
-
-function validateInferenceConfig(config: SinglePersonInterfaceConfig|
-                                 MultiPersonInferenceConfig) {
-  config = config || MULTI_PERSON_INFERENCE_CONFIG;
-  const VALID_DECODING_METHOD = ['single-person', 'multi-person'];
-
-  if (config.flipHorizontal == null) {
-    config.flipHorizontal = false;
-  }
-
-  if (config.decodingMethod == null) {
-    config.decodingMethod = 'multi-person';
-  }
-  if (VALID_DECODING_METHOD.indexOf(config.decodingMethod) < 0) {
-    throw new Error(
-        `Invalid decoding method ${config.decodingMethod}. ` +
-        `Should be one of ${VALID_DECODING_METHOD}`);
-  }
-
-  if (config.decodingMethod === 'single-person') {
-    return validateSinglePersonInferenceConfig(config);
-  } else {
-    return validateMultiPersonInputConfig(config);
-  }
 }
 
 export class PoseNet {
@@ -336,78 +298,104 @@ export class PoseNet {
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
    *
-   * @param config InferenceConfig dictionary that contains parameters for
-   * the PoseNet inference process. Please find more details of each parameters
-   * in the documentation of the InferenceConfig interface. The predefined
-   * `MULTI_PERSON_INFERENCE_CONFIG` and `SINGLE_PERSON_INFERENCE_CONFIG` can
-   * also be used as references for defining your customized config.
+   * @param config MultiPoseEstimationConfig object that contains parameters
+   * for the PoseNet inference using multiple pose estimation.
    *
    * @return An array of poses and their scores, each containing keypoints and
    * the corresponding keypoint scores.  The positions of the keypoints are
    * in the same scale as the original image
    */
-  async estimatePoses(
+  async estimateMultiplePoses(
       input: PosenetInput,
-      config: SinglePersonInterfaceConfig|
-      MultiPersonInferenceConfig = MULTI_PERSON_INFERENCE_CONFIG):
+      config: MultiPersonInferenceConfig = MULTI_PERSON_INFERENCE_CONFIG):
       Promise<Pose[]> {
-    config = validateInferenceConfig(config);
+    const configWithDefaults = validateMultiPersonInputConfig(config);
+
     const outputStride = this.baseModel.outputStride;
     const inputResolution = this.baseModel.inputResolution;
     assertValidOutputStride(outputStride);
     assertValidResolution(this.baseModel.inputResolution, outputStride);
 
     const [height, width] = getInputTensorDimensions(input);
-    let [resizedHeight, resizedWidth] = [0, 0];
-    let [padTop, padBottom, padLeft, padRight] = [0, 0, 0, 0];
-    let heatmapScores, offsets, displacementFwd, displacementBwd;
 
-    resizedHeight = inputResolution;
-    resizedWidth = inputResolution;
+    const {resized, padding} =
+        padAndResizeTo(input, [inputResolution, inputResolution]);
 
-    const outputs = tf.tidy(() => {
-      const {resized, paddedBy} =
-          padAndResizeTo(input, [resizedHeight, resizedWidth]);
-      padTop = paddedBy[0][0];
-      padBottom = paddedBy[0][1];
-      padLeft = paddedBy[1][0];
-      padRight = paddedBy[1][1];
-      return this.baseModel.predict(resized);
-    });
-    heatmapScores = outputs.heatmapScores;
-    offsets = outputs.offsets;
-    displacementFwd = outputs.displacementFwd;
-    displacementBwd = outputs.displacementBwd;
+    const {heatmapScores, offsets, displacementFwd, displacementBwd} =
+        this.baseModel.predict(resized);
 
-    let poses;
-    if (config.decodingMethod === 'multi-person') {
-      const [scoresBuffer, offsetsBuffer, displacementsFwdBuffer, displacementsBwdBuffer] =
-          await toTensorBuffers3D(
-              [heatmapScores, offsets, displacementFwd, displacementBwd]);
+    const [scoresBuffer, offsetsBuffer, displacementsFwdBuffer, displacementsBwdBuffer] =
+        await toTensorBuffers3D(
+            [heatmapScores, offsets, displacementFwd, displacementBwd]);
 
-      poses = await decodeMultiplePoses(
-          scoresBuffer, offsetsBuffer, displacementsFwdBuffer,
-          displacementsBwdBuffer, outputStride, config.maxDetections,
-          config.scoreThreshold, config.nmsRadius);
-    } else {
-      const pose = await decodeSinglePose(heatmapScores, offsets, outputStride);
-      poses = [pose];
-    }
+    const poses = await decodeMultiplePoses(
+        scoresBuffer, offsetsBuffer, displacementsFwdBuffer,
+        displacementsBwdBuffer, outputStride, configWithDefaults.maxDetections,
+        configWithDefaults.scoreThreshold, configWithDefaults.nmsRadius);
 
-    const scaleY = (height + padTop + padBottom) / (resizedHeight);
-    const scaleX = (width + padLeft + padRight) / (resizedWidth);
-    let scaledPoses = scalePoses(poses, scaleY, scaleX, -padTop, -padLeft);
-
-    if (config.flipHorizontal) {
-      scaledPoses = flipPosesHorizontal(scaledPoses, width);
-    }
+    const resultPoses = scaleAndFlipPoses(
+        poses, [height, width], [inputResolution, inputResolution], padding,
+        configWithDefaults.flipHorizontal);
 
     heatmapScores.dispose();
     offsets.dispose();
     displacementFwd.dispose();
     displacementBwd.dispose();
+    resized.dispose();
 
-    return scaledPoses;
+    return resultPoses;
+  }
+
+  /**
+   * Infer through PoseNet, and estimates a single pose using the outputs.
+   * This does standard ImageNet pre-processing before inferring through the
+   * model. The image should pixels should have values [0-255]. It detects
+   * multiple poses and finds their parts from part scores and displacement
+   * vectors using a fast greedy decoding algorithm.  It returns a single pose
+   *
+   * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
+   * The input image to feed through the network.
+   *
+   * @param config SinglePersonEstimationConfig object that contains parameters
+   * for the PoseNet inference using single pose estimation.
+   *
+   * @return An pose and its scores, containing keypoints and
+   * the corresponding keypoint scores.  The positions of the keypoints are
+   * in the same scale as the original image
+   */
+  async estimateSinglePose(
+      input: PosenetInput,
+      config: SinglePersonInterfaceConfig = SINGLE_PERSON_INFERENCE_CONFIG):
+      Promise<Pose> {
+    const configWithDefaults = validateSinglePersonInferenceConfig(config);
+
+    const outputStride = this.baseModel.outputStride;
+    const inputResolution = this.baseModel.inputResolution;
+    assertValidOutputStride(outputStride);
+    assertValidResolution(this.baseModel.inputResolution, outputStride);
+
+    const [height, width] = getInputTensorDimensions(input);
+
+    const {resized, padding} =
+        padAndResizeTo(input, [inputResolution, inputResolution]);
+
+    const {heatmapScores, offsets, displacementFwd, displacementBwd} =
+        this.baseModel.predict(resized);
+
+    const pose = await decodeSinglePose(heatmapScores, offsets, outputStride);
+    const poses = [pose];
+
+    const resultPoses = scaleAndFlipPoses(
+        poses, [height, width], [inputResolution, inputResolution], padding,
+        configWithDefaults.flipHorizontal);
+
+    heatmapScores.dispose();
+    offsets.dispose();
+    displacementFwd.dispose();
+    displacementBwd.dispose();
+    resized.dispose();
+
+    return resultPoses[0];
   }
 
   public dispose() {
