@@ -76,7 +76,6 @@ By default, `posenet.load()` loads a faster and smaller model that is based on M
 const net = await posenet.load({
   architecture: 'MobileNetV1',
   outputStride: 16,
-  inputResolution: 513,
   multiplier: 0.75
 });
 ```
@@ -88,7 +87,6 @@ or
 const net = await posenet.load({
   architecture: 'ResNet50',
   outputStride: 32,
-  inputResolution: 257,
   quantBytes: 2
 });
 ```
@@ -98,8 +96,6 @@ const net = await posenet.load({
  * **architecture** - Can be either `MobileNetV1` or `ResNet50`. It determines which PoseNet architecture to load.
 
  * **outputStride** - Can be one of `8`, `16`, `32` (Stride `16`, `32` are supported for the ResNet architecture and stride `8`, `16`, `32` are supported for the MobileNetV1 architecture). It specifies the output stride of the PoseNet model. The smaller the value, the larger the output resolution, and more accurate the model at the cost of speed. Set this to a larger value to increase speed at the cost of accuracy.
-
- * **inputResolution** - Can be one of `161`, `193`, `257`, `289`, `321`, `353`, `385`, `417`, `449`, `481`, `513`, and `801`. It specifies the size image is resized to before it is fed into the PoseNet model. The larger the value, the more accurate the model at the cost of speed. Set this to a smaller value to increase speed at the cost of accuracy.
 
  * **multiplier** - Can be one of `1.01`, `1.0`, `0.75`, or `0.50` (The value is used *only* by the MobileNetV1 architecture and not by the ResNet architecture). It is the float multiplier for the depth (number of channels) for all convolution ops. The larger the value, the larger the size of the layers, and more accurate the model at the cost of speed. Set this to a smaller value to increase speed at the cost of accuracy.
 
@@ -121,6 +117,7 @@ Single pose estimation is the simpler and faster of the two algorithms. Its idea
 const net = await posenet.load();
 
 const poses = await net.estimateSinglePose(image, {
+  inputResolution: 257,
   flipHorizontal: false
 });
 const pose = poses[0];
@@ -131,6 +128,7 @@ const pose = poses[0];
 * **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
    The input image to feed through the network.
 * **inferenceConfig** - an object containing:
+  * **inputResolution** - Can be one of `161`, `193`, `257`, `289`, `321`, `353`, `385`, `417`, `449`, `481`, `513`, and `801`. Defaults to `257.` It specifies the size image is resized to before it is fed into the PoseNet model. The larger the value, the more accurate the model at the cost of speed. Set this to a smaller value to increase speed at the cost of accuracy.
   * **flipHorizontal** - Defaults to false.  If the pose should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the poses to be returned in the proper orientation.
 
 #### Returns
@@ -348,6 +346,7 @@ Multiple Pose estimation can decode multiple poses in an image. It is more compl
 const net = await posenet.load();
 
 const poses = await net.estimateMultiplePoses(image, {
+  inputResolution: 257,
   flipHorizontal: false,
   maxDetections: 5,
   scoreThreshold: 0.5,
@@ -360,6 +359,7 @@ const poses = await net.estimateMultiplePoses(image, {
 * **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
    The input image to feed through the network.
 * **inferenceConfig** - an object containing:
+  * **inputResolution** - Can be one of `161`, `193`, `257`, `289`, `321`, `353`, `385`, `417`, `449`, `481`, `513`, and `801`. Defaults to `257.` It specifies the size image is resized to before it is fed into the PoseNet model. The larger the value, the more accurate the model at the cost of speed. Set this to a smaller value to increase speed at the cost of accuracy.
   * **flipHorizontal** - Defaults to false.  If the poses should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the poses to be returned in the proper orientation.
   * **maxDetections** - the maximum number of poses to detect. Defaults to 5.
   * **scoreThreshold** - Only return instance detections that have root part score greater or equal to this value. Defaults to 0.5.
