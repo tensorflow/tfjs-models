@@ -12,7 +12,7 @@
 
   async function run() {
     // Load the model.
-    const model = await mobilenet.load({version: 2, modelUrl: "https://tfhub.dev/google/imagenet/mobilenet_v2_050_224/classification/2/model.json?tfjs-format=file"});
+    const model = await mobilenet.load();
 
     // Classify the image.
     const predictions = await model.classify(img);
