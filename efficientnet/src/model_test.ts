@@ -22,13 +22,20 @@ import {
 } from '@tensorflow/tfjs-core/dist/jasmine_util';
 import { EfficientNet } from '.';
 
-describeWithFlags('Dummy', NODE_ENVS, () => {
-  it('DummyModel detect method should generate no output', async () => {
-    const dummy = new EfficientNet();
+describeWithFlags('EfficientNet', NODE_ENVS, () => {
+  beforeAll(() => {
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 20000;
+  });
+  it('EfficientNet predict should not leak', async () => {
+    const model = new EfficientNet('b0');
     const x = tf.zeros([227, 227, 3]) as tf.Tensor3D;
 
-    const data = await dummy.predict(x);
+    await model.predict(x);
 
-    expect(data).toEqual();
+    const numOfTensorsBefore = tf.memory().numTensors;
+
+    await model.predict(x);
+    await model.dispose();
+    expect(tf.memory().numTensors).toEqual(numOfTensorsBefore);
   });
 });

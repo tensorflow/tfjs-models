@@ -20,12 +20,13 @@ import { config } from './config';
 import {
   EfficientNetBaseModel,
   EfficientNetInput,
-  EfficientNetOutput,
+  // EfficientNetOutput,
 } from './types';
+import { toInputTensor } from './utils';
 
 export class EfficientNet {
   private base: EfficientNetBaseModel;
-  private model: Promise<tf.GraphModel>;
+  private model: Promise<tf.LayersModel>;
   private modelPath: string;
   constructor(base: EfficientNetBaseModel, isQuantized = true) {
     if (tf == null) {
@@ -34,7 +35,7 @@ export class EfficientNet {
           `also include @tensorflow/tfjs on the page before using this model.`
       );
     }
-    if (['b0', 'b3'].indexOf(base) === -1) {
+    if (['b0', 'b3', 'b5'].indexOf(base) === -1) {
       throw new Error(
         `EfficientNet cannot be constructed ` +
           `with an invalid base model ${base}. ` +
@@ -47,14 +48,16 @@ export class EfficientNet {
       isQuantized ? 'quantized/' : ''
     }${base}/model.json`;
 
-    this.model = tf.loadGraphModel(this.modelPath);
+    this.model = tf.loadLayersModel(this.modelPath);
   }
 
   public async predict(
     input: EfficientNetInput,
-    canvas?: HTMLCanvasElement
-  ): Promise<EfficientNetOutput> {
-    return [];
+    canvas?: HTMLCanvasElement // : Promise<EfficientNetOutput>
+  ) {
+    const model = await this.model;
+
+    return model.predict(toInputTensor(this.base, input));
   }
 
   /**

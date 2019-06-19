@@ -17,7 +17,7 @@
 
 import * as tf from '@tensorflow/tfjs';
 
-export type EfficientNetBaseModel = 'b0' | 'b3';
+export type EfficientNetBaseModel = 'b0' | 'b3' | 'b5';
 
 export type EfficientNetInput =
   | ImageData

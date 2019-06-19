@@ -21,6 +21,7 @@ export const config = {
   CROP_SIZE: {
     b0: 224,
     b3: 300,
+    b5: 456,
   },
   MEAN_RGB: [0.485, 0.456, 0.406],
   STDDEV_RGB: [0.229, 0.224, 0.225],
