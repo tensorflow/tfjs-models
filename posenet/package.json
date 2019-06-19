@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/posenet",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Pretrained PoseNet model in TensorFlow.js",
   "main": "dist/index.js",
   "jsnext:main": "dist/posenet.esm.js",
@@ -13,12 +13,12 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs-core": "^1.1.2",
-    "@tensorflow/tfjs-converter": "^1.1.2"
+    "@tensorflow/tfjs-core": "~1.2.1",
+    "@tensorflow/tfjs-converter": "~1.2.1"
   },
   "devDependencies": {
-    "@tensorflow/tfjs-core": "^1.1.2",
-    "@tensorflow/tfjs-converter": "^1.1.2",
+    "@tensorflow/tfjs-core": "~1.2.1",
+    "@tensorflow/tfjs-converter": "~1.2.1",
     "@types/jasmine": "~2.5.53",
     "babel-core": "^6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",

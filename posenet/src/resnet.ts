@@ -1,4 +1,4 @@
-import * as tfc from '@tensorflow/tfjs-converter';
+import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
 import {BaseModel, PoseNetOutputStride, PoseNetResolution} from './posenet_model';
@@ -14,12 +14,12 @@ function toFloatIfInt(input: tf.Tensor3D): tf.Tensor3D {
 }
 
 export class ResNet implements BaseModel {
-  readonly model: tfc.GraphModel;
+  readonly model: tfconv.GraphModel;
   readonly outputStride: PoseNetOutputStride;
   readonly inputResolution: PoseNetResolution;
 
   constructor(
-      model: tfc.GraphModel, inputResolution: PoseNetResolution,
+      model: tfconv.GraphModel, inputResolution: PoseNetResolution,
       outputStride: PoseNetOutputStride) {
     this.model = model;
     const inputShape =

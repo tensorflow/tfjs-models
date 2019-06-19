@@ -16,7 +16,7 @@
  =============================================================================
  */
 
-import * as tfc from '@tensorflow/tfjs-converter';
+import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
@@ -52,7 +52,7 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
       quantBytes: quantBytes
     } as posenetModel.ModelConfig;
 
-    spyOn(tfc, 'loadGraphModel').and.callFake((): tfc.GraphModel => {
+    spyOn(tfconv, 'loadGraphModel').and.callFake((): tfconv.GraphModel => {
       return null;
     })
 
