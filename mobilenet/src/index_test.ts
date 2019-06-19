@@ -14,13 +14,14 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
+import * as tfc from '@tensorflow/tfjs-converter';
 import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 import {load} from './index';
 
 describeWithFlags('MobileNet', NODE_ENVS, () => {
   beforeAll(() => {
-    spyOn(tf, 'loadGraphModel').and.callFake(() => {
+    spyOn(tfc, 'loadGraphModel').and.callFake(() => {
       const model = {
         predict: (x: tf.Tensor) => tf.zeros([x.shape[0], 1001]),
         execute: (x: tf.Tensor, nodeName: string) =>
