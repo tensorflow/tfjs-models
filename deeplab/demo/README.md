@@ -22,6 +22,8 @@ Launch the development server watching the files for changes.
 yarn watch
 ```
 
+**Warning**: *Running the Cityscapes model in the demo is resource-intensive and might crash your browser.*
+
 ## Development
 
 If you are developing the model locally and want to test the changes in the demo, proceed as follows:

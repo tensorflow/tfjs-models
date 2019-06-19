@@ -11,175 +11,237 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ============================================================================= -->
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
+  <head>
+    <title>DeepLab Demo</title>
+    <script src="index.js"></script>
+  </head>
 
-<head>
-  <title>DeepLab Demo</title>
-  <script src="index.js"></script>
-</head>
-
-<body>
-  <div class="container">
-    <div class="section">
-      <nav class="navbar">
-        <div class="navbar-brand">
-          <h1 class="navbar-item">
-            <img alt="TensorFlow.js Logo" src="tfjs-logo.png">
-            <span class="tag is-white is-medium">
-              <b>DeepLab Demo</b>
-            </span>
-          </h1>
-        </div>
-      </nav>
-      <div class="tile is-ancestor">
-        <div class="tile is-vertical">
-          <div class="tile is-parent">
-            <article class="message tile is-child">
-              <div class="message-header">
-                <h1>Three types of pre-trained weights are available:</h1>
-              </div>
-              <div class="message-body">
-                <div class="columns">
-                  <div class="column">
-                    <div class="card large">
-                      <div class="card-content">
-                        <div class="content">
-                          <b>DeepLab
-                            <a href="http://host.robots.ox.ac.uk/pascal/VOC/">
-                              Pascal
-                            </a>
-                          </b>
+  <body>
+    <div class="container">
+      <div class="section">
+        <nav class="navbar">
+          <div class="navbar-brand">
+            <h1 class="navbar-item">
+              <img alt="TensorFlow.js Logo" src="tfjs-logo.png" />
+              <span class="tag is-white is-medium">
+                <b>DeepLab Demo</b>
+              </span>
+            </h1>
+          </div>
+        </nav>
+        <div class="tile is-ancestor">
+          <div class="tile is-vertical">
+            <div class="tile is-parent">
+              <article class="message tile is-child">
+                <div class="message-header">
+                  <h1>Three types of pre-trained weights are available:</h1>
+                </div>
+                <div class="message-body">
+                  <div class="columns">
+                    <div class="column">
+                      <div class="card large">
+                        <div class="card-content">
+                          <div class="content">
+                            <b
+                              >DeepLab
+                              <a href="http://host.robots.ox.ac.uk/pascal/VOC/">
+                                Pascal
+                              </a>
+                            </b>
+                          </div>
                         </div>
+                        <footer class="card-footer">
+                          <a
+                            class="button card-footer-item is-unselectable"
+                            id="toggle-pascal-image"
+                            >Toggle example</a
+                          >
+                          <a
+                            class="button card-footer-item is-unselectable"
+                            id="run-pascal"
+                            >Run</a
+                          >
+                        </footer>
                       </div>
-                      <footer class="card-footer">
-                        <a class="button card-footer-item is-unselectable" id="toggle-pascal-image">Toggle example</a>
-                        <a class="button card-footer-item is-unselectable" id="run-pascal">Run</a>
-                      </footer>
                     </div>
-                  </div>
-                  <div class="column">
-                    <div class="card large">
-                      <div class="card-content">
-                        <div class="content">
-                          <b>DeepLab
-                            <a href="https://www.cityscapes-dataset.com">
-                              Cityscapes
-                            </a>
-                          </b>
+                    <div class="column">
+                      <div class="card large">
+                        <div class="card-content">
+                          <div class="content">
+                            <b
+                              >DeepLab
+                              <a href="https://www.cityscapes-dataset.com">
+                                Cityscapes
+                              </a>
+                            </b>
+                          </div>
                         </div>
+                        <footer class="card-footer">
+                          <a
+                            class="button card-footer-item is-unselectable"
+                            id="toggle-cityscapes-image"
+                            >Toggle example</a
+                          >
+                          <a
+                            class="button card-footer-item is-unselectable"
+                            id="run-cityscapes"
+                            >Run</a
+                          >
+                        </footer>
                       </div>
-                      <footer class="card-footer">
-                        <a class="button card-footer-item is-unselectable" id="toggle-cityscapes-image">Toggle
-                          example</a>
-                        <a class="button card-footer-item is-unselectable" id="run-cityscapes">Run</a>
-                      </footer>
+                      <div
+                        class="notification is-danger has-text-weight-semibold is-size-7 is-paddingless"
+                      >
+                        <span style="padding: 0.7em; display:block;">
+                          Running this model is resource-intensive and might
+                          crash your browser.
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                  <div class="column">
-                    <div class="card large">
-                      <div class="card-content">
-                        <div class="content">
-                          <b>DeepLab
-                            <a href="https://groups.csail.mit.edu/vision/datasets/ADE20K/">
-                              ADE20K
-                            </a>
-                          </b>
+                    <div class="column">
+                      <div class="card large">
+                        <div class="card-content">
+                          <div class="content">
+                            <b
+                              >DeepLab
+                              <a
+                                href="https://groups.csail.mit.edu/vision/datasets/ADE20K/"
+                              >
+                                ADE20K
+                              </a>
+                            </b>
+                          </div>
                         </div>
+                        <footer class="card-footer">
+                          <a
+                            class="button card-footer-item is-unselectable"
+                            id="toggle-ade20k-image"
+                            >Toggle example</a
+                          >
+                          <a
+                            class="button card-footer-item is-unselectable"
+                            id="run-ade20k"
+                            >Run</a
+                          >
+                        </footer>
                       </div>
-                      <footer class="card-footer">
-                        <a class="button card-footer-item is-unselectable" id="toggle-ade20k-image">Toggle example</a>
-                        <a class="button card-footer-item is-unselectable" id="run-ade20k">Run</a>
-                      </footer>
                     </div>
                   </div>
                 </div>
-              </div>
-            </article>
-          </div>
-          <div class="tile is-parent">
-            <span class="tile is-child">
-              <b>Disable quantization</b>: <label class="checkbox">
-                <input id="is-quantization-disabled" type="checkbox">
-                (this might <a href="https://github.com/tensorflow/tfjs-examples/tree/master/quantization">hurt</a>
-                performance, but
-                improve accuracy)
-              </label>
-
-            </span>
-          </div>
-          <div class="tile is-parent">
-            <p class="tile is-child">
-              <b>Status:</b> <span id="status-message">Loading models...</span>
-            </p>
-          </div>
-        </div>
-        <div class="tile is-4">
-          <div class="tile is-parent">
-            <div class="tile is-child box" style="z-index:100">
-              <div class="notification">
-                For best performance, upload images with objects (chairs, plants) or animals (humans,
-                cats).
-              </div>
-              <div class="file is-boxed is-centered">
-                <label class="file-label">
-                  <input class="file-input" type="file" name="image" id="upload-image">
-                  <span class="file-cta">
-                    <span class="file-label">
-                      Upload an image
-                    </span>
-                  </span>
+              </article>
+            </div>
+            <div class="tile is-parent">
+              <span class="tile is-child">
+                <b>Disable quantization</b>:
+                <label class="checkbox">
+                  <input id="is-quantization-disabled" type="checkbox" />
+                  (this might
+                  <a
+                    href="https://github.com/tensorflow/tfjs-examples/tree/master/quantization"
+                    >hurt</a
+                  >
+                  performance, but improve accuracy)
                 </label>
+              </span>
+            </div>
+            <div class="tile is-parent">
+              <p class="tile is-child">
+                <b>Status:</b>
+                <span id="status-message">Loading models...</span>
+              </p>
+            </div>
+          </div>
+          <div class="tile is-4">
+            <div class="tile is-parent">
+              <div
+                class="tile is-child box is-flex is-paddingless"
+                style="z-index:100; align-items:center; flex-direction:column"
+              >
+                <div class="section is-marginless">
+                  <div class="notification">
+                    For best performance, upload images with objects (chairs,
+                    plants) or animals (humans, cats).
+                  </div>
+                  <div class="file is-boxed is-centered">
+                    <label class="file-label">
+                      <input
+                        class="file-input"
+                        type="file"
+                        name="image"
+                        id="upload-image"
+                      />
+                      <span class="file-cta">
+                        <span class="file-label">
+                          Upload an image
+                        </span>
+                      </span>
+                    </label>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-      <div class="tile is-ancestor">
-        <div class="tile is-horizontal">
-          <div class="tile is-parent is-5">
-            <div class="tile is-child card large is-invisible" id="input-card">
-              <header class="card-header">
-                <p class="card-header-title">
-                  Input image
-                </p>
-              </header>
-              <div class="card-content">
-                <figure class="image">
-                  <img alt="Input image" id="input-image" src="./placeholder.png"/>
-                </figure>
+        <div class="tile is-ancestor">
+          <div class="tile is-horizontal">
+            <div class="tile is-parent is-5">
+              <div
+                class="tile is-child card large is-invisible"
+                id="input-card"
+              >
+                <header class="card-header">
+                  <p class="card-header-title">
+                    Input image
+                  </p>
+                </header>
+                <div class="card-content">
+                  <figure class="image">
+                    <img
+                      alt="Input image"
+                      id="input-image"
+                      src="./placeholder.png"
+                    />
+                  </figure>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="tile is-parent is-5">
-            <div class="tile is-child card large is-invisible" id="output-card">
-              <header class="card-header">
-                <p class="card-header-title">
-                  Segmentation map
-                </p>
-              </header>
-              <div class="card-content">
-                <figure class="image">
-                  <canvas id="output-image"></canvas>
-                </figure>
+            <div class="tile is-parent is-5">
+              <div
+                class="tile is-child card large is-invisible"
+                id="output-card"
+              >
+                <header class="card-header">
+                  <p class="card-header-title">
+                    Segmentation map
+                  </p>
+                </header>
+                <div class="card-content">
+                  <figure class="image">
+                    <canvas id="output-image"></canvas>
+                  </figure>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="tile is-parent">
-            <div class="tile is-child card large is-invisible" id="legend-card">
-              <header class="card-header">
-                <p class="card-header-title">
-                  Legend
-                </p>
-              </header>
-              <div class="card-content">
-                <div id="legend" class="columns is-multiline"></div>
+            <div class="tile is-parent">
+              <div
+                class="tile is-child card large is-invisible"
+                id="legend-card"
+              >
+                <header class="card-header">
+                  <p class="card-header-title">
+                    Legend
+                  </p>
+                </header>
+                <div class="card-content">
+                  <div id="legend" class="columns is-multiline"></div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-</body>
+  </body>
 </html>

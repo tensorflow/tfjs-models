@@ -16,7 +16,7 @@
  */
 
 import 'bulma/css/bulma.css';
-import {SemanticSegmentation} from '@tensorflow-models/deeplab';
+import { SemanticSegmentation } from '@tensorflow-models/deeplab';
 import * as tf from '@tensorflow/tfjs';
 import ade20kExampleImage from './examples/ade20k.jpg';
 import cityscapesExampleImage from './examples/cityscapes.jpg';
@@ -92,7 +92,7 @@ const processImages = (event) => {
 };
 
 const displaySegmentationMap = (modelName, deeplabOutput) => {
-  const {legend, height, width, segmentationMap} = deeplabOutput;
+  const { legend, height, width, segmentationMap } = deeplabOutput;
   const canvas = document.getElementById('output-image');
   const ctx = canvas.getContext('2d');
 
@@ -133,7 +133,7 @@ const displaySegmentationMap = (modelName, deeplabOutput) => {
   runner.classList.remove('is-loading');
 
   const inputContainer = document.getElementById('input-card');
-  inputContainer.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+  inputContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 };
 
 const status = (message) => {
@@ -145,7 +145,7 @@ const runPrediction = (modelName, input, initialisationStart) => {
   const model = deeplab[modelName];
   model.predict(input).then((output) => {
     displaySegmentationMap(modelName, output);
-    status(`Ran in ${performance.now() - initialisationStart} ms`);
+    status(`Ran in ${(performance.now() - initialisationStart).toFixed(2)} ms`);
   });
 };
 
