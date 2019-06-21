@@ -98,6 +98,7 @@ export interface BaseModel {
 export interface ModelConfig {
   architecture: PoseNetArchitecture;
   outputStride: PoseNetOutputStride;
+  inputResolution: PoseNetInputResolution;
   multiplier?: MobileNetMultiplier;
   modelUrl?: string;
   quantBytes?: PoseNetQuantBytes;
@@ -119,6 +120,7 @@ const MOBILENET_V1_CONFIG: ModelConfig = {
   architecture: 'MobileNetV1',
   outputStride: 16,
   multiplier: 0.75,
+  inputResolution: 257,
 } as ModelConfig;
 
 const VALID_ARCHITECTURE = ['MobileNetV1', 'ResNet50'];
@@ -144,6 +146,16 @@ function validateModelConfig(config: ModelConfig) {
     throw new Error(
         `Invalid architecture ${config.architecture}. ` +
         `Should be one of ${VALID_ARCHITECTURE}`);
+  }
+
+  if (config.inputResolution == null) {
+    config.inputResolution = 257;
+  }
+
+  if (VALID_INPUT_RESOLUTION.indexOf(config.inputResolution) < 0) {
+    throw new Error(
+        `Invalid inputResolution ${config.inputResolution}. ` +
+        `Should be one of ${VALID_INPUT_RESOLUTION}`);
   }
 
   if (config.outputStride == null) {
@@ -195,7 +207,6 @@ function validateModelConfig(config: ModelConfig) {
  */
 export interface InferenceConfig {
   flipHorizontal: boolean;
-  inputResolution: PoseNetInputResolution;
 }
 
 /**
@@ -233,35 +244,20 @@ export interface LegacySinglePersonInferenceConfig extends
 }
 
 export const SINGLE_PERSON_INFERENCE_CONFIG: SinglePersonInterfaceConfig = {
-  flipHorizontal: false,
-  inputResolution: 257
+  flipHorizontal: false
 };
 
 export const MULTI_PERSON_INFERENCE_CONFIG: MultiPersonInferenceConfig = {
   flipHorizontal: false,
-  inputResolution: 257,
   maxDetections: 5,
   scoreThreshold: 0.5,
   nmsRadius: 20
 };
 
-function validateBaseInferenceConfig({inputResolution}: InferenceConfig) {
-  if (VALID_INPUT_RESOLUTION.indexOf(inputResolution) < 0) {
-    throw new Error(
-        `Invalid inputResolution ${inputResolution}. ` +
-        `Should be one of ${VALID_INPUT_RESOLUTION}`);
-  }
-}
-
 function validateSinglePersonInferenceConfig(
-    config: SinglePersonInterfaceConfig) {
-  validateBaseInferenceConfig(config);
-}
-
+    config: SinglePersonInterfaceConfig) {}
 
 function validateMultiPersonInputConfig(config: MultiPersonInferenceConfig) {
-  validateBaseInferenceConfig(config);
-
   const {maxDetections, scoreThreshold, nmsRadius} = config;
 
   if (maxDetections <= 0) {
@@ -284,9 +280,11 @@ function validateMultiPersonInputConfig(config: MultiPersonInferenceConfig) {
 
 export class PoseNet {
   baseModel: BaseModel;
+  inputResolution: PoseNetInputResolution;
 
-  constructor(net: BaseModel) {
+  constructor(net: BaseModel, inputResolution: PoseNetInputResolution) {
     this.baseModel = net;
+    this.inputResolution = inputResolution;
   }
 
   /**
@@ -321,10 +319,10 @@ export class PoseNet {
     validateMultiPersonInputConfig(config);
 
     const outputStride = this.baseModel.outputStride;
-    const inputResolution = configWithDefaults.inputResolution;
+    const inputResolution = this.inputResolution;
 
     assertValidOutputStride(outputStride);
-    assertValidResolution(configWithDefaults.inputResolution, outputStride);
+    assertValidResolution(this.inputResolution, outputStride);
 
     const [height, width] = getInputTensorDimensions(input);
 
@@ -383,7 +381,7 @@ export class PoseNet {
     validateSinglePersonInferenceConfig(configWithDefaults);
 
     const outputStride = this.baseModel.outputStride;
-    const inputResolution = configWithDefaults.inputResolution;
+    const inputResolution = this.inputResolution;
     assertValidOutputStride(outputStride);
     assertValidResolution(inputResolution, outputStride);
 
@@ -442,7 +440,7 @@ async function loadMobileNet(config: ModelConfig): Promise<PoseNet> {
   const url = mobileNetCheckpoint(outputStride, multiplier, quantBytes);
   const graphModel = await tfc.loadGraphModel(config.modelUrl || url);
   const mobilenet = new MobileNet(graphModel, outputStride);
-  return new PoseNet(mobilenet);
+  return new PoseNet(mobilenet, config.inputResolution);
 }
 
 async function loadResNet(config: ModelConfig): Promise<PoseNet> {
@@ -458,7 +456,7 @@ async function loadResNet(config: ModelConfig): Promise<PoseNet> {
   const url = resNet50Checkpoint(outputStride, quantBytes);
   const graphModel = await tfc.loadGraphModel(config.modelUrl || url);
   const resnet = new ResNet(graphModel, outputStride);
-  return new PoseNet(resnet);
+  return new PoseNet(resnet, config.inputResolution);
 }
 
 /**

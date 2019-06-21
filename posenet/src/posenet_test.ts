@@ -40,13 +40,14 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
     const resNetConfig = {
       architecture: 'ResNet50',
       outputStride: outputStride,
-      inputResolution: inputResolution,
+      inputResolution,
       quantBytes: quantBytes
     } as posenetModel.ModelConfig;
 
     const mobileNetConfig = {
       architecture: 'MobileNetV1',
       outputStride: outputStride,
+      inputResolution,
       multiplier: multiplier,
       quantBytes: quantBytes
     } as posenetModel.ModelConfig;
@@ -111,10 +112,9 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
 
     const beforeTensors = tf.memory().numTensors;
 
-    resNet.estimateSinglePose(input, {flipHorizontal: false, inputResolution})
+    resNet.estimateSinglePose(input, {flipHorizontal: false})
         .then(() => {
-          return mobileNet.estimateSinglePose(
-              input, {flipHorizontal: false, inputResolution});
+          return mobileNet.estimateSinglePose(input, {flipHorizontal: false});
         })
         .then(() => {
           expect(tf.memory().numTensors).toEqual(beforeTensors);
@@ -131,7 +131,6 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
     resNet
         .estimateMultiplePoses(input, {
           flipHorizontal: false,
-          inputResolution,
           maxDetections: 5,
           scoreThreshold: 0.5,
           nmsRadius: 20
@@ -139,7 +138,6 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
         .then(() => {
           return mobileNet.estimateMultiplePoses(input, {
             flipHorizontal: false,
-            inputResolution,
             maxDetections: 5,
             scoreThreshold: 0.5,
             nmsRadius: 20

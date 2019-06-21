@@ -67,19 +67,20 @@ const defaultQuantBytes = 2;
 
 const defaultMobileNetMultiplier = isMobile() ? 0.50 : 0.75;
 const defaultMobileNetStride = 16;
+const defaultMobileNetInputResolution = 513;
 
 const defaultResNetMultiplier = 1.0;
 const defaultResNetStride = 32;
-const defaultInputResolution = 257;
+const defaultResNetInputResolution = 257;
 
 const guiState = {
   algorithm: 'multi-pose',
   input: {
     architecture: 'MobileNetV1',
     outputStride: defaultMobileNetStride,
+    inputResolution: defaultMobileNetInputResolution,
     multiplier: defaultMobileNetMultiplier,
-    quantBytes: defaultQuantBytes,
-    inputResolution: defaultInputResolution,
+    quantBytes: defaultQuantBytes
   },
   singlePoseDetection: {
     minPoseConfidence: 0.1,
@@ -134,6 +135,25 @@ function setupGui(cameras, net) {
   architectureController =
       input.add(guiState.input, 'architecture', ['MobileNetV1', 'ResNet50']);
   guiState.architecture = guiState.input.architecture;
+  // Input resolution:  Internally, this parameter affects the height and width
+  // of the layers in the neural network. The higher the value of the input
+  // resolution the better the accuracy but slower the speed.
+  let inputResolutionController = null;
+  function updateGuiInputResolution(
+      inputResolution,
+      inputResolutionArray,
+  ) {
+    if (inputResolutionController) {
+      inputResolutionController.remove();
+    }
+    guiState.inputResolution = inputResolution;
+    guiState.input.inputResolution = inputResolution;
+    inputResolutionController =
+        input.add(guiState.input, 'inputResolution', inputResolutionArray);
+    inputResolutionController.onChange(function(inputResolution) {
+      guiState.changeToInputResolution = inputResolution;
+    });
+  }
 
   // Output stride:  Internally, this parameter affects the height and width of
   // the layers in the neural network. The lower the value of the output stride
@@ -188,13 +208,15 @@ function setupGui(cameras, net) {
     });
   }
 
-  input.add(guiState.input, 'inputResolution', posenet.VALID_INPUT_RESOLUTION);
-
   function updateGui() {
     if (guiState.input.architecture === 'MobileNetV1') {
+      updateGuiInputResolution(
+          defaultMobileNetInputResolution, [257, 353, 449, 513, 801]);
       updateGuiOutputStride(defaultMobileNetStride, [8, 16]);
       updateGuiMultiplier(defaultMobileNetMultiplier, [0.50, 0.75, 1.0])
     } else {  // guiState.input.architecture === "ResNet50"
+      updateGuiInputResolution(
+          defaultResNetInputResolution, [257, 353, 449, 513, 801]);
       updateGuiOutputStride(defaultResNetStride, [32, 16]);
       updateGuiMultiplier(defaultResNetMultiplier, [1.0]);
     }
@@ -208,12 +230,10 @@ function setupGui(cameras, net) {
   // Min part confidence: the confidence that a particular estimated keypoint
   // position is accurate (i.e. the elbow's position)
   let single = gui.addFolder('Single Pose Detection');
-
   single.add(guiState.singlePoseDetection, 'minPoseConfidence', 0.0, 1.0);
   single.add(guiState.singlePoseDetection, 'minPartConfidence', 0.0, 1.0);
 
   let multi = gui.addFolder('Multi Pose Detection');
-
   multi.add(guiState.multiPoseDetection, 'maxPoseDetections')
       .min(1)
       .max(20)
@@ -286,6 +306,7 @@ function detectPoseInRealTime(video, net) {
       guiState.net = await posenet.load({
         architecture: guiState.changeToArchitecture,
         outputStride: guiState.outputStride,
+        inputResolution: guiState.inputResolution,
         multiplier: guiState.multiplier,
       });
       toggleLoadingUI(false);
@@ -299,6 +320,7 @@ function detectPoseInRealTime(video, net) {
       guiState.net = await posenet.load({
         architecture: guiState.architecture,
         outputStride: guiState.outputStride,
+        inputResolution: guiState.inputResolution,
         multiplier: +guiState.changeToMultiplier,
         quantBytes: guiState.quantBytes
       });
@@ -314,12 +336,29 @@ function detectPoseInRealTime(video, net) {
       guiState.net = await posenet.load({
         architecture: guiState.architecture,
         outputStride: +guiState.changeToOutputStride,
+        inputResolution: guiState.inputResolution,
         multiplier: guiState.multiplier,
         quantBytes: guiState.quantBytes
       });
       toggleLoadingUI(false);
       guiState.outputStride = +guiState.changeToOutputStride;
       guiState.changeToOutputStride = null;
+    }
+
+    if (guiState.changeToInputResolution) {
+      // Important to purge variables and free up GPU memory
+      guiState.net.dispose();
+      toggleLoadingUI(true);
+      guiState.net = await posenet.load({
+        architecture: guiState.architecture,
+        outputStride: guiState.outputStride,
+        inputResolution: +guiState.changeToInputResolution,
+        multiplier: guiState.multiplier,
+        quantBytes: guiState.quantBytes
+      });
+      toggleLoadingUI(false);
+      guiState.inputResolution = +guiState.changeToInputResolution;
+      guiState.changeToInputResolution = null;
     }
 
     if (guiState.changeToQuantBytes) {
@@ -329,6 +368,7 @@ function detectPoseInRealTime(video, net) {
       guiState.net = await posenet.load({
         architecture: guiState.architecture,
         outputStride: guiState.outputStride,
+        inputResolution: guiState.inputResolution,
         multiplier: guiState.multiplier,
         quantBytes: guiState.changeToQuantBytes
       });
@@ -343,19 +383,20 @@ function detectPoseInRealTime(video, net) {
     let poses = [];
     let minPoseConfidence;
     let minPartConfidence;
-    const inputResolution = +guiState.input.inputResolution;
     switch (guiState.algorithm) {
       case 'single-pose':
-        const pose = await guiState.net.estimateSinglePose(
-            video, {inputResolution, flipHorizontal: flipPoseHorizontal});
+        const pose = await guiState.net.estimatePoses(video, {
+          flipHorizontal: flipPoseHorizontal,
+          decodingMethod: 'single-person'
+        });
         poses = poses.concat(pose);
         minPoseConfidence = +guiState.singlePoseDetection.minPoseConfidence;
         minPartConfidence = +guiState.singlePoseDetection.minPartConfidence;
         break;
       case 'multi-pose':
-        let all_poses = await guiState.net.estimateMultiplePoses(video, {
-          inputResolution,
+        let all_poses = await guiState.net.estimatePoses(video, {
           flipHorizontal: flipPoseHorizontal,
+          decodingMethod: 'multi-person',
           maxDetections: guiState.multiPoseDetection.maxPoseDetections,
           scoreThreshold: guiState.multiPoseDetection.minPartConfidence,
           nmsRadius: guiState.multiPoseDetection.nmsRadius
