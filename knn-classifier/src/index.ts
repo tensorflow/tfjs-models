@@ -14,8 +14,8 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as tf from '@tensorflow/tfjs';
-import {Tensor, Tensor1D, Tensor2D, util} from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
+import {Tensor, Tensor1D, Tensor2D, util} from '@tensorflow/tfjs-core';
 import {concatWithNulls, topK} from './util';
 
 /**
@@ -129,8 +129,11 @@ export class KNNClassifier {
    * @returns A dict of the top class for the input and an array of confidence
    * values for all possible classes.
    */
-  async predictClass(input: Tensor, k = 3):
-      Promise<{label: string, classIndex: number, confidences: {[label: string]: number}}> {
+  async predictClass(input: Tensor, k = 3): Promise<{
+    label: string,
+    classIndex: number,
+    confidences: {[label: string]: number}
+  }> {
     if (k < 1) {
       throw new Error(
           `Please provide a positive integer k value to predictClass.`);
@@ -199,7 +202,11 @@ export class KNNClassifier {
 
     if (topKIndices == null) {
       // No class predicted
-      return {classIndex: this.labelToClassId[topLabel], label: topLabel, confidences};
+      return {
+        classIndex: this.labelToClassId[topLabel],
+        label: topLabel,
+        confidences
+      };
     }
 
     const classOffsets: {[label: string]: number} = {};
@@ -233,7 +240,11 @@ export class KNNClassifier {
       confidences[label] = probability;
     }
 
-    return {classIndex: this.labelToClassId[topLabel], label: topLabel, confidences};
+    return {
+      classIndex: this.labelToClassId[topLabel],
+      label: topLabel,
+      confidences
+    };
   }
 
   /**

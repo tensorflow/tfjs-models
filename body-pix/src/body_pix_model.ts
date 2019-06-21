@@ -16,7 +16,8 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tfconv from '@tensorflow/tfjs-converter';
+import * as tf from '@tensorflow/tfjs-core';
 
 import {checkpoints} from './checkpoints';
 import {decodePartSegmentation, toMask} from './decode_part_map';
@@ -235,8 +236,8 @@ export const mobilenetLoader = {
 
     const baseUrl = checkpoint.url;
 
-    const model =
-        await tf.loadGraphModel(`${baseUrl}model.json`) as tf.GraphModel;
+    const model = await tfconv.loadGraphModel(`${baseUrl}model.json`) as
+        tfconv.GraphModel;
 
     const weights = new ModelWeights(model);
 

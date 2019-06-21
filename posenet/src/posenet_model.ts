@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import * as tfc from '@tensorflow/tfjs-converter';
+import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
 import {mobileNetCheckpoint, resNet50Checkpoint} from './checkpoints';
@@ -439,7 +439,7 @@ async function loadMobileNet(config: ModelConfig): Promise<PoseNet> {
   }
 
   const url = mobileNetCheckpoint(outputStride, multiplier, quantBytes);
-  const graphModel = await tfc.loadGraphModel(config.modelUrl || url);
+  const graphModel = await tfconv.loadGraphModel(config.modelUrl || url);
   const mobilenet = new MobileNet(graphModel, outputStride);
   return new PoseNet(mobilenet, config.inputResolution);
 }
@@ -455,7 +455,7 @@ async function loadResNet(config: ModelConfig): Promise<PoseNet> {
   }
 
   const url = resNet50Checkpoint(outputStride, quantBytes);
-  const graphModel = await tfc.loadGraphModel(config.modelUrl || url);
+  const graphModel = await tfconv.loadGraphModel(config.modelUrl || url);
   const resnet = new ResNet(graphModel, outputStride);
   return new PoseNet(resnet, config.inputResolution);
 }
