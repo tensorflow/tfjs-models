@@ -50,8 +50,8 @@ const net = await posenet.load();
 By default, `posenet.load()` loads a faster and smaller model that is based on MobileNetV1 architecture and has a lower accuracy. If you want to load the larger and more accurate model, specify the architecture explicitly in `posenet.load()` using a `ModelConfig` dictionary:
 
 
+#### MobileNet (smaller, faster, less accurate)
 ```javascript
-// Loads MobileNetV1 based PoseNet
 const net = await posenet.load({
   architecture: 'MobileNetV1',
   outputStride: 16,
@@ -60,10 +60,8 @@ const net = await posenet.load({
 });
 ```
 
-or
-
+#### ResNet (larger, slower, more accurate) \*\*new!\*\*
 ```javascript
-// Loads ResNet based PoseNet
 const net = await posenet.load({
   architecture: 'ResNet50',
   outputStride: 32,
