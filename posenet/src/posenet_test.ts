@@ -61,6 +61,7 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
         outputStride,
         predict: (input: tf.Tensor3D) => {
           return {
+            inputResolution,
             heatmapScores:
                 tf.zeros([outputResolution, outputResolution, numKeypoints]),
             offsets: tf.zeros(
@@ -80,6 +81,7 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
         outputStride,
         predict: (input: tf.Tensor3D) => {
           return {
+            inputResolution,
             heatmapScores:
                 tf.zeros([outputResolution, outputResolution, numKeypoints]),
             offsets: tf.zeros(

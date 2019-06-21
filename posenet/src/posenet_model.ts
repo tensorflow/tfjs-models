@@ -413,9 +413,10 @@ export class PoseNet {
   async estimatePoses(
       input: PosenetInput,
       config: LegacySinglePersonInferenceConfig|
-      LegacyMultiPersonInferenceConfig) {
+      LegacyMultiPersonInferenceConfig): Promise<Pose[]> {
     if (config.decodingMethod == 'single-person') {
-      return this.estimateSinglePose(input, config);
+      const pose = await this.estimateSinglePose(input, config);
+      return [pose];
     } else {
       return this.estimateMultiplePoses(input, config);
     }
