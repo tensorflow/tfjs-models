@@ -97,10 +97,9 @@ Single pose estimation is the simpler and faster of the two algorithms. Its idea
 ```javascript
 const net = await posenet.load();
 
-const poses = await net.estimateSinglePose(image, {
+const pose = await net.estimateSinglePose(image, {
   flipHorizontal: false
 });
-const pose = poses[0];
 ```
 
 #### Inputs
