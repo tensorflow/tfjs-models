@@ -1,5 +1,7 @@
 # Pose Detection in the Browser: PoseNet Model
 
+## Note: We've just released Version 2.0 with a **new ResNet** model and API. Check out the new documentation below.
+
 This package contains a standalone model called PoseNet, as well as some demos, for running real-time pose estimation in the browser using TensorFlow.js.
 
 [Try the demo here!](https://storage.googleapis.com/tfjs-models/demos/posenet/camera.html)
@@ -36,29 +38,6 @@ npm install @tensorflow-models/posenet
 Either a single pose or multiple poses can be estimated from an image.
 Each methodology has its own algorithm and set of parameters.
 
-### Keypoints
-
-All keypoints are indexed by part id.  The parts and their ids are:
-
-| Id | Part |
-| -- | -- |
-| 0 | nose |
-| 1 | leftEye |
-| 2 | rightEye |
-| 3 | leftEar |
-| 4 | rightEar |
-| 5 | leftShoulder |
-| 6 | rightShoulder |
-| 7 | leftElbow |
-| 8 | rightElbow |
-| 9 | leftWrist |
-| 10 | rightWrist |
-| 11 | leftHip |
-| 12 | rightHip |
-| 13 | leftKnee |
-| 14 | rightKnee |
-| 15 | leftAnkle |
-| 16 | rightAnkle |
 
 ### Loading a pre-trained PoseNet Model
 
@@ -339,6 +318,31 @@ which would produce the output:
   ]
 }
 ```
+
+### Keypoints
+
+All keypoints are indexed by part id.  The parts and their ids are:
+
+| Id | Part |
+| -- | -- |
+| 0 | nose |
+| 1 | leftEye |
+| 2 | rightEye |
+| 3 | leftEar |
+| 4 | rightEar |
+| 5 | leftShoulder |
+| 6 | rightShoulder |
+| 7 | leftElbow |
+| 8 | rightElbow |
+| 9 | leftWrist |
+| 10 | rightWrist |
+| 11 | leftHip |
+| 12 | rightHip |
+| 13 | leftKnee |
+| 14 | rightKnee |
+| 15 | leftAnkle |
+| 16 | rightAnkle |
+
 
 ### Multi-Person Pose Estimation
 
