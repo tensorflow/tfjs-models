@@ -40,14 +40,14 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
     const resNetConfig = {
       architecture: 'ResNet50',
       outputStride: outputStride,
-      inputResolution: inputResolution,
+      inputResolution,
       quantBytes: quantBytes
     } as posenetModel.ModelConfig;
 
     const mobileNetConfig = {
       architecture: 'MobileNetV1',
       outputStride: outputStride,
-      inputResolution: inputResolution,
+      inputResolution,
       multiplier: multiplier,
       quantBytes: quantBytes
     } as posenetModel.ModelConfig;
@@ -58,10 +58,10 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
 
     spyOn(resnet, 'ResNet').and.callFake(() => {
       return {
-        inputResolution,
         outputStride,
         predict: (input: tf.Tensor3D) => {
           return {
+            inputResolution,
             heatmapScores:
                 tf.zeros([outputResolution, outputResolution, numKeypoints]),
             offsets: tf.zeros(
@@ -78,10 +78,10 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
 
     spyOn(mobilenet, 'MobileNet').and.callFake(() => {
       return {
-        inputResolution,
         outputStride,
         predict: (input: tf.Tensor3D) => {
           return {
+            inputResolution,
             heatmapScores:
                 tf.zeros([outputResolution, outputResolution, numKeypoints]),
             offsets: tf.zeros(
@@ -108,55 +108,47 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
         .catch(done.fail);
   });
 
-  it('estimatePoses does not leak memory when it is using sinlge-person decoding',
-     done => {
-       const input =
-           tf.zeros([inputResolution, inputResolution, 3]) as tf.Tensor3D;
+  it('estimateSinglePose does not leak memory', done => {
+    const input =
+        tf.zeros([inputResolution, inputResolution, 3]) as tf.Tensor3D;
 
-       const beforeTensors = tf.memory().numTensors;
+    const beforeTensors = tf.memory().numTensors;
 
-       resNet
-           .estimatePoses(
-               input, {flipHorizontal: false, decodingMethod: 'single-person'})
-           .then(() => {
-             return mobileNet.estimatePoses(
-                 input,
-                 {flipHorizontal: false, decodingMethod: 'single-person'});
-           })
-           .then(() => {
-             expect(tf.memory().numTensors).toEqual(beforeTensors);
-           })
-           .then(done)
-           .catch(done.fail);
-     });
+    resNet.estimateSinglePose(input, {flipHorizontal: false})
+        .then(() => {
+          return mobileNet.estimateSinglePose(input, {flipHorizontal: false});
+        })
+        .then(() => {
+          expect(tf.memory().numTensors).toEqual(beforeTensors);
+        })
+        .then(done)
+        .catch(done.fail);
+  });
 
-  it('estimatePoses does not leak memory when it is using multi-person decoding',
-     done => {
-       const input =
-           tf.zeros([inputResolution, inputResolution, 3]) as tf.Tensor3D;
+  it('estimateMultiplePoses does not leak memory', done => {
+    const input =
+        tf.zeros([inputResolution, inputResolution, 3]) as tf.Tensor3D;
 
-       const beforeTensors = tf.memory().numTensors;
-       resNet
-           .estimatePoses(input, {
-             flipHorizontal: false,
-             decodingMethod: 'multi-person',
-             maxDetections: 5,
-             scoreThreshold: 0.5,
-             nmsRadius: 20
-           })
-           .then(() => {
-             return mobileNet.estimatePoses(input, {
-               flipHorizontal: false,
-               decodingMethod: 'multi-person',
-               maxDetections: 5,
-               scoreThreshold: 0.5,
-               nmsRadius: 20
-             });
-           })
-           .then(() => {
-             expect(tf.memory().numTensors).toEqual(beforeTensors);
-           })
-           .then(done)
-           .catch(done.fail);
-     });
+    const beforeTensors = tf.memory().numTensors;
+    resNet
+        .estimateMultiplePoses(input, {
+          flipHorizontal: false,
+          maxDetections: 5,
+          scoreThreshold: 0.5,
+          nmsRadius: 20
+        })
+        .then(() => {
+          return mobileNet.estimateMultiplePoses(input, {
+            flipHorizontal: false,
+            maxDetections: 5,
+            scoreThreshold: 0.5,
+            nmsRadius: 20
+          });
+        })
+        .then(() => {
+          expect(tf.memory().numTensors).toEqual(beforeTensors);
+        })
+        .then(done)
+        .catch(done.fail);
+  });
 });
