@@ -14,125 +14,204 @@
 # limitations under the License.
 # =============================================================================
 
-# Make sure that we run Python 3.6, not 3.7
+# Make sure that we run Python 3.6 or newer
 PYTHON_VERSION=$(python -V 2>&1 | sed 's/.* \([0-9]\).\([0-9]\).*/\1\2/')
-if [ "$PYTHON_VERSION" -gt "36" ]; then
-  echo "This script requires python 3.6 or older."
+if [ "$PYTHON_VERSION" -lt "36" ]; then
+  echo "This script requires python 3.6 or newer."
   exit 1
 fi
 
-if [ -z "$1" ]; then
-  echo "No target directory supplied, aborting."
-  exit 1
+if ! [ -x "$(command -v aria2c)" ]; then
+  echo "Please install aria2c before continuing."
 fi
 
-SOURCE_CODE_URL="https://raw.githubusercontent.com/tensorflow/tpu/master/models/official/"
-SOURCE_CODE_FILES=(
-  "efficientnet_builder.py"
-  "efficientnet_model.py"
-  "eval_ckpt_main.py"
-  "utils.py"
-  "preprocessing.py"
+notify() {
+  # $1: the string which encloses the message
+  # $2: the message text
+  MESSAGE="$1 $2 $1"
+  PADDING=$(eval $(echo printf '"$1%0.s"' {1..${#MESSAGE}}))
+  SPACING="$1 $(eval $(echo printf '.%0.s' {1..${#2}})) $1"
+  echo $PADDING
+  echo $SPACING
+  echo $MESSAGE
+  echo $SPACING
+  echo $PADDING
+}
+
+elementIn() {
+  # Checks whether $1 is in the array $2
+  # Example:
+  # The snippet
+  #   array=("1" "a string" "3")
+  #   containsElement "a string" "${array[@]}"
+  # Returns 1
+  # Source:
+  # https://stackoverflow.com/questions/3685970/check-if-a-bash-array-contains-a-value
+  local e match="$1"
+  shift
+  for e; do [[ "$e" == "$match" ]] && return 0; done
+  return 1
+}
+
+# The mechanics of reading the long options are taken from
+# https://mywiki.wooledge.org/ComplexOptionParsing#CA-78a4030cda5dc5c45377a4d98ebd4fe610e0aa7e_2
+usage() {
+  echo "Usage:"
+  echo "  $0 [ --help | -h ]"
+  echo "  $0 [ --target_dir=<value> | --target_dir <value> ] [options]"
+  echo
+  echo "Options:"
+  echo "  --use_venv=true|yes|1|t|y :: Use the virtual env with pre-installed dependencies"
+  echo
+  echo "The default target_dir is dist."
+}
+
+# set defaults
+LAST_ARG_IDX=$(($# + 1))
+TARGET_DIR=$(realpath "dist")
+USE_VENV="false"
+declare -A LONGOPTS
+# Use associative array to declare how many arguments a long option
+# expects. In this case we declare that loglevel expects/has one
+# argument and range has two. Long options that aren't listed in this
+# way will have zero arguments by default.
+LONGOPTS=([target_dir]=1 [use_venv]=1)
+OPTSPEC="h-:"
+while getopts "$OPTSPEC" opt; do
+  while true; do
+    case "${opt}" in
+    -) #OPTARG is name-of-long-option or name-of-long-option=value
+      if [[ ${OPTARG} =~ .*=.* ]]; then # with this --key=value format only one argument is possible
+        opt=${OPTARG/=*/}
+        ((${#opt} <= 1)) && {
+          echo "Syntax error: Invalid long option '$opt'" >&2
+          exit 2
+        }
+        if (($((LONGOPTS[$opt])) != 1)); then
+          echo "Syntax error: Option '$opt' does not support this syntax." >&2
+          exit 2
+        fi
+        OPTARG=${OPTARG#*=}
+      else #with this --key value1 value2 format multiple arguments are possible
+        opt="$OPTARG"
+        ((${#opt} <= 1)) && {
+          echo "Syntax error: Invalid long option '$opt'" >&2
+          exit 2
+        }
+        OPTARG=(${@:OPTIND:$((LONGOPTS[$opt]))})
+        ((OPTIND += LONGOPTS[$opt]))
+        echo $OPTIND
+        ((OPTIND > $LAST_ARG_IDX)) && {
+          echo "Syntax error: Not all required arguments for option '$opt' are given." >&2
+          exit 3
+        }
+      fi
+      continue
+      ;;
+    target_dir)
+      TARGET_DIR=$(realpath $OPTARG)
+      ;;
+    use_venv)
+      USE_VENV=$OPTARG
+      ;;
+    h | help)
+      usage
+      exit 0
+      ;;
+    ?)
+      echo "Syntax error: Unknown short option '$OPTARG'" >&2
+      exit 2
+      ;;
+    *)
+      echo "Syntax error: Unknown long option '$opt'" >&2
+      exit 2
+      ;;
+    esac
+    break
+  done
+done
+
+# internal variables
+TRUE=(
+  "true"
+  "t"
+  "1"
+  "yes"
+  "y"
 )
-SOURCE_CODE_DIR="src"
-
-CHECKPOINTS_DIR="pretrained_tensorflow"
-CHECKPOINT_PREFIX="efficientnet-"
-CHECKPOINTS_URL="https://storage.googleapis.com/cloud-tpu-checkpoints/efficientnet/"
-CHECKPOINTS_EXT=".tar.gz"
-
+CONVERTED_MODELS_DIR="web-efficientnet"
+VIRTUALENV_DIR="venv"
 MODEL_NAME="efficientnet"
-URL_PREFIX="https://github.com/qubvel/efficientnet/releases/download/v0.0.1/efficientnet-"
+MODEL_SOURCE_DIR="efficientnet-source"
+MODEL_SOURCE_URL="https://github.com/sdll/efficientnet"
+MODEL_SOURCE_BRANCH="tf-keras"
+
 MODELS=(
   "b0"
+  "b1"
+  "b2"
   "b3"
+  "b4"
   "b5"
 )
-FILE_SUFFIX="_imagenet_1000.h5"
 
-MODEL_DIR="dist"
-# MODEL_DIR=$(mktemp -d)
-SCRIPT_DIR=$(pwd)
+PARENT_DIR="$(pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# trap 'rm -rf -- "$MODEL_DIR"' INT TERM HUP EXIT
-
-printf -- '=%.0s' {1..80}
-echo ""
-echo "Setting up the installation environment..."
-printf -- '=%.0s' {1..80}
-echo ""
+notify "=" "Setting up the conversion environment..."
 
 set -e
 
-cd $MODEL_DIR &&
-  echo 1
-# virtualenv --no-site-packages venv && \
-# source venv/bin/activate && \
-# pip install tensorflowjs numpy tensorflow
-printf -- '=%.0s' {1..80}
-echo ""
-echo "Downloading the checkpoints..."
-printf -- '=%.0s' {1..80}
-echo ""
+mkdir -p $TARGET_DIR/$CONVERTED_MODELS_DIR
 
-mkdir -p $CHECKPOINTS_DIR
+mkdir -p $TARGET_DIR
+cd $TARGET_DIR
+
+if elementIn "$USE_VENV" "${TRUE[@]}"; then
+  if [ -d $VIRTUALENV_DIR ]; then
+    source $VIRTUALENV_DIR/bin/activate
+  else
+    virtualenv --no-site-packages $VIRTUALENV_DIR
+    source $VIRTUALENV_DIR/bin/activate
+    pip install tensorflowjs keras scikit-image
+  fi
+fi
+
+notify "=" "Converting the model to tfjs..."
+
+if ! [ -d $MODEL_SOURCE_DIR ]; then
+  notify "~" "Downloading the model implementation..."
+  git clone -b $MODEL_SOURCE_BRANCH $MODEL_SOURCE_URL $MODEL_SOURCE_DIR
+fi
+
+cd $MODEL_SOURCE_DIR
+./scripts/convert_from_tf_to_keras.sh --target_dir dist --saved_model=true
+
+cd dist/pretrained_keras
+
 for MODEL_VERSION in "${MODELS[@]}"; do
-  aria2c -x 16 -k 1M -o $MODEL_VERSION$CHECKPOINTS_EXT $CHECKPOINTS_URL$CHECKPOINT_PREFIX$MODEL_VERSION$CHECKPOINTS_EXT
-  tar xvf $MODEL_VERSION$CHECKPOINTS_EXT
-  rm $MODEL_VERSION$CHECKPOINTS_EXT
+
+  MODEL_NAME="efficientnet-"$MODEL_VERSION
+
+  notify "~" "Converting $MODEL_NAME..."
+  tensorflowjs_converter \
+    --quantization_bytes 2 \
+    --input_format=tf_saved_model \
+    --output_format=tfjs_graph_model \
+    --signature_name=serving_default \
+    --saved_model_tags=serve \
+    $MODEL_NAME \
+    $TARGET_DIR/$CONVERTED_MODELS_DIR/$MODEL_VERSION
+
+  notify "~" "Converting and quantizing $MODEL_NAME..."
+  tensorflowjs_converter \
+    --quantization_bytes 2 \
+    --input_format=tf_saved_model \
+    --output_format=tfjs_graph_model \
+    --signature_name=serving_default \
+    --saved_model_tags=serve \
+    $MODEL_NAME \
+    $TARGET_DIR/$CONVERTED_MODELS_DIR/quantized/$MODEL_VERSION
 done
 
-printf -- '=%.0s' {1..80}
-echo ""
-echo "Converting the checkpoints to Keras..."
-printf -- '=%.0s' {1..80}
-echo ""
-
-mkdir -p $SOURCE_CODE_DIR
-touch $SOURCE_CODE_DIR/__init__.py
-for SOURCE_CODE_FILE in "${SOURCE_CODE_FILES[@]}"; do
-  aria2c -x 16 -k 1M -o $SOURCE_CODE_DIR/$SOURCE_CODE_FILE $SOURCE_CODE_URL/$SOURCE_CODE_FILE
-done
-
-mkdir -p $SCRIPT_DIR/$1/$MODEL_NAME/quantized
-# for MODEL_VERSION in "${MODELS[@]}"
-# do
-#   printf -- '=%.0s' {1..80}; echo ""
-
-#   printf -- '-%.0s' {1..80}; echo ""
-#   echo "Downloading and extracting the model from $URL_PREFIX$MODEL_VERSION$FILE_SUFFIX..."
-#   printf -- '-%.0s' {1..80}; echo ""
-
-#   aria2c -x 16 -k 1M -o $MODEL_VERSION$FILE_SUFFIX $URL_PREFIX$MODEL_VERSION$FILE_SUFFIX
-
-#   printf -- '-%.0s' {1..80}; echo ""
-#   echo "Converting the model to JSON..."
-#   printf -- '-%.0s' {1..80}; echo ""
-
-#   tensorflowjs_converter \
-#     --input_format keras \
-#     --output_format tfjs_graph_model \
-#     $MODEL_DIR/$MODEL_VERSION$FILE_SUFFIX \
-#     $1/$MODEL_NAME/$MODEL_VERSION
-
-#   printf -- '-%.0s' {1..80}; echo ""
-#   echo "Converting the model to quantized JSON..."
-#   printf -- '-%.0s' {1..80}; echo ""
-
-#   tensorflowjs_converter \
-#     --quantization_bytes 2 \
-#     --input_format keras \
-#     --output_format tfjs_graph_model \
-#     $MODEL_DIR/$MODEL_VERSION$FILE_SUFFIX \
-#     $1/$MODEL_NAME/quantized/$MODEL_VERSION
-
-#   printf -- '=%.0s' {1..80}; echo ""
-# done
-
-# echo "Success!"
-tensorflowjs_converter \
-  --quantization_bytes 2 \
-  --input_format keras \
-  --output_format tfjs_graph_model \
-  efficientnet/dist/efficientnet-b0.h5 \
-  testdir
+notify "=" "Success!"
