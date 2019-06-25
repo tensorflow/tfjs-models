@@ -20,19 +20,21 @@ import { EfficientNetInput, EfficientNetBaseModel } from './types';
 import { config } from './config';
 
 const normalize = (image: tf.Tensor3D) => {
-  const [height, width] = image.shape;
-  const imageData = image.arraySync() as number[][][];
-  image.dispose();
-  const meanRGB = config['MEAN_RGB'].map(depth => depth * 255);
-  const stddevRGB = config['STDDEV_RGB'].map(depth => depth * 255);
-  for (let columnIndex = 0; columnIndex < height; ++columnIndex) {
-    for (let rowIndex = 0; rowIndex < width; ++rowIndex) {
-      imageData[columnIndex][rowIndex] = imageData[columnIndex][rowIndex].map(
-        (depth, channel) => (depth - meanRGB[channel]) / stddevRGB[channel]
-      );
+  return tf.tidy(() => {
+    const [height, width] = image.shape;
+    const imageData = image.arraySync() as number[][][];
+    const meanRGB = config['MEAN_RGB'].map(depth => depth * 255);
+    const stddevRGB = config['STDDEV_RGB'].map(depth => depth * 255);
+    for (let columnIndex = 0; columnIndex < height; ++columnIndex) {
+      for (let rowIndex = 0; rowIndex < width; ++rowIndex) {
+        imageData[columnIndex][rowIndex] = imageData[columnIndex][rowIndex].map(
+          (depth, channel) => (depth - meanRGB[channel]) / stddevRGB[channel]
+        );
+      }
     }
-  }
-  return tf.tensor3d(imageData);
+    tf.dispose(image);
+    return tf.tensor3d(imageData);
+  });
 };
 
 const cropAndResize = (
@@ -53,7 +55,7 @@ const cropAndResize = (
     const offsetHeight = Math.round((height - paddedCenterCropSize + 1) / 2);
     const offsetWidth = Math.round((width - paddedCenterCropSize + 1) / 2);
 
-    return tf.image
+    const processedImage: tf.Tensor3D = tf.image
       .cropAndResize(
         image.expandDims(0),
         [
@@ -68,6 +70,8 @@ const cropAndResize = (
         [imageSize, imageSize]
       )
       .squeeze([0]);
+    tf.dispose(image);
+    return processedImage;
   });
 };
 
@@ -76,8 +80,7 @@ export const toInputTensor = (
   input: EfficientNetInput
 ) => {
   return tf.tidy(() => {
-    const croppedAndResizedImage = cropAndResize(base, input);
-    return normalize(croppedAndResizedImage).expandDims(0);
+    return normalize(cropAndResize(base, input)).expandDims(0);
   });
 };
 

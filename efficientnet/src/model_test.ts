@@ -28,14 +28,13 @@ describeWithFlags('EfficientNet', NODE_ENVS, () => {
   });
   it('EfficientNet predict should not leak', async () => {
     const model = new EfficientNet('b0');
+
     const x = tf.zeros([227, 227, 3]) as tf.Tensor3D;
-
-    await model.predict(x);
-
     const numOfTensorsBefore = tf.memory().numTensors;
 
     await model.predict(x);
     await model.dispose();
+
     expect(tf.memory().numTensors).toEqual(numOfTensorsBefore);
   });
 });

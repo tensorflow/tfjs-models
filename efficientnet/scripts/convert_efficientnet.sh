@@ -139,9 +139,8 @@ TRUE=(
   "yes"
   "y"
 )
-CONVERTED_MODELS_DIR="web-efficientnet"
+CONVERTED_MODELS_DIR="efficientnet"
 VIRTUALENV_DIR="venv"
-MODEL_NAME="efficientnet"
 MODEL_SOURCE_DIR="efficientnet-source"
 MODEL_SOURCE_URL="https://github.com/sdll/efficientnet"
 MODEL_SOURCE_BRANCH="tf-keras"

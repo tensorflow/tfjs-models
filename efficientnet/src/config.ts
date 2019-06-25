@@ -20,7 +20,10 @@ export const config = {
   CROP_PADDING: 32,
   CROP_SIZE: {
     b0: 224,
+    b1: 240,
+    b2: 260,
     b3: 300,
+    b4: 380,
     b5: 456,
   },
   MEAN_RGB: [0.485, 0.456, 0.406],
