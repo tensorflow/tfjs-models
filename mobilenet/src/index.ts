@@ -15,13 +15,32 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tfconv from '@tensorflow/tfjs-converter';
+import * as tf from '@tensorflow/tfjs-core';
+
 import {IMAGENET_CLASSES} from './imagenet_classes';
 
 const IMAGE_SIZE = 224;
 
-export type MobileNetVersion = 1;
+export type MobileNetVersion = 1|2;
 export type MobileNetAlpha = 0.25|0.50|0.75|1.0;
+
+/**
+ * Mobilenet model loading configuration
+ *
+ * @param version The MobileNet version number. Use 1 for MobileNetV1, and 2
+ * for MobileNetV2. Defaults to 1.
+ * @param alpha Controls the width of the network, trading accuracy for
+ * performance. A smaller alpha decreases accuracy and increases performance.
+ * Defaults to 1.0.
+ * @param modelUrl Optional param for specifying the custom model url or
+ * an `tf.io.IOHandler` object.
+ */
+export interface ModelConfig {
+  version: MobileNetVersion;
+  alpha?: MobileNetAlpha;
+  modelUrl?: string|tf.io.IOHandler;
+}
 
 const EMBEDDING_NODES: {[version: string]: string} = {
   '1.00': 'module_apply_default/MobilenetV1/Logits/global_pool',
@@ -49,45 +68,68 @@ const MODEL_INFO: {[version: string]: {[alpha: string]: string}} = {
   }
 };
 
-export async function load(
-    version: MobileNetVersion = 1, alpha: MobileNetAlpha = 1.0) {
+export async function load(modelConfig: ModelConfig = {
+  version: 1,
+  alpha: 1.0
+}): Promise<MobileNet> {
   if (tf == null) {
     throw new Error(
         `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
         `also include @tensorflow/tfjs on the page before using this model.`);
   }
-
-  const versionStr = version.toFixed(2);
-  const alphaStr = alpha.toFixed(2);
-  if (!(versionStr in MODEL_INFO)) {
-    throw new Error(
-        `Invalid version of MobileNet. Valid versions are: ` +
-        `${Object.keys(MODEL_INFO)}`);
+  const versionStr = modelConfig.version.toFixed(2);
+  const alphaStr = modelConfig.alpha ? modelConfig.alpha.toFixed(2) : '';
+  if (modelConfig.modelUrl == null) {
+    if (!(versionStr in MODEL_INFO)) {
+      throw new Error(
+          `Invalid version of MobileNet. Valid versions are: ` +
+          `${Object.keys(MODEL_INFO)}`);
+    }
+    if (!(alphaStr in MODEL_INFO[versionStr])) {
+      throw new Error(
+          `MobileNet constructed with invalid alpha ${
+              modelConfig.alpha}. Valid ` +
+          `multipliers for this version are: ` +
+          `${Object.keys(MODEL_INFO[versionStr])}.`);
+    }
   }
-  if (!(alphaStr in MODEL_INFO[versionStr])) {
-    throw new Error(
-        `MobileNet constructed with invalid alpha ${alpha}. Valid ` +
-        `multipliers for this version are: ` +
-        `${Object.keys(MODEL_INFO[versionStr])}.`);
-  }
 
-  const mobilenet = new MobileNet(versionStr, alphaStr);
+  const mobilenet =
+      new MobileNetImpl(versionStr, alphaStr, modelConfig.modelUrl);
   await mobilenet.load();
   return mobilenet;
 }
 
-export class MobileNet {
-  model: tf.GraphModel;
+export interface MobileNet {
+  load(): Promise<void>;
+  infer(
+      img: tf.Tensor|ImageData|HTMLImageElement|HTMLCanvasElement|
+      HTMLVideoElement,
+      embedding?: boolean): tf.Tensor;
+  classify(
+      img: tf.Tensor3D|ImageData|HTMLImageElement|HTMLCanvasElement|
+      HTMLVideoElement,
+      topk?: number): Promise<Array<{className: string, probability: number}>>;
+}
+
+class MobileNetImpl implements MobileNet {
+  model: tfconv.GraphModel;
 
   private normalizationOffset: tf.Scalar;
 
-  constructor(public version: string, public alpha: string) {
+  constructor(
+      public version: string, public alpha: string,
+      public modelUrl: string|tf.io.IOHandler) {
     this.normalizationOffset = tf.scalar(127.5);
   }
 
   async load() {
-    const url = MODEL_INFO[this.version][this.alpha];
-    this.model = await tf.loadGraphModel(url, {fromTFHub: true});
+    if (this.modelUrl) {
+      this.model = await tfconv.loadGraphModel(this.modelUrl);
+    } else {
+      const url = MODEL_INFO[this.version][this.alpha];
+      this.model = await tfconv.loadGraphModel(url, {fromTFHub: true});
+    }
 
     // Warmup the model.
     const result = tf.tidy(

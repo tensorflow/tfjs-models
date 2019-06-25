@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
 
 export function concatWithNulls(
     ndarray1: tf.Tensor2D, ndarray2: tf.Tensor2D): tf.Tensor2D {

@@ -48,3 +48,7 @@ export type PosenetInput =
     ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement|tf.Tensor3D;
 
 export type TensorBuffer3D = tf.TensorBuffer<tf.Rank.R3>;
+
+export interface Padding {
+  top: number, bottom: number, left: number, right: number
+}

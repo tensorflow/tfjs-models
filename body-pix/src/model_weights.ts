@@ -15,12 +15,13 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tfconv from '@tensorflow/tfjs-converter';
+import * as tf from '@tensorflow/tfjs-core';
 
 export class ModelWeights {
-  private graphModel: tf.GraphModel;
+  private graphModel: tfconv.GraphModel;
 
-  constructor(graphModel: tf.GraphModel) {
+  constructor(graphModel: tfconv.GraphModel) {
     this.graphModel = graphModel;
   }
 
