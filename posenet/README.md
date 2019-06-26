@@ -6,7 +6,7 @@ This package contains a standalone model called PoseNet, as well as some demos, 
 
 [Try the demo here!](https://storage.googleapis.com/tfjs-models/demos/posenet/camera.html)
 
-<img src="https://raw.githubusercontent.com/irealva/tfjs-models/master/posenet/demos/camera.gif" alt="cameraDemo" style="width: 600px;"/>
+<img src="demos/camera.gif" alt="cameraDemo" style="width: 600px;"/>
 
 PoseNet can be used to estimate either a single pose or multiple poses, meaning there is a version of the algorithm that can detect only one person in an image/video and one version that can detect multiple persons in an image/video.
 
