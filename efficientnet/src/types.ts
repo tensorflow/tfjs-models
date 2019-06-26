@@ -28,5 +28,8 @@ export type EfficientNetInput =
 
 export type ClassLabel = string;
 export type Probability = number;
-export type ClassPrediction = [ClassLabel, Probability];
+export type ClassPrediction = {
+  className: ClassLabel;
+  probability: Probability;
+};
 export type EfficientNetOutput = ClassPrediction[];

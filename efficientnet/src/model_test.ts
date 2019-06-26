@@ -24,7 +24,7 @@ import { EfficientNet } from '.';
 
 describeWithFlags('EfficientNet', NODE_ENVS, () => {
   beforeAll(() => {
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 20000;
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 40000;
   });
   it('EfficientNet predict should not leak', async () => {
     const model = new EfficientNet('b0');
@@ -32,7 +32,7 @@ describeWithFlags('EfficientNet', NODE_ENVS, () => {
     const x = tf.zeros([227, 227, 3]) as tf.Tensor3D;
     const numOfTensorsBefore = tf.memory().numTensors;
 
-    await model.predict(x);
+    await model.predict(x, 10);
     await model.dispose();
 
     expect(tf.memory().numTensors).toEqual(numOfTensorsBefore);

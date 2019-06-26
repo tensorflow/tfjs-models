@@ -20,15 +20,15 @@ import { config } from './config';
 import {
   EfficientNetBaseModel,
   EfficientNetInput,
+  EfficientNetOutput,
   // EfficientNetOutput,
 } from './types';
-import { toInputTensor } from './utils';
 
 export class EfficientNet {
   private base: EfficientNetBaseModel;
   private model: Promise<tf.GraphModel>;
   private modelPath: string;
-  constructor(base: EfficientNetBaseModel, isQuantized = true) {
+  public constructor(base: EfficientNetBaseModel, isQuantized = true) {
     if (tf == null) {
       throw new Error(
         `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
@@ -51,16 +51,113 @@ export class EfficientNet {
     this.model = tf.loadGraphModel(this.modelPath);
   }
 
+  private static normalize(image: tf.Tensor3D) {
+    return tf.tidy(() => {
+      const [height, width] = image.shape;
+      const imageData = image.arraySync() as number[][][];
+      const meanRGB = config['MEAN_RGB'].map(depth => depth * 255);
+      const stddevRGB = config['STDDEV_RGB'].map(depth => depth * 255);
+      for (let columnIndex = 0; columnIndex < height; ++columnIndex) {
+        for (let rowIndex = 0; rowIndex < width; ++rowIndex) {
+          imageData[columnIndex][rowIndex] = imageData[columnIndex][
+            rowIndex
+          ].map(
+            (depth, channel) => (depth - meanRGB[channel]) / stddevRGB[channel]
+          );
+        }
+      }
+      return tf.tensor3d(imageData);
+    });
+  }
+
+  private getTopKClasses(logits: tf.Tensor1D, topK: number) {
+    const imagenetClasses: { [key: number]: string } = config.IMAGENET_CLASSES;
+    const values = logits.dataSync();
+
+    const valuesAndIndices = [];
+    for (let idx = 0; idx < values.length; idx++) {
+      valuesAndIndices.push({ value: values[idx], index: idx });
+    }
+    valuesAndIndices.sort((a, b) => {
+      return b.value - a.value;
+    });
+    const topkValues = new Float32Array(topK);
+    const topkIndices = new Int32Array(topK);
+    for (let idx = 0; idx < topK; idx++) {
+      topkValues[idx] = valuesAndIndices[idx].value;
+      topkIndices[idx] = valuesAndIndices[idx].index;
+    }
+
+    const topClassesAndProbs = [];
+    for (let idx = 0; idx < topkIndices.length; idx++) {
+      topClassesAndProbs.push({
+        className: imagenetClasses[topkIndices[idx]],
+        probability: topkValues[idx],
+      });
+    }
+    return topClassesAndProbs;
+  }
+
+  private static cropAndResize(
+    base: EfficientNetBaseModel,
+    input: EfficientNetInput
+  ): tf.Tensor3D {
+    return tf.tidy(() => {
+      const image: tf.Tensor3D =
+        input instanceof tf.Tensor ? input : tf.browser.fromPixels(input);
+
+      const [height, width] = image.shape;
+
+      const imageSize = config['CROP_SIZE'][base];
+      const cropPadding = config['CROP_PADDING'];
+      const paddedCenterCropSize = Math.round(
+        Math.min(width, height) * (imageSize / (imageSize + cropPadding))
+      );
+      const offsetHeight = Math.round((height - paddedCenterCropSize + 1) / 2);
+      const offsetWidth = Math.round((width - paddedCenterCropSize + 1) / 2);
+
+      const processedImage: tf.Tensor3D = tf.image
+        .cropAndResize(
+          image.expandDims(0),
+          [
+            [
+              offsetHeight,
+              offsetWidth,
+              paddedCenterCropSize + offsetHeight,
+              paddedCenterCropSize + offsetWidth,
+            ],
+          ],
+          [0],
+          [imageSize, imageSize]
+        )
+        .squeeze([0]);
+      return processedImage;
+    });
+  }
+
+  public static preprocess(
+    base: EfficientNetBaseModel,
+    input: EfficientNetInput
+  ) {
+    return tf.tidy(() => {
+      return EfficientNet.normalize(
+        EfficientNet.cropAndResize(base, input)
+      ).expandDims(0);
+    });
+  }
+
   public async predict(
     input: EfficientNetInput,
-    canvas?: HTMLCanvasElement // : Promise<EfficientNetOutput>
-  ) {
+    topK: number
+  ): Promise<EfficientNetOutput> {
     const model = await this.model;
 
-    const processedInput = toInputTensor(this.base, input);
-    const logits = model.predict(processedInput);
-    tf.dispose(processedInput);
-    return logits;
+    return tf.tidy(() => {
+      const processedInput = EfficientNet.preprocess(this.base, input);
+      const logits = model.predict(processedInput) as tf.Tensor1D;
+      const predictions = this.getTopKClasses(logits, topK);
+      return predictions;
+    });
   }
 
   /**
