@@ -1,5 +1,5 @@
 {
-  "name": "model-demo",
+  "name": "efficientnet-demo",
   "version": "0.0.1",
   "description": "",
   "main": "src/index.js",
@@ -9,16 +9,18 @@
     "node": ">=8.9.0"
   },
   "peerDependencies": {
-    "@tensorflow-models/model": "^0.1.0"
+    "@tensorflow-models/efficientnet": "^0.1.0"
   },
   "dependencies": {
+    "@tensorflow-models/efficientnet": "link:.yalc/@tensorflow-models/efficientnet",
     "@tensorflow/tfjs": "^1.1.0",
     "bulma": "^0.7.5"
   },
   "scripts": {
     "watch": "cross-env NODE_ENV=development parcel src/index.html --no-hmr --open ",
     "build": "cross-env NODE_ENV=production parcel build src/index.html --no-minify --public-url ./",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "link-local": "yalc add --link @tensorflow-models/efficientnet"
   },
   "devDependencies": {
     "babel-core": "^6.26.3",
@@ -36,6 +38,10 @@
   "eslintConfig": {
     "extends": "google",
     "rules": {
+      "object-curly-spacing": [
+        "error",
+        "always"
+      ],
       "require-jsdoc": 0,
       "valid-jsdoc": 0
     },

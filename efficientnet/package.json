@@ -1,5 +1,5 @@
 {
-  "name": "efficientnet",
+  "name": "@tensorflow-models/efficientnet",
   "version": "0.1.0",
   "description": "EfficientNet: Low-Power, Low-Latency Image Classification in the Browser",
   "main": "dist/index.js",
@@ -16,7 +16,7 @@
     "url": "https://github.com/tensorflow/tfjs-models"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs": "^1.1.0"
+    "@tensorflow/tfjs": "^1.2.2"
   },
   "devDependencies": {
     "@tensorflow/tfjs": "^1.2.2",

@@ -46,9 +46,6 @@ function minify() {
     output: {
       preamble: PREAMBLE,
       ecma: 8,
-      module: true,
-      compress: true,
-      mangle: true,
     },
   });
 }
