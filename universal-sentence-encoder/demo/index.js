@@ -16,7 +16,7 @@
  */
 
 import * as use from '@tensorflow-models/universal-sentence-encoder';
-// import {interpolateReds} from 'd3-scale-chromatic';
+import {interpolateReds} from 'd3-scale-chromatic';
 
 const sentences = [
   'I like my phone.', 'Your cellphone looks great.', 'How old are you?',
