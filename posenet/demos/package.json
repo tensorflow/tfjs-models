@@ -15,9 +15,12 @@
   },
   "scripts": {
     "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr --open ",
-    "build": "cross-env NODE_ENV=production parcel build index.html --no-minify --public-url ./",
-    "build-camera": "cross-env NODE_ENV=production parcel build camera.html  --no-minify --public-url ./",
+    "build": "cross-env NODE_ENV=production parcel build index.html --public-url ./",
+    "build-camera": "cross-env NODE_ENV=production parcel build camera.html --public-url ./",
     "lint": "eslint ."
+  },
+  "browser": {
+    "crypto": false
   },
   "devDependencies": {
     "babel-core": "^6.26.3",

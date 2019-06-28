@@ -651,10 +651,10 @@
   resolved "https://registry.yarnpkg.com/@nodelib/fs.stat/-/fs.stat-1.1.3.tgz#2b5a3ab3f918cca48a8c754c08168e3f03eba61b"
   integrity sha512-shAmDyaQC4H92APFoIaVDHCx5bStIocgvbwQyxPRrbUY20V1EYTbSDchWbuwlMG3V17cprZhA6+78JfB+3DTPw==
 
-"@tensorflow-models/posenet@^2.0.0":
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/@tensorflow-models/posenet/-/posenet-2.0.0.tgz#11e04f58e0a381dd681fd3f35a6af151986f510e"
-  integrity sha512-4ozg2iWtFE4dlyHRwC0BuqxCOa55xVVMcdo6iqLnHV5ecG1EoABLoKU1JmvgL4qj7+qHHWCB+Mbvhb7pxBO2ew==
+"@tensorflow-models/posenet@^2.1.0":
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow-models/posenet/-/posenet-2.1.0.tgz#df9913717af07d93066b215e008759d2d3cbe750"
+  integrity sha512-BK9ScH0pVxZa74z0qnG3e4PSSTk3yqmz93mX82q1P7mderRFM20Jmt76tsyHx7norMMrraTK1SYXx4cLlzGKJA==
 
 "@tensorflow/tfjs-converter@1.1.2":
   version "1.1.2"
