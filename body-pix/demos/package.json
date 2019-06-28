@@ -18,6 +18,9 @@
     "build": "cross-env NODE_ENV=production parcel build index.html --public-url ./",
     "lint": "eslint ."
   },
+  "browser": {
+    "crypto": false
+  },
   "devDependencies": {
     "babel-core": "~6.26.3",
     "babel-plugin-transform-runtime": "~6.23.0",
