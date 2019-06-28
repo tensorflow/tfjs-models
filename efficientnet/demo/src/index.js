@@ -80,31 +80,59 @@ const processImages = (event) => {
   Array.from(files).forEach(processImage);
 };
 
-const displayClassification = (modelName, efficientnetOutput) => {
+const probabilityToColor = (probability) => {
+  const colors = [
+    '#a50026',
+    '#d73027',
+    '#f46d43',
+    '#fdae61',
+    '#fee08b',
+    '#ffffbf',
+    '#d9ef8b',
+    '#a6d96a',
+    '#66bd63',
+    '#1a9850',
+    '#006837',
+  ];
+  return colors[
+    probability < 1
+      ? Math.floor(probability * colors.length)
+      : colors.length - 1
+  ];
+};
+
+const displayClassification = (modelName, classification) => {
   toggleInvisible('classification-card', false);
   const classificationList = document.getElementById('classification');
   while (classificationList.firstChild) {
     classificationList.removeChild(classificationList.firstChild);
   }
 
-  console.log(efficientnetOutput);
-  // #TODO: Fix this
-  // Using for works around the parcel failure with Object.keys
-  // "Uncaught (in promise) ReferenceError: _Object$keys is not defined"
-  // for (const label in classification) {
-  //   if (classification.hasOwnProperty(label)) {
-  //     const tag = document.createElement('span');
-  //     tag.innerHTML = label;
-  //     const [red, green, blue] = classification[label];
-  //     tag.classList.add('column');
-  //     tag.style.backgroundColor = `rgb(${red}, ${green}, ${blue})`;
-  //     tag.style.padding = '1em';
-  //     tag.style.margin = '1em';
-  //     tag.style.color = '#ffffff';
-
-  //     classificationList.appendChild(tag);
-  // }
-  // }
+  console.log(classification);
+  classification.forEach(({ probability, className }) => {
+    const tags = document.createElement('div');
+    tags.classList.add('column', 'is-inline-flex');
+    const probabilityTag = document.createElement('span');
+    probabilityTag.classList.add('tag', 'is-dark');
+    probabilityTag.innerText = probability.toFixed(4);
+    probabilityTag.style.height = 'auto';
+    probabilityTag.style.borderRadius = '0';
+    const classNameTag = document.createElement('span');
+    classNameTag.classList.add('column', 'is-flex', 'is-centered-flex');
+    classNameTag.style.backgroundColor = probabilityToColor(probability);
+    const classNameTagContent = document.createElement('span');
+    classNameTagContent.innerText = className;
+    classNameTagContent.style.background = 'inherit';
+    classNameTagContent.style.backgroundClip = 'text';
+    classNameTagContent.style.color = 'transparent';
+    classNameTagContent.style.filter = 'invert(1) grayscale() contrast(100)';
+    // classNameTagContent.style.color = '#fff';
+    // classNameTagContent.style.mixBlendMode = 'difference';
+    classNameTag.appendChild(classNameTagContent);
+    tags.appendChild(probabilityTag);
+    tags.appendChild(classNameTag);
+    classificationList.appendChild(tags);
+  });
 
   const runner = document.getElementById(`run-${modelName}`);
   runner.classList.remove('is-loading');
@@ -120,12 +148,13 @@ const status = (message) => {
 
 const runPrediction = (modelName, input, initialisationStart) => {
   const model = efficientnet[modelName];
-  model.predict(input, 10).then((output) => {
+  model.predict(input, 5).then((output) => {
     displayClassification(modelName, output);
     status(
         `Finished running ${modelName.toUpperCase()} in ${(
-          performance.now() - initialisationStart
-        ).toFixed(2)} ms`
+          (performance.now() - initialisationStart) /
+        1000
+        ).toFixed(2)} s`
     );
   });
 };
