@@ -21,7 +21,6 @@ import {
   EfficientNetBaseModel,
   EfficientNetInput,
   EfficientNetOutput,
-  // EfficientNetOutput,
 } from './types';
 
 export class EfficientNet {
@@ -70,6 +69,44 @@ export class EfficientNet {
     });
   }
 
+  private static cropAndResize(
+    base: EfficientNetBaseModel,
+    input: EfficientNetInput
+  ): tf.Tensor3D {
+    return tf.tidy(() => {
+      const image: tf.Tensor3D = (input instanceof tf.Tensor
+        ? input
+        : tf.browser.fromPixels(input)
+      ).toFloat();
+
+      const [height, width] = image.shape;
+
+      const imageSize = config['CROP_SIZE'][base];
+      const cropPadding = config['CROP_PADDING'];
+      const paddedCenterCropSize = Math.round(
+        Math.min(width, height) *
+          ((1.0 * imageSize) / (imageSize + cropPadding))
+      );
+      const offsetHeight = Math.round((height - paddedCenterCropSize + 1) / 2);
+      const offsetWidth = Math.round((width - paddedCenterCropSize + 1) / 2);
+      const normalizedBox = [
+        offsetHeight / height,
+        offsetWidth / width,
+        (paddedCenterCropSize + offsetHeight) / height,
+        (paddedCenterCropSize + offsetWidth) / width,
+      ];
+      const processedImage: tf.Tensor3D = tf.image
+        .cropAndResize(
+          image.expandDims(0),
+          [normalizedBox],
+          [0],
+          [imageSize, imageSize]
+        )
+        .squeeze([0]);
+      return processedImage;
+    });
+  }
+
   private getTopKClasses(logits: tf.Tensor1D, topK: number) {
     const imagenetClasses: { [key: number]: string } = config.IMAGENET_CLASSES;
     const values = logits.dataSync();
@@ -96,43 +133,6 @@ export class EfficientNet {
       });
     }
     return topClassesAndProbs;
-  }
-
-  private static cropAndResize(
-    base: EfficientNetBaseModel,
-    input: EfficientNetInput
-  ): tf.Tensor3D {
-    return tf.tidy(() => {
-      const image: tf.Tensor3D =
-        input instanceof tf.Tensor ? input : tf.browser.fromPixels(input);
-
-      const [height, width] = image.shape;
-
-      const imageSize = config['CROP_SIZE'][base];
-      const cropPadding = config['CROP_PADDING'];
-      const paddedCenterCropSize = Math.round(
-        Math.min(width, height) * (imageSize / (imageSize + cropPadding))
-      );
-      const offsetHeight = Math.round((height - paddedCenterCropSize + 1) / 2);
-      const offsetWidth = Math.round((width - paddedCenterCropSize + 1) / 2);
-
-      const processedImage: tf.Tensor3D = tf.image
-        .cropAndResize(
-          image.expandDims(0),
-          [
-            [
-              offsetHeight,
-              offsetWidth,
-              paddedCenterCropSize + offsetHeight,
-              paddedCenterCropSize + offsetWidth,
-            ],
-          ],
-          [0],
-          [imageSize, imageSize]
-        )
-        .squeeze([0]);
-      return processedImage;
-    });
   }
 
   public static preprocess(

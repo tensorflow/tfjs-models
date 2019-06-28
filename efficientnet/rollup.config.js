@@ -45,8 +45,11 @@ function minify() {
   return terser({
     output: {
       preamble: PREAMBLE,
-      ecma: 8,
     },
+    ecma: 8,
+    module: true,
+    compress: true,
+    mangle: false,
   });
 }
 

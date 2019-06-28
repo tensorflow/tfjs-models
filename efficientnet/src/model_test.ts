@@ -20,13 +20,16 @@ import {
   describeWithFlags,
   NODE_ENVS,
 } from '@tensorflow/tfjs-core/dist/jasmine_util';
+import { readFileSync } from 'fs';
 import { EfficientNet } from '.';
+import { decode } from 'jpeg-js';
+import { resolve } from 'path';
 
 describeWithFlags('EfficientNet', NODE_ENVS, () => {
   beforeAll(() => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 40000;
   });
-  it('EfficientNet predict should not leak', async () => {
+  it('EfficientNet predictions do not leak.', async () => {
     const model = new EfficientNet('b0');
 
     const x = tf.zeros([227, 227, 3]) as tf.Tensor3D;
@@ -36,5 +39,40 @@ describeWithFlags('EfficientNet', NODE_ENVS, () => {
     await model.dispose();
 
     expect(tf.memory().numTensors).toEqual(numOfTensorsBefore);
+  });
+  it('EfficientNet produces sensible results.', async () => {
+    const model = new EfficientNet('b0');
+
+    const input = tf.tidy(() => {
+      const testImage = decode(
+        readFileSync(resolve(__dirname, 'input_test.jpg')),
+        true
+      );
+      const rawData = tf
+        .tensor(testImage.data, [testImage.height, testImage.width, 4])
+        .arraySync() as number[][][];
+      const inputBuffer = tf.buffer(
+        [testImage.height, testImage.width, 3],
+        'int32'
+      );
+      for (let columnIndex = 0; columnIndex < testImage.height; ++columnIndex) {
+        for (let rowIndex = 0; rowIndex < testImage.width; ++rowIndex) {
+          for (let channel = 0; channel < 3; ++channel) {
+            inputBuffer.set(
+              rawData[columnIndex][rowIndex][channel],
+              columnIndex,
+              rowIndex,
+              channel
+            );
+          }
+        }
+      }
+
+      return inputBuffer.toTensor();
+    }) as tf.Tensor3D;
+    const predictions = await model.predict(input, 10);
+    const isPanda = predictions[0].className.includes('panda');
+    await model.dispose();
+    expect(isPanda).toEqual(true);
   });
 });
