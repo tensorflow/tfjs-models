@@ -94,7 +94,7 @@ const probabilityToColor = (probability) => {
     '#1a9850',
     '#006837',
   ];
-  return colors[Math.floor(probability * (colors.length - 1))];
+  return colors[Math.round(probability * (colors.length - 1))];
 };
 
 const displayClassification = (modelName, classification) => {

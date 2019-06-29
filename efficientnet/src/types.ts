@@ -27,9 +27,12 @@ export type EfficientNetInput =
   | tf.Tensor3D;
 
 export type ClassLabel = string;
+
 export type Probability = number;
+
 export type ClassPrediction = {
   className: ClassLabel;
   probability: Probability;
 };
+
 export type EfficientNetOutput = ClassPrediction[];

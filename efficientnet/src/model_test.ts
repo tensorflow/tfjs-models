@@ -24,11 +24,42 @@ import { readFileSync } from 'fs';
 import { EfficientNet } from '.';
 import { decode } from 'jpeg-js';
 import { resolve } from 'path';
+import { EfficientNetBaseModel } from './types';
+import { config } from './config';
+
+const areEqualNumbers = (firstArray: number[], secondArray: number[]) => {
+  if (firstArray.length !== secondArray.length) {
+    return false;
+  }
+  for (let idx = 0; idx < firstArray.length; idx++) {
+    if (firstArray[idx] !== secondArray[idx]) {
+      return false;
+    }
+  }
+  return true;
+};
 
 describeWithFlags('EfficientNet', NODE_ENVS, () => {
   beforeAll(() => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 40000;
   });
+
+  it('EfficientNet preprocessing produces matching dimensions', async () => {
+    const input = tf.zeros([314, 529, 3]) as tf.Tensor3D;
+    const models = Array.from(Array(6).keys()).map(
+      idx => `b${idx}` as EfficientNetBaseModel
+    );
+    const isMatching = Array(6).fill(false);
+    models.forEach((model, idx) => {
+      const targetSize = config.CROP_SIZE[model];
+      isMatching[idx] = areEqualNumbers(
+        EfficientNet.preprocess(model, input).shape,
+        [1, targetSize, targetSize, 3]
+      );
+    });
+    expect(isMatching).toEqual(Array(6).fill(true));
+  });
+
   it('EfficientNet predictions do not leak.', async () => {
     const model = new EfficientNet('b0');
 
@@ -40,6 +71,7 @@ describeWithFlags('EfficientNet', NODE_ENVS, () => {
 
     expect(tf.memory().numTensors).toEqual(numOfTensorsBefore);
   });
+
   it('EfficientNet produces sensible results.', async () => {
     const model = new EfficientNet('b0');
 

@@ -34,6 +34,7 @@ export class EfficientNet {
           `also include @tensorflow/tfjs on the page before using this model.`
       );
     }
+
     if (['b0', 'b1', 'b2', 'b3', 'b4', 'b5'].indexOf(base) === -1) {
       throw new Error(
         `EfficientNet cannot be constructed ` +
