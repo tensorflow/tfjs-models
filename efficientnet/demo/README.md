@@ -1,11 +1,13 @@
-# model-name demo
+# EfficientNet Demo
+
+This demo allows you to classify images using EfficientNet and measure its performance.
 
 ## Setup
 
-Change into the `demo` folder:
+Change the directory to the `demo` folder:
 
 ```sh
-cd model-name/demo
+cd efficientnet/demo
 ```
 
 Install dependencies:
@@ -14,46 +16,53 @@ Install dependencies:
 yarn
 ```
 
-Launch a development server, and watch files for changes.
+Launch the development server watching the files for changes.
 
 ```sh
 yarn watch
 ```
 
-## If you are developing the model locally and want to test the changes in the demo
+**Warning**: *The higher the model version, the more time the inference takes.*
 
-Change into the `model-name` folder:
+## Development
+
+If you are developing the model locally and want to test the changes in the demo, proceed as follows:
+
+### Change the directory to the `efficientnet` folder
 
 ```sh
-cd model-name
+cd efficientnet
 ```
 
-Install dependencies:
+### Install dependencies
+
 ```sh
 yarn
 ```
 
-Publish `model-name` locally:
+### Publish a local copy of efficientnet
+
 ```sh
 yarn publish-local
 ```
 
-Change into the demo directory (`model-name/demo`) and install dependencies:
+### Change into the demo directory (`efficientnet/demo`) and install dependencies
 
 ```sh
 cd demo
 yarn
 ```
 
-Link the package published from the publish step above:
+### Link the package published from the publish step above
+
 ```sh
 yarn link-local
 ```
 
-Start the dev demo server:
+### Start the dev demo server
+
 ```sh
 yarn watch
 ```
 
-To get future updates from the `model-name` source code, run `yarn publish-local` in the `model-name`
-folder again.
+**Note**: *To get future updates from the `efficientnet` source code, just run `yarn publish-local` in the `efficientnet` folder again.*
