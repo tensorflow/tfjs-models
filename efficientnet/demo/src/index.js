@@ -94,11 +94,7 @@ const probabilityToColor = (probability) => {
     '#1a9850',
     '#006837',
   ];
-  return colors[
-    probability < 1
-      ? Math.floor(probability * colors.length)
-      : colors.length - 1
-  ];
+  return colors[Math.floor(probability * (colors.length - 1))];
 };
 
 const displayClassification = (modelName, classification) => {
@@ -112,22 +108,24 @@ const displayClassification = (modelName, classification) => {
   classification.forEach(({ probability, className }) => {
     const tags = document.createElement('div');
     tags.classList.add('column', 'is-inline-flex');
+
     const probabilityTag = document.createElement('span');
     probabilityTag.classList.add('tag', 'is-dark');
     probabilityTag.innerText = probability.toFixed(4);
     probabilityTag.style.height = 'auto';
     probabilityTag.style.borderRadius = '0';
+
     const classNameTag = document.createElement('span');
     classNameTag.classList.add('column', 'is-flex', 'is-centered-flex');
     classNameTag.style.backgroundColor = probabilityToColor(probability);
+
     const classNameTagContent = document.createElement('span');
     classNameTagContent.innerText = className;
     classNameTagContent.style.background = 'inherit';
     classNameTagContent.style.backgroundClip = 'text';
     classNameTagContent.style.color = 'transparent';
     classNameTagContent.style.filter = 'invert(1) grayscale() contrast(100)';
-    // classNameTagContent.style.color = '#fff';
-    // classNameTagContent.style.mixBlendMode = 'difference';
+
     classNameTag.appendChild(classNameTagContent);
     tags.appendChild(probabilityTag);
     tags.appendChild(classNameTag);

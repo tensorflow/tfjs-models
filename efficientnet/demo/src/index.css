@@ -1,6 +1,7 @@
 .is-on-top {
   z-index: 100;
 }
+
 .is-centered-flex {
   align-items: center !important;
   justify-content: center !important;
@@ -9,6 +10,7 @@
 .is-spaced-evenly {
   justify-content: space-evenly;
 }
+
 .is-column {
   flex-direction: column;
 }
