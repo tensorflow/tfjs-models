@@ -104,7 +104,6 @@ const displayClassification = (modelName, classification) => {
     classificationList.removeChild(classificationList.firstChild);
   }
 
-  console.log(classification);
   classification.forEach(({ probability, className }) => {
     const tags = document.createElement('div');
     tags.classList.add('column', 'is-inline-flex');
