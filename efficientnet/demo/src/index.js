@@ -45,7 +45,6 @@ const initializeModels = async () => {
     efficientnet[modelName] = new EfficientNet(modelName, state.isQuantized);
     const runner = document.getElementById(`run-${modelName}`);
     runner.onclick = async () => {
-      runner.classList.add('is-loading');
       toggleInvisible('classification-card', true);
       await tf.nextFrame();
       await runEfficientNet(modelName);
@@ -131,9 +130,6 @@ const displayClassification = (modelName, classification) => {
     classificationList.appendChild(tags);
   });
 
-  const runner = document.getElementById(`run-${modelName}`);
-  runner.classList.remove('is-loading');
-
   const inputContainer = document.getElementById('input-card');
   inputContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 };
@@ -170,8 +166,6 @@ const runEfficientNet = async (modelName) => {
   const input = document.getElementById('input-image');
   if (!input.src || !input.src.length || input.src.length === 0) {
     status('Failed! Please load an image first.');
-    const runner = document.getElementById(`run-${modelName}`);
-    runner.classList.remove('is-loading');
     return;
   }
 
