@@ -2,7 +2,7 @@
 # yarn lockfile v1
 
 
-"@tensorflow-models/universal-sentence-encoder@^1.1.0":
+"@tensorflow-models/universal-sentence-encoder@~1.1.0":
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@tensorflow-models/universal-sentence-encoder/-/universal-sentence-encoder-1.1.0.tgz#6ecf6a1bd9fb43691a5d7ce5030dc3018dce6361"
   integrity sha512-SaA3ITiVrcBwoZHK28Fv1sR2m6pxTh3kWqokKTqdw7oqNvE/K0Kf2TSwI8qsliQn3FSuV2zYMf0lhT+mNNV+sw==
