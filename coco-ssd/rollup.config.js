@@ -20,40 +20,39 @@ import typescript from 'rollup-plugin-typescript2';
 import uglify from 'rollup-plugin-uglify';
 
 const PREAMBLE =
-  `// @tensorflow/tfjs-models Copyright ${(new Date).getFullYear()} Google`;
+    `// @tensorflow/tfjs-models Copyright ${(new Date).getFullYear()} Google`;
 
 function minify() {
   return uglify({
     output: {
-      preamble: PREAMBLE
+      preamble: PREAMBLE,
     }
   });
 }
 
-function config({
-  plugins = [],
-  output = {}
-}) {
+function config({plugins = [], output = {}}) {
   return {
     input: 'src/index.ts',
     plugins: [
       typescript({
         tsconfigOverride: {
-          compilerOptions: {
-            module: 'ES2015'
-          }
-        }
+          compilerOptions: {module: 'ES2015'},
+        },
       }),
       node(), ...plugins
     ],
     output: {
       banner: PREAMBLE,
       globals: {
-        '@tensorflow/tfjs': 'tf'
+        '@tensorflow/tfjs-core': 'tf',
+        '@tensorflow/tfjs-converter': 'tf',
       },
       ...output
     },
-    external: ['@tensorflow/tfjs']
+    external: [
+      '@tensorflow/tfjs-core',
+      '@tensorflow/tfjs-converter',
+    ]
   };
 }
 
@@ -62,7 +61,7 @@ export default [
     output: {
       format: 'umd',
       name: 'cocoSsd',
-      file: 'dist/coco-ssd.js'
+      file: 'dist/coco-ssd.js',
     }
   }),
   config({
@@ -70,14 +69,14 @@ export default [
     output: {
       format: 'umd',
       name: 'cocoSsd',
-      file: 'dist/coco-ssd.min.js'
+      file: 'dist/coco-ssd.min.js',
     }
   }),
   config({
     plugins: [minify()],
     output: {
       format: 'es',
-      file: 'dist/coco-ssd.esm.js'
+      file: 'dist/coco-ssd.esm.js',
     }
   })
 ];
