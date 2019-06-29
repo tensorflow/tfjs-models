@@ -49,7 +49,7 @@ function minify() {
     ecma: 8,
     module: true,
     compress: true,
-    mangle: false,
+    mangle: { reserved: ['tf'] },
   });
 }
 
