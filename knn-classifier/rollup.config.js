@@ -20,40 +20,22 @@ import typescript from 'rollup-plugin-typescript2';
 import uglify from 'rollup-plugin-uglify';
 
 const PREAMBLE =
-  `// @tensorflow/tfjs-models Copyright ${(new Date).getFullYear()} Google`;
+    `// @tensorflow/tfjs-models Copyright ${(new Date).getFullYear()} Google`;
 
 function minify() {
-  return uglify({
-    output: {
-      preamble: PREAMBLE
-    }
-  });
+  return uglify({output: {preamble: PREAMBLE}});
 }
 
-function config({
-  plugins = [],
-  output = {}
-}) {
+function config({plugins = [], output = {}}) {
   return {
     input: 'src/index.ts',
     plugins: [
-      typescript({
-        tsconfigOverride: {
-          compilerOptions: {
-            module: 'ES2015'
-          }
-        }
-      }),
+      typescript({tsconfigOverride: {compilerOptions: {module: 'ES2015'}}}),
       node(), ...plugins
     ],
-    output: {
-      banner: PREAMBLE,
-      globals: {
-        '@tensorflow/tfjs': 'tf'
-      },
-      ...output
-    },
-    external: ['@tensorflow/tfjs']
+    output:
+        {banner: PREAMBLE, globals: {'@tensorflow/tfjs-core': 'tf'}, ...output},
+    external: ['@tensorflow/tfjs-core']
   };
 }
 
@@ -77,7 +59,7 @@ export default [
     plugins: [minify()],
     output: {
       format: 'es',
-      file: 'dist/knn-classifier.esm.js'
+      file: 'dist/knn-classifier.esm.js',
     }
   })
 ];

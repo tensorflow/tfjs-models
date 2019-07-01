@@ -33,17 +33,36 @@ function config({plugins = [], output = {}}) {
       typescript({tsconfigOverride: {compilerOptions: {module: 'ES2015'}}}),
       node(), ...plugins
     ],
-    output: {banner: PREAMBLE, globals: {'@tensorflow/tfjs': 'tf'}, ...output},
-    external: ['@tensorflow/tfjs']
+    output: {
+      banner: PREAMBLE,
+      globals: {
+        '@tensorflow/tfjs-core': 'tf',
+        '@tensorflow/tfjs-converter': 'tf',
+      },
+      ...output,
+    },
+    external: [
+      '@tensorflow/tfjs-core',
+      '@tensorflow/tfjs-converter',
+    ]
   };
 }
 
 export default [
-  config(
-      {output: {format: 'umd', name: 'use', file: 'dist/universal-sentence-encoder.js'}}),
+  config({
+    output: {
+      format: 'umd',
+      name: 'use',
+      file: 'dist/universal-sentence-encoder.js'
+    }
+  }),
   config({
     plugins: [minify()],
-    output: {format: 'umd', name: 'use', file: 'dist/universal-sentence-encoder.min.js'}
+    output: {
+      format: 'umd',
+      name: 'use',
+      file: 'dist/universal-sentence-encoder.min.js'
+    }
   }),
   config({
     plugins: [minify()],
