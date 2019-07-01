@@ -22,9 +22,7 @@ import { terser } from 'rollup-plugin-terser';
 
 const settings = {
   name: 'efficientnet',
-};
-
-const PREAMBLE = `/**
+  preamble: `/**
  * @license
  * Copyright ${new Date().getFullYear()} Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,7 +37,8 @@ const PREAMBLE = `/**
  * See the License for the specific language governing permissions and
  * limitations under the License.
  * =============================================================================
- */`;
+ */`,
+};
 
 function minify() {
   return terser({
