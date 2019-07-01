@@ -376,7 +376,7 @@ export class PoseNet {
       input: PosenetInput,
       config: SinglePersonInterfaceConfig = SINGLE_PERSON_INFERENCE_CONFIG):
       Promise<Pose> {
-    const configWithDefaults = {...SINGLE_PERSON_INFERENCE_CONFIG, config};
+    const configWithDefaults = {...SINGLE_PERSON_INFERENCE_CONFIG, ...config};
 
     validateSinglePersonInferenceConfig(configWithDefaults);
 
