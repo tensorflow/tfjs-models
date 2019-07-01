@@ -41,7 +41,10 @@ function config({plugins = [], output = {}}) {
       },
       ...output,
     },
-    external: ['@tensorflow/tfjs-core', '@tensorflow/tfjs-converter']
+    external: [
+      '@tensorflow/tfjs-core',
+      '@tensorflow/tfjs-converter',
+    ]
   };
 }
 
