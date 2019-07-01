@@ -21,13 +21,10 @@ import { terser } from 'rollup-plugin-terser';
 
 const settings = {
   name: 'deeplab',
-};
-
-const PREAMBLE = `/**
+  preamble: `/**
  * @license
  * Copyright ${new Date().getFullYear()} Google LLC. All Rights Reserved.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * Licensed under the Apache License, Version 2.0 (the "License"); * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -38,12 +35,13 @@ const PREAMBLE = `/**
  * See the License for the specific language governing permissions and
  * limitations under the License.
  * =============================================================================
- */`;
+ */`,
+};
 
 function minify() {
   return terser({
     output: {
-      preamble: PREAMBLE,
+      preamble: settings['preamble'],
     },
     ecma: 8,
     module: true,
@@ -67,7 +65,7 @@ function config({ plugins = [], output = {} }) {
       ...plugins,
     ],
     output: {
-      banner: PREAMBLE,
+      banner: settings['preamble'],
       globals: {
         '@tensorflow/tfjs': 'tf',
       },
