@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
 import {ModelWeights} from './model_weights';
 
 export type MobileNetMultiplier = 0.25|0.50|0.75|1.0|1.01;
