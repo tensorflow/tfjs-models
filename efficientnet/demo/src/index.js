@@ -16,7 +16,7 @@
  */
 
 import 'bulma/css/bulma.css';
-import { EfficientNet } from '@tensorflow-models/efficientnet';
+import {EfficientNet} from '@tensorflow-models/efficientnet';
 import * as tf from '@tensorflow/tfjs';
 
 const state = {
@@ -103,7 +103,7 @@ const displayClassification = (modelName, classification) => {
     classificationList.removeChild(classificationList.firstChild);
   }
 
-  classification.forEach(({ probability, className }) => {
+  classification.forEach(({probability, className}) => {
     const tags = document.createElement('div');
     tags.classList.add('column', 'is-inline-flex');
 
@@ -131,7 +131,7 @@ const displayClassification = (modelName, classification) => {
   });
 
   const inputContainer = document.getElementById('input-card');
-  inputContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  inputContainer.scrollIntoView({behavior: 'smooth', block: 'nearest'});
 };
 
 const status = (message) => {
@@ -143,12 +143,8 @@ const runPrediction = (modelName, input, initialisationStart) => {
   const model = efficientnet[modelName];
   model.predict(input, 5).then((output) => {
     displayClassification(modelName, output);
-    status(
-        `Finished running ${modelName.toUpperCase()} in ${(
-          (performance.now() - initialisationStart) /
-        1000
-        ).toFixed(2)} s`
-    );
+    status(`Finished running ${modelName.toUpperCase()} in ${
+      ((performance.now() - initialisationStart) / 1000).toFixed(2)} s`);
   });
 };
 
@@ -156,9 +152,8 @@ const runEfficientNet = async (modelName) => {
   status(`Running the inference...`);
   await tf.nextFrame();
   const initialisationStart = performance.now();
-  const isQuantizationDisabled = document.getElementById(
-      'is-quantization-disabled'
-  ).checked;
+  const isQuantizationDisabled =
+      document.getElementById('is-quantization-disabled').checked;
   if (!(isQuantizationDisabled ^ state.isQuantized)) {
     state.isQuantized = !isQuantizationDisabled;
     await initializeModels();

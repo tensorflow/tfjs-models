@@ -6,7 +6,12 @@
     "declaration": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "lib": ["es2015", "es2016", "es2017", "dom"],
+    "lib": [
+      "es2015",
+      "es2016",
+      "es2017",
+      "dom"
+    ],
     "module": "commonjs",
     "resolveJsonModule": true,
     "esModuleInterop": true,
@@ -24,6 +29,11 @@
     "sourceMap": true,
     "target": "es5"
   },
-  "include": ["src"],
-  "exclude": ["node_modules/", "dist/"]
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules/",
+    "dist/"
+  ]
 }

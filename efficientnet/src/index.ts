@@ -16,12 +16,8 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import { config } from './config';
-import {
-  EfficientNetBaseModel,
-  EfficientNetInput,
-  EfficientNetOutput,
-} from './types';
+import {config} from './config';
+import {EfficientNetBaseModel, EfficientNetInput, EfficientNetOutput,} from './types';
 
 export class EfficientNet {
   private base: EfficientNetBaseModel;
@@ -30,23 +26,21 @@ export class EfficientNet {
   public constructor(base: EfficientNetBaseModel, isQuantized = true) {
     if (tf == null) {
       throw new Error(
-        `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
-          `also include @tensorflow/tfjs on the page before using this model.`
-      );
+          `Cannot find TensorFlow.js. ` +
+          `If you are using a <script> tag, please ` +
+          `also include @tensorflow/tfjs on the page before using this model.`);
     }
 
     if (['b0', 'b1', 'b2', 'b3', 'b4', 'b5'].indexOf(base) === -1) {
       throw new Error(
-        `EfficientNet cannot be constructed ` +
+          `EfficientNet cannot be constructed ` +
           `with an invalid base model ${base}. ` +
-          `Try one of 'b0', 'b1', 'b2', 'b3', 'b4' or 'b5'.`
-      );
+          `Try one of 'b0', 'b1', 'b2', 'b3', 'b4' or 'b5'.`);
     }
     this.base = base;
 
     this.modelPath = `${config['BASE_PATH']}/${
-      isQuantized ? 'quantized/' : ''
-    }${base}/model.json`;
+        isQuantized ? 'quantized/' : ''}${base}/model.json`;
 
     this.model = tf.loadGraphModel(this.modelPath);
   }
@@ -59,11 +53,10 @@ export class EfficientNet {
       const stddevRGB = config['STDDEV_RGB'].map(depth => depth * 255);
       for (let columnIndex = 0; columnIndex < height; ++columnIndex) {
         for (let rowIndex = 0; rowIndex < width; ++rowIndex) {
-          imageData[columnIndex][rowIndex] = imageData[columnIndex][
-            rowIndex
-          ].map(
-            (depth, channel) => (depth - meanRGB[channel]) / stddevRGB[channel]
-          );
+          imageData[columnIndex][rowIndex] =
+              imageData[columnIndex][rowIndex].map(
+                  (depth, channel) =>
+                      (depth - meanRGB[channel]) / stddevRGB[channel]);
         }
       }
       return tf.tensor3d(imageData);
@@ -71,23 +64,19 @@ export class EfficientNet {
   }
 
   private static cropAndResize(
-    base: EfficientNetBaseModel,
-    input: EfficientNetInput
-  ): tf.Tensor3D {
+      base: EfficientNetBaseModel, input: EfficientNetInput): tf.Tensor3D {
     return tf.tidy(() => {
-      const image: tf.Tensor3D = (input instanceof tf.Tensor
-        ? input
-        : tf.browser.fromPixels(input)
-      ).toFloat();
+      const image: tf.Tensor3D =
+          (input instanceof tf.Tensor ? input : tf.browser.fromPixels(input))
+              .toFloat();
 
       const [height, width] = image.shape;
 
       const imageSize = config['CROP_SIZE'][base];
       const cropPadding = config['CROP_PADDING'];
       const paddedCenterCropSize = Math.round(
-        Math.min(width, height) *
-          ((1.0 * imageSize) / (imageSize + cropPadding))
-      );
+          Math.min(width, height) *
+          ((1.0 * imageSize) / (imageSize + cropPadding)));
       const offsetHeight = Math.round((height - paddedCenterCropSize + 1) / 2);
       const offsetWidth = Math.round((width - paddedCenterCropSize + 1) / 2);
       const normalizedBox = [
@@ -96,25 +85,23 @@ export class EfficientNet {
         (paddedCenterCropSize + offsetHeight) / height,
         (paddedCenterCropSize + offsetWidth) / width,
       ];
-      const processedImage: tf.Tensor3D = tf.image
-        .cropAndResize(
-          image.expandDims(0),
-          [normalizedBox],
-          [0],
-          [imageSize, imageSize]
-        )
-        .squeeze([0]);
+      const processedImage: tf.Tensor3D =
+          tf.image
+              .cropAndResize(
+                  image.expandDims(0), [normalizedBox], [0],
+                  [imageSize, imageSize])
+              .squeeze([0]);
       return processedImage;
     });
   }
 
   private getTopKClasses(logits: tf.Tensor1D, topK: number) {
-    const imagenetClasses: { [key: number]: string } = config.IMAGENET_CLASSES;
+    const imagenetClasses: {[key: number]: string} = config.IMAGENET_CLASSES;
     const values = logits.dataSync();
 
     const valuesAndIndices = [];
     for (let idx = 0; idx < values.length; idx++) {
-      valuesAndIndices.push({ value: values[idx], index: idx });
+      valuesAndIndices.push({value: values[idx], index: idx});
     }
     valuesAndIndices.sort((a, b) => {
       return b.value - a.value;
@@ -137,20 +124,15 @@ export class EfficientNet {
   }
 
   public static preprocess(
-    base: EfficientNetBaseModel,
-    input: EfficientNetInput
-  ) {
+      base: EfficientNetBaseModel, input: EfficientNetInput) {
     return tf.tidy(() => {
-      return EfficientNet.normalize(
-        EfficientNet.cropAndResize(base, input)
-      ).expandDims(0);
+      return EfficientNet.normalize(EfficientNet.cropAndResize(base, input))
+          .expandDims(0);
     });
   }
 
-  public async predict(
-    input: EfficientNetInput,
-    topK: number
-  ): Promise<EfficientNetOutput> {
+  public async predict(input: EfficientNetInput, topK: number):
+      Promise<EfficientNetOutput> {
     const model = await this.model;
 
     return tf.tidy(() => {

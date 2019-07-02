@@ -28,20 +28,16 @@
     "babel-polyfill": "~6.26.0",
     "babel-preset-env": "~1.7.0",
     "babel-preset-es2017": "^6.24.1",
+    "clang-format": "^1.2.4",
     "cross-env": "^5.2.0",
     "eslint": "^5.16.0",
     "eslint-config-google": "^0.13.0",
     "parcel-bundler": "~1.12.3",
-    "prettier-eslint": "^8.8.2",
     "yalc": "~1.0.0-pre.27"
   },
   "eslintConfig": {
     "extends": "google",
     "rules": {
-      "object-curly-spacing": [
-        "error",
-        "always"
-      ],
       "require-jsdoc": 0,
       "valid-jsdoc": 0
     },

@@ -17,22 +17,17 @@
 
 import * as tf from '@tensorflow/tfjs';
 
-export type EfficientNetBaseModel = 'b0' | 'b1' | 'b2' | 'b3' | 'b4' | 'b5';
+export type EfficientNetBaseModel = 'b0'|'b1'|'b2'|'b3'|'b4'|'b5';
 
 export type EfficientNetInput =
-  | ImageData
-  | HTMLImageElement
-  | HTMLCanvasElement
-  | HTMLVideoElement
-  | tf.Tensor3D;
+    |ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement|tf.Tensor3D;
 
 export type ClassLabel = string;
 
 export type Probability = number;
 
 export type ClassPrediction = {
-  className: ClassLabel;
-  probability: Probability;
+  className: ClassLabel; probability: Probability;
 };
 
 export type EfficientNetOutput = ClassPrediction[];

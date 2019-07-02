@@ -15,10 +15,10 @@
  * =============================================================================
  */
 
-import node from 'rollup-plugin-node-resolve';
-import typescript from 'rollup-plugin-typescript2';
 import json from 'rollup-plugin-json';
-import { terser } from 'rollup-plugin-terser';
+import node from 'rollup-plugin-node-resolve';
+import {terser} from 'rollup-plugin-terser';
+import typescript from 'rollup-plugin-typescript2';
 
 const settings = {
   name: 'efficientnet',
@@ -48,11 +48,11 @@ function minify() {
     ecma: 8,
     module: true,
     compress: true,
-    mangle: { reserved: ['tf'] },
+    mangle: {reserved: ['tf']},
   });
 }
 
-function config({ plugins = [], output = {} }) {
+function config({plugins = [], output = {}}) {
   return {
     input: 'src/index.ts',
     plugins: [
