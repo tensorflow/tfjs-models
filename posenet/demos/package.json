@@ -9,7 +9,7 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow-models/posenet": "^2.1.0",
+    "@tensorflow-models/posenet": "^2.1.1",
     "@tensorflow/tfjs": "^1.1.2",
     "stats.js": "^0.17.0"
   },
