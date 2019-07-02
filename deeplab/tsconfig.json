@@ -4,7 +4,10 @@
     "allowUnreachableCode": false,
     "alwaysStrict": true,
     "declaration": true,
-    "lib": ["es2015", "dom"],
+    "lib": [
+      "es2015",
+      "dom"
+    ],
     "module": "commonjs",
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
@@ -19,6 +22,12 @@
     "sourceMap": true,
     "target": "es2015"
   },
-  "include": ["src"],
-  "exclude": ["node_modules/", "dist/", "src/**/*_test.ts"]
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules/",
+    "dist/",
+    "src/**/*_test.ts"
+  ]
 }

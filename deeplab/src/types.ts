@@ -19,24 +19,19 @@ import * as tf from '@tensorflow/tfjs';
 
 export type Label = number;
 export type Color = [number, number, number];
-export type Legend = { [name: string]: Color };
-export type SemanticSegmentationBaseModel = 'pascal' | 'cityscapes' | 'ade20k';
+export type Legend = {
+  [name: string]: Color
+};
+export type SemanticSegmentationBaseModel = 'pascal'|'cityscapes'|'ade20k';
 export type DeepLabInput =
-  | ImageData
-  | HTMLImageElement
-  | HTMLCanvasElement
-  | HTMLVideoElement
-  | tf.Tensor3D;
+    |ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement|tf.Tensor3D;
 
 export type RawSegmentationMap = tf.Tensor2D;
 export type SegmentationMap = Uint8ClampedArray;
 export type SegmentationData = {
-  legend: Legend;
-  segmentationMap: SegmentationMap;
+  legend: Legend; segmentationMap: SegmentationMap;
 };
 export type DeepLabOutput = {
-  legend: Legend;
-  height: number;
-  width: number;
+  legend: Legend; height: number; width: number;
   segmentationMap: SegmentationMap;
 };

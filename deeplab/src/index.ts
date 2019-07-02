@@ -16,17 +16,9 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import { config } from './config';
-import {
-  DeepLabInput,
-  DeepLabOutput,
-  Label,
-  Legend,
-  RawSegmentationMap,
-  SegmentationData,
-  SemanticSegmentationBaseModel,
-} from './types';
-import { getColormap, toInputTensor } from './utils';
+import {config} from './config';
+import {DeepLabInput, DeepLabOutput, Label, Legend, RawSegmentationMap, SegmentationData, SemanticSegmentationBaseModel,} from './types';
+import {getColormap, toInputTensor} from './utils';
 
 export class SemanticSegmentation {
   private base: SemanticSegmentationBaseModel;
@@ -35,22 +27,20 @@ export class SemanticSegmentation {
   constructor(base: SemanticSegmentationBaseModel, isQuantized = false) {
     if (tf == null) {
       throw new Error(
-        `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
-          `also include @tensorflow/tfjs on the page before using this model.`
-      );
+          `Cannot find TensorFlow.js.` +
+          ` If you are using a <script> tag, please ` +
+          `also include @tensorflow/tfjs on the page before using this model.`);
     }
     if (['pascal', 'cityscapes', 'ade20k'].indexOf(base) === -1) {
       throw new Error(
-        `SemanticSegmentation cannot be constructed ` +
+          `SemanticSegmentation cannot be constructed ` +
           `with an invalid base model ${base}. ` +
-          `Try one of 'pascal', 'cityscapes' and 'ade20k'.`
-      );
+          `Try one of 'pascal', 'cityscapes' and 'ade20k'.`);
     }
     this.base = base;
 
     this.modelPath = `${config['BASE_PATH']}/${
-      isQuantized ? 'quantized/' : ''
-    }${base}/model.json`;
+        isQuantized ? 'quantized/' : ''}${base}/model.json`;
 
     this.model = tf.loadGraphModel(this.modelPath);
   }
@@ -72,16 +62,14 @@ export class SemanticSegmentation {
       return config['LABELS']['CITYSCAPES'];
     }
     throw new Error(
-      `SemanticSegmentation cannot be constructed ` +
+        `SemanticSegmentation cannot be constructed ` +
         `with an invalid base model ${base}. ` +
-        `Try one of 'pascal', 'cityscapes' and 'ade20k'.`
-    );
+        `Try one of 'pascal', 'cityscapes' and 'ade20k'.`);
   }
 
   public async translate(
-    rawSegmentationMap: RawSegmentationMap,
-    canvas?: HTMLCanvasElement
-  ): Promise<SegmentationData> {
+      rawSegmentationMap: RawSegmentationMap,
+      canvas?: HTMLCanvasElement): Promise<SegmentationData> {
     const [height, width] = rawSegmentationMap.shape;
     const colormap = getColormap(this.base);
     const translatedMapBuffer = tf.buffer([height, width, 3], 'int32');
@@ -99,40 +87,33 @@ export class SemanticSegmentation {
 
     const translatedMapTensor = translatedMapBuffer.toTensor() as tf.Tensor3D;
 
-    const segmentationMap = await tf.browser.toPixels(
-      translatedMapTensor,
-      canvas
-    );
+    const segmentationMap =
+        await tf.browser.toPixels(translatedMapTensor, canvas);
 
     tf.dispose(translatedMapTensor);
 
     const labelNames = SemanticSegmentation.translateLabels(this.base);
     const legend: Legend = Array.from(labels).reduce(
-      (accumulator, label) => ({
-        ...accumulator,
-        [labelNames[label]]: colormap[label],
-      }),
-      {}
-    );
+        (accumulator, label) => ({
+          ...accumulator,
+          [labelNames[label]]: colormap[label],
+        }),
+        {});
 
-    return { legend, segmentationMap };
+    return {legend, segmentationMap};
   }
 
-  public async predict(
-    input: DeepLabInput,
-    canvas?: HTMLCanvasElement
-  ): Promise<DeepLabOutput> {
+  public async predict(input: DeepLabInput, canvas?: HTMLCanvasElement):
+      Promise<DeepLabOutput> {
     const rawSegmentationMap = await this.segment(input);
 
     const [height, width] = rawSegmentationMap.shape;
-    const { legend, segmentationMap } = await this.translate(
-      rawSegmentationMap,
-      canvas
-    );
+    const {legend, segmentationMap} =
+        await this.translate(rawSegmentationMap, canvas);
 
     tf.dispose(rawSegmentationMap);
 
-    return { legend, height, width, segmentationMap };
+    return {legend, height, width, segmentationMap};
   }
 
   /**

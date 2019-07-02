@@ -16,8 +16,8 @@
  */
 
 import resolve from 'rollup-plugin-node-resolve';
+import {terser} from 'rollup-plugin-terser';
 import typescript from 'rollup-plugin-typescript2';
-import { terser } from 'rollup-plugin-terser';
 
 const settings = {
   name: 'deeplab',
@@ -46,11 +46,11 @@ function minify() {
     ecma: 8,
     module: true,
     compress: true,
-    mangle: { reserved: ['tf'] },
+    mangle: {reserved: ['tf']},
   });
 }
 
-function config({ plugins = [], output = {} }) {
+function config({plugins = [], output = {}}) {
   return {
     input: 'src/index.ts',
     plugins: [

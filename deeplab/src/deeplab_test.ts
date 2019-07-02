@@ -15,11 +15,8 @@
  * =============================================================================
  */
 import * as tf from '@tensorflow/tfjs';
-import {
-  describeWithFlags,
-  NODE_ENVS,
-} from '@tensorflow/tfjs-core/dist/jasmine_util';
-import { SemanticSegmentation } from '.';
+import {describeWithFlags, NODE_ENVS,} from '@tensorflow/tfjs-core/dist/jasmine_util';
+import {SemanticSegmentation} from '.';
 
 describeWithFlags('SemanticSegmentation', NODE_ENVS, () => {
   beforeAll(() => {
@@ -51,7 +48,7 @@ describeWithFlags('SemanticSegmentation', NODE_ENVS, () => {
     const model = new SemanticSegmentation('pascal');
     const x = tf.zeros([300, 500, 3]) as tf.Tensor3D;
 
-    const { legend } = await model.predict(x);
+    const {legend} = await model.predict(x);
     await model.dispose();
     expect(Object.keys(legend)).toContain('background');
   });

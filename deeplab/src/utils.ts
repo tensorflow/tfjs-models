@@ -16,8 +16,8 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import { config } from './config';
-import { Color, DeepLabInput, SemanticSegmentationBaseModel } from './types';
+import {config} from './config';
+import {Color, DeepLabInput, SemanticSegmentationBaseModel} from './types';
 
 const pascalColormapMaxEntriesNum = config['DATASET_MAX_ENTRIES']['PASCAL'];
 const createPascalColormap = (): Color[] => {
@@ -34,8 +34,8 @@ const createPascalColormap = (): Color[] => {
     const indexShift = 3 * (7 - shift);
     for (let channel = 0; channel < 3; ++channel) {
       for (let idx = 0; idx < pascalColormapMaxEntriesNum; ++idx) {
-        colormap[idx][channel] |=
-          ((idx >> (channel + indexShift)) & 1) << shift;
+        colormap[idx][channel] |= ((idx >> (channel + indexShift)) & 1)
+            << shift;
       }
     }
   }
@@ -59,23 +59,20 @@ export const getColormap = (base: SemanticSegmentationBaseModel) => {
     return createCityscapesColormap();
   }
   throw new Error(
-    `SemanticSegmentation cannot be constructed ` +
+      `SemanticSegmentation cannot be constructed ` +
       `with an invalid base model ${base}. ` +
-      `Try one of 'pascal', 'cityscapes' and 'ade20k'.`
-  );
+      `Try one of 'pascal', 'cityscapes' and 'ade20k'.`);
 };
 
 export function toInputTensor(input: DeepLabInput) {
   return tf.tidy(() => {
     const image =
-      input instanceof tf.Tensor ? input : tf.browser.fromPixels(input);
+        input instanceof tf.Tensor ? input : tf.browser.fromPixels(input);
     const [height, width] = image.shape;
     const resizeRatio = config['CROP_SIZE'] / Math.max(width, height);
-    const targetSize = [height, width].map(side =>
-      Math.round(side * resizeRatio)
-    );
-    return tf.image
-      .resizeBilinear(image, targetSize as [number, number])
-      .expandDims(0);
+    const targetSize =
+        [height, width].map(side => Math.round(side * resizeRatio));
+    return tf.image.resizeBilinear(image, targetSize as [number, number])
+        .expandDims(0);
   });
 }

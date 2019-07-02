@@ -16,7 +16,7 @@
  */
 
 import 'bulma/css/bulma.css';
-import { SemanticSegmentation } from '@tensorflow-models/deeplab';
+import {SemanticSegmentation} from '@tensorflow-models/deeplab';
 import * as tf from '@tensorflow/tfjs';
 import ade20kExampleImage from './examples/ade20k.jpg';
 import cityscapesExampleImage from './examples/cityscapes.jpg';
@@ -92,7 +92,7 @@ const processImages = (event) => {
 };
 
 const displaySegmentationMap = (modelName, deeplabOutput) => {
-  const { legend, height, width, segmentationMap } = deeplabOutput;
+  const {legend, height, width, segmentationMap} = deeplabOutput;
   const canvas = document.getElementById('output-image');
   const ctx = canvas.getContext('2d');
 
@@ -133,7 +133,7 @@ const displaySegmentationMap = (modelName, deeplabOutput) => {
   runner.classList.remove('is-loading');
 
   const inputContainer = document.getElementById('input-card');
-  inputContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  inputContainer.scrollIntoView({behavior: 'smooth', block: 'nearest'});
 };
 
 const status = (message) => {
@@ -153,9 +153,8 @@ const runDeeplab = async (modelName) => {
   status(`Running the inference...`);
   await tf.nextFrame();
   const initialisationStart = performance.now();
-  const isQuantizationDisabled = document.getElementById(
-      'is-quantization-disabled'
-  ).checked;
+  const isQuantizationDisabled =
+      document.getElementById('is-quantization-disabled').checked;
   if (!(isQuantizationDisabled ^ state.isQuantized)) {
     state.isQuantized = !isQuantizationDisabled;
     await initializeModels();
