@@ -21,8 +21,8 @@ if [ "$PYTHON_VERSION" -lt "36" ]; then
   exit 1
 fi
 
-if ! [ -x "$(command -v aria2c)" ]; then
-  echo "Please install aria2c before continuing."
+if ! [ -x "$(command -v wget)" ]; then
+  echo "Please install wget before continuing."
 fi
 
 notify() {
@@ -61,7 +61,10 @@ usage() {
   echo "  $0 [ --target_dir=<value> | --target_dir <value> ] [options]"
   echo
   echo "Options:"
-  echo "  --use_venv=true|yes|1|t|y :: Use the virtual env with pre-installed dependencies"
+  echo "  --use_venv=true|yes|1|t|y " \
+    ":: Use the virtual env with pre-installed dependencies. False by default"
+  echo "  --tmp_working_dir=true|yes|1|t|y " \
+    ":: Make a temporary working directory the working space. False by default"
   echo
   echo "The default target_dir is dist."
 }
@@ -70,12 +73,13 @@ usage() {
 LAST_ARG_IDX=$(($# + 1))
 TARGET_DIR=$(realpath "dist")
 USE_VENV="false"
+MAKE_TMP_WORKING_DIR="false"
 declare -A LONGOPTS
 # Use associative array to declare how many arguments a long option
 # expects. In this case we declare that loglevel expects/has one
 # argument and range has two. Long options that aren't listed in this
 # way will have zero arguments by default.
-LONGOPTS=([target_dir]=1 [use_venv]=1)
+LONGOPTS=([target_dir]=1 [use_venv]=1 [tmp_working_dir]=1)
 OPTSPEC="h-:"
 while getopts "$OPTSPEC" opt; do
   while true; do
@@ -114,6 +118,9 @@ while getopts "$OPTSPEC" opt; do
     use_venv)
       USE_VENV=$OPTARG
       ;;
+    tmp_working_dir)
+      MAKE_TMP_WORKING_DIR=$OPTARG
+      ;;
     h | help)
       usage
       exit 0
@@ -139,19 +146,22 @@ TRUE=(
   "yes"
   "y"
 )
-CONVERTED_MODELS_DIR="efficientnet"
+CONVERTED_MODELS_DIR="$(realpath $TARGET_DIR/efficientnet)"
+SAVED_MODELS_DIR="$(realpath $TARGET_DIR/saved_models)"
 VIRTUALENV_DIR="venv"
-MODEL_SOURCE_DIR="efficientnet-source"
-MODEL_SOURCE_URL="https://github.com/sdll/efficientnet"
-MODEL_SOURCE_BRANCH="tf-keras"
+
+CHECKPOINTS_DIR="pretrained_tensorflow"
+CHECKPOINT_PREFIX="efficientnet-"
+CHECKPOINTS_URL="https://storage.googleapis.com/cloud-tpu-checkpoints/efficientnet/"
+CHECKPOINTS_EXT=".tar.gz"
 
 MODELS=(
   "b0"
-  "b1"
-  "b2"
-  "b3"
-  "b4"
-  "b5"
+  # "b1"
+  # "b2"
+  # "b3"
+  # "b4"
+  # "b5"
 )
 
 PARENT_DIR="$(pwd)"
@@ -161,7 +171,7 @@ notify "=" "Setting up the conversion environment..."
 
 set -e
 
-mkdir -p $TARGET_DIR/$CONVERTED_MODELS_DIR
+mkdir -p $SAVED_MODELS_DIR
 
 mkdir -p $TARGET_DIR
 cd $TARGET_DIR
@@ -178,29 +188,49 @@ fi
 
 notify "=" "Converting the model to tfjs..."
 
-if ! [ -d $MODEL_SOURCE_DIR ]; then
-  notify "~" "Downloading the model implementation..."
-  git clone -b $MODEL_SOURCE_BRANCH $MODEL_SOURCE_URL $MODEL_SOURCE_DIR
+if ! [ -d $CHECKPOINTS_DIR ]; then
+  notify "=" "Downloading the checkpoints..."
+  mkdir -p $CHECKPOINTS_DIR
+  for MODEL_VERSION in "${MODELS[@]}"; do
+    if ! [ -d $CHECKPOINT_PREFIX$MODEL_VERSION ]; then
+      cd $CHECKPOINTS_DIR
+      wget \
+        -O $MODEL_VERSION$CHECKPOINTS_EXT \
+        $CHECKPOINTS_URL$CHECKPOINT_PREFIX$MODEL_VERSION$CHECKPOINTS_EXT
+      tar xvf $MODEL_VERSION$CHECKPOINTS_EXT
+      rm $MODEL_VERSION$CHECKPOINTS_EXT
+      cd ..
+    fi
+  done
 fi
 
-cd $MODEL_SOURCE_DIR
-./scripts/convert_from_tf_to_keras.sh --target_dir dist --saved_model=true
-
-cd dist/pretrained_keras
+notify "=" "Converting the checkpoints to SavedModels..."
 
 for MODEL_VERSION in "${MODELS[@]}"; do
+  MODEL_NAME="efficientnet-$MODEL_VERSION"
+  if ! [ -d "$SAVED_MODELS_DIR/$MODEL_NAME" ]; then
 
+    notify "~" "Converting $MODEL_NAME..."
+
+    PYTHONPATH=$(dirname $SCRIPT_DIR) python "$SCRIPT_DIR/load_efficientnet.py" \
+      --model_name $MODEL_NAME \
+      --tf_checkpoint $CHECKPOINTS_DIR/$MODEL_NAME \
+      --output_path "$SAVED_MODELS_DIR/$MODEL_NAME"
+  fi
+done
+
+notify "=" "Converting the checkpoints from SavedModels to TF.js JSON..."
+for MODEL_VERSION in "${MODELS[@]}"; do
   MODEL_NAME="efficientnet-"$MODEL_VERSION
 
   notify "~" "Converting $MODEL_NAME..."
   tensorflowjs_converter \
-    --quantization_bytes 2 \
     --input_format=tf_saved_model \
     --output_format=tfjs_graph_model \
     --signature_name=serving_default \
     --saved_model_tags=serve \
-    $MODEL_NAME \
-    $TARGET_DIR/$CONVERTED_MODELS_DIR/$MODEL_VERSION
+    $SAVED_MODELS_DIR/$MODEL_NAME \
+    $CONVERTED_MODELS_DIR/$MODEL_VERSION
 
   notify "~" "Converting and quantizing $MODEL_NAME..."
   tensorflowjs_converter \
@@ -209,8 +239,8 @@ for MODEL_VERSION in "${MODELS[@]}"; do
     --output_format=tfjs_graph_model \
     --signature_name=serving_default \
     --saved_model_tags=serve \
-    $MODEL_NAME \
-    $TARGET_DIR/$CONVERTED_MODELS_DIR/quantized/$MODEL_VERSION
+    $SAVED_MODELS_DIR/$MODEL_NAME \
+    $CONVERTED_MODELS_DIR/quantized/$MODEL_VERSION
 done
 
 notify "=" "Success!"
