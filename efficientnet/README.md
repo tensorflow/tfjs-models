@@ -18,14 +18,14 @@ To get started, pick the model variant from `b0`, `b1`, `b2`, `b3`, `b4`, and `b
 import { EfficientNet } from '@tensorflow-models/efficientnet';
 const model = 'b0';       // set to your preferred model, out of `b0`, `b1`, `b2`, `b3`, `b4`, and `b5`.
 const isQuantized = true; // set to your preference
-const deeplab = new SemanticSegmentation(model, isQuantized);
+const deeplab = new EfficientNet(model, isQuantized);
 ```
 
 The download of weights begins automatically. You can start using the model immediately.
 
 ### Classifying an Image
 
-The model recognizes [1000 ImageNet](https://github.com/sdll/tfjs-models/blob/4b3e32c0aa8374e1c38d4f248c84e38fd0af81ab/efficientnet/src/config.ts#L32) classes.
+The model recognizes [1000 ImageNet](./efficientnet/src/config.ts#L32) classes.
 
 #### Classification input
 
@@ -44,8 +44,9 @@ The output is a promise of `EfficientNetOutput`, the array of `ClassPrediction` 
 #### Classification example
 
 ```typescript
+const topK = 10;
 const classify = async (image) => {
-    return await model.predict(image);
+    return await model.predict(image, topK);
 }
 ```
 
@@ -55,17 +56,19 @@ Please see the demo [documentation](./demo/README.md).
 
 ## Technical Details
 
-EfficientNets rely on AutoML and compound scaling to achieve superior performance without compromising resource efficiency. The [AutoML Mobile framework](https://ai.googleblog.com/2018/08/mnasnet-towards-automating-design-of.html) has helped develop a mobile-size baseline network, **EfficientNet-B0**, which is then improved by the compound scaling method  to obtain EfficientNet-B1 to B7.
+EfficientNets rely on AutoML and compound scaling to achieve superior performance without compromising resource efficiency. The [AutoML Mobile framework](https://ai.googleblog.com/2018/08/mnasnet-towards-automating-design-of.html) has helped develop a mobile-size baseline network, **EfficientNet-B0**, which is then improved by the compound scaling method to obtain EfficientNet-B1 to B7.
 
 <table border="0">
-<tr>
+  <tr>
     <td>
-    <img src="https://raw.githubusercontent.com/tensorflow/tpu/master/models/official/efficientnet/g3doc/params.png" width="100%" />
+      <img src="https://raw.githubusercontent.com/tensorflow/tpu/master/models/official/efficientnet/g3doc/params.png"
+        width="100%" />
     </td>
     <td>
-    <img src="https://raw.githubusercontent.com/tensorflow/tpu/master/models/official/efficientnet/g3doc/flops.png", width="90%" />
+      <img src="https://raw.githubusercontent.com/tensorflow/tpu/master/models/official/efficientnet/g3doc/flops.png" ,
+        width="90%" />
     </td>
-</tr>
+  </tr>
 </table>
 
 EfficientNets achieve state-of-the-art accuracy on ImageNet with an order of magnitude better efficiency:
@@ -79,11 +82,11 @@ EfficientNets achieve state-of-the-art accuracy on ImageNet with an order of mag
 This model is based on the Keras [implementation](https://github.com/qubvel/efficientnet) of EfficientNet. You might want to inspect the [conversion script](./scripts/convert_efficientnet.sh), or download original TensorFlow checkpoints [here](https://github.com/tensorflow/tpu/tree/master/models/official/efficientnet). To convert the weights locally, run the script as follows, replacing `dist` with the target directory:
 
 ```bash
-./scripts/convert_deeplab.sh --target_dir=dist --use_venv=t
+./scripts/convert_efficientnet.sh --target_dir=dist --use_venv=t
 ```
 
 Run the usage helper to learn more about the options:
 
 ```bash
-./scripts/convert_deeplab.sh -h
+./scripts/convert_efficientnet.sh -h
 ```

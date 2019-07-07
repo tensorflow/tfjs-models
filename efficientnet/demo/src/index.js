@@ -23,14 +23,7 @@ const state = {
   isQuantized: true,
 };
 
-const efficientnet = {
-  b0: undefined,
-  b1: undefined,
-  b2: undefined,
-  b3: undefined,
-  b4: undefined,
-  b5: undefined,
-};
+const efficientnet = {};
 
 const toggleInvisible = (elementId, force = undefined) => {
   const outputContainer = document.getElementById(elementId);
