@@ -1,20 +1,26 @@
 # coding=utf-8
-import argparse
-import os
-import shutil
-import sys
-import time
-
-import numpy as np
-import tensorflow as tf
-
-import cv2
-from nets import model_train as model
-
-sys.path.append(os.getcwd())
 
 
 def convert_to_saved_model(checkpoint_path, output_path):
+    with tf.get_default_graph().as_default():
+        input_images = tf.placeholder(
+            tf.float32, shape=[None, None, None, 3], name="input_images"
+        )
+        global_step = tf.get_variable(
+            "global_step", [], initializer=tf.constant_initializer(0), trainable=False
+        )
+        seg_maps_pred = model.model(input_images, is_training=False)
+
+        variable_averages = tf.train.ExponentialMovingAverage(0.997, global_step)
+        saver = tf.train.Saver(variable_averages.variables_to_restore())
+        with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
+            ckpt_state = tf.train.get_checkpoint_state(FLAGS.checkpoint_path)
+            model_path = os.path.join(
+                FLAGS.checkpoint_path,
+                os.path.basename(ckpt_state.model_checkpoint_path),
+            )
+            logger.info("Restore from {}".format(model_path))
+            saver.restore(sess, model_path)
     os.makedirs(output_path)
 
     with tf.get_default_graph().as_default():
