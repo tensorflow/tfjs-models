@@ -77,7 +77,7 @@ LAST_ARG_IDX=$(($# + 1))
 TARGET_DIR="dist"
 USE_VENV="false"
 MAKE_TMP_WORKING_DIR="false"
-declare -A LONGOPTS
+declare -a LONGOPTS
 # Use associative array to declare how many arguments a long option
 # expects. In this case we declare that loglevel expects/has one
 # argument and range has two. Long options that aren't listed in this
@@ -173,7 +173,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 notify "=" "Setting up the conversion environment..."
 
-
 mkdir -p $SAVED_MODELS_DIR
 
 mkdir -p $TARGET_DIR
@@ -211,39 +210,38 @@ notify "=" "Converting the checkpoints to SavedModels..."
 
 for MODEL_VERSION in "${MODELS[@]}"; do
   MODEL_NAME="efficientnet-$MODEL_VERSION"
-  if ! [ -d "$SAVED_MODELS_DIR/$MODEL_NAME" ]; then
-
-    notify "~" "Converting $MODEL_NAME..."
-
-    PYTHONPATH=$(dirname $SCRIPT_DIR) python "$SCRIPT_DIR/load_efficientnet.py" \
-      --model_name $MODEL_NAME \
-      --tf_checkpoint $CHECKPOINTS_DIR/$MODEL_NAME \
-      --output_path "$SAVED_MODELS_DIR/$MODEL_NAME"
-  fi
-done
-
-notify "=" "Converting the checkpoints from SavedModels to TF.js JSON..."
-for MODEL_VERSION in "${MODELS[@]}"; do
-  MODEL_NAME="efficientnet-"$MODEL_VERSION
 
   notify "~" "Converting $MODEL_NAME..."
-  tensorflowjs_converter \
-    --input_format=tf_saved_model \
-    --output_format=tfjs_graph_model \
-    --signature_name=serving_default \
-    --saved_model_tags=serve \
-    $SAVED_MODELS_DIR/$MODEL_NAME \
-    $CONVERTED_MODELS_DIR/$MODEL_VERSION
 
-  notify "~" "Converting and quantizing $MODEL_NAME..."
-  tensorflowjs_converter \
-    --quantization_bytes 2 \
-    --input_format=tf_saved_model \
-    --output_format=tfjs_graph_model \
-    --signature_name=serving_default \
-    --saved_model_tags=serve \
-    $SAVED_MODELS_DIR/$MODEL_NAME \
-    $CONVERTED_MODELS_DIR/quantized/$MODEL_VERSION
+  PYTHONPATH=$(dirname $SCRIPT_DIR) python "$SCRIPT_DIR/convert_efficientnet.py" \
+    --model_name $MODEL_NAME \
+    --tf_checkpoint $CHECKPOINTS_DIR/$MODEL_NAME \
+    --saved_model_path "$SAVED_MODELS_DIR/$MODEL_NAME" \
+    --tfjs_model_path "$CONVERTED_MODELS_DIR/$MODEL_VERSION"
 done
+
+# notify "=" "Converting the checkpoints from SavedModels to TF.js JSON..."
+# for MODEL_VERSION in "${MODELS[@]}"; do
+#   MODEL_NAME="efficientnet-"$MODEL_VERSION
+
+#   notify "~" "Converting $MODEL_NAME..."
+#   tensorflowjs_converter \
+#     --input_format=tf_saved_model \
+#     --output_format=tfjs_graph_model \
+#     --signature_name=serving_default \
+#     --saved_model_tags=serve \
+#     $SAVED_MODELS_DIR/$MODEL_NAME \
+#     $CONVERTED_MODELS_DIR/$MODEL_VERSION
+
+#   notify "~" "Converting and quantizing $MODEL_NAME..."
+#   tensorflowjs_converter \
+#     --quantization_bytes 2 \
+#     --input_format=tf_saved_model \
+#     --output_format=tfjs_graph_model \
+#     --signature_name=serving_default \
+#     --saved_model_tags=serve \
+#     $SAVED_MODELS_DIR/$MODEL_NAME \
+#     $CONVERTED_MODELS_DIR/quantized/$MODEL_VERSION
+# done
 
 notify "=" "Success!"

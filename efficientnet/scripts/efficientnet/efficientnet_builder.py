@@ -162,8 +162,8 @@ def get_model_params(model_name, override_params):
         # in global_params.
         global_params = global_params._replace(**override_params)
 
-    tf.logging.info("global_params= %s", global_params)
-    tf.logging.info("blocks_args= %s", blocks_args)
+    tf.compat.v1.logging.info("global_params= %s", global_params)
+    tf.compat.v1.logging.info("blocks_args= %s", blocks_args)
     return blocks_args, global_params
 
 
@@ -200,7 +200,7 @@ def build_model(images, model_name, training, override_params=None, model_dir=No
                 f.write("global_params= %s\n\n" % str(global_params))
                 f.write("blocks_args= %s\n\n" % str(blocks_args))
 
-    with tf.variable_scope(model_name):
+    with tf.compat.v1.variable_scope(model_name):
         model = efficientnet_model.Model(blocks_args, global_params)
         logits = model(images, training=training)
 

@@ -19,15 +19,16 @@
   ICML'19, https://arxiv.org/abs/1905.11946
 """
 
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import collections
 import math
-
 import numpy as np
 import six
-import tensorflow as tf
 from six.moves import xrange  # pylint: disable=redefined-builtin
+import tensorflow as tf
 
 from . import utils
 
@@ -47,6 +48,10 @@ GlobalParams = collections.namedtuple(
     ],
 )
 GlobalParams.__new__.__defaults__ = (None,) * len(GlobalParams._fields)
+
+# batchnorm = tf.layers.BatchNormalization
+batchnorm = utils.TpuBatchNormalization  # TPU-specific requirement.
+relu_fn = tf.nn.swish
 
 
 BlockArgs = collections.namedtuple(
@@ -87,7 +92,7 @@ def conv_kernel_initializer(shape, dtype=None, partition_info=None):
     del partition_info
     kernel_height, kernel_width, _, out_filters = shape
     fan_out = int(kernel_height * kernel_width * out_filters)
-    return tf.random_normal(shape, mean=0.0, stddev=np.sqrt(2.0 / fan_out), dtype=dtype)
+    return tf.random.normal(shape, mean=0.0, stddev=np.sqrt(2.0 / fan_out), dtype=dtype)
 
 
 def dense_kernel_initializer(shape, dtype=None, partition_info=None):
@@ -108,7 +113,7 @@ def dense_kernel_initializer(shape, dtype=None, partition_info=None):
   """
     del partition_info
     init_range = 1.0 / np.sqrt(shape[1])
-    return tf.random_uniform(shape, -init_range, init_range, dtype=dtype)
+    return tf.random.uniform(shape, -init_range, init_range, dtype=dtype)
 
 
 def round_filters(filters, global_params):
@@ -183,7 +188,7 @@ class MBConvBlock(object):
         filters = self._block_args.input_filters * self._block_args.expand_ratio
         if self._block_args.expand_ratio != 1:
             # Expansion phase:
-            self._expand_conv = tf.layers.Conv2D(
+            self._expand_conv = tf.compat.v1.layers.Conv2D(
                 filters,
                 kernel_size=[1, 1],
                 strides=[1, 1],
@@ -192,7 +197,7 @@ class MBConvBlock(object):
                 data_format=self._data_format,
                 use_bias=False,
             )
-            self._bn0 = utils.TpuBatchNormalization(
+            self._bn0 = batchnorm(
                 axis=self._channel_axis,
                 momentum=self._batch_norm_momentum,
                 epsilon=self._batch_norm_epsilon,
@@ -208,7 +213,7 @@ class MBConvBlock(object):
             data_format=self._data_format,
             use_bias=False,
         )
-        self._bn1 = utils.TpuBatchNormalization(
+        self._bn1 = batchnorm(
             axis=self._channel_axis,
             momentum=self._batch_norm_momentum,
             epsilon=self._batch_norm_epsilon,
@@ -249,7 +254,7 @@ class MBConvBlock(object):
             data_format=self._data_format,
             use_bias=False,
         )
-        self._bn2 = utils.TpuBatchNormalization(
+        self._bn2 = batchnorm(
             axis=self._channel_axis,
             momentum=self._batch_norm_momentum,
             epsilon=self._batch_norm_epsilon,
@@ -265,7 +270,7 @@ class MBConvBlock(object):
       A output tensor, which should have the same shape as input.
     """
         se_tensor = tf.reduce_mean(input_tensor, self._spatial_dims, keepdims=True)
-        se_tensor = self._se_expand(tf.nn.swish(self._se_reduce(se_tensor)))
+        se_tensor = self._se_expand(relu_fn(self._se_reduce(se_tensor)))
         tf.logging.info(
             "Built Squeeze and Excitation with tensor shape: %s" % (se_tensor.shape)
         )
@@ -284,12 +289,12 @@ class MBConvBlock(object):
     """
         tf.logging.info("Block input: %s shape: %s" % (inputs.name, inputs.shape))
         if self._block_args.expand_ratio != 1:
-            x = tf.nn.swish(self._bn0(self._expand_conv(inputs), training=training))
+            x = relu_fn(self._bn0(self._expand_conv(inputs), training=training))
         else:
             x = inputs
         tf.logging.info("Expand: %s shape: %s" % (x.name, x.shape))
 
-        x = tf.nn.swish(self._bn1(self._depthwise_conv(x), training=training))
+        x = relu_fn(self._bn1(self._depthwise_conv(x), training=training))
         tf.logging.info("DWConv: %s shape: %s" % (x.name, x.shape))
 
         if self.has_se:
@@ -381,7 +386,7 @@ class Model(tf.keras.Model):
             data_format=self._global_params.data_format,
             use_bias=False,
         )
-        self._bn0 = utils.TpuBatchNormalization(
+        self._bn0 = batchnorm(
             axis=channel_axis, momentum=batch_norm_momentum, epsilon=batch_norm_epsilon
         )
 
@@ -394,14 +399,14 @@ class Model(tf.keras.Model):
             padding="same",
             use_bias=False,
         )
-        self._bn1 = utils.TpuBatchNormalization(
+        self._bn1 = batchnorm(
             axis=channel_axis, momentum=batch_norm_momentum, epsilon=batch_norm_epsilon
         )
 
         self._avg_pooling = tf.keras.layers.GlobalAveragePooling2D(
             data_format=self._global_params.data_format
         )
-        self._fc = tf.layers.Dense(
+        self._fc = tf.compat.v1.layers.Dense(
             self._global_params.num_classes, kernel_initializer=dense_kernel_initializer
         )
 
@@ -424,8 +429,8 @@ class Model(tf.keras.Model):
         outputs = None
         self.endpoints = {}
         # Calls Stem layers
-        with tf.variable_scope("stem"):
-            outputs = tf.nn.swish(self._bn0(self._conv_stem(inputs), training=training))
+        with tf.compat.v1.variable_scope("stem"):
+            outputs = relu_fn(self._bn0(self._conv_stem(inputs), training=training))
         tf.logging.info("Built stem layers with output shape: %s" % outputs.shape)
         self.endpoints["stem"] = outputs
 
@@ -460,7 +465,7 @@ class Model(tf.keras.Model):
         if not features_only:
             # Calls final layers and returns logits.
             with tf.variable_scope("head"):
-                outputs = tf.nn.swish(
+                outputs = relu_fn(
                     self._bn1(self._conv_head(outputs), training=training)
                 )
                 outputs = self._avg_pooling(outputs)
@@ -470,3 +475,4 @@ class Model(tf.keras.Model):
                 outputs = self._fc(outputs)
                 self.endpoints["head"] = outputs
         return outputs
+

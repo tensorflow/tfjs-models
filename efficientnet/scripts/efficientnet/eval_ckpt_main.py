@@ -81,12 +81,14 @@ class EvalCkptDriver(object):
 
     def restore_model(self, sess, ckpt_dir, enable_ema=True, export_ckpt=None):
         """Restore variables from checkpoint dir."""
-        sess.run(tf.global_variables_initializer())
+        sess.run(tf.compat.v1.global_variables_initializer())
         checkpoint = tf.train.latest_checkpoint(ckpt_dir)
         if enable_ema:
             ema = tf.train.ExponentialMovingAverage(decay=0.0)
-            ema_vars = tf.trainable_variables() + tf.get_collection("moving_vars")
-            for v in tf.global_variables():
+            ema_vars = tf.compat.v1.trainable_variables() + tf.compat.v1.get_collection(
+                "moving_vars"
+            )
+            for v in tf.compat.v1.global_variables():
                 if "moving_mean" in v.name or "moving_variance" in v.name:
                     ema_vars.append(v)
             ema_vars = list(set(ema_vars))
@@ -96,8 +98,8 @@ class EvalCkptDriver(object):
             var_dict = None
             ema_assign_op = None
 
-        sess.run(tf.global_variables_initializer())
-        saver = tf.train.Saver(var_dict, max_to_keep=1)
+        sess.run(tf.compat.v1.global_variables_initializer())
+        saver = tf.compat.v1.train.Saver(var_dict, max_to_keep=1)
         saver.restore(sess, checkpoint)
 
         if export_ckpt:
@@ -124,7 +126,7 @@ class EvalCkptDriver(object):
         dataset = tf.data.Dataset.from_tensor_slices((filenames, labels))
 
         def _parse_function(filename, label):
-            image_string = tf.read_file(filename)
+            image_string = tf.io.read_file(filename)
             image_decoded = preprocessing.preprocess_image(
                 image_string, is_training, image_size=self.image_size
             )
@@ -134,7 +136,7 @@ class EvalCkptDriver(object):
         dataset = dataset.map(_parse_function)
         dataset = dataset.batch(self.batch_size)
 
-        iterator = dataset.make_one_shot_iterator()
+        iterator = tf.compat.v1.data.make_one_shot_iterator(dataset)
         images, labels = iterator.get_next()
         return images, labels
 

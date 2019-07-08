@@ -87,7 +87,7 @@ def build_optimizer(
     return optimizer
 
 
-class TpuBatchNormalization(tf.layers.BatchNormalization):
+class TpuBatchNormalization(tf.compat.v1.layers.BatchNormalization):
     # class TpuBatchNormalization(tf.layers.BatchNormalization):
     """Cross replica batch normalization."""
 
@@ -206,7 +206,7 @@ def archive_ckpt(ckpt_eval, ckpt_objective, ckpt_path):
 
 
 # TODO(hongkuny): Consolidate this as a common library cross models.
-class DepthwiseConv2D(tf.keras.layers.DepthwiseConv2D, tf.layers.Layer):
+class DepthwiseConv2D(tf.keras.layers.DepthwiseConv2D, tf.compat.v1.layers.Layer):
     """Wrap keras DepthwiseConv2D to tf.layers."""
 
     pass
