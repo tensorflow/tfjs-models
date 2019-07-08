@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@tensorflow-models/deeplab": "link:.yalc/@tensorflow-models/deeplab",
-    "@tensorflow/tfjs": "^1.2.1",
+    "@tensorflow/tfjs": "^1.2.2",
     "bulma": "^0.7.5",
     "stats.js": "^0.17.0"
   },
@@ -28,7 +28,7 @@
     "babel-preset-es2017": "^6.24.1",
     "clang-format": "^1.2.4",
     "cross-env": "^5.2.0",
-    "eslint": "^5.16.0",
+    "eslint": "^6.0.1",
     "eslint-config-google": "^0.13.0",
     "parcel-bundler": "~1.12.3",
     "yalc": "~1.0.0-pre.32"
