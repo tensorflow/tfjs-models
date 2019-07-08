@@ -23,7 +23,10 @@ fi
 
 if ! [ -x "$(command -v wget)" ]; then
   echo "Please install wget before continuing."
+  exit 1
 fi
+
+set -e
 
 notify() {
   # $1: the string which encloses the message
@@ -71,7 +74,7 @@ usage() {
 
 # set defaults
 LAST_ARG_IDX=$(($# + 1))
-TARGET_DIR=$(realpath "dist")
+TARGET_DIR="dist"
 USE_VENV="false"
 MAKE_TMP_WORKING_DIR="false"
 declare -A LONGOPTS
@@ -146,8 +149,9 @@ TRUE=(
   "yes"
   "y"
 )
-CONVERTED_MODELS_DIR="$(realpath $TARGET_DIR/efficientnet)"
-SAVED_MODELS_DIR="$(realpath $TARGET_DIR/saved_models)"
+TARGET_DIR="$(realpath -m $TARGET_DIR)"
+CONVERTED_MODELS_DIR="$(realpath -m $TARGET_DIR/efficientnet)"
+SAVED_MODELS_DIR="$(realpath -m $TARGET_DIR/saved_models)"
 VIRTUALENV_DIR="venv"
 
 CHECKPOINTS_DIR="pretrained_tensorflow"
@@ -169,7 +173,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 notify "=" "Setting up the conversion environment..."
 
-set -e
 
 mkdir -p $SAVED_MODELS_DIR
 
@@ -182,7 +185,7 @@ if elementIn "$USE_VENV" "${TRUE[@]}"; then
   else
     virtualenv --no-site-packages $VIRTUALENV_DIR
     source $VIRTUALENV_DIR/bin/activate
-    pip install tensorflowjs keras scikit-image
+    pip install -r $SCRIPT_DIR/requirements.txt
   fi
 fi
 

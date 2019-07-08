@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  converter:
+    build: ./scripts
+    volumes:
+      - "./scripts:/converter"
+    command:
+      - /bin/bash
+      - -c
+      - |
+        /converter/convert_efficientnet.sh --target_dir=dist
+
