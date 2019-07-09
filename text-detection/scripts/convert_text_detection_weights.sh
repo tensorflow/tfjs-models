@@ -22,7 +22,10 @@ fi
 
 if ! [ -x "$(command -v realpath)" ]; then
   echo "Please install coreutils before continuing."
+  exit 1
 fi
+
+set -e
 
 notify() {
   # $1: the string which encloses the message
@@ -67,9 +70,9 @@ usage() {
 
 # set defaults
 LAST_ARG_IDX=$(($# + 1))
-TARGET_DIR=$(realpath "dist")
+TARGET_DIR="dist"
 USE_VENV="false"
-declare -A LONGOPTS
+declare -a LONGOPTS
 # Use associative array to declare how many arguments a long option
 # expects. In this case we declare that loglevel expects/has one
 # argument and range has two. Long options that aren't listed in this
@@ -138,23 +141,17 @@ TRUE=(
   "yes"
   "y"
 )
-CONVERTED_MODELS_DIR="text-detection"
+TARGET_DIR=$(realpath $TARGET_DIR)
+CONVERTED_MODELS_DIR=$(realpath "$TARGET_DIR/text-detection")
+ASSETS_DIR=$(realpath "$TARGET_DIR/assets")
+WEIGHTS_URL="https://storage.googleapis.com/gsoc-tfjs/weights/psenet/weights.tar.gz"
 VIRTUALENV_DIR="venv"
-MODEL_SOURCE_DIR="text-detection-source"
-MODEL_SOURCE_URL="https://github.com/sdll/text-detection-ctpn"
-MODEL_SOURCE_BRANCH="feat/conversion-script"
-
-MODEL_WEIGHTS_GDRIVE_ID="1HcZuB_MHqsKhKEKpfF1pEU85CYy4OlWO"
-
 PARENT_DIR="$(pwd)"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 notify "=" "Setting up the conversion environment..."
 
-set -e
-
-echo $TARGET_DIR
-mkdir -p $TARGET_DIR/$CONVERTED_MODELS_DIR
+mkdir -p $ASSETS_DIR
 
 cd $TARGET_DIR
 
@@ -164,50 +161,34 @@ if elementIn "$USE_VENV" "${TRUE[@]}"; then
   else
     virtualenv --no-site-packages $VIRTUALENV_DIR
     source $VIRTUALENV_DIR/bin/activate
-    pip install tensorflowjs cython gdown
+    pip install tensorflowjs
   fi
-fi
-
-if ! [ -x "$(command -v gdown)" ]; then
-  echo "Please install gdown before continuing."
-fi
-
-if ! [ -x "$(command -v cython)" ]; then
-  echo "Please install cython before continuing."
 fi
 
 notify "=" "Converting the model to tfjs..."
 
-if ! [ -d $MODEL_SOURCE_DIR ]; then
-  notify "~" "Downloading the model implementation and weights..."
-  git clone --depth 1 -b $MODEL_SOURCE_BRANCH $MODEL_SOURCE_URL $MODEL_SOURCE_DIR
-  mkdir -p $MODEL_SOURCE_DIR/dist
-  cd $MODEL_SOURCE_DIR/dist
-  $SCRIPT_DIR/gdrive_dl.sh $MODEL_WEIGHTS_GDRIVE_ID weights.zip
-  unzip weights.zip
+if ! [ -d $ASSETS_DIR/weights ]; then
+  notify "~" "Downloading the model  weights..."
+  cd $ASSETS_DIR
+  if ! [ -f $ASSETS_DIR/weights.tar.gz ]; then
+    wget -O weights.tar.gz $WEIGHTS_URL
+  fi
+  tar xvfz weights.tar.gz -C weights
 fi
 
-cd $MODEL_SOURCE_DIR/utils/bbox
-./make.sh
+PYTHONPATH=$(dirname $SCRIPT_DIR) python $SCRIPT_DIR/convert_to_saved_model.py \
+  --checkpoint_path $ASSETS_DIR/weights \
+  --output_path $ASSETS_DIR/saved_model
 
-MODEL_NAME="saved_text_detection_model"
-cd $MODEL_SOURCE_DIR
-mkdir dist
-PYTHONPATH=. python scripts/convert_to_saved_model \
-  --checkpoint_path dist/weights \
-  --output_path dist/$MODEL_NAME
-
-cd dist
-
-notify "~" "Converting $MODEL_NAME and quantizing to 2 bytes..."
+MODEL_NAME="psenet"
+notify "~" "Converting $MODEL_NAME..."
 tensorflowjs_converter \
-  --quantization_bytes 2 \
   --input_format=tf_saved_model \
   --output_format=tfjs_graph_model \
   --signature_name=serving_default \
   --saved_model_tags=serve \
-  $MODEL_NAME \
-  $TARGET_DIR/$CONVERTED_MODELS_DIR/$MODEL_VERSION
+  $ASSETS_DIR/saved_model \
+  $CONVERTED_MODELS_DIR/$MODEL_NAME
 
 notify "~" "Converting $MODEL_NAME and quantizing to 1 byte..."
 tensorflowjs_converter \
@@ -216,7 +197,17 @@ tensorflowjs_converter \
   --output_format=tfjs_graph_model \
   --signature_name=serving_default \
   --saved_model_tags=serve \
-  $MODEL_NAME \
-  $TARGET_DIR/$CONVERTED_MODELS_DIR/quantized/$MODEL_VERSION
+  $ASSETS_DIR/saved_model \
+  $CONVERTED_MODELS_DIR/quantized/1/$MODEL_NAME
+
+notify "~" "Converting $MODEL_NAME and quantizing to 2 bytes..."
+tensorflowjs_converter \
+  --quantization_bytes 2 \
+  --input_format=tf_saved_model \
+  --output_format=tfjs_graph_model \
+  --signature_name=serving_default \
+  --saved_model_tags=serve \
+  $ASSETS_DIR/saved_model \
+  $CONVERTED_MODELS_DIR/quantized/2/$MODEL_NAME
 
 notify "=" "Success!"
