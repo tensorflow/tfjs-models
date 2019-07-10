@@ -49,7 +49,7 @@ const EMBEDDING_NODES: {[version: string]: string} = {
 
 export interface MobileNetInfo {
   // Where to find the TFHub version of this model.
-  TFHubURL: string;
+  url: string;
   // The expected limits of the color channel values, in [min, max] format.
   inputRange: [number, number];
 }
@@ -57,39 +57,39 @@ export interface MobileNetInfo {
 const MODEL_INFO: {[version: string]: {[alpha: string]: MobileNetInfo}} = {
   '1.00': {
     '0.25': {
-      TFHubURL:
+      url:
           'https://tfhub.dev/google/imagenet/mobilenet_v1_025_224/classification/1',
       inputRange: [0, 1]
     },
     '0.50': {
-      TFHubURL:
+      url:
           'https://tfhub.dev/google/imagenet/mobilenet_v1_050_224/classification/1',
       inputRange: [0, 1]
     },
     '0.75': {
-      TFHubURL:
+      url:
           'https://tfhub.dev/google/imagenet/mobilenet_v1_075_224/classification/1',
       inputRange: [0, 1]
     },
     '1.00': {
-      TFHubURL:
+      url:
           'https://tfhub.dev/google/imagenet/mobilenet_v1_100_224/classification/1',
       inputRange: [0, 1]
     }
   },
   '2.00': {
     '0.50': {
-      TFHubURL:
+      url:
           'https://tfhub.dev/google/imagenet/mobilenet_v2_050_224/classification/2',
       inputRange: [0, 1]
     },
     '0.75': {
-      TFHubURL:
+      url:
           'https://tfhub.dev/google/imagenet/mobilenet_v2_075_224/classification/2',
       inputRange: [0, 1]
     },
     '1.00': {
-      TFHubURL:
+      url:
           'https://tfhub.dev/google/imagenet/mobilenet_v2_100_224/classification/2',
       inputRange: [0, 1]
     }
@@ -107,6 +107,8 @@ export async function load(modelConfig: ModelConfig = {
   }
   const versionStr = modelConfig.version.toFixed(2);
   const alphaStr = modelConfig.alpha ? modelConfig.alpha.toFixed(2) : '';
+  let inputMin = -1;
+  let inputMax = 1;
   if (modelConfig.modelUrl == null) {
     if (!(versionStr in MODEL_INFO)) {
       throw new Error(
@@ -120,10 +122,10 @@ export async function load(modelConfig: ModelConfig = {
           `multipliers for this version are: ` +
           `${Object.keys(MODEL_INFO[versionStr])}.`);
     }
+    [inputMin, inputMax] = MODEL_INFO[versionStr][alphaStr].inputRange;
   }
-
-  const mobilenet =
-      new MobileNetImpl(versionStr, alphaStr, modelConfig.modelUrl);
+  const mobilenet = new MobileNetImpl(
+      versionStr, alphaStr, modelConfig.modelUrl, inputMin, inputMax);
   await mobilenet.load();
   return mobilenet;
 }
@@ -148,26 +150,25 @@ class MobileNetImpl implements MobileNet {
   // Different implementations of mobilenet have different values of [min, max].
   // We store the appropriate normalization parameters using these two scalars
   // such that:
-  // out = in * normalizationScale + normalizationOffset;
-  private normalizationScale: tf.Scalar;
-  private normalizationOffset: tf.Scalar;
+  // out = in * inputRange + _inputMin;
+  private _inputRange: number;
+  private _inputMin: number;
 
   constructor(
       public version: string, public alpha: string,
-      public modelUrl: string|tf.io.IOHandler) {}
+      public modelUrl: string|tf.io.IOHandler, public inputMin: number = -1,
+      public inputMax: number = 1) {
+    this._inputMin = inputMin;
+    this._inputRange = inputMax - inputMin;
+  }
 
   async load() {
     if (this.modelUrl) {
       this.model = await tfconv.loadGraphModel(this.modelUrl);
       // Expect that models loaded by URL should be normalized to [-1, 1]
-      this.normalizationOffset = tf.scalar(-1.0);
-      this.normalizationScale = tf.scalar(2.0 / 255.0);
     } else {
-      const url = MODEL_INFO[this.version][this.alpha].TFHubURL;
+      const url = MODEL_INFO[this.version][this.alpha].url;
       this.model = await tfconv.loadGraphModel(url, {fromTFHub: true});
-      const [min, max] = MODEL_INFO[this.version][this.alpha].inputRange;
-      this.normalizationOffset = tf.scalar(min);
-      this.normalizationScale = tf.scalar((max - min) / 255.0);
     }
 
     // Warmup the model.
@@ -196,9 +197,9 @@ class MobileNetImpl implements MobileNet {
       }
 
       // Normalize the image from [0, 255] to inputRange.
-      const normalized = img.toFloat()
-                             .mul(this.normalizationScale)
-                             .add(this.normalizationOffset) as tf.Tensor3D;
+      const normalized =
+          img.toFloat().mul(this._inputRange).add(this._inputMin) as
+          tf.Tensor3D;
 
       // Resize the image to
       let resized = normalized;
