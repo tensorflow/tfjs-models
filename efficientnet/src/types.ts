@@ -22,12 +22,12 @@ export type EfficientNetBaseModel = 'b0'|'b1'|'b2'|'b3'|'b4'|'b5';
 export type EfficientNetInput =
     |ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement|tf.Tensor3D;
 
-export type ClassLabel = string;
-
-export type Probability = number;
+// #TODO: Fix this after the issues with the converter are resolved
+// export type QuantizationBytes = 1|2|4;
+export type QuantizationBytes = 2;
 
 export type ClassPrediction = {
-  className: ClassLabel; probability: Probability;
+  className: string; probability: number;
 };
 
 export type EfficientNetOutput = ClassPrediction[];

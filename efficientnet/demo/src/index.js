@@ -20,7 +20,7 @@ import {EfficientNet} from '@tensorflow-models/efficientnet';
 import * as tf from '@tensorflow/tfjs';
 
 const state = {
-  isQuantized: true,
+  quantizationBytes: 2,
 };
 
 const efficientnet = {};
@@ -32,15 +32,14 @@ const toggleInvisible = (elementId, force = undefined) => {
 
 const initializeModels = async () => {
   ['b0', 'b1', 'b2', 'b3', 'b4', 'b5'].forEach((modelName) => {
-    console.log(modelName);
     if (efficientnet[modelName]) {
       efficientnet[modelName].dispose();
     }
-    efficientnet[modelName] = new EfficientNet(modelName, state.isQuantized);
+    efficientnet[modelName] =
+        new EfficientNet(modelName, state.quantizationBytes);
     const runner = document.getElementById(`run-${modelName}`);
     runner.onclick = async () => {
       toggleInvisible('classification-card', true);
-      console.log(modelName);
       await tf.nextFrame();
       await runEfficientNet(modelName);
     };
@@ -132,11 +131,11 @@ const displayClassification = (modelName, classification) => {
 const status = (message) => {
   const statusMessage = document.getElementById('status-message');
   statusMessage.innerText = message;
+  console.log(message);
 };
 
 const runPrediction = (modelName, input, initialisationStart) => {
-  const model = efficientnet[modelName];
-  model.predict(input, 5).then((output) => {
+  efficientnet[modelName].predict(input, 5).then((output) => {
     displayClassification(modelName, output);
     status(`Finished running ${modelName.toUpperCase()} in ${
       ((performance.now() - initialisationStart) / 1000).toFixed(2)} s`);
@@ -144,13 +143,20 @@ const runPrediction = (modelName, input, initialisationStart) => {
 };
 
 const runEfficientNet = async (modelName) => {
+  if (!efficientnet[modelName].hasLoaded()) {
+    const loadingStart = performance.now();
+    status(`Loading the model...`);
+    await efficientnet[modelName].load();
+    status(`Finished loading ${modelName.toUpperCase()} in ${
+      ((performance.now() - loadingStart) / 1000).toFixed(2)} s`);
+  }
   status(`Running the inference...`);
   await tf.nextFrame();
   const initialisationStart = performance.now();
   const isQuantizationDisabled =
       document.getElementById('is-quantization-disabled').checked;
-  if (!(isQuantizationDisabled ^ state.isQuantized)) {
-    state.isQuantized = !isQuantizationDisabled;
+  if (!(isQuantizationDisabled ^ state.quantizationBytes)) {
+    state.quantizationBytes = isQuantizationDisabled ? 4 : 2;
     await initializeModels();
   }
   const input = document.getElementById('input-image');

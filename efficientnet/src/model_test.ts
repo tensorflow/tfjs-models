@@ -21,7 +21,7 @@ import {readFileSync} from 'fs';
 import {decode} from 'jpeg-js';
 import {resolve} from 'path';
 
-import {EfficientNet} from '.';
+import {EfficientNet, load} from '.';
 import {config} from './config';
 import {EfficientNetBaseModel} from './types';
 
@@ -47,29 +47,28 @@ describeWithFlags('EfficientNet', NODE_ENVS, () => {
     const models = Array.from(Array(6).keys())
                        .map(idx => `b${idx}` as EfficientNetBaseModel);
     const isMatching = Array(6).fill(false);
-    models.forEach((model, idx) => {
-      const targetSize = config.CROP_SIZE[model];
+    models.forEach((modelName, idx) => {
+      const model = new EfficientNet(modelName);
+      const targetSize = config.CROP_SIZE[modelName];
       isMatching[idx] = areEqualNumbers(
-          EfficientNet.preprocess(model, input).shape,
-          [1, targetSize, targetSize, 3]);
+          model.preprocess(input).shape, [1, targetSize, targetSize, 3]);
     });
     expect(isMatching).toEqual(Array(6).fill(true));
   });
 
   it('EfficientNet predictions do not leak.', async () => {
-    const model = new EfficientNet('b0');
+    const model = await load('b0');
 
     const x = tf.zeros([227, 227, 3]) as tf.Tensor3D;
     const numOfTensorsBefore = tf.memory().numTensors;
 
     await model.predict(x, 10);
-    await model.dispose();
 
     expect(tf.memory().numTensors).toEqual(numOfTensorsBefore);
   });
 
   it('EfficientNet produces sensible results.', async () => {
-    const model = new EfficientNet('b0');
+    const model = await load('b0');
 
     const input = tf.tidy(() => {
       const testImage =

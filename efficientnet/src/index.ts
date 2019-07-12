@@ -16,129 +16,74 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import {config} from './config';
-import {EfficientNetBaseModel, EfficientNetInput, EfficientNetOutput,} from './types';
 
+import {config} from './config';
+import {EfficientNetBaseModel, EfficientNetInput, EfficientNetOutput, QuantizationBytes,} from './types';
+import {cropAndResize, getTopKClasses, normalize} from './utils';
+
+export async function load(
+    base: EfficientNetBaseModel = 'b0',
+    quantizationBytes: QuantizationBytes = 2) {
+  if (tf == null) {
+    throw new Error(
+        `Cannot find TensorFlow.js. ` +
+        `If you are using a <script> tag, please ` +
+        `also include @tensorflow/tfjs on the page before using this model.`);
+  }
+
+  if (['b0', 'b1', 'b2', 'b3', 'b4', 'b5'].indexOf(base) === -1) {
+    throw new Error(
+        `EfficientNet cannot be constructed ` +
+        `with an invalid base model ${base}. ` +
+        `Try one of 'b0', 'b1', 'b2', 'b3', 'b4' or 'b5'.`);
+  }
+  if ([1, 2, 4].indexOf(quantizationBytes) === -1) {
+    throw new Error(`Only quantization to 1, 2 or 4 bytes is supported.`);
+  }
+
+  const efficientnet = new EfficientNet(base);
+  await efficientnet.load();
+  return efficientnet;
+}
 export class EfficientNet {
   private base: EfficientNetBaseModel;
-  private model: Promise<tf.GraphModel>;
+  private model: tf.GraphModel;
   private modelPath: string;
-  public constructor(base: EfficientNetBaseModel, isQuantized = true) {
-    if (tf == null) {
-      throw new Error(
-          `Cannot find TensorFlow.js. ` +
-          `If you are using a <script> tag, please ` +
-          `also include @tensorflow/tfjs on the page before using this model.`);
-    }
-
-    if (['b0', 'b1', 'b2', 'b3', 'b4', 'b5'].indexOf(base) === -1) {
-      throw new Error(
-          `EfficientNet cannot be constructed ` +
-          `with an invalid base model ${base}. ` +
-          `Try one of 'b0', 'b1', 'b2', 'b3', 'b4' or 'b5'.`);
-    }
+  public constructor(
+      base: EfficientNetBaseModel, quantizationBytes: QuantizationBytes = 2) {
     this.base = base;
 
     this.modelPath = `${config['BASE_PATH']}/${
-        isQuantized ? 'quantized/' : ''}${base}/model.json`;
-
-    this.model = tf.loadGraphModel(this.modelPath);
+        ([1, 2].indexOf(quantizationBytes) !== -1) ?
+            `quantized/${quantizationBytes}/` :
+            ''}${base}/model.json`;
   }
 
-  private static normalize(image: tf.Tensor3D) {
+  public hasLoaded() {
+    return !!this.model;
+  }
+
+  public async load() {
+    this.model = await tf.loadGraphModel(this.modelPath);
+    // Warm the model up.
+    const processedInput = this.preprocess(tf.zeros([227, 227, 3]));
+    const result = await this.model.predict(processedInput) as tf.Tensor1D;
+    await result.data();
+    result.dispose();
+  }
+
+  public preprocess(input: EfficientNetInput) {
     return tf.tidy(() => {
-      const [height, width] = image.shape;
-      const imageData = image.arraySync() as number[][][];
-      const meanRGB = config['MEAN_RGB'].map(depth => depth * 255);
-      const stddevRGB = config['STDDEV_RGB'].map(depth => depth * 255);
-      for (let columnIndex = 0; columnIndex < height; ++columnIndex) {
-        for (let rowIndex = 0; rowIndex < width; ++rowIndex) {
-          imageData[columnIndex][rowIndex] =
-              imageData[columnIndex][rowIndex].map(
-                  (depth, channel) =>
-                      (depth - meanRGB[channel]) / stddevRGB[channel]);
-        }
-      }
-      return tf.tensor3d(imageData);
-    });
-  }
-
-  private static cropAndResize(
-      base: EfficientNetBaseModel, input: EfficientNetInput): tf.Tensor3D {
-    return tf.tidy(() => {
-      const image: tf.Tensor3D =
-          (input instanceof tf.Tensor ? input : tf.browser.fromPixels(input))
-              .toFloat();
-
-      const [height, width] = image.shape;
-
-      const imageSize = config['CROP_SIZE'][base];
-      const cropPadding = config['CROP_PADDING'];
-      const paddedCenterCropSize = Math.round(
-          Math.min(width, height) *
-          ((1.0 * imageSize) / (imageSize + cropPadding)));
-      const offsetHeight = Math.round((height - paddedCenterCropSize + 1) / 2);
-      const offsetWidth = Math.round((width - paddedCenterCropSize + 1) / 2);
-      const normalizedBox = [
-        offsetHeight / height,
-        offsetWidth / width,
-        (paddedCenterCropSize + offsetHeight) / height,
-        (paddedCenterCropSize + offsetWidth) / width,
-      ];
-      const processedImage: tf.Tensor3D =
-          tf.image
-              .cropAndResize(
-                  image.expandDims(0), [normalizedBox], [0],
-                  [imageSize, imageSize])
-              .squeeze([0]);
-      return processedImage;
-    });
-  }
-
-  private getTopKClasses(logits: tf.Tensor1D, topK: number) {
-    const imagenetClasses: {[key: number]: string} = config.IMAGENET_CLASSES;
-    const values = logits.dataSync();
-
-    const valuesAndIndices = [];
-    for (let idx = 0; idx < values.length; idx++) {
-      valuesAndIndices.push({value: values[idx], index: idx});
-    }
-    valuesAndIndices.sort((a, b) => {
-      return b.value - a.value;
-    });
-    const topkValues = new Float32Array(topK);
-    const topkIndices = new Int32Array(topK);
-    for (let idx = 0; idx < topK; idx++) {
-      topkValues[idx] = valuesAndIndices[idx].value;
-      topkIndices[idx] = valuesAndIndices[idx].index;
-    }
-
-    const topClassesAndProbs = [];
-    for (let idx = 0; idx < topkIndices.length; idx++) {
-      topClassesAndProbs.push({
-        className: imagenetClasses[topkIndices[idx]],
-        probability: topkValues[idx],
-      });
-    }
-    return topClassesAndProbs;
-  }
-
-  public static preprocess(
-      base: EfficientNetBaseModel, input: EfficientNetInput) {
-    return tf.tidy(() => {
-      return EfficientNet.normalize(EfficientNet.cropAndResize(base, input))
-          .expandDims(0);
+      return normalize(cropAndResize(this.base, input)).expandDims(0);
     });
   }
 
   public async predict(input: EfficientNetInput, topK: number):
       Promise<EfficientNetOutput> {
-    const model = await this.model;
-
     return tf.tidy(() => {
-      const processedInput = EfficientNet.preprocess(this.base, input);
-      const logits = model.predict(processedInput) as tf.Tensor1D;
-      const predictions = this.getTopKClasses(logits, topK);
+      const processedInput = this.preprocess(input);
+      const logits = this.model.predict(processedInput) as tf.Tensor1D;
+      const predictions = getTopKClasses(logits, topK);
       return predictions;
     });
   }
@@ -149,6 +94,8 @@ export class EfficientNet {
    */
 
   public async dispose() {
-    (await this.model).dispose();
+    if (this.model) {
+      this.model.dispose();
+    }
   }
 }
