@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1.0, user-scalable=no">
+<meta name="HandheldFriendly" content="true" />
+<html>
+
+<head>
+  <script src="https://rawgit.com/mrdoob/stats.js/master/build/stats.min.js">
+  </script>
+  <!--script src="https://unpkg.com/@tensorflow/tfjs-core@0.13.8/dist/tf-core.js"></script>
+    <script src="https://unpkg.com/@tensorflow/tfjs-layers@0.8.2/dist/tf-layers.min.js"></script-->
+  <script src="./tf-core.js"></script>
+  <script>ENV.set('PROD', true)</script>
+  <script src="./tf-layers.js"></script>
+  <script src="./tf-converter.js"></script>
+  <script src="./blazepipeline.js"></script>
+</head>
+
+<body>
+  <div id="info" style='display:none'></div>
+
+  <div id="predictions"></div>
+  <!--
+      min-width: 100%;
+      min-height: 100%;
+    -->
+  <video id="video" playsinline style="
+      -webkit-transform: scaleX(-1);
+      transform: scaleX(-1);
+      display: none;
+      width: auto;
+      height: auto;
+      ">
+  </video>
+  <canvas id="output" style=""></canvas>
+  <canvas id="face_cut" style=""></canvas>
+  <div id="status"></div>
+</body>
+<script src="./layers.js"></script>
+<script src="./utils.js"></script>
+<script src="./blazeface.js"></script>
+<script src="./models.js"></script>
+<script>
+
+  // tf.ENV.set('PROD', true);
+  const statusElement = document.getElementById('status');
+  const status = msg => statusElement.innerText = msg;
+
+  // -----------------------------------------------------------------------------
+  // const videoWidth = 512;
+  // const videoHeight = 512;
+
+  /**
+   * Loads a the camera to be used in the demo
+   *
+   */
+  async function setupCamera() {
+    if (!isSupportedPlatform()) {
+      throw new Error("Your browser doesn't supported yet.");
+    }
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error(
+        'Browser API navigator.mediaDevices.getUserMedia not available');
+    }
+
+    const video = document.getElementById('video');
+
+    const mobile = isMobile();
+    const stream = await navigator.mediaDevices.getUserMedia({
+      'audio': false,
+      'video': {
+        facingMode: 'user',
+        // width: mobile ? undefined : videoWidth,
+        // height: mobile ? undefined : videoHeight,
+      },
+    });
+    video.srcObject = stream;
+
+    return new Promise((resolve) => {
+      video.onloadedmetadata = () => {
+        resolve(video);
+      };
+    });
+  }
+
+  async function loadVideo() {
+    const video = await setupCamera();
+    video.play();
+    return video;
+  }
+
+  /**
+   * Start the demo.
+   */
+  const bindPage = async () => {
+    const landmarksModel = await loadBlazeMesh();
+    const blazeface_model = await loadBlazeFace();
+
+    let video;
+
+    try {
+      video = await loadVideo();
+    } catch (e) {
+      let info = document.getElementById('info');
+      info.textContent = e.message;
+      info.style.display = 'block';
+      throw e;
+    }
+
+    landmarksRealTime(video, landmarksModel, blazeface_model);
+  }
+
+  const landmarksRealTime = async (video, landmarksModel, detectorModel) => {
+    const stats = new StatsWithTFJS();
+    stats.appendStats(document.body);
+
+    const videoWidth = video.videoWidth;
+    const videoHeight = video.videoHeight;
+
+    const fullWidth = window.innerWidth;
+    const fullHeight = window.innerHeight;
+
+    const canvas = document.getElementById('output');
+    const face_canvas = document.getElementById('face_cut');
+
+    // const face_cut_ctx = face_canvas.getContext('2d');
+
+    if (fullWidth < fullHeight) {
+      canvas.width = fullWidth;
+      canvas.height = fullWidth * videoHeight / videoWidth;
+    } else {
+      canvas.width = fullHeight * videoWidth / videoHeight;
+      canvas.height = fullHeight;
+    }
+
+    var width_coef = canvas.width / videoWidth,
+      height_coef = canvas.height / videoHeight;
+
+    const ctx = canvas.getContext('2d');
+
+    video.width = video.videoWidth;
+    video.height = video.videoHeight;
+
+    ctx.clearRect(0, 0, videoWidth, videoHeight);
+
+    ctx.strokeStyle = "red";
+
+    const blazeface = new BlazeFaceModel(detectorModel, 256, 256);
+
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
+
+    // BlazePipelineJustMesh
+    const pipeline = new BlazePipeline(blazeface, landmarksModel);
+
+    async function frameLandmarks() {
+      stats.begin();
+
+      const time = await tf.time(() => {
+        const meshes = tf.tidy(() => {
+          const image = tf.fromPixels(video).toFloat();
+          return pipeline.next_meshes(image);
+        });
+        const changed_coords = tf.mul(meshes.coords2ds,
+          [width_coef, height_coef]);
+
+        // tf.toPixels(meshes.cutted_face.squeeze([0]), face_canvas);
+
+        ctx.drawImage(video, 0, 0, videoWidth, videoHeight,
+          0, 0, canvas.width, canvas.height);
+        drawKeypoints(ctx, changed_coords);
+      });
+
+      stats.updateTime(time);
+      stats.end();
+
+      requestAnimationFrame(frameLandmarks);
+    };
+
+    frameLandmarks();
+  };
+
+  navigator.getUserMedia = navigator.getUserMedia ||
+    navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+
+  bindPage();
+
+</script>
+
+</html>
