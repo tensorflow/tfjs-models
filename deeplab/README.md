@@ -11,7 +11,7 @@ In the first step of semantic segmentation, an image is fed through a pre-traine
 To get started, pick the model name from `pascal`, `cityscapes` and `ade20k`, and decide whether you want your model quantized to 2 bytes. Then, initialize the model as follows:
 
 ```typescript
-import { load } from '@tensorflow-models/deeplab';
+import {load} from '@tensorflow-models/deeplab';
 const model = 'pascal';   // set to your preferred model, out of `pascal`, `cityscapes` and `ade20k`
 const isQuantized = true; // set to your preference
 const modelPromise = load(model, isQuantized);
@@ -22,7 +22,7 @@ This will load the weights and return the promise of a `SemanticSegmantation` ob
 If you require more careful control over the initialization, you can use the `SemanticSegmantation` object on its own:
 
 ```typescript
-import { SemanticSegmentation } from '@tensorflow-models/deeplab';
+import {SemanticSegmentation} from '@tensorflow-models/deeplab';
 const model = 'pascal';   // set to your preferred model, out of `pascal`, `cityscapes` and `ade20k`
 const isQuantized = true; // set to your preference
 const deeplab = new SemanticSegmentation(model, isQuantized);
