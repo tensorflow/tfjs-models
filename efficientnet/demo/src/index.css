@@ -15,6 +15,10 @@
   flex-direction: column;
 }
 
+.no-flex-grow .column {
+  flex-grow: 0;
+}
+
 .is-full-height {
   height: 100%;
 }

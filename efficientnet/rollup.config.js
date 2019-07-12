@@ -43,7 +43,7 @@ const settings = {
 function minify() {
   return terser({
     output: {
-      preamble: PREAMBLE,
+      preamble: settings['preamble'],
     },
     ecma: 8,
     module: true,

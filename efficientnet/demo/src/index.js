@@ -31,7 +31,8 @@ const toggleInvisible = (elementId, force = undefined) => {
 };
 
 const initializeModels = async () => {
-  Object.keys(efficientnet).forEach((modelName) => {
+  ['b0', 'b1', 'b2', 'b3', 'b4', 'b5'].forEach((modelName) => {
+    console.log(modelName);
     if (efficientnet[modelName]) {
       efficientnet[modelName].dispose();
     }
@@ -39,6 +40,7 @@ const initializeModels = async () => {
     const runner = document.getElementById(`run-${modelName}`);
     runner.onclick = async () => {
       toggleInvisible('classification-card', true);
+      console.log(modelName);
       await tf.nextFrame();
       await runEfficientNet(modelName);
     };
