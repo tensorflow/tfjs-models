@@ -70,7 +70,7 @@ const net = await posenet.load({
 });
 ```
 
-#### Inputs
+#### Config params in posenet.load()
 
  * **architecture** - Can be either `MobileNetV1` or `ResNet50`. It determines which PoseNet architecture to load.
 
@@ -87,6 +87,8 @@ const net = await posenet.load({
    - `2`. 2 bytes per float. Leads to slightly lower accuracy and 2x model size reduction (~45MB).
    - `1`. 1 byte per float. Leads to lower accuracy and 4x model size reduction (~22MB).
 
+* **modelUrl** - An optional string that specifies custom url of the model. This is useful for local development or countries that don't have access to the model hosted on GCP.
+
 
 **By default,** PoseNet loads a MobileNetV1 architecture with a **`0.75`** multiplier.  This is recommended for computers with **mid-range/lower-end GPUs.**  A model with a **`0.50`** multiplier is recommended for **mobile.** The ResNet achitecture is recommended for computers with **even more powerful GPUs**.
 
@@ -102,7 +104,7 @@ const pose = await net.estimateSinglePose(image, {
 });
 ```
 
-#### Inputs
+#### Params in estimateSinglePose()
 
 * **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
    The input image to feed through the network.
@@ -356,7 +358,7 @@ const poses = await net.estimateMultiplePoses(image, {
 });
 ```
 
-#### Inputs
+#### Params in estimateMultiplePoses()
 
 * **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
    The input image to feed through the network.
