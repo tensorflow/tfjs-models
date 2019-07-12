@@ -16,40 +16,41 @@
  */
 import * as tf from '@tensorflow/tfjs';
 import {describeWithFlags, NODE_ENVS,} from '@tensorflow/tfjs-core/dist/jasmine_util';
-import {SemanticSegmentation} from '.';
+import {createCanvas} from 'canvas';
+import {load} from '.';
 
 describeWithFlags('SemanticSegmentation', NODE_ENVS, () => {
-  beforeAll(() => {
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 20000;
-  });
-
-  it('SemanticSegmentation predict method should not leak', async () => {
-    const model = new SemanticSegmentation('pascal');
+  it('SemanticSegmentation should not leak', async () => {
+    const model = await load();
     const x = tf.zeros([227, 500, 3]) as tf.Tensor3D;
     const numOfTensorsBefore = tf.memory().numTensors;
 
-    await model.predict(x);
-    await model.dispose();
+    await model.segment(x);
     expect(tf.memory().numTensors).toEqual(numOfTensorsBefore);
   });
 
   it('SemanticSegmentation map has matching dimensions', async () => {
-    const model = new SemanticSegmentation('pascal');
     const x = tf.zeros([513, 500, 3]) as tf.Tensor3D;
-
-    const segmentationMapTensor = await model.segment(x);
+    const model = await load();
+    const segmentationMapTensor = await model.predict(x);
     const [height, width] = segmentationMapTensor.shape;
-    segmentationMapTensor.dispose();
-    await model.dispose();
     expect([height, width]).toEqual([513, 500]);
   });
 
-  it('SemanticSegmentation predict method generates valid output', async () => {
-    const model = new SemanticSegmentation('pascal');
+  it('SemanticSegmentation segment method generates valid output', async () => {
+    const model = await load();
     const x = tf.zeros([300, 500, 3]) as tf.Tensor3D;
 
-    const {legend} = await model.predict(x);
-    await model.dispose();
+    const {legend} = await model.segment(x);
     expect(Object.keys(legend)).toContain('background');
   });
+
+  it('SemanticSegmentation produces a valid segmentation of an empty canvas',
+     async () => {
+       const model = await load();
+       const x = createCanvas(200, 200);
+       // tslint:disable-next-line: no-any
+       const {legend} = await model.segment((x as any) as HTMLCanvasElement);
+       expect(Object.keys(legend)).toContain('background');
+     });
 });

@@ -70,7 +70,7 @@ and can be used as building blocks in other apps.
   <tr>
     <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./deeplab"><div style='vertical-align:middle; display:inline;'>DeepLab v3</div></a></b></td>
     <td><a href=""></a></td>
-    <td rowspan="2">Semantic segmentation in the browser using TensorFlow.js.</td>
+    <td rowspan="2">Semantic segmentation</td>
     <td rowspan="2"><code>npm i @tensorflow-models/deeplab</code></td>
   </tr>
   <tr>

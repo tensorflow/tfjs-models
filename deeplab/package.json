@@ -21,6 +21,8 @@
   "devDependencies": {
     "@tensorflow/tfjs": "^1.2.2",
     "@types/jasmine": "~3.3.13",
+    "canvas": "^2.5.0",
+    "clang-format": "^1.2.4",
     "jasmine": "^3.2.0",
     "jasmine-core": "~3.4.0",
     "rimraf": "~2.6.2",

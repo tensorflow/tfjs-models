@@ -1,7 +1,6 @@
-import {SemanticSegmentation} from '.';
 import {config} from './config';
 import {SemanticSegmentationBaseModel} from './types';
-import {getColormap} from './utils';
+import {createPascalColormap, getColormap, getLabels} from './utils';
 
 describe('Utilities', () => {
   it('Colormaps and labels must match in length.', () => {
@@ -16,16 +15,14 @@ describe('Utilities', () => {
     const labelsLengths = bases.map(base => {
       return base === 'pascal' ?
           config['DATASET_MAX_ENTRIES']['PASCAL'] :
-          SemanticSegmentation
-              .translateLabels(base as SemanticSegmentationBaseModel)
-              .length;
+          getLabels(base as SemanticSegmentationBaseModel).length;
     });
 
     expect(colormapLengths).toEqual(labelsLengths);
   });
 
   it('The PASCAL colormap coincides with the original.', () => {
-    expect(getColormap('pascal')).toEqual([
+    expect(createPascalColormap()).toEqual([
       [0, 0, 0],     [128, 0, 0],    [0, 128, 0],    [128, 128, 0],
       [0, 0, 128],   [128, 0, 128],  [0, 128, 128],  [128, 128, 128],
       [64, 0, 0],    [192, 0, 0],    [64, 128, 0],   [192, 128, 0],

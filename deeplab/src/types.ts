@@ -26,12 +26,10 @@ export type SemanticSegmentationBaseModel = 'pascal'|'cityscapes'|'ade20k';
 export type DeepLabInput =
     |ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement|tf.Tensor3D;
 
-export type RawSegmentationMap = tf.Tensor2D;
-export type SegmentationMap = Uint8ClampedArray;
 export type SegmentationData = {
-  legend: Legend; segmentationMap: SegmentationMap;
+  legend: Legend; segmentationMap: Uint8ClampedArray;
 };
 export type DeepLabOutput = {
   legend: Legend; height: number; width: number;
-  segmentationMap: SegmentationMap;
+  segmentationMap: Uint8ClampedArray;
 };

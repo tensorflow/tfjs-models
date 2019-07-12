@@ -6,7 +6,7 @@ This package contains a standalone implementation of the DeepLab inference pipel
 
 ## Usage
 
-In the first step of semantic segmentation, an image is fed through a pre-trained model [based](https://github.com/tensorflow/models/blob/master/research/deeplab/g3doc/model_zoo.md) on MobileNet-v2. Three types of pre-trained weights are available, trained on [Pascal](http://host.robots.ox.ac.uk/pascal/VOC/), [Cityscapes](https://www.cityscapes-dataset.com) and [ADE20K](https://groups.csail.mit.edu/vision/datasets/ADE20K/) datasets.
+In the first step of semantic segmentation, an image is fed through a pre-trained model [based](https://github.com/tensorflow/models/blob/master/research/deeplab/g3doc/model_zoo.md) on MobileNet-v2. Three types of pre-trained weights are available, trained on [Pascal](http://host.robots.ox.ac.uk/pascal/VOC/voc2012/index.html), [Cityscapes](https://www.cityscapes-dataset.com) and [ADE20K](https://groups.csail.mit.edu/vision/datasets/ADE20K/) datasets.
 
 To get started, pick the model name from `pascal`, `cityscapes` and `ade20k`, and decide whether you want your model quantized to 16 bits. Then, initialise the model as follows:
 
@@ -21,115 +21,117 @@ The download of weights begins automatically. You can start using the model imme
 
 ### Segmenting an Image
 
-The `predict` method of the `SemanticSegmentation` object covers most use cases.
+The `segment` method of the `SemanticSegmentation` object covers most use cases.
 
-The following twenty one objects are recognized and labelled according to the order of appearance:
+Each model recognises a different set of object classes in an image:
 
-* background
-* aeroplane
-* bicycle
-* bird
-* boat
-* bottle
-* bus
-* car
-* cat
-* chair
-* cow
-* dining table
-* dog
-* horse
-* motorbike
-* person
-* potted plant
-* sheep
-* sofa
-* train
-* TV
+- [PASCAL](./deeplab/src/config.ts#L60)
+- [CityScapes](./deeplab/src/config.ts#L66)
+- [ADE20K](./deeplab/src/config.ts#L72)
+
+You can use the `getLabels` method to obtain the colormap corresponding to the base model:
+
+```typescript
+import { getLabels } from '@tensorflow-models/deeplab';
+const model = 'ade20k';
+const colormap = getLabels(model);
+```
+
+#### `model.segment` input
+
+- **image** :: `ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | tf.Tensor3D`;
+
+The image to segment
+
+- **canvas** (optional) :: `HTMLCanvasElement`
 
 Pass an optional canvas element as `canvas` to draw the output as a side effect.
 
-#### Segmentation input
+#### `model.segment` output
 
-* **image** :: `DeepLabInput | ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | tf.Tensor3D`;
-* **canvas** (optional) :: `HTMLCanvasElement`
+The output is a promise of a `DeepLabOutput` object, with four attributes:
 
-#### Segmentation output
-
-The output is a promise of DeepLabOutput, an array of four elements:
-
-* **Legend** :: `{ [name: string]: [number, number, number] }`
+- **legend** :: `{ [name: string]: [number, number, number] }`
 
 The legend is a dictionary of objects recognized in the image and their colors in RGB format.
 
-* **height** :: `number`
+- **height** :: `number`
 
-The new height of the processed image.
+The height of the returned segmentation map
 
-* **width** :: `number`
+- **width** :: `number`
 
-The new width of the processed image.
+The width of the returned segmentation map
 
-* **SegmentationMap** :: `Uint8ClampedArray`
+- **segmentationMap** :: `Uint8ClampedArray`
 
 The colored segmentation map as `Uint8ClampedArray` which can be [fed](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Pixel_manipulation_with_canvas) into `ImageData` and mapped to a canvas.
 
-#### Prediction example
+#### `model.segment` example
 
 ```typescript
 const classify = async (image) => {
-    return await model.predict(image);
+    return await model.segment(image);
 }
 ```
 
-**Note**: *For more granular control, consider `segment` and `translate` methods described below.*
+**Note**: *For more granular control, consider `segment` and `toSegmentationImage` methods described below.*
 
 ### Producing a Semantic Segmentation Map
 
 To segment an arbitrary image and generate a two-dimensional tensor with class labels assigned to each cell of the grid overlayed on the image (with the maximum number of cells on the side fixed to 513), use the `segment` method of the `SemanticSegmentation` object.
 
-#### `model.segment` input
+#### `model.predict` input
 
-* **image** :: `DeepLabInput | ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | tf.Tensor3D`;
+- **image** :: `ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | tf.Tensor3D`;
 
-#### `model.segment` output
+The image to segment
 
-* **rawSegmentationMap** :: `Promise<RawSegmentationMap | tf.Tensor2D>`
+#### `model.predict` output
 
-#### `model.segment` example
+- **rawSegmentationMap** :: `Promise<tf.Tensor2D>`
+
+The segmentation map of the image
+
+#### `model.predict` example
 
 ```javascript
 const getSemanticSegmentationMap = async (image) => {
-    return await model.segment(image)
+    return await model.predict(image)
 }
 ```
 
 ### Translating a Segmentation Map into the Color-Labelled Image
 
-To transform the segmentation map into a coloured image, use the `translate` method of the `SemanticSegmentation` object. Pass an optional canvas element as `canvas` to draw the output as a side effect.
+To transform the segmentation map into a coloured image, use the `toSegmentationImage` method of the `SemanticSegmentation` object.
 
-#### `model.translate` input
+#### `model.toSegmentationImage` input
 
-* **segmentationMap** :: `RawSegmentationMap | tf.Tensor2D`
-* **canvas** (optional) :: `HTMLCanvasElement`
+- **segmentationMap** :: `tf.Tensor2D`
 
-#### `model.translate` output
+The segmentation map of the image
 
-The returned promise is the future of an array typed as `SegmentationData` that contains two objects:
+- **canvas** (optional) :: `HTMLCanvasElement`
 
-* **Legend** :: `{ [name: string]: [number, number, number] }`
+Pass an optional canvas element as `canvas` to draw the output as a side effect.
+
+#### `model.toSegmentationImage` output
+
+The returned promise is the future of a `SegmentationData` object that contains two attributes:
+
+- **legend** :: `{ [name: string]: [number, number, number] }`
 
 The legend is a dictionary of objects recognized in the image and their colors.
 
-* **SegmentationMap** :: `Uint8ClampedArray`
+- **segmentationMap** :: `Uint8ClampedArray`
 
 The colored segmentation map as `Uint8ClampedArray` which can be [fed](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Pixel_manipulation_with_canvas) into `ImageData` and mapped to a canvas.
 
-#### `model.translate` example
+#### `model.toSegmentationImage` example
 
 ```javascript
 const translateSegmentationMap = async (segmentationMap) => {
-    return await model.translate(segmentationMap)
+    return await model.toSegmentationImage(segmentationMap)
 }
 ```
 

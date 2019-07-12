@@ -19,13 +19,13 @@ import * as tf from '@tensorflow/tfjs';
 import {config} from './config';
 import {Color, DeepLabInput, SemanticSegmentationBaseModel} from './types';
 
-const pascalColormapMaxEntriesNum = config['DATASET_MAX_ENTRIES']['PASCAL'];
-const createPascalColormap = (): Color[] => {
+export const createPascalColormap = (): Color[] => {
   /**
    * Generates the colormap matching the Pascal VOC dev guidelines.
    * The original implementation in Python: https://git.io/fjgw5
    */
 
+  const pascalColormapMaxEntriesNum = config['DATASET_MAX_ENTRIES']['PASCAL'];
   const colormap = new Array(pascalColormapMaxEntriesNum);
   for (let idx = 0; idx < pascalColormapMaxEntriesNum; ++idx) {
     colormap[idx] = new Array(3);
@@ -42,21 +42,14 @@ const createPascalColormap = (): Color[] => {
   return colormap;
 };
 
-const createADE20KColormap = (): Color[] => {
-  return config['COLORMAPS']['ADE20K'] as Color[];
-};
-
-const createCityscapesColormap = (): Color[] => {
-  return config['COLORMAPS']['CITYSCAPES'] as Color[];
-};
 
 export const getColormap = (base: SemanticSegmentationBaseModel) => {
   if (base === 'pascal') {
-    return createPascalColormap();
+    return config['COLORMAPS']['PASCAL'] as Color[];
   } else if (base === 'ade20k') {
-    return createADE20KColormap();
+    return config['COLORMAPS']['ADE20K'] as Color[];
   } else if (base === 'cityscapes') {
-    return createCityscapesColormap();
+    return config['COLORMAPS']['CITYSCAPES'] as Color[];
   }
   throw new Error(
       `SemanticSegmentation cannot be constructed ` +
@@ -70,9 +63,23 @@ export function toInputTensor(input: DeepLabInput) {
         input instanceof tf.Tensor ? input : tf.browser.fromPixels(input);
     const [height, width] = image.shape;
     const resizeRatio = config['CROP_SIZE'] / Math.max(width, height);
-    const targetSize =
-        [height, width].map(side => Math.round(side * resizeRatio));
-    return tf.image.resizeBilinear(image, targetSize as [number, number])
+    const targetHeight = Math.round(height * resizeRatio)
+    const targetWidth = Math.round(width * resizeRatio)
+    return tf.image.resizeBilinear(image, [targetHeight, targetWidth])
         .expandDims(0);
   });
+}
+
+export function getLabels(base: SemanticSegmentationBaseModel) {
+  if (base === 'pascal') {
+    return config['LABELS']['PASCAL'];
+  } else if (base === 'ade20k') {
+    return config['LABELS']['ADE20K'];
+  } else if (base === 'cityscapes') {
+    return config['LABELS']['CITYSCAPES'];
+  }
+  throw new Error(
+      `SemanticSegmentation cannot be constructed ` +
+      `with an invalid base model ${base}. ` +
+      `Try one of 'pascal', 'cityscapes' and 'ade20k'.`);
 }

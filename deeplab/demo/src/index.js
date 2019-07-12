@@ -54,7 +54,6 @@ const initializeModels = async () => {
     toggler.onclick = () => setImage(deeplabExampleImages[modelName]);
     const runner = document.getElementById(`run-${modelName}`);
     runner.onclick = async () => {
-      runner.classList.add('is-loading');
       toggleInvisible('output-card', true);
       toggleInvisible('legend-card', true);
       await tf.nextFrame();
@@ -112,6 +111,20 @@ const displaySegmentationMap = (modelName, deeplabOutput) => {
   // #TODO: Fix this
   // Using for works around the parcel failure with Object.keys
   // "Uncaught (in promise) ReferenceError: _Object$keys is not defined"
+  // in the code below:
+  //
+  // Object.keys().forEach((label) => {
+  //   const tag = document.createElement('span');
+  //   tag.innerHTML = label;
+  //   const [red, green, blue] = legend[label];
+  //   tag.classList.add('column');
+  //   tag.style.backgroundColor = `rgb(${red}, ${green}, ${blue})`;
+  //   tag.style.padding = '1em';
+  //   tag.style.margin = '1em';
+  //   tag.style.color = '#ffffff';
+
+  //   legendList.appendChild(tag);
+  // });
   for (const label in legend) {
     if (legend.hasOwnProperty(label)) {
       const tag = document.createElement('span');
@@ -126,11 +139,8 @@ const displaySegmentationMap = (modelName, deeplabOutput) => {
       legendList.appendChild(tag);
     }
   }
-
   toggleInvisible('legend-card', false);
 
-  const runner = document.getElementById(`run-${modelName}`);
-  runner.classList.remove('is-loading');
 
   const inputContainer = document.getElementById('input-card');
   inputContainer.scrollIntoView({behavior: 'smooth', block: 'nearest'});
@@ -139,20 +149,20 @@ const displaySegmentationMap = (modelName, deeplabOutput) => {
 const status = (message) => {
   const statusMessage = document.getElementById('status-message');
   statusMessage.innerText = message;
+  console.log(message);
 };
 
 const runPrediction = (modelName, input, initialisationStart) => {
-  const model = deeplab[modelName];
-  model.predict(input).then((output) => {
+  deeplab[modelName].segment(input).then((output) => {
     displaySegmentationMap(modelName, output);
-    status(`Ran in ${(performance.now() - initialisationStart).toFixed(2)} ms`);
+    status(`Ran in ${
+      ((performance.now() - initialisationStart) / 1000).toFixed(2)} s`);
   });
 };
 
 const runDeeplab = async (modelName) => {
   status(`Running the inference...`);
   await tf.nextFrame();
-  const initialisationStart = performance.now();
   const isQuantizationDisabled =
       document.getElementById('is-quantization-disabled').checked;
   if (!(isQuantizationDisabled ^ state.isQuantized)) {
@@ -162,16 +172,22 @@ const runDeeplab = async (modelName) => {
   const input = document.getElementById('input-image');
   if (!input.src || !input.src.length || input.src.length === 0) {
     status('Failed! Please load an image first.');
-    const runner = document.getElementById(`run-${modelName}`);
-    runner.classList.remove('is-loading');
     return;
   }
 
+  if (!deeplab[modelName].hasLoaded()) {
+    status('Loading the model...');
+    const loadingStart = performance.now();
+    await deeplab[modelName].load();
+    status(`Loaded the model in ${
+      ((performance.now() - loadingStart) / 1000).toFixed(2)} s`);
+  }
+  const predictionStart = performance.now();
   if (input.complete && input.naturalHeight !== 0) {
-    runPrediction(modelName, input, initialisationStart);
+    runPrediction(modelName, input, predictionStart);
   } else {
     input.onload = () => {
-      runPrediction(modelName, input, initialisationStart);
+      runPrediction(modelName, input, predictionStart);
     };
   }
 };
