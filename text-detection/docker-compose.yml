@@ -1,0 +1,45 @@
+# =============================================================================
+# Copyright 2019 Google Inc. All Rights Reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# =============================================================================
+version: "3"
+volumes:
+  dist:
+services:
+  emsdk:
+    image: alpine/git:latest
+    volumes:
+      - dist:/build/
+    command: clone --depth 1 https://github.com/emscripten-core/emsdk.git /build/emsdk
+  opencv:
+    image: alpine/git:latest
+    volumes:
+      - dist:/build/
+    command: clone --depth 1 https://github.com/opencv/opencv.git /build/opencv
+  converter:
+    build: ./scripts
+    depends_on:
+      - emsdk
+      - opencv
+    volumes:
+      - dist:/build/
+      - ./scripts/embindgen.py:/build/embindgen.py
+      - ./dist/opencv.js:/build/opencv.js
+      # - ./scripts/embindgen.py:/build/opencv/modules/js/src/embindgen.py
+    stdin_open: true
+    tty: true
+    # command:
+    #   - /bin/bash
+    #   - -c
+    #   - |
+    #     /converter/convert_efficientnet.sh --target_dir=dist
