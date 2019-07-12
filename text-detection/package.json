@@ -1,15 +1,15 @@
 {
-  "name": "model-name",
+  "name": "text-detection",
   "version": "0.1.0",
-  "description": "Model starter in TensorFlow.js",
+  "description": "In-Browser Shape Robust Text Detection with Progressive Scale Expansion Network",
   "main": "dist/index.js",
-  "jsnext:main": "dist/model-name.esm.js",
-  "module": "dist/model-name.esm.js",
-  "unpkg": "dist/model-name.min.js",
-  "jsdelivr": "dist/model-name.min.js",
+  "jsnext:main": "dist/text-detection.esm.js",
+  "module": "dist/text-detection.esm.js",
+  "unpkg": "dist/text-detection.min.js",
+  "jsdelivr": "dist/text-detection.min.js",
   "types": "dist/index.d.ts",
   "model": {
-    "name": "model-name"
+    "name": "text-detection"
   },
   "repository": {
     "type": "git",
@@ -21,10 +21,12 @@
   "devDependencies": {
     "@tensorflow/tfjs": "^1.2.2",
     "@types/jasmine": "~3.3.13",
+    "@types/jpeg-js": "^0.3.0",
     "babel-core": "^6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",
     "jasmine": "^3.2.0",
     "jasmine-core": "~3.4.0",
+    "jpeg-js": "^0.3.5",
     "rimraf": "~2.6.2",
     "rollup": "~1.16.2",
     "rollup-plugin-json": "^4.0.0",

@@ -15,13 +15,13 @@
  * =============================================================================
  */
 
-import node from 'rollup-plugin-node-resolve';
-import typescript from 'rollup-plugin-typescript2';
 import json from 'rollup-plugin-json';
-import { terser } from 'rollup-plugin-terser';
+import node from 'rollup-plugin-node-resolve';
+import {terser} from 'rollup-plugin-terser';
+import typescript from 'rollup-plugin-typescript2';
 
 const settings = {
-  name: 'model-name',
+  name: 'text-detection',
   preamble: `/**
  * @license
  * Copyright ${new Date().getFullYear()} Google LLC. All Rights Reserved.
@@ -52,7 +52,7 @@ function minify() {
   });
 }
 
-function config({ plugins = [], output = {} }) {
+function config({plugins = [], output = {}}) {
   return {
     input: 'src/index.ts',
     plugins: [

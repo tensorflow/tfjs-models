@@ -17,15 +17,56 @@
 
 import * as tf from '@tensorflow/tfjs';
 import {describeWithFlags, NODE_ENVS,} from '@tensorflow/tfjs-core/dist/jasmine_util';
-import {DummyModel} from '.';
+// import {readFileSync} from 'fs';
+// import {decode} from 'jpeg-js';
+// import {resolve} from 'path';
 
-describeWithFlags('Dummy', NODE_ENVS, () => {
-  it('DummyModel detect method should generate no output', async () => {
-    const dummy = new DummyModel();
-    const x = tf.zeros([227, 227, 3]) as tf.Tensor3D;
+import {TextDetection} from '.';
 
-    const data = await dummy.predict(x);
-
-    expect(data).toEqual();
+describeWithFlags('TextDetection', NODE_ENVS, () => {
+  beforeAll(() => {
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 40000;
   });
+  it('Text detection does not leak.', async () => {
+    const model = new TextDetection(1);
+
+    const x = tf.zeros([227, 227, 3]) as tf.Tensor3D;
+    const numOfTensorsBefore = tf.memory().numTensors;
+
+    await model.predict(x);
+    await model.dispose();
+
+    expect(tf.memory().numTensors).toEqual(numOfTensorsBefore);
+  });
+  // it('TextDetection produces sensible results.', async () => {
+  //   const model = new TextDetection(1);
+
+  //   const input = tf.tidy(() => {
+  //     const testImage =
+  //         decode(readFileSync(resolve(__dirname, 'assets/example.jpeg')),
+  //         true);
+  //     const rawData = tf.tensor(testImage.data, [
+  //                         testImage.height, testImage.width, 4
+  //                       ]).arraySync() as number[][][];
+  //     const inputBuffer =
+  //         tf.buffer([testImage.height, testImage.width, 3], 'int32');
+  //     for (let columnIndex = 0; columnIndex < testImage.height;
+  //     ++columnIndex) {
+  //       for (let rowIndex = 0; rowIndex < testImage.width; ++rowIndex) {
+  //         for (let channel = 0; channel < 3; ++channel) {
+  //           inputBuffer.set(
+  //               rawData[columnIndex][rowIndex][channel], columnIndex,
+  //               rowIndex, channel);
+  //         }
+  //       }
+  //     }
+
+  //     return inputBuffer.toTensor();
+  //   }) as tf.Tensor3D;
+  //   const predictions = await model.predict(input);
+  //   // const isPanda = predictions[0].className.includes('panda');
+  //   await model.dispose();
+  //   // expect(isPanda).toEqual(true);
+  //   predictions.print();
+  // });
 });
