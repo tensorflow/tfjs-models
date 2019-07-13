@@ -1131,7 +1131,7 @@ class JSWrapperGenerator(object):
                         base_class_name,
                         " not found in classes for registering smart pointer using ",
                         class_info.name,
-                        "instead')
+                        "instead")
                     self.classes[class_info.name].has_smart_ptr = True
 
 
