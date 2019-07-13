@@ -17,29 +17,29 @@
 
 import * as tf from '@tensorflow/tfjs-core';
 
-export type Vector2D = {
+export declare type Vector2D = {
   y: number,
   x: number
 };
 
-export type Part = {
+export declare type Part = {
   heatmapX: number,
   heatmapY: number,
   id: number
 };
 
-export type PartWithScore = {
+export declare type PartWithScore = {
   score: number,
   part: Part
 };
 
-export type Keypoint = {
+export declare type Keypoint = {
   score: number,
   position: Vector2D,
   part: string
 };
 
-export type Pose = {
+export declare type Pose = {
   keypoints: Keypoint[],
   score: number,
 };
@@ -49,6 +49,6 @@ export type PosenetInput =
 
 export type TensorBuffer3D = tf.TensorBuffer<tf.Rank.R3>;
 
-export interface Padding {
+export declare interface Padding {
   top: number, bottom: number, left: number, right: number
 }
