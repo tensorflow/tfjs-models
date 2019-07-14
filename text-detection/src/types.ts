@@ -20,4 +20,5 @@ import * as tf from '@tensorflow/tfjs';
 export type TextDetectionInput =
     |ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement|tf.Tensor3D;
 
-export type TextDetectionOutput = tf.Tensor2D;
+export type QuantizationBytes = 1|2|4;
+export type TextDetectionOutput = tf.Tensor3D;

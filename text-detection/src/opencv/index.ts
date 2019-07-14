@@ -14,4 +14,5 @@
  * limitations under the License.
  * =============================================================================
  */
-export * from './opencv.js';
+import * as cv from './opencv';
+export = cv;

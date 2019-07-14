@@ -17,79 +17,59 @@
 import * as tf from '@tensorflow/tfjs';
 
 import {config} from './config';
-import {TextDetectionInput, TextDetectionOutput} from './types';
+import {QuantizationBytes, TextDetectionInput, TextDetectionOutput} from './types';
+import {cropAndResize, detect} from './utils';
+
+export const load = async (quantizationBytes: QuantizationBytes = 1) => {
+  if (tf == null) {
+    throw new Error(
+        `Cannot find TensorFlow.js. ` +
+        `If you are using a <script> tag, please ` +
+        `also include @tensorflow/tfjs on the page before using this model.`);
+  }
+
+  if ([1, 2, 4].indexOf(quantizationBytes) === -1) {
+    throw new Error(`Only quantization to 1, 2 and 4 bytes is supported.`);
+  }
+  const textDetection = new TextDetection(quantizationBytes);
+  await textDetection.load();
+  return textDetection;
+};
 export class TextDetection {
-  private model: Promise<tf.GraphModel>;
+  private model: tf.GraphModel;
   private modelPath: string;
   private base = 'psenet';
-  public constructor(quantizationBytes?: number) {
-    if (tf == null) {
-      throw new Error(
-          `Cannot find TensorFlow.js. ` +
-          `If you are using a <script> tag, please ` +
-          `also include @tensorflow/tfjs on the page before using this model.`);
-    }
-
-    if (quantizationBytes && [1, 2].indexOf(quantizationBytes) === -1) {
-      throw new Error(`Only quantization to 1 or 2 bytes is supported.`);
-    }
+  public constructor(quantizationBytes: QuantizationBytes = 1) {
     this.modelPath = `${config['BASE_PATH']}/${
         quantizationBytes ? `quantized/${quantizationBytes}/` :
                             ''}${this.base}/model.json`;
-
-    this.model = tf.loadGraphModel(this.modelPath);
   }
 
-  private static computeResizeRatios(height: number, width: number):
-      [number, number] {
-    const maxSide = Math.max(width, height)
-    const ratio = maxSide > config['MAX_SIDE_LENGTH'] ?
-        config['MAX_SIDE_LENGTH'] / maxSide :
-        1;
+  public async load() {
+    this.model = await tf.loadGraphModel(this.modelPath);
 
-    const resizeRatios = [height, width].map((side: number) => {
-      const roundedSide = Math.round(side * ratio);
-      return (roundedSide % 32 === 0 ?
-                  roundedSide :
-                  (Math.floor(roundedSide / 32) + 1) * 32) /
-          side;
-    }) as [number, number];
-    return resizeRatios;
+    // Warm the model up.
+    // const processedInput = this.preprocess(tf.zeros([227, 227, 3]));
+    // const result = await this.model.predict(processedInput) as tf.Tensor1D;
+    // await result.data();
+    // result.dispose();
   }
 
-  private static cropAndResize(input: TextDetectionInput): tf.Tensor3D {
+  public preprocess(input: TextDetectionInput) {
     return tf.tidy(() => {
-      const image: tf.Tensor3D =
-          (input instanceof tf.Tensor ? input : tf.browser.fromPixels(input))
-              .toFloat();
-
-      const [height, width] = image.shape;
-      const resizeRatios = TextDetection.computeResizeRatios(height, width);
-      const processedImage =
-          tf.image.resizeBilinear(image, [height, width].map((side, idx) => {
-            return Math.round(side * resizeRatios[idx]);
-          }) as [number, number]);
-
-      return processedImage;
-    });
-  }
-
-  public static preprocess(input: TextDetectionInput) {
-    return tf.tidy(() => {
-      return TextDetection.cropAndResize(input).expandDims(0);
+      return cropAndResize(input).expandDims(0);
     });
   }
 
   public async predict(input: TextDetectionInput):
       Promise<TextDetectionOutput> {
-    const model = await this.model;
     return tf.tidy(() => {
-      const processedInput = TextDetection.preprocess(input);
-      const predictions =
-          (model.predict(processedInput) as tf.Tensor4D).squeeze([0]) as
-          tf.Tensor2D;
-      console.log(predictions.shape);
-      return predictions;
+      const processedInput = this.preprocess(input);
+      const segmentationMaps =
+          (this.model.predict(processedInput) as tf.Tensor4D).squeeze([0]) as
+          tf.Tensor3D;
+      detect(segmentationMaps);
+      return segmentationMaps;
     });
   }
 
@@ -99,6 +79,8 @@ export class TextDetection {
    */
 
   public async dispose() {
-    (await this.model).dispose();
+    if (this.model) {
+      this.model.dispose();
+    }
   }
 }

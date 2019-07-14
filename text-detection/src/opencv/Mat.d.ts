@@ -48,6 +48,8 @@ import {Vec2} from './Vec2.d';
 import {Vec3} from './Vec3.d';
 import {Vec4} from './Vec4.d';
 
+declare function matFromArray<T>(
+    rows: number, columns: number, type: number, array: number[]): Mat;
 export class Mat {
   readonly rows: number;
   readonly cols: number;
@@ -71,6 +73,7 @@ export class Mat {
   constructor(dataArray: number[][][], type: number);
   constructor(dataArray: number[][][], type: number);
   constructor(data: Buffer, rows: number, cols: number, type?: number);
+  ucharPtr(row: number, column: number): number[];
   abs(): Mat;
   absdiff(otherMat: Mat): Mat;
   adaptiveThreshold(

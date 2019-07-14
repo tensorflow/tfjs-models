@@ -624,4 +624,4 @@ export const ml: {
 export const statModel: {
   COMPRESSED_INPUT: number; PREPROCESSED_INPUT: number; RAW_OUTPUT: number;
   UPDATE_MODEL: number;
-}
+};

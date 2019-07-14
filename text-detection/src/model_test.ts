@@ -21,20 +21,19 @@ import {describeWithFlags, NODE_ENVS,} from '@tensorflow/tfjs-core/dist/jasmine_
 // import {decode} from 'jpeg-js';
 // import {resolve} from 'path';
 
-import {TextDetection} from '.';
+import {load} from '.';
 
 describeWithFlags('TextDetection', NODE_ENVS, () => {
   beforeAll(() => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 40000;
   });
   it('Text detection does not leak.', async () => {
-    const model = new TextDetection(1);
+    const model = await load();
 
     const x = tf.zeros([227, 227, 3]) as tf.Tensor3D;
     const numOfTensorsBefore = tf.memory().numTensors;
 
-    await model.predict(x);
-    await model.dispose();
+    model.predict(x);
 
     expect(tf.memory().numTensors).toEqual(numOfTensorsBefore);
   });

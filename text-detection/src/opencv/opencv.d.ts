@@ -32,3 +32,4 @@ export * from './RotatedRect.d';
 export * from './TermCriteria.d';
 export * from './Contour.d';
 export * from './Moments.d';
+export * from './imgproc.d';
