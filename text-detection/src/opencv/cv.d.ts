@@ -35,6 +35,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 import {Mat} from './Mat.d';
+import {MatVector} from './MatVector';
 import {Point2} from './Point2.d';
 import {Point3} from './Point3.d';
 import {Rect} from './Rect.d';
@@ -396,3 +397,4 @@ export function getMemMetrics(): {
   NumAllocations: number,
   NumDeAllocations: number
 };
+export function merge(coordinates: MatVector, polytope: Mat): void;

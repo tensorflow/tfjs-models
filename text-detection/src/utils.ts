@@ -1,22 +1,27 @@
 import * as tf from '@tensorflow/tfjs';
 
 import {config} from './config';
-import cv from './opencv';
+import cv, {Point2} from './opencv';
 import {TextDetectionInput} from './types';
 
 export class Queue<T> {
-  _store: T[] = [];
-  push(val: T) {
+  private _store: T[] = [];
+  public push(val: T) {
     this._store.push(val);
   }
-  pop(): T|undefined {
+  public pop(): T|undefined {
     return this._store.shift();
+  }
+  public empty() {
+    return this._store.length === 0;
+  }
+  public size() {
+    return this._store.length;
   }
 }
 
 export const progressiveScaleExpansion = (kernels: tf.Tensor2D[]) => {
   const [height, width] = kernels[0].shape;
-  // const predictionsBuffer = tf.buffer([height, width], 'int32');
   const lastSegmentationMapData =
       Array.from(kernels[kernels.length - 1].dataSync());
   const lastSegmentationMapMatrix =
@@ -33,75 +38,62 @@ export const progressiveScaleExpansion = (kernels: tf.Tensor2D[]) => {
       }
     }
   }
-  const labelsToIgnore = new Set<number>();
-  const points: number[][] = [];  // An array of [x, y]-coordinates
+  const recognizedLabels = new Set<number>();
+  const queues: Array<Queue<[number, number, number]>> = [
+    new Queue<[number, number, number]>(),
+    new Queue<[number, number, number]>()
+  ];
+  let currentQueueIdx = 0;
+  const segmentationMapBuffer = tf.buffer([height, width], 'int32');
   for (let rowIdx = 0; rowIdx < labels.rows; rowIdx++) {
     for (let colIdx = 0; colIdx < labels.cols; colIdx++) {
       const label = labels.ucharPtr(rowIdx, colIdx)[0];
-      if (labelsToIgnore.has(label)) {
-        labels.ucharPtr(rowIdx, colIdx)[0] = 0;
-      } else if (label > 0) {
-        points.push([colIdx, rowIdx]);
+      if (label > 0) {
+        if (areaSizes[label] < config['MINIMAL_AREA_THRESHOLD']) {
+          labels.ucharPtr(rowIdx, colIdx)[0] = 0;
+        } else {
+          queues[currentQueueIdx].push([colIdx, rowIdx, label]);
+          segmentationMapBuffer.set(label, rowIdx, colIdx);
+          recognizedLabels.add(label);
+        }
       }
     }
   }
-  const queues = Array<Queue<[number, number, number]>>(2);
-  let currentQueueIdx = 0;
   const dx = [-1, 1, 0, 0];
   const dy = [0, 0, -1, 1];
+  for (let kernelIdx = kernels.length - 2; kernelIdx > -1; --kernelIdx) {
+    const kernelData = kernels[kernelIdx].arraySync();
+    while (!queues[currentQueueIdx].empty()) {
+      const [xCoordinate, yCoordinate, label] = queues[currentQueueIdx].pop();
+      let isEdge = true;
+      for (let direction = 0; direction < 4; ++direction) {
+        const nextX = xCoordinate + dx[direction];
+        const nextY = yCoordinate + dy[direction];
+        if (nextX < 0 || nextX >= width || nextY < 0 || nextY >= height) {
+          continue;
+        }
+        if (kernelData[nextY][nextX] === 0 ||
+            segmentationMapBuffer.get(nextY, nextX) > 0) {
+          continue;
+        }
+        queues[currentQueueIdx].push([nextX, nextY, label]);
+        segmentationMapBuffer.set(label, nextY, nextX);
+        isEdge = false;
+      }
+      if (isEdge) {
+        const nextQueueIdx = currentQueueIdx ^ 1;
+        queues[nextQueueIdx].push([xCoordinate, yCoordinate, label]);
+      }
+    }
+    currentQueueIdx ^= 1;
+  }
+  return {segmentationMapBuffer, recognizedLabels};
 };
 
-// kernelQueue = queue.Queue(maxsize=0)
-// next_queue = queue.Queue(maxsize=0)
-// points = np.array(np.where(label > 0)).transpose((1, 0))
-
-// for point_idx in range(points.shape[0]):
-//     x, y = points[point_idx, 0], points[point_idx, 1]
-//     l = label[x, y]
-//     kernelQueue.put((x, y, l))
-//     pred[x, y] = l
-
-// dx = [-1, 1, 0, 0]
-// dy = [0, 0, -1, 1]
-// for kernal_idx in range(kernal_num - 2, -1, -1):
-//     kernal = kernals[kernal_idx].copy()
-//     while not kernelQueue.empty():
-//         (x, y, l) = kernelQueue.get()
-
-//         is_edge = True
-//         for j in range(4):
-//             tmpx = x + dx[j]
-//             tmpy = y + dy[j]
-//             if (
-//                 tmpx < 0
-//                 or tmpx >= kernal.shape[0]
-//                 or tmpy < 0
-//                 or tmpy >= kernal.shape[1]
-//             ):
-//                 continue
-//             if kernal[tmpx, tmpy] == 0 or pred[tmpx, tmpy] > 0:
-//                 continue
-
-//             kernelQueue.put((tmpx, tmpy, l))
-//             pred[tmpx, tmpy] = l
-//             is_edge = False
-//         if is_edge:
-//             next_queue.put((x, y, l))
-
-//     # kernal[pred > 0] = 0
-//     kernelQueue, next_queue = next_queue, kernelQueue
-
-//     # points = np.array(np.where(pred > 0)).transpose((1, 0))
-//     # for point_idx in range(points.shape[0]):
-//     #     x, y = points[point_idx, 0], points[point_idx, 1]
-//     #     l = pred[x, y]
-//     #     queue.put((x, y, l))
-
-// return pred, label_values
-
-export const detect = (segmentationMaps: tf.Tensor3D) => {
+export const detect = (segmentationMaps: tf.Tensor3D): Point2[][] => {
   const [height, width, mapCount] = segmentationMaps.shape;
   const segmentationMapsData = segmentationMaps.arraySync();
+  tf.dispose(segmentationMaps);
   const one = tf.ones([height, width], 'int32');
   const zero = tf.zeros([height, width], 'int32');
   const threshold =
@@ -119,11 +111,68 @@ export const detect = (segmentationMaps: tf.Tensor3D) => {
     const kernel =
         tf.where(segmentationMap.greater(threshold), one, zero) as tf.Tensor2D;
     kernels.push(kernel);
+    tf.dispose(segmentationMap);
   }
+  tf.dispose(one);
+  tf.dispose(zero);
+  tf.dispose(threshold);
   if (kernels.length > 0) {
-    progressiveScaleExpansion(kernels);
+    const {segmentationMapBuffer, recognizedLabels} =
+        progressiveScaleExpansion(kernels);
+    kernels.forEach(tf.dispose);
+    const resizeRatios = computeTargetRatios(height, width);
+    const [targetHeight, targetWidth] = [height, width].map((side, idx) => {
+      return Math.round(side * resizeRatios[idx]);
+    });
+    const resizedSegmentationMapData =
+        tf.tidy(() => {
+            const processedSegmentationMap =
+                segmentationMapBuffer.toTensor().expandDims(2) as tf.Tensor3D;
+            return tf.image
+                .resizeNearestNeighbor(
+                    processedSegmentationMap, [targetHeight, targetWidth])
+                .squeeze([2]);
+          }).arraySync() as number[][];
+
+    // const labels = Array.from(recognizedLabels);
+    if (recognizedLabels.size === 0) {
+      return [];
+    }
+    const points: {[label: number]: {'x': number[], 'y': number[]}} = {};
+    for (let rowIdx = 0; rowIdx < targetHeight; ++rowIdx) {
+      for (let columnIdx = 0; columnIdx < targetWidth; ++columnIdx) {
+        const label = resizedSegmentationMapData[rowIdx][columnIdx];
+        if (recognizedLabels.has(label)) {
+          if (!points[label]) {
+            points[label] = {'x': [], 'y': []};
+          }
+          points[label].x.push(columnIdx);
+          points[label].y.push(rowIdx);
+        }
+      }
+    }
+    const boxes: Point2[][] = [];
+    Object.keys(points).forEach((labelStr) => {
+      const label = Number(labelStr);
+      const x = cv.matFromArray(
+          points[label].x.length, 1, cv.CV_32S, points[label].x);
+      const y = cv.matFromArray(
+          points[label].y.length, 1, cv.CV_32S, points[label].y);
+      const coords = new cv.MatVector();
+      coords.push_back(x);
+      coords.push_back(y);
+      const polytope = new cv.Mat();
+      cv.merge(coords, polytope);
+      const box = cv.RotatedRect.points(cv.minAreaRect(polytope));
+      boxes.push(box);
+      x.delete();
+      y.delete();
+      coords.delete();
+      polytope.delete();
+    });
+    return boxes;
   }
-  // mask_res, label_values = pse(kernals, min_area_thresh)
+  return [];
 };
 
 export const computeTargetRatios =

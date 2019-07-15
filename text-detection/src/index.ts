@@ -20,6 +20,7 @@ import {config} from './config';
 import {QuantizationBytes, TextDetectionInput, TextDetectionOutput} from './types';
 import {cropAndResize, detect} from './utils';
 
+export {detect};
 export const load = async (quantizationBytes: QuantizationBytes = 1) => {
   if (tf == null) {
     throw new Error(
@@ -35,6 +36,7 @@ export const load = async (quantizationBytes: QuantizationBytes = 1) => {
   await textDetection.load();
   return textDetection;
 };
+
 export class TextDetection {
   private model: tf.GraphModel;
   private modelPath: string;
@@ -49,10 +51,10 @@ export class TextDetection {
     this.model = await tf.loadGraphModel(this.modelPath);
 
     // Warm the model up.
-    // const processedInput = this.preprocess(tf.zeros([227, 227, 3]));
-    // const result = await this.model.predict(processedInput) as tf.Tensor1D;
-    // await result.data();
-    // result.dispose();
+    const processedInput = this.preprocess(tf.zeros([227, 227, 3]));
+    const result = await this.model.predict(processedInput) as tf.Tensor1D;
+    await result.data();
+    result.dispose();
   }
 
   public preprocess(input: TextDetectionInput) {
@@ -63,14 +65,12 @@ export class TextDetection {
 
   public async predict(input: TextDetectionInput):
       Promise<TextDetectionOutput> {
-    return tf.tidy(() => {
+    const segmentationMaps = tf.tidy(() => {
       const processedInput = this.preprocess(input);
-      const segmentationMaps =
-          (this.model.predict(processedInput) as tf.Tensor4D).squeeze([0]) as
+      return (this.model.predict(processedInput) as tf.Tensor4D).squeeze([0]) as
           tf.Tensor3D;
-      detect(segmentationMaps);
-      return segmentationMaps;
     });
+    return detect(segmentationMaps);
   }
 
   /**

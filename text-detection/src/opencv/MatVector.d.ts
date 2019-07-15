@@ -15,22 +15,10 @@
  * =============================================================================
  */
 
-export * from './cv.d';
-export * from './constants.d';
-export * from './Mat.d';
-export * from './MatVector.d';
-export * from './Vec.d';
-export * from './Vec2.d';
-export * from './Vec3.d';
-export * from './Vec4.d';
-export * from './Vec6.d';
-export * from './Point.d';
-export * from './Point2.d';
-export * from './Point3.d';
-export * from './Size.d';
-export * from './Rect.d';
-export * from './RotatedRect.d';
-export * from './TermCriteria.d';
-export * from './Contour.d';
-export * from './Moments.d';
-export * from './imgproc.d';
+import {Mat} from './Mat';
+
+export class MatVector {
+  get(i: number): MatVector;
+  push_back(mat: Mat): void;
+  delete(): void;
+}

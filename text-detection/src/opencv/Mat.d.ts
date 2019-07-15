@@ -73,6 +73,7 @@ export class Mat {
   constructor(dataArray: number[][][], type: number);
   constructor(dataArray: number[][][], type: number);
   constructor(data: Buffer, rows: number, cols: number, type?: number);
+  delete(): void;
   ucharPtr(row: number, column: number): number[];
   abs(): Mat;
   absdiff(otherMat: Mat): Mat;

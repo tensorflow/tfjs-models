@@ -17,11 +17,12 @@
 
 import * as tf from '@tensorflow/tfjs';
 import {describeWithFlags, NODE_ENVS,} from '@tensorflow/tfjs-core/dist/jasmine_util';
-// import {readFileSync} from 'fs';
-// import {decode} from 'jpeg-js';
-// import {resolve} from 'path';
+import {readFileSync} from 'fs';
+import {decode} from 'jpeg-js';
+import {resolve} from 'path';
 
 import {load} from '.';
+import {Point2} from './opencv';
 
 describeWithFlags('TextDetection', NODE_ENVS, () => {
   beforeAll(() => {
@@ -37,35 +38,44 @@ describeWithFlags('TextDetection', NODE_ENVS, () => {
 
     expect(tf.memory().numTensors).toEqual(numOfTensorsBefore);
   });
-  // it('TextDetection produces sensible results.', async () => {
-  //   const model = new TextDetection(1);
+  it('TextDetection produces sensible results.', async () => {
+    const model = await load();
 
-  //   const input = tf.tidy(() => {
-  //     const testImage =
-  //         decode(readFileSync(resolve(__dirname, 'assets/example.jpeg')),
-  //         true);
-  //     const rawData = tf.tensor(testImage.data, [
-  //                         testImage.height, testImage.width, 4
-  //                       ]).arraySync() as number[][][];
-  //     const inputBuffer =
-  //         tf.buffer([testImage.height, testImage.width, 3], 'int32');
-  //     for (let columnIndex = 0; columnIndex < testImage.height;
-  //     ++columnIndex) {
-  //       for (let rowIndex = 0; rowIndex < testImage.width; ++rowIndex) {
-  //         for (let channel = 0; channel < 3; ++channel) {
-  //           inputBuffer.set(
-  //               rawData[columnIndex][rowIndex][channel], columnIndex,
-  //               rowIndex, channel);
-  //         }
-  //       }
-  //     }
+    const input = tf.tidy(() => {
+      const testImage =
+          decode(readFileSync(resolve(__dirname, 'assets/example.jpeg')), true);
+      const rawData = tf.tensor(testImage.data, [
+                          testImage.height, testImage.width, 4
+                        ]).arraySync() as number[][][];
+      const inputBuffer =
+          tf.buffer([testImage.height, testImage.width, 3], 'int32');
+      for (let columnIndex = 0; columnIndex < testImage.height; ++columnIndex) {
+        for (let rowIndex = 0; rowIndex < testImage.width; ++rowIndex) {
+          for (let channel = 0; channel < 3; ++channel) {
+            inputBuffer.set(
+                rawData[columnIndex][rowIndex][channel], columnIndex, rowIndex,
+                channel);
+          }
+        }
+      }
 
-  //     return inputBuffer.toTensor();
-  //   }) as tf.Tensor3D;
-  //   const predictions = await model.predict(input);
-  //   // const isPanda = predictions[0].className.includes('panda');
-  //   await model.dispose();
-  //   // expect(isPanda).toEqual(true);
-  //   predictions.print();
-  // });
+      return inputBuffer.toTensor();
+    }) as tf.Tensor3D;
+    const boxes = await model.predict(input);
+    const xCoords = new Set<number>();
+    const yCoords = new Set<number>();
+    const points = new Set<Point2>();
+    if (boxes.length > 0) {
+      for (const box of boxes) {
+        for (const point of box) {
+          xCoords.add(point.x);
+          yCoords.add(point.y);
+          points.add(point);
+        }
+      }
+    }
+    const isSensible = boxes.length === 1 && xCoords.size === 2 &&
+        yCoords.size === 2 && points.size === 4;
+    expect(isSensible).toEqual(true);
+  });
 });

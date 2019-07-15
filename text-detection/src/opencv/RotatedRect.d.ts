@@ -46,5 +46,5 @@ export class RotatedRect {
   readonly angle: number;
   constructor();
   constructor(center: Point2, size: Size, angle: number);
-  boundingRect(): Rect;
+  static points(rect: RotatedRect): Point2[];
 }
