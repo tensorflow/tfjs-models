@@ -29,6 +29,7 @@ export const progressiveScaleExpansion = (kernels: tf.Tensor2D[]) => {
   const labels = new cv.Mat();
   const labelsCount =
       cv.connectedComponents(lastSegmentationMapMatrix, labels, 4);
+  lastSegmentationMapMatrix.delete();
   const areaSizes = Array<number>(labelsCount);
   for (let rowIdx = 0; rowIdx < labels.rows; rowIdx++) {
     for (let colIdx = 0; colIdx < labels.cols; colIdx++) {
@@ -59,10 +60,12 @@ export const progressiveScaleExpansion = (kernels: tf.Tensor2D[]) => {
       }
     }
   }
+  labels.delete();
   const dx = [-1, 1, 0, 0];
   const dy = [0, 0, -1, 1];
   for (let kernelIdx = kernels.length - 2; kernelIdx > -1; --kernelIdx) {
-    const kernelData = kernels[kernelIdx].arraySync();
+    const kernel = kernels[kernelIdx];
+    const kernelData = kernel.arraySync();
     while (!queues[currentQueueIdx].empty()) {
       const [xCoordinate, yCoordinate, label] = queues[currentQueueIdx].pop();
       let isEdge = true;
@@ -108,8 +111,9 @@ export const detect = (segmentationMaps: tf.Tensor3D): Point2[][] => {
       }
     }
     const segmentationMap = segmentationMapBuffer.toTensor();
-    const kernel =
-        tf.where(segmentationMap.greater(threshold), one, zero) as tf.Tensor2D;
+    const kernel = tf.tidy(
+        () => tf.where(segmentationMap.greater(threshold), one, zero) as
+            tf.Tensor2D);
     kernels.push(kernel);
     tf.dispose(segmentationMap);
   }
@@ -119,22 +123,22 @@ export const detect = (segmentationMaps: tf.Tensor3D): Point2[][] => {
   if (kernels.length > 0) {
     const {segmentationMapBuffer, recognizedLabels} =
         progressiveScaleExpansion(kernels);
-    kernels.forEach(tf.dispose);
+    tf.dispose(kernels);
     const resizeRatios = computeTargetRatios(height, width);
     const [targetHeight, targetWidth] = [height, width].map((side, idx) => {
       return Math.round(side * resizeRatios[idx]);
     });
+    const resizedSegmentationMap = tf.tidy(() => {
+      const processedSegmentationMap =
+          segmentationMapBuffer.toTensor().expandDims(2) as tf.Tensor3D;
+      return tf.image
+          .resizeNearestNeighbor(
+              processedSegmentationMap, [targetHeight, targetWidth])
+          .squeeze([2]);
+    });
     const resizedSegmentationMapData =
-        tf.tidy(() => {
-            const processedSegmentationMap =
-                segmentationMapBuffer.toTensor().expandDims(2) as tf.Tensor3D;
-            return tf.image
-                .resizeNearestNeighbor(
-                    processedSegmentationMap, [targetHeight, targetWidth])
-                .squeeze([2]);
-          }).arraySync() as number[][];
-
-    // const labels = Array.from(recognizedLabels);
+        resizedSegmentationMap.arraySync() as number[][];
+    tf.dispose(resizedSegmentationMap);
     if (recognizedLabels.size === 0) {
       return [];
     }
@@ -203,10 +207,11 @@ export const cropAndResize = (input: TextDetectionInput): tf.Tensor3D => {
 
     const [height, width] = image.shape;
     const resizeRatios = computeTargetRatios(height, width);
+    const [targetHeight, targetWidth] = [height, width].map((side, idx) => {
+      return Math.round(side * resizeRatios[idx]);
+    });
     const processedImage =
-        tf.image.resizeBilinear(image, [height, width].map((side, idx) => {
-          return Math.round(side * resizeRatios[idx]);
-        }) as [number, number]);
+        tf.image.resizeBilinear(image, [targetHeight, targetWidth]);
 
     return processedImage;
   });

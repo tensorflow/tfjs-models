@@ -51,10 +51,12 @@ export class TextDetection {
     this.model = await tf.loadGraphModel(this.modelPath);
 
     // Warm the model up.
-    const processedInput = this.preprocess(tf.zeros([227, 227, 3]));
+    const processedInput =
+        tf.tidy(() => this.preprocess(tf.zeros([100, 100, 3])));
     const result = await this.model.predict(processedInput) as tf.Tensor1D;
     await result.data();
-    result.dispose();
+    tf.dispose(result);
+    tf.dispose(processedInput);
   }
 
   public preprocess(input: TextDetectionInput) {
@@ -65,12 +67,17 @@ export class TextDetection {
 
   public async predict(input: TextDetectionInput):
       Promise<TextDetectionOutput> {
+    // const start = process.hrtime();
     const segmentationMaps = tf.tidy(() => {
       const processedInput = this.preprocess(input);
       return (this.model.predict(processedInput) as tf.Tensor4D).squeeze([0]) as
           tf.Tensor3D;
     });
-    return detect(segmentationMaps);
+    // const now = process.hrtime(start);
+    // console.log('Execution time (hr): %ds %dms', now[0], now[1] / 1000000);
+    const boxes = detect(segmentationMaps);
+    tf.dispose(segmentationMaps);
+    return boxes;
   }
 
   /**

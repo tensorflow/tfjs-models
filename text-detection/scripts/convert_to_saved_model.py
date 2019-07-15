@@ -30,7 +30,7 @@ def convert_to_saved_model(checkpoint_path, output_path):
 
         inputs = {"input_images": tf.saved_model.utils.build_tensor_info(input_images)}
 
-        seg_maps_pred = model.model(input_images, is_training=False)
+        seg_maps_pred = model.model(input_images, outputs=3, is_training=False)
         outputs = {"seg_maps": tf.saved_model.utils.build_tensor_info(seg_maps_pred)}
 
         global_step = tf.get_variable(
