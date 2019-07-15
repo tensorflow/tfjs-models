@@ -1,11 +1,11 @@
-# model-name Demo
+# Text Detection Demo
 
 ## Setup
 
 Change the directory to the `demo` folder:
 
 ```sh
-cd model-name/demo
+cd text-detection/demo
 ```
 
 Install dependencies:
@@ -24,10 +24,10 @@ yarn watch
 
 If you are developing the model locally and want to test the changes in the demo, proceed as follows:
 
-### Change the directory to the `model-name` folder
+### Change the directory to the `text-detection` folder
 
 ```sh
-cd model-name
+cd text-detection
 ```
 
 ### Install dependencies
@@ -36,13 +36,13 @@ cd model-name
 yarn
 ```
 
-### Publish a local copy ofmodel-name
+### Publish a local copy o text-detectionf
 
 ```sh
 yarn publish-local
 ```
 
-### Change into the demo directory (`model-name/demo`) and install dependencies
+### Change into the demo directory (`text-detection/demo`) and install dependencies
 
 ```sh
 cd demo
@@ -61,4 +61,4 @@ yarn link-local
 yarn watch
 ```
 
-**Note**: *To get future updates from the `model-name` source code, just run `yarn publish-local` in the `model-name` folder again.*
+**Note**: *To get future updates from the `text-detection` source code, just run `yarn publish-local` in the `text-detection` folder again.*

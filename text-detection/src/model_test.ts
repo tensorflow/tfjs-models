@@ -22,7 +22,7 @@ import {decode} from 'jpeg-js';
 import {resolve} from 'path';
 
 import {load} from '.';
-import {Point2} from './opencv';
+import cv from './opencv';
 
 describeWithFlags('TextDetection', NODE_ENVS, () => {
   beforeAll(() => {
@@ -64,7 +64,7 @@ describeWithFlags('TextDetection', NODE_ENVS, () => {
     const boxes = await model.predict(input);
     const xCoords = new Set<number>();
     const yCoords = new Set<number>();
-    const points = new Set<Point2>();
+    const points = new Set<cv.Point2>();
     if (boxes.length > 0) {
       for (const box of boxes) {
         for (const point of box) {

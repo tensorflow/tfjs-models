@@ -34,7 +34,7 @@ services:
     volumes:
       - dist:/build/
       - ./scripts/embindgen.py:/build/embindgen.py
-      - ./dist/opencv.js:/build/opencv.js
+      - ./scripts/dist/opencv.js:/build/opencv.js
       # - ./scripts/embindgen.py:/build/opencv/modules/js/src/embindgen.py
     stdin_open: true
     tty: true

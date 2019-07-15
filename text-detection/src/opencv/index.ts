@@ -15,4 +15,5 @@
  * =============================================================================
  */
 import * as cv from './opencv';
-export = cv;
+// tslint:disable-next-line: no-default-export
+export default cv;

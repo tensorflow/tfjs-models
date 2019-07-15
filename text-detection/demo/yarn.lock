@@ -755,6 +755,10 @@
     "@parcel/utils" "^1.11.0"
     physical-cpu-count "^2.0.0"
 
+"@tensorflow-models/text-detection@link:.yalc/@tensorflow-models/text-detection":
+  version "0.0.0"
+  uid ""
+
 "@tensorflow/tfjs-converter@1.2.2":
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-1.2.2.tgz#c95e2f79b1de830b8079c7704dc8463ced2d2b79"

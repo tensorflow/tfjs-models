@@ -15,31 +15,162 @@ limitations under the License.
 <html lang="en">
 
 <head>
-  <title>DeepLab Demo</title>
+  <title>Text Detection Demo</title>
+  <link rel="stylesheet" href="index.css" />
   <script src="index.js"></script>
 </head>
 
 <body>
-  <nav class="navbar">
-    <div class="navbar-brand">
-      <h1 class="navbar-item">
-        <img alt="TensorFlow.js Logo" src="tfjs-logo.png" />
-        <span class="tag is-white is-medium">
-          <b>Model Demo</b>
-        </span>
-      </h1>
-    </div>
-  </nav>
   <div class="container">
+    <nav class="navbar">
+      <div class="navbar-brand">
+        <h1 class="navbar-item">
+          <img alt="TensorFlow.js Logo" src="tfjs-logo.png" />
+          <span class="tag is-white is-medium">
+            <b>Text Detection Demo</b>
+          </span>
+        </h1>
+      </div>
+    </nav>
     <div class="section">
-      <article class="message">
-        <h2 class="message-header">
-          Hello World!
-        </h2>
-        <div class="message-body">
-          This is a demo.
+      <div class="tile is-ancestor">
+        <div class="tile is-vertical">
+          <div class="tile is-parent">
+            <div class="tile is-child">
+              <h2 class="title is-4">
+                Six types of pre-trained weights are available:
+              </h2>
+              <div class="columns is-multiline is-mobile no-flex-grow">
+                <div class="column">
+                  <div class="control ">
+                    <div class="tags has-addons">
+                      <span class="no-breaks is-unselectable">
+                        <span class="tag is-medium is-dark">B0</span><span class="tag is-medium is-link"
+                          id="run-b0">Run</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div class="column">
+                  <div class="control">
+                    <div class="tags has-addons">
+                      <span class="no-breaks is-unselectable">
+                        <span class="tag is-medium is-dark">B1</span><span class="tag is-medium is-link"
+                          id="run-b1">Run</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div class="column">
+                  <div class="control">
+                    <div class="tags has-addons">
+                      <span class="no-breaks is-unselectable">
+                        <span class="tag is-medium is-dark">B2</span><span class="tag is-medium is-link"
+                          id="run-b2">Run</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div class="column">
+                  <div class="control">
+                    <div class="tags has-addons">
+                      <span class="no-breaks is-unselectable">
+                        <span class="tag is-medium is-dark">B3</span><span class="tag is-medium is-link"
+                          id="run-b3">Run</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div class="column">
+                  <div class="control">
+                    <div class="tags has-addons">
+                      <span class="no-breaks is-unselectable">
+                        <span class="tag is-medium is-dark">B4</span><span class="tag is-medium is-link"
+                          id="run-b4">Run</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div class="column">
+                  <div class="control">
+                    <div class="tags has-addons">
+                      <span class="no-breaks is-unselectable">
+                        <span class="tag is-medium is-dark">B5</span><span class="tag is-medium is-link"
+                          id="run-b5">Run</span>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tile is-parent is-centered-flex">
+            <p class="tile is-child">
+              <b>Status:</b>
+              <span id="status-message">Loading models...</span>
+            </p>
+          </div>
         </div>
-      </article>
+        <div class="tile is-3 is-vertical">
+          <div class="tile is-parent">
+            <div class="tile is-child">
+              <label class="checkbox">
+                <b>Disable quantization</b>:
+                <input id="is-quantization-disabled" type="checkbox" />
+              </label>
+              <div class="notification is-danger has-text-weight-semibold is-paddingless">
+                <span class="is-concise-message">
+                  This might
+                  <a href="https://github.com/tensorflow/tfjs-examples/tree/master/quantization">hurt</a>
+                  performance, but improve accuracy.
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="tile is-parent">
+            <div class="tile is-child file is-warning is-centered">
+              <label class="file-label">
+                <input class="file-input" type="file" name="image" id="upload-image" />
+                <span class="file-cta is-full-width is-centered-flex">
+                  <span class="file-label">
+                    Upload an image
+                  </span>
+                </span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tile is-ancestor">
+        <div class="tile is-horizontal">
+          <div class="tile is-parent is-4">
+            <div class="tile is-child card large" id="input-card">
+              <header class="card-header">
+                <p class="card-header-title">
+                  Input image
+                </p>
+              </header>
+              <div class="card-content">
+                <figure class="image">
+                  <img alt="Input image" id="input-image" src="./examples/example.jpeg" />
+                </figure>
+              </div>
+            </div>
+          </div>
+          <div class="tile is-parent">
+            <div class="tile is-child card large is-invisible" id="classification-card">
+              <header class="card-header">
+                <p class="card-header-title">
+                  Predictions
+                </p>
+              </header>
+              <div class="card-content">
+                <div id="classification" class="columns is-multiline"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </body>

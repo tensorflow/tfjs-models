@@ -1,9 +1,8 @@
 import * as tf from '@tensorflow/tfjs';
 
 import {config} from './config';
-import cv, {Point2} from './opencv';
+import cv from './opencv';
 import {TextDetectionInput} from './types';
-
 export class Queue<T> {
   private _store: T[] = [];
   public push(val: T) {
@@ -93,7 +92,7 @@ export const progressiveScaleExpansion = (kernels: tf.Tensor2D[]) => {
   return {segmentationMapBuffer, recognizedLabels};
 };
 
-export const detect = (segmentationMaps: tf.Tensor3D): Point2[][] => {
+export const detect = (segmentationMaps: tf.Tensor3D): cv.Point2[][] => {
   const [height, width, mapCount] = segmentationMaps.shape;
   const segmentationMapsData = segmentationMaps.arraySync();
   tf.dispose(segmentationMaps);
@@ -155,7 +154,7 @@ export const detect = (segmentationMaps: tf.Tensor3D): Point2[][] => {
         }
       }
     }
-    const boxes: Point2[][] = [];
+    const boxes: cv.Point2[][] = [];
     Object.keys(points).forEach((labelStr) => {
       const label = Number(labelStr);
       const x = cv.matFromArray(

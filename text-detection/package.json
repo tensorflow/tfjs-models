@@ -1,5 +1,5 @@
 {
-  "name": "text-detection",
+  "name": "@tensorflow-models/text-detection",
   "version": "0.1.0",
   "description": "In-Browser Shape Robust Text Detection with Progressive Scale Expansion Network",
   "main": "dist/index.js",

@@ -1,0 +1,37 @@
+.is-on-top {
+  z-index: 100;
+}
+
+.is-centered-flex {
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.is-spaced-evenly {
+  justify-content: space-evenly;
+}
+
+.is-column {
+  flex-direction: column;
+}
+
+.no-flex-grow .column {
+  flex-grow: 0;
+}
+
+.is-full-height {
+  height: 100%;
+}
+
+.is-full-width {
+  width: 100%;
+}
+
+.is-concise-message {
+  padding: 0.7em;
+  display: block;
+}
+
+.no-breaks {
+  white-space: nowrap;
+}
