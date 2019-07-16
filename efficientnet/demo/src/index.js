@@ -90,6 +90,26 @@ const probabilityToColor = (probability) => {
   return colors[Math.round(probability * (colors.length - 1))];
 };
 
+// based on  https://stackoverflow.com/a/35970186/3581829
+function invertColor(hex, bw) {
+  if (hex.indexOf('#') === 0) {
+    hex = hex.slice(1);
+  }
+  // convert 3-digit hex to 6-digits.
+  if (hex.length === 3) {
+    hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+  }
+  if (hex.length !== 6) {
+    throw new Error('Invalid HEX color.');
+  }
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+
+  // http://stackoverflow.com/a/3943023/112731
+  return (r * 0.299 + g * 0.587 + b * 0.114) > 150 ? '#000000' : '#FFFFFF';
+}
+
 const displayClassification = (modelName, classification) => {
   toggleInvisible('classification-card', false);
   const classificationList = document.getElementById('classification');
@@ -109,14 +129,13 @@ const displayClassification = (modelName, classification) => {
 
     const classNameTag = document.createElement('span');
     classNameTag.classList.add('column', 'is-flex', 'is-centered-flex');
-    classNameTag.style.backgroundColor = probabilityToColor(probability);
+    const backgroundColor = probabilityToColor(probability);
+    classNameTag.style.backgroundColor = backgroundColor;
 
     const classNameTagContent = document.createElement('span');
     classNameTagContent.innerText = className;
-    classNameTagContent.style.background = 'inherit';
-    classNameTagContent.style.backgroundClip = 'text';
-    classNameTagContent.style.color = 'transparent';
-    classNameTagContent.style.filter = 'invert(1) grayscale() contrast(100)';
+    classNameTagContent.style.background = 'transparent';
+    classNameTagContent.style.color = invertColor(backgroundColor, true);
 
     classNameTag.appendChild(classNameTagContent);
     tags.appendChild(probabilityTag);
