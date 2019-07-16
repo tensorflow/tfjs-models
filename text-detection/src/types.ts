@@ -16,10 +16,11 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import cv from './opencv';
+import {Point} from './geometry';
 
 export type TextDetectionInput =
     |ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement|tf.Tensor3D;
 
 export type QuantizationBytes = 1|2|4;
-export type TextDetectionOutput = cv.Point2[][];
+export type Box = [Point, Point, Point, Point];
+export type TextDetectionOutput = Box[];

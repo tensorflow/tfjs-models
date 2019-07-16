@@ -67,14 +67,11 @@ export class TextDetection {
 
   public async predict(input: TextDetectionInput):
       Promise<TextDetectionOutput> {
-    // const start = process.hrtime();
     const segmentationMaps = tf.tidy(() => {
       const processedInput = this.preprocess(input);
       return (this.model.predict(processedInput) as tf.Tensor4D).squeeze([0]) as
           tf.Tensor3D;
     });
-    // const now = process.hrtime(start);
-    // console.log('Execution time (hr): %ds %dms', now[0], now[1] / 1000000);
     const boxes = detect(segmentationMaps);
     tf.dispose(segmentationMaps);
     return boxes;

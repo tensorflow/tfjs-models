@@ -44,9 +44,9 @@ const initializeModels = async () => {
 
   const runPrediction = async () => {
     const predictionStart = performance.now();
-    const boxes = await model.predict();
+    const boxes = await model.predict(input);
     status(`Finished in ${(performance.now() - predictionStart) / 1000} s.`);
-    status(`The boxes are ${boxes}`);
+    status(`The boxes are ${JSON.stringify(boxes)}`);
   };
   if (input.complete && input.naturalHeight !== 0) {
     await runPrediction();

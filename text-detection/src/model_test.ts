@@ -22,7 +22,7 @@ import {decode} from 'jpeg-js';
 import {resolve} from 'path';
 
 import {load} from '.';
-import cv from './opencv';
+import {Point} from './geometry';
 
 describeWithFlags('TextDetection', NODE_ENVS, () => {
   beforeAll(() => {
@@ -64,18 +64,34 @@ describeWithFlags('TextDetection', NODE_ENVS, () => {
     const boxes = await model.predict(input);
     const xCoords = new Set<number>();
     const yCoords = new Set<number>();
-    const points = new Set<cv.Point2>();
+    const points = new Set<Point>();
+    let conds = [
+      boxes.length === 1,
+    ];
     if (boxes.length > 0) {
       for (const box of boxes) {
+        const [upright, upleft, downleft, downright] = box;
+        const left = (upleft.sub(downleft)).norm();
+        const right = (upright.sub(downright)).norm();
+        const up = (upright.sub(upleft)).norm();
+        const down = (downright.sub(downleft)).norm();
+        const epsilon = 1e-9;
+        conds = conds.concat([
+          left > 0, right > 0, up > 0, down > 0, (right - left) < epsilon,
+          (up - down) < epsilon, (right * up) > epsilon
+        ]);
         for (const point of box) {
-          xCoords.add(point.x);
-          yCoords.add(point.y);
+          xCoords.add(Math.round(point.x));
+          yCoords.add(Math.round(point.y));
           points.add(point);
         }
       }
     }
-    const isSensible = boxes.length === 1 && xCoords.size === 2 &&
-        yCoords.size === 2 && points.size === 4;
-    expect(isSensible).toEqual(true);
+    conds = conds.concat([
+      xCoords.size === 2,
+      yCoords.size === 2,
+      points.size === 4,
+    ]);
+    expect(conds).toEqual(Array.from(new Array(conds.length), () => true));
   });
 });

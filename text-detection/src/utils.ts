@@ -1,38 +1,21 @@
 import * as tf from '@tensorflow/tfjs';
 
 import {config} from './config';
-import cv from './opencv';
-import {TextDetectionInput} from './types';
-export class Queue<T> {
-  private _store: T[] = [];
-  public push(val: T) {
-    this._store.push(val);
-  }
-  public pop(): T|undefined {
-    return this._store.shift();
-  }
-  public empty() {
-    return this._store.length === 0;
-  }
-  public size() {
-    return this._store.length;
-  }
-}
+import {connectedComponents} from './connectedComponents';
+import {Point} from './geometry';
+import {minAreaRect} from './minAreaRect';
+import {Queue} from './queue';
+import {Box, TextDetectionInput} from './types';
 
 export const progressiveScaleExpansion = (kernels: tf.Tensor2D[]) => {
   const [height, width] = kernels[0].shape;
   const lastSegmentationMapData =
-      Array.from(kernels[kernels.length - 1].dataSync());
-  const lastSegmentationMapMatrix =
-      cv.matFromArray(height, width, cv.CV_8U, lastSegmentationMapData);
-  const labels = new cv.Mat();
-  const labelsCount =
-      cv.connectedComponents(lastSegmentationMapMatrix, labels, 4);
-  lastSegmentationMapMatrix.delete();
+      Array.from(kernels[kernels.length - 1].arraySync());
+  const {labelsCount, labels} = connectedComponents(lastSegmentationMapData);
   const areaSizes = Array<number>(labelsCount);
-  for (let rowIdx = 0; rowIdx < labels.rows; rowIdx++) {
-    for (let colIdx = 0; colIdx < labels.cols; colIdx++) {
-      const label = labels.ucharPtr(rowIdx, colIdx)[0];
+  for (let rowIdx = 0; rowIdx < labels.length; rowIdx++) {
+    for (let colIdx = 0; colIdx < labels[0].length; colIdx++) {
+      const label = labels[rowIdx][colIdx];
       if (label > 0) {
         areaSizes[label] += 1;
       }
@@ -45,12 +28,12 @@ export const progressiveScaleExpansion = (kernels: tf.Tensor2D[]) => {
   ];
   let currentQueueIdx = 0;
   const segmentationMapBuffer = tf.buffer([height, width], 'int32');
-  for (let rowIdx = 0; rowIdx < labels.rows; rowIdx++) {
-    for (let colIdx = 0; colIdx < labels.cols; colIdx++) {
-      const label = labels.ucharPtr(rowIdx, colIdx)[0];
+  for (let rowIdx = 0; rowIdx < labels.length; rowIdx++) {
+    for (let colIdx = 0; colIdx < labels[0].length; colIdx++) {
+      const label = labels[rowIdx][colIdx];
       if (label > 0) {
         if (areaSizes[label] < config['MINIMAL_AREA_THRESHOLD']) {
-          labels.ucharPtr(rowIdx, colIdx)[0] = 0;
+          labels[rowIdx][colIdx] = 0;
         } else {
           queues[currentQueueIdx].push([colIdx, rowIdx, label]);
           segmentationMapBuffer.set(label, rowIdx, colIdx);
@@ -59,7 +42,6 @@ export const progressiveScaleExpansion = (kernels: tf.Tensor2D[]) => {
       }
     }
   }
-  labels.delete();
   const dx = [-1, 1, 0, 0];
   const dy = [0, 0, -1, 1];
   for (let kernelIdx = kernels.length - 2; kernelIdx > -1; --kernelIdx) {
@@ -92,7 +74,7 @@ export const progressiveScaleExpansion = (kernels: tf.Tensor2D[]) => {
   return {segmentationMapBuffer, recognizedLabels};
 };
 
-export const detect = (segmentationMaps: tf.Tensor3D): cv.Point2[][] => {
+export const detect = (segmentationMaps: tf.Tensor3D): Box[] => {
   const [height, width, mapCount] = segmentationMaps.shape;
   const segmentationMapsData = segmentationMaps.arraySync();
   tf.dispose(segmentationMaps);
@@ -141,37 +123,23 @@ export const detect = (segmentationMaps: tf.Tensor3D): cv.Point2[][] => {
     if (recognizedLabels.size === 0) {
       return [];
     }
-    const points: {[label: number]: {'x': number[], 'y': number[]}} = {};
+    const points: {[label: number]: Point[]} = {};
     for (let rowIdx = 0; rowIdx < targetHeight; ++rowIdx) {
       for (let columnIdx = 0; columnIdx < targetWidth; ++columnIdx) {
         const label = resizedSegmentationMapData[rowIdx][columnIdx];
         if (recognizedLabels.has(label)) {
           if (!points[label]) {
-            points[label] = {'x': [], 'y': []};
+            points[label] = [];
           }
-          points[label].x.push(columnIdx);
-          points[label].y.push(rowIdx);
+          points[label].push(new Point(columnIdx, rowIdx));
         }
       }
     }
-    const boxes: cv.Point2[][] = [];
+    const boxes: Box[] = [];
     Object.keys(points).forEach((labelStr) => {
       const label = Number(labelStr);
-      const x = cv.matFromArray(
-          points[label].x.length, 1, cv.CV_32S, points[label].x);
-      const y = cv.matFromArray(
-          points[label].y.length, 1, cv.CV_32S, points[label].y);
-      const coords = new cv.MatVector();
-      coords.push_back(x);
-      coords.push_back(y);
-      const polytope = new cv.Mat();
-      cv.merge(coords, polytope);
-      const box = cv.RotatedRect.points(cv.minAreaRect(polytope));
+      const box = minAreaRect(points[label]);
       boxes.push(box);
-      x.delete();
-      y.delete();
-      coords.delete();
-      polytope.delete();
     });
     return boxes;
   }
@@ -180,7 +148,7 @@ export const detect = (segmentationMaps: tf.Tensor3D): cv.Point2[][] => {
 
 export const computeTargetRatios =
     (height: number, width: number): [number, number] => {
-      const maxSide = Math.max(width, height)
+      const maxSide = Math.max(width, height);
       const ratio = maxSide > config['MAX_SIDE_LENGTH'] ?
           config['MAX_SIDE_LENGTH'] / maxSide :
           1;
@@ -214,4 +182,4 @@ export const cropAndResize = (input: TextDetectionInput): tf.Tensor3D => {
 
     return processedImage;
   });
-}
+};
