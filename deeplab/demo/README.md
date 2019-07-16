@@ -1,6 +1,5 @@
 # DeepLab Demo
 
-## This model is a work-in-progress and has not been released yet. We will update this README when the model is released and usable
 
 This demo allows you to try out semantic segmentation on a couple of preset images using different base models.
 

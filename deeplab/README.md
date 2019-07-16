@@ -1,5 +1,7 @@
 # Semantic Segmentation in the Browser: DeepLab v3 Model
 
+## This model is a work-in-progress and has not been released yet. We will update this README when the model is released and usable
+
 This package contains a standalone implementation of the DeepLab inference pipeline, as well as a [demo](./demo), for running semantic segmentation using TensorFlow.js.
 
 ![DeepLab Demo](./docs/deeplab-demo.gif)
