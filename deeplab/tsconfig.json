@@ -20,7 +20,6 @@
     "pretty": true,
     "noFallthroughCasesInSwitch": true,
     "allowUnreachableCode": false,
-    "downlevelIteration": true
   },
   "include": [
     "src/**/*"

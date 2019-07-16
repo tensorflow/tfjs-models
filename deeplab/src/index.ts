@@ -102,7 +102,7 @@ export class SemanticSegmentation {
 
     const labelNames = getLabels(this.base);
     const legend: Legend = {};
-    for (const label of labels) {
+    for (const label of Array.from(labels)) {
       legend[labelNames[label]] = colormap[label];
     }
     return {legend, segmentationMap};

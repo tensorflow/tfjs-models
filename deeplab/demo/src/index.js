@@ -174,6 +174,7 @@ const runDeeplab = async (modelName) => {
     status('Failed! Please load an image first.');
     return;
   }
+  toggleInvisible('input-card', false);
 
   if (!deeplab[modelName].hasLoaded()) {
     status('Loading the model...');
