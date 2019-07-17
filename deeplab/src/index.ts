@@ -33,9 +33,6 @@ export async function load(modelConfig: SemanticSegmentationConfig = {
         ` If you are using a <script> tag, please ` +
         `also include @tensorflow/tfjs on the page before using this model.`);
   }
-  if ([1, 2, 4].indexOf(modelConfig.quantizationBytes) === -1) {
-    throw new Error(`Only quantization to 1, 2 or 4 bytes is supported.`);
-  }
   if (modelConfig.base) {
     if (['pascal', 'cityscapes', 'ade20k'].indexOf(modelConfig.base) === -1) {
       throw new Error(
@@ -43,12 +40,16 @@ export async function load(modelConfig: SemanticSegmentationConfig = {
           `with an invalid base model ${modelConfig.base}. ` +
           `Try one of 'pascal', 'cityscapes' and 'ade20k'.`);
     }
+    if ([1, 2, 4].indexOf(modelConfig.quantizationBytes) === -1) {
+      throw new Error(`Only quantization to 1, 2 or 4 bytes is supported.`);
+    }
   } else if (!modelConfig.modelUrl) {
     throw new Error(
         `SemanticSegmentation can be constructed either by passing` +
         `the weights URL or one of the supported base model names from` +
-        `'pascal', 'cityscapes' and 'ade20k'.` +
-        `Aborting, since none has been provided.`);
+        `'pascal', 'cityscapes' and 'ade20k',` +
+        `together with the degree of quantization (either 1, 2 or 4).` +
+        `Aborting, since neither has been provided.`);
   }
   const url = getURL(modelConfig.base, modelConfig.quantizationBytes);
   const graphModel = await tfconv.loadGraphModel(modelConfig.modelUrl || url);

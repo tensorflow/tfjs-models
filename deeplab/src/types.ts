@@ -26,7 +26,7 @@ export type Legend = {
 export type QuantizationBytes = 1|2|4;
 export type SemanticSegmentationBaseModel = 'pascal'|'cityscapes'|'ade20k';
 export interface SemanticSegmentationConfig {
-  quantizationBytes: QuantizationBytes;
+  quantizationBytes?: QuantizationBytes;
   base?: SemanticSegmentationBaseModel;
   modelUrl?: string;
 }
