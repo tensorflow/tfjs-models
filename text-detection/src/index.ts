@@ -36,10 +36,10 @@ export const load = async (modelConfig: TextDetectionConfig = {
     }
   } else if (!modelConfig.modelUrl) {
     throw new Error(
-        `SemanticSegmentation can be constructed either by passing` +
-        `the weights URL or one of the supported base model names from` +
-        `'pascal', 'cityscapes' and 'ade20k'.` +
-        `Aborting, since none has been provided.`);
+        `TextDetection can be constructed either by passing` +
+        `the weights URL or by specifying one of the degree of quantization, ` +
+        `out of 1, 2 and 4.` +
+        `Aborting, since neither has been provided.`);
   }
   const url = getURL(modelConfig.quantizationBytes);
   const graphModel = await tfconv.loadGraphModel(modelConfig.modelUrl || url);
