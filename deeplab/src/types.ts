@@ -15,14 +15,22 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
 
 export type Label = number;
 export type Color = [number, number, number];
 export type Legend = {
   [name: string]: Color
 };
+
+export type QuantizationBytes = 1|2|4;
 export type SemanticSegmentationBaseModel = 'pascal'|'cityscapes'|'ade20k';
+export interface SemanticSegmentationConfig {
+  quantizationBytes: QuantizationBytes;
+  base?: SemanticSegmentationBaseModel;
+  modelUrl?: string;
+}
+
 export type DeepLabInput =
     |ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement|tf.Tensor3D;
 

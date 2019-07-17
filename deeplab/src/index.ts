@@ -15,106 +15,75 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tfconv from '@tensorflow/tfjs-converter';
+import * as tf from '@tensorflow/tfjs-core';
 
-import {config} from './config';
-import {DeepLabInput, DeepLabOutput, Label, Legend, SegmentationData, SemanticSegmentationBaseModel,} from './types';
-import {getColormap, getLabels, toInputTensor} from './utils';
+import {DeepLabInput, DeepLabOutput, SemanticSegmentationBaseModel, SemanticSegmentationConfig} from './types';
+import {getColormap, getLabels, getURL, toInputTensor, toSegmentationImage} from './utils';
 
-export {getLabels};
-export async function load(
-    base: SemanticSegmentationBaseModel = 'pascal', isQuantized = true) {
+export {getColormap, getLabels, getURL, toSegmentationImage};
+
+export async function load(modelConfig: SemanticSegmentationConfig = {
+  base: 'pascal',
+  quantizationBytes: 2
+}) {
   if (tf == null) {
     throw new Error(
         `Cannot find TensorFlow.js.` +
         ` If you are using a <script> tag, please ` +
         `also include @tensorflow/tfjs on the page before using this model.`);
   }
-  if (['pascal', 'cityscapes', 'ade20k'].indexOf(base) === -1) {
-    throw new Error(
-        `SemanticSegmentation cannot be constructed ` +
-        `with an invalid base model ${base}. ` +
-        `Try one of 'pascal', 'cityscapes' and 'ade20k'.`);
+  if ([1, 2, 4].indexOf(modelConfig.quantizationBytes) === -1) {
+    throw new Error(`Only quantization to 1, 2 or 4 bytes is supported.`);
   }
-
-  const semanticSegmentation = new SemanticSegmentation(base);
-  await semanticSegmentation.load();
+  if (modelConfig.base) {
+    if (['pascal', 'cityscapes', 'ade20k'].indexOf(modelConfig.base) === -1) {
+      throw new Error(
+          `SemanticSegmentation cannot be constructed ` +
+          `with an invalid base model ${modelConfig.base}. ` +
+          `Try one of 'pascal', 'cityscapes' and 'ade20k'.`);
+    }
+  } else if (!modelConfig.modelUrl) {
+    throw new Error(
+        `SemanticSegmentation can be constructed either by passing` +
+        `the weights URL or one of the supported base model names from` +
+        `'pascal', 'cityscapes' and 'ade20k'.` +
+        `Aborting, since none has been provided.`);
+  }
+  const url = getURL(modelConfig.base, modelConfig.quantizationBytes);
+  const graphModel = await tfconv.loadGraphModel(modelConfig.modelUrl || url);
+  const semanticSegmentation =
+      new SemanticSegmentation(graphModel, modelConfig.base);
   return semanticSegmentation;
 }
 
 export class SemanticSegmentation {
-  private base: SemanticSegmentationBaseModel;
-  private model: tf.GraphModel;
-  private modelPath: string;
-  constructor(base: SemanticSegmentationBaseModel, isQuantized = true) {
+  readonly model: tfconv.GraphModel;
+  readonly base: SemanticSegmentationBaseModel;
+  constructor(
+      graphModel: tfconv.GraphModel,
+      base?: SemanticSegmentationBaseModel,
+  ) {
+    this.model = graphModel;
     this.base = base;
-
-    this.modelPath = `${config['BASE_PATH']}/${
-        isQuantized ? 'quantized/' : ''}${base}/model.json`;
   }
 
-  public hasLoaded() {
-    return !!this.model;
-  }
-  public async load() {
-    this.model = await tf.loadGraphModel(this.modelPath);
-
-    // Warmup the model.
-    const result = await this.predict(tf.zeros([227, 227, 3])) as tf.Tensor;
-    await result.data();
-    result.dispose();
-  }
-
-  public async predict(input: DeepLabInput): Promise<tf.Tensor2D> {
+  public predict(input: DeepLabInput): tf.Tensor2D {
     return tf.tidy(() => {
       const data = toInputTensor(input);
       return tf.squeeze(this.model.execute(data) as tf.Tensor);
     }) as tf.Tensor2D;
   }
-  public async toSegmentationImage(
-      rawSegmentationMap: tf.Tensor2D,
-      canvas?: HTMLCanvasElement): Promise<SegmentationData> {
-    const [height, width] = rawSegmentationMap.shape;
-    const colormap = getColormap(this.base);
-    const segmentationImageBuffer = tf.buffer([height, width, 3], 'int32');
-    const mapData = (await rawSegmentationMap.array()) as number[][];
-    const labels = new Set<Label>();
-    for (let columnIndex = 0; columnIndex < height; ++columnIndex) {
-      for (let rowIndex = 0; rowIndex < width; ++rowIndex) {
-        const label: Label = mapData[columnIndex][rowIndex];
-        labels.add(label);
-        segmentationImageBuffer.set(
-            colormap[label][0], columnIndex, rowIndex, 0);
-        segmentationImageBuffer.set(
-            colormap[label][1], columnIndex, rowIndex, 1);
-        segmentationImageBuffer.set(
-            colormap[label][2], columnIndex, rowIndex, 2);
-      }
-    }
 
-    const segmentationImageTensor =
-        segmentationImageBuffer.toTensor() as tf.Tensor3D;
-
-    const segmentationMap =
-        await tf.browser.toPixels(segmentationImageTensor, canvas);
-
-    tf.dispose(segmentationImageTensor);
-
-    const labelNames = getLabels(this.base);
-    const legend: Legend = {};
-    for (const label of Array.from(labels)) {
-      legend[labelNames[label]] = colormap[label];
-    }
-    return {legend, segmentationMap};
-  }
-
-  public async segment(input: DeepLabInput, canvas?: HTMLCanvasElement):
-      Promise<DeepLabOutput> {
-    const rawSegmentationMap = await this.predict(input);
+  public async segment(
+      input: DeepLabInput, canvas?: HTMLCanvasElement,
+      colormap = getColormap(this.base),
+      labels = getLabels(this.base)): Promise<DeepLabOutput> {
+    const rawSegmentationMap = tf.tidy(() => this.predict(input));
 
     const [height, width] = rawSegmentationMap.shape;
     const {legend, segmentationMap} =
-        await this.toSegmentationImage(rawSegmentationMap, canvas);
+        await toSegmentationImage(colormap, labels, rawSegmentationMap, canvas);
 
     tf.dispose(rawSegmentationMap);
 

@@ -1,8 +1,7 @@
 .is-on-top {
   z-index: 100;
 }
-.is-vcentered-column {
-  align-items: center;
+.is-flex-column {
   flex-direction: column;
 }
 
@@ -10,3 +9,11 @@
   padding: 0.7em;
   display: block;
 }
+
+.is-vcentered {
+  align-items: center;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.m-r-sm { margin-right: 0.5rem; }

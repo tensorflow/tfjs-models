@@ -105,14 +105,29 @@ limitations under the License.
             </article>
           </div>
           <div class="tile is-parent">
-            <span class="tile is-child">
-              <b>Disable quantization</b>:
+            <span class="tile is-child is-inline-flex">
+              <span class="is-vcentered m-r-sm">
+                <b>Quantization:</b>
+              </span>
+              <div class="control">
+                <div class="select">
+                  <select id="quantizationBytes">
+                    <option>1</option>
+                    <option selected>2</option>
+                    <option>4</option>
+                  </select>
+                </div>
+                <span class="icon is-left">
+                  <i class="fas fa-globe"></i>
+                </span>
+              </div>
+              <!-- <b>Disable quantization</b>:
               <label class="checkbox">
                 <input id="is-quantization-disabled" type="checkbox" />
                 (this might
                 <a href="https://github.com/tensorflow/tfjs-examples/tree/master/quantization">hurt</a>
                 performance, but improve accuracy)
-              </label>
+              </label> -->
             </span>
           </div>
           <div class="tile is-parent">
@@ -124,7 +139,7 @@ limitations under the License.
         </div>
         <div class="tile is-4">
           <div class="tile is-parent">
-            <div class="tile is-child box is-flex is-paddingless is-vcentered-column is-on-top">
+            <div class="tile is-child box is-flex is-paddingless is-vcentered is-flex-column is-on-top">
               <div class="section is-marginless">
                 <div class="notification">
                   For best performance, upload images with objects (chairs,

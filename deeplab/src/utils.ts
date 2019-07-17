@@ -15,9 +15,10 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
 import {config} from './config';
-import {Color, DeepLabInput, SemanticSegmentationBaseModel} from './types';
+import {Color, DeepLabInput, Label, Legend, QuantizationBytes, SegmentationData, SemanticSegmentationBaseModel} from './types';
+
 
 export const createPascalColormap = (): Color[] => {
   /**
@@ -42,8 +43,16 @@ export const createPascalColormap = (): Color[] => {
   return colormap;
 };
 
+export const getURL =
+    (base: SemanticSegmentationBaseModel,
+     quantizationBytes: QuantizationBytes) => {
+      return `${config['BASE_PATH']}/${
+          ([1, 2].indexOf(quantizationBytes) !== -1) ?
+              `quantized/${quantizationBytes}/` :
+              ''}${base}/model.json`;
+    };
 
-export const getColormap = (base: SemanticSegmentationBaseModel) => {
+export const getColormap = (base: SemanticSegmentationBaseModel): Color[] => {
   if (base === 'pascal') {
     return config['COLORMAPS']['PASCAL'] as Color[];
   } else if (base === 'ade20k') {
@@ -63,11 +72,43 @@ export function toInputTensor(input: DeepLabInput) {
         input instanceof tf.Tensor ? input : tf.browser.fromPixels(input);
     const [height, width] = image.shape;
     const resizeRatio = config['CROP_SIZE'] / Math.max(width, height);
-    const targetHeight = Math.round(height * resizeRatio)
-    const targetWidth = Math.round(width * resizeRatio)
+    const targetHeight = Math.round(height * resizeRatio);
+    const targetWidth = Math.round(width * resizeRatio);
     return tf.image.resizeBilinear(image, [targetHeight, targetWidth])
         .expandDims(0);
   });
+}
+
+export async function toSegmentationImage(
+    colormap: Color[], labelNames: string[], rawSegmentationMap: tf.Tensor2D,
+    canvas?: HTMLCanvasElement): Promise<SegmentationData> {
+  const [height, width] = rawSegmentationMap.shape;
+  const segmentationImageBuffer = tf.buffer([height, width, 3], 'int32');
+  const mapData = (await rawSegmentationMap.array()) as number[][];
+  const labels = new Set<Label>();
+  for (let columnIndex = 0; columnIndex < height; ++columnIndex) {
+    for (let rowIndex = 0; rowIndex < width; ++rowIndex) {
+      const label: Label = mapData[columnIndex][rowIndex];
+      labels.add(label);
+      segmentationImageBuffer.set(colormap[label][0], columnIndex, rowIndex, 0);
+      segmentationImageBuffer.set(colormap[label][1], columnIndex, rowIndex, 1);
+      segmentationImageBuffer.set(colormap[label][2], columnIndex, rowIndex, 2);
+    }
+  }
+
+  const segmentationImageTensor =
+      segmentationImageBuffer.toTensor() as tf.Tensor3D;
+
+  const segmentationMap =
+      await tf.browser.toPixels(segmentationImageTensor, canvas);
+
+  tf.dispose(segmentationImageTensor);
+
+  const legend: Legend = {};
+  for (const label of Array.from(labels)) {
+    legend[labelNames[label]] = colormap[label];
+  }
+  return {legend, segmentationMap};
 }
 
 export function getLabels(base: SemanticSegmentationBaseModel) {

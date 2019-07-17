@@ -10,9 +10,9 @@
   },
   "dependencies": {
     "@tensorflow-models/deeplab": "link:.yalc/@tensorflow-models/deeplab",
-    "@tensorflow/tfjs": "^1.2.2",
-    "bulma": "^0.7.5",
-    "stats.js": "^0.17.0"
+    "@tensorflow/tfjs-converter": "^1.2.2",
+    "@tensorflow/tfjs-core": "^1.2.2",
+    "bulma": "^0.7.5"
   },
   "scripts": {
     "watch": "cross-env NODE_ENV=development parcel src/index.html --no-hmr",

@@ -157,5 +157,11 @@ Please see the demo [documentation](./demo/README.md).
 This model is based on the TensorFlow [implementation](https://github.com/tensorflow/models/tree/master/research/deeplab) of DeepLab v3. You might want to inspect the [conversion script](./scripts/convert_deeplab.sh), or download original pre-trained weights [here](https://github.com/tensorflow/models/blob/master/research/deeplab/g3doc/model_zoo.md). To convert the weights locally, run the script as follows, replacing `dist` with the target directory:
 
 ```bash
-./scripts/convert_deeplab.sh dist
+./scripts/convert_deeplab.sh --target_dir ./scripts/dist
+```
+
+Run the usage helper to learn more about the options:
+
+```bash
+./scripts/convert_deeplab.sh -h
 ```

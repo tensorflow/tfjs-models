@@ -16,21 +16,19 @@
  */
 
 import 'bulma/css/bulma.css';
-import {SemanticSegmentation} from '@tensorflow-models/deeplab';
-import * as tf from '@tensorflow/tfjs';
+
+import {getURL, SemanticSegmentation} from '@tensorflow-models/deeplab';
+import * as tfconv from '@tensorflow/tfjs-converter';
+import * as tf from '@tensorflow/tfjs-core';
+
 import ade20kExampleImage from './examples/ade20k.jpg';
 import cityscapesExampleImage from './examples/cityscapes.jpg';
 import pascalExampleImage from './examples/pascal.jpg';
 
-const state = {
-  isQuantized: true,
-};
-
-const deeplab = {
-  pascal: undefined,
-  cityscapes: undefined,
-  ade20k: undefined,
-};
+const modelNames = ['pascal', 'cityscapes', 'ade20k'];
+const deeplabGraphModels = {};
+const deeplab = {};
+const state = {};
 
 const deeplabExampleImages = {
   pascal: pascalExampleImage,
@@ -44,20 +42,22 @@ const toggleInvisible = (elementId, force = undefined) => {
 };
 
 const initializeModels = async () => {
-  Object.keys(deeplab).forEach((modelName) => {
-    if (deeplab[modelName]) {
-      deeplab[modelName].dispose();
-    }
-    const model = new SemanticSegmentation(modelName, state.isQuantized);
-    deeplab[modelName] = model;
-    const toggler = document.getElementById(`toggle-${modelName}-image`);
-    toggler.onclick = () => setImage(deeplabExampleImages[modelName]);
-    const runner = document.getElementById(`run-${modelName}`);
+  modelNames.forEach((base) => {
+    [1, 2, 4].forEach((quantizationBytes) => {
+      if (!deeplabGraphModels[quantizationBytes]) {
+        deeplabGraphModels[quantizationBytes] = {};
+      }
+      deeplabGraphModels[quantizationBytes][base] =
+          tfconv.loadGraphModel(getURL(base, quantizationBytes));
+    });
+    const toggler = document.getElementById(`toggle-${base}-image`);
+    toggler.onclick = () => setImage(deeplabExampleImages[base]);
+    const runner = document.getElementById(`run-${base}`);
     runner.onclick = async () => {
       toggleInvisible('output-card', true);
       toggleInvisible('legend-card', true);
       await tf.nextFrame();
-      await runDeeplab(modelName);
+      await runDeeplab(base);
     };
   });
   const uploader = document.getElementById('upload-image');
@@ -156,18 +156,21 @@ const runPrediction = (modelName, input, initialisationStart) => {
   deeplab[modelName].segment(input).then((output) => {
     displaySegmentationMap(modelName, output);
     status(`Ran in ${
-      ((performance.now() - initialisationStart) / 1000).toFixed(2)} s`);
+        ((performance.now() - initialisationStart) / 1000).toFixed(2)} s`);
   });
 };
 
 const runDeeplab = async (modelName) => {
   status(`Running the inference...`);
-  await tf.nextFrame();
-  const isQuantizationDisabled =
-      document.getElementById('is-quantization-disabled').checked;
-  if (!(isQuantizationDisabled ^ state.isQuantized)) {
-    state.isQuantized = !isQuantizationDisabled;
-    await initializeModels();
+  const selector = document.getElementById('quantizationBytes');
+  const quantizationBytes =
+      Number(selector.options[selector.selectedIndex].text);
+  if (state.quantizationBytes !== quantizationBytes) {
+    Object.keys(deeplab).forEach((base) => {
+      deeplab[base].dispose();
+      deeplab[base] = undefined;
+    });
+    state.quantizationBytes = quantizationBytes;
   }
   const input = document.getElementById('input-image');
   if (!input.src || !input.src.length || input.src.length === 0) {
@@ -176,12 +179,13 @@ const runDeeplab = async (modelName) => {
   }
   toggleInvisible('input-card', false);
 
-  if (!deeplab[modelName].hasLoaded()) {
+  if (!deeplab[modelName]) {
     status('Loading the model...');
     const loadingStart = performance.now();
-    await deeplab[modelName].load();
+    deeplab[modelName] = new SemanticSegmentation(
+        await deeplabGraphModels[quantizationBytes][modelName], modelName);
     status(`Loaded the model in ${
-      ((performance.now() - loadingStart) / 1000).toFixed(2)} s`);
+        ((performance.now() - loadingStart) / 1000).toFixed(2)} s`);
   }
   const predictionStart = performance.now();
   if (input.complete && input.naturalHeight !== 0) {
