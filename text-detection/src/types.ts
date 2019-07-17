@@ -15,8 +15,13 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
 import {Point} from './geometry';
+
+export interface TextDetectionConfig {
+  quantizationBytes?: QuantizationBytes;
+  modelUrl?: string;
+}
 
 export type TextDetectionInput =
     |ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement|tf.Tensor3D;

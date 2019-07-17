@@ -16,10 +16,12 @@
     "url": "https://github.com/tensorflow/tfjs-models"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs": "^1.2.2"
+    "@tensorflow/tfjs-converter": "^1.2.2",
+    "@tensorflow/tfjs-core": "^1.2.2"
   },
   "devDependencies": {
-    "@tensorflow/tfjs": "^1.2.2",
+    "@tensorflow/tfjs-converter": "^1.2.2",
+    "@tensorflow/tfjs-core": "^1.2.2",
     "@types/jasmine": "~3.3.13",
     "@types/jpeg-js": "^0.3.0",
     "babel-core": "^6.26.0",
@@ -28,14 +30,14 @@
     "jasmine-core": "~3.4.0",
     "jpeg-js": "^0.3.5",
     "rimraf": "~2.6.2",
-    "rollup": "~1.16.2",
+    "rollup": "~1.17.0",
     "rollup-plugin-json": "^4.0.0",
-    "rollup-plugin-node-resolve": "~5.1.0",
-    "rollup-plugin-terser": "^5.0.0",
-    "rollup-plugin-typescript2": "~0.21.2",
+    "rollup-plugin-node-resolve": "~5.2.0",
+    "rollup-plugin-terser": "^5.1.1",
+    "rollup-plugin-typescript2": "~0.22.0",
     "ts-node": "~8.3.0",
     "tslint": "~5.18.0",
-    "typescript": "3.5.2",
+    "typescript": "3.5.3",
     "yalc": "~1.0.0-pre.32"
   },
   "scripts": {
@@ -45,5 +47,6 @@
     "publish-npm": "yarn build && rollup -c && npm publish",
     "lint": "tslint -p . -t verbose"
   },
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "dependencies": {}
 }

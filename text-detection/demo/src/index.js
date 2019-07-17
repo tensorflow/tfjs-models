@@ -16,7 +16,7 @@
  */
 
 import 'bulma/css/bulma.css';
-import {TextDetection} from '@tensorflow-models/text-detection';
+import {load} from '@tensorflow-models/text-detection';
 // import * as tf from '@tensorflow/tfjs';
 
 // const state = {
@@ -32,9 +32,8 @@ import {TextDetection} from '@tensorflow-models/text-detection';
 // ;
 
 const initializeModels = async () => {
-  const model = new TextDetection(1);
   const loadingStart = performance.now();
-  await model.load();
+  const model = await load();
   status(`Loaded in ${(performance.now() - loadingStart) / 1000}s`);
   const input = document.getElementById('input-image');
   if (!input.src || !input.src.length || input.src.length === 0) {

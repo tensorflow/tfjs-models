@@ -1,11 +1,17 @@
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
 
 import {config} from './config';
 import {connectedComponents} from './connectedComponents';
 import {Point} from './geometry';
 import {minAreaRect} from './minAreaRect';
 import {Queue} from './queue';
-import {Box, TextDetectionInput} from './types';
+import {Box, QuantizationBytes, TextDetectionInput} from './types';
+
+export const getURL = (quantizationBytes: QuantizationBytes) => {
+  return `${config['BASE_PATH']}/${
+      quantizationBytes ? `quantized/${quantizationBytes}/` :
+                          ''}psenet/model.json`;
+};
 
 export const progressiveScaleExpansion = (kernels: tf.Tensor2D[]) => {
   const [height, width] = kernels[0].shape;

@@ -14,49 +14,43 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as tf from '@tensorflow/tfjs';
-
-import {config} from './config';
-import {QuantizationBytes, TextDetectionInput, TextDetectionOutput} from './types';
-import {cropAndResize, detect} from './utils';
+import * as tfconv from '@tensorflow/tfjs-converter';
+import * as tf from '@tensorflow/tfjs-core';
+import {TextDetectionConfig, TextDetectionInput, TextDetectionOutput} from './types';
+import {cropAndResize, detect, getURL} from './utils';
 
 export {detect};
-export const load = async (quantizationBytes: QuantizationBytes = 1) => {
+
+export const load = async (modelConfig: TextDetectionConfig = {
+  quantizationBytes: 1
+}) => {
   if (tf == null) {
     throw new Error(
         `Cannot find TensorFlow.js. ` +
         `If you are using a <script> tag, please ` +
         `also include @tensorflow/tfjs on the page before using this model.`);
   }
-
-  if ([1, 2, 4].indexOf(quantizationBytes) === -1) {
-    throw new Error(`Only quantization to 1, 2 and 4 bytes is supported.`);
+  if (modelConfig.quantizationBytes) {
+    if ([1, 2, 4].indexOf(modelConfig.quantizationBytes) === -1) {
+      throw new Error(`Only quantization to 1, 2 and 4 bytes is supported.`);
+    }
+  } else if (!modelConfig.modelUrl) {
+    throw new Error(
+        `SemanticSegmentation can be constructed either by passing` +
+        `the weights URL or one of the supported base model names from` +
+        `'pascal', 'cityscapes' and 'ade20k'.` +
+        `Aborting, since none has been provided.`);
   }
-  const textDetection = new TextDetection(quantizationBytes);
-  await textDetection.load();
+  const url = getURL(modelConfig.quantizationBytes);
+  const graphModel = await tfconv.loadGraphModel(modelConfig.modelUrl || url);
+  const textDetection = new TextDetection(graphModel);
   return textDetection;
 };
 
 export class TextDetection {
-  private model: tf.GraphModel;
-  private modelPath: string;
-  private base = 'psenet';
-  public constructor(quantizationBytes: QuantizationBytes = 1) {
-    this.modelPath = `${config['BASE_PATH']}/${
-        quantizationBytes ? `quantized/${quantizationBytes}/` :
-                            ''}${this.base}/model.json`;
-  }
-
-  public async load() {
-    this.model = await tf.loadGraphModel(this.modelPath);
-
-    // Warm the model up.
-    const processedInput =
-        tf.tidy(() => this.preprocess(tf.zeros([100, 100, 3])));
-    const result = await this.model.predict(processedInput) as tf.Tensor1D;
-    await result.data();
-    tf.dispose(result);
-    tf.dispose(processedInput);
+  readonly model: tfconv.GraphModel;
+  public constructor(graphModel: tfconv.GraphModel) {
+    this.model = graphModel;
   }
 
   public preprocess(input: TextDetectionInput) {
