@@ -18,7 +18,6 @@
 import resolve from 'rollup-plugin-node-resolve';
 import {terser} from 'rollup-plugin-terser';
 import typescript from 'rollup-plugin-typescript2';
-// import {uglify} from 'rollup-plugin-uglify';
 
 const settings = {
   name: 'deeplab',
@@ -41,11 +40,6 @@ const settings = {
 };
 
 function minify() {
-  // return uglify({
-  //   output: {
-  //     preamble: settings['preamble'],
-  //   }
-  // });
   return terser({
     output: {
       preamble: settings['preamble'],

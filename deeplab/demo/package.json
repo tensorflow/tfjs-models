@@ -31,6 +31,7 @@
     "eslint": "^6.0.1",
     "eslint-config-google": "^0.13.0",
     "parcel-bundler": "~1.12.3",
+    "ts-node": "^8.3.0",
     "yalc": "~1.0.0-pre.32"
   },
   "eslintConfig": {

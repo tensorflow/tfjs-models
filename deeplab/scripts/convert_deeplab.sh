@@ -18,7 +18,7 @@
 PYTHON_VERSION=$(python -V 2>&1 | sed 's/.* \([0-9]\).\([0-9]\).*/\1\2/')
 if [ "$PYTHON_VERSION" -gt "36" ]; then
   echo "This script requires python 3.6 or older."
-  # exit 1
+  exit 1
 fi
 
 if ! [ -x "$(command -v wget)" ]; then

@@ -1,6 +1,5 @@
 # DeepLab Demo
 
-
 This demo allows you to try out semantic segmentation on a couple of preset images using different base models.
 
 ## Setup

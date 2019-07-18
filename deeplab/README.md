@@ -13,10 +13,14 @@ In the first step of semantic segmentation, an image is fed through a pre-traine
 To get started, pick the model name from `pascal`, `cityscapes` and `ade20k`, and decide whether you want your model quantized to 1 or 2 bytes (set the `quantizationBytes` option to 4 if you want to disable quantization). Then, initialize the model as follows:
 
 ```typescript
-import {load} from '@tensorflow-models/deeplab';
-const modelName = 'pascal';   // set to your preferred model, out of `pascal`, `cityscapes` and `ade20k`
-const quantizationBytes = 2; // either 1, 2 or 4
-const modelPromise = load({base: modelName, quantizationBytes});
+import * as semanticSegmentation from '@tensorflow-models/deeplab';
+const loadSemanticSegmentation = async () => {
+  const modelName = 'pascal';   // set to your preferred model, out of `pascal`,
+                                // `cityscapes` and `ade20k`
+  const quantizationBytes = 2;  // either 1, 2 or 4
+  return await semanticSegmentation.load({base: modelName, quantizationBytes});
+};
+loadSemanticSegmentation().then(() => console.log(`Loaded the model successfully!`));
 ```
 
 By default, calling `load` initalizes the PASCAL variant of the model quantized to 2 bytes.
@@ -24,28 +28,40 @@ By default, calling `load` initalizes the PASCAL variant of the model quantized 
 If you would rather load custom weights, you can pass the URL in the config instead:
 
 ```typescript
-import {load} from '@tensorflow-models/deeplab';
-const modelName = 'pascal';   // set to your preferred model, out of `pascal`, `cityscapes` and `ade20k`
-const quantizationBytes = 2; // either 1, 2 or 4
-const url = 'https://storage.googleapis.com/gsoc-tfjs/models/deeplab/quantized/1/pascal/model.json';
-const modelPromise = load({modelUrl: url});
+import * as semanticSegmentation from '@tensorflow-models/deeplab';
+const loadSemanticSegmentation = async () => {
+  const modelName = 'pascal';   // set to your preferred model, out of `pascal`,
+                                // `cityscapes` and `ade20k`
+  const quantizationBytes = 2;  // either 1, 2 or 4
+  const url = 'https://storage.googleapis.com/gsoc-tfjs/models/deeplab/quantized/1/pascal/model.json';
+  return await semanticSegmentation.load({modelUrl: url});
+};
+loadSemanticSegmentation().then(() => console.log(`Loaded the model successfully!`));
 ```
 
-This will initialize the model and return the promise of a `SemanticSegmentation` object.
+This will initialize and return the `SemanticSegmentation` model.
+
+You can set the `base` attribute in the argument to `pascal`, `cityscapes` or `ade20k` to use the corresponding colormap and labelling scheme. Otherwise, you would have to provide those yourself during segmentation.
 
 You can still pass the `base` attribute set to either `pascal`,`pascal`, `cityscapes` and `ade20k` in the argument to use the corresponding colormap and labelling scheme. Otherwise, you would have to provide those yourself.
 
-If you require more careful control over the initialization and behavior of the model (e.g. you want to use your own labelling scheme and colormap), use the `SemanticSegmentation` object on its own, passing a pre-loaded `GraphModel` in the constructor:
+If you require more careful control over the initialization and behavior of the model (e.g. you want to use your own labelling scheme and colormap), use the `SemanticSegmentation` class, passing a pre-loaded `GraphModel` in the constructor:
 
 ```typescript
 import * as tfconv from '@tensorflow/tfjs-converter';
-import {SemanticSegmentation, getURL} from '@tensorflow-models/deeplab';
-// use the getURL utility function to get the URL to the pre-trained weights
-const base = 'pascal';   // set to your preferred model, out of `pascal`, `cityscapes` and `ade20k`
-const quantizationBytes = 2; // either 1, 2 or 4
-const modelUrl = getURL(base, quantizationBytes);
-const rawModel = tfconv.loadGraphModel(modelUrl);
-const modelPromise = (async () => {return new SemanticSegmentation(await rawModel)();
+import * as semanticSegmentation from '@tensorflow-models/deeplab';
+const loadSemanticSegmentation = async () => {
+  const base = 'pascal';        // set to your preferred model, out of `pascal`,
+                                // `cityscapes` and `ade20k`
+  const quantizationBytes = 2;  // either 1, 2 or 4
+  // use the getURL utility function to get the URL to the pre-trained weights
+  const modelUrl = semanticSegmentation.getURL(base, quantizationBytes);
+  const rawModel = await tfconv.loadGraphModel(modelUrl);
+  const modelName = 'pascal';  // set to your preferred model, out of `pascal`,
+  // `cityscapes` and `ade20k`
+  return new semanticSegmentation.SemanticSegmentation(rawModel);
+};
+loadSemanticSegmentation().then(() => console.log(`Loaded the model successfully!`));
 ```
 
 Use `getColormap(base)` and `getLabels(base)` utility function to fetch the default colormap and labelling scheme.
@@ -75,7 +91,7 @@ The image to segment
 
 - **canvas** (optional) :: `HTMLCanvasElement`
 
-Pass an optional canvas element as `canvas` to draw the output as a side effect.
+Pass an optional canvas element as `canvas` to draw the output
 
 - **colormap** (optional) :: `[number, number, number][]`
 
@@ -129,23 +145,23 @@ The image to segment
 
 #### `model.predict` output
 
-- **rawSegmentationMap** :: `Promise<tf.Tensor2D>`
+- **rawSegmentationMap** :: `tf.Tensor2D`
 
 The segmentation map of the image
 
 #### `model.predict` example
 
 ```javascript
-const getSemanticSegmentationMap = async (image) => {
-    return await model.predict(image)
+const getSemanticSegmentationMap = (image) => {
+    return model.predict(image)
 }
 ```
 
 ### Translating a Segmentation Map into the Color-Labelled Image
 
-To transform the segmentation map into a coloured image, use the `toSegmentationImage` method of the `SemanticSegmentation` object.
+To transform the segmentation map into a coloured image, use the `toSegmentationImage` method.
 
-#### `model.toSegmentationImage` input
+#### `toSegmentationImage` input
 
 - **colormap** :: `[number, number, number][]`
 
@@ -161,11 +177,11 @@ The segmentation map of the image
 
 - **canvas** (optional) :: `HTMLCanvasElement`
 
-Pass an optional canvas element as `canvas` to draw the output as a side effect.
+Pass an optional canvas element as `canvas` to draw the output
 
-#### `model.toSegmentationImage` output
+#### `toSegmentationImage` output
 
-The returned promise is the future of a `SegmentationData` object that contains two attributes:
+A promise resolving to the `SegmentationData` object that contains two attributes:
 
 - **legend** :: `{ [name: string]: [number, number, number] }`
 
@@ -175,11 +191,13 @@ The legend is a dictionary of objects recognized in the image and their colors.
 
 The colored segmentation map as `Uint8ClampedArray` which can be [fed](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Pixel_manipulation_with_canvas) into `ImageData` and mapped to a canvas.
 
-#### `model.toSegmentationImage` example
+#### `toSegmentationImage` example
 
 ```javascript
+const base = 'pascal';
 const translateSegmentationMap = async (segmentationMap) => {
-    return await model.toSegmentationImage(segmentationMap)
+  return await toSegmentationImage(
+      getColormap(base), getLabels(base), segmentationMap)
 }
 ```
 

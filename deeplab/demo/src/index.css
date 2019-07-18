@@ -1,6 +1,7 @@
 .is-on-top {
   z-index: 100;
 }
+
 .is-flex-column {
   flex-direction: column;
 }
@@ -16,4 +17,6 @@
   margin-bottom: auto;
 }
 
-.m-r-sm { margin-right: 0.5rem; }
+.m-r-sm {
+  margin-right: 0.5rem;
+}
