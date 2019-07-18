@@ -17,8 +17,7 @@
 
 import 'bulma/css/bulma.css';
 
-import {getURL, SemanticSegmentation} from '@tensorflow-models/deeplab';
-import * as tfconv from '@tensorflow/tfjs-converter';
+import {load} from '@tensorflow-models/deeplab';
 import * as tf from '@tensorflow/tfjs-core';
 
 import ade20kExampleImage from './examples/ade20k.jpg';
@@ -26,7 +25,6 @@ import cityscapesExampleImage from './examples/cityscapes.jpg';
 import pascalExampleImage from './examples/pascal.jpg';
 
 const modelNames = ['pascal', 'cityscapes', 'ade20k'];
-const deeplabGraphModels = {};
 const deeplab = {};
 const state = {};
 
@@ -43,13 +41,11 @@ const toggleInvisible = (elementId, force = undefined) => {
 
 const initializeModels = async () => {
   modelNames.forEach((base) => {
-    [1, 2, 4].forEach((quantizationBytes) => {
-      if (!deeplabGraphModels[quantizationBytes]) {
-        deeplabGraphModels[quantizationBytes] = {};
-      }
-      deeplabGraphModels[quantizationBytes][base] =
-          tfconv.loadGraphModel(getURL(base, quantizationBytes));
-    });
+    const selector = document.getElementById('quantizationBytes');
+    const quantizationBytes =
+        Number(selector.options[selector.selectedIndex].text);
+    state.quantizationBytes = quantizationBytes;
+    deeplab[base] = load({base, quantizationBytes});
     const toggler = document.getElementById(`toggle-${base}-image`);
     toggler.onclick = () => setImage(deeplabExampleImages[base]);
     const runner = document.getElementById(`run-${base}`);
@@ -153,10 +149,12 @@ const status = (message) => {
 };
 
 const runPrediction = (modelName, input, initialisationStart) => {
-  deeplab[modelName].segment(input).then((output) => {
-    displaySegmentationMap(modelName, output);
-    status(`Ran in ${
+  deeplab[modelName].then((model) => {
+    model.segment(input).then((output) => {
+      displaySegmentationMap(modelName, output);
+      status(`Ran in ${
         ((performance.now() - initialisationStart) / 1000).toFixed(2)} s`);
+    });
   });
 };
 
@@ -166,10 +164,12 @@ const runDeeplab = async (modelName) => {
   const quantizationBytes =
       Number(selector.options[selector.selectedIndex].text);
   if (state.quantizationBytes !== quantizationBytes) {
-    Object.keys(deeplab).forEach((base) => {
-      deeplab[base].dispose();
-      deeplab[base] = undefined;
-    });
+    for (const base of modelNames) {
+      if (deeplab[base]) {
+        (await deeplab[base]).dispose();
+        deeplab[base] = undefined;
+      }
+    };
     state.quantizationBytes = quantizationBytes;
   }
   const input = document.getElementById('input-image');
@@ -182,10 +182,10 @@ const runDeeplab = async (modelName) => {
   if (!deeplab[modelName]) {
     status('Loading the model...');
     const loadingStart = performance.now();
-    deeplab[modelName] = new SemanticSegmentation(
-        await deeplabGraphModels[quantizationBytes][modelName], modelName);
+    deeplab[modelName] = load({base: modelName, quantizationBytes});
+    await deeplab[modelName];
     status(`Loaded the model in ${
-        ((performance.now() - loadingStart) / 1000).toFixed(2)} s`);
+      ((performance.now() - loadingStart) / 1000).toFixed(2)} s`);
   }
   const predictionStart = performance.now();
   if (input.complete && input.naturalHeight !== 0) {

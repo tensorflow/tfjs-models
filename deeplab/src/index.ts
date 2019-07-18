@@ -45,7 +45,7 @@ export async function load(modelConfig: SemanticSegmentationConfig = {
     }
   } else if (!modelConfig.modelUrl) {
     throw new Error(
-        `SemanticSegmentation can be constructed either by passing` +
+        `SemanticSegmentation can be constructed either by passing ` +
         `the weights URL or one of the supported base model names from` +
         `'pascal', 'cityscapes' and 'ade20k',` +
         `together with the degree of quantization (either 1, 2 or 4).` +
