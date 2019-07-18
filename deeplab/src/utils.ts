@@ -19,7 +19,6 @@ import * as tf from '@tensorflow/tfjs-core';
 import {config} from './config';
 import {Color, DeepLabInput, Label, Legend, QuantizationBytes, SegmentationData, SemanticSegmentationBaseModel} from './types';
 
-
 export const createPascalColormap = (): Color[] => {
   /**
    * Generates the colormap matching the Pascal VOC dev guidelines.
@@ -66,6 +65,20 @@ export const getColormap = (base: SemanticSegmentationBaseModel): Color[] => {
       `Try one of 'pascal', 'cityscapes' and 'ade20k'.`);
 };
 
+export function getLabels(base: SemanticSegmentationBaseModel) {
+  if (base === 'pascal') {
+    return config['LABELS']['PASCAL'];
+  } else if (base === 'ade20k') {
+    return config['LABELS']['ADE20K'];
+  } else if (base === 'cityscapes') {
+    return config['LABELS']['CITYSCAPES'];
+  }
+  throw new Error(
+      `SemanticSegmentation cannot be constructed ` +
+      `with an invalid base model ${base}. ` +
+      `Try one of 'pascal', 'cityscapes' and 'ade20k'.`);
+}
+
 export function toInputTensor(input: DeepLabInput) {
   return tf.tidy(() => {
     const image =
@@ -82,6 +95,10 @@ export function toInputTensor(input: DeepLabInput) {
 export async function toSegmentationImage(
     colormap: Color[], labelNames: string[], rawSegmentationMap: tf.Tensor2D,
     canvas?: HTMLCanvasElement): Promise<SegmentationData> {
+  if (colormap.length !== labelNames.length) {
+    throw new Error(
+        'The length of the labelling scheme and colormap must coincide.');
+  }
   const [height, width] = rawSegmentationMap.shape;
   const segmentationImageBuffer = tf.buffer([height, width, 3], 'int32');
   const mapData = (await rawSegmentationMap.array()) as number[][];
@@ -109,18 +126,4 @@ export async function toSegmentationImage(
     legend[labelNames[label]] = colormap[label];
   }
   return {legend, segmentationMap};
-}
-
-export function getLabels(base: SemanticSegmentationBaseModel) {
-  if (base === 'pascal') {
-    return config['LABELS']['PASCAL'];
-  } else if (base === 'ade20k') {
-    return config['LABELS']['ADE20K'];
-  } else if (base === 'cityscapes') {
-    return config['LABELS']['CITYSCAPES'];
-  }
-  throw new Error(
-      `SemanticSegmentation cannot be constructed ` +
-      `with an invalid base model ${base}. ` +
-      `Try one of 'pascal', 'cityscapes' and 'ade20k'.`);
 }

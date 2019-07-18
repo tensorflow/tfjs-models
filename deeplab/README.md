@@ -43,8 +43,6 @@ This will initialize and return the `SemanticSegmentation` model.
 
 You can set the `base` attribute in the argument to `pascal`, `cityscapes` or `ade20k` to use the corresponding colormap and labelling scheme. Otherwise, you would have to provide those yourself during segmentation.
 
-You can still pass the `base` attribute set to either `pascal`,`pascal`, `cityscapes` and `ade20k` in the argument to use the corresponding colormap and labelling scheme. Otherwise, you would have to provide those yourself.
-
 If you require more careful control over the initialization and behavior of the model (e.g. you want to use your own labelling scheme and colormap), use the `SemanticSegmentation` class, passing a pre-loaded `GraphModel` in the constructor:
 
 ```typescript

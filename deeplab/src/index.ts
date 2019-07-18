@@ -17,8 +17,7 @@
 
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
-
-import {DeepLabInput, DeepLabOutput, SemanticSegmentationBaseModel, SemanticSegmentationConfig} from './types';
+import {Color, DeepLabInput, DeepLabOutput, SemanticSegmentationBaseModel, SemanticSegmentationConfig} from './types';
 import {getColormap, getLabels, getURL, toInputTensor, toSegmentationImage} from './utils';
 
 export {getColormap, getLabels, getURL, toSegmentationImage};
@@ -46,7 +45,7 @@ export async function load(modelConfig: SemanticSegmentationConfig = {
   } else if (!modelConfig.modelUrl) {
     throw new Error(
         `SemanticSegmentation can be constructed either by passing ` +
-        `the weights URL or one of the supported base model names from` +
+        `the weights URL or one of the supported base model names from ` +
         `'pascal', 'cityscapes' and 'ade20k',` +
         `together with the degree of quantization (either 1, 2 or 4).` +
         `Aborting, since neither has been provided.`);
@@ -77,9 +76,20 @@ export class SemanticSegmentation {
   }
 
   public async segment(
-      input: DeepLabInput, canvas?: HTMLCanvasElement,
-      colormap = getColormap(this.base),
-      labels = getLabels(this.base)): Promise<DeepLabOutput> {
+      input: DeepLabInput, canvas?: HTMLCanvasElement, colormap?: Color[],
+      labels?: string[]): Promise<DeepLabOutput> {
+    if (!(colormap && labels && this.base)) {
+      throw new Error(
+          `Calling the 'segment' method requires either the 'base'` +
+          ` attribute to be defined ` +
+          `(e.g. 'pascal', 'cityscapes' or'ade20k'),` +
+          ` or 'colormap' and 'labels' options to be set. ` +
+          `Aborting, since neither has been provided.`);
+    } else if (!(colormap && labels)) {
+      colormap = getColormap(this.base);
+      labels = getLabels(this.base);
+    }
+
     const rawSegmentationMap = tf.tidy(() => this.predict(input));
 
     const [height, width] = rawSegmentationMap.shape;
