@@ -95,9 +95,11 @@ export function toInputTensor(input: DeepLabInput) {
 export async function toSegmentationImage(
     colormap: Color[], labelNames: string[], rawSegmentationMap: tf.Tensor2D,
     canvas?: HTMLCanvasElement): Promise<SegmentationData> {
-  if (colormap.length !== labelNames.length) {
+  if (colormap.length < labelNames.length) {
     throw new Error(
-        'The length of the labelling scheme and colormap must coincide.');
+        'The colormap must be expansive enough to encode each label. ' +
+        `Aborting, since the given colormap has length ${colormap.length}, ` +
+        `but there are ${labelNames.length} labels.`);
   }
   const [height, width] = rawSegmentationMap.shape;
   const segmentationImageBuffer = tf.buffer([height, width, 3], 'int32');
