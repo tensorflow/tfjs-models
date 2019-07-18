@@ -16,8 +16,8 @@
     "url": "https://github.com/tensorflow/tfjs-models"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs-converter": "^1.2.2",
-    "@tensorflow/tfjs-core": "^1.2.2"
+    "@tensorflow/tfjs-converter": "1.2.2",
+    "@tensorflow/tfjs-core": "1.2.2"
   },
   "devDependencies": {
     "@tensorflow/tfjs-converter": "^1.2.2",
