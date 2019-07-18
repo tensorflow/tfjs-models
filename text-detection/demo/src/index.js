@@ -16,69 +16,66 @@
  */
 
 import 'bulma/css/bulma.css';
-// import {load} from '@tensorflow-models/text-detection';
-import * as tf from '@tensorflow/tfjs';
-// import * as tf from '@tensorflow/tfjs';
+import {load} from '@tensorflow-models/text-detection';
 
-// const state = {
-//   quantizationBytes: 2,
-// };
+const state = {
+  quantizationBytes: 2,
+};
 
-// const textDetection = {};
+const textDetection = {};
 
-// const toggleInvisible = (elementId, force = undefined) => {
-//   const outputContainer = document.getElementById(elementId);
-//   outputContainer.classList.toggle('is-invisible', force);
-// }
-// ;
+const toggleInvisible = (elementId, force = undefined) => {
+  const outputContainer = document.getElementById(elementId);
+  outputContainer.classList.toggle('is-invisible', force);
+};
 
 const initializeModels = async () => {
   const loadingStart = performance.now();
-  // const model = await load({
-  //   modelUrl:
-  //       'https://storage.googleapis.com/gsoc-tfjs/models/text-detection/quantized/1/psenet/model.json',
-  // });
+  const model = await load({
+    modelUrl:
+        'https://storage.googleapis.com/gsoc-tfjs/models/text-detection/quantized/1/psenet/model.json',
+  });
   const model = await tf.loadGraphModel(
       'https://storage.googleapis.com/tfjs-models/savedmodel/posenet/mobilenet/quant2/100/model-stride8.json'
       // 'https://storage.googleapis.com/gsoc-tfjs/models/text-detection/quantized/1/psenet/model.json',
   );
   console.log(model);
   status(`Loaded in ${(performance.now() - loadingStart) / 1000}s`);
-  // const input = document.getElementById('input-image');
-  // if (!input.src || !input.src.length || input.src.length === 0) {
-  //   status('Failed! Please load an image first.');
-  //   return;
-  // }
+  const input = document.getElementById('input-image');
+  if (!input.src || !input.src.length || input.src.length === 0) {
+    status('Failed! Please load an image first.');
+    return;
+  }
 
-  // const runPrediction = async () => {
-  //   const predictionStart = performance.now();
-  //   const boxes = await model.predict(input);
-  //   status(`Finished in ${(performance.now() - predictionStart) / 1000} s.`);
-  //   status(`The boxes are ${JSON.stringify(boxes)}`);
-  // };
-  // if (input.complete && input.naturalHeight !== 0) {
-  //   await runPrediction();
-  // } else {
-  //   input.onload = async () => {
-  //     await runPrediction();
-  //   };
-  // }
+  const runPrediction = async () => {
+    const predictionStart = performance.now();
+    const boxes = await model.predict(input);
+    status(`Finished in ${(performance.now() - predictionStart) / 1000} s.`);
+    status(`The boxes are ${JSON.stringify(boxes)}`);
+  };
+  if (input.complete && input.naturalHeight !== 0) {
+    await runPrediction();
+  } else {
+    input.onload = async () => {
+      await runPrediction();
+    };
+  }
 
-  // [1, 2, 4].forEach((quantizationBytes) => {
-  //   if (textDetection[quantizationBytes]) {
-  //     textDetection[quantizationBytes].dispose();
-  //   }
-  //   textDetection[quantizationBytes] = new TextDetection(quantizationBytes);
-  //   // const runner = document.getElementById(`run-${quantizationBytes}`);
-  //   // runner.onclick = async () => {
-  //   //   toggleInvisible('classification-card', true);
-  //   //   await tf.nextFrame();
-  //   //   await runTextDetection(quantizationBytes);
-  //   // };
-  // });
-  // const uploader = document.getElementById('upload-image');
-  // uploader.addEventListener('change', processImages);
-  // status('Initialised models, waiting for input...');
+  [1, 2, 4].forEach((quantizationBytes) => {
+    if (textDetection[quantizationBytes]) {
+      textDetection[quantizationBytes].dispose();
+    }
+    textDetection[quantizationBytes] = new TextDetection(quantizationBytes);
+    // const runner = document.getElementById(`run-${quantizationBytes}`);
+    // runner.onclick = async () => {
+    //   toggleInvisible('classification-card', true);
+    //   await tf.nextFrame();
+    //   await runTextDetection(quantizationBytes);
+    // };
+  });
+  const uploader = document.getElementById('upload-image');
+  uploader.addEventListener('change', processImages);
+  status('Initialised models, waiting for input...');
 };
 
 const status = (message) => {

@@ -14,6 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
+
 export const config = {
   BASE_PATH: 'https://storage.googleapis.com/gsoc-tfjs/models/text-detection',
   MAX_SIDE_LENGTH: 1200,
