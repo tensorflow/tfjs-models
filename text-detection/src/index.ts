@@ -19,7 +19,7 @@ import * as tf from '@tensorflow/tfjs-core';
 import {TextDetectionConfig, TextDetectionInput, TextDetectionOutput} from './types';
 import {cropAndResize, detect, getURL} from './utils';
 
-export {detect};
+export {detect, getURL};
 
 export const load = async (modelConfig: TextDetectionConfig = {
   quantizationBytes: 1

@@ -13,8 +13,7 @@
   },
   "dependencies": {
     "@tensorflow-models/text-detection": "link:.yalc/@tensorflow-models/text-detection",
-    "@tensorflow/tfjs-converter": "^1.2.2",
-    "@tensorflow/tfjs-core": "^1.2.2",
+    "@tensorflow/tfjs": "1.2.2",
     "bulma": "^0.7.5"
   },
   "scripts": {
