@@ -2,11 +2,22 @@
   z-index: 100;
 }
 
+.m-r-sm { margin-right: 0.5rem; }
+.m-t-med { margin-top: 1.5rem; }
+.is-vcentered {
+  align-items: center;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
 .is-centered-flex {
   align-items: center !important;
   justify-content: center !important;
 }
 
+.flex-should-wrap {
+  flex-wrap: wrap;
+}
 .is-spaced-evenly {
   justify-content: space-evenly;
 }

@@ -18,10 +18,7 @@
 import 'bulma/css/bulma.css';
 import {load} from '@tensorflow-models/text-detection';
 
-const state = {
-  quantizationBytes: 2,
-};
-
+const state = {};
 const textDetection = {};
 
 const toggleInvisible = (elementId, force = undefined) => {
@@ -30,52 +27,61 @@ const toggleInvisible = (elementId, force = undefined) => {
 };
 
 const initializeModels = async () => {
-  const loadingStart = performance.now();
-  const model = await load({
-    modelUrl:
-        'https://storage.googleapis.com/gsoc-tfjs/models/text-detection/quantized/1/psenet/model.json',
-  });
-  const model = await tf.loadGraphModel(
-      'https://storage.googleapis.com/tfjs-models/savedmodel/posenet/mobilenet/quant2/100/model-stride8.json'
-      // 'https://storage.googleapis.com/gsoc-tfjs/models/text-detection/quantized/1/psenet/model.json',
-  );
-  console.log(model);
-  status(`Loaded in ${(performance.now() - loadingStart) / 1000}s`);
-  const input = document.getElementById('input-image');
-  if (!input.src || !input.src.length || input.src.length === 0) {
-    status('Failed! Please load an image first.');
-    return;
-  }
-
-  const runPrediction = async () => {
-    const predictionStart = performance.now();
-    const boxes = await model.predict(input);
-    status(`Finished in ${(performance.now() - predictionStart) / 1000} s.`);
-    status(`The boxes are ${JSON.stringify(boxes)}`);
+  const selector = document.getElementById('quantizationBytes');
+  const quantizationBytes =
+      Number(selector.options[selector.selectedIndex].text);
+  state.quantizationBytes = quantizationBytes;
+  textDetection[quantizationBytes] = load({quantizationBytes});
+  const runner = document.getElementById('run');
+  runner.onclick = async () => {
+    toggleInvisible('output-card', true);
+    await tf.nextFrame();
+    await runTextDetection(base);
   };
-  if (input.complete && input.naturalHeight !== 0) {
-    await runPrediction();
-  } else {
-    input.onload = async () => {
-      await runPrediction();
-    };
-  }
-
-  [1, 2, 4].forEach((quantizationBytes) => {
-    if (textDetection[quantizationBytes]) {
-      textDetection[quantizationBytes].dispose();
-    }
-    textDetection[quantizationBytes] = new TextDetection(quantizationBytes);
-    // const runner = document.getElementById(`run-${quantizationBytes}`);
-    // runner.onclick = async () => {
-    //   toggleInvisible('classification-card', true);
-    //   await tf.nextFrame();
-    //   await runTextDetection(quantizationBytes);
-    // };
-  });
   const uploader = document.getElementById('upload-image');
   uploader.addEventListener('change', processImages);
   status('Initialised models, waiting for input...');
+};
+
+const setImage = (src) => {
+  toggleInvisible('output-card', true);
+  const image = document.getElementById('input-image');
+  image.src = src;
+  toggleInvisible('input-card', false);
+  status('Waiting until the model is picked...');
+};
+
+const processImage = (file) => {
+  if (!file.type.match('image.*')) {
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    setImage(event.target.result);
+  };
+  reader.readAsDataURL(file);
+};
+
+const processImages = (event) => {
+  const files = event.target.files;
+  Array.from(files).forEach(processImage);
+};
+
+const displayBoxes = (textDetectionOutput) => {
+  const canvas = document.getElementById('output-image');
+  const input = document.getElementById('input-image');
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(input, 0, 0);
+  // toggleInvisible('output-card', false);
+  // const segmentationMapData = new ImageData(segmentationMap, width, height);
+  // canvas.style.width = '100%';
+  // canvas.style.height = '100%';
+  // canvas.width = width;
+  // canvas.height = height;
+  // ctx.putImageData(segmentationMapData, 0, 0);
+
+  const inputContainer = document.getElementById('input-card');
+  inputContainer.scrollIntoView({behavior: 'smooth', block: 'nearest'});
 };
 
 const status = (message) => {
@@ -84,123 +90,52 @@ const status = (message) => {
   console.log(message);
 };
 
-// const runPrediction = (quantizationBytes, input, initialisationStart) => {
-//   textDetection[quantizationBytes].predict(input).then((output) => {
-//     // displayClassification(quantizationBytes, output);
-//     status(`Finished running ${quantizationBytes.toUpperCase()} in ${
-//       ((performance.now() - initialisationStart) / 1000).toFixed(2)} s`);
-//   });
-// };
+const runPrediction = (input, initialisationStart) => {
+  deeplab[state.quantizationBytes].then((model) => {
+    model.predict(input).then((output) => {
+      status(`Obtained ${JSON.stringify(output)}`);
+      displayBoxes(output);
+      status(`Ran in ${
+        ((performance.now() - initialisationStart) / 1000).toFixed(2)} s`);
+    });
+  });
+};
 
-// const runTextDetection = async (modelName) => {
-//   if (!textDetection[modelName].hasLoaded()) {
-//     const loadingStart = performance.now();
-//     status(`Loading the model...`);
-//     await textDetection[modelName].load();
-//     status(`Finished loading ${modelName.toUpperCase()} in ${
-//       ((performance.now() - loadingStart) / 1000).toFixed(2)} s`);
-//   }
-//   status(`Running the inference...`);
-//   await tf.nextFrame();
-//   const initialisationStart = performance.now();
-//   const isQuantizationDisabled =
-//       document.getElementById('is-quantization-disabled').checked;
-//   if (!(isQuantizationDisabled ^ state.quantizationBytes)) {
-//     state.quantizationBytes = isQuantizationDisabled ? 4 : 2;
-//     await initializeModels();
-//   }
-//   const input = document.getElementById('input-image');
-//   if (!input.src || !input.src.length || input.src.length === 0) {
-//     status('Failed! Please load an image first.');
-//     return;
-//   }
+const runTextDetection = async () => {
+  status(`Running the inference...`);
+  const selector = document.getElementById('quantizationBytes');
+  const quantizationBytes =
+      Number(selector.options[selector.selectedIndex].text);
+  if (state.quantizationBytes !== quantizationBytes) {
+    if (textDetection[quantizationBytes]) {
+      (await textDetection[quantizationBytes]).dispose();
+      textDetection[quantizationBytes] = undefined;
+    }
+    state.quantizationBytes = quantizationBytes;
+  }
+  const input = document.getElementById('input-image');
+  if (!input.src || !input.src.length || input.src.length === 0) {
+    status('Failed! Please load an image first.');
+    return;
+  }
+  toggleInvisible('input-card', false);
 
-//   if (input.complete && input.naturalHeight !== 0) {
-//     runPrediction(modelName, input, initialisationStart);
-//   } else {
-//     input.onload = () => {
-//       runPrediction(modelName, input, initialisationStart);
-//     };
-//   }
-// };
-
-// const setImage = (src) => {
-//   toggleInvisible('classification-card', true);
-//   const image = document.getElementById('input-image');
-//   image.src = src;
-//   toggleInvisible('input-card', false);
-//   status('Waiting until the model is picked...');
-// };
-
-// const processImage = (file) => {
-//   if (!file.type.match('image.*')) {
-//     return;
-//   }
-//   const reader = new FileReader();
-//   reader.onload = (event) => {
-//     setImage(event.target.result);
-//   };
-//   reader.readAsDataURL(file);
-// };
-
-// const processImages = (event) => {
-//   const files = event.target.files;
-//   Array.from(files).forEach(processImage);
-// };
-
-// const probabilityToColor = (probability) => {
-//   const colors = [
-//     '#a50026',
-//     '#d73027',
-//     '#f46d43',
-//     '#fdae61',
-//     '#fee08b',
-//     '#ffffbf',
-//     '#d9ef8b',
-//     '#a6d96a',
-//     '#66bd63',
-//     '#1a9850',
-//     '#006837',
-//   ];
-//   return colors[Math.round(probability * (colors.length - 1))];
-// };
-
-// const displayClassification = (modelName, classification) => {
-//   toggleInvisible('classification-card', false);
-//   const classificationList = document.getElementById('classification');
-//   while (classificationList.firstChild) {
-//     classificationList.removeChild(classificationList.firstChild);
-//   }
-
-//   classification.forEach(({probability, className}) => {
-//     const tags = document.createElement('div');
-//     tags.classList.add('column', 'is-inline-flex');
-
-//     const probabilityTag = document.createElement('span');
-//     probabilityTag.classList.add('tag', 'is-dark');
-//     probabilityTag.innerText = probability.toFixed(4);
-//     probabilityTag.style.height = 'auto';
-//     probabilityTag.style.borderRadius = '0';
-
-//     const classNameTag = document.createElement('span');
-//     classNameTag.classList.add('column', 'is-flex', 'is-centered-flex');
-//     classNameTag.style.backgroundColor = probabilityToColor(probability);
-
-//     const classNameTagContent = document.createElement('span');
-//     classNameTagContent.innerText = className;
-//     classNameTagContent.style.background = 'inherit';
-//     classNameTagContent.style.backgroundClip = 'text';
-//     classNameTagContent.style.color = 'transparent';
-//     classNameTagContent.style.filter = 'invert(1) grayscale() contrast(100)';
-
-//     classNameTag.appendChild(classNameTagContent);
-//     tags.appendChild(probabilityTag);
-//     tags.appendChild(classNameTag);
-//     classificationList.appendChild(tags);
-//   });
-
-//   const inputContainer = document.getElementById('input-card');
-//   inputContainer.scrollIntoView({behavior: 'smooth', block: 'nearest'});
-// };
+  if (!textDetection[quantizationBytes]) {
+    status('Loading the model...');
+    const loadingStart = performance.now();
+    textDetection[quantizationBytes] = load({quantizationBytes});
+    await textDetection[quantizationBytes];
+    status(`Loaded the model in ${
+      ((performance.now() - loadingStart) / 1000).toFixed(2)} s`);
+  }
+  const predictionStart = performance.now();
+  if (input.complete && input.naturalHeight !== 0) {
+    runPrediction(input, predictionStart);
+  } else {
+    input.onload = () => {
+      runPrediction(input, predictionStart);
+    };
+  }
+};
 
 window.onload = initializeModels;
