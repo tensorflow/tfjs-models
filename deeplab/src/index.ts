@@ -78,7 +78,7 @@ export class SemanticSegmentation {
   public async segment(
       input: DeepLabInput, canvas?: HTMLCanvasElement, colormap?: Color[],
       labels?: string[]): Promise<DeepLabOutput> {
-    if (!(colormap && labels && this.base)) {
+    if (!((colormap && labels) || this.base)) {
       throw new Error(
           `Calling the 'segment' method requires either the 'base'` +
           ` attribute to be defined ` +
