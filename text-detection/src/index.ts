@@ -17,10 +17,11 @@
 
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
-import {TextDetectionConfig, TextDetectionInput, TextDetectionOutput} from './types';
-import {cropAndResize, detect, getURL} from './utils';
 
-export {detect, getURL};
+import {TextDetectionConfig, TextDetectionInput, TextDetectionOutput} from './types';
+import {computeScalingFactors, cropAndResize, detect, getURL} from './utils';
+
+export {computeScalingFactors, detect, getURL};
 
 export const load = async (modelConfig: TextDetectionConfig = {
   quantizationBytes: 1
@@ -67,7 +68,16 @@ export class TextDetection {
       return (this.model.predict(processedInput) as tf.Tensor4D).squeeze([0]) as
           tf.Tensor3D;
     });
-    const boxes = detect(segmentationMaps);
+    const sides = new Array<number>(2);
+    if (input instanceof tf.Tensor) {
+      const [height, width] = input.shape;
+      sides[0] = height;
+      sides[1] = width;
+    } else {
+      sides[0] = input.height;
+      sides[1] = input.width;
+    }
+    const boxes = detect(segmentationMaps, sides[0], sides[1]);
     tf.dispose(segmentationMaps);
     return boxes;
   }

@@ -16,7 +16,9 @@
  */
 
 import 'bulma/css/bulma.css';
+
 import {load} from '@tensorflow-models/text-detection';
+import * as tf from '@tensorflow/tfjs';
 
 const state = {};
 const textDetection = {};
@@ -26,21 +28,28 @@ const toggleInvisible = (elementId, force = undefined) => {
   outputContainer.classList.toggle('is-invisible', force);
 };
 
-const initializeModels = async () => {
+const howManySecondsFrom = (start) => {
+  return ((performance.now() - start) / 1000).toFixed(2);
+};
+
+const initializeModel = async () => {
+  status('Loading the model...');
+  const loadingStart = performance.now();
   const selector = document.getElementById('quantizationBytes');
   const quantizationBytes =
       Number(selector.options[selector.selectedIndex].text);
   state.quantizationBytes = quantizationBytes;
-  textDetection[quantizationBytes] = load({quantizationBytes});
+  textDetection[quantizationBytes] = await load({quantizationBytes});
   const runner = document.getElementById('run');
   runner.onclick = async () => {
     toggleInvisible('output-card', true);
     await tf.nextFrame();
-    await runTextDetection(base);
+    await runTextDetection();
   };
   const uploader = document.getElementById('upload-image');
   uploader.addEventListener('change', processImages);
-  status('Initialised models, waiting for input...');
+  status(`Initialised the model in ${
+    howManySecondsFrom(loadingStart)} seconds, waiting for input...`);
 };
 
 const setImage = (src) => {
@@ -68,17 +77,48 @@ const processImages = (event) => {
 };
 
 const displayBoxes = (textDetectionOutput) => {
-  const canvas = document.getElementById('output-image');
   const input = document.getElementById('input-image');
+  const height = input.height;
+  const width = input.width;
+  const canvas = document.getElementById('output-image');
+  canvas.style.width = '100%';
+  canvas.style.height = '100%';
+  canvas.width = width;
+  canvas.height = height;
   const ctx = canvas.getContext('2d');
-  ctx.drawImage(input, 0, 0);
-  // toggleInvisible('output-card', false);
-  // const segmentationMapData = new ImageData(segmentationMap, width, height);
-  // canvas.style.width = '100%';
-  // canvas.style.height = '100%';
-  // canvas.width = width;
-  // canvas.height = height;
-  // ctx.putImageData(segmentationMapData, 0, 0);
+  ctx.imageSmoothingQuality = 'high';
+  ctx.strokeStyle = '#32CD32';
+  ctx.lineWidth = 3;
+  // apply the downsampling trick from
+  // https://stackoverflow.com/a/17862644/3581829
+  const img = new Image();
+  img.onload = function() {
+    const offscreenCanvas = document.createElement('canvas');
+    offscreenCanvas.width = this.width;
+    offscreenCanvas.height = this.height;
+    const offscreenCanvasContext = offscreenCanvas.getContext('2d');
+    const steps = (offscreenCanvas.width / canvas.width);
+    offscreenCanvasContext.filter = `blur(${steps}px)`;
+    offscreenCanvasContext.drawImage(this, 0, 0);
+    ctx.drawImage(
+        offscreenCanvas, 0, 0, offscreenCanvas.width, offscreenCanvas.height, 0,
+        0, width, height);
+    ctx.drawImage(this, 0, 0, this.width, this.height, 0, 0, width, height);
+    ctx.drawImage(input, 0, 0, width, height);
+    for (const box of textDetectionOutput) {
+      ctx.beginPath();
+      for (let idx = 0; idx < 4; ++idx) {
+        const from = box[idx];
+        ctx.moveTo(from.x, from.y);
+        const to = box[(idx + 1) % 4];
+        ctx.lineTo(to.x, to.y);
+      }
+      ctx.stroke();
+    };
+  };
+  img.src = input.src;
+
+  toggleInvisible('output-card', false);
 
   const inputContainer = document.getElementById('input-card');
   inputContainer.scrollIntoView({behavior: 'smooth', block: 'nearest'});
@@ -90,15 +130,14 @@ const status = (message) => {
   console.log(message);
 };
 
-const runPrediction = (input, initialisationStart) => {
-  deeplab[state.quantizationBytes].then((model) => {
-    model.predict(input).then((output) => {
-      status(`Obtained ${JSON.stringify(output)}`);
-      displayBoxes(output);
-      status(`Ran in ${
-        ((performance.now() - initialisationStart) / 1000).toFixed(2)} s`);
-    });
-  });
+const runPrediction = async (input, predictionStart) => {
+  await tf.nextFrame();
+  const model = textDetection[state.quantizationBytes];
+  const output = await model.predict(input);
+  status(`Obtained ${output.length} boxes`);
+  console.log(JSON.stringify(output));
+  displayBoxes(output);
+  status(`Ran in ${howManySecondsFrom(predictionStart)} seconds`);
 };
 
 const runTextDetection = async () => {
@@ -108,7 +147,7 @@ const runTextDetection = async () => {
       Number(selector.options[selector.selectedIndex].text);
   if (state.quantizationBytes !== quantizationBytes) {
     if (textDetection[quantizationBytes]) {
-      (await textDetection[quantizationBytes]).dispose();
+      textDetection[quantizationBytes].dispose();
       textDetection[quantizationBytes] = undefined;
     }
     state.quantizationBytes = quantizationBytes;
@@ -123,10 +162,9 @@ const runTextDetection = async () => {
   if (!textDetection[quantizationBytes]) {
     status('Loading the model...');
     const loadingStart = performance.now();
-    textDetection[quantizationBytes] = load({quantizationBytes});
-    await textDetection[quantizationBytes];
-    status(`Loaded the model in ${
-      ((performance.now() - loadingStart) / 1000).toFixed(2)} s`);
+    textDetection[quantizationBytes] = await load({quantizationBytes});
+    status(`Loaded the model in ${howManySecondsFrom(loadingStart)}
+    seconds`);
   }
   const predictionStart = performance.now();
   if (input.complete && input.naturalHeight !== 0) {
@@ -138,4 +176,4 @@ const runTextDetection = async () => {
   }
 };
 
-window.onload = initializeModels;
+window.onload = initializeModel;
