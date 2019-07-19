@@ -9,7 +9,7 @@
     "node": ">=8.9.0"
   },
   "peerDependencies": {
-    "@tensorflow-models/model": "^0.1.0"
+    "@tensorflow-models/text-detection": "^0.1.0"
   },
   "dependencies": {
     "@tensorflow-models/text-detection": "link:.yalc/@tensorflow-models/text-detection",

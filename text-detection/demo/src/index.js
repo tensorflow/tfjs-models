@@ -88,7 +88,7 @@ const displayBoxes = (textDetectionOutput) => {
   const ctx = canvas.getContext('2d');
   ctx.imageSmoothingQuality = 'high';
   ctx.strokeStyle = '#32CD32';
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 2;
   // apply the downsampling trick from
   // https://stackoverflow.com/a/17862644/3581829
   const img = new Image();
