@@ -23,6 +23,13 @@ export interface TextDetectionConfig {
   modelUrl?: string;
 }
 
+export interface TextDetectionOptions {
+  minKernelArea?: number;
+  minScore?: number;
+  maxSideLength?: number;
+}
+;
+
 export type TextDetectionInput =
     |ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement|tf.Tensor3D;
 

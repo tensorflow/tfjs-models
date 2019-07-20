@@ -5,9 +5,10 @@ import {Queue} from './queue';
 export const progressiveScaleExpansion =
     (kernels: tf.Tensor2D[], minKernelArea = config['MIN_KERNEL_AREA']) => {
       const [height, width] = kernels[0].shape;
-      const lastSegmentationMapData = kernels[kernels.length - 1].arraySync();
-      const {labelsCount, labels} =
-          connectedComponents(lastSegmentationMapData);
+      const lastKernel = kernels[kernels.length - 1];
+      const lastKernelData = lastKernel.arraySync();
+      tf.dispose(lastKernel);
+      const {labelsCount, labels} = connectedComponents(lastKernelData);
       const areaSizes = Array<number>(labelsCount);
       for (let rowIdx = 0; rowIdx < labels.length; rowIdx++) {
         for (let colIdx = 0; colIdx < labels[0].length; colIdx++) {
