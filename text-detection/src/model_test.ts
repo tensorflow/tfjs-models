@@ -31,10 +31,31 @@ describeWithFlags('TextDetection', NODE_ENVS, () => {
   it('Text detection does not leak.', async () => {
     const model = await load();
 
-    const x = tf.zeros([227, 227, 3]) as tf.Tensor3D;
+    const empty = tf.zeros([227, 227, 3]) as tf.Tensor3D;
+    const meaningful = tf.tidy(() => {
+      const testImage =
+          decode(readFileSync(resolve(__dirname, 'assets/example.jpeg')), true);
+      const rawData = tf.tensor(testImage.data, [
+                          testImage.height, testImage.width, 4
+                        ]).arraySync() as number[][][];
+      const inputBuffer =
+          tf.buffer([testImage.height, testImage.width, 3], 'int32');
+      for (let columnIndex = 0; columnIndex < testImage.height; ++columnIndex) {
+        for (let rowIndex = 0; rowIndex < testImage.width; ++rowIndex) {
+          for (let channel = 0; channel < 3; ++channel) {
+            inputBuffer.set(
+                rawData[columnIndex][rowIndex][channel], columnIndex, rowIndex,
+                channel);
+          }
+        }
+      }
+
+      return inputBuffer.toTensor();
+    }) as tf.Tensor3D;
     const numOfTensorsBefore = tf.memory().numTensors;
 
-    model.predict(x);
+    await model.predict(empty);
+    await model.predict(meaningful);
 
     expect(tf.memory().numTensors).toEqual(numOfTensorsBefore);
   });
