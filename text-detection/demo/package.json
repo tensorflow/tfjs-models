@@ -14,7 +14,8 @@
   "dependencies": {
     "@tensorflow-models/text-detection": "link:.yalc/@tensorflow-models/text-detection",
     "@tensorflow/tfjs": "1.2.2",
-    "bulma": "^0.7.5"
+    "bulma": "^0.7.5",
+    "fabric": "^3.3.2"
   },
   "scripts": {
     "watch": "cross-env NODE_ENV=development parcel src/index.html --no-hmr",
@@ -23,6 +24,7 @@
     "link-local": "yalc add --link @tensorflow-models/text-detection"
   },
   "devDependencies": {
+    "@types/fabric": "^3.0.0",
     "babel-core": "^6.26.3",
     "babel-plugin-transform-runtime": "~6.23.0",
     "babel-polyfill": "~6.26.0",

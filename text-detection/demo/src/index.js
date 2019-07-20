@@ -16,6 +16,7 @@
  */
 
 import 'bulma/css/bulma.css';
+import 'fabric';
 
 import {load} from '@tensorflow-models/text-detection';
 import * as tf from '@tensorflow/tfjs';
@@ -80,43 +81,59 @@ const displayBoxes = (textDetectionOutput) => {
   const input = document.getElementById('input-image');
   const height = input.height;
   const width = input.width;
-  const canvas = document.getElementById('output-image');
-  canvas.style.width = '100%';
-  canvas.style.height = '100%';
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d');
-  ctx.imageSmoothingQuality = 'high';
-  ctx.strokeStyle = '#32CD32';
-  ctx.lineWidth = 2;
-  // apply the downsampling trick from
-  // https://stackoverflow.com/a/17862644/3581829
-  const img = new Image();
-  img.onload = function() {
-    const offscreenCanvas = document.createElement('canvas');
-    offscreenCanvas.width = this.width;
-    offscreenCanvas.height = this.height;
-    const offscreenCanvasContext = offscreenCanvas.getContext('2d');
-    const steps = (offscreenCanvas.width / canvas.width);
-    offscreenCanvasContext.filter = `blur(${steps}px)`;
-    offscreenCanvasContext.drawImage(this, 0, 0);
-    ctx.drawImage(
-        offscreenCanvas, 0, 0, offscreenCanvas.width, offscreenCanvas.height, 0,
-        0, width, height);
-    ctx.drawImage(this, 0, 0, this.width, this.height, 0, 0, width, height);
-    ctx.drawImage(input, 0, 0, width, height);
+  const canvas = new fabric.StaticCanvas('output-image');
+  canvas.setWidth(width);
+  canvas.setHeight(height);
+  fabric.Image.fromURL(input.src, (image) => {
+    const output = image.set({left: 0, top: 0, evented: false})
+        .scaleToHeight(height)
+        .scaleToWidth(width);
+
+    canvas.add(output);
     for (const box of textDetectionOutput) {
-      ctx.beginPath();
       for (let idx = 0; idx < 4; ++idx) {
         const from = box[idx];
-        ctx.moveTo(from.x, from.y);
         const to = box[(idx + 1) % 4];
-        ctx.lineTo(to.x, to.y);
+        canvas.add(new fabric.Line(
+            [from.x, from.y, to.x, to.y],
+            {stroke: '#32CD32', strokeWidth: 3, evented: false}));
       }
-      ctx.stroke();
     };
-  };
-  img.src = input.src;
+  });
+  // .onload = function() {
+  //   // apply the downsampling trick from
+  //   // https://stackoverflow.com/a/17862644/3581829
+  //   const offscreenCanvas = document.createElement('canvas');
+  //   offscreenCanvas.width = this.width;
+  //   offscreenCanvas.height = this.height;
+  //   const offscreenCanvasContext = offscreenCanvas.getContext('2d');
+  //   const steps = (offscreenCanvas.width / canvas.width) >> 1;
+  //   offscreenCanvasContext.filter = `blur(${steps}px)`;
+  //   offscreenCanvasContext.drawImage(this, 0, 0);
+  //   ctx.drawImage(
+  //       offscreenCanvas, 0, 0, offscreenCanvas.width, offscreenCanvas.height,
+  //       0, 0, width, height);
+  //   const boxCanvas = document.createElement('canvas');
+  //   boxCanvas.width = this.width;
+  //   boxCanvas.height = this.height;
+  //   const boxCanvasContext = boxCanvas.getContext('2d');
+  //   boxCanvasContext.strokeStyle = '#32CD32';
+  //   boxCanvasContext.lineWidth = 10;
+  //   for (const box of textDetectionOutput) {
+  //     boxCanvasContext.beginPath();
+  //     for (let idx = 0; idx < 4; ++idx) {
+  //       const from = box[idx];
+  //       boxCanvasContext.moveTo(from.x, from.y);
+  //       const to = box[(idx + 1) % 4];
+  //       boxCanvasContext.lineTo(to.x, to.y);
+  //     }
+  //     boxCanvasContext.stroke();
+  //   };
+  //   ctx.drawImage(
+  //       boxCanvas, 0, 0, boxCanvas.width, boxCanvas.height, 0, 0, width,
+  //       height);
+  // };
+  // img.src = input.src;
 
   toggleInvisible('output-card', false);
 
@@ -130,15 +147,35 @@ const status = (message) => {
   console.log(message);
 };
 
-const runPrediction = async (input, predictionStart) => {
-  await tf.nextFrame();
-  const model = textDetection[state.quantizationBytes];
-  const output = await model.predict(input);
-  status(`Obtained ${output.length} boxes`);
-  console.log(JSON.stringify(output));
-  displayBoxes(output);
-  status(`Ran in ${howManySecondsFrom(predictionStart)} seconds`);
+const scale = (factor, boxes) => {
+  for (let boxIdx = 0; boxIdx < boxes.length; ++boxIdx) {
+    const box = [];
+    for (const point of boxes[boxIdx]) {
+      const {x, y} = point;
+      box.push({x: factor * x, y: factor * y});
+    }
+    boxes[boxIdx] = box;
+  }
+  return boxes;
 };
+
+const runPrediction = async (input, predictionStart) => {
+  const height = input.height;
+  const model = textDetection[state.quantizationBytes];
+  const img = new Image();
+  img.onload = async function() {
+    await tf.nextFrame();
+    const originalHeight = this.height;
+    const factor = height / originalHeight;
+    const output = await model.predict(this);
+    status(`Obtained ${output.length} boxes`);
+    console.log(JSON.stringify(output));
+    displayBoxes(scale(factor, output));
+    status(`Ran in ${howManySecondsFrom(predictionStart)} seconds`);
+  };
+  img.src = input.src;
+};
+
 
 const runTextDetection = async () => {
   status(`Running the inference...`);
