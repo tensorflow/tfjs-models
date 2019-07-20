@@ -63,7 +63,7 @@ export class TextDetection {
 
   public async predict(input: TextDetectionInput):
       Promise<TextDetectionOutput> {
-    const segmentationMaps = tf.tidy(() => {
+    const kernelScores = tf.tidy(() => {
       const processedInput = this.preprocess(input);
       return (this.model.predict(processedInput) as tf.Tensor4D).squeeze([0]) as
           tf.Tensor3D;
@@ -77,8 +77,8 @@ export class TextDetection {
       sides[0] = input.height;
       sides[1] = input.width;
     }
-    const boxes = detect(segmentationMaps, sides[0], sides[1]);
-    tf.dispose(segmentationMaps);
+    const boxes = detect(kernelScores, sides[0], sides[1]);
+    tf.dispose(kernelScores);
     return boxes;
   }
 

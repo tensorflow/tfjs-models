@@ -18,10 +18,9 @@
 import * as tf from '@tensorflow/tfjs-core';
 
 import {config} from './config';
-import {connectedComponents} from './connectedComponents';
 import {Point} from './geometry';
 import {minAreaRect} from './minAreaRect';
-import {Queue} from './queue';
+import {progressiveScaleExpansion} from './progressiveScaleExpansion';
 import {Box, QuantizationBytes, TextDetectionInput} from './types';
 
 export const getURL = (quantizationBytes: QuantizationBytes) => {
@@ -30,113 +29,41 @@ export const getURL = (quantizationBytes: QuantizationBytes) => {
                           ''}psenet/model.json`;
 };
 
-export const progressiveScaleExpansion =
-    (kernels: tf.Tensor2D[],
-     minAreaThreshold = config['MINIMAL_AREA_THRESHOLD']) => {
-      const [height, width] = kernels[0].shape;
-      const lastSegmentationMapData =
-          Array.from(kernels[kernels.length - 1].arraySync());
-      const {labelsCount, labels} =
-          connectedComponents(lastSegmentationMapData);
-      const areaSizes = Array<number>(labelsCount);
-      for (let rowIdx = 0; rowIdx < labels.length; rowIdx++) {
-        for (let colIdx = 0; colIdx < labels[0].length; colIdx++) {
-          const label = labels[rowIdx][colIdx];
-          if (label > 0) {
-            areaSizes[label] += 1;
-          }
-        }
-      }
-      const recognizedLabels = new Set<number>();
-      const queues: Array<Queue<[number, number, number]>> = [
-        new Queue<[number, number, number]>(),
-        new Queue<[number, number, number]>()
-      ];
-      let currentQueueIdx = 0;
-      const segmentationMapBuffer = tf.buffer([height, width], 'int32');
-      for (let rowIdx = 0; rowIdx < labels.length; rowIdx++) {
-        for (let colIdx = 0; colIdx < labels[0].length; colIdx++) {
-          const label = labels[rowIdx][colIdx];
-          if (label > 0) {
-            if (areaSizes[label] < minAreaThreshold) {
-              labels[rowIdx][colIdx] = 0;
-            } else {
-              queues[currentQueueIdx].push([colIdx, rowIdx, label]);
-              segmentationMapBuffer.set(label, rowIdx, colIdx);
-              recognizedLabels.add(label);
-            }
-          }
-        }
-      }
-      const dx = [-1, 1, 0, 0];
-      const dy = [0, 0, -1, 1];
-      for (let kernelIdx = kernels.length - 2; kernelIdx > -1; --kernelIdx) {
-        const kernel = kernels[kernelIdx];
-        const kernelData = kernel.arraySync();
-        while (!queues[currentQueueIdx].empty()) {
-          const [xCoordinate, yCoordinate, label] =
-              queues[currentQueueIdx].pop();
-          let isEdge = true;
-          for (let direction = 0; direction < 4; ++direction) {
-            const nextX = xCoordinate + dx[direction];
-            const nextY = yCoordinate + dy[direction];
-            if (nextX < 0 || nextX >= width || nextY < 0 || nextY >= height) {
-              continue;
-            }
-            if (kernelData[nextY][nextX] === 0 ||
-                segmentationMapBuffer.get(nextY, nextX) > 0) {
-              continue;
-            }
-            queues[currentQueueIdx].push([nextX, nextY, label]);
-            segmentationMapBuffer.set(label, nextY, nextX);
-            isEdge = false;
-          }
-          if (isEdge) {
-            const nextQueueIdx = currentQueueIdx ^ 1;
-            queues[nextQueueIdx].push([xCoordinate, yCoordinate, label]);
-          }
-        }
-        currentQueueIdx ^= 1;
-      }
-      return {segmentationMapBuffer, recognizedLabels};
-    };
-
 export const detect =
-    (segmentationMaps: tf.Tensor3D, originalHeight: number,
-     originalWidth: number, minAreaThreshold = config['MINIMAL_AREA_THRESHOLD'],
-     segmentationMapThreshold = config['SEGMENTATION_MAP_THRESHOLD'],
-     clippingEdge = config['MAX_SIDE_LENGTH']): Box[] => {
-      const [height, width, mapCount] = segmentationMaps.shape;
-      const segmentationMapsData = segmentationMaps.arraySync();
-      tf.dispose(segmentationMaps);
+    (kernelScores: tf.Tensor3D, originalHeight: number, originalWidth: number,
+     minKernelArea = config['MIN_KERNEL_AREA'], minScore = config['MIN_SCORE'],
+     maxSideLength = config['MAX_SIDE_LENGTH']): Box[] => {
+      const [height, width, numOfKernels] = kernelScores.shape;
+      const kernelScoreData = kernelScores.arraySync();
+      tf.dispose(kernelScores);
       const one = tf.ones([height, width], 'int32');
       const zero = tf.zeros([height, width], 'int32');
-      const threshold = tf.fill([height, width], segmentationMapThreshold);
+      const threshold = tf.fill([height, width], minScore);
       const kernels = new Array<tf.Tensor2D>();
-      for (let mapIdx = mapCount - 1; mapIdx > -1; --mapIdx) {
-        const segmentationMapBuffer = tf.buffer([height, width], 'int32');
+      for (let kernelIdx = numOfKernels - 1; kernelIdx > -1; --kernelIdx) {
+        const kernelScoreBuffer = tf.buffer([height, width], 'int32');
         for (let rowIdx = 0; rowIdx < height; ++rowIdx) {
           for (let columnIdx = 0; columnIdx < width; ++columnIdx) {
-            segmentationMapBuffer.set(
-                segmentationMapsData[rowIdx][columnIdx][mapIdx], rowIdx,
+            kernelScoreBuffer.set(
+                kernelScoreData[rowIdx][columnIdx][kernelIdx], rowIdx,
                 columnIdx);
           }
         }
-        const segmentationMap = segmentationMapBuffer.toTensor();
+        const kernelScore = kernelScoreBuffer.toTensor();
         const kernel = tf.tidy(
-            () => tf.where(segmentationMap.greater(threshold), one, zero) as
+            () => tf.where(kernelScore.greater(threshold), one, zero) as
                 tf.Tensor2D);
         kernels.push(kernel);
-        tf.dispose(segmentationMap);
+        tf.dispose(kernelScore);
       }
       tf.dispose(one);
       tf.dispose(zero);
       tf.dispose(threshold);
       const [heightScalingFactor, widthScalingFactor] =
-          computeScalingFactors(originalHeight, originalWidth, clippingEdge);
+          computeScalingFactors(originalHeight, originalWidth, maxSideLength);
       if (kernels.length > 0) {
         const {segmentationMapBuffer, recognizedLabels} =
-            progressiveScaleExpansion(kernels, minAreaThreshold);
+            progressiveScaleExpansion(kernels, minKernelArea);
         tf.dispose(kernels);
         const targetHeight = Math.round(originalHeight * heightScalingFactor);
         const targetWidth = Math.round(originalWidth * widthScalingFactor);

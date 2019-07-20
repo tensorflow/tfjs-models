@@ -18,7 +18,7 @@
 export const config = {
   BASE_PATH: 'https://storage.googleapis.com/gsoc-tfjs/models/text-detection',
   MAX_SIDE_LENGTH: 1200,
-  SEGMENTATION_MAP_THRESHOLD: 0.9,
+  MIN_SCORE: 0.93,
   FADING_COEFFICIENT: 1,
-  MINIMAL_AREA_THRESHOLD: 10
+  MIN_KERNEL_AREA: 10
 };
