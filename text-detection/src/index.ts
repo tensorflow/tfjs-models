@@ -19,8 +19,9 @@ import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
 import {config} from './config';
+import {minAreaRect} from './minAreaRect';
 import {TextDetectionConfig, TextDetectionInput, TextDetectionOptions, TextDetectionOutput} from './types';
-import {computeScalingFactors, cropAndResize, detect, getURL} from './utils';
+import {computeScalingFactors, detect, getURL, resize} from './utils';
 
 export {computeScalingFactors, detect, getURL};
 
@@ -56,9 +57,9 @@ export class TextDetection {
     this.model = graphModel;
   }
 
-  public preprocess(input: TextDetectionInput) {
+  public preprocess(input: TextDetectionInput, maxSideLength?: number) {
     return tf.tidy(() => {
-      return cropAndResize(input).expandDims(0);
+      return resize(input, maxSideLength).expandDims(0);
     });
   }
 
@@ -66,10 +67,12 @@ export class TextDetection {
       input: TextDetectionInput, textDetectionOptions: TextDetectionOptions = {
         minKernelArea: config['MIN_KERNEL_AREA'],
         minScore: config['MIN_SCORE'],
-        maxSideLength: config['MAX_SIDE_LENGTH']
+        maxSideLength: config['MAX_SIDE_LENGTH'],
+        processPoints: minAreaRect
       }): Promise<TextDetectionOutput> {
     const kernelScores = tf.tidy(() => {
-      const processedInput = this.preprocess(input);
+      const processedInput =
+          this.preprocess(input, textDetectionOptions.maxSideLength);
       return (this.model.predict(processedInput) as tf.Tensor4D).squeeze([0]) as
           tf.Tensor3D;
     });
@@ -83,8 +86,9 @@ export class TextDetection {
       sides[1] = input.width;
     }
     const boxes =
-        detect(kernelScores, sides[0], sides[1], textDetectionOptions);
+        await detect(kernelScores, sides[0], sides[1], textDetectionOptions);
     tf.dispose(kernelScores);
+    console.log(boxes);
     return boxes;
   }
 

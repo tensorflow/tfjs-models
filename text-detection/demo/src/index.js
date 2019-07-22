@@ -16,13 +16,23 @@
  */
 
 import 'bulma/css/bulma.css';
+// eslint-disable-next-line max-len
 import 'fabric';
 
 import {load} from '@tensorflow-models/text-detection';
 import * as tf from '@tensorflow/tfjs';
 
+import wordDemonstrationExample from './assets/examples/demonstration.jpg';
+import drNoExample from './assets/examples/dr-no.jpg';
+import gunForHireExample from './assets/examples/gun-for-hire.jpg';
+
 const state = {};
 const textDetection = {};
+const textDetectionExamples = {
+  'dr-no': drNoExample,
+  'gun-for-hire': gunForHireExample,
+  'demonstration': wordDemonstrationExample,
+};
 
 const toggleInvisible = (elementId, force = undefined) => {
   const outputContainer = document.getElementById(elementId);
@@ -33,13 +43,34 @@ const howManySecondsFrom = (start) => {
   return ((performance.now() - start) / 1000).toFixed(2);
 };
 
+const getSelectorValue = (selectorId) => {
+  const selector = document.getElementById(selectorId);
+  return selector.options[selector.selectedIndex].value;
+};
+
+const updateSlider = (sliderId, outputId) => {
+  const sliderValue = document.getElementById(sliderId).value;
+  document.getElementById(outputId).innerHTML = sliderValue;
+};
+
+const updateInput = () => {
+  toggleInvisible('output-card', true);
+  const input = document.getElementById('input-image');
+  const value = getSelectorValue('example');
+  input.src = textDetectionExamples[value];
+};
 const initializeModel = async () => {
+  toggleInvisible('overlay', false);
+  const maxSideLengthSlider = document.getElementById('max-side-length-slider');
+  maxSideLengthSlider.oninput = () =>
+    updateSlider('max-side-length-slider', 'max-side-length-value');
+  const inputSelector = document.getElementById('example');
+  inputSelector.onchange = updateInput;
   status('Loading the model...');
   const loadingStart = performance.now();
-  const selector = document.getElementById('quantizationBytes');
-  const quantizationBytes =
-      Number(selector.options[selector.selectedIndex].text);
+  const quantizationBytes = Number(getSelectorValue('quantizationBytes'));
   state.quantizationBytes = quantizationBytes;
+  await tf.nextFrame();
   textDetection[quantizationBytes] = await load({quantizationBytes});
   const runner = document.getElementById('run');
   runner.onclick = async () => {
@@ -51,6 +82,7 @@ const initializeModel = async () => {
   uploader.addEventListener('change', processImages);
   status(`Initialised the model in ${
     howManySecondsFrom(loadingStart)} seconds, waiting for input...`);
+  toggleInvisible('overlay', true);
 };
 
 const setImage = (src) => {
@@ -77,6 +109,13 @@ const processImages = (event) => {
   Array.from(files).forEach(processImage);
 };
 
+function getRandomColor(alpha = 0.5) {
+  const num = Math.round(0xffffff * Math.random());
+  const r = num >> 16;
+  const g = num >> 8 & 255;
+  const b = num & 255;
+  return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + alpha + ')';
+}
 const displayBoxes = (textDetectionOutput) => {
   const input = document.getElementById('input-image');
   const height = input.height;
@@ -91,13 +130,27 @@ const displayBoxes = (textDetectionOutput) => {
 
     canvas.add(output);
     for (const box of textDetectionOutput) {
-      for (let idx = 0; idx < 4; ++idx) {
-        const from = box[idx];
-        const to = box[(idx + 1) % 4];
-        canvas.add(new fabric.Line(
-            [from.x, from.y, to.x, to.y],
-            {stroke: '#32CD32', strokeWidth: 3, evented: false}));
-      }
+      const color = getRandomColor();
+      canvas.add(new fabric.Polygon(box, {fill: color, stroke: '#000'}));
+      // for (let idx = 0; idx < box.length; ++idx) {
+      //   const from = box[idx];
+      //   const to = box[(idx + 1) % 4];
+      //   canvas.add(new fabric.Line(
+      //       [from.x, from.y, to.x, to.y],
+      //       {stroke: color, strokeWidth: 2, evented: false}));
+      //   // const {x, y} = box[idx];
+      //   // canvas.add(new fabric.Circle({
+      //   //   left: x,
+      //   //   top: y,
+      //   //   radius: 3,
+      //   //   strokeWidth: 1,
+      //   //   stroke: color,
+      //   //   fill: color,
+      //   //   selectable: false,
+      //   //   originX: 'center',
+      //   //   originY: 'center',
+      //   // }));
+      // }
     };
   });
   // .onload = function() {
@@ -160,6 +213,7 @@ const scale = (factor, boxes) => {
 };
 
 const runPrediction = async (input, predictionStart) => {
+  toggleInvisible('overlay', false);
   const height = input.height;
   const model = textDetection[state.quantizationBytes];
   const img = new Image();
@@ -167,11 +221,15 @@ const runPrediction = async (input, predictionStart) => {
     await tf.nextFrame();
     const originalHeight = this.height;
     const factor = height / originalHeight;
-    const output = await model.predict(this);
+
+    const output = await model.predict(this, {
+      maxSideLength: document.getElementById('max-side-length-slider').value,
+    });
     status(`Obtained ${output.length} boxes`);
     console.log(JSON.stringify(output));
     displayBoxes(scale(factor, output));
     status(`Ran in ${howManySecondsFrom(predictionStart)} seconds`);
+    toggleInvisible('overlay', true);
   };
   img.src = input.src;
 };
@@ -179,9 +237,7 @@ const runPrediction = async (input, predictionStart) => {
 
 const runTextDetection = async () => {
   status(`Running the inference...`);
-  const selector = document.getElementById('quantizationBytes');
-  const quantizationBytes =
-      Number(selector.options[selector.selectedIndex].text);
+  const quantizationBytes = Number(getSelectorValue('quantizationBytes'));
   if (state.quantizationBytes !== quantizationBytes) {
     if (textDetection[quantizationBytes]) {
       textDetection[quantizationBytes].dispose();
@@ -198,10 +254,13 @@ const runTextDetection = async () => {
 
   if (!textDetection[quantizationBytes]) {
     status('Loading the model...');
+    toggleInvisible('overlay', false);
     const loadingStart = performance.now();
+    await tf.nextFrame();
     textDetection[quantizationBytes] = await load({quantizationBytes});
     status(`Loaded the model in ${howManySecondsFrom(loadingStart)}
     seconds`);
+    toggleInvisible('overlay', true);
   }
   const predictionStart = performance.now();
   if (input.complete && input.naturalHeight !== 0) {

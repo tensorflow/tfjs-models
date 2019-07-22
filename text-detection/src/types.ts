@@ -23,12 +23,13 @@ export interface TextDetectionConfig {
   modelUrl?: string;
 }
 
+export type PointProcessor = (points: Point[]) => Point[];
 export interface TextDetectionOptions {
   minKernelArea?: number;
   minScore?: number;
   maxSideLength?: number;
+  processPoints?: PointProcessor;
 }
-;
 
 export type TextDetectionInput =
     |ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement|tf.Tensor3D;

@@ -17,13 +17,17 @@
 
 export class UnionFind {
   private _store: number[] = [];
-  private label = 0;  // the next label in line
+  private nextLabel = 0;  // the next label in line
+
+  public getComponent(node: number) {
+    return this._store[node];
+  }
 
   public makeLabel() {
-    const nextLabel = this.label;
-    this.label += 1;
-    this._store.push(nextLabel);
-    return nextLabel;
+    const currentLabel = this.nextLabel;
+    this.nextLabel += 1;
+    this._store.push(currentLabel);
+    return currentLabel;
   }
 
   // Label all of the relatives of the current node, including itself, in sync

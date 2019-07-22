@@ -59,6 +59,7 @@ describeWithFlags('TextDetection', NODE_ENVS, () => {
 
     expect(tf.memory().numTensors).toEqual(numOfTensorsBefore);
   });
+
   it('TextDetection produces sensible results.', async () => {
     const model = await load();
 
@@ -109,8 +110,8 @@ describeWithFlags('TextDetection', NODE_ENVS, () => {
       }
     }
     conds = conds.concat([
-      xCoords.size === 2,
-      yCoords.size === 2,
+      xCoords.size >= 2,
+      yCoords.size >= 2,
       points.size === 4,
     ]);
     expect(conds).toEqual(Array.from(new Array(conds.length), () => true));

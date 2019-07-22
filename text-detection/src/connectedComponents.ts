@@ -50,8 +50,8 @@ export function connectedComponents(graph: number[][]):
   const labelsCount = roster.flattenAndRelabel();
   for (let row = 0; row < height; ++row) {
     for (let col = 0; col < width; ++col) {
-      const component = roster.find(labels[row][col]);
-      labels[row][col] = component;
+      const label = labels[row][col];
+      labels[row][col] = roster.getComponent(label);
     }
   }
   return {labelsCount, labels};

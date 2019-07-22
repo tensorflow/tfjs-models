@@ -21,9 +21,13 @@ limitations under the License.
 </head>
 
 <body>
+  <div id="overlay" class="is-invisible">
+    <img class="spinner" src="./assets/loader.gif" width=32>
+    </img>
+  </div>
   <div class="container">
-    <div class="section">
-      <nav class="navbar">
+    <div class="section p-t-sm">
+      <nav class="navbar m-b-sm">
         <div class="navbar-brand">
           <h1 class="navbar-item">
             <img alt="TensorFlow.js Logo" src="./assets/tfjs-logo.png" />
@@ -31,12 +35,18 @@ limitations under the License.
               <b>Text Detection Demo</b>
             </span>
           </h1>
+          <div class="message has-medium-text has-background-white is-vcentered flex-should-wrap">
+            <div class="columns message-body is-marginless is-paddingless  navbar-item">
+              <b class='column is-narrow'>Status</b>
+              <span class='column is-narrow' id="status-message">Loading models...</span>
+            </div>
+          </div>
         </div>
       </nav>
       <div class="tile is-ancestor">
         <div class="tile is-horizontal">
           <div class="tile is-parent is-3 is-flex is-flex-column flex-should-wrap">
-            <nav class="panel is-full-width">
+            <nav class="panel is-full-width has-medium-text">
               <div class="file is-boxed is-centered panel-block">
                 <label class="file-label is-centered is-full-width">
                   <input class="file-input" type="file" name="image" id="upload-image" />
@@ -48,40 +58,64 @@ limitations under the License.
                 </label>
               </div>
               <div class="panel-block">
-                <span class="is-boxed is-inline-flex">
+                <span class="is-full-width">
                   <span class="is-vcentered m-r-sm">
                     <b>Quantization:</b>
                   </span>
                   <div class="control">
                     <div class="select">
                       <select id="quantizationBytes">
-                        <option selected>1</option>
-                        <option>2</option>
-                        <option>4</option>
+                        <option value="1" selected>1 (29 MB)</option>
+                        <option value="2">2 (59 MB)</option>
+                        <option value="4">4 (115 MB)</option>
                       </select>
                     </div>
                   </div>
                 </span>
               </div>
               <div class="panel-block">
-                <div class="columns">
-                  <b class='column is-narrow'>Status</b>
-                  <span class='column' id="status-message">Loading models...</span>
-                </div>
+                <span class="is-boxed is-full-width">
+                  <span class="is-vcentered m-r-sm">
+                    <b>Max Side Length:</b>
+                    <span id="max-side-length-value">512</span>
+                  </span>
+                  <div class="control">
+                    <div>
+                      <input type="range" id="max-side-length-slider" name="max-side-length" min="256" max="1280"
+                        value="512" step="32">
+                    </div>
+                  </div>
+                </span>
               </div>
               <div class="panel-block">
-                <button class="button is-link is-full-width is-medium" id="run">Run</button>
+                <span class="is-boxed is-full-width">
+                  <span class="is-vcentered m-r-sm">
+                    <b>Example:</b>
+                  </span>
+                  <div class="control">
+                    <div class="select">
+                      <select id="example">
+                        <option value="dr-no" selected>Dr. No</option>
+                        <option value="gun-for-hire">This Gun For Hire</option>
+                        <option value="demonstration">WORD Demonstration</option>
+                      </select>
+                    </div>
+                  </div>
+                </span>
+              </div>
+              <div class="panel-block">
+                <button class="button is-link is-full-width is-small" id="run">Run</button>
               </div>
             </nav>
           </div>
           <div class="tile is-parent is-4">
-            <div class="tile is-child card large" id="input-card">
+            <div class="tile is-child card large is-flex is-flex-column is-full-height is-on-top" id="input-card">
               <header class="card-header">
                 <p class="card-header-title">
                   Input image
                 </p>
               </header>
-              <div class="card-content">
+              <div class="card-content is-flex is-centered-flex is-full-height">
                 <figure class="image">
                   <img alt="Input image" id="input-image" src="./assets/examples/dr-no.jpg" />
                 </figure>
@@ -89,13 +123,14 @@ limitations under the License.
             </div>
           </div>
           <div class="tile is-parent is-4">
-            <div class="tile is-child card large is-invisible" id="output-card">
+            <div class="tile is-child card large is-flex is-flex-column is-full-height is-on-top is-invisible"
+              id="output-card">
               <header class="card-header">
                 <p class="card-header-title">
                   Output
                 </p>
               </header>
-              <div class="card-content">
+              <div class="card-content is-flex is-centered-flex is-full-height">
                 <figure class="image">
                   <canvas id="output-image"></canvas>
                 </figure>
