@@ -74,7 +74,7 @@ export class BodyPix {
    * aspect ratio before feeding through the network. The image pixels
    * should have values [0-255].
    *
-   * @param input tf.Tensor3D
+   * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
    *
    * @param outputStride the desired stride for the outputs.  Must be 32, 16,
@@ -90,21 +90,22 @@ export class BodyPix {
    * of the input image.
    */
   estimatePersonSegmentationActivation(
-      input: tf.Tensor3D, outputStride: OutputStride = 16,
+      input: BodyPixInput, outputStride: OutputStride = 16,
       segmentationThreshold = 0.5): tf.Tensor2D {
     assertValidOutputStride(outputStride);
 
     return tf.tidy(() => {
+      const imageTensor = toInputTensor(input);
       const {
         resizedAndPadded,
         paddedBy,
-      } = resizeAndPadTo(input, segmentationModelImageDimensions);
+      } = resizeAndPadTo(imageTensor, segmentationModelImageDimensions);
 
       const segmentScores =
           this.predictForSegmentation(resizedAndPadded, outputStride);
 
       const [resizedHeight, resizedWidth] = resizedAndPadded.shape;
-      const [height, width] = input.shape;
+      const [height, width] = imageTensor.shape;
 
       const scaledSegmentScores = scaleAndCropToInputTensorShape(
           segmentScores, [height, width], [resizedHeight, resizedWidth],
@@ -142,12 +143,8 @@ export class BodyPix {
   async estimatePersonSegmentation(
       input: BodyPixInput, outputStride: OutputStride = 16,
       segmentationThreshold = 0.5): Promise<PersonSegmentation> {
-    const segmentation = tf.tidy(() => {
-      const imageTensor = toInputTensor(input);
-
-      return this.estimatePersonSegmentationActivation(
-          imageTensor, outputStride, segmentationThreshold);
-    });
+    const segmentation = this.estimatePersonSegmentationActivation(
+        input, outputStride, segmentationThreshold);
 
     const [height, width] = segmentation.shape;
     const result = await segmentation.data() as Uint8Array;
@@ -165,7 +162,7 @@ export class BodyPix {
    * original aspect ratio before feeding through the network. The image should
    * pixels should have values [0-255].
    *
-   * @param input tf.Tensor3D
+   * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
    *
    * @param outputStride the desired stride for the outputs.  Must be 32, 16,
@@ -181,22 +178,23 @@ export class BodyPix {
    * correspond to the same dimensions of the input image.
    */
   estimatePartSegmentationActivation(
-      input: tf.Tensor3D, outputStride: OutputStride = 16,
+      input: BodyPixInput, outputStride: OutputStride = 16,
       segmentationThreshold = 0.5): tf.Tensor2D {
     assertValidOutputStride(outputStride);
 
     return tf.tidy(() => {
+      const imageTensor = toInputTensor(input);
       const {
         resizedAndPadded,
         paddedBy,
-      } = resizeAndPadTo(input, segmentationModelImageDimensions);
+      } = resizeAndPadTo(imageTensor, segmentationModelImageDimensions);
 
       const {segmentScores, partHeatmapScores} =
           this.predictForPartMap(resizedAndPadded, outputStride);
 
       const [resizedHeight, resizedWidth] = resizedAndPadded.shape;
+      const [height, width] = imageTensor.shape;
 
-      const [height, width] = input.shape;
       const scaledSegmentScores = scaleAndCropToInputTensorShape(
           segmentScores, [height, width], [resizedHeight, resizedWidth],
           paddedBy);
@@ -240,12 +238,8 @@ export class BodyPix {
   async estimatePartSegmentation(
       input: BodyPixInput, outputStride: OutputStride = 16,
       segmentationThreshold = 0.5): Promise<PartSegmentation> {
-    const partSegmentation = tf.tidy(() => {
-      const imageTensor = toInputTensor(input);
-
-      return this.estimatePartSegmentationActivation(
-          imageTensor, outputStride, segmentationThreshold);
-    });
+    const partSegmentation = this.estimatePartSegmentationActivation(
+        input, outputStride, segmentationThreshold);
 
     const [height, width] = partSegmentation.shape;
     const data = await partSegmentation.data() as Int32Array;
