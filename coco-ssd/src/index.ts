@@ -34,7 +34,7 @@ export interface DetectedObject {
 }
 
 export async function load(
-    base: ObjectDetectionBaseModel = 'lite_mobilenet_v2') {
+    base: ObjectDetectionBaseModel = 'lite_mobilenet_v2', modelUrl?: string) {
   if (tf == null) {
     throw new Error(
         `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
@@ -49,7 +49,7 @@ export async function load(
         ` 'mobilenet_v2' and 'lite_mobilenet_v2'.`);
   }
 
-  const objectDetection = new ObjectDetection(base);
+  const objectDetection = new ObjectDetection(base, modelUrl);
   await objectDetection.load();
   return objectDetection;
 }
@@ -58,8 +58,9 @@ export class ObjectDetection {
   private modelPath: string;
   private model: tfconv.GraphModel;
 
-  constructor(base: ObjectDetectionBaseModel) {
-    this.modelPath = `${BASE_PATH}${this.getPrefix(base)}/model.json`;
+  constructor(base: ObjectDetectionBaseModel, modelUrl?: string) {
+    this.modelPath =
+        modelUrl || `${BASE_PATH}${this.getPrefix(base)}/model.json`;
   }
 
   private getPrefix(base: ObjectDetectionBaseModel) {

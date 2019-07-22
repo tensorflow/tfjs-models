@@ -17,6 +17,7 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
+import {expectArrayBuffersEqual} from '@tensorflow/tfjs-core/dist/test_util';
 
 import {load} from './index';
 
@@ -49,5 +50,13 @@ describeWithFlags('ObjectDetection', NODE_ENVS, () => {
     const data = await objectDetection.detect(x, 1);
 
     expect(data).toEqual([{bbox: [227, 227, 0, 0], class: 'person', score: 1}]);
+  });
+
+  it('should allow custom model url', async () => {
+    const objectDetection =
+        await load('mobilenet_v1', 'https://test.org/model.json');
+
+    expect(tfconv.loadGraphModel)
+        .toHaveBeenCalledWith('https://test.org/model.json');
   });
 });
