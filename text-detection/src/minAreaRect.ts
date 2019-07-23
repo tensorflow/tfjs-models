@@ -85,11 +85,12 @@ export function minAreaRect(points: Point[]): Box {
   }
   const [angle, , minX, maxX, minY, maxY] = minBoundingBox;
   const backwardsRotation = computeBackwardsRotationMatrix(angle);
+  const rotation = inverseRotation(backwardsRotation);
   const box: Box = [
-    new Point(...rotate(inverseRotation(backwardsRotation), [maxX, maxY])),
-    new Point(...rotate(inverseRotation(backwardsRotation), [minX, maxY])),
-    new Point(...rotate(inverseRotation(backwardsRotation), [minX, minY])),
-    new Point(...rotate(inverseRotation(backwardsRotation), [maxX, minY])),
+    new Point(...rotate(rotation, [maxX, maxY])),
+    new Point(...rotate(rotation, [minX, maxY])),
+    new Point(...rotate(rotation, [minX, minY])),
+    new Point(...rotate(rotation, [maxX, minY])),
   ];
   return box;
 }

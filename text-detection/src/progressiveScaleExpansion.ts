@@ -4,8 +4,8 @@ import {config} from './config';
 import {connectedComponents} from './connectedComponents';
 import {Queue} from './queue';
 
-export const progressiveScaleExpansion =
-    async (kernels: tf.Tensor3D, minKernelArea = config['MIN_KERNEL_AREA']) => {
+export const progressiveScaleExpansion = async (
+    kernels: tf.Tensor3D, minKernelArea = config['MIN_TEXTBOX_AREA']) => {
   const [height, width, numOfKernels] = kernels.shape;
   const kernelsData = await kernels.array();
   const lastKernelData =

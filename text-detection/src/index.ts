@@ -23,7 +23,7 @@ import {minAreaRect} from './minAreaRect';
 import {TextDetectionConfig, TextDetectionInput, TextDetectionOptions, TextDetectionOutput} from './types';
 import {computeScalingFactors, detect, getURL, resize} from './utils';
 
-export {computeScalingFactors, detect, getURL};
+export {computeScalingFactors, detect, getURL, minAreaRect};
 
 export const load = async (modelConfig: TextDetectionConfig = {
   quantizationBytes: 1
@@ -57,22 +57,22 @@ export class TextDetection {
     this.model = graphModel;
   }
 
-  public preprocess(input: TextDetectionInput, maxSideLength?: number) {
+  public preprocess(input: TextDetectionInput, resizeLength?: number) {
     return tf.tidy(() => {
-      return resize(input, maxSideLength).expandDims(0);
+      return resize(input, resizeLength).expandDims(0);
     });
   }
 
   public async predict(
       input: TextDetectionInput, textDetectionOptions: TextDetectionOptions = {
-        minKernelArea: config['MIN_KERNEL_AREA'],
-        minScore: config['MIN_SCORE'],
-        maxSideLength: config['MAX_SIDE_LENGTH'],
+        resizeLength: config['RESIZE_LENGTH'],
+        minTextBoxArea: config['MIN_TEXTBOX_AREA'],
+        minConfidence: config['MIN_CONFIDENCE'],
         processPoints: minAreaRect
       }): Promise<TextDetectionOutput> {
     const kernelScores = tf.tidy(() => {
       const processedInput =
-          this.preprocess(input, textDetectionOptions.maxSideLength);
+          this.preprocess(input, textDetectionOptions.resizeLength);
       return (this.model.predict(processedInput) as tf.Tensor4D).squeeze([0]) as
           tf.Tensor3D;
     });

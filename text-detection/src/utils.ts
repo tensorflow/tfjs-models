@@ -33,37 +33,38 @@ export const getURL = (quantizationBytes: QuantizationBytes) => {
 export const detect = async(
     kernelScores: tf.Tensor3D, originalHeight: number, originalWidth: number,
     textDetectionOptions: TextDetectionOptions = {
-      minKernelArea: config['MIN_KERNEL_AREA'],
-      minScore: config['MIN_SCORE'],
-      maxSideLength: config['MAX_SIDE_LENGTH']
+      minTextBoxArea: config['MIN_TEXTBOX_AREA'],
+      minConfidence: config['MIN_CONFIDENCE'],
+      resizeLength: config['RESIZE_LENGTH']
     }): Promise<Box[]> => {
-  if (!textDetectionOptions.minKernelArea) {
-    textDetectionOptions.minKernelArea = config['MIN_KERNEL_AREA'];
+  if (!textDetectionOptions.minTextBoxArea) {
+    textDetectionOptions.minTextBoxArea = config['MIN_TEXTBOX_AREA'];
   }
-  if (!textDetectionOptions.minScore) {
-    textDetectionOptions.minScore = config['MIN_SCORE'];
+  if (!textDetectionOptions.minConfidence) {
+    textDetectionOptions.minConfidence = config['MIN_CONFIDENCE'];
   }
-  if (!textDetectionOptions.maxSideLength) {
-    textDetectionOptions.maxSideLength = config['MAX_SIDE_LENGTH'];
+  if (!textDetectionOptions.resizeLength) {
+    textDetectionOptions.resizeLength = config['RESIZE_LENGTH'];
   }
   if (!textDetectionOptions.processPoints) {
     textDetectionOptions.processPoints = minAreaRect;
   }
-  const {minKernelArea, minScore, maxSideLength, processPoints} =
+  const {minTextBoxArea, minConfidence, resizeLength, processPoints} =
       textDetectionOptions;
 
   const [heightScalingFactor, widthScalingFactor] =
-      computeScalingFactors(originalHeight, originalWidth, maxSideLength);
+      computeScalingFactors(originalHeight, originalWidth, resizeLength);
 
   const [height, width, numOfKernels] = kernelScores.shape;
   const kernels = tf.tidy(() => {
     const one = tf.ones([height, width, numOfKernels], 'int32');
     const zero = tf.zeros([height, width, numOfKernels], 'int32');
-    const threshold = tf.scalar(minScore, 'float32');
+    const threshold = tf.scalar(minConfidence, 'float32');
     return tf.where(kernelScores.greater(threshold), one, zero) as tf.Tensor3D;
   });
   const {segmentationMapBuffer, recognizedLabels} =
-      await progressiveScaleExpansion(kernels, minKernelArea);
+      await progressiveScaleExpansion(
+          kernels, minTextBoxArea * heightScalingFactor * widthScalingFactor);
   tf.dispose(kernels);
   const targetHeight = Math.round(originalHeight * heightScalingFactor);
   const targetWidth = Math.round(originalWidth * widthScalingFactor);
@@ -113,29 +114,28 @@ export const detect = async(
 };
 
 export const computeScalingFactors =
-    (height: number, width: number, maxSideLength: number):
-        [number, number] => {
-          const maxSide = Math.max(width, height);
-          const ratio = maxSide > maxSideLength ? maxSideLength / maxSide : 1;
+    (height: number, width: number, resizeLength: number): [number, number] => {
+      const maxSide = Math.max(width, height);
+      const ratio = maxSide > resizeLength ? resizeLength / maxSide : 1;
 
-          const getScalingFactor = (side: number) => {
-            const roundedSide = Math.round(side * ratio);
-            return (roundedSide % 32 === 0 ?
-                        roundedSide :
-                        (Math.floor(roundedSide / 32) + 1) * 32) /
-                side;
-          };
+      const getScalingFactor = (side: number) => {
+        const roundedSide = Math.round(side * ratio);
+        return (roundedSide % 32 === 0 ?
+                    roundedSide :
+                    (Math.floor(roundedSide / 32) + 1) * 32) /
+            side;
+      };
 
-          const heightScalingRatio = getScalingFactor(height);
-          const widthScalingRatio = getScalingFactor(width);
-          return [heightScalingRatio, widthScalingRatio];
-        };
+      const heightScalingRatio = getScalingFactor(height);
+      const widthScalingRatio = getScalingFactor(width);
+      return [heightScalingRatio, widthScalingRatio];
+    };
 
 export const resize = (input: TextDetectionInput,
-                       maxSideLength?: number): tf.Tensor3D => {
+                       resizeLength?: number): tf.Tensor3D => {
   return tf.tidy(() => {
-    if (!maxSideLength) {
-      maxSideLength = config['MAX_SIDE_LENGTH'];
+    if (!resizeLength) {
+      resizeLength = config['RESIZE_LENGTH'];
     }
     const image: tf.Tensor3D = (input instanceof tf.Tensor ?
                                     input :
@@ -146,7 +146,7 @@ export const resize = (input: TextDetectionInput,
 
     const [height, width] = image.shape;
     const [heightScalingFactor, widthScalingFactor] =
-        computeScalingFactors(height, width, maxSideLength);
+        computeScalingFactors(height, width, resizeLength);
     const targetHeight = Math.round(height * heightScalingFactor);
     const targetWidth = Math.round(width * widthScalingFactor);
     const processedImage =

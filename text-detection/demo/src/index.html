@@ -22,20 +22,19 @@ limitations under the License.
 
 <body>
   <div id="overlay" class="is-invisible">
-    <img class="spinner" src="./assets/loader.gif" width=32>
-    </img>
+    <img class="spinner" src="./assets/loader.gif" alt="Spinning wheel" width=32>
   </div>
   <div class="container">
     <div class="section p-t-sm">
       <nav class="navbar m-b-sm">
-        <div class="navbar-brand">
+        <div class="navbar-brand is-inline-flex flex-should-wrap">
           <h1 class="navbar-item">
             <img alt="TensorFlow.js Logo" src="./assets/tfjs-logo.png" />
             <span class="tag is-white is-medium">
               <b>Text Detection Demo</b>
             </span>
           </h1>
-          <div class="message has-medium-text has-background-white is-vcentered flex-should-wrap">
+          <div class="navbar-item message has-medium-text has-background-white is-vcentered is-inline-block is-full-width">
             <div class="columns message-body is-marginless is-paddingless  navbar-item">
               <b class='column is-narrow'>Status</b>
               <span class='column is-narrow' id="status-message">Loading models...</span>
@@ -45,63 +44,158 @@ limitations under the License.
       </nav>
       <div class="tile is-ancestor">
         <div class="tile is-horizontal">
-          <div class="tile is-parent is-3 is-flex is-flex-column flex-should-wrap">
+          <div class="tile is-parent is-3 is-flex is-flex-column flex-should-wrap has-flex-1">
             <nav class="panel is-full-width has-medium-text">
               <div class="file is-boxed is-centered panel-block">
                 <label class="file-label is-centered is-full-width">
                   <input class="file-input" type="file" name="image" id="upload-image" />
-                  <span class="file-cta">
+                  <span class="file-cta has-background-warning">
                     <span class="file-label">
-                      Upload an image
+                      <b>
+                        Upload an image
+                      </b>
                     </span>
                   </span>
                 </label>
               </div>
               <div class="panel-block">
-                <span class="is-full-width">
-                  <span class="is-vcentered m-r-sm">
-                    <b>Quantization:</b>
-                  </span>
-                  <div class="control">
-                    <div class="select">
-                      <select id="quantizationBytes">
-                        <option value="1" selected>1 (29 MB)</option>
-                        <option value="2">2 (59 MB)</option>
-                        <option value="4">4 (115 MB)</option>
-                      </select>
+                <span class="is-vcentered m-r-sm">
+                  <b>Quantization:</b>
+                </span>
+                <div class="select">
+                  <select id="quantizationBytes">
+                    <option value="1" selected>1 (29 MB)</option>
+                    <option value="2">2 (59 MB)</option>
+                    <option value="4">4 (115 MB)</option>
+                  </select>
+                </div>
+              </div>
+              <div class="panel-block is-inline-block is-full-width">
+                <div class="is-vcentered m-r-sm m-b-sm no-breaks">
+                  <b>Point Post-Processing</b>
+                  <div class="dropdown is-hoverable">
+                    <span class="dropdown-trigger">
+                      <span class="infolink" aria-haspopup="true" aria-controls="dropdown-menu-post-processing-info">:
+                      </span>
+                    </span>
+                    <div class="dropdown-menu info-pop-up" id="dropdown-menu-post-processing-info" role="menu">
+                      <div class="dropdown-content">
+                        <div class="dropdown-item">
+                          <div class="notification is-warning">
+                            Three methods are supported in this demo:
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </span>
+                </div>
+                <div class="select">
+                  <select id="post-processing">
+                    <option value="identity" selected>Draw Points</option>
+                    <option value="minarearect">Determine Min Bounding Box</option>
+                    <option value="contours">Find Contours</option>
+                  </select>
+                </div>
               </div>
               <div class="panel-block">
-                <span class="is-boxed is-full-width">
-                  <span class="is-vcentered m-r-sm">
-                    <b>Max Side Length:</b>
-                    <span id="max-side-length-value">512</span>
-                  </span>
+                <div class="is-boxed is-full-width">
+                  <div class="is-vcentered m-r-sm no-breaks">
+                    <b>Resize Length</b>
+                    <div class="dropdown is-hoverable">
+                      <div class="dropdown-trigger">
+                        <span class="infolink" aria-haspopup="true" aria-controls="dropdown-menu-resize-length-info">:
+                          <span id="resize-length-value">512</span>
+                        </span>
+                      </div>
+                      <div class="dropdown-menu info-pop-up" id="dropdown-menu-resize-length-info" role="menu">
+                        <div class="dropdown-content">
+                          <div class="dropdown-item">
+                            <div class="notification is-warning">
+                              The greater the length, the better accuracy and precision you can get at the cost
+                              of
+                              performance. Setting this value to more than 700 might result in WebGL memory overflow.
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                   <div class="control">
                     <div>
-                      <input type="range" id="max-side-length-slider" name="max-side-length" min="256" max="1280"
-                        value="512" step="32">
+                      <input type="range" id="resize-length-slider" name="resize-length" min="256" max="1280"
+                        value="512" step="32" class="is-full-width">
                     </div>
                   </div>
-                </span>
+                </div>
               </div>
               <div class="panel-block">
-                <span class="is-boxed is-full-width">
-                  <span class="is-vcentered m-r-sm">
-                    <b>Example:</b>
-                  </span>
-                  <div class="control">
-                    <div class="select">
-                      <select id="example">
-                        <option value="dr-no" selected>Dr. No</option>
-                        <option value="gun-for-hire">This Gun For Hire</option>
-                        <option value="demonstration">WORD Demonstration</option>
-                      </select>
+                <div class="is-boxed is-full-width">
+                  <div class="is-vcentered m-r-sm no-breaks">
+                    <b>Min Textbox Area</b>
+                    <div class="dropdown is-hoverable">
+                      <div class="dropdown-trigger">
+                        <span class="infolink" aria-haspopup="true" aria-controls="dropdown-menu4">:
+                          <span id="min-textbox-area-value">10</span>
+                        </span>
+                      </div>
+                      <div class="dropdown-menu info-pop-up" id="dropdown-menu4" role="menu">
+                        <div class="dropdown-content">
+                          <div class="dropdown-item">
+                            <div class="notification is-warning">
+                              Text boxes with areas less than this value are ignored.
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
+                  <div class="control">
+                    <div>
+                      <input type="range" id="min-textbox-area-slider" name="min-textbox-area" min="0" max="100"
+                        value="10" step="1" class="is-full-width">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="panel-block">
+                <div class="is-boxed is-full-width">
+                  <div class="is-vcentered m-r-sm no-breaks">
+                    <b>Min Confidence</b>
+                    <div class="dropdown is-hoverable is-up">
+                      <span class="dropdown-trigger">
+                        <span class="infolink" aria-haspopup="true" aria-controls="dropdown-menu-min-confidence">:
+                          <span id="min-confidence-value">0.9</span></span>
+                      </span>
+                      <div class="dropdown-menu info-pop-up" id="dropdown-menu-min-confidence" role="menu">
+                        <div class="dropdown-content">
+                          <div class="dropdown-item">
+                            <div class="notification is-warning">
+                              Minimum allowable confidence of the prediction that a pixel corresponds to text.
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="control">
+                    <div>
+                      <input type="range" id="min-confidence-slider" name="min-confidence" min="0" max="1" value=".9"
+                        step="0.01" class="is-full-width">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="panel-block">
+                <span class="is-vcentered m-r-sm">
+                  <b>Example:</b>
                 </span>
+                <div class="select">
+                  <select id="example">
+                    <option value="dr-no" selected>Dr. No</option>
+                    <option value="gun-for-hire">This Gun For Hire</option>
+                    <option value="demonstration">Demonstration</option>
+                  </select>
+                </div>
               </div>
               <div class="panel-block">
                 <button class="button is-link is-full-width is-small" id="run">Run</button>

@@ -48,9 +48,8 @@ const getSelectorValue = (selectorId) => {
   return selector.options[selector.selectedIndex].value;
 };
 
-const updateSlider = (sliderId, outputId) => {
-  const sliderValue = document.getElementById(sliderId).value;
-  document.getElementById(outputId).innerHTML = sliderValue;
+const updateSlider = (slider, outputId) => {
+  document.getElementById(outputId).innerHTML = slider.value;
 };
 
 const updateInput = () => {
@@ -59,11 +58,28 @@ const updateInput = () => {
   const value = getSelectorValue('example');
   input.src = textDetectionExamples[value];
 };
+
+const getResizeLengthSlider = () =>
+  document.getElementById('resize-length-slider');
+const getMinTextBoxAreaSlider = () =>
+  document.getElementById('min-textbox-area-slider');
+const getMinConfidenceSlider = () =>
+  document.getElementById('min-confidence-slider');
+
 const initializeModel = async () => {
   toggleInvisible('overlay', false);
-  const maxSideLengthSlider = document.getElementById('max-side-length-slider');
-  maxSideLengthSlider.oninput = () =>
-    updateSlider('max-side-length-slider', 'max-side-length-value');
+  const resizeLengthSlider = getResizeLengthSlider();
+  updateSlider(resizeLengthSlider, 'resize-length-value');
+  resizeLengthSlider.oninput = () =>
+    updateSlider(resizeLengthSlider, 'resize-length-value');
+  const minTextBoxAreaSlider = getMinTextBoxAreaSlider();
+  updateSlider(minTextBoxAreaSlider, 'min-textbox-area-value');
+  minTextBoxAreaSlider.oninput = () =>
+    updateSlider(minTextBoxAreaSlider, 'min-textbox-area-value');
+  const minConfidenceSlider = getMinConfidenceSlider();
+  updateSlider(minConfidenceSlider, 'min-confidence-value');
+  minConfidenceSlider.oninput = () =>
+    updateSlider(minConfidenceSlider, 'min-confidence-value');
   const inputSelector = document.getElementById('example');
   inputSelector.onchange = updateInput;
   status('Loading the model...');
@@ -223,7 +239,9 @@ const runPrediction = async (input, predictionStart) => {
     const factor = height / originalHeight;
 
     const output = await model.predict(this, {
-      maxSideLength: document.getElementById('max-side-length-slider').value,
+      resizeLength: getResizeLengthSlider().value,
+      minTextBoxArea: getMinTextBoxAreaSlider().value,
+      minConfidence: getMinConfidenceSlider().value,
     });
     status(`Obtained ${output.length} boxes`);
     console.log(JSON.stringify(output));
