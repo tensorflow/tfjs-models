@@ -231,9 +231,6 @@ export class BodyPix {
         displacementBwd
       } = this.predictForSegmentationAndLongRangeOffsets(resized);
 
-      // decoding without scaling.
-
-
       // decoding with scaling.
       const scaledSegmentScores =
           scaleAndCropToInputTensorShape(
@@ -246,20 +243,10 @@ export class BodyPix {
           longOffsets, [height, width], [inputResolution, inputResolution],
           [[padding.top, padding.bottom], [padding.left, padding.right]]);
 
-      // const scaledOffsets = scaleAndCropToInputTensorShape(
-      //     offsets, [height, width], [inputResolution, inputResolution],
-      //     [[padding.top, padding.bottom], [padding.left, padding.right]]);
-
-      // const scaledHeatmapScores = scaleAndCropToInputTensorShape(
-      //     heatmapScores, [height, width], [inputResolution, inputResolution],
-      //     [[padding.top, padding.bottom], [padding.left, padding.right]]);
-
       return {
         segmentation:
             toMask(scaledSegmentScores.squeeze(), segmentationThreshold),
         longOffsets: scaledLongOffsets,
-        // offsets: scaledOffsets,
-        // heatmapScores: scaledHeatmapScores,
         heatmapScoresRaw: heatmapScores,
         offsetsRaw: offsets,
         displacementFwdRaw: displacementFwd,
@@ -267,10 +254,8 @@ export class BodyPix {
       };
     });
 
-    const result = await segmentation.data() as Uint8Array;
-    const result2 = await longOffsets.data() as Float32Array;
-    // const result3 = await heatmapScores.data() as Float32Array;
-    // const result4 = await offsets.data() as Float32Array;
+    const segmentationArray = await segmentation.data() as Uint8Array;
+    const longOffsetsArray = await longOffsets.data() as Float32Array;
 
     const [scoresBuffer, offsetsBuffer, displacementsFwdBuffer, displacementsBwdBuffer] =
         await toTensorBuffers3D([
@@ -282,25 +267,16 @@ export class BodyPix {
         displacementsBwdBuffer, outputStride, 30, 0.3, 20);
 
     poses = scaleAndFlipPoses(
-        poses, [height, width], [inputResolution, inputResolution], pad,
-        /*true*/ false);
+        poses, [height, width], [inputResolution, inputResolution], pad, false);
 
-    const instanceMasks =
-        decodeMultipleMasks(result, result2, poses, height, width);
+    const instanceMasks = decodeMultipleMasks(
+        segmentationArray, longOffsetsArray, poses, height, width);
+
     poses = flipPosesHorizontal(poses, width);
 
     segmentation.dispose();
 
-    return {
-      height,
-      width,
-      // data: result,
-      data: instanceMasks.data,
-      data2: result2,
-      // data3: result3,
-      // data4: result4,
-      poses: poses
-    };
+    return {height, width, data: instanceMasks.data, poses: poses};
   }
 
   /**
