@@ -19,6 +19,8 @@ import {ConvolutionDefinition, mobileNetArchitectures} from './mobilenet';
 
 const BASE_URL = 'https://storage.googleapis.com/tfjs-models/savedmodel/';
 
+const RESNET50_BASE_URL = 'http://localhost:8080/';
+
 export type Checkpoint = {
   url: string,
   architecture: ConvolutionDefinition[]
@@ -40,5 +42,17 @@ export const checkpoints: {[multiplier: number]: Checkpoint} = {
   0.25: {
     url: BASE_URL + 'posenet_mobilenet_025_partmap/',
     architecture: mobileNetArchitectures[25]
+  }
+};
+
+// The PoseNet 2.0 ResNet50 models use the latest TensorFlow.js 1.0 model
+// format.
+export function resNet50Checkpoint(stride: number, quantBytes: number): string {
+  const graphJson = `resnet50-%3Fx%3F-stride${stride}/model.json`;
+  // quantBytes=4 corresponding to the non-quantized full-precision checkpoints.
+  if (quantBytes == 4) {
+    return RESNET50_BASE_URL + `float/` + graphJson;
+  } else {
+    return RESNET50_BASE_URL + `quant${quantBytes}/` + graphJson;
   }
 };

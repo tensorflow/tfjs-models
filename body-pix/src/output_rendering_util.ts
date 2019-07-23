@@ -122,6 +122,8 @@ function renderImageDataToOffScreenCanvas(
   return canvas;
 }
 
+const STEP = 1;
+
 /**
  * Given the output from estimating person segmentation, generates a black image
  * with opacity and transparency at each pixel determined by the corresponding
@@ -148,16 +150,38 @@ export function toMaskImageData(
   const {width, height, data} = segmentation;
   const bytes = new Uint8ClampedArray(width * height * 4);
 
-  for (let i = 0; i < height * width; ++i) {
-    const shouldMask = maskBackground ? 1 - data[i] : data[i];
-    // alpha will determine how dark the mask should be.
-    const alpha = shouldMask * 255;
+  for (let i = 0; i < height; i += STEP) {
+    for (let j = 0; j < width; j += STEP) {
+      // const shouldMask =
+      //     maskBackground ? 1 - data[i * width + j] : data[i * width + j];
+      // // alpha will determine how dark the mask should be.
+      // const alpha = shouldMask * 255;
+      // const n = (i * width + j) * 4;
+      // bytes[n + 0] = 0;
+      // bytes[n + 1] = 0;
+      // bytes[n + 2] = 0;
+      // bytes[n + 3] = Math.round(alpha);
+      const n = i * width + j;
+      bytes[4 * n + 0] = 0;
+      bytes[4 * n + 1] = 0;
+      bytes[4 * n + 2] = 0;
+      bytes[4 * n + 3] = 0;
 
-    const j = i * 4;
-    bytes[j + 0] = 0;
-    bytes[j + 1] = 0;
-    bytes[j + 2] = 0;
-    bytes[j + 3] = Math.round(alpha);
+      for (let si = 0; si < 5; si++) {
+        for (let sj = 0; sj < 5; sj++) {
+          let nn = ((i - 1 + si) * width + (j - 1 + sj));
+          if (data[n] === 1) {
+            bytes[4 * nn + 0] = 155;
+            bytes[4 * nn + 3] = 100;
+          } else if (data[n] === 2) {
+            bytes[4 * nn + 1] = 155;
+            bytes[4 * nn + 3] = 100;
+          } else {
+            bytes[4 * nn + 3] = 255;
+          }
+        }
+      }
+    }
   }
 
   return new ImageData(bytes, width, height);
@@ -240,10 +264,12 @@ const CANVAS_NAMES = {
  */
 export function drawMask(
     canvas: HTMLCanvasElement, image: ImageType, maskImage: ImageData,
-    maskOpacity = 0.7, maskBlurAmount = 0, flipHorizontal = false) {
+    maskOpacity = 0.7, maskBlurAmount = 0, flipHorizontal = false,
+    longOffset: Float32Array, heatmap: Float32Array, offsets: Float32Array) {
   assertSameDimensions(image, maskImage, 'image', 'mask');
 
   const mask = renderImageDataToOffScreenCanvas(maskImage, CANVAS_NAMES.mask);
+
   const blurredMask = drawAndBlurImageOnOffScreenCanvas(
       mask, maskBlurAmount, CANVAS_NAMES.blurredMask);
 
@@ -259,6 +285,60 @@ export function drawMask(
   ctx.drawImage(image, 0, 0);
   ctx.globalAlpha = maskOpacity;
   ctx.drawImage(blurredMask, 0, 0);
+
+  // console.log('mask HxW:');
+  // console.log(blurredMask.height);
+  // console.log(blurredMask.width);
+  // var imageData = ctx.createImageData(blurredMask.width, blurredMask.height);
+  // console.log('heatmap length.');
+  // console.log(heatmap.length);
+  // for (let i = 0; i < blurredMask.height; i += 16) {
+  //   for (let j = 0; j < blurredMask.width; j += 16) {
+  //     let n = i * blurredMask.width + j;
+  //     let max_p = 0;
+  //     let max_p_k = -1;
+  //     for (let k = 0; k < 17; k++) {
+  //       let p = Math.round(255 * heatmap[17 * n + k]);
+  //       if (p > max_p) {
+  //         max_p = p;
+  //         max_p_k = k;
+  //       }
+  //     }
+  //     imageData.data[4 * n + 0] = max_p;
+  //     imageData.data[4 * n + 1] = 0;
+  //     imageData.data[4 * n + 2] = 0;
+  //     imageData.data[4 * n + 3] = 120;
+
+  //     if (max_p > 0.3 && max_p_k >= 0) {
+  //       let dy = offsets[17 * (2 * n) + max_p_k];
+  //       let dx = offsets[17 * (2 * n + 1) + max_p_k];
+  //       ctx.beginPath();
+  //       ctx.moveTo(j, i);
+  //       ctx.lineTo(j + dx, i + dy);
+  //       ctx.strokeStyle = 'white';
+  //       ctx.stroke();
+  //     }
+  //   }
+  // }
+
+  // ctx.putImageData(imageData, 0, 0, 0, 0, 1000, 1000);
+
+  // let k = 0
+  // for (let i = 0; i < blurredMask.height; i += STEP) {
+  //   for (let j = 0; j < blurredMask.width; j += STEP) {
+  //     let n = i * blurredMask.width + j;
+  //     if (maskImage.data[4 * n + 3] !== 255) {
+  //       let dy = longOffset[17 * (2 * n) + k];
+  //       let dx = longOffset[17 * (2 * n + 1) + k];
+  //       ctx.beginPath();
+  //       ctx.moveTo(j, i);
+  //       ctx.lineTo(j + dx, i + dy);
+  //       ctx.strokeStyle = 'red';
+  //       ctx.stroke();
+  //     }
+  //   }
+  // }
+
   ctx.restore();
 }
 

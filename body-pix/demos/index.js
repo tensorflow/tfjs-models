@@ -18,7 +18,9 @@ import * as bodyPix from '@tensorflow-models/body-pix';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 
+import {drawKeypoints, drawSkeleton} from './demo_util';
 import * as partColorScales from './part_color_scales';
+
 
 const stats = new Stats();
 
@@ -133,10 +135,25 @@ async function setupCamera(cameraLabel) {
   });
 }
 
+async function loadImage() {
+  const image = new Image();
+  const promise = new Promise((resolve, reject) => {
+    image.crossOrigin = '';
+    image.onload = () => {
+      resolve(image);
+    };
+  });
+
+  image.src = 'two_people.jpg';
+  return promise;
+}
 
 async function loadVideo(cameraLabel) {
   try {
-    state.video = await setupCamera(cameraLabel);
+    // state.video = await setupCamera(cameraLabel);
+    console.log('load...');
+    state.video = await loadImage();
+    console.log('loaded');
   } catch (e) {
     let info = document.getElementById('info');
     info.textContent = 'this browser does not support video capture,' +
@@ -145,17 +162,22 @@ async function loadVideo(cameraLabel) {
     throw e;
   }
 
-  state.video.play();
+  // state.video.play();
 }
 
 const guiState = {
   estimate: 'segmentation',
   camera: null,
   flipHorizontal: true,
-  input:
-      {mobileNetArchitecture: isMobile() ? '0.50' : '0.75', outputStride: 16},
+  input: {
+    architecture: 'ResNet50',
+    outputStride: 16,
+    inputResolution: 513,
+    multiplier: 1.0,
+    quantBytes: 4
+  },
   segmentation: {
-    segmentationThreshold: 0.5,
+    segmentationThreshold: 0.7,
     effect: 'mask',
     maskBackground: true,
     opacity: 0.7,
@@ -200,30 +222,27 @@ function setupGui(cameras) {
   gui.add(guiState, 'flipHorizontal');
 
   // Architecture: there are a few BodyPix models varying in size and
-  // accuracy. 1.00 is the largest, but will be the slowest. 0.25 is the
+  // accuracy.
+  // The input parameters have the most effect on accuracy and speed of the
+  // network
+  let input = gui.addFolder('Input');
+  // Architecture: there are a few PoseNet models varying in size and
+  // accuracy. 1.01 is the largest, but will be the slowest. 0.50 is the
   // fastest, but least accurate.
-  gui.add(
-         guiState.input, 'mobileNetArchitecture',
-         ['1.00', '0.75', '0.50', '0.25'])
-      .onChange(async function(architecture) {
-        state.changingArchitecture = true;
-        // Important to purge variables and free
-        // up GPU memory
-        state.net.dispose();
-
-        // Load the PoseNet model weights for
-        // either the 0.50, 0.75, 1.00, or 1.01
-        // version
-        state.net = await bodyPix.load(+architecture);
-
-        state.changingArchitecture = false;
-      });
+  let architectureController = null;
+  architectureController =
+      input.add(guiState.input, 'architecture', ['ResNet50']);
+  guiState.architecture = guiState.input.architecture;
 
   // Output stride:  Internally, this parameter affects the height and width
   // of the layers in the neural network. The lower the value of the output
   // stride the higher the accuracy but slower the speed, the higher the value
   // the faster the speed but lower the accuracy.
-  gui.add(guiState.input, 'outputStride', [8, 16, 32]);
+  input.add(guiState.input, 'outputStride', [8, 16, 32]);
+  input.add(guiState.input, 'inputResolution', [513]);
+  input.add(guiState.input, 'multiplier', [1.0]);
+  input.add(guiState.input, 'quantBytes', [4]);
+
 
   const estimateController =
       gui.add(guiState, 'estimate', ['segmentation', 'partmap']);
@@ -381,10 +400,19 @@ function segmentBodyInRealTime() {
           case 'mask':
             const mask = bodyPix.toMaskImageData(
                 personSegmentation, guiState.segmentation.maskBackground);
+            const {height, width, data, data2, data3, data4, poses} =
+                personSegmentation;
             bodyPix.drawMask(
                 canvas, state.video, mask, guiState.segmentation.opacity,
-                guiState.segmentation.maskBlurAmount, flipHorizontally);
-
+                guiState.segmentation.maskBlurAmount, flipHorizontally, data2,
+                data3, data4);
+            const ctx = canvas.getContext('2d');
+            poses.forEach(({score, keypoints}) => {
+              if (score >= 0.2) {
+                drawKeypoints(keypoints, 0.1, ctx);
+                drawSkeleton(keypoints, 0.1, ctx);
+              }
+            });
             break;
           case 'bokeh':
             bodyPix.drawBokehEffect(
@@ -433,7 +461,13 @@ function segmentBodyInRealTime() {
  */
 export async function bindPage() {
   // Load the BodyPix model weights with architecture 0.75
-  state.net = await bodyPix.load(+guiState.input.mobileNetArchitecture);
+  state.net = await bodyPix.load({
+    architecture: guiState.input.architecture,
+    outputStride: guiState.input.outputStride,
+    inputResolution: guiState.input.inputResolution,
+    multiplier: guiState.input.multiplier,
+    quantBytes: guiState.input.quantBytes
+  });
 
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'inline-block';
