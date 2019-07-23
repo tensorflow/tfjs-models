@@ -60,6 +60,11 @@ export interface BaseModel {
    * offsets: A Tensor3D that represents the offsets.
    * displacementFwd: A Tensor3D that represents the forward displacement.
    * displacementBwd: A Tensor3D that represents the backward displacement.
+   * segmentation: A Tensor3D that represents the segmentation of all people.
+   * longOffsets: A Tensor3D that represents the long offsets used for instance
+   * grouping. partHeatmaps: A Tensor3D that represents the body part
+   * segmentation. partOffsets: A Tensor3D that represents the UV offsets within
+   * each body part.
    */
   predict(input: tf.Tensor3D): {[key: string]: tf.Tensor3D};
   /**
@@ -79,6 +84,10 @@ export interface BaseModel {
  * the model at the cost of speed.  Set this to a larger value to increase speed
  * at the cost of accuracy. Stride 32 is supported for ResNet and
  * stride 8,16,32 are supported for various MobileNetV1 models.
+ *
+ * `inputResolution`: One of the number specified by BodyPixInputResolution.
+ * It represents the input image resolution of the model. The larger the size
+ * of the input image, and more accurate the model at the cost of speed.
  *
  * `multiplier`: An optional number with values: 1.01, 1.0, 0.75, or
  * 0.50. The value is used only by MobileNet architecture. It is the float
@@ -106,15 +115,17 @@ export interface ModelConfig {
   quantBytes?: BodyPixQuantBytes;
 }
 
-// The default configuration for loading MobileNetV1 based PoseNet.
+// The default configuration for loading MobileNetV1 based BodyPix.
+//
+// TODO(tylerzhu): Adds MobileNetV1 BodyPix 2.0 configuration.
 //
 // (And for references, the default configuration for loading ResNet
 // based PoseNet is also included).
-//
 const RESNET_CONFIG = {
   architecture: 'ResNet50',
   outputStride: 32,
-  quantBytes: 2,
+  inputResolution: 513,
+  quantBytes: 4,
 } as ModelConfig;
 
 
@@ -200,8 +211,8 @@ export class BodyPix {
     const {
       segmentation,
       longOffsets,
-      heatmapScores,
-      offsets,
+      // heatmapScores,
+      // offsets,
       heatmapScoresRaw,
       offsetsRaw,
       displacementFwdRaw,
@@ -220,6 +231,10 @@ export class BodyPix {
         displacementBwd
       } = this.predictForSegmentationAndLongRangeOffsets(resized);
 
+      // decoding without scaling.
+
+
+      // decoding with scaling.
       const scaledSegmentScores =
           scaleAndCropToInputTensorShape(
               segmentLogits, [height, width],
@@ -231,20 +246,20 @@ export class BodyPix {
           longOffsets, [height, width], [inputResolution, inputResolution],
           [[padding.top, padding.bottom], [padding.left, padding.right]]);
 
-      const scaledOffsets = scaleAndCropToInputTensorShape(
-          offsets, [height, width], [inputResolution, inputResolution],
-          [[padding.top, padding.bottom], [padding.left, padding.right]]);
+      // const scaledOffsets = scaleAndCropToInputTensorShape(
+      //     offsets, [height, width], [inputResolution, inputResolution],
+      //     [[padding.top, padding.bottom], [padding.left, padding.right]]);
 
-      const scaledHeatmapScores = scaleAndCropToInputTensorShape(
-          heatmapScores, [height, width], [inputResolution, inputResolution],
-          [[padding.top, padding.bottom], [padding.left, padding.right]]);
+      // const scaledHeatmapScores = scaleAndCropToInputTensorShape(
+      //     heatmapScores, [height, width], [inputResolution, inputResolution],
+      //     [[padding.top, padding.bottom], [padding.left, padding.right]]);
 
       return {
         segmentation:
             toMask(scaledSegmentScores.squeeze(), segmentationThreshold),
         longOffsets: scaledLongOffsets,
-        offsets: scaledOffsets,
-        heatmapScores: scaledHeatmapScores,
+        // offsets: scaledOffsets,
+        // heatmapScores: scaledHeatmapScores,
         heatmapScoresRaw: heatmapScores,
         offsetsRaw: offsets,
         displacementFwdRaw: displacementFwd,
@@ -254,8 +269,8 @@ export class BodyPix {
 
     const result = await segmentation.data() as Uint8Array;
     const result2 = await longOffsets.data() as Float32Array;
-    const result3 = await heatmapScores.data() as Float32Array;
-    const result4 = await offsets.data() as Float32Array;
+    // const result3 = await heatmapScores.data() as Float32Array;
+    // const result4 = await offsets.data() as Float32Array;
 
     const [scoresBuffer, offsetsBuffer, displacementsFwdBuffer, displacementsBwdBuffer] =
         await toTensorBuffers3D([
@@ -282,8 +297,8 @@ export class BodyPix {
       // data: result,
       data: instanceMasks.data,
       data2: result2,
-      data3: result3,
-      data4: result4,
+      // data3: result3,
+      // data4: result4,
       poses: poses
     };
   }

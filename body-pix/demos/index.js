@@ -151,9 +151,7 @@ async function loadImage() {
 async function loadVideo(cameraLabel) {
   try {
     // state.video = await setupCamera(cameraLabel);
-    console.log('load...');
     state.video = await loadImage();
-    console.log('loaded');
   } catch (e) {
     let info = document.getElementById('info');
     info.textContent = 'this browser does not support video capture,' +

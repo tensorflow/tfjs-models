@@ -19,6 +19,8 @@ import {ConvolutionDefinition, mobileNetArchitectures} from './mobilenet';
 
 const BASE_URL = 'https://storage.googleapis.com/tfjs-models/savedmodel/';
 
+// Currently it is using local server for debugging.
+// TODO(tylerzhu): switch to use storage.googleapis.com.
 const RESNET50_BASE_URL = 'http://localhost:8080/';
 
 export type Checkpoint = {
@@ -45,7 +47,7 @@ export const checkpoints: {[multiplier: number]: Checkpoint} = {
   }
 };
 
-// The PoseNet 2.0 ResNet50 models use the latest TensorFlow.js 1.0 model
+// The BodyPix 2.0 ResNet50 models use the latest TensorFlow.js 1.0 Graph
 // format.
 export function resNet50Checkpoint(stride: number, quantBytes: number): string {
   const graphJson = `resnet50-%3Fx%3F-stride${stride}/model.json`;
