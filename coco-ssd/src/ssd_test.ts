@@ -51,10 +51,18 @@ describeWithFlags('ObjectDetection', NODE_ENVS, () => {
 
     expect(data).toEqual([{bbox: [227, 227, 0, 0], class: 'person', score: 1}]);
   });
+  it('should allow custom model url', async () => {
+    const objectDetection = await load({base: 'mobilenet_v1'});
+
+    expect(tfconv.loadGraphModel)
+        .toHaveBeenCalledWith(
+            'https://storage.googleapis.com/tfjs-models/' +
+            'savedmodel/ssd_mobilenet_v1/model.json');
+  });
 
   it('should allow custom model url', async () => {
     const objectDetection =
-        await load('mobilenet_v1', 'https://test.org/model.json');
+        await load({modelUrl: 'https://test.org/model.json'});
 
     expect(tfconv.loadGraphModel)
         .toHaveBeenCalledWith('https://test.org/model.json');

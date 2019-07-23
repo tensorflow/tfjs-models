@@ -33,14 +33,30 @@ export interface DetectedObject {
   score: number;
 }
 
-export async function load(
-    base: ObjectDetectionBaseModel = 'lite_mobilenet_v2', modelUrl?: string) {
+/**
+ * Coco-ssd model loading is configurable using the following config dictionary.
+ *
+ * `base`: ObjectDetectionBaseModel. It determines wich PoseNet architecture
+ * to load. The supported architectures are: 'mobilenet_v1', 'mobilenet_v2' and
+ * 'lite_mobilenet_v2'. It is default to 'lite_mobilenet_v2'.
+ *
+ * `modelUrl`: An optional string that specifies custom url of the model. This
+ * is useful for area/countries that don't have access to the model hosted on
+ * GCP.
+ */
+export interface ModelConfig {
+  base?: ObjectDetectionBaseModel;
+  modelUrl?: string;
+}
+
+export async function load(config: ModelConfig = {}) {
   if (tf == null) {
     throw new Error(
         `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
         `also include @tensorflow/tfjs on the page before using this model.`);
   }
-
+  const base = config.base || 'lite_mobilenet_v2';
+  const modelUrl = config.modelUrl;
   if (['mobilenet_v1', 'mobilenet_v2', 'lite_mobilenet_v2'].indexOf(base) ===
       -1) {
     throw new Error(
