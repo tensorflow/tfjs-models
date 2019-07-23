@@ -17,11 +17,23 @@
 
 import * as tf from '@tensorflow/tfjs-core';
 
+import {Box} from './box';
+
 const LANDMARKS_COUNT = 468;
 
 export class BlazePipeline {
+  private blazeface: any;
+  private blazemesh: any;
+  private meshWidth: number;
+  private meshHeight: number;
+  private maxContinuousChecks: number;
+  private runsWithoutFaceDetector: number;
+  private ROIs: any;
+  private maxFaces: number;
+
   constructor(
-      blazeface, blazemesh, meshWidth, meshHeight, maxContinuousChecks) {
+      blazeface: any, blazemesh: any, meshWidth: number, meshHeight: number,
+      maxContinuousChecks: number) {
     this.blazeface = blazeface;
     this.blazemesh = blazemesh;
     this.meshWidth = meshWidth;
@@ -39,7 +51,7 @@ export class BlazePipeline {
    * @param {tf.Tensor!} image - image tensor of shape [1, H, W, 3].
    * @return {tf.Tensor?} tensor of 2d coordinates (1, 468, 2)
    */
-  predict(image) {
+  predict(image: tf.Tensor) {
     if (this.needsROIsUpdate()) {
       const box = this.blazeface.getSingleBoundingBox(image);
       if (!box) {
@@ -65,12 +77,12 @@ export class BlazePipeline {
             .add(box.startPoint);
 
     const landmarksBox = this.calculateLandmarksBoundingBox(coords2dScaled);
-    this.updateROIsFromFaceDetector(landmarksBox);
+    this.updateROIsFromFaceDetector(landmarksBox as {} as tf.Tensor[]);
 
     return [coords2dScaled, landmarksBox, flag]
   }
 
-  updateROIsFromFaceDetector(box) {
+  updateROIsFromFaceDetector(box: tf.Tensor[]) {
     this.ROIs = [box];
   }
 
@@ -90,7 +102,7 @@ export class BlazePipeline {
     return noROIs || shouldCheckForMoreFaces;
   }
 
-  calculateLandmarksBoundingBox(landmarks) {
+  calculateLandmarksBoundingBox(landmarks: tf.Tensor) {
     const xs = landmarks.slice([0, 0], [LANDMARKS_COUNT, 1]);
     const ys = landmarks.slice([0, 1], [LANDMARKS_COUNT, 1]);
 
