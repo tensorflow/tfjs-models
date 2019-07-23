@@ -145,6 +145,7 @@ async function loadImage() {
   });
 
   image.src = 'two_people.jpg';
+  image.src = 'yoga.jpg';
   return promise;
 }
 
@@ -177,7 +178,7 @@ const guiState = {
     quantBytes: 4
   },
   segmentation: {
-    segmentationThreshold: 0.7,
+    segmentationThreshold: 0.5,
     effect: 'mask',
     maskBackground: true,
     opacity: 0.7,
