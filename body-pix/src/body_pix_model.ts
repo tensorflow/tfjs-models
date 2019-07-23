@@ -132,7 +132,7 @@ export class BodyPix {
   }
 
   predictForSegmentationAndLongRangeOffsets(input: tf.Tensor3D): {
-    segmentScores: tf.Tensor3D,
+    segmentLogits: tf.Tensor3D,
     longOffsets: tf.Tensor3D,
     heatmapScores: tf.Tensor3D,
     offsets: tf.Tensor3D,
@@ -148,7 +148,7 @@ export class BodyPix {
       displacementBwd
     } = this.baseModel.predict(input);
     return {
-      segmentScores: segmentation.sigmoid(), longOffsets: longOffsets,
+      segmentLogits: segmentation, longOffsets: longOffsets,
           heatmapScores: heatmapScores, offsets: offsets,
           displacementFwd: displacementFwd, displacementBwd: displacementBwd
     }
@@ -212,7 +212,7 @@ export class BodyPix {
       pad = padding;
       // const segmentScores = this.predictForSegmentation(resized);
       const {
-        segmentScores,
+        segmentLogits,
         longOffsets,
         heatmapScores,
         offsets,
@@ -220,9 +220,12 @@ export class BodyPix {
         displacementBwd
       } = this.predictForSegmentationAndLongRangeOffsets(resized);
 
-      const scaledSegmentScores = scaleAndCropToInputTensorShape(
-          segmentScores, [height, width], [inputResolution, inputResolution],
-          [[padding.top, padding.bottom], [padding.left, padding.right]]);
+      const scaledSegmentScores =
+          scaleAndCropToInputTensorShape(
+              segmentLogits, [height, width],
+              [inputResolution, inputResolution],
+              [[padding.top, padding.bottom], [padding.left, padding.right]])
+              .sigmoid();
 
       const scaledLongOffsets = scaleAndCropToInputTensorShape(
           longOffsets, [height, width], [inputResolution, inputResolution],
