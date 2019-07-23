@@ -15,43 +15,96 @@
  * =============================================================================
  */
 
-import * as tfconv from '@tensorflow/tfjs-converter';
+// import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 import * as tfl from '@tensorflow/tfjs-layers';
+
+import {BlazeFaceModel} from './face';
 import {BlazePipeline} from './pipeline';
 
 const BLAZEFACE_MODEL_URL =
-    './blazeface_3x3_24ch_dd_bc5_rl6_256x256-web/tensorflowjs_model.pb';
-const BLAZEFACE_WEIGHTS_URL =
-    './blazeface_3x3_24ch_dd_bc5_rl6_256x256-web/weights_manifest.json';
+    'https://facemesh.s3.amazonaws.com/facedetector/rewritten_detector.json';
+
 const BLAZE_MESH_MODEL_PATH =
-    './model_blaze__output_mesh_contours_faceflag-release-1.0.0-web-keras/model.json';
+    'https://facemesh.s3.amazonaws.com/facemesh/model.json';
+
+export async function load() {
+  const faceMesh = new FaceMesh();
+  await faceMesh.load();
+  return faceMesh;
+}
 
 export class FaceMesh {
-  private blazeFaceModel: tfconv.GraphModel;
-  private blazeMeshModel: tfconv.GraphModel;
   private pipeline: any;
 
-  async load() {
+  detectionConfidence: number;
+
+  async load(
+      meshWidth = 128, meshHeight = 128, maxContinuousChecks = 5,
+      detectionConfidence = 0.9) {
     const [blazeFaceModel, blazeMeshModel] =
         await Promise.all([this.loadFaceModel(), this.loadMeshModel()]);
 
-    this.blazeFaceModel = blazeFaceModel;
-    this.blazeMeshModel = blazeMeshModel;
+    const blazeface = new BlazeFaceModel(blazeFaceModel, meshWidth, meshHeight);
 
-    this.pipeline = new BlazePipeline(blazeFaceModel, blazeMeshModel);
+    this.pipeline = new BlazePipeline(
+        blazeface, blazeMeshModel, meshWidth, meshHeight, maxContinuousChecks);
+
+    this.detectionConfidence = detectionConfidence;
   }
 
   loadFaceModel() {
-    return tf.loadFrozenModel(BLAZEFACE_MODEL_URL, BLAZEFACE_WEIGHTS_URL);
+    return tfl.loadLayersModel(BLAZEFACE_MODEL_URL);
   }
 
   loadMeshModel() {
-    return tf.loadModel(BLAZE_MESH_MODEL_PATH);
+    return tfl.loadLayersModel(BLAZE_MESH_MODEL_PATH);
   }
 
-  getMesh(videoElement) {
-    const image = tf.fromPixels(videoElement).toFloat();
-    return pipeline.next_meshes(image);
+  clearPipelineROIs(flag: [[number]]) {
+    if (flag[0][0] < this.detectionConfidence) {
+      this.pipeline.clearROIs();
+    }
+  }
+
+  async estimateFace(video: HTMLVideoElement, returnTensors = false) {
+    const prediction = tf.tidy(() => {
+      const image = tf.browser.fromPixels(video).toFloat().expandDims(0);
+      return this.pipeline.predict(image);
+    });
+
+    if (prediction != null) {
+      const [coords2dScaled, landmarksBox, flag] = prediction;
+
+      if (returnTensors) {
+        const flagArr = await flag.array();
+        this.clearPipelineROIs(flagArr);
+
+        return {
+          mesh: coords2dScaled,
+          boundingBox: {
+            topLeft: landmarksBox.startPoint,
+            bottomRight: landmarksBox.endPoint
+          }
+        };
+      }
+
+      const [coordsArr, topLeft, bottomRight, flagArr] = await Promise.all([
+        coords2dScaled, landmarksBox.startPoint, landmarksBox.endPoint, flag
+      ].map(async d => await d.array()));
+
+      flag.dispose();
+      coords2dScaled.dispose();
+
+      this.clearPipelineROIs(flagArr);
+
+      return {
+        mesh: coordsArr,
+        boundingBox: {topLeft: topLeft[0], bottomRight: bottomRight[0]}
+      };
+    }
+
+    // No face in view.
+    return null;
   }
 }
