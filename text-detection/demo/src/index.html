@@ -27,16 +27,16 @@ limitations under the License.
   <div class="container">
     <div class="section p-t-sm">
       <nav class="navbar m-b-sm">
-        <div class="navbar-brand is-inline-flex flex-should-wrap">
+        <div class="navbar-brand is-inline-flex flex-should-wrap is-full-width">
           <h1 class="navbar-item">
             <img alt="TensorFlow.js Logo" src="./assets/tfjs-logo.png" />
-            <span class="tag is-white is-medium">
-              <b>Text Detection Demo</b>
-            </span>
           </h1>
-          <div class="navbar-item message has-medium-text has-background-white is-vcentered is-inline-block is-full-width">
-            <div class="columns message-body is-marginless is-paddingless  navbar-item">
-              <b class='column is-narrow'>Status</b>
+          <span class="navbar-item tag is-white is-medium is-vcentered">
+            <b>Text Detection Demo</b>
+          </span>
+          <div class="navbar-item message has-medium-text has-background-white is-vcentered has-flex-1">
+            <div class="message-body is-marginless is-paddingless columns is-multiline">
+              <b class='column is-narrow'>Status:</b>
               <span class='column is-narrow' id="status-message">Loading models...</span>
             </div>
           </div>
@@ -80,7 +80,7 @@ limitations under the License.
                     </span>
                     <div class="dropdown-menu info-pop-up" id="dropdown-menu-post-processing-info" role="menu">
                       <div class="dropdown-content">
-                        <div class="dropdown-item">
+                        <div class="dropdown-item text-breaks">
                           <div class="notification is-warning">
                             Three methods are supported in this demo:
                           </div>
@@ -109,7 +109,7 @@ limitations under the License.
                       </div>
                       <div class="dropdown-menu info-pop-up" id="dropdown-menu-resize-length-info" role="menu">
                         <div class="dropdown-content">
-                          <div class="dropdown-item">
+                          <div class="dropdown-item text-breaks">
                             <div class="notification is-warning">
                               The greater the length, the better accuracy and precision you can get at the cost
                               of
@@ -140,7 +140,7 @@ limitations under the License.
                       </div>
                       <div class="dropdown-menu info-pop-up" id="dropdown-menu4" role="menu">
                         <div class="dropdown-content">
-                          <div class="dropdown-item">
+                          <div class="dropdown-item text-breaks">
                             <div class="notification is-warning">
                               Text boxes with areas less than this value are ignored.
                             </div>
@@ -168,7 +168,7 @@ limitations under the License.
                       </span>
                       <div class="dropdown-menu info-pop-up" id="dropdown-menu-min-confidence" role="menu">
                         <div class="dropdown-content">
-                          <div class="dropdown-item">
+                          <div class="dropdown-item text-breaks">
                             <div class="notification is-warning">
                               Minimum allowable confidence of the prediction that a pixel corresponds to text.
                             </div>

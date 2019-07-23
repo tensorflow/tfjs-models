@@ -11,6 +11,10 @@
   flex: 1 !important;
 }
 
+.m-l-sm {
+  margin-left: 0.5rem;
+}
+
 .m-r-sm {
   margin-right: 0.5rem;
 }
@@ -108,7 +112,6 @@
   text-align: center;
   width: 20px;
   height: 20px;
-  font-size: 0.9em;
   border-radius: 100%;
   margin-right: 4px;
   color: black;
@@ -124,9 +127,12 @@
   text-decoration: none;
 }
 
-.dropdown-item {
+.text-breaks {
   word-wrap: break-word;
   white-space: normal;
-  min-width: 225px;
+}
+
+.dropdown-item {
+  min-width: 260px;
   width: auto;
 }
