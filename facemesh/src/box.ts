@@ -1,7 +1,11 @@
 import * as tf from '@tensorflow/tfjs-core';
 
 export class Box {
-  constructor(startEndTensor) {
+  public startEndTensor: tf.Tensor;
+  public startPoint: tf.Tensor;
+  public endPoint: tf.Tensor;
+
+  constructor(startEndTensor: tf.Tensor) {
     // keep tensor for the next frame
     this.startEndTensor = tf.keep(startEndTensor);
     // startEndTensor[:, 0:2]
@@ -19,36 +23,43 @@ export class Box {
     return tf.add(this.startPoint, halfSize);
   }
 
-  cutFromAndResize(image, crop_size) {
+  cutFromAndResize(image: tf.Tensor4D, cropSize: [number, number]) {
     const h = image.shape[1];
     const w = image.shape[2];
 
     const xyxy = this.startEndTensor;
-    const yxyx = tf.concat2d([
-      xyxy.slice([0, 1], [-1, 1]), xyxy.slice([0, 0], [-1, 1]),
-      xyxy.slice([0, 3], [-1, 1]), xyxy.slice([0, 2], [-1, 1])
-    ]);
-    const rounded_coords = tf.div(yxyx.transpose(), [h, w, h, w]);
-    return tf.image.cropAndResize(image, rounded_coords, [0], crop_size);
+    const yxyx = tf.concat2d(
+        [
+          xyxy.slice([0, 1], [-1, 1]) as tf.Tensor2D,
+          xyxy.slice([0, 0], [-1, 1]) as tf.Tensor2D,
+          xyxy.slice([0, 3], [-1, 1]) as tf.Tensor2D,
+          xyxy.slice([0, 2], [-1, 1]) as tf.Tensor2D
+        ],
+        0);
+    const roundedCoords = tf.div(yxyx.transpose(), [h, w, h, w]);
+    return tf.image.cropAndResize(
+        image, roundedCoords as tf.Tensor2D, [0], cropSize);
   }
 
-  scale(factors) {
+  scale(factors: tf.Tensor) {
     const starts = tf.mul(this.startPoint, factors);
     const ends = tf.mul(this.endPoint, factors);
 
-    const new_coordinates = tf.concat2d([starts, ends], 1);
-    return new Box(new_coordinates);
+    const newCoordinates =
+        tf.concat2d([starts as tf.Tensor2D, ends as tf.Tensor2D], 1);
+    return new Box(newCoordinates);
   }
 
   increaseBox(ratio = 1.5) {
     const centers = this.getCenter();
     const size = this.getSize();
 
-    const new_size = tf.mul(tf.div(size, 2), ratio);
+    const newSize = tf.mul(tf.div(size, 2), ratio);
 
-    const new_starts = tf.sub(centers, new_size);
-    const new_ends = tf.add(centers, new_size);
+    const newStarts = tf.sub(centers, newSize);
+    const newEnds = tf.add(centers, newSize);
 
-    return new Box(tf.concat2d([new_starts, new_ends], 1));
+    return new Box(
+        tf.concat2d([newStarts as tf.Tensor2D, newEnds as tf.Tensor2D], 1));
   }
 }
