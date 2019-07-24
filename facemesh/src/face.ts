@@ -47,15 +47,15 @@ export class BlazeFaceModel {
     this.scoreThreshold = 0.75;
   }
 
-  private getAnchorsConfig(): AnchorsConfig {
+  getAnchorsConfig(): AnchorsConfig {
     return {
       'strides': [8, 16],
       'anchors': [2, 6],
     };
   }
 
-  private generateAnchors(
-      width: number, height: number, outputSpec: AnchorsConfig): tf.Tensor {
+  generateAnchors(width: number, height: number, outputSpec: AnchorsConfig):
+      tf.Tensor {
     const anchors = [];
     for (let i = 0; i < outputSpec.strides.length; ++i) {
       const stride = outputSpec.strides[i];
@@ -78,7 +78,7 @@ export class BlazeFaceModel {
     return tf.tensor(anchors);
   }
 
-  private decodeBounds(boxOutputs: tf.Tensor2D): tf.Tensor2D {
+  decodeBounds(boxOutputs: tf.Tensor2D): tf.Tensor2D {
     const boxStarts = tf.slice(boxOutputs, [0, 0], [-1, 2]);
     const centers = tf.add(boxStarts, this.anchors);
 
@@ -98,7 +98,7 @@ export class BlazeFaceModel {
         1);
   }
 
-  private getBoundingBox(inputImage: tf.Tensor4D): number[][] {
+  getBoundingBox(inputImage: tf.Tensor4D): number[][] {
     const normalizedImage = tf.mul(tf.sub(inputImage, 0.5), 2);
     const detectOutputs = this.blazeFaceModel.predict(normalizedImage);
 
