@@ -1,39 +1,49 @@
+/**
+ * @license
+ * Copyright 2019 Google LLC. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * =============================================================================
+ */
+
 import * as tf from '@tensorflow/tfjs-core';
 import * as tfl from '@tensorflow/tfjs-layers';
 
-function getExactlyOneTensor(xs: tf.Tensor[]) {
-  let x;
+const getExactlyOneTensor = (xs: tf.Tensor[]): tf.Tensor => {
   if (Array.isArray(xs)) {
     if (xs.length !== 1) {
       throw new Error(`Expected Tensor length to be 1; got ${xs.length}.`);
     }
-    x = xs[0];
-  } else {
-    x = xs;
+    return xs[0];
   }
-  return x;
-}
+  return xs;
+};
 
 class ChannelPadding extends tfl.layers.Layer {
   private padding: number;
-  // private mode: string;
 
-  constructor(config: any) {
+  constructor(config: {padding: number}) {
     super({});
 
     this.padding = config.padding;
-    // this.mode = config.mode;
   }
 
-  computeOutputShape(inputShape: number[]) {
-    let batch = inputShape[0], dim1 = inputShape[1], dim2 = inputShape[2];
-    let values = inputShape[3];
-    let new_shape = [batch, dim1, dim2, values + this.padding];
-    return new_shape;
+  computeOutputShape(inputShape: [number, number, number, number]) {
+    const [batch, dim1, dim2, values] = inputShape;
+    return [batch, dim1, dim2, values + this.padding];
   }
 
   call(inputs: tf.Tensor[]) {
-    let input = getExactlyOneTensor(inputs);
+    const input = getExactlyOneTensor(inputs);
     return tf.pad(input, [[0, 0], [0, 0], [0, 0], [0, this.padding]], 0.0);
   }
 
