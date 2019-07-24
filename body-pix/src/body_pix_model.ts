@@ -237,8 +237,7 @@ export class BodyPix {
    */
   async estimatePersonSegmentation(
       input: BodyPixInput,
-      segmentationThreshold = 0.5,
-      ): Promise<PersonSegmentation> {
+      segmentationThreshold = 0.5): Promise<PersonSegmentation> {
     const [height, width] = getInputTensorDimensions(input);
     const inputResolution = this.inputResolution;
 
@@ -246,8 +245,6 @@ export class BodyPix {
     const {
       segmentation,
       longOffsets,
-      // heatmapScores,
-      // offsets,
       heatmapScoresRaw,
       offsetsRaw,
       displacementFwdRaw,

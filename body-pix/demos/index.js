@@ -391,8 +391,7 @@ function segmentBodyInRealTime() {
     switch (guiState.estimate) {
       case 'segmentation':
         const personSegmentation = await state.net.estimatePersonSegmentation(
-            state.video, outputStride,
-            guiState.segmentation.segmentationThreshold);
+            state.video, guiState.segmentation.segmentationThreshold);
 
         switch (guiState.segmentation.effect) {
           case 'mask':
