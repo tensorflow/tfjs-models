@@ -70,9 +70,11 @@ export class FaceMesh {
   }
 
   async estimateFace(video: HTMLVideoElement, returnTensors = false): Promise<{
+    faceInViewConfidence: number,
     mesh: tf.Tensor2D,
     boundingBox: {topLeft: tf.Tensor2D, bottomRight: tf.Tensor2D}
   }|{
+    faceInViewConfidence: number,
     mesh: number[][],
     boundingBox: {topLeft: number[], bottomRight: number[]}
   }> {
@@ -91,6 +93,7 @@ export class FaceMesh {
         this.clearPipelineROIs(flagArr);
 
         return {
+          faceInViewConfidence: flagArr[0][0],
           mesh: coords2dScaled,
           boundingBox: {
             topLeft: landmarksBox.startPoint,
@@ -109,6 +112,7 @@ export class FaceMesh {
       this.clearPipelineROIs(flagArr);
 
       return {
+        faceInViewConfidence: flagArr[0][0],
         mesh: coordsArr,
         boundingBox: {topLeft: topLeft[0], bottomRight: bottomRight[0]}
       };
