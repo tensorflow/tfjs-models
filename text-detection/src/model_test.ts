@@ -64,8 +64,8 @@ describeWithFlags('TextDetection', NODE_ENVS, () => {
     const model = await load();
 
     const input = tf.tidy(() => {
-      const testImage =
-          decode(readFileSync(resolve(__dirname, 'assets/example.jpeg')), true);
+      const testImage = decode(
+          readFileSync(resolve(__dirname, 'assets/images/google.jpg')), true);
       const rawData = tf.tensor(testImage.data, [
                           testImage.height, testImage.width, 4
                         ]).arraySync() as number[][][];

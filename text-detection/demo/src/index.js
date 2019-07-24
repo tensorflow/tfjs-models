@@ -16,12 +16,10 @@
  */
 
 import 'bulma/css/bulma.css';
-// eslint-disable-next-line max-len
 import 'fabric';
 
 import {load, minTextBoxArea} from '@tensorflow-models/text-detection';
 import * as tf from '@tensorflow/tfjs';
-// import cv from 'cv';
 
 import blueBirdExample from './assets/examples/blue-bird.jpg';
 import gunForHireExample from './assets/examples/gun-for-hire.jpg';
@@ -74,8 +72,12 @@ const getMinConfidenceSlider = () =>
   document.getElementById('min-confidence-slider');
 
 const initializeModel = async () => {
-  const cv = require('./assets/opencv/opencv.js');
-  console.log(cv.imread.toString());
+  // #TODO: Fix this when parcel supports externals.
+  // Otherwise, opencv.js blows up the JS memory heap.
+  // URL for tracking:
+  // https://github.com/parcel-bundler/parcel/issues/144#issuecomment-508672837
+  // const cv = eval('require')('/opencv.js');
+  console.log(cv.findContours.toString());
   toggleInvisible('overlay', false);
   const resizeLengthSlider = getResizeLengthSlider();
   updateSlider(resizeLengthSlider, 'resize-length-value');

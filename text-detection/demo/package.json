@@ -9,11 +9,9 @@
     "node": ">=8.9.0"
   },
   "peerDependencies": {
-    "@tensorflow-models/text-detection": "^0.1.0"
+    "@tensorflow-models/text-detection": "link:.yalc/@tensorflow-models/text-detection"
   },
   "dependencies": {
-    "@babel/runtime": "^7.5.5",
-    "@tensorflow-models/text-detection": "link:.yalc/@tensorflow-models/text-detection",
     "@tensorflow/tfjs": "1.2.5",
     "bulma": "^0.7.5",
     "fabric": "^3.3.2"

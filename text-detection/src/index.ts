@@ -88,7 +88,6 @@ export class TextDetection {
     const boxes =
         await detect(kernelScores, sides[0], sides[1], textDetectionOptions);
     tf.dispose(kernelScores);
-    console.log(boxes);
     return boxes;
   }
 
