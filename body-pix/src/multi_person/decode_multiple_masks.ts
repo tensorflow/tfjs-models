@@ -10,7 +10,6 @@ const NUM_KPT_TO_USE = 17;
 function computeDistance(embedding: Pair[], pose: Pose, minPartScore = 0.3) {
   let distance = 0.0;
   let numKpt = 0;
-  // for (let p = 0; p < embedding.length; p++) {
   for (let p = 0; p < NUM_KPT_TO_USE; p++) {
     if (pose.keypoints[p].score > minPartScore) {
       numKpt += 1;
@@ -29,7 +28,8 @@ function computeDistance(embedding: Pair[], pose: Pose, minPartScore = 0.3) {
 
 export function decodeMultipleMasks(
     segmentation: Uint8Array, longOffsets: Float32Array, poses: Pose[],
-    height: number, width: number, minPartScore = 0.2): PersonSegmentation {
+    height: number, width: number, minPartScore = 0.2,
+    refineSteps = 0): PersonSegmentation {
   let data = new Uint8Array(height * width);
   for (let i = 0; i < height; i += 1) {
     for (let j = 0; j < width; j += 1) {
@@ -45,29 +45,30 @@ export function decodeMultipleMasks(
           let dx = longOffsets[17 * (2 * n + 1) + p];
           let y = i + dy;
           let x = j + dx;
-          // embedding refinement steps.
-          //   for (let t = 0; t < 2; t++) {
-          //     let nn = Math.round(y) * width + Math.round(x);
-          //     dy = longOffsets[17 * (2 * nn) + p];
-          //     dx = longOffsets[17 * (2 * nn + 1) + p];
-          //     y = y + dy;
-          //     x = x + dx;
-          //   }
+          for (let t = 0; t < refineSteps; t++) {
+            y = Math.min(Math.round(y), height - 1);
+            x = Math.min(Math.round(x), width - 1);
+            let nn = y * width + x;
+            dy = longOffsets[17 * (2 * nn) + p];
+            dx = longOffsets[17 * (2 * nn + 1) + p];
+            y = y + dy;
+            x = x + dx;
+          }
           embed.push({y: y, x: x});
         }
 
-        let k_min = -1;
-        let k_min_dist = Infinity;
+        let kMin = -1;
+        let kMinDist = Infinity;
         for (let k = 0; k < poses.length; k++) {
           if (poses[k].score > minPartScore) {
             const dist = computeDistance(embed, poses[k]);
-            if (dist < k_min_dist) {
-              k_min = k;
-              k_min_dist = dist;
+            if (dist < kMinDist) {
+              kMin = k;
+              kMinDist = dist;
             }
           }
         }
-        data[n] = k_min + 1;
+        data[n] = kMin + 1;
       } else {
         data[n] = 0;
       }
