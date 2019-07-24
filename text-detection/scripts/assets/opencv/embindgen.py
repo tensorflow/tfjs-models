@@ -191,7 +191,7 @@ imgproc = {
         # "calcHist",
         # "circle",
         # "compareHist",
-        # "connectedComponents",
+        "connectedComponents",
         # "connectedComponentsWithStats",
         # "contourArea",
         # "convexHull",

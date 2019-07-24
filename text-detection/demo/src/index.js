@@ -24,6 +24,7 @@ import * as tf from '@tensorflow/tfjs';
 import blueBirdExample from './assets/examples/blue-bird.jpg';
 import gunForHireExample from './assets/examples/gun-for-hire.jpg';
 import joyYoungRogersExample from './assets/examples/joy-young-rogers.jpg';
+import {findContours} from './findContours';
 
 const state = {
   processPoints: 'minarearect',
@@ -38,6 +39,7 @@ const textDetectionExamples = {
 const pointProcessors = {
   'minarearect': minTextBoxArea,
   'identity': (x) => x,
+  'contours': findContours,
 };
 const toggleInvisible = (elementId, force = undefined) => {
   const outputContainer = document.getElementById(elementId);
@@ -72,12 +74,6 @@ const getMinConfidenceSlider = () =>
   document.getElementById('min-confidence-slider');
 
 const initializeModel = async () => {
-  // #TODO: Fix this when parcel supports externals.
-  // Otherwise, opencv.js blows up the JS memory heap.
-  // URL for tracking:
-  // https://github.com/parcel-bundler/parcel/issues/144#issuecomment-508672837
-  // const cv = eval('require')('/opencv.js');
-  console.log(cv.findContours.toString());
   toggleInvisible('overlay', false);
   const resizeLengthSlider = getResizeLengthSlider();
   updateSlider(resizeLengthSlider, 'resize-length-value');
@@ -220,6 +216,12 @@ const runPrediction = async (input, predictionStart) => {
   img.onload = async function() {
     await tf.nextFrame();
     const originalHeight = this.height;
+    const originalWidth = this.width;
+
+    if (state.processPoints === 'contours') {
+      pointProcessors[state.processPoints] = (x) =>
+        findContours(x, originalHeight, originalWidth);
+    }
     const factor = height / originalHeight;
 
     const output = await model.predict(this, {

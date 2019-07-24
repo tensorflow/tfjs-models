@@ -12,6 +12,7 @@
     "@tensorflow-models/text-detection": "link:.yalc/@tensorflow-models/text-detection"
   },
   "dependencies": {
+    "@tensorflow-models/text-detection": "link:.yalc/@tensorflow-models/text-detection",
     "@tensorflow/tfjs": "1.2.5",
     "bulma": "^0.7.5",
     "fabric": "^3.3.2"

@@ -17,7 +17,16 @@ limitations under the License.
 <head>
   <title>Text Detection Demo</title>
   <link rel="stylesheet" href="index.css" />
-  <script src="index.js"></script>
+  <!--
+    #TODO: This can be replaced with a local external when parcel
+    starts supporting it. You can track the progress here:
+
+    https://github.com/parcel-bundler/parcel/issues/144
+
+    #TODO(tfjs): Replace this URL after you host the model
+  -->
+  <script defer src="https://storage.googleapis.com/gsoc-tfjs/utilities/text-detection/opencv.js"></script>
+  <script defer src="index.js"></script>
 </head>
 
 <body>

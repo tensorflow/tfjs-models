@@ -135,8 +135,5 @@ docker-compose up
 DESTINATION=$(dirname $SCRIPT_DIR)/src/assets/opencv/opencv.js
 notify "=" "Copying the distribution file to $DESTINATION..."
 cp $OPENCV_JS_DIR/bin/opencv.js $DESTINATION
-notify "=" "Copying the distribution file to $DESTINATION..."
-DESTINATION=$(dirname $SCRIPT_DIR)/demo/src/assets/opencv/opencv.js
-cp $OPENCV_JS_DIR/bin/opencv.js $DESTINATION
 
 notify "=" "Success!"
