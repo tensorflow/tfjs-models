@@ -51,7 +51,7 @@ const renderPrediction =
   stats.begin();
   const prediction = await model.estimateFace(video);
   if (prediction) {
-    const keypoints = prediction.mesh;
+    const keypoints = prediction.annotations.silhouette;
 
     ctx.drawImage(
         video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width,
