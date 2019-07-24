@@ -37,14 +37,16 @@ class ChannelPadding extends tfl.layers.Layer {
     this.padding = config.padding;
   }
 
-  computeOutputShape(inputShape: [number, number, number, number]) {
+  computeOutputShape(inputShape: [number, number, number, number]):
+      [number, number, number, number] {
     const [batch, dim1, dim2, values] = inputShape;
     return [batch, dim1, dim2, values + this.padding];
   }
 
-  call(inputs: tf.Tensor[]) {
+  call(inputs: tf.Tensor4D[]): tf.Tensor4D {
     const input = getExactlyOneTensor(inputs);
-    return tf.pad(input, [[0, 0], [0, 0], [0, 0], [0, this.padding]], 0.0);
+    return tf.pad(input, [[0, 0], [0, 0], [0, 0], [0, this.padding]], 0.0) as
+        tf.Tensor4D;
   }
 
   static get className() {

@@ -115,6 +115,6 @@ export class BlazeFaceModel {
     }
 
     const factors = tf.div([original_w, original_h], this.inputSize);
-    return new Box(tf.tensor(bboxes)).scale(factors);
+    return new Box(tf.tensor(bboxes)).scale(factors as tf.Tensor1D);
   }
 }

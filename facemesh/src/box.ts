@@ -1,12 +1,29 @@
+/**
+ * @license
+ * Copyright 2019 Google LLC. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * =============================================================================
+ */
+
 import * as tf from '@tensorflow/tfjs-core';
 
 export class Box {
-  public startEndTensor: tf.Tensor;
-  public startPoint: tf.Tensor;
-  public endPoint: tf.Tensor;
+  public startEndTensor: tf.Tensor2D;
+  public startPoint: tf.Tensor2D;
+  public endPoint: tf.Tensor2D;
 
-  constructor(startEndTensor: tf.Tensor) {
-    // keep tensor for the next frame
+  constructor(startEndTensor: tf.Tensor2D) {
+    // Keep tensor for the next frame.
     this.startEndTensor = tf.keep(startEndTensor);
     // startEndTensor[:, 0:2]
     this.startPoint = tf.keep(tf.slice(startEndTensor, [0, 0], [-1, 2]));
@@ -14,16 +31,17 @@ export class Box {
     this.endPoint = tf.keep(tf.slice(startEndTensor, [0, 2], [-1, 2]));
   }
 
-  getSize() {
-    return tf.abs(tf.sub(this.endPoint, this.startPoint));
+  getSize(): tf.Tensor2D {
+    return tf.abs(tf.sub(this.endPoint, this.startPoint)) as tf.Tensor2D;
   }
 
-  getCenter() {
+  getCenter(): tf.Tensor2D {
     const halfSize = tf.div(tf.sub(this.endPoint, this.startPoint), 2);
     return tf.add(this.startPoint, halfSize);
   }
 
-  cutFromAndResize(image: tf.Tensor4D, cropSize: [number, number]) {
+  cutFromAndResize(image: tf.Tensor4D, cropSize: [number, number]):
+      tf.Tensor4D {
     const h = image.shape[1];
     const w = image.shape[2];
 
@@ -41,7 +59,7 @@ export class Box {
         image, roundedCoords as tf.Tensor2D, [0], cropSize);
   }
 
-  scale(factors: tf.Tensor) {
+  scale(factors: tf.Tensor1D): Box {
     const starts = tf.mul(this.startPoint, factors);
     const ends = tf.mul(this.endPoint, factors);
 
@@ -50,7 +68,7 @@ export class Box {
     return new Box(newCoordinates);
   }
 
-  increaseBox(ratio = 1.5) {
+  increaseBox(ratio = 1.5): Box {
     const centers = this.getCenter();
     const size = this.getSize();
 
