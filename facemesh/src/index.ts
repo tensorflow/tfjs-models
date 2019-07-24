@@ -21,6 +21,7 @@ import './layers';
 import * as tf from '@tensorflow/tfjs-core';
 import * as tfl from '@tensorflow/tfjs-layers';
 
+import {Box} from './box';
 import {BlazeFaceModel} from './face';
 import {BlazePipeline} from './pipeline';
 
@@ -62,23 +63,28 @@ export class FaceMesh {
     return tfl.loadLayersModel(BLAZE_MESH_MODEL_PATH);
   }
 
-  clearPipelineROIs(flag: [[number]]) {
+  clearPipelineROIs(flag: number[][]) {
     if (flag[0][0] < this.detectionConfidence) {
       this.pipeline.clearROIs();
     }
   }
 
   async estimateFace(video: HTMLVideoElement, returnTensors = false): Promise<{
+    mesh: tf.Tensor2D,
+    boundingBox: {topLeft: tf.Tensor2D, bottomRight: tf.Tensor2D}
+  }|{
     mesh: number[][],
     boundingBox: {topLeft: number[], bottomRight: number[]}
   }> {
     const prediction = tf.tidy(() => {
-      const image = tf.browser.fromPixels(video).toFloat().expandDims(0);
-      return this.pipeline.predict(image);
+      const image =
+          tf.browser.fromPixels(video).toFloat().expandDims(0) as tf.Tensor4D;
+      return this.pipeline.predict(image) as {};
     });
 
     if (prediction != null) {
-      const [coords2dScaled, landmarksBox, flag] = prediction;
+      const [coords2dScaled, landmarksBox, flag] =
+          prediction as [tf.Tensor2D, Box, tf.Tensor2D];
 
       if (returnTensors) {
         const flagArr = await flag.array();

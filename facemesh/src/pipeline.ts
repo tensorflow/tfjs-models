@@ -16,31 +16,33 @@
  */
 
 import * as tf from '@tensorflow/tfjs-core';
+import * as tfl from '@tensorflow/tfjs-layers';
 
 import {Box} from './box';
+import {BlazeFaceModel} from './face';
 
 const LANDMARKS_COUNT = 468;
 
 export class BlazePipeline {
-  private blazeface: any;
-  private blazemesh: any;
+  private blazeface: BlazeFaceModel;
+  private blazemesh: tfl.LayersModel;
   private meshWidth: number;
   private meshHeight: number;
   private maxContinuousChecks: number;
   private runsWithoutFaceDetector: number;
-  private ROIs: any;
+  private rois: Box[];
   private maxFaces: number;
 
   constructor(
-      blazeface: any, blazemesh: any, meshWidth: number, meshHeight: number,
-      maxContinuousChecks: number) {
+      blazeface: BlazeFaceModel, blazemesh: tfl.LayersModel, meshWidth: number,
+      meshHeight: number, maxContinuousChecks: number) {
     this.blazeface = blazeface;
     this.blazemesh = blazemesh;
     this.meshWidth = meshWidth;
     this.meshHeight = meshHeight;
     this.maxContinuousChecks = maxContinuousChecks;
     this.runsWithoutFaceDetector = 0;
-    this.ROIs = [];
+    this.rois = [];
 
     this.maxFaces = 1;
   }
@@ -51,63 +53,62 @@ export class BlazePipeline {
    * @param {tf.Tensor!} image - image tensor of shape [1, H, W, 3].
    * @return {tf.Tensor?} tensor of 2d coordinates (1, 468, 2)
    */
-  predict(image: tf.Tensor) {
-    if (this.needsROIsUpdate()) {
-      const box = this.blazeface.getSingleBoundingBox(image);
+  predict(image: tf.Tensor4D): [tf.Tensor2D, Box, tf.Tensor2D] {
+    if (this.needsRoisUpdate()) {
+      const box = this.blazeface.getSingleBoundingBox(image as tf.Tensor4D);
       if (!box) {
         this.clearROIs();
         return null;
       }
-      this.updateROIsFromFaceDetector(box.increaseBox());
+      this.updateRoisFromFaceDetector(box.increaseBox());
       this.runsWithoutFaceDetector = 0;
     } else {
       this.runsWithoutFaceDetector++;
     }
 
-    const box = this.ROIs[0];
+    const box = this.rois[0] as Box;
     const face =
         box.cutFromAndResize(image, [this.meshHeight, this.meshWidth]).div(255);
-    const [coords, flag] = this.blazemesh.predict(face);
+    const [coords, flag] =
+        this.blazemesh.predict(face) as [tf.Tensor, tf.Tensor2D];
 
     const coords2d = tf.reshape(coords, [-1, 3]).slice([0, 0], [-1, 2]);
     const coords2dScaled =
         tf.mul(
               coords2d,
               tf.div(box.getSize(), [this.meshWidth, this.meshHeight]))
-            .add(box.startPoint);
+            .add(box.startPoint) as tf.Tensor2D;
 
     const landmarksBox = this.calculateLandmarksBoundingBox(coords2dScaled);
-    this.updateROIsFromFaceDetector(landmarksBox as {} as tf.Tensor[]);
+    this.updateRoisFromFaceDetector(landmarksBox as {} as Box);
 
-    return [coords2dScaled, landmarksBox, flag]
+    return [coords2dScaled, landmarksBox, flag];
   }
 
-  updateROIsFromFaceDetector(box: tf.Tensor[]) {
-    this.ROIs = [box];
+  updateRoisFromFaceDetector(box: Box) {
+    this.rois = [box];
   }
 
   clearROIs() {
-    for (let ROI in this.ROIs) {
-      tf.dispose(ROI);
-    }
-    this.ROIs = [];
+    this.rois = [];
   }
 
-  needsROIsUpdate() {
-    const ROIsCount = this.ROIs.length;
-    const noROIs = ROIsCount == 0;
-    const shouldCheckForMoreFaces = ROIsCount != this.maxFaces &&
+  needsRoisUpdate(): boolean {
+    const roisCount = this.rois.length;
+    const noROIs = roisCount === 0;
+    const shouldCheckForMoreFaces = roisCount !== this.maxFaces &&
         this.runsWithoutFaceDetector >= this.maxContinuousChecks;
 
     return noROIs || shouldCheckForMoreFaces;
   }
 
-  calculateLandmarksBoundingBox(landmarks: tf.Tensor) {
+  calculateLandmarksBoundingBox(landmarks: tf.Tensor): Box {
     const xs = landmarks.slice([0, 0], [LANDMARKS_COUNT, 1]);
     const ys = landmarks.slice([0, 1], [LANDMARKS_COUNT, 1]);
 
     const boxMinMax = tf.stack([xs.min(), ys.min(), xs.max(), ys.max()]);
     const box = new Box(boxMinMax.expandDims(0));
+
     return box.increaseBox();
   }
 }
