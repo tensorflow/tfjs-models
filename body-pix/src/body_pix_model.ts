@@ -128,6 +128,42 @@ const RESNET_CONFIG = {
   quantBytes: 4,
 } as ModelConfig;
 
+/**
+ * BodyPix inference is configurable using the following config dictionary.
+ *
+ * `flipHorizontal`: If the poses should be flipped/mirrored horizontally.
+ * This should be set to true for videos where the video is by default flipped
+ * horizontally (i.e. a webcam), and you want the person & body part
+ * segmentation to be returned in the proper orientation.
+ *
+ */
+export interface InferenceConfig {
+  flipHorizontal: boolean;
+}
+
+/**
+ * Single Person Inference Config
+ */
+export interface SinglePersonInterfaceConfig extends InferenceConfig {}
+
+/**
+ * Multiple Person Inference Config
+ *
+ * `maxDetections`: Maximum number of returned instance detections per image.
+ * Defaults to 10
+ *
+ * `scoreThreshold`: Only return instance detections that have root part
+ * score greater or equal to this value. Defaults to 0.5
+ *
+ * `nmsRadius`: Non-maximum suppression part distance in pixels. It needs
+ * to be strictly positive. Two parts suppress each other if they are less
+ * than `nmsRadius` pixels away. Defaults to 20.
+ **/
+export interface MultiPersonInferenceConfig extends InferenceConfig {
+  maxDetections?: number;
+  scoreThreshold?: number;
+  nmsRadius?: number;
+}
 
 export class BodyPix {
   baseModel: BaseModel;
@@ -200,10 +236,9 @@ export class BodyPix {
    * which are the same dimensions of the input image.
    */
   async estimatePersonSegmentation(
-      input: BodyPixInput, outputStride: OutputStride = 16,
-      segmentationThreshold = 0.5): Promise<PersonSegmentation> {
-    assertValidOutputStride(outputStride);
-
+      input: BodyPixInput,
+      segmentationThreshold = 0.5,
+      ): Promise<PersonSegmentation> {
     const [height, width] = getInputTensorDimensions(input);
     const inputResolution = this.inputResolution;
 
@@ -264,7 +299,7 @@ export class BodyPix {
 
     let poses = await decodeMultiplePoses(
         scoresBuffer, offsetsBuffer, displacementsFwdBuffer,
-        displacementsBwdBuffer, outputStride, 30, 0.3, 20);
+        displacementsBwdBuffer, this.baseModel.outputStride, 30, 0.3, 20);
 
     poses = scaleAndFlipPoses(
         poses, [height, width], [inputResolution, inputResolution], pad, false);
