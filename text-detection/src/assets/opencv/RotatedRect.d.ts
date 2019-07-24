@@ -36,20 +36,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import {Vec3} from './Vec3.d';
+import {Point2} from './Point2';
+import {Rect} from './Rect';
+import {Size} from './Size';
 
-export class Vec {
-  absdiff(otherVec: Vec): Vec;
-  add(otherVec: Vec): Vec;
-  at(index: number): number;
-  cross(): Vec3;
-  div(s: number): Vec;
-  exp(): Vec;
-  hDiv(otherVec: Vec): Vec;
-  hMul(otherVec: Vec): Vec;
-  mean(): Vec;
-  mul(s: number): Vec;
-  norm(): number;
-  sqrt(): Vec;
-  sub(otherVec: Vec): Vec;
+export class RotatedRect {
+  readonly center: Point2;
+  readonly size: Size;
+  readonly angle: number;
+  constructor();
+  constructor(center: Point2, size: Size, angle: number);
+  static points(rect: RotatedRect): Point2[];
 }

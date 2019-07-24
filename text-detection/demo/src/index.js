@@ -19,21 +19,28 @@ import 'bulma/css/bulma.css';
 // eslint-disable-next-line max-len
 import 'fabric';
 
-import {load} from '@tensorflow-models/text-detection';
+import {load, minTextBoxArea} from '@tensorflow-models/text-detection';
 import * as tf from '@tensorflow/tfjs';
+// import cv from 'cv';
 
-import wordDemonstrationExample from './assets/examples/demonstration.jpg';
-import drNoExample from './assets/examples/dr-no.jpg';
+import blueBirdExample from './assets/examples/blue-bird.jpg';
 import gunForHireExample from './assets/examples/gun-for-hire.jpg';
+import joyYoungRogersExample from './assets/examples/joy-young-rogers.jpg';
 
-const state = {};
-const textDetection = {};
-const textDetectionExamples = {
-  'dr-no': drNoExample,
-  'gun-for-hire': gunForHireExample,
-  'demonstration': wordDemonstrationExample,
+const state = {
+  processPoints: 'minarearect',
 };
 
+const textDetection = {};
+const textDetectionExamples = {
+  'joy-young-rogers': joyYoungRogersExample,
+  'gun-for-hire': gunForHireExample,
+  'blue-bird': blueBirdExample,
+};
+const pointProcessors = {
+  'minarearect': minTextBoxArea,
+  'identity': (x) => x,
+};
 const toggleInvisible = (elementId, force = undefined) => {
   const outputContainer = document.getElementById(elementId);
   outputContainer.classList.toggle('is-invisible', force);
@@ -67,6 +74,8 @@ const getMinConfidenceSlider = () =>
   document.getElementById('min-confidence-slider');
 
 const initializeModel = async () => {
+  const cv = require('./assets/opencv/opencv.js');
+  console.log(cv.imread.toString());
   toggleInvisible('overlay', false);
   const resizeLengthSlider = getResizeLengthSlider();
   updateSlider(resizeLengthSlider, 'resize-length-value');
@@ -136,7 +145,8 @@ const displayBoxes = (textDetectionOutput) => {
   const input = document.getElementById('input-image');
   const height = input.height;
   const width = input.width;
-  const canvas = new fabric.StaticCanvas('output-image');
+  const canvas =
+      new fabric.StaticCanvas('output-image', {renderOnAddRemove: false});
   canvas.setWidth(width);
   canvas.setHeight(height);
   fabric.Image.fromURL(input.src, (image) => {
@@ -145,64 +155,34 @@ const displayBoxes = (textDetectionOutput) => {
         .scaleToWidth(width);
 
     canvas.add(output);
-    for (const box of textDetectionOutput) {
-      const color = getRandomColor();
-      canvas.add(new fabric.Polygon(box, {fill: color, stroke: '#000'}));
-      // for (let idx = 0; idx < box.length; ++idx) {
-      //   const from = box[idx];
-      //   const to = box[(idx + 1) % 4];
-      //   canvas.add(new fabric.Line(
-      //       [from.x, from.y, to.x, to.y],
-      //       {stroke: color, strokeWidth: 2, evented: false}));
-      //   // const {x, y} = box[idx];
-      //   // canvas.add(new fabric.Circle({
-      //   //   left: x,
-      //   //   top: y,
-      //   //   radius: 3,
-      //   //   strokeWidth: 1,
-      //   //   stroke: color,
-      //   //   fill: color,
-      //   //   selectable: false,
-      //   //   originX: 'center',
-      //   //   originY: 'center',
-      //   // }));
-      // }
-    };
+    if (state.processPoints !== 'identity') {
+      for (const box of textDetectionOutput) {
+        const color = getRandomColor();
+        canvas.add(new fabric.Polygon(
+            box, {fill: color, stroke: '#000', objectCaching: false}));
+      };
+    } else {
+      for (const box of textDetectionOutput) {
+        const color = getRandomColor();
+        for (let idx = 0; idx < box.length; ++idx) {
+          const {x, y} = box[idx];
+          canvas.add(new fabric.Circle({
+            left: x,
+            top: y,
+            radius: 3,
+            strokeWidth: 1,
+            stroke: color,
+            fill: color,
+            selectable: false,
+            originX: 'center',
+            originY: 'center',
+            objectCaching: false,
+          }));
+        }
+      };
+    }
+    canvas.renderAll();
   });
-  // .onload = function() {
-  //   // apply the downsampling trick from
-  //   // https://stackoverflow.com/a/17862644/3581829
-  //   const offscreenCanvas = document.createElement('canvas');
-  //   offscreenCanvas.width = this.width;
-  //   offscreenCanvas.height = this.height;
-  //   const offscreenCanvasContext = offscreenCanvas.getContext('2d');
-  //   const steps = (offscreenCanvas.width / canvas.width) >> 1;
-  //   offscreenCanvasContext.filter = `blur(${steps}px)`;
-  //   offscreenCanvasContext.drawImage(this, 0, 0);
-  //   ctx.drawImage(
-  //       offscreenCanvas, 0, 0, offscreenCanvas.width, offscreenCanvas.height,
-  //       0, 0, width, height);
-  //   const boxCanvas = document.createElement('canvas');
-  //   boxCanvas.width = this.width;
-  //   boxCanvas.height = this.height;
-  //   const boxCanvasContext = boxCanvas.getContext('2d');
-  //   boxCanvasContext.strokeStyle = '#32CD32';
-  //   boxCanvasContext.lineWidth = 10;
-  //   for (const box of textDetectionOutput) {
-  //     boxCanvasContext.beginPath();
-  //     for (let idx = 0; idx < 4; ++idx) {
-  //       const from = box[idx];
-  //       boxCanvasContext.moveTo(from.x, from.y);
-  //       const to = box[(idx + 1) % 4];
-  //       boxCanvasContext.lineTo(to.x, to.y);
-  //     }
-  //     boxCanvasContext.stroke();
-  //   };
-  //   ctx.drawImage(
-  //       boxCanvas, 0, 0, boxCanvas.width, boxCanvas.height, 0, 0, width,
-  //       height);
-  // };
-  // img.src = input.src;
 
   toggleInvisible('output-card', false);
 
@@ -230,6 +210,8 @@ const scale = (factor, boxes) => {
 
 const runPrediction = async (input, predictionStart) => {
   toggleInvisible('overlay', false);
+  const pointProcessorName = getSelectorValue('post-processing');
+  state.processPoints = pointProcessorName;
   const height = input.height;
   const model = textDetection[state.quantizationBytes];
   const img = new Image();
@@ -242,6 +224,7 @@ const runPrediction = async (input, predictionStart) => {
       resizeLength: getResizeLengthSlider().value,
       minTextBoxArea: getMinTextBoxAreaSlider().value,
       minConfidence: getMinConfidenceSlider().value,
+      processPoints: pointProcessors[state.processPoints],
     });
     status(`Obtained ${output.length} boxes`);
     console.log(JSON.stringify(output));

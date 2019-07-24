@@ -36,9 +36,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import {Point} from './Point.d';
+import {Vec} from './Vec';
 
-export class Point2 extends Point {
+export class Vec2 extends Vec {
   readonly x: number;
   readonly y: number;
   constructor(x: number, y: number);

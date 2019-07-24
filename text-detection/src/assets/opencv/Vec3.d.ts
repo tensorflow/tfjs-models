@@ -36,14 +36,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import {Vec} from './Vec.d';
+import {Vec} from './Vec';
 
-export class Vec6 extends Vec {
-  readonly u: number;
-  readonly v: number;
-  readonly w: number;
+export class Vec3 extends Vec {
   readonly x: number;
   readonly y: number;
   readonly z: number;
-  constructor(u: number, v: number, w: number, x: number, y: number, z: number);
+  constructor(x: number, y: number, z: number);
 }

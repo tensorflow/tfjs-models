@@ -2,7 +2,7 @@
 
 This model is a TensorFlow.js implementation of a versatile text detector based on PSENet, which can precisely detect text instances with arbitrary shapes.
 
-Using the model does not require any specific knowledge about machine learning. It can take any browser-based image elements (<img>, <video> and <canvas> elements, for example) as input return an array of bounding boxes.
+Using the model does not require any specific knowledge about machine learning. It can take any browser-based image elements (`<img>`, `<video>` and `<canvas>` elements, for example) as input return an array of bounding boxes.
 
 ## Technical Details
 

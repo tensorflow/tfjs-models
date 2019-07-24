@@ -17,7 +17,7 @@
 
 export const config = {
   BASE_PATH: 'https://storage.googleapis.com/gsoc-tfjs/models/text-detection',
-  RESIZE_LENGTH: 512,
+  RESIZE_LENGTH: 576,
   MIN_CONFIDENCE: 0.9,
   MIN_TEXTBOX_AREA: 10
 };

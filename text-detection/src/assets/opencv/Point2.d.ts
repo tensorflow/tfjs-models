@@ -36,23 +36,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import {Size} from './Size.d';
+import {Point} from './Point';
 
-export class Rect {
+export class Point2 extends Point {
   readonly x: number;
   readonly y: number;
-  readonly width: number;
-  readonly height: number;
-  constructor();
-  constructor(x: number, y: number, width: number, height: number);
-  and(rect2: Rect): Rect;
-  or(rect2: Rect): Rect;
-  pad(factor: number): Rect;
-  pad(size: Size): Rect;
-  padAsync(factor: number): Promise<Rect>;
-  padAsync(size: Size): Promise<Rect>;
-  rescale(factor: number): Rect;
-  rescaleAsync(factor: number): Promise<Rect>;
-  toSquare(): Rect;
-  toSquareAsync(): Promise<Rect>;
+  constructor(x: number, y: number);
 }

@@ -36,17 +36,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import {Contour} from './Contour.d';
-import {Moments} from './Moments.d';
-import {Point2} from './Point2.d';
-import {Point3} from './Point3.d';
-import {Rect} from './Rect.d';
-import {RotatedRect} from './RotatedRect.d';
-import {Size} from './Size.d';
-import {TermCriteria} from './TermCriteria.d';
-import {Vec2} from './Vec2.d';
-import {Vec3} from './Vec3.d';
-import {Vec4} from './Vec4.d';
+import {Contour} from './Contour';
+import {Moments} from './Moments';
+import {Point2} from './Point2';
+import {Point3} from './Point3';
+import {Rect} from './Rect';
+import {RotatedRect} from './RotatedRect';
+import {Size} from './Size';
+import {TermCriteria} from './TermCriteria';
+import {Vec2} from './Vec2';
+import {Vec3} from './Vec3';
+import {Vec4} from './Vec4';
 
 declare function matFromArray<T>(
     rows: number, columns: number, type: number, array: number[]): Mat;

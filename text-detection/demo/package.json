@@ -12,8 +12,9 @@
     "@tensorflow-models/text-detection": "^0.1.0"
   },
   "dependencies": {
+    "@babel/runtime": "^7.5.5",
     "@tensorflow-models/text-detection": "link:.yalc/@tensorflow-models/text-detection",
-    "@tensorflow/tfjs": "1.2.2",
+    "@tensorflow/tfjs": "1.2.5",
     "bulma": "^0.7.5",
     "fabric": "^3.3.2"
   },
@@ -24,17 +25,16 @@
     "link-local": "yalc add --link @tensorflow-models/text-detection"
   },
   "devDependencies": {
+    "@babel/core": "^7.0.0-0",
+    "@babel/plugin-transform-runtime": "^7.5.5",
+    "@babel/preset-env": "^7.5.5",
     "@types/fabric": "^3.0.0",
-    "babel-core": "^6.26.3",
-    "babel-plugin-transform-runtime": "~6.23.0",
-    "babel-polyfill": "~6.26.0",
-    "babel-preset-env": "~1.7.0",
-    "babel-preset-es2017": "^6.24.1",
     "clang-format": "^1.2.4",
     "cross-env": "^5.2.0",
-    "eslint": "^6.0.1",
+    "eslint": "^6.1.0",
     "eslint-config-google": "^0.13.0",
     "parcel-bundler": "~1.12.3",
+    "seedrandom": "~2.4.3",
     "yalc": "~1.0.0-pre.32"
   },
   "eslintConfig": {

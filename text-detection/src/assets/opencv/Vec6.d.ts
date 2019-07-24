@@ -36,15 +36,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import {Point2} from './Point2.d';
-import {Rect} from './Rect.d';
-import {Size} from './Size.d';
+import {Vec} from './Vec';
 
-export class RotatedRect {
-  readonly center: Point2;
-  readonly size: Size;
-  readonly angle: number;
-  constructor();
-  constructor(center: Point2, size: Size, angle: number);
-  static points(rect: RotatedRect): Point2[];
+export class Vec6 extends Vec {
+  readonly u: number;
+  readonly v: number;
+  readonly w: number;
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+  constructor(u: number, v: number, w: number, x: number, y: number, z: number);
 }

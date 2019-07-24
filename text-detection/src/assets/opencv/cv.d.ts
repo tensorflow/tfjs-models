@@ -34,17 +34,17 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-import {Mat} from './Mat.d';
+import {Mat} from './Mat';
 import {MatVector} from './MatVector';
-import {Point2} from './Point2.d';
-import {Point3} from './Point3.d';
-import {Rect} from './Rect.d';
-import {Size} from './Size.d';
-import {TermCriteria} from './TermCriteria.d';
-import {Vec2} from './Vec2.d';
-import {Vec3} from './Vec3.d';
-import {Vec4} from './Vec4.d';
-import {Vec6} from './Vec6.d';
+import {Point2} from './Point2';
+import {Point3} from './Point3';
+import {Rect} from './Rect';
+import {Size} from './Size';
+import {TermCriteria} from './TermCriteria';
+import {Vec2} from './Vec2';
+import {Vec3} from './Vec3';
+import {Vec4} from './Vec4';
+import {Vec6} from './Vec6';
 
 export interface HistAxes {
   channel: number;

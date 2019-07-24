@@ -36,10 +36,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-import {Vec} from './Vec.d';
+import {Vec3} from './Vec3';
 
-export class Vec2 extends Vec {
-  readonly x: number;
-  readonly y: number;
-  constructor(x: number, y: number);
+export class Vec {
+  absdiff(otherVec: Vec): Vec;
+  add(otherVec: Vec): Vec;
+  at(index: number): number;
+  cross(): Vec3;
+  div(s: number): Vec;
+  exp(): Vec;
+  hDiv(otherVec: Vec): Vec;
+  hMul(otherVec: Vec): Vec;
+  mean(): Vec;
+  mul(s: number): Vec;
+  norm(): number;
+  sqrt(): Vec;
+  sub(otherVec: Vec): Vec;
 }

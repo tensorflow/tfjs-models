@@ -22,14 +22,14 @@ limitations under the License.
 
 <body>
   <div id="overlay" class="is-invisible">
-    <img class="spinner" src="./assets/loader.gif" alt="Spinning wheel" width=32>
+    <img class="spinner" src="./assets/images/loader.gif" alt="Spinning wheel" width=32>
   </div>
   <div class="container">
     <div class="section p-t-sm">
       <nav class="navbar m-b-sm">
         <div class="navbar-brand is-inline-flex flex-should-wrap is-full-width">
           <h1 class="navbar-item">
-            <img alt="TensorFlow.js Logo" src="./assets/tfjs-logo.png" />
+            <img alt="TensorFlow.js Logo" src="./assets/images/tfjs-logo.png" />
           </h1>
           <span class="navbar-item tag is-white is-medium is-vcentered">
             <b>Text Detection Demo</b>
@@ -91,9 +91,9 @@ limitations under the License.
                 </div>
                 <div class="select">
                   <select id="post-processing">
-                    <option value="identity" selected>Draw Points</option>
-                    <option value="minarearect">Determine Min Bounding Box</option>
-                    <option value="contours">Find Contours</option>
+                    <option value="minarearect" selected>Determine Min Bounding Box</option>
+                    <option value="contours">Find Contours (loads OpenCV.js)</option>
+                    <option value="identity">Draw Points</option>
                   </select>
                 </div>
               </div>
@@ -104,7 +104,7 @@ limitations under the License.
                     <div class="dropdown is-hoverable">
                       <div class="dropdown-trigger">
                         <span class="infolink" aria-haspopup="true" aria-controls="dropdown-menu-resize-length-info">:
-                          <span id="resize-length-value">512</span>
+                          <span id="resize-length-value">576</span>
                         </span>
                       </div>
                       <div class="dropdown-menu info-pop-up" id="dropdown-menu-resize-length-info" role="menu">
@@ -123,7 +123,7 @@ limitations under the License.
                   <div class="control">
                     <div>
                       <input type="range" id="resize-length-slider" name="resize-length" min="256" max="1280"
-                        value="512" step="32" class="is-full-width">
+                        value="576" step="32" class="is-full-width">
                     </div>
                   </div>
                 </div>
@@ -191,9 +191,9 @@ limitations under the License.
                 </span>
                 <div class="select">
                   <select id="example">
-                    <option value="dr-no" selected>Dr. No</option>
+                    <option value="blue-bird" selected>I. Bilibin's Blue Bird</option>
+                    <option value="joy-young-rogers">Joy Young Rogers</option>
                     <option value="gun-for-hire">This Gun For Hire</option>
-                    <option value="demonstration">Demonstration</option>
                   </select>
                 </div>
               </div>
@@ -211,7 +211,7 @@ limitations under the License.
               </header>
               <div class="card-content is-flex is-centered-flex is-full-height">
                 <figure class="image">
-                  <img alt="Input image" id="input-image" src="./assets/examples/dr-no.jpg" />
+                  <img alt="Input image" id="input-image" src="./assets/examples/blue-bird.jpg" />
                 </figure>
               </div>
             </div>

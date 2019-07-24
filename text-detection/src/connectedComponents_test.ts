@@ -25,7 +25,7 @@
 // import cv from './opencv';
 
 describe('connectedComponents', () => {
-  it('The connectedComponents output coincides with OpenCV results.',
+  it('The connectedComponents output coincides with OpenCV.js on random input.',
      () => {
          // const input = tf.tidy(() => {
          //   const testImage =

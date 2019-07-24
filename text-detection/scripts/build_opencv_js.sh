@@ -14,17 +14,6 @@
 # limitations under the License.
 # =============================================================================
 
-PYTHON_VERSION=$(python -V 2>&1 | sed 's/.* \([0-9]\).\([0-9]\).*/\1\2/')
-if [ "$PYTHON_VERSION" -lt "36" ]; then
-  echo "This script requires python 3.6 or newer."
-  exit 1
-fi
-
-if ! [ -x "$(command -v realpath)" ]; then
-  echo "Please install coreutils before continuing."
-  exit 1
-fi
-
 set -e
 
 notify() {
@@ -62,15 +51,12 @@ usage() {
   echo "  $0 [ --help | -h ]"
   echo "  $0 [ --target_dir=<value> | --target_dir <value> ] [options]"
   echo
-  echo "Options:"
-  echo "  --use_venv=true|yes|1|t|y :: Use the virtual env with pre-installed dependencies. False by default"
-  echo
-  echo "The default target_dir is dist."
+  echo "The default target_dir is ./scripts/dist."
 }
 
 # set defaults
+SCRIPT_DIR="$(realpath $(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd))"
 LAST_ARG_IDX=$(($# + 1))
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TARGET_DIR="$SCRIPT_DIR/dist"
 USE_VENV="false"
 declare -a LONGOPTS
@@ -78,7 +64,7 @@ declare -a LONGOPTS
 # expects. In this case we declare that loglevel expects/has one
 # argument and range has two. Long options that aren't listed in this
 # way will have zero arguments by default.
-LONGOPTS=([target_dir]=1 [use_venv]=1)
+LONGOPTS=([target_dir]=1)
 OPTSPEC="h-:"
 while getopts "$OPTSPEC" opt; do
   while true; do
@@ -114,9 +100,6 @@ while getopts "$OPTSPEC" opt; do
     target_dir)
       TARGET_DIR=$(realpath $OPTARG)
       ;;
-    use_venv)
-      USE_VENV=$OPTARG
-      ;;
     h | help)
       usage
       exit 0
@@ -143,71 +126,17 @@ TRUE=(
   "y"
 )
 TARGET_DIR=$(realpath $TARGET_DIR)
-CONVERTED_MODELS_DIR=$(realpath "$TARGET_DIR/text-detection")
-ASSETS_DIR=$(realpath "$TARGET_DIR/assets")
-WEIGHTS_URL="https://storage.googleapis.com/gsoc-tfjs/weights/psenet/weights.tar.gz"
-VIRTUALENV_DIR="venv"
-PARENT_DIR="$(pwd)"
 
-notify "=" "Setting up the conversion environment..."
+notify "=" "Building the docker images..."
+export OPENCV_JS_DIR="$TARGET_DIR/opencv.js"
+docker-compose build
+docker-compose up
 
-mkdir -p $ASSETS_DIR
-
-cd $TARGET_DIR
-
-if elementIn "$USE_VENV" "${TRUE[@]}"; then
-  if [ -d $VIRTUALENV_DIR ]; then
-    source $VIRTUALENV_DIR/bin/activate
-  else
-    virtualenv --no-site-packages $VIRTUALENV_DIR
-    source $VIRTUALENV_DIR/bin/activate
-    pip install tensorflowjs
-  fi
-fi
-
-notify "=" "Converting the model to tfjs..."
-
-if ! [ -d $ASSETS_DIR/weights ]; then
-  notify "~" "Downloading the model  weights..."
-  cd $ASSETS_DIR
-  if ! [ -f $ASSETS_DIR/weights.tar.gz ]; then
-    wget -O weights.tar.gz $WEIGHTS_URL
-  fi
-  tar xvfz weights.tar.gz -C weights
-fi
-
-PYTHONPATH="$(dirname $SCRIPT_DIR)/assets/" python $SCRIPT_DIR/assets/psenet/convert_to_saved_model.py \
-  --checkpoint_path $ASSETS_DIR/weights \
-  --output_path $ASSETS_DIR/saved_model
-
-MODEL_NAME="psenet"
-notify "~" "Converting $MODEL_NAME..."
-tensorflowjs_converter \
-  --input_format=tf_saved_model \
-  --output_format=tfjs_graph_model \
-  --signature_name=serving_default \
-  --saved_model_tags=serve \
-  $ASSETS_DIR/saved_model \
-  $CONVERTED_MODELS_DIR/$MODEL_NAME
-
-notify "~" "Converting $MODEL_NAME and quantizing to 1 byte..."
-tensorflowjs_converter \
-  --quantization_bytes 1 \
-  --input_format=tf_saved_model \
-  --output_format=tfjs_graph_model \
-  --signature_name=serving_default \
-  --saved_model_tags=serve \
-  $ASSETS_DIR/saved_model \
-  $CONVERTED_MODELS_DIR/quantized/1/$MODEL_NAME
-
-notify "~" "Converting $MODEL_NAME and quantizing to 2 bytes..."
-tensorflowjs_converter \
-  --quantization_bytes 2 \
-  --input_format=tf_saved_model \
-  --output_format=tfjs_graph_model \
-  --signature_name=serving_default \
-  --saved_model_tags=serve \
-  $ASSETS_DIR/saved_model \
-  $CONVERTED_MODELS_DIR/quantized/2/$MODEL_NAME
+DESTINATION=$(dirname $SCRIPT_DIR)/src/assets/opencv/opencv.js
+notify "=" "Copying the distribution file to $DESTINATION..."
+cp $OPENCV_JS_DIR/bin/opencv.js $DESTINATION
+notify "=" "Copying the distribution file to $DESTINATION..."
+DESTINATION=$(dirname $SCRIPT_DIR)/demo/src/assets/opencv/opencv.js
+cp $OPENCV_JS_DIR/bin/opencv.js $DESTINATION
 
 notify "=" "Success!"

@@ -191,7 +191,7 @@ imgproc = {
         # "calcHist",
         # "circle",
         # "compareHist",
-        "connectedComponents",
+        # "connectedComponents",
         # "connectedComponentsWithStats",
         # "contourArea",
         # "convexHull",
@@ -211,7 +211,7 @@ imgproc = {
         # "equalizeHist",
         # "erode",
         # "filter2D",
-        # "findContours",
+        "findContours",
         # "fitEllipse",
         # "fitLine",
         # "floodFill",
@@ -229,7 +229,7 @@ imgproc = {
         # "matchShapes",
         # "matchTemplate",
         # "medianBlur",
-        "minAreaRect",
+        # "minAreaRect",
         # "minEnclosingCircle",
         # "moments",
         # "morphologyEx",
@@ -534,7 +534,8 @@ def makeWhiteList(module_list):
 
 
 white_list = makeWhiteList(
-    [core, imgproc]  # objdetect, video, dnn, features2d, photo, aruco, calib3d
+    [ # core,
+       imgproc]  # objdetect, video, dnn, features2d, photo, aruco, calib3d
 )
 
 # Features to be exported
