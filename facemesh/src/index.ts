@@ -37,9 +37,8 @@ export async function load() {
 }
 
 export class FaceMesh {
-  private pipeline: any;
-
-  detectionConfidence: number;
+  private pipeline: BlazePipeline;
+  private detectionConfidence: number;
 
   async load(
       meshWidth = 128, meshHeight = 128, maxContinuousChecks = 5,
@@ -55,11 +54,11 @@ export class FaceMesh {
     this.detectionConfidence = detectionConfidence;
   }
 
-  loadFaceModel() {
+  loadFaceModel(): Promise<tfl.LayersModel> {
     return tfl.loadLayersModel(BLAZEFACE_MODEL_URL);
   }
 
-  loadMeshModel() {
+  loadMeshModel(): Promise<tfl.LayersModel> {
     return tfl.loadLayersModel(BLAZE_MESH_MODEL_PATH);
   }
 
@@ -69,7 +68,10 @@ export class FaceMesh {
     }
   }
 
-  async estimateFace(video: HTMLVideoElement, returnTensors = false) {
+  async estimateFace(video: HTMLVideoElement, returnTensors = false): Promise<{
+    mesh: number[][],
+    boundingBox: {topLeft: number[], bottomRight: number[]}
+  }> {
     const prediction = tf.tidy(() => {
       const image = tf.browser.fromPixels(video).toFloat().expandDims(0);
       return this.pipeline.predict(image);
