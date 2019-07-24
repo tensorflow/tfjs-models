@@ -17,7 +17,8 @@
 
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
-import {Color, DeepLabInput, DeepLabOutput, SemanticSegmentationBaseModel, SemanticSegmentationConfig} from './types';
+
+import {DeepLabInput, DeepLabOutput, PredictionConfig, SemanticSegmentationBaseModel, SemanticSegmentationConfig} from './types';
 import {getColormap, getLabels, getURL, toInputTensor, toSegmentationImage} from './utils';
 
 export {getColormap, getLabels, getURL, toSegmentationImage};
@@ -52,9 +53,8 @@ export async function load(modelConfig: SemanticSegmentationConfig = {
   }
   const url = getURL(modelConfig.base, modelConfig.quantizationBytes);
   const graphModel = await tfconv.loadGraphModel(modelConfig.modelUrl || url);
-  const semanticSegmentation =
-      new SemanticSegmentation(graphModel, modelConfig.base);
-  return semanticSegmentation;
+  const deeplab = new SemanticSegmentation(graphModel, modelConfig.base);
+  return deeplab;
 }
 
 export class SemanticSegmentation {
@@ -75,21 +75,21 @@ export class SemanticSegmentation {
     }) as tf.Tensor2D;
   }
 
-  public async segment(
-      input: DeepLabInput, canvas?: HTMLCanvasElement, colormap?: Color[],
-      labels?: string[]): Promise<DeepLabOutput> {
-    if (!((colormap && labels) || this.base)) {
+  public async segment(input: DeepLabInput, config: PredictionConfig = {}):
+      Promise<DeepLabOutput> {
+    if (!((config.colormap && config.labels) || this.base)) {
       throw new Error(
           `Calling the 'segment' method requires either the 'base'` +
           ` attribute to be defined ` +
           `(e.g. 'pascal', 'cityscapes' or'ade20k'),` +
           ` or 'colormap' and 'labels' options to be set. ` +
           `Aborting, since neither has been provided.`);
-    } else if (!(colormap && labels)) {
-      colormap = getColormap(this.base);
-      labels = getLabels(this.base);
+    } else if (!(config.colormap && config.labels)) {
+      config.colormap = getColormap(this.base);
+      config.labels = getLabels(this.base);
     }
 
+    const {colormap, labels, canvas} = config;
     const rawSegmentationMap = tf.tidy(() => this.predict(input));
 
     const [height, width] = rawSegmentationMap.shape;

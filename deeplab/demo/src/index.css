@@ -2,6 +2,14 @@
   z-index: 100;
 }
 
+.flex-should-wrap {
+  flex-wrap: wrap;
+}
+
+.is-inline-flex {
+  display: inline-flex;
+}
+
 .is-flex-column {
   flex-direction: column;
 }
@@ -9,6 +17,11 @@
 .is-concise-message {
   padding: 0.7em;
   display: block;
+  width: 150px;
+}
+
+.is-flex-centered {
+  justify-content: center;
 }
 
 .is-vcentered {
@@ -17,6 +30,22 @@
   margin-bottom: auto;
 }
 
+.is-full-width {
+  width: 100%;
+}
+
 .m-r-sm {
   margin-right: 0.5rem;
+}
+
+.no-breaks {
+  white-space: nowrap;
+}
+
+.min-content {
+  min-width: min-content !important;
+}
+
+.space-evenly {
+  justify-content: space-evenly;
 }

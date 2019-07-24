@@ -31,6 +31,12 @@ export interface SemanticSegmentationConfig {
   modelUrl?: string;
 }
 
+export interface PredictionConfig {
+  canvas?: HTMLCanvasElement;
+  colormap?: Color[];
+  labels?: string[];
+}
+
 export type DeepLabInput =
     |ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement|tf.Tensor3D;
 

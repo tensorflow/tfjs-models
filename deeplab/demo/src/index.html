@@ -33,15 +33,15 @@ limitations under the License.
           </h1>
         </div>
       </nav>
-      <div class="tile is-ancestor">
-        <div class="tile is-vertical">
-          <div class="tile is-parent">
-            <article class="message tile is-child">
+      <div class="tile is-ancestor flex-should-wrap space-evenly">
+        <div class="tile is-parent is-8 min-content">
+          <div class="tile is-child">
+            <article class="message">
               <div class="message-header">
                 <h1>Three types of pre-trained weights are available:</h1>
               </div>
               <div class="message-body">
-                <div class="columns">
+                <div class="columns is-flex-centered">
                   <div class="column">
                     <div class="card large">
                       <div class="card-content">
@@ -54,7 +54,8 @@ limitations under the License.
                         </div>
                       </div>
                       <footer class="card-footer">
-                        <a class="button card-footer-item is-unselectable" id="toggle-pascal-image">Toggle example</a>
+                        <a class="button card-footer-item is-unselectable" id="toggle-pascal-image">Toggle
+                          example</a>
                         <a class="button card-footer-item is-unselectable" id="run-pascal">Run</a>
                       </footer>
                     </div>
@@ -95,7 +96,8 @@ limitations under the License.
                         </div>
                       </div>
                       <footer class="card-footer">
-                        <a class="button card-footer-item is-unselectable" id="toggle-ade20k-image">Toggle example</a>
+                        <a class="button card-footer-item is-unselectable" id="toggle-ade20k-image">Toggle
+                          example</a>
                         <a class="button card-footer-item is-unselectable" id="run-ade20k">Run</a>
                       </footer>
                     </div>
@@ -103,49 +105,44 @@ limitations under the License.
                 </div>
               </div>
             </article>
-          </div>
-          <div class="tile is-parent">
-            <span class="tile is-child is-inline-flex">
-              <span class="is-vcentered m-r-sm">
-                <b>Quantization:</b>
-              </span>
-              <div class="control">
-                <div class="select">
-                  <select id="quantizationBytes">
-                    <option>1</option>
-                    <option selected>2</option>
-                    <option>4</option>
-                  </select>
+            <div class="is-inline-flex is-vcentered flex-should-wrap">
+              <div class="is-inline-flex no-breaks m-r-sm">
+                <span class="is-vcentered m-r-sm">
+                  <b>Quantization:</b>
+                </span>
+                <div class="control">
+                  <div class="select">
+                    <select id="quantizationBytes">
+                      <option>1</option>
+                      <option selected>2</option>
+                      <option>4</option>
+                    </select>
+                  </div>
                 </div>
               </div>
-            </span>
-          </div>
-          <div class="tile is-parent">
-            <p class="tile is-child">
-              <b>Status:</b>
-              <span id="status-message">Loading models...</span>
-            </p>
+              <span class="is-inline-flex no-breaks">
+                <b class="m-r-sm">Status:</b>
+                <span id="status-message">Loading models...</span>
+              </span>
+            </div>
+
           </div>
         </div>
-        <div class="tile is-4">
-          <div class="tile is-parent">
-            <div class="tile is-child box is-flex is-paddingless is-vcentered is-flex-column is-on-top">
-              <div class="section is-marginless">
-                <div class="notification">
-                  For best performance, upload images with objects (chairs,
-                  plants) or animals (humans, cats).
-                </div>
-                <div class="file is-boxed is-centered">
-                  <label class="file-label">
-                    <input class="file-input" type="file" name="image" id="upload-image" />
-                    <span class="file-cta">
-                      <span class="file-label">
-                        Upload an image
-                      </span>
-                    </span>
-                  </label>
-                </div>
-              </div>
+        <div class="tile is-parent is-3">
+          <div class="box tile is-child is-on-top is-inline-flex is-flex-column ">
+            <div class="notification">
+              For best performance, upload images with objects (chairs,
+              plants) or animals (humans, cats).
+            </div>
+            <div class="file is-boxed is-centered">
+              <label class="file-label">
+                <input class="file-input" type="file" name="image" id="upload-image" />
+                <span class="file-cta">
+                  <span class="file-label">
+                    Upload an image
+                  </span>
+                </span>
+              </label>
             </div>
           </div>
         </div>

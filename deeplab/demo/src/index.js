@@ -104,37 +104,18 @@ const displaySegmentationMap = (modelName, deeplabOutput) => {
     legendList.removeChild(legendList.firstChild);
   }
 
-  // #TODO: Fix this
-  // Using for works around the parcel failure with Object.keys
-  // "Uncaught (in promise) ReferenceError: _Object$keys is not defined"
-  // in the code below:
-  //
-  // Object.keys().forEach((label) => {
-  //   const tag = document.createElement('span');
-  //   tag.innerHTML = label;
-  //   const [red, green, blue] = legend[label];
-  //   tag.classList.add('column');
-  //   tag.style.backgroundColor = `rgb(${red}, ${green}, ${blue})`;
-  //   tag.style.padding = '1em';
-  //   tag.style.margin = '1em';
-  //   tag.style.color = '#ffffff';
+  Object.keys(legend).forEach((label) => {
+    const tag = document.createElement('span');
+    tag.innerHTML = label;
+    const [red, green, blue] = legend[label];
+    tag.classList.add('column');
+    tag.style.backgroundColor = `rgb(${red}, ${green}, ${blue})`;
+    tag.style.padding = '1em';
+    tag.style.margin = '1em';
+    tag.style.color = '#ffffff';
 
-  //   legendList.appendChild(tag);
-  // });
-  for (const label in legend) {
-    if (legend.hasOwnProperty(label)) {
-      const tag = document.createElement('span');
-      tag.innerHTML = label;
-      const [red, green, blue] = legend[label];
-      tag.classList.add('column');
-      tag.style.backgroundColor = `rgb(${red}, ${green}, ${blue})`;
-      tag.style.padding = '1em';
-      tag.style.margin = '1em';
-      tag.style.color = '#ffffff';
-
-      legendList.appendChild(tag);
-    }
-  }
+    legendList.appendChild(tag);
+  });
   toggleInvisible('legend-card', false);
 
 
