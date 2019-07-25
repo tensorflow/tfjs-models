@@ -145,6 +145,7 @@ async function loadImage() {
   });
 
   image.src = 'two_people.jpg';
+  // image.src = 'nine_people.jpg';
   return promise;
 }
 
@@ -390,8 +391,10 @@ function segmentBodyInRealTime() {
 
     switch (guiState.estimate) {
       case 'segmentation':
-        const personSegmentation = await state.net.estimatePersonSegmentation(
-            state.video, guiState.segmentation.segmentationThreshold);
+        const personSegmentation =
+            await state.net.estimatePersonSegmentation(state.video, {
+              segmentationThreshold: guiState.segmentation.segmentationThreshold
+            });
 
         switch (guiState.segmentation.effect) {
           case 'mask':

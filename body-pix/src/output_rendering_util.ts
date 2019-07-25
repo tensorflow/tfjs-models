@@ -163,6 +163,38 @@ export function toMaskImageData(
       } else if (data[n] === 2) {
         bytes[4 * n + 1] = 155;
         bytes[4 * n + 3] = 100;
+      } else if (data[n] === 3) {
+        bytes[4 * n + 2] = 155;
+        bytes[4 * n + 3] = 100;
+      } else if (data[n] === 4) {
+        bytes[4 * n + 0] = 155;
+        bytes[4 * n + 1] = 155;
+        bytes[4 * n + 3] = 100;
+      } else if (data[n] === 5) {
+        bytes[4 * n + 1] = 155;
+        bytes[4 * n + 2] = 155;
+        bytes[4 * n + 3] = 100;
+      } else if (data[n] === 6) {
+        bytes[4 * n + 0] = 155;
+        bytes[4 * n + 2] = 155;
+        bytes[4 * n + 3] = 100;
+      } else if (data[n] === 7) {
+        bytes[4 * n + 0] = 155;
+        bytes[4 * n + 1] = 155;
+        bytes[4 * n + 2] = 155;
+        bytes[4 * n + 3] = 100;
+      } else if (data[n] === 8) {
+        bytes[4 * n + 0] = 155;
+        bytes[4 * n + 1] = 55;
+        bytes[4 * n + 3] = 100;
+      } else if (data[n] === 9) {
+        bytes[4 * n + 2] = 155;
+        bytes[4 * n + 1] = 55;
+        bytes[4 * n + 3] = 100;
+      } else if (data[n] === 10) {
+        bytes[4 * n + 0] = 155;
+        bytes[4 * n + 2] = 55;
+        bytes[4 * n + 3] = 100;
       } else {
         bytes[4 * n + 3] = 255;
       }

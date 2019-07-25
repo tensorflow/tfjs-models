@@ -136,9 +136,17 @@ const RESNET_CONFIG = {
  * horizontally (i.e. a webcam), and you want the person & body part
  * segmentation to be returned in the proper orientation.
  *
+ *  `segmentationThreshold`: The minimum that segmentation values must
+ * have to be considered part of the person. Affects the generation of the
+ * segmentation mask. More specifically, it is the threshold used to binarize
+ * the intermediate person segmentation probability. The probablity of each
+ * pixel belongs to a person is in range [0, 1]. If the probablity is greater
+ * than the `segmentationThreshold`, it will be set to 1 otherwise 0.
+ *
  */
 export interface InferenceConfig {
   flipHorizontal: boolean;
+  segmentationThreshold: number;
 }
 
 /**
@@ -164,6 +172,20 @@ export interface MultiPersonInferenceConfig extends InferenceConfig {
   scoreThreshold?: number;
   nmsRadius?: number;
 }
+
+export const SINGLE_PERSON_INFERENCE_CONFIG: SinglePersonInterfaceConfig = {
+  flipHorizontal: false,
+  segmentationThreshold: 0.5
+};
+
+export const MULTI_PERSON_INFERENCE_CONFIG: MultiPersonInferenceConfig = {
+  flipHorizontal: false,
+  segmentationThreshold: 0.5,
+  maxDetections: 5,
+  scoreThreshold: 0.5,
+  nmsRadius: 20,
+};
+
 
 export class BodyPix {
   baseModel: BaseModel;
@@ -211,33 +233,31 @@ export class BodyPix {
   }
 
   /**
-   * Given an image with a person, returns a binary array with 1 for the pixels
-   * that are part of the person, and 0 otherwise. This does
-   * standard ImageNet pre-processing before inferring through the model. Will
-   * resize and crop the image to 353 x 257 while maintaining the original
-   * aspect ratio before feeding through the network. The image pixels
-   * should have values [0-255].
+   * Given an image with a person, returns a binary array with 1 for the
+   * pixels that are part of the person, and 0 otherwise. This does standard
+   * ImageNet pre-processing before inferring through the model. Will resize
+   * and crop the image to 353 x 257 while maintaining the original aspect
+   * ratio before feeding through the network. The image pixels should have
+   * values [0-255].
    *
-   * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
-   * The input image to feed through the network.
+   * @param input
+   * ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement) The input
+   * image to feed through the network.
    *
    * @param outputStride the desired stride for the outputs.  Must be 32, 16,
    * or 8. Defaults to 16. The output width and height will be will be
    * (inputDimension - 1)/outputStride + 1
    *
-   * @param segmentationThreshold The minimum that segmentation values must have
-   * to be considered part of the person.  Affects the generation of the
-   * segmentation mask.
-   *
-   * @return An object containing a width, height, and a binary array with 1 for
-   * the pixels that are part of the person, and 0 otherwise. The array size
-   * corresponds to the number of pixels in the image.  The width and height
-   * correspond to the dimensions of the image the binary array is shaped to,
-   * which are the same dimensions of the input image.
+   * @return An object containing a width, height, and a binary array with 1
+   * for the pixels that are part of the person, and 0 otherwise. The array
+   * size corresponds to the number of pixels in the image.  The width and
+   * height correspond to the dimensions of the image the binary array is
+   * shaped to, which are the same dimensions of the input image.
    */
   async estimatePersonSegmentation(
       input: BodyPixInput,
-      segmentationThreshold = 0.5): Promise<PersonSegmentation> {
+      config: MultiPersonInferenceConfig = MULTI_PERSON_INFERENCE_CONFIG):
+      Promise<PersonSegmentation> {
     const [height, width] = getInputTensorDimensions(input);
     const inputResolution = this.inputResolution;
 
@@ -277,7 +297,7 @@ export class BodyPix {
 
       return {
         segmentation:
-            toMask(scaledSegmentScores.squeeze(), segmentationThreshold),
+            toMask(scaledSegmentScores.squeeze(), config.segmentationThreshold),
         longOffsets: scaledLongOffsets,
         heatmapScoresRaw: heatmapScores,
         offsetsRaw: offsets,
