@@ -17,10 +17,10 @@
 
 import * as tf from '@tensorflow/tfjs-core';
 import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
+import {createCanvas} from 'canvas';
 import {readFileSync} from 'fs';
 import {decode} from 'jpeg-js';
 import {resolve} from 'path';
-
 import {load} from '.';
 import {Point} from './geometry';
 
@@ -54,8 +54,8 @@ describeWithFlags('TextDetection', NODE_ENVS, () => {
     }) as tf.Tensor3D;
     const numOfTensorsBefore = tf.memory().numTensors;
 
-    await model.predict(empty);
-    await model.predict(meaningful);
+    await model.detect(empty);
+    await model.detect(meaningful);
 
     expect(tf.memory().numTensors).toEqual(numOfTensorsBefore);
   });
@@ -83,7 +83,7 @@ describeWithFlags('TextDetection', NODE_ENVS, () => {
 
       return inputBuffer.toTensor();
     }) as tf.Tensor3D;
-    const boxes = await model.predict(input);
+    const boxes = await model.detect(input);
     const xCoords = new Set<number>();
     const yCoords = new Set<number>();
     const points = new Set<Point>();
@@ -115,5 +115,12 @@ describeWithFlags('TextDetection', NODE_ENVS, () => {
       points.size === 4,
     ]);
     expect(conds).toEqual(Array.from(new Array(conds.length), () => true));
+  });
+  it('Text Detection finds no text boxes on an empty canvas', async () => {
+    const model = await load();
+    const x = createCanvas(200, 200);
+    // tslint:disable-next-line: no-any
+    const boxes = await model.detect((x as any) as HTMLCanvasElement);
+    expect(boxes).toEqual([]);
   });
 });

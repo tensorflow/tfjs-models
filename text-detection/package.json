@@ -26,6 +26,7 @@
     "@types/jpeg-js": "^0.3.0",
     "babel-core": "^6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",
+    "canvas": "^2.5.0",
     "jasmine": "^3.2.0",
     "jasmine-core": "~3.4.0",
     "jpeg-js": "^0.3.5",

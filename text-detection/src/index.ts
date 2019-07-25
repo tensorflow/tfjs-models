@@ -58,24 +58,29 @@ export class TextDetection {
   }
 
   public preprocess(input: TextDetectionInput, resizeLength?: number) {
+    if (!resizeLength) {
+      resizeLength = config['RESIZE_LENGTH'];
+    }
     return tf.tidy(() => {
       return resize(input, resizeLength).expandDims(0);
     });
   }
 
-  public async predict(
+  public async detect(
       input: TextDetectionInput, textDetectionOptions: TextDetectionOptions = {
         resizeLength: config['RESIZE_LENGTH'],
         minTextBoxArea: config['MIN_TEXTBOX_AREA'],
         minConfidence: config['MIN_CONFIDENCE'],
         processPoints: minAreaRect
       }): Promise<TextDetectionOutput> {
-    const kernelScores = tf.tidy(() => {
-      const processedInput =
-          this.preprocess(input, textDetectionOptions.resizeLength);
-      return (this.model.predict(processedInput) as tf.Tensor4D).squeeze([0]) as
-          tf.Tensor3D;
-    });
+    textDetectionOptions = {
+      resizeLength: config['RESIZE_LENGTH'],
+      minTextBoxArea: config['MIN_TEXTBOX_AREA'],
+      minConfidence: config['MIN_CONFIDENCE'],
+      processPoints: minAreaRect,
+      ...textDetectionOptions
+    };
+    const kernelScores = this.predict(input, textDetectionOptions.resizeLength);
     const sides = new Array<number>(2);
     if (input instanceof tf.Tensor) {
       const [height, width] = input.shape;
@@ -89,6 +94,16 @@ export class TextDetection {
         await detect(kernelScores, sides[0], sides[1], textDetectionOptions);
     tf.dispose(kernelScores);
     return boxes;
+  }
+
+  public predict(
+      input: TextDetectionInput,
+      resizeLength = config['RESIZE_LENGTH']): tf.Tensor3D {
+    return tf.tidy(() => {
+      const processedInput = this.preprocess(input, resizeLength);
+      return (this.model.predict(processedInput) as tf.Tensor4D).squeeze([0]) as
+          tf.Tensor3D;
+    });
   }
 
   /**

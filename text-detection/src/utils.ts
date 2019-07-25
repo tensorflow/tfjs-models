@@ -37,18 +37,13 @@ export const detect = async(
       minConfidence: config['MIN_CONFIDENCE'],
       resizeLength: config['RESIZE_LENGTH']
     }): Promise<Box[]> => {
-  if (!textDetectionOptions.minTextBoxArea) {
-    textDetectionOptions.minTextBoxArea = config['MIN_TEXTBOX_AREA'];
-  }
-  if (!textDetectionOptions.minConfidence) {
-    textDetectionOptions.minConfidence = config['MIN_CONFIDENCE'];
-  }
-  if (!textDetectionOptions.resizeLength) {
-    textDetectionOptions.resizeLength = config['RESIZE_LENGTH'];
-  }
-  if (!textDetectionOptions.processPoints) {
-    textDetectionOptions.processPoints = minAreaRect;
-  }
+  textDetectionOptions = {
+    resizeLength: config['RESIZE_LENGTH'],
+    minTextBoxArea: config['MIN_TEXTBOX_AREA'],
+    minConfidence: config['MIN_CONFIDENCE'],
+    processPoints: minAreaRect,
+    ...textDetectionOptions
+  };
   const {minTextBoxArea, minConfidence, resizeLength, processPoints} =
       textDetectionOptions;
 

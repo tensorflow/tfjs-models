@@ -236,7 +236,7 @@ const runPrediction = async (input, predictionStart) => {
     }
     const factor = height / originalHeight;
 
-    const output = await model.predict(this, {
+    const output = await model.detect(this, {
       resizeLength: getResizeLengthSlider().value,
       minTextBoxArea: getMinTextBoxAreaSlider().value,
       minConfidence: getMinConfidenceSlider().value,
