@@ -33,7 +33,7 @@
     "eslint": "^6.1.0",
     "eslint-config-google": "^0.13.0",
     "parcel-bundler": "~1.12.3",
-    "seedrandom": "~2.4.3",
+    "seedrandom": "~2.4.4",
     "yalc": "~1.0.0-pre.32"
   },
   "eslintConfig": {
