@@ -20,10 +20,8 @@
     "@tensorflow/tfjs-core": "1.2.2"
   },
   "devDependencies": {
-    "@tensorflow/tfjs": "^1.2.5",
     "@tensorflow/tfjs-converter": "1.2.2",
     "@tensorflow/tfjs-core": "1.2.2",
-    "@tensorflow/tfjs-node": "^1.2.5",
     "@types/jasmine": "~3.3.13",
     "@types/jpeg-js": "^0.3.0",
     "babel-core": "^6.26.0",
