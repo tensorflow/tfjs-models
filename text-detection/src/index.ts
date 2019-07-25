@@ -21,9 +21,9 @@ import * as tf from '@tensorflow/tfjs-core';
 import {config} from './config';
 import {minAreaRect} from './minAreaRect';
 import {TextDetectionConfig, TextDetectionInput, TextDetectionOptions, TextDetectionOutput} from './types';
-import {computeScalingFactors, detect, getURL, resize} from './utils';
+import {computeScalingFactors, convertKernelsToBoxes, getURL, resize} from './utils';
 
-export {computeScalingFactors, detect, getURL, minAreaRect};
+export {computeScalingFactors, convertKernelsToBoxes, getURL, minAreaRect};
 
 export const load = async (modelConfig: TextDetectionConfig = {
   quantizationBytes: 1
@@ -90,8 +90,12 @@ export class TextDetection {
       sides[0] = input.height;
       sides[1] = input.width;
     }
-    const boxes =
-        await detect(kernelScores, sides[0], sides[1], textDetectionOptions);
+    const boxes = await convertKernelsToBoxes(
+        kernelScores,
+        sides[0],
+        sides[1],
+        textDetectionOptions,
+    );
     tf.dispose(kernelScores);
     return boxes;
   }

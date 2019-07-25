@@ -30,7 +30,7 @@ export const getURL = (quantizationBytes: QuantizationBytes) => {
           ''}psenet/model.json`;
 };
 
-export const detect = async(
+export const convertKernelsToBoxes = async(
     kernelScores: tf.Tensor3D, originalHeight: number, originalWidth: number,
     textDetectionOptions: TextDetectionOptions = {
       minTextBoxArea: config['MIN_TEXTBOX_AREA'],
