@@ -73,7 +73,7 @@ and can be used as building blocks in other apps.
     <td rowspan="2"><code>npm i @tensorflow-models/text-detection</code></td>
   </tr>
   <tr>
-    <td><a href="./mobilenet/demo/index.html">source</a></td>
+    <td><a href="./text-detection/demo/index.html">source</a></td>
   </tr>
   <!-- * Audio -->
   <!-- ** Speech Commands -->

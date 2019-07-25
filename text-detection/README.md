@@ -88,21 +88,28 @@ The `detect` method of the `TextDetection` object covers most use cases.
 
 * **image** :: `ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | tf.Tensor3D`;
 
-The image with text
+  The image with text
 
 * **config.minTextBoxArea** (optional) :: `number`
+
   Text boxes with areas less than this value are ignored. Equal to **10** by default.
 
 * **config.minConfidence** (optional) :: `number`
+
   Minimum allowable confidence of the prediction that a pixel corresponds to text. Set to **0.9** by default.
 
 * **config.resizeLength** (optional) :: `number`
+
   The greater the length, the better accuracy and precision you can get at the cost of performance. Equal to **576** by default.
+
   **Note**: *This is the first parameter to fine-tune in order to improve the speed of inference. Setting this value to more than 576 might result in memory overflow.*
 
 * **config.processPoints** (optional) :: `(points: ({x:number, y:number})[]) => ({x:number, y:number})[]`
+
   The method generalizing the set of text pixels to a shape. Two processing functions are supported out of the box:
+
   * The default `minAreaRect` [computes](./src/minAreaRect.ts#L50) the minimum bounding box
+
   * `convexHull` returns the convex hull of the input points
 
   You can test both as follows:
@@ -137,10 +144,12 @@ To compute the raw predictions of PSENet with the image pre-processed for optima
 
 * **image** :: `ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | tf.Tensor3D`;
 
-The image with text
+  The image with text
 
 * **config.resizeLength** (optional) :: `number`
+
   The greater the length, the better accuracy and precision you can get at the cost of performance. Equal to **576** by default.
+
   **Note**: *This is the first parameter to fine-tune in order to improve the speed of inference. Setting this value to more than 576 might result in memory overflow.*
 
 #### `model.predict(image, resizeLength?)` output
@@ -177,18 +186,25 @@ The original height of the input image
 The original width of the input image
 
 * **config.minTextBoxArea** (optional) :: `number`
+
   Text boxes with areas less than this value are ignored. Equal to **10** by default.
 
 * **config.minConfidence** (optional) :: `number`
+
   Minimum allowable confidence of the prediction that a pixel corresponds to text. Set to **0.9** by default.
 
 * **config.resizeLength** (optional) :: `number`
+
   The greater the length, the better accuracy and precision you can get at the cost of performance. Equal to **576** by default.
+
   **Note**: *This is the first parameter to fine-tune in order to improve the speed of inference. Setting this value to more than 576 might result in memory overflow.*
 
 * **config.processPoints** (optional) :: `(points: ({x:number, y:number})[]) => ({x:number, y:number})[]`
+
   The method generalizing the set of text pixels to a shape. Two processing functions are supported out of the box:
+
   * The default `minAreaRect` [computes](./src/minAreaRect.ts#L50) the minimum bounding box
+
   * `convexHull` returns the convex hull of the input points
 
   You can test both as follows:
@@ -203,32 +219,32 @@ The original width of the input image
 
 #### `convertKernelsToBoxes(kernelScores, originalHeight, originalWidth, config?)` outputs
 
-A promise of an array with individual boxes, represented as an array of points (objects with `x` and `y` attributes).
+  A promise of an array with individual boxes, represented as an array of points (objects with `x` and `y` attributes).
 
 #### `convertKernelsToBoxes(kernelScores, originalHeight, originalWidth, config?)` example
 
-```typescript
-import {createCanvas} from 'canvas';
-import * as psenet from '@tensorflow-models/text-detection';
-const loadModel = async () => {
-  const quantizationBytes = 2;  // either 1, 2 or 4
-  return await psenet.load({quantizationBytes});
-};
+  ```typescript
+  import {createCanvas} from 'canvas';
+  import * as psenet from '@tensorflow-models/text-detection';
+  const loadModel = async () => {
+    const quantizationBytes = 2;  // either 1, 2 or 4
+    return await psenet.load({quantizationBytes});
+  };
 
-// this empty canvas serves as an example input
-const input = createCanvas(200, 200);
-const processPoints = psenet.convexHull;
-// ...
+  // this empty canvas serves as an example input
+  const input = createCanvas(200, 200);
+  const processPoints = psenet.convexHull;
+  // ...
 
-loadModel()
-    .then((model) => model.predict(input))
-    .then(
-        (kernelScores) => psenet.convertKernelsToBoxes(
-            kernelScores, input.height, input.width, {processPoints}))
-    .then(
-        (boxes) => console.log(
-            `The predicted text boxes are ${JSON.stringify(boxes)}`));
-```
+  loadModel()
+      .then((model) => model.predict(input))
+      .then(
+          (kernelScores) => psenet.convertKernelsToBoxes(
+              kernelScores, input.height, input.width, {processPoints}))
+      .then(
+          (boxes) => console.log(
+              `The predicted text boxes are ${JSON.stringify(boxes)}`));
+  ```
 
 ## Technical Details
 
