@@ -17,17 +17,15 @@
 
 import * as tf from '@tensorflow/tfjs-core';
 
+// The bounding box of the face mesh.
 export class Box {
   public startEndTensor: tf.Tensor2D;
   public startPoint: tf.Tensor2D;
   public endPoint: tf.Tensor2D;
 
   constructor(startEndTensor: tf.Tensor2D) {
-    // Keep tensor for the next frame.
     this.startEndTensor = tf.keep(startEndTensor);
-    // startEndTensor[:, 0:2]
     this.startPoint = tf.keep(tf.slice(startEndTensor, [0, 0], [-1, 2]));
-    // startEndTensor[:, 2:4]
     this.endPoint = tf.keep(tf.slice(startEndTensor, [0, 2], [-1, 2]));
   }
 
@@ -69,15 +67,13 @@ export class Box {
   }
 
   increaseBox(ratio = 1.5): Box {
-    const centers = this.getCenter();
+    const center = this.getCenter();
     const size = this.getSize();
-
     const newSize = tf.mul(tf.div(size, 2), ratio);
-
-    const newStarts = tf.sub(centers, newSize);
-    const newEnds = tf.add(centers, newSize);
+    const newStart = tf.sub(center, newSize);
+    const newEnd = tf.add(center, newSize);
 
     return new Box(
-        tf.concat2d([newStarts as tf.Tensor2D, newEnds as tf.Tensor2D], 1));
+        tf.concat2d([newStart as tf.Tensor2D, newEnd as tf.Tensor2D], 1));
   }
 }
