@@ -101,7 +101,6 @@ export const detect = async(
   Object.keys(points).forEach((labelStr) => {
     const label = Number(labelStr);
     const box = processPoints(points[label]);
-    // const box = points[label];
     for (let pointIdx = 0; pointIdx < box.length; ++pointIdx) {
       const point = box[pointIdx];
       const scaledX = clip(point.x / widthScalingFactor, originalWidth);

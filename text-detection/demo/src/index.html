@@ -27,7 +27,7 @@ limitations under the License.
     #TODO(tfjs): Replace this URL after you host the model
   -->
   <script defer src="https://storage.googleapis.com/gsoc-tfjs/utilities/text-detection/opencv.js"></script>
-  <script defer src="index.js"></script>
+  <script src="index.js"></script>
 </head>
 
 <body>
@@ -102,7 +102,7 @@ limitations under the License.
                 <div class="select">
                   <select id="post-processing">
                     <option value="minarearect" selected>Determine Min Bounding Box</option>
-                    <option value="contours">Find Contours (loads OpenCV.js)</option>
+                    <option value="contours">Find Contours</option>
                     <option value="identity">Draw Points</option>
                   </select>
                 </div>
@@ -114,7 +114,7 @@ limitations under the License.
                     <div class="dropdown is-hoverable">
                       <div class="dropdown-trigger">
                         <span class="infolink" aria-haspopup="true" aria-controls="dropdown-menu-resize-length-info">:
-                          <span id="resize-length-value">576</span>
+                          <span id="resize-length-value">512</span>
                         </span>
                       </div>
                       <div class="dropdown-menu info-pop-up" id="dropdown-menu-resize-length-info" role="menu">
@@ -123,7 +123,7 @@ limitations under the License.
                             <div class="notification is-warning">
                               The greater the length, the better accuracy and precision you can get at the cost
                               of
-                              performance. Setting this value to more than 700 might result in WebGL memory overflow.
+                              performance. Setting this value to more than 576 might result in WebGL memory overflow.
                             </div>
                           </div>
                         </div>
@@ -133,7 +133,7 @@ limitations under the License.
                   <div class="control">
                     <div>
                       <input type="range" id="resize-length-slider" name="resize-length" min="256" max="1280"
-                        value="576" step="32" class="is-full-width">
+                        value="512" step="32" class="is-full-width">
                     </div>
                   </div>
                 </div>

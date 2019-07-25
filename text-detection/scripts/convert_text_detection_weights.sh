@@ -145,6 +145,7 @@ TRUE=(
 TARGET_DIR=$(realpath $TARGET_DIR)
 CONVERTED_MODELS_DIR=$(realpath "$TARGET_DIR/text-detection")
 ASSETS_DIR=$(realpath "$TARGET_DIR/assets")
+# TODO(tfjs): Replace this URL after you host the model
 WEIGHTS_URL="https://storage.googleapis.com/gsoc-tfjs/weights/psenet/weights.tar.gz"
 VIRTUALENV_DIR="venv"
 PARENT_DIR="$(pwd)"

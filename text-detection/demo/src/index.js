@@ -74,6 +74,7 @@ const getMinConfidenceSlider = () =>
   document.getElementById('min-confidence-slider');
 
 const initializeModel = async () => {
+  updateInput();
   toggleInvisible('overlay', false);
   const resizeLengthSlider = getResizeLengthSlider();
   updateSlider(resizeLengthSlider, 'resize-length-value');
@@ -139,7 +140,7 @@ function getRandomColor(alpha = 0.5) {
   const b = num & 255;
   return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + alpha + ')';
 }
-const displayBoxes = (textDetectionOutput) => {
+const displayBoxes = (boxes) => {
   const input = document.getElementById('input-image');
   const height = input.height;
   const width = input.width;
@@ -154,16 +155,24 @@ const displayBoxes = (textDetectionOutput) => {
 
     canvas.add(output);
     if (state.processPoints !== 'identity') {
-      for (const box of textDetectionOutput) {
+      for (let boxIdx = 0; boxIdx < boxes.length; ++boxIdx) {
+        const box = boxes[boxIdx];
         const color = getRandomColor();
+        if (boxIdx === boxes.length - 1) {
+          canvas.on('object:added', () => toggleInvisible('overlay', true));
+        }
         canvas.add(new fabric.Polygon(
             box, {fill: color, stroke: '#000', objectCaching: false}));
       };
     } else {
-      for (const box of textDetectionOutput) {
+      for (let boxIdx = 0; boxIdx < boxes.length; ++boxIdx) {
+        const box = boxes[boxIdx];
         const color = getRandomColor();
         for (let idx = 0; idx < box.length; ++idx) {
           const {x, y} = box[idx];
+          if (boxIdx === boxes.length - 1 && idx === box.length - 1) {
+            canvas.on('object:added', () => toggleInvisible('overlay', true));
+          }
           canvas.add(new fabric.Circle({
             left: x,
             top: y,
@@ -180,6 +189,9 @@ const displayBoxes = (textDetectionOutput) => {
       };
     }
     canvas.renderAll();
+    if (boxes.length === 0) {
+      toggleInvisible('overlay', true);
+    }
   });
 
   toggleInvisible('output-card', false);
@@ -234,7 +246,6 @@ const runPrediction = async (input, predictionStart) => {
     console.log(JSON.stringify(output));
     displayBoxes(scale(factor, output));
     status(`Ran in ${howManySecondsFrom(predictionStart)} seconds`);
-    toggleInvisible('overlay', true);
   };
   img.src = input.src;
 };

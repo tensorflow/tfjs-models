@@ -16,6 +16,7 @@
  */
 
 export const config = {
+  // #TODO(tfjs) : Replace this URL after you host the model
   BASE_PATH: 'https://storage.googleapis.com/gsoc-tfjs/models/text-detection',
   RESIZE_LENGTH: 576,
   MIN_CONFIDENCE: 0.9,
