@@ -15,6 +15,7 @@
  * =============================================================================
  */
 
+import '@tensorflow/tfjs-node';
 import * as tf from '@tensorflow/tfjs-core';
 import {describeWithFlags, NODE_ENVS,} from '@tensorflow/tfjs-core/dist/jasmine_util';
 import {readFileSync} from 'fs';
