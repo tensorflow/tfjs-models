@@ -15,6 +15,7 @@
  * =============================================================================
  */
 
+import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 import * as tfl from '@tensorflow/tfjs-layers';
 
@@ -25,7 +26,7 @@ const LANDMARKS_COUNT = 468;
 
 export class BlazePipeline {
   private blazeface: BlazeFaceModel;
-  private blazemesh: tfl.LayersModel;
+  private blazemesh: tfl.LayersModel|tfconv.GraphModel;
   private meshWidth: number;
   private meshHeight: number;
   private maxContinuousChecks: number;
@@ -34,8 +35,8 @@ export class BlazePipeline {
   private maxFaces: number;
 
   constructor(
-      blazeface: BlazeFaceModel, blazemesh: tfl.LayersModel, meshWidth: number,
-      meshHeight: number, maxContinuousChecks: number) {
+      blazeface: BlazeFaceModel, blazemesh: tfl.LayersModel|tfconv.GraphModel,
+      meshWidth: number, meshHeight: number, maxContinuousChecks: number) {
     this.blazeface = blazeface;
     this.blazemesh = blazemesh;
     this.meshWidth = meshWidth;

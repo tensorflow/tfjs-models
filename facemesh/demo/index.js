@@ -90,7 +90,7 @@ const setupPage =
   ctx.translate(canvas.width, 0);
   ctx.scale(-1, 1);
 
-  model = await faceMesh.load();
+  model = await faceMesh.load(false);
 
   setupFPS();
 
