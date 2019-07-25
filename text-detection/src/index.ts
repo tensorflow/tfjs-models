@@ -19,11 +19,18 @@ import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
 import {config} from './config';
+import {convexHull} from './convexHull';
 import {minAreaRect} from './minAreaRect';
 import {TextDetectionConfig, TextDetectionInput, TextDetectionOptions, TextDetectionOutput} from './types';
 import {computeScalingFactors, convertKernelsToBoxes, getURL, resize} from './utils';
 
-export {computeScalingFactors, convertKernelsToBoxes, getURL, minAreaRect};
+export {
+  computeScalingFactors,
+  convertKernelsToBoxes,
+  convexHull,
+  getURL,
+  minAreaRect
+};
 
 export const load = async (modelConfig: TextDetectionConfig = {
   quantizationBytes: 1
@@ -67,7 +74,7 @@ export class TextDetection {
   }
 
   public async detect(
-      input: TextDetectionInput, textDetectionOptions: TextDetectionOptions = {
+      image: TextDetectionInput, textDetectionOptions: TextDetectionOptions = {
         resizeLength: config['RESIZE_LENGTH'],
         minTextBoxArea: config['MIN_TEXTBOX_AREA'],
         minConfidence: config['MIN_CONFIDENCE'],
@@ -80,15 +87,15 @@ export class TextDetection {
       processPoints: minAreaRect,
       ...textDetectionOptions
     };
-    const kernelScores = this.predict(input, textDetectionOptions.resizeLength);
+    const kernelScores = this.predict(image, textDetectionOptions.resizeLength);
     const sides = new Array<number>(2);
-    if (input instanceof tf.Tensor) {
-      const [height, width] = input.shape;
+    if (image instanceof tf.Tensor) {
+      const [height, width] = image.shape;
       sides[0] = height;
       sides[1] = width;
     } else {
-      sides[0] = input.height;
-      sides[1] = input.width;
+      sides[0] = image.height;
+      sides[1] = image.width;
     }
     const boxes = await convertKernelsToBoxes(
         kernelScores,
@@ -101,10 +108,10 @@ export class TextDetection {
   }
 
   public predict(
-      input: TextDetectionInput,
+      image: TextDetectionInput,
       resizeLength = config['RESIZE_LENGTH']): tf.Tensor3D {
     return tf.tidy(() => {
-      const processedInput = this.preprocess(input, resizeLength);
+      const processedInput = this.preprocess(image, resizeLength);
       return (this.model.predict(processedInput) as tf.Tensor4D).squeeze([0]) as
           tf.Tensor3D;
     });

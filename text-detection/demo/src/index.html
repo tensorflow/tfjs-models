@@ -26,7 +26,8 @@ limitations under the License.
 
     #TODO(tfjs): Replace this URL after you host the model
   -->
-  <script defer src="https://storage.googleapis.com/gsoc-tfjs/utilities/text-detection/opencv.js"></script>
+  <script defer
+    src="https://raw.githubusercontent.com/sdll/tfjs-models/models/text-detection/text-detection/src/assets/opencv/opencv.js"></script>
   <script src="index.js"></script>
 </head>
 
@@ -101,9 +102,10 @@ limitations under the License.
                 </div>
                 <div class="select">
                   <select id="post-processing">
-                    <option value="minarearect" selected>Determine Min Bounding Box</option>
+                    <option value="min-area-rect" selected>Determine Min Bounding Box</option>
+                    <option value="convex-hull">Compute Convex Hull</option>
                     <option value="contours">Find Contours</option>
-                    <option value="identity">Draw Points</option>
+                    <option value="identity">Jot Points</option>
                   </select>
                 </div>
               </div>

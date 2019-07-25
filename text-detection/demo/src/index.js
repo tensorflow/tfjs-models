@@ -18,7 +18,7 @@
 import 'bulma/css/bulma.css';
 import 'fabric';
 
-import {load, minTextBoxArea} from '@tensorflow-models/text-detection';
+import * as psenet from '@tensorflow-models/text-detection';
 import * as tf from '@tensorflow/tfjs';
 
 import blueBirdExample from './assets/examples/blue-bird.jpg';
@@ -26,8 +26,9 @@ import gunForHireExample from './assets/examples/gun-for-hire.jpg';
 import joyYoungRogersExample from './assets/examples/joy-young-rogers.jpg';
 import {findContours} from './findContours';
 
+const {convexHull, load, minTextBoxArea} = psenet;
 const state = {
-  processPoints: 'minarearect',
+  processPoints: 'min-area-rect',
 };
 
 const textDetection = {};
@@ -37,7 +38,8 @@ const textDetectionExamples = {
   'blue-bird': blueBirdExample,
 };
 const pointProcessors = {
-  'minarearect': minTextBoxArea,
+  'min-area-rect': minTextBoxArea,
+  'convex-hull': convexHull,
   'identity': (x) => x,
   'contours': findContours,
 };

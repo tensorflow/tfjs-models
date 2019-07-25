@@ -31,12 +31,16 @@ export const getURL = (quantizationBytes: QuantizationBytes) => {
 };
 
 export const convertKernelsToBoxes = async(
-    kernelScores: tf.Tensor3D, originalHeight: number, originalWidth: number,
+    kernelScores: tf.Tensor3D,
+    originalHeight: number,
+    originalWidth: number,
     textDetectionOptions: TextDetectionOptions = {
       minTextBoxArea: config['MIN_TEXTBOX_AREA'],
       minConfidence: config['MIN_CONFIDENCE'],
-      resizeLength: config['RESIZE_LENGTH']
-    }): Promise<Box[]> => {
+      resizeLength: config['RESIZE_LENGTH'],
+      processPoints: minAreaRect,
+    },
+    ): Promise<Box[]> => {
   textDetectionOptions = {
     resizeLength: config['RESIZE_LENGTH'],
     minTextBoxArea: config['MIN_TEXTBOX_AREA'],

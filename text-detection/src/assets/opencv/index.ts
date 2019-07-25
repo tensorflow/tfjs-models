@@ -14,6 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
+
 import * as cv from './opencv';
 // tslint:disable-next-line: no-default-export
 export default cv;
