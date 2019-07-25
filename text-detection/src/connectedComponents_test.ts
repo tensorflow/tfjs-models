@@ -15,41 +15,54 @@
  * =============================================================================
  */
 
-// import * as tf from '@tensorflow/tfjs';
-// import {readFileSync} from 'fs';
-// import {decode} from 'jpeg-js';
-// import {resolve} from 'path';
+import * as tf from '@tensorflow/tfjs-core';
 
-// import {Point} from './geometry';
-// import {minAreaRect} from './minAreaRect';
-// import cv from './opencv';
+import cv from './assets/opencv';
+import {connectedComponents} from './connectedComponents';
 
 describe('connectedComponents', () => {
-  it('The connectedComponents output coincides with OpenCV.js on random input.',
+  it('The connectedComponents output matches with OpenCV.js on random input.',
      () => {
-         // const input = tf.tidy(() => {
-         //   const testImage =
-         //       decode(readFileSync(resolve(__dirname,
-         //       'assets/example.jpeg')), true);
-         //   const rawData = tf.tensor(testImage.data, [
-         //                       testImage.height, testImage.width, 4
-         //                     ]).arraySync() as number[][][];
-         //   const inputBuffer =
-         //       tf.buffer([testImage.height, testImage.width], 'int32');
-         //   for (let columnIndex = 0; columnIndex < testImage.height;
-         //   ++columnIndex) {
-         //     for (let rowIndex = 0; rowIndex < testImage.width; ++rowIndex) {
-         //       for (let channel = 0; channel < 3; ++channel) {
-         //         inputBuffer.set(
-         //             rawData[columnIndex][rowIndex][channel], columnIndex,
-         //             rowIndex);
-         //       }
-         //     }
-         //   }
+       const side = 50;
+       const input =
+           tf.tidy(() => ((tf.randomNormal([side, side]).sign()).add(1)).div(2))
+               .toInt();
+       const inputArray = input.arraySync() as number[][];
+       const inputMatrix = cv.matFromArray(
+           side, side, cv.CV_8U, [].concat.apply([], inputArray));
 
-         //   return inputBuffer.toTensor();
-         // }) as tf.Tensor2D;
-         // const inputArray = input.arraySync();
-         // const inputData = input.dataSync();
+       // 0. The label counts match
+       // 1. The dimensions match
+       // 2. Labels match
+       const conditions: boolean[] = [];
+
+       const {labelsCount, labels} = connectedComponents(inputArray);
+       const cvLabelsMatrix = new cv.Mat();
+       const cvLabelsCount =
+           cv.connectedComponents(inputMatrix, cvLabelsMatrix, 4);
+       const height = cvLabelsMatrix.rows;
+       const width = cvLabelsMatrix.cols;
+       const cvLabels = Array.from(new Array(height), () => new Array(width));
+       for (let rowIdx = 0; rowIdx < height; rowIdx++) {
+         for (let colIdx = 0; colIdx < width; colIdx++) {
+           const cvLabel = cvLabelsMatrix.ucharPtr(rowIdx, colIdx)[0];
+           cvLabels[rowIdx][colIdx] = cvLabel;
+         }
+       }
+       conditions.push(cvLabelsCount === labelsCount);
+       const areDimsOk = height === width && height === side;
+       conditions.push(areDimsOk);
+       let areLabelsOk = true;
+       for (let rowIdx = 0; rowIdx < height; rowIdx++) {
+         for (let colIdx = 0; colIdx < width; colIdx++) {
+           const cvLabel = cvLabels[rowIdx][colIdx];
+           const label = labels[rowIdx][colIdx];
+           areLabelsOk = cvLabel === label;
+         }
+       }
+       conditions.push(areLabelsOk);
+       cvLabelsMatrix.delete();
+       expect(conditions)
+           .toEqual(Array.from(new Array(conditions.length), () => true));
      });
 });

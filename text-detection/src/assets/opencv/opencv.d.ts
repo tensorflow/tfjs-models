@@ -15,23 +15,33 @@
  * =============================================================================
  */
 
-export * from './cv';
-export * from './constants';
-export * from './Mat';
-export * from './MatVector';
-export * from './Vec';
-export * from './Vec2';
-export * from './Vec3';
-export * from './Vec4';
-export * from './Vec6';
-export * from './Point';
-export * from './Point2';
-export * from './Point3';
-export * from './Size';
-export * from './Rect';
-export * from './RotatedRect';
-export * from './TermCriteria';
-export * from './Contour';
-export * from './Moments';
-export * from './imgproc';
+export const CV_8U: number;
+export class Mat {
+  readonly rows: number;
+  readonly cols: number;
+  readonly type: number;
+  readonly channels: number;
+  readonly depth: number;
+  readonly dims: number;
+  readonly empty: boolean;
+  readonly step: number;
+  readonly elemSize: number;
+  readonly sizes: number[];
+  constructor();
+  delete(): void;
+  ucharPtr(row: number, column: number): number[];
+}
+
+export class MatVector {
+  get(i: number): MatVector;
+  push_back(mat: Mat): void;
+  delete(): void;
+}
+
+export declare function connectedComponents(
+    graph: Mat, labels: Mat, connectivity: number): any;
+
+declare function matFromArray<T>(
+    rows: number, columns: number, type: number, array: number[]): Mat;
+
 declare function cv(): void;
