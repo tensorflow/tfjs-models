@@ -40,9 +40,6 @@ If you would rather load custom weights, you can pass the URL in the config inst
 ```typescript
 import * as deeplab from '@tensorflow-models/deeplab';
 const loadModel = async () => {
-  const modelName = 'pascal';   // set to your preferred model, out of `pascal`,
-                                // `cityscapes` and `ade20k`
-  const quantizationBytes = 2;  // either 1, 2 or 4
   // #TODO(tfjs): Replace this URL after you host the model
   const url = 'https://storage.googleapis.com/gsoc-tfjs/models/deeplab/quantized/1/pascal/model.json';
   return await deeplab.load({modelUrl: url});
@@ -96,21 +93,21 @@ Each model recognises a different set of object classes in an image:
 
 - **image** :: `ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | tf.Tensor3D`;
 
-The image to segment
+  The image to segment
 
 - **config.canvas** (optional) :: `HTMLCanvasElement`
 
-Pass an optional canvas element as `canvas` to draw the output
+  Pass an optional canvas element as `canvas` to draw the output
 
 - **config.colormap** (optional) :: `[number, number, number][]`
 
-The array of RGB colors corresponding to labels
+  The array of RGB colors corresponding to labels
 
 - **config.labels** (optional) :: `string[]`
 
-The array of names corresponding to labels
+  The array of names corresponding to labels
 
-By [default](./src/index.ts#L81), `colormap` and `labels` are set according to the `base` model attribute passed during initialization.
+  By [default](./src/index.ts#L81), `colormap` and `labels` are set according to the `base` model attribute passed during initialization.
 
 #### `model.segment(image, config?)` outputs
 
@@ -118,19 +115,19 @@ The output is a promise of a `DeepLabOutput` object, with four attributes:
 
 - **legend** :: `{ [name: string]: [number, number, number] }`
 
-The legend is a dictionary of objects recognized in the image and their colors in RGB format.
+  The legend is a dictionary of objects recognized in the image and their colors in RGB format.
 
 - **height** :: `number`
 
-The height of the returned segmentation map
+  The height of the returned segmentation map
 
 - **width** :: `number`
 
-The width of the returned segmentation map
+  The width of the returned segmentation map
 
 - **segmentationMap** :: `Uint8ClampedArray`
 
-The colored segmentation map as `Uint8ClampedArray` which can be [fed](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Pixel_manipulation_with_canvas) into `ImageData` and mapped to a canvas.
+  The colored segmentation map as `Uint8ClampedArray` which can be [fed](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Pixel_manipulation_with_canvas) into `ImageData` and mapped to a canvas.
 
 #### `model.segment(image, config?)` example
 
@@ -150,13 +147,13 @@ To segment an arbitrary image and generate a two-dimensional tensor with class l
 
 - **image** :: `ImageData | HTMLImageElement | HTMLCanvasElement | HTMLVideoElement | tf.Tensor3D`;
 
-The image to segment
+  The image to segment
 
-#### `model.predict` output
+#### `model.predict(image)` output
 
 - **rawSegmentationMap** :: `tf.Tensor2D`
 
-The segmentation map of the image
+  The segmentation map of the image
 
 #### `model.predict(image)` example
 
@@ -174,31 +171,31 @@ To transform the segmentation map into a coloured image, use the `toSegmentation
 
 - **colormap** :: `[number, number, number][]`
 
-The array of RGB colors corresponding to labels
+  The array of RGB colors corresponding to labels
 
 - **labels** :: `string[]`
 
-The array of names corresponding to labels
+  The array of names corresponding to labels
 
 - **segmentationMap** :: `tf.Tensor2D`
 
-The segmentation map of the image
+  The segmentation map of the image
 
 - **canvas** (optional) :: `HTMLCanvasElement`
 
-Pass an optional canvas element as `canvas` to draw the output
+  Pass an optional canvas element as `canvas` to draw the output
 
 #### `toSegmentationImage(colormap, labels, segmentationMap, canvas?)` outputs
 
-A promise resolving to the `SegmentationData` object that contains two attributes:
+  A promise resolving to the `SegmentationData` object that contains two attributes:
 
 - **legend** :: `{ [name: string]: [number, number, number] }`
 
-The legend is a dictionary of objects recognized in the image and their colors.
+  The legend is a dictionary of objects recognized in the image and their colors.
 
 - **segmentationMap** :: `Uint8ClampedArray`
 
-The colored segmentation map as `Uint8ClampedArray` which can be [fed](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Pixel_manipulation_with_canvas) into `ImageData` and mapped to a canvas.
+  The colored segmentation map as `Uint8ClampedArray` which can be [fed](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Pixel_manipulation_with_canvas) into `ImageData` and mapped to a canvas.
 
 #### `toSegmentationImage(colormap, labels, segmentationMap, canvas?)` example
 
