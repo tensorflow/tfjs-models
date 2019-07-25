@@ -76,6 +76,7 @@ export function scaleAndCropToInputTensorShape(
     [resizedAndPaddedHeight, resizedAndPaddedWidth]: [number, number],
     [[padT, padB], [padL, padR]]: [[number, number], [number, number]]):
     tf.Tensor3D {
+  debugger
   return tf.tidy(() => {
     const inResizedAndPaddedSize = tensor.resizeBilinear(
         [resizedAndPaddedHeight, resizedAndPaddedWidth], true);
@@ -91,20 +92,18 @@ export function removePaddingAndResizeBack(
     [originalHeight, originalWidth]: [number, number],
     [[padT, padB], [padL, padR]]: [[number, number], [number, number]]):
     tf.Tensor3D {
-  const [height, width] = resizedAndPadded.shape;
-  // remove padding that was added
-  const cropH = height - (padT + padB);
-  const cropW = width - (padL + padR);
-
   return tf.tidy(() => {
-    const withPaddingRemoved = tf.slice3d(
-        resizedAndPadded as tf.Tensor3D, [padT, padL, 0],
-        [cropH, cropW, resizedAndPadded.shape[2]]);
-
-    const atOriginalSize = withPaddingRemoved.resizeBilinear(
-        [originalHeight, originalWidth], true);
-
-    return atOriginalSize;
+    return tf.image
+        .cropAndResize(
+            resizedAndPadded.expandDims(), [[
+              padT / (originalHeight + padT + padB - 1.0),
+              padL / (originalWidth + padL + padR - 1.0),
+              (padT + originalHeight - 1.0) /
+                  (originalHeight + padT + padB - 1.0),
+              (padL + originalWidth - 1.0) / (originalWidth + padL + padR - 1.0)
+            ]],
+            [0], [originalHeight, originalWidth])
+        .squeeze([0]);
   });
 }
 
