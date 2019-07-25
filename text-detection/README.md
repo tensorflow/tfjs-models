@@ -173,15 +173,15 @@ To transform the segmentation map into a coloured image, use the `convertKernels
 
 #### `convertKernelsToBoxes(kernelScores, originalHeight, originalWidth, config?)` inputs
 
-* **kernelScores**: `tf.Tensor3D`
+* **kernelScores** :: `tf.Tensor3D`
 
 The minimal scale kernels of shape `(image height, image width, 6)`.
 
-* **originalHeight**: `number`
+* **originalHeight** :: `number`
 
 The original height of the input image
 
-* **originalWidth**: `number`
+* **originalWidth** :: `number`
 
 The original width of the input image
 
