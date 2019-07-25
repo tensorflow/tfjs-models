@@ -26,7 +26,7 @@ import {decodeMultipleMasks} from './multi_person/decode_multiple_masks';
 import {decodeMultiplePoses} from './multi_person/decode_multiple_poses';
 import {ResNet} from './resnet';
 import {BodyPixInput, PartSegmentation, PersonSegmentation} from './types';
-import {flipPosesHorizontal /*toInputTensor*/, getInputTensorDimensions, padAndResizeTo, scaleAndCropToInputTensorShape, scaleAndFlipPoses, toTensorBuffers3D} from './util';
+import {/*flipPosesHorizontal, toInputTensor,*/ getInputTensorDimensions, padAndResizeTo, scaleAndCropToInputTensorShape, scaleAndFlipPoses, toTensorBuffers3D} from './util';
 
 export type BodyPixInputResolution =
     161|193|257|289|321|353|385|417|449|481|513|801|1217;
@@ -248,16 +248,17 @@ export class BodyPix {
    * or 8. Defaults to 16. The output width and height will be will be
    * (inputDimension - 1)/outputStride + 1
    *
-   * @return An object containing a width, height, and a binary array with 1
-   * for the pixels that are part of the person, and 0 otherwise. The array
-   * size corresponds to the number of pixels in the image.  The width and
-   * height correspond to the dimensions of the image the binary array is
-   * shaped to, which are the same dimensions of the input image.
+   * @return An array of PersonSegmentation object, each containing a width,
+   * height, and a binary array with 1 for the pixels that are part of the
+   * person, and 0 otherwise. The array size corresponds to the number of pixels
+   * in the image. The width and height correspond to the dimensions of the
+   * image the binary array is shaped to, which are the same dimensions of the
+   * input image.
    */
   async estimatePersonSegmentation(
       input: BodyPixInput,
       config: MultiPersonInferenceConfig = MULTI_PERSON_INFERENCE_CONFIG):
-      Promise<PersonSegmentation> {
+      Promise<PersonSegmentation[]> {
     const [height, width] = getInputTensorDimensions(input);
     const inputResolution = this.inputResolution;
 
@@ -324,11 +325,9 @@ export class BodyPix {
     const instanceMasks = decodeMultipleMasks(
         segmentationArray, longOffsetsArray, poses, height, width);
 
-    poses = flipPosesHorizontal(poses, width);
-
     segmentation.dispose();
 
-    return {height, width, data: instanceMasks.data, poses: poses};
+    return instanceMasks;
   }
 
   /**

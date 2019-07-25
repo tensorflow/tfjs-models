@@ -28,9 +28,27 @@ function computeDistance(embedding: Pair[], pose: Pose, minPartScore = 0.3) {
 
 export function decodeMultipleMasks(
     segmentation: Uint8Array, longOffsets: Float32Array, poses: Pose[],
-    height: number, width: number, minPartScore = 0.2,
-    refineSteps = 0): PersonSegmentation {
-  let data = new Uint8Array(height * width);
+    height: number, width: number, minPoseScore = 0.2, refineSteps = 0,
+    flipHorizontally = false): PersonSegmentation[] {
+  let numPeopleToDecode = 0;
+  let posesAboveScores: Pose[] = [];
+  for (let k = 0; k < poses.length; k++) {
+    if (poses[k].score > minPoseScore) {
+      numPeopleToDecode += 1;
+      posesAboveScores.push(poses[k]);
+    }
+  }
+  let allPersonSegmentation: PersonSegmentation[] = [];
+  for (let k = 0; k < numPeopleToDecode; k++) {
+    allPersonSegmentation.push({
+      height: height,
+      width: width,
+      data: new Uint8Array(height * width).fill(0),
+      pose: posesAboveScores[k]
+    });
+  }
+
+  // let data = new Uint8Array(height * width);
   for (let i = 0; i < height; i += 1) {
     for (let j = 0; j < width; j += 1) {
       const n = i * width + j;
@@ -59,20 +77,25 @@ export function decodeMultipleMasks(
 
         let kMin = -1;
         let kMinDist = Infinity;
-        for (let k = 0; k < poses.length; k++) {
-          if (poses[k].score > minPartScore) {
-            const dist = computeDistance(embed, poses[k]);
+        for (let k = 0; k < posesAboveScores.length; k++) {
+          if (posesAboveScores[k].score > minPoseScore) {
+            const dist = computeDistance(embed, posesAboveScores[k]);
             if (dist < kMinDist) {
               kMin = k;
               kMinDist = dist;
             }
           }
         }
-        data[n] = kMin + 1;
-      } else {
-        data[n] = 0;
+        if (kMin >= 0) {
+          allPersonSegmentation[kMin].data[n] = 1;
+        }
       }
+      // data[n] = kMin + 1;
+      //   } else {
+      //     data[n] = 0;
+      //   }
     }
   }
-  return {data: data, height: height, width: width};
+  return allPersonSegmentation
+  // return {data: data, height: height, width: width};
 }

@@ -145,7 +145,9 @@ async function loadImage() {
   });
 
   image.src = 'two_people.jpg';
+  // image.src = 'three_people.jpg';
   // image.src = 'nine_people.jpg';
+  // image.src = 'four_people.jpg';
   return promise;
 }
 
@@ -391,26 +393,29 @@ function segmentBodyInRealTime() {
 
     switch (guiState.estimate) {
       case 'segmentation':
-        const personSegmentation =
+        const allPersonSegmentation =
             await state.net.estimatePersonSegmentation(state.video, {
               segmentationThreshold: guiState.segmentation.segmentationThreshold
             });
 
         switch (guiState.segmentation.effect) {
           case 'mask':
+            const ctx = canvas.getContext('2d');
+            // Draws masks
             const mask = bodyPix.toMaskImageData(
-                personSegmentation, guiState.segmentation.maskBackground);
-            const {height, width, data, data2, data3, data4, poses} =
-                personSegmentation;
+                allPersonSegmentation, guiState.segmentation.maskBackground);
             bodyPix.drawMask(
                 canvas, state.video, mask, guiState.segmentation.opacity,
-                guiState.segmentation.maskBlurAmount, flipHorizontally, data2,
-                data3, data4);
-            const ctx = canvas.getContext('2d');
-            poses.forEach(({score, keypoints}) => {
-              if (score >= 0.2) {
-                drawKeypoints(keypoints, 0.1, ctx);
-                drawSkeleton(keypoints, 0.1, ctx);
+                guiState.segmentation.maskBlurAmount, flipHorizontally);
+
+            allPersonSegmentation.forEach(personSegmentation => {
+              let pose = personSegmentation.pose;
+              if (flipHorizontally) {
+                pose = bodyPix.flipPoseHorizontal(pose, mask.width);
+              }
+              if (pose.score >= 0.2) {
+                drawKeypoints(pose.keypoints, 0.1, ctx);
+                drawSkeleton(pose.keypoints, 0.1, ctx);
               }
             });
             break;

@@ -46,9 +46,6 @@ export declare type Pose = {
 export type PersonSegmentation = {
   data: Uint8Array,
   width: number,
-  height: number
-    data2?: Float32Array,
-    data3?: Float32Array,
-    data4?: Float32Array,
-    poses?: Pose[]
-  };
+  height: number,
+  pose?: Pose
+};

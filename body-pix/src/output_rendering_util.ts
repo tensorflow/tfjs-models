@@ -146,8 +146,13 @@ const STEP = 1;
  * the corresponding binary segmentation value at the pixel from the output.
  */
 export function toMaskImageData(
-    segmentation: PersonSegmentation, maskBackground = true): ImageData {
-  const {width, height, data} = segmentation;
+    allPersonSegmentation: PersonSegmentation[],
+    maskBackground = true): ImageData {
+  if (allPersonSegmentation.length === 0) {
+    return new ImageData(new Uint8ClampedArray(0), 0, 0);
+  }
+
+  const {width, height} = allPersonSegmentation[0];
   const bytes = new Uint8ClampedArray(width * height * 4);
 
   for (let i = 0; i < height; i += STEP) {
@@ -156,47 +161,12 @@ export function toMaskImageData(
       bytes[4 * n + 0] = 0;
       bytes[4 * n + 1] = 0;
       bytes[4 * n + 2] = 0;
-      bytes[4 * n + 3] = 0;
-      if (data[n] === 1) {
-        bytes[4 * n + 0] = 155;
-        bytes[4 * n + 3] = 100;
-      } else if (data[n] === 2) {
-        bytes[4 * n + 1] = 155;
-        bytes[4 * n + 3] = 100;
-      } else if (data[n] === 3) {
-        bytes[4 * n + 2] = 155;
-        bytes[4 * n + 3] = 100;
-      } else if (data[n] === 4) {
-        bytes[4 * n + 0] = 155;
-        bytes[4 * n + 1] = 155;
-        bytes[4 * n + 3] = 100;
-      } else if (data[n] === 5) {
-        bytes[4 * n + 1] = 155;
-        bytes[4 * n + 2] = 155;
-        bytes[4 * n + 3] = 100;
-      } else if (data[n] === 6) {
-        bytes[4 * n + 0] = 155;
-        bytes[4 * n + 2] = 155;
-        bytes[4 * n + 3] = 100;
-      } else if (data[n] === 7) {
-        bytes[4 * n + 0] = 155;
-        bytes[4 * n + 1] = 155;
-        bytes[4 * n + 2] = 155;
-        bytes[4 * n + 3] = 100;
-      } else if (data[n] === 8) {
-        bytes[4 * n + 0] = 155;
-        bytes[4 * n + 1] = 55;
-        bytes[4 * n + 3] = 100;
-      } else if (data[n] === 9) {
-        bytes[4 * n + 2] = 155;
-        bytes[4 * n + 1] = 55;
-        bytes[4 * n + 3] = 100;
-      } else if (data[n] === 10) {
-        bytes[4 * n + 0] = 155;
-        bytes[4 * n + 2] = 55;
-        bytes[4 * n + 3] = 100;
-      } else {
-        bytes[4 * n + 3] = 255;
+      bytes[4 * n + 3] = 255;
+      for (let k = 0; k < allPersonSegmentation.length; k++) {
+        if (allPersonSegmentation[k].data[n] === 1) {
+          bytes[4 * n + 0] = 155;
+          bytes[4 * n + 3] = 180;
+        }
       }
     }
   }
@@ -281,8 +251,7 @@ const CANVAS_NAMES = {
  */
 export function drawMask(
     canvas: HTMLCanvasElement, image: ImageType, maskImage: ImageData,
-    maskOpacity = 0.7, maskBlurAmount = 0, flipHorizontal = false,
-    longOffset: Float32Array, heatmap: Float32Array, offsets: Float32Array) {
+    maskOpacity = 0.7, maskBlurAmount = 0, flipHorizontal = false) {
   assertSameDimensions(image, maskImage, 'image', 'mask');
 
   const mask = renderImageDataToOffScreenCanvas(maskImage, CANVAS_NAMES.mask);
@@ -387,7 +356,7 @@ function createPersonMask(
     segmentation: PersonSegmentation,
     edgeBlurAmount: number): HTMLCanvasElement {
   const maskBackground = false;
-  const backgroundMaskImage = toMaskImageData(segmentation, maskBackground);
+  const backgroundMaskImage = toMaskImageData([segmentation], maskBackground);
 
   const backgroundMask =
       renderImageDataToOffScreenCanvas(backgroundMaskImage, CANVAS_NAMES.mask);
