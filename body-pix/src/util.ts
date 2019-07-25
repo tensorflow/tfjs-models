@@ -76,7 +76,6 @@ export function scaleAndCropToInputTensorShape(
     [resizedAndPaddedHeight, resizedAndPaddedWidth]: [number, number],
     [[padT, padB], [padL, padR]]: [[number, number], [number, number]]):
     tf.Tensor3D {
-  debugger
   return tf.tidy(() => {
     const inResizedAndPaddedSize = tensor.resizeBilinear(
         [resizedAndPaddedHeight, resizedAndPaddedWidth], true);
