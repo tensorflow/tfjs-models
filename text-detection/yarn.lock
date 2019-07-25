@@ -80,7 +80,7 @@
     rimraf "^2.6.2"
     tar "^4.4.6"
 
-"@tensorflow/tfjs@~1.2.5":
+"@tensorflow/tfjs@^1.2.5", "@tensorflow/tfjs@~1.2.5":
   version "1.2.5"
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs/-/tfjs-1.2.5.tgz#078ed01ac11b9d4ec9db4cbe4ae72e9cdc1c7eb7"
   integrity sha512-oH1qIwr92jvfsS4b1DDEU0gc7vA3XPgRTqAPQ50PV5/QQ+fvjA/gYtJlUCoTINapIgbGffwTn6J+jVilqvz+SA==

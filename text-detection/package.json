@@ -20,6 +20,7 @@
     "@tensorflow/tfjs-core": "1.2.2"
   },
   "devDependencies": {
+    "@tensorflow/tfjs": "^1.2.5",
     "@tensorflow/tfjs-converter": "1.2.2",
     "@tensorflow/tfjs-core": "1.2.2",
     "@tensorflow/tfjs-node": "^1.2.5",
