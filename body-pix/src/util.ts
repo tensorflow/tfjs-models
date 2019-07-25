@@ -2,23 +2,17 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {BodyPixInput} from './types';
 
-export function getInputTensorDimensions(input: BodyPixInput):
-    [number, number] {
-  return input instanceof tf.Tensor ? [input.shape[0], input.shape[1]] :
-                                      [input.height, input.width];
-}
-
 export function toInputTensor(input: BodyPixInput) {
   return input instanceof tf.Tensor ? input : tf.browser.fromPixels(input);
 }
 
 export function resizeAndPadTo(
-    input: BodyPixInput, [targetH, targetW]: [number, number],
+    imageTensor: tf.Tensor3D, [targetH, targetW]: [number, number],
     flipHorizontal = false): {
   resizedAndPadded: tf.Tensor3D,
   paddedBy: [[number, number], [number, number]]
 } {
-  const [height, width] = getInputTensorDimensions(input);
+  const [height, width] = imageTensor.shape;
 
   const targetAspect = targetW / targetH;
   const aspect = width / height;
@@ -52,7 +46,6 @@ export function resizeAndPadTo(
   }
 
   const resizedAndPadded = tf.tidy(() => {
-    const imageTensor = toInputTensor(input);
     // resize to have largest dimension match image
     let resized: tf.Tensor3D;
     if (flipHorizontal) {
