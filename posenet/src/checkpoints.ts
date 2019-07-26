@@ -35,8 +35,7 @@ export function resNet50Checkpoint(stride: number, quantBytes: number): string {
 // The PoseNet 2.0 MobileNetV1 models use the latest TensorFlow.js 1.0 model
 // format.
 export function mobileNetCheckpoint(
-    resolution: number, stride: number, multiplier: number,
-    quantBytes: number): string {
+    stride: number, multiplier: number, quantBytes: number): string {
   const toStr: {[key: number]: string} = {1.0: '100', 0.75: '075', 0.50: '050'};
   const graphJson = `model-stride${stride}.json`;
   // quantBytes=4 corresponding to the non-quantized full-precision checkpoints.

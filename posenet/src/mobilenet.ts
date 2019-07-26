@@ -17,7 +17,8 @@
 
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
-import {BaseModel, PoseNetOutputStride, PoseNetResolution} from './posenet_model';
+
+import {BaseModel, PoseNetOutputStride} from './posenet_model';
 
 
 export type MobileNetMultiplier = 0.50|0.75|1.0;
@@ -56,20 +57,15 @@ function toFloatIfInt(input: tf.Tensor3D): tf.Tensor3D {
 export class MobileNet implements BaseModel {
   readonly model: tfconv.GraphModel
   readonly outputStride: PoseNetOutputStride
-  readonly inputResolution: PoseNetResolution;
 
-  constructor(
-      model: tfconv.GraphModel, inputResolution: PoseNetResolution,
-      outputStride: PoseNetOutputStride) {
+  constructor(model: tfconv.GraphModel, outputStride: PoseNetOutputStride) {
     this.model = model;
     const inputShape =
         this.model.inputs[0].shape as [number, number, number, number];
     tf.util.assert(
-        (inputShape[1] === inputResolution || inputShape[1] === -1) &&
-            (inputShape[2] === inputResolution || inputShape[2] === -1),
+        (inputShape[1] === -1) && (inputShape[2] === -1),
         () => `Input shape [${inputShape[1]}, ${inputShape[2]}] ` +
-            `must both be equal to ${inputResolution} or -1`);
-    this.inputResolution = inputResolution;
+            `must both be -1`);
     this.outputStride = outputStride;
   }
 
