@@ -16,7 +16,7 @@
  */
 
 import {config} from './config';
-import {SemanticSegmentationBaseModel} from './types';
+import {ModelArchitecture} from './types';
 import {createPascalColormap, getColormap, getLabels} from './utils';
 
 describe('Utilities', () => {
@@ -24,15 +24,14 @@ describe('Utilities', () => {
     const bases = ['pascal', 'cityscapes', 'ade20k'];
 
     const colormapLengths = bases.map(base => {
-      return getColormap(base as SemanticSegmentationBaseModel).length;
+      return getColormap(base as ModelArchitecture).length;
     });
 
     // Make an exception for pascal, which has a palette larger than
     // the number of labels
     const labelsLengths = bases.map(base => {
-      return base === 'pascal' ?
-          config['DATASET_MAX_ENTRIES']['PASCAL'] :
-          getLabels(base as SemanticSegmentationBaseModel).length;
+      return base === 'pascal' ? config['DATASET_MAX_ENTRIES']['PASCAL'] :
+                                 getLabels(base as ModelArchitecture).length;
     });
 
     expect(colormapLengths).toEqual(labelsLengths);
