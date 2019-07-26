@@ -18,15 +18,47 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {DeepLabInput, DeepLabOutput, PredictionConfig, SemanticSegmentationBaseModel, SemanticSegmentationConfig} from './types';
+import {DeepLabInput, DeepLabOutput, ModelArchitecture, ModelConfig, PredictionConfig} from './types';
 import {getColormap, getLabels, getURL, toInputTensor, toSegmentationImage} from './utils';
 
 export {getColormap, getLabels, getURL, toSegmentationImage};
 
-export async function load(modelConfig: SemanticSegmentationConfig = {
-  base: 'pascal',
-  quantizationBytes: 2
-}) {
+/**
+ * Initializes the DeepLab model and returns a `SemanticSegmentation` object.
+ *
+ * @param input ::
+ *     `ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement`
+ *
+ *  The input image to feed through the network.
+ *
+ * @param config :: `ModelConfig`
+ *
+ * The configuration for the model with any of the following attributes:
+ *
+ *   * quantizationBytes (optional) :: `QuantizationBytes`
+ *
+ *      The degree to which weights are quantized (either 1, 2 or 4).
+ *      Setting this attribute to 1 or 2 will load the model with int32 and
+ *      float32 compressed to 1 or 2 bytes respectively.
+ *      Set it to 4 to disable quantization.
+ *
+ *   * base (optional) :: `ModelArchitecture`
+ *
+ *      The type of model to load (either `pascal`, `cityscapes` or `ade20k`).
+ *
+ *   * modelUrl (optional) :: `string`
+ *
+ *      The URL from which to load the TF.js GraphModel JSON.
+ *      Inferred from `base` and `quantizationBytes` if undefined.
+ *
+ * @return The initialized `SemanticSegmentation` object
+ */
+export async function load(
+    modelConfig: ModelConfig = {
+      base: 'pascal',
+      quantizationBytes: 2
+    },
+) {
   if (tf == null) {
     throw new Error(
         `Cannot find TensorFlow.js.` +
@@ -59,21 +91,83 @@ export async function load(modelConfig: SemanticSegmentationConfig = {
 
 export class SemanticSegmentation {
   readonly model: tfconv.GraphModel;
-  readonly base: SemanticSegmentationBaseModel;
+  readonly base: ModelArchitecture;
   constructor(
       graphModel: tfconv.GraphModel,
-      base?: SemanticSegmentationBaseModel,
+      base?: ModelArchitecture,
   ) {
     this.model = graphModel;
     this.base = base;
   }
 
+  /**
+   * Segments an arbitrary image and generates a two-dimensional tensor with
+   * class labels assigned to each cell of the grid overlayed on the image ( the
+   * maximum number of cells on the side is fixed to 513).
+   *
+   * @param input ::
+   *     `ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement`
+   *
+   * The input image to segment.
+   *
+   * @return rawSegmentationMap :: `tf.Tensor2D`
+   *
+   * The segmentation map of the image
+   */
   public predict(input: DeepLabInput): tf.Tensor2D {
     return tf.tidy(() => {
       const data = toInputTensor(input);
       return tf.squeeze(this.model.execute(data) as tf.Tensor);
     }) as tf.Tensor2D;
   }
+
+  /**
+   * Segments an arbitrary image and generates a two-dimensional tensor with
+   * class labels assigned to each cell of the grid overlayed on the image ( the
+   * maximum number of cells on the side is fixed to 513).
+   *
+   * @param image :: `ImageData | HTMLImageElement | HTMLCanvasElement |
+   * HTMLVideoElement | tf.Tensor3D`;
+   *
+   *   The image to segment
+   *
+   * @param config (optional) The configuration object for the segmentation:
+   *
+   * - **config.canvas** (optional) :: `HTMLCanvasElement`
+   *
+   *   The canvas where to draw the output
+   *
+   * - **config.colormap** (optional) :: `[number, number, number][]`
+   *
+   *   The array of RGB colors corresponding to labels
+   *
+   * - **config.labels** (optional) :: `string[]`
+   *
+   *   The array of names corresponding to labels
+   *
+   *   By [default](./src/index.ts#L81), `colormap` and `labels` are set
+   * according to the `base` model attribute passed during initialization.
+   *
+   * @returns A promise of a `DeepLabOutput` object, with four attributes:
+   *
+   * - **legend** :: `{ [name: string]: [number, number, number] }`
+   *
+   *   The legend is a dictionary of objects recognized in the image and their
+   *   colors in RGB format.
+   *
+   * - **height** :: `number`
+   *
+   *   The height of the returned segmentation map
+   *
+   * - **width** :: `number`
+   *
+   *   The width of the returned segmentation map
+   *
+   * - **segmentationMap** :: `Uint8ClampedArray`
+   *
+   *   The colored segmentation map as `Uint8ClampedArray` which can be
+   *   fed into `ImageData` and mapped to a canvas.
+   */
 
   public async segment(input: DeepLabInput, config: PredictionConfig = {}):
       Promise<DeepLabOutput> {

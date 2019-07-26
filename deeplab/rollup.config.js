@@ -68,11 +68,15 @@ function config({plugins = [], output = {}}) {
     output: {
       banner: settings['preamble'],
       globals: {
-        '@tensorflow/tfjs': 'tf',
+        '@tensorflow/tfjs-core': 'tf',
+        '@tensorflow/tfjs-converter': 'tf',
       },
       ...output,
     },
-    external: ['@tensorflow/tfjs'],
+    external: [
+      '@tensorflow/tfjs-core',
+      '@tensorflow/tfjs-converter',
+    ],
   };
 }
 

@@ -13,7 +13,7 @@ In the first step of semantic segmentation, an image is fed through a pre-traine
 To get started, pick the model name from `pascal`, `cityscapes` and `ade20k`, and decide whether you want your model quantized to 1 or 2 bytes (set the `quantizationBytes` option to 4 if you want to disable quantization). Then, initialize the model as follows:
 
 ```typescript
-import {createCanvas} from 'canvas';
+import * as tf from '@tensorflow-models/tfjs';
 import * as deeplab from '@tensorflow-models/deeplab';
 const loadModel = async () => {
   const modelName = 'pascal';   // set to your preferred model, out of `pascal`,
@@ -22,8 +22,7 @@ const loadModel = async () => {
   return await deeplab.load({base: modelName, quantizationBytes});
 };
 
-// this empty canvas serves as an example input
-const input = createCanvas(200, 200);
+const input = tf.zeros([227, 500, 3]);
 // ...
 
 loadModel()

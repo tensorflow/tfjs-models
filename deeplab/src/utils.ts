@@ -16,10 +16,12 @@
  */
 
 import * as tf from '@tensorflow/tfjs-core';
-import {config} from './config';
-import {Color, DeepLabInput, Label, Legend, QuantizationBytes, SegmentationData, SemanticSegmentationBaseModel} from './types';
 
-export const createPascalColormap = (): Color[] => {
+import {config} from './config';
+import {Color, DeepLabInput, Label, Legend, ModelArchitecture, QuantizationBytes, SegmentationData} from './types';
+
+
+export function createPascalColormap(): Color[] {
   /**
    * Generates the colormap matching the Pascal VOC dev guidelines.
    * The original implementation in Python: https://git.io/fjgw5
@@ -40,18 +42,45 @@ export const createPascalColormap = (): Color[] => {
     }
   }
   return colormap;
-};
+}
 
-export const getURL =
-    (base: SemanticSegmentationBaseModel,
-     quantizationBytes: QuantizationBytes) => {
-      return `${config['BASE_PATH']}/${
-          ([1, 2].indexOf(quantizationBytes) !== -1) ?
-              `quantized/${quantizationBytes}/` :
-              ''}${base}/model.json`;
-    };
+/**
+ * Returns
+ *
+ * @param base  :: `ModelArchitecture`
+ *
+ * The type of model to load (either `pascal`, `cityscapes` or `ade20k`).
+ *
+ * @param quantizationBytes (optional) :: `QuantizationBytes`
+ *
+ * The degree to which weights are quantized (either 1, 2 or 4).
+ * Setting this attribute to 1 or 2 will load the model with int32 and
+ * float32 compressed to 1 or 2 bytes respectively.
+ * Set it to 4 to disable quantization.
+ *
+ * @return The URL of the TF.js GraphModel weights
+ */
+export function getURL(
+    base: ModelArchitecture,
+    quantizationBytes: QuantizationBytes,
+) {
+  return `${config['BASE_PATH']}/${
+      ([1, 2].indexOf(quantizationBytes) !== -1) ?
+          `quantized/${quantizationBytes}/` :
+          ''}${base}/model.json`;
+}
 
-export const getColormap = (base: SemanticSegmentationBaseModel): Color[] => {
+/**
+ * @param base  :: `ModelArchitecture`
+ *
+ * The type of model to load (either `pascal`, `cityscapes` or `ade20k`).
+ *
+ * @return colormap :: `[number, number, number][]`
+ *
+ * The list of colors in RGB format, represented as arrays and corresponding
+ * to labels.
+ */
+export function getColormap(base: ModelArchitecture): Color[] {
   if (base === 'pascal') {
     return config['COLORMAPS']['PASCAL'] as Color[];
   } else if (base === 'ade20k') {
@@ -63,9 +92,18 @@ export const getColormap = (base: SemanticSegmentationBaseModel): Color[] => {
       `SemanticSegmentation cannot be constructed ` +
       `with an invalid base model ${base}. ` +
       `Try one of 'pascal', 'cityscapes' and 'ade20k'.`);
-};
+}
 
-export function getLabels(base: SemanticSegmentationBaseModel) {
+/**
+ * @param base  :: `ModelArchitecture`
+ *
+ * The type of model to load (either `pascal`, `cityscapes` or `ade20k`).
+ *
+ * @return labellingScheme :: `string[]`
+ *
+ * The list with verbal descriptions of labels
+ */
+export function getLabels(base: ModelArchitecture) {
   if (base === 'pascal') {
     return config['LABELS']['PASCAL'];
   } else if (base === 'ade20k') {
@@ -79,6 +117,16 @@ export function getLabels(base: SemanticSegmentationBaseModel) {
       `Try one of 'pascal', 'cityscapes' and 'ade20k'.`);
 }
 
+/**
+ * @param input  ::
+ * `ImageData|HTMLImageElement|HTMLCanvasElement| HTMLVideoElement|tf.Tensor3D`
+ *
+ * The input image to prepare for segmentation.
+ *
+ * @return resizedInput :: `string[]`
+ *
+ * The input tensor to run through the model.
+ */
 export function toInputTensor(input: DeepLabInput) {
   return tf.tidy(() => {
     const image =
@@ -92,9 +140,50 @@ export function toInputTensor(input: DeepLabInput) {
   });
 }
 
+/**
+ * @param colormap :: `Color[]`
+ *
+ * The list of colors in RGB format, represented as arrays and corresponding
+ * to labels.
+ *
+ * @param labellingScheme :: `string[]`
+ *
+ * The list with verbal descriptions of labels
+ *
+ * @param rawSegmentationMap :: `tf.Tensor2D`
+ *
+ * The segmentation map of the image
+ *
+ * @param canvas (optional) :: `HTMLCanvasElement`
+ *
+ * The canvas where to draw the output
+ *
+ * @returns A promise of a `DeepLabOutput` object, with four attributes:
+ *
+ * - **legend** :: `{ [name: string]: [number, number, number] }`
+ *
+ *   The legend is a dictionary of objects recognized in the image and their
+ *   colors in RGB format.
+ *
+ * - **height** :: `number`
+ *
+ *   The height of the returned segmentation map
+ *
+ * - **width** :: `number`
+ *
+ *   The width of the returned segmentation map
+ *
+ * - **segmentationMap** :: `Uint8ClampedArray`
+ *
+ *   The colored segmentation map as `Uint8ClampedArray` which can be
+ *   fed into `ImageData` and mapped to a canvas.
+ */
 export async function toSegmentationImage(
-    colormap: Color[], labelNames: string[], rawSegmentationMap: tf.Tensor2D,
-    canvas?: HTMLCanvasElement): Promise<SegmentationData> {
+    colormap: Color[],
+    labelNames: string[],
+    rawSegmentationMap: tf.Tensor2D,
+    canvas?: HTMLCanvasElement,
+    ): Promise<SegmentationData> {
   if (colormap.length < labelNames.length) {
     throw new Error(
         'The colormap must be expansive enough to encode each label. ' +
