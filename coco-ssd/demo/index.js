@@ -35,7 +35,7 @@ select.onchange = async (event) => {
   const model = await modelPromise;
   model.dispose();
   modelPromise = cocoSsd.load(
-      event.srcElement.options[event.srcElement.selectedIndex].value);
+      {base: event.srcElement.options[event.srcElement.selectedIndex].value});
 };
 
 const image = document.getElementById('image');
