@@ -9,7 +9,7 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow-model s/coco-ssd": "2.0.0",
+    "@tensorflow-models/coco-ssd": "1.1.0",
     "@tensorflow/tfjs-core": "1.2.6",
     "@tensorflow/tfjs-converter": "1.2.5",
     "stats.js": "^0.17.0"
