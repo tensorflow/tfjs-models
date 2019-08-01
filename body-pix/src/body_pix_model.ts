@@ -255,7 +255,7 @@ export class BodyPix {
    * image the binary array is shaped to, which are the same dimensions of the
    * input image.
    */
-  async estimatePersonSegmentation(
+  async estimateMultiplePersonSegmentation(
       input: BodyPixInput,
       config: MultiPersonInferenceConfig = MULTI_PERSON_INFERENCE_CONFIG):
       Promise<PersonSegmentation[]> {
@@ -274,7 +274,6 @@ export class BodyPix {
       const {resized, padding} =
           padAndResizeTo(input, [inputResolution, inputResolution]);
       pad = padding;
-      // const segmentScores = this.predictForSegmentation(resized);
       const {
         segmentLogits,
         longOffsets,
