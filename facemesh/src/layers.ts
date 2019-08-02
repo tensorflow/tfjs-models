@@ -15,6 +15,7 @@
  * =============================================================================
  */
 
+import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 import * as tfl from '@tensorflow/tfjs-layers';
 
@@ -55,3 +56,9 @@ class ChannelPadding extends tfl.layers.Layer {
 }
 
 tf.serialization.registerClass(ChannelPadding);
+
+tfconv.registerOp('Prelu', (node) => {
+  const x = node.inputs[0];
+  const alpha = node.inputs[1];
+  return tf.prelu(x, alpha);
+});
