@@ -80,10 +80,12 @@ export class FaceMesh {
   async estimateFace(video: HTMLVideoElement, returnTensors = false): Promise<{
     faceInViewConfidence: number,
     mesh: tf.Tensor2D,
+    scaledMesh: tf.Tensor2D,
     boundingBox: {topLeft: tf.Tensor2D, bottomRight: tf.Tensor2D}
   }|{
     faceInViewConfidence: number,
     mesh: number[][],
+    scaledMesh: number[][],
     boundingBox: {topLeft: number[], bottomRight: number[]},
     annotations: {[key: string]: number[][]}
   }> {
@@ -94,8 +96,8 @@ export class FaceMesh {
     });
 
     if (prediction != null) {
-      const [coords2dScaled, landmarksBox, flag] =
-          prediction as [tf.Tensor2D, Box, tf.Tensor2D];
+      const [coords2d, coords2dScaled, landmarksBox, flag] =
+          prediction as [tf.Tensor2D, tf.Tensor2D, Box, tf.Tensor2D];
 
       if (returnTensors) {
         const flagArr = await flag.array();
@@ -103,7 +105,8 @@ export class FaceMesh {
 
         return {
           faceInViewConfidence: flagArr[0][0],
-          mesh: coords2dScaled,
+          mesh: coords2d,
+          scaledMesh: coords2dScaled,
           boundingBox: {
             topLeft: landmarksBox.startPoint,
             bottomRight: landmarksBox.endPoint
@@ -111,8 +114,8 @@ export class FaceMesh {
         };
       }
 
-      const [coordsArr, topLeft, bottomRight, flagArr] = await Promise.all([
-        coords2dScaled, landmarksBox.startPoint, landmarksBox.endPoint, flag
+      const [coordsArr, coordsArrScaled, topLeft, bottomRight, flagArr] = await Promise.all([
+        coords2d, coords2dScaled, landmarksBox.startPoint, landmarksBox.endPoint, flag
       ].map(async d => await d.array()));
 
       flag.dispose();
@@ -124,7 +127,7 @@ export class FaceMesh {
       for (const key in MESH_ANNOTATIONS) {
         annotations[key] =
             (MESH_ANNOTATIONS[key] as number[])
-                .map((index: number): number[] => coordsArr[index]) as
+                .map((index: number): number[] => coordsArrScaled[index]) as
             number[][];
       }
 
@@ -132,6 +135,7 @@ export class FaceMesh {
         faceInViewConfidence: flagArr[0][0],
         boundingBox: {topLeft: topLeft[0], bottomRight: bottomRight[0]},
         mesh: coordsArr,
+        scaledMesh: coordsArrScaled,
         annotations
       };
     }

@@ -54,7 +54,7 @@ export class BlazePipeline {
    * @param {tf.Tensor!} image - image tensor of shape [1, H, W, 3].
    * @return {tf.Tensor?} tensor of 2d coordinates (1, 468, 2)
    */
-  predict(image: tf.Tensor4D): [tf.Tensor2D, Box, tf.Tensor2D] {
+  predict(image: tf.Tensor4D): [tf.Tensor2D, tf.Tensor2D, Box, tf.Tensor2D] {
     if (this.needsRoisUpdate()) {
       const box = this.blazeface.getSingleBoundingBox(image as tf.Tensor4D);
       if (!box) {
@@ -73,7 +73,7 @@ export class BlazePipeline {
     const [coords, flag] =
         this.blazemesh.predict(face) as [tf.Tensor, tf.Tensor2D];
 
-    const coords2d = tf.reshape(coords, [-1, 3]).slice([0, 0], [-1, 2]);
+    const coords2d = tf.reshape(coords, [-1, 3]).slice([0, 0], [-1, 2]) as tf.Tensor2D;
     const coords2dScaled =
         tf.mul(
               coords2d,
@@ -83,7 +83,7 @@ export class BlazePipeline {
     const landmarksBox = this.calculateLandmarksBoundingBox(coords2dScaled);
     this.updateRoisFromFaceDetector(landmarksBox as {} as Box);
 
-    return [coords2dScaled, landmarksBox, flag];
+    return [coords2d, coords2dScaled, landmarksBox, flag];
   }
 
   updateRoisFromFaceDetector(box: Box) {
