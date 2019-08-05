@@ -27,8 +27,9 @@ function computeDistance(embedding: Pair[], pose: Pose, minPartScore = 0.3) {
 }
 
 export function decodeMultipleMasks(
-    segmentation: Uint8Array, longOffsets: Float32Array, poses: Pose[],
-    height: number, width: number, minPoseScore = 0.2, refineSteps = 0,
+    segmentation: Uint8Array, longOffsets: Float32Array,
+    partSegmentaion: Uint8Array, poses: Pose[], height: number, width: number,
+    minPoseScore = 0.2, refineSteps = 8,
     flipHorizontally = false): PersonSegmentation[] {
   let numPeopleToDecode = 0;
   let posesAboveScores: Pose[] = [];
@@ -44,6 +45,7 @@ export function decodeMultipleMasks(
       height: height,
       width: width,
       data: new Uint8Array(height * width).fill(0),
+      partData: new Int32Array(height * width).fill(-1),
       pose: posesAboveScores[k]
     });
   }
@@ -88,6 +90,7 @@ export function decodeMultipleMasks(
         }
         if (kMin >= 0) {
           allPersonSegmentation[kMin].data[n] = 1;
+          allPersonSegmentation[kMin].partData[n] = partSegmentaion[n];
         }
       }
       // data[n] = kMin + 1;

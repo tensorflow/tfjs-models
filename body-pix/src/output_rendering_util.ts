@@ -16,7 +16,7 @@
  */
 
 import {cpuBlur} from './blur';
-import {PartSegmentation, PersonSegmentation} from './types';
+import {/*PartSegmentation,*/ PersonSegmentation} from './types';
 
 const offScreenCanvases: {[name: string]: HTMLCanvasElement} = {};
 
@@ -164,8 +164,34 @@ export function toMaskImageData(
       bytes[4 * n + 3] = 255;
       for (let k = 0; k < allPersonSegmentation.length; k++) {
         if (allPersonSegmentation[k].data[n] === 1) {
-          bytes[4 * n + 0] = 155;
+          bytes[4 * n + (k % 3)] = 155;
+          bytes[4 * n + (k + 1) % 3] = 55;
+          bytes[4 * n + (k + 2) % 3] = 20;
           bytes[4 * n + 3] = 180;
+
+          // checks boundary
+          if (i - 1 >= 0 && i + 1 < height && j - 1 >= 0 && j + 1 < width) {
+            const n11 = (i - 1) * width + j - 1;
+            const n12 = (i - 1) * width + j;
+            const n13 = (i - 1) * width + j + 1;
+            const n21 = i * width + j - 1;
+            const n23 = i * width + j + 1;
+            const n31 = (i + 1) * width + j - 1;
+            const n32 = (i + 1) * width + j;
+            const n33 = (i + 1) * width + j + 1;
+            if (allPersonSegmentation[k].data[n11] !== 1 ||
+                allPersonSegmentation[k].data[n12] !== 1 ||
+                allPersonSegmentation[k].data[n13] !== 1 ||
+                allPersonSegmentation[k].data[n21] !== 1 ||
+                allPersonSegmentation[k].data[n23] !== 1 ||
+                allPersonSegmentation[k].data[n31] !== 1 ||
+                allPersonSegmentation[k].data[n32] !== 1 ||
+                allPersonSegmentation[k].data[n33] !== 1) {
+              bytes[4 * n + 0] = 0;
+              bytes[4 * n + 1] = 255;
+              bytes[4 * n + 2] = 0;
+            }
+          }
         }
       }
     }
@@ -191,34 +217,33 @@ export function toMaskImageData(
  * where there is no part.
  */
 export function toColoredPartImageData(
-    partSegmentation: PartSegmentation,
+    allPersonSegmentation: PersonSegmentation[],
     partColors: Array<[number, number, number]>): ImageData {
-  const {width, height, data} = partSegmentation;
+  const {width, height} = allPersonSegmentation[0];
   const bytes = new Uint8ClampedArray(width * height * 4);
 
   for (let i = 0; i < height * width; ++i) {
     // invert mask.  Invert the segmentatino mask.
-    const partId = Math.round(data[i]);
+    // const partId = Math.round(data[i]);
     const j = i * 4;
-
-    if (partId === -1) {
-      bytes[j + 0] = 255;
-      bytes[j + 1] = 255;
-      bytes[j + 2] = 255;
-      bytes[j + 3] = 255;
-    } else {
-      const color = partColors[partId];
-
-      if (!color) {
-        throw new Error(`No color could be found for part id ${partId}`);
+    bytes[j + 0] = 255;
+    bytes[j + 1] = 255;
+    bytes[j + 2] = 255;
+    bytes[j + 3] = 255;
+    for (let k = 0; k < allPersonSegmentation.length; k++) {
+      const partId = allPersonSegmentation[k].partData[i];
+      if (partId !== -1) {
+        const color = partColors[partId];
+        if (!color) {
+          throw new Error(`No color could be found for part id ${partId}`);
+        }
+        bytes[j + 0] = color[0];
+        bytes[j + 1] = color[1];
+        bytes[j + 2] = color[2];
+        bytes[j + 3] = 255;
       }
-      bytes[j + 0] = color[0];
-      bytes[j + 1] = color[1];
-      bytes[j + 2] = color[2];
-      bytes[j + 3] = 255;
     }
   }
-
   return new ImageData(bytes, width, height);
 }
 

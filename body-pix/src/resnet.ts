@@ -50,16 +50,26 @@ export class ResNet implements BaseModel {
       const asFloat = toFloatIfInt(input);
       const asBatch = asFloat.expandDims(0);
       const [
-             displacementBwd4d,
-             heatmaps4d,
-             partHeatmaps4d,
-             longOffsets4d,
-             offsets4d,
-             displacementFwd4d,
-             segmentation4d,
-             partOffsets4d,
-             ] =
-          this.model.predict(asBatch) as tf.Tensor[];
+          //  - bodypix2js_release_2
+          //  displacementBwd4d,
+          //  heatmaps4d,
+          //  partHeatmaps4d,
+          //  longOffsets4d,
+          //  offsets4d,
+          //  displacementFwd4d,
+          //  segmentation4d,
+          //  partOffsets4d,
+          //
+          //  - bodypix2js_release_2 2
+          displacementBwd4d,
+          displacementFwd4d,
+          heatmaps4d,
+          longOffsets4d,
+          offsets4d,
+          partHeatmaps4d,
+          segmentation4d,
+          partOffsets4d,
+      ] = this.model.predict(asBatch) as tf.Tensor[];
 
       const heatmaps = heatmaps4d.squeeze() as tf.Tensor3D;
       const heatmapScores = heatmaps.sigmoid();
@@ -70,6 +80,21 @@ export class ResNet implements BaseModel {
       const partHeatmaps = partHeatmaps4d.squeeze([0]) as tf.Tensor3D;
       const longOffsets = longOffsets4d.squeeze([0]) as tf.Tensor3D;
       const partOffsets = partOffsets4d.squeeze([0]) as tf.Tensor3D;
+
+      console.log('heatmap');
+      console.log(heatmapScores.shape);
+      console.log('offsets');
+      console.log(offsets.shape);
+      console.log('dispFwd');
+      console.log(displacementFwd.shape);
+      console.log('dispBwd');
+      console.log(displacementBwd.shape);
+      console.log('partHeatmap');
+      console.log(partHeatmaps.shape);
+      console.log('partOffsets');
+      console.log(partOffsets.shape);
+      console.log('longOffsets');
+      console.log(longOffsets.shape);
 
       return {
         heatmapScores,

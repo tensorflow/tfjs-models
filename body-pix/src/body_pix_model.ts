@@ -206,7 +206,8 @@ export class BodyPix {
     heatmapScores: tf.Tensor3D,
     offsets: tf.Tensor3D,
     displacementFwd: tf.Tensor3D,
-    displacementBwd: tf.Tensor3D
+    displacementBwd: tf.Tensor3D,
+    partHeatmaps: tf.Tensor3D
   } {
     const {
       segmentation,
@@ -214,12 +215,14 @@ export class BodyPix {
       heatmapScores,
       offsets,
       displacementFwd,
-      displacementBwd
+      displacementBwd,
+      partHeatmaps,
     } = this.baseModel.predict(input);
     return {
       segmentLogits: segmentation, longOffsets: longOffsets,
           heatmapScores: heatmapScores, offsets: offsets,
-          displacementFwd: displacementFwd, displacementBwd: displacementBwd
+          displacementFwd: displacementFwd, displacementBwd: displacementBwd,
+          partHeatmaps: partHeatmaps
     }
   }
 
@@ -270,6 +273,7 @@ export class BodyPix {
       offsetsRaw,
       displacementFwdRaw,
       displacementBwdRaw,
+      partSegmentation,
     } = tf.tidy(() => {
       const {resized, padding} =
           padAndResizeTo(input, [inputResolution, inputResolution]);
@@ -280,7 +284,8 @@ export class BodyPix {
         heatmapScores,
         offsets,
         displacementFwd,
-        displacementBwd
+        displacementBwd,
+        partHeatmaps
       } = this.predictForSegmentationAndLongRangeOffsets(resized);
 
       // decoding with scaling.
@@ -291,23 +296,35 @@ export class BodyPix {
               [[padding.top, padding.bottom], [padding.left, padding.right]])
               .sigmoid();
 
+      // decoding with scaling.
+      const scaledPartSegmentationScores =
+          scaleAndCropToInputTensorShape(
+              partHeatmaps, [height, width], [inputResolution, inputResolution],
+              [[padding.top, padding.bottom], [padding.left, padding.right]])
+              .sigmoid();
+
       const scaledLongOffsets = scaleAndCropToInputTensorShape(
           longOffsets, [height, width], [inputResolution, inputResolution],
           [[padding.top, padding.bottom], [padding.left, padding.right]]);
 
+      const segmentation =
+          toMask(scaledSegmentScores.squeeze(), config.segmentationThreshold);
+      const partSegmentation =
+          decodePartSegmentation(segmentation, scaledPartSegmentationScores);
       return {
-        segmentation:
-            toMask(scaledSegmentScores.squeeze(), config.segmentationThreshold),
+        segmentation: segmentation,
         longOffsets: scaledLongOffsets,
         heatmapScoresRaw: heatmapScores,
         offsetsRaw: offsets,
         displacementFwdRaw: displacementFwd,
         displacementBwdRaw: displacementBwd,
+        partSegmentation: partSegmentation
       };
     });
 
     const segmentationArray = await segmentation.data() as Uint8Array;
     const longOffsetsArray = await longOffsets.data() as Float32Array;
+    const partSegmentationArray = await partSegmentation.data() as Uint8Array;
 
     const [scoresBuffer, offsetsBuffer, displacementsFwdBuffer, displacementsBwdBuffer] =
         await toTensorBuffers3D([
@@ -322,7 +339,8 @@ export class BodyPix {
         poses, [height, width], [inputResolution, inputResolution], pad, false);
 
     const instanceMasks = decodeMultipleMasks(
-        segmentationArray, longOffsetsArray, poses, height, width);
+        segmentationArray, longOffsetsArray, partSegmentationArray, poses,
+        height, width);
 
     segmentation.dispose();
 

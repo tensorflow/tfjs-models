@@ -144,10 +144,11 @@ async function loadImage() {
     };
   });
 
-  image.src = 'two_people.jpg';
+  // image.src = 'two_people.jpg';
   // image.src = 'three_people.jpg';
+  // image.src = 'three_people_4.jpg';
+  image.src = 'four_people.jpg';
   // image.src = 'nine_people.jpg';
-  // image.src = 'four_people.jpg';
   return promise;
 }
 
@@ -401,9 +402,15 @@ function segmentBodyInRealTime() {
         switch (guiState.segmentation.effect) {
           case 'mask':
             const ctx = canvas.getContext('2d');
-            // Draws masks
+            // Draws instance segmentation masks
             const mask = bodyPix.toMaskImageData(
                 allPersonSegmentation, guiState.segmentation.maskBackground);
+
+            // // Draws body part segmentation masks
+            // const mask = bodyPix.toColoredPartImageData(
+            //     allPersonSegmentation,
+            //     partColorScales[guiState.partMap.colorScale]);
+
             bodyPix.drawMask(
                 canvas, state.video, mask, guiState.segmentation.opacity,
                 guiState.segmentation.maskBlurAmount, flipHorizontally);
