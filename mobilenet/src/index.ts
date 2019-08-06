@@ -150,16 +150,14 @@ class MobileNetImpl implements MobileNet {
   // Different implementations of mobilenet have different values of [min, max].
   // We store the appropriate normalization parameters using these two scalars
   // such that:
-  // out = in * inputRange + _inputMin;
-  private _inputRange: number;
-  private _inputMin: number;
+  // out = in * inputRange + inputMin;
+  private inputRange: number;
 
   constructor(
       public version: string, public alpha: string,
       public modelUrl: string|tf.io.IOHandler, public inputMin: number = -1,
       public inputMax: number = 1) {
-    this._inputMin = inputMin;
-    this._inputRange = inputMax - inputMin;
+    this.inputRange = inputMax - inputMin;
   }
 
   async load() {
@@ -198,8 +196,7 @@ class MobileNetImpl implements MobileNet {
 
       // Normalize the image from [0, 255] to inputRange.
       const normalized =
-          img.toFloat().mul(this._inputRange).add(this._inputMin) as
-          tf.Tensor3D;
+          img.toFloat().mul(this.inputRange).add(this.inputMin) as tf.Tensor3D;
 
       // Resize the image to
       let resized = normalized;
