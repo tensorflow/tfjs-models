@@ -29,16 +29,19 @@ export class BlazeFaceModel {
   private blazeFaceModel: tfl.LayersModel;
   private width: number;
   private height: number;
+  private maxFaces: number;
   private config: AnchorsConfig;
   private anchors: tf.Tensor;
   private inputSize: tf.Tensor;
   private iouThreshold: number;
   private scoreThreshold: number;
 
-  constructor(model: tfl.LayersModel, width: number, height: number) {
+  constructor(
+      model: tfl.LayersModel, width: number, height: number, maxFaces: number) {
     this.blazeFaceModel = model;
     this.width = width;
     this.height = height;
+    this.maxFaces = maxFaces;
     this.config = this.getAnchorsConfig();
     this.anchors = this.generateAnchors(width, height, this.config);
     this.inputSize = tf.tensor([width, height]);
@@ -98,7 +101,7 @@ export class BlazeFaceModel {
         1);
   }
 
-  getBoundingBox(inputImage: tf.Tensor4D): number[][] {
+  getBoundingBox(inputImage: tf.Tensor4D): number[][][] {
     const normalizedImage = tf.mul(tf.sub(inputImage, 0.5), 2);
     const detectOutputs = this.blazeFaceModel.predict(normalizedImage);
 
@@ -112,21 +115,15 @@ export class BlazeFaceModel {
     const boxes = this.decodeBounds(boxRegressors as tf.Tensor2D);
     const boxIndices = tf.image
                            .nonMaxSuppression(
-                               boxes, scores as tf.Tensor1D, 1,
+                               boxes, scores as tf.Tensor1D, this.maxFaces,
                                this.iouThreshold, this.scoreThreshold)
                            .arraySync();
 
-    if (boxIndices.length === 0) {
-      return null;  // TODO (vakunov): don't return null. Empty box?
-    }
-
-    // TODO (vakunov): change to multi face case
-    const boxIndex = boxIndices[0];
-    const resultBox = tf.slice(boxes, [boxIndex, 0], [1, -1]);
-    return resultBox.arraySync();
+    return boxIndices.map(
+        boxIndex => tf.slice(boxes, [boxIndex, 0], [1, -1]).arraySync());
   }
 
-  getSingleBoundingBox(inputImage: tf.Tensor4D): Box {
+  getSingleBoundingBox(inputImage: tf.Tensor4D): tf.Tensor[] {
     const originalHeight = inputImage.shape[1];
     const originalWidth = inputImage.shape[2];
 
@@ -137,7 +134,9 @@ export class BlazeFaceModel {
       return null;
     }
 
-    const factors = tf.div([originalWidth, originalHeight], this.inputSize);
-    return new Box(tf.tensor(bboxes)).scale(factors as tf.Tensor1D);
+    const factors =
+        tf.div([originalWidth, originalHeight], this.inputSize) as tf.Tensor1D;
+    return bboxes.map(
+        bbox => new Box(tf.tensor(bbox)).scale(factors).startEndTensor);
   }
 }
