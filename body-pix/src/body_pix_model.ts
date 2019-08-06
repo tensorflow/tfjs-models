@@ -26,7 +26,7 @@ import {decodeMultipleMasks} from './multi_person/decode_multiple_masks';
 import {decodeMultiplePoses} from './multi_person/decode_multiple_poses';
 import {ResNet} from './resnet';
 import {BodyPixInput, PartSegmentation, PersonSegmentation} from './types';
-import {getInputTensorDimensions, padAndResizeTo, scaleAndCropToInputTensorShape, scaleAndFlipPoses, /*flipPosesHorizontal,*/ toInputTensor, toTensorBuffers3D} from './util';
+import {getInputTensorDimensions, padAndResizeTo, scaleAndCropToInputTensorShape, scaleAndFlipPoses, toInputTensor, toTensorBuffers3D} from './util';
 
 export type BodyPixInputResolution =
     161|193|257|289|321|353|385|417|449|481|513|801|1217;
@@ -293,11 +293,9 @@ export class BodyPix {
    * to be considered part of the person.  Affects the generation of the
    * segmentation mask.
    *
-   * @return An object containing a width, height, and a binary array with 1 for
-   * the pixels that are part of the person, and 0 otherwise. The array size
-   * corresponds to the number of pixels in the image.  The width and height
-   * correspond to the dimensions of the image the binary array is shaped to,
-   * which are the same dimensions of the input image.
+   * @return A 2d Tensor with 1 for the pixels that are part of the person,
+   * and 0 otherwise. The width and height correspond to the same dimensions
+   * of the input image.
    */
   async estimatePersonSegmentation(
       input: BodyPixInput,
