@@ -21,12 +21,12 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {resNet50Checkpoint} from './checkpoints';
 import {decodePartSegmentation, toMask} from './decode_part_map';
-import {assertValidOutputStride, MobileNetMultiplier, OutputStride} from './mobilenet';
+import {MobileNetMultiplier} from './mobilenet';
 import {decodeMultipleMasks} from './multi_person/decode_multiple_masks';
 import {decodeMultiplePoses} from './multi_person/decode_multiple_poses';
 import {ResNet} from './resnet';
 import {BodyPixInput, PartSegmentation, PersonSegmentation} from './types';
-import {/*flipPosesHorizontal, toInputTensor,*/ getInputTensorDimensions, padAndResizeTo, scaleAndCropToInputTensorShape, scaleAndFlipPoses, toTensorBuffers3D} from './util';
+import {getInputTensorDimensions, padAndResizeTo, scaleAndCropToInputTensorShape, scaleAndFlipPoses, /*flipPosesHorizontal,*/ toInputTensor, toTensorBuffers3D} from './util';
 
 export type BodyPixInputResolution =
     161|193|257|289|321|353|385|417|449|481|513|801|1217;
@@ -236,6 +236,84 @@ export class BodyPix {
   }
 
   /**
+   * Given an image with a person, returns a binary array with 1 for the pixels
+   * that are part of the person, and 0 otherwise. This does
+   * standard ImageNet pre-processing before inferring through the model. Will
+   * resize and crop the image to 353 x 257 while maintaining the original
+   * aspect ratio before feeding through the network. The image pixels
+   * should have values [0-255].
+   *
+   * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
+   * The input image to feed through the network.
+   *
+   * @param segmentationThreshold The minimum that segmentation values must have
+   * to be considered part of the person.  Affects the generation of the
+   * segmentation mask.
+   *
+   * @return A 2d Tensor with 1 for the pixels that are part of the person,
+   * and 0 otherwise. The width and height correspond to the same dimensions
+   * of the input image.
+   */
+  estimatePersonSegmentationActivation(
+      input: BodyPixInput, segmentationThreshold = 0.5): tf.Tensor2D {
+    const inputResolution = this.inputResolution;
+
+    return tf.tidy(() => {
+      const imageTensor = toInputTensor(input);
+      const {
+        resized,
+        padding,
+      } = padAndResizeTo(imageTensor, [inputResolution, inputResolution]);
+
+      const segmentScores = this.predictForSegmentation(resized);
+
+      const [resizedHeight, resizedWidth] = resized.shape;
+      const [height, width] = imageTensor.shape;
+
+      const scaledSegmentScores = scaleAndCropToInputTensorShape(
+          segmentScores, [height, width], [resizedHeight, resizedWidth],
+          [[padding.top, padding.bottom], [padding.left, padding.right]]);
+
+      return toMask(scaledSegmentScores.squeeze(), segmentationThreshold);
+    });
+  }
+
+  /**
+   * Given an image with a person, returns a binary array with 1 for the pixels
+   * that are part of the person, and 0 otherwise. This does
+   * standard ImageNet pre-processing before inferring through the model. Will
+   * resize and crop the image to 353 x 257 while maintaining the original
+   * aspect ratio before feeding through the network. The image pixels
+   * should have values [0-255].
+   *
+   * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
+   * The input image to feed through the network.
+   *
+   * @param segmentationThreshold The minimum that segmentation values must have
+   * to be considered part of the person.  Affects the generation of the
+   * segmentation mask.
+   *
+   * @return An object containing a width, height, and a binary array with 1 for
+   * the pixels that are part of the person, and 0 otherwise. The array size
+   * corresponds to the number of pixels in the image.  The width and height
+   * correspond to the dimensions of the image the binary array is shaped to,
+   * which are the same dimensions of the input image.
+   */
+  async estimatePersonSegmentation(
+      input: BodyPixInput,
+      segmentationThreshold = 0.5): Promise<PersonSegmentation> {
+    const segmentation =
+        this.estimatePersonSegmentationActivation(input, segmentationThreshold);
+
+    const [height, width] = segmentation.shape;
+    const result = await segmentation.data() as Uint8Array;
+
+    segmentation.dispose();
+
+    return {height, width, data: result};
+  }
+
+  /**
    * Given an image with a person, returns a binary array with 1 for the
    * pixels that are part of the person, and 0 otherwise. This does standard
    * ImageNet pre-processing before inferring through the model. Will resize
@@ -358,6 +436,57 @@ export class BodyPix {
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
    *
+   * @param segmentationThreshold The minimum that segmentation values must have
+   * to be considered part of the person.  Affects the clipping of the colored
+   * part image.
+   *
+   * @return A 2d Tensor with part ids from 0-24 for the pixels that are part of
+   * a corresponding body part, and -1 otherwise. The width and height
+   * correspond to the same dimensions of the input image.
+   */
+  estimatePartSegmentationActivation(
+      input: BodyPixInput, segmentationThreshold = 0.5): tf.Tensor2D {
+    const inputResolution = this.inputResolution;
+
+    return tf.tidy(() => {
+      const imageTensor = toInputTensor(input);
+      const {
+        resized,
+        padding,
+      } = padAndResizeTo(imageTensor, [inputResolution, inputResolution]);
+
+      const {segmentScores, partHeatmapScores} =
+          this.predictForPartMap(resized);
+
+      const [resizedHeight, resizedWidth] = resized.shape;
+      const [height, width] = imageTensor.shape;
+
+      const scaledSegmentScores = scaleAndCropToInputTensorShape(
+          segmentScores, [height, width], [resizedHeight, resizedWidth],
+          [[padding.top, padding.bottom], [padding.left, padding.right]]);
+
+      const scaledPartHeatmapScore = scaleAndCropToInputTensorShape(
+          partHeatmapScores, [height, width], [resizedHeight, resizedWidth],
+          [[padding.top, padding.bottom], [padding.left, padding.right]]);
+
+      const segmentationMask =
+          toMask(scaledSegmentScores.squeeze(), segmentationThreshold);
+
+      return decodePartSegmentation(segmentationMask, scaledPartHeatmapScore);
+    });
+  }
+
+  /**
+   * Given an image with a person, returns an array with a part id from 0-24 for
+   * the pixels that are part of a corresponding body part, and -1 otherwise.
+   * This does standard ImageNet pre-processing before inferring through the
+   * model. Will resize and crop the image to 353 x 257 while maintaining the
+   * original aspect ratio before feeding through the network. The image should
+   * pixels should have values [0-255].
+   *
+   * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
+   * The input image to feed through the network.
+   *
    * @param outputStride the desired stride for the outputs.  Must be 32, 16,
    * or 8. Defaults to 16. The output width and height will be will be
    * (inputDimension - 1)/outputStride + 1
@@ -373,34 +502,12 @@ export class BodyPix {
    * shaped to, which are the same dimensions of the input image.
    */
   async estimatePartSegmentation(
-      input: BodyPixInput, outputStride: OutputStride = 16,
+      input: BodyPixInput,
       segmentationThreshold = 0.5): Promise<PartSegmentation> {
-    assertValidOutputStride(outputStride);
+    const partSegmentation =
+        this.estimatePartSegmentationActivation(input, segmentationThreshold);
 
-    const [height, width] = getInputTensorDimensions(input);
-    const inputResolution = this.inputResolution;
-
-    const partSegmentation = tf.tidy(() => {
-      const {resized, padding} =
-          padAndResizeTo(input, [inputResolution, inputResolution]);
-      const {segmentScores, partHeatmapScores} =
-          this.predictForPartMap(resized);
-
-      const scaledSegmentScores = scaleAndCropToInputTensorShape(
-          segmentScores, [height, width], [inputResolution, inputResolution],
-          [[padding.top, padding.bottom], [padding.left, padding.right]]);
-
-      const scaledPartHeatmapScore = scaleAndCropToInputTensorShape(
-          partHeatmapScores, [height, width],
-          [inputResolution, inputResolution],
-          [[padding.top, padding.bottom], [padding.left, padding.right]]);
-
-      const segmentationMask =
-          toMask(scaledSegmentScores.squeeze(), segmentationThreshold);
-
-      return decodePartSegmentation(segmentationMask, scaledPartHeatmapScore);
-    });
-
+    const [height, width] = partSegmentation.shape;
     const data = await partSegmentation.data() as Int32Array;
 
     partSegmentation.dispose();
