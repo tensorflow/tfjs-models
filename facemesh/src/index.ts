@@ -31,21 +31,23 @@ export async function load(maxFaces = 10, meshWidth = 128, meshHeight = 128) {
   return faceMesh;
 }
 
+type FaceBoundingBox = [[number, number], [number, number]];
+
 export class FaceMesh {
   private blazeface: BlazeFaceModel;
 
   async load(maxFaces: number, meshWidth: number, meshHeight: number) {
-    const blazeFaceModel = await this.loadFaceModel(maxFaces);
+    const blazeFaceModel = await this.loadFaceModel();
 
     this.blazeface =
         new BlazeFaceModel(blazeFaceModel, meshWidth, meshHeight, maxFaces);
   }
 
-  loadFaceModel(maxFaces: number): Promise<tfl.LayersModel> {
+  loadFaceModel(): Promise<tfl.LayersModel> {
     return tfl.loadLayersModel(BLAZEFACE_MODEL_URL);
   }
 
-  async estimateFace(video: HTMLVideoElement): Promise<any> {
+  async estimateFace(video: HTMLVideoElement): Promise<FaceBoundingBox[]> {
     const prediction = tf.tidy(() => {
       const image =
           tf.browser.fromPixels(video).toFloat().expandDims(0) as tf.Tensor4D;
@@ -56,7 +58,8 @@ export class FaceMesh {
       const coords = await Promise.all(
           prediction.map(async (d: tf.Tensor1D) => await d.array()));
 
-      return coords;
+      return coords.map(
+          arr => [arr.slice(0, 2), arr.slice(2)] as FaceBoundingBox);
     }
 
     return null;

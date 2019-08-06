@@ -137,6 +137,7 @@ export class BlazeFaceModel {
     const factors =
         tf.div([originalWidth, originalHeight], this.inputSize) as tf.Tensor1D;
     return bboxes.map(
-        bbox => new Box(tf.tensor(bbox)).scale(factors).startEndTensor);
+        bbox =>
+            new Box(tf.tensor(bbox)).scale(factors).startEndTensor.squeeze());
   }
 }
