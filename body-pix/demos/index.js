@@ -154,8 +154,8 @@ async function loadImage() {
 
 async function loadVideo(cameraLabel) {
   try {
-    // state.video = await setupCamera(cameraLabel);
-    state.video = await loadImage();
+    state.video = await setupCamera(cameraLabel);
+    // state.video = await loadImage();
   } catch (e) {
     let info = document.getElementById('info');
     info.textContent = 'this browser does not support video capture,' +
@@ -164,7 +164,7 @@ async function loadVideo(cameraLabel) {
     throw e;
   }
 
-  // state.video.play();
+  state.video.play();
 }
 
 const guiState = {
@@ -174,7 +174,7 @@ const guiState = {
   input: {
     architecture: 'ResNet50',
     outputStride: 16,
-    inputResolution: 513,
+    inputResolution: 257,
     multiplier: 1.0,
     quantBytes: 4
   },
@@ -394,22 +394,22 @@ function segmentBodyInRealTime() {
 
     switch (guiState.estimate) {
       case 'segmentation':
+        // Multi-person
         const allPersonSegmentation =
             await state.net.estimateMultiplePersonSegmentation(state.video, {
               segmentationThreshold: guiState.segmentation.segmentationThreshold
             });
 
+        // // Single-person
+        // const allPersonSegmentation =
+        //     [await state.net.estimateSinglePersonSegmentation(
+        //         state.video, guiState.segmentation.segmentationThreshold)];
+
         switch (guiState.segmentation.effect) {
           case 'mask':
             const ctx = canvas.getContext('2d');
-            // Draws instance segmentation masks
             const mask = bodyPix.toMaskImageData(
                 allPersonSegmentation, guiState.segmentation.maskBackground);
-
-            // // Draws body part segmentation masks
-            // const mask = bodyPix.toColoredPartImageData(
-            //     allPersonSegmentation,
-            //     partColorScales[guiState.partMap.colorScale]);
 
             bodyPix.drawMask(
                 canvas, state.video, mask, guiState.segmentation.opacity,
@@ -435,11 +435,17 @@ function segmentBodyInRealTime() {
         }
         break;
       case 'partmap':
-        const partSegmentation = await state.net.estimatePartSegmentation(
-            state.video, outputStride, guiState.partMap.segmentationThreshold);
+        const ctx = canvas.getContext('2d');
+        const allPersonPartSegmentation =
+            await state.net.estimateMultiplePersonPartSegmentation(
+                state.video, {
+                  segmentationThreshold:
+                      guiState.segmentation.segmentationThreshold
+                });
 
         const coloredPartImageData = bodyPix.toColoredPartImageData(
-            partSegmentation, partColorScales[guiState.partMap.colorScale]);
+            allPersonPartSegmentation,
+            partColorScales[guiState.partMap.colorScale]);
 
         const maskBlurAmount = 0;
         if (guiState.partMap.applyPixelation) {
@@ -453,6 +459,18 @@ function segmentBodyInRealTime() {
               canvas, video, coloredPartImageData, guiState.opacity,
               maskBlurAmount, flipHorizontally);
         }
+
+        allPersonPartSegmentation.forEach(personPartSegmentation => {
+          let pose = personPartSegmentation.pose;
+          if (flipHorizontally) {
+            pose =
+                bodyPix.flipPoseHorizontal(pose, personPartSegmentation.width);
+          }
+          if (pose.score >= 0.2) {
+            drawKeypoints(pose.keypoints, 0.1, ctx);
+            drawSkeleton(pose.keypoints, 0.1, ctx);
+          }
+        });
 
         break;
       default:

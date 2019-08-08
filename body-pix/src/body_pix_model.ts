@@ -22,7 +22,7 @@ import * as tf from '@tensorflow/tfjs-core';
 import {resNet50Checkpoint} from './checkpoints';
 import {decodePartSegmentation, toMask} from './decode_part_map';
 import {MobileNetMultiplier} from './mobilenet';
-import {decodeMultipleMasks} from './multi_person/decode_multiple_masks';
+import {decodeMultipleMasks, decodeMultiplePartMasks} from './multi_person/decode_multiple_masks';
 import {decodeMultiplePoses} from './multi_person/decode_multiple_poses';
 import {ResNet} from './resnet';
 import {BodyPixInput, PartSegmentation, PersonSegmentation} from './types';
@@ -196,8 +196,8 @@ export class BodyPix {
     this.inputResolution = inputResolution;
   }
 
-  predictForSegmentation(input: tf.Tensor3D): tf.Tensor3D {
-    return this.baseModel.predict(input).segmentation.sigmoid();
+  predictForSegmentationLogits(input: tf.Tensor3D): tf.Tensor3D {
+    return this.baseModel.predict(input).segmentation;
   }
 
   predictForSegmentationAndLongRangeOffsets(input: tf.Tensor3D): {
@@ -226,12 +226,11 @@ export class BodyPix {
     }
   }
 
-  predictForPartMap(input: tf.Tensor3D):
-      {segmentScores: tf.Tensor3D, partHeatmapScores: tf.Tensor3D} {
+  predictForPartMapLogits(input: tf.Tensor3D):
+      {segmentLogits: tf.Tensor3D, partHeatmapLogits: tf.Tensor3D} {
     const {segmentation, partHeatmaps} = this.baseModel.predict(input);
     return {
-      segmentScores: segmentation.sigmoid(),
-          partHeatmapScores: partHeatmaps.sigmoid()
+      segmentLogits: segmentation, partHeatmapLogits: partHeatmaps
     }
   }
 
@@ -247,14 +246,14 @@ export class BodyPix {
    * The input image to feed through the network.
    *
    * @param segmentationThreshold The minimum that segmentation values must have
-   * to be considered part of the person.  Affects the generation of the
+   * to be considered part of the person. Affects the generation of the
    * segmentation mask.
    *
    * @return A 2d Tensor with 1 for the pixels that are part of the person,
    * and 0 otherwise. The width and height correspond to the same dimensions
    * of the input image.
    */
-  estimatePersonSegmentationActivation(
+  estimateSinglePersonSegmentationActivation(
       input: BodyPixInput, segmentationThreshold = 0.5): tf.Tensor2D {
     const inputResolution = this.inputResolution;
 
@@ -265,14 +264,14 @@ export class BodyPix {
         padding,
       } = padAndResizeTo(imageTensor, [inputResolution, inputResolution]);
 
-      const segmentScores = this.predictForSegmentation(resized);
+      const segmentLogits = this.predictForSegmentationLogits(resized);
 
       const [resizedHeight, resizedWidth] = resized.shape;
       const [height, width] = imageTensor.shape;
 
       const scaledSegmentScores = scaleAndCropToInputTensorShape(
-          segmentScores, [height, width], [resizedHeight, resizedWidth],
-          [[padding.top, padding.bottom], [padding.left, padding.right]]);
+          segmentLogits, [height, width], [resizedHeight, resizedWidth],
+          [[padding.top, padding.bottom], [padding.left, padding.right]], true);
 
       return toMask(scaledSegmentScores.squeeze(), segmentationThreshold);
     });
@@ -297,11 +296,11 @@ export class BodyPix {
    * and 0 otherwise. The width and height correspond to the same dimensions
    * of the input image.
    */
-  async estimatePersonSegmentation(
+  async estimateSinglePersonSegmentation(
       input: BodyPixInput,
       segmentationThreshold = 0.5): Promise<PersonSegmentation> {
-    const segmentation =
-        this.estimatePersonSegmentationActivation(input, segmentationThreshold);
+    const segmentation = this.estimateSinglePersonSegmentationActivation(
+        input, segmentationThreshold);
 
     const [height, width] = segmentation.shape;
     const result = await segmentation.data() as Uint8Array;
@@ -349,7 +348,6 @@ export class BodyPix {
       offsetsRaw,
       displacementFwdRaw,
       displacementBwdRaw,
-      partSegmentation,
     } = tf.tidy(() => {
       const {resized, padding} =
           padAndResizeTo(input, [inputResolution, inputResolution]);
@@ -361,32 +359,20 @@ export class BodyPix {
         offsets,
         displacementFwd,
         displacementBwd,
-        partHeatmaps
       } = this.predictForSegmentationAndLongRangeOffsets(resized);
 
       // decoding with scaling.
-      const scaledSegmentScores =
-          scaleAndCropToInputTensorShape(
-              segmentLogits, [height, width],
-              [inputResolution, inputResolution],
-              [[padding.top, padding.bottom], [padding.left, padding.right]])
-              .sigmoid();
-
-      // decoding with scaling.
-      const scaledPartSegmentationScores =
-          scaleAndCropToInputTensorShape(
-              partHeatmaps, [height, width], [inputResolution, inputResolution],
-              [[padding.top, padding.bottom], [padding.left, padding.right]])
-              .sigmoid();
+      const scaledSegmentScores = scaleAndCropToInputTensorShape(
+          segmentLogits, [height, width], [inputResolution, inputResolution],
+          [[padding.top, padding.bottom], [padding.left, padding.right]], true);
 
       const scaledLongOffsets = scaleAndCropToInputTensorShape(
           longOffsets, [height, width], [inputResolution, inputResolution],
-          [[padding.top, padding.bottom], [padding.left, padding.right]]);
+          [[padding.top, padding.bottom], [padding.left, padding.right]], true);
 
       const segmentation =
           toMask(scaledSegmentScores.squeeze(), config.segmentationThreshold);
-      const partSegmentation =
-          decodePartSegmentation(segmentation, scaledPartSegmentationScores);
+
       return {
         segmentation: segmentation,
         longOffsets: scaledLongOffsets,
@@ -394,13 +380,11 @@ export class BodyPix {
         offsetsRaw: offsets,
         displacementFwdRaw: displacementFwd,
         displacementBwdRaw: displacementBwd,
-        partSegmentation: partSegmentation
       };
     });
 
     const segmentationArray = await segmentation.data() as Uint8Array;
     const longOffsetsArray = await longOffsets.data() as Float32Array;
-    const partSegmentationArray = await partSegmentation.data() as Uint8Array;
 
     const [scoresBuffer, offsetsBuffer, displacementsFwdBuffer, displacementsBwdBuffer] =
         await toTensorBuffers3D([
@@ -415,8 +399,7 @@ export class BodyPix {
         poses, [height, width], [inputResolution, inputResolution], pad, false);
 
     const instanceMasks = decodeMultipleMasks(
-        segmentationArray, longOffsetsArray, partSegmentationArray, poses,
-        height, width);
+        segmentationArray, longOffsetsArray, poses, height, width);
 
     segmentation.dispose();
 
@@ -442,7 +425,7 @@ export class BodyPix {
    * a corresponding body part, and -1 otherwise. The width and height
    * correspond to the same dimensions of the input image.
    */
-  estimatePartSegmentationActivation(
+  estimateSinglePersonPartSegmentationActivation(
       input: BodyPixInput, segmentationThreshold = 0.5): tf.Tensor2D {
     const inputResolution = this.inputResolution;
 
@@ -453,19 +436,19 @@ export class BodyPix {
         padding,
       } = padAndResizeTo(imageTensor, [inputResolution, inputResolution]);
 
-      const {segmentScores, partHeatmapScores} =
-          this.predictForPartMap(resized);
+      const {segmentLogits, partHeatmapLogits} =
+          this.predictForPartMapLogits(resized);
 
       const [resizedHeight, resizedWidth] = resized.shape;
       const [height, width] = imageTensor.shape;
 
       const scaledSegmentScores = scaleAndCropToInputTensorShape(
-          segmentScores, [height, width], [resizedHeight, resizedWidth],
-          [[padding.top, padding.bottom], [padding.left, padding.right]]);
+          segmentLogits, [height, width], [resizedHeight, resizedWidth],
+          [[padding.top, padding.bottom], [padding.left, padding.right]], true);
 
       const scaledPartHeatmapScore = scaleAndCropToInputTensorShape(
-          partHeatmapScores, [height, width], [resizedHeight, resizedWidth],
-          [[padding.top, padding.bottom], [padding.left, padding.right]]);
+          partHeatmapLogits, [height, width], [resizedHeight, resizedWidth],
+          [[padding.top, padding.bottom], [padding.left, padding.right]], true);
 
       const segmentationMask =
           toMask(scaledSegmentScores.squeeze(), segmentationThreshold);
@@ -499,11 +482,12 @@ export class BodyPix {
    * The width and height correspond to the dimensions of the image the array is
    * shaped to, which are the same dimensions of the input image.
    */
-  async estimatePartSegmentation(
+  async estimateSinglePersonPartSegmentation(
       input: BodyPixInput,
       segmentationThreshold = 0.5): Promise<PartSegmentation> {
     const partSegmentation =
-        this.estimatePartSegmentationActivation(input, segmentationThreshold);
+        this.estimateSinglePersonPartSegmentationActivation(
+            input, segmentationThreshold);
 
     const [height, width] = partSegmentation.shape;
     const data = await partSegmentation.data() as Int32Array;
@@ -513,10 +497,119 @@ export class BodyPix {
     return {height, width, data};
   }
 
+  /**
+   * Given an image with a person, returns a binary array with 1 for the
+   * pixels that are part of the person, and 0 otherwise. This does standard
+   * ImageNet pre-processing before inferring through the model. Will resize
+   * and crop the image to 353 x 257 while maintaining the original aspect
+   * ratio before feeding through the network. The image pixels should have
+   * values [0-255].
+   *
+   * @param input
+   * ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement) The input
+   * image to feed through the network.
+   *
+   * @param outputStride the desired stride for the outputs.  Must be 32, 16,
+   * or 8. Defaults to 16. The output width and height will be will be
+   * (inputDimension - 1)/outputStride + 1
+   *
+   * @return An array of PersonSegmentation object, each containing a width,
+   * height, and a binary array with 1 for the pixels that are part of the
+   * person, and 0 otherwise. The array size corresponds to the number of pixels
+   * in the image. The width and height correspond to the dimensions of the
+   * image the binary array is shaped to, which are the same dimensions of the
+   * input image.
+   */
+  async estimateMultiplePersonPartSegmentation(
+      input: BodyPixInput,
+      config: MultiPersonInferenceConfig = MULTI_PERSON_INFERENCE_CONFIG):
+      Promise<PartSegmentation[]> {
+    const [height, width] = getInputTensorDimensions(input);
+    const inputResolution = this.inputResolution;
+
+    let pad = null;
+    const {
+      segmentation,
+      longOffsets,
+      heatmapScoresRaw,
+      offsetsRaw,
+      displacementFwdRaw,
+      displacementBwdRaw,
+      partSegmentation,
+    } = tf.tidy(() => {
+      const {resized, padding} =
+          padAndResizeTo(input, [inputResolution, inputResolution]);
+      pad = padding;
+      const {
+        segmentLogits,
+        longOffsets,
+        heatmapScores,
+        offsets,
+        displacementFwd,
+        displacementBwd,
+        partHeatmaps
+      } = this.predictForSegmentationAndLongRangeOffsets(resized);
+
+      // decoding with scaling.
+      const scaledSegmentScores = scaleAndCropToInputTensorShape(
+          segmentLogits, [height, width], [inputResolution, inputResolution],
+          [[padding.top, padding.bottom], [padding.left, padding.right]], true);
+
+      // decoding with scaling.
+      const scaledPartSegmentationScores = scaleAndCropToInputTensorShape(
+          partHeatmaps, [height, width], [inputResolution, inputResolution],
+          [[padding.top, padding.bottom], [padding.left, padding.right]], true)
+
+      // decoding and scaling.
+      const scaledLongOffsets = scaleAndCropToInputTensorShape(
+          longOffsets, [height, width], [inputResolution, inputResolution],
+          [[padding.top, padding.bottom], [padding.left, padding.right]], true);
+
+      const segmentation =
+          toMask(scaledSegmentScores.squeeze(), config.segmentationThreshold);
+      const partSegmentation =
+          decodePartSegmentation(segmentation, scaledPartSegmentationScores);
+      return {
+        segmentation: segmentation,
+        longOffsets: scaledLongOffsets,
+        heatmapScoresRaw: heatmapScores,
+        offsetsRaw: offsets,
+        displacementFwdRaw: displacementFwd,
+        displacementBwdRaw: displacementBwd,
+        partSegmentation: partSegmentation
+      };
+    });
+
+    const segmentationArray = await segmentation.data() as Uint8Array;
+    const longOffsetsArray = await longOffsets.data() as Float32Array;
+    const partSegmentationArray = await partSegmentation.data() as Uint8Array;
+
+    const [scoresBuffer, offsetsBuffer, displacementsFwdBuffer, displacementsBwdBuffer] =
+        await toTensorBuffers3D([
+          heatmapScoresRaw, offsetsRaw, displacementFwdRaw, displacementBwdRaw
+        ]);
+
+    let poses = await decodeMultiplePoses(
+        scoresBuffer, offsetsBuffer, displacementsFwdBuffer,
+        displacementsBwdBuffer, this.baseModel.outputStride, 30, 0.3, 20);
+
+    poses = scaleAndFlipPoses(
+        poses, [height, width], [inputResolution, inputResolution], pad, false);
+
+    const instanceMasks = decodeMultiplePartMasks(
+        segmentationArray, longOffsetsArray, partSegmentationArray, poses,
+        height, width);
+
+    segmentation.dispose();
+
+    return instanceMasks;
+  }
+
   public dispose() {
     this.baseModel.dispose();
   }
 }
+
 
 /**
  * Loads the ResNet BodyPix model.

@@ -16,7 +16,7 @@
  */
 
 import {cpuBlur} from './blur';
-import {/*PartSegmentation,*/ PersonSegmentation} from './types';
+import {PartSegmentation, PersonSegmentation} from './types';
 
 const offScreenCanvases: {[name: string]: HTMLCanvasElement} = {};
 
@@ -217,7 +217,7 @@ export function toMaskImageData(
  * where there is no part.
  */
 export function toColoredPartImageData(
-    allPersonSegmentation: PersonSegmentation[],
+    allPersonSegmentation: PartSegmentation[],
     partColors: Array<[number, number, number]>): ImageData {
   const {width, height} = allPersonSegmentation[0];
   const bytes = new Uint8ClampedArray(width * height * 4);
@@ -231,7 +231,7 @@ export function toColoredPartImageData(
     bytes[j + 2] = 255;
     bytes[j + 3] = 255;
     for (let k = 0; k < allPersonSegmentation.length; k++) {
-      const partId = allPersonSegmentation[k].partData[i];
+      const partId = allPersonSegmentation[k].data[i];
       if (partId !== -1) {
         const color = partColors[partId];
         if (!color) {

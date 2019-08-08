@@ -4,10 +4,19 @@ export type BodyPixInput =
     ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement|tf.Tensor3D;
 
 
+export type PersonSegmentation = {
+  data: Uint8Array,
+  width: number,
+  height: number,
+  partData?: Int32Array,
+  pose?: Pose,
+};
+
 export type PartSegmentation = {
   data: Int32Array,
   width: number,
-  height: number
+  height: number,
+  pose?: Pose,
 };
 
 export declare interface Padding {
@@ -41,12 +50,4 @@ export declare type Keypoint = {
 export declare type Pose = {
   keypoints: Keypoint[],
   score: number,
-};
-
-export type PersonSegmentation = {
-  data: Uint8Array,
-  width: number,
-  height: number,
-  pose?: Pose,
-  partData?: Int32Array,
 };

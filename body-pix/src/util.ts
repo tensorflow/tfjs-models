@@ -73,11 +73,15 @@ export function scaleAndCropToInputTensorShape(
     tensor: tf.Tensor3D,
     [inputTensorHeight, inputTensorWidth]: [number, number],
     [resizedAndPaddedHeight, resizedAndPaddedWidth]: [number, number],
-    [[padT, padB], [padL, padR]]: [[number, number], [number, number]]):
-    tf.Tensor3D {
+    [[padT, padB], [padL, padR]]: [[number, number], [number, number]],
+    applySigmoidActivation = false): tf.Tensor3D {
   return tf.tidy(() => {
-    const inResizedAndPaddedSize = tensor.resizeBilinear(
+    let inResizedAndPaddedSize = tensor.resizeBilinear(
         [resizedAndPaddedHeight, resizedAndPaddedWidth], true);
+
+    if (applySigmoidActivation) {
+      inResizedAndPaddedSize.sigmoid();
+    }
 
     return removePaddingAndResizeBack(
         inResizedAndPaddedSize, [inputTensorHeight, inputTensorWidth],

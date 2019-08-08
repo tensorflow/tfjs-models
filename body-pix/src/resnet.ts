@@ -81,21 +81,6 @@ export class ResNet implements BaseModel {
       const longOffsets = longOffsets4d.squeeze([0]) as tf.Tensor3D;
       const partOffsets = partOffsets4d.squeeze([0]) as tf.Tensor3D;
 
-      console.log('heatmap');
-      console.log(heatmapScores.shape);
-      console.log('offsets');
-      console.log(offsets.shape);
-      console.log('dispFwd');
-      console.log(displacementFwd.shape);
-      console.log('dispBwd');
-      console.log(displacementBwd.shape);
-      console.log('partHeatmap');
-      console.log(partHeatmaps.shape);
-      console.log('partOffsets');
-      console.log(partOffsets.shape);
-      console.log('longOffsets');
-      console.log(longOffsets.shape);
-
       return {
         heatmapScores,
         offsets: offsets as tf.Tensor3D,
