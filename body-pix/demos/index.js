@@ -144,10 +144,10 @@ async function loadImage() {
     };
   });
 
-  // image.src = 'two_people.jpg';
-  // image.src = 'three_people.jpg';
+  image.src = 'two_people.jpg';
+  image.src = 'three_people.jpg';
   // image.src = 'three_people_4.jpg';
-  image.src = 'four_people.jpg';
+  // image.src = 'four_people.jpg';
   // image.src = 'nine_people.jpg';
   return promise;
 }
@@ -394,17 +394,20 @@ function segmentBodyInRealTime() {
 
     switch (guiState.estimate) {
       case 'segmentation':
-        // Multi-person
-        const allPersonSegmentation =
-            await state.net.estimateMultiplePersonSegmentation(state.video, {
-              segmentationThreshold: guiState.segmentation.segmentationThreshold
-            });
-
-        // // Single-person
-        // const allPersonSegmentation =
-        //     [await state.net.estimateSinglePersonSegmentation(
-        //         state.video, guiState.segmentation.segmentationThreshold)];
-
+        let allPersonSegmentation = null;
+        if (true) {
+          // // Multi-person
+          allPersonSegmentation =
+              await state.net.estimateMultiplePersonSegmentation(state.video, {
+                segmentationThreshold:
+                    guiState.segmentation.segmentationThreshold
+              });
+        } else {
+          // Single-person
+          allPersonSegmentation =
+              [await state.net.estimateSinglePersonSegmentation(
+                  state.video, guiState.segmentation.segmentationThreshold)];
+        }
         switch (guiState.segmentation.effect) {
           case 'mask':
             const ctx = canvas.getContext('2d');
@@ -415,16 +418,18 @@ function segmentBodyInRealTime() {
                 canvas, state.video, mask, guiState.segmentation.opacity,
                 guiState.segmentation.maskBlurAmount, flipHorizontally);
 
-            allPersonSegmentation.forEach(personSegmentation => {
-              let pose = personSegmentation.pose;
-              if (flipHorizontally) {
-                pose = bodyPix.flipPoseHorizontal(pose, mask.width);
-              }
-              if (pose.score >= 0.2) {
-                drawKeypoints(pose.keypoints, 0.1, ctx);
-                drawSkeleton(pose.keypoints, 0.1, ctx);
-              }
-            });
+            if (false) {
+              allPersonSegmentation.forEach(personSegmentation => {
+                let pose = personSegmentation.pose;
+                if (flipHorizontally) {
+                  pose = bodyPix.flipPoseHorizontal(pose, mask.width);
+                }
+                if (pose.score >= 0.2) {
+                  drawKeypoints(pose.keypoints, 0.1, ctx);
+                  drawSkeleton(pose.keypoints, 0.1, ctx);
+                }
+              });
+            }
             break;
           case 'bokeh':
             bodyPix.drawBokehEffect(

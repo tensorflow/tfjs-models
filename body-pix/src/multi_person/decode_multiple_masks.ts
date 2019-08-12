@@ -5,7 +5,7 @@ declare type Pair = {
   y: number,
 };
 
-const NUM_KPT_TO_USE = 17;
+const NUM_KPT_TO_USE = 5;
 
 function computeDistance(embedding: Pair[], pose: Pose, minPartScore = 0.3) {
   let distance = 0.0;
@@ -28,8 +28,10 @@ function computeDistance(embedding: Pair[], pose: Pose, minPartScore = 0.3) {
 
 export function decodeMultipleMasks(
     segmentation: Uint8Array, longOffsets: Float32Array, poses: Pose[],
-    height: number, width: number, minPoseScore = 0.2, refineSteps = 1 /*8*/,
-    flipHorizontally = false): PersonSegmentation[] {
+    height: number, width: number, stride: number, inputResolution: number,
+    [[padT, padB], [padL, padR]]: [[number, number], [number, number]],
+    minPoseScore = 0.2, refineSteps = 1 /*8*/, flipHorizontally = false,
+    longOffsetsResized = false): PersonSegmentation[] {
   let numPeopleToDecode = 0;
   let posesAboveScores: Pose[] = [];
   for (let k = 0; k < poses.length; k++) {
@@ -48,7 +50,8 @@ export function decodeMultipleMasks(
     });
   }
 
-  // let data = new Uint8Array(height * width);
+  const scale = inputResolution / (padT + padB + height);
+  const outputResolution = Math.round((inputResolution - 1.0) / stride + 1.0);
   for (let i = 0; i < height; i += 1) {
     for (let j = 0; j < width; j += 1) {
       const n = i * width + j;
@@ -59,14 +62,33 @@ export function decodeMultipleMasks(
         // the embedding at the pixel and assign k to the pixel (i, j).
         let embed = [];
         for (let p = 0; p < NUM_KPT_TO_USE; p++) {
-          let dy = longOffsets[17 * (2 * n) + p];
-          let dx = longOffsets[17 * (2 * n + 1) + p];
+          let nn = 0;
+          if (longOffsetsResized) {
+            nn = i * width + j;
+          } else {
+            const yResized =
+                Math.round(((padT + i + 1.0) * scale - 1.0) / stride);
+            const xResized =
+                Math.round(((padL + j + 1.0) * scale - 1.0) / stride);
+            nn = yResized * outputResolution + xResized;
+          }
+          let dy = longOffsets[17 * (2 * nn) + p];
+          let dx = longOffsets[17 * (2 * nn + 1) + p];
           let y = i + dy;
           let x = j + dx;
           for (let t = 0; t < refineSteps; t++) {
             y = Math.min(Math.round(y), height - 1);
             x = Math.min(Math.round(x), width - 1);
-            let nn = y * width + x;
+            let nn = 0;
+            if (longOffsetsResized) {
+              nn = y * width + x;
+            } else {
+              const yResized =
+                  Math.round(((padT + y + 1.0) * scale - 1.0) / stride);
+              const xResized =
+                  Math.round(((padL + x + 1.0) * scale - 1.0) / stride);
+              nn = yResized * outputResolution + xResized;
+            }
             dy = longOffsets[17 * (2 * nn) + p];
             dx = longOffsets[17 * (2 * nn + 1) + p];
             y = y + dy;
@@ -98,8 +120,10 @@ export function decodeMultipleMasks(
 export function decodeMultiplePartMasks(
     segmentation: Uint8Array, longOffsets: Float32Array,
     partSegmentaion: Uint8Array, poses: Pose[], height: number, width: number,
-    minPoseScore = 0.2, refineSteps = 8,
-    flipHorizontally = false): PartSegmentation[] {
+    stride: number, inputResolution: number,
+    [[padT, padB], [padL, padR]]: [[number, number], [number, number]],
+    minPoseScore = 0.2, refineSteps = 1 /*8*/, flipHorizontally = false,
+    longOffsetsResized = false): PartSegmentation[] {
   let numPeopleToDecode = 0;
   let posesAboveScores: Pose[] = [];
   for (let k = 0; k < poses.length; k++) {
@@ -118,25 +142,45 @@ export function decodeMultiplePartMasks(
     });
   }
 
-  // let data = new Uint8Array(height * width);
+  const scale = inputResolution / (padT + padB + height);
+  const outputResolution = Math.round((inputResolution - 1.0) / stride + 1.0);
   for (let i = 0; i < height; i += 1) {
     for (let j = 0; j < width; j += 1) {
       const n = i * width + j;
       const prob = segmentation[n];
       if (prob === 1) {
+        let nn = 0;
+        if (longOffsetsResized) {
+          nn = i * width + j;
+        } else {
+          const yResized =
+              Math.round(((padT + i + 1.0) * scale - 1.0) / stride);
+          const xResized =
+              Math.round(((padL + j + 1.0) * scale - 1.0) / stride);
+          nn = yResized * outputResolution + xResized;
+        }
         // 1) finds the pixel's embedding vector for all keypoints
         // 2) loops over the poses and find the instnace k that is close to the
         //    embedding at the pixel and assign k to the pixel (i, j).
         let embed = [];
         for (let p = 0; p < NUM_KPT_TO_USE; p++) {
-          let dy = longOffsets[17 * (2 * n) + p];
-          let dx = longOffsets[17 * (2 * n + 1) + p];
+          let dy = longOffsets[17 * (2 * nn) + p];
+          let dx = longOffsets[17 * (2 * nn + 1) + p];
           let y = i + dy;
           let x = j + dx;
           for (let t = 0; t < refineSteps; t++) {
             y = Math.min(Math.round(y), height - 1);
             x = Math.min(Math.round(x), width - 1);
-            let nn = y * width + x;
+            let nn = 0;
+            if (longOffsetsResized) {
+              nn = y * width + x;
+            } else {
+              const yResized =
+                  Math.round(((padT + y + 1.0) * scale - 1.0) / stride);
+              const xResized =
+                  Math.round(((padL + x + 1.0) * scale - 1.0) / stride);
+              nn = yResized * outputResolution + xResized;
+            }
             dy = longOffsets[17 * (2 * nn) + p];
             dx = longOffsets[17 * (2 * nn + 1) + p];
             y = y + dy;

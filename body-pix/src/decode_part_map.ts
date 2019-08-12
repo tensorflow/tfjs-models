@@ -92,3 +92,18 @@ export function decodePartSegmentation(
         .sub(tf.scalar(1, 'int32'));
   });
 }
+
+export function decodeOnlyPartSegmentation(partHeatmapScores: tf.Tensor3D):
+    tf.Tensor2D {
+  const [partMapHeight, partMapWidth, numParts] = partHeatmapScores.shape;
+  return tf.tidy(() => {
+    const flattenedMap = toFlattenedOneHotPartMap(partHeatmapScores);
+    const partNumbers =
+        tf.range(0, numParts, 1, 'int32').expandDims(1) as tf.Tensor2D;
+
+    const partMapFlattened = flattenedMap.matMul(partNumbers).toInt();
+
+    return partMapFlattened.reshape([partMapHeight, partMapWidth]) as
+        tf.Tensor2D;
+  });
+}
