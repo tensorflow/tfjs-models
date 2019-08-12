@@ -16,60 +16,90 @@
 //  =============================================================================
 //  */
 
-// import * as tf from '@tensorflow/tfjs-core';
-// import {describeWithFlags, NODE_ENVS} from
-// '@tensorflow/tfjs-core/dist/jasmine_util';
+import * as tfconv from '@tensorflow/tfjs-converter';
+import * as tf from '@tensorflow/tfjs-core';
+import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
-// import {BodyPix, load, mobilenetLoader} from './body_pix_model';
+import * as bodyPixModel from './body_pix_model';
+import * as resnet from './resnet';
 
-// describeWithFlags('BodyPix', NODE_ENVS, () => {
-//   let net: BodyPix;
+describeWithFlags('BodyPix', NODE_ENVS, () => {
+  let bodyPix: bodyPixModel.BodyPix;
+  const inputResolution = 513;
+  const outputStride = 32;
+  const quantBytes = 4;
+  const numKeypoints = 17;
+  const numParts = 24;
+  const outputResolution = (inputResolution - 1) / outputStride + 1;
 
-//   beforeAll((done) => {
-//     // Mock out the actual load so we don't make network requests in the unit
-//     // test.
-//     spyOn(mobilenetLoader, 'load').and.callFake(() => {
-//       return {
-//         predict: () => tf.zeros([1000]),
-//         convToOutput:
-//             (mobileNetOutput: tf.Tensor3D, outputLayerName: string) => {
-//               const shapes: {[layer: string]: number[]} = {
-//                 'segment_2': [23, 17, 1],
-//                 'part_heatmap_2': [23, 17, 24]
-//               };
-//               return tf.zeros(shapes[outputLayerName]);
-//             }
-//       };
-//     });
+  beforeAll((done) => {
+    const resNetConfig = {
+      architecture: 'ResNet50',
+      outputStride: outputStride,
+      inputResolution: inputResolution,
+      quantBytes: quantBytes
+    } as bodyPixModel.ModelConfig;
 
-//     load()
-//         .then((model: BodyPix) => {
-//           net = model;
-//         })
-//         .then(done)
-//         .catch(done.fail);
-//   });
+    spyOn(tfconv, 'loadGraphModel').and.callFake((): tfconv.GraphModel => {
+      return null;
+    })
 
-//   it('estimatePersonSegmentation does not leak memory', done => {
-//     const input = tf.zeros([513, 513, 3]) as tf.Tensor3D;
+    spyOn(resnet, 'ResNet').and.callFake(() => {
+      return {
+        outputStride,
+        predict: (input: tf.Tensor3D) => {
+          return {
+            inputResolution,
+            heatmapScores:
+                tf.zeros([outputResolution, outputResolution, numParts]),
+            offsets: tf.zeros(
+                [outputResolution, outputResolution, 2 * numKeypoints]),
+            displacementFwd: tf.zeros(
+                [outputResolution, outputResolution, 2 * (numKeypoints - 1)]),
+            displacementBwd: tf.zeros(
+                [outputResolution, outputResolution, 2 * (numKeypoints - 1)]),
+            segmentation: tf.zeros([outputResolution, outputResolution, 1]),
+            partHeatmaps:
+                tf.zeros([outputResolution, outputResolution, numParts]),
+            longOffsets: tf.zeros(
+                [outputResolution, outputResolution, 2 * numKeypoints]),
+            partOffsets:
+                tf.zeros([outputResolution, outputResolution, 2 * numParts])
+          };
+        },
+        dipose: () => {}
+      };
+    });
 
-//     const beforeTensors = tf.memory().numTensors;
+    bodyPixModel.load(resNetConfig)
+        .then((bodyPixInstance: bodyPixModel.BodyPix) => {
+          bodyPix = bodyPixInstance;
+        })
+        .then(done)
+        .catch(done.fail);
+  });
 
-//     net.estimatePersonSegmentation(input, 16)
-//         .then(() => {
-//           expect(tf.memory().numTensors).toEqual(beforeTensors);
-//         })
-//         .then(done)
-//         .catch(done.fail);
-//   });
-//   it('estimatePartSegmenation does not leak memory', done => {
-//     const input = tf.zeros([513, 513, 3]) as tf.Tensor3D;
-//     const beforeTensors = tf.memory().numTensors;
-//     net.estimatePartSegmentation(input)
-//         .then(() => {
-//           expect(tf.memory().numTensors).toEqual(beforeTensors);
-//         })
-//         .then(done)
-//         .catch(done.fail);
-//   });
-// });
+  it('estimatePersonSegmentation does not leak memory', done => {
+    const input = tf.zeros([513, 513, 3]) as tf.Tensor3D;
+
+    const beforeTensors = tf.memory().numTensors;
+
+    bodyPix.estimateSinglePersonSegmentation(input, 16)
+        .then(() => {
+          expect(tf.memory().numTensors).toEqual(beforeTensors);
+        })
+        .then(done)
+        .catch(done.fail);
+  });
+
+  it('estimatePartSegmenation does not leak memory', done => {
+    const input = tf.zeros([513, 513, 3]) as tf.Tensor3D;
+    const beforeTensors = tf.memory().numTensors;
+    bodyPix.estimateSinglePersonPartSegmentation(input)
+        .then(() => {
+          expect(tf.memory().numTensors).toEqual(beforeTensors);
+        })
+        .then(done)
+        .catch(done.fail);
+  });
+});
