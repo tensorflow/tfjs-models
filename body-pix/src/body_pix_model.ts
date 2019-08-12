@@ -19,9 +19,10 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {resNet50Checkpoint} from './checkpoints';
+import {mobileNetCheckpoint, resNet50Checkpoint} from './checkpoints';
 import {decodeOnlyPartSegmentation, decodePartSegmentation, toMask} from './decode_part_map';
 import {MobileNetMultiplier} from './mobilenet';
+import {MobileNet} from './mobilenet';
 import {decodeMultipleMasks, decodeMultiplePartMasks} from './multi_person/decode_multiple_masks';
 import {decodeMultiplePoses} from './multi_person/decode_multiple_poses';
 import {ResNet} from './resnet';
@@ -304,10 +305,7 @@ export class BodyPix {
 
     const [height, width] = segmentation.shape;
 
-    const t0 = performance.now()
     const result = await segmentation.data() as Uint8Array;
-    const t1 = performance.now();
-    console.log('downloadSegmentation ' + (t1 - t0) + ' ms');
     segmentation.dispose();
 
     return {height, width, data: result};
@@ -361,26 +359,9 @@ export class BodyPix {
         displacementFwd,
         displacementBwd,
       } = this.predictForSegmentationAndLongRangeOffsets(resized);
-      // let start = performance.now();
-      // segmentLogits.dataSync();
-      // console.log(
-      //     'compute segment logits ' + (performance.now() - start) + 'ms');
-
-      // decoding with scaling.
-      // start = performance.now();
       const scaledSegmentScores = scaleAndCropToInputTensorShape(
           segmentLogits, [height, width], [inputResolution, inputResolution],
           [[padding.top, padding.bottom], [padding.left, padding.right]], true);
-      // scaledSegmentScores.dataSync();
-      // console.log('scale segmentation ' + (performance.now() - start) +
-      // 'ms');
-
-      // const t8 = performance.now();
-      // longOffsets.dataSync();
-      // const t9 = performance.now();
-      // console.log('computing longoffsets' + (t9 - t8) + 'ms');
-
-      // const t10 = performance.now();
       const longOffsetsResized = false;
       let scaledLongOffsets;
       if (longOffsetsResized) {
@@ -391,9 +372,6 @@ export class BodyPix {
       } else {
         scaledLongOffsets = longOffsets;
       }
-      // scaledLongOffsets.dataSync();
-      // const t11 = performance.now();
-      // console.log('scale longOffsets ' + (t11 - t10) + 'ms');
 
       const segmentation =
           toMask(scaledSegmentScores.squeeze(), config.segmentationThreshold);
@@ -408,40 +386,26 @@ export class BodyPix {
       };
     });
 
-    // const ty = performance.now();
     const segmentationArray = await segmentation.data() as Uint8Array;
-    // const tz = performance.now();
-    // console.log('downloadSegmentation ' + (tz - ty) + 'ms');
     const longOffsetsArray = await longOffsets.data() as Float32Array;
-    // const t0 = performance.now();
-    // console.log('downloadLongOffsets ' + (t0 - tz) + ' ms');
 
     const [scoresBuffer, offsetsBuffer, displacementsFwdBuffer, displacementsBwdBuffer] =
         await toTensorBuffers3D([
           heatmapScoresRaw, offsetsRaw, displacementFwdRaw, displacementBwdRaw
         ]);
-    // const t1 = performance.now();
-    // console.log('toTensorBuffers3D ' + (t1 - t0) + ' ms');
 
     let poses = await decodeMultiplePoses(
         scoresBuffer, offsetsBuffer, displacementsFwdBuffer,
         displacementsBwdBuffer, this.baseModel.outputStride, 30, 0.3, 20);
-    // const t2 = performance.now();
-    // console.log('decodeMultiplePoses ' + (t2 - t1) + ' ms');
 
     poses = scaleAndFlipPoses(
         poses, [height, width], [inputResolution, inputResolution], padding,
         false);
 
-    // console.log(this.baseModel.outputStride);
-    // console.log(inputResolution);
-    // console.log(padding);
     const instanceMasks = decodeMultipleMasks(
         segmentationArray, longOffsetsArray, poses, height, width,
         this.baseModel.outputStride, inputResolution,
         [[padding.top, padding.bottom], [padding.left, padding.right]]);
-    // const t3 = performance.now();
-    // console.log('decodeMultipleMasks ' + (t3 - t2) + ' ms');
 
     resized.dispose();
     segmentation.dispose();
@@ -600,24 +564,14 @@ export class BodyPix {
           segmentLogits, [height, width], [inputResolution, inputResolution],
           [[padding.top, padding.bottom], [padding.left, padding.right]], true);
 
-      // // decoding with scaling.
+      // decoding with scaling.
       const scaledPartSegmentationScores = scaleAndCropToInputTensorShape(
           partHeatmaps, [height, width], [inputResolution, inputResolution],
           [[padding.top, padding.bottom], [padding.left, padding.right]], true)
 
-      // // decoding and scaling.
-      // const scaledLongOffsets = scaleAndCropToInputTensorShape(
-      //     longOffsets, [height, width], [inputResolution, inputResolution],
-      //     [[padding.top, padding.bottom], [padding.left, padding.right]],
-      //     true);
-
       const scaledLongOffsets = longOffsets;
       const segmentation =
           toMask(scaledSegmentScores.squeeze(), config.segmentationThreshold);
-      // const partSegmentation =
-      //     decodePartSegmentation(segmentation, partHeatmaps
-      //     /*scaledPartSegmentationScores*/);
-      // const partSegmentation = decodeOnlyPartSegmentation(partHeatmaps);
       const partSegmentation =
           decodeOnlyPartSegmentation(scaledPartSegmentationScores);
       return {
@@ -670,6 +624,22 @@ export class BodyPix {
   }
 }
 
+async function loadMobileNet(config: ModelConfig): Promise<BodyPix> {
+  const outputStride = config.outputStride;
+  const quantBytes = config.quantBytes;
+  const multiplier = config.multiplier;
+  if (tf == null) {
+    throw new Error(
+        `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
+        `also include @tensorflow/tfjs on the page before using this
+        model.`);
+  }
+
+  const url = mobileNetCheckpoint(outputStride, multiplier, quantBytes);
+  const graphModel = await tfconv.loadGraphModel(config.modelUrl || url);
+  const mobilenet = new MobileNet(graphModel, outputStride);
+  return new BodyPix(mobilenet, config.inputResolution);
+}
 
 /**
  * Loads the ResNet BodyPix model.
@@ -707,8 +677,8 @@ export async function load(config: ModelConfig = RESNET_CONFIG):
   // config = validateModelConfig(config);
   if (config.architecture === 'ResNet50') {
     return loadResNet(config);
-    // } else if (config.architecture === 'MobileNetV1') {
-    //   return loadMobileNet(config);
+  } else if (config.architecture === 'MobileNetV1') {
+    return loadMobileNet(config);
   } else {
     return null;
   }

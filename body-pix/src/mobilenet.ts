@@ -15,68 +15,12 @@
  * =============================================================================
  */
 
+import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
-import {ModelWeights} from './model_weights';
 
-export type MobileNetMultiplier = 0.25|0.50|0.75|1.0|1.01;
-export type ConvolutionType = 'conv2d'|'separableConv';
-export type ConvolutionDefinition = [ConvolutionType, number];
-export type OutputStride = 32|16|8;
+import {BaseModel, BodyPixOutputStride} from './body_pix_model';
 
-// clang-format off
-const mobileNet100Architecture: ConvolutionDefinition[] = [
-  ['conv2d', 2],
-  ['separableConv', 1],
-  ['separableConv', 2],
-  ['separableConv', 1],
-  ['separableConv', 2],
-  ['separableConv', 1],
-  ['separableConv', 2],
-  ['separableConv', 1],
-  ['separableConv', 1],
-  ['separableConv', 1],
-  ['separableConv', 1],
-  ['separableConv', 1],
-  ['separableConv', 2],
-  ['separableConv', 1]
-];
-
-const mobileNet75Architecture: ConvolutionDefinition[]  = [
-  ['conv2d', 2],
-  ['separableConv', 1],
-  ['separableConv', 2],
-  ['separableConv', 1],
-  ['separableConv', 2],
-  ['separableConv', 1],
-  ['separableConv', 2],
-  ['separableConv', 1],
-  ['separableConv', 1],
-  ['separableConv', 1],
-  ['separableConv', 1],
-  ['separableConv', 1],
-  ['separableConv', 1],
-  ['separableConv', 1]
-];
-
-const mobileNet50Architecture: ConvolutionDefinition[]  = [
-  ['conv2d', 2],
-  ['separableConv', 1],
-  ['separableConv', 2],
-  ['separableConv', 1],
-  ['separableConv', 2],
-  ['separableConv', 1],
-  ['separableConv', 2],
-  ['separableConv', 1],
-  ['separableConv', 1],
-  ['separableConv', 1],
-  ['separableConv', 1],
-  ['separableConv', 1],
-  ['separableConv', 1],
-  ['separableConv', 1]
-];
-
-const mobileNet25Architecture = mobileNet50Architecture;
-// clang-format on
+export type MobileNetMultiplier = 0.50|0.75|1.0;
 
 const VALID_OUTPUT_STRIDES = [8, 16, 32];
 // tslint:disable-next-line:no-any
@@ -91,7 +35,8 @@ export function assertValidOutputStride(outputStride: any) {
 
 // tslint:disable-next-line:no-any
 export function assertValidResolution(resolution: any, outputStride: number) {
-  tf.util.assert(typeof resolution === 'number', () => 'resolution is not a number');
+  tf.util.assert(
+      typeof resolution === 'number', () => 'resolution is not a number');
 
   tf.util.assert(
       (resolution - 1) % outputStride === 0,
@@ -99,162 +44,80 @@ export function assertValidResolution(resolution: any, outputStride: number) {
           `${outputStride}.`);
 }
 
-// tslint:disable-next-line:no-any
-export const mobileNetArchitectures:
-    {[name: string]: ConvolutionDefinition[]} = {
-      100: mobileNet100Architecture,
-      75: mobileNet75Architecture,
-      50: mobileNet50Architecture,
-      25: mobileNet25Architecture
-    };
-
-type Layer = {
-  blockId: number,
-  stride: number,
-  outputStride: number,
-  convType: ConvolutionType,
-  rate: number
-};
-
-/**
- * Takes a mobilenet architectures' convolution definitions and converts them
- * into definitions for convolutional layers that will generate outputs with the
- * desired output stride. It does this by reducing the input stride in certain
- * layers and applying atrous convolution in subsequent layers. Raises an error
- * if the output stride is not possible with the architecture.
- */
-function toOutputStridedLayers(
-    convolutionDefinition: ConvolutionDefinition[],
-    outputStride: OutputStride): Layer[] {
-  // The currentStride variable keeps track of the output stride of
-  // the activations, i.e., the running product of convolution
-  // strides up to the current network layer. This allows us to
-  // invoke atrous convolution whenever applying the next
-  // convolution would result in the activations having output
-  // stride larger than the target outputStride.
-  let currentStride = 1;
-
-  // The atrous convolution rate parameter.
-  let rate = 1;
-
-  return convolutionDefinition.map(([convType, stride], blockId): Layer => {
-    let layerStride, layerRate;
-
-    if (currentStride === outputStride) {
-      // If we have reached the target outputStride, then we need to
-      // employ atrous convolution with stride=1 and multiply the atrous
-      // rate by the current unit's stride for use in subsequent layers.
-      layerStride = 1;
-      layerRate = rate;
-      rate *= stride;
-    } else {
-      layerStride = stride;
-      layerRate = 1;
-      currentStride *= stride;
-    }
-
-    return {
-      blockId,
-      convType,
-      stride: layerStride,
-      rate: layerRate,
-      outputStride: currentStride
-    };
-  });
+function toFloatIfInt(input: tf.Tensor3D): tf.Tensor3D {
+  return tf.tidy(() => {
+    if (input.dtype === 'int32') input = input.toFloat();
+    // Normalize the pixels [0, 255] to be between [-1, 1].
+    input = tf.div(input, 127.5);
+    return tf.sub(input, 1.0);
+  })
 }
 
-export class MobileNet {
-  private modelWeights: ModelWeights;
-  // private model: tf.NamedTensorMap;
-  private convolutionDefinitions: ConvolutionDefinition[];
+export class MobileNet implements BaseModel {
+  readonly model: tfconv.GraphModel
+  readonly outputStride: BodyPixOutputStride
 
-  private PREPROCESS_DIVISOR = tf.scalar(255.0 / 2);
-  private ONE = tf.scalar(1.0);
-
-  constructor(
-      modelWeights: ModelWeights,
-      convolutionDefinitions: ConvolutionDefinition[]) {
-    this.modelWeights = modelWeights;
-    this.convolutionDefinitions = convolutionDefinitions;
+  constructor(model: tfconv.GraphModel, outputStride: BodyPixOutputStride) {
+    this.model = model;
+    const inputShape =
+        this.model.inputs[0].shape as [number, number, number, number];
+    tf.util.assert(
+        (inputShape[1] === -1) && (inputShape[2] === -1),
+        () => `Input shape [${inputShape[1]}, ${inputShape[2]}] ` +
+            `must both be -1`);
+    this.outputStride = outputStride;
   }
 
-  predict(input: tf.Tensor3D, outputStride: OutputStride): tf.Tensor3D {
-    // Normalize the pixels [0, 255] to be between [-1, 1].
-    const normalized = tf.div(input.toFloat(), this.PREPROCESS_DIVISOR);
+  predict(input: tf.Tensor3D): {[key: string]: tf.Tensor3D} {
+    return tf.tidy(() => {
+      const asFloat = toFloatIfInt(input);
+      const asBatch = asFloat.expandDims(0);
+      const [
+          //  - bodypix2js_release_2
+          //  displacementBwd4d,
+          //  heatmaps4d,
+          //  partHeatmaps4d,
+          //  longOffsets4d,
+          //  offsets4d,
+          //  displacementFwd4d,
+          //  segmentation4d,
+          //  partOffsets4d,
+          //
+          //  - bodypix2js_release_2 2
+          displacementBwd4d,
+          displacementFwd4d,
+          heatmaps4d,
+          longOffsets4d,
+          offsets4d,
+          partHeatmaps4d,
+          segmentation4d,
+          partOffsets4d,
+      ] = this.model.predict(asBatch) as tf.Tensor[];
 
-    const preprocessedInput = tf.sub(normalized, this.ONE) as tf.Tensor3D;
+      const heatmaps = heatmaps4d.squeeze() as tf.Tensor3D;
+      const heatmapScores = heatmaps.sigmoid();
+      const offsets = offsets4d.squeeze() as tf.Tensor3D;
+      const displacementFwd = displacementFwd4d.squeeze([0]) as tf.Tensor3D;
+      const displacementBwd = displacementBwd4d.squeeze([0]) as tf.Tensor3D;
+      const segmentation = segmentation4d.squeeze([0]) as tf.Tensor3D;
+      const partHeatmaps = partHeatmaps4d.squeeze([0]) as tf.Tensor3D;
+      const longOffsets = longOffsets4d.squeeze([0]) as tf.Tensor3D;
+      const partOffsets = partOffsets4d.squeeze([0]) as tf.Tensor3D;
 
-    const layers =
-        toOutputStridedLayers(this.convolutionDefinitions, outputStride);
-
-    return layers.reduce(
-        (previousLayer: tf.Tensor3D,
-         {blockId, stride, convType, rate}: Layer) => {
-          if (convType === 'conv2d') {
-            return this.conv(previousLayer, stride, blockId);
-          } else if (convType === 'separableConv') {
-            return this.separableConv(previousLayer, stride, blockId, rate);
-          } else {
-            throw Error(`Unknown conv type of ${convType}`);
-          }
-        },
-        preprocessedInput);
-  }
-
-  public convToOutput(mobileNetOutput: tf.Tensor3D, outputLayerName: string):
-      tf.Tensor3D {
-    return mobileNetOutput.conv2d(this.weights(outputLayerName), 1, 'same')
-               .add(this.convBias(outputLayerName, false)) as tf.Tensor3D;
-  }
-
-  private conv(inputs: tf.Tensor3D, stride: number, blockId: number):
-      tf.Tensor3D {
-    const weights = this.weights(`Conv2d_${String(blockId)}`);
-    const a = inputs.conv2d(weights, stride, 'same');
-    const b = a.add(this.convBias(`Conv2d_${String(blockId)}`));
-    // relu6
-    return b.clipByValue(0, 6) as tf.Tensor3D;
-  }
-
-  private separableConv(
-      inputs: tf.Tensor3D, stride: number, blockID: number,
-      dilations = 1): tf.Tensor3D {
-    const dwLayer = `Conv2d_${String(blockID)}_depthwise`;
-    const pwLayer = `Conv2d_${String(blockID)}_pointwise`;
-
-    const x1 = inputs
-                   .depthwiseConv2D(
-                       this.depthwiseWeights(dwLayer), stride, 'same', 'NHWC',
-                       dilations)
-                   .add(this.depthwiseBias(dwLayer))
-                   // relu6
-                   .clipByValue(0, 6) as tf.Tensor3D;
-
-    const x2 = x1.conv2d(this.weights(pwLayer), [1, 1], 'same')
-                   .add(this.convBias(pwLayer))
-                   // relu6
-                   .clipByValue(0, 6) as tf.Tensor3D;
-
-    return x2;
-  }
-
-  private weights(layerName: string): tf.Tensor4D {
-    return this.modelWeights.weights(layerName);
-  }
-
-  private convBias(layerName: string, doublePrefix = true): tf.Tensor1D {
-    return this.modelWeights.convBias(layerName, doublePrefix);
-  }
-
-  private depthwiseBias(layerName: string) {
-    return this.modelWeights.depthwiseBias(layerName);
-  }
-
-  private depthwiseWeights(layerName: string) {
-    return this.modelWeights.depthwiseWeights(layerName);
+      return {
+        heatmapScores,
+        offsets: offsets as tf.Tensor3D,
+        displacementFwd: displacementFwd as tf.Tensor3D,
+        displacementBwd: displacementBwd as tf.Tensor3D,
+        segmentation: segmentation as tf.Tensor3D,
+        partHeatmaps: partHeatmaps as tf.Tensor3D,
+        longOffsets: longOffsets as tf.Tensor3D,
+        partOffsets: partOffsets as tf.Tensor3D
+      };
+    });
   }
 
   dispose() {
-    this.modelWeights.dispose();
+    this.model.dispose();
   }
 }
