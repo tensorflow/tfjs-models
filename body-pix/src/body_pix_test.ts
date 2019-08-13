@@ -84,7 +84,7 @@ describeWithFlags('BodyPix', NODE_ENVS, () => {
 
     const beforeTensors = tf.memory().numTensors;
 
-    bodyPix.estimateSinglePersonSegmentation(input, 16)
+    bodyPix.estimateSinglePersonSegmentation(input)
         .then(() => {
           expect(tf.memory().numTensors).toEqual(beforeTensors);
         })

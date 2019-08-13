@@ -167,11 +167,22 @@ export interface SinglePersonInterfaceConfig extends InferenceConfig {}
  * `nmsRadius`: Non-maximum suppression part distance in pixels. It needs
  * to be strictly positive. Two parts suppress each other if they are less
  * than `nmsRadius` pixels away. Defaults to 20.
+ *
+ * `numKeypointForMatching`: The first N keypoints used for assigning
+ * segmentation mask to each person. It can be any integer value between [1,
+ * 17]. The larger the higher the accuracy and slower the inference.
+ *
+ * `refineSteps`: The number of refinement steps used when assigning the
+ * instance segmentation. It needs to be strictly positive. The larger the
+ * higher the accuracy and slower the inference.
+ *
  **/
 export interface MultiPersonInferenceConfig extends InferenceConfig {
   maxDetections?: number;
   scoreThreshold?: number;
   nmsRadius?: number;
+  numKeypointForMatching?: number;
+  refineSteps?: number;
 }
 
 export const SINGLE_PERSON_INFERENCE_CONFIG: SinglePersonInterfaceConfig = {
@@ -183,10 +194,11 @@ export const MULTI_PERSON_INFERENCE_CONFIG: MultiPersonInferenceConfig = {
   flipHorizontal: false,
   segmentationThreshold: 0.5,
   maxDetections: 5,
-  scoreThreshold: 0.5,
+  scoreThreshold: 0.2,
   nmsRadius: 20,
+  numKeypointForMatching: 5,
+  refineSteps: 1
 };
-
 
 export class BodyPix {
   baseModel: BaseModel;
@@ -289,9 +301,8 @@ export class BodyPix {
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
    *
-   * @param segmentationThreshold The minimum that segmentation values must have
-   * to be considered part of the person.  Affects the generation of the
-   * segmentation mask.
+   * @param config SinglePersonEstimationConfig object that contains
+   * parameters for the BodyPix inference using single person decoding.
    *
    * @return A 2d Tensor with 1 for the pixels that are part of the person,
    * and 0 otherwise. The width and height correspond to the same dimensions
@@ -299,9 +310,10 @@ export class BodyPix {
    */
   async estimateSinglePersonSegmentation(
       input: BodyPixInput,
-      segmentationThreshold = 0.5): Promise<PersonSegmentation> {
+      config: SinglePersonInterfaceConfig = SINGLE_PERSON_INFERENCE_CONFIG):
+      Promise<PersonSegmentation> {
     const segmentation = this.estimateSinglePersonSegmentationActivation(
-        input, segmentationThreshold);
+        input, config.segmentationThreshold);
 
     const [height, width] = segmentation.shape;
 
@@ -323,9 +335,8 @@ export class BodyPix {
    * ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement) The input
    * image to feed through the network.
    *
-   * @param outputStride the desired stride for the outputs.  Must be 32, 16,
-   * or 8. Defaults to 16. The output width and height will be will be
-   * (inputDimension - 1)/outputStride + 1
+   * @param config MultiPersonEstimationConfig object that contains
+   * parameters for the BodyPix inference using multi-person decoding.
    *
    * @return An array of PersonSegmentation object, each containing a width,
    * height, and a binary array with 1 for the pixels that are part of the
@@ -394,9 +405,11 @@ export class BodyPix {
           heatmapScoresRaw, offsetsRaw, displacementFwdRaw, displacementBwdRaw
         ]);
 
+    console.log(config);
     let poses = await decodeMultiplePoses(
         scoresBuffer, offsetsBuffer, displacementsFwdBuffer,
-        displacementsBwdBuffer, this.baseModel.outputStride, 30, 0.3, 20);
+        displacementsBwdBuffer, this.baseModel.outputStride, 5,
+        config.scoreThreshold, config.nmsRadius);
 
     poses = scaleAndFlipPoses(
         poses, [height, width], [inputResolution, inputResolution], padding,
@@ -404,8 +417,10 @@ export class BodyPix {
 
     const instanceMasks = decodeMultipleMasks(
         segmentationArray, longOffsetsArray, poses, height, width,
-        this.baseModel.outputStride, inputResolution,
-        [[padding.top, padding.bottom], [padding.left, padding.right]]);
+        this.baseModel.outputStride, [inputResolution, inputResolution],
+        [[padding.top, padding.bottom], [padding.left, padding.right]],
+        config.scoreThreshold, config.refineSteps, false,
+        config.numKeypointForMatching);
 
     resized.dispose();
     segmentation.dispose();
@@ -604,7 +619,8 @@ export class BodyPix {
 
     const instanceMasks = decodeMultiplePartMasks(
         segmentationArray, longOffsetsArray, partSegmentationArray, poses,
-        height, width, this.baseModel.outputStride, inputResolution,
+        height, width, this.baseModel.outputStride,
+        [inputResolution, inputResolution],
         [[padding.top, padding.bottom], [padding.left, padding.right]]);
 
     resized.dispose();

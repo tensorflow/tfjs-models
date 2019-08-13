@@ -178,6 +178,13 @@ const guiState = {
     multiplier: 1.0,
     quantBytes: 4
   },
+  multiPersonDecoding: {
+    maxDetections: 5,
+    scoreThreshold: 0.2,
+    nmsRadius: 20,
+    numKeypointForMatching: 5,
+    refineSteps: 1
+  },
   segmentation: {
     segmentationThreshold: 0.7,
     effect: 'mask',
@@ -253,8 +260,16 @@ function setupGui(cameras) {
   segmentation.add(guiState.segmentation, 'segmentationThreshold', 0.0, 1.0);
   const segmentationEffectController =
       segmentation.add(guiState.segmentation, 'effect', ['mask', 'bokeh']);
-
   segmentation.open();
+
+  let multiPersonDecoding = gui.addFolder('MultiPersonDecoding');
+  multiPersonDecoding.add(guiState.multiPersonDecoding, 'maxDetections', 0, 20);
+  multiPersonDecoding.add(
+      guiState.multiPersonDecoding, 'scoreThreshold', 0.0, 1.0);
+  multiPersonDecoding.add(guiState.multiPersonDecoding, 'nmsRadius', 0, 30);
+  multiPersonDecoding.add(
+      guiState.multiPersonDecoding, 'numKeypointForMatching', 1, 17);
+  multiPersonDecoding.add(guiState.multiPersonDecoding, 'refineSteps', 1, 10);
 
   let darknessLevel;
   let bokehBlurAmount;
@@ -400,7 +415,13 @@ function segmentBodyInRealTime() {
           allPersonSegmentation =
               await state.net.estimateMultiplePersonSegmentation(state.video, {
                 segmentationThreshold:
-                    guiState.segmentation.segmentationThreshold
+                    guiState.segmentation.segmentationThreshold,
+                maxDetections: guiState.multiPersonDecoding.maxDetections,
+                scoreThreshold: guiState.multiPersonDecoding.scoreThreshold,
+                nmsRadius: guiState.multiPersonDecoding.nmsRadius,
+                numKeypointForMatching:
+                    guiState.multiPersonDecoding.numKeypointForMatching,
+                refineSteps: guiState.multiPersonDecoding.refineSteps
               });
         } else {
           // Single-person
@@ -445,7 +466,13 @@ function segmentBodyInRealTime() {
             await state.net.estimateMultiplePersonPartSegmentation(
                 state.video, {
                   segmentationThreshold:
-                      guiState.segmentation.segmentationThreshold
+                      guiState.segmentation.segmentationThreshold,
+                  maxDetections: guiState.multiPersonDecoding.maxDetections,
+                  scoreThreshold: guiState.multiPersonDecoding.scoreThreshold,
+                  nmsRadius: guiState.multiPersonDecoding.nmsRadius,
+                  numKeypointForMatching:
+                      guiState.multiPersonDecoding.numKeypointForMatching,
+                  refineSteps: guiState.multiPersonDecoding.refineSteps
                 });
 
         const coloredPartImageData = bodyPix.toColoredPartImageData(
