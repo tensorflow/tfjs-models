@@ -263,13 +263,16 @@ function setupGui(cameras) {
   segmentation.open();
 
   let multiPersonDecoding = gui.addFolder('MultiPersonDecoding');
-  multiPersonDecoding.add(guiState.multiPersonDecoding, 'maxDetections', 0, 20);
+  multiPersonDecoding.add(
+      guiState.multiPersonDecoding, 'maxDetections', 0, 20, 1);
   multiPersonDecoding.add(
       guiState.multiPersonDecoding, 'scoreThreshold', 0.0, 1.0);
-  multiPersonDecoding.add(guiState.multiPersonDecoding, 'nmsRadius', 0, 30);
+  multiPersonDecoding.add(guiState.multiPersonDecoding, 'nmsRadius', 0, 30, 1);
   multiPersonDecoding.add(
-      guiState.multiPersonDecoding, 'numKeypointForMatching', 1, 17);
-  multiPersonDecoding.add(guiState.multiPersonDecoding, 'refineSteps', 1, 10);
+      guiState.multiPersonDecoding, 'numKeypointForMatching', 1, 17, 1);
+  multiPersonDecoding.add(
+      guiState.multiPersonDecoding, 'refineSteps', 1, 10, 1);
+  multiPersonDecoding.open();
 
   let darknessLevel;
   let bokehBlurAmount;
@@ -409,26 +412,17 @@ function segmentBodyInRealTime() {
 
     switch (guiState.estimate) {
       case 'segmentation':
-        let allPersonSegmentation = null;
-        if (true) {
-          // // Multi-person
-          allPersonSegmentation =
-              await state.net.estimateMultiplePersonSegmentation(state.video, {
-                segmentationThreshold:
-                    guiState.segmentation.segmentationThreshold,
-                maxDetections: guiState.multiPersonDecoding.maxDetections,
-                scoreThreshold: guiState.multiPersonDecoding.scoreThreshold,
-                nmsRadius: guiState.multiPersonDecoding.nmsRadius,
-                numKeypointForMatching:
-                    guiState.multiPersonDecoding.numKeypointForMatching,
-                refineSteps: guiState.multiPersonDecoding.refineSteps
-              });
-        } else {
-          // Single-person
-          allPersonSegmentation =
-              [await state.net.estimateSinglePersonSegmentation(
-                  state.video, guiState.segmentation.segmentationThreshold)];
-        }
+        const allPersonSegmentation =
+            await state.net.estimateMultiplePersonSegmentation(state.video, {
+              segmentationThreshold:
+                  guiState.segmentation.segmentationThreshold,
+              maxDetections: guiState.multiPersonDecoding.maxDetections,
+              scoreThreshold: guiState.multiPersonDecoding.scoreThreshold,
+              nmsRadius: guiState.multiPersonDecoding.nmsRadius,
+              numKeypointForMatching:
+                  guiState.multiPersonDecoding.numKeypointForMatching,
+              refineSteps: guiState.multiPersonDecoding.refineSteps
+            });
         switch (guiState.segmentation.effect) {
           case 'mask':
             const ctx = canvas.getContext('2d');
@@ -439,26 +433,23 @@ function segmentBodyInRealTime() {
                 canvas, state.video, mask, guiState.segmentation.opacity,
                 guiState.segmentation.maskBlurAmount, flipHorizontally);
 
-            if (false) {
-              allPersonSegmentation.forEach(personSegmentation => {
-                let pose = personSegmentation.pose;
-                if (flipHorizontally) {
-                  pose = bodyPix.flipPoseHorizontal(pose, mask.width);
-                }
-                if (pose.score >= 0.2) {
-                  drawKeypoints(pose.keypoints, 0.1, ctx);
-                  drawSkeleton(pose.keypoints, 0.1, ctx);
-                }
-              });
-            }
+            allPersonSegmentation.forEach(personSegmentation => {
+              let pose = personSegmentation.pose;
+              if (flipHorizontally) {
+                pose = bodyPix.flipPoseHorizontal(pose, mask.width);
+              }
+              drawKeypoints(pose.keypoints, 0.1, ctx);
+              drawSkeleton(pose.keypoints, 0.1, ctx);
+            });
             break;
           case 'bokeh':
             bodyPix.drawBokehEffect(
-                canvas, state.video, personSegmentation,
+                canvas, state.video, allPersonSegmentation,
                 +guiState.segmentation.backgroundBlurAmount,
                 guiState.segmentation.edgeBlurAmount, flipHorizontally);
             break;
         }
+
         break;
       case 'partmap':
         const ctx = canvas.getContext('2d');
@@ -498,10 +489,8 @@ function segmentBodyInRealTime() {
             pose =
                 bodyPix.flipPoseHorizontal(pose, personPartSegmentation.width);
           }
-          if (pose.score >= 0.2) {
-            drawKeypoints(pose.keypoints, 0.1, ctx);
-            drawSkeleton(pose.keypoints, 0.1, ctx);
-          }
+          drawKeypoints(pose.keypoints, 0.1, ctx);
+          drawSkeleton(pose.keypoints, 0.1, ctx);
         });
 
         break;
