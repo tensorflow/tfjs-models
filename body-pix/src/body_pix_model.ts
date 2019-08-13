@@ -153,7 +153,7 @@ export interface InferenceConfig {
 /**
  * Single Person Inference Config
  */
-export interface SinglePersonInterfaceConfig extends InferenceConfig {}
+export interface SinglePersonInferenceConfig extends InferenceConfig {}
 
 /**
  * Multiple Person Inference Config
@@ -185,7 +185,7 @@ export interface MultiPersonInferenceConfig extends InferenceConfig {
   refineSteps?: number;
 }
 
-export const SINGLE_PERSON_INFERENCE_CONFIG: SinglePersonInterfaceConfig = {
+export const SINGLE_PERSON_INFERENCE_CONFIG: SinglePersonInferenceConfig = {
   flipHorizontal: false,
   segmentationThreshold: 0.5
 };
@@ -199,6 +199,38 @@ export const MULTI_PERSON_INFERENCE_CONFIG: MultiPersonInferenceConfig = {
   numKeypointForMatching: 5,
   refineSteps: 1
 };
+
+function validateSinglePersonInferenceConfig(
+    config: SinglePersonInferenceConfig) {
+  const segmentationThreshold = config.segmentationThreshold;
+  if (segmentationThreshold < 0.0 || segmentationThreshold > 1.0) {
+    throw new Error(
+        `segmentationThreshold ${segmentationThreshold}. ` +
+        `Should be in range [0.0, 1.0]`);
+  }
+}
+
+function validateMultiPersonInferenceConfig(
+    config: MultiPersonInferenceConfig) {
+  const {maxDetections, scoreThreshold, nmsRadius} = config;
+
+  if (maxDetections <= 0) {
+    throw new Error(
+        `Invalid maxDetections ${maxDetections}. ` +
+        `Should be > 0`);
+  }
+
+  if (scoreThreshold < 0.0 || scoreThreshold > 1.0) {
+    throw new Error(
+        `Invalid scoreThreshold ${scoreThreshold}. ` +
+        `Should be in range [0.0, 1.0]`);
+  }
+
+
+  if (nmsRadius <= 0) {
+    throw new Error(`Invalid nmsRadius ${nmsRadius}.`);
+  }
+}
 
 export class BodyPix {
   baseModel: BaseModel;
@@ -310,10 +342,15 @@ export class BodyPix {
    */
   async estimateSinglePersonSegmentation(
       input: BodyPixInput,
-      config: SinglePersonInterfaceConfig = SINGLE_PERSON_INFERENCE_CONFIG):
+      config: SinglePersonInferenceConfig = SINGLE_PERSON_INFERENCE_CONFIG):
       Promise<PersonSegmentation> {
+    const configWithDefault: SinglePersonInferenceConfig = {
+      ...SINGLE_PERSON_INFERENCE_CONFIG,
+      ...config
+    };
+    validateSinglePersonInferenceConfig(configWithDefault);
     const segmentation = this.estimateSinglePersonSegmentationActivation(
-        input, config.segmentationThreshold);
+        input, configWithDefault.segmentationThreshold);
 
     const [height, width] = segmentation.shape;
 
@@ -349,6 +386,11 @@ export class BodyPix {
       input: BodyPixInput,
       config: MultiPersonInferenceConfig = MULTI_PERSON_INFERENCE_CONFIG):
       Promise<PersonSegmentation[]> {
+    const configWithDefault: MultiPersonInferenceConfig = {
+      ...MULTI_PERSON_INFERENCE_CONFIG,
+      ...config
+    };
+    validateMultiPersonInferenceConfig(configWithDefault);
     const [height, width] = getInputTensorDimensions(input);
     const inputResolution = this.inputResolution;
 
@@ -384,8 +426,9 @@ export class BodyPix {
         scaledLongOffsets = longOffsets;
       }
 
-      const segmentation =
-          toMask(scaledSegmentScores.squeeze(), config.segmentationThreshold);
+      const segmentation = toMask(
+          scaledSegmentScores.squeeze(),
+          configWithDefault.segmentationThreshold);
 
       return {
         segmentation: segmentation,
@@ -405,11 +448,10 @@ export class BodyPix {
           heatmapScoresRaw, offsetsRaw, displacementFwdRaw, displacementBwdRaw
         ]);
 
-    console.log(config);
     let poses = await decodeMultiplePoses(
         scoresBuffer, offsetsBuffer, displacementsFwdBuffer,
         displacementsBwdBuffer, this.baseModel.outputStride, 5,
-        config.scoreThreshold, config.nmsRadius);
+        configWithDefault.scoreThreshold, configWithDefault.nmsRadius);
 
     poses = scaleAndFlipPoses(
         poses, [height, width], [inputResolution, inputResolution], padding,
@@ -419,8 +461,8 @@ export class BodyPix {
         segmentationArray, longOffsetsArray, poses, height, width,
         this.baseModel.outputStride, [inputResolution, inputResolution],
         [[padding.top, padding.bottom], [padding.left, padding.right]],
-        config.scoreThreshold, config.refineSteps, false,
-        config.numKeypointForMatching);
+        configWithDefault.scoreThreshold, configWithDefault.refineSteps, false,
+        configWithDefault.numKeypointForMatching);
 
     resized.dispose();
     segmentation.dispose();
@@ -511,10 +553,16 @@ export class BodyPix {
    */
   async estimateSinglePersonPartSegmentation(
       input: BodyPixInput,
-      segmentationThreshold = 0.5): Promise<PartSegmentation> {
+      config: SinglePersonInferenceConfig = SINGLE_PERSON_INFERENCE_CONFIG):
+      Promise<PartSegmentation> {
+    const configWithDefault: SinglePersonInferenceConfig = {
+      ...SINGLE_PERSON_INFERENCE_CONFIG,
+      ...config
+    };
+    validateSinglePersonInferenceConfig(configWithDefault);
     const partSegmentation =
         this.estimateSinglePersonPartSegmentationActivation(
-            input, segmentationThreshold);
+            input, configWithDefault.segmentationThreshold);
 
     const [height, width] = partSegmentation.shape;
     const data = await partSegmentation.data() as Int32Array;
@@ -551,6 +599,11 @@ export class BodyPix {
       input: BodyPixInput,
       config: MultiPersonInferenceConfig = MULTI_PERSON_INFERENCE_CONFIG):
       Promise<PartSegmentation[]> {
+    const configWithDefault: MultiPersonInferenceConfig = {
+      ...MULTI_PERSON_INFERENCE_CONFIG,
+      ...config
+    };
+    validateMultiPersonInferenceConfig(configWithDefault);
     const [height, width] = getInputTensorDimensions(input);
     const inputResolution = this.inputResolution;
     const {resized, padding} =
@@ -585,8 +638,9 @@ export class BodyPix {
           [[padding.top, padding.bottom], [padding.left, padding.right]], true)
 
       const scaledLongOffsets = longOffsets;
-      const segmentation =
-          toMask(scaledSegmentScores.squeeze(), config.segmentationThreshold);
+      const segmentation = toMask(
+          scaledSegmentScores.squeeze(),
+          configWithDefault.segmentationThreshold);
       const partSegmentation =
           decodeOnlyPartSegmentation(scaledPartSegmentationScores);
       return {
@@ -621,7 +675,9 @@ export class BodyPix {
         segmentationArray, longOffsetsArray, partSegmentationArray, poses,
         height, width, this.baseModel.outputStride,
         [inputResolution, inputResolution],
-        [[padding.top, padding.bottom], [padding.left, padding.right]]);
+        [[padding.top, padding.bottom], [padding.left, padding.right]],
+        configWithDefault.scoreThreshold, configWithDefault.refineSteps, false,
+        configWithDefault.numKeypointForMatching);
 
     resized.dispose();
     segmentation.dispose();
