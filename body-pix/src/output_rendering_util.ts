@@ -164,10 +164,10 @@ export function toMaskImageData(
       bytes[4 * n + 3] = 255;
       for (let k = 0; k < allPersonSegmentation.length; k++) {
         if (allPersonSegmentation[k].data[n] === 1) {
-          bytes[4 * n + (k % 3)] = 155;
-          bytes[4 * n + (k + 1) % 3] = 55;
-          bytes[4 * n + (k + 2) % 3] = 20;
-          bytes[4 * n + 3] = 180;
+          bytes[4 * n] = 155;
+          bytes[4 * n + 1] = 55;
+          bytes[4 * n + 2] = 20;
+          bytes[4 * n + 3] = 150;
 
           // checks boundary
           if (i - 1 >= 0 && i + 1 < height && j - 1 >= 0 && j + 1 < width) {
@@ -187,9 +187,11 @@ export function toMaskImageData(
                 allPersonSegmentation[k].data[n31] !== 1 ||
                 allPersonSegmentation[k].data[n32] !== 1 ||
                 allPersonSegmentation[k].data[n33] !== 1) {
-              bytes[4 * n + 0] = 0;
-              bytes[4 * n + 1] = 255;
-              bytes[4 * n + 2] = 255;
+              for (let nn of [n, n11, n12, n13, n21, n23, n31, n31, n32, n33]) {
+                bytes[4 * nn + 0] = 0;
+                bytes[4 * nn + 1] = 255;
+                bytes[4 * nn + 2] = 255;
+              }
             }
           }
         }
