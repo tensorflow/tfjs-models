@@ -2,7 +2,7 @@
   "name": "@tensorflow-models/knn-classifier",
   "version": "1.2.2",
   "description": "KNN Classifier for TensorFlow.js",
-  "main": "dist/index.js",
+  "main": "dist/knn-classifier.min.js",
   "unpkg": "dist/knn-classifier.min.js",
   "jsdelivr": "dist/knn-classifier.min.js",
   "jsnext:main": "dist/knn-classifier.esm.js",
