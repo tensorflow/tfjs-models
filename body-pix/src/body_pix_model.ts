@@ -23,7 +23,7 @@ import {mobileNetCheckpoint, resNet50Checkpoint} from './checkpoints';
 import {decodeOnlyPartSegmentation, decodePartSegmentation, toMask} from './decode_part_map';
 import {MobileNetMultiplier} from './mobilenet';
 import {MobileNet} from './mobilenet';
-import {decodeMultipleMasks, decodeMultiplePartMasks} from './multi_person/decode_multiple_masks';
+import {decodeMultipleMasks, decodeMultiplePartMasks, decodeMultipleMasksGPU} from './multi_person/decode_multiple_masks';
 import {decodeMultiplePoses} from './multi_person/decode_multiple_poses';
 import {ResNet} from './resnet';
 import {BodyPixInput, PartSegmentation, PersonSegmentation} from './types';
@@ -463,6 +463,12 @@ export class BodyPix {
         [[padding.top, padding.bottom], [padding.left, padding.right]],
         configWithDefault.scoreThreshold, configWithDefault.refineSteps, false,
         configWithDefault.numKeypointForMatching);
+    
+    decodeMultipleMasksGPU(segmentation, longOffsets, poses, height, width,
+      this.baseModel.outputStride, [inputResolution, inputResolution],
+      [[padding.top, padding.bottom], [padding.left, padding.right]],
+      configWithDefault.scoreThreshold, configWithDefault.refineSteps, false,
+      configWithDefault.numKeypointForMatching);
 
     resized.dispose();
     segmentation.dispose();
