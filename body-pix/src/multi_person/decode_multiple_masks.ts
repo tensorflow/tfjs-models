@@ -15,8 +15,9 @@
  * =============================================================================
  */
 
-import {PartSegmentation, PersonSegmentation, Pose} from '../types';
 import * as tf from '@tensorflow/tfjs-core';
+
+import {PartSegmentation, PersonSegmentation, Pose} from '../types';
 
 declare type Pair = {
   x: number,
@@ -136,9 +137,9 @@ export function decodeMultipleMasksGPU(
   const [outHeight, outWidth] = longOffsets.shape.slice(0, 2);
 
   // TODO(Tyler): Verify that long offsets is [H, W, 2, 17], not [H, W, 17, 2].
+  // Tyler: Verified it is [H, W, 2, 17]
   longOffsets =
       longOffsets.reshape([outHeight, outWidth, 2, NUM_KEYPOINTS_IN_POSE]);
-  console.log('longOffsets shape', longOffsets.shape);
 
   // Filter out poses with smaller score.
   const posesAboveScore = poses.filter(pose => pose.score >= minPoseScore);
@@ -155,10 +156,15 @@ export function decodeMultipleMasksGPU(
       const offset = poseOffset + kp * 3;
       poseVals[offset] = keypoint.score;
       // TODO(Tyler): Verify if this should be x then y instead of y then x.
+      // Tyler: verified that in the Tensor, y coordinates always goes before x.
       poseVals[offset + 1] = keypoint.position.y;
       poseVals[offset + 2] = keypoint.position.x;
     }
   }
+
+  const [scaleX, scaleY] = getScale(
+      [height, width], [inHeight, inWidth], [[padT, padB], [padL, padR]]);
+
   const posesTensor =
       tf.tensor(poseVals, [MAX_NUM_PEOPLE, NUM_KEYPOINTS_IN_POSE, 3]);
 
@@ -166,22 +172,48 @@ export function decodeMultipleMasksGPU(
     variableNames: ['segmentation', 'longOffsets', 'poses'],
     outputShape: [origHeight, origWidth],
     userCode: `
+      int convertToPositionInOutput(int pos, int pad, float scale, int stride) {
+        return round(((float(pos + pad) + 1.0) * scale - 1.0) / float(stride));
+      }
+
+      float dist(float x1, float y1, float x2, float y2) {
+        return pow(x1 - x2, 2.0) + pow(y1 - y2, 2.0);
+      }
+
       int findNearestPose(int h, int w) {
         float prob = getSegmentation(h, w);
-        // TODO(Tyler): convert from output space h/w to strided space.
-        int stridedH = h;
-        int stridedW = w;
+        // Done(Tyler): convert from output space h/w to strided space.
+        int stridedH = convertToPositionInOutput(
+          h, ${padT}, ${scaleY}, ${stride});
+        int stridedW = convertToPositionInOutput(
+          w, ${padL}, ${scaleX}, ${stride});
+
         // TODO(Tyler): Loop over the poses (known loop size, MAX_NUM_PEOPLE).
-        int k = 0;
-        float dHeight = getLongOffsets(stridedH, stridedW, 0, k);
-        float dWidth = getLongOffsets(stridedH, stridedW, 1, k);
-        // TODO(Tyler): Loop over keypoints (known loop size, 17).
-        int keypoint = 0;
-        float poseScore = getPoses(k, keypoint, 0);
-        int poseH = round(getPoses(k, keypoint, 1));
-        int poseW = round(getPoses(k, keypoint, 2));
-        // TODO(Tyler): find nearest pose.
-        return -1;
+        float minDist = 1000000.0;
+        int iMin = -1;
+        for (int i = 0; i < ${MAX_NUM_PEOPLE}; i++) {
+          float curDistSum = 0.0;
+          int numKpt = 0;
+          for (int k = 0; k < ${numKptForMatching}; k++) {
+            float dy = getLongOffsets(stridedH, stridedW, 0, k);
+            float dx = getLongOffsets(stridedH, stridedW, 1, k);
+            float y = float(stridedH) + dy;
+            float x = float(stridedW) + dx;
+
+            float poseScore = getPoses(i, k, 0);
+            float poseY = getPoses(i, k, 1);
+            float poseX = getPoses(i, k, 2);
+            if (poseScore > 0.3) {
+              numKpt = numKpt + 1;
+              curDistSum = curDistSum + dist(x, y, poseX, poseY);
+            }
+          }
+          if (numKpt > 0 && curDistSum / float(numKpt) < minDist) {
+            minDist = curDistSum / float(numKpt);
+            iMin = i;
+          }
+        }
+        return iMin;
       }
 
       void main() {
