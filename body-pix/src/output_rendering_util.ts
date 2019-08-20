@@ -147,9 +147,9 @@ const STEP = 1;
  */
 export function toMaskImageData(
     allPersonSegmentation: PersonSegmentation[],
-    maskBackground = true): ImageData {
+    maskBackground = true): ImageData|null {
   if (allPersonSegmentation.length === 0) {
-    return new ImageData(new Uint8ClampedArray(0), 0, 0);
+    return null;
   }
 
   const {width, height} = allPersonSegmentation[0];
@@ -277,17 +277,10 @@ const CANVAS_NAMES = {
  * to false.
  */
 export function drawMask(
-    canvas: HTMLCanvasElement, image: ImageType, maskImage: ImageData,
+    canvas: HTMLCanvasElement, image: ImageType, maskImage: ImageData|null,
     maskOpacity = 0.7, maskBlurAmount = 0, flipHorizontal = false) {
-  assertSameDimensions(image, maskImage, 'image', 'mask');
-
-  const mask = renderImageDataToOffScreenCanvas(maskImage, CANVAS_NAMES.mask);
-
-  const blurredMask = drawAndBlurImageOnOffScreenCanvas(
-      mask, maskBlurAmount, CANVAS_NAMES.blurredMask);
-
-  canvas.width = blurredMask.width;
-  canvas.height = blurredMask.height;
+  canvas.width = image.width;
+  canvas.height = image.height;
 
   const ctx = canvas.getContext('2d');
   ctx.save();
@@ -297,7 +290,15 @@ export function drawMask(
 
   ctx.drawImage(image, 0, 0);
   ctx.globalAlpha = maskOpacity;
-  ctx.drawImage(blurredMask, 0, 0);
+  if (maskImage) {
+    assertSameDimensions(image, maskImage, 'image', 'mask');
+
+    const mask = renderImageDataToOffScreenCanvas(maskImage, CANVAS_NAMES.mask);
+
+    const blurredMask = drawAndBlurImageOnOffScreenCanvas(
+        mask, maskBlurAmount, CANVAS_NAMES.blurredMask);
+    ctx.drawImage(blurredMask, 0, 0);
+  }
   ctx.restore();
 }
 
