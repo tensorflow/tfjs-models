@@ -145,7 +145,7 @@ async function loadImage() {
   });
 
   image.src = 'two_people.jpg';
-  image.src = 'three_people.jpg';
+  // image.src = 'three_people.jpg';
   // image.src = 'three_people_4.jpg';
   // image.src = 'four_people.jpg';
   // image.src = 'nine_people.jpg';

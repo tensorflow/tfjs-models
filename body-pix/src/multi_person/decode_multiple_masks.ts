@@ -184,8 +184,28 @@ export function decodeMultipleMasksGPU(
         return round(((float(pos + pad) + 1.0) * scale - 1.0) / float(stride));
       }
 
+      float convertToPositionInOutputFloat(int pos, int pad, float scale, int stride) {
+        return ((float(pos + pad) + 1.0) * scale - 1.0) / float(stride);
+      }
+
       float dist(float x1, float y1, float x2, float y2) {
         return pow(x1 - x2, 2.0) + pow(y1 - y2, 2.0);
+      }
+
+      float sampleLongOffsets(float h, float w, int d, int k) {
+        float fh = fract(h);
+        float fw = fract(w);
+        int clH = int(ceil(h));
+        int clW = int(ceil(w));
+        int flH = int(floor(h));
+        int flW = int(floor(w));
+        float o11 = getLongOffsets(flH, flW, d, k);
+        float o12 = getLongOffsets(flH, clW, d, k);
+        float o21 = getLongOffsets(clH, flW, d, k);
+        float o22 = getLongOffsets(clH, clW, d, k);
+        float o1 = mix(o11, o12, fw);
+        float o2 = mix(o21, o22, fw);
+        return mix(o1, o2, fh);
       }
 
       int findNearestPose(int h, int w) {
@@ -195,31 +215,34 @@ export function decodeMultipleMasksGPU(
         }
 
         // Done(Tyler): convert from output space h/w to strided space.
-        int stridedH = convertToPositionInOutput(
+        float stridedH = convertToPositionInOutputFloat(
           h, ${padT}, ${scaleY}, ${stride});
-        int stridedW = convertToPositionInOutput(
+        float stridedW = convertToPositionInOutputFloat(
           w, ${padL}, ${scaleX}, ${stride});
+
         float minDist = 1000000.0;
         int iMin = -1;
         for (int i = 0; i < ${MAX_NUM_PEOPLE}; i++) {
           float curDistSum = 0.0;
           int numKpt = 0;
           for (int k = 0; k < ${numKptForMatching}; k++) {
-            float dy = getLongOffsets(stridedH, stridedW, 0, k);
-            float dx = getLongOffsets(stridedH, stridedW, 1, k);
+            float dy = sampleLongOffsets(stridedH, stridedW, 0, k);
+            float dx = sampleLongOffsets(stridedH, stridedW, 1, k);
+
             float y = float(h) + dy;
             float x = float(w) + dx;
 
             for (int s = 0; s < ${refineSteps}; s++) {
               int yRounded = round(min(y, float(${height - 1.0})));
               int xRounded = round(min(x, float(${width - 1.0})));
-              int yStrided = convertToPositionInOutput(
+
+              float yStrided = convertToPositionInOutputFloat(
                 yRounded, ${padT}, ${scaleY}, ${stride});
-              int xStrided = convertToPositionInOutput(
+              float xStrided = convertToPositionInOutputFloat(
                 xRounded, ${padL}, ${scaleX}, ${stride});
 
-              float dy = getLongOffsets(yStrided, xStrided, 0, k);
-              float dx = getLongOffsets(yStrided, xStrided, 1, k);
+              float dy = sampleLongOffsets(yStrided, xStrided, 0, k);
+              float dx = sampleLongOffsets(yStrided, xStrided, 1, k);
 
               y = y + dy;
               x = x + dx;
