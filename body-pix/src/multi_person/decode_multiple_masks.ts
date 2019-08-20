@@ -120,9 +120,16 @@ function matchEmbeddingToInstance(
   return kMin;
 }
 
+
 // Number of keypoints in a pose.
 const NUM_KEYPOINTS_IN_POSE = 17;
 const MAX_NUM_PEOPLE = 10;
+
+export function toPersonKSegmentation(
+    segmentation: tf.Tensor, k: number): tf.Tensor2D {
+  return tf.tidy(
+      () => (segmentation.equal(tf.scalar(k)).toInt() as tf.Tensor2D));
+}
 
 export function decodeMultipleMasksGPU(
     segmentation: tf.Tensor, longOffsets: tf.Tensor, poses: Pose[],
@@ -130,7 +137,7 @@ export function decodeMultipleMasksGPU(
     [inHeight, inWidth]: [number, number],
     [[padT, padB], [padL, padR]]: [[number, number], [number, number]],
     minPoseScore = 0.2, refineSteps = 1 /*8*/, flipHorizontally = false,
-    numKptForMatching = 5) {
+    numKptForMatching = 5): PersonSegmentation[] {
   // The height/width of the image/canvas itself.
   const [origHeight, origWidth] = segmentation.shape;
   // The height/width of the output of the model.
@@ -147,7 +154,8 @@ export function decodeMultipleMasksGPU(
   // Make pose tensor of shape [MAX_NUM_PEOPLE, NUM_KEYPOINTS_IN_POSE, 3] where
   // the last 3 coordinates correspond to the score, h and w coordinate of that
   // keypoint.
-  const poseVals = new Float32Array(MAX_NUM_PEOPLE * NUM_KEYPOINTS_IN_POSE * 3);
+  const poseVals =
+      new Float32Array(MAX_NUM_PEOPLE * NUM_KEYPOINTS_IN_POSE * 3).fill(0.0);
   for (let i = 0; i < posesAboveScore.length; i++) {
     const poseOffset = i * NUM_KEYPOINTS_IN_POSE * 3;
     const pose = posesAboveScore[i];
@@ -182,13 +190,15 @@ export function decodeMultipleMasksGPU(
 
       int findNearestPose(int h, int w) {
         float prob = getSegmentation(h, w);
+        if (prob < 1.0) {
+          return -1;
+        }
+
         // Done(Tyler): convert from output space h/w to strided space.
         int stridedH = convertToPositionInOutput(
           h, ${padT}, ${scaleY}, ${stride});
         int stridedW = convertToPositionInOutput(
           w, ${padL}, ${scaleX}, ${stride});
-
-        // TODO(Tyler): Loop over the poses (known loop size, MAX_NUM_PEOPLE).
         float minDist = 1000000.0;
         int iMin = -1;
         for (int i = 0; i < ${MAX_NUM_PEOPLE}; i++) {
@@ -197,8 +207,23 @@ export function decodeMultipleMasksGPU(
           for (int k = 0; k < ${numKptForMatching}; k++) {
             float dy = getLongOffsets(stridedH, stridedW, 0, k);
             float dx = getLongOffsets(stridedH, stridedW, 1, k);
-            float y = float(stridedH) + dy;
-            float x = float(stridedW) + dx;
+            float y = float(h) + dy;
+            float x = float(w) + dx;
+
+            for (int s = 0; s < ${refineSteps}; s++) {
+              int yRounded = round(min(y, float(${height - 1.0})));
+              int xRounded = round(min(x, float(${width - 1.0})));
+              int yStrided = convertToPositionInOutput(
+                yRounded, ${padT}, ${scaleY}, ${stride});
+              int xStrided = convertToPositionInOutput(
+                xRounded, ${padL}, ${scaleX}, ${stride});
+
+              float dy = getLongOffsets(yStrided, xStrided, 0, k);
+              float dx = getLongOffsets(yStrided, xStrided, 1, k);
+
+              y = y + dy;
+              x = x + dx;
+            }
 
             float poseScore = getPoses(i, k, 0);
             float poseY = getPoses(i, k, 1);
@@ -227,7 +252,20 @@ export function decodeMultipleMasksGPU(
   const result =
       webglBackend.compileAndRun(
           program, [segmentation, longOffsets, posesTensor]) as tf.Tensor;
+
   console.log(result.dataSync());
+
+  const allPersonSegmentation: PersonSegmentation[] = [];
+  for (let k = 0; k < posesAboveScore.length; k++) {
+    allPersonSegmentation.push({
+      height,
+      width,
+      data: toPersonKSegmentation(result, k).dataSync() as Uint8Array,
+      pose: posesAboveScore[k]
+    });
+  }
+
+  return allPersonSegmentation;
 }
 
 export function decodeMultipleMasks(

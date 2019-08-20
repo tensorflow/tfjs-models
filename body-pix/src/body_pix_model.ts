@@ -23,7 +23,7 @@ import {mobileNetCheckpoint, resNet50Checkpoint} from './checkpoints';
 import {decodeOnlyPartSegmentation, decodePartSegmentation, toMask} from './decode_part_map';
 import {MobileNetMultiplier} from './mobilenet';
 import {MobileNet} from './mobilenet';
-import {decodeMultipleMasks, decodeMultipleMasksGPU, decodeMultiplePartMasks} from './multi_person/decode_multiple_masks';
+import {/*decodeMultipleMasks,*/ decodeMultipleMasksGPU, decodeMultiplePartMasks} from './multi_person/decode_multiple_masks';
 import {decodeMultiplePoses} from './multi_person/decode_multiple_poses';
 import {ResNet} from './resnet';
 import {BodyPixInput, PartSegmentation, PersonSegmentation} from './types';
@@ -440,8 +440,8 @@ export class BodyPix {
       };
     });
 
-    const segmentationArray = await segmentation.data() as Uint8Array;
-    const longOffsetsArray = await longOffsets.data() as Float32Array;
+    // const segmentationArray = await segmentation.data() as Uint8Array;
+    // const longOffsetsArray = await longOffsets.data() as Float32Array;
 
     const [scoresBuffer, offsetsBuffer, displacementsFwdBuffer, displacementsBwdBuffer] =
         await toTensorBuffers3D([
@@ -457,14 +457,14 @@ export class BodyPix {
         poses, [height, width], [inputResolution, inputResolution], padding,
         false);
 
-    const instanceMasks = decodeMultipleMasks(
-        segmentationArray, longOffsetsArray, poses, height, width,
-        this.baseModel.outputStride, [inputResolution, inputResolution],
-        [[padding.top, padding.bottom], [padding.left, padding.right]],
-        configWithDefault.scoreThreshold, configWithDefault.refineSteps, false,
-        configWithDefault.numKeypointForMatching);
+    // const instanceMasks = decodeMultipleMasks(
+    //     segmentationArray, longOffsetsArray, poses, height, width,
+    //     this.baseModel.outputStride, [inputResolution, inputResolution],
+    //     [[padding.top, padding.bottom], [padding.left, padding.right]],
+    //     configWithDefault.scoreThreshold, configWithDefault.refineSteps,
+    //     false, configWithDefault.numKeypointForMatching);
 
-    decodeMultipleMasksGPU(
+    const instanceMasks = decodeMultipleMasksGPU(
         segmentation, longOffsets, poses, height, width,
         this.baseModel.outputStride, [inputResolution, inputResolution],
         [[padding.top, padding.bottom], [padding.left, padding.right]],
