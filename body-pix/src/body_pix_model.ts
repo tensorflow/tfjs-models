@@ -458,7 +458,7 @@ export class BodyPix {
         segmentation, longOffsets, poses, height, width,
         this.baseModel.outputStride, [inputResolution, inputResolution],
         [[padding.top, padding.bottom], [padding.left, padding.right]],
-        configWithDefault.scoreThreshold, configWithDefault.refineSteps, false,
+        configWithDefault.scoreThreshold, configWithDefault.refineSteps,
         configWithDefault.numKeypointForMatching);
 
     resized.dispose();
@@ -668,7 +668,7 @@ export class BodyPix {
         segmentation, longOffsets, partSegmentation, poses, height, width,
         this.baseModel.outputStride, [inputResolution, inputResolution],
         [[padding.top, padding.bottom], [padding.left, padding.right]],
-        configWithDefault.scoreThreshold, configWithDefault.refineSteps, false,
+        configWithDefault.scoreThreshold, configWithDefault.refineSteps,
         configWithDefault.numKeypointForMatching);
 
     resized.dispose();
