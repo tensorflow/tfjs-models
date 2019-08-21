@@ -380,7 +380,6 @@ export class BodyPix {
         offsets,
       };
     });
-    imageTensor.dispose();
     resized.dispose();
     return {
       segmentation, heatmapScores, offsets, padding
@@ -604,7 +603,6 @@ export class BodyPix {
         offsets
       };
     });
-    imageTensor.dispose();
     resized.dispose();
     return {
       partSegmentation, heatmapScores, offsets, padding
