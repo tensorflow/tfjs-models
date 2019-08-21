@@ -48,8 +48,7 @@ function decodeMultipleMasksTensorGPU(
     height: number, width: number, stride: number,
     [inHeight, inWidth]: [number, number],
     [[padT, padB], [padL, padR]]: [[number, number], [number, number]],
-    refineSteps: number, numKptForMatching: number, minKptScore: number,
-    maxNumPeople: number): tf.Tensor {
+    refineSteps: number, minKptScore: number, maxNumPeople: number): tf.Tensor {
   // The height/width of the image/canvas itself.
   const [origHeight, origWidth] = segmentation.shape;
   // The height/width of the output of the model.
@@ -127,7 +126,7 @@ function decodeMultipleMasksTensorGPU(
       for (int i = 0; i < ${maxNumPeople}; i++) {
         float curDistSum = 0.0;
         int numKpt = 0;
-        for (int k = 0; k < ${numKptForMatching}; k++) {
+        for (int k = 0; k < ${NUM_KEYPOINTS}; k++) {
           float dy = sampleLongOffsets(stridedH, stridedW, 0, k);
           float dx = sampleLongOffsets(stridedH, stridedW, 1, k);
 
@@ -186,15 +185,15 @@ export function decodeMultipleMasksGPU(
     height: number, width: number, stride: number,
     [inHeight, inWidth]: [number, number],
     [[padT, padB], [padL, padR]]: [[number, number], [number, number]],
-    minPoseScore = 0.2, refineSteps = 8, numKptForMatching = NUM_KEYPOINTS,
-    minKptScore = 0.3, maxNumPeople = 10): PersonSegmentation[] {
+    minPoseScore = 0.2, refineSteps = 8, minKeypointScore = 0.3,
+    maxNumPeople = 10): PersonSegmentation[] {
   // Filter out poses with smaller score.
   const posesAboveScore = poses.filter(pose => pose.score >= minPoseScore);
 
   const masksTensor = decodeMultipleMasksTensorGPU(
       segmentation, longOffsets, posesAboveScore, height, width, stride,
       [inHeight, inWidth], [[padT, padB], [padL, padR]], refineSteps,
-      numKptForMatching, minKptScore, maxNumPeople)
+      minKeypointScore, maxNumPeople)
 
   const allPersonSegmentation: PersonSegmentation[] = [];
   for (let k = 0; k < posesAboveScore.length; k++) {
@@ -214,15 +213,15 @@ export function decodeMultiplePartMasksGPU(
     poses: Pose[], height: number, width: number, stride: number,
     [inHeight, inWidth]: [number, number],
     [[padT, padB], [padL, padR]]: [[number, number], [number, number]],
-    minPoseScore = 0.2, refineSteps = 8, numKptForMatching = NUM_KEYPOINTS,
-    minKptScore = 0.3, maxNumPeople = 10): PartSegmentation[] {
+    minPoseScore = 0.2, refineSteps = 8, minKeypointScore = 0.3,
+    maxNumPeople = 10): PartSegmentation[] {
   // Filter out poses with smaller score.
   const posesAboveScore = poses.filter(pose => pose.score >= minPoseScore);
 
   const masksTensor = decodeMultipleMasksTensorGPU(
       segmentation, longOffsets, posesAboveScore, height, width, stride,
       [inHeight, inWidth], [[padT, padB], [padL, padR]], refineSteps,
-      numKptForMatching, minKptScore, maxNumPeople)
+      minKeypointScore, maxNumPeople)
 
   const allPersonPartSegmentation: PartSegmentation[] = [];
   for (let k = 0; k < posesAboveScore.length; k++) {

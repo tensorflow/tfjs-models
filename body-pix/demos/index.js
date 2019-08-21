@@ -168,6 +168,7 @@ async function loadVideo(cameraLabel) {
 }
 
 const guiState = {
+  algorithm: 'multi-person',
   estimate: 'segmentation',
   camera: null,
   flipHorizontal: true,
@@ -177,6 +178,9 @@ const guiState = {
     inputResolution: 257,
     multiplier: 1.0,
     quantBytes: 4
+  },
+  multiPersonDecoding: {
+    scoreThreshold: 0.2,
   },
   multiPersonDecoding: {
     maxDetections: 5,
@@ -230,6 +234,12 @@ function setupGui(cameras) {
 
   gui.add(guiState, 'flipHorizontal');
 
+  // The single-pose algorithm is faster and simpler but requires only one
+  // person to be in the frame or results will be innaccurate. Multi-pose works
+  // for more than 1 person
+  const algorithmController =
+      gui.add(guiState, 'algorithm', ['single-person', 'multi-person']);
+
   // Architecture: there are a few BodyPix models varying in size and
   // accuracy.
   // The input parameters have the most effect on accuracy and speed of the
@@ -262,6 +272,11 @@ function setupGui(cameras) {
       segmentation.add(guiState.segmentation, 'effect', ['mask', 'bokeh']);
   segmentation.open();
 
+  let singlePersonDecoding = gui.addFolder('SinglePersonDecoding');
+  singlePersonDecoding.add(
+      guiState.multiPersonDecoding, 'scoreThreshold', 0.0, 1.0);
+  singlePersonDecoding.close();
+
   let multiPersonDecoding = gui.addFolder('MultiPersonDecoding');
   multiPersonDecoding.add(
       guiState.multiPersonDecoding, 'maxDetections', 0, 20, 1);
@@ -273,6 +288,19 @@ function setupGui(cameras) {
   multiPersonDecoding.add(
       guiState.multiPersonDecoding, 'refineSteps', 1, 10, 1);
   multiPersonDecoding.open();
+
+  algorithmController.onChange(function(value) {
+    switch (guiState.algorithm) {
+      case 'single-person':
+        multiPersonDecoding.close();
+        singlePersonDecoding.open();
+        break;
+      case 'multi-person':
+        singlePersonDecoding.close();
+        multiPersonDecoding.open();
+        break;
+    }
+  });
 
   let darknessLevel;
   let bokehBlurAmount;
@@ -385,6 +413,63 @@ function setupFPS() {
   }
 }
 
+async function estimateSegmentation() {
+  let allPersonSegmentation = null;
+  console.log(guiState.algorithm);
+  switch (guiState.algorithm) {
+    case 'multi-person':
+      allPersonSegmentation =
+          await state.net.estimateMultiplePersonSegmentation(state.video, {
+            segmentationThreshold: guiState.segmentation.segmentationThreshold,
+            maxDetections: guiState.multiPersonDecoding.maxDetections,
+            scoreThreshold: guiState.multiPersonDecoding.scoreThreshold,
+            nmsRadius: guiState.multiPersonDecoding.nmsRadius,
+            numKeypointForMatching:
+                guiState.multiPersonDecoding.numKeypointForMatching,
+            refineSteps: guiState.multiPersonDecoding.refineSteps
+          });
+      break;
+    case 'single-person':
+      const personSegmentation =
+          await state.net.estimateSinglePersonSegmentation(state.video, {
+            segmentationThreshold: guiState.segmentation.segmentationThreshold
+          });
+      allPersonSegmentation = [personSegmentation];
+      break;
+    default:
+      break;
+  };
+  return allPersonSegmentation;
+}
+
+async function estimatePartSegmentation() {
+  let allPersonPartSegmentation = null;
+  switch (guiState.algorithm) {
+    case 'multi-person':
+      allPersonPartSegmentation =
+          await state.net.estimateMultiplePersonPartSegmentation(state.video, {
+            segmentationThreshold: guiState.segmentation.segmentationThreshold,
+            maxDetections: guiState.multiPersonDecoding.maxDetections,
+            scoreThreshold: guiState.multiPersonDecoding.scoreThreshold,
+            nmsRadius: guiState.multiPersonDecoding.nmsRadius,
+            numKeypointForMatching:
+                guiState.multiPersonDecoding.numKeypointForMatching,
+            refineSteps: guiState.multiPersonDecoding.refineSteps
+          });
+      break;
+    case 'single-person':
+      const personPartSegmentation =
+          await state.net.estimateSinglePersonPartSegmentation(state.video, {
+            segmentationThreshold: guiState.segmentation.segmentationThreshold
+          });
+      allPersonPartSegmentation = [personPartSegmentation];
+      break;
+    default:
+      break;
+  };
+  return allPersonPartSegmentation;
+}
+
 /**
  * Feeds an image to BodyPix to estimate segmentation - this is where the
  * magic happens. This function loops with a requestAnimationFrame method.
@@ -412,17 +497,7 @@ function segmentBodyInRealTime() {
 
     switch (guiState.estimate) {
       case 'segmentation':
-        const allPersonSegmentation =
-            await state.net.estimateMultiplePersonSegmentation(state.video, {
-              segmentationThreshold:
-                  guiState.segmentation.segmentationThreshold,
-              maxDetections: guiState.multiPersonDecoding.maxDetections,
-              scoreThreshold: guiState.multiPersonDecoding.scoreThreshold,
-              nmsRadius: guiState.multiPersonDecoding.nmsRadius,
-              numKeypointForMatching:
-                  guiState.multiPersonDecoding.numKeypointForMatching,
-              refineSteps: guiState.multiPersonDecoding.refineSteps
-            });
+        const allPersonSegmentation = await estimateSegmentation();
         switch (guiState.segmentation.effect) {
           case 'mask':
             const ctx = canvas.getContext('2d');
@@ -453,19 +528,7 @@ function segmentBodyInRealTime() {
         break;
       case 'partmap':
         const ctx = canvas.getContext('2d');
-        const allPersonPartSegmentation =
-            await state.net.estimateMultiplePersonPartSegmentation(
-                state.video, {
-                  segmentationThreshold:
-                      guiState.segmentation.segmentationThreshold,
-                  maxDetections: guiState.multiPersonDecoding.maxDetections,
-                  scoreThreshold: guiState.multiPersonDecoding.scoreThreshold,
-                  nmsRadius: guiState.multiPersonDecoding.nmsRadius,
-                  numKeypointForMatching:
-                      guiState.multiPersonDecoding.numKeypointForMatching,
-                  refineSteps: guiState.multiPersonDecoding.refineSteps
-                });
-
+        const allPersonPartSegmentation = await estimatePartSegmentation();
         const coloredPartImageData = bodyPix.toColoredPartImageData(
             allPersonPartSegmentation,
             partColorScales[guiState.partMap.colorScale]);

@@ -26,7 +26,8 @@ import {MobileNet} from './mobilenet';
 import {decodeMultipleMasksGPU, decodeMultiplePartMasksGPU} from './multi_person/decode_multiple_masks';
 import {decodeMultiplePoses} from './multi_person/decode_multiple_poses';
 import {ResNet} from './resnet';
-import {BodyPixInput, PartSegmentation, PersonSegmentation} from './types';
+import {decodeSinglePose} from './sinlge_person/decode_single_pose';
+import {BodyPixInput, Padding, PartSegmentation, PersonSegmentation} from './types';
 import {getInputTensorDimensions, padAndResizeTo, scaleAndCropToInputTensorShape, scaleAndFlipPoses, toInputTensor, toTensorBuffers3D} from './util';
 
 export type BodyPixInputResolution =
@@ -168,9 +169,8 @@ export interface SinglePersonInferenceConfig extends InferenceConfig {}
  * to be strictly positive. Two parts suppress each other if they are less
  * than `nmsRadius` pixels away. Defaults to 20.
  *
- * `numKeypointForMatching`: The first N keypoints used for assigning
- * segmentation mask to each person. It can be any integer value between [1,
- * 17]. The larger the higher the accuracy and slower the inference.
+ * `minKeypointScore`: Default to 0.3. Keypoints above the score are used
+ * for matching and assigning segmentation mask to each person..
  *
  * `refineSteps`: The number of refinement steps used when assigning the
  * instance segmentation. It needs to be strictly positive. The larger the
@@ -181,8 +181,7 @@ export interface MultiPersonInferenceConfig extends InferenceConfig {
   maxDetections?: number;
   scoreThreshold?: number;
   nmsRadius?: number;
-  numKeypointForMatching?: number;
-  refineSteps?: number;
+  minKeypointScore?: number, refineSteps?: number;
 }
 
 export const SINGLE_PERSON_INFERENCE_CONFIG: SinglePersonInferenceConfig = {
@@ -196,7 +195,7 @@ export const MULTI_PERSON_INFERENCE_CONFIG: MultiPersonInferenceConfig = {
   maxDetections: 5,
   scoreThreshold: 0.2,
   nmsRadius: 20,
-  numKeypointForMatching: 5,
+  minKeypointScore: 0.3,
   refineSteps: 1
 };
 
@@ -212,7 +211,13 @@ function validateSinglePersonInferenceConfig(
 
 function validateMultiPersonInferenceConfig(
     config: MultiPersonInferenceConfig) {
-  const {maxDetections, scoreThreshold, nmsRadius} = config;
+  const {
+    maxDetections,
+    scoreThreshold,
+    nmsRadius,
+    minKeypointScore,
+    refineSteps
+  } = config;
 
   if (maxDetections <= 0) {
     throw new Error(
@@ -230,6 +235,18 @@ function validateMultiPersonInferenceConfig(
   if (nmsRadius <= 0) {
     throw new Error(`Invalid nmsRadius ${nmsRadius}.`);
   }
+
+  if (minKeypointScore < 0 || minKeypointScore > 1) {
+    throw new Error(
+        `Invalid minKeypointScore ${minKeypointScore}.` +
+        `Should be in range [0.0, 1.0]`);
+  }
+
+  if (refineSteps <= 0 || minKeypointScore > 20) {
+    throw new Error(
+        `Invalid refineSteps ${refineSteps}.` +
+        `Should be in range [1, 20]`);
+  }
 }
 
 export class BodyPix {
@@ -241,11 +258,51 @@ export class BodyPix {
     this.inputResolution = inputResolution;
   }
 
-  predictForSegmentationLogits(input: tf.Tensor3D): tf.Tensor3D {
-    return this.baseModel.predict(input).segmentation;
+  predictForSinglePersonSegmentationLogits(input: tf.Tensor3D): {
+    segmentLogits: tf.Tensor3D,
+    heatmapScores: tf.Tensor3D,
+    offsets: tf.Tensor3D,
+    displacementFwd: tf.Tensor3D,
+    displacementBwd: tf.Tensor3D,
+  } {
+    const {
+      segmentation,
+      heatmapScores,
+      offsets,
+      displacementFwd,
+      displacementBwd,
+    } = this.baseModel.predict(input);
+    return {
+      segmentLogits: segmentation, heatmapScores: heatmapScores,
+          offsets: offsets, displacementFwd: displacementFwd,
+          displacementBwd: displacementBwd,
+    }
   }
 
-  predictForSegmentationAndLongRangeOffsets(input: tf.Tensor3D): {
+  predictForSinglePersonPartMapLogits(input: tf.Tensor3D): {
+    segmentLogits: tf.Tensor3D,
+    partHeatmapLogits: tf.Tensor3D,
+    heatmapScores: tf.Tensor3D,
+    offsets: tf.Tensor3D,
+    displacementFwd: tf.Tensor3D,
+    displacementBwd: tf.Tensor3D,
+  } {
+    const {
+      segmentation,
+      partHeatmaps,
+      heatmapScores,
+      offsets,
+      displacementFwd,
+      displacementBwd
+    } = this.baseModel.predict(input);
+    return {
+      segmentLogits: segmentation, partHeatmapLogits: partHeatmaps,
+          heatmapScores: heatmapScores, offsets: offsets,
+          displacementFwd: displacementFwd, displacementBwd: displacementBwd,
+    }
+  }
+
+  predictForMultiPersonSegmentationAndPartMap(input: tf.Tensor3D): {
     segmentLogits: tf.Tensor3D,
     longOffsets: tf.Tensor3D,
     heatmapScores: tf.Tensor3D,
@@ -271,14 +328,6 @@ export class BodyPix {
     }
   }
 
-  predictForPartMapLogits(input: tf.Tensor3D):
-      {segmentLogits: tf.Tensor3D, partHeatmapLogits: tf.Tensor3D} {
-    const {segmentation, partHeatmaps} = this.baseModel.predict(input);
-    return {
-      segmentLogits: segmentation, partHeatmapLogits: partHeatmaps
-    }
-  }
-
   /**
    * Given an image with a person, returns a binary array with 1 for the pixels
    * that are part of the person, and 0 otherwise. This does
@@ -299,17 +348,23 @@ export class BodyPix {
    * of the input image.
    */
   estimateSinglePersonSegmentationActivation(
-      input: BodyPixInput, segmentationThreshold = 0.5): tf.Tensor2D {
+      input: BodyPixInput, segmentationThreshold = 0.5): {
+    segmentation: tf.Tensor2D,
+    heatmapScores: tf.Tensor3D,
+    offsets: tf.Tensor3D,
+    padding: Padding
+  } {
     const inputResolution = this.inputResolution;
+    const imageTensor = toInputTensor(input);
+    const {resized, padding} =
+        padAndResizeTo(imageTensor, [inputResolution, inputResolution]);
 
-    return tf.tidy(() => {
-      const imageTensor = toInputTensor(input);
+    const {segmentation, heatmapScores, offsets} = tf.tidy(() => {
       const {
-        resized,
-        padding,
-      } = padAndResizeTo(imageTensor, [inputResolution, inputResolution]);
-
-      const segmentLogits = this.predictForSegmentationLogits(resized);
+        segmentLogits,
+        heatmapScores,
+        offsets,
+      } = this.predictForSinglePersonSegmentationLogits(resized);
 
       const [resizedHeight, resizedWidth] = resized.shape;
       const [height, width] = imageTensor.shape;
@@ -318,8 +373,18 @@ export class BodyPix {
           segmentLogits, [height, width], [resizedHeight, resizedWidth],
           [[padding.top, padding.bottom], [padding.left, padding.right]], true);
 
-      return toMask(scaledSegmentScores.squeeze(), segmentationThreshold);
+      return {
+        segmentation:
+            toMask(scaledSegmentScores.squeeze(), segmentationThreshold),
+        heatmapScores,
+        offsets,
+      };
     });
+    imageTensor.dispose();
+    resized.dispose();
+    return {
+      segmentation, heatmapScores, offsets, padding
+    }
   }
 
   /**
@@ -349,15 +414,23 @@ export class BodyPix {
       ...config
     };
     validateSinglePersonInferenceConfig(configWithDefault);
-    const segmentation = this.estimateSinglePersonSegmentationActivation(
-        input, configWithDefault.segmentationThreshold);
+    const {segmentation, heatmapScores, offsets, padding} =
+        this.estimateSinglePersonSegmentationActivation(
+            input, configWithDefault.segmentationThreshold);
 
     const [height, width] = segmentation.shape;
 
     const result = await segmentation.data() as Uint8Array;
     segmentation.dispose();
 
-    return {height, width, data: result};
+    const pose = await decodeSinglePose(
+        heatmapScores, offsets, this.baseModel.outputStride);
+
+    const resultPose = scaleAndFlipPoses(
+        [pose], [height, width], [this.inputResolution, this.inputResolution],
+        padding, configWithDefault.flipHorizontal)[0];
+
+    return {height, width, data: result, pose: resultPose};
   }
 
   /**
@@ -411,7 +484,7 @@ export class BodyPix {
         offsets,
         displacementFwd,
         displacementBwd,
-      } = this.predictForSegmentationAndLongRangeOffsets(resized);
+      } = this.predictForMultiPersonSegmentationAndPartMap(resized);
       const scaledSegmentScores = scaleAndCropToInputTensorShape(
           segmentLogits, [height, width], [inputResolution, inputResolution],
           [[padding.top, padding.bottom], [padding.left, padding.right]], true);
@@ -459,7 +532,7 @@ export class BodyPix {
         this.baseModel.outputStride, [inputResolution, inputResolution],
         [[padding.top, padding.bottom], [padding.left, padding.right]],
         configWithDefault.scoreThreshold, configWithDefault.refineSteps,
-        configWithDefault.numKeypointForMatching);
+        configWithDefault.minKeypointScore, configWithDefault.maxDetections);
 
     resized.dispose();
     segmentation.dispose();
@@ -492,18 +565,22 @@ export class BodyPix {
    * correspond to the same dimensions of the input image.
    */
   estimateSinglePersonPartSegmentationActivation(
-      input: BodyPixInput, segmentationThreshold = 0.5): tf.Tensor2D {
+      input: BodyPixInput, segmentationThreshold = 0.5): {
+    partSegmentation: tf.Tensor2D,
+    heatmapScores: tf.Tensor3D,
+    offsets: tf.Tensor3D,
+    padding: Padding
+  } {
     const inputResolution = this.inputResolution;
+    const imageTensor = toInputTensor(input);
+    const {
+      resized,
+      padding,
+    } = padAndResizeTo(imageTensor, [inputResolution, inputResolution]);
 
-    return tf.tidy(() => {
-      const imageTensor = toInputTensor(input);
-      const {
-        resized,
-        padding,
-      } = padAndResizeTo(imageTensor, [inputResolution, inputResolution]);
-
-      const {segmentLogits, partHeatmapLogits} =
-          this.predictForPartMapLogits(resized);
+    const {partSegmentation, heatmapScores, offsets} = tf.tidy(() => {
+      const {segmentLogits, partHeatmapLogits, heatmapScores, offsets} =
+          this.predictForSinglePersonPartMapLogits(resized);
 
       const [resizedHeight, resizedWidth] = resized.shape;
       const [height, width] = imageTensor.shape;
@@ -515,12 +592,20 @@ export class BodyPix {
       const scaledPartHeatmapScore = scaleAndCropToInputTensorShape(
           partHeatmapLogits, [height, width], [resizedHeight, resizedWidth],
           [[padding.top, padding.bottom], [padding.left, padding.right]], true);
-
-      const segmentationMask =
+      const segmentation =
           toMask(scaledSegmentScores.squeeze(), segmentationThreshold);
-
-      return decodePartSegmentation(segmentationMask, scaledPartHeatmapScore);
+      return {
+        partSegmentation:
+            decodePartSegmentation(segmentation, scaledPartHeatmapScore),
+        heatmapScores,
+        offsets
+      };
     });
+    imageTensor.dispose();
+    resized.dispose();
+    return {
+      partSegmentation, heatmapScores, offsets, padding
+    }
   }
 
   /**
@@ -557,16 +642,22 @@ export class BodyPix {
       ...config
     };
     validateSinglePersonInferenceConfig(configWithDefault);
-    const partSegmentation =
+    const {partSegmentation, heatmapScores, offsets, padding} =
         this.estimateSinglePersonPartSegmentationActivation(
             input, configWithDefault.segmentationThreshold);
 
     const [height, width] = partSegmentation.shape;
     const data = await partSegmentation.data() as Int32Array;
-
     partSegmentation.dispose();
 
-    return {height, width, data};
+    const pose = await decodeSinglePose(
+        heatmapScores, offsets, this.baseModel.outputStride);
+
+    const resultPose = scaleAndFlipPoses(
+        [pose], [height, width], [this.inputResolution, this.inputResolution],
+        padding, configWithDefault.flipHorizontal)[0];
+
+    return {height, width, data, pose: resultPose};
   }
 
   /**
@@ -622,7 +713,7 @@ export class BodyPix {
         displacementFwd,
         displacementBwd,
         partHeatmaps
-      } = this.predictForSegmentationAndLongRangeOffsets(resized);
+      } = this.predictForMultiPersonSegmentationAndPartMap(resized);
 
       // decoding with scaling.
       const scaledSegmentScores = scaleAndCropToInputTensorShape(
@@ -669,7 +760,7 @@ export class BodyPix {
         this.baseModel.outputStride, [inputResolution, inputResolution],
         [[padding.top, padding.bottom], [padding.left, padding.right]],
         configWithDefault.scoreThreshold, configWithDefault.refineSteps,
-        configWithDefault.numKeypointForMatching);
+        configWithDefault.minKeypointScore, configWithDefault.maxDetections);
 
     resized.dispose();
     segmentation.dispose();
