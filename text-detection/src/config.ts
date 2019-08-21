@@ -18,7 +18,11 @@
 export const config = {
   // #TODO(tfjs) : Replace this URL after you host the model
   BASE_PATH: 'https://storage.googleapis.com/gsoc-tfjs/models/text-detection',
-  RESIZE_LENGTH: 576,
-  MIN_CONFIDENCE: 0.9,
-  MIN_TEXTBOX_AREA: 10
+  // #TODO(tfjs) : Remove this after the model version is finalized
+  MODEL_VERSION: 'psenet-rc185-v0',
+  RESIZE_LENGTH: 256,
+  MIN_PIXEL_SALIENCE: 1,
+  MIN_TEXT_CONFIDENCE: 0.94,
+  MIN_TEXTBOX_AREA: 10,
+  DEBUG: false
 };

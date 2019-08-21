@@ -26,8 +26,7 @@ limitations under the License.
 
     #TODO(tfjs): Replace this URL after you host the model
   -->
-  <script defer
-    src="https://raw.githubusercontent.com/sdll/tfjs-models/models/text-detection/text-detection/src/assets/opencv/opencv.js"></script>
+  <script defer src="https://storage.googleapis.com/gsoc-tfjs/utilities/text-detection/opencv.js"></script>
   <script src="index.js"></script>
 </head>
 
@@ -75,9 +74,9 @@ limitations under the License.
                 </span>
                 <div class="select">
                   <select id="quantizationBytes">
-                    <option value="1" selected>1 (29 MB)</option>
-                    <option value="2">2 (59 MB)</option>
-                    <option value="4">4 (115 MB)</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="4" selected>4</option>
                   </select>
                 </div>
               </div>
@@ -123,7 +122,7 @@ limitations under the License.
                         <div class="dropdown-content">
                           <div class="dropdown-item text-breaks">
                             <div class="notification is-warning">
-                              The greater the length, the better accuracy and precision you can get at the cost
+                              The greater the length, the better accuracy and precision you might get at the cost
                               of
                               performance. Setting this value to more than 576 might result in WebGL memory overflow.
                             </div>
@@ -134,8 +133,8 @@ limitations under the License.
                   </div>
                   <div class="control">
                     <div>
-                      <input type="range" id="resize-length-slider" name="resize-length" min="256" max="1280"
-                        value="512" step="32" class="is-full-width">
+                      <input type="range" id="resize-length-slider" name="resize-length" min="64" max="512"
+                        value="256" step="32" class="is-full-width">
                     </div>
                   </div>
                 </div>
@@ -172,17 +171,17 @@ limitations under the License.
               <div class="panel-block">
                 <div class="is-boxed is-full-width">
                   <div class="is-vcentered m-r-sm no-breaks">
-                    <b>Min Confidence</b>
+                    <b>Min Pixel Salience</b>
                     <div class="dropdown is-hoverable is-up">
                       <span class="dropdown-trigger">
-                        <span class="infolink" aria-haspopup="true" aria-controls="dropdown-menu-min-confidence">:
-                          <span id="min-confidence-value">0.9</span></span>
+                        <span class="infolink" aria-haspopup="true" aria-controls="dropdown-menu-min-salience">:
+                          <span id="min-pixel-salience-value">1</span></span>
                       </span>
-                      <div class="dropdown-menu info-pop-up" id="dropdown-menu-min-confidence" role="menu">
+                      <div class="dropdown-menu info-pop-up" id="dropdown-menu-min-salience" role="menu">
                         <div class="dropdown-content">
                           <div class="dropdown-item text-breaks">
                             <div class="notification is-warning">
-                              Minimum allowable confidence of the prediction that a pixel corresponds to text.
+                              Minimum allowable salience of the prediction that a pixel is text.
                             </div>
                           </div>
                         </div>
@@ -191,8 +190,36 @@ limitations under the License.
                   </div>
                   <div class="control">
                     <div>
-                      <input type="range" id="min-confidence-slider" name="min-confidence" min="0" max="1" value=".9"
-                        step="0.01" class="is-full-width">
+                      <input type="range" id="min-pixel-salience-slider" name="min-pixel-salience" min="0" max="5"
+                        value="1" step="0.1" class="is-full-width">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="panel-block">
+                <div class="is-boxed is-full-width">
+                  <div class="is-vcentered m-r-sm no-breaks">
+                    <b>Min Text Confidence</b>
+                    <div class="dropdown is-hoverable is-up">
+                      <span class="dropdown-trigger">
+                        <span class="infolink" aria-haspopup="true" aria-controls="dropdown-menu-min-confidence">:
+                          <span id="min-text-confidence-value">0.94</span></span>
+                      </span>
+                      <div class="dropdown-menu info-pop-up" id="dropdown-menu-min-confidence" role="menu">
+                        <div class="dropdown-content">
+                          <div class="dropdown-item text-breaks">
+                            <div class="notification is-warning">
+                              Minimum allowable confidence of the prediction that a region is text.
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="control">
+                    <div>
+                      <input type="range" id="min-text-confidence-slider" name="min-text-confidence" min="0" max="1"
+                        value=".94" step="0.01" class="is-full-width">
                     </div>
                   </div>
                 </div>

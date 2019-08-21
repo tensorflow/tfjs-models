@@ -26,7 +26,7 @@ import gunForHireExample from './assets/examples/gun-for-hire.jpg';
 import joyYoungRogersExample from './assets/examples/joy-young-rogers.jpg';
 import {findContours} from './findContours';
 
-const {convexHull, load, minTextBoxArea} = psenet;
+const {convexHull, load, minAreaRect} = psenet;
 const state = {
   processPoints: 'min-area-rect',
 };
@@ -38,7 +38,7 @@ const textDetectionExamples = {
   'blue-bird': blueBirdExample,
 };
 const pointProcessors = {
-  'min-area-rect': minTextBoxArea,
+  'min-area-rect': minAreaRect,
   'convex-hull': convexHull,
   'identity': (x) => x,
   'contours': findContours,
@@ -72,8 +72,10 @@ const getResizeLengthSlider = () =>
   document.getElementById('resize-length-slider');
 const getMinTextBoxAreaSlider = () =>
   document.getElementById('min-textbox-area-slider');
-const getMinConfidenceSlider = () =>
-  document.getElementById('min-confidence-slider');
+const getMinTextConfidenceSlider = () =>
+  document.getElementById('min-text-confidence-slider');
+const getMinPixelSalienceSlider = () =>
+  document.getElementById('min-pixel-salience-slider');
 
 const initializeModel = async () => {
   updateInput();
@@ -86,10 +88,13 @@ const initializeModel = async () => {
   updateSlider(minTextBoxAreaSlider, 'min-textbox-area-value');
   minTextBoxAreaSlider.oninput = () =>
     updateSlider(minTextBoxAreaSlider, 'min-textbox-area-value');
-  const minConfidenceSlider = getMinConfidenceSlider();
-  updateSlider(minConfidenceSlider, 'min-confidence-value');
-  minConfidenceSlider.oninput = () =>
-    updateSlider(minConfidenceSlider, 'min-confidence-value');
+  const minTextConfidenceSlider = getMinTextConfidenceSlider();
+  updateSlider(minTextConfidenceSlider, 'min-text-confidence-value');
+  minTextConfidenceSlider.oninput = () =>
+    updateSlider(minTextConfidenceSlider, 'min-text-confidence-value');
+  const minPixelSalienceSlider = getMinPixelSalienceSlider();
+  minPixelSalienceSlider.oninput = () =>
+    updateSlider(minPixelSalienceSlider, 'min-pixel-salience-value');
   const inputSelector = document.getElementById('example');
   inputSelector.onchange = updateInput;
   status('Loading the model...');
@@ -239,13 +244,14 @@ const runPrediction = async (input, predictionStart) => {
     const factor = height / originalHeight;
 
     const output = await model.detect(this, {
-      resizeLength: getResizeLengthSlider().value,
-      minTextBoxArea: getMinTextBoxAreaSlider().value,
-      minConfidence: getMinConfidenceSlider().value,
+      resizeLength: Number(getResizeLengthSlider().value),
+      minTextBoxArea: Number(getMinTextBoxAreaSlider().value),
+      minTextConfidence: Number(getMinTextConfidenceSlider().value),
+      minPixelSalience: Number(getMinPixelSalienceSlider().value),
       processPoints: pointProcessors[state.processPoints],
+      debug: false,
     });
     status(`Obtained ${output.length} boxes`);
-    console.log(JSON.stringify(output));
     displayBoxes(scale(factor, output));
     status(`Ran in ${howManySecondsFrom(predictionStart)} seconds`);
   };

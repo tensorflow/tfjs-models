@@ -69,25 +69,34 @@ export class TextDetection {
       resizeLength = config['RESIZE_LENGTH'];
     }
     return tf.tidy(() => {
-      return resize(input, resizeLength).expandDims(0);
+      const resizedInput = resize(input, resizeLength).expandDims(0);
+      return resizedInput.div(127.5).sub(1);
     });
   }
 
   public async detect(
       image: TextDetectionInput, textDetectionOptions: TextDetectionOptions = {
-        resizeLength: config['RESIZE_LENGTH'],
+        debug: config['DEBUG'],
+        minPixelSalience: config['MIN_PIXEL_SALIENCE'],
         minTextBoxArea: config['MIN_TEXTBOX_AREA'],
-        minConfidence: config['MIN_CONFIDENCE'],
-        processPoints: minAreaRect
+        minTextConfidence: config['MIN_TEXT_CONFIDENCE'],
+        processPoints: minAreaRect,
+        resizeLength: config['RESIZE_LENGTH'],
       }): Promise<TextDetectionOutput> {
     textDetectionOptions = {
-      resizeLength: config['RESIZE_LENGTH'],
+      debug: config['DEBUG'],
+      minPixelSalience: config['MIN_PIXEL_SALIENCE'],
       minTextBoxArea: config['MIN_TEXTBOX_AREA'],
-      minConfidence: config['MIN_CONFIDENCE'],
+      minTextConfidence: config['MIN_TEXT_CONFIDENCE'],
       processPoints: minAreaRect,
+      resizeLength: config['RESIZE_LENGTH'],
       ...textDetectionOptions
     };
-    const kernelScores = this.predict(image, textDetectionOptions.resizeLength);
+    const kernelLogits = this.predict(image, textDetectionOptions.resizeLength);
+    if (textDetectionOptions.debug) {
+      console.log('Inferred the logits:');
+      kernelLogits.print(true);
+    }
     const sides = new Array<number>(2);
     if (image instanceof tf.Tensor) {
       const [height, width] = image.shape;
@@ -98,12 +107,12 @@ export class TextDetection {
       sides[1] = image.width;
     }
     const boxes = await convertKernelsToBoxes(
-        kernelScores,
+        kernelLogits,
         sides[0],
         sides[1],
         textDetectionOptions,
     );
-    tf.dispose(kernelScores);
+    tf.dispose(kernelLogits);
     return boxes;
   }
 

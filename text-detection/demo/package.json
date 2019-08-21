@@ -13,9 +13,9 @@
   },
   "dependencies": {
     "@tensorflow-models/text-detection": "link:.yalc/@tensorflow-models/text-detection",
-    "@tensorflow/tfjs": "1.2.5",
+    "@tensorflow/tfjs": "1.2.7",
     "bulma": "^0.7.5",
-    "fabric": "^3.3.2"
+    "fabric": "^3.4.0"
   },
   "scripts": {
     "watch": "cross-env NODE_ENV=development parcel src/index.html --no-hmr",
@@ -30,11 +30,11 @@
     "@types/fabric": "^3.0.0",
     "clang-format": "^1.2.4",
     "cross-env": "^5.2.0",
-    "eslint": "^6.1.0",
+    "eslint": "^6.2.1",
     "eslint-config-google": "^0.13.0",
     "parcel-bundler": "~1.12.3",
-    "seedrandom": "~2.4.4",
-    "yalc": "~1.0.0-pre.32"
+    "seedrandom": "~3.0.3",
+    "yalc": "~1.0.0-pre.33"
   },
   "eslintConfig": {
     "extends": "google",

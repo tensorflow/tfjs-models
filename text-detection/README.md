@@ -14,7 +14,7 @@ Four parameters affect the accuracy, precision and speed of inference:
 
 * **degree of quantization**
 
-  Three types of weights are supported by default, quantized either to 1, 2 or 4 bytes respectively. The greater the degree of quantization, the less the size and precision of the output (the current model quantized to **1 byte** weighs **29 MB**, to **2 bytes** ⁠— **59 MB**, to **4 bytes** ⁠— **115 MB**)
+  Three types of weights are supported by default, quantized either to 1, 2 or 4 bytes respectively. The greater the degree of quantization, the less the size of the model and the precision of the output.
 
 * **resize length**
 
@@ -49,14 +49,13 @@ loadModel()
             console.log(`The predicted text boxes are ${JSON.stringify(boxes)}`));
 ```
 
-By default, calling `load` initalizes the model quantized to 1 byte.
+By default, calling `load` initalizes the model without quantization.
 
 If you would rather load custom weights, you can pass the URL in the config instead:
 
 ```typescript
 import * as psenet from '@tensorflow-models/text-detection';
 const loadModel = async () => {
-  // #TODO(tfjs): Replace this URL after you host the model
   const url = 'https://storage.googleapis.com/gsoc-tfjs/models/text-detection/quantized/1/psenet/model.json';
   return await psenet.load({modelUrl: url});
 };
@@ -94,15 +93,19 @@ The `detect` method of the `TextDetection` object covers most use cases.
 
   Text boxes with areas less than this value are ignored. Equal to **10** by default.
 
-* **config.minConfidence** (optional) :: `number`
+* **config.minTextConfidence** (optional) :: `number`
 
-  Minimum allowable confidence of the prediction that a pixel corresponds to text. Set to **0.9** by default.
+  Minimum allowable confidence of the prediction that a region corresponds to text. Set to **0.94** by default.
+
+* **config.minPixelSalience** (optional) :: `number`
+
+  Minimum threshold above which the predicted logits are interpreted as text.  Set to **1** by default.
 
 * **config.resizeLength** (optional) :: `number`
 
-  The greater the length, the better accuracy and precision you can get at the cost of performance. Equal to **576** by default.
+  The greater the length, the better accuracy and precision you might get at the cost of performance. Set to **256** by default.
 
-  **Note**: *This is the first parameter to fine-tune in order to improve the speed of inference. Setting this value to more than 576 might result in memory overflow.*
+  **Note**: *This is the first parameter to fine-tune in order to improve the speed of inference. Setting this value to more than 352 might result in memory overflow.*
 
 * **config.processPoints** (optional) :: `(points: ({x:number, y:number})[]) => ({x:number, y:number})[]`
 
@@ -122,6 +125,10 @@ The `detect` method of the `TextDetection` object covers most use cases.
     console.log(`The min bounding box is: ${JSON.stringify(minAreaRect(points))})`;
   ```
 
+* **config.debug** (optional) :: `boolean`
+
+  Enables printing of the information for debugging purposes. Set to **false** by default.
+
 #### `model.detect(image, config?)` outputs
 
 The output is a promise of an array with individual boxes, represented as an array of points (objects with `x` and `y` attributes).
@@ -136,7 +143,7 @@ const computeTextBoxes = async (image) => {
 
 **Note**: *For more granular control, consider `predict` and `convertKernelsToBoxes` methods described below.*
 
-### Generting minimal scale kernels
+### Generating minimal scale kernels
 
 To compute the raw predictions of PSENet with the image pre-processed for optimal inference, use the `model.predict(image, resizeLength?)` method.
 
@@ -148,7 +155,7 @@ To compute the raw predictions of PSENet with the image pre-processed for optima
 
 * **config.resizeLength** (optional) :: `number`
 
-  The greater the length, the better accuracy and precision you can get at the cost of performance. Equal to **576** by default.
+  The greater the length, the better accuracy and precision you might get at the cost of performance. Set to **256** by default.
 
   **Note**: *This is the first parameter to fine-tune in order to improve the speed of inference. Setting this value to more than 576 might result in memory overflow.*
 
@@ -185,17 +192,17 @@ The original height of the input image
 
 The original width of the input image
 
-* **config.minTextBoxArea** (optional) :: `number`
+* **config.minTextConfidence** (optional) :: `number`
 
-  Text boxes with areas less than this value are ignored. Equal to **10** by default.
+  Minimum allowable confidence of the prediction that a region corresponds to text. Set to **0.94** by default.
 
-* **config.minConfidence** (optional) :: `number`
+* **config.minPixelSalience** (optional) :: `number`
 
-  Minimum allowable confidence of the prediction that a pixel corresponds to text. Set to **0.9** by default.
+  Minimum threshold above which the predicted logits are interpreted as text.  Set to **1** by default.
 
 * **config.resizeLength** (optional) :: `number`
 
-  The greater the length, the better accuracy and precision you can get at the cost of performance. Equal to **576** by default.
+  The greater the length, the better accuracy and precision you might get at the cost of performance. Set to **256** by default.
 
   **Note**: *This is the first parameter to fine-tune in order to improve the speed of inference. Setting this value to more than 576 might result in memory overflow.*
 

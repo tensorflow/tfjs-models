@@ -146,7 +146,9 @@ TARGET_DIR=$(realpath $TARGET_DIR)
 CONVERTED_MODELS_DIR=$(realpath "$TARGET_DIR/text-detection")
 ASSETS_DIR=$(realpath "$TARGET_DIR/assets")
 # TODO(tfjs): Replace this URL after you host the model
-WEIGHTS_URL="https://storage.googleapis.com/gsoc-tfjs/weights/psenet/weights.tar.gz"
+# WEIGHTS_URL="https://storage.googleapis.com/gsoc-tfjs/weights/psenet/weights.tar.gz"
+MODEL_VERSION="psenet-rc185-v0"
+WEIGHTS_URL="https://storage.googleapis.com/gsoc-tfjs/weights/psenet/custom/$MODEL_VERSION.zip"
 VIRTUALENV_DIR="venv"
 PARENT_DIR="$(pwd)"
 
@@ -168,30 +170,26 @@ fi
 
 notify "=" "Converting the model to tfjs..."
 
-if ! [ -d $ASSETS_DIR/weights ]; then
+if ! [ -d $ASSETS_DIR/saved_model ]; then
   notify "~" "Downloading the model  weights..."
   cd $ASSETS_DIR
-  if ! [ -f $ASSETS_DIR/weights.tar.gz ]; then
-    wget -O weights.tar.gz $WEIGHTS_URL
+  if ! [ -f $ASSETS_DIR/weights.zip ]; then
+    wget -O weights.zip $WEIGHTS_URL
   fi
-  tar xvfz weights.tar.gz -C weights
+  unzip weights.zip
+  mv $MODEL_VERSION $ASSETS_DIR/saved_model
 fi
 
-PYTHONPATH="$(dirname $SCRIPT_DIR)/assets/" python $SCRIPT_DIR/assets/psenet/convert_to_saved_model.py \
-  --checkpoint_path $ASSETS_DIR/weights \
-  --output_path $ASSETS_DIR/saved_model
-
-MODEL_NAME="psenet"
-notify "~" "Converting $MODEL_NAME..."
+notify "~" "Converting $MODEL_VERSION..."
 tensorflowjs_converter \
   --input_format=tf_saved_model \
   --output_format=tfjs_graph_model \
   --signature_name=serving_default \
   --saved_model_tags=serve \
   $ASSETS_DIR/saved_model \
-  $CONVERTED_MODELS_DIR/$MODEL_NAME
+  $CONVERTED_MODELS_DIR/$MODEL_VERSION
 
-notify "~" "Converting $MODEL_NAME and quantizing to 1 byte..."
+notify "~" "Converting $MODEL_VERSION and quantizing to 1 byte..."
 tensorflowjs_converter \
   --quantization_bytes 1 \
   --input_format=tf_saved_model \
@@ -199,9 +197,9 @@ tensorflowjs_converter \
   --signature_name=serving_default \
   --saved_model_tags=serve \
   $ASSETS_DIR/saved_model \
-  $CONVERTED_MODELS_DIR/quantized/1/$MODEL_NAME
+  $CONVERTED_MODELS_DIR/quantized/1/$MODEL_VERSION
 
-notify "~" "Converting $MODEL_NAME and quantizing to 2 bytes..."
+notify "~" "Converting $MODEL_VERSION and quantizing to 2 bytes..."
 tensorflowjs_converter \
   --quantization_bytes 2 \
   --input_format=tf_saved_model \
@@ -209,6 +207,6 @@ tensorflowjs_converter \
   --signature_name=serving_default \
   --saved_model_tags=serve \
   $ASSETS_DIR/saved_model \
-  $CONVERTED_MODELS_DIR/quantized/2/$MODEL_NAME
+  $CONVERTED_MODELS_DIR/quantized/2/$MODEL_VERSION
 
 notify "=" "Success!"

@@ -29,7 +29,8 @@ export const progressiveScaleExpansion = async (
       Array.from(new Array<number>(height), () => new Array<number>(width));
   for (let rowIdx = 0; rowIdx < height; ++rowIdx) {
     for (let colIdx = 0; colIdx < width; ++colIdx) {
-      lastKernelData[rowIdx][colIdx] = kernelsData[rowIdx][colIdx][0];
+      lastKernelData[rowIdx][colIdx] =
+          kernelsData[rowIdx][colIdx][numOfKernels - 1];
     }
   }
   const {labelsCount, labels} = connectedComponents(lastKernelData);
@@ -65,7 +66,7 @@ export const progressiveScaleExpansion = async (
   }
   const dx = [-1, 1, 0, 0];
   const dy = [0, 0, -1, 1];
-  for (let kernelIdx = 1; kernelIdx < numOfKernels; ++kernelIdx) {
+  for (let kernelIdx = numOfKernels - 2; kernelIdx > -1; --kernelIdx) {
     while (!queues[currentQueueIdx].empty()) {
       const [xCoordinate, yCoordinate, label] = queues[currentQueueIdx].pop();
       let isEdge = true;

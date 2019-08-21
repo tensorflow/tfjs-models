@@ -26,9 +26,11 @@ export interface TextDetectionConfig {
 export type PointProcessor = (points: Point[]) => Point[];
 export interface TextDetectionOptions {
   minTextBoxArea?: number;
-  minConfidence?: number;
+  minPixelSalience?: number;
+  minTextConfidence?: number;
   resizeLength?: number;
   processPoints?: PointProcessor;
+  debug?: boolean;
 }
 
 export type TextDetectionInput =
