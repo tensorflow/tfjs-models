@@ -51,7 +51,7 @@ describeWithFlags('BodyPix', NODE_ENVS, () => {
           return {
             inputResolution,
             heatmapScores:
-                tf.zeros([outputResolution, outputResolution, numParts]),
+                tf.zeros([outputResolution, outputResolution, numKeypoints]),
             offsets: tf.zeros(
                 [outputResolution, outputResolution, 2 * numKeypoints]),
             displacementFwd: tf.zeros(
