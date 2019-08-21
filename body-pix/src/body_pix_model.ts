@@ -380,6 +380,7 @@ export class BodyPix {
         offsets,
       };
     });
+    imageTensor.dispose();
     resized.dispose();
     return {
       segmentation, heatmapScores, offsets, padding
@@ -428,6 +429,9 @@ export class BodyPix {
     const resultPose = scaleAndFlipPoses(
         [pose], [height, width], [this.inputResolution, this.inputResolution],
         padding, configWithDefault.flipHorizontal)[0];
+
+    heatmapScores.dispose();
+    offsets.dispose();
 
     return {height, width, data: result, pose: resultPose};
   }
@@ -600,6 +604,7 @@ export class BodyPix {
         offsets
       };
     });
+    imageTensor.dispose();
     resized.dispose();
     return {
       partSegmentation, heatmapScores, offsets, padding
@@ -654,6 +659,9 @@ export class BodyPix {
     const resultPose = scaleAndFlipPoses(
         [pose], [height, width], [this.inputResolution, this.inputResolution],
         padding, configWithDefault.flipHorizontal)[0];
+
+    heatmapScores.dispose();
+    offsets.dispose();
 
     return {height, width, data, pose: resultPose};
   }
