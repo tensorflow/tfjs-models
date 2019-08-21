@@ -88,18 +88,12 @@ mobilenet.load(
 
 Args:
 - **version:** The MobileNet version number. Use 1 for [MobileNetV1](https://github.com/tensorflow/models/blob/master/research/slim/nets/mobilenet_v1.md), and 2 for [MobileNetV2](https://github.com/tensorflow/models/tree/master/research/slim/nets/mobilenet). Defaults to 1.
-- **alpha:** Controls the width of the network, trading accuracy for performance. A smaller alpha decreases accuracy and increases performance. Defaults to 1.0.
+- **alpha:** Controls the width of the network, trading accuracy for performance. A smaller alpha decreases accuracy and increases performance. Defaults to 1.0 and 0.25 is only for V1.
 - **modelUrl:** Optional param for specifying the custom model url or `tf.io.IOHandler` object.
 Returns a `model` object.
 
 `mobilenet` is the module name, which is automatically included when you use
 the <script src> method. When using ES6 imports, mobilenet is the module.
-
-Args:
-- **version:** The MobileNet version number. Use 1 for [MobileNetV1](https://github.com/tensorflow/models/blob/master/research/slim/nets/mobilenet_v1.md), and 2 for [MobileNetV2](https://github.com/tensorflow/models/tree/master/research/slim/nets/mobilenet). Defaults to 1.
-- **alpha:** Controls the width of the network, trading accuracy for performance. A smaller alpha decreases accuracy and increases performance. Defaults to 1.0.
-- **modelUrl:** Optional param for specifying the custom model url or `tf.io.IOHandler` object.
-Returns a `model` object.
 
 #### Making a classification
 
