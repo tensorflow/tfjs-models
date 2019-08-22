@@ -51,3 +51,11 @@ export declare type Pose = {
   keypoints: Keypoint[],
   score: number,
 };
+
+
+export declare type Color = {
+  r: number,
+  g: number,
+  b: number,
+  a: number,
+};

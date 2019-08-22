@@ -16,7 +16,7 @@
  */
 
 import {cpuBlur} from './blur';
-import {PartSegmentation, PersonSegmentation} from './types';
+import {Color, PartSegmentation, PersonSegmentation} from './types';
 
 const offScreenCanvases: {[name: string]: HTMLCanvasElement} = {};
 
@@ -123,54 +123,87 @@ function renderImageDataToOffScreenCanvas(
 }
 
 /**
- * Given the output from estimating person segmentation, generates a black image
- * with opacity and transparency at each pixel determined by the corresponding
- * binary segmentation value at the pixel from the output.  In other words,
- * pixels where there is a person will be transparent and where there is not a
- * person will be opaque, and visa-versa when 'maskBackground' is set to
- * false. This can be used as a mask to crop a person or the background when
- * compositing.
+ * Given the output from estimating single-person segmentation, generates an
+ * image with foreground and background color at each pixel determined by the
+ * corresponding binary segmentation value at the pixel from the output.  In
+ * other words, pixels where there is a person will be colored with foreground
+ * color and where there is not a person will be colored with background color.
  *
  * @param segmentation The output from estimagePersonSegmentation; an object
  * containing a width, height, and a binary array with 1 for the pixels that are
  * part of the person, and 0 otherwise.
  *
- * @param maskBackground If the mask should be opaque where the background is.
- * Defaults to true. When set to true, pixels where there is a person are
- * transparent and where there is no person become opaque.
+ * @param foreground The foreground color (r,g,b,a) for visualizing pixels that
+ * belong to people.
+ *
+ * @param background The background color (r,g,b,a) for visualizing pixels that
+ * don't belong to people.
+ *
+ * @param drawContour Whether to draw the contour around each person's
+ * segmentation mask.
  *
  * @returns An ImageData with the same width and height of the
- * personSegmentation, with opacity and transparency at each pixel determined by
+ * segmentation, with opacity and transparency at each pixel determined by
  * the corresponding binary segmentation value at the pixel from the output.
  */
-export function toMaskImageData(segmentation: PersonSegmentation): ImageData {
-  return toMultiPersonMaskImageData([segmentation]);
+export function toMaskImageData(
+    segmentation: PersonSegmentation, foreground: Color = {
+      r: 0,
+      g: 0,
+      b: 0,
+      a: 0
+    },
+    background: Color = {
+      r: 0,
+      g: 0,
+      b: 0,
+      a: 255
+    },
+    drawContour = false): ImageData {
+  return toMultiPersonMaskImageData(
+      [segmentation], foreground, background, drawContour);
 }
 
 /**
- * Given the output from estimating person segmentation, generates a black image
- * with opacity and transparency at each pixel determined by the corresponding
- * binary segmentation value at the pixel from the output.  In other words,
- * pixels where there is a person will be transparent and where there is not a
- * person will be opaque, and visa-versa when 'maskBackground' is set to
- * false. This can be used as a mask to crop a person or the background when
- * compositing.
+ * Given the output from estimating multi-person segmentation, generates an
+ * image with foreground and background color at each pixel determined by the
+ * corresponding binary segmentation value at the pixel from the output.  In
+ * other words, pixels where there is a person will be colored with foreground
+ * color and where there is not a person will be colored with background color.
  *
- * @param segmentation The output from estimagePersonSegmentation; an object
- * containing a width, height, and a binary array with 1 for the pixels that are
- * part of the person, and 0 otherwise.
+ * @param allPersonSegmentation The output from estimateMultiPersonSegmentation;
+ * An array of PersonSegmentation object, each containing a width, height, and a
+ * binary array with 1 for the pixels that are part of the person, and 0
+ * otherwise.
  *
- * @param maskBackground If the mask should be opaque where the background is.
- * Defaults to true. When set to true, pixels where there is a person are
- * transparent and where there is no person become opaque.
+ * @param foreground The foreground color (r,g,b,a) for visualizing pixels that
+ * belong to people.
  *
- * @returns An ImageData with the same width and height of the
- * personSegmentation, with opacity and transparency at each pixel determined by
- * the corresponding binary segmentation value at the pixel from the output.
+ * @param background The background color (r,g,b,a) for visualizing pixels that
+ * don't belong to people.
+ *
+ * @param drawContour Whether to draw the contour around each person's
+ * segmentation mask.
+ *
+ * @returns An ImageData with the same width and height of
+ * all the PersonSegmentation in allPersonSegmentation, with opacity and
+ * transparency at each pixel determined by the corresponding binary
+ * segmentation value at the pixel from the output.
  */
 export function toMultiPersonMaskImageData(
-    allPersonSegmentation: PersonSegmentation[],
-    maskBackground = true): ImageData|null {
+    allPersonSegmentation: PersonSegmentation[], foreground: Color = {
+      r: 0,
+      g: 0,
+      b: 0,
+      a: 0
+    },
+    background: Color = {
+      r: 0,
+      g: 0,
+      b: 0,
+      a: 255
+    },
+    drawContour = false): ImageData|null {
   if (allPersonSegmentation.length === 0) {
     return null;
   }
@@ -181,39 +214,42 @@ export function toMultiPersonMaskImageData(
   for (let i = 0; i < height; i += 1) {
     for (let j = 0; j < width; j += 1) {
       const n = i * width + j;
-      bytes[4 * n + 0] = 0;
-      bytes[4 * n + 1] = 0;
-      bytes[4 * n + 2] = 0;
-      bytes[4 * n + 3] = 255;
+      bytes[4 * n + 0] = background.r;
+      bytes[4 * n + 1] = background.g;
+      bytes[4 * n + 2] = background.b;
+      bytes[4 * n + 3] = background.a;
       for (let k = 0; k < allPersonSegmentation.length; k++) {
         if (allPersonSegmentation[k].data[n] === 1) {
-          bytes[4 * n] = 155;
-          bytes[4 * n + 1] = 55;
-          bytes[4 * n + 2] = 20;
-          bytes[4 * n + 3] = 150;
+          bytes[4 * n] = foreground.r;
+          bytes[4 * n + 1] = foreground.g;
+          bytes[4 * n + 2] = foreground.b;
+          bytes[4 * n + 3] = foreground.a;
 
-          // checks boundary
-          if (i - 1 >= 0 && i + 1 < height && j - 1 >= 0 && j + 1 < width) {
-            const n11 = (i - 1) * width + j - 1;
-            const n12 = (i - 1) * width + j;
-            const n13 = (i - 1) * width + j + 1;
-            const n21 = i * width + j - 1;
-            const n23 = i * width + j + 1;
-            const n31 = (i + 1) * width + j - 1;
-            const n32 = (i + 1) * width + j;
-            const n33 = (i + 1) * width + j + 1;
-            if (allPersonSegmentation[k].data[n11] !== 1 ||
-                allPersonSegmentation[k].data[n12] !== 1 ||
-                allPersonSegmentation[k].data[n13] !== 1 ||
-                allPersonSegmentation[k].data[n21] !== 1 ||
-                allPersonSegmentation[k].data[n23] !== 1 ||
-                allPersonSegmentation[k].data[n31] !== 1 ||
-                allPersonSegmentation[k].data[n32] !== 1 ||
-                allPersonSegmentation[k].data[n33] !== 1) {
-              for (let nn of [n, n11, n12, n13, n21, n23, n31, n31, n32, n33]) {
-                bytes[4 * nn + 0] = 0;
-                bytes[4 * nn + 1] = 255;
-                bytes[4 * nn + 2] = 255;
+          if (drawContour) {
+            // checks boundary
+            if (i - 1 >= 0 && i + 1 < height && j - 1 >= 0 && j + 1 < width) {
+              const n11 = (i - 1) * width + j - 1;
+              const n12 = (i - 1) * width + j;
+              const n13 = (i - 1) * width + j + 1;
+              const n21 = i * width + j - 1;
+              const n23 = i * width + j + 1;
+              const n31 = (i + 1) * width + j - 1;
+              const n32 = (i + 1) * width + j;
+              const n33 = (i + 1) * width + j + 1;
+              if (allPersonSegmentation[k].data[n11] !== 1 ||
+                  allPersonSegmentation[k].data[n12] !== 1 ||
+                  allPersonSegmentation[k].data[n13] !== 1 ||
+                  allPersonSegmentation[k].data[n21] !== 1 ||
+                  allPersonSegmentation[k].data[n23] !== 1 ||
+                  allPersonSegmentation[k].data[n31] !== 1 ||
+                  allPersonSegmentation[k].data[n32] !== 1 ||
+                  allPersonSegmentation[k].data[n33] !== 1) {
+                for (let nn
+                         of [n, n11, n12, n13, n21, n23, n31, n31, n32, n33]) {
+                  bytes[4 * nn + 0] = 0;
+                  bytes[4 * nn + 1] = 255;
+                  bytes[4 * nn + 2] = 255;
+                }
               }
             }
           }
@@ -226,9 +262,9 @@ export function toMultiPersonMaskImageData(
 }
 
 /**
- * Given the output from estimating part segmentation, and an array of colors
- * indexed by part id, generates an image with the corresponding color for each
- * part at each pixel, and white pixels where there is no part.
+ * Given the output from estimating single-person part segmentation, and an
+ * array of colors indexed by part id, generates an image with the corresponding
+ * color for each part at each pixel, and white pixels where there is no part.
  *
  * @param partSegmentation   The output from estimatePartSegmentation; an object
  * containing a width, height, and an array with a part id from 0-24 for the
@@ -248,20 +284,21 @@ export function toColoredPartImageData(
 }
 
 /**
- * Given the output from estimating part segmentation, and an array of colors
- * indexed by part id, generates an image with the corresponding color for each
- * part at each pixel, and white pixels where there is no part.
+ * Given the output from estimating multi-person part segmentation, and an array
+ * of colors indexed by part id, generates an image with the corresponding color
+ * for each part at each pixel, and white pixels where there is no part.
  *
- * @param partSegmentation   The output from estimatePartSegmentation; an object
+ * @param allPartSegmentation The output from
+ * estimateMultiPersonPartSegmentation; an array of PartSegmentation object
  * containing a width, height, and an array with a part id from 0-24 for the
  * pixels that are part of a corresponding body part, and -1 otherwise.
  *
  * @param partColors A multi-dimensional array of rgb colors indexed by
  * part id.  Must have 24 colors, one for every part.
  *
- * @returns An ImageData with the same width and height of the partSegmentation,
- * with the corresponding color for each part at each pixel, and black pixels
- * where there is no part.
+ * @returns An ImageData with the same width and height of all the element in
+ * allPartSegmentation, with the corresponding color for each part at each
+ * pixel, and black pixels where there is no part.
  */
 export function toMultiPersonColoredPartImageData(
     allPersonSegmentation: PartSegmentation[],

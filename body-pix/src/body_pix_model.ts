@@ -133,10 +133,11 @@ const RESNET_CONFIG = {
 /**
  * BodyPix inference is configurable using the following config dictionary.
  *
- * `flipHorizontal`: If the poses should be flipped/mirrored horizontally.
- * This should be set to true for videos where the video is by default flipped
- * horizontally (i.e. a webcam), and you want the person & body part
- * segmentation to be returned in the proper orientation.
+ * `flipHorizontal`: If the left-right keypoint of poses/part segmentation
+ * should be flipped/mirrored horizontally. This should be set to true for
+ * videos where the video is by default flipped horizontally (i.e. a webcam),
+ * and you want the person & body part segmentation to be returned in the proper
+ * orientation.
  *
  *  `segmentationThreshold`: The minimum that segmentation values must
  * have to be considered part of the person. Affects the generation of the
@@ -181,7 +182,8 @@ export interface MultiPersonInferenceConfig extends InferenceConfig {
   maxDetections?: number;
   scoreThreshold?: number;
   nmsRadius?: number;
-  minKeypointScore?: number, refineSteps?: number;
+  minKeypointScore?: number;
+  refineSteps?: number;
 }
 
 export const SINGLE_PERSON_INFERENCE_CONFIG: SinglePersonInferenceConfig = {
@@ -329,12 +331,9 @@ export class BodyPix {
   }
 
   /**
-   * Given an image with a person, returns a binary array with 1 for the pixels
-   * that are part of the person, and 0 otherwise. This does
-   * standard ImageNet pre-processing before inferring through the model. Will
-   * resize and crop the image to 353 x 257 while maintaining the original
-   * aspect ratio before feeding through the network. The image pixels
-   * should have values [0-255].
+   * Given an image with a person, returns a dictioanry of all intermediate
+   * tensors including: 1) a binary array with 1 for the pixels that are part of
+   * the person, and 0 otherwise, 2) heatmapScores, 3) offsets, and 4) paddings.
    *
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
@@ -343,9 +342,17 @@ export class BodyPix {
    * to be considered part of the person. Affects the generation of the
    * segmentation mask.
    *
-   * @return A 2d Tensor with 1 for the pixels that are part of the person,
-   * and 0 otherwise. The width and height correspond to the same dimensions
-   * of the input image.
+   * @return A dictionary containing `segmentation`, `heatmapScores`, `offsets`,
+   * and `padding`:
+   * - `segmentation`: A 2d Tensor with 1 for the pixels that are part of the
+   * person, and 0 otherwise. The width and height correspond to the same
+   * dimensions of the input image.
+   * - `heatmapScores`: A 3d Tensor of the keypoint heatmaps used by
+   * single-person pose estimation decoding.
+   * - `offsets`: A 3d Tensor of the keypoint offsets used by single-person pose
+   * estimation decoding.
+   * - `padding`: The padding (unit pixels) being applied to the input image
+   * before it is fed into the model.
    */
   estimateSinglePersonSegmentationActivation(
       input: BodyPixInput, segmentationThreshold = 0.5): {
@@ -387,22 +394,24 @@ export class BodyPix {
   }
 
   /**
-   * Given an image with a person, returns a binary array with 1 for the pixels
-   * that are part of the person, and 0 otherwise. This does
-   * standard ImageNet pre-processing before inferring through the model. Will
-   * resize and crop the image to 353 x 257 while maintaining the original
-   * aspect ratio before feeding through the network. The image pixels
-   * should have values [0-255].
+   * Given an image with a person, returns a PersonSegmentation dictionary that
+   * contains the segmentation mask and the pose for the person.
    *
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
    *
-   * @param config SinglePersonEstimationConfig object that contains
+   * @param config SinglePersonInferenceConfig object that contains
    * parameters for the BodyPix inference using single person decoding.
    *
-   * @return A 2d Tensor with 1 for the pixels that are part of the person,
-   * and 0 otherwise. The width and height correspond to the same dimensions
-   * of the input image.
+   * @return A PersonSegmentation dictionary that contains height, width, the
+   * flattened binary segmentation mask and the pose for the person. The width
+   * and height correspond to the same dimensions of the input image.
+   * - `height`: The height of the segmentation data in pixel unit.
+   * - `width`: The width of the segmentation data in pixel unit.
+   * - `data`: The flattened Uint8Array of segmentation data. 1 means the pixel
+   * belongs to a person and 0 means the pixel doesn't belong to a person. The
+   * size of the array is equal to `height` x `width` in row-major order.
+   * - `pose`: The 2d pose of the person.
    */
   async estimateSinglePersonSegmentation(
       input: BodyPixInput,
@@ -436,26 +445,23 @@ export class BodyPix {
   }
 
   /**
-   * Given an image with a person, returns a binary array with 1 for the
-   * pixels that are part of the person, and 0 otherwise. This does standard
-   * ImageNet pre-processing before inferring through the model. Will resize
-   * and crop the image to 353 x 257 while maintaining the original aspect
-   * ratio before feeding through the network. The image pixels should have
-   * values [0-255].
+   * Given an image with multiple people, returns an array of PersonSegmentation
+   * object. This does standard ImageNet pre-processing before inferring through
+   * the model.  The image pixels should have values [0-255].
    *
    * @param input
    * ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement) The input
    * image to feed through the network.
    *
-   * @param config MultiPersonEstimationConfig object that contains
+   * @param config MultiPersonInferenceConfig object that contains
    * parameters for the BodyPix inference using multi-person decoding.
    *
    * @return An array of PersonSegmentation object, each containing a width,
-   * height, and a binary array with 1 for the pixels that are part of the
-   * person, and 0 otherwise. The array size corresponds to the number of pixels
-   * in the image. The width and height correspond to the dimensions of the
-   * image the binary array is shaped to, which are the same dimensions of the
-   * input image.
+   * height, a binary array (1 for the pixels that are part of the
+   * person, and 0 otherwise) and 2D pose. The array size corresponds to the
+   * number of pixels in the image. The width and height correspond to the
+   * dimensions of the image the binary array is shaped to, which are the same
+   * dimensions of the input image.
    */
   async estimateMultiplePersonSegmentation(
       input: BodyPixInput,
@@ -548,12 +554,11 @@ export class BodyPix {
   }
 
   /**
-   * Given an image with a person, returns an array with a part id from 0-24 for
-   * the pixels that are part of a corresponding body part, and -1 otherwise.
-   * This does standard ImageNet pre-processing before inferring through the
-   * model. Will resize and crop the image to 353 x 257 while maintaining the
-   * original aspect ratio before feeding through the network. The image should
-   * pixels should have values [0-255].
+   * Given an image with a person, returns a dictionary containing: height,
+   * width, a tensor with a part id from 0-24 for the pixels that are
+   * part of a corresponding body part, and -1 otherwise. This does standard
+   * ImageNet pre-processing before inferring through the model.  The image
+   * should pixels should have values [0-255].
    *
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
@@ -562,9 +567,16 @@ export class BodyPix {
    * to be considered part of the person.  Affects the clipping of the colored
    * part image.
    *
-   * @return A 2d Tensor with part ids from 0-24 for the pixels that are part of
-   * a corresponding body part, and -1 otherwise. The width and height
-   * correspond to the same dimensions of the input image.
+   * @return  A dictionary containing `partSegmentation`, `heatmapScores`,
+   * `offsets`, and `padding`:
+   * - `partSegmentation`: A 2d Tensor with a part id from 0-24 for
+   * the pixels that are part of a corresponding body part, and -1 otherwise.
+   * - `heatmapScores`: A 3d Tensor of the keypoint heatmaps used by
+   * single-person pose estimation decoding.
+   * - `offsets`: A 3d Tensor of the keypoint offsets used by single-person pose
+   * estimation decoding.
+   * - `padding`: The padding (unit pixels) being applied to the input image
+   * before it is fed into the model.
    */
   estimateSinglePersonPartSegmentationActivation(
       input: BodyPixInput, segmentationThreshold = 0.5): {
@@ -610,29 +622,25 @@ export class BodyPix {
   }
 
   /**
-   * Given an image with a person, returns an array with a part id from 0-24 for
-   * the pixels that are part of a corresponding body part, and -1 otherwise.
-   * This does standard ImageNet pre-processing before inferring through the
-   * model. Will resize and crop the image to 353 x 257 while maintaining the
-   * original aspect ratio before feeding through the network. The image should
-   * pixels should have values [0-255].
+   * Given an image with a person, returns a PartSegmentation dictionary that
+   * contains the person part segmentation mask and the pose for the person.
    *
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
    *
-   * @param outputStride the desired stride for the outputs.  Must be 32, 16,
-   * or 8. Defaults to 16. The output width and height will be will be
-   * (inputDimension - 1)/outputStride + 1
+   * @param config SinglePersonInferenceConfig object that contains
+   * parameters for the BodyPix inference using single person decoding.
    *
-   * @param segmentationThreshold The minimum that segmentation values must have
-   * to be considered part of the person.  Affects the clipping of the colored
-   * part image.
-   *
-   * @return An object containing a width, height, and an array with a part id
-   * from 0-24 for the pixels that are part of a corresponding body part, and -1
-   * otherwise. The array size corresponds to the number of pixels in the image.
-   * The width and height correspond to the dimensions of the image the array is
-   * shaped to, which are the same dimensions of the input image.
+   * @return A PersonSegmentation dictionary that contains height, width, the
+   * flattened binary segmentation mask and the pose for the person. The width
+   * and height correspond to the same dimensions of the input image.
+   * - `height`: The height of the person part segmentation data in pixel unit.
+   * - `width`: The width of the person part segmentation data in pixel unit.
+   * - `data`: The flattened Int32Array of person part segmentation data with a
+   * part id from 0-24 for the pixels that are part of a corresponding body
+   * part, and -1 otherwise. The size of the array is equal to `height` x
+   * `width` in row-major order.
+   * - `pose`: The 2d pose of the person.
    */
   async estimateSinglePersonPartSegmentation(
       input: BodyPixInput,
@@ -665,27 +673,22 @@ export class BodyPix {
   }
 
   /**
-   * Given an image with a person, returns a binary array with 1 for the
-   * pixels that are part of the person, and 0 otherwise. This does standard
-   * ImageNet pre-processing before inferring through the model. Will resize
-   * and crop the image to 353 x 257 while maintaining the original aspect
-   * ratio before feeding through the network. The image pixels should have
-   * values [0-255].
+   * Given an image with multiple people, returns an array of PartSegmentation
+   * object. This does standard ImageNet pre-processing before inferring through
+   * the model. The image pixels should have values [0-255].
    *
    * @param input
    * ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement) The input
    * image to feed through the network.
    *
-   * @param outputStride the desired stride for the outputs.  Must be 32, 16,
-   * or 8. Defaults to 16. The output width and height will be will be
-   * (inputDimension - 1)/outputStride + 1
+   * @param config MultiPersonInferenceConfig object that contains
+   * parameters for the BodyPix inference using multi-person decoding.
    *
-   * @return An array of PersonSegmentation object, each containing a width,
-   * height, and a binary array with 1 for the pixels that are part of the
-   * person, and 0 otherwise. The array size corresponds to the number of pixels
-   * in the image. The width and height correspond to the dimensions of the
-   * image the binary array is shaped to, which are the same dimensions of the
-   * input image.
+   * @return An array of PartSegmentation object, each containing a width,
+   * height, a flattened array (with part id from 0-24 for the pixels that are
+   * part of a corresponding body part, and -1 otherwise) and 2D pose. The width
+   * and height correspond to the dimensions of the image. Each flattened part
+   * segmentation array size is equal to `height` x `width`.
    */
   async estimateMultiplePersonPartSegmentation(
       input: BodyPixInput,
@@ -783,6 +786,9 @@ export class BodyPix {
   }
 }
 
+/**
+ * Loads the MobileNet BodyPix model.
+ */
 async function loadMobileNet(config: ModelConfig): Promise<BodyPix> {
   const outputStride = config.outputStride;
   const quantBytes = config.quantBytes;
