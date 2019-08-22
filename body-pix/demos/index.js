@@ -186,8 +186,8 @@ const guiState = {
     maxDetections: 5,
     scoreThreshold: 0.2,
     nmsRadius: 20,
-    numKeypointForMatching: 5,
-    refineSteps: 1
+    numKeypointForMatching: 17,
+    refineSteps: 10
   },
   segmentation: {
     segmentationThreshold: 0.7,
@@ -501,7 +501,7 @@ function segmentBodyInRealTime() {
         switch (guiState.segmentation.effect) {
           case 'mask':
             const ctx = canvas.getContext('2d');
-            const mask = bodyPix.toMaskImageData(
+            const mask = bodyPix.toMultiPersonMaskImageData(
                 allPersonSegmentation, guiState.segmentation.maskBackground);
 
             bodyPix.drawMask(
@@ -518,7 +518,7 @@ function segmentBodyInRealTime() {
             });
             break;
           case 'bokeh':
-            bodyPix.drawBokehEffect(
+            bodyPix.drawMultiPersonBokehEffect(
                 canvas, state.video, allPersonSegmentation,
                 +guiState.segmentation.backgroundBlurAmount,
                 guiState.segmentation.edgeBlurAmount, flipHorizontally);
@@ -529,7 +529,7 @@ function segmentBodyInRealTime() {
       case 'partmap':
         const ctx = canvas.getContext('2d');
         const allPersonPartSegmentation = await estimatePartSegmentation();
-        const coloredPartImageData = bodyPix.toColoredPartImageData(
+        const coloredPartImageData = bodyPix.toMultiPersonColoredPartImageData(
             allPersonPartSegmentation,
             partColorScales[guiState.partMap.colorScale]);
 

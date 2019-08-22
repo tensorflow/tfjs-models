@@ -122,7 +122,30 @@ function renderImageDataToOffScreenCanvas(
   return canvas;
 }
 
-const STEP = 1;
+/**
+ * Given the output from estimating person segmentation, generates a black image
+ * with opacity and transparency at each pixel determined by the corresponding
+ * binary segmentation value at the pixel from the output.  In other words,
+ * pixels where there is a person will be transparent and where there is not a
+ * person will be opaque, and visa-versa when 'maskBackground' is set to
+ * false. This can be used as a mask to crop a person or the background when
+ * compositing.
+ *
+ * @param segmentation The output from estimagePersonSegmentation; an object
+ * containing a width, height, and a binary array with 1 for the pixels that are
+ * part of the person, and 0 otherwise.
+ *
+ * @param maskBackground If the mask should be opaque where the background is.
+ * Defaults to true. When set to true, pixels where there is a person are
+ * transparent and where there is no person become opaque.
+ *
+ * @returns An ImageData with the same width and height of the
+ * personSegmentation, with opacity and transparency at each pixel determined by
+ * the corresponding binary segmentation value at the pixel from the output.
+ */
+export function toMaskImageData(segmentation: PersonSegmentation): ImageData {
+  return toMultiPersonMaskImageData([segmentation]);
+}
 
 /**
  * Given the output from estimating person segmentation, generates a black image
@@ -145,7 +168,7 @@ const STEP = 1;
  * personSegmentation, with opacity and transparency at each pixel determined by
  * the corresponding binary segmentation value at the pixel from the output.
  */
-export function toMaskImageData(
+export function toMultiPersonMaskImageData(
     allPersonSegmentation: PersonSegmentation[],
     maskBackground = true): ImageData|null {
   if (allPersonSegmentation.length === 0) {
@@ -155,8 +178,8 @@ export function toMaskImageData(
   const {width, height} = allPersonSegmentation[0];
   const bytes = new Uint8ClampedArray(width * height * 4);
 
-  for (let i = 0; i < height; i += STEP) {
-    for (let j = 0; j < width; j += STEP) {
+  for (let i = 0; i < height; i += 1) {
+    for (let j = 0; j < width; j += 1) {
       const n = i * width + j;
       bytes[4 * n + 0] = 0;
       bytes[4 * n + 1] = 0;
@@ -219,6 +242,28 @@ export function toMaskImageData(
  * where there is no part.
  */
 export function toColoredPartImageData(
+    partSegmentation: PartSegmentation,
+    partColors: Array<[number, number, number]>): ImageData {
+  return toMultiPersonColoredPartImageData([partSegmentation], partColors);
+}
+
+/**
+ * Given the output from estimating part segmentation, and an array of colors
+ * indexed by part id, generates an image with the corresponding color for each
+ * part at each pixel, and white pixels where there is no part.
+ *
+ * @param partSegmentation   The output from estimatePartSegmentation; an object
+ * containing a width, height, and an array with a part id from 0-24 for the
+ * pixels that are part of a corresponding body part, and -1 otherwise.
+ *
+ * @param partColors A multi-dimensional array of rgb colors indexed by
+ * part id.  Must have 24 colors, one for every part.
+ *
+ * @returns An ImageData with the same width and height of the partSegmentation,
+ * with the corresponding color for each part at each pixel, and black pixels
+ * where there is no part.
+ */
+export function toMultiPersonColoredPartImageData(
     allPersonSegmentation: PartSegmentation[],
     partColors: Array<[number, number, number]>): ImageData {
   const {width, height} = allPersonSegmentation[0];
@@ -383,9 +428,8 @@ export function drawPixelatedMask(
 function createPersonMask(
     allPersonSegmentations: PersonSegmentation[],
     edgeBlurAmount: number): HTMLCanvasElement {
-  const maskBackground = false;
   const backgroundMaskImage =
-      toMaskImageData(allPersonSegmentations, maskBackground);
+      toMultiPersonMaskImageData(allPersonSegmentations);
 
   const backgroundMask =
       renderImageDataToOffScreenCanvas(backgroundMaskImage, CANVAS_NAMES.mask);
@@ -419,6 +463,59 @@ function createPersonMask(
  * to false.
  */
 export function drawBokehEffect(
+    canvas: HTMLCanvasElement, image: ImageType,
+    personSegmentation: PersonSegmentation, backgroundBlurAmount = 3,
+    edgeBlurAmount = 3, flipHorizontal = false) {
+  // assertSameDimensions(image, personSegmentation, 'image', 'segmentation');
+
+  const blurredImage = drawAndBlurImageOnOffScreenCanvas(
+      image, backgroundBlurAmount, CANVAS_NAMES.blurred);
+
+  const personMask = createPersonMask([personSegmentation], edgeBlurAmount);
+
+  const ctx = canvas.getContext('2d');
+  ctx.save();
+  if (flipHorizontal) {
+    flipCanvasHorizontal(canvas);
+  }
+  // draw the original image on the final canvas
+  ctx.drawImage(image, 0, 0);
+  // "destination-in" - "The existing canvas content is kept where both the
+  // new shape and existing canvas content overlap. Everything else is made
+  // transparent."
+  // crop what's not the person using the mask from the original image
+  drawWithCompositing(ctx, personMask, 'destination-in');
+  // "destination-over" - "The existing canvas content is kept where both the
+  // new shape and existing canvas content overlap. Everything else is made
+  // transparent."
+  // draw the blurred background on top of the original image where it doesn't
+  // overlap.
+  drawWithCompositing(ctx, blurredImage, 'destination-over');
+  ctx.restore();
+}
+
+/**
+ * Given a personSegmentation and an image, draws the image with its background
+ * blurred onto the canvas.
+ *
+ * @param canvas The canvas to draw the background-blurred image onto.
+ *
+ * @param image The image to blur the background of and draw.
+ *
+ * @param personSegmentation A personSegmentation object, containing a binary
+ * array with 1 for the pixels that are part of the person, and 0 otherwise.
+ * Must have the same dimensions as the image.
+ *
+ * @param backgroundBlurAmount How many pixels in the background blend into each
+ * other.  Defaults to 3. Should be an integer between 1 and 20.
+ *
+ * @param edgeBlurAmount How many pixels to blur on the edge between the person
+ * and the background by.  Defaults to 3. Should be an integer between 0 and 20.
+ *
+ * @param flipHorizontal If the output should be flipped horizontally.  Defaults
+ * to false.
+ */
+export function drawMultiPersonBokehEffect(
     canvas: HTMLCanvasElement, image: ImageType,
     allPersonSegmentation: PersonSegmentation[], backgroundBlurAmount = 3,
     edgeBlurAmount = 3, flipHorizontal = false) {
