@@ -147,7 +147,7 @@ CONVERTED_MODELS_DIR=$(realpath "$TARGET_DIR/text-detection")
 ASSETS_DIR=$(realpath "$TARGET_DIR/assets")
 # TODO(tfjs): Replace this URL after you host the model
 # WEIGHTS_URL="https://storage.googleapis.com/gsoc-tfjs/weights/psenet/weights.tar.gz"
-MODEL_VERSION="psenet-rc185-v0"
+MODEL_VERSION="psenet-rc185-v1"
 WEIGHTS_URL="https://storage.googleapis.com/gsoc-tfjs/weights/psenet/custom/$MODEL_VERSION.zip"
 VIRTUALENV_DIR="venv"
 PARENT_DIR="$(pwd)"
@@ -170,14 +170,15 @@ fi
 
 notify "=" "Converting the model to tfjs..."
 
-if ! [ -d $ASSETS_DIR/saved_model ]; then
+SAVED_MODEL_DIR=$ASSETS_DIR/saved_model_$MODEL_VERSION
+if ! [ -d $SAVED_MODEL_DIR ]; then
   notify "~" "Downloading the model  weights..."
   cd $ASSETS_DIR
-  if ! [ -f $ASSETS_DIR/weights.zip ]; then
-    wget -O weights.zip $WEIGHTS_URL
+  if ! [ -f $ASSETS_DIR/weights_$MODEL_VERSION.zip ]; then
+    wget -O weights_$MODEL_VERSION.zip $WEIGHTS_URL
   fi
-  unzip weights.zip
-  mv $MODEL_VERSION $ASSETS_DIR/saved_model
+  unzip weights_$MODEL_VERSION.zip
+  mv $MODEL_VERSION $SAVED_MODEL_DIR
 fi
 
 notify "~" "Converting $MODEL_VERSION..."
@@ -186,7 +187,7 @@ tensorflowjs_converter \
   --output_format=tfjs_graph_model \
   --signature_name=serving_default \
   --saved_model_tags=serve \
-  $ASSETS_DIR/saved_model \
+  $SAVED_MODEL_DIR \
   $CONVERTED_MODELS_DIR/$MODEL_VERSION
 
 notify "~" "Converting $MODEL_VERSION and quantizing to 1 byte..."
@@ -196,7 +197,7 @@ tensorflowjs_converter \
   --output_format=tfjs_graph_model \
   --signature_name=serving_default \
   --saved_model_tags=serve \
-  $ASSETS_DIR/saved_model \
+  $SAVED_MODEL_DIR \
   $CONVERTED_MODELS_DIR/quantized/1/$MODEL_VERSION
 
 notify "~" "Converting $MODEL_VERSION and quantizing to 2 bytes..."
@@ -206,7 +207,7 @@ tensorflowjs_converter \
   --output_format=tfjs_graph_model \
   --signature_name=serving_default \
   --saved_model_tags=serve \
-  $ASSETS_DIR/saved_model \
+  $SAVED_MODEL_DIR \
   $CONVERTED_MODELS_DIR/quantized/2/$MODEL_VERSION
 
 notify "=" "Success!"

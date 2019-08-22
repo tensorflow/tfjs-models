@@ -95,16 +95,19 @@ export async function convertKernelsToBoxes(
   const {segmentationMapBuffer, recognizedLabels} =
       await progressiveScaleExpansion(kernels, minTextBoxArea);
   tf.dispose(kernels);
+
   if (debug) {
     console.log('The recognized labels are:', Array.from(recognizedLabels));
   }
 
   if (recognizedLabels.size === 0) {
+    tf.dispose(score);
     return [];
   }
 
   const scoreData = await score.array() as number[][];
   tf.dispose(score);
+
   const labelScores: {[label: number]: [number, number]} = {};
   for (let rowIdx = 0; rowIdx < kernelHeight; ++rowIdx) {
     for (let colIdx = 0; colIdx < kernelWidth; ++colIdx) {
@@ -159,17 +162,6 @@ export async function convertKernelsToBoxes(
         }
       }
     }
-  }
-  if (debug) {
-    console.log('The points are:');
-    Object.keys(points).forEach((label: string) => {
-      console.log(`\tLabel ${label}:`)
-      const labelledPoints = points[Number(label)];
-      for (const point of labelledPoints) {
-        const {x, y} = point;
-        console.log(`\t\t(${x}, ${y})`);
-      }
-    });
   }
 
   const boxes: Box[] = [];
