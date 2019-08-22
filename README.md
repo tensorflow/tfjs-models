@@ -26,7 +26,7 @@ and can be used as building blocks in other apps.
   </tr>
   <!-- Images -->
   <tr>
-    <td rowspan="10"><b>Images</b></td>
+    <td rowspan="12"><b>Images</b></td>
   <!-- ** MobileNet -->
     <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./mobilenet"><div style='vertical-align:middle; display:inline;'>MobileNet</div></a></b></td>
     <td><a href=""></a></td>
@@ -75,6 +75,7 @@ and can be used as building blocks in other apps.
   </tr>
   <tr>
     <td><a href="./deeplab/demo/index.html">source</a></td>
+    </tr>
   <!-- ** Text Detection -->
       <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./text-detection"><div style='vertical-align:middle; display:inline;'>Text Detection</div></a></b></td>
     <td><a href=""></a></td>
