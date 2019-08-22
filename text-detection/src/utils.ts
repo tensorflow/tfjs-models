@@ -29,7 +29,7 @@ export function getURL(quantizationBytes: QuantizationBytes) {
       ([1, 2].indexOf(quantizationBytes) !== -1) ?
           `quantized/${quantizationBytes}/` :
           ''}${config['MODEL_VERSION']}/model.json`;
-};
+}
 
 export async function convertKernelsToBoxes(
     kernelLogits: tf.Tensor3D,

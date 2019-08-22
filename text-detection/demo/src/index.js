@@ -27,22 +27,27 @@ import joyYoungRogersExample from './assets/examples/joy-young-rogers.jpg';
 import {findContours} from './findContours';
 
 const {convexHull, load, minAreaRect} = psenet;
+
 const state = {
   processPoints: 'min-area-rect',
 };
 
+// stores the loaded models
 const textDetection = {};
+
 const textDetectionExamples = {
   'joy-young-rogers': joyYoungRogersExample,
   'gun-for-hire': gunForHireExample,
   'blue-bird': blueBirdExample,
 };
+
 const pointProcessors = {
   'min-area-rect': minAreaRect,
   'convex-hull': convexHull,
   'identity': (x) => x,
   'contours': findContours,
 };
+
 const toggleInvisible = (elementId, force = undefined) => {
   const outputContainer = document.getElementById(elementId);
   outputContainer.classList.toggle('is-invisible', force);
@@ -78,8 +83,15 @@ const getMinPixelSalienceSlider = () =>
   document.getElementById('min-pixel-salience-slider');
 
 const initializeModel = async () => {
+  // set an example input image
   updateInput();
+  const inputSelector = document.getElementById('example');
+  inputSelector.onchange = updateInput;
+
+  // start the loader
   toggleInvisible('overlay', false);
+
+  // set up the sliders
   const resizeLengthSlider = getResizeLengthSlider();
   updateSlider(resizeLengthSlider, 'resize-length-value');
   resizeLengthSlider.oninput = () =>
@@ -95,8 +107,7 @@ const initializeModel = async () => {
   const minPixelSalienceSlider = getMinPixelSalienceSlider();
   minPixelSalienceSlider.oninput = () =>
     updateSlider(minPixelSalienceSlider, 'min-pixel-salience-value');
-  const inputSelector = document.getElementById('example');
-  inputSelector.onchange = updateInput;
+
   status('Loading the model...');
   const loadingStart = performance.now();
   const quantizationBytes = Number(getSelectorValue('quantizationBytes'));
@@ -113,6 +124,8 @@ const initializeModel = async () => {
   uploader.addEventListener('change', processImages);
   status(`Initialised the model in ${
     howManySecondsFrom(loadingStart)} seconds, waiting for input...`);
+
+  // stop the loader
   toggleInvisible('overlay', true);
 };
 
