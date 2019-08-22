@@ -1,5 +1,7 @@
 # BodyPix - Person Segmentation in the Browser
 
+## Note: We've just released Version 2.0 with a **new ResNet** model and API. Check out the new documentation below.
+
 This package contains a standalone model called BodyPix, as well as some demos, for running real-time person and body part segmentation in the browser using TensorFlow.js.
 
 [Try the demo here!](https://storage.googleapis.com/tfjs-models/demos/body-pix/index.html)
@@ -18,7 +20,7 @@ You can use this as standalone es5 bundle like this:
 
 ```html
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.0"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@1.0.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.0.0"></script>
 ```
 
 Or you can install it via npm for use in a TypeScript / ES6 project.
@@ -34,17 +36,57 @@ Each methodology has similar input parameters with different outputs.
 
 ### Loading a pre-trained BodyPix Model
 
-In the first step of segmentation, an image is fed through a pre-trained model.  BodyPix **comes with a few different versions of the model,** each corresponding to a MobileNet v1 architecture with a specific multiplier. To get started, a model must be loaded from a checkpoint, with the MobileNet architecture specified by the multiplier:
+In the first step of pose estimation, an image is fed through a pre-trained model. BodyPix **comes with a few different versions of the model,** corresponding to variances of MobileNet v1 architecture and ResNet50 architecture. To get started, a model must be loaded from a checkpoint:
 
 ```javascript
-const net = await bodyPix.load(multiplier);
+const net = await bodyPix.load();
 ```
 
-#### Inputs
+By default, `bodyPix.load()` loads a faster and smaller model that is based on MobileNetV1 architecture and has a lower accuracy. If you want to load the larger and more accurate model, specify the architecture explicitly in `bodyPix.load()` using a `ModelConfig` dictionary:
 
-* **multiplier** - An optional number with values: `1.0`, `0.75`, or `0.50`, `0.25`. Defaults to `0.75`.   It is the float multiplier for the depth (number of channels) for all convolution operations. The value corresponds to a MobileNet architecture and checkpoint.  The larger the value, the larger the size of the layers, and more accurate the model at the cost of speed.  Set this to a smaller value to increase speed at the cost of accuracy.
 
-**By default,** BodyPix loads a model with a **`0.75`** multiplier.  This is recommended for computers with **mid-range/lower-end GPUS.**  A model with a **`1.00`** muliplier is recommended for computers with **powerful GPUS.** A model with a **`0.50`** or **`0.25`** architecture is recommended for **mobile.**
+#### MobileNet (smaller, faster, less accurate)
+```javascript
+const net = await bodyPix.load({
+  architecture: 'MobileNetV1',
+  outputStride: 16,
+  inputResolution: 513,
+  multiplier: 0.75
+});
+```
+
+#### ResNet (larger, slower, more accurate) \*\*new!\*\*
+```javascript
+const net = await bodyPix.load({
+  architecture: 'ResNet50',
+  outputStride: 32,
+  inputResolution: 257,
+  quantBytes: 2
+});
+```
+
+#### Config params in bodyPix.load()
+
+ * **architecture** - Can be either `MobileNetV1` or `ResNet50`. It determines which BodyPix architecture to load.
+
+ * **outputStride** - Can be one of `8`, `16`, `32` (Stride `16`, `32` are supported for the ResNet architecture and stride `8`, `16`, `32` are supported for the MobileNetV1 architecture). It specifies the output stride of the BodyPix model. The smaller the value, the larger the output resolution, and more accurate the model at the cost of speed. Set this to a larger value to increase speed at the cost of accuracy.
+
+* **inputResolution** - Can be one of `161`, `193`, `257`, `289`, `321`, `353`, `385`, `417`, `449`, `481`, `513`, and `801`. Defaults to `257.` It specifies the size the image is resized to before it is fed into the BodyPix model. The larger the value, the more accurate the model at the cost of speed. Set this to a smaller value to increase speed at the cost of accuracy.
+
+ * **multiplier** - Can be one of `1.01`, `1.0`, `0.75`, or `0.50` (The value is used *only* by the MobileNetV1 architecture and not by the ResNet architecture). It is the float multiplier for the depth (number of channels) for all convolution ops. The larger the value, the larger the size of the layers, and more accurate the model at the cost of speed. Set this to a smaller value to increase speed at the cost of accuracy.
+
+ * **quantBytes** - This argument controls the bytes used for weight quantization. The available options are:
+
+   - `4`. 4 bytes per float (no quantization). Leads to highest accuracy and original model size (~90MB).
+
+   - `2`. 2 bytes per float. Leads to slightly lower accuracy and 2x model size reduction (~45MB).
+   - `1`. 1 byte per float. Leads to lower accuracy and 4x model size reduction (~22MB).
+
+* **modelUrl** - An optional string that specifies custom url of the model. This is useful for local development or countries that don't have access to the model hosted on GCP.
+
+
+**By default,** BodyPix loads a MobileNetV1 architecture with a **`0.75`** multiplier.  This is recommended for computers with **mid-range/lower-end GPUs.**  A model with a **`0.50`** multiplier is recommended for **mobile.** The ResNet achitecture is recommended for computers with **even more powerful GPUs**.
+
 
 ### Person segmentation
 
@@ -57,21 +99,25 @@ It returns a binary array with 1 for the pixels that are part of the person, and
 ```javascript
 const net = await bodyPix.load();
 
-const segmentation = await net.estimatePersonSegmentation(image, outputStride, segmentationThreshold);
+const segmentation = await net.estimateSinglePersonSegmentation(image, {
+  flipHorizontal: false,
+  segmentationThreshold: 0.7,
+});
 ```
 
-#### Inputs
+#### Params in estimateSinglePersonSegmentation()
 
 * **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
-  The input image to feed through the network.
-* **outputStride** - the desired stride for the outputs when feeding the image through the model.  Must be 32, 16, 8.  Defaults to 16.  The higher the number, the faster the performance but slower the accuracy, and visa versa.
-* **segmentationThreshold** - Must be between 0 and 1. For each pixel, the model estimates a score between 0 and 1 that indicates how confident it is that part of a person is displayed in that pixel.  This *segmentationThreshold* is used to convert these values
+   The input image to feed through the network.
+* **inferenceConfig** - an object containing:
+  * **flipHorizontal** - Defaults to false.  If the segmentation & pose should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the segmentation & pose to be returned in the proper orientation.
+  * **segmentationThreshold** - Must be between 0 and 1. For each pixel, the model estimates a score between 0 and 1 that indicates how confident it is that part of a person is displayed in that pixel.  This *segmentationThreshold* is used to convert these values
 to binary 0 or 1s by determining the minimum value a pixel's score must have to be considered part of a person.  In essence, a higher value will create a tighter crop
 around a person but may result in some pixels being that are part of a person being excluded from the returned segmentation mask.
 
 #### Returns
 
-An object containing a width, height, and a binary array with 1 for the pixels that are part of the person, and 0 otherwise. The array size corresponds to the number of pixels in the image.  The width and height correspond to the dimensions of the image the binary array is shaped to, which are the same dimensions of the input image.
+It returns a `Promise` that resolves with a  **single** `PersonSegmentation`. The `PersonSegmentation` object contains a width, height, a binary array, and a `Pose` object. The binary array contains: 1 for the pixels that are part of the person, and 0 otherwise. The array size corresponds to the number of pixels in the image.  The width and height correspond to the dimensions of the image the binary array is shaped to, which are the same dimensions of the input image.
 
 #### Example Usage
 
@@ -83,7 +129,7 @@ An object containing a width, height, and a binary array with 1 for the pixels t
     <!-- Load TensorFlow.js -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.0"></script>
     <!-- Load BodyPix -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@1.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.0.0"></script>
  </head>
 
   <body>
@@ -91,13 +137,14 @@ An object containing a width, height, and a binary array with 1 for the pixels t
   </body>
   <!-- Place your code in the script tag below. You can also use an external .js file -->
   <script>
-    var outputStride = 16;
-    var segmentationThreshold = 0.5;
+    var segmentationThreshold = 0.7;
 
     var imageElement = document.getElementById('image');
 
     bodyPix.load().then(function(net){
-      return net.estimatePersonSegmentation(imageElement, outputStride, segmentationThreshold)
+      return net.estimateSinglePersonSegmentation(imageElement, {
+        segmentationThreshold: segmentationThreshold
+      });
     }).then(function(segmentation){
       console.log(segmentation);
     })
@@ -110,15 +157,16 @@ An object containing a width, height, and a binary array with 1 for the pixels t
 ```javascript
 import * as bodyPix from '@tensorflow-models/body-pix';
 
-const outputStride = 16;
-const segmentationThreshold = 0.5;
+const segmentationThreshold = 0.7;
 
 const imageElement = document.getElementById('image');
 
 // load the BodyPix model from a checkpoint
 const net = await bodyPix.load();
 
-const segmentation = await net.estimatePersonSegmentation(imageElement, outputStride, segmentationThreshold);
+const segmentation = await net.estimateSinglePersonSegmentation(imageElement, {
+  segmentationThreshold: segmentationThreshold
+});
 
 console.log(segmentation);
 
@@ -140,12 +188,15 @@ which would produce the output:
 Body part segmentation segments an image into pixels that are part of one of twenty-four body parts of a person, and to those that are not part of a person.
 It returns an object containing an array with a part id from 0-24 for the pixels that are part of a corresponding body part, and -1 otherwise. The array size corresponds to the number of pixels in the image.
 
-![Colored Part Image](colored-parts.gif)
+![Colored Part Image](./images/colored-parts.gif)
 
 ```javascript
 const net = await bodyPix.load();
 
-const partSegmentation = await net.estimatePartSegmentation(image, outputStride, segmentationThreshold);
+const partSegmentation = await net.estimateSinglePersonPartSegmentation(image, {
+  flipHorizontally: false,
+  segmentationThreshold: 0.7,
+});
 ```
 
 #### The Body Parts
@@ -183,15 +234,16 @@ As stated above, the result contains an array with ids for one of 24 body parts,
 #### Inputs
 
 * **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
-  The input image to feed through the network.
-* **outputStride** - the desired stride for the outputs when feeding the image through the model.  Must be 32, 16, 8.  Defaults to 16.  The higher the number, the faster the performance but slower the accuracy, and visa versa.
-* **segmentationTreshold** - Must be between 0 and 1. For each pixel, the model estimates a score between 0 and 1 that indicates how confident it is that part of a person is displayed in that pixel.  In part segmentation, this *segmentationThreshold* is used to convert these values
+   The input image to feed through the network.
+* **inferenceConfig** - an object containing:
+  * **flipHorizontal** - Defaults to false.  If the segmentation & pose should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the segmentation & pose to be returned in the proper orientation.
+  * **segmentationThreshold** - Must be between 0.0 and 1.0. For each pixel, the model estimates a score between 0 and 1 that indicates how confident it is that part of a person is displayed in that pixel. In part segmentation, this *segmentationThreshold* is used to convert these values
 to binary 0 or 1s by determining the minimum value a pixel's score must have to be considered part of a person, and clips the estimated part ids for each pixel by setting their values to -1 if the corresponding mask pixel value had a value of 0. In essence, a higher value will create a tighter crop
 around a person but may result in some pixels being that are part of a person being excluded from the returned part segmentation.
 
 #### Returns
 
-An object containing a width, height, and an array with a part id from 0-24 for the pixels that are part of a corresponding body part, and -1 otherwise. The array size corresponds to the number of pixels in the image. The width and height correspond to the dimensions of the image the array is shaped to, which are the same dimensions of the input image.
+It returns a `Promise` that resolves with a  **single** `PartSegmentation`. The `PartSegmentation` object contains a width, height, and an array with a part id from 0-24 for the pixels that are part of a corresponding body part, and -1 otherwise. The array size corresponds to the number of pixels in the image. The width and height correspond to the dimensions of the image the array is shaped to, which are the same dimensions of the input image.
 
 #### Example Usage
 
@@ -211,13 +263,13 @@ An object containing a width, height, and an array with a part id from 0-24 for 
   </body>
   <!-- Place your code in the script tag below. You can also use an external .js file -->
   <script>
-    var outputStride = 16;
-    var segmentationThreshold = 0.5;
-
-    var imageElement = document.getElementById('image');
+    const imageElement = document.getElementById('image');
 
     bodyPix.load().then(function(net){
-      return net.estimatePartSegmentation(imageElement, outputStride, segmentationThreshold)
+      return net.estimateSinglePersonPartSegmentation(imageElement, {
+        flipHorizontally: false,
+        segmentationThreshold: 0.7,
+      });
     }).then(function(partSegmentation){
       console.log(partSegmentation);
     })
@@ -230,15 +282,15 @@ An object containing a width, height, and an array with a part id from 0-24 for 
 ```javascript
 import * as bodyPix from '@tensorflow-models/body-pix';
 
-const outputStride = 16;
-const segmentationThreshold = 0.5;
-
 const imageElement = document.getElementById('image');
 
 // load the person segmentation model from a checkpoint
 const net = await bodyPix.load();
 
-const segmentation = await net.estimatePartSegmentation(imageElement, outputStride, segmentationThreshold);
+const segmentation = net.estimateSinglePersonPartSegmentation(imageElement, {
+  flipHorizontally: false,
+  segmentationThreshold: 0.7,
+});
 
 console.log(segmentation);
 
@@ -255,22 +307,28 @@ which would produce the output:
 // the array contains 307200 values, one for each pixel of the 640x480 image that was passed to the function.
 ```
 
-### Output Utility Functions
+### Output Visualization Utility Functions
 
 BodyPix contains utility functions to help with drawing and compositing using the outputs. **These API methods are experimental and subject to change.**
 
 #### `toMaskImageData`
 
-Given the output from estimating person segmentation, generates a black image with opacity and transparency at each pixel determined by the corresponding binary segmentation value at the pixel from the output.  In other words, pixels where there is a person will be transparent and where there is not a person will be opaque, and visa-versa when `maskBackground` is set to false. This can be used as a mask to crop a person or the background when compositing.
+Given the output from estimating single-person segmentation, generates a visualization of each pixel determined by the corresponding binary segmentation value at the pixel from the output.  In other words, pixels where there is a person will be colored by the foreground color and where there is not a person will be colored by the background color. This can be used as a mask to crop a person or the background when compositing.
 
 ##### Inputs
 
 * **segmentation** The output from estimagePersonSegmentation.
-* **maskBackground** If the mask should be opaque where the background is. Defaults to true. When set to true, pixels where there is a person are transparent and where there is a background become opaque, and visa-versa when set to false.
+* **foreground** The foreground color (r,g,b,a) for visualizing pixels that
+belong to people.
+
+* **background** The background color (r,g,b,a) for visualizing pixels that
+ don't belong to people.
+
+* **drawContour** Whether to draw the contour around each person's segmentation mask.
 
 ##### Returns
 
-An [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) with the same width and height of the personSegmentation, with opacity and transparency at each pixel determined by the corresponding binary segmentation value at the pixel from the output.
+An [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) with the same width and height of the personSegmentation, with color and opacity at each pixel determined by the corresponding binary segmentation value at the pixel from the output.
 
 ##### Example Usage
 
@@ -278,30 +336,32 @@ An [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) with 
 const imageElement = documet.getElementById('person');
 
 const net = await bodyPix.load();
-const personSegmentation = await net.estimatePersonSegmentation(imageElement);
+const personSegmentation = await net.estimateSinglePersonSegmentation(imageElement);
 
-// by setting maskBackground to false, the maskImage that is generated will be opaque where there is a person and transparent where there is a background.
-const maskBackground = false;
-const maskImage = bodyPix.toMaskImageData(personSegmentation, maskBackground);
+// by setting foregroundColor to {r: 0, g: 0, b: 0, a: 0} and backgroundColor to {r: 0, g: 0, b: 0, a: 255}, the maskImage that is generated will be transparent where there is a person and opaque where there is a background.
+const foregroundColor = {r: 0, g: 0, b: 0, a: 0};
+const backgroundColor = {r: 0, g: 0, b: 0, a: 255};
+const maskImage = bodyPix.toMaskImageData(
+  personSegmentation, foregroundColor, backgroundColor);
 ```
 
 ![MaskImageData](./images/toMaskImageData.jpg)
 
-*With the output from `estimatePersonSegmentation` on the first image above, `toMaskImageData` will produce an [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) that either looks like the second image above if `maskBackground` is set to true (by default), or the third image if `maskBackground` is set to false.  This can be used to mask either the person or the background using the method `drawMask`.*
+*With the output from `estimateSinglePersonSegmentation` on the first image above, `toMaskImageData` will produce an [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) that either looks like the second image above if setting `foregroundColor` to {r: 0, g: 0, b: 0, a: 0} and `backgroundColor` to {r: 0, g: 0, b: 0, a: 255} (by default), or the third image if if setting `foregroundColor` to {r: 0, g: 0, b: 0, a: 255} and `backgroundColor` to {r: 0, g: 0, b: 0, a: 0}.  This can be used to mask either the person or the background using the method `drawMask`.*
 
 #### `toColoredPartImageData`
 
-Given the output from estimating part segmentation, and an array of colors indexed by part id, generates an image with the corresponding color for each part at each pixel, and white pixels where there is no part.
+Given the output from estimating single-person part segmentation, and an array of colors indexed by part id, generates an image with the corresponding color for each part at each pixel, and white pixels where there is no part.
 
 ##### Inputs
 
-* **partSegmentation** The output from estimatePartSegmentation.
+* **partSegmentation** The output from estimateSinglePersonPartSegmentation.
 
 * **partColors** A multi-dimensional array of rgb colors indexed by part id.  Must have 24 colors, one for every part.  For some sample `partColors` check out [the ones used in the demo.](./demos/part_color_scales.js)
 
 ##### Returns
 
-An [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) with the same width and height of the partSegmentation, with the corresponding color for each part at each pixel, and black pixels where there is no part.
+An [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) with the same width and height of the estimated person part segmentation, with the corresponding color for each part at each pixel, and black pixels where there is no part.
 
 ##### Example usage
 
@@ -309,7 +369,7 @@ An [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) with 
 const imageElement = document.getElementById('person');
 
 const net = await bodyPix.load();
-const partSegmentation = await net.estimatePartSegmentation(imageElement);
+const partSegmentation = await net.estimateSinglePersonPartSegmentation(imageElement);
 
 const warm = [
   [110, 64, 170], [106, 72, 183], [100, 81, 196], [92, 91, 206],
@@ -319,9 +379,6 @@ const warm = [
   [41, 234, 141], [51, 240, 128], [64, 243, 116], [79, 246, 105],
   [96, 247, 97],  [115, 246, 91], [134, 245, 88], [155, 243, 88]
 ];
-
-
-const invert = true;
 
 // the colored part image is an rgb image with a corresponding color from thee rainbow colors for each part at each pixel, and black pixels where there is no part.
 const coloredPartImage = bodyPix.toColoredPartImageData(partSegmentation, rainbow);
@@ -337,7 +394,7 @@ bodyPix.drawMask(
 
 ![toColoredPartImageData](./images/toColoredPartImage.png)
 
-*With the output from `estimatePartSegmentation` on the first image above, and a 'warm' color scale, `toColoredPartImageData` will produce an `ImageData` that looks like the second image above.  The colored part image can be drawn on top of the original image with an `opacity` of 0.7 onto a canvas using `drawMask`; the result is shown in the third image above.*
+*With the output from `estimateSinglePersonPartSegmentation` on the first image above, and a 'warm' color scale, `toColoredPartImageData` will produce an `ImageData` that looks like the second image above.  The colored part image can be drawn on top of the original image with an `opacity` of 0.7 onto a canvas using `drawMask`; the result is shown in the third image above.*
 
 #### `drawMask`
 
@@ -358,12 +415,13 @@ Draws an image onto a canvas and draws an `ImageData` containing a mask on top o
 const imageElement = document.getElementById('image');
 
 const net = await bodyPix.load();
-const segmentation = await net.estimatePersonSegmentation(imageElement);
+const segmentation = await net.estimateSinglePersonSegmentation(imageElement);
 
 const maskBackground = true;
 // Convert the personSegmentation into a mask to darken the background.
-// Since maskBackground is set to true, there will be 1s where the background is and 0s where the person is.
-const backgroundDarkeningMask = bodyPix.toMaskImageData(personSegmentation, maskBackground);
+const foregroundColor = {r: 0, g: 0, b: 0, a: 0};
+const backgroundColor = {r: 0, g: 0, b: 0, a: 255};
+const backgroundDarkeningMask = bodyPix.toMaskImageData(personSegmentation, );
 
 const opacity = 0.7;
 const maskBlurAmount = 3;
@@ -399,7 +457,7 @@ Draws an image onto a canvas and draws an `ImageData` containing a mask on top o
 const imageElement = document.getElementById('person');
 
 const net = await bodyPix.load();
-const partSegmentation = await net.estimatePartSegmentation(imageElement);
+const partSegmentation = await net.estimateSinglePersonPartSegmentation(imageElement);
 
 const rainbow = [
   [110, 64, 170], [143, 61, 178], [178, 60, 178], [210, 62, 167],
@@ -454,7 +512,7 @@ and the background by.  Defaults to 3. Should be an integer between 0 and 20.
 const imageElement = document.getElementById('image');
 
 const net = await bodyPix.load();
-const personSegmentation = await net.estimatePersonSegmentation(imageElement);
+const personSegmentation = await net.estimateSinglePersonSegmentation(imageElement);
 
 const backgroundBlurAmount = 3;
 const edgeBlurAmount = 3;
