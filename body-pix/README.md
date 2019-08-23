@@ -88,7 +88,7 @@ const net = await bodyPix.load({
 **By default,** BodyPix loads a MobileNetV1 architecture with a **`0.75`** multiplier.  This is recommended for computers with **mid-range/lower-end GPUs.**  A model with a **`0.50`** multiplier is recommended for **mobile.** The ResNet achitecture is recommended for computers with **even more powerful GPUs**.
 
 
-### Person segmentation
+### Single-person segmentation
 
 Person segmentation segments an image into pixels that are and aren't part of a person.
 It returns a binary array with 1 for the pixels that are part of the person, and 0 otherwise. The array size corresponds to the number of pixels in the image.
@@ -182,6 +182,124 @@ which would produce the output:
 }
 // the array contains 307200 values, one for each pixel of the 640x480 image that was passed to the function.
 ```
+
+### Multi-person segmentation (The section is work in progress)
+
+Given an image with multiple people. Multi-person segmentation model predicts segmentation for *each* person. It returns *an array* of `PersonSegmentation` and each corresponding to one person.  a binary array for each person with 1 for the pixels that are part of the person, and 0 otherwise. The array size corresponds to the number of pixels in the image.
+
+(replace with copyright free ones)
+![Multi-person Segmentation](./images/two_people.png)
+
+```javascript
+const net = await bodyPix.load();
+
+const segmentation = await net.estimateMultiPersonSegmentation(image, {
+  flipHorizontal: false,
+  segmentationThreshold: 0.7,
+  maxDetections: 10,
+  scoreThreshold: 0.2,
+  nmsRadius: 20,
+  minKeypointScore: 0.3,
+  refineSteps: 10
+});
+```
+
+#### Params in estimateMultiPersonSegmentation()
+
+* **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
+   The input image to feed through the network.
+* **inferenceConfig** - an object containing:
+  * **flipHorizontal** - Defaults to false.  If the segmentation & pose should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the segmentation & pose to be returned in the proper orientation.
+  * **segmentationThreshold** - Must be between 0 and 1. For each pixel, the model estimates a score between 0 and 1 that indicates how confident it is that part of a person is displayed in that pixel.  This *segmentationThreshold* is used to convert these values
+to binary 0 or 1s by determining the minimum value a pixel's score must have to be considered part of a person.  In essence, a higher value will create a tighter crop
+around a person but may result in some pixels being that are part of a person being excluded from the returned segmentation mask.
+  * **maxDetections** - Maximum number of returned instance detections per image. Defaults to 10
+  * **scoreThreshold** - Only return instance detections that have root part score greater or equal to this value. Defaults to 0.5
+  * **nmsRadius** - Non-maximum suppression part distance in pixels. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away. Defaults to 20.
+  * **minKeypointScore** - Default to 0.3. Keypoints above the score are used for matching and assigning segmentation mask to each person..
+  * **refineSteps** - The number of refinement steps used when assigning the instance segmentation. It needs to be strictly positive. The larger the higher the accuracy and slower the inference.
+
+#### Returns
+
+It returns a `Promise` that resolves with **an array** of `PersonSegmentation`s. When there are multiple people in the image, each `PersonSegmentation` object in the array represents one person. More details about the `PersonSegmentation` object can be found in the documentation of the `estimateSinglePersonSegmentation` method.
+
+#### Example Usage
+
+##### via Script Tag
+
+```html
+<html>
+  <head>
+    <!-- Load TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.0"></script>
+    <!-- Load BodyPix -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.0.0"></script>
+ </head>
+
+  <body>
+    <img id='person' src='/images/person.jpg '/>
+  </body>
+  <!-- Place your code in the script tag below. You can also use an external .js file -->
+  <script>
+    var imageElement = document.getElementById('image');
+
+    bodyPix.load().then(function(net){
+      return net.estimateSinglePersonSegmentation(imageElement, {
+        flipHorizontal: false,
+        segmentationThreshold: 0.7,
+        maxDetections: 10,
+        scoreThreshold: 0.2,
+        nmsRadius: 20,
+        minKeypointScore: 0.3,
+       refineSteps: 10
+      });
+    }).then(function(allSegmentations){
+      console.log(allSegmentations);
+    })
+  </script>
+</html>
+```
+
+###### via NPM
+
+```javascript
+import * as bodyPix from '@tensorflow-models/body-pix';
+
+const imageElement = document.getElementById('image');
+
+// load the BodyPix model from a checkpoint
+const net = await bodyPix.load();
+
+const allSegmentations = await net.estimateSinglePersonSegmentation(imageElement, {
+  flipHorizontal: false,
+  segmentationThreshold: 0.7,
+  maxDetections: 10,
+  scoreThreshold: 0.2,
+  nmsRadius: 20,
+  minKeypointScore: 0.3,
+  refineSteps: 10
+});
+
+console.log(allSegmentations);
+```
+
+which would produce the output:
+
+```javascript
+[{
+  width: 640,
+  height: 480,
+  data: Uint8Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, …]
+ },
+ // the data array contains 307200 values, one for each pixel of the 640x480 image that was passed to the function.
+ {
+  width: 640,
+  height: 480,
+  data: Uint8Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, …]
+ }]
+ // the data array contains 307200 values, one for each pixel of the 640x480 image that was passed to the function.
+```
+
 
 ### Body Part Segmentation
 
@@ -305,6 +423,123 @@ which would produce the output:
   data: Int32Array(307200) [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 3, 3, 3, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 1, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 15, 15, 15, 15, 16, 16, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 23, 23, 23, 22, 22, -1, -1, -1, -1,  …]
 }
 // the array contains 307200 values, one for each pixel of the 640x480 image that was passed to the function.
+```
+
+### Multi-person body part segmentation (The section is work in progress)
+
+Given an image with multiple people. BodyPix's `estimateMultiPersonSegmentation` method predicts the 24 body part segmentations for *each* person. It returns *an array* of `PartSegmentation`s, each corresponding to one of the people. The `PartSegmentation` object contains a width, height, `Pose` and an Int32 array with a part id from 0-24 for the pixels that are part of a corresponding body part, and -1 otherwise.
+
+(replace with copyright free ones)
+![Multi-person Segmentation](./images/two_people_bodypart.png)
+
+```javascript
+const net = await bodyPix.load();
+
+const segmentation = await net.estimateMultiPersonPartSegmentation(image, {
+  flipHorizontal: false,
+  segmentationThreshold: 0.7,
+  maxDetections: 10,
+  scoreThreshold: 0.2,
+  nmsRadius: 20,
+  minKeypointScore: 0.3,
+  refineSteps: 10
+});
+```
+
+#### Params in estimateMultiPersonSegmentation()
+
+* **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
+   The input image to feed through the network.
+* **inferenceConfig** - an object containing:
+  * **flipHorizontal** - Defaults to false.  If the segmentation & pose should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the segmentation & pose to be returned in the proper orientation.
+  * **segmentationThreshold** - Must be between 0 and 1. For each pixel, the model estimates a score between 0 and 1 that indicates how confident it is that part of a person is displayed in that pixel.  This *segmentationThreshold* is used to convert these values
+to binary 0 or 1s by determining the minimum value a pixel's score must have to be considered part of a person.  In essence, a higher value will create a tighter crop
+around a person but may result in some pixels being that are part of a person being excluded from the returned segmentation mask.
+  * **maxDetections** - Maximum number of returned instance detections per image. Defaults to 10
+  * **scoreThreshold** - Only return instance detections that have root part score greater or equal to this value. Defaults to 0.5
+  * **nmsRadius** - Non-maximum suppression part distance in pixels. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away. Defaults to 20.
+  * **minKeypointScore** - Default to 0.3. Keypoints above the score are used for matching and assigning segmentation mask to each person..
+  * **refineSteps** - The number of refinement steps used when assigning the instance segmentation. It needs to be strictly positive. The larger the higher the accuracy and slower the inference.
+
+#### Returns
+
+It returns a `Promise` that resolves with **an array** of `PartSegmentation`s. When there are multiple people in the image, each `PartSegmentation` object in the array represents one person. More details about the `PartSegmentation` object can be found in the documentation of the `estimateSinglePersonPartSegmentation` method.
+
+#### Example Usage
+
+##### via Script Tag
+
+```html
+<html>
+  <head>
+    <!-- Load TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.0"></script>
+    <!-- Load BodyPix -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.0.0"></script>
+ </head>
+
+  <body>
+    <img id='person' src='/images/person.jpg '/>
+  </body>
+  <!-- Place your code in the script tag below. You can also use an external .js file -->
+  <script>
+    var imageElement = document.getElementById('image');
+
+    bodyPix.load().then(function(net){
+      return net.estimateMultiPersonPartSegmentation(imageElement, {
+        flipHorizontal: false,
+        segmentationThreshold: 0.7,
+        maxDetections: 10,
+        scoreThreshold: 0.2,
+        nmsRadius: 20,
+        minKeypointScore: 0.3,
+       refineSteps: 10
+      });
+    }).then(function(allPartSegmentations){
+      console.log(allPartSegmentations);
+    })
+  </script>
+</html>
+```
+
+###### via NPM
+
+```javascript
+import * as bodyPix from '@tensorflow-models/body-pix';
+
+const imageElement = document.getElementById('image');
+
+// load the BodyPix model from a checkpoint
+const net = await bodyPix.load();
+
+const allPartSegmentations = await net.estimateMultiPersonPartSegmentation(imageElement, {
+  flipHorizontal: false,
+  segmentationThreshold: 0.7,
+  maxDetections: 10,
+  scoreThreshold: 0.2,
+  nmsRadius: 20,
+  minKeypointScore: 0.3,
+  refineSteps: 10
+});
+
+console.log(allPartSegmentations);
+```
+
+which would produce the output:
+
+```javascript
+[{
+  width: 640,
+  height: 480,
+  data: Uint8Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, …]
+ },
+ // the data array contains 307200 values, one for each pixel of the 640x480 image that was passed to the function.
+ {
+  width: 640,
+  height: 480,
+  data: Uint8Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, …]
+ }]
+ // the data array contains 307200 values, one for each pixel of the 640x480 image that was passed to the function.
 ```
 
 ### Output Visualization Utility Functions

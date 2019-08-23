@@ -193,12 +193,12 @@ export const SINGLE_PERSON_INFERENCE_CONFIG: SinglePersonInferenceConfig = {
 
 export const MULTI_PERSON_INFERENCE_CONFIG: MultiPersonInferenceConfig = {
   flipHorizontal: false,
-  segmentationThreshold: 0.5,
-  maxDetections: 5,
+  segmentationThreshold: 0.7,
+  maxDetections: 10,
   scoreThreshold: 0.2,
   nmsRadius: 20,
   minKeypointScore: 0.3,
-  refineSteps: 1
+  refineSteps: 10
 };
 
 function validateSinglePersonInferenceConfig(
