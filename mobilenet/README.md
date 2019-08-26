@@ -91,7 +91,7 @@ mobilenet.load(
 
 Args:
 - **version:** The MobileNet version number. Use 1 for [MobileNetV1](https://github.com/tensorflow/models/blob/master/research/slim/nets/mobilenet_v1.md), and 2 for [MobileNetV2](https://github.com/tensorflow/models/tree/master/research/slim/nets/mobilenet). Defaults to 1.
-- **alpha:** Controls the width of the network, trading accuracy for performance. A smaller alpha decreases accuracy and increases performance. Defaults to 1.0.
+- **alpha:** Controls the width of the network, trading accuracy for performance. A smaller alpha decreases accuracy and increases performance. 0.25 is only available for V1. Defaults to 1.0.
 - **modelUrl:** Optional param for specifying the custom model url or `tf.io.IOHandler` object.
 Returns a `model` object.
 - **inputRange:** Optional param specifying the pixel value range expected by the trained model hosted at the modelUrl. This is typically [0, 1] or [-1, 1].
