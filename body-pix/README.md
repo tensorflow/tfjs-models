@@ -580,11 +580,11 @@ const maskImage = bodyPix.toMaskImageData(
   personSegmentation, foregroundColor, backgroundColor);
 ```
 
-![MaskImageData](./images/toMaskImageData.jpg)
+![MaskImageData](./images/toMultiPersonMaskImageData.png)
 
 *With the output from `estimateSinglePersonSegmentation` on the first image above, `toMaskImageData` will produce an [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) that either looks like the second image above if setting `foregroundColor` to {r: 0, g: 0, b: 0, a: 0} and `backgroundColor` to {r: 0, g: 0, b: 0, a: 255} (by default), or the third image if if setting `foregroundColor` to {r: 0, g: 0, b: 0, a: 255} and `backgroundColor` to {r: 0, g: 0, b: 0, a: 0}.  This can be used to mask either the person or the background using the method `drawMask`.*
 
-#### `toMaskImageDataMultiPerson (WIP)`
+#### `toMultiPersonMaskImageData`
 
 Given the output from estimating multi-person segmentation, generates a visualization of each pixel determined by the corresponding binary segmentation value at the pixel from the output.  In other words, pixels where there is a person will be colored by the foreground color and where there is not a person will be colored by the background color. This can be used as a mask to crop a person or the background when compositing.
 
@@ -654,13 +654,13 @@ bodyPix.drawMask(
 
 *With the output from `estimateSinglePersonPartSegmentation` on the first image above, and a 'warm' color scale, `toColoredPartImageData` will produce an `ImageData` that looks like the second image above.  The colored part image can be drawn on top of the original image with an `opacity` of 0.7 onto a canvas using `drawMask`; the result is shown in the third image above.*
 
-#### `toColoredPartImageDataMultiPerson (WIP)`
+#### `toMultiPersonColoredPartImageData`
 
-Given the output from estimating single-person part segmentation, and an array of colors indexed by part id, generates an image with the corresponding color for each part at each pixel, and white pixels where there is no part.
+Given the output from estimating multi-person part segmentation, and an array of colors indexed by part id, generates an image with the corresponding color for each part at each pixel, and white pixels where there is no part.
 
 ##### Inputs
 
-* **partSegmentation** The output from estimateSinglePersonPartSegmentation.
+* **allPartSegmentation** The output from estimateMultiPersonPartSegmentation.
 
 * **partColors** A multi-dimensional array of rgb colors indexed by part id.  Must have 24 colors, one for every part.  For some sample `partColors` check out [the ones used in the demo.](./demos/part_color_scales.js)
 
@@ -674,15 +674,16 @@ An [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) with 
 const imageElement = document.getElementById('person');
 
 const net = await bodyPix.load();
-const partSegmentation = await net.estimateSinglePersonPartSegmentation(imageElement);
+const partSegmentation = await net.estimateMultiPersonPartSegmentation(imageElement);
 
-const warm = [
-  [110, 64, 170], [106, 72, 183], [100, 81, 196], [92, 91, 206],
-  [84, 101, 214], [75, 113, 221], [66, 125, 224], [56, 138, 226],
-  [48, 150, 224], [40, 163, 220], [33, 176, 214], [29, 188, 205],
-  [26, 199, 194], [26, 210, 182], [28, 219, 169], [33, 227, 155],
-  [41, 234, 141], [51, 240, 128], [64, 243, 116], [79, 246, 105],
-  [96, 247, 97],  [115, 246, 91], [134, 245, 88], [155, 243, 88]
+// The rainbow colormap
+const rainbow = [
+  [110, 64, 170], [143, 61, 178], [178, 60, 178], [210, 62, 167],
+  [238, 67, 149], [255, 78, 125], [255, 94, 99],  [255, 115, 75],
+  [255, 140, 56], [239, 167, 47], [217, 194, 49], [194, 219, 64],
+  [175, 240, 91], [135, 245, 87], [96, 247, 96],  [64, 243, 115],
+  [40, 234, 141], [28, 219, 169], [26, 199, 194], [33, 176, 213],
+  [47, 150, 224], [65, 125, 224], [84, 101, 214], [99, 81, 195]
 ];
 
 // the colored part image is an rgb image with a corresponding color from thee rainbow colors for each part at each pixel, and black pixels where there is no part.
@@ -697,9 +698,9 @@ bodyPix.drawMask(
     flipHorizontal);
 ```
 
-![toColoredPartImageData](./images/toColoredPartImage.png)
+![toColoredPartImageData](./images/toMultiPersonColoredPartImage.png)
 
-*With the output from `estimateSinglePersonPartSegmentation` on the first image above, and a 'warm' color scale, `toColoredPartImageData` will produce an `ImageData` that looks like the second image above.  The colored part image can be drawn on top of the original image with an `opacity` of 0.7 onto a canvas using `drawMask`; the result is shown in the third image above.*
+*With the output from `estimateMultiPersonPartSegmentation` on the first image above, a 'spectral' color scale in `toColoredPartImageData` will produce an `ImageData` that looks like the second image above and a 'rainbow' color scale in `toColoredPartImageData` will produce an `ImageData` that looks like the third image above.*
 
 #### `drawMask`
 
