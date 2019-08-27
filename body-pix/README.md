@@ -584,7 +584,77 @@ const maskImage = bodyPix.toMaskImageData(
 
 *With the output from `estimateSinglePersonSegmentation` on the first image above, `toMaskImageData` will produce an [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) that either looks like the second image above if setting `foregroundColor` to {r: 0, g: 0, b: 0, a: 0} and `backgroundColor` to {r: 0, g: 0, b: 0, a: 255} (by default), or the third image if if setting `foregroundColor` to {r: 0, g: 0, b: 0, a: 255} and `backgroundColor` to {r: 0, g: 0, b: 0, a: 0}.  This can be used to mask either the person or the background using the method `drawMask`.*
 
+#### `toMaskImageDataMultiPerson (WIP)`
+
+Given the output from estimating multi-person segmentation, generates a visualization of each pixel determined by the corresponding binary segmentation value at the pixel from the output.  In other words, pixels where there is a person will be colored by the foreground color and where there is not a person will be colored by the background color. This can be used as a mask to crop a person or the background when compositing.
+
+##### Inputs
+
+*  **allPersonSegmentation** The output from `estimateMultiPersonSegmentation`; An array of PersonSegmentation object, each containing a width, height, and a binary array with 1 for the pixels that are part of the person, and 0 otherwise.
+* **foreground** The foreground color (r,g,b,a) for visualizing pixels that
+belong to people.
+
+* **background** The background color (r,g,b,a) for visualizing pixels that
+ don't belong to people.
+
+* **drawContour** Whether to draw the contour around each person's segmentation mask.
+
+##### Returns
+
+An [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) with the same width and height of the personSegmentation, with color and opacity at each pixel determined by the corresponding binary segmentation value at the pixel from the output.
+
+![MaskImageData](./images/toMaskImageData.jpg)
+
+*With the output from `estimateSinglePersonSegmentation` on the first image above, `toMaskImageData` will produce an [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) that either looks like the second image above if setting `foregroundColor` to {r: 0, g: 0, b: 0, a: 0} and `backgroundColor` to {r: 0, g: 0, b: 0, a: 255} (by default), or the third image if if setting `foregroundColor` to {r: 0, g: 0, b: 0, a: 255} and `backgroundColor` to {r: 0, g: 0, b: 0, a: 0}.  This can be used to mask either the person or the background using the method `drawMask`.*
+
 #### `toColoredPartImageData`
+
+Given the output from estimating single-person part segmentation, and an array of colors indexed by part id, generates an image with the corresponding color for each part at each pixel, and white pixels where there is no part.
+
+##### Inputs
+
+* **partSegmentation** The output from estimateSinglePersonPartSegmentation.
+
+* **partColors** A multi-dimensional array of rgb colors indexed by part id.  Must have 24 colors, one for every part.  For some sample `partColors` check out [the ones used in the demo.](./demos/part_color_scales.js)
+
+##### Returns
+
+An [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) with the same width and height of the estimated person part segmentation, with the corresponding color for each part at each pixel, and black pixels where there is no part.
+
+##### Example usage
+
+```javascript
+const imageElement = document.getElementById('person');
+
+const net = await bodyPix.load();
+const partSegmentation = await net.estimateSinglePersonPartSegmentation(imageElement);
+
+const warm = [
+  [110, 64, 170], [106, 72, 183], [100, 81, 196], [92, 91, 206],
+  [84, 101, 214], [75, 113, 221], [66, 125, 224], [56, 138, 226],
+  [48, 150, 224], [40, 163, 220], [33, 176, 214], [29, 188, 205],
+  [26, 199, 194], [26, 210, 182], [28, 219, 169], [33, 227, 155],
+  [41, 234, 141], [51, 240, 128], [64, 243, 116], [79, 246, 105],
+  [96, 247, 97],  [115, 246, 91], [134, 245, 88], [155, 243, 88]
+];
+
+// the colored part image is an rgb image with a corresponding color from thee rainbow colors for each part at each pixel, and black pixels where there is no part.
+const coloredPartImage = bodyPix.toColoredPartImageData(partSegmentation, rainbow);
+const opacity = 0.7;
+const flipHorizontal = true;
+const maskBlurAmount = 0;
+const canvas = document.getElementById('canvas');
+// draw the colored part image on top of the original image onto a canvas.  The colored part image will be drawn semi-transparent, with an opacity of 0.7, allowing for the original image to be visible under.
+bodyPix.drawMask(
+    canvas, imageElement, coloredPartImageData, opacity, maskBlurAmount,
+    flipHorizontal);
+```
+
+![toColoredPartImageData](./images/toColoredPartImage.png)
+
+*With the output from `estimateSinglePersonPartSegmentation` on the first image above, and a 'warm' color scale, `toColoredPartImageData` will produce an `ImageData` that looks like the second image above.  The colored part image can be drawn on top of the original image with an `opacity` of 0.7 onto a canvas using `drawMask`; the result is shown in the third image above.*
+
+#### `toColoredPartImageDataMultiPerson (WIP)`
 
 Given the output from estimating single-person part segmentation, and an array of colors indexed by part id, generates an image with the corresponding color for each part at each pixel, and white pixels where there is no part.
 
