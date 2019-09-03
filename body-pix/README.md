@@ -1,6 +1,6 @@
 # BodyPix - Person Segmentation in the Browser
 
-## Note: We've just released Version 2.0 with a **new ResNet** model and API. Check out the new documentation below.
+## Note: We've just released Version 2.0 with multi-person support, a **new ResNet** model and API. Check out the new documentation below.
 
 This package contains a standalone model called BodyPix, as well as some demos, for running real-time person and body part segmentation in the browser using TensorFlow.js.
 
@@ -700,7 +700,7 @@ bodyPix.drawMask(
 
 ![toColoredPartImageData](./images/toMultiPersonColoredPartImage.png)
 
-*With the output from `estimateMultiPersonPartSegmentation` on the first image above, a 'spectral' color scale in `toColoredPartImageData` will produce an `ImageData` that looks like the second image above and a 'rainbow' color scale in `toColoredPartImageData` will produce an `ImageData` that looks like the third image above.*
+*With the output from `estimateMultiPersonPartSegmentation` on the first image above, a 'spectral' or 'rainbow' color scale in `toColoredPartImageData` will produce an `ImageData` that looks like the second image or the third image above.*
 
 #### `drawMask`
 

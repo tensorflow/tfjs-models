@@ -17,13 +17,14 @@
 
 // Currently it is using local server for debugging.
 // TODO(tylerzhu): switch to use storage.googleapis.com.
-const RESNET50_BASE_URL = 'http://localhost:8080/';
-const MOBILENET_BASE_URL = 'http://localhost:8080/';
+const RESNET50_BASE_URL = 'http://localhost:8080/bodypix2js/resnet50/';
+const MOBILENET_BASE_URL = 'http://localhost:8080/bodypix2js/mobilenet/';
 
-// The BodyPix 2.0 ResNet50 models use the latest TensorFlow.js 1.0 Graph
+
+// The BodyPix 2.0 ResNet50 models use the latest TensorFlow.js 1.0 model
 // format.
 export function resNet50Checkpoint(stride: number, quantBytes: number): string {
-  const graphJson = `resnet50-%3Fx%3F-stride${stride}/model.json`;
+  const graphJson = `model-stride${stride}.json`;
   // quantBytes=4 corresponding to the non-quantized full-precision checkpoints.
   if (quantBytes == 4) {
     return RESNET50_BASE_URL + `float/` + graphJson;
@@ -32,7 +33,7 @@ export function resNet50Checkpoint(stride: number, quantBytes: number): string {
   }
 };
 
-// The PoseNet 2.0 MobileNetV1 models use the latest TensorFlow.js 1.0 model
+// The BodyPix 2.0 MobileNetV1 models use the latest TensorFlow.js 1.0 model
 // format.
 export function mobileNetCheckpoint(
     stride: number, multiplier: number, quantBytes: number): string {

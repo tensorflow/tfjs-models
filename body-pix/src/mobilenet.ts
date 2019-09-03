@@ -73,24 +73,13 @@ export class MobileNet implements BaseModel {
       const asFloat = toFloatIfInt(input);
       const asBatch = asFloat.expandDims(0);
       const [
-          //  - bodypix2js_release_2
-          //  displacementBwd4d,
-          //  heatmaps4d,
-          //  partHeatmaps4d,
-          //  longOffsets4d,
-          //  offsets4d,
-          //  displacementFwd4d,
-          //  segmentation4d,
-          //  partOffsets4d,
-          //
-          //  - bodypix2js_release_2 2
-          displacementBwd4d,
-          displacementFwd4d,
-          heatmaps4d,
-          longOffsets4d,
           offsets4d,
-          partHeatmaps4d,
           segmentation4d,
+          partHeatmaps4d,
+          longOffsets4d,
+          heatmaps4d,
+          displacementFwd4d,
+          displacementBwd4d,
           partOffsets4d,
       ] = this.model.predict(asBatch) as tf.Tensor[];
 
