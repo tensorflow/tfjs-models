@@ -87,7 +87,7 @@ An object containing a width, height, and a binary array with 1 for the pixels t
  </head>
 
   <body>
-    <img id='person' src='/images/person.jpg '/>
+    <img id='image' src='/images/person.jpg '/>
   </body>
   <!-- Place your code in the script tag below. You can also use an external .js file -->
   <script>
