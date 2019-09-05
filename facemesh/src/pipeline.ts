@@ -89,6 +89,12 @@ export class BlazePipeline {
   }
 
   updateRoisFromFaceDetector(box: Box) {
+    const prev = this.rois[0];
+    if (prev) {
+      prev.startEndTensor.dispose();
+      prev.startPoint.dispose();
+      prev.endPoint.dispose();
+    }
     this.rois = [box];
   }
 
