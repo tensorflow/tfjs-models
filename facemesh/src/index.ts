@@ -114,12 +114,15 @@ export class FaceMesh {
         };
       }
 
-      const [coordsArr, coordsArrScaled, topLeft, bottomRight, flagArr] = await Promise.all([
-        coords2d, coords2dScaled, landmarksBox.startPoint, landmarksBox.endPoint, flag
-      ].map(async d => await d.array()));
+      const [coordsArr, coordsArrScaled, topLeft, bottomRight, flagArr] =
+          await Promise.all([
+            coords2d, coords2dScaled, landmarksBox.startPoint,
+            landmarksBox.endPoint, flag
+          ].map(async d => await d.array()));
 
       flag.dispose();
       coords2dScaled.dispose();
+      coords2d.dispose();
 
       this.clearPipelineROIs(flagArr);
 

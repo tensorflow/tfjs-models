@@ -24,9 +24,9 @@ export class Box {
   public endPoint: tf.Tensor2D;
 
   constructor(startEndTensor: tf.Tensor2D) {
-    this.startEndTensor = tf.keep(startEndTensor);
-    this.startPoint = tf.keep(tf.slice(startEndTensor, [0, 0], [-1, 2]));
-    this.endPoint = tf.keep(tf.slice(startEndTensor, [0, 2], [-1, 2]));
+    this.startEndTensor = startEndTensor;
+    this.startPoint = tf.slice(startEndTensor, [0, 0], [-1, 2]);
+    this.endPoint = tf.slice(startEndTensor, [0, 2], [-1, 2]);
   }
 
   getSize(): tf.Tensor2D {
@@ -66,14 +66,16 @@ export class Box {
     return new Box(newCoordinates);
   }
 
-  increaseBox(ratio = 1.5): Box {
+  increaseBox(ratio = 1.5) {
     const center = this.getCenter();
     const size = this.getSize();
     const newSize = tf.mul(tf.div(size, 2), ratio);
     const newStart = tf.sub(center, newSize);
     const newEnd = tf.add(center, newSize);
 
-    return new Box(
-        tf.concat2d([newStart as tf.Tensor2D, newEnd as tf.Tensor2D], 1));
+    this.startEndTensor =
+        tf.concat2d([newStart as tf.Tensor2D, newEnd as tf.Tensor2D], 1);
+    this.startPoint = newStart as tf.Tensor2D;
+    this.endPoint = newEnd as tf.Tensor2D;
   }
 }

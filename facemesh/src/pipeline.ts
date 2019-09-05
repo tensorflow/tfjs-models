@@ -61,7 +61,8 @@ export class BlazePipeline {
         this.clearROIs();
         return null;
       }
-      this.updateRoisFromFaceDetector(box.increaseBox());
+      box.increaseBox();
+      this.updateRoisFromFaceDetector(box);
       this.runsWithoutFaceDetector = 0;
     } else {
       this.runsWithoutFaceDetector++;
@@ -73,7 +74,8 @@ export class BlazePipeline {
     const [coords, flag] =
         this.blazemesh.predict(face) as [tf.Tensor, tf.Tensor2D];
 
-    const coords2d = tf.reshape(coords, [-1, 3]).slice([0, 0], [-1, 2]) as tf.Tensor2D;
+    const coords2d =
+        tf.reshape(coords, [-1, 3]).slice([0, 0], [-1, 2]) as tf.Tensor2D;
     const coords2dScaled =
         tf.mul(
               coords2d,
@@ -109,7 +111,7 @@ export class BlazePipeline {
 
     const boxMinMax = tf.stack([xs.min(), ys.min(), xs.max(), ys.max()]);
     const box = new Box(boxMinMax.expandDims(0));
-
-    return box.increaseBox();
+    box.increaseBox();
+    return box;
   }
 }
