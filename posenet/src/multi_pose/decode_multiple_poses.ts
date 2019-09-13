@@ -15,10 +15,7 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
-
-import {Keypoint, Pose} from '../types';
-import {toTensorBuffers3D} from '../util';
+import {Keypoint, Pose, TensorBuffer3D} from '../types';
 
 import {buildPartWithScoreQueue} from './build_part_with_score_queue';
 import {decodePose} from './decode_pose';
@@ -114,16 +111,12 @@ const kLocalMaximumRadius = 1;
  * @return An array of poses and their scores, each containing keypoints and
  * the corresponding keypoint scores.
  */
-export async function decodeMultiplePoses(
-    heatmapScores: tf.Tensor3D, offsets: tf.Tensor3D,
-    displacementsFwd: tf.Tensor3D, displacementsBwd: tf.Tensor3D,
-    outputStride: number, maxPoseDetections: number, scoreThreshold = 0.5,
-    nmsRadius = 20): Promise<Pose[]> {
+export function decodeMultiplePoses(
+    scoresBuffer: TensorBuffer3D, offsetsBuffer: TensorBuffer3D,
+    displacementsFwdBuffer: TensorBuffer3D,
+    displacementsBwdBuffer: TensorBuffer3D, outputStride: number,
+    maxPoseDetections: number, scoreThreshold = 0.5, nmsRadius = 20): Pose[] {
   const poses: Pose[] = [];
-
-  const [scoresBuffer, offsetsBuffer, displacementsFwdBuffer, displacementsBwdBuffer] =
-      await toTensorBuffers3D(
-          [heatmapScores, offsets, displacementsFwd, displacementsBwd]);
 
   const queue = buildPartWithScoreQueue(
       scoreThreshold, kLocalMaximumRadius, scoresBuffer);

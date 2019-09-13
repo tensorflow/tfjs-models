@@ -21,6 +21,56 @@ const color = 'aqua';
 const boundingBoxColor = 'red';
 const lineWidth = 2;
 
+export const tryResNetButtonName = 'tryResNetButton';
+export const tryResNetButtonText = '[New] Try ResNet50';
+const tryResNetButtonTextCss = 'width:100%;text-decoration:underline;';
+const tryResNetButtonBackgroundCss = 'background:#e61d5f;';
+
+function isAndroid() {
+  return /Android/i.test(navigator.userAgent);
+}
+
+function isiOS() {
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+export function isMobile() {
+  return isAndroid() || isiOS();
+}
+
+function setDatGuiPropertyCss(propertyText, liCssString, spanCssString = '') {
+  var spans = document.getElementsByClassName('property-name');
+  for (var i = 0; i < spans.length; i++) {
+    var text = spans[i].textContent || spans[i].innerText;
+    if (text == propertyText) {
+      spans[i].parentNode.parentNode.style = liCssString;
+      if (spanCssString !== '') {
+        spans[i].style = spanCssString;
+      }
+    }
+  }
+}
+
+export function updateTryResNetButtonDatGuiCss() {
+  setDatGuiPropertyCss(
+      tryResNetButtonText, tryResNetButtonBackgroundCss,
+      tryResNetButtonTextCss);
+}
+
+/**
+ * Toggles between the loading UI and the main canvas UI.
+ */
+export function toggleLoadingUI(
+    showLoadingUI, loadingDivId = 'loading', mainDivId = 'main') {
+  if (showLoadingUI) {
+    document.getElementById(loadingDivId).style.display = 'block';
+    document.getElementById(mainDivId).style.display = 'none';
+  } else {
+    document.getElementById(loadingDivId).style.display = 'none';
+    document.getElementById(mainDivId).style.display = 'block';
+  }
+}
+
 function toTuple({y, x}) {
   return [y, x];
 }

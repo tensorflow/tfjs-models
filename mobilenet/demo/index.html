@@ -1,5 +1,5 @@
 <!-- Load TensorFlow.js. This is required to use MobileNet. -->
-<script src="http://unpkg.com/@tensorflow/tfjs@1.0"></script>
+<script src="http://unpkg.com/@tensorflow/tfjs"></script>
 <!-- Load the MobileNet model. -->
 <script src="../dist/mobilenet.js"></script>
 
@@ -12,7 +12,7 @@
 
   async function run() {
     // Load the model.
-    const model = await mobilenet.load(version, alpha);
+    const model = await mobilenet.load({version, alpha});
 
     // Classify the image.
     const predictions = await model.classify(img);

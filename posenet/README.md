@@ -1,16 +1,22 @@
 # Pose Detection in the Browser: PoseNet Model
 
+## Note: We've just released Version 2.0 with a **new ResNet** model and API. Check out the new documentation below.
+
 This package contains a standalone model called PoseNet, as well as some demos, for running real-time pose estimation in the browser using TensorFlow.js.
 
 [Try the demo here!](https://storage.googleapis.com/tfjs-models/demos/posenet/camera.html)
 
-<img src="https://raw.githubusercontent.com/irealva/tfjs-models/master/posenet/demos/camera.gif" alt="cameraDemo" style="width: 600px;"/>
+<img src="demos/camera.gif" alt="cameraDemo" style="width: 600px;"/>
 
 PoseNet can be used to estimate either a single pose or multiple poses, meaning there is a version of the algorithm that can detect only one person in an image/video and one version that can detect multiple persons in an image/video.
 
 [Refer to this blog post](https://medium.com/tensorflow/real-time-human-pose-estimation-in-the-browser-with-tensorflow-js-7dd0bc881cd5) for a high-level description of PoseNet running on Tensorflow.js.
 
 To keep track of issues we use the [tensorflow/tfjs](https://github.com/tensorflow/tfjs) Github repo.
+
+## Documentation Note
+
+>> The README you see here is for the [PoseNet 2.0 version](https://www.npmjs.com/package/@tensorflow-models/posenet). For README of the previous 1.0 version, please look at the [README published on NPM](https://www.npmjs.com/package/@tensorflow-models/posenet/v/1.0.3).
 
 ## Installation
 
@@ -32,65 +38,82 @@ npm install @tensorflow-models/posenet
 Either a single pose or multiple poses can be estimated from an image.
 Each methodology has its own algorithm and set of parameters.
 
-### Keypoints
-
-All keypoints are indexed by part id.  The parts and their ids are:
-
-| Id | Part |
-| -- | -- |
-| 0 | nose |
-| 1 | leftEye |
-| 2 | rightEye |
-| 3 | leftEar |
-| 4 | rightEar |
-| 5 | leftShoulder |
-| 6 | rightShoulder |
-| 7 | leftElbow |
-| 8 | rightElbow |
-| 9 | leftWrist |
-| 10 | rightWrist |
-| 11 | leftHip |
-| 12 | rightHip |
-| 13 | leftKnee |
-| 14 | rightKnee |
-| 15 | leftAnkle |
-| 16 | rightAnkle |
 
 ### Loading a pre-trained PoseNet Model
 
-In the first step of pose estimation, an image is fed through a pre-trained model.  PoseNet **comes with a few different versions of the model,** each corresponding to a MobileNet v1 architecture with a specific multiplier. To get started, a model must be loaded from a checkpoint, with the MobileNet architecture specified by the multiplier:
+In the first step of pose estimation, an image is fed through a pre-trained model.  PoseNet **comes with a few different versions of the model,** corresponding to variances of MobileNet v1 architecture and ResNet50 architecture. To get started, a model must be loaded from a checkpoint:
 
 ```javascript
-const net = await posenet.load(multiplier);
+const net = await posenet.load();
 ```
 
-#### Inputs
+By default, `posenet.load()` loads a faster and smaller model that is based on MobileNetV1 architecture and has a lower accuracy. If you want to load the larger and more accurate model, specify the architecture explicitly in `posenet.load()` using a `ModelConfig` dictionary:
 
-* **multiplier** - An optional number with values: `1.01`, `1.0`, `0.75`, or `0.50`. Defaults to `1.01`.   It is the float multiplier for the depth (number of channels) for all convolution operations. The value corresponds to a MobileNet architecture and checkpoint.  The larger the value, the larger the size of the layers, and more accurate the model at the cost of speed.  Set this to a smaller value to increase speed at the cost of accuracy.
 
-**By default,** PoseNet loads a model with a **`0.75`** multiplier.  This is recommended for computers with **mid-range/lower-end GPUS.**  A model with a **`1.00`** muliplier is recommended for computers with **powerful GPUS.**  A model with a **`0.50`** architecture is recommended for **mobile.**
+#### MobileNet (smaller, faster, less accurate)
+```javascript
+const net = await posenet.load({
+  architecture: 'MobileNetV1',
+  outputStride: 16,
+  inputResolution: 513,
+  multiplier: 0.75
+});
+```
+
+#### ResNet (larger, slower, more accurate) \*\*new!\*\*
+```javascript
+const net = await posenet.load({
+  architecture: 'ResNet50',
+  outputStride: 32,
+  inputResolution: 257,
+  quantBytes: 2
+});
+```
+
+#### Config params in posenet.load()
+
+ * **architecture** - Can be either `MobileNetV1` or `ResNet50`. It determines which PoseNet architecture to load.
+
+ * **outputStride** - Can be one of `8`, `16`, `32` (Stride `16`, `32` are supported for the ResNet architecture and stride `8`, `16`, `32` are supported for the MobileNetV1 architecture). It specifies the output stride of the PoseNet model. The smaller the value, the larger the output resolution, and more accurate the model at the cost of speed. Set this to a larger value to increase speed at the cost of accuracy.
+
+* **inputResolution** - Can be one of `161`, `193`, `257`, `289`, `321`, `353`, `385`, `417`, `449`, `481`, `513`, and `801`. Defaults to `257.` It specifies the size the image is resized to before it is fed into the PoseNet model. The larger the value, the more accurate the model at the cost of speed. Set this to a smaller value to increase speed at the cost of accuracy.
+
+ * **multiplier** - Can be one of `1.01`, `1.0`, `0.75`, or `0.50` (The value is used *only* by the MobileNetV1 architecture and not by the ResNet architecture). It is the float multiplier for the depth (number of channels) for all convolution ops. The larger the value, the larger the size of the layers, and more accurate the model at the cost of speed. Set this to a smaller value to increase speed at the cost of accuracy.
+
+ * **quantBytes** - This argument controls the bytes used for weight quantization. The available options are:
+
+   - `4`. 4 bytes per float (no quantization). Leads to highest accuracy and original model size (~90MB).
+
+   - `2`. 2 bytes per float. Leads to slightly lower accuracy and 2x model size reduction (~45MB).
+   - `1`. 1 byte per float. Leads to lower accuracy and 4x model size reduction (~22MB).
+
+* **modelUrl** - An optional string that specifies custom url of the model. This is useful for local development or countries that don't have access to the model hosted on GCP.
+
+
+**By default,** PoseNet loads a MobileNetV1 architecture with a **`0.75`** multiplier.  This is recommended for computers with **mid-range/lower-end GPUs.**  A model with a **`0.50`** multiplier is recommended for **mobile.** The ResNet achitecture is recommended for computers with **even more powerful GPUs**.
 
 ### Single-Person Pose Estimation
 
-Single pose estimation is the simpler and faster of the two algorithms. Its ideal use case is for when there is only one person in the image. The disadvantage is that if there are multiple persons in an image, keypoints from both persons will likely be estimated as being part of the same single pose—meaning, for example, that person #1’s left arm and person #2’s right knee might be conflated by the algorithm as belonging to the same pose.
+Single pose estimation is the simpler and faster of the two algorithms. Its ideal use case is for when there is only one person in the image. The disadvantage is that if there are multiple persons in an image, keypoints from both persons will likely be estimated as being part of the same single pose—meaning, for example, that person #1’s left arm and person #2’s right knee might be conflated by the algorithm as belonging to the same pose. Both the MobileNetV1 and the ResNet architecture support single-person pose estimation. The method returns a **single pose**:
 
 ```javascript
 const net = await posenet.load();
 
-const pose = await net.estimateSinglePose(image, imageScaleFactor, flipHorizontal, outputStride);
+const pose = await net.estimateSinglePose(image, {
+  flipHorizontal: false
+});
 ```
 
-#### Inputs
+#### Params in estimateSinglePose()
 
 * **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
    The input image to feed through the network.
-* **imageScaleFactor** - A number between 0.2 and 1.0. Defaults to 0.50.   What to scale the image by before feeding it through the network.  Set this number lower to scale down the image and increase the speed when feeding through the network at the cost of accuracy.
-* **flipHorizontal** - Defaults to false.  If the poses should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the poses to be returned in the proper orientation.
-* **outputStride** - the desired stride for the outputs when feeding the image through the model.  Must be 32, 16, 8.  Defaults to 16.  The higher the number, the faster the performance but slower the accuracy, and visa versa.
+* **inferenceConfig** - an object containing:
+  * **flipHorizontal** - Defaults to false.  If the pose should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the poses to be returned in the proper orientation.
 
 #### Returns
 
-It returns a `pose` with a confidence score and an array of keypoints indexed by part id, each with a score and position.
+It returns a `Promise` that resolves with a  **single** `pose`. The `pose` has a confidence score and an array of keypoints indexed by part id, each with a score and position.
 
 #### Example Usage
 
@@ -110,14 +133,15 @@ It returns a `pose` with a confidence score and an array of keypoints indexed by
   </body>
   <!-- Place your code in the script tag below. You can also use an external .js file -->
   <script>
-    var imageScaleFactor = 0.5;
-    var outputStride = 16;
     var flipHorizontal = false;
 
     var imageElement = document.getElementById('cat');
 
-    posenet.load().then(function(net){
-      return net.estimateSinglePose(imageElement, imageScaleFactor, flipHorizontal, outputStride)
+    posenet.load().then(function(net) {
+      const pose = net.estimateSinglePose(imageElement, {
+        flipHorizontal: true
+      });
+      return pose;
     }).then(function(pose){
       console.log(pose);
     })
@@ -129,16 +153,14 @@ It returns a `pose` with a confidence score and an array of keypoints indexed by
 
 ```javascript
 import * as posenet from '@tensorflow-models/posenet';
-const imageScaleFactor = 0.5;
-const outputStride = 16;
-const flipHorizontal = false;
 
 async function estimatePoseOnImage(imageElement) {
   // load the posenet model from a checkpoint
   const net = await posenet.load();
 
-  const pose = await net.estimateSinglePose(imageElement, imageScaleFactor, flipHorizontal, outputStride);
-
+  const pose = await net.estimateSinglePose(imageElement, {
+    flipHorizontal: false
+  });
   return pose;
 }
 
@@ -296,30 +318,59 @@ which would produce the output:
 }
 ```
 
+### Keypoints
+
+All keypoints are indexed by part id.  The parts and their ids are:
+
+| Id | Part |
+| -- | -- |
+| 0 | nose |
+| 1 | leftEye |
+| 2 | rightEye |
+| 3 | leftEar |
+| 4 | rightEar |
+| 5 | leftShoulder |
+| 6 | rightShoulder |
+| 7 | leftElbow |
+| 8 | rightElbow |
+| 9 | leftWrist |
+| 10 | rightWrist |
+| 11 | leftHip |
+| 12 | rightHip |
+| 13 | leftKnee |
+| 14 | rightKnee |
+| 15 | leftAnkle |
+| 16 | rightAnkle |
+
+
 ### Multi-Person Pose Estimation
 
-Multiple Pose estimation can decode multiple poses in an image. It is more complex and slightly slower than the single pose-algorithm, but has the advantage that if multiple people appear in an image, their detected keypoints are less likely to be associated with the wrong pose. Even if the use case is to detect a single person’s pose, this algorithm may be more desirable in that the accidental effect of two poses being joined together won’t occur when multiple people appear in the image. It uses the `Fast greedy decoding` algorithm from the research paper [PersonLab: Person Pose Estimation and Instance Segmentation with a Bottom-Up, Part-Based, Geometric Embedding Model](https://arxiv.org/pdf/1803.08225.pdf).
+Multiple Pose estimation can decode multiple poses in an image. It is more complex and slightly slower than the single person algorithm, but has the advantage that if multiple people appear in an image, their detected keypoints are less likely to be associated with the wrong pose. Even if the usecase is to detect a single person’s pose, this algorithm may be more desirable in that the accidental effect of two poses being joined together won’t occur when multiple people appear in the image. It uses the `Fast greedy decoding` algorithm from the research paper [PersonLab: Person Pose Estimation and Instance Segmentation with a Bottom-Up, Part-Based, Geometric Embedding Model](https://arxiv.org/pdf/1803.08225.pdf). Both MobileNetV1 and ResNet architecture support multi-person pose estimation. Returns a **promise** that resolves with an **array of poses.**
 
 ```javascript
 const net = await posenet.load();
 
-const poses = await net.estimateMultiplePoses(image, imageScaleFactor, flipHorizontal, outputStride, maxPoseDetections, scoreThreshold, nmsRadius);
+const poses = await net.estimateMultiplePoses(image, {
+  flipHorizontal: false,
+  maxDetections: 5,
+  scoreThreshold: 0.5,
+  nmsRadius: 20
+});
 ```
 
-#### Inputs
+#### Params in estimateMultiplePoses()
 
 * **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
    The input image to feed through the network.
-* **imageScaleFactor** - A number between 0.2 and 1.0. Defaults to 0.50.   What to scale the image by before feeding it through the network.  Set this number lower to scale down the image and increase the speed when feeding through the network at the cost of accuracy.
-* **flipHorizontal** - Defaults to false.  If the poses should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the poses to be returned in the proper orientation.
-* **outputStride** - the desired stride for the outputs when feeding the image through the model.  Must be 32, 16, 8.  Defaults to 16.  The higher the number, the faster the performance but slower the accuracy, and visa versa.
-* **maxPoseDetections** (optional) - the maximum number of poses to detect. Defaults to 5.
-* **scoreThreshold** (optional) - Only return instance detections that have root part score greater or equal to this value. Defaults to 0.5.
-* **nmsRadius** (optional) - Non-maximum suppression part distance. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away. Defaults to 20.
+* **inferenceConfig** - an object containing:
+  * **flipHorizontal** - Defaults to false.  If the poses should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the poses to be returned in the proper orientation.
+  * **maxDetections** - the maximum number of poses to detect. Defaults to 5.
+  * **scoreThreshold** - Only return instance detections that have root part score greater or equal to this value. Defaults to 0.5.
+  * **nmsRadius** - Non-maximum suppression part distance. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away. Defaults to 20.
 
 #### Returns
 
-It returns a `promise` that resolves with an array of `poses`, each with a confidence score and an array of `keypoints` indexed by part id, each with a score and position.
+It returns a `promise` that resolves with an array of `pose`s, each with a confidence score and an array of `keypoints` indexed by part id, each with a score and position.
 
 ##### via Script Tag
 
@@ -337,15 +388,14 @@ It returns a `promise` that resolves with an array of `poses`, each with a confi
   </body>
   <!-- Place your code in the script tag below. You can also use an external .js file -->
   <script>
-    var imageScaleFactor = 0.5;
-    var flipHorizontal = false;
-    var outputStride = 16;
-    var maxPoseDetections = 2;
-
     var imageElement = document.getElementById('cat');
 
     posenet.load().then(function(net){
-      return net.estimateMultiplePoses(imageElement, 0.5, flipHorizontal, outputStride, maxPoseDetections)
+      return net.estimateMultiplePoses(imageElement, {
+        flipHorizontal: false,
+        maxDetections: 2,
+        scoreThreshold: 0.6,
+        nmsRadius: 20})
     }).then(function(poses){
       console.log(poses);
     })
@@ -358,17 +408,15 @@ It returns a `promise` that resolves with an array of `poses`, each with a confi
 ```javascript
 import * as posenet from '@tensorflow-models/posenet';
 
-const imageScaleFactor = 0.5;
-const outputStride = 16;
-const flipHorizontal = false;
-const maxPoseDetections = 2;
-
 async function estimateMultiplePosesOnImage(imageElement) {
   const net = await posenet.load();
 
   // estimate poses
-  const poses = await net.estimateMultiplePoses(imageElement,
-    imageScaleFactor, flipHorizontal, outputStride, maxPoseDetections);
+  const poses = await net.estimateMultiplePoses(imageElement, {
+        flipHorizontal: false,
+        maxDetections: 2,
+        scoreThreshold: 0.6,
+        nmsRadius: 20});
 
   return poses;
 }

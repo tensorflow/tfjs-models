@@ -14,13 +14,16 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as tf from '@tensorflow/tfjs';
+import * as tfconv from '@tensorflow/tfjs-converter';
+import * as tf from '@tensorflow/tfjs-core';
 import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
+import {expectArrayBuffersEqual} from '@tensorflow/tfjs-core/dist/test_util';
+
 import {load} from './index';
 
 describeWithFlags('ObjectDetection', NODE_ENVS, () => {
   beforeEach(() => {
-    spyOn(tf, 'loadGraphModel').and.callFake(() => {
+    spyOn(tfconv, 'loadGraphModel').and.callFake(() => {
       const model = {
         executeAsync: (
             x: tf
@@ -47,5 +50,21 @@ describeWithFlags('ObjectDetection', NODE_ENVS, () => {
     const data = await objectDetection.detect(x, 1);
 
     expect(data).toEqual([{bbox: [227, 227, 0, 0], class: 'person', score: 1}]);
+  });
+  it('should allow custom model url', async () => {
+    const objectDetection = await load({base: 'mobilenet_v1'});
+
+    expect(tfconv.loadGraphModel)
+        .toHaveBeenCalledWith(
+            'https://storage.googleapis.com/tfjs-models/' +
+            'savedmodel/ssd_mobilenet_v1/model.json');
+  });
+
+  it('should allow custom model url', async () => {
+    const objectDetection =
+        await load({modelUrl: 'https://test.org/model.json'});
+
+    expect(tfconv.loadGraphModel)
+        .toHaveBeenCalledWith('https://test.org/model.json');
   });
 });
