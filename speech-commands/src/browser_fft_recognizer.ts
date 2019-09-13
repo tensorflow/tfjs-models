@@ -16,6 +16,8 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
+import * as tfd from '@tensorflow/tfjs-data';
+
 import {SpectrogramCallback, Tracker} from './browser_fft_extractor';
 import {loadMetadataJson, normalize, normalizeFloat32Array} from './browser_fft_utils';
 import {BACKGROUND_NOISE_TAG, Dataset} from './dataset';
@@ -174,12 +176,14 @@ export class BrowserFftSpeechCommandRecognizer implements
   async listen(
       callback: RecognizerCallback,
       config?: StreamingRecognitionConfig): Promise<void> {
+    console.log('1');
     if (this.streaming) {
       throw new Error(
           'Cannot start streaming again when streaming is ongoing.');
     }
 
     await this.ensureModelLoaded();
+    console.log('2');
 
     if (config == null) {
       config = {};
@@ -265,14 +269,14 @@ export class BrowserFftSpeechCommandRecognizer implements
     const suppressionTimeMillis = config.suppressionTimeMillis == null ?
         this.DEFAULT_SUPPRESSION_TIME_MILLIS :
         config.suppressionTimeMillis;
-    this.microphoneIterator = await tf.data.microphone({
+    console.log('3');
+
+    this.microphoneIterator = await tfd.microphone({
       // sampleRateHz: this.parameters.sampleRateHz,
       numFramesPerSpectrogram: this.nonBatchInputShape[0],
       columnTruncateLength: this.nonBatchInputShape[1],
-      suppressionTimeMillis,
-      // spectrogramCallback,
-      overlapFactor
     });
+
 
     this.inferenceInterval = setInterval(this.doInference.bind(this), 25);
 
@@ -282,7 +286,13 @@ export class BrowserFftSpeechCommandRecognizer implements
   async doInference() {
     const shouldFire = this.tracker.tick();
     if (shouldFire) {
-      const inputTensor = (await this.microphoneIterator.next()).value;
+      const result = (await this.microphoneIterator.next());
+      console.log(result);
+      const inputTensor = tf.tidy(() => {
+        return (result.value as any).spectrogram.expandDims(0);
+      });
+
+      console.log(inputTensor);
       if (inputTensor != null) {
         const shouldRest = await this.spectrogramCallback(inputTensor);
         if (shouldRest) {
@@ -564,13 +574,11 @@ export class BrowserFftSpeechCommandRecognizer implements
 
   private async recognizeOnline(): Promise<SpectrogramData> {
     return new Promise<SpectrogramData>(async (resolve, reject) => {
-      this.microphoneIterator = await tf.data.microphone({
+      this.microphoneIterator = await tfd.microphone({
         // sampleRateHz: this.parameters.sampleRateHz,
         numFramesPerSpectrogram: this.nonBatchInputShape[0],
         columnTruncateLength: this.nonBatchInputShape[1],
-        suppressionTimeMillis: 0,
         // spectrogramCallback,
-        overlapFactor: 0
       });
 
       this.inferenceInterval =
@@ -730,13 +738,11 @@ class TransferBrowserFftSpeechCommandRecognizer extends
           options.snippetDurationSec / totalDurationSec;
       const overlapFactor = 1 - stepFactor;
 
-      this.microphoneIterator = await tf.data.microphone({
+      this.microphoneIterator = await tfd.microphone({
         // sampleRateHz: this.parameters.sampleRateHz,
         numFramesPerSpectrogram,
         columnTruncateLength: this.nonBatchInputShape[1],
-        suppressionTimeMillis: 0,
         // spectrogramCallback,
-        overlapFactor,
         // includeRawAudio: options.includeRawAudio
       });
       this.inferenceInterval =
