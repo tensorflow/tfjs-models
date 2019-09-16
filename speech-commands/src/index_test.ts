@@ -19,15 +19,16 @@
 const packageJSON = require('../package.json');
 import * as tf from '@tensorflow/tfjs';
 import * as speechCommands from './index';
+import {describeAllEnvs} from './test_utils';
 
-describe('Public API', () => {
+describeAllEnvs('Public API', () => {
   it('version matches package.json', () => {
     expect(typeof speechCommands.version).toEqual('string');
     expect(speechCommands.version).toEqual(packageJSON.version);
   });
 });
 
-describe('Creating recognizer', () => {
+describeAllEnvs('Creating recognizer', () => {
   async function makeModelArtifacts(): Promise<tf.io.ModelArtifacts> {
     const model = tf.sequential();
     model.add(tf.layers.conv2d({

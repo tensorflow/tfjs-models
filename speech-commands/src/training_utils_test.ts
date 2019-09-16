@@ -18,12 +18,11 @@
 import '@tensorflow/tfjs-node';
 
 import * as tf from '@tensorflow/tfjs';
-import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
-import {expectTensorsClose} from './test_utils';
+import {describeNodeEnvs, expectTensorsClose} from './test_utils';
 import {balancedTrainValSplit} from './training_utils';
 
-describeWithFlags('balancedTrainValSplit', NODE_ENVS, () => {
+describeNodeEnvs('balancedTrainValSplit', () => {
   it('Enough data for split', () => {
     const xs = tf.randomNormal([8, 3]);
     const ys = tf.oneHot(tf.tensor1d([0, 0, 0, 0, 1, 1, 1, 1], 'int32'), 2);

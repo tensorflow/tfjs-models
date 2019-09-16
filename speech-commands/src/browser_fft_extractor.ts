@@ -305,7 +305,6 @@ export class Tracker {
    * @param suppressionPeriod The suppression period, in number of frames.
    */
   constructor(period: number, suppressionPeriod: number) {
-    console.log(period, suppressionPeriod);
     this.period = period;
     this.suppressionTime = suppressionPeriod == null ? 0 : suppressionPeriod;
     this.counter = 0;
@@ -322,9 +321,6 @@ export class Tracker {
    */
   tick(): boolean {
     this.counter++;
-    // console.log(
-    //     this.counter, this.period, this.suppressionOnset,
-    //     this.suppressionTime);
     const shouldFire = (this.counter % this.period === 0) &&
         (this.suppressionOnset == null ||
          this.counter - this.suppressionOnset > this.suppressionTime);

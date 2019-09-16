@@ -16,15 +16,12 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 import {BrowserFftFeatureExtractor, flattenQueue, getInputTensorFromFrequencyData} from './browser_fft_extractor';
 import * as BrowserFftUtils from './browser_fft_utils';
 import {FakeAudioContext, FakeAudioMediaStream} from './browser_test_utils';
-import {expectTensorsClose} from './test_utils';
+import {describeNodeEnvs, expectTensorsClose} from './test_utils';
 
-const testEnvs = NODE_ENVS;
-
-describeWithFlags('flattenQueue', testEnvs, () => {
+describeNodeEnvs('flattenQueue', () => {
   it('3 frames, 2 values each', () => {
     const queue = [[1, 1], [2, 2], [3, 3]].map(x => new Float32Array(x));
     expect(flattenQueue(queue)).toEqual(new Float32Array([1, 1, 2, 2, 3, 3]));
@@ -41,7 +38,7 @@ describeWithFlags('flattenQueue', testEnvs, () => {
   });
 });
 
-describeWithFlags('getInputTensorFromFrequencyData', testEnvs, () => {
+describeNodeEnvs('getInputTensorFromFrequencyData', () => {
   it('6 frames, 2 vals each', () => {
     const freqData = new Float32Array([1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6]);
     const numFrames = 6;
@@ -52,7 +49,7 @@ describeWithFlags('getInputTensorFromFrequencyData', testEnvs, () => {
   });
 });
 
-describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
+describeNodeEnvs('BrowserFftFeatureExtractor', () => {
   function setUpFakes() {
     spyOn(BrowserFftUtils, 'getAudioContextConstructor')
         .and.callFake(() => FakeAudioContext.createInstance);

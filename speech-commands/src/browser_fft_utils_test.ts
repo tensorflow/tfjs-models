@@ -16,10 +16,11 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import {normalize, normalizeFloat32Array} from './browser_fft_utils';
-import {expectTensorsClose} from './test_utils';
 
-describe('normalize', () => {
+import {normalize, normalizeFloat32Array} from './browser_fft_utils';
+import {describeAllEnvs, expectTensorsClose} from './test_utils';
+
+describeAllEnvs('normalize', () => {
   it('Non-constant value; no memory leak', () => {
     const x = tf.tensor4d([1, 2, 3, 4], [1, 2, 2, 1]);
     const numTensors0 = tf.memory().numTensors;
@@ -42,7 +43,7 @@ describe('normalize', () => {
   });
 });
 
-describe('normalizeFloat32Array', () => {
+describeAllEnvs('normalizeFloat32Array', () => {
   it('Length-4 input', () => {
     const xs = new Float32Array([1, 2, 3, 4]);
     const numTensors0 = tf.memory().numTensors;
