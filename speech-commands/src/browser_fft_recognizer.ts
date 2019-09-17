@@ -16,14 +16,13 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-
-import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
-import {loadMetadataJson, normalize, normalizeFloat32Array} from './browser_fft_utils';
+import {SpectrogramCallback} from './browser_fft_extractor';
+import {loadMetadataJson, normalize} from './browser_fft_utils';
 import {BACKGROUND_NOISE_TAG, Dataset} from './dataset';
-import {concatenateFloat32Arrays} from './generic_utils';
 import {balancedTrainValSplit} from './training_utils';
 import {AudioDataAugmentationOptions, EvaluateConfig, EvaluateResult, Example, ExampleCollectionOptions, RecognizeConfig, RecognizerCallback, RecognizerParams, ROCCurve, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerMetadata, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
 import {version} from './version';
+
 
 export const UNKNOWN_TAG = '_unknown_';
 
@@ -76,7 +75,7 @@ export class BrowserFftSpeechCommandRecognizer implements
 
   protected nonBatchInputShape: [number, number, number];
   private elementsPerExample: number;
-  protected audioDataExtractor: BrowserFftFeatureExtractor;
+  protected microphoneIterator: tf.data.MicrophoneIterator;
 
   private transferRecognizers:
       {[name: string]: TransferBrowserFftSpeechCommandRecognizer} = {};
@@ -87,6 +86,12 @@ export class BrowserFftSpeechCommandRecognizer implements
   // The second-last dense layer in the base model.
   // To be used for unfreezing during fine-tuning.
   protected secondLastBaseDenseLayer: tf.layers.Layer;
+
+  // tslint:disable-next-line:no-any
+  protected inferenceInterval: any;
+
+  protected spectrogramCallback: SpectrogramCallback;
+  protected tracker: Tracker;
 
   /**
    * Constructor of BrowserFftSpeechCommandRecognizer.
@@ -132,6 +137,9 @@ export class BrowserFftSpeechCommandRecognizer implements
       sampleRateHz: this.SAMPLE_RATE_HZ,
       fftSize: this.FFT_SIZE
     };
+
+    const period = Math.max(1, Math.round(42 * (1 - 0.5)));
+    this.tracker = new Tracker(period, 43);
   }
 
   /**
@@ -207,8 +215,7 @@ export class BrowserFftSpeechCommandRecognizer implements
         () => `Expected overlapFactor to be >= 0 and < 1, but got ${
             overlapFactor}`);
 
-    const spectrogramCallback: SpectrogramCallback =
-        async (x: tf.Tensor, timeData?: tf.Tensor) => {
+    this.spectrogramCallback = async (x: tf.Tensor, timeData?: tf.Tensor) => {
       const normalizedX = normalize(x);
       let y: tf.Tensor;
       let embedding: tf.Tensor;
@@ -257,18 +264,36 @@ export class BrowserFftSpeechCommandRecognizer implements
     const suppressionTimeMillis = config.suppressionTimeMillis == null ?
         this.DEFAULT_SUPPRESSION_TIME_MILLIS :
         config.suppressionTimeMillis;
-    this.audioDataExtractor = new BrowserFftFeatureExtractor({
-      sampleRateHz: this.parameters.sampleRateHz,
+    this.microphoneIterator = await tf.data.microphone({
       numFramesPerSpectrogram: this.nonBatchInputShape[0],
-      columnTruncateLength: this.nonBatchInputShape[1],
-      suppressionTimeMillis,
-      spectrogramCallback,
-      overlapFactor
+      columnTruncateLength: this.nonBatchInputShape[1]
     });
 
-    await this.audioDataExtractor.start(config.audioTrackConstraints);
+    this.inferenceInterval = setInterval(this.doInference.bind(this), 25);
 
     this.streaming = true;
+  }
+
+  async doInference() {
+    const shouldFire = this.tracker.tick();
+    if (shouldFire) {
+      const result = (await this.microphoneIterator.next());
+      console.log(result);
+      const inputTensor = tf.tidy(() => {
+        return (result.value as any).spectrogram.expandDims(0);
+      });
+
+      console.log(inputTensor);
+      if (inputTensor != null) {
+        const shouldRest = await this.spectrogramCallback(inputTensor);
+        if (shouldRest) {
+          this.tracker.suppress();
+        }
+        inputTensor.dispose();
+      } else {
+        console.log('no tensor');
+      }
+    }
   }
 
   /**
@@ -404,8 +429,9 @@ export class BrowserFftSpeechCommandRecognizer implements
     if (!this.streaming) {
       throw new Error('Cannot stop streaming when streaming is not ongoing.');
     }
-    await this.audioDataExtractor.stop();
+    this.microphoneIterator.stop();
     this.streaming = false;
+    clearInterval(this.inferenceInterval);
   }
 
   /**
@@ -537,26 +563,13 @@ export class BrowserFftSpeechCommandRecognizer implements
   }
 
   private async recognizeOnline(): Promise<SpectrogramData> {
-    return new Promise<SpectrogramData>((resolve, reject) => {
-      const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
-        const normalizedX = normalize(x);
-        await this.audioDataExtractor.stop();
-        resolve({
-          data: await normalizedX.data() as Float32Array,
-          frameSize: this.nonBatchInputShape[1],
-        });
-        normalizedX.dispose();
-        return false;
-      };
-      this.audioDataExtractor = new BrowserFftFeatureExtractor({
-        sampleRateHz: this.parameters.sampleRateHz,
+    return new Promise<SpectrogramData>(async (resolve, reject) => {
+      this.microphoneIterator = await tf.data.microphone({
         numFramesPerSpectrogram: this.nonBatchInputShape[0],
-        columnTruncateLength: this.nonBatchInputShape[1],
-        suppressionTimeMillis: 0,
-        spectrogramCallback,
-        overlapFactor: 0
+        columnTruncateLength: this.nonBatchInputShape[1]
       });
-      this.audioDataExtractor.start();
+      this.inferenceInterval =
+          setInterval(this.doInference.bind(this), 1024 / 44100 * 1e3);
     });
   }
 
@@ -706,96 +719,18 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     const totalDurationSec = frameDurationSec * numFramesPerSpectrogram;
 
     this.streaming = true;
-    return new Promise<SpectrogramData>(resolve => {
+    return new Promise<SpectrogramData>(async resolve => {
       const stepFactor = options.snippetDurationSec == null ?
           1 :
           options.snippetDurationSec / totalDurationSec;
-      const overlapFactor = 1 - stepFactor;
-      const callbackCountTarget = Math.round(1 / stepFactor);
-      let callbackCount = 0;
-      let lastIndex = -1;
-      const spectrogramSnippets: Float32Array[] = [];
 
-      const spectrogramCallback: SpectrogramCallback =
-          async (freqData: tf.Tensor, timeData?: tf.Tensor) => {
-        // TODO(cais): can we consolidate the logic in the two branches?
-        if (options.onSnippet == null) {
-          const normalizedX = normalize(freqData);
-          this.dataset.addExample({
-            label: word,
-            spectrogram: {
-              data: await normalizedX.data() as Float32Array,
-              frameSize: this.nonBatchInputShape[1],
-            },
-            rawAudio: options.includeRawAudio ? {
-              data: await timeData.data() as Float32Array,
-              sampleRateHz: this.audioDataExtractor.sampleRateHz
-            } :
-                                                undefined
-          });
-          normalizedX.dispose();
-          await this.audioDataExtractor.stop();
-          this.streaming = false;
-          this.collateTransferWords();
-          resolve({
-            data: await freqData.data() as Float32Array,
-            frameSize: this.nonBatchInputShape[1],
-          });
-        } else {
-          const data = await freqData.data() as Float32Array;
-          if (lastIndex === -1) {
-            lastIndex = data.length;
-          }
-          let i = lastIndex - 1;
-          while (data[i] !== 0 && i >= 0) {
-            i--;
-          }
-          const increment = lastIndex - i - 1;
-          lastIndex = i + 1;
-          const snippetData = data.slice(data.length - increment, data.length);
-          spectrogramSnippets.push(snippetData);
-
-          if (options.onSnippet != null) {
-            options.onSnippet(
-                {data: snippetData, frameSize: this.nonBatchInputShape[1]});
-          }
-
-          if (callbackCount++ === callbackCountTarget) {
-            await this.audioDataExtractor.stop();
-            this.streaming = false;
-            this.collateTransferWords();
-
-            const normalized = normalizeFloat32Array(
-                concatenateFloat32Arrays(spectrogramSnippets));
-            const finalSpectrogram: SpectrogramData = {
-              data: normalized,
-              frameSize: this.nonBatchInputShape[1]
-            };
-            this.dataset.addExample({
-              label: word,
-              spectrogram: finalSpectrogram,
-              rawAudio: options.includeRawAudio ? {
-                data: await timeData.data() as Float32Array,
-                sampleRateHz: this.audioDataExtractor.sampleRateHz
-              } :
-                                                  undefined
-            });
-            // TODO(cais): Fix 1-tensor memory leak.
-            resolve(finalSpectrogram);
-          }
-        }
-        return false;
-      };
-      this.audioDataExtractor = new BrowserFftFeatureExtractor({
-        sampleRateHz: this.parameters.sampleRateHz,
+      this.microphoneIterator = await tf.data.microphone({
+        // sampleRateHz: this.parameters.sampleRateHz,
         numFramesPerSpectrogram,
-        columnTruncateLength: this.nonBatchInputShape[1],
-        suppressionTimeMillis: 0,
-        spectrogramCallback,
-        overlapFactor,
-        includeRawAudio: options.includeRawAudio
+        columnTruncateLength: this.nonBatchInputShape[1]
       });
-      this.audioDataExtractor.start(options.audioTrackConstraints);
+      this.inferenceInterval =
+          setInterval(this.doInference.bind(this), 1024 / 44100 * 1e3);
     });
   }
 
