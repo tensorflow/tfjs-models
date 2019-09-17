@@ -81,8 +81,8 @@ export class BrowserFftSpeechCommandRecognizer implements
   private transferRecognizers:
       {[name: string]: TransferBrowserFftSpeechCommandRecognizer} = {};
 
-  private modelURL: string;
-  private metadataURL: string;
+  private modelArtifactsOrURL: tf.io.ModelArtifacts|string;
+  private metadataOrURL: SpeechCommandRecognizerMetadata|string;
 
   // The second-last dense layer in the base model.
   // To be used for unfreezing during fine-tuning.
@@ -99,20 +99,26 @@ export class BrowserFftSpeechCommandRecognizer implements
    *
    * @param vocabulary An optional vocabulary specifier. Mutually exclusive
    *   with `modelURL` and `metadataURL`.
-   * @param modelURL An optional, custom model URL pointing to a model.json
+   * @param modelArtifactsOrURL An optional, custom model URL pointing to a
+   *     model.json, or modelArtifacts in the format of `tf.io.ModelArtifacts`.
    *   file. Supported schemes: http://, https://, and node.js-only: file://.
    *   Mutually exclusive with `vocabulary`. If provided, `metadatURL`
    *   most also be provided.
-   * @param metadataURL A custom metadata URL pointing to a metadata.json
-   *   file. Must be provided together with `modelURL`.
+   * @param metadataOrURL A custom metadata URL pointing to a metadata.json
+   *   file. Or it can be a metadata JSON object itself. Must be provided
+   *   together with `modelArtifactsOrURL`.
    */
-  constructor(vocabulary?: string, modelURL?: string, metadataURL?: string) {
+  constructor(
+      vocabulary?: string, modelArtifactsOrURL?: tf.io.ModelArtifacts|string,
+      metadataOrURL?: SpeechCommandRecognizerMetadata|string) {
+    // TODO(cais): Consolidate the fields into a single config object when
+    // upgrading to v1.0.
     tf.util.assert(
-        modelURL == null && metadataURL == null ||
-            modelURL != null && metadataURL != null,
+        modelArtifactsOrURL == null && metadataOrURL == null ||
+            modelArtifactsOrURL != null && metadataOrURL != null,
         () => `modelURL and metadataURL must be both provided or ` +
             `both not provided.`);
-    if (modelURL == null) {
+    if (modelArtifactsOrURL == null) {
       if (vocabulary == null) {
         vocabulary = BrowserFftSpeechCommandRecognizer.DEFAULT_VOCABULARY_NAME;
       } else {
@@ -122,16 +128,17 @@ export class BrowserFftSpeechCommandRecognizer implements
             () => `Invalid vocabulary name: '${vocabulary}'`);
       }
       this.vocabulary = vocabulary;
-      this.modelURL = `${this.MODEL_URL_PREFIX}/${this.vocabulary}/model.json`;
-      this.metadataURL =
+      this.modelArtifactsOrURL =
+          `${this.MODEL_URL_PREFIX}/${this.vocabulary}/model.json`;
+      this.metadataOrURL =
           `${this.MODEL_URL_PREFIX}/${this.vocabulary}/metadata.json`;
     } else {
       tf.util.assert(
           vocabulary == null,
           () => `vocabulary name must be null or undefined when modelURL is ` +
               `provided`);
-      this.modelURL = modelURL;
-      this.metadataURL = metadataURL;
+      this.modelArtifactsOrURL = modelArtifactsOrURL;
+      this.metadataOrURL = metadataOrURL;
     }
 
     this.parameters = {
@@ -323,7 +330,17 @@ export class BrowserFftSpeechCommandRecognizer implements
 
     await this.ensureMetadataLoaded();
 
-    const model = await tf.loadLayersModel(this.modelURL);
+    let model: tf.LayersModel;
+    if (typeof this.modelArtifactsOrURL === 'string') {
+      model = await tf.loadLayersModel(this.modelArtifactsOrURL);
+    } else {
+      // this.modelArtifactsOrURL is an instance of `tf.io.ModelArtifacts`.
+      model = await tf.loadLayersModel(tf.io.fromMemory(
+          this.modelArtifactsOrURL.modelTopology,
+          this.modelArtifactsOrURL.weightSpecs,
+          this.modelArtifactsOrURL.weightData));
+    }
+
     // Check the validity of the model's input shape.
     if (model.inputs.length !== 1) {
       throw new Error(
@@ -417,7 +434,10 @@ export class BrowserFftSpeechCommandRecognizer implements
     if (this.words != null) {
       return;
     }
-    const metadataJSON = await loadMetadataJson(this.metadataURL);
+
+    const metadataJSON = typeof this.metadataOrURL === 'string' ?
+        await loadMetadataJson(this.metadataOrURL) :
+        this.metadataOrURL;
 
     if (metadataJSON.wordLabels == null) {
       // In some legacy formats, the field 'words', instead of 'wordLabels',

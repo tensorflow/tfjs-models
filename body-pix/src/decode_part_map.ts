@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
 
 /**
  * Takes the sigmoid of the part heatmap output and generates a 2d one-hot
