@@ -288,7 +288,7 @@ export class BrowserFftSpeechCommandRecognizer implements
 
     console.log(frameDurationMillis);
     this.inferenceInterval =
-        setInterval(this.doInference.bind(this), frameDurationMillis * 1.5);
+        setInterval(this.doInference.bind(this), frameDurationMillis * 2);
 
     this.streaming = true;
   }
