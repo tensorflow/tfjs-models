@@ -16,7 +16,6 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import {SpectrogramCallback} from './browser_fft_extractor';
 import {loadMetadataJson, normalize} from './browser_fft_utils';
 import {BACKGROUND_NOISE_TAG, Dataset} from './dataset';
 import {balancedTrainValSplit} from './training_utils';
@@ -48,6 +47,8 @@ export function getMajorAndMinorVersion(version: string) {
  * windows from a long spectrogram.
  */
 const DEFAULT_WINDOW_HOP_RATIO = 0.25;
+
+let counter = 0;
 
 /**
  * Speech-Command Recognizer using browser-native (WebAudio) spectral featutres.
@@ -137,9 +138,6 @@ export class BrowserFftSpeechCommandRecognizer implements
       sampleRateHz: this.SAMPLE_RATE_HZ,
       fftSize: this.FFT_SIZE
     };
-
-    const period = Math.max(1, Math.round(42 * (1 - 0.5)));
-    this.tracker = new Tracker(period, 43);
   }
 
   /**
@@ -215,7 +213,7 @@ export class BrowserFftSpeechCommandRecognizer implements
         () => `Expected overlapFactor to be >= 0 and < 1, but got ${
             overlapFactor}`);
 
-    this.spectrogramCallback = async (x: tf.Tensor, timeData?: tf.Tensor) => {
+    this.spectrogramCallback = async (x: tf.Tensor) => {
       const normalizedX = normalize(x);
       let y: tf.Tensor;
       let embedding: tf.Tensor;
@@ -244,6 +242,7 @@ export class BrowserFftSpeechCommandRecognizer implements
           };
         }
 
+        console.log(maxScore);
         let wordDetected = true;
         if (!invokeCallbackOnNoiseAndUnknown) {
           // Skip background noise and unknown tokens.
@@ -264,12 +263,25 @@ export class BrowserFftSpeechCommandRecognizer implements
     const suppressionTimeMillis = config.suppressionTimeMillis == null ?
         this.DEFAULT_SUPPRESSION_TIME_MILLIS :
         config.suppressionTimeMillis;
+    const frameDurationMillis =
+        this.parameters.fftSize / this.parameters.sampleRateHz * 1e3;
+    const suppressionPeriod =
+        Math.round(suppressionTimeMillis / frameDurationMillis);
+
+    const period = Math.max(
+        1, Math.round(this.nonBatchInputShape[0] * (1 - overlapFactor)));
+    this.tracker = new Tracker(period, suppressionPeriod);
+
     this.microphoneIterator = await tf.data.microphone({
+      fftSize: this.parameters.fftSize,
+      sampleRateHz: this.SAMPLE_RATE_HZ,
       numFramesPerSpectrogram: this.nonBatchInputShape[0],
       columnTruncateLength: this.nonBatchInputShape[1]
     });
 
-    this.inferenceInterval = setInterval(this.doInference.bind(this), 25);
+    console.log(frameDurationMillis);
+    this.inferenceInterval =
+        setInterval(this.doInference.bind(this), frameDurationMillis * 1.5);
 
     this.streaming = true;
   }
@@ -277,15 +289,18 @@ export class BrowserFftSpeechCommandRecognizer implements
   async doInference() {
     const shouldFire = this.tracker.tick();
     if (shouldFire) {
-      const result = (await this.microphoneIterator.next());
-      console.log(result);
+      console.log('shouldFire ', counter);
+      const result = (await this.microphoneIterator.capture());
       const inputTensor = tf.tidy(() => {
-        return (result.value as any).spectrogram.expandDims(0);
+        return (result as any).spectrogram.expandDims(0);
       });
+      result.spectrogram.dispose();
 
-      console.log(inputTensor);
+      console.log('before inputtensor != null');
       if (inputTensor != null) {
+        console.log('callback', counter++);
         const shouldRest = await this.spectrogramCallback(inputTensor);
+        console.log('should rest ', shouldRest);
         if (shouldRest) {
           this.tracker.suppress();
         }
@@ -1342,3 +1357,54 @@ export async function deleteSavedTransferModel(name: string): Promise<void> {
       SAVED_MODEL_METADATA_KEY, JSON.stringify(metadataMap));
   await tf.io.removeModel(getCanonicalSavePath(name));
 }
+
+/**
+ * A class that manages the firing of events based on periods
+ * and suppression time.
+ */
+export class Tracker {
+  readonly period: number;
+  readonly suppressionTime: number;
+
+  private counter: number;
+  private suppressionOnset: number;
+
+  /**
+   * Constructor of Tracker.
+   *
+   * @param period The event-firing period, in number of frames.
+   * @param suppressionPeriod The suppression period, in number of frames.
+   */
+  constructor(period: number, suppressionPeriod: number) {
+    this.period = period;
+    this.suppressionTime = suppressionPeriod == null ? 0 : suppressionPeriod;
+    this.counter = 0;
+
+    tf.util.assert(
+        this.period > 0,
+        () => `Expected period to be positive, but got ${this.period}`);
+  }
+
+  /**
+   * Mark a frame.
+   *
+   * @returns Whether the event should be fired at the current frame.
+   */
+  tick(): boolean {
+    this.counter++;
+    const shouldFire = (this.counter % this.period === 0) &&
+        (this.suppressionOnset == null ||
+         this.counter - this.suppressionOnset > this.suppressionTime);
+    return shouldFire;
+  }
+
+  /**
+   * Order the beginning of a supression period.
+   */
+  suppress() {
+    this.suppressionOnset = this.counter;
+  }
+}
+
+export type SpectrogramCallback = (freqData: tf.Tensor, timeData?: tf.Tensor) =>
+    Promise<boolean>;
