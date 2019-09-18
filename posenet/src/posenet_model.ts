@@ -332,9 +332,13 @@ export class PoseNet {
     const {heatmapScores, offsets, displacementFwd, displacementBwd} =
         this.baseModel.predict(resized);
 
-    const [scoresBuffer, offsetsBuffer, displacementsFwdBuffer, displacementsBwdBuffer] =
-        await toTensorBuffers3D(
-            [heatmapScores, offsets, displacementFwd, displacementBwd]);
+    const allTensorBuffers = await toTensorBuffers3D(
+        [heatmapScores, offsets, displacementFwd, displacementBwd]);
+
+    const scoresBuffer = allTensorBuffers[0];
+    const offsetsBuffer = allTensorBuffers[1];
+    const displacementsFwdBuffer = allTensorBuffers[2];
+    const displacementsBwdBuffer = allTensorBuffers[3];
 
     const poses = await decodeMultiplePoses(
         scoresBuffer, offsetsBuffer, displacementsFwdBuffer,
