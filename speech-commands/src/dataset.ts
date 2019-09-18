@@ -476,11 +476,11 @@ export class Dataset {
         console.log('Calling map()');        // DEBUG
         console.log('trainXs = ', trainXs);  // DEBUG
         const xTrain = tf.data.array(trainXs as any).map(x => {
-          // console.log(
-          //     `In map: numFrames=${numFrames}; ` +
-          //         `uniqueFrameSize=${uniqueFrameSize}; ` +
-          //         `x = `,
-          //     x);  // DEBUG
+          console.log(
+              `In map: numFrames=${numFrames}; ` +
+                  `uniqueFrameSize=${uniqueFrameSize}; ` +
+                  `x = `,
+              x);  // DEBUG
           return tf.tensor3d(x as any, [numFrames, uniqueFrameSize, 1]);
         });
         const yTrain = tf.data.array(trainYs).map(
