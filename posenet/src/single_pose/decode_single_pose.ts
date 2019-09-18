@@ -38,7 +38,7 @@ import {getOffsetPoints, getPointsConfidence} from './util';
  * row being the offset vector for the corresponding keypoint.
  * To get the keypoint, each part’s heatmap y and x are multiplied
  * by the output stride then added to their corresponding offset vector,
- * which is in the same scale as the original image. 
+ * which is in the same scale as the original image.
  *
  * @param heatmapScores 3-D tensor with shape `[height, width, numParts]`.
  * The value of heatmapScores[y, x, k]` is the score of placing the `k`-th
