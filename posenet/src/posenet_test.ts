@@ -108,6 +108,39 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
         .catch(done.fail);
   });
 
+  it('load with mobilenet returns a model with a valid input resolution',
+     (done) => {
+       const outputStride = 16;
+       const mobilenetModelConfig: posenetModel.ModelConfig = {
+         architecture: 'MobileNetV1',
+         outputStride,
+         multiplier: 0.75,
+         inputResolution: outputStride * 10 + 5
+       };
+
+       posenetModel.load(mobilenetModelConfig).then(model => {
+         expect(model.inputResolution).toEqual(outputStride * 10 + 1);
+
+         done();
+       });
+     });
+
+  it('load with resnet returns a model with a valid input resolution',
+     (done) => {
+       const outputStride = 32;
+       const mobilenetModelConfig: posenetModel.ModelConfig = {
+         architecture: 'ResNet50',
+         outputStride,
+         multiplier: 1.00,
+         inputResolution: outputStride * 10 + 4
+       };
+
+       posenetModel.load(mobilenetModelConfig).then(model => {
+         expect(model.inputResolution).toEqual(outputStride * 10 + 1);
+
+         done();
+       });
+     });
   it('estimateSinglePose does not leak memory', done => {
     const input =
         tf.zeros([inputResolution, inputResolution, 3]) as tf.Tensor3D;
