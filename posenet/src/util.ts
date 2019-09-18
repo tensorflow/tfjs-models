@@ -128,9 +128,45 @@ export function flipPosesHorizontal(poses: Pose[], imageWidth: number) {
 export function getValidResolution(
     imageScaleFactor: number, inputDimension: number,
     outputStride: PoseNetOutputStride): number {
-  const evenResolution = inputDimension * imageScaleFactor - 1;
+  return getValidInputResolution(
+      inputDimension * imageScaleFactor, outputStride);
+}
+
+function toEvenNumber(value: number): number {
+  if (value % 2 === 0) {
+    return value;
+  } else {
+    return value - 1;
+  }
+}
+
+export function getValidInputResolution(
+    inputResolution: number, outputStride: PoseNetOutputStride): number {
+  const evenResolution = toEvenNumber(inputResolution);
 
   return evenResolution - (evenResolution % outputStride) + 1;
+}
+
+const VALID_OUTPUT_STRIDES = [8, 16, 32];
+// tslint:disable-next-line:no-any
+export function assertValidOutputStride(outputStride: number) {
+  tf.util.assert(
+      typeof outputStride === 'number', () => 'outputStride is not a number');
+  tf.util.assert(
+      VALID_OUTPUT_STRIDES.indexOf(outputStride) >= 0,
+      () => `outputStride of ${outputStride} is invalid. ` +
+          `It must be either 8, 16, or 32`);
+}
+
+export function assertValidResolution(
+    resolution: number, outputStride: number) {
+  tf.util.assert(
+      typeof resolution === 'number', () => 'resolution is not a number');
+
+  tf.util.assert(
+      (resolution - 1) % outputStride === 0,
+      () => `resolution of ${resolution} is invalid for output stride ` +
+          `${outputStride}.`);
 }
 
 export function getInputTensorDimensions(input: PosenetInput):

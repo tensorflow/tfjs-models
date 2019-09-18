@@ -211,12 +211,12 @@ function setupGui(cameras, net) {
   function updateGui() {
     if (guiState.input.architecture === 'MobileNetV1') {
       updateGuiInputResolution(
-          defaultMobileNetInputResolution, [257, 353, 449, 513, 801]);
+          defaultMobileNetInputResolution, [257, 300, 353, 449, 513, 700, 801]);
       updateGuiOutputStride(defaultMobileNetStride, [8, 16]);
-      updateGuiMultiplier(defaultMobileNetMultiplier, [0.50, 0.75, 1.0])
+      updateGuiMultiplier(defaultMobileNetMultiplier, [0.50, 0.75, 1.0]);
     } else {  // guiState.input.architecture === "ResNet50"
       updateGuiInputResolution(
-          defaultResNetInputResolution, [257, 353, 449, 513, 801]);
+          defaultResNetInputResolution, [257, 300, 353, 449, 513, 700, 801]);
       updateGuiOutputStride(defaultResNetStride, [32, 16]);
       updateGuiMultiplier(defaultResNetMultiplier, [1.0]);
     }
