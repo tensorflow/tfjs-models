@@ -18,7 +18,7 @@
 import '@tensorflow/tfjs-node';
 
 import * as tf from '@tensorflow/tfjs';
-import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
+import {BROWSER_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
 import {writeFileSync} from 'fs';
 import {join} from 'path';
 import * as rimraf from 'rimraf';
@@ -32,6 +32,7 @@ import {create} from './index';
 import {SpeechCommandRecognizerResult} from './types';
 import {version} from './version';
 
+
 describe('getMajorAndMinorVersion', () => {
   it('Correct results', () => {
     expect(getMajorAndMinorVersion('0.1.3')).toEqual('0.1');
@@ -42,7 +43,7 @@ describe('getMajorAndMinorVersion', () => {
   });
 });
 
-describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
+describeWithFlags('Browser FFT recognizer', BROWSER_ENVS, () => {
   const fakeWords: string[] = [
     '_background_noise_', 'down', 'eight', 'five', 'four', 'go', 'left', 'nine',
     'one', 'right', 'seven', 'six', 'stop', 'three', 'two', 'up', 'zero'

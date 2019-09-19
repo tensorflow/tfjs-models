@@ -434,7 +434,7 @@ describe('Dataset', () => {
     expectTensorsClose(out.ys, tf.tensor2d([[1, 0], [1, 0], [0, 1]]));
   });
 
-  fit('getSpectrogramsAsTensors without label as tf.data.Dataset', async () => {
+  it('getSpectrogramsAsTensors without label as tf.data.Dataset', async () => {
     const dataset = new Dataset();
     addThreeExamplesToDataset(dataset);
 
@@ -444,37 +444,28 @@ describe('Dataset', () => {
       datasetValidationSplit: 1 / 3
     }) as [SpectrogramAndTargetsTfDataset, SpectrogramAndTargetsTfDataset];
     let numTrain = 0;
-    console.log('1111111111111111111111111111111111111111111');
-    await trainDataset.forEachAsync(x => {
-      console.log(x);
-    });
-    // await trainDataset.forEachAsync(
-    //     (xAndY: {xs: tf.Tensor2D, ys: tf.Tensor2D}) => {
-    //       console.log(xAndY);
-    //       const {xs, ys} = xAndY;
-    //       numTrain++;
-    //       expect(xs.shape).toEqual([1, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
-    //       expect(xs.isDisposed).toEqual(false);
-    //       expect(ys.shape).toEqual([1, 2]);
-    //       expect(ys.isDisposed).toEqual(false);
-    //     });
-    console.log('222222222222222222222222222222222222222222222');
-    // expect(numTrain).toEqual(2);
-    // let numVal = 0;
-    // await valDataset.forEachAsync(
-    //     (xAndY: {xs: tf.Tensor2D, ys: tf.Tensor2D}) => {
-    //       const {xs, ys} = xAndY;
-    //       numVal++;
-    //       expect(xs.shape).toEqual([1, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
-    //       expect(xs.isDisposed).toEqual(false);
-    //       expect(ys.shape).toEqual([1, 2]);
-    //       expect(ys.isDisposed).toEqual(false);
-    //     });
-    // expect(numVal).toEqual(1);
-
-    await valDataset.forEachAsync(x => {
-      console.log(x);
-    });
+    await trainDataset.forEachAsync(
+        (xAndY: {xs: tf.Tensor2D, ys: tf.Tensor2D}) => {
+          console.log(xAndY);
+          const {xs, ys} = xAndY;
+          numTrain++;
+          expect(xs.shape).toEqual([1, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
+          expect(xs.isDisposed).toEqual(false);
+          expect(ys.shape).toEqual([1, 2]);
+          expect(ys.isDisposed).toEqual(false);
+        });
+    expect(numTrain).toEqual(2);
+    let numVal = 0;
+    await valDataset.forEachAsync(
+        (xAndY: {xs: tf.Tensor2D, ys: tf.Tensor2D}) => {
+          const {xs, ys} = xAndY;
+          numVal++;
+          expect(xs.shape).toEqual([1, FAKE_NUM_FRAMES, FAKE_FRAME_SIZE, 1]);
+          expect(xs.isDisposed).toEqual(false);
+          expect(ys.shape).toEqual([1, 2]);
+          expect(ys.isDisposed).toEqual(false);
+        });
+    expect(numVal).toEqual(1);
   });
 
   it('getData w/ mixing-noise augmentation: get tf.data.Dataset', async () => {
