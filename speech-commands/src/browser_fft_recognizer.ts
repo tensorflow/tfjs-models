@@ -16,12 +16,13 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import {loadMetadataJson, normalize} from './browser_fft_utils';
+import {BrowserFftFeatureExtractor, SpectrogramCallback, Tracker} from './browser_fft_extractor';
+import {loadMetadataJson, normalize, normalizeFloat32Array} from './browser_fft_utils';
 import {BACKGROUND_NOISE_TAG, Dataset} from './dataset';
+import {concatenateFloat32Arrays} from './generic_utils';
 import {balancedTrainValSplit} from './training_utils';
 import {AudioDataAugmentationOptions, EvaluateConfig, EvaluateResult, Example, ExampleCollectionOptions, RecognizeConfig, RecognizerCallback, RecognizerParams, ROCCurve, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerMetadata, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
 import {version} from './version';
-
 
 export const UNKNOWN_TAG = '_unknown_';
 
@@ -47,8 +48,6 @@ export function getMajorAndMinorVersion(version: string) {
  * windows from a long spectrogram.
  */
 const DEFAULT_WINDOW_HOP_RATIO = 0.25;
-
-let counter = 0;
 
 /**
  * Speech-Command Recognizer using browser-native (WebAudio) spectral featutres.
@@ -76,7 +75,9 @@ export class BrowserFftSpeechCommandRecognizer implements
 
   protected nonBatchInputShape: [number, number, number];
   private elementsPerExample: number;
-  protected microphoneIterator: tf.data.MicrophoneIterator;
+  protected audioDataExtractor: BrowserFftFeatureExtractor;
+  // tslint:disable-next-line:no-any
+  protected microphoneIterator: any;
 
   private transferRecognizers:
       {[name: string]: TransferBrowserFftSpeechCommandRecognizer} = {};
@@ -249,7 +250,6 @@ export class BrowserFftSpeechCommandRecognizer implements
           };
         }
 
-        console.log(maxScore);
         let wordDetected = true;
         if (!invokeCallbackOnNoiseAndUnknown) {
           // Skip background noise and unknown tokens.
@@ -286,7 +286,6 @@ export class BrowserFftSpeechCommandRecognizer implements
       columnTruncateLength: this.nonBatchInputShape[1]
     });
 
-    console.log(frameDurationMillis);
     this.inferenceInterval =
         setInterval(this.doInference.bind(this), frameDurationMillis * 2);
 
@@ -296,7 +295,6 @@ export class BrowserFftSpeechCommandRecognizer implements
   async doInference() {
     const shouldFire = this.tracker.tick();
     if (shouldFire) {
-      console.log('shouldFire ', counter);
       const result = (await this.microphoneIterator.capture());
       const inputTensor = tf.tidy(() => {
         return (result as any).spectrogram.expandDims(0);
@@ -305,9 +303,7 @@ export class BrowserFftSpeechCommandRecognizer implements
 
       console.log('before inputtensor != null');
       if (inputTensor != null) {
-        console.log('callback', counter++);
         const shouldRest = await this.spectrogramCallback(inputTensor);
-        console.log('should rest ', shouldRest);
         if (shouldRest) {
           this.tracker.suppress();
         }
@@ -598,13 +594,26 @@ export class BrowserFftSpeechCommandRecognizer implements
   }
 
   private async recognizeOnline(): Promise<SpectrogramData> {
-    return new Promise<SpectrogramData>(async (resolve, reject) => {
-      this.microphoneIterator = await tf.data.microphone({
+    return new Promise<SpectrogramData>((resolve, reject) => {
+      const spectrogramCallback: SpectrogramCallback = async (x: tf.Tensor) => {
+        const normalizedX = normalize(x);
+        await this.audioDataExtractor.stop();
+        resolve({
+          data: await normalizedX.data() as Float32Array,
+          frameSize: this.nonBatchInputShape[1],
+        });
+        normalizedX.dispose();
+        return false;
+      };
+      this.audioDataExtractor = new BrowserFftFeatureExtractor({
+        sampleRateHz: this.parameters.sampleRateHz,
         numFramesPerSpectrogram: this.nonBatchInputShape[0],
-        columnTruncateLength: this.nonBatchInputShape[1]
+        columnTruncateLength: this.nonBatchInputShape[1],
+        suppressionTimeMillis: 0,
+        spectrogramCallback,
+        overlapFactor: 0
       });
-      this.inferenceInterval =
-          setInterval(this.doInference.bind(this), 1024 / 44100 * 1e3);
+      this.audioDataExtractor.start();
     });
   }
 
@@ -749,6 +758,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
           () => `snippetDurationSec must be provided if onSnippet ` +
               `is provided.`);
     }
+
     const frameDurationSec =
         this.parameters.fftSize / this.parameters.sampleRateHz;
     const totalDurationSec = frameDurationSec * numFramesPerSpectrogram;
@@ -758,14 +768,90 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       const stepFactor = options.snippetDurationSec == null ?
           1 :
           options.snippetDurationSec / totalDurationSec;
+      const callbackCountTarget = Math.round(1 / stepFactor);
+      let callbackCount = 0;
+      let lastIndex = -1;
+      const spectrogramSnippets: Float32Array[] = [];
+      this.spectrogramCallback =
+          async (freqData: tf.Tensor, timeData?: tf.Tensor) => {
+        // TODO(cais): can we consolidate the logic in the two branches?
+        if (options.onSnippet == null) {
+          const normalizedX = normalize(freqData);
+          this.dataset.addExample({
+            label: word,
+            spectrogram: {
+              data: await normalizedX.data() as Float32Array,
+              frameSize: this.nonBatchInputShape[1],
+            },
+            rawAudio: options.includeRawAudio ? {
+              data: await timeData.data() as Float32Array,
+              sampleRateHz: this.audioDataExtractor.sampleRateHz
+            } :
+                                                undefined
+          });
+          normalizedX.dispose();
+          await this.audioDataExtractor.stop();
+          this.streaming = false;
+          this.collateTransferWords();
+          resolve({
+            data: await freqData.data() as Float32Array,
+            frameSize: this.nonBatchInputShape[1],
+          });
+        } else {
+          const data = await freqData.data() as Float32Array;
+          if (lastIndex === -1) {
+            lastIndex = data.length;
+          }
+          let i = lastIndex - 1;
+          while (data[i] !== 0 && i >= 0) {
+            i--;
+          }
+          const increment = lastIndex - i - 1;
+          lastIndex = i + 1;
+          const snippetData = data.slice(data.length - increment, data.length);
+          spectrogramSnippets.push(snippetData);
+
+          if (options.onSnippet != null) {
+            options.onSnippet(
+                {data: snippetData, frameSize: this.nonBatchInputShape[1]});
+          }
+
+          if (callbackCount++ === callbackCountTarget) {
+            await this.audioDataExtractor.stop();
+            this.streaming = false;
+            this.collateTransferWords();
+
+            const normalized = normalizeFloat32Array(
+                concatenateFloat32Arrays(spectrogramSnippets));
+            const finalSpectrogram: SpectrogramData = {
+              data: normalized,
+              frameSize: this.nonBatchInputShape[1]
+            };
+            this.dataset.addExample({
+              label: word,
+              spectrogram: finalSpectrogram,
+              rawAudio: options.includeRawAudio ? {
+                data: await timeData.data() as Float32Array,
+                sampleRateHz: this.audioDataExtractor.sampleRateHz
+              } :
+                                                  undefined
+            });
+            // TODO(cais): Fix 1-tensor memory leak.
+            resolve(finalSpectrogram);
+          }
+        }
+        return false;
+      };
+
 
       this.microphoneIterator = await tf.data.microphone({
-        // sampleRateHz: this.parameters.sampleRateHz,
+        sampleRateHz: this.parameters.sampleRateHz,
         numFramesPerSpectrogram,
-        columnTruncateLength: this.nonBatchInputShape[1]
+        columnTruncateLength: this.nonBatchInputShape[1],
+        includeWaveform: options.includeRawAudio
       });
       this.inferenceInterval =
-          setInterval(this.doInference.bind(this), 1024 / 44100 * 1e3);
+          setInterval(this.doInference.bind(this), frameDurationSec * 1e3 * 2);
     });
   }
 
@@ -1377,54 +1463,3 @@ export async function deleteSavedTransferModel(name: string): Promise<void> {
       SAVED_MODEL_METADATA_KEY, JSON.stringify(metadataMap));
   await tf.io.removeModel(getCanonicalSavePath(name));
 }
-
-/**
- * A class that manages the firing of events based on periods
- * and suppression time.
- */
-export class Tracker {
-  readonly period: number;
-  readonly suppressionTime: number;
-
-  private counter: number;
-  private suppressionOnset: number;
-
-  /**
-   * Constructor of Tracker.
-   *
-   * @param period The event-firing period, in number of frames.
-   * @param suppressionPeriod The suppression period, in number of frames.
-   */
-  constructor(period: number, suppressionPeriod: number) {
-    this.period = period;
-    this.suppressionTime = suppressionPeriod == null ? 0 : suppressionPeriod;
-    this.counter = 0;
-
-    tf.util.assert(
-        this.period > 0,
-        () => `Expected period to be positive, but got ${this.period}`);
-  }
-
-  /**
-   * Mark a frame.
-   *
-   * @returns Whether the event should be fired at the current frame.
-   */
-  tick(): boolean {
-    this.counter++;
-    const shouldFire = (this.counter % this.period === 0) &&
-        (this.suppressionOnset == null ||
-         this.counter - this.suppressionOnset > this.suppressionTime);
-    return shouldFire;
-  }
-
-  /**
-   * Order the beginning of a supression period.
-   */
-  suppress() {
-    this.suppressionOnset = this.counter;
-  }
-}
-
-export type SpectrogramCallback = (freqData: tf.Tensor, timeData?: tf.Tensor) =>
-    Promise<boolean>;
