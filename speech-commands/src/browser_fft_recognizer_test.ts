@@ -30,6 +30,7 @@ import {create} from './index';
 import {SpeechCommandRecognizerResult} from './types';
 import {version} from './version';
 
+
 describe('getMajorAndMinorVersion', () => {
   it('Correct results', () => {
     expect(getMajorAndMinorVersion('0.1.3')).toEqual('0.1');
