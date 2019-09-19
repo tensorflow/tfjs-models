@@ -13,11 +13,11 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs": "^1.1.2"
+    "@tensorflow/tfjs": "^1.2.9"
   },
   "devDependencies": {
-    "@tensorflow/tfjs": "1.2.9",
-    "@tensorflow/tfjs-node": "1.2.9",
+    "@tensorflow/tfjs": "^1.2.9",
+    "@tensorflow/tfjs-node": "^1.2.9",
     "@types/jasmine": "~2.8.8",
     "@types/rimraf": "^2.0.2",
     "@types/tempfile": "^2.0.0",
@@ -27,6 +27,12 @@
     "dct": "^0.0.3",
     "jasmine": "^3.2.0",
     "jasmine-core": "^3.2.1",
+    "karma": "~4.0.1",
+    "karma-browserstack-launcher": "~1.4.0",
+    "karma-chrome-launcher": "~2.2.0",
+    "karma-firefox-launcher": "~1.1.0",
+    "karma-jasmine": "2.0.0",
+    "karma-typescript": "~4.0.0",
     "kissfft-js": "^0.1.8",
     "rimraf": "2.6.2",
     "rollup": "~0.60.7",
@@ -45,7 +51,9 @@
     "lint": "tslint -p . -t verbose",
     "publish-local": "yarn build && rollup -c && yalc push",
     "publish-npm": "yarn build && rollup -c && npm publish",
-    "test": "ts-node run_tests.ts"
+    "test": "karma start",
+    "test-node":"ts-node run_tests.ts",
+    "run-browserstack": "karma start --browsers='bs_firefox_mac,bs_chrome_mac' --singleRun"
   },
   "license": "Apache-2.0"
 }

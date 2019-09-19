@@ -301,7 +301,6 @@ export class BrowserFftSpeechCommandRecognizer implements
       });
       result.spectrogram.dispose();
 
-      console.log('before inputtensor != null');
       if (inputTensor != null) {
         const shouldRest = await this.spectrogramCallback(inputTensor);
         if (shouldRest) {

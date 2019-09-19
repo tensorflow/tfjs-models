@@ -15,12 +15,10 @@
  * =============================================================================
  */
 
-import '@tensorflow/tfjs-node';
-
 import * as tf from '@tensorflow/tfjs';
-import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
-import {writeFileSync} from 'fs';
-import {join} from 'path';
+import {BROWSER_ENVS, describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
+// import {writeFileSync} from 'fs';
+// import {join} from 'path';
 import * as rimraf from 'rimraf';
 import * as tempfile from 'tempfile';
 
@@ -42,7 +40,13 @@ describe('getMajorAndMinorVersion', () => {
   });
 });
 
-describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
+describeWithFlags(
+    'Browser FFT recognizer NODE', NODE_ENVS,
+    () => {
+
+    });
+
+describeWithFlags('Browser FFT recognizer', BROWSER_ENVS, () => {
   const fakeWords: string[] = [
     '_background_noise_', 'down', 'eight', 'five', 'four', 'go', 'left', 'nine',
     'one', 'right', 'seven', 'six', 'stop', 'three', 'two', 'up', 'zero'
@@ -129,7 +133,7 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
         .toMatch(/Mismatch between .* dimension.*12.*17/);
   });
 
-  async function createFakeModelArtifact(tmpDir: string) {
+  /*async function createFakeModelArtifact(tmpDir: string) {
     const model = tf.sequential();
     model.add(
         tf.layers.reshape({targetShape: [43 * 232], inputShape: [43, 232, 1]}));
@@ -232,7 +236,7 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
     expect((recogResult.scores[1] as Float32Array).length).toEqual(4);
 
     rimraf(tmpDir, () => {});
-  });
+  });*/
 
   it('Providing both vocabulary and modelURL leads to Error', () => {
     expect(
