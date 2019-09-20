@@ -296,17 +296,26 @@ export class BrowserFftSpeechCommandRecognizer implements
     const shouldFire = this.tracker.tick();
     if (shouldFire) {
       const result = (await this.microphoneIterator.capture());
-      const inputTensor = tf.tidy(() => {
+      const specTensor = tf.tidy(() => {
         return (result as any).spectrogram.expandDims(0);
       });
-      result.spectrogram.dispose();
+      let waveTensor;
+      if ((result as any).waveform != null) {
+        waveTensor = tf.tidy(() => {
+          return (result as any).waveform.expandDims(0);
+        })
+      }
 
-      if (inputTensor != null) {
-        const shouldRest = await this.spectrogramCallback(inputTensor);
+      if (specTensor != null) {
+        const shouldRest =
+            await this.spectrogramCallback(specTensor, waveTensor);
         if (shouldRest) {
           this.tracker.suppress();
         }
-        inputTensor.dispose();
+        specTensor.dispose();
+        if (waveTensor != null) {
+          waveTensor.dispose();
+        }
       } else {
         console.log('no tensor');
       }
@@ -784,13 +793,14 @@ class TransferBrowserFftSpeechCommandRecognizer extends
             },
             rawAudio: options.includeRawAudio ? {
               data: await timeData.data() as Float32Array,
-              sampleRateHz: this.audioDataExtractor.sampleRateHz
+              sampleRateHz: this.parameters.sampleRateHz
             } :
                                                 undefined
           });
           normalizedX.dispose();
-          await this.audioDataExtractor.stop();
+          this.microphoneIterator.stop();
           this.streaming = false;
+          clearInterval(this.inferenceInterval);
           this.collateTransferWords();
           resolve({
             data: await freqData.data() as Float32Array,
@@ -816,8 +826,9 @@ class TransferBrowserFftSpeechCommandRecognizer extends
           }
 
           if (callbackCount++ === callbackCountTarget) {
-            await this.audioDataExtractor.stop();
+            this.microphoneIterator.stop();
             this.streaming = false;
+            clearInterval(this.inferenceInterval);
             this.collateTransferWords();
 
             const normalized = normalizeFloat32Array(
@@ -831,7 +842,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
               spectrogram: finalSpectrogram,
               rawAudio: options.includeRawAudio ? {
                 data: await timeData.data() as Float32Array,
-                sampleRateHz: this.audioDataExtractor.sampleRateHz
+                sampleRateHz: this.parameters.sampleRateHz
               } :
                                                   undefined
             });
@@ -842,6 +853,12 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         return false;
       };
 
+      const overlapFactor = 1 - stepFactor;
+      const suppressionPeriod = 0;
+
+      const period = Math.max(
+          1, Math.round(this.nonBatchInputShape[0] * (1 - overlapFactor)));
+      this.tracker = new Tracker(period, suppressionPeriod);
 
       this.microphoneIterator = await tf.data.microphone({
         sampleRateHz: this.parameters.sampleRateHz,
