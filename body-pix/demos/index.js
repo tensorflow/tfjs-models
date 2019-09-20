@@ -18,7 +18,7 @@ import * as bodyPix from '@tensorflow-models/body-pix';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 
-import {drawKeypoints, drawSkeleton} from './demo_util';
+import {drawKeypoints, drawSkeleton, toggleLoadingUI} from './demo_util';
 import * as partColorScales from './part_color_scales';
 
 
@@ -135,49 +135,9 @@ async function setupCamera(cameraLabel) {
   });
 }
 
-/**
- * Loads a video to be used in the demo
- */
-async function setupVideo() {
-  const videoElement = document.getElementById('video');
-
-  var result = new Promise((resolve) => {
-    videoElement.onplay = () => {
-      console.log('loaded metadata');
-      videoElement.width = 1080;
-      videoElement.height = 720;
-      resolve(videoElement);
-    };
-  });
-  videoElement.play();
-  return result;
-}
-
-async function loadImage() {
-  const image = new Image();
-  const promise = new Promise((resolve, reject) => {
-    image.crossOrigin = '';
-    image.onload = () => {
-      resolve(image);
-    };
-  });
-
-  image.src = 'two_people.jpg';
-  // image.src = 'yoda_test.png';
-  // image.src = 'three_people.jpg';
-  // image.src = 'three_people2.jpg';
-  // image.src = 'three_people_4.jpg';
-  // image.src = 'four_people.jpg';
-  // image.src = 'four_people2.jpg';
-  // image.src = 'nine_people.jpg';
-  return promise;
-}
-
 async function loadVideo(cameraLabel) {
   try {
-    // state.video = await setupCamera(cameraLabel);
-    // state.video = await loadImage();
-    state.video = await setupVideo();
+    state.video = await setupCamera(cameraLabel);
   } catch (e) {
     let info = document.getElementById('info');
     info.textContent = 'this browser does not support video capture,' +
@@ -197,9 +157,9 @@ const guiState = {
   input: {
     architecture: 'ResNet50',
     outputStride: 16,
-    inputResolution: 801,
+    inputResolution: 257,
     multiplier: 1.0,
-    quantBytes: 4
+    quantBytes: 2
   },
   multiPersonDecoding: {
     scoreThreshold: 0.2,
@@ -298,7 +258,7 @@ function setupGui(cameras) {
   });
 
   input.add(guiState.input, 'quantBytes', [4]);
-
+  input.open()
 
   const estimateController =
       gui.add(guiState, 'estimate', ['segmentation', 'partmap']);
@@ -507,6 +467,18 @@ async function estimatePartSegmentation() {
   return allPersonPartSegmentation;
 }
 
+async function loadBodyPix() {
+  toggleLoadingUI(true);
+  state.net = await bodyPix.load({
+    architecture: guiState.input.architecture,
+    outputStride: guiState.input.outputStride,
+    inputResolution: guiState.input.inputResolution,
+    multiplier: guiState.input.multiplier,
+    quantBytes: guiState.input.quantBytes
+  });
+  toggleLoadingUI(false);
+}
+
 /**
  * Feeds an image to BodyPix to estimate segmentation - this is where the
  * magic happens. This function loops with a requestAnimationFrame method.
@@ -520,17 +492,7 @@ function segmentBodyInRealTime() {
     // then try again.
     if (state.changingArchitecture || state.changingMultiplier ||
         state.changingCamera) {
-      // setTimeout(bodySegmentationFrame, 1000);
-      console.log('changing architecture');
-      console.log(guiState.input.architecture);
-      state.net = await bodyPix.load({
-        architecture: guiState.input.architecture,
-        outputStride: guiState.input.outputStride,
-        inputResolution: guiState.input.inputResolution,
-        multiplier: guiState.input.multiplier,
-        quantBytes: guiState.input.quantBytes
-      });
-      console.log('loaded');
+      loadBodyPix();
       state.changingArchitecture = false;
       state.changingMultiplier = false;
     }
@@ -627,14 +589,7 @@ function segmentBodyInRealTime() {
  */
 export async function bindPage() {
   // Load the BodyPix model weights with architecture 0.75
-  state.net = await bodyPix.load({
-    architecture: guiState.input.architecture,
-    outputStride: guiState.input.outputStride,
-    inputResolution: guiState.input.inputResolution,
-    multiplier: guiState.input.multiplier,
-    quantBytes: guiState.input.quantBytes
-  });
-
+  await loadBodyPix();
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'inline-block';
 

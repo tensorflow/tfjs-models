@@ -51,6 +51,51 @@
       display: none;
     }
 
+    /*
+     *  The following loading spinner CSS is from SpinKit project
+     *  https://github.com/tobiasahlin/SpinKit
+     */
+    .sk-spinner-pulse {
+      width: 20px;
+      height: 20px;
+      margin: auto 10px;
+      float: left;
+      background-color: #333;
+      border-radius: 100%;
+      -webkit-animation: sk-pulseScaleOut 1s infinite ease-in-out;
+      animation: sk-pulseScaleOut 1s infinite ease-in-out;
+    }
+
+    @-webkit-keyframes sk-pulseScaleOut {
+      0% {
+        -webkit-transform: scale(0);
+        transform: scale(0);
+      }
+
+      100% {
+        -webkit-transform: scale(1.0);
+        transform: scale(1.0);
+        opacity: 0;
+      }
+    }
+
+    @keyframes sk-pulseScaleOut {
+      0% {
+        -webkit-transform: scale(0);
+        transform: scale(0);
+      }
+
+      100% {
+        -webkit-transform: scale(1.0);
+        transform: scale(1.0);
+        opacity: 0;
+      }
+    }
+
+    .spinner-text {
+      float: left;
+    }
+
     /* mobile */
     @media only screen and (max-width: 850px) {
       .footer {
@@ -77,26 +122,20 @@
   <div id="stats"></div>
   <div id="info" style='display:none'>
   </div>
-  <div id="loading">
-    Loading the model...
+  <div id="loading" style='display:flex'>
+    <div class="spinner-text">
+      Loading BodyPix model...
+    </div>
+    <div class="sk-spinner sk-spinner-pulse"></div>
   </div>
-
   <div id='main' style='display:none'>
-    <!-- <video id="video" playsinline style=" -moz-transform: scaleX(-1);
-        -o-transform: scaleX(-1);
-        -webkit-transform: scaleX(-1);
-        transform: scaleX(-1);
-        display: none;
-        " src="take1.mov">
-    </video> -->
-    <!-- <video id="video" src="take1.mov"></video> -->
     <video id="video" playsinline style=" -moz-transform: scaleX(-1);
         -o-transform: scaleX(-1);
         -webkit-transform: scaleX(-1);
         transform: scaleX(-1);
         display: none;
-        " src="6_1fps.mp4" autoplay muted></video>
-    <canvas id="output" />
+        "></video>
+    <canvas id="output">
   </div>
   <ul id="colors" style="display: none"></ul>
   <div class="footer">
