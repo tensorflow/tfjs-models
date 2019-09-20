@@ -17,8 +17,10 @@
 
 // Currently it is using local server for debugging.
 // TODO(tylerzhu): switch to use storage.googleapis.com.
-const RESNET50_BASE_URL = 'http://localhost:8080/bodypix2js/resnet50/';
-const MOBILENET_BASE_URL = 'http://localhost:8080/bodypix2js/mobilenet/';
+const RESNET50_BASE_URL =
+    'https://storage.googleapis.com/tfjs-models/savedmodel/bodypix/resnet50/';
+const MOBILENET_BASE_URL =
+    'https://storage.googleapis.com/tfjs-models/savedmodel/bodypix/mobilenet/';
 
 
 // The BodyPix 2.0 ResNet50 models use the latest TensorFlow.js 1.0 model

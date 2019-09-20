@@ -135,6 +135,24 @@ async function setupCamera(cameraLabel) {
   });
 }
 
+/**
+ * Loads a video to be used in the demo
+ */
+async function setupVideo() {
+  const videoElement = document.getElementById('video');
+
+  var result = new Promise((resolve) => {
+    videoElement.onplay = () => {
+      console.log('loaded metadata');
+      videoElement.width = 1080;
+      videoElement.height = 720;
+      resolve(videoElement);
+    };
+  });
+  videoElement.play();
+  return result;
+}
+
 async function loadImage() {
   const image = new Image();
   const promise = new Promise((resolve, reject) => {
@@ -145,17 +163,21 @@ async function loadImage() {
   });
 
   image.src = 'two_people.jpg';
+  // image.src = 'yoda_test.png';
   // image.src = 'three_people.jpg';
+  // image.src = 'three_people2.jpg';
   // image.src = 'three_people_4.jpg';
   // image.src = 'four_people.jpg';
+  // image.src = 'four_people2.jpg';
   // image.src = 'nine_people.jpg';
   return promise;
 }
 
 async function loadVideo(cameraLabel) {
   try {
-    state.video = await setupCamera(cameraLabel);
+    // state.video = await setupCamera(cameraLabel);
     // state.video = await loadImage();
+    state.video = await setupVideo();
   } catch (e) {
     let info = document.getElementById('info');
     info.textContent = 'this browser does not support video capture,' +
@@ -169,13 +191,13 @@ async function loadVideo(cameraLabel) {
 
 const guiState = {
   algorithm: 'multi-person',
-  estimate: 'segmentation',
+  estimate: 'partmap',
   camera: null,
   flipHorizontal: true,
   input: {
     architecture: 'ResNet50',
     outputStride: 16,
-    inputResolution: 257,
+    inputResolution: 801,
     multiplier: 1.0,
     quantBytes: 4
   },
@@ -223,14 +245,14 @@ function toCameraOptions(cameras) {
 function setupGui(cameras) {
   const gui = new dat.GUI({width: 300});
 
-  gui.add(guiState, 'camera', toCameraOptions(cameras))
-      .onChange(async function(cameraLabel) {
-        state.changingCamera = true;
+  // gui.add(guiState, 'camera', toCameraOptions(cameras))
+  //     .onChange(async function(cameraLabel) {
+  //       state.changingCamera = true;
 
-        await loadVideo(cameraLabel);
+  //       await loadVideo(cameraLabel);
 
-        state.changingCamera = false;
-      });
+  //       state.changingCamera = false;
+  //     });
 
   gui.add(guiState, 'flipHorizontal');
 
@@ -250,8 +272,13 @@ function setupGui(cameras) {
   // fastest, but least accurate.
   let architectureController = null;
   architectureController =
-      input.add(guiState.input, 'architecture', ['ResNet50']);
+      input.add(guiState.input, 'architecture', ['ResNet50', 'MobileNetV1']);
   guiState.architecture = guiState.input.architecture;
+  architectureController.onChange(function(architecture) {
+    // if architecture is ResNet50, then show ResNet50 options
+    state.changingArchitecture = true;
+    guiState.input.architecture = architecture;
+  });
 
   // Output stride:  Internally, this parameter affects the height and width
   // of the layers in the neural network. The lower the value of the output
@@ -259,7 +286,17 @@ function setupGui(cameras) {
   // the faster the speed but lower the accuracy.
   input.add(guiState.input, 'outputStride', [8, 16, 32]);
   input.add(guiState.input, 'inputResolution', [513]);
-  input.add(guiState.input, 'multiplier', [1.0]);
+  let multiplierController = null;
+  multiplierController =
+      input.add(guiState.input, 'multiplier', [1.0, 0.75, 0.50]);
+  guiState.multiplier = guiState.input.multiplier;
+  multiplierController.onChange(function(multiplier) {
+    // if architecture is ResNet50, then show ResNet50 options
+    console.log('onchange');
+    state.changingMultiplier = true;
+    guiState.input.multiplier = multiplier;
+  });
+
   input.add(guiState.input, 'quantBytes', [4]);
 
 
@@ -481,9 +518,21 @@ function segmentBodyInRealTime() {
   async function bodySegmentationFrame() {
     // if changing the model or the camera, wait a second for it to complete
     // then try again.
-    if (state.changingArchitecture || state.changingCamera) {
-      setTimeout(bodySegmentationFrame, 1000);
-      return;
+    if (state.changingArchitecture || state.changingMultiplier ||
+        state.changingCamera) {
+      // setTimeout(bodySegmentationFrame, 1000);
+      console.log('changing architecture');
+      console.log(guiState.input.architecture);
+      state.net = await bodyPix.load({
+        architecture: guiState.input.architecture,
+        outputStride: guiState.input.outputStride,
+        inputResolution: guiState.input.inputResolution,
+        multiplier: guiState.input.multiplier,
+        quantBytes: guiState.input.quantBytes
+      });
+      console.log('loaded');
+      state.changingArchitecture = false;
+      state.changingMultiplier = false;
     }
 
     // Begin monitoring code for frames per second
@@ -501,7 +550,7 @@ function segmentBodyInRealTime() {
         switch (guiState.segmentation.effect) {
           case 'mask':
             const ctx = canvas.getContext('2d');
-            const foregroundColor = {r: 155, g: 55, b: 20, a: 150};
+            const foregroundColor = {r: 255, g: 255, b: 255, a: 255};
             const backgroundColor = {r: 0, g: 0, b: 0, a: 255};
             const mask = bodyPix.toMultiPersonMaskImageData(
                 allPersonSegmentation, foregroundColor, backgroundColor, true);
@@ -540,11 +589,12 @@ function segmentBodyInRealTime() {
           const pixelCellWidth = 10.0;
 
           bodyPix.drawPixelatedMask(
-              canvas, video, coloredPartImageData, guiState.partMap.opacity,
-              maskBlurAmount, flipHorizontally, pixelCellWidth);
+              canvas, state.video, coloredPartImageData,
+              guiState.partMap.opacity, maskBlurAmount, flipHorizontally,
+              pixelCellWidth);
         } else {
           bodyPix.drawMask(
-              canvas, video, coloredPartImageData, guiState.opacity,
+              canvas, state.video, coloredPartImageData, guiState.opacity,
               maskBlurAmount, flipHorizontally);
         }
 
