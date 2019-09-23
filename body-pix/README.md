@@ -77,10 +77,17 @@ const net = await bodyPix.load({
 
  * **quantBytes** - This argument controls the bytes used for weight quantization. The available options are:
 
-   - `4`. 4 bytes per float (no quantization). Leads to highest accuracy and original model size (~90MB).
+   - `4`. 4 bytes per float (no quantization). Leads to highest accuracy and original model size.
+   - `2`. 2 bytes per float. Leads to slightly lower accuracy and 2x model size reduction.
+   - `1`. 1 byte per float. Leads to lower accuracy and 4x model size reduction.
 
-   - `2`. 2 bytes per float. Leads to slightly lower accuracy and 2x model size reduction (~45MB).
-   - `1`. 1 byte per float. Leads to lower accuracy and 4x model size reduction (~22MB).
+     | Architecture       | quantBytes=4 | quantBytes=2 | quantBytes=1 |
+     | ------------------ |:------------:|:------------:|:------------:|
+     | ResNet50           | ~90MB        | ~45MB        | ~22MB        |
+     | MobileNetV1 (1.00) | ~13MB        | ~6MB         | ~3MB         |
+     | MobileNetV1 (0.75) | ~5MB         | ~2MB         | ~1MB         |
+     | MobileNetV1 (0.50) | ~2MB         | ~1MB         | ~0.5MB       |
+
 
 * **modelUrl** - An optional string that specifies custom url of the model. This is useful for local development or countries that don't have access to the model hosted on GCP.
 
