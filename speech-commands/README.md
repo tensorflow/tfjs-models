@@ -151,13 +151,14 @@ console.log(recognizer.modelInputShape());
 console.log(recognizer.params().sampleRateHz);
 console.log(recognizer.params().fftSize);
 
-tf.tidy(() => {
-  const x = tf.tensor4d(
-      mySpectrogramData, [1].concat(recognizer.modelInputShape().slice(1)));
-  const output = recognizer.recognize(x);
-  // output has the same format as `result` in the online streaming example
-  // above: the `scores` field contains the probabilities of the words.
-});
+
+const x = tf.tensor4d(
+    mySpectrogramData, [1].concat(recognizer.modelInputShape().slice(1)));
+const output = await recognizer.recognize(x);
+// output has the same format as `result` in the online streaming example
+// above: the `scores` field contains the probabilities of the words.
+
+tf.dispose([x, output]);
 ```
 
 Note that you must provide a spectrogram value to the `recognize()` call

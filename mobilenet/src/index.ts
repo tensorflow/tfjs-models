@@ -28,6 +28,8 @@ export type MobileNetAlpha = 0.25|0.50|0.75|1.0;
 /**
  * Mobilenet model loading configuration
  *
+ * Users should provide a version and alpha *OR* a modelURL and inputRange.
+ *
  * @param version The MobileNet version number. Use 1 for MobileNetV1, and 2
  * for MobileNetV2. Defaults to 1.
  * @param alpha Controls the width of the network, trading accuracy for
@@ -35,11 +37,15 @@ export type MobileNetAlpha = 0.25|0.50|0.75|1.0;
  * Defaults to 1.0.
  * @param modelUrl Optional param for specifying the custom model url or
  * an `tf.io.IOHandler` object.
+ * @param inputRange The input range expected by the trained
+ * model hosted at the modelUrl. This is typically [0, 1] or [-1, 1].
  */
 export interface ModelConfig {
   version: MobileNetVersion;
   alpha?: MobileNetAlpha;
   modelUrl?: string|tf.io.IOHandler;
+  inputRange?: [number, number];
+
 }
 
 const EMBEDDING_NODES: {[version: string]: string} = {
@@ -96,6 +102,7 @@ const MODEL_INFO: {[version: string]: {[alpha: string]: MobileNetInfo}} = {
   }
 };
 
+// See ModelConfig documentation for expectations of provided fields.
 export async function load(modelConfig: ModelConfig = {
   version: 1,
   alpha: 1.0
@@ -109,6 +116,7 @@ export async function load(modelConfig: ModelConfig = {
   const alphaStr = modelConfig.alpha ? modelConfig.alpha.toFixed(2) : '';
   let inputMin = -1;
   let inputMax = 1;
+  // User provides versionStr / alphaStr.
   if (modelConfig.modelUrl == null) {
     if (!(versionStr in MODEL_INFO)) {
       throw new Error(
@@ -123,6 +131,10 @@ export async function load(modelConfig: ModelConfig = {
           `${Object.keys(MODEL_INFO[versionStr])}.`);
     }
     [inputMin, inputMax] = MODEL_INFO[versionStr][alphaStr].inputRange;
+  }
+  // User provides modelUrl & optional<inputRange>.
+  if (modelConfig.inputRange != null) {
+    [inputMin, inputMax] = modelConfig.inputRange;
   }
   const mobilenet = new MobileNetImpl(
       versionStr, alphaStr, modelConfig.modelUrl, inputMin, inputMax);
@@ -150,14 +162,14 @@ class MobileNetImpl implements MobileNet {
   // Different implementations of mobilenet have different values of [min, max].
   // We store the appropriate normalization parameters using these two scalars
   // such that:
-  // out = in * inputRange + inputMin;
-  private inputRange: number;
+  // out = (in / 255.0) * (inputMax - inputMin) + inputMin;
+  private normalizationConstant: number;
 
   constructor(
       public version: string, public alpha: string,
-      public modelUrl: string|tf.io.IOHandler, public inputMin: number = -1,
-      public inputMax: number = 1) {
-    this.inputRange = inputMax - inputMin;
+      public modelUrl: string|tf.io.IOHandler, public inputMin = -1,
+      public inputMax = 1) {
+    this.normalizationConstant = (inputMax - inputMin) / 255.0;
   }
 
   async load() {
@@ -194,9 +206,9 @@ class MobileNetImpl implements MobileNet {
         img = tf.browser.fromPixels(img);
       }
 
-      // Normalize the image from [0, 255] to inputRange.
+      // Normalize the image from [0, 255] to [inputMin, inputMax].
       const normalized =
-          img.toFloat().mul(this.inputRange).add(this.inputMin) as tf.Tensor3D;
+          img.toFloat().mul(this.normalizationConstant).add(this.inputMin) as tf.Tensor3D;
 
       // Resize the image to
       let resized = normalized;
