@@ -6,6 +6,7 @@
     "presubmit": "ts-node presubmit.ts"
   },
   "devDependencies": {
+    "@types/jasmine": "^3.4.0",
     "@types/node": "~10.3.4",
     "@types/shelljs": "~0.8.0",
     "clang-format": "~1.2.2",
