@@ -63,14 +63,12 @@ export async function decodeSinglePose(
 
   const heatmapValues = argmax2d(heatmapScores);
 
-  const allTensorBuffers = await Promise.all([
+  /* Extracting promise values removes 'incomplete alias for namespace' error */
+  const bufferVals = await Promise.all([
     toTensorBuffer(heatmapScores), toTensorBuffer(offsets),
     toTensorBuffer(heatmapValues, 'int32')
   ]);
-
-  const scoresBuffer = allTensorBuffers[0];
-  const offsetsBuffer = allTensorBuffers[1];
-  const heatmapValuesBuffer = allTensorBuffers[2];
+  const [scoresBuffer, offsetsBuffer, heatmapValuesBuffer] = bufferVals;
 
   const offsetPoints =
       getOffsetPoints(heatmapValuesBuffer, outputStride, offsetsBuffer);

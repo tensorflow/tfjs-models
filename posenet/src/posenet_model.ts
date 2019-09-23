@@ -332,13 +332,11 @@ export class PoseNet {
     const {heatmapScores, offsets, displacementFwd, displacementBwd} =
         this.baseModel.predict(resized);
 
-    const allTensorBuffers = await toTensorBuffers3D(
+    /* Extracting promise values removes 'incomplete alias for namespace' error */
+    const bufferVals = await toTensorBuffers3D(
         [heatmapScores, offsets, displacementFwd, displacementBwd]);
-
-    const scoresBuffer = allTensorBuffers[0];
-    const offsetsBuffer = allTensorBuffers[1];
-    const displacementsFwdBuffer = allTensorBuffers[2];
-    const displacementsBwdBuffer = allTensorBuffers[3];
+    const [scoresBuffer, offsetsBuffer, displacementsFwdBuffer, displacementsBwdBuffer] =
+        bufferVals;
 
     const poses = await decodeMultiplePoses(
         scoresBuffer, offsetsBuffer, displacementsFwdBuffer,
