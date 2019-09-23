@@ -18,7 +18,7 @@ import * as bodyPix from '@tensorflow-models/body-pix';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 
-import {drawKeypoints, drawSkeleton, toggleLoadingUI} from './demo_util';
+import {drawKeypoints, drawSkeleton, toggleLoadingUI, tryResNetButtonName, tryResNetButtonText, updateTryResNetButtonDatGuiCss} from './demo_util';
 import * as partColorScales from './part_color_scales';
 
 
@@ -29,8 +29,12 @@ const state = {
   stream: null,
   net: null,
   videoConstraints: {},
-  changingCamera: false,
-  changingArchitecture: false
+  // Triggers the TensorFlow model to reload
+  changingArchitecture: false,
+  changingMultiplier: false,
+  changingStride: false,
+  changingResolution: false,
+  changingQuantBytes: false,
 };
 
 function isAndroid() {
@@ -205,14 +209,21 @@ function toCameraOptions(cameras) {
 function setupGui(cameras) {
   const gui = new dat.GUI({width: 300});
 
-  // gui.add(guiState, 'camera', toCameraOptions(cameras))
-  //     .onChange(async function(cameraLabel) {
-  //       state.changingCamera = true;
+  let architectureController = null;
+  guiState[tryResNetButtonName] = function() {
+    architectureController.setValue('ResNet50')
+  };
+  gui.add(guiState, tryResNetButtonName).name(tryResNetButtonText);
+  updateTryResNetButtonDatGuiCss();
 
-  //       await loadVideo(cameraLabel);
+  gui.add(guiState, 'camera', toCameraOptions(cameras))
+      .onChange(async function(cameraLabel) {
+        state.changingCamera = true;
 
-  //       state.changingCamera = false;
-  //     });
+        await loadVideo(cameraLabel);
+
+        state.changingCamera = false;
+      });
 
   gui.add(guiState, 'flipHorizontal');
 
@@ -227,10 +238,118 @@ function setupGui(cameras) {
   // The input parameters have the most effect on accuracy and speed of the
   // network
   let input = gui.addFolder('Input');
+
+
+  // Output stride:  Internally, this parameter affects the height and width
+  // of the layers in the neural network. The lower the value of the output
+  // stride the higher the accuracy but slower the speed, the higher the value
+  // the faster the speed but lower the accuracy.
+  const defaultQuantBytes = 2;
+
+  const defaultMobileNetMultiplier = isMobile() ? 0.50 : 0.75;
+  const defaultMobileNetStride = 16;
+  const defaultMobileNetInputResolution = 513;
+
+  const defaultResNetMultiplier = 1.0;
+  const defaultResNetStride = 32;
+  const defaultResNetInputResolution = 257;
+
+  // Updates outputStride
+  // Output stride:  Internally, this parameter affects the height and width of
+  // the layers in the neural network. The lower the value of the output stride
+  // the higher the accuracy but slower the speed, the higher the value the
+  // faster the speed but lower the accuracy.
+  let outputStrideController = null;
+  function updateGuiOutputStride(outputStride, outputStrideArray) {
+    if (outputStrideController) {
+      outputStrideController.remove();
+    }
+    guiState.input.outputStride = outputStride;
+    outputStrideController =
+        input.add(guiState.input, 'outputStride', outputStrideArray);
+    outputStrideController.onChange(function(outputStride) {
+      guiState.changingStride = true;
+      guiState.input.outputStride = +outputStride;
+    });
+  }
+
+  // Updates input resolution
+  // Input resolution:  Internally, this parameter affects the height and width
+  // of the layers in the neural network. The higher the value of the input
+  // resolution the better the accuracy but slower the speed.
+  let inputResolutionController = null;
+  function updateGuiInputResolution(
+      inputResolution,
+      inputResolutionArray,
+  ) {
+    if (inputResolutionController) {
+      inputResolutionController.remove();
+    }
+    guiState.input.inputResolution = inputResolution;
+    inputResolutionController =
+        input.add(guiState.input, 'inputResolution', inputResolutionArray);
+    inputResolutionController.onChange(function(inputResolution) {
+      guiState.changingResolution = true;
+      guiState.input.inputResolution = +inputResolution;
+    });
+  }
+
+  // Updates depth multiplier
+  // Multiplier: this parameter affects the number of feature map channels in
+  // the MobileNet. The higher the value, the higher the accuracy but slower the
+  // speed, the lower the value the faster the speed but lower the accuracy.
+  let multiplierController = null;
+  function updateGuiMultiplier(multiplier, multiplierArray) {
+    if (multiplierController) {
+      multiplierController.remove();
+    }
+    guiState.input.multiplier = multiplier;
+    multiplierController =
+        input.add(guiState.input, 'multiplier', multiplierArray);
+    multiplierController.onChange(function(multiplier) {
+      guiState.changingMultiplier = true;
+      guiState.input.multiplier = +multiplier;
+    });
+  }
+
+  // updates quantBytes
+  // QuantBytes: this parameter affects weight quantization in the ResNet50
+  // model. The available options are 1 byte, 2 bytes, and 4 bytes. The higher
+  // the value, the larger the model size and thus the longer the loading time,
+  // the lower the value, the shorter the loading time but lower the accuracy.
+  let quantBytesController = null;
+  function updateGuiQuantBytes(quantBytes, quantBytesArray) {
+    if (quantBytesController) {
+      quantBytesController.remove();
+    }
+    guiState.quantBytes = +quantBytes;
+    guiState.input.quantBytes = +quantBytes;
+    quantBytesController =
+        input.add(guiState.input, 'quantBytes', quantBytesArray);
+    quantBytesController.onChange(function(quantBytes) {
+      guiState.changingQuantBytes = true;
+      guiState.input.quantBytes = +quantBytes;
+    });
+  }
+
+  function updateGuiInputSection() {
+    if (guiState.input.architecture === 'MobileNetV1') {
+      updateGuiInputResolution(
+          defaultMobileNetInputResolution, [257, 353, 449, 513, 801]);
+      updateGuiOutputStride(defaultMobileNetStride, [8, 16]);
+      updateGuiMultiplier(defaultMobileNetMultiplier, [0.50, 0.75, 1.0])
+    } else {  // guiState.input.architecture === "ResNet50"
+      updateGuiInputResolution(
+          defaultResNetInputResolution, [257, 353, 449, 513, 801]);
+      updateGuiOutputStride(defaultResNetStride, [32, 16]);
+      updateGuiMultiplier(defaultResNetMultiplier, [1.0]);
+    }
+    updateGuiQuantBytes(defaultQuantBytes, [1, 2, 4]);
+  }
+
   // Architecture: there are a few PoseNet models varying in size and
   // accuracy. 1.01 is the largest, but will be the slowest. 0.50 is the
   // fastest, but least accurate.
-  let architectureController = null;
   architectureController =
       input.add(guiState.input, 'architecture', ['ResNet50', 'MobileNetV1']);
   guiState.architecture = guiState.input.architecture;
@@ -238,26 +357,10 @@ function setupGui(cameras) {
     // if architecture is ResNet50, then show ResNet50 options
     state.changingArchitecture = true;
     guiState.input.architecture = architecture;
+    updateGuiInputSection();
   });
 
-  // Output stride:  Internally, this parameter affects the height and width
-  // of the layers in the neural network. The lower the value of the output
-  // stride the higher the accuracy but slower the speed, the higher the value
-  // the faster the speed but lower the accuracy.
-  input.add(guiState.input, 'outputStride', [8, 16, 32]);
-  input.add(guiState.input, 'inputResolution', [513]);
-  let multiplierController = null;
-  multiplierController =
-      input.add(guiState.input, 'multiplier', [1.0, 0.75, 0.50]);
-  guiState.multiplier = guiState.input.multiplier;
-  multiplierController.onChange(function(multiplier) {
-    // if architecture is ResNet50, then show ResNet50 options
-    console.log('onchange');
-    state.changingMultiplier = true;
-    guiState.input.multiplier = multiplier;
-  });
-
-  input.add(guiState.input, 'quantBytes', [4]);
+  updateGuiInputSection();
   input.open()
 
   const estimateController =
@@ -491,10 +594,14 @@ function segmentBodyInRealTime() {
     // if changing the model or the camera, wait a second for it to complete
     // then try again.
     if (state.changingArchitecture || state.changingMultiplier ||
-        state.changingCamera) {
+        state.changingCamera || state.changingStride ||
+        state.changingResolution || state.changingQuantBytes) {
       loadBodyPix();
       state.changingArchitecture = false;
       state.changingMultiplier = false;
+      state.changingStride = false;
+      state.changingResolution = false;
+      state.changingQuantBytes = false;
     }
 
     // Begin monitoring code for frames per second
@@ -593,7 +700,7 @@ export async function bindPage() {
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'inline-block';
 
-  await loadVideo();
+  await loadVideo(guiState.camera);
 
   let cameras = await getVideoInputs();
 
