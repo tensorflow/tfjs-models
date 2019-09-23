@@ -81,12 +81,14 @@ const net = await bodyPix.load({
    - `2`. 2 bytes per float. Leads to slightly lower accuracy and 2x model size reduction.
    - `1`. 1 byte per float. Leads to lower accuracy and 4x model size reduction.
 
-     | Architecture       | quantBytes=4 | quantBytes=2 | quantBytes=1 |
+   The following table contains the corresponding BodyPix 2.0 model checkpoint sizes (widthout gzip) when using different quantization bytes:
+
+     | Architecture       | quantBgytes=4 | quantBytes=2 | quantBytes=1 |
      | ------------------ |:------------:|:------------:|:------------:|
      | ResNet50           | ~90MB        | ~45MB        | ~22MB        |
      | MobileNetV1 (1.00) | ~13MB        | ~6MB         | ~3MB         |
      | MobileNetV1 (0.75) | ~5MB         | ~2MB         | ~1MB         |
-     | MobileNetV1 (0.50) | ~2MB         | ~1MB         | ~0.5MB       |
+     | MobileNetV1 (0.50) | ~2MB         | ~1MB         | ~0.6MB       |
 
 
 * **modelUrl** - An optional string that specifies custom url of the model. This is useful for local development or countries that don't have access to the model hosted on GCP.
@@ -116,9 +118,9 @@ const segmentation = await net.estimateSinglePersonSegmentation(image, {
 
 * **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
    The input image to feed through the network.
-* **inferenceConfig** - an object containing:
+* **inferenceConfig** - an optional dictionary containing:
   * **flipHorizontal** - Defaults to false.  If the segmentation & pose should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the segmentation & pose to be returned in the proper orientation.
-  * **segmentationThreshold** - Must be between 0 and 1. For each pixel, the model estimates a score between 0 and 1 that indicates how confident it is that part of a person is displayed in that pixel.  This *segmentationThreshold* is used to convert these values
+  * **segmentationThreshold** - Default to 0.7. Must be between 0 and 1. For each pixel, the model estimates a score between 0 and 1 that indicates how confident it is that part of a person is displayed in that pixel.  This *segmentationThreshold* is used to convert these values
 to binary 0 or 1s by determining the minimum value a pixel's score must have to be considered part of a person.  In essence, a higher value will create a tighter crop
 around a person but may result in some pixels being that are part of a person being excluded from the returned segmentation mask.
 
@@ -179,20 +181,9 @@ console.log(segmentation);
 
 ```
 
-which would produce the output:
-
-```javascript
-{
-  width: 640,
-  height: 480,
-  data: Uint8Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, …]
-}
-// the array contains 307200 values, one for each pixel of the 640x480 image that was passed to the function.
-```
-
 ### Multi-person segmentation (The section is work in progress)
 
-Given an image with multiple people. Multi-person segmentation model predicts segmentation for *each* person. It returns *an array* of `PersonSegmentation` and each corresponding to one person.  a binary array for each person with 1 for the pixels that are part of the person, and 0 otherwise. The array size corresponds to the number of pixels in the image.
+Given an image with multiple people, multi-person segmentation model predicts segmentation for *each* person. It returns *an array* of `PersonSegmentation` and each corresponding to one person. Each element is a binary array for each person with 1 for the pixels that are part of the person, and 0 otherwise. The array size corresponds to the number of pixels in the image.
 
 (replace with copyright free ones)
 ![Multi-person Segmentation](./images/two_people.png)

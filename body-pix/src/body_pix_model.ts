@@ -188,7 +188,7 @@ export interface MultiPersonInferenceConfig extends InferenceConfig {
 
 export const SINGLE_PERSON_INFERENCE_CONFIG: SinglePersonInferenceConfig = {
   flipHorizontal: false,
-  segmentationThreshold: 0.5
+  segmentationThreshold: 0.7
 };
 
 export const MULTI_PERSON_INFERENCE_CONFIG: MultiPersonInferenceConfig = {
