@@ -268,7 +268,7 @@ function setupGui(cameras) {
     outputStrideController =
         input.add(guiState.input, 'outputStride', outputStrideArray);
     outputStrideController.onChange(function(outputStride) {
-      guiState.changingStride = true;
+      state.changingStride = true;
       guiState.input.outputStride = +outputStride;
     });
   }
@@ -289,7 +289,7 @@ function setupGui(cameras) {
     inputResolutionController =
         input.add(guiState.input, 'inputResolution', inputResolutionArray);
     inputResolutionController.onChange(function(inputResolution) {
-      guiState.changingResolution = true;
+      state.changingResolution = true;
       guiState.input.inputResolution = +inputResolution;
     });
   }
@@ -307,7 +307,7 @@ function setupGui(cameras) {
     multiplierController =
         input.add(guiState.input, 'multiplier', multiplierArray);
     multiplierController.onChange(function(multiplier) {
-      guiState.changingMultiplier = true;
+      state.changingMultiplier = true;
       guiState.input.multiplier = +multiplier;
     });
   }
@@ -327,7 +327,7 @@ function setupGui(cameras) {
     quantBytesController =
         input.add(guiState.input, 'quantBytes', quantBytesArray);
     quantBytesController.onChange(function(quantBytes) {
-      guiState.changingQuantBytes = true;
+      state.changingQuantBytes = true;
       guiState.input.quantBytes = +quantBytes;
     });
   }
@@ -596,6 +596,7 @@ function segmentBodyInRealTime() {
     if (state.changingArchitecture || state.changingMultiplier ||
         state.changingCamera || state.changingStride ||
         state.changingResolution || state.changingQuantBytes) {
+      console.log('load model...');
       loadBodyPix();
       state.changingArchitecture = false;
       state.changingMultiplier = false;
