@@ -150,6 +150,7 @@ describeWithFlags('KNNClassifier', NODE_ENVS, () => {
     classifier.clearAllClasses();
     expect(classifier.getClassExampleCount()).toEqual({});
     expect(classifier.getNumClasses()).toBe(0);
+    expect(tf.memory().numTensors).toBe(0);
 
     classifier.dispose();
   });
