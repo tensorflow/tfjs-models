@@ -128,6 +128,15 @@ around a person but may result in some pixels being that are part of a person be
 
 It returns a `Promise` that resolves with a  **single** `PersonSegmentation`. The `PersonSegmentation` object contains a width, height, a binary array, and a `Pose` object. The binary array contains: 1 for the pixels that are part of the person, and 0 otherwise. The array size corresponds to the number of pixels in the image.  The width and height correspond to the dimensions of the image the binary array is shaped to, which are the same dimensions of the input image.
 
+```javascript
+{
+  width: 640,
+  height: 480,
+  data: Uint8Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, …]
+}
+// the array contains 307200 values, one for each pixel of the 640x480 image that was passed to the function.
+```
+
 #### Example Usage
 
 ##### via Script Tag
@@ -221,6 +230,23 @@ around a person but may result in some pixels being that are part of a person be
 
 It returns a `Promise` that resolves with **an array** of `PersonSegmentation`s. When there are multiple people in the image, each `PersonSegmentation` object in the array represents one person. More details about the `PersonSegmentation` object can be found in the documentation of the `estimateSinglePersonSegmentation` method.
 
+
+```javascript
+[{
+  width: 640,
+  height: 480,
+  data: Uint8Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 …]
+ },
+ ...
+ // the data array for the 1st person containing 307200 values, one for each pixel of the 640x480 image.
+ {
+  width: 640,
+  height: 480,
+  data: Uint8Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, …]
+ }]
+ // the data array for the n-th person containing 307200 values, one for each pixel of the 640x480 image.
+```
+
 #### Example Usage
 
 ##### via Script Tag
@@ -242,7 +268,7 @@ It returns a `Promise` that resolves with **an array** of `PersonSegmentation`s.
     var imageElement = document.getElementById('image');
 
     bodyPix.load().then(function(net){
-      return net.estimateSinglePersonSegmentation(imageElement, {
+      return net.estimateMultiPersonSegmentation(imageElement, {
         flipHorizontal: false,
         segmentationThreshold: 0.7,
         maxDetections: 10,
@@ -268,7 +294,7 @@ const imageElement = document.getElementById('image');
 // load the BodyPix model from a checkpoint
 const net = await bodyPix.load();
 
-const allSegmentations = await net.estimateSinglePersonSegmentation(imageElement, {
+const allSegmentations = await net.estimateMultiPersonSegmentation(imageElement, {
   flipHorizontal: false,
   segmentationThreshold: 0.7,
   maxDetections: 10,
@@ -280,24 +306,6 @@ const allSegmentations = await net.estimateSinglePersonSegmentation(imageElement
 
 console.log(allSegmentations);
 ```
-
-which would produce the output:
-
-```javascript
-[{
-  width: 640,
-  height: 480,
-  data: Uint8Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, …]
- },
- // the data array contains 307200 values, one for each pixel of the 640x480 image that was passed to the function.
- {
-  width: 640,
-  height: 480,
-  data: Uint8Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, …]
- }]
- // the data array contains 307200 values, one for each pixel of the 640x480 image that was passed to the function.
-```
-
 
 ### Body Part Segmentation
 
