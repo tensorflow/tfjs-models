@@ -183,10 +183,10 @@ console.log(segmentation);
 
 ### Multi-person segmentation (The section is work in progress)
 
-Given an image with multiple people, multi-person segmentation model predicts segmentation for *each* person. It returns *an array* of `PersonSegmentation` and each corresponding to one person. Each element is a binary array for each person with 1 for the pixels that are part of the person, and 0 otherwise. The array size corresponds to the number of pixels in the image.
+Given an image with multiple people, multi-person segmentation model predicts segmentation for *each* person. It returns *an array* of `PersonSegmentation` and each corresponding to one person. Each element is a binary array for one person with 1 for the pixels that are part of the person, and 0 otherwise. The array size corresponds to the number of pixels in the image.
 
 (replace with copyright free ones)
-![Multi-person Segmentation](./images/two_people.png)
+![Multi-person Segmentation](./images/two_people_segmentation.png)
 
 ```javascript
 const net = await bodyPix.load();
@@ -428,7 +428,7 @@ which would produce the output:
 Given an image with multiple people. BodyPix's `estimateMultiPersonSegmentation` method predicts the 24 body part segmentations for *each* person. It returns *an array* of `PartSegmentation`s, each corresponding to one of the people. The `PartSegmentation` object contains a width, height, `Pose` and an Int32 array with a part id from 0-24 for the pixels that are part of a corresponding body part, and -1 otherwise.
 
 (replace with copyright free ones)
-![Multi-person Segmentation](./images/two_people_bodypart.png)
+![Multi-person Segmentation](./images/two_people_parts.png)
 
 ```javascript
 const net = await bodyPix.load();
