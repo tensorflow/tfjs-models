@@ -118,7 +118,7 @@ const segmentation = await net.estimateSinglePersonSegmentation(image, {
 
 * **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
    The input image to feed through the network.
-* **inferenceConfig** - an optional dictionary containing:
+* **config** - an optional dictionary containing:
   * **flipHorizontal** - Defaults to false.  If the segmentation & pose should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the segmentation & pose to be returned in the proper orientation.
   * **segmentationThreshold** - Default to 0.7. Must be between 0 and 1. For each pixel, the model estimates a score between 0 and 1 that indicates how confident it is that part of a person is displayed in that pixel.  This *segmentationThreshold* is used to convert these values
 to binary 0 or 1s by determining the minimum value a pixel's score must have to be considered part of a person.  In essence, a higher value will create a tighter crop
@@ -206,16 +206,16 @@ const segmentation = await net.estimateMultiPersonSegmentation(image, {
 
 * **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
    The input image to feed through the network.
-* **inferenceConfig** - an object containing:
+* **config** - an optional dictionary containing:
   * **flipHorizontal** - Defaults to false.  If the segmentation & pose should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the segmentation & pose to be returned in the proper orientation.
-  * **segmentationThreshold** - Must be between 0 and 1. For each pixel, the model estimates a score between 0 and 1 that indicates how confident it is that part of a person is displayed in that pixel.  This *segmentationThreshold* is used to convert these values
+  * **segmentationThreshold** - Defaults to 0.7. Must be between 0 and 1. For each pixel, the model estimates a score between 0 and 1 that indicates how confident it is that part of a person is displayed in that pixel.  This *segmentationThreshold* is used to convert these values
 to binary 0 or 1s by determining the minimum value a pixel's score must have to be considered part of a person.  In essence, a higher value will create a tighter crop
 around a person but may result in some pixels being that are part of a person being excluded from the returned segmentation mask.
-  * **maxDetections** - Maximum number of returned instance detections per image. Defaults to 10
+  * **maxDetections** -  Defaults to 10. Maximum number of returned instance detections per image.
   * **scoreThreshold** - Only return instance detections that have root part score greater or equal to this value. Defaults to 0.5
-  * **nmsRadius** - Non-maximum suppression part distance in pixels. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away. Defaults to 20.
+  * **nmsRadius** - Defaults to 20. Non-maximum suppression part distance in pixels. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away.
   * **minKeypointScore** - Default to 0.3. Keypoints above the score are used for matching and assigning segmentation mask to each person..
-  * **refineSteps** - The number of refinement steps used when assigning the instance segmentation. It needs to be strictly positive. The larger the higher the accuracy and slower the inference.
+  * **refineSteps** - Default to 10. The number of refinement steps used when assigning the instance segmentation. It needs to be strictly positive. The larger the higher the accuracy and slower the inference.
 
 #### Returns
 

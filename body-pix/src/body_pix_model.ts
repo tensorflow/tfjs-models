@@ -164,7 +164,7 @@ export interface SinglePersonInferenceConfig extends InferenceConfig {}
  * Defaults to 10
  *
  * `scoreThreshold`: Only return instance detections that have root part
- * score greater or equal to this value. Defaults to 0.5
+ * score greater or equal to this value. Defaults to 0.7
  *
  * `nmsRadius`: Non-maximum suppression part distance in pixels. It needs
  * to be strictly positive. Two parts suppress each other if they are less
