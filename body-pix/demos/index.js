@@ -514,11 +514,11 @@ function setupFPS() {
 }
 
 async function estimateSegmentation() {
-  let allPersonSegmentation = null;
+  let multiPersonSegmentation = null;
   console.log(guiState.algorithm);
   switch (guiState.algorithm) {
     case 'multi-person':
-      allPersonSegmentation =
+      multiPersonSegmentation =
           await state.net.estimateMultiplePersonSegmentation(state.video, {
             segmentationThreshold: guiState.segmentation.segmentationThreshold,
             maxDetections: guiState.multiPersonDecoding.maxDetections,
@@ -534,12 +534,12 @@ async function estimateSegmentation() {
           await state.net.estimateSinglePersonSegmentation(state.video, {
             segmentationThreshold: guiState.segmentation.segmentationThreshold
           });
-      allPersonSegmentation = [personSegmentation];
+      multiPersonSegmentation = [personSegmentation];
       break;
     default:
       break;
   };
-  return allPersonSegmentation;
+  return multiPersonSegmentation;
 }
 
 async function estimatePartSegmentation() {
@@ -616,20 +616,20 @@ function segmentBodyInRealTime() {
 
     switch (guiState.estimate) {
       case 'segmentation':
-        const allPersonSegmentation = await estimateSegmentation();
+        const multiPersonSegmentation = await estimateSegmentation();
         switch (guiState.segmentation.effect) {
           case 'mask':
             const ctx = canvas.getContext('2d');
             const foregroundColor = {r: 255, g: 255, b: 255, a: 255};
             const backgroundColor = {r: 0, g: 0, b: 0, a: 255};
             const mask = bodyPix.toMultiPersonMaskImageData(
-                allPersonSegmentation, foregroundColor, backgroundColor, true);
+                multiPersonSegmentation, foregroundColor, backgroundColor, true);
 
             bodyPix.drawMask(
                 canvas, state.video, mask, guiState.segmentation.opacity,
                 guiState.segmentation.maskBlurAmount, flipHorizontally);
 
-            allPersonSegmentation.forEach(personSegmentation => {
+            multiPersonSegmentation.forEach(personSegmentation => {
               let pose = personSegmentation.pose;
               if (flipHorizontally) {
                 pose = bodyPix.flipPoseHorizontal(pose, mask.width);
@@ -640,7 +640,7 @@ function segmentBodyInRealTime() {
             break;
           case 'bokeh':
             bodyPix.drawMultiPersonBokehEffect(
-                canvas, state.video, allPersonSegmentation,
+                canvas, state.video, multiPersonSegmentation,
                 +guiState.segmentation.backgroundBlurAmount,
                 guiState.segmentation.edgeBlurAmount, flipHorizontally);
             break;

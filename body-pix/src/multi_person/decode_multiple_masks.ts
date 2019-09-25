@@ -195,9 +195,9 @@ export function decodeMultipleMasksGPU(
       [inHeight, inWidth], [[padT, padB], [padL, padR]], refineSteps,
       minKeypointScore, maxNumPeople)
 
-  const allPersonSegmentation: PersonSegmentation[] = [];
+  const multiPersonSegmentation: PersonSegmentation[] = [];
   for (let k = 0; k < posesAboveScore.length; k++) {
-    allPersonSegmentation.push({
+    multiPersonSegmentation.push({
       height,
       width,
       data: toPersonKSegmentation(masksTensor, k).dataSync() as Uint8Array,
@@ -205,7 +205,7 @@ export function decodeMultipleMasksGPU(
     });
   }
 
-  return allPersonSegmentation;
+  return multiPersonSegmentation;
 }
 
 export function decodeMultiplePartMasksGPU(

@@ -171,7 +171,7 @@ export function toMaskImageData(
  * other words, pixels where there is a person will be colored with foreground
  * color and where there is not a person will be colored with background color.
  *
- * @param allPersonSegmentation The output from estimateMultiPersonSegmentation;
+ * @param multiPersonSegmentation The output from estimateMultiPersonSegmentation;
  * An array of PersonSegmentation object, each containing a width, height, and a
  * binary array with 1 for the pixels that are part of the person, and 0
  * otherwise.
@@ -186,12 +186,12 @@ export function toMaskImageData(
  * segmentation mask.
  *
  * @returns An ImageData with the same width and height of
- * all the PersonSegmentation in allPersonSegmentation, with opacity and
+ * all the PersonSegmentation in multiPersonSegmentation, with opacity and
  * transparency at each pixel determined by the corresponding binary
  * segmentation value at the pixel from the output.
  */
 export function toMultiPersonMaskImageData(
-    allPersonSegmentation: PersonSegmentation[], foreground: Color = {
+    multiPersonSegmentation: PersonSegmentation[], foreground: Color = {
       r: 0,
       g: 0,
       b: 0,
@@ -204,11 +204,11 @@ export function toMultiPersonMaskImageData(
       a: 255
     },
     drawContour = false): ImageData|null {
-  if (allPersonSegmentation.length === 0) {
+  if (multiPersonSegmentation.length === 0) {
     return null;
   }
 
-  const {width, height} = allPersonSegmentation[0];
+  const {width, height} = multiPersonSegmentation[0];
   const bytes = new Uint8ClampedArray(width * height * 4);
 
   for (let i = 0; i < height; i += 1) {
@@ -218,8 +218,8 @@ export function toMultiPersonMaskImageData(
       bytes[4 * n + 1] = background.g;
       bytes[4 * n + 2] = background.b;
       bytes[4 * n + 3] = background.a;
-      for (let k = 0; k < allPersonSegmentation.length; k++) {
-        if (allPersonSegmentation[k].data[n] === 1) {
+      for (let k = 0; k < multiPersonSegmentation.length; k++) {
+        if (multiPersonSegmentation[k].data[n] === 1) {
           bytes[4 * n] = foreground.r;
           bytes[4 * n + 1] = foreground.g;
           bytes[4 * n + 2] = foreground.b;
@@ -236,14 +236,14 @@ export function toMultiPersonMaskImageData(
               const n31 = (i + 1) * width + j - 1;
               const n32 = (i + 1) * width + j;
               const n33 = (i + 1) * width + j + 1;
-              if (allPersonSegmentation[k].data[n11] !== 1 ||
-                  allPersonSegmentation[k].data[n12] !== 1 ||
-                  allPersonSegmentation[k].data[n13] !== 1 ||
-                  allPersonSegmentation[k].data[n21] !== 1 ||
-                  allPersonSegmentation[k].data[n23] !== 1 ||
-                  allPersonSegmentation[k].data[n31] !== 1 ||
-                  allPersonSegmentation[k].data[n32] !== 1 ||
-                  allPersonSegmentation[k].data[n33] !== 1) {
+              if (multiPersonSegmentation[k].data[n11] !== 1 ||
+                  multiPersonSegmentation[k].data[n12] !== 1 ||
+                  multiPersonSegmentation[k].data[n13] !== 1 ||
+                  multiPersonSegmentation[k].data[n21] !== 1 ||
+                  multiPersonSegmentation[k].data[n23] !== 1 ||
+                  multiPersonSegmentation[k].data[n31] !== 1 ||
+                  multiPersonSegmentation[k].data[n32] !== 1 ||
+                  multiPersonSegmentation[k].data[n33] !== 1) {
                 for (let nn
                          of [n, n11, n12, n13, n21, n23, n31, n31, n32, n33]) {
                   bytes[4 * nn + 0] = 0;
@@ -301,9 +301,9 @@ export function toColoredPartImageData(
  * pixel, and black pixels where there is no part.
  */
 export function toMultiPersonColoredPartImageData(
-    allPersonSegmentation: PartSegmentation[],
+    multiPersonSegmentation: PartSegmentation[],
     partColors: Array<[number, number, number]>): ImageData {
-  const {width, height} = allPersonSegmentation[0];
+  const {width, height} = multiPersonSegmentation[0];
   const bytes = new Uint8ClampedArray(width * height * 4);
 
   for (let i = 0; i < height * width; ++i) {
@@ -314,8 +314,8 @@ export function toMultiPersonColoredPartImageData(
     bytes[j + 1] = 255;
     bytes[j + 2] = 255;
     bytes[j + 3] = 255;
-    for (let k = 0; k < allPersonSegmentation.length; k++) {
-      const partId = allPersonSegmentation[k].data[i];
+    for (let k = 0; k < multiPersonSegmentation.length; k++) {
+      const partId = multiPersonSegmentation[k].data[i];
       if (partId !== -1) {
         const color = partColors[partId];
         if (!color) {
@@ -463,10 +463,10 @@ export function drawPixelatedMask(
 }
 
 function createPersonMask(
-    allPersonSegmentations: PersonSegmentation[],
+    multiPersonSegmentations: PersonSegmentation[],
     edgeBlurAmount: number): HTMLCanvasElement {
   const backgroundMaskImage =
-      toMultiPersonMaskImageData(allPersonSegmentations);
+      toMultiPersonMaskImageData(multiPersonSegmentations);
 
   const backgroundMask =
       renderImageDataToOffScreenCanvas(backgroundMaskImage, CANVAS_NAMES.mask);
@@ -554,14 +554,14 @@ export function drawBokehEffect(
  */
 export function drawMultiPersonBokehEffect(
     canvas: HTMLCanvasElement, image: ImageType,
-    allPersonSegmentation: PersonSegmentation[], backgroundBlurAmount = 3,
+    multiPersonSegmentation: PersonSegmentation[], backgroundBlurAmount = 3,
     edgeBlurAmount = 3, flipHorizontal = false) {
   // assertSameDimensions(image, personSegmentation, 'image', 'segmentation');
 
   const blurredImage = drawAndBlurImageOnOffScreenCanvas(
       image, backgroundBlurAmount, CANVAS_NAMES.blurred);
 
-  const personMask = createPersonMask(allPersonSegmentation, edgeBlurAmount);
+  const personMask = createPersonMask(multiPersonSegmentation, edgeBlurAmount);
 
   const ctx = canvas.getContext('2d');
   ctx.save();

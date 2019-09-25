@@ -612,7 +612,7 @@ Given the output from estimating multi-person segmentation, generates a visualiz
 
 ##### Inputs
 
-*  **allPersonSegmentation** The output from `estimateMultiPersonSegmentation`; An array of PersonSegmentation object, each containing a width, height, and a binary array with 1 for the pixels that are part of the person, and 0 otherwise.
+*  **multiPersonSegmentation** The output from `estimateMultiPersonSegmentation`; An array of PersonSegmentation object, each containing a width, height, and a binary array with 1 for the pixels that are part of the person, and 0 otherwise.
 * **foreground** The foreground color (r,g,b,a) for visualizing pixels that
 belong to people.
 
