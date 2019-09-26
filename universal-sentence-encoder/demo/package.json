@@ -9,7 +9,7 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow-models/universal-sentence-encoder": "1.1.2",
+    "@tensorflow-models/universal-sentence-encoder": "1.2.1",
     "@tensorflow/tfjs": "^1.2.9",
     "d3-scale-chromatic": "^1.3.3"
   },

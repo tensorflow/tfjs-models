@@ -9,7 +9,7 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow-models/toxicity": "1.1.2",
+    "@tensorflow-models/toxicity": "1.2.1",
     "@tensorflow/tfjs": "^1.2.9"
   },
   "scripts": {
