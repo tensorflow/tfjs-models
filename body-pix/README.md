@@ -434,7 +434,6 @@ console.log(segmentation);
 
 Given an image with multiple people. BodyPix's `estimateMultiPersonSegmentation` method predicts the 24 body part segmentations for *each* person. It returns *an array* of `PartSegmentation`s, each corresponding to one of the people. The `PartSegmentation` object contains a width, height, `Pose` and an Int32 array with a part id from 0-24 for the pixels that are part of a corresponding body part, and -1 otherwise.
 
-(replace with copyright free ones)
 ![Multi-person Segmentation](./images/two_people_parts.png)
 
 ```javascript
