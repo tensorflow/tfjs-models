@@ -18,15 +18,13 @@
 import {stringToChars} from '../util';
 
 // [token, score, index]
-// TODO fix typing
-// type OutputNode = [string[], number, number];
-type OutputNode = any; 
+type OutputNode = [string[], number, number];
 
 class TrieNode {
   public parent: TrieNode;
   public end: boolean;
   public children: {[firstSymbol: string]: TrieNode};
-  public word: OutputNode[];
+  public word: OutputNode;
 
   constructor() {
     this.parent = null;
@@ -77,11 +75,11 @@ export class Trie {
     let node = this.root.children[ss[0]];
 
     for (let i = 0; i < ss.length && node; i++){
-      if (node.end) output.push(node.word);
+      if (node.end){ output.push(node.word); }
       node = node.children[ss[i + 1]];
     }
 
-    if (!output.length) output.push([[ss[0]], 0, 0]);
+    if (!output.length){ output.push([[ss[0]], 0, 0]); }
 
     return output;
   }
