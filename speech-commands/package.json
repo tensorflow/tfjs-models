@@ -27,12 +27,6 @@
     "dct": "^0.0.3",
     "jasmine": "^3.2.0",
     "jasmine-core": "^3.2.1",
-    "karma": "~4.0.1",
-    "karma-browserstack-launcher": "~1.4.0",
-    "karma-chrome-launcher": "~2.2.0",
-    "karma-firefox-launcher": "~1.1.0",
-    "karma-jasmine": "2.0.0",
-    "karma-typescript": "~4.0.0",
     "kissfft-js": "^0.1.8",
     "rimraf": "2.6.2",
     "rollup": "~0.60.7",
@@ -51,9 +45,10 @@
     "lint": "tslint -p . -t verbose",
     "publish-local": "yarn build && rollup -c && yalc push",
     "publish-npm": "yarn build && rollup -c && npm publish",
-    "test": "karma start",
-    "test-node":"ts-node run_tests.ts",
-    "run-browserstack": "karma start --browsers='bs_firefox_mac,bs_chrome_mac' --singleRun"
+    "test": "ts-node run_tests.ts"
   },
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@tensorflow/tfjs-data": "file:tensorflow-tfjs-data-1.2.9.tgz"
+  }
 }

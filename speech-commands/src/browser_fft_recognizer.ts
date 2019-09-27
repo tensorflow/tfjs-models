@@ -95,6 +95,8 @@ export class BrowserFftSpeechCommandRecognizer implements
   protected spectrogramCallback: SpectrogramCallback;
   protected tracker: Tracker;
 
+  private isInferencing = false;
+
   /**
    * Constructor of BrowserFftSpeechCommandRecognizer.
    *
@@ -287,14 +289,15 @@ export class BrowserFftSpeechCommandRecognizer implements
     });
 
     this.inferenceInterval =
-        setInterval(this.doInference.bind(this), frameDurationMillis * 2);
+        setInterval(this.doInference.bind(this), frameDurationMillis);
 
     this.streaming = true;
   }
 
   async doInference() {
     const shouldFire = this.tracker.tick();
-    if (shouldFire) {
+    if (shouldFire && !this.isInferencing) {
+      this.isInferencing = true;
       const result = (await this.microphoneIterator.capture());
       const specTensor = tf.tidy(() => {
         return (result as any).spectrogram.expandDims(0);
@@ -319,6 +322,7 @@ export class BrowserFftSpeechCommandRecognizer implements
       } else {
         console.log('no tensor');
       }
+      this.isInferencing = false;
     }
   }
 
@@ -867,7 +871,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
         includeWaveform: options.includeRawAudio
       });
       this.inferenceInterval =
-          setInterval(this.doInference.bind(this), frameDurationSec * 1e3 * 2);
+          setInterval(this.doInference.bind(this), frameDurationSec * 1e3);
     });
   }
 

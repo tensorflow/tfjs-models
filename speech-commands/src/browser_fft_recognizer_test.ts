@@ -16,15 +16,16 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import {BROWSER_ENVS, describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
-// import {writeFileSync} from 'fs';
-// import {join} from 'path';
+import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
+import {MicrophoneConfig} from '@tensorflow/tfjs-data/dist/types';
+import {writeFileSync} from 'fs';
+import {join} from 'path';
 import * as rimraf from 'rimraf';
 import * as tempfile from 'tempfile';
 
 import {BrowserFftSpeechCommandRecognizer, deleteSavedTransferModel, getMajorAndMinorVersion, listSavedTransferModels, localStorageWrapper, SAVED_MODEL_METADATA_KEY} from './browser_fft_recognizer';
 import * as BrowserFftUtils from './browser_fft_utils';
-import {FakeAudioContext, FakeAudioMediaStream} from './browser_test_utils';
+import {FakeAudioContext, FakeAudioMediaStream, FakeMicrophoneIterator} from './browser_test_utils';
 import {arrayBuffer2SerializedExamples, BACKGROUND_NOISE_TAG} from './dataset';
 import {create} from './index';
 import {SpeechCommandRecognizerResult} from './types';
@@ -47,7 +48,7 @@ describeWithFlags(
 
     });
 
-describeWithFlags('Browser FFT recognizer', BROWSER_ENVS, () => {
+describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
   const fakeWords: string[] = [
     '_background_noise_', 'down', 'eight', 'five', 'four', 'go', 'left', 'nine',
     'one', 'right', 'seven', 'six', 'stop', 'three', 'two', 'up', 'zero'
@@ -86,6 +87,10 @@ describeWithFlags('Browser FFT recognizer', BROWSER_ENVS, () => {
           }
           return model;
         });
+
+    spyOn(tf.data, 'microphone').and.callFake((config: MicrophoneConfig) => {
+      return new FakeMicrophoneIterator(config);
+    })
     spyOn(BrowserFftUtils, 'loadMetadataJson')
         .and.callFake(async (url: string) => {
           return {words};
@@ -134,7 +139,7 @@ describeWithFlags('Browser FFT recognizer', BROWSER_ENVS, () => {
         .toMatch(/Mismatch between .* dimension.*12.*17/);
   });
 
-  /*async function createFakeModelArtifact(tmpDir: string) {
+  async function createFakeModelArtifact(tmpDir: string) {
     const model = tf.sequential();
     model.add(
         tf.layers.reshape({targetShape: [43 * 232], inputShape: [43, 232, 1]}));
@@ -237,7 +242,7 @@ describeWithFlags('Browser FFT recognizer', BROWSER_ENVS, () => {
     expect((recogResult.scores[1] as Float32Array).length).toEqual(4);
 
     rimraf(tmpDir, () => {});
-  });*/
+  });
 
   it('Providing both vocabulary and modelURL leads to Error', () => {
     expect(
@@ -396,7 +401,7 @@ describeWithFlags('Browser FFT recognizer', BROWSER_ENVS, () => {
         .toMatch(/Invalid probabilityThreshold value: -0\.1/);
   });
 
-  it('streaming: overlapFactor = 0', done => {
+  fit('streaming: overlapFactor = 0', done => {
     setUpFakes();
     const recognizer = new BrowserFftSpeechCommandRecognizer();
 
@@ -481,7 +486,7 @@ describeWithFlags('Browser FFT recognizer', BROWSER_ENVS, () => {
     });
   });
 
-  it('streaming: overlapFactor = 0.5, includeSpectrogram', done => {
+  fit('streaming: overlapFactor = 0.5, includeSpectrogram', done => {
     setUpFakes();
     const recognizer = new BrowserFftSpeechCommandRecognizer();
 
