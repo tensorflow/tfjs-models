@@ -661,7 +661,7 @@ const warm = [
 ];
 
 // the colored part image is an rgb image with a corresponding color from specified colormap for each part at each pixel, and black pixels where there is no part.
-const coloredPartImage = bodyPix.toColoredPartImageData(partSegmentation, rainbow);
+const coloredPartImage = bodyPix.toColoredPartImageData(partSegmentation, warm);
 const opacity = 0.7;
 const flipHorizontal = true;
 const maskBlurAmount = 0;
@@ -726,7 +726,7 @@ bodyPix.drawMask(
 
 #### `drawMask`
 
-Draws an image onto a canvas and draws an `ImageData` containing a mask on top of it with a specified opacity; The `ImageData` is typically generated using `toMaskImageData` or `toColoredPartImageData`.
+Draws an image onto a canvas and draws an `ImageData` containing a mask on top of it with a specified opacity; The `ImageData` is typically generated using `toMaskImageData`, `toMultiPersonMaskImageData`, `toColoredPartImageData` or `toMultiPersonColoredPartImageData`.
 
 ##### Inputs
 
@@ -749,7 +749,7 @@ const maskBackground = true;
 // Convert the personSegmentation into a mask to darken the background.
 const foregroundColor = {r: 0, g: 0, b: 0, a: 0};
 const backgroundColor = {r: 0, g: 0, b: 0, a: 255};
-const backgroundDarkeningMask = bodyPix.toMaskImageData(personSegmentation, );
+const backgroundDarkeningMask = bodyPix.toMaskImageData(personSegmentation personSegmentation, foregroundColor, backgroundColor);
 
 const opacity = 0.7;
 const maskBlurAmount = 3;
