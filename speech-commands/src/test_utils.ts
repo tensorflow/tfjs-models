@@ -17,19 +17,6 @@
 
 import {Tensor, test_util, util} from '@tensorflow/tfjs';
 
-import {registerTestEnv} from '@tensorflow/tfjs-core/dist/jasmine_util';
-
-registerTestEnv({name: 'cpu', backendName: 'cpu'});
-registerTestEnv({
-  name: 'webgl2',
-  backendName: 'webgl',
-  flags: {
-    'WEBGL_VERSION': 2,
-    'WEBGL_CPU_FORWARD': false,
-    'WEBGL_SIZE_UPLOAD_UNIFORM': 0
-  }
-});
-
 export function expectTensorsClose(
     actual: Tensor|number[], expected: Tensor|number[], epsilon?: number) {
   if (actual == null) {

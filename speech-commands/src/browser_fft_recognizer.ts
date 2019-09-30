@@ -820,9 +820,13 @@ class TransferBrowserFftSpeechCommandRecognizer extends
             lastIndex = data.length;
           }
           let i = lastIndex - 1;
+          // console.log(
+          //     i, data[i], data[i - 1], data[i - 2], data[i - 3], data[0],
+          //     data[1]);
           while (data[i] !== 0 && i >= 0) {
             i--;
           }
+          // console.log(2222222, i);
           const increment = lastIndex - i - 1;
           lastIndex = i + 1;
           const snippetData = data.slice(data.length - increment, data.length);

@@ -15,6 +15,8 @@
  * =============================================================================
  */
 
+import '@tensorflow/tfjs-node';
+
 import * as tf from '@tensorflow/tfjs';
 import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 import {MicrophoneConfig} from '@tensorflow/tfjs-data/dist/types';
@@ -22,6 +24,7 @@ import {writeFileSync} from 'fs';
 import {join} from 'path';
 import * as rimraf from 'rimraf';
 import * as tempfile from 'tempfile';
+
 import {BrowserFftSpeechCommandRecognizer, deleteSavedTransferModel, getMajorAndMinorVersion, listSavedTransferModels, localStorageWrapper, SAVED_MODEL_METADATA_KEY} from './browser_fft_recognizer';
 import * as BrowserFftUtils from './browser_fft_utils';
 import {FakeAudioContext, FakeAudioMediaStream, FakeMicrophoneIterator} from './browser_test_utils';
@@ -41,12 +44,6 @@ describe('getMajorAndMinorVersion', () => {
     expect(getMajorAndMinorVersion('3.0')).toEqual('3.0');
   });
 });
-
-describeWithFlags(
-    'Browser FFT recognizer NODE', NODE_ENVS,
-    () => {
-
-    });
 
 describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
   const fakeWords: string[] = [
@@ -701,7 +698,7 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
     }
   });
 
-  fit('collectExample with onSnippet', async () => {
+  it('collectExample with onSnippet', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();
@@ -716,7 +713,7 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
         snippetLengths.push(spectrogram.data.length);
       }
     });
-    console.log(snippetLengths.length, snippetLengths);
+    // console.log(snippetLengths);
     expect(snippetLengths.length).toEqual(11);
     expect(snippetLengths[0]).toEqual(927);
     // First audio sample is zero and should have been skipped.

@@ -148,7 +148,7 @@ export class FakeMicrophoneIterator {
 
   getFloatFrequencyData(data: Float32Array): void {
     const xs: number[] = [];
-    for (let i = 0; i < this.fftSize / 2; ++i) {
+    for (let i = 0; i < this.fftSize; i++) {
       xs.push(this.x++);
     }
     data.set(new Float32Array(xs));
@@ -156,13 +156,14 @@ export class FakeMicrophoneIterator {
 
   getFloatTimeDomainData(data: Float32Array): void {
     const xs: number[] = [];
-    for (let i = 0; i < this.fftSize / 2; ++i) {
+    for (let i = 0; i < this.fftSize; i++) {
       xs.push(-(this.x++));
     }
     data.set(new Float32Array(xs));
   }
 
   async capture(): Promise<{spectrogram: Tensor3D, waveform: Tensor2D}> {
+    this.x = 0;
     return (await this.next()).value as
         {spectrogram: Tensor3D, waveform: Tensor2D};
   }
