@@ -1,6 +1,6 @@
 {
   "name": "toxicity_demo",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "",
   "main": "index.js",
   "license": "Apache-2.0",
@@ -9,8 +9,8 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow-models/toxicity": "1.1.1",
-    "@tensorflow/tfjs": "^1.2.1"
+    "@tensorflow-models/toxicity": "1.2.0",
+    "@tensorflow/tfjs": "^1.2.9"
   },
   "scripts": {
     "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr --open ",
