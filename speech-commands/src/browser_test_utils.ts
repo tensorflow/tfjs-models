@@ -1,6 +1,3 @@
-import {Tensor, tensor, Tensor2D, Tensor3D, TensorContainer, util} from '@tensorflow/tfjs';
-import {MicrophoneConfig} from '@tensorflow/tfjs-data/dist/types';
-
 /**
  * @license
  * Copyright 2018 Google LLC. All Rights Reserved.
@@ -17,6 +14,9 @@ import {MicrophoneConfig} from '@tensorflow/tfjs-data/dist/types';
  * limitations under the License.
  * =============================================================================
  */
+
+import {Tensor, tensor, Tensor2D, Tensor3D, TensorContainer, util} from '@tensorflow/tfjs';
+import {MicrophoneConfig} from '@tensorflow/tfjs-data/dist/types';
 
 /**
  * Testing Utilities for Browser Audio Feature Extraction.
@@ -128,8 +128,8 @@ export class FakeMicrophoneIterator {
         timeDataQueue.push(this.timeData);
       }
     }
-    let spectrogramTensor: Tensor;
-    let waveformTensor: Tensor;
+    let spectrogramTensor: Tensor = null;
+    let waveformTensor: Tensor = null;
     if (this.includeSpectrogram) {
       const freqData = this.flattenQueue(freqDataQueue);
       spectrogramTensor = this.getTensorFromAudioDataArray(

@@ -16,6 +16,7 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
+import {Tensor} from '@tensorflow/tfjs';
 import {BrowserFftFeatureExtractor, SpectrogramCallback, Tracker} from './browser_fft_extractor';
 import {loadMetadataJson, normalize, normalizeFloat32Array} from './browser_fft_utils';
 import {BACKGROUND_NOISE_TAG, Dataset} from './dataset';
@@ -223,7 +224,7 @@ export class BrowserFftSpeechCommandRecognizer implements
         () => `Expected overlapFactor to be >= 0 and < 1, but got ${
             overlapFactor}`);
 
-    this.spectrogramCallback = async (x: tf.Tensor) => {
+    this.spectrogramCallback = async (x: tf.Tensor, timeData?: tf.Tensor) => {
       const normalizedX = normalize(x);
       let y: tf.Tensor;
       let embedding: tf.Tensor;
@@ -298,15 +299,16 @@ export class BrowserFftSpeechCommandRecognizer implements
     const shouldFire = this.tracker.tick();
     if (shouldFire && !this.isInferencing) {
       this.isInferencing = true;
-      const result = (await this.microphoneIterator.capture());
+      const result = (await this.microphoneIterator.capture()) as
+          {spectrogram: Tensor, waveform: Tensor};
       const specTensor = tf.tidy(() => {
-        return (result as any).spectrogram.expandDims(0);
+        return result.spectrogram.expandDims(0);
       });
       let waveTensor;
-      if ((result as any).waveform != null) {
+      if (result.waveform != null) {
         waveTensor = tf.tidy(() => {
-          return (result as any).waveform.expandDims(0);
-        })
+          return result.waveform.expandDims(0);
+        });
       }
 
       if (specTensor != null) {
@@ -316,11 +318,13 @@ export class BrowserFftSpeechCommandRecognizer implements
           this.tracker.suppress();
         }
         specTensor.dispose();
-        if (waveTensor != null) {
-          waveTensor.dispose();
-        }
+        result.spectrogram.dispose();
       } else {
         console.log('no tensor');
+      }
+      if (waveTensor != null) {
+        waveTensor.dispose();
+        result.waveform.dispose();
       }
       this.isInferencing = false;
     }

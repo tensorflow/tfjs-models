@@ -22,7 +22,6 @@ import {writeFileSync} from 'fs';
 import {join} from 'path';
 import * as rimraf from 'rimraf';
 import * as tempfile from 'tempfile';
-
 import {BrowserFftSpeechCommandRecognizer, deleteSavedTransferModel, getMajorAndMinorVersion, listSavedTransferModels, localStorageWrapper, SAVED_MODEL_METADATA_KEY} from './browser_fft_recognizer';
 import * as BrowserFftUtils from './browser_fft_utils';
 import {FakeAudioContext, FakeAudioMediaStream, FakeMicrophoneIterator} from './browser_test_utils';
@@ -30,6 +29,7 @@ import {arrayBuffer2SerializedExamples, BACKGROUND_NOISE_TAG} from './dataset';
 import {create} from './index';
 import {SpeechCommandRecognizerResult} from './types';
 import {version} from './version';
+
 
 
 describe('getMajorAndMinorVersion', () => {
@@ -401,7 +401,7 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
         .toMatch(/Invalid probabilityThreshold value: -0\.1/);
   });
 
-  fit('streaming: overlapFactor = 0', done => {
+  it('streaming: overlapFactor = 0', done => {
     setUpFakes();
     const recognizer = new BrowserFftSpeechCommandRecognizer();
 
@@ -486,7 +486,7 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
     });
   });
 
-  fit('streaming: overlapFactor = 0.5, includeSpectrogram', done => {
+  it('streaming: overlapFactor = 0.5, includeSpectrogram', done => {
     setUpFakes();
     const recognizer = new BrowserFftSpeechCommandRecognizer();
 
@@ -701,7 +701,7 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
     }
   });
 
-  it('collectExample with onSnippet', async () => {
+  fit('collectExample with onSnippet', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();
@@ -716,6 +716,7 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
         snippetLengths.push(spectrogram.data.length);
       }
     });
+    console.log(snippetLengths.length, snippetLengths);
     expect(snippetLengths.length).toEqual(11);
     expect(snippetLengths[0]).toEqual(927);
     // First audio sample is zero and should have been skipped.
