@@ -307,7 +307,7 @@ const allSegmentations = await net.estimateMultiPersonSegmentation(imageElement,
 console.log(allSegmentations);
 ```
 
-### Body Part Segmentation
+### Single-person body part segmentation
 
 Body part segmentation segments an image into pixels that are part of one of twenty-four body parts of a person, and to those that are not part of a person.
 It returns an object containing an array with a part id from 0-24 for the pixels that are part of a corresponding body part, and -1 otherwise. The array size corresponds to the number of pixels in the image.
@@ -573,7 +573,7 @@ Given the output from estimating single-person segmentation, generates a visuali
 
 ##### Inputs
 
-* **segmentation** The output from estimagePersonSegmentation.
+* **segmentation** The output from [estimageSinglePersonSegmentation](#Single-person-segmentation).
 * **foreground** The foreground color (r,g,b,a) for visualizing pixels that
 belong to people.
 
@@ -601,7 +601,7 @@ const maskImage = bodyPix.toMaskImageData(
   personSegmentation, foregroundColor, backgroundColor);
 ```
 
-![MaskImageData](./images/toMultiPersonMaskImageData.png)
+![MaskImageData](./images/toMaskImageData.jpg)
 
 *With the output from `estimateSinglePersonSegmentation` on the first image above, `toMaskImageData` will produce an [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) that either looks like the second image above if setting `foregroundColor` to {r: 0, g: 0, b: 0, a: 0} and `backgroundColor` to {r: 0, g: 0, b: 0, a: 255} (by default), or the third image if if setting `foregroundColor` to {r: 0, g: 0, b: 0, a: 255} and `backgroundColor` to {r: 0, g: 0, b: 0, a: 0}.  This can be used to mask either the person or the background using the method `drawMask`.*
 
@@ -611,7 +611,7 @@ Given the output from estimating multi-person segmentation, generates a visualiz
 
 ##### Inputs
 
-*  **multiPersonSegmentation** The output from `estimateMultiPersonSegmentation`; An array of PersonSegmentation object, each containing a width, height, and a binary array with 1 for the pixels that are part of the person, and 0 otherwise.
+*  **multiPersonSegmentation** The output from [estimageMultiPersonSegmentation](#Multi-person-segmentation): an array of PersonSegmentation object, each containing a width, height, and a binary array with 1 for the pixels that are part of the person, and 0 otherwise.
 * **foreground** The foreground color (r,g,b,a) for visualizing pixels that
 belong to people.
 
@@ -624,9 +624,9 @@ belong to people.
 
 An [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) with the same width and height of the personSegmentation, with color and opacity at each pixel determined by the corresponding binary segmentation value at the pixel from the output.
 
-![MaskImageData](./images/toMaskImageData.jpg)
+![MaskImageData](./images/toMultiPersonMaskImageData.png)
 
-*With the output from `estimateSinglePersonSegmentation` on the first image above, `toMaskImageData` will produce an [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) that either looks like the second image above if setting `foregroundColor` to {r: 0, g: 0, b: 0, a: 0} and `backgroundColor` to {r: 0, g: 0, b: 0, a: 255} (by default), or the third image if if setting `foregroundColor` to {r: 0, g: 0, b: 0, a: 255} and `backgroundColor` to {r: 0, g: 0, b: 0, a: 0}.  This can be used to mask either the person or the background using the method `drawMask`.*
+*With the output from `estimateMultiPersonSegmentation` on the first image above, `toMultiPersonMaskImageData` will produce an [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) that either looks like the second image above if setting `foregroundColor` to {r: 0, g: 0, b: 0, a: 0} and `backgroundColor` to {r: 0, g: 0, b: 0, a: 255} (by default), or the third image if if setting `foregroundColor` to {r: 0, g: 0, b: 0, a: 255} and `backgroundColor` to {r: 0, g: 0, b: 0, a: 0}.  This can be used to mask either the person or the background using the method `drawMask`.*
 
 #### `toColoredPartImageData`
 
@@ -634,7 +634,8 @@ Given the output from estimating single-person part segmentation, and an array o
 
 ##### Inputs
 
-* **partSegmentation** The output from estimateSinglePersonPartSegmentation.
+* **partSegmentation** The output from
+[estimageSinglePersonPartSegmentation](#Single-person-body-part-segmentation).
 
 * **partColors** A multi-dimensional array of rgb colors indexed by part id.  Must have 24 colors, one for every part.  For some sample `partColors` check out [the ones used in the demo.](./demos/part_color_scales.js)
 
@@ -681,7 +682,7 @@ Given the output from estimating multi-person part segmentation, and an array of
 
 ##### Inputs
 
-* **allPartSegmentation** The output from estimateMultiPersonPartSegmentation.
+* **allPartSegmentation** The output from [estimageMultiPersonPartSegmentation](#Multi-person-body-part-segmentation).
 
 * **partColors** A multi-dimensional array of rgb colors indexed by part id.  Must have 24 colors, one for every part.  For some sample `partColors` check out [the ones used in the demo.](./demos/part_color_scales.js)
 
