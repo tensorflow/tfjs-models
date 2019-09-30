@@ -515,7 +515,6 @@ function setupFPS() {
 
 async function estimateSegmentation() {
   let multiPersonSegmentation = null;
-  console.log(guiState.algorithm);
   switch (guiState.algorithm) {
     case 'multi-person':
       multiPersonSegmentation =
@@ -543,10 +542,10 @@ async function estimateSegmentation() {
 }
 
 async function estimatePartSegmentation() {
-  let allPersonPartSegmentation = null;
+  let multiPersonPartSegmentation = null;
   switch (guiState.algorithm) {
     case 'multi-person':
-      allPersonPartSegmentation =
+      multiPersonPartSegmentation =
           await state.net.estimateMultiplePersonPartSegmentation(state.video, {
             segmentationThreshold: guiState.segmentation.segmentationThreshold,
             maxDetections: guiState.multiPersonDecoding.maxDetections,
@@ -562,12 +561,12 @@ async function estimatePartSegmentation() {
           await state.net.estimateSinglePersonPartSegmentation(state.video, {
             segmentationThreshold: guiState.segmentation.segmentationThreshold
           });
-      allPersonPartSegmentation = [personPartSegmentation];
+      multiPersonPartSegmentation = [personPartSegmentation];
       break;
     default:
       break;
   };
-  return allPersonPartSegmentation;
+  return multiPersonPartSegmentation;
 }
 
 async function loadBodyPix() {
@@ -623,7 +622,8 @@ function segmentBodyInRealTime() {
             const foregroundColor = {r: 255, g: 255, b: 255, a: 255};
             const backgroundColor = {r: 0, g: 0, b: 0, a: 255};
             const mask = bodyPix.toMultiPersonMaskImageData(
-                multiPersonSegmentation, foregroundColor, backgroundColor, true);
+                multiPersonSegmentation, foregroundColor, backgroundColor,
+                true);
 
             bodyPix.drawMask(
                 canvas, state.video, mask, guiState.segmentation.opacity,
@@ -649,9 +649,9 @@ function segmentBodyInRealTime() {
         break;
       case 'partmap':
         const ctx = canvas.getContext('2d');
-        const allPersonPartSegmentation = await estimatePartSegmentation();
+        const multiPersonPartSegmentation = await estimatePartSegmentation();
         const coloredPartImageData = bodyPix.toMultiPersonColoredPartImageData(
-            allPersonPartSegmentation,
+            multiPersonPartSegmentation,
             partColorScales[guiState.partMap.colorScale]);
 
         const maskBlurAmount = 0;
@@ -668,7 +668,7 @@ function segmentBodyInRealTime() {
               maskBlurAmount, flipHorizontally);
         }
 
-        allPersonPartSegmentation.forEach(personPartSegmentation => {
+        multiPersonPartSegmentation.forEach(personPartSegmentation => {
           let pose = personPartSegmentation.pose;
           if (flipHorizontally) {
             pose =

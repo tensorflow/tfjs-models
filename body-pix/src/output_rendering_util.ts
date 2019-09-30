@@ -171,10 +171,10 @@ export function toMaskImageData(
  * other words, pixels where there is a person will be colored with foreground
  * color and where there is not a person will be colored with background color.
  *
- * @param multiPersonSegmentation The output from estimateMultiPersonSegmentation;
- * An array of PersonSegmentation object, each containing a width, height, and a
- * binary array with 1 for the pixels that are part of the person, and 0
- * otherwise.
+ * @param multiPersonSegmentation The output from
+ * estimateMultiPersonSegmentation; An array of PersonSegmentation object, each
+ * containing a width, height, and a binary array with 1 for the pixels that are
+ * part of the person, and 0 otherwise.
  *
  * @param foreground The foreground color (r,g,b,a) for visualizing pixels that
  * belong to people.
@@ -288,7 +288,7 @@ export function toColoredPartImageData(
  * of colors indexed by part id, generates an image with the corresponding color
  * for each part at each pixel, and white pixels where there is no part.
  *
- * @param allPartSegmentation The output from
+ * @param multiPersonPartSegmentation The output from
  * estimateMultiPersonPartSegmentation; an array of PartSegmentation object
  * containing a width, height, and an array with a part id from 0-24 for the
  * pixels that are part of a corresponding body part, and -1 otherwise.
@@ -297,13 +297,13 @@ export function toColoredPartImageData(
  * part id.  Must have 24 colors, one for every part.
  *
  * @returns An ImageData with the same width and height of all the element in
- * allPartSegmentation, with the corresponding color for each part at each
- * pixel, and black pixels where there is no part.
+ * multiPersonPartSegmentation, with the corresponding color for each part at
+ * each pixel, and black pixels where there is no part.
  */
 export function toMultiPersonColoredPartImageData(
-    multiPersonSegmentation: PartSegmentation[],
+    multiPersonPartSegmentation: PartSegmentation[],
     partColors: Array<[number, number, number]>): ImageData {
-  const {width, height} = multiPersonSegmentation[0];
+  const {width, height} = multiPersonPartSegmentation[0];
   const bytes = new Uint8ClampedArray(width * height * 4);
 
   for (let i = 0; i < height * width; ++i) {
@@ -314,8 +314,8 @@ export function toMultiPersonColoredPartImageData(
     bytes[j + 1] = 255;
     bytes[j + 2] = 255;
     bytes[j + 3] = 255;
-    for (let k = 0; k < multiPersonSegmentation.length; k++) {
-      const partId = multiPersonSegmentation[k].data[i];
+    for (let k = 0; k < multiPersonPartSegmentation.length; k++) {
+      const partId = multiPersonPartSegmentation[k].data[i];
       if (partId !== -1) {
         const color = partColors[partId];
         if (!color) {

@@ -516,8 +516,8 @@ It returns a `Promise` that resolves with **an array** of `PartSegmentation`s. W
         minKeypointScore: 0.3,
        refineSteps: 10
       });
-    }).then(function(allPartSegmentations){
-      console.log(allPartSegmentations);
+    }).then(function(multiPersonPartSegmentations){
+      console.log(multiPersonPartSegmentations);
     })
   </script>
 </html>
@@ -533,7 +533,7 @@ const imageElement = document.getElementById('image');
 // load the BodyPix model from a checkpoint
 const net = await bodyPix.load();
 
-const allPartSegmentations = await net.estimateMultiPersonPartSegmentation(imageElement, {
+const multiPersonPartSegmentations = await net.estimateMultiPersonPartSegmentation(imageElement, {
   flipHorizontal: false,
   segmentationThreshold: 0.7,
   maxDetections: 10,
@@ -543,7 +543,7 @@ const allPartSegmentations = await net.estimateMultiPersonPartSegmentation(image
   refineSteps: 10
 });
 
-console.log(allPartSegmentations);
+console.log(multiPersonPartSegmentations);
 ```
 
 which would produce the output:
@@ -660,7 +660,7 @@ const warm = [
   [96, 247, 97],  [115, 246, 91], [134, 245, 88], [155, 243, 88]
 ];
 
-// the colored part image is an rgb image with a corresponding color from thee rainbow colors for each part at each pixel, and black pixels where there is no part.
+// the colored part image is an rgb image with a corresponding color from specified colormap for each part at each pixel, and black pixels where there is no part.
 const coloredPartImage = bodyPix.toColoredPartImageData(partSegmentation, rainbow);
 const opacity = 0.7;
 const flipHorizontal = true;
@@ -682,7 +682,7 @@ Given the output from estimating multi-person part segmentation, and an array of
 
 ##### Inputs
 
-* **allPartSegmentation** The output from [estimageMultiPersonPartSegmentation](#Multi-person-body-part-segmentation).
+* **multiPersonPartSegmentation** The output from [estimageMultiPersonPartSegmentation](#Multi-person-body-part-segmentation).
 
 * **partColors** A multi-dimensional array of rgb colors indexed by part id.  Must have 24 colors, one for every part.  For some sample `partColors` check out [the ones used in the demo.](./demos/part_color_scales.js)
 
