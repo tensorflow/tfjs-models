@@ -102,7 +102,7 @@ export interface BaseModel {
  * is useful for area/countries that don't have access to the model hosted on
  * GCP.
  *
- * `quantBytes`: An opional number with values: 1, 2, or 4.  This parameter
+ * `quantBytes`: An optional number with values: 1, 2, or 4.  This parameter
  * affects weight quantization in the models. The available options are
  * 1 byte, 2 bytes, and 4 bytes. The higher the value, the larger the model size
  * and thus the longer the loading time, the lower the value, the shorter the
@@ -331,7 +331,7 @@ export class BodyPix {
   }
 
   /**
-   * Given an image with a person, returns a dictioanry of all intermediate
+   * Given an image with a person, returns a dictionary of all intermediate
    * tensors including: 1) a binary array with 1 for the pixels that are part of
    * the person, and 0 otherwise, 2) heatmapScores, 3) offsets, and 4) paddings.
    *

@@ -145,7 +145,7 @@ export function drawBoundingBox(keypoints, ctx) {
 }
 
 /**
- * Converts an arary of pixel data into an ImageData object
+ * Converts an array of pixel data into an ImageData object
  */
 export async function renderToCanvas(a, ctx) {
   const [height, width] = a.shape;
