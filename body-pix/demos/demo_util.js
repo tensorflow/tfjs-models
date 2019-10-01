@@ -17,14 +17,14 @@
 import * as posenet from '@tensorflow-models/posenet';
 import * as tf from '@tensorflow/tfjs-core';
 
-const color = 'aqua';
-const boundingBoxColor = 'red';
-const lineWidth = 2;
+const COLOR = 'aqua';
+const BOUNDING_BOX_COLOR = 'red';
+const LINE_WIDTH = 2;
 
-export const tryResNetButtonName = 'tryResNetButton';
-export const tryResNetButtonText = '[New] Try ResNet50';
-const tryResNetButtonTextCss = 'width:100%;text-decoration:underline;';
-const tryResNetButtonBackgroundCss = 'background:#e61d5f;';
+export const TRY_RESNET_BUTTON_NAME = 'tryResNetButton';
+export const TRY_RESNET_BUTTON_TEXT = '[New] Try ResNet50';
+const TRY_RESNET_BUTTON_TEXT_CSS = 'width:100%;text-decoration:underline;';
+const TRY_RESNET_BUTTON_BACKGROUND_CSS = 'background:#e61d5f;';
 
 function isAndroid() {
   return /Android/i.test(navigator.userAgent);
@@ -53,8 +53,8 @@ function setDatGuiPropertyCss(propertyText, liCssString, spanCssString = '') {
 
 export function updateTryResNetButtonDatGuiCss() {
   setDatGuiPropertyCss(
-      tryResNetButtonText, tryResNetButtonBackgroundCss,
-      tryResNetButtonTextCss);
+      TRY_RESNET_BUTTON_TEXT, TRY_RESNET_BUTTON_BACKGROUND_CSS,
+      TRY_RESNET_BUTTON_TEXT_CSS);
 }
 
 /**
@@ -89,7 +89,7 @@ export function drawSegment([ay, ax], [by, bx], color, scale, ctx) {
   ctx.beginPath();
   ctx.moveTo(ax * scale, ay * scale);
   ctx.lineTo(bx * scale, by * scale);
-  ctx.lineWidth = lineWidth;
+  ctx.lineWidth = LINE_WIDTH;
   ctx.strokeStyle = color;
   ctx.stroke();
 }
@@ -101,9 +101,13 @@ export function drawSkeleton(keypoints, minConfidence, ctx, scale = 1) {
   const adjacentKeyPoints =
       posenet.getAdjacentKeyPoints(keypoints, minConfidence);
 
+  function toTuple({y, x}) {
+    return [y, x];
+  }
+
   adjacentKeyPoints.forEach((keypoints) => {
     drawSegment(
-        toTuple(keypoints[0].position), toTuple(keypoints[1].position), color,
+        toTuple(keypoints[0].position), toTuple(keypoints[1].position), COLOR,
         scale, ctx);
   });
 }
@@ -120,7 +124,7 @@ export function drawKeypoints(keypoints, minConfidence, ctx, scale = 1) {
     }
 
     const {y, x} = keypoint.position;
-    drawPoint(ctx, y * scale, x * scale, 3, color);
+    drawPoint(ctx, y * scale, x * scale, 3, COLOR);
   }
 }
 
@@ -183,7 +187,7 @@ export function drawHeatMapValues(heatMapValues, outputStride, canvas) {
   const radius = 5;
   const scaledValues = heatMapValues.mul(tf.scalar(outputStride, 'int32'));
 
-  drawPoints(ctx, scaledValues, radius, color);
+  drawPoints(ctx, scaledValues, radius, COLOR);
 }
 
 /**
@@ -226,6 +230,6 @@ export function drawOffsetVectors(
     const offsetPointX = offsetPointsData[i + 1];
 
     drawSegment(
-        [heatmapY, heatmapX], [offsetPointY, offsetPointX], color, scale, ctx);
+        [heatmapY, heatmapX], [offsetPointY, offsetPointX], COLOR, scale, ctx);
   }
 }

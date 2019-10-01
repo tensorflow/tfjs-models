@@ -18,7 +18,7 @@ import * as bodyPix from '@tensorflow-models/body-pix';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 
-import {drawKeypoints, drawSkeleton, toggleLoadingUI, tryResNetButtonName, tryResNetButtonText, updateTryResNetButtonDatGuiCss} from './demo_util';
+import {drawKeypoints, drawSkeleton, toggleLoadingUI, TRY_RESNET_BUTTON_NAME, TRY_RESNET_BUTTON_TEXT, updateTryResNetButtonDatGuiCss} from './demo_util';
 import * as partColorScales from './part_color_scales';
 
 
@@ -153,6 +153,16 @@ async function loadVideo(cameraLabel) {
   state.video.play();
 }
 
+const defaultQuantBytes = 2;
+
+const defaultMobileNetMultiplier = isMobile() ? 0.50 : 0.75;
+const defaultMobileNetStride = 16;
+const defaultMobileNetInputResolution = 513;
+
+const defaultResNetMultiplier = 1.0;
+const defaultResNetStride = 16;
+const defaultResNetInputResolution = 257;
+
 const guiState = {
   algorithm: 'multi-person',
   estimate: 'partmap',
@@ -210,10 +220,10 @@ function setupGui(cameras) {
   const gui = new dat.GUI({width: 300});
 
   let architectureController = null;
-  guiState[tryResNetButtonName] = function() {
+  guiState[TRY_RESNET_BUTTON_NAME] = function() {
     architectureController.setValue('ResNet50')
   };
-  gui.add(guiState, tryResNetButtonName).name(tryResNetButtonText);
+  gui.add(guiState, TRY_RESNET_BUTTON_NAME).name(TRY_RESNET_BUTTON_TEXT);
   updateTryResNetButtonDatGuiCss();
 
   gui.add(guiState, 'camera', toCameraOptions(cameras))
@@ -240,19 +250,6 @@ function setupGui(cameras) {
   let input = gui.addFolder('Input');
 
 
-  // Output stride:  Internally, this parameter affects the height and width
-  // of the layers in the neural network. The lower the value of the output
-  // stride the higher the accuracy but slower the speed, the higher the value
-  // the faster the speed but lower the accuracy.
-  const defaultQuantBytes = 2;
-
-  const defaultMobileNetMultiplier = isMobile() ? 0.50 : 0.75;
-  const defaultMobileNetStride = 16;
-  const defaultMobileNetInputResolution = 513;
-
-  const defaultResNetMultiplier = 1.0;
-  const defaultResNetStride = 32;
-  const defaultResNetInputResolution = 257;
 
   // Updates outputStride
   // Output stride:  Internally, this parameter affects the height and width of
