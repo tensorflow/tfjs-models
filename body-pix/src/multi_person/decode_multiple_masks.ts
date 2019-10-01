@@ -48,7 +48,8 @@ function decodeMultipleMasksTensorGPU(
     height: number, width: number, stride: number,
     [inHeight, inWidth]: [number, number],
     [[padT, padB], [padL, padR]]: [[number, number], [number, number]],
-    refineSteps: number, minKptScore: number, maxNumPeople: number): tf.Tensor {
+    refineSteps: number, minKptScore: number,
+    maxNumPeople: number): tf.Tensor2D {
   // The height/width of the image/canvas itself.
   const [origHeight, origWidth] = segmentation.shape;
   // The height/width of the output of the model.
@@ -175,7 +176,7 @@ function decodeMultipleMasksTensorGPU(
   const webglBackend = tf.backend() as tf.webgl.MathBackendWebGL;
   const result =
       webglBackend.compileAndRun(
-          program, [segmentation, longOffsets, posesTensor]) as tf.Tensor;
+          program, [segmentation, longOffsets, posesTensor]) as tf.Tensor2D;
 
   return result;
 }
