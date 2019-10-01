@@ -218,8 +218,8 @@ function validateModelConfig(config: ModelConfig) {
  *  `segmentationThreshold`: The minimum that segmentation values must
  * have to be considered part of the person. Affects the generation of the
  * segmentation mask. More specifically, it is the threshold used to binarize
- * the intermediate person segmentation probability. The probablity of each
- * pixel belongs to a person is in range [0, 1]. If the probablity is greater
+ * the intermediate person segmentation probability. The probability of each
+ * pixel belongs to a person is in range [0, 1]. If the probability is greater
  * than the `segmentationThreshold`, it will be set to 1 otherwise 0.
  *
  */
