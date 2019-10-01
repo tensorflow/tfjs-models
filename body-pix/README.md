@@ -22,6 +22,7 @@ To keep track of issues we use the [tensorflow/tfjs](https://github.com/tensorfl
 * Ann Yuan, github: [annxingyuan](https://github.com/annxingyuan)
 * Irene Alvarado, github: [irealva](https://github.com/irealva)
 * Nikhil Thorat, github: [nsthorat](https://github.com/nsthorat)
+* Per Karlsson, github: [k3rp](https://github.com/k3rp)
 
 ## Tables of Contents
 
