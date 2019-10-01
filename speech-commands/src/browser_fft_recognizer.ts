@@ -297,7 +297,7 @@ export class BrowserFftSpeechCommandRecognizer implements
 
   async doInference() {
     const shouldFire = this.tracker.tick();
-    if (shouldFire) {
+    if (shouldFire && !this.updatingUI) {
       const result = (await this.microphoneIterator.capture()) as
           {spectrogram: Tensor, waveform: Tensor};
       const specTensor = tf.tidy(() => {
@@ -311,13 +311,11 @@ export class BrowserFftSpeechCommandRecognizer implements
       }
 
       if (specTensor != null) {
-        if (!this.updatingUI) {
-          const shouldRest =
-              await this.spectrogramCallback(specTensor, waveTensor);
-          if (shouldRest) {
-            this.tracker.suppress();
-            this.updatingUI = true;
-          }
+        const shouldRest =
+            await this.spectrogramCallback(specTensor, waveTensor);
+        if (shouldRest) {
+          this.tracker.suppress();
+          this.updatingUI = true;
         }
         specTensor.dispose();
         result.spectrogram.dispose();
