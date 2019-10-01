@@ -20,9 +20,9 @@ To keep track of issues we use the [tensorflow/tfjs](https://github.com/tensorfl
 * Dan Oved, github: [oveddan](https://github.com/oveddan)
 * Daniel Smilkov, github: [dsmilkov](https://github.com/dsmilkov)
 * Ann Yuan, github: [annxingyuan](https://github.com/annxingyuan)
+* Per Karlsson, github: [k3rp](https://github.com/k3rp)
 * Irene Alvarado, github: [irealva](https://github.com/irealva)
 * Nikhil Thorat, github: [nsthorat](https://github.com/nsthorat)
-* Per Karlsson, github: [k3rp](https://github.com/k3rp)
 
 ## Tables of Contents
 
