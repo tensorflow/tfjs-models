@@ -159,6 +159,7 @@ export class KNNClassifier {
       throw new Error(`Cannot clear invalid class ${label}`);
     }
 
+    this.classDatasetMatrices[label].dispose();
     delete this.classDatasetMatrices[label];
     delete this.classExampleCount[label];
     this.clearTrainDatasetMatrix();
