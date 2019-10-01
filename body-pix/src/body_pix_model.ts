@@ -58,15 +58,14 @@ export interface BaseModel {
    *
    * @return A dictionary of base model's intermediate predictions.
    * The returned dictionary should contains the following elements:
-   * heatmapScores: A Tensor3D that represents the heatmapScores.
-   * offsets: A Tensor3D that represents the offsets.
-   * displacementFwd: A Tensor3D that represents the forward displacement.
-   * displacementBwd: A Tensor3D that represents the backward displacement.
-   * segmentation: A Tensor3D that represents the segmentation of all people.
-   * longOffsets: A Tensor3D that represents the long offsets used for instance
-   * grouping. partHeatmaps: A Tensor3D that represents the body part
-   * segmentation. partOffsets: A Tensor3D that represents the UV offsets within
-   * each body part.
+   * - heatmapScores: A Tensor3D that represents the keypoint heatmap scores.
+   * - offsets: A Tensor3D that represents the offsets.
+   * - displacementFwd: A Tensor3D that represents the forward displacement.
+   * - displacementBwd: A Tensor3D that represents the backward displacement.
+   * - segmentation: A Tensor3D that represents the segmentation of all people.
+   * - longOffsets: A Tensor3D that represents the long offsets used for
+   * instance grouping.
+   * - partHeatmaps: A Tensor3D that represents the body part segmentation.
    */
   predict(input: tf.Tensor3D): {[key: string]: tf.Tensor3D};
   /**
@@ -119,16 +118,93 @@ export interface ModelConfig {
 
 // The default configuration for loading MobileNetV1 based BodyPix.
 //
-// TODO(tylerzhu): Adds MobileNetV1 BodyPix 2.0 configuration.
-//
 // (And for references, the default configuration for loading ResNet
 // based PoseNet is also included).
-const RESNET_CONFIG = {
-  architecture: 'ResNet50',
+//
+// ```
+// const RESNET_CONFIG = {
+//   architecture: 'ResNet50',
+//   outputStride: 32,
+//   inputResolution: 513,
+//   quantBytes: 4,
+// } as ModelConfig;
+// ```
+
+const MOBILENET_V1_CONFIG = {
+  architecture: 'MobileNetV1',
   outputStride: 32,
   inputResolution: 513,
   quantBytes: 4,
+  multiplier: 0.75,
 } as ModelConfig;
+
+const VALID_ARCHITECTURE = ['MobileNetV1', 'ResNet50'];
+const VALID_STRIDE = {
+  'MobileNetV1': [8, 16, 32],
+  'ResNet50': [32, 16]
+};
+export const VALID_INPUT_RESOLUTION =
+    [161, 193, 257, 289, 321, 353, 385, 417, 449, 481, 513, 801];
+const VALID_MULTIPLIER = {
+  'MobileNetV1': [0.50, 0.75, 1.0],
+  'ResNet50': [1.0]
+};
+const VALID_QUANT_BYTES = [1, 2, 4];
+
+function validateModelConfig(config: ModelConfig) {
+  config = config || MOBILENET_V1_CONFIG;
+
+  if (config.architecture == null) {
+    config.architecture = 'MobileNetV1';
+  }
+  if (VALID_ARCHITECTURE.indexOf(config.architecture) < 0) {
+    throw new Error(
+        `Invalid architecture ${config.architecture}. ` +
+        `Should be one of ${VALID_ARCHITECTURE}`);
+  }
+
+  if (config.inputResolution == null) {
+    config.inputResolution = 257;
+  }
+
+  if (VALID_INPUT_RESOLUTION.indexOf(config.inputResolution) < 0) {
+    throw new Error(
+        `Invalid inputResolution ${config.inputResolution}. ` +
+        `Should be one of ${VALID_INPUT_RESOLUTION}`);
+  }
+
+  if (config.outputStride == null) {
+    config.outputStride = 16;
+  }
+  if (VALID_STRIDE[config.architecture].indexOf(config.outputStride) < 0) {
+    throw new Error(
+        `Invalid outputStride ${config.outputStride}. ` +
+        `Should be one of ${VALID_STRIDE[config.architecture]} ` +
+        `for architecture ${config.architecture}.`);
+  }
+
+  if (config.multiplier == null) {
+    config.multiplier = 1.0;
+  }
+  if (VALID_MULTIPLIER[config.architecture].indexOf(config.multiplier) < 0) {
+    throw new Error(
+        `Invalid multiplier ${config.multiplier}. ` +
+        `Should be one of ${VALID_MULTIPLIER[config.architecture]} ` +
+        `for architecture ${config.architecture}.`);
+  }
+
+  if (config.quantBytes == null) {
+    config.quantBytes = 4;
+  }
+  if (VALID_QUANT_BYTES.indexOf(config.quantBytes) < 0) {
+    throw new Error(
+        `Invalid quantBytes ${config.quantBytes}. ` +
+        `Should be one of ${VALID_QUANT_BYTES} ` +
+        `for architecutre ${config.architecture}.`);
+  }
+
+  return config;
+}
 
 /**
  * BodyPix inference is configurable using the following config dictionary.
@@ -260,7 +336,7 @@ export class BodyPix {
     this.inputResolution = inputResolution;
   }
 
-  predictForSinglePersonSegmentationLogits(input: tf.Tensor3D): {
+  private predictForSinglePersonSegmentationLogits(input: tf.Tensor3D): {
     segmentLogits: tf.Tensor3D,
     heatmapScores: tf.Tensor3D,
     offsets: tf.Tensor3D,
@@ -281,7 +357,7 @@ export class BodyPix {
     }
   }
 
-  predictForSinglePersonPartMapLogits(input: tf.Tensor3D): {
+  private predictForSinglePersonPartMapLogits(input: tf.Tensor3D): {
     segmentLogits: tf.Tensor3D,
     partHeatmapLogits: tf.Tensor3D,
     heatmapScores: tf.Tensor3D,
@@ -304,7 +380,7 @@ export class BodyPix {
     }
   }
 
-  predictForMultiPersonSegmentationAndPartMap(input: tf.Tensor3D): {
+  private predictForMultiPersonSegmentationAndPartMap(input: tf.Tensor3D): {
     segmentLogits: tf.Tensor3D,
     longOffsets: tf.Tensor3D,
     heatmapScores: tf.Tensor3D,
@@ -528,8 +604,9 @@ export class BodyPix {
 
     let poses = await decodeMultiplePoses(
         scoresBuffer, offsetsBuffer, displacementsFwdBuffer,
-        displacementsBwdBuffer, this.baseModel.outputStride, 5,
-        configWithDefault.scoreThreshold, configWithDefault.nmsRadius);
+        displacementsBwdBuffer, this.baseModel.outputStride,
+        config.maxDetections, configWithDefault.scoreThreshold,
+        configWithDefault.nmsRadius);
 
     poses = scaleAndFlipPoses(
         poses, [height, width], [inputResolution, inputResolution], padding,
@@ -756,7 +833,8 @@ export class BodyPix {
 
     let poses = await decodeMultiplePoses(
         scoresBuffer, offsetsBuffer, displacementsFwdBuffer,
-        displacementsBwdBuffer, this.baseModel.outputStride, 30, 0.3, 20);
+        displacementsBwdBuffer, this.baseModel.outputStride,
+        config.maxDetections, config.scoreThreshold, config.nmsRadius);
 
     poses = scaleAndFlipPoses(
         poses, [height, width], [inputResolution, inputResolution], padding,
@@ -837,9 +915,9 @@ async function loadResNet(config: ModelConfig): Promise<BodyPix> {
  * `MOBILENET_V1_CONFIG` and `RESNET_CONFIG` can also be used as references
  * for defining your customized config.
  */
-export async function load(config: ModelConfig = RESNET_CONFIG):
+export async function load(config: ModelConfig = MOBILENET_V1_CONFIG):
     Promise<BodyPix> {
-  // config = validateModelConfig(config);
+  config = validateModelConfig(config);
   if (config.architecture === 'ResNet50') {
     return loadResNet(config);
   } else if (config.architecture === 'MobileNetV1') {

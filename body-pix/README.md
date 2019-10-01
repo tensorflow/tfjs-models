@@ -194,8 +194,7 @@ console.log(segmentation);
 
 Given an image with multiple people, multi-person segmentation model predicts segmentation for *each* person. It returns *an array* of `PersonSegmentation` and each corresponding to one person. Each element is a binary array for one person with 1 for the pixels that are part of the person, and 0 otherwise. The array size corresponds to the number of pixels in the image.
 
-(replace with copyright free ones)
-![Multi-person Segmentation](./images/two_people_segmentation.png)
+![Multi-person Segmentation](./images/two_people_segmentation.jpg)
 
 ```javascript
 const net = await bodyPix.load();
@@ -434,7 +433,7 @@ console.log(segmentation);
 
 Given an image with multiple people. BodyPix's `estimateMultiPersonSegmentation` method predicts the 24 body part segmentations for *each* person. It returns *an array* of `PartSegmentation`s, each corresponding to one of the people. The `PartSegmentation` object contains a width, height, `Pose` and an Int32 array with a part id from 0-24 for the pixels that are part of a corresponding body part, and -1 otherwise.
 
-![Multi-person Segmentation](./images/two_people_parts.png)
+![Multi-person Segmentation](./images/two_people_parts.jpg)
 
 ```javascript
 const net = await bodyPix.load();
@@ -624,7 +623,7 @@ belong to people.
 
 An [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) with the same width and height of the personSegmentation, with color and opacity at each pixel determined by the corresponding binary segmentation value at the pixel from the output.
 
-![MaskImageData](./images/toMultiPersonMaskImageData.png)
+![MaskImageData](./images/toMultiPersonMaskImageData.jpg)
 
 *With the output from `estimateMultiPersonSegmentation` on the first image above, `toMultiPersonMaskImageData` will produce an [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) that either looks like the second image above if setting `foregroundColor` to {r: 0, g: 0, b: 0, a: 0} and `backgroundColor` to {r: 0, g: 0, b: 0, a: 255} (by default), or the third image if if setting `foregroundColor` to {r: 0, g: 0, b: 0, a: 255} and `backgroundColor` to {r: 0, g: 0, b: 0, a: 0}.  This can be used to mask either the person or the background using the method `drawMask`.*
 
@@ -720,7 +719,7 @@ bodyPix.drawMask(
     flipHorizontal);
 ```
 
-![toColoredPartImageData](./images/toMultiPersonColoredPartImage.png)
+![toColoredPartImageData](./images/toMultiPersonColoredPartImage.jpg)
 
 *With the output from `estimateMultiPersonPartSegmentation` on the first image above, a 'spectral' or 'rainbow' color scale in `toColoredPartImageData` will produce an `ImageData` that looks like the second image or the third image above.*
 
