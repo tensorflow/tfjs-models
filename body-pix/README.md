@@ -83,7 +83,7 @@ const net = await bodyPix.load({
 
    The following table contains the corresponding BodyPix 2.0 model checkpoint sizes (widthout gzip) when using different quantization bytes:
 
-     | Architecture       | quantBgytes=4 | quantBytes=2 | quantBytes=1 |
+     | Architecture       | quantBytes=4 | quantBytes=2 | quantBytes=1 |
      | ------------------ |:------------:|:------------:|:------------:|
      | ResNet50           | ~90MB        | ~45MB        | ~22MB        |
      | MobileNetV1 (1.00) | ~13MB        | ~6MB         | ~3MB         |
