@@ -698,7 +698,7 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
     }
   });
 
-  it('collectExample with onSnippet', async () => {
+  fit('collectExample with onSnippet', async () => {
     setUpFakes();
     const base = new BrowserFftSpeechCommandRecognizer();
     await base.ensureModelLoaded();

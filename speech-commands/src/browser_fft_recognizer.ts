@@ -96,7 +96,7 @@ export class BrowserFftSpeechCommandRecognizer implements
   protected spectrogramCallback: SpectrogramCallback;
   protected tracker: Tracker;
 
-  private isInferencing = false;
+  private updatingUI = false;
 
   /**
    * Constructor of BrowserFftSpeechCommandRecognizer.
@@ -297,8 +297,7 @@ export class BrowserFftSpeechCommandRecognizer implements
 
   async doInference() {
     const shouldFire = this.tracker.tick();
-    if (shouldFire && !this.isInferencing) {
-      this.isInferencing = true;
+    if (shouldFire) {
       const result = (await this.microphoneIterator.capture()) as
           {spectrogram: Tensor, waveform: Tensor};
       const specTensor = tf.tidy(() => {
@@ -312,10 +311,13 @@ export class BrowserFftSpeechCommandRecognizer implements
       }
 
       if (specTensor != null) {
-        const shouldRest =
-            await this.spectrogramCallback(specTensor, waveTensor);
-        if (shouldRest) {
-          this.tracker.suppress();
+        if (!this.updatingUI) {
+          const shouldRest =
+              await this.spectrogramCallback(specTensor, waveTensor);
+          if (shouldRest) {
+            this.tracker.suppress();
+            this.updatingUI = true;
+          }
         }
         specTensor.dispose();
         result.spectrogram.dispose();
@@ -326,7 +328,7 @@ export class BrowserFftSpeechCommandRecognizer implements
         waveTensor.dispose();
         result.waveform.dispose();
       }
-      this.isInferencing = false;
+      this.updatingUI = false;
     }
   }
 
@@ -784,6 +786,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       const stepFactor = options.snippetDurationSec == null ?
           1 :
           options.snippetDurationSec / totalDurationSec;
+      console.log(stepFactor);
       const callbackCountTarget = Math.round(1 / stepFactor);
       let callbackCount = 0;
       let lastIndex = -1;
