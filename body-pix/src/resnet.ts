@@ -25,9 +25,15 @@ function toFloatIfInt(input: tf.Tensor3D): tf.Tensor3D {
     if (input.dtype === 'int32') {
       input = input.toFloat();
     }
+    return input;
+  });
+}
+
+function processInput(input: tf.Tensor3D): tf.Tensor3D {
+  return tf.tidy(() => {
     const imageNetMean = tf.tensor([-123.15, -115.90, -103.06]);
     return input.add(imageNetMean);
-  });
+  })
 }
 
 export class ResNet implements BaseModel {
@@ -47,20 +53,9 @@ export class ResNet implements BaseModel {
 
   predict(input: tf.Tensor3D): {[key: string]: tf.Tensor3D} {
     return tf.tidy(() => {
-      const asFloat = toFloatIfInt(input);
+      const asFloat = processInput(toFloatIfInt(input));
       const asBatch = asFloat.expandDims(0);
       const [
-          //  - bodypix2js_release_2
-          //  displacementBwd4d,
-          //  heatmaps4d,
-          //  partHeatmaps4d,
-          //  longOffsets4d,
-          //  offsets4d,
-          //  displacementFwd4d,
-          //  segmentation4d,
-          //  partOffsets4d,
-          //
-          //  - bodypix2js_release_2 2
           displacementBwd4d,
           displacementFwd4d,
           heatmaps4d,
