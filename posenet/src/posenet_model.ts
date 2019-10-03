@@ -76,13 +76,14 @@ export interface BaseModel {
  * at the cost of accuracy. Stride 32 is supported for ResNet and
  * stride 8,16,32 are supported for various MobileNetV1 models.
  *
- * * `inputResolution`: A number or an object containing width and height.
- * Specifies the size the input image is scaled to before feeding it through the
- * PoseNet model.  The larger the value, more accurate the model at the cost of
- * speed. Set this to a smaller value to increase speed at the cost of accuracy.
- * If a number is provided, the input will be resized to be a square
- * with the same width and height.  If width and height are provided, the input
- * will be resized to the specified width and height.
+ * * `inputResolution`: A number or an Object of type  {width: number, height:
+ * number}. Specifies the size the input image is scaled to before feeding it
+ * through the PoseNet model.  The larger the value, more accurate the model at
+ * the cost of speed. Set this to a smaller value to increase speed at the cost
+ * of accuracy. If a number is provided, the input will be resized and padded to
+ * be a square with the same width and height.  If width and height are
+ * provided, the input will be resized and padded to the specified width and
+ * height.
  *
  * `multiplier`: An optional number with values: 1.01, 1.0, 0.75, or
  * 0.50. The value is used only by MobileNet architecture. It is the float
