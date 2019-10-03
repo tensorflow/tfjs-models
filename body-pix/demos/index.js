@@ -164,7 +164,7 @@ const defaultResNetStride = 16;
 const defaultResNetInputResolution = 257;
 
 const guiState = {
-  algorithm: 'multi-person',
+  algorithm: 'multi-person-instance',
   estimate: 'partmap',
   camera: null,
   flipHorizontal: true,
@@ -237,11 +237,15 @@ function setupGui(cameras) {
 
   gui.add(guiState, 'flipHorizontal');
 
-  // The single-pose algorithm is faster and simpler but requires only one
-  // person to be in the frame or results will be innaccurate. Multi-pose works
-  // for more than 1 person
+  // There are two algorithms 'person' and 'multi-person-instance'.
+  // The 'person' algorithm returns one single segmentation mask (or body part
+  // map) for all people in the image. The 'multi-person-instance' algorithm
+  // returns an array of segmentation mask (or body part map). Each element
+  // in the array corresponding to one of the people. In other words,
+  // 'multi-person-instance' algorithm does instance-level person segmentation
+  // and body part segmentation for every person in the image.
   const algorithmController =
-      gui.add(guiState, 'algorithm', ['single-person', 'multi-person']);
+      gui.add(guiState, 'algorithm', ['person', 'multi-person-instance']);
 
   // Architecture: there are a few BodyPix models varying in size and
   // accuracy.
@@ -513,9 +517,9 @@ function setupFPS() {
 async function estimateSegmentation() {
   let multiPersonSegmentation = null;
   switch (guiState.algorithm) {
-    case 'multi-person':
+    case 'multi-person-instance':
       multiPersonSegmentation =
-          await state.net.estimateMultiplePersonSegmentation(state.video, {
+          await state.net.estimateMultiPersonInstanceSegmentation(state.video, {
             segmentationThreshold: guiState.segmentation.segmentationThreshold,
             maxDetections: guiState.multiPersonDecoding.maxDetections,
             scoreThreshold: guiState.multiPersonDecoding.scoreThreshold,
@@ -525,11 +529,10 @@ async function estimateSegmentation() {
             refineSteps: guiState.multiPersonDecoding.refineSteps
           });
       break;
-    case 'single-person':
-      const personSegmentation =
-          await state.net.estimateSinglePersonSegmentation(state.video, {
-            segmentationThreshold: guiState.segmentation.segmentationThreshold
-          });
+    case 'person':
+      const personSegmentation = await state.net.estimatePersonSegmentation(
+          state.video,
+          {segmentationThreshold: guiState.segmentation.segmentationThreshold});
       multiPersonSegmentation = [personSegmentation];
       break;
     default:
@@ -541,21 +544,23 @@ async function estimateSegmentation() {
 async function estimatePartSegmentation() {
   let multiPersonPartSegmentation = null;
   switch (guiState.algorithm) {
-    case 'multi-person':
+    case 'multi-person-instance':
       multiPersonPartSegmentation =
-          await state.net.estimateMultiplePersonPartSegmentation(state.video, {
-            segmentationThreshold: guiState.segmentation.segmentationThreshold,
-            maxDetections: guiState.multiPersonDecoding.maxDetections,
-            scoreThreshold: guiState.multiPersonDecoding.scoreThreshold,
-            nmsRadius: guiState.multiPersonDecoding.nmsRadius,
-            numKeypointForMatching:
-                guiState.multiPersonDecoding.numKeypointForMatching,
-            refineSteps: guiState.multiPersonDecoding.refineSteps
-          });
+          await state.net.estimateMultiPersonInstancePartSegmentation(
+              state.video, {
+                segmentationThreshold:
+                    guiState.segmentation.segmentationThreshold,
+                maxDetections: guiState.multiPersonDecoding.maxDetections,
+                scoreThreshold: guiState.multiPersonDecoding.scoreThreshold,
+                nmsRadius: guiState.multiPersonDecoding.nmsRadius,
+                numKeypointForMatching:
+                    guiState.multiPersonDecoding.numKeypointForMatching,
+                refineSteps: guiState.multiPersonDecoding.refineSteps
+              });
       break;
-    case 'single-person':
+    case 'person':
       const personPartSegmentation =
-          await state.net.estimateSinglePersonPartSegmentation(state.video, {
+          await state.net.estimatePersonPartSegmentation(state.video, {
             segmentationThreshold: guiState.segmentation.segmentationThreshold
           });
       multiPersonPartSegmentation = [personPartSegmentation];

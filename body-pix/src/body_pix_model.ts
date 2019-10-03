@@ -21,8 +21,7 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {mobileNetCheckpoint, resNet50Checkpoint} from './checkpoints';
 import {decodeOnlyPartSegmentation, decodePartSegmentation, toMask} from './decode_part_map';
-import {MobileNetMultiplier} from './mobilenet';
-import {MobileNet} from './mobilenet';
+import {MobileNet, MobileNetMultiplier} from './mobilenet';
 import {decodeMultipleMasksGPU, decodeMultiplePartMasksGPU} from './multi_person/decode_multiple_masks';
 import {decodeMultiplePoses} from './multi_person/decode_multiple_poses';
 import {ResNet} from './resnet';
@@ -34,7 +33,7 @@ export type BodyPixInputResolution =
     161|193|257|289|321|353|385|417|449|481|513|801|1217;
 export type BodyPixOutputStride = 32|16|8;
 export type BodyPixArchitecture = 'ResNet50'|'MobileNetV1';
-export type BodyPixDecodingMethod = 'single-person'|'multi-person';
+export type BodyPixDecodingMethod = 'person'|'multi-person-by-instance';
 export type BodyPixQuantBytes = 1|2|4;
 
 /**
@@ -77,12 +76,12 @@ export interface BaseModel {
 /**
  * BodyPix model loading is configurable using the following config dictionary.
  *
- * `architecture`: PoseNetArchitecture. It determines wich PoseNet architecture
- * to load. The supported architectures are: MobileNetV1 and ResNet.
+ * `architecture`: BodyPixArchitecture. It determines which BodyPix architecture
+ * to load. The supported architectures are: MobileNetV1 and ResNet50.
  *
- * `outputStride`: Specifies the output stride of the PoseNet model.
+ * `outputStride`: Specifies the output stride of the BodyPix model.
  * The smaller the value, the larger the output resolution, and more accurate
- * the model at the cost of speed.  Set this to a larger value to increase speed
+ * the model at the cost of speed. Set this to a larger value to increase speed
  * at the cost of accuracy. Stride 32 is supported for ResNet and
  * stride 8,16,32 are supported for various MobileNetV1 models.
  *
@@ -229,12 +228,12 @@ export interface InferenceConfig {
 }
 
 /**
- * Single Person Inference Config
+ * Person Inference Config
  */
-export interface SinglePersonInferenceConfig extends InferenceConfig {}
+export interface PersonInferenceConfig extends InferenceConfig {}
 
 /**
- * Multiple Person Inference Config
+ * Multiple Person Instance Inference Config
  *
  * `maxDetections`: Maximum number of returned instance detections per image.
  * Defaults to 10
@@ -254,7 +253,7 @@ export interface SinglePersonInferenceConfig extends InferenceConfig {}
  * higher the accuracy and slower the inference.
  *
  **/
-export interface MultiPersonInferenceConfig extends InferenceConfig {
+export interface MultiPersonInstanceInferenceConfig extends InferenceConfig {
   maxDetections?: number;
   scoreThreshold?: number;
   nmsRadius?: number;
@@ -262,23 +261,23 @@ export interface MultiPersonInferenceConfig extends InferenceConfig {
   refineSteps?: number;
 }
 
-export const SINGLE_PERSON_INFERENCE_CONFIG: SinglePersonInferenceConfig = {
+export const PERSON_INFERENCE_CONFIG: PersonInferenceConfig = {
   flipHorizontal: false,
   segmentationThreshold: 0.7
 };
 
-export const MULTI_PERSON_INFERENCE_CONFIG: MultiPersonInferenceConfig = {
-  flipHorizontal: false,
-  segmentationThreshold: 0.7,
-  maxDetections: 10,
-  scoreThreshold: 0.2,
-  nmsRadius: 20,
-  minKeypointScore: 0.3,
-  refineSteps: 10
-};
+export const MULTI_PERSON_INSTANCE_INFERENCE_CONFIG:
+    MultiPersonInstanceInferenceConfig = {
+      flipHorizontal: false,
+      segmentationThreshold: 0.7,
+      maxDetections: 10,
+      scoreThreshold: 0.2,
+      nmsRadius: 20,
+      minKeypointScore: 0.3,
+      refineSteps: 10
+    };
 
-function validateSinglePersonInferenceConfig(
-    config: SinglePersonInferenceConfig) {
+function validatePersonInferenceConfig(config: PersonInferenceConfig) {
   const segmentationThreshold = config.segmentationThreshold;
   if (segmentationThreshold < 0.0 || segmentationThreshold > 1.0) {
     throw new Error(
@@ -287,8 +286,8 @@ function validateSinglePersonInferenceConfig(
   }
 }
 
-function validateMultiPersonInferenceConfig(
-    config: MultiPersonInferenceConfig) {
+function validateMultiPersonInstanceInferenceConfig(
+    config: MultiPersonInstanceInferenceConfig) {
   const {
     maxDetections,
     scoreThreshold,
@@ -336,7 +335,7 @@ export class BodyPix {
     this.inputResolution = inputResolution;
   }
 
-  private predictForSinglePersonSegmentationLogits(input: tf.Tensor3D): {
+  private predictForPersonSegmentation(input: tf.Tensor3D): {
     segmentLogits: tf.Tensor3D,
     heatmapScores: tf.Tensor3D,
     offsets: tf.Tensor3D,
@@ -357,7 +356,7 @@ export class BodyPix {
     }
   }
 
-  private predictForSinglePersonPartMapLogits(input: tf.Tensor3D): {
+  private predictForPersonSegmentationAndPart(input: tf.Tensor3D): {
     segmentLogits: tf.Tensor3D,
     partHeatmapLogits: tf.Tensor3D,
     heatmapScores: tf.Tensor3D,
@@ -380,15 +379,16 @@ export class BodyPix {
     }
   }
 
-  private predictForMultiPersonSegmentationAndPartMap(input: tf.Tensor3D): {
-    segmentLogits: tf.Tensor3D,
-    longOffsets: tf.Tensor3D,
-    heatmapScores: tf.Tensor3D,
-    offsets: tf.Tensor3D,
-    displacementFwd: tf.Tensor3D,
-    displacementBwd: tf.Tensor3D,
-    partHeatmaps: tf.Tensor3D
-  } {
+  private predictForMultiPersonInstanceSegmentationAndPart(input: tf.Tensor3D):
+      {
+        segmentLogits: tf.Tensor3D,
+        longOffsets: tf.Tensor3D,
+        heatmapScores: tf.Tensor3D,
+        offsets: tf.Tensor3D,
+        displacementFwd: tf.Tensor3D,
+        displacementBwd: tf.Tensor3D,
+        partHeatmaps: tf.Tensor3D
+      } {
     const {
       segmentation,
       longOffsets,
@@ -407,7 +407,7 @@ export class BodyPix {
   }
 
   /**
-   * Given an image with a person, returns a dictionary of all intermediate
+   * Given an image with people, returns a dictionary of all intermediate
    * tensors including: 1) a binary array with 1 for the pixels that are part of
    * the person, and 0 otherwise, 2) heatmapScores, 3) offsets, and 4) paddings.
    *
@@ -430,7 +430,7 @@ export class BodyPix {
    * - `padding`: The padding (unit pixels) being applied to the input image
    * before it is fed into the model.
    */
-  estimateSinglePersonSegmentationActivation(
+  estimatePersonSegmentationActivation(
       input: BodyPixInput, segmentationThreshold = 0.5): {
     segmentation: tf.Tensor2D,
     heatmapScores: tf.Tensor3D,
@@ -447,7 +447,7 @@ export class BodyPix {
         segmentLogits,
         heatmapScores,
         offsets,
-      } = this.predictForSinglePersonSegmentationLogits(resized);
+      } = this.predictForPersonSegmentation(resized);
 
       const [resizedHeight, resizedWidth] = resized.shape;
       const [height, width] = imageTensor.shape;
@@ -470,14 +470,20 @@ export class BodyPix {
   }
 
   /**
-   * Given an image with a person, returns a PersonSegmentation dictionary that
-   * contains the segmentation mask and the pose for the person.
+   * Given an image with many people, returns a PersonSegmentation dictionary
+   * that contains the segmentation mask for all people and a single pose.
+   *
+   * Note: The segmentation mask returned by this method covers all people but
+   * the pose works well for one person. If you want to estimate instance-level
+   * multiple person segmentation & pose for each person, use
+   * `estimateMultiPersonInstanceSegmentation` instead.
+   *
    *
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
    *
-   * @param config SinglePersonInferenceConfig object that contains
-   * parameters for the BodyPix inference using single person decoding.
+   * @param config PersonInferenceConfig object that contains
+   * parameters for the BodyPix inference using person decoding.
    *
    * @return A PersonSegmentation dictionary that contains height, width, the
    * flattened binary segmentation mask and the pose for the person. The width
@@ -489,17 +495,15 @@ export class BodyPix {
    * size of the array is equal to `height` x `width` in row-major order.
    * - `pose`: The 2d pose of the person.
    */
-  async estimateSinglePersonSegmentation(
+  async estimatePersonSegmentation(
       input: BodyPixInput,
-      config: SinglePersonInferenceConfig = SINGLE_PERSON_INFERENCE_CONFIG):
+      config: PersonInferenceConfig = PERSON_INFERENCE_CONFIG):
       Promise<PersonSegmentation> {
-    const configWithDefault: SinglePersonInferenceConfig = {
-      ...SINGLE_PERSON_INFERENCE_CONFIG,
-      ...config
-    };
-    validateSinglePersonInferenceConfig(configWithDefault);
+    const configWithDefault:
+        PersonInferenceConfig = {...PERSON_INFERENCE_CONFIG, ...config};
+    validatePersonInferenceConfig(configWithDefault);
     const {segmentation, heatmapScores, offsets, padding} =
-        this.estimateSinglePersonSegmentationActivation(
+        this.estimatePersonSegmentationActivation(
             input, configWithDefault.segmentationThreshold);
 
     const [height, width] = segmentation.shape;
@@ -521,9 +525,13 @@ export class BodyPix {
   }
 
   /**
-   * Given an image with multiple people, returns an array of PersonSegmentation
-   * object. This does standard ImageNet pre-processing before inferring through
-   * the model.  The image pixels should have values [0-255].
+   * Given an image with multiple people, returns an *array* of
+   * PersonSegmentation object. Each element in the array corresponding to one
+   * of the people in the input image. In other words, it predicts
+   * instance-level multiple person segmentation & pose for each person.
+   *
+   * The model does standard ImageNet pre-processing before inferring through
+   * the model. The image pixels should have values [0-255].
    *
    * @param input
    * ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement) The input
@@ -539,15 +547,16 @@ export class BodyPix {
    * dimensions of the image the binary array is shaped to, which are the same
    * dimensions of the input image.
    */
-  async estimateMultiplePersonSegmentation(
+  async estimateMultiPersonInstanceSegmentation(
       input: BodyPixInput,
-      config: MultiPersonInferenceConfig = MULTI_PERSON_INFERENCE_CONFIG):
+      config: MultiPersonInstanceInferenceConfig =
+          MULTI_PERSON_INSTANCE_INFERENCE_CONFIG):
       Promise<PersonSegmentation[]> {
-    const configWithDefault: MultiPersonInferenceConfig = {
-      ...MULTI_PERSON_INFERENCE_CONFIG,
+    const configWithDefault: MultiPersonInstanceInferenceConfig = {
+      ...MULTI_PERSON_INSTANCE_INFERENCE_CONFIG,
       ...config
     };
-    validateMultiPersonInferenceConfig(configWithDefault);
+    validateMultiPersonInstanceInferenceConfig(configWithDefault);
     const [height, width] = getInputTensorDimensions(input);
     const inputResolution = this.inputResolution;
 
@@ -568,7 +577,7 @@ export class BodyPix {
         offsets,
         displacementFwd,
         displacementBwd,
-      } = this.predictForMultiPersonSegmentationAndPartMap(resized);
+      } = this.predictForMultiPersonInstanceSegmentationAndPart(resized);
       const scaledSegmentScores = scaleAndCropToInputTensorShape(
           segmentLogits, [height, width], [inputResolution, inputResolution],
           [[padding.top, padding.bottom], [padding.left, padding.right]], true);
@@ -631,7 +640,7 @@ export class BodyPix {
   }
 
   /**
-   * Given an image with a person, returns a dictionary containing: height,
+   * Given an image with many people, returns a dictionary containing: height,
    * width, a tensor with a part id from 0-24 for the pixels that are
    * part of a corresponding body part, and -1 otherwise. This does standard
    * ImageNet pre-processing before inferring through the model.  The image
@@ -655,7 +664,7 @@ export class BodyPix {
    * - `padding`: The padding (unit pixels) being applied to the input image
    * before it is fed into the model.
    */
-  estimateSinglePersonPartSegmentationActivation(
+  estimatePersonPartSegmentationActivation(
       input: BodyPixInput, segmentationThreshold = 0.5): {
     partSegmentation: tf.Tensor2D,
     heatmapScores: tf.Tensor3D,
@@ -671,7 +680,7 @@ export class BodyPix {
 
     const {partSegmentation, heatmapScores, offsets} = tf.tidy(() => {
       const {segmentLogits, partHeatmapLogits, heatmapScores, offsets} =
-          this.predictForSinglePersonPartMapLogits(resized);
+          this.predictForPersonSegmentationAndPart(resized);
 
       const [resizedHeight, resizedWidth] = resized.shape;
       const [height, width] = imageTensor.shape;
@@ -699,13 +708,18 @@ export class BodyPix {
   }
 
   /**
-   * Given an image with a person, returns a PartSegmentation dictionary that
-   * contains the person part segmentation mask and the pose for the person.
+   * Given an image with many people, returns a PartSegmentation dictionary that
+   * contains the body part segmentation mask for all people and a single pose.
+   *
+   * Note: The body part segmentation mask returned by this method covers all
+   * people but the pose works well when there is one person. If you want to
+   * estimate instance-level multiple person body part segmentation & pose for
+   * each person, use `estimateMultiPersonInstancePartSegmentation` instead.
    *
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
    *
-   * @param config SinglePersonInferenceConfig object that contains
+   * @param config PersonInferenceConfig object that contains
    * parameters for the BodyPix inference using single person decoding.
    *
    * @return A PersonSegmentation dictionary that contains height, width, the
@@ -719,17 +733,15 @@ export class BodyPix {
    * `width` in row-major order.
    * - `pose`: The 2d pose of the person.
    */
-  async estimateSinglePersonPartSegmentation(
+  async estimatePersonPartSegmentation(
       input: BodyPixInput,
-      config: SinglePersonInferenceConfig = SINGLE_PERSON_INFERENCE_CONFIG):
+      config: PersonInferenceConfig = PERSON_INFERENCE_CONFIG):
       Promise<PartSegmentation> {
-    const configWithDefault: SinglePersonInferenceConfig = {
-      ...SINGLE_PERSON_INFERENCE_CONFIG,
-      ...config
-    };
-    validateSinglePersonInferenceConfig(configWithDefault);
+    const configWithDefault:
+        PersonInferenceConfig = {...PERSON_INFERENCE_CONFIG, ...config};
+    validatePersonInferenceConfig(configWithDefault);
     const {partSegmentation, heatmapScores, offsets, padding} =
-        this.estimateSinglePersonPartSegmentationActivation(
+        this.estimatePersonPartSegmentationActivation(
             input, configWithDefault.segmentationThreshold);
 
     const [height, width] = partSegmentation.shape;
@@ -750,8 +762,13 @@ export class BodyPix {
   }
 
   /**
-   * Given an image with multiple people, returns an array of PartSegmentation
-   * object. This does standard ImageNet pre-processing before inferring through
+   * Given an image with multiple people, returns an *array* of PartSegmentation
+   * object. Each element in the array corresponding to one
+   * of the people in the input image. In other words, it predicts
+   * instance-level multiple person body part segmentation & pose for each
+   * person.
+   *
+   * This does standard ImageNet pre-processing before inferring through
    * the model. The image pixels should have values [0-255].
    *
    * @param input
@@ -767,15 +784,15 @@ export class BodyPix {
    * and height correspond to the dimensions of the image. Each flattened part
    * segmentation array size is equal to `height` x `width`.
    */
-  async estimateMultiplePersonPartSegmentation(
+  async estimateMultiPersonInstancePartSegmentation(
       input: BodyPixInput,
-      config: MultiPersonInferenceConfig = MULTI_PERSON_INFERENCE_CONFIG):
-      Promise<PartSegmentation[]> {
-    const configWithDefault: MultiPersonInferenceConfig = {
-      ...MULTI_PERSON_INFERENCE_CONFIG,
+      config: MultiPersonInstanceInferenceConfig =
+          MULTI_PERSON_INSTANCE_INFERENCE_CONFIG): Promise<PartSegmentation[]> {
+    const configWithDefault: MultiPersonInstanceInferenceConfig = {
+      ...MULTI_PERSON_INSTANCE_INFERENCE_CONFIG,
       ...config
     };
-    validateMultiPersonInferenceConfig(configWithDefault);
+    validateMultiPersonInstanceInferenceConfig(configWithDefault);
     const [height, width] = getInputTensorDimensions(input);
     const inputResolution = this.inputResolution;
     const {resized, padding} =
@@ -797,7 +814,7 @@ export class BodyPix {
         displacementFwd,
         displacementBwd,
         partHeatmaps
-      } = this.predictForMultiPersonSegmentationAndPartMap(resized);
+      } = this.predictForMultiPersonInstanceSegmentationAndPart(resized);
 
       // decoding with scaling.
       const scaledSegmentScores = scaleAndCropToInputTensorShape(
