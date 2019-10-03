@@ -125,23 +125,13 @@ export function flipPosesHorizontal(poses: Pose[], imageWidth: number) {
   return poses.map(pose => flipPoseHorizontal(pose, imageWidth));
 }
 
-function toEvenNumber(value: number): number {
-  if (value % 2 === 0) {
-    return value;
-  } else {
-    return value - 1;
-  }
-}
-
 export function toValidInputResolution(
     inputResolution: number, outputStride: PoseNetOutputStride): number {
   if (isValidInputResolution(inputResolution, outputStride)) {
     return inputResolution;
   }
 
-  const evenResolution = toEvenNumber(inputResolution);
-
-  return evenResolution - (evenResolution % outputStride) + 1;
+  return Math.floor(inputResolution / outputStride) * outputStride + 1;
 }
 
 export function validateInputResolution(inputResolution: InputResolution) {
