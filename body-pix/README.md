@@ -1,6 +1,6 @@
 # BodyPix - Person Segmentation in the Browser
 
-## Note: We've just released Version 2.0 with multi-person support, a **new ResNet** model and API. Check out the new documentation below.
+## Note: We've just released Version 2.0 with **multi-person** support, a **new ResNet** model and API. Check out the new documentation below.
 
 This package contains a standalone model called BodyPix, as well as some demos, for running real-time person and body part segmentation in the browser using TensorFlow.js.
 
@@ -49,7 +49,7 @@ Each methodology has similar input parameters with different outputs.
 
 ### Loading a pre-trained BodyPix Model
 
-In the first step of pose estimation, an image is fed through a pre-trained model. BodyPix **comes with a few different versions of the model,** corresponding to variances of MobileNet v1 architecture and ResNet50 architecture. To get started, a model must be loaded from a checkpoint:
+In the first step of person segmentation and body part segmentation, an image is fed through a pre-trained model. BodyPix **comes with a few different versions of the model,** corresponding to variances of MobileNetV1 architecture and ResNet50 architecture. To get started, a model must be loaded from a checkpoint:
 
 ```javascript
 const net = await bodyPix.load();
@@ -86,7 +86,7 @@ const net = await bodyPix.load({
 
 * **inputResolution** - Can be one of `161`, `193`, `257`, `289`, `321`, `353`, `385`, `417`, `449`, `481`, `513`, and `801`. Defaults to `257.` It specifies the size the image is resized to before it is fed into the BodyPix model. The larger the value, the more accurate the model at the cost of speed. Set this to a smaller value to increase speed at the cost of accuracy.
 
- * **multiplier** - Can be one of `1.01`, `1.0`, `0.75`, or `0.50` (The value is used *only* by the MobileNetV1 architecture and not by the ResNet architecture). It is the float multiplier for the depth (number of channels) for all convolution ops. The larger the value, the larger the size of the layers, and more accurate the model at the cost of speed. Set this to a smaller value to increase speed at the cost of accuracy.
+ * **multiplier** - Can be one of `1.0`, `0.75`, or `0.50` (The value is used *only* by the MobileNetV1 architecture and not by the ResNet architecture). It is the float multiplier for the depth (number of channels) for all convolution ops. The larger the value, the larger the size of the layers, and more accurate the model at the cost of speed. Set this to a smaller value to increase speed at the cost of accuracy.
 
  * **quantBytes** - This argument controls the bytes used for weight quantization. The available options are:
 
@@ -104,10 +104,10 @@ const net = await bodyPix.load({
      | MobileNetV1 (0.50) | ~2MB         | ~1MB         | ~0.6MB       |
 
 
-* **modelUrl** - An optional string that specifies custom url of the model. This is useful for local development or countries that don't have access to the model hosted on GCP.
+* **modelUrl** - An optional string that specifies custom url of the model. This is useful for local development or countries that don't have access to the models hosted on GCP.
 
 
-**By default,** BodyPix loads a MobileNetV1 architecture with a **`0.75`** multiplier.  This is recommended for computers with **mid-range/lower-end GPUs.**  A model with a **`0.50`** multiplier is recommended for **mobile.** The ResNet achitecture is recommended for computers with **even more powerful GPUs**.
+**By default,** BodyPix loads a MobileNetV1 architecture with a **`0.75`** multiplier.  This is recommended for computers with **mid-range/lower-end GPUs.**  A model with a **`0.50`** multiplier is recommended for **mobile.** The ResNet architecture is recommended for computers with **even more powerful GPUs**.
 
 
 ### Single-person segmentation
@@ -585,7 +585,7 @@ Given the output from estimating single-person segmentation, generates a visuali
 
 ##### Inputs
 
-* **segmentation** The output from [estimageSinglePersonSegmentation](#Single-person-segmentation).
+* **segmentation** The output from [estimateSinglePersonSegmentation](#Single-person-segmentation).
 * **foreground** The foreground color (r,g,b,a) for visualizing pixels that
 belong to people.
 
