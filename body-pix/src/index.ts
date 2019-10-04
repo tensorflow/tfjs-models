@@ -18,6 +18,6 @@
 export {BodyPix, load} from './body_pix_model';
 export {mobileNetCheckpoint, resNet50Checkpoint} from './checkpoints';
 export {decodePartSegmentation, toMask} from './decode_part_map';
-export {drawBokehEffect, drawMask, drawMultiPersonBokehEffect, drawPixelatedMask, toColoredPartImageData, toMaskImageData, toMultiPersonColoredPartImageData, toMultiPersonMaskImageData} from './output_rendering_util';
+export {drawBokehEffect, drawMask, drawMultiPersonBokehEffect, drawPixelatedMask, toColoredPartImageData, toMaskImageData, toMultiPersonColoredPartImageData} from './output_rendering_util';
 export {partChannels} from './part_channels';
 export {flipPoseHorizontal, resizeAndPadTo, scaleAndCropToInputTensorShape} from './util';

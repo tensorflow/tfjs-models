@@ -123,58 +123,15 @@ function renderImageDataToOffScreenCanvas(
 }
 
 /**
- * Given the output from estimating single-person segmentation, generates an
- * image with foreground and background color at each pixel determined by the
- * corresponding binary segmentation value at the pixel from the output.  In
- * other words, pixels where there is a person will be colored with foreground
- * color and where there is not a person will be colored with background color.
- *
- * @param segmentation The output from estimagePersonSegmentation; an object
- * containing a width, height, and a binary array with 1 for the pixels that are
- * part of the person, and 0 otherwise.
- *
- * @param foreground The foreground color (r,g,b,a) for visualizing pixels that
- * belong to people.
- *
- * @param background The background color (r,g,b,a) for visualizing pixels that
- * don't belong to people.
- *
- * @param drawContour Whether to draw the contour around each person's
- * segmentation mask.
- *
- * @returns An ImageData with the same width and height of the
- * segmentation, with opacity and transparency at each pixel determined by
- * the corresponding binary segmentation value at the pixel from the output.
- */
-export function toMaskImageData(
-    segmentation: PersonSegmentation, foreground: Color = {
-      r: 0,
-      g: 0,
-      b: 0,
-      a: 0
-    },
-    background: Color = {
-      r: 0,
-      g: 0,
-      b: 0,
-      a: 255
-    },
-    drawContour = false): ImageData {
-  return toMultiPersonMaskImageData(
-      [segmentation], foreground, background, drawContour);
-}
-
-/**
  * Given the output from estimating multi-person segmentation, generates an
  * image with foreground and background color at each pixel determined by the
  * corresponding binary segmentation value at the pixel from the output.  In
  * other words, pixels where there is a person will be colored with foreground
  * color and where there is not a person will be colored with background color.
  *
- * @param multiPersonSegmentation The output from
- * estimateMultiPersonSegmentation; An array of PersonSegmentation object, each
- * containing a width, height, and a binary array with 1 for the pixels that are
- * part of the person, and 0 otherwise.
+ * @param personSegmentation The output from estimatePersonSegmentation or
+ * estimateMultiPersonSegmentation. The former is a PersonSegmentation object
+ * and later is an array of PersonSegmentation object.
  *
  * @param foreground The foreground color (r,g,b,a) for visualizing pixels that
  * belong to people.
@@ -190,8 +147,9 @@ export function toMaskImageData(
  * transparency at each pixel determined by the corresponding binary
  * segmentation value at the pixel from the output.
  */
-export function toMultiPersonMaskImageData(
-    multiPersonSegmentation: PersonSegmentation[], foreground: Color = {
+export function toMaskImageData(
+    personSegmentation: PersonSegmentation|PersonSegmentation[],
+    foreground: Color = {
       r: 0,
       g: 0,
       b: 0,
@@ -204,8 +162,15 @@ export function toMultiPersonMaskImageData(
       a: 255
     },
     drawContour = false): ImageData|null {
-  if (multiPersonSegmentation.length === 0) {
+  if (Array.isArray(personSegmentation) && personSegmentation.length === 0) {
     return null;
+  }
+
+  let multiPersonSegmentation;
+  if (!Array.isArray(personSegmentation)) {
+    multiPersonSegmentation = [personSegmentation];
+  } else {
+    multiPersonSegmentation = personSegmentation;
   }
 
   const {width, height} = multiPersonSegmentation[0];
@@ -474,8 +439,7 @@ export function drawPixelatedMask(
 function createPersonMask(
     multiPersonSegmentations: PersonSegmentation[],
     edgeBlurAmount: number): HTMLCanvasElement {
-  const backgroundMaskImage =
-      toMultiPersonMaskImageData(multiPersonSegmentations);
+  const backgroundMaskImage = toMaskImageData(multiPersonSegmentations);
 
   const backgroundMask =
       renderImageDataToOffScreenCanvas(backgroundMaskImage, CANVAS_NAMES.mask);

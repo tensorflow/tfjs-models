@@ -581,49 +581,11 @@ BodyPix contains utility functions to help with drawing and compositing using th
 
 #### `toMaskImageData`
 
-Given the output from estimating single-person segmentation, generates a visualization of each pixel determined by the corresponding binary segmentation value at the pixel from the output.  In other words, pixels where there is a person will be colored by the foreground color and where there is not a person will be colored by the background color. This can be used as a mask to crop a person or the background when compositing.
+Given the output of person segmentation (or multi-person instance segmentation), generates a visualization of each pixel determined by the corresponding binary segmentation value at the pixel from the output.  In other words, pixels where there is a person will be colored by the foreground color and where there is not a person will be colored by the background color. This can be used as a mask to crop a person or the background when compositing.
 
 ##### Inputs
 
-* **segmentation** The output from [estimateSinglePersonSegmentation](#Single-person-segmentation).
-* **foreground** The foreground color (r,g,b,a) for visualizing pixels that
-belong to people.
-
-* **background** The background color (r,g,b,a) for visualizing pixels that
- don't belong to people.
-
-* **drawContour** Whether to draw the contour around each person's segmentation mask.
-
-##### Returns
-
-An [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) with the same width and height of the personSegmentation, with color and opacity at each pixel determined by the corresponding binary segmentation value at the pixel from the output.
-
-##### Example Usage
-
-```javascript
-const imageElement = documet.getElementById('person');
-
-const net = await bodyPix.load();
-const personSegmentation = await net.estimateSinglePersonSegmentation(imageElement);
-
-// by setting foregroundColor to {r: 0, g: 0, b: 0, a: 0} and backgroundColor to {r: 0, g: 0, b: 0, a: 255}, the maskImage that is generated will be transparent where there is a person and opaque where there is a background.
-const foregroundColor = {r: 0, g: 0, b: 0, a: 0};
-const backgroundColor = {r: 0, g: 0, b: 0, a: 255};
-const maskImage = bodyPix.toMaskImageData(
-  personSegmentation, foregroundColor, backgroundColor);
-```
-
-![MaskImageData](./images/toMaskImageData.jpg)
-
-*With the output from `estimateSinglePersonSegmentation` on the first image above, `toMaskImageData` will produce an [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) that either looks like the second image above if setting `foregroundColor` to {r: 0, g: 0, b: 0, a: 0} and `backgroundColor` to {r: 0, g: 0, b: 0, a: 255} (by default), or the third image if if setting `foregroundColor` to {r: 0, g: 0, b: 0, a: 255} and `backgroundColor` to {r: 0, g: 0, b: 0, a: 0}.  This can be used to mask either the person or the background using the method `drawMask`.*
-
-#### `toMultiPersonMaskImageData`
-
-Given the output from estimating multi-person segmentation, generates a visualization of each pixel determined by the corresponding binary segmentation value at the pixel from the output.  In other words, pixels where there is a person will be colored by the foreground color and where there is not a person will be colored by the background color. This can be used as a mask to crop a person or the background when compositing.
-
-##### Inputs
-
-*  **multiPersonSegmentation** The output from [estimageMultiPersonSegmentation](#Multi-person-segmentation): an array of PersonSegmentation object, each containing a width, height, and a binary array with 1 for the pixels that are part of the person, and 0 otherwise.
+* **personSegmentation** The output from [estimatePersonSegmentation](#Single-person-segmentation) or [estimateMultiPersonSegmentation](#Multi-person-segmentation). The former is a PersonSegmentation object and later is an *array* of PersonSegmentation object.
 * **foreground** The foreground color (r,g,b,a) for visualizing pixels that
 belong to people.
 
