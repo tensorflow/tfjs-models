@@ -675,7 +675,7 @@ const maskBackground = true;
 // Convert the personSegmentation into a mask to darken the background.
 const foregroundColor = {r: 0, g: 0, b: 0, a: 0};
 const backgroundColor = {r: 0, g: 0, b: 0, a: 255};
-const backgroundDarkeningMask = bodyPix.toMaskImageData(personSegmentation personSegmentation, foregroundColor, backgroundColor);
+const backgroundDarkeningMask = bodyPix.toMaskImageData(personSegmentation, foregroundColor, backgroundColor);
 
 const opacity = 0.7;
 const maskBlurAmount = 3;
