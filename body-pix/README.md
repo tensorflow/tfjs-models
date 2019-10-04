@@ -14,15 +14,16 @@ detector to segment multiple people in an image by first cropping boxes for each
 
 To keep track of issues we use the [tensorflow/tfjs](https://github.com/tensorflow/tfjs) Github repo.
 
-## Contacts
-
-* Tyler (Lixuan) Zhu, github: [tylerzhu-github](https://github.com/tylerzhu-github)
-* Dan Oved, github: [oveddan](https://github.com/oveddan)
-* Daniel Smilkov, github: [dsmilkov](https://github.com/dsmilkov)
-* Ann Yuan, github: [annxingyuan](https://github.com/annxingyuan)
-* Per Karlsson, github: [k3rp](https://github.com/k3rp)
-* Irene Alvarado, github: [irealva](https://github.com/irealva)
-* Nikhil Thorat, github: [nsthorat](https://github.com/nsthorat)
+## Contributors
+### Main Contributors
+* Tyler (Lixuan) Zhu, Twitter: [tylerzhu3](https://twitter.com/TYLERZHU3)
+* Dan Oved, Twitter: [oveddan](https://twitter.com/oveddan)
+### Acknowledgement
+* Daniel Smilkov, Twitter: [dsmilkov](https://twitter.com/dsmilkov)
+* Ann Yuan, Twitter: [greenbeandou](https://twitter.com/greenbeandou)
+* Per Karlsson, Twitter: [karlssonper](https://twitter.com/karlssonper)
+* Irene Alvarado, Twitter: [ire_alva](https://twitter.com/ire_alva)
+* Nikhil Thorat, Twitter: [nsthorat](https://twitter.com/nsthorat)
 
 ## Tables of Contents
 
