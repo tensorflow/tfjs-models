@@ -237,36 +237,14 @@ export function toMaskImageData(
 }
 
 /**
- * Given the output from estimating single-person part segmentation, and an
- * array of colors indexed by part id, generates an image with the corresponding
- * color for each part at each pixel, and white pixels where there is no part.
+ * Given the output from person body part segmentation (or multi-person
+ * instance body part segmentation) and an array of colors indexed by part id,
+ * generates an image with the corresponding color for each part at each pixel,
+ * and white pixels where there is no part.
  *
- * @param partSegmentation   The output from estimatePartSegmentation; an object
- * containing a width, height, and an array with a part id from 0-24 for the
- * pixels that are part of a corresponding body part, and -1 otherwise.
- *
- * @param partColors A multi-dimensional array of rgb colors indexed by
- * part id.  Must have 24 colors, one for every part.
- *
- * @returns An ImageData with the same width and height of the partSegmentation,
- * with the corresponding color for each part at each pixel, and black pixels
- * where there is no part.
- */
-export function toColoredPartImageData(
-    partSegmentation: PartSegmentation,
-    partColors: Array<[number, number, number]>): ImageData {
-  return toMultiPersonColoredPartImageData([partSegmentation], partColors);
-}
-
-/**
- * Given the output from estimating multi-person part segmentation, and an array
- * of colors indexed by part id, generates an image with the corresponding color
- * for each part at each pixel, and white pixels where there is no part.
- *
- * @param multiPersonPartSegmentation The output from
- * estimateMultiPersonPartSegmentation; an array of PartSegmentation object
- * containing a width, height, and an array with a part id from 0-24 for the
- * pixels that are part of a corresponding body part, and -1 otherwise.
+ * @param partSegmentation The output from estimatePersonPartSegmentation or
+ * estimateMultiPersonInstancePartSegmentation. The former is a PartSegmentation
+ * object and later is an array of PartSegmentation object.
  *
  * @param partColors A multi-dimensional array of rgb colors indexed by
  * part id.  Must have 24 colors, one for every part.
@@ -275,9 +253,19 @@ export function toColoredPartImageData(
  * multiPersonPartSegmentation, with the corresponding color for each part at
  * each pixel, and black pixels where there is no part.
  */
-export function toMultiPersonColoredPartImageData(
-    multiPersonPartSegmentation: PartSegmentation[],
+export function toColoredPartImageData(
+    partSegmentation: PartSegmentation|PartSegmentation[],
     partColors: Array<[number, number, number]>): ImageData {
+  if (Array.isArray(partSegmentation) && partSegmentation.length === 0) {
+    return null;
+  }
+
+  let multiPersonPartSegmentation;
+  if (!Array.isArray(partSegmentation)) {
+    multiPersonPartSegmentation = [partSegmentation];
+  } else {
+    multiPersonPartSegmentation = partSegmentation;
+  }
   const {width, height} = multiPersonPartSegmentation[0];
   const bytes = new Uint8ClampedArray(width * height * 4);
 

@@ -604,59 +604,11 @@ An [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) with 
 
 #### `toColoredPartImageData`
 
-Given the output from estimating single-person part segmentation, and an array of colors indexed by part id, generates an image with the corresponding color for each part at each pixel, and white pixels where there is no part.
+Given the output from person body part segmentation (or multi-person instance body part segmentation) and an array of colors indexed by part id, generates an image with the corresponding color for each part at each pixel, and white pixels where there is no part.
 
 ##### Inputs
 
-* **partSegmentation** The output from
-[estimageSinglePersonPartSegmentation](#Single-person-body-part-segmentation).
-
-* **partColors** A multi-dimensional array of rgb colors indexed by part id.  Must have 24 colors, one for every part.  For some sample `partColors` check out [the ones used in the demo.](./demos/part_color_scales.js)
-
-##### Returns
-
-An [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) with the same width and height of the estimated person part segmentation, with the corresponding color for each part at each pixel, and black pixels where there is no part.
-
-##### Example usage
-
-```javascript
-const imageElement = document.getElementById('person');
-
-const net = await bodyPix.load();
-const partSegmentation = await net.estimateSinglePersonPartSegmentation(imageElement);
-
-const warm = [
-  [110, 64, 170], [106, 72, 183], [100, 81, 196], [92, 91, 206],
-  [84, 101, 214], [75, 113, 221], [66, 125, 224], [56, 138, 226],
-  [48, 150, 224], [40, 163, 220], [33, 176, 214], [29, 188, 205],
-  [26, 199, 194], [26, 210, 182], [28, 219, 169], [33, 227, 155],
-  [41, 234, 141], [51, 240, 128], [64, 243, 116], [79, 246, 105],
-  [96, 247, 97],  [115, 246, 91], [134, 245, 88], [155, 243, 88]
-];
-
-// the colored part image is an rgb image with a corresponding color from specified colormap for each part at each pixel, and black pixels where there is no part.
-const coloredPartImage = bodyPix.toColoredPartImageData(partSegmentation, warm);
-const opacity = 0.7;
-const flipHorizontal = true;
-const maskBlurAmount = 0;
-const canvas = document.getElementById('canvas');
-// draw the colored part image on top of the original image onto a canvas.  The colored part image will be drawn semi-transparent, with an opacity of 0.7, allowing for the original image to be visible under.
-bodyPix.drawMask(
-    canvas, imageElement, coloredPartImageData, opacity, maskBlurAmount,
-    flipHorizontal);
-```
-
-![toColoredPartImageData](./images/toColoredPartImage.png)
-
-*With the output from `estimateSinglePersonPartSegmentation` on the first image above, and a 'warm' color scale, `toColoredPartImageData` will produce an `ImageData` that looks like the second image above.  The colored part image can be drawn on top of the original image with an `opacity` of 0.7 onto a canvas using `drawMask`; the result is shown in the third image above.*
-
-#### `toMultiPersonColoredPartImageData`
-
-Given the output from estimating multi-person part segmentation, and an array of colors indexed by part id, generates an image with the corresponding color for each part at each pixel, and white pixels where there is no part.
-
-##### Inputs
-
-* **multiPersonPartSegmentation** The output from [estimageMultiPersonPartSegmentation](#Multi-person-body-part-segmentation).
+* **personPartSegmentation** The output from [estimatePersonPartSegmentation](#Single-person-segmentation) or [estimateMultiPersonInstancePartSegmentation](#Multi-person-body-part-segmentation). The former is a PartSegmentation object and later is an *array* of PartSegmentation object.
 
 * **partColors** A multi-dimensional array of rgb colors indexed by part id.  Must have 24 colors, one for every part.  For some sample `partColors` check out [the ones used in the demo.](./demos/part_color_scales.js)
 

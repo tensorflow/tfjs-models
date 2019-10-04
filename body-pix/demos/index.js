@@ -652,7 +652,7 @@ function segmentBodyInRealTime() {
       case 'partmap':
         const ctx = canvas.getContext('2d');
         const multiPersonPartSegmentation = await estimatePartSegmentation();
-        const coloredPartImageData = bodyPix.toMultiPersonColoredPartImageData(
+        const coloredPartImageData = bodyPix.toColoredPartImageData(
             multiPersonPartSegmentation,
             partColorScales[guiState.partMap.colorScale]);
 
