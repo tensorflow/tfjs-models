@@ -1,4 +1,4 @@
-export const partChannels: string[] = [
+export const PART_CHANNELS: string[] = [
   'leftFace',          'rightFace',          'rightUpperLegFront',
   'rightLowerLegBack', 'rightUpperLegBack',  'leftLowerLegFront',
   'leftUpperLegFront', 'leftUpperLegBack',   'leftLowerLegBack',

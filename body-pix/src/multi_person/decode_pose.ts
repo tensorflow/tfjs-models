@@ -15,15 +15,15 @@
  * =============================================================================
  */
 
-import {NumberTuple, partIds, partNames, poseChain} from '../keypoints';
+import {NumberTuple, PART_IDS, PART_NAMES, POSE_CHAIN} from '../keypoints';
 import {Keypoint, PartWithScore, TensorBuffer3D, Vector2D} from '../types';
 
 import {clamp, getOffsetPoint} from './util';
 import {addVectors, getImageCoords} from './util';
 
-const parentChildrenTuples: NumberTuple[] = poseChain.map(
+const parentChildrenTuples: NumberTuple[] = POSE_CHAIN.map(
     ([parentJoinName, childJoinName]): NumberTuple =>
-        ([partIds[parentJoinName], partIds[childJoinName]]));
+        ([PART_IDS[parentJoinName], PART_IDS[childJoinName]]));
 
 const parentToChildEdges: number[] =
     parentChildrenTuples.map(([, childJointId]) => childJointId);
@@ -93,7 +93,7 @@ function traverseToTargetKeypoint(
   const score = scoresBuffer.get(
       targetKeyPointIndices.y, targetKeyPointIndices.x, targetKeypointId);
 
-  return {position: targetKeypoint, part: partNames[targetKeypointId], score};
+  return {position: targetKeypoint, part: PART_NAMES[targetKeypointId], score};
 }
 
 /**
@@ -116,7 +116,7 @@ export function decodePose(
 
   instanceKeypoints[rootPart.id] = {
     score: rootScore,
-    part: partNames[rootPart.id],
+    part: PART_NAMES[rootPart.id],
     position: rootPoint
   };
 

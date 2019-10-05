@@ -19,25 +19,25 @@ export type Tuple<T> = [T, T];
 export type StringTuple = Tuple<string>;
 export type NumberTuple = Tuple<number>;
 
-export const partNames = [
+export const PART_NAMES = [
   'nose', 'leftEye', 'rightEye', 'leftEar', 'rightEar', 'leftShoulder',
   'rightShoulder', 'leftElbow', 'rightElbow', 'leftWrist', 'rightWrist',
   'leftHip', 'rightHip', 'leftKnee', 'rightKnee', 'leftAnkle', 'rightAnkle'
 ];
 
-export const NUM_KEYPOINTS = partNames.length;
+export const NUM_KEYPOINTS = PART_NAMES.length;
 
 export interface NumberDict {
   [jointName: string]: number;
 }
 
-export const partIds =
-    partNames.reduce((result: NumberDict, jointName, i): NumberDict => {
+export const PART_IDS =
+    PART_NAMES.reduce((result: NumberDict, jointName, i): NumberDict => {
       result[jointName] = i;
       return result;
     }, {}) as NumberDict;
 
-const connectedPartNames: StringTuple[] = [
+const CONNECTED_PART_NAMES: StringTuple[] = [
   ['leftHip', 'leftShoulder'], ['leftElbow', 'leftShoulder'],
   ['leftElbow', 'leftWrist'], ['leftHip', 'leftKnee'],
   ['leftKnee', 'leftAnkle'], ['rightHip', 'rightShoulder'],
@@ -52,7 +52,7 @@ const connectedPartNames: StringTuple[] = [
  * since we will infer the displacement for both parent->child and
  * child->parent, we can define the tree root as any node.
  */
-export const poseChain: StringTuple[] = [
+export const POSE_CHAIN: StringTuple[] = [
   ['nose', 'leftEye'], ['leftEye', 'leftEar'], ['nose', 'rightEye'],
   ['rightEye', 'rightEar'], ['nose', 'leftShoulder'],
   ['leftShoulder', 'leftElbow'], ['leftElbow', 'leftWrist'],
@@ -63,32 +63,6 @@ export const poseChain: StringTuple[] = [
   ['rightKnee', 'rightAnkle']
 ];
 
-export const connectedPartIndices = connectedPartNames.map(
-    ([jointNameA, jointNameB]) => ([partIds[jointNameA], partIds[jointNameB]]));
-
-export const partChannels: string[] = [
-  'left_face',
-  'right_face',
-  'right_upper_leg_front',
-  'right_lower_leg_back',
-  'right_upper_leg_back',
-  'left_lower_leg_front',
-  'left_upper_leg_front',
-  'left_upper_leg_back',
-  'left_lower_leg_back',
-  'right_feet',
-  'right_lower_leg_front',
-  'left_feet',
-  'torso_front',
-  'torso_back',
-  'right_upper_arm_front',
-  'right_upper_arm_back',
-  'right_lower_arm_back',
-  'left_lower_arm_front',
-  'left_upper_arm_front',
-  'left_upper_arm_back',
-  'left_lower_arm_back',
-  'right_hand',
-  'right_lower_arm_front',
-  'left_hand'
-];
+export const CONNECTED_PART_INDICES = CONNECTED_PART_NAMES.map(
+    ([jointNameA, jointNameB]) =>
+        ([PART_IDS[jointNameA], PART_IDS[jointNameB]]));

@@ -18,7 +18,7 @@
 import * as tf from '@tensorflow/tfjs-core';
 
 import {BodyPixOutputStride} from '../body_pix_model';
-import {partNames} from '../keypoints';
+import {PART_NAMES} from '../keypoints';
 import {Keypoint, Pose} from '../types';
 import {toTensorBuffer} from '../util';
 
@@ -82,7 +82,7 @@ export async function decodeSinglePose(
         y: offsetPointsBuffer.get(keypointId, 0),
         x: offsetPointsBuffer.get(keypointId, 1)
       },
-      part: partNames[keypointId],
+      part: PART_NAMES[keypointId],
       score
     };
   });

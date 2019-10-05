@@ -489,7 +489,7 @@ function setShownPartColorScales(colorScale) {
   colors.innerHTML = '';
 
   const partColors = partColorScales[colorScale];
-  const partNames = bodyPix.partChannels;
+  const partNames = bodyPix.PART_CHANNELS;
 
   for (let i = 0; i < partColors.length; i++) {
     const partColor = partColors[i];
