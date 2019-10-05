@@ -19,12 +19,12 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {mobileNetCheckpoint, resNet50Checkpoint} from './checkpoints';
 import {decodeOnlyPartSegmentation, decodePartSegmentation, toMask} from './decode_part_map';
 import {MobileNet, MobileNetMultiplier} from './mobilenet';
 import {decodeMultipleMasksGPU, decodeMultiplePartMasksGPU} from './multi_person/decode_multiple_masks';
 import {decodeMultiplePoses} from './multi_person/decode_multiple_poses';
 import {ResNet} from './resnet';
+import {mobileNetSavedModel, resNet50SavedModel} from './saved_models';
 import {decodeSinglePose} from './sinlge_person/decode_single_pose';
 import {BodyPixInput, Padding, PartSegmentation, PersonSegmentation} from './types';
 import {getInputTensorDimensions, padAndResizeTo, scaleAndCropToInputTensorShape, scaleAndFlipPoses, toInputTensor, toTensorBuffers3D} from './util';
@@ -35,6 +35,9 @@ export type BodyPixOutputStride = 32|16|8;
 export type BodyPixArchitecture = 'ResNet50'|'MobileNetV1';
 export type BodyPixDecodingMethod = 'person'|'multi-person-by-instance';
 export type BodyPixQuantBytes = 1|2|4;
+export type BodyPixMultiplier = 1.0|0.75|0.50;
+
+const APPLY_SIGMOID_ACTIVATION = true;
 
 /**
  * BodyPix supports using various convolution neural network models
@@ -137,18 +140,18 @@ const MOBILENET_V1_CONFIG = {
   multiplier: 0.75,
 } as ModelConfig;
 
-const VALID_ARCHITECTURE = ['MobileNetV1', 'ResNet50'];
-const VALID_STRIDE = {
+const VALID_ARCHITECTURE: BodyPixArchitecture[] = ['MobileNetV1', 'ResNet50'];
+const VALID_STRIDE: {[id: string]: BodyPixOutputStride[]} = {
   'MobileNetV1': [8, 16, 32],
   'ResNet50': [32, 16]
 };
-export const VALID_INPUT_RESOLUTION =
+export const VALID_INPUT_RESOLUTION: BodyPixInputResolution[] =
     [161, 193, 257, 289, 321, 353, 385, 417, 449, 481, 513, 801];
-const VALID_MULTIPLIER = {
+const VALID_MULTIPLIER: {[id: string]: BodyPixMultiplier[]} = {
   'MobileNetV1': [0.50, 0.75, 1.0],
   'ResNet50': [1.0]
 };
-const VALID_QUANT_BYTES = [1, 2, 4];
+const VALID_QUANT_BYTES: BodyPixQuantBytes[] = [1, 2, 4];
 
 function validateModelConfig(config: ModelConfig) {
   config = config || MOBILENET_V1_CONFIG;
@@ -199,7 +202,7 @@ function validateModelConfig(config: ModelConfig) {
     throw new Error(
         `Invalid quantBytes ${config.quantBytes}. ` +
         `Should be one of ${VALID_QUANT_BYTES} ` +
-        `for architecutre ${config.architecture}.`);
+        `for architecture ${config.architecture}.`);
   }
 
   return config;
@@ -252,7 +255,7 @@ export interface PersonInferenceConfig extends InferenceConfig {}
  * instance segmentation. It needs to be strictly positive. The larger the
  * higher the accuracy and slower the inference.
  *
- **/
+ */
 export interface MultiPersonInstanceInferenceConfig extends InferenceConfig {
   maxDetections?: number;
   scoreThreshold?: number;
@@ -308,7 +311,6 @@ function validateMultiPersonInstanceInferenceConfig(
         `Should be in range [0.0, 1.0]`);
   }
 
-
   if (nmsRadius <= 0) {
     throw new Error(`Invalid nmsRadius ${nmsRadius}.`);
   }
@@ -350,10 +352,12 @@ export class BodyPix {
       displacementBwd,
     } = this.baseModel.predict(input);
     return {
-      segmentLogits: segmentation, heatmapScores: heatmapScores,
-          offsets: offsets, displacementFwd: displacementFwd,
-          displacementBwd: displacementBwd,
-    }
+      segmentLogits: segmentation,
+      heatmapScores,
+      offsets,
+      displacementFwd,
+      displacementBwd,
+    };
   }
 
   private predictForPersonSegmentationAndPart(input: tf.Tensor3D): {
@@ -373,10 +377,13 @@ export class BodyPix {
       displacementBwd
     } = this.baseModel.predict(input);
     return {
-      segmentLogits: segmentation, partHeatmapLogits: partHeatmaps,
-          heatmapScores: heatmapScores, offsets: offsets,
-          displacementFwd: displacementFwd, displacementBwd: displacementBwd,
-    }
+      segmentLogits: segmentation,
+      partHeatmapLogits: partHeatmaps,
+      heatmapScores,
+      offsets,
+      displacementFwd,
+      displacementBwd,
+    };
   }
 
   private predictForMultiPersonInstanceSegmentationAndPart(input: tf.Tensor3D):
@@ -399,11 +406,14 @@ export class BodyPix {
       partHeatmaps,
     } = this.baseModel.predict(input);
     return {
-      segmentLogits: segmentation, longOffsets: longOffsets,
-          heatmapScores: heatmapScores, offsets: offsets,
-          displacementFwd: displacementFwd, displacementBwd: displacementBwd,
-          partHeatmaps: partHeatmaps
-    }
+      segmentLogits: segmentation,
+      longOffsets,
+      heatmapScores,
+      offsets,
+      displacementFwd,
+      displacementBwd,
+      partHeatmaps
+    };
   }
 
   /**
@@ -454,7 +464,8 @@ export class BodyPix {
 
       const scaledSegmentScores = scaleAndCropToInputTensorShape(
           segmentLogits, [height, width], [resizedHeight, resizedWidth],
-          [[padding.top, padding.bottom], [padding.left, padding.right]], true);
+          [[padding.top, padding.bottom], [padding.left, padding.right]],
+          APPLY_SIGMOID_ACTIVATION);
 
       return {
         segmentation:
@@ -464,9 +475,7 @@ export class BodyPix {
       };
     });
     resized.dispose();
-    return {
-      segmentation, heatmapScores, offsets, padding
-    }
+    return {segmentation, heatmapScores, offsets, padding};
   }
 
   /**
@@ -580,14 +589,15 @@ export class BodyPix {
       } = this.predictForMultiPersonInstanceSegmentationAndPart(resized);
       const scaledSegmentScores = scaleAndCropToInputTensorShape(
           segmentLogits, [height, width], [inputResolution, inputResolution],
-          [[padding.top, padding.bottom], [padding.left, padding.right]], true);
+          [[padding.top, padding.bottom], [padding.left, padding.right]],
+          APPLY_SIGMOID_ACTIVATION);
       const longOffsetsResized = false;
       let scaledLongOffsets;
       if (longOffsetsResized) {
         scaledLongOffsets = scaleAndCropToInputTensorShape(
             longOffsets, [height, width], [inputResolution, inputResolution],
             [[padding.top, padding.bottom], [padding.left, padding.right]],
-            true);
+            APPLY_SIGMOID_ACTIVATION);
       } else {
         scaledLongOffsets = longOffsets;
       }
@@ -597,7 +607,7 @@ export class BodyPix {
           configWithDefault.segmentationThreshold);
 
       return {
-        segmentation: segmentation,
+        segmentation,
         longOffsets: scaledLongOffsets,
         heatmapScoresRaw: heatmapScores,
         offsetsRaw: offsets,
@@ -621,7 +631,7 @@ export class BodyPix {
         poses, [height, width], [inputResolution, inputResolution], padding,
         false);
 
-    const instanceMasks = decodeMultipleMasksGPU(
+    const instanceMasks = await decodeMultipleMasksGPU(
         segmentation, longOffsets, poses, height, width,
         this.baseModel.outputStride, [inputResolution, inputResolution],
         [[padding.top, padding.bottom], [padding.left, padding.right]],
@@ -687,11 +697,13 @@ export class BodyPix {
 
       const scaledSegmentScores = scaleAndCropToInputTensorShape(
           segmentLogits, [height, width], [resizedHeight, resizedWidth],
-          [[padding.top, padding.bottom], [padding.left, padding.right]], true);
+          [[padding.top, padding.bottom], [padding.left, padding.right]],
+          APPLY_SIGMOID_ACTIVATION);
 
       const scaledPartHeatmapScore = scaleAndCropToInputTensorShape(
           partHeatmapLogits, [height, width], [resizedHeight, resizedWidth],
-          [[padding.top, padding.bottom], [padding.left, padding.right]], true);
+          [[padding.top, padding.bottom], [padding.left, padding.right]],
+          APPLY_SIGMOID_ACTIVATION);
       const segmentation =
           toMask(scaledSegmentScores.squeeze(), segmentationThreshold);
       return {
@@ -702,9 +714,7 @@ export class BodyPix {
       };
     });
     resized.dispose();
-    return {
-      partSegmentation, heatmapScores, offsets, padding
-    }
+    return {partSegmentation, heatmapScores, offsets, padding};
   }
 
   /**
@@ -819,12 +829,14 @@ export class BodyPix {
       // decoding with scaling.
       const scaledSegmentScores = scaleAndCropToInputTensorShape(
           segmentLogits, [height, width], [inputResolution, inputResolution],
-          [[padding.top, padding.bottom], [padding.left, padding.right]], true);
+          [[padding.top, padding.bottom], [padding.left, padding.right]],
+          APPLY_SIGMOID_ACTIVATION);
 
       // decoding with scaling.
       const scaledPartSegmentationScores = scaleAndCropToInputTensorShape(
           partHeatmaps, [height, width], [inputResolution, inputResolution],
-          [[padding.top, padding.bottom], [padding.left, padding.right]], true)
+          [[padding.top, padding.bottom], [padding.left, padding.right]],
+          APPLY_SIGMOID_ACTIVATION);
 
       const scaledLongOffsets = longOffsets;
       const segmentation = toMask(
@@ -833,13 +845,13 @@ export class BodyPix {
       const partSegmentation =
           decodeOnlyPartSegmentation(scaledPartSegmentationScores);
       return {
-        segmentation: segmentation,
+        segmentation,
         longOffsets: scaledLongOffsets,
         heatmapScoresRaw: heatmapScores,
         offsetsRaw: offsets,
         displacementFwdRaw: displacementFwd,
         displacementBwdRaw: displacementBwd,
-        partSegmentation: partSegmentation
+        partSegmentation
       };
     });
 
@@ -857,7 +869,7 @@ export class BodyPix {
         poses, [height, width], [inputResolution, inputResolution], padding,
         false);
 
-    const instanceMasks = decodeMultiplePartMasksGPU(
+    const instanceMasks = await decodeMultiplePartMasksGPU(
         segmentation, longOffsets, partSegmentation, poses, height, width,
         this.baseModel.outputStride, [inputResolution, inputResolution],
         [[padding.top, padding.bottom], [padding.left, padding.right]],
@@ -895,7 +907,7 @@ async function loadMobileNet(config: ModelConfig): Promise<BodyPix> {
         model.`);
   }
 
-  const url = mobileNetCheckpoint(outputStride, multiplier, quantBytes);
+  const url = mobileNetSavedModel(outputStride, multiplier, quantBytes);
   const graphModel = await tfconv.loadGraphModel(config.modelUrl || url);
   const mobilenet = new MobileNet(graphModel, outputStride);
   return new BodyPix(mobilenet, config.inputResolution);
@@ -914,7 +926,7 @@ async function loadResNet(config: ModelConfig): Promise<BodyPix> {
         model.`);
   }
 
-  const url = resNet50Checkpoint(outputStride, quantBytes);
+  const url = resNet50SavedModel(outputStride, quantBytes);
   const graphModel = await tfconv.loadGraphModel(config.modelUrl || url);
   const resnet = new ResNet(graphModel, outputStride);
   return new BodyPix(resnet, config.inputResolution);

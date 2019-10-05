@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- =============================================================================
+ * =============================================================================
  */
 
 import * as tfconv from '@tensorflow/tfjs-converter';
@@ -33,16 +33,13 @@ describeWithFlags('BodyPix', NODE_ENVS, () => {
   const outputResolution = (inputResolution - 1) / outputStride + 1;
 
   beforeAll((done) => {
-    const resNetConfig = {
-      architecture: 'ResNet50',
-      outputStride: outputStride,
-      inputResolution: inputResolution,
-      quantBytes: quantBytes
-    } as bodyPixModel.ModelConfig;
+    const resNetConfig =
+        {architecture: 'ResNet50', outputStride, inputResolution, quantBytes} as
+        bodyPixModel.ModelConfig;
 
     spyOn(tfconv, 'loadGraphModel').and.callFake((): tfconv.GraphModel => {
       return null;
-    })
+    });
 
     spyOn(resnet, 'ResNet').and.callFake(() => {
       return {

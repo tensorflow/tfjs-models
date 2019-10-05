@@ -161,7 +161,7 @@ export function toMaskImageData(
       b: 0,
       a: 255
     },
-    drawContour = false): ImageData|null {
+    drawContour = false): ImageData {
   if (Array.isArray(personSegmentation) && personSegmentation.length === 0) {
     return null;
   }
@@ -223,7 +223,7 @@ export function toMaskImageData(
           bytes[4 * n + 2] = foreground.b;
           bytes[4 * n + 3] = foreground.a;
           const isBoundary = isSegmentationBoundary(
-              multiPersonSegmentation[k].data, i, j, width)
+              multiPersonSegmentation[k].data, i, j, width);
           if (drawContour && i - 1 >= 0 && i + 1 < height && j - 1 >= 0 &&
               j + 1 < width && isBoundary) {
             drawStroke(bytes, i, j, width, 1);
@@ -427,7 +427,9 @@ export function drawPixelatedMask(
 function createPersonMask(
     multiPersonSegmentations: PersonSegmentation[],
     edgeBlurAmount: number): HTMLCanvasElement {
-  const backgroundMaskImage = toMaskImageData(multiPersonSegmentations);
+  const backgroundMaskImage = toMaskImageData(
+      multiPersonSegmentations, {r: 0, g: 0, b: 0, a: 255},
+      {r: 0, g: 0, b: 0, a: 0});
 
   const backgroundMask =
       renderImageDataToOffScreenCanvas(backgroundMaskImage, CANVAS_NAMES.mask);
@@ -447,9 +449,8 @@ function createPersonMask(
  *
  * @param image The image to blur the background of and draw.
  *
- * @param personSegmentation A personSegmentation object, containing a binary
- * array with 1 for the pixels that are part of the person, and 0 otherwise.
- * Must have the same dimensions as the image.
+ * @param personSegmentation A PersonSegmentation object or an array of
+ * PersonSegmentation object.
  *
  * @param backgroundBlurAmount How many pixels in the background blend into each
  * other.  Defaults to 3. Should be an integer between 1 and 20.
@@ -462,75 +463,34 @@ function createPersonMask(
  */
 export function drawBokehEffect(
     canvas: HTMLCanvasElement, image: ImageType,
-    personSegmentation: PersonSegmentation, backgroundBlurAmount = 3,
-    edgeBlurAmount = 3, flipHorizontal = false) {
-  // assertSameDimensions(image, personSegmentation, 'image', 'segmentation');
+    personSegmentation: PersonSegmentation|PersonSegmentation[],
+    backgroundBlurAmount = 3, edgeBlurAmount = 3, flipHorizontal = false) {
+  let multiPersonSegmentation;
+  if (!Array.isArray(personSegmentation)) {
+    multiPersonSegmentation = [personSegmentation];
+  } else {
+    multiPersonSegmentation = personSegmentation;
+  }
 
   const blurredImage = drawAndBlurImageOnOffScreenCanvas(
       image, backgroundBlurAmount, CANVAS_NAMES.blurred);
-
-  const personMask = createPersonMask([personSegmentation], edgeBlurAmount);
 
   const ctx = canvas.getContext('2d');
-  ctx.save();
-  if (flipHorizontal) {
-    flipCanvasHorizontal(canvas);
+
+  if (Array.isArray(personSegmentation) && personSegmentation.length === 0) {
+    ctx.drawImage(blurredImage, 0, 0);
+    return;
   }
-  // draw the original image on the final canvas
-  ctx.drawImage(image, 0, 0);
-  // "destination-in" - "The existing canvas content is kept where both the
-  // new shape and existing canvas content overlap. Everything else is made
-  // transparent."
-  // crop what's not the person using the mask from the original image
-  drawWithCompositing(ctx, personMask, 'destination-in');
-  // "destination-over" - "The existing canvas content is kept where both the
-  // new shape and existing canvas content overlap. Everything else is made
-  // transparent."
-  // draw the blurred background on top of the original image where it doesn't
-  // overlap.
-  drawWithCompositing(ctx, blurredImage, 'destination-over');
-  ctx.restore();
-}
-
-/**
- * Given a personSegmentation and an image, draws the image with its background
- * blurred onto the canvas.
- *
- * @param canvas The canvas to draw the background-blurred image onto.
- *
- * @param image The image to blur the background of and draw.
- *
- * @param personSegmentation A personSegmentation object, containing a binary
- * array with 1 for the pixels that are part of the person, and 0 otherwise.
- * Must have the same dimensions as the image.
- *
- * @param backgroundBlurAmount How many pixels in the background blend into each
- * other.  Defaults to 3. Should be an integer between 1 and 20.
- *
- * @param edgeBlurAmount How many pixels to blur on the edge between the person
- * and the background by.  Defaults to 3. Should be an integer between 0 and 20.
- *
- * @param flipHorizontal If the output should be flipped horizontally.  Defaults
- * to false.
- */
-export function drawMultiPersonBokehEffect(
-    canvas: HTMLCanvasElement, image: ImageType,
-    multiPersonSegmentation: PersonSegmentation[], backgroundBlurAmount = 3,
-    edgeBlurAmount = 3, flipHorizontal = false) {
-  // assertSameDimensions(image, personSegmentation, 'image', 'segmentation');
-
-  const blurredImage = drawAndBlurImageOnOffScreenCanvas(
-      image, backgroundBlurAmount, CANVAS_NAMES.blurred);
 
   const personMask = createPersonMask(multiPersonSegmentation, edgeBlurAmount);
 
-  const ctx = canvas.getContext('2d');
   ctx.save();
   if (flipHorizontal) {
     flipCanvasHorizontal(canvas);
   }
   // draw the original image on the final canvas
   ctx.drawImage(image, 0, 0);
+
   // "destination-in" - "The existing canvas content is kept where both the
   // new shape and existing canvas content overlap. Everything else is made
   // transparent."

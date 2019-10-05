@@ -3,7 +3,6 @@ import * as tf from '@tensorflow/tfjs-core';
 export type BodyPixInput =
     ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement|tf.Tensor3D;
 
-
 export type PersonSegmentation = {
   data: Uint8Array,
   width: number,
@@ -20,7 +19,7 @@ export type PartSegmentation = {
 };
 
 export declare interface Padding {
-  top: number, bottom: number, left: number, right: number
+  top: number; bottom: number; left: number; right: number;
 }
 
 export declare type Part = {
@@ -51,7 +50,6 @@ export declare type Pose = {
   keypoints: Keypoint[],
   score: number,
 };
-
 
 export declare type Color = {
   r: number,

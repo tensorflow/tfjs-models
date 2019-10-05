@@ -31,9 +31,9 @@ function toFloatIfInt(input: tf.Tensor3D): tf.Tensor3D {
 
 function processInput(input: tf.Tensor3D): tf.Tensor3D {
   return tf.tidy(() => {
-    const imageNetMean = tf.tensor([-123.15, -115.90, -103.06]);
+    const imageNetMean = [-123.15, -115.90, -103.06];
     return input.add(imageNetMean);
-  })
+  });
 }
 
 export class ResNet implements BaseModel {

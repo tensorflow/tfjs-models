@@ -71,10 +71,6 @@ export function toggleLoadingUI(
   }
 }
 
-function toTuple({y, x}) {
-  return [y, x];
-}
-
 export function drawPoint(ctx, y, x, r, color) {
   ctx.beginPath();
   ctx.arc(x, y, r, 0, 2 * Math.PI);

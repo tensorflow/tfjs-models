@@ -56,14 +56,13 @@ function toFloatIfInt(input: tf.Tensor3D): tf.Tensor3D {
 function processInput(input: tf.Tensor3D): tf.Tensor3D {
   return tf.tidy(() => {
     // Normalize the pixels [0, 255] to be between [-1, 1].
-    input = tf.div(input, 127.5);
-    return tf.sub(input, 1.0);
+    return tf.div(input, 127.5).sub(1.0);
   });
 }
 
 export class MobileNet implements BaseModel {
-  readonly model: tfconv.GraphModel
-  readonly outputStride: BodyPixOutputStride
+  readonly model: tfconv.GraphModel;
+  readonly outputStride: BodyPixOutputStride;
 
   constructor(model: tfconv.GraphModel, outputStride: BodyPixOutputStride) {
     this.model = model;

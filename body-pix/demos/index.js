@@ -641,7 +641,7 @@ function segmentBodyInRealTime() {
             });
             break;
           case 'bokeh':
-            bodyPix.drawMultiPersonBokehEffect(
+            bodyPix.drawBokehEffect(
                 canvas, state.video, multiPersonSegmentation,
                 +guiState.segmentation.backgroundBlurAmount,
                 guiState.segmentation.edgeBlurAmount, flipHorizontally);

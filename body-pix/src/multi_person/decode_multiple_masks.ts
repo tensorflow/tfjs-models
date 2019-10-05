@@ -181,59 +181,53 @@ function decodeMultipleMasksTensorGPU(
   return result;
 }
 
-export function decodeMultipleMasksGPU(
+export async function decodeMultipleMasksGPU(
     segmentation: tf.Tensor, longOffsets: tf.Tensor, poses: Pose[],
     height: number, width: number, stride: number,
     [inHeight, inWidth]: [number, number],
     [[padT, padB], [padL, padR]]: [[number, number], [number, number]],
     minPoseScore = 0.2, refineSteps = 8, minKeypointScore = 0.3,
-    maxNumPeople = 10): PersonSegmentation[] {
+    maxNumPeople = 10): Promise<PersonSegmentation[]> {
   // Filter out poses with smaller score.
   const posesAboveScore = poses.filter(pose => pose.score >= minPoseScore);
 
   const masksTensor = decodeMultipleMasksTensorGPU(
       segmentation, longOffsets, posesAboveScore, height, width, stride,
       [inHeight, inWidth], [[padT, padB], [padL, padR]], refineSteps,
-      minKeypointScore, maxNumPeople)
+      minKeypointScore, maxNumPeople);
 
-  const multiPersonSegmentation: PersonSegmentation[] = [];
-  for (let k = 0; k < posesAboveScore.length; k++) {
-    multiPersonSegmentation.push({
-      height,
-      width,
-      data: toPersonKSegmentation(masksTensor, k).dataSync() as Uint8Array,
-      pose: posesAboveScore[k]
-    });
-  }
+  const multiPersonSegmentation: PersonSegmentation[] =
+      await Promise.all(posesAboveScore.map(async (pose, i) => {
+        const data =
+            (await toPersonKSegmentation(masksTensor, i).data()) as Uint8Array;
+        return {height, width, data, pose};
+      }));
 
   return multiPersonSegmentation;
 }
 
-export function decodeMultiplePartMasksGPU(
-    segmentation: tf.Tensor, longOffsets: tf.Tensor, partSegmentaion: tf.Tensor,
-    poses: Pose[], height: number, width: number, stride: number,
-    [inHeight, inWidth]: [number, number],
+export async function decodeMultiplePartMasksGPU(
+    segmentation: tf.Tensor, longOffsets: tf.Tensor,
+    partSegmentation: tf.Tensor, poses: Pose[], height: number, width: number,
+    stride: number, [inHeight, inWidth]: [number, number],
     [[padT, padB], [padL, padR]]: [[number, number], [number, number]],
     minPoseScore = 0.2, refineSteps = 8, minKeypointScore = 0.3,
-    maxNumPeople = 10): PartSegmentation[] {
+    maxNumPeople = 10): Promise<PartSegmentation[]> {
   // Filter out poses with smaller score.
   const posesAboveScore = poses.filter(pose => pose.score >= minPoseScore);
 
   const masksTensor = decodeMultipleMasksTensorGPU(
       segmentation, longOffsets, posesAboveScore, height, width, stride,
       [inHeight, inWidth], [[padT, padB], [padL, padR]], refineSteps,
-      minKeypointScore, maxNumPeople)
+      minKeypointScore, maxNumPeople);
 
-  const allPersonPartSegmentation: PartSegmentation[] = [];
-  for (let k = 0; k < posesAboveScore.length; k++) {
-    allPersonPartSegmentation.push({
-      height,
-      width,
-      data: toPersonKPartSegmentation(masksTensor, partSegmentaion, k)
-                .dataSync() as Int32Array,
-      pose: posesAboveScore[k]
-    });
-  }
+  const allPersonPartSegmentation: PartSegmentation[] =
+      await Promise.all(posesAboveScore.map(async (pose, i) => {
+        const data =
+            (await toPersonKPartSegmentation(masksTensor, partSegmentation, i)
+                 .data()) as Int32Array;
+        return {height, width, data, pose};
+      }));
 
   return allPersonPartSegmentation;
 }

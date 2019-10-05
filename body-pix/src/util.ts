@@ -118,7 +118,6 @@ export function resize2d(
                 .squeeze() as tf.Tensor2D);
 }
 
-
 export function padAndResizeTo(
     input: BodyPixInput, [targetH, targetW]: [number, number]):
     {resized: tf.Tensor3D, padding: Padding} {
@@ -145,13 +144,12 @@ export function padAndResizeTo(
     imageTensor = tf.pad3d(imageTensor, [[padT, padB], [padL, padR], [0, 0]]);
 
     return imageTensor.resizeBilinear([targetH, targetW]);
-  })
+  });
 
   return {
     resized, padding: {top: padT, left: padL, right: padR, bottom: padB}
-  }
+  };
 }
-
 
 export async function toTensorBuffer<rank extends tf.Rank>(
     tensor: tf.Tensor<rank>,
@@ -209,7 +207,6 @@ export function flipPosesHorizontal(poses: Pose[], imageWidth: number) {
   }
   return poses.map(pose => flipPoseHorizontal(pose, imageWidth));
 }
-
 
 export function scaleAndFlipPoses(
     poses: Pose[], [height, width]: [number, number],
