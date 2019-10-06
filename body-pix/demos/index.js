@@ -196,9 +196,11 @@ const guiState = {
   },
   partMap: {
     colorScale: 'rainbow',
+    effect: 'partMap',
     segmentationThreshold: 0.5,
-    applyPixelation: false,
-    opacity: 0.9
+    opacity: 0.9,
+    blurBodyPartAmount: 3,
+    bodyPartEdgeBlurAmount: 3,
   },
   showFps: !isMobile()
 };
@@ -238,12 +240,12 @@ function setupGui(cameras) {
   gui.add(guiState, 'flipHorizontal');
 
   // There are two algorithms 'person' and 'multi-person-instance'.
-  // The 'person' algorithm returns one single segmentation mask (or body part
-  // map) for all people in the image. The 'multi-person-instance' algorithm
-  // returns an array of segmentation mask (or body part map). Each element
-  // in the array corresponding to one of the people. In other words,
-  // 'multi-person-instance' algorithm does instance-level person segmentation
-  // and body part segmentation for every person in the image.
+  // The 'person' algorithm returns one single segmentation mask (or body
+  // part map) for all people in the image. The 'multi-person-instance'
+  // algorithm returns an array of segmentation mask (or body part map).
+  // Each element in the array corresponding to one of the people. In other
+  // words, 'multi-person-instance' algorithm does instance-level person
+  // segmentation and body part segmentation for every person in the image.
   const algorithmController =
       gui.add(guiState, 'algorithm', ['person', 'multi-person-instance']);
 
@@ -256,10 +258,10 @@ function setupGui(cameras) {
 
 
   // Updates outputStride
-  // Output stride:  Internally, this parameter affects the height and width of
-  // the layers in the neural network. The lower the value of the output stride
-  // the higher the accuracy but slower the speed, the higher the value the
-  // faster the speed but lower the accuracy.
+  // Output stride:  Internally, this parameter affects the height and width
+  // of the layers in the neural network. The lower the value of the output
+  // stride the higher the accuracy but slower the speed, the higher the
+  // value the faster the speed but lower the accuracy.
   let outputStrideController = null;
   function updateGuiOutputStride(outputStride, outputStrideArray) {
     if (outputStrideController) {
@@ -275,9 +277,9 @@ function setupGui(cameras) {
   }
 
   // Updates input resolution
-  // Input resolution:  Internally, this parameter affects the height and width
-  // of the layers in the neural network. The higher the value of the input
-  // resolution the better the accuracy but slower the speed.
+  // Input resolution:  Internally, this parameter affects the height and
+  // width of the layers in the neural network. The higher the value of the
+  // input resolution the better the accuracy but slower the speed.
   let inputResolutionController = null;
   function updateGuiInputResolution(
       inputResolution,
@@ -296,9 +298,10 @@ function setupGui(cameras) {
   }
 
   // Updates depth multiplier
-  // Multiplier: this parameter affects the number of feature map channels in
-  // the MobileNet. The higher the value, the higher the accuracy but slower the
-  // speed, the lower the value the faster the speed but lower the accuracy.
+  // Multiplier: this parameter affects the number of feature map channels
+  // in the MobileNet. The higher the value, the higher the accuracy but
+  // slower the speed, the lower the value the faster the speed but lower
+  // the accuracy.
   let multiplierController = null;
   function updateGuiMultiplier(multiplier, multiplierArray) {
     if (multiplierController) {
@@ -315,9 +318,10 @@ function setupGui(cameras) {
 
   // updates quantBytes
   // QuantBytes: this parameter affects weight quantization in the ResNet50
-  // model. The available options are 1 byte, 2 bytes, and 4 bytes. The higher
-  // the value, the larger the model size and thus the longer the loading time,
-  // the lower the value, the shorter the loading time but lower the accuracy.
+  // model. The available options are 1 byte, 2 bytes, and 4 bytes. The
+  // higher the value, the larger the model size and thus the longer the
+  // loading time, the lower the value, the shorter the loading time but
+  // lower the accuracy.
   let quantBytesController = null;
   function updateGuiQuantBytes(quantBytes, quantBytesArray) {
     if (quantBytesController) {
@@ -371,7 +375,6 @@ function setupGui(cameras) {
   segmentation.add(guiState.segmentation, 'segmentationThreshold', 0.0, 1.0);
   const segmentationEffectController =
       segmentation.add(guiState.segmentation, 'effect', ['mask', 'bokeh']);
-  segmentation.open();
 
   let singlePersonDecoding = gui.addFolder('SinglePersonDecoding');
   singlePersonDecoding.add(
@@ -455,13 +458,20 @@ function setupGui(cameras) {
 
   let partMap = gui.addFolder('Part Map');
   partMap.add(guiState.partMap, 'segmentationThreshold', 0.0, 1.0);
-  partMap.add(guiState.partMap, 'applyPixelation');
+  partMap.add(
+      guiState.partMap, 'effect', ['partMap', 'pixelation', 'blurBodyPart']);
   partMap.add(guiState.partMap, 'opacity', 0.0, 1.0);
   partMap.add(guiState.partMap, 'colorScale', Object.keys(partColorScales))
       .onChange(colorScale => {
         setShownPartColorScales(colorScale);
       });
   setShownPartColorScales(guiState.partMap.colorScale);
+  partMap.add(guiState.partMap, 'blurBodyPartAmount').min(1).max(20).step(1);
+  partMap.add(guiState.partMap, 'bodyPartEdgeBlurAmount')
+      .min(1)
+      .max(20)
+      .step(1);
+  partMap.open();
 
   estimateController.onChange(function(estimationType) {
     if (estimationType === 'segmentation') {
@@ -657,17 +667,26 @@ function segmentBodyInRealTime() {
             partColorScales[guiState.partMap.colorScale]);
 
         const maskBlurAmount = 0;
-        if (guiState.partMap.applyPixelation) {
-          const pixelCellWidth = 10.0;
+        switch (guiState.partMap.effect) {
+          case 'pixelation':
+            const pixelCellWidth = 10.0;
 
-          bodyPix.drawPixelatedMask(
-              canvas, state.video, coloredPartImageData,
-              guiState.partMap.opacity, maskBlurAmount, flipHorizontally,
-              pixelCellWidth);
-        } else {
-          bodyPix.drawMask(
-              canvas, state.video, coloredPartImageData, guiState.opacity,
-              maskBlurAmount, flipHorizontally);
+            bodyPix.drawPixelatedMask(
+                canvas, state.video, coloredPartImageData,
+                guiState.partMap.opacity, maskBlurAmount, flipHorizontally,
+                pixelCellWidth);
+            break;
+          case 'partMap':
+            bodyPix.drawMask(
+                canvas, state.video, coloredPartImageData, guiState.opacity,
+                maskBlurAmount, flipHorizontally);
+            break;
+          case 'blurBodyPart':
+            const blurBodyPartIds = [0, 1];
+            bodyPix.blurBodyPart(
+                canvas, state.video, multiPersonPartSegmentation,
+                blurBodyPartIds, guiState.partMap.blurBodyPartAmount,
+                guiState.partMap.edgeBlurAmount, flipHorizontally);
         }
 
         multiPersonPartSegmentation.forEach(personPartSegmentation => {
