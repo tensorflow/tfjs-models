@@ -782,6 +782,47 @@ bodyPix.drawBokehEffect(
 
 *The above shows the process of applying a 'bokeh' effect to an image (the left-most one) with `drawBokehEffect`.  An **inverted** mask is generated from a `personSegmentation`.  The original image is then drawn onto the canvas, and using the [canvas compositing](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/globalCompositeOperation) operation `destination-over` the mask is drawn onto the canvas, causing the background to be removed.  The original image is blurred and drawn onto the canvas where it doesn't overlap with the existing image using the compositing operation `destination-over`.  The result is seen in the right-most image.*
 
+#### `blurBodyPart`
+
+Given a PartSegmentation (or an array of PartSegmentation) and an image, blurs some person body parts (e.g. left face and right face).
+
+An example of applying a body part blur on `left_face` and `right_face` body parts (other body parts can be specified):
+
+![three_people_faceblur](./images/three_people_faceblur.jpg)
+
+
+##### Inputs
+
+* **canvas** The canvas to draw the body-part blurred image onto.
+* **image** The image with people to blur the body-part and draw.
+* **partSegmentation** A PartSegmentation object or an array of PartSegmentation object. Must have the same dimensions as the image.
+* **bodyPartIdsToBlur** Default to [0, 1] (left-face and right-face). An array of body part ids to blur. Each must be one of the 24 body part ids.
+* **backgroundBlurAmount** How many pixels in the background blend into each
+other.  Defaults to 3. Should be an integer between 1 and 20.
+* **edgeBlurAmount** How many pixels to blur on the edge between the person
+and the background by.  Defaults to 3. Should be an integer between 0 and 20.
+* **flipHorizontal** If the output should be flipped horizontally. Defaults to false.
+
+##### Example Usage
+
+```javascript
+const imageElement = document.getElementById('image');
+
+const net = await bodyPix.load();
+const partSegmentation = await net.estimateMultiPersonInstancePartSegmentation(imageElement);
+
+const backgroundBlurAmount = 3;
+const edgeBlurAmount = 3;
+const flipHorizontal = true;
+const faceBodyPartIdsToBlur = [0, 1];
+
+const canvas = document.getElementById('canvas');
+
+bodyPix.blurBodyPart(
+  canvas, imageElement, partSegmentation, faceBodyPartIdsToBlur, backgroundBlurAmount, edgeBlurAmount, flipHorizontal);
+```
+
+
 ## Developing the Demos
 
 Details for how to run the demos are included in the `demos/` folder.

@@ -548,7 +548,8 @@ function createBodyPartMask(
  * @param partSegmentation A PartSegmentation object or an array of
  * PartSegmentation object.
  *
- * @param
+ * @param bodyPartIdsToBlur Default to [0, 1] (left-face and right-face). An
+ * array of body part ids to blur. Each must be one of the 24 body part ids.
  *
  * @param backgroundBlurAmount How many pixels in the background blend into each
  * other.  Defaults to 3. Should be an integer between 1 and 20.
