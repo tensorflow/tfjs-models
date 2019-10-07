@@ -24,6 +24,9 @@ To keep track of issues we use the [tensorflow/tfjs](https://github.com/tensorfl
 * Per Karlsson, Twitter: [karlssonper](https://twitter.com/karlssonper)
 * Irene Alvarado, Twitter: [ire_alva](https://twitter.com/ire_alva)
 * Nikhil Thorat, Twitter: [nsthorat](https://twitter.com/nsthorat)
+### Special thanks for participating in the demo
+* Fabian Pedregosa, Twitter: [fpedregosa](https://twitter.com/fpedregosa)
+* Ross Goroshin, Scholar: [ross_goroshin](https://scholar.google.com/citations?user=EC4o-1oAAAAJ&hl=en)
 
 ## Tables of Contents
 
