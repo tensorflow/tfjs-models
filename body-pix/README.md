@@ -342,33 +342,33 @@ const partSegmentation = await net.estimateSinglePersonPartSegmentation(image, {
 
 As stated above, the result contains an array with ids for one of 24 body parts, or -1 if there is no body part:
 
-| Part Id | Part Name          |
-|---------|--------------------|
-| -1      | (no body part)     |
-| 0       | leftFace           |
-| 1       | rightFace          |
-| 2       | rightUpperLegFront |
-| 3       | rightLowerLegBack  |
-| 4       | rightUpperLegBack  |
-| 5       | leftLowerLegFront  |
-| 6       | leftUpperLegFront  |
-| 7       | leftUpperLegBack   |
-| 8       | leftLowerLegBack   |
-| 9       | rightFeet          |
-| 10      | rightLowerLegFront |
-| 11      | leftFeet           |
-| 12      | torsoFront         |
-| 13      | torsoBack          |
-| 14      | rightUpperArmFront |
-| 15      | rightUpperArmBack  |
-| 16      | rightLowerArmBack  |
-| 17      | leftLowerArmFront  |
-| 18      | leftUpperArmFront  |
-| 19      | leftUpperArmBack   |
-| 20      | leftLowerArmBack   |
-| 21      | rightHand          |
-| 22      | rightLowerArmFront |
-| 23      | leftHand           |
+| Part Id | Part Name              |
+|---------|------------------------|
+| -1      | (background)           |
+| 0       | left_face              |
+| 1       | right_face             |
+| 2       | left_upper_arm_front   |
+| 3       | left_upper_arm_back    |
+| 4       | right_upper_arm_front  |
+| 5       | right_upper_arm_back   |
+| 6       | left_lower_arm_front   |
+| 7       | left_lower_arm_back    |
+| 8       | right_lower_arm_front  |
+| 9       | right_lower_arm_back   |
+| 10      | left_hand              |
+| 11      | right_hand             |
+| 12      | torso_front            |
+| 13      | torso_back             |
+| 14      | left_upper_leg_front   |
+| 15      | left_upper_leg_back    |
+| 16      | right_upper_leg_front  |
+| 17      | right_upper_leg_back   |
+| 18      | left_lower_leg_front   |
+| 19      | left_lower_leg_back    |
+| 20      | right_lower_leg_front  |
+| 21      | right_lower_leg_back   |
+| 22      | left_feet              |
+| 23      | right_feet             |
 
 #### Inputs
 
