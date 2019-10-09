@@ -19,7 +19,7 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {connectedPartIndices} from './keypoints';
 import {PoseNetOutputStride} from './posenet_model';
-import {Keypoint, Padding, Pose, PosenetInput, TensorBuffer3D, Vector2D} from './types';
+import {InputResolution, Keypoint, Padding, Pose, PosenetInput, TensorBuffer3D, Vector2D} from './types';
 
 function eitherPointDoesntMeetConfidence(
     a: number, b: number, minConfidence: number): boolean {
@@ -125,12 +125,83 @@ export function flipPosesHorizontal(poses: Pose[], imageWidth: number) {
   return poses.map(pose => flipPoseHorizontal(pose, imageWidth));
 }
 
-export function getValidResolution(
-    imageScaleFactor: number, inputDimension: number,
-    outputStride: PoseNetOutputStride): number {
-  const evenResolution = inputDimension * imageScaleFactor - 1;
+export function toValidInputResolution(
+    inputResolution: number, outputStride: PoseNetOutputStride): number {
+  if (isValidInputResolution(inputResolution, outputStride)) {
+    return inputResolution;
+  }
 
-  return evenResolution - (evenResolution % outputStride) + 1;
+  return Math.floor(inputResolution / outputStride) * outputStride + 1;
+}
+
+export function validateInputResolution(inputResolution: InputResolution) {
+  tf.util.assert(
+      typeof inputResolution === 'number' ||
+          typeof inputResolution === 'object',
+      () => `Invalid inputResolution ${inputResolution}. ` +
+          `Should be a number or an object with width and height`);
+
+  if (typeof inputResolution === 'object') {
+    tf.util.assert(
+        typeof inputResolution.width === 'number',
+        () => `inputResolution.width has a value of ${
+            inputResolution.width} which is invalid; it must be a number`);
+    tf.util.assert(
+        typeof inputResolution.height === 'number',
+        () => `inputResolution.height has a value of ${
+            inputResolution.height} which is invalid; it must be a number`);
+  }
+}
+
+export function getValidInputResolutionDimensions(
+    inputResolution: InputResolution,
+    outputStride: PoseNetOutputStride): [number, number] {
+  validateInputResolution(inputResolution);
+  if (typeof inputResolution === 'object') {
+    return [
+      toValidInputResolution(inputResolution.height, outputStride),
+      toValidInputResolution(inputResolution.width, outputStride),
+    ];
+  } else {
+    return [
+      toValidInputResolution(inputResolution, outputStride),
+      toValidInputResolution(inputResolution, outputStride),
+    ];
+  }
+}
+
+const VALID_OUTPUT_STRIDES = [8, 16, 32];
+// tslint:disable-next-line:no-any
+export function assertValidOutputStride(outputStride: number) {
+  tf.util.assert(
+      typeof outputStride === 'number', () => 'outputStride is not a number');
+  tf.util.assert(
+      VALID_OUTPUT_STRIDES.indexOf(outputStride) >= 0,
+      () => `outputStride of ${outputStride} is invalid. ` +
+          `It must be either 8, 16, or 32`);
+}
+
+function isValidInputResolution(
+    resolution: number, outputStride: number): boolean {
+  return (resolution - 1) % outputStride === 0;
+}
+
+export function assertValidResolution(
+    resolution: [number, number], outputStride: number) {
+  tf.util.assert(
+      typeof resolution[0] === 'number' && typeof resolution[1] === 'number',
+      () => `both resolution values must be a number but had values ${
+          resolution}`);
+
+  tf.util.assert(
+      isValidInputResolution(resolution[0], outputStride),
+      () => `height of ${resolution[0]} is invalid for output stride ` +
+          `${outputStride}.`);
+
+  tf.util.assert(
+      isValidInputResolution(resolution[1], outputStride),
+      () => `width of ${resolution[1]} is invalid for output stride ` +
+          `${outputStride}.`);
 }
 
 export function getInputTensorDimensions(input: PosenetInput):

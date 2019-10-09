@@ -20,8 +20,8 @@ import {decodeMultiplePoses} from './multi_pose/decode_multiple_poses';
 import {decodeSinglePose} from './single_pose/decode_single_pose';
 
 export {partChannels, partIds, partNames, poseChain} from './keypoints';
-export {load, ModelConfig, MultiPersonInferenceConfig, PoseNet, PoseNetOutputStride, SinglePersonInterfaceConfig, VALID_INPUT_RESOLUTION} from './posenet_model';
-export {Keypoint, Pose} from './types';
+export {load, ModelConfig, MultiPersonInferenceConfig, PoseNet, PoseNetOutputStride, SinglePersonInterfaceConfig} from './posenet_model';
+export {InputResolution, Keypoint, Pose} from './types';
 export {getAdjacentKeyPoints, getBoundingBox, getBoundingBoxPoints, scaleAndFlipPoses, scalePose} from './util';
 export {
   decodeMultiplePoses,

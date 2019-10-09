@@ -19,15 +19,13 @@ import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
 import {mobileNetCheckpoint, resNet50Checkpoint} from './checkpoints';
-import {assertValidOutputStride, assertValidResolution, MobileNet, MobileNetMultiplier} from './mobilenet';
+import {MobileNet, MobileNetMultiplier} from './mobilenet';
 import {decodeMultiplePoses} from './multi_pose/decode_multiple_poses';
 import {ResNet} from './resnet';
 import {decodeSinglePose} from './single_pose/decode_single_pose';
-import {Pose, PosenetInput} from './types';
-import {getInputTensorDimensions, padAndResizeTo, scaleAndFlipPoses, toTensorBuffers3D} from './util';
+import {InputResolution, Pose, PosenetInput} from './types';
+import {assertValidOutputStride, assertValidResolution, getInputTensorDimensions, getValidInputResolutionDimensions, padAndResizeTo, scaleAndFlipPoses, toTensorBuffers3D, validateInputResolution} from './util';
 
-export type PoseNetInputResolution =
-    161|193|257|289|321|353|385|417|449|481|513|801|1217;
 export type PoseNetOutputStride = 32|16|8;
 export type PoseNetArchitecture = 'ResNet50'|'MobileNetV1';
 export type PoseNetDecodingMethod = 'single-person'|'multi-person';
@@ -78,6 +76,15 @@ export interface BaseModel {
  * at the cost of accuracy. Stride 32 is supported for ResNet and
  * stride 8,16,32 are supported for various MobileNetV1 models.
  *
+ * * `inputResolution`: A number or an Object of type {width: number, height:
+ * number}. Specifies the size the input image is scaled to before feeding it
+ * through the PoseNet model.  The larger the value, more accurate the model at
+ * the cost of speed. Set this to a smaller value to increase speed at the cost
+ * of accuracy. If a number is provided, the input will be resized and padded to
+ * be a square with the same width and height.  If width and height are
+ * provided, the input will be resized and padded to the specified width and
+ * height.
+ *
  * `multiplier`: An optional number with values: 1.01, 1.0, 0.75, or
  * 0.50. The value is used only by MobileNet architecture. It is the float
  * multiplier for the depth (number of channels) for all convolution ops.
@@ -98,7 +105,7 @@ export interface BaseModel {
 export interface ModelConfig {
   architecture: PoseNetArchitecture;
   outputStride: PoseNetOutputStride;
-  inputResolution: PoseNetInputResolution;
+  inputResolution: InputResolution;
   multiplier?: MobileNetMultiplier;
   modelUrl?: string;
   quantBytes?: PoseNetQuantBytes;
@@ -128,8 +135,7 @@ const VALID_STRIDE = {
   'MobileNetV1': [8, 16, 32],
   'ResNet50': [32, 16]
 };
-export const VALID_INPUT_RESOLUTION =
-    [161, 193, 257, 289, 321, 353, 385, 417, 449, 481, 513, 801];
+
 const VALID_MULTIPLIER = {
   'MobileNetV1': [0.50, 0.75, 1.0],
   'ResNet50': [1.0]
@@ -152,11 +158,7 @@ function validateModelConfig(config: ModelConfig) {
     config.inputResolution = 257;
   }
 
-  if (VALID_INPUT_RESOLUTION.indexOf(config.inputResolution) < 0) {
-    throw new Error(
-        `Invalid inputResolution ${config.inputResolution}. ` +
-        `Should be one of ${VALID_INPUT_RESOLUTION}`);
-  }
+  validateInputResolution(config.inputResolution);
 
   if (config.outputStride == null) {
     config.outputStride = 16;
@@ -198,11 +200,6 @@ function validateModelConfig(config: ModelConfig) {
  * This should be set to true for videos where the video is by default flipped
  * horizontally (i.e. a webcam), and you want the poses to be returned in the
  * proper orientation.
- *
- * `inputResolution`:Specifies the size the input image is scaled to before
- * feeding it through the PoseNet model.  The larger the value, more accurate
- * the model at the cost of speed. Set this to a smaller value to increase
- * speed at the cost of accuracy.
  *
  */
 export interface InferenceConfig {
@@ -279,10 +276,13 @@ function validateMultiPersonInputConfig(config: MultiPersonInferenceConfig) {
 }
 
 export class PoseNet {
-  baseModel: BaseModel;
-  inputResolution: PoseNetInputResolution;
+  readonly baseModel: BaseModel;
+  readonly inputResolution: [number, number];
 
-  constructor(net: BaseModel, inputResolution: PoseNetInputResolution) {
+  constructor(net: BaseModel, inputResolution: [number, number]) {
+    assertValidOutputStride(net.outputStride);
+    assertValidResolution(inputResolution, net.outputStride);
+
     this.baseModel = net;
     this.inputResolution = inputResolution;
   }
@@ -321,13 +321,9 @@ export class PoseNet {
     const outputStride = this.baseModel.outputStride;
     const inputResolution = this.inputResolution;
 
-    assertValidOutputStride(outputStride);
-    assertValidResolution(this.inputResolution, outputStride);
-
     const [height, width] = getInputTensorDimensions(input);
 
-    const {resized, padding} =
-        padAndResizeTo(input, [inputResolution, inputResolution]);
+    const {resized, padding} = padAndResizeTo(input, inputResolution);
 
     const {heatmapScores, offsets, displacementFwd, displacementBwd} =
         this.baseModel.predict(resized);
@@ -346,7 +342,7 @@ export class PoseNet {
         configWithDefaults.scoreThreshold, configWithDefaults.nmsRadius);
 
     const resultPoses = scaleAndFlipPoses(
-        poses, [height, width], [inputResolution, inputResolution], padding,
+        poses, [height, width], inputResolution, padding,
         configWithDefaults.flipHorizontal);
 
     heatmapScores.dispose();
@@ -386,13 +382,10 @@ export class PoseNet {
 
     const outputStride = this.baseModel.outputStride;
     const inputResolution = this.inputResolution;
-    assertValidOutputStride(outputStride);
-    assertValidResolution(inputResolution, outputStride);
 
     const [height, width] = getInputTensorDimensions(input);
 
-    const {resized, padding} =
-        padAndResizeTo(input, [inputResolution, inputResolution]);
+    const {resized, padding} = padAndResizeTo(input, inputResolution);
 
     const {heatmapScores, offsets, displacementFwd, displacementBwd} =
         this.baseModel.predict(resized);
@@ -401,7 +394,7 @@ export class PoseNet {
     const poses = [pose];
 
     const resultPoses = scaleAndFlipPoses(
-        poses, [height, width], [inputResolution, inputResolution], padding,
+        poses, [height, width], inputResolution, padding,
         configWithDefaults.flipHorizontal);
 
     heatmapScores.dispose();
@@ -445,7 +438,11 @@ async function loadMobileNet(config: ModelConfig): Promise<PoseNet> {
   const url = mobileNetCheckpoint(outputStride, multiplier, quantBytes);
   const graphModel = await tfconv.loadGraphModel(config.modelUrl || url);
   const mobilenet = new MobileNet(graphModel, outputStride);
-  return new PoseNet(mobilenet, config.inputResolution);
+
+  const validInputResolution = getValidInputResolutionDimensions(
+      config.inputResolution, mobilenet.outputStride);
+
+  return new PoseNet(mobilenet, validInputResolution);
 }
 
 async function loadResNet(config: ModelConfig): Promise<PoseNet> {
@@ -461,7 +458,9 @@ async function loadResNet(config: ModelConfig): Promise<PoseNet> {
   const url = resNet50Checkpoint(outputStride, quantBytes);
   const graphModel = await tfconv.loadGraphModel(config.modelUrl || url);
   const resnet = new ResNet(graphModel, outputStride);
-  return new PoseNet(resnet, config.inputResolution);
+  const validInputResolution = getValidInputResolutionDimensions(
+      config.inputResolution, resnet.outputStride);
+  return new PoseNet(resnet, validInputResolution);
 }
 
 /**
