@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google LLC. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,7 +16,7 @@
  */
 
 import {cpuBlur} from './blur';
-import {PartSegmentation, PersonSegmentation} from './types';
+import {Color, PartSegmentation, PersonSegmentation} from './types';
 
 const offScreenCanvases: {[name: string]: HTMLCanvasElement} = {};
 
@@ -123,91 +123,188 @@ function renderImageDataToOffScreenCanvas(
 }
 
 /**
- * Given the output from estimating person segmentation, generates a black image
- * with opacity and transparency at each pixel determined by the corresponding
- * binary segmentation value at the pixel from the output.  In other words,
- * pixels where there is a person will be transparent and where there is not a
- * person will be opaque, and visa-versa when 'maskBackground' is set to
- * false. This can be used as a mask to crop a person or the background when
- * compositing.
+ * Given the output from estimating multi-person segmentation, generates an
+ * image with foreground and background color at each pixel determined by the
+ * corresponding binary segmentation value at the pixel from the output.  In
+ * other words, pixels where there is a person will be colored with foreground
+ * color and where there is not a person will be colored with background color.
  *
- * @param segmentation The output from estimagePersonSegmentation; an object
- * containing a width, height, and a binary array with 1 for the pixels that are
- * part of the person, and 0 otherwise.
+ * @param personOrPartSegmentation The output from `estimatePersonSegmentation`,
+ * `estimateMultiPersonSegmentation`, `estimatePartSegmentation` or
+ * `estimateMultiPersonPartSegmentation`. They can be PersonSegmentation
+ * object, an array of PersonSegmentation object, PartSegmentation object, or an
+ * array of PartSegmentation object.
  *
- * @param maskBackground If the mask should be opaque where the background is.
- * Defaults to true. When set to true, pixels where there is a person are
- * transparent and where there is no person become opaque.
+ * @param foreground Default to {r:0, g:0, b:0, a: 0}. The foreground color
+ * (r,g,b,a) for visualizing pixels that belong to people.
  *
- * @returns An ImageData with the same width and height of the
- * personSegmentation, with opacity and transparency at each pixel determined by
- * the corresponding binary segmentation value at the pixel from the output.
+ * @param background Default to {r:0, g:0, b:0, a: 255}. The background color
+ * (r,g,b,a) for visualizing pixels that don't belong to people.
+ *
+ * @param drawContour Default to false. Whether to draw the contour around each
+ * person's segmentation mask or body part mask.
+ *
+ * @param foregroundIds Default to [1]. The integer values that represent
+ * foreground. For person segmentation, 1 is the foreground. For body part
+ * segmentation, it can be a subset of all body parts ids.
+ *
+ * @returns An ImageData with the same width and height of
+ * all the PersonSegmentation in multiPersonSegmentation, with opacity and
+ * transparency at each pixel determined by the corresponding binary
+ * segmentation value at the pixel from the output.
  */
 export function toMaskImageData(
-    segmentation: PersonSegmentation, maskBackground = true): ImageData {
-  const {width, height, data} = segmentation;
+    personOrPartSegmentation: PersonSegmentation|PersonSegmentation[]|
+    PartSegmentation|PartSegmentation[],
+    foreground: Color = {
+      r: 0,
+      g: 0,
+      b: 0,
+      a: 0
+    },
+    background: Color = {
+      r: 0,
+      g: 0,
+      b: 0,
+      a: 255
+    },
+    drawContour = false, foregroundIds: number[] = [1]): ImageData {
+  if (Array.isArray(personOrPartSegmentation) &&
+      personOrPartSegmentation.length === 0) {
+    return null;
+  }
+
+  let multiPersonOrPartSegmentation: (PersonSegmentation|PartSegmentation)[];
+  if (!Array.isArray(personOrPartSegmentation)) {
+    multiPersonOrPartSegmentation = [personOrPartSegmentation];
+  } else {
+    multiPersonOrPartSegmentation = personOrPartSegmentation;
+  }
+
+  const {width, height} = multiPersonOrPartSegmentation[0];
   const bytes = new Uint8ClampedArray(width * height * 4);
 
-  for (let i = 0; i < height * width; ++i) {
-    const shouldMask = maskBackground ? 1 - data[i] : data[i];
-    // alpha will determine how dark the mask should be.
-    const alpha = shouldMask * 255;
+  function drawStroke(
+      bytes: Uint8ClampedArray, row: number, column: number, width: number,
+      radius: number, color: Color = {r: 0, g: 255, b: 255, a: 255}) {
+    for (let i = -radius; i <= radius; i++) {
+      for (let j = -radius; j <= radius; j++) {
+        if (i !== 0 && j !== 0) {
+          const n = (row + i) * width + (column + j);
+          bytes[4 * n + 0] = color.r;
+          bytes[4 * n + 1] = color.g;
+          bytes[4 * n + 2] = color.b;
+          bytes[4 * n + 3] = color.a;
+        }
+      }
+    }
+  }
 
-    const j = i * 4;
-    bytes[j + 0] = 0;
-    bytes[j + 1] = 0;
-    bytes[j + 2] = 0;
-    bytes[j + 3] = Math.round(alpha);
+  function isSegmentationBoundary(
+      segmentationData: Uint8Array|Int32Array,
+      row: number,
+      column: number,
+      width: number,
+      foregroundIds: number[] = [1],
+      radius = 1,
+      ): boolean {
+    let numberBackgroundPixels = 0;
+    for (let i = -radius; i <= radius; i++) {
+      for (let j = -radius; j <= radius; j++) {
+        if (i !== 0 && j !== 0) {
+          const n = (row + i) * width + (column + j);
+          if (!foregroundIds.some(id => id === segmentationData[n])) {
+            numberBackgroundPixels += 1;
+          }
+        }
+      }
+    }
+    return numberBackgroundPixels > 0;
+  }
+
+  for (let i = 0; i < height; i += 1) {
+    for (let j = 0; j < width; j += 1) {
+      const n = i * width + j;
+      bytes[4 * n + 0] = background.r;
+      bytes[4 * n + 1] = background.g;
+      bytes[4 * n + 2] = background.b;
+      bytes[4 * n + 3] = background.a;
+      for (let k = 0; k < multiPersonOrPartSegmentation.length; k++) {
+        if (foregroundIds.some(
+                id => id === multiPersonOrPartSegmentation[k].data[n])) {
+          bytes[4 * n] = foreground.r;
+          bytes[4 * n + 1] = foreground.g;
+          bytes[4 * n + 2] = foreground.b;
+          bytes[4 * n + 3] = foreground.a;
+          const isBoundary = isSegmentationBoundary(
+              multiPersonOrPartSegmentation[k].data, i, j, width,
+              foregroundIds);
+          if (drawContour && i - 1 >= 0 && i + 1 < height && j - 1 >= 0 &&
+              j + 1 < width && isBoundary) {
+            drawStroke(bytes, i, j, width, 1);
+          }
+        }
+      }
+    }
   }
 
   return new ImageData(bytes, width, height);
 }
 
 /**
- * Given the output from estimating part segmentation, and an array of colors
- * indexed by part id, generates an image with the corresponding color for each
- * part at each pixel, and white pixels where there is no part.
+ * Given the output from person body part segmentation (or multi-person
+ * instance body part segmentation) and an array of colors indexed by part id,
+ * generates an image with the corresponding color for each part at each pixel,
+ * and white pixels where there is no part.
  *
- * @param partSegmentation   The output from estimatePartSegmentation; an object
- * containing a width, height, and an array with a part id from 0-24 for the
- * pixels that are part of a corresponding body part, and -1 otherwise.
+ * @param partSegmentation The output from estimatePersonPartSegmentation or
+ * estimateMultiPersonInstancePartSegmentation. The former is a PartSegmentation
+ * object and later is an array of PartSegmentation object.
  *
  * @param partColors A multi-dimensional array of rgb colors indexed by
  * part id.  Must have 24 colors, one for every part.
  *
- * @returns An ImageData with the same width and height of the partSegmentation,
- * with the corresponding color for each part at each pixel, and black pixels
- * where there is no part.
+ * @returns An ImageData with the same width and height of all the element in
+ * multiPersonPartSegmentation, with the corresponding color for each part at
+ * each pixel, and black pixels where there is no part.
  */
 export function toColoredPartImageData(
-    partSegmentation: PartSegmentation,
+    partSegmentation: PartSegmentation|PartSegmentation[],
     partColors: Array<[number, number, number]>): ImageData {
-  const {width, height, data} = partSegmentation;
+  if (Array.isArray(partSegmentation) && partSegmentation.length === 0) {
+    return null;
+  }
+
+  let multiPersonPartSegmentation;
+  if (!Array.isArray(partSegmentation)) {
+    multiPersonPartSegmentation = [partSegmentation];
+  } else {
+    multiPersonPartSegmentation = partSegmentation;
+  }
+  const {width, height} = multiPersonPartSegmentation[0];
   const bytes = new Uint8ClampedArray(width * height * 4);
 
   for (let i = 0; i < height * width; ++i) {
-    // invert mask.  Invert the segmentatino mask.
-    const partId = Math.round(data[i]);
+    // invert mask.  Invert the segmentation mask.
     const j = i * 4;
-
-    if (partId === -1) {
-      bytes[j + 0] = 255;
-      bytes[j + 1] = 255;
-      bytes[j + 2] = 255;
-      bytes[j + 3] = 255;
-    } else {
-      const color = partColors[partId];
-
-      if (!color) {
-        throw new Error(`No color could be found for part id ${partId}`);
+    bytes[j + 0] = 255;
+    bytes[j + 1] = 255;
+    bytes[j + 2] = 255;
+    bytes[j + 3] = 255;
+    for (let k = 0; k < multiPersonPartSegmentation.length; k++) {
+      const partId = multiPersonPartSegmentation[k].data[i];
+      if (partId !== -1) {
+        const color = partColors[partId];
+        if (!color) {
+          throw new Error(`No color could be found for part id ${partId}`);
+        }
+        bytes[j + 0] = color[0];
+        bytes[j + 1] = color[1];
+        bytes[j + 2] = color[2];
+        bytes[j + 3] = 255;
       }
-      bytes[j + 0] = color[0];
-      bytes[j + 1] = color[1];
-      bytes[j + 2] = color[2];
-      bytes[j + 3] = 255;
     }
   }
-
   return new ImageData(bytes, width, height);
 }
 
@@ -239,16 +336,10 @@ const CANVAS_NAMES = {
  * to false.
  */
 export function drawMask(
-    canvas: HTMLCanvasElement, image: ImageType, maskImage: ImageData,
+    canvas: HTMLCanvasElement, image: ImageType, maskImage: ImageData|null,
     maskOpacity = 0.7, maskBlurAmount = 0, flipHorizontal = false) {
-  assertSameDimensions(image, maskImage, 'image', 'mask');
-
-  const mask = renderImageDataToOffScreenCanvas(maskImage, CANVAS_NAMES.mask);
-  const blurredMask = drawAndBlurImageOnOffScreenCanvas(
-      mask, maskBlurAmount, CANVAS_NAMES.blurredMask);
-
-  canvas.width = blurredMask.width;
-  canvas.height = blurredMask.height;
+  canvas.width = image.width;
+  canvas.height = image.height;
 
   const ctx = canvas.getContext('2d');
   ctx.save();
@@ -258,7 +349,15 @@ export function drawMask(
 
   ctx.drawImage(image, 0, 0);
   ctx.globalAlpha = maskOpacity;
-  ctx.drawImage(blurredMask, 0, 0);
+  if (maskImage) {
+    assertSameDimensions(image, maskImage, 'image', 'mask');
+
+    const mask = renderImageDataToOffScreenCanvas(maskImage, CANVAS_NAMES.mask);
+
+    const blurredMask = drawAndBlurImageOnOffScreenCanvas(
+        mask, maskBlurAmount, CANVAS_NAMES.blurredMask);
+    ctx.drawImage(blurredMask, 0, 0);
+  }
   ctx.restore();
 }
 
@@ -341,10 +440,11 @@ export function drawPixelatedMask(
 }
 
 function createPersonMask(
-    segmentation: PersonSegmentation,
+    multiPersonSegmentations: PersonSegmentation[],
     edgeBlurAmount: number): HTMLCanvasElement {
-  const maskBackground = false;
-  const backgroundMaskImage = toMaskImageData(segmentation, maskBackground);
+  const backgroundMaskImage = toMaskImageData(
+      multiPersonSegmentations, {r: 0, g: 0, b: 0, a: 255},
+      {r: 0, g: 0, b: 0, a: 0});
 
   const backgroundMask =
       renderImageDataToOffScreenCanvas(backgroundMaskImage, CANVAS_NAMES.mask);
@@ -364,9 +464,8 @@ function createPersonMask(
  *
  * @param image The image to blur the background of and draw.
  *
- * @param personSegmentation A personSegmentation object, containing a binary
- * array with 1 for the pixels that are part of the person, and 0 otherwise.
- * Must have the same dimensions as the image.
+ * @param personSegmentation A PersonSegmentation object or an array of
+ * PersonSegmentation object.
  *
  * @param backgroundBlurAmount How many pixels in the background blend into each
  * other.  Defaults to 3. Should be an integer between 1 and 20.
@@ -379,27 +478,124 @@ function createPersonMask(
  */
 export function drawBokehEffect(
     canvas: HTMLCanvasElement, image: ImageType,
-    personSegmentation: PersonSegmentation, backgroundBlurAmount = 3,
-    edgeBlurAmount = 3, flipHorizontal = false) {
-  assertSameDimensions(image, personSegmentation, 'image', 'segmentation');
+    personSegmentation: PersonSegmentation|PersonSegmentation[],
+    backgroundBlurAmount = 3, edgeBlurAmount = 3, flipHorizontal = false) {
+  let multiPersonSegmentation;
+  if (!Array.isArray(personSegmentation)) {
+    multiPersonSegmentation = [personSegmentation];
+  } else {
+    multiPersonSegmentation = personSegmentation;
+  }
 
   const blurredImage = drawAndBlurImageOnOffScreenCanvas(
       image, backgroundBlurAmount, CANVAS_NAMES.blurred);
 
-  const personMask = createPersonMask(personSegmentation, edgeBlurAmount);
-
   const ctx = canvas.getContext('2d');
+
+  if (Array.isArray(personSegmentation) && personSegmentation.length === 0) {
+    ctx.drawImage(blurredImage, 0, 0);
+    return;
+  }
+
+  const personMask = createPersonMask(multiPersonSegmentation, edgeBlurAmount);
+
   ctx.save();
   if (flipHorizontal) {
     flipCanvasHorizontal(canvas);
   }
   // draw the original image on the final canvas
   ctx.drawImage(image, 0, 0);
+
   // "destination-in" - "The existing canvas content is kept where both the
   // new shape and existing canvas content overlap. Everything else is made
   // transparent."
   // crop what's not the person using the mask from the original image
   drawWithCompositing(ctx, personMask, 'destination-in');
+  // "destination-over" - "The existing canvas content is kept where both the
+  // new shape and existing canvas content overlap. Everything else is made
+  // transparent."
+  // draw the blurred background on top of the original image where it doesn't
+  // overlap.
+  drawWithCompositing(ctx, blurredImage, 'destination-over');
+  ctx.restore();
+}
+
+function createBodyPartMask(
+    multiPersonPartSegmentations: PartSegmentation[],
+    bodyPartIdsToMask: number[], edgeBlurAmount: number): HTMLCanvasElement {
+  const backgroundMaskImage = toMaskImageData(
+      multiPersonPartSegmentations, {r: 0, g: 0, b: 0, a: 0},
+      {r: 0, g: 0, b: 0, a: 255}, true, bodyPartIdsToMask);
+
+  const backgroundMask =
+      renderImageDataToOffScreenCanvas(backgroundMaskImage, CANVAS_NAMES.mask);
+  if (edgeBlurAmount === 0) {
+    return backgroundMask;
+  } else {
+    return drawAndBlurImageOnOffScreenCanvas(
+        backgroundMask, edgeBlurAmount, CANVAS_NAMES.blurredMask);
+  }
+}
+
+/**
+ * Given a personSegmentation and an image, draws the image with its background
+ * blurred onto the canvas.
+ *
+ * @param canvas The canvas to draw the background-blurred image onto.
+ *
+ * @param image The image to blur the background of and draw.
+ *
+ * @param partSegmentation A PartSegmentation object or an array of
+ * PartSegmentation object.
+ *
+ * @param bodyPartIdsToBlur Default to [0, 1] (left-face and right-face). An
+ * array of body part ids to blur. Each must be one of the 24 body part ids.
+ *
+ * @param backgroundBlurAmount How many pixels in the background blend into each
+ * other.  Defaults to 3. Should be an integer between 1 and 20.
+ *
+ * @param edgeBlurAmount How many pixels to blur on the edge between the person
+ * and the background by.  Defaults to 3. Should be an integer between 0 and 20.
+ *
+ * @param flipHorizontal If the output should be flipped horizontally.  Defaults
+ * to false.
+ */
+export function blurBodyPart(
+    canvas: HTMLCanvasElement, image: ImageType,
+    partSegmentation: PartSegmentation|PartSegmentation[],
+    bodyPartIdsToBlur = [0, 1], backgroundBlurAmount = 3, edgeBlurAmount = 3,
+    flipHorizontal = false) {
+  let multiPersonPartSegmentation;
+  if (!Array.isArray(partSegmentation)) {
+    multiPersonPartSegmentation = [partSegmentation];
+  } else {
+    multiPersonPartSegmentation = partSegmentation;
+  }
+
+  const blurredImage = drawAndBlurImageOnOffScreenCanvas(
+      image, backgroundBlurAmount, CANVAS_NAMES.blurred);
+
+  const ctx = canvas.getContext('2d');
+
+  if (Array.isArray(partSegmentation) && partSegmentation.length === 0) {
+    ctx.drawImage(blurredImage, 0, 0);
+    return;
+  }
+  const bodyPartMask = createBodyPartMask(
+      multiPersonPartSegmentation, bodyPartIdsToBlur, edgeBlurAmount);
+
+  ctx.save();
+  if (flipHorizontal) {
+    flipCanvasHorizontal(canvas);
+  }
+  // draw the original image on the final canvas
+  ctx.drawImage(image, 0, 0);
+
+  // "destination-in" - "The existing canvas content is kept where both the
+  // new shape and existing canvas content overlap. Everything else is made
+  // transparent."
+  // crop what's not the person using the mask from the original image
+  drawWithCompositing(ctx, bodyPartMask, 'destination-in');
   // "destination-over" - "The existing canvas content is kept where both the
   // new shape and existing canvas content overlap. Everything else is made
   // transparent."

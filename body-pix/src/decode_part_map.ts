@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google LLC. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -90,5 +90,20 @@ export function decodePartSegmentation(
 
     return clipByMask2d(partMapShiftedUpForClipping, segmentationMask)
         .sub(tf.scalar(1, 'int32'));
+  });
+}
+
+export function decodeOnlyPartSegmentation(partHeatmapScores: tf.Tensor3D):
+    tf.Tensor2D {
+  const [partMapHeight, partMapWidth, numParts] = partHeatmapScores.shape;
+  return tf.tidy(() => {
+    const flattenedMap = toFlattenedOneHotPartMap(partHeatmapScores);
+    const partNumbers =
+        tf.range(0, numParts, 1, 'int32').expandDims(1) as tf.Tensor2D;
+
+    const partMapFlattened = flattenedMap.matMul(partNumbers).toInt();
+
+    return partMapFlattened.reshape([partMapHeight, partMapWidth]) as
+        tf.Tensor2D;
   });
 }
