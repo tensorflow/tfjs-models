@@ -23,6 +23,7 @@ import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_u
 import * as mobilenet from './mobilenet';
 import * as posenetModel from './posenet_model';
 import * as resnet from './resnet';
+import {toValidInputResolution} from './util';
 
 describeWithFlags('PoseNet', NODE_ENVS, () => {
   let mobileNet: posenetModel.PoseNet;
@@ -37,24 +38,21 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
   beforeAll((done) => {
     // Mock out the actual load so we don't make network requests in the unit
     // test.
-    const resNetConfig = {
-      architecture: 'ResNet50',
-      outputStride: outputStride,
-      inputResolution,
-      quantBytes: quantBytes
-    } as posenetModel.ModelConfig;
+    const resNetConfig =
+        {architecture: 'ResNet50', outputStride, inputResolution, quantBytes} as
+        posenetModel.ModelConfig;
 
     const mobileNetConfig = {
       architecture: 'MobileNetV1',
-      outputStride: outputStride,
+      outputStride,
       inputResolution,
-      multiplier: multiplier,
-      quantBytes: quantBytes
+      multiplier,
+      quantBytes
     } as posenetModel.ModelConfig;
 
     spyOn(tfconv, 'loadGraphModel').and.callFake((): tfconv.GraphModel => {
       return null;
-    })
+    });
 
     spyOn(resnet, 'ResNet').and.callFake(() => {
       return {
@@ -108,6 +106,7 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
         .catch(done.fail);
   });
 
+
   it('estimateSinglePose does not leak memory', done => {
     const input =
         tf.zeros([inputResolution, inputResolution, 3]) as tf.Tensor3D;
@@ -151,4 +150,78 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
         .then(done)
         .catch(done.fail);
   });
+
+  it('load with mobilenet when input resolution is a number returns a model ' +
+         'with a valid and the same input resolution width and height',
+     (done) => {
+       const inputResolution = 500;
+       const validInputResolution =
+           toValidInputResolution(inputResolution, outputStride);
+
+       const expectedResolution = [validInputResolution, validInputResolution];
+
+       posenetModel
+           .load({architecture: 'MobileNetV1', outputStride, inputResolution})
+           .then(model => {
+             expect(model.inputResolution).toEqual(expectedResolution);
+
+             done();
+           });
+     });
+
+  it('load with resnet when input resolution is a number returns a model ' +
+         'with a valid and the same input resolution width and height',
+     (done) => {
+       const inputResolution = 350;
+       const validInputResolution =
+           toValidInputResolution(inputResolution, outputStride);
+
+       const expectedResolution = [validInputResolution, validInputResolution];
+
+       posenetModel
+           .load({architecture: 'ResNet50', outputStride, inputResolution})
+           .then(model => {
+             expect(model.inputResolution).toEqual(expectedResolution);
+
+             done();
+           });
+     });
+
+  it('load with mobilenet when input resolution is an object with width and height ' +
+         'returns a model with a valid resolution for the width and height',
+     (done) => {
+       const inputResolution = {width: 600, height: 400};
+
+       const expectedResolution = [
+         toValidInputResolution(inputResolution.height, outputStride),
+         toValidInputResolution(inputResolution.width, outputStride)
+       ];
+
+       posenetModel
+           .load({architecture: 'MobileNetV1', outputStride, inputResolution})
+           .then(model => {
+             expect(model.inputResolution).toEqual(expectedResolution);
+
+             done();
+           });
+     });
+
+  it('load with resnet when input resolution is an object with width and height ' +
+         'returns a model with a valid resolution for the width and height',
+     (done) => {
+       const inputResolution = {width: 700, height: 500};
+
+       const expectedResolution = [
+         toValidInputResolution(inputResolution.height, outputStride),
+         toValidInputResolution(inputResolution.width, outputStride)
+       ];
+
+       posenetModel
+           .load({architecture: 'ResNet50', outputStride, inputResolution})
+           .then(model => {
+             expect(model.inputResolution).toEqual(expectedResolution);
+
+             done();
+           });
+     });
 });

@@ -50,5 +50,10 @@ export type PosenetInput =
 export type TensorBuffer3D = tf.TensorBuffer<tf.Rank.R3>;
 
 export declare interface Padding {
-  top: number, bottom: number, left: number, right: number
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
 }
+
+export declare type InputResolution = number | {width: number, height: number};
