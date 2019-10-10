@@ -76,12 +76,12 @@ describeWithFlags('BodyPix', NODE_ENVS, () => {
         .catch(done.fail);
   });
 
-  it('segmentSinglePerson does not leak memory', done => {
+  it('estimatePersonSegmentation does not leak memory', done => {
     const input = tf.zeros([513, 513, 3]) as tf.Tensor3D;
 
     const beforeTensors = tf.memory().numTensors;
 
-    bodyPix.segmentSinglePerson(input)
+    bodyPix.estimatePersonSegmentation(input)
         .then(() => {
           expect(tf.memory().numTensors).toEqual(beforeTensors);
         })
@@ -92,7 +92,7 @@ describeWithFlags('BodyPix', NODE_ENVS, () => {
   it('estimatePersonPartSegmenation does not leak memory', done => {
     const input = tf.zeros([513, 513, 3]) as tf.Tensor3D;
     const beforeTensors = tf.memory().numTensors;
-    bodyPix.segmentSinglePersonParts(input)
+    bodyPix.estimatePersonPartSegmentation(input)
         .then(() => {
           expect(tf.memory().numTensors).toEqual(beforeTensors);
         })

@@ -529,7 +529,7 @@ async function estimateSegmentation() {
   switch (guiState.algorithm) {
     case 'multi-person-instance':
       multiPersonSegmentation =
-          await state.net.segmentMultiPerson(state.video, {
+          await state.net.estimateMultiPersonInstanceSegmentation(state.video, {
             segmentationThreshold: guiState.segmentation.segmentationThreshold,
             maxDetections: guiState.multiPersonDecoding.maxDetections,
             scoreThreshold: guiState.multiPersonDecoding.scoreThreshold,
@@ -540,7 +540,7 @@ async function estimateSegmentation() {
           });
       break;
     case 'person':
-      const personSegmentation = await state.net.segmentSinglePerson(
+      const personSegmentation = await state.net.estimatePersonSegmentation(
           state.video,
           {segmentationThreshold: guiState.segmentation.segmentationThreshold});
       multiPersonSegmentation = [personSegmentation];
@@ -556,20 +556,23 @@ async function estimatePartSegmentation() {
   switch (guiState.algorithm) {
     case 'multi-person-instance':
       multiPersonPartSegmentation =
-          await state.net.segmentMultiPersonParts(state.video, {
-            segmentationThreshold: guiState.segmentation.segmentationThreshold,
-            maxDetections: guiState.multiPersonDecoding.maxDetections,
-            scoreThreshold: guiState.multiPersonDecoding.scoreThreshold,
-            nmsRadius: guiState.multiPersonDecoding.nmsRadius,
-            numKeypointForMatching:
-                guiState.multiPersonDecoding.numKeypointForMatching,
-            refineSteps: guiState.multiPersonDecoding.refineSteps
-          });
+          await state.net.estimateMultiPersonInstancePartSegmentation(
+              state.video, {
+                segmentationThreshold:
+                    guiState.segmentation.segmentationThreshold,
+                maxDetections: guiState.multiPersonDecoding.maxDetections,
+                scoreThreshold: guiState.multiPersonDecoding.scoreThreshold,
+                nmsRadius: guiState.multiPersonDecoding.nmsRadius,
+                numKeypointForMatching:
+                    guiState.multiPersonDecoding.numKeypointForMatching,
+                refineSteps: guiState.multiPersonDecoding.refineSteps
+              });
       break;
     case 'person':
-      const personPartSegmentation = await state.net.segmentSinglePersonParts(
-          state.video,
-          {segmentationThreshold: guiState.segmentation.segmentationThreshold});
+      const personPartSegmentation =
+          await state.net.estimatePersonPartSegmentation(state.video, {
+            segmentationThreshold: guiState.segmentation.segmentationThreshold
+          });
       multiPersonPartSegmentation = [personPartSegmentation];
       break;
     default:

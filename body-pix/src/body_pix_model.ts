@@ -440,7 +440,7 @@ export class BodyPix {
    * - `padding`: The padding (unit pixels) being applied to the input image
    * before it is fed into the model.
    */
-  segmentSinglePersonActivation(
+  estimatePersonSegmentationActivation(
       input: BodyPixInput, segmentationThreshold = 0.5): {
     segmentation: tf.Tensor2D,
     heatmapScores: tf.Tensor3D,
@@ -485,7 +485,7 @@ export class BodyPix {
    * Note: The segmentation mask returned by this method covers all people but
    * the pose works well for one person. If you want to estimate instance-level
    * multiple person segmentation & pose for each person, use
-   * `segmentMultiPerson` instead.
+   * `estimateMultiPersonInstanceSegmentation` instead.
    *
    *
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
@@ -504,7 +504,7 @@ export class BodyPix {
    * size of the array is equal to `height` x `width` in row-major order.
    * - `pose`: The 2d pose of the person.
    */
-  async segmentSinglePerson(
+  async estimatePersonSegmentation(
       input: BodyPixInput,
       config: PersonInferenceConfig = PERSON_INFERENCE_CONFIG):
       Promise<PersonSegmentation> {
@@ -512,7 +512,7 @@ export class BodyPix {
         PersonInferenceConfig = {...PERSON_INFERENCE_CONFIG, ...config};
     validatePersonInferenceConfig(configWithDefault);
     const {segmentation, heatmapScores, offsets, padding} =
-        this.segmentSinglePersonActivation(
+        this.estimatePersonSegmentationActivation(
             input, configWithDefault.segmentationThreshold);
 
     const [height, width] = segmentation.shape;
@@ -556,7 +556,7 @@ export class BodyPix {
    * dimensions of the image the binary array is shaped to, which are the same
    * dimensions of the input image.
    */
-  async segmentMultiPerson(
+  async estimateMultiPersonInstanceSegmentation(
       input: BodyPixInput,
       config: MultiPersonInstanceInferenceConfig =
           MULTI_PERSON_INSTANCE_INFERENCE_CONFIG):
@@ -674,7 +674,7 @@ export class BodyPix {
    * - `padding`: The padding (unit pixels) being applied to the input image
    * before it is fed into the model.
    */
-  segmentSinglePersonPartsActivation(
+  estimatePersonPartSegmentationActivation(
       input: BodyPixInput, segmentationThreshold = 0.5): {
     partSegmentation: tf.Tensor2D,
     heatmapScores: tf.Tensor3D,
@@ -724,7 +724,7 @@ export class BodyPix {
    * Note: The body part segmentation mask returned by this method covers all
    * people but the pose works well when there is one person. If you want to
    * estimate instance-level multiple person body part segmentation & pose for
-   * each person, use `segmentMultiPersonParts` instead.
+   * each person, use `estimateMultiPersonInstancePartSegmentation` instead.
    *
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
@@ -743,7 +743,7 @@ export class BodyPix {
    * `width` in row-major order.
    * - `pose`: The 2d pose of the person.
    */
-  async segmentSinglePersonParts(
+  async estimatePersonPartSegmentation(
       input: BodyPixInput,
       config: PersonInferenceConfig = PERSON_INFERENCE_CONFIG):
       Promise<PartSegmentation> {
@@ -751,7 +751,7 @@ export class BodyPix {
         PersonInferenceConfig = {...PERSON_INFERENCE_CONFIG, ...config};
     validatePersonInferenceConfig(configWithDefault);
     const {partSegmentation, heatmapScores, offsets, padding} =
-        this.segmentSinglePersonPartsActivation(
+        this.estimatePersonPartSegmentationActivation(
             input, configWithDefault.segmentationThreshold);
 
     const [height, width] = partSegmentation.shape;
@@ -794,7 +794,7 @@ export class BodyPix {
    * and height correspond to the dimensions of the image. Each flattened part
    * segmentation array size is equal to `height` x `width`.
    */
-  async segmentMultiPersonParts(
+  async estimateMultiPersonInstancePartSegmentation(
       input: BodyPixInput,
       config: MultiPersonInstanceInferenceConfig =
           MULTI_PERSON_INSTANCE_INFERENCE_CONFIG): Promise<PartSegmentation[]> {

@@ -129,11 +129,11 @@ function renderImageDataToOffScreenCanvas(
  * other words, pixels where there is a person will be colored with foreground
  * color and where there is not a person will be colored with background color.
  *
- * @param personOrPartSegmentation The output from
- * `segmentSinglePerson`, `segmentMultiPerson`,
- * `estimatePartSegmentation` or `segmentMultiPersonParts`. They can
- * be PersonSegmentation object, an array of PersonSegmentation object,
- * PartSegmentation object, or an array of PartSegmentation object.
+ * @param personOrPartSegmentation The output from `estimatePersonSegmentation`,
+ * `estimateMultiPersonSegmentation`, `estimatePartSegmentation` or
+ * `estimateMultiPersonPartSegmentation`. They can be PersonSegmentation
+ * object, an array of PersonSegmentation object, PartSegmentation object, or an
+ * array of PartSegmentation object.
  *
  * @param foreground Default to {r:0, g:0, b:0, a: 0}. The foreground color
  * (r,g,b,a) for visualizing pixels that belong to people.
@@ -257,8 +257,8 @@ export function toMaskImageData(
  * generates an image with the corresponding color for each part at each pixel,
  * and white pixels where there is no part.
  *
- * @param partSegmentation The output from segmentSinglePersonParts
- * or segmentMultiPersonParts. The former is a PartSegmentation
+ * @param partSegmentation The output from estimatePersonPartSegmentation or
+ * estimateMultiPersonInstancePartSegmentation. The former is a PartSegmentation
  * object and later is an array of PartSegmentation object.
  *
  * @param partColors A multi-dimensional array of rgb colors indexed by
