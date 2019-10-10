@@ -230,9 +230,6 @@ console.log(allSegmentations);
 ```
 
 
-          |
-
-
 ### Multi-person body part segmentation
 
 Given an image with multiple people. BodyPix's `estimateMultiPersonInstancePartSegmentation` method predicts the 24 body part segmentations for *each* person. It returns *an array* of `PartSegmentation`s, each corresponding to one of the people. The `PartSegmentation` object contains a width, height, `Pose` and an Int32 array with a part id from 0-24 for the pixels that are part of a corresponding body part, and -1 otherwise.
@@ -244,6 +241,25 @@ Given an image with multiple people. BodyPix's `estimateMultiPersonInstancePartS
 As stated above, the result contains an array with ids for one of 24 body parts, or -1 if there is no body part:
 
 
+
+
+
+| Part Id | Part Name              | Part Id | Part Name              |
+|---------|------------------------|---------|------------------------|
+| 0       | left_face              | 12      | torso_front            |
+| 1       | right_face             | 13      | torso_back             |
+| 2       | left_upper_arm_front   | 14      | left_upper_leg_front   |
+| 3       | left_upper_arm_back    | 15      | left_upper_leg_back
+| 4       | right_upper_arm_front  | 16      | right_upper_leg_front
+| 5       | right_upper_arm_back   | 17      | right_upper_leg_back
+| 6       | left_lower_arm_front   | 18      | left_lower_leg_front
+| 7       | left_lower_arm_back    |  19      | left_lower_leg_back
+| 8       | right_lower_arm_front  | 20      | right_lower_leg_front
+| 9       | right_lower_arm_back   | 21      | right_lower_leg_back
+| 10      | left_hand              | 22      | left_feet
+| 11      | right_hand             | 23      | right_feet
+
+(Note: Part Id value -1 represents the non-person background)
 
 ```javascript
 const net = await bodyPix.load();
@@ -258,35 +274,8 @@ const segmentation = await net.estimateMultiPersonInstancePartSegmentation(image
   refineSteps: 10
 });
 ```
-| Part Id | Part Name              |
-|---------|------------------------|
-| -1      | (background)           |
-| 0       | left_face              |
-| 1       | right_face             |
-| 2       | left_upper_arm_front   |
-| 3       | left_upper_arm_back    |
-| 4       | right_upper_arm_front  |
-| 5       | right_upper_arm_back   |
-| 6       | left_lower_arm_front   |
-| 7       | left_lower_arm_back    |
-| 8       | right_lower_arm_front  |
-| 9       | right_lower_arm_back   |
-| 10      | left_hand              |
-| 11      | right_hand             |
-| 12      | torso_front            |
-| 13      | torso_back             |
-| 14      | left_upper_leg_front   |
-| 15      | left_upper_leg_back    |
-| 16      | right_upper_leg_front  |
-| 17      | right_upper_leg_back   |
-| 18      | left_lower_leg_front   |
-| 19      | left_lower_leg_back    |
-| 20      | right_lower_leg_front  |
-| 21      | right_lower_leg_back   |
-| 22      | left_feet              |
-| 23      | right_feet
 
-#### Params in estimateMultiPersonSegmentation()
+#### Params in estimateMultiPersonInstanceSegmentation
 
 * **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
    The input image to feed through the network.
