@@ -160,7 +160,7 @@ const net = await bodyPix.load({
 
 Given an image with one or more people, person segmentation predicts segmentation for *all* people together. It returns a `PersonSegmentation` object corresponding to segmentation for people in the image. It does not disambiguate between different individuals. If you need to segment individuals separately use `segmentMultiPerson` (the caveat is this method is slower).
 
-![Multi-person Segmentation](./images/two_people_segmentation.jpg)
+![Multi-person Segmentation](./images/two_people_semantic_segmentation.jpg)
 
 ```javascript
 const segmentation = await net.segmentPerson(image, {
@@ -196,7 +196,7 @@ It returns a `Promise` that resolves with a `PersonSegmentation` object. Multipl
 ### Person part segmentation
 Given an image with one or more people, BodyPix's `segmentPersonParts` method predicts the 24 body part segmentations for all people. It returns a `PartSegmentation` object corresponding to body parts for each pixel for all people merged.   If you need to segment individuals separately use `segmentMultiPersonParts` (the caveat is this method is slower).
 
-![Multi-person Segmentation](./images/two_people_parts.jpg)
+![Multi-person Segmentation](./images/two_people_semantic_parts.jpg)
 
 #### The Body Parts
 
