@@ -47,7 +47,7 @@ You can use this with script tags as follows:
   </body>
   <!-- Place your code in the script tag below. You can also use an external .js file -->
   <script>
-    var imageElement = document.getElementById('image');
+    const img = document.getElementById('image');
 
     async function loadAndPredict() {
       const net = await bodyPix.load(/** optional arguments, see below **/);
@@ -60,7 +60,7 @@ You can use this with script tags as follows:
        *   - net.segmentMultiPersonParts
        * See documentation below for details on each method.
        */
-      const segmentation = net.segmentPerson();
+      const segmentation = net.segmentPerson(img);
       console.log(segmentation);
     }
     loadAndPredict();
@@ -77,7 +77,7 @@ $ npm install @tensorflow-models/body-pix
 ```js
 import * as bodyPix from '@temsorflow-models/body-pix';
 
-const imageElement = document.getElementById('image');
+const img = document.getElementById('image');
 
 async function loadAndPredict() {
   const net = await bodyPix.load(/** optional arguments, see below **/);
@@ -90,7 +90,7 @@ async function loadAndPredict() {
    *   - net.segmentMultiPersonParts
    * See documentation below for details on each method.
     */
-  const segmentation = net.segmentPerson();
+  const segmentation = net.segmentPerson(img);
   console.log(segmentation);
 }
 loadAndPredict();
