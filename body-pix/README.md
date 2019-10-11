@@ -97,13 +97,13 @@ loadAndPredict();
 
 BodyPix **comes with a few different versions of the model,** with different performance characteristics trading off model size and prediction time with accuracy.
 
-To get started, a model must be loaded from a checkpoint:
+To get started, a model must be loaded:
 
 ```javascript
 const net = await bodyPix.load();
 ```
 
-**By default,** BodyPix loads a MobileNetV1 architecture with a **`0.75`** multiplier.  This is recommended for computers with **mid-range/lower-end GPUs.**  A model with a **`0.50`** multiplier is recommended for **mobile.** The ResNet architecture is recommended for computers with **even more powerful GPUs**.
+**By default**, BodyPix loads a MobileNetV1 architecture with a **`0.75`** multiplier.  This is recommended for computers with mid-range/lower-end GPUs.  A model with a **`0.50`** multiplier is recommended for mobile. The ResNet architecture is recommended for computers with even more powerful GPUs.
 
 If you want to load other versions of the model, specify the architecture explicitly in `bodyPix.load()` using a `ModelConfig` dictionary:
 
