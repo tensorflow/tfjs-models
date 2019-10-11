@@ -34,8 +34,8 @@ To keep track of issues we use the [tensorflow/tfjs](https://github.com/tensorfl
 You can use this as standalone es5 bundle like this:
 
 ```html
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.0"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.0.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.0"></script>
 ```
 
 Or you can install it via npm for use in a TypeScript / ES6 project.
@@ -112,7 +112,7 @@ const net = await bodyPix.load({
 **By default,** BodyPix loads a MobileNetV1 architecture with a **`0.75`** multiplier.  This is recommended for computers with **mid-range/lower-end GPUs.**  A model with a **`0.50`** multiplier is recommended for **mobile.** The ResNet architecture is recommended for computers with **even more powerful GPUs**.
 
 
-### Person segmentation
+### Multi-person segmentation
 
 Given an image with multiple people, multi-person segmentation model predicts segmentation for *each* person. It returns *an array* of `PersonSegmentation` and each corresponding to one person. Each element is a binary array for one person with 1 for the pixels that are part of the person, and 0 otherwise. The array size corresponds to the number of pixels in the image.
 
@@ -121,7 +121,7 @@ Given an image with multiple people, multi-person segmentation model predicts se
 ```javascript
 const net = await bodyPix.load();
 
-const segmentation = await net.estimateMultiPersonInstanceSegmentation(image, {
+const segmentation = await net.segmentMultiPerson(image, {
   flipHorizontal: false,
   segmentationThreshold: 0.7,
   maxDetections: 10,
@@ -132,7 +132,7 @@ const segmentation = await net.estimateMultiPersonInstanceSegmentation(image, {
 });
 ```
 
-#### Params in estimateMultiPersonInstanceSegmentation()
+#### Params in segmentMultiPerson()
 
 * **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
    The input image to feed through the network.
@@ -149,7 +149,7 @@ around a person but may result in some pixels being that are part of a person be
 
 #### Returns
 
-It returns a `Promise` that resolves with **an array** of `PersonSegmentation`s. When there are multiple people in the image, each `PersonSegmentation` object in the array represents one person. More details about the `PersonSegmentation` object can be found in the documentation of the `estimateSinglePersonSegmentation` method.
+It returns a `Promise` that resolves with **an array** of `PersonSegmentation`s. When there are multiple people in the image, each `PersonSegmentation` object in the array represents one person. More details about the `PersonSegmentation` object can be found in the documentation of the `segmentPerson` method.
 
 
 ```javascript
@@ -176,9 +176,9 @@ It returns a `Promise` that resolves with **an array** of `PersonSegmentation`s.
 <html>
   <head>
     <!-- Load TensorFlow.js -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.2"></script>
     <!-- Load BodyPix -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.0"></script>
  </head>
 
   <body>
@@ -189,7 +189,7 @@ It returns a `Promise` that resolves with **an array** of `PersonSegmentation`s.
     var imageElement = document.getElementById('image');
 
     bodyPix.load().then(function(net){
-      return net.estimateMultiPersonSegmentation(imageElement, {
+      return net.segmentMultiPerson(imageElement, {
         flipHorizontal: false,
         segmentationThreshold: 0.7,
         maxDetections: 10,
@@ -215,7 +215,7 @@ const imageElement = document.getElementById('image');
 // load the BodyPix model from a checkpoint
 const net = await bodyPix.load();
 
-const allSegmentations = await net.estimateMultiPersonInstanceSegmentation(imageElement, {
+const allSegmentations = await net.segmentMultiPerson(imageElement, {
   flipHorizontal: false,
   segmentationThreshold: 0.7,
   maxDetections: 10,
@@ -231,7 +231,7 @@ console.log(allSegmentations);
 
 ### Multi-person body part segmentation
 
-Given an image with multiple people. BodyPix's `estimateMultiPersonInstancePartSegmentation` method predicts the 24 body part segmentations for *each* person. It returns *an array* of `PartSegmentation`s, each corresponding to one of the people. The `PartSegmentation` object contains a width, height, `Pose` and an Int32 array with a part id from 0-24 for the pixels that are part of a corresponding body part, and -1 otherwise.
+Given an image with multiple people. BodyPix's `segmentMultiPersonParts` method predicts the 24 body part segmentations for *each* person. It returns *an array* of `PartSegmentation`s, each corresponding to one of the people. The `PartSegmentation` object contains a width, height, `Pose` and an Int32 array with a part id from 0-24 for the pixels that are part of a corresponding body part, and -1 otherwise.
 
 ![Multi-person Segmentation](./images/two_people_parts.jpg)
 
@@ -263,7 +263,7 @@ As stated above, the result contains an array with ids for one of 24 body parts,
 ```javascript
 const net = await bodyPix.load();
 
-const segmentation = await net.estimateMultiPersonInstancePartSegmentation(image, {
+const segmentation = await net.segmentMultiPersonParts(image, {
   flipHorizontal: false,
   segmentationThreshold: 0.7,
   maxDetections: 10,
@@ -274,7 +274,7 @@ const segmentation = await net.estimateMultiPersonInstancePartSegmentation(image
 });
 ```
 
-#### Params in estimateMultiPersonInstanceSegmentation
+#### Params in segmentMultiPerson
 
 * **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
    The input image to feed through the network.
@@ -291,7 +291,7 @@ around a person but may result in some pixels being that are part of a person be
 
 #### Returns
 
-It returns a `Promise` that resolves with **an array** of `PartSegmentation`s. When there are multiple people in the image, each `PartSegmentation` object in the array represents one person. More details about the `PartSegmentation` object can be found in the documentation of the `estimateSinglePersonPartSegmentation` method.
+It returns a `Promise` that resolves with **an array** of `PartSegmentation`s. When there are multiple people in the image, each `PartSegmentation` object in the array represents one person. More details about the `PartSegmentation` object can be found in the documentation of the `segmentPersonParts` method.
 
 
 ```javascript
@@ -318,9 +318,9 @@ It returns a `Promise` that resolves with **an array** of `PartSegmentation`s. W
 <html>
   <head>
     <!-- Load TensorFlow.js -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.2"></script>
     <!-- Load BodyPix -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.0"></script>
  </head>
 
   <body>
@@ -331,7 +331,7 @@ It returns a `Promise` that resolves with **an array** of `PartSegmentation`s. W
     var imageElement = document.getElementById('image');
 
     bodyPix.load().then(function(net){
-      return net.estimateMultiPersonPartSegmentation(imageElement, {
+      return net.segmentMultiPersonParts(imageElement, {
         flipHorizontal: false,
         segmentationThreshold: 0.7,
         maxDetections: 10,
@@ -357,7 +357,7 @@ const imageElement = document.getElementById('image');
 // load the BodyPix model from a checkpoint
 const net = await bodyPix.load();
 
-const multiPersonPartSegmentations = await net.estimateMultiPersonPartSegmentation(imageElement, {
+const multiPersonPartSegmentations = await net.segmentMultiPersonParts(imageElement, {
   flipHorizontal: false,
   segmentationThreshold: 0.7,
   maxDetections: 10,
@@ -370,23 +370,6 @@ const multiPersonPartSegmentations = await net.estimateMultiPersonPartSegmentati
 console.log(multiPersonPartSegmentations);
 ```
 
-which would produce the output:
-
-```javascript
-[{
-  width: 640,
-  height: 480,
-  data: Uint8Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, …]
- },
- // the data array contains 307200 values, one for each pixel of the 640x480 image that was passed to the function.
- {
-  width: 640,
-  height: 480,
-  data: Uint8Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, …]
- }]
- // the data array contains 307200 values, one for each pixel of the 640x480 image that was passed to the function.
-```
-
 ### Output Visualization Utility Functions
 
 BodyPix contains utility functions to help with drawing and compositing using the outputs. **These API methods are experimental and subject to change.**
@@ -397,7 +380,7 @@ Given the output of person segmentation (or multi-person instance segmentation),
 
 ##### Inputs
 
-* **personSegmentation** The output from [estimatePersonSegmentation](#Single-person-segmentation) or [estimateMultiPersonSegmentation](#Multi-person-segmentation). The former is a PersonSegmentation object and later is an *array* of PersonSegmentation object.
+* **personSegmentation** The output from [segmentPerson](#Single-person-segmentation) or [segmentMultiPerson](#Multi-person-segmentation). The former is a PersonSegmentation object and later is an *array* of PersonSegmentation object.
 * **foreground** The foreground color (r,g,b,a) for visualizing pixels that
 belong to people.
 
@@ -412,7 +395,7 @@ An [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) with 
 
 ![MaskImageData](./images/toMultiPersonMaskImageData.jpg)
 
-*With the output from `estimateMultiPersonSegmentation` on the first image above, `toMultiPersonMaskImageData` will produce an [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) that either looks like the second image above if setting `foregroundColor` to {r: 0, g: 0, b: 0, a: 0} and `backgroundColor` to {r: 0, g: 0, b: 0, a: 255} (by default), or the third image if if setting `foregroundColor` to {r: 0, g: 0, b: 0, a: 255} and `backgroundColor` to {r: 0, g: 0, b: 0, a: 0}.  This can be used to mask either the person or the background using the method `drawMask`.*
+*With the output from `segmentMultiPerson` on the first image above, `toMultiPersonMaskImageData` will produce an [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) that either looks like the second image above if setting `foregroundColor` to {r: 0, g: 0, b: 0, a: 0} and `backgroundColor` to {r: 0, g: 0, b: 0, a: 255} (by default), or the third image if if setting `foregroundColor` to {r: 0, g: 0, b: 0, a: 255} and `backgroundColor` to {r: 0, g: 0, b: 0, a: 0}.  This can be used to mask either the person or the background using the method `drawMask`.*
 
 #### `toColoredPartImageData`
 
@@ -420,7 +403,7 @@ Given the output from person body part segmentation (or multi-person instance bo
 
 ##### Inputs
 
-* **personPartSegmentation** The output from [estimatePersonPartSegmentation](#Single-person-segmentation) or [estimateMultiPersonInstancePartSegmentation](#Multi-person-body-part-segmentation). The former is a PartSegmentation object and later is an *array* of PartSegmentation object.
+* **personPartSegmentation** The output from [segmentPersonParts](#Single-person-segmentation) or [segmentMultiPersonParts](#Multi-person-body-part-segmentation). The former is a PartSegmentation object and later is an *array* of PartSegmentation object.
 
 * **partColors** A multi-dimensional array of rgb colors indexed by part id.  Must have 24 colors, one for every part.  For some sample `partColors` check out [the ones used in the demo.](./demos/part_color_scales.js)
 
@@ -434,7 +417,7 @@ An [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) with 
 const imageElement = document.getElementById('person');
 
 const net = await bodyPix.load();
-const partSegmentation = await net.estimateMultiPersonPartSegmentation(imageElement);
+const partSegmentation = await net.segmentMultiPersonParts(imageElement);
 
 // The rainbow colormap
 const rainbow = [
@@ -460,7 +443,7 @@ bodyPix.drawMask(
 
 ![toColoredPartImageData](./images/toMultiPersonColoredPartImage.jpg)
 
-*With the output from `estimateMultiPersonPartSegmentation` on the first image above, a 'spectral' or 'rainbow' color scale in `toColoredPartImageData` will produce an `ImageData` that looks like the second image or the third image above.*
+*With the output from `segmentMultiPersonParts` on the first image above, a 'spectral' or 'rainbow' color scale in `toColoredPartImageData` will produce an `ImageData` that looks like the second image or the third image above.*
 
 #### `drawMask`
 
@@ -481,7 +464,7 @@ Draws an image onto a canvas and draws an `ImageData` containing a mask on top o
 const imageElement = document.getElementById('image');
 
 const net = await bodyPix.load();
-const segmentation = await net.estimateSinglePersonSegmentation(imageElement);
+const segmentation = await net.segmentPerson(imageElement);
 
 const maskBackground = true;
 // Convert the personSegmentation into a mask to darken the background.
@@ -523,7 +506,7 @@ Draws an image onto a canvas and draws an `ImageData` containing a mask on top o
 const imageElement = document.getElementById('person');
 
 const net = await bodyPix.load();
-const partSegmentation = await net.estimateSinglePersonPartSegmentation(imageElement);
+const partSegmentation = await net.segmentPersonParts(imageElement);
 
 const rainbow = [
   [110, 64, 170], [143, 61, 178], [178, 60, 178], [210, 62, 167],
@@ -578,7 +561,7 @@ and the background by.  Defaults to 3. Should be an integer between 0 and 20.
 const imageElement = document.getElementById('image');
 
 const net = await bodyPix.load();
-const personSegmentation = await net.estimateSinglePersonSegmentation(imageElement);
+const personSegmentation = await net.segmentPerson(imageElement);
 
 const backgroundBlurAmount = 3;
 const edgeBlurAmount = 3;
@@ -621,7 +604,7 @@ and the background by.  Defaults to 3. Should be an integer between 0 and 20.
 const imageElement = document.getElementById('image');
 
 const net = await bodyPix.load();
-const partSegmentation = await net.estimateMultiPersonInstancePartSegmentation(imageElement);
+const partSegmentation = await net.segmentMultiPersonParts(imageElement);
 
 const backgroundBlurAmount = 3;
 const edgeBlurAmount = 3;
