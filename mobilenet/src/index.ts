@@ -45,7 +45,6 @@ export interface ModelConfig {
   alpha?: MobileNetAlpha;
   modelUrl?: string|tf.io.IOHandler;
   inputRange?: [number, number];
-
 }
 
 const EMBEDDING_NODES: {[version: string]: string} = {
@@ -86,17 +85,17 @@ const MODEL_INFO: {[version: string]: {[alpha: string]: MobileNetInfo}} = {
   '2.00': {
     '0.50': {
       url:
-          'https://tfhub.dev/google/imagenet/mobilenet_v2_050_224/classification/2',
+          'https://tfhub.dev/google/tfjs-model/imagenet/mobilenet_v2_050_224/classification/2/default/1',
       inputRange: [0, 1]
     },
     '0.75': {
       url:
-          'https://tfhub.dev/google/imagenet/mobilenet_v2_075_224/classification/2',
+          'https://tfhub.dev/google/tfjs-model/imagenet/mobilenet_v2_075_224/classification/2/default/1',
       inputRange: [0, 1]
     },
     '1.00': {
       url:
-          'https://tfhub.dev/google/imagenet/mobilenet_v2_100_224/classification/2',
+          'https://tfhub.dev/google/tfjs-model/imagenet/mobilenet_v2_100_224/classification/2/default/1',
       inputRange: [0, 1]
     }
   }
@@ -208,7 +207,8 @@ class MobileNetImpl implements MobileNet {
 
       // Normalize the image from [0, 255] to [inputMin, inputMax].
       const normalized =
-          img.toFloat().mul(this.normalizationConstant).add(this.inputMin) as tf.Tensor3D;
+          img.toFloat().mul(this.normalizationConstant).add(this.inputMin) as
+          tf.Tensor3D;
 
       // Resize the image to
       let resized = normalized;
