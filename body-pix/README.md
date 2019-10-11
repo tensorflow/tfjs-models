@@ -242,11 +242,12 @@ around a person but may result in some pixels being that are part of a person be
 It returns a `Promise` that resolves with a `PartSegmentation` object. When there are multiple people in the image they are merged into a single array of part values.
 
 ```javascript
-// the array contains 307200 values, one for each pixel of the 640x480 image that was passed to the function.
+// The array contains 307200 values, one for each pixel of the 640x480 image
+// that was passed to the function.
 {
   width: 680,
   height: 480,
-  data: Int32Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 1, 0, 0, 1, …]
+  data: Int32Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 1, 0, 0, …]
 }
 ```
 
@@ -358,7 +359,8 @@ It returns a `Promise` that resolves with **an array** of `PartSegmentation`s. W
   height: 480,
   data: Int32Array(307200) [2, 2, -1, -1, -1, -1, -1, -1 …]
 }]
-// the array contains 307200 values, one for each pixel of the 640x480 image that was passed to the function.
+// The array contains 307200 values, one for each pixel of the 640x480 image
+// that was passed to the function.
 ```
 
 ## Output Visualization Utility Functions
