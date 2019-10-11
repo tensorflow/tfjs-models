@@ -49,7 +49,7 @@ function clipByMask2d(image: tf.Tensor2D, mask: tf.Tensor2D): tf.Tensor2D {
  * @returns A segmentation mask with a 1 or 0 at each pixel where there is a
  * person or not a person.
  */
-export function toMask(
+export function toMaskTensor(
     segmentScores: tf.Tensor2D, threshold: number): tf.Tensor2D {
   return tf.tidy(
       () =>
