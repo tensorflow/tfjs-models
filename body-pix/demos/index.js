@@ -630,7 +630,7 @@ function segmentBodyInRealTime() {
             const ctx = canvas.getContext('2d');
             const foregroundColor = {r: 255, g: 255, b: 255, a: 255};
             const backgroundColor = {r: 0, g: 0, b: 0, a: 255};
-            const mask = bodyPix.toMaskImageData(
+            const mask = bodyPix.toMask(
                 multiPersonSegmentation, foregroundColor, backgroundColor,
                 true);
 
@@ -659,7 +659,7 @@ function segmentBodyInRealTime() {
       case 'partmap':
         const ctx = canvas.getContext('2d');
         const multiPersonPartSegmentation = await estimatePartSegmentation();
-        const coloredPartImageData = bodyPix.toColoredPartImageData(
+        const coloredPartImageData = bodyPix.toColoredPartMask(
             multiPersonPartSegmentation,
             partColorScales[guiState.partMap.colorScale]);
 
