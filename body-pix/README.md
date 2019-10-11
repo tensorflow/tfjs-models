@@ -75,7 +75,7 @@ $ npm install @tensorflow-models/body-pix
 ```
 
 ```js
-import * as bodyPix from '@temsorflow-models/body-pix';
+import * as bodyPix from '@tensorflow-models/body-pix';
 
 const img = document.getElementById('image');
 
