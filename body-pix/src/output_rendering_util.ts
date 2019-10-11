@@ -131,7 +131,7 @@ function renderImageDataToOffScreenCanvas(
  *
  * @param personOrPartSegmentation The output from
  * `segmentPerson`, `segmentMultiPerson`,
- * `estimatePartSegmentation` or `segmentMultiPersonParts`. They can
+ * `segmentPersonParts` or `segmentMultiPersonParts`. They can
  * be PersonSegmentation object, an array of PersonSegmentation object,
  * PartSegmentation object, or an array of PartSegmentation object.
  *
