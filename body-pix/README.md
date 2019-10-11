@@ -9,8 +9,7 @@ This package contains a standalone model called BodyPix, as well as some demos, 
 ![BodyPix](images/body-pix-2.0.gif)
 
 This model can be used to segment an image into pixels that are and are not part of a person, and into
-pixels that belong to each of twenty-four body parts.  It works for a single person, and its ideal use case is for when there is only one person centered in an input image or video.  It can be combined with a person
-detector to segment multiple people in an image by first cropping boxes for each detected person then estimating segmentation in each of those crops, but that responsibility is currently outside of the scope of this model.
+pixels that belong to each of twenty-four body parts.  It works for multiple people in an input image or video.
 
 To keep track of issues we use the [tensorflow/tfjs](https://github.com/tensorflow/tfjs) Github repo.
 
