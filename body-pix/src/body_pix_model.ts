@@ -134,7 +134,7 @@ export interface ModelConfig {
 
 const MOBILENET_V1_CONFIG = {
   architecture: 'MobileNetV1',
-  outputStride: 32,
+  outputStride: 16,
   inputResolution: 513,
   quantBytes: 4,
   multiplier: 0.75,
