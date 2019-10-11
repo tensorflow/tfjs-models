@@ -60,6 +60,8 @@ You can use this with script tags as follows:
        *   - net.segmentMultiPersonParts
        * See documentation below for details on each method.
        */
+      const segmentation = net.segmentPerson();
+      console.log(segmentation);
     }
     loadAndPredict();
   </script>
@@ -87,7 +89,9 @@ async function loadAndPredict() {
    *   - net.segmentMultiPerson
    *   - net.segmentMultiPersonParts
    * See documentation below for details on each method.
-   */
+    */
+  const segmentation = net.segmentPerson();
+  console.log(segmentation);
 }
 loadAndPredict();
 ```
