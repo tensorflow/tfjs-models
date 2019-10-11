@@ -19,7 +19,7 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {decodeOnlyPartSegmentation, decodePartSegmentation, toMask} from './decode_part_map';
+import {decodeOnlyPartSegmentation, decodePartSegmentation, toMaskTensor} from './decode_part_map';
 import {MobileNet, MobileNetMultiplier} from './mobilenet';
 import {decodeMultipleMasksGPU, decodeMultiplePartMasksGPU} from './multi_person/decode_multiple_masks';
 import {decodeMultiplePoses} from './multi_person/decode_multiple_poses';
@@ -468,7 +468,7 @@ export class BodyPix {
 
       return {
         segmentation:
-            toMask(scaledSegmentScores.squeeze(), segmentationThreshold),
+            toMaskTensor(scaledSegmentScores.squeeze(), segmentationThreshold),
         heatmapScores,
         offsets,
       };
@@ -601,7 +601,7 @@ export class BodyPix {
         scaledLongOffsets = longOffsets;
       }
 
-      const segmentation = toMask(
+      const segmentation = toMaskTensor(
           scaledSegmentScores.squeeze(),
           configWithDefault.segmentationThreshold);
 
@@ -704,7 +704,7 @@ export class BodyPix {
           [[padding.top, padding.bottom], [padding.left, padding.right]],
           APPLY_SIGMOID_ACTIVATION);
       const segmentation =
-          toMask(scaledSegmentScores.squeeze(), segmentationThreshold);
+          toMaskTensor(scaledSegmentScores.squeeze(), segmentationThreshold);
       return {
         partSegmentation:
             decodePartSegmentation(segmentation, scaledPartHeatmapScore),
@@ -838,7 +838,7 @@ export class BodyPix {
           APPLY_SIGMOID_ACTIVATION);
 
       const scaledLongOffsets = longOffsets;
-      const segmentation = toMask(
+      const segmentation = toMaskTensor(
           scaledSegmentScores.squeeze(),
           configWithDefault.segmentationThreshold);
       const partSegmentation =

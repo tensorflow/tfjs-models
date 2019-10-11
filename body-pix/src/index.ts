@@ -16,8 +16,6 @@
  */
 
 export {BodyPix, load} from './body_pix_model';
-export {decodePartSegmentation, toMask} from './decode_part_map';
-export {blurBodyPart, drawBokehEffect, drawMask, drawPixelatedMask, toColoredPartImageData, toMaskImageData} from './output_rendering_util';
+export {blurBodyPart, drawBokehEffect, drawMask, drawPixelatedMask, toColoredPartMask, toMask} from './output_rendering_util';
 export {PART_CHANNELS} from './part_channels';
-export {mobileNetSavedModel, resNet50SavedModel} from './saved_models';
 export {flipPoseHorizontal, resizeAndPadTo, scaleAndCropToInputTensorShape} from './util';
