@@ -53,7 +53,7 @@ You can use this with script tags as follows:
       const net = await bodyPix.load(/** optional arguments, see below **/);
 
       /**
-       * One of (see documentation before):
+       * One of (see documentation below):
        *   - net.segmentPerson
        *   - net.segmentPersonParts
        *   - net.segmentMultiPerson
@@ -83,7 +83,7 @@ async function loadAndPredict() {
   const net = await bodyPix.load(/** optional arguments, see below **/);
 
   /**
-   * One of (see documentation before):
+   * One of (see documentation below):
    *   - net.segmentPerson
    *   - net.segmentPersonParts
    *   - net.segmentMultiPerson
