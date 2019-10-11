@@ -27,8 +27,6 @@ To keep track of issues we use the [tensorflow/tfjs](https://github.com/tensorfl
 * Fabian Pedregosa, Twitter: [fpedregosa](https://twitter.com/fpedregosa)
 * Ross Goroshin, Scholar: [ross_goroshin](https://scholar.google.com/citations?user=EC4o-1oAAAAJ&hl=en)
 
-## Tables of Contents
-
 ## Usage
 
 You can use this with script tags as follows:
@@ -158,7 +156,7 @@ const net = await bodyPix.load({
 
 * **modelUrl** - An optional string that specifies custom url of the model. This is useful for local development or countries that don't have access to the models hosted on GCP.
 
-## Using the model
+## Making a prediction
 
 ### Person segmentation
 
@@ -204,7 +202,7 @@ Given an image with one or more people, BodyPix's `segmentPersonParts` method pr
 
 #### The Body Parts
 
-The `PartSegmentation` object contains a width, height, `Pose` and an Int32 array with a part id from 0-24 for the pixels that are part of a corresponding body part, and -1 otherwise.
+The `PartSegmentation` object contains a width, height, `Pose` and an Int32Array with a part id from 0-24 for the pixels that are part of a corresponding body part, and -1 otherwise.
 
 | Part Id | Part Name              | Part Id | Part Name              |
 |---------|------------------------|---------|------------------------|
@@ -313,7 +311,7 @@ It returns a `Promise` that resolves with **an array** of `PersonSegmentation`s.
 
 ### Multi-person body part segmentation
 
-Given an image with multiple people. BodyPix's `segmentMultiPersonParts` method predicts the 24 body part segmentations for *each* person. It returns *an array* of `PartSegmentation`s, each corresponding to one of the people. The `PartSegmentation` object contains a width, height, `Pose` and an Int32 array with a part id from 0-24 for the pixels that are part of a corresponding body part, and -1 otherwise.
+Given an image with multiple people. BodyPix's `segmentMultiPersonParts` method predicts the 24 body part segmentations for *each* person. It returns *an array* of `PartSegmentation`s, each corresponding to one of the people. The `PartSegmentation` object contains a width, height, `Pose` and an Int32Array with a part id from 0-24 for the pixels that are part of a corresponding body part, and -1 otherwise.
 
 See the table in the documentation of `segmentPersonParts` for the values for each part.
 
