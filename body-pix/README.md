@@ -32,7 +32,7 @@ To keep track of issues we use the [tensorflow/tfjs](https://github.com/tensorfl
 
 ## Usage
 
-You can use this as standalone es5 bundle like this:
+You can use this with script tags as follows:
 
 ```html
 <html>
@@ -195,11 +195,13 @@ It returns a `Promise` that resolves with a `PersonSegmentation` object. Multipl
 ```
 
 ### Person part segmentation
-Given an image with one or more people, BodyPix's `segmentPersonParts` method predicts the 24 body part segmentations for all people. It returns a `PartSegmentation` object corresponding to body parts for each pixel. The `PartSegmentation` object contains a width, height, `Pose` and an Int32 array with a part id from 0-24 for the pixels that are part of a corresponding body part, and -1 otherwise.
+Given an image with one or more people, BodyPix's `segmentPersonParts` method predicts the 24 body part segmentations for all people. It returns a `PartSegmentation` object corresponding to body parts for each pixel for all people merged.   If you need to segment individuals separately use `segmentMultiPersonParts` (the caveat is this method is slower).
 
 ![Multi-person Segmentation](./images/two_people_parts.jpg)
 
 #### The Body Parts
+
+The `PartSegmentation` object contains a width, height, `Pose` and an Int32 array with a part id from 0-24 for the pixels that are part of a corresponding body part, and -1 otherwise.
 
 | Part Id | Part Name              | Part Id | Part Name              |
 |---------|------------------------|---------|------------------------|
@@ -244,7 +246,7 @@ It returns a `Promise` that resolves with a `PartSegmentation` object. When ther
 {
   width: 680,
   height: 480,
-  data: Int32Array(307200) [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 3, 3, 3, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 1, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 15, 15, 15, 15, 16, 16, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 23, 23, 23, 22, 22, -1, -1, -1, -1,  …]
+  data: Int32Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 1, 0, 0, 1, …]
 }
 ```
 
@@ -346,18 +348,16 @@ It returns a `Promise` that resolves with **an array** of `PartSegmentation`s. W
 
 
 ```javascript
-[
-{
+[{
   width: 680,
   height: 480,
-  data: Int32Array(307200) [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 3, 3, 3, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 1, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 15, 15, 15, 15, 16, 16, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 23, 23, 23, 22, 22, -1, -1, -1, -1,  …]
+  data: Int32Array(307200) [-1, -1, -1, -1, -1, -1, 15, 15 …]
 },
 {
   width: 680,
   height: 480,
-  data: Int32Array(307200) [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 3, 3, 3, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 1, 1, 2, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 15, 15, 15, 15, 16, 16, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 23, 23, 23, 22, 22, -1, -1, -1, -1,  …]
-}
-]
+  data: Int32Array(307200) [2, 2, -1, -1, -1, -1, -1, -1 …]
+}]
 // the array contains 307200 values, one for each pixel of the 640x480 image that was passed to the function.
 ```
 
@@ -420,13 +420,17 @@ const rainbow = [
   [47, 150, 224], [65, 125, 224], [84, 101, 214], [99, 81, 195]
 ];
 
-// the colored part image is an rgb image with a corresponding color from thee rainbow colors for each part at each pixel, and black pixels where there is no part.
+// The colored part image is an rgb image with a corresponding color from the
+// rainbow colors for each part at each pixel, and black pixels where there is
+// no part.
 const coloredPartImage = bodyPix.toColoredPartMask(partSegmentation, rainbow);
 const opacity = 0.7;
 const flipHorizontal = true;
 const maskBlurAmount = 0;
 const canvas = document.getElementById('canvas');
-// draw the colored part image on top of the original image onto a canvas.  The colored part image will be drawn semi-transparent, with an opacity of 0.7, allowing for the original image to be visible under.
+// Draw the colored part image on top of the original image onto a canvas.
+// The colored part image will be drawn semi-transparent, with an opacity of
+// 0.7, allowing for the original image to be visible under.
 bodyPix.drawMask(
     canvas, imageElement, coloredPartImageData, opacity, maskBlurAmount,
     flipHorizontal);
@@ -461,14 +465,17 @@ const maskBackground = true;
 // Convert the personSegmentation into a mask to darken the background.
 const foregroundColor = {r: 0, g: 0, b: 0, a: 0};
 const backgroundColor = {r: 0, g: 0, b: 0, a: 255};
-const backgroundDarkeningMask = bodyPix.toMask(personSegmentation, foregroundColor, backgroundColor);
+const backgroundDarkeningMask = bodyPix.toMask(
+    personSegmentation, foregroundColor, backgroundColor);
 
 const opacity = 0.7;
 const maskBlurAmount = 3;
 const flipHorizontal = true;
 
 const canvas = document.getElementById('canvas');
-// draw the mask onto the image on a canvas.  With opacity set to 0.7 and maskBlurAmount set to 3, this will darken the background and blur the darkened background's edge.
+// Draw the mask onto the image on a canvas.  With opacity set to 0.7 and
+// maskBlurAmount set to 3, this will darken the background and blur the
+// darkened background's edge.
 bodyPix.drawMask(
     canvas, imageElement, backgroundDarkeningMask, opacity, maskBlurAmount, flipHorizontal);
 ```
@@ -508,14 +515,19 @@ const rainbow = [
   [47, 150, 224], [65, 125, 224], [84, 101, 214], [99, 81, 195]
 ];
 
-// the colored part image is an rgb image with a corresponding color from thee rainbow colors for each part at each pixel, and white pixels where there is no part.
+// The colored part image is an rgb image with a corresponding color from the
+// rainbow colors for each part at each pixel, and white pixels where there is
+// no part.
 const coloredPartImage = bodyPix.toColoredPartMask(partSegmentation, rainbow);
 const opacity = 0.7;
 const flipHorizontal = true;
 const maskBlurAmount = 0;
 const pixelCellWidth = 10.0;
 const canvas = document.getElementById('canvas');
-// draw the pixelated colored part image on top of the original image onto a canvas.  Each pixel cell's width will be set to 10 px. The pixelated colored part image will be drawn semi-transparent, with an opacity of 0.7, allowing for the original image to be visible under.
+// Draw the pixelated colored part image on top of the original image onto a
+// canvas.  Each pixel cell's width will be set to 10 px. The pixelated colored
+// part image will be drawn semi-transparent, with an opacity of 0.7, allowing
+// for the original image to be visible under.
 bodyPix.drawPixelatedMask(
     canvas, imageElement, coloredPartImageData, opacity, maskBlurAmount,
     flipHorizontal, pixelCellWidth);
@@ -559,9 +571,11 @@ const edgeBlurAmount = 3;
 const flipHorizontal = true;
 
 const canvas = document.getElementById('canvas');
-// draw the image with the background blurred onto the canvas. The edge between the person and blurred background is blurred by 3 pixels.
+// Draw the image with the background blurred onto the canvas. The edge between
+// the person and blurred background is blurred by 3 pixels.
 bodyPix.drawBokehEffect(
-  canvas, imageElement, personSegmentation, backgroundBlurAmount, edgeBlurAmount, flipHorizontal);
+    canvas, imageElement, personSegmentation, backgroundBlurAmount,
+    edgeBlurAmount, flipHorizontal);
 ```
 
 ![bokeh](./images/bokehimage.png)
@@ -605,9 +619,9 @@ const faceBodyPartIdsToBlur = [0, 1];
 const canvas = document.getElementById('canvas');
 
 bodyPix.blurBodyPart(
-  canvas, imageElement, partSegmentation, faceBodyPartIdsToBlur, backgroundBlurAmount, edgeBlurAmount, flipHorizontal);
+    canvas, imageElement, partSegmentation, faceBodyPartIdsToBlur,
+    backgroundBlurAmount, edgeBlurAmount, flipHorizontal);
 ```
-
 
 ## Developing the Demos
 
