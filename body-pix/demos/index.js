@@ -540,7 +540,7 @@ async function estimateSegmentation() {
           });
       break;
     case 'person':
-      const personSegmentation = await state.net.segmentSinglePerson(
+      const personSegmentation = await state.net.segmentPerson(
           state.video,
           {segmentationThreshold: guiState.segmentation.segmentationThreshold});
       multiPersonSegmentation = [personSegmentation];
@@ -567,7 +567,7 @@ async function estimatePartSegmentation() {
           });
       break;
     case 'person':
-      const personPartSegmentation = await state.net.segmentSinglePersonParts(
+      const personPartSegmentation = await state.net.segmentPersonParts(
           state.video,
           {segmentationThreshold: guiState.segmentation.segmentationThreshold});
       multiPersonPartSegmentation = [personPartSegmentation];

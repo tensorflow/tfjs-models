@@ -150,7 +150,7 @@ around a person but may result in some pixels being that are part of a person be
 
 #### Returns
 
-It returns a `Promise` that resolves with **an array** of `PersonSegmentation`s. When there are multiple people in the image, each `PersonSegmentation` object in the array represents one person. More details about the `PersonSegmentation` object can be found in the documentation of the `segmentSinglePerson` method.
+It returns a `Promise` that resolves with **an array** of `PersonSegmentation`s. When there are multiple people in the image, each `PersonSegmentation` object in the array represents one person. More details about the `PersonSegmentation` object can be found in the documentation of the `segmentPerson` method.
 
 
 ```javascript
@@ -292,7 +292,7 @@ around a person but may result in some pixels being that are part of a person be
 
 #### Returns
 
-It returns a `Promise` that resolves with **an array** of `PartSegmentation`s. When there are multiple people in the image, each `PartSegmentation` object in the array represents one person. More details about the `PartSegmentation` object can be found in the documentation of the `segmentSinglePersonParts` method.
+It returns a `Promise` that resolves with **an array** of `PartSegmentation`s. When there are multiple people in the image, each `PartSegmentation` object in the array represents one person. More details about the `PartSegmentation` object can be found in the documentation of the `segmentPersonParts` method.
 
 
 ```javascript
@@ -398,7 +398,7 @@ Given the output of person segmentation (or multi-person instance segmentation),
 
 ##### Inputs
 
-* **personSegmentation** The output from [segmentSinglePerson](#Single-person-segmentation) or [segmentMultiPerson](#Multi-person-segmentation). The former is a PersonSegmentation object and later is an *array* of PersonSegmentation object.
+* **personSegmentation** The output from [segmentPerson](#Single-person-segmentation) or [segmentMultiPerson](#Multi-person-segmentation). The former is a PersonSegmentation object and later is an *array* of PersonSegmentation object.
 * **foreground** The foreground color (r,g,b,a) for visualizing pixels that
 belong to people.
 
@@ -421,7 +421,7 @@ Given the output from person body part segmentation (or multi-person instance bo
 
 ##### Inputs
 
-* **personPartSegmentation** The output from [segmentSinglePersonParts](#Single-person-segmentation) or [segmentMultiPersonParts](#Multi-person-body-part-segmentation). The former is a PartSegmentation object and later is an *array* of PartSegmentation object.
+* **personPartSegmentation** The output from [segmentPersonParts](#Single-person-segmentation) or [segmentMultiPersonParts](#Multi-person-body-part-segmentation). The former is a PartSegmentation object and later is an *array* of PartSegmentation object.
 
 * **partColors** A multi-dimensional array of rgb colors indexed by part id.  Must have 24 colors, one for every part.  For some sample `partColors` check out [the ones used in the demo.](./demos/part_color_scales.js)
 
@@ -482,7 +482,7 @@ Draws an image onto a canvas and draws an `ImageData` containing a mask on top o
 const imageElement = document.getElementById('image');
 
 const net = await bodyPix.load();
-const segmentation = await net.segmentSinglePerson(imageElement);
+const segmentation = await net.segmentPerson(imageElement);
 
 const maskBackground = true;
 // Convert the personSegmentation into a mask to darken the background.
@@ -524,7 +524,7 @@ Draws an image onto a canvas and draws an `ImageData` containing a mask on top o
 const imageElement = document.getElementById('person');
 
 const net = await bodyPix.load();
-const partSegmentation = await net.segmentSinglePersonParts(imageElement);
+const partSegmentation = await net.segmentPersonParts(imageElement);
 
 const rainbow = [
   [110, 64, 170], [143, 61, 178], [178, 60, 178], [210, 62, 167],
@@ -579,7 +579,7 @@ and the background by.  Defaults to 3. Should be an integer between 0 and 20.
 const imageElement = document.getElementById('image');
 
 const net = await bodyPix.load();
-const personSegmentation = await net.segmentSinglePerson(imageElement);
+const personSegmentation = await net.segmentPerson(imageElement);
 
 const backgroundBlurAmount = 3;
 const edgeBlurAmount = 3;

@@ -130,7 +130,7 @@ function renderImageDataToOffScreenCanvas(
  * color and where there is not a person will be colored with background color.
  *
  * @param personOrPartSegmentation The output from
- * `segmentSinglePerson`, `segmentMultiPerson`,
+ * `segmentPerson`, `segmentMultiPerson`,
  * `estimatePartSegmentation` or `segmentMultiPersonParts`. They can
  * be PersonSegmentation object, an array of PersonSegmentation object,
  * PartSegmentation object, or an array of PartSegmentation object.
@@ -257,7 +257,7 @@ export function toMaskImageData(
  * generates an image with the corresponding color for each part at each pixel,
  * and white pixels where there is no part.
  *
- * @param partSegmentation The output from segmentSinglePersonParts
+ * @param partSegmentation The output from segmentPersonParts
  * or segmentMultiPersonParts. The former is a PartSegmentation
  * object and later is an array of PartSegmentation object.
  *

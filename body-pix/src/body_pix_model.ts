@@ -440,8 +440,7 @@ export class BodyPix {
    * - `padding`: The padding (unit pixels) being applied to the input image
    * before it is fed into the model.
    */
-  segmentSinglePersonActivation(
-      input: BodyPixInput, segmentationThreshold = 0.5): {
+  segmentPersonActivation(input: BodyPixInput, segmentationThreshold = 0.5): {
     segmentation: tf.Tensor2D,
     heatmapScores: tf.Tensor3D,
     offsets: tf.Tensor3D,
@@ -504,7 +503,7 @@ export class BodyPix {
    * size of the array is equal to `height` x `width` in row-major order.
    * - `pose`: The 2d pose of the person.
    */
-  async segmentSinglePerson(
+  async segmentPerson(
       input: BodyPixInput,
       config: PersonInferenceConfig = PERSON_INFERENCE_CONFIG):
       Promise<PersonSegmentation> {
@@ -512,7 +511,7 @@ export class BodyPix {
         PersonInferenceConfig = {...PERSON_INFERENCE_CONFIG, ...config};
     validatePersonInferenceConfig(configWithDefault);
     const {segmentation, heatmapScores, offsets, padding} =
-        this.segmentSinglePersonActivation(
+        this.segmentPersonActivation(
             input, configWithDefault.segmentationThreshold);
 
     const [height, width] = segmentation.shape;
@@ -674,7 +673,7 @@ export class BodyPix {
    * - `padding`: The padding (unit pixels) being applied to the input image
    * before it is fed into the model.
    */
-  segmentSinglePersonPartsActivation(
+  segmentPersonPartsActivation(
       input: BodyPixInput, segmentationThreshold = 0.5): {
     partSegmentation: tf.Tensor2D,
     heatmapScores: tf.Tensor3D,
@@ -743,7 +742,7 @@ export class BodyPix {
    * `width` in row-major order.
    * - `pose`: The 2d pose of the person.
    */
-  async segmentSinglePersonParts(
+  async segmentPersonParts(
       input: BodyPixInput,
       config: PersonInferenceConfig = PERSON_INFERENCE_CONFIG):
       Promise<PartSegmentation> {
@@ -751,7 +750,7 @@ export class BodyPix {
         PersonInferenceConfig = {...PERSON_INFERENCE_CONFIG, ...config};
     validatePersonInferenceConfig(configWithDefault);
     const {partSegmentation, heatmapScores, offsets, padding} =
-        this.segmentSinglePersonPartsActivation(
+        this.segmentPersonPartsActivation(
             input, configWithDefault.segmentationThreshold);
 
     const [height, width] = partSegmentation.shape;
