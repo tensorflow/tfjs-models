@@ -26,11 +26,9 @@ import {decodeMultiplePoses} from './multi_person/decode_multiple_poses';
 import {ResNet} from './resnet';
 import {mobileNetSavedModel, resNet50SavedModel} from './saved_models';
 import {decodeSinglePose} from './sinlge_person/decode_single_pose';
-import {BodyPixInput, Padding, PartSegmentation, PersonSegmentation} from './types';
-import {getInputTensorDimensions, padAndResizeTo, scaleAndCropToInputTensorShape, scaleAndFlipPoses, toInputTensor, toTensorBuffers3D} from './util';
+import {BodyPixInput, InputResolution, Padding, PartSegmentation, PersonSegmentation} from './types';
+import {assertValidOutputStride, assertValidResolution, getInputTensorDimensions, getValidInputResolutionDimensions, padAndResizeTo, scaleAndCropToInputTensorShape, scaleAndFlipPoses, toInputTensor, toTensorBuffers3D, validateInputResolution} from './util';
 
-export type BodyPixInputResolution =
-    161|193|257|289|321|353|385|417|449|481|513|801|1217;
 export type BodyPixOutputStride = 32|16|8;
 export type BodyPixArchitecture = 'ResNet50'|'MobileNetV1';
 export type BodyPixDecodingMethod = 'person'|'multi-person-by-instance';
@@ -88,9 +86,14 @@ export interface BaseModel {
  * at the cost of accuracy. Stride 32 is supported for ResNet and
  * stride 8,16,32 are supported for various MobileNetV1 models.
  *
- * `inputResolution`: One of the number specified by BodyPixInputResolution.
- * It represents the input image resolution of the model. The larger the size
- * of the input image, and more accurate the model at the cost of speed.
+ * * `inputResolution`: A number or an Object of type {width: number, height:
+ * number}. Specifies the size the input image is scaled to before feeding it
+ * through the PoseNet model.  The larger the value, more accurate the model at
+ * the cost of speed. Set this to a smaller value to increase speed at the cost
+ * of accuracy. If a number is provided, the input will be resized and padded to
+ * be a square with the same width and height.  If width and height are
+ * provided, the input will be resized and padded to the specified width and
+ * height
  *
  * `multiplier`: An optional number with values: 1.01, 1.0, 0.75, or
  * 0.50. The value is used only by MobileNet architecture. It is the float
@@ -112,7 +115,7 @@ export interface BaseModel {
 export interface ModelConfig {
   architecture: BodyPixArchitecture;
   outputStride: BodyPixOutputStride;
-  inputResolution: BodyPixInputResolution;
+  inputResolution: InputResolution;
   multiplier?: MobileNetMultiplier;
   modelUrl?: string;
   quantBytes?: BodyPixQuantBytes;
@@ -145,8 +148,6 @@ const VALID_STRIDE: {[id: string]: BodyPixOutputStride[]} = {
   'MobileNetV1': [8, 16, 32],
   'ResNet50': [32, 16]
 };
-export const VALID_INPUT_RESOLUTION: BodyPixInputResolution[] =
-    [161, 193, 257, 289, 321, 353, 385, 417, 449, 481, 513, 801];
 const VALID_MULTIPLIER: {[id: string]: BodyPixMultiplier[]} = {
   'MobileNetV1': [0.50, 0.75, 1.0],
   'ResNet50': [1.0]
@@ -169,11 +170,7 @@ function validateModelConfig(config: ModelConfig) {
     config.inputResolution = 257;
   }
 
-  if (VALID_INPUT_RESOLUTION.indexOf(config.inputResolution) < 0) {
-    throw new Error(
-        `Invalid inputResolution ${config.inputResolution}. ` +
-        `Should be one of ${VALID_INPUT_RESOLUTION}`);
-  }
+  validateInputResolution(config.inputResolution);
 
   if (config.outputStride == null) {
     config.outputStride = 16;
@@ -329,10 +326,13 @@ function validateMultiPersonInstanceInferenceConfig(
 }
 
 export class BodyPix {
-  baseModel: BaseModel;
-  inputResolution: BodyPixInputResolution;
+  readonly baseModel: BaseModel;
+  readonly inputResolution: [number, number];
 
-  constructor(net: BaseModel, inputResolution: BodyPixInputResolution) {
+  constructor(net: BaseModel, inputResolution: [number, number]) {
+    assertValidOutputStride(net.outputStride);
+    assertValidResolution(inputResolution, net.outputStride);
+
     this.baseModel = net;
     this.inputResolution = inputResolution;
   }
@@ -448,8 +448,7 @@ export class BodyPix {
   } {
     const inputResolution = this.inputResolution;
     const imageTensor = toInputTensor(input);
-    const {resized, padding} =
-        padAndResizeTo(imageTensor, [inputResolution, inputResolution]);
+    const {resized, padding} = padAndResizeTo(imageTensor, inputResolution);
 
     const {segmentation, heatmapScores, offsets} = tf.tidy(() => {
       const {
@@ -523,8 +522,8 @@ export class BodyPix {
         heatmapScores, offsets, this.baseModel.outputStride);
 
     const resultPose = scaleAndFlipPoses(
-        [pose], [height, width], [this.inputResolution, this.inputResolution],
-        padding, configWithDefault.flipHorizontal)[0];
+        [pose], [height, width], this.inputResolution, padding,
+        configWithDefault.flipHorizontal)[0];
 
     heatmapScores.dispose();
     offsets.dispose();
@@ -568,8 +567,7 @@ export class BodyPix {
     const [height, width] = getInputTensorDimensions(input);
     const inputResolution = this.inputResolution;
 
-    const {resized, padding} =
-        padAndResizeTo(input, [inputResolution, inputResolution]);
+    const {resized, padding} = padAndResizeTo(input, inputResolution);
     const {
       segmentation,
       longOffsets,
@@ -587,14 +585,14 @@ export class BodyPix {
         displacementBwd,
       } = this.predictForMultiPersonInstanceSegmentationAndPart(resized);
       const scaledSegmentScores = scaleAndCropToInputTensorShape(
-          segmentLogits, [height, width], [inputResolution, inputResolution],
+          segmentLogits, [height, width], inputResolution,
           [[padding.top, padding.bottom], [padding.left, padding.right]],
           APPLY_SIGMOID_ACTIVATION);
       const longOffsetsResized = false;
       let scaledLongOffsets;
       if (longOffsetsResized) {
         scaledLongOffsets = scaleAndCropToInputTensorShape(
-            longOffsets, [height, width], [inputResolution, inputResolution],
+            longOffsets, [height, width], inputResolution,
             [[padding.top, padding.bottom], [padding.left, padding.right]],
             APPLY_SIGMOID_ACTIVATION);
       } else {
@@ -627,12 +625,11 @@ export class BodyPix {
         configWithDefault.nmsRadius);
 
     poses = scaleAndFlipPoses(
-        poses, [height, width], [inputResolution, inputResolution], padding,
-        false);
+        poses, [height, width], inputResolution, padding, false);
 
     const instanceMasks = await decodeMultipleMasksGPU(
         segmentation, longOffsets, poses, height, width,
-        this.baseModel.outputStride, [inputResolution, inputResolution],
+        this.baseModel.outputStride, inputResolution,
         [[padding.top, padding.bottom], [padding.left, padding.right]],
         configWithDefault.scoreThreshold, configWithDefault.refineSteps,
         configWithDefault.minKeypointScore, configWithDefault.maxDetections);
@@ -685,7 +682,7 @@ export class BodyPix {
     const {
       resized,
       padding,
-    } = padAndResizeTo(imageTensor, [inputResolution, inputResolution]);
+    } = padAndResizeTo(imageTensor, inputResolution);
 
     const {partSegmentation, heatmapScores, offsets} = tf.tidy(() => {
       const {segmentLogits, partHeatmapLogits, heatmapScores, offsets} =
@@ -761,8 +758,8 @@ export class BodyPix {
         heatmapScores, offsets, this.baseModel.outputStride);
 
     const resultPose = scaleAndFlipPoses(
-        [pose], [height, width], [this.inputResolution, this.inputResolution],
-        padding, configWithDefault.flipHorizontal)[0];
+        [pose], [height, width], this.inputResolution, padding,
+        configWithDefault.flipHorizontal)[0];
 
     heatmapScores.dispose();
     offsets.dispose();
@@ -804,8 +801,7 @@ export class BodyPix {
     validateMultiPersonInstanceInferenceConfig(configWithDefault);
     const [height, width] = getInputTensorDimensions(input);
     const inputResolution = this.inputResolution;
-    const {resized, padding} =
-        padAndResizeTo(input, [inputResolution, inputResolution]);
+    const {resized, padding} = padAndResizeTo(input, inputResolution);
     const {
       segmentation,
       longOffsets,
@@ -827,13 +823,13 @@ export class BodyPix {
 
       // decoding with scaling.
       const scaledSegmentScores = scaleAndCropToInputTensorShape(
-          segmentLogits, [height, width], [inputResolution, inputResolution],
+          segmentLogits, [height, width], inputResolution,
           [[padding.top, padding.bottom], [padding.left, padding.right]],
           APPLY_SIGMOID_ACTIVATION);
 
       // decoding with scaling.
       const scaledPartSegmentationScores = scaleAndCropToInputTensorShape(
-          partHeatmaps, [height, width], [inputResolution, inputResolution],
+          partHeatmaps, [height, width], inputResolution,
           [[padding.top, padding.bottom], [padding.left, padding.right]],
           APPLY_SIGMOID_ACTIVATION);
 
@@ -865,12 +861,11 @@ export class BodyPix {
         config.maxDetections, config.scoreThreshold, config.nmsRadius);
 
     poses = scaleAndFlipPoses(
-        poses, [height, width], [inputResolution, inputResolution], padding,
-        false);
+        poses, [height, width], inputResolution, padding, false);
 
     const instanceMasks = await decodeMultiplePartMasksGPU(
         segmentation, longOffsets, partSegmentation, poses, height, width,
-        this.baseModel.outputStride, [inputResolution, inputResolution],
+        this.baseModel.outputStride, inputResolution,
         [[padding.top, padding.bottom], [padding.left, padding.right]],
         configWithDefault.scoreThreshold, configWithDefault.refineSteps,
         configWithDefault.minKeypointScore, configWithDefault.maxDetections);
@@ -909,7 +904,9 @@ async function loadMobileNet(config: ModelConfig): Promise<BodyPix> {
   const url = mobileNetSavedModel(outputStride, multiplier, quantBytes);
   const graphModel = await tfconv.loadGraphModel(config.modelUrl || url);
   const mobilenet = new MobileNet(graphModel, outputStride);
-  return new BodyPix(mobilenet, config.inputResolution);
+  const validInputResolution = getValidInputResolutionDimensions(
+      config.inputResolution, mobilenet.outputStride);
+  return new BodyPix(mobilenet, validInputResolution);
 }
 
 /**
@@ -928,7 +925,9 @@ async function loadResNet(config: ModelConfig): Promise<BodyPix> {
   const url = resNet50SavedModel(outputStride, quantBytes);
   const graphModel = await tfconv.loadGraphModel(config.modelUrl || url);
   const resnet = new ResNet(graphModel, outputStride);
-  return new BodyPix(resnet, config.inputResolution);
+  const validInputResolution = getValidInputResolutionDimensions(
+      config.inputResolution, resnet.outputStride);
+  return new BodyPix(resnet, validInputResolution);
 }
 
 /**

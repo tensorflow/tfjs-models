@@ -174,7 +174,7 @@ export function toMask(
     return null;
   }
 
-  let multiPersonOrPartSegmentation: (PersonSegmentation|PartSegmentation)[];
+  let multiPersonOrPartSegmentation: Array<PersonSegmentation|PartSegmentation>;
   if (!Array.isArray(personOrPartSegmentation)) {
     multiPersonOrPartSegmentation = [personOrPartSegmentation];
   } else {

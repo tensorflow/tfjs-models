@@ -113,7 +113,7 @@ If you want to load other versions of the model, specify the architecture explic
 const net = await bodyPix.load({
   architecture: 'ResNet50',
   outputStride: 32,
-  inputResolution: 257,
+  inputResolution: { width: 640, height: 480 },
   quantBytes: 2
 });
 ```
@@ -123,7 +123,7 @@ const net = await bodyPix.load({
 const net = await bodyPix.load({
   architecture: 'MobileNetV1',
   outputStride: 16,
-  inputResolution: 513,
+  inputResolution: { width: 257, height: 200 },
   multiplier: 0.75
 });
 ```
@@ -134,7 +134,7 @@ const net = await bodyPix.load({
 
  * **outputStride** - Can be one of `8`, `16`, `32` (Stride `16`, `32` are supported for the ResNet architecture and stride `8`, `16`, `32` are supported for the MobileNetV1 architecture). It specifies the output stride of the BodyPix model. The smaller the value, the larger the output resolution, and more accurate the model at the cost of speed.  ***A larger value results in a smaller model and faster prediction time but lower accuracy***.
 
-* **inputResolution** - Can be one of `161`, `193`, `257`, `289`, `321`, `353`, `385`, `417`, `449`, `481`, `513`, and `801`. Defaults to `257.` It specifies the size the image is resized to before it is fed into the BodyPix model. The larger the value, the more accurate the model at the cost of speed. ***A smaller value results in a smaller model and faster prediction time but lower accuracy***.
+* **inputResolution** - A `number` or an `Object` of type `{width: number, height: number}`. Defaults to `257.` It specifies the size the image is resized and padded to before it is fed into the PoseNet model. The larger the value, the more accurate the model at the cost of speed. Set this to a smaller value to increase speed at the cost of accuracy. If a number is provided, the image will be resized and padded to be a square with the same width and height.  If `width` and `height` are provided, the image will be resized and padded to the specified width and height. ***A smaller value results in a smaller model and faster prediction time but lower accuracy***.
 
  * **multiplier** - Can be one of `1.0`, `0.75`, or `0.50` (The value is used *only* by the MobileNetV1 architecture and not by the ResNet architecture). It is the float multiplier for the depth (number of channels) for all convolution ops. The larger the value, the larger the size of the layers, and more accurate the model at the cost of speed. ***A smaller value results in a smaller model and faster prediction time but lower accuracy***.
 

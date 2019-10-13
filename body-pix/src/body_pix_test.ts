@@ -21,12 +21,16 @@ import * as tf from '@tensorflow/tfjs-core';
 import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
 import * as bodyPixModel from './body_pix_model';
+import * as mobilenet from './mobilenet';
 import * as resnet from './resnet';
+import {toValidInputResolution} from './util';
 
 describeWithFlags('BodyPix', NODE_ENVS, () => {
-  let bodyPix: bodyPixModel.BodyPix;
+  let mobileNet: bodyPixModel.BodyPix;
+  let resNet: bodyPixModel.BodyPix;
   const inputResolution = 513;
   const outputStride = 32;
+  const multiplier = 1.0;
   const quantBytes = 4;
   const numKeypoints = 17;
   const numParts = 24;
@@ -36,6 +40,14 @@ describeWithFlags('BodyPix', NODE_ENVS, () => {
     const resNetConfig =
         {architecture: 'ResNet50', outputStride, inputResolution, quantBytes} as
         bodyPixModel.ModelConfig;
+
+    const mobileNetConfig = {
+      architecture: 'MobileNetV1',
+      outputStride,
+      inputResolution,
+      multiplier,
+      quantBytes
+    } as bodyPixModel.ModelConfig;
 
     spyOn(tfconv, 'loadGraphModel').and.callFake((): tfconv.GraphModel => {
       return null;
@@ -68,9 +80,40 @@ describeWithFlags('BodyPix', NODE_ENVS, () => {
       };
     });
 
+    spyOn(mobilenet, 'MobileNet').and.callFake(() => {
+      return {
+        outputStride,
+        predict: (input: tf.Tensor3D) => {
+          return {
+            inputResolution,
+            heatmapScores:
+                tf.zeros([outputResolution, outputResolution, numKeypoints]),
+            offsets: tf.zeros(
+                [outputResolution, outputResolution, 2 * numKeypoints]),
+            displacementFwd: tf.zeros(
+                [outputResolution, outputResolution, 2 * (numKeypoints - 1)]),
+            displacementBwd: tf.zeros(
+                [outputResolution, outputResolution, 2 * (numKeypoints - 1)]),
+            segmentation: tf.zeros([outputResolution, outputResolution, 1]),
+            partHeatmaps:
+                tf.zeros([outputResolution, outputResolution, numParts]),
+            longOffsets: tf.zeros(
+                [outputResolution, outputResolution, 2 * numKeypoints]),
+            partOffsets:
+                tf.zeros([outputResolution, outputResolution, 2 * numParts])
+          };
+        },
+        dipose: () => {}
+      };
+    });
+
     bodyPixModel.load(resNetConfig)
         .then((bodyPixInstance: bodyPixModel.BodyPix) => {
-          bodyPix = bodyPixInstance;
+          resNet = bodyPixInstance;
+        })
+        .then(() => bodyPixModel.load(mobileNetConfig))
+        .then((bodyPixInstance: bodyPixModel.BodyPix) => {
+          mobileNet = bodyPixInstance;
         })
         .then(done)
         .catch(done.fail);
@@ -81,7 +124,7 @@ describeWithFlags('BodyPix', NODE_ENVS, () => {
 
     const beforeTensors = tf.memory().numTensors;
 
-    bodyPix.segmentPerson(input)
+    resNet.segmentPerson(input)
         .then(() => {
           expect(tf.memory().numTensors).toEqual(beforeTensors);
         })
@@ -92,11 +135,85 @@ describeWithFlags('BodyPix', NODE_ENVS, () => {
   it('estimatePersonPartSegmenation does not leak memory', done => {
     const input = tf.zeros([513, 513, 3]) as tf.Tensor3D;
     const beforeTensors = tf.memory().numTensors;
-    bodyPix.segmentPersonParts(input)
+    mobileNet.segmentPersonParts(input)
         .then(() => {
           expect(tf.memory().numTensors).toEqual(beforeTensors);
         })
         .then(done)
         .catch(done.fail);
   });
+
+  it('load with mobilenet when input resolution is a number returns a model ' +
+         'with a valid and the same input resolution width and height',
+     (done) => {
+       const inputResolution = 500;
+       const validInputResolution =
+           toValidInputResolution(inputResolution, outputStride);
+
+       const expectedResolution = [validInputResolution, validInputResolution];
+
+       bodyPixModel
+           .load({architecture: 'MobileNetV1', outputStride, inputResolution})
+           .then(model => {
+             expect(model.inputResolution).toEqual(expectedResolution);
+
+             done();
+           });
+     });
+
+  it('load with resnet when input resolution is a number returns a model ' +
+         'with a valid and the same input resolution width and height',
+     (done) => {
+       const inputResolution = 350;
+       const validInputResolution =
+           toValidInputResolution(inputResolution, outputStride);
+
+       const expectedResolution = [validInputResolution, validInputResolution];
+
+       bodyPixModel
+           .load({architecture: 'ResNet50', outputStride, inputResolution})
+           .then(model => {
+             expect(model.inputResolution).toEqual(expectedResolution);
+
+             done();
+           });
+     });
+
+  it('load with mobilenet when input resolution is an object with width and height ' +
+         'returns a model with a valid resolution for the width and height',
+     (done) => {
+       const inputResolution = {width: 600, height: 400};
+
+       const expectedResolution = [
+         toValidInputResolution(inputResolution.height, outputStride),
+         toValidInputResolution(inputResolution.width, outputStride)
+       ];
+
+       bodyPixModel
+           .load({architecture: 'MobileNetV1', outputStride, inputResolution})
+           .then(model => {
+             expect(model.inputResolution).toEqual(expectedResolution);
+
+             done();
+           });
+     });
+
+  it('load with resnet when input resolution is an object with width and height ' +
+         'returns a model with a valid resolution for the width and height',
+     (done) => {
+       const inputResolution = {width: 700, height: 500};
+
+       const expectedResolution = [
+         toValidInputResolution(inputResolution.height, outputStride),
+         toValidInputResolution(inputResolution.width, outputStride)
+       ];
+
+       bodyPixModel
+           .load({architecture: 'ResNet50', outputStride, inputResolution})
+           .then(model => {
+             expect(model.inputResolution).toEqual(expectedResolution);
+
+             done();
+           });
+     });
 });

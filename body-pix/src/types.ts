@@ -19,7 +19,10 @@ export type PartSegmentation = {
 };
 
 export declare interface Padding {
-  top: number; bottom: number; left: number; right: number;
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
 }
 
 export declare type Part = {
@@ -57,3 +60,5 @@ export declare type Color = {
   b: number,
   a: number,
 };
+
+export declare type InputResolution = number | {width: number, height: number};

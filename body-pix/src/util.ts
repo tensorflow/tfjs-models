@@ -1,7 +1,87 @@
 import * as tf from '@tensorflow/tfjs-core';
 
-import {BodyPixInput, Padding} from './types';
+import {BodyPixOutputStride} from './body_pix_model';
+import {BodyPixInput, InputResolution, Padding} from './types';
 import {Pose, TensorBuffer3D} from './types';
+
+export function toValidInputResolution(
+    inputResolution: number, outputStride: BodyPixOutputStride): number {
+  if (isValidInputResolution(inputResolution, outputStride)) {
+    return inputResolution;
+  }
+
+  return Math.floor(inputResolution / outputStride) * outputStride + 1;
+}
+
+export function validateInputResolution(inputResolution: InputResolution) {
+  tf.util.assert(
+      typeof inputResolution === 'number' ||
+          typeof inputResolution === 'object',
+      () => `Invalid inputResolution ${inputResolution}. ` +
+          `Should be a number or an object with width and height`);
+
+  if (typeof inputResolution === 'object') {
+    tf.util.assert(
+        typeof inputResolution.width === 'number',
+        () => `inputResolution.width has a value of ${
+            inputResolution.width} which is invalid; it must be a number`);
+    tf.util.assert(
+        typeof inputResolution.height === 'number',
+        () => `inputResolution.height has a value of ${
+            inputResolution.height} which is invalid; it must be a number`);
+  }
+}
+
+export function getValidInputResolutionDimensions(
+    inputResolution: InputResolution,
+    outputStride: BodyPixOutputStride): [number, number] {
+  validateInputResolution(inputResolution);
+  if (typeof inputResolution === 'object') {
+    return [
+      toValidInputResolution(inputResolution.height, outputStride),
+      toValidInputResolution(inputResolution.width, outputStride),
+    ];
+  } else {
+    return [
+      toValidInputResolution(inputResolution, outputStride),
+      toValidInputResolution(inputResolution, outputStride),
+    ];
+  }
+}
+
+function isValidInputResolution(
+    resolution: number, outputStride: number): boolean {
+  return (resolution - 1) % outputStride === 0;
+}
+
+export function assertValidResolution(
+    resolution: [number, number], outputStride: number) {
+  tf.util.assert(
+      typeof resolution[0] === 'number' && typeof resolution[1] === 'number',
+      () => `both resolution values must be a number but had values ${
+          resolution}`);
+
+  tf.util.assert(
+      isValidInputResolution(resolution[0], outputStride),
+      () => `height of ${resolution[0]} is invalid for output stride ` +
+          `${outputStride}.`);
+
+  tf.util.assert(
+      isValidInputResolution(resolution[1], outputStride),
+      () => `width of ${resolution[1]} is invalid for output stride ` +
+          `${outputStride}.`);
+}
+
+const VALID_OUTPUT_STRIDES = [8, 16, 32];
+// tslint:disable-next-line:no-any
+export function assertValidOutputStride(outputStride: any) {
+  tf.util.assert(
+      typeof outputStride === 'number', () => 'outputStride is not a number');
+  tf.util.assert(
+      VALID_OUTPUT_STRIDES.indexOf(outputStride) >= 0,
+      () => `outputStride of ${outputStride} is invalid. ` +
+          `It must be either 8, 16, or 32`);
+}
 
 export function getInputTensorDimensions(input: BodyPixInput):
     [number, number] {
@@ -146,9 +226,7 @@ export function padAndResizeTo(
     return imageTensor.resizeBilinear([targetH, targetW]);
   });
 
-  return {
-    resized, padding: {top: padT, left: padL, right: padR, bottom: padB}
-  };
+  return {resized, padding: {top: padT, left: padL, right: padR, bottom: padB}};
 }
 
 export async function toTensorBuffer<rank extends tf.Rank>(
