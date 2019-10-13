@@ -16,16 +16,15 @@
  * =============================================================================
  */
 
+import {decodeMultiplePoses, decodeSinglePose} from '@tensorflow-models/posenet';
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
 import {decodeOnlyPartSegmentation, decodePartSegmentation, toMaskTensor} from './decode_part_map';
 import {MobileNet, MobileNetMultiplier} from './mobilenet';
 import {decodeMultipleMasksGPU, decodeMultiplePartMasksGPU} from './multi_person/decode_multiple_masks';
-import {decodeMultiplePoses} from './multi_person/decode_multiple_poses';
 import {ResNet} from './resnet';
 import {mobileNetSavedModel, resNet50SavedModel} from './saved_models';
-import {decodeSinglePose} from './sinlge_person/decode_single_pose';
 import {BodyPixInput, Padding, PartSegmentation, PersonSegmentation} from './types';
 import {getInputTensorDimensions, padAndResizeTo, scaleAndCropToInputTensorShape, scaleAndFlipPoses, toInputTensor, toTensorBuffers3D} from './util';
 
