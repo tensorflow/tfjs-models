@@ -32,13 +32,13 @@ function getScale(
 }
 
 export function toPersonKSegmentation(
-    segmentation: tf.Tensor, k: number): tf.Tensor2D {
+    segmentation: tf.Tensor2D, k: number): tf.Tensor2D {
   return tf.tidy(
       () => (segmentation.equal(tf.scalar(k)).toInt() as tf.Tensor2D));
 }
 
 export function toPersonKPartSegmentation(
-    segmentation: tf.Tensor, bodyParts: tf.Tensor, k: number): tf.Tensor2D {
+    segmentation: tf.Tensor2D, bodyParts: tf.Tensor2D, k: number): tf.Tensor2D {
   return tf.tidy(
       () => (segmentation.equal(tf.scalar(k)).toInt().mul(bodyParts.add(1)))
                 .sub(1) as tf.Tensor2D);
@@ -391,7 +391,7 @@ export async function decodePersonInstanceMasks(
 
 export async function decodePersonInstancePartMasks(
     segmentation: tf.Tensor2D, longOffsets: tf.Tensor3D,
-    partSegmentation: tf.Tensor, poses: Pose[], height: number, width: number,
+    partSegmentation: tf.Tensor2D, poses: Pose[], height: number, width: number,
     stride: number, [inHeight, inWidth]: [number, number],
     [[padT, padB], [padL, padR]]: [[number, number], [number, number]],
     minPoseScore = 0.2, refineSteps = 8, minKeypointScore = 0.3,
