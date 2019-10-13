@@ -21,7 +21,7 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {decodeOnlyPartSegmentation, decodePartSegmentation, toMaskTensor} from './decode_part_map';
 import {MobileNet, MobileNetMultiplier} from './mobilenet';
-import {decodeMultipleMasksGPU, decodeMultiplePartMasksGPU} from './multi_person/decode_multiple_masks';
+import {decodePersonInstanceMasks, decodePersonInstancePartMasks} from './multi_person/decode_instance_masks';
 import {decodeMultiplePoses} from './multi_person/decode_multiple_poses';
 import {ResNet} from './resnet';
 import {mobileNetSavedModel, resNet50SavedModel} from './saved_models';
@@ -630,7 +630,7 @@ export class BodyPix {
         poses, [height, width], [inputResolution, inputResolution], padding,
         false);
 
-    const instanceMasks = await decodeMultipleMasksGPU(
+    const instanceMasks = await decodePersonInstanceMasks(
         segmentation, longOffsets, poses, height, width,
         this.baseModel.outputStride, [inputResolution, inputResolution],
         [[padding.top, padding.bottom], [padding.left, padding.right]],
@@ -868,7 +868,7 @@ export class BodyPix {
         poses, [height, width], [inputResolution, inputResolution], padding,
         false);
 
-    const instanceMasks = await decodeMultiplePartMasksGPU(
+    const instanceMasks = await decodePersonInstancePartMasks(
         segmentation, longOffsets, partSegmentation, poses, height, width,
         this.baseModel.outputStride, [inputResolution, inputResolution],
         [[padding.top, padding.bottom], [padding.left, padding.right]],

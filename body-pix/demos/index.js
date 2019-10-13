@@ -15,6 +15,7 @@
  * =============================================================================
  */
 import * as bodyPix from '@tensorflow-models/body-pix';
+import {setBackend} from '@tensorflow/tfjs-core';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 
@@ -98,6 +99,17 @@ function getFacingMode(cameraLabel) {
   }
 }
 
+const GPU_BACKEND = 'gpu';
+const CPU_BACKEND = 'cpu';
+
+function getBackendFromQueryString() {
+  if (!window.URLSearchParams) return GPU_BACKEND;
+
+  const urlParams = new URLSearchParams(window.location.search);
+
+  return urlParams.get('backend') === 'cpu' ? CPU_BACKEND : GPU_BACKEND;
+}
+
 async function getConstraints(cameraLabel) {
   let deviceId;
   let facingMode;
@@ -169,7 +181,7 @@ const guiState = {
   camera: null,
   flipHorizontal: true,
   input: {
-    architecture: 'ResNet50',
+    architecture: 'MobileNetV1',
     outputStride: 16,
     inputResolution: 257,
     multiplier: 1.0,
@@ -578,6 +590,15 @@ async function estimatePartSegmentation() {
   return multiPersonPartSegmentation;
 }
 
+async function getAndSetBackend() {
+  const backend = getBackendFromQueryString();
+
+  if (backend === CPU_BACKEND) {
+    await setBackend(CPU_BACKEND);
+  }
+  // by default, gpu backend is used, so no need to set it.
+}
+
 async function loadBodyPix() {
   toggleLoadingUI(true);
   state.net = await bodyPix.load({
@@ -715,6 +736,7 @@ function segmentBodyInRealTime() {
  */
 export async function bindPage() {
   // Load the BodyPix model weights with architecture 0.75
+  await getAndSetBackend();
   await loadBodyPix();
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = 'inline-block';
