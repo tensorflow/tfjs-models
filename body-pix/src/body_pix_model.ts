@@ -633,9 +633,9 @@ export class BodyPix {
     const instanceMasks = await decodePersonInstanceMasks(
         segmentation, longOffsets, poses, height, width,
         this.baseModel.outputStride, [inputResolution, inputResolution],
-        [[padding.top, padding.bottom], [padding.left, padding.right]],
-        configWithDefault.scoreThreshold, configWithDefault.refineSteps,
-        configWithDefault.minKeypointScore, configWithDefault.maxDetections);
+        padding, configWithDefault.scoreThreshold,
+        configWithDefault.refineSteps, configWithDefault.minKeypointScore,
+        configWithDefault.maxDetections);
 
     resized.dispose();
     segmentation.dispose();
@@ -871,9 +871,9 @@ export class BodyPix {
     const instanceMasks = await decodePersonInstancePartMasks(
         segmentation, longOffsets, partSegmentation, poses, height, width,
         this.baseModel.outputStride, [inputResolution, inputResolution],
-        [[padding.top, padding.bottom], [padding.left, padding.right]],
-        configWithDefault.scoreThreshold, configWithDefault.refineSteps,
-        configWithDefault.minKeypointScore, configWithDefault.maxDetections);
+        padding, configWithDefault.scoreThreshold,
+        configWithDefault.refineSteps, configWithDefault.minKeypointScore,
+        configWithDefault.maxDetections);
 
     resized.dispose();
     segmentation.dispose();

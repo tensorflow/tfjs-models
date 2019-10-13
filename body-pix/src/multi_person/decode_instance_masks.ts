@@ -19,13 +19,13 @@ import * as tf from '@tensorflow/tfjs-core';
 import {getBackend} from '@tensorflow/tfjs-core';
 
 import {NUM_KEYPOINTS} from '../keypoints';
-import {PartSegmentation, PersonSegmentation, Pose} from '../types';
+import {Padding, PartSegmentation, PersonSegmentation, Pose} from '../types';
 
 function getScale(
     [height, width]: [number, number],
     [inputResolutionY, inputResolutionX]: [number, number],
-    [[padT, padB], [padL, padR]]: [[number, number], [number, number]]):
-    [number, number] {
+    padding: Padding): [number, number] {
+  const {top: padT, bottom: padB, left: padL, right: padR} = padding;
   const scaleY = inputResolutionY / (padT + padB + height);
   const scaleX = inputResolutionX / (padL + padR + width);
   return [scaleX, scaleY];
@@ -44,11 +44,10 @@ export function toPersonKPartSegmentation(
                 .sub(1) as tf.Tensor2D);
 }
 
-function decodeMultipleMasksTensorGPU(
+function decodeMultipleMasksWebGl(
     segmentation: tf.Tensor2D, longOffsets: tf.Tensor3D,
     posesAboveScore: Pose[], height: number, width: number, stride: number,
-    [inHeight, inWidth]: [number, number],
-    [[padT, padB], [padL, padR]]: [[number, number], [number, number]],
+    [inHeight, inWidth]: [number, number], padding: Padding,
     refineSteps: number, minKptScore: number,
     maxNumPeople: number): tf.Tensor2D {
   // The height/width of the image/canvas itself.
@@ -75,10 +74,12 @@ function decodeMultipleMasksTensorGPU(
     }
   }
 
-  const [scaleX, scaleY] = getScale(
-      [height, width], [inHeight, inWidth], [[padT, padB], [padL, padR]]);
+  const [scaleX, scaleY] =
+      getScale([height, width], [inHeight, inWidth], padding);
 
   const posesTensor = tf.tensor(poseVals, [maxNumPeople, NUM_KEYPOINTS, 3]);
+
+  const {top: padT, left: padL} = padding;
 
   const program: tf.webgl.GPGPUProgram = {
     variableNames: ['segmentation', 'longOffsets', 'poses'],
@@ -279,17 +280,18 @@ export function getOutputResolution(
   return [outputResolutionX, outputResolutionY];
 }
 
-export function decodeMultipleMasksTensorCPU(
+export function decodeMultipleMasksCPU(
     segmentation: Uint8Array, longOffsets: Float32Array,
     posesAboveScore: Pose[], height: number, width: number, stride: number,
-    [inHeight, inWidth]: [number, number],
-    [[padT, padB], [padL, padR]]: [[number, number], [number, number]],
+    [inHeight, inWidth]: [number, number], padding: Padding,
     refineSteps: number, numKptForMatching = 5): Uint8Array[] {
   const dataArrays =
       posesAboveScore.map(x => new Uint8Array(height * width).fill(0));
 
-  const [scaleX, scaleY] = getScale(
-      [height, width], [inHeight, inWidth], [[padT, padB], [padL, padR]]);
+  const {top: padT, left: padL} = padding;
+
+  const [scaleX, scaleY] =
+      getScale([height, width], [inHeight, inWidth], padding);
   const [outputResolutionX, ] =
     getOutputResolution([inHeight, inWidth], stride);
   for (let i = 0; i < height; i += 1) {
@@ -311,17 +313,19 @@ export function decodeMultipleMasksTensorCPU(
   return dataArrays;
 }
 
-export function decodeMultiplePartMasksTensorCPU(
+export function decodeMultiplePartMasksCPU(
     segmentation: Uint8Array, longOffsets: Float32Array,
     partSegmentaion: Uint8Array, posesAboveScore: Pose[], height: number,
     width: number, stride: number, [inHeight, inWidth]: [number, number],
-    [[padT, padB], [padL, padR]]: [[number, number], [number, number]],
-    refineSteps: number, numKptForMatching = 5): Int32Array[] {
+    padding: Padding, refineSteps: number,
+    numKptForMatching = 5): Int32Array[] {
   const dataArrays =
       posesAboveScore.map(x => new Int32Array(height * width).fill(-1));
 
-  const [scaleX, scaleY] = getScale(
-      [height, width], [inHeight, inWidth], [[padT, padB], [padL, padR]]);
+  const {top: padT, left: padL} = padding;
+
+  const [scaleX, scaleY] =
+      getScale([height, width], [inHeight, inWidth], padding);
   const [outputResolutionX, ] =
     getOutputResolution([inHeight, inWidth], stride);
 
@@ -351,9 +355,8 @@ function isWebGlBackend() {
 export async function decodePersonInstanceMasks(
     segmentation: tf.Tensor2D, longOffsets: tf.Tensor3D, poses: Pose[],
     height: number, width: number, stride: number,
-    [inHeight, inWidth]: [number, number],
-    [[padT, padB], [padL, padR]]: [[number, number], [number, number]],
-    minPoseScore = 0.2, refineSteps = 8, minKeypointScore = 0.3,
+    [inHeight, inWidth]: [number, number], padding: Padding, minPoseScore = 0.2,
+    refineSteps = 8, minKeypointScore = 0.3,
     maxNumPeople = 10): Promise<PersonSegmentation[]> {
   // Filter out poses with smaller score.
   const posesAboveScore = poses.filter(pose => pose.score >= minPoseScore);
@@ -362,10 +365,10 @@ export async function decodePersonInstanceMasks(
 
   if (isWebGlBackend()) {
     const personSegmentations = tf.tidy(() => {
-      const masksTensor = decodeMultipleMasksTensorGPU(
+      const masksTensor = decodeMultipleMasksWebGl(
           segmentation, longOffsets, posesAboveScore, height, width, stride,
-          [inHeight, inWidth], [[padT, padB], [padL, padR]], refineSteps,
-          minKeypointScore, maxNumPeople);
+          [inHeight, inWidth], padding, refineSteps, minKeypointScore,
+          maxNumPeople);
 
       return posesAboveScore.map(
           (_, k) => toPersonKSegmentation(masksTensor, k));
@@ -380,9 +383,9 @@ export async function decodePersonInstanceMasks(
     const segmentationsData = await segmentation.data() as Uint8Array;
     const longOffsetsData = await longOffsets.data() as Float32Array;
 
-    personSegmentationsData = decodeMultipleMasksTensorCPU(
+    personSegmentationsData = decodeMultipleMasksCPU(
         segmentationsData, longOffsetsData, posesAboveScore, height, width,
-        stride, [inHeight, inWidth], [[padT, padB], [padL, padR]], refineSteps);
+        stride, [inHeight, inWidth], padding, refineSteps);
   }
 
   return personSegmentationsData.map(
@@ -392,8 +395,7 @@ export async function decodePersonInstanceMasks(
 export async function decodePersonInstancePartMasks(
     segmentation: tf.Tensor2D, longOffsets: tf.Tensor3D,
     partSegmentation: tf.Tensor2D, poses: Pose[], height: number, width: number,
-    stride: number, [inHeight, inWidth]: [number, number],
-    [[padT, padB], [padL, padR]]: [[number, number], [number, number]],
+    stride: number, [inHeight, inWidth]: [number, number], padding: Padding,
     minPoseScore = 0.2, refineSteps = 8, minKeypointScore = 0.3,
     maxNumPeople = 10): Promise<PartSegmentation[]> {
   const posesAboveScore = poses.filter(pose => pose.score >= minPoseScore);
@@ -402,10 +404,10 @@ export async function decodePersonInstancePartMasks(
 
   if (isWebGlBackend()) {
     const partSegmentations = tf.tidy(() => {
-      const masksTensor = decodeMultipleMasksTensorGPU(
+      const masksTensor = decodeMultipleMasksWebGl(
           segmentation, longOffsets, posesAboveScore, height, width, stride,
-          [inHeight, inWidth], [[padT, padB], [padL, padR]], refineSteps,
-          minKeypointScore, maxNumPeople);
+          [inHeight, inWidth], padding, refineSteps, minKeypointScore,
+          maxNumPeople);
 
       return posesAboveScore.map(
           (_, k) =>
@@ -422,10 +424,10 @@ export async function decodePersonInstancePartMasks(
     const longOffsetsData = await longOffsets.data() as Float32Array;
     const partSegmentaionData = await partSegmentation.data() as Uint8Array;
 
-    partSegmentationsByPersonData = decodeMultiplePartMasksTensorCPU(
+    partSegmentationsByPersonData = decodeMultiplePartMasksCPU(
         segmentationsData, longOffsetsData, partSegmentaionData,
-        posesAboveScore, height, width, stride, [inHeight, inWidth],
-        [[padT, padB], [padL, padR]], refineSteps);
+        posesAboveScore, height, width, stride, [inHeight, inWidth], padding,
+        refineSteps);
   }
 
   return partSegmentationsByPersonData.map(
