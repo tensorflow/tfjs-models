@@ -41,7 +41,7 @@ You can use this with script tags as follows:
  </head>
 
   <body>
-    <img id='person' src='/images/person.jpg '/>
+    <img id='image' src='images/person.jpg' crossorigin='anonymous'/>
   </body>
   <!-- Place your code in the script tag below. You can also use an external .js file -->
   <script>
@@ -58,7 +58,7 @@ You can use this with script tags as follows:
        *   - net.segmentMultiPersonParts
        * See documentation below for details on each method.
        */
-      const segmentation = net.segmentPerson(img);
+      const segmentation = await net.segmentPerson(img);
       console.log(segmentation);
     }
     loadAndPredict();
@@ -88,7 +88,7 @@ async function loadAndPredict() {
    *   - net.segmentMultiPersonParts
    * See documentation below for details on each method.
     */
-  const segmentation = net.segmentPerson(img);
+  const segmentation = await net.segmentPerson(img);
   console.log(segmentation);
 }
 loadAndPredict();
@@ -391,6 +391,29 @@ An [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) with 
 
 *With the output from `segmentMultiPerson` on the first image above, `toMask` will produce an [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) that either looks like the second image above if setting `foregroundColor` to {r: 0, g: 0, b: 0, a: 0} and `backgroundColor` to {r: 0, g: 0, b: 0, a: 255} (by default), or the third image if if setting `foregroundColor` to {r: 0, g: 0, b: 0, a: 255} and `backgroundColor` to {r: 0, g: 0, b: 0, a: 0}.  This can be used to mask either the person or the background using the method `drawMask`.*
 
+#### Example usage
+
+```javascript
+const img = document.getElementById('image');
+
+const net = await bodyPix.load();
+const partSegmentation = await net.segmentPerson(img);
+
+// The mask image is an binary mask image with a 1 where there is a person and
+// a 0 where there is not.
+const coloredPartImage = bodyPix.toMask(partSegmentation);
+const opacity = 0.7;
+const flipHorizontal = false;
+const maskBlurAmount = 0;
+const canvas = document.getElementById('canvas');
+// Draw the mask image on top of the original image onto a canvas.
+// The colored part image will be drawn semi-transparent, with an opacity of
+// 0.7, allowing for the original image to be visible under.
+bodyPix.drawMask(
+    canvas, img, coloredPartImage, opacity, maskBlurAmount,
+    flipHorizontal);
+```
+
 ### bodyPix.toColoredPartMask
 
 Given the output from person body part segmentation (or multi-person body part segmentation) and an array of colors indexed by part id, generates an image with the corresponding color for each part at each pixel, and white pixels where there is no part.
@@ -399,7 +422,7 @@ Given the output from person body part segmentation (or multi-person body part s
 
 * **personPartSegmentation** The output from [segmentPersonParts](#Single-person-segmentation) or [segmentMultiPersonParts](#Multi-person-body-part-segmentation). The former is a PartSegmentation object and later is an *array* of PartSegmentation object.
 
-* **partColors** A multi-dimensional array of rgb colors indexed by part id.  Must have 24 colors, one for every part.  For some sample `partColors` check out [the ones used in the demo.](./demos/part_color_scales.js)
+* **partColors** Optional, defaults to rainbow. A multi-dimensional array of rgb colors indexed by part id.  Must have 24 colors, one for every part. For some sample `partColors` check out [the ones used in the demo.](./demos/part_color_scales.js)
 
 #### Returns
 
@@ -408,34 +431,24 @@ An [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) with 
 #### Example usage
 
 ```javascript
-const imageElement = document.getElementById('person');
+const img = document.getElementById('image');
 
 const net = await bodyPix.load();
-const partSegmentation = await net.segmentMultiPersonParts(imageElement);
-
-// The rainbow colormap
-const rainbow = [
-  [110, 64, 170], [143, 61, 178], [178, 60, 178], [210, 62, 167],
-  [238, 67, 149], [255, 78, 125], [255, 94, 99],  [255, 115, 75],
-  [255, 140, 56], [239, 167, 47], [217, 194, 49], [194, 219, 64],
-  [175, 240, 91], [135, 245, 87], [96, 247, 96],  [64, 243, 115],
-  [40, 234, 141], [28, 219, 169], [26, 199, 194], [33, 176, 213],
-  [47, 150, 224], [65, 125, 224], [84, 101, 214], [99, 81, 195]
-];
+const partSegmentation = await net.segmentMultiPersonParts(img);
 
 // The colored part image is an rgb image with a corresponding color from the
 // rainbow colors for each part at each pixel, and black pixels where there is
 // no part.
-const coloredPartImage = bodyPix.toColoredPartMask(partSegmentation, rainbow);
+const coloredPartImage = bodyPix.toColoredPartMask(partSegmentation);
 const opacity = 0.7;
-const flipHorizontal = true;
+const flipHorizontal = false;
 const maskBlurAmount = 0;
 const canvas = document.getElementById('canvas');
 // Draw the colored part image on top of the original image onto a canvas.
 // The colored part image will be drawn semi-transparent, with an opacity of
 // 0.7, allowing for the original image to be visible under.
 bodyPix.drawMask(
-    canvas, imageElement, coloredPartImageData, opacity, maskBlurAmount,
+    canvas, img, coloredPartImage, opacity, maskBlurAmount,
     flipHorizontal);
 ```
 
@@ -459,28 +472,27 @@ Draws an image onto a canvas and draws an `ImageData` containing a mask on top o
 #### Example usage
 
 ```javascript
-const imageElement = document.getElementById('image');
+const img = document.getElementById('image');
 
 const net = await bodyPix.load();
-const segmentation = await net.segmentPerson(imageElement);
+const segmentation = await net.segmentPerson(img);
 
 const maskBackground = true;
-// Convert the personSegmentation into a mask to darken the background.
+// Convert the segmentation into a mask to darken the background.
 const foregroundColor = {r: 0, g: 0, b: 0, a: 0};
 const backgroundColor = {r: 0, g: 0, b: 0, a: 255};
 const backgroundDarkeningMask = bodyPix.toMask(
-    personSegmentation, foregroundColor, backgroundColor);
+    segmentation, foregroundColor, backgroundColor);
 
 const opacity = 0.7;
 const maskBlurAmount = 3;
-const flipHorizontal = true;
-
+const flipHorizontal = false;
 const canvas = document.getElementById('canvas');
 // Draw the mask onto the image on a canvas.  With opacity set to 0.7 and
 // maskBlurAmount set to 3, this will darken the background and blur the
 // darkened background's edge.
 bodyPix.drawMask(
-    canvas, imageElement, backgroundDarkeningMask, opacity, maskBlurAmount, flipHorizontal);
+    canvas, img, backgroundDarkeningMask, opacity, maskBlurAmount, flipHorizontal);
 ```
 
 ![drawMask](./images/drawMask.jpg)
@@ -504,26 +516,17 @@ Draws an image onto a canvas and draws an `ImageData` containing a mask on top o
 #### Example usage
 
 ```javascript
-const imageElement = document.getElementById('person');
+const img = document.getElementById('image');
 
 const net = await bodyPix.load();
-const partSegmentation = await net.segmentPersonParts(imageElement);
-
-const rainbow = [
-  [110, 64, 170], [143, 61, 178], [178, 60, 178], [210, 62, 167],
-  [238, 67, 149], [255, 78, 125], [255, 94, 99],  [255, 115, 75],
-  [255, 140, 56], [239, 167, 47], [217, 194, 49], [194, 219, 64],
-  [175, 240, 91], [135, 245, 87], [96, 247, 96],  [64, 243, 115],
-  [40, 234, 141], [28, 219, 169], [26, 199, 194], [33, 176, 213],
-  [47, 150, 224], [65, 125, 224], [84, 101, 214], [99, 81, 195]
-];
+const partSegmentation = await net.segmentPersonParts(img);
 
 // The colored part image is an rgb image with a corresponding color from the
 // rainbow colors for each part at each pixel, and white pixels where there is
 // no part.
-const coloredPartImage = bodyPix.toColoredPartMask(partSegmentation, rainbow);
+const coloredPartImage = bodyPix.toColoredPartMask(partSegmentation);
 const opacity = 0.7;
-const flipHorizontal = true;
+const flipHorizontal = false;
 const maskBlurAmount = 0;
 const pixelCellWidth = 10.0;
 const canvas = document.getElementById('canvas');
@@ -532,7 +535,7 @@ const canvas = document.getElementById('canvas');
 // part image will be drawn semi-transparent, with an opacity of 0.7, allowing
 // for the original image to be visible under.
 bodyPix.drawPixelatedMask(
-    canvas, imageElement, coloredPartImageData, opacity, maskBlurAmount,
+    canvas, img, coloredPartImage, opacity, maskBlurAmount,
     flipHorizontal, pixelCellWidth);
 ```
 
@@ -564,20 +567,20 @@ and the background by.  Defaults to 3. Should be an integer between 0 and 20.
 #### Example Usage
 
 ```javascript
-const imageElement = document.getElementById('image');
+const img = document.getElementById('image');
 
 const net = await bodyPix.load();
-const personSegmentation = await net.segmentPerson(imageElement);
+const personSegmentation = await net.segmentPerson(img);
 
 const backgroundBlurAmount = 3;
 const edgeBlurAmount = 3;
-const flipHorizontal = true;
+const flipHorizontal = false;
 
 const canvas = document.getElementById('canvas');
 // Draw the image with the background blurred onto the canvas. The edge between
 // the person and blurred background is blurred by 3 pixels.
 bodyPix.drawBokehEffect(
-    canvas, imageElement, personSegmentation, backgroundBlurAmount,
+    canvas, img, personSegmentation, backgroundBlurAmount,
     edgeBlurAmount, flipHorizontal);
 ```
 
@@ -609,20 +612,20 @@ and the background by.  Defaults to 3. Should be an integer between 0 and 20.
 #### Example Usage
 
 ```javascript
-const imageElement = document.getElementById('image');
+const img = document.getElementById('image');
 
 const net = await bodyPix.load();
-const partSegmentation = await net.segmentMultiPersonParts(imageElement);
+const partSegmentation = await net.segmentMultiPersonParts(img);
 
 const backgroundBlurAmount = 3;
 const edgeBlurAmount = 3;
-const flipHorizontal = true;
+const flipHorizontal = false;
 const faceBodyPartIdsToBlur = [0, 1];
 
 const canvas = document.getElementById('canvas');
 
 bodyPix.blurBodyPart(
-    canvas, imageElement, partSegmentation, faceBodyPartIdsToBlur,
+    canvas, img, partSegmentation, faceBodyPartIdsToBlur,
     backgroundBlurAmount, edgeBlurAmount, flipHorizontal);
 ```
 
