@@ -499,6 +499,8 @@ export function drawBokehEffect(
 
   const blurredImage = drawAndBlurImageOnOffScreenCanvas(
       image, backgroundBlurAmount, CANVAS_NAMES.blurred);
+  canvas.width = blurredImage.width;
+  canvas.height = blurredImage.height;
 
   const ctx = canvas.getContext('2d');
 
@@ -584,6 +586,8 @@ export function blurBodyPart(
 
   const blurredImage = drawAndBlurImageOnOffScreenCanvas(
       image, backgroundBlurAmount, CANVAS_NAMES.blurred);
+  canvas.width = blurredImage.width;
+  canvas.height = blurredImage.height;
 
   const ctx = canvas.getContext('2d');
 
