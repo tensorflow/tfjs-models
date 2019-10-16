@@ -1,3 +1,4 @@
+import {Keypoint, Pose} from '@tensorflow-models/posenet';
 import * as tf from '@tensorflow/tfjs-core';
 
 export type BodyPixInput =
@@ -19,7 +20,10 @@ export type PartSegmentation = {
 };
 
 export declare interface Padding {
-  top: number; bottom: number; left: number; right: number;
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
 }
 
 export declare type Part = {
@@ -28,28 +32,9 @@ export declare type Part = {
   id: number
 };
 
-export declare type Vector2D = {
-  y: number,
-  x: number
-};
-
 export type TensorBuffer3D = tf.TensorBuffer<tf.Rank.R3>;
 
-export declare type PartWithScore = {
-  score: number,
-  part: Part
-};
-
-export declare type Keypoint = {
-  score: number,
-  position: Vector2D,
-  part: string
-};
-
-export declare type Pose = {
-  keypoints: Keypoint[],
-  score: number,
-};
+export {Pose, Keypoint};
 
 export declare type Color = {
   r: number,
