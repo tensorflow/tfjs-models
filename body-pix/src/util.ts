@@ -14,7 +14,7 @@ export function toValidInternalResolutionNumber(
     internalResolution: BodyPixInternalResolution): number {
   let validInternalResolution = 257;
   switch (internalResolution) {
-    case 'small': {
+    case 'low': {
       validInternalResolution = 257;
       break;
     }
@@ -22,7 +22,7 @@ export function toValidInternalResolutionNumber(
       validInternalResolution = 513
       break;
     }
-    case 'large': {
+    case 'high': {
       validInternalResolution = 1025
       break;
     }

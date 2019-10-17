@@ -161,7 +161,7 @@ const defaultMobileNetInternalResolution = 'medium';
 
 const defaultResNetMultiplier = 1.0;
 const defaultResNetStride = 16;
-const defaultResNetInternalResolution = 'small';
+const defaultResNetInternalResolution = 'low';
 
 const guiState = {
   algorithm: 'multi-person-instance',
@@ -171,7 +171,7 @@ const guiState = {
   input: {
     architecture: 'ResNet50',
     outputStride: 16,
-    internalResolution: 'small',
+    internalResolution: 'low',
     multiplier: 1.0,
     quantBytes: 2
   },
@@ -337,12 +337,12 @@ function setupGui(cameras) {
   function updateGuiInputSection() {
     if (guiState.input.architecture === 'MobileNetV1') {
       updateGuiInternalResolution(
-          defaultMobileNetInternalResolution, ['small', 'medium', 'large']);
+          defaultMobileNetInternalResolution, ['low', 'medium', 'high']);
       updateGuiOutputStride(defaultMobileNetStride, [8, 16]);
       updateGuiMultiplier(defaultMobileNetMultiplier, [0.50, 0.75, 1.0])
     } else {  // guiState.input.architecture === "ResNet50"
       updateGuiInternalResolution(
-          defaultResNetInternalResolution, ['small', 'medium', 'large']);
+          defaultResNetInternalResolution, ['low', 'medium', 'high']);
       updateGuiOutputStride(defaultResNetStride, [32, 16]);
       updateGuiMultiplier(defaultResNetMultiplier, [1.0]);
     }
