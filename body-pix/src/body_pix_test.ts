@@ -22,6 +22,7 @@ import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_u
 
 import * as bodyPixModel from './body_pix_model';
 import * as resnet from './resnet';
+import {toValidInternalResolutionNumber} from './util';
 
 describeWithFlags('BodyPix', NODE_ENVS, () => {
   let bodyPix: bodyPixModel.BodyPix;
@@ -99,4 +100,52 @@ describeWithFlags('BodyPix', NODE_ENVS, () => {
         .then(done)
         .catch(done.fail);
   });
+
+  it('toValidInternalResolutionNumber produces correct output when small is specified',
+     () => {
+       const result = toValidInternalResolutionNumber('small');
+       expect(result).toBe(257);
+     })
+
+  it('toValidInternalResolutionNumber produces correct output when medium is specified',
+     () => {
+       const result = toValidInternalResolutionNumber('medium');
+       expect(result).toBe(513);
+     })
+
+  it('toValidInternalResolutionNumber produces correct output when large is specified',
+     () => {
+       const result = toValidInternalResolutionNumber('large');
+       expect(result).toBe(1025);
+     })
+
+  it('toValidInternalResolutionNumber produces correct output when number is specified',
+     () => {
+       for (let i = 0; i < 2000; i++) {
+         const result = toValidInternalResolutionNumber(i);
+         if (i < 161) {
+           expect(result).toBe(161);
+         }
+
+         if (i > 1217) {
+           expect(result).toBe(1217);
+         }
+
+         if (i == 250) {
+           expect(result).toBe(257);
+         }
+
+         if (i == 500) {
+           expect(result).toBe(513);
+         }
+
+         if (i == 750) {
+           expect(result).toBe(737);
+         }
+
+         if (i == 1000) {
+           expect(result).toBe(993);
+         }
+       }
+     })
 });

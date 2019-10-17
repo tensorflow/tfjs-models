@@ -132,8 +132,6 @@ const VALID_STRIDE: {[id: string]: BodyPixOutputStride[]} = {
   'MobileNetV1': [8, 16, 32],
   'ResNet50': [32, 16]
 };
-export const VALID_INPUT_RESOLUTION: BodyPixInternalResolution[] =
-    [161, 193, 257, 289, 321, 353, 385, 417, 449, 481, 513, 801];
 const VALID_MULTIPLIER: {[id: string]: BodyPixMultiplier[]} = {
   'MobileNetV1': [0.50, 0.75, 1.0],
   'ResNet50': [1.0]
@@ -151,17 +149,6 @@ function validateModelConfig(config: ModelConfig) {
         `Invalid architecture ${config.architecture}. ` +
         `Should be one of ${VALID_ARCHITECTURE}`);
   }
-
-  // if (config.inputResolution == null) {
-  //   config.inputResolution = 257;
-  // }
-
-  // if (VALID_INPUT_RESOLUTION.indexOf(config.inputResolution) < 0) {
-  //   throw new Error(
-  //       `Invalid inputResolution ${config.inputResolution}. ` +
-  //       `Should be one of ${VALID_INPUT_RESOLUTION}`);
-  // }
-
   if (config.outputStride == null) {
     config.outputStride = 16;
   }
@@ -258,14 +245,14 @@ export interface MultiPersonInstanceInferenceConfig extends InferenceConfig {
 
 export const PERSON_INFERENCE_CONFIG: PersonInferenceConfig = {
   flipHorizontal: false,
-  internalResolution: 'median',
+  internalResolution: 'medium',
   segmentationThreshold: 0.7
 };
 
 export const MULTI_PERSON_INSTANCE_INFERENCE_CONFIG:
     MultiPersonInstanceInferenceConfig = {
       flipHorizontal: false,
-      internalResolution: 'median',
+      internalResolution: 'medium',
       segmentationThreshold: 0.7,
       maxDetections: 10,
       scoreThreshold: 0.2,

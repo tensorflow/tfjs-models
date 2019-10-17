@@ -18,7 +18,7 @@ export function toValidInternalResolutionNumber(
       validInternalResolution = 257;
       break;
     }
-    case 'median': {
+    case 'medium': {
       validInternalResolution = 513
       break;
     }
