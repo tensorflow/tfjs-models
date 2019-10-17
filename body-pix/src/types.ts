@@ -1,5 +1,11 @@
 import * as tf from '@tensorflow/tfjs-core';
 
+export type BodyPixInternalResolution = number|'small'|'median'|'large'
+export type BodyPixOutputStride = 32|16|8;
+export type BodyPixArchitecture = 'ResNet50'|'MobileNetV1';
+export type BodyPixQuantBytes = 1|2|4;
+export type BodyPixMultiplier = 1.0|0.75|0.50;
+
 export type BodyPixInput =
     ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement|tf.Tensor3D;
 
@@ -19,7 +25,10 @@ export type PartSegmentation = {
 };
 
 export declare interface Padding {
-  top: number; bottom: number; left: number; right: number;
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
 }
 
 export declare type Part = {

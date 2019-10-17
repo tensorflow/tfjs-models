@@ -530,6 +530,7 @@ async function estimateSegmentation() {
     case 'multi-person-instance':
       multiPersonSegmentation =
           await state.net.segmentMultiPerson(state.video, {
+            internalResolution: guiState.input.inputResolution,
             segmentationThreshold: guiState.segmentation.segmentationThreshold,
             maxDetections: guiState.multiPersonDecoding.maxDetections,
             scoreThreshold: guiState.multiPersonDecoding.scoreThreshold,
@@ -540,9 +541,10 @@ async function estimateSegmentation() {
           });
       break;
     case 'person':
-      const personSegmentation = await state.net.segmentPerson(
-          state.video,
-          {segmentationThreshold: guiState.segmentation.segmentationThreshold});
+      const personSegmentation = await state.net.segmentPerson(state.video, {
+        internalResolution: guiState.input.inputResolution,
+        segmentationThreshold: guiState.segmentation.segmentationThreshold
+      });
       multiPersonSegmentation = [personSegmentation];
       break;
     default:
@@ -557,6 +559,7 @@ async function estimatePartSegmentation() {
     case 'multi-person-instance':
       multiPersonPartSegmentation =
           await state.net.segmentMultiPersonParts(state.video, {
+            internalResolution: guiState.input.inputResolution,
             segmentationThreshold: guiState.segmentation.segmentationThreshold,
             maxDetections: guiState.multiPersonDecoding.maxDetections,
             scoreThreshold: guiState.multiPersonDecoding.scoreThreshold,
@@ -567,9 +570,11 @@ async function estimatePartSegmentation() {
           });
       break;
     case 'person':
-      const personPartSegmentation = await state.net.segmentPersonParts(
-          state.video,
-          {segmentationThreshold: guiState.segmentation.segmentationThreshold});
+      const personPartSegmentation =
+          await state.net.segmentMultiPersonParts(state.video, {
+            internalResolution: guiState.input.inputResolution,
+            segmentationThreshold: guiState.segmentation.segmentationThreshold
+          });
       multiPersonPartSegmentation = [personPartSegmentation];
       break;
     default:
@@ -583,7 +588,6 @@ async function loadBodyPix() {
   state.net = await bodyPix.load({
     architecture: guiState.input.architecture,
     outputStride: guiState.input.outputStride,
-    inputResolution: guiState.input.inputResolution,
     multiplier: guiState.input.multiplier,
     quantBytes: guiState.input.quantBytes
   });
@@ -603,13 +607,12 @@ function segmentBodyInRealTime() {
     // then try again.
     if (state.changingArchitecture || state.changingMultiplier ||
         state.changingCamera || state.changingStride ||
-        state.changingResolution || state.changingQuantBytes) {
+        state.changingQuantBytes) {
       console.log('load model...');
       loadBodyPix();
       state.changingArchitecture = false;
       state.changingMultiplier = false;
       state.changingStride = false;
-      state.changingResolution = false;
       state.changingQuantBytes = false;
     }
 
