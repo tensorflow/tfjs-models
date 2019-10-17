@@ -22,7 +22,6 @@ import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_u
 
 import * as bodyPixModel from './body_pix_model';
 import * as resnet from './resnet';
-import {toValidInternalResolutionNumber} from './util';
 
 describeWithFlags('BodyPix', NODE_ENVS, () => {
   let bodyPix: bodyPixModel.BodyPix;
