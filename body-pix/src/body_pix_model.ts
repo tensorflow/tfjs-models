@@ -190,10 +190,10 @@ function validateModelConfig(config: ModelConfig) {
  * and you want the person & body part segmentation to be returned in the proper
  * orientation.
  *
- * `internalResolution`: BodyPixInternalResolution. It represents the internal
- * input image resolution of the model. The larger the internal resolution,
- * and more accurate the model at the cost of speed. The internal resolution can
- * be specified using a positive number or a string ('low', 'medium', 'high').
+ * `internalResolution`: Defaults to 'medium'. The internal resolution used by
+ * the model. The larger the internal resolution the more accurate the model at
+ * the cost of slower prediction times. Available values are 'low', 'medium',
+ * 'high' or a positive number.
  *
  * `segmentationThreshold`: The minimum that segmentation values must
  * have to be considered part of the person. Affects the generation of the
@@ -404,11 +404,10 @@ export class BodyPix {
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
    *
-   * @param internalResolution: BodyPixInternalResolution. It represents the
-   * internal input image resolution of the model. The larger the internal
-   * resolution, and more accurate the model at the cost of speed. The internal
-   * resolution can be specified using a positive number or a string ('low',
-   * 'medium', 'high').
+   * @param internalResolution`: Defaults to 'medium'. The internal resolution
+   * used by the model. The larger the internal resolution the more accurate the
+   * model at the cost of slower prediction times. Available values are 'low',
+   * 'medium', 'high' or a positive number.
    *
    * @param segmentationThreshold The minimum that segmentation values must have
    * to be considered part of the person. Affects the generation of the
@@ -475,7 +474,6 @@ export class BodyPix {
    * the pose works well for one person. If you want to estimate instance-level
    * multiple person segmentation & pose for each person, use
    * `segmentMultiPerson` instead.
-   *
    *
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
@@ -654,11 +652,10 @@ export class BodyPix {
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
    *
-   * @param internalResolution: BodyPixInternalResolution. It represents the
-   * internal input image resolution of the model. The larger the internal
-   * resolution, and more accurate the model at the cost of speed. The internal
-   * resolution can be specified using a positive number or a string ('low',
-   * 'medium', 'high').
+   * @param internalResolution`: Defaults to 'medium'. The internal resolution
+   * used by the model. The larger the internal resolution the more accurate the
+   * model at the cost of slower prediction times. Available values are 'low',
+   * 'medium', 'high' or a positive number.
    *
    * @param segmentationThreshold The minimum that segmentation values must have
    * to be considered part of the person.  Affects the clipping of the colored
