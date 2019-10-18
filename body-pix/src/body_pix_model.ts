@@ -495,13 +495,12 @@ export class BodyPix {
       input: BodyPixInput,
       config: PersonInferenceConfig = PERSON_INFERENCE_CONFIG):
       Promise<PersonSegmentation> {
-    const configWithDefault:
-        PersonInferenceConfig = {...PERSON_INFERENCE_CONFIG, ...config};
-    validatePersonInferenceConfig(configWithDefault);
+    config = {...PERSON_INFERENCE_CONFIG, ...config};
+
+    validatePersonInferenceConfig(config);
     const {segmentation, heatmapScores, offsets, padding} =
         this.segmentPersonActivation(
-            input, configWithDefault.internalResolution,
-            configWithDefault.segmentationThreshold);
+            input, config.internalResolution, config.segmentationThreshold);
 
     const [height, width] = segmentation.shape;
 
@@ -514,7 +513,7 @@ export class BodyPix {
     const resultPose = scaleAndFlipPoses(
         [pose], [height, width],
         [this.internalResolution, this.internalResolution], padding,
-        configWithDefault.flipHorizontal)[0];
+        config.flipHorizontal)[0];
 
     heatmapScores.dispose();
     offsets.dispose();
@@ -550,14 +549,11 @@ export class BodyPix {
       config: MultiPersonInstanceInferenceConfig =
           MULTI_PERSON_INSTANCE_INFERENCE_CONFIG):
       Promise<PersonSegmentation[]> {
-    const configWithDefault: MultiPersonInstanceInferenceConfig = {
-      ...MULTI_PERSON_INSTANCE_INFERENCE_CONFIG,
-      ...config
-    };
-    validateMultiPersonInstanceInferenceConfig(configWithDefault);
+    config = {...MULTI_PERSON_INSTANCE_INFERENCE_CONFIG, ...config};
+    validateMultiPersonInstanceInferenceConfig(config);
     const [height, width] = getInputTensorDimensions(input);
     this.internalResolution =
-        toValidInternalResolutionNumber(configWithDefault.internalResolution);
+        toValidInternalResolutionNumber(config.internalResolution);
 
     const {resized, padding} = padAndResizeTo(
         input, [this.internalResolution, this.internalResolution]);
@@ -595,8 +591,7 @@ export class BodyPix {
       }
 
       const segmentation = toMaskTensor(
-          scaledSegmentScores.squeeze(),
-          configWithDefault.segmentationThreshold);
+          scaledSegmentScores.squeeze(), config.segmentationThreshold);
 
       return {
         segmentation,
@@ -616,8 +611,7 @@ export class BodyPix {
     let poses = await decodeMultiplePoses(
         scoresBuffer, offsetsBuffer, displacementsFwdBuffer,
         displacementsBwdBuffer, this.baseModel.outputStride,
-        config.maxDetections, configWithDefault.scoreThreshold,
-        configWithDefault.nmsRadius);
+        config.maxDetections, config.scoreThreshold, config.nmsRadius);
 
     poses = scaleAndFlipPoses(
         poses, [height, width],
@@ -628,8 +622,8 @@ export class BodyPix {
         this.baseModel.outputStride,
         [this.internalResolution, this.internalResolution],
         [[padding.top, padding.bottom], [padding.left, padding.right]],
-        configWithDefault.scoreThreshold, configWithDefault.refineSteps,
-        configWithDefault.minKeypointScore, configWithDefault.maxDetections);
+        config.scoreThreshold, config.refineSteps, config.minKeypointScore,
+        config.maxDetections);
 
     resized.dispose();
     segmentation.dispose();
@@ -749,13 +743,12 @@ export class BodyPix {
       input: BodyPixInput,
       config: PersonInferenceConfig = PERSON_INFERENCE_CONFIG):
       Promise<PartSegmentation> {
-    const configWithDefault:
-        PersonInferenceConfig = {...PERSON_INFERENCE_CONFIG, ...config};
-    validatePersonInferenceConfig(configWithDefault);
+    config = {...PERSON_INFERENCE_CONFIG, ...config};
+
+    validatePersonInferenceConfig(config);
     const {partSegmentation, heatmapScores, offsets, padding} =
         this.segmentPersonPartsActivation(
-            input, configWithDefault.internalResolution,
-            configWithDefault.segmentationThreshold);
+            input, config.internalResolution, config.segmentationThreshold);
 
     const [height, width] = partSegmentation.shape;
     const data = await partSegmentation.data() as Int32Array;
@@ -767,7 +760,7 @@ export class BodyPix {
     const resultPose = scaleAndFlipPoses(
         [pose], [height, width],
         [this.internalResolution, this.internalResolution], padding,
-        configWithDefault.flipHorizontal)[0];
+        config.flipHorizontal)[0];
 
     heatmapScores.dispose();
     offsets.dispose();
@@ -802,14 +795,12 @@ export class BodyPix {
       input: BodyPixInput,
       config: MultiPersonInstanceInferenceConfig =
           MULTI_PERSON_INSTANCE_INFERENCE_CONFIG): Promise<PartSegmentation[]> {
-    const configWithDefault: MultiPersonInstanceInferenceConfig = {
-      ...MULTI_PERSON_INSTANCE_INFERENCE_CONFIG,
-      ...config
-    };
-    validateMultiPersonInstanceInferenceConfig(configWithDefault);
+    config = {...MULTI_PERSON_INSTANCE_INFERENCE_CONFIG, ...config};
+
+    validateMultiPersonInstanceInferenceConfig(config);
     const [height, width] = getInputTensorDimensions(input);
     this.internalResolution =
-        toValidInternalResolutionNumber(configWithDefault.internalResolution);
+        toValidInternalResolutionNumber(config.internalResolution);
     const {resized, padding} = padAndResizeTo(
         input, [this.internalResolution, this.internalResolution]);
     const {
@@ -847,8 +838,7 @@ export class BodyPix {
 
       const scaledLongOffsets = longOffsets;
       const segmentation = toMaskTensor(
-          scaledSegmentScores.squeeze(),
-          configWithDefault.segmentationThreshold);
+          scaledSegmentScores.squeeze(), config.segmentationThreshold);
       const partSegmentation =
           decodeOnlyPartSegmentation(scaledPartSegmentationScores);
       return {
@@ -881,8 +871,8 @@ export class BodyPix {
         this.baseModel.outputStride,
         [this.internalResolution, this.internalResolution],
         [[padding.top, padding.bottom], [padding.left, padding.right]],
-        configWithDefault.scoreThreshold, configWithDefault.refineSteps,
-        configWithDefault.minKeypointScore, configWithDefault.maxDetections);
+        config.scoreThreshold, config.refineSteps, config.minKeypointScore,
+        config.maxDetections);
 
     resized.dispose();
     segmentation.dispose();
