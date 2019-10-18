@@ -2,11 +2,42 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {BodyPixInput, Padding} from './types';
 import {Pose, TensorBuffer3D} from './types';
+import {BodyPixInternalResolution} from './types';
 
 export function getInputTensorDimensions(input: BodyPixInput):
     [number, number] {
   return input instanceof tf.Tensor ? [input.shape[0], input.shape[1]] :
                                       [input.height, input.width];
+}
+
+export function toValidInternalResolutionNumber(
+    internalResolution: BodyPixInternalResolution): number {
+  let validInternalResolution = 257;
+  switch (internalResolution) {
+    case 'low': {
+      validInternalResolution = 257;
+      break;
+    }
+    case 'medium': {
+      validInternalResolution = 513
+      break;
+    }
+    case 'high': {
+      validInternalResolution = 1025
+      break;
+    }
+    default: {
+      validInternalResolution = Math.round(internalResolution / 32) * 32 + 1;
+      if (validInternalResolution > 1217) {
+        validInternalResolution = 1217;
+      }
+      if (validInternalResolution < 161) {
+        validInternalResolution = 161;
+      }
+      break;
+    }
+  }
+  return validInternalResolution;
 }
 
 export function toInputTensor(input: BodyPixInput) {
@@ -146,9 +177,7 @@ export function padAndResizeTo(
     return imageTensor.resizeBilinear([targetH, targetW]);
   });
 
-  return {
-    resized, padding: {top: padT, left: padL, right: padR, bottom: padB}
-  };
+  return {resized, padding: {top: padT, left: padL, right: padR, bottom: padB}};
 }
 
 export async function toTensorBuffer<rank extends tf.Rank>(
