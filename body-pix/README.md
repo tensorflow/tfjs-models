@@ -113,7 +113,6 @@ If you want to load other versions of the model, specify the architecture explic
 const net = await bodyPix.load({
   architecture: 'ResNet50',
   outputStride: 32,
-  inputResolution: 257,
   quantBytes: 2
 });
 ```
@@ -123,7 +122,6 @@ const net = await bodyPix.load({
 const net = await bodyPix.load({
   architecture: 'MobileNetV1',
   outputStride: 16,
-  inputResolution: 513,
   multiplier: 0.75
 });
 ```
@@ -133,8 +131,6 @@ const net = await bodyPix.load({
  * **architecture** - Can be either `MobileNetV1` or `ResNet50`. It determines which BodyPix architecture to load.
 
  * **outputStride** - Can be one of `8`, `16`, `32` (Stride `16`, `32` are supported for the ResNet architecture and stride `8`, `16`, `32` are supported for the MobileNetV1 architecture). It specifies the output stride of the BodyPix model. The smaller the value, the larger the output resolution, and more accurate the model at the cost of speed.  ***A larger value results in a smaller model and faster prediction time but lower accuracy***.
-
-* **inputResolution** - Can be one of `161`, `193`, `257`, `289`, `321`, `353`, `385`, `417`, `449`, `481`, `513`, and `801`. Defaults to `257.` It specifies the size the image is resized to before it is fed into the BodyPix model. The larger the value, the more accurate the model at the cost of speed. ***A smaller value results in a smaller model and faster prediction time but lower accuracy***.
 
  * **multiplier** - Can be one of `1.0`, `0.75`, or `0.50` (The value is used *only* by the MobileNetV1 architecture and not by the ResNet architecture). It is the float multiplier for the depth (number of channels) for all convolution ops. The larger the value, the larger the size of the layers, and more accurate the model at the cost of speed. ***A smaller value results in a smaller model and faster prediction time but lower accuracy***.
 
@@ -167,6 +163,7 @@ Given an image with one or more people, person segmentation predicts segmentatio
 ```javascript
 const segmentation = await net.segmentPerson(image, {
   flipHorizontal: false,
+  internalResolution: 'medium',
   segmentationThreshold: 0.7
 });
 ```
@@ -177,6 +174,7 @@ const segmentation = await net.segmentPerson(image, {
    The input image to feed through the network.
 * **config** - an optional dictionary containing:
   * **flipHorizontal** - Defaults to false.  If the segmentation & pose should be flipped/mirrored horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the segmentation & pose to be returned in the proper orientation.
+  * **internalResolution** - BodyPixInternalResolution, default to 'medium'. It represents the internal input image resolution of the model. The larger the internal resolution, and more accurate the model at the cost of speed. The internal resolution can be specified using a positive number or a string ('low', 'medium', 'high').
   * **segmentationThreshold** - Defaults to 0.7. Must be between 0 and 1. For each pixel, the model estimates a score between 0 and 1 that indicates how confident it is that part of a person is displayed in that pixel.  This *segmentationThreshold* is used to convert these values
 to binary 0 or 1s by determining the minimum value a pixel's score must have to be considered part of a person.  In essence, a higher value will create a tighter crop
 around a person but may result in some pixels being that are part of a person being excluded from the returned segmentation mask.
@@ -224,6 +222,7 @@ The `PartSegmentation` object contains a width, height, `Pose` and an Int32Array
 ```javascript
 const segmentation = await net.segmentPersonParts(image, {
   flipHorizontal: false,
+  internalResolution: 'medium',
   segmentationThreshold: 0.7
 });
 ```
@@ -234,6 +233,7 @@ const segmentation = await net.segmentPersonParts(image, {
    The input image to feed through the network.
 * **config** - an object containing:
   * **flipHorizontal** - Defaults to false.  If the segmentation & pose should be flipped/mirrored horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the segmentation & pose to be returned in the proper orientation.
+  * **internalResolution** - BodyPixInternalResolution, default to 'medium'. It represents the internal input image resolution of the model. The larger the internal resolution, and more accurate the model at the cost of speed. The internal resolution can be specified using a positive number or a string ('low', 'medium', 'high').
   * **segmentationThreshold** - Must be between 0 and 1. For each pixel, the model estimates a score between 0 and 1 that indicates how confident it is that part of a person is displayed in that pixel.  This *segmentationThreshold* is used to convert these values
 to binary 0 or 1s by determining the minimum value a pixel's score must have to be considered part of a person.  In essence, a higher value will create a tighter crop
 around a person but may result in some pixels being that are part of a person being excluded from the returned segmentation mask.
@@ -263,6 +263,7 @@ If you don't need to segment individuals separately then use `segmentPerson` whi
 ```javascript
 const segmentation = await net.segmentMultiPerson(image, {
   flipHorizontal: false,
+  internalResolution: 'medium',
   segmentationThreshold: 0.7,
   maxDetections: 10,
   scoreThreshold: 0.2,
@@ -278,6 +279,7 @@ const segmentation = await net.segmentMultiPerson(image, {
    The input image to feed through the network.
 * **config** - an optional dictionary containing:
   * **flipHorizontal** - Defaults to false.  If the segmentation & pose should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the segmentation & pose to be returned in the proper orientation.
+  * **internalResolution** - BodyPixInternalResolution, default to 'medium'. It represents the internal input image resolution of the model. The larger the internal resolution, and more accurate the model at the cost of speed. The internal resolution can be specified using a positive number or a string ('low', 'medium', 'high').
   * **segmentationThreshold** - Defaults to 0.7. Must be between 0 and 1. For each pixel, the model estimates a score between 0 and 1 that indicates how confident it is that part of a person is displayed in that pixel.  This *segmentationThreshold* is used to convert these values
 to binary 0 or 1s by determining the minimum value a pixel's score must have to be considered part of a person.  In essence, a higher value will create a tighter crop
 around a person but may result in some pixels being that are part of a person being excluded from the returned segmentation mask.
@@ -320,6 +322,7 @@ See the table in the documentation of `segmentPersonParts` for the values for ea
 ```javascript
 const segmentation = await net.segmentMultiPersonParts(image, {
   flipHorizontal: false,
+  internalResolution: 'medium',
   segmentationThreshold: 0.7,
   maxDetections: 10,
   scoreThreshold: 0.2,
@@ -335,6 +338,7 @@ const segmentation = await net.segmentMultiPersonParts(image, {
    The input image to feed through the network.
 * **config** - an object containing:
   * **flipHorizontal** - Defaults to false.  If the segmentation & pose should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the segmentation & pose to be returned in the proper orientation.
+  * **internalResolution** - BodyPixInternalResolution, default to 'medium'. It represents the internal input image resolution of the model. The larger the internal resolution, and more accurate the model at the cost of speed. The internal resolution can be specified using a positive number or a string ('low', 'medium', 'high').
   * **segmentationThreshold** - Must be between 0 and 1. For each pixel, the model estimates a score between 0 and 1 that indicates how confident it is that part of a person is displayed in that pixel.  This *segmentationThreshold* is used to convert these values
 to binary 0 or 1s by determining the minimum value a pixel's score must have to be considered part of a person.  In essence, a higher value will create a tighter crop
 around a person but may result in some pixels being that are part of a person being excluded from the returned segmentation mask.

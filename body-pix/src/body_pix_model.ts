@@ -80,7 +80,6 @@ export interface BaseModel {
  * the model at the cost of speed. Set this to a larger value to increase speed
  * at the cost of accuracy. Stride 32 is supported for ResNet and
  * stride 8,16,32 are supported for various MobileNetV1 models.
-
  *
  * `multiplier`: An optional number with values: 1.01, 1.0, 0.75, or
  * 0.50. The value is used only by MobileNet architecture. It is the float
@@ -191,9 +190,10 @@ function validateModelConfig(config: ModelConfig) {
  * and you want the person & body part segmentation to be returned in the proper
  * orientation.
  *
- * `internalResolution`: BodyPixInternalResolution. Default to 'median'. It
- * represents the internal input image resolution of the model. The larger the
- * size of the input image, and more accurate the model at the cost of speed.
+ * `internalResolution`: BodyPixInternalResolution. It represents the internal
+ * input image resolution of the model. The larger the internal resolution,
+ * and more accurate the model at the cost of speed. The internal resolution can
+ * be specified using a positive number or a string ('low', 'medium', 'high').
  *
  * `segmentationThreshold`: The minimum that segmentation values must
  * have to be considered part of the person. Affects the generation of the
@@ -403,6 +403,12 @@ export class BodyPix {
    *
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
+   *
+   * @param internalResolution: BodyPixInternalResolution. It represents the
+   * internal input image resolution of the model. The larger the internal
+   * resolution, and more accurate the model at the cost of speed. The internal
+   * resolution can be specified using a positive number or a string ('low',
+   * 'medium', 'high').
    *
    * @param segmentationThreshold The minimum that segmentation values must have
    * to be considered part of the person. Affects the generation of the
@@ -647,6 +653,12 @@ export class BodyPix {
    *
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
+   *
+   * @param internalResolution: BodyPixInternalResolution. It represents the
+   * internal input image resolution of the model. The larger the internal
+   * resolution, and more accurate the model at the cost of speed. The internal
+   * resolution can be specified using a positive number or a string ('low',
+   * 'medium', 'high').
    *
    * @param segmentationThreshold The minimum that segmentation values must have
    * to be considered part of the person.  Affects the clipping of the colored
