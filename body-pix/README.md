@@ -401,11 +401,11 @@ An [ImageData](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) with 
 const img = document.getElementById('image');
 
 const net = await bodyPix.load();
-const partSegmentation = await net.segmentPerson(img);
+const segmentation = await net.segmentPerson(img);
 
 // The mask image is an binary mask image with a 1 where there is a person and
 // a 0 where there is not.
-const coloredPartImage = bodyPix.toMask(partSegmentation);
+const coloredPartImage = bodyPix.toMask(segmentation);
 const opacity = 0.7;
 const flipHorizontal = false;
 const maskBlurAmount = 0;
@@ -574,7 +574,7 @@ and the background by.  Defaults to 3. Should be an integer between 0 and 20.
 const img = document.getElementById('image');
 
 const net = await bodyPix.load();
-const personSegmentation = await net.segmentPerson(img);
+const segmentation = await net.segmentPerson(img);
 
 const backgroundBlurAmount = 3;
 const edgeBlurAmount = 3;
@@ -584,7 +584,7 @@ const canvas = document.getElementById('canvas');
 // Draw the image with the background blurred onto the canvas. The edge between
 // the person and blurred background is blurred by 3 pixels.
 bodyPix.drawBokehEffect(
-    canvas, img, personSegmentation, backgroundBlurAmount,
+    canvas, img, segmentation, backgroundBlurAmount,
     edgeBlurAmount, flipHorizontal);
 ```
 
