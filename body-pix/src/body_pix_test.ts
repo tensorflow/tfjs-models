@@ -77,7 +77,7 @@ describeWithFlags('BodyPix', NODE_ENVS, () => {
   });
 
   it('segmentPerson does not leak memory', done => {
-    const input = tf.zeros([513, 513, 3]) as tf.Tensor3D;
+    const input = tf.zeros([73, 73, 3]) as tf.Tensor3D;
 
     const beforeTensors = tf.memory().numTensors;
 
@@ -90,7 +90,7 @@ describeWithFlags('BodyPix', NODE_ENVS, () => {
   });
 
   it('segmentMultiPerson does not leak memory', done => {
-    const input = tf.zeros([513, 513, 3]) as tf.Tensor3D;
+    const input = tf.zeros([73, 73, 3]) as tf.Tensor3D;
 
     const beforeTensors = tf.memory().numTensors;
 
@@ -103,7 +103,7 @@ describeWithFlags('BodyPix', NODE_ENVS, () => {
   });
 
   it('segmentPersonParts does not leak memory', done => {
-    const input = tf.zeros([513, 513, 3]) as tf.Tensor3D;
+    const input = tf.zeros([73, 73, 3]) as tf.Tensor3D;
     const beforeTensors = tf.memory().numTensors;
     bodyPix.segmentPersonParts(input)
         .then(() => {
@@ -114,7 +114,7 @@ describeWithFlags('BodyPix', NODE_ENVS, () => {
   });
 
   it('segmentMultiPersonParts does not leak memory', done => {
-    const input = tf.zeros([513, 513, 3]) as tf.Tensor3D;
+    const input = tf.zeros([73, 73, 3]) as tf.Tensor3D;
     const beforeTensors = tf.memory().numTensors;
     bodyPix.segmentMultiPersonParts(input)
         .then(() => {
