@@ -7,7 +7,6 @@ export type PersonSegmentation = {
   data: Uint8Array,
   width: number,
   height: number,
-  partData?: Int32Array,
   pose?: Pose,
 };
 
@@ -19,7 +18,10 @@ export type PartSegmentation = {
 };
 
 export declare interface Padding {
-  top: number; bottom: number; left: number; right: number;
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
 }
 
 export declare type Part = {
