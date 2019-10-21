@@ -414,7 +414,6 @@ export class Dataset {
                 spectrogram.keyFrameIndex;
           }
           // TODO(cais): See if we can get rid of dataSync();
-
           const snippet =
               tf.tensor3d(spectrogram.data, [snippetLength, frameSize, 1]);
           const windows =
@@ -442,8 +441,8 @@ export class Dataset {
 
       if (config.augmentByMixingNoiseRatio != null) {
         this.augmentByMixingNoise(
-            config.getDataset ? xArrays : xTensors as
-                Array<Float32Array | tf.Tensor>,
+            config.getDataset ? xArrays :
+                                xTensors as Array<Float32Array|tf.Tensor>,
             labelIndices, config.augmentByMixingNoiseRatio);
       }
 
@@ -523,7 +522,7 @@ export class Dataset {
     });
   }
 
-  private augmentByMixingNoise<T extends tf.Tensor | Float32Array>(
+  private augmentByMixingNoise<T extends tf.Tensor|Float32Array>(
       xs: T[], labelIndices: number[], ratio: number): void {
     if (xs == null || xs.length === 0) {
       throw new Error(
@@ -547,18 +546,19 @@ export class Dataset {
           `there is no example with label ${BACKGROUND_NOISE_TAG}`);
     }
 
-    const mixedXTensors: Array<tf.Tensor | Float32Array> = [];
+    const mixedXTensors: Array<tf.Tensor|Float32Array> = [];
     const mixedLabelIndices: number[] = [];
     for (const index of wordExampleIndices) {
       const noiseIndex =  // Randomly sample from the noises, with replacement.
           noiseExampleIndices[getRandomInteger(0, noiseExampleIndices.length)];
       const signalTensor = isTypedArray ?
-          tf.tensor1d(xs[index] as Float32Array) : xs[index] as tf.Tensor;
+          tf.tensor1d(xs[index] as Float32Array) :
+          xs[index] as tf.Tensor;
       const noiseTensor = isTypedArray ?
           tf.tensor1d(xs[noiseIndex] as Float32Array) :
           xs[noiseIndex] as tf.Tensor;
-      const mixed: tf.Tensor = tf.tidy(() =>
-          normalize(signalTensor.add(noiseTensor.mul(ratio))));
+      const mixed: tf.Tensor =
+          tf.tidy(() => normalize(signalTensor.add(noiseTensor.mul(ratio))));
       if (isTypedArray) {
         mixedXTensors.push(mixed.dataSync() as Float32Array);
       } else {

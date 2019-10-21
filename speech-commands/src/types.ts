@@ -691,7 +691,7 @@ export type ROCCurve =
     /**
      * Sampling rate, in Hz.
      */
-    sampleRateHz?: number;
+    sampleRateHz?: 44100|48000;
   }
 
   /**

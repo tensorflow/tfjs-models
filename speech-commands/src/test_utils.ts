@@ -20,12 +20,10 @@ import {Tensor, test_util, util} from '@tensorflow/tfjs';
 export function expectTensorsClose(
     actual: Tensor|number[], expected: Tensor|number[], epsilon?: number) {
   if (actual == null) {
-    throw new Error(
-        'First argument to expectTensorsClose() is not defined.');
+    throw new Error('First argument to expectTensorsClose() is not defined.');
   }
   if (expected == null) {
-    throw new Error(
-        'Second argument to expectTensorsClose() is not defined.');
+    throw new Error('Second argument to expectTensorsClose() is not defined.');
   }
   if (actual instanceof Tensor && expected instanceof Tensor) {
     if (actual.dtype !== expected.dtype) {

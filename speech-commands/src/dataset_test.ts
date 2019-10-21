@@ -17,7 +17,6 @@
 
 import * as tf from '@tensorflow/tfjs';
 import {test_util} from '@tensorflow/tfjs';
-
 import {normalize} from './browser_fft_utils';
 import {arrayBuffer2SerializedExamples, BACKGROUND_NOISE_TAG, Dataset, DATASET_SERIALIZATION_DESCRIPTOR, DATASET_SERIALIZATION_VERSION, deserializeExample, getMaxIntensityFrameIndex, getValidWindows, serializeExample, spectrogram2IntensityCurve, SpectrogramAndTargetsTfDataset} from './dataset';
 import {string2ArrayBuffer} from './generic_utils';
@@ -592,12 +591,9 @@ describe('Dataset', () => {
     const windows = tf.unstack(xs);
 
     expect(windows.length).toEqual(6);
-    expectTensorsClose(
-        windows[0], tf.tensor3d([1, 1, 2, 2, 3, 3], [3, 2, 1]));
-    expectTensorsClose(
-        windows[1], tf.tensor3d([2, 2, 3, 3, 2, 2], [3, 2, 1]));
-    expectTensorsClose(
-        windows[2], tf.tensor3d([3, 3, 2, 2, 1, 1], [3, 2, 1]));
+    expectTensorsClose(windows[0], tf.tensor3d([1, 1, 2, 2, 3, 3], [3, 2, 1]));
+    expectTensorsClose(windows[1], tf.tensor3d([2, 2, 3, 3, 2, 2], [3, 2, 1]));
+    expectTensorsClose(windows[2], tf.tensor3d([3, 3, 2, 2, 1, 1], [3, 2, 1]));
     expectTensorsClose(
         windows[3], tf.tensor3d([10, 10, 20, 20, 30, 30], [3, 2, 1]));
     expectTensorsClose(
@@ -774,8 +770,7 @@ describe('Dataset', () => {
         windows[1], tf.tensor3d([20, 20, 30, 30, 20, 20], [3, 2, 1]));
     expectTensorsClose(
         windows[2], tf.tensor3d([20, 20, 10, 10, 0, 0], [3, 2, 1]));
-    expectTensorsClose(
-        windows[3], tf.tensor3d([2, 2, 3, 3, 2, 2], [3, 2, 1]));
+    expectTensorsClose(windows[3], tf.tensor3d([2, 2, 3, 3, 2, 2], [3, 2, 1]));
     expectTensorsClose(ys, tf.tensor2d([[1, 0], [1, 0], [1, 0], [0, 1]]));
   });
 
@@ -1049,8 +1044,7 @@ describe('Dataset serialization', () => {
     const {xs, ys} = datasetPrime.getData(null, {shuffle: false}) as
         {xs: tf.Tensor, ys: tf.Tensor};
     expect(xs.shape).toEqual([3, 10, 16, 1]);
-    expectTensorsClose(
-        ys, tf.tensor2d([[1, 0, 0], [0, 1, 0], [0, 0, 1]]));
+    expectTensorsClose(ys, tf.tensor2d([[1, 0, 0], [0, 1, 0], [0, 0, 1]]));
   });
 
   it('Attempt to load invalid ArrayBuffer errors out', () => {
