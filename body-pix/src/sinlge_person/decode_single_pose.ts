@@ -17,8 +17,8 @@
 
 import * as tf from '@tensorflow/tfjs-core';
 
-import {BodyPixOutputStride} from '../body_pix_model';
 import {PART_NAMES} from '../keypoints';
+import {BodyPixOutputStride} from '../types';
 import {Keypoint, Pose} from '../types';
 import {toTensorBuffer} from '../util';
 

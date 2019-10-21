@@ -18,7 +18,8 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {BaseModel, BodyPixOutputStride} from './body_pix_model';
+import {BaseModel} from './body_pix_model';
+import {BodyPixOutputStride} from './types';
 
 export type MobileNetMultiplier = 0.50|0.75|1.0;
 

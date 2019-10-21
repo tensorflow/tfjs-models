@@ -26,16 +26,9 @@ import {decodeMultiplePoses} from './multi_person/decode_multiple_poses';
 import {ResNet} from './resnet';
 import {mobileNetSavedModel, resNet50SavedModel} from './saved_models';
 import {decodeSinglePose} from './sinlge_person/decode_single_pose';
-import {BodyPixInput, Padding, PartSegmentation, PersonSegmentation} from './types';
-import {getInputTensorDimensions, padAndResizeTo, scaleAndCropToInputTensorShape, scaleAndFlipPoses, toInputTensor, toTensorBuffers3D} from './util';
+import {BodyPixArchitecture, BodyPixInput, BodyPixInternalResolution, BodyPixMultiplier, BodyPixOutputStride, BodyPixQuantBytes, Padding, PartSegmentation, PersonSegmentation} from './types';
+import {getInputTensorDimensions, padAndResizeTo, scaleAndCropToInputTensorShape, scaleAndFlipPoses, toInputTensor, toTensorBuffers3D, toValidInternalResolutionNumber} from './util';
 
-export type BodyPixInputResolution =
-    161|193|257|289|321|353|385|417|449|481|513|801|1217;
-export type BodyPixOutputStride = 32|16|8;
-export type BodyPixArchitecture = 'ResNet50'|'MobileNetV1';
-export type BodyPixDecodingMethod = 'person'|'multi-person-by-instance';
-export type BodyPixQuantBytes = 1|2|4;
-export type BodyPixMultiplier = 1.0|0.75|0.50;
 
 const APPLY_SIGMOID_ACTIVATION = true;
 
@@ -88,10 +81,6 @@ export interface BaseModel {
  * at the cost of accuracy. Stride 32 is supported for ResNet and
  * stride 8,16,32 are supported for various MobileNetV1 models.
  *
- * `inputResolution`: One of the number specified by BodyPixInputResolution.
- * It represents the input image resolution of the model. The larger the size
- * of the input image, and more accurate the model at the cost of speed.
- *
  * `multiplier`: An optional number with values: 1.01, 1.0, 0.75, or
  * 0.50. The value is used only by MobileNet architecture. It is the float
  * multiplier for the depth (number of channels) for all convolution ops.
@@ -112,7 +101,6 @@ export interface BaseModel {
 export interface ModelConfig {
   architecture: BodyPixArchitecture;
   outputStride: BodyPixOutputStride;
-  inputResolution: BodyPixInputResolution;
   multiplier?: MobileNetMultiplier;
   modelUrl?: string;
   quantBytes?: BodyPixQuantBytes;
@@ -127,7 +115,6 @@ export interface ModelConfig {
 // const RESNET_CONFIG = {
 //   architecture: 'ResNet50',
 //   outputStride: 32,
-//   inputResolution: 513,
 //   quantBytes: 4,
 // } as ModelConfig;
 // ```
@@ -135,7 +122,6 @@ export interface ModelConfig {
 const MOBILENET_V1_CONFIG = {
   architecture: 'MobileNetV1',
   outputStride: 16,
-  inputResolution: 513,
   quantBytes: 4,
   multiplier: 0.75,
 } as ModelConfig;
@@ -145,8 +131,6 @@ const VALID_STRIDE: {[id: string]: BodyPixOutputStride[]} = {
   'MobileNetV1': [8, 16, 32],
   'ResNet50': [32, 16]
 };
-export const VALID_INPUT_RESOLUTION: BodyPixInputResolution[] =
-    [161, 193, 257, 289, 321, 353, 385, 417, 449, 481, 513, 801];
 const VALID_MULTIPLIER: {[id: string]: BodyPixMultiplier[]} = {
   'MobileNetV1': [0.50, 0.75, 1.0],
   'ResNet50': [1.0]
@@ -164,17 +148,6 @@ function validateModelConfig(config: ModelConfig) {
         `Invalid architecture ${config.architecture}. ` +
         `Should be one of ${VALID_ARCHITECTURE}`);
   }
-
-  if (config.inputResolution == null) {
-    config.inputResolution = 257;
-  }
-
-  if (VALID_INPUT_RESOLUTION.indexOf(config.inputResolution) < 0) {
-    throw new Error(
-        `Invalid inputResolution ${config.inputResolution}. ` +
-        `Should be one of ${VALID_INPUT_RESOLUTION}`);
-  }
-
   if (config.outputStride == null) {
     config.outputStride = 16;
   }
@@ -217,7 +190,12 @@ function validateModelConfig(config: ModelConfig) {
  * and you want the person & body part segmentation to be returned in the proper
  * orientation.
  *
- *  `segmentationThreshold`: The minimum that segmentation values must
+ * `internalResolution`: Defaults to 'medium'. The internal resolution used by
+ * the model. The larger the internal resolution the more accurate the model at
+ * the cost of slower prediction times. Available values are 'low', 'medium',
+ * 'high' or a positive number.
+ *
+ * `segmentationThreshold`: The minimum that segmentation values must
  * have to be considered part of the person. Affects the generation of the
  * segmentation mask. More specifically, it is the threshold used to binarize
  * the intermediate person segmentation probability. The probability of each
@@ -227,6 +205,7 @@ function validateModelConfig(config: ModelConfig) {
  */
 export interface InferenceConfig {
   flipHorizontal: boolean;
+  internalResolution: BodyPixInternalResolution;
   segmentationThreshold: number;
 }
 
@@ -266,12 +245,14 @@ export interface MultiPersonInstanceInferenceConfig extends InferenceConfig {
 
 export const PERSON_INFERENCE_CONFIG: PersonInferenceConfig = {
   flipHorizontal: false,
+  internalResolution: 'medium',
   segmentationThreshold: 0.7
 };
 
 export const MULTI_PERSON_INSTANCE_INFERENCE_CONFIG:
     MultiPersonInstanceInferenceConfig = {
       flipHorizontal: false,
+      internalResolution: 'medium',
       segmentationThreshold: 0.7,
       maxDetections: 10,
       scoreThreshold: 0.2,
@@ -330,11 +311,10 @@ function validateMultiPersonInstanceInferenceConfig(
 
 export class BodyPix {
   baseModel: BaseModel;
-  inputResolution: BodyPixInputResolution;
+  internalResolution: number;
 
-  constructor(net: BaseModel, inputResolution: BodyPixInputResolution) {
+  constructor(net: BaseModel) {
     this.baseModel = net;
-    this.inputResolution = inputResolution;
   }
 
   private predictForPersonSegmentation(input: tf.Tensor3D): {
@@ -424,6 +404,11 @@ export class BodyPix {
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
    *
+   * @param internalResolution`: Defaults to 'medium'. The internal resolution
+   * used by the model. The larger the internal resolution the more accurate the
+   * model at the cost of slower prediction times. Available values are 'low',
+   * 'medium', 'high' or a positive number.
+   *
    * @param segmentationThreshold The minimum that segmentation values must have
    * to be considered part of the person. Affects the generation of the
    * segmentation mask.
@@ -440,16 +425,20 @@ export class BodyPix {
    * - `padding`: The padding (unit pixels) being applied to the input image
    * before it is fed into the model.
    */
-  segmentPersonActivation(input: BodyPixInput, segmentationThreshold = 0.5): {
+  segmentPersonActivation(
+      input: BodyPixInput, internalResolution: BodyPixInternalResolution,
+      segmentationThreshold = 0.5): {
     segmentation: tf.Tensor2D,
     heatmapScores: tf.Tensor3D,
     offsets: tf.Tensor3D,
     padding: Padding
   } {
-    const inputResolution = this.inputResolution;
+    const validInternalResolution =
+        toValidInternalResolutionNumber(internalResolution);
+    this.internalResolution = validInternalResolution;
     const imageTensor = toInputTensor(input);
-    const {resized, padding} =
-        padAndResizeTo(imageTensor, [inputResolution, inputResolution]);
+    const {resized, padding} = padAndResizeTo(
+        imageTensor, [validInternalResolution, validInternalResolution]);
 
     const {segmentation, heatmapScores, offsets} = tf.tidy(() => {
       const {
@@ -486,7 +475,6 @@ export class BodyPix {
    * multiple person segmentation & pose for each person, use
    * `segmentMultiPerson` instead.
    *
-   *
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
    *
@@ -507,12 +495,12 @@ export class BodyPix {
       input: BodyPixInput,
       config: PersonInferenceConfig = PERSON_INFERENCE_CONFIG):
       Promise<PersonSegmentation> {
-    const configWithDefault:
-        PersonInferenceConfig = {...PERSON_INFERENCE_CONFIG, ...config};
-    validatePersonInferenceConfig(configWithDefault);
+    config = {...PERSON_INFERENCE_CONFIG, ...config};
+
+    validatePersonInferenceConfig(config);
     const {segmentation, heatmapScores, offsets, padding} =
         this.segmentPersonActivation(
-            input, configWithDefault.segmentationThreshold);
+            input, config.internalResolution, config.segmentationThreshold);
 
     const [height, width] = segmentation.shape;
 
@@ -523,8 +511,9 @@ export class BodyPix {
         heatmapScores, offsets, this.baseModel.outputStride);
 
     const resultPose = scaleAndFlipPoses(
-        [pose], [height, width], [this.inputResolution, this.inputResolution],
-        padding, configWithDefault.flipHorizontal)[0];
+        [pose], [height, width],
+        [this.internalResolution, this.internalResolution], padding,
+        config.flipHorizontal)[0];
 
     heatmapScores.dispose();
     offsets.dispose();
@@ -560,16 +549,14 @@ export class BodyPix {
       config: MultiPersonInstanceInferenceConfig =
           MULTI_PERSON_INSTANCE_INFERENCE_CONFIG):
       Promise<PersonSegmentation[]> {
-    const configWithDefault: MultiPersonInstanceInferenceConfig = {
-      ...MULTI_PERSON_INSTANCE_INFERENCE_CONFIG,
-      ...config
-    };
-    validateMultiPersonInstanceInferenceConfig(configWithDefault);
+    config = {...MULTI_PERSON_INSTANCE_INFERENCE_CONFIG, ...config};
+    validateMultiPersonInstanceInferenceConfig(config);
     const [height, width] = getInputTensorDimensions(input);
-    const inputResolution = this.inputResolution;
+    this.internalResolution =
+        toValidInternalResolutionNumber(config.internalResolution);
 
-    const {resized, padding} =
-        padAndResizeTo(input, [inputResolution, inputResolution]);
+    const {resized, padding} = padAndResizeTo(
+        input, [this.internalResolution, this.internalResolution]);
     const {
       segmentation,
       longOffsets,
@@ -587,14 +574,16 @@ export class BodyPix {
         displacementBwd,
       } = this.predictForMultiPersonInstanceSegmentationAndPart(resized);
       const scaledSegmentScores = scaleAndCropToInputTensorShape(
-          segmentLogits, [height, width], [inputResolution, inputResolution],
+          segmentLogits, [height, width],
+          [this.internalResolution, this.internalResolution],
           [[padding.top, padding.bottom], [padding.left, padding.right]],
           APPLY_SIGMOID_ACTIVATION);
       const longOffsetsResized = false;
       let scaledLongOffsets;
       if (longOffsetsResized) {
         scaledLongOffsets = scaleAndCropToInputTensorShape(
-            longOffsets, [height, width], [inputResolution, inputResolution],
+            longOffsets, [height, width],
+            [this.internalResolution, this.internalResolution],
             [[padding.top, padding.bottom], [padding.left, padding.right]],
             APPLY_SIGMOID_ACTIVATION);
       } else {
@@ -602,8 +591,7 @@ export class BodyPix {
       }
 
       const segmentation = toMaskTensor(
-          scaledSegmentScores.squeeze(),
-          configWithDefault.segmentationThreshold);
+          scaledSegmentScores.squeeze(), config.segmentationThreshold);
 
       return {
         segmentation,
@@ -623,19 +611,18 @@ export class BodyPix {
     let poses = await decodeMultiplePoses(
         scoresBuffer, offsetsBuffer, displacementsFwdBuffer,
         displacementsBwdBuffer, this.baseModel.outputStride,
-        config.maxDetections, configWithDefault.scoreThreshold,
-        configWithDefault.nmsRadius);
+        config.maxDetections, config.scoreThreshold, config.nmsRadius);
 
     poses = scaleAndFlipPoses(
-        poses, [height, width], [inputResolution, inputResolution], padding,
-        false);
+        poses, [height, width],
+        [this.internalResolution, this.internalResolution], padding, false);
 
     const instanceMasks = await decodePersonInstanceMasks(
         segmentation, longOffsets, poses, height, width,
-        this.baseModel.outputStride, [inputResolution, inputResolution],
-        padding, configWithDefault.scoreThreshold,
-        configWithDefault.refineSteps, configWithDefault.minKeypointScore,
-        configWithDefault.maxDetections);
+        this.baseModel.outputStride,
+        [this.internalResolution, this.internalResolution], padding,
+        config.scoreThreshold, config.refineSteps, config.minKeypointScore,
+        config.maxDetections);
 
     resized.dispose();
     segmentation.dispose();
@@ -658,6 +645,11 @@ export class BodyPix {
    * @param input ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement)
    * The input image to feed through the network.
    *
+   * @param internalResolution`: Defaults to 'medium'. The internal resolution
+   * used by the model. The larger the internal resolution the more accurate the
+   * model at the cost of slower prediction times. Available values are 'low',
+   * 'medium', 'high' or a positive number.
+   *
    * @param segmentationThreshold The minimum that segmentation values must have
    * to be considered part of the person.  Affects the clipping of the colored
    * part image.
@@ -674,18 +666,22 @@ export class BodyPix {
    * before it is fed into the model.
    */
   segmentPersonPartsActivation(
-      input: BodyPixInput, segmentationThreshold = 0.5): {
+      input: BodyPixInput, internalResolution: BodyPixInternalResolution,
+      segmentationThreshold = 0.5): {
     partSegmentation: tf.Tensor2D,
     heatmapScores: tf.Tensor3D,
     offsets: tf.Tensor3D,
     padding: Padding
   } {
-    const inputResolution = this.inputResolution;
     const imageTensor = toInputTensor(input);
+    this.internalResolution =
+        toValidInternalResolutionNumber(internalResolution);
     const {
       resized,
       padding,
-    } = padAndResizeTo(imageTensor, [inputResolution, inputResolution]);
+    } =
+        padAndResizeTo(
+            imageTensor, [this.internalResolution, this.internalResolution]);
 
     const {partSegmentation, heatmapScores, offsets} = tf.tidy(() => {
       const {segmentLogits, partHeatmapLogits, heatmapScores, offsets} =
@@ -746,12 +742,12 @@ export class BodyPix {
       input: BodyPixInput,
       config: PersonInferenceConfig = PERSON_INFERENCE_CONFIG):
       Promise<PartSegmentation> {
-    const configWithDefault:
-        PersonInferenceConfig = {...PERSON_INFERENCE_CONFIG, ...config};
-    validatePersonInferenceConfig(configWithDefault);
+    config = {...PERSON_INFERENCE_CONFIG, ...config};
+
+    validatePersonInferenceConfig(config);
     const {partSegmentation, heatmapScores, offsets, padding} =
         this.segmentPersonPartsActivation(
-            input, configWithDefault.segmentationThreshold);
+            input, config.internalResolution, config.segmentationThreshold);
 
     const [height, width] = partSegmentation.shape;
     const data = await partSegmentation.data() as Int32Array;
@@ -761,8 +757,9 @@ export class BodyPix {
         heatmapScores, offsets, this.baseModel.outputStride);
 
     const resultPose = scaleAndFlipPoses(
-        [pose], [height, width], [this.inputResolution, this.inputResolution],
-        padding, configWithDefault.flipHorizontal)[0];
+        [pose], [height, width],
+        [this.internalResolution, this.internalResolution], padding,
+        config.flipHorizontal)[0];
 
     heatmapScores.dispose();
     offsets.dispose();
@@ -797,15 +794,14 @@ export class BodyPix {
       input: BodyPixInput,
       config: MultiPersonInstanceInferenceConfig =
           MULTI_PERSON_INSTANCE_INFERENCE_CONFIG): Promise<PartSegmentation[]> {
-    const configWithDefault: MultiPersonInstanceInferenceConfig = {
-      ...MULTI_PERSON_INSTANCE_INFERENCE_CONFIG,
-      ...config
-    };
-    validateMultiPersonInstanceInferenceConfig(configWithDefault);
+    config = {...MULTI_PERSON_INSTANCE_INFERENCE_CONFIG, ...config};
+
+    validateMultiPersonInstanceInferenceConfig(config);
     const [height, width] = getInputTensorDimensions(input);
-    const inputResolution = this.inputResolution;
-    const {resized, padding} =
-        padAndResizeTo(input, [inputResolution, inputResolution]);
+    this.internalResolution =
+        toValidInternalResolutionNumber(config.internalResolution);
+    const {resized, padding} = padAndResizeTo(
+        input, [this.internalResolution, this.internalResolution]);
     const {
       segmentation,
       longOffsets,
@@ -827,20 +823,21 @@ export class BodyPix {
 
       // decoding with scaling.
       const scaledSegmentScores = scaleAndCropToInputTensorShape(
-          segmentLogits, [height, width], [inputResolution, inputResolution],
+          segmentLogits, [height, width],
+          [this.internalResolution, this.internalResolution],
           [[padding.top, padding.bottom], [padding.left, padding.right]],
           APPLY_SIGMOID_ACTIVATION);
 
       // decoding with scaling.
       const scaledPartSegmentationScores = scaleAndCropToInputTensorShape(
-          partHeatmaps, [height, width], [inputResolution, inputResolution],
+          partHeatmaps, [height, width],
+          [this.internalResolution, this.internalResolution],
           [[padding.top, padding.bottom], [padding.left, padding.right]],
           APPLY_SIGMOID_ACTIVATION);
 
       const scaledLongOffsets = longOffsets;
       const segmentation = toMaskTensor(
-          scaledSegmentScores.squeeze(),
-          configWithDefault.segmentationThreshold);
+          scaledSegmentScores.squeeze(), config.segmentationThreshold);
       const partSegmentation =
           decodeOnlyPartSegmentation(scaledPartSegmentationScores);
       return {
@@ -865,15 +862,15 @@ export class BodyPix {
         config.maxDetections, config.scoreThreshold, config.nmsRadius);
 
     poses = scaleAndFlipPoses(
-        poses, [height, width], [inputResolution, inputResolution], padding,
-        false);
+        poses, [height, width],
+        [this.internalResolution, this.internalResolution], padding, false);
 
     const instanceMasks = await decodePersonInstancePartMasks(
         segmentation, longOffsets, partSegmentation, poses, height, width,
-        this.baseModel.outputStride, [inputResolution, inputResolution],
-        padding, configWithDefault.scoreThreshold,
-        configWithDefault.refineSteps, configWithDefault.minKeypointScore,
-        configWithDefault.maxDetections);
+        this.baseModel.outputStride,
+        [this.internalResolution, this.internalResolution], padding,
+        config.scoreThreshold, config.refineSteps, config.minKeypointScore,
+        config.maxDetections);
 
     resized.dispose();
     segmentation.dispose();
@@ -909,7 +906,7 @@ async function loadMobileNet(config: ModelConfig): Promise<BodyPix> {
   const url = mobileNetSavedModel(outputStride, multiplier, quantBytes);
   const graphModel = await tfconv.loadGraphModel(config.modelUrl || url);
   const mobilenet = new MobileNet(graphModel, outputStride);
-  return new BodyPix(mobilenet, config.inputResolution);
+  return new BodyPix(mobilenet);
 }
 
 /**
@@ -928,7 +925,7 @@ async function loadResNet(config: ModelConfig): Promise<BodyPix> {
   const url = resNet50SavedModel(outputStride, quantBytes);
   const graphModel = await tfconv.loadGraphModel(config.modelUrl || url);
   const resnet = new ResNet(graphModel, outputStride);
-  return new BodyPix(resnet, config.inputResolution);
+  return new BodyPix(resnet);
 }
 
 /**

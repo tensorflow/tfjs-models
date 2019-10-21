@@ -157,11 +157,11 @@ const defaultQuantBytes = 2;
 
 const defaultMobileNetMultiplier = isMobile() ? 0.50 : 0.75;
 const defaultMobileNetStride = 16;
-const defaultMobileNetInputResolution = 513;
+const defaultMobileNetInternalResolution = 'medium';
 
 const defaultResNetMultiplier = 1.0;
 const defaultResNetStride = 16;
-const defaultResNetInputResolution = 257;
+const defaultResNetInternalResolution = 'low';
 
 const guiState = {
   algorithm: 'multi-person-instance',
@@ -171,7 +171,7 @@ const guiState = {
   input: {
     architecture: 'ResNet50',
     outputStride: 16,
-    inputResolution: 257,
+    internalResolution: 'low',
     multiplier: 1.0,
     quantBytes: 2
   },
@@ -255,8 +255,6 @@ function setupGui(cameras) {
   // network
   let input = gui.addFolder('Input');
 
-
-
   // Updates outputStride
   // Output stride:  Internally, this parameter affects the height and width
   // of the layers in the neural network. The lower the value of the output
@@ -276,24 +274,23 @@ function setupGui(cameras) {
     });
   }
 
-  // Updates input resolution
-  // Input resolution:  Internally, this parameter affects the height and
+  // Updates internal resolution
+  // Internal resolution:  Internally, this parameter affects the height and
   // width of the layers in the neural network. The higher the value of the
-  // input resolution the better the accuracy but slower the speed.
-  let inputResolutionController = null;
-  function updateGuiInputResolution(
-      inputResolution,
-      inputResolutionArray,
+  // internal resolution the better the accuracy but slower the speed.
+  let internalResolutionController = null;
+  function updateGuiInternalResolution(
+      internalResolution,
+      internalResolutionArray,
   ) {
-    if (inputResolutionController) {
-      inputResolutionController.remove();
+    if (internalResolutionController) {
+      internalResolutionController.remove();
     }
-    guiState.input.inputResolution = inputResolution;
-    inputResolutionController =
-        input.add(guiState.input, 'inputResolution', inputResolutionArray);
-    inputResolutionController.onChange(function(inputResolution) {
-      state.changingResolution = true;
-      guiState.input.inputResolution = +inputResolution;
+    guiState.input.internalResolution = internalResolution;
+    internalResolutionController = input.add(
+        guiState.input, 'internalResolution', internalResolutionArray);
+    internalResolutionController.onChange(function(internalResolution) {
+      guiState.input.internalResolution = internalResolution;
     });
   }
 
@@ -339,13 +336,13 @@ function setupGui(cameras) {
 
   function updateGuiInputSection() {
     if (guiState.input.architecture === 'MobileNetV1') {
-      updateGuiInputResolution(
-          defaultMobileNetInputResolution, [257, 353, 449, 513, 801]);
+      updateGuiInternalResolution(
+          defaultMobileNetInternalResolution, ['low', 'medium', 'high']);
       updateGuiOutputStride(defaultMobileNetStride, [8, 16]);
       updateGuiMultiplier(defaultMobileNetMultiplier, [0.50, 0.75, 1.0])
     } else {  // guiState.input.architecture === "ResNet50"
-      updateGuiInputResolution(
-          defaultResNetInputResolution, [257, 353, 449, 513, 801]);
+      updateGuiInternalResolution(
+          defaultResNetInternalResolution, ['low', 'medium', 'high']);
       updateGuiOutputStride(defaultResNetStride, [32, 16]);
       updateGuiMultiplier(defaultResNetMultiplier, [1.0]);
     }
@@ -530,6 +527,7 @@ async function estimateSegmentation() {
     case 'multi-person-instance':
       multiPersonSegmentation =
           await state.net.segmentMultiPerson(state.video, {
+            internalResolution: guiState.input.internalResolution,
             segmentationThreshold: guiState.segmentation.segmentationThreshold,
             maxDetections: guiState.multiPersonDecoding.maxDetections,
             scoreThreshold: guiState.multiPersonDecoding.scoreThreshold,
@@ -540,9 +538,10 @@ async function estimateSegmentation() {
           });
       break;
     case 'person':
-      const personSegmentation = await state.net.segmentPerson(
-          state.video,
-          {segmentationThreshold: guiState.segmentation.segmentationThreshold});
+      const personSegmentation = await state.net.segmentPerson(state.video, {
+        internalResolution: guiState.input.internalResolution,
+        segmentationThreshold: guiState.segmentation.segmentationThreshold
+      });
       multiPersonSegmentation = [personSegmentation];
       break;
     default:
@@ -557,6 +556,7 @@ async function estimatePartSegmentation() {
     case 'multi-person-instance':
       multiPersonPartSegmentation =
           await state.net.segmentMultiPersonParts(state.video, {
+            internalResolution: guiState.input.internalResolution,
             segmentationThreshold: guiState.segmentation.segmentationThreshold,
             maxDetections: guiState.multiPersonDecoding.maxDetections,
             scoreThreshold: guiState.multiPersonDecoding.scoreThreshold,
@@ -567,9 +567,11 @@ async function estimatePartSegmentation() {
           });
       break;
     case 'person':
-      const personPartSegmentation = await state.net.segmentPersonParts(
-          state.video,
-          {segmentationThreshold: guiState.segmentation.segmentationThreshold});
+      const personPartSegmentation =
+          await state.net.segmentPersonParts(state.video, {
+            internalResolution: guiState.input.internalResolution,
+            segmentationThreshold: guiState.segmentation.segmentationThreshold
+          });
       multiPersonPartSegmentation = [personPartSegmentation];
       break;
     default:
@@ -583,7 +585,6 @@ async function loadBodyPix() {
   state.net = await bodyPix.load({
     architecture: guiState.input.architecture,
     outputStride: guiState.input.outputStride,
-    inputResolution: guiState.input.inputResolution,
     multiplier: guiState.input.multiplier,
     quantBytes: guiState.input.quantBytes
   });
@@ -603,22 +604,17 @@ function segmentBodyInRealTime() {
     // then try again.
     if (state.changingArchitecture || state.changingMultiplier ||
         state.changingCamera || state.changingStride ||
-        state.changingResolution || state.changingQuantBytes) {
+        state.changingQuantBytes) {
       console.log('load model...');
       loadBodyPix();
       state.changingArchitecture = false;
       state.changingMultiplier = false;
       state.changingStride = false;
-      state.changingResolution = false;
       state.changingQuantBytes = false;
     }
 
     // Begin monitoring code for frames per second
     stats.begin();
-
-    // Scale an image down to a certain factor. Too large of an image will
-    // slow down the GPU
-    const outputStride = +guiState.input.outputStride;
 
     const flipHorizontally = guiState.flipHorizontal;
 

@@ -251,6 +251,15 @@ export function toMask(
   return new ImageData(bytes, width, height);
 }
 
+const RAINBOW_PART_COLORS: Array<[number, number, number]> = [
+  [110, 64, 170], [143, 61, 178], [178, 60, 178], [210, 62, 167],
+  [238, 67, 149], [255, 78, 125], [255, 94, 99],  [255, 115, 75],
+  [255, 140, 56], [239, 167, 47], [217, 194, 49], [194, 219, 64],
+  [175, 240, 91], [135, 245, 87], [96, 247, 96],  [64, 243, 115],
+  [40, 234, 141], [28, 219, 169], [26, 199, 194], [33, 176, 213],
+  [47, 150, 224], [65, 125, 224], [84, 101, 214], [99, 81, 195]
+];
+
 /**
  * Given the output from person body part segmentation (or multi-person
  * instance body part segmentation) and an array of colors indexed by part id,
@@ -270,7 +279,8 @@ export function toMask(
  */
 export function toColoredPartMask(
     partSegmentation: PartSegmentation|PartSegmentation[],
-    partColors: Array<[number, number, number]>): ImageData {
+    partColors: Array<[number, number, number]> =
+        RAINBOW_PART_COLORS): ImageData {
   if (Array.isArray(partSegmentation) && partSegmentation.length === 0) {
     return null;
   }
@@ -338,8 +348,8 @@ const CANVAS_NAMES = {
 export function drawMask(
     canvas: HTMLCanvasElement, image: ImageType, maskImage: ImageData|null,
     maskOpacity = 0.7, maskBlurAmount = 0, flipHorizontal = false) {
-  canvas.width = image.width;
-  canvas.height = image.height;
+  canvas.width = image.offsetWidth;
+  canvas.height = image.offsetHeight;
 
   const ctx = canvas.getContext('2d');
   ctx.save();
@@ -347,7 +357,8 @@ export function drawMask(
     flipCanvasHorizontal(canvas);
   }
 
-  ctx.drawImage(image, 0, 0);
+  ctx.drawImage(image, 0, 0, image.offsetWidth, image.offsetHeight);
+
   ctx.globalAlpha = maskOpacity;
   if (maskImage) {
     assertSameDimensions(image, maskImage, 'image', 'mask');
@@ -387,7 +398,9 @@ export function drawPixelatedMask(
     canvas: HTMLCanvasElement, image: ImageType, maskImage: ImageData,
     maskOpacity = 0.7, maskBlurAmount = 0, flipHorizontal = false,
     pixelCellWidth = 10.0) {
-  assertSameDimensions(image, maskImage, 'image', 'mask');
+  assertSameDimensions(
+      {width: image.offsetWidth, height: image.offsetHeight}, maskImage,
+      'image', 'mask');
 
   const mask = renderImageDataToOffScreenCanvas(maskImage, CANVAS_NAMES.mask);
   const blurredMask = drawAndBlurImageOnOffScreenCanvas(
@@ -408,12 +421,12 @@ export function drawPixelatedMask(
   offscreenCanvas.width = blurredMask.width * (1.0 / pixelCellWidth);
   offscreenCanvas.height = blurredMask.height * (1.0 / pixelCellWidth);
   offscreenCanvasCtx.drawImage(
-      blurredMask, 0, 0, blurredMask.width, blurredMask.height, 0, 0,
-      offscreenCanvas.width, offscreenCanvas.height);
+    blurredMask, 0, 0, blurredMask.width, blurredMask.height, 0, 0,
+    offscreenCanvas.width, offscreenCanvas.height);
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(
-      offscreenCanvas, 0, 0, offscreenCanvas.width, offscreenCanvas.height, 0,
-      0, canvas.width, canvas.height);
+    offscreenCanvas, 0, 0, offscreenCanvas.width, offscreenCanvas.height, 0,
+    0, canvas.width, canvas.height);
 
   // Draws vertical grid lines that are `pixelCellWidth` apart from each other.
   for (let i = 0; i < offscreenCanvas.width; i++) {
@@ -435,7 +448,7 @@ export function drawPixelatedMask(
   }
 
   ctx.globalAlpha = 1.0 - maskOpacity;
-  ctx.drawImage(image, 0, 0);
+  ctx.drawImage(image, 0, 0, blurredMask.width, blurredMask.height);
   ctx.restore();
 }
 
@@ -489,6 +502,8 @@ export function drawBokehEffect(
 
   const blurredImage = drawAndBlurImageOnOffScreenCanvas(
       image, backgroundBlurAmount, CANVAS_NAMES.blurred);
+  canvas.width = blurredImage.width;
+  canvas.height = blurredImage.height;
 
   const ctx = canvas.getContext('2d');
 
@@ -504,7 +519,7 @@ export function drawBokehEffect(
     flipCanvasHorizontal(canvas);
   }
   // draw the original image on the final canvas
-  ctx.drawImage(image, 0, 0);
+  ctx.drawImage(image, 0, 0, image.offsetWidth, image.offsetHeight);
 
   // "destination-in" - "The existing canvas content is kept where both the
   // new shape and existing canvas content overlap. Everything else is made
@@ -574,6 +589,8 @@ export function blurBodyPart(
 
   const blurredImage = drawAndBlurImageOnOffScreenCanvas(
       image, backgroundBlurAmount, CANVAS_NAMES.blurred);
+  canvas.width = blurredImage.width;
+  canvas.height = blurredImage.height;
 
   const ctx = canvas.getContext('2d');
 
@@ -589,7 +606,7 @@ export function blurBodyPart(
     flipCanvasHorizontal(canvas);
   }
   // draw the original image on the final canvas
-  ctx.drawImage(image, 0, 0);
+  ctx.drawImage(image, 0, 0, image.offsetWidth, image.offsetHeight);
 
   // "destination-in" - "The existing canvas content is kept where both the
   // new shape and existing canvas content overlap. Everything else is made
