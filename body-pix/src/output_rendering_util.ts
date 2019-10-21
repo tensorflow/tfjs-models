@@ -348,8 +348,8 @@ const CANVAS_NAMES = {
 export function drawMask(
     canvas: HTMLCanvasElement, image: ImageType, maskImage: ImageData|null,
     maskOpacity = 0.7, maskBlurAmount = 0, flipHorizontal = false) {
-  canvas.width = image.width;
-  canvas.height = image.height;
+  canvas.width = image.offsetWidth;
+  canvas.height = image.offsetHeight;
 
   const ctx = canvas.getContext('2d');
   ctx.save();
@@ -357,7 +357,8 @@ export function drawMask(
     flipCanvasHorizontal(canvas);
   }
 
-  ctx.drawImage(image, 0, 0);
+  ctx.drawImage(image, 0, 0, image.offsetWidth, image.offsetHeight);
+
   ctx.globalAlpha = maskOpacity;
   if (maskImage) {
     assertSameDimensions(image, maskImage, 'image', 'mask');
@@ -397,7 +398,9 @@ export function drawPixelatedMask(
     canvas: HTMLCanvasElement, image: ImageType, maskImage: ImageData,
     maskOpacity = 0.7, maskBlurAmount = 0, flipHorizontal = false,
     pixelCellWidth = 10.0) {
-  assertSameDimensions(image, maskImage, 'image', 'mask');
+  assertSameDimensions(
+      {width: image.offsetWidth, height: image.offsetHeight}, maskImage,
+      'image', 'mask');
 
   const mask = renderImageDataToOffScreenCanvas(maskImage, CANVAS_NAMES.mask);
   const blurredMask = drawAndBlurImageOnOffScreenCanvas(
@@ -418,12 +421,12 @@ export function drawPixelatedMask(
   offscreenCanvas.width = blurredMask.width * (1.0 / pixelCellWidth);
   offscreenCanvas.height = blurredMask.height * (1.0 / pixelCellWidth);
   offscreenCanvasCtx.drawImage(
-      blurredMask, 0, 0, blurredMask.width, blurredMask.height, 0, 0,
-      offscreenCanvas.width, offscreenCanvas.height);
+    blurredMask, 0, 0, blurredMask.width, blurredMask.height, 0, 0,
+    offscreenCanvas.width, offscreenCanvas.height);
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(
-      offscreenCanvas, 0, 0, offscreenCanvas.width, offscreenCanvas.height, 0,
-      0, canvas.width, canvas.height);
+    offscreenCanvas, 0, 0, offscreenCanvas.width, offscreenCanvas.height, 0,
+    0, canvas.width, canvas.height);
 
   // Draws vertical grid lines that are `pixelCellWidth` apart from each other.
   for (let i = 0; i < offscreenCanvas.width; i++) {
@@ -445,7 +448,7 @@ export function drawPixelatedMask(
   }
 
   ctx.globalAlpha = 1.0 - maskOpacity;
-  ctx.drawImage(image, 0, 0);
+  ctx.drawImage(image, 0, 0, blurredMask.width, blurredMask.height);
   ctx.restore();
 }
 
@@ -516,7 +519,7 @@ export function drawBokehEffect(
     flipCanvasHorizontal(canvas);
   }
   // draw the original image on the final canvas
-  ctx.drawImage(image, 0, 0);
+  ctx.drawImage(image, 0, 0, image.offsetWidth, image.offsetHeight);
 
   // "destination-in" - "The existing canvas content is kept where both the
   // new shape and existing canvas content overlap. Everything else is made
@@ -603,7 +606,7 @@ export function blurBodyPart(
     flipCanvasHorizontal(canvas);
   }
   // draw the original image on the final canvas
-  ctx.drawImage(image, 0, 0);
+  ctx.drawImage(image, 0, 0, image.offsetWidth, image.offsetHeight);
 
   // "destination-in" - "The existing canvas content is kept where both the
   // new shape and existing canvas content overlap. Everything else is made
