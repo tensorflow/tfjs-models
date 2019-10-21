@@ -29,7 +29,7 @@
     "rollup-plugin-uglify": "~3.0.0",
     "ts-node": "~5.0.0",
     "tslint": "~5.10.0",
-    "typescript": "3.3.3333",
+    "typescript": "^3.6.4",
     "yalc": "~1.0.0-pre.21"
   },
   "scripts": {
