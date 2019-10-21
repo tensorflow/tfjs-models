@@ -99,7 +99,6 @@ function setupGui() {
     // Listen for mouse events when clicking the button
     button.addEventListener('click', () => {
       training = i;
-      requestAnimationFrame(() => training = -1);
     });
 
     // Create info text
@@ -135,6 +134,9 @@ async function animate() {
     logits = infer();
     // Add current image to classifier
     classifier.addExample(logits, training);
+
+    // Reset the training bit so we only collect during clicks.
+    training = -1;
   }
 
   // If the classifier has examples for any classes, make a prediction!
@@ -145,7 +147,7 @@ async function animate() {
     const res = await classifier.predictClass(logits, TOPK);
     for (let i = 0; i < NUM_CLASSES; i++) {
       // Make the predicted class bold
-      if (res.classIndex == i) {
+      if (res.label == `${i}`) {
         infoTexts[i].style.fontWeight = 'bold';
       } else {
         infoTexts[i].style.fontWeight = 'normal';
