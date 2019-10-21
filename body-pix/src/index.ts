@@ -16,7 +16,6 @@
  */
 
 export {BodyPix, load} from './body_pix_model';
-export {decodePersonInstanceMasks, decodePersonInstancePartMasks} from './multi_person/decode_instance_masks';
 export {blurBodyPart, drawBokehEffect, drawMask, drawPixelatedMask, toColoredPartMask, toMask} from './output_rendering_util';
 export {PART_CHANNELS} from './part_channels';
 export {flipPoseHorizontal, resizeAndPadTo, scaleAndCropToInputTensorShape} from './util';
