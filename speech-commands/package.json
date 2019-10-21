@@ -13,11 +13,11 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs": "^1.1.2"
+    "@tensorflow/tfjs": "^1.2.9"
   },
   "devDependencies": {
-    "@tensorflow/tfjs": "^1.1.2",
-    "@tensorflow/tfjs-node": "^1.1.2",
+    "@tensorflow/tfjs": "^1.2.9",
+    "@tensorflow/tfjs-node": "^1.2.9",
     "@types/jasmine": "~2.8.8",
     "@types/rimraf": "^2.0.2",
     "@types/tempfile": "^2.0.0",
