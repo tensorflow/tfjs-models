@@ -27,7 +27,7 @@ steps:
   dir: 'body-pix'
   entrypoint: 'yarn'
   id: 'test'
-  args: ['test']
+  args: ['test-ci']
   waitFor: ['yarn']
   env: ['BROWSERSTACK_USERNAME=deeplearnjs1']
   secretEnv: ['BROWSERSTACK_KEY']
