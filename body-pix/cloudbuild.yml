@@ -29,6 +29,8 @@ steps:
   id: 'test'
   args: ['test']
   waitFor: ['yarn']
+  env: ['BROWSERSTACK_USERNAME=deeplearnjs1']
+  secretEnv: ['BROWSERSTACK_KEY']
 
 # General configuration
 secrets:

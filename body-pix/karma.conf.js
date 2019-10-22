@@ -24,7 +24,7 @@ module.exports = function (config) {
       ],
       exclude: ['src/test_node.ts'],
       preprocessors: {
-        '**/*.ts': ['karma-typescript'], // *.tsx for React Jsx
+        '**/*.ts': ['karma-typescript'],
       },
       karmaTypescriptConfig: {
         tsconfig: 'tsconfig.json',
