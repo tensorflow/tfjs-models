@@ -27,7 +27,7 @@ steps:
   dir: 'coco-ssd'
   entrypoint: 'yarn'
   id: 'test'
-  args: ['test-ci']
+  args: ['test']
   waitFor: ['yarn']
 
 # General configuration
