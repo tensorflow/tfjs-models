@@ -22,7 +22,6 @@ module.exports = function (config) {
         "src/setup_test.ts",       // Setup the environment for the tests.
         {pattern: 'src/**/*.ts'}
       ],
-      exclude: ['src/test_node.ts'],
       preprocessors: {
         '**/*.ts': ['karma-typescript'],
       },

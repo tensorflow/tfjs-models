@@ -39,6 +39,7 @@ setTestEnvs([
     isDataSync: true
   },
   // CPU.
-  // TODO(nsthorat): Enable this once we have CPU support.
+  // TODO(nsthorat): Enable this once we have CPU support
+  // https://github.com/tensorflow/tfjs/issues/2187
   // {name: 'cpu', backendName: 'cpu'}
 ]);
