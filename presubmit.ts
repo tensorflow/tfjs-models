@@ -31,22 +31,15 @@ const dirs = fs.readdirSync(dir)
                  .filter(f => !f.startsWith('.') && f !== 'node_modules');
 
 dirs.forEach(dir => {
+  if (!fs.existsSync(`${dir}/package.json`) || dir === 'clone') {
+    return;
+  }
+
   console.log(`~~~~~~~~~~~~ Building ${dir} ~~~~~~~~~~~~`);
 
   shell.cd(dir);
-  shell.exec('yarn');
-  shell.exec('yarn build');
 
   const pkg = JSON.parse(fs.readFileSync('package.json').toString());
-  if (pkg['scripts']['test'] != null) {
-    console.log(`************ Testing ${dir} ************`);
-    shell.exec('yarn test');
-  } else {
-    console.warn(
-        `WARNING: ${dir} has no unit tests! ` +
-        `Please consider adding unit tests to this model directory.`);
-  }
-
   // Make sure peer dependencies and dev dependencies of tfjs match, and make
   // sure the version uses ^.
   const peerDeps = pkg.peerDependencies;

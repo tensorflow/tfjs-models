@@ -2,6 +2,7 @@
   "name": "tensorflow-models",
   "version": "0.0.1",
   "scripts": {
+    "diff": "./scripts/diff.js",
     "link-local": "yalc link",
     "presubmit": "ts-node presubmit.ts"
   },
