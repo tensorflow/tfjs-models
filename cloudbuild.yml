@@ -9,7 +9,7 @@ steps:
   entrypoint: 'yarn'
   id: 'diff'
   args: ['diff']
-  waitFor: ['diff']
+  waitFor: ['yarn']
   env:
   - 'COMMIT_SHA=$COMMIT_SHA'
   - 'BRANCH_NAME=$BRANCH_NAME'
