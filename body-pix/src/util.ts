@@ -4,16 +4,41 @@ import {BodyPixInput, Padding} from './types';
 import {Pose, TensorBuffer3D} from './types';
 import {BodyPixInternalResolution} from './types';
 
-export function getInputSize(image: BodyPixInput) {
+export function getInputSize(image: BodyPixInput): [number, number] {
+  let height = 0;
+  let width = 0;
+
   if (image instanceof HTMLImageElement || image instanceof HTMLCanvasElement) {
-    return [image.offsetHeight, image.offsetWidth];
+    if (image.offsetHeight && image.offsetWidth) {
+      height = image.offsetHeight;
+      width = image.offsetWidth;
+    } else if (image.height && image.width) {
+      height = image.height;
+      width = image.width;
+    } else {
+      throw new Error(
+          `error: Input HTMLImageElement must have height and width attributes set.`);
+    }
   } else if (image instanceof ImageData) {
-    return [image.height, image.width];
+    height = image.height;
+    width = image.width;
   } else if (image instanceof HTMLVideoElement) {
-    return [image.videoHeight, image.videoWidth];
+    if (image.height && image.width) {
+      // Prioritizes user specified height and width.
+      height = image.height;
+      width = image.width;
+    } else {
+      height = image.videoHeight;
+      width = image.videoWidth;
+    }
+  } else if (image instanceof tf.Tensor) {
+    height = image.shape[0];
+    width = image.shape[1];
   } else {
-    return [image.shape[0], image.shape[1]]
+    throw new Error(`error: Unknown input type.`);
   }
+
+  return [height, width];
 }
 
 export function toValidInternalResolutionNumber(
