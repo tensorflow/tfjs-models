@@ -1,0 +1,40 @@
+
+<html>
+  <head>
+    <!-- Load TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.2"></script>
+    <!-- Load BodyPix -->
+    <script src="./dist/body-pix.js"></script>
+  </head>
+
+  <body>
+    <img id='image' src='testdata/test_image0.jpg' crossorigin='anonymous' width=281 height=187/>
+    <canvas id="canvas"></canvas>
+  </body>
+  <!-- Place your code in the script tag below. You can also use an external .js file -->
+  <script>
+    const img = document.getElementById('image');
+    const t = tf.browser.fromPixels(img);
+    const scale = 1;
+    const t2 = tf.image.resizeBilinear(t, [Math.floor(t.shape[0]/scale), Math.floor(t.shape[1]/scale)])
+    t2.print(true);
+    console.log(Array.from(t2.dataSync()));
+
+    async function loadAndPredict() {
+      const net = await bodyPix.load();
+      const partSegmentation = await net.segmentMultiPersonParts(img);
+
+const backgroundBlurAmount = 3;
+const edgeBlurAmount = 3;
+const flipHorizontal = false;
+const faceBodyPartIdsToBlur = [0, 1];
+
+const canvas = document.getElementById('canvas');
+
+bodyPix.blurBodyPart(
+    canvas, img, partSegmentation, faceBodyPartIdsToBlur,
+    backgroundBlurAmount, edgeBlurAmount, flipHorizontal);
+    }
+    loadAndPredict();
+  </script>
+</html>
