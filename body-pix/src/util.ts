@@ -4,10 +4,16 @@ import {BodyPixInput, Padding} from './types';
 import {Pose, TensorBuffer3D} from './types';
 import {BodyPixInternalResolution} from './types';
 
-export function getInputTensorDimensions(input: BodyPixInput):
-    [number, number] {
-  return input instanceof tf.Tensor ? [input.shape[0], input.shape[1]] :
-                                      [input.height, input.width];
+export function getInputSize(image: BodyPixInput) {
+  if (image instanceof HTMLImageElement || image instanceof HTMLCanvasElement) {
+    return [image.offsetHeight, image.offsetWidth];
+  } else if (image instanceof ImageData) {
+    return [image.height, image.width];
+  } else if (image instanceof HTMLVideoElement) {
+    return [image.videoHeight, image.videoWidth];
+  } else {
+    return [image.shape[0], image.shape[1]]
+  }
 }
 
 export function toValidInternalResolutionNumber(
@@ -152,7 +158,7 @@ export function resize2d(
 export function padAndResizeTo(
     input: BodyPixInput, [targetH, targetW]: [number, number]):
     {resized: tf.Tensor3D, padding: Padding} {
-  const [height, width] = getInputTensorDimensions(input);
+  const [height, width] = getInputSize(input);
   const targetAspect = targetW / targetH;
   const aspect = width / height;
   let [padT, padB, padL, padR] = [0, 0, 0, 0];
