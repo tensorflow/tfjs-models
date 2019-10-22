@@ -14,6 +14,14 @@ steps:
   - 'COMMIT_SHA=$COMMIT_SHA'
   - 'BRANCH_NAME=$BRANCH_NAME'
 
+# Universal sentence encoder.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'universal-sentence-encoder'
+  args: ['./scripts/run-build.sh', 'universal-sentence-encoder']
+  waitFor: ['diff']
+
+# Run the top-level sanity checks.
 - name: 'node:10'
   entrypoint: 'yarn'
   id: 'test'
