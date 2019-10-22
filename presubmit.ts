@@ -31,7 +31,7 @@ const dirs = fs.readdirSync(dir)
                  .filter(f => !f.startsWith('.') && f !== 'node_modules');
 
 dirs.forEach(dir => {
-  if (!fs.existsSync(`${dir}/package.json`)) {
+  if (!fs.existsSync(`${dir}/package.json`) || dir === 'clone') {
     return;
   }
 
