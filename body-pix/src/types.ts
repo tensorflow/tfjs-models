@@ -13,6 +13,7 @@ export type PersonSegmentation = {
   data: Uint8Array,
   width: number,
   height: number,
+  partData?: Int32Array,
   pose?: Pose,
 };
 
