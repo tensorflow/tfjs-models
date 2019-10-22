@@ -18,7 +18,7 @@ steps:
 - name: 'node:10'
   dir: 'universal-sentence-encoder'
   entrypoint: 'yarn'
-  id: 'yarn'
+  id: 'build'
   args: ['build']
   waitFor: ['yarn']
 
@@ -32,7 +32,7 @@ steps:
 
 # General configuration
 timeout: 1800s
-logsBucket: 'gs://tfjs-build-logs'
+logsBucket: 'gs://tfjs-models-build-logs'
 substitutions:
   _NIGHTLY: ''
 options:
