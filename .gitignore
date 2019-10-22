@@ -1,12 +1,16 @@
 node_modules
 dist/
 
+*/diff
+
 **/*/node_modules
 **/*/coverage
 **/*/.cache
 **/*/yarn-error.log
 **/*/yalc.lock
 **/*/.yalc
+
+clone/
 
 .rpt2_cache/
 
