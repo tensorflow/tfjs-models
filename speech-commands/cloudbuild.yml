@@ -32,7 +32,7 @@ steps:
 
 # General configuration
 timeout: 1800s
-logsBucket: 'gs://tfjs-models-build-logs'
+logsBucket: 'gs://tfjs-build-logs'
 substitutions:
   _NIGHTLY: ''
 options:
