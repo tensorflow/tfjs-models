@@ -31,6 +31,9 @@ const dirs = fs.readdirSync(dir)
                  .filter(f => !f.startsWith('.') && f !== 'node_modules');
 
 dirs.forEach(dir => {
+  if (dir === 'scripts') {
+    return;
+  }
   console.log(`~~~~~~~~~~~~ Building ${dir} ~~~~~~~~~~~~`);
 
   shell.cd(dir);
