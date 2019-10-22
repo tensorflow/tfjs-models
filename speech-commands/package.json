@@ -13,11 +13,11 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs": "^1.1.2"
+    "@tensorflow/tfjs": "^1.2.11"
   },
   "devDependencies": {
-    "@tensorflow/tfjs": "^1.1.2",
-    "@tensorflow/tfjs-node": "^1.1.2",
+    "@tensorflow/tfjs": "^1.2.11",
+    "@tensorflow/tfjs-node": "^1.2.11",
     "@types/jasmine": "~2.8.8",
     "@types/rimraf": "^2.0.2",
     "@types/tempfile": "^2.0.0",
@@ -37,7 +37,7 @@
     "ts-node": "~5.0.0",
     "tslint": "~5.10.0",
     "tslint-no-circular-imports": "^0.6.1",
-    "typescript": "^3.6.4",
+    "typescript": "~3.5.3",
     "yalc": "~1.0.0-pre.21"
   },
   "scripts": {
