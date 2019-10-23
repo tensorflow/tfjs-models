@@ -4,36 +4,36 @@ import {BodyPixInput, Padding} from './types';
 import {Pose, TensorBuffer3D} from './types';
 import {BodyPixInternalResolution} from './types';
 
-export function getInputSize(image: BodyPixInput): [number, number] {
+export function getInputSize(input: BodyPixInput): [number, number] {
   let height = 0;
   let width = 0;
 
-  if (image instanceof HTMLImageElement || image instanceof HTMLCanvasElement) {
-    if (image.offsetHeight && image.offsetWidth) {
-      height = image.offsetHeight;
-      width = image.offsetWidth;
-    } else if (image.height && image.width) {
-      height = image.height;
-      width = image.width;
+  if (input instanceof HTMLImageElement || input instanceof HTMLCanvasElement) {
+    if (input.offsetHeight && input.offsetWidth) {
+      height = input.offsetHeight;
+      width = input.offsetWidth;
+    } else if (input.height && input.width) {
+      height = input.height;
+      width = input.width;
     } else {
       throw new Error(
-          `error: Input HTMLImageElement must have height and width attributes set.`);
+          `error: Input is HTMLImageElement and it must have height and width attributes set.`);
     }
-  } else if (image instanceof ImageData) {
-    height = image.height;
-    width = image.width;
-  } else if (image instanceof HTMLVideoElement) {
-    if (image.height && image.width) {
+  } else if (input instanceof ImageData) {
+    height = input.height;
+    width = input.width;
+  } else if (input instanceof HTMLVideoElement) {
+    if (input.height && input.width) {
       // Prioritizes user specified height and width.
-      height = image.height;
-      width = image.width;
+      height = input.height;
+      width = input.width;
     } else {
-      height = image.videoHeight;
-      width = image.videoWidth;
+      height = input.videoHeight;
+      width = input.videoWidth;
     }
-  } else if (image instanceof tf.Tensor) {
-    height = image.shape[0];
-    width = image.shape[1];
+  } else if (input instanceof tf.Tensor) {
+    height = input.shape[0];
+    width = input.shape[1];
   } else {
     throw new Error(`error: Unknown input type.`);
   }
