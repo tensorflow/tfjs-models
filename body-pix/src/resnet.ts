@@ -25,4 +25,27 @@ export class ResNet extends BaseModel {
   preprocessInput(input: tf.Tensor3D): tf.Tensor3D {
     return input.add(imageNetMean);
   }
+
+  nameOutputResults(results: tf.Tensor3D[]) {
+    const [
+      displacementBwd,
+      displacementFwd,
+      heatmap,
+      longOffsets,
+      offsets,
+      partHeatmaps,
+      segmentation,
+      partOffsets,
+  ] = results;
+    return {
+      offsets,
+      segmentation,
+      partHeatmaps,
+      longOffsets,
+      heatmap,
+      displacementFwd,
+      displacementBwd,
+      partOffsets
+    };
+  }
 }

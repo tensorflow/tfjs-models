@@ -62,16 +62,30 @@ export abstract class BaseModel {
     displacementBwd: tf.Tensor3D
   } {
     return tf.tidy(() => {
-      const asFloat = input.toFloat();
+      const asFloat = this.preprocessInput(input.toFloat());
       const asBatch = asFloat.expandDims(0);
       const results = this.model.predict(asBatch) as tf.Tensor4D[];
-      const [displacementFwd, displacementBwd, offsets, heatmaps]:
-          tf.Tensor3D[] = results.map(y => y.squeeze());
-      const heatmapScores = heatmaps.sigmoid();
+      const results3d: tf.Tensor3D[] = results.map(y => y.squeeze([0]));
 
-      return {heatmapScores, offsets, displacementFwd, displacementBwd};
+      const namedResults = this.nameOutputResults(results3d);
+
+      return {
+        heatmapScores: namedResults.heatmap.sigmoid(),
+        offsets: namedResults.offsets,
+        displacementFwd: namedResults.displacementFwd,
+        displacementBwd: namedResults.displacementBwd
+      };
     });
   }
+
+  // Because MobileNet and ResNet predict() methods output a different order for
+  // these values, we have a method that needs to be implemented to order them.
+  abstract nameOutputResults(results: tf.Tensor3D[]): {
+    heatmap: tf.Tensor3D,
+    offsets: tf.Tensor3D,
+    displacementFwd: tf.Tensor3D,
+    displacementBwd: tf.Tensor3D
+  };
 
   /**
    * Releases the CPU and GPU memory allocated by the model.

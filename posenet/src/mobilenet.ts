@@ -23,4 +23,9 @@ export class MobileNet extends BaseModel {
     // Normalize the pixels [0, 255] to be between [-1, 1].
     return tf.tidy(() => tf.div(input, 127.5).sub(1.0));
   }
+
+  nameOutputResults(results: tf.Tensor3D[]) {
+    const [offsets, heatmap, displacementFwd, displacementBwd] = results;
+    return {offsets, heatmap, displacementFwd, displacementBwd};
+  }
 }
