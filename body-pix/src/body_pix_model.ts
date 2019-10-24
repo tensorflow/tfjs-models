@@ -449,7 +449,6 @@ export class BodyPix {
 
       const [resizedHeight, resizedWidth] = resized.shape;
 
-
       const scaledSegmentScores = scaleAndCropToInputTensorShape(
           segmentLogits, [height, width], [resizedHeight, resizedWidth],
           [[padding.top, padding.bottom], [padding.left, padding.right]],
@@ -689,7 +688,6 @@ export class BodyPix {
           this.predictForPersonSegmentationAndPart(resized);
 
       const [resizedHeight, resizedWidth] = resized.shape;
-
 
       const scaledSegmentScores = scaleAndCropToInputTensorShape(
           segmentLogits, [height, width], [resizedHeight, resizedWidth],

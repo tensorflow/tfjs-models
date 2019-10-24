@@ -26,7 +26,7 @@ export function getInputSize(input: BodyPixInput): [number, number] {
   } else if (input instanceof tf.Tensor) {
     return [input.shape[0], input.shape[1]];
   } else {
-    throw new Error(`error: Unknown input type.`);
+    throw new Error(`error: Unknown input type: ${input}.`);
   }
 }
 
