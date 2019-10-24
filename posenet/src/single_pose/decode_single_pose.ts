@@ -18,8 +18,7 @@
 import * as tf from '@tensorflow/tfjs-core';
 
 import {partNames} from '../keypoints';
-import {PoseNetOutputStride} from '../posenet_model';
-import {Keypoint, Pose} from '../types';
+import {Keypoint, Pose, PoseNetOutputStride} from '../types';
 
 import {argmax2d} from './argmax2d';
 import {getOffsetPoints, getPointsConfidence} from './util';

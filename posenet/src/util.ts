@@ -18,8 +18,7 @@
 import * as tf from '@tensorflow/tfjs-core';
 
 import {connectedPartIndices} from './keypoints';
-import {PoseNetOutputStride} from './posenet_model';
-import {InputResolution, Keypoint, Padding, Pose, PosenetInput, TensorBuffer3D, Vector2D} from './types';
+import {InputResolution, Keypoint, Padding, Pose, PosenetInput, PoseNetOutputStride, TensorBuffer3D, Vector2D} from './types';
 
 function eitherPointDoesntMeetConfidence(
     a: number, b: number, minConfidence: number): boolean {
@@ -161,9 +160,8 @@ export function getValidInputResolutionDimensions(
   }
 }
 
-const VALID_OUTPUT_STRIDES = [8, 16, 32];
-// tslint:disable-next-line:no-any
-export function assertValidOutputStride(outputStride: number) {
+const VALID_OUTPUT_STRIDES: PoseNetOutputStride[] = [8, 16, 32];
+export function assertValidOutputStride(outputStride: PoseNetOutputStride) {
   tf.util.assert(
       typeof outputStride === 'number', () => 'outputStride is not a number');
   tf.util.assert(
@@ -245,11 +243,9 @@ export function padAndResizeTo(
     imageTensor = tf.pad3d(imageTensor, [[padT, padB], [padL, padR], [0, 0]]);
 
     return imageTensor.resizeBilinear([targetH, targetW]);
-  })
+  });
 
-  return {
-    resized, padding: {top: padT, left: padL, right: padR, bottom: padB}
-  }
+  return {resized, padding: {top: padT, left: padL, right: padR, bottom: padB}};
 }
 
 export function scaleAndFlipPoses(

@@ -33,7 +33,7 @@ describeWithFlags('BodyPix', ALL_ENVS, () => {
   const numParts = 24;
   const outputResolution = (inputResolution - 1) / outputStride + 1;
 
-  beforeAll((done) => {
+  beforeAll(async () => {
     const resNetConfig =
         {architecture: 'ResNet50', outputStride, inputResolution, quantBytes} as
         bodyPixModel.ModelConfig;
@@ -69,35 +69,22 @@ describeWithFlags('BodyPix', ALL_ENVS, () => {
       };
     });
 
-    bodyPixModel.load(resNetConfig)
-        .then((bodyPixInstance: bodyPixModel.BodyPix) => {
-          bodyPix = bodyPixInstance;
-        })
-        .then(done)
-        .catch(done.fail);
+    bodyPix = await bodyPixModel.load(resNetConfig);
   });
 
-  it('segmentPerson does not leak memory', done => {
+  it('segmentPerson does not leak memory', async () => {
     const input: tf.Tensor3D = tf.zeros([513, 513, 3]);
 
     const beforeTensors = tf.memory().numTensors;
 
-    bodyPix.segmentPerson(input)
-        .then(() => {
-          expect(tf.memory().numTensors).toEqual(beforeTensors);
-        })
-        .then(done)
-        .catch(done.fail);
+    await bodyPix.segmentPerson(input);
+    expect(tf.memory().numTensors).toEqual(beforeTensors);
   });
 
-  it('estimatePersonPartSegmenation does not leak memory', done => {
+  it('estimatePersonPartSegmenation does not leak memory', async () => {
     const input: tf.Tensor3D = tf.zeros([513, 513, 3]);
     const beforeTensors = tf.memory().numTensors;
-    bodyPix.segmentPersonParts(input)
-        .then(() => {
-          expect(tf.memory().numTensors).toEqual(beforeTensors);
-        })
-        .then(done)
-        .catch(done.fail);
+    await bodyPix.segmentPersonParts(input);
+    expect(tf.memory().numTensors).toEqual(beforeTensors);
   });
 });

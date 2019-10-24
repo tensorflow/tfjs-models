@@ -16,7 +16,7 @@ steps:
 
 # Lint.
 - name: 'node:10'
-  dir: 'body-pix'
+  dir: 'speech-commands'
   entrypoint: 'yarn'
   id: 'lint'
   args: ['lint']
