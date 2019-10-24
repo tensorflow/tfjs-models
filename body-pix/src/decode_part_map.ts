@@ -79,7 +79,8 @@ export function decodePartSegmentation(
     const flattenedMap = toFlattenedOneHotPartMap(partHeatmapScores);
     const partNumbers = tf.range(0, numParts, 1, 'int32').expandDims(1);
 
-    const partMapFlattened = flattenedMap.matMul(partNumbers).toInt();
+    const partMapFlattened =
+        flattenedMap.matMul(partNumbers as tf.Tensor2D).toInt();
 
     const partMap = partMapFlattened.reshape([partMapHeight, partMapWidth]);
 
@@ -98,7 +99,8 @@ export function decodeOnlyPartSegmentation(partHeatmapScores: tf.Tensor3D):
     const flattenedMap = toFlattenedOneHotPartMap(partHeatmapScores);
     const partNumbers = tf.range(0, numParts, 1, 'int32').expandDims(1);
 
-    const partMapFlattened = flattenedMap.matMul(partNumbers).toInt();
+    const partMapFlattened =
+        flattenedMap.matMul(partNumbers as tf.Tensor2D).toInt();
 
     return partMapFlattened.reshape([partMapHeight, partMapWidth]);
   });
