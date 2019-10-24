@@ -19,11 +19,11 @@ export function toValidInternalResolutionNumber(
       break;
     }
     case 'medium': {
-      validInternalResolution = 513
+      validInternalResolution = 513;
       break;
     }
     case 'high': {
-      validInternalResolution = 1025
+      validInternalResolution = 1025;
       break;
     }
     default: {
@@ -143,10 +143,11 @@ export function removePaddingAndResizeBack(
 export function resize2d(
     tensor: tf.Tensor2D, resolution: [number, number],
     nearestNeighbor?: boolean): tf.Tensor2D {
-  return tf.tidy(
-      () => (tensor.expandDims(2) as tf.Tensor3D)
-                .resizeBilinear(resolution, nearestNeighbor)
-                .squeeze() as tf.Tensor2D);
+  return tf.tidy(() => {
+    return tensor.expandDims<tf.Rank.R3>(2)
+        .resizeBilinear(resolution, nearestNeighbor)
+        .squeeze();
+  });
 }
 
 export function padAndResizeTo(
@@ -180,18 +181,9 @@ export function padAndResizeTo(
   return {resized, padding: {top: padT, left: padL, right: padR, bottom: padB}};
 }
 
-export async function toTensorBuffer<rank extends tf.Rank>(
-    tensor: tf.Tensor<rank>,
-    type: 'float32'|'int32' = 'float32'): Promise<tf.TensorBuffer<rank>> {
-  const tensorData = await tensor.data();
-
-  return tf.buffer(tensor.shape, type, tensorData as Float32Array) as
-      tf.TensorBuffer<rank>;
-}
-
 export async function toTensorBuffers3D(tensors: tf.Tensor3D[]):
     Promise<TensorBuffer3D[]> {
-  return Promise.all(tensors.map(tensor => toTensorBuffer(tensor, 'float32')));
+  return Promise.all(tensors.map(tensor => tensor.buffer()));
 }
 
 export function scalePose(

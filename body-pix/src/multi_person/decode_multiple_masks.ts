@@ -39,8 +39,10 @@ export function toPersonKSegmentation(
 export function toPersonKPartSegmentation(
     segmentation: tf.Tensor, bodyParts: tf.Tensor, k: number): tf.Tensor2D {
   return tf.tidy(
-      () => (segmentation.equal(tf.scalar(k)).toInt().mul(bodyParts.add(1)))
-                .sub(1) as tf.Tensor2D);
+      () => segmentation.equal(tf.scalar(k))
+                .toInt()
+                .mul(bodyParts.add(1))
+                .sub(1));
 }
 
 function decodeMultipleMasksTensorGPU(
@@ -86,7 +88,8 @@ function decodeMultipleMasksTensorGPU(
       return round(((float(pos + pad) + 1.0) * scale - 1.0) / float(stride));
     }
 
-    float convertToPositionInOutputFloat(int pos, int pad, float scale, int stride) {
+    float convertToPositionInOutputFloat(
+        int pos, int pad, float scale, int stride) {
       return ((float(pos + pad) + 1.0) * scale - 1.0) / float(stride);
     }
 
@@ -174,11 +177,8 @@ function decodeMultipleMasksTensorGPU(
   `
   };
   const webglBackend = tf.backend() as tf.webgl.MathBackendWebGL;
-  const result =
-      webglBackend.compileAndRun(
-          program, [segmentation, longOffsets, posesTensor]) as tf.Tensor2D;
-
-  return result;
+  return webglBackend.compileAndRun(
+      program, [segmentation, longOffsets, posesTensor]);
 }
 
 export async function decodeMultipleMasksGPU(

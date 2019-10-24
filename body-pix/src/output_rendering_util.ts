@@ -174,7 +174,7 @@ export function toMask(
     return null;
   }
 
-  let multiPersonOrPartSegmentation: (PersonSegmentation|PartSegmentation)[];
+  let multiPersonOrPartSegmentation: Array<PersonSegmentation|PartSegmentation>;
   if (!Array.isArray(personOrPartSegmentation)) {
     multiPersonOrPartSegmentation = [personOrPartSegmentation];
   } else {
@@ -421,12 +421,12 @@ export function drawPixelatedMask(
   offscreenCanvas.width = blurredMask.width * (1.0 / pixelCellWidth);
   offscreenCanvas.height = blurredMask.height * (1.0 / pixelCellWidth);
   offscreenCanvasCtx.drawImage(
-    blurredMask, 0, 0, blurredMask.width, blurredMask.height, 0, 0,
-    offscreenCanvas.width, offscreenCanvas.height);
+      blurredMask, 0, 0, blurredMask.width, blurredMask.height, 0, 0,
+      offscreenCanvas.width, offscreenCanvas.height);
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(
-    offscreenCanvas, 0, 0, offscreenCanvas.width, offscreenCanvas.height, 0,
-    0, canvas.width, canvas.height);
+      offscreenCanvas, 0, 0, offscreenCanvas.width, offscreenCanvas.height, 0,
+      0, canvas.width, canvas.height);
 
   // Draws vertical grid lines that are `pixelCellWidth` apart from each other.
   for (let i = 0; i < offscreenCanvas.width; i++) {

@@ -28,7 +28,7 @@
     "rollup-plugin-typescript2": "~0.15.0",
     "rollup-plugin-uglify": "~3.0.0",
     "ts-node": "~5.0.0",
-    "tslint": "~5.10.0",
+    "tslint": "~5.18.0",
     "typescript": "~3.5.3",
     "yalc": "~1.0.0-pre.21"
   },

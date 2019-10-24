@@ -18,12 +18,13 @@
 
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
+// tslint:disable-next-line: no-imports-from-dist
+import {ALL_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
 import * as bodyPixModel from './body_pix_model';
 import * as resnet from './resnet';
-import {describeWithFlags, ALL_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
-describeWithFlags('BodyPix', ALL_ENVS, ()=> {
+describeWithFlags('BodyPix', ALL_ENVS, () => {
   let bodyPix: bodyPixModel.BodyPix;
   const inputResolution = 513;
   const outputStride = 32;
@@ -77,7 +78,7 @@ describeWithFlags('BodyPix', ALL_ENVS, ()=> {
   });
 
   it('segmentPerson does not leak memory', done => {
-    const input = tf.zeros([513, 513, 3]) as tf.Tensor3D;
+    const input: tf.Tensor3D = tf.zeros([513, 513, 3]);
 
     const beforeTensors = tf.memory().numTensors;
 
@@ -90,7 +91,7 @@ describeWithFlags('BodyPix', ALL_ENVS, ()=> {
   });
 
   it('estimatePersonPartSegmenation does not leak memory', done => {
-    const input = tf.zeros([513, 513, 3]) as tf.Tensor3D;
+    const input: tf.Tensor3D = tf.zeros([513, 513, 3]);
     const beforeTensors = tf.memory().numTensors;
     bodyPix.segmentPersonParts(input)
         .then(() => {

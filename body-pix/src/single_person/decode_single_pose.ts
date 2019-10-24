@@ -20,7 +20,6 @@ import * as tf from '@tensorflow/tfjs-core';
 import {PART_NAMES} from '../keypoints';
 import {BodyPixOutputStride} from '../types';
 import {Keypoint, Pose} from '../types';
-import {toTensorBuffer} from '../util';
 
 import {argmax2d} from './argmax2d';
 import {getOffsetPoints, getPointsConfidence} from './util';
@@ -63,14 +62,12 @@ export async function decodeSinglePose(
 
   const heatmapValues = argmax2d(heatmapScores);
 
-  const [scoresBuffer, offsetsBuffer, heatmapValuesBuffer] = await Promise.all([
-    toTensorBuffer(heatmapScores), toTensorBuffer(offsets),
-    toTensorBuffer(heatmapValues, 'int32')
-  ]);
+  const [scoresBuffer, offsetsBuffer, heatmapValuesBuffer] = await Promise.all(
+      [heatmapScores.buffer(), offsets.buffer(), heatmapValues.buffer()]);
 
   const offsetPoints =
       getOffsetPoints(heatmapValuesBuffer, outputStride, offsetsBuffer);
-  const offsetPointsBuffer = await toTensorBuffer(offsetPoints);
+  const offsetPointsBuffer = await offsetPoints.buffer();
 
   const keypointConfidence =
       Array.from(getPointsConfidence(scoresBuffer, heatmapValuesBuffer));

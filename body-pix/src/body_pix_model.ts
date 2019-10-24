@@ -19,55 +19,18 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
+import {BaseModel} from './base_model';
 import {decodeOnlyPartSegmentation, decodePartSegmentation, toMaskTensor} from './decode_part_map';
-import {MobileNet, MobileNetMultiplier} from './mobilenet';
+import {MobileNet} from './mobilenet';
 import {decodeMultipleMasksGPU, decodeMultiplePartMasksGPU} from './multi_person/decode_multiple_masks';
 import {decodeMultiplePoses} from './multi_person/decode_multiple_poses';
 import {ResNet} from './resnet';
 import {mobileNetSavedModel, resNet50SavedModel} from './saved_models';
-import {decodeSinglePose} from './sinlge_person/decode_single_pose';
+import {decodeSinglePose} from './single_person/decode_single_pose';
 import {BodyPixArchitecture, BodyPixInput, BodyPixInternalResolution, BodyPixMultiplier, BodyPixOutputStride, BodyPixQuantBytes, Padding, PartSegmentation, PersonSegmentation} from './types';
 import {getInputTensorDimensions, padAndResizeTo, scaleAndCropToInputTensorShape, scaleAndFlipPoses, toInputTensor, toTensorBuffers3D, toValidInternalResolutionNumber} from './util';
 
-
 const APPLY_SIGMOID_ACTIVATION = true;
-
-/**
- * BodyPix supports using various convolution neural network models
- * (e.g. ResNet and MobileNetV1) as its underlying base model.
- * The following BaseModel interface defines a unified interface for
- * creating such BodyPix base models. Currently both MobileNet (in
- * ./mobilenet.ts) and ResNet (in ./resnet.ts) implements the BaseModel
- * interface. New base models that conform to the BaseModel interface can be
- * added to BodyPix.
- */
-export interface BaseModel {
-  // The output stride of the base model.
-  readonly outputStride: BodyPixOutputStride;
-
-  /**
-   * Predicts intermediate Tensor representations.
-   *
-   * @param input The input RGB image of the base model.
-   * A Tensor of shape: [`inputResolution`, `inputResolution`, 3].
-   *
-   * @return A dictionary of base model's intermediate predictions.
-   * The returned dictionary should contains the following elements:
-   * - heatmapScores: A Tensor3D that represents the keypoint heatmap scores.
-   * - offsets: A Tensor3D that represents the offsets.
-   * - displacementFwd: A Tensor3D that represents the forward displacement.
-   * - displacementBwd: A Tensor3D that represents the backward displacement.
-   * - segmentation: A Tensor3D that represents the segmentation of all people.
-   * - longOffsets: A Tensor3D that represents the long offsets used for
-   * instance grouping.
-   * - partHeatmaps: A Tensor3D that represents the body part segmentation.
-   */
-  predict(input: tf.Tensor3D): {[key: string]: tf.Tensor3D};
-  /**
-   * Releases the CPU and GPU memory allocated by the model.
-   */
-  dispose(): void;
-}
 
 /**
  * BodyPix model loading is configurable using the following config dictionary.
@@ -101,7 +64,7 @@ export interface BaseModel {
 export interface ModelConfig {
   architecture: BodyPixArchitecture;
   outputStride: BodyPixOutputStride;
-  multiplier?: MobileNetMultiplier;
+  multiplier?: BodyPixMultiplier;
   modelUrl?: string;
   quantBytes?: BodyPixQuantBytes;
 }
@@ -603,15 +566,15 @@ export class BodyPix {
       };
     });
 
-    const [scoresBuffer, offsetsBuffer, displacementsFwdBuffer, displacementsBwdBuffer] =
+    const [scoresBuf, offsetsBuf, displacementsFwdBuf, displacementsBwdBuf] =
         await toTensorBuffers3D([
           heatmapScoresRaw, offsetsRaw, displacementFwdRaw, displacementBwdRaw
         ]);
 
-    let poses = await decodeMultiplePoses(
-        scoresBuffer, offsetsBuffer, displacementsFwdBuffer,
-        displacementsBwdBuffer, this.baseModel.outputStride,
-        config.maxDetections, config.scoreThreshold, config.nmsRadius);
+    let poses = decodeMultiplePoses(
+        scoresBuf, offsetsBuf, displacementsFwdBuf, displacementsBwdBuf,
+        this.baseModel.outputStride, config.maxDetections,
+        config.scoreThreshold, config.nmsRadius);
 
     poses = scaleAndFlipPoses(
         poses, [height, width],
@@ -852,15 +815,15 @@ export class BodyPix {
       };
     });
 
-    const [scoresBuffer, offsetsBuffer, displacementsFwdBuffer, displacementsBwdBuffer] =
+    const [scoresBuf, offsetsBuf, displacementsFwdBuf, displacementsBwdBuf] =
         await toTensorBuffers3D([
           heatmapScoresRaw, offsetsRaw, displacementFwdRaw, displacementBwdRaw
         ]);
 
-    let poses = await decodeMultiplePoses(
-        scoresBuffer, offsetsBuffer, displacementsFwdBuffer,
-        displacementsBwdBuffer, this.baseModel.outputStride,
-        config.maxDetections, config.scoreThreshold, config.nmsRadius);
+    let poses = decodeMultiplePoses(
+        scoresBuf, offsetsBuf, displacementsFwdBuf, displacementsBwdBuf,
+        this.baseModel.outputStride, config.maxDetections,
+        config.scoreThreshold, config.nmsRadius);
 
     poses = scaleAndFlipPoses(
         poses, [height, width],
