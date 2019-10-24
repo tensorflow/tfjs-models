@@ -4,10 +4,30 @@ import {BodyPixInput, Padding} from './types';
 import {Pose, TensorBuffer3D} from './types';
 import {BodyPixInternalResolution} from './types';
 
-export function getInputTensorDimensions(input: BodyPixInput):
-    [number, number] {
-  return input instanceof tf.Tensor ? [input.shape[0], input.shape[1]] :
-                                      [input.height, input.width];
+export function getInputSize(input: BodyPixInput): [number, number] {
+  if (input instanceof HTMLImageElement || input instanceof HTMLCanvasElement) {
+    if (input.offsetHeight !== 0 && input.offsetWidth !== 0) {
+      return [input.offsetHeight, input.offsetWidth];
+    } else if (input.height != null && input.width != null) {
+      return [input.height, input.width];
+    } else {
+      throw new Error(
+          `HTMLImageElement must have height and width attributes set.`);
+    }
+  } else if (input instanceof ImageData) {
+    return [input.height, input.width];
+  } else if (input instanceof HTMLVideoElement) {
+    if (input.height != null && input.width != null) {
+      // Prioritizes user specified height and width.
+      return [input.height, input.width];
+    } else {
+      return [input.videoHeight, input.videoWidth];
+    }
+  } else if (input instanceof tf.Tensor) {
+    return [input.shape[0], input.shape[1]];
+  } else {
+    throw new Error(`error: Unknown input type: ${input}.`);
+  }
 }
 
 export function toValidInternalResolutionNumber(
@@ -153,7 +173,7 @@ export function resize2d(
 export function padAndResizeTo(
     input: BodyPixInput, [targetH, targetW]: [number, number]):
     {resized: tf.Tensor3D, padding: Padding} {
-  const [height, width] = getInputTensorDimensions(input);
+  const [height, width] = getInputSize(input);
   const targetAspect = targetW / targetH;
   const aspect = width / height;
   let [padT, padB, padL, padR] = [0, 0, 0, 0];

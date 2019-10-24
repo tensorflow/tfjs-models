@@ -22,13 +22,13 @@ import * as tf from '@tensorflow/tfjs-core';
 import {BaseModel} from './base_model';
 import {decodeOnlyPartSegmentation, decodePartSegmentation, toMaskTensor} from './decode_part_map';
 import {MobileNet} from './mobilenet';
-import {decodeMultipleMasksGPU, decodeMultiplePartMasksGPU} from './multi_person/decode_multiple_masks';
+import {decodePersonInstanceMasks, decodePersonInstancePartMasks} from './multi_person/decode_instance_masks';
 import {decodeMultiplePoses} from './multi_person/decode_multiple_poses';
 import {ResNet} from './resnet';
 import {mobileNetSavedModel, resNet50SavedModel} from './saved_models';
 import {decodeSinglePose} from './single_person/decode_single_pose';
 import {BodyPixArchitecture, BodyPixInput, BodyPixInternalResolution, BodyPixMultiplier, BodyPixOutputStride, BodyPixQuantBytes, Padding, PartSegmentation, PersonSegmentation} from './types';
-import {getInputTensorDimensions, padAndResizeTo, scaleAndCropToInputTensorShape, scaleAndFlipPoses, toInputTensor, toTensorBuffers3D, toValidInternalResolutionNumber} from './util';
+import {getInputSize, padAndResizeTo, scaleAndCropToInputTensorShape, scaleAndFlipPoses, toTensorBuffers3D, toValidInternalResolutionNumber} from './util';
 
 const APPLY_SIGMOID_ACTIVATION = true;
 
@@ -396,12 +396,12 @@ export class BodyPix {
     offsets: tf.Tensor3D,
     padding: Padding
   } {
+    const [height, width] = getInputSize(input);
     const validInternalResolution =
         toValidInternalResolutionNumber(internalResolution);
     this.internalResolution = validInternalResolution;
-    const imageTensor = toInputTensor(input);
     const {resized, padding} = padAndResizeTo(
-        imageTensor, [validInternalResolution, validInternalResolution]);
+        input, [validInternalResolution, validInternalResolution]);
 
     const {segmentation, heatmapScores, offsets} = tf.tidy(() => {
       const {
@@ -411,7 +411,6 @@ export class BodyPix {
       } = this.predictForPersonSegmentation(resized);
 
       const [resizedHeight, resizedWidth] = resized.shape;
-      const [height, width] = imageTensor.shape;
 
       const scaledSegmentScores = scaleAndCropToInputTensorShape(
           segmentLogits, [height, width], [resizedHeight, resizedWidth],
@@ -514,7 +513,7 @@ export class BodyPix {
       Promise<PersonSegmentation[]> {
     config = {...MULTI_PERSON_INSTANCE_INFERENCE_CONFIG, ...config};
     validateMultiPersonInstanceInferenceConfig(config);
-    const [height, width] = getInputTensorDimensions(input);
+    const [height, width] = getInputSize(input);
     this.internalResolution =
         toValidInternalResolutionNumber(config.internalResolution);
 
@@ -580,11 +579,10 @@ export class BodyPix {
         poses, [height, width],
         [this.internalResolution, this.internalResolution], padding, false);
 
-    const instanceMasks = await decodeMultipleMasksGPU(
+    const instanceMasks = await decodePersonInstanceMasks(
         segmentation, longOffsets, poses, height, width,
         this.baseModel.outputStride,
-        [this.internalResolution, this.internalResolution],
-        [[padding.top, padding.bottom], [padding.left, padding.right]],
+        [this.internalResolution, this.internalResolution], padding,
         config.scoreThreshold, config.refineSteps, config.minKeypointScore,
         config.maxDetections);
 
@@ -637,7 +635,7 @@ export class BodyPix {
     offsets: tf.Tensor3D,
     padding: Padding
   } {
-    const imageTensor = toInputTensor(input);
+    const [height, width] = getInputSize(input);
     this.internalResolution =
         toValidInternalResolutionNumber(internalResolution);
     const {
@@ -645,14 +643,13 @@ export class BodyPix {
       padding,
     } =
         padAndResizeTo(
-            imageTensor, [this.internalResolution, this.internalResolution]);
+            input, [this.internalResolution, this.internalResolution]);
 
     const {partSegmentation, heatmapScores, offsets} = tf.tidy(() => {
       const {segmentLogits, partHeatmapLogits, heatmapScores, offsets} =
           this.predictForPersonSegmentationAndPart(resized);
 
       const [resizedHeight, resizedWidth] = resized.shape;
-      const [height, width] = imageTensor.shape;
 
       const scaledSegmentScores = scaleAndCropToInputTensorShape(
           segmentLogits, [height, width], [resizedHeight, resizedWidth],
@@ -761,7 +758,7 @@ export class BodyPix {
     config = {...MULTI_PERSON_INSTANCE_INFERENCE_CONFIG, ...config};
 
     validateMultiPersonInstanceInferenceConfig(config);
-    const [height, width] = getInputTensorDimensions(input);
+    const [height, width] = getInputSize(input);
     this.internalResolution =
         toValidInternalResolutionNumber(config.internalResolution);
     const {resized, padding} = padAndResizeTo(
@@ -829,11 +826,10 @@ export class BodyPix {
         poses, [height, width],
         [this.internalResolution, this.internalResolution], padding, false);
 
-    const instanceMasks = await decodeMultiplePartMasksGPU(
+    const instanceMasks = await decodePersonInstancePartMasks(
         segmentation, longOffsets, partSegmentation, poses, height, width,
         this.baseModel.outputStride,
-        [this.internalResolution, this.internalResolution],
-        [[padding.top, padding.bottom], [padding.left, padding.right]],
+        [this.internalResolution, this.internalResolution], padding,
         config.scoreThreshold, config.refineSteps, config.minKeypointScore,
         config.maxDetections);
 

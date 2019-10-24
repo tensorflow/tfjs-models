@@ -16,7 +16,17 @@
  */
 
 import {NUM_KEYPOINTS} from '../keypoints';
-import {Part, TensorBuffer3D, Vector2D} from '../types';
+import {Padding, Part, TensorBuffer3D, Vector2D} from '../types';
+
+export function getScale(
+    [height, width]: [number, number],
+    [inputResolutionY, inputResolutionX]: [number, number],
+    padding: Padding): [number, number] {
+  const {top: padT, bottom: padB, left: padL, right: padR} = padding;
+  const scaleY = inputResolutionY / (padT + padB + height);
+  const scaleX = inputResolutionX / (padL + padR + width);
+  return [scaleX, scaleY];
+}
 
 export function getOffsetPoint(
     y: number, x: number, keypoint: number, offsets: TensorBuffer3D): Vector2D {
