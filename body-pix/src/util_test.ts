@@ -17,10 +17,11 @@
  */
 
 // tslint:disable-next-line: no-imports-from-dist
-import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
+import {ALL_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
+
 import {toValidInternalResolutionNumber} from './util';
 
-describeWithFlags('util.toValidInternalResolutionNumber', NODE_ENVS, () => {
+describeWithFlags('util.toValidInternalResolutionNumber', ALL_ENVS, () => {
   it('produces correct output when small is specified', () => {
     const result = toValidInternalResolutionNumber('low');
     expect(result).toBe(257);
