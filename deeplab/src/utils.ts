@@ -20,7 +20,6 @@ import * as tf from '@tensorflow/tfjs-core';
 import {config} from './config';
 import {Color, DeepLabInput, Label, Legend, ModelArchitecture, QuantizationBytes, SegmentationData} from './types';
 
-
 export function createPascalColormap(): Color[] {
   /**
    * Generates the colormap matching the Pascal VOC dev guidelines.
@@ -192,7 +191,7 @@ export async function toSegmentationImage(
   }
   const [height, width] = rawSegmentationMap.shape;
   const segmentationImageBuffer = tf.buffer([height, width, 3], 'int32');
-  const mapData = (await rawSegmentationMap.array()) as number[][];
+  const mapData = await rawSegmentationMap.array();
   const labels = new Set<Label>();
   for (let columnIndex = 0; columnIndex < height; ++columnIndex) {
     for (let rowIndex = 0; rowIndex < width; ++rowIndex) {
