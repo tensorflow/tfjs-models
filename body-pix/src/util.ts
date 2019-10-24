@@ -6,9 +6,9 @@ import {BodyPixInternalResolution} from './types';
 
 export function getInputSize(input: BodyPixInput): [number, number] {
   if (input instanceof HTMLImageElement || input instanceof HTMLCanvasElement) {
-    if (input.offsetHeight && input.offsetWidth) {
+    if (input.offsetHeight != 0 && input.offsetWidth != 0) {
       return [input.offsetHeight, input.offsetWidth];
-    } else if (input.height && input.width) {
+    } else if (input.height != null && input.width != null) {
       return [input.height, input.width];
     } else {
       throw new Error(
@@ -17,7 +17,7 @@ export function getInputSize(input: BodyPixInput): [number, number] {
   } else if (input instanceof ImageData) {
     return [input.height, input.width];
   } else if (input instanceof HTMLVideoElement) {
-    if (input.height && input.width) {
+    if (input.height != null && input.width != null) {
       // Prioritizes user specified height and width.
       return [input.height, input.width];
     } else {
