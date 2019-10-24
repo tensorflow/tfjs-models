@@ -77,7 +77,7 @@ describeWithFlags('BodyPix', ALL_ENVS, ()=> {
   });
 
   it('segmentPerson does not leak memory', done => {
-    const input = tf.zeros([513, 513, 3]) as tf.Tensor3D;
+    const input = tf.zeros([73, 73, 3]) as tf.Tensor3D;
 
     const beforeTensors = tf.memory().numTensors;
 
@@ -89,10 +89,34 @@ describeWithFlags('BodyPix', ALL_ENVS, ()=> {
         .catch(done.fail);
   });
 
-  it('estimatePersonPartSegmenation does not leak memory', done => {
-    const input = tf.zeros([513, 513, 3]) as tf.Tensor3D;
+  it('segmentMultiPerson does not leak memory', done => {
+    const input = tf.zeros([73, 73, 3]) as tf.Tensor3D;
+
+    const beforeTensors = tf.memory().numTensors;
+
+    bodyPix.segmentMultiPerson(input)
+        .then(() => {
+          expect(tf.memory().numTensors).toEqual(beforeTensors);
+        })
+        .then(done)
+        .catch(done.fail);
+  });
+
+  it('segmentPersonParts does not leak memory', done => {
+    const input = tf.zeros([73, 73, 3]) as tf.Tensor3D;
     const beforeTensors = tf.memory().numTensors;
     bodyPix.segmentPersonParts(input)
+        .then(() => {
+          expect(tf.memory().numTensors).toEqual(beforeTensors);
+        })
+        .then(done)
+        .catch(done.fail);
+  });
+
+  it('segmentMultiPersonParts does not leak memory', done => {
+    const input = tf.zeros([73, 73, 3]) as tf.Tensor3D;
+    const beforeTensors = tf.memory().numTensors;
+    bodyPix.segmentMultiPersonParts(input)
         .then(() => {
           expect(tf.memory().numTensors).toEqual(beforeTensors);
         })
