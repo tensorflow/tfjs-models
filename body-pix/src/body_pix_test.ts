@@ -18,12 +18,12 @@
 
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
-import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
 import * as bodyPixModel from './body_pix_model';
 import * as resnet from './resnet';
+import {describeWithFlags, ALL_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
-describeWithFlags('BodyPix', NODE_ENVS, () => {
+describeWithFlags('BodyPix', ALL_ENVS, ()=> {
   let bodyPix: bodyPixModel.BodyPix;
   const inputResolution = 513;
   const outputStride = 32;
