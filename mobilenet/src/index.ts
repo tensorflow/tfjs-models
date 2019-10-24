@@ -45,7 +45,6 @@ export interface ModelConfig {
   alpha?: MobileNetAlpha;
   modelUrl?: string|tf.io.IOHandler;
   inputRange?: [number, number];
-
 }
 
 const EMBEDDING_NODES: {[version: string]: string} = {
@@ -207,8 +206,8 @@ class MobileNetImpl implements MobileNet {
       }
 
       // Normalize the image from [0, 255] to [inputMin, inputMax].
-      const normalized =
-          img.toFloat().mul(this.normalizationConstant).add(this.inputMin) as tf.Tensor3D;
+      const normalized: tf.Tensor3D =
+          img.toFloat().mul(this.normalizationConstant).add(this.inputMin);
 
       // Resize the image to
       let resized = normalized;
