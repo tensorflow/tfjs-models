@@ -34,7 +34,8 @@ export async function loadMetadataJson(url: string):
     const fs = require('fs');
     const readFile = promisify(fs.readFile);
 
-    return readFile(url.slice(FILE_SCHEME.length), {encoding: 'utf-8'});
+    return JSON.parse(
+        await readFile(url.slice(FILE_SCHEME.length), {encoding: 'utf-8'}));
   } else {
     throw new Error(
         `Unsupported URL scheme in metadata URL: ${url}. ` +
