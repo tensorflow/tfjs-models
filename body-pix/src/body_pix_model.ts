@@ -369,7 +369,7 @@ export class BodyPix {
    * The input image to feed through the network.
    *
    * @param internalResolution Defaults to 'medium'. The internal resolution
-   * that input is resized to before inference. The larger the
+   * that the input is resized to before inference. The larger the
    * internalResolution the more accurate the model at the cost of slower
    * prediction times. Available values are 'low', 'medium', 'high', 'full', or
    * a percentage value between 0 and 1. The values 'low', 'medium', 'high', and
@@ -621,7 +621,7 @@ export class BodyPix {
    * The input image to feed through the network.
    *
    * @param internalResolution Defaults to 'medium'. The internal resolution
-   * percentage that input is resized to before inference. The larger the
+   * percentage that the input is resized to before inference. The larger the
    * internalResolution the more accurate the model at the cost of slower
    * prediction times. Available values are 'low', 'medium', 'high', 'full', or
    * a percentage value between 0 and 1. The values 'low', 'medium', 'high', and
