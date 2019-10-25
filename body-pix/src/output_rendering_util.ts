@@ -175,7 +175,7 @@ export function toMask(
     return null;
   }
 
-  let multiPersonOrPartSegmentation: (PersonSegmentation|PartSegmentation)[];
+  let multiPersonOrPartSegmentation: Array<PersonSegmentation|PartSegmentation>;
   if (!Array.isArray(personOrPartSegmentation)) {
     multiPersonOrPartSegmentation = [personOrPartSegmentation];
   } else {
@@ -363,8 +363,7 @@ export function drawMask(
 
   ctx.globalAlpha = maskOpacity;
   if (maskImage) {
-    assertSameDimensions(
-        {width: width, height: height}, maskImage, 'image', 'mask');
+    assertSameDimensions({width, height}, maskImage, 'image', 'mask');
 
     const mask = renderImageDataToOffScreenCanvas(maskImage, CANVAS_NAMES.mask);
 
@@ -402,8 +401,7 @@ export function drawPixelatedMask(
     maskOpacity = 0.7, maskBlurAmount = 0, flipHorizontal = false,
     pixelCellWidth = 10.0) {
   const [height, width] = getInputSize(image);
-  assertSameDimensions(
-      {width: width, height: height}, maskImage, 'image', 'mask');
+  assertSameDimensions({width, height}, maskImage, 'image', 'mask');
 
   const mask = renderImageDataToOffScreenCanvas(maskImage, CANVAS_NAMES.mask);
   const blurredMask = drawAndBlurImageOnOffScreenCanvas(
@@ -610,7 +608,7 @@ export function blurBodyPart(
     flipCanvasHorizontal(canvas);
   }
   // draw the original image on the final canvas
-  const [height, width] = getInputSize(image)
+  const [height, width] = getInputSize(image);
   ctx.drawImage(image, 0, 0, width, height);
 
   // "destination-in" - "The existing canvas content is kept where both the

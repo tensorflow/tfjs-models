@@ -71,7 +71,7 @@ function traverseToTargetKeypoint(
   const displacement =
       getDisplacement(edgeId, sourceKeypointIndices, displacements);
 
-  let displacedPoint = addVectors(sourceKeypoint.position, displacement);
+  const displacedPoint = addVectors(sourceKeypoint.position, displacement);
   let targetKeypoint = displacedPoint;
   for (let i = 0; i < offsetRefineStep; i++) {
     const targetKeypointIndices =

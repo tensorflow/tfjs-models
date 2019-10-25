@@ -15,82 +15,37 @@
  * =============================================================================
  */
 
-import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {BaseModel} from './body_pix_model';
-import {BodyPixOutputStride} from './types';
+import {BaseModel} from './base_model';
 
-function toFloatIfInt(input: tf.Tensor3D): tf.Tensor3D {
-  return tf.tidy(() => {
-    if (input.dtype === 'int32') {
-      input = input.toFloat();
-    }
-    return input;
-  });
-}
+const imageNetMean = [-123.15, -115.90, -103.06];
 
-function processInput(input: tf.Tensor3D): tf.Tensor3D {
-  return tf.tidy(() => {
-    const imageNetMean = [-123.15, -115.90, -103.06];
+export class ResNet extends BaseModel {
+  preprocessInput(input: tf.Tensor3D): tf.Tensor3D {
     return input.add(imageNetMean);
-  });
-}
-
-export class ResNet implements BaseModel {
-  readonly model: tfconv.GraphModel;
-  readonly outputStride: BodyPixOutputStride;
-
-  constructor(model: tfconv.GraphModel, outputStride: BodyPixOutputStride) {
-    this.model = model;
-    const inputShape =
-        this.model.inputs[0].shape as [number, number, number, number];
-    tf.util.assert(
-        (inputShape[1] === -1) && (inputShape[2] === -1),
-        () => `Input shape [${inputShape[1]}, ${inputShape[2]}] ` +
-            `must both be equal to or -1`);
-    this.outputStride = outputStride;
   }
 
-  predict(input: tf.Tensor3D): {[key: string]: tf.Tensor3D} {
-    return tf.tidy(() => {
-      const asFloat = processInput(toFloatIfInt(input));
-      const asBatch = asFloat.expandDims(0);
-      const [
-          displacementBwd4d,
-          displacementFwd4d,
-          heatmaps4d,
-          longOffsets4d,
-          offsets4d,
-          partHeatmaps4d,
-          segmentation4d,
-          partOffsets4d,
-      ] = this.model.predict(asBatch) as tf.Tensor[];
-
-      const heatmaps = heatmaps4d.squeeze() as tf.Tensor3D;
-      const heatmapScores = heatmaps.sigmoid();
-      const offsets = offsets4d.squeeze() as tf.Tensor3D;
-      const displacementFwd = displacementFwd4d.squeeze([0]) as tf.Tensor3D;
-      const displacementBwd = displacementBwd4d.squeeze([0]) as tf.Tensor3D;
-      const segmentation = segmentation4d.squeeze([0]) as tf.Tensor3D;
-      const partHeatmaps = partHeatmaps4d.squeeze([0]) as tf.Tensor3D;
-      const longOffsets = longOffsets4d.squeeze([0]) as tf.Tensor3D;
-      const partOffsets = partOffsets4d.squeeze([0]) as tf.Tensor3D;
-
-      return {
-        heatmapScores,
-        offsets: offsets as tf.Tensor3D,
-        displacementFwd: displacementFwd as tf.Tensor3D,
-        displacementBwd: displacementBwd as tf.Tensor3D,
-        segmentation: segmentation as tf.Tensor3D,
-        partHeatmaps: partHeatmaps as tf.Tensor3D,
-        longOffsets: longOffsets as tf.Tensor3D,
-        partOffsets: partOffsets as tf.Tensor3D
-      };
-    });
-  }
-
-  dispose() {
-    this.model.dispose();
+  nameOutputResults(results: tf.Tensor3D[]) {
+    const [
+      displacementBwd,
+      displacementFwd,
+      heatmap,
+      longOffsets,
+      offsets,
+      partHeatmaps,
+      segmentation,
+      partOffsets,
+  ] = results;
+    return {
+      offsets,
+      segmentation,
+      partHeatmaps,
+      longOffsets,
+      heatmap,
+      displacementFwd,
+      displacementBwd,
+      partOffsets
+    };
   }
 }

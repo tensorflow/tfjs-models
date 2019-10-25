@@ -118,7 +118,7 @@ export class SemanticSegmentation {
     return tf.tidy(() => {
       const data = toInputTensor(input);
       return tf.squeeze(this.model.execute(data) as tf.Tensor);
-    }) as tf.Tensor2D;
+    });
   }
 
   /**

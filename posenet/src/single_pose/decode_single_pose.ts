@@ -18,9 +18,7 @@
 import * as tf from '@tensorflow/tfjs-core';
 
 import {partNames} from '../keypoints';
-import {PoseNetOutputStride} from '../posenet_model';
-import {Keypoint, Pose} from '../types';
-import {toTensorBuffer} from '../util';
+import {Keypoint, Pose, PoseNetOutputStride} from '../types';
 
 import {argmax2d} from './argmax2d';
 import {getOffsetPoints, getPointsConfidence} from './util';
@@ -63,10 +61,8 @@ export async function decodeSinglePose(
 
   const heatmapValues = argmax2d(heatmapScores);
 
-  const allTensorBuffers = await Promise.all([
-    toTensorBuffer(heatmapScores), toTensorBuffer(offsets),
-    toTensorBuffer(heatmapValues, 'int32')
-  ]);
+  const allTensorBuffers = await Promise.all(
+      [heatmapScores.buffer(), offsets.buffer(), heatmapValues.buffer()]);
 
   const scoresBuffer = allTensorBuffers[0];
   const offsetsBuffer = allTensorBuffers[1];
@@ -74,7 +70,7 @@ export async function decodeSinglePose(
 
   const offsetPoints =
       getOffsetPoints(heatmapValuesBuffer, outputStride, offsetsBuffer);
-  const offsetPointsBuffer = await toTensorBuffer(offsetPoints);
+  const offsetPointsBuffer = await offsetPoints.buffer();
 
   const keypointConfidence =
       Array.from(getPointsConfidence(scoresBuffer, heatmapValuesBuffer));

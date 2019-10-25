@@ -66,7 +66,8 @@ export function decodeMultipleMasksWebGl(
       return round(((float(pos + pad) + 1.0) * scale - 1.0) / float(stride));
     }
 
-    float convertToPositionInOutputFloat(int pos, int pad, float scale, int stride) {
+    float convertToPositionInOutputFloat(
+        int pos, int pad, float scale, int stride) {
       return ((float(pos + pad) + 1.0) * scale - 1.0) / float(stride);
     }
 
@@ -154,9 +155,6 @@ export function decodeMultipleMasksWebGl(
   `
   };
   const webglBackend = tf.backend() as tf.webgl.MathBackendWebGL;
-  const result = webglBackend.compileAndRun(
-                     program, [segmentation, shapedLongOffsets, posesTensor]) as
-      tf.Tensor2D;
-
-  return result;
+  return webglBackend.compileAndRun(
+      program, [segmentation, shapedLongOffsets, posesTensor]);
 }

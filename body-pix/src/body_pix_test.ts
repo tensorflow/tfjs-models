@@ -18,12 +18,13 @@
 
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
+// tslint:disable-next-line: no-imports-from-dist
+import {ALL_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
 import * as bodyPixModel from './body_pix_model';
 import * as resnet from './resnet';
-import {describeWithFlags, ALL_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
-describeWithFlags('BodyPix', ALL_ENVS, ()=> {
+describeWithFlags('BodyPix', ALL_ENVS, () => {
   let bodyPix: bodyPixModel.BodyPix;
   const inputResolution = 513;
   const outputStride = 32;
@@ -32,7 +33,7 @@ describeWithFlags('BodyPix', ALL_ENVS, ()=> {
   const numParts = 24;
   const outputResolution = (inputResolution - 1) / outputStride + 1;
 
-  beforeAll((done) => {
+  beforeAll(async () => {
     const resNetConfig =
         {architecture: 'ResNet50', outputStride, inputResolution, quantBytes} as
         bodyPixModel.ModelConfig;
@@ -68,59 +69,38 @@ describeWithFlags('BodyPix', ALL_ENVS, ()=> {
       };
     });
 
-    bodyPixModel.load(resNetConfig)
-        .then((bodyPixInstance: bodyPixModel.BodyPix) => {
-          bodyPix = bodyPixInstance;
-        })
-        .then(done)
-        .catch(done.fail);
+    bodyPix = await bodyPixModel.load(resNetConfig);
   });
 
-  it('segmentPerson does not leak memory', done => {
-    const input = tf.zeros([73, 73, 3]) as tf.Tensor3D;
+  it('segmentPerson does not leak memory', async () => {
+    const input: tf.Tensor3D = tf.zeros([73, 73, 3]);
 
     const beforeTensors = tf.memory().numTensors;
 
-    bodyPix.segmentPerson(input)
-        .then(() => {
-          expect(tf.memory().numTensors).toEqual(beforeTensors);
-        })
-        .then(done)
-        .catch(done.fail);
+    await bodyPix.segmentPerson(input);
+    expect(tf.memory().numTensors).toEqual(beforeTensors);
   });
 
-  it('segmentMultiPerson does not leak memory', done => {
-    const input = tf.zeros([73, 73, 3]) as tf.Tensor3D;
+  it('segmentMultiPerson does not leak memory', async () => {
+    const input: tf.Tensor3D = tf.zeros([73, 73, 3]);
 
     const beforeTensors = tf.memory().numTensors;
 
-    bodyPix.segmentMultiPerson(input)
-        .then(() => {
-          expect(tf.memory().numTensors).toEqual(beforeTensors);
-        })
-        .then(done)
-        .catch(done.fail);
+    await bodyPix.segmentMultiPerson(input);
+    expect(tf.memory().numTensors).toEqual(beforeTensors);
   });
 
-  it('segmentPersonParts does not leak memory', done => {
-    const input = tf.zeros([73, 73, 3]) as tf.Tensor3D;
+  it('segmentPersonParts does not leak memory', async () => {
+    const input: tf.Tensor3D = tf.zeros([73, 73, 3]);
     const beforeTensors = tf.memory().numTensors;
-    bodyPix.segmentPersonParts(input)
-        .then(() => {
-          expect(tf.memory().numTensors).toEqual(beforeTensors);
-        })
-        .then(done)
-        .catch(done.fail);
+    await bodyPix.segmentPersonParts(input);
+    expect(tf.memory().numTensors).toEqual(beforeTensors);
   });
 
-  it('segmentMultiPersonParts does not leak memory', done => {
-    const input = tf.zeros([73, 73, 3]) as tf.Tensor3D;
+  it('segmentMultiPersonParts does not leak memory', async () => {
+    const input: tf.Tensor3D = tf.zeros([73, 73, 3]);
     const beforeTensors = tf.memory().numTensors;
-    bodyPix.segmentMultiPersonParts(input)
-        .then(() => {
-          expect(tf.memory().numTensors).toEqual(beforeTensors);
-        })
-        .then(done)
-        .catch(done.fail);
+    await bodyPix.segmentMultiPersonParts(input);
+    expect(tf.memory().numTensors).toEqual(beforeTensors);
   });
 });

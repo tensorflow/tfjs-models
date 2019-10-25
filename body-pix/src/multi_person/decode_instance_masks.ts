@@ -20,8 +20,8 @@ import {getBackend} from '@tensorflow/tfjs-core';
 
 import {Padding, PartSegmentation, PersonSegmentation, Pose} from '../types';
 
-import {decodeMultipleMasksCPU, decodeMultiplePartMasksCPU} from './decode_multiple_masks_cpu'
-import {decodeMultipleMasksWebGl} from './decode_multiple_masks_webgl'
+import {decodeMultipleMasksCPU, decodeMultiplePartMasksCPU} from './decode_multiple_masks_cpu';
+import {decodeMultipleMasksWebGl} from './decode_multiple_masks_webgl';
 
 export function toPersonKSegmentation(
     segmentation: tf.Tensor2D, k: number): tf.Tensor2D {
@@ -32,8 +32,10 @@ export function toPersonKSegmentation(
 export function toPersonKPartSegmentation(
     segmentation: tf.Tensor2D, bodyParts: tf.Tensor2D, k: number): tf.Tensor2D {
   return tf.tidy(
-      () => (segmentation.equal(tf.scalar(k)).toInt().mul(bodyParts.add(1)))
-                .sub(1) as tf.Tensor2D);
+      () => segmentation.equal(tf.scalar(k))
+                .toInt()
+                .mul(bodyParts.add(1))
+                .sub(1));
 }
 
 function isWebGlBackend() {

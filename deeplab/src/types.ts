@@ -143,4 +143,3 @@ export interface DeepLabOutput {
   width: number;
   segmentationMap: Uint8ClampedArray;
 }
-;

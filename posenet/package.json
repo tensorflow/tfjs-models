@@ -30,7 +30,7 @@
     "rollup-plugin-typescript2": "~0.13.0",
     "rollup-plugin-uglify": "~3.0.0",
     "ts-node": "~5.0.0",
-    "tslint": "~5.8.0",
+    "tslint": "~5.18.0",
     "typescript": "3.3.3333",
     "yalc": "~1.0.0-pre.27"
   },
