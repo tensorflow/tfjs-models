@@ -298,14 +298,16 @@ It returns a `Promise` that resolves with **an array** of `PersonSegmentation`s.
 [{
   width: 640,
   height: 480,
-  data: Uint8Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 …]
+  data: Uint8Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 …],
+  pose: {"score": 0.4, "keypoints": […]}
  },
  ...
  // the data array for the 1st person containing 307200 values, one for each pixel of the 640x480 image.
  {
   width: 640,
   height: 480,
-  data: Uint8Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, …]
+  data: Uint8Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, …],
+  pose: {"score": 0.4, "keypoints": […]}
  }]
  // the data array for the n-th person containing 307200 values, one for each pixel of the 640x480 image.
 ```
@@ -357,12 +359,14 @@ It returns a `Promise` that resolves with **an array** of `PartSegmentation`s. W
 [{
   width: 680,
   height: 480,
-  data: Int32Array(307200) [-1, -1, -1, -1, -1, -1, 15, 15 …]
+  data: Int32Array(307200) [-1, -1, -1, -1, -1, -1, 15, 15 …],
+  pose: {"score": 0.4, "keypoints": […]}
 },
 {
   width: 680,
   height: 480,
-  data: Int32Array(307200) [2, 2, -1, -1, -1, -1, -1, -1 …]
+  data: Int32Array(307200) [2, 2, -1, -1, -1, -1, -1, -1 …],
+  pose: {"score": 0.4, "keypoints": […]}
 }]
 // The array contains 307200 values, one for each pixel of the 640x480 image
 // that was passed to the function.
