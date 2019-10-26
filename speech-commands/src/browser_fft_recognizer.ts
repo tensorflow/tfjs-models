@@ -551,6 +551,7 @@ export class BrowserFftSpeechCommandRecognizer implements
       };
     }
 
+    tf.dispose(outTensor);
     return output;
   }
 
