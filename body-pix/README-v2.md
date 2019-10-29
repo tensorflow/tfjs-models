@@ -352,7 +352,7 @@ around a person but may result in some pixels being that are part of a person be
 
 #### Returns
 
-It returns a `Promise` that resolves with **an array** of `PartSegmentation`s. When there are multiple people in the image, each `PartSegmentation` object in the array represents one person. More details about the `PartSegmentation` object can be found in the documentation of the `segmentPersonParts` method.
+It returns a `Promise` that resolves with **an array** of `PartSegmentation`s. When there are multiple people in the image, each `PartSegmentation` object in the array represents one person. More details about the `PartSegmentation` object can be found in the documentation of the `segmentPersonParts` method. In addition to `width`, `height`, and `data` fields, `PartSegmentation` object also has a field `pose`. It contains each person's pose same as PoseNet, but less accurate.
 
 
 ```javascript
