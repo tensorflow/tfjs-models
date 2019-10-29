@@ -273,10 +273,7 @@ export class PoseNet {
       input: PosenetInput,
       config: MultiPersonInferenceConfig = MULTI_PERSON_INFERENCE_CONFIG):
       Promise<Pose[]> {
-    const configWithDefaults: MultiPersonInferenceConfig = {
-      ...MULTI_PERSON_INFERENCE_CONFIG,
-      ...config
-    };
+    config = {...MULTI_PERSON_INFERENCE_CONFIG, ...config};
 
     validateMultiPersonInputConfig(config);
 
@@ -300,12 +297,12 @@ export class PoseNet {
 
     const poses = await decodeMultiplePoses(
         scoresBuffer, offsetsBuffer, displacementsFwdBuffer,
-        displacementsBwdBuffer, outputStride, configWithDefaults.maxDetections,
-        configWithDefaults.scoreThreshold, configWithDefaults.nmsRadius);
+        displacementsBwdBuffer, outputStride, config.maxDetections,
+        config.scoreThreshold, config.nmsRadius);
 
     const resultPoses = scaleAndFlipPoses(
         poses, [height, width], inputResolution, padding,
-        configWithDefaults.flipHorizontal);
+        config.flipHorizontal);
 
     heatmapScores.dispose();
     offsets.dispose();
@@ -338,9 +335,9 @@ export class PoseNet {
       input: PosenetInput,
       config: SinglePersonInterfaceConfig = SINGLE_PERSON_INFERENCE_CONFIG):
       Promise<Pose> {
-    const configWithDefaults = {...SINGLE_PERSON_INFERENCE_CONFIG, ...config};
+    config = {...SINGLE_PERSON_INFERENCE_CONFIG, ...config};
 
-    validateSinglePersonInferenceConfig(configWithDefaults);
+    validateSinglePersonInferenceConfig(config);
 
     const outputStride = this.baseModel.outputStride;
     const inputResolution = this.inputResolution;
@@ -357,7 +354,7 @@ export class PoseNet {
 
     const resultPoses = scaleAndFlipPoses(
         poses, [height, width], inputResolution, padding,
-        configWithDefaults.flipHorizontal);
+        config.flipHorizontal);
 
     heatmapScores.dispose();
     offsets.dispose();
