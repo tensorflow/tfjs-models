@@ -133,13 +133,12 @@ It returns a `Promise` that resolves with a  **single** `pose`. The `pose` has a
   </body>
   <!-- Place your code in the script tag below. You can also use an external .js file -->
   <script>
-    var flipHorizontal = false;
 
     var imageElement = document.getElementById('cat');
 
     posenet.load().then(function(net) {
       const pose = net.estimateSinglePose(imageElement, {
-        flipHorizontal: true
+        flipHorizontal: false
       });
       return pose;
     }).then(function(pose){
