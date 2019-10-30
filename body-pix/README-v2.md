@@ -181,7 +181,7 @@ around a person but may result in some pixels being that are part of a person be
 
 #### Returns
 
-It returns a `Promise` that resolves with a `PersonSegmentation` object. Multiple people in the image get merged into  a single binary mask.
+It returns a `Promise` that resolves with a `PersonSegmentation` object. Multiple people in the image get merged into a single binary mask. In addition to `width`, `height`, and `data` fields, `PersonSegmentation` object also has a field `pose`. Although the segmentation covers every person in the image, the pose works when there is 1 person in the image.
 
 
 ```javascript
@@ -240,7 +240,7 @@ around a person but may result in some pixels being that are part of a person be
 
 #### Returns
 
-It returns a `Promise` that resolves with a `PartSegmentation` object. When there are multiple people in the image they are merged into a single array of part values.
+It returns a `Promise` that resolves with a `PartSegmentation` object. When there are multiple people in the image they are merged into a single array of part values. In addition to `width`, `height`, and `data` fields, `PartSegmentation` object also has a field `pose`. Although the part segmentation covers every person in the image, the pose works when there is 1 person in the image.
 
 ```javascript
 // The array contains 307200 values, one for each pixel of the 640x480 image
