@@ -17,6 +17,7 @@
 
 import * as fs from 'fs';
 import {join} from 'path';
+import * as semver from 'semver';
 import * as shell from 'shelljs';
 
 // Exit if any commands error.
@@ -29,6 +30,45 @@ const dir = '.';
 const dirs = fs.readdirSync(dir)
                  .filter(f => fs.statSync(join(dir, f)).isDirectory())
                  .filter(f => !f.startsWith('.') && f !== 'node_modules');
+
+function assertPeerDepSatisfied(peerDeps, devDeps, dependencyName, dir) {
+  const peerDep = peerDeps[dependencyName];
+  const devDep = devDeps[dependencyName];
+  if (peerDep != null && devDep != null) {
+    // Use the min version because semver.satisfies needs to compare a version
+    // to a range.
+    const minDevDepInPeerDepRange =
+        semver.satisfies(semver.minVersion(devDep).version, peerDep);
+    if (!minDevDepInPeerDepRange) {
+      throw new Error(
+          `devDependency version (${devDep}) does not satisfy ` +
+          `peerDepency version (${peerDep}) of ${dependencyName} ` +
+          `in ${dir}.`);
+    }
+  }
+}
+
+function assertCaretPeerDep(peerDeps, dependencyName, dir) {
+  const peerDep = peerDeps[dependencyName];
+  if (peerDep != null) {
+    if (!peerDep.startsWith('^')) {
+      throw new Error(
+          `peerDependency version (${peerDep}) of ${dependencyName} for ` +
+          `${dir} must start with ^.`);
+    }
+  }
+}
+
+function assertCaretDevDep(devDeps, dependencyName, dir) {
+  const devDep = devDeps[dependencyName];
+  if (devDep != null) {
+    if (!devDep.startsWith('^')) {
+      throw new Error(
+          `devDependency version (${devDep}) of ${dependencyName} for ` +
+          `${dir} must start with ^.`);
+    }
+  }
+}
 
 dirs.forEach(dir => {
   if (!fs.existsSync(`${dir}/package.json`) || dir === 'clone') {
@@ -44,29 +84,18 @@ dirs.forEach(dir => {
   // sure the version uses ^.
   const peerDeps = pkg.peerDependencies;
   const devDeps = pkg.devDependencies;
-  if (peerDeps['@tensorflow/tfjs'] != null &&
-      devDeps['@tensorflow/tfjs'] != null) {
-    if (peerDeps['@tensorflow/tfjs'] !== devDeps['@tensorflow/tfjs']) {
-      throw new Error(
-          `peerDependency version (${peerDeps['@tensorflow/tfjs']}) and ` +
-          `devDependency version (${devDeps['@tensorflow/tfjs']}) of tfjs ` +
-          `do not match for model ${dir}.`);
-    }
-  }
-  if (peerDeps['@tensorflow/tfjs'] != null) {
-    if (!peerDeps['@tensorflow/tfjs'].startsWith('^')) {
-      throw new Error(
-          `peerDependency version (${peerDeps['@tensorflow/tfjs']}) for ` +
-          `${dir} must start with ^.`);
-    }
-  }
-  if (devDeps['@tensorflow/tfjs'] != null) {
-    if (!devDeps['@tensorflow/tfjs'].startsWith('^')) {
-      throw new Error(
-          `devDependency version (${peerDeps['@tensorflow/tfjs']}) for ${dir}` +
-          `must start with ^.`);
-    }
-  }
+
+  assertCaretDevDep(peerDeps, '@tensorflow/tfjs', dir);
+  assertCaretDevDep(peerDeps, '@tensorflow/tfjs-core', dir);
+  assertCaretDevDep(peerDeps, '@tensorflow/tfjs-converter', dir);
+
+  assertCaretDevDep(devDeps, '@tensorflow/tfjs', dir);
+  assertCaretDevDep(devDeps, '@tensorflow/tfjs-core', dir);
+  assertCaretDevDep(devDeps, '@tensorflow/tfjs-converter', dir);
+
+  assertPeerDepSatisfied(peerDeps, devDeps, '@tensorflow/tfjs', dir);
+  assertPeerDepSatisfied(peerDeps, devDeps, '@tensorflow/tfjs-core', dir);
+  assertPeerDepSatisfied(peerDeps, devDeps, '@tensorflow/tfjs-converter', dir);
 
   shell.cd('../');
   console.log();

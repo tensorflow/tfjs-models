@@ -13,6 +13,7 @@
     "clang-format": "~1.2.2",
     "fs": "~0.0.1-security",
     "jasmine": "~3.1.0",
+    "semver": "^6.3.0",
     "shelljs": "0.8.2",
     "ts-node": "~5.0.0",
     "tslint": "~5.18.0",
