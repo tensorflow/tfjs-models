@@ -228,7 +228,7 @@ const segmentation = await net.segmentPersonParts(image, {
 });
 ```
 
-#### Params in segmentMultiPerson
+#### Params in segmentPersonParts
 
 * **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
    The input image to feed through the network.
