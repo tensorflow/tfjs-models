@@ -85,9 +85,9 @@ dirs.forEach(dir => {
   const peerDeps = pkg.peerDependencies;
   const devDeps = pkg.devDependencies;
 
-  assertCaretDevDep(peerDeps, '@tensorflow/tfjs', dir);
-  assertCaretDevDep(peerDeps, '@tensorflow/tfjs-core', dir);
-  assertCaretDevDep(peerDeps, '@tensorflow/tfjs-converter', dir);
+  assertCaretPeerDep(peerDeps, '@tensorflow/tfjs', dir);
+  assertCaretPeerDep(peerDeps, '@tensorflow/tfjs-core', dir);
+  assertCaretPeerDep(peerDeps, '@tensorflow/tfjs-converter', dir);
 
   assertCaretDevDep(devDeps, '@tensorflow/tfjs', dir);
   assertCaretDevDep(devDeps, '@tensorflow/tfjs-core', dir);
