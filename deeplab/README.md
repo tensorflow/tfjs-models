@@ -36,7 +36,7 @@ If you would rather load custom weights, you can pass the URL in the config inst
 ```typescript
 import * as deeplab from '@tensorflow-models/deeplab';
 const loadModel = async () => {
-  const url = 'https://example.com/models/deeplab-custom-weights/model.json';
+  const url = 'https://tfhub.dev/tensorflow/tfjs-model/deeplab/pascal/1/default/1/model.json?tfjs-format=file';
   return await deeplab.load({modelUrl: url});
 };
 loadModel().then(() => console.log(`Loaded the model successfully!`));

@@ -68,7 +68,7 @@ export function getURL(
       `${base}/1/default/1/model.json` :
       `${base}/1/quantized/${quantizationBytes}/1/model.json`;
 
-  // Example of url that should be generated/
+  // Example of url that should be generated.
   // https://tfhub.dev/tensorflow/tfjs-model/deeplab/pascal/1/default/1/model.json?tfjs-format=file
   return `${TFHUB_BASE}/${modelPath}?${TFHUB_QUERY_PARAM}`;
 }
