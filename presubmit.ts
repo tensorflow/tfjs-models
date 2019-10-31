@@ -48,23 +48,12 @@ function assertPeerDepSatisfied(peerDeps, devDeps, dependencyName, dir) {
   }
 }
 
-function assertCaretPeerDep(peerDeps, dependencyName, dir) {
-  const peerDep = peerDeps[dependencyName];
-  if (peerDep != null) {
-    if (!peerDep.startsWith('^')) {
+function assertCaretDep(depsMap, dependencyName, dir, depType) {
+  const dep = depsMap[dependencyName];
+  if (dep != null) {
+    if (!dep.startsWith('^')) {
       throw new Error(
-          `peerDependency version (${peerDep}) of ${dependencyName} for ` +
-          `${dir} must start with ^.`);
-    }
-  }
-}
-
-function assertCaretDevDep(devDeps, dependencyName, dir) {
-  const devDep = devDeps[dependencyName];
-  if (devDep != null) {
-    if (!devDep.startsWith('^')) {
-      throw new Error(
-          `devDependency version (${devDep}) of ${dependencyName} for ` +
+          `${depType} version (${dep}) of ${dependencyName} for ` +
           `${dir} must start with ^.`);
     }
   }
@@ -85,13 +74,13 @@ dirs.forEach(dir => {
   const peerDeps = pkg.peerDependencies;
   const devDeps = pkg.devDependencies;
 
-  assertCaretPeerDep(peerDeps, '@tensorflow/tfjs', dir);
-  assertCaretPeerDep(peerDeps, '@tensorflow/tfjs-core', dir);
-  assertCaretPeerDep(peerDeps, '@tensorflow/tfjs-converter', dir);
+  assertCaretDep(peerDeps, '@tensorflow/tfjs', dir, 'peerDep');
+  assertCaretDep(peerDeps, '@tensorflow/tfjs-core', dir, 'peerDep');
+  assertCaretDep(peerDeps, '@tensorflow/tfjs-converter', dir, 'peerDep');
 
-  assertCaretDevDep(devDeps, '@tensorflow/tfjs', dir);
-  assertCaretDevDep(devDeps, '@tensorflow/tfjs-core', dir);
-  assertCaretDevDep(devDeps, '@tensorflow/tfjs-converter', dir);
+  assertCaretDep(devDeps, '@tensorflow/tfjs', dir, 'devDep');
+  assertCaretDep(devDeps, '@tensorflow/tfjs-core', dir, 'devDep');
+  assertCaretDep(devDeps, '@tensorflow/tfjs-converter', dir, 'devDep');
 
   assertPeerDepSatisfied(peerDeps, devDeps, '@tensorflow/tfjs', dir);
   assertPeerDepSatisfied(peerDeps, devDeps, '@tensorflow/tfjs-core', dir);
