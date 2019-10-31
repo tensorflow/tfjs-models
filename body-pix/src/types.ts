@@ -1,6 +1,6 @@
 import * as tf from '@tensorflow/tfjs-core';
 
-export type BodyPixInternalResolution = number|'low'|'medium'|'high';
+export type BodyPixInternalResolution = number|'low'|'medium'|'high'|'full';
 export type BodyPixOutputStride = 32|16|8;
 export type BodyPixArchitecture = 'ResNet50'|'MobileNetV1';
 export type BodyPixQuantBytes = 1|2|4;

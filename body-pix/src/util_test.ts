@@ -19,50 +19,140 @@
 // tslint:disable-next-line: no-imports-from-dist
 import {ALL_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
-import {toValidInternalResolutionNumber} from './util';
+import {BodyPixOutputStride} from './types';
+import {toInputResolutionHeightAndWidth, toValidInputResolution} from './util';
 
-describeWithFlags('util.toValidInternalResolutionNumber', ALL_ENVS, () => {
-  it('produces correct output when small is specified', () => {
-    const result = toValidInternalResolutionNumber('low');
-    expect(result).toBe(257);
+describeWithFlags('util.toValidInputResolution', ALL_ENVS, () => {
+  it('returns an odd value', () => {
+    expect(toValidInputResolution(1920, 8) % 2).toEqual(1);
+    expect(toValidInputResolution(1280, 16) % 2).toEqual(1);
+    expect(toValidInputResolution(719, 16) % 2).toEqual(1);
+    expect(toValidInputResolution(545, 16) % 2).toEqual(1);
+    expect(toValidInputResolution(225, 8) % 2).toEqual(1);
+    expect(toValidInputResolution(240, 8) % 2).toEqual(1);
   });
 
-  it('produces correct output when medium is specified', () => {
-    const result = toValidInternalResolutionNumber('medium');
-    expect(result).toBe(513);
+  it('returns the original value when already a valid resolution', () => {
+    const outputStride = 16;
+
+    const validResolution = toValidInputResolution(1000, outputStride);
+
+    const resolution = toValidInputResolution(validResolution, outputStride);
+
+    expect(resolution).toEqual(validResolution);
   });
 
-  it('produces correct output when large is specified', () => {
-    const result = toValidInternalResolutionNumber('high');
-    expect(result).toBe(1025);
+  it('succeeds when 1-resolution is divisible by the output stride', () => {
+    const outputStride = 8;
+    const inputResolution = 562;
+
+    const resolution = toValidInputResolution(inputResolution, outputStride);
+
+    expect((resolution - 1) % outputStride).toEqual(0);
   });
+});
 
-  it('produces correct output when number is specified', () => {
-    for (let i = 0; i < 2000; i++) {
-      const result = toValidInternalResolutionNumber(i);
-      if (i < 161) {
-        expect(result).toBe(161);
-      }
+describeWithFlags('util.toInputResolutionHeightAndWidth', ALL_ENVS, () => {
+  function getExpectedResolution(
+      inputShape: [number, number], outputStride: BodyPixOutputStride,
+      expectedScalePercentage: number) {
+    return inputShape.map(
+        size => toValidInputResolution(
+            size * expectedScalePercentage, outputStride));
+  }
 
-      if (i > 1217) {
-        expect(result).toBe(1217);
-      }
+  it(`returns the full image size as a valid input resolution when ` +
+         `internalResolution is 'full'`,
+     () => {
+       const inputShape: [number, number] = [1920, 1080];
+       const outputStride = 16;
+       const internalResolution = 'full';
+       const expectedScalePercentage = 1.0;
 
-      if (i === 250) {
-        expect(result).toBe(257);
-      }
+       const expectedResult = getExpectedResolution(
+           inputShape, outputStride, expectedScalePercentage);
 
-      if (i === 500) {
-        expect(result).toBe(513);
-      }
+       const result = toInputResolutionHeightAndWidth(
+           internalResolution, outputStride, inputShape);
 
-      if (i === 750) {
-        expect(result).toBe(737);
-      }
+       expect(result).toEqual(expectedResult);
+     });
 
-      if (i === 1000) {
-        expect(result).toBe(993);
-      }
-    }
+  it(`returns 75% of the image size as a valid input resolution when ` +
+         `internalResolution is 'high'`,
+     () => {
+       const inputShape: [number, number] = [400, 900];
+       const outputStride = 16;
+       const internalResolution = 'high';
+       const expectedScalePercentage = 0.75;
+
+       const expectedResult = getExpectedResolution(
+           inputShape, outputStride, expectedScalePercentage);
+
+       const result = toInputResolutionHeightAndWidth(
+           internalResolution, outputStride, inputShape);
+
+       expect(result).toEqual(expectedResult);
+     });
+
+  it(`returns 50% of the image size as a valid input resolution when ` +
+         `internalResolution is 'medium'`,
+     () => {
+       const inputShape: [number, number] = [694, 309];
+       const outputStride = 32;
+       const internalResolution = 'medium';
+       const expectedScalePercentage = 0.50;
+
+       const expectedResult = getExpectedResolution(
+           inputShape, outputStride, expectedScalePercentage);
+
+       const result = toInputResolutionHeightAndWidth(
+           internalResolution, outputStride, inputShape);
+
+       expect(result).toEqual(expectedResult);
+     });
+
+  it(`returns 25% of the image size as a valid input resolution when ` +
+         `internalResolution is 'low'`,
+     () => {
+       const inputShape: [number, number] = [930, 1001];
+       const outputStride = 8;
+       const internalResolution = 'low';
+       const expectedScalePercentage = 0.25;
+
+       const expectedResult = getExpectedResolution(
+           inputShape, outputStride, expectedScalePercentage);
+
+       const result = toInputResolutionHeightAndWidth(
+           internalResolution, outputStride, inputShape);
+
+       expect(result).toEqual(expectedResult);
+     });
+
+  it(`returns the {internalResolution}% of the image size as a valid input ` +
+         `resolution when internalResolution is a number`,
+     () => {
+       const inputShape: [number, number] = [1450, 789];
+       const outputStride = 16;
+       const internalResolution = 0.675;
+
+       const expectedResult =
+           getExpectedResolution(inputShape, outputStride, internalResolution);
+
+       const result = toInputResolutionHeightAndWidth(
+           internalResolution, outputStride, inputShape);
+
+       expect(result).toEqual(expectedResult);
+     });
+
+  it('raises an error when internalResolution is larger than 1', () => {
+    expect(() => {
+      toInputResolutionHeightAndWidth(1.01, 16, [640, 480]);
+    }).toThrow();
+  });
+  it('raises an error when internalResolution is less than 0', () => {
+    expect(() => {
+      toInputResolutionHeightAndWidth(-0.01, 16, [640, 480]);
+    }).toThrow();
   });
 });

@@ -1,6 +1,6 @@
 import * as tf from '@tensorflow/tfjs-core';
 
-import {BodyPixInput, Padding} from './types';
+import {BodyPixInput, BodyPixOutputStride, Padding} from './types';
 import {Pose, TensorBuffer3D} from './types';
 import {BodyPixInternalResolution} from './types';
 
@@ -30,34 +30,70 @@ export function getInputSize(input: BodyPixInput): [number, number] {
   }
 }
 
-export function toValidInternalResolutionNumber(
-    internalResolution: BodyPixInternalResolution): number {
-  let validInternalResolution = 257;
-  switch (internalResolution) {
-    case 'low': {
-      validInternalResolution = 257;
-      break;
-    }
-    case 'medium': {
-      validInternalResolution = 513;
-      break;
-    }
-    case 'high': {
-      validInternalResolution = 1025;
-      break;
-    }
-    default: {
-      validInternalResolution = Math.round(internalResolution / 32) * 32 + 1;
-      if (validInternalResolution > 1217) {
-        validInternalResolution = 1217;
-      }
-      if (validInternalResolution < 161) {
-        validInternalResolution = 161;
-      }
-      break;
-    }
+function isValidInputResolution(
+    resolution: number, outputStride: number): boolean {
+  return (resolution - 1) % outputStride === 0;
+}
+
+export function toValidInputResolution(
+    inputResolution: number, outputStride: BodyPixOutputStride): number {
+  if (isValidInputResolution(inputResolution, outputStride)) {
+    return inputResolution;
   }
-  return validInternalResolution;
+
+  return Math.floor(inputResolution / outputStride) * outputStride + 1;
+}
+
+const INTERNAL_RESOLUTION_STRING_OPTIONS = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  full: 'full'
+};
+
+const INTERNAL_RESOLUTION_PERCENTAGES = {
+  [INTERNAL_RESOLUTION_STRING_OPTIONS.low]: 0.25,
+  [INTERNAL_RESOLUTION_STRING_OPTIONS.medium]: 0.5,
+  [INTERNAL_RESOLUTION_STRING_OPTIONS.high]: 0.75,
+  [INTERNAL_RESOLUTION_STRING_OPTIONS.full]: 1.0
+};
+
+function toInternalResolutionPercentage(
+    internalResolution: BodyPixInternalResolution): number {
+  if (typeof internalResolution === 'string') {
+    const result = INTERNAL_RESOLUTION_PERCENTAGES[internalResolution];
+
+    tf.util.assert(
+        typeof result === 'number',
+        () => `string value of inputResolution must be one of ${
+            Object.values(INTERNAL_RESOLUTION_STRING_OPTIONS)
+                .join(',')} but was ${internalResolution}.`);
+    return result;
+  } else {
+    tf.util.assert(
+        typeof internalResolution === 'number' && internalResolution < 1 &&
+            internalResolution > 0,
+        () =>
+            `inputResolution must be a string or number between 0 and 1, but ` +
+            `was ${internalResolution}`);
+
+    return internalResolution;
+  }
+}
+
+export function toInputResolutionHeightAndWidth(
+    internalResolution: BodyPixInternalResolution,
+    outputStride: BodyPixOutputStride,
+    [inputHeight, inputWidth]: [number, number]): [number, number] {
+  const internalResolutionPercentage =
+      toInternalResolutionPercentage(internalResolution);
+
+  return [
+    toValidInputResolution(
+        inputHeight * internalResolutionPercentage, outputStride),
+    toValidInputResolution(
+        inputWidth * internalResolutionPercentage, outputStride)
+  ];
 }
 
 export function toInputTensor(input: BodyPixInput) {
