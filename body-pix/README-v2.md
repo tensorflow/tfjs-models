@@ -182,7 +182,7 @@ around a person but may result in some pixels being that are part of a person be
 
 #### Returns
 
-It returns a `Promise` that resolves with a `PersonSegmentation` object. Multiple people in the image get merged into  a single binary mask.
+It returns a `Promise` that resolves with a `PersonSegmentation` object. Multiple people in the image get merged into a single binary mask. In addition to `width`, `height`, and `data` fields, `PersonSegmentation` object also has a field `pose`. Although the segmentation covers every person in the image, the pose works when there is 1 person in the image.
 
 
 ```javascript
@@ -228,7 +228,7 @@ const segmentation = await net.segmentPersonParts(image, {
 });
 ```
 
-#### Params in segmentMultiPerson
+#### Params in segmentPersonParts
 
 * **image** - ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
    The input image to feed through the network.
@@ -241,7 +241,7 @@ around a person but may result in some pixels being that are part of a person be
 
 #### Returns
 
-It returns a `Promise` that resolves with a `PartSegmentation` object. When there are multiple people in the image they are merged into a single array of part values.
+It returns a `Promise` that resolves with a `PartSegmentation` object. When there are multiple people in the image they are merged into a single array of part values. In addition to `width`, `height`, and `data` fields, `PartSegmentation` object also has a field `pose`. Although the part segmentation covers every person in the image, the pose works when there is 1 person in the image.
 
 ```javascript
 // The array contains 307200 values, one for each pixel of the 640x480 image
@@ -292,21 +292,23 @@ around a person but may result in some pixels being that are part of a person be
 
 #### Returns
 
-It returns a `Promise` that resolves with **an array** of `PersonSegmentation`s. When there are multiple people in the image, each `PersonSegmentation` object in the array represents one person. More details about the `PersonSegmentation` object can be found in the documentation of the `segmentPerson` method.
+It returns a `Promise` that resolves with **an array** of `PersonSegmentation`s. When there are multiple people in the image, each `PersonSegmentation` object in the array represents one person. More details about the `PersonSegmentation` object can be found in the documentation of the `segmentPerson` method. In addition to `width`, `height`, and `data` fields, `PersonSegmentation` object also has a field `pose`. It contains each person's pose same as PoseNet, but less accurate.
 
 
 ```javascript
 [{
   width: 640,
   height: 480,
-  data: Uint8Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 …]
+  data: Uint8Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1 …],
+  pose: {"score": 0.4, "keypoints": […]}
  },
  ...
  // the data array for the 1st person containing 307200 values, one for each pixel of the 640x480 image.
  {
   width: 640,
   height: 480,
-  data: Uint8Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, …]
+  data: Uint8Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, …],
+  pose: {"score": 0.4, "keypoints": […]}
  }]
  // the data array for the n-th person containing 307200 values, one for each pixel of the 640x480 image.
 ```
@@ -351,19 +353,21 @@ around a person but may result in some pixels being that are part of a person be
 
 #### Returns
 
-It returns a `Promise` that resolves with **an array** of `PartSegmentation`s. When there are multiple people in the image, each `PartSegmentation` object in the array represents one person. More details about the `PartSegmentation` object can be found in the documentation of the `segmentPersonParts` method.
+It returns a `Promise` that resolves with **an array** of `PartSegmentation`s. When there are multiple people in the image, each `PartSegmentation` object in the array represents one person. More details about the `PartSegmentation` object can be found in the documentation of the `segmentPersonParts` method. In addition to `width`, `height`, and `data` fields, `PartSegmentation` object also has a field `pose`. It contains each person's pose same as PoseNet, but less accurate.
 
 
 ```javascript
 [{
   width: 680,
   height: 480,
-  data: Int32Array(307200) [-1, -1, -1, -1, -1, -1, 15, 15 …]
+  data: Int32Array(307200) [-1, -1, -1, -1, -1, -1, 15, 15 …],
+  pose: {"score": 0.4, "keypoints": […]}
 },
 {
   width: 680,
   height: 480,
-  data: Int32Array(307200) [2, 2, -1, -1, -1, -1, -1, -1 …]
+  data: Int32Array(307200) [2, 2, -1, -1, -1, -1, -1, -1 …],
+  pose: {"score": 0.4, "keypoints": […]}
 }]
 // The array contains 307200 values, one for each pixel of the 640x480 image
 // that was passed to the function.
