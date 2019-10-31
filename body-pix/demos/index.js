@@ -337,12 +337,13 @@ function setupGui(cameras) {
   function updateGuiInputSection() {
     if (guiState.input.architecture === 'MobileNetV1') {
       updateGuiInternalResolution(
-          defaultMobileNetInternalResolution, ['low', 'medium', 'high']);
+          defaultMobileNetInternalResolution,
+          ['low', 'medium', 'high', 'full']);
       updateGuiOutputStride(defaultMobileNetStride, [8, 16]);
       updateGuiMultiplier(defaultMobileNetMultiplier, [0.50, 0.75, 1.0])
     } else {  // guiState.input.architecture === "ResNet50"
       updateGuiInternalResolution(
-          defaultResNetInternalResolution, ['low', 'medium', 'high']);
+          defaultResNetInternalResolution, ['low', 'medium', 'high', 'full']);
       updateGuiOutputStride(defaultResNetStride, [32, 16]);
       updateGuiMultiplier(defaultResNetMultiplier, [1.0]);
     }
