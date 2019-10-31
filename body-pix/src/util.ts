@@ -60,6 +60,10 @@ const INTERNAL_RESOLUTION_PERCENTAGES = {
 
 function toInternalResolutionPercentage(
     internalResolution: BodyPixInternalResolution): number {
+  if (typeof internalResolution === 'undefined') {
+    return INTERNAL_RESOLUTION_PERCENTAGES[INTERNAL_RESOLUTION_STRING_OPTIONS
+                                               .medium];
+  }
   if (typeof internalResolution === 'string') {
     const result = INTERNAL_RESOLUTION_PERCENTAGES[internalResolution];
 

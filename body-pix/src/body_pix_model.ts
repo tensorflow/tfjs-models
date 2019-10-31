@@ -170,7 +170,7 @@ function validateModelConfig(config: ModelConfig) {
  */
 export interface InferenceConfig {
   flipHorizontal: boolean;
-  internalResolution: BodyPixInternalResolution;
+  internalResolution?: BodyPixInternalResolution;
   segmentationThreshold: number;
 }
 

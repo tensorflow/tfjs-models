@@ -19,7 +19,7 @@
 // tslint:disable-next-line: no-imports-from-dist
 import {ALL_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
-import {BodyPixOutputStride} from './types';
+import {BodyPixInternalResolution, BodyPixOutputStride} from './types';
 import {toInputResolutionHeightAndWidth, toValidInputResolution} from './util';
 
 describeWithFlags('util.toValidInputResolution', ALL_ENVS, () => {
@@ -138,6 +138,23 @@ describeWithFlags('util.toInputResolutionHeightAndWidth', ALL_ENVS, () => {
 
        const expectedResult =
            getExpectedResolution(inputShape, outputStride, internalResolution);
+
+       const result = toInputResolutionHeightAndWidth(
+           internalResolution, outputStride, inputShape);
+
+       expect(result).toEqual(expectedResult);
+     });
+
+  it(`returns the 50% of the image size as a valid input ` +
+         `resolution when internalResolution is undefined`,
+     () => {
+       const inputShape: [number, number] = [1450, 789];
+       const outputStride = 16;
+       const internalResolution: BodyPixInternalResolution = undefined;
+       const expectedScalePercentage = 0.50;
+
+       const expectedResult = getExpectedResolution(
+           inputShape, outputStride, expectedScalePercentage);
 
        const result = toInputResolutionHeightAndWidth(
            internalResolution, outputStride, inputShape);
