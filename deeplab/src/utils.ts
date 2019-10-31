@@ -57,16 +57,20 @@ export function createPascalColormap(): Color[] {
  * float32 compressed to 1 or 2 bytes respectively.
  * Set it to 4 to disable quantization.
  *
- * @return The URL of the TF.js GraphModel weights
+ * @return The URL of the TF.js model
  */
 export function getURL(
-    base: ModelArchitecture,
-    quantizationBytes: QuantizationBytes,
-) {
-  return `${config['BASE_PATH']}/${
-      ([1, 2].indexOf(quantizationBytes) !== -1) ?
-          `quantized/${quantizationBytes}/` :
-          ''}${base}/model.json`;
+    base: ModelArchitecture, quantizationBytes: QuantizationBytes) {
+  const TFHUB_BASE = `${config['BASE_PATH']}`;
+  const TFHUB_QUERY_PARAM = 'tfjs-format=file';
+
+  const modelPath = quantizationBytes === 4 ?
+      `${base}/1/default/1/model.json` :
+      `${base}/1/quantized/${quantizationBytes}/1/model.json`;
+
+  // Example of url that should be generated.
+  // https://tfhub.dev/tensorflow/tfjs-model/deeplab/pascal/1/default/1/model.json?tfjs-format=file
+  return `${TFHUB_BASE}/${modelPath}?${TFHUB_QUERY_PARAM}`;
 }
 
 /**
