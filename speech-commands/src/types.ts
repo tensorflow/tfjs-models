@@ -112,6 +112,9 @@ export interface SpeechCommandRecognizer {
    *     `stopListening()` and `recognize()` as the base recognizer.
    */
   createTransfer(name: string): TransferSpeechCommandRecognizer;
+
+  /** Dispose the WebGL memory held by the underlying model. */
+  dispose(): void;
 }
 
 export interface ExampleCollectionOptions {
