@@ -15,6 +15,7 @@ export type PersonSegmentation = {
   height: number,
   partData?: Int32Array,
   pose?: Pose,
+  allPoses?: Array<Pose>,
 };
 
 export type PartSegmentation = {
@@ -22,6 +23,7 @@ export type PartSegmentation = {
   width: number,
   height: number,
   pose?: Pose,
+  allPoses?: Array<Pose>,
 };
 
 export declare interface Padding {

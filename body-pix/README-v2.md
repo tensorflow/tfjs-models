@@ -179,10 +179,13 @@ const segmentation = await net.segmentPerson(image, {
   * **segmentationThreshold** - Defaults to 0.7. Must be between 0 and 1. For each pixel, the model estimates a score between 0 and 1 that indicates how confident it is that part of a person is displayed in that pixel.  This *segmentationThreshold* is used to convert these values
 to binary 0 or 1s by determining the minimum value a pixel's score must have to be considered part of a person.  In essence, a higher value will create a tighter crop
 around a person but may result in some pixels being that are part of a person being excluded from the returned segmentation mask.
+  * **maxDetections** -  Defaults to 10. Maximum number of returned individual person detections per image.
+  * **scoreThreshold** - Only return individual person detections that have root part score greater or equal to this value. Defaults to 0.5
+  * **nmsRadius** - Defaults to 20. Non-maximum suppression part distance in pixels. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away.
 
 #### Returns
 
-It returns a `Promise` that resolves with a `PersonSegmentation` object. Multiple people in the image get merged into a single binary mask. In addition to `width`, `height`, and `data` fields, `PersonSegmentation` object also has a field `pose`. Although the segmentation covers every person in the image, the pose works when there is 1 person in the image.
+It returns a `Promise` that resolves with a `PersonSegmentation` object. Multiple people in the image get merged into a single binary mask. In addition to `width`, `height`, and `data` fields, `PersonSegmentation` object also has a field `allPose` containing poses for all people.
 
 
 ```javascript
@@ -190,7 +193,8 @@ It returns a `Promise` that resolves with a `PersonSegmentation` object. Multipl
 {
   width: 640,
   height: 480,
-  data: Uint8Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, …]
+  data: Uint8Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, …],
+  allPoses: [{"score": 0.4, "keypoints": […]}, …]
 }
 ```
 
@@ -238,10 +242,13 @@ const segmentation = await net.segmentPersonParts(image, {
   * **segmentationThreshold** - Must be between 0 and 1. For each pixel, the model estimates a score between 0 and 1 that indicates how confident it is that part of a person is displayed in that pixel.  This *segmentationThreshold* is used to convert these values
 to binary 0 or 1s by determining the minimum value a pixel's score must have to be considered part of a person.  In essence, a higher value will create a tighter crop
 around a person but may result in some pixels being that are part of a person being excluded from the returned segmentation mask.
+  * **maxDetections** -  Defaults to 10. Maximum number of returned individual person detections per image.
+  * **scoreThreshold** - Only return individual person detections that have root part score greater or equal to this value. Defaults to 0.5
+  * **nmsRadius** - Defaults to 20. Non-maximum suppression part distance in pixels. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away.
 
 #### Returns
 
-It returns a `Promise` that resolves with a `PartSegmentation` object. When there are multiple people in the image they are merged into a single array of part values. In addition to `width`, `height`, and `data` fields, `PartSegmentation` object also has a field `pose`. Although the part segmentation covers every person in the image, the pose works when there is 1 person in the image.
+It returns a `Promise` that resolves with a `PartSegmentation` object. When there are multiple people in the image they are merged into a single array of part values. In addition to `width`, `height`, and `data` fields, `PartSegmentation` object also has a field `allPose` containing poses for all people.
 
 ```javascript
 // The array contains 307200 values, one for each pixel of the 640x480 image
@@ -249,7 +256,8 @@ It returns a `Promise` that resolves with a `PartSegmentation` object. When ther
 {
   width: 680,
   height: 480,
-  data: Int32Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 1, 0, 0, …]
+  data: Int32Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 1, 0, 0, …],
+  allPoses: [{"score": 0.4, "keypoints": […]}, …]
 }
 ```
 

@@ -176,11 +176,8 @@ const guiState = {
     quantBytes: 2
   },
   multiPersonDecoding: {
-    scoreThreshold: 0.2,
-  },
-  multiPersonDecoding: {
     maxDetections: 5,
-    scoreThreshold: 0.2,
+    scoreThreshold: 0.3,
     nmsRadius: 20,
     numKeypointForMatching: 17,
     refineSteps: 10
@@ -374,11 +371,6 @@ function setupGui(cameras) {
   const segmentationEffectController =
       segmentation.add(guiState.segmentation, 'effect', ['mask', 'bokeh']);
 
-  let singlePersonDecoding = gui.addFolder('SinglePersonDecoding');
-  singlePersonDecoding.add(
-      guiState.multiPersonDecoding, 'scoreThreshold', 0.0, 1.0);
-  singlePersonDecoding.close();
-
   let multiPersonDecoding = gui.addFolder('MultiPersonDecoding');
   multiPersonDecoding.add(
       guiState.multiPersonDecoding, 'maxDetections', 0, 20, 1);
@@ -539,11 +531,13 @@ async function estimateSegmentation() {
           });
       break;
     case 'person':
-      const personSegmentation = await state.net.segmentPerson(state.video, {
+      multiPersonSegmentation = await state.net.segmentPerson(state.video, {
         internalResolution: guiState.input.internalResolution,
-        segmentationThreshold: guiState.segmentation.segmentationThreshold
+        segmentationThreshold: guiState.segmentation.segmentationThreshold,
+        maxDetections: guiState.multiPersonDecoding.maxDetections,
+        scoreThreshold: guiState.multiPersonDecoding.scoreThreshold,
+        nmsRadius: guiState.multiPersonDecoding.nmsRadius,
       });
-      multiPersonSegmentation = [personSegmentation];
       break;
     default:
       break;
@@ -568,12 +562,14 @@ async function estimatePartSegmentation() {
           });
       break;
     case 'person':
-      const personPartSegmentation =
+      multiPersonPartSegmentation =
           await state.net.segmentPersonParts(state.video, {
             internalResolution: guiState.input.internalResolution,
-            segmentationThreshold: guiState.segmentation.segmentationThreshold
+            segmentationThreshold: guiState.segmentation.segmentationThreshold,
+            maxDetections: guiState.multiPersonDecoding.maxDetections,
+            scoreThreshold: guiState.multiPersonDecoding.scoreThreshold,
+            nmsRadius: guiState.multiPersonDecoding.nmsRadius,
           });
-      multiPersonPartSegmentation = [personPartSegmentation];
       break;
     default:
       break;
@@ -635,14 +631,24 @@ function segmentBodyInRealTime() {
                 canvas, state.video, mask, guiState.segmentation.opacity,
                 guiState.segmentation.maskBlurAmount, flipHorizontally);
 
-            multiPersonSegmentation.forEach(personSegmentation => {
-              let pose = personSegmentation.pose;
-              if (flipHorizontally) {
-                pose = bodyPix.flipPoseHorizontal(pose, mask.width);
-              }
-              drawKeypoints(pose.keypoints, 0.1, ctx);
-              drawSkeleton(pose.keypoints, 0.1, ctx);
-            });
+            if (Array.isArray(multiPersonSegmentation)) {
+              multiPersonSegmentation.forEach(personSegmentation => {
+                let pose = personSegmentation.pose;
+                if (flipHorizontally) {
+                  pose = bodyPix.flipPoseHorizontal(pose, mask.width);
+                }
+                drawKeypoints(pose.keypoints, 0.1, ctx);
+                drawSkeleton(pose.keypoints, 0.1, ctx);
+              });
+            } else {
+              multiPersonSegmentation.allPoses.forEach(pose => {
+                if (flipHorizontally) {
+                  pose = bodyPix.flipPoseHorizontal(pose, mask.width);
+                }
+                drawKeypoints(pose.keypoints, 0.1, ctx);
+                drawSkeleton(pose.keypoints, 0.1, ctx);
+              })
+            }
             break;
           case 'bokeh':
             bodyPix.drawBokehEffect(
@@ -683,15 +689,26 @@ function segmentBodyInRealTime() {
                 guiState.partMap.edgeBlurAmount, flipHorizontally);
         }
 
-        multiPersonPartSegmentation.forEach(personPartSegmentation => {
-          let pose = personPartSegmentation.pose;
-          if (flipHorizontally) {
-            pose =
-                bodyPix.flipPoseHorizontal(pose, personPartSegmentation.width);
-          }
-          drawKeypoints(pose.keypoints, 0.1, ctx);
-          drawSkeleton(pose.keypoints, 0.1, ctx);
-        });
+        if (Array.isArray(multiPersonPartSegmentation)) {
+          multiPersonPartSegmentation.forEach(personPartSegmentation => {
+            let pose = personPartSegmentation.pose;
+            if (flipHorizontally) {
+              pose = bodyPix.flipPoseHorizontal(
+                  pose, personPartSegmentation.width);
+            }
+            drawKeypoints(pose.keypoints, 0.1, ctx);
+            drawSkeleton(pose.keypoints, 0.1, ctx);
+          });
+        } else {
+          multiPersonPartSegmentation.allPoses.forEach(pose => {
+            if (flipHorizontally) {
+              pose = bodyPix.flipPoseHorizontal(
+                  pose, multiPersonPartSegmentation.width);
+            }
+            drawKeypoints(pose.keypoints, 0.1, ctx);
+            drawSkeleton(pose.keypoints, 0.1, ctx);
+          })
+        }
 
         break;
       default:
