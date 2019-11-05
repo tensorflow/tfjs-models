@@ -13,17 +13,28 @@ export type PersonSegmentation = {
   data: Uint8Array,
   width: number,
   height: number,
-  partData?: Int32Array,
-  pose?: Pose,
-  allPoses?: Array<Pose>,
+  pose: Pose,
+};
+
+export type SemanticPersonSegmentation = {
+  data: Uint8Array,
+  width: number,
+  height: number,
+  allPoses: Array<Pose>,
 };
 
 export type PartSegmentation = {
   data: Int32Array,
   width: number,
   height: number,
-  pose?: Pose,
-  allPoses?: Array<Pose>,
+  pose: Pose,
+};
+
+export type SemanticPartSegmentation = {
+  data: Int32Array,
+  width: number,
+  height: number,
+  allPoses: Array<Pose>,
 };
 
 export declare interface Padding {

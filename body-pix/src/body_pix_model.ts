@@ -26,7 +26,8 @@ import {decodePersonInstanceMasks, decodePersonInstancePartMasks} from './multi_
 import {decodeMultiplePoses} from './multi_person/decode_multiple_poses';
 import {ResNet} from './resnet';
 import {mobileNetSavedModel, resNet50SavedModel} from './saved_models';
-import {BodyPixArchitecture, BodyPixInput, BodyPixInternalResolution, BodyPixMultiplier, BodyPixOutputStride, BodyPixQuantBytes, Padding, PartSegmentation, PersonSegmentation} from './types';
+import {BodyPixArchitecture, BodyPixInput, BodyPixInternalResolution, BodyPixMultiplier, BodyPixOutputStride, BodyPixQuantBytes, Padding} from './types';
+import {PartSegmentation, PersonSegmentation, SemanticPartSegmentation, SemanticPersonSegmentation} from './types';
 import {getInputSize, padAndResizeTo, scaleAndCropToInputTensorShape, scaleAndFlipPoses, toInputResolutionHeightAndWidth, toTensorBuffers3D} from './util';
 
 const APPLY_SIGMOID_ACTIVATION = true;
@@ -487,9 +488,9 @@ export class BodyPix {
    * @param config PersonInferenceConfig object that contains
    * parameters for the BodyPix inference using person decoding.
    *
-   * @return A PersonSegmentation dictionary that contains height, width, the
-   * flattened binary segmentation mask and the poses for all people. The width
-   * and height correspond to the same dimensions of the input image.
+   * @return A SemanticPersonSegmentation dictionary that contains height,
+   * width, the flattened binary segmentation mask and the poses for all people.
+   * The width and height correspond to the same dimensions of the input image.
    * - `height`: The height of the segmentation data in pixel unit.
    * - `width`: The width of the segmentation data in pixel unit.
    * - `data`: The flattened Uint8Array of segmentation data. 1 means the pixel
@@ -500,7 +501,7 @@ export class BodyPix {
   async segmentPerson(
       input: BodyPixInput,
       config: PersonInferenceConfig = PERSON_INFERENCE_CONFIG):
-      Promise<PersonSegmentation> {
+      Promise<SemanticPersonSegmentation> {
     config = {...PERSON_INFERENCE_CONFIG, ...config};
 
     validatePersonInferenceConfig(config);
@@ -775,9 +776,9 @@ export class BodyPix {
    * @param config PersonInferenceConfig object that contains
    * parameters for the BodyPix inference using single person decoding.
    *
-   * @return A PersonSegmentation dictionary that contains height, width, the
-   * flattened binary segmentation mask and the pose for the person. The width
-   * and height correspond to the same dimensions of the input image.
+   * @return A SemanticPartSegmentation dictionary that contains height, width,
+   * the flattened binary segmentation mask and the pose for the person. The
+   * width and height correspond to the same dimensions of the input image.
    * - `height`: The height of the person part segmentation data in pixel unit.
    * - `width`: The width of the person part segmentation data in pixel unit.
    * - `data`: The flattened Int32Array of person part segmentation data with a
@@ -789,7 +790,7 @@ export class BodyPix {
   async segmentPersonParts(
       input: BodyPixInput,
       config: PersonInferenceConfig = PERSON_INFERENCE_CONFIG):
-      Promise<PartSegmentation> {
+      Promise<SemanticPartSegmentation> {
     config = {...PERSON_INFERENCE_CONFIG, ...config};
 
     validatePersonInferenceConfig(config);
