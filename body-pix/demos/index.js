@@ -177,7 +177,7 @@ const guiState = {
   },
   multiPersonDecoding: {
     maxDetections: 5,
-    scoreThreshold: 0.3,
+    scoreThreshold: 0.4,
     nmsRadius: 20,
     numKeypointForMatching: 17,
     refineSteps: 10
@@ -518,27 +518,24 @@ async function estimateSegmentation() {
   let multiPersonSegmentation = null;
   switch (guiState.algorithm) {
     case 'multi-person-instance':
-      multiPersonSegmentation =
-          await state.net.segmentMultiPerson(state.video, {
-            internalResolution: guiState.input.internalResolution,
-            segmentationThreshold: guiState.segmentation.segmentationThreshold,
-            maxDetections: guiState.multiPersonDecoding.maxDetections,
-            scoreThreshold: guiState.multiPersonDecoding.scoreThreshold,
-            nmsRadius: guiState.multiPersonDecoding.nmsRadius,
-            numKeypointForMatching:
-                guiState.multiPersonDecoding.numKeypointForMatching,
-            refineSteps: guiState.multiPersonDecoding.refineSteps
-          });
-      break;
+      return await state.net.segmentMultiPerson(state.video, {
+        internalResolution: guiState.input.internalResolution,
+        segmentationThreshold: guiState.segmentation.segmentationThreshold,
+        maxDetections: guiState.multiPersonDecoding.maxDetections,
+        scoreThreshold: guiState.multiPersonDecoding.scoreThreshold,
+        nmsRadius: guiState.multiPersonDecoding.nmsRadius,
+        numKeypointForMatching:
+            guiState.multiPersonDecoding.numKeypointForMatching,
+        refineSteps: guiState.multiPersonDecoding.refineSteps
+      });
     case 'person':
-      multiPersonSegmentation = await state.net.segmentPerson(state.video, {
+      return await state.net.segmentPerson(state.video, {
         internalResolution: guiState.input.internalResolution,
         segmentationThreshold: guiState.segmentation.segmentationThreshold,
         maxDetections: guiState.multiPersonDecoding.maxDetections,
         scoreThreshold: guiState.multiPersonDecoding.scoreThreshold,
         nmsRadius: guiState.multiPersonDecoding.nmsRadius,
       });
-      break;
     default:
       break;
   };
@@ -546,35 +543,52 @@ async function estimateSegmentation() {
 }
 
 async function estimatePartSegmentation() {
-  let multiPersonPartSegmentation = null;
   switch (guiState.algorithm) {
     case 'multi-person-instance':
-      multiPersonPartSegmentation =
-          await state.net.segmentMultiPersonParts(state.video, {
-            internalResolution: guiState.input.internalResolution,
-            segmentationThreshold: guiState.segmentation.segmentationThreshold,
-            maxDetections: guiState.multiPersonDecoding.maxDetections,
-            scoreThreshold: guiState.multiPersonDecoding.scoreThreshold,
-            nmsRadius: guiState.multiPersonDecoding.nmsRadius,
-            numKeypointForMatching:
-                guiState.multiPersonDecoding.numKeypointForMatching,
-            refineSteps: guiState.multiPersonDecoding.refineSteps
-          });
-      break;
+      return await state.net.segmentMultiPersonParts(state.video, {
+        internalResolution: guiState.input.internalResolution,
+        segmentationThreshold: guiState.segmentation.segmentationThreshold,
+        maxDetections: guiState.multiPersonDecoding.maxDetections,
+        scoreThreshold: guiState.multiPersonDecoding.scoreThreshold,
+        nmsRadius: guiState.multiPersonDecoding.nmsRadius,
+        numKeypointForMatching:
+            guiState.multiPersonDecoding.numKeypointForMatching,
+        refineSteps: guiState.multiPersonDecoding.refineSteps
+      });
     case 'person':
-      multiPersonPartSegmentation =
-          await state.net.segmentPersonParts(state.video, {
-            internalResolution: guiState.input.internalResolution,
-            segmentationThreshold: guiState.segmentation.segmentationThreshold,
-            maxDetections: guiState.multiPersonDecoding.maxDetections,
-            scoreThreshold: guiState.multiPersonDecoding.scoreThreshold,
-            nmsRadius: guiState.multiPersonDecoding.nmsRadius,
-          });
-      break;
+      return await state.net.segmentPersonParts(state.video, {
+        internalResolution: guiState.input.internalResolution,
+        segmentationThreshold: guiState.segmentation.segmentationThreshold,
+        maxDetections: guiState.multiPersonDecoding.maxDetections,
+        scoreThreshold: guiState.multiPersonDecoding.scoreThreshold,
+        nmsRadius: guiState.multiPersonDecoding.nmsRadius,
+      });
     default:
       break;
   };
   return multiPersonPartSegmentation;
+}
+
+function drawPoses(personOrPersonPartSegmentation, flipHorizontally, ctx) {
+  if (Array.isArray(personOrPersonPartSegmentation)) {
+    personOrPersonPartSegmentation.forEach(personSegmentation => {
+      let pose = personSegmentation.pose;
+      if (flipHorizontally) {
+        pose = bodyPix.flipPoseHorizontal(pose, personSegmentation.width);
+      }
+      drawKeypoints(pose.keypoints, 0.1, ctx);
+      drawSkeleton(pose.keypoints, 0.1, ctx);
+    });
+  } else {
+    personOrPersonPartSegmentation.allPoses.forEach(pose => {
+      if (flipHorizontally) {
+        pose = bodyPix.flipPoseHorizontal(
+            pose, personOrPersonPartSegmentation.width);
+      }
+      drawKeypoints(pose.keypoints, 0.1, ctx);
+      drawSkeleton(pose.keypoints, 0.1, ctx);
+    })
+  }
 }
 
 async function loadBodyPix() {
@@ -630,25 +644,7 @@ function segmentBodyInRealTime() {
             bodyPix.drawMask(
                 canvas, state.video, mask, guiState.segmentation.opacity,
                 guiState.segmentation.maskBlurAmount, flipHorizontally);
-
-            if (Array.isArray(multiPersonSegmentation)) {
-              multiPersonSegmentation.forEach(personSegmentation => {
-                let pose = personSegmentation.pose;
-                if (flipHorizontally) {
-                  pose = bodyPix.flipPoseHorizontal(pose, mask.width);
-                }
-                drawKeypoints(pose.keypoints, 0.1, ctx);
-                drawSkeleton(pose.keypoints, 0.1, ctx);
-              });
-            } else {
-              multiPersonSegmentation.allPoses.forEach(pose => {
-                if (flipHorizontally) {
-                  pose = bodyPix.flipPoseHorizontal(pose, mask.width);
-                }
-                drawKeypoints(pose.keypoints, 0.1, ctx);
-                drawSkeleton(pose.keypoints, 0.1, ctx);
-              })
-            }
+            drawPoses(multiPersonSegmentation, flipHorizontally, ctx);
             break;
           case 'bokeh':
             bodyPix.drawBokehEffect(
@@ -688,28 +684,7 @@ function segmentBodyInRealTime() {
                 blurBodyPartIds, guiState.partMap.blurBodyPartAmount,
                 guiState.partMap.edgeBlurAmount, flipHorizontally);
         }
-
-        if (Array.isArray(multiPersonPartSegmentation)) {
-          multiPersonPartSegmentation.forEach(personPartSegmentation => {
-            let pose = personPartSegmentation.pose;
-            if (flipHorizontally) {
-              pose = bodyPix.flipPoseHorizontal(
-                  pose, personPartSegmentation.width);
-            }
-            drawKeypoints(pose.keypoints, 0.1, ctx);
-            drawSkeleton(pose.keypoints, 0.1, ctx);
-          });
-        } else {
-          multiPersonPartSegmentation.allPoses.forEach(pose => {
-            if (flipHorizontally) {
-              pose = bodyPix.flipPoseHorizontal(
-                  pose, multiPersonPartSegmentation.width);
-            }
-            drawKeypoints(pose.keypoints, 0.1, ctx);
-            drawSkeleton(pose.keypoints, 0.1, ctx);
-          })
-        }
-
+        drawPoses(multiPersonPartSegmentation, flipHorizontally, ctx);
         break;
       default:
         break;

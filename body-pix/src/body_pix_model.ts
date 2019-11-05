@@ -179,7 +179,7 @@ export interface InferenceConfig {
  * `maxDetections`: Defaults to 10. Maximum number of person pose detections per
  * image.
  *
- * `scoreThreshold`: Defaults to 0.3. Only return person pose that have root
+ * `scoreThreshold`: Defaults to 0.4. Only return person pose that have root
  * part score greater or equal to this value.
  *
  * `nmsRadius`: Defaults to 20. Non-maximum suppression part distance in pixels.
@@ -198,7 +198,7 @@ export interface PersonInferenceConfig extends InferenceConfig {
  * `maxDetections`: Defaults to 10. Maximum number of returned instance
  * segmentation and pose detections per image.
  *
- * `scoreThreshold`: Defaults to 0.3. Only returns and uses person
+ * `scoreThreshold`: Defaults to 0.4. Only returns and uses person
  * poses for instance segmentation assignment when the pose has root part score
  * greater or equal to this value.
  *
@@ -227,7 +227,7 @@ export const PERSON_INFERENCE_CONFIG: PersonInferenceConfig = {
   internalResolution: 'medium',
   segmentationThreshold: 0.7,
   maxDetections: 10,
-  scoreThreshold: 0.3,
+  scoreThreshold: 0.4,
   nmsRadius: 20,
 };
 
@@ -237,7 +237,7 @@ export const MULTI_PERSON_INSTANCE_INFERENCE_CONFIG:
       internalResolution: 'medium',
       segmentationThreshold: 0.7,
       maxDetections: 10,
-      scoreThreshold: 0.3,
+      scoreThreshold: 0.4,
       nmsRadius: 20,
       minKeypointScore: 0.3,
       refineSteps: 10
@@ -495,7 +495,7 @@ export class BodyPix {
    * - `data`: The flattened Uint8Array of segmentation data. 1 means the pixel
    * belongs to a person and 0 means the pixel doesn't belong to a person. The
    * size of the array is equal to `height` x `width` in row-major order.
-   * - `allPoses`: The 2d pose of all people.
+   * - `allPoses`: The 2d poses of all people.
    */
   async segmentPerson(
       input: BodyPixInput,
@@ -572,7 +572,6 @@ export class BodyPix {
           MULTI_PERSON_INSTANCE_INFERENCE_CONFIG):
       Promise<PersonSegmentation[]> {
     config = {...MULTI_PERSON_INSTANCE_INFERENCE_CONFIG, ...config};
-    console.log(config)
     validateMultiPersonInstanceInferenceConfig(config);
     const [height, width] = getInputSize(input);
     const internalResolutionHeightAndWidth = toInputResolutionHeightAndWidth(
@@ -785,7 +784,7 @@ export class BodyPix {
    * part id from 0-24 for the pixels that are part of a corresponding body
    * part, and -1 otherwise. The size of the array is equal to `height` x
    * `width` in row-major order.
-   * - `allPoses`: The 2d pose of all people.
+   * - `allPoses`: The 2d poses of all people.
    */
   async segmentPersonParts(
       input: BodyPixInput,

@@ -179,13 +179,13 @@ const segmentation = await net.segmentPerson(image, {
   * **segmentationThreshold** - Defaults to 0.7. Must be between 0 and 1. For each pixel, the model estimates a score between 0 and 1 that indicates how confident it is that part of a person is displayed in that pixel.  This *segmentationThreshold* is used to convert these values
 to binary 0 or 1s by determining the minimum value a pixel's score must have to be considered part of a person.  In essence, a higher value will create a tighter crop
 around a person but may result in some pixels being that are part of a person being excluded from the returned segmentation mask.
-  * **maxDetections** -  Defaults to 10. Maximum number of returned individual person detections per image.
-  * **scoreThreshold** - Only return individual person detections that have root part score greater or equal to this value. Defaults to 0.5
-  * **nmsRadius** - Defaults to 20. Non-maximum suppression part distance in pixels. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away.
+  * **maxDetections** -  Defaults to 10. For pose estimation, the maximum number of person poses to detect per image.
+  * **scoreThreshold** - Defaults to 0.3. For pose estimation, only return individual person detections that have root part score greater or equal to this value.
+  * **nmsRadius** - Defaults to 20. For pose estimation, the non-maximum suppression part distance in pixels. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away.
 
 #### Returns
 
-It returns a `Promise` that resolves with a `PersonSegmentation` object. Multiple people in the image get merged into a single binary mask. In addition to `width`, `height`, and `data` fields, `PersonSegmentation` object also has a field `allPoses` containing poses for all people.
+It returns a `Promise` that resolves with a `PersonSegmentation` object. Multiple people in the image get merged into a single binary mask. In addition to `width`, `height`, and `data` fields, it returns a field `allPoses` which contains poses for all people.
 
 
 ```javascript
@@ -242,13 +242,13 @@ const segmentation = await net.segmentPersonParts(image, {
   * **segmentationThreshold** - Must be between 0 and 1. For each pixel, the model estimates a score between 0 and 1 that indicates how confident it is that part of a person is displayed in that pixel.  This *segmentationThreshold* is used to convert these values
 to binary 0 or 1s by determining the minimum value a pixel's score must have to be considered part of a person.  In essence, a higher value will create a tighter crop
 around a person but may result in some pixels being that are part of a person being excluded from the returned segmentation mask.
-  * **maxDetections** -  Defaults to 10. Maximum number of returned individual person detections per image.
-  * **scoreThreshold** - Only return individual person detections that have root part score greater or equal to this value. Defaults to 0.5
-  * **nmsRadius** - Defaults to 20. Non-maximum suppression part distance in pixels. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away.
+  * **maxDetections** -  Defaults to 10. For pose estimation, the maximum number of person pose to detect per image.
+  * **scoreThreshold** - Defaults to 0.4. For pose estimation, only return individual person detections that have root part score greater or equal to this value.
+  * **nmsRadius** - Defaults to 20. For pose estimation, the non-maximum suppression part distance in pixels. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away.
 
 #### Returns
 
-It returns a `Promise` that resolves with a `PartSegmentation` object. When there are multiple people in the image they are merged into a single array of part values. In addition to `width`, `height`, and `data` fields, `PartSegmentation` object also has a field `allPoses` containing poses for all people.
+It returns a `Promise` that resolves with a `PartSegmentation` object. When there are multiple people in the image they are merged into a single array of part values. In addition to `width`, `height`, and `data` fields, it returns a field `allPoses` which contains poses for all people..
 
 ```javascript
 // The array contains 307200 values, one for each pixel of the 640x480 image
@@ -293,7 +293,7 @@ const segmentation = await net.segmentMultiPerson(image, {
 to binary 0 or 1s by determining the minimum value a pixel's score must have to be considered part of a person.  In essence, a higher value will create a tighter crop
 around a person but may result in some pixels being that are part of a person being excluded from the returned segmentation mask.
   * **maxDetections** -  Defaults to 10. Maximum number of returned individual person detections per image.
-  * **scoreThreshold** - Only return individual person detections that have root part score greater or equal to this value. Defaults to 0.5
+  * **scoreThreshold** - Defaults to 0.4. Only return individual person detections that have root part score greater or equal to this value.
   * **nmsRadius** - Defaults to 20. Non-maximum suppression part distance in pixels. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away.
   * **minKeypointScore** - Default to 0.3. Keypoints above the score are used for matching and assigning segmentation mask to each person..
   * **refineSteps** - Default to 10. The number of refinement steps used when assigning the individual person segmentations. It needs to be strictly positive. The larger the higher the accuracy and slower the inference.
@@ -353,11 +353,11 @@ const segmentation = await net.segmentMultiPersonParts(image, {
   * **segmentationThreshold** - Must be between 0 and 1. For each pixel, the model estimates a score between 0 and 1 that indicates how confident it is that part of a person is displayed in that pixel.  This *segmentationThreshold* is used to convert these values
 to binary 0 or 1s by determining the minimum value a pixel's score must have to be considered part of a person.  In essence, a higher value will create a tighter crop
 around a person but may result in some pixels being that are part of a person being excluded from the returned segmentation mask.
-  * **maxDetections** - Maximum number of returned individual person detections per image. Defaults to 10
-  * **scoreThreshold** - Only return individual person detections that have root part score greater or equal to this value. Defaults to 0.5
-  * **nmsRadius** - Non-maximum suppression part distance in pixels. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away. Defaults to 20.
-  * **minKeypointScore** - Default to 0.3. Keypoints above the score are used for matching and assigning segmentation mask to each person..
-  * **refineSteps** - The number of refinement steps used when assigning the individual person segmentations. It needs to be strictly positive. The larger the higher the accuracy and slower the inference.
+  * **maxDetections** - Defaults to 10. Maximum number of returned individual person detections per image.
+  * **scoreThreshold** - Defaults to 0.4. Only return individual person detections that have root part score greater or equal to this value.
+  * **nmsRadius** - Defaults to 20. Non-maximum suppression part distance in pixels. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away.
+  * **minKeypointScore** - Default to 0.3. Keypoints above the score are used for matching and assigning segmentation mask to each person.
+  * **refineSteps** - Default to 10. The number of refinement steps used when assigning the individual person segmentations. It needs to be strictly positive. The larger the higher the accuracy and slower the inference.
 
 #### Returns
 
