@@ -183,7 +183,7 @@ export interface InferenceConfig {
  * part score greater or equal to this value.
  *
  * `nmsRadius`: Defaults to 20. Non-maximum suppression part distance in pixels.
- * It needs to be strictly positive. Two pose keypoint suppress each other if
+ * It needs to be strictly positive. Two pose keypoints suppress each other if
  * they are less than `nmsRadius` pixels away.
  */
 export interface PersonInferenceConfig extends InferenceConfig {
