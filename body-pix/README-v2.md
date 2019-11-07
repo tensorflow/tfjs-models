@@ -122,7 +122,8 @@ const net = await bodyPix.load({
 const net = await bodyPix.load({
   architecture: 'MobileNetV1',
   outputStride: 16,
-  multiplier: 0.75
+  multiplier: 0.75,
+  quantBytes: 2
 });
 ```
 
@@ -391,7 +392,7 @@ Given the output of person segmentation (or multi-person segmentation), generate
 
 #### Inputs
 
-* **personSegmentation** The output from [segmentPerson](#Single-person-segmentation) or [segmentMultiPerson](#Multi-person-segmentation). The former is a PersonSegmentation object and later is an *array* of PersonSegmentation object.
+* **personSegmentation** The output from [segmentPerson](#Single-person-segmentation) or [segmentMultiPerson](#Multi-person-segmentation). The former is a SemanticPersonSegmentation object and later is an *array* of PersonSegmentation object.
 * **foreground** The foreground color (r,g,b,a) for visualizing pixels that
 belong to people.
 
@@ -437,7 +438,7 @@ Given the output from person body part segmentation (or multi-person body part s
 
 #### Inputs
 
-* **personPartSegmentation** The output from [segmentPersonParts](#Single-person-segmentation) or [segmentMultiPersonParts](#Multi-person-body-part-segmentation). The former is a PartSegmentation object and later is an *array* of PartSegmentation object.
+* **personPartSegmentation** The output from [segmentPersonParts](#Single-person-segmentation) or [segmentMultiPersonParts](#Multi-person-body-part-segmentation). The former is a SemanticPartSegmentation object and later is an *array* of PartSegmentation object.
 
 * **partColors** Optional, defaults to rainbow. A multi-dimensional array of rgb colors indexed by part id.  Must have 24 colors, one for every part. For some sample `partColors` check out [the ones used in the demo.](./demos/part_color_scales.js)
 
@@ -574,7 +575,7 @@ An example of applying a [bokeh effect](https://www.nikonusa.com/en/learn-and-ex
 
 * **canvas** The canvas to draw the background-blurred image onto.
 * **image** The image to blur the background of and draw.
-* **personSegmentation** A personSegmentation object, containing a binary array with 1 for the pixels that are part of the person, and 0 otherwise. Must have the same dimensions as the image. This is typically created from `segmentPerson`.
+* **personSegmentation** A SemanticPersonSegmentation object or an array of PersonSegmentation object.
 * **backgroundBlurAmount** How many pixels in the background blend into each
 other.  Defaults to 3. Should be an integer between 1 and 20.
 * **edgeBlurAmount** How many pixels to blur on the edge between the person
@@ -618,7 +619,7 @@ An example of applying a body part blur on `left_face` and `right_face` body par
 
 * **canvas** The canvas to draw the body-part blurred image onto.
 * **image** The image with people to blur the body-part and draw.
-* **partSegmentation** A PartSegmentation object or an array of PartSegmentation object. Must have the same dimensions as the image. This is typically created from `segmentPersonParts` or `segmentMultiPersonParts`.
+* **partSegmentation** A SemanticPartSegmentation object or an array of PartSegmentation object. Must have the same dimensions as the image. This is typically created from `segmentPersonParts` or `segmentMultiPersonParts`.
 * **bodyPartIdsToBlur** Default to [0, 1] (left-face and right-face). An array of body part ids to blur. Each must be one of the 24 body part ids.
 * **backgroundBlurAmount** How many pixels in the background blend into each
 other.  Defaults to 3. Should be an integer between 1 and 20.
