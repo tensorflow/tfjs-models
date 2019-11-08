@@ -199,7 +199,7 @@ It returns a `Promise` that resolves with a `SemanticPersonSegmentation` object.
 }
 ```
 
-### Person part segmentation
+### Person body part segmentation
 Given an image with one or more people, BodyPix's `segmentPersonParts` method predicts the 24 body part segmentations for all people. It returns a `PartSegmentation` object corresponding to body parts for each pixel for all people merged.   If you need to segment individuals separately use `segmentMultiPersonParts` (the caveat is this method is slower).
 
 ![Multi-person Segmentation](./images/two_people_semantic_parts.jpg)
@@ -392,7 +392,7 @@ Given the output of person segmentation (or multi-person segmentation), generate
 
 #### Inputs
 
-* **personSegmentation** The output from [segmentPerson](#Single-person-segmentation) or [segmentMultiPerson](#Multi-person-segmentation). The former is a SemanticPersonSegmentation object and later is an *array* of PersonSegmentation object.
+* **personSegmentation** The output from [segmentPerson](#person-segmentation) or [segmentMultiPerson](#multi-person-segmentation). The former is a SemanticPersonSegmentation object and later is an *array* of PersonSegmentation object.
 * **foreground** The foreground color (r,g,b,a) for visualizing pixels that
 belong to people.
 
@@ -438,7 +438,7 @@ Given the output from person body part segmentation (or multi-person body part s
 
 #### Inputs
 
-* **personPartSegmentation** The output from [segmentPersonParts](#Single-person-segmentation) or [segmentMultiPersonParts](#Multi-person-body-part-segmentation). The former is a SemanticPartSegmentation object and later is an *array* of PartSegmentation object.
+* **personPartSegmentation** The output from [segmentPersonParts](#person-body-part-segmentation) or [segmentMultiPersonParts](#Multi-person-body-part-segmentation). The former is a SemanticPartSegmentation object and later is an *array* of PartSegmentation object.
 
 * **partColors** Optional, defaults to rainbow. A multi-dimensional array of rgb colors indexed by part id.  Must have 24 colors, one for every part. For some sample `partColors` check out [the ones used in the demo.](./demos/part_color_scales.js)
 
@@ -575,7 +575,7 @@ An example of applying a [bokeh effect](https://www.nikonusa.com/en/learn-and-ex
 
 * **canvas** The canvas to draw the background-blurred image onto.
 * **image** The image to blur the background of and draw.
-* **personSegmentation** A SemanticPersonSegmentation object or an array of PersonSegmentation object.
+* **personSegmentation** The output from [segmentPerson](#person-segmentation) or [segmentMultiPerson](#multi-person-segmentation). The former is a SemanticPersonSegmentation object and later is an *array* of PersonSegmentation object.
 * **backgroundBlurAmount** How many pixels in the background blend into each
 other.  Defaults to 3. Should be an integer between 1 and 20.
 * **edgeBlurAmount** How many pixels to blur on the edge between the person
@@ -619,7 +619,7 @@ An example of applying a body part blur on `left_face` and `right_face` body par
 
 * **canvas** The canvas to draw the body-part blurred image onto.
 * **image** The image with people to blur the body-part and draw.
-* **partSegmentation** A SemanticPartSegmentation object or an array of PartSegmentation object. Must have the same dimensions as the image. This is typically created from `segmentPersonParts` or `segmentMultiPersonParts`.
+* **partSegmentation** The output from [segmentPersonParts](#person-body-part-segmentation) or [segmentMultiPersonParts](#Multi-person-body-part-segmentation). The former is a SemanticPartSegmentation object and later is an *array* of PartSegmentation object.
 * **bodyPartIdsToBlur** Default to [0, 1] (left-face and right-face). An array of body part ids to blur. Each must be one of the 24 body part ids.
 * **backgroundBlurAmount** How many pixels in the background blend into each
 other.  Defaults to 3. Should be an integer between 1 and 20.

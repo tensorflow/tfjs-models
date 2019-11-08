@@ -31,6 +31,7 @@ import {PartSegmentation, PersonSegmentation, SemanticPartSegmentation, Semantic
 import {getInputSize, padAndResizeTo, scaleAndCropToInputTensorShape, scaleAndFlipPoses, toInputResolutionHeightAndWidth, toTensorBuffers3D} from './util';
 
 const APPLY_SIGMOID_ACTIVATION = true;
+const FLIP_POSES_AFTER_SCALING = false;
 
 /**
  * BodyPix model loading is configurable using the following config dictionary.
@@ -534,7 +535,7 @@ export class BodyPix {
 
     poses = scaleAndFlipPoses(
         poses, [height, width], internalResolutionHeightAndWidth, padding,
-        false);
+        FLIP_POSES_AFTER_SCALING);
 
     heatmapScores.dispose();
     offsets.dispose();
@@ -637,7 +638,7 @@ export class BodyPix {
 
     poses = scaleAndFlipPoses(
         poses, [height, width], internalResolutionHeightAndWidth, padding,
-        false);
+        FLIP_POSES_AFTER_SCALING);
 
     const instanceMasks = await decodePersonInstanceMasks(
         segmentation, longOffsets, poses, height, width,
@@ -821,7 +822,7 @@ export class BodyPix {
 
     poses = scaleAndFlipPoses(
         poses, [height, width], internalResolutionHeightAndWidth, padding,
-        false);
+        FLIP_POSES_AFTER_SCALING);
 
     heatmapScores.dispose();
     offsets.dispose();
@@ -926,7 +927,7 @@ export class BodyPix {
 
     poses = scaleAndFlipPoses(
         poses, [height, width], internalResolutionHeightAndWidth, padding,
-        false);
+        FLIP_POSES_AFTER_SCALING);
 
     const instanceMasks = await decodePersonInstancePartMasks(
         segmentation, longOffsets, partSegmentation, poses, height, width,
