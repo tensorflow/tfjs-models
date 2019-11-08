@@ -122,7 +122,8 @@ const net = await bodyPix.load({
 const net = await bodyPix.load({
   architecture: 'MobileNetV1',
   outputStride: 16,
-  multiplier: 0.75
+  multiplier: 0.75,
+  quantBytes: 2
 });
 ```
 
@@ -179,10 +180,13 @@ const segmentation = await net.segmentPerson(image, {
   * **segmentationThreshold** - Defaults to 0.7. Must be between 0 and 1. For each pixel, the model estimates a score between 0 and 1 that indicates how confident it is that part of a person is displayed in that pixel.  This *segmentationThreshold* is used to convert these values
 to binary 0 or 1s by determining the minimum value a pixel's score must have to be considered part of a person.  In essence, a higher value will create a tighter crop
 around a person but may result in some pixels being that are part of a person being excluded from the returned segmentation mask.
+  * **maxDetections** -  Defaults to 10. For pose estimation, the maximum number of person poses to detect per image.
+  * **scoreThreshold** - Defaults to 0.3. For pose estimation, only return individual person detections that have root part score greater or equal to this value.
+  * **nmsRadius** - Defaults to 20. For pose estimation, the non-maximum suppression part distance in pixels. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away.
 
 #### Returns
 
-It returns a `Promise` that resolves with a `PersonSegmentation` object. Multiple people in the image get merged into a single binary mask. In addition to `width`, `height`, and `data` fields, `PersonSegmentation` object also has a field `pose`. Although the segmentation covers every person in the image, the pose works when there is 1 person in the image.
+It returns a `Promise` that resolves with a `SemanticPersonSegmentation` object. Multiple people in the image get merged into a single binary mask. In addition to `width`, `height`, and `data` fields, it returns a field `allPoses` which contains poses for all people.
 
 
 ```javascript
@@ -190,11 +194,12 @@ It returns a `Promise` that resolves with a `PersonSegmentation` object. Multipl
 {
   width: 640,
   height: 480,
-  data: Uint8Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, …]
+  data: Uint8Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, …],
+  allPoses: [{"score": 0.4, "keypoints": […]}, …]
 }
 ```
 
-### Person part segmentation
+### Person body part segmentation
 Given an image with one or more people, BodyPix's `segmentPersonParts` method predicts the 24 body part segmentations for all people. It returns a `PartSegmentation` object corresponding to body parts for each pixel for all people merged.   If you need to segment individuals separately use `segmentMultiPersonParts` (the caveat is this method is slower).
 
 ![Multi-person Segmentation](./images/two_people_semantic_parts.jpg)
@@ -238,10 +243,13 @@ const segmentation = await net.segmentPersonParts(image, {
   * **segmentationThreshold** - Must be between 0 and 1. For each pixel, the model estimates a score between 0 and 1 that indicates how confident it is that part of a person is displayed in that pixel.  This *segmentationThreshold* is used to convert these values
 to binary 0 or 1s by determining the minimum value a pixel's score must have to be considered part of a person.  In essence, a higher value will create a tighter crop
 around a person but may result in some pixels being that are part of a person being excluded from the returned segmentation mask.
+  * **maxDetections** -  Defaults to 10. For pose estimation, the maximum number of person pose to detect per image.
+  * **scoreThreshold** - Defaults to 0.4. For pose estimation, only return individual person detections that have root part score greater or equal to this value.
+  * **nmsRadius** - Defaults to 20. For pose estimation, the non-maximum suppression part distance in pixels. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away.
 
 #### Returns
 
-It returns a `Promise` that resolves with a `PartSegmentation` object. When there are multiple people in the image they are merged into a single array of part values. In addition to `width`, `height`, and `data` fields, `PartSegmentation` object also has a field `pose`. Although the part segmentation covers every person in the image, the pose works when there is 1 person in the image.
+It returns a `Promise` that resolves with a `SemanticPartSegmentation` object. When there are multiple people in the image they are merged into a single array of part values. In addition to `width`, `height`, and `data` fields, it returns a field `allPoses` which contains poses for all people..
 
 ```javascript
 // The array contains 307200 values, one for each pixel of the 640x480 image
@@ -249,7 +257,8 @@ It returns a `Promise` that resolves with a `PartSegmentation` object. When ther
 {
   width: 680,
   height: 480,
-  data: Int32Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 1, 0, 0, …]
+  data: Int32Array(307200) [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 1, 0, 0, …],
+  allPoses: [{"score": 0.4, "keypoints": […]}, …]
 }
 ```
 
@@ -285,7 +294,7 @@ const segmentation = await net.segmentMultiPerson(image, {
 to binary 0 or 1s by determining the minimum value a pixel's score must have to be considered part of a person.  In essence, a higher value will create a tighter crop
 around a person but may result in some pixels being that are part of a person being excluded from the returned segmentation mask.
   * **maxDetections** -  Defaults to 10. Maximum number of returned individual person detections per image.
-  * **scoreThreshold** - Only return individual person detections that have root part score greater or equal to this value. Defaults to 0.5
+  * **scoreThreshold** - Defaults to 0.4. Only return individual person detections that have root part score greater or equal to this value.
   * **nmsRadius** - Defaults to 20. Non-maximum suppression part distance in pixels. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away.
   * **minKeypointScore** - Default to 0.3. Keypoints above the score are used for matching and assigning segmentation mask to each person..
   * **refineSteps** - Default to 10. The number of refinement steps used when assigning the individual person segmentations. It needs to be strictly positive. The larger the higher the accuracy and slower the inference.
@@ -345,11 +354,11 @@ const segmentation = await net.segmentMultiPersonParts(image, {
   * **segmentationThreshold** - Must be between 0 and 1. For each pixel, the model estimates a score between 0 and 1 that indicates how confident it is that part of a person is displayed in that pixel.  This *segmentationThreshold* is used to convert these values
 to binary 0 or 1s by determining the minimum value a pixel's score must have to be considered part of a person.  In essence, a higher value will create a tighter crop
 around a person but may result in some pixels being that are part of a person being excluded from the returned segmentation mask.
-  * **maxDetections** - Maximum number of returned individual person detections per image. Defaults to 10
-  * **scoreThreshold** - Only return individual person detections that have root part score greater or equal to this value. Defaults to 0.5
-  * **nmsRadius** - Non-maximum suppression part distance in pixels. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away. Defaults to 20.
-  * **minKeypointScore** - Default to 0.3. Keypoints above the score are used for matching and assigning segmentation mask to each person..
-  * **refineSteps** - The number of refinement steps used when assigning the individual person segmentations. It needs to be strictly positive. The larger the higher the accuracy and slower the inference.
+  * **maxDetections** - Defaults to 10. Maximum number of returned individual person detections per image.
+  * **scoreThreshold** - Defaults to 0.4. Only return individual person detections that have root part score greater or equal to this value.
+  * **nmsRadius** - Defaults to 20. Non-maximum suppression part distance in pixels. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away.
+  * **minKeypointScore** - Default to 0.3. Keypoints above the score are used for matching and assigning segmentation mask to each person.
+  * **refineSteps** - Default to 10. The number of refinement steps used when assigning the individual person segmentations. It needs to be strictly positive. The larger the higher the accuracy and slower the inference.
 
 #### Returns
 
@@ -383,7 +392,7 @@ Given the output of person segmentation (or multi-person segmentation), generate
 
 #### Inputs
 
-* **personSegmentation** The output from [segmentPerson](#Single-person-segmentation) or [segmentMultiPerson](#Multi-person-segmentation). The former is a PersonSegmentation object and later is an *array* of PersonSegmentation object.
+* **personSegmentation** The output from [segmentPerson](#person-segmentation) or [segmentMultiPerson](#multi-person-segmentation). The former is a SemanticPersonSegmentation object and later is an *array* of PersonSegmentation object.
 * **foreground** The foreground color (r,g,b,a) for visualizing pixels that
 belong to people.
 
@@ -429,7 +438,7 @@ Given the output from person body part segmentation (or multi-person body part s
 
 #### Inputs
 
-* **personPartSegmentation** The output from [segmentPersonParts](#Single-person-segmentation) or [segmentMultiPersonParts](#Multi-person-body-part-segmentation). The former is a PartSegmentation object and later is an *array* of PartSegmentation object.
+* **personPartSegmentation** The output from [segmentPersonParts](#person-body-part-segmentation) or [segmentMultiPersonParts](#Multi-person-body-part-segmentation). The former is a SemanticPartSegmentation object and later is an *array* of PartSegmentation object.
 
 * **partColors** Optional, defaults to rainbow. A multi-dimensional array of rgb colors indexed by part id.  Must have 24 colors, one for every part. For some sample `partColors` check out [the ones used in the demo.](./demos/part_color_scales.js)
 
@@ -566,7 +575,7 @@ An example of applying a [bokeh effect](https://www.nikonusa.com/en/learn-and-ex
 
 * **canvas** The canvas to draw the background-blurred image onto.
 * **image** The image to blur the background of and draw.
-* **personSegmentation** A personSegmentation object, containing a binary array with 1 for the pixels that are part of the person, and 0 otherwise. Must have the same dimensions as the image. This is typically created from `segmentPerson`.
+* **personSegmentation** The output from [segmentPerson](#person-segmentation) or [segmentMultiPerson](#multi-person-segmentation). The former is a SemanticPersonSegmentation object and later is an *array* of PersonSegmentation object.
 * **backgroundBlurAmount** How many pixels in the background blend into each
 other.  Defaults to 3. Should be an integer between 1 and 20.
 * **edgeBlurAmount** How many pixels to blur on the edge between the person
@@ -610,7 +619,7 @@ An example of applying a body part blur on `left_face` and `right_face` body par
 
 * **canvas** The canvas to draw the body-part blurred image onto.
 * **image** The image with people to blur the body-part and draw.
-* **partSegmentation** A PartSegmentation object or an array of PartSegmentation object. Must have the same dimensions as the image. This is typically created from `segmentPersonParts` or `segmentMultiPersonParts`.
+* **partSegmentation** The output from [segmentPersonParts](#person-body-part-segmentation) or [segmentMultiPersonParts](#Multi-person-body-part-segmentation). The former is a SemanticPartSegmentation object and later is an *array* of PartSegmentation object.
 * **bodyPartIdsToBlur** Default to [0, 1] (left-face and right-face). An array of body part ids to blur. Each must be one of the 24 body part ids.
 * **backgroundBlurAmount** How many pixels in the background blend into each
 other.  Defaults to 3. Should be an integer between 1 and 20.
