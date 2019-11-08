@@ -80,9 +80,9 @@ The `segment` method of the `SemanticSegmentation` object covers most use cases.
 
 Each model recognises a different set of object classes in an image:
 
-- [PASCAL](./deeplab/src/config.ts#L60)
-- [CityScapes](./deeplab/src/config.ts#L66)
-- [ADE20K](./deeplab/src/config.ts#L72)
+- [PASCAL](./src/config.ts#L142)
+- [CityScapes](./src/config.ts#L149)
+- [ADE20K](./src/config.ts#L155)
 
 #### `model.segment(image, config?)` inputs
 
