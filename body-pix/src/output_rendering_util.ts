@@ -17,6 +17,7 @@
 
 import {cpuBlur} from './blur';
 import {Color, PartSegmentation, PersonSegmentation} from './types';
+import {SemanticPartSegmentation, SemanticPersonSegmentation} from './types';
 import {getInputSize} from './util';
 
 const offScreenCanvases: {[name: string]: HTMLCanvasElement} = {};
@@ -133,8 +134,8 @@ function renderImageDataToOffScreenCanvas(
  * @param personOrPartSegmentation The output from
  * `segmentPerson`, `segmentMultiPerson`,
  * `segmentPersonParts` or `segmentMultiPersonParts`. They can
- * be PersonSegmentation object, an array of PersonSegmentation object,
- * PartSegmentation object, or an array of PartSegmentation object.
+ * be SemanticPersonSegmentation object, an array of PersonSegmentation object,
+ * SemanticPartSegmentation object, or an array of PartSegmentation object.
  *
  * @param foreground Default to {r:0, g:0, b:0, a: 0}. The foreground color
  * (r,g,b,a) for visualizing pixels that belong to people.
@@ -155,8 +156,8 @@ function renderImageDataToOffScreenCanvas(
  * segmentation value at the pixel from the output.
  */
 export function toMask(
-    personOrPartSegmentation: PersonSegmentation|PersonSegmentation[]|
-    PartSegmentation|PartSegmentation[],
+    personOrPartSegmentation: SemanticPersonSegmentation|
+    SemanticPartSegmentation|PersonSegmentation[]|PartSegmentation[],
     foreground: Color = {
       r: 0,
       g: 0,
@@ -175,7 +176,10 @@ export function toMask(
     return null;
   }
 
-  let multiPersonOrPartSegmentation: Array<PersonSegmentation|PartSegmentation>;
+  let multiPersonOrPartSegmentation:
+      Array<SemanticPersonSegmentation|SemanticPartSegmentation|
+            PersonSegmentation|PartSegmentation>;
+
   if (!Array.isArray(personOrPartSegmentation)) {
     multiPersonOrPartSegmentation = [personOrPartSegmentation];
   } else {
@@ -268,7 +272,7 @@ const RAINBOW_PART_COLORS: Array<[number, number, number]> = [
  * and white pixels where there is no part.
  *
  * @param partSegmentation The output from segmentPersonParts
- * or segmentMultiPersonParts. The former is a PartSegmentation
+ * or segmentMultiPersonParts. The former is a SemanticPartSegmentation
  * object and later is an array of PartSegmentation object.
  *
  * @param partColors A multi-dimensional array of rgb colors indexed by
@@ -279,7 +283,7 @@ const RAINBOW_PART_COLORS: Array<[number, number, number]> = [
  * each pixel, and black pixels where there is no part.
  */
 export function toColoredPartMask(
-    partSegmentation: PartSegmentation|PartSegmentation[],
+    partSegmentation: SemanticPartSegmentation|PartSegmentation[],
     partColors: Array<[number, number, number]> =
         RAINBOW_PART_COLORS): ImageData {
   if (Array.isArray(partSegmentation) && partSegmentation.length === 0) {
@@ -454,10 +458,10 @@ export function drawPixelatedMask(
 }
 
 function createPersonMask(
-    multiPersonSegmentations: PersonSegmentation[],
+    multiPersonSegmentation: PersonSegmentation[]|SemanticPersonSegmentation,
     edgeBlurAmount: number): HTMLCanvasElement {
   const backgroundMaskImage = toMask(
-      multiPersonSegmentations, {r: 0, g: 0, b: 0, a: 255},
+      multiPersonSegmentation, {r: 0, g: 0, b: 0, a: 255},
       {r: 0, g: 0, b: 0, a: 0});
 
   const backgroundMask =
@@ -478,7 +482,7 @@ function createPersonMask(
  *
  * @param image The image to blur the background of and draw.
  *
- * @param personSegmentation A PersonSegmentation object or an array of
+ * @param personSegmentation A SemanticPersonSegmentation or an array of
  * PersonSegmentation object.
  *
  * @param backgroundBlurAmount How many pixels in the background blend into each
@@ -492,15 +496,8 @@ function createPersonMask(
  */
 export function drawBokehEffect(
     canvas: HTMLCanvasElement, image: ImageType,
-    personSegmentation: PersonSegmentation|PersonSegmentation[],
+    multiPersonSegmentation: SemanticPersonSegmentation|PersonSegmentation[],
     backgroundBlurAmount = 3, edgeBlurAmount = 3, flipHorizontal = false) {
-  let multiPersonSegmentation;
-  if (!Array.isArray(personSegmentation)) {
-    multiPersonSegmentation = [personSegmentation];
-  } else {
-    multiPersonSegmentation = personSegmentation;
-  }
-
   const blurredImage = drawAndBlurImageOnOffScreenCanvas(
       image, backgroundBlurAmount, CANVAS_NAMES.blurred);
   canvas.width = blurredImage.width;
@@ -508,7 +505,8 @@ export function drawBokehEffect(
 
   const ctx = canvas.getContext('2d');
 
-  if (Array.isArray(personSegmentation) && personSegmentation.length === 0) {
+  if (Array.isArray(multiPersonSegmentation) &&
+      multiPersonSegmentation.length === 0) {
     ctx.drawImage(blurredImage, 0, 0);
     return;
   }
@@ -538,10 +536,10 @@ export function drawBokehEffect(
 }
 
 function createBodyPartMask(
-    multiPersonPartSegmentations: PartSegmentation[],
+    multiPersonPartSegmentation: SemanticPartSegmentation|PartSegmentation[],
     bodyPartIdsToMask: number[], edgeBlurAmount: number): HTMLCanvasElement {
   const backgroundMaskImage = toMask(
-      multiPersonPartSegmentations, {r: 0, g: 0, b: 0, a: 0},
+      multiPersonPartSegmentation, {r: 0, g: 0, b: 0, a: 0},
       {r: 0, g: 0, b: 0, a: 255}, true, bodyPartIdsToMask);
 
   const backgroundMask =
@@ -562,7 +560,7 @@ function createBodyPartMask(
  *
  * @param image The image to blur the background of and draw.
  *
- * @param partSegmentation A PartSegmentation object or an array of
+ * @param partSegmentation A SemanticPartSegmentation or an array of
  * PartSegmentation object.
  *
  * @param bodyPartIdsToBlur Default to [0, 1] (left-face and right-face). An
@@ -579,16 +577,9 @@ function createBodyPartMask(
  */
 export function blurBodyPart(
     canvas: HTMLCanvasElement, image: ImageType,
-    partSegmentation: PartSegmentation|PartSegmentation[],
+    partSegmentation: SemanticPartSegmentation|PartSegmentation[],
     bodyPartIdsToBlur = [0, 1], backgroundBlurAmount = 3, edgeBlurAmount = 3,
     flipHorizontal = false) {
-  let multiPersonPartSegmentation;
-  if (!Array.isArray(partSegmentation)) {
-    multiPersonPartSegmentation = [partSegmentation];
-  } else {
-    multiPersonPartSegmentation = partSegmentation;
-  }
-
   const blurredImage = drawAndBlurImageOnOffScreenCanvas(
       image, backgroundBlurAmount, CANVAS_NAMES.blurred);
   canvas.width = blurredImage.width;
@@ -600,8 +591,8 @@ export function blurBodyPart(
     ctx.drawImage(blurredImage, 0, 0);
     return;
   }
-  const bodyPartMask = createBodyPartMask(
-      multiPersonPartSegmentation, bodyPartIdsToBlur, edgeBlurAmount);
+  const bodyPartMask =
+      createBodyPartMask(partSegmentation, bodyPartIdsToBlur, edgeBlurAmount);
 
   ctx.save();
   if (flipHorizontal) {

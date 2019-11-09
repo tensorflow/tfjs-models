@@ -26,11 +26,12 @@ import {decodePersonInstanceMasks, decodePersonInstancePartMasks} from './multi_
 import {decodeMultiplePoses} from './multi_person/decode_multiple_poses';
 import {ResNet} from './resnet';
 import {mobileNetSavedModel, resNet50SavedModel} from './saved_models';
-import {decodeSinglePose} from './single_person/decode_single_pose';
-import {BodyPixArchitecture, BodyPixInput, BodyPixInternalResolution, BodyPixMultiplier, BodyPixOutputStride, BodyPixQuantBytes, Padding, PartSegmentation, PersonSegmentation} from './types';
+import {BodyPixArchitecture, BodyPixInput, BodyPixInternalResolution, BodyPixMultiplier, BodyPixOutputStride, BodyPixQuantBytes, Padding} from './types';
+import {PartSegmentation, PersonSegmentation, SemanticPartSegmentation, SemanticPersonSegmentation} from './types';
 import {getInputSize, padAndResizeTo, scaleAndCropToInputTensorShape, scaleAndFlipPoses, toInputResolutionHeightAndWidth, toTensorBuffers3D} from './util';
 
 const APPLY_SIGMOID_ACTIVATION = true;
+const FLIP_POSES_AFTER_SCALING = false;
 
 /**
  * BodyPix model loading is configurable using the following config dictionary.
@@ -176,28 +177,43 @@ export interface InferenceConfig {
 
 /**
  * Person Inference Config
+ *
+ * `maxDetections`: Defaults to 10. Maximum number of person pose detections per
+ * image.
+ *
+ * `scoreThreshold`: Defaults to 0.4. Only return person pose that have root
+ * part score greater or equal to this value.
+ *
+ * `nmsRadius`: Defaults to 20. Non-maximum suppression part distance in pixels.
+ * It needs to be strictly positive. Two pose keypoints suppress each other if
+ * they are less than `nmsRadius` pixels away.
  */
-export interface PersonInferenceConfig extends InferenceConfig {}
+export interface PersonInferenceConfig extends InferenceConfig {
+  maxDetections?: number;
+  scoreThreshold?: number;
+  nmsRadius?: number;
+}
 
 /**
  * Multiple Person Instance Inference Config
  *
- * `maxDetections`: Maximum number of returned instance detections per image.
- * Defaults to 10
+ * `maxDetections`: Defaults to 10. Maximum number of returned instance
+ * segmentation and pose detections per image.
  *
- * `scoreThreshold`: Only return instance detections that have root part
- * score greater or equal to this value. Defaults to 0.7
+ * `scoreThreshold`: Defaults to 0.4. Only returns and uses person
+ * poses for instance segmentation assignment when the pose has root part score
+ * greater or equal to this value.
  *
- * `nmsRadius`: Non-maximum suppression part distance in pixels. It needs
- * to be strictly positive. Two parts suppress each other if they are less
- * than `nmsRadius` pixels away. Defaults to 20.
+ * `nmsRadius`: Defaults to 20. Non-maximum suppression part distance in pixels.
+ * It needs to be strictly positive. Two parts suppress each other if they are
+ * less than `nmsRadius` pixels away.
  *
  * `minKeypointScore`: Default to 0.3. Keypoints above the score are used
- * for matching and assigning segmentation mask to each person..
+ * for matching and assigning segmentation mask to each person.
  *
- * `refineSteps`: The number of refinement steps used when assigning the
- * instance segmentation. It needs to be strictly positive. The larger the
- * higher the accuracy and slower the inference.
+ * `refineSteps`: Default to 10. The number of refinement steps used when
+ * assigning the instance segmentation. It needs to be strictly positive. The
+ * larger the higher the accuracy and slower the inference.
  *
  */
 export interface MultiPersonInstanceInferenceConfig extends InferenceConfig {
@@ -211,7 +227,10 @@ export interface MultiPersonInstanceInferenceConfig extends InferenceConfig {
 export const PERSON_INFERENCE_CONFIG: PersonInferenceConfig = {
   flipHorizontal: false,
   internalResolution: 'medium',
-  segmentationThreshold: 0.7
+  segmentationThreshold: 0.7,
+  maxDetections: 10,
+  scoreThreshold: 0.4,
+  nmsRadius: 20,
 };
 
 export const MULTI_PERSON_INSTANCE_INFERENCE_CONFIG:
@@ -220,7 +239,7 @@ export const MULTI_PERSON_INSTANCE_INFERENCE_CONFIG:
       internalResolution: 'medium',
       segmentationThreshold: 0.7,
       maxDetections: 10,
-      scoreThreshold: 0.2,
+      scoreThreshold: 0.4,
       nmsRadius: 20,
       minKeypointScore: 0.3,
       refineSteps: 10
@@ -385,9 +404,13 @@ export class BodyPix {
    * person, and 0 otherwise. The width and height correspond to the same
    * dimensions of the input image.
    * - `heatmapScores`: A 3d Tensor of the keypoint heatmaps used by
-   * single-person pose estimation decoding.
-   * - `offsets`: A 3d Tensor of the keypoint offsets used by single-person pose
+   * pose estimation decoding.
+   * - `offsets`: A 3d Tensor of the keypoint offsets used by pose
    * estimation decoding.
+   * - `displacementFwd`: A 3d Tensor of the keypoint forward displacement used
+   * by pose estimation decoding.
+   * - `displacementBwd`: A 3d Tensor of the keypoint backward displacement used
+   * by pose estimation decoding.
    * - `padding`: The padding (unit pixels) being applied to the input image
    * before it is fed into the model.
    */
@@ -397,6 +420,8 @@ export class BodyPix {
     segmentation: tf.Tensor2D,
     heatmapScores: tf.Tensor3D,
     offsets: tf.Tensor3D,
+    displacementFwd: tf.Tensor3D,
+    displacementBwd: tf.Tensor3D,
     padding: Padding,
     internalResolutionHeightAndWidth: [number, number]
   } {
@@ -406,11 +431,19 @@ export class BodyPix {
     const {resized, padding} =
         padAndResizeTo(input, internalResolutionHeightAndWidth);
 
-    const {segmentation, heatmapScores, offsets} = tf.tidy(() => {
+    const {
+      segmentation,
+      heatmapScores,
+      offsets,
+      displacementFwd,
+      displacementBwd
+    } = tf.tidy(() => {
       const {
         segmentLogits,
         heatmapScores,
         offsets,
+        displacementFwd,
+        displacementBwd
       } = this.predictForPersonSegmentation(resized);
 
       const [resizedHeight, resizedWidth] = resized.shape;
@@ -425,6 +458,8 @@ export class BodyPix {
             toMaskTensor(scaledSegmentScores.squeeze(), segmentationThreshold),
         heatmapScores,
         offsets,
+        displacementFwd,
+        displacementBwd,
       };
     });
     resized.dispose();
@@ -432,6 +467,8 @@ export class BodyPix {
       segmentation,
       heatmapScores,
       offsets,
+      displacementFwd,
+      displacementBwd,
       padding,
       internalResolutionHeightAndWidth
     };
@@ -452,20 +489,20 @@ export class BodyPix {
    * @param config PersonInferenceConfig object that contains
    * parameters for the BodyPix inference using person decoding.
    *
-   * @return A PersonSegmentation dictionary that contains height, width, the
-   * flattened binary segmentation mask and the pose for the person. The width
-   * and height correspond to the same dimensions of the input image.
+   * @return A SemanticPersonSegmentation dictionary that contains height,
+   * width, the flattened binary segmentation mask and the poses for all people.
+   * The width and height correspond to the same dimensions of the input image.
    * - `height`: The height of the segmentation data in pixel unit.
    * - `width`: The width of the segmentation data in pixel unit.
    * - `data`: The flattened Uint8Array of segmentation data. 1 means the pixel
    * belongs to a person and 0 means the pixel doesn't belong to a person. The
    * size of the array is equal to `height` x `width` in row-major order.
-   * - `pose`: The 2d pose of the person.
+   * - `allPoses`: The 2d poses of all people.
    */
   async segmentPerson(
       input: BodyPixInput,
       config: PersonInferenceConfig = PERSON_INFERENCE_CONFIG):
-      Promise<PersonSegmentation> {
+      Promise<SemanticPersonSegmentation> {
     config = {...PERSON_INFERENCE_CONFIG, ...config};
 
     validatePersonInferenceConfig(config);
@@ -474,6 +511,8 @@ export class BodyPix {
       segmentation,
       heatmapScores,
       offsets,
+      displacementFwd,
+      displacementBwd,
       padding,
       internalResolutionHeightAndWidth
     } =
@@ -485,17 +524,25 @@ export class BodyPix {
     const result = await segmentation.data() as Uint8Array;
     segmentation.dispose();
 
-    const pose = await decodeSinglePose(
-        heatmapScores, offsets, this.baseModel.outputStride);
+    const [scoresBuf, offsetsBuf, displacementsFwdBuf, displacementsBwdBuf] =
+        await toTensorBuffers3D(
+            [heatmapScores, offsets, displacementFwd, displacementBwd]);
 
-    const resultPose = scaleAndFlipPoses(
-        [pose], [height, width], internalResolutionHeightAndWidth, padding,
-        config.flipHorizontal)[0];
+    let poses = decodeMultiplePoses(
+        scoresBuf, offsetsBuf, displacementsFwdBuf, displacementsBwdBuf,
+        this.baseModel.outputStride, config.maxDetections,
+        config.scoreThreshold, config.nmsRadius);
+
+    poses = scaleAndFlipPoses(
+        poses, [height, width], internalResolutionHeightAndWidth, padding,
+        FLIP_POSES_AFTER_SCALING);
 
     heatmapScores.dispose();
     offsets.dispose();
+    displacementFwd.dispose();
+    displacementBwd.dispose();
 
-    return {height, width, data: result, pose: resultPose};
+    return {height, width, data: result, allPoses: poses};
   }
 
   /**
@@ -591,7 +638,7 @@ export class BodyPix {
 
     poses = scaleAndFlipPoses(
         poses, [height, width], internalResolutionHeightAndWidth, padding,
-        false);
+        FLIP_POSES_AFTER_SCALING);
 
     const instanceMasks = await decodePersonInstanceMasks(
         segmentation, longOffsets, poses, height, width,
@@ -639,6 +686,10 @@ export class BodyPix {
    * single-person pose estimation decoding.
    * - `offsets`: A 3d Tensor of the keypoint offsets used by single-person pose
    * estimation decoding.
+   * - `displacementFwd`: A 3d Tensor of the keypoint forward displacement
+   * used by pose estimation decoding.
+   * - `displacementBwd`: A 3d Tensor of the keypoint backward displacement used
+   * by pose estimation decoding.
    * - `padding`: The padding (unit pixels) being applied to the input image
    * before it is fed into the model.
    */
@@ -648,6 +699,8 @@ export class BodyPix {
     partSegmentation: tf.Tensor2D,
     heatmapScores: tf.Tensor3D,
     offsets: tf.Tensor3D,
+    displacementFwd: tf.Tensor3D,
+    displacementBwd: tf.Tensor3D,
     padding: Padding,
     internalResolutionHeightAndWidth: [number, number]
   } {
@@ -659,9 +712,21 @@ export class BodyPix {
       padding,
     } = padAndResizeTo(input, internalResolutionHeightAndWidth);
 
-    const {partSegmentation, heatmapScores, offsets} = tf.tidy(() => {
-      const {segmentLogits, partHeatmapLogits, heatmapScores, offsets} =
-          this.predictForPersonSegmentationAndPart(resized);
+    const {
+      partSegmentation,
+      heatmapScores,
+      offsets,
+      displacementFwd,
+      displacementBwd
+    } = tf.tidy(() => {
+      const {
+        segmentLogits,
+        partHeatmapLogits,
+        heatmapScores,
+        offsets,
+        displacementFwd,
+        displacementBwd
+      } = this.predictForPersonSegmentationAndPart(resized);
 
       const [resizedHeight, resizedWidth] = resized.shape;
 
@@ -680,7 +745,9 @@ export class BodyPix {
         partSegmentation:
             decodePartSegmentation(segmentation, scaledPartHeatmapScore),
         heatmapScores,
-        offsets
+        offsets,
+        displacementFwd,
+        displacementBwd,
       };
     });
     resized.dispose();
@@ -688,6 +755,8 @@ export class BodyPix {
       partSegmentation,
       heatmapScores,
       offsets,
+      displacementFwd,
+      displacementBwd,
       padding,
       internalResolutionHeightAndWidth
     };
@@ -708,21 +777,21 @@ export class BodyPix {
    * @param config PersonInferenceConfig object that contains
    * parameters for the BodyPix inference using single person decoding.
    *
-   * @return A PersonSegmentation dictionary that contains height, width, the
-   * flattened binary segmentation mask and the pose for the person. The width
-   * and height correspond to the same dimensions of the input image.
+   * @return A SemanticPartSegmentation dictionary that contains height, width,
+   * the flattened binary segmentation mask and the pose for the person. The
+   * width and height correspond to the same dimensions of the input image.
    * - `height`: The height of the person part segmentation data in pixel unit.
    * - `width`: The width of the person part segmentation data in pixel unit.
    * - `data`: The flattened Int32Array of person part segmentation data with a
    * part id from 0-24 for the pixels that are part of a corresponding body
    * part, and -1 otherwise. The size of the array is equal to `height` x
    * `width` in row-major order.
-   * - `pose`: The 2d pose of the person.
+   * - `allPoses`: The 2d poses of all people.
    */
   async segmentPersonParts(
       input: BodyPixInput,
       config: PersonInferenceConfig = PERSON_INFERENCE_CONFIG):
-      Promise<PartSegmentation> {
+      Promise<SemanticPartSegmentation> {
     config = {...PERSON_INFERENCE_CONFIG, ...config};
 
     validatePersonInferenceConfig(config);
@@ -730,6 +799,8 @@ export class BodyPix {
       partSegmentation,
       heatmapScores,
       offsets,
+      displacementFwd,
+      displacementBwd,
       padding,
       internalResolutionHeightAndWidth
     } =
@@ -740,17 +811,25 @@ export class BodyPix {
     const data = await partSegmentation.data() as Int32Array;
     partSegmentation.dispose();
 
-    const pose = await decodeSinglePose(
-        heatmapScores, offsets, this.baseModel.outputStride);
+    const [scoresBuf, offsetsBuf, displacementsFwdBuf, displacementsBwdBuf] =
+        await toTensorBuffers3D(
+            [heatmapScores, offsets, displacementFwd, displacementBwd]);
 
-    const resultPose = scaleAndFlipPoses(
-        [pose], [height, width], internalResolutionHeightAndWidth, padding,
-        config.flipHorizontal)[0];
+    let poses = decodeMultiplePoses(
+        scoresBuf, offsetsBuf, displacementsFwdBuf, displacementsBwdBuf,
+        this.baseModel.outputStride, config.maxDetections,
+        config.scoreThreshold, config.nmsRadius);
+
+    poses = scaleAndFlipPoses(
+        poses, [height, width], internalResolutionHeightAndWidth, padding,
+        FLIP_POSES_AFTER_SCALING);
 
     heatmapScores.dispose();
     offsets.dispose();
+    displacementFwd.dispose();
+    displacementBwd.dispose();
 
-    return {height, width, data, pose: resultPose};
+    return {height, width, data, allPoses: poses};
   }
 
   /**
@@ -848,7 +927,7 @@ export class BodyPix {
 
     poses = scaleAndFlipPoses(
         poses, [height, width], internalResolutionHeightAndWidth, padding,
-        false);
+        FLIP_POSES_AFTER_SCALING);
 
     const instanceMasks = await decodePersonInstancePartMasks(
         segmentation, longOffsets, partSegmentation, poses, height, width,
