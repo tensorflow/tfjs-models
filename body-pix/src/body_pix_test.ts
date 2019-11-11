@@ -23,6 +23,7 @@ import {ALL_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_ut
 
 import * as bodyPixModel from './body_pix_model';
 import * as resnet from './resnet';
+import * as util from './util';
 
 describeWithFlags('BodyPix', ALL_ENVS, () => {
   let bodyPix: bodyPixModel.BodyPix;
@@ -106,33 +107,33 @@ describeWithFlags('BodyPix', ALL_ENVS, () => {
 
   it('segmentPerson handles null in InferenceConfig', async () => {
     const input: tf.Tensor3D = tf.zeros([73, 73, 3]);
-
-    const beforeTensors = tf.memory().numTensors;
-
+    spyOn(util, 'toInputResolutionHeightAndWidth').and.callThrough();
     await bodyPix.segmentPerson(input, {});
-    expect(tf.memory().numTensors).toEqual(beforeTensors);
+    expect(util.toInputResolutionHeightAndWidth)
+        .toHaveBeenCalledWith('medium', 32, [73, 73]);
   });
 
   it('segmentMultiPerson handles null in InferenceConfig', async () => {
     const input: tf.Tensor3D = tf.zeros([73, 73, 3]);
-
-    const beforeTensors = tf.memory().numTensors;
-
+    spyOn(util, 'toInputResolutionHeightAndWidth').and.callThrough();
     await bodyPix.segmentMultiPerson(input, {});
-    expect(tf.memory().numTensors).toEqual(beforeTensors);
+    expect(util.toInputResolutionHeightAndWidth)
+        .toHaveBeenCalledWith('medium', 32, [73, 73]);
   });
 
   it('segmentPersonParts handles null in InferenceConfig', async () => {
     const input: tf.Tensor3D = tf.zeros([73, 73, 3]);
-    const beforeTensors = tf.memory().numTensors;
+    spyOn(util, 'toInputResolutionHeightAndWidth').and.callThrough();
     await bodyPix.segmentPersonParts(input, {});
-    expect(tf.memory().numTensors).toEqual(beforeTensors);
+    expect(util.toInputResolutionHeightAndWidth)
+        .toHaveBeenCalledWith('medium', 32, [73, 73]);
   });
 
   it('segmentMultiPersonParts handles null in InferenceConfig', async () => {
     const input: tf.Tensor3D = tf.zeros([73, 73, 3]);
-    const beforeTensors = tf.memory().numTensors;
+    spyOn(util, 'toInputResolutionHeightAndWidth').and.callThrough();
     await bodyPix.segmentMultiPersonParts(input, {});
-    expect(tf.memory().numTensors).toEqual(beforeTensors);
+    expect(util.toInputResolutionHeightAndWidth)
+        .toHaveBeenCalledWith('medium', 32, [73, 73]);
   });
 });
