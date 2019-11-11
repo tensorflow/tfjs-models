@@ -103,4 +103,36 @@ describeWithFlags('BodyPix', ALL_ENVS, () => {
     await bodyPix.segmentMultiPersonParts(input);
     expect(tf.memory().numTensors).toEqual(beforeTensors);
   });
+
+  it('segmentPerson handles null in InferenceConfig', async () => {
+    const input: tf.Tensor3D = tf.zeros([73, 73, 3]);
+
+    const beforeTensors = tf.memory().numTensors;
+
+    await bodyPix.segmentPerson(input, {});
+    expect(tf.memory().numTensors).toEqual(beforeTensors);
+  });
+
+  it('segmentMultiPerson handles null in InferenceConfig', async () => {
+    const input: tf.Tensor3D = tf.zeros([73, 73, 3]);
+
+    const beforeTensors = tf.memory().numTensors;
+
+    await bodyPix.segmentMultiPerson(input, {});
+    expect(tf.memory().numTensors).toEqual(beforeTensors);
+  });
+
+  it('segmentPersonParts handles null in InferenceConfig', async () => {
+    const input: tf.Tensor3D = tf.zeros([73, 73, 3]);
+    const beforeTensors = tf.memory().numTensors;
+    await bodyPix.segmentPersonParts(input, {});
+    expect(tf.memory().numTensors).toEqual(beforeTensors);
+  });
+
+  it('segmentMultiPersonParts handles null in InferenceConfig', async () => {
+    const input: tf.Tensor3D = tf.zeros([73, 73, 3]);
+    const beforeTensors = tf.memory().numTensors;
+    await bodyPix.segmentMultiPersonParts(input, {});
+    expect(tf.memory().numTensors).toEqual(beforeTensors);
+  });
 });

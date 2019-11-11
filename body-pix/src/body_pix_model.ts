@@ -101,7 +101,7 @@ const VALID_MULTIPLIER: {[id: string]: BodyPixMultiplier[]} = {
 };
 const VALID_QUANT_BYTES: BodyPixQuantBytes[] = [1, 2, 4];
 
-function validateModelConfig(config: ModelConfig) {
+function validateModelConfig(config: ModelConfig): ModelConfig {
   config = config || MOBILENET_V1_CONFIG;
 
   if (config.architecture == null) {
@@ -170,9 +170,9 @@ function validateModelConfig(config: ModelConfig) {
  *
  */
 export interface InferenceConfig {
-  flipHorizontal: boolean;
-  internalResolution: BodyPixInternalResolution;
-  segmentationThreshold: number;
+  flipHorizontal?: boolean;
+  internalResolution?: BodyPixInternalResolution;
+  segmentationThreshold?: number;
 }
 
 /**
@@ -246,23 +246,48 @@ export const MULTI_PERSON_INSTANCE_INFERENCE_CONFIG:
     };
 
 function validatePersonInferenceConfig(config: PersonInferenceConfig) {
-  const segmentationThreshold = config.segmentationThreshold;
+  const {segmentationThreshold, maxDetections, scoreThreshold, nmsRadius} =
+      config;
+
   if (segmentationThreshold < 0.0 || segmentationThreshold > 1.0) {
     throw new Error(
         `segmentationThreshold ${segmentationThreshold}. ` +
         `Should be in range [0.0, 1.0]`);
+  }
+
+  if (maxDetections <= 0) {
+    throw new Error(
+        `Invalid maxDetections ${maxDetections}. ` +
+        `Should be > 0`);
+  }
+
+  if (scoreThreshold < 0.0 || scoreThreshold > 1.0) {
+    throw new Error(
+        `Invalid scoreThreshold ${scoreThreshold}. ` +
+        `Should be in range [0.0, 1.0]`);
+  }
+
+  if (nmsRadius <= 0) {
+    throw new Error(`Invalid nmsRadius ${nmsRadius}.`);
   }
 }
 
 function validateMultiPersonInstanceInferenceConfig(
     config: MultiPersonInstanceInferenceConfig) {
   const {
+    segmentationThreshold,
     maxDetections,
     scoreThreshold,
     nmsRadius,
     minKeypointScore,
     refineSteps
   } = config;
+
+  if (segmentationThreshold < 0.0 || segmentationThreshold > 1.0) {
+    throw new Error(
+        `segmentationThreshold ${segmentationThreshold}. ` +
+        `Should be in range [0.0, 1.0]`);
+  }
 
   if (maxDetections <= 0) {
     throw new Error(
@@ -286,7 +311,7 @@ function validateMultiPersonInstanceInferenceConfig(
         `Should be in range [0.0, 1.0]`);
   }
 
-  if (refineSteps <= 0 || minKeypointScore > 20) {
+  if (refineSteps <= 0 || refineSteps > 20) {
     throw new Error(
         `Invalid refineSteps ${refineSteps}.` +
         `Should be in range [1, 20]`);
