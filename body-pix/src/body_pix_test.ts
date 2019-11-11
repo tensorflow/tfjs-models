@@ -105,7 +105,8 @@ describeWithFlags('BodyPix', ALL_ENVS, () => {
     expect(tf.memory().numTensors).toEqual(beforeTensors);
   });
 
-  it('segmentPerson uses default values when null is passed in inferenceConfig parameters',
+  it(`segmentPerson uses default values when null is
+      passed in inferenceConfig parameters`,
      async () => {
        const input: tf.Tensor3D = tf.zeros([73, 73, 3]);
        spyOn(util, 'toInputResolutionHeightAndWidth').and.callThrough();
@@ -114,7 +115,8 @@ describeWithFlags('BodyPix', ALL_ENVS, () => {
            .toHaveBeenCalledWith('medium', 32, [73, 73]);
      });
 
-  it('segmentMultiPerson uses default values when null is passed in inferenceConfig parameters',
+  it(`segmentMultiPerson uses default values when null is
+      passed in inferenceConfig parameters`,
      async () => {
        const input: tf.Tensor3D = tf.zeros([73, 73, 3]);
        spyOn(util, 'toInputResolutionHeightAndWidth').and.callThrough();
@@ -123,7 +125,8 @@ describeWithFlags('BodyPix', ALL_ENVS, () => {
            .toHaveBeenCalledWith('medium', 32, [73, 73]);
      });
 
-  it('segmentPersonParts uses default values when null is passed in inferenceConfig parameters',
+  it(`segmentPersonParts uses default values when null is
+      passed in inferenceConfig parameters`,
      async () => {
        const input: tf.Tensor3D = tf.zeros([73, 73, 3]);
        spyOn(util, 'toInputResolutionHeightAndWidth').and.callThrough();
@@ -132,7 +135,8 @@ describeWithFlags('BodyPix', ALL_ENVS, () => {
            .toHaveBeenCalledWith('medium', 32, [73, 73]);
      });
 
-  it('segmentMultiPersonParts uses default values when null is passed in inferenceConfig parameters',
+  it(`segmentMultiPersonParts uses default values when null is
+      passed in inferenceConfig parameters`,
      async () => {
        const input: tf.Tensor3D = tf.zeros([73, 73, 3]);
        spyOn(util, 'toInputResolutionHeightAndWidth').and.callThrough();
