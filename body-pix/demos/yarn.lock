@@ -742,25 +742,25 @@
     "@parcel/utils" "^1.11.0"
     physical-cpu-count "^2.0.0"
 
-"@tensorflow-models/body-pix@1.1.0":
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/@tensorflow-models/body-pix/-/body-pix-1.1.0.tgz#ced5835dc08edd02b1b89c1007def994e14f85ad"
-  integrity sha512-ePZaOHufSRdW9QIWw+YHrOAo8uek17XMCxpW2K/kiEiQPqTLuMEiPvKfY5zhX1XXfUKI0yWF6i0Dm2OmXDSO/g==
+"@tensorflow-models/body-pix@2.0.1":
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/@tensorflow-models/body-pix/-/body-pix-2.0.0.tgz#c82c4f720dec5f43a6147e8ef5ad3f2bc5744f6e"
+  integrity sha512-RUmIpMq6Cp6G0QgrUrlqJ++mWkY/6pbC/rV1h/DizKJWNtV0rJlDr3fSR3QS4OJQ4rChPHI2+Mch0NtO7ttNBw==
 
 "@tensorflow-models/posenet@^2.1.3":
   version "2.1.3"
   resolved "https://registry.yarnpkg.com/@tensorflow-models/posenet/-/posenet-2.1.3.tgz#09633e6e6e41d6c00d2ee7633632fb9322651463"
   integrity sha512-Z6HvkJhLWtXt5BD+1c9iaUGlHjohiPkeRJQpr1hu57opvTmwswwmwwRAKsmM07AVjuUT0D49QordE6zkjIJ3mg==
 
-"@tensorflow/tfjs-converter@~1.2.1":
-  version "1.2.7"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-1.2.7.tgz#3a1cf6d636667586010c4df79e861293ce10c4c8"
-  integrity sha512-7MRH21zNgOOYGuztcrZwx6eXhg8gn/QvIZWljsmTJ33fnIyWLSAIHXsp5WgWalfAsj40yU92TnxaIyRuPeD/mw==
+"@tensorflow/tfjs-converter@~1.3.1":
+  version "1.3.1"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-1.3.1.tgz#4e08e07621f43690a0b69c345cd63bc1f6974879"
+  integrity sha512-8IHzcIZwqCofcRBhaCTN6W73m2RGdBDH6BEORf0KDdbgbz4DouItVcKX692PrA8gchY+Xy8ZHMpj93PcAOs17g==
 
-"@tensorflow/tfjs-core@~1.2.1":
-  version "1.2.8"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-core/-/tfjs-core-1.2.8.tgz#d6873b88522f8cf25d34c10afd095866578d7d92"
-  integrity sha512-lWV4vAnXAAmahXpCWBwdGGW9HO6iNw9pUeVYih7pDXeJahMk3OJs6SgjRNhwn+ldsGwRoorR0/RHg0yNLmqWxQ==
+"@tensorflow/tfjs-core@~1.3.1":
+  version "1.3.1"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-core/-/tfjs-core-1.3.1.tgz#89e3253f320233120ee24d4ae62fca65c315580f"
+  integrity sha512-X4MKhpg1gLEZetKUMeQNW6diP3gbFFddeF6UT816sH8jOenX/8x2HnVmANpNnUxCTPhDniY3V9zhBWwbl13+Yg==
   dependencies:
     "@types/offscreencanvas" "~2019.3.0"
     "@types/seedrandom" "2.4.27"
