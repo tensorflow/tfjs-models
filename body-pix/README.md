@@ -1,6 +1,6 @@
 # BodyPix - Person Segmentation in the Browser
 
-## Note: We've just released Version 2.0 with **multi-person** support, a **new ResNet** model and API. Check out the new documentation below. For README of the previous 1.0 version, please look at the [README published on NPM]!(https://www.npmjs.com/package/@tensorflow-models/body-pix/v/1.1.2).
+## Note: We've just released Version 2.0 with **multi-person** support, a **new ResNet** model and API. Check out the new documentation below. For README of the previous 1.0 version, please look at the [README published on NPM](https://www.npmjs.com/package/@tensorflow-models/body-pix/v/1.1.2).
 
 This package contains a standalone model called BodyPix, as well as some demos, for running real-time person and body part segmentation in the browser using TensorFlow.js.
 
