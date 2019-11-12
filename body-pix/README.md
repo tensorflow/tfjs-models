@@ -94,7 +94,7 @@ An object containing a width, height, and a binary array with 1 for the pixels t
     var outputStride = 16;
     var segmentationThreshold = 0.5;
 
-    var imageElement = document.getElementById('image');
+    var imageElement = document.getElementById('person');
 
     bodyPix.load().then(function(net){
       return net.estimatePersonSegmentation(imageElement, outputStride, segmentationThreshold)
@@ -113,7 +113,7 @@ import * as bodyPix from '@tensorflow-models/body-pix';
 const outputStride = 16;
 const segmentationThreshold = 0.5;
 
-const imageElement = document.getElementById('image');
+const imageElement = document.getElementById('person');
 
 // load the BodyPix model from a checkpoint
 const net = await bodyPix.load();
@@ -214,7 +214,7 @@ An object containing a width, height, and an array with a part id from 0-24 for 
     var outputStride = 16;
     var segmentationThreshold = 0.5;
 
-    var imageElement = document.getElementById('image');
+    var imageElement = document.getElementById('person');
 
     bodyPix.load().then(function(net){
       return net.estimatePartSegmentation(imageElement, outputStride, segmentationThreshold)
@@ -233,7 +233,7 @@ import * as bodyPix from '@tensorflow-models/body-pix';
 const outputStride = 16;
 const segmentationThreshold = 0.5;
 
-const imageElement = document.getElementById('image');
+const imageElement = document.getElementById('person');
 
 // load the person segmentation model from a checkpoint
 const net = await bodyPix.load();
@@ -355,7 +355,7 @@ Draws an image onto a canvas and draws an `ImageData` containing a mask on top o
 ##### Example usage
 
 ```javascript
-const imageElement = document.getElementById('image');
+const imageElement = document.getElementById('person');
 
 const net = await bodyPix.load();
 const segmentation = await net.estimatePersonSegmentation(imageElement);
@@ -451,7 +451,7 @@ and the background by.  Defaults to 3. Should be an integer between 0 and 20.
 ##### Example Usage
 
 ```javascript
-const imageElement = document.getElementById('image');
+const imageElement = document.getElementById('person');
 
 const net = await bodyPix.load();
 const personSegmentation = await net.estimatePersonSegmentation(imageElement);
