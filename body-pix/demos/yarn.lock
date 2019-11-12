@@ -744,8 +744,8 @@
 
 "@tensorflow-models/body-pix@2.0.2":
   version "2.0.2"
-  resolved "https://registry.yarnpkg.com/@tensorflow-models/body-pix/-/body-pix-2.0.1.tgz#77478fde781abc64f3fb9fca6374092f2b59eb94"
-  integrity sha512-7SWw00OcJkheAMnZTgTacYlRjR0ALcgpLInb5PVaaSnZQMmjMO2cG1K9ZRW5WQwTlFSI9q427quHd63XT61DJQ==
+  resolved "https://registry.yarnpkg.com/@tensorflow-models/body-pix/-/body-pix-2.0.2.tgz#3c2c787a9621bbc40d4e20e23aad8b7e69f8c9c5"
+  integrity sha512-2fgwuco2smxkTqPOGq6Jc/4K9lOrTIvqfMF5UjIqQGhVGwRas8DQJfOiq7pPCzRZEc1diuhCjMTx4PK4aSKFyQ==
 
 "@tensorflow-models/posenet@^2.1.3":
   version "2.1.3"
