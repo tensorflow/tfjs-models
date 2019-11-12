@@ -94,7 +94,7 @@ An object containing a width, height, and a binary array with 1 for the pixels t
     var outputStride = 16;
     var segmentationThreshold = 0.5;
 
-    var imageElement = document.getElementById('image');
+    var imageElement = document.getElementById('person');
 
     bodyPix.load().then(function(net){
       return net.estimatePersonSegmentation(imageElement, outputStride, segmentationThreshold)
