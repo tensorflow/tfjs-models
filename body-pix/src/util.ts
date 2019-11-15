@@ -58,6 +58,8 @@ const INTERNAL_RESOLUTION_PERCENTAGES = {
   [INTERNAL_RESOLUTION_STRING_OPTIONS.full]: 1.0
 };
 
+const MAX_INTERNAL_RESOLUTION = 4;
+
 function toInternalResolutionPercentage(
     internalResolution: BodyPixInternalResolution): number {
   if (typeof internalResolution === 'string') {
@@ -71,10 +73,11 @@ function toInternalResolutionPercentage(
     return result;
   } else {
     tf.util.assert(
-        typeof internalResolution === 'number' && internalResolution < 1 &&
+        typeof internalResolution === 'number' &&
+            internalResolution <= MAX_INTERNAL_RESOLUTION &&
             internalResolution > 0,
         () =>
-            `inputResolution must be a string or number between 0 and 1, but ` +
+            `inputResolution must be a string or number between 0 and 4, but ` +
             `was ${internalResolution}`);
 
     return internalResolution;
