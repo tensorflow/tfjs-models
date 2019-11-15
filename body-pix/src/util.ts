@@ -4,9 +4,13 @@ import {BodyPixInput, BodyPixOutputStride, Padding} from './types';
 import {Pose, TensorBuffer3D} from './types';
 import {BodyPixInternalResolution} from './types';
 
-const isBrowser = typeof window !== 'undefined';
+function checkIfBrowser() {
+  return typeof window !== 'undefined';
+}
 
 export function getInputSize(input: BodyPixInput): [number, number] {
+  const isBrowser = checkIfBrowser();
+
   if (isBrowser &&
       (input instanceof HTMLImageElement ||
        input instanceof HTMLCanvasElement)) {
