@@ -4,8 +4,12 @@ import {BodyPixInput, BodyPixOutputStride, Padding} from './types';
 import {Pose, TensorBuffer3D} from './types';
 import {BodyPixInternalResolution} from './types';
 
+const isBrowser = typeof window !== 'undefined';
+
 export function getInputSize(input: BodyPixInput): [number, number] {
-  if (input instanceof HTMLImageElement || input instanceof HTMLCanvasElement) {
+  if (isBrowser &&
+      (input instanceof HTMLImageElement ||
+       input instanceof HTMLCanvasElement)) {
     if (input.offsetHeight !== 0 && input.offsetWidth !== 0) {
       return [input.offsetHeight, input.offsetWidth];
     } else if (input.height != null && input.width != null) {
@@ -14,9 +18,9 @@ export function getInputSize(input: BodyPixInput): [number, number] {
       throw new Error(
           `HTMLImageElement must have height and width attributes set.`);
     }
-  } else if (input instanceof ImageData) {
+  } else if (isBrowser && input instanceof ImageData) {
     return [input.height, input.width];
-  } else if (input instanceof HTMLVideoElement) {
+  } else if (isBrowser && input instanceof HTMLVideoElement) {
     if (input.height != null && input.width != null) {
       // Prioritizes user specified height and width.
       return [input.height, input.width];
