@@ -47,7 +47,5 @@
     "lint": "tslint -p . -t verbose"
   },
   "license": "Apache-2.0",
-  "dependencies": {
-    "pngjs": "^3.4.0"
-  }
+  "dependencies": {}
 }
