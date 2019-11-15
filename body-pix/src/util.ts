@@ -58,7 +58,7 @@ const INTERNAL_RESOLUTION_PERCENTAGES = {
   [INTERNAL_RESOLUTION_STRING_OPTIONS.full]: 1.0
 };
 
-const MAX_INTERNAL_RESOLUTION = 4;
+const MAX_INTERNAL_RESOLUTION = 2;
 
 function toInternalResolutionPercentage(
     internalResolution: BodyPixInternalResolution): number {

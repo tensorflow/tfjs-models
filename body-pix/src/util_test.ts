@@ -145,14 +145,14 @@ describeWithFlags('util.toInputResolutionHeightAndWidth', ALL_ENVS, () => {
        expect(result).toEqual(expectedResult);
      });
 
-  it('does not raise an error when internalResolution is 4', () => {
+  it('does not raise an error when internalResolution is 2', () => {
     expect(() => {
-      toInputResolutionHeightAndWidth(4.00, 16, [640, 480]);
+      toInputResolutionHeightAndWidth(2.00, 16, [640, 480]);
     }).not.toThrow();
   });
-  it('raises an error when internalResolution is larger than 4', () => {
+  it('raises an error when internalResolution is larger than 2', () => {
     expect(() => {
-      toInputResolutionHeightAndWidth(4.01, 16, [640, 480]);
+      toInputResolutionHeightAndWidth(2.01, 16, [640, 480]);
     }).toThrow();
   });
   it('raises an error when internalResolution is less than 0', () => {
