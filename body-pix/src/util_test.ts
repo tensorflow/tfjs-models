@@ -155,9 +155,14 @@ describeWithFlags('util.toInputResolutionHeightAndWidth', ALL_ENVS, () => {
       toInputResolutionHeightAndWidth(2.01, 16, [640, 480]);
     }).toThrow();
   });
-  it('raises an error when internalResolution is less than 0', () => {
+  it('does not raise an error when internalResolution is 0.1', () => {
     expect(() => {
-      toInputResolutionHeightAndWidth(-0.01, 16, [640, 480]);
+      toInputResolutionHeightAndWidth(0.1, 16, [640, 480]);
+    }).not.toThrow();
+  });
+  it('raises an error when internalResolution is less than 0.1', () => {
+    expect(() => {
+      toInputResolutionHeightAndWidth(0.09, 16, [640, 480]);
     }).toThrow();
   });
 });
