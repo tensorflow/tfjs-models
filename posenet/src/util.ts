@@ -18,7 +18,7 @@
 import * as tf from '@tensorflow/tfjs-core';
 
 import {connectedPartIndices} from './keypoints';
-import {Keypoint, Padding, Pose, PosenetInput, PoseNetInternalResolution, PoseNetOutputStride, TensorBuffer3D, Vector2D} from './types';
+import {InputResolution, Keypoint, Padding, Pose, PosenetInput, PoseNetInternalResolution, PoseNetOutputStride, TensorBuffer3D, Vector2D} from './types';
 
 function eitherPointDoesntMeetConfidence(
     a: number, b: number, minConfidence: number): boolean {
@@ -124,6 +124,42 @@ export function toValidInputResolution(
   return Math.floor(inputResolution / outputStride) * outputStride + 1;
 }
 
+function validateInputResolution(inputResolution: InputResolution) {
+  tf.util.assert(
+      typeof inputResolution === 'number' ||
+          typeof inputResolution === 'object',
+      () => `Invalid inputResolution ${inputResolution}. ` +
+          `Should be a number or an object with width and height`);
+
+  if (typeof inputResolution === 'object') {
+    tf.util.assert(
+        typeof inputResolution.width === 'number',
+        () => `inputResolution.width has a value of ${
+            inputResolution.width} which is invalid; it must be a number`);
+    tf.util.assert(
+        typeof inputResolution.height === 'number',
+        () => `inputResolution.height has a value of ${
+            inputResolution.height} which is invalid; it must be a number`);
+  }
+}
+
+export function getValidInputResolutionDimensions(
+    inputResolution: InputResolution,
+    outputStride: PoseNetOutputStride): [number, number] {
+  validateInputResolution(inputResolution);
+  if (typeof inputResolution === 'object') {
+    return [
+      toValidInputResolution(inputResolution.height, outputStride),
+      toValidInputResolution(inputResolution.width, outputStride),
+    ];
+  } else {
+    return [
+      toValidInputResolution(inputResolution, outputStride),
+      toValidInputResolution(inputResolution, outputStride),
+    ];
+  }
+}
+
 const INTERNAL_RESOLUTION_STRING_OPTIONS = {
   low: 'low',
   medium: 'medium',
@@ -166,9 +202,14 @@ function toInternalResolutionPercentage(
 }
 
 export function toInputResolutionHeightAndWidth(
+    inputResolutionFromModelConfig: [number, number],
     internalResolution: PoseNetInternalResolution,
     outputStride: PoseNetOutputStride,
     [inputHeight, inputWidth]: [number, number]): [number, number] {
+  if (inputResolutionFromModelConfig) {
+    return inputResolutionFromModelConfig;
+  }
+
   const internalResolutionPercentage =
       toInternalResolutionPercentage(internalResolution);
 

@@ -61,6 +61,22 @@ describeWithFlags('util.toInputResolutionHeightAndWidth', ALL_ENVS, () => {
             size * expectedScalePercentage, outputStride));
   }
 
+  it(`return the internal resolution from the model config when the internal ` +
+         `resolution from the model config is provided`,
+     () => {
+       const inputShape: [number, number] = [1920, 1080];
+       const inputResolutionFromModelConfig: [number, number] = [1200, 400];
+       const outputStride = 16;
+       const internalResolution = 'full';
+       const expectedScalePercentage = 1.0;
+
+       const result = toInputResolutionHeightAndWidth(
+           inputResolutionFromModelConfig, internalResolution, outputStride,
+           inputShape);
+
+       expect(result).toEqual(inputResolutionFromModelConfig);
+     });
+
   it(`returns the full image size as a valid input resolution when ` +
          `internalResolution is 'full'`,
      () => {
@@ -73,7 +89,7 @@ describeWithFlags('util.toInputResolutionHeightAndWidth', ALL_ENVS, () => {
            inputShape, outputStride, expectedScalePercentage);
 
        const result = toInputResolutionHeightAndWidth(
-           internalResolution, outputStride, inputShape);
+           null, internalResolution, outputStride, inputShape);
 
        expect(result).toEqual(expectedResult);
      });
@@ -90,7 +106,7 @@ describeWithFlags('util.toInputResolutionHeightAndWidth', ALL_ENVS, () => {
            inputShape, outputStride, expectedScalePercentage);
 
        const result = toInputResolutionHeightAndWidth(
-           internalResolution, outputStride, inputShape);
+           null, internalResolution, outputStride, inputShape);
 
        expect(result).toEqual(expectedResult);
      });
@@ -107,7 +123,7 @@ describeWithFlags('util.toInputResolutionHeightAndWidth', ALL_ENVS, () => {
            inputShape, outputStride, expectedScalePercentage);
 
        const result = toInputResolutionHeightAndWidth(
-           internalResolution, outputStride, inputShape);
+           null, internalResolution, outputStride, inputShape);
 
        expect(result).toEqual(expectedResult);
      });
@@ -124,7 +140,7 @@ describeWithFlags('util.toInputResolutionHeightAndWidth', ALL_ENVS, () => {
            inputShape, outputStride, expectedScalePercentage);
 
        const result = toInputResolutionHeightAndWidth(
-           internalResolution, outputStride, inputShape);
+           null, internalResolution, outputStride, inputShape);
 
        expect(result).toEqual(expectedResult);
      });
@@ -140,7 +156,7 @@ describeWithFlags('util.toInputResolutionHeightAndWidth', ALL_ENVS, () => {
            getExpectedResolution(inputShape, outputStride, internalResolution);
 
        const result = toInputResolutionHeightAndWidth(
-           internalResolution, outputStride, inputShape);
+           null, internalResolution, outputStride, inputShape);
 
        expect(result).toEqual(expectedResult);
      });
@@ -157,19 +173,19 @@ describeWithFlags('util.toInputResolutionHeightAndWidth', ALL_ENVS, () => {
            inputShape, outputStride, expectedScalePercentage);
 
        const result = toInputResolutionHeightAndWidth(
-           internalResolution, outputStride, inputShape);
+           null, internalResolution, outputStride, inputShape);
 
        expect(result).toEqual(expectedResult);
      });
 
   it('raises an error when internalResolution is larger than 1', () => {
     expect(() => {
-      toInputResolutionHeightAndWidth(1.01, 16, [640, 480]);
+      toInputResolutionHeightAndWidth(null, 1.01, 16, [640, 480]);
     }).toThrow();
   });
   it('raises an error when internalResolution is less than 0', () => {
     expect(() => {
-      toInputResolutionHeightAndWidth(-0.01, 16, [640, 480]);
+      toInputResolutionHeightAndWidth(null, -0.01, 16, [640, 480]);
     }).toThrow();
   });
 });

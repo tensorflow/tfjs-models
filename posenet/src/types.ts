@@ -63,3 +63,5 @@ export declare interface Padding {
   left: number;
   right: number;
 }
+
+export declare type InputResolution = number | {width: number, height: number};
