@@ -140,7 +140,7 @@ const INTERNAL_RESOLUTION_PERCENTAGES = {
 
 function toInternalResolutionPercentage(
     internalResolution: PoseNetInternalResolution): number {
-  if (typeof internalResolution === 'undefined') {
+  if (internalResolution == null) {
     return INTERNAL_RESOLUTION_PERCENTAGES[INTERNAL_RESOLUTION_STRING_OPTIONS
                                                .medium];
   }
