@@ -4,7 +4,6 @@ import {BodyPixInput, BodyPixOutputStride, Padding} from './types';
 import {Pose, TensorBuffer3D} from './types';
 import {BodyPixInternalResolution} from './types';
 
-
 function getSizeFromImageLikeElement(input: HTMLImageElement|
                                      HTMLCanvasElement): [number, number] {
   if (input.offsetHeight !== 0 && input.offsetWidth !== 0) {
@@ -37,7 +36,7 @@ export function getInputSize(input: BodyPixInput): [number, number] {
   } else if (
       typeof (HTMLVideoElement) !== 'undefined' &&
       input instanceof HTMLVideoElement) {
-    return getSizeFromVideoElement(input as HTMLVideoElement);
+    return getSizeFromVideoElement(input);
   } else if (input instanceof tf.Tensor) {
     return [input.shape[0], input.shape[1]];
   } else {
