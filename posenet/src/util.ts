@@ -18,7 +18,7 @@
 import * as tf from '@tensorflow/tfjs-core';
 
 import {connectedPartIndices} from './keypoints';
-import {InputResolution, Keypoint, Padding, Pose, PosenetInput, PoseNetOutputStride, TensorBuffer3D, Vector2D} from './types';
+import {Keypoint, Padding, Pose, PosenetInput, PoseNetInternalResolution, PoseNetOutputStride, TensorBuffer3D, Vector2D} from './types';
 
 function eitherPointDoesntMeetConfidence(
     a: number, b: number, minConfidence: number): boolean {
@@ -124,40 +124,60 @@ export function toValidInputResolution(
   return Math.floor(inputResolution / outputStride) * outputStride + 1;
 }
 
-export function validateInputResolution(inputResolution: InputResolution) {
-  tf.util.assert(
-      typeof inputResolution === 'number' ||
-          typeof inputResolution === 'object',
-      () => `Invalid inputResolution ${inputResolution}. ` +
-          `Should be a number or an object with width and height`);
+const INTERNAL_RESOLUTION_STRING_OPTIONS = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+  full: 'full'
+};
 
-  if (typeof inputResolution === 'object') {
+const INTERNAL_RESOLUTION_PERCENTAGES = {
+  [INTERNAL_RESOLUTION_STRING_OPTIONS.low]: 0.25,
+  [INTERNAL_RESOLUTION_STRING_OPTIONS.medium]: 0.5,
+  [INTERNAL_RESOLUTION_STRING_OPTIONS.high]: 0.75,
+  [INTERNAL_RESOLUTION_STRING_OPTIONS.full]: 1.0
+};
+
+function toInternalResolutionPercentage(
+    internalResolution: PoseNetInternalResolution): number {
+  if (typeof internalResolution === 'undefined') {
+    return INTERNAL_RESOLUTION_PERCENTAGES[INTERNAL_RESOLUTION_STRING_OPTIONS
+                                               .medium];
+  }
+  if (typeof internalResolution === 'string') {
+    const result = INTERNAL_RESOLUTION_PERCENTAGES[internalResolution];
+
     tf.util.assert(
-        typeof inputResolution.width === 'number',
-        () => `inputResolution.width has a value of ${
-            inputResolution.width} which is invalid; it must be a number`);
+        typeof result === 'number',
+        () => `string value of inputResolution must be one of ${
+            Object.values(INTERNAL_RESOLUTION_STRING_OPTIONS)
+                .join(',')} but was ${internalResolution}.`);
+    return result;
+  } else {
     tf.util.assert(
-        typeof inputResolution.height === 'number',
-        () => `inputResolution.height has a value of ${
-            inputResolution.height} which is invalid; it must be a number`);
+        typeof internalResolution === 'number' && internalResolution < 1 &&
+            internalResolution > 0,
+        () =>
+            `inputResolution must be a string or number between 0 and 1, but ` +
+            `was ${internalResolution}`);
+
+    return internalResolution;
   }
 }
 
-export function getValidInputResolutionDimensions(
-    inputResolution: InputResolution,
-    outputStride: PoseNetOutputStride): [number, number] {
-  validateInputResolution(inputResolution);
-  if (typeof inputResolution === 'object') {
-    return [
-      toValidInputResolution(inputResolution.height, outputStride),
-      toValidInputResolution(inputResolution.width, outputStride),
-    ];
-  } else {
-    return [
-      toValidInputResolution(inputResolution, outputStride),
-      toValidInputResolution(inputResolution, outputStride),
-    ];
-  }
+export function toInputResolutionHeightAndWidth(
+    internalResolution: PoseNetInternalResolution,
+    outputStride: PoseNetOutputStride,
+    [inputHeight, inputWidth]: [number, number]): [number, number] {
+  const internalResolutionPercentage =
+      toInternalResolutionPercentage(internalResolution);
+
+  return [
+    toValidInputResolution(
+        inputHeight * internalResolutionPercentage, outputStride),
+    toValidInputResolution(
+        inputWidth * internalResolutionPercentage, outputStride)
+  ];
 }
 
 const VALID_OUTPUT_STRIDES: PoseNetOutputStride[] = [8, 16, 32];
@@ -173,24 +193,6 @@ export function assertValidOutputStride(outputStride: PoseNetOutputStride) {
 function isValidInputResolution(
     resolution: number, outputStride: number): boolean {
   return (resolution - 1) % outputStride === 0;
-}
-
-export function assertValidResolution(
-    resolution: [number, number], outputStride: number) {
-  tf.util.assert(
-      typeof resolution[0] === 'number' && typeof resolution[1] === 'number',
-      () => `both resolution values must be a number but had values ${
-          resolution}`);
-
-  tf.util.assert(
-      isValidInputResolution(resolution[0], outputStride),
-      () => `height of ${resolution[0]} is invalid for output stride ` +
-          `${outputStride}.`);
-
-  tf.util.assert(
-      isValidInputResolution(resolution[1], outputStride),
-      () => `width of ${resolution[1]} is invalid for output stride ` +
-          `${outputStride}.`);
 }
 
 export function getInputTensorDimensions(input: PosenetInput):
