@@ -68,7 +68,6 @@ describeWithFlags('util.toInputResolutionHeightAndWidth', ALL_ENVS, () => {
        const inputResolutionFromModelConfig: [number, number] = [1200, 400];
        const outputStride = 16;
        const internalResolution = 'full';
-       const expectedScalePercentage = 1.0;
 
        const result = toInputResolutionHeightAndWidth(
            inputResolutionFromModelConfig, internalResolution, outputStride,

@@ -386,6 +386,11 @@ export class PoseNet {
   }
 }
 
+const INPUT_RESOLUTION_WARNING_MESSAGE =
+    'Warning: inputResolution is deprecated and will be removed. ' +
+    'Set the internalResolution parameter in the estimate functions' +
+    'instead.';
+
 async function loadMobileNet(config: ModelConfig): Promise<PoseNet> {
   const outputStride = config.outputStride;
   const quantBytes = config.quantBytes;
@@ -404,6 +409,8 @@ async function loadMobileNet(config: ModelConfig): Promise<PoseNet> {
   let inputResolution: [number, number];
 
   if (config.inputResolution) {
+    console.log(INPUT_RESOLUTION_WARNING_MESSAGE);
+
     inputResolution = getValidInputResolutionDimensions(
         config.inputResolution, mobilenet.outputStride);
   }
@@ -428,6 +435,8 @@ async function loadResNet(config: ModelConfig): Promise<PoseNet> {
   let inputResolution: [number, number];
 
   if (config.inputResolution) {
+    console.log(INPUT_RESOLUTION_WARNING_MESSAGE);
+
     inputResolution = getValidInputResolutionDimensions(
         config.inputResolution, resnet.outputStride);
   }
