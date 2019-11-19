@@ -24,8 +24,8 @@ import {MobileNet} from './mobilenet';
 import {decodeMultiplePoses} from './multi_pose/decode_multiple_poses';
 import {ResNet} from './resnet';
 import {decodeSinglePose} from './single_pose/decode_single_pose';
-import {InputResolution, MobileNetMultiplier, Pose, PoseNetArchitecture, PosenetInput, PoseNetOutputStride, PoseNetQuantBytes} from './types';
-import {assertValidOutputStride, assertValidResolution, getInputTensorDimensions, getValidInputResolutionDimensions, padAndResizeTo, scaleAndFlipPoses, toTensorBuffers3D, validateInputResolution} from './util';
+import {InputResolution, MobileNetMultiplier, Pose, PoseNetArchitecture, PosenetInput, PoseNetInternalResolution, PoseNetOutputStride, PoseNetQuantBytes} from './types';
+import {assertValidOutputStride, getInputTensorDimensions, getValidInputResolutionDimensions, padAndResizeTo, scaleAndFlipPoses, toInputResolutionHeightAndWidth, toTensorBuffers3D} from './util';
 
 /**
  * PoseNet model loading is configurable using the following config dictionary.
@@ -38,15 +38,6 @@ import {assertValidOutputStride, assertValidResolution, getInputTensorDimensions
  * the model at the cost of speed.  Set this to a larger value to increase speed
  * at the cost of accuracy. Stride 32 is supported for ResNet and
  * stride 8,16,32 are supported for various MobileNetV1 models.
- *
- * * `inputResolution`: A number or an Object of type {width: number, height:
- * number}. Specifies the size the input image is scaled to before feeding it
- * through the PoseNet model.  The larger the value, more accurate the model at
- * the cost of speed. Set this to a smaller value to increase speed at the cost
- * of accuracy. If a number is provided, the input will be resized and padded to
- * be a square with the same width and height.  If width and height are
- * provided, the input will be resized and padded to the specified width and
- * height.
  *
  * `multiplier`: An optional number with values: 1.01, 1.0, 0.75, or
  * 0.50. The value is used only by MobileNet architecture. It is the float
@@ -68,10 +59,12 @@ import {assertValidOutputStride, assertValidResolution, getInputTensorDimensions
 export interface ModelConfig {
   architecture: PoseNetArchitecture;
   outputStride: PoseNetOutputStride;
-  inputResolution: InputResolution;
   multiplier?: MobileNetMultiplier;
   modelUrl?: string;
   quantBytes?: PoseNetQuantBytes;
+  // Deprecated in favor of internalResolution parameter in
+  // estimate functions
+  inputResolution?: InputResolution;
 }
 
 // The default configuration for loading MobileNetV1 based PoseNet.
@@ -90,7 +83,6 @@ const MOBILENET_V1_CONFIG: ModelConfig = {
   architecture: 'MobileNetV1',
   outputStride: 16,
   multiplier: 0.75,
-  inputResolution: 257,
 } as ModelConfig;
 
 const VALID_ARCHITECTURE = ['MobileNetV1', 'ResNet50'];
@@ -116,12 +108,6 @@ function validateModelConfig(config: ModelConfig) {
         `Invalid architecture ${config.architecture}. ` +
         `Should be one of ${VALID_ARCHITECTURE}`);
   }
-
-  if (config.inputResolution == null) {
-    config.inputResolution = 257;
-  }
-
-  validateInputResolution(config.inputResolution);
 
   if (config.outputStride == null) {
     config.outputStride = 16;
@@ -164,9 +150,16 @@ function validateModelConfig(config: ModelConfig) {
  * horizontally (i.e. a webcam), and you want the poses to be returned in the
  * proper orientation.
  *
+ * `internalResolution`: Defaults to 'medium'. The internal resolution
+ * percentage that the input is resized to before inference. The larger the
+ * internalResolution the more accurate the model at the cost of slower
+ * prediction times. Available values are 'low', 'medium', 'high', 'full', or a
+ * percentage value between 0 and 1. The values 'low', 'medium', 'high', and
+ * 'full' map to 0.25, 0.5, 0.75, and 1.0 correspondingly.
  */
 export interface InferenceConfig {
   flipHorizontal: boolean;
+  internalResolution?: PoseNetInternalResolution;
 }
 
 /**
@@ -204,14 +197,16 @@ export interface LegacySinglePersonInferenceConfig extends
 }
 
 export const SINGLE_PERSON_INFERENCE_CONFIG: SinglePersonInterfaceConfig = {
-  flipHorizontal: false
+  flipHorizontal: false,
+  internalResolution: 'medium'
 };
 
 export const MULTI_PERSON_INFERENCE_CONFIG: MultiPersonInferenceConfig = {
   flipHorizontal: false,
+  internalResolution: 'medium',
   maxDetections: 5,
   scoreThreshold: 0.5,
-  nmsRadius: 20
+  nmsRadius: 20,
 };
 
 function validateSinglePersonInferenceConfig(
@@ -239,14 +234,15 @@ function validateMultiPersonInputConfig(config: MultiPersonInferenceConfig) {
 
 export class PoseNet {
   readonly baseModel: BaseModel;
-  readonly inputResolution: [number, number];
+  // Depretcated in favor of internalResolution parameter in
+  // estimate functions
+  readonly inputResolutionFromModelConfig?: [number, number];
 
-  constructor(net: BaseModel, inputResolution: [number, number]) {
+  constructor(net: BaseModel, inputResolution?: [number, number]) {
     assertValidOutputStride(net.outputStride);
-    assertValidResolution(inputResolution, net.outputStride);
 
     this.baseModel = net;
-    this.inputResolution = inputResolution;
+    this.inputResolutionFromModelConfig = inputResolution;
   }
 
   /**
@@ -281,11 +277,13 @@ export class PoseNet {
     validateMultiPersonInputConfig(config);
 
     const outputStride = this.baseModel.outputStride;
-    const inputResolution = this.inputResolution;
-
     const [height, width] = getInputTensorDimensions(input);
+    const internalResolutionHeightAndWidth = toInputResolutionHeightAndWidth(
+        this.inputResolutionFromModelConfig, config.internalResolution,
+        outputStride, [height, width]);
 
-    const {resized, padding} = padAndResizeTo(input, inputResolution);
+    const {resized, padding} =
+        padAndResizeTo(input, internalResolutionHeightAndWidth);
 
     const {heatmapScores, offsets, displacementFwd, displacementBwd} =
         this.baseModel.predict(resized);
@@ -304,7 +302,7 @@ export class PoseNet {
         configWithDefaults.scoreThreshold, configWithDefaults.nmsRadius);
 
     const resultPoses = scaleAndFlipPoses(
-        poses, [height, width], inputResolution, padding,
+        poses, [height, width], internalResolutionHeightAndWidth, padding,
         configWithDefaults.flipHorizontal);
 
     heatmapScores.dispose();
@@ -343,11 +341,13 @@ export class PoseNet {
     validateSinglePersonInferenceConfig(configWithDefaults);
 
     const outputStride = this.baseModel.outputStride;
-    const inputResolution = this.inputResolution;
-
     const [height, width] = getInputTensorDimensions(input);
+    const internalResolutionHeightAndWidth = toInputResolutionHeightAndWidth(
+        this.inputResolutionFromModelConfig, config.internalResolution,
+        outputStride, [height, width]);
 
-    const {resized, padding} = padAndResizeTo(input, inputResolution);
+    const {resized, padding} =
+        padAndResizeTo(input, internalResolutionHeightAndWidth);
 
     const {heatmapScores, offsets, displacementFwd, displacementBwd} =
         this.baseModel.predict(resized);
@@ -356,7 +356,7 @@ export class PoseNet {
     const poses = [pose];
 
     const resultPoses = scaleAndFlipPoses(
-        poses, [height, width], inputResolution, padding,
+        poses, [height, width], internalResolutionHeightAndWidth, padding,
         configWithDefaults.flipHorizontal);
 
     heatmapScores.dispose();
@@ -401,10 +401,14 @@ async function loadMobileNet(config: ModelConfig): Promise<PoseNet> {
   const graphModel = await tfconv.loadGraphModel(config.modelUrl || url);
   const mobilenet = new MobileNet(graphModel, outputStride);
 
-  const validInputResolution = getValidInputResolutionDimensions(
-      config.inputResolution, mobilenet.outputStride);
+  let inputResolution: [number, number];
 
-  return new PoseNet(mobilenet, validInputResolution);
+  if (config.inputResolution) {
+    inputResolution = getValidInputResolutionDimensions(
+        config.inputResolution, mobilenet.outputStride);
+  }
+
+  return new PoseNet(mobilenet, inputResolution);
 }
 
 async function loadResNet(config: ModelConfig): Promise<PoseNet> {
@@ -420,9 +424,15 @@ async function loadResNet(config: ModelConfig): Promise<PoseNet> {
   const url = resNet50Checkpoint(outputStride, quantBytes);
   const graphModel = await tfconv.loadGraphModel(config.modelUrl || url);
   const resnet = new ResNet(graphModel, outputStride);
-  const validInputResolution = getValidInputResolutionDimensions(
-      config.inputResolution, resnet.outputStride);
-  return new PoseNet(resnet, validInputResolution);
+
+  let inputResolution: [number, number];
+
+  if (config.inputResolution) {
+    inputResolution = getValidInputResolutionDimensions(
+        config.inputResolution, resnet.outputStride);
+  }
+
+  return new PoseNet(resnet, inputResolution);
 }
 
 /**

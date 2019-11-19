@@ -17,6 +17,7 @@
 
 import * as tf from '@tensorflow/tfjs-core';
 
+export type PoseNetInternalResolution = number|'low'|'medium'|'high'|'full';
 export type PoseNetOutputStride = 32|16|8;
 export type PoseNetArchitecture = 'ResNet50'|'MobileNetV1';
 export type PoseNetDecodingMethod = 'single-person'|'multi-person';
