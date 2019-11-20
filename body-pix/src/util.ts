@@ -4,25 +4,39 @@ import {BodyPixInput, BodyPixOutputStride, Padding} from './types';
 import {Pose, TensorBuffer3D} from './types';
 import {BodyPixInternalResolution} from './types';
 
-export function getInputSize(input: BodyPixInput): [number, number] {
-  if (input instanceof HTMLImageElement || input instanceof HTMLCanvasElement) {
-    if (input.offsetHeight !== 0 && input.offsetWidth !== 0) {
-      return [input.offsetHeight, input.offsetWidth];
-    } else if (input.height != null && input.width != null) {
-      return [input.height, input.width];
-    } else {
-      throw new Error(
-          `HTMLImageElement must have height and width attributes set.`);
-    }
-  } else if (input instanceof ImageData) {
+function getSizeFromImageLikeElement(input: HTMLImageElement|
+                                     HTMLCanvasElement): [number, number] {
+  if (input.offsetHeight !== 0 && input.offsetWidth !== 0) {
+    return [input.offsetHeight, input.offsetWidth];
+  } else if (input.height != null && input.width != null) {
     return [input.height, input.width];
-  } else if (input instanceof HTMLVideoElement) {
-    if (input.height != null && input.width != null) {
-      // Prioritizes user specified height and width.
-      return [input.height, input.width];
-    } else {
-      return [input.videoHeight, input.videoWidth];
-    }
+  } else {
+    throw new Error(
+        `HTMLImageElement must have height and width attributes set.`);
+  }
+}
+
+function getSizeFromVideoElement(input: HTMLVideoElement): [number, number] {
+  if (input.height != null && input.width != null) {
+    // Prioritizes user specified height and width.
+    return [input.height, input.width];
+  } else {
+    return [input.videoHeight, input.videoWidth];
+  }
+}
+
+export function getInputSize(input: BodyPixInput): [number, number] {
+  if ((typeof (HTMLCanvasElement) !== 'undefined' &&
+       input instanceof HTMLCanvasElement) ||
+      (typeof (HTMLImageElement) !== 'undefined' &&
+       input instanceof HTMLImageElement)) {
+    return getSizeFromImageLikeElement(input);
+  } else if (typeof (ImageData) !== 'undefined' && input instanceof ImageData) {
+    return [input.height, input.width];
+  } else if (
+      typeof (HTMLVideoElement) !== 'undefined' &&
+      input instanceof HTMLVideoElement) {
+    return getSizeFromVideoElement(input);
   } else if (input instanceof tf.Tensor) {
     return [input.shape[0], input.shape[1]];
   } else {
