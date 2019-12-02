@@ -86,7 +86,7 @@ const setupPage =
     ctx.scale(-1, 1);
     ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
 
-    model = await blazeFace.load(true);
+    model = await blazeFace.load();
 
     setupFPS();
 
