@@ -1,15 +1,15 @@
-# Facemesh demo
+# Blazeface demo
 
 ## Contents
 
-The Facemesh demo shows how to use the Facemesh model to estimate keypoints on a face.
+The Blazeface demo shows how to use the Blazeface model to detect faces.
 
 ## Setup
 
 cd into the demos folder:
 
 ```sh
-cd facemesh/demos
+cd blazeface/demos
 ```
 
 Install dependencies and prepare the build directory:
@@ -24,11 +24,11 @@ To watch files for changes, and launch a dev server:
 yarn watch
 ```
 
-## If you are developing facemesh locally, and want to test the changes in the demos
+## If you are developing blazeface locally, and want to test the changes in the demos
 
-Cd into the facemesh folder:
+Cd into the blazeface folder:
 ```sh
-cd facemesh
+cd blazeface
 ```
 
 Install dependencies:
@@ -36,7 +36,7 @@ Install dependencies:
 yarn
 ```
 
-Publish facemesh locally:
+Publish blazeface locally:
 ```sh
 yarn build && yarn yalc publish
 ```
@@ -48,9 +48,9 @@ cd demos
 yarn
 ```
 
-Link the local facemesh to the demos:
+Link the local blazeface to the demos:
 ```sh
-yarn yalc link @tensorflow-models/facemesh
+yarn yalc link @tensorflow-models/blazeface
 ```
 
 Start the dev demo server:
@@ -58,9 +58,9 @@ Start the dev demo server:
 yarn watch
 ```
 
-To get future updates from the facemesh source code:
+To get future updates from the blazeface source code:
 ```
-# cd up into the facemesh directory
+# cd up into the blazeface directory
 cd ../
 yarn build && yarn yalc push
 ```

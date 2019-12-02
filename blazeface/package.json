@@ -1,12 +1,12 @@
 {
-  "name": "@tensorflow-models/facemesh",
+  "name": "@tensorflow-models/blazeface",
   "version": "1.1.1",
-  "description": "Pretrained face mesh model in TensorFlow.js",
+  "description": "Pretrained face detection model in TensorFlow.js",
   "main": "dist/index.js",
-  "jsnext:main": "dist/facemesh.esm.js",
-  "module": "dist/facemesh.esm.js",
-  "unpkg": "dist/facemesh.min.js",
-  "jsdelivr": "dist/facemesh.min.js",
+  "jsnext:main": "dist/blazeface.esm.js",
+  "module": "dist/blazeface.esm.js",
+  "unpkg": "dist/blazeface.min.js",
+  "jsdelivr": "dist/blazeface.min.js",
   "types": "dist/index.d.ts",
   "repository": {
     "type": "git",

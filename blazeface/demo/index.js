@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import * as faceMesh from '@tensorflow-models/facemesh';
+import * as blazeFace from '@tensorflow-models/blazeface';
 import Stats from 'stats.js';
 
 let model, ctx, videoWidth, videoHeight, video, canvas;
@@ -27,7 +27,7 @@ async function setupCamera() {
 
   const stream = await navigator.mediaDevices.getUserMedia({
     'audio': false,
-    'video': {facingMode: 'user'},
+    'video': { facingMode: 'user' },
   });
   video.srcObject = stream;
 
@@ -47,54 +47,54 @@ function setupFPS() {
 }
 
 const renderPrediction =
-    async () => {
-  stats.begin();
-  const prediction = await model.estimateFace(video);
-  if (prediction) {
-    const keypoints = prediction.annotations.silhouette;
+  async () => {
+    stats.begin();
+    const prediction = await model.estimateFace(video);
+    if (prediction) {
+      const keypoints = prediction.annotations.silhouette;
 
-    ctx.drawImage(
+      ctx.drawImage(
         video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width,
         canvas.height);
 
-    const r = 1;
+      const r = 1;
 
-    for (let i = 0; i < keypoints.length; i++) {
-      const x = keypoints[i][0];
-      const y = keypoints[i][1];
-      ctx.beginPath();
-      ctx.arc(x, y, r, 0, 2 * Math.PI);
-      ctx.fill();
+      for (let i = 0; i < keypoints.length; i++) {
+        const x = keypoints[i][0];
+        const y = keypoints[i][1];
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, 2 * Math.PI);
+        ctx.fill();
+      }
     }
+
+    stats.end();
+
+    requestAnimationFrame(renderPrediction);
   }
 
-  stats.end();
-
-  requestAnimationFrame(renderPrediction);
-}
-
 const setupPage =
-    async () => {
-  await setupCamera();
-  video.play();
+  async () => {
+    await setupCamera();
+    video.play();
 
-  videoWidth = video.videoWidth;
-  videoHeight = video.videoHeight;
-  video.width = videoWidth;
-  video.height = videoHeight;
+    videoWidth = video.videoWidth;
+    videoHeight = video.videoHeight;
+    video.width = videoWidth;
+    video.height = videoHeight;
 
-  canvas = document.getElementById('output');
-  canvas.width = videoWidth;
-  canvas.height = videoHeight;
-  ctx = canvas.getContext('2d');
-  ctx.translate(canvas.width, 0);
-  ctx.scale(-1, 1);
+    canvas = document.getElementById('output');
+    canvas.width = videoWidth;
+    canvas.height = videoHeight;
+    ctx = canvas.getContext('2d');
+    ctx.translate(canvas.width, 0);
+    ctx.scale(-1, 1);
 
-  model = await faceMesh.load(true);
+    model = await blazeFace.load(true);
 
-  setupFPS();
+    setupFPS();
 
-  renderPrediction();
-}
+    renderPrediction();
+  }
 
 setupPage();

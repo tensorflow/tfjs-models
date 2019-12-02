@@ -37,14 +37,14 @@ const PREAMBLE = `/**
     */`;
 
 function minify() {
-  return uglify({output: {preamble: PREAMBLE}});
+  return uglify({ output: { preamble: PREAMBLE } });
 }
 
-function config({plugins = [], output = {}}) {
+function config({ plugins = [], output = {} }) {
   return {
     input: 'src/index.ts',
     plugins: [
-      typescript({tsconfigOverride: {compilerOptions: {module: 'ES2015'}}}),
+      typescript({ tsconfigOverride: { compilerOptions: { module: 'ES2015' } } }),
       node(), ...plugins
     ],
     output: {
@@ -65,13 +65,13 @@ function config({plugins = [], output = {}}) {
 }
 
 export default [
-  config({output: {format: 'umd', name: 'facemesh', file: 'dist/facemesh.js'}}),
+  config({ output: { format: 'umd', name: 'blazeface', file: 'dist/blazeface.js' } }),
   config({
     plugins: [minify()],
-    output: {format: 'umd', name: 'facemesh', file: 'dist/facemesh.min.js'}
+    output: { format: 'umd', name: 'blazeface', file: 'dist/blazeface.min.js' }
   }),
   config({
     plugins: [minify()],
-    output: {format: 'es', file: 'dist/facemesh.esm.js'}
+    output: { format: 'es', file: 'dist/blazeface.esm.js' }
   })
 ];
