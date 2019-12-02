@@ -1,7 +1,5 @@
 # Semantic Segmentation in the Browser: DeepLab v3 Model
 
-## This model is a work-in-progress and has not been released yet. We will update this README when the model is released and usable
-
 This package contains a standalone implementation of the DeepLab inference pipeline, as well as a [demo](./demo), for running semantic segmentation using TensorFlow.js.
 
 ![DeepLab Demo](./docs/deeplab-demo.gif)
@@ -16,8 +14,7 @@ To get started, pick the model name from `pascal`, `cityscapes` and `ade20k`, an
 import * as tf from '@tensorflow-models/tfjs';
 import * as deeplab from '@tensorflow-models/deeplab';
 const loadModel = async () => {
-  const modelName = 'pascal';   // set to your preferred model, out of `pascal`,
-                                // `cityscapes` and `ade20k`
+  const modelName = 'pascal';   // set to your preferred model, either `pascal`, `cityscapes` or `ade20k`
   const quantizationBytes = 2;  // either 1, 2 or 4
   return await deeplab.load({base: modelName, quantizationBytes});
 };
@@ -39,8 +36,7 @@ If you would rather load custom weights, you can pass the URL in the config inst
 ```typescript
 import * as deeplab from '@tensorflow-models/deeplab';
 const loadModel = async () => {
-  // #TODO(tfjs): Replace this URL after you host the model
-  const url = 'https://storage.googleapis.com/gsoc-tfjs/models/deeplab/quantized/1/pascal/model.json';
+  const url = 'https://tfhub.dev/tensorflow/tfjs-model/deeplab/pascal/1/default/1/model.json?tfjs-format=file';
   return await deeplab.load({modelUrl: url});
 };
 loadModel().then(() => console.log(`Loaded the model successfully!`));
@@ -84,9 +80,9 @@ The `segment` method of the `SemanticSegmentation` object covers most use cases.
 
 Each model recognises a different set of object classes in an image:
 
-- [PASCAL](./deeplab/src/config.ts#L60)
-- [CityScapes](./deeplab/src/config.ts#L66)
-- [ADE20K](./deeplab/src/config.ts#L72)
+- [PASCAL](./src/config.ts#L142)
+- [CityScapes](./src/config.ts#L149)
+- [ADE20K](./src/config.ts#L155)
 
 #### `model.segment(image, config?)` inputs
 

@@ -19,8 +19,6 @@ import * as use from '@tensorflow-models/universal-sentence-encoder';
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-// import {padInput} from './util';
-
 const BASE_PATH =
     'https://storage.googleapis.com/tfjs-models/savedmodel/toxicity/';
 
@@ -75,9 +73,8 @@ export class ToxicityClassifier {
     } else {
       tf.util.assert(
           this.toxicityLabels.every(d => this.labels.indexOf(d) > -1),
-          () =>
-              `toxicityLabels argument must contain only items from the model ` +
-              `heads ${this.labels.join(', ')}, ` +
+          () => `toxicityLabels argument must contain only items from the ` +
+              `model heads ${this.labels.join(', ')}, ` +
               `got ${this.toxicityLabels.join(', ')}`);
     }
   }

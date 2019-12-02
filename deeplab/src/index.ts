@@ -83,8 +83,10 @@ export async function load(
         `together with the degree of quantization (either 1, 2 or 4).` +
         `Aborting, since neither has been provided.`);
   }
-  const url = getURL(modelConfig.base, modelConfig.quantizationBytes);
-  const graphModel = await tfconv.loadGraphModel(modelConfig.modelUrl || url);
+
+  const graphModel = await tfconv.loadGraphModel(
+      modelConfig.modelUrl ||
+      getURL(modelConfig.base, modelConfig.quantizationBytes));
   const deeplab = new SemanticSegmentation(graphModel, modelConfig.base);
   return deeplab;
 }
@@ -118,7 +120,7 @@ export class SemanticSegmentation {
     return tf.tidy(() => {
       const data = toInputTensor(input);
       return tf.squeeze(this.model.execute(data) as tf.Tensor);
-    }) as tf.Tensor2D;
+    });
   }
 
   /**
