@@ -15,8 +15,6 @@
  * =============================================================================
  */
 
-import './layers';
-
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
