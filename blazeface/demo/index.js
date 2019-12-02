@@ -51,20 +51,15 @@ const renderPrediction =
     stats.begin();
     const prediction = await model.estimateFace(video);
     if (prediction) {
-      const keypoints = prediction.annotations.silhouette;
+      ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
+      const keypoints = prediction.reduce((acc, curr) => acc.concat(curr), []);
+      const r = 2;
 
-      ctx.drawImage(
-        video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width,
-        canvas.height);
-
-      const r = 1;
-
-      for (let i = 0; i < keypoints.length; i++) {
-        const x = keypoints[i][0];
-        const y = keypoints[i][1];
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, 2 * Math.PI);
-        ctx.fill();
+      for (let i = 0; i < keypoints.length / 2; i++) {
+        const start = keypoints[i * 2];
+        const end = keypoints[i * 2 + 1];
+        const size = [end[0] - start[0], end[1] - start[1]];
+        ctx.fillRect(start[0], start[1], size[0], size[1]);
       }
     }
 
@@ -89,6 +84,7 @@ const setupPage =
     ctx = canvas.getContext('2d');
     ctx.translate(canvas.width, 0);
     ctx.scale(-1, 1);
+    ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
 
     model = await blazeFace.load(true);
 
