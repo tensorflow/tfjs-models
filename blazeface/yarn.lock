@@ -2,15 +2,10 @@
 # yarn lockfile v1
 
 
-"@tensorflow/tfjs-converter@~1.2.3":
-  version "1.2.5"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-1.2.5.tgz#11b10a421605f82eb7c8da2bfb42bd8ccfc35303"
-  integrity sha512-KQoNDl1UDmBBqknaxiFg2tyYoVFyxJ0q5mY/e6mqavokf4vVXn4TsurzxDx++uV6gKEL1fPk9TuSIaq8xHuCRQ==
-
-"@tensorflow/tfjs-core@~1.2.3":
-  version "1.2.5"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-core/-/tfjs-core-1.2.5.tgz#865f0b3d7a79614650698c907185dd0adfb6470e"
-  integrity sha512-2M88UcKVfcMwtIaDEOJKWAxgX9rO+UdPnRZGSyWW/vH2PiB+jKtB6//7O5V4JpbRjA2ZJFjhfQ5ybfQf8wawRg==
+"@tensorflow/tfjs-core@~1.3.2":
+  version "1.3.2"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-core/-/tfjs-core-1.3.2.tgz#7dcf66510e404a6564f7f47cd854eff936b58c5a"
+  integrity sha512-42WlbkbD10F11qN7k+GMjdPB62DGGnz7czkvk+lT501qWUrQI8swTjZfgMijcTWyQSeJuLa97EOL9n/Gn3Yfpw==
   dependencies:
     "@types/offscreencanvas" "~2019.3.0"
     "@types/seedrandom" "2.4.27"
@@ -19,10 +14,10 @@
     node-fetch "~2.1.2"
     seedrandom "2.4.3"
 
-"@tensorflow/tfjs-layers@~1.2.3":
-  version "1.2.5"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-layers/-/tfjs-layers-1.2.5.tgz#f1119a5b0275c33b3d9fc406caa49d0a05af9ad1"
-  integrity sha512-ZF7q7wL4bdW4yM4kCPGFUhGkpA3gcJAeqD43sVsG8mYvTTMAnbrQAZ/0+tNE2Rz2qnx7s8VjbUCT4C5EyMFInQ==
+"@tensorflow/tfjs-layers@~1.3.2":
+  version "1.3.2"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-layers/-/tfjs-layers-1.3.2.tgz#1691513bce5d49f95c0aad9ee3a22eda5742828e"
+  integrity sha512-Y+zsoXlXWYopv+u3woMgE18TsEtzcRUVdgMQxuQm1FGRFAltyKxHzVO44b/nVdC59kRHIv0wrLU4G2hSQlprqA==
 
 "@types/estree@0.0.38":
   version "0.0.38"

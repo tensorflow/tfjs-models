@@ -17,13 +17,13 @@
 
 import './layers';
 
+import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
-import * as tfl from '@tensorflow/tfjs-layers';
 
 import {BlazeFaceModel} from './face';
 
 const BLAZEFACE_MODEL_URL =
-    'https://facemesh.s3.amazonaws.com/facedetector/rewritten_detector.json';
+    'https://storage.googleapis.com/learnjs-data/facemesh_staging/facedetector_tfjs/model.json';
 
 export async function load(maxFaces = 10, meshWidth = 128, meshHeight = 128) {
   const faceMesh = new FaceMesh();
@@ -43,8 +43,8 @@ export class FaceMesh {
         new BlazeFaceModel(blazeFaceModel, meshWidth, meshHeight, maxFaces);
   }
 
-  loadFaceModel(): Promise<tfl.LayersModel> {
-    return tfl.loadLayersModel(BLAZEFACE_MODEL_URL);
+  loadFaceModel(): Promise<tfconv.GraphModel> {
+    return tfconv.loadGraphModel(BLAZEFACE_MODEL_URL);
   }
 
   async estimateFace(video: HTMLVideoElement): Promise<FaceBoundingBox[]> {
