@@ -16,11 +16,8 @@
  */
 
 import * as blazeface from '@tensorflow-models/blazeface';
-import Stats from 'stats.js';
 
 let model, ctx, videoWidth, videoHeight, video, canvas;
-
-const stats = new Stats();
 
 async function setupCamera() {
   video = document.getElementById('video');
@@ -38,17 +35,8 @@ async function setupCamera() {
   });
 }
 
-/**
- * Sets up a frames per second panel on the top-left of the window
- */
-function setupFPS() {
-  stats.showPanel(0);  // 0: fps, 1: ms, 2: mb, 3+: custom
-  document.getElementById('main').appendChild(stats.dom);
-}
-
 const renderPrediction =
   async () => {
-    stats.begin();
     const prediction = await model.estimateFace(video);
 
     if (prediction) {
@@ -60,8 +48,6 @@ const renderPrediction =
         ctx.fillRect(start[0], start[1], size[0], size[1]);
       }
     }
-
-    stats.end();
 
     requestAnimationFrame(renderPrediction);
   }
@@ -85,8 +71,6 @@ const setupPage =
     ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
 
     model = await blazeface.load();
-
-    setupFPS();
 
     renderPrediction();
   }
