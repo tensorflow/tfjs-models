@@ -17,7 +17,7 @@
 
 import * as tf from '@tensorflow/tfjs-core';
 
-// The bounding box of the face mesh.
+// The facial bounding box.
 export class Box {
   public startEndTensor: tf.Tensor2D;
   public startPoint: tf.Tensor2D;

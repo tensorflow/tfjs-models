@@ -47,10 +47,10 @@ const prediction = await model.estimateFace(document.querySelector("img"));
 
 if (prediction.length) {
   for (let i = 0; i < prediction.length; i++) {
+
     // The first element of each bounding box specifies the upper left hand
     // corner of the detected face. The second element specifies the lower right
     // hand corner.
-
     const start = prediction[i][0];
     const end = prediction[i][1];
     const size = [end[0] - start[0], end[1] - start[1]];

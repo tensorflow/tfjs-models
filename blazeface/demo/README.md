@@ -2,7 +2,7 @@
 
 ## Contents
 
-The Blazeface demo shows how to use the Blazeface model to detect faces.
+This demo shows how to use the Blazeface model to detect faces in a video stream.
 
 ## Setup
 
