@@ -20,7 +20,7 @@ import * as tf from '@tensorflow/tfjs';
 
 import * as SpeechCommands from '../src';
 
-import {hideCandidateWords, logToStatusDisplay, plotPredictions, populateCandidateWords, showCandidateWords} from './ui';
+import {hideCandidateWords, logToStatusDisplay, plotPredictions, plotSpectrogram, populateCandidateWords, showCandidateWords} from './ui';
 import {DatasetViz, removeNonFixedChildrenFromWordDiv} from './dataset-vis';
 
 const startButton = document.getElementById('start');
@@ -56,6 +56,8 @@ const transferModelNameInput = document.getElementById('transfer-model-name');
 const learnWordsInput = document.getElementById('learn-words');
 const durationMultiplierSelect = document.getElementById('duration-multiplier');
 const enterLearnWordsButton = document.getElementById('enter-learn-words');
+const includeTimeDomainWaveformCheckbox =
+  document.getElementById('include-audio-waveform');
 const collectButtonsDiv = document.getElementById('collect-words');
 const startTransferLearnButton =
     document.getElementById('start-transfer-learn');
@@ -165,6 +167,18 @@ function scrollToPageBottom() {
 let collectWordButtons = {};
 let datasetViz;
 
+function createProgressBarAndIntervalJob(parentElement, durationSec) {
+  const progressBar = document.createElement('progress');
+  progressBar.value = 0;
+  progressBar.style['width'] = `${Math.round(window.innerWidth * 0.25)}px`;
+  // Update progress bar in increments.
+  const intervalJob = setInterval(() => {
+    progressBar.value += 0.05;
+  }, durationSec * 1e3 / 20);
+  parentElement.appendChild(progressBar);
+  return {progressBar, intervalJob};
+}
+
 /**
  * Create div elements for transfer words.
  *
@@ -221,38 +235,67 @@ function createWordDivs(transferWords) {
 
     button.addEventListener('click', async () => {
       disableAllCollectWordButtons();
+      removeNonFixedChildrenFromWordDiv(wordDiv);
+
       const collectExampleOptions = {};
       let durationSec;
-      // _background_noise_ examples are special, in that user can specify
-      // the length of the recording (in seconds).
+      let intervalJob;
+      let progressBar;
+
       if (word === BACKGROUND_NOISE_TAG) {
+        // If the word type is background noise, display a progress bar during
+        // sound collection and do not show an incrementally updating
+        // spectrogram.
+        // _background_noise_ examples are special, in that user can specify
+        // the length of the recording (in seconds).
         collectExampleOptions.durationSec =
             Number.parseFloat(durationInput.value);
         durationSec = collectExampleOptions.durationSec;
+
+        const barAndJob = createProgressBarAndIntervalJob(wordDiv, durationSec);
+        progressBar = barAndJob.progressBar;
+        intervalJob = barAndJob.intervalJob;
       } else {
+        // If this is not a background-noise word type and if the duration
+        // multiplier is >1 (> ~1 s recoding), show an incrementally
+        // updating spectrogram in real time.
         collectExampleOptions.durationMultiplier = transferDurationMultiplier;
-        durationSec = 2;
+        let tempSpectrogramData;
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.style['margin-left'] = '132px';
+        tempCanvas.height = 50;
+        wordDiv.appendChild(tempCanvas);
+
+        collectExampleOptions.snippetDurationSec = 0.1;
+        collectExampleOptions.onSnippet = async (spectrogram) => {
+          if (tempSpectrogramData == null) {
+            tempSpectrogramData = spectrogram.data;
+          } else {
+            tempSpectrogramData = SpeechCommands.utils.concatenateFloat32Arrays(
+                [tempSpectrogramData, spectrogram.data]);
+          }
+          plotSpectrogram(
+              tempCanvas, tempSpectrogramData, spectrogram.frameSize,
+              spectrogram.frameSize, {pixelsPerFrame: 2});
+        }
       }
 
-      // Show collection progress bar.
-      removeNonFixedChildrenFromWordDiv(wordDiv);
-      const progressBar = document.createElement('progress');
-      progressBar.value = 0;
-      progressBar.style['width'] = `${Math.round(window.innerWidth * 0.25)}px`;
-      // Update progress bar in increments.
-      const intervalJob = setInterval(() => {
-        progressBar.value += 0.05;
-      }, durationSec * 1e3 / 20);
-      wordDiv.appendChild(progressBar);
-
+      collectExampleOptions.includeRawAudio =
+          includeTimeDomainWaveformCheckbox.checked;
       const spectrogram = await transferRecognizer.collectExample(
           word, collectExampleOptions);
 
-      clearInterval(intervalJob);
-      wordDiv.removeChild(progressBar);
+
+      if (intervalJob != null) {
+        clearInterval(intervalJob);
+      }
+      if (progressBar != null) {
+        wordDiv.removeChild(progressBar);
+      }
       const examples = transferRecognizer.getExamples(word)
-      const exampleUID = examples[examples.length - 1].uid;
-      await datasetViz.drawExample(wordDiv, word, spectrogram, exampleUID);
+      const example = examples[examples.length - 1];
+      await datasetViz.drawExample(
+          wordDiv, word, spectrogram, example.example.rawAudio, example.uid);
       enableAllCollectWordButtons();
     });
   }
@@ -405,9 +448,13 @@ startTransferLearnButton.addEventListener('click', async () => {
   }
 
   disableAllCollectWordButtons();
+  const augmentByMixingNoiseRatio =
+      document.getElementById('augment-by-mixing-noise').checked ? 0.5 : null;
+  console.log(`augmentByMixingNoiseRatio = ${augmentByMixingNoiseRatio}`);
   await transferRecognizer.train({
     epochs,
     validationSplit: 0.25,
+    augmentByMixingNoiseRatio,
     callback: {
       onEpochEnd: async (epoch, logs) => {
         plotLossAndAccuracy(

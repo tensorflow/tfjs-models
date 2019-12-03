@@ -14,8 +14,8 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as tf from '@tensorflow/tfjs';
-import {Tensor, Tensor1D, Tensor2D, util} from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
+import {Tensor, Tensor1D, Tensor2D, util} from '@tensorflow/tfjs-core';
 import {concatWithNulls, topK} from './util';
 
 /**
@@ -30,15 +30,17 @@ export class KNNClassifier {
 
   // Individual class datasets used when adding examples. These get concatenated
   // into the full trainDatasetMatrix when a prediction is made.
-  private classDatasetMatrices: {[classId: number]: Tensor2D} = {};
-  private classExampleCount: {[classId: number]: number} = {};
+  private classDatasetMatrices: {[label: string]: Tensor2D} = {};
+  private classExampleCount: {[label: string]: number} = {};
 
   private exampleShape: number[];
+  private labelToClassId: {[label: string]: number} = {};
+  private nextClassId = 0;
 
   /**
    * Adds the provided example to the specified class.
    */
-  addExample(example: Tensor, classIndex: number): void {
+  addExample(example: Tensor, label: number|string): void {
     if (this.exampleShape == null) {
       this.exampleShape = example.shape;
     }
@@ -47,36 +49,37 @@ export class KNNClassifier {
           `Example shape provided, ${example.shape} does not match ` +
           `previously provided example shapes ${this.exampleShape}.`);
     }
-    if (!Number.isInteger(classIndex)) {
-      throw new Error(`classIndex must be an integer, got ${classIndex}.`);
-    }
 
     this.clearTrainDatasetMatrix();
+
+    if (!(label in this.labelToClassId)) {
+      this.labelToClassId[label] = this.nextClassId++;
+    }
 
     tf.tidy(() => {
       const normalizedExample =
           this.normalizeVectorToUnitLength(example.flatten());
       const exampleSize = normalizedExample.shape[0];
 
-      if (this.classDatasetMatrices[classIndex] == null) {
-        this.classDatasetMatrices[classIndex] =
+      if (this.classDatasetMatrices[label] == null) {
+        this.classDatasetMatrices[label] =
             normalizedExample.as2D(1, exampleSize);
       } else {
         const newTrainLogitsMatrix =
-            this.classDatasetMatrices[classIndex]
-                .as2D(this.classExampleCount[classIndex], exampleSize)
+            this.classDatasetMatrices[label]
+                .as2D(this.classExampleCount[label], exampleSize)
                 .concat(normalizedExample.as2D(1, exampleSize), 0);
 
-        this.classDatasetMatrices[classIndex].dispose();
-        this.classDatasetMatrices[classIndex] = newTrainLogitsMatrix;
+        this.classDatasetMatrices[label].dispose();
+        this.classDatasetMatrices[label] = newTrainLogitsMatrix;
       }
 
-      tf.keep(this.classDatasetMatrices[classIndex]);
+      tf.keep(this.classDatasetMatrices[label]);
 
-      if (this.classExampleCount[classIndex] == null) {
-        this.classExampleCount[classIndex] = 0;
+      if (this.classExampleCount[label] == null) {
+        this.classExampleCount[label] = 0;
       }
-      this.classExampleCount[classIndex]++;
+      this.classExampleCount[label]++;
     });
   }
 
@@ -97,9 +100,9 @@ export class KNNClassifier {
       if (this.trainDatasetMatrix == null) {
         let newTrainLogitsMatrix = null;
 
-        for (const i in this.classDatasetMatrices) {
+        for (const label in this.classDatasetMatrices) {
           newTrainLogitsMatrix = concatWithNulls(
-              newTrainLogitsMatrix, this.classDatasetMatrices[i]);
+              newTrainLogitsMatrix, this.classDatasetMatrices[label]);
         }
         this.trainDatasetMatrix = newTrainLogitsMatrix;
       }
@@ -126,8 +129,11 @@ export class KNNClassifier {
    * @returns A dict of the top class for the input and an array of confidence
    * values for all possible classes.
    */
-  async predictClass(input: Tensor, k = 3):
-      Promise<{classIndex: number, confidences: {[classId: number]: number}}> {
+  async predictClass(input: Tensor, k = 3): Promise<{
+    label: string,
+    classIndex: number,
+    confidences: {[label: string]: number}
+  }> {
     if (k < 1) {
       throw new Error(
           `Please provide a positive integer k value to predictClass.`);
@@ -138,7 +144,6 @@ export class KNNClassifier {
           `Please add examples before calling predictClass.`);
     }
     const knn = tf.tidy(() => this.similarities(input).asType('float32'));
-
     const kVal = Math.min(k, this.getNumExamples());
     const topKIndices = topK(await knn.data() as Float32Array, kVal).indices;
     knn.dispose();
@@ -149,27 +154,28 @@ export class KNNClassifier {
   /**
    * Clears the saved examples from the specified class.
    */
-  clearClass(classIndex: number) {
-    if (this.classDatasetMatrices[classIndex] == null) {
-      throw new Error('Cannot clear invalid class ${classIndex}');
+  clearClass(label: number|string) {
+    if (this.classDatasetMatrices[label] == null) {
+      throw new Error(`Cannot clear invalid class ${label}`);
     }
 
-    delete this.classDatasetMatrices[classIndex];
-    delete this.classExampleCount[classIndex];
+    this.classDatasetMatrices[label].dispose();
+    delete this.classDatasetMatrices[label];
+    delete this.classExampleCount[label];
     this.clearTrainDatasetMatrix();
   }
 
   clearAllClasses() {
-    for (const i in this.classDatasetMatrices) {
-      this.clearClass(+i);
+    for (const label in this.classDatasetMatrices) {
+      this.clearClass(label);
     }
   }
 
-  getClassExampleCount(): {[classId: number]: number} {
+  getClassExampleCount(): {[label: string]: number} {
     return this.classExampleCount;
   }
 
-  getClassifierDataset(): {[classId: number]: Tensor2D} {
+  getClassifierDataset(): {[label: string]: Tensor2D} {
     return this.classDatasetMatrices;
   }
 
@@ -177,12 +183,12 @@ export class KNNClassifier {
     return Object.keys(this.classExampleCount).length;
   }
 
-  setClassifierDataset(classDatasetMatrices: {[classId: number]: Tensor2D}) {
+  setClassifierDataset(classDatasetMatrices: {[label: string]: Tensor2D}) {
     this.clearTrainDatasetMatrix();
 
     this.classDatasetMatrices = classDatasetMatrices;
-    for (const i in classDatasetMatrices) {
-      this.classExampleCount[i] = classDatasetMatrices[i].shape[0];
+    for (const label in classDatasetMatrices) {
+      this.classExampleCount[label] = classDatasetMatrices[label].shape[0];
     }
   }
 
@@ -192,29 +198,33 @@ export class KNNClassifier {
    * @param kVal The value of k for the k-nearest neighbors algorithm.
    */
   private calculateTopClass(topKIndices: Int32Array, kVal: number) {
-    let exampleClass = -1;
-    const confidences: {[classId: number]: number} = {};
+    let topLabel: string;
+    const confidences: {[label: string]: number} = {};
 
     if (topKIndices == null) {
       // No class predicted
-      return {classIndex: exampleClass, confidences};
+      return {
+        classIndex: this.labelToClassId[topLabel],
+        label: topLabel,
+        confidences
+      };
     }
 
-    const indicesForClasses = [];
-    for (const i in this.classDatasetMatrices) {
-      let num = this.classExampleCount[i];
-      if (+i > 0) {
-        num += indicesForClasses[+i - 1];
-      }
-      indicesForClasses.push(num);
+    const classOffsets: {[label: string]: number} = {};
+    let offset = 0;
+    for (const label in this.classDatasetMatrices) {
+      offset += this.classExampleCount[label];
+      classOffsets[label] = offset;
     }
-
-    const topKCountsForClasses =
-        Array(Object.keys(this.classDatasetMatrices).length).fill(0);
+    const votesPerClass: {[label: string]: number} = {};
+    for (const label in this.classDatasetMatrices) {
+      votesPerClass[label] = 0;
+    }
     for (let i = 0; i < topKIndices.length; i++) {
-      for (let classId = 0; classId < indicesForClasses.length; classId++) {
-        if (topKIndices[i] < indicesForClasses[classId]) {
-          topKCountsForClasses[classId]++;
+      const index = topKIndices[i];
+      for (const label in this.classDatasetMatrices) {
+        if (index < classOffsets[label]) {
+          votesPerClass[label]++;
           break;
         }
       }
@@ -222,16 +232,20 @@ export class KNNClassifier {
 
     // Compute confidences.
     let topConfidence = 0;
-    for (const i in this.classDatasetMatrices) {
-      const probability = topKCountsForClasses[i] / kVal;
+    for (const label in this.classDatasetMatrices) {
+      const probability = votesPerClass[label] / kVal;
       if (probability > topConfidence) {
         topConfidence = probability;
-        exampleClass = +i;
+        topLabel = label;
       }
-      confidences[i] = probability;
+      confidences[label] = probability;
     }
 
-    return {classIndex: exampleClass, confidences};
+    return {
+      classIndex: this.labelToClassId[topLabel],
+      label: topLabel,
+      confidences
+    };
   }
 
   /**
@@ -258,8 +272,8 @@ export class KNNClassifier {
 
   private getNumExamples() {
     let total = 0;
-    for (const i in this.classDatasetMatrices) {
-      total += this.classExampleCount[+i];
+    for (const label in this.classDatasetMatrices) {
+      total += this.classExampleCount[label];
     }
 
     return total;
@@ -267,8 +281,8 @@ export class KNNClassifier {
 
   dispose() {
     this.clearTrainDatasetMatrix();
-    for (const i in this.classDatasetMatrices) {
-      this.classDatasetMatrices[i].dispose();
+    for (const label in this.classDatasetMatrices) {
+      this.classDatasetMatrices[label].dispose();
     }
   }
 }

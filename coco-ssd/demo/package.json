@@ -9,15 +9,19 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow-models/coco-ssd": "1.0.0",
-    "@tensorflow/tfjs": "1.0.0",
+    "@tensorflow-models/coco-ssd": "1.1.0",
+    "@tensorflow/tfjs-converter": "1.2.5",
+    "@tensorflow/tfjs-core": "1.2.6",
     "stats.js": "^0.17.0"
   },
   "scripts": {
     "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr --open",
-    "build": "cross-env NODE_ENV=production parcel build index.html  --no-minify --public-url ./",
+    "build": "cross-env NODE_ENV=production parcel build index.html --public-url ./",
     "lint": "eslint .",
     "link-local": "yalc link @tensorflow-models/coco-ssd"
+  },
+  "browser": {
+    "crypto": false
   },
   "devDependencies": {
     "babel-core": "^6.26.3",
@@ -31,7 +35,7 @@
     "dat.gui": "^0.7.1",
     "eslint": "^4.19.1",
     "eslint-config-google": "^0.9.1",
-    "parcel-bundler": "~1.10.3",
+    "parcel-bundler": "~1.12.4",
     "yalc": "~1.0.0-pre.21"
   },
   "eslintConfig": {

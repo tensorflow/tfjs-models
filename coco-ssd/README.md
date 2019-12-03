@@ -70,15 +70,21 @@ You can also take a look at the [demo app](./demo).
 `coco-ssd` is the module name, which is automatically included when you use the `<script src>` method. When using ES6 imports, `coco-ssd` is the module.
 
 ```ts
-cocoSsd.load(
-  base?: 'mobilenet_v1' | 'mobilenet_v2' | 'lite_mobilenet_v2'
-)
+export interface ModelConfig {
+  base?: ObjectDetectionBaseModel;
+  modelUrl?: string;
+}
+
+cocoSsd.load(config: ModelConfig = {});
 ```
 
 Args:
- **base:** Controls the base cnn model, can be 'mobilenet_v1', 'mobilenet_v2' or 'lite_mobilenet_v2'. Defaults to 'lite_mobilenet_v2'.
+**config** Type of ModelConfig interface with following attributes:
+ - **base:** Controls the base cnn model, can be 'mobilenet_v1', 'mobilenet_v2' or 'lite_mobilenet_v2'. Defaults to 'lite_mobilenet_v2'.
  lite_mobilenet_v2 is smallest in size, and fastest in inference speed.
  mobilenet_v2 has the highest classification accuracy.
+
+ - **modelUrl:** An optional string that specifies custom url of the model. This is useful for area/countries that don't have access to the model hosted on GCP.
 
 Returns a `model` object.
 
@@ -126,9 +132,9 @@ This model is based on the TensorFlow object detection API. You can download the
 Here is the converter command for removing the post process graph.
 
 ```sh
-tensorflowjs_converter --input_format=tf_saved_model \
+tensorflowjs_converter --input_format=tf_frozen_model \
+                       --output_format=tfjs_graph_model \
                        --output_node_names='Postprocessor/ExpandDims_1,Postprocessor/Slice' \
-                       --saved_model_tags=serve \
-                       ./saved_model \
+                       ./frozen_inference_graph.pb \
                        ./web_model
 ```

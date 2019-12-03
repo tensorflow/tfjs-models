@@ -15,7 +15,8 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tfconv from '@tensorflow/tfjs-converter';
+import * as tf from '@tensorflow/tfjs-core';
 
 import {Tokenizer} from './tokenizer';
 
@@ -46,16 +47,16 @@ export async function loadTokenizer(pathToVocabulary?: string) {
  * UniversalSentenceEncoder.
  */
 async function loadVocabulary(pathToVocabulary = `${BASE_PATH}vocab.json`) {
-  const vocabulary = await fetch(pathToVocabulary);
+  const vocabulary = await tf.util.fetch(pathToVocabulary);
   return vocabulary.json();
 }
 
 export class UniversalSentenceEncoder {
-  private model: tf.GraphModel;
+  private model: tfconv.GraphModel;
   private tokenizer: Tokenizer;
 
   async loadModel() {
-    return tf.loadGraphModel(`${BASE_PATH}model.json`);
+    return tfconv.loadGraphModel(`${BASE_PATH}model.json`);
   }
 
   async load() {

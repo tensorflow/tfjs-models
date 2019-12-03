@@ -6,14 +6,14 @@
 
 The camera demo shows how to estimate poses in real-time from a webcam video stream.
 
-<img src="https://raw.githubusercontent.com/irealva/tfjs-models/master/posenet/demos/camera.gif" alt="cameraDemo" style="width: 600px;"/>
+<img src="https://raw.githubusercontent.com/tensorflow/tfjs-models/master/posenet/demos/camera.gif" alt="cameraDemo" style="width: 600px;"/>
 
 
 ### Demo 2: Coco Images
 
 The [coco images](http://cocodataset.org/#home) demo shows how to estimate poses in images. It also illustrates the differences between the single-person and multi-person pose detection algorithms.
 
-<img src="https://raw.githubusercontent.com/irealva/tfjs-models/master/posenet/demos/coco.gif" alt="cameraDemo" style="width: 600px;"/>
+<img src="https://raw.githubusercontent.com/tensorflow/tfjs-models/master/posenet/demos/coco.gif" alt="cameraDemo" style="width: 600px;"/>
 
 
 ## Setup
@@ -50,7 +50,7 @@ yarn
 
 Publish posenet locally:
 ```sh
-yarn build && yalc publish
+yarn build && yarn yalc publish
 ```
 
 Cd into the demos and install dependencies:
@@ -74,5 +74,5 @@ To get future updates from the posenet source code:
 ```
 # cd up into the posenet directory
 cd ../
-yarn build && yalc push
+yarn build && yarn yalc push
 ```

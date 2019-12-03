@@ -16,9 +16,8 @@
  */
 
 import * as use from '@tensorflow-models/universal-sentence-encoder';
-import * as tf from '@tensorflow/tfjs';
-
-// import {padInput} from './util';
+import * as tfconv from '@tensorflow/tfjs-converter';
+import * as tf from '@tensorflow/tfjs-core';
 
 const BASE_PATH =
     'https://storage.googleapis.com/tfjs-models/savedmodel/toxicity/';
@@ -41,7 +40,7 @@ export async function load(threshold: number, toxicityLabels: string[]) {
 
 export class ToxicityClassifier {
   private tokenizer: use.Tokenizer;
-  private model: tf.GraphModel;
+  private model: tfconv.GraphModel;
   private labels: string[];
   private threshold: number;
   private toxicityLabels: string[];
@@ -52,7 +51,7 @@ export class ToxicityClassifier {
   }
 
   async loadModel() {
-    return tf.loadGraphModel(`${BASE_PATH}model.json`);
+    return tfconv.loadGraphModel(`${BASE_PATH}model.json`);
   }
 
   async loadTokenizer() {
@@ -74,8 +73,8 @@ export class ToxicityClassifier {
     } else {
       tf.util.assert(
           this.toxicityLabels.every(d => this.labels.indexOf(d) > -1),
-          () => `toxicityLabels argument must contain only items from the model ` +
-              `heads ${this.labels.join(', ')}, ` +
+          () => `toxicityLabels argument must contain only items from the ` +
+              `model heads ${this.labels.join(', ')}, ` +
               `got ${this.toxicityLabels.join(', ')}`);
     }
   }

@@ -38,21 +38,66 @@
       text-align: center;
       margin: auto;
     }
+
+    /*
+     *  The following loading spinner CSS is from SpinKit project
+     *  https://github.com/tobiasahlin/SpinKit
+     */
+    .sk-spinner-pulse {
+      width: 20px;
+      height: 20px;
+      margin: auto 10px;
+      float: left;
+      background-color: #333;
+      border-radius: 100%;
+      -webkit-animation: sk-pulseScaleOut 1s infinite ease-in-out;
+      animation: sk-pulseScaleOut 1s infinite ease-in-out;
+    }
+
+    @-webkit-keyframes sk-pulseScaleOut {
+      0% {
+        -webkit-transform: scale(0);
+        transform: scale(0);
+      }
+
+      100% {
+        -webkit-transform: scale(1.0);
+        transform: scale(1.0);
+        opacity: 0;
+      }
+    }
+
+    @keyframes sk-pulseScaleOut {
+      0% {
+        -webkit-transform: scale(0);
+        transform: scale(0);
+      }
+
+      100% {
+        -webkit-transform: scale(1.0);
+        transform: scale(1.0);
+        opacity: 0;
+      }
+    }
+
+    .spinner-text {
+      float: left;
+    }
   </style>
 </head>
 
 <body>
-  <div id="loading">
+  <div id="loading" style='display:flex'>
+    <div class="spinner-text">
+      Loading PoseNet model...
+    </div>
+    <div class="sk-spinner sk-spinner-pulse"></div>
   </div>
   <div id='main'>
     <div id="status"></div>
     <div id='results' style='display:none'>
       <div id="multi">
         <h4>Multiple Poses Estimation</h4>
-        <canvas></canvas>
-      </div>
-      <div id="single">
-        <h4>Single Pose Estimation</h4>
         <canvas></canvas>
       </div>
     </div>
@@ -62,8 +107,7 @@
       <p>
         PoseNet runs with either a
         <strong>single-pose</strong> or
-        <strong>multi-pose</strong> detection algorithm. The single person pose detector is faster and more accurate but requires
-        only one subject present in the image.
+        <strong>multi-pose</strong> detection algorithm. The multi-pose detector is shown here.
         <br>
         <br> The
         <strong>output stride</strong> and

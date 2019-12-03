@@ -18,7 +18,9 @@
 import * as tf from '@tensorflow/tfjs';
 
 import {BrowserFftSpeechCommandRecognizer} from './browser_fft_recognizer';
-import {FFT_TYPE, SpeechCommandRecognizer} from './types';
+import {playRawAudio} from './browser_fft_utils';
+import {concatenateFloat32Arrays} from './generic_utils';
+import {FFT_TYPE, SpeechCommandRecognizer, SpeechCommandRecognizerMetadata} from './types';
 
 /**
  * Create an instance of speech-command recognizer.
@@ -35,24 +37,28 @@ import {FFT_TYPE, SpeechCommandRecognizer} from './types';
  *     'right', in addition to '_background_noise_' and '_unknown_'.
  *   Choosing a smaller vocabulary leads to better accuracy on the words of
  *   interest and a slightly smaller model size.
- * @param customModelURL A custom model URL pointing to a model.json file.
+ * @param customModelArtifactsOrURL A custom model URL pointing to a model.json
+ *     file, or a set of modelArtifacts in `tf.io.ModelArtifacts` format.
  *   Supported schemes: http://, https://, and node.js-only: file://.
  *   Mutually exclusive with `vocabulary`. If provided, `customMetadatURL`
  *   most also be provided.
- * @param customMetadataURL A custom metadata URL pointing to a metadata.json
- *   file. Must be provided together with `customModelURL`.
+ * @param customMetadataOrURL A custom metadata URL pointing to a metadata.json
+ *   file. Must be provided together with `customModelURL`, or a metadata
+ *   object.
  * @returns An instance of SpeechCommandRecognizer.
  * @throws Error on invalid value of `fftType`.
  */
 export function create(
-    fftType: FFT_TYPE, vocabulary?: string, customModelURL?: string,
-    customMetadataURL?: string): SpeechCommandRecognizer {
+    fftType: FFT_TYPE, vocabulary?: string,
+    customModelArtifactsOrURL?: tf.io.ModelArtifacts|string,
+    customMetadataOrURL?: SpeechCommandRecognizerMetadata|
+    string): SpeechCommandRecognizer {
   tf.util.assert(
-      customModelURL == null && customMetadataURL == null ||
-          customModelURL != null && customMetadataURL != null,
+      customModelArtifactsOrURL == null && customMetadataOrURL == null ||
+          customModelArtifactsOrURL != null && customMetadataOrURL != null,
       () => `customModelURL and customMetadataURL must be both provided or ` +
           `both not provided.`);
-  if (customModelURL != null) {
+  if (customModelArtifactsOrURL != null) {
     tf.util.assert(
         vocabulary == null,
         () => `vocabulary name must be null or undefined when modelURL ` +
@@ -61,7 +67,7 @@ export function create(
 
   if (fftType === 'BROWSER_FFT') {
     return new BrowserFftSpeechCommandRecognizer(
-        vocabulary, customModelURL, customMetadataURL);
+        vocabulary, customModelArtifactsOrURL, customMetadataOrURL);
   } else if (fftType === 'SOFT_FFT') {
     throw new Error(
         'SOFT_FFT SpeechCommandRecognizer has not been implemented yet.');
@@ -70,7 +76,13 @@ export function create(
   }
 }
 
+const utils = {
+  concatenateFloat32Arrays,
+  playRawAudio
+};
+
 export {BACKGROUND_NOISE_TAG, Dataset, GetDataConfig as GetSpectrogramsAsTensorsConfig, getMaxIntensityFrameIndex, spectrogram2IntensityCurve, SpectrogramAndTargetsTfDataset} from './dataset';
-export {Example, FFT_TYPE, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerMetadata, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
+export {AudioDataAugmentationOptions, Example, FFT_TYPE, RawAudioData, RecognizerParams, SpectrogramData, SpeechCommandRecognizer, SpeechCommandRecognizerMetadata, SpeechCommandRecognizerResult, StreamingRecognitionConfig, TransferLearnConfig, TransferSpeechCommandRecognizer} from './types';
 export {deleteSavedTransferModel, listSavedTransferModels, UNKNOWN_TAG} from './browser_fft_recognizer';
+export {utils};
 export {version} from './version';

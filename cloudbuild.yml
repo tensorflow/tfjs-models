@@ -1,0 +1,102 @@
+steps:
+- name: 'node:10'
+  entrypoint: 'yarn'
+  id: 'yarn'
+  args: ['install']
+
+# Run diff to find modified files in each folder.
+- name: 'node:10'
+  entrypoint: 'yarn'
+  id: 'diff'
+  args: ['diff']
+  waitFor: ['yarn']
+  env:
+  - 'COMMIT_SHA=$COMMIT_SHA'
+  - 'BRANCH_NAME=$BRANCH_NAME'
+
+# Body pix.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'body-pix'
+  args: ['./scripts/run-build.sh', 'body-pix']
+  waitFor: ['diff']
+
+# Coco SSD.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'coco-ssd'
+  args: ['./scripts/run-build.sh', 'coco-ssd']
+  waitFor: ['diff']
+
+# Deeplab.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'deeplab'
+  args: ['./scripts/run-build.sh', 'deep-lab']
+  waitFor: ['diff']
+
+# KNN Classifier.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'knn-classifier'
+  args: ['./scripts/run-build.sh', 'knn-classifier']
+  waitFor: ['diff']
+
+# Mobilenet.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'mobilenet'
+  args: ['./scripts/run-build.sh', 'mobilenet']
+  waitFor: ['diff']
+
+# Posenet.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'posenet'
+  args: ['./scripts/run-build.sh', 'posenet']
+  waitFor: ['diff']
+
+# Speech commands.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'speech-commands'
+  args: ['./scripts/run-build.sh', 'speech-commands']
+  waitFor: ['diff']
+
+# Toxicity.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'toxicity'
+  args: ['./scripts/run-build.sh', 'toxicity']
+  waitFor: ['diff']
+
+# Universal sentence encoder.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'universal-sentence-encoder'
+  args: ['./scripts/run-build.sh', 'universal-sentence-encoder']
+  waitFor: ['diff']
+
+# Run the top-level sanity checks.
+- name: 'node:10'
+  entrypoint: 'yarn'
+  id: 'test'
+  args: ['presubmit']
+  waitFor: ['diff']
+  env: ['BROWSERSTACK_USERNAME=deeplearnjs1']
+  secretEnv: ['BROWSERSTACK_KEY']
+
+- name: 'python:3.6'
+  entrypoint: 'bash'
+  args: ['./run_python_tests.sh']
+  waitFor: ['diff']
+
+secrets:
+- kmsKeyName: projects/learnjs-174218/locations/global/keyRings/tfjs/cryptoKeys/enc
+  secretEnv:
+    BROWSERSTACK_KEY: CiQAkwyoIW0LcnxymzotLwaH4udVTQFBEN4AEA5CA+a3+yflL2ASPQAD8BdZnGARf78MhH5T9rQqyz9HNODwVjVIj64CTkFlUCGrP1B2HX9LXHWHLmtKutEGTeFFX9XhuBzNExA=
+timeout: 1800s
+logsBucket: 'gs://tfjs-build-logs'
+options:
+  logStreamingOption: 'STREAM_ON'
+  substitution_option: 'ALLOW_LOOSE'

@@ -151,13 +151,14 @@ console.log(recognizer.modelInputShape());
 console.log(recognizer.params().sampleRateHz);
 console.log(recognizer.params().fftSize);
 
-tf.tidy(() => {
-  const x = tf.tensor4d(
-      mySpectrogramData, [1].concat(recognizer.modelInputShape().slice(1)));
-  const output = recognizer.recognize(x);
-  // output has the same format as `result` in the online streaming example
-  // above: the `scores` field contains the probabilities of the words.
-});
+
+const x = tf.tensor4d(
+    mySpectrogramData, [1].concat(recognizer.modelInputShape().slice(1)));
+const output = await recognizer.recognize(x);
+// output has the same format as `result` in the online streaming example
+// above: the `scores` field contains the probabilities of the words.
+
+tf.dispose([x, output]);
 ```
 
 Note that you must provide a spectrogram value to the `recognize()` call
@@ -261,6 +262,41 @@ await transferRecognizer.listen(result => {
 // Stop the recognition in 10 seconds.
 setTimeout(() => transferRecognizer.stopListening(), 10e3);
 ```
+
+### Serialize examples from a transfer recognizer.
+
+Once examples has been collected with a transfer recognizer,
+you can export the examples in serialized form with the `serielizedExamples()`
+method, e.g.,
+
+```js
+const serialized = transferRecognizer.serializeExamples();
+```
+
+`serialized` is a binary `ArrayBuffer` amenable to storage and transmission.
+It contains the spectrogram data of the examples, as well as metadata such
+as word labels.
+
+You can also serialize the examples from a subset of the words in the
+transfer recognizer's vocabulary, e.g.,
+
+```js
+const serializedWithOnlyFoo = transferRecognizer.serializeExamples('foo');
+// Or
+const serializedWithOnlyFooAndBar = transferRecognizer.serializeExamples(['foo', 'bar']);
+```
+
+The serialized examples can later be loaded into another instance of
+transfer recognizer with the `loadExamples()` method, e.g.,
+
+```js
+const clearExisting = false;
+newTransferRecognizer.loadExamples(serialized, clearExisting);
+```
+
+Theo `clearExisting` flag ensures that the examples that `newTransferRecognizer`
+already holds are preserved. If `true`, the existing exampels will be cleared.
+If `clearExisting` is not specified, it'll default to `false`.
 
 ## Live demo
 

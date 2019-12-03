@@ -20,10 +20,12 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
+
 import {getAudioContextConstructor, getAudioMediaStream} from './browser_fft_utils';
 import {FeatureExtractor, RecognizerParams} from './types';
 
-export type SpectrogramCallback = (x: tf.Tensor) => Promise<boolean>;
+export type SpectrogramCallback = (freqData: tf.Tensor, timeData?: tf.Tensor) =>
+    Promise<boolean>;
 
 /**
  * Configurations for constructing BrowserFftFeatureExtractor.
@@ -68,6 +70,14 @@ export interface BrowserFftFeatureExtractorConfig extends RecognizerParams {
    * will be taken every 600 ms.
    */
   overlapFactor: number;
+
+  /**
+   * Whether to collect the raw time-domain audio waveform in addition to the
+   * spectrogram.
+   *
+   * Default: `false`.
+   */
+  includeRawAudio?: boolean;
 }
 
 /**
@@ -91,6 +101,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
   // Overlapping factor: the ratio between the temporal spacing between
   // consecutive spectrograms and the length of each individual spectrogram.
   readonly overlapFactor: number;
+  readonly includeRawAudio: boolean;
 
   private readonly spectrogramCallback: SpectrogramCallback;
 
@@ -101,7 +112,9 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
   private analyser: AnalyserNode;
   private tracker: Tracker;
   private freqData: Float32Array;
+  private timeData: Float32Array;
   private freqDataQueue: Float32Array[];
+  private timeDataQueue: Float32Array[];
   // tslint:disable-next-line:no-any
   private frameIntervalTask: any;
   private frameDurationMillis: number;
@@ -144,6 +157,7 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     this.frameDurationMillis = this.fftSize / this.sampleRateHz * 1e3;
     this.columnTruncateLength = config.columnTruncateLength || this.fftSize;
     this.overlapFactor = config.overlapFactor;
+    this.includeRawAudio = config.includeRawAudio;
 
     tf.util.assert(
         this.overlapFactor >= 0 && this.overlapFactor < 1,
@@ -159,13 +173,15 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     this.audioContextConstructor = getAudioContextConstructor();
   }
 
-  async start(): Promise<Float32Array[]|void> {
+  async start(audioTrackConstraints?: MediaTrackConstraints):
+      Promise<Float32Array[]|void> {
     if (this.frameIntervalTask != null) {
       throw new Error(
           'Cannot start already-started BrowserFftFeatureExtractor');
     }
 
-    this.stream = await getAudioMediaStream();
+    this.stream = await getAudioMediaStream(audioTrackConstraints);
+
     this.audioContext = new this.audioContextConstructor() as AudioContext;
     if (this.audioContext.sampleRate !== this.sampleRateHz) {
       console.warn(
@@ -181,6 +197,10 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     // Reset the queue.
     this.freqDataQueue = [];
     this.freqData = new Float32Array(this.fftSize);
+    if (this.includeRawAudio) {
+      this.timeDataQueue = [];
+      this.timeData = new Float32Array(this.fftSize);
+    }
     const period =
         Math.max(1, Math.round(this.numFrames * (1 - this.overlapFactor)));
     this.tracker = new Tracker(
@@ -197,6 +217,10 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     }
 
     this.freqDataQueue.push(this.freqData.slice(0, this.columnTruncateLength));
+    if (this.includeRawAudio) {
+      this.analyser.getFloatTimeDomainData(this.timeData);
+      this.timeDataQueue.push(this.timeData.slice());
+    }
     if (this.freqDataQueue.length > this.numFrames) {
       // Drop the oldest frame (least recent).
       this.freqDataQueue.shift();
@@ -204,13 +228,20 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     const shouldFire = this.tracker.tick();
     if (shouldFire) {
       const freqData = flattenQueue(this.freqDataQueue);
-      const inputTensor = getInputTensorFromFrequencyData(
+      const freqDataTensor = getInputTensorFromFrequencyData(
           freqData, [1, this.numFrames, this.columnTruncateLength, 1]);
-      const shouldRest = await this.spectrogramCallback(inputTensor);
+      let timeDataTensor: tf.Tensor;
+      if (this.includeRawAudio) {
+        const timeData = flattenQueue(this.timeDataQueue);
+        timeDataTensor = getInputTensorFromFrequencyData(
+            timeData, [1, this.numFrames * this.fftSize]);
+      }
+      const shouldRest =
+          await this.spectrogramCallback(freqDataTensor, timeDataTensor);
       if (shouldRest) {
         this.tracker.suppress();
       }
-      inputTensor.dispose();
+      tf.dispose([freqDataTensor, timeDataTensor]);
     }
   }
 
