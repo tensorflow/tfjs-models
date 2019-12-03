@@ -50,14 +50,12 @@ const renderPrediction =
   async () => {
     stats.begin();
     const prediction = await model.estimateFace(video);
-    if (prediction) {
-      ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
-      const keypoints = prediction.reduce((acc, curr) => acc.concat(curr), []);
-      const r = 2;
 
-      for (let i = 0; i < keypoints.length / 2; i++) {
-        const start = keypoints[i * 2];
-        const end = keypoints[i * 2 + 1];
+    if (prediction.length) {
+      ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
+      for (let i = 0; i < prediction.length; i++) {
+        const start = prediction[i][0];
+        const end = prediction[i][1];
         const size = [end[0] - start[0], end[1] - start[1]];
         ctx.fillRect(start[0], start[1], size[0], size[1]);
       }
