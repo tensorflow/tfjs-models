@@ -4,7 +4,7 @@
 
 More background information about the model, as well as its performance characteristics on different datasets, can be found here: https://drive.google.com/file/d/1f39lSzU5Oq-j_OXgS67KfN5wNsoeAZ4V/view
 
-The model is designed for front-facing cameras on mobile devices, where faces in view occupy a relatively large fraction of the canvas. Blazeface may struggle to identify far-away faces.
+The model is designed for front-facing cameras on mobile devices, where faces in view tend to occupy a relatively large fraction of the canvas. Blazeface may struggle to identify far-away faces.
 
 ## Installation
 
