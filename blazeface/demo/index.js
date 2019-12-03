@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import * as blazeFace from '@tensorflow-models/blazeface';
+import * as blazeface from '@tensorflow-models/blazeface';
 import Stats from 'stats.js';
 
 let model, ctx, videoWidth, videoHeight, video, canvas;
@@ -84,7 +84,7 @@ const setupPage =
     ctx.scale(-1, 1);
     ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
 
-    model = await blazeFace.load();
+    model = await blazeface.load();
 
     setupFPS();
 
