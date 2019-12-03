@@ -23,9 +23,16 @@ import {BlazeFaceModel} from './face';
 const BLAZEFACE_MODEL_URL =
     'https://storage.googleapis.com/learnjs-data/facemesh_staging/facedetector_tfjs/model.json';
 
-export async function load(maxFaces = 10, meshWidth = 128, meshHeight = 128) {
+export async function load({
+  maxFaces = 10,
+  meshWidth = 128,
+  meshHeight = 128,
+  iouThreshold = 0.3,
+  scoreThreshold = 0.75
+}) {
   const faceMesh = new FaceMesh();
-  await faceMesh.load(maxFaces, meshWidth, meshHeight);
+  await faceMesh.load(
+      maxFaces, meshWidth, meshHeight, iouThreshold, scoreThreshold);
   return faceMesh;
 }
 
@@ -34,11 +41,14 @@ type FaceBoundingBox = [[number, number], [number, number]];
 export class FaceMesh {
   private blazeface: BlazeFaceModel;
 
-  async load(maxFaces: number, meshWidth: number, meshHeight: number) {
+  async load(
+      maxFaces: number, meshWidth: number, meshHeight: number,
+      iouThreshold: number, scoreThreshold: number) {
     const blazeFaceModel = await this.loadFaceModel();
 
-    this.blazeface =
-        new BlazeFaceModel(blazeFaceModel, meshWidth, meshHeight, maxFaces);
+    this.blazeface = new BlazeFaceModel(
+        blazeFaceModel, meshWidth, meshHeight, maxFaces, iouThreshold,
+        scoreThreshold);
   }
 
   loadFaceModel(): Promise<tfconv.GraphModel> {

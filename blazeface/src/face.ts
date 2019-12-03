@@ -37,8 +37,8 @@ export class BlazeFaceModel {
   private scoreThreshold: number;
 
   constructor(
-      model: tfconv.GraphModel, width: number, height: number,
-      maxFaces: number) {
+      model: tfconv.GraphModel, width: number, height: number, maxFaces: number,
+      iouThreshold: number, scoreThreshold: number) {
     this.blazeFaceModel = model;
     this.width = width;
     this.height = height;
@@ -47,8 +47,8 @@ export class BlazeFaceModel {
     this.anchors = this.generateAnchors(width, height, this.config);
     this.inputSize = tf.tensor([width, height]);
 
-    this.iouThreshold = 0.3;
-    this.scoreThreshold = 0.75;
+    this.iouThreshold = iouThreshold;
+    this.scoreThreshold = scoreThreshold;
   }
 
   getAnchorsConfig(): AnchorsConfig {
