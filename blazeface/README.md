@@ -45,7 +45,7 @@ const model = await blazeface.load();
 // bounding boxes, one for each detected face.
 const prediction = await model.estimateFace(document.querySelector("img"));
 
-if (prediction.length) {
+if (prediction) {
   for (let i = 0; i < prediction.length; i++) {
 
     // The first element of each bounding box specifies the upper left hand

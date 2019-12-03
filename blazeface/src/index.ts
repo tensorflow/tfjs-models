@@ -23,16 +23,27 @@ import {BlazeFaceModel} from './face';
 const BLAZEFACE_MODEL_URL =
     'https://storage.googleapis.com/learnjs-data/facemesh_staging/facedetector_tfjs/model.json';
 
+/**
+ * Load blazeface.
+ *
+ * @param maxFaces The maximum number of faces returned by the model.
+ * @param inputWidth The width of the input image.
+ * @param inputHeight The height of the input image.
+ * @param iouThreshold The threshold for deciding whether boxes overlap too
+ * much.
+ * @param scoreThreshold The threshold for deciding when to remove boxes based
+ * on score.
+ */
 export async function load({
   maxFaces = 10,
-  meshWidth = 128,
-  meshHeight = 128,
+  inputWidth = 128,
+  inputHeight = 128,
   iouThreshold = 0.3,
   scoreThreshold = 0.75
-}) {
+} = {}) {
   const faceMesh = new FaceMesh();
   await faceMesh.load(
-      maxFaces, meshWidth, meshHeight, iouThreshold, scoreThreshold);
+      maxFaces, inputWidth, inputHeight, iouThreshold, scoreThreshold);
   return faceMesh;
 }
 
@@ -42,12 +53,12 @@ export class FaceMesh {
   private blazeface: BlazeFaceModel;
 
   async load(
-      maxFaces: number, meshWidth: number, meshHeight: number,
+      maxFaces: number, inputWidth: number, inputHeight: number,
       iouThreshold: number, scoreThreshold: number) {
     const blazeFaceModel = await this.loadFaceModel();
 
     this.blazeface = new BlazeFaceModel(
-        blazeFaceModel, meshWidth, meshHeight, maxFaces, iouThreshold,
+        blazeFaceModel, inputWidth, inputHeight, maxFaces, iouThreshold,
         scoreThreshold);
   }
 
@@ -55,21 +66,27 @@ export class FaceMesh {
     return tfconv.loadGraphModel(BLAZEFACE_MODEL_URL);
   }
 
-  async estimateFace(video: HTMLVideoElement): Promise<FaceBoundingBox[]> {
+  /**
+   * Returns an array of faces in an image.
+   *
+   * @param input The image to classify. Can be a tensor or a DOM element iamge,
+   * video, or canvas.
+   */
+  async estimateFace(input: tf.Tensor3D|ImageData|HTMLVideoElement|
+                     HTMLImageElement|
+                     HTMLCanvasElement): Promise<FaceBoundingBox[]> {
     const prediction = tf.tidy(() => {
-      const image =
-          tf.browser.fromPixels(video).toFloat().expandDims(0) as tf.Tensor4D;
+      if (!(input instanceof tf.Tensor)) {
+        input = tf.browser.fromPixels(input);
+      }
+      const image = input.toFloat().expandDims(0) as tf.Tensor4D;
       return this.blazeface.getSingleBoundingBox(image as tf.Tensor4D);
     });
 
-    if (prediction != null) {
-      const coords = await Promise.all(
-          prediction.map(async (d: tf.Tensor1D) => await d.array()));
+    const coords = await Promise.all(
+        prediction.map(async (d: tf.Tensor1D) => await d.array()));
 
-      return coords.map(
-          arr => [arr.slice(0, 2), arr.slice(2)] as FaceBoundingBox);
-    }
-
-    return null;
+    return coords.map(
+        arr => [arr.slice(0, 2), arr.slice(2)] as FaceBoundingBox);
   }
 }

@@ -51,7 +51,7 @@ const renderPrediction =
     stats.begin();
     const prediction = await model.estimateFace(video);
 
-    if (prediction.length) {
+    if (prediction) {
       ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
       for (let i = 0; i < prediction.length; i++) {
         const start = prediction[i][0];

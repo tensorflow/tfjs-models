@@ -131,10 +131,6 @@ export class BlazeFaceModel {
     const image = inputImage.resizeBilinear([this.width, this.height]).div(255);
     const bboxes = this.getBoundingBox(image as tf.Tensor4D);
 
-    if (!bboxes) {
-      return null;
-    }
-
     const factors =
         tf.div([originalWidth, originalHeight], this.inputSize) as tf.Tensor1D;
     return bboxes.map(
