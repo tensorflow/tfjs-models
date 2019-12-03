@@ -15,7 +15,7 @@
     "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr --open ",
     "build": "cross-env NODE_ENV=production parcel build index.html --public-url ./",
     "lint": "eslint .",
-    "link-local": "yalc link @tensorflow-models/toxicity"
+    "link-local": "yalc link @tensorflow-models/handtrack"
   },
   "browser": {
     "crypto": false
