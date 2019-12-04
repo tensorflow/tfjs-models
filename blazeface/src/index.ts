@@ -80,7 +80,7 @@ export class FaceMesh {
         input = tf.browser.fromPixels(input);
       }
       const image = input.toFloat().expandDims(0) as tf.Tensor4D;
-      return this.blazeface.getSingleBoundingBox(image as tf.Tensor4D);
+      return this.blazeface.getBoundingBoxes(image as tf.Tensor4D);
     });
 
     const coords = await Promise.all(

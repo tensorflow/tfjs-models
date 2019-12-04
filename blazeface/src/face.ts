@@ -102,8 +102,12 @@ export class BlazeFaceModel {
         1);
   }
 
-  getBoundingBox(inputImage: tf.Tensor4D): number[][][] {
-    const normalizedImage = tf.mul(tf.sub(inputImage, 0.5), 2);
+  getBoundingBoxes(inputImage: tf.Tensor4D): tf.Tensor[] {
+    const originalHeight = inputImage.shape[1];
+    const originalWidth = inputImage.shape[2];
+
+    const image = inputImage.resizeBilinear([this.width, this.height]).div(255);
+    const normalizedImage = tf.mul(tf.sub(image, 0.5), 2);
     const detectOutputs = this.blazeFaceModel.predict(normalizedImage);
 
     const scores =
@@ -119,17 +123,8 @@ export class BlazeFaceModel {
                                boxes, scores as tf.Tensor1D, this.maxFaces,
                                this.iouThreshold, this.scoreThreshold)
                            .arraySync();
-
-    return boxIndices.map(
+    const bboxes = boxIndices.map(
         boxIndex => tf.slice(boxes, [boxIndex, 0], [1, -1]).arraySync());
-  }
-
-  getSingleBoundingBox(inputImage: tf.Tensor4D): tf.Tensor[] {
-    const originalHeight = inputImage.shape[1];
-    const originalWidth = inputImage.shape[2];
-
-    const image = inputImage.resizeBilinear([this.width, this.height]).div(255);
-    const bboxes = this.getBoundingBox(image as tf.Tensor4D);
 
     const factors =
         tf.div([originalWidth, originalHeight], this.inputSize) as tf.Tensor1D;
