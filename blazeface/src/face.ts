@@ -18,7 +18,7 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {Box} from './box';
+import {createBox, scaleBox} from './box';
 
 type AnchorsConfig = {
   strides: [number, number],
@@ -31,8 +31,8 @@ export class BlazeFaceModel {
   private height: number;
   private maxFaces: number;
   private config: AnchorsConfig;
-  private anchors: tf.Tensor;
-  private inputSize: tf.Tensor;
+  private anchors: tf.Tensor2D;
+  private inputSize: tf.Tensor1D;
   private iouThreshold: number;
   private scoreThreshold: number;
 
@@ -45,7 +45,7 @@ export class BlazeFaceModel {
     this.maxFaces = maxFaces;
     this.config = this.getAnchorsConfig();
     this.anchors = this.generateAnchors(width, height, this.config);
-    this.inputSize = tf.tensor([width, height]);
+    this.inputSize = tf.tensor1d([width, height]);
 
     this.iouThreshold = iouThreshold;
     this.scoreThreshold = scoreThreshold;
@@ -59,18 +59,18 @@ export class BlazeFaceModel {
   }
 
   generateAnchors(width: number, height: number, outputSpec: AnchorsConfig):
-      tf.Tensor {
+      tf.Tensor2D {
     const anchors = [];
-    for (let i = 0; i < outputSpec.strides.length; ++i) {
+    for (let i = 0; i < outputSpec.strides.length; i++) {
       const stride = outputSpec.strides[i];
       const gridRows = Math.floor((height + stride - 1) / stride);
       const gridCols = Math.floor((width + stride - 1) / stride);
       const anchorsNum = outputSpec.anchors[i];
 
-      for (let gridY = 0; gridY < gridRows; ++gridY) {
+      for (let gridY = 0; gridY < gridRows; gridY++) {
         const anchorY = stride * (gridY + 0.5);
 
-        for (let gridX = 0; gridX < gridCols; ++gridX) {
+        for (let gridX = 0; gridX < gridCols; gridX++) {
           const anchorX = stride * (gridX + 0.5);
           for (let n = 0; n < anchorsNum; n++) {
             anchors.push([anchorX, anchorY]);
@@ -79,7 +79,7 @@ export class BlazeFaceModel {
       }
     }
 
-    return tf.tensor(anchors);
+    return tf.tensor2d(anchors);
   }
 
   decodeBounds(boxOutputs: tf.Tensor2D): tf.Tensor2D {
@@ -128,8 +128,13 @@ export class BlazeFaceModel {
 
     const factors =
         tf.div([originalWidth, originalHeight], this.inputSize) as tf.Tensor1D;
-    return bboxes.map(
-        bbox =>
-            new Box(tf.tensor(bbox)).scale(factors).startEndTensor.squeeze());
+
+    return bboxes.map(bbox => {
+      const startEndTensor = tf.tensor2d(bbox);
+      const box = createBox(startEndTensor);
+      const scaledBox = scaleBox(box, factors);
+
+      return scaledBox.startEndTensor.squeeze();
+    });
   }
 }
