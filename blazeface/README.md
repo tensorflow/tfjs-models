@@ -6,6 +6,8 @@ More background information about the model, as well as its performance characte
 
 The model is designed for front-facing cameras on mobile devices, where faces in view tend to occupy a relatively large fraction of the canvas. Blazeface may struggle to identify far-away faces.
 
+Check out our [demo](https://storage.googleapis.com/learnjs-data/tfjs_blazeface_demo/index.html), which uses the model to predict facial bounding boxes from a live video stream.
+
 ## Installation
 
 Using `yarn`:
