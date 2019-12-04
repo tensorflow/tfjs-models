@@ -129,15 +129,16 @@ export class BlazeFaceModel {
     const boundingBoxes = boxIndices.map(
         boxIndex => tf.slice(boxes, [boxIndex, 0], [1, -1]).arraySync());
 
+    const originalHeight = inputImage.shape[1];
+    const originalWidth = inputImage.shape[2];
     const factors =
-        tf.div(inputImage.shape.slice(1, 3), this.inputSize) as tf.Tensor1D;
+        tf.div([originalWidth, originalHeight], this.inputSize) as tf.Tensor1D;
 
     return boundingBoxes.map(boundingBox => {
       const startEndTensor = tf.tensor2d(boundingBox);
       const box = createBox(startEndTensor);
-      const scaledBox = scaleBox(box, factors);
 
-      return scaledBox.startEndTensor.squeeze();
+      return scaleBox(box, factors).startEndTensor.squeeze();
     });
   }
 }
