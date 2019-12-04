@@ -25,6 +25,10 @@ type AnchorsConfig = {
   anchors: [number, number]
 };
 
+/**
+ * Feeds the input to the model and decodes the facial bounding boxes (if any)
+ * from the model output.
+ */
 export class BlazeFaceModel {
   private blazeFaceModel: tfconv.GraphModel;
   private width: number;
@@ -103,34 +107,33 @@ export class BlazeFaceModel {
   }
 
   getBoundingBoxes(inputImage: tf.Tensor4D): tf.Tensor[] {
-    const originalHeight = inputImage.shape[1];
-    const originalWidth = inputImage.shape[2];
+    let normalizedImage =
+        inputImage.resizeBilinear([this.width, this.height]).div(255);
+    normalizedImage = tf.mul(tf.sub(normalizedImage, 0.5), 2);
 
-    const image = inputImage.resizeBilinear([this.width, this.height]).div(255);
-    const normalizedImage = tf.mul(tf.sub(image, 0.5), 2);
-    const detectOutputs = this.blazeFaceModel.predict(normalizedImage);
+    const detectedOutputs = this.blazeFaceModel.predict(normalizedImage);
+    const boxRegressors = tf.slice(detectedOutputs as tf.Tensor3D, [0, 0, 1], [
+                              1, -1, 4
+                            ]).squeeze();
+    const boxes = this.decodeBounds(boxRegressors as tf.Tensor2D);
 
     const scores =
         tf.sigmoid(
-              tf.slice(detectOutputs as tf.Tensor3D, [0, 0, 0], [1, -1, 1]))
+              tf.slice(detectedOutputs as tf.Tensor3D, [0, 0, 0], [1, -1, 1]))
             .squeeze();
-
-    const boxRegressors =
-        tf.slice(detectOutputs as tf.Tensor3D, [0, 0, 1], [1, -1, 4]).squeeze();
-    const boxes = this.decodeBounds(boxRegressors as tf.Tensor2D);
     const boxIndices = tf.image
                            .nonMaxSuppression(
                                boxes, scores as tf.Tensor1D, this.maxFaces,
                                this.iouThreshold, this.scoreThreshold)
                            .arraySync();
-    const bboxes = boxIndices.map(
+    const boundingBoxes = boxIndices.map(
         boxIndex => tf.slice(boxes, [boxIndex, 0], [1, -1]).arraySync());
 
     const factors =
-        tf.div([originalWidth, originalHeight], this.inputSize) as tf.Tensor1D;
+        tf.div(inputImage.shape.slice(1, 3), this.inputSize) as tf.Tensor1D;
 
-    return bboxes.map(bbox => {
-      const startEndTensor = tf.tensor2d(bbox);
+    return boundingBoxes.map(boundingBox => {
+      const startEndTensor = tf.tensor2d(boundingBox);
       const box = createBox(startEndTensor);
       const scaledBox = scaleBox(box, factors);
 
