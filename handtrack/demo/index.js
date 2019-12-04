@@ -24,6 +24,15 @@ class HandPipeline {
     this.force_update = false;
     this.max_hands_num = 1; // simple case
     this.rois = [];
+
+    this.hand_canvas = document.getElementById('hand_cut');
+    this.hand_canvas.width = 256;
+    this.hand_canvas.height = 256;
+    this.ctx = this.hand_canvas.getContext('2d');
+
+    this.ctx.strokeStyle = "red";
+    // this.ctx.translate(this.hand_canvas.width, 0);
+    // this.ctx.scale(-1, 1);
   }
 
   /**
@@ -48,43 +57,56 @@ class HandPipeline {
     }
 
     const box = this.rois[0];
-
-    // TODO (vakunov): move to configuration
     const width = 256., height = 256.;
 
+    // TODO (vakunov): move to configuration
     const scale_factor = 2.6;
-    const shifts = [0, -0.5];
+    const shifts = [0, -0.25];
 
     const angle = this.calculateRotation(box);
-
     const box_for_cut = this.transform_box(box, angle, scale_factor, shifts);
-
     const cutted_hand = box_for_cut.cutFromAndResize(image_tensor, [height, width]);
-
     const handImage = tf.image.rotate(cutted_hand, angle).div(255);
 
-    this.showImage(handImage);
+    // this.clearROIS(); // TODO: remove
     const output = this.handtrackModel.predict(handImage);
 
     const coords3d = tf.reshape(output[0], [-1, 3]);
     const coords2d = coords3d.slice([0, 0], [-1, 2]);
 
+    if (true) {
+      const image = handImage.squeeze([0]);
+
+      const keeped_coords2d = tf.keep(coords2d);
+      tf.browser.toPixels(tf.keep(image)).then((bytes) => {
+        const imageData = new ImageData(bytes, width, height);
+        this.ctx.clearRect(0, 0, width, height);
+        this.ctx.putImageData(imageData, 0, 0);
+
+        drawKeypoints(this.ctx, keeped_coords2d);
+        tf.dispose(image);
+        tf.dispose(keeped_coords2d);
+      });
+
+    }
+
     const coords2d_scaled = tf.mul(coords2d,
       tf.div(box.getSize(), [width, height]))
+      .mul(scale_factor)
       .add(box.startPoint);
 
     const landmarks_box = this.calculateLandmarsBoundingBox(coords2d_scaled);
-    this.updateROIFromFacedetector(landmarks_box);
+    // this.updateROIFromFacedetector(landmarks_box);
+
+    const res = coords2d_scaled;
 
     const handFlag = output[1].arraySync()[0][0];
-
-    console.log(handFlag);
-
-    if (handFlag < 0.9) { // TODO: move to configuration
+    // console.log(handFlag);
+    if (true || handFlag < 0.9) { // TODO: move to configuration
       this.clearROIS();
     }
 
-    return coords2d_scaled;
+    return box.landmarks;
   }
 
   transform_box(box, rotation, scale_factor, shifts) {
@@ -132,7 +154,7 @@ class HandPipeline {
 
   showImage(cutted_hand) {
     const hand_canvas = document.getElementById('hand_cut');
-    const image = cutted_hand.squeeze([0]);// tf.div(, 255);
+    const image = cutted_hand.squeeze([0]);
 
     tf.browser.toPixels(tf.keep(image), hand_canvas).then((successMessage) => {
       tf.dispose(image);
@@ -156,6 +178,7 @@ class HandPipeline {
     return new Box(box_min_max.expandDims(0), landmarks);
   }
 }
+
 
 let ANCHORS = [
   { 'w': 1.0, 'h': 1.0, 'x_center': 0.015625, 'y_center': 0.015625 },
@@ -3102,8 +3125,7 @@ let ANCHORS = [
   { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 },
   { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 },
   { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 },
-  { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }, { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 }
-];
+]
 
 class HandDetectModel {
 
@@ -3310,7 +3332,8 @@ function isDesktop() {
 }
 
 function isChrome() {
-  return true;
+  return /chrome/.test(navigator.userAgent.toLowerCase())
+    && /Google Inc/.test(navigator.vendor);
 }
 
 function isSupportedPlatform() {
@@ -3318,7 +3341,6 @@ function isSupportedPlatform() {
 }
 
 // Model loading
-// const HANDDETECT_MODEL_PATH = "https://bertviz.s3.amazonaws.com/handdetector/model.json";
 const HANDDETECT_MODEL_PATH = "https://bertviz.s3.amazonaws.com/andrey_handdetector/model.json";
 const HANDTRACK_MODEL_PATH = "https://bertviz.s3.amazonaws.com/handskeleton/model.json"
 
@@ -3393,6 +3415,7 @@ const bindPage = async () => {
   landmarksRealTime(video, handdetectModel, handtrackModel);
 }
 
+
 const landmarksRealTime = async (video, handdetectModel, handtrackModel) => {
   const stats = new Stats();
   stats.showPanel(0);
@@ -3414,11 +3437,11 @@ const landmarksRealTime = async (video, handdetectModel, handtrackModel) => {
   ctx.clearRect(0, 0, videoWidth, videoHeight);
   ctx.strokeStyle = "red";
 
-  const handdetect = new HandDetectModel(handdetectModel, 256, 256);
 
   ctx.translate(canvas.width, 0);
   ctx.scale(-1, 1);
 
+  const handdetect = new HandDetectModel(handdetectModel, 256, 256);
   const pipeline = new HandPipeline(handdetect, handtrackModel);
 
   async function frameLandmarks() {
