@@ -92,7 +92,8 @@ function toInternalResolutionPercentage(
             internalResolution <= MAX_INTERNAL_RESOLUTION &&
             internalResolution >= MIN_INTERNAL_RESOLUTION,
         () =>
-            `inputResolution must be a string or number between 0 and 4, but ` +
+            `inputResolution must be a string or number between ${
+                MIN_INTERNAL_RESOLUTION} and ${MAX_INTERNAL_RESOLUTION}, but ` +
             `was ${internalResolution}`);
 
     return internalResolution;
