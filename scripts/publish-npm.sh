@@ -14,7 +14,8 @@
 # limitations under the License.
 # =============================================================================
 
-# Before you run this script, run `yarn release` and commit the PRs.
+# Before you run this script, update the package.json to update versions and
+# commit the PRs.
 
 # Then:
 # 1) Checkout the master branch of this repo.
