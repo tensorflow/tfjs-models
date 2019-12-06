@@ -23,4 +23,5 @@ export {partChannels, partIds, partNames, poseChain} from './keypoints';
 export {load, ModelConfig, MultiPersonInferenceConfig, PoseNet, SinglePersonInterfaceConfig} from './posenet_model';
 export {InputResolution, Keypoint, MobileNetMultiplier, Pose, PoseNetOutputStride} from './types';
 export {getAdjacentKeyPoints, getBoundingBox, getBoundingBoxPoints, scaleAndFlipPoses, scalePose} from './util';
+export {version} from './version';
 export {decodeMultiplePoses, decodeSinglePose, MobileNet};

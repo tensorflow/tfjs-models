@@ -17,6 +17,7 @@
 import * as tf from '@tensorflow/tfjs-core';
 import {Tensor, Tensor1D, Tensor2D, util} from '@tensorflow/tfjs-core';
 import {concatWithNulls, topK} from './util';
+export {version} from './version';
 
 /**
  * A K-nearest neighbors (KNN) classifier that allows fast
