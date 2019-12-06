@@ -6,7 +6,7 @@ steps:
   entrypoint: 'yarn'
   args: ['install']
 
-# Install tfjs dependencies.
+# Install blazeface dependencies.
 - name: 'node:10'
   dir: 'blazeface'
   entrypoint: 'yarn'
