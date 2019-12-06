@@ -115,16 +115,11 @@ export class BlazeFaceModel {
         inputImage.resizeBilinear([this.width, this.height]).div(255);
     normalizedImage = tf.mul(tf.sub(normalizedImage, 0.5), 2);
 
-    // [896, 17]
-    // [logit, ...topLeft, ...boxSize, ...landmarks]
     const detectedOutputs =
         (this.blazeFaceModel.predict(normalizedImage) as tf.Tensor3D)
             .squeeze() as tf.Tensor2D;
 
-    // [894, 4]
     const boxes = this.decodeBounds(detectedOutputs);
-
-    // [896, 1]
     const logits = tf.slice(detectedOutputs as tf.Tensor2D, [0, 0], [-1, 1]);
     const scores = tf.sigmoid(logits).squeeze();
     const boxIndices = tf.image
@@ -158,17 +153,14 @@ export class BlazeFaceModel {
       const startEndTensor = tf.tensor2d(boundingBox.box);
       const box = createBox(startEndTensor);
 
-      const scaledLandmarks = boundingBox.landmarks.map(landmark => {
-        return [
-          (landmark[0] + boundingBox.anchor[0]) * factorsData[0],
-          (landmark[1] + boundingBox.anchor[1]) * factorsData[1]
-        ];
-      });
+      const scaledLandmarks = boundingBox.landmarks.map(
+          landmark => landmark.map(
+              (coord, coordIndex) => (coord + boundingBox.anchor[coordIndex]) *
+                  factorsData[coordIndex]));
 
       return {
         box: scaleBox(box, factors).startEndTensor.squeeze(),
-        landmarks: scaledLandmarks,
-        anchor: boundingBox.anchor
+        landmarks: scaledLandmarks
       };
     });
   }

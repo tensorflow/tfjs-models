@@ -82,16 +82,15 @@ export class FaceMesh {
       return this.blazeface.getBoundingBoxes(image as tf.Tensor4D);
     });
 
-    const coords = await Promise.all(prediction.map(async (d: any) => {
+    const faces = await Promise.all(prediction.map(async (d: any) => {
       const boxData = await d.box.array();
-      return [boxData, d.landmarks, d.anchor];
+      return [boxData, d.landmarks];
     }));
 
-    return coords.map(([arr, landmarks, anchor]) => {
+    return faces.map(([arr, landmarks]) => {
       return {
         box: [(arr as number[]).slice(0, 2), (arr as number[]).slice(2)],
-        landmarks,
-        anchor
+        landmarks
       };
     });
   }
