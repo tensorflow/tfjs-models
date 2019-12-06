@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google Inc. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,13 +15,13 @@
  * =============================================================================
  */
 
-import Plotly from 'plotly.js-dist';
 import * as tf from '@tensorflow/tfjs';
+import Plotly from 'plotly.js-dist';
 
 import * as SpeechCommands from '../src';
 
-import {hideCandidateWords, logToStatusDisplay, plotPredictions, plotSpectrogram, populateCandidateWords, showCandidateWords} from './ui';
 import {DatasetViz, removeNonFixedChildrenFromWordDiv} from './dataset-vis';
+import {hideCandidateWords, logToStatusDisplay, plotPredictions, plotSpectrogram, populateCandidateWords, showCandidateWords} from './ui';
 
 const startButton = document.getElementById('start');
 const stopButton = document.getElementById('stop');
@@ -37,15 +37,19 @@ const downloadAsFileButton = document.getElementById('download-dataset');
 const datasetFileInput = document.getElementById('dataset-file-input');
 const uploadFilesButton = document.getElementById('upload-dataset');
 
-const evalModelOnDatasetButton = document.getElementById('eval-model-on-dataset');
+const evalModelOnDatasetButton =
+    document.getElementById('eval-model-on-dataset');
 const evalResultsSpan = document.getElementById('eval-results');
 
 const modelIOButton = document.getElementById('model-io');
-const transferModelSaveLoadInnerDiv = document.getElementById('transfer-model-save-load-inner');
+const transferModelSaveLoadInnerDiv =
+    document.getElementById('transfer-model-save-load-inner');
 const loadTransferModelButton = document.getElementById('load-transfer-model');
 const saveTransferModelButton = document.getElementById('save-transfer-model');
-const savedTransferModelsSelect = document.getElementById('saved-transfer-models');
-const deleteTransferModelButton = document.getElementById('delete-transfer-model');
+const savedTransferModelsSelect =
+    document.getElementById('saved-transfer-models');
+const deleteTransferModelButton =
+    document.getElementById('delete-transfer-model');
 
 const BACKGROUND_NOISE_TAG = SpeechCommands.BACKGROUND_NOISE_TAG;
 
@@ -57,7 +61,7 @@ const learnWordsInput = document.getElementById('learn-words');
 const durationMultiplierSelect = document.getElementById('duration-multiplier');
 const enterLearnWordsButton = document.getElementById('enter-learn-words');
 const includeTimeDomainWaveformCheckbox =
-  document.getElementById('include-audio-waveform');
+    document.getElementById('include-audio-waveform');
 const collectButtonsDiv = document.getElementById('collect-words');
 const startTransferLearnButton =
     document.getElementById('start-transfer-learn');
@@ -190,12 +194,10 @@ function createWordDivs(transferWords) {
   while (collectButtonsDiv.firstChild) {
     collectButtonsDiv.removeChild(collectButtonsDiv.firstChild);
   }
-  datasetViz = new DatasetViz(transferRecognizer,
-                              collectButtonsDiv,
-                              MIN_EXAMPLES_PER_CLASS,
-                              startTransferLearnButton,
-                              downloadAsFileButton,
-                              transferDurationMultiplier);
+  datasetViz = new DatasetViz(
+      transferRecognizer, collectButtonsDiv, MIN_EXAMPLES_PER_CLASS,
+      startTransferLearnButton, downloadAsFileButton,
+      transferDurationMultiplier);
 
   const wordDivs = {};
   for (const word of transferWords) {
@@ -282,8 +284,8 @@ function createWordDivs(transferWords) {
 
       collectExampleOptions.includeRawAudio =
           includeTimeDomainWaveformCheckbox.checked;
-      const spectrogram = await transferRecognizer.collectExample(
-          word, collectExampleOptions);
+      const spectrogram =
+          await transferRecognizer.collectExample(word, collectExampleOptions);
 
 
       if (intervalJob != null) {
@@ -603,34 +605,27 @@ evalModelOnDatasetButton.addEventListener('click', async () => {
       transferRecognizer.loadExamples(event.target.result);
       const evalResult = await transferRecognizer.evaluate({
         windowHopRatio: 0.25,
-        wordProbThresholds:
-            [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5,
-             0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0]
+        wordProbThresholds: [
+          0,    0.05, 0.1,  0.15, 0.2,  0.25, 0.3,  0.35, 0.4,  0.5,
+          0.55, 0.6,  0.65, 0.7,  0.75, 0.8,  0.85, 0.9,  0.95, 1.0
+        ]
       });
       // Plot the ROC curve.
-      const rocDataForPlot = {
-        x: [],
-        y: []
-      };
+      const rocDataForPlot = {x: [], y: []};
       evalResult.rocCurve.forEach(item => {
         rocDataForPlot.x.push(item.fpr);
         rocDataForPlot.y.push(item.tpr);
       });
 
-      Plotly.newPlot(
-          'roc-plot',
-          [rocDataForPlot],
-          {
-            width: 360,
-            height: 360,
-            mode: 'markers',
-            marker: {
-              size: 7
-            },
-            xaxis: {title: 'False positive rate (FPR)', range: [0, 1]},
-            yaxis: {title: 'True positive rate (TPR)', range: [0, 1]},
-            font: {size: 18}
-          });
+      Plotly.newPlot('roc-plot', [rocDataForPlot], {
+        width: 360,
+        height: 360,
+        mode: 'markers',
+        marker: {size: 7},
+        xaxis: {title: 'False positive rate (FPR)', range: [0, 1]},
+        yaxis: {title: 'True positive rate (TPR)', range: [0, 1]},
+        font: {size: 18}
+      });
       evalResultsSpan.textContent = `AUC = ${evalResult.auc}`;
     } catch (err) {
       const originalTextContent = evalModelOnDatasetButton.textContent;
@@ -649,8 +644,7 @@ evalModelOnDatasetButton.addEventListener('click', async () => {
 async function populateSavedTransferModelsSelect() {
   const savedModelKeys = await SpeechCommands.listSavedTransferModels();
   while (savedTransferModelsSelect.firstChild) {
-    savedTransferModelsSelect.removeChild(
-        savedTransferModelsSelect.firstChild);
+    savedTransferModelsSelect.removeChild(savedTransferModelsSelect.firstChild);
   }
   if (savedModelKeys.length > 0) {
     for (const key of savedModelKeys) {
@@ -689,12 +683,10 @@ loadTransferModelButton.addEventListener('click', async () => {
 modelIOButton.addEventListener('click', () => {
   if (modelIOButton.textContent.endsWith(' >>')) {
     transferModelSaveLoadInnerDiv.style.display = 'inline-block';
-    modelIOButton.textContent =
-        modelIOButton.textContent.replace(' >>', ' <<');
+    modelIOButton.textContent = modelIOButton.textContent.replace(' >>', ' <<');
   } else {
     transferModelSaveLoadInnerDiv.style.display = 'none';
-    modelIOButton.textContent =
-        modelIOButton.textContent.replace(' <<', ' >>');
+    modelIOButton.textContent = modelIOButton.textContent.replace(' <<', ' >>');
   }
 });
 
@@ -719,4 +711,3 @@ datasetIOButton.addEventListener('click', () => {
         datasetIOButton.textContent.replace(' <<', ' >>');
   }
 });
-
