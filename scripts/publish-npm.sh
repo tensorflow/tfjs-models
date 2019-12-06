@@ -63,7 +63,7 @@ fi
 ./scripts/make-version.js $1
 
 cd $1
-yarn build-npm for-publish
+yarn build-npm
 cd ..
 
 ./scripts/tag-version.js $1
