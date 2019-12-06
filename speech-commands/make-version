@@ -1,5 +1,5 @@
-#!/usr/bin/env node
-// Copyright 2018 Google LLC. All Rights Reserved.
+#!/ usr / bin / env node
+// Copyright 2019 Google LLC. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,14 +22,14 @@ const version = JSON.parse(fs.readFileSync('package.json', 'utf8')).version;
 
 const versionCode =
 `/** @license See the LICENSE file. */
-// This code is auto-generated, do not modify this file!
-const version = '${version}';
+    // This code is auto-generated, do not modify this file!
+    const version = '${version}';
 export {version};
 `
 
-fs.writeFile('src/version.ts', versionCode, err => {
-  if (err) {
-    throw new Error(`Could not save version file ${version} : $ { err }`);
-  }
+    fs.writeFile('src/version.ts', versionCode, err = > {
+      if (err) {
+        throw new Error(`Could not save version file ${version} : $ { err }`);
+      }
   console.log(`Version file for version ${version} saved sucessfully.`);
-});
+    });
