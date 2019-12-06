@@ -47,7 +47,7 @@ export async function load({
   return faceMesh;
 }
 
-type FaceBoundingBox = [[number, number], [number, number]];
+// type FaceBoundingBox = [[number, number], [number, number]];
 
 export class FaceMesh {
   private blazeface: BlazeFaceModel;
@@ -73,8 +73,7 @@ export class FaceMesh {
    * video, or canvas.
    */
   async estimateFace(input: tf.Tensor3D|ImageData|HTMLVideoElement|
-                     HTMLImageElement|
-                     HTMLCanvasElement): Promise<FaceBoundingBox[]> {
+                     HTMLImageElement|HTMLCanvasElement): Promise<any> {
     const prediction = tf.tidy(() => {
       if (!(input instanceof tf.Tensor)) {
         input = tf.browser.fromPixels(input);
@@ -83,10 +82,17 @@ export class FaceMesh {
       return this.blazeface.getBoundingBoxes(image as tf.Tensor4D);
     });
 
-    const coords = await Promise.all(
-        prediction.map(async (d: tf.Tensor1D) => await d.array()));
+    const coords = await Promise.all(prediction.map(async (d: any) => {
+      const boxData = await d.box.array();
+      return [boxData, d.landmarks, d.anchor];
+    }));
 
-    return coords.map(
-        arr => [arr.slice(0, 2), arr.slice(2)] as FaceBoundingBox);
+    return coords.map(([arr, landmarks, anchor]) => {
+      return {
+        box: [(arr as number[]).slice(0, 2), (arr as number[]).slice(2)],
+        landmarks,
+        anchor
+      };
+    });
   }
 }

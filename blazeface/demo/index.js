@@ -42,10 +42,21 @@ const renderPrediction =
     if (prediction) {
       ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
       for (let i = 0; i < prediction.length; i++) {
-        const start = prediction[i][0];
-        const end = prediction[i][1];
+        const box = prediction[i].box;
+        const start = box[0];
+        const end = box[1];
         const size = [end[0] - start[0], end[1] - start[1]];
+        ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
         ctx.fillRect(start[0], start[1], size[0], size[1]);
+
+        const landmarks = prediction[i].landmarks;
+
+        ctx.fillStyle = "blue";
+        for (let j = 0; j < landmarks.length; j++) {
+          const x = landmarks[j][0];
+          const y = landmarks[j][1];
+          ctx.fillRect(x, y, 5, 5);
+        }
       }
     }
 
