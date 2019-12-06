@@ -38,7 +38,7 @@
     "build": "rimraf dist && tsc",
     "test": "ts-node run_tests.ts",
     "publish-local": "yarn build && rollup -c && yalc push",
-    "publish-npm": "yarn build && rollup -c && npm publish",
+    "build-npm": "yarn build && rollup -c",
     "dev": "cd demos && yarn watch",
     "lint": "tslint -p . -t verbose"
   },

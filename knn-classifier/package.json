@@ -34,7 +34,7 @@
   },
   "scripts": {
     "build": "rimraf dist && tsc",
-    "publish-npm": "yarn build && rollup -c && npm publish",
+    "build-npm": "yarn build && rollup -c",
     "publish-local": "yarn build && rollup -c && yalc push",
     "lint": "tslint -p . -t verbose",
     "test": "ts-node run_tests.ts"

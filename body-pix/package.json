@@ -43,7 +43,7 @@
     "publish-local": "yarn build && rollup -c && yalc publish",
     "test": "karma start",
     "test-ci": "karma start --singleRun --browsers=bs_chrome_mac",
-    "publish-npm": "yarn build && rollup -c && npm publish",
+    "build-npm": "yarn build && rollup -c",
     "lint": "tslint -p . -t verbose"
   },
   "license": "Apache-2.0",
