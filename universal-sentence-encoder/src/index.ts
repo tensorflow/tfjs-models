@@ -20,6 +20,8 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {Tokenizer} from './tokenizer';
 
+export {version} from './version';
+
 const BASE_PATH =
     'https://storage.googleapis.com/tfjs-models/savedmodel/universal_sentence_encoder/';
 

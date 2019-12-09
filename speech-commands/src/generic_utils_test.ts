@@ -1,7 +1,7 @@
 
 /**
  * @license
- * Copyright 2018 Google LLC. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,8 +16,9 @@
  * =============================================================================
  */
 
-import {arrayBuffer2String, string2ArrayBuffer, concatenateFloat32Arrays} from './generic_utils';
 import {expectArraysEqual} from '@tensorflow/tfjs-core/dist/test_util';
+
+import {arrayBuffer2String, concatenateFloat32Arrays, string2ArrayBuffer} from './generic_utils';
 
 describe('string2ArrayBuffer and arrayBuffer2String', () => {
   it('round trip: ASCII only', () => {
@@ -38,10 +39,10 @@ describe('concatenateFloat32Arrays', () => {
   it('Two non-empty', () => {
     const xs = new Float32Array([1, 3]);
     const ys = new Float32Array([3, 7]);
-    expectArraysEqual(concatenateFloat32Arrays([xs, ys]),
-        new Float32Array([1, 3, 3, 7]));
-    expectArraysEqual(concatenateFloat32Arrays([ys, xs]),
-        new Float32Array([3, 7, 1, 3]));
+    expectArraysEqual(
+        concatenateFloat32Arrays([xs, ys]), new Float32Array([1, 3, 3, 7]));
+    expectArraysEqual(
+        concatenateFloat32Arrays([ys, xs]), new Float32Array([3, 7, 1, 3]));
     // Assert that the original Float32Arrays are not altered.
     expectArraysEqual(xs, new Float32Array([1, 3]));
     expectArraysEqual(ys, new Float32Array([3, 7]));
@@ -51,17 +52,18 @@ describe('concatenateFloat32Arrays', () => {
     const array1 = new Float32Array([1]);
     const array2 = new Float32Array([2, 3]);
     const array3 = new Float32Array([4, 5, 6]);
-    expectArraysEqual(concatenateFloat32Arrays([array1, array2, array3]),
+    expectArraysEqual(
+        concatenateFloat32Arrays([array1, array2, array3]),
         new Float32Array([1, 2, 3, 4, 5, 6]));
   });
 
   it('One empty, one non-empty', () => {
     const xs = new Float32Array([4, 2]);
     const ys = new Float32Array(0);
-    expectArraysEqual(concatenateFloat32Arrays([xs, ys]),
-        new Float32Array([4, 2]));
-    expectArraysEqual(concatenateFloat32Arrays([ys, xs]),
-        new Float32Array([4, 2]));
+    expectArraysEqual(
+        concatenateFloat32Arrays([xs, ys]), new Float32Array([4, 2]));
+    expectArraysEqual(
+        concatenateFloat32Arrays([ys, xs]), new Float32Array([4, 2]));
     // Assert that the original Float32Arrays are not altered.
     expectArraysEqual(xs, new Float32Array([4, 2]));
     expectArraysEqual(ys, new Float32Array(0));
@@ -70,10 +72,8 @@ describe('concatenateFloat32Arrays', () => {
   it('Two empty', () => {
     const xs = new Float32Array(0);
     const ys = new Float32Array(0);
-    expectArraysEqual(concatenateFloat32Arrays([xs, ys]),
-        new Float32Array(0));
-    expectArraysEqual(concatenateFloat32Arrays([ys, xs]),
-        new Float32Array(0));
+    expectArraysEqual(concatenateFloat32Arrays([xs, ys]), new Float32Array(0));
+    expectArraysEqual(concatenateFloat32Arrays([ys, xs]), new Float32Array(0));
     // Assert that the original Float32Arrays are not altered.
     expectArraysEqual(xs, new Float32Array(0));
     expectArraysEqual(ys, new Float32Array(0));

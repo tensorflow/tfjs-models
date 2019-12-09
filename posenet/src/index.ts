@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google Inc. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -23,4 +23,5 @@ export {partChannels, partIds, partNames, poseChain} from './keypoints';
 export {load, ModelConfig, MultiPersonInferenceConfig, PoseNet, SinglePersonInterfaceConfig} from './posenet_model';
 export {InputResolution, Keypoint, MobileNetMultiplier, Pose, PoseNetOutputStride} from './types';
 export {getAdjacentKeyPoints, getBoundingBox, getBoundingBoxPoints, scaleAndFlipPoses, scalePose} from './util';
+export {version} from './version';
 export {decodeMultiplePoses, decodeSinglePose, MobileNet};
