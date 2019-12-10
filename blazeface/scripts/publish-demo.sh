@@ -17,4 +17,4 @@
 cd demo
 rm -rf dist
 yarn build
-gsutil rsync -d -r dist/ gs://learnjs-data/tfjs_blazeface_demo
+gsutil rsync -d -r dist/ gs://tfjs-models/demos/blazeface
