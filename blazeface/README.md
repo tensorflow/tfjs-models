@@ -44,17 +44,17 @@ Then:
 const model = await blazeface.load();
 
 // Pass in an image or video to the model. The model returns an array of
-// bounding boxes, one for each detected face.
-const prediction = await model.estimateFace(document.querySelector("img"));
+// bounding boxes, probabilities, and landmarks, one for each detected face.
+const predictions = await model.estimateFace(document.querySelector("img"));
 
-if (prediction) {
-  for (let i = 0; i < prediction.length; i++) {
+if (predictions) {
+  for (let i = 0; i < predictions.length; i++) {
 
     // The first element of each bounding box specifies the upper left hand
     // corner of the detected face. The second element specifies the lower right
     // hand corner.
-    const start = prediction[i][0];
-    const end = prediction[i][1];
+    const start = predictions[i][0];
+    const end = predictions[i][1];
     const size = [end[0] - start[0], end[1] - start[1]];
 
     ctx.fillRect(start[0], start[1], size[0], size[1]);
