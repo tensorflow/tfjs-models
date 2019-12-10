@@ -84,7 +84,7 @@ export class FaceMesh {
 
     const faces = await Promise.all(prediction.map(async (d: any) => {
       const boxData = await d.box.array();
-      return [boxData, d.landmarks];
+      return [boxData, d.landmarks, d.probability];
     }));
 
     return faces.map(([arr, landmarks]) => {

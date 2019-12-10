@@ -135,6 +135,7 @@ export class BlazeFaceModel {
 
       return {
         box: tf.slice(boxes, [boxIndex, 0], [1, -1]).arraySync(),
+        probability: tf.slice(scores, [boxIndex], [1]).arraySync(),
         landmarks,
         anchor: this.anchorsData[boxIndex]
       };
@@ -160,7 +161,8 @@ export class BlazeFaceModel {
 
       return {
         box: scaleBox(box, factors).startEndTensor.squeeze(),
-        landmarks: scaledLandmarks
+        landmarks: scaledLandmarks,
+        probability: boundingBox.probability
       };
     });
   }
