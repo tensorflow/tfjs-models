@@ -2,6 +2,8 @@
 
 [Blazeface](https://arxiv.org/abs/1907.05047) is a lightweight model that detects faces in images. Blazeface makes use of the [Single Shot Detector](https://arxiv.org/abs/1512.02325) architecture with a custom encoder. The model may serve as a first step for face-related computer vision applications, such as facial keypoint recognition.
 
+<img src="demo/demo.gif" alt="demo" style="width: 437px;"/>
+
 More background information about the model, as well as its performance characteristics on different datasets, can be found here: [https://drive.google.com/file/d/1f39lSzU5Oq-j_OXgS67KfN5wNsoeAZ4V/view](https://drive.google.com/file/d/1f39lSzU5Oq-j_OXgS67KfN5wNsoeAZ4V/view)
 
 The model is designed for front-facing cameras on mobile devices, where faces in view tend to occupy a relatively large fraction of the canvas. Blazeface may struggle to identify far-away faces.
