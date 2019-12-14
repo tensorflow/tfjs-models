@@ -18,6 +18,7 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
+import {scaleBox} from './box';
 import {BlazeFaceModel} from './face';
 
 const BLAZEFACE_MODEL_URL =
@@ -85,8 +86,10 @@ export class FaceMesh {
         image as tf.Tensor4D, returnTensors);
 
     const faces = await Promise.all(prediction.map(async (d: any) => {
-      const boxData = await d.box.array();
-      const landmarkData = await d.landmarks.array();
+      const scaledBox = scaleBox(d.box, d.scaleFactor).startEndTensor.squeeze();
+      const scaledLandmarks = d.landmarks.add(d.anchor).mul(d.scaleFactor);
+      const boxData = await scaledBox.array();
+      const landmarkData = await scaledLandmarks.array();
       const probabilityData = await d.probability.array();
       return [boxData, landmarkData, probabilityData];
     }));

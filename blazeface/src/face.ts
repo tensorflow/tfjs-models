@@ -18,7 +18,7 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {createBox, scaleBox} from './box';
+import {createBox} from './box';
 
 type AnchorsConfig = {
   strides: [number, number],
@@ -38,7 +38,7 @@ export class BlazeFaceModel {
   private anchors: tf.Tensor2D;
   private anchorsData: number[][];
   private inputSize: tf.Tensor1D;
-  // private inputSizeData: [number, number];
+  private inputSizeData: [number, number];
   private iouThreshold: number;
   private scoreThreshold: number;
 
@@ -52,7 +52,7 @@ export class BlazeFaceModel {
     this.config = this.getAnchorsConfig();
     this.anchorsData = this.generateAnchors(width, height, this.config);
     this.anchors = tf.tensor2d(this.anchorsData);
-    // this.inputSizeData = [width, height];
+    this.inputSizeData = [width, height];
     this.inputSize = tf.tensor1d([width, height]);
 
     this.iouThreshold = iouThreshold;
@@ -111,9 +111,8 @@ export class BlazeFaceModel {
   }
 
   async getBoundingBoxes(inputImage: tf.Tensor4D, returnTensors: boolean) {
-    let normalizedImage =
-        inputImage.resizeBilinear([this.width, this.height]).div(255);
-    normalizedImage = tf.mul(tf.sub(normalizedImage, 0.5), 2);
+    const resizedImage = inputImage.resizeBilinear([this.width, this.height]);
+    const normalizedImage = tf.mul(tf.sub(resizedImage.div(255), 0.5), 2);
 
     const detectedOutputs =
         (this.blazeFaceModel.predict(normalizedImage) as tf.Tensor3D)
@@ -134,37 +133,36 @@ export class BlazeFaceModel {
 
     const originalHeight = inputImage.shape[1];
     const originalWidth = inputImage.shape[2];
-    const factors =
-        tf.div([originalWidth, originalHeight], this.inputSize) as tf.Tensor1D;
-    // const factorsData = [
-    //   originalWidth / this.inputSizeData[0],
-    //   originalHeight / this.inputSizeData[1]
-    // ];
+
+    let scaleFactor: [number, number]|tf.Tensor1D;
+    if (returnTensors) {
+      scaleFactor = tf.div([originalWidth, originalHeight], this.inputSize) as
+          tf.Tensor1D;
+    } else {
+      scaleFactor = [
+        originalWidth / this.inputSizeData[0],
+        originalHeight / this.inputSizeData[1]
+      ];
+    }
 
     return boundingBoxes.map((boundingBox, i) => {
       const boxIndex = boxIndices[i];
-      const startEndTensor = tf.tensor2d(boundingBox);
-      const landmarks =
-          tf.slice(detectedOutputs, [boxIndex, 5], [1, -1]).squeeze().reshape([
-            6, -1
-          ]);
-      const probability = tf.slice(scores, [boxIndex], [1]);
-      // const anchor = this.anchorsData[boxIndex];
-      const anchorTensor = this.anchors.slice([boxIndex, 0], [1, 2]);
-      const box = createBox(startEndTensor);
 
-      // const scaledLandmarks = boundingBox.landmarks.map(
-      //     landmark => landmark.map(
-      //         (coord, coordIndex) => (coord + boundingBox.anchor[coordIndex])
-      //         *
-      //             factorsData[coordIndex]));
-
-      const scaledLandmarks = landmarks.add(anchorTensor).mul(factors);
+      let anchor: [number, number]|tf.Tensor2D;
+      if (returnTensors) {
+        anchor = this.anchors.slice([boxIndex, 0], [1, 2]) as tf.Tensor2D;
+      } else {
+        anchor = this.anchorsData[boxIndex] as [number, number];
+      }
 
       return {
-        box: scaleBox(box, factors).startEndTensor.squeeze(),
-        landmarks: scaledLandmarks,
-        probability
+        box: createBox(tf.tensor2d(boundingBox)),
+        landmarks: tf.slice(detectedOutputs, [boxIndex, 5], [1, -1])
+                       .squeeze()
+                       .reshape([6, -1]),
+        probability: tf.slice(scores, [boxIndex], [1]),
+        anchor,
+        scaleFactor
       };
     });
   }
