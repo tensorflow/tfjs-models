@@ -110,7 +110,7 @@ export class BlazeFaceModel {
         1);
   }
 
-  getBoundingBoxes(inputImage: tf.Tensor4D) {
+  async getBoundingBoxes(inputImage: tf.Tensor4D, returnTensors: boolean) {
     let normalizedImage =
         inputImage.resizeBilinear([this.width, this.height]).div(255);
     normalizedImage = tf.mul(tf.sub(normalizedImage, 0.5), 2);
@@ -122,29 +122,15 @@ export class BlazeFaceModel {
     const boxes = this.decodeBounds(detectedOutputs);
     const logits = tf.slice(detectedOutputs as tf.Tensor2D, [0, 0], [-1, 1]);
     const scores = tf.sigmoid(logits).squeeze();
-    const boxIndices = tf.image
+    const boxIndices = await tf.image
                            .nonMaxSuppression(
                                boxes, scores as tf.Tensor1D, this.maxFaces,
                                this.iouThreshold, this.scoreThreshold)
-                           .arraySync();
-    const boundingBoxes = boxIndices.map(boxIndex => {
-      const landmarks =
-          tf.slice(detectedOutputs, [boxIndex, 5], [1, -1]).squeeze().reshape([
-            6, -1
-          ]);
-      // const landmarks = tf.slice(detectedOutputs, [boxIndex, 5], [1, -1])
-      //                       .squeeze()
-      //                       .reshape([6, -1])
-      //                       .arraySync() as number[][];
+                           .array();
 
-      return {
-        box: tf.slice(boxes, [boxIndex, 0], [1, -1]).arraySync(),
-        probability: tf.slice(scores, [boxIndex], [1]).arraySync(),
-        landmarks,
-        anchor: this.anchorsData[boxIndex],
-        anchorTensor: this.anchors.slice([boxIndex, 0], [1, 2])
-      };
-    });
+    const boundingBoxes = await Promise.all(boxIndices.map(
+        async (boxIndex) =>
+            await tf.slice(boxes, [boxIndex, 0], [1, -1]).array()));
 
     const originalHeight = inputImage.shape[1];
     const originalWidth = inputImage.shape[2];
@@ -155,8 +141,16 @@ export class BlazeFaceModel {
     //   originalHeight / this.inputSizeData[1]
     // ];
 
-    return boundingBoxes.map(boundingBox => {
-      const startEndTensor = tf.tensor2d(boundingBox.box);
+    return boundingBoxes.map((boundingBox, i) => {
+      const boxIndex = boxIndices[i];
+      const startEndTensor = tf.tensor2d(boundingBox);
+      const landmarks =
+          tf.slice(detectedOutputs, [boxIndex, 5], [1, -1]).squeeze().reshape([
+            6, -1
+          ]);
+      const probability = tf.slice(scores, [boxIndex], [1]);
+      // const anchor = this.anchorsData[boxIndex];
+      const anchorTensor = this.anchors.slice([boxIndex, 0], [1, 2]);
       const box = createBox(startEndTensor);
 
       // const scaledLandmarks = boundingBox.landmarks.map(
@@ -165,13 +159,12 @@ export class BlazeFaceModel {
       //         *
       //             factorsData[coordIndex]));
 
-      const scaledLandmarks =
-          boundingBox.landmarks.add(boundingBox.anchorTensor).mul(factors);
+      const scaledLandmarks = landmarks.add(anchorTensor).mul(factors);
 
       return {
         box: scaleBox(box, factors).startEndTensor.squeeze(),
-        landmarks: scaledLandmarks.arraySync(),
-        probability: boundingBox.probability
+        landmarks: scaledLandmarks,
+        probability
       };
     });
   }

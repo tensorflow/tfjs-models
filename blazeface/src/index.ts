@@ -72,19 +72,23 @@ export class FaceMesh {
    * @param input The image to classify. Can be a tensor or a DOM element iamge,
    * video, or canvas.
    */
-  async estimateFace(input: tf.Tensor3D|ImageData|HTMLVideoElement|
-                     HTMLImageElement|HTMLCanvasElement): Promise<any> {
-    const prediction = tf.tidy(() => {
-      if (!(input instanceof tf.Tensor)) {
-        input = tf.browser.fromPixels(input);
-      }
-      const image = input.toFloat().expandDims(0) as tf.Tensor4D;
-      return this.blazeface.getBoundingBoxes(image as tf.Tensor4D);
-    });
+  async estimateFace(
+      input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
+      HTMLCanvasElement,
+      returnTensors = false): Promise<any> {
+    if (!(input instanceof tf.Tensor)) {
+      input = tf.browser.fromPixels(input);
+    }
+
+    const image = input.toFloat().expandDims(0) as tf.Tensor4D;
+    const prediction = await this.blazeface.getBoundingBoxes(
+        image as tf.Tensor4D, returnTensors);
 
     const faces = await Promise.all(prediction.map(async (d: any) => {
       const boxData = await d.box.array();
-      return [boxData, d.landmarks, d.probability];
+      const landmarkData = await d.landmarks.array();
+      const probabilityData = await d.probability.array();
+      return [boxData, landmarkData, probabilityData];
     }));
 
     return faces.map(([arr, landmarks, probability]) => {
