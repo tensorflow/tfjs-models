@@ -86,17 +86,17 @@ export class FaceMesh {
         image as tf.Tensor4D, returnTensors);
 
     if (returnTensors) {
-      // return prediction.map((d: any) => {
-      //   const scaledBox = scaleBox(d.box,
-      //   d.scaleFactor).startEndTensor.squeeze(); const scaledLandmarks =
-      //   d.landmarks.add(d.anchor).mul(d.scaleFactor);
+      return prediction.map((d: any) => {
+        const scaledBox =
+            scaleBox(d.box, d.scaleFactor).startEndTensor.squeeze();
 
-      //   const topLeft = scaledBox.slice([0, 0], [1, 2]);
-      //   const bottomRight = scaledBox.slice([1, 0], [1, 2]);
-      //   return {
-      //     top:
-      //   };
-      // });
+        return {
+          topLeft: scaledBox.slice([0], [2]),
+          bottomRight: scaledBox.slice([2], [2]),
+          landmarks: d.landmarks.add(d.anchor).mul(d.scaleFactor),
+          probability: d.probability
+        };
+      });
     }
 
     const faces = await Promise.all(prediction.map(async (d: any) => {
@@ -109,9 +109,8 @@ export class FaceMesh {
           (landmark[1] + anchor[1]) * d.scaleFactor[1]
         ];
       });
-      // const scaledLandmarks = d.landmarks.add(d.anchor).mul(d.scaleFactor);
+
       const boxData = await scaledBox.array();
-      // const landmarkData = await scaledLandmarks.array();
       const probabilityData = await d.probability.array();
 
       return {
