@@ -91,15 +91,20 @@ export class FaceMesh {
       const boxData = await scaledBox.array();
       const landmarkData = await scaledLandmarks.array();
       const probabilityData = await d.probability.array();
-      return [boxData, landmarkData, probabilityData];
+
+      const topLeft = (boxData as number[]).slice(0, 2);
+      const bottomLeft = (boxData as number[]).slice(2);
+
+      return {
+        top: topLeft[1],
+        left: topLeft[0],
+        width: bottomLeft[0] - topLeft[0],
+        height: bottomLeft[1] - topLeft[1],
+        landmarks: landmarkData,
+        probability: probabilityData
+      };
     }));
 
-    return faces.map(([arr, landmarks, probability]) => {
-      return {
-        box: [(arr as number[]).slice(0, 2), (arr as number[]).slice(2)],
-        landmarks,
-        probability
-      };
-    });
+    return faces;
   }
 }
