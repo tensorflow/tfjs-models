@@ -101,17 +101,17 @@ export class FaceMesh {
 
     const faces = await Promise.all(prediction.map(async (d: any) => {
       const scaledBox = scaleBox(d.box, d.scaleFactor).startEndTensor.squeeze();
-      const landmarkData = await d.landmarks.array();
-      const anchor = d.anchor as [number, number];
-      const scaledLandmarks = landmarkData.map((landmark: [number, number]) => {
-        return [
-          (landmark[0] + anchor[0]) * d.scaleFactor[0],
-          (landmark[1] + anchor[1]) * d.scaleFactor[1]
-        ];
-      });
 
-      const boxData = await scaledBox.array();
-      const probabilityData = await d.probability.array();
+      const [landmarkData, boxData, probabilityData] =
+          await Promise.all([d.landmarks, scaledBox, d.probability].map(
+              async d => await d.array()));
+
+      const anchor = d.anchor as [number, number];
+      const scaledLandmarks =
+          landmarkData.map((landmark: [number, number]) => ([
+                             (landmark[0] + anchor[0]) * d.scaleFactor[0],
+                             (landmark[1] + anchor[1]) * d.scaleFactor[1]
+                           ]));
 
       return {
         topLeft: (boxData as number[]).slice(0, 2),

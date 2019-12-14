@@ -128,7 +128,7 @@ export class BlazeFaceModel {
                            .array();
 
     const boundingBoxes = await Promise.all(boxIndices.map(
-        async (boxIndex) =>
+        async boxIndex =>
             await tf.slice(boxes, [boxIndex, 0], [1, -1]).array()));
 
     const originalHeight = inputImage.shape[1];
