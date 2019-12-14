@@ -85,22 +85,39 @@ export class FaceMesh {
     const prediction = await this.blazeface.getBoundingBoxes(
         image as tf.Tensor4D, returnTensors);
 
+    if (returnTensors) {
+      // return prediction.map((d: any) => {
+      //   const scaledBox = scaleBox(d.box,
+      //   d.scaleFactor).startEndTensor.squeeze(); const scaledLandmarks =
+      //   d.landmarks.add(d.anchor).mul(d.scaleFactor);
+
+      //   const topLeft = scaledBox.slice([0, 0], [1, 2]);
+      //   const bottomRight = scaledBox.slice([1, 0], [1, 2]);
+      //   return {
+      //     top:
+      //   };
+      // });
+    }
+
     const faces = await Promise.all(prediction.map(async (d: any) => {
       const scaledBox = scaleBox(d.box, d.scaleFactor).startEndTensor.squeeze();
-      const scaledLandmarks = d.landmarks.add(d.anchor).mul(d.scaleFactor);
+      const landmarkData = await d.landmarks.array();
+      const anchor = d.anchor as [number, number];
+      const scaledLandmarks = landmarkData.map((landmark: [number, number]) => {
+        return [
+          (landmark[0] + anchor[0]) * d.scaleFactor[0],
+          (landmark[1] + anchor[1]) * d.scaleFactor[1]
+        ];
+      });
+      // const scaledLandmarks = d.landmarks.add(d.anchor).mul(d.scaleFactor);
       const boxData = await scaledBox.array();
-      const landmarkData = await scaledLandmarks.array();
+      // const landmarkData = await scaledLandmarks.array();
       const probabilityData = await d.probability.array();
 
-      const topLeft = (boxData as number[]).slice(0, 2);
-      const bottomLeft = (boxData as number[]).slice(2);
-
       return {
-        top: topLeft[1],
-        left: topLeft[0],
-        width: bottomLeft[0] - topLeft[0],
-        height: bottomLeft[1] - topLeft[1],
-        landmarks: landmarkData,
+        topLeft: (boxData as number[]).slice(0, 2),
+        bottomRight: (boxData as number[]).slice(2),
+        landmarks: scaledLandmarks,
         probability: probabilityData
       };
     }));

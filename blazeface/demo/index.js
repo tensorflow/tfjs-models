@@ -42,8 +42,9 @@ const renderPrediction =
     if (prediction) {
       ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
       for (let i = 0; i < prediction.length; i++) {
-        const start = [prediction[i].left, prediction[i].top];
-        const size = [prediction[i].width, prediction[i].height];
+        const start = prediction[i].topLeft;
+        const end = prediction[i].bottomRight;
+        const size = [end[0] - start[0], end[1] - start[1]];
         ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
         ctx.fillRect(start[0], start[1], size[0], size[1]);
 
