@@ -87,10 +87,11 @@ export class FaceMesh {
       return [boxData, d.landmarks, d.probability];
     }));
 
-    return faces.map(([arr, landmarks]) => {
+    return faces.map(([arr, landmarks, probability]) => {
       return {
         box: [(arr as number[]).slice(0, 2), (arr as number[]).slice(2)],
-        landmarks
+        landmarks,
+        probability
       };
     });
   }
