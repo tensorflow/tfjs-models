@@ -38,7 +38,7 @@ export class BlazeFaceModel {
   private anchors: tf.Tensor2D;
   private anchorsData: number[][];
   private inputSize: tf.Tensor1D;
-  private inputSizeData: [number, number];
+  // private inputSizeData: [number, number];
   private iouThreshold: number;
   private scoreThreshold: number;
 
@@ -52,7 +52,7 @@ export class BlazeFaceModel {
     this.config = this.getAnchorsConfig();
     this.anchorsData = this.generateAnchors(width, height, this.config);
     this.anchors = tf.tensor2d(this.anchorsData);
-    this.inputSizeData = [width, height];
+    // this.inputSizeData = [width, height];
     this.inputSize = tf.tensor1d([width, height]);
 
     this.iouThreshold = iouThreshold;
@@ -128,16 +128,21 @@ export class BlazeFaceModel {
                                this.iouThreshold, this.scoreThreshold)
                            .arraySync();
     const boundingBoxes = boxIndices.map(boxIndex => {
-      const landmarks = tf.slice(detectedOutputs, [boxIndex, 5], [1, -1])
-                            .squeeze()
-                            .reshape([6, -1])
-                            .arraySync() as number[][];
+      const landmarks =
+          tf.slice(detectedOutputs, [boxIndex, 5], [1, -1]).squeeze().reshape([
+            6, -1
+          ]);
+      // const landmarks = tf.slice(detectedOutputs, [boxIndex, 5], [1, -1])
+      //                       .squeeze()
+      //                       .reshape([6, -1])
+      //                       .arraySync() as number[][];
 
       return {
         box: tf.slice(boxes, [boxIndex, 0], [1, -1]).arraySync(),
         probability: tf.slice(scores, [boxIndex], [1]).arraySync(),
         landmarks,
-        anchor: this.anchorsData[boxIndex]
+        anchor: this.anchorsData[boxIndex],
+        anchorTensor: this.anchors.slice([boxIndex, 0], [1, 2])
       };
     });
 
@@ -145,23 +150,27 @@ export class BlazeFaceModel {
     const originalWidth = inputImage.shape[2];
     const factors =
         tf.div([originalWidth, originalHeight], this.inputSize) as tf.Tensor1D;
-    const factorsData = [
-      originalWidth / this.inputSizeData[0],
-      originalHeight / this.inputSizeData[1]
-    ];
+    // const factorsData = [
+    //   originalWidth / this.inputSizeData[0],
+    //   originalHeight / this.inputSizeData[1]
+    // ];
 
     return boundingBoxes.map(boundingBox => {
       const startEndTensor = tf.tensor2d(boundingBox.box);
       const box = createBox(startEndTensor);
 
-      const scaledLandmarks = boundingBox.landmarks.map(
-          landmark => landmark.map(
-              (coord, coordIndex) => (coord + boundingBox.anchor[coordIndex]) *
-                  factorsData[coordIndex]));
+      // const scaledLandmarks = boundingBox.landmarks.map(
+      //     landmark => landmark.map(
+      //         (coord, coordIndex) => (coord + boundingBox.anchor[coordIndex])
+      //         *
+      //             factorsData[coordIndex]));
+
+      const scaledLandmarks =
+          boundingBox.landmarks.add(boundingBox.anchorTensor).mul(factors);
 
       return {
         box: scaleBox(box, factors).startEndTensor.squeeze(),
-        landmarks: scaledLandmarks,
+        landmarks: scaledLandmarks.arraySync(),
         probability: boundingBox.probability
       };
     });
