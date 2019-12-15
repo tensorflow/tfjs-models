@@ -35,8 +35,12 @@ class HandPipeline {
     // this.ctx.scale(-1, 1);
   }
 
+  calculateHandPalmCenter(box) {
+    return tf.gather(box.landmarks, [0, 2]).mean(0);
+  }
+
   /**
-   * Calculates face mesh for specific image (468 points).
+   * Calculates hand mesh for specific image (21 points).
    *
    * @param {tf.Tensor!} image_tensor - image tensor of shape [1, H, W, 3].
    *
@@ -56,89 +60,146 @@ class HandPipeline {
       this.runs_without_hand_detector++;
     }
 
-    const box = this.rois[0];
     const width = 256., height = 256.;
+    const box = this.rois[0];
 
     // TODO (vakunov): move to configuration
     const scale_factor = 2.6;
-    const shifts = [0, -0.25];
-
+    const shifts = [0, -0.2];
     const angle = this.calculateRotation(box);
-    const box_for_cut = this.transform_box(box, angle, scale_factor, shifts);
-    const cutted_hand = box_for_cut.cutFromAndResize(image_tensor, [height, width]);
-    const handImage = tf.image.rotate(cutted_hand, angle).div(255);
 
-    // this.clearROIS(); // TODO: remove
+    const handpalm_center = box.getCenter().gather(0);
+    const x = handpalm_center.arraySync();
+    const handpalm_center_relative = [x[0] / image_tensor.shape[2],
+    x[1] / image_tensor.shape[1]];
+    const rotated_image = tf.image.rotate(image_tensor, angle, 0, handpalm_center_relative);
+    const box_landmarks_homo = tf.concat([box.landmarks, tf.ones([7]).expandDims(1)], 1);
+
+    const palm_rotation_matrix = this.build_rotation_matrix_with_center(
+      -angle, handpalm_center);
+
+    const rotated_landmarks = tf.matMul(palm_rotation_matrix,
+      box_landmarks_homo.transpose()).transpose().slice([0, 0], [7, 2]);
+
+    let box_for_cut = this.calculateLandmarksBoundingBox(rotated_landmarks)
+      .increaseBox(scale_factor);
+    box_for_cut = this.makeSquareBox(box_for_cut);
+    box_for_cut = this.shiftBox(box_for_cut, shifts);
+
+    const cutted_hand = box_for_cut.cutFromAndResize(rotated_image,
+      [width, height]);
+    const handImage = cutted_hand.div(255);
+
     const output = this.handtrackModel.predict(handImage);
 
     const coords3d = tf.reshape(output[0], [-1, 3]);
     const coords2d = coords3d.slice([0, 0], [-1, 2]);
 
-    if (true) {
-      const image = handImage.squeeze([0]);
+    const coords2d_scaled = tf.mul(coords2d.sub(tf.tensor([128, 128])),
+      tf.div(box_for_cut.getSize(), [width, height]));
 
-      const keeped_coords2d = tf.keep(coords2d);
-      tf.browser.toPixels(tf.keep(image)).then((bytes) => {
-        const imageData = new ImageData(bytes, width, height);
-        this.ctx.clearRect(0, 0, width, height);
-        this.ctx.putImageData(imageData, 0, 0);
+    const coords_rotation_matrix = this.build_rotation_matrix_with_center(
+      angle, tf.tensor([0, 0]));
 
-        drawKeypoints(this.ctx, keeped_coords2d);
-        tf.dispose(image);
-        tf.dispose(keeped_coords2d);
-      });
+    const coords2d_homo = tf.concat([coords2d_scaled, tf.ones([21]).expandDims(1)], 1);
 
-    }
+    const coords2d_rotated = tf.matMul(coords_rotation_matrix, coords2d_homo,
+      false, true).transpose().slice([0, 0], [-1, 2]);
 
-    const coords2d_scaled = tf.mul(coords2d,
-      tf.div(box.getSize(), [width, height]))
-      .mul(scale_factor)
-      .add(box.startPoint);
+    const original_center =
+      tf.matMul(this.inverse(palm_rotation_matrix),
+        tf.concat([box_for_cut.getCenter(), tf.ones([1]).expandDims(1)], 1).transpose()
+      ).transpose().slice([0, 0], [1, 2]);
 
-    const landmarks_box = this.calculateLandmarsBoundingBox(coords2d_scaled);
-    // this.updateROIFromFacedetector(landmarks_box);
+    const coords2d_result = coords2d_rotated.add(original_center);
 
-    const res = coords2d_scaled;
+    const landmarks_ids = [0, 5, 9, 13, 17, 1, 2];
+    const selected_landmarks = tf.gather(coords2d_result, landmarks_ids);
+
+    const landmarks_box = this.calculateLandmarksBoundingBox(selected_landmarks);
+    this.updateROIFromFacedetector(landmarks_box);
 
     const handFlag = output[1].arraySync()[0][0];
-    // console.log(handFlag);
-    if (true || handFlag < 0.9) { // TODO: move to configuration
+    if (handFlag < 0.8) { // TODO: move to configuration
       this.clearROIS();
+      return null;
     }
 
-    return box.landmarks;
+    return coords2d_result;
   }
 
-  transform_box(box, rotation, scale_factor, shifts) {
-    const new_box = box.increaseBox(scale_factor);
+  inverse(matrix) {
+    const rotation_part = tf.slice(matrix, [0, 0], [2, 2]).transpose();
+    const translate_part = tf.slice(matrix, [0, 2], [2, 1]);
+    const change_translation = tf.neg(tf.matMul(rotation_part, translate_part));
+    const inverted = tf.concat([rotation_part, change_translation], 1);
+    return tf.concat([inverted, tf.tensor([[0, 0, 1]])], 0);
+  }
 
-    const boxSize = tf.sub(new_box.endPoint, new_box.startPoint);
+  makeSquareBox(box) {
+    const centers = box.getCenter();
+    const size = box.getSize();
+    const maxEdge = tf.max(size, 1);
 
+    const half_size = tf.div(maxEdge, 2);
+
+    const new_starts = tf.sub(centers, half_size);
+    const new_ends = tf.add(centers, half_size);
+
+    return new Box(tf.concat2d([new_starts, new_ends], 1));
+  }
+
+  shiftBox(box, shifts) {
+    const boxSize = tf.sub(box.endPoint, box.startPoint);
     const absolute_shifts = tf.mul(boxSize, tf.tensor(shifts));
+    const new_start = tf.add(box.startPoint, absolute_shifts);
+    const new_end = tf.add(box.endPoint, absolute_shifts);
+    const new_coordinates = tf.concat2d([new_start, new_end], 1);
 
+    return new Box(new_coordinates);
+  }
+
+  calculateLandmarksBoundingBox(landmarks) {
+    const xs = landmarks.slice([0, 0], [-1, 1]);
+    const ys = landmarks.slice([0, 1], [-1, 1]);
+
+    const box_min_max = tf.stack([xs.min(), ys.min(), xs.max(), ys.max()]);
+    return new Box(box_min_max.expandDims(0), landmarks);
+  }
+
+  build_translation_matrix(translation) {
+    // last column
+    const only_tranalation = tf.pad(translation.expandDims(0),
+      [[2, 0], [0, 1]]).transpose();
+
+    return tf.add(tf.eye(3), only_tranalation);
+  }
+
+  build_rotation_matrix_with_center(rotation, center) {
+    const cosa = Math.cos(rotation);
+    const sina = Math.sin(rotation);
+
+    const rotation_matrix = tf.tensor([[cosa, -sina, 0],
+    [sina, cosa, 0],
+    [0, 0, 1]]);
+
+    return tf.matMul(tf.matMul(
+      this.build_translation_matrix(center), rotation_matrix),
+      this.build_translation_matrix(tf.neg(center)));
+  }
+
+  build_rotation_matrix(rotation, center) {
     const cosa = Math.cos(rotation);
     const sina = Math.sin(rotation);
 
     const rotation_matrix = tf.tensor([[cosa, -sina], [sina, cosa]]);
-    const rotated_shifts = tf.matMul(rotation_matrix, tf.transpose(absolute_shifts));
-
-    const new_start = tf.add(new_box.startPoint, rotated_shifts.transpose());
-    const new_end = tf.add(new_box.endPoint, rotated_shifts.transpose());
-
-    const new_coordinates = tf.concat2d([new_start, new_end], 1);
-    return new Box(new_coordinates);
-
-    // rect->set_x_center(rect->x_center() + x_shift);
-    // rect->set_y_center(rect->y_center() + y_shift);
+    return rotation_matrix;
   }
+
 
   calculateRotation(box) {
     let keypointsArray = box.landmarks.arraySync();
-    if (keypointsArray.length == 7) {
-      return computeRotation(keypointsArray[0], keypointsArray[2]);
-    } else if (keypointsArray.length == 21) {
-      return computeRotation(keypointsArray[0], keypointsArray[9]);
-    }
+    return computeRotation(keypointsArray[0], keypointsArray[2]);
   }
 
   updateROIFromFacedetector(box) {
@@ -170,15 +231,7 @@ class HandPipeline {
     return this.force_update || has_no_rois || should_check_for_more_hands;
   }
 
-  calculateLandmarsBoundingBox(landmarks) {
-    const xs = landmarks.slice([0, 0], [LANDMARKS_COUNT, 1]);
-    const ys = landmarks.slice([0, 1], [LANDMARKS_COUNT, 1]);
-
-    const box_min_max = tf.stack([xs.min(), ys.min(), xs.max(), ys.max()]);
-    return new Box(box_min_max.expandDims(0), landmarks);
-  }
 }
-
 
 let ANCHORS = [
   { 'w': 1.0, 'h': 1.0, 'x_center': 0.015625, 'y_center': 0.015625 },
@@ -3125,7 +3178,7 @@ let ANCHORS = [
   { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 },
   { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 },
   { 'w': 1.0, 'h': 1.0, 'x_center': 0.9375, 'y_center': 0.9375 },
-]
+];
 
 class HandDetectModel {
 
@@ -3193,7 +3246,7 @@ class HandDetectModel {
       return [null, null]; // TODO (vakunov): don't return null. Empty box?
     }
 
-    // TODO (vakunov): change to multi face case
+    // TODO (vakunov): change to multi hand case
     const box_index = box_indices[0];
     const result_box = tf.slice(boxes, [box_index, 0], [1, -1]);
 
@@ -3201,7 +3254,6 @@ class HandDetectModel {
       .reshape([-1, 2]);
     return [result_box, result_landmarks];
   }
-  // landmarks.print();
 
   getSingleBoundingBox(input_image) {
     const original_h = input_image.shape[1];
