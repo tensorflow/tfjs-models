@@ -18,6 +18,7 @@
 import * as use from '@tensorflow-models/universal-sentence-encoder';
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
+export {version} from './version';
 
 const BASE_PATH =
     'https://storage.googleapis.com/tfjs-models/savedmodel/toxicity/';

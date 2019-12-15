@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/speech-commands",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Speech-command recognizer in TensorFlow.js",
   "main": "dist/index.js",
   "unpkg": "dist/speech-commands.min.js",
@@ -44,7 +44,7 @@
     "build": "tsc",
     "lint": "tslint -p . -t verbose",
     "publish-local": "yarn build && rollup -c && yalc push",
-    "publish-npm": "yarn build && rollup -c && npm publish",
+    "build-npm": "yarn build && rollup -c",
     "test": "ts-node run_tests.ts"
   },
   "license": "Apache-2.0"

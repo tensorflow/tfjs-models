@@ -21,6 +21,7 @@ import * as tf from '@tensorflow/tfjs-core';
 import {DeepLabInput, DeepLabOutput, ModelArchitecture, ModelConfig, PredictionConfig} from './types';
 import {getColormap, getLabels, getURL, toInputTensor, toSegmentationImage} from './utils';
 
+export {version} from './version';
 export {getColormap, getLabels, getURL, toSegmentationImage};
 
 /**
