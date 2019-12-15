@@ -3394,7 +3394,7 @@ function isSupportedPlatform() {
 
 // Model loading
 const HANDDETECT_MODEL_PATH = "https://storage.googleapis.com/learnjs-data/tfjs_converter_v1.3.2_master/handdetector_hourglass_short_2019_03_25_v0/model.json";
-const HANDTRACK_MODEL_PATH = "https://bertviz.s3.amazonaws.com/handskeleton/model.json"
+const HANDTRACK_MODEL_PATH = "https://storage.googleapis.com/learnjs-data/tfjs_converter_v1.3.2_master/handskeleton_3d_handflag_2019_08_19_v0/model.json";
 
 tf.registerOp('Prelu', (node) => {
   const x = node.inputs[0];
