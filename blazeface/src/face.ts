@@ -150,10 +150,9 @@ export class BlazeFaceModel {
     const originalHeight = inputImage.shape[1];
     const originalWidth = inputImage.shape[2];
 
-    let scaleFactor: [number, number]|tf.Tensor1D;
+    let scaleFactor;
     if (returnTensors) {
-      scaleFactor = tf.div([originalWidth, originalHeight], this.inputSize) as
-          tf.Tensor1D;
+      scaleFactor = tf.div([originalWidth, originalHeight], this.inputSize);
     } else {
       scaleFactor = [
         originalWidth / this.inputSizeData[0],
@@ -164,9 +163,9 @@ export class BlazeFaceModel {
     const annotatedBoxes = boundingBoxes.map((boundingBox, i) => tf.tidy(() => {
       const boxIndex = boxIndices[i];
 
-      let anchor: [number, number]|tf.Tensor2D;
+      let anchor;
       if (returnTensors) {
-        anchor = this.anchors.slice([boxIndex, 0], [1, 2]) as tf.Tensor2D;
+        anchor = this.anchors.slice([boxIndex, 0], [1, 2]);
       } else {
         anchor = this.anchorsData[boxIndex] as [number, number];
       }
@@ -202,7 +201,7 @@ export class BlazeFaceModel {
       if (!(input instanceof tf.Tensor)) {
         input = tf.browser.fromPixels(input);
       }
-      return (input as tf.Tensor).toFloat().expandDims(0) as tf.Tensor4D;
+      return (input as tf.Tensor).toFloat().expandDims(0);
     });
     const [prediction, scaleFactor] =
         await this.getBoundingBoxes(image as tf.Tensor4D, returnTensors);
