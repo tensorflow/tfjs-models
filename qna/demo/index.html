@@ -15,20 +15,18 @@ limitations under the License.
 <!doctype html>
 <html>
 
+
 <body>
-  <h1>TensorFlow.js Object Detection</h1>
-  <select id='base_model'>
-    <option value="lite_mobilenet_v2">SSD Lite Mobilenet V2</option>
-    <option value="mobilenet_v1">SSD Mobilenet v1</option>
-    <option value="mobilenet_v2">SSD Mobilenet v2</option>
-  </select>
-  <button type="button" id="run">Run</button>
-  <button type="button" id="toggle">Toggle Image</button>
-<div>
-  <img id="image"/>
-  <canvas id="canvas" width="600" height="399"></canvas>
-</div>
+  <div>
+    <div id='context'>Nikola Tesla (Serbian Cyrillic: 10 July 1856 - 2013 7 January 1943) was a Serbian
+      American inventor, electrical engineer, mechanical engineer, physicist, and
+      futurist best known for his contributions to the design of the modern alternating
+      current (AC) electricity supply system.</div>
+    <input type=text id="question">
+    <div id='answer'></div>
+  </div>
 </body>
 
-<script src="index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+<script src="./index.js"></script>
 </html>

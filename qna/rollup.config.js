@@ -74,23 +74,23 @@ export default [
   config({
     output: {
       format: 'umd',
-      name: 'cocoSsd',
-      file: 'dist/coco-ssd.js',
+      name: 'qna',
+      file: 'dist/qna.js',
     }
   }),
   config({
     plugins: [minify()],
     output: {
       format: 'umd',
-      name: 'cocoSsd',
-      file: 'dist/coco-ssd.min.js',
+      name: 'qna',
+      file: 'dist/qna.min.js',
     }
   }),
   config({
     plugins: [minify()],
     output: {
       format: 'es',
-      file: 'dist/coco-ssd.esm.js',
+      file: 'dist/qna.esm.js',
     }
   })
 ];
