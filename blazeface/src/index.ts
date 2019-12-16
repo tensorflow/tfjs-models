@@ -18,6 +18,7 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import {BlazeFaceModel} from './face';
 
+// TODO(annxingyuan): use TFHub link once it's available.
 const BLAZEFACE_MODEL_URL =
     'https://storage.googleapis.com/learnjs-data/facemesh_staging/facedetector_tfjs/model.json';
 

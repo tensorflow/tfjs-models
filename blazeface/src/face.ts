@@ -69,7 +69,6 @@ const decodeBounds = (boxOutputs: tf.Tensor2D, anchors: tf.Tensor2D,
                       inputSize: tf.Tensor1D): tf.Tensor2D => {
   const boxStarts = tf.slice(boxOutputs, [0, 1], [-1, 2]);
   const centers = tf.add(boxStarts, anchors);
-
   const boxSizes = tf.slice(boxOutputs, [0, 3], [-1, 2]);
 
   const boxSizesNormalized = tf.div(boxSizes, inputSize);
