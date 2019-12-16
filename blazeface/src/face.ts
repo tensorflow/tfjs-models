@@ -27,7 +27,7 @@ type Face = {
   probability: number|tf.Tensor1D
 };
 
-type RawFace = {
+type BlazeFacePrediction = {
   box: Box,
   landmarks: tf.Tensor2D,
   probability: tf.Tensor1D,
@@ -78,12 +78,11 @@ const decodeBounds = (boxOutputs: tf.Tensor2D, anchors: tf.Tensor2D,
   const starts = tf.sub(centersNormalized, tf.div(boxSizesNormalized, 2));
   const ends = tf.add(centersNormalized, tf.div(boxSizesNormalized, 2));
 
+  const startNormalized = tf.mul(starts, inputSize);
+  const endNormalized = tf.mul(ends, inputSize);
+
   return tf.concat2d(
-      [
-        tf.mul(starts, inputSize) as tf.Tensor2D,
-        tf.mul(ends, inputSize) as tf.Tensor2D
-      ],
-      1);
+      [startNormalized as tf.Tensor2D, endNormalized as tf.Tensor2D], 1);
 };
 
 /**
@@ -125,13 +124,11 @@ export class BlazeFaceModel {
     const [detectedOutputs, boxes, scores] = tf.tidy(() => {
       const resizedImage = inputImage.resizeBilinear([this.width, this.height]);
       const normalizedImage = tf.mul(tf.sub(resizedImage.div(255), 0.5), 2);
-
-      const prediction =
-          (this.blazeFaceModel.predict(normalizedImage) as tf.Tensor3D)
-              .squeeze() as tf.Tensor2D;
+      const batchedPrediction = this.blazeFaceModel.predict(normalizedImage);
+      const prediction = (batchedPrediction as tf.Tensor3D).squeeze();
 
       const decodedBounds =
-          decodeBounds(prediction, this.anchors, this.inputSize);
+          decodeBounds(prediction as tf.Tensor2D, this.anchors, this.inputSize);
       const logits = tf.slice(prediction as tf.Tensor2D, [0, 0], [-1, 1]);
       return [prediction, decodedBounds, tf.sigmoid(logits).squeeze()];
     });
@@ -212,50 +209,54 @@ export class BlazeFaceModel {
     image.dispose();
 
     if (returnTensors) {
-      return (prediction as RawFace[]).map((face: RawFace) => {
-        const scaledBox = scaleBox(face.box, scaleFactor as tf.Tensor1D)
-                              .startEndTensor.squeeze();
+      return (prediction as BlazeFacePrediction[])
+          .map((face: BlazeFacePrediction) => {
+            const scaledBox = scaleBox(face.box, scaleFactor as tf.Tensor1D)
+                                  .startEndTensor.squeeze();
 
-        return {
-          topLeft: scaledBox.slice([0], [2]),
-          bottomRight: scaledBox.slice([2], [2]),
-          landmarks: face.landmarks.add(face.anchor).mul(scaleFactor),
-          probability: face.probability
-        } as Face;
-      });
+            return {
+              topLeft: scaledBox.slice([0], [2]),
+              bottomRight: scaledBox.slice([2], [2]),
+              landmarks: face.landmarks.add(face.anchor).mul(scaleFactor),
+              probability: face.probability
+            } as Face;
+          });
     }
 
-    return Promise.all((prediction as RawFace[]).map(async (face: RawFace) => {
-      const scaledBox = tf.tidy(() => {
-        return scaleBox(face.box, scaleFactor as [number, number])
-            .startEndTensor.squeeze();
-      });
+    return Promise.all(
+        (prediction as BlazeFacePrediction[])
+            .map(async (face: BlazeFacePrediction) => {
+              const scaledBox = tf.tidy(() => {
+                return scaleBox(face.box, scaleFactor as [number, number])
+                    .startEndTensor.squeeze();
+              });
 
-      const [landmarkData, boxData, probabilityData] =
-          await Promise.all([face.landmarks, scaledBox, face.probability].map(
-              async d => d.array()));
+              const [landmarkData, boxData, probabilityData] =
+                  await Promise.all([
+                    face.landmarks, scaledBox, face.probability
+                  ].map(async d => d.array()));
 
-      const anchor = face.anchor as [number, number];
-      const scaledLandmarks =
-          (landmarkData as number[][])
-              .map((landmark: [number, number]) => ([
-                     (landmark[0] + anchor[0]) *
-                         (scaleFactor as [number, number])[0],
-                     (landmark[1] + anchor[1]) *
-                         (scaleFactor as [number, number])[1]
-                   ]));
+              const anchor = face.anchor as [number, number];
+              const scaledLandmarks =
+                  (landmarkData as number[][])
+                      .map((landmark: [number, number]) => ([
+                             (landmark[0] + anchor[0]) *
+                                 (scaleFactor as [number, number])[0],
+                             (landmark[1] + anchor[1]) *
+                                 (scaleFactor as [number, number])[1]
+                           ]));
 
-      scaledBox.dispose();
-      disposeBox(face.box);
-      face.landmarks.dispose();
-      face.probability.dispose();
+              scaledBox.dispose();
+              disposeBox(face.box);
+              face.landmarks.dispose();
+              face.probability.dispose();
 
-      return {
-        topLeft: (boxData as number[]).slice(0, 2),
-        bottomRight: (boxData as number[]).slice(2),
-        landmarks: scaledLandmarks,
-        probability: probabilityData
-      } as Face;
-    }));
+              return {
+                topLeft: (boxData as number[]).slice(0, 2),
+                bottomRight: (boxData as number[]).slice(2),
+                landmarks: scaledLandmarks,
+                probability: probabilityData
+              } as Face;
+            }));
   }
 }
