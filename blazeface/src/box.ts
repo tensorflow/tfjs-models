@@ -30,13 +30,11 @@ export const disposeBox = (box: Box): void => {
   box.endPoint.dispose();
 };
 
-export const createBox = (startEndTensor: tf.Tensor2D): Box => {
-  return {
-    startEndTensor,
-    startPoint: tf.slice(startEndTensor, [0, 0], [-1, 2]),
-    endPoint: tf.slice(startEndTensor, [0, 2], [-1, 2])
-  };
-};
+export const createBox = (startEndTensor: tf.Tensor2D): Box => ({
+  startEndTensor,
+  startPoint: tf.slice(startEndTensor, [0, 0], [-1, 2]),
+  endPoint: tf.slice(startEndTensor, [0, 2], [-1, 2])
+});
 
 export const scaleBox = (box: Box, factors: tf.Tensor1D|[number, number]) => {
   const starts = tf.mul(box.startPoint, factors);
