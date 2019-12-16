@@ -47,14 +47,12 @@ const renderPrediction = async () => {
 
   if (prediction) {
     if (returnTensors) {
-      prediction = await Promise.all(prediction.map(async (d) => {
-        return {
-          topLeft: await d.topLeft.array(),
-          bottomRight: await d.bottomRight.array(),
-          landmarks: await d.landmarks.array(),
-          probability: await d.probability.array()
-        };
-      }));
+      prediction = await Promise.all(prediction.map(async (d) => ({
+        topLeft: await d.topLeft.array(),
+        bottomRight: await d.bottomRight.array(),
+        landmarks: await d.landmarks.array(),
+        probability: await d.probability.array()
+      })));
     }
 
     ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
