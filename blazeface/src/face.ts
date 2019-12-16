@@ -18,7 +18,21 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {createBox, disposeBox, scaleBox} from './box';
+import {Box, createBox, disposeBox, scaleBox} from './box';
+
+type Face = {
+  topLeft: [number, number]|tf.Tensor1D,
+  bottomRight: [number, number]|tf.Tensor1D,
+  landmarks: number[][]|tf.Tensor2D,
+  probability: number|tf.Tensor1D
+};
+
+type RawFace = {
+  box: Box,
+  landmarks: tf.Tensor2D,
+  probability: tf.Tensor1D,
+  anchor: tf.Tensor2D|[number, number]
+};
 
 const ANCHORS_CONFIG = {
   'strides': [8, 16],
@@ -186,7 +200,7 @@ export class BlazeFaceModel {
   async estimateFace(
       input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
       HTMLCanvasElement,
-      returnTensors = false): Promise<any> {
+      returnTensors = false): Promise<Face[]> {
     const image = tf.tidy(() => {
       if (!(input instanceof tf.Tensor)) {
         input = tf.browser.fromPixels(input);
@@ -198,7 +212,7 @@ export class BlazeFaceModel {
     image.dispose();
 
     if (returnTensors) {
-      return (prediction as any[]).map((d: any) => {
+      return (prediction as RawFace[]).map((d: RawFace) => {
         const scaledBox = scaleBox(d.box, scaleFactor as tf.Tensor1D)
                               .startEndTensor.squeeze();
 
@@ -207,11 +221,11 @@ export class BlazeFaceModel {
           bottomRight: scaledBox.slice([2], [2]),
           landmarks: d.landmarks.add(d.anchor).mul(scaleFactor),
           probability: d.probability
-        };
+        } as Face;
       });
     }
 
-    return Promise.all((prediction as any[]).map(async (d: any) => {
+    return Promise.all((prediction as RawFace[]).map(async (d: RawFace) => {
       const scaledBox = tf.tidy(() => {
         return scaleBox(d.box, scaleFactor as [number, number])
             .startEndTensor.squeeze();
@@ -222,11 +236,14 @@ export class BlazeFaceModel {
               async innerD => innerD.array()));
 
       const anchor = d.anchor as [number, number];
-      const scaledLandmarks = landmarkData.map(
-          (landmark: [number, number]) => ([
-            (landmark[0] + anchor[0]) * (scaleFactor as [number, number])[0],
-            (landmark[1] + anchor[1]) * (scaleFactor as [number, number])[1]
-          ]));
+      const scaledLandmarks =
+          (landmarkData as number[][])
+              .map((landmark: [number, number]) => ([
+                     (landmark[0] + anchor[0]) *
+                         (scaleFactor as [number, number])[0],
+                     (landmark[1] + anchor[1]) *
+                         (scaleFactor as [number, number])[1]
+                   ]));
 
       scaledBox.dispose();
       disposeBox(d.box);
@@ -238,7 +255,7 @@ export class BlazeFaceModel {
         bottomRight: (boxData as number[]).slice(2),
         landmarks: scaledLandmarks,
         probability: probabilityData
-      };
+      } as Face;
     }));
   }
 }
