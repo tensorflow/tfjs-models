@@ -111,25 +111,29 @@ export class BlazeFaceModel {
   }
 
   async getBoundingBoxes(inputImage: tf.Tensor4D, returnTensors: boolean) {
-    const resizedImage = inputImage.resizeBilinear([this.width, this.height]);
-    const normalizedImage = tf.mul(tf.sub(resizedImage.div(255), 0.5), 2);
+    const [detectedOutputs, boxes, scores] = tf.tidy(() => {
+      const resizedImage = inputImage.resizeBilinear([this.width, this.height]);
+      const normalizedImage = tf.mul(tf.sub(resizedImage.div(255), 0.5), 2);
 
-    const detectedOutputs =
-        (this.blazeFaceModel.predict(normalizedImage) as tf.Tensor3D)
-            .squeeze() as tf.Tensor2D;
+      const prediction =
+          (this.blazeFaceModel.predict(normalizedImage) as tf.Tensor3D)
+              .squeeze() as tf.Tensor2D;
 
-    const boxes = this.decodeBounds(detectedOutputs);
-    const logits = tf.slice(detectedOutputs as tf.Tensor2D, [0, 0], [-1, 1]);
-    const scores = tf.sigmoid(logits).squeeze();
-    const boxIndices = await tf.image
-                           .nonMaxSuppression(
-                               boxes, scores as tf.Tensor1D, this.maxFaces,
-                               this.iouThreshold, this.scoreThreshold)
-                           .array();
+      const decodedBounds = this.decodeBounds(prediction);
+      const logits = tf.slice(prediction as tf.Tensor2D, [0, 0], [-1, 1]);
+      return [prediction, decodedBounds, tf.sigmoid(logits).squeeze()];
+    });
+
+    const boxIndices =
+        await tf.image
+            .nonMaxSuppression(
+                boxes as tf.Tensor2D, scores as tf.Tensor1D, this.maxFaces,
+                this.iouThreshold, this.scoreThreshold)
+            .array();
 
     const boundingBoxes = await Promise.all(boxIndices.map(
-        async boxIndex =>
-            await tf.slice(boxes, [boxIndex, 0], [1, -1]).array()));
+        async (boxIndex: number) =>
+            tf.slice(boxes, [boxIndex, 0], [1, -1]).array()));
 
     const originalHeight = inputImage.shape[1];
     const originalWidth = inputImage.shape[2];
@@ -145,7 +149,7 @@ export class BlazeFaceModel {
       ];
     }
 
-    return boundingBoxes.map((boundingBox, i) => {
+    const annotatedBoxes = boundingBoxes.map((boundingBox, i) => {
       const boxIndex = boxIndices[i];
 
       let anchor: [number, number]|tf.Tensor2D;
@@ -156,7 +160,7 @@ export class BlazeFaceModel {
       }
 
       return {
-        box: createBox(tf.tensor2d(boundingBox)),
+        box: createBox(tf.tensor2d(boundingBox as number[][])),
         landmarks: tf.slice(detectedOutputs, [boxIndex, 5], [1, -1])
                        .squeeze()
                        .reshape([6, -1]),
@@ -165,5 +169,11 @@ export class BlazeFaceModel {
         scaleFactor
       };
     });
+
+    boxes.dispose();
+    scores.dispose();
+    detectedOutputs.dispose();
+
+    return annotatedBoxes;
   }
 }
