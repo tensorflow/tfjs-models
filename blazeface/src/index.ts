@@ -16,9 +16,6 @@
  */
 
 import * as tfconv from '@tensorflow/tfjs-converter';
-import * as tf from '@tensorflow/tfjs-core';
-
-import {disposeBox, scaleBox} from './box';
 import {BlazeFaceModel} from './face';
 
 const BLAZEFACE_MODEL_URL =
@@ -42,91 +39,9 @@ export async function load({
   iouThreshold = 0.3,
   scoreThreshold = 0.75
 } = {}) {
-  const faceModel = await tfconv.loadGraphModel(BLAZEFACE_MODEL_URL);
-  const faceMesh = new FaceMesh();
-  await faceMesh.load(
-      maxFaces, inputWidth, inputHeight, iouThreshold, scoreThreshold,
-      faceModel);
+  const blazeface = await tfconv.loadGraphModel(BLAZEFACE_MODEL_URL);
 
-  return faceMesh;
-}
-
-// type FaceBoundingBox = [[number, number], [number, number]];
-
-export class FaceMesh {
-  private blazeface: BlazeFaceModel;
-
-  async load(
-      maxFaces: number, inputWidth: number, inputHeight: number,
-      iouThreshold: number, scoreThreshold: number,
-      blazeFaceModel: tfconv.GraphModel) {
-    this.blazeface = new BlazeFaceModel(
-        blazeFaceModel, inputWidth, inputHeight, maxFaces, iouThreshold,
-        scoreThreshold);
-  }
-
-  /**
-   * Returns an array of faces in an image.
-   *
-   * @param input The image to classify. Can be a tensor or a DOM element iamge,
-   * video, or canvas.
-   */
-  async estimateFace(
-      input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
-      HTMLCanvasElement,
-      returnTensors = false): Promise<any> {
-    const image = tf.tidy(() => {
-      if (!(input instanceof tf.Tensor)) {
-        input = tf.browser.fromPixels(input);
-      }
-      return (input as tf.Tensor).toFloat().expandDims(0) as tf.Tensor4D;
-    });
-    const [prediction, scaleFactor] = await this.blazeface.getBoundingBoxes(
-        image as tf.Tensor4D, returnTensors);
-    image.dispose();
-
-    if (returnTensors) {
-      return (prediction as any[]).map((d: any) => {
-        const scaledBox = scaleBox(d.box, scaleFactor as tf.Tensor1D)
-                              .startEndTensor.squeeze();
-
-        return {
-          topLeft: scaledBox.slice([0], [2]),
-          bottomRight: scaledBox.slice([2], [2]),
-          landmarks: d.landmarks.add(d.anchor).mul(scaleFactor),
-          probability: d.probability
-        };
-      });
-    }
-
-    return Promise.all((prediction as any[]).map(async (d: any) => {
-      const scaledBox = tf.tidy(() => {
-        return scaleBox(d.box, scaleFactor as [number, number])
-            .startEndTensor.squeeze();
-      });
-
-      const [landmarkData, boxData, probabilityData] =
-          await Promise.all([d.landmarks, scaledBox, d.probability].map(
-              async innerD => innerD.array()));
-
-      const anchor = d.anchor as [number, number];
-      const scaledLandmarks = landmarkData.map(
-          (landmark: [number, number]) => ([
-            (landmark[0] + anchor[0]) * (scaleFactor as [number, number])[0],
-            (landmark[1] + anchor[1]) * (scaleFactor as [number, number])[1]
-          ]));
-
-      scaledBox.dispose();
-      disposeBox(d.box);
-      d.landmarks.dispose();
-      d.probability.dispose();
-
-      return {
-        topLeft: (boxData as number[]).slice(0, 2),
-        bottomRight: (boxData as number[]).slice(2),
-        landmarks: scaledLandmarks,
-        probability: probabilityData
-      };
-    }));
-  }
+  return new BlazeFaceModel(
+      blazeface, inputWidth, inputHeight, maxFaces, iouThreshold,
+      scoreThreshold);
 }
