@@ -42,9 +42,12 @@ export async function load({
   iouThreshold = 0.3,
   scoreThreshold = 0.75
 } = {}) {
+  const faceModel = await tfconv.loadGraphModel(BLAZEFACE_MODEL_URL);
   const faceMesh = new FaceMesh();
   await faceMesh.load(
-      maxFaces, inputWidth, inputHeight, iouThreshold, scoreThreshold);
+      maxFaces, inputWidth, inputHeight, iouThreshold, scoreThreshold,
+      faceModel);
+
   return faceMesh;
 }
 
@@ -55,16 +58,11 @@ export class FaceMesh {
 
   async load(
       maxFaces: number, inputWidth: number, inputHeight: number,
-      iouThreshold: number, scoreThreshold: number) {
-    const blazeFaceModel = await this.loadFaceModel();
-
+      iouThreshold: number, scoreThreshold: number,
+      blazeFaceModel: tfconv.GraphModel) {
     this.blazeface = new BlazeFaceModel(
         blazeFaceModel, inputWidth, inputHeight, maxFaces, iouThreshold,
         scoreThreshold);
-  }
-
-  loadFaceModel(): Promise<tfconv.GraphModel> {
-    return tfconv.loadGraphModel(BLAZEFACE_MODEL_URL);
   }
 
   /**
