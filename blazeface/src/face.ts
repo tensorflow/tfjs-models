@@ -20,13 +20,16 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {Box, createBox, disposeBox, scaleBox} from './box';
 
-type Face = {
+// The user-facing object describing a detected face.
+type NormalizedFace = {
   topLeft: [number, number]|tf.Tensor1D,
   bottomRight: [number, number]|tf.Tensor1D,
   landmarks: number[][]|tf.Tensor2D,
   probability: number|tf.Tensor1D
 };
 
+// The blazeface model predictions containing unnormalized coordinates
+// for facial bounding box / landmarks.
 type BlazeFacePrediction = {
   box: Box,
   landmarks: tf.Tensor2D,
@@ -84,10 +87,6 @@ const decodeBounds = (boxOutputs: tf.Tensor2D, anchors: tf.Tensor2D,
       [startNormalized as tf.Tensor2D, endNormalized as tf.Tensor2D], 1);
 };
 
-/**
- * Feeds the input to the model and decodes the facial bounding boxes (if any)
- * from the model output.
- */
 export class BlazeFaceModel {
   private blazeFaceModel: tfconv.GraphModel;
   private width: number;
@@ -189,13 +188,21 @@ export class BlazeFaceModel {
   /**
    * Returns an array of faces in an image.
    *
-   * @param input The image to classify. Can be a tensor or a DOM element iamge,
+   * @param input The image to classify. Can be a tensor, DOM element image,
    * video, or canvas.
+   * @param returnTensors (defaults to `false`) Whether to return tensors as
+   * opposed to values.
+   *
+   * @return An array of detected faces, each with the following properties:
+   *  `topLeft`: the upper left coordinate of the face in the form `[x, y]`
+   *  `bottomRight`: the lower right coordinate of the face in the form `[x, y]`
+   *  `landmarks`: facial landmark coordinates
+   *  `probability`: the probability of the face being present
    */
   async estimateFace(
       input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
       HTMLCanvasElement,
-      returnTensors = false): Promise<Face[]> {
+      returnTensors = false): Promise<NormalizedFace[]> {
     const image = tf.tidy(() => {
       if (!(input instanceof tf.Tensor)) {
         input = tf.browser.fromPixels(input);
@@ -217,7 +224,7 @@ export class BlazeFaceModel {
               bottomRight: scaledBox.slice([2], [2]),
               landmarks: face.landmarks.add(face.anchor).mul(scaleFactor),
               probability: face.probability
-            } as Face;
+            } as NormalizedFace;
           });
     }
 
@@ -254,7 +261,7 @@ export class BlazeFaceModel {
                 bottomRight: (boxData as number[]).slice(2),
                 landmarks: scaledLandmarks,
                 probability: probabilityData
-              } as Face;
+              } as NormalizedFace;
             }));
   }
 }
