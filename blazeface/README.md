@@ -71,14 +71,11 @@ if (predictions) {
   */
 
   for (let i = 0; i < predictions.length; i++) {
-
-    // The first element of each bounding box specifies the upper left hand
-    // corner of the detected face. The second element specifies the lower right
-    // hand corner.
-    const start = predictions[i][0];
-    const end = predictions[i][1];
+    const start = predictions[i].topLeft;
+    const end = predictions[i].bottomRight;
     const size = [end[0] - start[0], end[1] - start[1]];
 
+    // Render a rectangle over each detected face.
     ctx.fillRect(start[0], start[1], size[0], size[1]);
   }
 }

@@ -42,19 +42,9 @@ async function setupCamera() {
 const renderPrediction = async () => {
   stats.begin();
 
-  const returnTensors = false;
-  let prediction = await model.estimateFace(video, returnTensors);
+  let prediction = await model.estimateFace(video);
 
   if (prediction) {
-    if (returnTensors) {
-      prediction = await Promise.all(prediction.map(async (d) => ({
-        topLeft: await d.topLeft.array(),
-        bottomRight: await d.bottomRight.array(),
-        landmarks: await d.landmarks.array(),
-        probability: await d.probability.array()
-      })));
-    }
-
     ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
 
     for (let i = 0; i < prediction.length; i++) {
