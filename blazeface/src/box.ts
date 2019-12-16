@@ -24,6 +24,12 @@ export type Box = {
   endPoint: tf.Tensor2D
 };
 
+export const disposeBox = (box: Box): void => {
+  box.startEndTensor.dispose();
+  box.startPoint.dispose();
+  box.endPoint.dispose();
+};
+
 export const createBox = (startEndTensor: tf.Tensor2D): Box => {
   return {
     startEndTensor,

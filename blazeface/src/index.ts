@@ -18,7 +18,7 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {scaleBox} from './box';
+import {disposeBox, scaleBox} from './box';
 import {BlazeFaceModel} from './face';
 
 const BLAZEFACE_MODEL_URL =
@@ -103,12 +103,14 @@ export class FaceMesh {
 
     const faces =
         await Promise.all((prediction as any[]).map(async (d: any) => {
-          const scaledBox = scaleBox(d.box, scaleFactor as [number, number])
-                                .startEndTensor.squeeze();
+          const scaledBox = tf.tidy(() => {
+            return scaleBox(d.box, scaleFactor as [number, number])
+                .startEndTensor.squeeze();
+          });
 
           const [landmarkData, boxData, probabilityData] =
               await Promise.all([d.landmarks, scaledBox, d.probability].map(
-                  async d => await d.array()));
+                  async innerD => innerD.array()));
 
           const anchor = d.anchor as [number, number];
           const scaledLandmarks = landmarkData.map(
@@ -117,6 +119,11 @@ export class FaceMesh {
                     (scaleFactor as [number, number])[0],
                 (landmark[1] + anchor[1]) * (scaleFactor as [number, number])[1]
               ]));
+
+          scaledBox.dispose();
+          disposeBox(d.box);
+          d.landmarks.dispose();
+          d.probability.dispose();
 
           return {
             topLeft: (boxData as number[]).slice(0, 2),
