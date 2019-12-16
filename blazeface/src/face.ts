@@ -124,16 +124,19 @@ export class BlazeFaceModel {
       return [prediction, decodedBounds, tf.sigmoid(logits).squeeze()];
     });
 
-    const boxIndices =
-        await tf.image
-            .nonMaxSuppression(
-                boxes as tf.Tensor2D, scores as tf.Tensor1D, this.maxFaces,
-                this.iouThreshold, this.scoreThreshold)
-            .array();
+    const boxIndicesTensor = tf.image.nonMaxSuppression(
+        boxes as tf.Tensor2D, scores as tf.Tensor1D, this.maxFaces,
+        this.iouThreshold, this.scoreThreshold);
+    const boxIndices = await boxIndicesTensor.array();
+    boxIndicesTensor.dispose();
 
-    const boundingBoxes = await Promise.all(boxIndices.map(
-        async (boxIndex: number) =>
-            tf.slice(boxes, [boxIndex, 0], [1, -1]).array()));
+    const boundingBoxes =
+        await Promise.all(boxIndices.map(async (boxIndex: number) => {
+          const box = tf.slice(boxes, [boxIndex, 0], [1, -1]);
+          const vals = await box.array();
+          box.dispose();
+          return vals;
+        }));
 
     const originalHeight = inputImage.shape[1];
     const originalWidth = inputImage.shape[2];
@@ -149,7 +152,7 @@ export class BlazeFaceModel {
       ];
     }
 
-    const annotatedBoxes = boundingBoxes.map((boundingBox, i) => {
+    const annotatedBoxes = boundingBoxes.map((boundingBox, i) => tf.tidy(() => {
       const boxIndex = boxIndices[i];
 
       let anchor: [number, number]|tf.Tensor2D;
@@ -159,21 +162,20 @@ export class BlazeFaceModel {
         anchor = this.anchorsData[boxIndex] as [number, number];
       }
 
-      return {
-        box: createBox(tf.tensor2d(boundingBox as number[][])),
-        landmarks: tf.slice(detectedOutputs, [boxIndex, 5], [1, -1])
-                       .squeeze()
-                       .reshape([6, -1]),
-        probability: tf.slice(scores, [boxIndex], [1]),
-        anchor,
-        scaleFactor
-      };
-    });
+      const box = createBox(tf.tensor2d(boundingBox as number[][]));
+      const landmarks =
+          tf.slice(detectedOutputs, [boxIndex, 5], [1, -1]).squeeze().reshape([
+            6, -1
+          ]);
+      const probability = tf.slice(scores, [boxIndex], [1]);
+
+      return [box, landmarks, probability, anchor];
+    }));
 
     boxes.dispose();
     scores.dispose();
     detectedOutputs.dispose();
 
-    return annotatedBoxes;
+    return [annotatedBoxes, scaleFactor];
   }
 }

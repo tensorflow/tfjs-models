@@ -81,45 +81,54 @@ export class FaceMesh {
       input = tf.browser.fromPixels(input);
     }
 
+    const startNumTensors = tf.memory().numTensors;
+
     const image = input.toFloat().expandDims(0) as tf.Tensor4D;
-    const prediction = await this.blazeface.getBoundingBoxes(
+    const [prediction, scaleFactor] = await this.blazeface.getBoundingBoxes(
         image as tf.Tensor4D, returnTensors);
 
+    image.dispose();
+
+    console.log('num new tensors:', tf.memory().numTensors - startNumTensors);
+
     if (returnTensors) {
-      return prediction.map((d: any) => {
-        const scaledBox =
-            scaleBox(d.box, d.scaleFactor).startEndTensor.squeeze();
+      return (prediction as any[]).map((d: any) => {
+        const scaledBox = scaleBox(d.box, scaleFactor as tf.Tensor1D)
+                              .startEndTensor.squeeze();
 
         return {
           topLeft: scaledBox.slice([0], [2]),
           bottomRight: scaledBox.slice([2], [2]),
-          landmarks: d.landmarks.add(d.anchor).mul(d.scaleFactor),
+          landmarks: d.landmarks.add(d.anchor).mul(scaleFactor),
           probability: d.probability
         };
       });
     }
 
-    const faces = await Promise.all(prediction.map(async (d: any) => {
-      const scaledBox = scaleBox(d.box, d.scaleFactor).startEndTensor.squeeze();
+    const faces =
+        await Promise.all((prediction as any[]).map(async (d: any) => {
+          const scaledBox = scaleBox(d.box, scaleFactor as [number, number])
+                                .startEndTensor.squeeze();
 
-      const [landmarkData, boxData, probabilityData] =
-          await Promise.all([d.landmarks, scaledBox, d.probability].map(
-              async d => await d.array()));
+          const [landmarkData, boxData, probabilityData] =
+              await Promise.all([d.landmarks, scaledBox, d.probability].map(
+                  async d => await d.array()));
 
-      const anchor = d.anchor as [number, number];
-      const scaledLandmarks =
-          landmarkData.map((landmark: [number, number]) => ([
-                             (landmark[0] + anchor[0]) * d.scaleFactor[0],
-                             (landmark[1] + anchor[1]) * d.scaleFactor[1]
-                           ]));
+          const anchor = d.anchor as [number, number];
+          const scaledLandmarks = landmarkData.map(
+              (landmark: [number, number]) => ([
+                (landmark[0] + anchor[0]) *
+                    (scaleFactor as [number, number])[0],
+                (landmark[1] + anchor[1]) * (scaleFactor as [number, number])[1]
+              ]));
 
-      return {
-        topLeft: (boxData as number[]).slice(0, 2),
-        bottomRight: (boxData as number[]).slice(2),
-        landmarks: scaledLandmarks,
-        probability: probabilityData
-      };
-    }));
+          return {
+            topLeft: (boxData as number[]).slice(0, 2),
+            bottomRight: (boxData as number[]).slice(2),
+            landmarks: scaledLandmarks,
+            probability: probabilityData
+          };
+        }));
 
     return faces;
   }

@@ -32,7 +32,7 @@ export const createBox = (startEndTensor: tf.Tensor2D): Box => {
   };
 };
 
-export const scaleBox = (box: Box, factors: tf.Tensor1D) => {
+export const scaleBox = (box: Box, factors: tf.Tensor1D|[number, number]) => {
   const starts = tf.mul(box.startPoint, factors);
   const ends = tf.mul(box.endPoint, factors);
 
