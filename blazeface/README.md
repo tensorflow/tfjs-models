@@ -50,6 +50,26 @@ const model = await blazeface.load();
 const predictions = await model.estimateFace(document.querySelector("img"));
 
 if (predictions) {
+  /*
+  `predictions` is an array of objects describing each detected face, for example:
+
+  [
+    {
+      topLeft: [232.28, 145.26],
+      bottomRight: [449.75, 308.36],
+      probability: [0.998],
+      landmarks: [
+        [295.13, 177.64], // right eye
+        [382.32, 175.56], // left eye
+        [341.18, 205.03], // nose
+        [345.12, 250.61], // mouth
+        [252.76, 211.37], // right ear
+        [431.20, 204.93] // left ear
+      ]
+    }
+  ]
+  */
+
   for (let i = 0; i < predictions.length; i++) {
 
     // The first element of each bounding box specifies the upper left hand
