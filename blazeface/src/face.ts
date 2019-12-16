@@ -212,30 +212,30 @@ export class BlazeFaceModel {
     image.dispose();
 
     if (returnTensors) {
-      return (prediction as RawFace[]).map((d: RawFace) => {
-        const scaledBox = scaleBox(d.box, scaleFactor as tf.Tensor1D)
+      return (prediction as RawFace[]).map((face: RawFace) => {
+        const scaledBox = scaleBox(face.box, scaleFactor as tf.Tensor1D)
                               .startEndTensor.squeeze();
 
         return {
           topLeft: scaledBox.slice([0], [2]),
           bottomRight: scaledBox.slice([2], [2]),
-          landmarks: d.landmarks.add(d.anchor).mul(scaleFactor),
-          probability: d.probability
+          landmarks: face.landmarks.add(face.anchor).mul(scaleFactor),
+          probability: face.probability
         } as Face;
       });
     }
 
-    return Promise.all((prediction as RawFace[]).map(async (d: RawFace) => {
+    return Promise.all((prediction as RawFace[]).map(async (face: RawFace) => {
       const scaledBox = tf.tidy(() => {
-        return scaleBox(d.box, scaleFactor as [number, number])
+        return scaleBox(face.box, scaleFactor as [number, number])
             .startEndTensor.squeeze();
       });
 
       const [landmarkData, boxData, probabilityData] =
-          await Promise.all([d.landmarks, scaledBox, d.probability].map(
-              async innerD => innerD.array()));
+          await Promise.all([face.landmarks, scaledBox, face.probability].map(
+              async d => d.array()));
 
-      const anchor = d.anchor as [number, number];
+      const anchor = face.anchor as [number, number];
       const scaledLandmarks =
           (landmarkData as number[][])
               .map((landmark: [number, number]) => ([
@@ -246,9 +246,9 @@ export class BlazeFaceModel {
                    ]));
 
       scaledBox.dispose();
-      disposeBox(d.box);
-      d.landmarks.dispose();
-      d.probability.dispose();
+      disposeBox(face.box);
+      face.landmarks.dispose();
+      face.probability.dispose();
 
       return {
         topLeft: (boxData as number[]).slice(0, 2),
