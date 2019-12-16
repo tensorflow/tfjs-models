@@ -169,7 +169,7 @@ export class BlazeFaceModel {
           ]);
       const probability = tf.slice(scores, [boxIndex], [1]);
 
-      return [box, landmarks, probability, anchor];
+      return {box, landmarks, probability, anchor};
     }));
 
     boxes.dispose();

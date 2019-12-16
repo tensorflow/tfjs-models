@@ -81,15 +81,11 @@ export class FaceMesh {
       input = tf.browser.fromPixels(input);
     }
 
-    const startNumTensors = tf.memory().numTensors;
-
-    const image = input.toFloat().expandDims(0) as tf.Tensor4D;
+    const image = tf.tidy(
+        () => (input as tf.Tensor).toFloat().expandDims(0) as tf.Tensor4D);
     const [prediction, scaleFactor] = await this.blazeface.getBoundingBoxes(
         image as tf.Tensor4D, returnTensors);
-
     image.dispose();
-
-    console.log('num new tensors:', tf.memory().numTensors - startNumTensors);
 
     if (returnTensors) {
       return (prediction as any[]).map((d: any) => {
