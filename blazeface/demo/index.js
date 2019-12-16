@@ -17,6 +17,10 @@
 
 import * as blazeface from '@tensorflow-models/blazeface';
 
+const stats = new Stats();
+stats.showPanel(0);
+document.body.prepend(stats.domElement);
+
 let model, ctx, videoWidth, videoHeight, video, canvas;
 
 async function setupCamera() {
@@ -35,67 +39,69 @@ async function setupCamera() {
   });
 }
 
-const renderPrediction =
-  async () => {
-    const returnTensors = false;
-    let prediction = await model.estimateFace(video, returnTensors);
+const renderPrediction = async () => {
+  stats.begin();
 
-    if (prediction) {
-      if (returnTensors) {
-        prediction = await Promise.all(prediction.map(async (d) => {
-          return {
-            topLeft: await d.topLeft.array(),
-            bottomRight: await d.bottomRight.array(),
-            landmarks: await d.landmarks.array(),
-            probability: await d.probability.array()
-          };
-        }));
-      }
+  const returnTensors = false;
+  let prediction = await model.estimateFace(video, returnTensors);
 
-      ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
-
-      for (let i = 0; i < prediction.length; i++) {
-        const start = prediction[i].topLeft;
-        const end = prediction[i].bottomRight;
-        const size = [end[0] - start[0], end[1] - start[1]];
-        ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
-        ctx.fillRect(start[0], start[1], size[0], size[1]);
-
-        const landmarks = prediction[i].landmarks;
-
-        ctx.fillStyle = "blue";
-        for (let j = 0; j < landmarks.length; j++) {
-          const x = landmarks[j][0];
-          const y = landmarks[j][1];
-          ctx.fillRect(x, y, 5, 5);
-        }
-      }
+  if (prediction) {
+    if (returnTensors) {
+      prediction = await Promise.all(prediction.map(async (d) => {
+        return {
+          topLeft: await d.topLeft.array(),
+          bottomRight: await d.bottomRight.array(),
+          landmarks: await d.landmarks.array(),
+          probability: await d.probability.array()
+        };
+      }));
     }
 
-    requestAnimationFrame(renderPrediction);
+    ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
+
+    for (let i = 0; i < prediction.length; i++) {
+      const start = prediction[i].topLeft;
+      const end = prediction[i].bottomRight;
+      const size = [end[0] - start[0], end[1] - start[1]];
+      ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
+      ctx.fillRect(start[0], start[1], size[0], size[1]);
+
+      const landmarks = prediction[i].landmarks;
+
+      ctx.fillStyle = "blue";
+      for (let j = 0; j < landmarks.length; j++) {
+        const x = landmarks[j][0];
+        const y = landmarks[j][1];
+        ctx.fillRect(x, y, 5, 5);
+      }
+    }
   }
 
-const setupPage =
-  async () => {
-    await setupCamera();
-    video.play();
+  stats.end();
 
-    videoWidth = video.videoWidth;
-    videoHeight = video.videoHeight;
-    video.width = videoWidth;
-    video.height = videoHeight;
+  requestAnimationFrame(renderPrediction);
+};
 
-    canvas = document.getElementById('output');
-    canvas.width = videoWidth;
-    canvas.height = videoHeight;
-    ctx = canvas.getContext('2d');
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
-    ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
+const setupPage = async () => {
+  await setupCamera();
+  video.play();
 
-    model = await blazeface.load();
+  videoWidth = video.videoWidth;
+  videoHeight = video.videoHeight;
+  video.width = videoWidth;
+  video.height = videoHeight;
 
-    renderPrediction();
-  }
+  canvas = document.getElementById('output');
+  canvas.width = videoWidth;
+  canvas.height = videoHeight;
+  ctx = canvas.getContext('2d');
+  ctx.translate(canvas.width, 0);
+  ctx.scale(-1, 1);
+  ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
+
+  model = await blazeface.load();
+
+  renderPrediction();
+};
 
 setupPage();

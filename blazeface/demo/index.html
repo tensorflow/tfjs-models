@@ -13,6 +13,26 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================-->
 
+<style>
+  body {
+    margin: 50px;
+  }
+
+  #main {
+    margin: 20px 0;
+  }
+
+  #description {
+    margin-top: 20px;
+    width: 600px;
+  }
+
+  #description-title {
+    font-weight: bold;
+    font-size: 18px;
+  }
+</style>
+
 <body>
   <div id="main">
     <video id="video" playsinline style="
@@ -24,6 +44,13 @@ limitations under the License.
       ">
     </video>
     <canvas id="output"></canvas>
+    <div id="description">
+      <div id="description-title">Blazeface demo</div>
+      <p>This demo shows the blazeface model detecting faces in a live camera feed. The demo renders a semi-transparent
+        red
+        box over faces, and blue dots over facial landmarks (eyes, ears, nose, and mouth).</p>
+    </div>
   </div>
 </body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js"></script>
 <script src="index.js"></script>
