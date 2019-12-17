@@ -162,7 +162,7 @@ class MobileBertImpl implements MobileBert {
       const endLogits = result[1].arraySync();
       return this.getBestAnswers(
           startLogits[0], endLogits[0], feature.origTokens,
-          feature.tokenToOrigMap);
+          feature.tokenToOrigMap, index);
     });
     console.log(answers);
     return []
@@ -180,7 +180,7 @@ class MobileBertImpl implements MobileBert {
    */
   getBestAnswers(
       startLogits: number[], endLogits: number[], origTokens: string[],
-      tokenToOrigMap: {[key: string]: number}) {
+      tokenToOrigMap: {[key: string]: number}, docIndex = 0) {
     // Model uses the closed interval [start, end] for indices.
     const startIndexes = this.getBestIndex(startLogits);
     const endIndexes = this.getBestIndex(endLogits);
@@ -212,7 +212,7 @@ class MobileBertImpl implements MobileBert {
       } else {
         convertedText = '';
       }
-      answers.push(convertedText, origResults[i][2]);
+      answers.push([convertedText, origResults[i][2], docIndex]);
     }
     return answers;
   }

@@ -21,14 +21,22 @@ let modelPromise = {};
 window.onload = () => modelPromise = qna.load();
 
 const input = document.getElementById('question');
+const search = document.getElementById('search');
 const contextDiv = document.getElementById('context');
 const answerDiv = document.getElementById('answer');
 
+const process = async () => {
+  const model = await modelPromise;
+  const answers = model.findAnswers(input.value, contextDiv.textContent);
+  console.log(answers);
+  answerDiv.innerHTML =
+      answers.map(answer => answer[0] + ' (score =' + answer[1] + ')')
+          .join('<br>');
+};
 input.addEventListener('keyup', async (event) => {
   if (event.key === 'Enter') {
-    console.log(input.value, contextDiv.textContent);
-    const model = await modelPromise;
-    const answers = model.findAnswers(input.value, contextDiv.textContent);
-    console.log(anwsers);
+    process();
   }
 });
+
+search.onclick = process;
