@@ -25,12 +25,13 @@ const BLAZEFACE_MODEL_URL =
 /**
  * Load blazeface.
  *
- * @param maxFaces The maximum number of faces returned by the model.
- * @param inputWidth The width of the input image.
- * @param inputHeight The height of the input image.
- * @param iouThreshold The threshold for deciding whether boxes overlap too
+ * @param config A configuration object with the following properties:
+ *  `maxFaces` The maximum number of faces returned by the model.
+ *  `inputWidth` The width of the input image.
+ *  `inputHeight` The height of the input image.
+ *  `iouThreshold` The threshold for deciding whether boxes overlap too
  * much.
- * @param scoreThreshold The threshold for deciding when to remove boxes based
+ *  `scoreThreshold` The threshold for deciding when to remove boxes based
  * on score.
  */
 export async function load({
