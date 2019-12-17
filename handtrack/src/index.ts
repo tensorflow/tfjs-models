@@ -1,6 +1,9 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
+import {rotate as rotateCpu} from './rotate_cpu';
+import {rotate as rotateWebgl} from './rotate_gpu';
+
 let ANCHORS: any;
 
 tfconv.registerOp('Prelu', (node) => {
@@ -33,62 +36,56 @@ export async function load() {
 
 const MAX_CONTINUOUS_CHECKS = 5;
 
-function degToRadian(deg) {
-  return deg * (Math.PI / 180);
-}
-
-function NormalizeRadians(angle) {
+function NormalizeRadians(angle: number) {
   return angle - 2 * Math.PI * Math.floor((angle - (-Math.PI)) / (2 * Math.PI));
 }
 
-function computeRotation(point1, point2) {
+function computeRotation(point1: [number, number], point2: [number, number]) {
   const radians =
       Math.PI / 2 - Math.atan2(-(point2[1] - point1[1]), point2[0] - point1[0]);
   return NormalizeRadians(radians);
 }
 
 class HandPipeline {
-  constructor(handdetect, handtrackModel) {
+  private handdetect: HandDetectModel;
+  private handtrackModel: tfconv.GraphModel;
+  private runsWithoutHandDetector: number;
+  private forceUpdate: boolean;
+  private maxHandsNum: number;
+  private rois: any[];
+
+  constructor(handdetect: HandDetectModel, handtrackModel: tfconv.GraphModel) {
     this.handdetect = handdetect;
     this.handtrackModel = handtrackModel;
-    this.runs_without_hand_detector = 0;
-    this.force_update = false;
-    this.max_hands_num = 1;  // simple case
+    this.runsWithoutHandDetector = 0;
+    this.forceUpdate = false;
+    this.maxHandsNum = 1;  // simple case
     this.rois = [];
-
-    this.hand_canvas = document.getElementById('hand_cut');
-    this.hand_canvas.width = 256;
-    this.hand_canvas.height = 256;
-    this.ctx = this.hand_canvas.getContext('2d');
-
-    this.ctx.strokeStyle = 'red';
-    // this.ctx.translate(this.hand_canvas.width, 0);
-    // this.ctx.scale(-1, 1);
   }
 
-  calculateHandPalmCenter(box) {
+  calculateHandPalmCenter(box: any) {
     return tf.gather(box.landmarks, [0, 2]).mean(0);
   }
 
   /**
    * Calculates hand mesh for specific image (21 points).
    *
-   * @param {tf.Tensor!} image_tensor - image tensor of shape [1, H, W, 3].
+   * @param {tf.Tensor!} input - image tensor of shape [1, H, W, 3].
    *
    * @return {tf.Tensor?} tensor of 2d coordinates (1, 21, 3)
    */
-  next_meshes(image_tensor) {
+  next_meshes(input: tf.Tensor4D) {
     if (this.needROIUpdate()) {
-      const box = this.handdetect.getSingleBoundingBox(image_tensor);
+      const box = this.handdetect.getSingleBoundingBox(input);
       if (!box) {
         this.clearROIS();
         return null;
       }
       this.updateROIFromFacedetector(box);
-      this.runs_without_hand_detector = 0;
-      this.force_update = false;
+      this.runsWithoutHandDetector = 0;
+      this.forceUpdate = false;
     } else {
-      this.runs_without_hand_detector++;
+      this.runsWithoutHandDetector++;
     }
 
     const width = 256., height = 256.;
@@ -102,9 +99,9 @@ class HandPipeline {
     const handpalm_center = box.getCenter().gather(0);
     const x = handpalm_center.arraySync();
     const handpalm_center_relative =
-        [x[0] / image_tensor.shape[2], x[1] / image_tensor.shape[1]];
+        [x[0] / input.shape[2], x[1] / input.shape[1]];
     const rotated_image =
-        tf.image.rotate(image_tensor, angle, 0, handpalm_center_relative);
+        rotateWebgl(input, angle, 0, handpalm_center_relative);
     const box_landmarks_homo =
         tf.concat([box.landmarks, tf.ones([7]).expandDims(1)], 1);
 
@@ -172,7 +169,7 @@ class HandPipeline {
     return coords2d_result;
   }
 
-  inverse(matrix) {
+  inverse(matrix: tf.Tensor) {
     const rotation_part = tf.slice(matrix, [0, 0], [2, 2]).transpose();
     const translate_part = tf.slice(matrix, [0, 2], [2, 1]);
     const change_translation = tf.neg(tf.matMul(rotation_part, translate_part));
@@ -256,22 +253,13 @@ class HandPipeline {
     this.rois = [];
   }
 
-  showImage(cutted_hand) {
-    const hand_canvas = document.getElementById('hand_cut');
-    const image = cutted_hand.squeeze([0]);
-
-    tf.browser.toPixels(tf.keep(image), hand_canvas).then((successMessage) => {
-      tf.dispose(image);
-    });
-  }
-
   needROIUpdate() {
     const rois_count = this.rois.length;
     const has_no_rois = rois_count == 0;
-    const should_check_for_more_hands = rois_count != this.max_hands_num &&
-        this.runs_without_hand_detector >= MAX_CONTINUOUS_CHECKS;
+    const should_check_for_more_hands = rois_count != this.maxHandsNum &&
+        this.runsWithoutHandDetector >= MAX_CONTINUOUS_CHECKS;
 
-    return this.force_update || has_no_rois || should_check_for_more_hands;
+    return this.forceUpdate || has_no_rois || should_check_for_more_hands;
   }
 }
 
