@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/coco-ssd",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Object detection model (coco-ssd) in TensorFlow.js",
   "main": "dist/index.js",
   "unpkg": "dist/coco-ssd.min.js",
@@ -37,7 +37,7 @@
     "build": "rimraf dist && tsc",
     "lint": "tslint -p . -t verbose",
     "publish-local": "yarn build && rollup -c && yalc push",
-    "publish-npm": "yarn build && rollup -c && npm publish",
+    "build-npm": "yarn build && rollup -c",
     "test": "yarn build && ts-node run_tests.ts"
   },
   "license": "Apache-2.0"
