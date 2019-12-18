@@ -205,7 +205,7 @@ export class BlazeFaceModel {
    *  `landmarks`: facial landmark coordinates
    *  `probability`: the probability of the face being present
    */
-  async estimateFace(
+  async estimateFaces(
       input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
       HTMLCanvasElement,
       returnTensors = false): Promise<NormalizedFace[]> {

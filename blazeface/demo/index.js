@@ -42,19 +42,19 @@ async function setupCamera() {
 const renderPrediction = async () => {
   stats.begin();
 
-  let prediction = await model.estimateFace(video);
+  let predictions = await model.estimateFaces(video);
 
-  if (prediction != null) {
+  if (predictions != null) {
     ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
 
-    for (let i = 0; i < prediction.length; i++) {
-      const start = prediction[i].topLeft;
-      const end = prediction[i].bottomRight;
+    for (let i = 0; i < predictions.length; i++) {
+      const start = predictions[i].topLeft;
+      const end = predictions[i].bottomRight;
       const size = [end[0] - start[0], end[1] - start[1]];
       ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
       ctx.fillRect(start[0], start[1], size[0], size[1]);
 
-      const landmarks = prediction[i].landmarks;
+      const landmarks = predictions[i].landmarks;
 
       ctx.fillStyle = "blue";
       for (let j = 0; j < landmarks.length; j++) {

@@ -48,7 +48,7 @@ const main = async () => {
 
   // Pass in an image or video to the model. The model returns an array of
   // bounding boxes, probabilities, and landmarks, one for each detected face.
-  const predictions = await model.estimateFace(document.querySelector("img"));
+  const predictions = await model.estimateFaces(document.querySelector("img"));
 
   if (predictions != null) {
     /*
