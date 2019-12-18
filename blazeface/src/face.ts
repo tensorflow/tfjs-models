@@ -52,6 +52,7 @@ const ANCHORS_CONFIG = {
   'anchors': [2, 6]
 };
 
+// `NUM_LANDMARKS` is a fixed property of the model.
 const NUM_LANDMARKS = 6;
 
 function generateAnchors(
@@ -139,8 +140,9 @@ export class BlazeFaceModel {
     const [detectedOutputs, boxes, scores] = tf.tidy(() => {
       const resizedImage = inputImage.resizeBilinear([this.width, this.height]);
       const normalizedImage = tf.mul(tf.sub(resizedImage.div(255), 0.5), 2);
-      const batchedPrediction = this.blazeFaceModel.predict(
-          normalizedImage);  // batchedPrediction shape: [1, 897, 17]
+
+      // [1, 897, 17] 1 = batch, 897 = number of anchors
+      const batchedPrediction = this.blazeFaceModel.predict(normalizedImage);
       const prediction = (batchedPrediction as tf.Tensor3D).squeeze();
 
       const decodedBounds =
