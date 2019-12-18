@@ -42,6 +42,8 @@ const ANCHORS_CONFIG = {
   'anchors': [2, 6]
 };
 
+const NUM_LANDMARKS = 6;
+
 const generateAnchors =
     (width: number, height: number,
      outputSpec: {strides: [number, number], anchors: [number, number]}):
@@ -174,9 +176,9 @@ export class BlazeFaceModel {
 
       const box = createBox(tf.tensor2d(boundingBox as number[][]));
       const landmarks =
-          tf.slice(detectedOutputs, [boxIndex, 5], [1, -1]).squeeze().reshape([
-            6, -1
-          ]);
+          tf.slice(detectedOutputs, [boxIndex, NUM_LANDMARKS - 1], [1, -1])
+              .squeeze()
+              .reshape([NUM_LANDMARKS, -1]);
       const probability = tf.slice(scores, [boxIndex], [1]);
 
       return {box, landmarks, probability, anchor};
