@@ -1,7 +1,7 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {rotate as rotateCpu} from './rotate_cpu';
+// import {rotate as rotateCpu} from './rotate_cpu';
 import {rotate as rotateWebgl} from './rotate_gpu';
 
 let ANCHORS: any;
@@ -100,8 +100,8 @@ class HandPipeline {
     const x = handpalm_center.arraySync();
     const handpalm_center_relative =
         [x[0] / input.shape[2], x[1] / input.shape[1]];
-    const rotated_image =
-        rotateWebgl(input, angle, 0, handpalm_center_relative);
+    const rotated_image = rotateWebgl(
+        input, angle, 0, handpalm_center_relative as [number, number]);
     const box_landmarks_homo =
         tf.concat([box.landmarks, tf.ones([7]).expandDims(1)], 1);
 
@@ -118,11 +118,11 @@ class HandPipeline {
     box_for_cut = this.makeSquareBox(box_for_cut);
     box_for_cut = this.shiftBox(box_for_cut, shifts);
 
-    const cutted_hand =
-        box_for_cut.cutFromAndResize(rotated_image, [width, height]);
+    const cutted_hand = box_for_cut.cutFromAndResize(
+        rotated_image as tf.Tensor4D, [width, height]);
     const handImage = cutted_hand.div(255);
 
-    const output = this.handtrackModel.predict(handImage);
+    const output = this.handtrackModel.predict(handImage) as tf.Tensor[];
 
     const coords3d = tf.reshape(output[0], [-1, 3]);
     const coords2d = coords3d.slice([0, 0], [-1, 2]);
@@ -160,7 +160,7 @@ class HandPipeline {
         this.calculateLandmarksBoundingBox(selected_landmarks);
     this.updateROIFromFacedetector(landmarks_box);
 
-    const handFlag = output[1].arraySync()[0][0];
+    const handFlag = ((output[1] as tf.Tensor).arraySync() as number[][])[0][0];
     if (handFlag < 0.8) {  // TODO: move to configuration
       this.clearROIS();
       return null;
@@ -177,7 +177,7 @@ class HandPipeline {
     return tf.concat([inverted, tf.tensor([[0, 0, 1]])], 0);
   }
 
-  makeSquareBox(box) {
+  makeSquareBox(box: Box) {
     const centers = box.getCenter();
     const size = box.getSize();
     const maxEdge = tf.max(size, 1);
@@ -187,20 +187,22 @@ class HandPipeline {
     const new_starts = tf.sub(centers, half_size);
     const new_ends = tf.add(centers, half_size);
 
-    return new Box(tf.concat2d([new_starts, new_ends], 1));
+    return new Box(
+        tf.concat2d([new_starts as tf.Tensor2D, new_ends as tf.Tensor2D], 1));
   }
 
-  shiftBox(box, shifts) {
-    const boxSize = tf.sub(box.endPoint, box.startPoint);
+  shiftBox(box: any, shifts: number[]) {
+    const boxSize =
+        tf.sub(box.endPoint as tf.Tensor, box.startPoint as tf.Tensor);
     const absolute_shifts = tf.mul(boxSize, tf.tensor(shifts));
     const new_start = tf.add(box.startPoint, absolute_shifts);
     const new_end = tf.add(box.endPoint, absolute_shifts);
-    const new_coordinates = tf.concat2d([new_start, new_end], 1);
+    const new_coordinates = tf.concat2d([new_start as any, new_end], 1);
 
     return new Box(new_coordinates);
   }
 
-  calculateLandmarksBoundingBox(landmarks) {
+  calculateLandmarksBoundingBox(landmarks: tf.Tensor) {
     const xs = landmarks.slice([0, 0], [-1, 1]);
     const ys = landmarks.slice([0, 1], [-1, 1]);
 
@@ -208,7 +210,7 @@ class HandPipeline {
     return new Box(box_min_max.expandDims(0), landmarks);
   }
 
-  build_translation_matrix(translation) {
+  build_translation_matrix(translation: tf.Tensor) {
     // last column
     const only_tranalation =
         tf.pad(translation.expandDims(0), [[2, 0], [0, 1]]).transpose();
@@ -216,7 +218,7 @@ class HandPipeline {
     return tf.add(tf.eye(3), only_tranalation);
   }
 
-  build_rotation_matrix_with_center(rotation, center) {
+  build_rotation_matrix_with_center(rotation: number, center: tf.Tensor) {
     const cosa = Math.cos(rotation);
     const sina = Math.sin(rotation);
 
@@ -228,7 +230,7 @@ class HandPipeline {
         this.build_translation_matrix(tf.neg(center)));
   }
 
-  build_rotation_matrix(rotation, center) {
+  build_rotation_matrix(rotation: number, center: tf.Tensor) {
     const cosa = Math.cos(rotation);
     const sina = Math.sin(rotation);
 
@@ -237,12 +239,12 @@ class HandPipeline {
   }
 
 
-  calculateRotation(box) {
-    let keypointsArray = box.landmarks.arraySync();
+  calculateRotation(box: BoxType) {
+    let keypointsArray = box.landmarks.arraySync() as [number, number][];
     return computeRotation(keypointsArray[0], keypointsArray[2]);
   }
 
-  updateROIFromFacedetector(box) {
+  updateROIFromFacedetector(box: any) {
     this.rois = [box];
   }
 
@@ -264,7 +266,13 @@ class HandPipeline {
 }
 
 class HandDetectModel {
-  constructor(model, width, height) {
+  private model: tfconv.GraphModel;
+  private anchors: tf.Tensor;
+  private input_size: tf.Tensor;
+  private iou_threshold: number;
+  private scoreThreshold: number;
+
+  constructor(model: tfconv.GraphModel, width: number, height: number) {
     this.model = model;
     this.anchors = this._generate_anchors();
     this.input_size = tf.tensor([width, height]);
@@ -283,7 +291,7 @@ class HandDetectModel {
     return tf.tensor(anchors);
   }
 
-  _decode_bounds(box_outputs) {
+  _decode_bounds(box_outputs: tf.Tensor) {
     const box_starts = tf.slice(box_outputs, [0, 0], [-1, 2]);
     const centers = tf.add(tf.div(box_starts, this.input_size), this.anchors);
     const box_sizes = tf.slice(box_outputs, [0, 2], [-1, 2]);
@@ -295,10 +303,15 @@ class HandDetectModel {
     const ends = tf.add(centers_norm, tf.div(box_sizes_norm, 2));
 
     return tf.concat2d(
-        [tf.mul(starts, this.input_size), tf.mul(ends, this.input_size)], 1);
+        [
+          tf.mul(starts as tf.Tensor2D, this.input_size as tf.Tensor2D) as
+              tf.Tensor2D,
+          tf.mul(ends, this.input_size) as tf.Tensor2D
+        ],
+        1);
   }
 
-  _decode_landmarks(raw_landmarks) {
+  _decode_landmarks(raw_landmarks: tf.Tensor) {
     const relative_landmarks = tf.add(
         tf.div(raw_landmarks.reshape([-1, 7, 2]), this.input_size),
         this.anchors.reshape([-1, 1, 2]));
@@ -306,13 +319,14 @@ class HandDetectModel {
     return tf.mul(relative_landmarks, this.input_size);
   }
 
-  _getBoundingBox(input_image) {
+  _getBoundingBox(input_image: tf.Tensor) {
     const img = tf.mul(tf.sub(input_image, 0.5), 2);  // make input [-1, 1]
 
-    const detect_outputs = this.model.predict(img);
+    const detect_outputs = this.model.predict(img) as tf.Tensor;
 
     const scores =
-        tf.sigmoid(tf.slice(detect_outputs, [0, 0, 0], [1, -1, 1])).squeeze();
+        tf.sigmoid(tf.slice(detect_outputs, [0, 0, 0], [1, -1, 1])).squeeze() as
+        tf.Tensor1D;
 
     const raw_boxes = tf.slice(detect_outputs, [0, 0, 1], [1, -1, 4]).squeeze();
     const raw_landmarks =
@@ -339,7 +353,7 @@ class HandDetectModel {
     return [result_box, result_landmarks];
   }
 
-  getSingleBoundingBox(input_image) {
+  getSingleBoundingBox(input_image: tf.Tensor4D) {
     const original_h = input_image.shape[1];
     const original_w = input_image.shape[2];
 
@@ -358,8 +372,20 @@ class HandDetectModel {
   }
 };
 
+type BoxType = {
+  startEndTensor: tf.Tensor,
+  startPoint: tf.Tensor,
+  endPoint: tf.Tensor,
+  landmarks?: tf.Tensor
+};
+
 class Box {
-  constructor(startEndTensor, landmarks) {
+  private startEndTensor: tf.Tensor;
+  private startPoint: tf.Tensor;
+  private endPoint: tf.Tensor;
+  private landmarks?: tf.Tensor;
+
+  constructor(startEndTensor: tf.Tensor, landmarks?: tf.Tensor) {
     // keep tensor for the next frame
     this.startEndTensor = tf.keep(startEndTensor);
     // startEndTensor[:, 0:2]
@@ -386,24 +412,30 @@ class Box {
     return tf.add(this.startPoint, halfSize);
   }
 
-  cutFromAndResize(image, crop_size) {
+  cutFromAndResize(image: tf.Tensor4D, crop_size: [number, number]) {
     const h = image.shape[1];
     const w = image.shape[2];
 
     const xyxy = this.startEndTensor;
-    const yxyx = tf.concat2d([
-      xyxy.slice([0, 1], [-1, 1]), xyxy.slice([0, 0], [-1, 1]),
-      xyxy.slice([0, 3], [-1, 1]), xyxy.slice([0, 2], [-1, 1])
-    ]);
-    const rounded_coords = tf.div(yxyx.transpose(), [h, w, h, w]);
+    const yxyx = tf.concat2d(
+        [
+          xyxy.slice([0, 1], [-1, 1]) as tf.Tensor2D,
+          xyxy.slice([0, 0], [-1, 1]) as tf.Tensor2D,
+          xyxy.slice([0, 3], [-1, 1]) as tf.Tensor2D,
+          xyxy.slice([0, 2], [-1, 1]) as tf.Tensor2D
+        ],
+        0);
+    const rounded_coords =
+        tf.div(yxyx.transpose(), [h, w, h, w]) as tf.Tensor2D;
     return tf.image.cropAndResize(image, rounded_coords, [0], crop_size);
   }
 
-  scale(factors) {
+  scale(factors: any) {
     const starts = tf.mul(this.startPoint, factors);
     const ends = tf.mul(this.endPoint, factors);
 
-    const new_coordinates = tf.concat2d([starts, ends], 1);
+    const new_coordinates =
+        tf.concat2d([starts as tf.Tensor2D, ends as tf.Tensor2D], 1);
     return new Box(new_coordinates, tf.mul(this.landmarks, factors));
   }
 
@@ -416,6 +448,8 @@ class Box {
     const new_starts = tf.sub(centers, new_size);
     const new_ends = tf.add(centers, new_size);
 
-    return new Box(tf.concat2d([new_starts, new_ends], 1), this.landmarks);
+    return new Box(
+        tf.concat2d([new_starts as tf.Tensor2D, new_ends as tf.Tensor2D], 1),
+        this.landmarks);
   }
 }
