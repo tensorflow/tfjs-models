@@ -20,13 +20,19 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {Box, createBox, disposeBox, scaleBox} from './box';
 
-// The user-facing object describing a detected face.
-type NormalizedFace = {
-  topLeft: [number, number]|tf.Tensor1D,
-  bottomRight: [number, number]|tf.Tensor1D,
-  landmarks: number[][]|tf.Tensor2D,
-  probability: number|tf.Tensor1D
-};
+/*
+ * The object describing a face.
+ */
+export interface NormalizedFace {
+  /** The upper left-hand corner of the face. */
+  topLeft: [number, number]|tf.Tensor1D;
+  /** The lower right-hand corner of the face. */
+  bottomRight: [number, number]|tf.Tensor1D;
+  /** Facial landmark coordinates. */
+  landmarks: number[][]|tf.Tensor2D;
+  /** Probability of the face detection. */
+  probability: number|tf.Tensor1D;
+}
 
 // The blazeface model predictions containing unnormalized coordinates
 // for facial bounding box / landmarks.
@@ -37,6 +43,10 @@ type BlazeFacePrediction = {
   anchor: tf.Tensor2D|[number, number]
 };
 
+// Blazeface scatters anchor points throughout the input image and for each
+// point predicts the probability that it lies within a face. `ANCHORS_CONFIG`
+// is a fixed configuration that determines where the anchor points are
+// scattered.
 const ANCHORS_CONFIG = {
   'strides': [8, 16],
   'anchors': [2, 6]
@@ -44,34 +54,35 @@ const ANCHORS_CONFIG = {
 
 const NUM_LANDMARKS = 6;
 
-const generateAnchors =
-    (width: number, height: number,
-     outputSpec: {strides: [number, number], anchors: [number, number]}):
-        number[][] => {
-          const anchors = [];
-          for (let i = 0; i < outputSpec.strides.length; i++) {
-            const stride = outputSpec.strides[i];
-            const gridRows = Math.floor((height + stride - 1) / stride);
-            const gridCols = Math.floor((width + stride - 1) / stride);
-            const anchorsNum = outputSpec.anchors[i];
+function generateAnchors(
+    width: number, height: number,
+    outputSpec: {strides: [number, number], anchors: [number, number]}):
+    number[][] {
+  const anchors = [];
+  for (let i = 0; i < outputSpec.strides.length; i++) {
+    const stride = outputSpec.strides[i];
+    const gridRows = Math.floor((height + stride - 1) / stride);
+    const gridCols = Math.floor((width + stride - 1) / stride);
+    const anchorsNum = outputSpec.anchors[i];
 
-            for (let gridY = 0; gridY < gridRows; gridY++) {
-              const anchorY = stride * (gridY + 0.5);
+    for (let gridY = 0; gridY < gridRows; gridY++) {
+      const anchorY = stride * (gridY + 0.5);
 
-              for (let gridX = 0; gridX < gridCols; gridX++) {
-                const anchorX = stride * (gridX + 0.5);
-                for (let n = 0; n < anchorsNum; n++) {
-                  anchors.push([anchorX, anchorY]);
-                }
-              }
-            }
-          }
+      for (let gridX = 0; gridX < gridCols; gridX++) {
+        const anchorX = stride * (gridX + 0.5);
+        for (let n = 0; n < anchorsNum; n++) {
+          anchors.push([anchorX, anchorY]);
+        }
+      }
+    }
+  }
 
-          return anchors;
-        };
+  return anchors;
+}
 
-const decodeBounds = (boxOutputs: tf.Tensor2D, anchors: tf.Tensor2D,
-                      inputSize: tf.Tensor1D): tf.Tensor2D => {
+function decodeBounds(
+    boxOutputs: tf.Tensor2D, anchors: tf.Tensor2D,
+    inputSize: tf.Tensor1D): tf.Tensor2D {
   const boxStarts = tf.slice(boxOutputs, [0, 1], [-1, 2]);
   const centers = tf.add(boxStarts, anchors);
   const boxSizes = tf.slice(boxOutputs, [0, 3], [-1, 2]);
@@ -90,7 +101,7 @@ const decodeBounds = (boxOutputs: tf.Tensor2D, anchors: tf.Tensor2D,
   return tf.concat2d(
       [startNormalized as tf.Tensor2D, endNormalized as tf.Tensor2D],
       concatAxis);
-};
+}
 
 export class BlazeFaceModel {
   private blazeFaceModel: tfconv.GraphModel;

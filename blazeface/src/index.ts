@@ -47,3 +47,5 @@ export async function load({
       blazeface, inputWidth, inputHeight, maxFaces, iouThreshold,
       scoreThreshold);
 }
+
+export {NormalizedFace} from './face';
