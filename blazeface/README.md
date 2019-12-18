@@ -42,42 +42,46 @@ Then:
 
 ```js
 
-// Load the model.
-const model = await blazeface.load();
+const main = async () => {
+  // Load the model.
+  const model = await blazeface.load();
 
-// Pass in an image or video to the model. The model returns an array of
-// bounding boxes, probabilities, and landmarks, one for each detected face.
-const predictions = await model.estimateFace(document.querySelector("img"));
+  // Pass in an image or video to the model. The model returns an array of
+  // bounding boxes, probabilities, and landmarks, one for each detected face.
+  const predictions = await model.estimateFace(document.querySelector("img"));
 
-if (predictions) {
-  /*
-  `predictions` is an array of objects describing each detected face, for example:
+  if (predictions != null) {
+    /*
+    `predictions` is an array of objects describing each detected face, for example:
 
-  [
-    {
-      topLeft: [232.28, 145.26],
-      bottomRight: [449.75, 308.36],
-      probability: [0.998],
-      landmarks: [
-        [295.13, 177.64], // right eye
-        [382.32, 175.56], // left eye
-        [341.18, 205.03], // nose
-        [345.12, 250.61], // mouth
-        [252.76, 211.37], // right ear
-        [431.20, 204.93] // left ear
-      ]
+    [
+      {
+        topLeft: [232.28, 145.26],
+        bottomRight: [449.75, 308.36],
+        probability: [0.998],
+        landmarks: [
+          [295.13, 177.64], // right eye
+          [382.32, 175.56], // left eye
+          [341.18, 205.03], // nose
+          [345.12, 250.61], // mouth
+          [252.76, 211.37], // right ear
+          [431.20, 204.93] // left ear
+        ]
+      }
+    ]
+    */
+
+    for (let i = 0; i < predictions.length; i++) {
+      const start = predictions[i].topLeft;
+      const end = predictions[i].bottomRight;
+      const size = [end[0] - start[0], end[1] - start[1]];
+
+      // Render a rectangle over each detected face.
+      ctx.fillRect(start[0], start[1], size[0], size[1]);
     }
-  ]
-  */
-
-  for (let i = 0; i < predictions.length; i++) {
-    const start = predictions[i].topLeft;
-    const end = predictions[i].bottomRight;
-    const size = [end[0] - start[0], end[1] - start[1]];
-
-    // Render a rectangle over each detected face.
-    ctx.fillRect(start[0], start[1], size[0], size[1]);
   }
 }
+
+main();
 
 ```
