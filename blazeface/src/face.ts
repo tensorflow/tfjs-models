@@ -155,13 +155,16 @@ export class BlazeFaceModel {
     const boxIndices = await boxIndicesTensor.array();
     boxIndicesTensor.dispose();
 
-    const boundingBoxes =
-        await Promise.all(boxIndices.map(async (boxIndex: number) => {
-          const box = tf.slice(boxes, [boxIndex, 0], [1, -1]);
-          const vals = await box.array();
-          box.dispose();
-          return vals;
-        }));
+    let boundingBoxes: tf.Tensor[]|number[][][] = boxIndices.map(
+        (boxIndex: number) => tf.slice(boxes, [boxIndex, 0], [1, -1]));
+    if (!returnTensors) {
+      boundingBoxes = await Promise.all(
+          boundingBoxes.map(async (boundingBox: tf.Tensor2D) => {
+            const vals = await boundingBox.array();
+            boundingBox.dispose();
+            return vals;
+          }));
+    }
 
     const originalHeight = inputImage.shape[1];
     const originalWidth = inputImage.shape[2];
@@ -176,25 +179,33 @@ export class BlazeFaceModel {
       ];
     }
 
-    const annotatedBoxes = boundingBoxes.map((boundingBox, i) => tf.tidy(() => {
-      const boxIndex = boxIndices[i];
+    const annotatedBoxes =
+        (boundingBoxes as number[][][])
+            .map(
+                (boundingBox: tf.Tensor2D|number[][], i: number) =>
+                    tf.tidy(() => {
+                      const boxIndex = boxIndices[i];
 
-      let anchor;
-      if (returnTensors) {
-        anchor = this.anchors.slice([boxIndex, 0], [1, 2]);
-      } else {
-        anchor = this.anchorsData[boxIndex] as [number, number];
-      }
+                      let anchor;
+                      if (returnTensors) {
+                        anchor = this.anchors.slice([boxIndex, 0], [1, 2]);
+                      } else {
+                        anchor = this.anchorsData[boxIndex] as [number, number];
+                      }
 
-      const box = createBox(tf.tensor2d(boundingBox as number[][]));
-      const landmarks =
-          tf.slice(detectedOutputs, [boxIndex, NUM_LANDMARKS - 1], [1, -1])
-              .squeeze()
-              .reshape([NUM_LANDMARKS, -1]);
-      const probability = tf.slice(scores, [boxIndex], [1]);
+                      const box = boundingBox instanceof tf.Tensor ?
+                          createBox(boundingBox) :
+                          createBox(tf.tensor2d(boundingBox));
+                      const landmarks =
+                          tf.slice(
+                                detectedOutputs, [boxIndex, NUM_LANDMARKS - 1],
+                                [1, -1])
+                              .squeeze()
+                              .reshape([NUM_LANDMARKS, -1]);
+                      const probability = tf.slice(scores, [boxIndex], [1]);
 
-      return {box, landmarks, probability, anchor};
-    }));
+                      return {box, landmarks, probability, anchor};
+                    }));
 
     boxes.dispose();
     scores.dispose();
