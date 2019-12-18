@@ -42,13 +42,15 @@ Then:
 
 ```js
 
-const main = async () => {
+async function main() {
   // Load the model.
   const model = await blazeface.load();
 
   // Pass in an image or video to the model. The model returns an array of
   // bounding boxes, probabilities, and landmarks, one for each detected face.
-  const predictions = await model.estimateFaces(document.querySelector("img"));
+
+  const returnTensors = false; // Pass in `true` to get tensors back, rather than values.
+  const predictions = await model.estimateFaces(document.querySelector("img"), returnTensors);
 
   if (predictions != null) {
     /*
