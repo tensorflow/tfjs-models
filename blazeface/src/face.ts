@@ -139,7 +139,8 @@ export class BlazeFaceModel {
     const [detectedOutputs, boxes, scores] = tf.tidy(() => {
       const resizedImage = inputImage.resizeBilinear([this.width, this.height]);
       const normalizedImage = tf.mul(tf.sub(resizedImage.div(255), 0.5), 2);
-      const batchedPrediction = this.blazeFaceModel.predict(normalizedImage);
+      const batchedPrediction = this.blazeFaceModel.predict(
+          normalizedImage);  // batchedPrediction shape: [1, 897, 17]
       const prediction = (batchedPrediction as tf.Tensor3D).squeeze();
 
       const decodedBounds =
