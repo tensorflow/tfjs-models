@@ -84,8 +84,10 @@ const decodeBounds = (boxOutputs: tf.Tensor2D, anchors: tf.Tensor2D,
   const startNormalized = tf.mul(starts, inputSize);
   const endNormalized = tf.mul(ends, inputSize);
 
+  const concatAxis = 1;
   return tf.concat2d(
-      [startNormalized as tf.Tensor2D, endNormalized as tf.Tensor2D], 1);
+      [startNormalized as tf.Tensor2D, endNormalized as tf.Tensor2D],
+      concatAxis);
 };
 
 export class BlazeFaceModel {
@@ -149,7 +151,7 @@ export class BlazeFaceModel {
     const originalHeight = inputImage.shape[1];
     const originalWidth = inputImage.shape[2];
 
-    let scaleFactor;
+    let scaleFactor: tf.Tensor|[number, number];
     if (returnTensors) {
       scaleFactor = tf.div([originalWidth, originalHeight], this.inputSize);
     } else {
