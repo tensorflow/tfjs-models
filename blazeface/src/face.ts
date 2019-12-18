@@ -77,8 +77,9 @@ const decodeBounds = (boxOutputs: tf.Tensor2D, anchors: tf.Tensor2D,
   const boxSizesNormalized = tf.div(boxSizes, inputSize);
   const centersNormalized = tf.div(centers, inputSize);
 
-  const starts = tf.sub(centersNormalized, tf.div(boxSizesNormalized, 2));
-  const ends = tf.add(centersNormalized, tf.div(boxSizesNormalized, 2));
+  const halfBoxSize = tf.div(boxSizesNormalized, 2);
+  const starts = tf.sub(centersNormalized, halfBoxSize);
+  const ends = tf.add(centersNormalized, halfBoxSize);
 
   const startNormalized = tf.mul(starts, inputSize);
   const endNormalized = tf.mul(ends, inputSize);

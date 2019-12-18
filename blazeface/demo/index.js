@@ -44,7 +44,7 @@ const renderPrediction = async () => {
 
   let prediction = await model.estimateFace(video);
 
-  if (prediction) {
+  if (prediction != null) {
     ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
 
     for (let i = 0; i < prediction.length; i++) {
