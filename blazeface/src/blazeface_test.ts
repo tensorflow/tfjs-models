@@ -20,16 +20,23 @@ import * as tf from '@tensorflow/tfjs-core';
 // tslint:disable-next-line: no-imports-from-dist
 import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
+import {BlazeFaceModel} from './face';
 import * as blazeface from './index';
 
 describeWithFlags('BlazeFace', NODE_ENVS, () => {
-  beforeAll(
-      async () => {
+  let model: BlazeFaceModel;
+  beforeAll(async () => {
+    spyOn(tfconv, 'loadGraphModel')
+        .and.callFake(() => ({predict: () => tf.zeros([1, 896, 17])}));
 
-      });
+    model = await blazeface.load();
+  });
 
-  it('estimateFaces does not leak memory',
-     async () => {
+  it('estimateFaces does not leak memory', async () => {
+    const input: tf.Tensor3D = tf.zeros([224, 224, 3]);
+    const beforeTensors = tf.memory().numTensors;
+    await model.estimateFaces(input);
 
-     });
+    expect(tf.memory().numTensors).toEqual(beforeTensors);
+  });
 });
