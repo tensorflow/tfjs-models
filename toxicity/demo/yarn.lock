@@ -807,10 +807,8 @@
     "@parcel/utils" "^1.11.0"
     physical-cpu-count "^2.0.0"
 
-"@tensorflow-models/toxicity@1.2.0":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@tensorflow-models/toxicity/-/toxicity-1.2.0.tgz#544f4604e38ff102ed8a55db7d8f7b5a195d8928"
-  integrity sha512-9bGWPpjNpLIjAKmUttUA4YhPCI6Py/zBxA9H+DRzfLE/OUZUYw9Eams7NNiUIOqs3LzM89lqzjF6L2iIXbxOlA==
+"@tensorflow-models/toxicity@file:..":
+  version "1.2.1"
   dependencies:
     "@tensorflow-models/universal-sentence-encoder" "~1.2.0"
 
