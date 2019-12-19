@@ -52,7 +52,7 @@ async function main() {
   const returnTensors = false; // Pass in `true` to get tensors back, rather than values.
   const predictions = await model.estimateFaces(document.querySelector("img"), returnTensors);
 
-  if (predictions != null) {
+  if (predictions.length > 0) {
     /*
     `predictions` is an array of objects describing each detected face, for example:
 
