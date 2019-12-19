@@ -31,7 +31,7 @@
     ]
   },
   "browserslist": [
-    "last 2 Chrome versions"
+    "last 1 Chrome version"
   ],
   "devDependencies": {
     "@babel/core": "^7.7.6",
