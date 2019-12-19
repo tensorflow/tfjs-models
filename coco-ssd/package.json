@@ -13,12 +13,14 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs-core": "^1.2.6",
-    "@tensorflow/tfjs-converter": "^1.2.5"
+    "@tensorflow/tfjs-backend-wasm": "1.4.0-alpha3",
+    "@tensorflow/tfjs-converter": "^1.4.0",
+    "@tensorflow/tfjs-core": "^1.4.0"
   },
   "devDependencies": {
-    "@tensorflow/tfjs-core": "^1.2.6",
-    "@tensorflow/tfjs-converter": "^1.2.5",
+    "@tensorflow/tfjs-backend-wasm": "1.4.0-alpha3",
+    "@tensorflow/tfjs-converter": "^1.4.0",
+    "@tensorflow/tfjs-core": "^1.4.0",
     "@types/jasmine": "~2.8.8",
     "babel-core": "~6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",
@@ -40,5 +42,8 @@
     "build-npm": "yarn build && rollup -c",
     "test": "yarn build && ts-node run_tests.ts"
   },
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@types/emscripten": "^1.38.0"
+  }
 }

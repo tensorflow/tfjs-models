@@ -17,6 +17,7 @@
 
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
+import '@tensorflow/tfjs-backend-wasm';
 
 import {CLASSES} from './classes';
 
@@ -135,7 +136,7 @@ export class ObjectDetection {
 
     const prevBackend = tf.getBackend();
     // run post process in cpu
-    tf.setBackend('cpu');
+    await tf.setBackend('wasm');
     const indexTensor = tf.tidy(() => {
       const boxes2 =
           tf.tensor2d(boxes, [result[1].shape[1], result[1].shape[3]]);

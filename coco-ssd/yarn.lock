@@ -18,12 +18,17 @@
     esutils "^2.0.2"
     js-tokens "^4.0.0"
 
-"@tensorflow/tfjs-converter@^1.2.5":
+"@tensorflow/tfjs-backend-wasm@1.4.0-alpha3":
+  version "1.4.0-alpha3"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-backend-wasm/-/tfjs-backend-wasm-1.4.0-alpha3.tgz#432c0352ff97afc0f0502d4b35c031514cf2d4d4"
+  integrity sha512-cgRhD/qwJKqsa58qnAEy8k6ZVRlSLbIfti4qVK3dXCtfiM8/pD7M5FVGgjrvRYTCYM/+D2vPCnvCrKsk1cwKjA==
+
+"@tensorflow/tfjs-converter@^1.4.0":
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-1.4.0.tgz#c864edd2ec7cc89d3ffd53854e79612fc230ef97"
   integrity sha512-vdZumj6zHcEALtQlonCBbVwGdEEDcPrF7prgzf4HF82QG4RpM1x/kVdvzsGvfUIPYjRImNn0ZSPC3WaKslNcXw==
 
-"@tensorflow/tfjs-core@^1.2.6":
+"@tensorflow/tfjs-core@^1.4.0":
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-core/-/tfjs-core-1.4.0.tgz#045c91f93cb3ea77473b664c0d1dbad675d7f046"
   integrity sha512-a7dHhSsBbtaxp8/1UAeYKrjY1bQxsDy/Uhj57+mTuGLAcL8CDrTOXXZzucCgs5nvQErdscp7Gp/2VCcA1xp6XQ==
@@ -34,6 +39,11 @@
     "@types/webgl2" "0.0.4"
     node-fetch "~2.1.2"
     seedrandom "2.4.3"
+
+"@types/emscripten@^1.38.0":
+  version "1.38.0"
+  resolved "https://registry.yarnpkg.com/@types/emscripten/-/emscripten-1.38.0.tgz#eba859e3bf94249dcd25bcf853481065a92a6c5c"
+  integrity sha512-qfuBbl9hC0ybmW9s8SDORPgg+LdPV+KRpB8AMdTRqxuQZR4G5T7ozIAVUJLO26N7SFSM1zvDVuZ9+qOX7qt/EQ==
 
 "@types/estree@0.0.39":
   version "0.0.39"
