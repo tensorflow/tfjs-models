@@ -15,28 +15,38 @@
  * =============================================================================
  */
 
-import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 // tslint:disable-next-line: no-imports-from-dist
 import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
 import {BlazeFaceModel} from './face';
 import * as blazeface from './index';
+import {stubbedImageVals} from './test_util';
 
 describeWithFlags('BlazeFace', NODE_ENVS, () => {
   let model: BlazeFaceModel;
   beforeAll(async () => {
-    spyOn(tfconv, 'loadGraphModel')
-        .and.callFake(() => ({predict: () => tf.zeros([1, 896, 17])}));
-
     model = await blazeface.load();
   });
 
   it('estimateFaces does not leak memory', async () => {
-    const input: tf.Tensor3D = tf.zeros([224, 224, 3]);
+    const input: tf.Tensor3D = tf.zeros([128, 128, 3]);
     const beforeTensors = tf.memory().numTensors;
     await model.estimateFaces(input);
 
     expect(tf.memory().numTensors).toEqual(beforeTensors);
+  });
+
+  it('estimateFaces returns objects with expected properties', async () => {
+    // Stubbed image contains a single face.
+    const input: tf.Tensor3D = tf.tensor3d(stubbedImageVals, [128, 128, 3]);
+    const result = await model.estimateFaces(input);
+
+    const face = result[0];
+
+    expect(face.topLeft).toBeDefined();
+    expect(face.bottomRight).toBeDefined();
+    expect(face.landmarks).toBeDefined();
+    expect(face.probability).toBeDefined();
   });
 });
