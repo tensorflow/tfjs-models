@@ -807,25 +807,27 @@
     "@parcel/utils" "^1.11.0"
     physical-cpu-count "^2.0.0"
 
-"@tensorflow-models/toxicity@file:..":
-  version "1.2.1"
+"@tensorflow-models/toxicity@^1.2.2":
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/@tensorflow-models/toxicity/-/toxicity-1.2.2.tgz#aed2cc92122f2fc949b42502bb55f8ed2e1d03a8"
+  integrity sha512-DSMIoBzNyX7+4D4cGKjsFLbCuJz3bksYpwFHKAjTp4+tmgAGpNyg5nDXXI/IQp18nMTbLKgLruLWOxq5y7P4WQ==
   dependencies:
-    "@tensorflow-models/universal-sentence-encoder" "~1.2.0"
+    "@tensorflow-models/universal-sentence-encoder" "~1.2.2"
 
-"@tensorflow-models/universal-sentence-encoder@~1.2.0":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@tensorflow-models/universal-sentence-encoder/-/universal-sentence-encoder-1.2.0.tgz#a44c5b66a778c49c42c88c775586b7a7f5bc249b"
-  integrity sha512-UV7bXkK+Uns0zPT3TfAQ+A3nhYIC2TMEZJ+7aL0juJ2Nf0NOE+2EBIb90TH9DpiGQukA2AgY2P5hK+bvhc8BZA==
+"@tensorflow-models/universal-sentence-encoder@~1.2.2":
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/@tensorflow-models/universal-sentence-encoder/-/universal-sentence-encoder-1.2.2.tgz#27a38c39424b5e85389ac461be177c9f44ba19bd"
+  integrity sha512-fGCl/gwB7jmKCRI2FhgIBeIa/LCSUcjlEcckH2Bc2dIjhJ+2nspp+22lubxcseN6jjrmP42kkXt/reAPe+KJkQ==
 
-"@tensorflow/tfjs-converter@1.2.9":
-  version "1.2.9"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-1.2.9.tgz#4774dd9447ac81c0c6776f9fd186374b9fa3bf1a"
-  integrity sha512-OKmiuZicIgadT3Bv9BvM+oom7wRz9eC5rTglQnuv7VN9H0syFVuhf5oD1Ff70tGDhJjJgL+cPz01fZRxTXjRWA==
+"@tensorflow/tfjs-converter@1.5.0":
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-1.5.0.tgz#f11e7ad3a82e42939039ea2286610a8d77940987"
+  integrity sha512-IvikVcaaCoZhO4NMOH3E5USvdDEmV42Gv2F1lU755CWUZ+NEHkR/uPOdIwmE8ZsfbNdVVegZyaZQRnxju1L2fQ==
 
-"@tensorflow/tfjs-core@1.2.9":
-  version "1.2.9"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-core/-/tfjs-core-1.2.9.tgz#125830270a0bdd0e856914778a300c4ad6f51e21"
-  integrity sha512-s0hHZSx6rGTlkkB8u8gs5n7sIPv1GXDNHmISRy+kqGzmlpkfI2kr6WXqOWQy6wFgjzopRD8cJQjBZ9USPZnYTQ==
+"@tensorflow/tfjs-core@1.5.0":
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-core/-/tfjs-core-1.5.0.tgz#a011a68882068d91d82410bb71aa0220867286bc"
+  integrity sha512-UcTAoVNmBxJLktGWUNbSq7ZEgBvjD0SWS0QcRBMgs93AeLM3xhlyo8MqECQsvCkuReDZwVHhX2fjMrf2M3R99w==
   dependencies:
     "@types/offscreencanvas" "~2019.3.0"
     "@types/seedrandom" "2.4.27"
@@ -834,28 +836,28 @@
     node-fetch "~2.1.2"
     seedrandom "2.4.3"
 
-"@tensorflow/tfjs-data@1.2.9":
-  version "1.2.9"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-data/-/tfjs-data-1.2.9.tgz#54030a7990eb58d20288cab099d966d496710760"
-  integrity sha512-Ti9Cj3pte9butuEsK5OPq0Lcqdi4wVUdtQXm0o7iYOZ0umseRzfbIb6zbdqucc2MQzOMTnRoxN+FL7LZmncsHg==
+"@tensorflow/tfjs-data@1.5.0":
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-data/-/tfjs-data-1.5.0.tgz#91f0620210806ebdb6fa83f3013db33a325ff7a1"
+  integrity sha512-3o/hzzdIHbLGi6oq+UplsTBpgaEFMVldr7X7n56RoXwSP8jSyhAM0oV2SvrL3rcmNP+5eW+pPodBg4kltZq9yQ==
   dependencies:
     "@types/node-fetch" "^2.1.2"
     node-fetch "~2.1.2"
 
-"@tensorflow/tfjs-layers@1.2.9":
-  version "1.2.9"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-layers/-/tfjs-layers-1.2.9.tgz#d30d1bdfed228a07a3d4e9dcb9a6884031ae56e7"
-  integrity sha512-OlXYaIb1rCk5dYmpaNsPEkO7R+T0oxfS3vQGIztNJB+YxrN8mwCu3hqgpbdKhAITiP+jxO0o+7bny8MsOCkOSQ==
+"@tensorflow/tfjs-layers@1.5.0":
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-layers/-/tfjs-layers-1.5.0.tgz#fe8e8a0a35a6999df891e4cff471aac6521d5ed7"
+  integrity sha512-uX5lWiDVrA0KSH2nzbewbBThtcVNVRU+xahm8SsNC7wYvnXAoL8K1X/yAYd+OvgTxbDxo+CW3ORd0S4sZby+yg==
 
-"@tensorflow/tfjs@^1.2.9":
-  version "1.2.9"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs/-/tfjs-1.2.9.tgz#120f55a2826f71a5816e02b5bc0311fd583beedb"
-  integrity sha512-9UAQnSp638FyM5eedYEM+j2R7VcNajiFmkeT5EXtf7YIurmMFNEm1sbajKJx7/ckz31YcYrVoUPc/iLhhDQl2A==
+"@tensorflow/tfjs@^1.3.3":
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs/-/tfjs-1.5.0.tgz#a0823bea27d1624d6ff4c5a50be2d1a59c937bf0"
+  integrity sha512-y2izi8vkXd9pYcszj3tOj9rkM6lQDMNesVa5AZBsyvFsgpcSiQpYoiyZKOM1YEcmwgNDgvmAUVfKsgqZfl8BLQ==
   dependencies:
-    "@tensorflow/tfjs-converter" "1.2.9"
-    "@tensorflow/tfjs-core" "1.2.9"
-    "@tensorflow/tfjs-data" "1.2.9"
-    "@tensorflow/tfjs-layers" "1.2.9"
+    "@tensorflow/tfjs-converter" "1.5.0"
+    "@tensorflow/tfjs-core" "1.5.0"
+    "@tensorflow/tfjs-data" "1.5.0"
+    "@tensorflow/tfjs-layers" "1.5.0"
 
 "@types/node-fetch@^2.1.2":
   version "2.3.7"
