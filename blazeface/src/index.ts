@@ -18,9 +18,8 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import {BlazeFaceModel} from './face';
 
-// TODO(annxingyuan): use TFHub link once it's available.
 const BLAZEFACE_MODEL_URL =
-    'https://storage.googleapis.com/learnjs-data/facemesh_staging/facedetector_tfjs/model.json';
+    'https://tfhub.dev/tensorflow/tfjs-model/blazeface/1/default/1';
 
 /**
  * Load blazeface.
@@ -41,7 +40,8 @@ export async function load({
   iouThreshold = 0.3,
   scoreThreshold = 0.75
 } = {}) {
-  const blazeface = await tfconv.loadGraphModel(BLAZEFACE_MODEL_URL);
+  const blazeface =
+      await tfconv.loadGraphModel(BLAZEFACE_MODEL_URL, {fromTFHub: true});
 
   return new BlazeFaceModel(
       blazeface, inputWidth, inputHeight, maxFaces, iouThreshold,
