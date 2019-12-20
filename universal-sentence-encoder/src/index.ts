@@ -58,7 +58,9 @@ export class UniversalSentenceEncoder {
   private tokenizer: Tokenizer;
 
   async loadModel() {
-    return tfconv.loadGraphModel(`${BASE_PATH}model.json`);
+    return tfconv.loadGraphModel(
+        'https://tfhub.dev/tensorflow/tfjs-model/universal-sentence-encoder-lite/1/default/1',
+        {fromTFHub: true});
   }
 
   async load() {
