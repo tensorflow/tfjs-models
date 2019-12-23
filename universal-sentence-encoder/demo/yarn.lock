@@ -742,10 +742,10 @@
     "@parcel/utils" "^1.11.0"
     physical-cpu-count "^2.0.0"
 
-"@tensorflow-models/universal-sentence-encoder@1.2.0":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@tensorflow-models/universal-sentence-encoder/-/universal-sentence-encoder-1.2.0.tgz#a44c5b66a778c49c42c88c775586b7a7f5bc249b"
-  integrity sha512-UV7bXkK+Uns0zPT3TfAQ+A3nhYIC2TMEZJ+7aL0juJ2Nf0NOE+2EBIb90TH9DpiGQukA2AgY2P5hK+bvhc8BZA==
+"@tensorflow-models/universal-sentence-encoder@^1.2.2":
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/@tensorflow-models/universal-sentence-encoder/-/universal-sentence-encoder-1.2.2.tgz#27a38c39424b5e85389ac461be177c9f44ba19bd"
+  integrity sha512-fGCl/gwB7jmKCRI2FhgIBeIa/LCSUcjlEcckH2Bc2dIjhJ+2nspp+22lubxcseN6jjrmP42kkXt/reAPe+KJkQ==
 
 "@tensorflow/tfjs-converter@1.2.9":
   version "1.2.9"
