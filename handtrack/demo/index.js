@@ -45,10 +45,6 @@ const statusElement = document.getElementById("status");
 const status = msg => statusElement.innerText = msg;
 
 async function setupCamera() {
-  if (!isSupportedPlatform()) {
-    throw new Error("Your browser doesn't supported yet.");
-  }
-
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     throw new Error(
       'Browser API navigator.mediaDevices.getUserMedia not available');
@@ -94,7 +90,6 @@ const bindPage = async () => {
 
   landmarksRealTime(video);
 }
-
 
 const landmarksRealTime = async (video) => {
   const stats = new Stats();

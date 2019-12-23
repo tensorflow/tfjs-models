@@ -9,9 +9,7 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow-models/handtrack": "file:../",
-    "@tensorflow/tfjs-core": "^1.3.2",
-    "@tensorflow/tfjs-converter": "^1.3.2"
+    "@tensorflow-models/handtrack": "file:../"
   },
   "scripts": {
     "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr ",
