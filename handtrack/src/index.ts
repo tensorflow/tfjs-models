@@ -83,98 +83,101 @@ class HandPipeline {
       return (input as tf.Tensor).toFloat().expandDims(0);
     });
 
-    if (this.needROIUpdate()) {
-      const box = this.handdetect.getSingleBoundingBox(image);
-      if (!box) {
+    return tf.tidy(() => {
+      if (this.needROIUpdate()) {
+        const box = this.handdetect.getSingleBoundingBox(image);
+        if (!box) {
+          this.clearROIS();
+          return null;
+        }
+        this.updateROIFromFacedetector(box);
+        this.runsWithoutHandDetector = 0;
+        this.forceUpdate = false;
+      } else {
+        this.runsWithoutHandDetector++;
+      }
+
+      const width = 256., height = 256.;
+      const box = this.rois[0];
+
+      // TODO (vakunov): move to configuration
+      const scale_factor = 2.6;
+      const shifts = [0, -0.2];
+      const angle = this.calculateRotation(box);
+
+      const handpalm_center = box.getCenter().gather(0);
+      const x = handpalm_center.arraySync();
+      const handpalm_center_relative =
+          [x[0] / image.shape[2], x[1] / image.shape[1]];
+      const rotated_image = rotateWebgl(
+          image, angle, 0, handpalm_center_relative as [number, number]);
+      const box_landmarks_homo =
+          tf.concat([box.landmarks, tf.ones([7]).expandDims(1)], 1);
+
+      const palm_rotation_matrix =
+          this.build_rotation_matrix_with_center(-angle, handpalm_center);
+
+      const rotated_landmarks =
+          tf.matMul(palm_rotation_matrix, box_landmarks_homo.transpose())
+              .transpose()
+              .slice([0, 0], [7, 2]);
+
+      let box_for_cut = this.calculateLandmarksBoundingBox(rotated_landmarks)
+                            .increaseBox(scale_factor);
+      box_for_cut = this.makeSquareBox(box_for_cut);
+      box_for_cut = this.shiftBox(box_for_cut, shifts);
+
+      const cutted_hand = box_for_cut.cutFromAndResize(
+          rotated_image as tf.Tensor4D, [width, height]);
+      const handImage = cutted_hand.div(255);
+
+      const output = this.handtrackModel.predict(handImage) as tf.Tensor[];
+
+      const coords3d = tf.reshape(output[1], [-1, 3]);
+      const coords2d = coords3d.slice([0, 0], [-1, 2]);
+
+      const coords2d_scaled = tf.mul(
+          coords2d.sub(tf.tensor([128, 128])),
+          tf.div(box_for_cut.getSize(), [width, height]));
+
+      const coords_rotation_matrix =
+          this.build_rotation_matrix_with_center(angle, tf.tensor([0, 0]));
+
+      const coords2d_homo =
+          tf.concat([coords2d_scaled, tf.ones([21]).expandDims(1)], 1);
+
+      const coords2d_rotated =
+          tf.matMul(coords_rotation_matrix, coords2d_homo, false, true)
+              .transpose()
+              .slice([0, 0], [-1, 2]);
+
+      const original_center =
+          tf.matMul(
+                this.inverse(palm_rotation_matrix),
+                tf.concat(
+                      [box_for_cut.getCenter(), tf.ones([1]).expandDims(1)], 1)
+                    .transpose())
+              .transpose()
+              .slice([0, 0], [1, 2]);
+
+      const coords2d_result = coords2d_rotated.add(original_center);
+
+      const landmarks_ids = [0, 5, 9, 13, 17, 1, 2];
+      const selected_landmarks = tf.gather(coords2d_result, landmarks_ids);
+
+      const landmarks_box =
+          this.calculateLandmarksBoundingBox(selected_landmarks);
+      this.updateROIFromFacedetector(landmarks_box);
+
+      const handFlag =
+          ((output[0] as tf.Tensor).arraySync() as number[][])[0][0];
+      if (handFlag < 0.8) {  // TODO: move to configuration
         this.clearROIS();
         return null;
       }
-      this.updateROIFromFacedetector(box);
-      this.runsWithoutHandDetector = 0;
-      this.forceUpdate = false;
-    } else {
-      this.runsWithoutHandDetector++;
-    }
 
-    const width = 256., height = 256.;
-    const box = this.rois[0];
-
-    // TODO (vakunov): move to configuration
-    const scale_factor = 2.6;
-    const shifts = [0, -0.2];
-    const angle = this.calculateRotation(box);
-
-    const handpalm_center = box.getCenter().gather(0);
-    const x = handpalm_center.arraySync();
-    const handpalm_center_relative =
-        [x[0] / image.shape[2], x[1] / image.shape[1]];
-    const rotated_image = rotateWebgl(
-        image, angle, 0, handpalm_center_relative as [number, number]);
-    const box_landmarks_homo =
-        tf.concat([box.landmarks, tf.ones([7]).expandDims(1)], 1);
-
-    const palm_rotation_matrix =
-        this.build_rotation_matrix_with_center(-angle, handpalm_center);
-
-    const rotated_landmarks =
-        tf.matMul(palm_rotation_matrix, box_landmarks_homo.transpose())
-            .transpose()
-            .slice([0, 0], [7, 2]);
-
-    let box_for_cut = this.calculateLandmarksBoundingBox(rotated_landmarks)
-                          .increaseBox(scale_factor);
-    box_for_cut = this.makeSquareBox(box_for_cut);
-    box_for_cut = this.shiftBox(box_for_cut, shifts);
-
-    const cutted_hand = box_for_cut.cutFromAndResize(
-        rotated_image as tf.Tensor4D, [width, height]);
-    const handImage = cutted_hand.div(255);
-
-    const output = this.handtrackModel.predict(handImage) as tf.Tensor[];
-
-    const coords3d = tf.reshape(output[1], [-1, 3]);
-    const coords2d = coords3d.slice([0, 0], [-1, 2]);
-
-    const coords2d_scaled = tf.mul(
-        coords2d.sub(tf.tensor([128, 128])),
-        tf.div(box_for_cut.getSize(), [width, height]));
-
-    const coords_rotation_matrix =
-        this.build_rotation_matrix_with_center(angle, tf.tensor([0, 0]));
-
-    const coords2d_homo =
-        tf.concat([coords2d_scaled, tf.ones([21]).expandDims(1)], 1);
-
-    const coords2d_rotated =
-        tf.matMul(coords_rotation_matrix, coords2d_homo, false, true)
-            .transpose()
-            .slice([0, 0], [-1, 2]);
-
-    const original_center =
-        tf.matMul(
-              this.inverse(palm_rotation_matrix),
-              tf.concat(
-                    [box_for_cut.getCenter(), tf.ones([1]).expandDims(1)], 1)
-                  .transpose())
-            .transpose()
-            .slice([0, 0], [1, 2]);
-
-    const coords2d_result = coords2d_rotated.add(original_center);
-
-    const landmarks_ids = [0, 5, 9, 13, 17, 1, 2];
-    const selected_landmarks = tf.gather(coords2d_result, landmarks_ids);
-
-    const landmarks_box =
-        this.calculateLandmarksBoundingBox(selected_landmarks);
-    this.updateROIFromFacedetector(landmarks_box);
-
-    const handFlag = ((output[0] as tf.Tensor).arraySync() as number[][])[0][0];
-    if (handFlag < 0.8) {  // TODO: move to configuration
-      this.clearROIS();
-      return null;
-    }
-
-    return coords2d_result;
+      return coords2d_result;
+    });
   }
 
   inverse(matrix: tf.Tensor) {
