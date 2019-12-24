@@ -116,12 +116,13 @@ const landmarksRealTime = async (video) => {
   ctx.scale(-1, 1);
 
   async function frameLandmarks() {
+    stats.begin();
     ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
     let meshes = model.next_meshes(video);
     if (meshes) {
       drawKeypoints(ctx, meshes);
     }
-
+    stats.end();
     requestAnimationFrame(frameLandmarks);
   };
 

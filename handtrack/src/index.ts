@@ -132,7 +132,7 @@ class HandPipeline {
 
     const output = this.handtrackModel.predict(handImage) as tf.Tensor[];
 
-    const coords3d = tf.reshape(output[0], [-1, 3]);
+    const coords3d = tf.reshape(output[1], [-1, 3]);
     const coords2d = coords3d.slice([0, 0], [-1, 2]);
 
     const coords2d_scaled = tf.mul(
@@ -168,7 +168,7 @@ class HandPipeline {
         this.calculateLandmarksBoundingBox(selected_landmarks);
     this.updateROIFromFacedetector(landmarks_box);
 
-    const handFlag = ((output[1] as tf.Tensor).arraySync() as number[][])[0][0];
+    const handFlag = ((output[0] as tf.Tensor).arraySync() as number[][])[0][0];
     if (handFlag < 0.8) {  // TODO: move to configuration
       this.clearROIS();
       return null;
