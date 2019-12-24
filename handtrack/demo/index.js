@@ -116,19 +116,11 @@ const landmarksRealTime = async (video) => {
   ctx.scale(-1, 1);
 
   async function frameLandmarks() {
-    stats.begin();
-    tf.tidy(function () {
-      const image = tf.browser.fromPixels(video).toFloat().expandDims(0);
-
-      ctx.drawImage(video, 0, 0, videoWidth, videoHeight,
-        0, 0, canvas.width, canvas.height);
-
-      let meshes = model.next_meshes(image);
-      if (meshes) {
-        drawKeypoints(ctx, meshes);
-      }
-    });
-    stats.end();
+    ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
+    let meshes = model.next_meshes(video);
+    if (meshes) {
+      drawKeypoints(ctx, meshes);
+    }
 
     requestAnimationFrame(frameLandmarks);
   };

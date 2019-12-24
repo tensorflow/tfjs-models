@@ -74,9 +74,17 @@ class HandPipeline {
    *
    * @return {tf.Tensor?} tensor of 2d coordinates (1, 21, 3)
    */
-  next_meshes(input: tf.Tensor4D) {
+  next_meshes(input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
+              HTMLCanvasElement) {
+    const image: tf.Tensor4D = tf.tidy(() => {
+      if (!(input instanceof tf.Tensor)) {
+        input = tf.browser.fromPixels(input);
+      }
+      return (input as tf.Tensor).toFloat().expandDims(0);
+    });
+
     if (this.needROIUpdate()) {
-      const box = this.handdetect.getSingleBoundingBox(input);
+      const box = this.handdetect.getSingleBoundingBox(image);
       if (!box) {
         this.clearROIS();
         return null;
@@ -99,9 +107,9 @@ class HandPipeline {
     const handpalm_center = box.getCenter().gather(0);
     const x = handpalm_center.arraySync();
     const handpalm_center_relative =
-        [x[0] / input.shape[2], x[1] / input.shape[1]];
+        [x[0] / image.shape[2], x[1] / image.shape[1]];
     const rotated_image = rotateWebgl(
-        input, angle, 0, handpalm_center_relative as [number, number]);
+        image, angle, 0, handpalm_center_relative as [number, number]);
     const box_landmarks_homo =
         tf.concat([box.landmarks, tf.ones([7]).expandDims(1)], 1);
 
