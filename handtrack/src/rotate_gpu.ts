@@ -67,5 +67,5 @@ export function rotate(
   };
 
   const webglBackend = tf.backend() as tf.webgl.MathBackendWebGL;
-  return webglBackend.compileAndRun(program, []);
+  return webglBackend.compileAndRun(program, [image]);
 }
