@@ -74,8 +74,8 @@ class HandPipeline {
    *
    * @return {tf.Tensor?} tensor of 2d coordinates (1, 21, 3)
    */
-  next_meshes(input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
-              HTMLCanvasElement) {
+  async next_meshes(input: tf.Tensor3D|ImageData|HTMLVideoElement|
+                    HTMLImageElement|HTMLCanvasElement) {
     const image: tf.Tensor4D = tf.tidy(() => {
       if (!(input instanceof tf.Tensor)) {
         input = tf.browser.fromPixels(input);
@@ -83,20 +83,20 @@ class HandPipeline {
       return (input as tf.Tensor).toFloat().expandDims(0);
     });
 
-    return tf.tidy(() => {
-      if (this.needROIUpdate()) {
-        const box = this.handdetect.getSingleBoundingBox(image);
-        if (!box) {
-          this.clearROIS();
-          return null;
-        }
-        this.updateROIFromFacedetector(box);
-        this.runsWithoutHandDetector = 0;
-        this.forceUpdate = false;
-      } else {
-        this.runsWithoutHandDetector++;
+    if (this.needROIUpdate()) {
+      const box = await this.handdetect.getSingleBoundingBox(image);
+      if (!box) {
+        this.clearROIS();
+        return null;
       }
+      this.updateROIFromFacedetector(box);
+      this.runsWithoutHandDetector = 0;
+      this.forceUpdate = false;
+    } else {
+      this.runsWithoutHandDetector++;
+    }
 
+    return tf.tidy(() => {
       const width = 256., height = 256.;
       const box = this.rois[0];
 
@@ -330,7 +330,7 @@ class HandDetectModel {
     return tf.mul(relative_landmarks, this.input_size);
   }
 
-  _getBoundingBox(input_image: tf.Tensor) {
+  async _getBoundingBox(input_image: tf.Tensor) {
     const img = tf.mul(tf.sub(input_image, 0.5), 2);  // make input [-1, 1]
 
     const detect_outputs = this.model.predict(img) as tf.Tensor;
@@ -344,11 +344,9 @@ class HandDetectModel {
         tf.slice(detect_outputs, [0, 0, 5], [1, -1, 14]).squeeze();
     const boxes = this._decode_bounds(raw_boxes);
 
-    const box_indices =
-        tf.image
-            .nonMaxSuppression(
-                boxes, scores, 1, this.iou_threshold, this.scoreThreshold)
-            .arraySync();
+    const box_indices_tensor = await tf.image.nonMaxSuppressionAsync(
+        boxes, scores, 1, this.iou_threshold, this.scoreThreshold);
+    const box_indices = await box_indices_tensor.array();
 
     const landmarks = this._decode_landmarks(raw_landmarks);
     if (box_indices.length == 0) {
@@ -364,12 +362,12 @@ class HandDetectModel {
     return [result_box, result_landmarks];
   }
 
-  getSingleBoundingBox(input_image: tf.Tensor4D) {
+  async getSingleBoundingBox(input_image: tf.Tensor4D) {
     const original_h = input_image.shape[1];
     const original_w = input_image.shape[2];
 
     const image = input_image.resizeBilinear([256, 256]).div(255);
-    const bboxes_data = this._getBoundingBox(image);
+    const bboxes_data = await this._getBoundingBox(image);
 
     if (!bboxes_data[0]) {
       return null;

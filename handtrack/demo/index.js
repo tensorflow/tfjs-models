@@ -118,7 +118,7 @@ const landmarksRealTime = async (video) => {
   async function frameLandmarks() {
     stats.begin();
     ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
-    let meshes = model.next_meshes(video);
+    let meshes = await model.next_meshes(video);
     if (meshes) {
       drawKeypoints(ctx, meshes);
     }
