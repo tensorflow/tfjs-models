@@ -20,9 +20,6 @@ import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 export {version} from './version';
 
-const BASE_PATH =
-    'https://storage.googleapis.com/tfjs-models/savedmodel/toxicity/';
-
 /**
  * Load the toxicity model.
  *
@@ -52,7 +49,9 @@ export class ToxicityClassifier {
   }
 
   async loadModel() {
-    return tfconv.loadGraphModel(`${BASE_PATH}model.json`);
+    return tfconv.loadGraphModel(
+        'https://tfhub.dev/tensorflow/tfjs-model/toxicity/1/default/1',
+        {fromTFHub: true});
   }
 
   async loadTokenizer() {
