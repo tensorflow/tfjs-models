@@ -10,6 +10,10 @@ The model is designed for front-facing cameras on mobile devices, where faces in
 
 Check out our [demo](https://storage.googleapis.com/tfjs-models/demos/blazeface/index.html), which uses the model to predict facial bounding boxes from a live video stream.
 
+This model is also available as part of
+[MediaPipe](https://github.com/google/mediapipe/tree/master/mediapipe/models), a
+framework for building multimodal applied ML pipelines.
+
 ## Installation
 
 Using `yarn`:
