@@ -76,6 +76,7 @@ class HandPipeline {
    */
   async next_meshes(input: tf.Tensor3D|ImageData|HTMLVideoElement|
                     HTMLImageElement|HTMLCanvasElement) {
+    const startNumTensors = tf.memory().numTensors;
     const image: tf.Tensor4D = tf.tidy(() => {
       if (!(input instanceof tf.Tensor)) {
         input = tf.browser.fromPixels(input);
@@ -84,9 +85,12 @@ class HandPipeline {
     });
 
     if (this.needROIUpdate()) {
+      console.log('NEEDS ROI UPDATE');
       const box = await this.handdetect.getSingleBoundingBox(image);
       if (!box) {
         this.clearROIS();
+        console.log('no box - returning');
+        console.log(tf.memory().numTensors - startNumTensors);
         return null;
       }
       this.updateROIFromFacedetector(box);
@@ -96,7 +100,7 @@ class HandPipeline {
       this.runsWithoutHandDetector++;
     }
 
-    return tf.tidy(() => {
+    const scaledCoords = tf.tidy(() => {
       const width = 256., height = 256.;
       const box = this.rois[0];
 
@@ -178,6 +182,10 @@ class HandPipeline {
 
       return coords2d_result;
     });
+
+    console.log(tf.memory().numTensors - startNumTensors);
+
+    return scaledCoords;
   }
 
   inverse(matrix: tf.Tensor) {
