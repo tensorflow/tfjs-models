@@ -14,6 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
+import * as tf from '@tensorflow/tfjs-core';
 
 /**
  * Class for represent node for token parsing Trie data structure.
@@ -93,6 +94,28 @@ class Trie {
   }
 }
 
+function isWhitespace(ch) {
+  return /\s/.test(ch);
+}
+
+function isInvalid(ch) {
+  return (ch === 0 || ch === 0xfffd);
+}
+
+/** To judge whether it's a control character(exclude whitespace). */
+function isControl(ch) {
+  if (isWhitespace(ch)) {
+    return false;
+  }
+  return /[^ -~]/.test(ch);
+}
+
+const punctuationRegEx = /[~`\!@#\$%\^&\*\(\)\{\}\[\];:\"'<,\.>\?\/\\\|\-_\+=]/;
+
+/** To judge whether it's a punctuation. */
+function isPunctuation(ch) {
+  return punctuationRegEx.test(ch);
+}
 /**
  * Tokenizer for Bert.
  */
@@ -120,19 +143,66 @@ export class BertTokenizer {
   }
 
   private async loadVocab() {
-    return fetch(
-               'https://storage.googleapis.com/learnjs-data/bert_vocab/processed_vocab.json')
+    return tf.util
+        .fetch(
+            'https://storage.googleapis.com/learnjs-data/bert_vocab/processed_vocab.json')
         .then(d => d.json());
   }
 
-  private processInput(text) {
-    const words = text.split(' ');
-    return words.map(word => {
-      if (word !== '[CLS]' && word !== '[SEP]') {
-        return this.separator + word.toLowerCase().normalize('NFKC');
-      }
-      return word;
+  processInput(text: string) {
+    const cleanedText = this.cleanText(text);
+
+    const origTokens = cleanedText.split(' ');
+
+    const tokens = origTokens.map((token) => {
+      token = token.toLowerCase();
+      return this.runSplitOnPunc(token);
     });
+    return [].concat.apply([], tokens);
+  }
+
+  /* Performs invalid character removal and whitespace cleanup on text. */
+  private cleanText(text: string) {
+    if (text == null) {
+      throw new Error('The input String is null.');
+    }
+
+    const stringBuilder = [];
+    for (const ch of text) {
+      // Skip the characters that cannot be used.
+      if (isInvalid(ch) || isControl(ch)) {
+        continue;
+      }
+      if (isWhitespace(ch)) {
+        stringBuilder.push(' ');
+      } else {
+        stringBuilder.push(ch);
+      }
+    }
+    return stringBuilder.join('');
+  }
+
+  /* Splits punctuation on a piece of text. */
+  private runSplitOnPunc(text: string) {
+    if (text == null) {
+      throw new Error('The input String is null.');
+    }
+
+    const tokens = [];
+    let startNewWord = true;
+    for (const ch of text) {
+      if (isPunctuation(ch)) {
+        tokens.push(ch);
+        startNewWord = true;
+      } else {
+        if (startNewWord) {
+          tokens.push('');
+          startNewWord = false;
+        }
+        tokens[tokens.length - 1] += ch;
+      }
+    }
+    return tokens;
   }
 
   /**
@@ -145,8 +215,12 @@ export class BertTokenizer {
 
     let outputTokens = [];
 
-    const words = this.processInput(text);
-
+    const words = this.processInput(text).map(word => {
+      if (word !== '[CLS]' && word !== '[SEP]') {
+        return `${this.separator}${word.normalize('NFKC')}`;
+      }
+      return word;
+    });
     for (let i = 0; i < words.length; i++) {
       const chars = [];
       for (const symbol of words[i]) {

@@ -27,7 +27,7 @@ const answerDiv = document.getElementById('answer');
 
 const process = async () => {
   const model = await modelPromise;
-  const answers = model.findAnswers(input.value, contextDiv.textContent);
+  const answers = model.findAnswers(input.value, contextDiv.value);
   console.log(answers);
   answerDiv.innerHTML =
       answers.map(answer => answer[0] + ' (score =' + answer[1] + ')')

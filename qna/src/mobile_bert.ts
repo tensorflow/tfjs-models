@@ -32,6 +32,18 @@ export interface MobileBert {
   findAnswers(question: string, context: string): Array<[string, number]>;
 }
 
+/**
+ * MobileBert model loading is configurable using the following config
+ * dictionary.
+ *
+ * `modelUrl`: An optional string that specifies custom url of the model. This
+ * is useful for area/countries that don't have access to the model hosted on
+ * GCP.
+ */
+export interface ModelConfig {
+  modelUrl: string;
+}
+
 interface Feature {
   inputIds: number[];
   inputMask: number[];
@@ -44,6 +56,11 @@ class MobileBertImpl implements MobileBert {
   private model: tfconv.GraphModel;
   private tokenizer: BertTokenizer;
 
+  constructor(private modelConfig: ModelConfig) {
+    if (this.modelConfig == null) {
+      this.modelConfig = {modelUrl: MODEL_URL};
+    }
+  }
   private process(
       query: string, context: string, maxQueryLen: number, maxSeqLen: number,
       docStride = 128): Feature[] {
@@ -51,7 +68,7 @@ class MobileBertImpl implements MobileBert {
     if (queryTokens.length > maxQueryLen) {
       queryTokens = queryTokens.slice(0, maxQueryLen);
     }
-    const origTokens = context.trim().split(/\s+/).slice(0);
+    const origTokens = this.tokenizer.processInput(context.trim()).slice(0);
     const tokenToOrigIndex = [];
     const allDocTokens = [];
     for (let i = 0; i < origTokens.length; i++) {
@@ -98,7 +115,7 @@ class MobileBertImpl implements MobileBert {
       tokens.push(this.tokenizer.SEP_INDEX);
       segmentIds.push(0);
       for (let i = 0; i < docSpan['length']; i++) {
-        const splitTokenIndex = i + docSpan['start'];
+        const splitTokenIndex = `${i}${docSpan['start']}`;
         const docToken = allDocTokens[splitTokenIndex];
         tokens.push(docToken);
         segmentIds.push(1);
@@ -119,13 +136,13 @@ class MobileBertImpl implements MobileBert {
   }
 
   async load() {
-    this.model = await tfconv.loadGraphModel(MODEL_URL);
+    this.model = await tfconv.loadGraphModel(this.modelConfig.modelUrl);
     // warm up the backend
     const inputIds = tf.ones([1, size], 'int32');
     const segmentIds = tf.ones([1, size], 'int32');
     const inputMask = tf.ones([1, size], 'int32');
 
-    this.model.predict({
+    this.model.execute({
       input_ids: inputIds,
       segment_ids: segmentIds,
       input_mask: inputMask,
@@ -142,32 +159,33 @@ class MobileBertImpl implements MobileBert {
    * @return array of answsers
    */
   findAnswers(question: string, context: string) {
-    const features =
-        this.process(question, context, MAX_QUERY_LEN, MAX_SEQ_LEN);
-    const answers = features.map((feature, index) => {
-      console.log(feature);
-      const inputIds = tf.tensor2d(feature.inputIds, [1, size], 'int32');
-      const segmentIds = tf.tensor2d(feature.segmentIds, [1, size], 'int32');
-      const inputMask = tf.tensor2d(feature.inputMask, [1, size], 'int32');
-      const globalStep = tf.scalar(index, 'int32');
-      const result = this.model.execute(
-          {
-            input_ids: inputIds,
-            segment_ids: segmentIds,
-            input_mask: inputMask,
-            global_step: globalStep
-          },
-          ['start_logits', 'end_logits']);
-      const startLogits = result[0].arraySync();
-      const endLogits = result[1].arraySync();
-      return this.getBestAnswers(
-          startLogits[0], endLogits[0], feature.origTokens,
-          feature.tokenToOrigMap, index);
+    const answers = tf.tidy(() => {
+      const features =
+          this.process(question, context, MAX_QUERY_LEN, MAX_SEQ_LEN);
+      return features.map((feature, index) => {
+        const inputIds = tf.tensor2d(feature.inputIds, [1, size], 'int32');
+        const segmentIds = tf.tensor2d(feature.segmentIds, [1, size], 'int32');
+        const inputMask = tf.tensor2d(feature.inputMask, [1, size], 'int32');
+        const globalStep = tf.scalar(index, 'int32');
+        const result = this.model.execute(
+            {
+              input_ids: inputIds,
+              segment_ids: segmentIds,
+              input_mask: inputMask,
+              global_step: globalStep
+            },
+            ['start_logits', 'end_logits']);
+        const startLogits = result[0].arraySync();
+        const endLogits = result[1].arraySync();
+
+        return this.getBestAnswers(
+            startLogits[0], endLogits[0], feature.origTokens,
+            feature.tokenToOrigMap, index);
+      });
     });
-    console.log(answers);
     return []
         .concat.apply([], answers)
-        .sort((a, b) => b[1] - a[1])
+        .sort((logitA, logitB) => logitB[1] - logitA[1])
         .slice(0, PREDICT_ANS_NUM);
   }
 
@@ -248,8 +266,8 @@ class MobileBertImpl implements MobileBert {
   }
 }
 
-export const load = async(): Promise<MobileBert> => {
-  const mobileBert = new MobileBertImpl();
+export const load = async(modelConfig?: ModelConfig): Promise<MobileBert> => {
+  const mobileBert = new MobileBertImpl(modelConfig);
   await mobileBert.load();
   return mobileBert;
 };
