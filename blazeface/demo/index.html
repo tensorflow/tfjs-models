@@ -35,14 +35,6 @@ limitations under the License.
 
 <body>
   <div id="main">
-    <video id="video" playsinline style="
-      -webkit-transform: scaleX(-1);
-      transform: scaleX(-1);
-      display: none;
-      width: auto;
-      height: auto;
-      ">
-    </video>
     <canvas id="output"></canvas>
     <div id="description">
       <div id="description-title">Blazeface demo</div>
@@ -50,6 +42,14 @@ limitations under the License.
         red
         box over faces, and blue dots over facial landmarks (eyes, ears, nose, and mouth).</p>
     </div>
+    <video id="video" playsinline style="
+      -webkit-transform: scaleX(-1);
+      transform: scaleX(-1);
+      visibility: hidden;
+      width: auto;
+      height: auto;
+      ">
+    </video>
   </div>
 </body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js"></script>
