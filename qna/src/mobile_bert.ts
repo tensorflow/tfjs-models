@@ -115,7 +115,7 @@ class MobileBertImpl implements MobileBert {
       tokens.push(this.tokenizer.SEP_INDEX);
       segmentIds.push(0);
       for (let i = 0; i < docSpan['length']; i++) {
-        const splitTokenIndex = `${i}${docSpan['start']}`;
+        const splitTokenIndex = i + docSpan['start'];
         const docToken = allDocTokens[splitTokenIndex];
         tokens.push(docToken);
         segmentIds.push(1);
