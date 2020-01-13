@@ -151,7 +151,9 @@ export class BlazeFaceModel {
       return [prediction, decodedBounds, tf.sigmoid(logits).squeeze()];
     });
 
-    const boxIndicesTensor = await tf.image.nonMaxSuppressionAsync(
+    // TODO: Once tf.image.nonMaxSuppression includes a flag to suppress console
+    // warnings for not using async version, pass that flag in.
+    const boxIndicesTensor = tf.image.nonMaxSuppression(
         boxes as tf.Tensor2D, scores as tf.Tensor1D, this.maxFaces,
         this.iouThreshold, this.scoreThreshold);
     const boxIndices = await boxIndicesTensor.array();
