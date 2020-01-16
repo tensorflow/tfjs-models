@@ -192,9 +192,13 @@ export class BlazeFaceModel {
 
     // TODO: Once tf.image.nonMaxSuppression includes a flag to suppress console
     // warnings for not using async version, pass that flag in.
+    const savedConsoleWarnFn = console.warn;
+    console.warn = () => {};
+
     const boxIndicesTensor = tf.image.nonMaxSuppression(
         boxes as tf.Tensor2D, scores as tf.Tensor1D, this.maxFaces,
         this.iouThreshold, this.scoreThreshold);
+    console.warn = savedConsoleWarnFn;
     const boxIndices = await boxIndicesTensor.array();
     boxIndicesTensor.dispose();
 
@@ -277,7 +281,8 @@ export class BlazeFaceModel {
   async estimateFaces(
       input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
       HTMLCanvasElement,
-      returnTensors = false, flipHorizontal = true): Promise<NormalizedFace[]> {
+      returnTensors = false,
+      flipHorizontal = false): Promise<NormalizedFace[]> {
     const [, width] = getInputTensorDimensions(input);
     const image = tf.tidy(() => {
       if (!(input instanceof tf.Tensor)) {

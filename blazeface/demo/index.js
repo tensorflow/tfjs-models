@@ -32,8 +32,8 @@ const state = {
 };
 
 const gui = new dat.GUI();
-gui.add(state, 'backend', ['wasm', 'webgl', 'cpu']).onChange(backend => {
-  tf.setBackend(backend);
+gui.add(state, 'backend', ['wasm', 'webgl', 'cpu']).onChange(async backend => {
+  await tf.setBackend(backend);
 });
 
 async function setupCamera() {
