@@ -55,20 +55,9 @@ async function setupCamera() {
 const renderPrediction = async () => {
   stats.begin();
 
-  const returnTensors = true;
+  const returnTensors = false;
   const flipHorizontal = false;
   let predictions = await model.estimateFaces(video, returnTensors, flipHorizontal);
-
-  if(returnTensors) {
-    const prediction = predictions[0];
-    predictions = [
-      {
-        topLeft: prediction.topLeft.arraySync(),
-        bottomRight: prediction.bottomRight.arraySync(),
-        landmarks: prediction.landmarks.arraySync()
-      }
-    ];
-  }
 
   if (predictions.length > 0) {
     ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
