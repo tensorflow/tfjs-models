@@ -9,7 +9,7 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow-models/blazeface": "0.0.2",
+    "@tensorflow-models/blazeface": "0.0.3",
     "@tensorflow/tfjs-core": "^1.5.0",
     "@tensorflow/tfjs-converter": "^1.5.0",
     "@tensorflow/tfjs-backend-wasm": "^1.5.1-alpha5"
