@@ -16,12 +16,25 @@
  */
 
 import * as blazeface from '@tensorflow-models/blazeface';
+import * as tf from '@tensorflow/tfjs-core';
+import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
+
+tfjsWasm.setWasmPath('https://unpkg.com/@tensorflow/tfjs-backend-wasm@latest/dist/tfjs-backend-wasm.wasm');
 
 const stats = new Stats();
 stats.showPanel(0);
 document.body.prepend(stats.domElement);
 
 let model, ctx, videoWidth, videoHeight, video, canvas;
+
+const state = {
+  backend: 'wasm'
+};
+
+const gui = new dat.GUI();
+gui.add(state, 'backend', ['wasm', 'webgl', 'cpu']).onChange(backend => {
+  tf.setBackend(backend);
+});
 
 async function setupCamera() {
   video = document.getElementById('video');
@@ -43,7 +56,8 @@ const renderPrediction = async () => {
   stats.begin();
 
   const returnTensors = true;
-  let predictions = await model.estimateFaces(video, returnTensors, true);
+  const flipHorizontal = false;
+  let predictions = await model.estimateFaces(video, returnTensors, flipHorizontal);
 
   if(returnTensors) {
     const prediction = predictions[0];
@@ -83,6 +97,7 @@ const renderPrediction = async () => {
 };
 
 const setupPage = async () => {
+  await tf.setBackend(state.backend);
   await setupCamera();
   video.play();
 

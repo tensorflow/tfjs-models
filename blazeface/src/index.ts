@@ -43,9 +43,10 @@ export async function load({
   const blazeface =
       await tfconv.loadGraphModel(BLAZEFACE_MODEL_URL, {fromTFHub: true});
 
-  return new BlazeFaceModel(
+  const model = new BlazeFaceModel(
       blazeface, inputWidth, inputHeight, maxFaces, iouThreshold,
       scoreThreshold);
+  return model;
 }
 
 export {NormalizedFace, BlazeFaceModel} from './face';
