@@ -56,11 +56,11 @@ const renderPrediction = async () => {
   stats.begin();
 
   const returnTensors = false;
-  const flipHorizontal = false;
+  const flipHorizontal = true;
   let predictions = await model.estimateFaces(video, returnTensors, flipHorizontal);
 
   if (predictions.length > 0) {
-    ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     for (let i = 0; i < predictions.length; i++) {
       const start = predictions[i].topLeft;
@@ -99,8 +99,6 @@ const setupPage = async () => {
   canvas.width = videoWidth;
   canvas.height = videoHeight;
   ctx = canvas.getContext('2d');
-  ctx.translate(canvas.width, 0);
-  ctx.scale(-1, 1);
   ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
 
   model = await blazeface.load();

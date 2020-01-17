@@ -19,7 +19,14 @@ limitations under the License.
   }
 
   #main {
-    margin: 20px 0;
+    position: relative;
+    margin: 50px 0;
+  }
+
+  canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
   }
 
   #description {
@@ -38,7 +45,6 @@ limitations under the License.
     <video id="video" playsinline style="
       -webkit-transform: scaleX(-1);
       transform: scaleX(-1);
-      display: none;
       width: auto;
       height: auto;
       ">
