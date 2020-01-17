@@ -697,10 +697,10 @@
   resolved "https://registry.yarnpkg.com/@nodelib/fs.stat/-/fs.stat-1.1.3.tgz#2b5a3ab3f918cca48a8c754c08168e3f03eba61b"
   integrity sha512-shAmDyaQC4H92APFoIaVDHCx5bStIocgvbwQyxPRrbUY20V1EYTbSDchWbuwlMG3V17cprZhA6+78JfB+3DTPw==
 
-"@tensorflow-models/blazeface@0.0.2":
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/@tensorflow-models/blazeface/-/blazeface-0.0.2.tgz#212b264097abc8336ff0804be1e530c8f3c4e852"
-  integrity sha512-U9vyp59mwpbOhD0CD1+E76sOTyrQ8laIp0S9kn5zl3xn5CeB3U7RLrAqbVUs96MG4ppMzLHT2nLYXl/ooxlu5Q==
+"@tensorflow-models/blazeface@0.0.3":
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/@tensorflow-models/blazeface/-/blazeface-0.0.3.tgz#c83c77d9dece3a2c5fec8c3e39fc7dd7ff28d540"
+  integrity sha512-ZYup8woiixWvcB0+jCR8TfDGwRtkvVcVTh2W+4a2MCcUCnxZN8mDq+4C97IzpUTeuvHHie7LdBg++LgapRdjCQ==
 
 "@tensorflow/tfjs-backend-wasm@^1.5.1-alpha5":
   version "1.5.1-alpha5"
