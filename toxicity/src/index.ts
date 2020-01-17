@@ -20,6 +20,11 @@ import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 export {version} from './version';
 
+declare interface ModelInputs extends tf.NamedTensorMap {
+  Placeholder_1: tf.Tensor;
+  Placeholder: tf.Tensor;
+}
+
 /**
  * Load the toxicity model.
  *
@@ -112,8 +117,12 @@ export class ToxicityClassifier {
         flattenedIndicesArr, [flattenedIndicesArr.length, 2], 'int32');
     const values = tf.tensor1d(tf.util.flatten(encodings) as number[], 'int32');
 
-    const labels = await this.model.executeAsync(
-        {Placeholder_1: indices, Placeholder: values});
+    const modelInputs: ModelInputs = {
+      Placeholder_1: indices,
+      Placeholder: values
+    };
+
+    const labels = await this.model.executeAsync(modelInputs);
 
     indices.dispose();
     values.dispose();
