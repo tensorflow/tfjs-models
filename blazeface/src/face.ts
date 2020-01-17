@@ -104,6 +104,45 @@ function decodeBounds(
       concatAxis);
 }
 
+function getInputTensorDimensions(input: tf.Tensor3D|ImageData|HTMLVideoElement|
+                                  HTMLImageElement|
+                                  HTMLCanvasElement): [number, number] {
+  return input instanceof tf.Tensor ? [input.shape[0], input.shape[1]] :
+                                      [input.height, input.width];
+}
+
+function flipFaceHorizontal(
+    face: NormalizedFace, imageWidth: number): NormalizedFace {
+  if (face.topLeft instanceof tf.Tensor) {
+    return {
+      topLeft: tf.concat([
+        tf.sub(imageWidth - 1, face.topLeft.slice(0, 1)),
+        face.topLeft.slice(1, 1)
+      ]) as tf.Tensor1D,
+      bottomRight: tf.concat([
+        tf.sub(imageWidth - 1, (face.bottomRight as tf.Tensor).slice(0, 1)),
+        (face.bottomRight as tf.Tensor).slice(1, 1)
+      ]) as tf.Tensor1D,
+      landmarks: tf.sub(tf.tensor1d([imageWidth - 1, 0]), face.landmarks)
+                     .mul(tf.tensor1d([1, -1])) as tf.Tensor2D,
+      probability: face.probability
+    } as NormalizedFace;
+  }
+
+  return {
+    topLeft: [imageWidth - 1 - face.topLeft[0], face.topLeft[1]],
+    bottomRight: [
+      imageWidth - 1 - (face.bottomRight as [number, number])[0],
+      (face.bottomRight as [number, number])[1]
+    ],
+    landmarks:
+        (face.landmarks as number[][]).map((coord: [number, number]) => ([
+                                             imageWidth - 1 - coord[0], coord[1]
+                                           ])),
+    probability: face.probability
+  };
+}
+
 export class BlazeFaceModel {
   private blazeFaceModel: tfconv.GraphModel;
   private width: number;
@@ -151,9 +190,15 @@ export class BlazeFaceModel {
       return [prediction, decodedBounds, tf.sigmoid(logits).squeeze()];
     });
 
-    const boxIndicesTensor = await tf.image.nonMaxSuppressionAsync(
+    // TODO: Once tf.image.nonMaxSuppression includes a flag to suppress console
+    // warnings for not using async version, pass that flag in.
+    const savedConsoleWarnFn = console.warn;
+    console.warn = () => {};
+
+    const boxIndicesTensor = tf.image.nonMaxSuppression(
         boxes as tf.Tensor2D, scores as tf.Tensor1D, this.maxFaces,
         this.iouThreshold, this.scoreThreshold);
+    console.warn = savedConsoleWarnFn;
     const boxIndices = await boxIndicesTensor.array();
     boxIndicesTensor.dispose();
 
@@ -223,6 +268,9 @@ export class BlazeFaceModel {
    * video, or canvas.
    * @param returnTensors (defaults to `false`) Whether to return tensors as
    * opposed to values.
+   * @param flipHorizontal Whether to flip/mirror the facial keypoints
+   * horizontally. Should be true for videos that are flipped by default (e.g.
+   * webcams).
    *
    * @return An array of detected faces, each with the following properties:
    *  `topLeft`: the upper left coordinate of the face in the form `[x, y]`
@@ -233,7 +281,9 @@ export class BlazeFaceModel {
   async estimateFaces(
       input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
       HTMLCanvasElement,
-      returnTensors = false): Promise<NormalizedFace[]> {
+      returnTensors = false,
+      flipHorizontal = false): Promise<NormalizedFace[]> {
+    const [, width] = getInputTensorDimensions(input);
     const image = tf.tidy(() => {
       if (!(input instanceof tf.Tensor)) {
         input = tf.browser.fromPixels(input);
@@ -249,12 +299,18 @@ export class BlazeFaceModel {
         const scaledBox = scaleBox(face.box, scaleFactor as tf.Tensor1D)
                               .startEndTensor.squeeze();
 
-        return {
+        let normalizedFace = {
           topLeft: scaledBox.slice([0], [2]),
           bottomRight: scaledBox.slice([2], [2]),
           landmarks: face.landmarks.add(face.anchor).mul(scaleFactor),
           probability: face.probability
         } as NormalizedFace;
+        if (flipHorizontal) {
+          normalizedFace =
+              flipFaceHorizontal(normalizedFace as NormalizedFace, width) as
+              NormalizedFace;
+        }
+        return normalizedFace;
       });
     }
 
@@ -283,12 +339,18 @@ export class BlazeFaceModel {
       face.landmarks.dispose();
       face.probability.dispose();
 
-      return {
+      let normalizedFace = {
         topLeft: (boxData as number[]).slice(0, 2),
         bottomRight: (boxData as number[]).slice(2),
         landmarks: scaledLandmarks,
         probability: probabilityData
       } as NormalizedFace;
+
+      if (flipHorizontal) {
+        normalizedFace = flipFaceHorizontal(normalizedFace, width);
+      }
+
+      return normalizedFace;
     }));
   }
 }

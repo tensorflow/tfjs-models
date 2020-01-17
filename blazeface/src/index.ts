@@ -39,13 +39,14 @@ export async function load({
   inputHeight = 128,
   iouThreshold = 0.3,
   scoreThreshold = 0.75
-} = {}) {
+} = {}): Promise<BlazeFaceModel> {
   const blazeface =
       await tfconv.loadGraphModel(BLAZEFACE_MODEL_URL, {fromTFHub: true});
 
-  return new BlazeFaceModel(
+  const model = new BlazeFaceModel(
       blazeface, inputWidth, inputHeight, maxFaces, iouThreshold,
       scoreThreshold);
+  return model;
 }
 
-export {NormalizedFace} from './face';
+export {NormalizedFace, BlazeFaceModel} from './face';
