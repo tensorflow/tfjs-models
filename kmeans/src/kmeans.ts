@@ -1,5 +1,5 @@
 import {Tensor} from '@tensorflow/tfjs-core';
-import {kMeans, initCentroids, assignToNearest} from './util';
+import {kMeansMain, initCentroids, assignToNearest} from './training';
 
 export interface KMeansArgs {
   nClusters: number;
@@ -49,7 +49,7 @@ export class KMeansClustering {
   }
 
   protected fitLoop(): void {
-    const outs = kMeans(this.inputs, this.nClusters, this.maxIter, this.tol);
+    const outs = kMeansMain(this.inputs, this.nClusters, this.maxIter, this.tol);
     this.outputs = outs;
   }
 
@@ -66,6 +66,6 @@ export class KMeansClustering {
   }
 }
 
-export function kmeans(args: KMeansArgs): KMeansClustering {
+export function kMeans(args: KMeansArgs): KMeansClustering {
   return new KMeansClustering(args);
 }

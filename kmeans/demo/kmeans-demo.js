@@ -1,4 +1,4 @@
-import {kmeans} from '@tensorflow-models/kmeans';
+import {kMeans} from '@tensorflow-models/kmeans';
 import {genRandomSamples} from '../src/util';
 import * as tf from '@tensorflow/tfjs';
 
@@ -7,14 +7,20 @@ const nFeatures = 2;
 let model;
 
 async function prepareData(nSamplesPerCluster) {
-  const {centroids, samples} = genRandomSamples(nClusters, nSamplesPerCluster, nFeatures);
+  const {centroids, samples} = genRandomSamples(
+    nClusters,
+    nSamplesPerCluster,
+    nFeatures
+  );
   const allSamples = await samples.data();
   const allCentroids = await centroids.data();
   const samplesArr = [];
 
   const nElePerSample = nFeatures * nSamplesPerCluster;
   for (let i = 0; i < nClusters; i++) {
-    samplesArr.push(allSamples.slice(i * nElePerSample, (i + 1) * nElePerSample));
+    samplesArr.push(
+      allSamples.slice(i * nElePerSample, (i + 1) * nElePerSample)
+    );
   }
   return {samplesArr, allCentroids};
 }
@@ -61,11 +67,13 @@ function plotClusters(samplesArr, centroids, nSamplesPerCluster) {
 
 function fitData(data) {
   model.fitPredict(data);
+  // waiting to test kmeans algo works to correct the clustering of points in interface
+  console.log(model);
 }
 
 async function onPageLoad() {
   // create model
-  model = kmeans({nClusters});
+  model = kMeans({nClusters});
 
   // plot initial data
   const nSamplesPerCluster = 200;
