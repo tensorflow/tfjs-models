@@ -1,4 +1,4 @@
-# KNN Classifier
+# KMeans Clustering
 
 This package provides a utility for creating a classifier using the
 [K-Nearest Neighbors](https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm)
@@ -6,10 +6,10 @@ algorithm.
 
 This package is different from the other packages in this repository in that it
 doesn't provide a model with weights, but rather a utility for constructing a
-KNN model using activations from another model or any other tensors you can
+KMeans model using activations from another model or any other tensors you can
 associate with a class.
 
-You can see example code [here](https://github.com/tensorflow/tfjs-models/tree/master/knn-classifier/demo).
+You can see example code [here](https://github.com/tensorflow/tfjs-models/tree/master/kmeans/demo).
 
 ## Usage example
 
@@ -22,8 +22,8 @@ You can see example code [here](https://github.com/tensorflow/tfjs-models/tree/m
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.11.7"></script>
     <!-- Load MobileNet -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@0.1.1"></script>
-    <!-- Load KNN Classifier -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/knn-classifier@0.1.0"></script>
+    <!-- Load KMeans -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/kmeans@0.1.0"></script>
  </head>
 
   <body>
@@ -36,7 +36,7 @@ You can see example code [here](https://github.com/tensorflow/tfjs-models/tree/m
 
     const init = async function() {
       // Create the classifier.
-      const classifier = knnClassifier.create();
+      const classifier = kmeans.create();
 
       // Load mobilenet.
       const mobilenetModule = await mobilenet.load();
@@ -69,10 +69,10 @@ You can see example code [here](https://github.com/tensorflow/tfjs-models/tree/m
 ```js
 import * as tf from '@tensorflow/tfjs';
 import * as mobilenetModule from '@tensorflow-models/mobilenet';
-import * as knnClassifier from '@tensorflow-models/knn-classifier';
+import * as kmeans from '@tensorflow-models/kmeans';
 
 // Create the classifier.
-const classifier = knnClassifier.create();
+const classifier = kmeans.create();
 
 // Load mobilenet.
 const mobilenet = await mobilenetModule.load();
@@ -96,14 +96,14 @@ console.log(classifier.predictClass(xlogits));
 ## API
 
 #### Creating a classifier
-`knnClassifier` is the module name, which is automatically included when you use
+`kmeans` is the module name, which is automatically included when you use
 the <script src> method.
 
 ```ts
-classifier = knnClassifier.create()
+classifier = kmeans.create()
 ```
 
-Returns a `KNNImageClassifier`.
+Returns a `KMeans` clustering instance.
 
 #### Adding examples
 

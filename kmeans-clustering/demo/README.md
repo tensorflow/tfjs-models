@@ -1,4 +1,4 @@
-# KNN Image Classifier Demo
+# KMeans Image Classifier Demo
 
 ## Contents
 
@@ -11,7 +11,7 @@ The camera demo shows how to create a custom classifier with 3 classes that can 
 cd into the demos folder:
 
 ```sh
-cd knn-classifier/demos
+cd kmeans/demos
 ```
 
 Install dependencies and prepare the build directory:
@@ -28,10 +28,10 @@ yarn watch
 
 ## If you are developing the classifier locally, and want to test the changes in the demos
 
-cd into the knn-classifier/ folder:
+cd into the kmeans/ folder:
 
 ```sh
-cd knn-classifier
+cd kmeans
 ```
 
 Install dependencies:
@@ -39,12 +39,12 @@ Install dependencies:
 yarn
 ```
 
-Publish knn-classifier locally:
+Publish kmeans locally:
 ```sh
 yarn publish-local
 ```
 
-cd into this directory, knn-classifier/demos and install dependencies:
+cd into this directory, kmeans/demos and install dependencies:
 
 ```sh
 cd demos

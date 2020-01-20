@@ -1,4 +1,4 @@
-import {kmeans} from '../src';
+import {kmeans} from '@tensorflow-models/kmeans';
 import {genRandomSamples} from '../src/util';
 import * as tf from '@tensorflow/tfjs';
 

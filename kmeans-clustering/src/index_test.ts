@@ -1,9 +1,9 @@
 import * as tf from '@tensorflow/tfjs';
 import {describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
-import * as knnClassier from './index';
+import * as kmeans from './index';
 
-describeWithFlags('KNNClassifier', tf.test_util.NODE_ENVS, () => {
+describeWithFlags('kmeans', tf.test_util.NODE_ENVS, () => {
   it('simple nearest neighbors', async () => {
     const x0s = [
       tf.tensor1d([1, 1, 1, 1]), tf.tensor1d([1.1, .9, 1.2, .8]),
@@ -13,7 +13,7 @@ describeWithFlags('KNNClassifier', tf.test_util.NODE_ENVS, () => {
       tf.tensor1d([-1, -1, -1, -1]), tf.tensor1d([-1.1, -.9, -1.2, -.8]),
       tf.tensor1d([-1.2, -.8, -1.3, -.7])
     ];
-    const classifier = knnClassier.create();
+    const classifier = kmeans.create();
     x0s.forEach(x0 => classifier.addExample(x0, 0));
     x1s.forEach(x1 => classifier.addExample(x1, 1));
 
@@ -35,7 +35,7 @@ describeWithFlags('KNNClassifier', tf.test_util.NODE_ENVS, () => {
   });
 
   it('calling predictClass before adding example throws', async () => {
-    const classifier = knnClassier.create();
+    const classifier = kmeans.create();
     const x0 = tf.tensor1d([1.1, 1.1, 1.1, 1.1]);
 
     let errorMessage;
@@ -45,6 +45,6 @@ describeWithFlags('KNNClassifier', tf.test_util.NODE_ENVS, () => {
       errorMessage = error.message;
     }
     expect(errorMessage)
-        .toMatch(/You have not added any exaples to the KNN classifier/);
+        .toMatch(/You have not added any examples to the KMeans/);
   });
 });
