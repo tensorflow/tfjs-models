@@ -46,8 +46,7 @@ function setupFPS() {
   document.getElementById('main').appendChild(stats.dom);
 }
 
-const renderPrediction =
-    async () => {
+const renderPrediction = async () => {
   stats.begin();
   const prediction = await model.estimateFace(video);
   if (prediction) {
@@ -71,15 +70,21 @@ const renderPrediction =
   stats.end();
 
   requestAnimationFrame(renderPrediction);
-}
+};
 
-const setupPage =
-    async () => {
-  await setupCamera();
-  video.play();
+const setupPage = async () => {
+  const useVideoStream = false;
+  if(useVideoStream) {
+    await setupCamera();
+    video.play();
+    videoWidth = video.videoWidth;
+    videoHeight = video.videoHeight;
+  } else {
+    video = document.querySelector("img");
+    videoWidth = 640;
+    videoHeight = 640;
+  }
 
-  videoWidth = video.videoWidth;
-  videoHeight = video.videoHeight;
   video.width = videoWidth;
   video.height = videoHeight;
 
@@ -95,6 +100,6 @@ const setupPage =
   setupFPS();
 
   renderPrediction();
-}
+};
 
 setupPage();

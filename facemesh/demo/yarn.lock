@@ -700,15 +700,15 @@
 "@tensorflow-models/facemesh@file:..":
   version "1.1.1"
 
-"@tensorflow/tfjs-converter@^1.2.3":
-  version "1.2.5"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-1.2.5.tgz#11b10a421605f82eb7c8da2bfb42bd8ccfc35303"
-  integrity sha512-KQoNDl1UDmBBqknaxiFg2tyYoVFyxJ0q5mY/e6mqavokf4vVXn4TsurzxDx++uV6gKEL1fPk9TuSIaq8xHuCRQ==
+"@tensorflow/tfjs-converter@^1.5.0":
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-1.5.1.tgz#13b76266d51c7e7f3aeee27cdc65444a48e01538"
+  integrity sha512-M9tl2/ep8ntcZpmncHwKuvThsS7TaUWqJ9vJSgJmkazwTfAvlAJmZ8/p1miJ+m5sH1EJO4oTjiEmch6g8IA5IQ==
 
-"@tensorflow/tfjs-core@^1.2.3":
-  version "1.2.5"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-core/-/tfjs-core-1.2.5.tgz#865f0b3d7a79614650698c907185dd0adfb6470e"
-  integrity sha512-2M88UcKVfcMwtIaDEOJKWAxgX9rO+UdPnRZGSyWW/vH2PiB+jKtB6//7O5V4JpbRjA2ZJFjhfQ5ybfQf8wawRg==
+"@tensorflow/tfjs-core@^1.5.0":
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-core/-/tfjs-core-1.5.1.tgz#490209617f744fef660e8f81fe8b858e95b0d10b"
+  integrity sha512-N4fsi8mLsRwRs8UJN2cARB1rYFxyVXkLyZ4wOusiR976BwwZbCwQrTTSIPzPqYT3rwiexEUzm7sM6ZaDl5dpXA==
   dependencies:
     "@types/offscreencanvas" "~2019.3.0"
     "@types/seedrandom" "2.4.27"
@@ -717,10 +717,10 @@
     node-fetch "~2.1.2"
     seedrandom "2.4.3"
 
-"@tensorflow/tfjs-layers@^1.2.3":
-  version "1.2.5"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-layers/-/tfjs-layers-1.2.5.tgz#f1119a5b0275c33b3d9fc406caa49d0a05af9ad1"
-  integrity sha512-ZF7q7wL4bdW4yM4kCPGFUhGkpA3gcJAeqD43sVsG8mYvTTMAnbrQAZ/0+tNE2Rz2qnx7s8VjbUCT4C5EyMFInQ==
+"@tensorflow/tfjs-layers@^1.5.0":
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-layers/-/tfjs-layers-1.5.1.tgz#52aab88ab64618bfb193a7fafc7443a7edaaa151"
+  integrity sha512-DyuhifqflK+bdpBRLAj3RuWm1eTVe8yNX2+WH+W+wmhpjGg7Yagnar6/66JdS2h3WUFoiplCpZRAVMVw631E5g==
 
 "@types/offscreencanvas@~2019.3.0":
   version "2019.3.0"
