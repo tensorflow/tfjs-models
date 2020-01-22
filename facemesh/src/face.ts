@@ -15,8 +15,8 @@
  * =============================================================================
  */
 
+import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
-import * as tfl from '@tensorflow/tfjs-layers';
 
 import {Box} from './box';
 
@@ -26,7 +26,7 @@ type AnchorsConfig = {
 };
 
 export class BlazeFaceModel {
-  private blazeFaceModel: tfl.LayersModel;
+  private blazeFaceModel: tfconv.GraphModel;
   private width: number;
   private height: number;
   private config: AnchorsConfig;
@@ -35,7 +35,7 @@ export class BlazeFaceModel {
   private iouThreshold: number;
   private scoreThreshold: number;
 
-  constructor(model: tfl.LayersModel, width: number, height: number) {
+  constructor(model: tfconv.GraphModel, width: number, height: number) {
     this.blazeFaceModel = model;
     this.width = width;
     this.height = height;

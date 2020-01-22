@@ -27,7 +27,7 @@ import {MESH_ANNOTATIONS} from './keypoints';
 import {BlazePipeline} from './pipeline';
 
 const BLAZEFACE_MODEL_URL =
-    'https://facemesh.s3.amazonaws.com/facedetector/rewritten_detector.json';
+    'https://tfhub.dev/tensorflow/tfjs-model/blazeface/1/default/1';
 
 const BLAZE_MESH_GRAPHMODEL_PATH =
     'https://facemesh.s3.amazonaws.com/facemeshgraphmodel/model.json';
@@ -51,7 +51,8 @@ export class FaceMesh {
     const [blazeFaceModel, blazeMeshModel] = await Promise.all(
         [this.loadFaceModel(), this.loadMeshModel(useGraphModel)]);
 
-    const blazeface = new BlazeFaceModel(blazeFaceModel, meshWidth, meshHeight);
+    const blazeface = new BlazeFaceModel(
+        blazeFaceModel as tfconv.GraphModel, meshWidth, meshHeight);
 
     this.pipeline = new BlazePipeline(
         blazeface, blazeMeshModel, meshWidth, meshHeight, maxContinuousChecks);
@@ -59,8 +60,8 @@ export class FaceMesh {
     this.detectionConfidence = detectionConfidence;
   }
 
-  loadFaceModel(): Promise<tfl.LayersModel> {
-    return tfl.loadLayersModel(BLAZEFACE_MODEL_URL);
+  loadFaceModel(): Promise<tfconv.GraphModel> {
+    return tfconv.loadGraphModel(BLAZEFACE_MODEL_URL, {fromTFHub: true});
   }
 
   loadMeshModel(useGraphModel: boolean):
