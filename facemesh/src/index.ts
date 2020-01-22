@@ -78,70 +78,73 @@ export class FaceMesh {
     }
   }
 
-  async estimateFace(video: HTMLVideoElement, returnTensors = false): Promise<{
-    faceInViewConfidence: number,
-    mesh: tf.Tensor2D,
-    scaledMesh: tf.Tensor2D,
-    boundingBox: {topLeft: tf.Tensor2D, bottomRight: tf.Tensor2D}
-  }|{
-    faceInViewConfidence: number,
-    mesh: number[][],
-    scaledMesh: number[][],
-    boundingBox: {topLeft: number[], bottomRight: number[]},
-    annotations: {[key: string]: number[][]}
-  }> {
-    const prediction = tf.tidy(() => {
+  async estimateFace(video: HTMLVideoElement, returnTensors = false):
+      Promise<Array<{
+        faceInViewConfidence: number,
+        mesh: tf.Tensor2D,
+        scaledMesh: tf.Tensor2D,
+        boundingBox: {topLeft: tf.Tensor2D, bottomRight: tf.Tensor2D}
+      }|{
+        faceInViewConfidence: number,
+        mesh: number[][],
+        scaledMesh: number[][],
+        boundingBox: {topLeft: number[], bottomRight: number[]},
+        annotations: {[key: string]: number[][]}
+      }>> {
+    const predictions = tf.tidy(() => {
       const image =
           tf.browser.fromPixels(video).toFloat().expandDims(0) as tf.Tensor4D;
       return this.pipeline.predict(image) as {};
     });
 
-    if (prediction != null) {
-      const [coords2d, coords2dScaled, landmarksBox, flag] =
-          prediction as [tf.Tensor2D, tf.Tensor2D, Box, tf.Tensor2D];
+    if ((predictions as any[]).length) {
+      return Promise.all((predictions as any).map(async (prediction: any) => {
+        const [coords2d, coords2dScaled, landmarksBox, flag] =
+            prediction as [tf.Tensor2D, tf.Tensor2D, Box, tf.Tensor2D];
 
-      if (returnTensors) {
-        const flagArr = await flag.array();
+        const [coordsArr, coordsArrScaled, topLeft, bottomRight, flagArr] =
+            await Promise.all([
+              coords2d, coords2dScaled, landmarksBox.startPoint,
+              landmarksBox.endPoint, flag
+            ].map(async d => await d.array()));
+
+        flag.dispose();
+        coords2dScaled.dispose();
+        coords2d.dispose();
+
         this.clearPipelineROIs(flagArr);
+
+        const annotations: {[key: string]: number[][]} = {};
+        for (const key in MESH_ANNOTATIONS) {
+          annotations[key] =
+              (MESH_ANNOTATIONS[key] as number[])
+                  .map((index: number): number[] => coordsArrScaled[index]) as
+              number[][];
+        }
 
         return {
           faceInViewConfidence: flagArr[0][0],
-          mesh: coords2d,
-          scaledMesh: coords2dScaled,
-          boundingBox: {
-            topLeft: landmarksBox.startPoint,
-            bottomRight: landmarksBox.endPoint
-          }
+          boundingBox: {topLeft: topLeft[0], bottomRight: bottomRight[0]},
+          mesh: coordsArr,
+          scaledMesh: coordsArrScaled,
+          annotations
         };
-      }
+      })) as any;
 
-      const [coordsArr, coordsArrScaled, topLeft, bottomRight, flagArr] =
-          await Promise.all([
-            coords2d, coords2dScaled, landmarksBox.startPoint,
-            landmarksBox.endPoint, flag
-          ].map(async d => await d.array()));
+      // if (returnTensors) {
+      //   const flagArr = await flag.array();
+      //   this.clearPipelineROIs(flagArr);
 
-      flag.dispose();
-      coords2dScaled.dispose();
-      coords2d.dispose();
-
-      this.clearPipelineROIs(flagArr);
-
-      const annotations: {[key: string]: number[][]} = {};
-      for (const key in MESH_ANNOTATIONS) {
-        annotations[key] =
-            (MESH_ANNOTATIONS[key] as number[])
-                .map((index: number): number[] => coordsArrScaled[index]) as
-            number[][];
-      }
-
-      return {
-        faceInViewConfidence: flagArr[0][0],
-        boundingBox: {topLeft: topLeft[0], bottomRight: bottomRight[0]},
-        mesh: coordsArr,
-        scaledMesh: coordsArrScaled,
-        annotations
-      };
+      //   return {
+      //     faceInViewConfidence: flagArr[0][0],
+      //     mesh: coords2d,
+      //     scaledMesh: coords2dScaled,
+      //     boundingBox: {
+      //       topLeft: landmarksBox.startPoint,
+      //       bottomRight: landmarksBox.endPoint
+      //     }
+      //   };
+      // }
     }
 
     // No face in view.

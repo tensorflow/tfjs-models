@@ -21,6 +21,7 @@ import Stats from 'stats.js';
 let model, ctx, videoWidth, videoHeight, video, canvas;
 
 const stats = new Stats();
+const r = 1;
 
 async function setupCamera() {
   video = document.getElementById('video');
@@ -48,23 +49,23 @@ function setupFPS() {
 
 const renderPrediction = async () => {
   stats.begin();
-  const prediction = await model.estimateFace(video);
-  if (prediction) {
-    const keypoints = prediction.annotations.silhouette;
+  const predictions = await model.estimateFace(video);
+  ctx.drawImage(
+    video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width,
+    canvas.height);
 
-    ctx.drawImage(
-        video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width,
-        canvas.height);
+  if (predictions) {
+    predictions.forEach(prediction => {
+      const keypoints = prediction.scaledMesh;
 
-    const r = 1;
-
-    for (let i = 0; i < keypoints.length; i++) {
-      const x = keypoints[i][0];
-      const y = keypoints[i][1];
-      ctx.beginPath();
-      ctx.arc(x, y, r, 0, 2 * Math.PI);
-      ctx.fill();
-    }
+      for (let i = 0; i < keypoints.length; i++) {
+        const x = keypoints[i][0];
+        const y = keypoints[i][1];
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+    });
   }
 
   stats.end();

@@ -98,7 +98,7 @@ export class BlazeFaceModel {
         1);
   }
 
-  getBoundingBox(inputImage: tf.Tensor4D): number[][] {
+  getBoundingBox(inputImage: tf.Tensor4D, maxFaces: number): number[][][] {
     const normalizedImage = tf.mul(tf.sub(inputImage, 0.5), 2);
     const detectOutputs = this.blazeFaceModel.predict(normalizedImage);
 
@@ -112,7 +112,7 @@ export class BlazeFaceModel {
     const boxes = this.decodeBounds(boxRegressors as tf.Tensor2D);
     const boxIndices = tf.image
                            .nonMaxSuppression(
-                               boxes, scores as tf.Tensor1D, 1,
+                               boxes, scores as tf.Tensor1D, maxFaces,
                                this.iouThreshold, this.scoreThreshold)
                            .arraySync();
 
@@ -120,24 +120,34 @@ export class BlazeFaceModel {
       return null;  // TODO (vakunov): don't return null. Empty box?
     }
 
-    // TODO (vakunov): change to multi face case
-    const boxIndex = boxIndices[0];
-    const resultBox = tf.slice(boxes, [boxIndex, 0], [1, -1]);
-    return resultBox.arraySync();
+    // const boxIndex = boxIndices[0];
+    // const resultBox = tf.slice(boxes, [boxIndex, 0], [1, -1]);
+    // return resultBox.arraySync();
+
+    const boundingBoxes = boxIndices.map((boxIndex: number) => {
+      const resultBox = tf.slice(boxes, [boxIndex, 0], [1, -1]);
+      return resultBox.arraySync();
+    });
+    return boundingBoxes;
   }
 
-  getSingleBoundingBox(inputImage: tf.Tensor4D): Box {
+  getSingleBoundingBox(inputImage: tf.Tensor4D, maxFaces: number): Array<Box> {
     const originalHeight = inputImage.shape[1];
     const originalWidth = inputImage.shape[2];
 
     const image = inputImage.resizeBilinear([this.width, this.height]).div(255);
-    const bboxes = this.getBoundingBox(image as tf.Tensor4D);
+    const bboxes = this.getBoundingBox(image as tf.Tensor4D, maxFaces);
 
     if (!bboxes) {
       return null;
     }
 
     const factors = tf.div([originalWidth, originalHeight], this.inputSize);
-    return new Box(tf.tensor(bboxes)).scale(factors as tf.Tensor1D);
+
+    return bboxes.map((bbox: any) => {
+      return new Box(tf.tensor(bbox)).scale(factors as tf.Tensor1D);
+    });
+
+    // return new Box(tf.tensor(bboxes)).scale(factors as tf.Tensor1D);
   }
 }
