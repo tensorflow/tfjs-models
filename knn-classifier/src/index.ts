@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google Inc. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,6 +17,7 @@
 import * as tf from '@tensorflow/tfjs-core';
 import {Tensor, Tensor1D, Tensor2D, util} from '@tensorflow/tfjs-core';
 import {concatWithNulls, topK} from './util';
+export {version} from './version';
 
 /**
  * A K-nearest neighbors (KNN) classifier that allows fast
@@ -159,6 +160,7 @@ export class KNNClassifier {
       throw new Error(`Cannot clear invalid class ${label}`);
     }
 
+    this.classDatasetMatrices[label].dispose();
     delete this.classDatasetMatrices[label];
     delete this.classExampleCount[label];
     this.clearTrainDatasetMatrix();

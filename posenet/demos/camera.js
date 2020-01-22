@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google Inc. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -67,11 +67,11 @@ const defaultQuantBytes = 2;
 
 const defaultMobileNetMultiplier = isMobile() ? 0.50 : 0.75;
 const defaultMobileNetStride = 16;
-const defaultMobileNetInputResolution = 513;
+const defaultMobileNetInputResolution = 500;
 
 const defaultResNetMultiplier = 1.0;
 const defaultResNetStride = 32;
-const defaultResNetInputResolution = 257;
+const defaultResNetInputResolution = 250;
 
 const guiState = {
   algorithm: 'multi-pose',
@@ -211,12 +211,14 @@ function setupGui(cameras, net) {
   function updateGui() {
     if (guiState.input.architecture === 'MobileNetV1') {
       updateGuiInputResolution(
-          defaultMobileNetInputResolution, [257, 353, 449, 513, 801]);
+          defaultMobileNetInputResolution,
+          [200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800]);
       updateGuiOutputStride(defaultMobileNetStride, [8, 16]);
-      updateGuiMultiplier(defaultMobileNetMultiplier, [0.50, 0.75, 1.0])
+      updateGuiMultiplier(defaultMobileNetMultiplier, [0.50, 0.75, 1.0]);
     } else {  // guiState.input.architecture === "ResNet50"
       updateGuiInputResolution(
-          defaultResNetInputResolution, [257, 353, 449, 513, 801]);
+          defaultResNetInputResolution,
+          [200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800]);
       updateGuiOutputStride(defaultResNetStride, [32, 16]);
       updateGuiMultiplier(defaultResNetMultiplier, [1.0]);
     }

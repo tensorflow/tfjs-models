@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/knn-classifier",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "KNN Classifier for TensorFlow.js",
   "main": "dist/index.js",
   "unpkg": "dist/knn-classifier.min.js",
@@ -13,10 +13,10 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs-core": "~1.2.1"
+    "@tensorflow/tfjs-core": "^1.2.1"
   },
   "devDependencies": {
-    "@tensorflow/tfjs-core": "~1.2.1",
+    "@tensorflow/tfjs-core": "^1.2.1",
     "@types/jasmine": "~2.5.53",
     "babel-core": "~6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",
@@ -28,13 +28,13 @@
     "rollup-plugin-typescript2": "~0.15.0",
     "rollup-plugin-uglify": "~3.0.0",
     "ts-node": "~5.0.0",
-    "tslint": "~5.10.0",
-    "typescript": "3.3.3333",
+    "tslint": "~5.18.0",
+    "typescript": "~3.5.3",
     "yalc": "~1.0.0-pre.21"
   },
   "scripts": {
     "build": "rimraf dist && tsc",
-    "publish-npm": "yarn build && rollup -c && npm publish",
+    "build-npm": "yarn build && rollup -c",
     "publish-local": "yarn build && rollup -c && yalc push",
     "lint": "tslint -p . -t verbose",
     "test": "ts-node run_tests.ts"

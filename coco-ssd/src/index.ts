@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google LLC. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -89,8 +89,8 @@ export class ObjectDetection {
     // Warmup the model.
     const result = await this.model.executeAsync(tf.zeros([1, 300, 300, 3])) as
         tf.Tensor[];
-    result.map(async (t) => await t.data());
-    result.map(async (t) => t.dispose());
+    await Promise.all(result.map(t => t.data()));
+    result.map(t => t.dispose());
   }
 
   /**

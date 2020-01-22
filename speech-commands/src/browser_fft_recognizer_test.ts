@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google Inc. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -282,6 +282,9 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
     const spectrogram =
         tf.zeros([numExamples, fakeNumFrames, fakeColumnTruncateLength, 1]);
     const recognizer = new BrowserFftSpeechCommandRecognizer();
+    // Warm-up recognize call, for subsequent memory-leak check.
+    await recognizer.recognize(spectrogram, {includeEmbedding: true});
+    const numTensors0 = tf.memory().numTensors;  // For memory-leak check.
     const output =
         await recognizer.recognize(spectrogram, {includeEmbedding: true});
     expect(Array.isArray(output.scores)).toEqual(true);
@@ -291,6 +294,9 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
     }
     expect(output.embedding.rank).toEqual(2);
     expect(output.embedding.shape[0]).toEqual(numExamples);
+    tf.dispose(output.embedding);
+    // Assert no memory leak.
+    expect(tf.memory().numTensors).toEqual(numTensors0);
   });
 
   it('Offline recognize fails due to incorrect shape', async () => {

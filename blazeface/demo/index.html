@@ -1,0 +1,71 @@
+<!-- Copyright 2019 Google LLC. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================-->
+
+<style>
+  body {
+    margin: 25px;
+  }
+
+  #main {
+    position: relative;
+    margin: 50px 0;
+  }
+
+  canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  #description {
+    margin-top: 20px;
+    width: 600px;
+  }
+
+  #description-title {
+    font-weight: bold;
+    font-size: 18px;
+  }
+</style>
+
+<body>
+  <div id="main">
+    <video id="video" playsinline style="
+      -webkit-transform: scaleX(-1);
+      transform: scaleX(-1);
+      width: auto;
+      height: auto;
+      ">
+    </video>
+    <canvas id="output"></canvas>
+    <div id="description">
+      <div id="description-title">Blazeface demo</div>
+      <p>This demo shows the blazeface model detecting faces in a live camera feed. The demo renders a semi-transparent
+        red
+        box over faces, and blue dots over facial landmarks (eyes, ears, nose, and mouth).</p>
+    </div>
+    <video id="video" playsinline style="
+      -webkit-transform: scaleX(-1);
+      transform: scaleX(-1);
+      visibility: hidden;
+      width: auto;
+      height: auto;
+      ">
+    </video>
+  </div>
+</body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.6/dat.gui.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js"></script>
+<script src="index.js"></script>
