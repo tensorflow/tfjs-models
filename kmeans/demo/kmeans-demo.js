@@ -4,26 +4,8 @@ import * as tf from '@tensorflow/tfjs';
 
 const nClusters = 4;
 const nFeatures = 2;
-let model;
-
-async function prepareData(nSamplesPerCluster) {
-  const {centroids, samples} = genRandomSamples(
-    nClusters,
-    nSamplesPerCluster,
-    nFeatures
-  );
-  const allSamples = await samples.data();
-  const allCentroids = await centroids.data();
-  const samplesArr = [];
-
-  const nElePerSample = nFeatures * nSamplesPerCluster;
-  for (let i = 0; i < nClusters; i++) {
-    samplesArr.push(
-      allSamples.slice(i * nElePerSample, (i + 1) * nElePerSample)
-    );
-  }
-  return {samplesArr, allCentroids};
-}
+const nSamplesPerCluster = 200;
+let samplesArr, centroidsArr, model;
 
 function convertTensorArrayToChartData(arr, nDims) {
   const fieldNames = ['x', 'y', 'z', 't', 'u', 'v'];
@@ -38,21 +20,38 @@ function convertTensorArrayToChartData(arr, nDims) {
   return res;
 }
 
-function plotClusters(samplesArr, centroids, nSamplesPerCluster) {
+function plotClusters(predictedArr) {
   const ctx = document.getElementById('myChart').getContext('2d');
   const backgroundColors = ['red', 'yellow', 'blue', 'green'];
 
-  const datasets = samplesArr.map((arr, i) => ({
-    label: `Cluster ${i}`,
-    data: convertTensorArrayToChartData(arr, nFeatures),
-    backgroundColor: backgroundColors[i],
-  }));
+  const samplesDataset = {
+    data: convertTensorArrayToChartData(samplesArr, nFeatures),
+    radius: 2,
+  };
+  const centroidsDataset = {
+    data: convertTensorArrayToChartData(centroidsArr, nFeatures),
+    borderWidth: 3,
+    pointStyle: 'cross',
+    pointRadius: 9,
+    pointBorderColor: 'black',
+  };
+
   const myChart = new Chart(ctx, {
     type: 'scatter',
     data: {
-      datasets,
+      datasets: [samplesDataset, centroidsDataset],
     },
     options: {
+      elements: {
+        point: {
+          backgroundColor: context => {
+            const clusterId = predictedArr
+              ? predictedArr[context.dataIndex]
+              : Math.floor(context.dataIndex / nSamplesPerCluster);
+            return backgroundColors[clusterId];
+          },
+        },
+      },
       scales: {
         xAxes: [
           {
@@ -65,10 +64,11 @@ function plotClusters(samplesArr, centroids, nSamplesPerCluster) {
   });
 }
 
-function fitData(data) {
-  model.fitPredict(data);
-  // waiting to test kmeans algo works to correct the clustering of points in interface
-  console.log(model);
+async function onFitButtonClick(samples) {
+  const predictions = await model.fitPredict(samples);
+  const predictionsArr = await predictions.data();
+
+  plotClusters(predictionsArr);
 }
 
 async function onPageLoad() {
@@ -76,15 +76,18 @@ async function onPageLoad() {
   model = kMeans({nClusters});
 
   // plot initial data
-  const nSamplesPerCluster = 200;
-  const {samplesArr, allCentroids} = await prepareData(nSamplesPerCluster);
-  plotClusters(samplesArr, allCentroids, nSamplesPerCluster);
+  const {centroids, samples} = genRandomSamples(
+    nClusters,
+    nSamplesPerCluster,
+    nFeatures
+  );
+  samplesArr = await samples.data();
+  centroidsArr = await centroids.data();
+  plotClusters();
 
   // set up event listener
   const fitButton = document.getElementById('fit');
-  fitButton.addEventListener('click', () => {
-    fitData(tf.tensor2d(samplesArr, [nSamplesPerCluster, nFeatures]));
-  });
+  fitButton.addEventListener('click', () => onFitButtonClick(samples));
 }
 
 onPageLoad();

@@ -1,45 +1,43 @@
 <!DOCTYPE html>
 <html>
-
-<head>
+  <head>
     <title>KMeans - Camera Feed Demo</title>
     <style>
-    .footer {
+      .footer {
         position: fixed;
         left: 0;
         bottom: 0;
         width: 100%;
         color: black;
-    }
+      }
 
-    .footer-text {
+      .footer-text {
         max-width: 600px;
         text-align: center;
         margin: auto;
-    }
-
-    @media only screen and (max-width: 600px) {
-      .footer-text, .dg {
-        display: none;
       }
-    }
-    </style>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
 
-<body>
-    <div id="info" style='display:none'>
-    </div>
+      @media only screen and (max-width: 600px) {
+        .footer-text,
+        .dg {
+          display: none;
+        }
+      }
+    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+
+  <body>
+    <div id="info" style="display:none"></div>
     <div id="loading">
-        Loading the model...
+      Loading the model...
     </div>
     <button id="fit">Fit</button>
 
-    <div id='main' style="position: relative; height:40vh; width:80vw">
-        <canvas id="myChart" width="400" height="200"></canvas>
+    <div id="main" style="position: relative; height:40vh; width:80vw">
+      <canvas id="myChart" width="400" height="200"></canvas>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.bundle.min.js"></script>
     <script src="kmeans-demo.js"></script>
-</body>
-
+  </body>
 </html>
