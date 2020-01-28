@@ -19,7 +19,6 @@ import './layers';
 
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
-import * as tfl from '@tensorflow/tfjs-layers';
 
 import {Box} from './box';
 import {BlazeFaceModel} from './face';
@@ -32,12 +31,9 @@ const BLAZEFACE_MODEL_URL =
 const BLAZE_MESH_GRAPHMODEL_PATH =
     'https://facemesh.s3.amazonaws.com/facemeshgraphmodel/model.json';
 
-const BLAZE_MESH_MODEL_PATH =
-    'https://facemesh.s3.amazonaws.com/facemesh/model.json';
-
-export async function load(useGraphModel = false) {
+export async function load() {
   const faceMesh = new FaceMesh();
-  await faceMesh.load(useGraphModel);
+  await faceMesh.load();
   return faceMesh;
 }
 
@@ -46,10 +42,10 @@ export class FaceMesh {
   private detectionConfidence: number;
 
   async load(
-      useGraphModel = false, meshWidth = 128, meshHeight = 128,
-      maxContinuousChecks = 5, detectionConfidence = 0.9) {
-    const [blazeFaceModel, blazeMeshModel] = await Promise.all(
-        [this.loadFaceModel(), this.loadMeshModel(useGraphModel)]);
+      meshWidth = 128, meshHeight = 128, maxContinuousChecks = 5,
+      detectionConfidence = 0.9) {
+    const [blazeFaceModel, blazeMeshModel] =
+        await Promise.all([this.loadFaceModel(), this.loadMeshModel()]);
 
     const blazeface = new BlazeFaceModel(
         blazeFaceModel as tfconv.GraphModel, meshWidth, meshHeight);
@@ -64,12 +60,8 @@ export class FaceMesh {
     return tfconv.loadGraphModel(BLAZEFACE_MODEL_URL, {fromTFHub: true});
   }
 
-  loadMeshModel(useGraphModel: boolean):
-      Promise<tfl.LayersModel|tfconv.GraphModel> {
-    if (useGraphModel) {
-      return tfconv.loadGraphModel(BLAZE_MESH_GRAPHMODEL_PATH);
-    }
-    return tfl.loadLayersModel(BLAZE_MESH_MODEL_PATH);
+  loadMeshModel(): Promise<tfconv.GraphModel> {
+    return tfconv.loadGraphModel(BLAZE_MESH_GRAPHMODEL_PATH);
   }
 
   clearPipelineROIs(flag: number[][]) {
