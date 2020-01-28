@@ -97,7 +97,7 @@ export class FaceMesh {
       return this.pipeline.predict(image) as {};
     });
 
-    if ((predictions as any[]).length) {
+    if (predictions && (predictions as any[]).length) {
       return Promise.all((predictions as any).map(async (prediction: any) => {
         const [coords2d, coords2dScaled, landmarksBox, flag] =
             prediction as [tf.Tensor2D, tf.Tensor2D, Box, tf.Tensor2D];
