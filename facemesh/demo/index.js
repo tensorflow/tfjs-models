@@ -74,7 +74,7 @@ const renderPrediction = async () => {
 };
 
 const setupPage = async () => {
-  const useVideoStream = false;
+  const useVideoStream = true;
   if(useVideoStream) {
     await setupCamera();
     video.play();
