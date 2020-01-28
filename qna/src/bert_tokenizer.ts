@@ -102,14 +102,6 @@ function isInvalid(ch) {
   return (ch === 0 || ch === 0xfffd);
 }
 
-/** To judge whether it's a control character(exclude whitespace). */
-function isControl(ch) {
-  if (isWhitespace(ch)) {
-    return false;
-  }
-  return /[^ -~]/.test(ch);
-}
-
 const punctuationRegEx = /[~`\!@#\$%\^&\*\(\)\{\}\[\];:\"'<,\.>\?\/\\\|\-_\+=]/;
 
 /** To judge whether it's a punctuation. */
@@ -170,7 +162,7 @@ export class BertTokenizer {
     const stringBuilder = [];
     for (const ch of text) {
       // Skip the characters that cannot be used.
-      if (isInvalid(ch) || isControl(ch)) {
+      if (isInvalid(ch)) {
         continue;
       }
       if (isWhitespace(ch)) {
