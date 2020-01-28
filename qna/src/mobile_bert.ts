@@ -29,7 +29,7 @@ const PREDICT_ANS_NUM = 5;
 const OUTPUT_OFFSET = 1;
 
 export interface MobileBert {
-  findAnswers(question: string, context: string): Array<[string, number]>;
+  findAnswers(question: string, context: string): Answer[];
 }
 
 /**
@@ -42,6 +42,11 @@ export interface MobileBert {
  */
 export interface ModelConfig {
   modelUrl: string;
+}
+
+export interface Answer {
+  text: string;
+  score: number;
 }
 
 interface Feature {
@@ -158,11 +163,12 @@ class MobileBertImpl implements MobileBert {
    * @param context: string, context where the answers are looked up from.
    * @return array of answsers
    */
-  findAnswers(question: string, context: string) {
-    const answers = tf.tidy(() => {
+  findAnswers(question: string, context: string): Answer[] {
+    let answers: Answer[][] = [];
+    tf.tidy(() => {
       const features =
           this.process(question, context, MAX_QUERY_LEN, MAX_SEQ_LEN);
-      return features.map((feature, index) => {
+      answers = features.map((feature, index) => {
         const inputIds = tf.tensor2d(feature.inputIds, [1, size], 'int32');
         const segmentIds = tf.tensor2d(feature.segmentIds, [1, size], 'int32');
         const inputMask = tf.tensor2d(feature.inputMask, [1, size], 'int32');
@@ -185,7 +191,7 @@ class MobileBertImpl implements MobileBert {
     });
     return []
         .concat.apply([], answers)
-        .sort((logitA, logitB) => logitB[1] - logitA[1])
+        .sort((logitA, logitB) => logitB.score - logitA.score)
         .slice(0, PREDICT_ANS_NUM);
   }
 
@@ -198,7 +204,7 @@ class MobileBertImpl implements MobileBert {
    */
   getBestAnswers(
       startLogits: number[], endLogits: number[], origTokens: string[],
-      tokenToOrigMap: {[key: string]: number}, docIndex = 0) {
+      tokenToOrigMap: {[key: string]: number}, docIndex = 0): Answer[] {
     // Model uses the closed interval [start, end] for indices.
     const startIndexes = this.getBestIndex(startLogits);
     const endIndexes = this.getBestIndex(endLogits);
@@ -217,7 +223,7 @@ class MobileBertImpl implements MobileBert {
 
     origResults.sort((a, b) => b[2] - a[2]);
 
-    const answers = [];
+    const answers: Answer[] = [];
     for (let i = 0; i < origResults.length; i++) {
       if (i >= PREDICT_ANS_NUM) {
         break;
@@ -230,7 +236,7 @@ class MobileBertImpl implements MobileBert {
       } else {
         convertedText = '';
       }
-      answers.push([convertedText, origResults[i][2], docIndex]);
+      answers.push({text: convertedText, score: origResults[i][2]});
     }
     return answers;
   }
