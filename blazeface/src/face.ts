@@ -324,7 +324,7 @@ export class BlazeFaceModel {
           bottomRight: scaledBox.slice([2], [2]) as tf.Tensor1D
         };
 
-        if (!annotateBoxes) {
+        if (annotateBoxes) {
           const {landmarks, probability, anchor} = face as {
             landmarks: tf.Tensor2D,
             probability: tf.Tensor1D,

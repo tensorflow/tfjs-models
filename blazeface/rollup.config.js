@@ -65,11 +65,15 @@ function config({ plugins = [], output = {} }) {
 export default [
   config({ output: { format: 'umd', name: 'blazeface', file: 'dist/blazeface.js' } }),
   config({
-    plugins: [minify()],
+    plugins: [
+      // minify()
+    ],
     output: { format: 'umd', name: 'blazeface', file: 'dist/blazeface.min.js' }
   }),
   config({
-    plugins: [minify()],
+    plugins: [
+      // minify()
+    ],
     output: { format: 'es', file: 'dist/blazeface.esm.js' }
   })
 ];
