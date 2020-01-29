@@ -25,6 +25,15 @@ import {Pipeline, Prediction} from './pipeline';
 const BLAZE_MESH_GRAPHMODEL_PATH =
     'https://storage.googleapis.com/learnjs-data/facemesh_staging/facemesh_faceflag-ultralite_shift30-2018_12_21-v0.hdf5_tfjs/model.json';
 
+export type AnnotatedPrediction = {
+  faceInViewConfidence: number|tf.Scalar,
+  boundingBox:
+      {topLeft: number[][]|tf.Tensor2D, bottomRight: number[][]|tf.Tensor2D},
+  mesh: number[][]|tf.Tensor2D,
+  scaledMesh: number[][]|tf.Tensor2D,
+  annotations: {[key: string]: number[][]|tf.Tensor2D}
+};
+
 export async function load() {
   const faceMesh = new FaceMesh();
   await faceMesh.load();
@@ -74,18 +83,7 @@ export class FaceMesh {
   async estimateFaces(
       input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
       HTMLCanvasElement,
-      returnTensors = false): Promise<Array<{
-    faceInViewConfidence: number,
-    mesh: tf.Tensor2D,
-    scaledMesh: tf.Tensor2D,
-    boundingBox: {topLeft: tf.Tensor2D, bottomRight: tf.Tensor2D}
-  }|{
-    faceInViewConfidence: number,
-    mesh: number[][],
-    scaledMesh: number[][],
-    boundingBox: {topLeft: number[], bottomRight: number[]},
-    annotations: {[key: string]: number[][]}
-  }>> {
+      returnTensors = false): Promise<AnnotatedPrediction[]> {
     if (!(input instanceof tf.Tensor)) {
       input = tf.browser.fromPixels(input);
     }
@@ -101,7 +99,7 @@ export class FaceMesh {
       return Promise.all(predictions.map(async (prediction: Prediction) => {
         const {coords, scaledCoords, box, flag} = prediction;
 
-        const [coordsArr, coordsArrScaled, topLeft, bottomRight, flagArr] =
+        const [coordsArr, coordsArrScaled, topLeft, bottomRight, flagValue] =
             await Promise.all([
               coords, scaledCoords, box.startPoint, box.endPoint, flag
             ].map(async d => await d.array()));
@@ -110,7 +108,7 @@ export class FaceMesh {
         scaledCoords.dispose();
         coords.dispose();
 
-        this.clearPipelineROIs(flagArr as number);
+        this.clearPipelineROIs(flagValue as number);
 
         const annotations: {[key: string]: number[][]} = {};
         for (const key in MESH_ANNOTATIONS) {
@@ -122,20 +120,20 @@ export class FaceMesh {
         }
 
         return {
-          faceInViewConfidence: flagArr,
+          faceInViewConfidence: flagValue,
           boundingBox: {topLeft, bottomRight},
           mesh: coordsArr,
           scaledMesh: coordsArrScaled,
           annotations
-        };
-      })) as any;
+        } as AnnotatedPrediction;
+      }));
 
       // if (returnTensors) {
-      //   const flagArr = await flag.array();
-      //   this.clearPipelineROIs(flagArr);
+      //   const flagValue = await flag.array();
+      //   this.clearPipelineROIs(flagValue);
 
       //   return {
-      //     faceInViewConfidence: flagArr[0][0],
+      //     faceInViewConfidence: flagValue[0][0],
       //     mesh: coords,
       //     scaledMesh: scaledCoords,
       //     boundingBox: {
