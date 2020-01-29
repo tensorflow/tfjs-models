@@ -17,16 +17,13 @@
 
 import './layers';
 
+import * as blazeface from '@tensorflow-models/blazeface';
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
 import {Box} from './box';
-import {BlazeFaceModel} from './face';
 import {MESH_ANNOTATIONS} from './keypoints';
 import {BlazePipeline} from './pipeline';
-
-const BLAZEFACE_MODEL_URL =
-    'https://tfhub.dev/tensorflow/tfjs-model/blazeface/1/default/1';
 
 const BLAZE_MESH_GRAPHMODEL_PATH =
     'https://storage.googleapis.com/learnjs-data/facemesh_staging/facemesh_faceflag-ultralite_shift30-2018_12_21-v0.hdf5_tfjs/model.json';
@@ -43,21 +40,19 @@ export class FaceMesh {
 
   async load(
       meshWidth = 128, meshHeight = 128, maxContinuousChecks = 5,
-      detectionConfidence = 0.9) {
-    const [blazeFaceModel, blazeMeshModel] =
-        await Promise.all([this.loadFaceModel(), this.loadMeshModel()]);
-
-    const blazeface = new BlazeFaceModel(
-        blazeFaceModel as tfconv.GraphModel, meshWidth, meshHeight);
+      detectionConfidence = 0.9, maxFaces = 10) {
+    const [blazeFace, blazeMeshModel] =
+        await Promise.all([this.loadFaceModel(maxFaces), this.loadMeshModel()]);
 
     this.pipeline = new BlazePipeline(
-        blazeface, blazeMeshModel, meshWidth, meshHeight, maxContinuousChecks);
+        blazeFace, blazeMeshModel, meshWidth, meshHeight, maxContinuousChecks,
+        maxFaces);
 
     this.detectionConfidence = detectionConfidence;
   }
 
-  loadFaceModel(): Promise<tfconv.GraphModel> {
-    return tfconv.loadGraphModel(BLAZEFACE_MODEL_URL, {fromTFHub: true});
+  loadFaceModel(maxFaces: number): Promise<blazeface.BlazeFaceModel> {
+    return blazeface.load({maxFaces});
   }
 
   loadMeshModel(): Promise<tfconv.GraphModel> {
@@ -83,11 +78,12 @@ export class FaceMesh {
         boundingBox: {topLeft: number[], bottomRight: number[]},
         annotations: {[key: string]: number[][]}
       }>> {
-    const predictions = tf.tidy(() => {
-      const image =
-          tf.browser.fromPixels(video).toFloat().expandDims(0) as tf.Tensor4D;
-      return this.pipeline.predict(image) as {};
+    const image = tf.tidy(() => {
+      return tf.browser.fromPixels(video).toFloat().expandDims(0) as
+          tf.Tensor4D;
     });
+
+    const predictions = await this.pipeline.predict(image) as {};
 
     if (predictions && (predictions as any[]).length) {
       return Promise.all((predictions as any).map(async (prediction: any) => {

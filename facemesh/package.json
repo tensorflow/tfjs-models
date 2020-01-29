@@ -17,6 +17,9 @@
     "@tensorflow/tfjs-converter": "~1.5.0",
     "@tensorflow/tfjs-layers": "~1.5.0"
   },
+  "dependencies": {
+    "@tensorflow-models/blazeface": "0.0.3"
+  },
   "devDependencies": {
     "@tensorflow/tfjs-core": "~1.5.0",
     "@tensorflow/tfjs-converter": "~1.5.0",

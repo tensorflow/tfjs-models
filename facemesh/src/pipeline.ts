@@ -15,17 +15,27 @@
  * =============================================================================
  */
 
+import * as blazeface from '@tensorflow-models/blazeface';
+
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 import * as tfl from '@tensorflow/tfjs-layers';
 
-import {Box, createBox, cutBoxFromImageAndResize, enlargeBox, getBoxSize} from './box';
-import {BlazeFaceModel} from './face';
+import {Box, createBox, cutBoxFromImageAndResize, enlargeBox, getBoxSize, scaleBox} from './box';
+
+// The blazeface model predictions containing unnormalized coordinates
+// for facial bounding box / landmarks.
+type BlazeFacePrediction = {
+  box: Box,
+  landmarks: tf.Tensor2D,
+  probability: tf.Tensor1D,
+  anchor: tf.Tensor2D|[number, number]
+};
 
 const LANDMARKS_COUNT = 468;
 
 export class BlazePipeline {
-  private blazeface: BlazeFaceModel;
+  private blazeface: blazeface.BlazeFaceModel;
   private blazemesh: tfl.LayersModel|tfconv.GraphModel;
   private meshWidth: number;
   private meshHeight: number;
@@ -35,8 +45,9 @@ export class BlazePipeline {
   private maxFaces: number;
 
   constructor(
-      blazeface: BlazeFaceModel, blazemesh: tfl.LayersModel|tfconv.GraphModel,
-      meshWidth: number, meshHeight: number, maxContinuousChecks: number) {
+      blazeface: blazeface.BlazeFaceModel,
+      blazemesh: tfl.LayersModel|tfconv.GraphModel, meshWidth: number,
+      meshHeight: number, maxContinuousChecks: number, maxFaces: number) {
     this.blazeface = blazeface;
     this.blazemesh = blazemesh;
     this.meshWidth = meshWidth;
@@ -44,8 +55,7 @@ export class BlazePipeline {
     this.maxContinuousChecks = maxContinuousChecks;
     this.runsWithoutFaceDetector = 0;
     this.rois = [];
-
-    this.maxFaces = 10;
+    this.maxFaces = maxFaces;
   }
 
   /**
@@ -54,17 +64,27 @@ export class BlazePipeline {
    * @param {tf.Tensor!} image - image tensor of shape [1, H, W, 3].
    * @return {tf.Tensor?} tensor of 2d coordinates (1, 468, 2)
    */
-  predict(image: tf.Tensor4D):
-      Array<[tf.Tensor2D, tf.Tensor2D, Box, tf.Tensor2D]> {
+  async predict(image: tf.Tensor4D):
+      Promise<Array<[tf.Tensor2D, tf.Tensor2D, Box, tf.Tensor2D]>> {
     if (this.needsRoisUpdate()) {
-      const boxes =
-          this.blazeface
-              .getSingleBoundingBox(image as tf.Tensor4D, this.maxFaces)
-              .map(box => enlargeBox(box));
-      if (!boxes) {
+      const returnTensors = false;
+      const [blazeFacePredictions, scaleFactor] =
+          await this.blazeface.getBoundingBoxes(
+              image as tf.Tensor4D, returnTensors);
+
+      if (!blazeFacePredictions.length) {
         this.clearROIs();
         return null;
       }
+
+      const boxes =
+          blazeFacePredictions.map((prediction: BlazeFacePrediction): Box => {
+            return enlargeBox(
+                       scaleBox(
+                           prediction.box, scaleFactor as [number, number]) as
+                       Box) as Box;
+          }) as Box[];
+
       this.updateRoisFromFaceDetector(boxes);
       this.runsWithoutFaceDetector = 0;
     } else {
