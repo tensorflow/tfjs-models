@@ -19,9 +19,8 @@ import * as blazeface from '@tensorflow-models/blazeface';
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {Box} from './box';
 import {MESH_ANNOTATIONS} from './keypoints';
-import {BlazePipeline} from './pipeline';
+import {Pipeline, Prediction} from './pipeline';
 
 const BLAZE_MESH_GRAPHMODEL_PATH =
     'https://storage.googleapis.com/learnjs-data/facemesh_staging/facemesh_faceflag-ultralite_shift30-2018_12_21-v0.hdf5_tfjs/model.json';
@@ -33,7 +32,7 @@ export async function load() {
 }
 
 export class FaceMesh {
-  private pipeline: BlazePipeline;
+  private pipeline: Pipeline;
   private detectionConfidence: number;
 
   async load({
@@ -50,7 +49,7 @@ export class FaceMesh {
       this.loadMeshModel()
     ]);
 
-    this.pipeline = new BlazePipeline(
+    this.pipeline = new Pipeline(
         blazeFace, blazeMeshModel, meshWidth, meshHeight, maxContinuousChecks,
         maxFaces);
 
@@ -66,8 +65,8 @@ export class FaceMesh {
     return tfconv.loadGraphModel(BLAZE_MESH_GRAPHMODEL_PATH);
   }
 
-  clearPipelineROIs(flag: number[][]) {
-    if (flag[0][0] < this.detectionConfidence) {
+  clearPipelineROIs(flag: number) {
+    if (flag < this.detectionConfidence) {
       this.pipeline.clearROIs();
     }
   }
@@ -93,39 +92,38 @@ export class FaceMesh {
 
     const inputToFloat = input.toFloat();
     const image = inputToFloat.expandDims(0) as tf.Tensor4D;
-    const predictions = await this.pipeline.predict(image) as {};
+    const predictions = await this.pipeline.predict(image) as Prediction[];
 
     input.dispose();
     inputToFloat.dispose();
 
-    if (predictions && (predictions as any[]).length) {
-      return Promise.all((predictions as any).map(async (prediction: any) => {
-        const [coords2d, coords2dScaled, landmarksBox, flag] =
-            prediction as [tf.Tensor2D, tf.Tensor2D, Box, tf.Tensor2D];
+    if (predictions && predictions.length) {
+      return Promise.all(predictions.map(async (prediction: Prediction) => {
+        const {coords, scaledCoords, box, flag} = prediction;
 
         const [coordsArr, coordsArrScaled, topLeft, bottomRight, flagArr] =
             await Promise.all([
-              coords2d, coords2dScaled, landmarksBox.startPoint,
-              landmarksBox.endPoint, flag
+              coords, scaledCoords, box.startPoint, box.endPoint, flag
             ].map(async d => await d.array()));
 
         flag.dispose();
-        coords2dScaled.dispose();
-        coords2d.dispose();
+        scaledCoords.dispose();
+        coords.dispose();
 
-        this.clearPipelineROIs(flagArr);
+        this.clearPipelineROIs(flagArr as number);
 
         const annotations: {[key: string]: number[][]} = {};
         for (const key in MESH_ANNOTATIONS) {
           annotations[key] =
               (MESH_ANNOTATIONS[key] as number[])
-                  .map((index: number): number[] => coordsArrScaled[index]) as
-              number[][];
+                  .map(
+                      (index: number): number[] =>
+                          (coordsArrScaled as number[][])[index]) as number[][];
         }
 
         return {
-          faceInViewConfidence: flagArr[0][0],
-          boundingBox: {topLeft: topLeft[0], bottomRight: bottomRight[0]},
+          faceInViewConfidence: flagArr,
+          boundingBox: {topLeft, bottomRight},
           mesh: coordsArr,
           scaledMesh: coordsArrScaled,
           annotations
@@ -138,11 +136,11 @@ export class FaceMesh {
 
       //   return {
       //     faceInViewConfidence: flagArr[0][0],
-      //     mesh: coords2d,
-      //     scaledMesh: coords2dScaled,
+      //     mesh: coords,
+      //     scaledMesh: scaledCoords,
       //     boundingBox: {
-      //       topLeft: landmarksBox.startPoint,
-      //       bottomRight: landmarksBox.endPoint
+      //       topLeft: box.startPoint,
+      //       bottomRight: box.endPoint
       //     }
       //   };
       // }

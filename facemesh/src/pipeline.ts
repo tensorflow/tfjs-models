@@ -30,9 +30,16 @@ type BlazeFacePrediction = {
   anchor: tf.Tensor2D|[number, number]
 };
 
+export type Prediction = {
+  coords: tf.Tensor2D,
+  scaledCoords: tf.Tensor2D,
+  box: Box,
+  flag: tf.Scalar
+};
+
 const LANDMARKS_COUNT = 468;
 
-export class BlazePipeline {
+export class Pipeline {
   private blazeface: blazeface.BlazeFaceModel;
   private blazemesh: tfconv.GraphModel;
   private meshWidth: number;
@@ -57,13 +64,10 @@ export class BlazePipeline {
   }
 
   /**
-   * Calculates face mesh for specific image (468 points).
-   *
    * @param {tf.Tensor!} image - image tensor of shape [1, H, W, 3].
-   * @return {tf.Tensor?} tensor of 2d coordinates (1, 468, 2)
+   * @return an array of predictions for each face
    */
-  async predict(image: tf.Tensor4D):
-      Promise<Array<[tf.Tensor2D, tf.Tensor2D, Box, tf.Tensor2D]>> {
+  async predict(image: tf.Tensor4D): Promise<Prediction[]> {
     if (this.needsRoisUpdate()) {
       const returnTensors = false;
       const [blazeFacePredictions, scaleFactor] =
@@ -109,11 +113,16 @@ export class BlazePipeline {
       }
       this.rois[i] = landmarksBox;
 
-      return [coords2d, coords2dScaled, landmarksBox, flag];
-    }) as any);
+      return {
+        coords: coords2d,
+        scaledCoords: coords2dScaled,
+        box: landmarksBox,
+        flag: flag.squeeze()
+      } as Prediction;
+    }));
   }
 
-  updateRoisFromFaceDetector(boxes: Array<Box>) {
+  updateRoisFromFaceDetector(boxes: Box[]) {
     for (let i = 0; i < boxes.length; i++) {
       const box = boxes[i];
       const prev = this.rois[i];
