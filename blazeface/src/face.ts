@@ -299,7 +299,7 @@ export class BlazeFaceModel {
       input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
       HTMLCanvasElement,
       returnTensors = false, flipHorizontal = false,
-      annotateBoxes = true): Promise<any> {
+      annotateBoxes = true): Promise<NormalizedFace[]> {
     const [, width] = getInputTensorDimensions(input);
     const image = tf.tidy(() => {
       if (!(input instanceof tf.Tensor)) {
