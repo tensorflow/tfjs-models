@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google Inc. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,7 +21,7 @@ import {plotSpectrogram} from './ui';
 
 /** Remove the children of a div that do not have the isFixed attribute. */
 export function removeNonFixedChildrenFromWordDiv(wordDiv) {
-  for (let i = wordDiv.children.length - 1; i >=0; --i) {
+  for (let i = wordDiv.children.length - 1; i >= 0; --i) {
     if (wordDiv.children[i].getAttribute('isFixed') == null) {
       wordDiv.removeChild(wordDiv.children[i]);
     } else {
@@ -77,12 +77,10 @@ export class DatasetViz {
    *   multiplier (the ratio between the length of the example
    *   and the length expected by the model.) Defaults to 1.
    */
-  constructor(transferRecognizer,
-              topLevelContainer,
-              minExamplesPerClass,
-              startTransferLearnButton,
-              downloadAsFileButton,
-              transferDurationMultiplier = 1) {
+  constructor(
+      transferRecognizer, topLevelContainer, minExamplesPerClass,
+      startTransferLearnButton, downloadAsFileButton,
+      transferDurationMultiplier = 1) {
     this.transferRecognizer = transferRecognizer;
     this.container = topLevelContainer;
     this.minExamplesPerClass = minExamplesPerClass;
@@ -187,9 +185,8 @@ export class DatasetViz {
         spectrogram.frameSize, {
           pixelsPerFrame: exampleCanvas.width / modelNumFrames,
           maxPixelWidth: Math.round(0.4 * window.innerWidth),
-          markKeyFrame:
-              this.transferDurationMultiplier > 1 &&
-                  word !== speechCommands.BACKGROUND_NOISE_TAG,
+          markKeyFrame: this.transferDurationMultiplier > 1 &&
+              word !== speechCommands.BACKGROUND_NOISE_TAG,
           keyFrameIndex: spectrogram.keyFrameIndex
         });
 
@@ -243,7 +240,8 @@ export class DatasetViz {
     }
     const wordDiv = this.container.children[divIndex];
     const exampleCounts = this.transferRecognizer.isDatasetEmpty() ?
-        {} : this.transferRecognizer.countExamples();
+        {} :
+        this.transferRecognizer.countExamples();
 
     if (word in exampleCounts) {
       const examples = this.transferRecognizer.getExamples(word);
@@ -285,16 +283,18 @@ export class DatasetViz {
   /** Update the button states according to the state of transferRecognizer. */
   updateButtons_() {
     const exampleCounts = this.transferRecognizer.isDatasetEmpty() ?
-        {} : this.transferRecognizer.countExamples();
+        {} :
+        this.transferRecognizer.countExamples();
     const minCountByClass =
-        this.words_().map(word => exampleCounts[word] || 0)
+        this.words_()
+            .map(word => exampleCounts[word] || 0)
             .reduce((prev, current) => current < prev ? current : prev);
 
     for (const element of this.container.children) {
       const word = element.getAttribute('word');
       const button = element.children[0];
-      const displayWord = word ===
-        speechCommands.BACKGROUND_NOISE_TAG ? 'noise' : word;
+      const displayWord =
+          word === speechCommands.BACKGROUND_NOISE_TAG ? 'noise' : word;
       const exampleCount = exampleCounts[word] || 0;
       if (exampleCount === 0) {
         button.textContent = `${displayWord} (${exampleCount})`;
@@ -315,6 +315,7 @@ export class DatasetViz {
       this.startTransferLearnButton.disabled = true;
     }
 
-    this.downloadAsFileButton.disabled = this.transferRecognizer.isDatasetEmpty();
+    this.downloadAsFileButton.disabled =
+        this.transferRecognizer.isDatasetEmpty();
   }
 }

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google Inc. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -37,35 +37,20 @@ const PREAMBLE = `/**
  */`;
 
 function minify() {
-  return uglify({
-    output: {
-      preamble: PREAMBLE
-    }
-  });
+  return uglify({output: {preamble: PREAMBLE}});
 }
 
-function config({
-  plugins = [],
-  output = {}
-}) {
+function config({plugins = [], output = {}}) {
   return {
     input: 'src/index.ts',
     plugins: [
-      typescript({
-        tsconfigOverride: {
-          compilerOptions: {
-            module: 'ES2015'
-          }
-        }
-      }),
+      typescript({tsconfigOverride: {compilerOptions: {module: 'ES2015'}}}),
       node(), ...plugins
     ],
     output: {
       banner: PREAMBLE,
       sourcemap: true,
-      globals: {
-        '@tensorflow/tfjs': 'tf'
-      },
+      globals: {'@tensorflow/tfjs': 'tf'},
       ...output
     },
     external: ['@tensorflow/tfjs']
@@ -74,11 +59,8 @@ function config({
 
 export default [
   config({
-    output: {
-      format: 'umd',
-      name: 'speechCommands',
-      file: 'dist/speech-commands.js'
-    }
+    output:
+        {format: 'umd', name: 'speechCommands', file: 'dist/speech-commands.js'}
   }),
   config({
     plugins: [minify()],
@@ -90,9 +72,6 @@ export default [
   }),
   config({
     plugins: [minify()],
-    output: {
-      format: 'es',
-      file: 'dist/speech-commands.esm.js'
-    }
+    output: {format: 'es', file: 'dist/speech-commands.esm.js'}
   })
 ];

@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/universal-sentence-encoder",
-  "version": "1.2.0",
+  "version": "1.2.2",
   "description": "Universal Sentence Encoder lite in TensorFlow.js",
   "main": "dist/index.js",
   "jsnext:main": "dist/universal-sentence-encoder.esm.js",
@@ -36,7 +36,7 @@
     "build": "rimraf dist && tsc",
     "publish-local": "yarn build && rollup -c && yalc push",
     "test": "ts-node run_tests.ts",
-    "publish-npm": "yarn build && rollup -c && npm publish",
+    "build-npm": "yarn build && rollup -c",
     "lint": "tslint -p . -t verbose"
   },
   "license": "Apache-2.0"

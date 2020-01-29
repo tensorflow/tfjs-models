@@ -20,8 +20,15 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {Tokenizer} from './tokenizer';
 
+export {version} from './version';
+
 const BASE_PATH =
     'https://storage.googleapis.com/tfjs-models/savedmodel/universal_sentence_encoder/';
+
+declare interface ModelInputs extends tf.NamedTensorMap {
+  indices: tf.Tensor;
+  values: tf.Tensor;
+}
 
 export async function load() {
   const use = new UniversalSentenceEncoder();
@@ -56,7 +63,9 @@ export class UniversalSentenceEncoder {
   private tokenizer: Tokenizer;
 
   async loadModel() {
-    return tfconv.loadGraphModel(`${BASE_PATH}model.json`);
+    return tfconv.loadGraphModel(
+        'https://tfhub.dev/tensorflow/tfjs-model/universal-sentence-encoder-lite/1/default/1',
+        {fromTFHub: true});
   }
 
   async load() {
@@ -94,7 +103,9 @@ export class UniversalSentenceEncoder {
         flattenedIndicesArr, [flattenedIndicesArr.length, 2], 'int32');
     const values = tf.tensor1d(tf.util.flatten(encodings) as number[], 'int32');
 
-    const embeddings = await this.model.executeAsync({indices, values});
+    const modelInputs: ModelInputs = {indices, values};
+
+    const embeddings = await this.model.executeAsync(modelInputs);
     indices.dispose();
     values.dispose();
 

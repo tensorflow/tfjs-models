@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/mobilenet",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "Pretrained MobileNet in TensorFlow.js",
   "main": "dist/index.js",
   "unpkg": "dist/mobilenet.min.js",
@@ -35,6 +35,7 @@
   },
   "scripts": {
     "build": "rimraf dist && tsc",
+    "build-npm": "yarn build && rollup -c",
     "publish-local": "yarn build && rollup -c && yalc push",
     "lint": "tslint -p . -t verbose",
     "test": "ts-node run_tests.ts"
