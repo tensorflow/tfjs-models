@@ -20,7 +20,7 @@ There are two main ways to get this model in your JavaScript project: via script
 ### via Script Tag
 
 ```html
-<!-- Load TensorFlow.js. This is required to use qna model. -->
+<!-- Load TensorFlow.js. This is required to use the qna model. -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"> </script>
 <!-- Load the qna model. -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/qna"> </script>
@@ -32,7 +32,7 @@ There are two main ways to get this model in your JavaScript project: via script
 
   // Load the model.
   qna.load().then(model => {
-    // detect objects in the image.
+    // Find the answers
     model.findAnswers(question, passage).then(answers => {
       console.log('Answers: ', answers);
     });
@@ -50,7 +50,7 @@ import * as qna from '@tensorflow-models/qna';
 // Load the model.
 const model = await qna.load();
 
-// Classify the image.
+// Finding the answers
 const answers = await model.findAnswers(question, passage);
 
 console.log('Answers: ');
