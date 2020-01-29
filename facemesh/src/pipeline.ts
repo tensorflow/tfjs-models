@@ -75,13 +75,10 @@ export class BlazePipeline {
         return null;
       }
 
-      const boxes =
-          blazeFacePredictions.map((prediction: BlazeFacePrediction): Box => {
-            return enlargeBox(
-                       scaleBox(
-                           prediction.box, scaleFactor as [number, number]) as
-                       Box) as Box;
-          }) as Box[];
+      const boxes = tf.tidy(
+          () => blazeFacePredictions.map(
+              (prediction: BlazeFacePrediction): Box => enlargeBox(
+                  scaleBox(prediction.box, scaleFactor as [number, number]))));
 
       this.updateRoisFromFaceDetector(boxes);
       this.runsWithoutFaceDetector = 0;
@@ -89,7 +86,7 @@ export class BlazePipeline {
       this.runsWithoutFaceDetector++;
     }
 
-    return this.rois.map((roi, i) => {
+    return tf.tidy(() => this.rois.map((roi, i) => {
       const box = roi as Box;
       const face = cutBoxFromImageAndResize(box, image, [
                      this.meshHeight, this.meshWidth
@@ -113,7 +110,7 @@ export class BlazePipeline {
       this.rois[i] = landmarksBox;
 
       return [coords2d, coords2dScaled, landmarksBox, flag];
-    }) as any;
+    }) as any);
   }
 
   updateRoisFromFaceDetector(boxes: Array<Box>) {
