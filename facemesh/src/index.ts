@@ -29,7 +29,7 @@ const BLAZEFACE_MODEL_URL =
     'https://tfhub.dev/tensorflow/tfjs-model/blazeface/1/default/1';
 
 const BLAZE_MESH_GRAPHMODEL_PATH =
-    'https://facemesh.s3.amazonaws.com/facemeshgraphmodel/model.json';
+    'https://storage.googleapis.com/learnjs-data/facemesh_staging/facemesh_faceflag-ultralite_shift30-2018_12_21-v0.hdf5_tfjs/model.json';
 
 export async function load() {
   const faceMesh = new FaceMesh();

@@ -110,19 +110,21 @@ export class BlazeFaceModel {
     const boxRegressors =
         tf.slice(detectOutputs as tf.Tensor3D, [0, 0, 1], [1, -1, 4]).squeeze();
     const boxes = this.decodeBounds(boxRegressors as tf.Tensor2D);
+
+    // TODO: Once tf.image.nonMaxSuppression includes a flag to suppress console
+    // warnings for not using async version, pass that flag in.
+    const savedConsoleWarnFn = console.warn;
+    console.warn = () => {};
     const boxIndices = tf.image
                            .nonMaxSuppression(
                                boxes, scores as tf.Tensor1D, maxFaces,
                                this.iouThreshold, this.scoreThreshold)
                            .arraySync();
+    console.warn = savedConsoleWarnFn;
 
     if (boxIndices.length === 0) {
       return null;  // TODO (vakunov): don't return null. Empty box?
     }
-
-    // const boxIndex = boxIndices[0];
-    // const resultBox = tf.slice(boxes, [boxIndex, 0], [1, -1]);
-    // return resultBox.arraySync();
 
     const boundingBoxes = boxIndices.map((boxIndex: number) => {
       const resultBox = tf.slice(boxes, [boxIndex, 0], [1, -1]);
@@ -147,7 +149,5 @@ export class BlazeFaceModel {
     return bboxes.map((bbox: any) => {
       return new Box(tf.tensor(bbox)).scale(factors as tf.Tensor1D);
     });
-
-    // return new Box(tf.tensor(bboxes)).scale(factors as tf.Tensor1D);
   }
 }
