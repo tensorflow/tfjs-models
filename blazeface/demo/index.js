@@ -55,28 +55,29 @@ async function setupCamera() {
 const renderPrediction = async () => {
   stats.begin();
 
-  const returnTensors = false;
+  const returnTensors = true;
   const flipHorizontal = true;
-  let predictions = await model.estimateFaces(video, returnTensors, flipHorizontal);
+  const annotateBoxes = false;
+  let predictions = await model.estimateFaces(video, returnTensors, flipHorizontal, annotateBoxes);
 
   if (predictions.length > 0) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     for (let i = 0; i < predictions.length; i++) {
-      const start = predictions[i].topLeft;
-      const end = predictions[i].bottomRight;
+      const start = predictions[i].topLeft.arraySync();
+      const end = predictions[i].bottomRight.arraySync();
       const size = [end[0] - start[0], end[1] - start[1]];
       ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
       ctx.fillRect(start[0], start[1], size[0], size[1]);
 
-      const landmarks = predictions[i].landmarks;
+      // const landmarks = predictions[i].landmarks;
 
-      ctx.fillStyle = "blue";
-      for (let j = 0; j < landmarks.length; j++) {
-        const x = landmarks[j][0];
-        const y = landmarks[j][1];
-        ctx.fillRect(x, y, 5, 5);
-      }
+      // ctx.fillStyle = "blue";
+      // for (let j = 0; j < landmarks.length; j++) {
+      //   const x = landmarks[j][0];
+      //   const y = landmarks[j][1];
+      //   ctx.fillRect(x, y, 5, 5);
+      // }
     }
   }
 
