@@ -49,7 +49,7 @@ function setupFPS() {
 
 const renderPrediction = async () => {
   stats.begin();
-  const predictions = await model.estimateFace(video);
+  const predictions = await model.estimateFaces(video);
   ctx.drawImage(
     video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width,
     canvas.height);

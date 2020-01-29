@@ -72,25 +72,31 @@ export class FaceMesh {
     }
   }
 
-  async estimateFace(video: HTMLVideoElement, returnTensors = false):
-      Promise<Array<{
-        faceInViewConfidence: number,
-        mesh: tf.Tensor2D,
-        scaledMesh: tf.Tensor2D,
-        boundingBox: {topLeft: tf.Tensor2D, bottomRight: tf.Tensor2D}
-      }|{
-        faceInViewConfidence: number,
-        mesh: number[][],
-        scaledMesh: number[][],
-        boundingBox: {topLeft: number[], bottomRight: number[]},
-        annotations: {[key: string]: number[][]}
-      }>> {
-    const image = tf.tidy(() => {
-      return tf.browser.fromPixels(video).toFloat().expandDims(0) as
-          tf.Tensor4D;
-    });
+  async estimateFaces(
+      input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
+      HTMLCanvasElement,
+      returnTensors = false): Promise<Array<{
+    faceInViewConfidence: number,
+    mesh: tf.Tensor2D,
+    scaledMesh: tf.Tensor2D,
+    boundingBox: {topLeft: tf.Tensor2D, bottomRight: tf.Tensor2D}
+  }|{
+    faceInViewConfidence: number,
+    mesh: number[][],
+    scaledMesh: number[][],
+    boundingBox: {topLeft: number[], bottomRight: number[]},
+    annotations: {[key: string]: number[][]}
+  }>> {
+    if (!(input instanceof tf.Tensor)) {
+      input = tf.browser.fromPixels(input);
+    }
 
+    const inputToFloat = input.toFloat();
+    const image = inputToFloat.expandDims(0) as tf.Tensor4D;
     const predictions = await this.pipeline.predict(image) as {};
+
+    input.dispose();
+    inputToFloat.dispose();
 
     if (predictions && (predictions as any[]).length) {
       return Promise.all((predictions as any).map(async (prediction: any) => {
