@@ -22,7 +22,7 @@ There are two main ways to get this model in your JavaScript project: via script
 ```html
 <!-- Load TensorFlow.js. This is required to use qna model. -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"> </script>
-<!-- Load the coco-ssd model. -->
+<!-- Load the qna model. -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/qna"> </script>
 
 <!-- Place your code in the script tag below. You can also use an external .js file -->
@@ -33,8 +33,8 @@ There are two main ways to get this model in your JavaScript project: via script
   // Load the model.
   qna.load().then(model => {
     // detect objects in the image.
-    model.findAnswers(question, passage).then(predictions => {
-      console.log('Predictions: ', predictions);
+    model.findAnswers(question, passage).then(answers => {
+      console.log('Answers: ', answers);
     });
   });
 </script>
@@ -51,10 +51,10 @@ import * as qna from '@tensorflow-models/qna';
 const model = await qna.load();
 
 // Classify the image.
-const predictions = await model.findAnswers(question, passage);
+const answers = await model.findAnswers(question, passage);
 
-console.log('Predictions: ');
-console.log(predictions);
+console.log('Answers: ');
+console.log(answers);
 ```
 
 You can also take a look at the [demo app](./demo).
@@ -64,28 +64,28 @@ You can also take a look at the [demo app](./demo).
 #### Loading the model
 `qna` is the module name, which is automatically included when you use the `<script src>` method. When using ES6 imports, `qna` is the module.
 
-```ts
-export interface ModelConfig {
-  modelUrl?: string;
-}
-
-qna.load(config: ModelConfig = {});
+```js
+// you can load the model without providing the config object.
+model = await qna.load();
+// or you can specify the model url.
+config = {modelUrl: 'https://yourown-server/qna/model.json'};
+customModel = await qna.load(config);
 ```
 
 Args:
-**config** Type of ModelConfig interface with following attributes:
+**config** Model Config structure with following attributes:
  - **modelUrl:** An optional string that specifies custom url of the model. This is useful for area/countries that don't have access to the model hosted on GCP.
 
 Returns a `model` object.
 
-#### Find the answer
+#### Find the answers
 
-You can find the answer give question and associated passage with the model without needing to create a Tensor.
+You can find the answers give question and associated passage with the model without needing to create a Tensor.
 `model.findAnswers` takes two inputs (question and passage) and returns an array of answers ranked by their scores.
 
 This method exists on the model that is loaded from `qna.load`.
 
-```ts
+```js
 model.findAnswers(
   question: string, passage: string
 )
@@ -96,14 +96,28 @@ Args:
 - **question:** The question string.
 - **passage:** The content to extract answers from.
 
-Returns an array of ansers and score that looks like:
+Returns an Promise of array of answers that look like following:
 
+```js
+[{
+  text: "Sundar Pichai",
+  score: 0.8380282521247864
+}]
+```
+
+In which the text is of string type and represents the answer body, and score is a number, indicates the confident level.
+
+Here is an example run of the QnA model:
 ```js
 const passage = "Google LLC is an American multinational technology company that specializes in Internet-related services and products, which include online advertising technologies, search engine, cloud computing, software, and hardware. It is considered one of the Big Four technology companies, alongside Amazon, Apple, and Facebook. Google was founded in September 1998 by Larry Page and Sergey Brin while they were Ph.D. students at Stanford University in California. Together they own about 14 percent of its shares and control 56 percent of the stockholder voting power through supervoting stock. They incorporated Google as a California privately held company on September 4, 1998, in California. Google was then reincorporated in Delaware on October 22, 2002. An initial public offering (IPO) took place on August 19, 2004, and Google moved to its headquarters in Mountain View, California, nicknamed the Googleplex. In August 2015, Google announced plans to reorganize its various interests as a conglomerate called Alphabet Inc. Google is Alphabet's leading subsidiary and will continue to be the umbrella company for Alphabet's Internet interests. Sundar Pichai was appointed CEO of Google, replacing Larry Page who became the CEO of Alphabet."
 const question = "Who is the CEO of Google?"
-model.findAnswers
+
+const answers = await model.findAnswers(question, passage);
+console.log(answers);
+/**
 [{
-  anwser: "Sundar Picai",
+  text: "Sundar Pichai",
   score: 0.8380282521247864
 }]
+**/
 ```

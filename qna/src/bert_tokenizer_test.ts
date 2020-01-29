@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google LLC. All Rights Reserved.
+ * Copyright 2020 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,16 +14,11 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as tfconv from '@tensorflow/tfjs-converter';
-import * as tf from '@tensorflow/tfjs-core';
 import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
-import {expectArrayBuffersEqual} from '@tensorflow/tfjs-core/dist/test_util';
 
 import {loadTokenizer} from './bert_tokenizer';
 
 describeWithFlags('bertTokenizer', NODE_ENVS, () => {
-  beforeEach(() => {});
-
   it('should load', async () => {
     const tokenizer = await loadTokenizer();
 
@@ -40,13 +35,6 @@ describeWithFlags('bertTokenizer', NODE_ENVS, () => {
   it('should tokenize punctuation', async () => {
     const tokenizer = await loadTokenizer();
     const result = tokenizer.tokenize('a new [test]');
-
-    expect(result).toEqual([1037, 2047, 1031, 3231, 1033]);
-  });
-
-  it('should cleanup control characters', async () => {
-    const tokenizer = await loadTokenizer();
-    const result = tokenizer.tokenize('a new\b\v [test]');
 
     expect(result).toEqual([1037, 2047, 1031, 3231, 1033]);
   });

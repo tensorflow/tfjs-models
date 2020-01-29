@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google LLC. All Rights Reserved.
+ * Copyright 2020 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -27,10 +27,10 @@ const answerDiv = document.getElementById('answer');
 
 const process = async () => {
   const model = await modelPromise;
-  const answers = model.findAnswers(input.value, contextDiv.value);
+  const answers = await model.findAnswers(input.value, contextDiv.value);
   console.log(answers);
   answerDiv.innerHTML =
-      answers.map(answer => answer[0] + ' (score =' + answer[1] + ')')
+      answers.map(answer => answer.text + ' (score =' + answer.score + ')')
           .join('<br>');
 };
 input.addEventListener('keyup', async (event) => {

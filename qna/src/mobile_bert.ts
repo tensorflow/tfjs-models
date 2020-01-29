@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2019 Google LLC. All Rights Reserved.
+ * Copyright 2020 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,19 +17,19 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {BertTokenizer, loadTokenizer} from './bert_tokenizer';
+import {BertTokenizer, CLS_INDEX, loadTokenizer, SEP_INDEX} from './bert_tokenizer';
 
 const BASE_DIR = 'https://storage.googleapis.com/tfjs-testing/mobile-bert/';
 const MODEL_URL = BASE_DIR + 'model.json';
-const size = 384;
-const MAX_ANS_LEN = 32;
+const INPUT_SIZE = 384;
+const MAX_ANSWER_LEN = 32;
 const MAX_QUERY_LEN = 64;
 const MAX_SEQ_LEN = 384;
-const PREDICT_ANS_NUM = 5;
+const PREDICT_ANSWER_NUM = 5;
 const OUTPUT_OFFSET = 1;
 
 export interface MobileBert {
-  findAnswers(question: string, context: string): Answer[];
+  findAnswers(question: string, context: string): Promise<Answer[]>;
 }
 
 /**
@@ -55,6 +55,12 @@ interface Feature {
   segmentIds: number[];
   origTokens: string[];
   tokenToOrigMap: {[key: number]: number};
+}
+
+interface AnswerIndex {
+  start: number;
+  end: number;
+  score: number;
 }
 
 class MobileBertImpl implements MobileBert {
@@ -110,14 +116,14 @@ class MobileBertImpl implements MobileBert {
       const tokens = [];
       const segmentIds = [];
       const tokenToOrigMap = {};
-      tokens.push(this.tokenizer.CLS_INDEX);
+      tokens.push(CLS_INDEX);
       segmentIds.push(0);
       for (let i = 0; i < queryTokens.length; i++) {
         const queryToken = queryTokens[i];
         tokens.push(queryToken);
         segmentIds.push(0);
       }
-      tokens.push(this.tokenizer.SEP_INDEX);
+      tokens.push(SEP_INDEX);
       segmentIds.push(0);
       for (let i = 0; i < docSpan['length']; i++) {
         const splitTokenIndex = i + docSpan['start'];
@@ -126,7 +132,7 @@ class MobileBertImpl implements MobileBert {
         segmentIds.push(1);
         tokenToOrigMap[tokens.length] = tokenToOrigIndex[splitTokenIndex];
       }
-      tokens.push(this.tokenizer.SEP_INDEX);
+      tokens.push(SEP_INDEX);
       segmentIds.push(1);
       const inputIds = tokens;
       const inputMask = inputIds.map(id => 1);
@@ -143,10 +149,10 @@ class MobileBertImpl implements MobileBert {
   async load() {
     this.model = await tfconv.loadGraphModel(this.modelConfig.modelUrl);
     // warm up the backend
-    const inputIds = tf.ones([1, size], 'int32');
-    const segmentIds = tf.ones([1, size], 'int32');
-    const inputMask = tf.ones([1, size], 'int32');
-
+    const batchSize = 1;
+    const inputIds = tf.ones([batchSize, INPUT_SIZE], 'int32');
+    const segmentIds = tf.ones([1, INPUT_SIZE], 'int32');
+    const inputMask = tf.ones([1, INPUT_SIZE], 'int32');
     this.model.execute({
       input_ids: inputIds,
       segment_ids: segmentIds,
@@ -159,21 +165,31 @@ class MobileBertImpl implements MobileBert {
 
   /**
    * Given the question and context, find the best answers.
-   * @param question: string
-   * @param context: string, context where the answers are looked up from.
-   * @return array of answsers
+   * @param question the question to find answers for.
+   * @param context context where the answers are looked up from.
+   * @return array of answers
    */
-  findAnswers(question: string, context: string): Answer[] {
-    let answers: Answer[][] = [];
-    tf.tidy(() => {
-      const features =
-          this.process(question, context, MAX_QUERY_LEN, MAX_SEQ_LEN);
-      answers = features.map((feature, index) => {
-        const inputIds = tf.tensor2d(feature.inputIds, [1, size], 'int32');
-        const segmentIds = tf.tensor2d(feature.segmentIds, [1, size], 'int32');
-        const inputMask = tf.tensor2d(feature.inputMask, [1, size], 'int32');
+  async findAnswers(question: string, context: string): Promise<Answer[]> {
+    if (question == null || context == null) {
+      throw new Error(
+          'The input to findAnswers call is null, ' +
+          'please pass a string as input.');
+    }
+
+    const answers: Answer[][] = [];
+    const features =
+        this.process(question, context, MAX_QUERY_LEN, MAX_SEQ_LEN);
+    const promises = features.map(async (feature, index) => {
+      const result = tf.tidy(() => {
+        const batchSize = 1;
+        const inputIds =
+            tf.tensor2d(feature.inputIds, [batchSize, INPUT_SIZE], 'int32');
+        const segmentIds =
+            tf.tensor2d(feature.segmentIds, [batchSize, INPUT_SIZE], 'int32');
+        const inputMask =
+            tf.tensor2d(feature.inputMask, [batchSize, INPUT_SIZE], 'int32');
         const globalStep = tf.scalar(index, 'int32');
-        const result = this.model.execute(
+        return this.model.execute(
             {
               input_ids: inputIds,
               segment_ids: segmentIds,
@@ -181,26 +197,31 @@ class MobileBertImpl implements MobileBert {
               global_step: globalStep
             },
             ['start_logits', 'end_logits']);
-        const startLogits = result[0].arraySync();
-        const endLogits = result[1].arraySync();
-
-        return this.getBestAnswers(
-            startLogits[0], endLogits[0], feature.origTokens,
-            feature.tokenToOrigMap, index);
       });
+      const startLogits = await result[0].array();
+      const endLogits = await result[1].array();
+
+      // dispose all intermediate tensors
+      result[0].dispose();
+      result[1].dispose();
+
+      answers.push(this.getBestAnswers(
+          startLogits[0], endLogits[0], feature.origTokens,
+          feature.tokenToOrigMap, index));
     });
-    return []
-        .concat.apply([], answers)
+
+    await Promise.all(promises);
+    return answers.reduce((flatten, array) => flatten.concat(array), [])
         .sort((logitA, logitB) => logitB.score - logitA.score)
-        .slice(0, PREDICT_ANS_NUM);
+        .slice(0, PREDICT_ANSWER_NUM);
   }
 
   /**
    * Find the Best N answers & logits from the logits array and input feature.
-   * @param startLogits: start index for the answers
-   * @param endLogits: end index for the answers
-   * @param origTokens: original tokens of the passage
-   * @param tokenToOrigMap: token to index mapping
+   * @param startLogits start index for the answers
+   * @param endLogits end index for the answers
+   * @param origTokens original tokens of the passage
+   * @param tokenToOrigMap token to index mapping
    */
   getBestAnswers(
       startLogits: number[], endLogits: number[], origTokens: string[],
@@ -209,40 +230,42 @@ class MobileBertImpl implements MobileBert {
     const startIndexes = this.getBestIndex(startLogits);
     const endIndexes = this.getBestIndex(endLogits);
 
-    const origResults = [];
+    const origResults: AnswerIndex[] = [];
     startIndexes.forEach(start => {
       endIndexes.forEach(end => {
         if (tokenToOrigMap[start] && tokenToOrigMap[end] && end >= start) {
           const length = end - start + 1;
-          if (length < MAX_ANS_LEN) {
-            origResults.push([start, end, startLogits[start] + endLogits[end]]);
+          if (length < MAX_ANSWER_LEN) {
+            origResults.push(
+                {start, end, score: startLogits[start] + endLogits[end]});
           }
         }
       });
     });
 
-    origResults.sort((a, b) => b[2] - a[2]);
+    origResults.sort((a, b) => b.score - a.score);
 
     const answers: Answer[] = [];
     for (let i = 0; i < origResults.length; i++) {
-      if (i >= PREDICT_ANS_NUM) {
+      if (i >= PREDICT_ANSWER_NUM) {
         break;
       }
 
       let convertedText = '';
-      if (origResults[i][0] > 0) {
+      if (origResults[i].start > 0) {
         convertedText = this.convertBack(
-            origTokens, tokenToOrigMap, origResults[i][0], origResults[i][1]);
+            origTokens, tokenToOrigMap, origResults[i].start,
+            origResults[i].end);
       } else {
         convertedText = '';
       }
-      answers.push({text: convertedText, score: origResults[i][2]});
+      answers.push({text: convertedText, score: origResults[i].score});
     }
     return answers;
   }
 
   /** Get the n-best logits from a list of all the logits. */
-  getBestIndex(logits: number[]) {
+  getBestIndex(logits: number[]): number[] {
     const tmpList = [];
     for (let i = 0; i < MAX_SEQ_LEN; i++) {
       tmpList.push([i, i, logits[i]]);
@@ -250,7 +273,7 @@ class MobileBertImpl implements MobileBert {
     tmpList.sort((a, b) => b[2] - a[2]);
 
     const indexes = [];
-    for (let i = 0; i < PREDICT_ANS_NUM; i++) {
+    for (let i = 0; i < PREDICT_ANSWER_NUM; i++) {
       indexes.push(tmpList[i][0]);
     }
 
@@ -260,7 +283,7 @@ class MobileBertImpl implements MobileBert {
   /** Convert the answer back to original text form. */
   convertBack(
       origTokens: string[], tokenToOrigMap: {[key: string]: number},
-      start: number, end: number) {
+      start: number, end: number): string {
     // Shifted index is: index of logits + offset.
     const shiftedStart = start + OUTPUT_OFFSET;
     const shiftedEnd = end + OUTPUT_OFFSET;
@@ -272,8 +295,8 @@ class MobileBertImpl implements MobileBert {
   }
 }
 
-export const load = async(modelConfig?: ModelConfig): Promise<MobileBert> => {
+export async function load(modelConfig?: ModelConfig): Promise<MobileBert> {
   const mobileBert = new MobileBertImpl(modelConfig);
   await mobileBert.load();
   return mobileBert;
-};
+}

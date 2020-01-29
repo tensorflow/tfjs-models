@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2019 Google LLC. All Rights Reserved.
+ * Copyright 2020 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,11 +16,21 @@
  */
 import * as tf from '@tensorflow/tfjs-core';
 
+const SEPERATOR = '\u2581';
+export const UNK_INDEX = 100;
+export const CLS_INDEX = 101;
+export const CLS_TOKEN = '[CLS]';
+export const SEP_INDEX = 102;
+export const SEP_TOKEN = '[SEP]';
+export const NFKC_TOKEN = 'NFKC';
+export const VOCAB_URL =
+    'https://storage.googleapis.com/learnjs-data/bert_vocab/processed_vocab.json';
+
 /**
  * Class for represent node for token parsing Trie data structure.
  */
 class TrieNode {
-  parent: TrieNode = null;
+  parent: TrieNode;
   children: {[key: string]: TrieNode} = {};
   end = false;
   score: number;
@@ -31,8 +41,8 @@ class TrieNode {
     const output = [];
     let node: TrieNode = this;
 
-    while (node !== null) {
-      if (node.key !== null) {
+    while (node != null) {
+      if (node.key != null) {
         output.unshift(node.key);
       }
       node = node.parent;
@@ -44,16 +54,15 @@ class TrieNode {
 
 class Trie {
   private root: TrieNode = new TrieNode(null);
-  constructor() {}
 
   /**
-   *
-   * @param word string, word to be inserted.
-   * @param score number: word score.
-   * @param index number: index of word in the bert vocabulary file.
+   * Insert the bert vacabulary word into the trie.
+   * @param word word to be inserted.
+   * @param score word score.
+   * @param index index of word in the bert vocabulary file.
    */
   insert(word: string, score: number, index: number) {
-    let node: TrieNode = this.root;
+    let node = this.root;
 
     const symbols = [];
     for (const symbol of word) {
@@ -61,7 +70,7 @@ class Trie {
     }
 
     for (let i = 0; i < symbols.length; i++) {
-      if (!node.children[symbols[i]]) {
+      if (node.children[symbols[i]] == null) {
         node.children[symbols[i]] = new TrieNode(symbols[i]);
         node.children[symbols[i]].parent = node;
       }
@@ -79,9 +88,9 @@ class Trie {
   /**
    * Find the Trie node for the given token, it will return the first node that
    * matches the subtoken from the beginning of the token.
-   * @param token string, input string to be searched
+   * @param token string, input string to be searched.
    */
-  find(token: string) {
+  find(token: string): TrieNode {
     let node = this.root;
     let iter = 0;
 
@@ -94,31 +103,27 @@ class Trie {
   }
 }
 
-function isWhitespace(ch) {
+function isWhitespace(ch: string): boolean {
   return /\s/.test(ch);
 }
 
-function isInvalid(ch) {
-  return (ch === 0 || ch === 0xfffd);
+function isInvalid(ch: string): boolean {
+  return (ch.charCodeAt(0) === 0 || ch.charCodeAt(0) === 0xfffd);
 }
 
-const punctuationRegEx = /[~`\!@#\$%\^&\*\(\)\{\}\[\];:\"'<,\.>\?\/\\\|\-_\+=]/;
+const punctuations = '[~`!@#$%^&*(){}[];:"\'<,.>?/\\|-_+=';
 
 /** To judge whether it's a punctuation. */
-function isPunctuation(ch) {
-  return punctuationRegEx.test(ch);
+function isPunctuation(ch: string): boolean {
+  return punctuations.indexOf(ch) !== -1;
 }
+
 /**
  * Tokenizer for Bert.
  */
 export class BertTokenizer {
-  separator = '\u2581';
-  UNK_INDEX = 100;
-  CLS_INDEX = 101;
-  SEP_INDEX = 102;
   private vocab: string[];
   private trie: Trie;
-  constructor() {}
 
   /**
    * Load the vacabulary file and initialize the Trie for lookup.
@@ -128,20 +133,17 @@ export class BertTokenizer {
 
     this.trie = new Trie();
     // Actual tokens start at 999.
-    for (let i = 999; i < this.vocab.length; i++) {
-      const word = this.vocab[i];
-      this.trie.insert(word, 1, i);
+    for (let vocabIndex = 999; vocabIndex < this.vocab.length; vocabIndex++) {
+      const word = this.vocab[vocabIndex];
+      this.trie.insert(word, 1, vocabIndex);
     }
   }
 
-  private async loadVocab() {
-    return tf.util
-        .fetch(
-            'https://storage.googleapis.com/learnjs-data/bert_vocab/processed_vocab.json')
-        .then(d => d.json());
+  private async loadVocab(): Promise<[]> {
+    return tf.util.fetch(VOCAB_URL).then(d => d.json());
   }
 
-  processInput(text: string) {
+  processInput(text: string): string[] {
     const cleanedText = this.cleanText(text);
 
     const origTokens = cleanedText.split(' ');
@@ -150,15 +152,12 @@ export class BertTokenizer {
       token = token.toLowerCase();
       return this.runSplitOnPunc(token);
     });
-    return [].concat.apply([], tokens);
+
+    return tokens.reduce((flatten, array) => flatten.concat(array), []);
   }
 
   /* Performs invalid character removal and whitespace cleanup on text. */
-  private cleanText(text: string) {
-    if (text == null) {
-      throw new Error('The input String is null.');
-    }
-
+  private cleanText(text: string): string {
     const stringBuilder = [];
     for (const ch of text) {
       // Skip the characters that cannot be used.
@@ -175,11 +174,7 @@ export class BertTokenizer {
   }
 
   /* Splits punctuation on a piece of text. */
-  private runSplitOnPunc(text: string) {
-    if (text == null) {
-      throw new Error('The input String is null.');
-    }
-
+  private runSplitOnPunc(text: string): string[] {
     const tokens = [];
     let startNewWord = true;
     for (const ch of text) {
@@ -199,17 +194,17 @@ export class BertTokenizer {
 
   /**
    * Generate tokens for the given vocalbuary.
-   * @param text string
+   * @param text text to be tokenized.
    */
-  tokenize(text) {
+  tokenize(text: string): number[] {
     // Source:
     // https://github.com/google-research/bert/blob/88a817c37f788702a363ff935fd173b6dc6ac0d6/tokenization.py#L311
 
     let outputTokens = [];
 
     const words = this.processInput(text).map(word => {
-      if (word !== '[CLS]' && word !== '[SEP]') {
-        return `${this.separator}${word.normalize('NFKC')}`;
+      if (word !== CLS_TOKEN && word !== SEP_TOKEN) {
+        return `${SEPERATOR}${word.normalize(NFKC_TOKEN)}`;
       }
       return word;
     });
@@ -233,7 +228,7 @@ export class BertTokenizer {
           const substr = chars.slice(start, end).join('');
 
           const match = this.trie.find(substr);
-          if (match != null && match.end) {
+          if (match != null && match.end != null) {
             currIndex = match.getWord()[2];
             break;
           }
@@ -251,7 +246,7 @@ export class BertTokenizer {
       }
 
       if (isUnknown) {
-        outputTokens.push(this.UNK_INDEX);
+        outputTokens.push(UNK_INDEX);
       } else {
         outputTokens = outputTokens.concat(subTokens);
       }
@@ -261,8 +256,8 @@ export class BertTokenizer {
   }
 }
 
-export const loadTokenizer = async(): Promise<BertTokenizer> => {
+export async function loadTokenizer(): Promise<BertTokenizer> {
   const tokenizer = new BertTokenizer();
   await tokenizer.load();
   return tokenizer;
-};
+}

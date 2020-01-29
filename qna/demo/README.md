@@ -1,13 +1,16 @@
-# Object Detection (COCO-SSD) Demo
+## QnA Demo
 
-This demo allows you to try out object detection on a couple of preset images using different base models.
+This demo allows you to find answers of a question from the given context.
+To used the demo, you can update the text area with your own text, type your
+question into the input box, and click the search button. You will see the
+answers displayed in the Answers section.
 
 ## Setup
 
 `cd` into the demo/ folder:
 
 ```sh
-cd coco-ssd/demo
+cd qna/demo
 ```
 
 Install dependencies:
@@ -25,10 +28,10 @@ yarn watch
 
 ## If you are developing the model locally and want to test the changes in the demo
 
-`cd` into the coco-ssd/ folder:
+`cd` into the qna/ folder:
 
 ```sh
-cd coco-ssd
+cd qna
 ```
 
 Install dependencies:
@@ -36,12 +39,12 @@ Install dependencies:
 yarn
 ```
 
-Publish coco-ssd locally:
+Publish qna locally:
 ```sh
 yarn publish-local
 ```
 
-`cd` into this directory (coco-ssd/demo) and install dependencies:
+`cd` into this directory (qna/demo) and install dependencies:
 
 ```sh
 cd demo
@@ -58,5 +61,5 @@ Start the dev demo server:
 yarn watch
 ```
 
-To get future updates from the `coco-ssd` source code, just run `yarn publish-local` in the coco-ssd/
+To get future updates from the `qna` source code, just run `yarn publish-local` in the qna/
 folder again.

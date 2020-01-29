@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google LLC. All Rights Reserved.
+ * Copyright 2020 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,19 +17,16 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
-import {expectArrayBuffersEqual} from '@tensorflow/tfjs-core/dist/test_util';
 
 import {load} from './index';
 
 describeWithFlags('mobileBert', NODE_ENVS, () => {
   beforeEach(() => {
-    spyOn(tfconv, 'loadGraphModel').and.callFake(() => {
-      const model = {
-        execute: (
-            x: tf
-                .Tensor) => [tf.ones([1, 1917, 90]), tf.ones([1, 1917, 1, 4])]
-      };
-      return model;
+    spyOn(tfconv, 'loadGraphModel').and.callFake((modelUrl: string) => {
+      const model = new tfconv.GraphModel(modelUrl);
+      spyOn(model, 'execute')
+          .and.callFake((x: tf.Tensor) => [tf.ones([10]), tf.ones([10])]);
+      return Promise.resolve(model);
     });
   });
 
@@ -45,17 +42,16 @@ describeWithFlags('mobileBert', NODE_ENVS, () => {
 
   it('mobileBert detect method should generate output', async () => {
     const mobileBert = await load();
-    const x = tf.zeros([227, 227, 3]) as tf.Tensor3D;
 
-    const data = mobileBert.findAnswers('question', 'context');
+    const data = await mobileBert.findAnswers('question', 'context');
 
     expect(data).toEqual([]);
   });
 
   it('should allow custom model url', async () => {
-    const mobileBert = await load({modelUrl: 'https://test.org/model.json'});
+    const mobileBert = await load({modelUrl: 'https://google.com/model.json'});
 
     expect(tfconv.loadGraphModel)
-        .toHaveBeenCalledWith('https://test.org/model.json');
+        .toHaveBeenCalledWith('https://google.com/model.json');
   });
 });
