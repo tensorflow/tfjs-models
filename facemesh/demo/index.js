@@ -59,7 +59,7 @@ const renderPrediction = async () => {
     predictions.forEach(prediction => {
       let keypoints = prediction.scaledMesh;
       if(returnTensors) {
-        keypoints = predictions.scaledMesh.arraySync();
+        keypoints = prediction.scaledMesh.arraySync();
       }
 
       for (let i = 0; i < keypoints.length; i++) {

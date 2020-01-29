@@ -31,7 +31,7 @@ export type AnnotatedPrediction = {
       {topLeft: number[][]|tf.Tensor2D, bottomRight: number[][]|tf.Tensor2D},
   mesh: number[][]|tf.Tensor2D,
   scaledMesh: number[][]|tf.Tensor2D,
-  annotations: {[key: string]: number[][]|tf.Tensor2D}
+  annotations?: {[key: string]: number[][]}
 };
 
 export async function load() {
@@ -63,6 +63,10 @@ export class FaceMesh {
         maxFaces);
 
     this.detectionConfidence = detectionConfidence;
+  }
+
+  static getAnnotations() {
+    return MESH_ANNOTATIONS;
   }
 
   loadFaceModel(maxFaces: number, iouThreshold: number, scoreThreshold: number):
