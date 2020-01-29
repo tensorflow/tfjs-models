@@ -113,8 +113,9 @@ function getInputTensorDimensions(input: tf.Tensor3D|ImageData|HTMLVideoElement|
 
 function flipFaceHorizontal(
     face: NormalizedFace, imageWidth: number): NormalizedFace {
+  let flipped;
   if (face.topLeft instanceof tf.Tensor) {
-    const flipped = Object.assign({}, face, {
+    flipped = Object.assign({}, face, {
       topLeft: tf.concat([
         tf.sub(imageWidth - 1, face.topLeft.slice(0, 1)),
         face.topLeft.slice(1, 1)
@@ -129,23 +130,24 @@ function flipFaceHorizontal(
           tf.sub(tf.tensor1d([imageWidth - 1, 0]), face.landmarks)
               .mul(tf.tensor1d([1, -1])) as tf.Tensor2D;
     }
-    return flipped;
+  } else {
+    flipped = Object.assign({}, face, {
+      topLeft: [imageWidth - 1 - face.topLeft[0], face.topLeft[1]],
+      bottomRight: [
+        imageWidth - 1 - (face.bottomRight as [number, number])[0],
+        (face.bottomRight as [number, number])[1]
+      ]
+    });
+
+    if (face.landmarks) {
+      flipped['landmarks'] =
+          (face.landmarks as number[][]).map((coord: [number, number]) => ([
+                                               imageWidth - 1 - coord[0],
+                                               coord[1]
+                                             ]));
+    }
   }
 
-  const flipped = Object.assign({}, face, {
-    topLeft: [imageWidth - 1 - face.topLeft[0], face.topLeft[1]],
-    bottomRight: [
-      imageWidth - 1 - (face.bottomRight as [number, number])[0],
-      (face.bottomRight as [number, number])[1]
-    ]
-  });
-
-  if (face.landmarks) {
-    flipped['landmarks'] =
-        (face.landmarks as number[][]).map((coord: [number, number]) => ([
-                                             imageWidth - 1 - coord[0], coord[1]
-                                           ]));
-  }
   return flipped;
 }
 
