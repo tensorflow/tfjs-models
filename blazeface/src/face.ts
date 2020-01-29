@@ -36,7 +36,7 @@ export interface NormalizedFace {
 
 // The blazeface model predictions containing unnormalized coordinates
 // for facial bounding box / landmarks.
-type BlazeFacePrediction = {
+export type BlazeFacePrediction = {
   box: Box,
   landmarks: tf.Tensor2D,
   probability: tf.Tensor1D,
