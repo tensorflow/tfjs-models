@@ -36,11 +36,19 @@ export class FaceMesh {
   private pipeline: BlazePipeline;
   private detectionConfidence: number;
 
-  async load(
-      meshWidth = 128, meshHeight = 128, maxContinuousChecks = 5,
-      detectionConfidence = 0.9, maxFaces = 10) {
-    const [blazeFace, blazeMeshModel] =
-        await Promise.all([this.loadFaceModel(maxFaces), this.loadMeshModel()]);
+  async load({
+    meshWidth = 128,
+    meshHeight = 128,
+    maxContinuousChecks = 5,
+    detectionConfidence = 0.9,
+    maxFaces = 10,
+    iouThreshold = 0.3,
+    scoreThreshold = 0.75
+  } = {}) {
+    const [blazeFace, blazeMeshModel] = await Promise.all([
+      this.loadFaceModel(maxFaces, iouThreshold, scoreThreshold),
+      this.loadMeshModel()
+    ]);
 
     this.pipeline = new BlazePipeline(
         blazeFace, blazeMeshModel, meshWidth, meshHeight, maxContinuousChecks,
@@ -49,8 +57,9 @@ export class FaceMesh {
     this.detectionConfidence = detectionConfidence;
   }
 
-  loadFaceModel(maxFaces: number): Promise<blazeface.BlazeFaceModel> {
-    return blazeface.load({maxFaces});
+  loadFaceModel(maxFaces: number, iouThreshold: number, scoreThreshold: number):
+      Promise<blazeface.BlazeFaceModel> {
+    return blazeface.load({maxFaces, iouThreshold, scoreThreshold});
   }
 
   loadMeshModel(): Promise<tfconv.GraphModel> {

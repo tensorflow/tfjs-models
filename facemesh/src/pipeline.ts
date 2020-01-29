@@ -16,12 +16,10 @@
  */
 
 import * as blazeface from '@tensorflow-models/blazeface';
-
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
-import * as tfl from '@tensorflow/tfjs-layers';
 
-import {Box, createBox, cutBoxFromImageAndResize, enlargeBox, getBoxSize, scaleBox} from './box';
+import {Box, createBox, cutBoxFromImageAndResize, disposeBox, enlargeBox, getBoxSize, scaleBox} from './box';
 
 // The blazeface model predictions containing unnormalized coordinates
 // for facial bounding box / landmarks.
@@ -36,7 +34,7 @@ const LANDMARKS_COUNT = 468;
 
 export class BlazePipeline {
   private blazeface: blazeface.BlazeFaceModel;
-  private blazemesh: tfl.LayersModel|tfconv.GraphModel;
+  private blazemesh: tfconv.GraphModel;
   private meshWidth: number;
   private meshHeight: number;
   private maxContinuousChecks: number;
@@ -45,9 +43,9 @@ export class BlazePipeline {
   private maxFaces: number;
 
   constructor(
-      blazeface: blazeface.BlazeFaceModel,
-      blazemesh: tfl.LayersModel|tfconv.GraphModel, meshWidth: number,
-      meshHeight: number, maxContinuousChecks: number, maxFaces: number) {
+      blazeface: blazeface.BlazeFaceModel, blazemesh: tfconv.GraphModel,
+      meshWidth: number, meshHeight: number, maxContinuousChecks: number,
+      maxFaces: number) {
     this.blazeface = blazeface;
     this.blazemesh = blazemesh;
     this.meshWidth = meshWidth;
@@ -110,9 +108,7 @@ export class BlazePipeline {
       const landmarksBox = this.calculateLandmarksBoundingBox(coords2dScaled);
       const prev = this.rois[i];
       if (prev) {
-        prev.startEndTensor.dispose();
-        prev.startPoint.dispose();
-        prev.endPoint.dispose();
+        disposeBox(prev);
       }
       this.rois[i] = landmarksBox;
 
@@ -154,9 +150,7 @@ export class BlazePipeline {
     for (let i = boxes.length; i < this.rois.length; i++) {
       const roi = this.rois[i];
       if (roi) {
-        roi.startEndTensor.dispose();
-        roi.startPoint.dispose();
-        roi.endPoint.dispose();
+        disposeBox(roi);
       }
     }
 
