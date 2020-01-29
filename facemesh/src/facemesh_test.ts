@@ -20,7 +20,7 @@ import * as tf from '@tensorflow/tfjs-core';
 import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
 import * as facemesh from './index';
-// import {stubbedImageVals} from './test_util';
+import {stubbedImageVals} from './test_util';
 
 describeWithFlags('Facemesh', NODE_ENVS, () => {
   let model: facemesh.FaceMesh;
@@ -28,7 +28,7 @@ describeWithFlags('Facemesh', NODE_ENVS, () => {
     model = await facemesh.load();
   });
 
-  fit('estimateFaces does not leak memory', async () => {
+  it('estimateFaces does not leak memory', async () => {
     const input: tf.Tensor3D = tf.zeros([128, 128, 3]);
     const beforeTensors = tf.memory().numTensors;
     await model.estimateFaces(input);
@@ -36,18 +36,17 @@ describeWithFlags('Facemesh', NODE_ENVS, () => {
     expect(tf.memory().numTensors).toEqual(beforeTensors);
   });
 
-  it('estimateFaces returns objects with expected properties',
-     async () => {
-         // Stubbed image contains a single face.
-         // const input: tf.Tensor3D = tf.tensor3d(stubbedImageVals, [128, 128,
-         // 3]);
-         // const result = await model.estimateFaces(input);
+  it('estimateFaces returns objects with expected properties', async () => {
+    // Stubbed image contains a single face.
+    const input: tf.Tensor3D = tf.tensor3d(stubbedImageVals, [128, 128, 3]);
+    const result = await model.estimateFaces(input);
 
-         // const face = result[0];
+    const face = result[0];
 
-         // expect(face.coords).toBeDefined();
-         // expect(face.bottomRight).toBeDefined();
-         // expect(face.landmarks).toBeDefined();
-         // expect(face.probability).toBeDefined();
-     });
+    expect(face.faceInViewConfidence).toBeDefined();
+    expect(face.boundingBox).toBeDefined();
+    expect(face.mesh).toBeDefined();
+    expect(face.scaledMesh).toBeDefined();
+    expect(face.annotations).toBeDefined();
+  });
 });
