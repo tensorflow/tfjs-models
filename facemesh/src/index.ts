@@ -98,17 +98,34 @@ export class FaceMesh {
     if (predictions && predictions.length) {
       return Promise.all(predictions.map(async (prediction: Prediction) => {
         const {coords, scaledCoords, box, flag} = prediction;
+        let tensorsToRead: Array<tf.Tensor2D|tf.Scalar> = [flag];
+        if (!returnTensors) {
+          tensorsToRead = tensorsToRead.concat(
+              [coords, scaledCoords, box.startPoint, box.endPoint]);
+        }
 
-        const [coordsArr, coordsArrScaled, topLeft, bottomRight, flagValue] =
-            await Promise.all([
-              coords, scaledCoords, box.startPoint, box.endPoint, flag
-            ].map(async d => await d.array()));
+        const tensorValues =
+            await Promise.all(tensorsToRead.map(async d => await d.array()));
+        const flagValue = tensorValues[0];
 
         flag.dispose();
+        this.clearPipelineROIs(flagValue as number);
+
+        if (returnTensors) {
+          return {
+            faceInViewConfidence: flag,
+            mesh: coords,
+            scaledMesh: scaledCoords,
+            boundingBox:
+                {topLeft: box.startPoint, bottomRight: box.endPoint}
+          } as AnnotatedPrediction;
+        }
+
+        const [coordsArr, coordsArrScaled, topLeft, bottomRight] =
+            tensorValues.slice(1);
+
         scaledCoords.dispose();
         coords.dispose();
-
-        this.clearPipelineROIs(flagValue as number);
 
         const annotations: {[key: string]: number[][]} = {};
         for (const key in MESH_ANNOTATIONS) {
@@ -127,21 +144,6 @@ export class FaceMesh {
           annotations
         } as AnnotatedPrediction;
       }));
-
-      // if (returnTensors) {
-      //   const flagValue = await flag.array();
-      //   this.clearPipelineROIs(flagValue);
-
-      //   return {
-      //     faceInViewConfidence: flagValue[0][0],
-      //     mesh: coords,
-      //     scaledMesh: scaledCoords,
-      //     boundingBox: {
-      //       topLeft: box.startPoint,
-      //       bottomRight: box.endPoint
-      //     }
-      //   };
-      // }
     }
 
     // No face in view.

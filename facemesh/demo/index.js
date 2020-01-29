@@ -49,14 +49,18 @@ function setupFPS() {
 
 const renderPrediction = async () => {
   stats.begin();
-  const predictions = await model.estimateFaces(video);
+  const returnTensors = false;
+  const predictions = await model.estimateFaces(video, returnTensors);
   ctx.drawImage(
     video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width,
     canvas.height);
 
   if (predictions) {
     predictions.forEach(prediction => {
-      const keypoints = prediction.scaledMesh;
+      let keypoints = prediction.scaledMesh;
+      if(returnTensors) {
+        keypoints = predictions.scaledMesh.arraySync();
+      }
 
       for (let i = 0; i < keypoints.length; i++) {
         const x = keypoints[i][0];
