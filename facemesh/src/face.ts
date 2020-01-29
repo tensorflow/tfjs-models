@@ -18,7 +18,7 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {Box} from './box';
+import {Box, createBox, scaleBox} from './box';
 
 type AnchorsConfig = {
   strides: [number, number],
@@ -147,7 +147,7 @@ export class BlazeFaceModel {
     const factors = tf.div([originalWidth, originalHeight], this.inputSize);
 
     return bboxes.map((bbox: any) => {
-      return new Box(tf.tensor(bbox)).scale(factors as tf.Tensor1D);
+      return scaleBox(createBox(tf.tensor(bbox)), factors as tf.Tensor1D);
     });
   }
 }

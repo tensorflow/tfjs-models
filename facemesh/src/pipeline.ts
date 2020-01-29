@@ -19,7 +19,7 @@ import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 import * as tfl from '@tensorflow/tfjs-layers';
 
-import {Box} from './box';
+import {Box, createBox, cutBoxFromImageAndResize, enlargeBox, getBoxSize} from './box';
 import {BlazeFaceModel} from './face';
 
 const LANDMARKS_COUNT = 468;
@@ -57,15 +57,14 @@ export class BlazePipeline {
   predict(image: tf.Tensor4D):
       Array<[tf.Tensor2D, tf.Tensor2D, Box, tf.Tensor2D]> {
     if (this.needsRoisUpdate()) {
-      const boxes = this.blazeface.getSingleBoundingBox(
-          image as tf.Tensor4D, this.maxFaces);
+      const boxes =
+          this.blazeface
+              .getSingleBoundingBox(image as tf.Tensor4D, this.maxFaces)
+              .map(box => enlargeBox(box));
       if (!boxes) {
         this.clearROIs();
         return null;
       }
-      boxes.forEach(box => {
-        box.increaseBox();
-      });
       this.updateRoisFromFaceDetector(boxes);
       this.runsWithoutFaceDetector = 0;
     } else {
@@ -74,9 +73,9 @@ export class BlazePipeline {
 
     return this.rois.map((roi, i) => {
       const box = roi as Box;
-      const face =
-          box.cutFromAndResize(image, [this.meshHeight, this.meshWidth])
-              .div(255);
+      const face = cutBoxFromImageAndResize(box, image, [
+                     this.meshHeight, this.meshWidth
+                   ]).div(255);
       const [coords, flag] =
           this.blazemesh.predict(face) as [tf.Tensor, tf.Tensor2D];
 
@@ -85,7 +84,7 @@ export class BlazePipeline {
       const coords2dScaled =
           tf.mul(
                 coords2d,
-                tf.div(box.getSize(), [this.meshWidth, this.meshHeight]))
+                tf.div(getBoxSize(box), [this.meshWidth, this.meshHeight]))
               .add(box.startPoint) as tf.Tensor2D;
 
       const landmarksBox = this.calculateLandmarksBoundingBox(coords2dScaled);
@@ -162,8 +161,7 @@ export class BlazePipeline {
     const ys = landmarks.slice([0, 1], [LANDMARKS_COUNT, 1]);
 
     const boxMinMax = tf.stack([xs.min(), ys.min(), xs.max(), ys.max()]);
-    const box = new Box(boxMinMax.expandDims(0));
-    box.increaseBox();
-    return box;
+    const box = createBox(boxMinMax.expandDims(0));
+    return enlargeBox(box);
   }
 }
