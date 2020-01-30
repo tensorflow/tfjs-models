@@ -71,21 +71,20 @@ export class Pipeline {
   async predict(image: tf.Tensor4D): Promise<Prediction[]> {
     if (this.needsRoisUpdate()) {
       const returnTensors = false;
-      const [blazeFacePredictions, scaleFactor] =
-          await this.blazeface.getBoundingBoxes(
-              image as tf.Tensor4D, returnTensors);
+      const {boxes, scaleFactor} = await this.blazeface.getBoundingBoxes(
+          image as tf.Tensor4D, returnTensors);
 
-      if (!blazeFacePredictions.length) {
+      if (!boxes.length) {
         this.clearROIs();
         return null;
       }
 
-      const boxes = tf.tidy(
-          () => blazeFacePredictions.map(
+      const scaledBoxes = tf.tidy(
+          () => boxes.map(
               (prediction: BlazeFacePrediction): Box => enlargeBox(
                   scaleBox(prediction.box, scaleFactor as [number, number]))));
 
-      this.updateRoisFromFaceDetector(boxes);
+      this.updateRoisFromFaceDetector(scaledBoxes);
       this.runsWithoutFaceDetector = 0;
     } else {
       this.runsWithoutFaceDetector++;

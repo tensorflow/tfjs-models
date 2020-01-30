@@ -155,6 +155,7 @@ export class FaceMesh {
 
     input.dispose();
     inputToFloat.dispose();
+    image.dispose();
 
     if (predictions && predictions.length) {
       return Promise
