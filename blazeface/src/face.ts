@@ -309,7 +309,7 @@ export class BlazeFaceModel {
    * horizontally. Should be true for videos that are flipped by default (e.g.
    * webcams).
    * @param annotateBoxes Whether to annotate bounding boxes with additional
-   * properties.
+   * properties such as landmarks and probability.
    *
    * @return An array of detected faces, each with the following properties:
    *  `topLeft`: the upper left coordinate of the face in the form `[x, y]`
