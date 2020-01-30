@@ -23,6 +23,7 @@ import {Box, createBox, cutBoxFromImageAndResize, disposeBox, enlargeBox, getBox
 
 // The blazeface model predictions containing unnormalized coordinates
 // for facial bounding box / landmarks.
+// TODO: REMOVE once blazeface 0.0.4 is out.
 type BlazeFacePrediction = {
   box: Box,
   landmarks: tf.Tensor2D,

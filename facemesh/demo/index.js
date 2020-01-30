@@ -50,7 +50,8 @@ function setupFPS() {
 const renderPrediction = async () => {
   stats.begin();
   const returnTensors = false;
-  const predictions = await model.estimateFaces(video, returnTensors);
+  const flipHorizontal = false;
+  const predictions = await model.estimateFaces(video, returnTensors, flipHorizontal);
   ctx.drawImage(
     video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width,
     canvas.height);

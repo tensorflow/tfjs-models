@@ -27,12 +27,67 @@ const BLAZE_MESH_GRAPHMODEL_PATH =
 
 export type AnnotatedPrediction = {
   faceInViewConfidence: number|tf.Scalar,
-  boundingBox:
-      {topLeft: number[][]|tf.Tensor2D, bottomRight: number[][]|tf.Tensor2D},
+  boundingBox: {
+    topLeft: [number, number]|tf.Tensor2D,
+    bottomRight: [number, number]|tf.Tensor2D
+  },
   mesh: number[][]|tf.Tensor2D,
   scaledMesh: number[][]|tf.Tensor2D,
+  /*Annotated keypoints. */
   annotations?: {[key: string]: number[][]}
 };
+
+function getInputTensorDimensions(input: tf.Tensor3D|ImageData|HTMLVideoElement|
+                                  HTMLImageElement|
+                                  HTMLCanvasElement): [number, number] {
+  return input instanceof tf.Tensor ? [input.shape[0], input.shape[1]] :
+                                      [input.height, input.width];
+}
+
+function flipFaceHorizontal(
+    face: AnnotatedPrediction, imageWidth: number): AnnotatedPrediction {
+  if (face.mesh instanceof tf.Tensor) {
+    return Object.assign({}, face, {
+      boundingBox: {
+        topLeft: tf.concat([
+          tf.sub(
+              imageWidth - 1,
+              (face.boundingBox.topLeft as tf.Tensor2D).slice(0, 1)),
+          (face.boundingBox.topLeft as tf.Tensor2D).slice(1, 1)
+        ]),
+        bottomRight: tf.concat([
+          tf.sub(
+              imageWidth - 1,
+              (face.boundingBox.bottomRight as tf.Tensor2D).slice(0, 1)),
+          (face.boundingBox.bottomRight as tf.Tensor2D).slice(1, 1)
+        ])
+      },
+      mesh: tf.sub(tf.tensor1d([imageWidth - 1, 0]), face.mesh)
+                .mul(tf.tensor1d([1, -1])) as tf.Tensor2D,
+      scaledMesh: tf.sub(tf.tensor1d([imageWidth - 1, 0]), face.scaledMesh)
+                      .mul(tf.tensor1d([1, -1])) as tf.Tensor2D
+    });
+  }
+
+  return Object.assign({}, face, {
+    boundingBox: {
+      topLeft: [
+        imageWidth - 1 - (face.boundingBox.topLeft as [number, number])[0],
+        (face.boundingBox.topLeft as [number, number])[1]
+      ],
+      bottomRight: [
+        imageWidth - 1 - (face.boundingBox.bottomRight as [number, number])[0],
+        (face.boundingBox.bottomRight as [number, number])[1]
+      ]
+    },
+    mesh: face.mesh.map(
+        (coord: [number, number]) => ([imageWidth - 1 - coord[0], coord[1]])),
+    scaledMesh: (face.scaledMesh as number[][])
+                    .map(
+                        (coord: [number, number]) =>
+                            ([imageWidth - 1 - coord[0], coord[1]]))
+  });
+}
 
 export async function load() {
   const faceMesh = new FaceMesh();
@@ -87,11 +142,13 @@ export class FaceMesh {
   async estimateFaces(
       input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
       HTMLCanvasElement,
-      returnTensors = false): Promise<AnnotatedPrediction[]> {
+      returnTensors = false,
+      flipHorizontal = false): Promise<AnnotatedPrediction[]> {
     if (!(input instanceof tf.Tensor)) {
       input = tf.browser.fromPixels(input);
     }
 
+    const [, width] = getInputTensorDimensions(input);
     const inputToFloat = input.toFloat();
     const image = inputToFloat.expandDims(0) as tf.Tensor4D;
     const predictions = await this.pipeline.predict(image) as Prediction[];
@@ -100,57 +157,83 @@ export class FaceMesh {
     inputToFloat.dispose();
 
     if (predictions && predictions.length) {
-      return Promise.all(predictions.map(async (prediction: Prediction) => {
-        const {coords, scaledCoords, box, flag} = prediction;
-        let tensorsToRead: Array<tf.Tensor2D|tf.Scalar> = [flag];
-        if (!returnTensors) {
-          tensorsToRead = tensorsToRead.concat(
-              [coords, scaledCoords, box.startPoint, box.endPoint]);
-        }
+      return Promise
+          .all(
+              predictions.map(
+                  async (prediction: Prediction) => {
+                    const {coords, scaledCoords, box, flag} = prediction;
+                    let tensorsToRead: Array<tf.Tensor2D|tf.Scalar> = [flag];
+                    if (!returnTensors) {
+                      tensorsToRead = tensorsToRead.concat(
+                          [coords, scaledCoords, box.startPoint, box.endPoint]);
+                    }
 
-        const tensorValues =
-            await Promise.all(tensorsToRead.map(async d => await d.array()));
-        const flagValue = tensorValues[0];
+                    const tensorValues = await Promise.all(
+                        tensorsToRead.map(async d => await d.array()));
+                    const flagValue = tensorValues[0] as number;
 
-        flag.dispose();
-        this.clearPipelineROIs(flagValue as number);
+                    flag.dispose();
+                    this.clearPipelineROIs(flagValue);
 
-        if (returnTensors) {
-          return {
-            faceInViewConfidence: flag,
-            mesh: coords,
-            scaledMesh: scaledCoords,
-            boundingBox:
-                {topLeft: box.startPoint, bottomRight: box.endPoint}
-          } as AnnotatedPrediction;
-        }
+                    if (returnTensors) {
+                      let annotatedPrediction: AnnotatedPrediction = {
+                        faceInViewConfidence: flag,
+                        mesh: coords,
+                        scaledMesh: scaledCoords,
+                        boundingBox: {
+                          topLeft: box.startPoint,
+                          bottomRight: box.endPoint
+                        }
+                      };
 
-        const [coordsArr, coordsArrScaled, topLeft, bottomRight] =
-            tensorValues.slice(1);
+                      if (flipHorizontal) {
+                        annotatedPrediction =
+                            flipFaceHorizontal(annotatedPrediction, width);
+                      }
 
-        scaledCoords.dispose();
-        coords.dispose();
+                      return annotatedPrediction;
+                    }
 
-        const annotations: {[key: string]: number[][]} = {};
-        for (const key in MESH_ANNOTATIONS) {
-          annotations[key] =
-              (MESH_ANNOTATIONS[key] as number[])
-                  .map(
-                      (index: number): number[] =>
-                          (coordsArrScaled as number[][])[index]) as number[][];
-        }
+                    const [coordsArr, coordsArrScaled, topLeft, bottomRight] =
+                      tensorValues.slice(1) as [
+                        number[][],
+                        number[][],
+                        [number, number],
+                        [number, number]];
 
-        return {
-          faceInViewConfidence: flagValue,
-          boundingBox: {topLeft, bottomRight},
-          mesh: coordsArr,
-          scaledMesh: coordsArrScaled,
-          annotations
-        } as AnnotatedPrediction;
-      }));
+                    scaledCoords.dispose();
+                    coords.dispose();
+
+                    let annotatedPrediction: AnnotatedPrediction = {
+                      faceInViewConfidence: flagValue,
+                      boundingBox: {
+                        topLeft: topLeft as [number, number],
+                        bottomRight: bottomRight as [number, number]
+                      },
+                      mesh: coordsArr as number[][],
+                      scaledMesh: coordsArrScaled as number[][]
+                    };
+
+                    if (flipHorizontal) {
+                      annotatedPrediction =
+                          flipFaceHorizontal(annotatedPrediction, width);
+                    }
+
+                    const annotations: {[key: string]: number[][]} = {};
+                    for (const key in MESH_ANNOTATIONS) {
+                      annotations[key] =
+                          (MESH_ANNOTATIONS[key] as number[])
+                              .map(
+                                  (index: number): number[] =>
+                                      (annotatedPrediction.scaledMesh as
+                                       number[][])[index]) as number[][];
+                    }
+                    annotatedPrediction['annotations'] = annotations;
+
+                    return annotatedPrediction;
+                  }));
     }
 
-    // No face in view.
     return null;
   }
 }
