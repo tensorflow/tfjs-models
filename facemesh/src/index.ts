@@ -23,7 +23,10 @@ import {MESH_ANNOTATIONS} from './keypoints';
 import {Pipeline, Prediction} from './pipeline';
 
 const BLAZE_MESH_GRAPHMODEL_PATH =
-    'https://storage.googleapis.com/learnjs-data/facemesh_staging/facemesh_faceflag-ultralite_shift30-2018_12_21-v0.hdf5_tfjs/model.json';
+    'https://storage.googleapis.com/learnjs-data/facemesh_staging/facemesh_facecontours_faceflag-blaze_shift30-2019_01_14-v0.hdf5_tfjs/model.json';
+
+// const BLAZE_MESH_GRAPHMODEL_PATH =
+//     'https://storage.googleapis.com/learnjs-data/facemesh_staging/facemesh_faceflag-ultralite_shift30-2018_12_21-v0.hdf5_tfjs/model.json';
 
 export type AnnotatedPrediction = {
   faceInViewConfidence: number|tf.Scalar,
@@ -100,8 +103,8 @@ export class FaceMesh {
   private detectionConfidence: number;
 
   async load({
-    meshWidth = 128,
-    meshHeight = 128,
+    meshWidth = 192,  // change to 128 for ultralite
+    meshHeight = 192,
     maxContinuousChecks = 5,
     detectionConfidence = 0.9,
     maxFaces = 10,

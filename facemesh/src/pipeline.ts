@@ -86,8 +86,10 @@ export class Pipeline {
       const face = cutBoxFromImageAndResize(box, image, [
                      this.meshHeight, this.meshWidth
                    ]).div(255);
-      const [coords, flag] =
-          this.blazemesh.predict(face) as [tf.Tensor, tf.Tensor2D];
+      // TODO: What are contours? (first argument)
+      // change to [coords, flag] for ultralite model
+      const [, flag, coords] =
+          this.blazemesh.predict(face) as [tf.Tensor, tf.Tensor2D, tf.Tensor2D];
 
       const coords2d =
           tf.reshape(coords, [-1, 3]).slice([0, 0], [-1, 2]) as tf.Tensor2D;
