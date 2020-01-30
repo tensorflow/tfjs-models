@@ -185,9 +185,14 @@ export class BlazeFaceModel {
   }
 
   async getBoundingBoxes(
-      inputImage: tf.Tensor4D, returnTensors: boolean, annotateBoxes = true):
-      Promise<[Array<BlazeFacePrediction|Box>, tf.Tensor|[number, number]]> {
-    const [detectedOutputs, boxes, scores] = tf.tidy(() => {
+      inputImage: tf.Tensor4D, returnTensors: boolean,
+      annotateBoxes = true): Promise<{
+    boxes: Array<BlazeFacePrediction|Box>,
+    scaleFactor: tf.Tensor|[number, number]
+  }> {
+    const [detectedOutputs, boxes, scores] = tf.tidy((): [
+      tf.Tensor2D, tf.Tensor2D, tf.Tensor1D
+    ] => {
       const resizedImage = inputImage.resizeBilinear([this.width, this.height]);
       const normalizedImage = tf.mul(tf.sub(resizedImage.div(255), 0.5), 2);
 
@@ -199,7 +204,7 @@ export class BlazeFaceModel {
           decodeBounds(prediction as tf.Tensor2D, this.anchors, this.inputSize);
       const logits = tf.slice(prediction as tf.Tensor2D, [0, 0], [-1, 1]);
       const scores = tf.sigmoid(logits).squeeze();
-      return [prediction, decodedBounds, scores];
+      return [prediction as tf.Tensor2D, decodedBounds, scores as tf.Tensor1D];
     });
 
     // TODO: Once tf.image.nonMaxSuppression includes a flag to suppress console
@@ -207,8 +212,7 @@ export class BlazeFaceModel {
     const savedConsoleWarnFn = console.warn;
     console.warn = () => {};
     const boxIndicesTensor = tf.image.nonMaxSuppression(
-        boxes, scores as tf.Tensor1D, this.maxFaces, this.iouThreshold,
-        this.scoreThreshold);
+        boxes, scores, this.maxFaces, this.iouThreshold, this.scoreThreshold);
     console.warn = savedConsoleWarnFn;
 
     const boxIndices = await boxIndicesTensor.array();
@@ -275,7 +279,10 @@ export class BlazeFaceModel {
     scores.dispose();
     detectedOutputs.dispose();
 
-    return [annotatedBoxes as Array<BlazeFacePrediction|Box>, scaleFactor];
+    return {
+      boxes: annotatedBoxes as Array<BlazeFacePrediction|Box>,
+      scaleFactor
+    };
   }
 
   /**
@@ -309,12 +316,12 @@ export class BlazeFaceModel {
       }
       return (input as tf.Tensor).toFloat().expandDims(0);
     });
-    const [prediction, scaleFactor] = await this.getBoundingBoxes(
+    const {boxes, scaleFactor} = await this.getBoundingBoxes(
         image as tf.Tensor4D, returnTensors, annotateBoxes);
     image.dispose();
 
     if (returnTensors) {
-      return prediction.map((face: BlazeFacePrediction|Box) => {
+      return boxes.map((face: BlazeFacePrediction|Box) => {
         let box;
         if (face.hasOwnProperty('box')) {
           box = (face as BlazeFacePrediction).box;
@@ -348,7 +355,7 @@ export class BlazeFaceModel {
       });
     }
 
-    return Promise.all(prediction.map(async (face: BlazeFacePrediction) => {
+    return Promise.all(boxes.map(async (face: BlazeFacePrediction) => {
       const scaledBox = tf.tidy(() => {
         let box;
         if (face.hasOwnProperty('box')) {
