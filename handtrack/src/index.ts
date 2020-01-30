@@ -76,7 +76,6 @@ class HandPipeline {
    */
   async next_meshes(input: tf.Tensor3D|ImageData|HTMLVideoElement|
                     HTMLImageElement|HTMLCanvasElement) {
-    const startNumTensors = tf.memory().numTensors;
     const image: tf.Tensor4D = tf.tidy(() => {
       if (!(input instanceof tf.Tensor)) {
         input = tf.browser.fromPixels(input);
@@ -86,11 +85,9 @@ class HandPipeline {
 
     if (this.needROIUpdate()) {
       console.log('NEEDS ROI UPDATE');
-      const box = await this.handdetect.getSingleBoundingBox(image);
+      const box = this.handdetect.getSingleBoundingBox(image);
       if (!box) {
         this.clearROIS();
-        console.log('no box - returning');
-        console.log(tf.memory().numTensors - startNumTensors);
         return null;
       }
       this.updateROIFromFacedetector(box);
@@ -183,8 +180,7 @@ class HandPipeline {
       return coords2d_result;
     });
 
-    console.log(tf.memory().numTensors - startNumTensors);
-
+    image.dispose();
     return scaledCoords;
   }
 
@@ -274,13 +270,19 @@ class HandPipeline {
     this.rois = [];
   }
 
+  // Forcing ROI update with every frame to debug rotation issue.
   needROIUpdate() {
     const rois_count = this.rois.length;
-    const has_no_rois = rois_count == 0;
+    // const has_no_rois = rois_count == 0;
     const should_check_for_more_hands = rois_count != this.maxHandsNum &&
         this.runsWithoutHandDetector >= MAX_CONTINUOUS_CHECKS;
 
-    return this.forceUpdate || has_no_rois || should_check_for_more_hands;
+    console.log('rois count', rois_count);
+    console.log('should check', should_check_for_more_hands);
+    console.log(this.forceUpdate);
+    return true;
+
+    // return this.forceUpdate || has_no_rois || should_check_for_more_hands;
   }
 }
 
@@ -338,44 +340,48 @@ class HandDetectModel {
     return tf.mul(relative_landmarks, this.input_size);
   }
 
-  async _getBoundingBox(input_image: tf.Tensor) {
-    const img = tf.mul(tf.sub(input_image, 0.5), 2);  // make input [-1, 1]
+  _getBoundingBox(input_image: tf.Tensor) {
+    return tf.tidy(() => {
+      const img = tf.mul(tf.sub(input_image, 0.5), 2);  // make input [-1, 1]
 
-    const detect_outputs = this.model.predict(img) as tf.Tensor;
+      const detect_outputs = this.model.predict(img) as tf.Tensor;
 
-    const scores =
-        tf.sigmoid(tf.slice(detect_outputs, [0, 0, 0], [1, -1, 1])).squeeze() as
-        tf.Tensor1D;
+      const scores = tf.sigmoid(tf.slice(detect_outputs, [0, 0, 0], [1, -1, 1]))
+                         .squeeze() as tf.Tensor1D;
 
-    const raw_boxes = tf.slice(detect_outputs, [0, 0, 1], [1, -1, 4]).squeeze();
-    const raw_landmarks =
-        tf.slice(detect_outputs, [0, 0, 5], [1, -1, 14]).squeeze();
-    const boxes = this._decode_bounds(raw_boxes);
+      const raw_boxes =
+          tf.slice(detect_outputs, [0, 0, 1], [1, -1, 4]).squeeze();
+      const raw_landmarks =
+          tf.slice(detect_outputs, [0, 0, 5], [1, -1, 14]).squeeze();
+      const boxes = this._decode_bounds(raw_boxes);
 
-    const box_indices_tensor = await tf.image.nonMaxSuppressionAsync(
-        boxes, scores, 1, this.iou_threshold, this.scoreThreshold);
-    const box_indices = await box_indices_tensor.array();
+      const box_indices =
+          tf.image
+              .nonMaxSuppression(
+                  boxes, scores, 1, this.iou_threshold, this.scoreThreshold)
+              .arraySync();
 
-    const landmarks = this._decode_landmarks(raw_landmarks);
-    if (box_indices.length == 0) {
-      return [null, null];  // TODO (vakunov): don't return null. Empty box?
-    }
+      const landmarks = this._decode_landmarks(raw_landmarks);
+      if (box_indices.length == 0) {
+        return [null, null];  // TODO (vakunov): don't return null. Empty box?
+      }
 
-    // TODO (vakunov): change to multi hand case
-    const box_index = box_indices[0];
-    const result_box = tf.slice(boxes, [box_index, 0], [1, -1]);
+      // TODO (vakunov): change to multi hand case
+      const box_index = box_indices[0];
+      const result_box = tf.slice(boxes, [box_index, 0], [1, -1]);
 
-    const result_landmarks =
-        tf.slice(landmarks, [box_index, 0], [1]).reshape([-1, 2]);
-    return [result_box, result_landmarks];
+      const result_landmarks =
+          tf.slice(landmarks, [box_index, 0], [1]).reshape([-1, 2]);
+      return [result_box, result_landmarks];
+    });
   }
 
-  async getSingleBoundingBox(input_image: tf.Tensor4D) {
+  getSingleBoundingBox(input_image: tf.Tensor4D) {
     const original_h = input_image.shape[1];
     const original_w = input_image.shape[2];
 
     const image = input_image.resizeBilinear([256, 256]).div(255);
-    const bboxes_data = await this._getBoundingBox(image);
+    const bboxes_data = this._getBoundingBox(image);
 
     if (!bboxes_data[0]) {
       return null;
@@ -385,7 +391,12 @@ class HandDetectModel {
     const landmarks = bboxes_data[1];
 
     const factors = tf.div([original_w, original_h], this.input_size);
-    return new Box(tf.tensor(bboxes), landmarks).scale(factors);
+    const bb = new Box(tf.tensor(bboxes), landmarks).scale(factors);
+
+    image.dispose();
+    bboxes_data[0].dispose();
+
+    return bb;
   }
 };
 
