@@ -73,7 +73,7 @@ export class Pipeline {
       const scaledBoxes = tf.tidy(
           () => boxes.map(
               (prediction: blazeface.BlazeFacePrediction): Box => enlargeBox(
-                  scaleBox(prediction.box, scaleFactor as [number, number]))));
+                  scaleBox(prediction, scaleFactor as [number, number]))));
 
       this.updateRoisFromFaceDetector(scaledBoxes);
       this.runsWithoutFaceDetector = 0;
