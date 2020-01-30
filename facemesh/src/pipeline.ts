@@ -63,7 +63,7 @@ export class Pipeline {
       const returnTensors = false;
       const annotateFace = false;
       const {boxes, scaleFactor} = await this.blazeface.getBoundingBoxes(
-          image as tf.Tensor4D, returnTensors, annotateFace);
+          image, returnTensors, annotateFace);
 
       if (!boxes.length) {
         this.clearROIs();
@@ -72,7 +72,7 @@ export class Pipeline {
 
       const scaledBoxes = tf.tidy(
           () => boxes.map(
-              (prediction: blazeface.BlazeFacePrediction): Box => enlargeBox(
+              (prediction: Box): Box => enlargeBox(
                   scaleBox(prediction, scaleFactor as [number, number]))));
 
       this.updateRoisFromFaceDetector(scaledBoxes);
