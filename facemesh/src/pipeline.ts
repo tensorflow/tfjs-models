@@ -149,8 +149,12 @@ export class Pipeline {
 
       if (iou > 0.25) {
         this.rois[i] = prev;
+        disposeBox(box);
       } else {
         this.rois[i] = box;
+        if (prev && prev.startPoint) {
+          disposeBox(prev);
+        }
       }
     }
 
