@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/facemesh",
-  "version": "1.1.1",
+  "version": "0.0.1",
   "description": "Pretrained face mesh model in TensorFlow.js",
   "main": "dist/index.js",
   "jsnext:main": "dist/facemesh.esm.js",
@@ -17,7 +17,7 @@
     "@tensorflow/tfjs-converter": "~1.5.2"
   },
   "dependencies": {
-    "@tensorflow-models/blazeface": "0.0.3"
+    "@tensorflow-models/blazeface": "0.0.4"
   },
   "devDependencies": {
     "@tensorflow/tfjs-core": "~1.5.2",

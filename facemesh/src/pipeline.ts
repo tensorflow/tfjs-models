@@ -21,16 +21,6 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {Box, createBox, cutBoxFromImageAndResize, disposeBox, enlargeBox, getBoxSize, scaleBox} from './box';
 
-// The blazeface model predictions containing unnormalized coordinates
-// for facial bounding box / landmarks.
-// TODO: REMOVE once blazeface 0.0.4 is out.
-type BlazeFacePrediction = {
-  box: Box,
-  landmarks: tf.Tensor2D,
-  probability: tf.Tensor1D,
-  anchor: tf.Tensor2D|[number, number]
-};
-
 export type Prediction = {
   coords: tf.Tensor2D,
   scaledCoords: tf.Tensor2D,
@@ -71,8 +61,9 @@ export class Pipeline {
   async predict(image: tf.Tensor4D): Promise<Prediction[]> {
     if (this.needsRoisUpdate()) {
       const returnTensors = false;
+      const annotateFace = false;
       const {boxes, scaleFactor} = await this.blazeface.getBoundingBoxes(
-          image as tf.Tensor4D, returnTensors);
+          image as tf.Tensor4D, returnTensors, annotateFace);
 
       if (!boxes.length) {
         this.clearROIs();
@@ -81,7 +72,7 @@ export class Pipeline {
 
       const scaledBoxes = tf.tidy(
           () => boxes.map(
-              (prediction: BlazeFacePrediction): Box => enlargeBox(
+              (prediction: blazeface.BlazeFacePrediction): Box => enlargeBox(
                   scaleBox(prediction.box, scaleFactor as [number, number]))));
 
       this.updateRoisFromFaceDetector(scaledBoxes);
