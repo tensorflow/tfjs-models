@@ -125,10 +125,12 @@ function flipFaceHorizontal(
         (face.bottomRight as tf.Tensor).slice(1, 1)
       ]) as tf.Tensor1D
     });
+
     if (face.landmarks) {
-      flipped['landmarks'] =
+      const flippedLandmarks: tf.Tensor2D =
           tf.sub(tf.tensor1d([imageWidth - 1, 0]), face.landmarks)
-              .mul(tf.tensor1d([1, -1])) as tf.Tensor2D;
+              .mul(tf.tensor1d([1, -1]));
+      flipped['landmarks'] = flippedLandmarks;
     }
   } else {
     flipped = Object.assign({}, face, {
@@ -204,11 +206,11 @@ export class BlazeFaceModel {
     // warnings for not using async version, pass that flag in.
     const savedConsoleWarnFn = console.warn;
     console.warn = () => {};
-
     const boxIndicesTensor = tf.image.nonMaxSuppression(
-        boxes as tf.Tensor2D, scores as tf.Tensor1D, this.maxFaces,
-        this.iouThreshold, this.scoreThreshold);
+        boxes, scores as tf.Tensor1D, this.maxFaces, this.iouThreshold,
+        this.scoreThreshold);
     console.warn = savedConsoleWarnFn;
+
     const boxIndices = await boxIndicesTensor.array();
     boxIndicesTensor.dispose();
 
@@ -333,15 +335,14 @@ export class BlazeFaceModel {
             anchor: tf.Tensor2D | [number, number]
           };
 
-          normalizedFace['landmarks'] =
-              landmarks.add(anchor).mul(scaleFactor) as tf.Tensor2D;
+          const normalizedLandmarks: tf.Tensor2D =
+              landmarks.add(anchor).mul(scaleFactor);
+          normalizedFace['landmarks'] = normalizedLandmarks;
           normalizedFace['probability'] = probability;
         }
 
         if (flipHorizontal) {
-          normalizedFace =
-              flipFaceHorizontal(normalizedFace as NormalizedFace, width) as
-              NormalizedFace;
+          normalizedFace = flipFaceHorizontal(normalizedFace, width);
         }
         return normalizedFace;
       });
@@ -351,7 +352,7 @@ export class BlazeFaceModel {
       const scaledBox = tf.tidy(() => {
         let box;
         if (face.hasOwnProperty('box')) {
-          box = (face as BlazeFacePrediction).box;
+          box = face.box;
         } else {
           box = face;
         }
