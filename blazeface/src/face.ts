@@ -153,6 +153,19 @@ function flipFaceHorizontal(
   return flipped;
 }
 
+function scaleBoxFromPrediction(
+    face: BlazeFacePrediction|Box, scaleFactor: tf.Tensor1D|[number, number]) {
+  return tf.tidy(() => {
+    let box;
+    if (face.hasOwnProperty('box')) {
+      box = (face as BlazeFacePrediction).box;
+    } else {
+      box = face;
+    }
+    return scaleBox(box as Box, scaleFactor).startEndTensor.squeeze();
+  });
+}
+
 export class BlazeFaceModel {
   private blazeFaceModel: tfconv.GraphModel;
   private width: number;
@@ -322,14 +335,8 @@ export class BlazeFaceModel {
 
     if (returnTensors) {
       return boxes.map((face: BlazeFacePrediction|Box) => {
-        let box;
-        if (face.hasOwnProperty('box')) {
-          box = (face as BlazeFacePrediction).box;
-        } else {
-          box = face;
-        }
-        const scaledBox = scaleBox(box as Box, scaleFactor as tf.Tensor1D)
-                              .startEndTensor.squeeze();
+        const scaledBox =
+            scaleBoxFromPrediction(face, scaleFactor as tf.Tensor1D);
         let normalizedFace: NormalizedFace = {
           topLeft: scaledBox.slice([0], [2]) as tf.Tensor1D,
           bottomRight: scaledBox.slice([2], [2]) as tf.Tensor1D
@@ -356,17 +363,8 @@ export class BlazeFaceModel {
     }
 
     return Promise.all(boxes.map(async (face: BlazeFacePrediction) => {
-      const scaledBox = tf.tidy(() => {
-        let box;
-        if (face.hasOwnProperty('box')) {
-          box = face.box;
-        } else {
-          box = face;
-        }
-        return scaleBox(box as Box, scaleFactor as [number, number])
-            .startEndTensor.squeeze();
-      });
-
+      const scaledBox =
+          scaleBoxFromPrediction(face, scaleFactor as [number, number]);
       let normalizedFace: NormalizedFace;
       if (!annotateBoxes) {
         const boxData = await scaledBox.array();

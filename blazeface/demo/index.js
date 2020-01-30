@@ -57,7 +57,7 @@ const renderPrediction = async () => {
 
   const returnTensors = false;
   const flipHorizontal = true;
-  const annotateBoxes = false;
+  const annotateBoxes = true;
   const predictions = await model.estimateFaces(video, returnTensors, flipHorizontal, annotateBoxes);
 
   if (predictions.length > 0) {
