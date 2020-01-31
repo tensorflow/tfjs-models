@@ -115,10 +115,10 @@ class HandPipeline {
           tf.matMul(box_landmarks_homo, palm_rotation_matrix, false, true)
               .slice([0, 0], [7, 2]);
 
-      let box_for_cut = this.calculateLandmarksBoundingBox(rotated_landmarks)
-                            .increaseBox(scale_factor);
-      box_for_cut = this.makeSquareBox(box_for_cut);
-      box_for_cut = this.shiftBox(box_for_cut, shifts);
+      const bb = this.calculateLandmarksBoundingBox(rotated_landmarks);
+      const bbIncreased = bb.increaseBox(scale_factor);
+      const bbSquared = this.makeSquareBox(bbIncreased);
+      const box_for_cut = this.shiftBox(bbSquared, shifts);
 
       const cutted_hand = box_for_cut.cutFromAndResize(
           rotated_image as tf.Tensor4D, [width, height]);
@@ -169,7 +169,10 @@ class HandPipeline {
         return null;
       }
 
-      return [coords2d_result, box as any, angle, cutted_hand];
+      return [
+        coords2d_result, cutted_hand, angle, box as any, bb as any,
+        box_for_cut as any
+      ];
     });
 
     image.dispose();

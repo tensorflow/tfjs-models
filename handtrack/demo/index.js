@@ -169,10 +169,10 @@ const landmarksRealTime = async (video) => {
     let result = await model.next_meshes(video);
     if (result) {
       drawKeypoints(ctx, result[0]);
-      const points = result[1].startEndTensor.arraySync();
+      const points = result[3].startEndTensor.arraySync();
       drawBox(ctx, points[0], result[2], `rgba(0, 0, 255, 0.2)`);
 
-      const cutImage = result[3].arraySync();
+      const cutImage = result[1].arraySync();
       for(let r=0; r<256; r++) {
         for(let c=0; c<256; c++) {
           const point = cutImage[0][r][c];
