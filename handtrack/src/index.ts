@@ -84,7 +84,6 @@ class HandPipeline {
     });
 
     if (this.needROIUpdate()) {
-      console.log('NEEDS ROI UPDATE');
       const box = this.handdetect.getSingleBoundingBox(image);
       if (!box) {
         this.clearROIS();
@@ -270,19 +269,15 @@ class HandPipeline {
     this.rois = [];
   }
 
-  // Forcing ROI update with every frame to debug rotation issue.
   needROIUpdate() {
     const rois_count = this.rois.length;
-    // const has_no_rois = rois_count == 0;
-    const should_check_for_more_hands = rois_count != this.maxHandsNum &&
-        this.runsWithoutHandDetector >= MAX_CONTINUOUS_CHECKS;
+    const has_no_rois = rois_count === 0;
+    const should_check_for_more_hands = this.maxHandsNum === 1 ?
+        has_no_rois :
+        (rois_count !== this.maxHandsNum &&
+         this.runsWithoutHandDetector >= MAX_CONTINUOUS_CHECKS);
 
-    console.log('rois count', rois_count);
-    console.log('should check', should_check_for_more_hands);
-    console.log(this.forceUpdate);
-    return true;
-
-    // return this.forceUpdate || has_no_rois || should_check_for_more_hands;
+    return this.forceUpdate || has_no_rois || should_check_for_more_hands;
   }
 }
 
