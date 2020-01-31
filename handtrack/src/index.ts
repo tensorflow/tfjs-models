@@ -6,20 +6,12 @@ import {HandDetectModel} from './hand';
 // import {rotate as rotateCpu} from './rotate_cpu';
 import {rotate as rotateWebgl} from './rotate_gpu';
 
-tfconv.registerOp('Prelu', (node) => {
-  const x = node.inputs[0];
-  const alpha = node.inputs[1];
-  return tf.prelu(x, alpha);
-});
-
-// Model loading
 const HANDDETECT_MODEL_PATH =
     'https://storage.googleapis.com/learnjs-data/tfjs_converter_v1.3.2_master/handdetector_hourglass_short_2019_03_25_v0/model.json';
 const HANDTRACK_MODEL_PATH =
     'https://storage.googleapis.com/learnjs-data/tfjs_converter_v1.3.2_master/handskeleton_3d_handflag_2019_08_19_v0/model.json';
 
 export async function load() {
-  // TODO: Move ANCHORS file to tfjs-models.
   const ANCHORS =
       await fetch(
           'https://storage.googleapis.com/learnjs-data/handtrack_staging/anchors.json')
