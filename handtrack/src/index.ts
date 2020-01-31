@@ -1,10 +1,10 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
+import {Box, BoxType} from './box';
+import {HandDetectModel} from './hand';
 // import {rotate as rotateCpu} from './rotate_cpu';
 import {rotate as rotateWebgl} from './rotate_gpu';
-
-let ANCHORS: any;
 
 tfconv.registerOp('Prelu', (node) => {
   const x = node.inputs[0];
@@ -20,7 +20,7 @@ const HANDTRACK_MODEL_PATH =
 
 export async function load() {
   // TODO: Move ANCHORS file to tfjs-models.
-  ANCHORS =
+  const ANCHORS =
       await fetch(
           'https://storage.googleapis.com/learnjs-data/handtrack_staging/anchors.json')
           .then(d => d.json());
@@ -28,7 +28,7 @@ export async function load() {
   const handModel = await tfconv.loadGraphModel(HANDDETECT_MODEL_PATH);
   const handSkeletonModel = await tfconv.loadGraphModel(HANDTRACK_MODEL_PATH);
 
-  const handdetect = new HandDetectModel(handModel, 256, 256);
+  const handdetect = new HandDetectModel(handModel, 256, 256, ANCHORS);
   const pipeline = new HandPipeline(handdetect, handSkeletonModel);
 
   return pipeline;
@@ -252,7 +252,6 @@ class HandPipeline {
     return rotation_matrix;
   }
 
-
   calculateRotation(box: BoxType) {
     let keypointsArray = box.landmarks.arraySync() as [number, number][];
     return computeRotation(keypointsArray[0], keypointsArray[2]);
@@ -278,201 +277,5 @@ class HandPipeline {
          this.runsWithoutHandDetector >= MAX_CONTINUOUS_CHECKS);
 
     return this.forceUpdate || has_no_rois || should_check_for_more_hands;
-  }
-}
-
-class HandDetectModel {
-  private model: tfconv.GraphModel;
-  private anchors: tf.Tensor;
-  private input_size: tf.Tensor;
-  private iou_threshold: number;
-  private scoreThreshold: number;
-
-  constructor(model: tfconv.GraphModel, width: number, height: number) {
-    this.model = model;
-    this.anchors = this._generate_anchors();
-    this.input_size = tf.tensor([width, height]);
-
-    this.iou_threshold = 0.3;
-    this.scoreThreshold = 0.5;
-  }
-
-  _generate_anchors() {
-    const anchors = [];
-
-    for (let i = 0; i < ANCHORS.length; ++i) {
-      const anchor = ANCHORS[i];
-      anchors.push([anchor.x_center, anchor.y_center]);
-    }
-    return tf.tensor(anchors);
-  }
-
-  _decode_bounds(box_outputs: tf.Tensor) {
-    const box_starts = tf.slice(box_outputs, [0, 0], [-1, 2]);
-    const centers = tf.add(tf.div(box_starts, this.input_size), this.anchors);
-    const box_sizes = tf.slice(box_outputs, [0, 2], [-1, 2]);
-
-    const box_sizes_norm = tf.div(box_sizes, this.input_size);
-    const centers_norm = centers;
-
-    const starts = tf.sub(centers_norm, tf.div(box_sizes_norm, 2));
-    const ends = tf.add(centers_norm, tf.div(box_sizes_norm, 2));
-
-    return tf.concat2d(
-        [
-          tf.mul(starts as tf.Tensor2D, this.input_size as tf.Tensor2D) as
-              tf.Tensor2D,
-          tf.mul(ends, this.input_size) as tf.Tensor2D
-        ],
-        1);
-  }
-
-  _decode_landmarks(raw_landmarks: tf.Tensor) {
-    const relative_landmarks = tf.add(
-        tf.div(raw_landmarks.reshape([-1, 7, 2]), this.input_size),
-        this.anchors.reshape([-1, 1, 2]));
-
-    return tf.mul(relative_landmarks, this.input_size);
-  }
-
-  _getBoundingBox(input_image: tf.Tensor) {
-    return tf.tidy(() => {
-      const img = tf.mul(tf.sub(input_image, 0.5), 2);  // make input [-1, 1]
-
-      const detect_outputs = this.model.predict(img) as tf.Tensor;
-
-      const scores = tf.sigmoid(tf.slice(detect_outputs, [0, 0, 0], [1, -1, 1]))
-                         .squeeze() as tf.Tensor1D;
-
-      const raw_boxes =
-          tf.slice(detect_outputs, [0, 0, 1], [1, -1, 4]).squeeze();
-      const raw_landmarks =
-          tf.slice(detect_outputs, [0, 0, 5], [1, -1, 14]).squeeze();
-      const boxes = this._decode_bounds(raw_boxes);
-
-      const box_indices =
-          tf.image
-              .nonMaxSuppression(
-                  boxes, scores, 1, this.iou_threshold, this.scoreThreshold)
-              .arraySync();
-
-      const landmarks = this._decode_landmarks(raw_landmarks);
-      if (box_indices.length == 0) {
-        return [null, null];  // TODO (vakunov): don't return null. Empty box?
-      }
-
-      // TODO (vakunov): change to multi hand case
-      const box_index = box_indices[0];
-      const result_box = tf.slice(boxes, [box_index, 0], [1, -1]);
-
-      const result_landmarks =
-          tf.slice(landmarks, [box_index, 0], [1]).reshape([-1, 2]);
-      return [result_box, result_landmarks];
-    });
-  }
-
-  getSingleBoundingBox(input_image: tf.Tensor4D) {
-    const original_h = input_image.shape[1];
-    const original_w = input_image.shape[2];
-
-    const image = input_image.resizeBilinear([256, 256]).div(255);
-    const bboxes_data = this._getBoundingBox(image);
-
-    if (!bboxes_data[0]) {
-      return null;
-    }
-
-    const bboxes = bboxes_data[0].arraySync();
-    const landmarks = bboxes_data[1];
-
-    const factors = tf.div([original_w, original_h], this.input_size);
-    const bb = new Box(tf.tensor(bboxes), landmarks).scale(factors);
-
-    image.dispose();
-    bboxes_data[0].dispose();
-
-    return bb;
-  }
-};
-
-type BoxType = {
-  startEndTensor: tf.Tensor,
-  startPoint: tf.Tensor,
-  endPoint: tf.Tensor,
-  landmarks?: tf.Tensor
-};
-
-class Box {
-  private startEndTensor: tf.Tensor;
-  private startPoint: tf.Tensor;
-  private endPoint: tf.Tensor;
-  private landmarks?: tf.Tensor;
-
-  constructor(startEndTensor: tf.Tensor, landmarks?: tf.Tensor) {
-    // keep tensor for the next frame
-    this.startEndTensor = tf.keep(startEndTensor);
-    // startEndTensor[:, 0:2]
-    this.startPoint = tf.keep(tf.slice(startEndTensor, [0, 0], [-1, 2]));
-    // startEndTensor[:, 2:4]
-    this.endPoint = tf.keep(tf.slice(startEndTensor, [0, 2], [-1, 2]));
-    if (landmarks) {
-      this.landmarks = tf.keep(landmarks);
-    }
-  }
-
-  dispose() {
-    tf.dispose(this.startEndTensor);
-    tf.dispose(this.startPoint);
-    tf.dispose(this.endPoint);
-  }
-
-  getSize() {
-    return tf.abs(tf.sub(this.endPoint, this.startPoint));
-  }
-
-  getCenter() {
-    const halfSize = tf.div(tf.sub(this.endPoint, this.startPoint), 2);
-    return tf.add(this.startPoint, halfSize);
-  }
-
-  cutFromAndResize(image: tf.Tensor4D, crop_size: [number, number]) {
-    const h = image.shape[1];
-    const w = image.shape[2];
-
-    const xyxy = this.startEndTensor;
-    const yxyx = tf.concat2d(
-        [
-          xyxy.slice([0, 1], [-1, 1]) as tf.Tensor2D,
-          xyxy.slice([0, 0], [-1, 1]) as tf.Tensor2D,
-          xyxy.slice([0, 3], [-1, 1]) as tf.Tensor2D,
-          xyxy.slice([0, 2], [-1, 1]) as tf.Tensor2D
-        ],
-        0);
-    const rounded_coords =
-        tf.div(yxyx.transpose(), [h, w, h, w]) as tf.Tensor2D;
-    return tf.image.cropAndResize(image, rounded_coords, [0], crop_size);
-  }
-
-  scale(factors: any) {
-    const starts = tf.mul(this.startPoint, factors);
-    const ends = tf.mul(this.endPoint, factors);
-
-    const new_coordinates =
-        tf.concat2d([starts as tf.Tensor2D, ends as tf.Tensor2D], 1);
-    return new Box(new_coordinates, tf.mul(this.landmarks, factors));
-  }
-
-  increaseBox(ratio = 1.5) {
-    const centers = this.getCenter();
-    const size = this.getSize();
-
-    const new_size = tf.mul(tf.div(size, 2), ratio);
-
-    const new_starts = tf.sub(centers, new_size);
-    const new_ends = tf.add(centers, new_size);
-
-    return new Box(
-        tf.concat2d([new_starts as tf.Tensor2D, new_ends as tf.Tensor2D], 1),
-        this.landmarks);
   }
 }
