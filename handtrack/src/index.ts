@@ -96,8 +96,8 @@ class HandPipeline {
       const box = this.rois[0];
 
       // TODO (vakunov): move to configuration
-      const scale_factor = 2.6;
-      const shifts = [0, -0.1];
+      const scale_factor = 3;
+      const shifts = [0, -0.2];
       const angle = this.calculateRotation(box);
 
       const handpalm_center = box.getCenter().gather(0);
@@ -170,8 +170,8 @@ class HandPipeline {
       }
 
       return [
-        coords2d_result, cutted_hand, angle, box as any, bb as any,
-        box_for_cut as any
+        coords2d_result, cutted_hand, angle, box as any, bbIncreased as any,
+        bbSquared as any, box_for_cut as any
       ];
     });
 

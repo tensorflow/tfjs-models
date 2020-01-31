@@ -169,8 +169,16 @@ const landmarksRealTime = async (video) => {
     let result = await model.next_meshes(video);
     if (result) {
       drawKeypoints(ctx, result[0]);
-      const points = result[3].startEndTensor.arraySync();
-      drawBox(ctx, points[0], result[2], `rgba(0, 0, 255, 0.2)`);
+      const angle = result[2];
+
+      const box = result[3].startEndTensor.arraySync();
+      drawBox(ctx, box[0], angle, `rgba(0, 0, 255, 0.2)`);
+
+      const bbIncreased = result[4].startEndTensor.arraySync();
+      drawBox(ctx, bbIncreased[0], angle, `rgba(255, 0, 0, 0.2)`);
+
+      const bbSquared = result[5].startEndTensor.arraySync();
+      drawBox(ctx, bbSquared[0], angle, `rgba(0, 255, 0, 0.2)`);
 
       const cutImage = result[1].arraySync();
       for(let r=0; r<256; r++) {
