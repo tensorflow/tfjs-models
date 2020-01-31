@@ -26,9 +26,6 @@ function drawPoint(ctx, y, x, r, color) {
   ctx.fill();
 }
 
-/**
- * Draw pose keypoints onto a canvas
- */
 function drawKeypoints(ctx, keypoints) {
   let keypointsArray = keypoints.arraySync();
 
@@ -39,12 +36,48 @@ function drawKeypoints(ctx, keypoints) {
   }
 }
 
-function drawBox(ctx, box) {
-  for (let i = 0; i < 2; i++) {
-    const y = box[i * 2];
-    const x = box[i * 2 + 1];
-    drawPoint(ctx, x, y, 3, "blue");
+function vectorDiff(v1, v2) {
+  return [v1[0] - v2[0], v1[1] - v2[1]];
+}
+
+function vectorSum(v1, v2) {
+  return [v1[0] + v2[0], v1[1] + v2[1]];
+}
+
+function rotatePoint(point, rad) {
+  return [
+    point[0] * Math.cos(rad) - point[1] * Math.sin(rad),
+    point[0] * Math.sin(rad) + point[1] * Math.cos(rad)
+  ];
+}
+
+function drawBox(ctx, box, angle, color) {
+  const upperRight = [box[0], box[1]];
+  const lowerLeft = [box[2], box[3]];
+  const center = vectorSum(lowerLeft,
+    vectorDiff(upperRight, lowerLeft).map(d => d / 2));
+
+  let upperLeft = rotatePoint(vectorDiff(upperRight, center), Math.PI / 2);
+  upperLeft = vectorSum(upperLeft, center);
+
+  let lowerRight = rotatePoint(vectorDiff(lowerLeft, center), Math.PI / 2);
+  lowerRight = vectorSum(lowerRight, center);
+
+  const points = [upperRight, lowerRight, lowerLeft, upperLeft].map(point => {
+    const rotated = rotatePoint(vectorDiff(point, center), angle);
+    return vectorSum(rotated, center);
+  });
+
+  const region = new Path2D();
+  region.moveTo(points[0][0], points[0][1]);
+  for (let i = 1; i < points.length; i++) {
+    const point = points[i];
+    region.lineTo(point[0], point[1]);
   }
+
+  region.closePath();
+  ctx.fillStyle = color;
+  ctx.fill(region);
 }
 
 let model;
@@ -137,7 +170,7 @@ const landmarksRealTime = async (video) => {
     if (result) {
       drawKeypoints(ctx, result[0]);
       const points = result[1].startEndTensor.arraySync();
-      drawBox(ctx, points[0]);
+      drawBox(ctx, points[0], result[2], `rgba(0, 0, 255, 0.2)`);
 
       const cutImage = result[3].arraySync();
       for(let r=0; r<256; r++) {
