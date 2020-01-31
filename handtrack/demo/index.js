@@ -39,6 +39,14 @@ function drawKeypoints(ctx, keypoints) {
   }
 }
 
+function drawBox(ctx, box) {
+  for (let i = 0; i < 2; i++) {
+    const y = box[i * 2];
+    const x = box[i * 2 + 1];
+    drawPoint(ctx, x, y, 3, "blue");
+  }
+}
+
 let model;
 
 const statusElement = document.getElementById("status");
@@ -106,6 +114,11 @@ const landmarksRealTime = async (video) => {
 
   const ctx = canvas.getContext('2d');
 
+  const cut = document.querySelector("#hand_cut");
+  cut.width = 256;
+  cut.height = 256;
+  const cutCtx = cut.getContext('2d');
+
   video.width = videoWidth;
   video.height = videoHeight;
 
@@ -114,13 +127,26 @@ const landmarksRealTime = async (video) => {
 
   ctx.translate(canvas.width, 0);
   ctx.scale(-1, 1);
+  cutCtx.translate(256, 0);
+  cutCtx.scale(-1, 1);
 
   async function frameLandmarks() {
     stats.begin();
     ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
-    let meshes = await model.next_meshes(video);
-    if (meshes) {
-      drawKeypoints(ctx, meshes);
+    let result = await model.next_meshes(video);
+    if (result) {
+      drawKeypoints(ctx, result[0]);
+      const points = result[1].startEndTensor.arraySync();
+      drawBox(ctx, points[0]);
+
+      const cutImage = result[3].arraySync();
+      for(let r=0; r<256; r++) {
+        for(let c=0; c<256; c++) {
+          const point = cutImage[0][r][c];
+          cutCtx.fillStyle = `rgb(${point.join(',')})`;
+          cutCtx.fillRect(c, r, 1, 1);
+        }
+      }
     }
     stats.end();
     requestAnimationFrame(frameLandmarks);

@@ -75,7 +75,10 @@ class HandPipeline {
       return (input as tf.Tensor).toFloat().expandDims(0);
     });
 
-    if (this.needROIUpdate()) {
+    const needROIUpdate = this.needROIUpdate();
+    console.log('need ROI update', needROIUpdate);
+
+    if (needROIUpdate) {
       const box = this.handdetect.getSingleBoundingBox(image);
       if (!box) {
         this.clearROIS();
@@ -94,7 +97,7 @@ class HandPipeline {
 
       // TODO (vakunov): move to configuration
       const scale_factor = 2.6;
-      const shifts = [0, -0.2];
+      const shifts = [0, -0.1];
       const angle = this.calculateRotation(box);
 
       const handpalm_center = box.getCenter().gather(0);
@@ -108,10 +111,8 @@ class HandPipeline {
 
       const palm_rotation_matrix =
           this.build_rotation_matrix_with_center(-angle, handpalm_center);
-
       const rotated_landmarks =
-          tf.matMul(palm_rotation_matrix, box_landmarks_homo.transpose())
-              .transpose()
+          tf.matMul(box_landmarks_homo, palm_rotation_matrix, false, true)
               .slice([0, 0], [7, 2]);
 
       let box_for_cut = this.calculateLandmarksBoundingBox(rotated_landmarks)
@@ -168,7 +169,7 @@ class HandPipeline {
         return null;
       }
 
-      return coords2d_result;
+      return [coords2d_result, box as any, angle, cutted_hand];
     });
 
     image.dispose();
