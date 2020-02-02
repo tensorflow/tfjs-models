@@ -5,7 +5,6 @@ import * as tf from '@tensorflow/tfjs';
 const nClusters = 4;
 const nFeatures = 2;
 const nSamplesPerCluster = 200;
-let samplesArr, centroidsArr, model, chart;
 const chartConfig = {backgroundColors: ['red', 'yellow', 'blue', 'green']};
 
 function convertTensorArrayToChartData(arr, nDims) {
@@ -21,8 +20,25 @@ function convertTensorArrayToChartData(arr, nDims) {
   return res;
 }
 
-function plotClusters(config = chartConfig) {
+function initChart() {
   const ctx = document.getElementById('myChart').getContext('2d');
+  const chart = new Chart(ctx, {
+    type: 'scatter',
+    options: {
+      scales: {
+        xAxes: [
+          {
+            type: 'linear',
+            position: 'bottom',
+          },
+        ],
+      },
+    },
+  });
+  return chart;
+}
+
+function plotClusters(chart, samplesArr, centroidsArr, config = chartConfig) {
   const samplesDataset = {
     data: convertTensorArrayToChartData(samplesArr, nFeatures),
     radius: 2,
@@ -35,35 +51,15 @@ function plotClusters(config = chartConfig) {
     pointBorderColor: 'black',
   };
 
-  chart = new Chart(ctx, {
-    type: 'scatter',
-    data: {
-      datasets: [samplesDataset, centroidsDataset],
-    },
-    options: {
-      elements: {
-        point: {
-          backgroundColor: context => {
-            const clusterId = Math.floor(
-              context.dataIndex / nSamplesPerCluster
-            );
-            return config.backgroundColors[clusterId];
-          },
-        },
-      },
-      scales: {
-        xAxes: [
-          {
-            type: 'linear',
-            position: 'bottom',
-          },
-        ],
-      },
-    },
-  });
+  chart.data.datasets = [samplesDataset, centroidsDataset];
+  chart.options.elements.point.backgroundColor = context => {
+    const clusterId = Math.floor(context.dataIndex / nSamplesPerCluster);
+    return config.backgroundColors[clusterId];
+  };
+  chart.update();
 }
 
-function updateClusters(predictedArr, config = chartConfig) {
+function updateClusters(chart, predictedArr, config = chartConfig) {
   chart.options.elements.point.backgroundColor = context => {
     const clusterId = predictedArr[context.dataIndex];
     return config.backgroundColors[clusterId];
@@ -71,30 +67,45 @@ function updateClusters(predictedArr, config = chartConfig) {
   chart.update();
 }
 
-async function onFitButtonClick(samples) {
+async function onFitButtonClick(model, samples, chart) {
   const predictions = await model.fitPredict(samples);
   const predictionsArr = await predictions.data();
 
-  updateClusters(predictionsArr);
+  updateClusters(chart, predictionsArr);
 }
 
-async function onPageLoad() {
-  // create model
-  model = kMeans({nClusters});
-
-  // plot initial data
+async function onRegenData(chart) {
   const {centroids, samples} = genRandomSamples(
     nClusters,
     nSamplesPerCluster,
     nFeatures
   );
-  samplesArr = await samples.data();
-  centroidsArr = await centroids.data();
-  plotClusters();
+  const samplesArr = await samples.data();
+  const centroidsArr = await centroids.data();
 
-  // set up event listener
+  plotClusters(chart, samplesArr, centroidsArr);
+  return {centroids, samples};
+}
+
+async function onPageLoad() {
+  // create model
+  let model = kMeans({nClusters});
+
+  // plot initial data
+  const chart = initChart();
+  let data = await onRegenData(chart);
+
+  // set up event listeners
+  const regenButton = document.getElementById('regen');
+  regenButton.addEventListener('click', async () => {
+    data = await onRegenData(chart);
+  });
+
   const fitButton = document.getElementById('fit');
-  fitButton.addEventListener('click', () => onFitButtonClick(samples));
+  fitButton.addEventListener('click', () => {
+    const {samples} = data;
+    onFitButtonClick(model, samples, chart);
+  });
 }
 
 onPageLoad();
