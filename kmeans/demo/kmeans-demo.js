@@ -5,7 +5,8 @@ import * as tf from '@tensorflow/tfjs';
 const nClusters = 4;
 const nFeatures = 2;
 const nSamplesPerCluster = 200;
-let samplesArr, centroidsArr, model;
+let samplesArr, centroidsArr, model, chart;
+const chartConfig = {backgroundColors: ['red', 'yellow', 'blue', 'green']};
 
 function convertTensorArrayToChartData(arr, nDims) {
   const fieldNames = ['x', 'y', 'z', 't', 'u', 'v'];
@@ -20,10 +21,8 @@ function convertTensorArrayToChartData(arr, nDims) {
   return res;
 }
 
-function plotClusters(predictedArr) {
+function plotClusters(config = chartConfig) {
   const ctx = document.getElementById('myChart').getContext('2d');
-  const backgroundColors = ['red', 'yellow', 'blue', 'green'];
-
   const samplesDataset = {
     data: convertTensorArrayToChartData(samplesArr, nFeatures),
     radius: 2,
@@ -36,7 +35,7 @@ function plotClusters(predictedArr) {
     pointBorderColor: 'black',
   };
 
-  const myChart = new Chart(ctx, {
+  chart = new Chart(ctx, {
     type: 'scatter',
     data: {
       datasets: [samplesDataset, centroidsDataset],
@@ -45,10 +44,10 @@ function plotClusters(predictedArr) {
       elements: {
         point: {
           backgroundColor: context => {
-            const clusterId = predictedArr
-              ? predictedArr[context.dataIndex]
-              : Math.floor(context.dataIndex / nSamplesPerCluster);
-            return backgroundColors[clusterId];
+            const clusterId = Math.floor(
+              context.dataIndex / nSamplesPerCluster
+            );
+            return config.backgroundColors[clusterId];
           },
         },
       },
@@ -64,11 +63,19 @@ function plotClusters(predictedArr) {
   });
 }
 
+function updateClusters(predictedArr, config = chartConfig) {
+  chart.options.elements.point.backgroundColor = context => {
+    const clusterId = predictedArr[context.dataIndex];
+    return config.backgroundColors[clusterId];
+  };
+  chart.update();
+}
+
 async function onFitButtonClick(samples) {
   const predictions = await model.fitPredict(samples);
   const predictionsArr = await predictions.data();
 
-  plotClusters(predictionsArr);
+  updateClusters(predictionsArr);
 }
 
 async function onPageLoad() {

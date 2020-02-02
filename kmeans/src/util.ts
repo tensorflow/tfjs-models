@@ -5,7 +5,10 @@ export function range(length: number): number[] {
   return Array.from(Array(length).keys());
 }
 
-export function sampleWithoutReplacement(data: number[], nSamples: number): number[] {
+export function sampleWithoutReplacement(
+  data: number[],
+  nSamples: number
+): number[] {
   const dataCopy = data.slice(0);
   const output = [];
   for (let i = 0; i < nSamples; i++) {
@@ -19,6 +22,7 @@ export function genRandomSamples(
   nClusters: number,
   nSamplesPerCluster: number,
   nFeatures = 2,
+  variance = 1,
   embiggenFactor = 5,
   seed = 0
 ) {
@@ -30,15 +34,15 @@ export function genRandomSamples(
       let samples = tf.randomNormal(
         [nSamplesPerCluster, nFeatures],
         0,
-        5,
+        variance,
         'float32',
         seed
       );
 
       const currentCentroid = tf.randomUniform(
         [1, nFeatures],
-        embiggenFactor * -8,
-        embiggenFactor * 8
+        embiggenFactor * -1,
+        embiggenFactor
       );
       samples = samples.add(currentCentroid);
       centroidsArr = centroidsArr.concat(currentCentroid);
