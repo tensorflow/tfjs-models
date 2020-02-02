@@ -64,39 +64,39 @@ const MODEL_INFO: {[version: string]: {[alpha: string]: MobileNetInfo}} = {
   '1.00': {
     '0.25': {
       url:
-          'https://tfhub.dev/google/imagenet/mobilenet_v1_025_224/classification/1',
+          'https://hub.tensorflow.google.cn/google/imagenet/mobilenet_v1_025_224/classification/1',
       inputRange: [0, 1]
     },
     '0.50': {
       url:
-          'https://tfhub.dev/google/imagenet/mobilenet_v1_050_224/classification/1',
+          'https://hub.tensorflow.google.cn/google/imagenet/mobilenet_v1_050_224/classification/1',
       inputRange: [0, 1]
     },
     '0.75': {
       url:
-          'https://tfhub.dev/google/imagenet/mobilenet_v1_075_224/classification/1',
+          'https://hub.tensorflow.google.cn/google/imagenet/mobilenet_v1_075_224/classification/1',
       inputRange: [0, 1]
     },
     '1.00': {
       url:
-          'https://tfhub.dev/google/imagenet/mobilenet_v1_100_224/classification/1',
+          'https://hub.tensorflow.google.cn/google/imagenet/mobilenet_v1_100_224/classification/1',
       inputRange: [0, 1]
     }
   },
   '2.00': {
     '0.50': {
       url:
-          'https://tfhub.dev/google/imagenet/mobilenet_v2_050_224/classification/2',
+          'https://hub.tensorflow.google.cn/google/imagenet/mobilenet_v2_050_224/classification/2',
       inputRange: [0, 1]
     },
     '0.75': {
       url:
-          'https://tfhub.dev/google/imagenet/mobilenet_v2_075_224/classification/2',
+          'https://hub.tensorflow.google.cn/google/imagenet/mobilenet_v2_075_224/classification/2',
       inputRange: [0, 1]
     },
     '1.00': {
       url:
-          'https://tfhub.dev/google/imagenet/mobilenet_v2_100_224/classification/2',
+          'https://hub.tensorflow.google.cn/google/imagenet/mobilenet_v2_100_224/classification/2',
       inputRange: [0, 1]
     }
   }

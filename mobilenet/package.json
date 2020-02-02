@@ -1,6 +1,6 @@
 {
-  "name": "@tensorflow-models/mobilenet",
-  "version": "2.0.5",
+  "name": "@tom408881465/mobilenet-zh",
+  "version": "2.0.6",
   "description": "Pretrained MobileNet in TensorFlow.js",
   "main": "dist/index.js",
   "unpkg": "dist/mobilenet.min.js",
@@ -10,7 +10,7 @@
   "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tensorflow/tfjs-models.git"
+    "url": "git+https://github.com/408881465/tfjs-models.git"
   },
   "peerDependencies": {
     "@tensorflow/tfjs-core": "^1.2.1",
@@ -40,5 +40,11 @@
     "lint": "tslint -p . -t verbose",
     "test": "ts-node run_tests.ts"
   },
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/408881465/tfjs-models/issues"
+  },
+  "homepage": "https://github.com/408881465/tfjs-models#readme",
+  "dependencies": {},
+  "author": ""
 }
