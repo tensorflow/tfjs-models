@@ -68,6 +68,8 @@ function drawBox(ctx, box, angle, color) {
     return vectorSum(rotated, center);
   });
 
+  ctx.strokeStyle = color;
+
   const region = new Path2D();
   region.moveTo(points[0][0], points[0][1]);
   for (let i = 1; i < points.length; i++) {
@@ -76,8 +78,7 @@ function drawBox(ctx, box, angle, color) {
   }
 
   region.closePath();
-  ctx.fillStyle = color;
-  ctx.fill(region);
+  ctx.stroke(region);
 }
 
 let model;
@@ -171,14 +172,21 @@ const landmarksRealTime = async (video) => {
       drawKeypoints(ctx, result[0]);
       const angle = result[2];
 
+      // (blue) Original region of interest (either detected by bounding boxes or carried over from last frame.)
       const box = result[3].startEndTensor.arraySync();
-      drawBox(ctx, box[0], angle, `rgba(0, 0, 255, 0.2)`);
+      drawBox(ctx, box[0], angle, `rgba(0, 0, 255, 1)`);
 
+      // (red) Rotated, then scaled ROI.
       const bbIncreased = result[4].startEndTensor.arraySync();
-      drawBox(ctx, bbIncreased[0], angle, `rgba(255, 0, 0, 0.2)`);
+      drawBox(ctx, bbIncreased[0], angle, `rgba(255, 0, 0, 1)`);
 
+      // (green) Squared.
       const bbSquared = result[5].startEndTensor.arraySync();
-      drawBox(ctx, bbSquared[0], angle, `rgba(0, 255, 0, 0.2)`);
+      drawBox(ctx, bbSquared[0], angle, `rgba(0, 255, 0, 1)`);
+
+      // (purple) New landmarks box.
+      const newLandmarks = result[6].startEndTensor.arraySync();
+      drawBox(ctx, newLandmarks[0], angle, `rgba(255, 0, 255, 1)`);
 
       const cutImage = result[1].arraySync();
       for(let r=0; r<256; r++) {

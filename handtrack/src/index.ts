@@ -3,13 +3,30 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {Box, BoxType} from './box';
 import {HandDetectModel} from './hand';
+import {maxPool, maxPoolWArgMax} from './pool_gpu';
 // import {rotate as rotateCpu} from './rotate_cpu';
 import {rotate as rotateWebgl} from './rotate_gpu';
 
 const HANDDETECT_MODEL_PATH =
     'https://storage.googleapis.com/learnjs-data/tfjs_converter_v1.3.2_master/handdetector_hourglass_short_2019_03_25_v0/model.json';
+
+// NEW MODEL
+// const HANDTRACK_MODEL_PATH =
+//     'https://storage.googleapis.com/learnjs-data/handskeleton_handflag_light_2019_12_18_v0.hdf5_tfjs/model.json';
+// const HANDTRACK_MODEL_PATH =
+//     'https://storage.googleapis.com/learnjs-data/handskeleton_handflag_2019_12_18_v0.hdf5_tfjs/model.json';
+
+// OLD MODEL
 const HANDTRACK_MODEL_PATH =
     'https://storage.googleapis.com/learnjs-data/tfjs_converter_v1.3.2_master/handskeleton_3d_handflag_2019_08_19_v0/model.json';
+
+tfconv.registerOp('MaxPoolWithArgmax', (obj: any) => {
+  const input = obj['inputs'][0];
+  const attrs = obj['attrs'];
+  const maxVals = maxPool(input, attrs);
+  const argmax = maxPoolWArgMax(input, attrs);
+  return [maxVals as tf.Tensor, argmax as tf.Tensor];
+});
 
 export async function load() {
   const ANCHORS =
@@ -55,7 +72,7 @@ class HandPipeline {
     this.rois = [];
   }
 
-  calculateHandPalmCenter(box: any) {
+  calculateHandPalmCenter(box: any) {  // DetectionsToRectsCalculator
     return tf.gather(box.landmarks, [0, 2]).mean(0);
   }
 
@@ -116,17 +133,21 @@ class HandPipeline {
               .slice([0, 0], [7, 2]);
 
       const bb = this.calculateLandmarksBoundingBox(rotated_landmarks);
+      // RectTransformationCalculator
       const bbIncreased = bb.increaseBox(scale_factor);
       const bbSquared = this.makeSquareBox(bbIncreased);
       const box_for_cut = this.shiftBox(bbSquared, shifts);
 
+      // ImageCroppingCalculator
       const cutted_hand = box_for_cut.cutFromAndResize(
           rotated_image as tf.Tensor4D, [width, height]);
       const handImage = cutted_hand.div(255);
 
+      // TfLiteInferenceCalculator
       const output = this.handtrackModel.predict(handImage) as tf.Tensor[];
 
-      const coords3d = tf.reshape(output[1], [-1, 3]);
+      const output_keypoints = output[output.length - 1];
+      const coords3d = tf.reshape(output_keypoints, [-1, 3]);
       const coords2d = coords3d.slice([0, 0], [-1, 2]);
 
       const coords2d_scaled = tf.mul(
@@ -136,8 +157,12 @@ class HandPipeline {
       const coords_rotation_matrix =
           this.build_rotation_matrix_with_center(angle, tf.tensor([0, 0]));
 
-      const coords2d_homo =
-          tf.concat([coords2d_scaled, tf.ones([21]).expandDims(1)], 1);
+      const coords2d_homo = tf.concat(
+          [
+            coords2d_scaled,
+            tf.ones([output_keypoints.shape[1] / 3]).expandDims(1)
+          ],
+          1);
 
       const coords2d_rotated =
           tf.matMul(coords_rotation_matrix, coords2d_homo, false, true)
@@ -152,10 +177,13 @@ class HandPipeline {
                     .transpose())
               .transpose()
               .slice([0, 0], [1, 2]);
-
+      // LandmarkProjectionCalculator
       const coords2d_result = coords2d_rotated.add(original_center);
 
       const landmarks_ids = [0, 5, 9, 13, 17, 1, 2];
+      // const landmark_ids = [0, 1, 2, 3, 5, 6, 9, 10, 13, 14, 17, 18];
+
+      // SplitNormalizedLandmarkListCalculator
       const selected_landmarks = tf.gather(coords2d_result, landmarks_ids);
 
       const landmarks_box =
@@ -171,7 +199,7 @@ class HandPipeline {
 
       return [
         coords2d_result, cutted_hand, angle, box as any, bbIncreased as any,
-        bbSquared as any, box_for_cut as any
+        bbSquared as any, landmarks_box as any
       ];
     });
 
