@@ -6,7 +6,7 @@ const nClusters = 4;
 const nFeatures = 2;
 const nSamplesPerCluster = 200;
 const chartConfig = {
-  backgroundColors: ['red', 'orange', 'blue', 'green'],
+  pointColors: ['red', 'orange', 'blue', 'green'],
 };
 
 function convertTensorArrayToChartData(arr, nDims) {
@@ -27,6 +27,12 @@ function initChart() {
   const chart = new Chart(ctx, {
     type: 'scatter',
     options: {
+      legend: {
+        align: 'end',
+        labels: {
+          usePointStyle: true,
+        },
+      },
       scales: {
         xAxes: [
           {
@@ -44,6 +50,7 @@ function plotClusters(chart, samplesArr, centroidsArr, config = chartConfig) {
   const samplesDataset = {
     data: convertTensorArrayToChartData(samplesArr, nFeatures),
     radius: 2,
+    label: 'Data',
   };
   const centroidsDataset = {
     data: convertTensorArrayToChartData(centroidsArr, nFeatures),
@@ -51,12 +58,13 @@ function plotClusters(chart, samplesArr, centroidsArr, config = chartConfig) {
     borderWidth: 3,
     pointStyle: 'cross',
     pointRadius: 9,
+    label: 'Centroids',
   };
 
   chart.data.datasets = [samplesDataset, centroidsDataset];
   chart.options.elements.point.backgroundColor = context => {
     const clusterId = Math.floor(context.dataIndex / nSamplesPerCluster);
-    return config.backgroundColors[clusterId];
+    return config.pointColors[clusterId];
   };
   chart.update();
 }
@@ -78,7 +86,8 @@ function updateClusters(
       borderWidth: 3,
       pointStyle: 'cross',
       pointRadius: 9,
-      pointBorderColor: context => config.backgroundColors[context.dataIndex],
+      label: 'Predicted centroids',
+      pointBorderColor: context => config.pointColors[context.dataIndex],
     });
   } else {
     chart.data.datasets[
@@ -88,7 +97,7 @@ function updateClusters(
 
   chart.options.elements.point.backgroundColor = context => {
     const clusterId = predictedArr[context.dataIndex];
-    return config.backgroundColors[clusterId];
+    return config.pointColors[clusterId];
   };
   chart.update();
 }
