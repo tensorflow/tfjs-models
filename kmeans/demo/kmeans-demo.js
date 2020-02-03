@@ -67,8 +67,15 @@ function updateClusters(chart, predictedArr, config = chartConfig) {
   chart.update();
 }
 
-async function onFitButtonClick(model, samples, chart) {
+async function onFit(model, samples, chart) {
   const predictions = await model.fitPredict(samples);
+  const predictionsArr = await predictions.data();
+
+  updateClusters(chart, predictionsArr);
+}
+
+async function onFitOneCycle(model, samples, chart) {
+  const predictions = await model.fitOneCycle(samples);
   const predictionsArr = await predictions.data();
 
   updateClusters(chart, predictionsArr);
@@ -96,7 +103,7 @@ async function onPageLoad() {
   let data = await onRegenData(chart);
 
   // set up event listeners
-  const regenButton = document.getElementById('regen');
+  const regenButton = document.getElementById('gen-train');
   regenButton.addEventListener('click', async () => {
     data = await onRegenData(chart);
   });
@@ -104,7 +111,13 @@ async function onPageLoad() {
   const fitButton = document.getElementById('fit');
   fitButton.addEventListener('click', () => {
     const {samples} = data;
-    onFitButtonClick(model, samples, chart);
+    onFit(model, samples, chart);
+  });
+
+  const fitOneButton = document.getElementById('fit-one');
+  fitOneButton.addEventListener('click', () => {
+    const {samples} = data;
+    onFitOneCycle(model, samples, chart);
   });
 }
 

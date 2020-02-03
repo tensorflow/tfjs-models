@@ -3,25 +3,16 @@ import {Tensor} from '@tensorflow/tfjs-core';
 
 import {range, sampleWithoutReplacement} from './util';
 
-// run kmeans on random samples
-export function kMeansMain(
+export function kMeansFitOneCycle(
   data: Tensor,
+  centroids: Tensor,
   nClusters: number,
-  maxIterations = 300,
   tolerance = 10e-4
-): Tensor {
-  return tf.tidy(() => {
-    let centroids = initCentroids(data, nClusters);
-    let nearest;
-    const samples = data.toFloat();
-    for (let i = 0; i < maxIterations; i++) {
-      nearest = assignToNearest(samples, centroids);
-      // change updateCentroids schema
-      centroids = updateCentroids(samples, nearest, nClusters);
-    }
-    // return an array of indices, representing the nearest "centroid" to each data point
-    return nearest;
-  });
+): {centroids: Tensor, nearest: Tensor} {
+  const nearest = assignToNearest(data, centroids);
+  // change updateCentroids schema
+  const newCentroids = updateCentroids(data, nearest, nClusters);
+  return {centroids: newCentroids, nearest};
 }
 
 /**
@@ -77,7 +68,7 @@ export function updateCentroids(
         // then sum across all instances
         tf.sum(tf.mul(tf.expandDims(mask.toFloat(), 1), samples), 0),
         // divided by number of instances
-        tf.sum(mask.toFloat()),
+        tf.sum(mask.toFloat())
       );
       newCentroids.push(currentCentroid);
     }

@@ -1,5 +1,5 @@
 import {Tensor} from '@tensorflow/tfjs-core';
-import {kMeansMain, initCentroids, assignToNearest} from './training';
+import {kMeansFitOneCycle, initCentroids, assignToNearest} from './training';
 
 export interface KMeansArgs {
   nClusters: number;
@@ -26,6 +26,21 @@ export class KMeansClustering {
     this.tol = tol;
   }
 
+  protected init(): void {
+    this.clusterCenters = initCentroids(this.inputs, this.nClusters);
+  }
+
+  protected fitSingle(): void {
+    const fitOutput = kMeansFitOneCycle(
+      this.inputs,
+      this.clusterCenters,
+      this.nClusters,
+      this.tol
+    );
+    this.outputs = fitOutput.nearest;
+    this.clusterCenters = fitOutput.centroids;
+  }
+
   fit(x: Tensor): Tensor {
     if (this.isTraining) {
       throw new Error(
@@ -35,22 +50,31 @@ export class KMeansClustering {
     if (!(x instanceof Tensor)) {
       throw new Error('Input must be tensor');
     }
-    this.inputs = x;
-
+    this.inputs = x.toFloat();
     this.init();
-    this.fitLoop();
-
+    for (let i = 0; i < this.maxIter; i++) {
+      this.fitSingle();
+    }
     this.isTraining = false;
     return this.outputs;
   }
 
-  protected init(): void {
-    this.clusterCenters = initCentroids(this.inputs, this.nClusters);
-  }
-
-  protected fitLoop(): void {
-    const outs = kMeansMain(this.inputs, this.nClusters, this.maxIter, this.tol);
-    this.outputs = outs;
+  fitOneCycle(x: Tensor): Tensor {
+    if (this.isTraining) {
+      throw new Error(
+        'Cannot start training because another fit() call is ongoing.'
+      );
+    }
+    if (!(x instanceof Tensor)) {
+      throw new Error('Input must be tensor');
+    }
+    this.inputs = x.toFloat();
+    if (!this.clusterCenters) {
+      this.init();
+    }
+    this.fitSingle();
+    this.isTraining = false;
+    return this.outputs;
   }
 
   predict(x: Tensor): Tensor {
