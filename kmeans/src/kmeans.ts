@@ -14,7 +14,7 @@ export class KMeansClustering {
   protected isTraining: boolean;
   private inputs: Tensor;
   private outputs: Tensor;
-  private clusterCenters: Tensor;
+  public clusterCenters: Tensor;
   private readonly nClusters: number;
   private readonly maxIter: number;
   private readonly tol: number;

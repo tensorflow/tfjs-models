@@ -5,7 +5,9 @@ import * as tf from '@tensorflow/tfjs';
 const nClusters = 4;
 const nFeatures = 2;
 const nSamplesPerCluster = 200;
-const chartConfig = {backgroundColors: ['red', 'yellow', 'blue', 'green']};
+const chartConfig = {
+  backgroundColors: ['red', 'orange', 'blue', 'green'],
+};
 
 function convertTensorArrayToChartData(arr, nDims) {
   const fieldNames = ['x', 'y', 'z', 't', 'u', 'v'];
@@ -45,10 +47,10 @@ function plotClusters(chart, samplesArr, centroidsArr, config = chartConfig) {
   };
   const centroidsDataset = {
     data: convertTensorArrayToChartData(centroidsArr, nFeatures),
+    pointBorderColor: 'black',
     borderWidth: 3,
     pointStyle: 'cross',
     pointRadius: 9,
-    pointBorderColor: 'black',
   };
 
   chart.data.datasets = [samplesDataset, centroidsDataset];
@@ -59,7 +61,31 @@ function plotClusters(chart, samplesArr, centroidsArr, config = chartConfig) {
   chart.update();
 }
 
-function updateClusters(chart, predictedArr, config = chartConfig) {
+function updateClusters(
+  chart,
+  predictedArr,
+  centroidsArr,
+  config = chartConfig
+) {
+  const predictedCentroidsData = convertTensorArrayToChartData(
+    centroidsArr,
+    nFeatures
+  );
+
+  if (chart.data.datasets.length === 2) {
+    chart.data.datasets.push({
+      data: predictedCentroidsData,
+      borderWidth: 3,
+      pointStyle: 'cross',
+      pointRadius: 9,
+      pointBorderColor: context => config.backgroundColors[context.dataIndex],
+    });
+  } else {
+    chart.data.datasets[
+      chart.data.datasets.length - 1
+    ].data = predictedCentroidsData;
+  }
+
   chart.options.elements.point.backgroundColor = context => {
     const clusterId = predictedArr[context.dataIndex];
     return config.backgroundColors[clusterId];
@@ -68,17 +94,19 @@ function updateClusters(chart, predictedArr, config = chartConfig) {
 }
 
 async function onFit(model, samples, chart) {
-  const predictions = await model.fitPredict(samples);
+  const predictions = model.fitPredict(samples);
   const predictionsArr = await predictions.data();
-
-  updateClusters(chart, predictionsArr);
+  const centroidsArr = await model.clusterCenters.data();
+  tf.dispose(predictions);
+  updateClusters(chart, predictionsArr, centroidsArr);
 }
 
 async function onFitOneCycle(model, samples, chart) {
-  const predictions = await model.fitOneCycle(samples);
+  const predictions = model.fitOneCycle(samples);
   const predictionsArr = await predictions.data();
-
-  updateClusters(chart, predictionsArr);
+  const centroidsArr = await model.clusterCenters.data();
+  tf.dispose(predictions);
+  updateClusters(chart, predictionsArr, centroidsArr);
 }
 
 async function onRegenData(chart) {

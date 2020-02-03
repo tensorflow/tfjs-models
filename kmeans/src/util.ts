@@ -23,7 +23,7 @@ export function genRandomSamples(
   nSamplesPerCluster: number,
   nFeatures = 2,
   variance = 1,
-  embiggenFactor = 5,
+  embiggenFactor = 4,
   seed = 0
 ) {
   return tf.tidy(() => {
