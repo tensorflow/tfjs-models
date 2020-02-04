@@ -17,7 +17,17 @@
 
 import * as handtrack from '@tensorflow-models/handtrack';
 
+let videoWidth, videoHeight;
 const color = 'red';
+
+const MAX_KEYPOINTS = 30;
+for(let i=0; i<MAX_KEYPOINTS; i++) {
+  const point = document.createElement("div");
+  point.id = `point_${i}`;
+  point.className = 'point';
+  point.innerHTML = i;
+  document.querySelector("#keypoints-wrapper").appendChild(point);
+}
 
 function drawPoint(ctx, y, x, r, color) {
   ctx.beginPath();
@@ -33,6 +43,9 @@ function drawKeypoints(ctx, keypoints) {
     const y = keypointsArray[i][0];
     const x = keypointsArray[i][1];
     drawPoint(ctx, x, y, 3, color);
+
+    document.querySelector(`#point_${i}`).style.left = `${videoWidth - y}px`;
+    document.querySelector(`#point_${i}`).style.top = `${x}px`;
   }
 }
 
@@ -138,8 +151,8 @@ const landmarksRealTime = async (video) => {
   stats.showPanel(0);
   document.body.appendChild(stats.dom);
 
-  const videoWidth = video.videoWidth;
-  const videoHeight = video.videoHeight;
+  videoWidth = video.videoWidth;
+  videoHeight = video.videoHeight;
 
   const canvas = document.getElementById('output');
 
