@@ -42,10 +42,24 @@ function drawKeypoints(ctx, keypoints) {
   for (let i = 0; i < keypointsArray.length; i++) {
     const y = keypointsArray[i][0];
     const x = keypointsArray[i][1];
-    drawPoint(ctx, x, y, 3, color);
+    drawPoint(ctx, x - 2, y - 2, 4, color);
 
     document.querySelector(`#point_${i}`).style.left = `${videoWidth - y}px`;
     document.querySelector(`#point_${i}`).style.top = `${x}px`;
+  }
+
+  // Old model.
+  const fingers = [
+    [0, 1, 2, 3, 4], // thumb
+    [0, 5, 6, 7, 8],
+    [0, 9, 10, 11, 12],
+    [0, 13, 14, 15, 16],
+    [0, 17, 18, 19, 20],
+  ];
+
+  for(let i=0; i<fingers.length; i++) {
+    const points = fingers[i].map(idx => keypointsArray[idx]);
+    drawPath(ctx, points, 'red', false);
   }
 }
 
@@ -62,6 +76,22 @@ function rotatePoint(point, rad) {
     point[0] * Math.cos(rad) - point[1] * Math.sin(rad),
     point[0] * Math.sin(rad) + point[1] * Math.cos(rad)
   ];
+}
+
+function drawPath(ctx, points, color, closePath) {
+  ctx.strokeStyle = color;
+
+  const region = new Path2D();
+  region.moveTo(points[0][0], points[0][1]);
+  for (let i = 1; i < points.length; i++) {
+    const point = points[i];
+    region.lineTo(point[0], point[1]);
+  }
+
+  if(closePath) {
+    region.closePath();
+  }
+  ctx.stroke(region);
 }
 
 function drawBox(ctx, box, angle, color) {
@@ -81,17 +111,7 @@ function drawBox(ctx, box, angle, color) {
     return vectorSum(rotated, center);
   });
 
-  ctx.strokeStyle = color;
-
-  const region = new Path2D();
-  region.moveTo(points[0][0], points[0][1]);
-  for (let i = 1; i < points.length; i++) {
-    const point = points[i];
-    region.lineTo(point[0], point[1]);
-  }
-
-  region.closePath();
-  ctx.stroke(region);
+  drawPath(ctx, points, color, true);
 }
 
 let model;
@@ -182,6 +202,8 @@ const landmarksRealTime = async (video) => {
     ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
     let result = await model.next_meshes(video);
     if (result) {
+      document.querySelector("#keypoints-wrapper").className = 'show';
+
       drawKeypoints(ctx, result[0]);
       const angle = result[2];
 
@@ -209,6 +231,8 @@ const landmarksRealTime = async (video) => {
           cutCtx.fillRect(c, r, 1, 1);
         }
       }
+    } else {
+      document.querySelector("#keypoints-wrapper").className = 'hide';
     }
     stats.end();
     requestAnimationFrame(frameLandmarks);
