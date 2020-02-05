@@ -70,7 +70,7 @@ const renderPrediction = async () => {
       ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
       ctx.fillRect(start[0], start[1], size[0], size[1]);
 
-      if(annotateBoxes) {
+      if (annotateBoxes) {
         const landmarks = predictions[i].landmarks;
 
         ctx.fillStyle = "blue";
