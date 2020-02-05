@@ -387,11 +387,11 @@ export class BlazeFaceModel {
                      ]));
 
         normalizedFace = {
-          topLeft: (boxData as number[]).slice(0, 2),
-          bottomRight: (boxData as number[]).slice(2),
+          topLeft: (boxData as number[]).slice(0, 2) as [number, number],
+          bottomRight: (boxData as number[]).slice(2) as [number, number],
           landmarks: scaledLandmarks,
-          probability: probabilityData
-        } as NormalizedFace;
+          probability: probabilityData as number
+        };
 
         disposeBox(face.box);
         face.landmarks.dispose();
