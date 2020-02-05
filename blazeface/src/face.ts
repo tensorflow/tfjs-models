@@ -113,7 +113,7 @@ function getInputTensorDimensions(input: tf.Tensor3D|ImageData|HTMLVideoElement|
 
 function flipFaceHorizontal(
     face: NormalizedFace, imageWidth: number): NormalizedFace {
-  let flipped;
+  let flipped: NormalizedFace;
   if (face.topLeft instanceof tf.Tensor &&
       face.bottomRight instanceof tf.Tensor) {
     flipped = Object.assign({}, face, {
@@ -127,11 +127,11 @@ function flipFaceHorizontal(
       ])
     });
 
-    if (face.landmarks) {
+    if (face.landmarks != null) {
       const flippedLandmarks: tf.Tensor2D =
           tf.sub(tf.tensor1d([imageWidth - 1, 0]), face.landmarks)
               .mul(tf.tensor1d([1, -1]));
-      flipped['landmarks'] = flippedLandmarks;
+      flipped.landmarks = flippedLandmarks;
     }
   } else {
     const [topLeftX, topLeftY] = face.topLeft as [number, number];
@@ -141,8 +141,8 @@ function flipFaceHorizontal(
       bottomRight: [imageWidth - 1 - bottomRightX, bottomRightY]
     });
 
-    if (face.landmarks) {
-      flipped['landmarks'] =
+    if (face.landmarks != null) {
+      flipped.landmarks =
           (face.landmarks as number[][]).map((coord: [number, number]) => ([
                                                imageWidth - 1 - coord[0],
                                                coord[1]
@@ -351,8 +351,8 @@ export class BlazeFaceModel {
 
           const normalizedLandmarks: tf.Tensor2D =
               landmarks.add(anchor).mul(scaleFactor);
-          normalizedFace['landmarks'] = normalizedLandmarks;
-          normalizedFace['probability'] = probability;
+          normalizedFace.landmarks = normalizedLandmarks;
+          normalizedFace.probability = probability;
         }
 
         if (flipHorizontal) {
