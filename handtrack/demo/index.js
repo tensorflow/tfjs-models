@@ -211,11 +211,11 @@ const landmarksRealTime = async (video) => {
       const box = result[3].startEndTensor.arraySync();
       drawBox(ctx, box[0], angle, `rgba(0, 0, 255, 1)`);
 
-      // (red) Rotated ROI.
+      // (black) Rotated ROI.
       const bb = result[4].startEndTensor.arraySync();
       drawBox(ctx, bb[0], angle, `rgba(0, 0, 0, 1)`);
 
-      // (red) Rotated, then scaled ROI.
+      // (red) Shifted ROI.
       const bbIncreased = result[5].startEndTensor.arraySync();
       drawBox(ctx, bbIncreased[0], angle, `rgba(255, 0, 0, 1)`);
 

@@ -182,6 +182,8 @@ class HandPipeline {
       // LandmarkProjectionCalculator
       const coords2d_result = coords2d_rotated.add(original_center);
 
+      // LandmarksToDetectionCalculator: landmarks to rect
+
       const landmarks_ids = [0, 5, 9, 13, 17, 1, 2];
       // const landmark_ids = [0, 1, 2, 3, 5, 6, 9, 10, 13, 14, 17, 18];
 
