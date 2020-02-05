@@ -114,17 +114,17 @@ function getInputTensorDimensions(input: tf.Tensor3D|ImageData|HTMLVideoElement|
 function flipFaceHorizontal(
     face: NormalizedFace, imageWidth: number): NormalizedFace {
   let flipped;
-  if (face.topLeft instanceof tf.Tensor && face.bottomRight instanceof 
-    tf.Tensor) {
+  if (face.topLeft instanceof tf.Tensor &&
+      face.bottomRight instanceof tf.Tensor) {
     flipped = Object.assign({}, face, {
       topLeft: tf.concat([
         tf.sub(imageWidth - 1, face.topLeft.slice(0, 1)),
         face.topLeft.slice(1, 1)
-      ]) as tf.Tensor1D,
+      ]),
       bottomRight: tf.concat([
         tf.sub(imageWidth - 1, face.bottomRight.slice(0, 1)),
         face.bottomRight.slice(1, 1)
-      ]) as tf.Tensor1D
+      ])
     });
 
     if (face.landmarks) {
@@ -138,9 +138,7 @@ function flipFaceHorizontal(
     const [bottomRightX, bottomRightY] = face.bottomRight as [number, number];
     flipped = Object.assign({}, face, {
       topLeft: [imageWidth - 1 - topLeftX, topLeftY],
-      bottomRight: [
-        imageWidth - 1 - bottomRightX, bottomRightY
-      ]
+      bottomRight: [imageWidth - 1 - bottomRightX, bottomRightY]
     });
 
     if (face.landmarks) {
