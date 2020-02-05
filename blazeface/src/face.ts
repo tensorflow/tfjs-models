@@ -116,21 +116,25 @@ function flipFaceHorizontal(
   let flipped: NormalizedFace;
   if (face.topLeft instanceof tf.Tensor &&
       face.bottomRight instanceof tf.Tensor) {
-    flipped = Object.assign({}, face, {
-      topLeft: tf.concat([
-        tf.sub(imageWidth - 1, face.topLeft.slice(0, 1)),
-        face.topLeft.slice(1, 1)
-      ]),
-      bottomRight: tf.concat([
-        tf.sub(imageWidth - 1, face.bottomRight.slice(0, 1)),
-        face.bottomRight.slice(1, 1)
-      ])
+    const [topLeft, bottomRight] = tf.tidy(() => {
+      return [
+        tf.concat([
+          tf.sub(imageWidth - 1, (face.topLeft as tf.Tensor).slice(0, 1)),
+          (face.topLeft as tf.Tensor).slice(1, 1)
+        ]),
+        tf.concat([
+          tf.sub(imageWidth - 1, (face.bottomRight as tf.Tensor).slice(0, 1)),
+          (face.bottomRight as tf.Tensor).slice(1, 1)
+        ])
+      ];
     });
 
+    flipped = Object.assign({}, face, {topLeft, bottomRight});
+
     if (face.landmarks != null) {
-      const flippedLandmarks: tf.Tensor2D =
-          tf.sub(tf.tensor1d([imageWidth - 1, 0]), face.landmarks)
-              .mul(tf.tensor1d([1, -1]));
+      const flippedLandmarks: tf.Tensor2D = tf.tidy(
+          () => tf.sub(tf.tensor1d([imageWidth - 1, 0]), face.landmarks)
+                    .mul(tf.tensor1d([1, -1])));
       flipped.landmarks = flippedLandmarks;
     }
   } else {
