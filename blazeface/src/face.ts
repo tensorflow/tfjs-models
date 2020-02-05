@@ -255,38 +255,37 @@ export class BlazeFaceModel {
       ];
     }
 
-    const annotatedBoxes =
-        (boundingBoxes as number[][][])
-            .map(
-                (boundingBox: tf.Tensor2D|number[][], i: number) =>
-                    tf.tidy(() => {
-                      const box = boundingBox instanceof tf.Tensor ?
-                          createBox(boundingBox) :
-                          createBox(tf.tensor2d(boundingBox));
+    const annotatedBoxes = [];
+    for (let i = 0; i < boundingBoxes.length; i++) {
+      const boundingBox = boundingBoxes[i] as tf.Tensor2D | number[][];
+      const annotatedBox = tf.tidy(() => {
+        const box = boundingBox instanceof tf.Tensor ?
+            createBox(boundingBox) :
+            createBox(tf.tensor2d(boundingBox));
 
-                      if (!annotateBoxes) {
-                        return box;
-                      }
+        if (!annotateBoxes) {
+          return box;
+        }
 
-                      const boxIndex = boxIndices[i];
+        const boxIndex = boxIndices[i];
 
-                      let anchor;
-                      if (returnTensors) {
-                        anchor = this.anchors.slice([boxIndex, 0], [1, 2]);
-                      } else {
-                        anchor = this.anchorsData[boxIndex] as [number, number];
-                      }
+        let anchor;
+        if (returnTensors) {
+          anchor = this.anchors.slice([boxIndex, 0], [1, 2]);
+        } else {
+          anchor = this.anchorsData[boxIndex] as [number, number];
+        }
 
-                      const landmarks =
-                          tf.slice(
-                                detectedOutputs, [boxIndex, NUM_LANDMARKS - 1],
-                                [1, -1])
-                              .squeeze()
-                              .reshape([NUM_LANDMARKS, -1]);
-                      const probability = tf.slice(scores, [boxIndex], [1]);
+        const landmarks =
+            tf.slice(detectedOutputs, [boxIndex, NUM_LANDMARKS - 1], [1, -1])
+                .squeeze()
+                .reshape([NUM_LANDMARKS, -1]);
+        const probability = tf.slice(scores, [boxIndex], [1]);
 
-                      return {box, landmarks, probability, anchor};
-                    }));
+        return {box, landmarks, probability, anchor};
+      });
+      annotatedBoxes.push(annotatedBox);
+    }
 
     boxes.dispose();
     scores.dispose();
@@ -308,8 +307,9 @@ export class BlazeFaceModel {
    * @param flipHorizontal Whether to flip/mirror the facial keypoints
    * horizontally. Should be true for videos that are flipped by default (e.g.
    * webcams).
-   * @param annotateBoxes Whether to annotate bounding boxes with additional
-   * properties such as landmarks and probability.
+   * @param annotateBoxes (defaults to `true`) Whether to annotate bounding
+   * boxes with additional properties such as landmarks and probability. Pass in
+   * `false` for faster inference if annotations are not needed.
    *
    * @return An array of detected faces, each with the following properties:
    *  `topLeft`: the upper left coordinate of the face in the form `[x, y]`
