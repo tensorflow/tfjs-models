@@ -19,6 +19,7 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {BertTokenizer, CLS_INDEX, loadTokenizer, SEP_INDEX} from './bert_tokenizer';
 
+//TODO: Upload model to TFHub tensorflow/tfjs#2730
 const BASE_DIR = 'https://storage.googleapis.com/tfjs-testing/mobile-bert/';
 const MODEL_URL = BASE_DIR + 'model.json';
 const INPUT_SIZE = 384;
@@ -176,7 +177,6 @@ class MobileBertImpl implements MobileBert {
           'please pass a string as input.');
     }
 
-    const answers: Answer[][] = [];
     const features =
         this.process(question, context, MAX_QUERY_LEN, MAX_SEQ_LEN);
     const promises = features.map(async (feature, index) => {
@@ -198,19 +198,18 @@ class MobileBertImpl implements MobileBert {
             },
             ['start_logits', 'end_logits']);
       });
-      const startLogits = await result[0].array();
-      const endLogits = await result[1].array();
+      const logits = await Promise.all([result[0].array(), result[1].array()]);
 
       // dispose all intermediate tensors
       result[0].dispose();
       result[1].dispose();
 
-      answers.push(this.getBestAnswers(
-          startLogits[0], endLogits[0], feature.origTokens,
-          feature.tokenToOrigMap, index));
+      return this.getBestAnswers(
+          logits[0][0], logits[1][0], feature.origTokens,
+          feature.tokenToOrigMap, index);
     });
 
-    await Promise.all(promises);
+    const answers = await Promise.all(promises);
     return answers.reduce((flatten, array) => flatten.concat(array), [])
         .sort((logitA, logitB) => logitB.score - logitA.score)
         .slice(0, PREDICT_ANSWER_NUM);

@@ -1,7 +1,7 @@
 ## QnA Demo
 
 This demo allows you to find answers of a question from the given context.
-To used the demo, you can update the text area with your own text, type your
+To use the demo, you can update the text area with your own text, type your
 question into the input box, and click the search button. You will see the
 answers displayed in the Answers section.
 

@@ -7,11 +7,11 @@ The model can be used to build a system that can answer users’ questions in na
 
 (BERT)[https://github.com/google-research/bert], or Bidirectional Encoder Representations from Transformers, is a method of pre-training language representations which obtains state-of-the-art results on a wide array of Natural Language Processing tasks.
 
-This app uses a compressed version of BERT, MobileBERT, that runs 4x faster and has 4x smaller model size.
+This app uses a compressed version of BERT, (MobileBERT)[https://openreview.net/forum?id=SJxjVaNKwB], that runs 4x faster and has 4x smaller model size.
 
 (SQuAD)[https://rajpurkar.github.io/SQuAD-explorer/], or Stanford Question Answering Dataset, is a reading comprehension dataset consisting of articles from Wikipedia and a set of question-answer pairs for each article.
 
-The model takes a passage and a question as input, then returns a segment of the passage that most likely answers the question. It requires semi-complex pre-processing including tokenization and post-processing steps that are described in the BERT (paper)[https://arxiv.org/abs/1810.04805] and implemented in the sample app.
+The model takes a passage and a question as input, then returns a segment of the passage that most likely answers the question. It requires semi-complex pre-processing including tokenization and post-processing steps that are described in the BERT (paper)[https://arxiv.org/abs/1810.04805] and implemented in the sample app. This model is also available in (TFLite)[https://www.tensorflow.org/lite/models/bert_qa/overview].
 
 ## Usage
 
@@ -43,7 +43,7 @@ There are two main ways to get this model in your JavaScript project: via script
 ### via NPM
 
 ```js
-// Note: you do not need to import @tensorflow/tfjs here.
+// Note: you do not need to import @tensorflow/tfjs here, but make sure you have installed the peer dependencies for tfjs-core and tfjs-converter.
 
 import * as qna from '@tensorflow-models/qna';
 
@@ -62,7 +62,7 @@ You can also take a look at the [demo app](./demo).
 ## API
 
 #### Loading the model
-`qna` is the module name, which is automatically included when you use the `<script src>` method. When using ES6 imports, `qna` is the module.
+When using a script tag, the package is available as `qna` in the global namespace.
 
 ```js
 // you can load the model without providing the config object.
@@ -80,7 +80,7 @@ Returns a `model` object.
 
 #### Find the answers
 
-You can find the answers give question and associated passage with the model without needing to create a Tensor.
+You can find the answers for a given question and associated passage with the model without needing to create a Tensor.
 `model.findAnswers` takes two inputs (question and passage) and returns an array of answers ranked by their scores.
 
 This method exists on the model that is loaded from `qna.load()`.

@@ -18,12 +18,10 @@
 import * as qna from '@tensorflow-models/qna';
 
 let modelPromise = {};
-window.onload = () => modelPromise = qna.load();
-
-const input = document.getElementById('question');
-const search = document.getElementById('search');
-const contextDiv = document.getElementById('context');
-const answerDiv = document.getElementById('answer');
+let search;
+let input;
+let contextDiv;
+let answerDiv;
 
 const process = async () => {
   const model = await modelPromise;
@@ -33,10 +31,18 @@ const process = async () => {
       answers.map(answer => answer.text + ' (score =' + answer.score + ')')
           .join('<br>');
 };
-input.addEventListener('keyup', async (event) => {
-  if (event.key === 'Enter') {
-    process();
-  }
-});
 
-search.onclick = process;
+window.onload = () => {
+  modelPromise = qna.load();
+  input = document.getElementById('question');
+  search = document.getElementById('search');
+  contextDiv = document.getElementById('context');
+  answerDiv = document.getElementById('answer');
+  search.onclick = process;
+  
+  input.addEventListener('keyup', async (event) => {
+    if (event.key === 'Enter') {
+      process();
+    }
+  });
+};

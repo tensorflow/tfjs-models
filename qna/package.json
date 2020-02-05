@@ -6,7 +6,7 @@
   "unpkg": "dist/qna.min.js",
   "jsdelivr": "dist/qna.min.js",
   "jsnext:main": "dist/qna.esm.js",
-  "module": "dist/qna.js",
+  "module": "dist/qna.esm.js",
   "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
