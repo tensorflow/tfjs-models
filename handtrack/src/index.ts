@@ -113,8 +113,10 @@ class HandPipeline {
       const box = this.rois[0];
 
       // TODO (vakunov): move to configuration
-      const scale_factor = 3;
-      const shifts = [0, -0.2];
+      const scale_factor = 2.6;
+      const shifts = [0, -0.5];
+
+      // DetectionsToRectsCalculator
       const angle = this.calculateRotation(box);
 
       const handpalm_center = box.getCenter().gather(0);
@@ -131,12 +133,12 @@ class HandPipeline {
       const rotated_landmarks =
           tf.matMul(box_landmarks_homo, palm_rotation_matrix, false, true)
               .slice([0, 0], [7, 2]);
-
       const bb = this.calculateLandmarksBoundingBox(rotated_landmarks);
+
       // RectTransformationCalculator
-      const bbIncreased = bb.increaseBox(scale_factor);
-      const bbSquared = this.makeSquareBox(bbIncreased);
-      const box_for_cut = this.shiftBox(bbSquared, shifts);
+      const bbShifted = this.shiftBox(bb, shifts);
+      const bbSquarified = this.makeSquareBox(bbShifted);
+      const box_for_cut = bbSquarified.increaseBox(scale_factor);
 
       // ImageCroppingCalculator
       const cutted_hand = box_for_cut.cutFromAndResize(
@@ -188,7 +190,7 @@ class HandPipeline {
 
       const landmarks_box =
           this.calculateLandmarksBoundingBox(selected_landmarks);
-      this.updateROIFromFacedetector(landmarks_box);
+      this.updateROIFromFacedetector((landmarks_box as any));
 
       const handFlag =
           ((output[0] as tf.Tensor).arraySync() as number[][])[0][0];
@@ -198,8 +200,8 @@ class HandPipeline {
       }
 
       return [
-        coords2d_result, cutted_hand, angle, box as any, bbIncreased as any,
-        bbSquared as any, landmarks_box as any
+        coords2d_result, cutted_hand, angle, box as any, bb as any,
+        bbShifted as any, bbSquarified as any, landmarks_box as any
       ];
     });
 

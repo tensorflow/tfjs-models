@@ -211,16 +211,20 @@ const landmarksRealTime = async (video) => {
       const box = result[3].startEndTensor.arraySync();
       drawBox(ctx, box[0], angle, `rgba(0, 0, 255, 1)`);
 
+      // (red) Rotated ROI.
+      const bb = result[4].startEndTensor.arraySync();
+      drawBox(ctx, bb[0], angle, `rgba(0, 0, 0, 1)`);
+
       // (red) Rotated, then scaled ROI.
-      const bbIncreased = result[4].startEndTensor.arraySync();
+      const bbIncreased = result[5].startEndTensor.arraySync();
       drawBox(ctx, bbIncreased[0], angle, `rgba(255, 0, 0, 1)`);
 
       // (green) Squared.
-      const bbSquared = result[5].startEndTensor.arraySync();
+      const bbSquared = result[6].startEndTensor.arraySync();
       drawBox(ctx, bbSquared[0], angle, `rgba(0, 255, 0, 1)`);
 
       // (purple) New landmarks box.
-      const newLandmarks = result[6].startEndTensor.arraySync();
+      const newLandmarks = result[7].startEndTensor.arraySync();
       drawBox(ctx, newLandmarks[0], angle, `rgba(255, 0, 255, 1)`);
 
       const cutImage = result[1].arraySync();
