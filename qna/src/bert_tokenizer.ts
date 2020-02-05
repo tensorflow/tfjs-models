@@ -53,7 +53,7 @@ class TrieNode {
 }
 
 class Trie {
-  private root: TrieNode = new TrieNode(null);
+  private root = new TrieNode(null);
 
   /**
    * Insert the bert vacabulary word into the trie.
@@ -153,7 +153,11 @@ export class BertTokenizer {
       return this.runSplitOnPunc(token);
     });
 
-    return tokens.reduce((flatten, array) => flatten.concat(array), []);
+    let flattenTokens = [];
+    for (let index = 0; index < tokens.length; index++) {
+      flattenTokens = flattenTokens.concat(tokens[index]);
+    }
+    return flattenTokens;
   }
 
   /* Performs invalid character removal and whitespace cleanup on text. */

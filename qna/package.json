@@ -38,6 +38,7 @@
     "build": "rimraf dist && tsc",
     "lint": "tslint -p . -t verbose",
     "build-local": "yarn build && rollup -c",
+    "build-npm": "yarn build && rollup -c",
     "test": "yarn build && ts-node run_tests.ts"
   },
   "license": "Apache-2.0"
