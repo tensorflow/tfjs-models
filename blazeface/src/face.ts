@@ -378,13 +378,12 @@ export class BlazeFaceModel {
                 async d => d.array()));
 
         const anchor = face.anchor as [number, number];
+        const [scaleFactorX, scaleFactorY] = scaleFactor as [number, number];
         const scaledLandmarks =
-            (landmarkData as number[][])
-                .map((landmark: [number, number]) => ([
-                       (landmark[0] + anchor[0]) *
-                           (scaleFactor as [number, number])[0],
-                       (landmark[1] + anchor[1]) *
-                           (scaleFactor as [number, number])[1]
+            (landmarkData as Array<[number, number]>)
+                .map(landmark => ([
+                       (landmark[0] + anchor[0]) * scaleFactorX,
+                       (landmark[1] + anchor[1]) * scaleFactorY
                      ]));
 
         normalizedFace = {
