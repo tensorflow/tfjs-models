@@ -101,7 +101,7 @@ class HandPipeline {
         this.clearROIS();
         return null;
       }
-      this.updateROIFromFacedetector(box);
+      this.updateROIFromFacedetector(box, true);
       this.runsWithoutHandDetector = 0;
       this.forceUpdate = false;
     } else {
@@ -113,8 +113,8 @@ class HandPipeline {
       const box = this.rois[0];
 
       // TODO (vakunov): move to configuration
-      const scale_factor = 2.6;
-      const shifts = [0, -0.5];
+      const scale_factor = 3.0;
+      const shifts = [0, -0.4];
 
       // DetectionsToRectsCalculator
       const angle = this.calculateRotation(box);
@@ -207,7 +207,7 @@ class HandPipeline {
 
       const landmarks_box =
           this.calculateLandmarksBoundingBox(selected_landmarks);
-      this.updateROIFromFacedetector((landmarks_box as any));
+      this.updateROIFromFacedetector(landmarks_box as any, false);
 
       const handFlag =
           ((output[0] as tf.Tensor).arraySync() as number[][])[0][0];
@@ -301,8 +301,37 @@ class HandPipeline {
     return computeRotation(keypointsArray[0], keypointsArray[2]);
   }
 
-  updateROIFromFacedetector(box: any) {
-    this.rois = [box];
+  updateROIFromFacedetector(box: any, force: boolean) {
+    if (force) {
+      this.rois = [box];
+    } else {
+      const prev = this.rois[0];
+      let iou = 0;
+
+      if (prev && prev.startPoint) {
+        const boxStartEnd = box.startEndTensor.arraySync()[0];
+        const prevStartEnd = prev.startEndTensor.arraySync()[0];
+
+        const xBox = Math.max(boxStartEnd[0], prevStartEnd[0]);
+        const yBox = Math.max(boxStartEnd[1], prevStartEnd[1]);
+        const xPrev = Math.min(boxStartEnd[2], prevStartEnd[2]);
+        const yPrev = Math.min(boxStartEnd[3], prevStartEnd[3]);
+
+        const interArea = (xPrev - xBox) * (yPrev - yBox);
+
+        const boxArea = (boxStartEnd[2] - boxStartEnd[0]) *
+            (boxStartEnd[3] - boxStartEnd[1]);
+        const prevArea = (prevStartEnd[2] - prevStartEnd[0]) *
+            (prevStartEnd[3] - boxStartEnd[1]);
+        iou = interArea / (boxArea + prevArea - interArea);
+      }
+
+      if (iou > 0.7) {
+        this.rois[0] = prev;
+      } else {
+        this.rois[0] = box;
+      }
+    }
   }
 
   clearROIS() {
