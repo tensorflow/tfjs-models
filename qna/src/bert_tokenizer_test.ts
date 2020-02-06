@@ -38,4 +38,11 @@ describeWithFlags('bertTokenizer', NODE_ENVS, () => {
 
     expect(result).toEqual([1037, 2047, 1031, 3231, 1033]);
   });
+
+  it('should tokenize empty string', async () => {
+    const tokenizer = await loadTokenizer();
+    const result = tokenizer.tokenize('');
+
+    expect(result).toEqual([]);
+  });
 });
