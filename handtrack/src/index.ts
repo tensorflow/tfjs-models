@@ -140,10 +140,21 @@ class HandPipeline {
       const bbSquarified = this.makeSquareBox(bbShifted);
       const box_for_cut = bbSquarified.increaseBox(scale_factor);
 
-      // ImageCroppingCalculator
-      const cutted_hand = box_for_cut.cutFromAndResize(
-          rotated_image as tf.Tensor4D, [width, height]);
-      const handImage = cutted_hand.div(255);
+      // whether the input video stream is already 256/256 and we just want to
+      // test skeleton detection
+      const testSkeleton = false;
+      let handImage, cutted_hand;
+      if (testSkeleton) {
+        (box_for_cut as any).startPoint = tf.tensor2d([[0, 0]]);
+        (box_for_cut as any).endPoint = tf.tensor2d([[256, 256]]);
+
+        handImage = (rotated_image as any).div(255);
+      } else {
+        // ImageCroppingCalculator
+        cutted_hand = box_for_cut.cutFromAndResize(
+            rotated_image as tf.Tensor4D, [width, height]);
+        handImage = cutted_hand.div(255);
+      }
 
       // TfLiteInferenceCalculator
       const output = this.handtrackModel.predict(handImage) as tf.Tensor[];
@@ -152,9 +163,12 @@ class HandPipeline {
       const coords3d = tf.reshape(output_keypoints, [-1, 3]);
       const coords2d = coords3d.slice([0, 0], [-1, 2]);
 
+      // center around 0, 0
+      // scale to fit 256, 256
       const coords2d_scaled = tf.mul(
           coords2d.sub(tf.tensor([128, 128])),
           tf.div(box_for_cut.getSize(), [width, height]));
+      // what if we scaled the coordinates slightly at this point?
 
       const coords_rotation_matrix =
           this.build_rotation_matrix_with_center(angle, tf.tensor([0, 0]));
@@ -175,10 +189,11 @@ class HandPipeline {
           tf.matMul(
                 this.inverse(palm_rotation_matrix),
                 tf.concat(
-                      [box_for_cut.getCenter(), tf.ones([1]).expandDims(1)], 1)
-                    .transpose())
+                    [box_for_cut.getCenter(), tf.ones([1]).expandDims(1)], 1),
+                false, true)
               .transpose()
               .slice([0, 0], [1, 2]);
+
       // LandmarkProjectionCalculator
       const coords2d_result = coords2d_rotated.add(original_center);
 
@@ -202,8 +217,9 @@ class HandPipeline {
       }
 
       return [
-        coords2d_result, cutted_hand, angle, box as any, bb as any,
-        bbShifted as any, bbSquarified as any, landmarks_box as any
+        coords2d_result, testSkeleton ? rotated_image : cutted_hand, angle,
+        box as any, bb as any, bbShifted as any, bbSquarified as any,
+        landmarks_box as any
       ];
     });
 

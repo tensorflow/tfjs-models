@@ -130,6 +130,9 @@ async function setupCamera() {
     'audio': false,
     'video': {
       facingMode: 'user',
+      // Uncomment to test skeleton detection only
+      width: 256,
+      height: 256
     },
   });
   video.srcObject = stream;
