@@ -48,6 +48,15 @@ describeWithFlags('mobileBert', NODE_ENVS, () => {
     expect(data).toEqual([]);
   });
 
+  it('mobileBert detect method should work for long context', async () => {
+    const mobileBert = await load();
+    const context = 'text '.repeat(1000);
+
+    const data = await mobileBert.findAnswers('question', 'context');
+
+    expect(data).toEqual([]);
+  });
+
   it('should allow custom model url', async () => {
     const mobileBert = await load({modelUrl: 'https://google.com/model.json'});
 
