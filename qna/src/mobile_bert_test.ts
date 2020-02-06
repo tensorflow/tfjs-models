@@ -25,7 +25,7 @@ describeWithFlags('mobileBert', NODE_ENVS, () => {
     spyOn(tfconv, 'loadGraphModel').and.callFake((modelUrl: string) => {
       const model = new tfconv.GraphModel(modelUrl);
       spyOn(model, 'execute')
-          .and.callFake((x: tf.Tensor) => [tf.ones([10]), tf.ones([10])]);
+          .and.callFake((x: tf.Tensor) => [tf.ones([1, 10]), tf.ones([1, 10])]);
       return Promise.resolve(model);
     });
   });
@@ -52,9 +52,9 @@ describeWithFlags('mobileBert', NODE_ENVS, () => {
     const mobileBert = await load();
     const context = 'text '.repeat(1000);
 
-    const data = await mobileBert.findAnswers('question', 'context');
+    const data = await mobileBert.findAnswers('question', context);
 
-    expect(data).toEqual([]);
+    expect(data.length).toEqual(5);
   });
 
   it('should allow custom model url', async () => {
