@@ -57,7 +57,8 @@ console.log('Answers: ');
 console.log(answers);
 ```
 
-You can also take a look at the [demo app](./demo).
+[Try the demo here!](https://storage.googleapis.com/tfjs-models/demos/mobilebert-qna/index.html)
+You can also take a look at the source code of the [demo app](./demo).
 
 ## API
 
