@@ -76,9 +76,9 @@ class MobileBertImpl implements MobileBert {
   private process(
       query: string, context: string, maxQueryLen: number, maxSeqLen: number,
       docStride = 128): Feature[] {
-    let queryTokens = this.tokenizer.tokenize(query);
-    if (queryTokens.length > maxQueryLen) {
-      queryTokens = queryTokens.slice(0, maxQueryLen);
+    const queryTokens = this.tokenizer.tokenize(query);
+    if (queryTokens.length > maxQueryLen) {  
+      throw new Error(`The length of question token exceeds the limit (${maxQueryLen}).`)    
     }
     const origTokens = this.tokenizer.processInput(context.trim()).slice(0);
     const tokenToOrigIndex = [];

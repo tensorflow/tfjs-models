@@ -48,6 +48,20 @@ describeWithFlags('mobileBert', NODE_ENVS, () => {
     expect(data).toEqual([]);
   });
 
+  it('mobileBert detect method should throw error if question is too long',
+     async () => {
+       const mobileBert = await load();
+       const question = 'question '.repeat(300);
+       let result = undefined;
+       try {
+         result = await mobileBert.findAnswers(question, 'context');
+       } catch (error) {
+         expect(error.message)
+             .toEqual('The length of question token exceeds the limit (64).');
+       }
+       expect(result).toBeUndefined();
+     });
+
   it('mobileBert detect method should work for long context', async () => {
     const mobileBert = await load();
     const context = 'text '.repeat(1000);
