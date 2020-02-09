@@ -170,17 +170,14 @@ class HandPipeline {
           1);
 
       const coords2d_rotated =
-          tf.matMul(coords_rotation_matrix, coords2d_homo, false, true)
-              .transpose()
+          tf.matMul(coords2d_homo, coords_rotation_matrix, false, true)
               .slice([0, 0], [-1, 2]);
 
       const original_center =
           tf.matMul(
-                this.inverse(palm_rotation_matrix),
                 tf.concat(
                     [box_for_cut.getCenter(), tf.ones([1]).expandDims(1)], 1),
-                false, true)
-              .transpose()
+                this.inverse(palm_rotation_matrix), false, true)
               .slice([0, 0], [1, 2]);
 
       // LandmarkProjectionCalculator
