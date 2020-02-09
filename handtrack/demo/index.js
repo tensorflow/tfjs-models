@@ -207,33 +207,37 @@ const landmarksRealTime = async (video) => {
     if (result) {
       document.querySelector("#keypoints-wrapper").className = 'show';
 
-      drawKeypoints(ctx, result[0]);
-      const angle = result[2];
+      let [keypoints, cutImage, angle, box, rotatedBox, shiftedBox, squaredBox, nextBox] = result;
 
-      // (blue) Original region of interest (either detected by bounding boxes or carried over from last frame.)
-      const box = result[3].startEndTensor.arraySync();
-      drawBox(ctx, box[0], angle, `rgba(0, 0, 255, 1)`);
+      drawKeypoints(ctx, keypoints);
 
-      // (black) Rotated ROI.
-      const bb = result[4].startEndTensor.arraySync();
-      drawBox(ctx, bb[0], angle, `rgba(0, 0, 0, 1)`);
+      box = box.startEndTensor.arraySync();
+      drawBox(ctx, box[0], angle, `rgba(0, 0, 255, 1)`); // blue
 
-      // (red) Shifted ROI.
-      const bbIncreased = result[5].startEndTensor.arraySync();
-      drawBox(ctx, bbIncreased[0], angle, `rgba(255, 0, 0, 1)`);
+      if(rotatedBox) {
+        rotatedBox = rotatedBox.startEndTensor.arraySync();
+        drawBox(ctx, rotatedBox[0], angle, `rgba(0, 0, 0, 1)`); // black
+      }
 
-      // (green) Squared.
-      const bbSquared = result[6].startEndTensor.arraySync();
-      drawBox(ctx, bbSquared[0], angle, `rgba(0, 255, 0, 1)`);
+      if(shiftedBox) {
+        shiftedBox = shiftedBox.startEndTensor.arraySync();
+        drawBox(ctx, shiftedBox[0], angle, `rgba(255, 0, 0, 1)`); // red
+      }
 
-      // (purple) New landmarks box.
-      const newLandmarks = result[7].startEndTensor.arraySync();
-      drawBox(ctx, newLandmarks[0], angle, `rgba(255, 0, 255, 1)`);
+      if(squaredBox) {
+        squaredBox = squaredBox.startEndTensor.arraySync();
+        drawBox(ctx, squaredBox[0], angle, `rgba(0, 255, 0, 1)`); // green
+      }
 
-      const cutImage = result[1].arraySync();
+      if(nextBox) {
+        nextBox = nextBox.startEndTensor.arraySync();
+        drawBox(ctx, nextBox[0], angle, `rgba(255, 0, 255, 1)`); // purple
+      }
+
+      const cutImageData = cutImage.arraySync();
       for(let r=0; r<256; r++) {
         for(let c=0; c<256; c++) {
-          const point = cutImage[0][r][c];
+          const point = cutImageData[0][r][c];
           cutCtx.fillStyle = `rgb(${point.join(',')})`;
           cutCtx.fillRect(c, r, 1, 1);
         }

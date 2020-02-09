@@ -43,7 +43,9 @@ export async function load() {
   return pipeline;
 }
 
-const MAX_CONTINUOUS_CHECKS = 5;
+const MAX_CONTINUOUS_CHECKS = 10;
+const BRANCH_ON_DETECTION = false;  // whether we branch box scaling / shifting
+                                    // logic depending on detection type
 
 function NormalizeRadians(angle: number) {
   return angle - 2 * Math.PI * Math.floor((angle - (-Math.PI)) / (2 * Math.PI));
@@ -59,7 +61,6 @@ class HandPipeline {
   private handdetect: HandDetectModel;
   private handtrackModel: tfconv.GraphModel;
   private runsWithoutHandDetector: number;
-  private forceUpdate: boolean;
   private maxHandsNum: number;
   private rois: any[];
 
@@ -67,7 +68,6 @@ class HandPipeline {
     this.handdetect = handdetect;
     this.handtrackModel = handtrackModel;
     this.runsWithoutHandDetector = 0;
-    this.forceUpdate = false;
     this.maxHandsNum = 1;  // simple case
     this.rois = [];
   }
@@ -92,10 +92,10 @@ class HandPipeline {
       return (input as tf.Tensor).toFloat().expandDims(0);
     });
 
-    const needROIUpdate = this.needROIUpdate();
-    console.log('need ROI update', needROIUpdate);
+    const useFreshBox = this.needROIUpdate();
+    console.log('need ROI update', useFreshBox);
 
-    if (needROIUpdate) {
+    if (useFreshBox) {
       const box = this.handdetect.getSingleBoundingBox(image);
       if (!box) {
         this.clearROIS();
@@ -103,7 +103,6 @@ class HandPipeline {
       }
       this.updateROIFromFacedetector(box, true);
       this.runsWithoutHandDetector = 0;
-      this.forceUpdate = false;
     } else {
       this.runsWithoutHandDetector++;
     }
@@ -111,10 +110,6 @@ class HandPipeline {
     const scaledCoords = tf.tidy(() => {
       const width = 256., height = 256.;
       const box = this.rois[0];
-
-      // TODO (vakunov): move to configuration
-      const scale_factor = 3.0;
-      const shifts = [0, -0.4];
 
       // DetectionsToRectsCalculator
       const angle = this.calculateRotation(box);
@@ -125,36 +120,31 @@ class HandPipeline {
           [x[0] / image.shape[2], x[1] / image.shape[1]];
       const rotated_image = rotateWebgl(
           image, angle, 0, handpalm_center_relative as [number, number]);
-      const box_landmarks_homo =
-          tf.concat([box.landmarks, tf.ones([7]).expandDims(1)], 1);
-
       const palm_rotation_matrix =
           this.build_rotation_matrix_with_center(-angle, handpalm_center);
-      const rotated_landmarks =
-          tf.matMul(box_landmarks_homo, palm_rotation_matrix, false, true)
-              .slice([0, 0], [7, 2]);
-      const bb = this.calculateLandmarksBoundingBox(rotated_landmarks);
 
-      // RectTransformationCalculator
-      const bbShifted = this.shiftBox(bb, shifts);
-      const bbSquarified = this.makeSquareBox(bbShifted);
-      const box_for_cut = bbSquarified.increaseBox(scale_factor);
+      let box_for_cut, bbRotated, bbShifted, bbSquarified;
+      if (!BRANCH_ON_DETECTION || useFreshBox) {
+        const numLandmarks = box.landmarks.shape[0];
+        const box_landmarks_homo = tf.concat(
+            [box.landmarks, tf.ones([numLandmarks]).expandDims(1)], 1);
+        const rotated_landmarks =
+            tf.matMul(box_landmarks_homo, palm_rotation_matrix, false, true)
+                .slice([0, 0], [numLandmarks, 2]);
 
-      // whether the input video stream is already 256/256 and we just want to
-      // test skeleton detection
-      const testSkeleton = false;
-      let handImage, cutted_hand;
-      if (testSkeleton) {
-        (box_for_cut as any).startPoint = tf.tensor2d([[0, 0]]);
-        (box_for_cut as any).endPoint = tf.tensor2d([[256, 256]]);
-
-        handImage = (rotated_image as any).div(255);
+        bbRotated = this.calculateLandmarksBoundingBox(rotated_landmarks);
+        // RectTransformationCalculator
+        bbShifted = this.shiftBox(bbRotated, [0, -0.4]);
+        bbSquarified = this.makeSquareBox(bbShifted);
+        box_for_cut = bbSquarified.increaseBox(3);
       } else {
-        // ImageCroppingCalculator
-        cutted_hand = box_for_cut.cutFromAndResize(
-            rotated_image as tf.Tensor4D, [width, height]);
-        handImage = cutted_hand.div(255);
+        box_for_cut = box;
       }
+
+      // ImageCroppingCalculator
+      const cutted_hand = box_for_cut.cutFromAndResize(
+          rotated_image as tf.Tensor4D, [width, height]);
+      const handImage = cutted_hand.div(255);
 
       // TfLiteInferenceCalculator
       const output = this.handtrackModel.predict(handImage) as tf.Tensor[];
@@ -168,7 +158,6 @@ class HandPipeline {
       const coords2d_scaled = tf.mul(
           coords2d.sub(tf.tensor([128, 128])),
           tf.div(box_for_cut.getSize(), [width, height]));
-      // what if we scaled the coordinates slightly at this point?
 
       const coords_rotation_matrix =
           this.build_rotation_matrix_with_center(angle, tf.tensor([0, 0]));
@@ -198,16 +187,26 @@ class HandPipeline {
       const coords2d_result = coords2d_rotated.add(original_center);
 
       // LandmarksToDetectionCalculator: landmarks to rect
-
       const landmarks_ids = [0, 5, 9, 13, 17, 1, 2];
-      // const landmark_ids = [0, 1, 2, 3, 5, 6, 9, 10, 13, 14, 17, 18];
-
-      // SplitNormalizedLandmarkListCalculator
       const selected_landmarks = tf.gather(coords2d_result, landmarks_ids);
 
-      const landmarks_box =
-          this.calculateLandmarksBoundingBox(selected_landmarks);
-      this.updateROIFromFacedetector(landmarks_box as any, false);
+      let nextBoundingBox;
+      if (BRANCH_ON_DETECTION) {
+        const landmarks_box =
+            this.calculateLandmarksBoundingBox(coords2d_result);
+
+        const landmarks_box_shifted = this.shiftBox(landmarks_box, [0, -0.1]);
+        const landmarks_box_shifted_squarified =
+            this.makeSquareBox(landmarks_box_shifted);
+        nextBoundingBox = landmarks_box_shifted_squarified.increaseBox(1.65);
+        (nextBoundingBox as any).landmarks = tf.keep(selected_landmarks);
+      } else {
+        nextBoundingBox =
+            this.calculateLandmarksBoundingBox(selected_landmarks);
+      }
+
+      this.updateROIFromFacedetector(
+          nextBoundingBox as any, false /* force replace */);
 
       const handFlag =
           ((output[0] as tf.Tensor).arraySync() as number[][])[0][0];
@@ -217,9 +216,8 @@ class HandPipeline {
       }
 
       return [
-        coords2d_result, testSkeleton ? rotated_image : cutted_hand, angle,
-        box as any, bb as any, bbShifted as any, bbSquarified as any,
-        landmarks_box as any
+        coords2d_result, cutted_hand, angle, box as any, bbRotated as any,
+        bbShifted as any, bbSquarified as any, nextBoundingBox as any
       ];
     });
 
@@ -343,12 +341,8 @@ class HandPipeline {
 
   needROIUpdate() {
     const rois_count = this.rois.length;
-    const has_no_rois = rois_count === 0;
-    const should_check_for_more_hands = this.maxHandsNum === 1 ?
-        has_no_rois :
-        (rois_count !== this.maxHandsNum &&
-         this.runsWithoutHandDetector >= MAX_CONTINUOUS_CHECKS);
 
-    return this.forceUpdate || has_no_rois || should_check_for_more_hands;
+    return rois_count !== this.maxHandsNum ||
+        this.runsWithoutHandDetector >= MAX_CONTINUOUS_CHECKS;
   }
 }
