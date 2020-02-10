@@ -19,7 +19,7 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {BertTokenizer, CLS_INDEX, loadTokenizer, SEP_INDEX} from './bert_tokenizer';
 
-//TODO: Upload model to TFHub tensorflow/tfjs#2730
+// TODO: Upload model to TFHub tensorflow/tfjs#2730
 const BASE_DIR = 'https://storage.googleapis.com/tfjs-testing/mobile-bert/';
 const MODEL_URL = BASE_DIR + 'model.json';
 const INPUT_SIZE = 384;
@@ -77,8 +77,9 @@ class MobileBertImpl implements MobileBert {
       query: string, context: string, maxQueryLen: number, maxSeqLen: number,
       docStride = 128): Feature[] {
     const queryTokens = this.tokenizer.tokenize(query);
-    if (queryTokens.length > maxQueryLen) {  
-      throw new Error(`The length of question token exceeds the limit (${maxQueryLen}).`)    
+    if (queryTokens.length > maxQueryLen) {
+      throw new Error(
+          `The length of question token exceeds the limit (${maxQueryLen}).`);
     }
     const origTokens = this.tokenizer.processInput(context.trim()).slice(0);
     const tokenToOrigIndex = [];
