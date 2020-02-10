@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/kmeans",
-  "version": "0.2.2",
+  "version": "0.1.0",
   "description": "KMeans Clustering for TensorFlow.js",
   "main": "dist/index.js",
   "unpkg": "dist/kmeans.min.js",

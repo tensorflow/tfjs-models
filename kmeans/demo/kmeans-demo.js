@@ -1,4 +1,4 @@
-import {kMeans} from '@tensorflow-models/kmeans';
+import {kMeans, KMeansArgs, KMeansClustering} from '@tensorflow-models/kmeans';
 import {genRandomSamples} from '../src/util';
 import * as tf from '@tensorflow/tfjs';
 
@@ -178,7 +178,6 @@ async function onRegenTestData(chart, model) {
 
   plotTestData(chart, samplesArr, predictionsArr);
 
-  // might need to return test data
   tf.dispose(samples);
   tf.dispose(predictions);
 }
@@ -186,6 +185,8 @@ async function onRegenTestData(chart, model) {
 async function onPageLoad() {
   // create model
   let model = kMeans({nClusters});
+  // console.log({nClusters} instanceof KMeansArgs);
+  // console.log(model instanceof KMeansClustering, KMeansClustering);
 
   // plot initial data
   const chart = initChart();

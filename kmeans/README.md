@@ -1,13 +1,13 @@
 # KMeans Clustering
 
-This package provides a utility for creating a classifier using the
-[K-Nearest Neighbors](https://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm)
+This package provides a utility for doing unsupervised learning using the
+[K-Means Clustering](https://en.wikipedia.org/wiki/K-means_clustering)
 algorithm.
 
 This package is different from the other packages in this repository in that it
-doesn't provide a model with weights, but rather a utility for constructing a
-KMeans model using activations from another model or any other tensors you can
-associate with a class.
+doesn't provide a model with weights, but rather an algorithm for grouping data
+points together based on similarities in their feature space, i.e. unsupervised
+machine learning.
 
 You can see example code [here](https://github.com/tensorflow/tfjs-models/tree/master/kmeans/demo).
 
@@ -19,47 +19,43 @@ You can see example code [here](https://github.com/tensorflow/tfjs-models/tree/m
 <html>
   <head>
     <!-- Load TensorFlow.js -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.11.7"></script>
-    <!-- Load MobileNet -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@0.1.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.5.0"></script>
     <!-- Load KMeans -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/kmeans@0.1.0"></script>
- </head>
+  </head>
 
-  <body>
-    <img id='class0' src='/images/class0.jpg '/>
-    <img id='class1' src='/images/class1.jpg '/>
-    <img id='test' src='/images/test.jpg '/>
-  </body>
+  <body></body>
   <!-- Place your code in the script tag below. You can also use an external .js file -->
   <script>
-
     const init = async function() {
-      // Create the classifier.
-      const classifier = kmeans.create();
+      // Create the data
+      const nSamplesPerCluster = 100;
+      const nFeatures = 3;
+      const nClusters = 4;
+      const dataCollection = [];
 
-      // Load mobilenet.
-      const mobilenetModule = await mobilenet.load();
+      // Generate samples for each cluster
+      for (let i = 0; i < nClusters; i++) {
+        const currentCentroid = tf.randomUniform([1, nFeatures]);
+        const data = tf
+          .randomNormal([nSamplesPerCluster, nFeatures])
+          .add(currentCentroid);
+        dataCollection.push(data);
+      }
+      // Combine into one dataset
+      const X = tf.concat(dataCollection, 0);
 
-      // Add MobileNet activations to the model repeatedly for all classes.
-      const img0 = tf.fromPixels(document.getElementById('class0'));
-      const logits0 = mobilenetModule.infer(img0, 'conv_preds');
-      classifier.addExample(logits0, 0);
+      // Create the model
+      const model = kmeans.kMeans({nClusters});
 
-      const img1 = tf.fromPixels(document.getElementById('class1'));
-      const logits1 = mobilenetModule.infer(img1, 'conv_preds');
-      classifier.addExample(logits1, 1);
+      // Train and predict on training data
+      const y = model.fitPredict(X);
 
-      // Make a prediction.
-      const x = tf.fromPixels(document.getElementById('test'));
-      const xlogits = mobilenetModule.infer(x, 'conv_preds');
-      console.log('Predictions:');
-      const result = await classifier.predictClass(xlogits);
-      console.log(result);
-    }
+      const yData = await y.data();
+      console.log(yData);
+    };
 
     init();
-
   </script>
 </html>
 ```
@@ -68,129 +64,119 @@ You can see example code [here](https://github.com/tensorflow/tfjs-models/tree/m
 
 ```js
 import * as tf from '@tensorflow/tfjs';
-import * as mobilenetModule from '@tensorflow-models/mobilenet';
-import * as kmeans from '@tensorflow-models/kmeans';
+import {kMeans} from '@tensorflow-models/kmeans';
 
-// Create the classifier.
-const classifier = kmeans.create();
+const init = async function() {
+  // Create the data
+  const nSamplesPerCluster = 100;
+  const nFeatures = 3;
+  const nClusters = 4;
+  const dataCollection = [];
 
-// Load mobilenet.
-const mobilenet = await mobilenetModule.load();
+  // Generate samples for each cluster
+  for (let i = 0; i < nClusters; i++) {
+    const currentCentroid = tf.randomUniform([1, nFeatures]);
+    const data = tf
+      .randomNormal([nSamplesPerCluster, nFeatures])
+      .add(currentCentroid);
+    dataCollection.push(data);
+  }
+  // Combine into one dataset
+  const X = tf.concat(dataCollection, 0);
 
-// Add MobileNet activations to the model repeatedly for all classes.
-const img0 = tf.fromPixels(...);
-const img0 = tf.fromPixels(document.getElementById('class0'));
-classifier.addExample(logits, 0);
+  // Create the model
+  const model = kMeans({nClusters});
 
-const img1 = tf.fromPixels(document.getElementById('class1'));
-const logits1 = mobilenet.infer(img1, 'conv_preds');
-classifier.addExample(logits, 1);
+  // Train and predict on training data
+  const y = model.fitPredict(X);
 
-// Make a prediction.
-const x = tf.fromPixels(document.getElementById('test'));
-const xlogits = mobilenet.infer(x, 'conv_preds');
-console.log('Predictions:');
-console.log(classifier.predictClass(xlogits));
+  const yData = await y.data();
+  console.log(yData);
 ```
 
 ## API
 
 #### Creating a classifier
+
 `kmeans` is the module name, which is automatically included when you use
-the <script src> method.
+the <script src> method. `kMeans` is the model constructor name, which can be
+used to create and instance of `KMeansClustering`. To do so, pass a `KMeansArgs`
+to the condtructor.
 
 ```ts
-classifier = kmeans.create()
+import {kMeans} from '@tensorflow-models/kmeans';
+const model = kMeans({nClusters: 8});
+console.log(model instanceof KMeansClustering, KMeansClustering); // true
 ```
 
 Returns a `KMeans` clustering instance.
 
-#### Adding examples
+#### Changing hyper-parameters
 
 ```ts
-classifier.addExample(
-  example: tf.Tensor,
-  classIndex: number
-): void;
+const model = kMeans({
+  nClusters: number,
+  maxIter: number,
+  tol: number,
+}): KMeansClustering;
 ```
 
 Args:
-- **example:** An example to add to the dataset, usually an activation from
-  another model.
-- **classIndex:** The class index of the example.
+
+- **nClusters:** Number of clusters to group input datasets into. Optional,
+default to 8.
+- **maxIter:** Maximum number of iterations for updating the centroids before
+the algorithm concludes. Optional, default to 300.
+- **tol:** Tolerance for the difference of centroids' positions between two
+model iterations. Model stops when the difference becomes lower than this value.
+Useful for early stopping. Optional, default to 10e-4.
+
+#### Training
+
+```ts
+model.fit(x: tf.Tensor): tf.Tensor;
+// or:
+model.fitPredict(x: tf.Tensor): tf.Tensor;
+```
+
+Args:
+
+- **x:** Training data, a two-dimensional tensor with shape
+`[nInstances, nFeatures]`.
+
+Returns a vector representing the prediction on training data `x`, with shape
+`[nInstances, 1]`. Each dimension of the vector is an integer, representing the
+cluster ID a data instance belongs to.
+
+#### Incremental training
+
+```ts
+model.fitOneCycle(x: tf.Tensor): tf.Tensor;
+```
+
+Args:
+
+- **x:** Training data, a two-dimensional tensor with shape
+`[nInstances, nFeatures]`.
+
+Returns a vector representing the prediction on training data `x`, with shape
+`[nInstances, 1]`. Each dimension of the vector is an integer, representing the
+cluster ID a data instance belongs to.
+
+Different from `model.fit` or `model.fitPredict`, this method only runs one
+iteration each function call. Useful for demoing or debugging.
 
 #### Making a prediction
 
 ```ts
-classifier.predictClass(
-  input: tf.Tensor,
-  k = 3
-): Promise<{classIndex: number, confidences: {[classId: number]: number}}>;
+model.predict(x: tf.Tensor): tf.Tensor;
 ```
 
 Args:
-- **input:** An example to make a prediction on, usually an activation from
-  another model.
-- **k:** The K value to use in K-nearest neighbors. The algorithm will first
-  find the K nearest examples from those it was previously shown, and then choose
-  the class that appears the most as the final prediction for the input example.
-  Defaults to 3. If examples < k, k = examples.
 
-Returns an object with a top classIndex, and confidences mapping all class
-indices to their confidence.
+- **x:** Test data, a tensor in shape `[nInstances, nFeatures]`.
 
-#### Misc
+Returns a vector representing the prediction on test data `x`, with shape
+`[nInstances, 1]`. Each dimension of the vector is an integer, representing the
+cluster ID a data instance belongs to.
 
-##### Clear all examples for a class.
-
-```ts
-classifier.clearClass(classIndex: number)
-```
-
-Args:
-- **classIndex:** The class to clear all examples for.
-
-##### Clear all examples from all classes
-
-```ts
-classifier.clearAllClasses()
-```
-
-##### Get the example count for each class
-
-```ts
-classifier.getClassExampleCount(): {[classId: number]: number}
-```
-
-Returns an object that maps classId to example count for that class.
-
-##### Get the full dataset, useful for saving state.
-
-```ts
-classifier.getClassifierDataset(): {[classId: number]: Tensor2D}
-```
-
-##### Set the full dataset, useful for restoring state.
-
-```ts
-classifier.setClassifierDataset(dataset: {[classId: number]: Tensor2D})
-```
-
-Args:
-- **dataset:** The class dataset matrices map. Can be retrieved from
-  getClassDatsetMatrices. Useful for restoring state.
-
-##### Get the total number of classes
-
-```ts
-classifier.getNumClasses(): number
-```
-
-##### Dispose the classifier and all internal state
-
-Clears up WebGL memory. Useful if you no longer need the classifier in your
-application.
-
-```ts
-classifier.dispose()
-```

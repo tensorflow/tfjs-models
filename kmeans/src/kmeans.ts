@@ -2,7 +2,7 @@ import {Tensor} from '@tensorflow/tfjs-core';
 import {kMeansFitOneCycle, initCentroids, assignToNearest} from './training';
 
 export interface KMeansArgs {
-  nClusters: number;
+  nClusters?: number;
   maxIter?: number;
   tol?: number;
 }

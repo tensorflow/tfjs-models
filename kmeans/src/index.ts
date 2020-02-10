@@ -1,1 +1,1 @@
-export {KMeansClustering, kMeans, KMeansArgs} from './kmeans';
+export {kMeans, KMeansClustering, KMeansArgs} from './kmeans';
