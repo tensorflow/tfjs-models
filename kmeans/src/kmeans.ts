@@ -8,9 +8,6 @@ export interface KMeansArgs {
 }
 
 export class KMeansClustering {
-  // A public property that can be set by Callbacks to order early stopping
-  // during `fit()` calls.
-  protected stopTraining_: boolean;
   protected isTraining: boolean;
   private inputs: Tensor;
   private outputs: Tensor;
