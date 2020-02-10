@@ -21,12 +21,14 @@ let videoWidth, videoHeight;
 const color = 'red';
 
 const MAX_KEYPOINTS = 30;
-for(let i=0; i<MAX_KEYPOINTS; i++) {
-  const point = document.createElement("div");
-  point.id = `point_${i}`;
-  point.className = 'point';
-  point.innerHTML = i;
-  document.querySelector("#keypoints-wrapper").appendChild(point);
+if(location.hash === '#debug') {
+  for(let i=0; i<MAX_KEYPOINTS; i++) {
+    const point = document.createElement("div");
+    point.id = `point_${i}`;
+    point.className = 'point';
+    point.innerHTML = i;
+    document.querySelector("#keypoints-wrapper").appendChild(point);
+  }
 }
 
 function drawPoint(ctx, y, x, r, color) {
@@ -42,10 +44,12 @@ function drawKeypoints(ctx, keypoints) {
   for (let i = 0; i < keypointsArray.length; i++) {
     const y = keypointsArray[i][0];
     const x = keypointsArray[i][1];
-    drawPoint(ctx, x - 2, y - 2, 4, color);
+    drawPoint(ctx, x - 2, y - 2, 3, color);
 
-    document.querySelector(`#point_${i}`).style.left = `${videoWidth - y}px`;
-    document.querySelector(`#point_${i}`).style.top = `${x}px`;
+    if(location.hash === '#debug') {
+      document.querySelector(`#point_${i}`).style.left = `${videoWidth - y}px`;
+      document.querySelector(`#point_${i}`).style.top = `${x}px`;
+    }
   }
 
   // Old model.
@@ -207,12 +211,14 @@ const landmarksRealTime = async (video) => {
     if (result) {
       document.querySelector("#keypoints-wrapper").className = 'show';
 
-      let [keypoints, cutImage, angle, box, rotatedBox, shiftedBox, squaredBox, nextBox] = result;
+      let [keypoints, angle, cutImage, box, rotatedBox, shiftedBox, squaredBox, nextBox] = result;
 
       drawKeypoints(ctx, keypoints);
 
-      box = box.startEndTensor.arraySync();
-      drawBox(ctx, box[0], angle, `rgba(0, 0, 255, 1)`); // blue
+      if(box) {
+        box = box.startEndTensor.arraySync();
+        drawBox(ctx, box[0], angle, `rgba(0, 0, 255, 1)`); // blue
+      }
 
       if(rotatedBox) {
         rotatedBox = rotatedBox.startEndTensor.arraySync();
@@ -234,12 +240,14 @@ const landmarksRealTime = async (video) => {
         drawBox(ctx, nextBox[0], angle, `rgba(255, 0, 255, 1)`); // purple
       }
 
-      const cutImageData = cutImage.arraySync();
-      for(let r=0; r<256; r++) {
-        for(let c=0; c<256; c++) {
-          const point = cutImageData[0][r][c];
-          cutCtx.fillStyle = `rgb(${point.join(',')})`;
-          cutCtx.fillRect(c, r, 1, 1);
+      if(cutImage) {
+        const cutImageData = cutImage.arraySync();
+        for(let r=0; r<256; r++) {
+          for(let c=0; c<256; c++) {
+            const point = cutImageData[0][r][c];
+            cutCtx.fillStyle = `rgb(${point.join(',')})`;
+            cutCtx.fillRect(c, r, 1, 1);
+          }
         }
       }
     } else {

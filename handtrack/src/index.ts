@@ -43,7 +43,7 @@ export async function load() {
   return pipeline;
 }
 
-const MAX_CONTINUOUS_CHECKS = 10;
+const MAX_CONTINUOUS_CHECKS = Infinity;
 const BRANCH_ON_DETECTION = false;  // whether we branch box scaling / shifting
                                     // logic depending on detection type
 
@@ -212,10 +212,15 @@ class HandPipeline {
         return null;
       }
 
-      return [
-        coords2d_result, cutted_hand, angle, box as any, bbRotated as any,
-        bbShifted as any, bbSquarified as any, nextBoundingBox as any
-      ];
+      let result = [coords2d_result];
+      if (location.hash === '#debug') {
+        result = result.concat([
+          angle, cutted_hand, box as any, bbRotated as any, bbShifted as any,
+          bbSquarified as any, nextBoundingBox as any
+        ])
+      }
+
+      return result;
     });
 
     image.dispose();
