@@ -44,8 +44,8 @@ export async function load() {
 }
 
 const MAX_CONTINUOUS_CHECKS = Infinity;
-const BRANCH_ON_DETECTION = false;  // whether we branch box scaling / shifting
-                                    // logic depending on detection type
+const BRANCH_ON_DETECTION = true;  // whether we branch box scaling / shifting
+                                   // logic depending on detection type
 
 function NormalizeRadians(angle: number) {
   return angle - 2 * Math.PI * Math.floor((angle - (-Math.PI)) / (2 * Math.PI));
@@ -326,7 +326,7 @@ class HandPipeline {
         iou = interArea / (boxArea + prevArea - interArea);
       }
 
-      if (iou > 0.7) {
+      if (iou > 0.8) {
         this.rois[0] = prev;
       } else {
         this.rois[0] = box;
