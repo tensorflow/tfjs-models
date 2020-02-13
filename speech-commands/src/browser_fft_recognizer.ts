@@ -619,6 +619,12 @@ export class BrowserFftSpeechCommandRecognizer implements
           `but got shape [null,${nonBatchedShape}]`);
     }
   }
+
+  dispose(): void {
+    if (this.model != null) {
+      this.model.dispose();
+    }
+  }
 }
 
 /**
@@ -1383,6 +1389,13 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     throw new Error(
         'Creating transfer-learned recognizer from a transfer-learned ' +
         'recognizer is not supported.');
+  }
+
+  dispose(): void {
+    // console.log('transferHead:', this.transferHead);  // DEBUG
+    if (this.model != null) {
+      this.model.dispose();
+    }
   }
 }
 

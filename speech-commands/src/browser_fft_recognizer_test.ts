@@ -29,7 +29,7 @@ import * as BrowserFftUtils from './browser_fft_utils';
 import {FakeAudioContext, FakeAudioMediaStream} from './browser_test_utils';
 import {arrayBuffer2SerializedExamples, BACKGROUND_NOISE_TAG} from './dataset';
 import {create} from './index';
-import {SpeechCommandRecognizerResult} from './types';
+import {SpeechCommandRecognizerResult, TransferSpeechCommandRecognizer} from './types';
 import {version} from './version';
 
 describe('getMajorAndMinorVersion', () => {
@@ -986,6 +986,27 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
     }
     expect(caughtError.message)
         .toMatch(/Cannot start collection of transfer-learning example/);
+
+    // console.log((transfer1 as any).baseModel.dispose);
+  });
+
+  fit('Dispose base recognizer model', async done => {
+    setUpFakes();
+    const recognizer = new BrowserFftSpeechCommandRecognizer();
+    await recognizer.ensureModelLoaded();
+    await recognizer.listen(
+        async (result: SpeechCommandRecognizerResult) => {});
+    setTimeout(async () => {
+      await recognizer.stopListening();
+      recognizer.dispose();
+      expect(tf.memory().numTensors).toEqual(0);
+      done();
+    }, 300);
+  });
+
+  fit('Dispose recognizer before ensureModelLoaded', () => {
+    const recognizer = new BrowserFftSpeechCommandRecognizer();
+    recognizer.dispose();
   });
 
   it('Concurrent collectExample+listen fails', async () => {
@@ -1112,6 +1133,35 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
       await transfer.stopListening();
       done();
     });
+  });
+
+  fit('trainTransferLearningModel then dispose', async () => {
+    setUpFakes();
+    const base = new BrowserFftSpeechCommandRecognizer();
+    console.log('50', tf.memory().numTensors);  // DEBUG
+    await base.ensureModelLoaded();
+    console.log('80', tf.memory().numTensors);  // DEBUG
+    const transfers: TransferSpeechCommandRecognizer[] = [];
+    for (let i = 0; i < 2; ++i) {
+      console.log(`i = ${i}`);  // DEBUG
+      const transfer = base.createTransfer(`xfer_${i}`);
+      console.log('100', tf.memory().numTensors);  // DEBUG
+      await transfer.collectExample('foo');
+      await transfer.collectExample('bar');
+      transfers.push(transfer);
+      console.log('200', tf.memory().numTensors);  // DEBUG
+    }
+    console.log(tf.memory().numTensors);  // DEBUG
+    for (const transfer of transfers) {
+      await transfer.train({epochs: 1, batchSize: 2});
+    }
+    console.log(tf.memory().numTensors);  // DEBUG
+    transfers[0].dispose();
+    console.log('600', tf.memory().numTensors);  // DEBUG
+    transfers[1].dispose();
+    console.log('700', tf.memory().numTensors);  // DEBUG
+    // base.dispose();
+    console.log('800', tf.memory().numTensors);  // DEBUG
   });
 
   it('trainTransferLearningModel w/ mixing-noise augmentation', async () => {
