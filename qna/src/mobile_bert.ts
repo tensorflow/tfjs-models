@@ -71,6 +71,9 @@ class MobileBertImpl implements MobileBert {
     if (this.modelConfig == null) {
       this.modelConfig = {modelUrl: MODEL_URL, fromTFHub: true};
     }
+    if (this.modelConfig.fromTFHub == null) {
+      this.modelConfig.fromTFHub = false;
+    }
   }
   private process(
       query: string, context: string, maxQueryLen: number, maxSeqLen: number,
@@ -149,8 +152,7 @@ class MobileBertImpl implements MobileBert {
 
   async load() {
     this.model = await tfconv.loadGraphModel(
-        this.modelConfig.modelUrl,
-        {fromTFHub: this.modelConfig.fromTFHub || false});
+        this.modelConfig.modelUrl, {fromTFHub: this.modelConfig.fromTFHub});
     // warm up the backend
     const batchSize = 1;
     const inputIds = tf.ones([batchSize, INPUT_SIZE], 'int32');
