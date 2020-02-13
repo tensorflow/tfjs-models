@@ -10,9 +10,10 @@
   },
   "dependencies": {
     "@tensorflow-models/facemesh": "file:../",
-    "@tensorflow/tfjs-core": "^1.5.0",
-    "@tensorflow/tfjs-layers": "^1.5.0",
+    "@tensorflow/tfjs-backend-wasm": "^1.5.2-alpha1",
     "@tensorflow/tfjs-converter": "^1.5.0",
+    "@tensorflow/tfjs-core": "1.5.2",
+    "@tensorflow/tfjs-layers": "^1.5.0",
     "stats.js": "^0.17.0"
   },
   "scripts": {
@@ -31,7 +32,6 @@
     "babel-preset-env": "~1.6.1",
     "clang-format": "~1.2.2",
     "cross-env": "^5.2.0",
-    "dat.gui": "^0.7.2",
     "eslint": "^4.19.1",
     "eslint-config-google": "^0.9.1",
     "parcel-bundler": "~1.10.3",

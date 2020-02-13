@@ -16,12 +16,25 @@
  */
 
 import * as faceMesh from '@tensorflow-models/facemesh';
+import * as tf from '@tensorflow/tfjs-core';
+import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
+
+tfjsWasm.setWasmPath('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@latest/dist/tfjs-backend-wasm.wasm');
 import Stats from 'stats.js';
 
 let model, ctx, videoWidth, videoHeight, video, canvas;
 
 const stats = new Stats();
 const r = 1;
+
+const state = {
+  backend: 'wasm'
+};
+
+const gui = new dat.GUI();
+gui.add(state, 'backend', ['wasm', 'webgl', 'cpu']).onChange(async backend => {
+  await tf.setBackend(backend);
+});
 
 async function setupCamera() {
   video = document.getElementById('video');
@@ -79,6 +92,8 @@ const renderPrediction = async () => {
 };
 
 const setupPage = async () => {
+  await tf.setBackend(state.backend);
+
   const useVideoStream = true;
   if(useVideoStream) {
     await setupCamera();
