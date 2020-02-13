@@ -219,15 +219,19 @@ export class BrowserFftSpeechCommandRecognizer implements
       const normalizedX = normalize(x);
       let y: tf.Tensor;
       let embedding: tf.Tensor;
+      let t0: number;  // DEBUG
       if (config.includeEmbedding) {
         await this.ensureModelWithEmbeddingOutputCreated();
         [y, embedding] =
             this.modelWithEmbeddingOutput.predict(normalizedX) as tf.Tensor[];
       } else {
+        t0 = Date.now();  // DEBUG
         y = this.model.predict(normalizedX) as tf.Tensor;
       }
 
       const scores = await y.data() as Float32Array;
+      const t1 = Date.now();
+      console.log(`predict() took ${t1 - t0} ms`);  // DEBUG
       const maxIndexTensor = y.argMax(-1);
       const maxIndex = (await maxIndexTensor.data())[0];
       const maxScore = Math.max(...scores);
