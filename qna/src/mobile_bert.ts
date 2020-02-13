@@ -19,7 +19,6 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {BertTokenizer, CLS_INDEX, loadTokenizer, SEP_INDEX} from './bert_tokenizer';
 
-// TODO: Upload model to TFHub tensorflow/tfjs#2730
 const MODEL_URL = 'https://tfhub.dev/tensorflow/tfjs-model/mobilebert/1';
 const INPUT_SIZE = 384;
 const MAX_ANSWER_LEN = 32;

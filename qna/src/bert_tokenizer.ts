@@ -23,9 +23,9 @@ export const CLS_TOKEN = '[CLS]';
 export const SEP_INDEX = 102;
 export const SEP_TOKEN = '[SEP]';
 export const NFKC_TOKEN = 'NFKC';
-export const VOCAB_URL =
-    'https://storage.googleapis.com/learnjs-data/bert_vocab/processed_vocab.json';
-
+export const VOCAB_BASE =
+    'https://tfhub.dev/tensorflow/tfjs-model/mobilebert/1/';
+export const VOCAB_URL = VOCAB_BASE + 'processed_vocab.json?tfjs-format=file';
 /**
  * Class for represent node for token parsing Trie data structure.
  */
