@@ -116,7 +116,9 @@ const setupPage = async () => {
   ctx.translate(canvas.width, 0);
   ctx.scale(-1, 1);
 
-  model = await faceMesh.load();
+  model = await faceMesh.load({
+    maxFaces: 1
+  });
 
   setupFPS();
 

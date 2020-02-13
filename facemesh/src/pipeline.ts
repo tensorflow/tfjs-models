@@ -170,7 +170,7 @@ export class Pipeline {
     const shouldCheckForMoreFaces = roisCount !== this.maxFaces &&
         this.runsWithoutFaceDetector >= this.maxContinuousChecks;
 
-    return noROIs || shouldCheckForMoreFaces;
+    return this.maxFaces === 1 ? noROIs : noROIs || shouldCheckForMoreFaces;
   }
 
   calculateLandmarksBoundingBox(landmarks: tf.Tensor): Box {

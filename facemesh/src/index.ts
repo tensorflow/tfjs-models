@@ -92,9 +92,9 @@ function flipFaceHorizontal(
   });
 }
 
-export async function load() {
+export async function load(options = {}) {
   const faceMesh = new FaceMesh();
-  await faceMesh.load();
+  await faceMesh.load(options);
   return faceMesh;
 }
 
