@@ -228,7 +228,6 @@ export class BrowserFftSpeechCommandRecognizer implements
       }
 
       const scores = await y.data() as Float32Array;
-      const t1 = Date.now();
       const maxIndexTensor = y.argMax(-1);
       const maxIndex = (await maxIndexTensor.data())[0];
       const maxScore = Math.max(...scores);
