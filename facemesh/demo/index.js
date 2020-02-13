@@ -28,7 +28,7 @@ const stats = new Stats();
 const r = 1;
 
 const state = {
-  backend: 'wasm'
+  backend: 'webgl'
 };
 
 const gui = new dat.GUI();
