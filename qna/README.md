@@ -20,6 +20,8 @@ There are two main ways to get this model in your JavaScript project: via script
 ### via Script Tag
 
 ```html
+<!-- Make sure your page supports utf-8 characterset. -->
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <!-- Load TensorFlow.js. This is required to use the qna model. -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"> </script>
 <!-- Load the qna model. -->
@@ -59,6 +61,13 @@ console.log(answers);
 
 [Try the demo here!](https://storage.googleapis.com/tfjs-models/demos/mobilebert-qna/index.html)
 You can also take a look at the source code of the [demo app](./demo).
+
+### Note
+Please make sure your web page supports utf-8 character set. To achieve that you can add following line to your page:
+
+```html
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+```
 
 ## API
 

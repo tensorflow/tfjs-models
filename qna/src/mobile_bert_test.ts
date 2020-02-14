@@ -75,6 +75,6 @@ describeWithFlags('mobileBert', NODE_ENVS, () => {
     const mobileBert = await load({modelUrl: 'https://google.com/model.json'});
 
     expect(tfconv.loadGraphModel)
-        .toHaveBeenCalledWith('https://google.com/model.json');
+        .toHaveBeenCalledWith('https://google.com/model.json', {fromTFHub: false});
   });
 });
