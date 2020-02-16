@@ -24,9 +24,9 @@ export class KMeansClustering {
     this.tol = tol;
   }
 
-  protected init(): void {
+  protected async init(): Promise<void> {
     tf.dispose(this.clusterCenters);
-    this.clusterCenters = initCentroids(this.inputs, this.nClusters);
+    this.clusterCenters = await initCentroids(this.inputs, this.nClusters);
   }
 
   protected fitSingle(): void {
@@ -42,7 +42,7 @@ export class KMeansClustering {
     this.clusterCenters = fitOutput.centroids;
   }
 
-  fit(x: Tensor): void {
+  async fit(x: Tensor): Promise<void> {
     // console.log(this.clusterCenters.dataSync());
     if (this.isTraining) {
       throw new Error(
@@ -53,7 +53,7 @@ export class KMeansClustering {
       throw new Error('Input must be tensor');
     }
     this.inputs = x.toFloat();
-    this.init();
+    await this.init();
     for (let i = 0; i < this.maxIter; i++) {
       this.fitSingle();
     }
@@ -72,7 +72,7 @@ export class KMeansClustering {
     }
     this.inputs = x.toFloat();
     if (!this.clusterCenters) {
-      this.init();
+      await this.init();
     }
     this.fitSingle();
     this.isTraining = false;
@@ -94,7 +94,7 @@ export class KMeansClustering {
   }
 
   async fitPredict(x: Tensor): Promise<Int32Array> {
-    this.fit(x);
+    await this.fit(x);
     const res = (await this.outputs.data()) as Int32Array;
     tf.dispose(this.outputs);
     return res;

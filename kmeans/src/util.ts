@@ -5,17 +5,24 @@ export function range(length: number): number[] {
   return Array.from(Array(length).keys());
 }
 
-export function sampleWithoutReplacement(
+export async function sampleWithoutReplacement(
   data: number[],
-  nSamples: number
-): number[] {
+  nSamples: number,
+  seed = 0
+): Promise<number[]> {
+  // Fisher-Yates sample without replacement
   const dataCopy = data.slice(0);
-  const output = [];
   for (let i = 0; i < nSamples; i++) {
-    const randomIndex = Math.floor(Math.random() * dataCopy.length);
-    output.push(dataCopy.splice(randomIndex, 1)[0]);
+    const randomIndexArr = await tf
+      .randomUniform([1], i, dataCopy.length, 'int32', seed + i)
+      .data();
+
+    const randomIndex = randomIndexArr[0];
+    const sampled = dataCopy[randomIndex];
+    dataCopy[randomIndex] = dataCopy[i];
+    dataCopy[i] = sampled;
   }
-  return output;
+  return dataCopy.slice(0, nSamples);
 }
 
 export function genRandomSamples(
@@ -25,7 +32,7 @@ export function genRandomSamples(
   variance = 1,
   embiggenFactor = 4,
   seed = 0
-) {
+): {centroids: Tensor; samples: Tensor} {
   return tf.tidy(() => {
     const slices = [];
     let centroidsArr: Tensor[] = [];

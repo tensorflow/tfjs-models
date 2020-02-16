@@ -20,9 +20,17 @@ export function kMeansFitOneCycle(
  * @param {Number} nClusters - number of clusters
  * @return {Tensor} centroids
  */
-export function initCentroids(X: Tensor, nClusters: number): Tensor {
+export async function initCentroids(
+  X: Tensor,
+  nClusters: number,
+  seed = 0
+): Promise<Tensor> {
   // select `nClusters` number of input data samples to be initial centroids
-  const sampleIndices = sampleWithoutReplacement(range(X.shape[0]), nClusters);
+  const sampleIndices = await sampleWithoutReplacement(
+    range(X.shape[0]),
+    nClusters,
+    seed
+  );
   return tf.gather(X, sampleIndices);
 }
 
