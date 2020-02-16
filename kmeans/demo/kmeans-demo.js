@@ -73,7 +73,7 @@ function plotClusters(chart, samplesArr, centroidsArr, config = chartConfig) {
   chart.data.datasets[0].backgroundColor = context => {
     const clusterId = Math.floor(context.dataIndex / nSamplesPerCluster);
     const [r, g, b] = config.pointColors[clusterId];
-    return `rgb(${r},${g},${b},0.5)`;
+    return `rgb(${r},${g},${b},0.7)`;
   };
   // resume auto scaling
   chart.options.scales = chartConfig.scalesOptions;
@@ -113,7 +113,7 @@ function updateClusters(
   chart.data.datasets[0].backgroundColor = context => {
     const clusterId = predictedArr[context.dataIndex];
     const [r, g, b] = config.pointColors[clusterId];
-    return `rgb(${r},${g},${b},0.5)`;
+    return `rgb(${r},${g},${b},0.7)`;
   };
   chart.update();
 }
@@ -128,7 +128,7 @@ function plotTestData(chart, samplesArr, predictedArr, config = chartConfig) {
   chart.data.datasets[0].backgroundColor = context => {
     const clusterId = predictedArr[context.dataIndex];
     const [r, g, b] = config.pointColors[clusterId];
-    return `rgb(${r},${g},${b},0.5)`;
+    return `rgb(${r},${g},${b},0.7)`;
   };
 
   // prevent auto-scaling
@@ -149,7 +149,6 @@ async function onFit(model, samples, chart) {
 async function onFitOneCycle(model, samples, chart) {
   const predictionsArr = await model.fitOneCycle(samples);
   const centroidsArr = await model.clusterCenters.data();
-  console.log(centroidsArr);
   updateClusters(chart, predictionsArr, centroidsArr);
 }
 

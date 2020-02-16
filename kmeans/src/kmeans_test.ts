@@ -30,12 +30,9 @@ describeWithFlags('KMeans', NODE_ENVS, () => {
     // Warm up
     await model.fitOneCycle(X0);
     const numTensorsBefore = tf.memory().numTensors;
-    // console.log('--------- warm up finished');
 
     const result0 = await model.fitPredict(X0);
-    // console.log('--------- fit finished');
     const result1 = await model.predict(X1);
-    // console.log('--------- predict finished');
 
     for (let i = 0; i < 3; i += 1) {
       expect(result0[3 * i]).toEqual(result0[3 * i + 1]);
