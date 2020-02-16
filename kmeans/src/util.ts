@@ -13,13 +13,17 @@ export async function sampleWithoutReplacement(
   // Fisher-Yates sample without replacement
   const dataCopy = data.slice(0);
   for (let i = 0; i < nSamples; i++) {
-    const randomIndexArr = await tf
-      .randomUniform([1], i, dataCopy.length, 'int32', seed + i)
-      .data();
-
-    const randomIndex = randomIndexArr[0];
-    const sampled = dataCopy[randomIndex];
-    dataCopy[randomIndex] = dataCopy[i];
+    const randomIndTensor = tf.randomUniform(
+      [1],
+      i,
+      dataCopy.length,
+      'int32',
+      seed + i
+    );
+    const randomInd = (await randomIndTensor.data())[0];
+    tf.dispose(randomIndTensor);
+    const sampled = dataCopy[randomInd];
+    dataCopy[randomInd] = dataCopy[i];
     dataCopy[i] = sampled;
   }
   return dataCopy.slice(0, nSamples);
