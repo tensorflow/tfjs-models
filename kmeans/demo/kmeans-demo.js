@@ -6,7 +6,12 @@ const nClusters = 4;
 const nFeatures = 2;
 const nSamplesPerCluster = 200;
 const chartConfig = {
-  pointColors: ['red', 'orange', 'blue', 'green'],
+  pointColors: [
+    [255, 0, 0],
+    [255, 180, 0],
+    [0, 0, 255],
+    [32, 200, 32],
+  ],
   scalesOptions: {
     xAxes: [
       {
@@ -52,6 +57,7 @@ function plotClusters(chart, samplesArr, centroidsArr, config = chartConfig) {
     data: convertTensorArrayToChartData(samplesArr, nFeatures),
     radius: 2,
     label: 'Data',
+    fill: false,
   };
   const centroidsDataset = {
     data: convertTensorArrayToChartData(centroidsArr, nFeatures),
@@ -64,9 +70,10 @@ function plotClusters(chart, samplesArr, centroidsArr, config = chartConfig) {
 
   // chart.data.datasets contains [<train/test instances>, <real centroids>, <predicted centroids>]
   chart.data.datasets = [samplesDataset, centroidsDataset];
-  chart.options.elements.point.backgroundColor = context => {
+  chart.data.datasets[0].backgroundColor = context => {
     const clusterId = Math.floor(context.dataIndex / nSamplesPerCluster);
-    return config.pointColors[clusterId];
+    const [r, g, b] = config.pointColors[clusterId];
+    return `rgb(${r},${g},${b},0.5)`;
   };
   // resume auto scaling
   chart.options.scales = chartConfig.scalesOptions;
@@ -92,7 +99,10 @@ function updateClusters(
       pointStyle: 'cross',
       pointRadius: 9,
       label: 'Predicted centroids',
-      pointBorderColor: context => config.pointColors[context.dataIndex],
+      pointBorderColor: context => {
+        const [r, g, b] = config.pointColors[context.dataIndex];
+        return `rgb(${r},${g},${b})`;
+      },
     });
   } else {
     chart.data.datasets[
@@ -100,9 +110,10 @@ function updateClusters(
     ].data = predictedCentroidsData;
   }
 
-  chart.options.elements.point.backgroundColor = context => {
+  chart.data.datasets[0].backgroundColor = context => {
     const clusterId = predictedArr[context.dataIndex];
-    return config.pointColors[clusterId];
+    const [r, g, b] = config.pointColors[clusterId];
+    return `rgb(${r},${g},${b},0.5)`;
   };
   chart.update();
 }
@@ -114,9 +125,10 @@ function plotTestData(chart, samplesArr, predictedArr, config = chartConfig) {
     nFeatures
   );
 
-  chart.options.elements.point.backgroundColor = context => {
+  chart.data.datasets[0].backgroundColor = context => {
     const clusterId = predictedArr[context.dataIndex];
-    return config.pointColors[clusterId];
+    const [r, g, b] = config.pointColors[clusterId];
+    return `rgb(${r},${g},${b},0.5)`;
   };
 
   // prevent auto-scaling
@@ -129,18 +141,15 @@ function plotTestData(chart, samplesArr, predictedArr, config = chartConfig) {
 }
 
 async function onFit(model, samples, chart) {
-  const predictions = model.fitPredict(samples);
-  const predictionsArr = await predictions.data();
+  const predictionsArr = await model.fitPredict(samples);
   const centroidsArr = await model.clusterCenters.data();
-  tf.dispose(predictions);
   updateClusters(chart, predictionsArr, centroidsArr);
 }
 
 async function onFitOneCycle(model, samples, chart) {
-  const predictions = model.fitOneCycle(samples);
-  const predictionsArr = await predictions.data();
+  const predictionsArr = await model.fitOneCycle(samples);
   const centroidsArr = await model.clusterCenters.data();
-  tf.dispose(predictions);
+  console.log(centroidsArr);
   updateClusters(chart, predictionsArr, centroidsArr);
 }
 
@@ -172,14 +181,11 @@ async function onRegenTestData(chart, model) {
     testDataConfig.variance,
     testDataConfig.embiggenFactor
   );
-  const predictions = model.predict(samples);
+  const predictionsArr = await model.predict(samples);
   const samplesArr = await samples.data();
-  const predictionsArr = await predictions.data();
+  tf.dispose(samples);
 
   plotTestData(chart, samplesArr, predictionsArr);
-
-  tf.dispose(samples);
-  tf.dispose(predictions);
 }
 
 async function onPageLoad() {
@@ -201,20 +207,20 @@ async function onPageLoad() {
     genTestButton.disabled = true;
   });
 
-  fitButton.addEventListener('click', () => {
+  fitButton.addEventListener('click', async () => {
     const {samples} = trainData;
-    onFit(model, samples, chart);
+    await onFit(model, samples, chart);
     genTestButton.disabled = false;
   });
 
-  fitOneButton.addEventListener('click', () => {
+  fitOneButton.addEventListener('click', async () => {
     const {samples} = trainData;
-    onFitOneCycle(model, samples, chart);
+    await onFitOneCycle(model, samples, chart);
     genTestButton.disabled = false;
   });
 
-  genTestButton.addEventListener('click', () => {
-    onRegenTestData(chart, model);
+  genTestButton.addEventListener('click', async () => {
+    await onRegenTestData(chart, model);
   });
 }
 

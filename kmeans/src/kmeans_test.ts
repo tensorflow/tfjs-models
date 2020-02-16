@@ -36,7 +36,6 @@ describeWithFlags('KMeans', NODE_ENVS, () => {
     // console.log('--------- fit finished');
     const result1 = await model.predict(X1);
     // console.log('--------- predict finished');
-    console.log(result0, result1, model.clusterCenters.dataSync());
 
     for (let i = 0; i < 3; i += 1) {
       expect(result0[3 * i]).toEqual(result0[3 * i + 1]);
