@@ -8,7 +8,7 @@ export function kMeansFitOneCycle(
   centroids: Tensor,
   nClusters: number,
   tolerance = 10e-4
-): {centroids: Tensor, nearest: Tensor} {
+): {centroids: Tensor; nearest: Tensor} {
   const nearest = assignToNearest(data, centroids);
   // change updateCentroids schema
   const newCentroids = updateCentroids(data, nearest, nClusters);

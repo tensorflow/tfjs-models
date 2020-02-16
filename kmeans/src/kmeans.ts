@@ -1,3 +1,4 @@
+import * as tf from '@tensorflow/tfjs-core';
 import {Tensor} from '@tensorflow/tfjs-core';
 import {kMeansFitOneCycle, initCentroids, assignToNearest} from './training';
 
@@ -24,6 +25,7 @@ export class KMeansClustering {
   }
 
   protected init(): void {
+    tf.dispose(this.clusterCenters);
     this.clusterCenters = initCentroids(this.inputs, this.nClusters);
   }
 
@@ -34,11 +36,14 @@ export class KMeansClustering {
       this.nClusters,
       this.tol
     );
+    tf.dispose(this.outputs);
+    tf.dispose(this.clusterCenters);
     this.outputs = fitOutput.nearest;
     this.clusterCenters = fitOutput.centroids;
   }
 
-  fit(x: Tensor): Tensor {
+  fit(x: Tensor): void {
+    // console.log(this.clusterCenters.dataSync());
     if (this.isTraining) {
       throw new Error(
         'Cannot start training because another fit() call is ongoing.'
@@ -53,10 +58,10 @@ export class KMeansClustering {
       this.fitSingle();
     }
     this.isTraining = false;
-    return this.outputs;
+    tf.dispose(this.inputs);
   }
 
-  fitOneCycle(x: Tensor): Tensor {
+  async fitOneCycle(x: Tensor): Promise<Int32Array> {
     if (this.isTraining) {
       throw new Error(
         'Cannot start training because another fit() call is ongoing.'
@@ -71,19 +76,28 @@ export class KMeansClustering {
     }
     this.fitSingle();
     this.isTraining = false;
-    return this.outputs;
+    tf.dispose(this.inputs);
+
+    const res = (await this.outputs.data()) as Int32Array;
+    tf.dispose(this.outputs);
+    return res;
   }
 
-  predict(x: Tensor): Tensor {
+  async predict(x: Tensor): Promise<Int32Array> {
     if (this.isTraining) {
       throw new Error('Cannot start prediction because fit() call is ongoing.');
     }
-    const inputs = x;
-    return assignToNearest(inputs, this.clusterCenters);
+    const outputs = assignToNearest(x, this.clusterCenters);
+    const res = (await outputs.data()) as Int32Array;
+    tf.dispose(outputs);
+    return res;
   }
 
-  fitPredict(x: Tensor): Tensor {
-    return this.fit(x);
+  async fitPredict(x: Tensor): Promise<Int32Array> {
+    this.fit(x);
+    const res = (await this.outputs.data()) as Int32Array;
+    tf.dispose(this.outputs);
+    return res;
   }
 }
 

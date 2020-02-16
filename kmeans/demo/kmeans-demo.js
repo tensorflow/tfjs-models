@@ -185,8 +185,6 @@ async function onRegenTestData(chart, model) {
 async function onPageLoad() {
   // create model
   let model = kMeans({nClusters});
-  // console.log({nClusters} instanceof KMeansArgs);
-  // console.log(model instanceof KMeansClustering, KMeansClustering);
 
   // plot initial data
   const chart = initChart();
