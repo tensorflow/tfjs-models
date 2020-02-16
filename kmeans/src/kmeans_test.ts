@@ -11,10 +11,13 @@ describeWithFlags('KMeans', NODE_ENVS, () => {
     const X0 = tf.tensor([
       [0, 1],
       [1, 0],
+      [0, 0.2],
       [10, 11],
       [11, 10],
+      [10, 10.8],
       [100, 101],
       [101, 100],
+      [100, 100.5],
     ]);
     const X1 = tf.tensor([
       [0.5, 0.5],
@@ -33,10 +36,11 @@ describeWithFlags('KMeans', NODE_ENVS, () => {
     // console.log('--------- fit finished');
     const result1 = await model.predict(X1);
     // console.log('--------- predict finished');
+    console.log(result0, result1, model.clusterCenters.dataSync());
 
     for (let i = 0; i < 3; i += 1) {
-      expect(result0[2 * i]).toEqual(result0[2 * i + 1]);
-      expect(result0[2 * i]).toEqual(result1[i]);
+      expect(result0[3 * i]).toEqual(result0[3 * i + 1]);
+      expect(result0[3 * i]).toEqual(result1[i]);
     }
     expect(tf.memory().numTensors).toEqual(numTensorsBefore);
   });
