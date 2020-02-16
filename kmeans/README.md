@@ -124,12 +124,12 @@ const model = kMeans({
 Args:
 
 - **nClusters:** Number of clusters to group input datasets into. Optional,
-default to 8.
+  default to 8.
 - **maxIter:** Maximum number of iterations for updating the centroids before
-the algorithm concludes. Optional, default to 300.
+  the algorithm concludes. Optional, default to 300.
 - **tol:** Tolerance for the difference of centroids' positions between two
-model iterations. Model stops when the difference becomes lower than this value.
-Useful for early stopping. Optional, default to 10e-4.
+  model iterations. Model stops when the difference becomes lower than this value.
+  Useful for early stopping. Optional, default to 10e-4.
 
 #### Training
 
@@ -142,11 +142,23 @@ model.fitPredict(x: tf.Tensor): tf.Tensor;
 Args:
 
 - **x:** Training data, a two-dimensional tensor with shape
-`[nInstances, nFeatures]`.
+  `[nInstances, nFeatures]`.
 
-Returns a vector representing the prediction on training data `x`, with shape
-`[nInstances, 1]`. Each dimension of the vector is an integer, representing the
-cluster ID a data instance belongs to.
+Returns `void`
+
+#### Making a prediction on training data
+
+```ts
+model.fitPredict(x: tf.Tensor): tf.Tensor;
+```
+
+Args:
+
+- **x:** Training data, a tensor in shape `[nInstances, nFeatures]`.
+
+Returns a `Int32Array` representing the prediction on training data `x`, with length
+`nInstances`. Each element of the array is an integer, representing the
+cluster ID a data instance in the training dataset `x` belongs to.
 
 #### Incremental training
 
@@ -157,10 +169,10 @@ model.fitOneCycle(x: tf.Tensor): tf.Tensor;
 Args:
 
 - **x:** Training data, a two-dimensional tensor with shape
-`[nInstances, nFeatures]`.
+  `[nInstances, nFeatures]`.
 
-Returns a vector representing the prediction on training data `x`, with shape
-`[nInstances, 1]`. Each dimension of the vector is an integer, representing the
+Returns a `Int32Array` representing the prediction on training data `x`, with length
+`nInstances`. Each element of the array is an integer, representing the
 cluster ID a data instance belongs to.
 
 Different from `model.fit` or `model.fitPredict`, this method only runs one
@@ -176,7 +188,6 @@ Args:
 
 - **x:** Test data, a tensor in shape `[nInstances, nFeatures]`.
 
-Returns a vector representing the prediction on test data `x`, with shape
-`[nInstances, 1]`. Each dimension of the vector is an integer, representing the
-cluster ID a data instance belongs to.
-
+Returns a `Int32Array`  representing the prediction on test data `x`, with length
+`nInstances`. Each element of the array is an integer, representing the
+cluster ID a data instance in the test dataset `x` belongs to.
