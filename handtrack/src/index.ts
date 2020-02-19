@@ -7,8 +7,10 @@ import {maxPool, maxPoolWArgMax} from './pool_gpu';
 // import {rotate as rotateCpu} from './rotate_cpu';
 import {rotate as rotateWebgl} from './rotate_gpu';
 
+// const HANDDETECT_MODEL_PATH =
+//     'https://storage.googleapis.com/learnjs-data/tfjs_converter_v1.3.2_master/handdetector_hourglass_short_2019_03_25_v0/model.json';
 const HANDDETECT_MODEL_PATH =
-    'https://storage.googleapis.com/learnjs-data/tfjs_converter_v1.3.2_master/handdetector_hourglass_short_2019_03_25_v0/model.json';
+    'https://tfhub.dev/tensorflow/tfjs-model/handdetector/1/default/1';
 
 // NEW MODEL
 // const HANDTRACK_MODEL_PATH =
@@ -17,8 +19,10 @@ const HANDDETECT_MODEL_PATH =
 //     'https://storage.googleapis.com/learnjs-data/handskeleton_handflag_2019_12_18_v0.hdf5_tfjs/model.json';
 
 // OLD MODEL
+// const HANDTRACK_MODEL_PATH =
+//     'https://storage.googleapis.com/learnjs-data/tfjs_converter_v1.3.2_master/handskeleton_3d_handflag_2019_08_19_v0/model.json';
 const HANDTRACK_MODEL_PATH =
-    'https://storage.googleapis.com/learnjs-data/tfjs_converter_v1.3.2_master/handskeleton_3d_handflag_2019_08_19_v0/model.json';
+    'https://tfhub.dev/tensorflow/tfjs-model/handskeleton/1/default/1';
 
 tfconv.registerOp('MaxPoolWithArgmax', (obj: any) => {
   const input = obj['inputs'][0];
@@ -34,8 +38,10 @@ export async function load() {
           'https://storage.googleapis.com/learnjs-data/handtrack_staging/anchors.json')
           .then(d => d.json());
 
-  const handModel = await tfconv.loadGraphModel(HANDDETECT_MODEL_PATH);
-  const handSkeletonModel = await tfconv.loadGraphModel(HANDTRACK_MODEL_PATH);
+  const handModel =
+      await tfconv.loadGraphModel(HANDDETECT_MODEL_PATH, {fromTFHub: true});
+  const handSkeletonModel =
+      await tfconv.loadGraphModel(HANDTRACK_MODEL_PATH, {fromTFHub: true});
 
   const handdetect = new HandDetectModel(handModel, 256, 256, ANCHORS);
   const pipeline = new HandPipeline(handdetect, handSkeletonModel);
