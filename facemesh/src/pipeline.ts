@@ -101,8 +101,10 @@ export class Pipeline {
             tf.mul(coordsReshaped, normalizedBox).add(box.startPoint);
       } else {
         scaledCoords =
-            tf.mul(coordsReshaped, normalizedBox)
-                .add(box.startPoint.concat(tf.tensor2d([0], [1, 1])));
+            tf.mul(
+                  coordsReshaped,
+                  normalizedBox.concat(tf.tensor2d([1], [1, 1]), 1))
+                .add(box.startPoint.concat(tf.tensor2d([0], [1, 1]), 1));
       }
 
       const landmarksBox = this.calculateLandmarksBoundingBox(scaledCoords);
