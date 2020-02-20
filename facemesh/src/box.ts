@@ -46,6 +46,16 @@ export const createBox =
     };
 
 export const scaleBox = (box: Box, factors: tf.Tensor1D|number[]): Box => {
+  if (factors instanceof tf.Tensor) {
+    if (box.startPoint.shape[1] > factors.shape[0]) {
+      factors = tf.concat([factors, tf.tensor1d([1])]);
+    }
+  } else {
+    if (box.startPoint.shape[1] > factors.length) {
+      factors = [...factors, 1];
+    }
+  }
+
   const starts = tf.mul(box.startPoint, factors);
   const ends = tf.mul(box.endPoint, factors);
 

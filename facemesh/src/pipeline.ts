@@ -74,12 +74,8 @@ export class Pipeline {
 
       const scaledBoxes = tf.tidy(
           () => boxes.map(
-              (prediction: any): any => enlargeBox(
+              (prediction: Box): Box => enlargeBox(
                   scaleBox(prediction, scaleFactor as [number, number]))));
-      // const scaledBoxes = tf.tidy(
-      //     () => boxes.map(
-      //         (prediction: Box): Box => enlargeBox(
-      //             scaleBox(prediction, scaleFactor as [number, number]))));
 
       this.updateRoisFromFaceDetector(scaledBoxes);
       this.runsWithoutFaceDetector = 0;
@@ -127,8 +123,7 @@ export class Pipeline {
     }));
   }
 
-  // updateRoisFromFaceDetector(boxes: Box[]) {
-  updateRoisFromFaceDetector(boxes: any[]) {
+  updateRoisFromFaceDetector(boxes: Box[]) {
     for (let i = 0; i < boxes.length; i++) {
       const box = boxes[i];
       const prev = this.rois[i];
@@ -136,19 +131,28 @@ export class Pipeline {
 
       if (prev && prev.startPoint) {
         const boxStartEnd = box.startEndTensor.arraySync()[0];
-        const prevStartEnd = prev.startEndTensor.arraySync()[0] as any;
+        const prevStartEnd = prev.startEndTensor.arraySync()[0];
 
-        const xBox = Math.max(boxStartEnd[0], prevStartEnd[0]);
-        const yBox = Math.max(boxStartEnd[1], prevStartEnd[1]);
-        const xPrev = Math.min(boxStartEnd[2], prevStartEnd[2]);
-        const yPrev = Math.min(boxStartEnd[3], prevStartEnd[3]);
+        const dims = boxStartEnd.length;
 
-        const interArea = (xPrev - xBox) * (yPrev - yBox);
+        const boxStartX = boxStartEnd[0];
+        const prevStartX = prevStartEnd[0];
+        const boxStartY = boxStartEnd[1];
+        const prevStartY = prevStartEnd[1];
+        const boxEndX = boxStartEnd[dims];
+        const prevEndX = prevStartEnd[dims];
+        const boxEndY = boxStartEnd[dims + 1];
+        const prevEndY = prevStartEnd[dims + 1];
 
-        const boxArea = (boxStartEnd[2] - boxStartEnd[0]) *
-            (boxStartEnd[3] - boxStartEnd[1]);
-        const prevArea = (prevStartEnd[2] - prevStartEnd[0]) *
-            (prevStartEnd[3] - boxStartEnd[1]);
+        const xStartMax = Math.max(boxStartX, prevStartX);
+        const yStartMax = Math.max(boxStartY, prevStartY);
+        const xEndMin = Math.min(boxEndX, prevEndX);
+        const yEndMin = Math.min(boxEndY, prevEndY);
+
+        const interArea = (xEndMin - xStartMax) * (yEndMin - yStartMax);
+
+        const boxArea = (boxEndX - boxStartX) * (boxEndY - boxStartY);
+        const prevArea = (prevEndX - prevStartX) * (prevEndY - boxStartY);
         iou = interArea / (boxArea + prevArea - interArea);
       }
 
