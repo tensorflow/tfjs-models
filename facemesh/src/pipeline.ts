@@ -190,7 +190,7 @@ export class Pipeline {
     const xs = landmarks.slice([0, 0], [LANDMARKS_COUNT, 1]);
     const ys = landmarks.slice([0, 1], [LANDMARKS_COUNT, 1]);
 
-    const boxMinMax = tf.stack([xs.min(), ys.min(), xs.max(), ys.max()]) as any;
+    const boxMinMax = tf.stack([xs.min(), ys.min(), xs.max(), ys.max()]);
     const box = createBox(boxMinMax.expandDims(0));
     return enlargeBox(box);
   }
