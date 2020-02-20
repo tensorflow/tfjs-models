@@ -65,8 +65,6 @@ export class Pipeline {
       const {boxes, scaleFactor} = await this.blazeface.getBoundingBoxes(
           image, returnTensors, annotateFace);
 
-      // debugger;
-
       if (!boxes.length) {
         this.clearROIs();
         return null;
@@ -94,16 +92,18 @@ export class Pipeline {
 
       let coordsReshaped = tf.reshape(coords, [-1, 3]);
 
-      let scaledCoords: tf.Tensor2D|tf.Tensor3D, normalizedBox: tf.Tensor1D;
+      let scaledCoords: tf.Tensor2D|tf.Tensor3D;
+      const normalizedBox =
+          tf.div(getBoxSize(box), [this.meshWidth, this.meshHeight]);
       if (return3d === false) {
-        normalizedBox =
-            tf.div(getBoxSize(box), [this.meshWidth, this.meshHeight]);
         coordsReshaped = coordsReshaped.slice([0, 0], [-1, 2]) as tf.Tensor2D;
+        scaledCoords =
+            tf.mul(coordsReshaped, normalizedBox).add(box.startPoint);
       } else {
-        normalizedBox =
-            tf.div(getBoxSize(box), [this.meshWidth, this.meshHeight, 1]);
+        scaledCoords =
+            tf.mul(coordsReshaped, normalizedBox)
+                .add(box.startPoint.concat(tf.tensor2d([0], [1, 1])));
       }
-      scaledCoords = tf.mul(coordsReshaped, normalizedBox).add(box.startPoint);
 
       const landmarksBox = this.calculateLandmarksBoundingBox(scaledCoords);
       const prev = this.rois[i];
