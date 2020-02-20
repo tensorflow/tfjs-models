@@ -29,26 +29,31 @@ export const disposeBox = (box: Box): void => {
   box.endPoint.dispose();
 };
 
+// startEndTensor: [1, 4]|[1, 6]
+// startPoint: [1, 2]|[1, 3]
 export const createBox =
     (startEndTensor: tf.Tensor2D, startPoint?: tf.Tensor2D,
-     endPoint?: tf.Tensor2D): Box => ({
-      startEndTensor,
-      startPoint: startPoint ? startPoint :
-                               tf.slice(startEndTensor, [0, 0], [-1, 2]),
-      endPoint: endPoint ? endPoint :
-                           tf.slice(startEndTensor, [0, 2], [-1, 2])
-    });
+     endPoint?: tf.Tensor2D): Box => {
+      const dims = startEndTensor.shape[1] / 2;
 
-export const scaleBox =
-    (box: Box, factors: tf.Tensor1D|[number, number]): Box => {
-      const starts = tf.mul(box.startPoint, factors);
-      const ends = tf.mul(box.endPoint, factors);
-
-      const newCoordinates =
-          tf.concat2d([starts as tf.Tensor2D, ends as tf.Tensor2D], 1);
-
-      return createBox(newCoordinates);
+      return {
+        startEndTensor,
+        startPoint: startPoint ? startPoint :
+                                 tf.slice(startEndTensor, [0, 0], [-1, dims]),
+        endPoint: endPoint ? endPoint :
+                             tf.slice(startEndTensor, [0, dims], [-1, dims])
+      };
     };
+
+export const scaleBox = (box: Box, factors: tf.Tensor1D|number[]): Box => {
+  const starts = tf.mul(box.startPoint, factors);
+  const ends = tf.mul(box.endPoint, factors);
+
+  const newCoordinates =
+      tf.concat2d([starts as tf.Tensor2D, ends as tf.Tensor2D], 1);
+
+  return createBox(newCoordinates);
+};
 
 export const getBoxSize = (box: Box): tf.Tensor2D => {
   return tf.abs(tf.sub(box.endPoint, box.startPoint)) as tf.Tensor2D;
@@ -64,13 +69,14 @@ export const cutBoxFromImageAndResize =
       const h = image.shape[1];
       const w = image.shape[2];
 
-      const xyxy = box.startEndTensor;
+      const xyxy = box.startEndTensor;  // TODO: 3D SUPPORT
+      const dims = xyxy.shape[1] / 2;
       const yxyx = tf.concat2d(
           [
             xyxy.slice([0, 1], [-1, 1]) as tf.Tensor2D,
             xyxy.slice([0, 0], [-1, 1]) as tf.Tensor2D,
-            xyxy.slice([0, 3], [-1, 1]) as tf.Tensor2D,
-            xyxy.slice([0, 2], [-1, 1]) as tf.Tensor2D
+            xyxy.slice([0, dims + 1], [-1, 1]) as tf.Tensor2D,
+            xyxy.slice([0, dims], [-1, 1]) as tf.Tensor2D
           ],
           0);
       const roundedCoords = tf.div(yxyx.transpose(), [h, w, h, w]);

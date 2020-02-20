@@ -22,6 +22,7 @@ import * as tf from '@tensorflow/tfjs-core';
 import {MESH_ANNOTATIONS} from './keypoints';
 import {Pipeline, Prediction} from './pipeline';
 
+// TODO: CHANGE TO TFHUB LINK ONCE AVAILABLE.
 const BLAZE_MESH_GRAPHMODEL_PATH =
     'https://storage.googleapis.com/learnjs-data/facemesh_staging/facemesh_facecontours_faceflag-blaze_shift30-2019_01_14-v0.hdf5_tfjs_fixed_batch/model.json';
 
@@ -103,7 +104,7 @@ export class FaceMesh {
   private detectionConfidence: number;
 
   async load({
-    meshWidth = 192,  // change to 128 for ultralite
+    meshWidth = 192,
     meshHeight = 192,
     maxContinuousChecks = 5,
     detectionConfidence = 0.9,
@@ -145,8 +146,8 @@ export class FaceMesh {
   async estimateFaces(
       input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
       HTMLCanvasElement,
-      returnTensors = false,
-      flipHorizontal = false): Promise<AnnotatedPrediction[]> {
+      returnTensors = false, flipHorizontal = false,
+      return3d = false): Promise<AnnotatedPrediction[]> {
     if (!(input instanceof tf.Tensor)) {
       input = tf.browser.fromPixels(input);
     }
@@ -154,7 +155,8 @@ export class FaceMesh {
     const [, width] = getInputTensorDimensions(input);
     const inputToFloat = input.toFloat();
     const image = inputToFloat.expandDims(0) as tf.Tensor4D;
-    const predictions = await this.pipeline.predict(image) as Prediction[];
+    const predictions =
+        await this.pipeline.predict(image, return3d) as Prediction[];
 
     input.dispose();
     inputToFloat.dispose();
@@ -166,21 +168,21 @@ export class FaceMesh {
               predictions.map(
                   async (prediction: Prediction) => {
                     const {coords, scaledCoords, box, flag} = prediction;
-                    let tensorsToRead: Array<tf.Tensor2D|tf.Scalar> = [flag];
+                    let tensorsToRead: any = [flag];
                     if (!returnTensors) {
                       tensorsToRead = tensorsToRead.concat(
                           [coords, scaledCoords, box.startPoint, box.endPoint]);
                     }
 
                     const tensorValues = await Promise.all(
-                        tensorsToRead.map(async d => await d.array()));
+                        tensorsToRead.map(async (d: any) => await d.array()));
                     const flagValue = tensorValues[0] as number;
 
                     flag.dispose();
                     this.clearPipelineROIs(flagValue);
 
                     if (returnTensors) {
-                      let annotatedPrediction: AnnotatedPrediction = {
+                      let annotatedPrediction: any = {
                         faceInViewConfidence: flag,
                         mesh: coords,
                         scaledMesh: scaledCoords,

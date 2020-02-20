@@ -22,8 +22,8 @@ import * as tf from '@tensorflow/tfjs-core';
 import {Box, createBox, cutBoxFromImageAndResize, disposeBox, enlargeBox, getBoxSize, scaleBox} from './box';
 
 export type Prediction = {
-  coords: tf.Tensor2D,
-  scaledCoords: tf.Tensor2D,
+  coords: tf.Tensor2D|tf.Tensor3D,
+  scaledCoords: tf.Tensor2D|tf.Tensor3D,
   box: Box,
   flag: tf.Scalar
 };
@@ -55,15 +55,17 @@ export class Pipeline {
   }
 
   /**
-   * @param {tf.Tensor!} image - image tensor of shape [1, H, W, 3].
+   * @param image - image tensor of shape [1, H, W, 3].
    * @return an array of predictions for each face
    */
-  async predict(image: tf.Tensor4D): Promise<Prediction[]> {
+  async predict(image: tf.Tensor4D, return3d: boolean): Promise<Prediction[]> {
     if (this.needsRoisUpdate()) {
       const returnTensors = false;
       const annotateFace = false;
       const {boxes, scaleFactor} = await this.blazeface.getBoundingBoxes(
           image, returnTensors, annotateFace);
+
+      // debugger;
 
       if (!boxes.length) {
         this.clearROIs();
@@ -72,8 +74,12 @@ export class Pipeline {
 
       const scaledBoxes = tf.tidy(
           () => boxes.map(
-              (prediction: Box): Box => enlargeBox(
+              (prediction: any): any => enlargeBox(
                   scaleBox(prediction, scaleFactor as [number, number]))));
+      // const scaledBoxes = tf.tidy(
+      //     () => boxes.map(
+      //         (prediction: Box): Box => enlargeBox(
+      //             scaleBox(prediction, scaleFactor as [number, number]))));
 
       this.updateRoisFromFaceDetector(scaledBoxes);
       this.runsWithoutFaceDetector = 0;
@@ -86,20 +92,26 @@ export class Pipeline {
       const face = cutBoxFromImageAndResize(box, image, [
                      this.meshHeight, this.meshWidth
                    ]).div(255);
-      // TODO: What are contours? (first argument)
-      // change to [coords, flag] for ultralite model
+
       const [, flag, coords] =
           this.blazemesh.predict(face) as [tf.Tensor, tf.Tensor2D, tf.Tensor2D];
 
-      const coords2d =
-          tf.reshape(coords, [-1, 3]).slice([0, 0], [-1, 2]) as tf.Tensor2D;
-      const coords2dScaled =
-          tf.mul(
-                coords2d,
-                tf.div(getBoxSize(box), [this.meshWidth, this.meshHeight]))
-              .add(box.startPoint) as tf.Tensor2D;
+      let coordsReshaped = tf.reshape(coords, [-1, 3]);
+      const normalizedBox =
+          tf.div(getBoxSize(box), [this.meshWidth, this.meshHeight]);
 
-      const landmarksBox = this.calculateLandmarksBoundingBox(coords2dScaled);
+      let scaledCoords: tf.Tensor2D|tf.Tensor3D;
+      if (return3d === false) {
+        coordsReshaped = coordsReshaped.slice([0, 0], [-1, 2]) as tf.Tensor2D;
+        scaledCoords =
+            tf.mul(coordsReshaped, normalizedBox).add(box.startPoint);
+      } else {
+        // scaledCoords =
+        //     tf.mul(coordsReshaped, normalizedBox.concat(tf.tensor1d([1])))
+        //         .add(box.startPoint.concat(tf.tensor1d([1])));
+      }
+
+      const landmarksBox = this.calculateLandmarksBoundingBox(scaledCoords);
       const prev = this.rois[i];
       if (prev) {
         disposeBox(prev);
@@ -107,15 +119,16 @@ export class Pipeline {
       this.rois[i] = landmarksBox;
 
       return {
-        coords: coords2d,
-        scaledCoords: coords2dScaled,
+        coords: coordsReshaped,
+        scaledCoords,
         box: landmarksBox,
         flag: flag.squeeze()
       } as Prediction;
     }));
   }
 
-  updateRoisFromFaceDetector(boxes: Box[]) {
+  // updateRoisFromFaceDetector(boxes: Box[]) {
+  updateRoisFromFaceDetector(boxes: any[]) {
     for (let i = 0; i < boxes.length; i++) {
       const box = boxes[i];
       const prev = this.rois[i];
@@ -123,7 +136,7 @@ export class Pipeline {
 
       if (prev && prev.startPoint) {
         const boxStartEnd = box.startEndTensor.arraySync()[0];
-        const prevStartEnd = prev.startEndTensor.arraySync()[0];
+        const prevStartEnd = prev.startEndTensor.arraySync()[0] as any;
 
         const xBox = Math.max(boxStartEnd[0], prevStartEnd[0]);
         const yBox = Math.max(boxStartEnd[1], prevStartEnd[1]);
@@ -177,7 +190,7 @@ export class Pipeline {
     const xs = landmarks.slice([0, 0], [LANDMARKS_COUNT, 1]);
     const ys = landmarks.slice([0, 1], [LANDMARKS_COUNT, 1]);
 
-    const boxMinMax = tf.stack([xs.min(), ys.min(), xs.max(), ys.max()]);
+    const boxMinMax = tf.stack([xs.min(), ys.min(), xs.max(), ys.max()]) as any;
     const box = createBox(boxMinMax.expandDims(0));
     return enlargeBox(box);
   }
