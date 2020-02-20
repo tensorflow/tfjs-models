@@ -22,7 +22,7 @@ import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
 tfjsWasm.setWasmPath('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@latest/dist/tfjs-backend-wasm.wasm');
 import Stats from 'stats.js';
 
-let model, ctx, videoWidth, videoHeight, video, canvas;
+let model, ctx, videoWidth, videoHeight, video, canvas, scatterGLHasInitialized = false;
 
 const stats = new Stats();
 const r = 1;
@@ -85,6 +85,20 @@ const renderPrediction = async () => {
         ctx.fill();
       }
     });
+
+    if(return3D) {
+      const dataset = new ScatterGL.Dataset(
+        predictions[0].scaledMesh.map(point =>
+          ([-point[0], -point[1], -point[2]])));
+
+      if (!scatterGLHasInitialized) {
+        scatterGL.render(dataset);
+      } else {
+        scatterGL.updateDataset(dataset);
+      }
+
+      scatterGLHasInitialized = true;
+    }
   }
 
   stats.end();
@@ -96,7 +110,7 @@ const setupPage = async () => {
   await tf.setBackend(state.backend);
 
   const useVideoStream = true;
-  if(useVideoStream) {
+  if (useVideoStream) {
     await setupCamera();
     video.play();
     videoWidth = video.videoWidth;
@@ -113,6 +127,10 @@ const setupPage = async () => {
   canvas = document.getElementById('output');
   canvas.width = videoWidth;
   canvas.height = videoHeight;
+  const canvasContainer = document.querySelector(".canvas-wrapper");
+  canvasContainer.style.width = `${videoWidth}px`;
+  canvasContainer.style.height = `${videoHeight}px`;
+
   ctx = canvas.getContext('2d');
   ctx.translate(canvas.width, 0);
   ctx.scale(-1, 1);
@@ -125,5 +143,11 @@ const setupPage = async () => {
 
   renderPrediction();
 };
+
+const scatterGL = new ScatterGL(
+  document.querySelector("#scatter-gl-container"), {
+    'rotateOnStart': false,
+    'selectEnabled': false
+  });
 
 setupPage();
