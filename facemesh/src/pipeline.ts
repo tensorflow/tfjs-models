@@ -32,7 +32,7 @@ const LANDMARKS_COUNT = 468;
 
 export class Pipeline {
   private blazeface: blazeface.BlazeFaceModel;
-  private blazemesh: tfconv.GraphModel;
+  private mesh: tfconv.GraphModel;
   private meshWidth: number;
   private meshHeight: number;
   private maxContinuousChecks: number;
@@ -41,11 +41,11 @@ export class Pipeline {
   private maxFaces: number;
 
   constructor(
-      blazeface: blazeface.BlazeFaceModel, blazemesh: tfconv.GraphModel,
+      blazeface: blazeface.BlazeFaceModel, mesh: tfconv.GraphModel,
       meshWidth: number, meshHeight: number, maxContinuousChecks: number,
       maxFaces: number) {
     this.blazeface = blazeface;
-    this.blazemesh = blazemesh;
+    this.mesh = mesh;
     this.meshWidth = meshWidth;
     this.meshHeight = meshHeight;
     this.maxContinuousChecks = maxContinuousChecks;
@@ -90,22 +90,20 @@ export class Pipeline {
                    ]).div(255);
 
       const [, flag, coords] =
-          this.blazemesh.predict(face) as [tf.Tensor, tf.Tensor2D, tf.Tensor2D];
+          this.mesh.predict(face) as [tf.Tensor, tf.Tensor2D, tf.Tensor2D];
 
       let coordsReshaped = tf.reshape(coords, [-1, 3]);
-      const normalizedBox =
-          tf.div(getBoxSize(box), [this.meshWidth, this.meshHeight]);
 
-      let scaledCoords: tf.Tensor2D|tf.Tensor3D;
+      let scaledCoords: tf.Tensor2D|tf.Tensor3D, normalizedBox: tf.Tensor1D;
       if (return3d === false) {
+        normalizedBox =
+            tf.div(getBoxSize(box), [this.meshWidth, this.meshHeight]);
         coordsReshaped = coordsReshaped.slice([0, 0], [-1, 2]) as tf.Tensor2D;
-        scaledCoords =
-            tf.mul(coordsReshaped, normalizedBox).add(box.startPoint);
       } else {
-        // scaledCoords =
-        //     tf.mul(coordsReshaped, normalizedBox.concat(tf.tensor1d([1])))
-        //         .add(box.startPoint.concat(tf.tensor1d([1])));
+        normalizedBox =
+            tf.div(getBoxSize(box), [this.meshWidth, this.meshHeight, 1]);
       }
+      scaledCoords = tf.mul(coordsReshaped, normalizedBox).add(box.startPoint);
 
       const landmarksBox = this.calculateLandmarksBoundingBox(scaledCoords);
       const prev = this.rois[i];
@@ -133,16 +131,14 @@ export class Pipeline {
         const boxStartEnd = box.startEndTensor.arraySync()[0];
         const prevStartEnd = prev.startEndTensor.arraySync()[0];
 
-        const dims = boxStartEnd.length;
-
         const boxStartX = boxStartEnd[0];
         const prevStartX = prevStartEnd[0];
         const boxStartY = boxStartEnd[1];
         const prevStartY = prevStartEnd[1];
-        const boxEndX = boxStartEnd[dims];
-        const prevEndX = prevStartEnd[dims];
-        const boxEndY = boxStartEnd[dims + 1];
-        const prevEndY = prevStartEnd[dims + 1];
+        const boxEndX = boxStartEnd[2];
+        const prevEndX = prevStartEnd[2];
+        const boxEndY = boxStartEnd[3];
+        const prevEndY = prevStartEnd[3];
 
         const xStartMax = Math.max(boxStartX, prevStartX);
         const yStartMax = Math.max(boxStartY, prevStartY);

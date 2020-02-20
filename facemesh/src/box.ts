@@ -79,7 +79,7 @@ export const cutBoxFromImageAndResize =
       const h = image.shape[1];
       const w = image.shape[2];
 
-      const xyxy = box.startEndTensor;  // TODO: 3D SUPPORT
+      const xyxy = box.startEndTensor;
       const dims = xyxy.shape[1] / 2;
       const yxyx = tf.concat2d(
           [
