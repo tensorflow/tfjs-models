@@ -15,6 +15,7 @@
  * =============================================================================
  */
 import * as tf from '@tensorflow/tfjs-core';
+import {showCandidateWords} from '../../speech-commands/demo/ui';
 
 const SEPERATOR = '\u2581';
 export const UNK_INDEX = 100;
@@ -118,6 +119,10 @@ function isPunctuation(ch: string): boolean {
   return punctuations.indexOf(ch) !== -1;
 }
 
+export interface TokenWithIndexMap {
+  token: string;
+  index: number;
+}
 /**
  * Tokenizer for Bert.
  */
@@ -143,14 +148,18 @@ export class BertTokenizer {
     return tf.util.fetch(VOCAB_URL).then(d => d.json());
   }
 
-  processInput(text: string): string[] {
-    const cleanedText = this.cleanText(text);
+  processInput(text: string): TokenWithIndexMap[] {
+    const charOrignalIndex = [];
+    const cleanedText = this.cleanText(text, charOrignalIndex);
 
     const origTokens = cleanedText.split(' ');
 
+    let charCount = 0;
     const tokens = origTokens.map((token) => {
       token = token.toLowerCase();
-      return this.runSplitOnPunc(token);
+      charCount += token.length + 1;
+      const tokens = this.runSplitOnPunc(token, charCount, charOrignalIndex);
+      return tokens;
     });
 
     let flattenTokens = [];
@@ -161,36 +170,53 @@ export class BertTokenizer {
   }
 
   /* Performs invalid character removal and whitespace cleanup on text. */
-  private cleanText(text: string): string {
+  private cleanText(text: string, charOriginalIndex: number[]): string {
     const stringBuilder = [];
+    let originalCharIndex = 0, newCharIndex = 0;
     for (const ch of text) {
       // Skip the characters that cannot be used.
       if (isInvalid(ch)) {
+        originalCharIndex += ch.length;
         continue;
       }
       if (isWhitespace(ch)) {
-        stringBuilder.push(' ');
+        if (stringBuilder.length > 0 &&
+            stringBuilder[stringBuilder.length - 1] !== ' ') {
+          stringBuilder.push(' ');
+          charOriginalIndex[newCharIndex] = originalCharIndex;
+          originalCharIndex += ch.length;
+        } else {
+          originalCharIndex += ch.length;
+          continue;
+        }
       } else {
         stringBuilder.push(ch);
+        charOriginalIndex[newCharIndex] = originalCharIndex;
+        originalCharIndex += ch.length;
       }
+      newCharIndex++;
     }
     return stringBuilder.join('');
   }
 
   /* Splits punctuation on a piece of text. */
-  private runSplitOnPunc(text: string): string[] {
+  private runSplitOnPunc(
+      text: string, count: number,
+      charOriginalIndex: number[]): TokenWithIndexMap[] {
     const tokens = [];
     let startNewWord = true;
     for (const ch of text) {
       if (isPunctuation(ch)) {
-        tokens.push(ch);
+        tokens.push({token: ch, index: charOriginalIndex[count]});
+        count += ch.length;
         startNewWord = true;
       } else {
         if (startNewWord) {
-          tokens.push('');
+          tokens.push({token: '', index: charOriginalIndex[count]});
           startNewWord = false;
+          count += ch.length;
         }
-        tokens[tokens.length - 1] += ch;
+        tokens[tokens.length - 1].token += ch;
       }
     }
     return tokens;
@@ -206,15 +232,16 @@ export class BertTokenizer {
 
     let outputTokens = [];
 
-    const words = this.processInput(text).map(word => {
-      if (word !== CLS_TOKEN && word !== SEP_TOKEN) {
-        return `${SEPERATOR}${word.normalize(NFKC_TOKEN)}`;
+    const words = this.processInput(text);
+    showCandidateWords.forEach(word => {
+      if (word.token !== CLS_TOKEN && word.token !== SEP_TOKEN) {
+        word.token = `${SEPERATOR}${word.token.normalize(NFKC_TOKEN)}`;
       }
-      return word;
     });
+
     for (let i = 0; i < words.length; i++) {
       const chars = [];
-      for (const symbol of words[i]) {
+      for (const symbol of words[i].token) {
         chars.push(symbol);
       }
 

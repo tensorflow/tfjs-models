@@ -17,9 +17,9 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {BertTokenizer, CLS_INDEX, loadTokenizer, SEP_INDEX} from './bert_tokenizer';
+import {BertTokenizer, CLS_INDEX, loadTokenizer, SEP_INDEX, TokenWithIndexMap} from './bert_tokenizer';
 
-//TODO: Upload model to TFHub tensorflow/tfjs#2730
+// TODO: Upload model to TFHub tensorflow/tfjs#2730
 const BASE_DIR = 'https://storage.googleapis.com/tfjs-testing/mobile-bert/';
 const MODEL_URL = BASE_DIR + 'model.json';
 const INPUT_SIZE = 384;
@@ -47,6 +47,8 @@ export interface ModelConfig {
 
 export interface Answer {
   text: string;
+  startIndex: number;
+  endIndex: number;
   score: number;
 }
 
@@ -54,7 +56,7 @@ interface Feature {
   inputIds: number[];
   inputMask: number[];
   segmentIds: number[];
-  origTokens: string[];
+  origTokens: TokenWithIndexMap[];
   tokenToOrigMap: {[key: number]: number};
 }
 
@@ -80,11 +82,11 @@ class MobileBertImpl implements MobileBert {
     if (queryTokens.length > maxQueryLen) {
       queryTokens = queryTokens.slice(0, maxQueryLen);
     }
-    const origTokens = this.tokenizer.processInput(context.trim()).slice(0);
+    const origTokens = this.tokenizer.processInput(context.trim());
     const tokenToOrigIndex = [];
     const allDocTokens = [];
     for (let i = 0; i < origTokens.length; i++) {
-      const token = origTokens[i];
+      const token = origTokens[i].token;
       const subTokens = this.tokenizer.tokenize(token);
       for (let j = 0; j < subTokens.length; j++) {
         const subToken = subTokens[j];
@@ -223,8 +225,9 @@ class MobileBertImpl implements MobileBert {
    * @param tokenToOrigMap token to index mapping
    */
   getBestAnswers(
-      startLogits: number[], endLogits: number[], origTokens: string[],
-      tokenToOrigMap: {[key: string]: number}, docIndex = 0): Answer[] {
+      startLogits: number[], endLogits: number[],
+      origTokens: TokenWithIndexMap[], tokenToOrigMap: {[key: string]: number},
+      docIndex = 0): Answer[] {
     // Model uses the closed interval [start, end] for indices.
     const startIndexes = this.getBestIndex(startLogits);
     const endIndexes = this.getBestIndex(endLogits);
@@ -251,14 +254,21 @@ class MobileBertImpl implements MobileBert {
       }
 
       let convertedText = '';
+      let startIndex = 0;
+      let endIndex = 0;
       if (origResults[i].start > 0) {
-        convertedText = this.convertBack(
+        [convertedText, startIndex, endIndex] = this.convertBack(
             origTokens, tokenToOrigMap, origResults[i].start,
             origResults[i].end);
       } else {
         convertedText = '';
       }
-      answers.push({text: convertedText, score: origResults[i].score});
+      answers.push({
+        text: convertedText,
+        score: origResults[i].score,
+        startIndex,
+        endIndex
+      });
     }
     return answers;
   }
@@ -281,16 +291,23 @@ class MobileBertImpl implements MobileBert {
 
   /** Convert the answer back to original text form. */
   convertBack(
-      origTokens: string[], tokenToOrigMap: {[key: string]: number},
-      start: number, end: number): string {
+      origTokens: TokenWithIndexMap[], tokenToOrigMap: {[key: string]: number},
+      start: number, end: number): [string, number, number] {
     // Shifted index is: index of logits + offset.
     const shiftedStart = start + OUTPUT_OFFSET;
     const shiftedEnd = end + OUTPUT_OFFSET;
     const startIndex = tokenToOrigMap[shiftedStart];
     const endIndex = tokenToOrigMap[shiftedEnd];
     // end + 1 for the closed interval.
-    const ans = origTokens.slice(startIndex, endIndex + 1).join(' ');
-    return ans;
+    const ans = origTokens.slice(startIndex, endIndex + 1)
+                    .map(token => token.token)
+                    .join(' ');
+    const startCharIndex = origTokens[startIndex].index;
+
+    const endCharIndex = endIndex === origTokens.length ?
+        origTokens[endIndex].index + origTokens[endIndex].token.length :
+        origTokens[endIndex + 1].index - 1;
+    return [ans, startCharIndex, endCharIndex];
   }
 }
 
