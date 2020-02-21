@@ -17,7 +17,7 @@
     "@tensorflow/tfjs-converter": "~1.5.2"
   },
   "dependencies": {
-    "@tensorflow-models/blazeface": "0.0.4"
+    "@tensorflow-models/blazeface": "0.0.5"
   },
   "devDependencies": {
     "@tensorflow/tfjs-core": "~1.5.2",

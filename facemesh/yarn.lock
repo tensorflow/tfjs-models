@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@tensorflow-models/blazeface@0.0.4":
-  version "0.0.4"
-  resolved "https://registry.yarnpkg.com/@tensorflow-models/blazeface/-/blazeface-0.0.4.tgz#ce20aafd29be86c7d8c90b44b8a670c5546552e6"
-  integrity sha512-Wm5iaofbb7N58MIt8Q/wdn2mAnPh60JUfleA471yY8hNfS02srZu5mq/0ZSWT0fF5ofIXdp2d07AuHR6TTOy1g==
+"@tensorflow-models/blazeface@0.0.5":
+  version "0.0.5"
+  resolved "https://registry.yarnpkg.com/@tensorflow-models/blazeface/-/blazeface-0.0.5.tgz#6261fcc5de61a283ea409b69f6a851f44a809826"
+  integrity sha512-bIMJDV2CD8rr7v9OrIDdDZVh9sbk0EhlZdHaDFpgWUw3Lp21wUN7GSifOJVE5hV2ngmpzM+J12OH8bG1GZoDag==
 
 "@tensorflow/tfjs-converter@~1.5.2":
   version "1.5.2"
