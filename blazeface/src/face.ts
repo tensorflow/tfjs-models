@@ -113,13 +113,9 @@ function getInputTensorDimensions(input: tf.Tensor3D|ImageData|HTMLVideoElement|
 
 function flipFaceHorizontal(
     face: NormalizedFace, imageWidth: number): NormalizedFace {
-  let flipped: NormalizedFace;
-
-  if (face.probability != null) {
-    flipped.probability = face.probability instanceof tf.Tensor ?
-        face.probability.clone() :
-        face.probability;
-  }
+  let flippedTopLeft: [number, number]|tf.Tensor1D,
+      flippedBottomRight: [number, number]|tf.Tensor1D,
+      flippedLandmarks: number[][]|tf.Tensor2D;
 
   if (face.topLeft instanceof tf.Tensor &&
       face.bottomRight instanceof tf.Tensor) {
@@ -136,24 +132,27 @@ function flipFaceHorizontal(
       ];
     });
 
-    flipped = {topLeft, bottomRight};
+    flippedTopLeft = topLeft;
+    flippedBottomRight = bottomRight;
 
     if (face.landmarks != null) {
-      const flippedLandmarks: tf.Tensor2D = tf.tidy(
-          () => tf.sub(tf.tensor1d([imageWidth - 1, 0]), face.landmarks)
-                    .mul(tf.tensor1d([1, -1])));
-      flipped.landmarks = flippedLandmarks;
+      flippedLandmarks = tf.tidy(() => {
+        const a: tf.Tensor2D =
+            tf.sub(tf.tensor1d([imageWidth - 1, 0]), face.landmarks);
+        const b = tf.tensor1d([1, -1]);
+        const product: tf.Tensor2D = tf.mul(a, b);
+        return product;
+      });
     }
   } else {
     const [topLeftX, topLeftY] = face.topLeft as [number, number];
     const [bottomRightX, bottomRightY] = face.bottomRight as [number, number];
-    flipped = {
-      topLeft: [imageWidth - 1 - topLeftX, topLeftY],
-      bottomRight: [imageWidth - 1 - bottomRightX, bottomRightY]
-    };
+
+    flippedTopLeft = [imageWidth - 1 - topLeftX, topLeftY];
+    flippedBottomRight = [imageWidth - 1 - bottomRightX, bottomRightY];
 
     if (face.landmarks != null) {
-      flipped.landmarks =
+      flippedLandmarks =
           (face.landmarks as number[][]).map((coord: [number, number]) => ([
                                                imageWidth - 1 - coord[0],
                                                coord[1]
@@ -161,7 +160,22 @@ function flipFaceHorizontal(
     }
   }
 
-  return flipped;
+  const flippedFace: NormalizedFace = {
+    topLeft: flippedTopLeft,
+    bottomRight: flippedBottomRight
+  };
+
+  if (flippedLandmarks != null) {
+    flippedFace.landmarks = flippedLandmarks;
+  }
+
+  if (face.probability != null) {
+    flippedFace.probability = face.probability instanceof tf.Tensor ?
+        face.probability.clone() :
+        face.probability;
+  }
+
+  return flippedFace;
 }
 
 function scaleBoxFromPrediction(

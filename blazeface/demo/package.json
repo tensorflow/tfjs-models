@@ -9,10 +9,10 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow-models/blazeface": "0.0.4",
+    "@tensorflow-models/blazeface": "0.0.5",
     "@tensorflow/tfjs-core": "^1.5.2",
     "@tensorflow/tfjs-converter": "^1.5.2",
-    "@tensorflow/tfjs-backend-wasm": "^1.5.1-alpha5"
+    "@tensorflow/tfjs-backend-wasm": "^1.5.2-alpha1"
   },
   "scripts": {
     "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr --open --target browser",
