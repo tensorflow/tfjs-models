@@ -75,6 +75,8 @@ export class Pipeline {
               (prediction: Box): Box => enlargeBox(
                   scaleBox(prediction, scaleFactor as [number, number]))));
 
+      boxes.forEach(disposeBox);
+
       this.updateRoisFromFaceDetector(scaledBoxes);
       this.runsWithoutFaceDetector = 0;
     } else {
