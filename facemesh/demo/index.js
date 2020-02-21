@@ -22,11 +22,11 @@ import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
 tfjsWasm.setWasmPath('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@latest/dist/tfjs-backend-wasm.wasm');
 import Stats from 'stats.js';
 
-let model, ctx, videoWidth, videoHeight, video, canvas, scatterGLHasInitialized = false;
+let model, ctx, videoWidth, videoHeight, video, canvas, scatterGLHasInitialized = false, scatterGL;
 
+const render3D = true;
 const stats = new Stats();
 const r = 1;
-
 const state = {
   backend: 'webgl'
 };
@@ -68,8 +68,9 @@ const renderPrediction = async () => {
   stats.begin();
   const returnTensors = false;
   const flipHorizontal = false;
-  const return3D = true;
-  const predictions = await model.estimateFaces(video, returnTensors, flipHorizontal, return3D);
+  const startNumTensors = tf.memory().numTensors;
+  const predictions = await model.estimateFaces(video, returnTensors, flipHorizontal, render3D);
+  console.log(tf.memory().numTensors - startNumTensors);
   ctx.drawImage(
     video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width,
     canvas.height);
@@ -90,7 +91,7 @@ const renderPrediction = async () => {
       }
     });
 
-    if(return3D) {
+    if(render3D) {
       const dataset = new ScatterGL.Dataset(
         predictions[0].scaledMesh.map(point =>
           ([-point[0], -point[1], -point[2]])));
@@ -106,7 +107,6 @@ const renderPrediction = async () => {
   }
 
   stats.end();
-
   requestAnimationFrame(renderPrediction);
 };
 
@@ -148,13 +148,15 @@ const setupPage = async () => {
   renderPrediction();
 };
 
-document.querySelector("#scatter-gl-container").style.width = `300px`;
-document.querySelector("#scatter-gl-container").style.height = `300px`;
+if(render3D) {
+  document.querySelector("#scatter-gl-container").style.width = `300px`;
+  document.querySelector("#scatter-gl-container").style.height = `300px`;
 
-const scatterGL = new ScatterGL(
-  document.querySelector("#scatter-gl-container"), {
-    'rotateOnStart': false,
-    'selectEnabled': false
-  });
+  scatterGL = new ScatterGL(
+    document.querySelector("#scatter-gl-container"), {
+      'rotateOnStart': false,
+      'selectEnabled': false
+    });
+}
 
 setupPage();
