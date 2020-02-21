@@ -66,8 +66,8 @@ function setupFPS() {
 
 const renderPrediction = async () => {
   stats.begin();
-  const returnTensors = false;
-  const flipHorizontal = false;
+  const returnTensors = true;
+  const flipHorizontal = true;
   const startNumTensors = tf.memory().numTensors;
   const predictions = await model.estimateFaces(video, returnTensors, flipHorizontal, render3D);
   console.log(tf.memory().numTensors - startNumTensors);

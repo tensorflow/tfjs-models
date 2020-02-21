@@ -51,29 +51,34 @@ function getInputTensorDimensions(input: tf.Tensor3D|ImageData|HTMLVideoElement|
 function flipFaceHorizontal(
     face: AnnotatedPrediction, imageWidth: number,
     return3d: boolean): AnnotatedPrediction {
-  if (face.mesh instanceof tf.Tensor &&
-      face.boundingBox.topLeft instanceof tf.Tensor &&
-      face.boundingBox.bottomRight instanceof tf.Tensor) {
-    const subtractBasis =
-        return3d ? [imageWidth - 1, 0, 0] : [imageWidth - 1, 0];
-    const multiplyBasis = return3d ? [1, -1, 1] : [1, -1];
+  if (face.mesh instanceof tf.Tensor) {
+    const [topLeft, bottomRight, mesh, scaledMesh] = tf.tidy(() => {
+      const subtractBasis =
+          return3d ? [imageWidth - 1, 0, 0] : [imageWidth - 1, 0];
+      const multiplyBasis = return3d ? [1, -1, 1] : [1, -1];
 
-    return Object.assign({}, face, {
-      boundingBox: {
-        topLeft: tf.concat([
-          tf.sub(imageWidth - 1, face.boundingBox.topLeft.slice(0, 1)),
-          face.boundingBox.topLeft.slice(1, 1)
+      return [
+        tf.concat([
+          tf.sub(
+              imageWidth - 1,
+              (face.boundingBox.topLeft as tf.Tensor1D).slice(0, 1)),
+          (face.boundingBox.topLeft as tf.Tensor1D).slice(1, 1)
         ]),
-        bottomRight: tf.concat([
-          tf.sub(imageWidth - 1, face.boundingBox.bottomRight.slice(0, 1)),
-          face.boundingBox.bottomRight.slice(1, 1)
-        ])
-      },
-      mesh: tf.sub(tf.tensor1d(subtractBasis), face.mesh)
-                .mul(tf.tensor1d(multiplyBasis)) as tf.Tensor2D,
-      scaledMesh: tf.sub(tf.tensor1d(subtractBasis), face.scaledMesh)
-                      .mul(tf.tensor1d(multiplyBasis)) as tf.Tensor2D
+        tf.concat([
+          tf.sub(
+              imageWidth - 1,
+              (face.boundingBox.bottomRight as tf.Tensor1D).slice(0, 1)),
+          (face.boundingBox.bottomRight as tf.Tensor1D).slice(1, 1)
+        ]),
+        tf.sub(tf.tensor1d(subtractBasis), face.mesh)
+            .mul(tf.tensor1d(multiplyBasis)),
+        tf.sub(tf.tensor1d(subtractBasis), face.scaledMesh)
+            .mul(tf.tensor1d(multiplyBasis))
+      ];
     });
+
+    return Object.assign(
+        {}, face, {boundingBox: {topLeft, bottomRight}, mesh, scaledMesh});
   }
 
   return Object.assign({}, face, {
@@ -191,7 +196,7 @@ export class FaceMesh {
                     this.clearPipelineROIs(flagValue);
 
                     if (returnTensors) {
-                      let annotatedPrediction = {
+                      const annotatedPrediction = {
                         faceInViewConfidence: flag,
                         mesh: coords,
                         scaledMesh: scaledCoords,
@@ -202,8 +207,19 @@ export class FaceMesh {
                       } as AnnotatedPrediction;
 
                       if (flipHorizontal) {
-                        annotatedPrediction = flipFaceHorizontal(
+                        const flipped = flipFaceHorizontal(
                             annotatedPrediction, width, return3d);
+
+                        (annotatedPrediction.mesh as tf.Tensor2D).dispose();
+                        (annotatedPrediction.scaledMesh as tf.Tensor2D)
+                            .dispose();
+                        (annotatedPrediction.boundingBox.topLeft as tf.Tensor1D)
+                            .dispose();
+                        (annotatedPrediction.boundingBox.bottomRight as
+                         tf.Tensor1D)
+                            .dispose();
+
+                        return flipped;
                       }
 
                       return annotatedPrediction;
