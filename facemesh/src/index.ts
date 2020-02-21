@@ -168,21 +168,21 @@ export class FaceMesh {
               predictions.map(
                   async (prediction: Prediction) => {
                     const {coords, scaledCoords, box, flag} = prediction;
-                    let tensorsToRead: any = [flag];
+                    let tensorsToRead: tf.Tensor[] = [flag];
                     if (!returnTensors) {
                       tensorsToRead = tensorsToRead.concat(
                           [coords, scaledCoords, box.startPoint, box.endPoint]);
                     }
 
-                    const tensorValues = await Promise.all(
-                        tensorsToRead.map(async (d: any) => await d.array()));
+                    const tensorValues = await Promise.all(tensorsToRead.map(
+                        async (d: tf.Tensor) => await d.array()));
                     const flagValue = tensorValues[0] as number;
 
                     flag.dispose();
                     this.clearPipelineROIs(flagValue);
 
                     if (returnTensors) {
-                      let annotatedPrediction: any = {
+                      let annotatedPrediction = {
                         faceInViewConfidence: flag,
                         mesh: coords,
                         scaledMesh: scaledCoords,
@@ -190,7 +190,7 @@ export class FaceMesh {
                           topLeft: box.startPoint,
                           bottomRight: box.endPoint
                         }
-                      };
+                      } as AnnotatedPrediction;
 
                       if (flipHorizontal) {
                         annotatedPrediction =
