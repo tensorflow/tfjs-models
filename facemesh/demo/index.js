@@ -41,7 +41,11 @@ async function setupCamera() {
 
   const stream = await navigator.mediaDevices.getUserMedia({
     'audio': false,
-    'video': {facingMode: 'user'},
+    'video': {
+      facingMode: 'user',
+      width: 500,
+      height: 500
+    },
   });
   video.srcObject = stream;
 
@@ -143,6 +147,9 @@ const setupPage = async () => {
 
   renderPrediction();
 };
+
+document.querySelector("#scatter-gl-container").style.width = `300px`;
+document.querySelector("#scatter-gl-container").style.height = `300px`;
 
 const scatterGL = new ScatterGL(
   document.querySelector("#scatter-gl-container"), {
