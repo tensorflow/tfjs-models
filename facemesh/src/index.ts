@@ -32,8 +32,8 @@ const BLAZE_MESH_GRAPHMODEL_PATH =
 export type AnnotatedPrediction = {
   faceInViewConfidence: number|tf.Scalar,
   boundingBox: {
-    topLeft: [number, number]|tf.Tensor2D,
-    bottomRight: [number, number]|tf.Tensor2D
+    topLeft: [number, number]|tf.Tensor1D,
+    bottomRight: [number, number]|tf.Tensor1D
   },
   mesh: number[][]|tf.Tensor2D,
   scaledMesh: number[][]|tf.Tensor2D,
@@ -51,7 +51,9 @@ function getInputTensorDimensions(input: tf.Tensor3D|ImageData|HTMLVideoElement|
 function flipFaceHorizontal(
     face: AnnotatedPrediction, imageWidth: number,
     return3d: boolean): AnnotatedPrediction {
-  if (face.mesh instanceof tf.Tensor) {
+  if (face.mesh instanceof tf.Tensor &&
+      face.boundingBox.topLeft instanceof tf.Tensor &&
+      face.boundingBox.bottomRight instanceof tf.Tensor) {
     const subtractBasis =
         return3d ? [imageWidth - 1, 0, 0] : [imageWidth - 1, 0];
     const multiplyBasis = return3d ? [1, -1, 1] : [1, -1];
@@ -59,16 +61,12 @@ function flipFaceHorizontal(
     return Object.assign({}, face, {
       boundingBox: {
         topLeft: tf.concat([
-          tf.sub(
-              imageWidth - 1,
-              (face.boundingBox.topLeft as tf.Tensor2D).slice(0, 1)),
-          (face.boundingBox.topLeft as tf.Tensor2D).slice(1, 1)
+          tf.sub(imageWidth - 1, face.boundingBox.topLeft.slice(0, 1)),
+          face.boundingBox.topLeft.slice(1, 1)
         ]),
         bottomRight: tf.concat([
-          tf.sub(
-              imageWidth - 1,
-              (face.boundingBox.bottomRight as tf.Tensor2D).slice(0, 1)),
-          (face.boundingBox.bottomRight as tf.Tensor2D).slice(1, 1)
+          tf.sub(imageWidth - 1, face.boundingBox.bottomRight.slice(0, 1)),
+          face.boundingBox.bottomRight.slice(1, 1)
         ])
       },
       mesh: tf.sub(tf.tensor1d(subtractBasis), face.mesh)
@@ -89,11 +87,12 @@ function flipFaceHorizontal(
         (face.boundingBox.bottomRight as [number, number])[1]
       ]
     },
-    mesh: face.mesh.map((coord: [number, number]|[number, number, number]) => {
-      const flippedCoord = coord.slice(0);
-      flippedCoord[0] = imageWidth - 1 - coord[0];
-      return flippedCoord;
-    }),
+    mesh: (face.mesh as number[][])
+              .map((coord: [number, number]|[number, number, number]) => {
+                const flippedCoord = coord.slice(0);
+                flippedCoord[0] = imageWidth - 1 - coord[0];
+                return flippedCoord;
+              }),
     scaledMesh: (face.scaledMesh as number[][])
                     .map((coord: [number, number]|[number, number, number]) => {
                       const flippedCoord = coord.slice(0);
@@ -197,8 +196,8 @@ export class FaceMesh {
                         mesh: coords,
                         scaledMesh: scaledCoords,
                         boundingBox: {
-                          topLeft: box.startPoint,
-                          bottomRight: box.endPoint
+                          topLeft: box.startPoint.squeeze(),
+                          bottomRight: box.endPoint.squeeze()
                         }
                       } as AnnotatedPrediction;
 
