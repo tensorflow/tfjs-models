@@ -113,7 +113,7 @@ function getInputTensorDimensions(input: tf.Tensor3D|ImageData|HTMLVideoElement|
 
 function flipFaceHorizontal(
     face: NormalizedFace, imageWidth: number): NormalizedFace {
-  let flipped: NormalizedFace;
+  const flipped = {} as NormalizedFace;
 
   if (face.probability != null) {
     flipped.probability = face.probability instanceof tf.Tensor ?
@@ -136,7 +136,8 @@ function flipFaceHorizontal(
       ];
     });
 
-    flipped = {topLeft, bottomRight};
+    flipped.topLeft = topLeft;
+    flipped.bottomRight = bottomRight;
 
     if (face.landmarks != null) {
       const flippedLandmarks: tf.Tensor2D = tf.tidy(
@@ -147,10 +148,9 @@ function flipFaceHorizontal(
   } else {
     const [topLeftX, topLeftY] = face.topLeft as [number, number];
     const [bottomRightX, bottomRightY] = face.bottomRight as [number, number];
-    flipped = {
-      topLeft: [imageWidth - 1 - topLeftX, topLeftY],
-      bottomRight: [imageWidth - 1 - bottomRightX, bottomRightY]
-    };
+
+    flipped.topLeft = [imageWidth - 1 - topLeftX, topLeftY];
+    flipped.bottomRight = [imageWidth - 1 - bottomRightX, bottomRightY];
 
     if (face.landmarks != null) {
       flipped.landmarks =
