@@ -697,15 +697,15 @@
   resolved "https://registry.yarnpkg.com/@nodelib/fs.stat/-/fs.stat-1.1.3.tgz#2b5a3ab3f918cca48a8c754c08168e3f03eba61b"
   integrity sha512-shAmDyaQC4H92APFoIaVDHCx5bStIocgvbwQyxPRrbUY20V1EYTbSDchWbuwlMG3V17cprZhA6+78JfB+3DTPw==
 
-"@tensorflow-models/blazeface@0.0.4":
-  version "0.0.4"
-  resolved "https://registry.yarnpkg.com/@tensorflow-models/blazeface/-/blazeface-0.0.4.tgz#ce20aafd29be86c7d8c90b44b8a670c5546552e6"
-  integrity sha512-Wm5iaofbb7N58MIt8Q/wdn2mAnPh60JUfleA471yY8hNfS02srZu5mq/0ZSWT0fF5ofIXdp2d07AuHR6TTOy1g==
+"@tensorflow-models/blazeface@0.0.5":
+  version "0.0.5"
+  resolved "https://registry.yarnpkg.com/@tensorflow-models/blazeface/-/blazeface-0.0.5.tgz#6261fcc5de61a283ea409b69f6a851f44a809826"
+  integrity sha512-bIMJDV2CD8rr7v9OrIDdDZVh9sbk0EhlZdHaDFpgWUw3Lp21wUN7GSifOJVE5hV2ngmpzM+J12OH8bG1GZoDag==
 
-"@tensorflow/tfjs-backend-wasm@^1.5.1-alpha5":
-  version "1.5.1-alpha5"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-backend-wasm/-/tfjs-backend-wasm-1.5.1-alpha5.tgz#3e30a4246c0be809182c52b50e0b6ff0e5da5195"
-  integrity sha512-aHa5aR0egbVlRLNHFM6ptmLkASLgpDp/phBlJUodoGpcjhtrODPHOzMwWw52Q+J1FDXgb+isWmZ/TKH6KeWf0Q==
+"@tensorflow/tfjs-backend-wasm@^1.5.2-alpha1":
+  version "1.5.2-alpha1"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-backend-wasm/-/tfjs-backend-wasm-1.5.2-alpha1.tgz#e7275fad79569d7c3abebf97b77b065354bcfa42"
+  integrity sha512-J+CSf8nqKxYisnb7DtfK/6B66Jy9TAjREZRY6vQKVqc5uQeMx49D59D4+tHQVjfEBtf6PZYobWUrXogJTNP71Q==
   dependencies:
     "@types/emscripten" "~0.0.34"
 
