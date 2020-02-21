@@ -697,7 +697,7 @@
   resolved "https://registry.yarnpkg.com/@nodelib/fs.stat/-/fs.stat-1.1.3.tgz#2b5a3ab3f918cca48a8c754c08168e3f03eba61b"
   integrity sha512-shAmDyaQC4H92APFoIaVDHCx5bStIocgvbwQyxPRrbUY20V1EYTbSDchWbuwlMG3V17cprZhA6+78JfB+3DTPw==
 
-"@tensorflow-models/blazeface@0.0.4":
+"@tensorflow-models/blazeface@0.0.5":
   version "0.0.4"
   resolved "https://registry.yarnpkg.com/@tensorflow-models/blazeface/-/blazeface-0.0.4.tgz#ce20aafd29be86c7d8c90b44b8a670c5546552e6"
   integrity sha512-Wm5iaofbb7N58MIt8Q/wdn2mAnPh60JUfleA471yY8hNfS02srZu5mq/0ZSWT0fF5ofIXdp2d07AuHR6TTOy1g==
