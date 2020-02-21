@@ -49,8 +49,13 @@ function getInputTensorDimensions(input: tf.Tensor3D|ImageData|HTMLVideoElement|
 }
 
 function flipFaceHorizontal(
-    face: AnnotatedPrediction, imageWidth: number): AnnotatedPrediction {
+    face: AnnotatedPrediction, imageWidth: number,
+    return3d: boolean): AnnotatedPrediction {
   if (face.mesh instanceof tf.Tensor) {
+    const subtractBasis =
+        return3d ? [imageWidth - 1, 0, 0] : [imageWidth - 1, 0];
+    const multiplyBasis = return3d ? [1, -1, 1] : [1, -1];
+
     return Object.assign({}, face, {
       boundingBox: {
         topLeft: tf.concat([
@@ -66,10 +71,10 @@ function flipFaceHorizontal(
           (face.boundingBox.bottomRight as tf.Tensor2D).slice(1, 1)
         ])
       },
-      mesh: tf.sub(tf.tensor1d([imageWidth - 1, 0]), face.mesh)
-                .mul(tf.tensor1d([1, -1])) as tf.Tensor2D,
-      scaledMesh: tf.sub(tf.tensor1d([imageWidth - 1, 0]), face.scaledMesh)
-                      .mul(tf.tensor1d([1, -1])) as tf.Tensor2D
+      mesh: tf.sub(tf.tensor1d(subtractBasis), face.mesh)
+                .mul(tf.tensor1d(multiplyBasis)) as tf.Tensor2D,
+      scaledMesh: tf.sub(tf.tensor1d(subtractBasis), face.scaledMesh)
+                      .mul(tf.tensor1d(multiplyBasis)) as tf.Tensor2D
     });
   }
 
@@ -84,12 +89,17 @@ function flipFaceHorizontal(
         (face.boundingBox.bottomRight as [number, number])[1]
       ]
     },
-    mesh: face.mesh.map(
-        (coord: [number, number]) => ([imageWidth - 1 - coord[0], coord[1]])),
+    mesh: face.mesh.map((coord: [number, number]|[number, number, number]) => {
+      const flippedCoord = coord.slice(0);
+      flippedCoord[0] = imageWidth - 1 - coord[0];
+      return flippedCoord;
+    }),
     scaledMesh: (face.scaledMesh as number[][])
-                    .map(
-                        (coord: [number, number]) =>
-                            ([imageWidth - 1 - coord[0], coord[1]]))
+                    .map((coord: [number, number]|[number, number, number]) => {
+                      const flippedCoord = coord.slice(0);
+                      flippedCoord[0] = imageWidth - 1 - coord[0];
+                      return flippedCoord;
+                    })
   });
 }
 
@@ -193,8 +203,8 @@ export class FaceMesh {
                       } as AnnotatedPrediction;
 
                       if (flipHorizontal) {
-                        annotatedPrediction =
-                            flipFaceHorizontal(annotatedPrediction, width);
+                        annotatedPrediction = flipFaceHorizontal(
+                            annotatedPrediction, width, return3d);
                       }
 
                       return annotatedPrediction;
@@ -221,8 +231,8 @@ export class FaceMesh {
                     };
 
                     if (flipHorizontal) {
-                      annotatedPrediction =
-                          flipFaceHorizontal(annotatedPrediction, width);
+                      annotatedPrediction = flipFaceHorizontal(
+                          annotatedPrediction, width, return3d);
                     }
 
                     const annotations: {[key: string]: number[][]} = {};

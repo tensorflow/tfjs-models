@@ -24,7 +24,7 @@ import Stats from 'stats.js';
 
 let model, ctx, videoWidth, videoHeight, video, canvas, scatterGLHasInitialized = false, scatterGL;
 
-const render3D = true;
+const render3D = false;
 const stats = new Stats();
 const r = 1;
 const state = {
@@ -66,8 +66,8 @@ function setupFPS() {
 
 const renderPrediction = async () => {
   stats.begin();
-  const returnTensors = false;
-  const flipHorizontal = false;
+  const returnTensors = true;
+  const flipHorizontal = true;
   const startNumTensors = tf.memory().numTensors;
   const predictions = await model.estimateFaces(video, returnTensors, flipHorizontal, render3D);
   console.log(tf.memory().numTensors - startNumTensors);
@@ -92,6 +92,11 @@ const renderPrediction = async () => {
     });
 
     if(render3D) {
+      let scaledMesh = predictions[0].scaledMesh;
+      if(returnTensors) {
+        scaledMesh = scaledMesh.arraySync();
+      }
+
       const dataset = new ScatterGL.Dataset(
         predictions[0].scaledMesh.map(point =>
           ([-point[0], -point[1], -point[2]])));
