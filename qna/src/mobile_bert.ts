@@ -19,9 +19,7 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {BertTokenizer, CLS_INDEX, loadTokenizer, SEP_INDEX, TokenWithIndexMap} from './bert_tokenizer';
 
-// TODO: Upload model to TFHub tensorflow/tfjs#2730
-const BASE_DIR = 'https://storage.googleapis.com/tfjs-testing/mobile-bert/';
-const MODEL_URL = BASE_DIR + 'model.json';
+const MODEL_URL = 'https://tfhub.dev/tensorflow/tfjs-model/mobilebert/1';
 const INPUT_SIZE = 384;
 const MAX_ANSWER_LEN = 32;
 const MAX_QUERY_LEN = 64;
@@ -43,6 +41,7 @@ export interface MobileBert {
  */
 export interface ModelConfig {
   modelUrl: string;
+  fromTFHub?: boolean;
 }
 
 export interface Answer {
@@ -72,16 +71,21 @@ class MobileBertImpl implements MobileBert {
 
   constructor(private modelConfig: ModelConfig) {
     if (this.modelConfig == null) {
-      this.modelConfig = {modelUrl: MODEL_URL};
+      this.modelConfig = {modelUrl: MODEL_URL, fromTFHub: true};
+    }
+    if (this.modelConfig.fromTFHub == null) {
+      this.modelConfig.fromTFHub = false;
     }
   }
   private process(
       query: string, context: string, maxQueryLen: number, maxSeqLen: number,
       docStride = 128): Feature[] {
-    let queryTokens = this.tokenizer.tokenize(query);
+    const queryTokens = this.tokenizer.tokenize(query);
     if (queryTokens.length > maxQueryLen) {
-      queryTokens = queryTokens.slice(0, maxQueryLen);
+      throw new Error(
+          `The length of question token exceeds the limit (${maxQueryLen}).`);
     }
+
     const origTokens = this.tokenizer.processInput(context.trim());
     const tokenToOrigIndex = [];
     const allDocTokens = [];
@@ -150,7 +154,8 @@ class MobileBertImpl implements MobileBert {
   }
 
   async load() {
-    this.model = await tfconv.loadGraphModel(this.modelConfig.modelUrl);
+    this.model = await tfconv.loadGraphModel(
+        this.modelConfig.modelUrl, {fromTFHub: this.modelConfig.fromTFHub});
     // warm up the backend
     const batchSize = 1;
     const inputIds = tf.ones([batchSize, INPUT_SIZE], 'int32');

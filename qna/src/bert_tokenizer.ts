@@ -15,7 +15,6 @@
  * =============================================================================
  */
 import * as tf from '@tensorflow/tfjs-core';
-import {showCandidateWords} from '../../speech-commands/demo/ui';
 
 const SEPERATOR = '\u2581';
 export const UNK_INDEX = 100;
@@ -24,9 +23,9 @@ export const CLS_TOKEN = '[CLS]';
 export const SEP_INDEX = 102;
 export const SEP_TOKEN = '[SEP]';
 export const NFKC_TOKEN = 'NFKC';
-export const VOCAB_URL =
-    'https://storage.googleapis.com/learnjs-data/bert_vocab/processed_vocab.json';
-
+export const VOCAB_BASE =
+    'https://tfhub.dev/tensorflow/tfjs-model/mobilebert/1/';
+export const VOCAB_URL = VOCAB_BASE + 'processed_vocab.json?tfjs-format=file';
 /**
  * Class for represent node for token parsing Trie data structure.
  */
@@ -149,16 +148,15 @@ export class BertTokenizer {
   }
 
   processInput(text: string): TokenWithIndexMap[] {
-    const charOrignalIndex = [];
-    const cleanedText = this.cleanText(text, charOrignalIndex);
-
+    const charOriginalIndex = [];
+    const cleanedText = this.cleanText(text, charOriginalIndex);
     const origTokens = cleanedText.split(' ');
 
     let charCount = 0;
     const tokens = origTokens.map((token) => {
       token = token.toLowerCase();
+      const tokens = this.runSplitOnPunc(token, charCount, charOriginalIndex);
       charCount += token.length + 1;
-      const tokens = this.runSplitOnPunc(token, charCount, charOrignalIndex);
       return tokens;
     });
 
@@ -214,9 +212,9 @@ export class BertTokenizer {
         if (startNewWord) {
           tokens.push({token: '', index: charOriginalIndex[count]});
           startNewWord = false;
-          count += ch.length;
         }
         tokens[tokens.length - 1].token += ch;
+        count += ch.length;
       }
     }
     return tokens;
@@ -233,7 +231,7 @@ export class BertTokenizer {
     let outputTokens = [];
 
     const words = this.processInput(text);
-    showCandidateWords.forEach(word => {
+    words.forEach(word => {
       if (word.token !== CLS_TOKEN && word.token !== SEP_TOKEN) {
         word.token = `${SEPERATOR}${word.token.normalize(NFKC_TOKEN)}`;
       }

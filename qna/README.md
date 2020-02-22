@@ -20,6 +20,8 @@ There are two main ways to get this model in your JavaScript project: via script
 ### via Script Tag
 
 ```html
+<!-- Make sure your page supports utf-8 characterset. -->
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <!-- Load TensorFlow.js. This is required to use the qna model. -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"> </script>
 <!-- Load the qna model. -->
@@ -57,7 +59,15 @@ console.log('Answers: ');
 console.log(answers);
 ```
 
-You can also take a look at the [demo app](./demo).
+[Try the demo here!](https://storage.googleapis.com/tfjs-models/demos/mobilebert-qna/index.html)
+You can also take a look at the source code of the [demo app](./demo).
+
+### Note
+Please make sure your web page supports utf-8 character set. To achieve that you can add following line to your page:
+
+```html
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+```
 
 ## API
 
@@ -101,11 +111,13 @@ Returns an Promise of array of answers that look like following:
 ```js
 [{
   text: "Sundar Pichai",
+  startIndex: 1143,
+  endIndex: 1156,
   score: 0.8380282521247864
 }]
 ```
 
-In which the text is of string type and represents the answer body, and score is a number, indicates the confident level.
+In which the text is of string type and represents the answer body, and score is a number, indicates the confident level. The startIndex is the index of the starting character of the answer in the passage. The endIndex is index of the last character of the answer.
 
 Here is an example run of the QnA model:
 ```js
@@ -117,6 +129,8 @@ console.log(answers);
 /**
 [{
   text: "Sundar Pichai",
+  startIndex: 1143
+  endIndex: 1156
   score: 0.8380282521247864
 }]
 **/
