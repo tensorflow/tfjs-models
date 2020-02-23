@@ -95,21 +95,25 @@ const renderPrediction = async () => {
       }
     });
 
-    if(renderPointcloud) {
-      let scaledMesh = predictions[0].scaledMesh;
-      if(returnTensors) {
-        scaledMesh = scaledMesh.arraySync();
-      }
+    if (renderPointcloud) {
+      const pointsData = predictions.map(prediction => {
+        let scaledMesh = prediction.scaledMesh;
+        if(returnTensors) {
+          scaledMesh = scaledMesh.arraySync();
+        }
 
-      const dataset = new ScatterGL.Dataset(scaledMesh.map(point =>
-          ([-point[0], -point[1], -point[2]])));
+        return scaledMesh.map(
+          point => ([-point[0], -point[1], -point[2]]));
+      });
+
+      const dataset = new ScatterGL.Dataset(
+        pointsData.reduce((acc, curr) => acc.concat(curr), []));
 
       if (!scatterGLHasInitialized) {
         scatterGL.render(dataset);
       } else {
         scatterGL.updateDataset(dataset);
       }
-
       scatterGLHasInitialized = true;
     }
   }
