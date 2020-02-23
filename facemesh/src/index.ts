@@ -49,13 +49,11 @@ function getInputTensorDimensions(input: tf.Tensor3D|ImageData|HTMLVideoElement|
 }
 
 function flipFaceHorizontal(
-    face: AnnotatedPrediction, imageWidth: number,
-    return3d: boolean): AnnotatedPrediction {
+    face: AnnotatedPrediction, imageWidth: number): AnnotatedPrediction {
   if (face.mesh instanceof tf.Tensor) {
     const [topLeft, bottomRight, mesh, scaledMesh] = tf.tidy(() => {
-      const subtractBasis =
-          return3d ? [imageWidth - 1, 0, 0] : [imageWidth - 1, 0];
-      const multiplyBasis = return3d ? [1, -1, 1] : [1, -1];
+      const subtractBasis = [imageWidth - 1, 0, 0];
+      const multiplyBasis = [1, -1, 1];
 
       return [
         tf.concat([
@@ -160,8 +158,8 @@ export class FaceMesh {
   async estimateFaces(
       input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
       HTMLCanvasElement,
-      returnTensors = false, flipHorizontal = false,
-      return3d = false): Promise<AnnotatedPrediction[]> {
+      returnTensors = false,
+      flipHorizontal = false): Promise<AnnotatedPrediction[]> {
     if (!(input instanceof tf.Tensor)) {
       input = tf.browser.fromPixels(input);
     }
@@ -169,8 +167,7 @@ export class FaceMesh {
     const [, width] = getInputTensorDimensions(input);
     const inputToFloat = input.toFloat();
     const image = inputToFloat.expandDims(0) as tf.Tensor4D;
-    const predictions =
-        await this.pipeline.predict(image, return3d) as Prediction[];
+    const predictions = await this.pipeline.predict(image) as Prediction[];
 
     input.dispose();
     inputToFloat.dispose();
@@ -207,8 +204,8 @@ export class FaceMesh {
                       } as AnnotatedPrediction;
 
                       if (flipHorizontal) {
-                        const flipped = flipFaceHorizontal(
-                            annotatedPrediction, width, return3d);
+                        const flipped =
+                            flipFaceHorizontal(annotatedPrediction, width);
 
                         (annotatedPrediction.mesh as tf.Tensor2D).dispose();
                         (annotatedPrediction.scaledMesh as tf.Tensor2D)
@@ -246,8 +243,8 @@ export class FaceMesh {
                     };
 
                     if (flipHorizontal) {
-                      annotatedPrediction = flipFaceHorizontal(
-                          annotatedPrediction, width, return3d);
+                      annotatedPrediction =
+                          flipFaceHorizontal(annotatedPrediction, width);
                     }
 
                     const annotations: {[key: string]: number[][]} = {};

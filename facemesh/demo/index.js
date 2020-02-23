@@ -16,17 +16,22 @@
  */
 
 import * as faceMesh from '@tensorflow-models/facemesh';
+import Stats from 'stats.js';
 import * as tf from '@tensorflow/tfjs-core';
 import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
-
 tfjsWasm.setWasmPath('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@latest/dist/tfjs-backend-wasm.wasm');
-import Stats from 'stats.js';
 
-let model, ctx, videoWidth, videoHeight, video, canvas, scatterGLHasInitialized = false, scatterGL;
+function isMobile() {
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  return isAndroid || isiOS;
+}
 
-const render3D = true;
+let model, ctx, videoWidth, videoHeight, video, canvas,
+  scatterGLHasInitialized = false, scatterGL;
+
+const renderPointcloud = isMobile() === false;
 const stats = new Stats();
-
 const state = {
   backend: 'webgl',
   maxFaces: 1
@@ -65,19 +70,11 @@ async function setupCamera() {
   });
 }
 
-/**
- * Sets up a frames per second panel on the top-left of the window
- */
-function setupFPS() {
-  stats.showPanel(0);  // 0: fps, 1: ms, 2: mb, 3+: custom
-  document.getElementById('main').appendChild(stats.dom);
-}
-
 const renderPrediction = async () => {
   stats.begin();
   const returnTensors = false;
   const flipHorizontal = false;
-  const predictions = await model.estimateFaces(video, returnTensors, flipHorizontal, render3D);
+  const predictions = await model.estimateFaces(video, returnTensors, flipHorizontal);
   ctx.drawImage(
     video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width,
     canvas.height);
@@ -98,7 +95,7 @@ const renderPrediction = async () => {
       }
     });
 
-    if(render3D) {
+    if(renderPointcloud) {
       let scaledMesh = predictions[0].scaledMesh;
       if(returnTensors) {
         scaledMesh = scaledMesh.arraySync();
@@ -125,6 +122,9 @@ const setupPage = async () => {
   await tf.setBackend(state.backend);
   setupDatGui();
 
+  stats.showPanel(0);  // 0: fps, 1: ms, 2: mb, 3+: custom
+  document.getElementById('main').appendChild(stats.dom);
+
   const useVideoStream = true;
   if (useVideoStream) {
     await setupCamera();
@@ -144,31 +144,26 @@ const setupPage = async () => {
   canvas.width = videoWidth;
   canvas.height = videoHeight;
   const canvasContainer = document.querySelector(".canvas-wrapper");
-  canvasContainer.style.width = `${videoWidth}px`;
-  canvasContainer.style.height = `${videoHeight}px`;
+  canvasContainer.style.width = `width: ${videoWidth}px; height: ${videoHeight}px`;
 
   ctx = canvas.getContext('2d');
   ctx.translate(canvas.width, 0);
   ctx.scale(-1, 1);
 
-  model = await faceMesh.load({
-    maxFaces: state.maxFaces
-  });
+  if(renderPointcloud) {
+    document.querySelector("#scatter-gl-container").style.width = `300px`;
+    document.querySelector("#scatter-gl-container").style.height = `300px`;
 
-  setupFPS();
+    scatterGL = new ScatterGL(
+      document.querySelector("#scatter-gl-container"), {
+        'rotateOnStart': false,
+        'selectEnabled': false
+      });
+  }
+
+  model = await faceMesh.load({ maxFaces: state.maxFaces });
 
   renderPrediction();
 };
-
-if(render3D) {
-  document.querySelector("#scatter-gl-container").style.width = `300px`;
-  document.querySelector("#scatter-gl-container").style.height = `300px`;
-
-  scatterGL = new ScatterGL(
-    document.querySelector("#scatter-gl-container"), {
-      'rotateOnStart': false,
-      'selectEnabled': false
-    });
-}
 
 setupPage();

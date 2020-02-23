@@ -58,7 +58,7 @@ export class Pipeline {
    * @param image - image tensor of shape [1, H, W, 3].
    * @return an array of predictions for each face
    */
-  async predict(image: tf.Tensor4D, return3d: boolean): Promise<Prediction[]> {
+  async predict(image: tf.Tensor4D): Promise<Prediction[]> {
     if (this.needsRoisUpdate()) {
       const returnTensors = false;
       const annotateFace = false;
@@ -92,22 +92,14 @@ export class Pipeline {
       const [, flag, coords] =
           this.mesh.predict(face) as [tf.Tensor, tf.Tensor2D, tf.Tensor2D];
 
-      let coordsReshaped = tf.reshape(coords, [-1, 3]);
-
-      let scaledCoords: tf.Tensor2D|tf.Tensor3D;
+      const coordsReshaped = tf.reshape(coords, [-1, 3]);
       const normalizedBox =
           tf.div(getBoxSize(box), [this.meshWidth, this.meshHeight]);
-      if (return3d === false) {
-        coordsReshaped = coordsReshaped.slice([0, 0], [-1, 2]) as tf.Tensor2D;
-        scaledCoords =
-            tf.mul(coordsReshaped, normalizedBox).add(box.startPoint);
-      } else {
-        scaledCoords =
-            tf.mul(
-                  coordsReshaped,
-                  normalizedBox.concat(tf.tensor2d([1], [1, 1]), 1))
-                .add(box.startPoint.concat(tf.tensor2d([0], [1, 1]), 1));
-      }
+      const scaledCoords =
+          tf.mul(
+                coordsReshaped,
+                normalizedBox.concat(tf.tensor2d([1], [1, 1]), 1))
+              .add(box.startPoint.concat(tf.tensor2d([0], [1, 1]), 1));
 
       const landmarksBox = this.calculateLandmarksBoundingBox(scaledCoords);
       const prev = this.rois[i];
