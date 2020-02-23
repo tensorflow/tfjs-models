@@ -49,7 +49,7 @@ export async function load() {
   return pipeline;
 }
 
-const MAX_CONTINUOUS_CHECKS = Infinity;
+const MAX_CONTINUOUS_CHECKS = 100;
 const BRANCH_ON_DETECTION = true;  // whether we branch box scaling / shifting
                                    // logic depending on detection type
 
@@ -80,6 +80,13 @@ class HandPipeline {
 
   calculateHandPalmCenter(box: any) {  // DetectionsToRectsCalculator
     return tf.gather(box.landmarks, [0, 2]).mean(0);
+  }
+
+  rotateVector(angle: number, vector: [number, number]): [number, number] {
+    return [
+      vector[0] * Math.cos(angle) - vector[1] * Math.sin(angle),
+      vector[0] * Math.sin(angle) + vector[1] * Math.cos(angle)
+    ];
   }
 
   /**
@@ -140,9 +147,11 @@ class HandPipeline {
 
         bbRotated = this.calculateLandmarksBoundingBox(rotated_landmarks);
         // RectTransformationCalculator
-        bbShifted = this.shiftBox(bbRotated, [0, -0.4]);
+        const shiftVector: [number, number] = [0, -0.4];
+        const rotatedVector = this.rotateVector(angle, shiftVector);
+        bbShifted = this.shiftBox(bbRotated, rotatedVector);
         bbSquarified = this.makeSquareBox(bbShifted);
-        box_for_cut = bbSquarified.increaseBox(3);
+        box_for_cut = bbSquarified.increaseBox(3.0);
       } else {
         box_for_cut = box;
       }
@@ -159,8 +168,7 @@ class HandPipeline {
       const coords3d = tf.reshape(output_keypoints, [-1, 3]);
       const coords2d = coords3d.slice([0, 0], [-1, 2]);
 
-      // center around 0, 0
-      // scale to fit 256, 256
+      // center around 0, 0, scale to fit 256, 256
       const coords2d_scaled = tf.mul(
           coords2d.sub(tf.tensor([128, 128])),
           tf.div(box_for_cut.getSize(), [width, height]));
@@ -198,7 +206,8 @@ class HandPipeline {
         const landmarks_box =
             this.calculateLandmarksBoundingBox(coords2d_result);
 
-        const landmarks_box_shifted = this.shiftBox(landmarks_box, [0, -0.1]);
+        const landmarks_box_shifted =
+            this.shiftBox(landmarks_box, this.rotateVector(angle, [0, -0.1]));
         const landmarks_box_shifted_squarified =
             this.makeSquareBox(landmarks_box_shifted);
         nextBoundingBox = landmarks_box_shifted_squarified.increaseBox(1.65);
@@ -223,7 +232,7 @@ class HandPipeline {
         result = result.concat([
           angle, cutted_hand, box as any, bbRotated as any, bbShifted as any,
           bbSquarified as any, nextBoundingBox as any
-        ])
+        ]);
       }
 
       return result;
