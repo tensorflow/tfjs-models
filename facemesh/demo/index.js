@@ -26,15 +26,24 @@ let model, ctx, videoWidth, videoHeight, video, canvas, scatterGLHasInitialized 
 
 const render3D = true;
 const stats = new Stats();
-const r = 1;
+
 const state = {
-  backend: 'webgl'
+  backend: 'webgl',
+  maxFaces: 1
 };
 
-const gui = new dat.GUI();
-gui.add(state, 'backend', ['wasm', 'webgl', 'cpu']).onChange(async backend => {
-  await tf.setBackend(backend);
-});
+function setupDatGui() {
+  const gui = new dat.GUI();
+  gui.add(state, 'backend', ['wasm', 'webgl', 'cpu']).onChange(async backend => {
+    await tf.setBackend(backend);
+  });
+
+  gui.add(state, 'maxFaces', 1, 20, 1).onChange(async val => {
+    model = await faceMesh.load({
+      maxFaces: val
+    });
+  });
+}
 
 async function setupCamera() {
   video = document.getElementById('video');
@@ -84,7 +93,7 @@ const renderPrediction = async () => {
         const x = keypoints[i][0];
         const y = keypoints[i][1];
         ctx.beginPath();
-        ctx.arc(x, y, r, 0, 2 * Math.PI);
+        ctx.arc(x, y, 1 /* radius */, 0, 2 * Math.PI);
         ctx.fill();
       }
     });
@@ -114,6 +123,7 @@ const renderPrediction = async () => {
 
 const setupPage = async () => {
   await tf.setBackend(state.backend);
+  setupDatGui();
 
   const useVideoStream = true;
   if (useVideoStream) {
@@ -142,7 +152,7 @@ const setupPage = async () => {
   ctx.scale(-1, 1);
 
   model = await faceMesh.load({
-    maxFaces: 1
+    maxFaces: state.maxFaces
   });
 
   setupFPS();
