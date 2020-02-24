@@ -133,10 +133,7 @@ async function setupCamera() {
   const stream = await navigator.mediaDevices.getUserMedia({
     'audio': false,
     'video': {
-      facingMode: 'user',
-      // Uncomment to test skeleton detection only
-      // width: 256,
-      // height: 256
+      facingMode: 'user'
     },
   });
   video.srcObject = stream;
@@ -154,9 +151,6 @@ async function loadVideo() {
   return video;
 }
 
-/**
- * Start the demo.
- */
 const bindPage = async () => {
   model = await handtrack.load();
   let video;
