@@ -309,9 +309,12 @@ class MobileBertImpl implements MobileBert {
                     .join(' ');
     const startCharIndex = origTokens[startIndex].index;
 
-    const endCharIndex = endIndex === origTokens.length ?
-        origTokens[endIndex].index + origTokens[endIndex].token.length :
-        origTokens[endIndex + 1].index - 1;
+    // the next token index is better indicator for the ending of the answer,
+    // since the length of the last token could ignore characters being
+    // cleaned up. Only use last token length when there is no other cues.
+    const endCharIndex = endIndex < origTokens.length ?
+        origTokens[endIndex + 1].index - 1 :
+        origTokens[endIndex].index + origTokens[endIndex].token.length;
     return [ans, startCharIndex, endCharIndex];
   }
 }
