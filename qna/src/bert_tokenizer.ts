@@ -118,8 +118,8 @@ function isPunctuation(ch: string): boolean {
   return punctuations.indexOf(ch) !== -1;
 }
 
-export interface TokenWithIndexMap {
-  token: string;
+export interface Token {
+  text: string;
   index: number;
 }
 /**
@@ -147,7 +147,7 @@ export class BertTokenizer {
     return tf.util.fetch(VOCAB_URL).then(d => d.json());
   }
 
-  processInput(text: string): TokenWithIndexMap[] {
+  processInput(text: string): Token[] {
     const charOriginalIndex = [];
     const cleanedText = this.cleanText(text, charOriginalIndex);
     const origTokens = cleanedText.split(' ');
@@ -200,20 +200,20 @@ export class BertTokenizer {
   /* Splits punctuation on a piece of text. */
   private runSplitOnPunc(
       text: string, count: number,
-      charOriginalIndex: number[]): TokenWithIndexMap[] {
+      charOriginalIndex: number[]): Token[] {
     const tokens = [];
     let startNewWord = true;
     for (const ch of text) {
       if (isPunctuation(ch)) {
-        tokens.push({token: ch, index: charOriginalIndex[count]});
+        tokens.push({text: ch, index: charOriginalIndex[count]});
         count += ch.length;
         startNewWord = true;
       } else {
         if (startNewWord) {
-          tokens.push({token: '', index: charOriginalIndex[count]});
+          tokens.push({text: '', index: charOriginalIndex[count]});
           startNewWord = false;
         }
-        tokens[tokens.length - 1].token += ch;
+        tokens[tokens.length - 1].text += ch;
         count += ch.length;
       }
     }
@@ -232,14 +232,14 @@ export class BertTokenizer {
 
     const words = this.processInput(text);
     words.forEach(word => {
-      if (word.token !== CLS_TOKEN && word.token !== SEP_TOKEN) {
-        word.token = `${SEPERATOR}${word.token.normalize(NFKC_TOKEN)}`;
+      if (word.text !== CLS_TOKEN && word.text !== SEP_TOKEN) {
+        word.text = `${SEPERATOR}${word.text.normalize(NFKC_TOKEN)}`;
       }
     });
 
     for (let i = 0; i < words.length; i++) {
       const chars = [];
-      for (const symbol of words[i].token) {
+      for (const symbol of words[i].text) {
         chars.push(symbol);
       }
 

@@ -56,8 +56,8 @@ describeWithFlags('bertTokenizer', NODE_ENVS, () => {
     const tokenizer = await loadTokenizer();
     const result = tokenizer.processInput(' a new\t\v  [test]');
     expect(result).toEqual([
-      {token: 'a', index: 1}, {token: 'new', index: 3}, {token: '[', index: 10},
-      {token: 'test', index: 11}, {token: ']', index: 15}
+      {text: 'a', index: 1}, {text: 'new', index: 3}, {text: '[', index: 10},
+      {text: 'test', index: 11}, {text: ']', index: 15}
     ]);
   });
 });

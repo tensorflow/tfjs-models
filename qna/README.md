@@ -117,7 +117,7 @@ Returns an Promise of array of answers that look like following:
 }]
 ```
 
-In which the text is of string type and represents the answer body, and score is a number, indicates the confident level. The startIndex is the index of the starting character of the answer in the passage. The endIndex is index of the last character of the answer.
+In which the ```text``` is of string type and represents the answer body, and ```score``` is a number, indicates the confident level. The ```startIndex``` is the index of the starting character of the answer in the passage. The ```endIndex``` is index of the last character of the answer.
 
 Here is an example run of the QnA model:
 ```js
@@ -129,8 +129,8 @@ console.log(answers);
 /**
 [{
   text: "Sundar Pichai",
-  startIndex: 1143
-  endIndex: 1156
+  startIndex: 1143,
+  endIndex: 1156,
   score: 0.8380282521247864
 }]
 **/

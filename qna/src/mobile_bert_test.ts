@@ -84,7 +84,7 @@ describeWithFlags('mobileBert', NODE_ENVS, () => {
     model.execute.and.callFake(
         (x: tf.Tensor) =>
             [tf.tensor2d([0, 0, 0, 0, 1, 2, 3, 2, 1, 0], [1, 10]),
-             tf.tensor2d([0, 0, 0, 0, 1, 2, 3, 2, 1, 0], [1, 10])]);
+             tf.tensor2d([0, 0, 0, 0, 1, 2, 3, 2, 1, 2], [1, 10])]);
 
     const result =
         await mobileBert.findAnswers('question', 'this is the answer for you!');
@@ -92,8 +92,8 @@ describeWithFlags('mobileBert', NODE_ENVS, () => {
     expect(result).toEqual([
       {text: 'answer', score: 6, startIndex: 12, endIndex: 18},
       {text: 'answer for', score: 5, startIndex: 12, endIndex: 22},
+      {text: 'answer for you!', score: 5, startIndex: 12, endIndex: 27},
       {text: 'the answer', score: 5, startIndex: 8, endIndex: 18},
-      {text: 'answer for you', score: 4, startIndex: 12, endIndex: 25},
       {text: 'the', score: 4, startIndex: 8, endIndex: 11}
     ]);
   });
