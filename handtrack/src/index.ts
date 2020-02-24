@@ -4,7 +4,6 @@ import * as tf from '@tensorflow/tfjs-core';
 import {Box, BoxType} from './box';
 import {HandDetectModel} from './hand';
 import {maxPool, maxPoolWArgMax} from './pool_gpu';
-// import {rotate as rotateCpu} from './rotate_cpu';
 import {rotate as rotateWebgl} from './rotate_gpu';
 
 // const HANDDETECT_MODEL_PATH =
@@ -124,7 +123,6 @@ class HandPipeline {
       const width = 256., height = 256.;
       const box = this.rois[0];
 
-      // DetectionsToRectsCalculator
       const angle = this.calculateRotation(box);
 
       const handpalm_center = box.getCenter().gather(0);
@@ -146,7 +144,6 @@ class HandPipeline {
                 .slice([0, 0], [numLandmarks, 2]);
 
         bbRotated = this.calculateLandmarksBoundingBox(rotated_landmarks);
-        // RectTransformationCalculator
         const shiftVector: [number, number] = [0, -0.4];
         const rotatedVector = this.rotateVector(angle, shiftVector);
         bbShifted = this.shiftBox(bbRotated, rotatedVector);
@@ -156,12 +153,10 @@ class HandPipeline {
         box_for_cut = box;
       }
 
-      // ImageCroppingCalculator
       const cutted_hand = box_for_cut.cutFromAndResize(
           rotated_image as tf.Tensor4D, [width, height]);
       const handImage = cutted_hand.div(255);
 
-      // TfLiteInferenceCalculator
       const output = this.handtrackModel.predict(handImage) as tf.Tensor[];
 
       const output_keypoints = output[output.length - 1];
@@ -194,10 +189,8 @@ class HandPipeline {
                 this.inverse(palm_rotation_matrix), false, true)
               .slice([0, 0], [1, 2]);
 
-      // LandmarkProjectionCalculator
       const coords2d_result = coords2d_rotated.add(original_center);
 
-      // LandmarksToDetectionCalculator: landmarks to rect
       const landmarks_ids = [0, 5, 9, 13, 17, 1, 2];
       const selected_landmarks = tf.gather(coords2d_result, landmarks_ids);
 
