@@ -167,7 +167,12 @@ export class FaceMesh {
     const [, width] = getInputTensorDimensions(input);
     const inputToFloat = input.toFloat();
     const image = inputToFloat.expandDims(0) as tf.Tensor4D;
+
+    const savedWebglPackDepthwiseConvFlag =
+        tf.env().get('WEBGL_PACK_DEPTHWISECONV');
+    tf.env().set('WEBGL_PACK_DEPTHWISECONV', true);
     const predictions = await this.pipeline.predict(image) as Prediction[];
+    tf.env().set('WEBGL_PACK_DEPTHWISECONV', savedWebglPackDepthwiseConvFlag);
 
     input.dispose();
     inputToFloat.dispose();
