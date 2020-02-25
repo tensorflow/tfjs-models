@@ -162,7 +162,7 @@ tf.dispose([x, output]);
 ```
 
 Note that you must provide a spectrogram value to the `recognize()` call
-in order to perform the offline recognition. If `recognzie()` as called
+in order to perform the offline recognition. If `recognize()` is called
 without a first argument, it will perform one-shot online recognition
 by collecting a frame of audio via WebAudio.
 

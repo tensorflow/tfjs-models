@@ -51,4 +51,13 @@ describeWithFlags('bertTokenizer', NODE_ENVS, () => {
     const result = tokenizer.tokenize('a new\b\v [test]');
     expect(result).toEqual([1037, 100, 1031, 3231, 1033]);
   });
+
+  it('should processInput', async () => {
+    const tokenizer = await loadTokenizer();
+    const result = tokenizer.processInput(' a new\t\v  [test]');
+    expect(result).toEqual([
+      {text: 'a', index: 1}, {text: 'new', index: 3}, {text: '[', index: 10},
+      {text: 'test', index: 11}, {text: ']', index: 15}
+    ]);
+  });
 });
