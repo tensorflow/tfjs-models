@@ -98,10 +98,9 @@ export class HandDetector {
 
       const landmarks = this._decode_landmarks(raw_landmarks);
       if (box_indices.length == 0) {
-        return [null, null];  // TODO (vakunov): don't return null. Empty box?
+        return [null, null];
       }
 
-      // TODO (vakunov): change to multi hand case
       const box_index = box_indices[0];
       const result_box = tf.slice(boxes, [box_index, 0], [1, -1]);
 

@@ -60,6 +60,10 @@ export class HandPipeline {
    */
   async estimateHand(input: tf.Tensor3D|ImageData|HTMLVideoElement|
                      HTMLImageElement|HTMLCanvasElement) {
+    const savedWebglPackDepthwiseConvFlag =
+        tf.env().get('WEBGL_PACK_DEPTHWISECONV');
+    tf.env().set('WEBGL_PACK_DEPTHWISECONV', true);
+
     const image: tf.Tensor4D = tf.tidy(() => {
       if (!(input instanceof tf.Tensor)) {
         input = tf.browser.fromPixels(input);
@@ -70,7 +74,11 @@ export class HandPipeline {
     const useFreshBox = this.needROIUpdate();
 
     if (useFreshBox) {
+      const start = tf.memory().numTensors;
       const box = this.handdetect.getSingleBoundingBox(image);
+      console.log(
+          'leaked tensors after detection', tf.memory().numTensors - start);
+
       if (!box) {
         this.clearROIS();
         return null;
@@ -194,6 +202,8 @@ export class HandPipeline {
     });
 
     image.dispose();
+
+    tf.env().set('WEBGL_PACK_DEPTHWISECONV', savedWebglPackDepthwiseConvFlag);
     return scaledCoords;
   }
 
