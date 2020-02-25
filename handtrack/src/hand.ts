@@ -1,22 +1,40 @@
+/**
+ * @license
+ * Copyright 2020 Google LLC. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * =============================================================================
+ */
+
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 import {Box} from './box';
 
-export class HandDetectModel {
+export class HandDetector {
   private model: tfconv.GraphModel;
   private anchors: tf.Tensor;
   private input_size: tf.Tensor;
-  private iou_threshold: number;
+  private iouThreshold: number;
   private scoreThreshold: number;
 
   constructor(
-      model: tfconv.GraphModel, width: number, height: number, ANCHORS: any) {
+      model: tfconv.GraphModel, width: number, height: number, ANCHORS: any,
+      iouThreshold: number, scoreThreshold: number) {
     this.model = model;
     this.anchors = this._generate_anchors(ANCHORS);
     this.input_size = tf.tensor([width, height]);
 
-    this.iou_threshold = 0.3;
-    this.scoreThreshold = 0.5;
+    this.iouThreshold = iouThreshold;
+    this.scoreThreshold = scoreThreshold;
   }
 
   _generate_anchors(ANCHORS: any) {
@@ -75,7 +93,7 @@ export class HandDetectModel {
       const box_indices =
           tf.image
               .nonMaxSuppression(
-                  boxes, scores, 1, this.iou_threshold, this.scoreThreshold)
+                  boxes, scores, 1, this.iouThreshold, this.scoreThreshold)
               .arraySync();
 
       const landmarks = this._decode_landmarks(raw_landmarks);
@@ -115,4 +133,4 @@ export class HandDetectModel {
 
     return bb;
   }
-};
+}
