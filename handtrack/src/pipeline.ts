@@ -130,44 +130,32 @@ export class HandPipeline {
       const output = this.handtrackModel.predict(handImage) as tf.Tensor[];
 
       const output_keypoints = output[output.length - 1];
-      const coords3d = tf.reshape(output_keypoints, [-1, 3]);
-      const coords2d = coords3d.slice([0, 0], [-1, 2]);
+      const coords = tf.reshape(output_keypoints, [-1, 3]);
 
-      // center around 0, 0, scale to fit 256, 256
-      const coords2d_scaled = tf.mul(
-          coords2d.sub(tf.tensor([128, 128])),
-          tf.div(box_for_cut.getSize(), [width, height]));
+      const coordsScaled = tf.mul(
+          coords.sub(tf.tensor([128, 128, 0])),
+          tf.div(box_for_cut.getSize(), [
+              width, height
+            ]).concat(tf.tensor2d([1], [1, 1]), 1));
 
       const coords_rotation_matrix =
           this.build_rotation_matrix_with_center(angle, tf.tensor([0, 0]));
 
-      const coords2d_homo = tf.concat(
-          [
-            coords2d_scaled,
-            tf.ones([output_keypoints.shape[1] / 3]).expandDims(1)
-          ],
-          1);
+      const coordsRotated =
+          tf.matMul(coordsScaled, coords_rotation_matrix, false, true);
 
-      const coords2d_rotated =
-          tf.matMul(coords2d_homo, coords_rotation_matrix, false, true)
-              .slice([0, 0], [-1, 2]);
+      const original_center = tf.matMul(
+          tf.concat([box_for_cut.getCenter(), tf.ones([1]).expandDims(1)], 1),
+          this.inverse(palm_rotation_matrix), false, true);
 
-      const original_center =
-          tf.matMul(
-                tf.concat(
-                    [box_for_cut.getCenter(), tf.ones([1]).expandDims(1)], 1),
-                this.inverse(palm_rotation_matrix), false, true)
-              .slice([0, 0], [1, 2]);
-
-      const coords2d_result = coords2d_rotated.add(original_center);
+      const coordsResult = coordsRotated.add(original_center);
 
       const landmarks_ids = [0, 5, 9, 13, 17, 1, 2];
-      const selected_landmarks = tf.gather(coords2d_result, landmarks_ids);
+      const selected_landmarks = tf.gather(coordsResult, landmarks_ids);
 
       let nextBoundingBox;
       if (BRANCH_ON_DETECTION) {
-        const landmarks_box =
-            this.calculateLandmarksBoundingBox(coords2d_result);
+        const landmarks_box = this.calculateLandmarksBoundingBox(coordsResult);
 
         const landmarks_box_shifted =
             this.shiftBox(landmarks_box, rotatePoint(angle, [0, -0.05]));
@@ -190,7 +178,7 @@ export class HandPipeline {
         return null;
       }
 
-      let result = [coords2d_result];
+      let result = [coordsResult];
       if (location.hash === '#debug') {
         result = result.concat([
           angle, cutted_hand, box as any, bbRotated as any, bbShifted as any,
