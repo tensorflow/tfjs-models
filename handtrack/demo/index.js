@@ -201,7 +201,7 @@ const landmarksRealTime = async (video) => {
   async function frameLandmarks() {
     stats.begin();
     ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
-    let result = await model.next_meshes(video);
+    let result = await model.estimateHand(video);
     if (result) {
       document.querySelector("#keypoints-wrapper").className = 'show';
 

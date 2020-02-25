@@ -33,8 +33,9 @@ tfconv.registerOp('MaxPoolWithArgmax', (obj: any) => {
 
 export async function load() {
   const ANCHORS =
-      await fetch(
-          'https://storage.googleapis.com/learnjs-data/handtrack_staging/anchors.json')
+      await tf.util
+          .fetch(
+              'https://storage.googleapis.com/learnjs-data/handtrack_staging/anchors.json')
           .then(d => d.json());
 
   const handModel =
@@ -95,8 +96,8 @@ class HandPipeline {
    *
    * @return {tf.Tensor?} tensor of 2d coordinates (1, 21, 3)
    */
-  async next_meshes(input: tf.Tensor3D|ImageData|HTMLVideoElement|
-                    HTMLImageElement|HTMLCanvasElement) {
+  async estimateHand(input: tf.Tensor3D|ImageData|HTMLVideoElement|
+                     HTMLImageElement|HTMLCanvasElement) {
     const image: tf.Tensor4D = tf.tidy(() => {
       if (!(input instanceof tf.Tensor)) {
         input = tf.browser.fromPixels(input);
