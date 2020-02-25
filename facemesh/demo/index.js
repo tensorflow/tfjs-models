@@ -30,6 +30,7 @@ function isMobile() {
 let model, ctx, videoWidth, videoHeight, video, canvas,
   scatterGLHasInitialized = false, scatterGL;
 
+const VIDEO_SIZE = 500;
 const renderPointcloud = isMobile() === false;
 const stats = new Stats();
 const state = {
@@ -57,8 +58,8 @@ async function setupCamera() {
     'audio': false,
     'video': {
       facingMode: 'user',
-      width: 500,
-      height: 500
+      width: VIDEO_SIZE,
+      height: VIDEO_SIZE
     },
   });
   video.srcObject = stream;
@@ -148,15 +149,15 @@ const setupPage = async () => {
   canvas.width = videoWidth;
   canvas.height = videoHeight;
   const canvasContainer = document.querySelector(".canvas-wrapper");
-  canvasContainer.style.width = `width: ${videoWidth}px; height: ${videoHeight}px`;
+  canvasContainer.style = `width: ${videoWidth}px; height: ${videoHeight}px`;
 
   ctx = canvas.getContext('2d');
   ctx.translate(canvas.width, 0);
   ctx.scale(-1, 1);
 
   if(renderPointcloud) {
-    document.querySelector("#scatter-gl-container").style.width = `300px`;
-    document.querySelector("#scatter-gl-container").style.height = `300px`;
+    document.querySelector("#scatter-gl-container").style.width = `${VIDEO_SIZE}px`;
+    document.querySelector("#scatter-gl-container").style.height = `${VIDEO_SIZE}px`;
 
     scatterGL = new ScatterGL(
       document.querySelector("#scatter-gl-container"), {

@@ -40,7 +40,8 @@
     "publish-local": "yarn build && rollup -c && yalc publish",
     "test": "ts-node run_tests.ts",
     "publish-npm": "yarn build && rollup -c && npm publish",
-    "lint": "tslint -p . -t verbose"
+    "lint": "tslint -p . -t verbose",
+    "publish-demo": "./scripts/publish-demo.sh"
   },
   "license": "Apache-2.0"
 }
