@@ -53,10 +53,10 @@ export class HandDetector {
     const box_sizes = tf.slice(box_outputs, [0, 2], [-1, 2]);
 
     const box_sizes_norm = tf.div(box_sizes, this.input_size);
-    const centers_norm = centers;
+    const halfBoxSize = tf.div(box_sizes_norm, 2);
 
-    const starts = tf.sub(centers_norm, tf.div(box_sizes_norm, 2));
-    const ends = tf.add(centers_norm, tf.div(box_sizes_norm, 2));
+    const starts = tf.sub(centers, halfBoxSize);
+    const ends = tf.add(centers, halfBoxSize);
 
     return tf.concat2d(
         [
@@ -79,15 +79,15 @@ export class HandDetector {
     return tf.tidy(() => {
       const img = tf.mul(tf.sub(input_image, 0.5), 2);  // make input [-1, 1]
 
-      const detect_outputs = this.model.predict(img) as tf.Tensor;
+      const prediction = this.model.predict(img) as tf.Tensor;
 
-      const scores = tf.sigmoid(tf.slice(detect_outputs, [0, 0, 0], [1, -1, 1]))
-                         .squeeze() as tf.Tensor1D;
+      const scores =
+          tf.sigmoid(tf.slice(prediction, [0, 0, 0], [1, -1, 1])).squeeze() as
+          tf.Tensor1D;
 
-      const raw_boxes =
-          tf.slice(detect_outputs, [0, 0, 1], [1, -1, 4]).squeeze();
+      const raw_boxes = tf.slice(prediction, [0, 0, 1], [1, -1, 4]).squeeze();
       const raw_landmarks =
-          tf.slice(detect_outputs, [0, 0, 5], [1, -1, 14]).squeeze();
+          tf.slice(prediction, [0, 0, 5], [1, -1, 14]).squeeze();
       const boxes = this._decode_bounds(raw_boxes);
 
       const box_indices =
