@@ -20,10 +20,11 @@ import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_u
 
 import {load} from './index';
 
+let model;
 describeWithFlags('mobileBert', NODE_ENVS, () => {
   beforeEach(() => {
     spyOn(tfconv, 'loadGraphModel').and.callFake((modelUrl: string) => {
-      const model = new tfconv.GraphModel(modelUrl);
+      model = new tfconv.GraphModel(modelUrl);
       spyOn(model, 'execute')
           .and.callFake((x: tf.Tensor) => [tf.ones([1, 10]), tf.ones([1, 10])]);
       return Promise.resolve(model);
@@ -32,7 +33,6 @@ describeWithFlags('mobileBert', NODE_ENVS, () => {
 
   it('mobileBert detect method should not leak', async () => {
     const mobileBert = await load();
-    const x = tf.zeros([227, 227, 3]) as tf.Tensor3D;
     const numOfTensorsBefore = tf.memory().numTensors;
 
     await mobileBert.findAnswers('question', 'context');
@@ -72,9 +72,29 @@ describeWithFlags('mobileBert', NODE_ENVS, () => {
   });
 
   it('should allow custom model url', async () => {
-    const mobileBert = await load({modelUrl: 'https://google.com/model.json'});
+    await load({modelUrl: 'https://google.com/model.json'});
 
     expect(tfconv.loadGraphModel)
-        .toHaveBeenCalledWith('https://google.com/model.json', {fromTFHub: false});
+        .toHaveBeenCalledWith(
+            'https://google.com/model.json', {fromTFHub: false});
+  });
+
+  it('should populate the startIndex and endIndex', async () => {
+    const mobileBert = await load();
+    model.execute.and.callFake(
+        (x: tf.Tensor) =>
+            [tf.tensor2d([0, 0, 0, 0, 1, 2, 3, 2, 1, 0], [1, 10]),
+             tf.tensor2d([0, 0, 0, 0, 1, 2, 3, 2, 1, 2], [1, 10])]);
+
+    const result =
+        await mobileBert.findAnswers('question', 'this is the answer for you!');
+
+    expect(result).toEqual([
+      {text: 'answer', score: 6, startIndex: 12, endIndex: 18},
+      {text: 'answer for', score: 5, startIndex: 12, endIndex: 22},
+      {text: 'answer for you!', score: 5, startIndex: 12, endIndex: 27},
+      {text: 'the answer', score: 5, startIndex: 8, endIndex: 18},
+      {text: 'the', score: 4, startIndex: 8, endIndex: 11}
+    ]);
   });
 });

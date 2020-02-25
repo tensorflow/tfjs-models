@@ -17,7 +17,7 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {BertTokenizer, CLS_INDEX, loadTokenizer, SEP_INDEX} from './bert_tokenizer';
+import {BertTokenizer, CLS_INDEX, loadTokenizer, SEP_INDEX, Token} from './bert_tokenizer';
 
 const MODEL_URL = 'https://tfhub.dev/tensorflow/tfjs-model/mobilebert/1';
 const INPUT_SIZE = 384;
@@ -46,6 +46,8 @@ export interface ModelConfig {
 
 export interface Answer {
   text: string;
+  startIndex: number;
+  endIndex: number;
   score: number;
 }
 
@@ -53,7 +55,7 @@ interface Feature {
   inputIds: number[];
   inputMask: number[];
   segmentIds: number[];
-  origTokens: string[];
+  origTokens: Token[];
   tokenToOrigMap: {[key: number]: number};
 }
 
@@ -83,11 +85,12 @@ class MobileBertImpl implements MobileBert {
       throw new Error(
           `The length of question token exceeds the limit (${maxQueryLen}).`);
     }
-    const origTokens = this.tokenizer.processInput(context.trim()).slice(0);
+
+    const origTokens = this.tokenizer.processInput(context.trim());
     const tokenToOrigIndex = [];
     const allDocTokens = [];
     for (let i = 0; i < origTokens.length; i++) {
-      const token = origTokens[i];
+      const token = origTokens[i].text;
       const subTokens = this.tokenizer.tokenize(token);
       for (let j = 0; j < subTokens.length; j++) {
         const subToken = subTokens[j];
@@ -210,7 +213,7 @@ class MobileBertImpl implements MobileBert {
 
       return this.getBestAnswers(
           logits[0][0], logits[1][0], feature.origTokens,
-          feature.tokenToOrigMap, index);
+          feature.tokenToOrigMap, context, index);
     });
 
     const answers = await Promise.all(promises);
@@ -227,8 +230,9 @@ class MobileBertImpl implements MobileBert {
    * @param tokenToOrigMap token to index mapping
    */
   getBestAnswers(
-      startLogits: number[], endLogits: number[], origTokens: string[],
-      tokenToOrigMap: {[key: string]: number}, docIndex = 0): Answer[] {
+      startLogits: number[], endLogits: number[], origTokens: Token[],
+      tokenToOrigMap: {[key: string]: number}, context: string,
+      docIndex = 0): Answer[] {
     // Model uses the closed interval [start, end] for indices.
     const startIndexes = this.getBestIndex(startLogits);
     const endIndexes = this.getBestIndex(endLogits);
@@ -255,14 +259,21 @@ class MobileBertImpl implements MobileBert {
       }
 
       let convertedText = '';
+      let startIndex = 0;
+      let endIndex = 0;
       if (origResults[i].start > 0) {
-        convertedText = this.convertBack(
+        [convertedText, startIndex, endIndex] = this.convertBack(
             origTokens, tokenToOrigMap, origResults[i].start,
-            origResults[i].end);
+            origResults[i].end, context);
       } else {
         convertedText = '';
       }
-      answers.push({text: convertedText, score: origResults[i].score});
+      answers.push({
+        text: convertedText,
+        score: origResults[i].score,
+        startIndex,
+        endIndex
+      });
     }
     return answers;
   }
@@ -285,16 +296,23 @@ class MobileBertImpl implements MobileBert {
 
   /** Convert the answer back to original text form. */
   convertBack(
-      origTokens: string[], tokenToOrigMap: {[key: string]: number},
-      start: number, end: number): string {
+      origTokens: Token[], tokenToOrigMap: {[key: string]: number},
+      start: number, end: number, context: string): [string, number, number] {
     // Shifted index is: index of logits + offset.
     const shiftedStart = start + OUTPUT_OFFSET;
     const shiftedEnd = end + OUTPUT_OFFSET;
     const startIndex = tokenToOrigMap[shiftedStart];
     const endIndex = tokenToOrigMap[shiftedEnd];
-    // end + 1 for the closed interval.
-    const ans = origTokens.slice(startIndex, endIndex + 1).join(' ');
-    return ans;
+    const startCharIndex = origTokens[startIndex].index;
+
+    const endCharIndex = endIndex < origTokens.length - 1 ?
+        origTokens[endIndex + 1].index - 1 :
+        origTokens[endIndex].index + origTokens[endIndex].text.length;
+
+    return [
+      context.slice(startCharIndex, endCharIndex + 1).trim(), startCharIndex,
+      endCharIndex
+    ];
   }
 }
 
