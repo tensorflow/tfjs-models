@@ -21,7 +21,7 @@ import * as tf from '@tensorflow/tfjs-core';
 import {Box, BoxType} from './box';
 import {HandDetector} from './hand';
 import {rotate as rotateWebgl} from './rotate_gpu';
-import {buildRotationMatrix, computeRotation, rotatePoint} from './util';
+import {buildRotationMatrix, computeRotation, invertTransformMatrix, rotatePoint} from './util';
 
 const BRANCH_ON_DETECTION = true;  // whether we branch box scaling / shifting
                                    // logic depending on detection type
@@ -145,9 +145,12 @@ export class HandPipeline {
       const coordsRotated =
           tf.matMul(coordsScaled, coords_rotation_matrix, false, true);
 
+      const inverseRotationMatrix =
+          tf.tensor2d(invertTransformMatrix(rotationMatrix));
+
       const original_center = tf.matMul(
           tf.concat([box_for_cut.getCenter(), tf.ones([1]).expandDims(1)], 1),
-          this.inverse(palm_rotation_matrix), false, true);
+          inverseRotationMatrix, false, true);
 
       const coordsResult = coordsRotated.add(original_center);
 
@@ -194,14 +197,6 @@ export class HandPipeline {
 
     tf.env().set('WEBGL_PACK_DEPTHWISECONV', savedWebglPackDepthwiseConvFlag);
     return scaledCoords;
-  }
-
-  inverse(matrix: tf.Tensor) {
-    const rotation_part = tf.slice(matrix, [0, 0], [2, 2]).transpose();
-    const translate_part = tf.slice(matrix, [0, 2], [2, 1]);
-    const change_translation = tf.neg(tf.matMul(rotation_part, translate_part));
-    const inverted = tf.concat([rotation_part, change_translation], 1);
-    return tf.concat([inverted, tf.tensor([[0, 0, 1]])], 0);
   }
 
   makeSquareBox(box: Box) {
