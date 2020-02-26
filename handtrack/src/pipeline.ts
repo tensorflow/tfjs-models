@@ -155,7 +155,6 @@ export class HandPipeline {
           });
 
       const inverseRotationMatrix = invertTransformMatrix(rotationMatrix);
-
       const numerator = [...box_for_cut.getCenter(), 1];
 
       const original_center = [
@@ -173,8 +172,13 @@ export class HandPipeline {
           });
 
       const landmarks_ids = [0, 5, 9, 13, 17, 1, 2];
-      const selected_landmarks =
-          tf.gather(tf.tensor2d(coordsResult), landmarks_ids);
+
+      const selected_landmarks = [];
+      for (let i = 0; i < coordsResult.length; i++) {
+        if (landmarks_ids.includes(i)) {
+          selected_landmarks.push(coordsResult[i]);
+        }
+      }
 
       let nextBoundingBox;
       if (BRANCH_ON_DETECTION) {
@@ -186,11 +190,10 @@ export class HandPipeline {
             this.makeSquareBox(landmarks_box_shifted);
 
         nextBoundingBox = landmarks_box_shifted_squarified.increaseBox(1.65);
-        nextBoundingBox.landmarks =
-            selected_landmarks.arraySync() as [number, number][];
+        nextBoundingBox.landmarks = selected_landmarks as [number, number][];
       } else {
         nextBoundingBox = this.calculateLandmarksBoundingBox(
-            selected_landmarks.arraySync() as [number, number][]);
+            selected_landmarks as [number, number][]);
       }
 
       this.updateROIFromFacedetector(
