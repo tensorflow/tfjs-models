@@ -43,7 +43,7 @@ async function loadAnchors() {
 export async function load({
   meshWidth = 256,
   meshHeight = 256,
-  maxContinuousChecks = 100,
+  maxContinuousChecks = Infinity,
   detectionConfidence = 0.8,
   iouThreshold = 0.3,
   scoreThreshold = 0.5

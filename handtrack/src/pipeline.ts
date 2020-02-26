@@ -21,7 +21,7 @@ import * as tf from '@tensorflow/tfjs-core';
 import {Box, BoxType} from './box';
 import {HandDetector} from './hand';
 import {rotate as rotateWebgl} from './rotate_gpu';
-import {buildRotationMatrix, computeRotation, invertTransformMatrix, rotatePoint} from './util';
+import {buildRotationMatrix, computeRotation, invertTransformMatrix} from './util';
 
 const BRANCH_ON_DETECTION = true;  // whether we branch box scaling / shifting
                                    // logic depending on detection type
@@ -115,8 +115,7 @@ export class HandPipeline {
 
         bbRotated = this.calculateLandmarksBoundingBox(rotated_landmarks);
         const shiftVector: [number, number] = [0, -0.4];
-        const rotatedVector = rotatePoint(angle, shiftVector);
-        bbShifted = this.shiftBox(bbRotated, rotatedVector);
+        bbShifted = this.shiftBox(bbRotated, shiftVector);
         bbSquarified = this.makeSquareBox(bbShifted);
         box_for_cut = bbSquarified.increaseBox(3.0);
       } else {
@@ -160,8 +159,7 @@ export class HandPipeline {
       if (BRANCH_ON_DETECTION) {
         const landmarks_box = this.calculateLandmarksBoundingBox(coordsResult);
 
-        const landmarks_box_shifted =
-            this.shiftBox(landmarks_box, rotatePoint(angle, [0, -0.1]));
+        const landmarks_box_shifted = this.shiftBox(landmarks_box, [0, -0.1]);
         const landmarks_box_shifted_squarified =
             this.makeSquareBox(landmarks_box_shifted);
         nextBoundingBox = landmarks_box_shifted_squarified.increaseBox(1.65);
