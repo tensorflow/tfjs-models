@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google LLC. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -509,8 +509,6 @@ export class BrowserFftSpeechCommandRecognizer implements
       inputTensor = input;
       numExamples = input.shape[0];
     } else {
-      // `input` is a `Float32Array`.
-      input = input as Float32Array;
       if (input.length % this.elementsPerExample) {
         throw new Error(
             `The length of the input Float32Array ${input.length} ` +
@@ -539,7 +537,7 @@ export class BrowserFftSpeechCommandRecognizer implements
     if (numExamples === 1) {
       output.scores = await outTensor.data() as Float32Array;
     } else {
-      const unstacked = tf.unstack(outTensor) as tf.Tensor[];
+      const unstacked = tf.unstack(outTensor);
       const scorePromises = unstacked.map(item => item.data());
       output.scores = await Promise.all(scorePromises) as Float32Array[];
       tf.dispose(unstacked);
@@ -553,6 +551,7 @@ export class BrowserFftSpeechCommandRecognizer implements
       };
     }
 
+    tf.dispose(outTensor);
     return output;
   }
 
@@ -1056,9 +1055,9 @@ class TransferBrowserFftSpeechCommandRecognizer extends
           `${this.dataset.durationMillis()} ms > ` +
           `${datasetDurationMillisThreshold} ms. ` +
           `Training transfer model using fitDataset() instead of fit()`);
-      return await this.trainOnDataset(config);
+      return this.trainOnDataset(config);
     } else {
-      return await this.trainOnTensors(config);
+      return this.trainOnTensors(config);
     }
   }
 

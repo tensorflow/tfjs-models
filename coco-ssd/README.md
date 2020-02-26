@@ -132,9 +132,9 @@ This model is based on the TensorFlow object detection API. You can download the
 Here is the converter command for removing the post process graph.
 
 ```sh
-tensorflowjs_converter --input_format=tf_saved_model \
+tensorflowjs_converter --input_format=tf_frozen_model \
+                       --output_format=tfjs_graph_model \
                        --output_node_names='Postprocessor/ExpandDims_1,Postprocessor/Slice' \
-                       --saved_model_tags=serve \
-                       ./saved_model \
+                       ./frozen_inference_graph.pb \
                        ./web_model
 ```

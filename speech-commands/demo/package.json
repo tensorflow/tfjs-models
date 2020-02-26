@@ -9,7 +9,7 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow/tfjs": "^1.1.0",
+    "@tensorflow/tfjs": "^1.5.2",
     "stats.js": "^0.17.0"
   },
   "scripts": {
@@ -33,7 +33,7 @@
     "dat.gui": "^0.7.1",
     "eslint": "^4.19.1",
     "eslint-config-google": "^0.9.1",
-    "parcel-bundler": "~1.10.3",
+    "parcel-bundler": "~1.12.4",
     "plotly.js-dist": "^1.39.4",
     "yalc": "~1.0.0-pre.21"
   },

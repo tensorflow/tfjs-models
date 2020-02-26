@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google LLC. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,6 +19,7 @@ import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
 import {IMAGENET_CLASSES} from './imagenet_classes';
+export {version} from './version';
 
 const IMAGE_SIZE = 224;
 
@@ -45,7 +46,6 @@ export interface ModelConfig {
   alpha?: MobileNetAlpha;
   modelUrl?: string|tf.io.IOHandler;
   inputRange?: [number, number];
-
 }
 
 const EMBEDDING_NODES: {[version: string]: string} = {
@@ -207,8 +207,8 @@ class MobileNetImpl implements MobileNet {
       }
 
       // Normalize the image from [0, 255] to [inputMin, inputMax].
-      const normalized =
-          img.toFloat().mul(this.normalizationConstant).add(this.inputMin) as tf.Tensor3D;
+      const normalized: tf.Tensor3D =
+          img.toFloat().mul(this.normalizationConstant).add(this.inputMin);
 
       // Resize the image to
       let resized = normalized;

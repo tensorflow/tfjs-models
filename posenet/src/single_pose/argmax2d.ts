@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google LLC. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -30,12 +30,11 @@ export function argmax2d(inputs: tf.Tensor3D): tf.Tensor2D {
 
   return tf.tidy(() => {
     const reshaped = inputs.reshape([height * width, depth]);
-    const coords = reshaped.argMax(0) as tf.Tensor1D;
+    const coords = reshaped.argMax(0);
 
-    const yCoords =
-        coords.div(tf.scalar(width, 'int32')).expandDims(1) as tf.Tensor2D;
-    const xCoords = mod(coords, width).expandDims(1) as tf.Tensor2D;
+    const yCoords = coords.div(tf.scalar(width, 'int32')).expandDims(1);
+    const xCoords = mod(coords as tf.Tensor1D, width).expandDims(1);
 
     return tf.concat([yCoords, xCoords], 1);
-  });
+  }) as tf.Tensor2D;
 }

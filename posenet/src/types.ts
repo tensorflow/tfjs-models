@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google LLC. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,6 +16,13 @@
  */
 
 import * as tf from '@tensorflow/tfjs-core';
+
+export type PoseNetOutputStride = 32|16|8;
+export type PoseNetArchitecture = 'ResNet50'|'MobileNetV1';
+export type PoseNetDecodingMethod = 'single-person'|'multi-person';
+export type PoseNetQuantBytes = 1|2|4;
+
+export type MobileNetMultiplier = 0.50|0.75|1.0;
 
 export declare type Vector2D = {
   y: number,
@@ -50,5 +57,10 @@ export type PosenetInput =
 export type TensorBuffer3D = tf.TensorBuffer<tf.Rank.R3>;
 
 export declare interface Padding {
-  top: number, bottom: number, left: number, right: number
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
 }
+
+export declare type InputResolution = number | {width: number, height: number};
