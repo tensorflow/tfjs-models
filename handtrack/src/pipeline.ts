@@ -134,13 +134,14 @@ export class HandPipeline {
         const shiftVector: [number, number] = [0, -0.4];
         bbShifted = this.shiftBox(bbRotated, shiftVector);
         bbSquarified = this.makeSquareBox(bbShifted);
-        box_for_cut = boxFromCPUBox(bbSquarified).increaseBox(3.0);
+        box_for_cut = bbSquarified.increaseBox(3.0);
       } else {
-        box_for_cut = box;
+        box_for_cut = cpuBox;
       }
 
       const cutted_hand = box_for_cut.cutFromAndResize(
           rotated_image as tf.Tensor4D, [width, height]);
+
       const handImage = cutted_hand.div(255);
 
       const output = this.handtrackModel.predict(handImage) as tf.Tensor[];
@@ -148,11 +149,9 @@ export class HandPipeline {
       const output_keypoints = output[output.length - 1];
       const coords = tf.reshape(output_keypoints, [-1, 3]);
 
-      const coordsScaled = tf.mul(
-          coords.sub(tf.tensor([128, 128, 0])),
-          tf.div(box_for_cut.getSize(), [
-              width, height
-            ]).concat(tf.tensor2d([1], [1, 1]), 1));
+      const boxSize = box_for_cut.getSize();
+      const denom = [boxSize[0] / width, boxSize[1] / height, 1];
+      const coordsScaled = tf.mul(coords.sub(tf.tensor([128, 128, 0])), denom);
 
       const coords_rotation_matrix =
           tf.tensor2d(buildRotationMatrix(angle, [0, 0]) as any);
@@ -163,9 +162,9 @@ export class HandPipeline {
       const inverseRotationMatrix =
           tf.tensor2d(invertTransformMatrix(rotationMatrix));
 
+      const numerator = [...box_for_cut.getCenter(), 1];
       const original_center = tf.matMul(
-          tf.concat([box_for_cut.getCenter(), tf.ones([1]).expandDims(1)], 1),
-          inverseRotationMatrix, false, true);
+          tf.tensor(numerator, [1, 3]), inverseRotationMatrix, false, true);
 
       const coordsResult = coordsRotated.add(original_center);
 

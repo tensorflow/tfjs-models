@@ -98,18 +98,9 @@ export class CPUBox {
     const centers = this.getCenter();
     const size = this.getSize();
 
-    // const new_size = tf.mul(tf.div(size, 2), ratio);
-
     const new_size = [ratio * size[0] / 2, ratio * size[1] / 2];
     const new_starts = [centers[0] - new_size[0], centers[1] - new_size[1]];
     const new_ends = [centers[0] + new_size[0], centers[1] + new_size[1]];
-
-    // const new_starts = tf.sub(centers, new_size);
-    // const new_ends = tf.add(centers, new_size);
-
-    // return new Box(
-    //     tf.concat2d([new_starts as tf.Tensor2D, new_ends as tf.Tensor2D], 1),
-    //     this.landmarks);
 
     return new CPUBox(
         new_starts.concat(new_ends) as [number, number, number, number],
