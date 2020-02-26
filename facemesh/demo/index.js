@@ -34,7 +34,7 @@ const VIDEO_SIZE = 500;
 const renderPointcloud = isMobile() === false;
 const stats = new Stats();
 const state = {
-  backend: 'webgl',
+  backend: 'wasm',
   maxFaces: 1
 };
 
@@ -154,6 +154,7 @@ const setupPage = async () => {
   ctx = canvas.getContext('2d');
   ctx.translate(canvas.width, 0);
   ctx.scale(-1, 1);
+  ctx.fillStyle = 'red';
 
   if(renderPointcloud) {
     document.querySelector("#scatter-gl-container").style.width = `${VIDEO_SIZE}px`;
