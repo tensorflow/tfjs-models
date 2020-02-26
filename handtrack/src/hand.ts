@@ -119,7 +119,8 @@ export class HandDetector {
     const original_h = input_image.shape[1];
     const original_w = input_image.shape[2];
 
-    const image = input_image.resizeBilinear([256, 256]).div(255);
+    const image =
+        tf.tidy(() => input_image.resizeBilinear([256, 256]).div(255));
     const bboxes_data = this._getBoundingBox(image);
 
     if (!bboxes_data[0]) {

@@ -37,15 +37,16 @@ export function rotatePoint(
 const buildTranslationMatrix = (x: number, y: number) =>
     ([[1, 0, x], [0, 1, y], [0, 0, 1]]);
 
-const dot = (v1: number[], v2: number[]) => {
+export function dot(v1: number[], v2: number[]) {
   let product = 0;
   for (let i = 0; i < v1.length; i++) {
     product += v1[i] * v2[i];
   }
   return product;
-};
+}
 
-const getColumnFrom2DArr = (arr: number[][], columnIndex: number): number[] => {
+export function getColumnFrom2DArr(
+    arr: number[][], columnIndex: number): number[] {
   const column: number[] = [];
 
   for (let i = 0; i < arr.length; i++) {
@@ -53,7 +54,7 @@ const getColumnFrom2DArr = (arr: number[][], columnIndex: number): number[] => {
   }
 
   return column;
-};
+}
 
 const multiplyTransformMatrices =
     (mat1: number[][], mat2: number[][]): number[][] => {
