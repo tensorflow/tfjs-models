@@ -17,12 +17,14 @@
 
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
-import {Box} from './box';
+import {CPUBox} from './cpu_box';
 
 export class HandDetector {
   private model: tfconv.GraphModel;
   private anchors: tf.Tensor;
   private input_size: tf.Tensor;
+  private width: number;
+  private height: number;
   private iouThreshold: number;
   private scoreThreshold: number;
 
@@ -31,6 +33,8 @@ export class HandDetector {
       iouThreshold: number, scoreThreshold: number) {
     this.model = model;
     this.anchors = this._generate_anchors(ANCHORS);
+    this.width = width;
+    this.height = height;
     this.input_size = tf.tensor([width, height]);
 
     this.iouThreshold = iouThreshold;
@@ -106,11 +110,13 @@ export class HandDetector {
 
       const result_landmarks =
           tf.slice(landmarks, [box_index, 0], [1]).reshape([-1, 2]);
+
       return [result_box, result_landmarks];
     });
   }
 
   getSingleBoundingBox(input_image: tf.Tensor4D) {
+    console.log('------');
     const original_h = input_image.shape[1];
     const original_w = input_image.shape[2];
 
@@ -121,14 +127,20 @@ export class HandDetector {
       return null;
     }
 
-    const bboxes = bboxes_data[0].arraySync();
-    const landmarks = bboxes_data[1];
+    console.log(bboxes_data[0].shape, bboxes_data[1].shape);
 
-    const factors = tf.div([original_w, original_h], this.input_size);
-    const bb = new Box(tf.tensor(bboxes), landmarks).scale(factors);
+    const bboxes = bboxes_data[0].arraySync() as any;
+    const landmarks = bboxes_data[1].arraySync() as any;
+
+    const factors: [number, number] =
+        [original_w / this.width, original_h / this.height];
+
+    // const bb = new Box(tf.tensor(bboxes), landmarks).scale(factors);
+    const bb = new CPUBox(bboxes[0], landmarks).scale(factors);
 
     image.dispose();
     bboxes_data[0].dispose();
+    bboxes_data[1].dispose();
 
     return bb;
   }
