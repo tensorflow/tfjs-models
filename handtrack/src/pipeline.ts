@@ -132,34 +132,54 @@ export class HandPipeline {
       const output = this.handtrackModel.predict(handImage) as tf.Tensor[];
 
       const output_keypoints = output[output.length - 1];
-      const coords = tf.reshape(output_keypoints, [-1, 3]);
+      const coords = tf.reshape(output_keypoints, [-1, 3]).arraySync() as
+          Array<[number, number, number]>;
 
       const boxSize = box_for_cut.getSize();
-      const denom = [boxSize[0] / width, boxSize[1] / height, 1];
-      const coordsScaled = tf.mul(coords.sub(tf.tensor([128, 128, 0])), denom);
+      const scaleFactor = [boxSize[0] / width, boxSize[1] / height];
 
-      const coords_rotation_matrix =
-          tf.tensor2d(buildRotationMatrix(angle, [0, 0]) as any);
+      const coordsScaled = coords.map((coord: [number, number, number]) => {
+        return [
+          scaleFactor[0] * (coord[0] - 128), scaleFactor[1] * (coord[1] - 128),
+          coord[2]
+        ];
+      });
 
+      const coords_rotation_matrix = buildRotationMatrix(angle, [0, 0]);
       const coordsRotated =
-          tf.matMul(coordsScaled, coords_rotation_matrix, false, true);
+          coordsScaled.map((coord: [number, number, number]) => {
+            return [
+              dot(coord, coords_rotation_matrix[0]),
+              dot(coord, coords_rotation_matrix[1])
+            ];
+          });
 
-      const inverseRotationMatrix =
-          tf.tensor2d(invertTransformMatrix(rotationMatrix));
+      const inverseRotationMatrix = invertTransformMatrix(rotationMatrix);
 
       const numerator = [...box_for_cut.getCenter(), 1];
-      const original_center = tf.matMul(
-          tf.tensor(numerator, [1, 3]), inverseRotationMatrix, false, true);
 
-      const coordsResult = coordsRotated.add(original_center);
+      const original_center = [
+        dot(numerator, inverseRotationMatrix[0]),
+        dot(numerator, inverseRotationMatrix[1]),
+        dot(numerator, inverseRotationMatrix[2])
+      ];
+
+      const coordsResult =
+          coordsRotated.map((coord: [number, number, number]) => {
+            return [
+              coord[0] + original_center[0], coord[1] + original_center[1],
+              coord[2] + original_center[2]
+            ];
+          });
 
       const landmarks_ids = [0, 5, 9, 13, 17, 1, 2];
-      const selected_landmarks = tf.gather(coordsResult, landmarks_ids);
+      const selected_landmarks =
+          tf.gather(tf.tensor2d(coordsResult), landmarks_ids);
 
       let nextBoundingBox;
       if (BRANCH_ON_DETECTION) {
         const landmarks_box = this.calculateLandmarksBoundingBox(
-            coordsResult.arraySync() as [number, number][]);
+            coordsResult as [number, number][]);
 
         const landmarks_box_shifted = this.shiftBox(landmarks_box, [0, -0.1]);
         const landmarks_box_shifted_squarified =
