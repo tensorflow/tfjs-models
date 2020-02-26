@@ -161,10 +161,10 @@ export class HandPipeline {
         const landmarks_box = this.calculateLandmarksBoundingBox(coordsResult);
 
         const landmarks_box_shifted =
-            this.shiftBox(landmarks_box, rotatePoint(angle, [0, -0.05]));
+            this.shiftBox(landmarks_box, rotatePoint(angle, [0, -0.1]));
         const landmarks_box_shifted_squarified =
             this.makeSquareBox(landmarks_box_shifted);
-        nextBoundingBox = landmarks_box_shifted_squarified.increaseBox(1.75);
+        nextBoundingBox = landmarks_box_shifted_squarified.increaseBox(1.65);
         (nextBoundingBox as any).landmarks = tf.keep(selected_landmarks);
       } else {
         nextBoundingBox =
