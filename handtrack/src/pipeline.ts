@@ -129,10 +129,10 @@ export class HandPipeline {
             tf.matMul(box_landmarks_homo, palm_rotation_matrix, false, true)
                 .slice([0, 0], [numLandmarks, 2]);
 
-        bbRotated = boxFromCPUBox(this.calculateLandmarksBoundingBox(
-            rotated_landmarks.arraySync() as [number, number][]));
+        bbRotated = this.calculateLandmarksBoundingBox(
+            rotated_landmarks.arraySync() as [number, number][]);
         const shiftVector: [number, number] = [0, -0.4];
-        bbShifted = this.shiftBox(bbRotated, shiftVector);
+        bbShifted = boxFromCPUBox(this.shiftBox(bbRotated, shiftVector));
         bbSquarified = this.makeSquareBox(bbShifted);
         box_for_cut = bbSquarified.increaseBox(3.0);
       } else {
@@ -174,10 +174,11 @@ export class HandPipeline {
 
       let nextBoundingBox;
       if (BRANCH_ON_DETECTION) {
-        const landmarks_box = boxFromCPUBox(this.calculateLandmarksBoundingBox(
-            coordsResult.arraySync() as [number, number][]));
+        const landmarks_box = this.calculateLandmarksBoundingBox(
+            coordsResult.arraySync() as [number, number][]);
 
-        const landmarks_box_shifted = this.shiftBox(landmarks_box, [0, -0.1]);
+        const landmarks_box_shifted =
+            boxFromCPUBox(this.shiftBox(landmarks_box, [0, -0.1]));
         const landmarks_box_shifted_squarified =
             this.makeSquareBox(landmarks_box_shifted);
         nextBoundingBox = landmarks_box_shifted_squarified.increaseBox(1.65);
@@ -228,15 +229,21 @@ export class HandPipeline {
         tf.concat2d([new_starts as tf.Tensor2D, new_ends as tf.Tensor2D], 1));
   }
 
-  shiftBox(box: any, shifts: number[]) {
-    const boxSize =
-        tf.sub(box.endPoint as tf.Tensor, box.startPoint as tf.Tensor);
-    const absolute_shifts = tf.mul(boxSize, tf.tensor(shifts));
-    const new_start = tf.add(box.startPoint, absolute_shifts);
-    const new_end = tf.add(box.endPoint, absolute_shifts);
-    const new_coordinates = tf.concat2d([new_start as any, new_end], 1);
-
-    return new Box(new_coordinates);
+  shiftBox(box: CPUBox, shifts: number[]) {
+    const boxSize = [
+      box.endPoint[0] - box.startPoint[0], box.endPoint[1] - box.startPoint[1]
+    ];
+    const absoluteShifts = [boxSize[0] * shifts[0], boxSize[1] * shifts[1]];
+    const newStart = [
+      box.startPoint[0] + absoluteShifts[0],
+      box.startPoint[1] + absoluteShifts[1]
+    ];
+    const newEnd = [
+      box.endPoint[0] + absoluteShifts[0], box.endPoint[1] + absoluteShifts[1]
+    ];
+    console.log('SHIFT CPU BOX', newStart.concat(newEnd));
+    return new CPUBox(
+        newStart.concat(newEnd) as [number, number, number, number]);
   }
 
   calculateLandmarksBoundingBox(landmarks: [number, number][]) {
