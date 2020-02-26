@@ -17,7 +17,7 @@
 
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
-import {CPUBox} from './cpu_box';
+import {Box} from './box';
 
 export class HandDetector {
   private model: tfconv.GraphModel;
@@ -116,7 +116,6 @@ export class HandDetector {
   }
 
   getSingleBoundingBox(input_image: tf.Tensor4D) {
-    console.log('------');
     const original_h = input_image.shape[1];
     const original_w = input_image.shape[2];
 
@@ -127,16 +126,13 @@ export class HandDetector {
       return null;
     }
 
-    console.log(bboxes_data[0].shape, bboxes_data[1].shape);
-
     const bboxes = bboxes_data[0].arraySync() as any;
     const landmarks = bboxes_data[1].arraySync() as any;
 
     const factors: [number, number] =
         [original_w / this.width, original_h / this.height];
 
-    // const bb = new Box(tf.tensor(bboxes), landmarks).scale(factors);
-    const bb = new CPUBox(bboxes[0], landmarks).scale(factors);
+    const bb = new Box(bboxes[0], landmarks).scale(factors);
 
     image.dispose();
     bboxes_data[0].dispose();
