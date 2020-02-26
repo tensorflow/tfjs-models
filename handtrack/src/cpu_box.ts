@@ -45,7 +45,7 @@ export class CPUBox {
     // return tf.abs(tf.sub(this.endPoint, this.startPoint));
   }
 
-  getCenter() {
+  getCenter(): [number, number] {
     // const halfSize = tf.div(tf.sub(this.endPoint, this.startPoint), 2);
     // return tf.add(this.startPoint, halfSize);
 

@@ -18,13 +18,28 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {Box, BoxType} from './box';
+import {Box} from './box';
+import {CPUBox} from './cpu_box';
 import {HandDetector} from './hand';
 import {rotate as rotateWebgl} from './rotate_gpu';
 import {buildRotationMatrix, computeRotation, invertTransformMatrix} from './util';
 
 const BRANCH_ON_DETECTION = true;  // whether we branch box scaling / shifting
                                    // logic depending on detection type
+
+
+function boxFromCPUBox(cpuBox: CPUBox) {
+  return new Box(
+      tf.tensor([cpuBox.startEndTensor]),
+      cpuBox.landmarks ? tf.tensor(cpuBox.landmarks) : null);
+}
+
+function cpuBoxFromBox(box: Box) {
+  return new CPUBox(
+      ((box.startEndTensor as any).arraySync() as
+       any)[0] as [number, number, number, number],
+      box.landmarks ? box.landmarks.arraySync() as [number, number][] : null);
+}
 
 export class HandPipeline {
   private handdetect: HandDetector;
@@ -75,17 +90,15 @@ export class HandPipeline {
 
     if (useFreshBox) {
       const start = tf.memory().numTensors;
-      const cpubox = this.handdetect.getSingleBoundingBox(image);
+      const box = this.handdetect.getSingleBoundingBox(image);
       console.log(
           'leaked tensors after detection', tf.memory().numTensors - start);
 
-      if (!cpubox) {
+      if (!box) {
         this.clearROIS();
         return null;
       }
 
-      const box = new Box(
-          tf.tensor([cpubox.startEndTensor]), tf.tensor(cpubox.landmarks));
       this.updateROIFromFacedetector(box, true);
       this.runsWithoutHandDetector = 0;
     } else {
@@ -95,10 +108,11 @@ export class HandPipeline {
     const scaledCoords = tf.tidy(() => {
       const width = 256., height = 256.;
       const box = this.rois[0];
+      const cpuBox = cpuBoxFromBox(box);
 
-      const angle = this.calculateRotation(box);
+      const angle = this.calculateRotation(cpuBox);
 
-      const handpalm_center = box.getCenter().arraySync()[0];
+      const handpalm_center = cpuBox.getCenter();
       const handpalm_center_relative = [
         handpalm_center[0] / image.shape[2], handpalm_center[1] / image.shape[1]
       ];
@@ -109,14 +123,14 @@ export class HandPipeline {
 
       let box_for_cut, bbRotated, bbShifted, bbSquarified;
       if (!BRANCH_ON_DETECTION || useFreshBox) {
-        const numLandmarks = box.landmarks.shape[0];
-        const box_landmarks_homo = tf.concat(
-            [box.landmarks, tf.ones([numLandmarks]).expandDims(1)], 1);
+        const numLandmarks = cpuBox.landmarks.length;
+        const box_landmarks_homo = cpuBox.landmarks.map(coord => [...coord, 1]);
         const rotated_landmarks =
             tf.matMul(box_landmarks_homo, palm_rotation_matrix, false, true)
                 .slice([0, 0], [numLandmarks, 2]);
 
-        bbRotated = this.calculateLandmarksBoundingBox(rotated_landmarks);
+        bbRotated = boxFromCPUBox(this.calculateLandmarksBoundingBox(
+            rotated_landmarks.arraySync() as [number, number][]));
         const shiftVector: [number, number] = [0, -0.4];
         bbShifted = this.shiftBox(bbRotated, shiftVector);
         bbSquarified = this.makeSquareBox(bbShifted);
@@ -160,7 +174,8 @@ export class HandPipeline {
 
       let nextBoundingBox;
       if (BRANCH_ON_DETECTION) {
-        const landmarks_box = this.calculateLandmarksBoundingBox(coordsResult);
+        const landmarks_box = boxFromCPUBox(this.calculateLandmarksBoundingBox(
+            coordsResult.arraySync() as [number, number][]));
 
         const landmarks_box_shifted = this.shiftBox(landmarks_box, [0, -0.1]);
         const landmarks_box_shifted_squarified =
@@ -168,12 +183,12 @@ export class HandPipeline {
         nextBoundingBox = landmarks_box_shifted_squarified.increaseBox(1.65);
         (nextBoundingBox as any).landmarks = tf.keep(selected_landmarks);
       } else {
-        nextBoundingBox =
-            this.calculateLandmarksBoundingBox(selected_landmarks);
+        nextBoundingBox = this.calculateLandmarksBoundingBox(
+            selected_landmarks.arraySync() as [number, number][]);
       }
 
       this.updateROIFromFacedetector(
-          nextBoundingBox as any, false /* force replace */);
+          cpuBoxFromBox(nextBoundingBox as any), false /* force replace */);
 
       const handFlag =
           ((output[0] as tf.Tensor).arraySync() as number[][])[0][0];
@@ -224,28 +239,34 @@ export class HandPipeline {
     return new Box(new_coordinates);
   }
 
-  calculateLandmarksBoundingBox(landmarks: tf.Tensor) {
-    const xs = landmarks.slice([0, 0], [-1, 1]);
-    const ys = landmarks.slice([0, 1], [-1, 1]);
+  calculateLandmarksBoundingBox(landmarks: [number, number][]) {
+    // const xs = landmarks.slice([0, 0], [-1, 1]);
+    // const ys = landmarks.slice([0, 1], [-1, 1]);
 
-    const box_min_max = tf.stack([xs.min(), ys.min(), xs.max(), ys.max()]);
-    return new Box(box_min_max.expandDims(0), landmarks);
+    // const box_min_max = tf.stack([xs.min(), ys.min(), xs.max(), ys.max()]);
+    // return new Box(box_min_max.expandDims(0), landmarks);
+
+    const xs = landmarks.map(d => d[0]);
+    const ys = landmarks.map(d => d[1]);
+    const startEnd: [number, number, number, number] =
+        [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+    return new CPUBox(startEnd, landmarks);
   }
 
-  calculateRotation(box: BoxType) {
-    let keypointsArray = box.landmarks.arraySync() as [number, number][];
+  calculateRotation(box: CPUBox) {
+    let keypointsArray = box.landmarks as [number, number][];
     return computeRotation(keypointsArray[0], keypointsArray[2]);
   }
 
-  updateROIFromFacedetector(box: any, force: boolean) {
+  updateROIFromFacedetector(box: CPUBox, force: boolean) {
     if (force) {
-      this.rois = [box];
+      this.rois = [boxFromCPUBox(box)];
     } else {
       const prev = this.rois[0];
       let iou = 0;
 
       if (prev && prev.startPoint) {
-        const boxStartEnd = box.startEndTensor.arraySync()[0];
+        const boxStartEnd = box.startEndTensor;
         const prevStartEnd = prev.startEndTensor.arraySync()[0];
 
         const xBox = Math.max(boxStartEnd[0], prevStartEnd[0]);
@@ -265,7 +286,7 @@ export class HandPipeline {
       if (iou > 0.8) {
         this.rois[0] = prev;
       } else {
-        this.rois[0] = box;
+        this.rois[0] = boxFromCPUBox(box);
       }
     }
   }

@@ -8,10 +8,10 @@ export type BoxType = {
 };
 
 export class Box {
-  private startEndTensor: tf.Tensor;
-  private startPoint: tf.Tensor;
-  private endPoint: tf.Tensor;
-  private landmarks?: tf.Tensor;
+  public startEndTensor: tf.Tensor;
+  public startPoint: tf.Tensor;
+  public endPoint: tf.Tensor;
+  public landmarks?: tf.Tensor;
 
   constructor(startEndTensor: tf.Tensor, landmarks?: tf.Tensor) {
     // keep tensor for the next frame
