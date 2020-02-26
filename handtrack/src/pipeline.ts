@@ -95,14 +95,13 @@ export class HandPipeline {
 
       const angle = this.calculateRotation(box);
 
-      const handpalm_center = box.getCenter().gather(0);
-      const x = handpalm_center.arraySync();
-      const handpalm_center_relative =
-          [x[0] / image.shape[2], x[1] / image.shape[1]];
+      const handpalm_center = box.getCenter().arraySync()[0];
+      const handpalm_center_relative = [
+        handpalm_center[0] / image.shape[2], handpalm_center[1] / image.shape[1]
+      ];
       const rotated_image = rotateWebgl(
           image, angle, 0, handpalm_center_relative as [number, number]);
-      const rotationMatrix =
-          buildRotationMatrix(-angle, handpalm_center.arraySync());
+      const rotationMatrix = buildRotationMatrix(-angle, handpalm_center);
       const palm_rotation_matrix = tf.tensor2d(rotationMatrix as any);
 
       let box_for_cut, bbRotated, bbShifted, bbSquarified;
