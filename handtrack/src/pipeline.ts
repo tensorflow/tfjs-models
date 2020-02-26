@@ -132,9 +132,9 @@ export class HandPipeline {
         bbRotated = this.calculateLandmarksBoundingBox(
             rotated_landmarks.arraySync() as [number, number][]);
         const shiftVector: [number, number] = [0, -0.4];
-        bbShifted = boxFromCPUBox(this.shiftBox(bbRotated, shiftVector));
+        bbShifted = this.shiftBox(bbRotated, shiftVector);
         bbSquarified = this.makeSquareBox(bbShifted);
-        box_for_cut = bbSquarified.increaseBox(3.0);
+        box_for_cut = boxFromCPUBox(bbSquarified).increaseBox(3.0);
       } else {
         box_for_cut = box;
       }
@@ -177,11 +177,11 @@ export class HandPipeline {
         const landmarks_box = this.calculateLandmarksBoundingBox(
             coordsResult.arraySync() as [number, number][]);
 
-        const landmarks_box_shifted =
-            boxFromCPUBox(this.shiftBox(landmarks_box, [0, -0.1]));
+        const landmarks_box_shifted = this.shiftBox(landmarks_box, [0, -0.1]);
         const landmarks_box_shifted_squarified =
             this.makeSquareBox(landmarks_box_shifted);
-        nextBoundingBox = landmarks_box_shifted_squarified.increaseBox(1.65);
+        nextBoundingBox =
+            boxFromCPUBox(landmarks_box_shifted_squarified).increaseBox(1.65);
         (nextBoundingBox as any).landmarks = tf.keep(selected_landmarks);
       } else {
         nextBoundingBox = this.calculateLandmarksBoundingBox(
@@ -215,18 +215,17 @@ export class HandPipeline {
     return scaledCoords;
   }
 
-  makeSquareBox(box: Box) {
+  makeSquareBox(box: CPUBox) {
     const centers = box.getCenter();
     const size = box.getSize();
-    const maxEdge = tf.max(size, 1);
+    const maxEdge = Math.max(...size);
 
-    const half_size = tf.div(maxEdge, 2);
+    const halfSize = maxEdge / 2;
+    const newStarts = [centers[0] - halfSize, centers[1] - halfSize];
+    const newEnds = [centers[0] + halfSize, centers[1] + halfSize];
 
-    const new_starts = tf.sub(centers, half_size);
-    const new_ends = tf.add(centers, half_size);
-
-    return new Box(
-        tf.concat2d([new_starts as tf.Tensor2D, new_ends as tf.Tensor2D], 1));
+    return new CPUBox(
+        newStarts.concat(newEnds) as [number, number, number, number]);
   }
 
   shiftBox(box: CPUBox, shifts: number[]) {
@@ -241,18 +240,11 @@ export class HandPipeline {
     const newEnd = [
       box.endPoint[0] + absoluteShifts[0], box.endPoint[1] + absoluteShifts[1]
     ];
-    console.log('SHIFT CPU BOX', newStart.concat(newEnd));
     return new CPUBox(
         newStart.concat(newEnd) as [number, number, number, number]);
   }
 
   calculateLandmarksBoundingBox(landmarks: [number, number][]) {
-    // const xs = landmarks.slice([0, 0], [-1, 1]);
-    // const ys = landmarks.slice([0, 1], [-1, 1]);
-
-    // const box_min_max = tf.stack([xs.min(), ys.min(), xs.max(), ys.max()]);
-    // return new Box(box_min_max.expandDims(0), landmarks);
-
     const xs = landmarks.map(d => d[0]);
     const ys = landmarks.map(d => d[1]);
     const startEnd: [number, number, number, number] =
