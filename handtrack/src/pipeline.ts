@@ -21,7 +21,7 @@ import * as tf from '@tensorflow/tfjs-core';
 import {Box, BoxType} from './box';
 import {HandDetector} from './hand';
 import {rotate as rotateWebgl} from './rotate_gpu';
-import {computeRotation, rotatePoint} from './util';
+import {buildRotationMatrix, computeRotation, rotatePoint} from './util';
 
 const BRANCH_ON_DETECTION = true;  // whether we branch box scaling / shifting
                                    // logic depending on detection type
@@ -101,8 +101,9 @@ export class HandPipeline {
           [x[0] / image.shape[2], x[1] / image.shape[1]];
       const rotated_image = rotateWebgl(
           image, angle, 0, handpalm_center_relative as [number, number]);
-      const palm_rotation_matrix =
-          this.build_rotation_matrix_with_center(-angle, handpalm_center);
+      const rotationMatrix =
+          buildRotationMatrix(-angle, handpalm_center.arraySync());
+      const palm_rotation_matrix = tf.tensor2d(rotationMatrix as any);
 
       let box_for_cut, bbRotated, bbShifted, bbSquarified;
       if (!BRANCH_ON_DETECTION || useFreshBox) {
@@ -139,7 +140,7 @@ export class HandPipeline {
             ]).concat(tf.tensor2d([1], [1, 1]), 1));
 
       const coords_rotation_matrix =
-          this.build_rotation_matrix_with_center(angle, tf.tensor([0, 0]));
+          tf.tensor2d(buildRotationMatrix(angle, [0, 0]) as any);
 
       const coordsRotated =
           tf.matMul(coordsScaled, coords_rotation_matrix, false, true);
@@ -234,34 +235,6 @@ export class HandPipeline {
 
     const box_min_max = tf.stack([xs.min(), ys.min(), xs.max(), ys.max()]);
     return new Box(box_min_max.expandDims(0), landmarks);
-  }
-
-  build_translation_matrix(translation: tf.Tensor) {
-    // last column
-    const only_tranalation =
-        tf.pad(translation.expandDims(0), [[2, 0], [0, 1]]).transpose();
-
-    return tf.add(tf.eye(3), only_tranalation);
-  }
-
-  build_rotation_matrix_with_center(rotation: number, center: tf.Tensor) {
-    const cosa = Math.cos(rotation);
-    const sina = Math.sin(rotation);
-
-    const rotation_matrix =
-        tf.tensor([[cosa, -sina, 0], [sina, cosa, 0], [0, 0, 1]]);
-
-    return tf.matMul(
-        tf.matMul(this.build_translation_matrix(center), rotation_matrix),
-        this.build_translation_matrix(tf.neg(center)));
-  }
-
-  build_rotation_matrix(rotation: number, center: tf.Tensor) {
-    const cosa = Math.cos(rotation);
-    const sina = Math.sin(rotation);
-
-    const rotation_matrix = tf.tensor([[cosa, -sina], [sina, cosa]]);
-    return rotation_matrix;
   }
 
   calculateRotation(box: BoxType) {
