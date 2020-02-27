@@ -19,8 +19,8 @@ import * as blazeface from '@tensorflow-models/blazeface';
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {Box, createBox, disposeBox, enlargeBox, getBoxSize} from './box';
-import {Box as CPUBox, createBox as createCPUBox, cutBoxFromImageAndResize as cutCPUBoxFromImageAndResize, enlargeBox as enlargeCPUBox, scaleBoxCoordinates as scaleCPUBoxCoordinates} from './box_cpu';
+import {Box, createBox, enlargeBox} from './box';
+import {Box as CPUBox, createBox as createCPUBox, cutBoxFromImageAndResize, enlargeBox as enlargeCPUBox, getBoxSize as getCPUBoxSize, scaleBoxCoordinates as scaleCPUBoxCoordinates} from './box_cpu';
 
 export type Prediction = {
   coords: tf.Tensor2D,
@@ -93,11 +93,14 @@ export class Pipeline {
 
       const scaledBoxes = boxes.map((prediction: Box) => {
         const cpuBox = boxToCPUBox(prediction);
+
+        prediction.startPoint.dispose();
+        prediction.endPoint.dispose();
+        prediction.startEndTensor.dispose();
+
         return enlargeCPUBox(
             scaleCPUBoxCoordinates(cpuBox, scaleFactor as [number, number]));
       });
-
-      boxes.forEach(disposeBox);
 
       this.updateRegionsOfInterest(scaledBoxes);
       this.runsWithoutFaceDetector = 0;
@@ -106,7 +109,7 @@ export class Pipeline {
     }
 
     return tf.tidy(() => this.regionsOfInterest.map((box: CPUBox, i) => {
-      const face = cutCPUBoxFromImageAndResize(box, input, [
+      const face = cutBoxFromImageAndResize(box, input, [
                      this.meshHeight, this.meshWidth
                    ]).div(255);
 
@@ -117,15 +120,20 @@ export class Pipeline {
               face) as [tf.Tensor, tf.Tensor2D, tf.Tensor2D];
 
       const coordsReshaped = tf.reshape(coords, [-1, 3]);
-      const normalizedBox = tf.div(
-          getBoxSize(cpuBoxToBox(box)), [this.meshWidth, this.meshHeight]);
-      const scaledCoords =
-          tf.mul(
-                coordsReshaped,
-                normalizedBox.concat(tf.tensor2d([1], [1, 1]), 1))
-              .add(cpuBoxToBox(box).startPoint.concat(
-                  tf.tensor2d([0], [1, 1]), 1));
+      const boxSize = getCPUBoxSize(box);
+      const normalizedBoxSize =
+          [boxSize[0] / this.meshWidth, boxSize[1] / this.meshHeight, 1];
+      const scaledCoords = tf.mul(coordsReshaped, normalizedBoxSize)
+                               .add(cpuBoxToBox(box).startPoint.concat(
+                                   tf.tensor2d([0], [1, 1]), 1));
+      // const scaledCoords =
+      //     tf.mul(
+      //           coordsReshaped,
+      //           normalizedBox.concat(tf.tensor2d([1], [1, 1]), 1))
+      //         .add(cpuBoxToBox(box).startPoint.concat(
+      //             tf.tensor2d([0], [1, 1]), 1));
 
+      // last step: make landmarksbox a cpubox
       const landmarksBox = this.calculateLandmarksBoundingBox(scaledCoords);
       this.regionsOfInterest[i] = boxToCPUBox(landmarksBox);
 
