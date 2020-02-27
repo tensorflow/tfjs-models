@@ -19,7 +19,8 @@ import * as blazeface from '@tensorflow-models/blazeface';
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {Box, createBox, cutBoxFromImageAndResize, disposeBox, enlargeBox, getBoxSize, scaleBoxCoordinates} from './box';
+import {Box, createBox, cutBoxFromImageAndResize, disposeBox, enlargeBox, getBoxSize} from './box';
+import {Box as CPUBox, createBox as createCPUBox, enlargeBox as enlargeCPUBox, scaleBoxCoordinates as scaleCPUBoxCoordinates} from './box_cpu';
 
 export type Prediction = {
   coords: tf.Tensor2D,
@@ -30,6 +31,16 @@ export type Prediction = {
 
 const LANDMARKS_COUNT = 468;
 const MERGE_REGIONS_OF_INTEREST_IOU_THRESHOLD = 0.25;
+
+function boxToCPUBox(box: Box): CPUBox {
+  return createCPUBox(
+      box.startPoint.squeeze().arraySync() as [number, number],
+      box.endPoint.squeeze().arraySync() as [number, number]);
+}
+
+function cpuBoxToBox(box: CPUBox): Box {
+  return createBox(tf.tensor(box.startPoint.concat(box.endPoint), [1, 4]));
+}
 
 // The Pipeline coordinates between the bounding box and skeleton models.
 export class Pipeline {
@@ -70,9 +81,9 @@ export class Pipeline {
       const {boxes, scaleFactor} =
           await this.boundingBoxDetector.getBoundingBoxes(
               input,
-              true,  // whether to return tensors
-              false  // whether to annotate facial bounding boxes with landmark
-                     // information
+              false,  // whether to return tensors
+              false   // whether to annotate facial bounding boxes with landmark
+                      // information
           );
 
       if (!boxes.length) {
@@ -80,10 +91,19 @@ export class Pipeline {
         return null;
       }
 
-      const scaledBoxes = tf.tidy(
-          () => boxes.map(
-              (prediction: Box): Box => enlargeBox(scaleBoxCoordinates(
-                  prediction, scaleFactor as tf.Tensor1D))));
+      const scaledBoxes = boxes.map((prediction: Box) => {
+        const cpuBox = boxToCPUBox(prediction);
+        return cpuBoxToBox(enlargeCPUBox(
+            scaleCPUBoxCoordinates(cpuBox, scaleFactor as [number, number])));
+      });
+
+      // todo: convert blazeboxes to cpu boxes here, and change
+      // updateregionsofinterest to work with cpuboxes.
+
+      // const scaledBoxes = tf.tidy(
+      //     () => boxes.map(
+      //         (prediction: Box): Box => enlargeBox(scaleBoxCoordinates(
+      //             prediction, scaleFactor as tf.Tensor1D))));
 
       boxes.forEach(disposeBox);
 
