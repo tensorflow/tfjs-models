@@ -43,8 +43,8 @@ export class Pipeline {
   private meshWidth: number;
   private meshHeight: number;
   private maxContinuousChecks: number;
-  private runsWithoutFaceDetector: number;
   private maxFaces: number;
+  private runsWithoutFaceDetector: number;
 
   constructor(
       blazeface: blazeface.BlazeFaceModel, meshDetector: tfconv.GraphModel,
@@ -55,36 +55,38 @@ export class Pipeline {
     this.meshWidth = meshWidth;
     this.meshHeight = meshHeight;
     this.maxContinuousChecks = maxContinuousChecks;
+    this.maxFaces = maxFaces;
+
     this.runsWithoutFaceDetector = 0;
     this.regionsOfInterest = [];
-    this.maxFaces = maxFaces;
   }
 
   /**
-   * @param image - image tensor of shape [1, H, W, 3].
-   * @return an array of predictions for each face
+   * @param input - tensor of shape [1, H, W, 3].
    */
-  async predict(image: tf.Tensor4D): Promise<Prediction[]> {
+  async predict(input: tf.Tensor4D): Promise<Prediction[]> {
     if (this.needsRoisUpdate()) {
-      const returnTensors = false;
-      const annotateFace = false;
       const {boxes, scaleFactor} =
           await this.boundingBoxDetector.getBoundingBoxes(
-              image, returnTensors, annotateFace);
+              input,
+              true,  // whether to return tensors
+              false  // whether to annotate facial bounding boxes with landmark
+                     // information
+          );
 
       if (!boxes.length) {
-        this.clearROIs();
+        this.clearRegionsOfInterest();
         return null;
       }
 
       const scaledBoxes = tf.tidy(
           () => boxes.map(
               (prediction: Box): Box => enlargeBox(scaleBoxCoordinates(
-                  prediction, scaleFactor as [number, number]))));
+                  prediction, scaleFactor as tf.Tensor1D))));
 
       boxes.forEach(disposeBox);
 
-      this.updateRoisFromFaceDetector(scaledBoxes);
+      this.updateRegionsOfInterest(scaledBoxes);
       this.runsWithoutFaceDetector = 0;
     } else {
       this.runsWithoutFaceDetector++;
@@ -92,7 +94,7 @@ export class Pipeline {
 
     return tf.tidy(() => this.regionsOfInterest.map((roi, i) => {
       const box = roi as Box;
-      const face = cutBoxFromImageAndResize(box, image, [
+      const face = cutBoxFromImageAndResize(box, input, [
                      this.meshHeight, this.meshWidth
                    ]).div(255);
 
@@ -125,7 +127,7 @@ export class Pipeline {
     }));
   }
 
-  updateRoisFromFaceDetector(boxes: Box[]) {
+  updateRegionsOfInterest(boxes: Box[]) {
     for (let i = 0; i < boxes.length; i++) {
       const box = boxes[i];
       const prev = this.regionsOfInterest[i];
@@ -177,7 +179,7 @@ export class Pipeline {
     this.regionsOfInterest = this.regionsOfInterest.slice(0, boxes.length);
   }
 
-  clearROIs() {
+  clearRegionsOfInterest() {
     this.regionsOfInterest = [];
   }
 

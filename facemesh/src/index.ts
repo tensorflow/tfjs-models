@@ -160,7 +160,7 @@ export class FaceMesh {
 
   clearPipelineROIs(flag: number) {
     if (flag < this.detectionConfidence) {
-      this.pipeline.clearROIs();
+      this.pipeline.clearRegionsOfInterest();
     }
   }
 
