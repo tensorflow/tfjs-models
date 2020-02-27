@@ -57,24 +57,17 @@ export const getBoxCenter = (box: Box): tf.Tensor2D => {
   return tf.add(box.startPoint, halfSize);
 };
 
-export const cutBoxFromImageAndResize =
-    (box: Box, image: tf.Tensor4D, cropSize: [number, number]): tf.Tensor4D => {
-      const h = image.shape[1];
-      const w = image.shape[2];
+export const cutBoxFromImageAndResize = (box: Box, image: tf.Tensor4D,
+                                         cropSize: [number, number]):
+                                            tf.Tensor4D => {
+  const h = image.shape[1];
+  const w = image.shape[2];
 
-      const xyxy = box.startEndTensor;
-      const yxyx = tf.concat2d(
-          [
-            xyxy.slice([0, 1], [-1, 1]) as tf.Tensor2D,
-            xyxy.slice([0, 0], [-1, 1]) as tf.Tensor2D,
-            xyxy.slice([0, 3], [-1, 1]) as tf.Tensor2D,
-            xyxy.slice([0, 2], [-1, 1]) as tf.Tensor2D
-          ],
-          0);
-      const roundedCoords = tf.div(yxyx.transpose(), [h, w, h, w]);
-      return tf.image.cropAndResize(
-          image, roundedCoords as tf.Tensor2D, [0], cropSize);
-    };
+  const xyxy = box.startEndTensor.arraySync()[0];
+  const yxyx = [xyxy[1], xyxy[0], xyxy[3], xyxy[2]];
+  const roundedCoords = [yxyx[0] / h, yxyx[1] / w, yxyx[2] / h, yxyx[3] / w];
+  return tf.image.cropAndResize(image, [roundedCoords], [0], cropSize);
+};
 
 export const enlargeBox = (box: Box, factor = 1.5) => {
   const center = getBoxCenter(box);
