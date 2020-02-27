@@ -96,7 +96,7 @@ const renderPrediction = async () => {
       }
     });
 
-    if (renderPointcloud) {
+    if (renderPointcloud && scatterGL) {
       const pointsData = predictions.map(prediction => {
         let scaledMesh = prediction.scaledMesh;
         if(returnTensors) {
@@ -156,6 +156,10 @@ const setupPage = async () => {
   ctx.scale(-1, 1);
   ctx.fillStyle = 'red';
 
+  model = await faceMesh.load({ maxFaces: state.maxFaces });
+
+  renderPrediction();
+
   if(renderPointcloud) {
     document.querySelector("#scatter-gl-container").style.width = `${VIDEO_SIZE}px`;
     document.querySelector("#scatter-gl-container").style.height = `${VIDEO_SIZE}px`;
@@ -166,10 +170,6 @@ const setupPage = async () => {
         'selectEnabled': false
       });
   }
-
-  model = await faceMesh.load({ maxFaces: state.maxFaces });
-
-  renderPrediction();
 };
 
 setupPage();
