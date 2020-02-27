@@ -123,7 +123,7 @@ export class Pipeline {
       const normalizedBoxSize =
           [boxSize[0] / this.meshWidth, boxSize[1] / this.meshHeight, 1];
       const scaledCoords =
-          tf.mul(coordsReshaped, normalizedBoxSize).add([...box.startPoint, 0]);
+          tf.mul(coordsReshaped, normalizedBoxSize).add([...box.topLeft, 0]);
 
       const landmarksBox = this.calculateLandmarksBoundingBox(scaledCoords);
       this.regionsOfInterest[i] = landmarksBox;
@@ -144,11 +144,11 @@ export class Pipeline {
       const previousBox = this.regionsOfInterest[i];
       let iou = 0;
 
-      if (previousBox && previousBox.startPoint) {
-        const [boxStartX, boxStartY] = box.startPoint;
-        const [boxEndX, boxEndY] = box.endPoint;
-        const [prevStartX, prevStartY] = previousBox.startPoint;
-        const [prevEndX, prevEndY] = previousBox.endPoint;
+      if (previousBox && previousBox.topLeft) {
+        const [boxStartX, boxStartY] = box.topLeft;
+        const [boxEndX, boxEndY] = box.bottomRight;
+        const [prevStartX, prevStartY] = previousBox.topLeft;
+        const [prevEndX, prevEndY] = previousBox.bottomRight;
 
         const xStartMax = Math.max(boxStartX, prevStartX);
         const yStartMax = Math.max(boxStartY, prevStartY);

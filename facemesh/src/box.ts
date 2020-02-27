@@ -19,33 +19,33 @@ import * as tf from '@tensorflow/tfjs-core';
 
 // The facial bounding box.
 export type Box = {
-  startPoint: [number, number],  // Upper left hand corner of bounding box.
-  endPoint: [number, number]     // Lower right hand corner of bounding box.
+  topLeft: [number, number],     // Upper left hand corner of bounding box.
+  bottomRight: [number, number]  // Lower right hand corner of bounding box.
 };
 
 const getBoxCenter = (box: Box): [number, number] => ([
-  box.startPoint[0] + (box.endPoint[0] - box.startPoint[0]) / 2,
-  box.startPoint[1] + (box.endPoint[1] - box.startPoint[1]) / 2,
+  box.topLeft[0] + (box.bottomRight[0] - box.topLeft[0]) / 2,
+  box.topLeft[1] + (box.bottomRight[1] - box.topLeft[1]) / 2,
 ]);
 
 export function createBox(
-    startPoint: [number, number], endPoint: [number, number]): Box {
-  return {startPoint, endPoint};
+    topLeft: [number, number], bottomRight: [number, number]): Box {
+  return {topLeft, bottomRight};
 }
 
 export function scaleBoxCoordinates(box: Box, factor: [number, number]): Box {
   const start: [number, number] =
-      [box.startPoint[0] * factor[0], box.startPoint[1] * factor[1]];
+      [box.topLeft[0] * factor[0], box.topLeft[1] * factor[1]];
   const end: [number, number] =
-      [box.endPoint[0] * factor[0], box.endPoint[1] * factor[1]];
+      [box.bottomRight[0] * factor[0], box.bottomRight[1] * factor[1]];
 
   return createBox(start, end);
 }
 
 export function getBoxSize(box: Box): [number, number] {
   return [
-    Math.abs(box.endPoint[0] - box.startPoint[0]),
-    Math.abs(box.endPoint[1] - box.startPoint[1])
+    Math.abs(box.bottomRight[0] - box.topLeft[0]),
+    Math.abs(box.bottomRight[1] - box.topLeft[1])
   ];
 }
 
@@ -66,7 +66,7 @@ export function cutBoxFromImageAndResize(
   const h = image.shape[1];
   const w = image.shape[2];
 
-  const xyxy = box.startPoint.concat(box.endPoint);
+  const xyxy = box.topLeft.concat(box.bottomRight);
   const yxyx = [xyxy[1], xyxy[0], xyxy[3], xyxy[2]];
   const roundedCoords = [yxyx[0] / h, yxyx[1] / w, yxyx[2] / h, yxyx[3] / w];
   return tf.image.cropAndResize(image, [roundedCoords], [0], cropSize);

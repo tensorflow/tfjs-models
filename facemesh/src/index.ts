@@ -19,6 +19,7 @@ import * as blazeface from '@tensorflow-models/blazeface';
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
+import {Box} from './box';
 import {MESH_ANNOTATIONS} from './keypoints';
 import {Pipeline, Prediction} from './pipeline';
 
@@ -27,10 +28,8 @@ const BLAZE_MESH_GRAPHMODEL_PATH =
     'https://storage.googleapis.com/learnjs-data/facemesh_staging/facemesh_facecontours_faceflag-blaze_shift30-2019_01_14-v0.hdf5_tfjs_fixed_batch/model.json';
 
 export type AnnotatedPrediction = {
-  faceInViewConfidence: number|tf.Scalar,
-  boundingBox: {topLeft: [number, number], bottomRight: [number, number]},
-  mesh: number[][]|tf.Tensor2D,
-  scaledMesh: number[][]|tf.Tensor2D,
+  faceInViewConfidence: number|tf.Scalar, boundingBox: Box;
+  mesh: number[][] | tf.Tensor2D, scaledMesh: number[][] | tf.Tensor2D,
   /*Annotated keypoints. Not available if `returnTensors` is true. */
   annotations?: {[key: string]: number[][]}
 };
@@ -192,8 +191,7 @@ export class FaceMesh {
             faceInViewConfidence: flag,
             mesh: coords,
             scaledMesh: scaledCoords,
-            boundingBox:
-                {topLeft: box.startPoint, bottomRight: box.endPoint}
+            boundingBox: box
           } as AnnotatedPrediction;
 
           if (flipHorizontal) {
@@ -217,8 +215,8 @@ export class FaceMesh {
         let annotatedPrediction: AnnotatedPrediction = {
           faceInViewConfidence: flagValue,
           boundingBox: {
-            topLeft: box.startPoint as [number, number],
-            bottomRight: box.endPoint as [number, number]
+            topLeft: box.topLeft as [number, number],
+            bottomRight: box.bottomRight as [number, number]
           },
           mesh: coordsArr as number[][],
           scaledMesh: coordsArrScaled as number[][]
