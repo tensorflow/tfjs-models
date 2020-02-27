@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2019 Google LLC. All Rights Reserved.
+ * Copyright 2020 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,10 +17,11 @@
 
 import * as tf from '@tensorflow/tfjs-core';
 
+// The facial bounding box.
 export type Box = {
   startEndTensor: tf.Tensor2D,
-  startPoint: tf.Tensor2D,
-  endPoint: tf.Tensor2D
+  startPoint: tf.Tensor2D,  // Upper left hand corner of bounding box.
+  endPoint: tf.Tensor2D     // Lower right hand corner of bounding box.
 };
 
 export const disposeBox = (box: Box): void => {
@@ -29,8 +30,6 @@ export const disposeBox = (box: Box): void => {
   box.endPoint.dispose();
 };
 
-// startEndTensor: [1, 4]|[1, 6]
-// startPoint: [1, 2]|[1, 3]
 export const createBox =
     (startEndTensor: tf.Tensor2D, startPoint?: tf.Tensor2D,
      endPoint?: tf.Tensor2D): Box => ({
@@ -46,15 +45,12 @@ export const scaleBox =
       const starts = tf.mul(box.startPoint, factors);
       const ends = tf.mul(box.endPoint, factors);
 
-      const newCoordinates =
-          tf.concat2d([starts as tf.Tensor2D, ends as tf.Tensor2D], 1);
-
-      return createBox(newCoordinates);
+      return createBox(
+          tf.concat2d([starts as tf.Tensor2D, ends as tf.Tensor2D], 1));
     };
 
-export const getBoxSize = (box: Box): tf.Tensor2D => {
-  return tf.abs(tf.sub(box.endPoint, box.startPoint)) as tf.Tensor2D;
-};
+export const getBoxSize = (box: Box): tf.Tensor2D =>
+    tf.abs(tf.sub(box.endPoint, box.startPoint)) as tf.Tensor2D;
 
 export const getBoxCenter = (box: Box): tf.Tensor2D => {
   const halfSize = tf.div(tf.sub(box.endPoint, box.startPoint), 2);
