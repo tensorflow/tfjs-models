@@ -19,28 +19,25 @@ import * as blazeface from '@tensorflow-models/blazeface';
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {Box} from './box';
-import {Box as CPUBox, createBox as createCPUBox, cutBoxFromImageAndResize, enlargeBox as enlargeCPUBox, getBoxSize as getCPUBoxSize, scaleBoxCoordinates as scaleCPUBoxCoordinates} from './box_cpu';
+import {Box, createBox, cutBoxFromImageAndResize, enlargeBox, getBoxSize, scaleBoxCoordinates} from './box';
 
 export type Prediction = {
   coords: tf.Tensor2D,
   scaledCoords: tf.Tensor2D,
-  box: CPUBox,
+  box: Box,
   flag: tf.Scalar
+};
+
+// Container for the coordinates of the facial bounding box returned by
+// blazeface.
+type BlazeBox = {
+  startEndTensor: tf.Tensor2D,
+  startPoint: tf.Tensor2D,
+  endPoint: tf.Tensor2D
 };
 
 const LANDMARKS_COUNT = 468;
 const MERGE_REGIONS_OF_INTEREST_IOU_THRESHOLD = 0.25;
-
-function boxToCPUBox(box: Box): CPUBox {
-  return createCPUBox(
-      box.startPoint.squeeze().arraySync() as [number, number],
-      box.endPoint.squeeze().arraySync() as [number, number]);
-}
-
-// function cpuBoxToBox(box: CPUBox): Box {
-//   return createBox(tf.tensor(box.startPoint.concat(box.endPoint), [1, 4]));
-// }
 
 // The Pipeline coordinates between the bounding box and skeleton models.
 export class Pipeline {
@@ -50,7 +47,7 @@ export class Pipeline {
   private meshDetector: tfconv.GraphModel;
 
   // An array of facial bounding boxes.
-  private regionsOfInterest: CPUBox[];
+  private regionsOfInterest: Box[];
 
   private meshWidth: number;
   private meshHeight: number;
@@ -91,15 +88,17 @@ export class Pipeline {
         return null;
       }
 
-      const scaledBoxes = boxes.map((prediction: Box) => {
-        const cpuBox = boxToCPUBox(prediction);
+      const scaledBoxes = boxes.map((prediction: BlazeBox) => {
+        const cpuBox = createBox(
+            prediction.startPoint.squeeze().arraySync() as [number, number],
+            prediction.endPoint.squeeze().arraySync() as [number, number]);
 
         prediction.startPoint.dispose();
         prediction.endPoint.dispose();
         prediction.startEndTensor.dispose();
 
-        return enlargeCPUBox(
-            scaleCPUBoxCoordinates(cpuBox, scaleFactor as [number, number]));
+        return enlargeBox(
+            scaleBoxCoordinates(cpuBox, scaleFactor as [number, number]));
       });
 
       this.updateRegionsOfInterest(scaledBoxes);
@@ -108,7 +107,7 @@ export class Pipeline {
       this.runsWithoutFaceDetector++;
     }
 
-    return tf.tidy(() => this.regionsOfInterest.map((box: CPUBox, i) => {
+    return tf.tidy(() => this.regionsOfInterest.map((box: Box, i) => {
       const face = cutBoxFromImageAndResize(box, input, [
                      this.meshHeight, this.meshWidth
                    ]).div(255);
@@ -120,13 +119,12 @@ export class Pipeline {
               face) as [tf.Tensor, tf.Tensor2D, tf.Tensor2D];
 
       const coordsReshaped = tf.reshape(coords, [-1, 3]);
-      const boxSize = getCPUBoxSize(box);
+      const boxSize = getBoxSize(box);
       const normalizedBoxSize =
           [boxSize[0] / this.meshWidth, boxSize[1] / this.meshHeight, 1];
       const scaledCoords =
           tf.mul(coordsReshaped, normalizedBoxSize).add([...box.startPoint, 0]);
 
-      // last step: make landmarksbox a cpubox
       const landmarksBox = this.calculateLandmarksBoundingBox(scaledCoords);
       this.regionsOfInterest[i] = landmarksBox;
 
@@ -140,7 +138,7 @@ export class Pipeline {
   }
 
   // Update regions of interest using intersection-over-union thresholding.
-  updateRegionsOfInterest(boxes: CPUBox[]) {
+  updateRegionsOfInterest(boxes: Box[]) {
     for (let i = 0; i < boxes.length; i++) {
       const box = boxes[i];
       const previousBox = this.regionsOfInterest[i];
@@ -187,7 +185,7 @@ export class Pipeline {
     return this.maxFaces === 1 ? noROIs : noROIs || shouldCheckForMoreFaces;
   }
 
-  calculateLandmarksBoundingBox(landmarks: tf.Tensor): CPUBox {
+  calculateLandmarksBoundingBox(landmarks: tf.Tensor): Box {
     const xs = landmarks.slice([0, 0], [LANDMARKS_COUNT, 1]);
     const ys = landmarks.slice([0, 1], [LANDMARKS_COUNT, 1]);
 
@@ -196,6 +194,6 @@ export class Pipeline {
     const yMin = ys.min().squeeze().arraySync() as number;
     const yMax = ys.max().squeeze().arraySync() as number;
 
-    return enlargeCPUBox(createCPUBox([xMin, yMin], [xMax, yMax]));
+    return enlargeBox(createBox([xMin, yMin], [xMax, yMax]));
   }
 }

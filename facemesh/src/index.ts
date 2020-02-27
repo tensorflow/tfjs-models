@@ -28,10 +28,7 @@ const BLAZE_MESH_GRAPHMODEL_PATH =
 
 export type AnnotatedPrediction = {
   faceInViewConfidence: number|tf.Scalar,
-  boundingBox: {
-    topLeft: [number, number]|tf.Tensor1D,
-    bottomRight: [number, number]|tf.Tensor1D
-  },
+  boundingBox: {topLeft: [number, number], bottomRight: [number, number]},
   mesh: number[][]|tf.Tensor2D,
   scaledMesh: number[][]|tf.Tensor2D,
   /*Annotated keypoints. Not available if `returnTensors` is true. */
@@ -47,24 +44,21 @@ function getInputTensorDimensions(input: tf.Tensor3D|ImageData|HTMLVideoElement|
 
 function flipFaceHorizontal(
     face: AnnotatedPrediction, imageWidth: number): AnnotatedPrediction {
+  const topLeft = [
+    imageWidth - 1 - face.boundingBox.topLeft[0], face.boundingBox.topLeft[1]
+  ];
+
+  const bottomRight = [
+    imageWidth - 1 - face.boundingBox.bottomRight[0],
+    face.boundingBox.bottomRight[1]
+  ];
+
   if (face.mesh instanceof tf.Tensor) {
-    const [topLeft, bottomRight, mesh, scaledMesh] = tf.tidy(() => {
+    const [mesh, scaledMesh] = tf.tidy(() => {
       const subtractBasis = [imageWidth - 1, 0, 0];
       const multiplyBasis = [1, -1, 1];
 
       return [
-        tf.concat([
-          tf.sub(
-              imageWidth - 1,
-              (face.boundingBox.topLeft as tf.Tensor1D).slice(0, 1)),
-          (face.boundingBox.topLeft as tf.Tensor1D).slice(1, 1)
-        ]),
-        tf.concat([
-          tf.sub(
-              imageWidth - 1,
-              (face.boundingBox.bottomRight as tf.Tensor1D).slice(0, 1)),
-          (face.boundingBox.bottomRight as tf.Tensor1D).slice(1, 1)
-        ]),
         tf.sub(tf.tensor1d(subtractBasis), face.mesh)
             .mul(tf.tensor1d(multiplyBasis)),
         tf.sub(tf.tensor1d(subtractBasis), face.scaledMesh)
@@ -77,16 +71,7 @@ function flipFaceHorizontal(
   }
 
   return Object.assign({}, face, {
-    boundingBox: {
-      topLeft: [
-        imageWidth - 1 - (face.boundingBox.topLeft as [number, number])[0],
-        (face.boundingBox.topLeft as [number, number])[1]
-      ],
-      bottomRight: [
-        imageWidth - 1 - (face.boundingBox.bottomRight as [number, number])[0],
-        (face.boundingBox.bottomRight as [number, number])[1]
-      ]
-    },
+    boundingBox: {topLeft, bottomRight},
     mesh: (face.mesh as number[][])
               .map((coord: [number, number]|[number, number, number]) => {
                 const flippedCoord = coord.slice(0);
