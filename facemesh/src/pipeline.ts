@@ -93,17 +93,12 @@ export class Pipeline {
 
       const scaledBoxes = boxes.map((prediction: Box) => {
         const cpuBox = boxToCPUBox(prediction);
-        return cpuBoxToBox(enlargeCPUBox(
-            scaleCPUBoxCoordinates(cpuBox, scaleFactor as [number, number])));
+        return enlargeCPUBox(
+            scaleCPUBoxCoordinates(cpuBox, scaleFactor as [number, number]));
       });
 
       // todo: convert blazeboxes to cpu boxes here, and change
       // updateregionsofinterest to work with cpuboxes.
-
-      // const scaledBoxes = tf.tidy(
-      //     () => boxes.map(
-      //         (prediction: Box): Box => enlargeBox(scaleBoxCoordinates(
-      //             prediction, scaleFactor as tf.Tensor1D))));
 
       boxes.forEach(disposeBox);
 
@@ -150,15 +145,15 @@ export class Pipeline {
   }
 
   // Update regions of interest using intersection-over-union thresholding.
-  updateRegionsOfInterest(boxes: Box[]) {
+  updateRegionsOfInterest(boxes: CPUBox[]) {
     for (let i = 0; i < boxes.length; i++) {
       const box = boxes[i];
       const previousBox = this.regionsOfInterest[i];
       let iou = 0;
 
       if (previousBox && previousBox.startPoint) {
-        const [boxStartX, boxStartY, boxEndX, boxEndY] =
-            box.startEndTensor.arraySync()[0];
+        const [boxStartX, boxStartY] = box.startPoint;
+        const [boxEndX, boxEndY] = box.endPoint;
         const [prevStartX, prevStartY, prevEndX, prevEndY] =
             previousBox.startEndTensor.arraySync()[0];
 
@@ -176,9 +171,8 @@ export class Pipeline {
 
       if (iou > MERGE_REGIONS_OF_INTEREST_IOU_THRESHOLD) {
         this.regionsOfInterest[i] = previousBox;
-        disposeBox(box);
       } else {
-        this.regionsOfInterest[i] = box;
+        this.regionsOfInterest[i] = cpuBoxToBox(box);
         if (previousBox && previousBox.startPoint) {
           disposeBox(previousBox);
         }
