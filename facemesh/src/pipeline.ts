@@ -19,7 +19,7 @@ import * as blazeface from '@tensorflow-models/blazeface';
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {Box, createBox, enlargeBox} from './box';
+import {Box, createBox} from './box';
 import {Box as CPUBox, createBox as createCPUBox, cutBoxFromImageAndResize, enlargeBox as enlargeCPUBox, getBoxSize as getCPUBoxSize, scaleBoxCoordinates as scaleCPUBoxCoordinates} from './box_cpu';
 
 export type Prediction = {
@@ -123,24 +123,17 @@ export class Pipeline {
       const boxSize = getCPUBoxSize(box);
       const normalizedBoxSize =
           [boxSize[0] / this.meshWidth, boxSize[1] / this.meshHeight, 1];
-      const scaledCoords = tf.mul(coordsReshaped, normalizedBoxSize)
-                               .add(cpuBoxToBox(box).startPoint.concat(
-                                   tf.tensor2d([0], [1, 1]), 1));
-      // const scaledCoords =
-      //     tf.mul(
-      //           coordsReshaped,
-      //           normalizedBox.concat(tf.tensor2d([1], [1, 1]), 1))
-      //         .add(cpuBoxToBox(box).startPoint.concat(
-      //             tf.tensor2d([0], [1, 1]), 1));
+      const scaledCoords =
+          tf.mul(coordsReshaped, normalizedBoxSize).add([...box.startPoint, 0]);
 
       // last step: make landmarksbox a cpubox
       const landmarksBox = this.calculateLandmarksBoundingBox(scaledCoords);
-      this.regionsOfInterest[i] = boxToCPUBox(landmarksBox);
+      this.regionsOfInterest[i] = landmarksBox;
 
       return {
         coords: coordsReshaped,
         scaledCoords,
-        box: landmarksBox,
+        box: cpuBoxToBox(landmarksBox),
         flag: flag.squeeze()
       } as Prediction;
     }));
@@ -194,12 +187,15 @@ export class Pipeline {
     return this.maxFaces === 1 ? noROIs : noROIs || shouldCheckForMoreFaces;
   }
 
-  calculateLandmarksBoundingBox(landmarks: tf.Tensor): Box {
+  calculateLandmarksBoundingBox(landmarks: tf.Tensor): CPUBox {
     const xs = landmarks.slice([0, 0], [LANDMARKS_COUNT, 1]);
     const ys = landmarks.slice([0, 1], [LANDMARKS_COUNT, 1]);
 
-    const boxMinMax = tf.stack([xs.min(), ys.min(), xs.max(), ys.max()]);
-    const box = createBox(boxMinMax.expandDims(0));
-    return enlargeBox(box);
+    const xMin = xs.min().squeeze().arraySync() as number;
+    const xMax = xs.max().squeeze().arraySync() as number;
+    const yMin = ys.min().squeeze().arraySync() as number;
+    const yMax = ys.max().squeeze().arraySync() as number;
+
+    return enlargeCPUBox(createCPUBox([xMin, yMin], [xMax, yMax]));
   }
 }
