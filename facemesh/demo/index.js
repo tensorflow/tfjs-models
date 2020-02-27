@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import * as faceMesh from '@tensorflow-models/facemesh';
+import * as facemesh from '@tensorflow-models/facemesh';
 import Stats from 'stats.js';
 import * as tf from '@tensorflow/tfjs-core';
 import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
@@ -45,7 +45,7 @@ function setupDatGui() {
   });
 
   gui.add(state, 'maxFaces', 1, 20, 1).onChange(async val => {
-    model = await faceMesh.load({
+    model = await facemesh.load({
       maxFaces: val
     });
   });
@@ -156,7 +156,7 @@ const setupPage = async () => {
   ctx.scale(-1, 1);
   ctx.fillStyle = 'red';
 
-  model = await faceMesh.load({ maxFaces: state.maxFaces });
+  model = await facemesh.load({ maxFaces: state.maxFaces });
 
   renderPrediction();
 
