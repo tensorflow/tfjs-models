@@ -29,6 +29,7 @@ export type Prediction = {
 };
 
 const LANDMARKS_COUNT = 468;
+const MERGE_REGIONS_OF_INTEREST_IOU_THRESHOLD = 0.25;
 
 // The Pipeline coordinates between the bounding box and skeleton models.
 export class Pipeline {
@@ -65,7 +66,7 @@ export class Pipeline {
    * @param input - tensor of shape [1, H, W, 3].
    */
   async predict(input: tf.Tensor4D): Promise<Prediction[]> {
-    if (this.needsRoisUpdate()) {
+    if (this.shouldUpdateRegionsOfInterest()) {
       const {boxes, scaleFactor} =
           await this.boundingBoxDetector.getBoundingBoxes(
               input,
@@ -92,12 +93,13 @@ export class Pipeline {
       this.runsWithoutFaceDetector++;
     }
 
-    return tf.tidy(() => this.regionsOfInterest.map((roi, i) => {
-      const box = roi as Box;
+    return tf.tidy(() => this.regionsOfInterest.map((box: Box, i) => {
       const face = cutBoxFromImageAndResize(box, input, [
                      this.meshHeight, this.meshWidth
                    ]).div(255);
 
+      // First returned item is 'contours', which is included in the
+      // coordinates.
       const [, flag, coords] =
           this.meshDetector.predict(
               face) as [tf.Tensor, tf.Tensor2D, tf.Tensor2D];
@@ -127,44 +129,38 @@ export class Pipeline {
     }));
   }
 
+  // Update regions of interest using intersection-over-union thresholding.
   updateRegionsOfInterest(boxes: Box[]) {
     for (let i = 0; i < boxes.length; i++) {
       const box = boxes[i];
-      const prev = this.regionsOfInterest[i];
+      const previousBox = this.regionsOfInterest[i];
       let iou = 0;
 
-      if (prev && prev.startPoint) {
-        const boxStartEnd = box.startEndTensor.arraySync()[0];
-        const prevStartEnd = prev.startEndTensor.arraySync()[0];
-
-        const boxStartX = boxStartEnd[0];
-        const prevStartX = prevStartEnd[0];
-        const boxStartY = boxStartEnd[1];
-        const prevStartY = prevStartEnd[1];
-        const boxEndX = boxStartEnd[2];
-        const prevEndX = prevStartEnd[2];
-        const boxEndY = boxStartEnd[3];
-        const prevEndY = prevStartEnd[3];
+      if (previousBox && previousBox.startPoint) {
+        const [boxStartX, boxStartY, boxEndX, boxEndY] =
+            box.startEndTensor.arraySync()[0];
+        const [prevStartX, prevStartY, prevEndX, prevEndY] =
+            previousBox.startEndTensor.arraySync()[0];
 
         const xStartMax = Math.max(boxStartX, prevStartX);
         const yStartMax = Math.max(boxStartY, prevStartY);
         const xEndMin = Math.min(boxEndX, prevEndX);
         const yEndMin = Math.min(boxEndY, prevEndY);
 
-        const interArea = (xEndMin - xStartMax) * (yEndMin - yStartMax);
-
+        const intersection = (xEndMin - xStartMax) * (yEndMin - yStartMax);
         const boxArea = (boxEndX - boxStartX) * (boxEndY - boxStartY);
-        const prevArea = (prevEndX - prevStartX) * (prevEndY - boxStartY);
-        iou = interArea / (boxArea + prevArea - interArea);
+        const previousBoxArea =
+            (prevEndX - prevStartX) * (prevEndY - boxStartY);
+        iou = intersection / (boxArea + previousBoxArea - intersection);
       }
 
-      if (iou > 0.25) {
-        this.regionsOfInterest[i] = prev;
+      if (iou > MERGE_REGIONS_OF_INTEREST_IOU_THRESHOLD) {
+        this.regionsOfInterest[i] = previousBox;
         disposeBox(box);
       } else {
         this.regionsOfInterest[i] = box;
-        if (prev && prev.startPoint) {
-          disposeBox(prev);
+        if (previousBox && previousBox.startPoint) {
+          disposeBox(previousBox);
         }
       }
     }
@@ -183,7 +179,7 @@ export class Pipeline {
     this.regionsOfInterest = [];
   }
 
-  needsRoisUpdate(): boolean {
+  shouldUpdateRegionsOfInterest(): boolean {
     const roisCount = this.regionsOfInterest.length;
     const noROIs = roisCount === 0;
     const shouldCheckForMoreFaces = roisCount !== this.maxFaces &&
