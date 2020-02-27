@@ -34,7 +34,7 @@ export type AnnotatedPrediction = {
   },
   mesh: number[][]|tf.Tensor2D,
   scaledMesh: number[][]|tf.Tensor2D,
-  /*Annotated keypoints. */
+  /*Annotated keypoints. Not available if `returnTensors` is true. */
   annotations?: {[key: string]: number[][]}
 };
 
@@ -102,9 +102,26 @@ function flipFaceHorizontal(
   });
 }
 
-export async function load(options = {}) {
+/**
+ * Load the model.
+ * @param options - a configuration object with the following properties:
+ *  `maxContinuousChecks` How many frames to go without running the bounding box
+ * detector. Only relevant if maxFaces > 1.
+ */
+export async function load({
+  meshWidth = 192,
+  meshHeight = 192,
+  maxContinuousChecks = 5,
+  detectionConfidence = 0.9,
+  maxFaces = 10,
+  iouThreshold = 0.3,
+  scoreThreshold = 0.75
+} = {}) {
   const faceMesh = new FaceMesh();
-  await faceMesh.load(options);
+
+  await faceMesh.load(
+      meshWidth, meshHeight, maxContinuousChecks, detectionConfidence, maxFaces,
+      iouThreshold, scoreThreshold);
   return faceMesh;
 }
 
@@ -112,15 +129,10 @@ export class FaceMesh {
   private pipeline: Pipeline;
   private detectionConfidence: number;
 
-  async load({
-    meshWidth = 192,
-    meshHeight = 192,
-    maxContinuousChecks = 5,
-    detectionConfidence = 0.9,
-    maxFaces = 10,
-    iouThreshold = 0.3,
-    scoreThreshold = 0.75
-  } = {}) {
+  async load(
+      meshWidth: number, meshHeight: number, maxContinuousChecks: number,
+      detectionConfidence: number, maxFaces: number, iouThreshold: number,
+      scoreThreshold: number) {
     const [blazeFace, blazeMeshModel] = await Promise.all([
       this.loadFaceModel(maxFaces, iouThreshold, scoreThreshold),
       this.loadMeshModel()
