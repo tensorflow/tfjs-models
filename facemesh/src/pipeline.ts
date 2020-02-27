@@ -19,114 +19,94 @@ import * as blazeface from '@tensorflow-models/blazeface';
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {Box, createBox, cutBoxFromImageAndResize, enlargeBox, getBoxSize, scaleBoxCoordinates} from './box';
+import {Box, createBox, cutBoxFromImageAndResize, disposeBox, enlargeBox, getBoxSize, scaleBox} from './box';
 
 export type Prediction = {
-  coords: tf.Tensor2D,
-  scaledCoords: tf.Tensor2D,
+  coords: tf.Tensor2D|tf.Tensor3D,
+  scaledCoords: tf.Tensor2D|tf.Tensor3D,
   box: Box,
   flag: tf.Scalar
 };
 
-// Container for the coordinates of the facial bounding box returned by
-// blazeface.
-type BlazeBox = {
-  startEndTensor: tf.Tensor2D,
-  startPoint: tf.Tensor2D,
-  endPoint: tf.Tensor2D
-};
-
 const LANDMARKS_COUNT = 468;
-const MERGE_REGIONS_OF_INTEREST_IOU_THRESHOLD = 0.25;
 
-// The Pipeline coordinates between the bounding box and skeleton models.
 export class Pipeline {
-  // MediaPipe model for detecting facial bounding boxes.
-  private boundingBoxDetector: blazeface.BlazeFaceModel;
-  // MediaPipe model for detecting facial mesh.
-  private meshDetector: tfconv.GraphModel;
-
-  // An array of facial bounding boxes.
-  private regionsOfInterest: Box[];
-
+  private blazeface: blazeface.BlazeFaceModel;
+  private mesh: tfconv.GraphModel;
   private meshWidth: number;
   private meshHeight: number;
   private maxContinuousChecks: number;
-  private maxFaces: number;
   private runsWithoutFaceDetector: number;
+  private rois: Box[];
+  private maxFaces: number;
 
   constructor(
-      blazeface: blazeface.BlazeFaceModel, meshDetector: tfconv.GraphModel,
+      blazeface: blazeface.BlazeFaceModel, mesh: tfconv.GraphModel,
       meshWidth: number, meshHeight: number, maxContinuousChecks: number,
       maxFaces: number) {
-    this.boundingBoxDetector = blazeface;
-    this.meshDetector = meshDetector;
+    this.blazeface = blazeface;
+    this.mesh = mesh;
     this.meshWidth = meshWidth;
     this.meshHeight = meshHeight;
     this.maxContinuousChecks = maxContinuousChecks;
-    this.maxFaces = maxFaces;
-
     this.runsWithoutFaceDetector = 0;
-    this.regionsOfInterest = [];
+    this.rois = [];
+    this.maxFaces = maxFaces;
   }
 
   /**
-   * @param input - tensor of shape [1, H, W, 3].
+   * @param image - image tensor of shape [1, H, W, 3].
+   * @return an array of predictions for each face
    */
-  async predict(input: tf.Tensor4D): Promise<Prediction[]> {
-    if (this.shouldUpdateRegionsOfInterest()) {
-      const {boxes, scaleFactor} =
-          await this.boundingBoxDetector.getBoundingBoxes(
-              input,
-              false,  // whether to return tensors
-              false   // whether to annotate facial bounding boxes with landmark
-                      // information
-          );
+  async predict(image: tf.Tensor4D): Promise<Prediction[]> {
+    if (this.needsRoisUpdate()) {
+      const returnTensors = false;
+      const annotateFace = false;
+      const {boxes, scaleFactor} = await this.blazeface.getBoundingBoxes(
+          image, returnTensors, annotateFace);
 
       if (!boxes.length) {
-        this.clearRegionsOfInterest();
+        this.clearROIs();
         return null;
       }
 
-      const scaledBoxes = boxes.map((prediction: BlazeBox) => {
-        const cpuBox = createBox(
-            prediction.startPoint.squeeze().arraySync() as [number, number],
-            prediction.endPoint.squeeze().arraySync() as [number, number]);
+      const scaledBoxes = tf.tidy(
+          () => boxes.map(
+              (prediction: Box): Box => enlargeBox(
+                  scaleBox(prediction, scaleFactor as [number, number]))));
 
-        prediction.startPoint.dispose();
-        prediction.endPoint.dispose();
-        prediction.startEndTensor.dispose();
+      boxes.forEach(disposeBox);
 
-        return enlargeBox(
-            scaleBoxCoordinates(cpuBox, scaleFactor as [number, number]));
-      });
-
-      this.updateRegionsOfInterest(scaledBoxes);
+      this.updateRoisFromFaceDetector(scaledBoxes);
       this.runsWithoutFaceDetector = 0;
     } else {
       this.runsWithoutFaceDetector++;
     }
 
-    return tf.tidy(() => this.regionsOfInterest.map((box: Box, i) => {
-      const face = cutBoxFromImageAndResize(box, input, [
+    return tf.tidy(() => this.rois.map((roi, i) => {
+      const box = roi as Box;
+      const face = cutBoxFromImageAndResize(box, image, [
                      this.meshHeight, this.meshWidth
                    ]).div(255);
 
-      // First returned item is 'contours', which is included in the
-      // coordinates.
       const [, flag, coords] =
-          this.meshDetector.predict(
-              face) as [tf.Tensor, tf.Tensor2D, tf.Tensor2D];
+          this.mesh.predict(face) as [tf.Tensor, tf.Tensor2D, tf.Tensor2D];
 
       const coordsReshaped = tf.reshape(coords, [-1, 3]);
-      const boxSize = getBoxSize(box);
-      const normalizedBoxSize =
-          [boxSize[0] / this.meshWidth, boxSize[1] / this.meshHeight, 1];
+      const normalizedBox =
+          tf.div(getBoxSize(box), [this.meshWidth, this.meshHeight]);
       const scaledCoords =
-          tf.mul(coordsReshaped, normalizedBoxSize).add([...box.topLeft, 0]);
+          tf.mul(
+                coordsReshaped,
+                normalizedBox.concat(tf.tensor2d([1], [1, 1]), 1))
+              .add(box.startPoint.concat(tf.tensor2d([0], [1, 1]), 1));
 
       const landmarksBox = this.calculateLandmarksBoundingBox(scaledCoords);
-      this.regionsOfInterest[i] = landmarksBox;
+      const prev = this.rois[i];
+      if (prev) {
+        disposeBox(prev);
+      }
+      this.rois[i] = landmarksBox;
 
       return {
         coords: coordsReshaped,
@@ -137,47 +117,64 @@ export class Pipeline {
     }));
   }
 
-  // Update regions of interest using intersection-over-union thresholding.
-  updateRegionsOfInterest(boxes: Box[]) {
+  updateRoisFromFaceDetector(boxes: Box[]) {
     for (let i = 0; i < boxes.length; i++) {
       const box = boxes[i];
-      const previousBox = this.regionsOfInterest[i];
+      const prev = this.rois[i];
       let iou = 0;
 
-      if (previousBox && previousBox.topLeft) {
-        const [boxStartX, boxStartY] = box.topLeft;
-        const [boxEndX, boxEndY] = box.bottomRight;
-        const [prevStartX, prevStartY] = previousBox.topLeft;
-        const [prevEndX, prevEndY] = previousBox.bottomRight;
+      if (prev && prev.startPoint) {
+        const boxStartEnd = box.startEndTensor.arraySync()[0];
+        const prevStartEnd = prev.startEndTensor.arraySync()[0];
+
+        const boxStartX = boxStartEnd[0];
+        const prevStartX = prevStartEnd[0];
+        const boxStartY = boxStartEnd[1];
+        const prevStartY = prevStartEnd[1];
+        const boxEndX = boxStartEnd[2];
+        const prevEndX = prevStartEnd[2];
+        const boxEndY = boxStartEnd[3];
+        const prevEndY = prevStartEnd[3];
 
         const xStartMax = Math.max(boxStartX, prevStartX);
         const yStartMax = Math.max(boxStartY, prevStartY);
         const xEndMin = Math.min(boxEndX, prevEndX);
         const yEndMin = Math.min(boxEndY, prevEndY);
 
-        const intersection = (xEndMin - xStartMax) * (yEndMin - yStartMax);
+        const interArea = (xEndMin - xStartMax) * (yEndMin - yStartMax);
+
         const boxArea = (boxEndX - boxStartX) * (boxEndY - boxStartY);
-        const previousBoxArea =
-            (prevEndX - prevStartX) * (prevEndY - boxStartY);
-        iou = intersection / (boxArea + previousBoxArea - intersection);
+        const prevArea = (prevEndX - prevStartX) * (prevEndY - boxStartY);
+        iou = interArea / (boxArea + prevArea - interArea);
       }
 
-      if (iou > MERGE_REGIONS_OF_INTEREST_IOU_THRESHOLD) {
-        this.regionsOfInterest[i] = previousBox;
+      if (iou > 0.25) {
+        this.rois[i] = prev;
+        disposeBox(box);
       } else {
-        this.regionsOfInterest[i] = box;
+        this.rois[i] = box;
+        if (prev && prev.startPoint) {
+          disposeBox(prev);
+        }
       }
     }
 
-    this.regionsOfInterest = this.regionsOfInterest.slice(0, boxes.length);
+    for (let i = boxes.length; i < this.rois.length; i++) {
+      const roi = this.rois[i];
+      if (roi) {
+        disposeBox(roi);
+      }
+    }
+
+    this.rois = this.rois.slice(0, boxes.length);
   }
 
-  clearRegionsOfInterest() {
-    this.regionsOfInterest = [];
+  clearROIs() {
+    this.rois = [];
   }
 
-  shouldUpdateRegionsOfInterest(): boolean {
-    const roisCount = this.regionsOfInterest.length;
+  needsRoisUpdate(): boolean {
+    const roisCount = this.rois.length;
     const noROIs = roisCount === 0;
     const shouldCheckForMoreFaces = roisCount !== this.maxFaces &&
         this.runsWithoutFaceDetector >= this.maxContinuousChecks;
@@ -189,11 +186,8 @@ export class Pipeline {
     const xs = landmarks.slice([0, 0], [LANDMARKS_COUNT, 1]);
     const ys = landmarks.slice([0, 1], [LANDMARKS_COUNT, 1]);
 
-    const xMin = xs.min().squeeze().arraySync() as number;
-    const xMax = xs.max().squeeze().arraySync() as number;
-    const yMin = ys.min().squeeze().arraySync() as number;
-    const yMax = ys.max().squeeze().arraySync() as number;
-
-    return enlargeBox(createBox([xMin, yMin], [xMax, yMax]));
+    const boxMinMax = tf.stack([xs.min(), ys.min(), xs.max(), ys.max()]);
+    const box = createBox(boxMinMax.expandDims(0));
+    return enlargeBox(box);
   }
 }
