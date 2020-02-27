@@ -15,8 +15,8 @@
  * =============================================================================
  */
 
-import * as qna from '@tensorflow-models/qna';
-
+ import * as qna from '@tensorflow-models/qna';
+ 
 let modelPromise = {};
 let search;
 let input;
