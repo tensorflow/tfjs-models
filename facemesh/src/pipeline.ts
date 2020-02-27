@@ -19,13 +19,13 @@ import * as blazeface from '@tensorflow-models/blazeface';
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {Box, createBox} from './box';
+import {Box} from './box';
 import {Box as CPUBox, createBox as createCPUBox, cutBoxFromImageAndResize, enlargeBox as enlargeCPUBox, getBoxSize as getCPUBoxSize, scaleBoxCoordinates as scaleCPUBoxCoordinates} from './box_cpu';
 
 export type Prediction = {
   coords: tf.Tensor2D,
   scaledCoords: tf.Tensor2D,
-  box: Box,
+  box: CPUBox,
   flag: tf.Scalar
 };
 
@@ -38,9 +38,9 @@ function boxToCPUBox(box: Box): CPUBox {
       box.endPoint.squeeze().arraySync() as [number, number]);
 }
 
-function cpuBoxToBox(box: CPUBox): Box {
-  return createBox(tf.tensor(box.startPoint.concat(box.endPoint), [1, 4]));
-}
+// function cpuBoxToBox(box: CPUBox): Box {
+//   return createBox(tf.tensor(box.startPoint.concat(box.endPoint), [1, 4]));
+// }
 
 // The Pipeline coordinates between the bounding box and skeleton models.
 export class Pipeline {
@@ -133,7 +133,7 @@ export class Pipeline {
       return {
         coords: coordsReshaped,
         scaledCoords,
-        box: cpuBoxToBox(landmarksBox),
+        box: landmarksBox,
         flag: flag.squeeze()
       } as Prediction;
     }));
