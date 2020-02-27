@@ -24,42 +24,52 @@ export type Box = {
   endPoint: tf.Tensor2D     // Lower right hand corner of bounding box.
 };
 
-export const disposeBox = (box: Box): void => {
-  box.startEndTensor.dispose();
-  box.startPoint.dispose();
-  box.endPoint.dispose();
-};
-
-export const createBox =
-    (startEndTensor: tf.Tensor2D, startPoint?: tf.Tensor2D,
-     endPoint?: tf.Tensor2D): Box => ({
-      startEndTensor,
-      startPoint: startPoint ? startPoint :
-                               tf.slice(startEndTensor, [0, 0], [-1, 2]),
-      endPoint: endPoint ? endPoint :
-                           tf.slice(startEndTensor, [0, 2], [-1, 2])
-    });
-
-export const scaleBox =
-    (box: Box, factors: tf.Tensor1D|[number, number]): Box => {
-      const starts = tf.mul(box.startPoint, factors);
-      const ends = tf.mul(box.endPoint, factors);
-
-      return createBox(
-          tf.concat2d([starts as tf.Tensor2D, ends as tf.Tensor2D], 1));
-    };
-
-export const getBoxSize = (box: Box): tf.Tensor2D =>
-    tf.abs(tf.sub(box.endPoint, box.startPoint)) as tf.Tensor2D;
-
-export const getBoxCenter = (box: Box): tf.Tensor2D => {
+const getBoxCenter = (box: Box): tf.Tensor2D => {
   const halfSize = tf.div(tf.sub(box.endPoint, box.startPoint), 2);
   return tf.add(box.startPoint, halfSize);
 };
 
-export const cutBoxFromImageAndResize = (box: Box, image: tf.Tensor4D,
-                                         cropSize: [number, number]):
-                                            tf.Tensor4D => {
+export function disposeBox(box: Box): void {
+  box.startEndTensor.dispose();
+  box.startPoint.dispose();
+  box.endPoint.dispose();
+}
+
+export function createBox(
+    startEndTensor: tf.Tensor2D, startPoint?: tf.Tensor2D,
+    endPoint?: tf.Tensor2D): Box {
+  return {
+    startEndTensor,
+    startPoint: startPoint ? startPoint :
+                             tf.slice(startEndTensor, [0, 0], [-1, 2]),
+    endPoint: endPoint ? endPoint : tf.slice(startEndTensor, [0, 2], [-1, 2])
+  };
+}
+
+export function scaleBoxCoordinates(
+    box: Box, factor: tf.Tensor1D|[number, number]): Box {
+  const start: tf.Tensor2D = tf.mul(box.startPoint, factor);
+  const end: tf.Tensor2D = tf.mul(box.endPoint, factor);
+
+  return createBox(tf.concat2d([start, end], 1), start, end);
+}
+
+export function enlargeBox(box: Box, factor = 1.5) {
+  const center = getBoxCenter(box);
+  const size = getBoxSize(box);
+  const newSize = tf.mul(tf.div(size, 2), factor);
+  const newStart: tf.Tensor2D = tf.sub(center, newSize);
+  const newEnd: tf.Tensor2D = tf.add(center, newSize);
+
+  return createBox(tf.concat2d([newStart, newEnd], 1), newStart, newEnd);
+}
+
+export function getBoxSize(box: Box): tf.Tensor2D {
+  return tf.abs(tf.sub(box.endPoint, box.startPoint)) as tf.Tensor2D;
+}
+
+export function cutBoxFromImageAndResize(
+    box: Box, image: tf.Tensor4D, cropSize: [number, number]): tf.Tensor4D {
   const h = image.shape[1];
   const w = image.shape[2];
 
@@ -67,14 +77,4 @@ export const cutBoxFromImageAndResize = (box: Box, image: tf.Tensor4D,
   const yxyx = [xyxy[1], xyxy[0], xyxy[3], xyxy[2]];
   const roundedCoords = [yxyx[0] / h, yxyx[1] / w, yxyx[2] / h, yxyx[3] / w];
   return tf.image.cropAndResize(image, [roundedCoords], [0], cropSize);
-};
-
-export const enlargeBox = (box: Box, factor = 1.5) => {
-  const center = getBoxCenter(box);
-  const size = getBoxSize(box);
-  const newSize = tf.mul(tf.div(size, 2), factor);
-  const newStart = tf.sub(center, newSize) as tf.Tensor2D;
-  const newEnd = tf.add(center, newSize) as tf.Tensor2D;
-
-  return createBox(tf.concat2d([newStart, newEnd], 1), newStart, newEnd);
-};
+}

@@ -19,7 +19,7 @@ import * as blazeface from '@tensorflow-models/blazeface';
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {Box, createBox, cutBoxFromImageAndResize, disposeBox, enlargeBox, getBoxSize, scaleBox} from './box';
+import {Box, createBox, cutBoxFromImageAndResize, disposeBox, enlargeBox, getBoxSize, scaleBoxCoordinates} from './box';
 
 export type Prediction = {
   coords: tf.Tensor2D|tf.Tensor3D,
@@ -72,8 +72,8 @@ export class Pipeline {
 
       const scaledBoxes = tf.tidy(
           () => boxes.map(
-              (prediction: Box): Box => enlargeBox(
-                  scaleBox(prediction, scaleFactor as [number, number]))));
+              (prediction: Box): Box => enlargeBox(scaleBoxCoordinates(
+                  prediction, scaleFactor as [number, number]))));
 
       boxes.forEach(disposeBox);
 
