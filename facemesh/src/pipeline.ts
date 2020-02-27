@@ -19,8 +19,8 @@ import * as blazeface from '@tensorflow-models/blazeface';
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {Box, createBox, cutBoxFromImageAndResize, disposeBox, enlargeBox, getBoxSize} from './box';
-import {Box as CPUBox, createBox as createCPUBox, enlargeBox as enlargeCPUBox, scaleBoxCoordinates as scaleCPUBoxCoordinates} from './box_cpu';
+import {Box, createBox, disposeBox, enlargeBox, getBoxSize} from './box';
+import {Box as CPUBox, createBox as createCPUBox, cutBoxFromImageAndResize as cutCPUBoxFromImageAndResize, enlargeBox as enlargeCPUBox, scaleBoxCoordinates as scaleCPUBoxCoordinates} from './box_cpu';
 
 export type Prediction = {
   coords: tf.Tensor2D,
@@ -50,7 +50,7 @@ export class Pipeline {
   private meshDetector: tfconv.GraphModel;
 
   // An array of facial bounding boxes.
-  private regionsOfInterest: Box[];
+  private regionsOfInterest: CPUBox[];
 
   private meshWidth: number;
   private meshHeight: number;
@@ -97,9 +97,6 @@ export class Pipeline {
             scaleCPUBoxCoordinates(cpuBox, scaleFactor as [number, number]));
       });
 
-      // todo: convert blazeboxes to cpu boxes here, and change
-      // updateregionsofinterest to work with cpuboxes.
-
       boxes.forEach(disposeBox);
 
       this.updateRegionsOfInterest(scaledBoxes);
@@ -108,8 +105,8 @@ export class Pipeline {
       this.runsWithoutFaceDetector++;
     }
 
-    return tf.tidy(() => this.regionsOfInterest.map((box: Box, i) => {
-      const face = cutBoxFromImageAndResize(box, input, [
+    return tf.tidy(() => this.regionsOfInterest.map((box: CPUBox, i) => {
+      const face = cutCPUBoxFromImageAndResize(box, input, [
                      this.meshHeight, this.meshWidth
                    ]).div(255);
 
@@ -120,20 +117,17 @@ export class Pipeline {
               face) as [tf.Tensor, tf.Tensor2D, tf.Tensor2D];
 
       const coordsReshaped = tf.reshape(coords, [-1, 3]);
-      const normalizedBox =
-          tf.div(getBoxSize(box), [this.meshWidth, this.meshHeight]);
+      const normalizedBox = tf.div(
+          getBoxSize(cpuBoxToBox(box)), [this.meshWidth, this.meshHeight]);
       const scaledCoords =
           tf.mul(
                 coordsReshaped,
                 normalizedBox.concat(tf.tensor2d([1], [1, 1]), 1))
-              .add(box.startPoint.concat(tf.tensor2d([0], [1, 1]), 1));
+              .add(cpuBoxToBox(box).startPoint.concat(
+                  tf.tensor2d([0], [1, 1]), 1));
 
       const landmarksBox = this.calculateLandmarksBoundingBox(scaledCoords);
-      const prev = this.regionsOfInterest[i];
-      if (prev) {
-        disposeBox(prev);
-      }
-      this.regionsOfInterest[i] = landmarksBox;
+      this.regionsOfInterest[i] = boxToCPUBox(landmarksBox);
 
       return {
         coords: coordsReshaped,
@@ -154,8 +148,8 @@ export class Pipeline {
       if (previousBox && previousBox.startPoint) {
         const [boxStartX, boxStartY] = box.startPoint;
         const [boxEndX, boxEndY] = box.endPoint;
-        const [prevStartX, prevStartY, prevEndX, prevEndY] =
-            previousBox.startEndTensor.arraySync()[0];
+        const [prevStartX, prevStartY] = previousBox.startPoint;
+        const [prevEndX, prevEndY] = previousBox.endPoint;
 
         const xStartMax = Math.max(boxStartX, prevStartX);
         const yStartMax = Math.max(boxStartY, prevStartY);
@@ -172,17 +166,7 @@ export class Pipeline {
       if (iou > MERGE_REGIONS_OF_INTEREST_IOU_THRESHOLD) {
         this.regionsOfInterest[i] = previousBox;
       } else {
-        this.regionsOfInterest[i] = cpuBoxToBox(box);
-        if (previousBox && previousBox.startPoint) {
-          disposeBox(previousBox);
-        }
-      }
-    }
-
-    for (let i = boxes.length; i < this.regionsOfInterest.length; i++) {
-      const roi = this.regionsOfInterest[i];
-      if (roi) {
-        disposeBox(roi);
+        this.regionsOfInterest[i] = box;
       }
     }
 
