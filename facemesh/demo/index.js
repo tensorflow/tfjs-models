@@ -70,6 +70,8 @@ async function setupCamera() {
 const renderPrediction = async () => {
   stats.begin();
   const returnTensors = false;
+
+  // We are flipping the canvas context, so we don't need to flip the predictions.
   const flipHorizontal = false;
   const predictions =
       await model.estimateFaces(video, returnTensors, flipHorizontal);
@@ -92,7 +94,7 @@ const renderPrediction = async () => {
       }
     });
 
-    if (renderPointcloud && scatterGL) {
+    if (renderPointcloud === true && scatterGL != null) {
       const pointsData = predictions.map(prediction => {
         let scaledMesh = prediction.scaledMesh;
         if (returnTensors) {
@@ -148,7 +150,7 @@ const setupPage = async () => {
 
   renderPrediction();
 
-  if (renderPointcloud) {
+  if (renderPointcloud === true) {
     document.querySelector('#scatter-gl-container').style.width =
         `${VIDEO_SIZE}px`;
     document.querySelector('#scatter-gl-container').style.height =
