@@ -51,15 +51,13 @@ function config({plugins = [], output = {}}) {
       banner: PREAMBLE,
       globals: {
         '@tensorflow/tfjs-core': 'tf',
-        '@tensorflow/tfjs-converter': 'tf',
-        '@tensorflow/tfjs-layers': 'tf',
+        '@tensorflow/tfjs-converter': 'tf'
       },
       ...output,
     },
     external: [
       '@tensorflow/tfjs-core',
-      '@tensorflow/tfjs-converter',
-      '@tensorflow/tfjs-layers',
+      '@tensorflow/tfjs-converter'
     ]
   };
 }
