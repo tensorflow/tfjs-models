@@ -22,10 +22,10 @@ import * as tf from '@tensorflow/tfjs-core';
 import {Box, createBox, cutBoxFromImageAndResize, disposeBox, enlargeBox, getBoxSize, scaleBoxCoordinates} from './box';
 
 export type Prediction = {
-  coords: tf.Tensor2D|tf.Tensor3D,
-  scaledCoords: tf.Tensor2D|tf.Tensor3D,
-  box: Box,
-  flag: tf.Scalar
+  coords: tf.Tensor2D,        // coordinates of facial landmarks.
+  scaledCoords: tf.Tensor2D,  // coordinates normalized to the mesh size.
+  box: Box,                   // bounding box of coordinates.
+  flag: tf.Scalar             // confidence in presence of a face.
 };
 
 const LANDMARKS_COUNT = 468;
