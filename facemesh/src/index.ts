@@ -102,9 +102,20 @@ function flipFaceHorizontal(
   });
 }
 
-export async function load(options = {}) {
+export async function load({
+  meshWidth = 192,
+  meshHeight = 192,
+  maxContinuousChecks = 5,
+  detectionConfidence = 0.9,
+  maxFaces = 10,
+  iouThreshold = 0.3,
+  scoreThreshold = 0.75
+} = {}) {
   const faceMesh = new FaceMesh();
-  await faceMesh.load(options);
+
+  await faceMesh.load(
+      meshWidth, meshHeight, maxContinuousChecks, detectionConfidence, maxFaces,
+      iouThreshold, scoreThreshold);
   return faceMesh;
 }
 
@@ -112,15 +123,10 @@ export class FaceMesh {
   private pipeline: Pipeline;
   private detectionConfidence: number;
 
-  async load({
-    meshWidth = 192,
-    meshHeight = 192,
-    maxContinuousChecks = 5,
-    detectionConfidence = 0.9,
-    maxFaces = 10,
-    iouThreshold = 0.3,
-    scoreThreshold = 0.75
-  } = {}) {
+  async load(
+      meshWidth: number, meshHeight: number, maxContinuousChecks: number,
+      detectionConfidence: number, maxFaces: number, iouThreshold: number,
+      scoreThreshold: number) {
     const [blazeFace, blazeMeshModel] = await Promise.all([
       this.loadFaceModel(maxFaces, iouThreshold, scoreThreshold),
       this.loadMeshModel()

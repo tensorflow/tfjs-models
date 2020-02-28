@@ -30,27 +30,31 @@ export type Prediction = {
 
 const LANDMARKS_COUNT = 468;
 
+// The Pipeline coordinates between the bounding box and skeleton models.
 export class Pipeline {
-  private blazeface: blazeface.BlazeFaceModel;
-  private mesh: tfconv.GraphModel;
+  // MediaPipe model for detecting facial bounding boxes.
+  private boundingBoxDetector: blazeface.BlazeFaceModel;
+  // MediaPipe model for detecting facial mesh.
+  private meshDetector: tfconv.GraphModel;
   private meshWidth: number;
   private meshHeight: number;
   private maxContinuousChecks: number;
   private runsWithoutFaceDetector: number;
-  private rois: Box[];
+  // An array of facial bounding boxes.
+  private regionsOfInterest: Box[];
   private maxFaces: number;
 
   constructor(
-      blazeface: blazeface.BlazeFaceModel, mesh: tfconv.GraphModel,
-      meshWidth: number, meshHeight: number, maxContinuousChecks: number,
-      maxFaces: number) {
-    this.blazeface = blazeface;
-    this.mesh = mesh;
+      boundingBoxDetector: blazeface.BlazeFaceModel,
+      meshDetector: tfconv.GraphModel, meshWidth: number, meshHeight: number,
+      maxContinuousChecks: number, maxFaces: number) {
+    this.boundingBoxDetector = boundingBoxDetector;
+    this.meshDetector = meshDetector;
     this.meshWidth = meshWidth;
     this.meshHeight = meshHeight;
     this.maxContinuousChecks = maxContinuousChecks;
     this.runsWithoutFaceDetector = 0;
-    this.rois = [];
+    this.regionsOfInterest = [];
     this.maxFaces = maxFaces;
   }
 
@@ -62,8 +66,9 @@ export class Pipeline {
     if (this.needsRoisUpdate()) {
       const returnTensors = false;
       const annotateFace = false;
-      const {boxes, scaleFactor} = await this.blazeface.getBoundingBoxes(
-          image, returnTensors, annotateFace);
+      const {boxes, scaleFactor} =
+          await this.boundingBoxDetector.getBoundingBoxes(
+              image, returnTensors, annotateFace);
 
       if (!boxes.length) {
         this.clearROIs();
@@ -83,14 +88,15 @@ export class Pipeline {
       this.runsWithoutFaceDetector++;
     }
 
-    return tf.tidy(() => this.rois.map((roi, i) => {
+    return tf.tidy(() => this.regionsOfInterest.map((roi, i) => {
       const box = roi as Box;
       const face = cutBoxFromImageAndResize(box, image, [
                      this.meshHeight, this.meshWidth
                    ]).div(255);
 
       const [, flag, coords] =
-          this.mesh.predict(face) as [tf.Tensor, tf.Tensor2D, tf.Tensor2D];
+          this.meshDetector.predict(
+              face) as [tf.Tensor, tf.Tensor2D, tf.Tensor2D];
 
       const coordsReshaped = tf.reshape(coords, [-1, 3]);
       const normalizedBox =
@@ -102,11 +108,11 @@ export class Pipeline {
               .add(box.startPoint.concat(tf.tensor2d([0], [1, 1]), 1));
 
       const landmarksBox = this.calculateLandmarksBoundingBox(scaledCoords);
-      const prev = this.rois[i];
+      const prev = this.regionsOfInterest[i];
       if (prev) {
         disposeBox(prev);
       }
-      this.rois[i] = landmarksBox;
+      this.regionsOfInterest[i] = landmarksBox;
 
       return {
         coords: coordsReshaped,
@@ -120,7 +126,7 @@ export class Pipeline {
   updateRoisFromFaceDetector(boxes: Box[]) {
     for (let i = 0; i < boxes.length; i++) {
       const box = boxes[i];
-      const prev = this.rois[i];
+      const prev = this.regionsOfInterest[i];
       let iou = 0;
 
       if (prev && prev.startPoint) {
@@ -149,32 +155,32 @@ export class Pipeline {
       }
 
       if (iou > 0.25) {
-        this.rois[i] = prev;
+        this.regionsOfInterest[i] = prev;
         disposeBox(box);
       } else {
-        this.rois[i] = box;
+        this.regionsOfInterest[i] = box;
         if (prev && prev.startPoint) {
           disposeBox(prev);
         }
       }
     }
 
-    for (let i = boxes.length; i < this.rois.length; i++) {
-      const roi = this.rois[i];
+    for (let i = boxes.length; i < this.regionsOfInterest.length; i++) {
+      const roi = this.regionsOfInterest[i];
       if (roi) {
         disposeBox(roi);
       }
     }
 
-    this.rois = this.rois.slice(0, boxes.length);
+    this.regionsOfInterest = this.regionsOfInterest.slice(0, boxes.length);
   }
 
   clearROIs() {
-    this.rois = [];
+    this.regionsOfInterest = [];
   }
 
   needsRoisUpdate(): boolean {
-    const roisCount = this.rois.length;
+    const roisCount = this.regionsOfInterest.length;
     const noROIs = roisCount === 0;
     const shouldCheckForMoreFaces = roisCount !== this.maxFaces &&
         this.runsWithoutFaceDetector >= this.maxContinuousChecks;
