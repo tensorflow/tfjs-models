@@ -25,9 +25,11 @@ startEndTensor: tf.Tensor2D, // Concatenation of start and end points.
 };
 
 export function disposeBox(box: Box): void {
-  box.startEndTensor.dispose();
-  box.startPoint.dispose();
-  box.endPoint.dispose();
+  if (box != null && box.startPoint != null) {
+    box.startEndTensor.dispose();
+    box.startPoint.dispose();
+    box.endPoint.dispose();
+  }
 }
 
 export function createBox(

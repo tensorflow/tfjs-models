@@ -146,7 +146,6 @@ export class Pipeline {
         const yEndMin = Math.min(boxEndY, previousBoxEndY);
 
         const intersection = (xEndMin - xStartMax) * (yEndMin - yStartMax);
-
         const boxArea = (boxEndX - boxStartX) * (boxEndY - boxStartY);
         const previousBoxArea = (previousBoxEndX - previousBoxStartX) *
             (previousBoxEndY - boxStartY);
@@ -154,21 +153,15 @@ export class Pipeline {
       }
 
       if (iou > UPDATE_REGION_OF_INTEREST_IOU_THRESHOLD) {
-        this.regionsOfInterest[i] = previousBox;
         disposeBox(box);
       } else {
         this.regionsOfInterest[i] = box;
-        if (previousBox && previousBox.startPoint) {
-          disposeBox(previousBox);
-        }
+        disposeBox(previousBox);
       }
     }
 
     for (let i = boxes.length; i < this.regionsOfInterest.length; i++) {
-      const box = this.regionsOfInterest[i];
-      if (box) {
-        disposeBox(box);
-      }
+      disposeBox(this.regionsOfInterest[i]);
     }
 
     this.regionsOfInterest = this.regionsOfInterest.slice(0, boxes.length);
