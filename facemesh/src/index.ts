@@ -156,7 +156,7 @@ export class FaceMesh {
       maxContinuousChecks: number, detectionConfidence: number,
       maxFaces: number, iouThreshold: number, scoreThreshold: number) {
     const [blazeFace, blazeMeshModel] = await Promise.all([
-      this.loadFaceModel(maxFaces, iouThreshold, scoreThreshold),
+      this.loadDetectorModel(maxFaces, iouThreshold, scoreThreshold),
       this.loadMeshModel()
     ]);
 
@@ -171,8 +171,9 @@ export class FaceMesh {
     return MESH_ANNOTATIONS;
   }
 
-  loadFaceModel(maxFaces: number, iouThreshold: number, scoreThreshold: number):
-      Promise<blazeface.BlazeFaceModel> {
+  loadDetectorModel(
+      maxFaces: number, iouThreshold: number,
+      scoreThreshold: number): Promise<blazeface.BlazeFaceModel> {
     return blazeface.load({maxFaces, iouThreshold, scoreThreshold});
   }
 
