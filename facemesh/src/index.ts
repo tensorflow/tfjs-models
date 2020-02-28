@@ -102,6 +102,12 @@ function flipFaceHorizontal(
   });
 }
 
+/**
+ * Load the model.
+ * @param options - a configuration object with the following properties:
+ *  `maxContinuousChecks` How many frames to go without running the bounding box
+ * detector. Only relevant if maxFaces > 1.
+ */
 export async function load({
   meshWidth = 192,
   meshHeight = 192,
