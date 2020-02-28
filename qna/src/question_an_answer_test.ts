@@ -21,40 +21,43 @@ import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_u
 import {load} from './index';
 
 let model;
-describeWithFlags('mobileBert', NODE_ENVS, () => {
+describeWithFlags('qna', NODE_ENVS, () => {
   beforeEach(() => {
     spyOn(tfconv, 'loadGraphModel').and.callFake((modelUrl: string) => {
       model = new tfconv.GraphModel(modelUrl);
       spyOn(model, 'execute')
-          .and.callFake((x: tf.Tensor) => [tf.ones([1, 10]), tf.ones([1, 10])]);
+          .and.callFake(
+              (x: tf.Tensor) =>
+                  [tf.tensor2d([0, 0, 0, 0, 1, 2, 3, 2, 1, 0], [1, 10]),
+                   tf.tensor2d([0, 0, 0, 0, 1, 2, 3, 2, 1, 2], [1, 10])]);
       return Promise.resolve(model);
     });
   });
 
-  it('mobileBert detect method should not leak', async () => {
-    const mobileBert = await load();
+  it('qna detect method should not leak', async () => {
+    const qna = await load();
     const numOfTensorsBefore = tf.memory().numTensors;
 
-    await mobileBert.findAnswers('question', 'context');
+    await qna.findAnswers('question', 'context');
 
     expect(tf.memory().numTensors).toEqual(numOfTensorsBefore);
   });
 
-  it('mobileBert detect method should generate output', async () => {
-    const mobileBert = await load();
+  it('qna detect method should generate output', async () => {
+    const qna = await load();
 
-    const data = await mobileBert.findAnswers('question', 'context');
+    const data = await qna.findAnswers('question', 'context');
 
     expect(data).toEqual([]);
   });
 
-  it('mobileBert detect method should throw error if question is too long',
+  it('qna detect method should throw error if question is too long',
      async () => {
-       const mobileBert = await load();
+       const qna = await load();
        const question = 'question '.repeat(300);
        let result = undefined;
        try {
-         result = await mobileBert.findAnswers(question, 'context');
+         result = await qna.findAnswers(question, 'context');
        } catch (error) {
          expect(error.message)
              .toEqual('The length of question token exceeds the limit (64).');
@@ -62,12 +65,11 @@ describeWithFlags('mobileBert', NODE_ENVS, () => {
        expect(result).toBeUndefined();
      });
 
-  it('mobileBert detect method should work for long context', async () => {
-    const mobileBert = await load();
+  it('qna detect method should work for long context', async () => {
+    const qna = await load();
     const context = 'text '.repeat(1000);
 
-    const data = await mobileBert.findAnswers('question', context);
-
+    const data = await qna.findAnswers('question', context);
     expect(data.length).toEqual(5);
   });
 
@@ -80,21 +82,16 @@ describeWithFlags('mobileBert', NODE_ENVS, () => {
   });
 
   it('should populate the startIndex and endIndex', async () => {
-    const mobileBert = await load();
-    model.execute.and.callFake(
-        (x: tf.Tensor) =>
-            [tf.tensor2d([0, 0, 0, 0, 1, 2, 3, 2, 1, 0], [1, 10]),
-             tf.tensor2d([0, 0, 0, 0, 1, 2, 3, 2, 1, 2], [1, 10])]);
+    const qna = await load();
 
-    const result =
-        await mobileBert.findAnswers('question', 'this is the answer for you!');
+    const result = await qna.findAnswers('question', 'this is answer for you!');
 
     expect(result).toEqual([
-      {text: 'answer', score: 6, startIndex: 12, endIndex: 18},
-      {text: 'answer for', score: 5, startIndex: 12, endIndex: 22},
-      {text: 'answer for you!', score: 5, startIndex: 12, endIndex: 27},
-      {text: 'the answer', score: 5, startIndex: 8, endIndex: 18},
-      {text: 'the', score: 4, startIndex: 8, endIndex: 11}
+      {text: 'answer', score: 6, startIndex: 8, endIndex: 14},
+      {text: 'answer for', score: 5, startIndex: 8, endIndex: 18},
+      {text: 'answer for you!', score: 5, startIndex: 8, endIndex: 23},
+      {text: 'for', score: 4, startIndex: 15, endIndex: 18},
+      {text: 'for you!', score: 4, startIndex: 15, endIndex: 23}
     ]);
   });
 });

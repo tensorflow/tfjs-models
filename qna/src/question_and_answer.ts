@@ -27,7 +27,13 @@ const MAX_SEQ_LEN = 384;
 const PREDICT_ANSWER_NUM = 5;
 const OUTPUT_OFFSET = 1;
 
-export interface MobileBert {
+export interface QuestionAndAnswer {
+  /**
+   * Given the question and context, find the best answers.
+   * @param question the question to find answers for.
+   * @param context context where the answers are looked up from.
+   * @return array of answers
+   */  
   findAnswers(question: string, context: string): Promise<Answer[]>;
 }
 
@@ -44,6 +50,15 @@ export interface ModelConfig {
   fromTFHub?: boolean;
 }
 
+/**
+ * Answer object returned by the model.
+ * `text`: string, the text of the answer.
+ * `startIndex`: number, the index of the starting character of the answer in
+ *     the passage.
+ * `endIndex`: number, index of the last character of the answer text.
+ * `score`: number, indicates the confident
+ * level.
+ */
 export interface Answer {
   text: string;
   startIndex: number;
@@ -65,7 +80,7 @@ interface AnswerIndex {
   score: number;
 }
 
-class MobileBertImpl implements MobileBert {
+class QuestionAndAnswerImpl implements QuestionAndAnswer {
   private model: tfconv.GraphModel;
   private tokenizer: BertTokenizer;
 
@@ -80,6 +95,11 @@ class MobileBertImpl implements MobileBert {
   private process(
       query: string, context: string, maxQueryLen: number, maxSeqLen: number,
       docStride = 128): Feature[] {
+    // always add the question mark to the end of the query.
+    query = query.trim();
+    if (!query.endsWith('?')) {
+      query = query + '?';
+    }
     const queryTokens = this.tokenizer.tokenize(query);
     if (queryTokens.length > maxQueryLen) {
       throw new Error(
@@ -236,7 +256,6 @@ class MobileBertImpl implements MobileBert {
     // Model uses the closed interval [start, end] for indices.
     const startIndexes = this.getBestIndex(startLogits);
     const endIndexes = this.getBestIndex(endLogits);
-
     const origResults: AnswerIndex[] = [];
     startIndexes.forEach(start => {
       endIndexes.forEach(end => {
@@ -251,7 +270,6 @@ class MobileBertImpl implements MobileBert {
     });
 
     origResults.sort((a, b) => b.score - a.score);
-
     const answers: Answer[] = [];
     for (let i = 0; i < origResults.length; i++) {
       if (i >= PREDICT_ANSWER_NUM) {
@@ -316,8 +334,9 @@ class MobileBertImpl implements MobileBert {
   }
 }
 
-export async function load(modelConfig?: ModelConfig): Promise<MobileBert> {
-  const mobileBert = new MobileBertImpl(modelConfig);
+export async function load(modelConfig?: ModelConfig):
+    Promise<QuestionAndAnswer> {
+  const mobileBert = new QuestionAndAnswerImpl(modelConfig);
   await mobileBert.load();
   return mobileBert;
 }
