@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>KMeans Demo</title>
+    <style>
+      #control > button {
+        margin-right: 10px;
+      }
+    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+
+  <body>
+    <div id="control" style="display:flex">
+      <button id="gen-train">Regen Training Data</button>
+      <button id="fit-one">Fit One-Cycle</button>
+      <button id="fit">Fit</button>
+      <button id="gen-test" disabled>New Test Data</button>
+    </div>
+    <div id="info" style="display:none">
+      Loading the model...
+    </div>
+
+    <div id="main" style="position: relative; height:40vh; width:40vw">
+      <canvas id="myChart" width="100" height="100"></canvas>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.bundle.min.js"></script>
+    <script src="kmeans-demo.js"></script>
+  </body>
+</html>
