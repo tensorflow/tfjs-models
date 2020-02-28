@@ -32,7 +32,8 @@ let model, ctx, videoWidth, videoHeight, video, canvas,
     scatterGLHasInitialized = false, scatterGL;
 
 const VIDEO_SIZE = 500;
-const renderPointcloud = isMobile() === false;
+const mobile = isMobile();
+const renderPointcloud = mobile === false;
 const stats = new Stats();
 const state = {
   backend: 'wasm',
@@ -56,7 +57,11 @@ async function setupCamera() {
 
   const stream = await navigator.mediaDevices.getUserMedia({
     'audio': false,
-    'video': {facingMode: 'user', width: VIDEO_SIZE, height: VIDEO_SIZE},
+    'video': {
+      facingMode: 'user',
+      width: mobile ? undefined : VIDEO_SIZE,
+      height: mobile ? undefined : VIDEO_SIZE
+    },
   });
   video.srcObject = stream;
 
