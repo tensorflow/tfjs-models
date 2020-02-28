@@ -66,13 +66,13 @@ export default [
   config({output: {format: 'umd', name: 'facemesh', file: 'dist/facemesh.js'}}),
   config({
     plugins: [
-      // minify()
+      minify()
     ],
     output: {format: 'umd', name: 'facemesh', file: 'dist/facemesh.min.js'}
   }),
   config({
     plugins: [
-      // minify()
+      minify()
     ],
     output: {format: 'es', file: 'dist/facemesh.esm.js'}
   })
