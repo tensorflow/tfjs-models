@@ -69,10 +69,10 @@ async function setupCamera() {
 
 const renderPrediction = async () => {
   stats.begin();
-  const returnTensors = false;
 
-  // We are flipping the canvas context, so we don't need to flip the predictions.
-  const flipHorizontal = false;
+  const returnTensors = false;
+  const flipHorizontal = false; // We are flipping the canvas context, so we
+                                // don't need to flip the predictions.
   const predictions =
       await model.estimateFaces(video, returnTensors, flipHorizontal);
   ctx.drawImage(
@@ -81,7 +81,7 @@ const renderPrediction = async () => {
   if (predictions != null) {
     predictions.forEach(prediction => {
       let keypoints = prediction.scaledMesh;
-      if (returnTensors) {
+      if (returnTensors === true) {
         keypoints = prediction.scaledMesh.arraySync();
       }
 
@@ -97,7 +97,7 @@ const renderPrediction = async () => {
     if (renderPointcloud === true && scatterGL != null) {
       const pointsData = predictions.map(prediction => {
         let scaledMesh = prediction.scaledMesh;
-        if (returnTensors) {
+        if (returnTensors === true) {
           scaledMesh = scaledMesh.arraySync();
         }
 
