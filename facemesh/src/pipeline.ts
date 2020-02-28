@@ -73,6 +73,7 @@ export class Pipeline {
               input, returnTensors, annotateFace);
 
       if (!boxes.length) {
+        (scaleFactor as tf.Tensor1D).dispose();
         this.clearAllRegionsOfInterest();
         return null;
       }
