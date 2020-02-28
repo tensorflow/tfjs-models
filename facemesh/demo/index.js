@@ -19,7 +19,8 @@ import * as facemesh from '@tensorflow-models/facemesh';
 import Stats from 'stats.js';
 import * as tf from '@tensorflow/tfjs-core';
 import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
-tfjsWasm.setWasmPath('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@latest/dist/tfjs-backend-wasm.wasm');
+tfjsWasm.setWasmPath(
+    'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@latest/dist/tfjs-backend-wasm.wasm');
 
 function isMobile() {
   const isAndroid = /Android/i.test(navigator.userAgent);
@@ -28,7 +29,7 @@ function isMobile() {
 }
 
 let model, ctx, videoWidth, videoHeight, video, canvas,
-  scatterGLHasInitialized = false, scatterGL;
+    scatterGLHasInitialized = false, scatterGL;
 
 const VIDEO_SIZE = 500;
 const renderPointcloud = isMobile() === false;
@@ -40,14 +41,13 @@ const state = {
 
 function setupDatGui() {
   const gui = new dat.GUI();
-  gui.add(state, 'backend', ['wasm', 'webgl', 'cpu']).onChange(async backend => {
-    await tf.setBackend(backend);
-  });
+  gui.add(state, 'backend', ['wasm', 'webgl', 'cpu'])
+      .onChange(async backend => {
+        await tf.setBackend(backend);
+      });
 
   gui.add(state, 'maxFaces', 1, 20, 1).onChange(async val => {
-    model = await facemesh.load({
-      maxFaces: val
-    });
+    model = await facemesh.load({maxFaces: val});
   });
 }
 
@@ -56,11 +56,7 @@ async function setupCamera() {
 
   const stream = await navigator.mediaDevices.getUserMedia({
     'audio': false,
-    'video': {
-      facingMode: 'user',
-      width: VIDEO_SIZE,
-      height: VIDEO_SIZE
-    },
+    'video': {facingMode: 'user', width: VIDEO_SIZE, height: VIDEO_SIZE},
   });
   video.srcObject = stream;
 
@@ -75,15 +71,15 @@ const renderPrediction = async () => {
   stats.begin();
   const returnTensors = false;
   const flipHorizontal = false;
-  const predictions = await model.estimateFaces(video, returnTensors, flipHorizontal);
+  const predictions =
+      await model.estimateFaces(video, returnTensors, flipHorizontal);
   ctx.drawImage(
-    video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width,
-    canvas.height);
+      video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
 
   if (predictions) {
     predictions.forEach(prediction => {
       let keypoints = prediction.scaledMesh;
-      if(returnTensors) {
+      if (returnTensors) {
         keypoints = prediction.scaledMesh.arraySync();
       }
 
@@ -99,16 +95,15 @@ const renderPrediction = async () => {
     if (renderPointcloud && scatterGL) {
       const pointsData = predictions.map(prediction => {
         let scaledMesh = prediction.scaledMesh;
-        if(returnTensors) {
+        if (returnTensors) {
           scaledMesh = scaledMesh.arraySync();
         }
 
-        return scaledMesh.map(
-          point => ([-point[0], -point[1], -point[2]]));
+        return scaledMesh.map(point => ([-point[0], -point[1], -point[2]]));
       });
 
       const dataset = new ScatterGL.Dataset(
-        pointsData.reduce((acc, curr) => acc.concat(curr), []));
+          pointsData.reduce((acc, curr) => acc.concat(curr), []));
 
       if (!scatterGLHasInitialized) {
         scatterGL.render(dataset);
@@ -137,7 +132,7 @@ const setupPage = async () => {
     videoWidth = video.videoWidth;
     videoHeight = video.videoHeight;
   } else {
-    video = document.querySelector("img");
+    video = document.querySelector('img');
     videoWidth = 640;
     videoHeight = 640;
   }
@@ -148,7 +143,7 @@ const setupPage = async () => {
   canvas = document.getElementById('output');
   canvas.width = videoWidth;
   canvas.height = videoHeight;
-  const canvasContainer = document.querySelector(".canvas-wrapper");
+  const canvasContainer = document.querySelector('.canvas-wrapper');
   canvasContainer.style = `width: ${videoWidth}px; height: ${videoHeight}px`;
 
   ctx = canvas.getContext('2d');
@@ -156,19 +151,19 @@ const setupPage = async () => {
   ctx.scale(-1, 1);
   ctx.fillStyle = 'red';
 
-  model = await facemesh.load({ maxFaces: state.maxFaces });
+  model = await facemesh.load({maxFaces: state.maxFaces});
 
   renderPrediction();
 
-  if(renderPointcloud) {
-    document.querySelector("#scatter-gl-container").style.width = `${VIDEO_SIZE}px`;
-    document.querySelector("#scatter-gl-container").style.height = `${VIDEO_SIZE}px`;
+  if (renderPointcloud) {
+    document.querySelector('#scatter-gl-container').style.width =
+        `${VIDEO_SIZE}px`;
+    document.querySelector('#scatter-gl-container').style.height =
+        `${VIDEO_SIZE}px`;
 
     scatterGL = new ScatterGL(
-      document.querySelector("#scatter-gl-container"), {
-        'rotateOnStart': false,
-        'selectEnabled': false
-      });
+        document.querySelector('#scatter-gl-container'),
+        {'rotateOnStart': false, 'selectEnabled': false});
   }
 };
 

@@ -87,7 +87,7 @@ async function main() {
     for (let i = 0; i < predictions.length; i++) {
       const keypoints = predictions[i].scaledMesh;
 
-      // Draw a circle over each facial keypoint.
+      // Render facial keypoints.
       for (let i = 0; i < keypoints.length; i++) {
         const x = keypoints[i][0];
         const y = keypoints[i][1];

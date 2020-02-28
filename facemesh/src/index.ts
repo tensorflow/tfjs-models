@@ -291,6 +291,6 @@ export class FaceMesh {
       }));
     }
 
-    return null;
+    return [];
   }
 }
