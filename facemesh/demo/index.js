@@ -131,7 +131,6 @@ const setupPage = async () => {
   video.play();
   videoWidth = video.videoWidth;
   videoHeight = video.videoHeight;
-
   video.width = videoWidth;
   video.height = videoHeight;
 
@@ -147,14 +146,11 @@ const setupPage = async () => {
   ctx.fillStyle = 'red';
 
   model = await facemesh.load({maxFaces: state.maxFaces});
-
   renderPrediction();
 
   if (renderPointcloud === true) {
-    document.querySelector('#scatter-gl-container').style.width =
-        `${VIDEO_SIZE}px`;
-    document.querySelector('#scatter-gl-container').style.height =
-        `${VIDEO_SIZE}px`;
+    document.querySelector('#scatter-gl-container').style =
+      `width: ${VIDEO_SIZE}px; height: ${VIDEO_SIZE}px;`;
 
     scatterGL = new ScatterGL(
         document.querySelector('#scatter-gl-container'),
