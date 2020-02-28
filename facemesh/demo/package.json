@@ -11,7 +11,7 @@
   "dependencies": {
     "@tensorflow-models/facemesh": "file:../",
     "@tensorflow/tfjs-backend-wasm": "^1.5.2-alpha1",
-    "@tensorflow/tfjs-converter": "^1.5.0",
+    "@tensorflow/tfjs-converter": "^1.5.2",
     "@tensorflow/tfjs-core": "1.5.2",
     "stats.js": "^0.17.0"
   },
