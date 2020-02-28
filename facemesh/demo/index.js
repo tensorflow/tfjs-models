@@ -76,7 +76,7 @@ const renderPrediction = async () => {
   ctx.drawImage(
       video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
 
-  if (predictions) {
+  if (predictions != null) {
     predictions.forEach(prediction => {
       let keypoints = prediction.scaledMesh;
       if (returnTensors) {
@@ -103,7 +103,7 @@ const renderPrediction = async () => {
       });
 
       const dataset = new ScatterGL.Dataset(
-          pointsData.reduce((acc, curr) => acc.concat(curr), []));
+          pointsData.reduce((acc, curr) => acc.concat(curr), []) /* flatten */);
 
       if (!scatterGLHasInitialized) {
         scatterGL.render(dataset);
@@ -125,17 +125,10 @@ const setupPage = async () => {
   stats.showPanel(0);  // 0: fps, 1: ms, 2: mb, 3+: custom
   document.getElementById('main').appendChild(stats.dom);
 
-  const useVideoStream = true;
-  if (useVideoStream) {
-    await setupCamera();
-    video.play();
-    videoWidth = video.videoWidth;
-    videoHeight = video.videoHeight;
-  } else {
-    video = document.querySelector('img');
-    videoWidth = 640;
-    videoHeight = 640;
-  }
+  await setupCamera();
+  video.play();
+  videoWidth = video.videoWidth;
+  videoHeight = video.videoHeight;
 
   video.width = videoWidth;
   video.height = videoHeight;
