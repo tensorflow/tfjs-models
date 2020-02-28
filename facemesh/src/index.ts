@@ -28,24 +28,33 @@ const BLAZE_MESH_GRAPHMODEL_PATH =
 const MESH_MODEL_INPUT_WIDTH = 192;
 const MESH_MODEL_INPUT_HEIGHT = 192;
 
-// The object returned by facemesh describing a face found in the input.
-export type AnnotatedPrediction = {
+type AnnotatedPredictionValues = {
   /** Probability of the face detection. */
-  faceInViewConfidence: number|tf.Scalar,
+  faceInViewConfidence: number,
   boundingBox: {
     /** The upper left-hand corner of the face. */
-    topLeft: [number, number]|tf.Tensor1D,
+    topLeft: [number, number],
     /** The lower right-hand corner of the face. */
-    bottomRight: [number, number]|tf.Tensor1D
+    bottomRight: [number, number]
   },
   /** Facial landmark coordinates. */
-  mesh: Array<[number, number, number]>|tf.Tensor2D,
+  mesh: Array<[number, number, number]>,
   /** Facial landmark coordinates normalized to input dimensions. */
-  scaledMesh: Array<[number, number, number]>|tf.Tensor2D,
-
-  /** Annotated keypoints. Not available if returning tensors. */
+  scaledMesh: Array<[number, number, number]>,
+  /** Annotated keypoints. */
   annotations?: {[key: string]: Array<[number, number, number]>}
 };
+
+type AnnotatedPredictionTensors = {
+  faceInViewConfidence: number,
+  boundingBox: {topLeft: tf.Tensor1D, bottomRight: tf.Tensor1D},
+  mesh: tf.Tensor2D,
+  scaledMesh: tf.Tensor2D
+};
+
+// The object returned by facemesh describing a face found in the input.
+export type AnnotatedPrediction =
+    AnnotatedPredictionValues|AnnotatedPredictionTensors;
 
 /**
  * Load the model.
@@ -212,97 +221,74 @@ export class FaceMesh {
     image.dispose();
 
     if (predictions != null && predictions.length > 0) {
-      return Promise
-          .all(
-              predictions.map(
-                  async (prediction: Prediction, i) => {
-                    const {coords, scaledCoords, box, flag} = prediction;
-                    let tensorsToRead: tf.Tensor[] = [flag];
-                    if (!returnTensors) {
-                      tensorsToRead = tensorsToRead.concat(
-                          [coords, scaledCoords, box.startPoint, box.endPoint]);
-                    }
+      return Promise.all(predictions.map(async (prediction: Prediction, i) => {
+        const {coords, scaledCoords, box, flag} = prediction;
+        let tensorsToRead: tf.Tensor[] = [flag];
+        if (!returnTensors) {
+          tensorsToRead = tensorsToRead.concat(
+              [coords, scaledCoords, box.startPoint, box.endPoint]);
+        }
 
-                    const tensorValues = await Promise.all(tensorsToRead.map(
-                        async (d: tf.Tensor) => await d.array()));
-                    const flagValue = tensorValues[0] as number;
+        const tensorValues = await Promise.all(
+            tensorsToRead.map(async (d: tf.Tensor) => d.array()));
+        const flagValue = tensorValues[0] as number;
 
-                    flag.dispose();
-                    if (flagValue < this.detectionConfidence) {
-                      this.pipeline.clearRegionOfInterest(i);
-                    }
+        flag.dispose();
+        if (flagValue < this.detectionConfidence) {
+          this.pipeline.clearRegionOfInterest(i);
+        }
 
-                    if (returnTensors) {
-                      const annotatedPrediction = {
-                        faceInViewConfidence: flag,
-                        mesh: coords,
-                        scaledMesh: scaledCoords,
-                        boundingBox: {
-                          topLeft: box.startPoint.squeeze(),
-                          bottomRight: box.endPoint.squeeze()
-                        }
-                      } as AnnotatedPrediction;
+        if (returnTensors) {
+          const annotatedPrediction: AnnotatedPrediction = {
+            faceInViewConfidence: flagValue,
+            mesh: coords,
+            scaledMesh: scaledCoords,
+            boundingBox: {
+              topLeft: box.startPoint.squeeze() as tf.Tensor1D,
+              bottomRight: box.endPoint.squeeze() as tf.Tensor1D
+            }
+          };
 
-                      if (flipHorizontal) {
-                        const flipped =
-                            flipFaceHorizontal(annotatedPrediction, width);
+          if (flipHorizontal) {
+            return flipFaceHorizontal(annotatedPrediction, width);
+          }
 
-                        (annotatedPrediction.mesh as tf.Tensor2D).dispose();
-                        (annotatedPrediction.scaledMesh as tf.Tensor2D)
-                            .dispose();
-                        (annotatedPrediction.boundingBox.topLeft as tf.Tensor1D)
-                            .dispose();
-                        (annotatedPrediction.boundingBox.bottomRight as
-                         tf.Tensor1D)
-                            .dispose();
+          return annotatedPrediction;
+        }
 
-                        return flipped;
-                      }
-
-                      return annotatedPrediction;
-                    }
-
-                    const [coordsArr, coordsArrScaled, topLeft, bottomRight] =
+        const [coordsArr, coordsArrScaled, topLeft, bottomRight] =
                       tensorValues.slice(1) as [
-                        number[][],
-                        number[][],
+                        Array<[number, number, number]>,
+                        Array<[number, number, number]>,
                         [number, number],
                         [number, number]];
 
-                    scaledCoords.dispose();
-                    coords.dispose();
+        scaledCoords.dispose();
+        coords.dispose();
 
-                    let annotatedPrediction: AnnotatedPrediction = {
-                      faceInViewConfidence: flagValue,
-                      boundingBox: {
-                        topLeft: topLeft as [number, number],
-                        bottomRight: bottomRight as [number, number]
-                      },
-                      mesh: coordsArr as Array<[number, number, number]>,
-                      scaledMesh: coordsArrScaled as
-                          Array<[number, number, number]>
-                    };
+        let annotatedPrediction: AnnotatedPredictionValues = {
+          faceInViewConfidence: flagValue,
+          boundingBox: {topLeft, bottomRight},
+          mesh: coordsArr,
+          scaledMesh: coordsArrScaled
+        };
 
-                    if (flipHorizontal) {
-                      annotatedPrediction =
-                          flipFaceHorizontal(annotatedPrediction, width);
-                    }
+        if (flipHorizontal) {
+          annotatedPrediction =
+              flipFaceHorizontal(annotatedPrediction, width) as
+              AnnotatedPredictionValues;
+        }
 
-                    const annotations:
-                        {[key: string]: Array<[number, number, number]>} = {};
-                    for (const key in MESH_ANNOTATIONS) {
-                      annotations[key] =
-                          (MESH_ANNOTATIONS[key] as number[])
-                              .map(
-                                  (index: number): number[] =>
-                                      (annotatedPrediction.scaledMesh as Array<
-                                           [number, number, number]>)[index]) as
-                          Array<[number, number, number]>;
-                    }
-                    annotatedPrediction['annotations'] = annotations;
+        const annotations:
+            {[key: string]: Array<[number, number, number]>} = {};
+        for (const key in MESH_ANNOTATIONS) {
+          annotations[key] = MESH_ANNOTATIONS[key].map(
+              index => annotatedPrediction.scaledMesh[index]);
+        }
+        annotatedPrediction['annotations'] = annotations;
 
-                    return annotatedPrediction;
-                  }));
+        return annotatedPrediction;
+      }));
     }
 
     return null;

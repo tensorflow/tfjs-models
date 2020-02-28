@@ -47,6 +47,5 @@ describeWithFlags('Facemesh', NODE_ENVS, () => {
     expect(face.boundingBox).toBeDefined();
     expect(face.mesh).toBeDefined();
     expect(face.scaledMesh).toBeDefined();
-    expect(face.annotations).toBeDefined();
   });
 });
