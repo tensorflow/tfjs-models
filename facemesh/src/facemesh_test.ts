@@ -31,6 +31,7 @@ describeWithFlags('Facemesh', NODE_ENVS, () => {
   it('estimateFaces does not leak memory', async () => {
     const input: tf.Tensor3D = tf.zeros([128, 128, 3]);
     const beforeTensors = tf.memory().numTensors;
+
     await model.estimateFaces(input);
 
     expect(tf.memory().numTensors).toEqual(beforeTensors);
