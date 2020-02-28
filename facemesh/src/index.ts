@@ -28,20 +28,28 @@ const BLAZE_MESH_GRAPHMODEL_PATH =
 const MESH_MODEL_INPUT_WIDTH = 192;
 const MESH_MODEL_INPUT_HEIGHT = 192;
 
+// The object returned by facemesh describing a face found in the input.
 export type AnnotatedPrediction = {
+  /** Probability of the face detection. */
   faceInViewConfidence: number|tf.Scalar,
   boundingBox: {
+    /** The upper left-hand corner of the face. */
     topLeft: [number, number]|tf.Tensor1D,
+    /** The lower right-hand corner of the face. */
     bottomRight: [number, number]|tf.Tensor1D
   },
+  /** Facial landmark coordinates. */
   mesh: Array<[number, number, number]>|tf.Tensor2D,
+  /** Facial landmark coordinates normalized to input dimensions. */
   scaledMesh: Array<[number, number, number]>|tf.Tensor2D,
-  /*Annotated keypoints. Not available if returning tensors. */
+
+  /** Annotated keypoints. Not available if returning tensors. */
   annotations?: {[key: string]: Array<[number, number, number]>}
 };
 
 /**
  * Load the model.
+ *
  * @param options - a configuration object with the following properties:
  *  `maxContinuousChecks` How many frames to go without running the bounding box
  * detector. Only relevant if maxFaces > 1. Defaults to 5.
@@ -163,18 +171,36 @@ export class FaceMesh {
     return tfconv.loadGraphModel(BLAZE_MESH_GRAPHMODEL_PATH);
   }
 
+  /**
+   * Returns an array of faces in an image.
+   *
+   * @param input The image to classify. Can be a tensor, DOM element image,
+   * video, or canvas.
+   * @param returnTensors (defaults to `false`) Whether to return tensors as
+   * opposed to values.
+   * @param flipHorizontal Whether to flip/mirror the facial keypoints
+   * horizontally. Should be true for videos that are flipped by default (e.g.
+   * webcams).
+   *
+   * @return An array of AnnotatedPrediction objects.
+   */
   async estimateFaces(
       input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
       HTMLCanvasElement,
       returnTensors = false,
       flipHorizontal = false): Promise<AnnotatedPrediction[]> {
+    const [, width] = getInputTensorDimensions(input);
+
     if (!(input instanceof tf.Tensor)) {
       input = tf.browser.fromPixels(input);
     }
 
-    const [, width] = getInputTensorDimensions(input);
-    const inputToFloat = input.toFloat();
-    const image = inputToFloat.expandDims(0) as tf.Tensor4D;
+    const image: tf.Tensor4D = tf.tidy(() => {
+      if (!(input instanceof tf.Tensor)) {
+        input = tf.browser.fromPixels(input);
+      }
+      return (input as tf.Tensor).toFloat().expandDims(0);
+    });
 
     const savedWebglPackDepthwiseConvFlag =
         tf.env().get('WEBGL_PACK_DEPTHWISECONV');
@@ -183,10 +209,9 @@ export class FaceMesh {
     tf.env().set('WEBGL_PACK_DEPTHWISECONV', savedWebglPackDepthwiseConvFlag);
 
     input.dispose();
-    inputToFloat.dispose();
     image.dispose();
 
-    if (predictions && predictions.length) {
+    if (predictions != null && predictions.length > 0) {
       return Promise
           .all(
               predictions.map(
