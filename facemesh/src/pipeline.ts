@@ -36,13 +36,15 @@ export class Pipeline {
   private boundingBoxDetector: blazeface.BlazeFaceModel;
   // MediaPipe model for detecting facial mesh.
   private meshDetector: tfconv.GraphModel;
+
   private meshWidth: number;
   private meshHeight: number;
   private maxContinuousChecks: number;
-  private runsWithoutFaceDetector: number;
-  // An array of facial bounding boxes.
-  private regionsOfInterest: Box[];
   private maxFaces: number;
+
+  // An array of facial bounding boxes.
+  private regionsOfInterest: Box[] = [];
+  private runsWithoutFaceDetector = 0;
 
   constructor(
       boundingBoxDetector: blazeface.BlazeFaceModel,
@@ -53,22 +55,21 @@ export class Pipeline {
     this.meshWidth = meshWidth;
     this.meshHeight = meshHeight;
     this.maxContinuousChecks = maxContinuousChecks;
-    this.runsWithoutFaceDetector = 0;
-    this.regionsOfInterest = [];
     this.maxFaces = maxFaces;
   }
 
   /**
-   * @param image - image tensor of shape [1, H, W, 3].
-   * @return an array of predictions for each face
+   * Returns an array of predictions for each face in the input.
+   *
+   * @param input - tensor of shape [1, H, W, 3].
    */
-  async predict(image: tf.Tensor4D): Promise<Prediction[]> {
-    if (this.needsRoisUpdate()) {
-      const returnTensors = false;
+  async predict(input: tf.Tensor4D): Promise<Prediction[]> {
+    if (this.needsRegionsOfInterestUpdate()) {
+      const returnTensors = true;
       const annotateFace = false;
       const {boxes, scaleFactor} =
           await this.boundingBoxDetector.getBoundingBoxes(
-              image, returnTensors, annotateFace);
+              input, returnTensors, annotateFace);
 
       if (!boxes.length) {
         this.clearROIs();
@@ -90,7 +91,7 @@ export class Pipeline {
 
     return tf.tidy(() => this.regionsOfInterest.map((roi, i) => {
       const box = roi as Box;
-      const face = cutBoxFromImageAndResize(box, image, [
+      const face = cutBoxFromImageAndResize(box, input, [
                      this.meshHeight, this.meshWidth
                    ]).div(255);
 
@@ -179,7 +180,7 @@ export class Pipeline {
     this.regionsOfInterest = [];
   }
 
-  needsRoisUpdate(): boolean {
+  needsRegionsOfInterestUpdate(): boolean {
     const roisCount = this.regionsOfInterest.length;
     const noROIs = roisCount === 0;
     const shouldCheckForMoreFaces = roisCount !== this.maxFaces &&
