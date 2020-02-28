@@ -25,6 +25,8 @@ import {Pipeline, Prediction} from './pipeline';
 // TODO: CHANGE TO TFHUB LINK ONCE AVAILABLE.
 const BLAZE_MESH_GRAPHMODEL_PATH =
     'https://storage.googleapis.com/learnjs-data/facemesh_staging/facemesh_facecontours_faceflag-blaze_shift30-2019_01_14-v0.hdf5_tfjs_fixed_batch/model.json';
+const MESH_MODEL_INPUT_WIDTH = 192;
+const MESH_MODEL_INPUT_HEIGHT = 192;
 
 export type AnnotatedPrediction = {
   faceInViewConfidence: number|tf.Scalar,
@@ -32,11 +34,41 @@ export type AnnotatedPrediction = {
     topLeft: [number, number]|tf.Tensor1D,
     bottomRight: [number, number]|tf.Tensor1D
   },
-  mesh: number[][]|tf.Tensor2D,
-  scaledMesh: number[][]|tf.Tensor2D,
-  /*Annotated keypoints. */
-  annotations?: {[key: string]: number[][]}
+  mesh: Array<[number, number, number]>|tf.Tensor2D,
+  scaledMesh: Array<[number, number, number]>|tf.Tensor2D,
+  /*Annotated keypoints. Not available if returning tensors. */
+  annotations?: {[key: string]: Array<[number, number, number]>}
 };
+
+/**
+ * Load the model.
+ * @param options - a configuration object with the following properties:
+ *  `maxContinuousChecks` How many frames to go without running the bounding box
+ * detector. Only relevant if maxFaces > 1. Defaults to 5.
+ *  `detectionConfidence` Threshold for discarding a prediction. Defaults to
+ * 0.9.
+ *  `maxFaces` The maximum number of faces detected in the input. Should be
+ * set to the minimum number for performance. Defaults to 10.
+ *  `iouThreshold` A float representing the threshold for deciding whether boxes
+ * overlap too much in non-maximum suppression. Must be between [0, 1]. Defaults
+ * to 0.3.
+ *  `scoreThreshold` A threshold for deciding when to remove boxes based
+ * on score in non-maximum suppression. Defaults to 0.75.
+ */
+export async function load({
+  maxContinuousChecks = 5,
+  detectionConfidence = 0.9,
+  maxFaces = 10,
+  iouThreshold = 0.3,
+  scoreThreshold = 0.75
+} = {}) {
+  const faceMesh = new FaceMesh();
+
+  await faceMesh.load(
+      maxContinuousChecks, detectionConfidence, maxFaces, iouThreshold,
+      scoreThreshold);
+  return faceMesh;
+}
 
 function getInputTensorDimensions(input: tf.Tensor3D|ImageData|HTMLVideoElement|
                                   HTMLImageElement|
@@ -49,8 +81,8 @@ function flipFaceHorizontal(
     face: AnnotatedPrediction, imageWidth: number): AnnotatedPrediction {
   if (face.mesh instanceof tf.Tensor) {
     const [topLeft, bottomRight, mesh, scaledMesh] = tf.tidy(() => {
-      const subtractBasis = [imageWidth - 1, 0, 0];
-      const multiplyBasis = [1, -1, 1];
+      const subtractBasis = tf.tensor1d([imageWidth - 1, 0, 0]);
+      const multiplyBasis = tf.tensor1d([1, -1, 1]);
 
       return [
         tf.concat([
@@ -65,10 +97,8 @@ function flipFaceHorizontal(
               (face.boundingBox.bottomRight as tf.Tensor1D).slice(0, 1)),
           (face.boundingBox.bottomRight as tf.Tensor1D).slice(1, 1)
         ]),
-        tf.sub(tf.tensor1d(subtractBasis), face.mesh)
-            .mul(tf.tensor1d(multiplyBasis)),
-        tf.sub(tf.tensor1d(subtractBasis), face.scaledMesh)
-            .mul(tf.tensor1d(multiplyBasis))
+        tf.sub(subtractBasis, face.mesh).mul(multiplyBasis),
+        tf.sub(subtractBasis, face.scaledMesh).mul(multiplyBasis)
       ];
     });
 
@@ -87,42 +117,18 @@ function flipFaceHorizontal(
         (face.boundingBox.bottomRight as [number, number])[1]
       ]
     },
-    mesh: (face.mesh as number[][])
-              .map((coord: [number, number]|[number, number, number]) => {
-                const flippedCoord = coord.slice(0);
-                flippedCoord[0] = imageWidth - 1 - coord[0];
-                return flippedCoord;
-              }),
-    scaledMesh: (face.scaledMesh as number[][])
-                    .map((coord: [number, number]|[number, number, number]) => {
-                      const flippedCoord = coord.slice(0);
-                      flippedCoord[0] = imageWidth - 1 - coord[0];
-                      return flippedCoord;
-                    })
+    mesh: (face.mesh as Array<[number, number, number]>).map(coord => {
+      const flippedCoord = coord.slice(0);
+      flippedCoord[0] = imageWidth - 1 - coord[0];
+      return flippedCoord;
+    }),
+    scaledMesh:
+        (face.scaledMesh as Array<[number, number, number]>).map(coord => {
+          const flippedCoord = coord.slice(0);
+          flippedCoord[0] = imageWidth - 1 - coord[0];
+          return flippedCoord;
+        })
   });
-}
-
-/**
- * Load the model.
- * @param options - a configuration object with the following properties:
- *  `maxContinuousChecks` How many frames to go without running the bounding box
- * detector. Only relevant if maxFaces > 1.
- */
-export async function load({
-  meshWidth = 192,
-  meshHeight = 192,
-  maxContinuousChecks = 5,
-  detectionConfidence = 0.9,
-  maxFaces = 10,
-  iouThreshold = 0.3,
-  scoreThreshold = 0.75
-} = {}) {
-  const faceMesh = new FaceMesh();
-
-  await faceMesh.load(
-      meshWidth, meshHeight, maxContinuousChecks, detectionConfidence, maxFaces,
-      iouThreshold, scoreThreshold);
-  return faceMesh;
 }
 
 export class FaceMesh {
@@ -130,17 +136,16 @@ export class FaceMesh {
   private detectionConfidence: number;
 
   async load(
-      meshWidth: number, meshHeight: number, maxContinuousChecks: number,
-      detectionConfidence: number, maxFaces: number, iouThreshold: number,
-      scoreThreshold: number) {
+      maxContinuousChecks: number, detectionConfidence: number,
+      maxFaces: number, iouThreshold: number, scoreThreshold: number) {
     const [blazeFace, blazeMeshModel] = await Promise.all([
       this.loadFaceModel(maxFaces, iouThreshold, scoreThreshold),
       this.loadMeshModel()
     ]);
 
     this.pipeline = new Pipeline(
-        blazeFace, blazeMeshModel, meshWidth, meshHeight, maxContinuousChecks,
-        maxFaces);
+        blazeFace, blazeMeshModel, MESH_MODEL_INPUT_WIDTH,
+        MESH_MODEL_INPUT_HEIGHT, maxContinuousChecks, maxFaces);
 
     this.detectionConfidence = detectionConfidence;
   }
@@ -156,12 +161,6 @@ export class FaceMesh {
 
   loadMeshModel(): Promise<tfconv.GraphModel> {
     return tfconv.loadGraphModel(BLAZE_MESH_GRAPHMODEL_PATH);
-  }
-
-  clearPipelineROIs(flag: number) {
-    if (flag < this.detectionConfidence) {
-      this.pipeline.clearRegionsOfInterest();
-    }
   }
 
   async estimateFaces(
@@ -191,7 +190,7 @@ export class FaceMesh {
       return Promise
           .all(
               predictions.map(
-                  async (prediction: Prediction) => {
+                  async (prediction: Prediction, i) => {
                     const {coords, scaledCoords, box, flag} = prediction;
                     let tensorsToRead: tf.Tensor[] = [flag];
                     if (!returnTensors) {
@@ -204,7 +203,9 @@ export class FaceMesh {
                     const flagValue = tensorValues[0] as number;
 
                     flag.dispose();
-                    this.clearPipelineROIs(flagValue);
+                    if (flagValue < this.detectionConfidence) {
+                      this.pipeline.clearRegionOfInterest(i);
+                    }
 
                     if (returnTensors) {
                       const annotatedPrediction = {
@@ -252,8 +253,9 @@ export class FaceMesh {
                         topLeft: topLeft as [number, number],
                         bottomRight: bottomRight as [number, number]
                       },
-                      mesh: coordsArr as number[][],
-                      scaledMesh: coordsArrScaled as number[][]
+                      mesh: coordsArr as Array<[number, number, number]>,
+                      scaledMesh: coordsArrScaled as
+                          Array<[number, number, number]>
                     };
 
                     if (flipHorizontal) {
@@ -261,14 +263,16 @@ export class FaceMesh {
                           flipFaceHorizontal(annotatedPrediction, width);
                     }
 
-                    const annotations: {[key: string]: number[][]} = {};
+                    const annotations:
+                        {[key: string]: Array<[number, number, number]>} = {};
                     for (const key in MESH_ANNOTATIONS) {
                       annotations[key] =
                           (MESH_ANNOTATIONS[key] as number[])
                               .map(
                                   (index: number): number[] =>
-                                      (annotatedPrediction.scaledMesh as
-                                       number[][])[index]) as number[][];
+                                      (annotatedPrediction.scaledMesh as Array<
+                                           [number, number, number]>)[index]) as
+                          Array<[number, number, number]>;
                     }
                     annotatedPrediction['annotations'] = annotations;
 

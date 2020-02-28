@@ -73,7 +73,7 @@ export class Pipeline {
               input, returnTensors, annotateFace);
 
       if (!boxes.length) {
-        this.clearRegionsOfInterest();
+        this.clearAllRegionsOfInterest();
         return null;
       }
 
@@ -167,7 +167,22 @@ export class Pipeline {
     this.regionsOfInterest = this.regionsOfInterest.slice(0, boxes.length);
   }
 
-  clearRegionsOfInterest() {
+  clearRegionOfInterest(index: number) {
+    if (this.regionsOfInterest[index] != null) {
+      disposeBox(this.regionsOfInterest[index]);
+
+      this.regionsOfInterest = [
+        ...this.regionsOfInterest.slice(0, index),
+        ...this.regionsOfInterest.slice(index + 1)
+      ];
+    }
+  }
+
+  clearAllRegionsOfInterest() {
+    for (let i = 0; i < this.regionsOfInterest.length; i++) {
+      disposeBox(this.regionsOfInterest[i]);
+    }
+
     this.regionsOfInterest = [];
   }
 
