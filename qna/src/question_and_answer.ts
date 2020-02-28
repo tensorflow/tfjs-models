@@ -28,6 +28,12 @@ const PREDICT_ANSWER_NUM = 5;
 const OUTPUT_OFFSET = 1;
 
 export interface QuestionAndAnswer {
+  /**
+   * Given the question and context, find the best answers.
+   * @param question the question to find answers for.
+   * @param context context where the answers are looked up from.
+   * @return array of answers
+   */  
   findAnswers(question: string, context: string): Promise<Answer[]>;
 }
 
