@@ -89,40 +89,42 @@ export class Pipeline {
       this.runsWithoutFaceDetector++;
     }
 
-    return tf.tidy(() => this.regionsOfInterest.map((box, i) => {
-      const face = cutBoxFromImageAndResize(box, input, [
-                     this.meshHeight, this.meshWidth
-                   ]).div(255);
+    return tf.tidy(() => {
+      return this.regionsOfInterest.map((box, i) => {
+        const face = cutBoxFromImageAndResize(box, input, [
+                       this.meshHeight, this.meshWidth
+                     ]).div(255);
 
-      // The first returned tensor represents facial contours, which are
-      // included in the coordinates.
-      const [, flag, coords] =
-          this.meshDetector.predict(
-              face) as [tf.Tensor, tf.Tensor2D, tf.Tensor2D];
+        // The first returned tensor represents facial contours, which are
+        // included in the coordinates.
+        const [, flag, coords] =
+            this.meshDetector.predict(
+                face) as [tf.Tensor, tf.Tensor2D, tf.Tensor2D];
 
-      const coordsReshaped = tf.reshape(coords, [-1, 3]);
-      const normalizedBox =
-          tf.div(getBoxSize(box), [this.meshWidth, this.meshHeight]);
-      const scaledCoords =
-          tf.mul(
-                coordsReshaped,
-                normalizedBox.concat(tf.tensor2d([1], [1, 1]), 1))
-              .add(box.startPoint.concat(tf.tensor2d([0], [1, 1]), 1));
+        const coordsReshaped: tf.Tensor2D = tf.reshape(coords, [-1, 3]);
+        const normalizedBox =
+            tf.div(getBoxSize(box), [this.meshWidth, this.meshHeight]);
+        const scaledCoords: tf.Tensor2D =
+            tf.mul(
+                  coordsReshaped,
+                  normalizedBox.concat(tf.tensor2d([1], [1, 1]), 1))
+                .add(box.startPoint.concat(tf.tensor2d([0], [1, 1]), 1));
 
-      const landmarksBox = this.calculateLandmarksBoundingBox(scaledCoords);
-      const previousBox = this.regionsOfInterest[i];
-      if (previousBox) {
+        const landmarksBox = this.calculateLandmarksBoundingBox(scaledCoords);
+        const previousBox = this.regionsOfInterest[i];
         disposeBox(previousBox);
-      }
-      this.regionsOfInterest[i] = landmarksBox;
+        this.regionsOfInterest[i] = landmarksBox;
 
-      return {
-        coords: coordsReshaped,
-        scaledCoords,
-        box: landmarksBox,
-        flag: flag.squeeze()
-      } as Prediction;
-    }));
+        const prediction: Prediction = {
+          coords: coordsReshaped,
+          scaledCoords,
+          box: landmarksBox,
+          flag: flag.squeeze()
+        };
+
+        return prediction;
+      });
+    });
   }
 
   // Updates regions of interest if the intersection over union between
