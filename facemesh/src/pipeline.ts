@@ -78,11 +78,9 @@ export class Pipeline {
         return null;
       }
 
-      const scaledBoxes = tf.tidy(
-          () => boxes.map(
-              (prediction: Box): Box => enlargeBox(scaleBoxCoordinates(
-                  prediction, scaleFactor as [number, number]))));
-
+      const scaledBoxes = boxes.map(
+          (prediction: Box): Box => enlargeBox(scaleBoxCoordinates(
+              prediction, scaleFactor as [number, number])));
       boxes.forEach(disposeBox);
 
       this.updateRegionsOfInterest(scaledBoxes);
