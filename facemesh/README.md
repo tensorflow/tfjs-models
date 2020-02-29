@@ -1,12 +1,12 @@
-# Facemesh
+# MediaPipe Facemesh
 
-Facemesh is a lightweight model that predicts 3D facial keypoints ([paper](https://arxiv.org/pdf/1907.06724.pdf)).
+MediaPipe Facemesh is a lightweight model that predicts 3D facial keypoints ([paper](https://arxiv.org/pdf/1907.06724.pdf)).
 
 <img src="demo/demo.gif" alt="demo" style="width: 640px;"/>
 
 More background information about the model, as well as its performance characteristics on different datasets, can be found here: [https://drive.google.com/file/d/1VFC_wIpw4O7xBOiTgUldl79d9LA-LsnA/view](https://drive.google.com/file/d/1VFC_wIpw4O7xBOiTgUldl79d9LA-LsnA/view)
 
-The model is designed for front-facing cameras on mobile devices, where faces in view tend to occupy a relatively large fraction of the canvas. Facemesh may struggle to identify far-away faces.
+The model is designed for front-facing cameras on mobile devices, where faces in view tend to occupy a relatively large fraction of the canvas. MediaPipe Facemesh may struggle to identify far-away faces.
 
 Check out our [demo](https://storage.googleapis.com/tfjs-models/demos/facemesh/index.html), which uses the model to detect facial landmarks in a live video stream.
 
@@ -46,10 +46,10 @@ Then:
 ```js
 
 async function main() {
-  // Load the model.
+  // Load the MediaPipe facemesh model.
   const model = await facemesh.load();
 
-  // Pass in a video stream to obtain an array of detected faces.
+  // Pass in a video stream to obtain an array of detected faces from the MediaPipe graph.
   const predictions = await model.estimateFaces(document.querySelector("video"));
 
   if (predictions.length > 0) {
@@ -102,5 +102,3 @@ async function main() {
 main();
 
 ```
-
-
