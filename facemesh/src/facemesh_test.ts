@@ -17,12 +17,12 @@
 
 import * as tf from '@tensorflow/tfjs-core';
 // tslint:disable-next-line: no-imports-from-dist
-import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
+import {ALL_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
 import * as facemesh from './index';
 import {stubbedImageVals} from './test_util';
 
-describeWithFlags('Facemesh', NODE_ENVS, () => {
+describeWithFlags('Facemesh', ALL_ENVS, () => {
   let model: facemesh.FaceMesh;
   beforeAll(async () => {
     model = await facemesh.load();
@@ -39,7 +39,7 @@ describeWithFlags('Facemesh', NODE_ENVS, () => {
 
   it('estimateFaces returns objects with expected properties', async () => {
     // Stubbed image contains a single face.
-    const input: tf.Tensor3D = tf.tensor3d(stubbedImageVals, [128, 128, 3]);
+    const input = tf.tensor3d(stubbedImageVals, [128, 128, 3]);
     const result = await model.estimateFaces(input);
 
     const face = result[0];

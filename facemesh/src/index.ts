@@ -22,7 +22,7 @@ import * as tf from '@tensorflow/tfjs-core';
 import {MESH_ANNOTATIONS} from './keypoints';
 import {Pipeline, Prediction} from './pipeline';
 
-// TODO: CHANGE TO TFHUB LINK ONCE AVAILABLE.
+// TODO(annxingyuan): CHANGE TO TFHUB LINK ONCE AVAILABLE.
 const BLAZE_MESH_GRAPHMODEL_PATH =
     'https://storage.googleapis.com/learnjs-data/facemesh_staging/facemesh_facecontours_faceflag-blaze_shift30-2019_01_14-v0.hdf5_tfjs_fixed_batch/model.json';
 const MESH_MODEL_INPUT_WIDTH = 192;
