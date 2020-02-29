@@ -78,7 +78,7 @@ export async function load({
   maxFaces = 10,
   iouThreshold = 0.3,
   scoreThreshold = 0.75
-} = {}) {
+} = {}): Promise<FaceMesh> {
   const faceMesh = new FaceMesh();
 
   await faceMesh.load(
@@ -101,22 +101,23 @@ function flipFaceHorizontal(
       const subtractBasis = tf.tensor1d([imageWidth - 1, 0, 0]);
       const multiplyBasis = tf.tensor1d([1, -1, 1]);
 
-      return [
-        tf.concat([
-          tf.sub(
-              imageWidth - 1,
-              (face.boundingBox.topLeft as tf.Tensor1D).slice(0, 1)),
-          (face.boundingBox.topLeft as tf.Tensor1D).slice(1, 1)
-        ]),
-        tf.concat([
-          tf.sub(
-              imageWidth - 1,
-              (face.boundingBox.bottomRight as tf.Tensor1D).slice(0, 1)),
-          (face.boundingBox.bottomRight as tf.Tensor1D).slice(1, 1)
-        ]),
-        tf.sub(subtractBasis, face.mesh).mul(multiplyBasis),
-        tf.sub(subtractBasis, face.scaledMesh).mul(multiplyBasis)
-      ];
+      return tf.tidy(
+          () => ([
+            tf.concat([
+              tf.sub(
+                  imageWidth - 1,
+                  (face.boundingBox.topLeft as tf.Tensor1D).slice(0, 1)),
+              (face.boundingBox.topLeft as tf.Tensor1D).slice(1, 1)
+            ]),
+            tf.concat([
+              tf.sub(
+                  imageWidth - 1,
+                  (face.boundingBox.bottomRight as tf.Tensor1D).slice(0, 1)),
+              (face.boundingBox.bottomRight as tf.Tensor1D).slice(1, 1)
+            ]),
+            tf.sub(subtractBasis, face.mesh).mul(multiplyBasis),
+            tf.sub(subtractBasis, face.scaledMesh).mul(multiplyBasis)
+          ]));
     });
 
     return Object.assign(
@@ -167,7 +168,7 @@ export class FaceMesh {
     this.detectionConfidence = detectionConfidence;
   }
 
-  static getAnnotations() {
+  static getAnnotations(): {[key: string]: number[]} {
     return MESH_ANNOTATIONS;
   }
 
