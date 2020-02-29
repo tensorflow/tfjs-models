@@ -34,7 +34,8 @@ describeWithFlags('Facemesh', ALL_ENVS, () => {
 
     await model.estimateFaces(input);
 
-    expect(tf.memory().numTensors).toEqual(beforeTensors);
+    expect(tf.memory().numTensors + 1 /*because we dispose the input */)
+        .toEqual(beforeTensors);
   });
 
   it('estimateFaces returns objects with expected properties', async () => {

@@ -219,6 +219,7 @@ export class FaceMesh {
     const predictions = await this.pipeline.predict(image) as Prediction[];
     tf.env().set('WEBGL_PACK_DEPTHWISECONV', savedWebglPackDepthwiseConvFlag);
 
+    input.dispose();
     image.dispose();
 
     if (predictions != null && predictions.length > 0) {
