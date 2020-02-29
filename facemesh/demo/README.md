@@ -1,8 +1,8 @@
-# Facemesh demo
+# MediaPipe Facemesh demo
 
 ## Contents
 
-The Facemesh demo shows how to use the Facemesh model to estimate keypoints on a face.
+The MediaPipe Facemesh demo shows how to use the MediaPipe Facemesh model to estimate keypoints on a face.
 
 ## Setup
 

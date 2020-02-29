@@ -20,7 +20,7 @@ import Stats from 'stats.js';
 import * as tf from '@tensorflow/tfjs-core';
 import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
 tfjsWasm.setWasmPath(
-    'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@latest/dist/tfjs-backend-wasm.wasm');
+    'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@1.5.2-alpha1/dist/tfjs-backend-wasm.wasm');
 
 function isMobile() {
   const isAndroid = /Android/i.test(navigator.userAgent);
@@ -72,12 +72,12 @@ async function setupCamera() {
   });
 }
 
-const renderPrediction = async () => {
+async function renderPrediction() {
   stats.begin();
 
   const returnTensors = false;
-  const flipHorizontal = false; // We are flipping the canvas context, so we
-                                // don't need to flip the predictions.
+  // We are flipping the canvas context, so we don't need to flip the predictions.
+  const flipHorizontal = false;
   const predictions =
       await model.estimateFaces(video, returnTensors, flipHorizontal);
   ctx.drawImage(
@@ -125,7 +125,7 @@ const renderPrediction = async () => {
   requestAnimationFrame(renderPrediction);
 };
 
-const setupPage = async () => {
+async function setupPage() {
   await tf.setBackend(state.backend);
   setupDatGui();
 
@@ -153,7 +153,7 @@ const setupPage = async () => {
   model = await facemesh.load({maxFaces: state.maxFaces});
   renderPrediction();
 
-  if (renderPointcloud === true) {
+  if (renderPointcloud) {
     document.querySelector('#scatter-gl-container').style =
       `width: ${VIDEO_SIZE}px; height: ${VIDEO_SIZE}px;`;
 
