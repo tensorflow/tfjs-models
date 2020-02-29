@@ -83,7 +83,7 @@ async function renderPrediction() {
   ctx.drawImage(
       video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
 
-  if (predictions != null) {
+  if (predictions.length > 0) {
     predictions.forEach(prediction => {
       let keypoints = prediction.scaledMesh;
       if (returnTensors === true) {

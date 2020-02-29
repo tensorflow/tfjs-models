@@ -72,7 +72,7 @@ export class Pipeline {
           await this.boundingBoxDetector.getBoundingBoxes(
               input, returnTensors, annotateFace);
 
-      if (!boxes.length) {
+      if (boxes.length === 0) {
         (scaleFactor as tf.Tensor1D).dispose();
         this.clearAllRegionsOfInterest();
         return null;
