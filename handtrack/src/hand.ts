@@ -17,7 +17,7 @@
 
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
-import {Box} from './box';
+import {scaleBoxCoordinates} from './box';
 
 export class HandDetector {
   private model: tfconv.GraphModel;
@@ -133,8 +133,13 @@ export class HandDetector {
     const factors: [number, number] =
         [original_w / this.width, original_h / this.height];
 
-    const bb = new Box(bboxes[0].slice(0, 2), bboxes[0].slice(2, 4), landmarks)
-                   .scale(factors);
+    const bb = scaleBoxCoordinates(
+        {
+          startPoint: bboxes[0].slice(0, 2),
+          endPoint: bboxes[0].slice(2, 4),
+          landmarks
+        },
+        factors);
 
     image.dispose();
     bboxes_data[0].dispose();

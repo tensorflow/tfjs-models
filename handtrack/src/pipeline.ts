@@ -18,7 +18,7 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {Box} from './box';
+import {Box, cutBoxFromImageAndResize, enlargeBox, getBoxCenter, getBoxSize} from './box';
 import {HandDetector} from './hand';
 import {rotate as rotateWebgl} from './rotate_gpu';
 import {buildRotationMatrix, computeRotation, dot, invertTransformMatrix} from './util';
@@ -47,7 +47,7 @@ export class HandPipeline {
     this.rois = [];
   }
 
-  calculateHandPalmCenter(box: any) {
+  calculateHandPalmCenter(box: Box) {
     return tf.gather(box.landmarks, [0, 2]).mean(0);
   }
 
@@ -96,7 +96,7 @@ export class HandPipeline {
 
       const angle = this.calculateRotation(box);
 
-      const handpalm_center = box.getCenter();
+      const handpalm_center = getBoxCenter(box);
       const handpalm_center_relative = [
         handpalm_center[0] / image.shape[2], handpalm_center[1] / image.shape[1]
       ];
@@ -120,13 +120,14 @@ export class HandPipeline {
         const shiftVector: [number, number] = [0, -0.4];
         bbShifted = this.shiftBox(bbRotated, shiftVector);
         bbSquarified = this.makeSquareBox(bbShifted);
-        box_for_cut = bbSquarified.increaseBox(3.0);
+        box_for_cut = enlargeBox(bbSquarified, 3);
       } else {
         box_for_cut = box;
       }
-
-      const cutted_hand = box_for_cut.cutFromAndResize(
-          rotated_image as tf.Tensor4D, [width, height]);
+      const cutted_hand = cutBoxFromImageAndResize(
+          box_for_cut, rotated_image as tf.Tensor4D, [width, height]);
+      // const cutted_hand = box_for_cut.cutFromAndResize(
+      //     rotated_image as tf.Tensor4D, [width, height]);
       const handImage = cutted_hand.div(255);
 
       const output = this.handtrackModel.predict(handImage) as tf.Tensor[];
@@ -135,7 +136,7 @@ export class HandPipeline {
       const coords = tf.reshape(output_keypoints, [-1, 3]).arraySync() as
           Array<[number, number, number]>;
 
-      const boxSize = box_for_cut.getSize();
+      const boxSize = getBoxSize(box_for_cut);
       const scaleFactor = [boxSize[0] / width, boxSize[1] / height];
 
       const coordsScaled = coords.map((coord: [number, number, number]) => {
@@ -155,7 +156,7 @@ export class HandPipeline {
           });
 
       const inverseRotationMatrix = invertTransformMatrix(rotationMatrix);
-      const numerator = [...box_for_cut.getCenter(), 1];
+      const numerator = [...getBoxCenter(box_for_cut), 1];
 
       const original_center = [
         dot(numerator, inverseRotationMatrix[0]),
@@ -187,7 +188,7 @@ export class HandPipeline {
         const landmarks_box_shifted_squarified =
             this.makeSquareBox(landmarks_box_shifted);
 
-        nextBoundingBox = landmarks_box_shifted_squarified.increaseBox(1.65);
+        nextBoundingBox = enlargeBox(landmarks_box_shifted_squarified, 1.65);
         nextBoundingBox.landmarks = selected_landmarks as [number, number][];
       } else {
         nextBoundingBox = this.calculateLandmarksBoundingBox(
@@ -222,17 +223,17 @@ export class HandPipeline {
   }
 
   makeSquareBox(box: Box) {
-    const centers = box.getCenter();
-    const size = box.getSize();
+    const centers = getBoxCenter(box);
+    const size = getBoxSize(box);
     const maxEdge = Math.max(...size);
 
     const halfSize = maxEdge / 2;
-    const newStarts: [number, number] =
+    const startPoint: [number, number] =
         [centers[0] - halfSize, centers[1] - halfSize];
-    const newEnds: [number, number] =
+    const endPoint: [number, number] =
         [centers[0] + halfSize, centers[1] + halfSize];
 
-    return new Box(newStarts, newEnds);
+    return {startPoint, endPoint};
   }
 
   shiftBox(box: Box, shifts: number[]) {
@@ -240,22 +241,22 @@ export class HandPipeline {
       box.endPoint[0] - box.startPoint[0], box.endPoint[1] - box.startPoint[1]
     ];
     const absoluteShifts = [boxSize[0] * shifts[0], boxSize[1] * shifts[1]];
-    const newStart: [number, number] = [
+    const startPoint: [number, number] = [
       box.startPoint[0] + absoluteShifts[0],
       box.startPoint[1] + absoluteShifts[1]
     ];
-    const newEnd: [number, number] = [
+    const endPoint: [number, number] = [
       box.endPoint[0] + absoluteShifts[0], box.endPoint[1] + absoluteShifts[1]
     ];
-    return new Box(newStart, newEnd);
+    return {startPoint, endPoint};
   }
 
   calculateLandmarksBoundingBox(landmarks: Array<[number, number]>) {
     const xs = landmarks.map(d => d[0]);
     const ys = landmarks.map(d => d[1]);
-    const start: [number, number] = [Math.min(...xs), Math.min(...ys)];
-    const end: [number, number] = [Math.max(...xs), Math.max(...ys)];
-    return new Box(start, end, landmarks);
+    const startPoint: [number, number] = [Math.min(...xs), Math.min(...ys)];
+    const endPoint: [number, number] = [Math.max(...xs), Math.max(...ys)];
+    return {startPoint, endPoint, landmarks};
   }
 
   calculateRotation(box: Box) {
