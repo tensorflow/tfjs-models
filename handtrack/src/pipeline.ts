@@ -174,10 +174,8 @@ export class HandPipeline {
       const landmarks_ids = [0, 5, 9, 13, 17, 1, 2];
 
       const selected_landmarks = [];
-      for (let i = 0; i < coordsResult.length; i++) {
-        if (landmarks_ids.includes(i)) {
-          selected_landmarks.push(coordsResult[i]);
-        }
+      for (let i = 0; i < landmarks_ids.length; i++) {
+        selected_landmarks.push(coordsResult[landmarks_ids[i]]);
       }
 
       let nextBoundingBox;
