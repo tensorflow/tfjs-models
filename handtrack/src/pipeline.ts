@@ -227,11 +227,12 @@ export class HandPipeline {
     const maxEdge = Math.max(...size);
 
     const halfSize = maxEdge / 2;
-    const newStarts = [centers[0] - halfSize, centers[1] - halfSize];
-    const newEnds = [centers[0] + halfSize, centers[1] + halfSize];
+    const newStarts: [number, number] =
+        [centers[0] - halfSize, centers[1] - halfSize];
+    const newEnds: [number, number] =
+        [centers[0] + halfSize, centers[1] + halfSize];
 
-    return new Box(
-        newStarts.concat(newEnds) as [number, number, number, number]);
+    return new Box(newStarts, newEnds);
   }
 
   shiftBox(box: Box, shifts: number[]) {
@@ -239,26 +240,26 @@ export class HandPipeline {
       box.endPoint[0] - box.startPoint[0], box.endPoint[1] - box.startPoint[1]
     ];
     const absoluteShifts = [boxSize[0] * shifts[0], boxSize[1] * shifts[1]];
-    const newStart = [
+    const newStart: [number, number] = [
       box.startPoint[0] + absoluteShifts[0],
       box.startPoint[1] + absoluteShifts[1]
     ];
-    const newEnd = [
+    const newEnd: [number, number] = [
       box.endPoint[0] + absoluteShifts[0], box.endPoint[1] + absoluteShifts[1]
     ];
-    return new Box(newStart.concat(newEnd) as [number, number, number, number]);
+    return new Box(newStart, newEnd);
   }
 
-  calculateLandmarksBoundingBox(landmarks: [number, number][]) {
+  calculateLandmarksBoundingBox(landmarks: Array<[number, number]>) {
     const xs = landmarks.map(d => d[0]);
     const ys = landmarks.map(d => d[1]);
-    const startEnd: [number, number, number, number] =
-        [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
-    return new Box(startEnd, landmarks);
+    const start: [number, number] = [Math.min(...xs), Math.min(...ys)];
+    const end: [number, number] = [Math.max(...xs), Math.max(...ys)];
+    return new Box(start, end, landmarks);
   }
 
   calculateRotation(box: Box) {
-    let keypointsArray = box.landmarks as [number, number][];
+    let keypointsArray = box.landmarks;
     return computeRotation(keypointsArray[0], keypointsArray[2]);
   }
 
@@ -270,8 +271,8 @@ export class HandPipeline {
       let iou = 0;
 
       if (prev && prev.startPoint) {
-        const boxStartEnd = box.startEndTensor;
-        const prevStartEnd = prev.startEndTensor;
+        const boxStartEnd = box.startPoint.concat(box.endPoint);
+        const prevStartEnd = prev.startPoint.concat(prev.endPoint);
 
         const xBox = Math.max(boxStartEnd[0], prevStartEnd[0]);
         const yBox = Math.max(boxStartEnd[1], prevStartEnd[1]);

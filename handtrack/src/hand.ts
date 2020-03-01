@@ -133,7 +133,8 @@ export class HandDetector {
     const factors: [number, number] =
         [original_w / this.width, original_h / this.height];
 
-    const bb = new Box(bboxes[0], landmarks).scale(factors);
+    const bb = new Box(bboxes[0].slice(0, 2), bboxes[0].slice(2, 4), landmarks)
+                   .scale(factors);
 
     image.dispose();
     bboxes_data[0].dispose();
