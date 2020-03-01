@@ -39,10 +39,11 @@ function drawPoint(ctx, y, x, r, color) {
 }
 
 function drawKeypoints(ctx, keypoints) {
-  keypoints = keypoints.arraySync();
-  for (let i = 0; i < keypoints.length; i++) {
-    const y = keypoints[i][0];
-    const x = keypoints[i][1];
+  const keypointsArray = keypoints;
+
+  for (let i = 0; i < keypointsArray.length; i++) {
+    const y = keypointsArray[i][0];
+    const x = keypointsArray[i][1];
     drawPoint(ctx, x - 2, y - 2, 3, color);
 
     if(location.hash === '#debug') {

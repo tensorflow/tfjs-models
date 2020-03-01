@@ -26,19 +26,18 @@
 <body>
   <div id="info" style='display:none'></div>
   <div id="predictions"></div>
-
-  <video id="video" playsinline style="
-    -webkit-transform: scaleX(-1);
-    transform: scaleX(-1);
-    display: none;
-    width: auto;
-    height: auto;
-    ">
-  </video>
   <div id="canvas-wrapper">
     <canvas id="output" style=""></canvas>
     <div id="keypoints-wrapper"></div>
   </div>
+  <video id="video" playsinline style="
+    -webkit-transform: scaleX(-1);
+    transform: scaleX(-1);
+    visibility: hidden;
+    width: auto;
+    height: auto;
+    ">
+  </video>
   <canvas id="hand_cut" style=""></canvas>
   <div id="status"></div>
 

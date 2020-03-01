@@ -18,10 +18,10 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {Box, BoxType} from './box';
+import {Box} from './box';
 import {HandDetector} from './hand';
 import {rotate as rotateWebgl} from './rotate_gpu';
-import {buildRotationMatrix, computeRotation, invertTransformMatrix} from './util';
+import {buildRotationMatrix, computeRotation, dot, invertTransformMatrix} from './util';
 
 const BRANCH_ON_DETECTION = true;  // whether we branch box scaling / shifting
                                    // logic depending on detection type
@@ -74,15 +74,16 @@ export class HandPipeline {
     const useFreshBox = this.needROIUpdate();
 
     if (useFreshBox) {
-      const start = tf.memory().numTensors;
+      // const start = tf.memory().numTensors;
       const box = this.handdetect.getSingleBoundingBox(image);
-      console.log(
-          'leaked tensors after detection', tf.memory().numTensors - start);
+      // console.log(
+      //     'leaked tensors after detection', tf.memory().numTensors - start);
 
       if (!box) {
-        this.clearROIS();
+        this.rois = [];
         return null;
       }
+
       this.updateROIFromFacedetector(box, true);
       this.runsWithoutHandDetector = 0;
     } else {
@@ -95,25 +96,27 @@ export class HandPipeline {
 
       const angle = this.calculateRotation(box);
 
-      const handpalm_center = box.getCenter().arraySync()[0];
+      const handpalm_center = box.getCenter();
       const handpalm_center_relative = [
         handpalm_center[0] / image.shape[2], handpalm_center[1] / image.shape[1]
       ];
       const rotated_image = rotateWebgl(
           image, angle, 0, handpalm_center_relative as [number, number]);
       const rotationMatrix = buildRotationMatrix(-angle, handpalm_center);
-      const palm_rotation_matrix = tf.tensor2d(rotationMatrix as any);
 
       let box_for_cut, bbRotated, bbShifted, bbSquarified;
       if (!BRANCH_ON_DETECTION || useFreshBox) {
-        const numLandmarks = box.landmarks.shape[0];
-        const box_landmarks_homo = tf.concat(
-            [box.landmarks, tf.ones([numLandmarks]).expandDims(1)], 1);
-        const rotated_landmarks =
-            tf.matMul(box_landmarks_homo, palm_rotation_matrix, false, true)
-                .slice([0, 0], [numLandmarks, 2]);
+        const rotatedLandmarks =
+            box.landmarks.map((coord: [number, number]) => {
+              const homogeneousCoordinate = [...coord, 1];
+              return [
+                dot(homogeneousCoordinate, rotationMatrix[0]),
+                dot(homogeneousCoordinate, rotationMatrix[1])
+              ];
+            });
 
-        bbRotated = this.calculateLandmarksBoundingBox(rotated_landmarks);
+        bbRotated = this.calculateLandmarksBoundingBox(
+            rotatedLandmarks as [number, number][]);
         const shiftVector: [number, number] = [0, -0.4];
         bbShifted = this.shiftBox(bbRotated, shiftVector);
         bbSquarified = this.makeSquareBox(bbShifted);
@@ -129,44 +132,66 @@ export class HandPipeline {
       const output = this.handtrackModel.predict(handImage) as tf.Tensor[];
 
       const output_keypoints = output[output.length - 1];
-      const coords = tf.reshape(output_keypoints, [-1, 3]);
+      const coords = tf.reshape(output_keypoints, [-1, 3]).arraySync() as
+          Array<[number, number, number]>;
 
-      const coordsScaled = tf.mul(
-          coords.sub(tf.tensor([128, 128, 0])),
-          tf.div(box_for_cut.getSize(), [
-              width, height
-            ]).concat(tf.tensor2d([1], [1, 1]), 1));
+      const boxSize = box_for_cut.getSize();
+      const scaleFactor = [boxSize[0] / width, boxSize[1] / height];
 
-      const coords_rotation_matrix =
-          tf.tensor2d(buildRotationMatrix(angle, [0, 0]) as any);
+      const coordsScaled = coords.map((coord: [number, number, number]) => {
+        return [
+          scaleFactor[0] * (coord[0] - 128), scaleFactor[1] * (coord[1] - 128),
+          coord[2]
+        ];
+      });
 
+      const coords_rotation_matrix = buildRotationMatrix(angle, [0, 0]);
       const coordsRotated =
-          tf.matMul(coordsScaled, coords_rotation_matrix, false, true);
+          coordsScaled.map((coord: [number, number, number]) => {
+            return [
+              dot(coord, coords_rotation_matrix[0]),
+              dot(coord, coords_rotation_matrix[1])
+            ];
+          });
 
-      const inverseRotationMatrix =
-          tf.tensor2d(invertTransformMatrix(rotationMatrix));
+      const inverseRotationMatrix = invertTransformMatrix(rotationMatrix);
+      const numerator = [...box_for_cut.getCenter(), 1];
 
-      const original_center = tf.matMul(
-          tf.concat([box_for_cut.getCenter(), tf.ones([1]).expandDims(1)], 1),
-          inverseRotationMatrix, false, true);
+      const original_center = [
+        dot(numerator, inverseRotationMatrix[0]),
+        dot(numerator, inverseRotationMatrix[1]),
+        dot(numerator, inverseRotationMatrix[2])
+      ];
 
-      const coordsResult = coordsRotated.add(original_center);
+      const coordsResult =
+          coordsRotated.map((coord: [number, number, number]) => {
+            return [
+              coord[0] + original_center[0], coord[1] + original_center[1],
+              coord[2] + original_center[2]
+            ];
+          });
 
       const landmarks_ids = [0, 5, 9, 13, 17, 1, 2];
-      const selected_landmarks = tf.gather(coordsResult, landmarks_ids);
+
+      const selected_landmarks = [];
+      for (let i = 0; i < landmarks_ids.length; i++) {
+        selected_landmarks.push(coordsResult[landmarks_ids[i]]);
+      }
 
       let nextBoundingBox;
       if (BRANCH_ON_DETECTION) {
-        const landmarks_box = this.calculateLandmarksBoundingBox(coordsResult);
+        const landmarks_box = this.calculateLandmarksBoundingBox(
+            coordsResult as [number, number][]);
 
         const landmarks_box_shifted = this.shiftBox(landmarks_box, [0, -0.1]);
         const landmarks_box_shifted_squarified =
             this.makeSquareBox(landmarks_box_shifted);
+
         nextBoundingBox = landmarks_box_shifted_squarified.increaseBox(1.65);
-        (nextBoundingBox as any).landmarks = tf.keep(selected_landmarks);
+        nextBoundingBox.landmarks = selected_landmarks as [number, number][];
       } else {
-        nextBoundingBox =
-            this.calculateLandmarksBoundingBox(selected_landmarks);
+        nextBoundingBox = this.calculateLandmarksBoundingBox(
+            selected_landmarks as [number, number][]);
       }
 
       this.updateROIFromFacedetector(
@@ -175,7 +200,7 @@ export class HandPipeline {
       const handFlag =
           ((output[0] as tf.Tensor).arraySync() as number[][])[0][0];
       if (handFlag < this.detectionConfidence) {
-        this.clearROIS();
+        this.rois = [];
         return null;
       }
 
@@ -199,42 +224,45 @@ export class HandPipeline {
   makeSquareBox(box: Box) {
     const centers = box.getCenter();
     const size = box.getSize();
-    const maxEdge = tf.max(size, 1);
+    const maxEdge = Math.max(...size);
 
-    const half_size = tf.div(maxEdge, 2);
-
-    const new_starts = tf.sub(centers, half_size);
-    const new_ends = tf.add(centers, half_size);
+    const halfSize = maxEdge / 2;
+    const newStarts = [centers[0] - halfSize, centers[1] - halfSize];
+    const newEnds = [centers[0] + halfSize, centers[1] + halfSize];
 
     return new Box(
-        tf.concat2d([new_starts as tf.Tensor2D, new_ends as tf.Tensor2D], 1));
+        newStarts.concat(newEnds) as [number, number, number, number]);
   }
 
-  shiftBox(box: any, shifts: number[]) {
-    const boxSize =
-        tf.sub(box.endPoint as tf.Tensor, box.startPoint as tf.Tensor);
-    const absolute_shifts = tf.mul(boxSize, tf.tensor(shifts));
-    const new_start = tf.add(box.startPoint, absolute_shifts);
-    const new_end = tf.add(box.endPoint, absolute_shifts);
-    const new_coordinates = tf.concat2d([new_start as any, new_end], 1);
-
-    return new Box(new_coordinates);
+  shiftBox(box: Box, shifts: number[]) {
+    const boxSize = [
+      box.endPoint[0] - box.startPoint[0], box.endPoint[1] - box.startPoint[1]
+    ];
+    const absoluteShifts = [boxSize[0] * shifts[0], boxSize[1] * shifts[1]];
+    const newStart = [
+      box.startPoint[0] + absoluteShifts[0],
+      box.startPoint[1] + absoluteShifts[1]
+    ];
+    const newEnd = [
+      box.endPoint[0] + absoluteShifts[0], box.endPoint[1] + absoluteShifts[1]
+    ];
+    return new Box(newStart.concat(newEnd) as [number, number, number, number]);
   }
 
-  calculateLandmarksBoundingBox(landmarks: tf.Tensor) {
-    const xs = landmarks.slice([0, 0], [-1, 1]);
-    const ys = landmarks.slice([0, 1], [-1, 1]);
-
-    const box_min_max = tf.stack([xs.min(), ys.min(), xs.max(), ys.max()]);
-    return new Box(box_min_max.expandDims(0), landmarks);
+  calculateLandmarksBoundingBox(landmarks: [number, number][]) {
+    const xs = landmarks.map(d => d[0]);
+    const ys = landmarks.map(d => d[1]);
+    const startEnd: [number, number, number, number] =
+        [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+    return new Box(startEnd, landmarks);
   }
 
-  calculateRotation(box: BoxType) {
-    let keypointsArray = box.landmarks.arraySync() as [number, number][];
+  calculateRotation(box: Box) {
+    let keypointsArray = box.landmarks as [number, number][];
     return computeRotation(keypointsArray[0], keypointsArray[2]);
   }
 
-  updateROIFromFacedetector(box: any, force: boolean) {
+  updateROIFromFacedetector(box: Box, force: boolean) {
     if (force) {
       this.rois = [box];
     } else {
@@ -242,8 +270,8 @@ export class HandPipeline {
       let iou = 0;
 
       if (prev && prev.startPoint) {
-        const boxStartEnd = box.startEndTensor.arraySync()[0];
-        const prevStartEnd = prev.startEndTensor.arraySync()[0];
+        const boxStartEnd = box.startEndTensor;
+        const prevStartEnd = prev.startEndTensor;
 
         const xBox = Math.max(boxStartEnd[0], prevStartEnd[0]);
         const yBox = Math.max(boxStartEnd[1], prevStartEnd[1]);
@@ -259,19 +287,8 @@ export class HandPipeline {
         iou = interArea / (boxArea + prevArea - interArea);
       }
 
-      if (iou > 0.8) {
-        this.rois[0] = prev;
-      } else {
-        this.rois[0] = box;
-      }
+      this.rois[0] = iou > 0.8 ? prev : box;
     }
-  }
-
-  clearROIS() {
-    for (let roi in this.rois) {
-      tf.dispose(roi);
-    }
-    this.rois = [];
   }
 
   needROIUpdate() {
