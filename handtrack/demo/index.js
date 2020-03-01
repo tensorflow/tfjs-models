@@ -39,6 +39,7 @@ function drawPoint(ctx, y, x, r, color) {
 }
 
 function drawKeypoints(ctx, keypoints) {
+  keypoints = keypoints.arraySync();
   for (let i = 0; i < keypoints.length; i++) {
     const y = keypoints[i][0];
     const x = keypoints[i][1];
