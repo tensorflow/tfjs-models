@@ -233,7 +233,7 @@ export class HandPipeline {
     const endPoint: [number, number] =
         [centers[0] + halfSize, centers[1] + halfSize];
 
-    return {startPoint, endPoint};
+    return {startPoint, endPoint, landmarks: box.landmarks};
   }
 
   shiftBox(box: Box, shifts: number[]) {
@@ -248,7 +248,7 @@ export class HandPipeline {
     const endPoint: [number, number] = [
       box.endPoint[0] + absoluteShifts[0], box.endPoint[1] + absoluteShifts[1]
     ];
-    return {startPoint, endPoint};
+    return {startPoint, endPoint, landmarks: box.landmarks};
   }
 
   calculateLandmarksBoundingBox(landmarks: Array<[number, number]>) {

@@ -43,10 +43,12 @@ export function cutBoxFromImageAndResize(
   const h = image.shape[1];
   const w = image.shape[2];
 
-  const xyxy = box.startPoint.concat(box.endPoint);
-  const yxyx = [xyxy[1], xyxy[0], xyxy[3], xyxy[2]];
-  const roundedCoords = [yxyx[0] / h, yxyx[1] / w, yxyx[2] / h, yxyx[3] / w];
-  return tf.image.cropAndResize(image, [roundedCoords], [0], cropSize);
+  const boxes = [[
+    box.startPoint[1] / h, box.startPoint[0] / w, box.endPoint[1] / h,
+    box.endPoint[0] / w
+  ]];
+
+  return tf.image.cropAndResize(image, boxes, [0], cropSize);
 }
 
 export function scaleBoxCoordinates(box: Box, factor: [number, number]): Box {
@@ -65,14 +67,14 @@ export function scaleBoxCoordinates(box: Box, factor: [number, number]): Box {
 }
 
 export function enlargeBox(box: Box, factor = 1.5): Box {
-  const centers = getBoxCenter(box);
+  const center = getBoxCenter(box);
   const size = getBoxSize(box);
 
-  const new_size = [factor * size[0] / 2, factor * size[1] / 2];
+  const newSize = [factor * size[0] / 2, factor * size[1] / 2];
   const startPoint: [number, number] =
-      [centers[0] - new_size[0], centers[1] - new_size[1]];
+      [center[0] - newSize[0], center[1] - newSize[1]];
   const endPoint: [number, number] =
-      [centers[0] + new_size[0], centers[1] + new_size[1]];
+      [center[0] + newSize[0], center[1] + newSize[1]];
 
-  return {startPoint, endPoint};
+  return {startPoint, endPoint, landmarks: box.landmarks};
 }
