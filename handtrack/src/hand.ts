@@ -17,15 +17,13 @@
 
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
-import {scaleBoxCoordinates} from './box';
 
-// function getInputTensorDimensions(input:
-// tf.Tensor3D|ImageData|HTMLVideoElement|
-//                                   HTMLImageElement|
-//                                   HTMLCanvasElement): [number, number] {
-//   return input instanceof tf.Tensor ? [input.shape[0], input.shape[1]] :
-//                                       [input.height, input.width];
-// }
+import {Box, scaleBoxCoordinates} from './box';
+
+type HandDetectorPrediction = {
+  boxes: tf.Tensor2D,
+  landmarks: tf.Tensor2D
+};
 
 export class HandDetector {
   private model: tfconv.GraphModel;
@@ -85,7 +83,7 @@ export class HandDetector {
     });
   }
 
-  getBoundingBoxes(input: tf.Tensor4D) {
+  getBoundingBoxes(input: tf.Tensor4D): HandDetectorPrediction {
     return tf.tidy(() => {
       const normalizedInput = tf.mul(tf.sub(input, 0.5), 2);
 
@@ -113,50 +111,51 @@ export class HandDetector {
       console.warn = savedConsoleWarnFn;
 
       if (boxesWithHands.length === 0) {
-        return [null, null];
+        return null;
       }
 
       const boxIndex = boxesWithHands[0];
       const matchingBox = tf.slice(boxes, [boxIndex, 0], [1, -1]);
 
       const rawLandmarks = tf.slice(prediction, [boxIndex, 5], [1, 14]);
-      const landmarks =
+      const landmarks: tf.Tensor2D =
           this.normalizeLandmarks(rawLandmarks, boxIndex).reshape([-1, 2]);
 
-      return [matchingBox, landmarks];
+      return {boxes: matchingBox, landmarks};
     });
   }
 
-  estimateHandBounds(input: tf.Tensor4D) {
-    const original_h = input.shape[1];
-    const original_w = input.shape[2];
+  /**
+   * Returns a Box identifying the bounding box of a hand within the image, if
+   * any.
+   *
+   * @param input The image to classify.
+   */
+  estimateHandBounds(input: tf.Tensor4D): Box {
+    const inputHeight = input.shape[1];
+    const inputWidth = input.shape[2];
 
     const image: tf.Tensor4D =
         tf.tidy(() => input.resizeBilinear([this.width, this.height]).div(255));
-    const bboxes_data = this.getBoundingBoxes(image);
+    const prediction = this.getBoundingBoxes(image);
 
-    if (!bboxes_data[0]) {
+    if (prediction === null) {
       return null;
     }
 
-    const bboxes = bboxes_data[0].arraySync() as any;
-    const landmarks = bboxes_data[1].arraySync() as any;
-
-    const factors: [number, number] =
-        [original_w / this.width, original_h / this.height];
-
-    const bb = scaleBoxCoordinates(
-        {
-          startPoint: bboxes[0].slice(0, 2),
-          endPoint: bboxes[0].slice(2, 4),
-          landmarks
-        },
-        factors);
+    const boundingBoxes =
+        prediction.boxes.arraySync() as Array<[number, number, number, number]>;
+    const startPoint = boundingBoxes[0].slice(0, 2) as [number, number];
+    const endPoint = boundingBoxes[0].slice(2, 4) as [number, number];
+    const landmarks =
+        prediction.landmarks.arraySync() as Array<[number, number]>;
 
     image.dispose();
-    bboxes_data[0].dispose();
-    bboxes_data[1].dispose();
+    prediction.boxes.dispose();
+    prediction.landmarks.dispose();
 
-    return bb;
+    return scaleBoxCoordinates(
+        {startPoint, endPoint, landmarks},
+        [inputWidth / this.width, inputHeight / this.height]);
   }
 }
