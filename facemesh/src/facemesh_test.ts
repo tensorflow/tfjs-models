@@ -25,18 +25,48 @@ import {stubbedImageVals} from './test_util';
 describeWithFlags('Facemesh', ALL_ENVS, () => {
   let model: facemesh.FaceMesh;
   beforeAll(async () => {
+    // Note: this makes a network request for model assets.
     model = await facemesh.load();
   });
 
-  it('estimateFaces does not leak memory', async () => {
-    const input: tf.Tensor3D = tf.zeros([128, 128, 3]);
-    const beforeTensors = tf.memory().numTensors;
+  it('estimateFaces does not leak memory when the input does not contain a face',
+     async () => {
+       let numTensors = tf.memory().numTensors;
 
-    await model.estimateFaces(input);
+       let input: tf.Tensor3D = tf.zeros([128, 128, 3]);
+       let returnTensors = false;
+       let flipHorizontal = false;
+       await model.estimateFaces(input, returnTensors, flipHorizontal);
 
-    expect(tf.memory().numTensors + 1 /*because we dispose the input */)
-        .toEqual(beforeTensors);
-  });
+       expect(tf.memory().numTensors).toEqual(numTensors);
+
+       numTensors = tf.memory().numTensors;
+
+       input = tf.zeros([128, 128, 3]);
+       returnTensors = false;
+       flipHorizontal = true;
+       await model.estimateFaces(input, returnTensors, flipHorizontal);
+
+       expect(tf.memory().numTensors).toEqual(numTensors);
+
+       numTensors = tf.memory().numTensors;
+
+       input = tf.zeros([128, 128, 3]);
+       returnTensors = true;
+       flipHorizontal = false;
+       await model.estimateFaces(input, returnTensors, flipHorizontal);
+
+       expect(tf.memory().numTensors).toEqual(numTensors);
+
+       numTensors = tf.memory().numTensors;
+
+       input = tf.zeros([128, 128, 3]);
+       returnTensors = true;
+       flipHorizontal = true;
+       await model.estimateFaces(input, returnTensors, flipHorizontal);
+
+       expect(tf.memory().numTensors).toEqual(numTensors);
+     });
 
   it('estimateFaces returns objects with expected properties', async () => {
     // Stubbed image contains a single face.
