@@ -61,12 +61,14 @@ export class HandDetector {
     return tf.concat2d([startPoints, endPoints], 1);
   }
 
-  _decode_landmarks(raw_landmarks: tf.Tensor) {
-    const relative_landmarks = tf.add(
-        tf.div(raw_landmarks.reshape([-1, 7, 2]), this.inputSizeTensor),
-        this.anchors.reshape([-1, 1, 2]));
+  normalizeLandmarks(rawLandmarks: tf.Tensor, index: number) {
+    const reshapedAnchors = this.anchors.reshape([-1, 1, 2])
+                                .slice([index, 0, 0], [1]);  // [2944, 1, 2]
+    const landmarks = tf.add(
+        tf.div(rawLandmarks.reshape([-1, 7, 2]), this.inputSizeTensor),
+        reshapedAnchors);
 
-    return tf.mul(relative_landmarks, this.inputSizeTensor);
+    return tf.mul(landmarks, this.inputSizeTensor);
   }
 
   _getBoundingBox(input: tf.Tensor) {
@@ -100,10 +102,9 @@ export class HandDetector {
       const boxIndex = boxesWithHands[0];
       const matchingBox = tf.slice(boxes, [boxIndex, 0], [1, -1]);
 
-      const rawLandmarks = tf.slice(prediction, [0, 5], [-1, 14]);
-      let landmarks = this._decode_landmarks(rawLandmarks);
-
-      landmarks = tf.slice(landmarks, [boxIndex, 0], [1]).reshape([-1, 2]);
+      const rawLandmarks = tf.slice(prediction, [boxIndex, 5], [1, 14]);
+      const landmarks =
+          this.normalizeLandmarks(rawLandmarks, boxIndex).reshape([-1, 2]);
 
       return [matchingBox, landmarks];
     });
