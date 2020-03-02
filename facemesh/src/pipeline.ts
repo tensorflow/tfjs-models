@@ -136,6 +136,9 @@ export class Pipeline {
       let iou = 0;
 
       if (previousBox && previousBox.startPoint) {
+        // Computing IOU on the CPU for performance.
+        // Using arraySync() rather than await array() because the tensors are
+        // very small, so it's not worth the overhead to call await array().
         const [boxStartX, boxStartY, boxEndX, boxEndY] =
             box.startEndTensor.arraySync()[0];
         const [previousBoxStartX, previousBoxStartY, previousBoxEndX, previousBoxEndY] =
