@@ -75,7 +75,7 @@ export class HandPipeline {
 
     if (useFreshBox) {
       // const start = tf.memory().numTensors;
-      const box = this.handdetect.getSingleBoundingBox(image);
+      const box = this.handdetect.estimateHandBounds(image);
       // console.log(
       //     'leaked tensors after detection', tf.memory().numTensors - start);
 

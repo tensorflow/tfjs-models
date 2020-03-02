@@ -19,6 +19,14 @@ import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 import {scaleBoxCoordinates} from './box';
 
+// function getInputTensorDimensions(input:
+// tf.Tensor3D|ImageData|HTMLVideoElement|
+//                                   HTMLImageElement|
+//                                   HTMLCanvasElement): [number, number] {
+//   return input instanceof tf.Tensor ? [input.shape[0], input.shape[1]] :
+//                                       [input.height, input.width];
+// }
+
 export class HandDetector {
   private model: tfconv.GraphModel;
   private width: number;
@@ -51,29 +59,33 @@ export class HandDetector {
   }
 
   normalizeBoxes(boxes: tf.Tensor2D): tf.Tensor2D {
-    const boxOffsets = tf.slice(boxes, [0, 0], [-1, 2]);
-    const boxSizes = tf.slice(boxes, [0, 2], [-1, 2]);
+    return tf.tidy(() => {
+      const boxOffsets = tf.slice(boxes, [0, 0], [-1, 2]);
+      const boxSizes = tf.slice(boxes, [0, 2], [-1, 2]);
 
-    const boxCenterPoints =
-        tf.add(tf.div(boxOffsets, this.inputSizeTensor), this.anchorsTensor);
-    const halfBoxSizes = tf.div(boxSizes, this.doubleInputSizeTensor);
+      const boxCenterPoints =
+          tf.add(tf.div(boxOffsets, this.inputSizeTensor), this.anchorsTensor);
+      const halfBoxSizes = tf.div(boxSizes, this.doubleInputSizeTensor);
 
-    const startPoints: tf.Tensor2D =
-        tf.mul(tf.sub(boxCenterPoints, halfBoxSizes), this.inputSizeTensor);
-    const endPoints: tf.Tensor2D =
-        tf.mul(tf.add(boxCenterPoints, halfBoxSizes), this.inputSizeTensor);
-    return tf.concat2d([startPoints, endPoints], 1);
+      const startPoints: tf.Tensor2D =
+          tf.mul(tf.sub(boxCenterPoints, halfBoxSizes), this.inputSizeTensor);
+      const endPoints: tf.Tensor2D =
+          tf.mul(tf.add(boxCenterPoints, halfBoxSizes), this.inputSizeTensor);
+      return tf.concat2d([startPoints, endPoints], 1);
+    });
   }
 
-  normalizeLandmarks(rawLandmarks: tf.Tensor, index: number) {
-    const landmarks = tf.add(
-        tf.div(rawLandmarks.reshape([-1, 7, 2]), this.inputSizeTensor),
-        this.anchors[index]);
+  normalizeLandmarks(rawLandmarks: tf.Tensor2D, index: number): tf.Tensor2D {
+    return tf.tidy(() => {
+      const landmarks = tf.add(
+          tf.div(rawLandmarks.reshape([-1, 7, 2]), this.inputSizeTensor),
+          this.anchors[index]);
 
-    return tf.mul(landmarks, this.inputSizeTensor);
+      return tf.mul(landmarks, this.inputSizeTensor);
+    });
   }
 
-  _getBoundingBox(input: tf.Tensor) {
+  getBoundingBoxes(input: tf.Tensor4D) {
     return tf.tidy(() => {
       const normalizedInput = tf.mul(tf.sub(input, 0.5), 2);
 
@@ -115,13 +127,13 @@ export class HandDetector {
     });
   }
 
-  getSingleBoundingBox(input: tf.Tensor4D) {
+  estimateHandBounds(input: tf.Tensor4D) {
     const original_h = input.shape[1];
     const original_w = input.shape[2];
 
-    const image =
+    const image: tf.Tensor4D =
         tf.tidy(() => input.resizeBilinear([this.width, this.height]).div(255));
-    const bboxes_data = this._getBoundingBox(image);
+    const bboxes_data = this.getBoundingBoxes(image);
 
     if (!bboxes_data[0]) {
       return null;
