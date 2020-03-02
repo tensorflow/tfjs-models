@@ -19,14 +19,13 @@ import * as tf from '@tensorflow/tfjs-core';
 // tslint:disable-next-line: no-imports-from-dist
 import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
-// import {HandTrackModel} from './face';
-import * as handtrack from './index';
+import * as handpose from './index';
 import {stubbedImageVals} from './test_util';
 
-describeWithFlags('Handtrack', NODE_ENVS, () => {
+describeWithFlags('Handpose', NODE_ENVS, () => {
   let model: any;
   beforeAll(async () => {
-    model = await handtrack.load();
+    model = await handpose.load();
   });
 
   it('estimateHand does not leak memory', async () => {

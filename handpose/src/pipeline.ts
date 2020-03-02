@@ -28,7 +28,7 @@ const BRANCH_ON_DETECTION = true;  // whether we branch box scaling / shifting
 
 export class HandPipeline {
   private handdetect: HandDetector;
-  private handtrackModel: tfconv.GraphModel;
+  private handposeModel: tfconv.GraphModel;
   private runsWithoutHandDetector: number;
   private maxHandsNum: number;
   private rois: any[];
@@ -36,10 +36,10 @@ export class HandPipeline {
   private detectionConfidence: number;
 
   constructor(
-      handdetect: HandDetector, handtrackModel: tfconv.GraphModel,
+      handdetect: HandDetector, handposeModel: tfconv.GraphModel,
       maxContinuousChecks: number, detectionConfidence: number) {
     this.handdetect = handdetect;
-    this.handtrackModel = handtrackModel;
+    this.handposeModel = handposeModel;
     this.maxContinuousChecks = maxContinuousChecks;
     this.detectionConfidence = detectionConfidence;
     this.runsWithoutHandDetector = 0;
@@ -130,7 +130,7 @@ export class HandPipeline {
       //     rotated_image as tf.Tensor4D, [width, height]);
       const handImage = cutted_hand.div(255);
 
-      const output = this.handtrackModel.predict(handImage) as tf.Tensor[];
+      const output = this.handposeModel.predict(handImage) as tf.Tensor[];
 
       const output_keypoints = output[output.length - 1];
       const coords = tf.reshape(output_keypoints, [-1, 3]).arraySync() as

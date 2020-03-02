@@ -1,15 +1,15 @@
-# Handtrack demo
+# Handpose demo
 
 ## Contents
 
-This demo shows how to use the handtrack model to detect faces in a video stream.
+This demo shows how to use the handpose model to detect faces in a video stream.
 
 ## Setup
 
 cd into the demos folder:
 
 ```sh
-cd handtrack/demos
+cd handpose/demos
 ```
 
 Install dependencies and prepare the build directory:
@@ -24,11 +24,11 @@ To watch files for changes, and launch a dev server:
 yarn watch
 ```
 
-## If you are developing handtrack locally, and want to test the changes in the demos
+## If you are developing handpose locally, and want to test the changes in the demos
 
-Cd into the handtrack folder:
+Cd into the handpose folder:
 ```sh
-cd handtrack
+cd handpose
 ```
 
 Install dependencies:
@@ -36,7 +36,7 @@ Install dependencies:
 yarn
 ```
 
-Publish handtrack locally:
+Publish handpose locally:
 ```sh
 yarn build && yarn yalc publish
 ```
@@ -48,9 +48,9 @@ cd demos
 yarn
 ```
 
-Link the local handtrack to the demos:
+Link the local handpose to the demos:
 ```sh
-yarn yalc link @tensorflow-models/handtrack
+yarn yalc link @tensorflow-models/handpose
 ```
 
 Start the dev demo server:
@@ -58,9 +58,9 @@ Start the dev demo server:
 yarn watch
 ```
 
-To get future updates from the handtrack source code:
+To get future updates from the handpose source code:
 ```
-# cd up into the handtrack directory
+# cd up into the handpose directory
 cd ../
 yarn build && yarn yalc push
 ```

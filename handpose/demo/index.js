@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import * as handtrack from '@tensorflow-models/handtrack';
+import * as handpose from '@tensorflow-models/handpose';
 
 let videoWidth, videoHeight;
 const color = 'red';
@@ -152,8 +152,8 @@ async function loadVideo() {
 }
 
 const bindPage = async () => {
-  // model = await handtrack.load({meshWidth: 192, meshHeight: 192});
-  model = await handtrack.load();
+  // model = await handpose.load({meshWidth: 192, meshHeight: 192});
+  model = await handpose.load();
   let video;
 
   try {

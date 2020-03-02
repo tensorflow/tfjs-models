@@ -7,9 +7,9 @@ steps:
   entrypoint: 'yarn'
   args: ['install']
 
-# Install handtrack dependencies.
+# Install handpose dependencies.
 - name: 'node:10'
-  dir: 'handtrack'
+  dir: 'handpose'
   entrypoint: 'yarn'
   id: 'yarn'
   args: ['install']
@@ -17,7 +17,7 @@ steps:
 
 # Lint.
 - name: 'node:10'
-  dir: 'handtrack'
+  dir: 'handpose'
   entrypoint: 'yarn'
   id: 'lint'
   args: ['lint']
@@ -25,7 +25,7 @@ steps:
 
 # Build.
 - name: 'node:10'
-  dir: 'handtrack'
+  dir: 'handpose'
   entrypoint: 'yarn'
   id: 'build'
   args: ['build']
@@ -33,7 +33,7 @@ steps:
 
 # Run tests.
 - name: 'node:10'
-  dir: 'handtrack'
+  dir: 'handpose'
   entrypoint: 'yarn'
   id: 'test'
   args: ['test']

@@ -63,13 +63,13 @@ function config({ plugins = [], output = {} }) {
 }
 
 export default [
-  config({ output: { format: 'umd', name: 'handtrack', file: 'dist/handtrack.js' } }),
+  config({ output: { format: 'umd', name: 'handpose', file: 'dist/handpose.js' } }),
   config({
     // plugins: [minify()],
-    output: { format: 'umd', name: 'handtrack', file: 'dist/handtrack.min.js' }
+    output: { format: 'umd', name: 'handpose', file: 'dist/handpose.min.js' }
   }),
   config({
     // plugins: [minify()],
-    output: { format: 'es', file: 'dist/handtrack.esm.js' }
+    output: { format: 'es', file: 'dist/handpose.esm.js' }
   })
 ];

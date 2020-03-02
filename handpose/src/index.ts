@@ -31,9 +31,9 @@ const MESH_MODEL_INPUT_WIDTH = 256;
 const MESH_MODEL_INPUT_HEIGHT = 256;
 
 async function loadHandMeshModel() {
-  const HANDTRACK_MODEL_PATH =
+  const HANDPOSE_MODEL_PATH =
       'https://tfhub.dev/tensorflow/tfjs-model/handskeleton/1/default/1';
-  return tfconv.loadGraphModel(HANDTRACK_MODEL_PATH, {fromTFHub: true});
+  return tfconv.loadGraphModel(HANDPOSE_MODEL_PATH, {fromTFHub: true});
 }
 
 // In single shot detector pipelines, the output space is discretized into a set
