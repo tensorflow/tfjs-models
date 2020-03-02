@@ -49,7 +49,8 @@ async function main() {
   // Load the MediaPipe facemesh model.
   const model = await facemesh.load();
 
-  // Pass in a video stream to obtain an array of detected faces from the MediaPipe graph.
+  // Pass in a video stream (or an image, canvas, or 3D tensor) to obtain an
+  // array of detected faces from the MediaPipe graph.
   const predictions = await model.estimateFaces(document.querySelector("video"));
 
   if (predictions.length > 0) {
@@ -58,21 +59,21 @@ async function main() {
 
     [
       {
-        faceInViewConfidence: 1,
-        boundingBox: {
+        faceInViewConfidence: 1, // The probability of a face being present.
+        boundingBox: { // The bounding box surrounding the face.
           topLeft: [232.28, 145.26],
           bottomRight: [449.75, 308.36],
         },
-        mesh: [
+        mesh: [ // The 3D coordinates of each facial landmark.
           [92.07, 119.49, -17.54],
           [91.97, 102.52, -30.54],
           ...
         ],
-        scaledMesh: [
+        scaledMesh: [ // The 3D coordinates of each facial landmark, normalized.
           [322.32, 297.58, -17.54],
           [322.18, 263.95, -30.54]
         ],
-        annotations: {
+        annotations: { // Semantic groupings of the `scaledMesh` coordinates.
           silhouette: [
             [326.19, 124.72, -3.82],
             [351.06, 126.30, -3.00],
@@ -87,13 +88,11 @@ async function main() {
     for (let i = 0; i < predictions.length; i++) {
       const keypoints = predictions[i].scaledMesh;
 
-      // Render facial keypoints.
+      // Log facial keypoints.
       for (let i = 0; i < keypoints.length; i++) {
-        const x = keypoints[i][0];
-        const y = keypoints[i][1];
-        ctx.beginPath();
-        ctx.arc(x, y, 1 /* radius */, 0, 2 * Math.PI);
-        ctx.fill();
+        const [x, y, z] = keypoints[i];
+
+        console.log(`Keypoint ${i}: [${x}, ${y}, ${z}]`);
       }
     }
   }
