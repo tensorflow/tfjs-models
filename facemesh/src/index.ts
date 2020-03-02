@@ -79,12 +79,24 @@ export async function load({
   iouThreshold = 0.3,
   scoreThreshold = 0.75
 } = {}): Promise<FaceMesh> {
-  const faceMesh = new FaceMesh();
+  const [blazeFace, blazeMeshModel] = await Promise.all([
+    loadDetectorModel(maxFaces, iouThreshold, scoreThreshold), loadMeshModel()
+  ]);
 
-  await faceMesh.load(
-      maxContinuousChecks, detectionConfidence, maxFaces, iouThreshold,
-      scoreThreshold);
+  const faceMesh = new FaceMesh(
+      blazeFace, blazeMeshModel, maxContinuousChecks, detectionConfidence,
+      maxFaces);
   return faceMesh;
+}
+
+async function loadDetectorModel(
+    maxFaces: number, iouThreshold: number,
+    scoreThreshold: number): Promise<blazeface.BlazeFaceModel> {
+  return blazeface.load({maxFaces, iouThreshold, scoreThreshold});
+}
+
+async function loadMeshModel(): Promise<tfconv.GraphModel> {
+  return tfconv.loadGraphModel(BLAZE_MESH_GRAPHMODEL_PATH);
 }
 
 function getInputTensorDimensions(input: tf.Tensor3D|ImageData|HTMLVideoElement|
@@ -154,14 +166,10 @@ export class FaceMesh {
   private pipeline: Pipeline;
   private detectionConfidence: number;
 
-  async load(
+  constructor(
+      blazeFace: blazeface.BlazeFaceModel, blazeMeshModel: tfconv.GraphModel,
       maxContinuousChecks: number, detectionConfidence: number,
-      maxFaces: number, iouThreshold: number, scoreThreshold: number) {
-    const [blazeFace, blazeMeshModel] = await Promise.all([
-      this.loadDetectorModel(maxFaces, iouThreshold, scoreThreshold),
-      this.loadMeshModel()
-    ]);
-
+      maxFaces: number) {
     this.pipeline = new Pipeline(
         blazeFace, blazeMeshModel, MESH_MODEL_INPUT_WIDTH,
         MESH_MODEL_INPUT_HEIGHT, maxContinuousChecks, maxFaces);
@@ -171,16 +179,6 @@ export class FaceMesh {
 
   static getAnnotations(): {[key: string]: number[]} {
     return MESH_ANNOTATIONS;
-  }
-
-  loadDetectorModel(
-      maxFaces: number, iouThreshold: number,
-      scoreThreshold: number): Promise<blazeface.BlazeFaceModel> {
-    return blazeface.load({maxFaces, iouThreshold, scoreThreshold});
-  }
-
-  loadMeshModel(): Promise<tfconv.GraphModel> {
-    return tfconv.loadGraphModel(BLAZE_MESH_GRAPHMODEL_PATH);
   }
 
   /**
