@@ -28,6 +28,7 @@ export class HandDetector {
 
   private anchors: tf.Tensor2D;
   private inputSizeTensor: tf.Tensor1D;
+  private doubleInputSizeTensor: tf.Tensor1D;
 
   constructor(
       model: tfconv.GraphModel, width: number, height: number,
@@ -42,24 +43,25 @@ export class HandDetector {
     this.anchors = tf.tensor2d(
         ANCHORS.map(anchor => ([anchor.x_center, anchor.y_center])));
     this.inputSizeTensor = tf.tensor1d([width, height]);
+    this.doubleInputSizeTensor = tf.tensor1d([width * 2, height * 2]);
   }
 
-  _decode_bounds(box_outputs: tf.Tensor) {
-    const box_starts = tf.slice(box_outputs, [0, 0], [-1, 2]);
-    const centers =
-        tf.add(tf.div(box_starts, this.inputSizeTensor), this.anchors);
-    const box_sizes = tf.slice(box_outputs, [0, 2], [-1, 2]);
+  normalizeBoxes(boxes: tf.Tensor) {
+    const boxOffsets = tf.slice(boxes, [0, 0], [-1, 2]);
+    const boxSizes = tf.slice(boxes, [0, 2], [-1, 2]);
 
-    const box_sizes_norm = tf.div(box_sizes, this.inputSizeTensor);
-    const halfBoxSize = tf.div(box_sizes_norm, 2);
+    const boxCenterPoints =
+        tf.add(tf.div(boxOffsets, this.inputSizeTensor), this.anchors);
 
-    const starts = tf.sub(centers, halfBoxSize);
-    const ends = tf.add(centers, halfBoxSize);
+    const halfBoxSizes = tf.div(boxSizes, this.doubleInputSizeTensor);
+    const startPoints = tf.sub(boxCenterPoints, halfBoxSizes);
+    const endPoints = tf.add(boxCenterPoints, halfBoxSizes);
 
     return tf.concat2d(
         [
-          tf.mul(starts as tf.Tensor2D, this.inputSizeTensor) as tf.Tensor2D,
-          tf.mul(ends, this.inputSizeTensor) as tf.Tensor2D
+          tf.mul(startPoints as tf.Tensor2D, this.inputSizeTensor) as
+              tf.Tensor2D,
+          tf.mul(endPoints, this.inputSizeTensor) as tf.Tensor2D
         ],
         1);
   }
@@ -87,12 +89,13 @@ export class HandDetector {
       const prediction: tf.Tensor2D =
           (this.model.predict(img) as tf.Tensor3D).squeeze();
 
+      // Regression score for each anchor point.
       const scores: tf.Tensor1D =
           tf.sigmoid(tf.slice(prediction, [0, 0], [-1, 1])).squeeze();
 
-      const raw_boxes = tf.slice(prediction, [0, 1], [-1, 4]);
-
-      const boxes = this._decode_bounds(raw_boxes);
+      // Bounding box for each anchor point.
+      const rawBoxes = tf.slice(prediction, [0, 1], [-1, 4]);
+      const boxes = this.normalizeBoxes(rawBoxes);
 
       const box_indices =
           tf.image
