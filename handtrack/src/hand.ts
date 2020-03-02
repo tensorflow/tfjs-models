@@ -72,19 +72,26 @@ export class HandDetector {
     return tf.mul(relative_landmarks, this.inputSizeTensor);
   }
 
-  _getBoundingBox(input_image: tf.Tensor) {
+  _getBoundingBox(input: tf.Tensor) {
     return tf.tidy(() => {
-      const img = tf.mul(tf.sub(input_image, 0.5), 2);  // make input [-1, 1]
+      const img = tf.mul(tf.sub(input, 0.5), 2);  // make input [-1, 1]
 
-      const prediction = this.model.predict(img) as tf.Tensor;
+      // 19:
+      //  0: score
+      //  1,2,3,4: raw boxes
+      //  5-14: raw landmarks
 
-      const scores =
-          tf.sigmoid(tf.slice(prediction, [0, 0, 0], [1, -1, 1])).squeeze() as
-          tf.Tensor1D;
+      // The model returns a tensor with the following shape:
+      //  [1 (batch), 2944 (anchor points), 19 (data for each anchor)]
+      // Squeezing immediately because we are not batching inputs.
+      const prediction: tf.Tensor2D =
+          (this.model.predict(img) as tf.Tensor3D).squeeze();
 
-      const raw_boxes = tf.slice(prediction, [0, 0, 1], [1, -1, 4]).squeeze();
-      const raw_landmarks =
-          tf.slice(prediction, [0, 0, 5], [1, -1, 14]).squeeze();
+      const scores: tf.Tensor1D =
+          tf.sigmoid(tf.slice(prediction, [0, 0], [-1, 1])).squeeze();
+
+      const raw_boxes = tf.slice(prediction, [0, 1], [-1, 4]);
+
       const boxes = this._decode_bounds(raw_boxes);
 
       const box_indices =
@@ -92,14 +99,15 @@ export class HandDetector {
               .nonMaxSuppression(
                   boxes, scores, 1, this.iouThreshold, this.scoreThreshold)
               .arraySync();
-
-      const landmarks = this._decode_landmarks(raw_landmarks);
-      if (box_indices.length == 0) {
+      if (box_indices.length === 0) {
         return [null, null];
       }
 
       const box_index = box_indices[0];
       const result_box = tf.slice(boxes, [box_index, 0], [1, -1]);
+
+      const raw_landmarks = tf.slice(prediction, [0, 5], [-1, 14]);
+      const landmarks = this._decode_landmarks(raw_landmarks);
 
       const result_landmarks =
           tf.slice(landmarks, [box_index, 0], [1]).reshape([-1, 2]);
@@ -108,12 +116,12 @@ export class HandDetector {
     });
   }
 
-  getSingleBoundingBox(input_image: tf.Tensor4D) {
-    const original_h = input_image.shape[1];
-    const original_w = input_image.shape[2];
+  getSingleBoundingBox(input: tf.Tensor4D) {
+    const original_h = input.shape[1];
+    const original_w = input.shape[2];
 
-    const image = tf.tidy(
-        () => input_image.resizeBilinear([this.width, this.height]).div(255));
+    const image =
+        tf.tidy(() => input.resizeBilinear([this.width, this.height]).div(255));
     const bboxes_data = this._getBoundingBox(image);
 
     if (!bboxes_data[0]) {
