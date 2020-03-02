@@ -26,7 +26,8 @@ export class HandDetector {
   private iouThreshold: number;
   private scoreThreshold: number;
 
-  private anchors: tf.Tensor2D;
+  private anchors: Array<[number, number]>;
+  private anchorsTensor: tf.Tensor2D;
   private inputSizeTensor: tf.Tensor1D;
   private doubleInputSizeTensor: tf.Tensor1D;
 
@@ -40,8 +41,11 @@ export class HandDetector {
     this.iouThreshold = iouThreshold;
     this.scoreThreshold = scoreThreshold;
 
-    this.anchors = tf.tensor2d(
-        ANCHORS.map(anchor => ([anchor.x_center, anchor.y_center])));
+    this.anchors = ANCHORS.map(anchor => {
+      const coord: [number, number] = [anchor.x_center, anchor.y_center];
+      return coord;
+    });
+    this.anchorsTensor = tf.tensor2d(this.anchors);
     this.inputSizeTensor = tf.tensor1d([width, height]);
     this.doubleInputSizeTensor = tf.tensor1d([width * 2, height * 2]);
   }
@@ -51,7 +55,7 @@ export class HandDetector {
     const boxSizes = tf.slice(boxes, [0, 2], [-1, 2]);
 
     const boxCenterPoints =
-        tf.add(tf.div(boxOffsets, this.inputSizeTensor), this.anchors);
+        tf.add(tf.div(boxOffsets, this.inputSizeTensor), this.anchorsTensor);
     const halfBoxSizes = tf.div(boxSizes, this.doubleInputSizeTensor);
 
     const startPoints: tf.Tensor2D =
@@ -62,11 +66,9 @@ export class HandDetector {
   }
 
   normalizeLandmarks(rawLandmarks: tf.Tensor, index: number) {
-    const reshapedAnchors = this.anchors.reshape([-1, 1, 2])
-                                .slice([index, 0, 0], [1]);  // [2944, 1, 2]
     const landmarks = tf.add(
         tf.div(rawLandmarks.reshape([-1, 7, 2]), this.inputSizeTensor),
-        reshapedAnchors);
+        this.anchors[index]);
 
     return tf.mul(landmarks, this.inputSizeTensor);
   }
@@ -89,11 +91,14 @@ export class HandDetector {
       const rawBoxes = tf.slice(prediction, [0, 1], [-1, 4]);
       const boxes = this.normalizeBoxes(rawBoxes);
 
+      const savedConsoleWarnFn = console.warn;
+      console.warn = () => {};
       const boxesWithHands =
           tf.image
               .nonMaxSuppression(
                   boxes, scores, 1, this.iouThreshold, this.scoreThreshold)
               .arraySync();
+      console.warn = savedConsoleWarnFn;
 
       if (boxesWithHands.length === 0) {
         return [null, null];
