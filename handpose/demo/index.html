@@ -1,0 +1,42 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1.0, user-scalable=no">
+<style>
+  #canvas-wrapper {
+    position: relative;
+  }
+  #keypoints-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  .hide {
+    display: none;
+  }
+  .point {
+    position: absolute;
+    color: white;
+    font-size: 12px;
+  }
+</style>
+<script src="https://rawgit.com/mrdoob/stats.js/master/build/stats.min.js"></script>
+
+<body>
+  <div id="info" style='display:none'></div>
+  <div id="predictions"></div>
+  <div id="canvas-wrapper">
+    <canvas id="output" style=""></canvas>
+    <div id="keypoints-wrapper"></div>
+  </div>
+  <video id="video" playsinline style="
+    -webkit-transform: scaleX(-1);
+    transform: scaleX(-1);
+    visibility: hidden;
+    width: auto;
+    height: auto;
+    ">
+  </video>
+  <canvas id="hand_cut" style=""></canvas>
+  <div id="status"></div>
+
+  <script src="./index.js"></script>
+</body>
