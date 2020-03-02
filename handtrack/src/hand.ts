@@ -21,42 +21,36 @@ import {scaleBoxCoordinates} from './box';
 
 export class HandDetector {
   private model: tfconv.GraphModel;
-  private anchors: tf.Tensor;
-  private input_size: tf.Tensor;
   private width: number;
   private height: number;
   private iouThreshold: number;
   private scoreThreshold: number;
 
+  private anchors: tf.Tensor2D;
+  private inputSizeTensor: tf.Tensor1D;
+
   constructor(
-      model: tfconv.GraphModel, width: number, height: number, ANCHORS: any,
+      model: tfconv.GraphModel, width: number, height: number,
+      ANCHORS: Array<{x_center: number, y_center: number}>,
       iouThreshold: number, scoreThreshold: number) {
     this.model = model;
-    this.anchors = this._generate_anchors(ANCHORS);
     this.width = width;
     this.height = height;
-    this.input_size = tf.tensor([width, height]);
-
     this.iouThreshold = iouThreshold;
     this.scoreThreshold = scoreThreshold;
-  }
 
-  _generate_anchors(ANCHORS: any) {
-    const anchors = [];
-
-    for (let i = 0; i < ANCHORS.length; ++i) {
-      const anchor = ANCHORS[i];
-      anchors.push([anchor.x_center, anchor.y_center]);
-    }
-    return tf.tensor(anchors);
+    this.anchors = tf.tensor2d(
+        ANCHORS.map(anchor => ([anchor.x_center, anchor.y_center])));
+    this.inputSizeTensor = tf.tensor1d([width, height]);
   }
 
   _decode_bounds(box_outputs: tf.Tensor) {
     const box_starts = tf.slice(box_outputs, [0, 0], [-1, 2]);
-    const centers = tf.add(tf.div(box_starts, this.input_size), this.anchors);
+    const centers =
+        tf.add(tf.div(box_starts, this.inputSizeTensor), this.anchors);
     const box_sizes = tf.slice(box_outputs, [0, 2], [-1, 2]);
 
-    const box_sizes_norm = tf.div(box_sizes, this.input_size);
+    const box_sizes_norm = tf.div(box_sizes, this.inputSizeTensor);
     const halfBoxSize = tf.div(box_sizes_norm, 2);
 
     const starts = tf.sub(centers, halfBoxSize);
@@ -64,19 +58,18 @@ export class HandDetector {
 
     return tf.concat2d(
         [
-          tf.mul(starts as tf.Tensor2D, this.input_size as tf.Tensor2D) as
-              tf.Tensor2D,
-          tf.mul(ends, this.input_size) as tf.Tensor2D
+          tf.mul(starts as tf.Tensor2D, this.inputSizeTensor) as tf.Tensor2D,
+          tf.mul(ends, this.inputSizeTensor) as tf.Tensor2D
         ],
         1);
   }
 
   _decode_landmarks(raw_landmarks: tf.Tensor) {
     const relative_landmarks = tf.add(
-        tf.div(raw_landmarks.reshape([-1, 7, 2]), this.input_size),
+        tf.div(raw_landmarks.reshape([-1, 7, 2]), this.inputSizeTensor),
         this.anchors.reshape([-1, 1, 2]));
 
-    return tf.mul(relative_landmarks, this.input_size);
+    return tf.mul(relative_landmarks, this.inputSizeTensor);
   }
 
   _getBoundingBox(input_image: tf.Tensor) {

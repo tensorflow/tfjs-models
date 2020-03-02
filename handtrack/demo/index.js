@@ -152,6 +152,7 @@ async function loadVideo() {
 }
 
 const bindPage = async () => {
+  // model = await handtrack.load({meshWidth: 192, meshHeight: 192});
   model = await handtrack.load();
   let video;
 
