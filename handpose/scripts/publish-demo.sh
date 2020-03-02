@@ -17,4 +17,4 @@
 cd demo
 rm -rf dist
 yarn build
-gsutil rsync -d -r dist/ gs://tfjs-models/demos/handtrack
+gsutil rsync -d -r dist/ gs://tfjs-models/demos/handpose
