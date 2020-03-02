@@ -9,6 +9,7 @@ coverage/
 node_modules/
 karma.conf.js
 *.tgz
+dist/**/*.js.map
 .travis.yml
 .npmignore
 tslint.json
