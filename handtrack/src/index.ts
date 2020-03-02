@@ -27,35 +27,39 @@ async function loadHandDetectorModel() {
   return tfconv.loadGraphModel(HANDDETECT_MODEL_PATH, {fromTFHub: true});
 }
 
-async function loadHandSkeletonModel() {
+const MESH_MODEL_INPUT_WIDTH = 256;
+const MESH_MODEL_INPUT_HEIGHT = 256;
+
+async function loadHandMeshModel() {
   const HANDTRACK_MODEL_PATH =
       'https://tfhub.dev/tensorflow/tfjs-model/handskeleton/1/default/1';
   return tfconv.loadGraphModel(HANDTRACK_MODEL_PATH, {fromTFHub: true});
 }
 
+// In single shot detector pipelines, the output space is discretized into a set
+// of bounding boxes, each of which is assigned a score during prediction. The
+// anchors define the coordinates of these boxes.
 async function loadAnchors() {
   return tf.util
       .fetch(
-          'https://storage.googleapis.com/learnjs-data/handtrack_staging/anchors.json')
+          'https://storage.googleapis.com/learnjs-data/handtrack_staging/anchors.json')  // TODO: Where should these assets live?
       .then(d => d.json());
 }
 
 export async function load({
-  meshWidth = 256,
-  meshHeight = 256,
   maxContinuousChecks = Infinity,
   detectionConfidence = 0.8,
   iouThreshold = 0.3,
   scoreThreshold = 0.5
 } = {}) {
-  const [ANCHORS, handDetectorModel, handSkeletonModel] = await Promise.all(
-      [loadAnchors(), loadHandDetectorModel(), loadHandSkeletonModel()]);
+  const [ANCHORS, handDetectorModel, handMeshModel] = await Promise.all(
+      [loadAnchors(), loadHandDetectorModel(), loadHandMeshModel()]);
 
   const detector = new HandDetector(
-      handDetectorModel, meshWidth, meshHeight, ANCHORS, iouThreshold,
-      scoreThreshold);
+      handDetectorModel, MESH_MODEL_INPUT_WIDTH, MESH_MODEL_INPUT_HEIGHT,
+      ANCHORS, iouThreshold, scoreThreshold);
   const pipeline = new HandPipeline(
-      detector, handSkeletonModel, maxContinuousChecks, detectionConfidence);
+      detector, handMeshModel, maxContinuousChecks, detectionConfidence);
 
   return pipeline;
 }
