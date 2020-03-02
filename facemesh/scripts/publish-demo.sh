@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright 2019 Google LLC. All Rights Reserved.
+# Copyright 2020 Google LLC. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,4 +17,5 @@
 cd demo
 rm -rf dist
 yarn build
-gsutil rsync -J -d -r dist/ gs://tfjs-models/demos/facemesh
+gsutil -m rm -r gs://tfjs-models/demos/facemesh/*
+gsutil -m cp -Z -r dist/ gs://tfjs-models/demos/facemesh
