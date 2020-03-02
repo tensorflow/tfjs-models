@@ -65,6 +65,8 @@ describeWithFlags('Facemesh', ALL_ENVS, () => {
     // Stubbed image contains a single face.
     const input = tf.tensor3d(stubbedImageVals, [128, 128, 3]);
 
+    // Call estimateFaces once up front to exclude any initialization tensors
+    // from memory test.
     await model.estimateFaces(input);
 
     const numTensors = tf.memory().numTensors;
