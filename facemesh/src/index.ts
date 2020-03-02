@@ -202,10 +202,6 @@ export class FaceMesh {
       flipHorizontal = false): Promise<AnnotatedPrediction[]> {
     const [, width] = getInputTensorDimensions(input);
 
-    if (!(input instanceof tf.Tensor)) {
-      input = tf.browser.fromPixels(input);
-    }
-
     const image: tf.Tensor4D = tf.tidy(() => {
       if (!(input instanceof tf.Tensor)) {
         input = tf.browser.fromPixels(input);
@@ -216,10 +212,9 @@ export class FaceMesh {
     const savedWebglPackDepthwiseConvFlag =
         tf.env().get('WEBGL_PACK_DEPTHWISECONV');
     tf.env().set('WEBGL_PACK_DEPTHWISECONV', true);
-    const predictions = await this.pipeline.predict(image) as Prediction[];
+    const predictions = await this.pipeline.predict(image);
     tf.env().set('WEBGL_PACK_DEPTHWISECONV', savedWebglPackDepthwiseConvFlag);
 
-    input.dispose();
     image.dispose();
 
     if (predictions != null && predictions.length > 0) {

@@ -30,54 +30,48 @@ describeWithFlags('Facemesh', ALL_ENVS, () => {
   });
 
   it('estimateFaces does not leak memory', async () => {
+    const input: tf.Tensor3D = tf.zeros([128, 128, 3]);
+
     // returnTensors = false, flipHorizontal = false
     let numTensors = tf.memory().numTensors;
-
-    let input: tf.Tensor3D = tf.zeros([128, 128, 3]);
     let returnTensors = false;
     let flipHorizontal = false;
     await model.estimateFaces(input, returnTensors, flipHorizontal);
-
     expect(tf.memory().numTensors).toEqual(numTensors);
 
     // returnTensors = false, flipHorizontal = true
     numTensors = tf.memory().numTensors;
-
-    input = tf.zeros([128, 128, 3]);
     returnTensors = false;
     flipHorizontal = true;
     await model.estimateFaces(input, returnTensors, flipHorizontal);
-
     expect(tf.memory().numTensors).toEqual(numTensors);
 
     // returnTensors = true, flipHorizontal = false
     numTensors = tf.memory().numTensors;
-
-    input = tf.zeros([128, 128, 3]);
     returnTensors = true;
     flipHorizontal = false;
     await model.estimateFaces(input, returnTensors, flipHorizontal);
-
     expect(tf.memory().numTensors).toEqual(numTensors);
 
     // returnTensors = true, flipHorizontal = true
     numTensors = tf.memory().numTensors;
-
-    input = tf.zeros([128, 128, 3]);
     returnTensors = true;
     flipHorizontal = true;
     await model.estimateFaces(input, returnTensors, flipHorizontal);
-
     expect(tf.memory().numTensors).toEqual(numTensors);
   });
 
   it('estimateFaces returns objects with expected properties', async () => {
     // Stubbed image contains a single face.
     const input = tf.tensor3d(stubbedImageVals, [128, 128, 3]);
-    const result = await model.estimateFaces(input);
 
+    await model.estimateFaces(input);
+
+    const numTensors = tf.memory().numTensors;
+    const result = await model.estimateFaces(input);
     const face = result[0];
 
+    expect(tf.memory().numTensors).toEqual(numTensors);
     expect(face.faceInViewConfidence).toBeDefined();
     expect(face.boundingBox).toBeDefined();
     expect(face.mesh).toBeDefined();
