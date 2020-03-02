@@ -33,6 +33,7 @@ let model, ctx, videoWidth, videoHeight, video, canvas,
 
 const VIDEO_SIZE = 500;
 const mobile = isMobile();
+// Don't render the point cloud on mobile in order to maximize performance and to avoid crowding limited screen space.
 const renderPointcloud = mobile === false;
 const stats = new Stats();
 const state = {
@@ -59,6 +60,8 @@ async function setupCamera() {
     'audio': false,
     'video': {
       facingMode: 'user',
+      // Only setting the video to a specified size in order to accommodate a
+      // point cloud, so on mobile devices accept the default size.
       width: mobile ? undefined : VIDEO_SIZE,
       height: mobile ? undefined : VIDEO_SIZE
     },
@@ -75,20 +78,13 @@ async function setupCamera() {
 async function renderPrediction() {
   stats.begin();
 
-  const returnTensors = false;
-  // We are flipping the canvas context, so we don't need to flip the predictions.
-  const flipHorizontal = false;
-  const predictions =
-      await model.estimateFaces(video, returnTensors, flipHorizontal);
+  const predictions = await model.estimateFaces(video);
   ctx.drawImage(
       video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
 
   if (predictions.length > 0) {
     predictions.forEach(prediction => {
-      let keypoints = prediction.scaledMesh;
-      if (returnTensors === true) {
-        keypoints = prediction.scaledMesh.arraySync();
-      }
+      const keypoints = prediction.scaledMesh;
 
       for (let i = 0; i < keypoints.length; i++) {
         const x = keypoints[i][0];
@@ -102,10 +98,6 @@ async function renderPrediction() {
     if (renderPointcloud === true && scatterGL != null) {
       const pointsData = predictions.map(prediction => {
         let scaledMesh = prediction.scaledMesh;
-        if (returnTensors === true) {
-          scaledMesh = scaledMesh.arraySync();
-        }
-
         return scaledMesh.map(point => ([-point[0], -point[1], -point[2]]));
       });
 
@@ -148,7 +140,7 @@ async function setupPage() {
   ctx = canvas.getContext('2d');
   ctx.translate(canvas.width, 0);
   ctx.scale(-1, 1);
-  ctx.fillStyle = 'red';
+  ctx.fillStyle = '#32EEDB';
 
   model = await facemesh.load({maxFaces: state.maxFaces});
   renderPrediction();
