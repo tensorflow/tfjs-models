@@ -42,7 +42,7 @@ async function loadHandMeshModel() {
 async function loadAnchors() {
   return tf.util
       .fetch(
-          'https://storage.googleapis.com/learnjs-data/handtrack_staging/anchors.json')  // TODO: Where should these assets live?
+          'https://storage.googleapis.com/tfjs-models/assets/handpose/anchors.json')
       .then(d => d.json());
 }
 
