@@ -28,29 +28,29 @@ const BLAZE_MESH_GRAPHMODEL_PATH =
 const MESH_MODEL_INPUT_WIDTH = 192;
 const MESH_MODEL_INPUT_HEIGHT = 192;
 
-type AnnotatedPredictionValues = {
+interface AnnotatedPredictionValues {
   /** Probability of the face detection. */
-  faceInViewConfidence: number,
+  faceInViewConfidence: number;
   boundingBox: {
     /** The upper left-hand corner of the face. */
     topLeft: [number, number],
     /** The lower right-hand corner of the face. */
     bottomRight: [number, number]
-  },
+  };
   /** Facial landmark coordinates. */
-  mesh: Array<[number, number, number]>,
+  mesh: Array<[number, number, number]>;
   /** Facial landmark coordinates normalized to input dimensions. */
-  scaledMesh: Array<[number, number, number]>,
+  scaledMesh: Array<[number, number, number]>;
   /** Annotated keypoints. */
-  annotations?: {[key: string]: Array<[number, number, number]>}
-};
+  annotations?: {[key: string]: Array<[number, number, number]>};
+}
 
-type AnnotatedPredictionTensors = {
-  faceInViewConfidence: number,
-  boundingBox: {topLeft: tf.Tensor1D, bottomRight: tf.Tensor1D},
-  mesh: tf.Tensor2D,
-  scaledMesh: tf.Tensor2D
-};
+interface AnnotatedPredictionTensors {
+  faceInViewConfidence: number;
+  boundingBox: {topLeft: tf.Tensor1D, bottomRight: tf.Tensor1D};
+  mesh: tf.Tensor2D;
+  scaledMesh: tf.Tensor2D;
+}
 
 // The object returned by facemesh describing a face found in the input.
 export type AnnotatedPrediction =
@@ -60,16 +60,16 @@ export type AnnotatedPrediction =
  * Load the model.
  *
  * @param options - a configuration object with the following properties:
- *  `maxContinuousChecks` How many frames to go without running the bounding box
- * detector. Only relevant if maxFaces > 1. Defaults to 5.
- *  `detectionConfidence` Threshold for discarding a prediction. Defaults to
+ *  - `maxContinuousChecks` How many frames to go without running the bounding
+ * box detector. Only relevant if maxFaces > 1. Defaults to 5.
+ *  - `detectionConfidence` Threshold for discarding a prediction. Defaults to
  * 0.9.
- *  `maxFaces` The maximum number of faces detected in the input. Should be
+ *  - `maxFaces` The maximum number of faces detected in the input. Should be
  * set to the minimum number for performance. Defaults to 10.
- *  `iouThreshold` A float representing the threshold for deciding whether boxes
- * overlap too much in non-maximum suppression. Must be between [0, 1]. Defaults
- * to 0.3.
- *  `scoreThreshold` A threshold for deciding when to remove boxes based
+ *  - `iouThreshold` A float representing the threshold for deciding whether
+ * boxes overlap too much in non-maximum suppression. Must be between [0, 1].
+ * Defaults to 0.3.
+ *  - `scoreThreshold` A threshold for deciding when to remove boxes based
  * on score in non-maximum suppression. Defaults to 0.75.
  */
 export async function load({
@@ -101,23 +101,24 @@ function flipFaceHorizontal(
       const subtractBasis = tf.tensor1d([imageWidth - 1, 0, 0]);
       const multiplyBasis = tf.tensor1d([1, -1, 1]);
 
-      return tf.tidy(
-          () => ([
-            tf.concat([
-              tf.sub(
-                  imageWidth - 1,
-                  (face.boundingBox.topLeft as tf.Tensor1D).slice(0, 1)),
-              (face.boundingBox.topLeft as tf.Tensor1D).slice(1, 1)
-            ]),
-            tf.concat([
-              tf.sub(
-                  imageWidth - 1,
-                  (face.boundingBox.bottomRight as tf.Tensor1D).slice(0, 1)),
-              (face.boundingBox.bottomRight as tf.Tensor1D).slice(1, 1)
-            ]),
-            tf.sub(subtractBasis, face.mesh).mul(multiplyBasis),
-            tf.sub(subtractBasis, face.scaledMesh).mul(multiplyBasis)
-          ]));
+      return tf.tidy(() => {
+        return [
+          tf.concat([
+            tf.sub(
+                imageWidth - 1,
+                (face.boundingBox.topLeft as tf.Tensor1D).slice(0, 1)),
+            (face.boundingBox.topLeft as tf.Tensor1D).slice(1, 1)
+          ]),
+          tf.concat([
+            tf.sub(
+                imageWidth - 1,
+                (face.boundingBox.bottomRight as tf.Tensor1D).slice(0, 1)),
+            (face.boundingBox.bottomRight as tf.Tensor1D).slice(1, 1)
+          ]),
+          tf.sub(subtractBasis, face.mesh).mul(multiplyBasis),
+          tf.sub(subtractBasis, face.scaledMesh).mul(multiplyBasis)
+        ];
+      });
     });
 
     return Object.assign(
