@@ -23,9 +23,12 @@ import {HandDetector} from './hand';
 import {rotate as rotateWebgl} from './rotate_gpu';
 import {buildRotationMatrix, computeRotation, dot, invertTransformMatrix} from './util';
 
-const FRESH_BOX_SHIFT_VECTOR = [0, -0.4];
-const FRESH_BOX_ENLARGE_FACTOR = 3;
+const PALM_BOX_SHIFT_VECTOR = [0, -0.4];
+const PALM_BOX_ENLARGE_FACTOR = 3;
 const PALM_LANDMARK_IDS = [0, 5, 9, 13, 17, 1, 2];
+
+const HAND_BOX_SHIFT_VECTOR = [0, -0.1];
+const HAND_BOX_ENLARGE_FACTOR = 1.65;
 
 // The Pipeline coordinates between the bounding box and skeleton models.
 export class HandPipeline {
@@ -118,11 +121,11 @@ export class HandPipeline {
 
         const boxAroundPalm =
             this.calculateLandmarksBoundingBox(rotatedPalmLandmarks);
-        // boxAroundPalm only surrounds the palm - so, we shift it
+        // boxAroundPalm only surrounds the palm - therefore we shift it
         // upwards so it will capture fingers once enlarged / squarified.
-        const shiftedBox = this.shiftBox(boxAroundPalm, FRESH_BOX_SHIFT_VECTOR);
-        box = enlargeBox(
-            this.makeSquareBox(shiftedBox), FRESH_BOX_ENLARGE_FACTOR);
+        const shiftedBox = this.shiftBox(boxAroundPalm, PALM_BOX_SHIFT_VECTOR);
+        box =
+            enlargeBox(this.makeSquareBox(shiftedBox), PALM_BOX_ENLARGE_FACTOR);
       } else {
         box = currentBox;
       }
@@ -173,15 +176,14 @@ export class HandPipeline {
         palmLandmarks.push(coords[PALM_LANDMARK_IDS[i]] as [number, number]);
       }
 
-      const landmarks_box =
-          this.calculateLandmarksBoundingBox(coords as [number, number][]);
-
-      const landmarks_box_shifted = this.shiftBox(landmarks_box, [0, -0.1]);
-      const landmarks_box_shifted_squarified =
-          this.makeSquareBox(landmarks_box_shifted);
-
-      const nextBoundingBox: Box =
-          enlargeBox(landmarks_box_shifted_squarified, 1.65);
+      // The MediaPipe hand mesh model is trained on hands with empty space
+      // around them, so we still need to shift / enlarge the box even though
+      // the box surrounds the entire hand.
+      const boxAroundHand = this.calculateLandmarksBoundingBox(coords);
+      const shiftedBoxAroundHand =
+          this.shiftBox(boxAroundHand, HAND_BOX_SHIFT_VECTOR);
+      const nextBoundingBox: Box = enlargeBox(
+          this.makeSquareBox(shiftedBoxAroundHand), HAND_BOX_ENLARGE_FACTOR);
       nextBoundingBox.palmLandmarks = palmLandmarks;
 
       this.updateRegionsOfInterest(nextBoundingBox, false /* force replace */);
@@ -229,7 +231,7 @@ export class HandPipeline {
     return {startPoint, endPoint, palmLandmarks: box.palmLandmarks};
   }
 
-  calculateLandmarksBoundingBox(landmarks: Array<[number, number]>) {
+  calculateLandmarksBoundingBox(landmarks: number[][]) {
     const xs = landmarks.map(d => d[0]);
     const ys = landmarks.map(d => d[1]);
     const startPoint: [number, number] = [Math.min(...xs), Math.min(...ys)];

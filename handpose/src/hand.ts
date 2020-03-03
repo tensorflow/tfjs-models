@@ -22,7 +22,7 @@ import {Box, scaleBoxCoordinates} from './box';
 
 type HandDetectorPrediction = {
   boxes: tf.Tensor2D,
-  landmarks: tf.Tensor2D
+  palmLandmarks: tf.Tensor2D
 };
 
 export class HandDetector {
@@ -56,7 +56,7 @@ export class HandDetector {
     this.doubleInputSizeTensor = tf.tensor1d([width * 2, height * 2]);
   }
 
-  normalizeBoxes(boxes: tf.Tensor2D): tf.Tensor2D {
+  private normalizeBoxes(boxes: tf.Tensor2D): tf.Tensor2D {
     return tf.tidy(() => {
       const boxOffsets = tf.slice(boxes, [0, 0], [-1, 2]);
       const boxSizes = tf.slice(boxes, [0, 2], [-1, 2]);
@@ -73,7 +73,7 @@ export class HandDetector {
     });
   }
 
-  normalizeLandmarks(rawPalmLandmarks: tf.Tensor2D, index: number):
+  private normalizeLandmarks(rawPalmLandmarks: tf.Tensor2D, index: number):
       tf.Tensor2D {
     return tf.tidy(() => {
       const landmarks = tf.add(
@@ -84,7 +84,7 @@ export class HandDetector {
     });
   }
 
-  getBoundingBoxes(input: tf.Tensor4D): HandDetectorPrediction {
+  private getBoundingBoxes(input: tf.Tensor4D): HandDetectorPrediction {
     return tf.tidy(() => {
       const normalizedInput = tf.mul(tf.sub(input, 0.5), 2);
 
@@ -119,10 +119,10 @@ export class HandDetector {
       const matchingBox = tf.slice(boxes, [boxIndex, 0], [1, -1]);
 
       const rawPalmLandmarks = tf.slice(prediction, [boxIndex, 5], [1, 14]);
-      const landmarks: tf.Tensor2D =
+      const palmLandmarks: tf.Tensor2D =
           this.normalizeLandmarks(rawPalmLandmarks, boxIndex).reshape([-1, 2]);
 
-      return {boxes: matchingBox, landmarks};
+      return {boxes: matchingBox, palmLandmarks};
     });
   }
 
@@ -149,11 +149,11 @@ export class HandDetector {
     const startPoint = boundingBoxes[0].slice(0, 2) as [number, number];
     const endPoint = boundingBoxes[0].slice(2, 4) as [number, number];
     const palmLandmarks =
-        prediction.landmarks.arraySync() as Array<[number, number]>;
+        prediction.palmLandmarks.arraySync() as Array<[number, number]>;
 
     image.dispose();
     prediction.boxes.dispose();
-    prediction.landmarks.dispose();
+    prediction.palmLandmarks.dispose();
 
     return scaleBoxCoordinates(
         {startPoint, endPoint, palmLandmarks},
