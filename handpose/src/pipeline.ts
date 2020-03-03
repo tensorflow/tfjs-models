@@ -46,11 +46,27 @@ function getInputTensorDimensions(input: tf.Tensor3D|ImageData|HTMLVideoElement|
                                       [input.height, input.width];
 }
 
-function flipHandHorizontal(coords: Coords3D, width: number): Coords3D {
-  return coords.map(
-      (coord: [number, number, number]): [number, number, number] => {
-        return [width - 1 - coord[0], coord[1], coord[2]];
-      });
+function flipHandHorizontal(prediction: Prediction, width: number): Prediction {
+  const {handInViewConfidence, landmarks, boundingBox} = prediction;
+  return {
+    handInViewConfidence,
+    landmarks: landmarks.map(
+        (coord: [number, number, number]): [number, number, number] => {
+          return [width - 1 - coord[0], coord[1], coord[2]];
+        }),
+    boundingBox: {
+      topLeft: [width - 1 - boundingBox.topLeft[0], boundingBox.topLeft[1]],
+      bottomRight: [
+        width - 1 - boundingBox.bottomRight[0], boundingBox.bottomRight[1]
+      ]
+    }
+  };
+}
+
+export interface Prediction {
+  handInViewConfidence: number;
+  landmarks: Coords3D;
+  boundingBox: {topLeft: [number, number], bottomRight: [number, number]};
 }
 
 // The Pipeline coordinates between the bounding box and skeleton models.
@@ -95,7 +111,7 @@ export class HandPose {
   async estimateHand(
       input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
       HTMLCanvasElement,
-      flipHorizontal = false): Promise<Coords3D> {
+      flipHorizontal = false): Promise<Prediction> {
     const savedWebglPackDepthwiseConvFlag =
         tf.env().get('WEBGL_PACK_DEPTHWISECONV');
     tf.env().set('WEBGL_PACK_DEPTHWISECONV', true);
@@ -126,116 +142,134 @@ export class HandPose {
       this.runsWithoutHandDetector++;
     }
 
-    const scaledCoords: Coords3D = tf.tidy(() => {
-      const currentBox = this.regionsOfInterest[0];
-      const angle = computeRotation(
-          currentBox.palmLandmarks[PALM_LANDMARKS_INDEX_OF_PALM_BASE],
-          currentBox.palmLandmarks[PALM_LANDMARKS_INDEX_OF_MIDDLE_FINGER_BASE]);
+    const currentBox = this.regionsOfInterest[0];
+    const angle = computeRotation(
+        currentBox.palmLandmarks[PALM_LANDMARKS_INDEX_OF_PALM_BASE],
+        currentBox.palmLandmarks[PALM_LANDMARKS_INDEX_OF_MIDDLE_FINGER_BASE]);
 
-      const palmCenter = getBoxCenter(currentBox);
-      const palmCenterNormalized: [number, number] =
-          [palmCenter[0] / image.shape[2], palmCenter[1] / image.shape[1]];
-      const rotatedImage: tf.Tensor4D = tf.getBackend() === 'webgl' ?
-          rotateWebgl(image, angle, 0, palmCenterNormalized) :
-          rotateCpu(image, angle, 0, palmCenterNormalized);
-      const rotationMatrix = buildRotationMatrix(-angle, palmCenter);
+    const palmCenter = getBoxCenter(currentBox);
+    const palmCenterNormalized: [number, number] =
+        [palmCenter[0] / image.shape[2], palmCenter[1] / image.shape[1]];
+    const rotatedImage: tf.Tensor4D = tf.getBackend() === 'webgl' ?
+        rotateWebgl(image, angle, 0, palmCenterNormalized) :
+        rotateCpu(image, angle, 0, palmCenterNormalized);
+    const rotationMatrix = buildRotationMatrix(-angle, palmCenter);
 
-      let box: Box;
-      if (useFreshBox === true) {
-        const rotatedPalmLandmarks: Coords2D = currentBox.palmLandmarks.map(
-            (coord: [number, number]): [number, number] => {
-              const homogeneousCoordinate =
-                  [...coord, 1] as [number, number, number];
-              return rotatePoint(homogeneousCoordinate, rotationMatrix);
-            });
-
-        const boxAroundPalm =
-            this.calculateLandmarksBoundingBox(rotatedPalmLandmarks);
-        // boxAroundPalm only surrounds the palm - therefore we shift it
-        // upwards so it will capture fingers once enlarged + squarified.
-        box = enlargeBox(
-            squarifyBox(shiftBox(boxAroundPalm, PALM_BOX_SHIFT_VECTOR)),
-            PALM_BOX_ENLARGE_FACTOR);
-      } else {
-        box = currentBox;
-      }
-
-      const croppedInput = cutBoxFromImageAndResize(
-          box, rotatedImage, [this.meshWidth, this.meshHeight]);
-      const handImage = croppedInput.div(255);
-
-      const [flag, keypoints] =
-          this.meshDetector.predict(handImage) as [tf.Tensor, tf.Tensor];
-
-      if (flag.squeeze().arraySync() < this.detectionConfidence) {
-        this.regionsOfInterest = [];
-        return null;
-      }
-
-      const rawCoords = tf.reshape(keypoints, [-1, 3]).arraySync() as Coords3D;
-
-      const boxSize = getBoxSize(box);
-      const scaleFactor =
-          [boxSize[0] / this.meshWidth, boxSize[1] / this.meshHeight];
-
-      const coordsScaled = rawCoords.map((coord: [number, number, number]) => {
-        return [
-          scaleFactor[0] * (coord[0] - this.meshWidth / 2),
-          scaleFactor[1] * (coord[1] - this.meshHeight / 2), coord[2]
-        ];
-      });
-
-      const coordsRotationMatrix = buildRotationMatrix(angle, [0, 0]);
-      const coordsRotated =
-          coordsScaled.map((coord: [number, number, number]) => {
-            const rotated = rotatePoint(coord, coordsRotationMatrix);
-            return [...rotated, coord[2]];
+    let box: Box;
+    if (useFreshBox === true) {
+      const rotatedPalmLandmarks: Coords2D = currentBox.palmLandmarks.map(
+          (coord: [number, number]): [number, number] => {
+            const homogeneousCoordinate =
+                [...coord, 1] as [number, number, number];
+            return rotatePoint(homogeneousCoordinate, rotationMatrix);
           });
 
-      const inverseRotationMatrix = invertTransformMatrix(rotationMatrix);
-      const boxCenter = [...getBoxCenter(box), 1];
+      const boxAroundPalm =
+          this.calculateLandmarksBoundingBox(rotatedPalmLandmarks);
+      // boxAroundPalm only surrounds the palm - therefore we shift it
+      // upwards so it will capture fingers once enlarged + squarified.
+      box = enlargeBox(
+          squarifyBox(shiftBox(boxAroundPalm, PALM_BOX_SHIFT_VECTOR)),
+          PALM_BOX_ENLARGE_FACTOR);
+    } else {
+      box = currentBox;
+    }
 
-      const originalBoxCenter = [
-        dot(boxCenter, inverseRotationMatrix[0]),
-        dot(boxCenter, inverseRotationMatrix[1])
+    const croppedInput = cutBoxFromImageAndResize(
+        box, rotatedImage, [this.meshWidth, this.meshHeight]);
+    const handImage = croppedInput.div(255);
+    croppedInput.dispose();
+    rotatedImage.dispose();
+
+    const [flag, keypoints] =
+        this.meshDetector.predict(handImage) as [tf.Tensor, tf.Tensor];
+    const flagSqueezed = flag.squeeze();
+    const flagValue = flagSqueezed.arraySync() as number;
+    flag.dispose();
+    flagSqueezed.dispose();
+    handImage.dispose();
+
+    if (flagValue < this.detectionConfidence) {
+      keypoints.dispose();
+      this.regionsOfInterest = [];
+      return null;
+    }
+
+    const keypointsReshaped = tf.reshape(keypoints, [-1, 3]);
+    const rawCoords = keypointsReshaped.arraySync() as Coords3D;
+    keypoints.dispose();
+    keypointsReshaped.dispose();
+
+    const boxSize = getBoxSize(box);
+    const scaleFactor =
+        [boxSize[0] / this.meshWidth, boxSize[1] / this.meshHeight];
+
+    const coordsScaled = rawCoords.map((coord: [number, number, number]) => {
+      return [
+        scaleFactor[0] * (coord[0] - this.meshWidth / 2),
+        scaleFactor[1] * (coord[1] - this.meshHeight / 2), coord[2]
       ];
-
-      const coords: Coords3D = coordsRotated.map(
-          (coord: [number, number, number]): [number, number, number] => {
-            return [
-              coord[0] + originalBoxCenter[0], coord[1] + originalBoxCenter[1],
-              coord[2]
-            ];
-          });
-
-      // The MediaPipe hand mesh model is trained on hands with empty space
-      // around them, so we still need to shift / enlarge boxAroundHand even
-      // though it surrounds the entire hand.
-      const boxAroundHand = this.calculateLandmarksBoundingBox(coords);
-      const nextBoundingBox: Box = enlargeBox(
-          squarifyBox(shiftBox(boxAroundHand, HAND_BOX_SHIFT_VECTOR)),
-          HAND_BOX_ENLARGE_FACTOR);
-
-      const palmLandmarks: Coords2D = [];
-      for (let i = 0; i < PALM_LANDMARK_IDS.length; i++) {
-        palmLandmarks.push(
-            coords[PALM_LANDMARK_IDS[i]].slice(0, 2) as [number, number]);
-      }
-      nextBoundingBox.palmLandmarks = palmLandmarks;
-
-      this.updateRegionsOfInterest(nextBoundingBox, false /* force replace */);
-
-      if (flipHorizontal === true) {
-        return flipHandHorizontal(coords, width);
-      }
-      return coords;
     });
+
+    const coordsRotationMatrix = buildRotationMatrix(angle, [0, 0]);
+    const coordsRotated =
+        coordsScaled.map((coord: [number, number, number]) => {
+          const rotated = rotatePoint(coord, coordsRotationMatrix);
+          return [...rotated, coord[2]];
+        });
+
+    const inverseRotationMatrix = invertTransformMatrix(rotationMatrix);
+    const boxCenter = [...getBoxCenter(box), 1];
+
+    const originalBoxCenter = [
+      dot(boxCenter, inverseRotationMatrix[0]),
+      dot(boxCenter, inverseRotationMatrix[1])
+    ];
+
+    const coords: Coords3D = coordsRotated.map(
+        (coord: [number, number, number]): [number, number, number] => {
+          return [
+            coord[0] + originalBoxCenter[0], coord[1] + originalBoxCenter[1],
+            coord[2]
+          ];
+        });
+
+    // The MediaPipe hand mesh model is trained on hands with empty space
+    // around them, so we still need to shift / enlarge boxAroundHand even
+    // though it surrounds the entire hand.
+    const boxAroundHand = this.calculateLandmarksBoundingBox(coords);
+    const nextBoundingBox: Box = enlargeBox(
+        squarifyBox(shiftBox(boxAroundHand, HAND_BOX_SHIFT_VECTOR)),
+        HAND_BOX_ENLARGE_FACTOR);
+
+    const palmLandmarks: Coords2D = [];
+    for (let i = 0; i < PALM_LANDMARK_IDS.length; i++) {
+      palmLandmarks.push(
+          coords[PALM_LANDMARK_IDS[i]].slice(0, 2) as [number, number]);
+    }
+    nextBoundingBox.palmLandmarks = palmLandmarks;
+
+    this.updateRegionsOfInterest(nextBoundingBox, false /* force replace */);
+
+    const result: Prediction = {
+      landmarks: coords,
+      handInViewConfidence: flagValue,
+      boundingBox: {
+        topLeft: boxAroundHand.startPoint,
+        bottomRight: boxAroundHand.endPoint
+      }
+    };
+
+    let prediction = result;
+    if (flipHorizontal === true) {
+      prediction = flipHandHorizontal(result, width);
+    }
 
     image.dispose();
 
     tf.env().set('WEBGL_PACK_DEPTHWISECONV', savedWebglPackDepthwiseConvFlag);
 
-    return scaledCoords;
+    return prediction;
   }
 
   private calculateLandmarksBoundingBox(landmarks: number[][]): Box {
