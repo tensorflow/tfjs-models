@@ -19,7 +19,7 @@ import * as tf from '@tensorflow/tfjs-core';
 
 export function rotate(
     image: tf.Tensor4D, radians: number, fillValue: number[]|number,
-    center: [number, number]) {
+    center: [number, number]): tf.Tensor4D {
   const imageShape = image.shape;
   const imageHeight = imageShape[1];
   const imageWidth = imageShape[2];

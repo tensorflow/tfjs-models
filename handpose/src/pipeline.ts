@@ -97,10 +97,11 @@ export class HandPipeline {
       const palmCenter = getBoxCenter(currentBox);
       const palmCenterNormalized: [number, number] =
           [palmCenter[0] / image.shape[2], palmCenter[1] / image.shape[1]];
-      const rotatedImage = rotateWebgl(image, angle, 0, palmCenterNormalized);
+      const rotatedImage: tf.Tensor4D =
+          rotateWebgl(image, angle, 0, palmCenterNormalized);
       const rotationMatrix = buildRotationMatrix(-angle, palmCenter);
 
-      let box;
+      let box: Box;
       if (useFreshBox === true) {
         const rotatedLandmarks: Array<[number, number]> =
             currentBox.landmarks.map(
@@ -125,12 +126,12 @@ export class HandPipeline {
       }
 
       const croppedInput = cutBoxFromImageAndResize(
-          box, rotatedImage as tf.Tensor4D, [this.meshWidth, this.meshHeight]);
+          box, rotatedImage, [this.meshWidth, this.meshHeight]);
       const handImage = croppedInput.div(255);
 
-      const output = this.meshDetector.predict(handImage) as tf.Tensor[];
+      const prediction = this.meshDetector.predict(handImage) as tf.Tensor[];
 
-      const output_keypoints = output[output.length - 1];
+      const output_keypoints = prediction[prediction.length - 1];
       const coords = tf.reshape(output_keypoints, [-1, 3]).arraySync() as
           Array<[number, number, number]>;
 
@@ -185,15 +186,13 @@ export class HandPipeline {
       const landmarks_box_shifted_squarified =
           this.makeSquareBox(landmarks_box_shifted);
 
-      const nextBoundingBox =
+      const nextBoundingBox: Box =
           enlargeBox(landmarks_box_shifted_squarified, 1.65);
       nextBoundingBox.landmarks = selected_landmarks as [number, number][];
 
-      this.updateRegionsOfInterest(
-          nextBoundingBox as any, false /* force replace */);
+      this.updateRegionsOfInterest(nextBoundingBox, false /* force replace */);
 
-      const handFlag =
-          ((output[0] as tf.Tensor).arraySync() as number[][])[0][0];
+      const handFlag = prediction[0].squeeze().arraySync() as number;
       if (handFlag < this.detectionConfidence) {
         this.regionsOfInterest = [];
         return null;
