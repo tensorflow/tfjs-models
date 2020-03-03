@@ -103,7 +103,9 @@ export class HandPipeline {
 
     const scaledCoords = tf.tidy(() => {
       const currentBox = this.regionsOfInterest[0];
-      const angle = this.calculatePalmRotation(currentBox);
+      const angle = computeRotation(
+          currentBox.palmLandmarks[PALM_LANDMARKS_INDEX_OF_PALM_BASE],
+          currentBox.palmLandmarks[PALM_LANDMARKS_INDEX_OF_MIDDLE_FINGER_BASE]);
 
       const palmCenter = getBoxCenter(currentBox);
       const palmCenterNormalized: [number, number] =
@@ -180,8 +182,8 @@ export class HandPipeline {
       });
 
       // The MediaPipe hand mesh model is trained on hands with empty space
-      // around them, so we still need to shift / enlarge the box even though
-      // the box surrounds the entire hand.
+      // around them, so we still need to shift / enlarge boxAroundHand even
+      // though it surrounds the entire hand.
       const boxAroundHand = this.calculateLandmarksBoundingBox(coords);
       const shiftedBoxAroundHand =
           shiftBox(boxAroundHand, HAND_BOX_SHIFT_VECTOR);
@@ -210,12 +212,6 @@ export class HandPipeline {
     const startPoint: [number, number] = [Math.min(...xs), Math.min(...ys)];
     const endPoint: [number, number] = [Math.max(...xs), Math.max(...ys)];
     return {startPoint, endPoint};
-  }
-
-  private calculatePalmRotation(box: Box) {
-    return computeRotation(
-        box.palmLandmarks[PALM_LANDMARKS_INDEX_OF_PALM_BASE],
-        box.palmLandmarks[PALM_LANDMARKS_INDEX_OF_MIDDLE_FINGER_BASE]);
   }
 
   // Updates regions of interest if the intersection over union between
