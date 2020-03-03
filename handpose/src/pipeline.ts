@@ -114,6 +114,7 @@ export class HandPose {
       const boundingBoxPrediction =
           this.boundingBoxDetector.estimateHandBounds(image);
       if (boundingBoxPrediction === null) {
+        image.dispose();
         this.regionsOfInterest = [];
         return null;
       }
@@ -165,6 +166,7 @@ export class HandPose {
 
       const [flag, keypoints] =
           this.meshDetector.predict(handImage) as [tf.Tensor, tf.Tensor];
+
       if (flag.squeeze().arraySync() < this.detectionConfidence) {
         this.regionsOfInterest = [];
         return null;

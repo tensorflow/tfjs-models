@@ -141,6 +141,7 @@ export class HandDetector {
     const prediction = this.getBoundingBoxes(image);
 
     if (prediction === null) {
+      image.dispose();
       return null;
     }
 

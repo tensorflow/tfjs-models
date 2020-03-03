@@ -26,11 +26,14 @@ import {stubbedImageVals} from './test_util';
 describeWithFlags('Handpose', NODE_ENVS, () => {
   let model: HandPose;
   beforeAll(async () => {
-    model = await handpose.load();
+    model = await handpose.load({detectionConfidence: 0});
   });
 
-  fit('estimateHand does not leak memory', async () => {
+  it('estimateHand does not leak memory', async () => {
     const input: tf.Tensor3D = tf.zeros([128, 128, 3]);
+    // Do not count tensors involved in setup.
+    await model.estimateHand(input);
+
     const beforeTensors = tf.memory().numTensors;
     await model.estimateHand(input);
 
@@ -40,9 +43,13 @@ describeWithFlags('Handpose', NODE_ENVS, () => {
   it('estimateHand returns objects with expected properties', async () => {
     // Stubbed image contains a single hand.
     const input: tf.Tensor3D = tf.tensor3d(stubbedImageVals, [128, 128, 3]);
+    await model.estimateHand(input);
+
+    const beforeTensors = tf.memory().numTensors;
     const hand = await model.estimateHand(input);
 
     console.log(hand);
+    expect(tf.memory().numTensors).toEqual(beforeTensors);
 
     // expect(hand.topLeft).toBeDefined();
     // expect(hand.bottomRight).toBeDefined();
