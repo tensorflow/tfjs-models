@@ -21,7 +21,7 @@ import * as tf from '@tensorflow/tfjs-core';
 import {Box, cutBoxFromImageAndResize, enlargeBox, getBoxCenter, getBoxSize} from './box';
 import {HandDetector} from './hand';
 import {rotate as rotateWebgl} from './rotate_gpu';
-import {buildRotationMatrix, computeRotation, dot, invertTransformMatrix} from './util';
+import {buildRotationMatrix, computeRotation, dot, invertTransformMatrix, rotatePoint} from './util';
 
 const PALM_BOX_SHIFT_VECTOR = [0, -0.4];
 const PALM_BOX_ENLARGE_FACTOR = 3;
@@ -112,11 +112,9 @@ export class HandPipeline {
         const rotatedPalmLandmarks: Array<[number, number]> =
             currentBox.palmLandmarks.map(
                 (coord: [number, number]): [number, number] => {
-                  const homogeneousCoordinate = [...coord, 1];
-                  return [
-                    dot(homogeneousCoordinate, rotationMatrix[0]),
-                    dot(homogeneousCoordinate, rotationMatrix[1])
-                  ];
+                  const homogeneousCoordinate =
+                      [...coord, 1] as [number, number, number];
+                  return rotatePoint(homogeneousCoordinate, rotationMatrix);
                 });
 
         const boxAroundPalm =
@@ -152,10 +150,10 @@ export class HandPipeline {
 
       const coordsRotationMatrix = buildRotationMatrix(angle, [0, 0]);
       const coordsRotated =
-          coordsScaled.map((coord: [number, number, number]) => ([
-                             dot(coord, coordsRotationMatrix[0]),
-                             dot(coord, coordsRotationMatrix[1]), coord[2]
-                           ]));
+          coordsScaled.map((coord: [number, number, number]) => {
+            const rotated = rotatePoint(coord, coordsRotationMatrix);
+            return [...rotated, coord[2]];
+          });
 
       const inverseRotationMatrix = invertTransformMatrix(rotationMatrix);
       const boxCenter = [...getBoxCenter(box), 1];

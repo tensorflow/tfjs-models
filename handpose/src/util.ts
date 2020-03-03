@@ -15,6 +15,10 @@
  * =============================================================================
  */
 
+export type TransformationMatrix = [
+  [number, number, number], [number, number, number], [number, number, number]
+];
+
 export function normalizeRadians(angle: number) {
   return angle - 2 * Math.PI * Math.floor((angle - (-Math.PI)) / (2 * Math.PI));
 }
@@ -26,15 +30,7 @@ export function computeRotation(
   return normalizeRadians(radians);
 }
 
-export function rotatePoint(
-    angle: number, point: [number, number]): [number, number] {
-  return [
-    point[0] * Math.cos(angle) - point[1] * Math.sin(angle),
-    point[0] * Math.sin(angle) + point[1] * Math.cos(angle)
-  ];
-}
-
-const buildTranslationMatrix = (x: number, y: number) =>
+const buildTranslationMatrix = (x: number, y: number): TransformationMatrix =>
     ([[1, 0, x], [0, 1, y], [0, 0, 1]]);
 
 export function dot(v1: number[], v2: number[]) {
@@ -56,24 +52,24 @@ export function getColumnFrom2DArr(
   return column;
 }
 
-const multiplyTransformMatrices =
-    (mat1: number[][], mat2: number[][]): number[][] => {
-      const product = [];
+function multiplyTransformMatrices(
+    mat1: number[][], mat2: number[][]): TransformationMatrix {
+  const product = [];
 
-      const size = mat1.length;
+  const size = mat1.length;
 
-      for (let row = 0; row < size; row++) {
-        product.push([]);
-        for (let col = 0; col < size; col++) {
-          product[row].push(dot(mat1[row], getColumnFrom2DArr(mat2, col)));
-        }
-      }
+  for (let row = 0; row < size; row++) {
+    product.push([]);
+    for (let col = 0; col < size; col++) {
+      product[row].push(dot(mat1[row], getColumnFrom2DArr(mat2, col)));
+    }
+  }
 
-      return product;
-    };
+  return product as TransformationMatrix;
+}
 
 export function buildRotationMatrix(
-    rotation: number, center: [number, number]) {
+    rotation: number, center: [number, number]): TransformationMatrix {
   const cosA = Math.cos(rotation);
   const sinA = Math.sin(rotation);
 
@@ -88,13 +84,24 @@ export function buildRotationMatrix(
       translationTimesRotation, negativeTranslationMatrix);
 }
 
-export function invertTransformMatrix(matrix: number[][]): number[][] {
+export function invertTransformMatrix(matrix: TransformationMatrix):
+    TransformationMatrix {
   const rotation = [[matrix[0][0], matrix[1][0]], [matrix[0][1], matrix[1][1]]];
   const translation = [matrix[0][2], matrix[1][2]];
   const changeTranslation =
       [-dot(rotation[0], translation), -dot(rotation[1], translation)];
   return [
-    rotation[0].concat(changeTranslation[0]),
-    rotation[1].concat(changeTranslation[1]), [0, 0, 1]
+    rotation[0].concat(changeTranslation[0]) as [number, number, number],
+    rotation[1].concat(changeTranslation[1]) as [number, number, number],
+    [0, 0, 1]
+  ];
+}
+
+export function rotatePoint(
+    homogeneousCoordinate: [number, number, number],
+    rotationMatrix: TransformationMatrix): [number, number] {
+  return [
+    dot(homogeneousCoordinate, rotationMatrix[0]),
+    dot(homogeneousCoordinate, rotationMatrix[1])
   ];
 }
