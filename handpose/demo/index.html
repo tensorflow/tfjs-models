@@ -1,5 +1,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1.0, user-scalable=no">
+<!-- Load three.js -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.106.2/build/three.min.js"></script>
+<!-- Load scatter-gl.js -->
+<script src="https://cdn.jsdelivr.net/npm/scatter-gl@0.0.1/lib/scatter-gl.min.js"></script>
 <style>
   #canvas-wrapper {
     position: relative;
@@ -26,6 +30,7 @@
   <div id="canvas-wrapper">
     <canvas id="output" style=""></canvas>
   </div>
+  <div id="scatter-gl-container"></div>
   <video id="video" playsinline style="
     -webkit-transform: scaleX(-1);
     transform: scaleX(-1);
@@ -34,6 +39,5 @@
     height: auto;
     ">
   </video>
-
   <script src="./index.js"></script>
 </body>

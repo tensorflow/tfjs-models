@@ -17,8 +17,10 @@
 
 import * as handpose from '@tensorflow-models/handpose';
 
-let videoWidth, videoHeight;
+let videoWidth, videoHeight,
+scatterGLHasInitialized = false, scatterGL;
 const color = 'red';
+const renderPointcloud = true;
 
 function drawPoint(ctx, y, x, r, color) {
   ctx.beginPath();
@@ -177,12 +179,41 @@ const landmarksRealTime = async (video) => {
     const result = await model.estimateHand(video);
     if (result) {
       drawKeypoints(ctx, result);
+
+      if (renderPointcloud === true && scatterGL != null) {
+        // const pointsData = predictions.map(prediction => {
+        //   let scaledMesh = prediction.scaledMesh;
+        //   return scaledMesh.map(point => ([-point[0], -point[1], -point[2]]));
+        // });
+
+        const pointsData = result.map(point => {
+          return [-point[0], -point[1], -point[2]];
+        });
+
+        const dataset = new ScatterGL.Dataset(pointsData);
+
+        if (!scatterGLHasInitialized) {
+          scatterGL.render(dataset);
+        } else {
+          scatterGL.updateDataset(dataset);
+        }
+        scatterGLHasInitialized = true;
+      }
     }
     stats.end();
     requestAnimationFrame(frameLandmarks);
   };
 
   frameLandmarks();
+
+  if (renderPointcloud) {
+    document.querySelector('#scatter-gl-container').style =
+      `width: ${500}px; height: ${500}px;`;
+
+    scatterGL = new ScatterGL(
+        document.querySelector('#scatter-gl-container'),
+        {'rotateOnStart': false, 'selectEnabled': false});
+  }
 };
 
 navigator.getUserMedia = navigator.getUserMedia ||

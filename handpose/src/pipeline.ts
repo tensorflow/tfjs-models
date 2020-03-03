@@ -72,7 +72,7 @@ export class HandPipeline {
       if (!(input instanceof tf.Tensor)) {
         input = tf.browser.fromPixels(input);
       }
-      return (input as tf.Tensor).toFloat().expandDims(0);
+      return input.toFloat().expandDims(0);
     });
 
     const useFreshBox = this.shouldUpdateRegionsOfInterest();
@@ -147,27 +147,24 @@ export class HandPipeline {
 
       const coordsRotationMatrix = buildRotationMatrix(angle, [0, 0]);
       const coordsRotated =
-          coordsScaled.map((coord: [number, number, number]) => {
-            return [
-              dot(coord, coordsRotationMatrix[0]),
-              dot(coord, coordsRotationMatrix[1])
-            ];
-          });
+          coordsScaled.map((coord: [number, number, number]) => ([
+                             dot(coord, coordsRotationMatrix[0]),
+                             dot(coord, coordsRotationMatrix[1]), coord[2]
+                           ]));
 
       const inverseRotationMatrix = invertTransformMatrix(rotationMatrix);
       const boxCenter = [...getBoxCenter(box), 1];
 
       const originalBoxCenter = [
         dot(boxCenter, inverseRotationMatrix[0]),
-        dot(boxCenter, inverseRotationMatrix[1]),
-        dot(boxCenter, inverseRotationMatrix[2])
+        dot(boxCenter, inverseRotationMatrix[1])
       ];
 
-      const coordsResult = coordsRotated.map(
-          (coord: [number, number, number]) => ([
-            coord[0] + originalBoxCenter[0], coord[1] + originalBoxCenter[1],
-            coord[2] + originalBoxCenter[2]
-          ]));
+      const coordsResult =
+          coordsRotated.map((coord: [number, number, number]) => ([
+                              coord[0] + originalBoxCenter[0],
+                              coord[1] + originalBoxCenter[1], coord[2]
+                            ]));
 
       const landmarks_ids = [0, 5, 9, 13, 17, 1, 2];
 
