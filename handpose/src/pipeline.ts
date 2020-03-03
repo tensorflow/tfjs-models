@@ -23,6 +23,9 @@ import {HandDetector} from './hand';
 import {rotate as rotateWebgl} from './rotate_gpu';
 import {buildRotationMatrix, computeRotation, dot, invertTransformMatrix} from './util';
 
+const FRESH_BOX_SHIFT_VECTOR = [0, -0.4];
+const FRESH_BOX_ENLARGE_FACTOR = 3;
+
 // The Pipeline coordinates between the bounding box and skeleton models.
 export class HandPipeline {
   // MediaPipe model for detecting hand bounding box.
@@ -97,29 +100,33 @@ export class HandPipeline {
       const rotatedImage = rotateWebgl(image, angle, 0, palmCenterNormalized);
       const rotationMatrix = buildRotationMatrix(-angle, palmCenter);
 
-      let box, bbRotated, bbShifted, bbSquarified;
+      let box;
       if (useFreshBox === true) {
-        const rotatedLandmarks =
-            currentBox.landmarks.map((coord: [number, number]) => {
-              const homogeneousCoordinate = [...coord, 1];
-              return [
-                dot(homogeneousCoordinate, rotationMatrix[0]),
-                dot(homogeneousCoordinate, rotationMatrix[1])
-              ];
-            });
+        const rotatedLandmarks: Array<[number, number]> =
+            currentBox.landmarks.map(
+                (coord: [number, number]): [number, number] => {
+                  const homogeneousCoordinate = [...coord, 1];
+                  return [
+                    dot(homogeneousCoordinate, rotationMatrix[0]),
+                    dot(homogeneousCoordinate, rotationMatrix[1])
+                  ];
+                });
 
-        bbRotated = this.calculateLandmarksBoundingBox(
-            rotatedLandmarks as [number, number][]);
-        const shiftVector: [number, number] = [0, -0.4];
-        bbShifted = this.shiftBox(bbRotated, shiftVector);
-        bbSquarified = this.makeSquareBox(bbShifted);
-        box = enlargeBox(bbSquarified, 3);
+        const boxAroundRotatedLandmarks =
+            this.calculateLandmarksBoundingBox(rotatedLandmarks);
+        // boxAroundRotatedLandmarks only surrounds palm - so, we shift it
+        // upwards so it will capture fingers once enlarged and squarified.
+        const shiftedBox =
+            this.shiftBox(boxAroundRotatedLandmarks, FRESH_BOX_SHIFT_VECTOR);
+        box = enlargeBox(
+            this.makeSquareBox(shiftedBox), FRESH_BOX_ENLARGE_FACTOR);
       } else {
         box = currentBox;
       }
-      const cutted_hand = cutBoxFromImageAndResize(
+
+      const croppedInput = cutBoxFromImageAndResize(
           box, rotatedImage as tf.Tensor4D, [this.meshWidth, this.meshHeight]);
-      const handImage = cutted_hand.div(255);
+      const handImage = croppedInput.div(255);
 
       const output = this.meshDetector.predict(handImage) as tf.Tensor[];
 
