@@ -39,6 +39,20 @@ const PALM_LANDMARKS_INDEX_OF_MIDDLE_FINGER_BASE = 2;
 type Coords3D = Array<[number, number, number]>;
 type Coords2D = Array<[number, number]>;
 
+function getInputTensorDimensions(input: tf.Tensor3D|ImageData|HTMLVideoElement|
+                                  HTMLImageElement|
+                                  HTMLCanvasElement): [number, number] {
+  return input instanceof tf.Tensor ? [input.shape[0], input.shape[1]] :
+                                      [input.height, input.width];
+}
+
+function flipHandHorizontal(coords: Coords3D, width: number): Coords3D {
+  return coords.map(
+      (coord: [number, number, number]): [number, number, number] => {
+        return [width - 1 - coord[0], coord[1], coord[2]];
+      });
+}
+
 // The Pipeline coordinates between the bounding box and skeleton models.
 export class HandPose {
   // MediaPipe model for detecting hand bounding box.
@@ -73,13 +87,20 @@ export class HandPose {
   /**
    * Finds a hand in the input image.
    *
-   * @param input - tensor of shape [1, H, W, 3].
+   * @param input The image to classify. Can be a tensor, DOM element image,
+   * video, or canvas.
+   * @param flipHorizontal Whether to flip the hand keypoints horizontally.
+   * Should be true for videos that are flipped by default (e.g. webcams).
    */
-  async estimateHand(input: tf.Tensor3D|ImageData|HTMLVideoElement|
-                     HTMLImageElement|HTMLCanvasElement): Promise<Coords3D> {
+  async estimateHand(
+      input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
+      HTMLCanvasElement,
+      flipHorizontal = false): Promise<Coords3D> {
     const savedWebglPackDepthwiseConvFlag =
         tf.env().get('WEBGL_PACK_DEPTHWISECONV');
     tf.env().set('WEBGL_PACK_DEPTHWISECONV', true);
+
+    const [, width] = getInputTensorDimensions(input);
 
     const image: tf.Tensor4D = tf.tidy(() => {
       if (!(input instanceof tf.Tensor)) {
@@ -104,7 +125,7 @@ export class HandPose {
       this.runsWithoutHandDetector++;
     }
 
-    const scaledCoords = tf.tidy(() => {
+    const scaledCoords: Coords3D = tf.tidy(() => {
       const currentBox = this.regionsOfInterest[0];
       const angle = computeRotation(
           currentBox.palmLandmarks[PALM_LANDMARKS_INDEX_OF_PALM_BASE],
@@ -130,7 +151,7 @@ export class HandPose {
         const boxAroundPalm =
             this.calculateLandmarksBoundingBox(rotatedPalmLandmarks);
         // boxAroundPalm only surrounds the palm - therefore we shift it
-        // upwards so it will capture fingers once enlarged / squarified.
+        // upwards so it will capture fingers once enlarged + squarified.
         box = enlargeBox(
             squarifyBox(shiftBox(boxAroundPalm, PALM_BOX_SHIFT_VECTOR)),
             PALM_BOX_ENLARGE_FACTOR);
@@ -201,12 +222,17 @@ export class HandPose {
       nextBoundingBox.palmLandmarks = palmLandmarks;
 
       this.updateRegionsOfInterest(nextBoundingBox, false /* force replace */);
+
+      if (flipHorizontal === true) {
+        return flipHandHorizontal(coords, width);
+      }
       return coords;
     });
 
     image.dispose();
 
     tf.env().set('WEBGL_PACK_DEPTHWISECONV', savedWebglPackDepthwiseConvFlag);
+
     return scaledCoords;
   }
 
