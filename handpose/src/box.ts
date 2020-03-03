@@ -78,3 +78,17 @@ export function enlargeBox(box: Box, factor = 1.5): Box {
 
   return {startPoint, endPoint, palmLandmarks: box.palmLandmarks};
 }
+
+export function squarifyBox(box: Box): Box {
+  const centers = getBoxCenter(box);
+  const size = getBoxSize(box);
+  const maxEdge = Math.max(...size);
+
+  const halfSize = maxEdge / 2;
+  const startPoint: [number, number] =
+      [centers[0] - halfSize, centers[1] - halfSize];
+  const endPoint: [number, number] =
+      [centers[0] + halfSize, centers[1] + halfSize];
+
+  return {startPoint, endPoint, palmLandmarks: box.palmLandmarks};
+}

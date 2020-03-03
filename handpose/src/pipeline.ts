@@ -18,7 +18,7 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {Box, cutBoxFromImageAndResize, enlargeBox, getBoxCenter, getBoxSize} from './box';
+import {Box, cutBoxFromImageAndResize, enlargeBox, getBoxCenter, getBoxSize, squarifyBox} from './box';
 import {HandDetector} from './hand';
 import {rotate as rotateWebgl} from './rotate_gpu';
 import {buildRotationMatrix, computeRotation, dot, invertTransformMatrix, rotatePoint} from './util';
@@ -122,8 +122,7 @@ export class HandPipeline {
         // boxAroundPalm only surrounds the palm - therefore we shift it
         // upwards so it will capture fingers once enlarged / squarified.
         const shiftedBox = this.shiftBox(boxAroundPalm, PALM_BOX_SHIFT_VECTOR);
-        box =
-            enlargeBox(this.makeSquareBox(shiftedBox), PALM_BOX_ENLARGE_FACTOR);
+        box = enlargeBox(squarifyBox(shiftedBox), PALM_BOX_ENLARGE_FACTOR);
       } else {
         box = currentBox;
       }
@@ -134,6 +133,10 @@ export class HandPipeline {
 
       const [flag, keypoints] =
           this.meshDetector.predict(handImage) as tf.Tensor[];
+      if (flag.squeeze().arraySync() < this.detectionConfidence) {
+        this.regionsOfInterest = [];
+        return null;
+      }
 
       const rawCoords = tf.reshape(keypoints, [-1, 3]).arraySync() as
           Array<[number, number, number]>;
@@ -142,11 +145,12 @@ export class HandPipeline {
       const scaleFactor =
           [boxSize[0] / this.meshWidth, boxSize[1] / this.meshHeight];
 
-      const coordsScaled = rawCoords.map(
-          (coord: [number, number, number]) => ([
-            scaleFactor[0] * (coord[0] - this.meshWidth / 2),
-            scaleFactor[1] * (coord[1] - this.meshHeight / 2), coord[2]
-          ]));
+      const coordsScaled = rawCoords.map((coord: [number, number, number]) => {
+        return [
+          scaleFactor[0] * (coord[0] - this.meshWidth / 2),
+          scaleFactor[1] * (coord[1] - this.meshHeight / 2), coord[2]
+        ];
+      });
 
       const coordsRotationMatrix = buildRotationMatrix(angle, [0, 0]);
       const coordsRotated =
@@ -163,11 +167,12 @@ export class HandPipeline {
         dot(boxCenter, inverseRotationMatrix[1])
       ];
 
-      const coords =
-          coordsRotated.map((coord: [number, number, number]) => ([
-                              coord[0] + originalBoxCenter[0],
-                              coord[1] + originalBoxCenter[1], coord[2]
-                            ]));
+      const coords = coordsRotated.map((coord: [number, number, number]) => {
+        return [
+          coord[0] + originalBoxCenter[0], coord[1] + originalBoxCenter[1],
+          coord[2]
+        ];
+      });
 
       // The MediaPipe hand mesh model is trained on hands with empty space
       // around them, so we still need to shift / enlarge the box even though
@@ -176,7 +181,7 @@ export class HandPipeline {
       const shiftedBoxAroundHand =
           this.shiftBox(boxAroundHand, HAND_BOX_SHIFT_VECTOR);
       const nextBoundingBox: Box = enlargeBox(
-          this.makeSquareBox(shiftedBoxAroundHand), HAND_BOX_ENLARGE_FACTOR);
+          squarifyBox(shiftedBoxAroundHand), HAND_BOX_ENLARGE_FACTOR);
 
       const palmLandmarks: Array<[number, number]> = [];
       for (let i = 0; i < PALM_LANDMARK_IDS.length; i++) {
@@ -185,12 +190,6 @@ export class HandPipeline {
       nextBoundingBox.palmLandmarks = palmLandmarks;
 
       this.updateRegionsOfInterest(nextBoundingBox, false /* force replace */);
-
-      if (flag.squeeze().arraySync() < this.detectionConfidence) {
-        this.regionsOfInterest = [];
-        return null;
-      }
-
       return coords;
     });
 
@@ -198,20 +197,6 @@ export class HandPipeline {
 
     tf.env().set('WEBGL_PACK_DEPTHWISECONV', savedWebglPackDepthwiseConvFlag);
     return scaledCoords;
-  }
-
-  private makeSquareBox(box: Box) {
-    const centers = getBoxCenter(box);
-    const size = getBoxSize(box);
-    const maxEdge = Math.max(...size);
-
-    const halfSize = maxEdge / 2;
-    const startPoint: [number, number] =
-        [centers[0] - halfSize, centers[1] - halfSize];
-    const endPoint: [number, number] =
-        [centers[0] + halfSize, centers[1] + halfSize];
-
-    return {startPoint, endPoint, palmLandmarks: box.palmLandmarks};
   }
 
   private shiftBox(box: Box, shifts: number[]) {
