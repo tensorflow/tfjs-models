@@ -30,8 +30,7 @@ describeWithFlags('Handpose', NODE_ENVS, () => {
   });
 
   fit('estimateHand does not leak memory', async () => {
-    // const input: tf.Tensor3D = tf.zeros([128, 128, 3]);
-    const input: tf.Tensor3D = tf.tensor3d(stubbedImageVals, [128, 128, 3]);
+    const input: tf.Tensor3D = tf.zeros([128, 128, 3]);
     const beforeTensors = tf.memory().numTensors;
     await model.estimateHand(input);
 

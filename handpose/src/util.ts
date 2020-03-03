@@ -20,7 +20,7 @@ export type TransformationMatrix = [
 ];
 
 export function normalizeRadians(angle: number) {
-  return angle - 2 * Math.PI * Math.floor((angle - (-Math.PI)) / (2 * Math.PI));
+  return angle - 2 * Math.PI * Math.floor((angle + Math.PI) / (2 * Math.PI));
 }
 
 export function computeRotation(
@@ -86,13 +86,19 @@ export function buildRotationMatrix(
 
 export function invertTransformMatrix(matrix: TransformationMatrix):
     TransformationMatrix {
-  const rotation = [[matrix[0][0], matrix[1][0]], [matrix[0][1], matrix[1][1]]];
-  const translation = [matrix[0][2], matrix[1][2]];
-  const changeTranslation =
-      [-dot(rotation[0], translation), -dot(rotation[1], translation)];
+  const rotationComponent =
+      [[matrix[0][0], matrix[1][0]], [matrix[0][1], matrix[1][1]]];
+  const translationComponent = [matrix[0][2], matrix[1][2]];
+  const invertedTranslation = [
+    -dot(rotationComponent[0], translationComponent),
+    -dot(rotationComponent[1], translationComponent)
+  ];
+
   return [
-    rotation[0].concat(changeTranslation[0]) as [number, number, number],
-    rotation[1].concat(changeTranslation[1]) as [number, number, number],
+    rotationComponent[0].concat(
+        invertedTranslation[0]) as [number, number, number],
+    rotationComponent[1].concat(
+        invertedTranslation[1]) as [number, number, number],
     [0, 0, 1]
   ];
 }
