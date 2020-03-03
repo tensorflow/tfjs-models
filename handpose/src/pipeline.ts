@@ -88,7 +88,6 @@ export class HandPipeline {
     });
 
     const useFreshBox = this.shouldUpdateRegionsOfInterest();
-
     if (useFreshBox === true) {
       const boundingBoxPrediction =
           this.boundingBoxDetector.estimateHandBounds(image);
@@ -130,8 +129,9 @@ export class HandPipeline {
             this.calculateLandmarksBoundingBox(rotatedPalmLandmarks);
         // boxAroundPalm only surrounds the palm - therefore we shift it
         // upwards so it will capture fingers once enlarged / squarified.
-        const shiftedBox = shiftBox(boxAroundPalm, PALM_BOX_SHIFT_VECTOR);
-        box = enlargeBox(squarifyBox(shiftedBox), PALM_BOX_ENLARGE_FACTOR);
+        box = enlargeBox(
+            squarifyBox(shiftBox(boxAroundPalm, PALM_BOX_SHIFT_VECTOR)),
+            PALM_BOX_ENLARGE_FACTOR);
       } else {
         box = currentBox;
       }
@@ -141,7 +141,7 @@ export class HandPipeline {
       const handImage = croppedInput.div(255);
 
       const [flag, keypoints] =
-          this.meshDetector.predict(handImage) as tf.Tensor[];
+          this.meshDetector.predict(handImage) as [tf.Tensor, tf.Tensor];
       if (flag.squeeze().arraySync() < this.detectionConfidence) {
         this.regionsOfInterest = [];
         return null;
@@ -187,10 +187,9 @@ export class HandPipeline {
       // around them, so we still need to shift / enlarge boxAroundHand even
       // though it surrounds the entire hand.
       const boxAroundHand = this.calculateLandmarksBoundingBox(coords);
-      const shiftedBoxAroundHand =
-          shiftBox(boxAroundHand, HAND_BOX_SHIFT_VECTOR);
       const nextBoundingBox: Box = enlargeBox(
-          squarifyBox(shiftedBoxAroundHand), HAND_BOX_ENLARGE_FACTOR);
+          squarifyBox(shiftBox(boxAroundHand, HAND_BOX_SHIFT_VECTOR)),
+          HAND_BOX_ENLARGE_FACTOR);
 
       const palmLandmarks: Coords2D = [];
       for (let i = 0; i < PALM_LANDMARK_IDS.length; i++) {

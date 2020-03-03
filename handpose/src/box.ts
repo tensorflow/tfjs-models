@@ -103,5 +103,6 @@ export function shiftBox(box: Box, shiftFactor: [number, number]) {
       [box.startPoint[0] + shiftVector[0], box.startPoint[1] + shiftVector[1]];
   const endPoint: [number, number] =
       [box.endPoint[0] + shiftVector[0], box.endPoint[1] + shiftVector[1]];
+
   return {startPoint, endPoint, palmLandmarks: box.palmLandmarks};
 }

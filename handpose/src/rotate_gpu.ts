@@ -17,6 +17,15 @@
 
 import * as tf from '@tensorflow/tfjs-core';
 
+/**
+ * Rotates an image.
+ *
+ * @param image - Input tensor.
+ * @param radians - Angle of rotation.
+ * @param fillValue - The RGBA values to use in filling the leftover triangles
+ * after rotation.
+ * @param center - The center of rotation.
+ */
 export function rotate(
     image: tf.Tensor4D, radians: number, fillValue: number[]|number,
     center: [number, number]): tf.Tensor4D {
