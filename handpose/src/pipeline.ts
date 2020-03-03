@@ -23,12 +23,17 @@ import {HandDetector} from './hand';
 import {rotate as rotateWebgl} from './rotate_gpu';
 import {buildRotationMatrix, computeRotation, dot, invertTransformMatrix, rotatePoint} from './util';
 
+const UPDATE_REGION_OF_INTEREST_IOU_THRESHOLD = 0.8;
+
 const PALM_BOX_SHIFT_VECTOR: [number, number] = [0, -0.4];
 const PALM_BOX_ENLARGE_FACTOR = 3;
-const PALM_LANDMARK_IDS = [0, 5, 9, 13, 17, 1, 2];
 
 const HAND_BOX_SHIFT_VECTOR: [number, number] = [0, -0.1];
 const HAND_BOX_ENLARGE_FACTOR = 1.65;
+
+const PALM_LANDMARK_IDS = [0, 5, 9, 13, 17, 1, 2];
+const PALM_LANDMARKS_INDEX_OF_PALM_BASE = 0;
+const PALM_LANDMARKS_INDEX_OF_MIDDLE_FINGER_BASE = 2;
 
 // The Pipeline coordinates between the bounding box and skeleton models.
 export class HandPipeline {
@@ -98,7 +103,7 @@ export class HandPipeline {
 
     const scaledCoords = tf.tidy(() => {
       const currentBox = this.regionsOfInterest[0];
-      const angle = this.calculateRotation(currentBox);
+      const angle = this.calculatePalmRotation(currentBox);
 
       const palmCenter = getBoxCenter(currentBox);
       const palmCenterNormalized: [number, number] =
@@ -199,45 +204,49 @@ export class HandPipeline {
     return scaledCoords;
   }
 
-  private calculateLandmarksBoundingBox(landmarks: number[][]) {
+  private calculateLandmarksBoundingBox(landmarks: number[][]): Box {
     const xs = landmarks.map(d => d[0]);
     const ys = landmarks.map(d => d[1]);
     const startPoint: [number, number] = [Math.min(...xs), Math.min(...ys)];
     const endPoint: [number, number] = [Math.max(...xs), Math.max(...ys)];
-    return {startPoint, endPoint, landmarks};
+    return {startPoint, endPoint};
   }
 
-  private calculateRotation(box: Box) {
-    let keypointsArray = box.palmLandmarks;
-    return computeRotation(keypointsArray[0], keypointsArray[2]);
+  private calculatePalmRotation(box: Box) {
+    return computeRotation(
+        box.palmLandmarks[PALM_LANDMARKS_INDEX_OF_PALM_BASE],
+        box.palmLandmarks[PALM_LANDMARKS_INDEX_OF_MIDDLE_FINGER_BASE]);
   }
 
-  private updateRegionsOfInterest(box: Box, force: boolean) {
-    if (force) {
+  // Updates regions of interest if the intersection over union between
+  // the incoming and previous regions falls below a threshold.
+  private updateRegionsOfInterest(box: Box, forceUpdate: boolean) {
+    if (forceUpdate === true) {
       this.regionsOfInterest = [box];
     } else {
-      const prev = this.regionsOfInterest[0];
+      const previousBox = this.regionsOfInterest[0];
       let iou = 0;
 
-      if (prev && prev.startPoint) {
-        const boxStartEnd = box.startPoint.concat(box.endPoint);
-        const prevStartEnd = prev.startPoint.concat(prev.endPoint);
+      if (previousBox != null && previousBox.startPoint) {
+        const [boxStartX, boxStartY] = box.startPoint;
+        const [boxEndX, boxEndY] = box.endPoint;
+        const [previousBoxStartX, previousBoxStartY] = previousBox.startPoint;
+        const [previousBoxEndX, previousBoxEndY] = previousBox.endPoint;
 
-        const xBox = Math.max(boxStartEnd[0], prevStartEnd[0]);
-        const yBox = Math.max(boxStartEnd[1], prevStartEnd[1]);
-        const xPrev = Math.min(boxStartEnd[2], prevStartEnd[2]);
-        const yPrev = Math.min(boxStartEnd[3], prevStartEnd[3]);
+        const xStartMax = Math.max(boxStartX, previousBoxStartX);
+        const yStartMax = Math.max(boxStartY, previousBoxStartY);
+        const xEndMin = Math.min(boxEndX, previousBoxEndX);
+        const yEndMin = Math.min(boxEndY, previousBoxEndY);
 
-        const interArea = (xPrev - xBox) * (yPrev - yBox);
-
-        const boxArea = (boxStartEnd[2] - boxStartEnd[0]) *
-            (boxStartEnd[3] - boxStartEnd[1]);
-        const prevArea = (prevStartEnd[2] - prevStartEnd[0]) *
-            (prevStartEnd[3] - boxStartEnd[1]);
-        iou = interArea / (boxArea + prevArea - interArea);
+        const intersection = (xEndMin - xStartMax) * (yEndMin - yStartMax);
+        const boxArea = (boxEndX - boxStartX) * (boxEndY - boxStartY);
+        const previousBoxArea = (previousBoxEndX - previousBoxStartX) *
+            (previousBoxEndY - boxStartY);
+        iou = intersection / (boxArea + previousBoxArea - intersection);
       }
 
-      this.regionsOfInterest[0] = iou > 0.8 ? prev : box;
+      this.regionsOfInterest[0] =
+          iou > UPDATE_REGION_OF_INTEREST_IOU_THRESHOLD ? previousBox : box;
     }
   }
 
