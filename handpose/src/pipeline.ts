@@ -23,40 +23,36 @@ import {HandDetector} from './hand';
 import {rotate as rotateWebgl} from './rotate_gpu';
 import {buildRotationMatrix, computeRotation, dot, invertTransformMatrix} from './util';
 
-const BRANCH_ON_DETECTION = true;  // whether we branch box scaling / shifting
-                                   // logic depending on detection type
-
+// The Pipeline coordinates between the bounding box and skeleton models.
 export class HandPipeline {
-  private handdetect: HandDetector;
-  private handposeModel: tfconv.GraphModel;
-  private runsWithoutHandDetector: number;
-  private maxHandsNum: number;
-  private rois: any[];
+  // MediaPipe model for detecting hand bounding box.
+  private boundingBoxDetector: HandDetector;
+  // MediaPipe model for detecting hand mesh.
+  private meshDetector: tfconv.GraphModel;
+
+  private maxHandsNumber: number;
   private maxContinuousChecks: number;
   private detectionConfidence: number;
 
+  // An array of hand bounding boxes.
+  private regionsOfInterest: Box[] = [];
+  private runsWithoutHandDetector = 0;
+
   constructor(
-      handdetect: HandDetector, handposeModel: tfconv.GraphModel,
+      boundingBoxDetector: HandDetector, meshDetector: tfconv.GraphModel,
       maxContinuousChecks: number, detectionConfidence: number) {
-    this.handdetect = handdetect;
-    this.handposeModel = handposeModel;
+    this.boundingBoxDetector = boundingBoxDetector;
+    this.meshDetector = meshDetector;
     this.maxContinuousChecks = maxContinuousChecks;
     this.detectionConfidence = detectionConfidence;
-    this.runsWithoutHandDetector = 0;
-    this.maxHandsNum = 1;  // TODO: Add multi-hand support.
-    this.rois = [];
-  }
 
-  calculateHandPalmCenter(box: Box) {
-    return tf.gather(box.landmarks, [0, 2]).mean(0);
+    this.maxHandsNumber = 1;  // TODO: Add multi-hand support.
   }
 
   /**
-   * Calculates hand mesh for specific image (21 points).
+   * Finds a hand in the input image.
    *
-   * @param {tf.Tensor!} input - image tensor of shape [1, H, W, 3].
-   *
-   * @return {tf.Tensor?} tensor of 2d coordinates (1, 21, 3)
+   * @param input - tensor of shape [1, H, W, 3].
    */
   async estimateHand(input: tf.Tensor3D|ImageData|HTMLVideoElement|
                      HTMLImageElement|HTMLCanvasElement) {
@@ -71,20 +67,16 @@ export class HandPipeline {
       return (input as tf.Tensor).toFloat().expandDims(0);
     });
 
-    const useFreshBox = this.needROIUpdate();
+    const useFreshBox = this.shouldUpdateRegionsOfInterest();
 
-    if (useFreshBox) {
-      // const start = tf.memory().numTensors;
-      const box = this.handdetect.estimateHandBounds(image);
-      // console.log(
-      //     'leaked tensors after detection', tf.memory().numTensors - start);
-
-      if (!box) {
-        this.rois = [];
+    if (useFreshBox === true) {
+      const box = this.boundingBoxDetector.estimateHandBounds(image);
+      if (box === null) {
+        this.regionsOfInterest = [];
         return null;
       }
 
-      this.updateROIFromFacedetector(box, true);
+      this.updateRegionsOfInterest(box, true /*force update*/);
       this.runsWithoutHandDetector = 0;
     } else {
       this.runsWithoutHandDetector++;
@@ -92,7 +84,7 @@ export class HandPipeline {
 
     const scaledCoords = tf.tidy(() => {
       const width = 256., height = 256.;
-      const box = this.rois[0];
+      const box = this.regionsOfInterest[0];
 
       const angle = this.calculateRotation(box);
 
@@ -105,7 +97,7 @@ export class HandPipeline {
       const rotationMatrix = buildRotationMatrix(-angle, handpalm_center);
 
       let box_for_cut, bbRotated, bbShifted, bbSquarified;
-      if (!BRANCH_ON_DETECTION || useFreshBox) {
+      if (useFreshBox) {
         const rotatedLandmarks =
             box.landmarks.map((coord: [number, number]) => {
               const homogeneousCoordinate = [...coord, 1];
@@ -130,7 +122,7 @@ export class HandPipeline {
       //     rotated_image as tf.Tensor4D, [width, height]);
       const handImage = cutted_hand.div(255);
 
-      const output = this.handposeModel.predict(handImage) as tf.Tensor[];
+      const output = this.meshDetector.predict(handImage) as tf.Tensor[];
 
       const output_keypoints = output[output.length - 1];
       const coords = tf.reshape(output_keypoints, [-1, 3]).arraySync() as
@@ -179,29 +171,24 @@ export class HandPipeline {
         selected_landmarks.push(coordsResult[landmarks_ids[i]]);
       }
 
-      let nextBoundingBox;
-      if (BRANCH_ON_DETECTION) {
-        const landmarks_box = this.calculateLandmarksBoundingBox(
-            coordsResult as [number, number][]);
+      const landmarks_box = this.calculateLandmarksBoundingBox(
+          coordsResult as [number, number][]);
 
-        const landmarks_box_shifted = this.shiftBox(landmarks_box, [0, -0.1]);
-        const landmarks_box_shifted_squarified =
-            this.makeSquareBox(landmarks_box_shifted);
+      const landmarks_box_shifted = this.shiftBox(landmarks_box, [0, -0.1]);
+      const landmarks_box_shifted_squarified =
+          this.makeSquareBox(landmarks_box_shifted);
 
-        nextBoundingBox = enlargeBox(landmarks_box_shifted_squarified, 1.65);
-        nextBoundingBox.landmarks = selected_landmarks as [number, number][];
-      } else {
-        nextBoundingBox = this.calculateLandmarksBoundingBox(
-            selected_landmarks as [number, number][]);
-      }
+      const nextBoundingBox =
+          enlargeBox(landmarks_box_shifted_squarified, 1.65);
+      nextBoundingBox.landmarks = selected_landmarks as [number, number][];
 
-      this.updateROIFromFacedetector(
+      this.updateRegionsOfInterest(
           nextBoundingBox as any, false /* force replace */);
 
       const handFlag =
           ((output[0] as tf.Tensor).arraySync() as number[][])[0][0];
       if (handFlag < this.detectionConfidence) {
-        this.rois = [];
+        this.regionsOfInterest = [];
         return null;
       }
 
@@ -264,11 +251,11 @@ export class HandPipeline {
     return computeRotation(keypointsArray[0], keypointsArray[2]);
   }
 
-  updateROIFromFacedetector(box: Box, force: boolean) {
+  updateRegionsOfInterest(box: Box, force: boolean) {
     if (force) {
-      this.rois = [box];
+      this.regionsOfInterest = [box];
     } else {
-      const prev = this.rois[0];
+      const prev = this.regionsOfInterest[0];
       let iou = 0;
 
       if (prev && prev.startPoint) {
@@ -289,14 +276,14 @@ export class HandPipeline {
         iou = interArea / (boxArea + prevArea - interArea);
       }
 
-      this.rois[0] = iou > 0.8 ? prev : box;
+      this.regionsOfInterest[0] = iou > 0.8 ? prev : box;
     }
   }
 
-  needROIUpdate() {
-    const rois_count = this.rois.length;
+  shouldUpdateRegionsOfInterest() {
+    const rois_count = this.regionsOfInterest.length;
 
-    return rois_count !== this.maxHandsNum ||
+    return rois_count !== this.maxHandsNumber ||
         this.runsWithoutHandDetector >= this.maxContinuousChecks;
   }
 }
