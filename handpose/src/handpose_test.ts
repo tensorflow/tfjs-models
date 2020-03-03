@@ -48,12 +48,11 @@ describeWithFlags('Handpose', NODE_ENVS, () => {
     const beforeTensors = tf.memory().numTensors;
     const hand = await model.estimateHand(input);
 
-    console.log(hand);
     expect(tf.memory().numTensors).toEqual(beforeTensors);
 
-    // expect(hand.topLeft).toBeDefined();
-    // expect(hand.bottomRight).toBeDefined();
-    // expect(hand.landmarks).toBeDefined();
-    // expect(hand.probability).toBeDefined();
+    expect(hand.boundingBox.topLeft).toBeDefined();
+    expect(hand.boundingBox.bottomRight).toBeDefined();
+    expect(hand.landmarks).toBeDefined();
+    expect(hand.handInViewConfidence).toBeDefined();
   });
 });

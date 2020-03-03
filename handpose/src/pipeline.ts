@@ -112,10 +112,6 @@ export class HandPose {
       input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
       HTMLCanvasElement,
       flipHorizontal = false): Promise<Prediction> {
-    const savedWebglPackDepthwiseConvFlag =
-        tf.env().get('WEBGL_PACK_DEPTHWISECONV');
-    tf.env().set('WEBGL_PACK_DEPTHWISECONV', true);
-
     const [, width] = getInputTensorDimensions(input);
 
     const image: tf.Tensor4D = tf.tidy(() => {
@@ -181,12 +177,15 @@ export class HandPose {
     croppedInput.dispose();
     rotatedImage.dispose();
 
+    const savedWebglPackDepthwiseConvFlag =
+        tf.env().get('WEBGL_PACK_DEPTHWISECONV');
+    tf.env().set('WEBGL_PACK_DEPTHWISECONV', true);
     const [flag, keypoints] =
         this.meshDetector.predict(handImage) as [tf.Tensor, tf.Tensor];
-    const flagSqueezed = flag.squeeze();
-    const flagValue = flagSqueezed.arraySync() as number;
+    tf.env().set('WEBGL_PACK_DEPTHWISECONV', savedWebglPackDepthwiseConvFlag);
+
+    const flagValue = flag.dataSync()[0];
     flag.dispose();
-    flagSqueezed.dispose();
     handImage.dispose();
 
     if (flagValue < this.detectionConfidence) {
@@ -266,9 +265,6 @@ export class HandPose {
     }
 
     image.dispose();
-
-    tf.env().set('WEBGL_PACK_DEPTHWISECONV', savedWebglPackDepthwiseConvFlag);
-
     return prediction;
   }
 

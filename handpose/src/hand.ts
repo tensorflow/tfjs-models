@@ -91,8 +91,12 @@ export class HandDetector {
       // The model returns a tensor with the following shape:
       //  [1 (batch), 2944 (anchor points), 19 (data for each anchor)]
       // Squeezing immediately because we are not batching inputs.
+      const savedWebglPackDepthwiseConvFlag =
+          tf.env().get('WEBGL_PACK_DEPTHWISECONV');
+      tf.env().set('WEBGL_PACK_DEPTHWISECONV', true);
       const prediction: tf.Tensor2D =
           (this.model.predict(normalizedInput) as tf.Tensor3D).squeeze();
+      tf.env().set('WEBGL_PACK_DEPTHWISECONV', savedWebglPackDepthwiseConvFlag);
 
       // Regression score for each anchor point.
       const scores: tf.Tensor1D =
