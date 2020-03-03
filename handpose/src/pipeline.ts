@@ -35,6 +35,9 @@ const PALM_LANDMARK_IDS = [0, 5, 9, 13, 17, 1, 2];
 const PALM_LANDMARKS_INDEX_OF_PALM_BASE = 0;
 const PALM_LANDMARKS_INDEX_OF_MIDDLE_FINGER_BASE = 2;
 
+type Coords3D = Array<[number, number, number]>;
+type Coords2D = Array<[number, number]>;
+
 // The Pipeline coordinates between the bounding box and skeleton models.
 export class HandPipeline {
   // MediaPipe model for detecting hand bounding box.
@@ -72,7 +75,7 @@ export class HandPipeline {
    * @param input - tensor of shape [1, H, W, 3].
    */
   async estimateHand(input: tf.Tensor3D|ImageData|HTMLVideoElement|
-                     HTMLImageElement|HTMLCanvasElement) {
+                     HTMLImageElement|HTMLCanvasElement): Promise<Coords3D> {
     const savedWebglPackDepthwiseConvFlag =
         tf.env().get('WEBGL_PACK_DEPTHWISECONV');
     tf.env().set('WEBGL_PACK_DEPTHWISECONV', true);
@@ -116,13 +119,12 @@ export class HandPipeline {
 
       let box: Box;
       if (useFreshBox === true) {
-        const rotatedPalmLandmarks: Array<[number, number]> =
-            currentBox.palmLandmarks.map(
-                (coord: [number, number]): [number, number] => {
-                  const homogeneousCoordinate =
-                      [...coord, 1] as [number, number, number];
-                  return rotatePoint(homogeneousCoordinate, rotationMatrix);
-                });
+        const rotatedPalmLandmarks: Coords2D = currentBox.palmLandmarks.map(
+            (coord: [number, number]): [number, number] => {
+              const homogeneousCoordinate =
+                  [...coord, 1] as [number, number, number];
+              return rotatePoint(homogeneousCoordinate, rotationMatrix);
+            });
 
         const boxAroundPalm =
             this.calculateLandmarksBoundingBox(rotatedPalmLandmarks);
@@ -145,8 +147,7 @@ export class HandPipeline {
         return null;
       }
 
-      const rawCoords = tf.reshape(keypoints, [-1, 3]).arraySync() as
-          Array<[number, number, number]>;
+      const rawCoords = tf.reshape(keypoints, [-1, 3]).arraySync() as Coords3D;
 
       const boxSize = getBoxSize(box);
       const scaleFactor =
@@ -174,12 +175,13 @@ export class HandPipeline {
         dot(boxCenter, inverseRotationMatrix[1])
       ];
 
-      const coords = coordsRotated.map((coord: [number, number, number]) => {
-        return [
-          coord[0] + originalBoxCenter[0], coord[1] + originalBoxCenter[1],
-          coord[2]
-        ];
-      });
+      const coords: Coords3D = coordsRotated.map(
+          (coord: [number, number, number]): [number, number, number] => {
+            return [
+              coord[0] + originalBoxCenter[0], coord[1] + originalBoxCenter[1],
+              coord[2]
+            ];
+          });
 
       // The MediaPipe hand mesh model is trained on hands with empty space
       // around them, so we still need to shift / enlarge boxAroundHand even
@@ -190,9 +192,10 @@ export class HandPipeline {
       const nextBoundingBox: Box = enlargeBox(
           squarifyBox(shiftedBoxAroundHand), HAND_BOX_ENLARGE_FACTOR);
 
-      const palmLandmarks: Array<[number, number]> = [];
+      const palmLandmarks: Coords2D = [];
       for (let i = 0; i < PALM_LANDMARK_IDS.length; i++) {
-        palmLandmarks.push(coords[PALM_LANDMARK_IDS[i]] as [number, number]);
+        palmLandmarks.push(
+            coords[PALM_LANDMARK_IDS[i]].slice(0, 2) as [number, number]);
       }
       nextBoundingBox.palmLandmarks = palmLandmarks;
 
@@ -216,7 +219,7 @@ export class HandPipeline {
 
   // Updates regions of interest if the intersection over union between
   // the incoming and previous regions falls below a threshold.
-  private updateRegionsOfInterest(box: Box, forceUpdate: boolean) {
+  private updateRegionsOfInterest(box: Box, forceUpdate: boolean): void {
     if (forceUpdate === true) {
       this.regionsOfInterest = [box];
     } else {
@@ -246,7 +249,7 @@ export class HandPipeline {
     }
   }
 
-  private shouldUpdateRegionsOfInterest() {
+  private shouldUpdateRegionsOfInterest(): boolean {
     const roisCount = this.regionsOfInterest.length;
 
     return roisCount !== this.maxHandsNumber ||
