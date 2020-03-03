@@ -26,6 +26,7 @@ const MAX_QUERY_LEN = 64;
 const MAX_SEQ_LEN = 384;
 const PREDICT_ANSWER_NUM = 5;
 const OUTPUT_OFFSET = 1;
+const NO_ANSWER_THRESHOLD = 4.3980759382247925;
 
 export interface MobileBert {
   findAnswers(question: string, context: string): Promise<Answer[]>;
@@ -254,7 +255,8 @@ class MobileBertImpl implements MobileBert {
 
     const answers: Answer[] = [];
     for (let i = 0; i < origResults.length; i++) {
-      if (i >= PREDICT_ANSWER_NUM) {
+      if (i >= PREDICT_ANSWER_NUM ||
+          origResults[i].score < NO_ANSWER_THRESHOLD) {
         break;
       }
 

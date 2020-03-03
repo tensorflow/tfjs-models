@@ -33,13 +33,16 @@ const process = async () => {
 };
 
 window.onload = () => {
-  modelPromise = qna.load();
+  modelPromise = qna.load({
+    modelUrl:
+        'https://storage.googleapis.com/tfjs-testing/mobilebert-squad2/model.json'
+  });
   input = document.getElementById('question');
   search = document.getElementById('search');
   contextDiv = document.getElementById('context');
   answerDiv = document.getElementById('answer');
   search.onclick = process;
-  
+
   input.addEventListener('keyup', async (event) => {
     if (event.key === 'Enter') {
       process();
