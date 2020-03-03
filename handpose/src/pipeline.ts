@@ -129,48 +129,45 @@ export class HandPipeline {
           box, rotatedImage, [this.meshWidth, this.meshHeight]);
       const handImage = croppedInput.div(255);
 
-      const prediction = this.meshDetector.predict(handImage) as tf.Tensor[];
+      const [flag, keypoints] =
+          this.meshDetector.predict(handImage) as tf.Tensor[];
 
-      const output_keypoints = prediction[prediction.length - 1];
-      const coords = tf.reshape(output_keypoints, [-1, 3]).arraySync() as
+      const coords = tf.reshape(keypoints, [-1, 3]).arraySync() as
           Array<[number, number, number]>;
 
       const boxSize = getBoxSize(box);
       const scaleFactor =
           [boxSize[0] / this.meshWidth, boxSize[1] / this.meshHeight];
 
-      const coordsScaled = coords.map((coord: [number, number, number]) => {
-        return [
-          scaleFactor[0] * (coord[0] - 128), scaleFactor[1] * (coord[1] - 128),
-          coord[2]
-        ];
-      });
+      const coordsScaled =
+          coords.map((coord: [number, number, number]) => ([
+                       scaleFactor[0] * (coord[0] - 128),
+                       scaleFactor[1] * (coord[1] - 128), coord[2]
+                     ]));
 
-      const coords_rotation_matrix = buildRotationMatrix(angle, [0, 0]);
+      const coordsRotationMatrix = buildRotationMatrix(angle, [0, 0]);
       const coordsRotated =
           coordsScaled.map((coord: [number, number, number]) => {
             return [
-              dot(coord, coords_rotation_matrix[0]),
-              dot(coord, coords_rotation_matrix[1])
+              dot(coord, coordsRotationMatrix[0]),
+              dot(coord, coordsRotationMatrix[1])
             ];
           });
 
       const inverseRotationMatrix = invertTransformMatrix(rotationMatrix);
-      const numerator = [...getBoxCenter(box), 1];
+      const boxCenter = [...getBoxCenter(box), 1];
 
-      const original_center = [
-        dot(numerator, inverseRotationMatrix[0]),
-        dot(numerator, inverseRotationMatrix[1]),
-        dot(numerator, inverseRotationMatrix[2])
+      const originalBoxCenter = [
+        dot(boxCenter, inverseRotationMatrix[0]),
+        dot(boxCenter, inverseRotationMatrix[1]),
+        dot(boxCenter, inverseRotationMatrix[2])
       ];
 
-      const coordsResult =
-          coordsRotated.map((coord: [number, number, number]) => {
-            return [
-              coord[0] + original_center[0], coord[1] + original_center[1],
-              coord[2] + original_center[2]
-            ];
-          });
+      const coordsResult = coordsRotated.map(
+          (coord: [number, number, number]) => ([
+            coord[0] + originalBoxCenter[0], coord[1] + originalBoxCenter[1],
+            coord[2] + originalBoxCenter[2]
+          ]));
 
       const landmarks_ids = [0, 5, 9, 13, 17, 1, 2];
 
@@ -192,8 +189,7 @@ export class HandPipeline {
 
       this.updateRegionsOfInterest(nextBoundingBox, false /* force replace */);
 
-      const handFlag = prediction[0].squeeze().arraySync() as number;
-      if (handFlag < this.detectionConfidence) {
+      if (flag.squeeze().arraySync() < this.detectionConfidence) {
         this.regionsOfInterest = [];
         return null;
       }
