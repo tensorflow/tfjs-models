@@ -20,6 +20,7 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {Box, cutBoxFromImageAndResize, enlargeBox, getBoxCenter, getBoxSize, shiftBox, squarifyBox} from './box';
 import {HandDetector} from './hand';
+import {rotate as rotateCpu} from './rotate_cpu';
 import {rotate as rotateWebgl} from './rotate_gpu';
 import {buildRotationMatrix, computeRotation, dot, invertTransformMatrix, rotatePoint} from './util';
 
@@ -39,7 +40,7 @@ type Coords3D = Array<[number, number, number]>;
 type Coords2D = Array<[number, number]>;
 
 // The Pipeline coordinates between the bounding box and skeleton models.
-export class HandPipeline {
+export class HandPose {
   // MediaPipe model for detecting hand bounding box.
   private boundingBoxDetector: HandDetector;
   // MediaPipe model for detecting hand mesh.
@@ -112,8 +113,9 @@ export class HandPipeline {
       const palmCenter = getBoxCenter(currentBox);
       const palmCenterNormalized: [number, number] =
           [palmCenter[0] / image.shape[2], palmCenter[1] / image.shape[1]];
-      const rotatedImage: tf.Tensor4D =
-          rotateWebgl(image, angle, 0, palmCenterNormalized);
+      const rotatedImage: tf.Tensor4D = tf.getBackend() === 'webgl' ?
+          rotateWebgl(image, angle, 0, palmCenterNormalized) :
+          rotateCpu(image, angle, 0, palmCenterNormalized);
       const rotationMatrix = buildRotationMatrix(-angle, palmCenter);
 
       let box: Box;

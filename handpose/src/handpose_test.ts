@@ -20,16 +20,18 @@ import * as tf from '@tensorflow/tfjs-core';
 import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
 import * as handpose from './index';
+import {HandPose} from './pipeline';
 import {stubbedImageVals} from './test_util';
 
 describeWithFlags('Handpose', NODE_ENVS, () => {
-  let model: any;
+  let model: HandPose;
   beforeAll(async () => {
     model = await handpose.load();
   });
 
-  it('estimateHand does not leak memory', async () => {
-    const input: tf.Tensor3D = tf.zeros([128, 128, 3]);
+  fit('estimateHand does not leak memory', async () => {
+    // const input: tf.Tensor3D = tf.zeros([128, 128, 3]);
+    const input: tf.Tensor3D = tf.tensor3d(stubbedImageVals, [128, 128, 3]);
     const beforeTensors = tf.memory().numTensors;
     await model.estimateHand(input);
 

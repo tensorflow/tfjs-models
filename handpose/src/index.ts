@@ -18,7 +18,7 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 import {HandDetector} from './hand';
-import {HandPipeline} from './pipeline';
+import {HandPose} from './pipeline';
 
 // Load the bounding box detector model.
 async function loadHandDetectorModel() {
@@ -67,14 +67,14 @@ export async function load({
   detectionConfidence = 0.8,
   iouThreshold = 0.3,
   scoreThreshold = 0.5
-} = {}) {
+} = {}): Promise<HandPose> {
   const [ANCHORS, handDetectorModel, handMeshModel] = await Promise.all(
       [loadAnchors(), loadHandDetectorModel(), loadHandMeshModel()]);
 
   const detector = new HandDetector(
       handDetectorModel, MESH_MODEL_INPUT_WIDTH, MESH_MODEL_INPUT_HEIGHT,
       ANCHORS, iouThreshold, scoreThreshold);
-  const pipeline = new HandPipeline(
+  const pipeline = new HandPose(
       detector, handMeshModel, MESH_MODEL_INPUT_WIDTH, MESH_MODEL_INPUT_HEIGHT,
       maxContinuousChecks, detectionConfidence);
 
