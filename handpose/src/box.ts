@@ -92,3 +92,16 @@ export function squarifyBox(box: Box): Box {
 
   return {startPoint, endPoint, palmLandmarks: box.palmLandmarks};
 }
+
+export function shiftBox(box: Box, shiftFactor: [number, number]) {
+  const boxSize = [
+    box.endPoint[0] - box.startPoint[0], box.endPoint[1] - box.startPoint[1]
+  ];
+  const shiftVector =
+      [boxSize[0] * shiftFactor[0], boxSize[1] * shiftFactor[1]];
+  const startPoint: [number, number] =
+      [box.startPoint[0] + shiftVector[0], box.startPoint[1] + shiftVector[1]];
+  const endPoint: [number, number] =
+      [box.endPoint[0] + shiftVector[0], box.endPoint[1] + shiftVector[1]];
+  return {startPoint, endPoint, palmLandmarks: box.palmLandmarks};
+}

@@ -18,16 +18,16 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {Box, cutBoxFromImageAndResize, enlargeBox, getBoxCenter, getBoxSize, squarifyBox} from './box';
+import {Box, cutBoxFromImageAndResize, enlargeBox, getBoxCenter, getBoxSize, shiftBox, squarifyBox} from './box';
 import {HandDetector} from './hand';
 import {rotate as rotateWebgl} from './rotate_gpu';
 import {buildRotationMatrix, computeRotation, dot, invertTransformMatrix, rotatePoint} from './util';
 
-const PALM_BOX_SHIFT_VECTOR = [0, -0.4];
+const PALM_BOX_SHIFT_VECTOR: [number, number] = [0, -0.4];
 const PALM_BOX_ENLARGE_FACTOR = 3;
 const PALM_LANDMARK_IDS = [0, 5, 9, 13, 17, 1, 2];
 
-const HAND_BOX_SHIFT_VECTOR = [0, -0.1];
+const HAND_BOX_SHIFT_VECTOR: [number, number] = [0, -0.1];
 const HAND_BOX_ENLARGE_FACTOR = 1.65;
 
 // The Pipeline coordinates between the bounding box and skeleton models.
@@ -121,7 +121,7 @@ export class HandPipeline {
             this.calculateLandmarksBoundingBox(rotatedPalmLandmarks);
         // boxAroundPalm only surrounds the palm - therefore we shift it
         // upwards so it will capture fingers once enlarged / squarified.
-        const shiftedBox = this.shiftBox(boxAroundPalm, PALM_BOX_SHIFT_VECTOR);
+        const shiftedBox = shiftBox(boxAroundPalm, PALM_BOX_SHIFT_VECTOR);
         box = enlargeBox(squarifyBox(shiftedBox), PALM_BOX_ENLARGE_FACTOR);
       } else {
         box = currentBox;
@@ -179,7 +179,7 @@ export class HandPipeline {
       // the box surrounds the entire hand.
       const boxAroundHand = this.calculateLandmarksBoundingBox(coords);
       const shiftedBoxAroundHand =
-          this.shiftBox(boxAroundHand, HAND_BOX_SHIFT_VECTOR);
+          shiftBox(boxAroundHand, HAND_BOX_SHIFT_VECTOR);
       const nextBoundingBox: Box = enlargeBox(
           squarifyBox(shiftedBoxAroundHand), HAND_BOX_ENLARGE_FACTOR);
 
@@ -197,21 +197,6 @@ export class HandPipeline {
 
     tf.env().set('WEBGL_PACK_DEPTHWISECONV', savedWebglPackDepthwiseConvFlag);
     return scaledCoords;
-  }
-
-  private shiftBox(box: Box, shifts: number[]) {
-    const boxSize = [
-      box.endPoint[0] - box.startPoint[0], box.endPoint[1] - box.startPoint[1]
-    ];
-    const absoluteShifts = [boxSize[0] * shifts[0], boxSize[1] * shifts[1]];
-    const startPoint: [number, number] = [
-      box.startPoint[0] + absoluteShifts[0],
-      box.startPoint[1] + absoluteShifts[1]
-    ];
-    const endPoint: [number, number] = [
-      box.endPoint[0] + absoluteShifts[0], box.endPoint[1] + absoluteShifts[1]
-    ];
-    return {startPoint, endPoint, palmLandmarks: box.palmLandmarks};
   }
 
   private calculateLandmarksBoundingBox(landmarks: number[][]) {
