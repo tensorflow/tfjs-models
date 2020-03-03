@@ -70,11 +70,11 @@ export function enlargeBox(box: Box, factor = 1.5): Box {
   const center = getBoxCenter(box);
   const size = getBoxSize(box);
 
-  const newSize = [factor * size[0] / 2, factor * size[1] / 2];
+  const newHalfSize = [factor * size[0] / 2, factor * size[1] / 2];
   const startPoint: [number, number] =
-      [center[0] - newSize[0], center[1] - newSize[1]];
+      [center[0] - newHalfSize[0], center[1] - newHalfSize[1]];
   const endPoint: [number, number] =
-      [center[0] + newSize[0], center[1] + newSize[1]];
+      [center[0] + newHalfSize[0], center[1] + newHalfSize[1]];
 
   return {startPoint, endPoint, palmLandmarks: box.palmLandmarks};
 }

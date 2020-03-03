@@ -171,11 +171,6 @@ export class HandPipeline {
                               coord[1] + originalBoxCenter[1], coord[2]
                             ]));
 
-      const palmLandmarks: Array<[number, number]> = [];
-      for (let i = 0; i < PALM_LANDMARK_IDS.length; i++) {
-        palmLandmarks.push(coords[PALM_LANDMARK_IDS[i]] as [number, number]);
-      }
-
       // The MediaPipe hand mesh model is trained on hands with empty space
       // around them, so we still need to shift / enlarge the box even though
       // the box surrounds the entire hand.
@@ -184,6 +179,11 @@ export class HandPipeline {
           this.shiftBox(boxAroundHand, HAND_BOX_SHIFT_VECTOR);
       const nextBoundingBox: Box = enlargeBox(
           this.makeSquareBox(shiftedBoxAroundHand), HAND_BOX_ENLARGE_FACTOR);
+
+      const palmLandmarks: Array<[number, number]> = [];
+      for (let i = 0; i < PALM_LANDMARK_IDS.length; i++) {
+        palmLandmarks.push(coords[PALM_LANDMARK_IDS[i]] as [number, number]);
+      }
       nextBoundingBox.palmLandmarks = palmLandmarks;
 
       this.updateRegionsOfInterest(nextBoundingBox, false /* force replace */);
@@ -202,7 +202,7 @@ export class HandPipeline {
     return scaledCoords;
   }
 
-  makeSquareBox(box: Box) {
+  private makeSquareBox(box: Box) {
     const centers = getBoxCenter(box);
     const size = getBoxSize(box);
     const maxEdge = Math.max(...size);
@@ -216,7 +216,7 @@ export class HandPipeline {
     return {startPoint, endPoint, palmLandmarks: box.palmLandmarks};
   }
 
-  shiftBox(box: Box, shifts: number[]) {
+  private shiftBox(box: Box, shifts: number[]) {
     const boxSize = [
       box.endPoint[0] - box.startPoint[0], box.endPoint[1] - box.startPoint[1]
     ];
@@ -231,7 +231,7 @@ export class HandPipeline {
     return {startPoint, endPoint, palmLandmarks: box.palmLandmarks};
   }
 
-  calculateLandmarksBoundingBox(landmarks: number[][]) {
+  private calculateLandmarksBoundingBox(landmarks: number[][]) {
     const xs = landmarks.map(d => d[0]);
     const ys = landmarks.map(d => d[1]);
     const startPoint: [number, number] = [Math.min(...xs), Math.min(...ys)];
@@ -239,12 +239,12 @@ export class HandPipeline {
     return {startPoint, endPoint, landmarks};
   }
 
-  calculateRotation(box: Box) {
+  private calculateRotation(box: Box) {
     let keypointsArray = box.palmLandmarks;
     return computeRotation(keypointsArray[0], keypointsArray[2]);
   }
 
-  updateRegionsOfInterest(box: Box, force: boolean) {
+  private updateRegionsOfInterest(box: Box, force: boolean) {
     if (force) {
       this.regionsOfInterest = [box];
     } else {
@@ -273,7 +273,7 @@ export class HandPipeline {
     }
   }
 
-  shouldUpdateRegionsOfInterest() {
+  private shouldUpdateRegionsOfInterest() {
     const roisCount = this.regionsOfInterest.length;
 
     return roisCount !== this.maxHandsNumber ||
