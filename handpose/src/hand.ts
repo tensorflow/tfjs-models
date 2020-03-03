@@ -73,10 +73,11 @@ export class HandDetector {
     });
   }
 
-  normalizeLandmarks(rawLandmarks: tf.Tensor2D, index: number): tf.Tensor2D {
+  normalizeLandmarks(rawPalmLandmarks: tf.Tensor2D, index: number):
+      tf.Tensor2D {
     return tf.tidy(() => {
       const landmarks = tf.add(
-          tf.div(rawLandmarks.reshape([-1, 7, 2]), this.inputSizeTensor),
+          tf.div(rawPalmLandmarks.reshape([-1, 7, 2]), this.inputSizeTensor),
           this.anchors[index]);
 
       return tf.mul(landmarks, this.inputSizeTensor);
@@ -117,9 +118,9 @@ export class HandDetector {
       const boxIndex = boxesWithHands[0];
       const matchingBox = tf.slice(boxes, [boxIndex, 0], [1, -1]);
 
-      const rawLandmarks = tf.slice(prediction, [boxIndex, 5], [1, 14]);
+      const rawPalmLandmarks = tf.slice(prediction, [boxIndex, 5], [1, 14]);
       const landmarks: tf.Tensor2D =
-          this.normalizeLandmarks(rawLandmarks, boxIndex).reshape([-1, 2]);
+          this.normalizeLandmarks(rawPalmLandmarks, boxIndex).reshape([-1, 2]);
 
       return {boxes: matchingBox, landmarks};
     });
@@ -147,7 +148,7 @@ export class HandDetector {
         prediction.boxes.arraySync() as Array<[number, number, number, number]>;
     const startPoint = boundingBoxes[0].slice(0, 2) as [number, number];
     const endPoint = boundingBoxes[0].slice(2, 4) as [number, number];
-    const landmarks =
+    const palmLandmarks =
         prediction.landmarks.arraySync() as Array<[number, number]>;
 
     image.dispose();
@@ -155,7 +156,7 @@ export class HandDetector {
     prediction.landmarks.dispose();
 
     return scaleBoxCoordinates(
-        {startPoint, endPoint, landmarks},
+        {startPoint, endPoint, palmLandmarks},
         [inputWidth / this.width, inputHeight / this.height]);
   }
 }

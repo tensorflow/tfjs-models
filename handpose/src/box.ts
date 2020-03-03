@@ -21,7 +21,7 @@ import * as tf from '@tensorflow/tfjs-core';
 export type Box = {
   startPoint: [number, number],
   endPoint: [number, number],
-  landmarks?: Array<[number, number]>
+  palmLandmarks?: Array<[number, number]>
 };
 
 export function getBoxSize(box: Box): [number, number] {
@@ -56,14 +56,14 @@ export function scaleBoxCoordinates(box: Box, factor: [number, number]): Box {
       [box.startPoint[0] * factor[0], box.startPoint[1] * factor[1]];
   const endPoint: [number, number] =
       [box.endPoint[0] * factor[0], box.endPoint[1] * factor[1]];
-  const landmarks: Array<[number, number]> =
-      box.landmarks.map((coord: [number, number]) => {
+  const palmLandmarks: Array<[number, number]> =
+      box.palmLandmarks.map((coord: [number, number]) => {
         const scaledCoord: [number, number] =
             [coord[0] * factor[0], coord[1] * factor[1]];
         return scaledCoord;
       });
 
-  return {startPoint, endPoint, landmarks};
+  return {startPoint, endPoint, palmLandmarks};
 }
 
 export function enlargeBox(box: Box, factor = 1.5): Box {
@@ -76,5 +76,5 @@ export function enlargeBox(box: Box, factor = 1.5): Box {
   const endPoint: [number, number] =
       [center[0] + newSize[0], center[1] + newSize[1]];
 
-  return {startPoint, endPoint, landmarks: box.landmarks};
+  return {startPoint, endPoint, palmLandmarks: box.palmLandmarks};
 }

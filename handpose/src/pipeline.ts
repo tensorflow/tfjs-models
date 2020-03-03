@@ -25,6 +25,7 @@ import {buildRotationMatrix, computeRotation, dot, invertTransformMatrix} from '
 
 const FRESH_BOX_SHIFT_VECTOR = [0, -0.4];
 const FRESH_BOX_ENLARGE_FACTOR = 3;
+const PALM_LANDMARK_IDS = [0, 5, 9, 13, 17, 1, 2];
 
 // The Pipeline coordinates between the bounding box and skeleton models.
 export class HandPipeline {
@@ -78,13 +79,15 @@ export class HandPipeline {
     const useFreshBox = this.shouldUpdateRegionsOfInterest();
 
     if (useFreshBox === true) {
-      const box = this.boundingBoxDetector.estimateHandBounds(image);
-      if (box === null) {
+      const boundingBoxPrediction =
+          this.boundingBoxDetector.estimateHandBounds(image);
+      if (boundingBoxPrediction === null) {
         this.regionsOfInterest = [];
         return null;
       }
 
-      this.updateRegionsOfInterest(box, true /*force update*/);
+      this.updateRegionsOfInterest(
+          boundingBoxPrediction, true /*force update*/);
       this.runsWithoutHandDetector = 0;
     } else {
       this.runsWithoutHandDetector++;
@@ -103,8 +106,8 @@ export class HandPipeline {
 
       let box: Box;
       if (useFreshBox === true) {
-        const rotatedLandmarks: Array<[number, number]> =
-            currentBox.landmarks.map(
+        const rotatedPalmLandmarks: Array<[number, number]> =
+            currentBox.palmLandmarks.map(
                 (coord: [number, number]): [number, number] => {
                   const homogeneousCoordinate = [...coord, 1];
                   return [
@@ -113,12 +116,11 @@ export class HandPipeline {
                   ];
                 });
 
-        const boxAroundRotatedLandmarks =
-            this.calculateLandmarksBoundingBox(rotatedLandmarks);
-        // boxAroundRotatedLandmarks only surrounds palm - so, we shift it
-        // upwards so it will capture fingers once enlarged and squarified.
-        const shiftedBox =
-            this.shiftBox(boxAroundRotatedLandmarks, FRESH_BOX_SHIFT_VECTOR);
+        const boxAroundPalm =
+            this.calculateLandmarksBoundingBox(rotatedPalmLandmarks);
+        // boxAroundPalm only surrounds the palm - so, we shift it
+        // upwards so it will capture fingers once enlarged / squarified.
+        const shiftedBox = this.shiftBox(boxAroundPalm, FRESH_BOX_SHIFT_VECTOR);
         box = enlargeBox(
             this.makeSquareBox(shiftedBox), FRESH_BOX_ENLARGE_FACTOR);
       } else {
@@ -132,18 +134,18 @@ export class HandPipeline {
       const [flag, keypoints] =
           this.meshDetector.predict(handImage) as tf.Tensor[];
 
-      const coords = tf.reshape(keypoints, [-1, 3]).arraySync() as
+      const rawCoords = tf.reshape(keypoints, [-1, 3]).arraySync() as
           Array<[number, number, number]>;
 
       const boxSize = getBoxSize(box);
       const scaleFactor =
           [boxSize[0] / this.meshWidth, boxSize[1] / this.meshHeight];
 
-      const coordsScaled =
-          coords.map((coord: [number, number, number]) => ([
-                       scaleFactor[0] * (coord[0] - 128),
-                       scaleFactor[1] * (coord[1] - 128), coord[2]
-                     ]));
+      const coordsScaled = rawCoords.map(
+          (coord: [number, number, number]) => ([
+            scaleFactor[0] * (coord[0] - this.meshWidth / 2),
+            scaleFactor[1] * (coord[1] - this.meshHeight / 2), coord[2]
+          ]));
 
       const coordsRotationMatrix = buildRotationMatrix(angle, [0, 0]);
       const coordsRotated =
@@ -160,21 +162,19 @@ export class HandPipeline {
         dot(boxCenter, inverseRotationMatrix[1])
       ];
 
-      const coordsResult =
+      const coords =
           coordsRotated.map((coord: [number, number, number]) => ([
                               coord[0] + originalBoxCenter[0],
                               coord[1] + originalBoxCenter[1], coord[2]
                             ]));
 
-      const landmarks_ids = [0, 5, 9, 13, 17, 1, 2];
-
-      const selected_landmarks = [];
-      for (let i = 0; i < landmarks_ids.length; i++) {
-        selected_landmarks.push(coordsResult[landmarks_ids[i]]);
+      const palmLandmarks: Array<[number, number]> = [];
+      for (let i = 0; i < PALM_LANDMARK_IDS.length; i++) {
+        palmLandmarks.push(coords[PALM_LANDMARK_IDS[i]] as [number, number]);
       }
 
-      const landmarks_box = this.calculateLandmarksBoundingBox(
-          coordsResult as [number, number][]);
+      const landmarks_box =
+          this.calculateLandmarksBoundingBox(coords as [number, number][]);
 
       const landmarks_box_shifted = this.shiftBox(landmarks_box, [0, -0.1]);
       const landmarks_box_shifted_squarified =
@@ -182,7 +182,7 @@ export class HandPipeline {
 
       const nextBoundingBox: Box =
           enlargeBox(landmarks_box_shifted_squarified, 1.65);
-      nextBoundingBox.landmarks = selected_landmarks as [number, number][];
+      nextBoundingBox.palmLandmarks = palmLandmarks;
 
       this.updateRegionsOfInterest(nextBoundingBox, false /* force replace */);
 
@@ -191,7 +191,7 @@ export class HandPipeline {
         return null;
       }
 
-      return coordsResult;
+      return coords;
     });
 
     image.dispose();
@@ -211,7 +211,7 @@ export class HandPipeline {
     const endPoint: [number, number] =
         [centers[0] + halfSize, centers[1] + halfSize];
 
-    return {startPoint, endPoint, landmarks: box.landmarks};
+    return {startPoint, endPoint, palmLandmarks: box.palmLandmarks};
   }
 
   shiftBox(box: Box, shifts: number[]) {
@@ -226,7 +226,7 @@ export class HandPipeline {
     const endPoint: [number, number] = [
       box.endPoint[0] + absoluteShifts[0], box.endPoint[1] + absoluteShifts[1]
     ];
-    return {startPoint, endPoint, landmarks: box.landmarks};
+    return {startPoint, endPoint, palmLandmarks: box.palmLandmarks};
   }
 
   calculateLandmarksBoundingBox(landmarks: Array<[number, number]>) {
@@ -238,7 +238,7 @@ export class HandPipeline {
   }
 
   calculateRotation(box: Box) {
-    let keypointsArray = box.landmarks;
+    let keypointsArray = box.palmLandmarks;
     return computeRotation(keypointsArray[0], keypointsArray[2]);
   }
 
@@ -272,9 +272,9 @@ export class HandPipeline {
   }
 
   shouldUpdateRegionsOfInterest() {
-    const rois_count = this.regionsOfInterest.length;
+    const roisCount = this.regionsOfInterest.length;
 
-    return rois_count !== this.maxHandsNumber ||
+    return roisCount !== this.maxHandsNumber ||
         this.runsWithoutHandDetector >= this.maxContinuousChecks;
   }
 }
