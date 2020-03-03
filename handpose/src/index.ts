@@ -75,7 +75,8 @@ export async function load({
       handDetectorModel, MESH_MODEL_INPUT_WIDTH, MESH_MODEL_INPUT_HEIGHT,
       ANCHORS, iouThreshold, scoreThreshold);
   const pipeline = new HandPipeline(
-      detector, handMeshModel, maxContinuousChecks, detectionConfidence);
+      detector, handMeshModel, MESH_MODEL_INPUT_WIDTH, MESH_MODEL_INPUT_HEIGHT,
+      maxContinuousChecks, detectionConfidence);
 
   return pipeline;
 }

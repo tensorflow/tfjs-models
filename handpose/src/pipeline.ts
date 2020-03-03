@@ -33,6 +33,8 @@ export class HandPipeline {
   private maxHandsNumber: number;
   private maxContinuousChecks: number;
   private detectionConfidence: number;
+  private meshWidth: number;
+  private meshHeight: number;
 
   // An array of hand bounding boxes.
   private regionsOfInterest: Box[] = [];
@@ -40,11 +42,14 @@ export class HandPipeline {
 
   constructor(
       boundingBoxDetector: HandDetector, meshDetector: tfconv.GraphModel,
-      maxContinuousChecks: number, detectionConfidence: number) {
+      meshWidth: number, meshHeight: number, maxContinuousChecks: number,
+      detectionConfidence: number) {
     this.boundingBoxDetector = boundingBoxDetector;
     this.meshDetector = meshDetector;
     this.maxContinuousChecks = maxContinuousChecks;
     this.detectionConfidence = detectionConfidence;
+    this.meshWidth = meshWidth;
+    this.meshHeight = meshHeight;
 
     this.maxHandsNumber = 1;  // TODO: Add multi-hand support.
   }
@@ -83,23 +88,19 @@ export class HandPipeline {
     }
 
     const scaledCoords = tf.tidy(() => {
-      const width = 256., height = 256.;
-      const box = this.regionsOfInterest[0];
+      const currentBox = this.regionsOfInterest[0];
+      const angle = this.calculateRotation(currentBox);
 
-      const angle = this.calculateRotation(box);
+      const palmCenter = getBoxCenter(currentBox);
+      const palmCenterNormalized: [number, number] =
+          [palmCenter[0] / image.shape[2], palmCenter[1] / image.shape[1]];
+      const rotatedImage = rotateWebgl(image, angle, 0, palmCenterNormalized);
+      const rotationMatrix = buildRotationMatrix(-angle, palmCenter);
 
-      const handpalm_center = getBoxCenter(box);
-      const handpalm_center_relative = [
-        handpalm_center[0] / image.shape[2], handpalm_center[1] / image.shape[1]
-      ];
-      const rotated_image = rotateWebgl(
-          image, angle, 0, handpalm_center_relative as [number, number]);
-      const rotationMatrix = buildRotationMatrix(-angle, handpalm_center);
-
-      let box_for_cut, bbRotated, bbShifted, bbSquarified;
-      if (useFreshBox) {
+      let box, bbRotated, bbShifted, bbSquarified;
+      if (useFreshBox === true) {
         const rotatedLandmarks =
-            box.landmarks.map((coord: [number, number]) => {
+            currentBox.landmarks.map((coord: [number, number]) => {
               const homogeneousCoordinate = [...coord, 1];
               return [
                 dot(homogeneousCoordinate, rotationMatrix[0]),
@@ -112,14 +113,12 @@ export class HandPipeline {
         const shiftVector: [number, number] = [0, -0.4];
         bbShifted = this.shiftBox(bbRotated, shiftVector);
         bbSquarified = this.makeSquareBox(bbShifted);
-        box_for_cut = enlargeBox(bbSquarified, 3);
+        box = enlargeBox(bbSquarified, 3);
       } else {
-        box_for_cut = box;
+        box = currentBox;
       }
       const cutted_hand = cutBoxFromImageAndResize(
-          box_for_cut, rotated_image as tf.Tensor4D, [width, height]);
-      // const cutted_hand = box_for_cut.cutFromAndResize(
-      //     rotated_image as tf.Tensor4D, [width, height]);
+          box, rotatedImage as tf.Tensor4D, [this.meshWidth, this.meshHeight]);
       const handImage = cutted_hand.div(255);
 
       const output = this.meshDetector.predict(handImage) as tf.Tensor[];
@@ -128,8 +127,9 @@ export class HandPipeline {
       const coords = tf.reshape(output_keypoints, [-1, 3]).arraySync() as
           Array<[number, number, number]>;
 
-      const boxSize = getBoxSize(box_for_cut);
-      const scaleFactor = [boxSize[0] / width, boxSize[1] / height];
+      const boxSize = getBoxSize(box);
+      const scaleFactor =
+          [boxSize[0] / this.meshWidth, boxSize[1] / this.meshHeight];
 
       const coordsScaled = coords.map((coord: [number, number, number]) => {
         return [
@@ -148,7 +148,7 @@ export class HandPipeline {
           });
 
       const inverseRotationMatrix = invertTransformMatrix(rotationMatrix);
-      const numerator = [...getBoxCenter(box_for_cut), 1];
+      const numerator = [...getBoxCenter(box), 1];
 
       const original_center = [
         dot(numerator, inverseRotationMatrix[0]),
@@ -192,15 +192,7 @@ export class HandPipeline {
         return null;
       }
 
-      let result = [coordsResult];
-      if (location.hash === '#debug') {
-        result = result.concat([
-          angle, cutted_hand, box as any, bbRotated as any, bbShifted as any,
-          bbSquarified as any, nextBoundingBox as any
-        ]);
-      }
-
-      return result;
+      return coordsResult;
     });
 
     image.dispose();

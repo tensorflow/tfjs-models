@@ -20,17 +20,6 @@ import * as handpose from '@tensorflow-models/handpose';
 let videoWidth, videoHeight;
 const color = 'red';
 
-const MAX_KEYPOINTS = 30;
-if(location.hash === '#debug') {
-  for(let i=0; i<MAX_KEYPOINTS; i++) {
-    const point = document.createElement("div");
-    point.id = `point_${i}`;
-    point.className = 'point';
-    point.innerHTML = i;
-    document.querySelector("#keypoints-wrapper").appendChild(point);
-  }
-}
-
 function drawPoint(ctx, y, x, r, color) {
   ctx.beginPath();
   ctx.arc(x, y, r, 0, 2 * Math.PI);
@@ -45,14 +34,8 @@ function drawKeypoints(ctx, keypoints) {
     const y = keypointsArray[i][0];
     const x = keypointsArray[i][1];
     drawPoint(ctx, x - 2, y - 2, 3, color);
-
-    if(location.hash === '#debug') {
-      document.querySelector(`#point_${i}`).style.left = `${videoWidth - y}px`;
-      document.querySelector(`#point_${i}`).style.top = `${x}px`;
-    }
   }
 
-  // Old model.
   const fingers = [
     [0, 1, 2, 3, 4], // thumb
     [0, 5, 6, 7, 8],
@@ -120,9 +103,6 @@ function drawBox(ctx, box, angle, color) {
 
 let model;
 
-const statusElement = document.getElementById("status");
-const status = msg => statusElement.innerText = msg;
-
 async function setupCamera() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     throw new Error(
@@ -152,7 +132,6 @@ async function loadVideo() {
 }
 
 const bindPage = async () => {
-  // model = await handpose.load({meshWidth: 192, meshHeight: 192});
   model = await handpose.load();
   let video;
 
@@ -183,11 +162,6 @@ const landmarksRealTime = async (video) => {
 
   const ctx = canvas.getContext('2d');
 
-  const cut = document.querySelector("#hand_cut");
-  cut.width = 256;
-  cut.height = 256;
-  const cutCtx = cut.getContext('2d');
-
   video.width = videoWidth;
   video.height = videoHeight;
 
@@ -196,57 +170,13 @@ const landmarksRealTime = async (video) => {
 
   ctx.translate(canvas.width, 0);
   ctx.scale(-1, 1);
-  cutCtx.translate(256, 0);
-  cutCtx.scale(-1, 1);
 
   async function frameLandmarks() {
     stats.begin();
     ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
-    let result = await model.estimateHand(video);
+    const result = await model.estimateHand(video);
     if (result) {
-      document.querySelector("#keypoints-wrapper").className = 'show';
-
-      let [keypoints, angle, cutImage, box, rotatedBox, shiftedBox, squaredBox, nextBox] = result;
-
-      drawKeypoints(ctx, keypoints);
-
-      if(box) {
-        box = box.startEndTensor.arraySync();
-        drawBox(ctx, box[0], angle, `rgba(0, 0, 255, 1)`); // blue
-      }
-
-      if(rotatedBox) {
-        rotatedBox = rotatedBox.startEndTensor.arraySync();
-        drawBox(ctx, rotatedBox[0], angle, `rgba(0, 0, 0, 1)`); // black
-      }
-
-      if(shiftedBox) {
-        shiftedBox = shiftedBox.startEndTensor.arraySync();
-        drawBox(ctx, shiftedBox[0], angle, `rgba(255, 0, 0, 1)`); // red
-      }
-
-      if(squaredBox) {
-        squaredBox = squaredBox.startEndTensor.arraySync();
-        drawBox(ctx, squaredBox[0], angle, `rgba(0, 255, 0, 1)`); // green
-      }
-
-      if(nextBox) {
-        nextBox = nextBox.startEndTensor.arraySync();
-        drawBox(ctx, nextBox[0], angle, `rgba(255, 0, 255, 1)`); // purple
-      }
-
-      if(cutImage) {
-        const cutImageData = cutImage.arraySync();
-        for(let r=0; r<256; r++) {
-          for(let c=0; c<256; c++) {
-            const point = cutImageData[0][r][c];
-            cutCtx.fillStyle = `rgb(${point.join(',')})`;
-            cutCtx.fillRect(c, r, 1, 1);
-          }
-        }
-      }
-    } else {
-      document.querySelector("#keypoints-wrapper").className = 'hide';
+      drawKeypoints(ctx, result);
     }
     stats.end();
     requestAnimationFrame(frameLandmarks);
