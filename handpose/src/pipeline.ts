@@ -22,7 +22,7 @@ import {Box, cutBoxFromImageAndResize, enlargeBox, getBoxCenter, getBoxSize, shi
 import {HandDetector} from './hand';
 import {rotate as rotateCpu} from './rotate_cpu';
 import {rotate as rotateWebgl} from './rotate_gpu';
-import {buildRotationMatrix, computeRotation, dot, invertTransformMatrix, rotatePoint} from './util';
+import {buildRotationMatrix, computeRotation, dot, invertTransformMatrix, rotatePoint, TransformationMatrix} from './util';
 
 const UPDATE_REGION_OF_INTEREST_IOU_THRESHOLD = 0.8;
 
@@ -100,6 +100,81 @@ export class HandPose {
     this.maxHandsNumber = 1;  // TODO: Add multi-hand support.
   }
 
+  private getBoxForPalmLandmarks(
+      palmLandmarks: Coords2D, rotationMatrix: TransformationMatrix): Box {
+    const rotatedPalmLandmarks: Coords2D =
+        palmLandmarks.map((coord: [number, number]): [number, number] => {
+          const homogeneousCoordinate =
+              [...coord, 1] as [number, number, number];
+          return rotatePoint(homogeneousCoordinate, rotationMatrix);
+        });
+
+    const boxAroundPalm =
+        this.calculateLandmarksBoundingBox(rotatedPalmLandmarks);
+    // boxAroundPalm only surrounds the palm - therefore we shift it
+    // upwards so it will capture fingers once enlarged + squarified.
+    return enlargeBox(
+        squarifyBox(shiftBox(boxAroundPalm, PALM_BOX_SHIFT_VECTOR)),
+        PALM_BOX_ENLARGE_FACTOR);
+  }
+
+  private getBoxForHandLandmarks(landmarks: Coords3D): Box {
+    // The MediaPipe hand mesh model is trained on hands with empty space
+    // around them, so we still need to shift / enlarge boxAroundHand even
+    // though it surrounds the entire hand.
+    const boundingBox = this.calculateLandmarksBoundingBox(landmarks);
+    const boxAroundHand: Box = enlargeBox(
+        squarifyBox(shiftBox(boundingBox, HAND_BOX_SHIFT_VECTOR)),
+        HAND_BOX_ENLARGE_FACTOR);
+
+    const palmLandmarks: Coords2D = [];
+    for (let i = 0; i < PALM_LANDMARK_IDS.length; i++) {
+      palmLandmarks.push(
+          landmarks[PALM_LANDMARK_IDS[i]].slice(0, 2) as [number, number]);
+    }
+    boxAroundHand.palmLandmarks = palmLandmarks;
+
+    return boxAroundHand;
+  }
+
+  private transformRawCoords(
+      rawCoords: Coords3D, box: Box, angle: number,
+      rotationMatrix: TransformationMatrix): Coords3D {
+    const boxSize = getBoxSize(box);
+    const scaleFactor =
+        [boxSize[0] / this.meshWidth, boxSize[1] / this.meshHeight];
+
+    const coordsScaled = rawCoords.map((coord: [number, number, number]) => {
+      return [
+        scaleFactor[0] * (coord[0] - this.meshWidth / 2),
+        scaleFactor[1] * (coord[1] - this.meshHeight / 2), coord[2]
+      ];
+    });
+
+    const coordsRotationMatrix = buildRotationMatrix(angle, [0, 0]);
+    const coordsRotated =
+        coordsScaled.map((coord: [number, number, number]) => {
+          const rotated = rotatePoint(coord, coordsRotationMatrix);
+          return [...rotated, coord[2]];
+        });
+
+    const inverseRotationMatrix = invertTransformMatrix(rotationMatrix);
+    const boxCenter = [...getBoxCenter(box), 1];
+
+    const originalBoxCenter = [
+      dot(boxCenter, inverseRotationMatrix[0]),
+      dot(boxCenter, inverseRotationMatrix[1])
+    ];
+
+    return coordsRotated.map(
+        (coord: [number, number, number]): [number, number, number] => {
+          return [
+            coord[0] + originalBoxCenter[0], coord[1] + originalBoxCenter[1],
+            coord[2]
+          ];
+        });
+  }
+
   /**
    * Finds a hand in the input image.
    *
@@ -153,20 +228,8 @@ export class HandPose {
 
     let box: Box;
     if (useFreshBox === true) {
-      const rotatedPalmLandmarks: Coords2D = currentBox.palmLandmarks.map(
-          (coord: [number, number]): [number, number] => {
-            const homogeneousCoordinate =
-                [...coord, 1] as [number, number, number];
-            return rotatePoint(homogeneousCoordinate, rotationMatrix);
-          });
-
-      const boxAroundPalm =
-          this.calculateLandmarksBoundingBox(rotatedPalmLandmarks);
-      // boxAroundPalm only surrounds the palm - therefore we shift it
-      // upwards so it will capture fingers once enlarged + squarified.
-      box = enlargeBox(
-          squarifyBox(shiftBox(boxAroundPalm, PALM_BOX_SHIFT_VECTOR)),
-          PALM_BOX_ENLARGE_FACTOR);
+      box =
+          this.getBoxForPalmLandmarks(currentBox.palmLandmarks, rotationMatrix);
     } else {
       box = currentBox;
     }
@@ -184,9 +247,10 @@ export class HandPose {
         this.meshDetector.predict(handImage) as [tf.Tensor, tf.Tensor];
     tf.env().set('WEBGL_PACK_DEPTHWISECONV', savedWebglPackDepthwiseConvFlag);
 
+    handImage.dispose();
+
     const flagValue = flag.dataSync()[0];
     flag.dispose();
-    handImage.dispose();
 
     if (flagValue < this.detectionConfidence) {
       keypoints.dispose();
@@ -199,54 +263,9 @@ export class HandPose {
     keypoints.dispose();
     keypointsReshaped.dispose();
 
-    const boxSize = getBoxSize(box);
-    const scaleFactor =
-        [boxSize[0] / this.meshWidth, boxSize[1] / this.meshHeight];
-
-    const coordsScaled = rawCoords.map((coord: [number, number, number]) => {
-      return [
-        scaleFactor[0] * (coord[0] - this.meshWidth / 2),
-        scaleFactor[1] * (coord[1] - this.meshHeight / 2), coord[2]
-      ];
-    });
-
-    const coordsRotationMatrix = buildRotationMatrix(angle, [0, 0]);
-    const coordsRotated =
-        coordsScaled.map((coord: [number, number, number]) => {
-          const rotated = rotatePoint(coord, coordsRotationMatrix);
-          return [...rotated, coord[2]];
-        });
-
-    const inverseRotationMatrix = invertTransformMatrix(rotationMatrix);
-    const boxCenter = [...getBoxCenter(box), 1];
-
-    const originalBoxCenter = [
-      dot(boxCenter, inverseRotationMatrix[0]),
-      dot(boxCenter, inverseRotationMatrix[1])
-    ];
-
-    const coords: Coords3D = coordsRotated.map(
-        (coord: [number, number, number]): [number, number, number] => {
-          return [
-            coord[0] + originalBoxCenter[0], coord[1] + originalBoxCenter[1],
-            coord[2]
-          ];
-        });
-
-    // The MediaPipe hand mesh model is trained on hands with empty space
-    // around them, so we still need to shift / enlarge boxAroundHand even
-    // though it surrounds the entire hand.
-    const boxAroundHand = this.calculateLandmarksBoundingBox(coords);
-    const nextBoundingBox: Box = enlargeBox(
-        squarifyBox(shiftBox(boxAroundHand, HAND_BOX_SHIFT_VECTOR)),
-        HAND_BOX_ENLARGE_FACTOR);
-
-    const palmLandmarks: Coords2D = [];
-    for (let i = 0; i < PALM_LANDMARK_IDS.length; i++) {
-      palmLandmarks.push(
-          coords[PALM_LANDMARK_IDS[i]].slice(0, 2) as [number, number]);
-    }
-    nextBoundingBox.palmLandmarks = palmLandmarks;
+    const coords =
+        this.transformRawCoords(rawCoords, box, angle, rotationMatrix);
+    const nextBoundingBox = this.getBoxForHandLandmarks(coords);
 
     this.updateRegionsOfInterest(nextBoundingBox, false /* force replace */);
 
@@ -254,8 +273,8 @@ export class HandPose {
       landmarks: coords,
       handInViewConfidence: flagValue,
       boundingBox: {
-        topLeft: boxAroundHand.startPoint,
-        bottomRight: boxAroundHand.endPoint
+        topLeft: nextBoundingBox.startPoint,
+        bottomRight: nextBoundingBox.endPoint
       }
     };
 
