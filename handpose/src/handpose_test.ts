@@ -25,6 +25,7 @@ import {stubbedImageVals} from './test_util';
 describeWithFlags('Handpose', NODE_ENVS, () => {
   let model: handpose.HandPose;
   beforeAll(async () => {
+    // Note: this makes a network request for model assets.
     model = await handpose.load({detectionConfidence: 0});
   });
 

@@ -149,6 +149,8 @@ export class HandDetector {
       return null;
     }
 
+    // Calling arraySync on both boxes and palmLandmarks because the tensors are
+    // very small so it's not worth calling await array().
     const boundingBoxes =
         prediction.boxes.arraySync() as Array<[number, number, number, number]>;
     const startPoint = boundingBoxes[0].slice(0, 2) as [number, number];

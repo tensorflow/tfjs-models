@@ -223,6 +223,8 @@ export class HandPipeline {
     }
 
     const keypointsReshaped = tf.reshape(keypoints, [-1, 3]);
+    // Calling arraySync() because the tensor is very small so it's not worth
+    // calling await array().
     const rawCoords = keypointsReshaped.arraySync() as Coords3D;
     keypoints.dispose();
     keypointsReshaped.dispose();

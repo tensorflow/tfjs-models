@@ -2,7 +2,7 @@
 
 ## Contents
 
-This demo shows how to use the handpose model to detect faces in a video stream.
+This demo shows how to use the handpose model to detect hands in a video stream.
 
 ## Setup
 

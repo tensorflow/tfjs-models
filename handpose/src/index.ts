@@ -57,15 +57,15 @@ interface AnnotatedPrediction extends Prediction {
  * Load handpose.
  *
  * @param config A configuration object with the following properties:
- *  `maxContinuousChecks` How many frames to go without running the bounding box
- * detector. Defaults to infinity. Set to a lower value if you want a safety net
- * in case the mesh detector produces consistently flawed predictions.
- *  `detectionConfidence` Threshold for discarding a prediction. Defaults to
+ * - `maxContinuousChecks` How many frames to go without running the bounding
+ * box detector. Defaults to infinity. Set to a lower value if you want a safety
+ * net in case the mesh detector produces consistently flawed predictions.
+ * - `detectionConfidence` Threshold for discarding a prediction. Defaults to
  * 0.8.
- *  `iouThreshold` A float representing the threshold for deciding whether boxes
- * overlap too much in non-maximum suppression. Must be between [0, 1]. Defaults
- * to 0.3.
- *  `scoreThreshold` A threshold for deciding when to remove boxes based
+ * - `iouThreshold` A float representing the threshold for deciding whether
+ * boxes overlap too much in non-maximum suppression. Must be between [0, 1].
+ * Defaults to 0.3.
+ * - `scoreThreshold` A threshold for deciding when to remove boxes based
  * on score in non-maximum suppression. Defaults to 0.75.
  */
 export async function load({
