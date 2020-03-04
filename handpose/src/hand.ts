@@ -90,6 +90,8 @@ export class HandDetector {
 
       // Currently tfjs-core does not pack depthwiseConv because it fails for
       // very large inputs (https://github.com/tensorflow/tfjs/issues/1652).
+      // TODO(annxingyuan): call tf.enablePackedDepthwiseConv when available
+      // (https://github.com/tensorflow/tfjs/issues/2821)
       const savedWebglPackDepthwiseConvFlag =
           tf.env().get('WEBGL_PACK_DEPTHWISECONV');
       tf.env().set('WEBGL_PACK_DEPTHWISECONV', true);
