@@ -58,16 +58,24 @@ async function main() {
     `prediction` is an object describing the detected hand, for example:
     [
       {
-        handInViewConfidence: 1, // The probability of a face being present.
-        boundingBox: { // The bounding box surrounding the face.
-          topLeft: [232.28, 145.26],
-          bottomRight: [449.75, 308.36],
+        handInViewConfidence: 1, // The probability of a hand being present.
+        boundingBox: { // The bounding box surrounding the hand.
+          topLeft: [162.91, -17.42],
+          bottomRight: [548.56, 368.23],
         },
         landmarks: [ // The 3D coordinates of each facial landmark.
-          [92.07, 119.49, -17.54],
-          [91.97, 102.52, -30.54],
+          [472.52, 298.59, 0.00],
+          [412.80, 315.64, -6.18],
           ...
-        ]
+        ],
+        annotations: { // Semantic groupings of the `landmarks` coordinates.
+          thumb: [
+            [412.80, 315.64, -6.18]
+            [350.02, 298.38, -7.14],
+            ...
+          ],
+          ...
+        }
       }
     ]
     */
