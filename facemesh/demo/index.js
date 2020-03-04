@@ -19,8 +19,11 @@ import * as facemesh from '@tensorflow-models/facemesh';
 import Stats from 'stats.js';
 import * as tf from '@tensorflow/tfjs-core';
 import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
+// TODO(annxingyuan): read version from tfjsWasm directly once https://github.com/tensorflow/tfjs/pull/2819 is merged.
+import {version} from '@tensorflow/tfjs-backend-wasm/dist/version';
+
 tfjsWasm.setWasmPath(
-    'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@1.5.2-alpha1/dist/tfjs-backend-wasm.wasm');
+    `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${version}/dist/tfjs-backend-wasm.wasm`);
 
 function isMobile() {
   const isAndroid = /Android/i.test(navigator.userAgent);
