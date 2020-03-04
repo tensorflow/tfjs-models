@@ -147,6 +147,11 @@ const landmarksRealTime = async (video) => {
   ctx.translate(canvas.width, 0);
   ctx.scale(-1, 1);
 
+  // These anchor points allow the hand pointcloud to resize according to its
+  // position in the input.
+  const ANCHOR_POINTS = [[0, 0, 0], [0, -VIDEO_SIZE, 0],
+    [-VIDEO_SIZE, 0, 0], [-VIDEO_SIZE, -VIDEO_SIZE, 0]];
+
   async function frameLandmarks() {
     stats.begin();
     ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
@@ -160,10 +165,18 @@ const landmarksRealTime = async (video) => {
           return [-point[0], -point[1], -point[2]];
         });
 
-        const dataset = new ScatterGL.Dataset(pointsData);
+        const dataset = new ScatterGL.Dataset([...pointsData, ...ANCHOR_POINTS]);
 
         if (!scatterGLHasInitialized) {
           scatterGL.render(dataset);
+
+          scatterGL.setSequences(fingers.map(finger => ({ indices: finger })));
+          scatterGL.setPointColorer((index) => {
+            if(index < pointsData.length) {
+              return 'steelblue';
+            }
+            return 'white'; // Hide.
+          });
         } else {
           scatterGL.updateDataset(dataset);
         }
