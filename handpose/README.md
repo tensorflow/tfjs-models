@@ -63,7 +63,7 @@ async function main() {
           topLeft: [162.91, -17.42],
           bottomRight: [548.56, 368.23],
         },
-        landmarks: [ // The 3D coordinates of each facial landmark.
+        landmarks: [ // The 3D coordinates of each hand landmark.
           [472.52, 298.59, 0.00],
           [412.80, 315.64, -6.18],
           ...
@@ -80,8 +80,8 @@ async function main() {
     ]
     */
 
-    const keypoints = predictions[i].scaledMesh;
-    // Log facial keypoints.
+    const keypoints = predictions[i].landmarks;
+    // Log hand keypoints.
     for (let i = 0; i < keypoints.length; i++) {
       const [x, y, z] = keypoints[i];
       console.log(`Keypoint ${i}: [${x}, ${y}, ${z}]`);
