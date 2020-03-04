@@ -24,7 +24,8 @@ function isMobile() {
 }
 
 let videoWidth, videoHeight, scatterGLHasInitialized = false, scatterGL;
-const VIDEO_SIZE = 500;
+const VIDEO_WIDTH = 640;
+const VIDEO_HEIGHT = 500;
 const mobile = isMobile();
 // Don't render the point cloud on mobile in order to maximize performance and
 // to avoid crowding limited screen space.
@@ -88,8 +89,8 @@ async function setupCamera() {
       facingMode: 'user',
       // Only setting the video to a specified size in order to accommodate a
       // point cloud, so on mobile devices accept the default size.
-      width: mobile ? undefined : VIDEO_SIZE,
-      height: mobile ? undefined : VIDEO_SIZE
+      width: mobile ? undefined : VIDEO_WIDTH,
+      height: mobile ? undefined : VIDEO_HEIGHT
     },
   });
   video.srcObject = stream;
@@ -150,8 +151,8 @@ const landmarksRealTime = async (video) => {
 
   // These anchor points allow the hand pointcloud to resize according to its
   // position in the input.
-  const ANCHOR_POINTS = [[0, 0, 0], [0, -VIDEO_SIZE, 0],
-    [-VIDEO_SIZE, 0, 0], [-VIDEO_SIZE, -VIDEO_SIZE, 0]];
+  const ANCHOR_POINTS = [[0, 0, 0], [0, -VIDEO_HEIGHT, 0],
+    [-VIDEO_WIDTH, 0, 0], [-VIDEO_WIDTH, -VIDEO_HEIGHT, 0]];
 
   async function frameLandmarks() {
     stats.begin();
@@ -192,7 +193,7 @@ const landmarksRealTime = async (video) => {
 
   if (renderPointcloud) {
     document.querySelector('#scatter-gl-container').style =
-      `width: ${VIDEO_SIZE}px; height: ${VIDEO_SIZE}px;`;
+      `width: ${VIDEO_WIDTH}px; height: ${VIDEO_HEIGHT}px;`;
 
     scatterGL = new ScatterGL(
         document.querySelector('#scatter-gl-container'),
