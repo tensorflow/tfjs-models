@@ -39,30 +39,6 @@ const PALM_LANDMARKS_INDEX_OF_MIDDLE_FINGER_BASE = 2;
 type Coords3D = Array<[number, number, number]>;
 type Coords2D = Array<[number, number]>;
 
-function getInputTensorDimensions(input: tf.Tensor3D|ImageData|HTMLVideoElement|
-                                  HTMLImageElement|
-                                  HTMLCanvasElement): [number, number] {
-  return input instanceof tf.Tensor ? [input.shape[0], input.shape[1]] :
-                                      [input.height, input.width];
-}
-
-function flipHandHorizontal(prediction: Prediction, width: number): Prediction {
-  const {handInViewConfidence, landmarks, boundingBox} = prediction;
-  return {
-    handInViewConfidence,
-    landmarks: landmarks.map(
-        (coord: [number, number, number]): [number, number, number] => {
-          return [width - 1 - coord[0], coord[1], coord[2]];
-        }),
-    boundingBox: {
-      topLeft: [width - 1 - boundingBox.topLeft[0], boundingBox.topLeft[1]],
-      bottomRight: [
-        width - 1 - boundingBox.bottomRight[0], boundingBox.bottomRight[1]
-      ]
-    }
-  };
-}
-
 export interface Prediction {
   handInViewConfidence: number;
   landmarks: Coords3D;
@@ -70,7 +46,7 @@ export interface Prediction {
 }
 
 // The Pipeline coordinates between the bounding box and skeleton models.
-export class HandPose {
+export class HandPipeline {
   // MediaPipe model for detecting hand bounding box.
   private boundingBoxDetector: HandDetector;
   // MediaPipe model for detecting hand mesh.
@@ -179,27 +155,7 @@ export class HandPose {
         });
   }
 
-  /**
-   * Finds a hand in the input image.
-   *
-   * @param input The image to classify. Can be a tensor, DOM element image,
-   * video, or canvas.
-   * @param flipHorizontal Whether to flip the hand keypoints horizontally.
-   * Should be true for videos that are flipped by default (e.g. webcams).
-   */
-  async estimateHand(
-      input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
-      HTMLCanvasElement,
-      flipHorizontal = false): Promise<Prediction> {
-    const [, width] = getInputTensorDimensions(input);
-
-    const image: tf.Tensor4D = tf.tidy(() => {
-      if (!(input instanceof tf.Tensor)) {
-        input = tf.browser.fromPixels(input);
-      }
-      return input.toFloat().expandDims(0);
-    });
-
+  async estimateHand(image: tf.Tensor4D): Promise<Prediction> {
     const useFreshBox = this.shouldUpdateRegionsOfInterest();
     if (useFreshBox === true) {
       const boundingBoxPrediction =
@@ -286,13 +242,7 @@ export class HandPose {
       }
     };
 
-    let prediction = result;
-    if (flipHorizontal === true) {
-      prediction = flipHandHorizontal(result, width);
-    }
-
-    image.dispose();
-    return prediction;
+    return result;
   }
 
   private calculateLandmarksBoundingBox(landmarks: number[][]): Box {

@@ -18,7 +18,7 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 import {HandDetector} from './hand';
-import {HandPose} from './pipeline';
+import {HandPipeline, Prediction} from './pipeline';
 
 // Load the bounding box detector model.
 async function loadHandDetectorModel() {
@@ -74,9 +74,73 @@ export async function load({
   const detector = new HandDetector(
       handDetectorModel, MESH_MODEL_INPUT_WIDTH, MESH_MODEL_INPUT_HEIGHT,
       ANCHORS, iouThreshold, scoreThreshold);
-  const pipeline = new HandPose(
+  const pipeline = new HandPipeline(
       detector, handMeshModel, MESH_MODEL_INPUT_WIDTH, MESH_MODEL_INPUT_HEIGHT,
       maxContinuousChecks, detectionConfidence);
+  const handpose = new HandPose(pipeline);
 
-  return pipeline;
+  return handpose;
+}
+
+function getInputTensorDimensions(input: tf.Tensor3D|ImageData|HTMLVideoElement|
+                                  HTMLImageElement|
+                                  HTMLCanvasElement): [number, number] {
+  return input instanceof tf.Tensor ? [input.shape[0], input.shape[1]] :
+                                      [input.height, input.width];
+}
+
+function flipHandHorizontal(prediction: Prediction, width: number): Prediction {
+  const {handInViewConfidence, landmarks, boundingBox} = prediction;
+  return {
+    handInViewConfidence,
+    landmarks: landmarks.map(
+        (coord: [number, number, number]): [number, number, number] => {
+          return [width - 1 - coord[0], coord[1], coord[2]];
+        }),
+    boundingBox: {
+      topLeft: [width - 1 - boundingBox.topLeft[0], boundingBox.topLeft[1]],
+      bottomRight: [
+        width - 1 - boundingBox.bottomRight[0], boundingBox.bottomRight[1]
+      ]
+    }
+  };
+}
+
+export class HandPose {
+  private pipeline: HandPipeline;
+
+  constructor(pipeline: HandPipeline) {
+    this.pipeline = pipeline;
+  }
+
+  /**
+   * Finds a hand in the input image.
+   *
+   * @param input The image to classify. Can be a tensor, DOM element image,
+   * video, or canvas.
+   * @param flipHorizontal Whether to flip the hand keypoints horizontally.
+   * Should be true for videos that are flipped by default (e.g. webcams).
+   */
+  async estimateHand(
+      input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
+      HTMLCanvasElement,
+      flipHorizontal = false) {
+    const [, width] = getInputTensorDimensions(input);
+
+    const image: tf.Tensor4D = tf.tidy(() => {
+      if (!(input instanceof tf.Tensor)) {
+        input = tf.browser.fromPixels(input);
+      }
+      return input.toFloat().expandDims(0);
+    });
+
+    const result = await this.pipeline.estimateHand(image);
+    let prediction = result;
+    if (flipHorizontal === true) {
+      prediction = flipHandHorizontal(result, width);
+    }
+
+    image.dispose();
+    return prediction;
+  }
 }
