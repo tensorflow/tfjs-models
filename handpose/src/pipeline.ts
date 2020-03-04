@@ -204,6 +204,8 @@ export class HandPipeline {
     croppedInput.dispose();
     rotatedImage.dispose();
 
+    // Currently tfjs-core does not pack depthwiseConv because it fails for
+    // very large inputs (https://github.com/tensorflow/tfjs/issues/1652).
     const savedWebglPackDepthwiseConvFlag =
         tf.env().get('WEBGL_PACK_DEPTHWISECONV');
     tf.env().set('WEBGL_PACK_DEPTHWISECONV', true);

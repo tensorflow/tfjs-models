@@ -26,7 +26,8 @@ function isMobile() {
 let videoWidth, videoHeight, scatterGLHasInitialized = false, scatterGL;
 const VIDEO_SIZE = 500;
 const mobile = isMobile();
-// Don't render the point cloud on mobile in order to maximize performance and to avoid crowding limited screen space.
+// Don't render the point cloud on mobile in order to maximize performance and
+// to avoid crowding limited screen space.
 const renderPointcloud = mobile === false;
 
 function drawPoint(ctx, y, x, r) {
