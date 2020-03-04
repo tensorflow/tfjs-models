@@ -101,8 +101,11 @@ async function renderPrediction() {
         return scaledMesh.map(point => ([-point[0], -point[1], -point[2]]));
       });
 
-      const dataset = new ScatterGL.Dataset(
-          pointsData.reduce((acc, curr) => acc.concat(curr), []) /* flatten */);
+      let flattenedPointsData = [];
+      for (let i=0; i<pointsData.length; i++) {
+        flattenedPointsData = flattenedPointsData.concat(pointsData[i]);
+      }
+      const dataset = new ScatterGL.Dataset(flattenedPointsData);
 
       if (!scatterGLHasInitialized) {
         scatterGL.render(dataset);
