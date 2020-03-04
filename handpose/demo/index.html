@@ -8,18 +8,9 @@
   #canvas-wrapper {
     position: relative;
   }
-  #keypoints-wrapper {
-    position: absolute;
-    top: 0;
-    left: 0;
-  }
-  .hide {
-    display: none;
-  }
-  .point {
-    position: absolute;
-    color: white;
-    font-size: 12px;
+  #canvas-wrapper, #scatter-gl-container {
+    display: inline-block;
+    vertical-align: top;
   }
 </style>
 <script src="https://rawgit.com/mrdoob/stats.js/master/build/stats.min.js"></script>
@@ -29,15 +20,16 @@
   <div id="predictions"></div>
   <div id="canvas-wrapper">
     <canvas id="output" style=""></canvas>
-  </div>
-  <div id="scatter-gl-container"></div>
-  <video id="video" playsinline style="
+    <video id="video" playsinline style="
     -webkit-transform: scaleX(-1);
     transform: scaleX(-1);
     visibility: hidden;
     width: auto;
     height: auto;
+    position: absolute;
     ">
   </video>
+  </div>
+  <div id="scatter-gl-container"></div>
   <script src="./index.js"></script>
 </body>

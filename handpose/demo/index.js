@@ -17,17 +17,31 @@
 
 import * as handpose from '@tensorflow-models/handpose';
 
-let videoWidth, videoHeight,
-scatterGLHasInitialized = false, scatterGL;
-const color = 'red';
-const renderPointcloud = true;
+function isMobile() {
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  return isAndroid || isiOS;
+}
 
-function drawPoint(ctx, y, x, r, color) {
+let videoWidth, videoHeight, scatterGLHasInitialized = false, scatterGL;
+const VIDEO_SIZE = 500;
+const mobile = isMobile();
+// Don't render the point cloud on mobile in order to maximize performance and to avoid crowding limited screen space.
+const renderPointcloud = mobile === false;
+
+function drawPoint(ctx, y, x, r) {
   ctx.beginPath();
   ctx.arc(x, y, r, 0, 2 * Math.PI);
-  ctx.fillStyle = color;
   ctx.fill();
 }
+
+const fingers = [
+  [0, 1, 2, 3, 4],
+  [0, 5, 6, 7, 8],
+  [0, 9, 10, 11, 12],
+  [0, 13, 14, 15, 16],
+  [0, 17, 18, 19, 20],
+];
 
 function drawKeypoints(ctx, keypoints) {
   const keypointsArray = keypoints;
@@ -35,41 +49,16 @@ function drawKeypoints(ctx, keypoints) {
   for (let i = 0; i < keypointsArray.length; i++) {
     const y = keypointsArray[i][0];
     const x = keypointsArray[i][1];
-    drawPoint(ctx, x - 2, y - 2, 3, color);
+    drawPoint(ctx, x - 2, y - 2, 3);
   }
-
-  const fingers = [
-    [0, 1, 2, 3, 4], // thumb
-    [0, 5, 6, 7, 8],
-    [0, 9, 10, 11, 12],
-    [0, 13, 14, 15, 16],
-    [0, 17, 18, 19, 20],
-  ];
 
   for(let i=0; i<fingers.length; i++) {
     const points = fingers[i].map(idx => keypoints[idx]);
-    drawPath(ctx, points, 'red', false);
+    drawPath(ctx, points, false);
   }
 }
 
-function vectorDiff(v1, v2) {
-  return [v1[0] - v2[0], v1[1] - v2[1]];
-}
-
-function vectorSum(v1, v2) {
-  return [v1[0] + v2[0], v1[1] + v2[1]];
-}
-
-function rotatePoint(point, rad) {
-  return [
-    point[0] * Math.cos(rad) - point[1] * Math.sin(rad),
-    point[0] * Math.sin(rad) + point[1] * Math.cos(rad)
-  ];
-}
-
-function drawPath(ctx, points, color, closePath) {
-  ctx.strokeStyle = color;
-
+function drawPath(ctx, points, closePath) {
   const region = new Path2D();
   region.moveTo(points[0][0], points[0][1]);
   for (let i = 1; i < points.length; i++) {
@@ -81,26 +70,6 @@ function drawPath(ctx, points, color, closePath) {
     region.closePath();
   }
   ctx.stroke(region);
-}
-
-function drawBox(ctx, box, angle, color) {
-  const upperRight = [box[0], box[1]];
-  const lowerLeft = [box[2], box[3]];
-  const center = vectorSum(lowerLeft,
-    vectorDiff(upperRight, lowerLeft).map(d => d / 2));
-
-  let upperLeft = rotatePoint(vectorDiff(upperRight, center), Math.PI / 2);
-  upperLeft = vectorSum(upperLeft, center);
-
-  let lowerRight = rotatePoint(vectorDiff(lowerLeft, center), Math.PI / 2);
-  lowerRight = vectorSum(lowerRight, center);
-
-  const points = [upperRight, lowerRight, lowerLeft, upperLeft].map(point => {
-    const rotated = rotatePoint(vectorDiff(point, center), angle);
-    return vectorSum(rotated, center);
-  });
-
-  drawPath(ctx, points, color, true);
 }
 
 let model;
@@ -115,7 +84,11 @@ async function setupCamera() {
   const stream = await navigator.mediaDevices.getUserMedia({
     'audio': false,
     'video': {
-      facingMode: 'user'
+      facingMode: 'user',
+      // Only setting the video to a specified size in order to accommodate a
+      // point cloud, so on mobile devices accept the default size.
+      width: mobile ? undefined : VIDEO_SIZE,
+      height: mobile ? undefined : VIDEO_SIZE
     },
   });
   video.srcObject = stream;
@@ -169,6 +142,7 @@ const landmarksRealTime = async (video) => {
 
   ctx.clearRect(0, 0, videoWidth, videoHeight);
   ctx.strokeStyle = "red";
+  ctx.fillStyle = "red";
 
   ctx.translate(canvas.width, 0);
   ctx.scale(-1, 1);
@@ -182,11 +156,6 @@ const landmarksRealTime = async (video) => {
       drawKeypoints(ctx, result);
 
       if (renderPointcloud === true && scatterGL != null) {
-        // const pointsData = predictions.map(prediction => {
-        //   let scaledMesh = prediction.scaledMesh;
-        //   return scaledMesh.map(point => ([-point[0], -point[1], -point[2]]));
-        // });
-
         const pointsData = result.map(point => {
           return [-point[0], -point[1], -point[2]];
         });
@@ -209,7 +178,7 @@ const landmarksRealTime = async (video) => {
 
   if (renderPointcloud) {
     document.querySelector('#scatter-gl-container').style =
-      `width: ${500}px; height: ${500}px;`;
+      `width: ${VIDEO_SIZE}px; height: ${VIDEO_SIZE}px;`;
 
     scatterGL = new ScatterGL(
         document.querySelector('#scatter-gl-container'),
