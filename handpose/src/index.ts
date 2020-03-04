@@ -17,8 +17,10 @@
 
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
+
 import {HandDetector} from './hand';
-import {HandPipeline, Prediction} from './pipeline';
+import {MESH_ANNOTATIONS} from './keypoints';
+import {Coords3D, HandPipeline, Prediction} from './pipeline';
 
 // Load the bounding box detector model.
 async function loadHandDetectorModel() {
@@ -45,6 +47,10 @@ async function loadAnchors() {
       .fetch(
           'https://storage.googleapis.com/tfjs-models/assets/handpose/anchors.json')
       .then(d => d.json());
+}
+
+interface AnnotatedPrediction extends Prediction {
+  annotations: {[key: string]: Array<[number, number, number]>};
 }
 
 /**
@@ -113,6 +119,10 @@ export class HandPose {
     this.pipeline = pipeline;
   }
 
+  static getAnnotations(): {[key: string]: number[]} {
+    return MESH_ANNOTATIONS;
+  }
+
   /**
    * Finds a hand in the input image.
    *
@@ -124,7 +134,7 @@ export class HandPose {
   async estimateHand(
       input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
       HTMLCanvasElement,
-      flipHorizontal = false) {
+      flipHorizontal = false): Promise<AnnotatedPrediction> {
     const [, width] = getInputTensorDimensions(input);
 
     const image: tf.Tensor4D = tf.tidy(() => {
@@ -135,12 +145,28 @@ export class HandPose {
     });
 
     const result = await this.pipeline.estimateHand(image);
+    image.dispose();
+
+    if (result === null) {
+      return null;
+    }
+
     let prediction = result;
     if (flipHorizontal === true) {
       prediction = flipHandHorizontal(result, width);
     }
 
-    image.dispose();
-    return prediction;
+    const annotations: {[key: string]: Coords3D} = {};
+    for (const key in MESH_ANNOTATIONS) {
+      annotations[key] =
+          MESH_ANNOTATIONS[key].map(index => prediction.landmarks[index]);
+    }
+
+    return {
+      handInViewConfidence: prediction.handInViewConfidence,
+      boundingBox: prediction.boundingBox,
+      landmarks: prediction.landmarks,
+      annotations
+    };
   }
 }

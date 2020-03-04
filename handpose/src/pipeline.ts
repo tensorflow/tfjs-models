@@ -36,7 +36,7 @@ const PALM_LANDMARK_IDS = [0, 5, 9, 13, 17, 1, 2];
 const PALM_LANDMARKS_INDEX_OF_PALM_BASE = 0;
 const PALM_LANDMARKS_INDEX_OF_MIDDLE_FINGER_BASE = 2;
 
-type Coords3D = Array<[number, number, number]>;
+export type Coords3D = Array<[number, number, number]>;
 type Coords2D = Array<[number, number]>;
 
 export interface Prediction {
