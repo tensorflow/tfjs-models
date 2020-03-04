@@ -22,6 +22,8 @@ import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
 // TODO(annxingyuan): read version from tfjsWasm directly once https://github.com/tensorflow/tfjs/pull/2819 is merged.
 import {version} from '@tensorflow/tfjs-backend-wasm/dist/version';
 
+import {TRIANGULATION} from './triangulation';
+
 tfjsWasm.setWasmPath(
     `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${version}/dist/tfjs-backend-wasm.wasm`);
 
@@ -29,6 +31,20 @@ function isMobile() {
   const isAndroid = /Android/i.test(navigator.userAgent);
   const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
   return isAndroid || isiOS;
+}
+
+function drawPath(ctx, points, closePath) {
+  const region = new Path2D();
+  region.moveTo(points[0][0], points[0][1]);
+  for (let i = 1; i < points.length; i++) {
+    const point = points[i];
+    region.lineTo(point[0], point[1]);
+  }
+
+  if(closePath) {
+    region.closePath();
+  }
+  ctx.stroke(region);
 }
 
 let model, ctx, videoWidth, videoHeight, video, canvas,
@@ -89,12 +105,14 @@ async function renderPrediction() {
     predictions.forEach(prediction => {
       const keypoints = prediction.scaledMesh;
 
-      for (let i = 0; i < keypoints.length; i++) {
-        const x = keypoints[i][0];
-        const y = keypoints[i][1];
-        ctx.beginPath();
-        ctx.arc(x, y, 1 /* radius */, 0, 2 * Math.PI);
-        ctx.fill();
+      for(let i=0; i<TRIANGULATION.length / 3; i++) {
+        const points = [
+          TRIANGULATION[i * 3],
+          TRIANGULATION[i * 3 + 1],
+          TRIANGULATION[i * 3 + 2]
+        ].map(index => keypoints[index]);
+
+        drawPath(ctx, points, true);
       }
     });
 
@@ -146,7 +164,8 @@ async function setupPage() {
   ctx = canvas.getContext('2d');
   ctx.translate(canvas.width, 0);
   ctx.scale(-1, 1);
-  ctx.fillStyle = '#32EEDB';
+  ctx.strokeStyle = '#32EEDB';
+  ctx.lineWidth = 0.5;
 
   model = await facemesh.load({maxFaces: state.maxFaces});
   renderPrediction();
