@@ -100,6 +100,7 @@ export class HandPose {
     this.maxHandsNumber = 1;  // TODO: Add multi-hand support.
   }
 
+  // Get the bounding box surrounding the hand, given palm landmarks.
   private getBoxForPalmLandmarks(
       palmLandmarks: Coords2D, rotationMatrix: TransformationMatrix): Box {
     const rotatedPalmLandmarks: Coords2D =
@@ -118,6 +119,7 @@ export class HandPose {
         PALM_BOX_ENLARGE_FACTOR);
   }
 
+  // Get the bounding box surrounding the hand, given all hand landmarks.
   private getBoxForHandLandmarks(landmarks: Coords3D): Box {
     // The MediaPipe hand mesh model is trained on hands with empty space
     // around them, so we still need to shift / enlarge boxAroundHand even
@@ -137,6 +139,8 @@ export class HandPose {
     return boxAroundHand;
   }
 
+  // Scale, rotate, and translate raw keypoints from the model so they map to
+  // the input coordinates.
   private transformRawCoords(
       rawCoords: Coords3D, box: Box, angle: number,
       rotationMatrix: TransformationMatrix): Coords3D {
@@ -213,6 +217,7 @@ export class HandPose {
       this.runsWithoutHandDetector++;
     }
 
+    // Rotate input so the hand is vertically oriented.
     const currentBox = this.regionsOfInterest[0];
     const angle = computeRotation(
         currentBox.palmLandmarks[PALM_LANDMARKS_INDEX_OF_PALM_BASE],
@@ -227,6 +232,9 @@ export class HandPose {
     const rotationMatrix = buildRotationMatrix(-angle, palmCenter);
 
     let box: Box;
+    // The bounding box detector only detects palms, so if we're using a fresh
+    // bounding box prediction, we have to construct the hand bounding box from
+    // the palm keypoints.
     if (useFreshBox === true) {
       box =
           this.getBoxForPalmLandmarks(currentBox.palmLandmarks, rotationMatrix);
