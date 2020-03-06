@@ -33,10 +33,7 @@ const process = async () => {
 };
 
 window.onload = () => {
-  modelPromise = qna.load({
-    modelUrl:
-        'https://storage.googleapis.com/tfjs-testing/mobilebert-squad2-n/model.json'
-  });
+  modelPromise = qna.load();
   input = document.getElementById('question');
   search = document.getElementById('search');
   contextDiv = document.getElementById('context');
