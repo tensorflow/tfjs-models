@@ -28,8 +28,18 @@ describeWithFlags('qna', NODE_ENVS, () => {
       spyOn(model, 'execute')
           .and.callFake(
               (x: tf.Tensor) =>
-                  [tf.tensor2d([0, 0, 0, 0, 1, 2, 3, 2, 1, 0], [1, 10]),
-                   tf.tensor2d([0, 0, 0, 0, 1, 2, 3, 2, 1, 2], [1, 10])]);
+                  [tf.tensor2d(
+                       [
+                         0, 0, 0, 0, 10, 20, 30, 20, 10, 0,
+                         ...Array(374).fill(0)
+                       ],
+                       [1, 384]),
+                   tf.tensor2d(
+                       [
+                         0, 0, 0, 0, 10, 20, 30, 20, 10, 20,
+                         ...Array(374).fill(0)
+                       ],
+                       [1, 384])]);
       return Promise.resolve(model);
     });
   });
@@ -68,7 +78,20 @@ describeWithFlags('qna', NODE_ENVS, () => {
   it('qna detect method should work for long context', async () => {
     const qna = await load();
     const context = 'text '.repeat(1000);
-
+    model.execute.and.returnValue(
+      [tf.tensor2d(
+        [
+          0, 0, 0, 0, 10, 20, 30, 20, 10, 0,
+          ...Array(384 * 6 - 10).fill(0)
+        ],
+        [6, 384]),
+    tf.tensor2d(
+        [
+          0, 0, 0, 0, 10, 20, 30, 20, 10, 20,
+          ...Array(384 * 6 - 10).fill(0)
+        ],
+        [6, 384])]
+    );
     const data = await qna.findAnswers('question', context);
     expect(data.length).toEqual(5);
   });
@@ -87,11 +110,11 @@ describeWithFlags('qna', NODE_ENVS, () => {
     const result = await qna.findAnswers('question', 'this is answer for you!');
 
     expect(result).toEqual([
-      {text: 'answer', score: 6, startIndex: 8, endIndex: 14},
-      {text: 'answer for', score: 5, startIndex: 8, endIndex: 18},
-      {text: 'answer for you!', score: 5, startIndex: 8, endIndex: 23},
-      {text: 'for', score: 4, startIndex: 15, endIndex: 18},
-      {text: 'for you!', score: 4, startIndex: 15, endIndex: 23}
+      {text: 'answer', score: 60, startIndex: 8, endIndex: 14},
+      {text: 'answer for', score: 50, startIndex: 8, endIndex: 18},
+      {text: 'answer for you!', score: 50, startIndex: 8, endIndex: 23},
+      {text: 'for', score: 40, startIndex: 15, endIndex: 18},
+      {text: 'for you!', score: 40, startIndex: 15, endIndex: 23}
     ]);
   });
 });
