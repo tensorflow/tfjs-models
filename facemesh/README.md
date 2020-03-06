@@ -1,6 +1,6 @@
 # MediaPipe Facemesh
 
-MediaPipe Facemesh is a lightweight model that predicts 3D facial keypoints ([paper](https://arxiv.org/pdf/1907.06724.pdf)).
+MediaPipe Facemesh is a lightweight ML pipeline predicting 486 3D facial landmarks to infer the approximate surface geometry of a human face ([paper](https://arxiv.org/pdf/1907.06724.pdf)).
 
 <img src="demo/demo.gif" alt="demo" style="width: 640px;"/>
 
