@@ -73,7 +73,7 @@ export class HandPipeline {
     this.meshWidth = meshWidth;
     this.meshHeight = meshHeight;
 
-    this.maxHandsNumber = 1;  // TODO: Add multi-hand support.
+    this.maxHandsNumber = 1;  // TODO(annxingyuan): Add multi-hand support.
   }
 
   // Get the bounding box surrounding the hand, given palm landmarks.
@@ -182,9 +182,19 @@ export class HandPipeline {
     const palmCenter = getBoxCenter(currentBox);
     const palmCenterNormalized: [number, number] =
         [palmCenter[0] / image.shape[2], palmCenter[1] / image.shape[1]];
-    const rotatedImage: tf.Tensor4D = tf.getBackend() === 'webgl' ?
-        rotateWebgl(image, angle, 0, palmCenterNormalized) :
-        rotateCpu(image, angle, 0, palmCenterNormalized);
+    let rotatedImage: tf.Tensor4D;
+    const backend = tf.getBackend();
+
+    if (backend === 'webgl') {
+      rotatedImage = rotateWebgl(image, angle, 0, palmCenterNormalized);
+    } else if (backend === 'cpu') {
+      rotatedImage = rotateCpu(image, angle, 0, palmCenterNormalized);
+    } else {
+      throw new Error(
+          `Handpose is not yet supported by the ${backend} ` +
+          `backend - rotation kernel is not defined.`);
+    }
+
     const rotationMatrix = buildRotationMatrix(-angle, palmCenter);
 
     let box: Box;
@@ -262,13 +272,13 @@ export class HandPipeline {
   // Updates regions of interest if the intersection over union between
   // the incoming and previous regions falls below a threshold.
   private updateRegionsOfInterest(box: Box, forceUpdate: boolean): void {
-    if (forceUpdate === true) {
+    if (forceUpdate) {
       this.regionsOfInterest = [box];
     } else {
       const previousBox = this.regionsOfInterest[0];
       let iou = 0;
 
-      if (previousBox != null && previousBox.startPoint) {
+      if (previousBox != null && previousBox.startPoint != null) {
         const [boxStartX, boxStartY] = box.startPoint;
         const [boxEndX, boxEndY] = box.endPoint;
         const [previousBoxStartX, previousBoxStartY] = previousBox.startPoint;
