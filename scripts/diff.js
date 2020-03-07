@@ -25,7 +25,7 @@ const filesWhitelistToTriggerBuild = [
   'scripts/run-build.sh'
 ];
 
-const CLONE_PATH = 'clone';
+const CLONE_PATH = 'clones';
 
 const dirs = readdirSync('.').filter(f => {
   return f !== 'node_modules' && f !== '.git' && statSync(f).isDirectory();
@@ -53,8 +53,9 @@ console.log();  // Break up the console for readability.
 shell.cd(CLONE_PATH);
 
 // If we cannot check out the commit then this PR is coming from a fork.
-const res = shell.exec(`git checkout ${commitSha}`, { silent: true });
-const isPullRequestFromFork = res.code !== 0;
+// const res = shell.exec(`git checkout ${commitSha}`, { silent: true });
+// const isPullRequestFromFork = res.code !== 0;
+const isPullRequestFromFork = false;
 
 // Only checkout the merge base if the pull requests comes from a
 // tensorflow/tfjs branch. Otherwise clone master and diff against master.
@@ -62,7 +63,6 @@ if (!isPullRequestFromFork) {
   console.log(
     'PR is coming from tensorflow/tfjs-models. ' +
     'Finding the merge base...');
-  console.log(branchName);
   exec(`git checkout ${branchName}`);
   const mergeBase = exec(`git merge-base master ${branchName}`).stdout.trim();
   exec(`git fetch origin ${mergeBase}`);
