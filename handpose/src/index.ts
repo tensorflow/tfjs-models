@@ -124,17 +124,17 @@ export class HandPose {
   }
 
   /**
-   * Finds a hand in the input image.
+   * Finds hands in the input image.
    *
    * @param input The image to classify. Can be a tensor, DOM element image,
    * video, or canvas.
    * @param flipHorizontal Whether to flip the hand keypoints horizontally.
    * Should be true for videos that are flipped by default (e.g. webcams).
    */
-  async estimateHand(
+  async estimateHands(
       input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
       HTMLCanvasElement,
-      flipHorizontal = false): Promise<AnnotatedPrediction> {
+      flipHorizontal = false): Promise<AnnotatedPrediction[]> {
     const [, width] = getInputTensorDimensions(input);
 
     const image: tf.Tensor4D = tf.tidy(() => {
@@ -148,7 +148,7 @@ export class HandPose {
     image.dispose();
 
     if (result === null) {
-      return null;
+      return [];
     }
 
     let prediction = result;
@@ -162,11 +162,11 @@ export class HandPose {
           MESH_ANNOTATIONS[key].map(index => prediction.landmarks[index]);
     }
 
-    return {
+    return [{
       handInViewConfidence: prediction.handInViewConfidence,
       boundingBox: prediction.boundingBox,
       landmarks: prediction.landmarks,
       annotations
-    };
+    }];
   }
 }

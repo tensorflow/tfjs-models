@@ -176,9 +176,9 @@ const landmarksRealTime = async (video) => {
   async function frameLandmarks() {
     stats.begin();
     ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
-    const prediction = await model.estimateHand(video);
-    if (prediction) {
-      const result = prediction.landmarks;
+    const predictions = await model.estimateHands(video);
+    if (predictions.length > 0) {
+      const result = predictions[0].landmarks;
       drawKeypoints(ctx, result);
 
       if (renderPointcloud === true && scatterGL != null) {

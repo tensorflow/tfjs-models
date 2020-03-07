@@ -52,10 +52,10 @@ async function main() {
   const model = await handpose.load();
   // Pass in a video stream (or an image, canvas, or 3D tensor) to obtain a
   // hand prediction from the MediaPipe graph.
-  const prediction = await model.estimateHand(document.querySelector("video"));
-  if (prediction != null) {
+  const predictions = await model.estimateHands(document.querySelector("video"));
+  if (predictions.length > 0) {
     /*
-    `prediction` is an object describing the detected hand, for example:
+    `predictions` is an array of objects describing each detected hand, for example:
     [
       {
         handInViewConfidence: 1, // The probability of a hand being present.
@@ -80,11 +80,14 @@ async function main() {
     ]
     */
 
-    const keypoints = predictions[i].landmarks;
-    // Log hand keypoints.
-    for (let i = 0; i < keypoints.length; i++) {
-      const [x, y, z] = keypoints[i];
-      console.log(`Keypoint ${i}: [${x}, ${y}, ${z}]`);
+    for (let i = 0; i < predictions.length; i++) {
+      const keypoints = predictions[i].landmarks;
+
+      // Log hand keypoints.
+      for (let i = 0; i < keypoints.length; i++) {
+        const [x, y, z] = keypoints[i];
+        console.log(`Keypoint ${i}: [${x}, ${y}, ${z}]`);
+      }
     }
   }
 }
