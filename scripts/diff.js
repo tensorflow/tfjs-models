@@ -65,7 +65,6 @@ if (!isPullRequestFromFork) {
   console.log(
       'PR is coming from tensorflow/tfjs-models. ' +
       'Finding the merge base...');
-  exec(`git checkout master`);
   exec(`git checkout ${branchName}`);
   const mergeBase = exec(`git merge-base master ${branchName}`).stdout.trim();
   exec(`git fetch origin ${mergeBase}`);
