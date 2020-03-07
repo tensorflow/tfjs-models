@@ -111,13 +111,19 @@ main();
 `facemesh.load()` takes a configuration object with the following properties:
 
 * **maxContinuousChecks** - How many frames to go without running the bounding box detector. Only relevant if maxFaces > 1. Defaults to 5.
+
 * **detectionConfidence** - Threshold for discarding a prediction. Defaults to 0.9.
+
 * **maxFaces** - The maximum number of faces detected in the input. Should be set to the minimum number for performance. Defaults to 10.
+
 * **iouThreshold** - A float representing the threshold for deciding whether boxes overlap too much in non-maximum suppression. Must be between [0, 1]. Defaults to 0.3.
+
 * **scoreThreshold** - A threshold for deciding when to remove boxes based on score in non-maximum suppression. Defaults to 0.75.
 
 #### Parameters for model.estimateFace()
 
 * **input** - The image to classify. Can be a tensor, DOM element image, video, or canvas.
+
 * **returnTensors** - (defaults to `false`) Whether to return tensors as opposed to values.
+
 * **flipHorizontal** - Whether to flip/mirror the facial keypoints horizontally. Should be true for videos that are flipped by default (e.g. webcams).
