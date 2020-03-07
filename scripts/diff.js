@@ -27,6 +27,8 @@ const filesWhitelistToTriggerBuild = [
 
 const CLONE_PATH = 'clone';
 
+shell.rm('-f', CLONE_PATH);
+
 const dirs = readdirSync('.').filter(f => {
   return f !== 'node_modules' && f !== '.git' && statSync(f).isDirectory();
 });
