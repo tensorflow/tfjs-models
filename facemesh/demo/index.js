@@ -168,7 +168,7 @@ async function renderPrediction() {
   requestAnimationFrame(renderPrediction);
 };
 
-async function setupPage() {
+async function main() {
   await tf.setBackend(state.backend);
   setupDatGui();
 
@@ -208,4 +208,4 @@ async function setupPage() {
   }
 };
 
-setupPage();
+main();
