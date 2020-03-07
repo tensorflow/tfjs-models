@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/body-pix",
-  "version": "2.0.2",
+  "version": "2.0.4",
   "description": "Pretrained BodyPix model in TensorFlow.js",
   "main": "dist/index.js",
   "jsnext:main": "dist/body-pix.esm.js",
@@ -13,12 +13,12 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs-core": "^1.3.1",
-    "@tensorflow/tfjs-converter": "^1.3.1"
+    "@tensorflow/tfjs-converter": "^1.3.1",
+    "@tensorflow/tfjs-core": "^1.3.1"
   },
   "devDependencies": {
-    "@tensorflow/tfjs-core": "^1.3.1",
     "@tensorflow/tfjs-converter": "^1.3.1",
+    "@tensorflow/tfjs-core": "^1.3.1",
     "@types/jasmine": "~2.5.53",
     "jasmine": "~3.2.0",
     "jasmine-core": "~3.1.0",
@@ -43,8 +43,9 @@
     "publish-local": "yarn build && rollup -c && yalc publish",
     "test": "karma start",
     "test-ci": "karma start --singleRun --browsers=bs_chrome_mac",
-    "publish-npm": "yarn build && rollup -c && npm publish",
+    "build-npm": "yarn build && rollup -c",
     "lint": "tslint -p . -t verbose"
   },
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "dependencies": {}
 }

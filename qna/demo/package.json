@@ -1,0 +1,54 @@
+{
+  "name": "tfjs-qna-demo",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "license": "Apache-2.0",
+  "private": true,
+  "engines": {
+    "node": ">=8.9.0"
+  },
+  "dependencies": {
+    "@tensorflow-models/qna": "1.0.0",
+    "@tensorflow/tfjs-converter": "1.5.2",
+    "@tensorflow/tfjs-core": "1.5.2"
+  },
+  "scripts": {
+    "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr --open",
+    "build": "cross-env NODE_ENV=production parcel build index.html --public-url ./",
+    "lint": "eslint .",
+    "link-local": "yalc link @tensorflow-models/qna"
+  },
+  "browser": {
+    "crypto": false
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-plugin-transform-runtime": "~6.23.0",
+    "babel-preset-env": "^1.7.0",
+    "clang-format": "~1.2.2",
+    "cross-env": "^5.2.0",
+    "dat.gui": "^0.7.1",
+    "parcel-bundler": "~1.12.4",
+    "tslint": "~5.18.0",
+    "typescript": "3.3.3333",
+    "yalc": "~1.0.0-pre.21"
+  },
+  "eslintConfig": {
+    "extends": "google",
+    "rules": {
+      "require-jsdoc": 0,
+      "valid-jsdoc": 0
+    },
+    "env": {
+      "es6": true
+    },
+    "parserOptions": {
+      "ecmaVersion": 8,
+      "sourceType": "module"
+    }
+  },
+  "eslintIgnore": [
+    "dist/"
+  ]
+}
