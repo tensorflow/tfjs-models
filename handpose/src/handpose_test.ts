@@ -17,12 +17,12 @@
 
 import * as tf from '@tensorflow/tfjs-core';
 // tslint:disable-next-line: no-imports-from-dist
-import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
+import {ALL_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
 import * as handpose from './index';
 import {stubbedImageVals} from './test_util';
 
-describeWithFlags('Handpose', NODE_ENVS, () => {
+describeWithFlags('Handpose', ALL_ENVS, () => {
   let model: handpose.HandPose;
   beforeAll(async () => {
     // Note: this makes a network request for model assets.
@@ -34,9 +34,14 @@ describeWithFlags('Handpose', NODE_ENVS, () => {
     // Do not count tensors involved in setup.
     await model.estimateHands(input);
 
-    const beforeTensors = tf.memory().numTensors;
-    await model.estimateHands(input);
+    let beforeTensors = tf.memory().numTensors;
+    await model.estimateHands(input, false /* flipHorizontal */);
 
+    expect(tf.memory().numTensors).toEqual(beforeTensors);
+
+    beforeTensors = tf.memory().numTensors;
+
+    await model.estimateHands(input, true /* flipHorizontal */);
     expect(tf.memory().numTensors).toEqual(beforeTensors);
   });
 
