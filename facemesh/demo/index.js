@@ -19,13 +19,15 @@ import * as facemesh from '@tensorflow-models/facemesh';
 import Stats from 'stats.js';
 import * as tf from '@tensorflow/tfjs-core';
 import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
-// TODO(annxingyuan): read version from tfjsWasm directly once https://github.com/tensorflow/tfjs/pull/2819 is merged.
+// TODO(annxingyuan): read version from tfjsWasm directly once
+// https://github.com/tensorflow/tfjs/pull/2819 is merged.
 import {version} from '@tensorflow/tfjs-backend-wasm/dist/version';
 
 import {TRIANGULATION} from './triangulation';
 
 tfjsWasm.setWasmPath(
-    `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${version}/dist/tfjs-backend-wasm.wasm`);
+    `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
+        version}/dist/tfjs-backend-wasm.wasm`);
 
 function isMobile() {
   const isAndroid = /Android/i.test(navigator.userAgent);
@@ -41,7 +43,7 @@ function drawPath(ctx, points, closePath) {
     region.lineTo(point[0], point[1]);
   }
 
-  if(closePath) {
+  if (closePath) {
     region.closePath();
   }
   ctx.stroke(region);
@@ -52,13 +54,18 @@ let model, ctx, videoWidth, videoHeight, video, canvas,
 
 const VIDEO_SIZE = 500;
 const mobile = isMobile();
-// Don't render the point cloud on mobile in order to maximize performance and to avoid crowding limited screen space.
+// Don't render the point cloud on mobile in order to maximize performance and
+// to avoid crowding limited screen space.
 const renderPointcloud = mobile === false;
 const stats = new Stats();
 const state = {
   backend: 'wasm',
-  maxFaces: 1
+  maxFaces: 1,
 };
+
+if (renderPointcloud) {
+  state.renderPointcloud = true;
+}
 
 function setupDatGui() {
   const gui = new dat.GUI();
@@ -70,6 +77,13 @@ function setupDatGui() {
   gui.add(state, 'maxFaces', 1, 20, 1).onChange(async val => {
     model = await facemesh.load({maxFaces: val});
   });
+
+  if (renderPointcloud) {
+    gui.add(state, 'renderPointcloud').onChange(render => {
+      document.querySelector('#scatter-gl-container').style.display =
+          render ? 'block' : 'none';
+    });
+  }
 }
 
 async function setupCamera() {
@@ -105,10 +119,9 @@ async function renderPrediction() {
     predictions.forEach(prediction => {
       const keypoints = prediction.scaledMesh;
 
-      for(let i=0; i<TRIANGULATION.length / 3; i++) {
+      for (let i = 0; i < TRIANGULATION.length / 3; i++) {
         const points = [
-          TRIANGULATION[i * 3],
-          TRIANGULATION[i * 3 + 1],
+          TRIANGULATION[i * 3], TRIANGULATION[i * 3 + 1],
           TRIANGULATION[i * 3 + 2]
         ].map(index => keypoints[index]);
 
@@ -116,14 +129,14 @@ async function renderPrediction() {
       }
     });
 
-    if (renderPointcloud === true && scatterGL != null) {
+    if (renderPointcloud && state.renderPointcloud && scatterGL != null) {
       const pointsData = predictions.map(prediction => {
         let scaledMesh = prediction.scaledMesh;
         return scaledMesh.map(point => ([-point[0], -point[1], -point[2]]));
       });
 
       let flattenedPointsData = [];
-      for (let i=0; i<pointsData.length; i++) {
+      for (let i = 0; i < pointsData.length; i++) {
         flattenedPointsData = flattenedPointsData.concat(pointsData[i]);
       }
       const dataset = new ScatterGL.Dataset(flattenedPointsData);
@@ -172,7 +185,7 @@ async function setupPage() {
 
   if (renderPointcloud) {
     document.querySelector('#scatter-gl-container').style =
-      `width: ${VIDEO_SIZE}px; height: ${VIDEO_SIZE}px;`;
+        `width: ${VIDEO_SIZE}px; height: ${VIDEO_SIZE}px;`;
 
     scatterGL = new ScatterGL(
         document.querySelector('#scatter-gl-container'),
