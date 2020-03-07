@@ -2,7 +2,7 @@
 
 MediaPipe Facemesh is a lightweight machine learning pipeline predicting 486 3D facial landmarks to infer the approximate surface geometry of a human face ([paper](https://arxiv.org/pdf/1907.06724.pdf)).
 
-<img src="demo/demo.gif" alt="demo" style="width: 640px;"/>
+<img src="demo.gif" alt="demo" style="width: 640px;"/>
 
 Here is map of the keypoints:
 
