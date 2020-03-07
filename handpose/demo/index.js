@@ -23,7 +23,15 @@ function isMobile() {
   return isAndroid || isiOS;
 }
 
-let videoWidth, videoHeight, scatterGLHasInitialized = false, scatterGL;
+let videoWidth, videoHeight, scatterGLHasInitialized = false, scatterGL,
+  fingerLookupIndices = {
+    thumb: [0, 1, 2, 3, 4],
+    indexFinger: [0, 5, 6, 7, 8],
+    middleFinger: [0, 9, 10, 11, 12],
+    ringFinger: [0, 13, 14, 15, 16],
+    pinky: [0, 17, 18, 19, 20]
+  }; // for rendering each finger as a polyline
+
 const VIDEO_WIDTH = 640;
 const VIDEO_HEIGHT = 500;
 const mobile = isMobile();
@@ -33,17 +41,17 @@ const renderPointcloud = mobile === false;
 
 const state = {};
 
-if(renderPointcloud) {
+if (renderPointcloud) {
   state.renderPointcloud = true;
 }
 
 function setupDatGui() {
   const gui = new dat.GUI();
 
-  if(renderPointcloud) {
+  if (renderPointcloud) {
     gui.add(state, 'renderPointcloud').onChange(render => {
       document.querySelector('#scatter-gl-container').style.display =
-          render ? 'inline-block' : 'none';
+        render ? 'inline-block' : 'none';
     });
   }
 }
@@ -54,14 +62,6 @@ function drawPoint(ctx, y, x, r) {
   ctx.fill();
 }
 
-const fingers = [
-  [0, 1, 2, 3, 4],
-  [0, 5, 6, 7, 8],
-  [0, 9, 10, 11, 12],
-  [0, 13, 14, 15, 16],
-  [0, 17, 18, 19, 20],
-];
-
 function drawKeypoints(ctx, keypoints) {
   const keypointsArray = keypoints;
 
@@ -71,8 +71,10 @@ function drawKeypoints(ctx, keypoints) {
     drawPoint(ctx, x - 2, y - 2, 3);
   }
 
-  for(let i=0; i<fingers.length; i++) {
-    const points = fingers[i].map(idx => keypoints[idx]);
+  const fingers = Object.keys(fingerLookupIndices);
+  for (let i = 0; i < fingers.length; i++) {
+    const finger = fingers[i];
+    const points = fingerLookupIndices[finger].map(idx => keypoints[idx]);
     drawPath(ctx, points, false);
   }
 }
@@ -85,7 +87,7 @@ function drawPath(ctx, points, closePath) {
     region.lineTo(point[0], point[1]);
   }
 
-  if(closePath) {
+  if (closePath) {
     region.closePath();
   }
   ctx.stroke(region);
@@ -171,7 +173,7 @@ const landmarksRealTime = async (video) => {
   // These anchor points allow the hand pointcloud to resize according to its
   // position in the input.
   const ANCHOR_POINTS = [[0, 0, 0], [0, -VIDEO_HEIGHT, 0],
-    [-VIDEO_WIDTH, 0, 0], [-VIDEO_WIDTH, -VIDEO_HEIGHT, 0]];
+  [-VIDEO_WIDTH, 0, 0], [-VIDEO_WIDTH, -VIDEO_HEIGHT, 0]];
 
   async function frameLandmarks() {
     stats.begin();
@@ -179,7 +181,7 @@ const landmarksRealTime = async (video) => {
     const predictions = await model.estimateHands(video);
     if (predictions.length > 0) {
       const result = predictions[0].landmarks;
-      drawKeypoints(ctx, result);
+      drawKeypoints(ctx, result, predictions[0].annotations);
 
       if (renderPointcloud === true && scatterGL != null) {
         const pointsData = result.map(point => {
@@ -191,9 +193,11 @@ const landmarksRealTime = async (video) => {
         if (!scatterGLHasInitialized) {
           scatterGL.render(dataset);
 
-          scatterGL.setSequences(fingers.map(finger => ({ indices: finger })));
+          const fingers = Object.keys(fingerLookupIndices);
+
+          scatterGL.setSequences(fingers.map(finger => ({ indices: fingerLookupIndices[finger] })));
           scatterGL.setPointColorer((index) => {
-            if(index < pointsData.length) {
+            if (index < pointsData.length) {
               return 'steelblue';
             }
             return 'white'; // Hide.
@@ -215,8 +219,8 @@ const landmarksRealTime = async (video) => {
       `width: ${VIDEO_WIDTH}px; height: ${VIDEO_HEIGHT}px;`;
 
     scatterGL = new ScatterGL(
-        document.querySelector('#scatter-gl-container'),
-        {'rotateOnStart': false, 'selectEnabled': false});
+      document.querySelector('#scatter-gl-container'),
+      { 'rotateOnStart': false, 'selectEnabled': false });
   }
 };
 
