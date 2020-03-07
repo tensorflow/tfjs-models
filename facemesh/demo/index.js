@@ -61,6 +61,7 @@ const stats = new Stats();
 const state = {
   backend: 'wasm',
   maxFaces: 1,
+  triangulateMesh: true
 };
 
 if (renderPointcloud) {
@@ -78,10 +79,12 @@ function setupDatGui() {
     model = await facemesh.load({maxFaces: val});
   });
 
+  gui.add(state, 'triangulateMesh');
+
   if (renderPointcloud) {
     gui.add(state, 'renderPointcloud').onChange(render => {
       document.querySelector('#scatter-gl-container').style.display =
-          render ? 'block' : 'none';
+          render ? 'inline-block' : 'none';
     });
   }
 }
@@ -119,13 +122,24 @@ async function renderPrediction() {
     predictions.forEach(prediction => {
       const keypoints = prediction.scaledMesh;
 
-      for (let i = 0; i < TRIANGULATION.length / 3; i++) {
-        const points = [
-          TRIANGULATION[i * 3], TRIANGULATION[i * 3 + 1],
-          TRIANGULATION[i * 3 + 2]
-        ].map(index => keypoints[index]);
+      if (state.triangulateMesh) {
+        for (let i = 0; i < TRIANGULATION.length / 3; i++) {
+          const points = [
+            TRIANGULATION[i * 3], TRIANGULATION[i * 3 + 1],
+            TRIANGULATION[i * 3 + 2]
+          ].map(index => keypoints[index]);
 
-        drawPath(ctx, points, true);
+          drawPath(ctx, points, true);
+        }
+      } else {
+        for (let i = 0; i < keypoints.length; i++) {
+          const x = keypoints[i][0];
+          const y = keypoints[i][1];
+
+          ctx.beginPath();
+          ctx.arc(x, y, 1 /* radius */, 0, 2 * Math.PI);
+          ctx.fill();
+        }
       }
     });
 
@@ -177,6 +191,7 @@ async function setupPage() {
   ctx = canvas.getContext('2d');
   ctx.translate(canvas.width, 0);
   ctx.scale(-1, 1);
+  ctx.fillStyle = '#32EEDB';
   ctx.strokeStyle = '#32EEDB';
   ctx.lineWidth = 0.5;
 
