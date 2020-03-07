@@ -22,9 +22,8 @@ import * as tf from '@tensorflow/tfjs-core';
 import {MESH_ANNOTATIONS} from './keypoints';
 import {Pipeline, Prediction} from './pipeline';
 
-// TODO(annxingyuan): CHANGE TO TFHUB LINK ONCE AVAILABLE.
-const BLAZE_MESH_GRAPHMODEL_PATH =
-    'https://storage.googleapis.com/learnjs-data/facemesh_staging/facemesh_facecontours_faceflag-blaze_shift30-2019_01_14-v0.hdf5_tfjs_fixed_batch/model.json';
+const FACEMESH_GRAPHMODEL_PATH =
+    'https://tfhub.dev/mediapipe/tfjs-model/facemesh/1/default/1';
 const MESH_MODEL_INPUT_WIDTH = 192;
 const MESH_MODEL_INPUT_HEIGHT = 192;
 
@@ -96,7 +95,7 @@ async function loadDetectorModel(
 }
 
 async function loadMeshModel(): Promise<tfconv.GraphModel> {
-  return tfconv.loadGraphModel(BLAZE_MESH_GRAPHMODEL_PATH);
+  return tfconv.loadGraphModel(FACEMESH_GRAPHMODEL_PATH, {fromTFHub: true});
 }
 
 function getInputTensorDimensions(input: tf.Tensor3D|ImageData|HTMLVideoElement|
