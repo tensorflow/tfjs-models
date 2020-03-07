@@ -93,3 +93,21 @@ async function main() {
 }
 main();
 ```
+
+#### Parameters for handpose.load()
+
+`handpose.load()` takes a configuration object with the following properties:
+
+* **maxContinuousChecks** - How many frames to go without running the bounding box detector. Defaults to infinity. Set to a lower value if you want a safety net in case the mesh detector produces consistently flawed predictions.
+
+* **detectionConfidence** - Threshold for discarding a prediction. Defaults to 0.8.
+
+* **iouThreshold** - A float representing the threshold for deciding whether boxes overlap too much in non-maximum suppression. Must be between [0, 1]. Defaults to 0.3.
+
+* **scoreThreshold** - A threshold for deciding when to remove boxes based on score in non-maximum suppression. Defaults to 0.75.
+
+#### Parameters for handpose.estimateHands()
+
+* **input** - The image to classify. Can be a tensor, DOM element image, video, or canvas.
+
+* **flipHorizontal** - Whether to flip/mirror the facial keypoints horizontally. Should be true for videos that are flipped by default (e.g. webcams).
