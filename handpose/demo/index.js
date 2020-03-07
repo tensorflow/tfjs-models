@@ -31,6 +31,23 @@ const mobile = isMobile();
 // to avoid crowding limited screen space.
 const renderPointcloud = mobile === false;
 
+const state = {};
+
+if(renderPointcloud) {
+  state.renderPointcloud = true;
+}
+
+function setupDatGui() {
+  const gui = new dat.GUI();
+
+  if(renderPointcloud) {
+    gui.add(state, 'renderPointcloud').onChange(render => {
+      document.querySelector('#scatter-gl-container').style.display =
+          render ? 'inline-block' : 'none';
+    });
+  }
+}
+
 function drawPoint(ctx, y, x, r) {
   ctx.beginPath();
   ctx.arc(x, y, r, 0, 2 * Math.PI);
@@ -125,6 +142,8 @@ const bindPage = async () => {
 }
 
 const landmarksRealTime = async (video) => {
+  setupDatGui();
+
   const stats = new Stats();
   stats.showPanel(0);
   document.body.appendChild(stats.dom);

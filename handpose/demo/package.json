@@ -10,8 +10,8 @@
   },
   "dependencies": {
     "@tensorflow-models/handpose": "file:../",
-    "@tensorflow/tfjs-core": "^1.5.2",
-    "@tensorflow/tfjs-converter": "^1.5.2"
+    "@tensorflow/tfjs-core": "^1.6.1",
+    "@tensorflow/tfjs-converter": "^1.6.1"
   },
   "scripts": {
     "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr ",
