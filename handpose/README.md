@@ -14,7 +14,7 @@ This model is also available as part of [MediaPipe](https://hand.mediapipe.dev/)
 
 # Performance
 
-MediaPipe Handpose consists of ~12MB of weights, and is well-suited for real time inference across a variety of devices (40 FPS on a 2018 MacBook Pro, 35 FPS on an iPhone11).
+MediaPipe Handpose consists of ~12MB of weights, and is well-suited for real time inference across a variety of devices (40 FPS on a 2018 MacBook Pro, 35 FPS on an iPhone11, 6 FPS on a Pixel3).
 
 ## Installation
 
