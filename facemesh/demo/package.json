@@ -9,7 +9,7 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow-models/facemesh": "file:../",
+    "@tensorflow-models/facemesh": "0.0.1",
     "@tensorflow/tfjs-backend-wasm": "^1.5.2-alpha1",
     "@tensorflow/tfjs-converter": "^1.6.1",
     "@tensorflow/tfjs-core": "^1.6.1",

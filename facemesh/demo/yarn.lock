@@ -772,8 +772,10 @@
   resolved "https://registry.yarnpkg.com/@tensorflow-models/blazeface/-/blazeface-0.0.5.tgz#6261fcc5de61a283ea409b69f6a851f44a809826"
   integrity sha512-bIMJDV2CD8rr7v9OrIDdDZVh9sbk0EhlZdHaDFpgWUw3Lp21wUN7GSifOJVE5hV2ngmpzM+J12OH8bG1GZoDag==
 
-"@tensorflow-models/facemesh@file:..":
+"@tensorflow-models/facemesh@0.0.1":
   version "0.0.1"
+  resolved "https://registry.yarnpkg.com/@tensorflow-models/facemesh/-/facemesh-0.0.1.tgz#dd620fb49a8ed2fad841471dccd0c73f75deae16"
+  integrity sha512-7twdyRWB+1TOJE4nJdx0eBGjP6VNyaaqisxvH9RhjCBlv4qJeKsowpg0aCn8I5NpdAukH8wVw2rjfsBP4qPA/A==
   dependencies:
     "@tensorflow-models/blazeface" "0.0.5"
 
