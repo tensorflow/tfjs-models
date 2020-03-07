@@ -25,7 +25,7 @@ const filesWhitelistToTriggerBuild = [
   'scripts/run-build.sh'
 ];
 
-const CLONE_PATH = 'clones';
+const CLONE_PATH = 'clone';
 
 const dirs = readdirSync('.').filter(f => {
   return f !== 'node_modules' && f !== '.git' && statSync(f).isDirectory();
@@ -49,6 +49,8 @@ console.log('branchName: ', branchName);
 exec(`git clone https://github.com/tensorflow/tfjs-models ${CLONE_PATH}`);
 
 console.log();  // Break up the console for readability.
+
+shell.rm('-f', `${CLONE_PATH}`);
 
 shell.cd(CLONE_PATH);
 
