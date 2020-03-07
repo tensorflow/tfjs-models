@@ -18,7 +18,7 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {Box, scaleBoxCoordinates} from './box';
+import { Box, scaleBoxCoordinates } from './box';
 
 type HandDetectorPrediction = {
   boxes: tf.Tensor2D,
@@ -38,19 +38,16 @@ export class HandDetector {
   private doubleInputSizeTensor: tf.Tensor1D;
 
   constructor(
-      model: tfconv.GraphModel, width: number, height: number,
-      ANCHORS: Array<{x_center: number, y_center: number}>,
-      iouThreshold: number, scoreThreshold: number) {
+    model: tfconv.GraphModel, width: number, height: number,
+    anchors: Array<{ x_center: number, y_center: number }>,
+    iouThreshold: number, scoreThreshold: number) {
     this.model = model;
     this.width = width;
     this.height = height;
     this.iouThreshold = iouThreshold;
     this.scoreThreshold = scoreThreshold;
 
-    this.anchors = ANCHORS.map(anchor => {
-      const coord: [number, number] = [anchor.x_center, anchor.y_center];
-      return coord;
-    });
+    this.anchors = anchors.map(anchor => ([anchor.x_center, anchor.y_center] as [number, number]));
     this.anchorsTensor = tf.tensor2d(this.anchors);
     this.inputSizeTensor = tf.tensor1d([width, height]);
     this.doubleInputSizeTensor = tf.tensor1d([width * 2, height * 2]);
@@ -62,23 +59,23 @@ export class HandDetector {
       const boxSizes = tf.slice(boxes, [0, 2], [-1, 2]);
 
       const boxCenterPoints =
-          tf.add(tf.div(boxOffsets, this.inputSizeTensor), this.anchorsTensor);
+        tf.add(tf.div(boxOffsets, this.inputSizeTensor), this.anchorsTensor);
       const halfBoxSizes = tf.div(boxSizes, this.doubleInputSizeTensor);
 
       const startPoints: tf.Tensor2D =
-          tf.mul(tf.sub(boxCenterPoints, halfBoxSizes), this.inputSizeTensor);
+        tf.mul(tf.sub(boxCenterPoints, halfBoxSizes), this.inputSizeTensor);
       const endPoints: tf.Tensor2D =
-          tf.mul(tf.add(boxCenterPoints, halfBoxSizes), this.inputSizeTensor);
+        tf.mul(tf.add(boxCenterPoints, halfBoxSizes), this.inputSizeTensor);
       return tf.concat2d([startPoints, endPoints], 1);
     });
   }
 
   private normalizeLandmarks(rawPalmLandmarks: tf.Tensor2D, index: number):
-      tf.Tensor2D {
+    tf.Tensor2D {
     return tf.tidy(() => {
       const landmarks = tf.add(
-          tf.div(rawPalmLandmarks.reshape([-1, 7, 2]), this.inputSizeTensor),
-          this.anchors[index]);
+        tf.div(rawPalmLandmarks.reshape([-1, 7, 2]), this.inputSizeTensor),
+        this.anchors[index]);
 
       return tf.mul(landmarks, this.inputSizeTensor);
     });
@@ -93,30 +90,30 @@ export class HandDetector {
       // TODO(annxingyuan): call tf.enablePackedDepthwiseConv when available
       // (https://github.com/tensorflow/tfjs/issues/2821)
       const savedWebglPackDepthwiseConvFlag =
-          tf.env().get('WEBGL_PACK_DEPTHWISECONV');
+        tf.env().get('WEBGL_PACK_DEPTHWISECONV');
       tf.env().set('WEBGL_PACK_DEPTHWISECONV', true);
       // The model returns a tensor with the following shape:
       //  [1 (batch), 2944 (anchor points), 19 (data for each anchor)]
       // Squeezing immediately because we are not batching inputs.
       const prediction: tf.Tensor2D =
-          (this.model.predict(normalizedInput) as tf.Tensor3D).squeeze();
+        (this.model.predict(normalizedInput) as tf.Tensor3D).squeeze();
       tf.env().set('WEBGL_PACK_DEPTHWISECONV', savedWebglPackDepthwiseConvFlag);
 
       // Regression score for each anchor point.
       const scores: tf.Tensor1D =
-          tf.sigmoid(tf.slice(prediction, [0, 0], [-1, 1])).squeeze();
+        tf.sigmoid(tf.slice(prediction, [0, 0], [-1, 1])).squeeze();
 
       // Bounding box for each anchor point.
       const rawBoxes = tf.slice(prediction, [0, 1], [-1, 4]);
       const boxes = this.normalizeBoxes(rawBoxes);
 
       const savedConsoleWarnFn = console.warn;
-      console.warn = () => {};
+      console.warn = () => { };
       const boxesWithHands =
-          tf.image
-              .nonMaxSuppression(
-                  boxes, scores, 1, this.iouThreshold, this.scoreThreshold)
-              .arraySync();
+        tf.image
+          .nonMaxSuppression(
+            boxes, scores, 1, this.iouThreshold, this.scoreThreshold)
+          .arraySync();
       console.warn = savedConsoleWarnFn;
 
       if (boxesWithHands.length === 0) {
@@ -128,9 +125,9 @@ export class HandDetector {
 
       const rawPalmLandmarks = tf.slice(prediction, [boxIndex, 5], [1, 14]);
       const palmLandmarks: tf.Tensor2D =
-          this.normalizeLandmarks(rawPalmLandmarks, boxIndex).reshape([-1, 2]);
+        this.normalizeLandmarks(rawPalmLandmarks, boxIndex).reshape([-1, 2]);
 
-      return {boxes: matchingBox, palmLandmarks};
+      return { boxes: matchingBox, palmLandmarks };
     });
   }
 
@@ -145,7 +142,7 @@ export class HandDetector {
     const inputWidth = input.shape[2];
 
     const image: tf.Tensor4D =
-        tf.tidy(() => input.resizeBilinear([this.width, this.height]).div(255));
+      tf.tidy(() => input.resizeBilinear([this.width, this.height]).div(255));
     const prediction = this.getBoundingBoxes(image);
 
     if (prediction === null) {
@@ -156,18 +153,18 @@ export class HandDetector {
     // Calling arraySync on both boxes and palmLandmarks because the tensors are
     // very small so it's not worth calling await array().
     const boundingBoxes =
-        prediction.boxes.arraySync() as Array<[number, number, number, number]>;
+      prediction.boxes.arraySync() as Array<[number, number, number, number]>;
     const startPoint = boundingBoxes[0].slice(0, 2) as [number, number];
     const endPoint = boundingBoxes[0].slice(2, 4) as [number, number];
     const palmLandmarks =
-        prediction.palmLandmarks.arraySync() as Array<[number, number]>;
+      prediction.palmLandmarks.arraySync() as Array<[number, number]>;
 
     image.dispose();
     prediction.boxes.dispose();
     prediction.palmLandmarks.dispose();
 
     return scaleBoxCoordinates(
-        {startPoint, endPoint, palmLandmarks},
-        [inputWidth / this.width, inputHeight / this.height]);
+      { startPoint, endPoint, palmLandmarks },
+      [inputWidth / this.width, inputHeight / this.height]);
   }
 }

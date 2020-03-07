@@ -127,7 +127,7 @@ async function loadVideo() {
   return video;
 }
 
-const bindPage = async () => {
+const main = async () => {
   model = await handpose.load();
   let video;
 
@@ -227,4 +227,4 @@ const landmarksRealTime = async (video) => {
 navigator.getUserMedia = navigator.getUserMedia ||
   navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 
-bindPage();
+main();
