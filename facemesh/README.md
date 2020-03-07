@@ -4,10 +4,6 @@ MediaPipe Facemesh is a lightweight machine learning pipeline predicting 486 3D 
 
 <img src="demo.gif" alt="demo" style="width: 640px;"/>
 
-Here is map of the keypoints:
-
-<img src="mesh_map.jpg" alt="keypoints_map" style="width: 500px; height: 500px">
-
 More background information about the model, as well as its performance characteristics on different datasets, can be found here: [https://drive.google.com/file/d/1VFC_wIpw4O7xBOiTgUldl79d9LA-LsnA/view](https://drive.google.com/file/d/1VFC_wIpw4O7xBOiTgUldl79d9LA-LsnA/view)
 
 The model is designed for front-facing cameras on mobile devices, where faces in view tend to occupy a relatively large fraction of the canvas. MediaPipe Facemesh may struggle to identify far-away faces.
@@ -127,3 +123,9 @@ main();
 * **returnTensors** - (defaults to `false`) Whether to return tensors as opposed to values.
 
 * **flipHorizontal** - Whether to flip/mirror the facial keypoints horizontally. Should be true for videos that are flipped by default (e.g. webcams).
+
+#### Keypoints
+
+Here is map of the keypoints:
+
+<img src="mesh_map.jpg" alt="keypoints_map" style="width: 500px; height: 500px">
