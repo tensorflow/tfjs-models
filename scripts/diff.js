@@ -14,10 +14,10 @@
 // limitations under the License.
 // =============================================================================
 
-const { exec } = require('./test-util');
+const {exec} = require('./test-util');
 const shell = require('shelljs');
-const { readdirSync, statSync, writeFileSync } = require('fs');
-const { join } = require('path');
+const {readdirSync, statSync, writeFileSync} = require('fs');
+const {join} = require('path');
 const fs = require('fs');
 
 const filesWhitelistToTriggerBuild = [
@@ -26,9 +26,6 @@ const filesWhitelistToTriggerBuild = [
 ];
 
 const CLONE_PATH = 'clone';
-
-
-shell.rm('-f', `${CLONE_PATH}`);
 
 const dirs = readdirSync('.').filter(f => {
   return f !== 'node_modules' && f !== '.git' && statSync(f).isDirectory();
@@ -53,20 +50,18 @@ exec(`git clone https://github.com/tensorflow/tfjs-models ${CLONE_PATH}`);
 
 console.log();  // Break up the console for readability.
 
-
 shell.cd(CLONE_PATH);
 
 // If we cannot check out the commit then this PR is coming from a fork.
-// const res = shell.exec(`git checkout ${commitSha}`, { silent: true });
-// const isPullRequestFromFork = res.code !== 0;
-const isPullRequestFromFork = false;
+const res = shell.exec(`git checkout ${commitSha}`, {silent: true});
+const isPullRequestFromFork = res.code !== 0;
 
 // Only checkout the merge base if the pull requests comes from a
 // tensorflow/tfjs branch. Otherwise clone master and diff against master.
 if (!isPullRequestFromFork) {
   console.log(
-    'PR is coming from tensorflow/tfjs-models. ' +
-    'Finding the merge base...');
+      'PR is coming from tensorflow/tfjs-models. ' +
+      'Finding the merge base...');
   exec(`git checkout ${branchName}`);
   const mergeBase = exec(`git merge-base master ${branchName}`).stdout.trim();
   exec(`git fetch origin ${mergeBase}`);
@@ -114,12 +109,12 @@ console.log();  // Break up the console for readability.
 // Filter the triggered builds to log by whether a cloudbuild.yml file
 // exists for that directory.
 triggeredBuilds = triggeredBuilds.filter(
-  triggeredBuild => fs.existsSync(triggeredBuild + '/cloudbuild.yml'));
+    triggeredBuild => fs.existsSync(triggeredBuild + '/cloudbuild.yml'));
 console.log('Triggering builds for ', triggeredBuilds.join(', '));
 
 function diff(fileOrDirName) {
   const diffCmd = `diff -rq --exclude='settings.json' ` +
-    `${CLONE_PATH}/${fileOrDirName} ` +
-    `${fileOrDirName}`;
-  return exec(diffCmd, { silent: true }, true).stdout.trim();
+      `${CLONE_PATH}/${fileOrDirName} ` +
+      `${fileOrDirName}`;
+  return exec(diffCmd, {silent: true}, true).stdout.trim();
 }
