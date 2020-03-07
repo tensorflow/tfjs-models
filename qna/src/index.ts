@@ -15,5 +15,5 @@
  * =============================================================================
  */
 
-export {load, MobileBert} from './mobile_bert';
+export {load, QuestionAndAnswer} from './question_and_answer';
 export {version} from './version';
