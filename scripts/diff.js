@@ -27,6 +27,7 @@ const filesWhitelistToTriggerBuild = [
 
 const CLONE_PATH = 'clone';
 
+console.log(`Removing existing clone`);
 shell.rm('-f', CLONE_PATH);
 
 const dirs = readdirSync('.').filter(f => {
