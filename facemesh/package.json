@@ -1,0 +1,47 @@
+{
+  "name": "@tensorflow-models/facemesh",
+  "version": "0.0.1",
+  "description": "Pretrained facemesh model",
+  "main": "dist/index.js",
+  "jsnext:main": "dist/facemesh.esm.js",
+  "module": "dist/facemesh.esm.js",
+  "unpkg": "dist/facemesh.min.js",
+  "jsdelivr": "dist/facemesh.min.js",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tensorflow/tfjs-models.git"
+  },
+  "peerDependencies": {
+    "@tensorflow/tfjs-core": "^1.6.1",
+    "@tensorflow/tfjs-converter": "^1.6.1"
+  },
+  "dependencies": {
+    "@tensorflow-models/blazeface": "0.0.5"
+  },
+  "devDependencies": {
+    "@tensorflow/tfjs-core": "^1.6.1",
+    "@tensorflow/tfjs-converter": "^1.6.1",
+    "@types/jasmine": "~2.5.53",
+    "jasmine": "~3.2.0",
+    "jasmine-core": "~3.1.0",
+    "rimraf": "~2.6.2",
+    "rollup": "~0.58.2",
+    "rollup-plugin-node-resolve": "~3.3.0",
+    "rollup-plugin-typescript2": "~0.13.0",
+    "rollup-plugin-uglify": "~3.0.0",
+    "ts-node": "~5.0.0",
+    "tslint": "~5.8.0",
+    "typescript": "3.3.3333",
+    "yalc": "^1.0.0-pre.27"
+  },
+  "scripts": {
+    "build": "rimraf dist && tsc",
+    "publish-local": "yarn build && rollup -c && yalc publish",
+    "test": "ts-node run_tests.ts",
+    "build-npm": "yarn build && rollup -c",
+    "lint": "tslint -p . -t verbose",
+    "publish-demo": "./scripts/publish-demo.sh"
+  },
+  "license": "Apache-2.0"
+}
