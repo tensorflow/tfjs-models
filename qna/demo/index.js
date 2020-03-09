@@ -39,7 +39,7 @@ window.onload = () => {
   contextDiv = document.getElementById('context');
   answerDiv = document.getElementById('answer');
   search.onclick = process;
-  
+
   input.addEventListener('keyup', async (event) => {
     if (event.key === 'Enter') {
       process();
