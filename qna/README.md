@@ -3,15 +3,15 @@
 Use a pre-trained model to answer questions based on the content of a given passage.
 
 ### How it works
-The model can be used to build a system that can answer users’ questions in natural language. It was created using a pre-trained BERT model fine-tuned on SQuAD 1.1 dataset.
+The model can be used to build a system that can answer users’ questions in natural language. It was created using a pre-trained BERT model fine-tuned on [SQuAD 2.0 dataset](https://rajpurkar.github.io/SQuAD-explorer/).
 
-(BERT)[https://github.com/google-research/bert], or Bidirectional Encoder Representations from Transformers, is a method of pre-training language representations which obtains state-of-the-art results on a wide array of Natural Language Processing tasks.
+[BERT](https://github.com/google-research/bert), or Bidirectional Encoder Representations from Transformers, is a method of pre-training language representations which obtains state-of-the-art results on a wide array of Natural Language Processing tasks.
 
-This app uses a compressed version of BERT, (MobileBERT)[https://openreview.net/forum?id=SJxjVaNKwB], that runs 4x faster and has 4x smaller model size.
+This app uses a compressed version of BERT, [MobileBERT](https://openreview.net/forum?id=SJxjVaNKwB), that runs 4x faster and has 4x smaller model size.
 
-(SQuAD)[https://rajpurkar.github.io/SQuAD-explorer/], or Stanford Question Answering Dataset, is a reading comprehension dataset consisting of articles from Wikipedia and a set of question-answer pairs for each article.
+[SQuAD](https://rajpurkar.github.io/SQuAD-explorer/), or Stanford Question Answering Dataset, is a reading comprehension dataset consisting of articles from Wikipedia and a set of question-answer pairs for each article.
 
-The model takes a passage and a question as input, then returns a segment of the passage that most likely answers the question. It requires semi-complex pre-processing including tokenization and post-processing steps that are described in the BERT (paper)[https://arxiv.org/abs/1810.04805] and implemented in the sample app. This model is also available in (TFLite)[https://www.tensorflow.org/lite/models/bert_qa/overview].
+The model takes a passage and a question as input, then returns a segment of the passage that most likely answers the question. It requires semi-complex pre-processing including tokenization and post-processing steps that are described in the BERT [paper](https://arxiv.org/abs/1810.04805) and implemented in the sample app. This model is also available in [TFLite](https://www.tensorflow.org/lite/models/bert_qa/overview).
 
 ## Usage
 
