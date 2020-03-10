@@ -45,7 +45,7 @@ async function loadHandPoseModel() {
 async function loadAnchors() {
   return tf.util
       .fetch(
-          'https://storage.googleapis.com/tfhub-tfjs-modules/tensorflow/tfjs-model/handskeleton/1/default/1/anchors.json')
+          'https://tfhub.dev/tensorflow/tfjs-model/handskeleton/1/default/1/anchors.json?tfjs-format=file')
       .then(d => d.json());
 }
 
