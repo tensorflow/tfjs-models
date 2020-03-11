@@ -25,7 +25,7 @@ import {Coords3D, HandPipeline, Prediction} from './pipeline';
 // Load the bounding box detector model.
 async function loadHandDetectorModel() {
   const HANDDETECT_MODEL_PATH =
-      'https://tfhub.dev/tensorflow/tfjs-model/handdetector/1/default/1';
+      'https://tfhub.dev/mediapipe/tfjs-model/handdetector/1/default/1';
   return tfconv.loadGraphModel(HANDDETECT_MODEL_PATH, {fromTFHub: true});
 }
 
@@ -35,7 +35,7 @@ const MESH_MODEL_INPUT_HEIGHT = 256;
 // Load the mesh detector model.
 async function loadHandPoseModel() {
   const HANDPOSE_MODEL_PATH =
-      'https://tfhub.dev/tensorflow/tfjs-model/handskeleton/1/default/1';
+      'https://tfhub.dev/mediapipe/tfjs-model/handskeleton/1/default/1';
   return tfconv.loadGraphModel(HANDPOSE_MODEL_PATH, {fromTFHub: true});
 }
 
@@ -45,7 +45,7 @@ async function loadHandPoseModel() {
 async function loadAnchors() {
   return tf.util
       .fetch(
-          'https://tfhub.dev/tensorflow/tfjs-model/handskeleton/1/default/1/anchors.json?tfjs-format=file')
+          'https://tfhub.dev/mediapipe/tfjs-model/handskeleton/1/default/1/anchors.json?tfjs-format=file')
       .then(d => d.json());
 }
 
