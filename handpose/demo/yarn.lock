@@ -815,10 +815,8 @@
     "@parcel/utils" "^1.11.0"
     physical-cpu-count "^2.0.0"
 
-"@tensorflow-models/handpose@0.0.2":
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/@tensorflow-models/handpose/-/handpose-0.0.2.tgz#d5ce96f42a418bd9278e48f5ce5762933dba4242"
-  integrity sha512-3F9uf+WAVhkUPZ08aswk0YIQiauVxSnKYhOXEheFmZM5QOHAz50A223/5b26iXi5OAM7/KiddfSPgTko7JQiQQ==
+"@tensorflow-models/handpose@file:..":
+  version "0.0.3"
 
 "@tensorflow/tfjs-converter@^1.6.1":
   version "1.6.1"
