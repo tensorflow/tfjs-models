@@ -549,9 +549,10 @@ export class BodyPix {
     const result = await segmentation.data() as Uint8Array;
     segmentation.dispose();
 
+    const tensorBuffers = await toTensorBuffers3D(
+        [heatmapScores, offsets, displacementFwd, displacementBwd]);
     const [scoresBuf, offsetsBuf, displacementsFwdBuf, displacementsBwdBuf] =
-        await toTensorBuffers3D(
-            [heatmapScores, offsets, displacementFwd, displacementBwd]);
+        tensorBuffers;
 
     let poses = decodeMultiplePoses(
         scoresBuf, offsetsBuf, displacementsFwdBuf, displacementsBwdBuf,
@@ -651,10 +652,10 @@ export class BodyPix {
       };
     });
 
+    const tensorBuffers = await toTensorBuffers3D(
+        [heatmapScoresRaw, offsetsRaw, displacementFwdRaw, displacementBwdRaw]);
     const [scoresBuf, offsetsBuf, displacementsFwdBuf, displacementsBwdBuf] =
-        await toTensorBuffers3D([
-          heatmapScoresRaw, offsetsRaw, displacementFwdRaw, displacementBwdRaw
-        ]);
+        tensorBuffers;
 
     let poses = decodeMultiplePoses(
         scoresBuf, offsetsBuf, displacementsFwdBuf, displacementsBwdBuf,
@@ -836,9 +837,10 @@ export class BodyPix {
     const data = await partSegmentation.data() as Int32Array;
     partSegmentation.dispose();
 
+    const tensorBuffers = await toTensorBuffers3D(
+        [heatmapScores, offsets, displacementFwd, displacementBwd]);
     const [scoresBuf, offsetsBuf, displacementsFwdBuf, displacementsBwdBuf] =
-        await toTensorBuffers3D(
-            [heatmapScores, offsets, displacementFwd, displacementBwd]);
+        tensorBuffers;
 
     let poses = decodeMultiplePoses(
         scoresBuf, offsetsBuf, displacementsFwdBuf, displacementsBwdBuf,
@@ -940,10 +942,10 @@ export class BodyPix {
       };
     });
 
+    const tensorBuffers = await toTensorBuffers3D(
+        [heatmapScoresRaw, offsetsRaw, displacementFwdRaw, displacementBwdRaw]);
     const [scoresBuf, offsetsBuf, displacementsFwdBuf, displacementsBwdBuf] =
-        await toTensorBuffers3D([
-          heatmapScoresRaw, offsetsRaw, displacementFwdRaw, displacementBwdRaw
-        ]);
+        tensorBuffers;
 
     let poses = decodeMultiplePoses(
         scoresBuf, offsetsBuf, displacementsFwdBuf, displacementsBwdBuf,
