@@ -1,4 +1,5 @@
 # MediaPipe Handpose
+Note: this model can only detect a maximum of one hand in the input - multi-hand detection is coming in a future release.
 
 MediaPipe Handpose is a lightweight ML pipeline consisting of two models: A palm detector and a hand-skeleton finger tracking model. It predicts 21 2D hand keypoints per detected hand. For more details, please read our Google AI [blogpost](https://ai.googleblog.com/2019/08/on-device-real-time-hand-tracking-with.html).
 
