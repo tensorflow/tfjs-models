@@ -55,7 +55,7 @@ async function main() {
   const predictions = await model.estimateHands(document.querySelector("video"));
   if (predictions.length > 0) {
     /*
-    `predictions` is an array of objects describing each detected hand, for example:
+    `predictions` is an array of objects describing detected hand, for example:
     [
       {
         handInViewConfidence: 1, // The probability of a hand being present.
