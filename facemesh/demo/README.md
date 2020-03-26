@@ -9,7 +9,7 @@ The MediaPipe Facemesh demo shows how to use the MediaPipe Facemesh model to est
 cd into the demos folder:
 
 ```sh
-cd facemesh/demos
+cd facemesh/demo
 ```
 
 Install dependencies and prepare the build directory:
