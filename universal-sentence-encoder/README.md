@@ -33,7 +33,7 @@ Using `npm`:
 To import in npm:
 
 ```js
-import * as use from '@tensorflow-models/universal-sentence-encoder';
+const use = require('@tensorflow-models/universal-sentence-encoder');
 ```
 
 or as a standalone script tag:

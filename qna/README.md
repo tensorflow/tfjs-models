@@ -47,7 +47,7 @@ There are two main ways to get this model in your JavaScript project: via script
 ```js
 // Note: you do not need to import @tensorflow/tfjs here, but make sure you have installed the peer dependencies for tfjs-core and tfjs-converter.
 
-import * as qna from '@tensorflow-models/qna';
+const qna = require('@tensorflow-models/qna');
 
 // Load the model.
 const model = await qna.load();

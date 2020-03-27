@@ -34,7 +34,7 @@ Note that this package specifies `@tensorflow/tfjs-core` and `@tensorflow/tfjs-c
 To import in npm:
 
 ```js
-import * as handpose from '@tensorflow-models/handpose';
+const handpose = require('@tensorflow-models/handpose');
 ```
 
 or as a standalone script tag:

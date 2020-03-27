@@ -30,7 +30,7 @@ Note that this package specifies `@tensorflow/tfjs-core` and `@tensorflow/tfjs-c
 To import in npm:
 
 ```js
-import * as facemesh from '@tensorflow-models/facemesh';
+const facemesh = require('@tensorflow-models/facemesh');
 ```
 
 or as a standalone script tag:
