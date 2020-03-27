@@ -9,7 +9,7 @@ The demo shows how to use embeddings produced by the Universal Sentence Encoder.
 cd into the demos folder:
 
 ```sh
-cd universal-sentence-encoder/demos
+cd universal-sentence-encoder/demo
 ```
 
 Install dependencies and prepare the build directory:
