@@ -50,7 +50,7 @@ There are two main ways to get this model in your JavaScript project: via script
 ```js
 // Note: you do not need to import @tensorflow/tfjs here.
 
-import * as mobilenet from '@tensorflow-models/mobilenet';
+const mobilenet = require('@tensorflow-models/mobilenet');
 
 const img = document.getElementById('img');
 

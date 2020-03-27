@@ -67,9 +67,9 @@ You can see example code [here](https://github.com/tensorflow/tfjs-models/tree/m
 ###### via NPM
 
 ```js
-import * as tf from '@tensorflow/tfjs';
-import * as mobilenetModule from '@tensorflow-models/mobilenet';
-import * as knnClassifier from '@tensorflow-models/knn-classifier';
+const tf = require('@tensorflow/tfjs');
+const mobilenetModule = require('@tensorflow-models/mobilenet');
+const knnClassifier = require('@tensorflow-models/knn-classifier');
 
 // Create the classifier.
 const classifier = knnClassifier.create();

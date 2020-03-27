@@ -23,7 +23,7 @@ Using `npm`:
 To import in npm:
 
 ```js
-import * as toxicity from '@tensorflow-models/toxicity';
+const toxicity = require('@tensorflow-models/toxicity');
 ```
 
 or as a standalone script tag:

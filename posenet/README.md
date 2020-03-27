@@ -152,7 +152,7 @@ It returns a `Promise` that resolves with a  **single** `pose`. The `pose` has a
 ###### via NPM
 
 ```javascript
-import * as posenet from '@tensorflow-models/posenet';
+const posenet = require('@tensorflow-models/posenet');
 
 async function estimatePoseOnImage(imageElement) {
   // load the posenet model from a checkpoint
@@ -406,7 +406,7 @@ It returns a `promise` that resolves with an array of `pose`s, each with a confi
 ###### via NPM
 
 ```javascript
-import * as posenet from '@tensorflow-models/posenet';
+const posenet = require('@tensorflow-models/posenet');
 
 async function estimateMultiplePosesOnImage(imageElement) {
   const net = await posenet.load();
