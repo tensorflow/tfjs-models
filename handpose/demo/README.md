@@ -9,7 +9,7 @@ This demo shows how to use the handpose model to detect hands in a video stream.
 cd into the demos folder:
 
 ```sh
-cd handpose/demos
+cd handpose/demo
 ```
 
 Install dependencies and prepare the build directory:

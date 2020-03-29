@@ -6,10 +6,10 @@ The MediaPipe Facemesh demo shows how to use the MediaPipe Facemesh model to est
 
 ## Setup
 
-cd into the demos folder:
+cd into the demo folder:
 
 ```sh
-cd facemesh/demos
+cd facemesh/demo
 ```
 
 Install dependencies and prepare the build directory:
@@ -44,7 +44,7 @@ yarn build && yarn yalc publish
 Cd into the demos and install dependencies:
 
 ```sh
-cd demos
+cd demo
 yarn
 ```
 

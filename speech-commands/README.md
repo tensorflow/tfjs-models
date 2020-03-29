@@ -42,8 +42,8 @@ To use the speech-command recognizer, first create a recognizer instance,
 then start the streaming recognition by calling its `listen()` method.
 
 ```js
-import * as tf from '@tensorflow/tfjs';
-import * as speechCommands from '@tensorflow-models/speech-commands';
+const tf = require('@tensorflow/tfjs');
+const speechCommands = require('@tensorflow-models/speech-commands');
 
 // When calling `create()`, you must provide the type of the audio input.
 // The two available options are `BROWSER_FFT` and `SOFT_FFT`.
@@ -132,8 +132,8 @@ shape of the Tensor must match the expectation of the recognizer instance.
 E.g.,
 
 ```js
-import * as tf from '@tensorflow/tfjs';
-import * as speechCommands from '@tensorflow-models/speech-commands';
+const tf = require('@tensorflow/tfjs');
+const speechCommands = require('@tensorflow-models/speech-commands');
 
 const recognizer = speechCommands.create('BROWSER_FFT');
 
