@@ -98,7 +98,7 @@ This method exists on the model that is loaded from `cocoSsd.load`.
 ```ts
 model.detect(
   img: tf.Tensor3D | ImageData | HTMLImageElement |
-      HTMLCanvasElement | HTMLVideoElement, maxDetectionSize: number
+      HTMLCanvasElement | HTMLVideoElement, maxNumBoxes: number
 )
 ```
 
