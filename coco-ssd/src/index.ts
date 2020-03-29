@@ -101,11 +101,14 @@ export class ObjectDetection {
    * @param maxNumBoxes The maximum number of bounding boxes of detected
    * objects. There can be multiple objects of the same class, but at different
    * locations. Defaults to 20.
+   * @param minScore The minimum score of the retuned bounding boxes of detected objects.
+   * value between 0 and 1. Defaults to 0.5.
    */
   private async infer(
       img: tf.Tensor3D|ImageData|HTMLImageElement|HTMLCanvasElement|
       HTMLVideoElement,
-      maxNumBoxes: number): Promise<DetectedObject[]> {
+      maxNumBoxes: number, 
+      minScore: number): Promise<DetectedObject[]> {
     const batched = tf.tidy(() => {
       if (!(img instanceof tf.Tensor)) {
         img = tf.browser.fromPixels(img);
@@ -140,7 +143,7 @@ export class ObjectDetection {
       const boxes2 =
           tf.tensor2d(boxes, [result[1].shape[1], result[1].shape[3]]);
       return tf.image.nonMaxSuppression(
-          boxes2, maxScores, maxNumBoxes, 0.5, 0.5);
+          boxes2, maxScores, maxNumBoxes, minScore, minScore);
     });
 
     const indexes = indexTensor.dataSync() as Float32Array;
@@ -209,13 +212,15 @@ export class ObjectDetection {
    * @param maxNumBoxes The maximum number of bounding boxes of detected
    * objects. There can be multiple objects of the same class, but at different
    * locations. Defaults to 20.
-   *
+   * @param minScore The minimum score of the retuned bounding boxes of detected objects.
+   * value between 0 and 1. Defaults to 0.5.
    */
   async detect(
       img: tf.Tensor3D|ImageData|HTMLImageElement|HTMLCanvasElement|
       HTMLVideoElement,
-      maxNumBoxes = 20): Promise<DetectedObject[]> {
-    return this.infer(img, maxNumBoxes);
+      maxNumBoxes = 20,
+      minScore = 0.5): Promise<DetectedObject[]> {
+    return this.infer(img, maxNumBoxes, minScore);
   }
 
   /**
