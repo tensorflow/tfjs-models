@@ -98,7 +98,7 @@ This method exists on the model that is loaded from `cocoSsd.load`.
 ```ts
 model.detect(
   img: tf.Tensor3D | ImageData | HTMLImageElement |
-      HTMLCanvasElement | HTMLVideoElement, maxNumBoxes: number, minScore:number
+      HTMLCanvasElement | HTMLVideoElement, maxNumBoxes: number, minScore: number
 )
 ```
 
@@ -106,6 +106,7 @@ Args:
 
 - **img:** A Tensor or an image element to make a detection on.
 - **maxNumBoxes:** The maximum number of bounding boxes of detected objects. There can be multiple objects of the same class, but at different locations. Defaults to 20.
+- **minScore** The minimum score of the retuned bounding boxes of detected objects. Value between 0 and 1. Defaults to 0.5.
 
 Returns an array of classes and probabilities that looks like:
 
