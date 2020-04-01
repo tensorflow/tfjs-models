@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2020 Google Inc. All Rights Reserved.
+ * Copyright 2019 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -19,7 +19,7 @@ import * as tfwebgpu from '@tensorflow/tfjs-backend-webgpu';
 import * as tf from '@tensorflow/tfjs-core';
 
 export function rotate(
-    this: any, image: tf.Tensor4D, radians: number, fillValue: number[]|number,
+    image: tf.Tensor4D, radians: number, fillValue: number[]|number,
     center: [number, number]): tf.Tensor4D {
   const imageShape = image.shape;
   const imageHeight = imageShape[1];
@@ -46,8 +46,10 @@ export function rotate(
     outputShape: imageShape,
     workGroupSize: [16, 1, 1],
     dispatchLayout: tfwebgpu.webgpu.webgpu_util.flatDispatchLayout(imageShape),
+    // TODO(xing.xu): use this instead.
     dispatch: tfwebgpu.webgpu.webgpu_util.computeDispatch(
-        this.dispatchLayout, imageShape, this.workGroupSize),
+        tfwebgpu.webgpu.webgpu_util.flatDispatchLayout(imageShape), imageShape,
+        [16, 1, 1], [1, 1, 1]),
     userCode: `
       void main() {
         int index = int(gl_GlobalInvocationID.x);
