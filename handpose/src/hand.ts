@@ -82,54 +82,63 @@ export class HandDetector {
     });
   }
 
-  private getBoundingBoxes(input: tf.Tensor4D): HandDetectorPrediction {
-    return tf.tidy(() => {
-      const normalizedInput = tf.mul(tf.sub(input, 0.5), 2);
+  private async getBoundingBoxes(input: tf.Tensor4D):
+      Promise<HandDetectorPrediction> {
+    // const normalizedInput = tf.mul(tf.sub(input, 0.5), 2);
+    const normalizedInput = tf.tidy(() => tf.mul(tf.sub(input, 0.5), 2));
 
-      // Currently tfjs-core does not pack depthwiseConv because it fails for
-      // very large inputs (https://github.com/tensorflow/tfjs/issues/1652).
-      // TODO(annxingyuan): call tf.enablePackedDepthwiseConv when available
-      // (https://github.com/tensorflow/tfjs/issues/2821)
-      const savedWebglPackDepthwiseConvFlag =
-          tf.env().get('WEBGL_PACK_DEPTHWISECONV');
-      tf.env().set('WEBGL_PACK_DEPTHWISECONV', true);
-      // The model returns a tensor with the following shape:
-      //  [1 (batch), 2944 (anchor points), 19 (data for each anchor)]
-      // Squeezing immediately because we are not batching inputs.
-      const prediction: tf.Tensor2D =
-          (this.model.predict(normalizedInput) as tf.Tensor3D).squeeze();
-      tf.env().set('WEBGL_PACK_DEPTHWISECONV', savedWebglPackDepthwiseConvFlag);
+    // Currently tfjs-core does not pack depthwiseConv because it fails for
+    // very large inputs (https://github.com/tensorflow/tfjs/issues/1652).
+    // TODO(annxingyuan): call tf.enablePackedDepthwiseConv when available
+    // (https://github.com/tensorflow/tfjs/issues/2821)
+    const savedWebglPackDepthwiseConvFlag =
+        tf.env().get('WEBGL_PACK_DEPTHWISECONV');
+    tf.env().set('WEBGL_PACK_DEPTHWISECONV', true);
+    // The model returns a tensor with the following shape:
+    //  [1 (batch), 2944 (anchor points), 19 (data for each anchor)]
+    const batchedPrediction =
+        this.model.predict(normalizedInput) as tf.Tensor3D;
+    tf.env().set('WEBGL_PACK_DEPTHWISECONV', savedWebglPackDepthwiseConvFlag);
+    const prediction: tf.Tensor2D = batchedPrediction.squeeze();
 
-      // Regression score for each anchor point.
-      const scores: tf.Tensor1D =
-          tf.sigmoid(tf.slice(prediction, [0, 0], [-1, 1])).squeeze();
+    // Regression score for each anchor point.
+    const scores: tf.Tensor1D = tf.tidy(
+        () => tf.sigmoid(tf.slice(prediction, [0, 0], [-1, 1])).squeeze());
 
-      // Bounding box for each anchor point.
-      const rawBoxes = tf.slice(prediction, [0, 1], [-1, 4]);
-      const boxes = this.normalizeBoxes(rawBoxes);
+    // Bounding box for each anchor point.
+    const rawBoxes = tf.slice(prediction, [0, 1], [-1, 4]);
+    const boxes = this.normalizeBoxes(rawBoxes);
 
-      const savedConsoleWarnFn = console.warn;
-      console.warn = () => {};
-      const boxesWithHands =
-          tf.image
-              .nonMaxSuppression(
-                  boxes, scores, 1, this.iouThreshold, this.scoreThreshold)
-              .arraySync();
-      console.warn = savedConsoleWarnFn;
+    const savedConsoleWarnFn = console.warn;
+    console.warn = () => {};
+    const boxesWithHandsTensor = tf.image.nonMaxSuppression(
+        boxes, scores, 1, this.iouThreshold, this.scoreThreshold);
+    console.warn = savedConsoleWarnFn;
+    const boxesWithHands = await boxesWithHandsTensor.array();
 
-      if (boxesWithHands.length === 0) {
-        return null;
-      }
+    const toDispose = [
+      normalizedInput, batchedPrediction, boxesWithHandsTensor, prediction,
+      boxes, rawBoxes, scores
+    ];
+    if (boxesWithHands.length === 0) {
+      toDispose.forEach(tensor => tensor.dispose());
 
-      const boxIndex = boxesWithHands[0];
-      const matchingBox = tf.slice(boxes, [boxIndex, 0], [1, -1]);
+      return null;
+    }
 
-      const rawPalmLandmarks = tf.slice(prediction, [boxIndex, 5], [1, 14]);
-      const palmLandmarks: tf.Tensor2D =
-          this.normalizeLandmarks(rawPalmLandmarks, boxIndex).reshape([-1, 2]);
+    const boxIndex = boxesWithHands[0];
+    const matchingBox = tf.slice(boxes, [boxIndex, 0], [1, -1]);
 
-      return {boxes: matchingBox, palmLandmarks};
-    });
+    const rawPalmLandmarks = tf.slice(prediction, [boxIndex, 5], [1, 14]);
+    const palmLandmarks: tf.Tensor2D = tf.tidy(
+        () => this.normalizeLandmarks(rawPalmLandmarks, boxIndex).reshape([
+          -1, 2
+        ]));
+
+    toDispose.push(rawPalmLandmarks);
+    toDispose.forEach(tensor => tensor.dispose());
+
+    return {boxes: matchingBox, palmLandmarks};
   }
 
   /**
@@ -138,13 +147,13 @@ export class HandDetector {
    *
    * @param input The image to classify.
    */
-  estimateHandBounds(input: tf.Tensor4D): Box {
+  async estimateHandBounds(input: tf.Tensor4D): Promise<Box> {
     const inputHeight = input.shape[1];
     const inputWidth = input.shape[2];
 
     const image: tf.Tensor4D =
         tf.tidy(() => input.resizeBilinear([this.width, this.height]).div(255));
-    const prediction = this.getBoundingBoxes(image);
+    const prediction = await this.getBoundingBoxes(image);
 
     if (prediction === null) {
       image.dispose();
