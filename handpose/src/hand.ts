@@ -84,7 +84,6 @@ export class HandDetector {
 
   private async getBoundingBoxes(input: tf.Tensor4D):
       Promise<HandDetectorPrediction> {
-    // const normalizedInput = tf.mul(tf.sub(input, 0.5), 2);
     const normalizedInput = tf.tidy(() => tf.mul(tf.sub(input, 0.5), 2));
 
     // Currently tfjs-core does not pack depthwiseConv because it fails for
