@@ -40,16 +40,19 @@ export function rotate(
       vec3 fill = vec3(${fillValue.join(',')});
       float outputValue = fill[coords[3]];`;
   }
+  const dispatchLayout =
+      tfwebgpu.webgpu.webgpu_util.flatDispatchLayout(imageShape);
+  const workGroupSize: [number, number, number] = [16, 1, 1];
+  const dispatch = tfwebgpu.webgpu.webgpu_util.computeDispatch(
+      dispatchLayout, imageShape, workGroupSize, [1, 1, 1]);
 
   const program: tfwebgpu.webgpu.WebGPUProgram = {
     variableNames: ['Image'],
     outputShape: imageShape,
-    workGroupSize: [16, 1, 1],
-    dispatchLayout: tfwebgpu.webgpu.webgpu_util.flatDispatchLayout(imageShape),
-    // TODO(xing.xu): use this instead.
-    dispatch: tfwebgpu.webgpu.webgpu_util.computeDispatch(
-        tfwebgpu.webgpu.webgpu_util.flatDispatchLayout(imageShape), imageShape,
-        [16, 1, 1], [1, 1, 1]),
+    dispatchLayout,
+    dispatch,
+    workGroupSize,
+
     userCode: `
       void main() {
         int index = int(gl_GlobalInvocationID.x);
