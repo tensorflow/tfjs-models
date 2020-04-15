@@ -13,12 +13,12 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs-core": "^1.2.6",
-    "@tensorflow/tfjs-converter": "^1.2.5"
+    "@tensorflow/tfjs-converter": "^1.2.5",
+    "@tensorflow/tfjs-core": "^1.2.6"
   },
   "devDependencies": {
-    "@tensorflow/tfjs-core": "^1.2.6",
     "@tensorflow/tfjs-converter": "^1.2.5",
+    "@tensorflow/tfjs-core": "^1.2.6",
     "@types/jasmine": "~2.8.8",
     "babel-core": "~6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",
