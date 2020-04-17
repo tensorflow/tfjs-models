@@ -18,7 +18,8 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {Tokenizer} from './tokenizer';
+import {loadVocabulary, Tokenizer} from './tokenizer';
+import {loadQnA} from './use_qna';
 
 export {version} from './version';
 
@@ -36,28 +37,6 @@ export async function load() {
   return use;
 }
 
-/**
- * Load the Tokenizer for use independently from the UniversalSentenceEncoder.
- *
- * @param pathToVocabulary (optional) Provide a path to the vocabulary file.
- */
-export async function loadTokenizer(pathToVocabulary?: string) {
-  const vocabulary = await loadVocabulary(pathToVocabulary);
-  const tokenizer = new Tokenizer(vocabulary);
-  return tokenizer;
-}
-
-/**
- * Load a vocabulary for the Tokenizer.
- *
- * @param pathToVocabulary Defaults to the path to the 8k vocabulary used by the
- * UniversalSentenceEncoder.
- */
-async function loadVocabulary(pathToVocabulary = `${BASE_PATH}vocab.json`) {
-  const vocabulary = await tf.util.fetch(pathToVocabulary);
-  return vocabulary.json();
-}
-
 export class UniversalSentenceEncoder {
   private model: tfconv.GraphModel;
   private tokenizer: Tokenizer;
@@ -69,8 +48,8 @@ export class UniversalSentenceEncoder {
   }
 
   async load() {
-    const [model, vocabulary] =
-        await Promise.all([this.loadModel(), loadVocabulary()]);
+    const [model, vocabulary] = await Promise.all(
+        [this.loadModel(), loadVocabulary(`${BASE_PATH}/vocab.json`)]);
 
     this.model = model;
     this.tokenizer = new Tokenizer(vocabulary);
@@ -114,3 +93,4 @@ export class UniversalSentenceEncoder {
 }
 
 export {Tokenizer};
+export {loadQnA};
