@@ -86,11 +86,12 @@ export class ObjectDetection {
   async load() {
     this.model = await tfconv.loadGraphModel(this.modelPath);
 
+    const zeroTensor = tf.zeros([1, 300, 300, 3], 'int32');
     // Warmup the model.
-    const result = await this.model.executeAsync(
-                       tf.zeros([1, 300, 300, 3], 'int32')) as tf.Tensor[];
+    const result = await this.model.executeAsync(zeroTensor) as tf.Tensor[];
     await Promise.all(result.map(t => t.data()));
     result.map(t => t.dispose());
+    zeroTensor.dispose();
   }
 
   /**
@@ -223,7 +224,7 @@ export class ObjectDetection {
    * are done with the model.
    */
   dispose() {
-    if (this.model) {
+    if (this.model != null) {
       this.model.dispose();
     }
   }
