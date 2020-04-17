@@ -26,8 +26,8 @@ describeWithFlags('ObjectDetection', NODE_ENVS, () => {
     spyOn(tfconv, 'loadGraphModel').and.callFake(() => {
       const model = {
         executeAsync: (
-            x: tf
-                .Tensor) => [tf.ones([1, 1917, 90]), tf.ones([1, 1917, 1, 4])]
+            x: tf.Tensor) => [tf.ones([1, 1917, 90]), tf.ones([1, 1917, 1, 4])],
+        dispose: () => true
       };
       return model;
     });
@@ -40,6 +40,17 @@ describeWithFlags('ObjectDetection', NODE_ENVS, () => {
 
     await objectDetection.detect(x, 1);
 
+    expect(tf.memory().numTensors).toEqual(numOfTensorsBefore);
+  });
+
+  it('ObjectDetection e2e should not leak', async () => {
+    const numOfTensorsBefore = tf.memory().numTensors;
+    const objectDetection = await load();
+    const x = tf.zeros([227, 227, 3]) as tf.Tensor3D;
+
+    await objectDetection.detect(x, 1);
+    x.dispose();
+    objectDetection.dispose();
     expect(tf.memory().numTensors).toEqual(numOfTensorsBefore);
   });
 
