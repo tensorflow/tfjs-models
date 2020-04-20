@@ -18,7 +18,14 @@
 import * as tfwebgpu from '@tensorflow/tfjs-backend-webgpu';
 import * as tf from '@tensorflow/tfjs-core';
 import * as handpose from '@tensorflow-models/handpose';
+import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
+// TODO(annxingyuan): read version from tfjsWasm directly once
+// https://github.com/tensorflow/tfjs/pull/2819 is merged.
+import {version} from '@tensorflow/tfjs-backend-wasm/dist/version';
 
+tfjsWasm.setWasmPath(
+    `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
+        version}/dist/tfjs-backend-wasm.wasm`);
 function isMobile() {
   const isAndroid = /Android/i.test(navigator.userAgent);
   const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -41,7 +48,9 @@ const mobile = isMobile();
 // to avoid crowding limited screen space.
 const renderPointcloud = mobile === false;
 
-const state = {};
+const state = {
+  backend: 'webgl'
+};
 
 if (renderPointcloud) {
   state.renderPointcloud = true;
@@ -58,6 +67,20 @@ function setupDatGui() {
   }
 }
 
+function setupDatGui() {
+  const gui = new dat.GUI();
+  gui.add(state, 'backend', ['wasm', 'webgl', 'cpu', 'webgpu'])
+      .onChange(async backend => {
+        await tf.setBackend(backend);
+      });
+
+  if (renderPointcloud) {
+    gui.add(state, 'renderPointcloud').onChange(render => {
+      document.querySelector('#scatter-gl-container').style.display =
+          render ? 'inline-block' : 'none';
+    });
+  }
+}
 function drawPoint(ctx, y, x, r) {
   ctx.beginPath();
   ctx.arc(x, y, r, 0, 2 * Math.PI);
@@ -130,7 +153,7 @@ async function loadVideo() {
 }
 
 const main = async () => {
-  await tf.ready();
+  await tf.setBackend(state.backend);
   model = await handpose.load();
   let video;
 
