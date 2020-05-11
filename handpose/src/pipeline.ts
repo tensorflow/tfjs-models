@@ -186,11 +186,11 @@ export class HandPipeline {
     let rotatedImage: tf.Tensor4D;
     const backend = tf.getBackend();
 
-    if (backend === 'webgl') {
+    if (backend.match('webgl')) {
       rotatedImage = rotateWebgl(image, angle, 0, palmCenterNormalized);
     } else if (backend === 'webgpu') {
       rotatedImage = rotateWebgpu(image, angle, 0, palmCenterNormalized);
-    } else if (backend === 'cpu') {
+    } else if (backend === 'cpu' || backend === 'tensorflow') {
       rotatedImage = rotateCpu(image, angle, 0, palmCenterNormalized);
     } else {
       throw new Error(
