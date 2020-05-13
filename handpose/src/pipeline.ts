@@ -159,7 +159,7 @@ export class HandPipeline {
     const useFreshBox = this.shouldUpdateRegionsOfInterest();
     if (useFreshBox === true) {
       const boundingBoxPrediction =
-          this.boundingBoxDetector.estimateHandBounds(image);
+          await this.boundingBoxDetector.estimateHandBounds(image);
       if (boundingBoxPrediction === null) {
         image.dispose();
         this.regionsOfInterest = [];
