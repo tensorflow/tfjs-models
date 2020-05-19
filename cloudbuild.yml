@@ -84,6 +84,13 @@ steps:
   args: ['./scripts/run-build.sh', 'handpose']
   waitFor: ['diff']
 
+# Handpose
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'facemesh'
+  args: ['./scripts/run-build.sh', 'facemesh']
+  waitFor: ['diff']
+
 # Run the top-level sanity checks.
 - name: 'node:10'
   entrypoint: 'yarn'
