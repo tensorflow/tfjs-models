@@ -147,7 +147,7 @@ function flipFaceHorizontal(
         (face.boundingBox.bottomRight as [number, number])[1]
       ]
     },
-    mesh: (face.mesh as Array<[number, number, number]>).map(coord => {
+    mesh: (face.mesh).map(coord => {
       const flippedCoord = coord.slice(0);
       flippedCoord[0] = imageWidth - 1 - coord[0];
       return flippedCoord;
@@ -243,7 +243,9 @@ export class FaceMesh {
             mesh: coords,
             scaledMesh: scaledCoords,
             boundingBox: {
+              // tslint:disable-next-line: no-unnecessary-type-assertion
               topLeft: box.startPoint.squeeze() as tf.Tensor1D,
+              // tslint:disable-next-line: no-unnecessary-type-assertion
               bottomRight: box.endPoint.squeeze() as tf.Tensor1D
             }
           };
