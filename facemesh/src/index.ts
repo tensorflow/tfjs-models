@@ -27,7 +27,7 @@ const FACEMESH_GRAPHMODEL_PATH =
 const MESH_MODEL_INPUT_WIDTH = 192;
 const MESH_MODEL_INPUT_HEIGHT = 192;
 
-interface AnnotatedPredictionValues {
+export interface AnnotatedPredictionValues {
   /** Probability of the face detection. */
   faceInViewConfidence: number;
   boundingBox: {
@@ -44,7 +44,7 @@ interface AnnotatedPredictionValues {
   annotations?: {[key: string]: Array<[number, number, number]>};
 }
 
-interface AnnotatedPredictionTensors {
+export interface AnnotatedPredictionTensors {
   faceInViewConfidence: number;
   boundingBox: {topLeft: tf.Tensor1D, bottomRight: tf.Tensor1D};
   mesh: tf.Tensor2D;
@@ -193,6 +193,16 @@ export class FaceMesh {
    *
    * @return An array of AnnotatedPrediction objects.
    */
+  async estimateFaces(
+      input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
+      HTMLCanvasElement,
+      returnTensors: true,
+      flipHorizontal = false): Promise<AnnotatedPredictionTensors[]>;
+  async estimateFaces(
+      input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
+      HTMLCanvasElement,
+      returnTensors: false,
+      flipHorizontal = false): Promise<AnnotatedPredictionValues[]>;
   async estimateFaces(
       input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
       HTMLCanvasElement,
