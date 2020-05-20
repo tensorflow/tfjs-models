@@ -182,7 +182,8 @@ export class FaceMesh {
   }
 
   /**
-   * Returns an array of UV coordinates for the 468 facial keypoint vertices.
+   * Returns an array of UV coordinates for the 468 facial keypoint vertices in
+   * mesh_map.jpg. Can be used to map textures to the facial mesh.
    */
   static getUVCoords(): Array<[number, number]> {
     return UV_COORDS;
