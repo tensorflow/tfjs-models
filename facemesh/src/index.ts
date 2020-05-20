@@ -21,6 +21,7 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {MESH_ANNOTATIONS} from './keypoints';
 import {Pipeline, Prediction} from './pipeline';
+import {UV_COORDS} from './uv_coords';
 
 const FACEMESH_GRAPHMODEL_PATH =
     'https://tfhub.dev/mediapipe/tfjs-model/facemesh/1/default/1';
@@ -178,6 +179,14 @@ export class FaceMesh {
 
   static getAnnotations(): {[key: string]: number[]} {
     return MESH_ANNOTATIONS;
+  }
+
+  /**
+   * Returns an array of UV coordinates for the 468 facial keypoint vertices in
+   * mesh_map.jpg. Can be used to map textures to the facial mesh.
+   */
+  static getUVCoords(): Array<[number, number]> {
+    return UV_COORDS;
   }
 
   /**

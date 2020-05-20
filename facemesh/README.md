@@ -129,3 +129,5 @@ main();
 Here is map of the keypoints:
 
 <img src="mesh_map.jpg" alt="keypoints_map" style="width: 500px; height: 500px">
+
+The UV coordinates for these keypoints are available via the `getUVCoords()` method on the `FaceMesh` model object. They can also be found in `src/uv_coords.ts`.
