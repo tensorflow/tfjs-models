@@ -220,8 +220,8 @@ The `PartSegmentation` object contains a width, height, `Pose` and an Int32Array
 | 7       | left_lower_arm_back    |  19      | left_lower_leg_back
 | 8       | right_lower_arm_front  | 20      | right_lower_leg_front
 | 9       | right_lower_arm_back   | 21      | right_lower_leg_back
-| 10      | left_hand              | 22      | left_feet
-| 11      | right_hand             | 23      | right_feet
+| 10      | left_hand              | 22      | left_foot
+| 11      | right_hand             | 23      | right_foot
 
 *Note: Part Id value -1 represents the non-person background)*
 
