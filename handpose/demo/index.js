@@ -15,8 +15,7 @@
  * =============================================================================
  */
 
-import * as tfwebgpu from '@tensorflow/tfjs-backend-webgpu';
-import * as tf from '@tensorflow/tfjs-core';
+// import * as tfwebgpu from '@tensorflow/tfjs-backend-webgpu';
 import * as handpose from '@tensorflow-models/handpose';
 import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
 import {version_wasm} from '@tensorflow/tfjs-backend-wasm';
@@ -30,14 +29,14 @@ function isMobile() {
   return isAndroid || isiOS;
 }
 
-let videoWidth, videoHeight, scatterGLHasInitialized = false, scatterGL,
-  fingerLookupIndices = {
-    thumb: [0, 1, 2, 3, 4],
-    indexFinger: [0, 5, 6, 7, 8],
-    middleFinger: [0, 9, 10, 11, 12],
-    ringFinger: [0, 13, 14, 15, 16],
-    pinky: [0, 17, 18, 19, 20]
-  }; // for rendering each finger as a polyline
+let videoWidth, videoHeight,
+    scatterGLHasInitialized = false, scatterGL, fingerLookupIndices = {
+      thumb: [0, 1, 2, 3, 4],
+      indexFinger: [0, 5, 6, 7, 8],
+      middleFinger: [0, 9, 10, 11, 12],
+      ringFinger: [0, 13, 14, 15, 16],
+      pinky: [0, 17, 18, 19, 20]
+    };  // for rendering each finger as a polyline
 
 const VIDEO_WIDTH = 640;
 const VIDEO_HEIGHT = 500;
@@ -110,7 +109,7 @@ let model;
 async function setupCamera() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     throw new Error(
-      'Browser API navigator.mediaDevices.getUserMedia not available');
+        'Browser API navigator.mediaDevices.getUserMedia not available');
   }
 
   const video = document.getElementById('video');
@@ -139,7 +138,8 @@ async function loadVideo() {
   return video;
 }
 
-const main = async () => {
+const main =
+    async () => {
   await tf.setBackend(state.backend);
   model = await handpose.load();
   let video;
@@ -177,20 +177,24 @@ const landmarksRealTime = async (video) => {
   video.height = videoHeight;
 
   ctx.clearRect(0, 0, videoWidth, videoHeight);
-  ctx.strokeStyle = "red";
-  ctx.fillStyle = "red";
+  ctx.strokeStyle = 'red';
+  ctx.fillStyle = 'red';
 
   ctx.translate(canvas.width, 0);
   ctx.scale(-1, 1);
 
   // These anchor points allow the hand pointcloud to resize according to its
   // position in the input.
-  const ANCHOR_POINTS = [[0, 0, 0], [0, -VIDEO_HEIGHT, 0],
-  [-VIDEO_WIDTH, 0, 0], [-VIDEO_WIDTH, -VIDEO_HEIGHT, 0]];
+  const ANCHOR_POINTS = [
+    [0, 0, 0], [0, -VIDEO_HEIGHT, 0], [-VIDEO_WIDTH, 0, 0],
+    [-VIDEO_WIDTH, -VIDEO_HEIGHT, 0]
+  ];
 
   async function frameLandmarks() {
     stats.begin();
-    ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(
+        video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width,
+        canvas.height);
     const predictions = await model.estimateHands(video);
     if (predictions.length > 0) {
       const result = predictions[0].landmarks;
@@ -201,19 +205,21 @@ const landmarksRealTime = async (video) => {
           return [-point[0], -point[1], -point[2]];
         });
 
-        const dataset = new ScatterGL.Dataset([...pointsData, ...ANCHOR_POINTS]);
+        const dataset =
+            new ScatterGL.Dataset([...pointsData, ...ANCHOR_POINTS]);
 
         if (!scatterGLHasInitialized) {
           scatterGL.render(dataset);
 
           const fingers = Object.keys(fingerLookupIndices);
 
-          scatterGL.setSequences(fingers.map(finger => ({ indices: fingerLookupIndices[finger] })));
+          scatterGL.setSequences(
+              fingers.map(finger => ({indices: fingerLookupIndices[finger]})));
           scatterGL.setPointColorer((index) => {
             if (index < pointsData.length) {
               return 'steelblue';
             }
-            return 'white'; // Hide.
+            return 'white';  // Hide.
           });
         } else {
           scatterGL.updateDataset(dataset);
@@ -229,15 +235,15 @@ const landmarksRealTime = async (video) => {
 
   if (renderPointcloud) {
     document.querySelector('#scatter-gl-container').style =
-      `width: ${VIDEO_WIDTH}px; height: ${VIDEO_HEIGHT}px;`;
+        `width: ${VIDEO_WIDTH}px; height: ${VIDEO_HEIGHT}px;`;
 
     scatterGL = new ScatterGL(
-      document.querySelector('#scatter-gl-container'),
-      { 'rotateOnStart': false, 'selectEnabled': false });
+        document.querySelector('#scatter-gl-container'),
+        {'rotateOnStart': false, 'selectEnabled': false});
   }
 };
 
 navigator.getUserMedia = navigator.getUserMedia ||
-  navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+    navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 
 main();

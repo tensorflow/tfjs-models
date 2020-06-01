@@ -21,6 +21,7 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {MESH_ANNOTATIONS} from './keypoints';
 import {Pipeline, Prediction} from './pipeline';
+import {UV_COORDS} from './uv_coords';
 
 const FACEMESH_GRAPHMODEL_PATH =
     'https://tfhub.dev/mediapipe/tfjs-model/facemesh/1/default/1';
@@ -147,7 +148,7 @@ function flipFaceHorizontal(
         (face.boundingBox.bottomRight as [number, number])[1]
       ]
     },
-    mesh: (face.mesh as Array<[number, number, number]>).map(coord => {
+    mesh: (face.mesh).map(coord => {
       const flippedCoord = coord.slice(0);
       flippedCoord[0] = imageWidth - 1 - coord[0];
       return flippedCoord;
@@ -178,6 +179,14 @@ export class FaceMesh {
 
   static getAnnotations(): {[key: string]: number[]} {
     return MESH_ANNOTATIONS;
+  }
+
+  /**
+   * Returns an array of UV coordinates for the 468 facial keypoint vertices in
+   * mesh_map.jpg. Can be used to map textures to the facial mesh.
+   */
+  static getUVCoords(): Array<[number, number]> {
+    return UV_COORDS;
   }
 
   /**
@@ -243,7 +252,9 @@ export class FaceMesh {
             mesh: coords,
             scaledMesh: scaledCoords,
             boundingBox: {
+              // tslint:disable-next-line: no-unnecessary-type-assertion
               topLeft: box.startPoint.squeeze() as tf.Tensor1D,
+              // tslint:disable-next-line: no-unnecessary-type-assertion
               bottomRight: box.endPoint.squeeze() as tf.Tensor1D
             }
           };
