@@ -18,14 +18,11 @@
 // import * as tfwebgpu from '@tensorflow/tfjs-backend-webgpu';
 import * as handpose from '@tensorflow-models/handpose';
 import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
-// TODO(annxingyuan): read version from tfjsWasm directly once
-// https://github.com/tensorflow/tfjs/pull/2819 is merged.
-import {version} from '@tensorflow/tfjs-backend-wasm/dist/version';
-import * as tf from '@tensorflow/tfjs-core';
+import {version_wasm} from '@tensorflow/tfjs-backend-wasm';
 
 tfjsWasm.setWasmPath(
     `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
-        version}/dist/tfjs-backend-wasm.wasm`);
+        version_wasm}/dist/tfjs-backend-wasm.wasm`);
 function isMobile() {
   const isAndroid = /Android/i.test(navigator.userAgent);
   const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -54,17 +51,6 @@ const state = {
 
 if (renderPointcloud) {
   state.renderPointcloud = true;
-}
-
-function setupDatGui() {
-  const gui = new dat.GUI();
-
-  if (renderPointcloud) {
-    gui.add(state, 'renderPointcloud').onChange(render => {
-      document.querySelector('#scatter-gl-container').style.display =
-          render ? 'inline-block' : 'none';
-    });
-  }
 }
 
 function setupDatGui() {
