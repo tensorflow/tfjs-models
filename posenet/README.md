@@ -76,8 +76,6 @@ const net = await posenet.load({
 
  * **outputStride** - Can be one of `8`, `16`, `32` (Stride `16`, `32` are supported for the ResNet architecture and stride `8`, `16`, `32` are supported for the MobileNetV1 architecture). It specifies the output stride of the PoseNet model. The smaller the value, the larger the output resolution, and more accurate the model at the cost of speed. Set this to a larger value to increase speed at the cost of accuracy.
 
-* **inputResolution** - A `number` or an `Object` of type `{width: number, height: number}`. Defaults to `257.` It specifies the size the image is resized and padded to before it is fed into the PoseNet model. The larger the value, the more accurate the model at the cost of speed. Set this to a smaller value to increase speed at the cost of accuracy. If a number is provided, the image will be resized and padded to be a square with the same width and height.  If `width` and `height` are provided, the image will be resized and padded to the specified width and height.
-
  * **multiplier** - Can be one of `1.01`, `1.0`, `0.75`, or `0.50` (The value is used *only* by the MobileNetV1 architecture and not by the ResNet architecture). It is the float multiplier for the depth (number of channels) for all convolution ops. The larger the value, the larger the size of the layers, and more accurate the model at the cost of speed. Set this to a smaller value to increase speed at the cost of accuracy.
 
  * **quantBytes** - This argument controls the bytes used for weight quantization. The available options are:
@@ -100,7 +98,8 @@ Single pose estimation is the simpler and faster of the two algorithms. Its idea
 const net = await posenet.load();
 
 const pose = await net.estimateSinglePose(image, {
-  flipHorizontal: false
+  flipHorizontal: false,
+  internalResolution: 'medium'
 });
 ```
 
@@ -110,6 +109,8 @@ const pose = await net.estimateSinglePose(image, {
    The input image to feed through the network.
 * **inferenceConfig** - an object containing:
   * **flipHorizontal** - Defaults to false.  If the pose should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the poses to be returned in the proper orientation.
+  * **internalResolution** - Defaults to `medium`. The internal resolution percentage that the input is resized to before inference. The larger the `internalResolution` the more accurate the model at the cost of slower prediction times. Available values are `low`, `medium`, `high`, `full`, or a percentage value between 0 and 1. The values `low`, `medium`, `high`, and
+`full` map to 0.25, 0.5, 0.75, and 1.0 correspondingly.
 
 #### Returns
 
@@ -159,7 +160,8 @@ async function estimatePoseOnImage(imageElement) {
   const net = await posenet.load();
 
   const pose = await net.estimateSinglePose(imageElement, {
-    flipHorizontal: false
+    flipHorizontal: false,
+    internalResolution: 'medium',
   });
   return pose;
 }
@@ -352,6 +354,7 @@ const net = await posenet.load();
 
 const poses = await net.estimateMultiplePoses(image, {
   flipHorizontal: false,
+  internalResolution: 'large',
   maxDetections: 5,
   scoreThreshold: 0.5,
   nmsRadius: 20
@@ -364,6 +367,7 @@ const poses = await net.estimateMultiplePoses(image, {
    The input image to feed through the network.
 * **inferenceConfig** - an object containing:
   * **flipHorizontal** - Defaults to false.  If the poses should be flipped/mirrored  horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the poses to be returned in the proper orientation.
+  * **internalResolution** - Defaults to `medium`. The internal resolution percentage that the input is resized to before inference. The larger the `internalResolution` the more accurate the model at the cost of slower prediction times. Available values are `low`, `medium`, `high`, `full`, or a percentage value between 0 and 1. The values `low`, `medium`, `high`, and `full` map to 0.25, 0.5, 0.75, and 1.0 correspondingly.
   * **maxDetections** - the maximum number of poses to detect. Defaults to 5.
   * **scoreThreshold** - Only return instance detections that have root part score greater or equal to this value. Defaults to 0.5.
   * **nmsRadius** - Non-maximum suppression part distance. It needs to be strictly positive. Two parts suppress each other if they are less than `nmsRadius` pixels away. Defaults to 20.
@@ -393,6 +397,7 @@ It returns a `promise` that resolves with an array of `pose`s, each with a confi
     posenet.load().then(function(net){
       return net.estimateMultiplePoses(imageElement, {
         flipHorizontal: false,
+        internalResolution: 'large',
         maxDetections: 2,
         scoreThreshold: 0.6,
         nmsRadius: 20})

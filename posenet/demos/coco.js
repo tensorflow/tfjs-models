@@ -146,9 +146,9 @@ async function testImageAndEstimatePoses(net) {
   const input = tf.browser.fromPixels(image);
 
   // Estimates poses
-  const poses = await net.estimatePoses(input, {
+  const poses = await net.estimateMultiplePoses(input, {
     flipHorizontal: false,
-    decodingMethod: 'multi-person',
+    internalResolution: guiState.model.internalResolution,
     maxDetections: guiState.multiPoseDetection.maxDetections,
     scoreThreshold: guiState.multiPoseDetection.minPartConfidence,
     nmsRadius: guiState.multiPoseDetection.nmsRadius
@@ -175,7 +175,6 @@ async function reloadNetTestImageAndEstimatePoses(net) {
   guiState.net = await posenet.load({
     architecture: guiState.model.architecture,
     outputStride: guiState.model.outputStride,
-    inputResolution: guiState.model.inputResolution,
     multiplier: guiState.model.multiplier,
     quantBytes: guiState.model.quantBytes,
   });
@@ -187,18 +186,18 @@ const defaultQuantBytes = 2;
 
 const defaultMobileNetMultiplier = isMobile() ? 0.50 : 0.75;
 const defaultMobileNetStride = 16;
-const defaultMobileNetInputResolution = 513;
+const defaultMobileNetInternalResolution = 'full';
 
 const defaultResNetMultiplier = 1.0;
 const defaultResNetStride = 32;
-const defaultResNetInputResolution = 257;
+const defaultResNetInternalResolution = 'medium';
 
 let guiState = {
   net: null,
   model: {
     architecture: 'MobileNetV1',
     outputStride: defaultMobileNetStride,
-    inputResolution: defaultMobileNetInputResolution,
+    internalResolution: defaultMobileNetInternalResolution,
     multiplier: defaultMobileNetMultiplier,
     quantBytes: defaultQuantBytes,
   },
@@ -225,23 +224,22 @@ function setupGui(net) {
   gui.add(guiState, tryResNetButtonName).name(tryResNetButtonText);
   updateTryResNetButtonDatGuiCss();
 
-  // Input resolution:  Internally, this parameter affects the height and width
-  // of the layers in the neural network. The higher the value of the input
-  // resolution the better the accuracy but slower the speed.
+  // Internal resolution:  Internally, this parameter affects the height and
+  // width of the layers in the neural network. The higher the value of the
+  // input resolution the better the accuracy but slower the speed.
   const model = gui.addFolder('Model');
   model.open();
-  let inputResolutionController = null;
-  function updateGuiInputResolution(inputResolutionArray) {
-    if (inputResolutionController) {
-      inputResolutionController.remove();
-    }
-    inputResolutionController =
-        model.add(guiState.model, 'inputResolution', inputResolutionArray);
-    inputResolutionController.onChange(async function(inputResolution) {
-      guiState.model.inputResolution = +inputResolution;
-      reloadNetTestImageAndEstimatePoses(guiState.net);
-    });
-  }
+  const internalResolutionController =
+      model
+          .add(
+              guiState.model, 'internalResolution',
+              ['low', 'medium', 'high', 'full'])
+          .listen();
+  internalResolutionController.onChange(() => {
+    testImageAndEstimatePoses(guiState.net);
+  });
+
+
   // Output stride:  Internally, this parameter affects the height and width of
   // the layers in the neural network. The lower the value of the output stride
   // the higher the accuracy but slower the speed, the higher the value the
@@ -293,7 +291,6 @@ function setupGui(net) {
   }
 
   function updateGui() {
-    updateGuiInputResolution([257, 353, 449, 513, 801]);
     if (guiState.model.architecture.includes('ResNet50')) {
       updateGuiOutputStride([32, 16]);
       updateGuiMultiplier([1.0]);
@@ -311,11 +308,11 @@ function setupGui(net) {
       model.add(guiState.model, 'architecture', ['MobileNetV1', 'ResNet50']);
   architectureController.onChange(async function(architecture) {
     if (architecture.includes('ResNet50')) {
-      guiState.model.inputResolution = defaultResNetInputResolution;
+      guiState.model.internalResolution = defaultResNetInternalResolution;
       guiState.model.outputStride = defaultResNetStride;
       guiState.model.multiplier = defaultResNetMultiplier;
     } else {
-      guiState.model.inputResolution = defaultMobileNetInputResolution;
+      guiState.model.internalResolution = defaultMobileNetInternalResolution;
       guiState.model.outputStride = defaultMobileNetStride;
       guiState.model.multiplier = defaultMobileNetMultiplier;
     }
@@ -365,7 +362,6 @@ export async function bindPage() {
   const net = await posenet.load({
     architecture: guiState.model.architecture,
     outputStride: guiState.model.outputStride,
-    inputResolution: guiState.model.inputResolution,
     multiplier: guiState.model.multiplier,
     quantBytes: guiState.model.quantBytes
   });
