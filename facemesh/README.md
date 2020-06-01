@@ -36,9 +36,8 @@ const facemesh = require('@tensorflow-models/facemesh');
 or as a standalone script tag:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/facemesh"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/facemesh"></script>
 ```
 
 Then:
@@ -129,3 +128,5 @@ main();
 Here is map of the keypoints:
 
 <img src="mesh_map.jpg" alt="keypoints_map" style="width: 500px; height: 500px">
+
+The UV coordinates for these keypoints are available via the `getUVCoords()` method on the `FaceMesh` model object. They can also be found in `src/uv_coords.ts`.

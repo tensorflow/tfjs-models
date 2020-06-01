@@ -22,6 +22,7 @@ import {Box, cutBoxFromImageAndResize, enlargeBox, getBoxCenter, getBoxSize, shi
 import {HandDetector} from './hand';
 import {rotate as rotateCpu} from './rotate_cpu';
 import {rotate as rotateWebgl} from './rotate_gpu';
+// import {rotate as rotateWebgpu} from './rotate_webgpu';
 import {buildRotationMatrix, computeRotation, dot, invertTransformMatrix, rotatePoint, TransformationMatrix} from './util';
 
 const UPDATE_REGION_OF_INTEREST_IOU_THRESHOLD = 0.8;
@@ -159,7 +160,7 @@ export class HandPipeline {
     const useFreshBox = this.shouldUpdateRegionsOfInterest();
     if (useFreshBox === true) {
       const boundingBoxPrediction =
-          this.boundingBoxDetector.estimateHandBounds(image);
+          await this.boundingBoxDetector.estimateHandBounds(image);
       if (boundingBoxPrediction === null) {
         image.dispose();
         this.regionsOfInterest = [];
@@ -185,9 +186,11 @@ export class HandPipeline {
     let rotatedImage: tf.Tensor4D;
     const backend = tf.getBackend();
 
-    if (backend === 'webgl') {
+    if (backend.match('webgl')) {
       rotatedImage = rotateWebgl(image, angle, 0, palmCenterNormalized);
-    } else if (backend === 'cpu') {
+      // } else if (backend === 'webgpu') {
+      //   rotatedImage = rotateWebgpu(image, angle, 0, palmCenterNormalized);
+    } else if (backend === 'cpu' || backend === 'tensorflow') {
       rotatedImage = rotateCpu(image, angle, 0, palmCenterNormalized);
     } else {
       throw new Error(
