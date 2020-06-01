@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/facemesh",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "Pretrained facemesh model",
   "main": "dist/index.js",
   "jsnext:main": "dist/facemesh.esm.js",
