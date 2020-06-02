@@ -213,8 +213,8 @@ export class ObjectDetection {
    * @param maxNumBoxes The maximum number of bounding boxes of detected
    * objects. There can be multiple objects of the same class, but at different
    * locations. Defaults to 20.
-   * @param minScore The minimum score of the returned bounding boxes of detected objects.
-   * value between 0 and 1. Defaults to 0.5.
+   * @param minScore The minimum score of the returned bounding boxes
+   * of detected objects. Value between 0 and 1. Defaults to 0.5.
    */
   async detect(
       img: tf.Tensor3D|ImageData|HTMLImageElement|HTMLCanvasElement|
