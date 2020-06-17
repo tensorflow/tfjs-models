@@ -15,6 +15,7 @@
  * =============================================================================
  */
 
+import * as tfwebgl from '@tensorflow/tfjs-backend-webgl';
 import * as tf from '@tensorflow/tfjs-core';
 
 /**
@@ -49,7 +50,7 @@ export function rotate(
       float outputValue = fill[coords[3]];`;
   }
 
-  const program: tf.webgl.GPGPUProgram = {
+  const program: tfwebgl.GPGPUProgram = {
     variableNames: ['Image'],
     outputShape: imageShape,
     userCode: `
@@ -75,6 +76,6 @@ export function rotate(
     }`
   };
 
-  const webglBackend = tf.backend() as tf.webgl.MathBackendWebGL;
+  const webglBackend = tf.backend() as tfwebgl.MathBackendWebGL;
   return webglBackend.compileAndRun(program, [image]);
 }

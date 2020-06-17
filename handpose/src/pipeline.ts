@@ -22,6 +22,7 @@ import {Box, cutBoxFromImageAndResize, enlargeBox, getBoxCenter, getBoxSize, shi
 import {HandDetector} from './hand';
 import {rotate as rotateCpu} from './rotate_cpu';
 import {rotate as rotateWebgl} from './rotate_gpu';
+import {rotate as rotateWasm} from './rotate_wasm';
 // import {rotate as rotateWebgpu} from './rotate_webgpu';
 import {buildRotationMatrix, computeRotation, dot, invertTransformMatrix, rotatePoint, TransformationMatrix} from './util';
 
@@ -192,6 +193,8 @@ export class HandPipeline {
       //   rotatedImage = rotateWebgpu(image, angle, 0, palmCenterNormalized);
     } else if (backend === 'cpu' || backend === 'tensorflow') {
       rotatedImage = rotateCpu(image, angle, 0, palmCenterNormalized);
+    } else if (backend === 'wasm') {
+      rotatedImage = rotateWasm(image, angle, 0, palmCenterNormalized);
     } else {
       throw new Error(
           `Handpose is not yet supported by the ${backend} ` +
