@@ -34,5 +34,6 @@ export function rotate(
 
   const output = wasmBackend.makeOutput(image.shape, image.dtype);
 
-  return output as tf.Tensor4D;
+  return tf.engine().makeTensorFromDataId(
+             output.dataId, output.shape, output.dtype) as tf.Tensor4D;
 }
