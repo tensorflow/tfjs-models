@@ -18,6 +18,7 @@
 // import * as tfwebgpu from '@tensorflow/tfjs-backend-webgpu';
 import * as handpose from '@tensorflow-models/handpose';
 import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
+import * as tf from '@tensorflow/tfjs';
 import {version_wasm} from '@tensorflow/tfjs-backend-wasm';
 
 tfjsWasm.setWasmPath(
