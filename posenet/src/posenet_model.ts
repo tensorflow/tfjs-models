@@ -153,6 +153,13 @@ function validateModelConfig(config: ModelConfig) {
         `for architecture ${config.architecture}.`);
   }
 
+  if (config.architecture === 'MobileNetV1' && config.outputStride === 32 &&
+      config.multiplier !== 1) {
+    throw new Error(
+        `When using an output stride of 32, ` +
+        `you must select 1 as the multiplier.`);
+  }
+
   return config;
 }
 
