@@ -36,9 +36,8 @@ const facemesh = require('@tensorflow-models/facemesh');
 or as a standalone script tag:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/facemesh"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/facemesh"></script>
 ```
 
 Then:

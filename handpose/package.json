@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/handpose",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Pretrained hand detection model",
   "main": "dist/index.js",
   "jsnext:main": "dist/handpose.esm.js",

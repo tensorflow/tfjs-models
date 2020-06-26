@@ -5,7 +5,7 @@ Object detection model that aims to localize and identify multiple objects in a 
 This model is a TensorFlow.js port of the COCO-SSD model. For more information about Tensorflow object detection API, check out this readme in
 [tensorflow/object_detection](https://github.com/tensorflow/models/blob/master/research/object_detection/README.md).
 
-This model detects objects defined in the COCO dataset, which is a large-scale object detection, segmentation, and captioning dataset. You can find more information [here](http://cocodataset.org/#home). The model is capable of detecting [90 classes of objects](./src/classes.ts). (SSD stands for Single Shot MultiBox Detection).
+This model detects objects defined in the COCO dataset, which is a large-scale object detection, segmentation, and captioning dataset. You can find more information [here](http://cocodataset.org/#home). The model is capable of detecting [80 classes of objects](./src/classes.ts). (SSD stands for Single Shot MultiBox Detection).
 
 This TensorFlow.js model does not require you to know about machine learning.
 It can take input as any browser-based image elements (`<img>`, `<video>`, `<canvas>`
@@ -98,7 +98,7 @@ This method exists on the model that is loaded from `cocoSsd.load`.
 ```ts
 model.detect(
   img: tf.Tensor3D | ImageData | HTMLImageElement |
-      HTMLCanvasElement | HTMLVideoElement, maxDetectionSize: number
+      HTMLCanvasElement | HTMLVideoElement, maxNumBoxes: number, minScore: number
 )
 ```
 
@@ -106,6 +106,7 @@ Args:
 
 - **img:** A Tensor or an image element to make a detection on.
 - **maxNumBoxes:** The maximum number of bounding boxes of detected objects. There can be multiple objects of the same class, but at different locations. Defaults to 20.
+- **minScore:** The minimum score of the returned bounding boxes of detected objects. Value between 0 and 1. Defaults to 0.5.
 
 Returns an array of classes and probabilities that looks like:
 
