@@ -22,13 +22,13 @@ import {loadVocabulary, Tokenizer} from './tokenizer';
 
 export {version} from './version';
 
-const BASE_PATH = 'https://storage.googleapis.com/tfjs-testing/use-qna/';
+const BASE_PATH = 'https://storage.googleapis.com/tfjs-testing/use-qa-2/';
 const SKIP_VALUES = [0, 1, 2];
 const OFFSET = 3;
 const INPUT_LIMIT = 192;
-const QUERY_NODE_NAME = 'inp_text/EncodeFeature/Cast';
-const RESPONSE_CONTEXT_NODE_NAME = 'res_context/EncodeFeature/Cast';
-const RESPONSE_NODE_NAME = 'res_text/EncodeFeature/Cast:0';
+const QUERY_NODE_NAME = 'input_inp_text';
+const RESPONSE_CONTEXT_NODE_NAME = 'input_res_context';
+const RESPONSE_NODE_NAME = 'input_res_text';
 const RESPONSE_RESULT_NODE_NAME = 'Final/EncodeResult/mul';
 const QUERY_RESULT_NODE_NAME = 'Final/EncodeQuery/mul';
 const RESERVED_SYMBOLS_COUNT = 3;
@@ -90,7 +90,6 @@ export class UniversalSentenceEncoderQnA {
               this.tokenizer.encode(r.context || ''), INPUT_LIMIT));
       const contextEncoding = tf.tensor2d(
           contextTokens, [input.responses.length, INPUT_LIMIT], 'int32');
-
       const modelInputs: {[key: string]: tf.Tensor} = {};
       modelInputs[QUERY_NODE_NAME] = queryEncoding;
       modelInputs[RESPONSE_NODE_NAME] = responseEncoding;

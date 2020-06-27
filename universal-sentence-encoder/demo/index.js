@@ -26,12 +26,10 @@ const sentences = [
 
 const init = async () => {
   const model = await use.load();
-
   document.querySelector('#loading').style.display = 'none';
   renderSentences();
 
   const embeddings = await model.embed(sentences);
-
   const matrixSize = 250;
   const cellSize = matrixSize / sentences.length;
   const canvas = document.querySelector('canvas');
@@ -70,8 +68,44 @@ const init = async () => {
     }
   }
 };
+const initQnA = async () => {
+  const input = {
+    queries: ['How are you feeling today?'],
+    responses: [
+      {response: 'I\'m not feeling very well.'},
+      {response: 'Beijing is the capital of China.'},
+      {response: 'You have five fingers on your hand.'}
+    ]
+  };
+  const model = await use.loadQnA();
+  document.querySelector('#loadingQnA').style.display = 'none';
+  let result = await model.embed(input);
+  const query = result['queryEmbedding'];
 
+  const answers = result['responseEmbedding'];
+  for (let i = 0; i < answers.length; i++) {
+    document.getElementById(`answer_${i + 1}`).textContent =
+        `${dotProduct(query[0], answers[i])}`
+  }
+};
 init();
+initQnA();
+// zipWith :: (a -> b -> c) -> [a] -> [b] -> [c]
+const zipWith =
+    (f, xs, ys) => {
+      const ny = ys.length;
+      return (xs.length <= ny ? xs : xs.slice(0, ny))
+          .map((x, i) => f(x, ys[i]));
+    }
+
+// dotProduct :: [Int] -> [Int] -> Int
+const dotProduct =
+    (xs, ys) => {
+      const sum = xs => xs ? xs.reduce((a, b) => a + b, 0) : undefined;
+
+      return xs.length === ys.length ? (sum(zipWith((a, b) => a * b, xs, ys))) :
+                                       undefined;
+    }
 
 const renderSentences = () => {
   sentences.forEach((sentence, i) => {
