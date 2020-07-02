@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/coco-ssd",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "Object detection model (coco-ssd) in TensorFlow.js",
   "main": "dist/index.js",
   "unpkg": "dist/coco-ssd.min.js",
@@ -13,8 +13,8 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs-converter": "^1.2.5",
-    "@tensorflow/tfjs-core": "^1.2.6"
+    "@tensorflow/tfjs-converter": "^2.0.1",
+    "@tensorflow/tfjs-core": "^2.0.1"
   },
   "devDependencies": {
     "@tensorflow/tfjs-converter": "^1.2.5",
