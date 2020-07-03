@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/coco-ssd",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "Object detection model (coco-ssd) in TensorFlow.js",
   "main": "dist/index.js",
   "unpkg": "dist/coco-ssd.min.js",
@@ -13,32 +13,34 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs-converter": "^1.2.5",
-    "@tensorflow/tfjs-core": "^1.2.6"
+    "@tensorflow/tfjs-converter": "^2.0.1",
+    "@tensorflow/tfjs-core": "^2.0.1"
   },
   "devDependencies": {
-    "@tensorflow/tfjs-converter": "^1.2.5",
-    "@tensorflow/tfjs-core": "^1.2.6",
+    "@rollup/plugin-commonjs": "^11.0.2",
+    "@rollup/plugin-node-resolve": "^7.1.1",
+    "@rollup/plugin-typescript": "^3.0.0",
+    "@tensorflow/tfjs-backend-cpu": "^2.0.1",
+    "@tensorflow/tfjs-converter": "^2.0.1",
+    "@tensorflow/tfjs-core": "^2.0.1",
     "@types/jasmine": "~2.8.8",
     "babel-core": "~6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",
-    "jasmine": "~3.3.1",
-    "jasmine-core": "~3.3.0",
-    "rollup": "~0.60.7",
-    "rollup-plugin-node-resolve": "~3.3.0",
-    "rollup-plugin-typescript2": "~0.15.0",
-    "rollup-plugin-uglify": "~3.0.0",
-    "ts-node": "~5.0.0",
+    "jasmine-core": "~3.5.0",
+    "rollup": "~2.3.2",
+    "rollup-plugin-terser": "~5.3.0",
+    "rollup-plugin-visualizer": "~3.3.2",
+    "ts-node": "~8.8.2",
     "tslint": "~5.18.0",
-    "typescript": "3.3.3333",
+    "typescript": "~3.5.3",
     "yalc": "~1.0.0-pre.21"
   },
   "scripts": {
     "build": "rimraf dist && tsc",
     "lint": "tslint -p . -t verbose",
     "publish-local": "yarn build && rollup -c && yalc push",
-    "build-npm": "yarn build && rollup -c",
-    "test": "yarn build && ts-node run_tests.ts"
+    "build-npm": "yarn build && rollup -c --visualize --npm",
+    "test": "yarn build && ts-node --skip-ignore -P tsconfig.test.json run_tests.ts"
   },
   "license": "Apache-2.0"
 }

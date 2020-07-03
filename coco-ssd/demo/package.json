@@ -9,9 +9,11 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow-models/coco-ssd": "2.0.2",
-    "@tensorflow/tfjs-converter": "1.7.2",
-    "@tensorflow/tfjs-core": "1.7.2",
+    "@tensorflow-models/coco-ssd": "2.0.4",
+    "@tensorflow/tfjs-converter": "2.0.1",
+    "@tensorflow/tfjs-core": "2.0.1",
+    "@tensorflow/tfjs-backend-cpu": "2.0.1",
+    "@tensorflow/tfjs-backend-webgl": "2.0.1",
     "stats.js": "^0.17.0"
   },
   "scripts": {

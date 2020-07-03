@@ -14,8 +14,9 @@
  * limitations under the License.
  * =============================================================================
  */
-
 import * as cocoSsd from '@tensorflow-models/coco-ssd'
+import * as cpu from '@tensorflow/tfjs-backend-cpu'
+import * as webgl from '@tensorflow/tfjs-backend-webgl'
 
 import imageURL from './image1.jpg';
 import image2URL from './image2.jpg';
