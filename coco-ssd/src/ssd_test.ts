@@ -17,7 +17,6 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
-import {expectArrayBuffersEqual} from '@tensorflow/tfjs-core/dist/test_util';
 
 import {load} from './index';
 
@@ -35,10 +34,10 @@ describeWithFlags('ObjectDetection', NODE_ENVS, () => {
 
   it('ObjectDetection detect method should not leak', async () => {
     const objectDetection = await load();
-    const x = tf.zeros([227, 227, 3]) as tf.Tensor3D;
+    const x = tf.zeros([227, 227, 3]);
     const numOfTensorsBefore = tf.memory().numTensors;
 
-    await objectDetection.detect(x, 1);
+    await objectDetection.detect(x as tf.Tensor3D, 1);
 
     expect(tf.memory().numTensors).toEqual(numOfTensorsBefore);
   });
@@ -46,9 +45,9 @@ describeWithFlags('ObjectDetection', NODE_ENVS, () => {
   it('ObjectDetection e2e should not leak', async () => {
     const numOfTensorsBefore = tf.memory().numTensors;
     const objectDetection = await load();
-    const x = tf.zeros([227, 227, 3]) as tf.Tensor3D;
+    const x = tf.zeros([227, 227, 3]);
 
-    await objectDetection.detect(x, 1);
+    await objectDetection.detect(x as tf.Tensor3D, 1);
     x.dispose();
     objectDetection.dispose();
     expect(tf.memory().numTensors).toEqual(numOfTensorsBefore);
@@ -56,14 +55,14 @@ describeWithFlags('ObjectDetection', NODE_ENVS, () => {
 
   it('ObjectDetection detect method should generate output', async () => {
     const objectDetection = await load();
-    const x = tf.zeros([227, 227, 3]) as tf.Tensor3D;
+    const x = tf.zeros([227, 227, 3]);
 
-    const data = await objectDetection.detect(x, 1);
+    const data = await objectDetection.detect(x as tf.Tensor3D, 1);
 
     expect(data).toEqual([{bbox: [227, 227, 0, 0], class: 'person', score: 1}]);
   });
   it('should allow custom model url', async () => {
-    const objectDetection = await load({base: 'mobilenet_v1'});
+    await load({base: 'mobilenet_v1'});
 
     expect(tfconv.loadGraphModel)
         .toHaveBeenCalledWith(
@@ -72,8 +71,7 @@ describeWithFlags('ObjectDetection', NODE_ENVS, () => {
   });
 
   it('should allow custom model url', async () => {
-    const objectDetection =
-        await load({modelUrl: 'https://test.org/model.json'});
+    await load({modelUrl: 'https://test.org/model.json'});
 
     expect(tfconv.loadGraphModel)
         .toHaveBeenCalledWith('https://test.org/model.json');
