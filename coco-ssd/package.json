@@ -2,11 +2,11 @@
   "name": "@tensorflow-models/coco-ssd",
   "version": "2.0.4",
   "description": "Object detection model (coco-ssd) in TensorFlow.js",
-  "main": "dist/index.js",
+  "main": "dist/coco-ssd.node.js",
   "unpkg": "dist/coco-ssd.min.js",
   "jsdelivr": "dist/coco-ssd.min.js",
   "jsnext:main": "dist/coco-ssd.esm.js",
-  "module": "dist/coco-ssd.esm.js",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
