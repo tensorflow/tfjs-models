@@ -74,6 +74,10 @@ function config({
     output: {
       banner: PREAMBLE,
       sourcemap: true,
+      globals: {
+        '@tensorflow/tfjs-core': 'tf',
+        '@tensorflow/tfjs-converter': 'tf',
+      },
       ...output,
     },
     external:
