@@ -44,6 +44,8 @@ There are two main ways to get this model in your JavaScript project: via script
 ```
 
 ### via NPM
+__Note__: The following shows how to use coco-ssd npm to transpile for web
+deployment, not an example on how to use coco-ssd in the node env.
 
 ```js
 // Note: Require the cpu and webgl backend and add them to package.json as peer dependencies.
