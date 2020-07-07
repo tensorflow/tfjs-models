@@ -190,11 +190,12 @@ def convert_wav_files_in_dir(input_dir,
     raise ValueError(
         'If input_wav_path is a directory, '
         'output_data_path must also be a directory.')
-  elif not os.path.exists(output_dir):
+
+  if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
   if test_split is not None:
-    assert test_split > 0.0 and test_split < 1.0
+    assert 0.0 < test_split < 1.0
     if test_output_dir is None:
       raise ValueError(
           'test_output_dir must be specified if test_split is specified.')
