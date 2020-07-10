@@ -220,11 +220,15 @@ export class FaceMesh {
     // very large inputs (https://github.com/tensorflow/tfjs/issues/1652).
     // TODO(annxingyuan): call tf.enablePackedDepthwiseConv when available
     // (https://github.com/tensorflow/tfjs/issues/2821)
-    const savedWebglPackDepthwiseConvFlag =
-        tf.env().get('WEBGL_PACK_DEPTHWISECONV');
-    tf.env().set('WEBGL_PACK_DEPTHWISECONV', true);
+    let savedWebglPackDepthwiseConvFlag;
+    if (tf.getBackend() === 'webgl') {
+      savedWebglPackDepthwiseConvFlag = tf.env().get('WEBGL_PACK_DEPTHWISECONV');
+      tf.env().set('WEBGL_PACK_DEPTHWISECONV', true);
+    }
     const predictions = await this.pipeline.predict(image);
-    tf.env().set('WEBGL_PACK_DEPTHWISECONV', savedWebglPackDepthwiseConvFlag);
+    if (tf.getBackend() === 'webgl') {
+      tf.env().set('WEBGL_PACK_DEPTHWISECONV', savedWebglPackDepthwiseConvFlag);
+    }
 
     image.dispose();
 
