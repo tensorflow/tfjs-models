@@ -270,15 +270,15 @@ export class FaceMesh {
                       tensorValues.slice(1) as [
                         Array<[number, number, number]>,
                         Array<[number, number, number]>,
-                        [number, number],
-                        [number, number]];
+                        [[number, number]],
+                        [[number, number]]];
 
         scaledCoords.dispose();
         coords.dispose();
 
         let annotatedPrediction: AnnotatedPredictionValues = {
           faceInViewConfidence: flagValue,
-          boundingBox: {topLeft, bottomRight},
+          boundingBox: {topLeft: topLeft[0], bottomRight: bottomRight[0]},
           mesh: coordsArr,
           scaledMesh: coordsArrScaled
         };
