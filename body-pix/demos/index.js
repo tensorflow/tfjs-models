@@ -14,6 +14,8 @@
  * limitations under the License.
  * =============================================================================
  */
+
+ /*
 import * as bodyPix from '@tensorflow-models/body-pix';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
@@ -21,8 +23,9 @@ import Stats from 'stats.js';
 import {drawKeypoints, drawSkeleton, toggleLoadingUI, TRY_RESNET_BUTTON_NAME, TRY_RESNET_BUTTON_TEXT, updateTryResNetButtonDatGuiCss} from './demo_util';
 import * as partColorScales from './part_color_scales';
 
+*/
 
-const stats = new Stats();
+//const stats = new Stats();
 
 const state = {
   video: null,
@@ -153,31 +156,28 @@ async function loadVideo(cameraLabel) {
   state.video.play();
 }
 
-const defaultQuantBytes = 2;
+const defaultQuantBytes =4;
 
 const defaultMobileNetMultiplier = isMobile() ? 0.50 : 0.75;
 const defaultMobileNetStride = 16;
-const defaultMobileNetInternalResolution = 'medium';
+const defaultMobileNetInternalResolution = 'low';
 
-const defaultResNetMultiplier = 1.0;
-const defaultResNetStride = 16;
-const defaultResNetInternalResolution = 'low';
 
 const guiState = {
   algorithm: 'multi-person-instance',
-  estimate: 'partmap',
+  estimate: 'segmentation',
   camera: null,
   flipHorizontal: true,
   input: {
     architecture: 'MobileNetV1',
     outputStride: 16,
     internalResolution: 'low',
-    multiplier: 0.50,
-    quantBytes: 2
+    multiplier: 0.75,
+    quantBytes: 1
   },
   multiPersonDecoding: {
-    maxDetections: 5,
-    scoreThreshold: 0.3,
+    maxDetections: 1,
+    scoreThreshold: 0.4,
     nmsRadius: 20,
     numKeypointForMatching: 17,
     refineSteps: 10
@@ -186,7 +186,7 @@ const guiState = {
     segmentationThreshold: 0.7,
     effect: 'mask',
     maskBackground: true,
-    opacity: 0.7,
+    opacity: 1,
     backgroundBlurAmount: 3,
     maskBlurAmount: 0,
     edgeBlurAmount: 3
@@ -545,7 +545,7 @@ async function estimateSegmentation() {
 async function estimatePartSegmentation() {
   switch (guiState.algorithm) {
     case 'multi-person-instance':
-      return await state.net.segmentMultiPersonParts(state.video, {
+      return await state.net.segmentMultiPerson(state.video, {
         internalResolution: guiState.input.internalResolution,
         segmentationThreshold: guiState.segmentation.segmentationThreshold,
         maxDetections: guiState.multiPersonDecoding.maxDetections,
@@ -592,14 +592,14 @@ function drawPoses(personOrPersonPartSegmentation, flipHorizontally, ctx) {
 }
 
 async function loadBodyPix() {
-  toggleLoadingUI(true);
+  //toggleLoadingUI(true);
   state.net = await bodyPix.load({
     architecture: guiState.input.architecture,
     outputStride: guiState.input.outputStride,
     multiplier: guiState.input.multiplier,
     quantBytes: guiState.input.quantBytes
   });
-  toggleLoadingUI(false);
+  //toggleLoadingUI(false);
 }
 
 /**
@@ -625,7 +625,7 @@ function segmentBodyInRealTime() {
     }
 
     // Begin monitoring code for frames per second
-    stats.begin();
+   // stats.begin();
 
     const flipHorizontally = guiState.flipHorizontal;
 
@@ -635,8 +635,8 @@ function segmentBodyInRealTime() {
         switch (guiState.segmentation.effect) {
           case 'mask':
             const ctx = canvas.getContext('2d');
-            const foregroundColor = {r: 255, g: 255, b: 255, a: 255};
-            const backgroundColor = {r: 0, g: 0, b: 0, a: 255};
+            const foregroundColor = {r: 255, g: 255, b: 255, a: 0};
+            const backgroundColor = {r: 255, g: 255, b: 255, a: 255};
             const mask = bodyPix.toMask(
                 multiPersonSegmentation, foregroundColor, backgroundColor,
                 true);
@@ -644,7 +644,7 @@ function segmentBodyInRealTime() {
             bodyPix.drawMask(
                 canvas, state.video, mask, guiState.segmentation.opacity,
                 guiState.segmentation.maskBlurAmount, flipHorizontally);
-            drawPoses(multiPersonSegmentation, flipHorizontally, ctx);
+           // drawPoses(multiPersonSegmentation, flipHorizontally, ctx);
             break;
           case 'bokeh':
             bodyPix.drawBokehEffect(
@@ -691,7 +691,7 @@ function segmentBodyInRealTime() {
     }
 
     // End monitoring code for frames per second
-    stats.end();
+  //  stats.end();
 
     requestAnimationFrame(bodySegmentationFrame);
   }
@@ -702,7 +702,7 @@ function segmentBodyInRealTime() {
 /**
  * Kicks off the demo.
  */
-export async function bindPage() {
+ async function bindPage() {
   // Load the BodyPix model weights with architecture 0.75
   await loadBodyPix();
   document.getElementById('loading').style.display = 'none';
@@ -710,10 +710,10 @@ export async function bindPage() {
 
   await loadVideo(guiState.camera);
 
-  let cameras = await getVideoInputs();
+ // let cameras = await getVideoInputs();
 
-  setupFPS();
-  setupGui(cameras);
+  //setupFPS();
+  //setupGui(cameras);
 
   segmentBodyInRealTime();
 }
