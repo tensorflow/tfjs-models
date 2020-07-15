@@ -58,8 +58,8 @@ export function rotate(
         int x = coords[2];
         int y = coords[1];
         int coordX = int(float(x - ${centerX}) * ${cosFactor} -
-          float(y - ${centerY}) * ${sinFactor});
-        int coordY = int(float(x - ${centerX}) * ${sinFactor} +
+          float(y - ${centerY}) * float(${sinFactor}));
+        int coordY = int(float(x - ${centerX}) * float(${sinFactor}) +
           float(y - ${centerY}) * ${cosFactor});
         coordX = int(coordX + ${centerX});
         coordY = int(coordY + ${centerY});
