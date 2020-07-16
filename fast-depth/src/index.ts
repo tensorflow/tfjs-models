@@ -16,16 +16,13 @@
  */
 
 import * as tfconv from '@tensorflow/tfjs-converter';
-import * as tf from '@tensorflow/tfjs-core';
+import * as tf from '@tensorflow/tfjs';
 
-import {HandDetector} from './hand';
-import {MESH_ANNOTATIONS} from './keypoints';
-import {Coords3D, HandPipeline, Prediction} from './pipeline';
+// Load FastDepth model
+async function loadDepthInferenceModel() {
+  const DEPTH_MODEL_PATH =
+  '';
 
-// Load the bounding box detector model.
-async function loadHandDetectorModel() {
-  const HANDDETECT_MODEL_PATH =
-      'https://tfhub.dev/mediapipe/tfjs-model/handdetector/1/default/1';
   return tfconv.loadGraphModel(HANDDETECT_MODEL_PATH, {fromTFHub: true});
 }
 

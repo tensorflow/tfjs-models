@@ -63,13 +63,13 @@ function config({ plugins = [], output = {} }) {
 }
 
 export default [
-  config({ output: { format: 'umd', name: 'handpose', file: 'dist/handpose.js' } }),
+  config({ output: { format: 'umd', name: 'fastdepth', file: 'dist/fastdepth.js' } }),
   config({
     plugins: [minify()],
-    output: { format: 'umd', name: 'handpose', file: 'dist/handpose.min.js' }
+    output: { format: 'umd', name: 'fastdepth', file: 'dist/fastdepth.min.js' }
   }),
   config({
     plugins: [minify()],
-    output: { format: 'es', file: 'dist/handpose.esm.js' }
+    output: { format: 'es', file: 'dist/fastdepth.esm.js' }
   })
 ];
