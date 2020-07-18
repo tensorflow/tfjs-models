@@ -61,8 +61,19 @@ export class Pipeline {
   }
 
   transformRawCoords(
-      coordsScaled: any, box: Box, angle: number,
+      rawCoords: any, box: Box, angle: number,
       rotationMatrix: TransformationMatrix) {
+    const boxSize = getBoxSize(box).arraySync()[0];
+    const scaleFactor =
+        [boxSize[0] / this.meshWidth, boxSize[1] / this.meshHeight];
+
+    const coordsScaled = rawCoords.map((coord: [number, number, number]) => {
+      return [
+        scaleFactor[0] * (coord[0] - this.meshWidth / 2),
+        scaleFactor[1] * (coord[1] - this.meshHeight / 2), coord[2]
+      ];
+    });
+
     const coordsRotationMatrix = buildRotationMatrix(angle, [0, 0]);
     const coordsRotated =
         coordsScaled.map((coord: [number, number, number]) => {
@@ -72,7 +83,7 @@ export class Pipeline {
 
     const inverseRotationMatrix = invertTransformMatrix(rotationMatrix);
     const boxCenter =
-        [...getBoxCenter(box).arraySync(), 1] as [number, number, number];
+        [...getBoxCenter(box).arraySync()[0], 1] as [number, number, number];
 
     const originalBoxCenter = [
       dot(boxCenter, inverseRotationMatrix[0]),
@@ -125,21 +136,20 @@ export class Pipeline {
 
     return tf.tidy(() => {
       return this.regionsOfInterest.map((box, i) => {
-        // rotation goes here
-        console.log(box, box.landmarks);
         let angle: number;
         if (box.landmarks.length === 468) {
-          angle = computeRotation(box.landmarks[205], box.landmarks[425]);
-          console.log(radToDegrees(angle));
+          angle = computeRotation(box.landmarks[168], box.landmarks[1]);
         } else {
-          angle = computeRotation(box.landmarks[4], box.landmarks[5]);
-          console.log(radToDegrees(angle));
+          angle = computeRotation(box.landmarks[3], box.landmarks[2]);
         }
 
         const faceCenterTensor = getBoxCenter(box);
         const faceCenter = faceCenterTensor.arraySync()[0] as [number, number];
         const faceCenterNormalized: [number, number] =
             [faceCenter[0] / input.shape[2], faceCenter[1] / input.shape[1]];
+
+        console.log(angle);
+
         const rotatedImage =
             tf.image.rotateWithOffset(input, angle, 0, faceCenterNormalized);
 
@@ -156,16 +166,16 @@ export class Pipeline {
                 face) as [tf.Tensor, tf.Tensor2D, tf.Tensor2D];
 
         const coordsReshaped: tf.Tensor2D = tf.reshape(coords, [-1, 3]);
-        const normalizedBox =
-            tf.div(getBoxSize(box), [this.meshWidth, this.meshHeight]);
-        const scaledCoords: tf.Tensor2D =
-            tf.mul(
-                  coordsReshaped,
-                  normalizedBox.concat(tf.tensor2d([1], [1, 1]), 1))
-                .add(box.startPoint.concat(tf.tensor2d([0], [1, 1]), 1));
+        const rawCoords = coordsReshaped.arraySync();
+        // const normalizedBox =
+        //     tf.div(getBoxSize(box), [this.meshWidth, this.meshHeight]);
+        // const scaledCoords: tf.Tensor2D = tf.mul(
+        //     coordsReshaped, normalizedBox.concat(tf.tensor2d([1], [1, 1]),
+        //     1));
+        // .add(box.startPoint.concat(tf.tensor2d([0], [1, 1]), 1));
 
-        const transformedCoordsData = this.transformRawCoords(
-            scaledCoords.arraySync(), box, angle, rotationMatrix);
+        const transformedCoordsData =
+            this.transformRawCoords(rawCoords, box, angle, rotationMatrix);
         const transformedCoords = tf.tensor2d(transformedCoordsData);
 
         const landmarksBox =
