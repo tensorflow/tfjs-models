@@ -184,7 +184,7 @@ export class Pipeline {
         disposeBox(previousBox);
         this.regionsOfInterest[i] = {
           ...landmarksBox,
-          landmarks: coordsReshaped.arraySync()
+          landmarks: transformedCoords.arraySync()
         };
 
         const prediction: Prediction = {
