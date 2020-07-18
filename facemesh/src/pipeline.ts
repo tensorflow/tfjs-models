@@ -138,7 +138,7 @@ export class Pipeline {
       return this.regionsOfInterest.map((box, i) => {
         let angle: number;
         if (box.landmarks.length === 468) {
-          angle = computeRotation(box.landmarks[168], box.landmarks[1]);
+          angle = computeRotation(box.landmarks[1], box.landmarks[168]);
         } else {
           angle = computeRotation(box.landmarks[3], box.landmarks[2]);
         }
