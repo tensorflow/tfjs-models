@@ -19,9 +19,10 @@ import * as tf from '@tensorflow/tfjs-core';
 
 // The facial bounding box.
 export type Box = {
-  startPoint: tf.Tensor2D,     // Upper left hand corner of bounding box.
-  endPoint: tf.Tensor2D,       // Lower right hand corner of bounding box.
-  startEndTensor: tf.Tensor2D  // Concatenation of start and end points.
+  startPoint: tf.Tensor2D,      // Upper left hand corner of bounding box.
+  endPoint: tf.Tensor2D,        // Lower right hand corner of bounding box.
+  startEndTensor: tf.Tensor2D,  // Concatenation of start and end points.
+  landmarks?: any
 };
 
 export function disposeBox(box: Box): void {

@@ -19,7 +19,8 @@ import * as blazeface from '@tensorflow-models/blazeface';
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {Box, createBox, cutBoxFromImageAndResize, disposeBox, enlargeBox, getBoxSize, scaleBoxCoordinates} from './box';
+import {Box, createBox, cutBoxFromImageAndResize, disposeBox, enlargeBox, getBoxCenter, getBoxSize, scaleBoxCoordinates} from './box';
+import {buildRotationMatrix, computeRotation, dot, invertTransformMatrix, radToDegrees, rotatePoint, TransformationMatrix} from './util';
 
 export type Prediction = {
   coords: tf.Tensor2D,        // coordinates of facial landmarks.
@@ -59,6 +60,34 @@ export class Pipeline {
     this.maxFaces = maxFaces;
   }
 
+  transformRawCoords(
+      coordsScaled: any, box: Box, angle: number,
+      rotationMatrix: TransformationMatrix) {
+    const coordsRotationMatrix = buildRotationMatrix(angle, [0, 0]);
+    const coordsRotated =
+        coordsScaled.map((coord: [number, number, number]) => {
+          const rotated = rotatePoint(coord, coordsRotationMatrix);
+          return [...rotated, coord[2]];
+        });
+
+    const inverseRotationMatrix = invertTransformMatrix(rotationMatrix);
+    const boxCenter =
+        [...getBoxCenter(box).arraySync(), 1] as [number, number, number];
+
+    const originalBoxCenter = [
+      dot(boxCenter, inverseRotationMatrix[0]),
+      dot(boxCenter, inverseRotationMatrix[1])
+    ];
+
+    return coordsRotated.map(
+        (coord: [number, number, number]): [number, number, number] => {
+          return [
+            coord[0] + originalBoxCenter[0], coord[1] + originalBoxCenter[1],
+            coord[2]
+          ];
+        });
+  }
+
   /**
    * Returns an array of predictions for each face in the input.
    *
@@ -67,7 +96,7 @@ export class Pipeline {
   async predict(input: tf.Tensor4D): Promise<Prediction[]> {
     if (this.shouldUpdateRegionsOfInterest()) {
       const returnTensors = true;
-      const annotateFace = false;
+      const annotateFace = true;
       const {boxes, scaleFactor} =
           await this.boundingBoxDetector.getBoundingBoxes(
               input, returnTensors, annotateFace);
@@ -78,9 +107,14 @@ export class Pipeline {
         return null;
       }
 
-      const scaledBoxes = boxes.map(
-          (prediction: Box): Box => enlargeBox(scaleBoxCoordinates(
-              prediction, scaleFactor as [number, number])));
+      const scaledBoxes =
+          boxes.map((prediction: blazeface.BlazeFacePrediction): Box => {
+            return {
+              ...enlargeBox(scaleBoxCoordinates(
+                  prediction.box, scaleFactor as [number, number])),
+              landmarks: prediction.landmarks.arraySync()
+            };
+          });
       boxes.forEach(disposeBox);
 
       this.updateRegionsOfInterest(scaledBoxes);
@@ -91,7 +125,27 @@ export class Pipeline {
 
     return tf.tidy(() => {
       return this.regionsOfInterest.map((box, i) => {
-        const face = cutBoxFromImageAndResize(box, input, [
+        // rotation goes here
+        console.log(box, box.landmarks);
+        let angle: number;
+        if (box.landmarks.length === 468) {
+          angle = computeRotation(box.landmarks[205], box.landmarks[425]);
+          console.log(radToDegrees(angle));
+        } else {
+          angle = computeRotation(box.landmarks[4], box.landmarks[5]);
+          console.log(radToDegrees(angle));
+        }
+
+        const faceCenterTensor = getBoxCenter(box);
+        const faceCenter = faceCenterTensor.arraySync()[0] as [number, number];
+        const faceCenterNormalized: [number, number] =
+            [faceCenter[0] / input.shape[2], faceCenter[1] / input.shape[1]];
+        const rotatedImage =
+            tf.image.rotateWithOffset(input, angle, 0, faceCenterNormalized);
+
+        const rotationMatrix = buildRotationMatrix(-angle, faceCenter);
+
+        const face = cutBoxFromImageAndResize(box, rotatedImage, [
                        this.meshHeight, this.meshWidth
                      ]).div(255);
 
@@ -110,14 +164,22 @@ export class Pipeline {
                   normalizedBox.concat(tf.tensor2d([1], [1, 1]), 1))
                 .add(box.startPoint.concat(tf.tensor2d([0], [1, 1]), 1));
 
-        const landmarksBox = this.calculateLandmarksBoundingBox(scaledCoords);
+        const transformedCoordsData = this.transformRawCoords(
+            scaledCoords.arraySync(), box, angle, rotationMatrix);
+        const transformedCoords = tf.tensor2d(transformedCoordsData);
+
+        const landmarksBox =
+            this.calculateLandmarksBoundingBox(transformedCoords);
         const previousBox = this.regionsOfInterest[i];
         disposeBox(previousBox);
-        this.regionsOfInterest[i] = landmarksBox;
+        this.regionsOfInterest[i] = {
+          ...landmarksBox,
+          landmarks: coordsReshaped.arraySync()
+        };
 
         const prediction: Prediction = {
           coords: coordsReshaped,
-          scaledCoords,
+          scaledCoords: transformedCoords,
           box: landmarksBox,
           flag: flag.squeeze()
         };

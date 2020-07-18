@@ -13,32 +13,46 @@ Check out our [demo](https://storage.googleapis.com/tfjs-models/demos/facemesh/i
 This model is also available as part of [MediaPipe](https://github.com/google/mediapipe/tree/master/mediapipe/models), a
 framework for building multimodal applied ML pipelines.
 
-## Installation
+## INSTALLATION
+
+via script tags:
+
+```html
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tf-core"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tf-converter"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tf-backend-wasm"></script>
+  <!-- you can use webgl instead if you want <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tf-backend-webgl"></script> -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/facemesh"></script>
+
+```
+
+via npm:
 
 Using `yarn`:
 
     $ yarn add @tensorflow-models/facemesh
+    $ yarn add @tensorflow/tfjs-core, @tensorflow/tfjs-converter
+    $ yarn add @tensorflow/tfjs-backend-wasm # or tfjs-backend-webgl
 
-Using `npm`:
-
-    $ npm install @tensorflow-models/facemesh
-
-Note that this package specifies `@tensorflow/tfjs-core` and `@tensorflow/tfjs-converter` as peer dependencies, so they will also need to be installed.
+```js
+```
 
 ## Usage
 
-To import in npm:
+If you are using via npm, first add:
 
 ```js
 const facemesh = require('@tensorflow-models/facemesh');
+
+// IF USING WASM BACKEND
+require('@tensorflow/tfjs-backend-wasm'); // you need to require the backend explicitly because facemesh itself does not
+setWasmPath();
+
+// IF USING WEBGL BACKEND
+// require('@tensorflow/tfjs-backend-webgl');
 ```
 
-or as a standalone script tag:
-
-```html
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/facemesh"></script>
-```
+__(you can skip this step if you're using script tags)__
 
 Then:
 
