@@ -20,7 +20,7 @@ import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
 import {Box, createBox, cutBoxFromImageAndResize, disposeBox, enlargeBox, getBoxCenter, getBoxSize, scaleBoxCoordinates} from './box';
-import {buildRotationMatrix, computeRotation, dot, invertTransformMatrix, radToDegrees, rotatePoint, TransformationMatrix} from './util';
+import {buildRotationMatrix, computeRotation, dot, invertTransformMatrix, rotatePoint, TransformationMatrix} from './util';
 
 export type Prediction = {
   coords: tf.Tensor2D,        // coordinates of facial landmarks.
@@ -148,10 +148,8 @@ export class Pipeline {
         const faceCenterNormalized: [number, number] =
             [faceCenter[0] / input.shape[2], faceCenter[1] / input.shape[1]];
 
-        console.log(angle);
-
         const rotatedImage =
-            tf.image.rotateWithOffset(input, angle, 0, faceCenterNormalized);
+            tf.image.rotateWithOffset(input, -angle, 0, faceCenterNormalized);
 
         const rotationMatrix = buildRotationMatrix(-angle, faceCenter);
 
