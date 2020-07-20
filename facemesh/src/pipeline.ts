@@ -149,7 +149,7 @@ export class Pipeline {
             [faceCenter[0] / input.shape[2], faceCenter[1] / input.shape[1]];
 
         const rotatedImage =
-            tf.image.rotateWithOffset(input, -angle, 0, faceCenterNormalized);
+            tf.image.rotateWithOffset(input, angle, 0, faceCenterNormalized);
 
         const rotationMatrix = buildRotationMatrix(-angle, faceCenter);
 

@@ -20,8 +20,6 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {Box, cutBoxFromImageAndResize, enlargeBox, getBoxCenter, getBoxSize, shiftBox, squarifyBox} from './box';
 import {HandDetector} from './hand';
-import {rotate as rotateCpu} from './rotate_cpu';
-import {rotate as rotateWebgl} from './rotate_gpu';
 // import {rotate as rotateWebgpu} from './rotate_webgpu';
 import {buildRotationMatrix, computeRotation, dot, invertTransformMatrix, rotatePoint, TransformationMatrix} from './util';
 
@@ -183,20 +181,8 @@ export class HandPipeline {
     const palmCenter = getBoxCenter(currentBox);
     const palmCenterNormalized: [number, number] =
         [palmCenter[0] / image.shape[2], palmCenter[1] / image.shape[1]];
-    let rotatedImage: tf.Tensor4D;
-    const backend = tf.getBackend();
-
-    if (backend.match('webgl')) {
-      rotatedImage = rotateWebgl(image, angle, 0, palmCenterNormalized);
-      // } else if (backend === 'webgpu') {
-      //   rotatedImage = rotateWebgpu(image, angle, 0, palmCenterNormalized);
-    } else if (backend === 'cpu' || backend === 'tensorflow') {
-      rotatedImage = rotateCpu(image, angle, 0, palmCenterNormalized);
-    } else {
-      throw new Error(
-          `Handpose is not yet supported by the ${backend} ` +
-          `backend - rotation kernel is not defined.`);
-    }
+    const rotatedImage =
+        tf.image.rotateWithOffset(image, angle, 0, palmCenterNormalized);
 
     const rotationMatrix = buildRotationMatrix(-angle, palmCenter);
 
