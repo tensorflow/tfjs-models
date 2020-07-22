@@ -16,10 +16,7 @@
  */
 
 import * as tfconv from '@tensorflow/tfjs-converter';
-import * as tf from '@tensorflow/tfjs';
-
-// temp workaround until model on tf hub
-
+import * as tf from '@tensorflow/tfjs-core';
 import * as tfnode from '@tensorflow/tfjs-node';
 
 const INPUT_SIZE = 224;
@@ -33,13 +30,18 @@ export class DepthPredict implements FastDepth {
   private model: tfconv.GraphModel;
   private normalizationConstant: number;
 
-  constructor(public inputMin = 0.0, public inputMax = 255.0, public raw_output = false, public modelUrl = 'src/fastdepth_opset9_v2_tfjs/model.json') {
+  constructor(public inputMin = 0.0, public inputMax = 255.0, public raw_output = false, public modelUrl = 'https://raw.githubusercontent.com/grasskin/fastdepth_tfjs/master/fastdepth_opset9_v2_tfjs/model.json') {
     this.normalizationConstant = (inputMax - inputMin);
   }
 
-  async load() {
-    const handler = tfnode.io.fileSystem(this.modelUrl);
+  public async load() {
+    const handler = tfnode.io.fileSystem('./src/fastdepth_opset9_v2_tfjs/model.json')
     this.model = await tfconv.loadGraphModel(handler);
+
+  // Warmup the model.
+    const result = tf.tidy(() => this.model.predict(tf.zeros([1, 3, INPUT_SIZE, INPUT_SIZE]))) as tf.Tensor;
+    await result.data();
+    result.dispose();
   }
   
   /**
@@ -48,13 +50,12 @@ export class DepthPredict implements FastDepth {
    * @param img The image to classify. Can be a tensor or a DOM element image,
    * video, or canvas.
    */
-  private predict(
-      img: tf.Tensor|ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement): tf.Tensor {
+  public predict(
+      img: tf.Tensor3D|ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement): tf.Tensor {
       return tf.tidy(() => {
-        if(!img instanceof tf.Tensor) {
+        if(!(img instanceof tf.Tensor)) {
           img = tf.browser.fromPixels(img);
         }
-
         // Normalize input from [inputMin, inputMax] to [0,1]
         const normalized: tf.Tensor3D = img.toFloat().sub(this.inputMin).div(this.normalizationConstant);
 
@@ -67,7 +68,7 @@ export class DepthPredict implements FastDepth {
 
         const reshaped = tf.transpose(resized, [2, 0, 1]); // change image from [224,224,3] to [3,224,224]
         const batched = reshaped.reshape([-1, 3, INPUT_SIZE, INPUT_SIZE]);
-        const out: tf.Tensor3D = this.model.predict(batched);
+        const out: tf.Tensor = (this.model.predict(batched) as tf.Tensor);
         const resizeOut = out.reshape([1, INPUT_SIZE, INPUT_SIZE]);
         if (this.raw_output) {
           return resizeOut;

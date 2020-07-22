@@ -14,8 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as tfconv from '@tensorflow/tfjs-converter';
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
 
 import {DepthPredict} from './index';
 
