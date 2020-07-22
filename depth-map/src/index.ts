@@ -30,12 +30,12 @@ export class DepthPredict implements FastDepth {
   private model: tfconv.GraphModel;
   private normalizationConstant: number;
 
-  constructor(public inputMin = 0.0, public inputMax = 255.0, public raw_output = false, public modelUrl = 'https://raw.githubusercontent.com/grasskin/fastdepth_tfjs/master/fastdepth_opset9_v2_tfjs/model.json') {
+  constructor(public inputMin = 0, public inputMax = 255, public raw_output = false, public modelUrl = 'https://raw.githubusercontent.com/grasskin/fastdepth_tfjs/master/fastdepth_opset9_v2_tfjs/model.json') {
     this.normalizationConstant = (inputMax - inputMin);
   }
 
   public async load() {
-    const handler = tfnode.io.fileSystem('./src/fastdepth_opset9_v2_tfjs/model.json')
+  const handler = tfnode.io.fileSystem('/home/grasskin/tfjs-models/depth-map/src/fastdepth_opset9_v2_tfjs/model.json')
     this.model = await tfconv.loadGraphModel(handler);
 
   // Warmup the model.
@@ -57,18 +57,17 @@ export class DepthPredict implements FastDepth {
           img = tf.browser.fromPixels(img);
         }
         // Normalize input from [inputMin, inputMax] to [0,1]
-        const normalized: tf.Tensor3D = img.toFloat().sub(this.inputMin).div(this.normalizationConstant);
-
         // Resize the image to
-        let resized = normalized;
+        let resized = img.toFloat();
         if (img.shape[0] !== INPUT_SIZE || img.shape[1] !== INPUT_SIZE) {
           const alignCorners = true;
-          resized = tf.image.resizeBilinear(normalized, [INPUT_SIZE, INPUT_SIZE], alignCorners);
+          resized = tf.image.resizeBilinear(img, [INPUT_SIZE, INPUT_SIZE], alignCorners);
         }
 
         const reshaped = tf.transpose(resized, [2, 0, 1]); // change image from [224,224,3] to [3,224,224]
-        const batched = reshaped.reshape([-1, 3, INPUT_SIZE, INPUT_SIZE]);
-        const out: tf.Tensor = (this.model.predict(batched) as tf.Tensor);
+        const batched = reshaped.reshape([1, 3, INPUT_SIZE, INPUT_SIZE]);
+        const normalized: tf.Tensor3D = batched.sub(this.inputMin).div(this.normalizationConstant);
+        const out: tf.Tensor = (this.model.predict(normalized) as tf.Tensor);
         const resizeOut = out.reshape([1, INPUT_SIZE, INPUT_SIZE]);
         if (this.raw_output) {
           return resizeOut;
