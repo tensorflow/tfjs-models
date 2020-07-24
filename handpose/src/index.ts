@@ -63,6 +63,9 @@ interface AnnotatedPrediction extends Prediction {
  * Defaults to 0.3.
  * - `scoreThreshold` A threshold for deciding when to remove boxes based
  * on score in non-maximum suppression. Defaults to 0.75.
+ * - `handdetectModelURL` Specify URL of handdetect model. Defaults to tfhub.dev.
+ * - `handposeModelURL` Specify URL of handdetect model. Defaults to tfhub.dev.
+ * - `anchorsURL` Specify URL of handdetect model's anchors file. Defaults to tfhub.dev.
  */
 export async function load({
   maxContinuousChecks = Infinity,
