@@ -23,7 +23,7 @@ There are two main ways to get this model in your JavaScript project: via script
 <!-- Make sure your page supports utf-8 characterset. -->
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <!-- Load TensorFlow.js. This is required to use the qna model. -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"> </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/2.0.1/tf.min.js"> </script>
 <!-- Load the qna model. -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/qna"> </script>
 
