@@ -130,7 +130,7 @@ function validateModelConfig(config: ModelConfig) {
     throw new Error(
         `Invalid outputStride ${config.outputStride}. ` +
         `Should be one of ${VALID_STRIDE[config.architecture]} ` +
-        `for architecutre ${config.architecture}.`);
+        `for architecture ${config.architecture}.`);
   }
 
   if (config.multiplier == null) {
@@ -140,7 +140,7 @@ function validateModelConfig(config: ModelConfig) {
     throw new Error(
         `Invalid multiplier ${config.multiplier}. ` +
         `Should be one of ${VALID_MULTIPLIER[config.architecture]} ` +
-        `for architecutre ${config.architecture}.`);
+        `for architecture ${config.architecture}.`);
   }
 
   if (config.quantBytes == null) {
@@ -150,7 +150,14 @@ function validateModelConfig(config: ModelConfig) {
     throw new Error(
         `Invalid quantBytes ${config.quantBytes}. ` +
         `Should be one of ${VALID_QUANT_BYTES} ` +
-        `for architecutre ${config.architecture}.`);
+        `for architecture ${config.architecture}.`);
+  }
+
+  if (config.architecture === 'MobileNetV1' && config.outputStride === 32 &&
+      config.multiplier !== 1) {
+    throw new Error(
+        `When using an output stride of 32, ` +
+        `you must select 1 as the multiplier.`);
   }
 
   return config;

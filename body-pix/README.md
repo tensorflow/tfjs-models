@@ -175,7 +175,7 @@ const segmentation = await net.segmentPerson(image, {
    The input image to feed through the network.
 * **config** - an optional dictionary containing:
   * **flipHorizontal** - Defaults to false.  If the segmentation & pose should be flipped/mirrored horizontally.  This should be set to true for videos where the video is by default flipped horizontally (i.e. a webcam), and you want the segmentation & pose to be returned in the proper orientation.
- * **internalResolution** - Defaults to `medium`. The internal resolution percentage that the input is resized to before inference. The larger the `internalResolution` the more accurate the model at the cost of slower prediction times. Available values are `low`, `medium`, `high`, `full`, or a percentage value between 0 and 1. The values `low`, `medium`, `high`, and
+  * **internalResolution** - Defaults to `medium`. The internal resolution percentage that the input is resized to before inference. The larger the `internalResolution` the more accurate the model at the cost of slower prediction times. Available values are `low`, `medium`, `high`, `full`, or a percentage value between 0 and 1. The values `low`, `medium`, `high`, and
 `full` map to 0.25, 0.5, 0.75, and 1.0 correspondingly.
   * **segmentationThreshold** - Defaults to 0.7. Must be between 0 and 1. For each pixel, the model estimates a score between 0 and 1 that indicates how confident it is that part of a person is displayed in that pixel.  This *segmentationThreshold* is used to convert these values
 to binary 0 or 1s by determining the minimum value a pixel's score must have to be considered part of a person.  In essence, a higher value will create a tighter crop
@@ -220,8 +220,8 @@ The `PartSegmentation` object contains a width, height, `Pose` and an Int32Array
 | 7       | left_lower_arm_back    |  19      | left_lower_leg_back
 | 8       | right_lower_arm_front  | 20      | right_lower_leg_front
 | 9       | right_lower_arm_back   | 21      | right_lower_leg_back
-| 10      | left_hand              | 22      | left_feet
-| 11      | right_hand             | 23      | right_feet
+| 10      | left_hand              | 22      | left_foot
+| 11      | right_hand             | 23      | right_foot
 
 *Note: Part Id value -1 represents the non-person background)*
 

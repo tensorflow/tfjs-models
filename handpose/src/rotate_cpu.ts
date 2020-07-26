@@ -39,8 +39,8 @@ export function rotate(
   const centerY =
       imageHeight * (typeof center === 'number' ? center : center[1]);
 
-  const sinFactor = Math.sin(-radians);
-  const cosFactor = Math.cos(-radians);
+  const sinFactor = Math.sin(radians);
+  const cosFactor = Math.cos(radians);
   const imageVals = cpuBackend.readSync(image.dataId) as Float32Array;
 
   for (let batchIdx = 0; batchIdx < batch; batchIdx++) {

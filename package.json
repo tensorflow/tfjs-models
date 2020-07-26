@@ -4,7 +4,7 @@
   "scripts": {
     "diff": "./scripts/diff.js",
     "link-local": "yalc link",
-    "presubmit": "ts-node presubmit.ts"
+    "presubmit": "ts-node -P tsconfig.test.json presubmit.ts"
   },
   "devDependencies": {
     "@types/jasmine": "^3.4.0",
