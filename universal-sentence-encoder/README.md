@@ -18,6 +18,17 @@ The sentences (taken from the [TensorFlow Hub USE lite colab](https://colab.sand
 5. An apple a day, keeps the doctors away.
 6. Eating strawberries is healthy.
 
+# Universal Sentence Encoder For Question Answering
+
+The Universal Sentence Encoder for question answering (USE-QA) is a model that encodes question and answer texts into 100-dimensional embeddings. The product of these embeddings gives the score of the correlation between the question-answer pair. It can also be used in other applications, including any type of text classification, clustering, etc.
+This module is a lightweight TensorFlow.js [`GraphModel`](https://js.tensorflow.org/api/latest/#loadGraphModel). The model is based on the ([Vaswani et al, 2017](https://arxiv.org/pdf/1706.03762.pdf)) architecture, and uses an 8k SentencePiece [vocabulary](https://tfhub.dev/google/tfjs-model/universal-sentence-encoder-qa-ondevice/1/vocab.json?tfjs-format=file). It is trained on a variety of data sources, with the goal of learning text representations that are useful out-of-the-box to retrieve an answer given a question.
+
+In [this demo](./demo/index.js) we embed a question and three answers with the USE QnA, and render their their scores:
+
+![QnA scores](./images/qna_score.png)
+
+*The scores show the similarity between each answer and the question.*
+
 ## Installation
 
 Using `yarn`:
@@ -66,5 +77,38 @@ To use the Tokenizer separately:
 ```js
 use.loadTokenizer().then(tokenizer => {
   tokenizer.encode('Hello, how are you?'); // [341, 4125, 8, 140, 31, 19, 54]
+});
+```
+
+To use the QnA dual encoder:
+```js
+// Calculate the dot product of two vector arrays.
+const dotProduct = (xs, ys) => {
+  const sum = xs => xs ? xs.reduce((a, b) => a + b, 0) : undefined;
+
+  return xs.length === ys.length ?
+    sum(zipWith((a, b) => a * b, xs, ys))
+    : undefined;
+}
+
+// Load the model.
+use.loadQnA().then(model => {
+  // Embed a dictionary of a query and responses.
+    const input = {
+      queries: ["How are you feeling today?"],
+      responses: [
+        {response: "I'm not feeling very well."},
+        {response: "Beijing is the capital of China."},
+        {response: "You have five fingers on your hand."}
+      ]
+    };
+  var scores = [];
+  model.embed(input).then(embeddings => {
+    const embed_query = embeddings['queryEmbedding'];
+    const embed_responses = embeddings['responseEmbedding'];
+    for (let i = 0; i < answers.length; i++) {
+      scores.push(dotProduct(embed_query[0], embed_responses[i]));
+    }
+  });
 });
 ```
