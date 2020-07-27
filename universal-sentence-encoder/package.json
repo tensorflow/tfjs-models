@@ -39,8 +39,5 @@
     "build-npm": "yarn build && rollup -c",
     "lint": "tslint -p . -t verbose"
   },
-  "license": "Apache-2.0",
-  "dependencies": {
-    "@tensorflow-models/universal-sentence-encoder": "file:.yalc/@tensorflow-models/universal-sentence-encoder"
-  }
+  "license": "Apache-2.0"
 }
