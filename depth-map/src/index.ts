@@ -17,26 +17,46 @@
 
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
-import * as tfnode from '@tensorflow/tfjs-node';
 
 const INPUT_SIZE = 224;
 
-export interface FastDepth {
+export interface ModelConfig {
+  modelUrl: string | tf.io.IOHandler,
+  inputRange?: [number, number],
+  rawOutput?: boolean
+}
+
+export async function load(modelConfig: ModelConfig = {modelUrl: '', inputRange: [0, 255], rawOutput: false}): Promise<DepthMap> {
+  let inputMin = 0;
+  let inputMax = 255;
+  if (tf == null) {
+    throw new Error(
+      `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
+      `also include @tensorflow/tfjs on the page before using this model.`);
+  }
+  if(modelConfig.inputRange != null) {
+    [inputMin, inputMax] = modelConfig.inputRange
+  }
+  const depthmap = new DepthMapImpl(modelConfig.modelUrl, inputMin, inputMax, modelConfig.rawOutput);
+  await depthmap.load();
+  return depthmap;
+}
+
+export interface DepthMap{
   load(): Promise<void>;
   predict(img: tf.Tensor3D|ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement): tf.Tensor;
 }
 
-export class DepthPredict implements FastDepth {
+export class DepthMapImpl implements DepthMap {
   private model: tfconv.GraphModel;
   private normalizationConstant: number;
 
-  constructor(public modelUrl: string, public inputMin: number = 0, public inputMax: number = 255, public rawOutput: boolean = false) {
+  constructor(public modelUrl: string | tf.io.IOHandler, public inputMin: number = 0, public inputMax: number = 255, public rawOutput: boolean = false) {
     this.normalizationConstant = (inputMax - inputMin);
   }
 
   public async load() {
-    const handler = tfnode.io.fileSystem(this.modelUrl);
-    this.model = await tfconv.loadGraphModel(handler);
+    this.model = await tfconv.loadGraphModel(this.modelUrl);
 
   // Warmup the model.
     const result = tf.tidy(() => this.model.predict(tf.zeros([1, 3, INPUT_SIZE, INPUT_SIZE]))) as tf.Tensor;

@@ -14,8 +14,7 @@
   },
   "peerDependencies": {
     "@tensorflow/tfjs-converter": "^1.7.0",
-    "@tensorflow/tfjs-core": "1.7.0",
-    "@tensorflow/tfjs-node": "1.7.0"
+    "@tensorflow/tfjs-core": "1.7.0"
   },
   "devDependencies": {
     "@tensorflow/tfjs-converter": "^1.7.0",
