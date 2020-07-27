@@ -24,20 +24,37 @@ export interface ModelConfig {
   modelUrl: string | tf.io.IOHandler,
   inputRange?: [number, number],
   rawOutput?: boolean
-}
+  }
 
-export async function load(modelConfig: ModelConfig = {modelUrl: '', inputRange: [0, 255], rawOutput: false}): Promise<DepthMap> {
+/**
+ * DepthMap model loading configuration
+ *
+ * @param modelUrl Param for specifying the custom model url or `tf.io.IOHandler` object.
+ * @param inputRange Optional param specifying the pixel value range of your input. This is typically [0, 255] or [0, 1].
+  Defaults to [0, 255].
+ * @param rawOutput Optional param specifying whether model shoudl output the raw [3, 224, 224] result or postprocess to
+ * the image-friendly [224, 224, 3]. Defaults to false.
+ */
+export async function load(modelConfig: ModelConfig = {modelUrl: 'https://raw.githubusercontent.com/grasskin/tfjs-models/master/depth-map/fastdepth_opset9_v2_tfjs/model.json', inputRange: [0, 255], rawOutput: false}): Promise<DepthMap> {
   let inputMin = 0;
   let inputMax = 255;
+  let modelUrl = 'https://raw.githubusercontent.com/grasskin/tfjs-models/master/depth-map/fastdepth_opset9_v2_tfjs/model.json';
+  let rawOutput = false;
   if (tf == null) {
     throw new Error(
       `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
       `also include @tensorflow/tfjs on the page before using this model.`);
+   }
+  if(modelConfig.modelUrl != null) {
+    modelUrl = modelConfig.modelUrl; 
   }
   if(modelConfig.inputRange != null) {
     [inputMin, inputMax] = modelConfig.inputRange
+    }
+  if(modelConfig.rawOutput != null) {
+    rawOutput = modelConfig.rawOutput;
   }
-  const depthmap = new DepthMapImpl(modelConfig.modelUrl, inputMin, inputMax, modelConfig.rawOutput);
+  const depthmap = new DepthMapImpl(modelUrl, inputMin, inputMax, rawOutput);
   await depthmap.load();
   return depthmap;
 }

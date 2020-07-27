@@ -24,13 +24,13 @@ const handler = tfnode.io.fileSystem(MODEL_PATH);
 describe('DepthPredict', () => {
 it('should load the model', async () => {
 console.log(MODEL_PATH, typeof MODEL_PATH);
-    const depthprediction = await load({modelUrl: handler});
+    const depthprediction = await load();
     const img: tf.Tensor3D = tf.zeros([480, 640, 3]);
     const out = depthprediction.predict(img);
     expect(out.shape).toEqual([224, 224, 1]);
   });
   it('should be able to output raw tensors', async () => {
-    const depthprediction = await load({modelUrl: handler, rawOutput: true});
+    const depthprediction = await load({rawOutput: true});
     const img: tf.Tensor3D = tf.zeros([480, 640, 3]);
     const out = depthprediction.predict(img);
     expect(out.shape).toEqual([1, 224, 224]);
