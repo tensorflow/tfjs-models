@@ -24,8 +24,8 @@ describe('Universal Sentence Encoder QNA', () => {
     qna = await loadQnA();
   });
 
-  it('basic usage', () => {
-    const result = qna.embed({
+  it('basic usage', async () => {
+    const result = await qna.embed({
       queries: ['what is the weather today?'],
       responses: [{response: 'today is cloudy.'}]
     });

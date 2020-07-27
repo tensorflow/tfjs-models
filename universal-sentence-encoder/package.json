@@ -17,6 +17,7 @@
     "@tensorflow/tfjs-core": "^2.0.1"
   },
   "devDependencies": {
+    "@tensorflow/tfjs-backend-cpu": "^2.0.1",
     "@tensorflow/tfjs-converter": "^2.0.1",
     "@tensorflow/tfjs-core": "^2.0.1",
     "@types/jasmine": "~2.5.53",
@@ -35,7 +36,7 @@
   "scripts": {
     "build": "rimraf dist && tsc",
     "publish-local": "yarn build && rollup -c && yalc push",
-    "test": "ts-node run_tests.ts",
+    "test": "yarn build && ts-node --skip-ignore -P tsconfig.test.json run_tests.ts",
     "build-npm": "yarn build && rollup -c",
     "lint": "tslint -p . -t verbose"
   },
