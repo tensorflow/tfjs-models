@@ -22,7 +22,8 @@ import {loadVocabulary, Tokenizer} from './tokenizer';
 
 export {version} from './version';
 
-const BASE_PATH = 'https://storage.googleapis.com/tfjs-testing/use-qa-2/';
+const BASE_PATH =
+    'https://tfhub.dev/google/tfjs-model/universal-sentence-encoder-qa-ondevice/1';
 const SKIP_VALUES = [0, 1, 2];
 const OFFSET = 3;
 const INPUT_LIMIT = 192;
@@ -57,12 +58,14 @@ export class UniversalSentenceEncoderQnA {
   private tokenizer: Tokenizer;
 
   async loadModel() {
-    return tfconv.loadGraphModel(BASE_PATH + 'model.json');
+    return tfconv.loadGraphModel(BASE_PATH, {fromTFHub: true});
   }
 
   async load() {
-    const [model, vocabulary] = await Promise.all(
-        [this.loadModel(), loadVocabulary(`${BASE_PATH}vocab.json`)]);
+    const [model, vocabulary] = await Promise.all([
+      this.loadModel(),
+      loadVocabulary(`${BASE_PATH}/vocab.json?tfjs-format=file`)
+    ]);
 
     this.model = model;
     this.tokenizer = new Tokenizer(vocabulary, RESERVED_SYMBOLS_COUNT);
