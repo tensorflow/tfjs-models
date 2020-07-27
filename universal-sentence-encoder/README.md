@@ -20,14 +20,14 @@ The sentences (taken from the [TensorFlow Hub USE lite colab](https://colab.sand
 
 # Universal Sentence Encoder For Question Answering
 
-The Universal Sentence Encoder for question answering (USE-QA) is a model that encodes question and answer texts into 100-dimensional embeddings. The product of these embeddings gives the score of the correlation between the question-answer pair. It can also be used in other applications, including any type of text classification, clustering, etc.
-This module is a lightweight TensorFlow.js [`GraphModel`](https://js.tensorflow.org/api/latest/#loadGraphModel). The model is based on the ([Vaswani et al, 2017](https://arxiv.org/pdf/1706.03762.pdf)) architecture, and uses an 8k SentencePiece [vocabulary](https://tfhub.dev/google/tfjs-model/universal-sentence-encoder-qa-ondevice/1/vocab.json?tfjs-format=file). It is trained on a variety of data sources, with the goal of learning text representations that are useful out-of-the-box to retrieve an answer given a question.
+The Universal Sentence Encoder for question answering (USE QnA) is a model that encodes question and answer texts into 100-dimensional embeddings. The dot product of these embeddings measures how well the answer fits the question. It can also be used in other applications, including any type of text classification, clustering, etc.
+This module is a lightweight TensorFlow.js [`GraphModel`](https://js.tensorflow.org/api/latest/#loadGraphModel). The model is based on the Transformer ([Vaswani et al, 2017](https://arxiv.org/pdf/1706.03762.pdf)) architecture, and uses an 8k SentencePiece [vocabulary](https://tfhub.dev/google/tfjs-model/universal-sentence-encoder-qa-ondevice/1/vocab.json?tfjs-format=file). It is trained on a variety of data sources, with the goal of learning text representations that are useful out-of-the-box to retrieve an answer given a question.
 
 In [this demo](./demo/index.js) we embed a question and three answers with the USE QnA, and render their their scores:
 
 ![QnA scores](./images/qna_score.png)
 
-*The scores show the similarity between each answer and the question.*
+*The scores show how well each answer fits the question.*
 
 ## Installation
 
@@ -82,6 +82,55 @@ use.loadTokenizer().then(tokenizer => {
 
 To use the QnA dual encoder:
 ```js
+// Load the model.
+use.loadQnA().then(model => {
+  // Embed a dictionary of a query and responses. The input to the embed method
+  // needs to be in following format:
+  // {
+  //   queries: string[];
+  //   responses: Response[];
+  // }
+  // queries is an array of question strings
+  // responses is an array of following structure:
+  // {
+  //   response: string;
+  //   context?: string;
+  // }
+  // context is optional, it provides the context string of the answer.
+
+  const input = {
+    queries: ["How are you feeling today?", "What is captial of China?"],
+    responses: [
+      {response: "I'm not feeling very well."},
+      {response: "Beijing is the capital of China."},
+      {response: "You have five fingers on your hand."}
+    ]
+  };
+  var scores = [];
+  model.embed(input).then(embeddings => {
+    // The output of the embed method is an object with two keys:
+    //  {
+    //   queryEmbedding: tf.Tensor;
+    //   responseEmbedding: tf.Tensor;
+    // }
+    // queryEmbedding is a tensor contains embeddings for all queries.
+    // responseEmbedding is a tensor contains embeddings for all answers.
+    // You can call `arraySync()` to retrieve the data of the tensor.
+    // In this example, embed_query[0] is the embedding for query
+    // "How are you feeling today?"
+    // And embed_responses[0] is the embedding for answer
+    // "I'm not feeling very well."
+    const embed_query = embeddings['queryEmbedding'].arraySync();
+    const embed_responses = embeddings['responseEmbedding'].arraySync();
+    // compute the dotProduct of each query and response pair.
+    for (let i = 0; i < input['queries'].length; i++) {
+      for (let j = 0; j < input['responses'].length; j++) {
+        scores.push(dotProduct(embed_query[i], embed_responses[j]));
+      }
+    }
+  });
+});
+
 // Calculate the dot product of two vector arrays.
 const dotProduct = (xs, ys) => {
   const sum = xs => xs ? xs.reduce((a, b) => a + b, 0) : undefined;
@@ -90,25 +139,4 @@ const dotProduct = (xs, ys) => {
     sum(zipWith((a, b) => a * b, xs, ys))
     : undefined;
 }
-
-// Load the model.
-use.loadQnA().then(model => {
-  // Embed a dictionary of a query and responses.
-    const input = {
-      queries: ["How are you feeling today?"],
-      responses: [
-        {response: "I'm not feeling very well."},
-        {response: "Beijing is the capital of China."},
-        {response: "You have five fingers on your hand."}
-      ]
-    };
-  var scores = [];
-  model.embed(input).then(embeddings => {
-    const embed_query = embeddings['queryEmbedding'];
-    const embed_responses = embeddings['responseEmbedding'];
-    for (let i = 0; i < answers.length; i++) {
-      scores.push(dotProduct(embed_query[0], embed_responses[i]));
-    }
-  });
-});
 ```

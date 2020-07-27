@@ -72,17 +72,15 @@ const initQnA = async () => {
   const input = {
     queries: ['How are you feeling today?'],
     responses: [
-      {response: 'I\'m not feeling very well.'},
-      {response: 'Beijing is the capital of China.'},
-      {response: 'You have five fingers on your hand.'}
+      'I\'m not feeling very well.', 'Beijing is the capital of China.',
+      'You have five fingers on your hand.'
     ]
   };
   const model = await use.loadQnA();
   document.querySelector('#loadingQnA').style.display = 'none';
   let result = await model.embed(input);
-  const query = result['queryEmbedding'];
-
-  const answers = result['responseEmbedding'];
+  const query = result['queryEmbedding'].arraySync();
+  const answers = result['responseEmbedding'].arraySync();
   for (let i = 0; i < answers.length; i++) {
     document.getElementById(`answer_${i + 1}`).textContent =
         `${dotProduct(query[0], answers[i])}`

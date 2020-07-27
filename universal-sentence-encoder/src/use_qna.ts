@@ -24,27 +24,38 @@ export {version} from './version';
 
 const BASE_PATH =
     'https://tfhub.dev/google/tfjs-model/universal-sentence-encoder-qa-ondevice/1';
+// Index in the vocab file that needs to be skipped.
 const SKIP_VALUES = [0, 1, 2];
+// Offset value for skipped vocab index.
 const OFFSET = 3;
+// Input tensor size limit.
 const INPUT_LIMIT = 192;
+// Model node name for query.
 const QUERY_NODE_NAME = 'input_inp_text';
+// Model node name for query.
 const RESPONSE_CONTEXT_NODE_NAME = 'input_res_context';
+// Model node name for response.
 const RESPONSE_NODE_NAME = 'input_res_text';
+// Model node name for response result.
 const RESPONSE_RESULT_NODE_NAME = 'Final/EncodeResult/mul';
+// Model node name for query result.
 const QUERY_RESULT_NODE_NAME = 'Final/EncodeQuery/mul';
+// Reserved symbol count for tokenizer.
 const RESERVED_SYMBOLS_COUNT = 3;
+// Value for token padding
+const TOKEN_PADDING = 2;
+// Start value for each token
+const TOKEN_START_VALUE = 1;
+
 export interface ModelOutput {
-  queryEmbedding: number[][];
-  responseEmbedding: number[][];
+  queryEmbedding: tf.Tensor;
+  responseEmbedding: tf.Tensor;
 }
 
-export interface Response {
-  response: string;
-  context?: string;
-}
 export interface ModelInput {
   queries: string[];
-  responses: Response[];
+  responses: string[];
+  contexts?: string[];
 }
 
 export async function loadQnA() {
@@ -79,20 +90,22 @@ export class UniversalSentenceEncoderQnA {
    */
   embed(input: ModelInput): ModelOutput {
     const embeddings = tf.tidy(() => {
-      const queryTokens = input.queries.map(
-          q => this.updateToken(this.tokenizer.encode(q), INPUT_LIMIT));
-      const queryEncoding = tf.tensor2d(
-          queryTokens, [input.queries.length, INPUT_LIMIT], 'int32');
-      const responseTokens = input.responses.map(
-          r =>
-              this.updateToken(this.tokenizer.encode(r.response), INPUT_LIMIT));
-      const responseEncoding = tf.tensor2d(
-          responseTokens, [input.responses.length, INPUT_LIMIT], 'int32');
-      const contextTokens = input.responses.map(
-          r => this.updateToken(
-              this.tokenizer.encode(r.context || ''), INPUT_LIMIT));
-      const contextEncoding = tf.tensor2d(
-          contextTokens, [input.responses.length, INPUT_LIMIT], 'int32');
+      const queryEncoding = this.tokenizeStrings(input.queries, INPUT_LIMIT);
+      const responseEncoding =
+          this.tokenizeStrings(input.responses, INPUT_LIMIT);
+      if (input.contexts != null) {
+        if (input.contexts.length !== input.responses.length) {
+          throw new Error(
+              'The length of response strings ' +
+              'and context strings need to match.')
+        }
+      }
+      const contexts: string[] = input.contexts || [];
+      if (input.contexts == null) {
+        contexts.length = input.responses.length;
+        contexts.fill('');
+      }
+      const contextEncoding = this.tokenizeStrings(contexts, INPUT_LIMIT);
       const modelInputs: {[key: string]: tf.Tensor} = {};
       modelInputs[QUERY_NODE_NAME] = queryEncoding;
       modelInputs[RESPONSE_NODE_NAME] = responseEncoding;
@@ -101,22 +114,27 @@ export class UniversalSentenceEncoderQnA {
       return this.model.execute(
           modelInputs, [QUERY_RESULT_NODE_NAME, RESPONSE_RESULT_NODE_NAME]);
     }) as tf.Tensor[];
-    const queryEmbedding = embeddings[0].arraySync() as number[][];
-    const responseEmbedding = embeddings[1].arraySync() as number[][];
-    embeddings[0].dispose();
-    embeddings[1].dispose();
+    const queryEmbedding = embeddings[0];
+    const responseEmbedding = embeddings[1];
+
     return {queryEmbedding, responseEmbedding};
   }
 
-  private updateToken(token: number[], limit: number): number[] {
-    token.unshift(1);
+  private tokenizeStrings(strs: string[], limit: number): tf.Tensor2D {
+    const tokens =
+        strs.map(s => this.shiftTokens(this.tokenizer.encode(s), INPUT_LIMIT));
+    return tf.tensor2d(tokens, [strs.length, INPUT_LIMIT], 'int32');
+  }
+
+  private shiftTokens(tokens: number[], limit: number): number[] {
+    tokens.unshift(TOKEN_START_VALUE);
     for (let index = 0; index < limit; index++) {
-      if (index >= token.length) {
-        token[index] = 2;
-      } else if (SKIP_VALUES.indexOf(token[index]) === -1) {
-        token[index] += OFFSET;
+      if (index >= tokens.length) {
+        tokens[index] = TOKEN_PADDING;
+      } else if (!SKIP_VALUES.includes(tokens[index])) {
+        tokens[index] += OFFSET;
       }
     }
-    return token.slice(0, limit);
+    return tokens.slice(0, limit);
   }
 }

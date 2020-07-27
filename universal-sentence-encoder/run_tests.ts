@@ -32,8 +32,7 @@ process.on('unhandledRejection', e => {
   throw e;
 });
 
-jasmine_util.setTestEnvs(
-    [{name: 'test-cocossd', backendName: 'cpu', flags: {}}]);
+jasmine_util.setTestEnvs([{name: 'test-use', backendName: 'cpu', flags: {}}]);
 
 const unitTests = 'src/**/*_test.ts';
 
