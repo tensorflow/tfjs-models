@@ -1,6 +1,8 @@
-# FastDepth
+# DepthMap
 
 DepthMap is a lightweight model capable of infering depth from single images. It is implemented with [FastDepth](https://arxiv.org/abs/1903.03273).
+
+![Input image - picture of a living room](https://github.com/grasskin/tfjs-models/blob/master/depth-map/demo/livingroom.jpg) ![Resulting depth map](https://github.com/grasskin/tfjs-models/blob/master/depth-map/demo/output.jpg)
 
 # Performance
 
@@ -47,7 +49,6 @@ depthmap.load({modelUrl: string | tf.io.IOHandler,
 
 Args:
 - **modelUrl:** Param for specifying the custom model url or `tf.io.IOHandler` object.
-Returns a `model` object.
 - **inputRange:** Optional param specifying the pixel value range of your input. This is typically [0, 255] or [0, 1].
 Defaults to [0, 255].
 - **rawOutput:** Optional param specifying whether model shoudl output the raw [3, 224, 224] result or postprocess to
