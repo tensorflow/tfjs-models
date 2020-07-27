@@ -52,14 +52,12 @@ function config({ plugins = [], output = {} }) {
       globals: {
         '@tensorflow/tfjs-core': 'tf',
         '@tensorflow/tfjs-converter': 'tf',
-        '@tensorflow/tfjs-node': 'tf',
       },
       ...output,
     },
     external: [
       '@tensorflow/tfjs-core',
       '@tensorflow/tfjs-converter',
-      '@tensorflow/tfjs-node',
     ]
   };
 }
