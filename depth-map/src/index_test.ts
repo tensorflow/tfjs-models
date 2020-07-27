@@ -15,12 +15,10 @@
  * =============================================================================
  */
 import * as tf from '@tensorflow/tfjs-core';
-import * as tfnode from '@tensorflow/tfjs-node';
 
 import {load} from './index';
 
 const MODEL_PATH = __dirname + '/../fastdepth_opset9_v2_tfjs/model.json';
-const handler = tfnode.io.fileSystem(MODEL_PATH);
 describe('DepthPredict', () => {
 it('should load the model', async () => {
 console.log(MODEL_PATH, typeof MODEL_PATH);

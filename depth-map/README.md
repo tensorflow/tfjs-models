@@ -48,7 +48,7 @@ depthmap.load({modelUrl: string | tf.io.IOHandler,
 ```
 
 Args:
-- **modelUrl:** Param for specifying the custom model url or `tf.io.IOHandler` object.
+- **modelUrl:** Optional param for specifying the custom model url or `tf.io.IOHandler` object.
 - **inputRange:** Optional param specifying the pixel value range of your input. This is typically [0, 255] or [0, 1].
 Defaults to [0, 255].
 - **rawOutput:** Optional param specifying whether model shoudl output the raw [3, 224, 224] result or postprocess to
