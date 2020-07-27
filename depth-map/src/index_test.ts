@@ -18,16 +18,19 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {DepthPredict} from './index';
 
+const MODEL_PATH = __dirname + '/../fastdepth_opset9_v2_tfjs/model.json';
+
 describe('DepthPredict', () => {
-  it('should load the model with no parameters', async () => {
-    const depthprediction = new DepthPredict();
+it('should load the model', async () => {
+    console.log(MODEL_PATH, typeof MODEL_PATH);
+    const depthprediction = new DepthPredict(MODEL_PATH);
     await depthprediction.load();
-    const img: tf.Tensor3D = tf.zeros([480, 640, 3])
+    const img: tf.Tensor3D = tf.zeros([480, 640, 3]);
     const out = depthprediction.predict(img);
     expect(out.shape).toEqual([224, 224, 1]);
   });
   it('should be able to output raw tensors', async () => {
-    const depthprediction = new DepthPredict(0,255,true);
+    const depthprediction = new DepthPredict(MODEL_PATH, 0,255,true);
     await depthprediction.load();
     const img: tf.Tensor3D = tf.zeros([480, 640, 3]);
     const out = depthprediction.predict(img);

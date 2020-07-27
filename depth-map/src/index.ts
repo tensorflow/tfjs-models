@@ -30,12 +30,12 @@ export class DepthPredict implements FastDepth {
   private model: tfconv.GraphModel;
   private normalizationConstant: number;
 
-  constructor(public inputMin = 0, public inputMax = 255, public raw_output = false, public modelUrl = 'https://raw.githubusercontent.com/grasskin/fastdepth_tfjs/master/fastdepth_opset9_v2_tfjs/model.json') {
+  constructor(public modelUrl: string, public inputMin: number = 0, public inputMax: number = 255, public rawOutput: boolean = false) {
     this.normalizationConstant = (inputMax - inputMin);
   }
 
   public async load() {
-  const handler = tfnode.io.fileSystem('/home/grasskin/tfjs-models/depth-map/src/fastdepth_opset9_v2_tfjs/model.json')
+    const handler = tfnode.io.fileSystem(this.modelUrl);
     this.model = await tfconv.loadGraphModel(handler);
 
   // Warmup the model.
@@ -69,7 +69,7 @@ export class DepthPredict implements FastDepth {
         const normalized: tf.Tensor3D = batched.sub(this.inputMin).div(this.normalizationConstant);
         const out: tf.Tensor = (this.model.predict(normalized) as tf.Tensor);
         const resizeOut = out.reshape([1, INPUT_SIZE, INPUT_SIZE]);
-        if (this.raw_output) {
+        if (this.rawOutput) {
           return resizeOut;
         } else {
           const reshapedOut = tf.transpose(resizeOut, [1, 2, 0]); // change output from [1, 224, 224] to [224, 224, 1]
@@ -78,4 +78,3 @@ export class DepthPredict implements FastDepth {
       });
   }
 }
-
