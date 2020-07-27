@@ -97,7 +97,7 @@ export class UniversalSentenceEncoderQnA {
         if (input.contexts.length !== input.responses.length) {
           throw new Error(
               'The length of response strings ' +
-              'and context strings need to match.')
+              'and context strings need to match.');
         }
       }
       const contexts: string[] = input.contexts || [];
