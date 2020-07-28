@@ -51,11 +51,11 @@ Args:
 - **modelUrl:** Optional param for specifying the custom model url or `tf.io.IOHandler` object.
 - **inputRange:** Optional param specifying the pixel value range of your input. This is typically [0, 255] or [0, 1].
 Defaults to [0, 255].
-- **rawOutput:** Optional param specifying whether model shoudl output the raw [3, 224, 224] result or postprocess to
+- **rawOutput:** Optional param specifying whether model should output the raw [3, 224, 224] result or postprocess to
 the image-friendly [224, 224, 3]. Defaults to false.
 
 
-#### Making a depth prediction
+### Making a depth prediction
 
 You can make a prediciton with DepthMap without needing to create a Tensor
 with `depthmap.predict`, which takes an input image element and returns a
