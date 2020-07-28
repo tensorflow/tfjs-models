@@ -9,10 +9,10 @@ data through the native WebAudio frequency analyzer (FFT) of the browser.
 The following steps are involved:
 
 1. Download the speech-commands data set from
-   https://storage.cloud.google.com/download.tensorflow.org/data/speech_commands_v0.0.1.tar.gz
+   https://storage.cloud.google.com/download.tensorflow.org/data/speech_commands_v0.01.tar.gz
    or
-   https://storage.cloud.google.com/download.tensorflow.org/data/speech_commands_v0.0.2.tar.gz
-   Version 0.0.2 is a larger dataset than 0.0.1.
+   https://storage.cloud.google.com/download.tensorflow.org/data/speech_commands_v0.02.tar.gz
+   Version 0.02 is a larger dataset than 0.01.
 
 2. Use `prep_wavs.py` to convert the raw wav files into a binary format
    ready for FFT conversion in the browser. E.g.,
