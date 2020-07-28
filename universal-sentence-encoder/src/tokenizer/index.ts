@@ -22,6 +22,8 @@
  * details, refer to https://arxiv.org/pdf/1804.10959.pdf.
  */
 
+import * as tf from '@tensorflow/tfjs-core';
+
 import {stringToChars} from '../util';
 
 import {Trie} from './trie';
@@ -31,14 +33,16 @@ const separator =
 
 function processInput(str: string): string {
   const normalized = str.normalize('NFKC');
-  return separator + normalized.replace(/ /g, separator);
+  return normalized.length > 0 ?
+      separator + normalized.replace(/ /g, separator) :
+      normalized;
 }
 
 // The first tokens are reserved for unk, control symbols, and user-defined
 // symbols.
 const RESERVED_SYMBOLS_COUNT = 6;
 
-type Vocabulary = Array<[string, number]>;
+export type Vocabulary = Array<[string, number]>;
 
 type Score = {
   key: string[],
@@ -47,14 +51,14 @@ type Score = {
 };
 
 export class Tokenizer {
-  vocabulary: Vocabulary;
   trie: Trie;
 
-  constructor(vocabulary: Vocabulary) {
-    this.vocabulary = vocabulary;
+  constructor(
+      private vocabulary: Vocabulary,
+      private reservedSymbolsCount = RESERVED_SYMBOLS_COUNT) {
     this.trie = new Trie();
 
-    for (let i = RESERVED_SYMBOLS_COUNT; i < this.vocabulary.length; i++) {
+    for (let i = this.reservedSymbolsCount; i < this.vocabulary.length; i++) {
       this.trie.insert(this.vocabulary[i][0], this.vocabulary[i][1], i);
     }
   }
@@ -130,4 +134,26 @@ export class Tokenizer {
 
     return merged.reverse();
   }
+}
+
+/**
+ * Load the Tokenizer for use independently from the UniversalSentenceEncoder.
+ *
+ * @param pathToVocabulary (optional) Provide a path to the vocabulary file.
+ */
+export async function loadTokenizer(pathToVocabulary?: string) {
+  const vocabulary = await loadVocabulary(pathToVocabulary);
+  const tokenizer = new Tokenizer(vocabulary);
+  return tokenizer;
+}
+
+/**
+ * Load a vocabulary for the Tokenizer.
+ *
+ * @param pathToVocabulary Defaults to the path to the 8k vocabulary used by the
+ * UniversalSentenceEncoder.
+ */
+export async function loadVocabulary(pathToVocabulary: string) {
+  const vocabulary = await tf.util.fetch(pathToVocabulary);
+  return vocabulary.json();
 }
