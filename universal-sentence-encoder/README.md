@@ -141,4 +141,12 @@ const dotProduct = (xs, ys) => {
     sum(zipWith((a, b) => a * b, xs, ys))
     : undefined;
 }
+
+// zipWith :: (a -> b -> c) -> [a] -> [b] -> [c]
+const zipWith =
+    (f, xs, ys) => {
+      const ny = ys.length;
+      return (xs.length <= ny ? xs : xs.slice(0, ny))
+          .map((x, i) => f(x, ys[i]));
+    }
 ```
