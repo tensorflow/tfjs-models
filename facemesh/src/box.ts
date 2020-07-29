@@ -25,6 +25,12 @@ export type Box = {
   landmarks?: any
 };
 
+export type cpuBox = {
+  startPoint: [number, number],  // Upper left hand corner of bounding box.
+  endPoint: [number, number],    // Lower right hand corner of bounding box.
+  landmarks?: Array<[number, number]>
+};
+
 export function disposeBox(box: Box): void {
   if (box != null && box.startPoint != null) {
     box.startEndTensor.dispose();
@@ -60,11 +66,11 @@ export function getBoxSize(box: Box): tf.Tensor2D {
   });
 }
 
-export function getBoxCenter(box: Box): tf.Tensor2D {
-  return tf.tidy(() => {
-    const halfSize = tf.div(tf.sub(box.endPoint, box.startPoint), 2);
-    return tf.add(box.startPoint, halfSize);
-  });
+export function getBoxCenter(box: cpuBox): [number, number] {
+  return [
+    box.startPoint[0] + (box.endPoint[0] - box.startPoint[0]) / 2,
+    box.startPoint[1] + (box.endPoint[1] - box.startPoint[1]) / 2
+  ];
 }
 
 export function cutBoxFromImageAndResize(
@@ -88,7 +94,10 @@ export function cutBoxFromImageAndResize(
 
 export function enlargeBox(box: Box, factor = 1.5): Box {
   return tf.tidy(() => {
-    const center = getBoxCenter(box);
+    const center = getBoxCenter({
+      startPoint: box.startPoint.dataSync() as {} as [number, number],
+      endPoint: box.endPoint.dataSync() as {} as [number, number]
+    });
     const size = getBoxSize(box);
     const newSize = tf.mul(tf.div(size, 2), factor);
     const newStart: tf.Tensor2D = tf.sub(center, newSize);

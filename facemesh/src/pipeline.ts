@@ -82,8 +82,13 @@ export class Pipeline {
         });
 
     const inverseRotationMatrix = invertTransformMatrix(rotationMatrix);
-    const boxCenter =
-        [...getBoxCenter(box).arraySync()[0], 1] as [number, number, number];
+    const boxCenter = [
+      ...getBoxCenter({
+        startPoint: box.startPoint.dataSync() as {} as [number, number],
+        endPoint: box.endPoint.dataSync() as {} as [number, number]
+      }),
+      1
+    ] as [number, number, number];
 
     const originalBoxCenter = [
       dot(boxCenter, inverseRotationMatrix[0]),
@@ -143,8 +148,10 @@ export class Pipeline {
           angle = computeRotation(box.landmarks[3], box.landmarks[2]);
         }
 
-        const faceCenterTensor = getBoxCenter(box);
-        const faceCenter = faceCenterTensor.arraySync()[0] as [number, number];
+        const faceCenter = getBoxCenter({
+          startPoint: box.startPoint.dataSync() as {} as [number, number],
+          endPoint: box.endPoint.dataSync() as {} as [number, number]
+        });
         const faceCenterNormalized: [number, number] =
             [faceCenter[0] / input.shape[2], faceCenter[1] / input.shape[1]];
 
@@ -165,12 +172,6 @@ export class Pipeline {
 
         const coordsReshaped: tf.Tensor2D = tf.reshape(coords, [-1, 3]);
         const rawCoords = coordsReshaped.arraySync();
-        // const normalizedBox =
-        //     tf.div(getBoxSize(box), [this.meshWidth, this.meshHeight]);
-        // const scaledCoords: tf.Tensor2D = tf.mul(
-        //     coordsReshaped, normalizedBox.concat(tf.tensor2d([1], [1, 1]),
-        //     1));
-        // .add(box.startPoint.concat(tf.tensor2d([0], [1, 1]), 1));
 
         const transformedCoordsData =
             this.transformRawCoords(rawCoords, box, angle, rotationMatrix);
