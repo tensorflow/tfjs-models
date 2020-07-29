@@ -88,18 +88,15 @@ export function cutBoxFromImageAndResize(
   return tf.image.cropAndResize(image, boxes, [0], cropSize);
 }
 
-export function enlargeBox(box: Box, factor = 1.5): Box {
-  return tf.tidy(() => {
-    const boxCPU = {
-      startPoint: box.startPoint.dataSync() as {} as [number, number],
-      endPoint: box.endPoint.dataSync() as {} as [number, number]
-    };
-    const center = getBoxCenter(boxCPU);
-    const size = tf.tensor2d(getBoxSize(boxCPU), [1, 2]);
-    const newSize = tf.mul(tf.div(size, 2), factor);
-    const newStart: tf.Tensor2D = tf.sub(center, newSize);
-    const newEnd: tf.Tensor2D = tf.add(center, newSize);
+export function enlargeBox(box: cpuBox, factor = 1.5): cpuBox {
+  const center = getBoxCenter(box);
+  const size = getBoxSize(box);
 
-    return createBox(tf.concat2d([newStart, newEnd], 1), newStart, newEnd);
-  });
+  const newHalfSize = [factor * size[0] / 2, factor * size[1] / 2];
+  const startPoint: [number, number] =
+      [center[0] - newHalfSize[0], center[1] - newHalfSize[1]];
+  const endPoint: [number, number] =
+      [center[0] + newHalfSize[0], center[1] + newHalfSize[1]];
+
+  return {startPoint, endPoint, landmarks: box.landmarks};
 }

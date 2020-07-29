@@ -136,13 +136,11 @@ export class Pipeline {
 
             const scaledBox = scaleBoxCoordinates(
                 predictionBoxCPU, scaleFactor as [number, number]);
-            const scaledBoxGPU = createBox(tf.tensor2d(
-                [...scaledBox.startPoint, ...scaledBox.endPoint], [1, 4]));
+            const enlargedBox = enlargeBox(scaledBox);
+            const boxGPU = createBox(tf.tensor2d(
+                [...enlargedBox.startPoint, ...enlargedBox.endPoint], [1, 4]));
 
-            return {
-              ...enlargeBox(scaledBoxGPU),
-              landmarks: prediction.landmarks.arraySync()
-            };
+            return {...boxGPU, landmarks: prediction.landmarks.arraySync()};
           });
       boxes.forEach(disposeBox);
 
@@ -297,6 +295,11 @@ export class Pipeline {
 
     const boxMinMax = tf.stack([xs.min(), ys.min(), xs.max(), ys.max()]);
     const box = createBox(boxMinMax.expandDims(0));
-    return enlargeBox(box);
+    const enlarged = enlargeBox({
+      startPoint: box.startPoint.dataSync() as {} as [number, number],
+      endPoint: box.endPoint.dataSync() as {} as [number, number]
+    });
+    return createBox(
+        tf.tensor2d([...enlarged.startPoint, ...enlarged.endPoint], [1, 4]));
   }
 }
