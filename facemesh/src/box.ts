@@ -59,11 +59,11 @@ export function scaleBoxCoordinates(
   return createBox(tf.concat2d([newStart, newEnd], 1));
 }
 
-export function getBoxSize(box: Box): tf.Tensor2D {
-  return tf.tidy(() => {
-    const diff: tf.Tensor2D = tf.sub(box.endPoint, box.startPoint);
-    return tf.abs(diff);
-  });
+export function getBoxSize(box: cpuBox): [number, number] {
+  return [
+    Math.abs(box.endPoint[0] - box.startPoint[0]),
+    Math.abs(box.endPoint[1] - box.startPoint[1])
+  ];
 }
 
 export function getBoxCenter(box: cpuBox): [number, number] {
@@ -94,11 +94,12 @@ export function cutBoxFromImageAndResize(
 
 export function enlargeBox(box: Box, factor = 1.5): Box {
   return tf.tidy(() => {
-    const center = getBoxCenter({
+    const boxCPU = {
       startPoint: box.startPoint.dataSync() as {} as [number, number],
       endPoint: box.endPoint.dataSync() as {} as [number, number]
-    });
-    const size = getBoxSize(box);
+    };
+    const center = getBoxCenter(boxCPU);
+    const size = tf.tensor2d(getBoxSize(boxCPU), [1, 2]);
     const newSize = tf.mul(tf.div(size, 2), factor);
     const newStart: tf.Tensor2D = tf.sub(center, newSize);
     const newEnd: tf.Tensor2D = tf.add(center, newSize);

@@ -63,7 +63,10 @@ export class Pipeline {
   transformRawCoords(
       rawCoords: any, box: Box, angle: number,
       rotationMatrix: TransformationMatrix) {
-    const boxSize = getBoxSize(box).arraySync()[0];
+    const boxSize = getBoxSize({
+      startPoint: box.startPoint.dataSync() as {} as [number, number],
+      endPoint: box.endPoint.dataSync() as {} as [number, number]
+    });
     const scaleFactor =
         [boxSize[0] / this.meshWidth, boxSize[1] / this.meshHeight];
 
