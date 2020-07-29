@@ -128,9 +128,21 @@ export class Pipeline {
 
       const scaledBoxes =
           boxes.map((prediction: blazeface.BlazeFacePrediction): Box => {
+            const predictionBoxCPU = {
+              startPoint: prediction.box.startPoint.dataSync() as
+                  {} as [number, number],
+              endPoint: prediction.box.endPoint.dataSync() as
+                  {} as [number, number]
+            };
+
+            const scaledBox = scaleBoxCoordinates(
+                predictionBoxCPU,
+                (scaleFactor as any).dataSync() as {} as [number, number]);
+            const scaledBoxGPU = createBox(tf.tensor2d(
+                [...scaledBox.startPoint, ...scaledBox.endPoint], [1, 4]));
+
             return {
-              ...enlargeBox(scaleBoxCoordinates(
-                  prediction.box, scaleFactor as [number, number])),
+              ...enlargeBox(scaledBoxGPU),
               landmarks: prediction.landmarks.arraySync()
             };
           });

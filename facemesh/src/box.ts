@@ -52,11 +52,13 @@ export function createBox(
 }
 
 export function scaleBoxCoordinates(
-    box: Box, factor: tf.Tensor1D|[number, number]): Box {
-  const newStart: tf.Tensor2D = tf.mul(box.startPoint, factor);
-  const newEnd: tf.Tensor2D = tf.mul(box.endPoint, factor);
+    box: cpuBox, factor: [number, number]): cpuBox {
+  const startPoint: [number, number] =
+      [box.startPoint[0] * factor[0], box.startPoint[1] * factor[1]];
+  const endPoint: [number, number] =
+      [box.endPoint[0] * factor[0], box.endPoint[1] * factor[1]];
 
-  return createBox(tf.concat2d([newStart, newEnd], 1));
+  return {startPoint, endPoint};
 }
 
 export function getBoxSize(box: cpuBox): [number, number] {
