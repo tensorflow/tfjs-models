@@ -19,8 +19,9 @@
 import * as handpose from '@tensorflow-models/handpose';
 import * as tf from '@tensorflow/tfjs';
 import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
+import * as tf from '@tensorflow/tfjs';
 import {version_wasm} from '@tensorflow/tfjs-backend-wasm';
-
+import * as tf from '@tensorflow/tfjs-core';
 tfjsWasm.setWasmPath(
     `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
         version_wasm}/dist/tfjs-backend-wasm.wasm`);

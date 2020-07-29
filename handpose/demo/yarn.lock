@@ -815,10 +815,10 @@
     "@parcel/utils" "^1.11.0"
     physical-cpu-count "^2.0.0"
 
-"@tensorflow-models/handpose@0.0.4":
-  version "0.0.4"
-  resolved "https://registry.yarnpkg.com/@tensorflow-models/handpose/-/handpose-0.0.4.tgz#3740629a1b48b72398c173553e5976f2630bb5d7"
-  integrity sha512-bHO4HbwhbkgH9xg3yEgM4P3v4+bJVFudIwi5M723dqHIi31TfSnb7YfojaV1u+uYDFhq/mYqCu+CZfp5DzNyXg==
+"@tensorflow-models/handpose@0.0.5":
+  version "0.0.5"
+  resolved "https://registry.yarnpkg.com/@tensorflow-models/handpose/-/handpose-0.0.5.tgz#0385ba82a7d81d4ac38cf4fd37be5a014dea2d42"
+  integrity sha512-sygyoOp0AU8COlTZJCq/j2YtfhroY2/aWjDa+enYk7Kw7XxLxIefvRG+UixRxQe24VWlAmVKDFxNGTR265G9DA==
 
 "@tensorflow/tfjs-backend-cpu@2.0.1":
   version "2.0.1"
@@ -828,7 +828,7 @@
     "@types/seedrandom" "2.4.27"
     seedrandom "2.4.3"
 
-"@tensorflow/tfjs-backend-wasm@^2.0.1":
+"@tensorflow/tfjs-backend-wasm@^2.1.0":
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-backend-wasm/-/tfjs-backend-wasm-2.0.1.tgz#6551b3bd1de7079a481750e9dafeb59555261086"
   integrity sha512-OYMPn3wPwuV4vYlgfqMaE9CICTvUEsNP/IkwJVaArzoN7txHZGikt+SQ3+lojh4MOUTN+9wxT1xkr05k7bivGg==
@@ -877,7 +877,7 @@
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-layers/-/tfjs-layers-2.0.1.tgz#4b48841fe1b2831dabcb06fd7cb69c98c92a4596"
   integrity sha512-ih7/KyhC2Ci/31UfB9frYbqUW59Zj5UVp22apyscyIqrRdBXhVtJIUnd4O5OXis0j9BOdzAQnBoOAa8S/T8JsA==
 
-"@tensorflow/tfjs@^2.0.1":
+"@tensorflow/tfjs@^2.1.0":
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs/-/tfjs-2.0.1.tgz#f72193c9433080c31efe0d48b77b21c4fae74ade"
   integrity sha512-XMI8gH1k0ushRR7hWAUXoy0WiAil2R7zOU6oz9AMioXTFK2cEn08xgpTXS7KLZUS4CnXN4NHOKbYn3/Dp+CSTA==
