@@ -114,14 +114,13 @@ export class Pipeline {
    */
   async predict(input: tf.Tensor4D): Promise<Prediction[]> {
     if (this.shouldUpdateRegionsOfInterest()) {
-      const returnTensors = true;
+      const returnTensors = false;
       const annotateFace = true;
       const {boxes, scaleFactor} =
           await this.boundingBoxDetector.getBoundingBoxes(
               input, returnTensors, annotateFace);
 
       if (boxes.length === 0) {
-        (scaleFactor as tf.Tensor1D).dispose();
         this.clearAllRegionsOfInterest();
         return null;
       }
@@ -136,8 +135,7 @@ export class Pipeline {
             };
 
             const scaledBox = scaleBoxCoordinates(
-                predictionBoxCPU,
-                (scaleFactor as any).dataSync() as {} as [number, number]);
+                predictionBoxCPU, scaleFactor as [number, number]);
             const scaledBoxGPU = createBox(tf.tensor2d(
                 [...scaledBox.startPoint, ...scaledBox.endPoint], [1, 4]));
 
