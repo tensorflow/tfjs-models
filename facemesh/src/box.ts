@@ -76,22 +76,16 @@ export function getBoxCenter(box: cpuBox): [number, number] {
 }
 
 export function cutBoxFromImageAndResize(
-    box: Box, image: tf.Tensor4D, cropSize: [number, number]): tf.Tensor4D {
-  const height = image.shape[1];
-  const width = image.shape[2];
-  const xyxy = box.startEndTensor;
+    box: cpuBox, image: tf.Tensor4D, cropSize: [number, number]): tf.Tensor4D {
+  const h = image.shape[1];
+  const w = image.shape[2];
 
-  return tf.tidy(() => {
-    const yxyx = tf.concat2d(
-        [
-          xyxy.slice([0, 1], [-1, 1]), xyxy.slice([0, 0], [-1, 1]),
-          xyxy.slice([0, 3], [-1, 1]), xyxy.slice([0, 2], [-1, 1])
-        ],
-        0);
-    const roundedCoords: tf.Tensor2D =
-        tf.div(yxyx.transpose(), [height, width, height, width]);
-    return tf.image.cropAndResize(image, roundedCoords, [0], cropSize);
-  });
+  const boxes = [[
+    box.startPoint[1] / h, box.startPoint[0] / w, box.endPoint[1] / h,
+    box.endPoint[0] / w
+  ]];
+
+  return tf.image.cropAndResize(image, boxes, [0], cropSize);
 }
 
 export function enlargeBox(box: Box, factor = 1.5): Box {

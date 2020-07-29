@@ -173,7 +173,12 @@ export class Pipeline {
 
         const rotationMatrix = buildRotationMatrix(-angle, faceCenter);
 
-        const face = cutBoxFromImageAndResize(box, rotatedImage, [
+        const boxCPU = {
+          startPoint: box.startPoint.dataSync() as {} as [number, number],
+          endPoint: box.endPoint.dataSync() as {} as [number, number]
+        };
+
+        const face = cutBoxFromImageAndResize(boxCPU, rotatedImage, [
                        this.meshHeight, this.meshWidth
                      ]).div(255);
 
