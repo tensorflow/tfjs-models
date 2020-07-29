@@ -28,7 +28,7 @@ export type Box = {
 export type cpuBox = {
   startPoint: [number, number],  // Upper left hand corner of bounding box.
   endPoint: [number, number],    // Lower right hand corner of bounding box.
-  landmarks?: Array<[number, number]>
+  landmarks?: number[][]
 };
 
 export function disposeBox(box: Box): void {
