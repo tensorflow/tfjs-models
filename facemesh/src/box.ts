@@ -19,40 +19,12 @@ import * as tf from '@tensorflow/tfjs-core';
 
 // The facial bounding box.
 export type Box = {
-  startPoint: tf.Tensor2D,      // Upper left hand corner of bounding box.
-  endPoint: tf.Tensor2D,        // Lower right hand corner of bounding box.
-  startEndTensor: tf.Tensor2D,  // Concatenation of start and end points.
-  landmarks?: any
-};
-
-export type cpuBox = {
   startPoint: [number, number],  // Upper left hand corner of bounding box.
   endPoint: [number, number],    // Lower right hand corner of bounding box.
   landmarks?: number[][]
 };
 
-export function disposeBox(box: Box): void {
-  if (box != null && box.startPoint != null) {
-    box.startEndTensor.dispose();
-    box.startPoint.dispose();
-    box.endPoint.dispose();
-  }
-}
-
-export function createBox(
-    startEndTensor: tf.Tensor2D, startPoint?: tf.Tensor2D,
-    endPoint?: tf.Tensor2D): Box {
-  return {
-    startEndTensor,
-    startPoint: startPoint != null ? startPoint :
-                                     tf.slice(startEndTensor, [0, 0], [-1, 2]),
-    endPoint: endPoint != null ? endPoint :
-                                 tf.slice(startEndTensor, [0, 2], [-1, 2])
-  };
-}
-
-export function scaleBoxCoordinates(
-    box: cpuBox, factor: [number, number]): cpuBox {
+export function scaleBoxCoordinates(box: Box, factor: [number, number]): Box {
   const startPoint: [number, number] =
       [box.startPoint[0] * factor[0], box.startPoint[1] * factor[1]];
   const endPoint: [number, number] =
@@ -61,14 +33,14 @@ export function scaleBoxCoordinates(
   return {startPoint, endPoint};
 }
 
-export function getBoxSize(box: cpuBox): [number, number] {
+export function getBoxSize(box: Box): [number, number] {
   return [
     Math.abs(box.endPoint[0] - box.startPoint[0]),
     Math.abs(box.endPoint[1] - box.startPoint[1])
   ];
 }
 
-export function getBoxCenter(box: cpuBox): [number, number] {
+export function getBoxCenter(box: Box): [number, number] {
   return [
     box.startPoint[0] + (box.endPoint[0] - box.startPoint[0]) / 2,
     box.startPoint[1] + (box.endPoint[1] - box.startPoint[1]) / 2
@@ -76,7 +48,7 @@ export function getBoxCenter(box: cpuBox): [number, number] {
 }
 
 export function cutBoxFromImageAndResize(
-    box: cpuBox, image: tf.Tensor4D, cropSize: [number, number]): tf.Tensor4D {
+    box: Box, image: tf.Tensor4D, cropSize: [number, number]): tf.Tensor4D {
   const h = image.shape[1];
   const w = image.shape[2];
 
@@ -88,7 +60,7 @@ export function cutBoxFromImageAndResize(
   return tf.image.cropAndResize(image, boxes, [0], cropSize);
 }
 
-export function enlargeBox(box: cpuBox, factor = 1.5): cpuBox {
+export function enlargeBox(box: Box, factor = 1.5): Box {
   const center = getBoxCenter(box);
   const size = getBoxSize(box);
 

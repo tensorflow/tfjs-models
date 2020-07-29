@@ -19,17 +19,16 @@ import * as blazeface from '@tensorflow-models/blazeface';
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {cpuBox, cutBoxFromImageAndResize, disposeBox, enlargeBox, getBoxCenter, getBoxSize, scaleBoxCoordinates} from './box';
+import {Box, cutBoxFromImageAndResize, enlargeBox, getBoxCenter, getBoxSize, scaleBoxCoordinates} from './box';
 import {buildRotationMatrix, computeRotation, dot, invertTransformMatrix, rotatePoint, TransformationMatrix} from './util';
 
 export type Prediction = {
   coords: tf.Tensor2D,        // coordinates of facial landmarks.
   scaledCoords: tf.Tensor2D,  // coordinates normalized to the mesh size.
-  box: cpuBox,                // bounding box of coordinates.
+  box: Box,                   // bounding box of coordinates.
   flag: tf.Scalar             // confidence in presence of a face.
 };
 
-// const LANDMARKS_COUNT = 468;
 const UPDATE_REGION_OF_INTEREST_IOU_THRESHOLD = 0.25;
 
 // The Pipeline coordinates between the bounding box and skeleton models.
@@ -45,7 +44,7 @@ export class Pipeline {
   private maxFaces: number;
 
   // An array of facial bounding boxes.
-  private regionsOfInterest: cpuBox[] = [];
+  private regionsOfInterest: Box[] = [];
   private runsWithoutFaceDetector = 0;
 
   constructor(
@@ -61,7 +60,7 @@ export class Pipeline {
   }
 
   transformRawCoords(
-      rawCoords: any, box: cpuBox, angle: number,
+      rawCoords: any, box: Box, angle: number,
       rotationMatrix: TransformationMatrix) {
     const boxSize =
         getBoxSize({startPoint: box.startPoint, endPoint: box.endPoint});
@@ -115,12 +114,12 @@ export class Pipeline {
               input, returnTensors, annotateFace);
 
       if (boxes.length === 0) {
-        this.clearAllRegionsOfInterest();
+        this.regionsOfInterest = [];
         return null;
       }
 
       const scaledBoxes =
-          boxes.map((prediction: blazeface.BlazeFacePrediction): cpuBox => {
+          boxes.map((prediction: blazeface.BlazeFacePrediction): Box => {
             const predictionBoxCPU = {
               startPoint: prediction.box.startPoint.dataSync() as
                   {} as [number, number],
@@ -131,18 +130,23 @@ export class Pipeline {
             const scaledBox = scaleBoxCoordinates(
                 predictionBoxCPU, scaleFactor as [number, number]);
             const enlargedBox = enlargeBox(scaledBox);
-            // const boxGPU = createBox(tf.tensor2d(
-            //     [...enlargedBox.startPoint, ...enlargedBox.endPoint], [1,
-            //     4]));
-
-            // return {...boxGPU, landmarks: prediction.landmarks.arraySync()};
-
             return {
               ...enlargedBox,
               landmarks: prediction.landmarks.arraySync()
             };
           });
-      boxes.forEach(disposeBox);
+
+      boxes.forEach((box: {
+                      startPoint: tf.Tensor2D,
+                      startEndTensor: tf.Tensor2D,
+                      endPoint: tf.Tensor2D
+                    }) => {
+        if (box != null && box.startPoint != null) {
+          box.startEndTensor.dispose();
+          box.startPoint.dispose();
+          box.endPoint.dispose();
+        }
+      });
 
       this.updateRegionsOfInterest(scaledBoxes);
       this.runsWithoutFaceDetector = 0;
@@ -194,8 +198,6 @@ export class Pipeline {
 
         const landmarksBox =
             this.calculateLandmarksBoundingBox(transformedCoordsData);
-        // const previousBox = this.regionsOfInterest[i];
-        // disposeBox(previousBox);
         this.regionsOfInterest[i] = {
           ...landmarksBox,
           landmarks: transformedCoords.arraySync()
@@ -215,7 +217,7 @@ export class Pipeline {
 
   // Updates regions of interest if the intersection over union between
   // the incoming and previous regions falls below a threshold.
-  updateRegionsOfInterest(boxes: cpuBox[]) {
+  updateRegionsOfInterest(boxes: Box[]) {
     for (let i = 0; i < boxes.length; i++) {
       const box = boxes[i];
       const previousBox = this.regionsOfInterest[i];
@@ -239,38 +241,21 @@ export class Pipeline {
         iou = intersection / (boxArea + previousBoxArea - intersection);
       }
 
-      if (iou > UPDATE_REGION_OF_INTEREST_IOU_THRESHOLD) {
-        // disposeBox(box);
-      } else {
+      if (iou < UPDATE_REGION_OF_INTEREST_IOU_THRESHOLD) {
         this.regionsOfInterest[i] = box;
-        // disposeBox(previousBox);
       }
     }
-
-    // for (let i = boxes.length; i < this.regionsOfInterest.length; i++) {
-    //   disposeBox(this.regionsOfInterest[i]);
-    // }
 
     this.regionsOfInterest = this.regionsOfInterest.slice(0, boxes.length);
   }
 
   clearRegionOfInterest(index: number) {
     if (this.regionsOfInterest[index] != null) {
-      // disposeBox(this.regionsOfInterest[index]);
-
       this.regionsOfInterest = [
         ...this.regionsOfInterest.slice(0, index),
         ...this.regionsOfInterest.slice(index + 1)
       ];
     }
-  }
-
-  clearAllRegionsOfInterest() {
-    // for (let i = 0; i < this.regionsOfInterest.length; i++) {
-    //   disposeBox(this.regionsOfInterest[i]);
-    // }
-
-    this.regionsOfInterest = [];
   }
 
   shouldUpdateRegionsOfInterest(): boolean {
@@ -285,7 +270,7 @@ export class Pipeline {
         this.runsWithoutFaceDetector >= this.maxContinuousChecks;
   }
 
-  calculateLandmarksBoundingBox(landmarks: number[][]): cpuBox {
+  calculateLandmarksBoundingBox(landmarks: number[][]): Box {
     const xs = landmarks.map(d => d[0]);
     const ys = landmarks.map(d => d[1]);
     // const xs = landmarks.slice([0, 0], [LANDMARKS_COUNT, 1]);
