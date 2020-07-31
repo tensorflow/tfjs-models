@@ -15,22 +15,17 @@
  * =============================================================================
  */
 import * as tf from '@tensorflow/tfjs-core';
+// tslint:disable-next-line: no-imports-from-dist
+import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
 import {load} from './index';
 
-const MODEL_PATH = __dirname + '/../fastdepth_opset9_v2_tfjs/model.json';
-describe('DepthPredict', () => {
-it('should load the model', async () => {
-console.log(MODEL_PATH, typeof MODEL_PATH);
+describeWithFlags('DepthPredict', NODE_ENVS, () => {
+  it('should load the model', async () => {
     const depthprediction = await load();
+    await depthprediction.warmup();
     const img: tf.Tensor3D = tf.zeros([480, 640, 3]);
     const out = depthprediction.predict(img);
-    expect(out.shape).toEqual([224, 224, 1]);
+    expect(out.shape).toEqual([224, 224]);
   });
-  it('should be able to output raw tensors', async () => {
-    const depthprediction = await load({rawOutput: true});
-    const img: tf.Tensor3D = tf.zeros([480, 640, 3]);
-    const out = depthprediction.predict(img);
-    expect(out.shape).toEqual([1, 224, 224]);
-    });
 });

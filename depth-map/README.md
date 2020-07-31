@@ -1,8 +1,8 @@
 # DepthMap
 
-DepthMap is a lightweight model capable of infering depth from single images. It is implemented with [FastDepth](https://arxiv.org/abs/1903.03273).
+DepthMap is a lightweight model capable of inferring depth from single images. It is implemented with [FastDepth](https://arxiv.org/abs/1903.03273).
 
-![Input image - picture of a living room](https://github.com/grasskin/tfjs-models/blob/master/depth-map/demo/livingroom.jpg) ![Resulting depth map](https://github.com/grasskin/tfjs-models/blob/master/depth-map/demo/output.jpg)
+![Input image - picture of a living room](https://github.com/tensorflow/tfjs-models/blob/master/depth-map/demo/livingroom.jpg) ![Resulting depth map](https://github.com/tensorflow/tfjs-models/blob/master/depth-map/demo/output.jpg)
 
 # Performance
 
@@ -12,15 +12,13 @@ TODO: Add performance
 
 ## Installation
 
-And then in your project:
-
 Using `yarn`:
 
-    $ yarn add @tensorflow-models/fast-depth
+    $ yarn add @tensorflow-models/depth-map
 
 Using `npm`:
 
-    $ npm install @tensorflow-models/fast-depth
+    $ npm install @tensorflow-models/depth-map
 
 Note that this package specifies `@tensorflow/tfjs-core` and `@tensorflow/tfjs-converter` as peer dependencies, so they will also need to be installed.
 
@@ -29,35 +27,43 @@ Note that this package specifies `@tensorflow/tfjs-core` and `@tensorflow/tfjs-c
 To import in npm:
 ```js
 const depthmap = require('@tensorflow-models/depth-map');
+```
 
+or as a standalone script tag:
+```html
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/depth-map"></script>
+```
+
+Then:
+```
 const img = document.getElementById('img');
 
-// Load the model.
-const model = await depthmap.load({modelUrl: 'path/to/model.json'});
+async function generateDepthMap() {
+  // Load the model.
+  const model = await depthmap.load();
 
-// Generate the depth map
-const output = await model.predict(img);
+  // The DepthMap model takes an image as input and returns a tensor containing the depth map for the image
+  const output = await model.predict(img);
+}
 ```
 ## API
 
 ### Loading the model
 ```ts
 depthmap.load({modelUrl: string | tf.io.IOHandler,
-    inputRange?: [number, number],
-    rawOutput?: boolean}): Promise<DepthMap>
+    inputRange?: [number, number]): Promise<DepthMap>
 ```
 
 Args:
 - **modelUrl:** Optional param for specifying the custom model url or `tf.io.IOHandler` object.
 - **inputRange:** Optional param specifying the pixel value range of your input. This is typically [0, 255] or [0, 1].
 Defaults to [0, 255].
-- **rawOutput:** Optional param specifying whether model should output the raw [3, 224, 224] result or postprocess to
-the image-friendly [224, 224, 3]. Defaults to false.
 
 
 ### Making a depth prediction
 
-You can make a prediciton with DepthMap without needing to create a Tensor
+You can make a prediction with DepthMap without needing to create a Tensor
 with `depthmap.predict`, which takes an input image element and returns a
 depth tensor.
 
@@ -69,3 +75,5 @@ model.predict(
       HTMLCanvasElement | HTMLVideoElement,
 ): tf.Tensor
 ```
+
+Returns a [224, 224] tensor where each float element corresponds to the estimated depth of that pixel in meters.

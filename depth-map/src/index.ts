@@ -23,8 +23,7 @@ const INPUT_SIZE = 224;
 export interface ModelConfig {
   modelUrl?: string | tf.io.IOHandler,
   inputRange?: [number, number],
-  rawOutput?: boolean
-  }
+}
 
 /**
  * DepthMap model loading configuration
@@ -32,15 +31,12 @@ export interface ModelConfig {
  * @param modelUrl Optional param for specifying the custom model url or `tf.io.IOHandler` object.
  * @param inputRange Optional param specifying the pixel value range of your input. This is typically [0, 255] or [0, 1].
   Defaults to [0, 255].
- * @param rawOutput Optional param specifying whether model shoudl output the raw [3, 224, 224] result or postprocess to
- * the image-friendly [224, 224, 3]. Defaults to false.
  */
-export async function load(modelConfig: ModelConfig = {modelUrl: 'https://raw.githubusercontent.com/grasskin/tfjs-models/master/depth-map/fastdepth_opset9_v2_tfjs/model.json', inputRange: [0, 255], rawOutput: false}): Promise<DepthMap> {
+export async function load(modelConfig: ModelConfig = {modelUrl: 'https://raw.githubusercontent.com/grasskin/tfjs-models/master/depth-map/fastdepth_opset9_v2_tfjs/model.json', inputRange: [0, 255]}): Promise<DepthMap> {
   let inputMin = 0;
   let inputMax = 255;
   let modelUrl: string | tf.io.IOHandler = 'https://raw.githubusercontent.com/grasskin/tfjs-models/master/depth-map/fastdepth_opset9_v2_tfjs/model.json';
   //TODO add tfhub compat
-  let rawOutput = false;
   if (tf == null) {
     throw new Error(
       `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
@@ -52,20 +48,12 @@ export async function load(modelConfig: ModelConfig = {modelUrl: 'https://raw.gi
   if(modelConfig.inputRange != null) {
     [inputMin, inputMax] = modelConfig.inputRange
     }
-  if(modelConfig.rawOutput != null) {
-    rawOutput = modelConfig.rawOutput;
-  }
-  const depthmap = new DepthMapImpl(modelUrl, inputMin, inputMax, rawOutput);
+  const depthmap = new DepthMap(modelUrl, inputMin, inputMax);
   await depthmap.load();
   return depthmap;
 }
 
-export interface DepthMap{
-  load(): Promise<void>;
-  predict(img: tf.Tensor3D|ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement): tf.Tensor;
-}
-
-export class DepthMapImpl implements DepthMap {
+export class DepthMap {
   private model: tfconv.GraphModel;
   private normalizationConstant: number;
 
@@ -73,10 +61,12 @@ export class DepthMapImpl implements DepthMap {
     this.normalizationConstant = (inputMax - inputMin);
   }
 
-  public async load() {
+  public async load() : Promise<void> {
     this.model = await tfconv.loadGraphModel(this.modelUrl);
+  }
 
-  // Warmup the model.
+  public async warmup() : Promise<void> {
+    // Warmup the model.
     const result = tf.tidy(() => this.model.predict(tf.zeros([1, 3, INPUT_SIZE, INPUT_SIZE]))) as tf.Tensor;
     await result.data();
     result.dispose();
@@ -94,25 +84,19 @@ export class DepthMapImpl implements DepthMap {
         if(!(img instanceof tf.Tensor)) {
           img = tf.browser.fromPixels(img);
         }
-        // Normalize input from [inputMin, inputMax] to [0,1]
-        // Resize the image to
+        // Resize the image to [224, 224]
         let resized = img.toFloat();
         if (img.shape[0] !== INPUT_SIZE || img.shape[1] !== INPUT_SIZE) {
           const alignCorners = true;
           resized = tf.image.resizeBilinear(img, [INPUT_SIZE, INPUT_SIZE], alignCorners);
         }
-
         const reshaped = tf.transpose(resized, [2, 0, 1]); // change image from [224,224,3] to [3,224,224]
-        const batched = reshaped.reshape([1, 3, INPUT_SIZE, INPUT_SIZE]);
+        const batched = reshaped.expandDims()
+        // Normalize input from [inputMin, inputMax] to [0,1]
         const normalized: tf.Tensor3D = batched.sub(this.inputMin).div(this.normalizationConstant);
-        const out: tf.Tensor = (this.model.predict(normalized) as tf.Tensor);
-        const resizeOut = out.reshape([1, INPUT_SIZE, INPUT_SIZE]);
-        if (this.rawOutput) {
-          return resizeOut;
-        } else {
-          const reshapedOut = tf.transpose(resizeOut, [1, 2, 0]); // change output from [1, 224, 224] to [224, 224, 1]
-          return reshapedOut;
-        }
+        const out: tf.Tensor = this.model.predict(normalized);
+        const resizeOut = out.reshape([INPUT_SIZE, INPUT_SIZE]);
+        return resizeOut;
       });
   }
 }
