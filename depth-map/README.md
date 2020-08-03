@@ -60,6 +60,14 @@ Args:
 - **inputRange:** Optional param specifying the pixel value range of your input. This is typically [0, 255] or [0, 1].
 Defaults to [0, 255].
 
+### Warming up the model (optional)
+
+Models can take longer to run the first time, calling this method will allow future calls to predict to be faster.
+
+```ts
+depthmap.warmup()
+```
+
 
 ### Making a depth prediction
 

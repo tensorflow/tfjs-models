@@ -28,4 +28,12 @@ describeWithFlags('DepthPredict', NODE_ENVS, () => {
     const out = depthprediction.predict(img);
     expect(out.shape).toEqual([224, 224]);
   });
+  it('should not leak memory', async () => {
+    const depthprediction = await load();
+    const img: tf.Tensor3D = tf.zeros([480, 640, 3]);
+
+    const beforeTensors = tf.memory().numTensors;
+    await depthprediction.predict(img);
+    expect(tf.memory().numTensors).toBe(beforeTensors + 1);
+  })
 });

@@ -41,13 +41,13 @@ export async function load(modelConfig: ModelConfig = {modelUrl: 'https://raw.gi
     throw new Error(
       `Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
       `also include @tensorflow/tfjs on the page before using this model.`);
-   }
+  }
   if(modelConfig.modelUrl != null) {
     modelUrl = modelConfig.modelUrl; 
   }
   if(modelConfig.inputRange != null) {
     [inputMin, inputMax] = modelConfig.inputRange
-    }
+  }
   const depthmap = new DepthMap(modelUrl, inputMin, inputMax);
   await depthmap.load();
   return depthmap;
