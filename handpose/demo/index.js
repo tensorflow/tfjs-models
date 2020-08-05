@@ -15,16 +15,16 @@
  * =============================================================================
  */
 
-// import * as tfwebgpu from '@tensorflow/tfjs-backend-webgpu';
 import * as handpose from '@tensorflow-models/handpose';
-import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
-import * as tf from '@tensorflow/tfjs';
-import {version_wasm} from '@tensorflow/tfjs-backend-wasm';
 import * as tf from '@tensorflow/tfjs-core';
+import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
+require('@tensorflow/tfjs-backend-webgl');
+
 tfjsWasm.setWasmPath(
     `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
-        version_wasm}/dist/tfjs-backend-wasm.wasm`);
-function isMobile() {
+        tfjsWasm.version_wasm}/dist/tfjs-backend-wasm.wasm`);
+
+        function isMobile() {
   const isAndroid = /Android/i.test(navigator.userAgent);
   const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
   return isAndroid || isiOS;
@@ -47,7 +47,7 @@ const mobile = isMobile();
 const renderPointcloud = mobile === false;
 
 const state = {
-  backend: 'webgl'
+  backend: 'wasm'
 };
 
 if (renderPointcloud) {
@@ -56,7 +56,7 @@ if (renderPointcloud) {
 
 function setupDatGui() {
   const gui = new dat.GUI();
-  gui.add(state, 'backend', ['wasm', 'webgl', 'cpu', 'webgpu'])
+  gui.add(state, 'backend', ['wasm', 'webgl'])
       .onChange(async backend => {
         await tf.setBackend(backend);
       });
