@@ -19,29 +19,39 @@ MediaPipe Handpose consists of ~12MB of weights, and is well-suited for real tim
 
 ## Installation
 
+Via script tags:
+
+```html
+<!-- Require the peer dependencies of handpose. -->
+<script src="https://unpkg.com/@tensorflow/tfjs-core@2.1.0/dist/tf-core.js"></script>
+<script src="https://unpkg.com/@tensorflow/tfjs-converter@2.1.0/dist/tf-converter.js"></script>
+
+<!-- You must explicitly require a TF.js backend if you're not using the tfs union bundle. -->
+<script src="https://unpkg.com/@tensorflow/tfjs-backend-webgl@2.1.0/dist/tf-backend-webgl.js"></script>
+<!-- Alternatively ou can use the WASM backend: <script src="https://unpkg.com/@tensorflow/tfjs-backend-wasm@2.1.0/dist/tf-backend-wasm.js"></script> -->
+
+<script src="https://unpkg.com/@tensorflow-models/handpose@0.0.5/dist/handpose.js"></script>
+```
+
+Via npm:
+
 Using `yarn`:
 
     $ yarn add @tensorflow-models/handpose
-
-Using `npm`:
-
-    $ npm install @tensorflow-models/handpose
-
-Note that this package specifies `@tensorflow/tfjs-core` and `@tensorflow/tfjs-converter` as peer dependencies, so they will also need to be installed.
+    $ yarn add @tensorflow/tfjs-core, @tensorflow/tfjs-converter
+    $ yarn add @tensorflow/tfjs-backend-webgl # or tfjs-backend-wasm
 
 ## Usage
 
-To import in npm:
+If you are using npm, first add:
 
 ```js
 const handpose = require('@tensorflow-models/handpose');
-```
 
-or as a standalone script tag:
+require('@tensorflow/tfjs-backend-webgl'); // handpose does not itself require a backend, so you must explicitly install one.
 
-```html
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/handpose"></script>
+// If you are using the WASM backend:
+// require('@tensorflow/tfjs-backend-wasm');
 ```
 
 Then:

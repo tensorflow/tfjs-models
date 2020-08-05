@@ -1,6 +1,6 @@
 {
   "name": "handpose_demo",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "",
   "main": "index.js",
   "license": "Apache-2.0",
@@ -9,7 +9,7 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow-models/handpose": "0.0.5",
+    "@tensorflow-models/handpose": "0.0.6",
     "@tensorflow/tfjs-core": "2.1.0",
     "@tensorflow/tfjs-converter": "2.1.0",
     "@tensorflow/tfjs-backend-webgl": "2.1.0",
