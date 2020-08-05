@@ -28,9 +28,9 @@ Via script tags:
 
 <!-- You must explicitly require a TF.js backend if you're not using the tfs union bundle. -->
 <script src="https://unpkg.com/@tensorflow/tfjs-backend-webgl@2.1.0/dist/tf-backend-webgl.js"></script>
-<!-- Alternatively ou can use the WASM backend: <script src="https://unpkg.com/@tensorflow/tfjs-backend-wasm@2.1.0/dist/tf-backend-wasm.js"></script> -->
+<!-- Alternatively you can use the WASM backend: <script src="https://unpkg.com/@tensorflow/tfjs-backend-wasm@2.1.0/dist/tf-backend-wasm.js"></script> -->
 
-<script src="https://unpkg.com/@tensorflow-models/handpose@0.0.5/dist/handpose.js"></script>
+<script src="https://unpkg.com/@tensorflow-models/handpose@0.0.6/dist/handpose.js"></script>
 ```
 
 Via npm:
