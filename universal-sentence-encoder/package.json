@@ -1,8 +1,8 @@
 {
   "name": "@tensorflow-models/universal-sentence-encoder",
-  "version": "1.3.0",
+  "version": "1.3.2",
   "description": "Universal Sentence Encoder lite in TensorFlow.js",
-  "main": "dist/index.js",
+  "main": "dist/universal-sentence-encoder.min.js",
   "jsnext:main": "dist/universal-sentence-encoder.esm.js",
   "module": "dist/universal-sentence-encoder.esm.js",
   "unpkg": "dist/universal-sentence-encoder.min.js",
