@@ -7,7 +7,7 @@ steps:
   entrypoint: 'yarn'
   args: ['install']
 
-# Install handpose dependencies.
+# Install depth-map dependencies.
 - name: 'node:10'
   dir: 'depth-map'
   entrypoint: 'yarn'
