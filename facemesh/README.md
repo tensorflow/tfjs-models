@@ -15,27 +15,26 @@ framework for building multimodal applied ML pipelines.
 
 ## INSTALLATION
 
-via script tags:
+Via script tags:
 
 ```html
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tf-core"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tf-converter"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tf-backend-wasm"></script>
-  <!-- you can use webgl instead if you want <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tf-backend-webgl"></script> -->
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/facemesh"></script>
+<!-- Require the peer dependencies of facemesh. -->
+<script src="https://unpkg.com/@tensorflow/tfjs-core@2.1.0/dist/tf-core.js"></script>
+<script src="https://unpkg.com/@tensorflow/tfjs-converter@2.1.0/dist/tf-converter.js"></script>
 
+<!-- You must explicitly require a TF.js backend if you're not using the tfs union bundle. -->
+<script src="https://unpkg.com/@tensorflow/tfjs-backend-wasm@2.1.0/dist/tf-backend-wasm.js"></script>
+<!-- Alternatively you can use the WebGL backend: <script src="https://unpkg.com/@tensorflow/tfjs-backend-webgl@2.1.0/dist/tf-backend-webgl.js"></script> -->
 ```
 
-via npm:
+Via npm:
 
 Using `yarn`:
 
     $ yarn add @tensorflow-models/facemesh
+
     $ yarn add @tensorflow/tfjs-core, @tensorflow/tfjs-converter
     $ yarn add @tensorflow/tfjs-backend-wasm # or tfjs-backend-webgl
-
-```js
-```
 
 ## Usage
 
@@ -44,15 +43,13 @@ If you are using via npm, first add:
 ```js
 const facemesh = require('@tensorflow-models/facemesh');
 
-// IF USING WASM BACKEND
-require('@tensorflow/tfjs-backend-wasm'); // you need to require the backend explicitly because facemesh itself does not
+// If you are using the WASM backend:
+require('@tensorflow/tfjs-backend-wasm'); // You need to require the backend explicitly because facemesh itself does not
 setWasmPath();
 
-// IF USING WEBGL BACKEND
+// If you are using the WebGL backend:
 // require('@tensorflow/tfjs-backend-webgl');
 ```
-
-__(you can skip this step if you're using script tags)__
 
 Then:
 
