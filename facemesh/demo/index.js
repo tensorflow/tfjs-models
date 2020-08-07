@@ -26,7 +26,7 @@ import {version} from '@tensorflow/tfjs-backend-wasm';
 import {TRIANGULATION} from './triangulation';
 
 tfjsWasm.setWasmPath(
-    `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${version}/dist/tfjs-backend-wasm.wasm`);
+    `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@2.1.0/dist/tfjs-backend-wasm.wasm`);
 
 function isMobile() {
   const isAndroid = /Android/i.test(navigator.userAgent);

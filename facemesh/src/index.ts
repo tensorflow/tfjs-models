@@ -28,21 +28,24 @@ const FACEMESH_GRAPHMODEL_PATH =
 const MESH_MODEL_INPUT_WIDTH = 192;
 const MESH_MODEL_INPUT_HEIGHT = 192;
 
+type Coord2D = [number, number];
+type Coords3D = Array<[number, number, number]>;
+
 interface AnnotatedPredictionValues {
   /** Probability of the face detection. */
   faceInViewConfidence: number;
   boundingBox: {
     /** The upper left-hand corner of the face. */
-    topLeft: [number, number],
+    topLeft: Coord2D,
     /** The lower right-hand corner of the face. */
-    bottomRight: [number, number]
+    bottomRight: Coord2D
   };
   /** Facial landmark coordinates. */
-  mesh: Array<[number, number, number]>;
+  mesh: Coords3D;
   /** Facial landmark coordinates normalized to input dimensions. */
-  scaledMesh: Array<[number, number, number]>;
+  scaledMesh: Coords3D;
   /** Annotated keypoints. */
-  annotations?: {[key: string]: Array<[number, number, number]>};
+  annotations?: {[key: string]: Coords3D};
 }
 
 interface AnnotatedPredictionTensors {
@@ -100,8 +103,7 @@ async function loadMeshModel(): Promise<tfconv.GraphModel> {
 }
 
 function getInputTensorDimensions(input: tf.Tensor3D|ImageData|HTMLVideoElement|
-                                  HTMLImageElement|
-                                  HTMLCanvasElement): [number, number] {
+                                  HTMLImageElement|HTMLCanvasElement): Coord2D {
   return input instanceof tf.Tensor ? [input.shape[0], input.shape[1]] :
                                       [input.height, input.width];
 }
@@ -153,12 +155,11 @@ function flipFaceHorizontal(
       flippedCoord[0] = imageWidth - 1 - coord[0];
       return flippedCoord;
     }),
-    scaledMesh:
-        (face.scaledMesh as Array<[number, number, number]>).map(coord => {
-          const flippedCoord = coord.slice(0);
-          flippedCoord[0] = imageWidth - 1 - coord[0];
-          return flippedCoord;
-        })
+    scaledMesh: (face.scaledMesh as Coords3D).map(coord => {
+      const flippedCoord = coord.slice(0);
+      flippedCoord[0] = imageWidth - 1 - coord[0];
+      return flippedCoord;
+    })
   });
 }
 
@@ -185,7 +186,7 @@ export class FaceMesh {
    * Returns an array of UV coordinates for the 468 facial keypoint vertices in
    * mesh_map.jpg. Can be used to map textures to the facial mesh.
    */
-  static getUVCoords(): Array<[number, number]> {
+  static getUVCoords(): Coord2D[] {
     return UV_COORDS;
   }
 
@@ -235,85 +236,68 @@ export class FaceMesh {
     image.dispose();
 
     if (predictions != null && predictions.length > 0) {
-      return Promise.all(predictions
-                             .map(async (prediction: Prediction, i: number) => {
-                               const {coords, scaledCoords, box, flag} =
-                                   prediction;
-                               let tensorsToRead: tf.Tensor[] = [flag];
-                               if (!returnTensors) {
-                                 tensorsToRead = tensorsToRead.concat(
-                                     [coords, scaledCoords]);
-                               }
+      return Promise.all(predictions.map(async (prediction: Prediction, i) => {
+        const {coords, scaledCoords, box, flag} = prediction;
+        let tensorsToRead: tf.Tensor[] = [flag];
+        if (!returnTensors) {
+          tensorsToRead = tensorsToRead.concat([coords, scaledCoords]);
+        }
 
-                               const tensorValues =
-                                   await Promise.all(tensorsToRead.map(
-                                       async (d: tf.Tensor) => d.array()));
-                               const flagValue = tensorValues[0] as number;
+        const tensorValues = await Promise.all(
+            tensorsToRead.map(async (d: tf.Tensor) => d.array()));
+        const flagValue = tensorValues[0] as number;
 
-                               flag.dispose();
-                               if (flagValue < this.detectionConfidence) {
-                                 this.pipeline.clearRegionOfInterest(i);
-                               }
+        flag.dispose();
+        if (flagValue < this.detectionConfidence) {
+          this.pipeline.clearRegionOfInterest(i);
+        }
 
-                               if (returnTensors) {
-                                 const annotatedPrediction:
-                                     AnnotatedPrediction = {
-                                       faceInViewConfidence: flagValue,
-                                       mesh: coords,
-                                       scaledMesh: scaledCoords,
-                                       boundingBox: {
-                                         topLeft: tf.tensor1d(box.startPoint),
-                                         bottomRight: tf.tensor1d(box.endPoint)
-                                       }
-                                     };
+        if (returnTensors) {
+          const annotatedPrediction: AnnotatedPrediction = {
+            faceInViewConfidence: flagValue,
+            mesh: coords,
+            scaledMesh: scaledCoords,
+            boundingBox: {
+              topLeft: tf.tensor1d(box.startPoint),
+              bottomRight: tf.tensor1d(box.endPoint)
+            }
+          };
 
-                                 if (flipHorizontal) {
-                                   return flipFaceHorizontal(
-                                       annotatedPrediction, width);
-                                 }
+          if (flipHorizontal) {
+            return flipFaceHorizontal(annotatedPrediction, width);
+          }
 
-                                 return annotatedPrediction;
-                               }
+          return annotatedPrediction;
+        }
 
-                               const [coordsArr, coordsArrScaled] =
-                      tensorValues.slice(1) as [
-                        Array<[number, number, number]>,
-                        Array<[number, number, number]>];
+        const [coordsArr, coordsArrScaled] =
+            tensorValues.slice(1) as [Coords3D, Coords3D];
 
-                               scaledCoords.dispose();
-                               coords.dispose();
+        scaledCoords.dispose();
+        coords.dispose();
 
-                               let annotatedPrediction:
-                                   AnnotatedPredictionValues = {
-                                     faceInViewConfidence: flagValue,
-                                     boundingBox: {
-                                       topLeft: box.startPoint,
-                                       bottomRight: box.endPoint
-                                     },
-                                     mesh: coordsArr,
-                                     scaledMesh: coordsArrScaled
-                                   };
+        let annotatedPrediction: AnnotatedPredictionValues = {
+          faceInViewConfidence: flagValue,
+          boundingBox: {topLeft: box.startPoint, bottomRight: box.endPoint},
+          mesh: coordsArr,
+          scaledMesh: coordsArrScaled
+        };
 
-                               if (flipHorizontal) {
-                                 annotatedPrediction =
-                                     flipFaceHorizontal(
-                                         annotatedPrediction, width) as
-                                     AnnotatedPredictionValues;
-                               }
+        if (flipHorizontal) {
+          annotatedPrediction =
+              flipFaceHorizontal(annotatedPrediction, width) as
+              AnnotatedPredictionValues;
+        }
 
-                               const annotations: {
-                                 [key: string]:
-                                     Array<[number, number, number]>
-                               } = {};
-                               for (const key in MESH_ANNOTATIONS) {
-                                 annotations[key] = MESH_ANNOTATIONS[key].map(
-                                     index =>
-                                         annotatedPrediction.scaledMesh[index]);
-                               }
-                               annotatedPrediction['annotations'] = annotations;
+        const annotations: {[key: string]: Coords3D} = {};
+        for (const key in MESH_ANNOTATIONS) {
+          annotations[key] = MESH_ANNOTATIONS[key].map(
+              index => annotatedPrediction.scaledMesh[index]);
+        }
+        annotatedPrediction['annotations'] = annotations;
 
-                               return annotatedPrediction;
-                             }));
+        return annotatedPrediction;
+      }));
     }
 
     return [];
