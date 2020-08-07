@@ -30,6 +30,9 @@ export type Prediction = {
 };
 
 const UPDATE_REGION_OF_INTEREST_IOU_THRESHOLD = 0.25;
+const LANDMARKS_COUNT = 468;
+const MESH_MODEL_KEYPOINTS_LINE_OF_SYMMETRY_INDICES = [1, 168];
+const BLAZEFACE_KEYPOINTS_LINE_OF_SYMMETRY_INDICES = [3, 2];
 
 // The Pipeline coordinates between the bounding box and skeleton models.
 export class Pipeline {
@@ -152,10 +155,21 @@ export class Pipeline {
     return tf.tidy(() => {
       return this.regionsOfInterest.map((box, i) => {
         let angle: number;
-        if (box.landmarks.length === 468) {
-          angle = computeRotation(box.landmarks[1], box.landmarks[168]);
+        // The facial bounding box landmarks could come either from blazeface
+        // (if we are using a fresh box), or from the mesh model (if we are
+        // reusing an old box).
+        const boxLandmarksFromMeshModel =
+            box.landmarks.length === LANDMARKS_COUNT;
+        if (boxLandmarksFromMeshModel) {
+          const [indexOfNose, indexOfForehead] =
+              MESH_MODEL_KEYPOINTS_LINE_OF_SYMMETRY_INDICES;
+          angle = computeRotation(
+              box.landmarks[indexOfNose], box.landmarks[indexOfForehead]);
         } else {
-          angle = computeRotation(box.landmarks[3], box.landmarks[2]);
+          const [indexOfNose, indexOfForehead] =
+              BLAZEFACE_KEYPOINTS_LINE_OF_SYMMETRY_INDICES;
+          angle = computeRotation(
+              box.landmarks[indexOfNose], box.landmarks[indexOfForehead]);
         }
 
         const faceCenter =
