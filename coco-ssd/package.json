@@ -5,8 +5,8 @@
   "main": "dist/coco-ssd.node.js",
   "unpkg": "dist/coco-ssd.min.js",
   "jsdelivr": "dist/coco-ssd.min.js",
-  "jsnext:main": "dist/coco-ssd.esm.js",
-  "module": "dist/index.js",
+  "jsnext:main": "dist/coco-ssd.es2017.esm.min.js",
+  "module": "dist/coco-ssd.es2017.esm.min.js",
   "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
