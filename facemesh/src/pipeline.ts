@@ -20,7 +20,7 @@ import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
 import {Box, cutBoxFromImageAndResize, enlargeBox, getBoxCenter, getBoxSize, scaleBoxCoordinates} from './box';
-import {buildRotationMatrix, computeRotation, dot, invertTransformMatrix, rotatePoint, TransformationMatrix} from './util';
+import {buildRotationMatrix, computeRotation, Coord2D, Coord3D, Coords3D, dot, invertTransformMatrix, rotatePoint, TransformationMatrix} from './util';
 
 export type Prediction = {
   coords: tf.Tensor2D,        // coordinates of facial landmarks.
@@ -60,14 +60,14 @@ export class Pipeline {
   }
 
   transformRawCoords(
-      rawCoords: any, box: Box, angle: number,
+      rawCoords: Coords3D, box: Box, angle: number,
       rotationMatrix: TransformationMatrix) {
     const boxSize =
         getBoxSize({startPoint: box.startPoint, endPoint: box.endPoint});
     const scaleFactor =
         [boxSize[0] / this.meshWidth, boxSize[1] / this.meshHeight];
 
-    const coordsScaled = rawCoords.map((coord: [number, number, number]) => {
+    const coordsScaled = rawCoords.map(coord => {
       return [
         scaleFactor[0] * (coord[0] - this.meshWidth / 2),
         scaleFactor[1] * (coord[1] - this.meshHeight / 2), coord[2]
@@ -75,29 +75,25 @@ export class Pipeline {
     });
 
     const coordsRotationMatrix = buildRotationMatrix(angle, [0, 0]);
-    const coordsRotated =
-        coordsScaled.map((coord: [number, number, number]) => {
-          const rotated = rotatePoint(coord, coordsRotationMatrix);
-          return [...rotated, coord[2]];
-        });
+    const coordsRotated = coordsScaled.map((coord: Coord3D) => {
+      const rotated = rotatePoint(coord, coordsRotationMatrix);
+      return [...rotated, coord[2]];
+    });
 
     const inverseRotationMatrix = invertTransformMatrix(rotationMatrix);
     const boxCenter = [
       ...getBoxCenter({startPoint: box.startPoint, endPoint: box.endPoint}), 1
-    ] as [number, number, number];
+    ];
 
     const originalBoxCenter = [
       dot(boxCenter, inverseRotationMatrix[0]),
       dot(boxCenter, inverseRotationMatrix[1])
     ];
 
-    return coordsRotated.map(
-        (coord: [number, number, number]): [number, number, number] => {
-          return [
-            coord[0] + originalBoxCenter[0], coord[1] + originalBoxCenter[1],
-            coord[2]
-          ];
-        });
+    return coordsRotated.map((coord): Coord3D => ([
+                               coord[0] + originalBoxCenter[0],
+                               coord[1] + originalBoxCenter[1], coord[2]
+                             ]));
   }
 
   /**
@@ -121,18 +117,17 @@ export class Pipeline {
       const scaledBoxes =
           boxes.map((prediction: blazeface.BlazeFacePrediction): Box => {
             const predictionBoxCPU = {
-              startPoint: prediction.box.startPoint.dataSync() as
-                  {} as [number, number],
-              endPoint: prediction.box.endPoint.dataSync() as
-                  {} as [number, number]
+              startPoint: prediction.box.startPoint.squeeze().arraySync() as
+                  Coord2D,
+              endPoint: prediction.box.endPoint.squeeze().arraySync() as Coord2D
             };
 
-            const scaledBox = scaleBoxCoordinates(
-                predictionBoxCPU, scaleFactor as [number, number]);
+            const scaledBox =
+                scaleBoxCoordinates(predictionBoxCPU, scaleFactor as Coord2D);
             const enlargedBox = enlargeBox(scaledBox);
             return {
               ...enlargedBox,
-              landmarks: prediction.landmarks.arraySync()
+              landmarks: prediction.landmarks.arraySync() as Coords3D
             };
           });
 
@@ -158,18 +153,14 @@ export class Pipeline {
       return this.regionsOfInterest.map((box, i) => {
         let angle: number;
         if (box.landmarks.length === 468) {
-          angle = computeRotation(
-              box.landmarks[1] as [number, number],
-              box.landmarks[168] as [number, number]);
+          angle = computeRotation(box.landmarks[1], box.landmarks[168]);
         } else {
-          angle = computeRotation(
-              box.landmarks[3] as [number, number],
-              box.landmarks[2] as [number, number]);
+          angle = computeRotation(box.landmarks[3], box.landmarks[2]);
         }
 
         const faceCenter =
             getBoxCenter({startPoint: box.startPoint, endPoint: box.endPoint});
-        const faceCenterNormalized: [number, number] =
+        const faceCenterNormalized: Coord2D =
             [faceCenter[0] / input.shape[2], faceCenter[1] / input.shape[1]];
 
         const rotatedImage =
@@ -190,7 +181,7 @@ export class Pipeline {
                 face) as [tf.Tensor, tf.Tensor2D, tf.Tensor2D];
 
         const coordsReshaped: tf.Tensor2D = tf.reshape(coords, [-1, 3]);
-        const rawCoords = coordsReshaped.arraySync();
+        const rawCoords = coordsReshaped.arraySync() as Coords3D;
 
         const transformedCoordsData =
             this.transformRawCoords(rawCoords, box, angle, rotationMatrix);
@@ -200,7 +191,7 @@ export class Pipeline {
             this.calculateLandmarksBoundingBox(transformedCoordsData);
         this.regionsOfInterest[i] = {
           ...landmarksBox,
-          landmarks: transformedCoords.arraySync()
+          landmarks: transformedCoords.arraySync() as Coords3D
         };
 
         const prediction: Prediction = {
@@ -270,23 +261,14 @@ export class Pipeline {
         this.runsWithoutFaceDetector >= this.maxContinuousChecks;
   }
 
-  calculateLandmarksBoundingBox(landmarks: number[][]): Box {
+  calculateLandmarksBoundingBox(landmarks: Coords3D): Box {
     const xs = landmarks.map(d => d[0]);
     const ys = landmarks.map(d => d[1]);
-    // const xs = landmarks.slice([0, 0], [LANDMARKS_COUNT, 1]);
-    // const ys = landmarks.slice([0, 1], [LANDMARKS_COUNT, 1]);
 
-    // const boxMinMax = tf.stack([xs.min(), ys.min(), xs.max(), ys.max()]);
-    // const box = createBox(boxMinMax.expandDims(0));
-
-    const startPoint: [number, number] = [Math.min(...xs), Math.min(...ys)];
-    const endPoint: [number, number] = [Math.max(...xs), Math.max(...ys)];
+    const startPoint: Coord2D = [Math.min(...xs), Math.min(...ys)];
+    const endPoint: Coord2D = [Math.max(...xs), Math.max(...ys)];
     const box = {startPoint, endPoint};
 
-    const enlarged =
-        enlargeBox({startPoint: box.startPoint, endPoint: box.endPoint});
-    return enlarged;
-    // return createBox(
-    //     tf.tensor2d([...enlarged.startPoint, ...enlarged.endPoint], [1, 4]));
+    return enlargeBox({startPoint: box.startPoint, endPoint: box.endPoint});
   }
 }

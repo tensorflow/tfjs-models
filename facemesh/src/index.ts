@@ -21,15 +21,13 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {MESH_ANNOTATIONS} from './keypoints';
 import {Pipeline, Prediction} from './pipeline';
+import {Coord2D, Coords3D} from './util';
 import {UV_COORDS} from './uv_coords';
 
 const FACEMESH_GRAPHMODEL_PATH =
     'https://tfhub.dev/mediapipe/tfjs-model/facemesh/1/default/1';
 const MESH_MODEL_INPUT_WIDTH = 192;
 const MESH_MODEL_INPUT_HEIGHT = 192;
-
-type Coord2D = [number, number];
-type Coords3D = Array<[number, number, number]>;
 
 interface AnnotatedPredictionValues {
   /** Probability of the face detection. */
@@ -217,13 +215,12 @@ export class FaceMesh {
       return (input as tf.Tensor).toFloat().expandDims(0);
     });
 
-    // Currently tfjs-core does not pack depthwiseConv because it fails for
-    // very large inputs (https://github.com/tensorflow/tfjs/issues/1652).
-    // TODO(annxingyuan): call tf.enablePackedDepthwiseConv when available
-    // (https://github.com/tensorflow/tfjs/issues/2821)
-
     let predictions;
     if (tf.getBackend() === 'webgl') {
+      // Currently tfjs-core does not pack depthwiseConv because it fails for
+      // very large inputs (https://github.com/tensorflow/tfjs/issues/1652).
+      // TODO(annxingyuan): call tf.enablePackedDepthwiseConv when available
+      // (https://github.com/tensorflow/tfjs/issues/2821)
       const savedWebglPackDepthwiseConvFlag =
           tf.env().get('WEBGL_PACK_DEPTHWISECONV');
       tf.env().set('WEBGL_PACK_DEPTHWISECONV', true);

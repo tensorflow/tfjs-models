@@ -17,30 +17,32 @@
 
 import * as tf from '@tensorflow/tfjs-core';
 
+import {Coord2D, Coords3D} from './util';
+
 // The facial bounding box.
 export type Box = {
-  startPoint: [number, number],  // Upper left hand corner of bounding box.
-  endPoint: [number, number],    // Lower right hand corner of bounding box.
-  landmarks?: number[][]
+  startPoint: Coord2D,  // Upper left hand corner of bounding box.
+  endPoint: Coord2D,    // Lower right hand corner of bounding box.
+  landmarks?: Coords3D
 };
 
-export function scaleBoxCoordinates(box: Box, factor: [number, number]): Box {
-  const startPoint: [number, number] =
+export function scaleBoxCoordinates(box: Box, factor: Coord2D): Box {
+  const startPoint: Coord2D =
       [box.startPoint[0] * factor[0], box.startPoint[1] * factor[1]];
-  const endPoint: [number, number] =
+  const endPoint: Coord2D =
       [box.endPoint[0] * factor[0], box.endPoint[1] * factor[1]];
 
   return {startPoint, endPoint};
 }
 
-export function getBoxSize(box: Box): [number, number] {
+export function getBoxSize(box: Box): Coord2D {
   return [
     Math.abs(box.endPoint[0] - box.startPoint[0]),
     Math.abs(box.endPoint[1] - box.startPoint[1])
   ];
 }
 
-export function getBoxCenter(box: Box): [number, number] {
+export function getBoxCenter(box: Box): Coord2D {
   return [
     box.startPoint[0] + (box.endPoint[0] - box.startPoint[0]) / 2,
     box.startPoint[1] + (box.endPoint[1] - box.startPoint[1]) / 2
@@ -48,7 +50,7 @@ export function getBoxCenter(box: Box): [number, number] {
 }
 
 export function cutBoxFromImageAndResize(
-    box: Box, image: tf.Tensor4D, cropSize: [number, number]): tf.Tensor4D {
+    box: Box, image: tf.Tensor4D, cropSize: Coord2D): tf.Tensor4D {
   const h = image.shape[1];
   const w = image.shape[2];
 
@@ -65,9 +67,9 @@ export function enlargeBox(box: Box, factor = 1.5): Box {
   const size = getBoxSize(box);
 
   const newHalfSize = [factor * size[0] / 2, factor * size[1] / 2];
-  const startPoint: [number, number] =
+  const startPoint: Coord2D =
       [center[0] - newHalfSize[0], center[1] - newHalfSize[1]];
-  const endPoint: [number, number] =
+  const endPoint: Coord2D =
       [center[0] + newHalfSize[0], center[1] + newHalfSize[1]];
 
   return {startPoint, endPoint, landmarks: box.landmarks};

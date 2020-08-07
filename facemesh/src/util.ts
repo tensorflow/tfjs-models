@@ -15,16 +15,20 @@
  * =============================================================================
  */
 
+export type Coord2D = [number, number];
+export type Coord3D = [number, number, number];
+export type Coords3D = Coord3D[];
+
 export type TransformationMatrix = [
   [number, number, number], [number, number, number], [number, number, number]
 ];
 
-export function normalizeRadians(angle: number) {
+export function normalizeRadians(angle: number): number {
   return angle - 2 * Math.PI * Math.floor((angle + Math.PI) / (2 * Math.PI));
 }
 
 export function computeRotation(
-    point1: [number, number], point2: [number, number]) {
+    point1: Coord2D|Coord3D, point2: Coord2D|Coord3D): number {
   const radians =
       Math.PI / 2 - Math.atan2(-(point2[1] - point1[1]), point2[0] - point1[0]);
   return normalizeRadians(radians);
@@ -37,7 +41,7 @@ export function radToDegrees(rad: number): number {
 const buildTranslationMatrix = (x: number, y: number): TransformationMatrix =>
     ([[1, 0, x], [0, 1, y], [0, 0, 1]]);
 
-export function dot(v1: number[], v2: number[]) {
+export function dot(v1: number[], v2: number[]): number {
   let product = 0;
   for (let i = 0; i < v1.length; i++) {
     product += v1[i] * v2[i];
@@ -73,7 +77,7 @@ function multiplyTransformMatrices(
 }
 
 export function buildRotationMatrix(
-    rotation: number, center: [number, number]): TransformationMatrix {
+    rotation: number, center: Coord2D): TransformationMatrix {
   const cosA = Math.cos(rotation);
   const sinA = Math.sin(rotation);
 
@@ -99,17 +103,14 @@ export function invertTransformMatrix(matrix: TransformationMatrix):
   ];
 
   return [
-    rotationComponent[0].concat(
-        invertedTranslation[0]) as [number, number, number],
-    rotationComponent[1].concat(
-        invertedTranslation[1]) as [number, number, number],
-    [0, 0, 1]
+    rotationComponent[0].concat(invertedTranslation[0]) as Coord3D,
+    rotationComponent[1].concat(invertedTranslation[1]) as Coord3D, [0, 0, 1]
   ];
 }
 
 export function rotatePoint(
-    homogeneousCoordinate: [number, number, number],
-    rotationMatrix: TransformationMatrix): [number, number] {
+    homogeneousCoordinate: Coord3D,
+    rotationMatrix: TransformationMatrix): Coord2D {
   return [
     dot(homogeneousCoordinate, rotationMatrix[0]),
     dot(homogeneousCoordinate, rotationMatrix[1])
