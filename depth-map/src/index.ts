@@ -79,23 +79,23 @@ export class DepthMap {
    * video, or canvas.
    */
   public predict(
-      img: tf.Tensor3D|ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement): tf.Tensor {
+      img: tf.Tensor3D|ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement): tf.Tensor2D {
       return tf.tidy(() => {
         if(!(img instanceof tf.Tensor)) {
           img = tf.browser.fromPixels(img);
         }
         // Resize the image to [224, 224]
-        let resized = img.toFloat();
+        let resized : tf.Tensor3D = img.toFloat();
         if (img.shape[0] !== INPUT_SIZE || img.shape[1] !== INPUT_SIZE) {
           const alignCorners = true;
           resized = tf.image.resizeBilinear(img, [INPUT_SIZE, INPUT_SIZE], alignCorners);
         }
-        const reshaped = tf.transpose(resized, [2, 0, 1]); // change image from [224,224,3] to [3,224,224]
-        const batched = reshaped.expandDims()
+        const reshaped : tf.Tensor3D = tf.transpose(resized, [2, 0, 1]); // change image from [224,224,3] to [3,224,224]
+        const batched : tf.Tensor3D = reshaped.expandDims()
         // Normalize input from [inputMin, inputMax] to [0,1]
         const normalized: tf.Tensor3D = batched.sub(this.inputMin).div(this.normalizationConstant);
-        const out: tf.Tensor = this.model.predict(normalized);
-        const resizeOut = out.reshape([INPUT_SIZE, INPUT_SIZE]);
+        const out : tf.Tensor = this.model.predict(normalized);
+        const resizeOut : tf.Tensor2D = out.reshape([INPUT_SIZE, INPUT_SIZE]);
         return resizeOut;
       });
   }

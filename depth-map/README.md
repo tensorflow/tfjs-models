@@ -81,7 +81,16 @@ This method exists on the model that is loaded from `depthmap.load`.
 model.predict(
   img: tf.Tensor3D | ImageData | HTMLImageElement |
       HTMLCanvasElement | HTMLVideoElement,
-): tf.Tensor
+): tf.Tensor2D
 ```
 
-Returns a [224, 224] tensor where each float element corresponds to the estimated depth of that pixel in meters.
+Returns a `Tensor2D` of shape [224, 224] where each float element corresponds to the estimated depth of that pixel in meters.
+
+```
+@inproceedings{icra_2019_fastdepth,
+	author      = {{Wofk, Diana and Ma, Fangchang and Yang, Tien-Ju and Karaman, Sertac and Sze, Vivienne}},
+	title       = {{FastDepth: Fast Monocular Depth Estimation on Embedded Systems}},
+	booktitle   = {{IEEE International Conference on Robotics and Automation (ICRA)}},
+	year        = {{2019}}
+}
+```
