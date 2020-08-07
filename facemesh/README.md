@@ -13,7 +13,7 @@ Check out our [demo](https://storage.googleapis.com/tfjs-models/demos/facemesh/i
 This model is also available as part of [MediaPipe](https://github.com/google/mediapipe/tree/master/mediapipe/models), a
 framework for building multimodal applied ML pipelines.
 
-## INSTALLATION
+## Installation
 
 Via script tags:
 
