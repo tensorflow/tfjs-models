@@ -6,7 +6,7 @@ This module is a TensorFlow.js [`GraphModel`](https://js.tensorflow.org/api/late
 
 In [this demo](./demo/index.js) we embed six sentences with the USE, and render their self-similarity scores in a matrix (redder means more similar):
 
-![selfsimilarity](./images/self_similarity.jpg)
+![selfsimilarity](https://storage.googleapis.com/tfjs-models/assets/use/self_similarity.jpg)
 
 *The matrix shows that USE embeddings can be used to cluster sentences by similarity.*
 
@@ -25,7 +25,7 @@ This module is a lightweight TensorFlow.js [`GraphModel`](https://js.tensorflow.
 
 In [this demo](./demo/index.js) we embed a question and three answers with the USE QnA, and render their their scores:
 
-![QnA scores](./images/qna_score.png)
+![QnA scores](https://storage.googleapis.com/tfjs-models/assets/use/qna_score.png)
 
 *The scores show how well each answer fits the question.*
 
@@ -44,6 +44,7 @@ Using `npm`:
 To import in npm:
 
 ```js
+require('@tensorflow/tfjs');
 const use = require('@tensorflow-models/universal-sentence-encoder');
 ```
 
