@@ -18,14 +18,15 @@
 import * as facemesh from '@tensorflow-models/facemesh';
 import Stats from 'stats.js';
 import * as tf from '@tensorflow/tfjs-core';
+
 require('@tensorflow/tfjs-backend-webgl');
-// import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
-// import {version} from '@tensorflow/tfjs-backend-wasm';
+import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
+import {version} from '@tensorflow/tfjs-backend-wasm';
 
 import {TRIANGULATION} from './triangulation';
 
-// tfjsWasm.setWasmPath(
-//     `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@2.0.1/dist/tfjs-backend-wasm.wasm`);
+tfjsWasm.setWasmPath(
+    `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${version}/dist/tfjs-backend-wasm.wasm`);
 
 function isMobile() {
   const isAndroid = /Android/i.test(navigator.userAgent);
