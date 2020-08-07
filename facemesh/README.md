@@ -45,7 +45,6 @@ const facemesh = require('@tensorflow-models/facemesh');
 
 // If you are using the WASM backend:
 require('@tensorflow/tfjs-backend-wasm'); // You need to require the backend explicitly because facemesh itself does not
-setWasmPath();
 
 // If you are using the WebGL backend:
 // require('@tensorflow/tfjs-backend-webgl');
