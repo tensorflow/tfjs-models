@@ -80,13 +80,14 @@ export async function load({
   iouThreshold = 0.3,
   scoreThreshold = 0.75
 } = {}): Promise<FaceMesh> {
-  const [blazeFace, blazeMeshModel] = await Promise.all([
-    loadDetectorModel(maxFaces, iouThreshold, scoreThreshold), loadMeshModel()
+  const [blazeFace, blazeMeshModel, irisModel] = await Promise.all([
+    loadDetectorModel(maxFaces, iouThreshold, scoreThreshold), loadMeshModel(),
+    loadIrisModel()
   ]);
 
   const faceMesh = new FaceMesh(
       blazeFace, blazeMeshModel, maxContinuousChecks, detectionConfidence,
-      maxFaces);
+      maxFaces, irisModel);
   return faceMesh;
 }
 
@@ -98,6 +99,11 @@ async function loadDetectorModel(
 
 async function loadMeshModel(): Promise<tfconv.GraphModel> {
   return tfconv.loadGraphModel(FACEMESH_GRAPHMODEL_PATH, {fromTFHub: true});
+}
+
+async function loadIrisModel(): Promise<tfconv.GraphModel> {
+  return tfconv.loadGraphModel(
+      'https://storage.googleapis.com/learnjs-data/iris_tfjs/model.json');
 }
 
 function getInputTensorDimensions(input: tf.Tensor3D|ImageData|HTMLVideoElement|
@@ -168,10 +174,10 @@ export class FaceMesh {
   constructor(
       blazeFace: blazeface.BlazeFaceModel, blazeMeshModel: tfconv.GraphModel,
       maxContinuousChecks: number, detectionConfidence: number,
-      maxFaces: number) {
+      maxFaces: number, irisModel: tfconv.GraphModel) {
     this.pipeline = new Pipeline(
         blazeFace, blazeMeshModel, MESH_MODEL_INPUT_WIDTH,
-        MESH_MODEL_INPUT_HEIGHT, maxContinuousChecks, maxFaces);
+        MESH_MODEL_INPUT_HEIGHT, maxContinuousChecks, maxFaces, irisModel);
 
     this.detectionConfidence = detectionConfidence;
   }

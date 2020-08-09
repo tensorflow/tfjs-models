@@ -19,7 +19,7 @@ import * as blazeface from '@tensorflow-models/blazeface';
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {Box, cutBoxFromImageAndResize, enlargeBox, getBoxCenter, getBoxSize, scaleBoxCoordinates} from './box';
+import {Box, cutBoxFromImageAndResize, enlargeBox, getBoxCenter, getBoxSize, scaleBoxCoordinates, squarifyBox} from './box';
 import {buildRotationMatrix, computeRotation, Coord2D, Coord3D, Coords3D, dot, invertTransformMatrix, rotatePoint, TransformationMatrix} from './util';
 
 export type Prediction = {
@@ -46,6 +46,8 @@ export class Pipeline {
   private maxContinuousChecks: number;
   private maxFaces: number;
 
+  private irisModel: tfconv.GraphModel;
+
   // An array of facial bounding boxes.
   private regionsOfInterest: Box[] = [];
   private runsWithoutFaceDetector = 0;
@@ -53,9 +55,11 @@ export class Pipeline {
   constructor(
       boundingBoxDetector: blazeface.BlazeFaceModel,
       meshDetector: tfconv.GraphModel, meshWidth: number, meshHeight: number,
-      maxContinuousChecks: number, maxFaces: number) {
+      maxContinuousChecks: number, maxFaces: number,
+      irisModel: tfconv.GraphModel) {
     this.boundingBoxDetector = boundingBoxDetector;
     this.meshDetector = meshDetector;
+    this.irisModel = irisModel;
     this.meshWidth = meshWidth;
     this.meshHeight = meshHeight;
     this.maxContinuousChecks = maxContinuousChecks;
@@ -159,7 +163,7 @@ export class Pipeline {
         // (if we are using a fresh box), or from the mesh model (if we are
         // reusing an old box).
         const boxLandmarksFromMeshModel =
-            box.landmarks.length === LANDMARKS_COUNT;
+            box.landmarks.length === (LANDMARKS_COUNT + 10);
         if (boxLandmarksFromMeshModel) {
           const [indexOfNose, indexOfForehead] =
               MESH_MODEL_KEYPOINTS_LINE_OF_SYMMETRY_INDICES;
@@ -181,7 +185,6 @@ export class Pipeline {
             tf.image.rotateWithOffset(input, angle, 0, faceCenterNormalized);
 
         const rotationMatrix = buildRotationMatrix(-angle, faceCenter);
-
         const boxCPU = {startPoint: box.startPoint, endPoint: box.endPoint};
 
         const face = cutBoxFromImageAndResize(boxCPU, rotatedImage, [
@@ -195,14 +198,74 @@ export class Pipeline {
                 face) as [tf.Tensor, tf.Tensor2D, tf.Tensor2D];
 
         const coordsReshaped: tf.Tensor2D = tf.reshape(coords, [-1, 3]);
-        const rawCoords = coordsReshaped.arraySync() as Coords3D;
+        let rawCoords = coordsReshaped.arraySync() as Coords3D;
+
+        const leftEyeBox = squarifyBox(enlargeBox(
+            this.calculateLandmarksBoundingBox([rawCoords[33], rawCoords[133]]),
+            2.3));
+        const leftEye = tf.image.cropAndResize(
+            face as tf.Tensor4D,
+            [[...leftEyeBox.startPoint, ...leftEyeBox.endPoint]], [0],
+            [64, 64]);
+
+        const leftEyePrediction =
+            (this.irisModel.predict(leftEye) as tf.Tensor).squeeze();
+        const leftEyeRawCoords =
+            leftEyePrediction.reshape([-1, 3]).arraySync() as Coords3D;
+        const leftEyeBoxSize = getBoxSize(leftEyeBox);
+        const leftIrisRawCoords =
+            leftEyeRawCoords.slice(71)
+                .map((coord: Coord3D) => {
+                  return [
+                    (coord[0] / 64) * leftEyeBoxSize[0],
+                    (coord[1] / 64) * leftEyeBoxSize[1], coord[2]
+                  ];
+                })
+                .map((coord: Coord3D) => {
+                  return [
+                    coord[0] + leftEyeBox.startPoint[0],
+                    coord[1] + leftEyeBox.startPoint[1], coord[2]
+                  ];
+                }) as Coords3D;
+
+        const rightEyeBox = squarifyBox(enlargeBox(
+            this.calculateLandmarksBoundingBox(
+                [rawCoords[362], rawCoords[263]]),
+            2.3));
+        const rightEye = tf.image.cropAndResize(
+            face as tf.Tensor4D,
+            [[...rightEyeBox.startPoint, ...rightEyeBox.endPoint]], [0],
+            [64, 64]);
+
+        const rightEyePrediction =
+            (this.irisModel.predict(rightEye) as tf.Tensor).squeeze();
+        const rightEyeRawCoords =
+            rightEyePrediction.reshape([-1, 3]).arraySync() as Coords3D;
+        const rightEyeBoxSize = getBoxSize(rightEyeBox);
+        const rightIrisRawCoords =
+            rightEyeRawCoords.slice(71)
+                .map((coord: Coord3D) => {
+                  return [
+                    (coord[0] / 64) * rightEyeBoxSize[0],
+                    (coord[1] / 64) * rightEyeBoxSize[1], coord[2]
+                  ];
+                })
+                .map((coord: Coord3D) => {
+                  return [
+                    coord[0] + rightEyeBox.startPoint[0],
+                    coord[1] + rightEyeBox.startPoint[1], coord[2]
+                  ];
+                }) as Coords3D;
+
+        rawCoords =
+            rawCoords.concat(leftIrisRawCoords).concat(rightIrisRawCoords);
 
         const transformedCoordsData =
             this.transformRawCoords(rawCoords, box, angle, rotationMatrix);
         const transformedCoords = tf.tensor2d(transformedCoordsData);
 
-        const landmarksBox =
-            this.calculateLandmarksBoundingBox(transformedCoordsData);
+        const landmarksBox = enlargeBox(
+            this.calculateLandmarksBoundingBox(transformedCoordsData));
         this.regionsOfInterest[i] = {
           ...landmarksBox,
           landmarks: transformedCoords.arraySync() as Coords3D
@@ -281,8 +344,6 @@ export class Pipeline {
 
     const startPoint: Coord2D = [Math.min(...xs), Math.min(...ys)];
     const endPoint: Coord2D = [Math.max(...xs), Math.max(...ys)];
-    const box = {startPoint, endPoint};
-
-    return enlargeBox({startPoint: box.startPoint, endPoint: box.endPoint});
+    return {startPoint, endPoint};
   }
 }

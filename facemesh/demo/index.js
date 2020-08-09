@@ -60,7 +60,7 @@ const stats = new Stats();
 const state = {
   backend: 'wasm',
   maxFaces: 1,
-  triangulateMesh: true
+  triangulateMesh: false
 };
 
 if (renderPointcloud) {
@@ -137,6 +137,12 @@ async function renderPrediction() {
 
           ctx.beginPath();
           ctx.arc(x, y, 1 /* radius */, 0, 2 * Math.PI);
+
+          if(i >= 468) {
+            ctx.fillStyle = 'red';
+          } else {
+            ctx.fillStyle = '#32EEDB';
+          }
           ctx.fill();
         }
       }
