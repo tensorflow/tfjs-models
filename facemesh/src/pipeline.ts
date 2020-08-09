@@ -20,6 +20,7 @@ import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
 import {Box, cutBoxFromImageAndResize, enlargeBox, getBoxCenter, getBoxSize, scaleBoxCoordinates, squarifyBox} from './box';
+// import {MESH_ANNOTATIONS} from './keypoints';
 import {buildRotationMatrix, computeRotation, Coord2D, Coord3D, Coords3D, dot, invertTransformMatrix, rotatePoint, TransformationMatrix} from './util';
 
 export type Prediction = {
@@ -214,23 +215,19 @@ export class Pipeline {
 
         const leftEyePrediction =
             (this.irisModel.predict(leftEye) as tf.Tensor).squeeze();
-        const leftEyeRawCoords =
-            leftEyePrediction.reshape([-1, 3]).arraySync() as Coords3D;
         const leftEyeBoxSize = getBoxSize(leftEyeBox);
-        const leftIrisRawCoords =
-            leftEyeRawCoords.slice(71)
+        const leftEyeRawCoords =
+            (leftEyePrediction.reshape([-1, 3]).arraySync() as Coords3D)
                 .map((coord: Coord3D) => {
                   return [
-                    (coord[0] / 64) * leftEyeBoxSize[0],
-                    (coord[1] / 64) * leftEyeBoxSize[1], coord[2]
+                    (coord[0] / 64) * leftEyeBoxSize[0] +
+                        leftEyeBox.startPoint[0],
+                    (coord[1] / 64) * leftEyeBoxSize[1] +
+                        leftEyeBox.startPoint[1],
+                    coord[2]
                   ];
-                })
-                .map((coord: Coord3D) => {
-                  return [
-                    coord[0] + leftEyeBox.startPoint[0],
-                    coord[1] + leftEyeBox.startPoint[1], coord[2]
-                  ];
-                }) as Coords3D;
+                });
+        const leftIrisRawCoords = leftEyeRawCoords.slice(71) as Coords3D;
 
         const rightEyeBox = squarifyBox(enlargeBox(
             this.calculateLandmarksBoundingBox(
@@ -247,26 +244,24 @@ export class Pipeline {
 
         const rightEyePrediction =
             (this.irisModel.predict(rightEye) as tf.Tensor).squeeze();
-        const rightEyeRawCoords =
-            rightEyePrediction.reshape([-1, 3]).arraySync() as Coords3D;
         const rightEyeBoxSize = getBoxSize(rightEyeBox);
-        const rightIrisRawCoords =
-            rightEyeRawCoords.slice(71)
+        const rightEyeRawCoords =
+            (rightEyePrediction.reshape([-1, 3]).arraySync() as Coords3D)
                 .map((coord: Coord3D) => {
                   return [
-                    (coord[0] / 64) * rightEyeBoxSize[0],
-                    (coord[1] / 64) * rightEyeBoxSize[1], coord[2]
+                    (coord[0] / 64) * rightEyeBoxSize[0] +
+                        rightEyeBox.startPoint[0],
+                    (coord[1] / 64) * rightEyeBoxSize[1] +
+                        rightEyeBox.startPoint[1],
+                    coord[2]
                   ];
-                })
-                .map((coord: Coord3D) => {
-                  return [
-                    coord[0] + rightEyeBox.startPoint[0],
-                    coord[1] + rightEyeBox.startPoint[1], coord[2]
-                  ];
-                }) as Coords3D;
+                });
+
+        const rightIrisRawCoords = rightEyeRawCoords.slice(71) as Coords3D;
 
         rawCoords =
             rawCoords.concat(leftIrisRawCoords).concat(rightIrisRawCoords);
+        // replace coordinates
 
         const transformedCoordsData =
             this.transformRawCoords(rawCoords, box, angle, rotationMatrix);
