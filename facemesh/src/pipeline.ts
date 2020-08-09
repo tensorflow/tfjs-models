@@ -204,9 +204,13 @@ export class Pipeline {
             this.calculateLandmarksBoundingBox([rawCoords[33], rawCoords[133]]),
             2.3));
         const leftEye = tf.image.cropAndResize(
-            face as tf.Tensor4D,
-            [[...leftEyeBox.startPoint, ...leftEyeBox.endPoint]], [0],
-            [64, 64]);
+            face as tf.Tensor4D, [[
+              leftEyeBox.startPoint[1] / this.meshHeight,
+              leftEyeBox.startPoint[0] / this.meshWidth,
+              leftEyeBox.endPoint[1] / this.meshHeight,
+              leftEyeBox.endPoint[0] / this.meshWidth
+            ]],
+            [0], [64, 64]);
 
         const leftEyePrediction =
             (this.irisModel.predict(leftEye) as tf.Tensor).squeeze();
@@ -233,9 +237,13 @@ export class Pipeline {
                 [rawCoords[362], rawCoords[263]]),
             2.3));
         const rightEye = tf.image.cropAndResize(
-            face as tf.Tensor4D,
-            [[...rightEyeBox.startPoint, ...rightEyeBox.endPoint]], [0],
-            [64, 64]);
+            face as tf.Tensor4D, [[
+              rightEyeBox.startPoint[1] / this.meshHeight,
+              rightEyeBox.startPoint[0] / this.meshWidth,
+              rightEyeBox.endPoint[1] / this.meshHeight,
+              rightEyeBox.endPoint[0] / this.meshWidth
+            ]],
+            [0], [64, 64]);
 
         const rightEyePrediction =
             (this.irisModel.predict(rightEye) as tf.Tensor).squeeze();
