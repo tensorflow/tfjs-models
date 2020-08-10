@@ -15,9 +15,9 @@
  * =============================================================================
  */
 
-import node from 'rollup-plugin-node-resolve';
-import typescript from 'rollup-plugin-typescript2';
-import uglify from 'rollup-plugin-uglify';
+import resolve from '@rollup/plugin-node-resolve';
+import typescript from '@rollup/plugin-typescript';
+import {terser} from 'rollup-plugin-terser';
 
 const PREAMBLE = `/**
     * @license
@@ -36,16 +36,18 @@ const PREAMBLE = `/**
     * =============================================================================
     */`;
 
-function minify() {
-  return uglify({output: {preamble: PREAMBLE}});
-}
+function config({ plugins = [], output = {}, tsCompilerOptions = {} }) {
+  const defaultTsOptions = {
+    include: ['src/**/*.ts'],
+    module: 'ES2015',
+  };
+  const tsoptions = Object.assign({}, defaultTsOptions, tsCompilerOptions);
 
-function config({plugins = [], output = {}}) {
   return {
     input: 'src/index.ts',
     plugins: [
-      typescript({tsconfigOverride: {compilerOptions: {module: 'ES2015'}}}),
-      node(), ...plugins
+      typescript(tsoptions),
+      resolve(), ...plugins
     ],
     output: {
       banner: PREAMBLE,
@@ -65,15 +67,11 @@ function config({plugins = [], output = {}}) {
 export default [
   config({output: {format: 'umd', name: 'facemesh', file: 'dist/facemesh.js'}}),
   config({
-    plugins: [
-      minify()
-    ],
+    plugins: [terser({output: {preamble: PREAMBLE, comments: false}})],
     output: {format: 'umd', name: 'facemesh', file: 'dist/facemesh.min.js'}
   }),
   config({
-    plugins: [
-      minify()
-    ],
+    plugins: [terser({output: {preamble: PREAMBLE, comments: false}})],
     output: {format: 'es', file: 'dist/facemesh.esm.js'}
   })
 ];
