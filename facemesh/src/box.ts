@@ -62,6 +62,12 @@ export function cutBoxFromImageAndResize(
   return tf.image.cropAndResize(image, boxes, [0], cropSize);
 }
 
+/**
+ * Enlarges the box by the provided factor.
+ * @param box An object with startPoint and endPoint properties describing the
+ * outlines of the box to be enlarged.
+ * @param factor optional The enlargement factor. Defaults to 1.5
+ */
 export function enlargeBox(box: Box, factor = 1.5): Box {
   const center = getBoxCenter(box);
   const size = getBoxSize(box);
