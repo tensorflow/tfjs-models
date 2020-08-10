@@ -17,7 +17,8 @@
     "@tensorflow/tfjs-core": "^2.1.0"
   },
   "dependencies": {
-    "@tensorflow-models/blazeface": "0.0.5"
+    "@tensorflow-models/blazeface": "0.0.5",
+    "rimraf": "^3.0.2"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^11.0.2",
