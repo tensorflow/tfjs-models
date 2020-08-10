@@ -20,7 +20,7 @@ import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
 import {Box, cutBoxFromImageAndResize, enlargeBox, getBoxCenter, getBoxSize, scaleBoxCoordinates, squarifyBox} from './box';
-// import {MESH_ANNOTATIONS} from './keypoints';
+import {MESH_ANNOTATIONS} from './keypoints';
 import {buildRotationMatrix, computeRotation, Coord2D, Coord3D, Coords3D, dot, invertTransformMatrix, rotatePoint, TransformationMatrix} from './util';
 
 export type Prediction = {
@@ -34,6 +34,17 @@ const UPDATE_REGION_OF_INTEREST_IOU_THRESHOLD = 0.25;
 const LANDMARKS_COUNT = 468;
 const MESH_MODEL_KEYPOINTS_LINE_OF_SYMMETRY_INDICES = [1, 168];
 const BLAZEFACE_KEYPOINTS_LINE_OF_SYMMETRY_INDICES = [3, 2];
+const REPLACEMENT_INDICES = [
+  {key: 'EyeUpper0', indices: [9, 10, 11, 12, 13, 14, 15]},
+  {key: 'EyeUpper1', indices: [25, 26, 27, 28, 29, 30, 31]},
+  {key: 'EyeUpper2', indices: [41, 42, 43, 44, 45, 46, 47]},
+  {key: 'EyeLower0', indices: [0, 1, 2, 3, 4, 5, 6, 7, 8]},
+  {key: 'EyeLower1', indices: [16, 17, 18, 19, 20, 21, 22, 23, 24]},
+  {key: 'EyeLower2', indices: [32, 33, 34, 35, 36, 37, 38, 39, 40]},
+  {key: 'EyeLower3', indices: [54, 55, 56, 57, 58, 59, 60, 61, 62]},
+  {key: 'EyebrowUpper', indices: [63, 64, 65, 66, 67, 68, 69, 70]},
+  {key: 'EyebrowLower', indices: [48, 49, 50, 51, 52, 53]}
+];
 
 // The Pipeline coordinates between the bounding box and skeleton models.
 export class Pipeline {
@@ -202,7 +213,8 @@ export class Pipeline {
         let rawCoords = coordsReshaped.arraySync() as Coords3D;
 
         const leftEyeBox = squarifyBox(enlargeBox(
-            this.calculateLandmarksBoundingBox([rawCoords[33], rawCoords[133]]),
+            this.calculateLandmarksBoundingBox(
+                [rawCoords[362], rawCoords[263]]),
             2.3));
         const leftEye = tf.image.cropAndResize(
             face as tf.Tensor4D, [[
@@ -230,8 +242,7 @@ export class Pipeline {
         const leftIrisRawCoords = leftEyeRawCoords.slice(71) as Coords3D;
 
         const rightEyeBox = squarifyBox(enlargeBox(
-            this.calculateLandmarksBoundingBox(
-                [rawCoords[362], rawCoords[263]]),
+            this.calculateLandmarksBoundingBox([rawCoords[33], rawCoords[133]]),
             2.3));
         const rightEye = tf.image.cropAndResize(
             face as tf.Tensor4D, [[
@@ -261,7 +272,22 @@ export class Pipeline {
 
         rawCoords =
             rawCoords.concat(leftIrisRawCoords).concat(rightIrisRawCoords);
-        // replace coordinates
+
+        for (let i = 0; i < REPLACEMENT_INDICES.length; i++) {
+          const {key, indices} = REPLACEMENT_INDICES[i];
+          const leftIndices = MESH_ANNOTATIONS[`left${key}`];
+          const rightIndices = MESH_ANNOTATIONS[`right${key}`];
+          for (let j = 0; j < indices.length; j++) {
+            const index = indices[j];
+            const [leftX, leftY, ] = leftEyeRawCoords[index];
+            rawCoords[leftIndices[j]] =
+                [leftX, leftY, rawCoords[leftIndices[j]][2]];
+
+            const [rightX, rightY, ] = rightEyeRawCoords[index];
+            rawCoords[rightIndices[j]] =
+                [rightX, rightY, rawCoords[rightIndices[j]][2]];
+          }
+        }
 
         const transformedCoordsData =
             this.transformRawCoords(rawCoords, box, angle, rotationMatrix);
