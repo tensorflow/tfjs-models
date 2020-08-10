@@ -23,10 +23,19 @@ export type TransformationMatrix = [
   [number, number, number], [number, number, number], [number, number, number]
 ];
 
+/**
+ * Normalizes the provided angle to the range -pi to pi.
+ * @param angle The angle in radians to be normalized.
+ */
 export function normalizeRadians(angle: number): number {
   return angle - 2 * Math.PI * Math.floor((angle + Math.PI) / (2 * Math.PI));
 }
 
+/**
+ * Computes the angle of rotation between two anchor points.
+ * @param point1 First anchor point
+ * @param point2 Second anchor point
+ */
 export function computeRotation(
     point1: Coord2D|Coord3D, point2: Coord2D|Coord3D): number {
   const radians =
@@ -38,8 +47,9 @@ export function radToDegrees(rad: number): number {
   return rad * 180 / Math.PI;
 }
 
-const buildTranslationMatrix = (x: number, y: number): TransformationMatrix =>
-    ([[1, 0, x], [0, 1, y], [0, 0, 1]]);
+function buildTranslationMatrix(x: number, y: number): TransformationMatrix {
+  return [[1, 0, x], [0, 1, y], [0, 0, 1]];
+}
 
 export function dot(v1: number[], v2: number[]): number {
   let product = 0;
