@@ -86,18 +86,23 @@ export class HandDetector {
       Promise<HandDetectorPrediction> {
     const normalizedInput = tf.tidy(() => tf.mul(tf.sub(input, 0.5), 2));
 
-    // Currently tfjs-core does not pack depthwiseConv because it fails for
-    // very large inputs (https://github.com/tensorflow/tfjs/issues/1652).
-    // TODO(annxingyuan): call tf.enablePackedDepthwiseConv when available
-    // (https://github.com/tensorflow/tfjs/issues/2821)
-    const savedWebglPackDepthwiseConvFlag =
-        tf.env().get('WEBGL_PACK_DEPTHWISECONV');
-    tf.env().set('WEBGL_PACK_DEPTHWISECONV', true);
-    // The model returns a tensor with the following shape:
-    //  [1 (batch), 2944 (anchor points), 19 (data for each anchor)]
-    const batchedPrediction =
-        this.model.predict(normalizedInput) as tf.Tensor3D;
-    tf.env().set('WEBGL_PACK_DEPTHWISECONV', savedWebglPackDepthwiseConvFlag);
+    let batchedPrediction;
+    if (tf.getBackend() === 'webgl') {
+      // Currently tfjs-core does not pack depthwiseConv because it fails for
+      // very large inputs (https://github.com/tensorflow/tfjs/issues/1652).
+      // TODO(annxingyuan): call tf.enablePackedDepthwiseConv when available
+      // (https://github.com/tensorflow/tfjs/issues/2821)
+      const savedWebglPackDepthwiseConvFlag =
+          tf.env().get('WEBGL_PACK_DEPTHWISECONV');
+      tf.env().set('WEBGL_PACK_DEPTHWISECONV', true);
+      // The model returns a tensor with the following shape:
+      //  [1 (batch), 2944 (anchor points), 19 (data for each anchor)]
+      batchedPrediction = this.model.predict(normalizedInput) as tf.Tensor3D;
+      tf.env().set('WEBGL_PACK_DEPTHWISECONV', savedWebglPackDepthwiseConvFlag);
+    } else {
+      batchedPrediction = this.model.predict(normalizedInput) as tf.Tensor3D;
+    }
+
     const prediction: tf.Tensor2D = batchedPrediction.squeeze();
 
     // Regression score for each anchor point.

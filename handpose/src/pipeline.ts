@@ -20,9 +20,6 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {Box, cutBoxFromImageAndResize, enlargeBox, getBoxCenter, getBoxSize, shiftBox, squarifyBox} from './box';
 import {HandDetector} from './hand';
-import {rotate as rotateCpu} from './rotate_cpu';
-import {rotate as rotateWebgl} from './rotate_gpu';
-// import {rotate as rotateWebgpu} from './rotate_webgpu';
 import {buildRotationMatrix, computeRotation, dot, invertTransformMatrix, rotatePoint, TransformationMatrix} from './util';
 
 const UPDATE_REGION_OF_INTEREST_IOU_THRESHOLD = 0.8;
@@ -183,20 +180,8 @@ export class HandPipeline {
     const palmCenter = getBoxCenter(currentBox);
     const palmCenterNormalized: [number, number] =
         [palmCenter[0] / image.shape[2], palmCenter[1] / image.shape[1]];
-    let rotatedImage: tf.Tensor4D;
-    const backend = tf.getBackend();
-
-    if (backend.match('webgl')) {
-      rotatedImage = rotateWebgl(image, angle, 0, palmCenterNormalized);
-      // } else if (backend === 'webgpu') {
-      //   rotatedImage = rotateWebgpu(image, angle, 0, palmCenterNormalized);
-    } else if (backend === 'cpu' || backend === 'tensorflow') {
-      rotatedImage = rotateCpu(image, angle, 0, palmCenterNormalized);
-    } else {
-      throw new Error(
-          `Handpose is not yet supported by the ${backend} ` +
-          `backend - rotation kernel is not defined.`);
-    }
+    const rotatedImage =
+        tf.image.rotateWithOffset(image, angle, 0, palmCenterNormalized);
 
     const rotationMatrix = buildRotationMatrix(-angle, palmCenter);
 
@@ -217,16 +202,24 @@ export class HandPipeline {
     croppedInput.dispose();
     rotatedImage.dispose();
 
-    // Currently tfjs-core does not pack depthwiseConv because it fails for
-    // very large inputs (https://github.com/tensorflow/tfjs/issues/1652).
-    // TODO(annxingyuan): call tf.enablePackedDepthwiseConv when available
-    // (https://github.com/tensorflow/tfjs/issues/2821)
-    const savedWebglPackDepthwiseConvFlag =
-        tf.env().get('WEBGL_PACK_DEPTHWISECONV');
-    tf.env().set('WEBGL_PACK_DEPTHWISECONV', true);
-    const [flag, keypoints] =
-        this.meshDetector.predict(handImage) as [tf.Tensor, tf.Tensor];
-    tf.env().set('WEBGL_PACK_DEPTHWISECONV', savedWebglPackDepthwiseConvFlag);
+    let prediction;
+    if (tf.getBackend() === 'webgl') {
+      // Currently tfjs-core does not pack depthwiseConv because it fails for
+      // very large inputs (https://github.com/tensorflow/tfjs/issues/1652).
+      // TODO(annxingyuan): call tf.enablePackedDepthwiseConv when available
+      // (https://github.com/tensorflow/tfjs/issues/2821)
+      const savedWebglPackDepthwiseConvFlag =
+          tf.env().get('WEBGL_PACK_DEPTHWISECONV');
+      tf.env().set('WEBGL_PACK_DEPTHWISECONV', true);
+      prediction =
+          this.meshDetector.predict(handImage) as [tf.Tensor, tf.Tensor];
+      tf.env().set('WEBGL_PACK_DEPTHWISECONV', savedWebglPackDepthwiseConvFlag);
+    } else {
+      prediction =
+          this.meshDetector.predict(handImage) as [tf.Tensor, tf.Tensor];
+    }
+
+    const [flag, keypoints] = prediction;
 
     handImage.dispose();
 
