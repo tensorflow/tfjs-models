@@ -34,7 +34,7 @@ Using `yarn`:
     $ yarn add @tensorflow-models/facemesh
 
     $ yarn add @tensorflow/tfjs-core, @tensorflow/tfjs-converter
-    $ yarn add @tensorflow/tfjs-backend-wasm # or tfjs-backend-webgl
+    $ yarn add @tensorflow/tfjs-backend-wasm # or @tensorflow/tfjs-backend-webgl
 
 ## Usage
 
