@@ -15,29 +15,39 @@ framework for building multimodal applied ML pipelines.
 
 ## Installation
 
+Via script tags:
+
+```html
+<!-- Require the peer dependencies of facemesh. -->
+<script src="https://unpkg.com/@tensorflow/tfjs-core@2.1.0/dist/tf-core.js"></script>
+<script src="https://unpkg.com/@tensorflow/tfjs-converter@2.1.0/dist/tf-converter.js"></script>
+
+<!-- You must explicitly require a TF.js backend if you're not using the tfs union bundle. -->
+<script src="https://unpkg.com/@tensorflow/tfjs-backend-wasm@2.1.0/dist/tf-backend-wasm.js"></script>
+<!-- Alternatively you can use the WebGL backend: <script src="https://unpkg.com/@tensorflow/tfjs-backend-webgl@2.1.0/dist/tf-backend-webgl.js"></script> -->
+```
+
+Via npm:
+
 Using `yarn`:
 
     $ yarn add @tensorflow-models/facemesh
 
-Using `npm`:
-
-    $ npm install @tensorflow-models/facemesh
-
-Note that this package specifies `@tensorflow/tfjs-core` and `@tensorflow/tfjs-converter` as peer dependencies, so they will also need to be installed.
+    $ yarn add @tensorflow/tfjs-core, @tensorflow/tfjs-converter
+    $ yarn add @tensorflow/tfjs-backend-wasm # or @tensorflow/tfjs-backend-webgl
 
 ## Usage
 
-To import in npm:
+If you are using via npm, first add:
 
 ```js
 const facemesh = require('@tensorflow-models/facemesh');
-```
 
-or as a standalone script tag:
+// If you are using the WASM backend:
+require('@tensorflow/tfjs-backend-wasm'); // You need to require the backend explicitly because facemesh itself does not
 
-```html
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/facemesh"></script>
+// If you are using the WebGL backend:
+// require('@tensorflow/tfjs-backend-webgl');
 ```
 
 Then:
