@@ -57,7 +57,7 @@ const mobile = isMobile();
 const renderPointcloud = mobile === false;
 const stats = new Stats();
 const state = {
-  backend: 'wasm',
+  backend: 'webgl',
   maxFaces: 1,
   triangulateMesh: false
 };
@@ -68,7 +68,7 @@ if (renderPointcloud) {
 
 function setupDatGui() {
   const gui = new dat.GUI();
-  gui.add(state, 'backend', ['wasm', 'webgl', 'cpu'])
+  gui.add(state, 'backend', ['webgl', 'wasm', 'cpu'])
       .onChange(async backend => {
         await tf.setBackend(backend);
       });

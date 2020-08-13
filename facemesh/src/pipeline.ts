@@ -223,16 +223,17 @@ export class Pipeline {
               leftEyeBox.endPoint[1] / this.meshHeight,
               leftEyeBox.endPoint[0] / this.meshWidth
             ]],
-            [0], [64, 64]);
+            [0], [64, 64]);  // [1, 64, 64, 3]
 
+        const leftEyeFlipped = tf.image.flipLeftRight(leftEye);
         const leftEyePrediction =
-            (this.irisModel.predict(leftEye) as tf.Tensor).squeeze();
+            (this.irisModel.predict(leftEyeFlipped) as tf.Tensor).squeeze();
         const leftEyeBoxSize = getBoxSize(leftEyeBox);
         const leftEyeRawCoords =
             (leftEyePrediction.reshape([-1, 3]).arraySync() as Coords3D)
                 .map((coord: Coord3D) => {
                   return [
-                    (coord[0] / 64) * leftEyeBoxSize[0] +
+                    (1 - (coord[0] / 64)) * leftEyeBoxSize[0] +
                         leftEyeBox.startPoint[0],
                     (coord[1] / 64) * leftEyeBoxSize[1] +
                         leftEyeBox.startPoint[1],
