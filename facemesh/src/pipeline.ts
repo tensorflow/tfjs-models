@@ -115,6 +115,43 @@ export class Pipeline {
                              ]));
   }
 
+  getEyeCoords(
+      rawCoords: Coords3D, face: tf.Tensor4D, eyeCornerLeft: number,
+      eyeCornerRight: number, flip = false) {
+    const eyeBox = squarifyBox(enlargeBox(
+        this.calculateLandmarksBoundingBox(
+            [rawCoords[eyeCornerLeft], rawCoords[eyeCornerRight]]),
+        2.3));
+    let eye = tf.image.cropAndResize(
+        face, [[
+          eyeBox.startPoint[1] / this.meshHeight,
+          eyeBox.startPoint[0] / this.meshWidth,
+          eyeBox.endPoint[1] / this.meshHeight,
+          eyeBox.endPoint[0] / this.meshWidth
+        ]],
+        [0], [64, 64]);  // [1, 64, 64, 3]
+
+    if (flip === true) {
+      eye = tf.image.flipLeftRight(eye);
+    }
+
+    const eyePrediction = (this.irisModel.predict(eye) as tf.Tensor).squeeze();
+    const eyeBoxSize = getBoxSize(eyeBox);
+    const eyeRawCoords: Coords3D =
+        (eyePrediction.reshape([-1, 3]).arraySync() as Coords3D)
+            .map((coord: Coord3D) => {
+              return [
+                (flip ? (1 - (coord[0] / 64)) : (coord[0] / 64)) *
+                        eyeBoxSize[0] +
+                    eyeBox.startPoint[0],
+                (coord[1] / 64) * eyeBoxSize[1] + eyeBox.startPoint[1], coord[2]
+              ];
+            });
+    const irisRawCoords = eyeRawCoords.slice(71) as Coords3D;
+
+    return {rawCoords: eyeRawCoords, iris: irisRawCoords};
+  }
+
   /**
    * Returns an array of predictions for each face in the input.
    *
@@ -212,64 +249,15 @@ export class Pipeline {
         const coordsReshaped: tf.Tensor2D = tf.reshape(coords, [-1, 3]);
         let rawCoords = coordsReshaped.arraySync() as Coords3D;
 
-        const leftEyeBox = squarifyBox(enlargeBox(
-            this.calculateLandmarksBoundingBox(
-                [rawCoords[362], rawCoords[263]]),
-            2.3));
-        const leftEye = tf.image.cropAndResize(
-            face as tf.Tensor4D, [[
-              leftEyeBox.startPoint[1] / this.meshHeight,
-              leftEyeBox.startPoint[0] / this.meshWidth,
-              leftEyeBox.endPoint[1] / this.meshHeight,
-              leftEyeBox.endPoint[0] / this.meshWidth
-            ]],
-            [0], [64, 64]);  // [1, 64, 64, 3]
+        const leftEye =
+            this.getEyeCoords(rawCoords, face as tf.Tensor4D, 362, 263, true);
+        const leftEyeRawCoords = leftEye.rawCoords;
+        const leftIrisRawCoords = leftEye.iris;
 
-        const leftEyeFlipped = tf.image.flipLeftRight(leftEye);
-        const leftEyePrediction =
-            (this.irisModel.predict(leftEyeFlipped) as tf.Tensor).squeeze();
-        const leftEyeBoxSize = getBoxSize(leftEyeBox);
-        const leftEyeRawCoords: Coords3D =
-            (leftEyePrediction.reshape([-1, 3]).arraySync() as Coords3D)
-                .map((coord: Coord3D) => {
-                  return [
-                    (1 - (coord[0] / 64)) * leftEyeBoxSize[0] +
-                        leftEyeBox.startPoint[0],
-                    (coord[1] / 64) * leftEyeBoxSize[1] +
-                        leftEyeBox.startPoint[1],
-                    coord[2]
-                  ];
-                });
-        const leftIrisRawCoords = leftEyeRawCoords.slice(71) as Coords3D;
-
-        const rightEyeBox = squarifyBox(enlargeBox(
-            this.calculateLandmarksBoundingBox([rawCoords[33], rawCoords[133]]),
-            2.3));
-        const rightEye = tf.image.cropAndResize(
-            face as tf.Tensor4D, [[
-              rightEyeBox.startPoint[1] / this.meshHeight,
-              rightEyeBox.startPoint[0] / this.meshWidth,
-              rightEyeBox.endPoint[1] / this.meshHeight,
-              rightEyeBox.endPoint[0] / this.meshWidth
-            ]],
-            [0], [64, 64]);
-
-        const rightEyePrediction =
-            (this.irisModel.predict(rightEye) as tf.Tensor).squeeze();
-        const rightEyeBoxSize = getBoxSize(rightEyeBox);
-        const rightEyeRawCoords: Coords3D =
-            (rightEyePrediction.reshape([-1, 3]).arraySync() as Coords3D)
-                .map((coord: Coord3D) => {
-                  return [
-                    (coord[0] / 64) * rightEyeBoxSize[0] +
-                        rightEyeBox.startPoint[0],
-                    (coord[1] / 64) * rightEyeBoxSize[1] +
-                        rightEyeBox.startPoint[1],
-                    coord[2]
-                  ];
-                });
-
-        const rightIrisRawCoords = rightEyeRawCoords.slice(71) as Coords3D;
+        const rightEye =
+            this.getEyeCoords(rawCoords, face as tf.Tensor4D, 33, 133);
+        const rightEyeRawCoords = rightEye.rawCoords;
+        const rightIrisRawCoords = rightEye.iris;
 
         rawCoords =
             rawCoords.concat(leftIrisRawCoords).concat(rightIrisRawCoords);
