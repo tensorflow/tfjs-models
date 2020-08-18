@@ -42,14 +42,12 @@ limitations under the License.
   <div id="main">
     <div class="container">
       <div class="canvas-wrapper">
-        <canvas id="output"></canvas>
-        <video id="video" playsinline style="
-          -webkit-transform: scaleX(-1);
+        <video id="video" controls style="
           transform: scaleX(-1);
-          visibility: hidden;
-          width: auto;
-          height: auto;
+          width: 500px;
+          height: 500px;
           ">
+          <source src="./input.mp4" type="video/mp4">
         </video>
       </div>
       <div id="scatter-gl-container"></div>
