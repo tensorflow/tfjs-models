@@ -18,6 +18,7 @@
   },
   "scripts": {
     "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr --target browser",
+    "watch-video": "cross-env NODE_ENV=development parcel video.html --no-hmr --target browser",
     "build": "cross-env NODE_ENV=production parcel build index.html --target browser --public-url ./",
     "lint": "eslint .",
     "link-local": "yalc link @tensorflow-models/facemesh"
