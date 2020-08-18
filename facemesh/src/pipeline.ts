@@ -151,6 +151,12 @@ export class Pipeline {
     const eyeUpperCenterZ = eyeRawCoords[12][2];
     const eyeLowerCenterZ = eyeRawCoords[4][2];
     const averageZ = (eyeUpperCenterZ + eyeLowerCenterZ) / 2;
+
+    // 0: center
+    // 1: right
+    // 2: above
+    // 3: left
+    // 4: below
     const irisRawCoords = eyeRawCoords.slice(71).map((coord: Coord3D, i) => {
       let z = averageZ;
       if (i === 2) {
