@@ -229,7 +229,7 @@ export class Pipeline {
         const leftEyePrediction =
             (this.irisModel.predict(leftEyeFlipped) as tf.Tensor).squeeze();
         const leftEyeBoxSize = getBoxSize(leftEyeBox);
-        const leftEyeRawCoords =
+        const leftEyeRawCoords: Coords3D =
             (leftEyePrediction.reshape([-1, 3]).arraySync() as Coords3D)
                 .map((coord: Coord3D) => {
                   return [
@@ -257,7 +257,7 @@ export class Pipeline {
         const rightEyePrediction =
             (this.irisModel.predict(rightEye) as tf.Tensor).squeeze();
         const rightEyeBoxSize = getBoxSize(rightEyeBox);
-        const rightEyeRawCoords =
+        const rightEyeRawCoords: Coords3D =
             (rightEyePrediction.reshape([-1, 3]).arraySync() as Coords3D)
                 .map((coord: Coord3D) => {
                   return [
@@ -280,13 +280,8 @@ export class Pipeline {
           const rightIndices = MESH_ANNOTATIONS[`right${key}`];
           for (let j = 0; j < indices.length; j++) {
             const index = indices[j];
-            const [leftX, leftY, ] = leftEyeRawCoords[index];
-            rawCoords[leftIndices[j]] =
-                [leftX, leftY, rawCoords[leftIndices[j]][2]];
-
-            const [rightX, rightY, ] = rightEyeRawCoords[index];
-            rawCoords[rightIndices[j]] =
-                [rightX, rightY, rawCoords[rightIndices[j]][2]];
+            rawCoords[leftIndices[j]] = leftEyeRawCoords[index];
+            rawCoords[rightIndices[j]] = rightEyeRawCoords[index];
           }
         }
 
