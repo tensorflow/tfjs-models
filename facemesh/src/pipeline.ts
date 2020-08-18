@@ -147,7 +147,20 @@ export class Pipeline {
                 (coord[1] / 64) * eyeBoxSize[1] + eyeBox.startPoint[1], coord[2]
               ];
             });
-    const irisRawCoords = eyeRawCoords.slice(71) as Coords3D;
+
+    const eyeUpperCenterZ = eyeRawCoords[12][2];
+    const eyeLowerCenterZ = eyeRawCoords[4][2];
+    const averageZ = (eyeUpperCenterZ + eyeLowerCenterZ) / 2;
+    const irisRawCoords = eyeRawCoords.slice(71).map((coord: Coord3D, i) => {
+      let z = averageZ;
+      if (i === 2) {
+        z = eyeUpperCenterZ;
+      } else if (i === 4) {
+        z = eyeLowerCenterZ;
+      }
+
+      return [coord[0], coord[1], z];
+    }) as Coords3D;
 
     return {rawCoords: eyeRawCoords, iris: irisRawCoords};
   }
