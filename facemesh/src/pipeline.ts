@@ -115,6 +115,17 @@ export class Pipeline {
                              ]));
   }
 
+  private getEyeSizeRatios(leftEyeSize: [number, number], rightEyeSize: [
+    number, number
+  ]): number {
+    const leftTotalSize = leftEyeSize[0] * leftEyeSize[1];
+    const rightTotalSize = rightEyeSize[0] * rightEyeSize[1];
+    if (leftTotalSize < rightTotalSize) {
+      return rightTotalSize / leftTotalSize;
+    }
+    return leftTotalSize / rightTotalSize;
+  }
+
   getEyeCoords(
       rawCoords: Coords3D, face: tf.Tensor4D, eyeCornerLeft: number,
       eyeCornerRight: number, flip = false) {
@@ -168,7 +179,7 @@ export class Pipeline {
       return [coord[0], coord[1], z];
     }) as Coords3D;
 
-    return {rawCoords: eyeRawCoords, iris: irisRawCoords};
+    return {rawCoords: eyeRawCoords, iris: irisRawCoords, size: eyeBoxSize};
   }
 
   /**
@@ -231,7 +242,7 @@ export class Pipeline {
         // (if we are using a fresh box), or from the mesh model (if we are
         // reusing an old box).
         const boxLandmarksFromMeshModel =
-            box.landmarks.length === (LANDMARKS_COUNT + 10);
+            box.landmarks.length >= LANDMARKS_COUNT;
         if (boxLandmarksFromMeshModel) {
           const [indexOfNose, indexOfForehead] =
               MESH_MODEL_KEYPOINTS_LINE_OF_SYMMETRY_INDICES;
@@ -278,17 +289,22 @@ export class Pipeline {
         const rightEyeRawCoords = rightEye.rawCoords;
         const rightIrisRawCoords = rightEye.iris;
 
-        rawCoords =
-            rawCoords.concat(leftIrisRawCoords).concat(rightIrisRawCoords);
+        const eyeSizeRatios =
+            this.getEyeSizeRatios(leftEye.size, rightEye.size);
 
-        for (let i = 0; i < REPLACEMENT_INDICES.length; i++) {
-          const {key, indices} = REPLACEMENT_INDICES[i];
-          const leftIndices = MESH_ANNOTATIONS[`left${key}`];
-          const rightIndices = MESH_ANNOTATIONS[`right${key}`];
-          for (let j = 0; j < indices.length; j++) {
-            const index = indices[j];
-            rawCoords[leftIndices[j]] = leftEyeRawCoords[index];
-            rawCoords[rightIndices[j]] = rightEyeRawCoords[index];
+        if (Math.abs(1 - eyeSizeRatios) < 1) {
+          rawCoords =
+              rawCoords.concat(leftIrisRawCoords).concat(rightIrisRawCoords);
+
+          for (let i = 0; i < REPLACEMENT_INDICES.length; i++) {
+            const {key, indices} = REPLACEMENT_INDICES[i];
+            const leftIndices = MESH_ANNOTATIONS[`left${key}`];
+            const rightIndices = MESH_ANNOTATIONS[`right${key}`];
+            for (let j = 0; j < indices.length; j++) {
+              const index = indices[j];
+              rawCoords[leftIndices[j]] = leftEyeRawCoords[index];
+              rawCoords[rightIndices[j]] = rightEyeRawCoords[index];
+            }
           }
         }
 
