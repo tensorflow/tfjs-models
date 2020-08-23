@@ -125,7 +125,7 @@ main();
 
 * **scoreThreshold** - A threshold for deciding when to remove boxes based on score in non-maximum suppression. Defaults to 0.75.
 
-#### Parameters for model.estimateFace()
+#### Parameters for model.estimateFaces()
 
 * **input** - The image to classify. Can be a tensor, DOM element image, video, or canvas.
 
