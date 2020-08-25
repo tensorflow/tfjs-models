@@ -21,7 +21,7 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {Box, cutBoxFromImageAndResize, enlargeBox, getBoxCenter, getBoxSize, scaleBoxCoordinates, squarifyBox} from './box';
 import {MESH_ANNOTATIONS} from './keypoints';
-import {buildRotationMatrix, computeRotation, Coord2D, Coord3D, Coords3D, dot, invertTransformMatrix, rotatePoint, TransformationMatrix, xyDistanceBetweenPoints} from './util';
+import {buildRotationMatrix, computeRotation, Coord2D, Coord3D, Coords3D, dot, IDENTITY_MATRIX, invertTransformMatrix, rotatePoint, TransformationMatrix, xyDistanceBetweenPoints} from './util';
 
 export type Prediction = {
   coords: tf.Tensor2D,        // coordinates of facial landmarks.
@@ -30,19 +30,21 @@ export type Prediction = {
   flag: tf.Scalar             // confidence in presence of a face.
 };
 
-const UPDATE_REGION_OF_INTEREST_IOU_THRESHOLD = 0.25;
 const LANDMARKS_COUNT = 468;
+const UPDATE_REGION_OF_INTEREST_IOU_THRESHOLD = 0.25;
 
-const MESH_MODEL_MOUTH_INDEX = 13;
-const MESH_MODEL_LEFT_EYE_INDEX = 386;
-const MESH_MODEL_RIGHT_EYE_INDEX = 159;
-const MESH_MODEL_KEYPOINTS_LINE_OF_SYMMETRY_INDICES =
+const MESH_MOUTH_INDEX = 13;
+const MESH_LEFT_EYE_INDEX = 386;
+const MESH_RIGHT_EYE_INDEX = 159;
+const MESH_KEYPOINTS_LINE_OF_SYMMETRY_INDICES =
     [MESH_ANNOTATIONS['noseTip'][0], MESH_ANNOTATIONS['midwayBetweenEyes'][0]];
+
 const BLAZEFACE_MOUTH_INDEX = 3;
 const BLAZEFACE_LEFT_EYE_INDEX = 0;
 const BLAZEFACE_RIGHT_EYE_INDEX = 1;
+const BLAZEFACE_NOSE_INDEX = 2;
 const BLAZEFACE_KEYPOINTS_LINE_OF_SYMMETRY_INDICES =
-    [BLAZEFACE_MOUTH_INDEX, 2 /* nose */];
+    [BLAZEFACE_MOUTH_INDEX, BLAZEFACE_NOSE_INDEX];
 
 const LEFT_EYE_OUTLINE = MESH_ANNOTATIONS['leftEyeLower0'];
 const LEFT_EYE_BOUNDS =
@@ -51,13 +53,12 @@ const RIGHT_EYE_OUTLINE = MESH_ANNOTATIONS['rightEyeLower0'];
 const RIGHT_EYE_BOUNDS =
     [RIGHT_EYE_OUTLINE[0], RIGHT_EYE_OUTLINE[RIGHT_EYE_OUTLINE.length - 1]];
 
-const IRIS_KEYPOINTS_UPPER_CENTER_INDEX = 12;
-const IRIS_KEYPOINTS_LOWER_CENTER_INDEX = 4;
-const IRIS_KEYPOINTS_IRIS_INDEX = 71;
+const IRIS_UPPER_CENTER_INDEX = 12;
+const IRIS_LOWER_CENTER_INDEX = 4;
+const IRIS_IRIS_INDEX = 71;
 
-const ENLARGE_EYE_RATIO = 2.3;
-const IRIS_MODEL_INPUT_SIZE = 64;
-const REPLACEMENT_INDICES = [
+// A mapping from facemesh model keypoints to iris model keypoints.
+const MESH_TO_IRIS_INDICES_MAP = [
   {key: 'EyeUpper0', indices: [9, 10, 11, 12, 13, 14, 15]},
   {key: 'EyeUpper1', indices: [25, 26, 27, 28, 29, 30, 31]},
   {key: 'EyeUpper2', indices: [41, 42, 43, 44, 45, 46, 47]},
@@ -68,6 +69,11 @@ const REPLACEMENT_INDICES = [
   {key: 'EyebrowUpper', indices: [63, 64, 65, 66, 67, 68, 69, 70]},
   {key: 'EyebrowLower', indices: [48, 49, 50, 51, 52, 53]}
 ];
+
+// Factor by which to enlarge the box around the eye landmarks so the input
+// region matches the expectations of the iris model.
+const ENLARGE_EYE_RATIO = 2.3;
+const IRIS_MODEL_INPUT_SIZE = 64;
 
 // Threshold for determining when the face is sufficiently in profile that it
 // shouldn't be rotated.
@@ -112,19 +118,16 @@ export class Pipeline {
         getBoxSize({startPoint: box.startPoint, endPoint: box.endPoint});
     const scaleFactor =
         [boxSize[0] / this.meshWidth, boxSize[1] / this.meshHeight];
-
-    const coordsScaled = rawCoords.map(coord => {
-      return [
-        scaleFactor[0] * (coord[0] - this.meshWidth / 2),
-        scaleFactor[1] * (coord[1] - this.meshHeight / 2), coord[2]
-      ];
-    });
+    const coordsScaled = rawCoords.map(
+        coord => ([
+          scaleFactor[0] * (coord[0] - this.meshWidth / 2),
+          scaleFactor[1] * (coord[1] - this.meshHeight / 2), coord[2]
+        ]));
 
     const coordsRotationMatrix = buildRotationMatrix(angle, [0, 0]);
-    const coordsRotated = coordsScaled.map((coord: Coord3D) => {
-      const rotated = rotatePoint(coord, coordsRotationMatrix);
-      return [...rotated, coord[2]];
-    });
+    const coordsRotated = coordsScaled.map(
+        (coord: Coord3D) =>
+            ([...rotatePoint(coord, coordsRotationMatrix), coord[2]]));
 
     const inverseRotationMatrix = invertTransformMatrix(rotationMatrix);
     const boxCenter = [
@@ -151,7 +154,6 @@ export class Pipeline {
     const distanceBetweenEyes = xyDistanceBetweenPoints(leftEye, rightEye);
     const distanceBetweenVertical =
         xyDistanceBetweenPoints(midwayBetweenEyes, mouth);
-
     return distanceBetweenEyes / distanceBetweenVertical;
   }
 
@@ -198,29 +200,27 @@ export class Pipeline {
 
     // The z-coordinates returned for the iris are unreliable, so we take the z
     // values from the surrounding keypoints.
-    const eyeUpperCenterZ = eyeRawCoords[IRIS_KEYPOINTS_UPPER_CENTER_INDEX][2];
-    const eyeLowerCenterZ = eyeRawCoords[IRIS_KEYPOINTS_LOWER_CENTER_INDEX][2];
+    const eyeUpperCenterZ = eyeRawCoords[IRIS_UPPER_CENTER_INDEX][2];
+    const eyeLowerCenterZ = eyeRawCoords[IRIS_LOWER_CENTER_INDEX][2];
     const averageZ = (eyeUpperCenterZ + eyeLowerCenterZ) / 2;
 
     // Iris indices:
     // 0: center | 1: right | 2: above | 3: left | 4: below
-    const irisRawCoords = eyeRawCoords.slice(IRIS_KEYPOINTS_IRIS_INDEX)
-                              .map((coord: Coord3D, i) => {
-                                let z = averageZ;
-                                if (i === 2) {
-                                  z = eyeUpperCenterZ;
-                                } else if (i === 4) {
-                                  z = eyeLowerCenterZ;
-                                }
-                                return [coord[0], coord[1], z];
-                              }) as Coords3D;
-
+    const irisRawCoords =
+        eyeRawCoords.slice(IRIS_IRIS_INDEX).map((coord: Coord3D, i) => {
+          let z = averageZ;
+          if (i === 2) {
+            z = eyeUpperCenterZ;
+          } else if (i === 4) {
+            z = eyeLowerCenterZ;
+          }
+          return [coord[0], coord[1], z];
+        }) as Coords3D;
     return {rawCoords: eyeRawCoords, iris: irisRawCoords};
   }
 
   /**
    * Returns an array of predictions for each face in the input.
-   *
    * @param input - tensor of shape [1, H, W, 3].
    */
   async predict(input: tf.Tensor4D): Promise<Prediction[]> {
@@ -279,28 +279,27 @@ export class Pipeline {
         // reusing an old box).
         const boxLandmarksFromMeshModel =
             box.landmarks.length >= LANDMARKS_COUNT;
-        if (boxLandmarksFromMeshModel) {
-          const ratioHorizontalToVertical = this.getRatioHorizontalToVertical(
-              box.landmarks[MESH_MODEL_LEFT_EYE_INDEX],
-              box.landmarks[MESH_MODEL_RIGHT_EYE_INDEX],
-              box.landmarks[MESH_MODEL_MOUTH_INDEX]);
-          if (ratioHorizontalToVertical < X_TO_Y_ROTATION_THRESHOLD) {
-            const [indexOfNose, indexOfForehead] =
-                MESH_MODEL_KEYPOINTS_LINE_OF_SYMMETRY_INDICES;
-            angle = computeRotation(
-                box.landmarks[indexOfNose], box.landmarks[indexOfForehead]);
-          }
-        } else {
-          const ratioHorizontalToVertical = this.getRatioHorizontalToVertical(
-              box.landmarks[BLAZEFACE_LEFT_EYE_INDEX],
-              box.landmarks[BLAZEFACE_RIGHT_EYE_INDEX],
-              box.landmarks[BLAZEFACE_MOUTH_INDEX]);
-          if (ratioHorizontalToVertical < X_TO_Y_ROTATION_THRESHOLD) {
-            const [indexOfNose, indexOfForehead] =
-                BLAZEFACE_KEYPOINTS_LINE_OF_SYMMETRY_INDICES;
-            angle = computeRotation(
-                box.landmarks[indexOfNose], box.landmarks[indexOfForehead]);
-          }
+        let leftEyeIndex = MESH_LEFT_EYE_INDEX;
+        let rightEyeIndex = MESH_RIGHT_EYE_INDEX;
+        let mouthIndex = MESH_MOUTH_INDEX;
+        let [indexOfNose, indexOfForehead] =
+            MESH_KEYPOINTS_LINE_OF_SYMMETRY_INDICES;
+
+        if (boxLandmarksFromMeshModel === false) {
+          leftEyeIndex = BLAZEFACE_LEFT_EYE_INDEX;
+          rightEyeIndex = BLAZEFACE_RIGHT_EYE_INDEX;
+          mouthIndex = BLAZEFACE_MOUTH_INDEX;
+          [indexOfNose, indexOfForehead] =
+              BLAZEFACE_KEYPOINTS_LINE_OF_SYMMETRY_INDICES;
+        }
+
+        const ratioHorizontalToVertical = this.getRatioHorizontalToVertical(
+            box.landmarks[leftEyeIndex], box.landmarks[rightEyeIndex],
+            box.landmarks[mouthIndex]);
+        // If the face is not in profile...
+        if (ratioHorizontalToVertical < X_TO_Y_ROTATION_THRESHOLD) {
+          angle = computeRotation(
+              box.landmarks[indexOfNose], box.landmarks[indexOfForehead]);
         }
 
         const faceCenter =
@@ -309,8 +308,7 @@ export class Pipeline {
             [faceCenter[0] / input.shape[2], faceCenter[1] / input.shape[1]];
 
         let rotatedImage = input;
-        let rotationMatrix: TransformationMatrix =
-            [[1, 0, 0], [0, 1, 0], [0, 0, 1]];  // identity matrix
+        let rotationMatrix = IDENTITY_MATRIX;
         if (angle !== 0) {
           rotatedImage =
               tf.image.rotateWithOffset(input, angle, 0, faceCenterNormalized);
@@ -361,8 +359,8 @@ export class Pipeline {
           rawCoords =
               rawCoords.concat(leftIrisRawCoords).concat(rightIrisRawCoords);
 
-          for (let i = 0; i < REPLACEMENT_INDICES.length; i++) {
-            const {key, indices} = REPLACEMENT_INDICES[i];
+          for (let i = 0; i < MESH_TO_IRIS_INDICES_MAP.length; i++) {
+            const {key, indices} = MESH_TO_IRIS_INDICES_MAP[i];
             const leftIndices = MESH_ANNOTATIONS[`left${key}`];
             const rightIndices = MESH_ANNOTATIONS[`right${key}`];
             for (let j = 0; j < indices.length; j++) {

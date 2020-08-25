@@ -23,6 +23,9 @@ export type TransformationMatrix = [
   [number, number, number], [number, number, number], [number, number, number]
 ];
 
+export const IDENTITY_MATRIX: TransformationMatrix =
+    [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+
 /**
  * Normalizes the provided angle to the range -pi to pi.
  * @param angle The angle in radians to be normalized.
