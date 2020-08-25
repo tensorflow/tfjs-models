@@ -27,6 +27,8 @@ import {TRIANGULATION} from './triangulation';
 tfjsWasm.setWasmPath(
     `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${tfjsWasm.version_wasm}/dist/tfjs-backend-wasm.wasm`);
 
+const NUM_KEYPOINTS = 468;
+
 function isMobile() {
   const isAndroid = /Android/i.test(navigator.userAgent);
   const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -48,7 +50,7 @@ function drawPath(ctx, points, closePath) {
 }
 
 let model, ctx, videoWidth, videoHeight, video, canvas,
-    scatterGLHasInitialized = false, scatterGL;
+    scatterGLHasInitialized = false, scatterGL, rafID;
 
 const VIDEO_SIZE = 500;
 const mobile = isMobile();
@@ -59,7 +61,7 @@ const stats = new Stats();
 const state = {
   backend: 'webgl',
   maxFaces: 1,
-  triangulateMesh: false
+  triangulateMesh: true
 };
 
 if (renderPointcloud) {
@@ -70,7 +72,9 @@ function setupDatGui() {
   const gui = new dat.GUI();
   gui.add(state, 'backend', ['webgl', 'wasm', 'cpu'])
       .onChange(async backend => {
+        window.cancelAnimationFrame(rafID);
         await tf.setBackend(backend);
+        requestAnimationFrame(renderPrediction);
       });
 
   gui.add(state, 'maxFaces', 1, 20, 1).onChange(async val => {
@@ -121,6 +125,9 @@ async function renderPrediction() {
       const keypoints = prediction.scaledMesh;
 
       if (state.triangulateMesh) {
+        ctx.strokeStyle = '#32EEDB';
+        ctx.lineWidth = 0.5;
+
         for (let i = 0; i < TRIANGULATION.length / 3; i++) {
           const points = [
             TRIANGULATION[i * 3], TRIANGULATION[i * 3 + 1],
@@ -130,20 +137,48 @@ async function renderPrediction() {
           drawPath(ctx, points, true);
         }
       } else {
-        for (let i = 0; i < keypoints.length; i++) {
+        ctx.fillStyle = '#32EEDB';
+
+        for (let i = 0; i < NUM_KEYPOINTS; i++) {
           const x = keypoints[i][0];
           const y = keypoints[i][1];
 
           ctx.beginPath();
           ctx.arc(x, y, 1 /* radius */, 0, 2 * Math.PI);
 
-          if(i >= 468) {
-            ctx.fillStyle = 'red';
+          if(i >= NUM_KEYPOINTS) {
+            ctx.fillStyle = '#FF2C35';
           } else {
-            ctx.fillStyle = '#32EEDB';
           }
           ctx.fill();
         }
+      }
+
+      if(keypoints.length > NUM_KEYPOINTS) {
+        ctx.strokeStyle = "red";
+        ctx.lineWidth = 1;
+
+        const leftCenter = keypoints[NUM_KEYPOINTS];
+        const leftAbove = keypoints[NUM_KEYPOINTS + 2];
+        const leftBelow = keypoints[NUM_KEYPOINTS + 4];
+        const leftDiameter = Math.sqrt(
+          Math.pow(leftBelow[0] - leftAbove[0], 2) +
+          Math.pow(leftBelow[1] - leftAbove[1], 2));
+
+        ctx.beginPath();
+        ctx.arc(leftCenter[0], leftCenter[1], leftDiameter / 2, 0, 2 * Math.PI)
+        ctx.stroke();
+
+        const rightCenter = keypoints[NUM_KEYPOINTS + 5];
+        const rightAbove = keypoints[NUM_KEYPOINTS + 5 + 2];
+        const rightBelow = keypoints[NUM_KEYPOINTS + 5 + 4];
+        const rightDiameter = Math.sqrt(
+          Math.pow(rightBelow[0] - rightAbove[0], 2) +
+          Math.pow(rightBelow[1] - rightAbove[1], 2));
+
+        ctx.beginPath();
+        ctx.arc(rightCenter[0], rightCenter[1], rightDiameter / 2, 0, 2 * Math.PI)
+        ctx.stroke();
       }
     });
 
@@ -161,7 +196,7 @@ async function renderPrediction() {
 
       if (!scatterGLHasInitialized) {
         scatterGL.setPointColorer((i) => {
-          if(i >= 468) {
+          if(i >= NUM_KEYPOINTS) {
             return "#FF2C35";
           }
           return "#157AB3";
@@ -175,7 +210,7 @@ async function renderPrediction() {
   }
 
   stats.end();
-  requestAnimationFrame(renderPrediction);
+  rafID = requestAnimationFrame(renderPrediction);
 };
 
 async function main() {
