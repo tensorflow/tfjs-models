@@ -126,3 +126,8 @@ export function rotatePoint(
     dot(homogeneousCoordinate, rotationMatrix[1])
   ];
 }
+
+export function xyDistanceBetweenPoints(
+    a: Coord2D|Coord3D, b: Coord2D|Coord3D): number {
+  return Math.sqrt(Math.pow(a[0] - b[0], 2) + Math.pow(a[1] - b[1], 2));
+}

@@ -21,7 +21,7 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {Box, cutBoxFromImageAndResize, enlargeBox, getBoxCenter, getBoxSize, scaleBoxCoordinates, squarifyBox} from './box';
 import {MESH_ANNOTATIONS} from './keypoints';
-import {buildRotationMatrix, computeRotation, Coord2D, Coord3D, Coords3D, dot, invertTransformMatrix, rotatePoint, TransformationMatrix} from './util';
+import {buildRotationMatrix, computeRotation, Coord2D, Coord3D, Coords3D, dot, invertTransformMatrix, rotatePoint, TransformationMatrix, xyDistanceBetweenPoints} from './util';
 
 export type Prediction = {
   coords: tf.Tensor2D,        // coordinates of facial landmarks.
@@ -35,7 +35,7 @@ const LANDMARKS_COUNT = 468;
 const MESH_MODEL_KEYPOINTS_LINE_OF_SYMMETRY_INDICES =
     [MESH_ANNOTATIONS['noseTip'][0], MESH_ANNOTATIONS['midwayBetweenEyes'][0]];
 const BLAZEFACE_KEYPOINTS_LINE_OF_SYMMETRY_INDICES =
-    [3 /* nose */, 2 /* mouth */];
+    [3 /* mouth */, 2 /* nose */];
 const LEFT_EYE_OUTLINE = MESH_ANNOTATIONS['leftEyeLower0'];
 const LEFT_EYE_BOUNDS =
     [LEFT_EYE_OUTLINE[0], LEFT_EYE_OUTLINE[LEFT_EYE_OUTLINE.length - 1]];
@@ -123,6 +123,17 @@ export class Pipeline {
                                coord[0] + originalBoxCenter[0],
                                coord[1] + originalBoxCenter[1], coord[2]
                              ]));
+  }
+
+  private getRatioHorizontalToVertical(
+      leftEye: Coord3D, rightEye: Coord3D, mouth: Coord3D): number {
+    const midwayBetweenEyes: Coord3D =
+        [(leftEye[0] + rightEye[0]) / 2, (leftEye[1] + rightEye[1]) / 2, 0];
+    const distanceBetweenEyes = xyDistanceBetweenPoints(leftEye, rightEye);
+    const distanceBetweenVertical =
+        xyDistanceBetweenPoints(midwayBetweenEyes, mouth);
+
+    return distanceBetweenEyes / distanceBetweenVertical;
   }
 
   private getRatioLeftToRightEye(leftEyeSize: [number, number], rightEyeSize: [
@@ -242,22 +253,30 @@ export class Pipeline {
 
     return tf.tidy(() => {
       return this.regionsOfInterest.map((box, i) => {
-        let angle: number;
+        let angle = 0;
         // The facial bounding box landmarks could come either from blazeface
         // (if we are using a fresh box), or from the mesh model (if we are
         // reusing an old box).
         const boxLandmarksFromMeshModel =
             box.landmarks.length >= LANDMARKS_COUNT;
         if (boxLandmarksFromMeshModel) {
-          const [indexOfNose, indexOfForehead] =
-              MESH_MODEL_KEYPOINTS_LINE_OF_SYMMETRY_INDICES;
-          angle = computeRotation(
-              box.landmarks[indexOfNose], box.landmarks[indexOfForehead]);
+          const ratioHorizontalToVertical = this.getRatioHorizontalToVertical(
+              box.landmarks[386], box.landmarks[159], box.landmarks[13]);
+          if (ratioHorizontalToVertical < 0.3) {
+            const [indexOfNose, indexOfForehead] =
+                MESH_MODEL_KEYPOINTS_LINE_OF_SYMMETRY_INDICES;
+            angle = computeRotation(
+                box.landmarks[indexOfNose], box.landmarks[indexOfForehead]);
+          }
         } else {
-          const [indexOfNose, indexOfForehead] =
-              BLAZEFACE_KEYPOINTS_LINE_OF_SYMMETRY_INDICES;
-          angle = computeRotation(
-              box.landmarks[indexOfNose], box.landmarks[indexOfForehead]);
+          const ratioHorizontalToVertical = this.getRatioHorizontalToVertical(
+              box.landmarks[0], box.landmarks[1], box.landmarks[3]);
+          if (ratioHorizontalToVertical < 0.3) {
+            const [indexOfNose, indexOfForehead] =
+                BLAZEFACE_KEYPOINTS_LINE_OF_SYMMETRY_INDICES;
+            angle = computeRotation(
+                box.landmarks[indexOfNose], box.landmarks[indexOfForehead]);
+          }
         }
 
         const faceCenter =
@@ -265,12 +284,16 @@ export class Pipeline {
         const faceCenterNormalized: Coord2D =
             [faceCenter[0] / input.shape[2], faceCenter[1] / input.shape[1]];
 
-        const rotatedImage =
-            tf.image.rotateWithOffset(input, angle, 0, faceCenterNormalized);
+        let rotatedImage = input;
+        let rotationMatrix: TransformationMatrix =
+            [[1, 0, 0], [0, 1, 0], [0, 0, 1]];  // identity matrix
+        if (angle !== 0) {
+          rotatedImage =
+              tf.image.rotateWithOffset(input, angle, 0, faceCenterNormalized);
+          rotationMatrix = buildRotationMatrix(-angle, faceCenter);
+        }
 
-        const rotationMatrix = buildRotationMatrix(-angle, faceCenter);
         const boxCPU = {startPoint: box.startPoint, endPoint: box.endPoint};
-
         const face = cutBoxFromImageAndResize(boxCPU, rotatedImage, [
                        this.meshHeight, this.meshWidth
                      ]).div(255);
