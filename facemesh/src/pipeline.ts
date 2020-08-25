@@ -33,10 +33,16 @@ export type Prediction = {
 const UPDATE_REGION_OF_INTEREST_IOU_THRESHOLD = 0.25;
 const LANDMARKS_COUNT = 468;
 
+const MESH_MODEL_MOUTH_INDEX = 13;
+const MESH_MODEL_LEFT_EYE_INDEX = 386;
+const MESH_MODEL_RIGHT_EYE_INDEX = 159;
 const MESH_MODEL_KEYPOINTS_LINE_OF_SYMMETRY_INDICES =
     [MESH_ANNOTATIONS['noseTip'][0], MESH_ANNOTATIONS['midwayBetweenEyes'][0]];
+const BLAZEFACE_MOUTH_INDEX = 3;
+const BLAZEFACE_LEFT_EYE_INDEX = 0;
+const BLAZEFACE_RIGHT_EYE_INDEX = 1;
 const BLAZEFACE_KEYPOINTS_LINE_OF_SYMMETRY_INDICES =
-    [3 /* mouth */, 2 /* nose */];
+    [BLAZEFACE_MOUTH_INDEX, 2 /* nose */];
 
 const LEFT_EYE_OUTLINE = MESH_ANNOTATIONS['leftEyeLower0'];
 const LEFT_EYE_BOUNDS =
@@ -62,6 +68,10 @@ const REPLACEMENT_INDICES = [
   {key: 'EyebrowUpper', indices: [63, 64, 65, 66, 67, 68, 69, 70]},
   {key: 'EyebrowLower', indices: [48, 49, 50, 51, 52, 53]}
 ];
+
+// Threshold for determining when the face is sufficiently in profile that it
+// shouldn't be rotated.
+const X_TO_Y_ROTATION_THRESHOLD = 0.3;
 
 // The Pipeline coordinates between the bounding box and skeleton models.
 export class Pipeline {
@@ -271,8 +281,10 @@ export class Pipeline {
             box.landmarks.length >= LANDMARKS_COUNT;
         if (boxLandmarksFromMeshModel) {
           const ratioHorizontalToVertical = this.getRatioHorizontalToVertical(
-              box.landmarks[386], box.landmarks[159], box.landmarks[13]);
-          if (ratioHorizontalToVertical < 0.3) {
+              box.landmarks[MESH_MODEL_LEFT_EYE_INDEX],
+              box.landmarks[MESH_MODEL_RIGHT_EYE_INDEX],
+              box.landmarks[MESH_MODEL_MOUTH_INDEX]);
+          if (ratioHorizontalToVertical < X_TO_Y_ROTATION_THRESHOLD) {
             const [indexOfNose, indexOfForehead] =
                 MESH_MODEL_KEYPOINTS_LINE_OF_SYMMETRY_INDICES;
             angle = computeRotation(
@@ -280,8 +292,10 @@ export class Pipeline {
           }
         } else {
           const ratioHorizontalToVertical = this.getRatioHorizontalToVertical(
-              box.landmarks[0], box.landmarks[1], box.landmarks[3]);
-          if (ratioHorizontalToVertical < 0.3) {
+              box.landmarks[BLAZEFACE_LEFT_EYE_INDEX],
+              box.landmarks[BLAZEFACE_RIGHT_EYE_INDEX],
+              box.landmarks[BLAZEFACE_MOUTH_INDEX]);
+          if (ratioHorizontalToVertical < X_TO_Y_ROTATION_THRESHOLD) {
             const [indexOfNose, indexOfForehead] =
                 BLAZEFACE_KEYPOINTS_LINE_OF_SYMMETRY_INDICES;
             angle = computeRotation(
