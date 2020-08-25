@@ -115,14 +115,11 @@ export class Pipeline {
                              ]));
   }
 
-  private getEyeSizeRatios(leftEyeSize: [number, number], rightEyeSize: [
+  private getRatioLeftToRightEye(leftEyeSize: [number, number], rightEyeSize: [
     number, number
   ]): number {
     const leftTotalSize = leftEyeSize[0] * leftEyeSize[1];
     const rightTotalSize = rightEyeSize[0] * rightEyeSize[1];
-    if (leftTotalSize < rightTotalSize) {
-      return rightTotalSize / leftTotalSize;
-    }
     return leftTotalSize / rightTotalSize;
   }
 
@@ -289,10 +286,11 @@ export class Pipeline {
         const rightEyeRawCoords = rightEye.rawCoords;
         const rightIrisRawCoords = rightEye.iris;
 
-        const eyeSizeRatios =
-            this.getEyeSizeRatios(leftEye.size, rightEye.size);
+        const ratioLeftToRightEye =
+            this.getRatioLeftToRightEye(leftEye.size, rightEye.size);
 
-        if (Math.abs(1 - eyeSizeRatios) < 1) {
+        // If the user is looking straight ahead...
+        if (0.5 < ratioLeftToRightEye && ratioLeftToRightEye < 1.5) {
           rawCoords =
               rawCoords.concat(leftIrisRawCoords).concat(rightIrisRawCoords);
 
