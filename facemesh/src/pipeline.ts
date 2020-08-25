@@ -32,16 +32,23 @@ export type Prediction = {
 
 const UPDATE_REGION_OF_INTEREST_IOU_THRESHOLD = 0.25;
 const LANDMARKS_COUNT = 468;
+
 const MESH_MODEL_KEYPOINTS_LINE_OF_SYMMETRY_INDICES =
     [MESH_ANNOTATIONS['noseTip'][0], MESH_ANNOTATIONS['midwayBetweenEyes'][0]];
 const BLAZEFACE_KEYPOINTS_LINE_OF_SYMMETRY_INDICES =
     [3 /* mouth */, 2 /* nose */];
+
 const LEFT_EYE_OUTLINE = MESH_ANNOTATIONS['leftEyeLower0'];
 const LEFT_EYE_BOUNDS =
     [LEFT_EYE_OUTLINE[0], LEFT_EYE_OUTLINE[LEFT_EYE_OUTLINE.length - 1]];
 const RIGHT_EYE_OUTLINE = MESH_ANNOTATIONS['rightEyeLower0'];
 const RIGHT_EYE_BOUNDS =
     [RIGHT_EYE_OUTLINE[0], RIGHT_EYE_OUTLINE[RIGHT_EYE_OUTLINE.length - 1]];
+
+const IRIS_KEYPOINTS_UPPER_CENTER_INDEX = 12;
+const IRIS_KEYPOINTS_LOWER_CENTER_INDEX = 4;
+const IRIS_KEYPOINTS_IRIS_INDEX = 71;
+
 const ENLARGE_EYE_RATIO = 2.3;
 const IRIS_MODEL_INPUT_SIZE = 64;
 const REPLACEMENT_INDICES = [
@@ -125,6 +132,8 @@ export class Pipeline {
                              ]));
   }
 
+  // Returns the ratio of the projected XY distance between the eyes, and
+  // between the forehead and mouth.
   private getRatioHorizontalToVertical(
       leftEye: Coord3D, rightEye: Coord3D, mouth: Coord3D): number {
     const midwayBetweenEyes: Coord3D =
@@ -136,6 +145,8 @@ export class Pipeline {
     return distanceBetweenEyes / distanceBetweenVertical;
   }
 
+  // Returns the ratio of the projected left eye bounding box size, and the
+  // right eye bounding box size.
   private getRatioLeftToRightEye(leftEyeSize: [number, number], rightEyeSize: [
     number, number
   ]): number {
@@ -144,6 +155,8 @@ export class Pipeline {
     return leftTotalSize / rightTotalSize;
   }
 
+  // Given a cropped image of an eye, returns the coordinates of the contours
+  // surrounding the eye and the iris.
   getEyeCoords(
       face: tf.Tensor4D, eyeBox: Box, eyeBoxSize: [number, number],
       flip = false) {
@@ -163,39 +176,36 @@ export class Pipeline {
     const eyePrediction = (this.irisModel.predict(eye) as tf.Tensor).squeeze();
     const eyeRawCoords: Coords3D =
         (eyePrediction.reshape([-1, 3]).arraySync() as Coords3D)
-            .map((coord: Coord3D) => {
-              return [
-                (flip ? (1 - (coord[0] / IRIS_MODEL_INPUT_SIZE)) :
-                        (coord[0] / IRIS_MODEL_INPUT_SIZE)) *
-                        eyeBoxSize[0] +
-                    eyeBox.startPoint[0],
-                (coord[1] / IRIS_MODEL_INPUT_SIZE) * eyeBoxSize[1] +
-                    eyeBox.startPoint[1],
-                coord[2]
-              ];
-            });
+            .map((coord: Coord3D) => ([
+                   (flip ? (1 - (coord[0] / IRIS_MODEL_INPUT_SIZE)) :
+                           (coord[0] / IRIS_MODEL_INPUT_SIZE)) *
+                           eyeBoxSize[0] +
+                       eyeBox.startPoint[0],
+                   (coord[1] / IRIS_MODEL_INPUT_SIZE) * eyeBoxSize[1] +
+                       eyeBox.startPoint[1],
+                   coord[2]
+                 ]));
 
-    const eyeUpperCenterZ = eyeRawCoords[12][2];
-    const eyeLowerCenterZ = eyeRawCoords[4][2];
+    // The z-coordinates returned for the iris are unreliable, so we take the z
+    // values from the surrounding keypoints.
+    const eyeUpperCenterZ = eyeRawCoords[IRIS_KEYPOINTS_UPPER_CENTER_INDEX][2];
+    const eyeLowerCenterZ = eyeRawCoords[IRIS_KEYPOINTS_LOWER_CENTER_INDEX][2];
     const averageZ = (eyeUpperCenterZ + eyeLowerCenterZ) / 2;
 
-    // 0: center
-    // 1: right
-    // 2: above
-    // 3: left
-    // 4: below
-    const irisRawCoords = eyeRawCoords.slice(71).map((coord: Coord3D, i) => {
-      let z = averageZ;
-      if (i === 2) {
-        z = eyeUpperCenterZ;
-      } else if (i === 4) {
-        z = eyeLowerCenterZ;
-      }
+    // Iris indices:
+    // 0: center | 1: right | 2: above | 3: left | 4: below
+    const irisRawCoords = eyeRawCoords.slice(IRIS_KEYPOINTS_IRIS_INDEX)
+                              .map((coord: Coord3D, i) => {
+                                let z = averageZ;
+                                if (i === 2) {
+                                  z = eyeUpperCenterZ;
+                                } else if (i === 4) {
+                                  z = eyeLowerCenterZ;
+                                }
+                                return [coord[0], coord[1], z];
+                              }) as Coords3D;
 
-      return [coord[0], coord[1], z];
-    }) as Coords3D;
-
-    return {rawCoords: eyeRawCoords, iris: irisRawCoords, size: eyeBoxSize};
+    return {rawCoords: eyeRawCoords, iris: irisRawCoords};
   }
 
   /**
