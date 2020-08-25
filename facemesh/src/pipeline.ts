@@ -320,8 +320,16 @@ export class Pipeline {
             const rightIndices = MESH_ANNOTATIONS[`right${key}`];
             for (let j = 0; j < indices.length; j++) {
               const index = indices[j];
-              rawCoords[leftIndices[j]] = leftEyeRawCoords[index];
-              rawCoords[rightIndices[j]] = rightEyeRawCoords[index];
+
+              rawCoords[leftIndices[j]] = [
+                leftEyeRawCoords[index][0], leftEyeRawCoords[index][1],
+                (leftEyeRawCoords[index][2] + rawCoords[leftIndices[j]][2]) / 2
+              ];
+              rawCoords[rightIndices[j]] = [
+                rightEyeRawCoords[index][0], rightEyeRawCoords[index][1],
+                (rightEyeRawCoords[index][2] + rawCoords[rightIndices[j]][2]) /
+                    2
+              ];
             }
           }
         }
