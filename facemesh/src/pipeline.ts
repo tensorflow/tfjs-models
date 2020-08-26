@@ -21,7 +21,7 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {Box, cutBoxFromImageAndResize, enlargeBox, getBoxCenter, getBoxSize, scaleBoxCoordinates, squarifyBox} from './box';
 import {MESH_ANNOTATIONS} from './keypoints';
-import {buildRotationMatrix, computeRotation, Coord2D, Coord3D, Coords3D, dot, IDENTITY_MATRIX, invertTransformMatrix, rotatePoint, TransformationMatrix, xyDistanceBetweenPoints} from './util';
+import {buildRotationMatrix, computeRotation, Coord2D, Coord3D, Coords3D, dot, IDENTITY_MATRIX, invertTransformMatrix, rotatePoint, TransformationMatrix} from './util';
 
 export type Prediction = {
   coords: tf.Tensor2D,        // coordinates of facial landmarks.
@@ -34,14 +34,10 @@ const LANDMARKS_COUNT = 468;
 const UPDATE_REGION_OF_INTEREST_IOU_THRESHOLD = 0.25;
 
 const MESH_MOUTH_INDEX = 13;
-const MESH_LEFT_EYE_INDEX = 386;
-const MESH_RIGHT_EYE_INDEX = 159;
 const MESH_KEYPOINTS_LINE_OF_SYMMETRY_INDICES =
-    [MESH_ANNOTATIONS['noseTip'][0], MESH_ANNOTATIONS['midwayBetweenEyes'][0]];
+    [MESH_MOUTH_INDEX, MESH_ANNOTATIONS['midwayBetweenEyes'][0]];
 
 const BLAZEFACE_MOUTH_INDEX = 3;
-const BLAZEFACE_LEFT_EYE_INDEX = 0;
-const BLAZEFACE_RIGHT_EYE_INDEX = 1;
 const BLAZEFACE_NOSE_INDEX = 2;
 const BLAZEFACE_KEYPOINTS_LINE_OF_SYMMETRY_INDICES =
     [BLAZEFACE_MOUTH_INDEX, BLAZEFACE_NOSE_INDEX];
@@ -61,10 +57,6 @@ const IRIS_IRIS_INDEX = 71;
 // region matches the expectations of the iris model.
 const ENLARGE_EYE_RATIO = 2.3;
 const IRIS_MODEL_INPUT_SIZE = 64;
-
-// Threshold for determining when the face is sufficiently in profile that it
-// shouldn't be rotated.
-const X_TO_Y_ROTATION_THRESHOLD = 0.3;
 
 // A mapping from facemesh model keypoints to iris model keypoints.
 const MESH_TO_IRIS_INDICES_MAP = [
@@ -164,18 +156,6 @@ export class Pipeline {
                                coord[0] + originalBoxCenter[0],
                                coord[1] + originalBoxCenter[1], coord[2]
                              ]));
-  }
-
-  // Returns the ratio of the projected XY distance between the eyes, and
-  // between the forehead and mouth.
-  private getRatioHorizontalToVertical(
-      leftEye: Coord3D, rightEye: Coord3D, mouth: Coord3D): number {
-    const midwayBetweenEyes: Coord3D =
-        [(leftEye[0] + rightEye[0]) / 2, (leftEye[1] + rightEye[1]) / 2, 0];
-    const distanceBetweenEyes = xyDistanceBetweenPoints(leftEye, rightEye);
-    const distanceBetweenVertical =
-        xyDistanceBetweenPoints(midwayBetweenEyes, mouth);
-    return distanceBetweenEyes / distanceBetweenVertical;
   }
 
   // Returns the ratio of the projected left eye bounding box size, and the
@@ -302,28 +282,16 @@ export class Pipeline {
         // reusing an old box).
         const boxLandmarksFromMeshModel =
             box.landmarks.length >= LANDMARKS_COUNT;
-        let leftEyeIndex = MESH_LEFT_EYE_INDEX;
-        let rightEyeIndex = MESH_RIGHT_EYE_INDEX;
-        let mouthIndex = MESH_MOUTH_INDEX;
-        let [indexOfNose, indexOfForehead] =
+        let [indexOfMouth, indexOfForehead] =
             MESH_KEYPOINTS_LINE_OF_SYMMETRY_INDICES;
 
         if (boxLandmarksFromMeshModel === false) {
-          leftEyeIndex = BLAZEFACE_LEFT_EYE_INDEX;
-          rightEyeIndex = BLAZEFACE_RIGHT_EYE_INDEX;
-          mouthIndex = BLAZEFACE_MOUTH_INDEX;
-          [indexOfNose, indexOfForehead] =
+          [indexOfMouth, indexOfForehead] =
               BLAZEFACE_KEYPOINTS_LINE_OF_SYMMETRY_INDICES;
         }
 
-        const ratioHorizontalToVertical = this.getRatioHorizontalToVertical(
-            box.landmarks[leftEyeIndex], box.landmarks[rightEyeIndex],
-            box.landmarks[mouthIndex]);
-        // If the face is not in profile...
-        if (ratioHorizontalToVertical < X_TO_Y_ROTATION_THRESHOLD) {
-          angle = computeRotation(
-              box.landmarks[indexOfNose], box.landmarks[indexOfForehead]);
-        }
+        angle = computeRotation(
+            box.landmarks[indexOfMouth], box.landmarks[indexOfForehead]);
 
         const faceCenter =
             getBoxCenter({startPoint: box.startPoint, endPoint: box.endPoint});
