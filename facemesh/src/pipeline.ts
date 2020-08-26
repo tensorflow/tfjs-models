@@ -340,8 +340,8 @@ export class Pipeline {
           const ratioLeftToRightEye =
               this.getRatioLeftToRightEye(leftEyeBoxSize, rightEyeBoxSize);
 
-          // If the user is looking straight ahead...
-          if (0.7 < ratioLeftToRightEye && ratioLeftToRightEye < 1.3) {
+          if (0.7 < ratioLeftToRightEye &&
+              ratioLeftToRightEye < 1.3) {  // User is looking straight ahead.
             const leftEye = this.getEyeCoords(
                 face as tf.Tensor4D, leftEyeBox, leftEyeBoxSize, true);
             const leftEyeRawCoords = leftEye.rawCoords;
