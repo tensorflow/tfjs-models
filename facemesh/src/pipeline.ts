@@ -358,6 +358,10 @@ export class Pipeline {
             replaceRawCoordinates(rawCoords, rightEyeRawCoords, 'right');
           } else if (ratioLeftToRightEye > 1) {  // User is looking towards the
                                                  // right.
+            // If the user is looking to the left or to the right, the iris
+            // coordinates tend to diverge too much from the mesh coordinates
+            // for them to be merged. So we only update a single contour line
+            // above and below the eye.
             const leftEye = this.getEyeCoords(
                 face as tf.Tensor4D, leftEyeBox, leftEyeBoxSize, true);
             const leftEyeRawCoords = leftEye.rawCoords;
