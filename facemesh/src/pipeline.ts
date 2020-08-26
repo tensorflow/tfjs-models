@@ -174,7 +174,7 @@ export class Pipeline {
   // surrounding the eye and the iris.
   getEyeCoords(
       face: tf.Tensor4D, eyeBox: Box, eyeBoxSize: [number, number],
-      flip = false) {
+      flip = false): {rawCoords: Coords3D, iris: Coords3D} {
     let eye = tf.image.cropAndResize(
         face, [[
           eyeBox.startPoint[1] / this.meshHeight,
@@ -209,16 +209,16 @@ export class Pipeline {
 
     // Iris indices:
     // 0: center | 1: right | 2: above | 3: left | 4: below
-    const irisRawCoords =
-        eyeRawCoords.slice(IRIS_IRIS_INDEX).map((coord: Coord3D, i) => {
-          let z = averageZ;
-          if (i === 2) {
-            z = eyeUpperCenterZ;
-          } else if (i === 4) {
-            z = eyeLowerCenterZ;
-          }
-          return [coord[0], coord[1], z];
-        });
+    const irisRawCoords = eyeRawCoords.slice(IRIS_IRIS_INDEX)
+                              .map((coord: Coord3D, i): Coord3D => {
+                                let z = averageZ;
+                                if (i === 2) {
+                                  z = eyeUpperCenterZ;
+                                } else if (i === 4) {
+                                  z = eyeLowerCenterZ;
+                                }
+                                return [coord[0], coord[1], z];
+                              });
     return {rawCoords: eyeRawCoords, iris: irisRawCoords};
   }
 
