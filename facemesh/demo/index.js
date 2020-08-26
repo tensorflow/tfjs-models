@@ -169,16 +169,18 @@ async function renderPrediction() {
         ctx.arc(leftCenter[0], leftCenter[1], leftDiameter / 2, 0, 2 * Math.PI)
         ctx.stroke();
 
-        const rightCenter = keypoints[NUM_KEYPOINTS + 5];
-        const rightAbove = keypoints[NUM_KEYPOINTS + 5 + 2];
-        const rightBelow = keypoints[NUM_KEYPOINTS + 5 + 4];
-        const rightDiameter = Math.sqrt(
-          Math.pow(rightBelow[0] - rightAbove[0], 2) +
-          Math.pow(rightBelow[1] - rightAbove[1], 2));
+        if(keypoints.length > NUM_KEYPOINTS + 5) {
+          const rightCenter = keypoints[NUM_KEYPOINTS + 5];
+          const rightAbove = keypoints[NUM_KEYPOINTS + 5 + 2];
+          const rightBelow = keypoints[NUM_KEYPOINTS + 5 + 4];
+          const rightDiameter = Math.sqrt(
+            Math.pow(rightBelow[0] - rightAbove[0], 2) +
+            Math.pow(rightBelow[1] - rightAbove[1], 2));
 
-        ctx.beginPath();
-        ctx.arc(rightCenter[0], rightCenter[1], rightDiameter / 2, 0, 2 * Math.PI)
-        ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(rightCenter[0], rightCenter[1], rightDiameter / 2, 0, 2 * Math.PI)
+          ctx.stroke();
+        }
       }
     });
 

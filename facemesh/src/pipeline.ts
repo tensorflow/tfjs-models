@@ -346,7 +346,7 @@ export class Pipeline {
             this.getRatioLeftToRightEye(leftEyeBoxSize, rightEyeBoxSize);
 
         // If the user is looking straight ahead...
-        if (0.75 < ratioLeftToRightEye && ratioLeftToRightEye < 1.25) {
+        if (0.7 < ratioLeftToRightEye && ratioLeftToRightEye < 1.3) {
           const leftEye = this.getEyeCoords(
               face as tf.Tensor4D, leftEyeBox, leftEyeBoxSize, true);
           const leftEyeRawCoords = leftEye.rawCoords;
@@ -375,6 +375,56 @@ export class Pipeline {
                 (rightEyeRawCoords[index][2] + rawCoords[rightIndices[j]][2]) /
                     2
               ];
+            }
+          }
+        } else if (ratioLeftToRightEye > 1) {  // User is looking towards the
+                                               // right.
+          const leftEye = this.getEyeCoords(
+              face as tf.Tensor4D, leftEyeBox, leftEyeBoxSize, true);
+          const leftEyeRawCoords = leftEye.rawCoords;
+          const leftIrisRawCoords = leftEye.iris;
+
+          rawCoords = rawCoords.concat(leftIrisRawCoords);
+
+          for (let i = 0; i < MESH_TO_IRIS_INDICES_MAP.length; i++) {
+            const {key, indices} = MESH_TO_IRIS_INDICES_MAP[i];
+
+            if (key === 'EyeUpper0' || key === 'EyeLower0') {
+              const leftIndices = MESH_ANNOTATIONS[`left${key}`];
+              for (let j = 0; j < indices.length; j++) {
+                const index = indices[j];
+
+                rawCoords[leftIndices[j]] = [
+                  leftEyeRawCoords[index][0], leftEyeRawCoords[index][1],
+                  (leftEyeRawCoords[index][2] + rawCoords[leftIndices[j]][2]) /
+                      2
+                ];
+              }
+            }
+          }
+        } else {  // User is looking towards the left.
+          const rightEye = this.getEyeCoords(
+              face as tf.Tensor4D, rightEyeBox, rightEyeBoxSize);
+          const rightEyeRawCoords = rightEye.rawCoords;
+          const rightIrisRawCoords = rightEye.iris;
+
+          rawCoords = rawCoords.concat(rightIrisRawCoords);
+
+          for (let i = 0; i < MESH_TO_IRIS_INDICES_MAP.length; i++) {
+            const {key, indices} = MESH_TO_IRIS_INDICES_MAP[i];
+
+            if (key === 'EyeUpper0' || key === 'EyeLower0') {
+              const rightIndices = MESH_ANNOTATIONS[`right${key}`];
+              for (let j = 0; j < indices.length; j++) {
+                const index = indices[j];
+
+                rawCoords[rightIndices[j]] = [
+                  rightEyeRawCoords[index][0], rightEyeRawCoords[index][1],
+                  (rightEyeRawCoords[index][2] +
+                   rawCoords[rightIndices[j]][2]) /
+                      2
+                ];
+              }
             }
           }
         }
