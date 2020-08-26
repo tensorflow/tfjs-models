@@ -73,6 +73,8 @@ const MESH_TO_IRIS_INDICES_MAP = [
 
 // Replace the raw coordinates returned by facemesh with refined iris model
 // coordinates.
+// Update the z coordinate to be an average of the original and the new. This
+// produces the best visual effect.
 function replaceRawCoordinates(
     rawCoords: Coords3D, newCoords: Coords3D, prefix: string, keys?: string[]) {
   for (let i = 0; i < MESH_TO_IRIS_INDICES_MAP.length; i++) {
