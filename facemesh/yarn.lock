@@ -69,23 +69,23 @@
   resolved "https://registry.yarnpkg.com/@tensorflow-models/blazeface/-/blazeface-0.0.5.tgz#6261fcc5de61a283ea409b69f6a851f44a809826"
   integrity sha512-bIMJDV2CD8rr7v9OrIDdDZVh9sbk0EhlZdHaDFpgWUw3Lp21wUN7GSifOJVE5hV2ngmpzM+J12OH8bG1GZoDag==
 
-"@tensorflow/tfjs-backend-cpu@^2.1.0":
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-backend-cpu/-/tfjs-backend-cpu-2.1.0.tgz#0678ff3fd68ce4bf1d4493f4903efbed9b5ecb10"
-  integrity sha512-NXosd00L6zUztjdpxu5pBLe7CaPpi/Yvev2ik0e78TgA027tb7oHMgyB2IJI+F8BqzetWyv8Sndblmgpce98+w==
+"@tensorflow/tfjs-backend-cpu@^2.3.0":
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-backend-cpu/-/tfjs-backend-cpu-2.3.0.tgz#31176038bfeb321a49a2b30bedbdb6c239025f95"
+  integrity sha512-Ycf8mZywZYJrRIcZBqrloDxBc/lmV6aLLfj18wo8WE4aX9UxLNmSXF2iSs+x8icx7YmvLLglvTVST6tzL4sUSg==
   dependencies:
     "@types/seedrandom" "2.4.27"
     seedrandom "2.4.3"
 
-"@tensorflow/tfjs-converter@^2.1.0":
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-2.1.0.tgz#3dd226f11cab412cebf0b3f8d2b7f69bbfee994f"
-  integrity sha512-AAKUOTRDhhbIUM++7sD+WzSw8OKmykBCLAh6iGZkil12NL90gALhTfMH+9IkI+vTybKvbNlHiSUYVWoNek7zMw==
+"@tensorflow/tfjs-converter@^2.3.0":
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-2.3.0.tgz#359a8cbb5da78c7aefcf5045b4db3754d9846965"
+  integrity sha512-Q6rXAhL4XN9jo8bnXnDoc3sB3dC5T/gIWnLX+DGmDfgIARBCKG+QZdemBvg64qw48gdK6oxd75aaTsvCjuQ6ww==
 
-"@tensorflow/tfjs-core@^2.1.0":
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-core/-/tfjs-core-2.1.0.tgz#746be3db56c7943ba8480c70f757084ad49c7ad1"
-  integrity sha512-GFA8EkEbHYt8mRrDKrNt310Ru04Xc7HRR1nqIY7UDZ3bHpngIq+SC8WwhKSwgiGPgiTZ4N698+tqFB4eoE3uPg==
+"@tensorflow/tfjs-core@^2.3.0":
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-core/-/tfjs-core-2.3.0.tgz#272f9e6c143c6ff8c092aacf98707cec49d1bd2d"
+  integrity sha512-XJ8B/VQexYVtyyoIUCqzIbEgwaWZzv9lq1E4LKafJeuT9DldJGHS7IWIkNnZDBfmQvfYHU+fAvGRRPdQPoYeRg==
   dependencies:
     "@types/offscreencanvas" "~2019.3.0"
     "@types/seedrandom" "2.4.27"
