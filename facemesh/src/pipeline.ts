@@ -218,7 +218,7 @@ export class Pipeline {
             z = eyeLowerCenterZ;
           }
           return [coord[0], coord[1], z];
-        }) as Coords3D;
+        });
     return {rawCoords: eyeRawCoords, iris: irisRawCoords};
   }
 
