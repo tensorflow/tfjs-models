@@ -53,11 +53,13 @@ describeWithFlags('Facemesh', ALL_ENVS, () => {
     await model.estimateFaces(input, returnTensors, flipHorizontal);
     expect(tf.memory().numTensors).toEqual(numTensors);
 
-    // returnTensors = true, flipHorizontal = true
+    // returnTensors = true, flipHorizontal = true, returnIrises = true
     numTensors = tf.memory().numTensors;
     returnTensors = true;
     flipHorizontal = true;
-    await model.estimateFaces(input, returnTensors, flipHorizontal);
+    const returnIrises = true;
+    await model.estimateFaces(
+        input, returnTensors, flipHorizontal, returnIrises);
     expect(tf.memory().numTensors).toEqual(numTensors);
   });
 
@@ -67,7 +69,9 @@ describeWithFlags('Facemesh', ALL_ENVS, () => {
 
     // Call estimateFaces once up front to exclude any initialization tensors
     // from memory test.
-    await model.estimateFaces(input);
+    await model.estimateFaces(
+        input, false /* return tensors */, false /* return tensors */,
+        true /* predict irises */);
 
     const numTensors = tf.memory().numTensors;
     const result = await model.estimateFaces(input);
@@ -79,4 +83,28 @@ describeWithFlags('Facemesh', ALL_ENVS, () => {
     expect(face.mesh).toBeDefined();
     expect(face.scaledMesh).toBeDefined();
   });
+
+  it('estimateFaces returns objects with expected properties when ' +
+         'predicting irises',
+     async () => {
+       // Stubbed image contains a single face.
+       const input = tf.tensor3d(stubbedImageVals, [128, 128, 3]);
+
+       // Call estimateFaces once up front to exclude any initialization tensors
+       // from memory test.
+       await model.estimateFaces(input);
+
+       const numTensors = tf.memory().numTensors;
+       const result = await model.estimateFaces(input);
+       const face = result[0];
+
+       expect(tf.memory().numTensors).toEqual(numTensors);
+       expect(face.faceInViewConfidence).toBeDefined();
+       expect(face.boundingBox).toBeDefined();
+       expect(face.mesh).toBeDefined();
+       expect(face.scaledMesh).toBeDefined();
+
+       const mesh = face.scaledMesh as Array<[number, number, number]>;
+       expect(mesh.length).toEqual(478);
+     });
 });
