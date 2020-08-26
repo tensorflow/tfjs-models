@@ -133,6 +133,8 @@ main();
 
 * **flipHorizontal** - Whether to flip/mirror the facial keypoints horizontally. Should be true for videos that are flipped by default (e.g. webcams).
 
+* **predictIrises** - (defaults to `true`) Whether to return keypoints for the irises. Disabling may improve performance.
+
 #### Keypoints
 
 Here is map of the keypoints:
