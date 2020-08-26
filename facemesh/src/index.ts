@@ -205,14 +205,16 @@ export class FaceMesh {
    * @param flipHorizontal Whether to flip/mirror the facial keypoints
    * horizontally. Should be true for videos that are flipped by default (e.g.
    * webcams).
+   * @param predictIrises Whether to return keypoints for the irises.
+   * Disabling may improve performance. Defaults to true.
    *
    * @return An array of AnnotatedPrediction objects.
    */
   async estimateFaces(
       input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
       HTMLCanvasElement,
-      returnTensors = false,
-      flipHorizontal = false): Promise<AnnotatedPrediction[]> {
+      returnTensors = false, flipHorizontal = false,
+      predictIrises = true): Promise<AnnotatedPrediction[]> {
     const [, width] = getInputTensorDimensions(input);
 
     const image: tf.Tensor4D = tf.tidy(() => {
@@ -231,10 +233,10 @@ export class FaceMesh {
       const savedWebglPackDepthwiseConvFlag =
           tf.env().get('WEBGL_PACK_DEPTHWISECONV');
       tf.env().set('WEBGL_PACK_DEPTHWISECONV', true);
-      predictions = await this.pipeline.predict(image);
+      predictions = await this.pipeline.predict(image, predictIrises);
       tf.env().set('WEBGL_PACK_DEPTHWISECONV', savedWebglPackDepthwiseConvFlag);
     } else {
-      predictions = await this.pipeline.predict(image);
+      predictions = await this.pipeline.predict(image, predictIrises);
     }
 
     image.dispose();

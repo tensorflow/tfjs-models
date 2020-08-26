@@ -243,8 +243,10 @@ export class Pipeline {
   /**
    * Returns an array of predictions for each face in the input.
    * @param input - tensor of shape [1, H, W, 3].
+   * @param predictIrises - Whether to return keypoints for the irises.
    */
-  async predict(input: tf.Tensor4D): Promise<Prediction[]> {
+  async predict(input: tf.Tensor4D, predictIrises: boolean):
+      Promise<Prediction[]> {
     if (this.shouldUpdateRegionsOfInterest()) {
       const returnTensors = false;
       const annotateFace = true;
@@ -350,58 +352,62 @@ export class Pipeline {
         const coordsReshaped: tf.Tensor2D = tf.reshape(coords, [-1, 3]);
         let rawCoords = coordsReshaped.arraySync() as Coords3D;
 
-        const leftEyeBox = squarifyBox(enlargeBox(
-            this.calculateLandmarksBoundingBox(
-                [rawCoords[LEFT_EYE_BOUNDS[0]], rawCoords[LEFT_EYE_BOUNDS[1]]]),
-            ENLARGE_EYE_RATIO));
-        const leftEyeBoxSize = getBoxSize(leftEyeBox);
+        if (predictIrises) {
+          const leftEyeBox = squarifyBox(enlargeBox(
+              this.calculateLandmarksBoundingBox([
+                rawCoords[LEFT_EYE_BOUNDS[0]], rawCoords[LEFT_EYE_BOUNDS[1]]
+              ]),
+              ENLARGE_EYE_RATIO));
+          const leftEyeBoxSize = getBoxSize(leftEyeBox);
 
-        const rightEyeBox = squarifyBox(enlargeBox(
-            this.calculateLandmarksBoundingBox([
-              rawCoords[RIGHT_EYE_BOUNDS[0]], rawCoords[RIGHT_EYE_BOUNDS[1]]
-            ]),
-            ENLARGE_EYE_RATIO));
-        const rightEyeBoxSize = getBoxSize(rightEyeBox);
+          const rightEyeBox = squarifyBox(enlargeBox(
+              this.calculateLandmarksBoundingBox([
+                rawCoords[RIGHT_EYE_BOUNDS[0]], rawCoords[RIGHT_EYE_BOUNDS[1]]
+              ]),
+              ENLARGE_EYE_RATIO));
+          const rightEyeBoxSize = getBoxSize(rightEyeBox);
 
-        const ratioLeftToRightEye =
-            this.getRatioLeftToRightEye(leftEyeBoxSize, rightEyeBoxSize);
+          const ratioLeftToRightEye =
+              this.getRatioLeftToRightEye(leftEyeBoxSize, rightEyeBoxSize);
 
-        // If the user is looking straight ahead...
-        if (0.7 < ratioLeftToRightEye && ratioLeftToRightEye < 1.3) {
-          const leftEye = this.getEyeCoords(
-              face as tf.Tensor4D, leftEyeBox, leftEyeBoxSize, true);
-          const leftEyeRawCoords = leftEye.rawCoords;
-          const leftIrisRawCoords = leftEye.iris;
+          // If the user is looking straight ahead...
+          if (0.7 < ratioLeftToRightEye && ratioLeftToRightEye < 1.3) {
+            const leftEye = this.getEyeCoords(
+                face as tf.Tensor4D, leftEyeBox, leftEyeBoxSize, true);
+            const leftEyeRawCoords = leftEye.rawCoords;
+            const leftIrisRawCoords = leftEye.iris;
 
-          const rightEye = this.getEyeCoords(
-              face as tf.Tensor4D, rightEyeBox, rightEyeBoxSize);
-          const rightEyeRawCoords = rightEye.rawCoords;
-          const rightIrisRawCoords = rightEye.iris;
+            const rightEye = this.getEyeCoords(
+                face as tf.Tensor4D, rightEyeBox, rightEyeBoxSize);
+            const rightEyeRawCoords = rightEye.rawCoords;
+            const rightIrisRawCoords = rightEye.iris;
 
-          rawCoords =
-              rawCoords.concat(leftIrisRawCoords).concat(rightIrisRawCoords);
-          replaceRawCoordinates(rawCoords, leftEyeRawCoords, 'left');
-          replaceRawCoordinates(rawCoords, rightEyeRawCoords, 'right');
-        } else if (ratioLeftToRightEye > 1) {  // User is looking towards the
-                                               // right.
-          const leftEye = this.getEyeCoords(
-              face as tf.Tensor4D, leftEyeBox, leftEyeBoxSize, true);
-          const leftEyeRawCoords = leftEye.rawCoords;
-          const leftIrisRawCoords = leftEye.iris;
+            rawCoords =
+                rawCoords.concat(leftIrisRawCoords).concat(rightIrisRawCoords);
+            replaceRawCoordinates(rawCoords, leftEyeRawCoords, 'left');
+            replaceRawCoordinates(rawCoords, rightEyeRawCoords, 'right');
+          } else if (ratioLeftToRightEye > 1) {  // User is looking towards the
+                                                 // right.
+            const leftEye = this.getEyeCoords(
+                face as tf.Tensor4D, leftEyeBox, leftEyeBoxSize, true);
+            const leftEyeRawCoords = leftEye.rawCoords;
+            const leftIrisRawCoords = leftEye.iris;
 
-          rawCoords = rawCoords.concat(leftIrisRawCoords);
-          replaceRawCoordinates(
-              rawCoords, leftEyeRawCoords, 'left', ['EyeUpper0', 'EyeLower0']);
-        } else {  // User is looking towards the left.
-          const rightEye = this.getEyeCoords(
-              face as tf.Tensor4D, rightEyeBox, rightEyeBoxSize);
-          const rightEyeRawCoords = rightEye.rawCoords;
-          const rightIrisRawCoords = rightEye.iris;
+            rawCoords = rawCoords.concat(leftIrisRawCoords);
+            replaceRawCoordinates(
+                rawCoords, leftEyeRawCoords, 'left',
+                ['EyeUpper0', 'EyeLower0']);
+          } else {  // User is looking towards the left.
+            const rightEye = this.getEyeCoords(
+                face as tf.Tensor4D, rightEyeBox, rightEyeBoxSize);
+            const rightEyeRawCoords = rightEye.rawCoords;
+            const rightIrisRawCoords = rightEye.iris;
 
-          rawCoords = rawCoords.concat(rightIrisRawCoords);
-          replaceRawCoordinates(
-              rawCoords, rightEyeRawCoords, 'right',
-              ['EyeUpper0', 'EyeLower0']);
+            rawCoords = rawCoords.concat(rightIrisRawCoords);
+            replaceRawCoordinates(
+                rawCoords, rightEyeRawCoords, 'right',
+                ['EyeUpper0', 'EyeLower0']);
+          }
         }
 
         const transformedCoordsData =

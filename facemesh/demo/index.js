@@ -61,7 +61,8 @@ const stats = new Stats();
 const state = {
   backend: 'webgl',
   maxFaces: 1,
-  triangulateMesh: true
+  triangulateMesh: true,
+  predictIrises: true
 };
 
 if (renderPointcloud) {
@@ -82,6 +83,7 @@ function setupDatGui() {
   });
 
   gui.add(state, 'triangulateMesh');
+  gui.add(state, 'predictIrises');
 
   if (renderPointcloud) {
     gui.add(state, 'renderPointcloud').onChange(render => {
@@ -116,7 +118,9 @@ async function setupCamera() {
 async function renderPrediction() {
   stats.begin();
 
-  const predictions = await model.estimateFaces(video);
+  const predictions = await model.estimateFaces(
+      video, false /* returnTensors */, false /* flipHorizontal */,
+      state.predictIrises);
   ctx.drawImage(
       video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
 
