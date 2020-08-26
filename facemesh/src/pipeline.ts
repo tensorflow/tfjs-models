@@ -57,6 +57,15 @@ const IRIS_UPPER_CENTER_INDEX = 12;
 const IRIS_LOWER_CENTER_INDEX = 4;
 const IRIS_IRIS_INDEX = 71;
 
+// Factor by which to enlarge the box around the eye landmarks so the input
+// region matches the expectations of the iris model.
+const ENLARGE_EYE_RATIO = 2.3;
+const IRIS_MODEL_INPUT_SIZE = 64;
+
+// Threshold for determining when the face is sufficiently in profile that it
+// shouldn't be rotated.
+const X_TO_Y_ROTATION_THRESHOLD = 0.3;
+
 // A mapping from facemesh model keypoints to iris model keypoints.
 const MESH_TO_IRIS_INDICES_MAP = [
   {key: 'EyeUpper0', indices: [9, 10, 11, 12, 13, 14, 15]},
@@ -70,14 +79,26 @@ const MESH_TO_IRIS_INDICES_MAP = [
   {key: 'EyebrowLower', indices: [48, 49, 50, 51, 52, 53]}
 ];
 
-// Factor by which to enlarge the box around the eye landmarks so the input
-// region matches the expectations of the iris model.
-const ENLARGE_EYE_RATIO = 2.3;
-const IRIS_MODEL_INPUT_SIZE = 64;
+// Replace the raw coordinates returned by facemesh with refined iris model
+// coordinates.
+function replaceRawCoordinates(
+    rawCoords: Coords3D, newCoords: Coords3D, prefix: string, keys?: string[]) {
+  for (let i = 0; i < MESH_TO_IRIS_INDICES_MAP.length; i++) {
+    const {key, indices} = MESH_TO_IRIS_INDICES_MAP[i];
+    const originalIndices = MESH_ANNOTATIONS[`${prefix}${key}`];
 
-// Threshold for determining when the face is sufficiently in profile that it
-// shouldn't be rotated.
-const X_TO_Y_ROTATION_THRESHOLD = 0.3;
+    if (keys == null || keys.includes(key)) {
+      for (let j = 0; j < indices.length; j++) {
+        const index = indices[j];
+
+        rawCoords[originalIndices[j]] = [
+          newCoords[index][0], newCoords[index][1],
+          (newCoords[index][2] + rawCoords[originalIndices[j]][2]) / 2
+        ];
+      }
+    }
+  }
+}
 
 // The Pipeline coordinates between the bounding box and skeleton models.
 export class Pipeline {
@@ -356,27 +377,11 @@ export class Pipeline {
               face as tf.Tensor4D, rightEyeBox, rightEyeBoxSize);
           const rightEyeRawCoords = rightEye.rawCoords;
           const rightIrisRawCoords = rightEye.iris;
+
           rawCoords =
               rawCoords.concat(leftIrisRawCoords).concat(rightIrisRawCoords);
-
-          for (let i = 0; i < MESH_TO_IRIS_INDICES_MAP.length; i++) {
-            const {key, indices} = MESH_TO_IRIS_INDICES_MAP[i];
-            const leftIndices = MESH_ANNOTATIONS[`left${key}`];
-            const rightIndices = MESH_ANNOTATIONS[`right${key}`];
-            for (let j = 0; j < indices.length; j++) {
-              const index = indices[j];
-
-              rawCoords[leftIndices[j]] = [
-                leftEyeRawCoords[index][0], leftEyeRawCoords[index][1],
-                (leftEyeRawCoords[index][2] + rawCoords[leftIndices[j]][2]) / 2
-              ];
-              rawCoords[rightIndices[j]] = [
-                rightEyeRawCoords[index][0], rightEyeRawCoords[index][1],
-                (rightEyeRawCoords[index][2] + rawCoords[rightIndices[j]][2]) /
-                    2
-              ];
-            }
-          }
+          replaceRawCoordinates(rawCoords, leftEyeRawCoords, 'left');
+          replaceRawCoordinates(rawCoords, rightEyeRawCoords, 'right');
         } else if (ratioLeftToRightEye > 1) {  // User is looking towards the
                                                // right.
           const leftEye = this.getEyeCoords(
@@ -385,23 +390,8 @@ export class Pipeline {
           const leftIrisRawCoords = leftEye.iris;
 
           rawCoords = rawCoords.concat(leftIrisRawCoords);
-
-          for (let i = 0; i < MESH_TO_IRIS_INDICES_MAP.length; i++) {
-            const {key, indices} = MESH_TO_IRIS_INDICES_MAP[i];
-
-            if (key === 'EyeUpper0' || key === 'EyeLower0') {
-              const leftIndices = MESH_ANNOTATIONS[`left${key}`];
-              for (let j = 0; j < indices.length; j++) {
-                const index = indices[j];
-
-                rawCoords[leftIndices[j]] = [
-                  leftEyeRawCoords[index][0], leftEyeRawCoords[index][1],
-                  (leftEyeRawCoords[index][2] + rawCoords[leftIndices[j]][2]) /
-                      2
-                ];
-              }
-            }
-          }
+          replaceRawCoordinates(
+              rawCoords, leftEyeRawCoords, 'left', ['EyeUpper0', 'EyeLower0']);
         } else {  // User is looking towards the left.
           const rightEye = this.getEyeCoords(
               face as tf.Tensor4D, rightEyeBox, rightEyeBoxSize);
@@ -409,24 +399,9 @@ export class Pipeline {
           const rightIrisRawCoords = rightEye.iris;
 
           rawCoords = rawCoords.concat(rightIrisRawCoords);
-
-          for (let i = 0; i < MESH_TO_IRIS_INDICES_MAP.length; i++) {
-            const {key, indices} = MESH_TO_IRIS_INDICES_MAP[i];
-
-            if (key === 'EyeUpper0' || key === 'EyeLower0') {
-              const rightIndices = MESH_ANNOTATIONS[`right${key}`];
-              for (let j = 0; j < indices.length; j++) {
-                const index = indices[j];
-
-                rawCoords[rightIndices[j]] = [
-                  rightEyeRawCoords[index][0], rightEyeRawCoords[index][1],
-                  (rightEyeRawCoords[index][2] +
-                   rawCoords[rightIndices[j]][2]) /
-                      2
-                ];
-              }
-            }
-          }
+          replaceRawCoordinates(
+              rawCoords, rightEyeRawCoords, 'right',
+              ['EyeUpper0', 'EyeLower0']);
         }
 
         const transformedCoordsData =
