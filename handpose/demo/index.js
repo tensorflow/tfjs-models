@@ -15,22 +15,22 @@
  * =============================================================================
  */
 
-// import * as tfwebgpu from '@tensorflow/tfjs-backend-webgpu';
 import * as handpose from '@tensorflow-models/handpose';
-import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
-import * as tf from '@tensorflow/tfjs';
-import {version_wasm} from '@tensorflow/tfjs-backend-wasm';
 import * as tf from '@tensorflow/tfjs-core';
+import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
+import '@tensorflow/tfjs-backend-webgl';
+
 tfjsWasm.setWasmPath(
     `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
-        version_wasm}/dist/tfjs-backend-wasm.wasm`);
+        tfjsWasm.version_wasm}/dist/tfjs-backend-wasm.wasm`);
+
 function isMobile() {
   const isAndroid = /Android/i.test(navigator.userAgent);
   const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
   return isAndroid || isiOS;
 }
 
-let videoWidth, videoHeight,
+let videoWidth, videoHeight, rafID, ctx, canvas, ANCHOR_POINTS,
     scatterGLHasInitialized = false, scatterGL, fingerLookupIndices = {
       thumb: [0, 1, 2, 3, 4],
       indexFinger: [0, 5, 6, 7, 8],
@@ -50,15 +50,21 @@ const state = {
   backend: 'webgl'
 };
 
+const stats = new Stats();
+stats.showPanel(0);
+document.body.appendChild(stats.dom);
+
 if (renderPointcloud) {
   state.renderPointcloud = true;
 }
 
 function setupDatGui() {
   const gui = new dat.GUI();
-  gui.add(state, 'backend', ['wasm', 'webgl', 'cpu', 'webgpu'])
+  gui.add(state, 'backend', ['webgl', 'wasm'])
       .onChange(async backend => {
+        window.cancelAnimationFrame(rafID);
         await tf.setBackend(backend);
+        landmarksRealTime(video);
       });
 
   if (renderPointcloud) {
@@ -68,30 +74,31 @@ function setupDatGui() {
     });
   }
 }
-function drawPoint(ctx, y, x, r) {
+
+function drawPoint(y, x, r) {
   ctx.beginPath();
   ctx.arc(x, y, r, 0, 2 * Math.PI);
   ctx.fill();
 }
 
-function drawKeypoints(ctx, keypoints) {
+function drawKeypoints(keypoints) {
   const keypointsArray = keypoints;
 
   for (let i = 0; i < keypointsArray.length; i++) {
     const y = keypointsArray[i][0];
     const x = keypointsArray[i][1];
-    drawPoint(ctx, x - 2, y - 2, 3);
+    drawPoint(x - 2, y - 2, 3);
   }
 
   const fingers = Object.keys(fingerLookupIndices);
   for (let i = 0; i < fingers.length; i++) {
     const finger = fingers[i];
     const points = fingerLookupIndices[finger].map(idx => keypoints[idx]);
-    drawPath(ctx, points, false);
+    drawPath(points, false);
   }
 }
 
-function drawPath(ctx, points, closePath) {
+function drawPath(points, closePath) {
   const region = new Path2D();
   region.moveTo(points[0][0], points[0][1]);
   for (let i = 1; i < points.length; i++) {
@@ -139,8 +146,7 @@ async function loadVideo() {
   return video;
 }
 
-const main =
-    async () => {
+async function main() {
   await tf.setBackend(state.backend);
   model = await handpose.load();
   let video;
@@ -154,29 +160,18 @@ const main =
     throw e;
   }
 
-  landmarksRealTime(video);
-}
-
-const landmarksRealTime = async (video) => {
   setupDatGui();
-
-  const stats = new Stats();
-  stats.showPanel(0);
-  document.body.appendChild(stats.dom);
 
   videoWidth = video.videoWidth;
   videoHeight = video.videoHeight;
 
-  const canvas = document.getElementById('output');
-
+  canvas = document.getElementById('output');
   canvas.width = videoWidth;
   canvas.height = videoHeight;
-
-  const ctx = canvas.getContext('2d');
-
   video.width = videoWidth;
   video.height = videoHeight;
 
+  ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, videoWidth, videoHeight);
   ctx.strokeStyle = 'red';
   ctx.fillStyle = 'red';
@@ -186,11 +181,24 @@ const landmarksRealTime = async (video) => {
 
   // These anchor points allow the hand pointcloud to resize according to its
   // position in the input.
-  const ANCHOR_POINTS = [
+  ANCHOR_POINTS = [
     [0, 0, 0], [0, -VIDEO_HEIGHT, 0], [-VIDEO_WIDTH, 0, 0],
     [-VIDEO_WIDTH, -VIDEO_HEIGHT, 0]
   ];
 
+  if (renderPointcloud) {
+    document.querySelector('#scatter-gl-container').style =
+        `width: ${VIDEO_WIDTH}px; height: ${VIDEO_HEIGHT}px;`;
+
+    scatterGL = new ScatterGL(
+        document.querySelector('#scatter-gl-container'),
+        {'rotateOnStart': false, 'selectEnabled': false});
+  }
+
+  landmarksRealTime(video);
+}
+
+const landmarksRealTime = async (video) => {
   async function frameLandmarks() {
     stats.begin();
     ctx.drawImage(
@@ -199,7 +207,7 @@ const landmarksRealTime = async (video) => {
     const predictions = await model.estimateHands(video);
     if (predictions.length > 0) {
       const result = predictions[0].landmarks;
-      drawKeypoints(ctx, result, predictions[0].annotations);
+      drawKeypoints(result, predictions[0].annotations);
 
       if (renderPointcloud === true && scatterGL != null) {
         const pointsData = result.map(point => {
@@ -229,19 +237,10 @@ const landmarksRealTime = async (video) => {
       }
     }
     stats.end();
-    requestAnimationFrame(frameLandmarks);
+    rafID = requestAnimationFrame(frameLandmarks);
   };
 
   frameLandmarks();
-
-  if (renderPointcloud) {
-    document.querySelector('#scatter-gl-container').style =
-        `width: ${VIDEO_WIDTH}px; height: ${VIDEO_HEIGHT}px;`;
-
-    scatterGL = new ScatterGL(
-        document.querySelector('#scatter-gl-container'),
-        {'rotateOnStart': false, 'selectEnabled': false});
-  }
 };
 
 navigator.getUserMedia = navigator.getUserMedia ||
