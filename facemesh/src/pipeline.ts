@@ -81,7 +81,8 @@ function replaceRawCoordinates(
     const {key, indices} = MESH_TO_IRIS_INDICES_MAP[i];
     const originalIndices = MESH_ANNOTATIONS[`${prefix}${key}`];
 
-    if (keys == null || keys.includes(key)) {
+    const shouldReplaceAllKeys = keys == null;
+    if (shouldReplaceAllKeys || keys.includes(key)) {
       for (let j = 0; j < indices.length; j++) {
         const index = indices[j];
 
