@@ -30,7 +30,7 @@ declare interface ModelInputs extends tf.NamedTensorMap {
  *
  * @param threshold A prediction is considered valid only if its confidence
  * exceeds the threshold. Defaults to 0.85.
- * @param toxicityLabels An array of strings indicating which types of toxicity
+ * @param [toxicityLabels=[]] An array of strings indicating which types of toxicity
  * to detect. Labels must be one of `toxicity` | `severe_toxicity` |
  * `identity_attack` | `insult` | `threat` | `sexual_explicit` | `obscene`.
  * Defaults to all labels.
