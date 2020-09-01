@@ -36,6 +36,10 @@ function isMobile() {
   return isAndroid || isiOS;
 }
 
+function distance(a, b) {
+  return Math.sqrt(Math.pow(a[0] - b[0], 2) + Math.pow(a[1] - b[1], 2));
+}
+
 function drawPath(ctx, points, closePath) {
   const region = new Path2D();
   region.moveTo(points[0][0], points[0][1]);
@@ -159,26 +163,28 @@ async function renderPrediction() {
         ctx.lineWidth = 1;
 
         const leftCenter = keypoints[NUM_KEYPOINTS];
-        const leftAbove = keypoints[NUM_KEYPOINTS + 2];
-        const leftBelow = keypoints[NUM_KEYPOINTS + 4];
-        const leftDiameter = Math.sqrt(
-          Math.pow(leftBelow[0] - leftAbove[0], 2) +
-          Math.pow(leftBelow[1] - leftAbove[1], 2));
+        const leftDiameterY = distance(
+          keypoints[NUM_KEYPOINTS + 4],
+          keypoints[NUM_KEYPOINTS + 2]);
+        const leftDiameterX = distance(
+          keypoints[NUM_KEYPOINTS + 3],
+          keypoints[NUM_KEYPOINTS + 1]);
 
         ctx.beginPath();
-        ctx.arc(leftCenter[0], leftCenter[1], leftDiameter / 2, 0, 2 * Math.PI)
+        ctx.ellipse(leftCenter[0], leftCenter[1], leftDiameterX / 2, leftDiameterY / 2, 0, 0, 2 * Math.PI);
         ctx.stroke();
 
         if(keypoints.length > NUM_KEYPOINTS + NUM_IRIS_KEYPOINTS) {
           const rightCenter = keypoints[NUM_KEYPOINTS + NUM_IRIS_KEYPOINTS];
-          const rightAbove = keypoints[NUM_KEYPOINTS + NUM_IRIS_KEYPOINTS + 2];
-          const rightBelow = keypoints[NUM_KEYPOINTS + NUM_IRIS_KEYPOINTS + 4];
-          const rightDiameter = Math.sqrt(
-            Math.pow(rightBelow[0] - rightAbove[0], 2) +
-            Math.pow(rightBelow[1] - rightAbove[1], 2));
+          const rightDiameterY = distance(
+            keypoints[NUM_KEYPOINTS + NUM_IRIS_KEYPOINTS + 2],
+            keypoints[NUM_KEYPOINTS + NUM_IRIS_KEYPOINTS + 4]);
+          const rightDiameterX = distance(
+            keypoints[NUM_KEYPOINTS + NUM_IRIS_KEYPOINTS + 3],
+            keypoints[NUM_KEYPOINTS + NUM_IRIS_KEYPOINTS + 1]);
 
           ctx.beginPath();
-          ctx.arc(rightCenter[0], rightCenter[1], rightDiameter / 2, 0, 2 * Math.PI)
+          ctx.ellipse(rightCenter[0], rightCenter[1], rightDiameterX / 2, rightDiameterY / 2, 0, 0, 2 * Math.PI);
           ctx.stroke();
         }
       }
