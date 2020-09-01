@@ -10,10 +10,10 @@
   },
   "dependencies": {
     "@tensorflow-models/facemesh": "0.0.4",
-    "@tensorflow/tfjs-backend-wasm": "^2.1.0",
-    "@tensorflow/tfjs-backend-webgl": "^2.1.0",
-    "@tensorflow/tfjs-converter": "^2.1.0",
-    "@tensorflow/tfjs-core": "^2.1.0",
+    "@tensorflow/tfjs-backend-wasm": "^2.3.0",
+    "@tensorflow/tfjs-backend-webgl": "^2.3.0",
+    "@tensorflow/tfjs-converter": "^2.3.0",
+    "@tensorflow/tfjs-core": "^2.3.0",
     "stats.js": "^0.17.0"
   },
   "scripts": {
@@ -23,7 +23,9 @@
     "link-local": "yalc link @tensorflow-models/facemesh"
   },
   "browser": {
-    "crypto": false
+    "crypto": false,
+    "perf_hooks": false,
+    "worker_threads": false
   },
   "devDependencies": {
     "@babel/core": "7.7.5",
