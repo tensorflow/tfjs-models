@@ -363,7 +363,7 @@ export function drawMask(
     flipCanvasHorizontal(canvas);
   }
 
-  ctx.drawImage(image, 0, 0);
+  ctx.drawImage(image, 0, 0, width, height);
 
   ctx.globalAlpha = maskOpacity;
   if (maskImage) {
