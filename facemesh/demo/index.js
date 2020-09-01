@@ -150,11 +150,6 @@ async function renderPrediction() {
 
           ctx.beginPath();
           ctx.arc(x, y, 1 /* radius */, 0, 2 * Math.PI);
-
-          if(i >= NUM_KEYPOINTS) {
-            ctx.fillStyle = '#FF2C35';
-          } else {
-          }
           ctx.fill();
         }
       }
