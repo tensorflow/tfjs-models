@@ -49,7 +49,7 @@ const RIGHT_EYE_OUTLINE = MESH_ANNOTATIONS['rightEyeLower0'];
 const RIGHT_EYE_BOUNDS =
     [RIGHT_EYE_OUTLINE[0], RIGHT_EYE_OUTLINE[RIGHT_EYE_OUTLINE.length - 1]];
 
-const IRIS_UPPER_CENTER_INDEX = 12;
+const IRIS_UPPER_CENTER_INDEX = 3;
 const IRIS_LOWER_CENTER_INDEX = 4;
 const IRIS_IRIS_INDEX = 71;
 
@@ -202,25 +202,33 @@ export class Pipeline {
                    coord[2]
                  ]));
 
-    // The z-coordinates returned for the iris are unreliable, so we take the z
-    // values from the surrounding keypoints.
-    const eyeUpperCenterZ = eyeRawCoords[IRIS_UPPER_CENTER_INDEX][2];
-    const eyeLowerCenterZ = eyeRawCoords[IRIS_LOWER_CENTER_INDEX][2];
-    const averageZ = (eyeUpperCenterZ + eyeLowerCenterZ) / 2;
+    return {rawCoords: eyeRawCoords, iris: eyeRawCoords.slice(IRIS_IRIS_INDEX)};
+  }
+
+  // The z-coordinates returned for the iris are unreliable, so we take the z
+  // values from the surrounding keypoints.
+  private getAdjustedIrisCoords(
+      rawCoords: Coords3D, irisCoords: Coords3D,
+      direction: 'left'|'right'): Coords3D {
+    const upperCenterZ =
+        rawCoords[MESH_ANNOTATIONS[`${direction}EyeUpper0`]
+                                  [IRIS_UPPER_CENTER_INDEX]][2];
+    const lowerCenterZ =
+        rawCoords[MESH_ANNOTATIONS[`${direction}EyeLower0`]
+                                  [IRIS_LOWER_CENTER_INDEX]][2];
+    const averageZ = (upperCenterZ + lowerCenterZ) / 2;
 
     // Iris indices:
     // 0: center | 1: right | 2: above | 3: left | 4: below
-    const irisRawCoords = eyeRawCoords.slice(IRIS_IRIS_INDEX)
-                              .map((coord: Coord3D, i): Coord3D => {
-                                let z = averageZ;
-                                if (i === 2) {
-                                  z = eyeUpperCenterZ;
-                                } else if (i === 4) {
-                                  z = eyeLowerCenterZ;
-                                }
-                                return [coord[0], coord[1], z];
-                              });
-    return {rawCoords: eyeRawCoords, iris: irisRawCoords};
+    return irisCoords.map((coord: Coord3D, i): Coord3D => {
+      let z = averageZ;
+      if (i === 2) {
+        z = upperCenterZ;
+      } else if (i === 4) {
+        z = lowerCenterZ;
+      }
+      return [coord[0], coord[1], z];
+    });
   }
 
   /**
@@ -341,20 +349,18 @@ export class Pipeline {
           const ratioLeftToRightEye =
               this.getRatioLeftToRightEye(leftEyeBoxSize, rightEyeBoxSize);
 
+          const leftEye = this.getEyeCoords(
+              face as tf.Tensor4D, leftEyeBox, leftEyeBoxSize, true);
+          const leftEyeRawCoords = leftEye.rawCoords;
+          const leftIrisRawCoords = leftEye.iris;
+
+          const rightEye = this.getEyeCoords(
+              face as tf.Tensor4D, rightEyeBox, rightEyeBoxSize);
+          const rightEyeRawCoords = rightEye.rawCoords;
+          const rightIrisRawCoords = rightEye.iris;
+
           if (0.7 < ratioLeftToRightEye &&
               ratioLeftToRightEye < 1.3) {  // User is looking straight ahead.
-            const leftEye = this.getEyeCoords(
-                face as tf.Tensor4D, leftEyeBox, leftEyeBoxSize, true);
-            const leftEyeRawCoords = leftEye.rawCoords;
-            const leftIrisRawCoords = leftEye.iris;
-
-            const rightEye = this.getEyeCoords(
-                face as tf.Tensor4D, rightEyeBox, rightEyeBoxSize);
-            const rightEyeRawCoords = rightEye.rawCoords;
-            const rightIrisRawCoords = rightEye.iris;
-
-            rawCoords =
-                rawCoords.concat(leftIrisRawCoords).concat(rightIrisRawCoords);
             replaceRawCoordinates(rawCoords, leftEyeRawCoords, 'left');
             replaceRawCoordinates(rawCoords, rightEyeRawCoords, 'right');
           } else if (ratioLeftToRightEye > 1) {  // User is looking towards the
@@ -363,26 +369,21 @@ export class Pipeline {
             // coordinates tend to diverge too much from the mesh coordinates
             // for them to be merged. So we only update a single contour line
             // above and below the eye.
-            const leftEye = this.getEyeCoords(
-                face as tf.Tensor4D, leftEyeBox, leftEyeBoxSize, true);
-            const leftEyeRawCoords = leftEye.rawCoords;
-            const leftIrisRawCoords = leftEye.iris;
-
-            rawCoords = rawCoords.concat(leftIrisRawCoords);
             replaceRawCoordinates(
                 rawCoords, leftEyeRawCoords, 'left',
                 ['EyeUpper0', 'EyeLower0']);
           } else {  // User is looking towards the left.
-            const rightEye = this.getEyeCoords(
-                face as tf.Tensor4D, rightEyeBox, rightEyeBoxSize);
-            const rightEyeRawCoords = rightEye.rawCoords;
-            const rightIrisRawCoords = rightEye.iris;
-
-            rawCoords = rawCoords.concat(rightIrisRawCoords);
             replaceRawCoordinates(
                 rawCoords, rightEyeRawCoords, 'right',
                 ['EyeUpper0', 'EyeLower0']);
           }
+
+          const adjustedLeftIrisCoords =
+              this.getAdjustedIrisCoords(rawCoords, leftIrisRawCoords, 'left');
+          const adjustedRightIrisCoords = this.getAdjustedIrisCoords(
+              rawCoords, rightIrisRawCoords, 'right');
+          rawCoords = rawCoords.concat(adjustedLeftIrisCoords)
+                          .concat(adjustedRightIrisCoords);
         }
 
         const transformedCoordsData =
