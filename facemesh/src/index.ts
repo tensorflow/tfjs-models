@@ -297,8 +297,10 @@ export class FaceMesh {
 
         const annotations: {[key: string]: Coords3D} = {};
         for (const key in MESH_ANNOTATIONS) {
-          annotations[key] = MESH_ANNOTATIONS[key].map(
-              index => annotatedPrediction.scaledMesh[index]);
+          if (predictIrises || key.includes('Iris') === false) {
+            annotations[key] = MESH_ANNOTATIONS[key].map(
+                index => annotatedPrediction.scaledMesh[index]);
+          }
         }
         annotatedPrediction['annotations'] = annotations;
 
