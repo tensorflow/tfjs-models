@@ -29,6 +29,9 @@ tfjsWasm.setWasmPath(
 
 const NUM_KEYPOINTS = 468;
 const NUM_IRIS_KEYPOINTS = 5;
+const GREEN = '#32EEDB';
+const RED = "#FF2C35";
+const BLUE = "#157AB3";
 
 function isMobile() {
   const isAndroid = /Android/i.test(navigator.userAgent);
@@ -134,7 +137,7 @@ async function renderPrediction() {
       const keypoints = prediction.scaledMesh;
 
       if (state.triangulateMesh) {
-        ctx.strokeStyle = '#32EEDB';
+        ctx.strokeStyle = GREEN;
         ctx.lineWidth = 0.5;
 
         for (let i = 0; i < TRIANGULATION.length / 3; i++) {
@@ -146,7 +149,7 @@ async function renderPrediction() {
           drawPath(ctx, points, true);
         }
       } else {
-        ctx.fillStyle = '#32EEDB';
+        ctx.fillStyle = GREEN;
 
         for (let i = 0; i < NUM_KEYPOINTS; i++) {
           const x = keypoints[i][0];
@@ -159,7 +162,7 @@ async function renderPrediction() {
       }
 
       if(keypoints.length > NUM_KEYPOINTS) {
-        ctx.strokeStyle = "red";
+        ctx.strokeStyle = RED;
         ctx.lineWidth = 1;
 
         const leftCenter = keypoints[NUM_KEYPOINTS];
@@ -205,9 +208,9 @@ async function renderPrediction() {
       if (!scatterGLHasInitialized) {
         scatterGL.setPointColorer((i) => {
           if(i >= NUM_KEYPOINTS) {
-            return "#FF2C35";
+            return RED;
           }
-          return "#157AB3";
+          return BLUE;
         });
         scatterGL.render(dataset);
       } else {
@@ -244,8 +247,8 @@ async function main() {
   ctx = canvas.getContext('2d');
   ctx.translate(canvas.width, 0);
   ctx.scale(-1, 1);
-  ctx.fillStyle = '#32EEDB';
-  ctx.strokeStyle = '#32EEDB';
+  ctx.fillStyle = GREEN;
+  ctx.strokeStyle = GREEN;
   ctx.lineWidth = 0.5;
 
   model = await facemesh.load({maxFaces: state.maxFaces});
