@@ -359,8 +359,8 @@ export class Pipeline {
           const rightEyeRawCoords = rightEye.rawCoords;
           const rightIrisRawCoords = rightEye.iris;
 
-          if (0.7 < ratioLeftToRightEye &&
-              ratioLeftToRightEye < 1.3) {  // User is looking straight ahead.
+          if (0.6 < ratioLeftToRightEye &&
+              ratioLeftToRightEye < 1.4) {  // User is looking straight ahead.
             replaceRawCoordinates(rawCoords, leftEyeRawCoords, 'left');
             replaceRawCoordinates(rawCoords, rightEyeRawCoords, 'right');
           } else if (ratioLeftToRightEye > 1) {  // User is looking towards the
