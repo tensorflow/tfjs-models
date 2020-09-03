@@ -47,7 +47,11 @@ export type BlazeFacePrediction = {
 // point predicts the probability that it lies within a face. `ANCHORS_CONFIG`
 // is a fixed configuration that determines where the anchor points are
 // scattered.
-const ANCHORS_CONFIG = {
+declare interface AnchorsConfig {
+  strides: [number, number];
+  anchors: [number, number];
+}
+const ANCHORS_CONFIG: AnchorsConfig = {
   'strides': [8, 16],
   'anchors': [2, 6]
 };
@@ -56,9 +60,7 @@ const ANCHORS_CONFIG = {
 const NUM_LANDMARKS = 6;
 
 function generateAnchors(
-    width: number, height: number,
-    outputSpec: {strides: [number, number], anchors: [number, number]}):
-    number[][] {
+    width: number, height: number, outputSpec: AnchorsConfig): number[][] {
   const anchors = [];
   for (let i = 0; i < outputSpec.strides.length; i++) {
     const stride = outputSpec.strides[i];
