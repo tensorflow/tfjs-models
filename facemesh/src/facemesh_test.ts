@@ -79,7 +79,6 @@ describeWithFlags('Facemesh', ALL_ENVS, () => {
     expect(face.mesh).toBeDefined();
     expect(face.scaledMesh).toBeDefined();
 
-
     const topLeft = face.boundingBox.topLeft as [number, number];
     const bottomRight = face.boundingBox.bottomRight as [number, number];
 
