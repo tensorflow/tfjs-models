@@ -99,7 +99,8 @@ module.exports = cmdOptions => {
   const terserPlugin = terser({output: {preamble: PREAMBLE, comments: false}});
   const name = 'cocoSsd';
   const extend = true;
-  const browserFormat = 'umd';
+  const umdFormat = 'umd';
+  const flatEsmFormat = 'es';
   const fileName = 'coco-ssd';
 
   // Node
@@ -115,11 +116,11 @@ module.exports = cmdOptions => {
   }));
 
   if (cmdOptions.ci || cmdOptions.npm) {
-    // Browser default minified (ES5)
+    // UMD default minified (ES5)
     bundles.push(config({
       plugins: [terserPlugin],
       output: {
-        format: browserFormat,
+        format: umdFormat,
         name,
         extend,
         file: `dist/${fileName}.min.js`,
@@ -131,10 +132,10 @@ module.exports = cmdOptions => {
   }
 
   if (cmdOptions.npm) {
-    // Browser default unminified (ES5)
+    // UMD default unminified (ES5)
     bundles.push(config({
       output: {
-        format: browserFormat,
+        format: umdFormat,
         name,
         extend,
         file: `dist/${fileName}.js`,
@@ -143,25 +144,14 @@ module.exports = cmdOptions => {
       tsCompilerOptions: {target: 'es5'}
     }));
 
-    // Browser ES2017
-    bundles.push(config({
-      output: {
-        format: browserFormat,
-        name,
-        extend,
-        file: `dist/${fileName}.es2017.js`
-      },
-      tsCompilerOptions: {target: 'es2017'}
-    }));
-
-    // Browser ES2017 minified
+    // ESM ES2017 minified
     bundles.push(config({
       plugins: [terserPlugin],
       output: {
-        format: browserFormat,
+        format: flatEsmFormat,
         name,
         extend,
-        file: `dist/${fileName}.es2017.min.js`
+        file: `dist/${fileName}.es2017.esm.min.js`
       },
       tsCompilerOptions: {target: 'es2017'}
     }));
