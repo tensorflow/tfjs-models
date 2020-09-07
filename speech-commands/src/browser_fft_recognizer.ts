@@ -39,12 +39,12 @@ export const SAVE_PATH_PREFIX = 'indexeddb://tfjs-speech-commands-model/';
  * from: https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API/Using_the_Web_Storage_API#Feature-detecting_localStorage
  */
 function storageAvailable(type) {
-    var storage;
+    let storage;
     try {
         storage = window[type];
-        var x = '__storage_test__';
-        storage.setItem(x, x);
-        storage.removeItem(x);
+        const testItem = '__storage_test__';
+        storage.setItem(testItem, testItem);
+        storage.removeItem(testItem);
         return true;
     }
     catch(e) {
