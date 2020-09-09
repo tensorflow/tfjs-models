@@ -172,6 +172,30 @@ export class Pipeline {
     return leftTotalSize / rightTotalSize;
   }
 
+  // Returns a box describing a cropped region around the eye fit for passing to
+  // the iris model.
+  getEyeBox(
+      rawCoords: Coords3D, face: tf.Tensor4D, eyeInnerCornerIndex: number,
+      eyeOuterCornerIndex: number, flip = false) {
+    const box = squarifyBox(enlargeBox(
+        this.calculateLandmarksBoundingBox(
+            [rawCoords[eyeInnerCornerIndex], rawCoords[eyeOuterCornerIndex]]),
+        ENLARGE_EYE_RATIO));
+    const boxSize = getBoxSize(box);
+    let crop = tf.image.cropAndResize(
+        face, [[
+          box.startPoint[1] / this.meshHeight,
+          box.startPoint[0] / this.meshWidth, box.endPoint[1] / this.meshHeight,
+          box.endPoint[0] / this.meshWidth
+        ]],
+        [0], [IRIS_MODEL_INPUT_SIZE, IRIS_MODEL_INPUT_SIZE]);
+    if (flip) {
+      crop = tf.image.flipLeftRight(crop);
+    }
+
+    return {box, boxSize, crop};
+  }
+
   // Given a cropped image of an eye, returns the coordinates of the contours
   // surrounding the eye and the iris.
   getEyeCoords(
@@ -319,9 +343,10 @@ export class Pipeline {
         }
 
         const boxCPU = {startPoint: box.startPoint, endPoint: box.endPoint};
-        const face = cutBoxFromImageAndResize(boxCPU, rotatedImage, [
-                       this.meshHeight, this.meshWidth
-                     ]).div(255);
+        const face: tf.Tensor4D =
+            cutBoxFromImageAndResize(boxCPU, rotatedImage, [
+              this.meshHeight, this.meshWidth
+            ]).div(255);
 
         // The first returned tensor represents facial contours, which are
         // included in the coordinates.
@@ -333,41 +358,21 @@ export class Pipeline {
         let rawCoords = coordsReshaped.arraySync() as Coords3D;
 
         if (predictIrises) {
-          const leftEyeBox = squarifyBox(enlargeBox(
-              this.calculateLandmarksBoundingBox([
-                rawCoords[LEFT_EYE_BOUNDS[0]], rawCoords[LEFT_EYE_BOUNDS[1]]
-              ]),
-              ENLARGE_EYE_RATIO));
-          const leftEyeBoxSize = getBoxSize(leftEyeBox);
+          const {box: leftEyeBox, boxSize: leftEyeBoxSize, crop: leftEyeCrop} =
+              this.getEyeBox(
+                  rawCoords, face, LEFT_EYE_BOUNDS[0], LEFT_EYE_BOUNDS[1],
+                  true);
 
-          const rightEyeBox = squarifyBox(enlargeBox(
-              this.calculateLandmarksBoundingBox([
-                rawCoords[RIGHT_EYE_BOUNDS[0]], rawCoords[RIGHT_EYE_BOUNDS[1]]
-              ]),
-              ENLARGE_EYE_RATIO));
-          const rightEyeBoxSize = getBoxSize(rightEyeBox);
+          const {
+            box: rightEyeBox,
+            boxSize: rightEyeBoxSize,
+            crop: rightEyeCrop
+          } =
+              this.getEyeBox(
+                  rawCoords, face, RIGHT_EYE_BOUNDS[0], RIGHT_EYE_BOUNDS[1]);
 
           const ratioLeftToRightEye =
               this.getRatioLeftToRightEye(leftEyeBoxSize, rightEyeBoxSize);
-
-          let leftEyeCrop = tf.image.cropAndResize(
-              face as tf.Tensor4D, [[
-                leftEyeBox.startPoint[1] / this.meshHeight,
-                leftEyeBox.startPoint[0] / this.meshWidth,
-                leftEyeBox.endPoint[1] / this.meshHeight,
-                leftEyeBox.endPoint[0] / this.meshWidth
-              ]],
-              [0], [IRIS_MODEL_INPUT_SIZE, IRIS_MODEL_INPUT_SIZE]);
-          leftEyeCrop = tf.image.flipLeftRight(leftEyeCrop);
-
-          const rightEyeCrop = tf.image.cropAndResize(
-              face as tf.Tensor4D, [[
-                rightEyeBox.startPoint[1] / this.meshHeight,
-                rightEyeBox.startPoint[0] / this.meshWidth,
-                rightEyeBox.endPoint[1] / this.meshHeight,
-                rightEyeBox.endPoint[0] / this.meshWidth
-              ]],
-              [0], [IRIS_MODEL_INPUT_SIZE, IRIS_MODEL_INPUT_SIZE]);
 
           const eyePredictions =
               (this.irisModel.predict(
@@ -410,16 +415,6 @@ export class Pipeline {
           }
 
           const rightIrisRawCoords = rightEyeRawCoords.slice(IRIS_IRIS_INDEX);
-
-          // const leftEye = this.getEyeCoords(
-          //     face as tf.Tensor4D, leftEyeBox, leftEyeBoxSize, true);
-          // const leftEyeRawCoords = leftEye.rawCoords;
-          // const leftIrisRawCoords = leftEye.iris;
-
-          // const rightEye = this.getEyeCoords(
-          //     face as tf.Tensor4D, rightEyeBox, rightEyeBoxSize);
-          // const rightEyeRawCoords = rightEye.rawCoords;
-          // const rightIrisRawCoords = rightEye.iris;
 
           if (0.6 < ratioLeftToRightEye &&
               ratioLeftToRightEye < 1.4) {  // User is looking straight ahead.
