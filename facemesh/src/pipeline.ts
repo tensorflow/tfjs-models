@@ -162,21 +162,18 @@ export class Pipeline {
                              ]));
   }
 
-  // Returns the ratio of the projected left eye bounding box size, and the
-  // right eye bounding box size.
-  private getRatioLeftToRightEye(leftEyeSize: [number, number], rightEyeSize: [
-    number, number
-  ]): number {
-    const leftTotalSize = leftEyeSize[0] * leftEyeSize[1];
-    const rightTotalSize = rightEyeSize[0] * rightEyeSize[1];
-    return leftTotalSize / rightTotalSize;
+  private getLeftToRightEyeDepthDifference(rawCoords: Coords3D): number {
+    const leftEyeZ = rawCoords[LEFT_EYE_BOUNDS[0]][2];
+    const rightEyeZ = rawCoords[RIGHT_EYE_BOUNDS[0]][2];
+    return leftEyeZ - rightEyeZ;
   }
 
   // Returns a box describing a cropped region around the eye fit for passing to
   // the iris model.
   getEyeBox(
       rawCoords: Coords3D, face: tf.Tensor4D, eyeInnerCornerIndex: number,
-      eyeOuterCornerIndex: number, flip = false) {
+      eyeOuterCornerIndex: number,
+      flip = false): {box: Box, boxSize: [number, number], crop: tf.Tensor4D} {
     const box = squarifyBox(enlargeBox(
         this.calculateLandmarksBoundingBox(
             [rawCoords[eyeInnerCornerIndex], rawCoords[eyeOuterCornerIndex]]),
@@ -358,9 +355,6 @@ export class Pipeline {
               this.getEyeBox(
                   rawCoords, face, RIGHT_EYE_BOUNDS[0], RIGHT_EYE_BOUNDS[1]);
 
-          const ratioLeftToRightEye =
-              this.getRatioLeftToRightEye(leftEyeBoxSize, rightEyeBoxSize);
-
           const eyePredictions =
               (this.irisModel.predict(
                   tf.concat([leftEyeCrop, rightEyeCrop]))) as tf.Tensor4D;
@@ -376,12 +370,15 @@ export class Pipeline {
           const {rawCoords: rightEyeRawCoords, iris: rightIrisRawCoords} =
               this.getEyeCoords(rightEyeData, rightEyeBox, rightEyeBoxSize);
 
-          if (0.6 < ratioLeftToRightEye &&
-              ratioLeftToRightEye < 1.4) {  // User is looking straight ahead.
+          const leftToRightEyeDepthDifference =
+              this.getLeftToRightEyeDepthDifference(rawCoords);
+          if (Math.abs(leftToRightEyeDepthDifference) <
+              30) {  // User is looking straight ahead.
             replaceRawCoordinates(rawCoords, leftEyeRawCoords, 'left');
             replaceRawCoordinates(rawCoords, rightEyeRawCoords, 'right');
-          } else if (ratioLeftToRightEye > 1) {  // User is looking towards the
-                                                 // right.
+          } else if (leftToRightEyeDepthDifference < 1) {  // User is looking
+                                                           // towards the
+                                                           // right.
             // If the user is looking to the left or to the right, the iris
             // coordinates tend to diverge too much from the mesh coordinates
             // for them to be merged. So we only update a single contour line
