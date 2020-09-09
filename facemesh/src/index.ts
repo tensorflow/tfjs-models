@@ -26,8 +26,10 @@ import {UV_COORDS} from './uv_coords';
 
 const FACEMESH_GRAPHMODEL_PATH =
     'https://tfhub.dev/mediapipe/tfjs-model/facemesh/1/default/1';
+// const IRIS_GRAPHMODEL_PATH =
+//     'https://tfhub.dev/mediapipe/tfjs-model/iris/1/default/1';
 const IRIS_GRAPHMODEL_PATH =
-    'https://tfhub.dev/mediapipe/tfjs-model/iris/1/default/1';
+    `https://storage.googleapis.com/learnjs-data/iris_tfjs/output_tfjs_model/model.json`;
 const MESH_MODEL_INPUT_WIDTH = 192;
 const MESH_MODEL_INPUT_HEIGHT = 192;
 
@@ -104,7 +106,8 @@ async function loadMeshModel(): Promise<tfconv.GraphModel> {
 }
 
 async function loadIrisModel(): Promise<tfconv.GraphModel> {
-  return tfconv.loadGraphModel(IRIS_GRAPHMODEL_PATH, {fromTFHub: true});
+  // return tfconv.loadGraphModel(IRIS_GRAPHMODEL_PATH, {fromTFHub: true});
+  return tfconv.loadGraphModel(IRIS_GRAPHMODEL_PATH);
 }
 
 function getInputTensorDimensions(input: tf.Tensor3D|ImageData|HTMLVideoElement|

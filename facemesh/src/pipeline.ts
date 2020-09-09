@@ -52,6 +52,7 @@ const RIGHT_EYE_BOUNDS =
 const IRIS_UPPER_CENTER_INDEX = 3;
 const IRIS_LOWER_CENTER_INDEX = 4;
 const IRIS_IRIS_INDEX = 71;
+const IRIS_NUM_COORDINATES = 76;
 
 // Factor by which to enlarge the box around the eye landmarks so the input
 // region matches the expectations of the iris model.
@@ -349,15 +350,76 @@ export class Pipeline {
           const ratioLeftToRightEye =
               this.getRatioLeftToRightEye(leftEyeBoxSize, rightEyeBoxSize);
 
-          const leftEye = this.getEyeCoords(
-              face as tf.Tensor4D, leftEyeBox, leftEyeBoxSize, true);
-          const leftEyeRawCoords = leftEye.rawCoords;
-          const leftIrisRawCoords = leftEye.iris;
+          let leftEyeCrop = tf.image.cropAndResize(
+              face as tf.Tensor4D, [[
+                leftEyeBox.startPoint[1] / this.meshHeight,
+                leftEyeBox.startPoint[0] / this.meshWidth,
+                leftEyeBox.endPoint[1] / this.meshHeight,
+                leftEyeBox.endPoint[0] / this.meshWidth
+              ]],
+              [0], [IRIS_MODEL_INPUT_SIZE, IRIS_MODEL_INPUT_SIZE]);
+          leftEyeCrop = tf.image.flipLeftRight(leftEyeCrop);
 
-          const rightEye = this.getEyeCoords(
-              face as tf.Tensor4D, rightEyeBox, rightEyeBoxSize);
-          const rightEyeRawCoords = rightEye.rawCoords;
-          const rightIrisRawCoords = rightEye.iris;
+          const rightEyeCrop = tf.image.cropAndResize(
+              face as tf.Tensor4D, [[
+                rightEyeBox.startPoint[1] / this.meshHeight,
+                rightEyeBox.startPoint[0] / this.meshWidth,
+                rightEyeBox.endPoint[1] / this.meshHeight,
+                rightEyeBox.endPoint[0] / this.meshWidth
+              ]],
+              [0], [IRIS_MODEL_INPUT_SIZE, IRIS_MODEL_INPUT_SIZE]);
+
+          const eyePredictions =
+              (this.irisModel.predict(
+                  tf.concat([leftEyeCrop, rightEyeCrop]))) as tf.Tensor4D;
+
+          const eyePredictionsData = eyePredictions.dataSync();
+
+          const leftEyeData =
+              eyePredictionsData.slice(0, IRIS_NUM_COORDINATES * 3);
+          const leftEyeRawCoords: Coords3D = [];
+          for (let i = 0; i < IRIS_NUM_COORDINATES; i++) {
+            const x = leftEyeData[i * 3];
+            const y = leftEyeData[i * 3 + 1];
+            const z = leftEyeData[i * 3 + 2];
+            leftEyeRawCoords.push([
+              (1 - (x / IRIS_MODEL_INPUT_SIZE)) * leftEyeBoxSize[0] +
+                  leftEyeBox.startPoint[0],
+              (y / IRIS_MODEL_INPUT_SIZE) * leftEyeBoxSize[1] +
+                  leftEyeBox.startPoint[1],
+              z
+            ]);
+          }
+
+          const leftIrisRawCoords = leftEyeRawCoords.slice(IRIS_IRIS_INDEX);
+
+          const rightEyeData =
+              eyePredictionsData.slice(IRIS_NUM_COORDINATES * 3);
+          const rightEyeRawCoords: Coords3D = [];
+          for (let i = 0; i < IRIS_NUM_COORDINATES; i++) {
+            const x = rightEyeData[i * 3];
+            const y = rightEyeData[i * 3 + 1];
+            const z = rightEyeData[i * 3 + 2];
+            rightEyeRawCoords.push([
+              (x / IRIS_MODEL_INPUT_SIZE) * rightEyeBoxSize[0] +
+                  rightEyeBox.startPoint[0],
+              (y / IRIS_MODEL_INPUT_SIZE) * rightEyeBoxSize[1] +
+                  rightEyeBox.startPoint[1],
+              z
+            ]);
+          }
+
+          const rightIrisRawCoords = rightEyeRawCoords.slice(IRIS_IRIS_INDEX);
+
+          // const leftEye = this.getEyeCoords(
+          //     face as tf.Tensor4D, leftEyeBox, leftEyeBoxSize, true);
+          // const leftEyeRawCoords = leftEye.rawCoords;
+          // const leftIrisRawCoords = leftEye.iris;
+
+          // const rightEye = this.getEyeCoords(
+          //     face as tf.Tensor4D, rightEyeBox, rightEyeBoxSize);
+          // const rightEyeRawCoords = rightEye.rawCoords;
+          // const rightIrisRawCoords = rightEye.iris;
 
           if (0.6 < ratioLeftToRightEye &&
               ratioLeftToRightEye < 1.4) {  // User is looking straight ahead.
