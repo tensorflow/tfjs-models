@@ -200,7 +200,7 @@ export function scaleAndCropToInputTensorShape(
     [[padT, padB], [padL, padR]]: [[number, number], [number, number]],
     applySigmoidActivation = false): tf.Tensor3D {
   return tf.tidy(() => {
-    let inResizedAndPadded = tensor.resizeBilinear(
+    let inResizedAndPadded: tf.Tensor3D = tensor.resizeBilinear(
         [resizedAndPaddedHeight, resizedAndPaddedWidth], true);
 
     if (applySigmoidActivation) {
@@ -219,9 +219,10 @@ export function removePaddingAndResizeBack(
     [[padT, padB], [padL, padR]]: [[number, number], [number, number]]):
     tf.Tensor3D {
   return tf.tidy(() => {
+    const batchedImage: tf.Tensor4D = resizedAndPadded.expandDims();
     return tf.image
         .cropAndResize(
-            resizedAndPadded.expandDims(), [[
+            batchedImage, [[
               padT / (originalHeight + padT + padB - 1.0),
               padL / (originalWidth + padL + padR - 1.0),
               (padT + originalHeight - 1.0) /
@@ -237,9 +238,8 @@ export function resize2d(
     tensor: tf.Tensor2D, resolution: [number, number],
     nearestNeighbor?: boolean): tf.Tensor2D {
   return tf.tidy(() => {
-    return tensor.expandDims<tf.Rank.R3>(2)
-        .resizeBilinear(resolution, nearestNeighbor)
-        .squeeze();
+    const batchedImage: tf.Tensor4D = tensor.expandDims(2);
+    return batchedImage.resizeBilinear(resolution, nearestNeighbor).squeeze();
   });
 }
 
