@@ -199,33 +199,21 @@ export class Pipeline {
   // Given a cropped image of an eye, returns the coordinates of the contours
   // surrounding the eye and the iris.
   getEyeCoords(
-      face: tf.Tensor4D, eyeBox: Box, eyeBoxSize: [number, number],
+      eyeData: Float32Array, eyeBox: Box, eyeBoxSize: [number, number],
       flip = false): {rawCoords: Coords3D, iris: Coords3D} {
-    let eye = tf.image.cropAndResize(
-        face, [[
-          eyeBox.startPoint[1] / this.meshHeight,
-          eyeBox.startPoint[0] / this.meshWidth,
-          eyeBox.endPoint[1] / this.meshHeight,
-          eyeBox.endPoint[0] / this.meshWidth
-        ]],
-        [0], [IRIS_MODEL_INPUT_SIZE, IRIS_MODEL_INPUT_SIZE]);
-
-    if (flip === true) {
-      eye = tf.image.flipLeftRight(eye);
+    const eyeRawCoords: Coords3D = [];
+    for (let i = 0; i < IRIS_NUM_COORDINATES; i++) {
+      const x = eyeData[i * 3];
+      const y = eyeData[i * 3 + 1];
+      const z = eyeData[i * 3 + 2];
+      eyeRawCoords.push([
+        (flip ? (1 - (x / IRIS_MODEL_INPUT_SIZE)) :
+                (x / IRIS_MODEL_INPUT_SIZE)) *
+                eyeBoxSize[0] +
+            eyeBox.startPoint[0],
+        (y / IRIS_MODEL_INPUT_SIZE) * eyeBoxSize[1] + eyeBox.startPoint[1], z
+      ]);
     }
-
-    const eyePrediction = (this.irisModel.predict(eye) as tf.Tensor).squeeze();
-    const eyeRawCoords: Coords3D =
-        (eyePrediction.reshape([-1, 3]).arraySync() as Coords3D)
-            .map((coord: Coord3D) => ([
-                   (flip ? (1 - (coord[0] / IRIS_MODEL_INPUT_SIZE)) :
-                           (coord[0] / IRIS_MODEL_INPUT_SIZE)) *
-                           eyeBoxSize[0] +
-                       eyeBox.startPoint[0],
-                   (coord[1] / IRIS_MODEL_INPUT_SIZE) * eyeBoxSize[1] +
-                       eyeBox.startPoint[1],
-                   coord[2]
-                 ]));
 
     return {rawCoords: eyeRawCoords, iris: eyeRawCoords.slice(IRIS_IRIS_INDEX)};
   }
@@ -362,7 +350,6 @@ export class Pipeline {
               this.getEyeBox(
                   rawCoords, face, LEFT_EYE_BOUNDS[0], LEFT_EYE_BOUNDS[1],
                   true);
-
           const {
             box: rightEyeBox,
             boxSize: rightEyeBoxSize,
@@ -377,44 +364,17 @@ export class Pipeline {
           const eyePredictions =
               (this.irisModel.predict(
                   tf.concat([leftEyeCrop, rightEyeCrop]))) as tf.Tensor4D;
-
-          const eyePredictionsData = eyePredictions.dataSync();
+          const eyePredictionsData = eyePredictions.dataSync() as Float32Array;
 
           const leftEyeData =
               eyePredictionsData.slice(0, IRIS_NUM_COORDINATES * 3);
-          const leftEyeRawCoords: Coords3D = [];
-          for (let i = 0; i < IRIS_NUM_COORDINATES; i++) {
-            const x = leftEyeData[i * 3];
-            const y = leftEyeData[i * 3 + 1];
-            const z = leftEyeData[i * 3 + 2];
-            leftEyeRawCoords.push([
-              (1 - (x / IRIS_MODEL_INPUT_SIZE)) * leftEyeBoxSize[0] +
-                  leftEyeBox.startPoint[0],
-              (y / IRIS_MODEL_INPUT_SIZE) * leftEyeBoxSize[1] +
-                  leftEyeBox.startPoint[1],
-              z
-            ]);
-          }
-
-          const leftIrisRawCoords = leftEyeRawCoords.slice(IRIS_IRIS_INDEX);
+          const {rawCoords: leftEyeRawCoords, iris: leftIrisRawCoords} =
+              this.getEyeCoords(leftEyeData, leftEyeBox, leftEyeBoxSize, true);
 
           const rightEyeData =
               eyePredictionsData.slice(IRIS_NUM_COORDINATES * 3);
-          const rightEyeRawCoords: Coords3D = [];
-          for (let i = 0; i < IRIS_NUM_COORDINATES; i++) {
-            const x = rightEyeData[i * 3];
-            const y = rightEyeData[i * 3 + 1];
-            const z = rightEyeData[i * 3 + 2];
-            rightEyeRawCoords.push([
-              (x / IRIS_MODEL_INPUT_SIZE) * rightEyeBoxSize[0] +
-                  rightEyeBox.startPoint[0],
-              (y / IRIS_MODEL_INPUT_SIZE) * rightEyeBoxSize[1] +
-                  rightEyeBox.startPoint[1],
-              z
-            ]);
-          }
-
-          const rightIrisRawCoords = rightEyeRawCoords.slice(IRIS_IRIS_INDEX);
+          const {rawCoords: rightEyeRawCoords, iris: rightIrisRawCoords} =
+              this.getEyeCoords(rightEyeData, rightEyeBox, rightEyeBoxSize);
 
           if (0.6 < ratioLeftToRightEye &&
               ratioLeftToRightEye < 1.4) {  // User is looking straight ahead.
