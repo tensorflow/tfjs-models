@@ -125,6 +125,8 @@ main();
 
 * **scoreThreshold** - A threshold for deciding when to remove boxes based on score in non-maximum suppression. Defaults to 0.75.
 
+* **shouldLoadIrisModel** - Whether to also load the iris detection model. Defaults to `true`.
+
 #### Parameters for model.estimateFace()
 
 * **input** - The image to classify. Can be a tensor, DOM element image, video, or canvas.

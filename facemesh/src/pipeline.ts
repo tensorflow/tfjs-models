@@ -108,7 +108,7 @@ export class Pipeline {
   private maxContinuousChecks: number;
   private maxFaces: number;
 
-  private irisModel: tfconv.GraphModel;
+  private irisModel: tfconv.GraphModel|null;
 
   // An array of facial bounding boxes.
   private regionsOfInterest: Box[] = [];
@@ -118,7 +118,7 @@ export class Pipeline {
       boundingBoxDetector: blazeface.BlazeFaceModel,
       meshDetector: tfconv.GraphModel, meshWidth: number, meshHeight: number,
       maxContinuousChecks: number, maxFaces: number,
-      irisModel: tfconv.GraphModel) {
+      irisModel: tfconv.GraphModel|null) {
     this.boundingBoxDetector = boundingBoxDetector;
     this.meshDetector = meshDetector;
     this.irisModel = irisModel;

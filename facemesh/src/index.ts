@@ -76,22 +76,32 @@ export type AnnotatedPrediction =
  * Defaults to 0.3.
  *  - `scoreThreshold` A threshold for deciding when to remove boxes based
  * on score in non-maximum suppression. Defaults to 0.75.
+ *  - `shouldLoadIrisModel` Whether to also load the iris detection model.
+ * Defaults to true.
  */
 export async function load({
   maxContinuousChecks = 5,
   detectionConfidence = 0.9,
   maxFaces = 10,
   iouThreshold = 0.3,
-  scoreThreshold = 0.75
+  scoreThreshold = 0.75,
+  shouldLoadIrisModel = true
 } = {}): Promise<FaceMesh> {
-  const [blazeFace, blazeMeshModel, irisModel] = await Promise.all([
-    loadDetectorModel(maxFaces, iouThreshold, scoreThreshold), loadMeshModel(),
-    loadIrisModel()
-  ]);
+  let models;
+  if (shouldLoadIrisModel) {
+    models = await Promise.all([
+      loadDetectorModel(maxFaces, iouThreshold, scoreThreshold),
+      loadMeshModel(), loadIrisModel()
+    ]);
+  } else {
+    models = await Promise.all([
+      loadDetectorModel(maxFaces, iouThreshold, scoreThreshold), loadMeshModel()
+    ]);
+  }
 
   const faceMesh = new FaceMesh(
-      blazeFace, blazeMeshModel, maxContinuousChecks, detectionConfidence,
-      maxFaces, irisModel);
+      models[0], models[1], maxContinuousChecks, detectionConfidence, maxFaces,
+      shouldLoadIrisModel ? models[2] : null);
   return faceMesh;
 }
 
@@ -178,7 +188,7 @@ export class FaceMesh {
   constructor(
       blazeFace: blazeface.BlazeFaceModel, blazeMeshModel: tfconv.GraphModel,
       maxContinuousChecks: number, detectionConfidence: number,
-      maxFaces: number, irisModel: tfconv.GraphModel) {
+      maxFaces: number, irisModel: tfconv.GraphModel|null) {
     this.pipeline = new Pipeline(
         blazeFace, blazeMeshModel, MESH_MODEL_INPUT_WIDTH,
         MESH_MODEL_INPUT_HEIGHT, maxContinuousChecks, maxFaces, irisModel);
