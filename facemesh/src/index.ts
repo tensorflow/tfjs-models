@@ -228,6 +228,13 @@ export class FaceMesh {
       HTMLCanvasElement,
       returnTensors = false, flipHorizontal = false,
       predictIrises = true): Promise<AnnotatedPrediction[]> {
+    if (predictIrises && this.pipeline.irisModel == null) {
+      throw new Error(
+          'The iris model was not loaded as part of facemesh. ' +
+          'Please initialize the model with ' +
+          'facemesh.load({shouldLoadIrisModel: true}).');
+    }
+
     const [, width] = getInputTensorDimensions(input);
 
     const image: tf.Tensor4D = tf.tidy(() => {

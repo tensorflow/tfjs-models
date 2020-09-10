@@ -108,7 +108,7 @@ export class Pipeline {
   private maxContinuousChecks: number;
   private maxFaces: number;
 
-  private irisModel: tfconv.GraphModel|null;
+  public irisModel: tfconv.GraphModel|null;
 
   // An array of facial bounding boxes.
   private regionsOfInterest: Box[] = [];
