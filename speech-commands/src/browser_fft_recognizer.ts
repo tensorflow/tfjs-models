@@ -58,7 +58,7 @@ function storageAvailable(type) {
             e.name === 'QuotaExceededError' ||
             // Firefox
             e.name === 'NS_ERROR_DOM_QUOTA_REACHED') &&
-            // acknowledge QuotaExceededError only if there's something already stored
+            // acknowledge QuotaExceededError only if something is stored
             (storage && storage.length !== 0);
     }
 }
@@ -66,7 +66,9 @@ function storageAvailable(type) {
 // Export a variable for injection during unit testing.
 // tslint:disable-next-line:no-any
 export let localStorageWrapper = {
-  localStorage: (typeof window === 'undefined' || !storageAvailable('localStorage')) ? null : window.localStorage
+  localStorage:
+    (typeof window === 'undefined' || !storageAvailable('localStorage')) ?
+    null : window.localStorage
 };
 
 export function getMajorAndMinorVersion(version: string) {
