@@ -114,8 +114,7 @@ async function loadMeshModel(): Promise<tfconv.GraphModel> {
 }
 
 async function loadIrisModel(): Promise<tfconv.GraphModel> {
-  // return tfconv.loadGraphModel(IRIS_GRAPHMODEL_PATH, {fromTFHub: true});
-  return tfconv.loadGraphModel(IRIS_GRAPHMODEL_PATH);
+  return tfconv.loadGraphModel(IRIS_GRAPHMODEL_PATH, {fromTFHub: true});
 }
 
 function getInputTensorDimensions(input: tf.Tensor3D|ImageData|HTMLVideoElement|
