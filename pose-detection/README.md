@@ -1,4 +1,4 @@
-# Pose Detection in the Browser: PoseNet Model
+# Pose Detection in the Browser
 
 ## Note: We've just released Version 2.0 with a **new ResNet** model and API. Check out the new documentation below.
 

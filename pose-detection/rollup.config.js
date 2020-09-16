@@ -63,13 +63,13 @@ function config({plugins = [], output = {}}) {
 }
 
 export default [
-  config({output: {format: 'umd', name: 'posenet', file: 'dist/posenet.js'}}),
+  config({output: {format: 'umd', name: 'pose-detection', file: 'dist/pose-detection.js'}}),
   config({
     plugins: [minify()],
-    output: {format: 'umd', name: 'posenet', file: 'dist/posenet.min.js'}
+    output: {format: 'umd', name: 'pose-detection', file: 'dist/pose-detection.min.js'}
   }),
   config({
     plugins: [minify()],
-    output: {format: 'es', file: 'dist/posenet.esm.js'}
+    output: {format: 'es', file: 'dist/pose-detection.esm.js'}
   })
 ];
