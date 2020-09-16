@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>PoseNet - Coco Images Demo</title>
+  <style type='text/css'>
+    h3,
+    h4,
+    p {
+      margin: 10px 0;
+    }
+
+    #main ul {
+      margin: 10px 0;
+      padding: 0;
+    }
+
+    #main li {
+      list-style-type: none;
+      display: inline-block;
+    }
+
+    #results>div {
+      display: inline-block;
+      width: 513px
+    }
+
+    .footer {
+      position: fixed;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      color: black;
+    }
+
+    .footer-text {
+      max-width: 600px;
+      text-align: center;
+      margin: auto;
+    }
+
+    /*
+     *  The following loading spinner CSS is from SpinKit project
+     *  https://github.com/tobiasahlin/SpinKit
+     */
+    .sk-spinner-pulse {
+      width: 20px;
+      height: 20px;
+      margin: auto 10px;
+      float: left;
+      background-color: #333;
+      border-radius: 100%;
+      -webkit-animation: sk-pulseScaleOut 1s infinite ease-in-out;
+      animation: sk-pulseScaleOut 1s infinite ease-in-out;
+    }
+
+    @-webkit-keyframes sk-pulseScaleOut {
+      0% {
+        -webkit-transform: scale(0);
+        transform: scale(0);
+      }
+
+      100% {
+        -webkit-transform: scale(1.0);
+        transform: scale(1.0);
+        opacity: 0;
+      }
+    }
+
+    @keyframes sk-pulseScaleOut {
+      0% {
+        -webkit-transform: scale(0);
+        transform: scale(0);
+      }
+
+      100% {
+        -webkit-transform: scale(1.0);
+        transform: scale(1.0);
+        opacity: 0;
+      }
+    }
+
+    .spinner-text {
+      float: left;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="loading" style='display:flex'>
+    <div class="spinner-text">
+      Loading PoseNet model...
+    </div>
+    <div class="sk-spinner sk-spinner-pulse"></div>
+  </div>
+  <div id='main'>
+    <div id="status"></div>
+    <div id='results' style='display:none'>
+      <div id="multi">
+        <h4>Multiple Poses Estimation</h4>
+        <canvas></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="footer">
+    <div class="footer-text">
+      <p>
+        PoseNet runs with either a
+        <strong>single-pose</strong> or
+        <strong>multi-pose</strong> detection algorithm. The multi-pose detector is shown here.
+        <br>
+        <br> The
+        <strong>output stride</strong> and
+        <strong>input image resolution</strong> have the largest effects on accuracy/speed. A
+        <i>higher</i> output stride results in lower accuracy but higher speed. A
+        <i>higher</i> input image resolution results in higher accuracy but lower speed.
+      </p>
+    </div>
+  </div>
+  <script src="coco.js"></script>
+</body>
+
+</html>
