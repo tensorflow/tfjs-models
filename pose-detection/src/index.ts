@@ -19,12 +19,11 @@ import * as posenet from './posenet';
 
 export {version} from './version';
 
-export async function load({model = 'posenet'} = {}) {
-  console.log('IN TOP LEVEL LOAD');
-  console.log(model);
+export {posenet};
 
+export async function load({model = 'posenet'} = {}) {
   if (model === 'posenet') {
     return posenet.load();
   }
-  return null;
+  throw new Error(`No model found for ${model}`);
 }
