@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as posenet from '@tensorflow-models/posenet';
+import * as posedetection from '@tensorflow-models/pose-detection';
 import * as tf from '@tensorflow/tfjs';
 import dat from 'dat.gui';
 
@@ -82,7 +82,7 @@ function drawResults(canvas, poses, minPartConfidence, minPoseConfidence) {
 }
 
 const imageBucket =
-    'https://storage.googleapis.com/tfjs-models/assets/posenet/';
+    'https://storage.googleapis.com/tfjs-models/assets/posedetection/';
 
 async function loadImage(imagePath) {
   const image = new Image();
@@ -129,7 +129,7 @@ function disposePoses() {
 }
 
 /**
- * Loads an image, feeds it into posenet the posenet model, and
+ * Loads an image, feeds it into posedetection the posedetection model, and
  * calculates poses based on the model outputs
  */
 async function testImageAndEstimatePoses(net) {
@@ -164,7 +164,7 @@ async function testImageAndEstimatePoses(net) {
 }
 
 /**
- * Reloads PoseNet, then loads an image, feeds it into posenet, and
+ * Reloads PoseNet, then loads an image, feeds it into posedetection, and
  * calculates poses based on the model outputs
  */
 async function reloadNetTestImageAndEstimatePoses(net) {
@@ -172,7 +172,7 @@ async function reloadNetTestImageAndEstimatePoses(net) {
     guiState.net.dispose();
   }
   toggleLoadingUI(true);
-  guiState.net = await posenet.load({
+  guiState.net = await posedetection.load({
     architecture: guiState.model.architecture,
     outputStride: guiState.model.outputStride,
     inputResolution: guiState.model.inputResolution,
@@ -357,12 +357,12 @@ function setupGui(net) {
 }
 
 /**
- * Kicks off the demo by loading the posenet model and estimating
+ * Kicks off the demo by loading the posedetection model and estimating
  * poses on a default image
  */
 export async function bindPage() {
   toggleLoadingUI(true);
-  const net = await posenet.load({
+  const net = await posedetection.load({
     architecture: guiState.model.architecture,
     outputStride: guiState.model.outputStride,
     inputResolution: guiState.model.inputResolution,

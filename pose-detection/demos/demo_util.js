@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as posenet from '@tensorflow-models/posenet';
+import * as posedetection from '@tensorflow-models/pose-detection';
 import * as tf from '@tensorflow/tfjs';
 
 const color = 'aqua';
@@ -99,7 +99,7 @@ export function drawSegment([ay, ax], [by, bx], color, scale, ctx) {
  */
 export function drawSkeleton(keypoints, minConfidence, ctx, scale = 1) {
   const adjacentKeyPoints =
-      posenet.getAdjacentKeyPoints(keypoints, minConfidence);
+      posedetection.getAdjacentKeyPoints(keypoints, minConfidence);
 
   adjacentKeyPoints.forEach((keypoints) => {
     drawSegment(
@@ -130,7 +130,7 @@ export function drawKeypoints(keypoints, minConfidence, ctx, scale = 1) {
  * ankles
  */
 export function drawBoundingBox(keypoints, ctx) {
-  const boundingBox = posenet.getBoundingBox(keypoints);
+  const boundingBox = posedetection.getBoundingBox(keypoints);
 
   ctx.rect(
       boundingBox.minX, boundingBox.minY, boundingBox.maxX - boundingBox.minX,
@@ -214,7 +214,7 @@ function drawPoints(ctx, points, radius, color) {
 export function drawOffsetVectors(
     heatMapValues, offsets, outputStride, scale = 1, ctx) {
   const offsetPoints =
-      posenet.singlePose.getOffsetPoints(heatMapValues, outputStride, offsets);
+      posedetection.singlePose.getOffsetPoints(heatMapValues, outputStride, offsets);
 
   const heatmapData = heatMapValues.buffer().values;
   const offsetPointsData = offsetPoints.buffer().values;

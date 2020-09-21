@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as posenet from '@tensorflow-models/posenet';
+import * as posedetection from '@tensorflow-models/pose-detection';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 
@@ -284,7 +284,7 @@ function setupFPS() {
 }
 
 /**
- * Feeds an image to posenet to estimate poses - this is where the magic
+ * Feeds an image to posedetection to estimate poses - this is where the magic
  * happens. This function loops with a requestAnimationFrame method.
  */
 function detectPoseInRealTime(video, net) {
@@ -305,7 +305,7 @@ function detectPoseInRealTime(video, net) {
       // Important to purge variables and free up GPU memory
       guiState.net.dispose();
       toggleLoadingUI(true);
-      guiState.net = await posenet.load({
+      guiState.net = await posedetection.load({
         architecture: guiState.changeToArchitecture,
         outputStride: guiState.outputStride,
         inputResolution: guiState.inputResolution,
@@ -319,7 +319,7 @@ function detectPoseInRealTime(video, net) {
     if (guiState.changeToMultiplier) {
       guiState.net.dispose();
       toggleLoadingUI(true);
-      guiState.net = await posenet.load({
+      guiState.net = await posedetection.load({
         architecture: guiState.architecture,
         outputStride: guiState.outputStride,
         inputResolution: guiState.inputResolution,
@@ -335,7 +335,7 @@ function detectPoseInRealTime(video, net) {
       // Important to purge variables and free up GPU memory
       guiState.net.dispose();
       toggleLoadingUI(true);
-      guiState.net = await posenet.load({
+      guiState.net = await posedetection.load({
         architecture: guiState.architecture,
         outputStride: +guiState.changeToOutputStride,
         inputResolution: guiState.inputResolution,
@@ -351,7 +351,7 @@ function detectPoseInRealTime(video, net) {
       // Important to purge variables and free up GPU memory
       guiState.net.dispose();
       toggleLoadingUI(true);
-      guiState.net = await posenet.load({
+      guiState.net = await posedetection.load({
         architecture: guiState.architecture,
         outputStride: guiState.outputStride,
         inputResolution: +guiState.changeToInputResolution,
@@ -367,7 +367,7 @@ function detectPoseInRealTime(video, net) {
       // Important to purge variables and free up GPU memory
       guiState.net.dispose();
       toggleLoadingUI(true);
-      guiState.net = await posenet.load({
+      guiState.net = await posedetection.load({
         architecture: guiState.architecture,
         outputStride: guiState.outputStride,
         inputResolution: guiState.inputResolution,
@@ -447,12 +447,12 @@ function detectPoseInRealTime(video, net) {
 }
 
 /**
- * Kicks off the demo by loading the posenet model, finding and loading
+ * Kicks off the demo by loading the posedetection model, finding and loading
  * available camera devices, and setting off the detectPoseInRealTime function.
  */
 export async function bindPage() {
   toggleLoadingUI(true);
-  const net = await posenet.load({
+  const net = await posedetection.load({
     architecture: guiState.input.architecture,
     outputStride: guiState.input.outputStride,
     inputResolution: guiState.input.inputResolution,
