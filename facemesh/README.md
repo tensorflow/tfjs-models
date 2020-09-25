@@ -115,7 +115,7 @@ main();
 
 `facemesh.load()` takes a configuration object with the following properties:
 
-* **shouldLoadIrisModel** - Whether to load the iris detection model (an additional 2.6 MB of weights). The iris detection model provides (1) an additional 10 keypoints outlining the irises and (2) improved eye region keypoints enabling blink detection. Defaults to `true`.
+* **shouldLoadIrisModel** - Whether to load the MediaPipe iris detection model (an additional 2.6 MB of weights). The MediaPipe iris detection model provides (1) an additional 10 keypoints outlining the irises and (2) improved eye region keypoints enabling blink detection. Defaults to `true`.
 
 * **maxContinuousChecks** - How many frames to go without running the bounding box detector. Only relevant if maxFaces > 1. Defaults to 5.
 
