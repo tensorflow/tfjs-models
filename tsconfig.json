@@ -2,12 +2,12 @@
   "compilerOptions": {
     "module": "commonjs",
     "moduleResolution": "node",
-    "allowJs": true,
+    "allowJs": false,
     "noImplicitAny": true,
     "sourceMap": true,
     "removeComments": false,
     "preserveConstEnums": true,
-    "declaration": false,
+    "declaration": true,
     "target": "es5",
     "lib": [
       "es2015",
