@@ -35,8 +35,10 @@ function getSizeFromImageLikeElement(input: HTMLImageElement|
 }
 
 function getSizeFromVideoElement(input: HTMLVideoElement): [number, number] {
-  if (input.height != null && input.width != null) {
+  if (input.hasAttribute('height') && input.hasAttribute('width')) {
     // Prioritizes user specified height and width.
+    // We can't test the .height and .width properties directly,
+    // because they evaluate to 0 if unset.
     return [input.height, input.width];
   } else {
     return [input.videoHeight, input.videoWidth];
