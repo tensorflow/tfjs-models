@@ -23,7 +23,7 @@ import * as facemesh from './index';
 import {stubbedImageVals} from './test_util';
 
 describeWithFlags('Facemesh', ALL_ENVS, () => {
-  let model: facemesh.FaceMesh;
+  let model: facemesh.MediaPipeFaceMesh;
   beforeAll(async () => {
     // Note: this makes a network request for model assets.
     model = await facemesh.load();

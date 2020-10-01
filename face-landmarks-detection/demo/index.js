@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import * as facemesh from '@tensorflow-models/facemesh';
+import * as faceLandmarksDetection from '@tensorflow-models/face-landmarks-detection';
 import Stats from 'stats.js';
 import * as tf from '@tensorflow/tfjs-core';
 import '@tensorflow/tfjs-backend-webgl';
@@ -87,7 +87,7 @@ function setupDatGui() {
       });
 
   gui.add(state, 'maxFaces', 1, 20, 1).onChange(async val => {
-    model = await facemesh.load({maxFaces: val});
+    model = await faceLandmarksDetection.load('mediapipe-facemesh', {maxFaces: val});
   });
 
   gui.add(state, 'triangulateMesh');
@@ -251,7 +251,7 @@ async function main() {
   ctx.strokeStyle = GREEN;
   ctx.lineWidth = 0.5;
 
-  model = await facemesh.load({maxFaces: state.maxFaces});
+  model = await faceLandmarksDetection.load('mediapipe-facemesh', {maxFaces: state.maxFaces});
   renderPrediction();
 
   if (renderPointcloud) {
