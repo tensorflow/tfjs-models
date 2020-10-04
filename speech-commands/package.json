@@ -45,7 +45,7 @@
     "lint": "tslint -p . -t verbose",
     "publish-local": "yarn build && rollup -c && yalc push",
     "build-npm": "yarn build && rollup -c",
-    "test": "ts-node run_tests.ts"
+    "test": "ts-node --project tsconfig.test.json run_tests.ts"
   },
   "license": "Apache-2.0"
 }
