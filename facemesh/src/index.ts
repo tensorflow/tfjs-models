@@ -26,8 +26,6 @@ import {UV_COORDS} from './uv_coords';
 
 const FACEMESH_GRAPHMODEL_PATH =
     'https://tfhub.dev/mediapipe/tfjs-model/facemesh/1/default/1';
-const IRIS_GRAPHMODEL_PATH =
-    'https://tfhub.dev/mediapipe/tfjs-model/iris/1/default/2';
 const MESH_MODEL_INPUT_WIDTH = 192;
 const MESH_MODEL_INPUT_HEIGHT = 192;
 
@@ -74,32 +72,21 @@ export type AnnotatedPrediction =
  * Defaults to 0.3.
  *  - `scoreThreshold` A threshold for deciding when to remove boxes based
  * on score in non-maximum suppression. Defaults to 0.75.
- *  - `shouldLoadIrisModel` Whether to also load the iris detection model.
- * Defaults to true.
  */
 export async function load({
   maxContinuousChecks = 5,
   detectionConfidence = 0.9,
   maxFaces = 10,
   iouThreshold = 0.3,
-  scoreThreshold = 0.75,
-  shouldLoadIrisModel = true
+  scoreThreshold = 0.75
 } = {}): Promise<FaceMesh> {
-  let models;
-  if (shouldLoadIrisModel) {
-    models = await Promise.all([
-      loadDetectorModel(maxFaces, iouThreshold, scoreThreshold),
-      loadMeshModel(), loadIrisModel()
-    ]);
-  } else {
-    models = await Promise.all([
-      loadDetectorModel(maxFaces, iouThreshold, scoreThreshold), loadMeshModel()
-    ]);
-  }
+  const [blazeFace, blazeMeshModel] = await Promise.all([
+    loadDetectorModel(maxFaces, iouThreshold, scoreThreshold), loadMeshModel()
+  ]);
 
   const faceMesh = new FaceMesh(
-      models[0], models[1], maxContinuousChecks, detectionConfidence, maxFaces,
-      shouldLoadIrisModel ? models[2] : null);
+      blazeFace, blazeMeshModel, maxContinuousChecks, detectionConfidence,
+      maxFaces);
   return faceMesh;
 }
 
@@ -111,10 +98,6 @@ async function loadDetectorModel(
 
 async function loadMeshModel(): Promise<tfconv.GraphModel> {
   return tfconv.loadGraphModel(FACEMESH_GRAPHMODEL_PATH, {fromTFHub: true});
-}
-
-async function loadIrisModel(): Promise<tfconv.GraphModel> {
-  return tfconv.loadGraphModel(IRIS_GRAPHMODEL_PATH, {fromTFHub: true});
 }
 
 function getInputTensorDimensions(input: tf.Tensor3D|ImageData|HTMLVideoElement|
@@ -185,10 +168,10 @@ export class FaceMesh {
   constructor(
       blazeFace: blazeface.BlazeFaceModel, blazeMeshModel: tfconv.GraphModel,
       maxContinuousChecks: number, detectionConfidence: number,
-      maxFaces: number, irisModel: tfconv.GraphModel|null) {
+      maxFaces: number) {
     this.pipeline = new Pipeline(
         blazeFace, blazeMeshModel, MESH_MODEL_INPUT_WIDTH,
-        MESH_MODEL_INPUT_HEIGHT, maxContinuousChecks, maxFaces, irisModel);
+        MESH_MODEL_INPUT_HEIGHT, maxContinuousChecks, maxFaces);
 
     this.detectionConfidence = detectionConfidence;
   }
@@ -215,23 +198,14 @@ export class FaceMesh {
    * @param flipHorizontal Whether to flip/mirror the facial keypoints
    * horizontally. Should be true for videos that are flipped by default (e.g.
    * webcams).
-   * @param predictIrises Whether to return keypoints for the irises.
-   * Disabling may improve performance. Defaults to true.
    *
    * @return An array of AnnotatedPrediction objects.
    */
   async estimateFaces(
       input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
       HTMLCanvasElement,
-      returnTensors = false, flipHorizontal = false,
-      predictIrises = true): Promise<AnnotatedPrediction[]> {
-    if (predictIrises && this.pipeline.irisModel == null) {
-      throw new Error(
-          'The iris model was not loaded as part of facemesh. ' +
-          'Please initialize the model with ' +
-          'facemesh.load({shouldLoadIrisModel: true}).');
-    }
-
+      returnTensors = false,
+      flipHorizontal = false): Promise<AnnotatedPrediction[]> {
     const [, width] = getInputTensorDimensions(input);
 
     const image: tf.Tensor4D = tf.tidy(() => {
@@ -250,10 +224,10 @@ export class FaceMesh {
       const savedWebglPackDepthwiseConvFlag =
           tf.env().get('WEBGL_PACK_DEPTHWISECONV');
       tf.env().set('WEBGL_PACK_DEPTHWISECONV', true);
-      predictions = await this.pipeline.predict(image, predictIrises);
+      predictions = await this.pipeline.predict(image);
       tf.env().set('WEBGL_PACK_DEPTHWISECONV', savedWebglPackDepthwiseConvFlag);
     } else {
-      predictions = await this.pipeline.predict(image, predictIrises);
+      predictions = await this.pipeline.predict(image);
     }
 
     image.dispose();
@@ -314,10 +288,8 @@ export class FaceMesh {
 
         const annotations: {[key: string]: Coords3D} = {};
         for (const key in MESH_ANNOTATIONS) {
-          if (predictIrises || key.includes('Iris') === false) {
-            annotations[key] = MESH_ANNOTATIONS[key].map(
-                index => annotatedPrediction.scaledMesh[index]);
-          }
+          annotations[key] = MESH_ANNOTATIONS[key].map(
+              index => annotatedPrediction.scaledMesh[index]);
         }
         annotatedPrediction['annotations'] = annotations;
 

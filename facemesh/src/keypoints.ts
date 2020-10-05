@@ -38,8 +38,6 @@ export const MESH_ANNOTATIONS: {[key: string]: number[]} = {
   rightEyebrowUpper: [156, 70, 63, 105, 66, 107, 55, 193],
   rightEyebrowLower: [35, 124, 46, 53, 52, 65],
 
-  rightEyeIris: [473, 474, 475, 476, 477],
-
   leftEyeUpper0: [466, 388, 387, 386, 385, 384, 398],
   leftEyeLower0: [263, 249, 390, 373, 374, 380, 381, 382, 362],
   leftEyeUpper1: [467, 260, 259, 257, 258, 286, 414],
@@ -50,8 +48,6 @@ export const MESH_ANNOTATIONS: {[key: string]: number[]} = {
 
   leftEyebrowUpper: [383, 300, 293, 334, 296, 336, 285, 417],
   leftEyebrowLower: [265, 353, 276, 283, 282, 295],
-
-  leftEyeIris: [468, 469, 470, 471, 472],
 
   midwayBetweenEyes: [168],
 

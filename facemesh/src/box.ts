@@ -80,23 +80,3 @@ export function enlargeBox(box: Box, factor = 1.5): Box {
 
   return {startPoint, endPoint, landmarks: box.landmarks};
 }
-
-/**
- * Squarifies the provided box by setting its length and height equal to
- * max(length, height) while preserving its center point.
- * @param box An object with startPoint and endPoint properties describing the
- * outlines of the box to be squarified.
- */
-export function squarifyBox(box: Box): Box {
-  const centers = getBoxCenter(box);
-  const size = getBoxSize(box);
-  const maxEdge = Math.max(...size);
-
-  const halfSize = maxEdge / 2;
-  const startPoint: [number, number] =
-      [centers[0] - halfSize, centers[1] - halfSize];
-  const endPoint: [number, number] =
-      [centers[0] + halfSize, centers[1] + halfSize];
-
-  return {startPoint, endPoint, landmarks: box.landmarks};
-}

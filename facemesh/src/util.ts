@@ -23,9 +23,6 @@ export type TransformationMatrix = [
   [number, number, number], [number, number, number], [number, number, number]
 ];
 
-export const IDENTITY_MATRIX: TransformationMatrix =
-    [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
-
 /**
  * Normalizes the provided angle to the range -pi to pi.
  * @param angle The angle in radians to be normalized.
@@ -128,9 +125,4 @@ export function rotatePoint(
     dot(homogeneousCoordinate, rotationMatrix[0]),
     dot(homogeneousCoordinate, rotationMatrix[1])
   ];
-}
-
-export function xyDistanceBetweenPoints(
-    a: Coord2D|Coord3D, b: Coord2D|Coord3D): number {
-  return Math.sqrt(Math.pow(a[0] - b[0], 2) + Math.pow(a[1] - b[1], 2));
 }

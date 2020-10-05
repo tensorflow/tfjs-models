@@ -19,12 +19,12 @@ Via script tags:
 
 ```html
 <!-- Require the peer dependencies of facemesh. -->
-<script src="https://unpkg.com/@tensorflow/tfjs-core@2.4.0/dist/tf-core.js"></script>
-<script src="https://unpkg.com/@tensorflow/tfjs-converter@2.4.0/dist/tf-converter.js"></script>
+<script src="https://unpkg.com/@tensorflow/tfjs-core@2.1.0/dist/tf-core.js"></script>
+<script src="https://unpkg.com/@tensorflow/tfjs-converter@2.1.0/dist/tf-converter.js"></script>
 
 <!-- You must explicitly require a TF.js backend if you're not using the tfs union bundle. -->
-<script src="https://unpkg.com/@tensorflow/tfjs-backend-wasm@2.4.0/dist/tf-backend-wasm.js"></script>
-<!-- Alternatively you can use the WebGL backend: <script src="https://unpkg.com/@tensorflow/tfjs-backend-webgl@2.4.0/dist/tf-backend-webgl.js"></script> -->
+<script src="https://unpkg.com/@tensorflow/tfjs-backend-wasm@2.1.0/dist/tf-backend-wasm.js"></script>
+<!-- Alternatively you can use the WebGL backend: <script src="https://unpkg.com/@tensorflow/tfjs-backend-webgl@2.1.0/dist/tf-backend-webgl.js"></script> -->
 ```
 
 Via npm:
@@ -115,8 +115,6 @@ main();
 
 `facemesh.load()` takes a configuration object with the following properties:
 
-* **shouldLoadIrisModel** - Whether to load the MediaPipe iris detection model (an additional 2.6 MB of weights). The MediaPipe iris detection model provides (1) an additional 10 keypoints outlining the irises and (2) improved eye region keypoints enabling blink detection. Defaults to `true`.
-
 * **maxContinuousChecks** - How many frames to go without running the bounding box detector. Only relevant if maxFaces > 1. Defaults to 5.
 
 * **detectionConfidence** - Threshold for discarding a prediction. Defaults to 0.9.
@@ -134,8 +132,6 @@ main();
 * **returnTensors** - (defaults to `false`) Whether to return tensors as opposed to values.
 
 * **flipHorizontal** - Whether to flip/mirror the facial keypoints horizontally. Should be true for videos that are flipped by default (e.g. webcams).
-
-* **predictIrises** - (defaults to `true`) Whether to return keypoints for the irises. Disabling may improve performance.
 
 #### Keypoints
 
