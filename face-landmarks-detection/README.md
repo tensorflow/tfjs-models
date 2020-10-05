@@ -14,7 +14,7 @@ More background information about the model, as well as its performance characte
 
 The model is designed for front-facing cameras on mobile devices, where faces in view tend to occupy a relatively large fraction of the canvas. MediaPipe Facemesh may struggle to identify far-away faces.
 
-Check out our [demo](https://storage.googleapis.com/tfjs-models/demos/facemesh/index.html), which uses the model to detect facial landmarks in a live video stream.
+Check out our [demo](https://storage.googleapis.com/tfjs-models/demos/face-landmarks-detection/index.html), which uses the model to detect facial landmarks in a live video stream.
 
 This model is also available as part of [MediaPipe](https://github.com/google/mediapipe/tree/master/mediapipe/models), a
 framework for building multimodal applied ML pipelines.
