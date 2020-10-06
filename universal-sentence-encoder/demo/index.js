@@ -78,7 +78,7 @@ const initQnA = async () => {
   };
   const model = await use.loadQnA();
   document.querySelector('#loadingQnA').style.display = 'none';
-  let result = await model.embed(input);
+  let result = model.embed(input);
   const query = result['queryEmbedding'].arraySync();
   const answers = result['responseEmbedding'].arraySync();
   for (let i = 0; i < answers.length; i++) {
