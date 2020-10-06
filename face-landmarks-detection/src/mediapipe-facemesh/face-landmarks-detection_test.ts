@@ -19,14 +19,14 @@ import * as tf from '@tensorflow/tfjs-core';
 // tslint:disable-next-line: no-imports-from-dist
 import {ALL_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
-import * as facemesh from './index';
+import * as faceLandmarksDetection from '.././index';
 import {stubbedImageVals} from './test_util';
 
-describeWithFlags('Facemesh', ALL_ENVS, () => {
-  let model: facemesh.MediaPipeFaceMesh;
+describeWithFlags('Face landmarks detection', ALL_ENVS, () => {
+  let model: faceLandmarksDetection.MediaPipeFaceMesh;
   beforeAll(async () => {
     // Note: this makes a network request for model assets.
-    model = await facemesh.load();
+    model = await faceLandmarksDetection.load('mediapipe-facemesh');
   });
 
   it('estimateFaces does not leak memory', async () => {

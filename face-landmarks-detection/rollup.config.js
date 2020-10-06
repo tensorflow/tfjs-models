@@ -65,13 +65,13 @@ function config({ plugins = [], output = {}, tsCompilerOptions = {} }) {
 }
 
 export default [
-  config({output: {format: 'umd', name: 'facemesh', file: 'dist/facemesh.js'}}),
+  config({output: {format: 'umd', name: 'face-landmarks-detection', file: 'dist/face-landmarks-detection.js'}}),
   config({
     plugins: [terser({output: {preamble: PREAMBLE, comments: false}})],
-    output: {format: 'umd', name: 'facemesh', file: 'dist/facemesh.min.js'}
+    output: {format: 'umd', name: 'face-landmarks-detection', file: 'dist/face-landmarks-detection.min.js'}
   }),
   config({
     plugins: [terser({output: {preamble: PREAMBLE, comments: false}})],
-    output: {format: 'es', file: 'dist/facemesh.esm.js'}
+    output: {format: 'es', file: 'dist/face-landmarks-detection.esm.js'}
   })
 ];

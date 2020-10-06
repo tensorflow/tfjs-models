@@ -31,7 +31,7 @@ process.on('unhandledRejection', e => {
 });
 
 jasmine_util.setTestEnvs(
-    [{name: 'test-facemesh', backendName: 'cpu', flags: {}}]);
+    [{name: 'test-face-landmarks-detection', backendName: 'cpu', flags: {}}]);
 
 const unitTests = 'src/**/*_test.ts';
 
