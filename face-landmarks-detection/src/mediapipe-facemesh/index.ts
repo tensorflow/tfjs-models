@@ -19,6 +19,8 @@ import * as blazeface from '@tensorflow-models/blazeface';
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
+import {FaceLandmarksPackage, FaceLandmarksPrediction} from '../types';
+
 import {MESH_ANNOTATIONS} from './keypoints';
 import {Pipeline, Prediction} from './pipeline';
 import {Coord2D, Coords3D} from './util';
@@ -31,7 +33,7 @@ const IRIS_GRAPHMODEL_PATH =
 const MESH_MODEL_INPUT_WIDTH = 192;
 const MESH_MODEL_INPUT_HEIGHT = 192;
 
-interface AnnotatedPredictionValues {
+interface AnnotatedPredictionValues extends FaceLandmarksPrediction {
   /** Probability of the face detection. */
   faceInViewConfidence: number;
   boundingBox: {
@@ -48,7 +50,7 @@ interface AnnotatedPredictionValues {
   annotations?: {[key: string]: Coords3D};
 }
 
-interface AnnotatedPredictionTensors {
+interface AnnotatedPredictionTensors extends FaceLandmarksPrediction {
   faceInViewConfidence: number;
   boundingBox: {topLeft: tf.Tensor1D, bottomRight: tf.Tensor1D};
   mesh: tf.Tensor2D;
@@ -178,7 +180,7 @@ function flipFaceHorizontal(
   });
 }
 
-export class MediaPipeFaceMesh {
+export class MediaPipeFaceMesh implements FaceLandmarksPackage {
   private pipeline: Pipeline;
   private detectionConfidence: number;
 

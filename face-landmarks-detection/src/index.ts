@@ -15,9 +15,10 @@
  * =============================================================================
  */
 
-import {load as loadMediaPipeFaceMesh, MediaPipeFaceMesh} from './mediapipe-facemesh';
+import {load as loadMediaPipeFaceMesh} from './mediapipe-facemesh';
 
-export {MediaPipeFaceMesh};
+import {FaceLandmarksPackage} from './types';
+export {FaceLandmarksPackage, FaceLandmarksPrediction} from './types';
 
 /**
  * Load the package.
@@ -38,7 +39,7 @@ export {MediaPipeFaceMesh};
  * Defaults to true.
  */
 export async function load(
-    pkg = 'mediapipe-facemesh', config = {}): Promise<MediaPipeFaceMesh> {
+    pkg = 'mediapipe-facemesh', config = {}): Promise<FaceLandmarksPackage> {
   if (pkg === 'mediapipe-facemesh') {
     return loadMediaPipeFaceMesh(config);
   } else {
