@@ -17,5 +17,6 @@
 cd demo
 rm -rf dist
 yarn build
-gsutil -m rm -r gs://tfjs-models/demos/face-landmarks-detection/*
-gsutil -m cp -Z -r dist/ gs://tfjs-models/demos/face-landmarks-detection
+gsutil -m rm -r gs://tfjs-models/demos/facemesh/*
+gsutil -m cp -Z -r dist/ gs://tfjs-models/demos/facemesh
+
