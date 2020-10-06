@@ -412,7 +412,7 @@ export class Pipeline {
         };
 
         const prediction: Prediction = {
-          coords: coordsReshaped,
+          coords: tf.tensor2d(rawCoords, [rawCoords.length, 3]),
           scaledCoords: transformedCoords,
           box: landmarksBox,
           flag: flag.squeeze()
