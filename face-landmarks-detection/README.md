@@ -2,7 +2,7 @@
 
 This package contains solutions for detecting facial landmarks.
 
-Currently, we offer one solution: MediaPipe facemesh (`mediapipe-facemesh`), described in detail below.
+Currently, we offer one solution: MediaPipe Facemesh (`mediapipe-facemesh`), described in detail below.
 
 # MediaPipe Facemesh
 

@@ -1,5 +1,13 @@
 # MediaPipe Facemesh
 
+---
+
+## This repository has been archived in favor of tfjs-models/face-landmarks-detection and will no longer be updated.
+
+Please refer to [face-landmarks-detection](https://github.com/tensorflow/tfjs-models/tree/master/facemesh) for future updates.
+
+---
+
 MediaPipe Facemesh is a lightweight machine learning pipeline predicting 486 3D facial landmarks to infer the approximate surface geometry of a human face ([paper](https://arxiv.org/pdf/1907.06724.pdf)).
 
 <img src="demo.gif" alt="demo" style="width: 640px;"/>
