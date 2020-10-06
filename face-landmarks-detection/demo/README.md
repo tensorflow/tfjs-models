@@ -1,15 +1,15 @@
-# MediaPipe Facemesh demo
+# Face landmarks detection demo
 
 ## Contents
 
-The MediaPipe Facemesh demo shows how to use the MediaPipe Facemesh model to estimate keypoints on a face.
+The face landmarks detection demo shows how to estimate keypoints on a face.
 
 ## Setup
 
 cd into the demo folder:
 
 ```sh
-cd facemesh/demo
+cd face-landmarks-detection/demo
 ```
 
 Install dependencies and prepare the build directory:
@@ -24,11 +24,11 @@ To watch files for changes, and launch a dev server:
 yarn watch
 ```
 
-## If you are developing facemesh locally, and want to test the changes in the demos
+## If you are developing face-landmarks-detection locally, and want to test the changes in the demos
 
-Cd into the facemesh folder:
+Cd into the face-landmarks-detection folder:
 ```sh
-cd facemesh
+cd face-landmarks-detection
 ```
 
 Install dependencies:
@@ -36,7 +36,7 @@ Install dependencies:
 yarn
 ```
 
-Publish facemesh locally:
+Publish face-landmarks-detection locally:
 ```sh
 yarn build && yarn yalc publish
 ```
@@ -48,9 +48,9 @@ cd demo
 yarn
 ```
 
-Link the local facemesh to the demos:
+Link the local face-landmarks-detection to the demos:
 ```sh
-yarn yalc link @tensorflow-models/facemesh
+yarn yalc link @tensorflow-models/face-landmarks-detection
 ```
 
 Start the dev demo server:
@@ -58,9 +58,9 @@ Start the dev demo server:
 yarn watch
 ```
 
-To get future updates from the facemesh source code:
+To get future updates from the face-landmarks-detection source code:
 ```
-# cd up into the facemesh directory
+# cd up into the face-landmarks-detection directory
 cd ../
 yarn build && yarn yalc push
 ```
