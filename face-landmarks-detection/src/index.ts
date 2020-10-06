@@ -20,7 +20,7 @@ import {load as loadMediaPipeFaceMesh, MediaPipeFaceMesh} from './mediapipe-face
 export {MediaPipeFaceMesh};
 
 /**
- * Load the model.
+ * Load the package.
  *
  * @param options - a configuration object with the following properties:
  *  - `maxContinuousChecks` How many frames to go without running the bounding
@@ -38,10 +38,10 @@ export {MediaPipeFaceMesh};
  * Defaults to true.
  */
 export async function load(
-    model: string, config = {}): Promise<MediaPipeFaceMesh> {
-  if (model === 'mediapipe-facemesh') {
+    pkg = 'mediapipe-facemesh', config = {}): Promise<MediaPipeFaceMesh> {
+  if (pkg === 'mediapipe-facemesh') {
     return loadMediaPipeFaceMesh(config);
   } else {
-    throw new Error('model not found');
+    throw new Error(`${pkg} is not a valid package name.`);
   }
 }

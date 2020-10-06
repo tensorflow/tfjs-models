@@ -1,22 +1,22 @@
 # Face landmarks detection
 
-This package contains solutions for detecting facial landmarks.
+This project contains packages for detecting facial landmarks.
 
-Currently, we offer one solution: MediaPipe Facemesh (`mediapipe-facemesh`), described in detail below.
+Currently, we offer one package: MediaPipe Facemesh (`mediapipe-facemesh`), described in detail below.
 
 # MediaPipe Facemesh
 
-MediaPipe Facemesh (`mediapipe-facemesh`) is a lightweight machine learning pipeline predicting 486 3D facial landmarks to infer the approximate surface geometry of a human face ([paper](https://arxiv.org/pdf/1907.06724.pdf)).
+MediaPipe Facemesh (`mediapipe-facemesh`) is a lightweight package predicting 486 3D facial landmarks to infer the approximate surface geometry of a human face ([paper](https://arxiv.org/pdf/1907.06724.pdf)).
 
 <img src="demo.gif" alt="demo" style="width: 640px;"/>
 
-More background information about the model, as well as its performance characteristics on different datasets, can be found here: [https://drive.google.com/file/d/1VFC_wIpw4O7xBOiTgUldl79d9LA-LsnA/view](https://drive.google.com/file/d/1VFC_wIpw4O7xBOiTgUldl79d9LA-LsnA/view)
+More background information about the package, as well as its performance characteristics on different datasets, can be found here: [https://drive.google.com/file/d/1VFC_wIpw4O7xBOiTgUldl79d9LA-LsnA/view](https://drive.google.com/file/d/1VFC_wIpw4O7xBOiTgUldl79d9LA-LsnA/view)
 
-The model is designed for front-facing cameras on mobile devices, where faces in view tend to occupy a relatively large fraction of the canvas. MediaPipe Facemesh may struggle to identify far-away faces.
+The package is designed for front-facing cameras on mobile devices, where faces in view tend to occupy a relatively large fraction of the canvas. MediaPipe Facemesh may struggle to identify far-away faces.
 
-Check out our [demo](https://storage.googleapis.com/tfjs-models/demos/face-landmarks-detection/index.html), which uses the model to detect facial landmarks in a live video stream.
+Check out our [demo](https://storage.googleapis.com/tfjs-models/demos/face-landmarks-detection/index.html), which uses the MediaPipe Facemesh to detect facial landmarks in a live video stream.
 
-This model is also available as part of [MediaPipe](https://github.com/google/mediapipe/tree/master/mediapipe/models), a
+This package is also available as part of [MediaPipe](https://github.com/google/mediapipe/tree/master/mediapipe/models), a
 framework for building multimodal applied ML pipelines.
 
 ## Installation
@@ -28,9 +28,9 @@ Via script tags:
 <script src="https://unpkg.com/@tensorflow/tfjs-core@2.4.0/dist/tf-core.js"></script>
 <script src="https://unpkg.com/@tensorflow/tfjs-converter@2.4.0/dist/tf-converter.js"></script>
 
-<!-- You must explicitly require a TF.js backend if you're not using the tfs union bundle. -->
-<script src="https://unpkg.com/@tensorflow/tfjs-backend-wasm@2.4.0/dist/tf-backend-wasm.js"></script>
-<!-- Alternatively you can use the WebGL backend: <script src="https://unpkg.com/@tensorflow/tfjs-backend-webgl@2.4.0/dist/tf-backend-webgl.js"></script> -->
+<!-- You must explicitly require a TF.js backend if you're not using the tfjs union bundle. -->
+<script src="https://unpkg.com/@tensorflow/tfjs-backend-webgl@2.4.0/dist/tf-backend-webgl.js"></script>
+<!-- Alternatively you can use the WASM backend: <script src="https://unpkg.com/@tensorflow/tfjs-backend-wasm@2.4.0/dist/tf-backend-wasm.js"></script> -->
 
 <!-- Require face-landmarks-detection itself. -->
 <script src="https://unpkg.com/@tensorflow-models/face-landmarks-detection@0.0.1/dist/face-landmarks-detection.js"></script>
@@ -43,7 +43,7 @@ Using `yarn`:
     $ yarn add @tensorflow-models/face-landmarks-detection
 
     $ yarn add @tensorflow/tfjs-core, @tensorflow/tfjs-converter
-    $ yarn add @tensorflow/tfjs-backend-wasm # or @tensorflow/tfjs-backend-webgl
+    $ yarn add @tensorflow/tfjs-backend-webgl # or @tensorflow/tfjs-backend-wasm
 
 ## Usage
 
@@ -52,11 +52,11 @@ If you are using via npm, first add:
 ```js
 const faceLandmarksDetection = require('@tensorflow-models/face-landmarks-detection');
 
-// If you are using the WASM backend:
-require('@tensorflow/tfjs-backend-wasm'); // You need to require the backend explicitly because facemesh itself does not
-
 // If you are using the WebGL backend:
-// require('@tensorflow/tfjs-backend-webgl');
+require('@tensorflow/tfjs-backend-webgl');
+
+// If you are using the WASM backend:
+// require('@tensorflow/tfjs-backend-wasm'); // You need to require the backend explicitly because facemesh itself does not
 ```
 
 Then:
@@ -64,7 +64,7 @@ Then:
 ```js
 
 async function main() {
-  // Load the MediaPipe facemesh model.
+  // Load the MediaPipe Facemesh package.
   const model = await faceLandmarksDetection.load('mediapipe-facemesh');
 
   // Pass in a video stream (or an image, canvas, or 3D tensor) to obtain an
@@ -124,9 +124,9 @@ main();
 
 `faceLandmarksDetection.load()` takes two arguments:
 
-* **model** - Which solution to load. Current options: `mediapipe-facemesh`.
+* **package** - Which package to load. Current options: `mediapipe-facemesh`.
 
-* **modelConfig** - A configuration object. If loading the `mediapipe-facemesh` model, the configuration object has the following properties:
+* **packageConfig** - A configuration object. If loading the `mediapipe-facemesh` package, the configuration object has the following properties:
 
   * **shouldLoadIrisModel** - Whether to load the MediaPipe iris detection model (an additional 2.6 MB of weights). The MediaPipe iris detection model provides (1) an additional 10 keypoints outlining the irises and (2) improved eye region keypoints enabling blink detection. Defaults to `true`.
 
