@@ -141,6 +141,10 @@ main();
 
   * **scoreThreshold** - A threshold for deciding when to remove boxes based on score in non-maximum suppression. Defaults to 0.75. Increase this score in order to reduce false positives (detects fewer faces).
 
+  * **modelUrl** - Optional param for specifying a custom facemesh model url or a `tf.io.IOHandler` object.
+
+  * **irisModelUrl** - Optional param for specifying a custom iris model url or a `tf.io.IOHandler` object.
+
 #### Parameters for model.estimateFace()
 
 * **input** - The image to classify. Can be a tensor, DOM element image, video, or canvas.

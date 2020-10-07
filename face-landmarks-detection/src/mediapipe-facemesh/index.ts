@@ -78,24 +78,42 @@ export type AnnotatedPrediction =
  * on score in non-maximum suppression. Defaults to 0.75.
  *  - `shouldLoadIrisModel` Whether to also load the iris detection model.
  * Defaults to true.
+ *  - `modelUrl` Optional param for specifying a custom facemesh model url or
+ * a `tf.io.IOHandler` object.
+ *  - `irisModelUrl` Optional param for specifying a custom iris model url or
+ * a `tf.io.IOHandler` object.
  */
-export async function load({
-  maxContinuousChecks = 5,
-  detectionConfidence = 0.9,
-  maxFaces = 10,
-  iouThreshold = 0.3,
-  scoreThreshold = 0.75,
-  shouldLoadIrisModel = true
-} = {}): Promise<MediaPipeFaceMesh> {
+export async function load(config: {
+  maxContinuousChecks?: number,
+  detectionConfidence?: number,
+  maxFaces?: number,
+  iouThreshold?: number,
+  scoreThreshold?: number,
+  shouldLoadIrisModel?: boolean,
+  modelUrl?: string|tf.io.IOHandler,
+  irisModelUrl?: string|tf.io.IOHandler,
+}): Promise<MediaPipeFaceMesh> {
+  const {
+    maxContinuousChecks = 5,
+    detectionConfidence = 0.9,
+    maxFaces = 10,
+    iouThreshold = 0.3,
+    scoreThreshold = 0.75,
+    shouldLoadIrisModel = true,
+    modelUrl,
+    irisModelUrl
+  } = config;
+
   let models;
   if (shouldLoadIrisModel) {
     models = await Promise.all([
       loadDetectorModel(maxFaces, iouThreshold, scoreThreshold),
-      loadMeshModel(), loadIrisModel()
+      loadMeshModel(modelUrl), loadIrisModel(irisModelUrl)
     ]);
   } else {
     models = await Promise.all([
-      loadDetectorModel(maxFaces, iouThreshold, scoreThreshold), loadMeshModel()
+      loadDetectorModel(maxFaces, iouThreshold, scoreThreshold),
+      loadMeshModel(modelUrl)
     ]);
   }
 
@@ -111,11 +129,19 @@ async function loadDetectorModel(
   return blazeface.load({maxFaces, iouThreshold, scoreThreshold});
 }
 
-async function loadMeshModel(): Promise<tfconv.GraphModel> {
+async function loadMeshModel(modelUrl?: string|
+                             tf.io.IOHandler): Promise<tfconv.GraphModel> {
+  if (modelUrl != null) {
+    return tfconv.loadGraphModel(modelUrl);
+  }
   return tfconv.loadGraphModel(FACEMESH_GRAPHMODEL_PATH, {fromTFHub: true});
 }
 
-async function loadIrisModel(): Promise<tfconv.GraphModel> {
+async function loadIrisModel(modelUrl?: string|
+                             tf.io.IOHandler): Promise<tfconv.GraphModel> {
+  if (modelUrl != null) {
+    return tfconv.loadGraphModel(modelUrl);
+  }
   return tfconv.loadGraphModel(IRIS_GRAPHMODEL_PATH, {fromTFHub: true});
 }
 
