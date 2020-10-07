@@ -27,7 +27,8 @@ describeWithFlags('Face landmarks detection', ALL_ENVS, () => {
   let model: MediaPipeFaceMesh;
   beforeAll(async () => {
     // Note: this makes a network request for model assets.
-    model = await faceLandmarksDetection.load('mediapipe-facemesh') as
+    model = await faceLandmarksDetection.load(
+                faceLandmarksDetection.SupportedPackages.mediapipeFacemesh) as
         MediaPipeFaceMesh;
   });
 
