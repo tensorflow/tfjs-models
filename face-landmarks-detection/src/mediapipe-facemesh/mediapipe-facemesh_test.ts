@@ -19,7 +19,7 @@ import * as tf from '@tensorflow/tfjs-core';
 // tslint:disable-next-line: no-imports-from-dist
 import {ALL_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
-import * as faceLandmarksDetection from '.././index';
+import * as faceLandmarksDetection from '../index';
 import {MediaPipeFaceMesh} from './index';
 import {stubbedImageVals} from './test_util';
 
@@ -73,7 +73,7 @@ describeWithFlags('Face landmarks detection', ALL_ENVS, () => {
     // Call estimateFaces once up front to exclude any initialization tensors
     // from memory test.
     await model.estimateFaces(
-        input, false /* return tensors */, false /* return tensors */,
+        input, false /* return tensors */, false /* flip horizontal */,
         true /* predict irises */);
 
     const numTensors = tf.memory().numTensors;

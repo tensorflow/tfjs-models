@@ -65,7 +65,8 @@ Then:
 
 async function main() {
   // Load the MediaPipe Facemesh package.
-  const model = await faceLandmarksDetection.load('mediapipe-facemesh');
+  const model = await faceLandmarksDetection.load(
+    faceLandmarksDetection.SupportedPackages.mediapipeFacemesh);
 
   // Pass in a video stream (or an image, canvas, or 3D tensor) to obtain an
   // array of detected faces from the MediaPipe graph. If passing in a video
