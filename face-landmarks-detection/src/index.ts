@@ -20,6 +20,10 @@ import {load as loadMediaPipeFaceMesh} from './mediapipe-facemesh';
 import {FaceLandmarksPackage} from './types';
 export {FaceLandmarksPackage, FaceLandmarksPrediction} from './types';
 
+export enum SupportedPackages {
+  mediapipeFacemesh = 'mediapipe-facemesh'
+}
+
 /**
  * Load the package.
  *
@@ -39,8 +43,9 @@ export {FaceLandmarksPackage, FaceLandmarksPrediction} from './types';
  * Defaults to true.
  */
 export async function load(
-    pkg = 'mediapipe-facemesh', config = {}): Promise<FaceLandmarksPackage> {
-  if (pkg === 'mediapipe-facemesh') {
+    pkg = SupportedPackages.mediapipeFacemesh,
+    config = {}): Promise<FaceLandmarksPackage> {
+  if (pkg === SupportedPackages.mediapipeFacemesh) {
     return loadMediaPipeFaceMesh(config);
   } else {
     throw new Error(`${pkg} is not a valid package name.`);
