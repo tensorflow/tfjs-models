@@ -39,30 +39,30 @@ describeWithFlags('Face landmarks detection', ALL_ENVS, () => {
     let numTensors = tf.memory().numTensors;
     let returnTensors = false;
     let flipHorizontal = false;
-    await model.estimateFaces(input, returnTensors, flipHorizontal);
+    await model.estimateFaces({input, returnTensors, flipHorizontal});
     expect(tf.memory().numTensors).toEqual(numTensors);
 
     // returnTensors = false, flipHorizontal = true
     numTensors = tf.memory().numTensors;
     returnTensors = false;
     flipHorizontal = true;
-    await model.estimateFaces(input, returnTensors, flipHorizontal);
+    await model.estimateFaces({input, returnTensors, flipHorizontal});
     expect(tf.memory().numTensors).toEqual(numTensors);
 
     // returnTensors = true, flipHorizontal = false
     numTensors = tf.memory().numTensors;
     returnTensors = true;
     flipHorizontal = false;
-    await model.estimateFaces(input, returnTensors, flipHorizontal);
+    await model.estimateFaces({input, returnTensors, flipHorizontal});
     expect(tf.memory().numTensors).toEqual(numTensors);
 
-    // returnTensors = true, flipHorizontal = true, returnIrises = true
+    // returnTensors = true, flipHorizontal = true, predictIrises = true
     numTensors = tf.memory().numTensors;
     returnTensors = true;
     flipHorizontal = true;
-    const returnIrises = true;
+    const predictIrises = true;
     await model.estimateFaces(
-        input, returnTensors, flipHorizontal, returnIrises);
+        {input, returnTensors, flipHorizontal, predictIrises});
     expect(tf.memory().numTensors).toEqual(numTensors);
   });
 
@@ -72,12 +72,15 @@ describeWithFlags('Face landmarks detection', ALL_ENVS, () => {
 
     // Call estimateFaces once up front to exclude any initialization tensors
     // from memory test.
-    await model.estimateFaces(
-        input, false /* return tensors */, false /* flip horizontal */,
-        true /* predict irises */);
+    await model.estimateFaces({
+      input,
+      returnTensors: false,
+      flipHorizontal: false,
+      predictIrises: true
+    });
 
     const numTensors = tf.memory().numTensors;
-    const result = await model.estimateFaces(input);
+    const result = await model.estimateFaces({input});
     const face = result[0];
 
     expect(tf.memory().numTensors).toEqual(numTensors);
@@ -108,10 +111,10 @@ describeWithFlags('Face landmarks detection', ALL_ENVS, () => {
 
        // Call estimateFaces once up front to exclude any initialization tensors
        // from memory test.
-       await model.estimateFaces(input);
+       await model.estimateFaces({input});
 
        const numTensors = tf.memory().numTensors;
-       const result = await model.estimateFaces(input);
+       const result = await model.estimateFaces({input});
        const face = result[0];
 
        expect(tf.memory().numTensors).toEqual(numTensors);

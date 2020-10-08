@@ -19,7 +19,7 @@ import * as blazeface from '@tensorflow-models/blazeface';
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {FaceLandmarksPackage, FaceLandmarksPrediction} from '../types';
+import {EstimateFacesConfig, FaceLandmarksPackage, FaceLandmarksPrediction} from '../types';
 
 import {MESH_ANNOTATIONS} from './keypoints';
 import {Pipeline, Prediction} from './pipeline';
@@ -32,6 +32,14 @@ const IRIS_GRAPHMODEL_PATH =
     'https://tfhub.dev/mediapipe/tfjs-model/iris/1/default/2';
 const MESH_MODEL_INPUT_WIDTH = 192;
 const MESH_MODEL_INPUT_HEIGHT = 192;
+
+interface MediaPipeFaceMeshEstimateFacesConfig extends EstimateFacesConfig {
+  /**
+   * Whether to return keypoints for the irises. Disabling may improve
+   * performance. Defaults to true.
+   */
+  predictIrises?: boolean;
+}
 
 interface AnnotatedPredictionValues extends FaceLandmarksPrediction {
   /** Probability of the face detection. */
@@ -243,16 +251,19 @@ export class MediaPipeFaceMesh implements FaceLandmarksPackage {
    * @param flipHorizontal Whether to flip/mirror the facial keypoints
    * horizontally. Should be true for videos that are flipped by default (e.g.
    * webcams).
-   * @param predictIrises Whether to return keypoints for the irises.
-   * Disabling may improve performance. Defaults to true.
+   * @param predictIrises
    *
    * @return An array of AnnotatedPrediction objects.
    */
-  async estimateFaces(
-      input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
-      HTMLCanvasElement,
-      returnTensors = false, flipHorizontal = false,
-      predictIrises = true): Promise<AnnotatedPrediction[]> {
+  async estimateFaces(config: MediaPipeFaceMeshEstimateFacesConfig):
+      Promise<AnnotatedPrediction[]> {
+    const {
+      returnTensors = false,
+      flipHorizontal = false,
+      predictIrises = true
+    } = config;
+    let input = config.input;
+
     if (predictIrises && this.pipeline.irisModel == null) {
       throw new Error(
           'The iris model was not loaded as part of facemesh. ' +

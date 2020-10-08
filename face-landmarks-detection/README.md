@@ -71,7 +71,9 @@ async function main() {
   // Pass in a video stream (or an image, canvas, or 3D tensor) to obtain an
   // array of detected faces from the MediaPipe graph. If passing in a video
   // stream, a single prediction per frame will be returned.
-  const predictions = await model.estimateFaces(document.querySelector("video"));
+  const predictions = await model.estimateFaces({
+    input: document.querySelector("video")
+  });
 
   if (predictions.length > 0) {
     /*
@@ -146,15 +148,17 @@ main();
 
   * **irisModelUrl** - Optional param for specifying a custom iris model url or a `tf.io.IOHandler` object.
 
-#### Parameters for model.estimateFace()
+#### Parameters for model.estimateFaces()
 
-* **input** - The image to classify. Can be a tensor, DOM element image, video, or canvas.
+* **config** - A configuration object. If loading the `mediapipe-facemesh` package, the configuration object has the following properties:
 
-* **returnTensors** - (defaults to `false`) Whether to return tensors as opposed to values.
+  * **input** - The image to classify. Can be a tensor, DOM element image, video, or canvas.
 
-* **flipHorizontal** - Whether to flip/mirror the facial keypoints horizontally. Should be true for videos that are flipped by default (e.g. webcams).
+  * **returnTensors** - (defaults to `false`) Whether to return tensors as opposed to values.
 
-* **predictIrises** - (defaults to `true`) Whether to return keypoints for the irises. Disabling may improve performance.
+  * **flipHorizontal** - Whether to flip/mirror the facial keypoints horizontally. Should be true for videos that are flipped by default (e.g. webcams).
+
+  * **predictIrises** - (defaults to `true`) Whether to return keypoints for the irises. Disabling may improve performance.
 
 #### Keypoints
 

@@ -24,25 +24,24 @@ export interface FaceLandmarksPrediction {
   mesh: tf.Tensor2D|Array<[number, number]>|Array<[number, number, number]>;
 }
 
+export interface EstimateFacesConfig {
+  /**
+   * The image to classify. Can be a tensor, DOM element image, video, or
+   * canvas.
+   */
+  input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
+      HTMLCanvasElement;
+  /** Whether to return tensors as opposed to values. */
+  returnTensors?: boolean;
+  /** Whether to flip/mirror the facial keypoints horizontally. */
+  flipHorizontal?: boolean;
+}
+
 // The interface that defines packages that detect face landmarks in an input.
 export class FaceLandmarksPackage {
-  /**
-   * Returns an array of faces in an image.
-   *
-   * @param input The image to classify. Can be a tensor, DOM element image,
-   * video, or canvas.
-   * @param returnTensors Whether to return tensors as
-   * opposed to values.
-   * @param flipHorizontal Whether to flip/mirror the facial keypoints
-   * horizontally.
-   *
-   * @return An array of FaceLandmarksPrediction objects.
-   */
-  estimateFaces(
-      input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
-      HTMLCanvasElement,
-      returnTensors: boolean,
-      flipHorizontal: boolean): Promise<FaceLandmarksPrediction[]> {
+  // Returns an array of faces in an image.
+  estimateFaces(config: EstimateFacesConfig):
+      Promise<FaceLandmarksPrediction[]> {
     throw new Error('estimateFaces is not yet implemented.');
   }
 }

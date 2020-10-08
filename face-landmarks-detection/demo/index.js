@@ -128,9 +128,12 @@ async function setupCamera() {
 async function renderPrediction() {
   stats.begin();
 
-  const predictions = await model.estimateFaces(
-      video, false /* returnTensors */, false /* flipHorizontal */,
-      state.predictIrises);
+  const predictions = await model.estimateFaces({
+    input: video,
+    returnTensors: false,
+    flipHorizontal: false,
+    predictIrises: state.predictIrises
+  });
   ctx.drawImage(
       video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
 
