@@ -12,6 +12,7 @@
     "@tensorflow-models/face-landmarks-detection": "0.0.1",
     "@tensorflow/tfjs-backend-wasm": "2.4.0",
     "@tensorflow/tfjs-backend-webgl": "2.4.0",
+    "@tensorflow/tfjs-backend-cpu": "2.4.0",
     "@tensorflow/tfjs-converter": "2.4.0",
     "@tensorflow/tfjs-core": "2.4.0",
     "stats.js": "^0.17.0"
