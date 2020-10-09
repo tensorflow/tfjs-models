@@ -10,7 +10,7 @@ MediaPipe Facemesh (`mediapipe-facemesh`) is a lightweight package predicting 48
 
 <img src="demo.gif" alt="demo" style="width: 640px;"/>
 
-More background information about the package, as well as its performance characteristics on different datasets, can be found here: [https://drive.google.com/file/d/1VFC_wIpw4O7xBOiTgUldl79d9LA-LsnA/view](https://drive.google.com/file/d/1VFC_wIpw4O7xBOiTgUldl79d9LA-LsnA/view)
+More background information about the package, as well as its performance characteristics on different datasets, can be found in the model card: [https://drive.google.com/file/d/1VFC_wIpw4O7xBOiTgUldl79d9LA-LsnA/view](https://drive.google.com/file/d/1VFC_wIpw4O7xBOiTgUldl79d9LA-LsnA/view). The facemesh package optionally loads an iris detection model, whose model card can be found here: [https://drive.google.com/file/d/1bsWbokp9AklH2ANjCfmjqEzzxO1CNbMu/view](https://drive.google.com/file/d/1bsWbokp9AklH2ANjCfmjqEzzxO1CNbMu/view).
 
 The package is designed for front-facing cameras on mobile devices, where faces in view tend to occupy a relatively large fraction of the canvas. MediaPipe Facemesh may struggle to identify far-away faces.
 
