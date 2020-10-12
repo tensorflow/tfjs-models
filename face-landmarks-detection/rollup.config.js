@@ -64,11 +64,12 @@ function config({ plugins = [], output = {}, tsCompilerOptions = {} }) {
   };
 }
 
+const packageName = 'faceLandmarksDetection';
 export default [
-  config({output: {format: 'umd', name: 'face-landmarks-detection', file: 'dist/face-landmarks-detection.js'}}),
+  config({output: {format: 'umd', name: packageName, file: 'dist/face-landmarks-detection.js'}}),
   config({
     plugins: [terser({output: {preamble: PREAMBLE, comments: false}})],
-    output: {format: 'umd', name: 'face-landmarks-detection', file: 'dist/face-landmarks-detection.min.js'}
+    output: {format: 'umd', name: packageName, file: 'dist/face-landmarks-detection.min.js'}
   }),
   config({
     plugins: [terser({output: {preamble: PREAMBLE, comments: false}})],
