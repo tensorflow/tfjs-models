@@ -4,7 +4,7 @@
 
 ## This repository has been archived in favor of tfjs-models/face-landmarks-detection and will no longer be updated.
 
-Please refer to [face-landmarks-detection](https://github.com/tensorflow/tfjs-models/tree/master/facemesh) for future updates.
+Please refer to [face-landmarks-detection](https://github.com/tensorflow/tfjs-models/tree/master/face-landmarks-detection) for future updates.
 
 ---
 
