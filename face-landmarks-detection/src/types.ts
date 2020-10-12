@@ -22,6 +22,9 @@ import * as tf from '@tensorflow/tfjs-core';
 export interface FaceLandmarksPrediction {
   /** Facial landmark coordinates. */
   mesh: tf.Tensor2D|Array<[number, number]>|Array<[number, number, number]>;
+
+  // tslint:disable-next-line:no-any
+  [x: string]: any;
 }
 
 export interface EstimateFacesConfig {
@@ -35,6 +38,9 @@ export interface EstimateFacesConfig {
   returnTensors?: boolean;
   /** Whether to flip/mirror the facial keypoints horizontally. */
   flipHorizontal?: boolean;
+
+  // tslint:disable-next-line:no-any
+  [x: string]: any;
 }
 
 // The interface that defines packages that detect face landmarks in an input.
