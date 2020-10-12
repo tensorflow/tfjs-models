@@ -25,9 +25,10 @@ export enum SupportedPackages {
 }
 
 /**
- * Load the package.
+ * Load face-landmarks-detection.
  *
- * @param options - a configuration object with the following properties:
+ * @param pkg - The name of the package to load, e.g. 'mediapipe-facemesh'.
+ * @param config - a configuration object with the following properties:
  *  - `maxContinuousChecks` How many frames to go without running the bounding
  * box detector. Only relevant if maxFaces > 1. Defaults to 5.
  *  - `detectionConfidence` Threshold for discarding a prediction. Defaults to
