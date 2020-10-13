@@ -15,33 +15,13 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs-core';
+import {AnnotatedPrediction as MediaPipePrediction, MediaPipeFaceMeshEstimateFacesConfig} from './mediapipe-facemesh';
 
 // The object returned by a FaceLandmarksPackage describing a face found in the
 // input.
-export interface FaceLandmarksPrediction {
-  /** Facial landmark coordinates. */
-  mesh: tf.Tensor2D|Array<[number, number]>|Array<[number, number, number]>;
+export type FaceLandmarksPrediction = MediaPipePrediction;
 
-  // tslint:disable-next-line:no-any
-  [x: string]: any;
-}
-
-export interface EstimateFacesConfig {
-  /**
-   * The image to classify. Can be a tensor, DOM element image, video, or
-   * canvas.
-   */
-  input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
-      HTMLCanvasElement;
-  /** Whether to return tensors as opposed to values. */
-  returnTensors?: boolean;
-  /** Whether to flip/mirror the facial keypoints horizontally. */
-  flipHorizontal?: boolean;
-
-  // tslint:disable-next-line:no-any
-  [x: string]: any;
-}
+export type EstimateFacesConfig = MediaPipeFaceMeshEstimateFacesConfig;
 
 // The interface that defines packages that detect face landmarks in an input.
 export class FaceLandmarksPackage {
@@ -51,3 +31,5 @@ export class FaceLandmarksPackage {
     throw new Error('estimateFaces is not yet implemented.');
   }
 }
+
+export {MediaPipePrediction, MediaPipeFaceMeshEstimateFacesConfig};

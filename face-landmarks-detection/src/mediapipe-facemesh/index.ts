@@ -19,8 +19,6 @@ import * as blazeface from '@tensorflow-models/blazeface';
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {EstimateFacesConfig, FaceLandmarksPackage, FaceLandmarksPrediction} from '../types';
-
 import {MESH_ANNOTATIONS} from './keypoints';
 import {Pipeline, Prediction} from './pipeline';
 import {Coord2D, Coords3D} from './util';
@@ -33,7 +31,17 @@ const IRIS_GRAPHMODEL_PATH =
 const MESH_MODEL_INPUT_WIDTH = 192;
 const MESH_MODEL_INPUT_HEIGHT = 192;
 
-interface MediaPipeFaceMeshEstimateFacesConfig extends EstimateFacesConfig {
+export interface MediaPipeFaceMeshEstimateFacesConfig {
+  /**
+   * The image to classify. Can be a tensor, DOM element image, video, or
+   * canvas.
+   */
+  input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
+      HTMLCanvasElement;
+  /** Whether to return tensors as opposed to values. */
+  returnTensors?: boolean;
+  /** Whether to flip/mirror the facial keypoints horizontally. */
+  flipHorizontal?: boolean;
   /**
    * Whether to return keypoints for the irises. Disabling may improve
    * performance. Defaults to true.
@@ -41,7 +49,8 @@ interface MediaPipeFaceMeshEstimateFacesConfig extends EstimateFacesConfig {
   predictIrises?: boolean;
 }
 
-interface AnnotatedPredictionValues extends FaceLandmarksPrediction {
+export interface AnnotatedPredictionValues {
+  kind: 'mediaPipeAnnotatedPredictionValues';
   /** Probability of the face detection. */
   faceInViewConfidence: number;
   boundingBox: {
@@ -58,7 +67,8 @@ interface AnnotatedPredictionValues extends FaceLandmarksPrediction {
   annotations?: {[key: string]: Coords3D};
 }
 
-interface AnnotatedPredictionTensors extends FaceLandmarksPrediction {
+export interface AnnotatedPredictionTensors {
+  kind: 'mediaPipeAnnotatedPredictionTensors';
   faceInViewConfidence: number;
   boundingBox: {topLeft: tf.Tensor1D, bottomRight: tf.Tensor1D};
   mesh: tf.Tensor2D;
@@ -214,7 +224,7 @@ function flipFaceHorizontal(
   });
 }
 
-export class MediaPipeFaceMesh implements FaceLandmarksPackage {
+export class MediaPipeFaceMesh {
   private pipeline: Pipeline;
   private detectionConfidence: number;
 
@@ -316,6 +326,7 @@ export class MediaPipeFaceMesh implements FaceLandmarksPackage {
 
         if (returnTensors) {
           const annotatedPrediction: AnnotatedPrediction = {
+            kind: 'mediaPipeAnnotatedPredictionTensors',
             faceInViewConfidence: flagValue,
             mesh: coords,
             scaledMesh: scaledCoords,
@@ -339,6 +350,7 @@ export class MediaPipeFaceMesh implements FaceLandmarksPackage {
         coords.dispose();
 
         let annotatedPrediction: AnnotatedPredictionValues = {
+          kind: 'mediaPipeAnnotatedPredictionValues',
           faceInViewConfidence: flagValue,
           boundingBox: {topLeft: box.startPoint, bottomRight: box.endPoint},
           mesh: coordsArr,

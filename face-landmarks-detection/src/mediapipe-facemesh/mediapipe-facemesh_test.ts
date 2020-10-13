@@ -26,8 +26,7 @@ describeWithFlags('Face landmarks detection', ALL_ENVS, () => {
   let model: faceLandmarksDetection.FaceLandmarksPackage;
   beforeAll(async () => {
     // Note: this makes a network request for model assets.
-    model = await faceLandmarksDetection.load(
-        faceLandmarksDetection.SupportedPackages.mediapipeFacemesh);
+    model = await faceLandmarksDetection.load();
   });
 
   it('estimateFaces does not leak memory', async () => {
