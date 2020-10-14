@@ -70,8 +70,11 @@ interface AnnotatedPredictionValues {
   annotations?: {[key: string]: Coords3D};
 }
 
+const PREDICTION_TENSORS = 'MediaPipePredictionTensors';
+type PredictionTensorsKind = typeof PREDICTION_TENSORS;
+
 interface AnnotatedPredictionTensors {
-  kind: 'MediaPipePredictionTensors';
+  kind: PredictionTensorsKind;
   faceInViewConfidence: number;
   boundingBox: {topLeft: tf.Tensor1D, bottomRight: tf.Tensor1D};
   mesh: tf.Tensor2D;
@@ -336,7 +339,7 @@ class FaceMesh implements MediaPipeFaceMesh {
 
         if (returnTensors) {
           const annotatedPrediction: AnnotatedPrediction = {
-            kind: 'MediaPipePredictionTensors',
+            kind: PREDICTION_TENSORS,
             faceInViewConfidence: flagValue,
             mesh: coords,
             scaledMesh: scaledCoords,
