@@ -32,16 +32,19 @@ const BLAZEFACE_MODEL_URL =
  * much.
  *  `scoreThreshold` The threshold for deciding when to remove boxes based
  * on score.
+ *  `blazeModelUrl` Optional param for specifying a custom blaze model url or
+ * a `tf.io.IOHandler` object.
  */
 export async function load({
   maxFaces = 10,
   inputWidth = 128,
   inputHeight = 128,
   iouThreshold = 0.3,
-  scoreThreshold = 0.75
+  scoreThreshold = 0.75,
+  blazeModelUrl = BLAZEFACE_MODEL_URL,
 } = {}): Promise<BlazeFaceModel> {
   const blazeface =
-      await tfconv.loadGraphModel(BLAZEFACE_MODEL_URL, {fromTFHub: true});
+      await tfconv.loadGraphModel(blazeModelUrl, {fromTFHub: true});
 
   const model = new BlazeFaceModel(
       blazeface, inputWidth, inputHeight, maxFaces, iouThreshold,
