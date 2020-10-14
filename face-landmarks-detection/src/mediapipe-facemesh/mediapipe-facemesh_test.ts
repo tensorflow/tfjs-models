@@ -23,7 +23,7 @@ import * as faceLandmarksDetection from '../index';
 import {stubbedImageVals} from './test_util';
 
 describeWithFlags('Face landmarks detection', ALL_ENVS, () => {
-  let model: faceLandmarksDetection.FaceLandmarksPackage;
+  let model: faceLandmarksDetection.FaceLandmarksDetector;
   beforeAll(async () => {
     // Note: this makes a network request for model assets.
     model = await faceLandmarksDetection.load();
