@@ -45,7 +45,7 @@ export enum SupportedPackages {
  */
 export async function load(
     pkg = SupportedPackages.mediapipeFacemesh,
-    config = {}): Promise<FaceLandmarksPackage> {
+    config = {}): Promise<FaceLandmarksDetector> {
   if (pkg === SupportedPackages.mediapipeFacemesh) {
     return loadMediaPipeFaceMesh(config);
   } else {
