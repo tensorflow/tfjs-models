@@ -49,8 +49,11 @@ export interface EstimateFacesConfig {
   predictIrises?: boolean;
 }
 
+const PREDICTION_VALUES = 'MediaPipePredictionValues';
+type PredictionValuesKind = typeof PREDICTION_VALUES;
+
 interface AnnotatedPredictionValues {
-  kind: 'MediaPipePredictionValues';
+  kind: PredictionValuesKind;
   /** Probability of the face detection. */
   faceInViewConfidence: number;
   boundingBox: {
@@ -357,7 +360,7 @@ class FaceMesh implements MediaPipeFaceMesh {
         coords.dispose();
 
         let annotatedPrediction: AnnotatedPredictionValues = {
-          kind: 'MediaPipePredictionValues',
+          kind: PREDICTION_VALUES,
           faceInViewConfidence: flagValue,
           boundingBox: {topLeft: box.startPoint, bottomRight: box.endPoint},
           mesh: coordsArr,
