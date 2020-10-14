@@ -31,7 +31,7 @@ const IRIS_GRAPHMODEL_PATH =
 const MESH_MODEL_INPUT_WIDTH = 192;
 const MESH_MODEL_INPUT_HEIGHT = 192;
 
-export interface MediaPipeFaceMeshEstimateFacesConfig {
+export interface EstimateFacesConfig {
   /**
    * The image to classify. Can be a tensor, DOM element image, video, or
    * canvas.
@@ -50,7 +50,7 @@ export interface MediaPipeFaceMeshEstimateFacesConfig {
 }
 
 export interface AnnotatedPredictionValues {
-  kind: 'mediaPipeAnnotatedPredictionValues';
+  kind: 'MediaPipePrediction';
   /** Probability of the face detection. */
   faceInViewConfidence: number;
   boundingBox: {
@@ -68,7 +68,7 @@ export interface AnnotatedPredictionValues {
 }
 
 export interface AnnotatedPredictionTensors {
-  kind: 'mediaPipeAnnotatedPredictionTensors';
+  kind: 'MediaPipePrediction';
   faceInViewConfidence: number;
   boundingBox: {topLeft: tf.Tensor1D, bottomRight: tf.Tensor1D};
   mesh: tf.Tensor2D;
@@ -110,7 +110,7 @@ export async function load(config: {
   shouldLoadIrisModel?: boolean,
   modelUrl?: string|tf.io.IOHandler,
   irisModelUrl?: string|tf.io.IOHandler,
-}): Promise<MediaPipeFaceMesh> {
+}): Promise<FaceMesh> {
   const {
     maxContinuousChecks = 5,
     detectionConfidence = 0.9,
@@ -135,7 +135,7 @@ export async function load(config: {
     ]);
   }
 
-  const faceMesh = new MediaPipeFaceMesh(
+  const faceMesh = new FaceMesh(
       models[0], models[1], maxContinuousChecks, detectionConfidence, maxFaces,
       shouldLoadIrisModel ? models[2] : null);
   return faceMesh;
@@ -224,9 +224,16 @@ function flipFaceHorizontal(
   });
 }
 
-export class MediaPipeFaceMesh {
+export interface MediaPipeFaceMesh {
+  kind: 'MediaPipeFaceMesh';
+  estimateFaces(config: EstimateFacesConfig): Promise<AnnotatedPrediction[]>;
+}
+
+class FaceMesh implements MediaPipeFaceMesh {
   private pipeline: Pipeline;
   private detectionConfidence: number;
+
+  public kind = 'MediaPipeFaceMesh' as const ;
 
   constructor(
       blazeFace: blazeface.BlazeFaceModel, blazeMeshModel: tfconv.GraphModel,
@@ -265,7 +272,7 @@ export class MediaPipeFaceMesh {
    *
    * @return An array of AnnotatedPrediction objects.
    */
-  async estimateFaces(config: MediaPipeFaceMeshEstimateFacesConfig):
+  async estimateFaces(config: EstimateFacesConfig):
       Promise<AnnotatedPrediction[]> {
     const {
       returnTensors = false,
@@ -326,7 +333,7 @@ export class MediaPipeFaceMesh {
 
         if (returnTensors) {
           const annotatedPrediction: AnnotatedPrediction = {
-            kind: 'mediaPipeAnnotatedPredictionTensors',
+            kind: 'MediaPipePrediction',
             faceInViewConfidence: flagValue,
             mesh: coords,
             scaledMesh: scaledCoords,
@@ -350,7 +357,7 @@ export class MediaPipeFaceMesh {
         coords.dispose();
 
         let annotatedPrediction: AnnotatedPredictionValues = {
-          kind: 'mediaPipeAnnotatedPredictionValues',
+          kind: 'MediaPipePrediction',
           faceInViewConfidence: flagValue,
           boundingBox: {topLeft: box.startPoint, bottomRight: box.endPoint},
           mesh: coordsArr,

@@ -15,21 +15,14 @@
  * =============================================================================
  */
 
-import {AnnotatedPrediction as MediaPipePrediction, MediaPipeFaceMeshEstimateFacesConfig} from './mediapipe-facemesh';
+import {AnnotatedPrediction as MediaPipePrediction, MediaPipeFaceMesh} from './mediapipe-facemesh';
 
-// The object returned by a FaceLandmarksPackage describing a face found in the
-// input.
+// The union of types describing objects returned by a FaceLandmarksPackage
+// (currently with only one option);
 export type FaceLandmarksPrediction = MediaPipePrediction;
 
-export type EstimateFacesConfig = MediaPipeFaceMeshEstimateFacesConfig;
+// The union of types describing packages that detect face landmarks in an
+// input (currently with only one option).
+export type FaceLandmarksPackage = MediaPipeFaceMesh;
 
-// The interface that defines packages that detect face landmarks in an input.
-export class FaceLandmarksPackage {
-  // Returns an array of faces in an image.
-  estimateFaces(config: EstimateFacesConfig):
-      Promise<FaceLandmarksPrediction[]> {
-    throw new Error('estimateFaces is not yet implemented.');
-  }
-}
-
-export {MediaPipePrediction, MediaPipeFaceMeshEstimateFacesConfig};
+export {MediaPipePrediction, MediaPipeFaceMesh};
