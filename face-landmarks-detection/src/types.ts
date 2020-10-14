@@ -23,6 +23,6 @@ export type FaceLandmarksPrediction = MediaPipePrediction;
 
 // The union of types describing packages that detect face landmarks in an
 // input (currently with only one option).
-export type FaceLandmarksPackage = MediaPipeFaceMesh;
+export type FaceLandmarksDetector = MediaPipeFaceMesh;
 
 export {MediaPipePrediction, MediaPipeFaceMesh};

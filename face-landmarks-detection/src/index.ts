@@ -17,8 +17,8 @@
 
 import {load as loadMediaPipeFaceMesh} from './mediapipe-facemesh';
 
-import {FaceLandmarksPackage} from './types';
-export {FaceLandmarksPackage, FaceLandmarksPrediction} from './types';
+import {FaceLandmarksDetector} from './types';
+export {FaceLandmarksDetector, FaceLandmarksPrediction} from './types';
 
 export enum SupportedPackages {
   mediapipeFacemesh = 'mediapipe-facemesh'

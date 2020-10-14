@@ -49,8 +49,8 @@ export interface EstimateFacesConfig {
   predictIrises?: boolean;
 }
 
-export interface AnnotatedPredictionValues {
-  kind: 'MediaPipePrediction';
+interface AnnotatedPredictionValues {
+  kind: 'MediaPipePredictionValues';
   /** Probability of the face detection. */
   faceInViewConfidence: number;
   boundingBox: {
@@ -67,8 +67,8 @@ export interface AnnotatedPredictionValues {
   annotations?: {[key: string]: Coords3D};
 }
 
-export interface AnnotatedPredictionTensors {
-  kind: 'MediaPipePrediction';
+interface AnnotatedPredictionTensors {
+  kind: 'MediaPipePredictionTensors';
   faceInViewConfidence: number;
   boundingBox: {topLeft: tf.Tensor1D, bottomRight: tf.Tensor1D};
   mesh: tf.Tensor2D;
@@ -333,7 +333,7 @@ class FaceMesh implements MediaPipeFaceMesh {
 
         if (returnTensors) {
           const annotatedPrediction: AnnotatedPrediction = {
-            kind: 'MediaPipePrediction',
+            kind: 'MediaPipePredictionTensors',
             faceInViewConfidence: flagValue,
             mesh: coords,
             scaledMesh: scaledCoords,
@@ -357,7 +357,7 @@ class FaceMesh implements MediaPipeFaceMesh {
         coords.dispose();
 
         let annotatedPrediction: AnnotatedPredictionValues = {
-          kind: 'MediaPipePrediction',
+          kind: 'MediaPipePredictionValues',
           faceInViewConfidence: flagValue,
           boundingBox: {topLeft: box.startPoint, bottomRight: box.endPoint},
           mesh: coordsArr,
