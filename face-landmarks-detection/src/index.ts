@@ -17,8 +17,8 @@
 
 import {load as loadMediaPipeFaceMesh} from './mediapipe-facemesh';
 
-import {FaceLandmarksPackage} from './types';
-export {FaceLandmarksPackage, FaceLandmarksPrediction} from './types';
+import {FaceLandmarksDetector} from './types';
+export {FaceLandmarksDetector, FaceLandmarksPrediction} from './types';
 
 export enum SupportedPackages {
   mediapipeFacemesh = 'mediapipe-facemesh'
@@ -45,7 +45,7 @@ export enum SupportedPackages {
  */
 export async function load(
     pkg = SupportedPackages.mediapipeFacemesh,
-    config = {}): Promise<FaceLandmarksPackage> {
+    config = {}): Promise<FaceLandmarksDetector> {
   if (pkg === SupportedPackages.mediapipeFacemesh) {
     return loadMediaPipeFaceMesh(config);
   } else {
