@@ -19,8 +19,6 @@ import * as blazeface from '@tensorflow-models/blazeface';
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {EstimateFacesConfig, FaceLandmarksPackage, FaceLandmarksPrediction} from '../types';
-
 import {MESH_ANNOTATIONS} from './keypoints';
 import {Pipeline, Prediction} from './pipeline';
 import {Coord2D, Coords3D} from './util';
@@ -33,7 +31,17 @@ const IRIS_GRAPHMODEL_PATH =
 const MESH_MODEL_INPUT_WIDTH = 192;
 const MESH_MODEL_INPUT_HEIGHT = 192;
 
-interface MediaPipeFaceMeshEstimateFacesConfig extends EstimateFacesConfig {
+export interface EstimateFacesConfig {
+  /**
+   * The image to classify. Can be a tensor, DOM element image, video, or
+   * canvas.
+   */
+  input: tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
+      HTMLCanvasElement;
+  /** Whether to return tensors as opposed to values. */
+  returnTensors?: boolean;
+  /** Whether to flip/mirror the facial keypoints horizontally. */
+  flipHorizontal?: boolean;
   /**
    * Whether to return keypoints for the irises. Disabling may improve
    * performance. Defaults to true.
@@ -41,7 +49,11 @@ interface MediaPipeFaceMeshEstimateFacesConfig extends EstimateFacesConfig {
   predictIrises?: boolean;
 }
 
-interface AnnotatedPredictionValues extends FaceLandmarksPrediction {
+const PREDICTION_VALUES = 'MediaPipePredictionValues';
+type PredictionValuesKind = typeof PREDICTION_VALUES;
+
+interface AnnotatedPredictionValues {
+  kind: PredictionValuesKind;
   /** Probability of the face detection. */
   faceInViewConfidence: number;
   boundingBox: {
@@ -58,7 +70,11 @@ interface AnnotatedPredictionValues extends FaceLandmarksPrediction {
   annotations?: {[key: string]: Coords3D};
 }
 
-interface AnnotatedPredictionTensors extends FaceLandmarksPrediction {
+const PREDICTION_TENSORS = 'MediaPipePredictionTensors';
+type PredictionTensorsKind = typeof PREDICTION_TENSORS;
+
+interface AnnotatedPredictionTensors {
+  kind: PredictionTensorsKind;
   faceInViewConfidence: number;
   boundingBox: {topLeft: tf.Tensor1D, bottomRight: tf.Tensor1D};
   mesh: tf.Tensor2D;
@@ -100,7 +116,7 @@ export async function load(config: {
   shouldLoadIrisModel?: boolean,
   modelUrl?: string|tf.io.IOHandler,
   irisModelUrl?: string|tf.io.IOHandler,
-}): Promise<MediaPipeFaceMesh> {
+}): Promise<FaceMesh> {
   const {
     maxContinuousChecks = 5,
     detectionConfidence = 0.9,
@@ -125,7 +141,7 @@ export async function load(config: {
     ]);
   }
 
-  const faceMesh = new MediaPipeFaceMesh(
+  const faceMesh = new FaceMesh(
       models[0], models[1], maxContinuousChecks, detectionConfidence, maxFaces,
       shouldLoadIrisModel ? models[2] : null);
   return faceMesh;
@@ -214,9 +230,16 @@ function flipFaceHorizontal(
   });
 }
 
-export class MediaPipeFaceMesh implements FaceLandmarksPackage {
+export interface MediaPipeFaceMesh {
+  kind: 'MediaPipeFaceMesh';
+  estimateFaces(config: EstimateFacesConfig): Promise<AnnotatedPrediction[]>;
+}
+
+class FaceMesh implements MediaPipeFaceMesh {
   private pipeline: Pipeline;
   private detectionConfidence: number;
+
+  public kind = 'MediaPipeFaceMesh' as const ;
 
   constructor(
       blazeFace: blazeface.BlazeFaceModel, blazeMeshModel: tfconv.GraphModel,
@@ -255,7 +278,7 @@ export class MediaPipeFaceMesh implements FaceLandmarksPackage {
    *
    * @return An array of AnnotatedPrediction objects.
    */
-  async estimateFaces(config: MediaPipeFaceMeshEstimateFacesConfig):
+  async estimateFaces(config: EstimateFacesConfig):
       Promise<AnnotatedPrediction[]> {
     const {
       returnTensors = false,
@@ -316,6 +339,7 @@ export class MediaPipeFaceMesh implements FaceLandmarksPackage {
 
         if (returnTensors) {
           const annotatedPrediction: AnnotatedPrediction = {
+            kind: PREDICTION_TENSORS,
             faceInViewConfidence: flagValue,
             mesh: coords,
             scaledMesh: scaledCoords,
@@ -339,6 +363,7 @@ export class MediaPipeFaceMesh implements FaceLandmarksPackage {
         coords.dispose();
 
         let annotatedPrediction: AnnotatedPredictionValues = {
+          kind: PREDICTION_VALUES,
           faceInViewConfidence: flagValue,
           boundingBox: {topLeft: box.startPoint, bottomRight: box.endPoint},
           mesh: coordsArr,
