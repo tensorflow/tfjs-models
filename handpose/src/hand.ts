@@ -46,7 +46,7 @@ export class HandDetector {
 
   constructor(
       model: tfconv.GraphModel, width: number, height: number,
-      anchors: Array<AnchorsConfig>,
+      anchors: AnchorsConfig[],
       iouThreshold: number, scoreThreshold: number) {
     this.model = model;
     this.width = width;
