@@ -33,28 +33,16 @@ declare interface AnchorsConfig {
 }
 
 export class HandDetector {
-  private model: tfconv.GraphModel;
-  private width: number;
-  private height: number;
-  private iouThreshold: number;
-  private scoreThreshold: number;
-
-  private anchors: Array<[number, number]>;
-  private anchorsTensor: tf.Tensor2D;
-  private inputSizeTensor: tf.Tensor1D;
-  private doubleInputSizeTensor: tf.Tensor1D;
+  private readonly anchors: Array<[number, number]>;
+  private readonly anchorsTensor: tf.Tensor2D;
+  private readonly inputSizeTensor: tf.Tensor1D;
+  private readonly doubleInputSizeTensor: tf.Tensor1D;
 
   constructor(
-      model: tfconv.GraphModel, width: number, height: number,
-      anchors: AnchorsConfig[],
-      iouThreshold: number, scoreThreshold: number) {
-    this.model = model;
-    this.width = width;
-    this.height = height;
-    this.iouThreshold = iouThreshold;
-    this.scoreThreshold = scoreThreshold;
-
-    this.anchors = anchors.map(
+      private model: tfconv.GraphModel, private width: number,
+      private height: number, private anchorsAnnotated: AnchorsConfig[],
+      private iouThreshold: number, private scoreThreshold: number) {
+    this.anchors = anchorsAnnotated.map(
         anchor => ([anchor.x_center, anchor.y_center] as [number, number]));
     this.anchorsTensor = tf.tensor2d(this.anchors);
     this.inputSizeTensor = tf.tensor1d([width, height]);
