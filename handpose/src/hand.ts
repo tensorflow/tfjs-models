@@ -25,6 +25,13 @@ type HandDetectorPrediction = {
   palmLandmarks: tf.Tensor2D
 };
 
+declare interface AnchorsConfig {
+  w: number;
+  h: number;
+  x_center: number;
+  y_center: number;
+}
+
 export class HandDetector {
   private model: tfconv.GraphModel;
   private width: number;
@@ -39,7 +46,7 @@ export class HandDetector {
 
   constructor(
       model: tfconv.GraphModel, width: number, height: number,
-      anchors: Array<{x_center: number, y_center: number}>,
+      anchors: Array<AnchorsConfig>,
       iouThreshold: number, scoreThreshold: number) {
     this.model = model;
     this.width = width;

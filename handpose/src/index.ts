@@ -49,7 +49,7 @@ async function loadAnchors() {
       .then(d => d.json());
 }
 
-interface AnnotatedPrediction extends Prediction {
+export interface AnnotatedPrediction extends Prediction {
   annotations: {[key: string]: Array<[number, number, number]>};
 }
 
