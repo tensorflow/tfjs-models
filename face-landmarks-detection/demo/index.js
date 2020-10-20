@@ -213,7 +213,7 @@ async function renderPrediction() {
 
       if (!scatterGLHasInitialized) {
         scatterGL.setPointColorer((i) => {
-          if(i >= NUM_KEYPOINTS) {
+          if(i % (NUM_KEYPOINTS + NUM_IRIS_KEYPOINTS * 2) > NUM_KEYPOINTS) {
             return RED;
           }
           return BLUE;
