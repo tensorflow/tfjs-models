@@ -39,9 +39,10 @@ export class HandDetector {
   private readonly doubleInputSizeTensor: tf.Tensor1D;
 
   constructor(
-      private model: tfconv.GraphModel, private width: number,
-      private height: number, anchorsAnnotated: AnchorsConfig[],
-      private iouThreshold: number, private scoreThreshold: number) {
+      private readonly model: tfconv.GraphModel, private readonly width: number,
+      private readonly height: number, anchorsAnnotated: AnchorsConfig[],
+      private readonly iouThreshold: number,
+      private readonly scoreThreshold: number) {
     this.anchors = anchorsAnnotated.map(
         anchor => ([anchor.x_center, anchor.y_center] as [number, number]));
     this.anchorsTensor = tf.tensor2d(this.anchors);

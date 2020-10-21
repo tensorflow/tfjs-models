@@ -113,7 +113,7 @@ function flipHandHorizontal(prediction: Prediction, width: number): Prediction {
 }
 
 export class HandPose {
-  constructor(private pipeline: HandPipeline) {}
+  constructor(private readonly pipeline: HandPipeline) {}
 
   static getAnnotations(): {[key: string]: number[]} {
     return MESH_ANNOTATIONS;
