@@ -25,29 +25,25 @@ type HandDetectorPrediction = {
   palmLandmarks: tf.Tensor2D
 };
 
-export class HandDetector {
-  private model: tfconv.GraphModel;
-  private width: number;
-  private height: number;
-  private iouThreshold: number;
-  private scoreThreshold: number;
+declare interface AnchorsConfig {
+  w: number;
+  h: number;
+  x_center: number;
+  y_center: number;
+}
 
-  private anchors: Array<[number, number]>;
-  private anchorsTensor: tf.Tensor2D;
-  private inputSizeTensor: tf.Tensor1D;
-  private doubleInputSizeTensor: tf.Tensor1D;
+export class HandDetector {
+  private readonly anchors: Array<[number, number]>;
+  private readonly anchorsTensor: tf.Tensor2D;
+  private readonly inputSizeTensor: tf.Tensor1D;
+  private readonly doubleInputSizeTensor: tf.Tensor1D;
 
   constructor(
-      model: tfconv.GraphModel, width: number, height: number,
-      anchors: Array<{x_center: number, y_center: number}>,
-      iouThreshold: number, scoreThreshold: number) {
-    this.model = model;
-    this.width = width;
-    this.height = height;
-    this.iouThreshold = iouThreshold;
-    this.scoreThreshold = scoreThreshold;
-
-    this.anchors = anchors.map(
+      private readonly model: tfconv.GraphModel, private readonly width: number,
+      private readonly height: number, anchorsAnnotated: AnchorsConfig[],
+      private readonly iouThreshold: number,
+      private readonly scoreThreshold: number) {
+    this.anchors = anchorsAnnotated.map(
         anchor => ([anchor.x_center, anchor.y_center] as [number, number]));
     this.anchorsTensor = tf.tensor2d(this.anchors);
     this.inputSizeTensor = tf.tensor1d([width, height]);
