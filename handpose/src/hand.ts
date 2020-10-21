@@ -40,7 +40,7 @@ export class HandDetector {
 
   constructor(
       private model: tfconv.GraphModel, private width: number,
-      private height: number, private anchorsAnnotated: AnchorsConfig[],
+      private height: number, anchorsAnnotated: AnchorsConfig[],
       private iouThreshold: number, private scoreThreshold: number) {
     this.anchors = anchorsAnnotated.map(
         anchor => ([anchor.x_center, anchor.y_center] as [number, number]));
