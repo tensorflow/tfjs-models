@@ -45,32 +45,20 @@ export interface Prediction {
 
 // The Pipeline coordinates between the bounding box and skeleton models.
 export class HandPipeline {
-  // MediaPipe model for detecting hand bounding box.
-  private boundingBoxDetector: HandDetector;
-  // MediaPipe model for detecting hand mesh.
-  private meshDetector: tfconv.GraphModel;
-
-  private maxHandsNumber: number;
-  private maxContinuousChecks: number;
-  private detectionConfidence: number;
-  private meshWidth: number;
-  private meshHeight: number;
+  private readonly maxHandsNumber: number;
 
   // An array of hand bounding boxes.
   private regionsOfInterest: Box[] = [];
   private runsWithoutHandDetector = 0;
 
   constructor(
-      boundingBoxDetector: HandDetector, meshDetector: tfconv.GraphModel,
-      meshWidth: number, meshHeight: number, maxContinuousChecks: number,
-      detectionConfidence: number) {
-    this.boundingBoxDetector = boundingBoxDetector;
-    this.meshDetector = meshDetector;
-    this.maxContinuousChecks = maxContinuousChecks;
-    this.detectionConfidence = detectionConfidence;
-    this.meshWidth = meshWidth;
-    this.meshHeight = meshHeight;
-
+      private readonly boundingBoxDetector: HandDetector
+      /* MediaPipe model for detecting hand bounding box */,
+      private readonly meshDetector: tfconv.GraphModel
+      /* MediaPipe model for detecting hand mesh */,
+      private readonly meshWidth: number, private readonly meshHeight: number,
+      private readonly maxContinuousChecks: number,
+      private readonly detectionConfidence: number) {
     this.maxHandsNumber = 1;  // TODO(annxingyuan): Add multi-hand support.
   }
 
