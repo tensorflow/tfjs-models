@@ -139,7 +139,9 @@ export class ObjectDetection {
 
     const prevBackend = tf.getBackend();
     // run post process in cpu
-    tf.setBackend('cpu');
+    if (tf.getBackend() === 'webgl') {
+      tf.setBackend('cpu');
+    }
     const indexTensor = tf.tidy(() => {
       const boxes2 =
           tf.tensor2d(boxes, [result[1].shape[1], result[1].shape[3]]);
@@ -151,7 +153,9 @@ export class ObjectDetection {
     indexTensor.dispose();
 
     // restore previous backend
-    tf.setBackend(prevBackend);
+    if (prevBackend !== tf.getBackend()) {
+      tf.setBackend(prevBackend);
+    }
 
     return this.buildDetectedObjects(
         width, height, boxes, maxScores, indexes, classes);
