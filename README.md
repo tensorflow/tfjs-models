@@ -66,6 +66,16 @@ and can be used as building blocks in other apps.
   <tr>
     <td><a href="./body-pix/demos/index.html">source</a></td>
   </tr>
+  <!-- ** HandPose -->
+  <tr>
+    <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./handpose"><div style='vertical-align:middle; display:inline;'>HandPose</div></a></b></td>
+    <td><a href="https://storage.googleapis.com/tfjs-models/demos/handpose/index.html">live</a></td>
+    <td rowspan="2">Real-time hand pose detection in the browser using TensorFlow.js.</td>
+    <td rowspan="2"><code>npm i @tensorflow-models/handpose</code></td>
+  </tr>
+  <tr>
+    <td><a href="./handpose/demos/index.html">source</a></td>
+  </tr>
     <!-- ** DeepLab -->
   <tr>
     <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./deeplab"><div style='vertical-align:middle; display:inline;'>DeepLab v3</div></a></b></td>
