@@ -20,10 +20,6 @@ import * as tf from '@tensorflow/tfjs-core';
 import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
 import '@tensorflow/tfjs-backend-webgl';
 
-tfjsWasm.setWasmPath(
-    `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
-        tfjsWasm.version_wasm}/dist/tfjs-backend-wasm.wasm`);
-
 function isMobile() {
   const isAndroid = /Android/i.test(navigator.userAgent);
   const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -147,6 +143,21 @@ async function loadVideo() {
 }
 
 async function main() {
+  const simdSupported = await tf.env().getAsync('WASM_HAS_SIMD_SUPPORT');
+  const threadsSupported = await tf.env().getAsync('WASM_HAS_MULTITHREAD_SUPPORT');
+  if (simdSupported == false){
+     tfjsWasm.setWasmPath(
+    `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
+        tfjsWasm.version_wasm}/dist/tfjs-backend-wasm.wasm`);
+  } else if (simdSupported == true && threadsSupported == true){
+      tfjsWasm.setWasmPath(
+    `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
+        tfjsWasm.version_wasm}/dist/tfjs-backend-wasm-threaded-simd.wasm`);
+  } else {
+      tfjsWasm.setWasmPath(
+    `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
+        tfjsWasm.version_wasm}/dist/tfjs-backend-wasm-simd.wasm`);
+  }
   await tf.setBackend(state.backend);
   model = await handpose.load();
   let video;
