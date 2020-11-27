@@ -43,7 +43,7 @@ and can be used as building blocks in other apps.
     <td rowspan="2"><code>npm i @tensorflow-models/handpose</code></td>
   </tr>
   <tr>
-    <td><a href="./handpose/demos/index.html">source</a></td>
+    <td><a href="./handpose/demo/index.html">source</a></td>
   </tr>
   <!-- ** PoseNet -->
   <tr>
@@ -83,7 +83,7 @@ and can be used as building blocks in other apps.
     <td rowspan="2"><code>npm i @tensorflow-models/blazeface</code></td>
   </tr>
   <tr>
-    <td><a href="./blazeface/demos/index.html">source</a></td>
+    <td><a href="./blazeface/demo/index.html">source</a></td>
   </tr>
     <!-- ** DeepLab -->
   <tr>
