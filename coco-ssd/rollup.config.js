@@ -148,7 +148,7 @@ module.exports = cmdOptions => {
     bundles.push(config({
       plugins: [terserPlugin],
       output: {
-        format: flatEsmFormat,
+        format: umdFormat,
         name,
         extend,
         file: `dist/${fileName}.es2017.esm.min.js`
