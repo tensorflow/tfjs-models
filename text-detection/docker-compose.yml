@@ -1,0 +1,56 @@
+# =============================================================================
+# Copyright 2019 Google Inc. All Rights Reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# =============================================================================
+
+version: "3"
+volumes:
+  store:
+services:
+  emsdk:
+    image: alpine/git:latest
+    volumes:
+      - store:/build/
+    command: clone --depth 1 https://github.com/emscripten-core/emsdk.git /build/emsdk
+  opencv:
+    image: alpine/git:latest
+    volumes:
+      - store:/build/
+    command: clone --depth 1 https://github.com/opencv/opencv.git /build/opencv
+  converter:
+    build: ./scripts/assets/opencv
+    depends_on:
+      - emsdk
+      - opencv
+    volumes:
+      - store:/build/
+      - ./scripts/assets/opencv/build_js.py:/build/build_js.py
+      - ./scripts/assets/opencv/embindgen.py:/build/embindgen.py
+      - $OPENCV_JS_DIR:/build/opencv.js
+    command:
+      - /bin/bash
+      - -c
+      - |
+        ln -sfn \
+          /build/embindgen.py \
+          /build/opencv/modules/js/src/embindgen.py && \
+        ln -sfn \
+          /build/build_js.py \
+          /build/opencv/platforms/js/build_js.py && \
+        ./emsdk/emsdk install latest && \
+        ./emsdk/emsdk activate latest && \
+        source ./emsdk/emsdk_env.sh && \
+        PYTHONPATH='/build/opencv/modules/js/src' python \
+          ./opencv/platforms/js/build_js.py opencv.js \
+          --emscripten_dir=/build/emsdk/fastcomp/emscripten \
+          --disable_wasm

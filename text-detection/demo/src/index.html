@@ -1,0 +1,279 @@
+<!-- Copyright 2019 Google LLC. All Rights Reserved.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+============================================================================= -->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Text Detection Demo</title>
+  <link rel="stylesheet" href="index.css" />
+  <!--
+    #TODO: This can be replaced with a local external when parcel
+    starts supporting it. You can track the progress here:
+
+    https://github.com/parcel-bundler/parcel/issues/144
+
+    #TODO(tfjs): Replace this URL after you host the model
+  -->
+  <script defer src="https://storage.googleapis.com/gsoc-tfjs/utilities/text-detection/opencv.js"></script>
+  <script src="index.js"></script>
+</head>
+
+<body>
+  <div id="overlay" class="is-invisible">
+    <img class="spinner" src="./assets/images/loader.gif" alt="Spinning wheel" width=32>
+  </div>
+  <div class="container">
+    <div class="section p-t-sm">
+      <nav class="navbar m-b-sm">
+        <div class="navbar-brand is-inline-flex flex-should-wrap is-full-width">
+          <h1 class="navbar-item">
+            <img alt="TensorFlow.js Logo" src="./assets/images/tfjs-logo.png" />
+          </h1>
+          <span class="navbar-item tag is-white is-medium is-vcentered">
+            <b>Text Detection Demo</b>
+          </span>
+          <div class="navbar-item message has-medium-text has-background-white is-vcentered has-flex-1">
+            <div class="message-body is-marginless is-paddingless columns is-multiline">
+              <b class='column is-narrow'>Status:</b>
+              <span class='column is-narrow' id="status-message">Loading models...</span>
+            </div>
+          </div>
+        </div>
+      </nav>
+      <div class="tile is-ancestor">
+        <div class="tile is-horizontal">
+          <div class="tile is-parent is-3 is-flex is-flex-column flex-should-wrap has-flex-1">
+            <nav class="panel is-full-width has-medium-text">
+              <div class="file is-boxed is-centered panel-block">
+                <label class="file-label is-centered is-full-width">
+                  <input class="file-input" type="file" name="image" id="upload-image" />
+                  <span class="file-cta has-background-warning">
+                    <span class="file-label">
+                      <b>
+                        Upload an image
+                      </b>
+                    </span>
+                  </span>
+                </label>
+              </div>
+              <div class="panel-block">
+                <span class="is-vcentered m-r-sm">
+                  <b>Quantization:</b>
+                </span>
+                <div class="select">
+                  <select id="quantizationBytes">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="4" selected>4</option>
+                  </select>
+                </div>
+              </div>
+              <div class="panel-block is-inline-block is-full-width">
+                <div class="is-vcentered m-r-sm m-b-sm no-breaks">
+                  <b>Point Post-Processing</b>
+                  <div class="dropdown is-hoverable">
+                    <span class="dropdown-trigger">
+                      <span class="infolink" aria-haspopup="true" aria-controls="dropdown-menu-post-processing-info">:
+                      </span>
+                    </span>
+                    <div class="dropdown-menu info-pop-up" id="dropdown-menu-post-processing-info" role="menu">
+                      <div class="dropdown-content">
+                        <div class="dropdown-item text-breaks">
+                          <div class="notification is-warning">
+                            Three methods are supported in this demo:
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="select">
+                  <select id="post-processing">
+                    <option value="min-area-rect" selected>Determine Min Bounding Box</option>
+                    <option value="convex-hull">Compute Convex Hull</option>
+                    <option value="contours">Find Contours</option>
+                    <option value="identity">Jot Points</option>
+                  </select>
+                </div>
+              </div>
+              <div class="panel-block">
+                <div class="is-boxed is-full-width">
+                  <div class="is-vcentered m-r-sm no-breaks">
+                    <b>Resize Length</b>
+                    <div class="dropdown is-hoverable">
+                      <div class="dropdown-trigger">
+                        <span class="infolink" aria-haspopup="true" aria-controls="dropdown-menu-resize-length-info">:
+                          <span id="resize-length-value">512</span>
+                        </span>
+                      </div>
+                      <div class="dropdown-menu info-pop-up" id="dropdown-menu-resize-length-info" role="menu">
+                        <div class="dropdown-content">
+                          <div class="dropdown-item text-breaks">
+                            <div class="notification is-warning">
+                              The greater the length, the better accuracy and precision you might get at the cost
+                              of
+                              performance. Setting this value to more than 576 might result in WebGL memory overflow.
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="control">
+                    <div>
+                      <input type="range" id="resize-length-slider" name="resize-length" min="64" max="512"
+                        value="256" step="32" class="is-full-width">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="panel-block">
+                <div class="is-boxed is-full-width">
+                  <div class="is-vcentered m-r-sm no-breaks">
+                    <b>Min Textbox Area</b>
+                    <div class="dropdown is-hoverable">
+                      <div class="dropdown-trigger">
+                        <span class="infolink" aria-haspopup="true" aria-controls="dropdown-menu4">:
+                          <span id="min-textbox-area-value">10</span>
+                        </span>
+                      </div>
+                      <div class="dropdown-menu info-pop-up" id="dropdown-menu4" role="menu">
+                        <div class="dropdown-content">
+                          <div class="dropdown-item text-breaks">
+                            <div class="notification is-warning">
+                              Text boxes with areas less than this value are ignored.
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="control">
+                    <div>
+                      <input type="range" id="min-textbox-area-slider" name="min-textbox-area" min="0" max="100"
+                        value="10" step="1" class="is-full-width">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="panel-block">
+                <div class="is-boxed is-full-width">
+                  <div class="is-vcentered m-r-sm no-breaks">
+                    <b>Min Pixel Salience</b>
+                    <div class="dropdown is-hoverable is-up">
+                      <span class="dropdown-trigger">
+                        <span class="infolink" aria-haspopup="true" aria-controls="dropdown-menu-min-salience">:
+                          <span id="min-pixel-salience-value">1</span></span>
+                      </span>
+                      <div class="dropdown-menu info-pop-up" id="dropdown-menu-min-salience" role="menu">
+                        <div class="dropdown-content">
+                          <div class="dropdown-item text-breaks">
+                            <div class="notification is-warning">
+                              Minimum allowable salience of the prediction that a pixel is text.
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="control">
+                    <div>
+                      <input type="range" id="min-pixel-salience-slider" name="min-pixel-salience" min="0" max="5"
+                        value="1" step="0.1" class="is-full-width">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="panel-block">
+                <div class="is-boxed is-full-width">
+                  <div class="is-vcentered m-r-sm no-breaks">
+                    <b>Min Text Confidence</b>
+                    <div class="dropdown is-hoverable is-up">
+                      <span class="dropdown-trigger">
+                        <span class="infolink" aria-haspopup="true" aria-controls="dropdown-menu-min-confidence">:
+                          <span id="min-text-confidence-value">0.94</span></span>
+                      </span>
+                      <div class="dropdown-menu info-pop-up" id="dropdown-menu-min-confidence" role="menu">
+                        <div class="dropdown-content">
+                          <div class="dropdown-item text-breaks">
+                            <div class="notification is-warning">
+                              Minimum allowable confidence of the prediction that a region is text.
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="control">
+                    <div>
+                      <input type="range" id="min-text-confidence-slider" name="min-text-confidence" min="0" max="1"
+                        value=".94" step="0.01" class="is-full-width">
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="panel-block">
+                <span class="is-vcentered m-r-sm">
+                  <b>Example:</b>
+                </span>
+                <div class="select">
+                  <select id="example">
+                    <option value="blue-bird" selected>I. Bilibin's Blue Bird</option>
+                    <option value="joy-young-rogers">Joy Young Rogers</option>
+                    <option value="gun-for-hire">This Gun For Hire</option>
+                  </select>
+                </div>
+              </div>
+              <div class="panel-block">
+                <button class="button is-link is-full-width is-small" id="run">Run</button>
+              </div>
+            </nav>
+          </div>
+          <div class="tile is-parent is-4">
+            <div class="tile is-child card large is-flex is-flex-column is-full-height is-on-top" id="input-card">
+              <header class="card-header">
+                <p class="card-header-title">
+                  Input image
+                </p>
+              </header>
+              <div class="card-content is-flex is-centered-flex is-full-height">
+                <figure class="image">
+                  <img alt="Input image" id="input-image" src="./assets/examples/blue-bird.jpg" />
+                </figure>
+              </div>
+            </div>
+          </div>
+          <div class="tile is-parent is-4">
+            <div class="tile is-child card large is-flex is-flex-column is-full-height is-on-top is-invisible"
+              id="output-card">
+              <header class="card-header">
+                <p class="card-header-title">
+                  Output
+                </p>
+              </header>
+              <div class="card-content is-flex is-centered-flex is-full-height">
+                <figure class="image">
+                  <canvas id="output-image"></canvas>
+                </figure>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

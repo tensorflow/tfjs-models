@@ -1,0 +1,155 @@
+/*
+ * @license
+ * Copyright 2019 Google LLC. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * =============================================================================
+*/
+
+.has-auto-overflow {
+  display: flex;
+  flex-direction: column;
+}
+
+.is-on-top {
+  z-index: 100;
+}
+
+.has-flex-1 {
+  flex: 1 !important;
+}
+
+.m-l-sm {
+  margin-left: 0.5rem;
+}
+
+.m-r-sm {
+  margin-right: 0.5rem;
+}
+
+.m-b-sm {
+  margin-bottom: 0.5rem !important;
+}
+
+.p-t-sm {
+  padding-top: 0.5rem !important;
+}
+
+.m-t-med {
+  margin-top: 1.5rem !important;
+}
+
+.is-vcentered {
+  align-items: center;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.is-centered-flex {
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.flex-should-wrap {
+  flex-wrap: wrap;
+}
+
+.is-spaced-evenly {
+  justify-content: space-evenly;
+}
+
+.is-flex-column {
+  flex-direction: column;
+}
+
+.no-flex-grow .column {
+  flex-grow: 0;
+}
+
+.is-full-height {
+  height: 100%;
+}
+
+.is-full-width {
+  width: 100%;
+}
+
+.is-concise-message {
+  padding: 0.7em;
+  display: block;
+}
+
+.no-breaks {
+  white-space: nowrap;
+}
+
+.has-medium-text {
+  font-size: 0.8em !important;
+}
+
+#overlay {
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  z-index: 10001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.loader {
+  position: relative;
+  margin: auto;
+  width: 32;
+  opacity: 1 !important;
+  z-index: 1001;
+}
+
+.info-pop-up {
+  z-index: 101 !important;
+}
+
+.infolink:before {
+  content: '?';
+  display: inline-block;
+  font-family: sans-serif;
+  font-weight: bold;
+  text-align: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 100%;
+  margin-right: 4px;
+  color: black;
+  background: white;
+  border: 1px solid black;
+  text-decoration: none;
+}
+
+.infolink:hover:before {
+  color: white;
+  background: black;
+  border-color: white;
+  text-decoration: none;
+}
+
+.text-breaks {
+  word-wrap: break-word;
+  white-space: normal;
+}
+
+.dropdown-item {
+  min-width: 260px;
+  width: auto;
+}
