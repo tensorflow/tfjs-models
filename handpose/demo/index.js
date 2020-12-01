@@ -60,6 +60,7 @@ function setupDatGui() {
       .onChange(async backend => {
         window.cancelAnimationFrame(rafID);
         await tf.setBackend(backend);
+        await addFlagLabels();
         landmarksRealTime(video);
       });
 
@@ -141,9 +142,27 @@ async function loadVideo() {
   video.play();
   return video;
 }
+async function addFlagLables() {
+  if(!document.querySelector("#simd_supported")) {
+    const simdSupportLabel = document.createElement("div");
+    simdSupportLabel.id = "simd_supported";
+    simdSupportLabel.style = "font-weight: bold";
+    const simdSupported = await tf.env().getAsync('WASM_HAS_SIMD_SUPPORT');
+    simdSupportLabel.innerHTML = `SIMD supported: <span class=${simdSupported}>${simdSupported}<span>`;
+    document.querySelector("#description").appendChild(simdSupportLabel);
+  }
 
+  if(!document.querySelector("#threads_supported")) {
+    const threadSupportLabel = document.createElement("div");
+    threadSupportLabel.id = "threads_supported";
+    threadSupportLabel.style = "font-weight: bold";
+    const threadsSupported = await tf.env().getAsync('WASM_HAS_MULTITHREAD_SUPPORT');
+    threadSupportLabel.innerHTML = `Threads supported: <span class=${threadsSupported}>${threadsSupported}</span>`;
+    document.querySelector("#description").appendChild(threadSupportLabel);
+  }
+}
 async function main() {
-  const simdSupported = await tf.env().getAsync('WASM_HAS_SIMD_SUPPORT');
+  /*const simdSupported = await tf.env().getAsync('WASM_HAS_SIMD_SUPPORT');
   const threadsSupported = await tf.env().getAsync('WASM_HAS_MULTITHREAD_SUPPORT');
   if (simdSupported == false){
      tfjsWasm.setWasmPath(
@@ -157,7 +176,7 @@ async function main() {
       tfjsWasm.setWasmPath(
     `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
         tfjsWasm.version_wasm}/dist/tfjs-backend-wasm-simd.wasm`);
-  }
+  }*/
   await tf.setBackend(state.backend);
   model = await handpose.load();
   let video;
