@@ -271,8 +271,9 @@ export class Pipeline {
             const scaledBox =
                 scaleBoxCoordinates(predictionBoxCPU, scaleFactor as Coord2D);
             const enlargedBox = enlargeBox(scaledBox);
+            const squarifiedBox = squarifyBox(enlargedBox);
             return {
-              ...enlargedBox,
+              ...squarifiedBox,
               landmarks: prediction.landmarks.arraySync() as Coords3D
             };
           });
@@ -406,8 +407,9 @@ export class Pipeline {
 
         const landmarksBox = enlargeBox(
             this.calculateLandmarksBoundingBox(transformedCoordsData));
+        const squarifiedLandmarksBox = squarifyBox(landmarksBox)
         this.regionsOfInterest[i] = {
-          ...landmarksBox,
+          ...squarifiedLandmarksBox,
           landmarks: transformedCoords.arraySync() as Coords3D
         };
 
