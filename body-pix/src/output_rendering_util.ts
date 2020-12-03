@@ -124,53 +124,36 @@ function renderImageDataToOffScreenCanvas(
   return canvas;
 }
 
-/**
- * Given the output from estimating multi-person segmentation, generates an
- * image with foreground and background color at each pixel determined by the
- * corresponding binary segmentation value at the pixel from the output.  In
- * other words, pixels where there is a person will be colored with foreground
- * color and where there is not a person will be colored with background color.
- *
- * @param personOrPartSegmentation The output from
- * `segmentPerson`, `segmentMultiPerson`,
- * `segmentPersonParts` or `segmentMultiPersonParts`. They can
- * be SemanticPersonSegmentation object, an array of PersonSegmentation object,
- * SemanticPartSegmentation object, or an array of PartSegmentation object.
- *
- * @param foreground Default to {r:0, g:0, b:0, a: 0}. The foreground color
- * (r,g,b,a) for visualizing pixels that belong to people.
- *
- * @param background Default to {r:0, g:0, b:0, a: 255}. The background color
- * (r,g,b,a) for visualizing pixels that don't belong to people.
- *
- * @param drawContour Default to false. Whether to draw the contour around each
- * person's segmentation mask or body part mask.
- *
- * @param foregroundIds Default to [1]. The integer values that represent
- * foreground. For person segmentation, 1 is the foreground. For body part
- * segmentation, it can be a subset of all body parts ids.
- *
- * @returns An ImageData with the same width and height of
- * all the PersonSegmentation in multiPersonSegmentation, with opacity and
- * transparency at each pixel determined by the corresponding binary
- * segmentation value at the pixel from the output.
- */
-export function toMask(
-    personOrPartSegmentation: SemanticPersonSegmentation|
-    SemanticPartSegmentation|PersonSegmentation[]|PartSegmentation[],
-    foreground: Color = {
+type PersonOrPartSegmentation = 
+  |SemanticPersonSegmentation
+  |SemanticPartSegmentation
+  |PersonSegmentation[]
+  |PartSegmentation[];
+
+interface ToMaskOptions {
+  foreground?: Color;
+  background?: Color;
+  drawContour?:boolean;
+  foregroundIds?: number[];
+}
+
+function toMaskImplementation(
+    personOrPartSegmentation: PersonOrPartSegmentation,
+    foreground: ToMaskOptions['foreground'] = {
       r: 0,
       g: 0,
       b: 0,
       a: 0
     },
-    background: Color = {
+    background: ToMaskOptions['background'] = {
       r: 0,
       g: 0,
       b: 0,
       a: 255
     },
-    drawContour = false, foregroundIds: number[] = [1]): ImageData {
+    drawContour = false,
+    foregroundIds: ToMaskOptions['foregroundIds'] = [1]
+  ): ImageData {
   if (Array.isArray(personOrPartSegmentation) &&
       personOrPartSegmentation.length === 0) {
     return null;
@@ -254,6 +237,108 @@ export function toMask(
   }
 
   return new ImageData(bytes, width, height);
+}
+
+/**
+ * Given the output from estimating multi-person segmentation, generates an
+ * image with foreground and background color at each pixel determined by the
+ * corresponding binary segmentation value at the pixel from the output.  In
+ * other words, pixels where there is a person will be colored with foreground
+ * color and where there is not a person will be colored with background color.
+ *
+ * @param personOrPartSegmentation The output from
+ * `segmentPerson`, `segmentMultiPerson`,
+ * `segmentPersonParts` or `segmentMultiPersonParts`. They can
+ * be SemanticPersonSegmentation object, an array of PersonSegmentation object,
+ * SemanticPartSegmentation object, or an array of PartSegmentation object.
+ *
+ * @param options
+ * @param options.foreground Default to {r:0, g:0, b:0, a: 0}. The foreground color
+ * (r,g,b,a) for visualizing pixels that belong to people.
+ *
+ * @param options.background Default to {r:0, g:0, b:0, a: 255}. The background color
+ * (r,g,b,a) for visualizing pixels that don't belong to people.
+ *
+ * @param options.drawContour Default to false. Whether to draw the contour around each
+ * person's segmentation mask or body part mask.
+ *
+ * @param options.foregroundIds Default to [1]. The integer values that represent
+ * foreground. For person segmentation, 1 is the foreground. For body part
+ * segmentation, it can be a subset of all body parts ids.
+ *
+ * @returns An ImageData with the same width and height of
+ * all the PersonSegmentation in multiPersonSegmentation, with opacity and
+ * transparency at each pixel determined by the corresponding binary
+ * segmentation value at the pixel from the output.
+ */
+export function toMask(
+    personOrPartSegmentation: PersonOrPartSegmentation,
+    options?: ToMaskOptions
+  ): ImageData;
+
+/**
+ * Given the output from estimating multi-person segmentation, generates an
+ * image with foreground and background color at each pixel determined by the
+ * corresponding binary segmentation value at the pixel from the output.  In
+ * other words, pixels where there is a person will be colored with foreground
+ * color and where there is not a person will be colored with background color.
+ *
+ * @param personOrPartSegmentation The output from
+ * `segmentPerson`, `segmentMultiPerson`,
+ * `segmentPersonParts` or `segmentMultiPersonParts`. They can
+ * be SemanticPersonSegmentation object, an array of PersonSegmentation object,
+ * SemanticPartSegmentation object, or an array of PartSegmentation object.
+ *
+ * @param foreground Default to {r:0, g:0, b:0, a: 0}. The foreground color
+ * (r,g,b,a) for visualizing pixels that belong to people.
+ *
+ * @param background Default to {r:0, g:0, b:0, a: 255}. The background color
+ * (r,g,b,a) for visualizing pixels that don't belong to people.
+ *
+ * @param drawContour Default to false. Whether to draw the contour around each
+ * person's segmentation mask or body part mask.
+ *
+ * @param foregroundIds Default to [1]. The integer values that represent
+ * foreground. For person segmentation, 1 is the foreground. For body part
+ * segmentation, it can be a subset of all body parts ids.
+ *
+ * @returns An ImageData with the same width and height of
+ * all the PersonSegmentation in multiPersonSegmentation, with opacity and
+ * transparency at each pixel determined by the corresponding binary
+ * segmentation value at the pixel from the output.
+ */
+export function toMask(
+    personOrPartSegmentation: PersonOrPartSegmentation,
+    foreground?: ToMaskOptions['foreground'],
+    background?: ToMaskOptions['background'],
+    drawContour?: boolean,
+    foregroundIds?: number[]
+  ): ImageData;
+
+export function toMask(
+    personOrPartSegmentation: PersonOrPartSegmentation,
+    ...args: any[]
+  ): ImageData {
+  if (args.length === 1) {
+    const {
+      foreground,
+      background,
+      drawContour,
+      foregroundIds 
+    } = args[0] as ToMaskOptions;
+
+    if (foreground || background || drawContour || foregroundIds) {
+      return toMaskImplementation(
+        personOrPartSegmentation,
+        foreground,
+        background,
+        drawContour,
+        foregroundIds
+      );
+    }
+  }
+
+  return toMaskImplementation(personOrPartSegmentation, ...args);
 }
 
 const RAINBOW_PART_COLORS: Array<[number, number, number]> = [
