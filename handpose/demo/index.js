@@ -169,22 +169,10 @@ async function addFlagLables() {
   }
 }
 async function main() {
-  /*const simdSupported = await tf.env().getAsync('WASM_HAS_SIMD_SUPPORT');
-  const threadsSupported = await tf.env().getAsync('WASM_HAS_MULTITHREAD_SUPPORT');
-  if (simdSupported == false){
-     tfjsWasm.setWasmPath(
-    `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
-        tfjsWasm.version_wasm}/dist/tfjs-backend-wasm.wasm`);
-  } else if (simdSupported == true && threadsSupported == true){
-      tfjsWasm.setWasmPath(
-    `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
-        tfjsWasm.version_wasm}/dist/tfjs-backend-wasm-threaded-simd.wasm`);
-  } else {
-      tfjsWasm.setWasmPath(
-    `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
-        tfjsWasm.version_wasm}/dist/tfjs-backend-wasm-simd.wasm`);
-  }*/
   await tf.setBackend(state.backend);
+  if (!tf.env().getAsync('WASM_HAS_SIMD_SUPPORT') && state.backend == "wasm") {
+    console.warn("The backend is set to WebAssembly and SIMD support is turned off.\nThis could bottleneck your performance greatly, thus to prevent this enable SIMD Support in chrome://flags");
+  }
   model = await handpose.load();
   let video;
 
