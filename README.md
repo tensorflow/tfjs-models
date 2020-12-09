@@ -27,7 +27,7 @@ and can be used as building blocks in other apps.
   <!-- Images -->
   <!-- ** MobileNet -->
   <tr>
-    <td rowspan="10"><b>Images</b></td>
+    <td rowspan="14"><b>Images</b></td>
     <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./mobilenet"><div style='vertical-align:middle; display:inline;'>MobileNet</div></a></b></td>
     <td><a href=""></a></td>
     <td rowspan="2">Classify images with labels from the <a href="http://www.image-net.org/">ImageNet database</a>.</td>
@@ -35,6 +35,15 @@ and can be used as building blocks in other apps.
   </tr>
   <tr>
     <td><a href="./mobilenet/demo/index.html">source</a></td>
+  </tr>
+  <tr>
+    <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./handpose"><div style='vertical-align:middle; display:inline;'>HandPose</div></a></b></td>
+    <td><a href="https://storage.googleapis.com/tfjs-models/demos/handpose/index.html">live</a></td>
+    <td rowspan="2">Real-time hand pose detection in the browser using TensorFlow.js.</td>
+    <td rowspan="2"><code>npm i @tensorflow-models/handpose</code></td>
+  </tr>
+  <tr>
+    <td><a href="./handpose/demo/index.html">source</a></td>
   </tr>
   <!-- ** PoseNet -->
   <tr>
@@ -65,6 +74,16 @@ and can be used as building blocks in other apps.
   </tr>
   <tr>
     <td><a href="./body-pix/demos/index.html">source</a></td>
+  </tr>
+  <!-- ** BlazeFace -->
+  <tr>
+    <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./blazeface"><div style='vertical-align:middle; display:inline;'>BlazeFace</div></a></b></td>
+    <td><a href="https://storage.googleapis.com/tfjs-models/demos/blazeface/index.html">live</a></td>
+    <td rowspan="2">Real-time rapid Face detection in the browser using TensorFlow.js.</td>
+    <td rowspan="2"><code>npm i @tensorflow-models/blazeface</code></td>
+  </tr>
+  <tr>
+    <td><a href="./blazeface/demo/index.html">source</a></td>
   </tr>
     <!-- ** DeepLab -->
   <tr>
