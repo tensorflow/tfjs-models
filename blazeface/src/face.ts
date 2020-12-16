@@ -17,8 +17,6 @@
 
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
-import '@tensorflow/tfjs-backend-webgl';
-import '@tensorflow/tfjs-backend-cpu';
 
 import {Box, createBox, disposeBox, scaleBox} from './box';
 
