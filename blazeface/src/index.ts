@@ -18,6 +18,13 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import {BlazeFaceModel} from './face';
 
+import '@tensorflow/tfjs-core/dist/public/chained_ops/to_float';
+import '@tensorflow/tfjs-core/dist/public/chained_ops/expand_dims';
+import '@tensorflow/tfjs-core/dist/public/chained_ops/resize_bilinear';
+import '@tensorflow/tfjs-core/dist/public/chained_ops/squeeze';
+import '@tensorflow/tfjs-core/dist/public/chained_ops/reshape';
+import '@tensorflow/tfjs-core/dist/public/chained_ops/div';
+
 const BLAZEFACE_MODEL_URL =
     'https://tfhub.dev/tensorflow/tfjs-model/blazeface/1/default/1';
 

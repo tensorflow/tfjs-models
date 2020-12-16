@@ -59,7 +59,9 @@ export function cutBoxFromImageAndResize(
     box.endPoint[0] / w
   ]];
 
-  return tf.image.cropAndResize(image, boxes, [0], cropSize);
+  return tf.image.cropAndResize(image, boxes, [0], cropSize,
+    'bilinear' /* method */,
+    0 /* extrapolation value */);
 }
 
 /**
