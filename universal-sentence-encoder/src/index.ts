@@ -55,12 +55,10 @@ export class UniversalSentenceEncoder {
         );
   }
 
-  async load(config?: LoadConfig) {
+  async load(config: LoadConfig = {}) {
     const [model, vocabulary] = await Promise.all([
-      this.loadModel(config?.modelUrl),
-      loadVocabulary(
-        config?.vocabUrl ? config.vocabUrl : `${BASE_PATH}/vocab.json`
-      )
+      this.loadModel(config.modelUrl),
+      loadVocabulary(config.vocabUrl || `${BASE_PATH}/vocab.json`)
     ]);
 
     this.model = model;
