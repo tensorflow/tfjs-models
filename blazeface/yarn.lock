@@ -2,23 +2,23 @@
 # yarn lockfile v1
 
 
-"@tensorflow/tfjs-backend-cpu@^2.8.2":
-  version "2.8.2"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-backend-cpu/-/tfjs-backend-cpu-2.8.2.tgz#9f54749d294d5d557a7ce2937be7f498deaadfd6"
-  integrity sha512-/puqtocadSmwW+ntiuW6UMhcYk1laMTr1hoWqyvMinaVwxSZwOyfRqDyF9snxHLfCW3uS8HX02LRqh9B4AzD0A==
+"@tensorflow/tfjs-backend-cpu@^3.0.0-rc.0":
+  version "3.0.0-rc.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-backend-cpu/-/tfjs-backend-cpu-3.0.0-rc.0.tgz#ad518523cc46ce4f9d04c09fb4a7684a3e48df29"
+  integrity sha512-xXhl3Zr6Z+/khAPEZhDDYKBbtQsvBvtU2TN1xo7DCLMCwo1bTEd0QbeM4VbnLFoDkstGuqP+zU7u0V6vU2aNqw==
   dependencies:
     "@types/seedrandom" "2.4.27"
     seedrandom "2.4.3"
 
-"@tensorflow/tfjs-converter@^2.8.0":
-  version "2.8.2"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-2.8.2.tgz#4e3dab3b2a5f11c1412c0fb7191ba35ba9a6c602"
-  integrity sha512-JJPrS2SClMEnvoC/vBOUlWa03UBl6ZZRIeddjgTo+V1CJyvtYr+njySz9lX5HoCBtrcrLkMcd+1IYFKtgFH1Cg==
+"@tensorflow/tfjs-converter@^3.0.0-rc.0":
+  version "3.0.0-rc.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-3.0.0-rc.0.tgz#34bc787406faf8e94bf1e6f683e6b43b5d51ef39"
+  integrity sha512-R7L+riDqXxCQVCJchlyl/2CKc3QOuOUdsdQGnuAjeziHiXLjOo+3a9GXP2MW8UvKoFXGgmlMoEwUt4gOR1SCjg==
 
-"@tensorflow/tfjs-core@^2.8.0":
-  version "2.8.2"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-core/-/tfjs-core-2.8.2.tgz#28c79b9b25e5c89bffe8961121d4fb50c79ef975"
-  integrity sha512-r3Df7phzNa80uoTtlcBGJ/rf+kweSKgN1/VmBT7b53womzoYlw3fQHlZ1WKUbHL9kOf2Zt4y2PPcBiKUQYQC+Q==
+"@tensorflow/tfjs-core@^3.0.0-rc.0":
+  version "3.0.0-rc.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-core/-/tfjs-core-3.0.0-rc.0.tgz#140b2c766f0b5ffe8df1b8613fe3f01d75d690f2"
+  integrity sha512-1Q63k4FOJl5YK3oyps92/mo3SXBPNhxoDCkqz645Ijob1ZkZjgFzLRCp43RCemxHM0TbSLoXlRRhQ/3o4JUE4g==
   dependencies:
     "@types/offscreencanvas" "~2019.3.0"
     "@types/seedrandom" "2.4.27"

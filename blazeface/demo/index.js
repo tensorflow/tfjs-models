@@ -15,11 +15,14 @@
  * =============================================================================
  */
 
-import * as blazeface from '@tensorflow-models/blazeface';
-import * as tf from '@tensorflow/tfjs-core';
-import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
+import '@tensorflow/tfjs-core/dist/public/chained_ops/register_all_chained_ops';
 
-tfjsWasm.setWasmPath('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@latest/dist/tfjs-backend-wasm.wasm');
+import * as blazeface from '@tensorflow-models/blazeface';
+import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
+import * as tf from '@tensorflow/tfjs-core';
+
+tfjsWasm.setWasmPath(
+    'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@latest/dist/tfjs-backend-wasm.wasm');
 
 const stats = new Stats();
 stats.showPanel(0);
@@ -41,7 +44,7 @@ async function setupCamera() {
 
   const stream = await navigator.mediaDevices.getUserMedia({
     'audio': false,
-    'video': { facingMode: 'user' },
+    'video': {facingMode: 'user'},
   });
   video.srcObject = stream;
 
@@ -59,7 +62,7 @@ const renderPrediction = async () => {
   const flipHorizontal = true;
   const annotateBoxes = true;
   const predictions = await model.estimateFaces(
-    video, returnTensors, flipHorizontal, annotateBoxes);
+      video, returnTensors, flipHorizontal, annotateBoxes);
 
   if (predictions.length > 0) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -76,13 +79,13 @@ const renderPrediction = async () => {
       const start = predictions[i].topLeft;
       const end = predictions[i].bottomRight;
       const size = [end[0] - start[0], end[1] - start[1]];
-      ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
+      ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
       ctx.fillRect(start[0], start[1], size[0], size[1]);
 
       if (annotateBoxes) {
         const landmarks = predictions[i].landmarks;
 
-        ctx.fillStyle = "blue";
+        ctx.fillStyle = 'blue';
         for (let j = 0; j < landmarks.length; j++) {
           const x = landmarks[j][0];
           const y = landmarks[j][1];
@@ -111,7 +114,7 @@ const setupPage = async () => {
   canvas.width = videoWidth;
   canvas.height = videoHeight;
   ctx = canvas.getContext('2d');
-  ctx.fillStyle = "rgba(255, 0, 0, 0.5)";
+  ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
 
   model = await blazeface.load();
 

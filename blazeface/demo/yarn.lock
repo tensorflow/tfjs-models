@@ -702,28 +702,36 @@
   resolved "https://registry.yarnpkg.com/@tensorflow-models/blazeface/-/blazeface-0.0.5.tgz#6261fcc5de61a283ea409b69f6a851f44a809826"
   integrity sha512-bIMJDV2CD8rr7v9OrIDdDZVh9sbk0EhlZdHaDFpgWUw3Lp21wUN7GSifOJVE5hV2ngmpzM+J12OH8bG1GZoDag==
 
-"@tensorflow/tfjs-backend-wasm@^1.5.2-alpha1":
-  version "1.5.2-alpha1"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-backend-wasm/-/tfjs-backend-wasm-1.5.2-alpha1.tgz#e7275fad79569d7c3abebf97b77b065354bcfa42"
-  integrity sha512-J+CSf8nqKxYisnb7DtfK/6B66Jy9TAjREZRY6vQKVqc5uQeMx49D59D4+tHQVjfEBtf6PZYobWUrXogJTNP71Q==
+"@tensorflow/tfjs-backend-cpu@3.0.0-rc.0":
+  version "3.0.0-rc.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-backend-cpu/-/tfjs-backend-cpu-3.0.0-rc.0.tgz#ad518523cc46ce4f9d04c09fb4a7684a3e48df29"
+  integrity sha512-xXhl3Zr6Z+/khAPEZhDDYKBbtQsvBvtU2TN1xo7DCLMCwo1bTEd0QbeM4VbnLFoDkstGuqP+zU7u0V6vU2aNqw==
   dependencies:
+    "@types/seedrandom" "2.4.27"
+    seedrandom "2.4.3"
+
+"@tensorflow/tfjs-backend-wasm@^3.0.0-rc.0":
+  version "3.0.0-rc.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-backend-wasm/-/tfjs-backend-wasm-3.0.0-rc.0.tgz#0e56c1379a8f70c55a1e46297b7c6acc4ad85087"
+  integrity sha512-AfqVvaAKB6nUKujF9Y5HsiDXQkXVNfUkKe9P+zrCP1iLIuWCNy6NJOToHm7FtUNdq1VwXi/LxXJjxPCk3E8OWQ==
+  dependencies:
+    "@tensorflow/tfjs-backend-cpu" "3.0.0-rc.0"
     "@types/emscripten" "~0.0.34"
 
-"@tensorflow/tfjs-converter@^1.5.2":
-  version "1.5.2"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-1.5.2.tgz#ec1373f421313bdc6aac46d5578deb58e5093e8c"
-  integrity sha512-RRrB8lZFxjLPHO6TwEJPgViVuJP5yqq0IPqA35PhWLYjsNNuC6Tx8vxEa5BZ0Le0mX21CTURak6pdmyac/Jc2w==
+"@tensorflow/tfjs-converter@^3.0.0-rc.0":
+  version "3.0.0-rc.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-3.0.0-rc.0.tgz#34bc787406faf8e94bf1e6f683e6b43b5d51ef39"
+  integrity sha512-R7L+riDqXxCQVCJchlyl/2CKc3QOuOUdsdQGnuAjeziHiXLjOo+3a9GXP2MW8UvKoFXGgmlMoEwUt4gOR1SCjg==
 
-"@tensorflow/tfjs-core@^1.5.2":
-  version "1.5.2"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-core/-/tfjs-core-1.5.2.tgz#df76752cf7c43987df1548fb69820935bd8215d7"
-  integrity sha512-Rj6l8xf0PxrEKctvX3bvxjqhHLaCBQT0ChvqFK6//HBu8A1/ao4SzeVKpXKNnP9Niax+qV3c9U9VcOwwIkCMag==
+"@tensorflow/tfjs-core@^3.0.0-rc.0":
+  version "3.0.0-rc.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-core/-/tfjs-core-3.0.0-rc.0.tgz#140b2c766f0b5ffe8df1b8613fe3f01d75d690f2"
+  integrity sha512-1Q63k4FOJl5YK3oyps92/mo3SXBPNhxoDCkqz645Ijob1ZkZjgFzLRCp43RCemxHM0TbSLoXlRRhQ/3o4JUE4g==
   dependencies:
     "@types/offscreencanvas" "~2019.3.0"
     "@types/seedrandom" "2.4.27"
     "@types/webgl-ext" "0.0.30"
-    "@types/webgl2" "0.0.4"
-    node-fetch "~2.1.2"
+    node-fetch "~2.6.1"
     seedrandom "2.4.3"
 
 "@types/emscripten@~0.0.34":
@@ -750,11 +758,6 @@
   version "0.0.30"
   resolved "https://registry.yarnpkg.com/@types/webgl-ext/-/webgl-ext-0.0.30.tgz#0ce498c16a41a23d15289e0b844d945b25f0fb9d"
   integrity sha512-LKVgNmBxN0BbljJrVUwkxwRYqzsAEPcZOe6S2T6ZaBDIrFp0qu4FNlpc5sM1tGbXUYFgdVQIoeLk1Y1UoblyEg==
-
-"@types/webgl2@0.0.4":
-  version "0.0.4"
-  resolved "https://registry.yarnpkg.com/@types/webgl2/-/webgl2-0.0.4.tgz#c3b0f9d6b465c66138e84e64cb3bdf8373c2c279"
-  integrity sha512-PACt1xdErJbMUOUweSrbVM7gSIYm1vTncW2hF6Os/EeWi6TXYAYMPp+8v6rzHmypE5gHrxaxZNXgMkJVIdZpHw==
 
 abbrev@1:
   version "1.1.1"
@@ -4011,10 +4014,10 @@ node-addon-api@^1.6.0:
   resolved "https://registry.yarnpkg.com/node-addon-api/-/node-addon-api-1.7.0.tgz#d2897e0a2f35895676133004abbe6a7af6e55f79"
   integrity sha512-TaiwMuQqmonaIz/dI+a3V2XE67872jC2Z+fOzKuH4piwxGZN48NwVy75hL8shzQL09Nfl/Avk7md7dVcMG0zlA==
 
-node-fetch@~2.1.2:
-  version "2.1.2"
-  resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.1.2.tgz#ab884e8e7e57e38a944753cec706f788d1768bb5"
-  integrity sha1-q4hOjn5X44qUR1POxwb3iNF2i7U=
+node-fetch@~2.6.1:
+  version "2.6.1"
+  resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.6.1.tgz#045bd323631f76ed2e2b55573394416b639a0052"
+  integrity sha512-V4aYg89jEoVRxRb2fJdAg8FHvI7cEyYdVAh94HH0UIK8oJxUfkjlDQN9RbMx+bEjP7+ggMiFRprSti032Oipxw==
 
 node-forge@^0.7.1:
   version "0.7.6"
