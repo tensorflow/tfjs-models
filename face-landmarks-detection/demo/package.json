@@ -10,11 +10,11 @@
   },
   "dependencies": {
     "@tensorflow-models/face-landmarks-detection": "0.0.1",
-    "@tensorflow/tfjs-backend-wasm": "2.8.0",
-    "@tensorflow/tfjs-backend-webgl": "2.8.0",
-    "@tensorflow/tfjs-backend-cpu": "2.8.0",
-    "@tensorflow/tfjs-converter": "2.8.0",
-    "@tensorflow/tfjs-core": "2.8.0",
+    "@tensorflow/tfjs-backend-wasm": "2.8.4",
+    "@tensorflow/tfjs-backend-webgl": "2.8.4",
+    "@tensorflow/tfjs-backend-cpu": "2.8.4",
+    "@tensorflow/tfjs-converter": "2.8.4",
+    "@tensorflow/tfjs-core": "2.8.4",
     "stats.js": "^0.17.0"
   },
   "scripts": {
