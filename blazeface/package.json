@@ -17,6 +17,7 @@
     "@tensorflow/tfjs-core": "^2.8.0"
   },
   "devDependencies": {
+    "@tensorflow/tfjs-backend-cpu": "^2.8.2",
     "@tensorflow/tfjs-converter": "^2.8.0",
     "@tensorflow/tfjs-core": "^2.8.0",
     "@types/jasmine": "~2.5.53",

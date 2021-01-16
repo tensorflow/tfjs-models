@@ -21,6 +21,13 @@ steps:
   args: ['./scripts/run-build.sh', 'body-pix']
   waitFor: ['diff']
 
+# Blaze face.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'blazeface'
+  args: ['./scripts/run-build.sh', 'blazeface']
+  waitFor: ['diff']
+
 # Coco SSD.
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
