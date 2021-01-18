@@ -15,18 +15,11 @@
  * =============================================================================
  */
 
-import * as tfconv from '@tensorflow/tfjs-converter';
-import {BlazeFaceModel} from './face';
-
-import '@tensorflow/tfjs-core/dist/public/chained_ops/to_float';
-import '@tensorflow/tfjs-core/dist/public/chained_ops/expand_dims';
-import '@tensorflow/tfjs-core/dist/public/chained_ops/resize_bilinear';
-import '@tensorflow/tfjs-core/dist/public/chained_ops/squeeze';
-import '@tensorflow/tfjs-core/dist/public/chained_ops/reshape';
-import '@tensorflow/tfjs-core/dist/public/chained_ops/div';
+import * as tfconv from "@tensorflow/tfjs-converter";
+import { BlazeFaceModel } from "./face";
 
 const BLAZEFACE_MODEL_URL =
-    'https://tfhub.dev/tensorflow/tfjs-model/blazeface/1/default/1';
+  "https://tfhub.dev/tensorflow/tfjs-model/blazeface/1/default/1";
 
 /**
  * Load blazeface.
@@ -45,15 +38,21 @@ export async function load({
   inputWidth = 128,
   inputHeight = 128,
   iouThreshold = 0.3,
-  scoreThreshold = 0.75
+  scoreThreshold = 0.75,
 } = {}): Promise<BlazeFaceModel> {
-  const blazeface =
-      await tfconv.loadGraphModel(BLAZEFACE_MODEL_URL, {fromTFHub: true});
+  const blazeface = await tfconv.loadGraphModel(BLAZEFACE_MODEL_URL, {
+    fromTFHub: true,
+  });
 
   const model = new BlazeFaceModel(
-      blazeface, inputWidth, inputHeight, maxFaces, iouThreshold,
-      scoreThreshold);
+    blazeface,
+    inputWidth,
+    inputHeight,
+    maxFaces,
+    iouThreshold,
+    scoreThreshold
+  );
   return model;
 }
 
-export {NormalizedFace, BlazeFaceModel, BlazeFacePrediction} from './face';
+export { NormalizedFace, BlazeFaceModel, BlazeFacePrediction } from "./face";
