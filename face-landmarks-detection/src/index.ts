@@ -16,6 +16,13 @@
  */
 
 import {load as loadMediaPipeFaceMesh} from './mediapipe-facemesh';
+import '@tensorflow/tfjs-core/dist/public/chained_ops/slice';
+import '@tensorflow/tfjs-core/dist/public/chained_ops/mul';
+import '@tensorflow/tfjs-core/dist/public/chained_ops/to_float';
+import '@tensorflow/tfjs-core/dist/public/chained_ops/expand_dims';
+import '@tensorflow/tfjs-core/dist/public/chained_ops/squeeze';
+import '@tensorflow/tfjs-core/dist/public/chained_ops/reshape';
+import '@tensorflow/tfjs-core/dist/public/chained_ops/div';
 
 import {FaceLandmarksDetector} from './types';
 export {FaceLandmarksDetector, FaceLandmarksPrediction} from './types';
