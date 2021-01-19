@@ -39,7 +39,7 @@ steps:
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
   id: 'deeplab'
-  args: ['./scripts/run-build.sh', 'deep-lab']
+  args: ['./scripts/run-build.sh', 'deeplab']
   waitFor: ['diff']
 
 # KNN Classifier.
