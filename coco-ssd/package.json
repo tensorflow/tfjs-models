@@ -21,7 +21,6 @@
     "@rollup/plugin-node-resolve": "^7.1.1",
     "@rollup/plugin-typescript": "^3.0.0",
     "@tensorflow/tfjs-backend-cpu": "^3.0.0-rc.1",
-    "@tensorflow/tfjs-backend-webgl": "^3.0.0-rc.1",
     "@tensorflow/tfjs-converter": "^3.0.0-rc.1",
     "@tensorflow/tfjs-core": "^3.0.0-rc.1",
     "@types/jasmine": "~2.8.8",
