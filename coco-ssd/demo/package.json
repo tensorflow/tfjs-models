@@ -20,7 +20,7 @@
     "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr --open",
     "build": "cross-env NODE_ENV=production parcel build index.html --public-url ./",
     "build-deps": "yarn build-model && yarn build",
-    "build-model": "cd .. && yarn && yarn build",
+    "build-model": "cd .. && yarn && yarn build-npm",
     "lint": "eslint .",
     "link-local": "yalc link @tensorflow-models/coco-ssd"
   },
