@@ -479,8 +479,8 @@ export class BodyPix {
           APPLY_SIGMOID_ACTIVATION);
 
       return {
-        segmentation:
-            toMaskTensor(tf.squeeze(scaledSegmentScores), segmentationThreshold),
+        segmentation: toMaskTensor(
+            tf.squeeze(scaledSegmentScores), segmentationThreshold),
         heatmapScores,
         offsets,
         displacementFwd,

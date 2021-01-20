@@ -182,7 +182,8 @@ export function resizeAndPadTo(
     // resize to have largest dimension match image
     let resized: tf.Tensor3D;
     if (flipHorizontal) {
-      resized = tf.image.resizeBilinear(tf.reverse(imageTensor, 1), [resizeH, resizeW]);
+      resized = tf.image.resizeBilinear(
+          tf.reverse(imageTensor, 1), [resizeH, resizeW]);
     } else {
       resized = tf.image.resizeBilinear(imageTensor, [resizeH, resizeW]);
     }
@@ -240,7 +241,8 @@ export function resize2d(
     nearestNeighbor?: boolean): tf.Tensor2D {
   return tf.tidy(() => {
     const batchedImage: tf.Tensor4D = tf.expandDims(tensor, 2);
-    return tf.squeeze(tf.image.resizeBilinear(batchedImage, resolution, nearestNeighbor));
+    return tf.squeeze(
+        tf.image.resizeBilinear(batchedImage, resolution, nearestNeighbor));
   });
 }
 

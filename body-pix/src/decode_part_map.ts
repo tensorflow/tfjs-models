@@ -53,7 +53,8 @@ export function toMaskTensor(
     segmentScores: tf.Tensor2D, threshold: number): tf.Tensor2D {
   return tf.tidy(
       () =>
-          (tf.cast(tf.greater(segmentScores, tf.scalar(threshold)), 'int32') as tf.Tensor2D));
+          (tf.cast(tf.greater(
+              segmentScores, tf.scalar(threshold)), 'int32') as tf.Tensor2D));
 }
 
 /**
