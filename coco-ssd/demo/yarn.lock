@@ -742,11 +742,11 @@
     "@parcel/utils" "^1.11.0"
     physical-cpu-count "^2.0.0"
 
-"@tensorflow-models/coco-ssd@link:..":
+"@tensorflow-models/coco-ssd@link:../dist":
   version "0.0.0"
   uid ""
 
-"@tensorflow/tfjs-backend-cpu@3.0.0-rc.1":
+"@tensorflow/tfjs-backend-cpu@3.0.0-rc.1", "@tensorflow/tfjs-backend-cpu@^3.0.0-rc.1":
   version "3.0.0-rc.1"
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-backend-cpu/-/tfjs-backend-cpu-3.0.0-rc.1.tgz#b02e05706b2d91ab601e7eb397b6ea60ac0a9e2e"
   integrity sha512-9+13fs3vVpfOpDY+Aa/JXdda2SuBN/clxxoNYIX3pMY0GAGwpUaAkSECLuOOhnngHcl9pxuaJtgqrCcrq+A3/A==
