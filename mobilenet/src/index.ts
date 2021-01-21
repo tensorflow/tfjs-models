@@ -17,6 +17,13 @@
 
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
+import '@tensorflow/tfjs-core/dist/public/chained_ops/add'
+import '@tensorflow/tfjs-core/dist/public/chained_ops/mul'
+import '@tensorflow/tfjs-core/dist/public/chained_ops/reshape'
+import '@tensorflow/tfjs-core/dist/public/chained_ops/squeeze'
+import '@tensorflow/tfjs-core/dist/public/chained_ops/slice'
+import '@tensorflow/tfjs-core/dist/public/chained_ops/softmax'
+import '@tensorflow/tfjs-core/dist/public/chained_ops/to_float'
 
 import {IMAGENET_CLASSES} from './imagenet_classes';
 export {version} from './version';
