@@ -16,6 +16,12 @@ Install dependencies:
 yarn
 ```
 
+Build the coco-ssd model locally which the demo depends on:
+
+```sh
+yarn build-deps
+```
+
 Launch a development server, and watch files for changes. This command will also automatically open
 the demo app in your browser.
 
@@ -25,32 +31,15 @@ yarn watch
 
 ## If you are developing the model locally and want to test the changes in the demo
 
-`cd` into the coco-ssd/ folder:
+`cd` into the coco-ssd/demo folder:
 
 ```sh
-cd coco-ssd
+cd coco-ssd/demo
 ```
 
-Install dependencies:
+Rebuild coco-ssd locally:
 ```sh
-yarn
-```
-
-Publish coco-ssd locally:
-```sh
-yarn publish-local
-```
-
-`cd` into this directory (coco-ssd/demo) and install dependencies:
-
-```sh
-cd demo
-yarn
-```
-
-Link the package published from the publish step above:
-```sh
-yarn link-local
+yarn build-deps
 ```
 
 Start the dev demo server:
@@ -58,5 +47,5 @@ Start the dev demo server:
 yarn watch
 ```
 
-To get future updates from the `coco-ssd` source code, just run `yarn publish-local` in the coco-ssd/
+To get future updates from the `coco-ssd` source code, just run `yarn build-deps` in the coco-ssd/demo
 folder again.

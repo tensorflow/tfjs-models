@@ -108,14 +108,13 @@ export class ObjectDetection {
   private async infer(
       img: tf.Tensor3D|ImageData|HTMLImageElement|HTMLCanvasElement|
       HTMLVideoElement,
-      maxNumBoxes: number, 
-      minScore: number): Promise<DetectedObject[]> {
+      maxNumBoxes: number, minScore: number): Promise<DetectedObject[]> {
     const batched = tf.tidy(() => {
       if (!(img instanceof tf.Tensor)) {
         img = tf.browser.fromPixels(img);
       }
       // Reshape to a single-element batch so we can pass it to executeAsync.
-      return img.expandDims(0);
+      return tf.expandDims(img);
     });
     const height = batched.shape[1];
     const width = batched.shape[2];
@@ -223,8 +222,7 @@ export class ObjectDetection {
   async detect(
       img: tf.Tensor3D|ImageData|HTMLImageElement|HTMLCanvasElement|
       HTMLVideoElement,
-      maxNumBoxes = 20,
-      minScore = 0.5): Promise<DetectedObject[]> {
+      maxNumBoxes = 20, minScore = 0.5): Promise<DetectedObject[]> {
     return this.infer(img, maxNumBoxes, minScore);
   }
 
