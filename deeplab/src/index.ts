@@ -119,7 +119,7 @@ export class SemanticSegmentation {
    */
   public predict(input: DeepLabInput): tf.Tensor2D {
     return tf.tidy(() => {
-      const data = toInputTensor(input);
+      const data = tf.cast(toInputTensor(input), 'int32');
       return tf.squeeze(this.model.execute(data) as tf.Tensor);
     });
   }

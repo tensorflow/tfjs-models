@@ -479,8 +479,8 @@ export class BodyPix {
           APPLY_SIGMOID_ACTIVATION);
 
       return {
-        segmentation:
-            toMaskTensor(scaledSegmentScores.squeeze(), segmentationThreshold),
+        segmentation: toMaskTensor(
+            tf.squeeze(scaledSegmentScores), segmentationThreshold),
         heatmapScores,
         offsets,
         displacementFwd,
@@ -640,7 +640,7 @@ export class BodyPix {
       }
 
       const segmentation = toMaskTensor(
-          scaledSegmentScores.squeeze(), config.segmentationThreshold);
+          tf.squeeze(scaledSegmentScores), config.segmentationThreshold);
 
       return {
         segmentation,
@@ -766,7 +766,7 @@ export class BodyPix {
           [[padding.top, padding.bottom], [padding.left, padding.right]],
           APPLY_SIGMOID_ACTIVATION);
       const segmentation =
-          toMaskTensor(scaledSegmentScores.squeeze(), segmentationThreshold);
+          toMaskTensor(tf.squeeze(scaledSegmentScores), segmentationThreshold);
       return {
         partSegmentation:
             decodePartSegmentation(segmentation, scaledPartHeatmapScore),
@@ -928,7 +928,7 @@ export class BodyPix {
 
       const scaledLongOffsets = longOffsets;
       const segmentation = toMaskTensor(
-          scaledSegmentScores.squeeze(), config.segmentationThreshold);
+        tf.squeeze(scaledSegmentScores), config.segmentationThreshold);
       const partSegmentation =
           decodeOnlyPartSegmentation(scaledPartSegmentationScores);
       return {

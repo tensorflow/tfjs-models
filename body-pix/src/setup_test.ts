@@ -20,6 +20,8 @@
  * executing tests.
  */
 
+import '@tensorflow/tfjs-backend-webgl';
+
 import {setTestEnvs} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
 // Increase test timeout since we are fetching the model files from GCS.
