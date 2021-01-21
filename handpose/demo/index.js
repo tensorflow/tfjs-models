@@ -67,7 +67,6 @@ function setupDatGui() {
       .onChange(async backend => {
         window.cancelAnimationFrame(rafID);
         await tf.setBackend(backend);
-        await addFlagLabels();
         landmarksRealTime(video);
       });
 
