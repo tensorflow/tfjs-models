@@ -42,7 +42,7 @@
     "build": "rimraf dist && tsc && yarn bundle",
     "publish-local": "yarn build && rollup -c && yalc publish",
     "test": "ts-node --skip-ignore --project tsconfig.test.json run_tests.ts",
-    "build-npm": "yarn build && rollup -c",
+    "build-npm": "yarn build && yarn bundle",
     "lint": "tslint -p . -t verbose",
     "publish-demo": "./scripts/publish-demo.sh"
   },
