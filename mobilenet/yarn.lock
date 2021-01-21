@@ -18,6 +18,14 @@
     esutils "^2.0.2"
     js-tokens "^4.0.0"
 
+"@tensorflow/tfjs-backend-cpu@^3.0.0-rc.1":
+  version "3.0.0-rc.1"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-backend-cpu/-/tfjs-backend-cpu-3.0.0-rc.1.tgz#b02e05706b2d91ab601e7eb397b6ea60ac0a9e2e"
+  integrity sha512-9+13fs3vVpfOpDY+Aa/JXdda2SuBN/clxxoNYIX3pMY0GAGwpUaAkSECLuOOhnngHcl9pxuaJtgqrCcrq+A3/A==
+  dependencies:
+    "@types/seedrandom" "2.4.27"
+    seedrandom "2.4.3"
+
 "@tensorflow/tfjs-converter@^3.0.0-rc.1":
   version "3.0.0-rc.1"
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-3.0.0-rc.1.tgz#a15eb72ade80f7ae0e6403020763be0c5af6f2f7"
