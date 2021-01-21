@@ -13,12 +13,13 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs-converter": "^1.2.1",
-    "@tensorflow/tfjs-core": "^1.2.1"
+    "@tensorflow/tfjs-converter": "^3.0.0-rc.1",
+    "@tensorflow/tfjs-core": "^3.0.0-rc.1"
   },
   "devDependencies": {
-    "@tensorflow/tfjs-converter": "^1.2.1",
-    "@tensorflow/tfjs-core": "^1.2.1",
+    "@tensorflow/tfjs-backend-cpu": "^3.0.0-rc.1",
+    "@tensorflow/tfjs-converter": "^3.0.0-rc.1",
+    "@tensorflow/tfjs-core": "^3.0.0-rc.1",
     "@types/jasmine": "~2.5.53",
     "babel-core": "^6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",
@@ -38,7 +39,7 @@
     "build-npm": "yarn build && rollup -c",
     "publish-local": "yarn build && rollup -c && yalc push",
     "lint": "tslint -p . -t verbose",
-    "test": "ts-node --project tsconfig.test.json run_tests.ts"
+    "test": "ts-node --skip-ignore --project tsconfig.test.json run_tests.ts"
   },
   "license": "Apache-2.0"
 }
