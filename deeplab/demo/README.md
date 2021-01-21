@@ -4,6 +4,8 @@ This demo allows you to try out semantic segmentation on a couple of preset imag
 
 ## Setup
 
+Run `yarn build-npm` in the 'deeplab' folder.
+
 Change the directory to the `demo` folder:
 
 ```sh
