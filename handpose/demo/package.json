@@ -10,10 +10,10 @@
   },
   "dependencies": {
     "@tensorflow-models/handpose": "0.0.6",
-    "@tensorflow/tfjs-core": "2.1.0",
-    "@tensorflow/tfjs-converter": "2.1.0",
-    "@tensorflow/tfjs-backend-webgl": "2.1.0",
-    "@tensorflow/tfjs-backend-wasm": "2.1.0"
+    "@tensorflow/tfjs-core": "^2.3.0",
+    "@tensorflow/tfjs-converter": "^2.3.0",
+    "@tensorflow/tfjs-backend-webgl": "^2.3.0",
+    "@tensorflow/tfjs-backend-wasm": "^2.3.0"
   },
   "scripts": {
     "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr ",
@@ -22,7 +22,9 @@
     "link-local": "yalc link @tensorflow-models/handpose"
   },
   "browser": {
-    "crypto": false
+    "crypto": false,
+    "perf_hooks": false,
+    "worker_threads": false
   },
   "devDependencies": {
     "babel-core": "~6.26.3",
