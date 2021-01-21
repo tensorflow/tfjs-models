@@ -67,9 +67,7 @@ export function getOffsetPoints(
   return tf.tidy(() => {
     const offsetVectors = getOffsetVectors(heatMapCoordsBuffer, offsetsBuffer);
 
-    return heatMapCoordsBuffer.toTensor()
-        .mul(tf.scalar(outputStride, 'int32'))
-        .toFloat()
-        .add(offsetVectors);
+    return tf.add(tf.cast(tf.mul(heatMapCoordsBuffer.toTensor(),
+        tf.scalar(outputStride, 'int32')), 'float32'), offsetVectors);
   });
 }
