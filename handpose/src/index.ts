@@ -137,7 +137,7 @@ export class HandPose {
       if (!(input instanceof tf.Tensor)) {
         input = tf.browser.fromPixels(input);
       }
-      return input.toFloat().expandDims(0);
+      return tf.expandDims(tf.cast(input, 'float32'));
     });
 
     const result = await this.pipeline.estimateHand(image);
