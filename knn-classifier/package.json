@@ -13,7 +13,9 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs-core": "^2.8.5"
+    "@tensorflow/tfjs-backend-cpu": "^3.0.0-rc.1",
+    "@tensorflow/tfjs-core": "^3.0.0-rc.1",
+    "@tensorflow/tfjs-layers": "^3.0.0-rc.1"
   },
   "devDependencies": {
     "@tensorflow/tfjs-backend-cpu": "^3.0.0-rc.1",
