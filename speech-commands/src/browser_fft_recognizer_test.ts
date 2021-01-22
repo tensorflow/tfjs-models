@@ -133,7 +133,8 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
   async function createFakeModelArtifact(tmpDir: string) {
     const model = tfl.sequential();
     model.add(
-        tfl.layers.reshape({targetShape: [43 * 232], inputShape: [43, 232, 1]}));
+        tfl.layers.reshape(
+            {targetShape: [43 * 232], inputShape: [43, 232, 1]}));
     model.add(tfl.layers.dense({units: 4, activation: 'softmax'}));
     await model.save(`file://${tmpDir}`);
   }
