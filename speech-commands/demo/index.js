@@ -15,7 +15,9 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+ import '@tensorflow/tfjs-backend-webgl';
+import * as tf from '@tensorflow/tfjs-core';
+import * as tfl from '@tensorflow/tfjs-layers';
 import Plotly from 'plotly.js-dist';
 
 import * as SpeechCommands from '../src';

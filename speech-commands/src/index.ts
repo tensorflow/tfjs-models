@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
 
 import {BrowserFftSpeechCommandRecognizer} from './browser_fft_recognizer';
 import {playRawAudio} from './browser_fft_utils';
