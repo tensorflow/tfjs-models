@@ -18,6 +18,8 @@ import '@tensorflow/tfjs-backend-webgl';
 
 import * as posenet from '@tensorflow-models/posenet';
 import * as tf from '@tensorflow/tfjs-core';
+import '@tensorflow/tfjs-backend-webgl';
+
 import dat from 'dat.gui';
 
 import {isMobile, toggleLoadingUI, tryResNetButtonName, tryResNetButtonText, updateTryResNetButtonDatGuiCss} from './demo_util';

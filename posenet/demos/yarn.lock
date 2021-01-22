@@ -742,9 +742,8 @@
     "@parcel/utils" "^1.11.0"
     physical-cpu-count "^2.0.0"
 
-"@tensorflow-models/posenet@link:../dist":
+"@tensorflow-models/posenet@file:../dist":
   version "0.0.0"
-  uid ""
 
 "@tensorflow/tfjs-backend-cpu@3.0.0-rc.1":
   version "3.0.0-rc.1"
@@ -765,6 +764,11 @@
     "@types/webgl-ext" "0.0.30"
     "@types/webgl2" "0.0.5"
     seedrandom "2.4.3"
+
+"@tensorflow/tfjs-converter@^3.0.0-rc.1":
+  version "3.0.0-rc.1"
+  resolved "https://registry.npmjs.org/@tensorflow/tfjs-converter/-/tfjs-converter-3.0.0-rc.1.tgz#a15eb72ade80f7ae0e6403020763be0c5af6f2f7"
+  integrity sha512-vVezwsDtrqM9CGDU+9c1WvPbLB5Odi9uiyEUHZEXMgNnPZ9Ix8a7RFOL7Y+8uBsI3B5wmLrWJuUNeyxUjA7yiA==
 
 "@tensorflow/tfjs-core@^3.0.0-rc.1":
   version "3.0.0-rc.1"
