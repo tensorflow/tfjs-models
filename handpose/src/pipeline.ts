@@ -186,7 +186,7 @@ export class HandPipeline {
 
     const croppedInput = cutBoxFromImageAndResize(
         box, rotatedImage, [this.meshWidth, this.meshHeight]);
-    const handImage = croppedInput.div(255);
+    const handImage = tf.div(croppedInput, 255);
     croppedInput.dispose();
     rotatedImage.dispose();
 
