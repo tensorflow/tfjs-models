@@ -15,6 +15,7 @@
  * =============================================================================
  */
 import * as tf from '@tensorflow/tfjs-core';
+import '@tensorflow/tfjs-layers';
 import {Tensor, Tensor1D, Tensor2D, util} from '@tensorflow/tfjs-core';
 import {concatWithNulls, topK} from './util';
 export {version} from './version';
@@ -59,7 +60,7 @@ export class KNNClassifier {
 
     tf.tidy(() => {
       const normalizedExample =
-          this.normalizeVectorToUnitLength(example.flatten());
+        this.normalizeVectorToUnitLength(example.flatten());
       const exampleSize = normalizedExample.shape[0];
 
       if (this.classDatasetMatrices[label] == null) {
