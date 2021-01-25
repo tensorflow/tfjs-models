@@ -149,14 +149,14 @@ async function loadVideo() {
   video.play();
   return video;
 }
-async function addFlagLables() {
+async function addFlagLabels() {
   if(!document.querySelector("#simd_supported")) {
     const simdSupportLabel = document.createElement("div");
     simdSupportLabel.id = "simd_supported";
     simdSupportLabel.style = "font-weight: bold";
     const simdSupported = await tf.env().getAsync('WASM_HAS_SIMD_SUPPORT');
     simdSupportLabel.innerHTML = `SIMD supported: <span class=${simdSupported}>${simdSupported}<span>`;
-    document.querySelector("#description").appendChild(simdSupportLabel);
+    document.querySelector("#info").appendChild(simdSupportLabel);
   }
 
   if(!document.querySelector("#threads_supported")) {
@@ -165,7 +165,7 @@ async function addFlagLables() {
     threadSupportLabel.style = "font-weight: bold";
     const threadsSupported = await tf.env().getAsync('WASM_HAS_MULTITHREAD_SUPPORT');
     threadSupportLabel.innerHTML = `Threads supported: <span class=${threadsSupported}>${threadsSupported}</span>`;
-    document.querySelector("#description").appendChild(threadSupportLabel);
+    document.querySelector("#info").appendChild(threadSupportLabel);
   }
 }
 async function main() {

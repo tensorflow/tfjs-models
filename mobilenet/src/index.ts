@@ -207,8 +207,9 @@ class MobileNetImpl implements MobileNet {
       }
 
       // Normalize the image from [0, 255] to [inputMin, inputMax].
-      const normalized: tf.Tensor3D =
-          img.toFloat().mul(this.normalizationConstant).add(this.inputMin);
+      const normalized: tf.Tensor3D = tf.add(
+          tf.mul(tf.cast(img, 'float32'), this.normalizationConstant),
+          this.inputMin);
 
       // Resize the image to
       let resized = normalized;
@@ -219,7 +220,7 @@ class MobileNetImpl implements MobileNet {
       }
 
       // Reshape so we can pass it to predict.
-      const batched = resized.reshape([-1, IMAGE_SIZE, IMAGE_SIZE, 3]);
+      const batched = tf.reshape(resized, [-1, IMAGE_SIZE, IMAGE_SIZE, 3]);
 
       let result: tf.Tensor2D;
 
@@ -227,11 +228,11 @@ class MobileNetImpl implements MobileNet {
         const embeddingName = EMBEDDING_NODES[this.version];
         const internal =
             this.model.execute(batched, embeddingName) as tf.Tensor4D;
-        result = internal.squeeze([1, 2]);
+        result = tf.squeeze(internal, [1, 2]);
       } else {
         const logits1001 = this.model.predict(batched) as tf.Tensor2D;
         // Remove the very first logit (background noise).
-        result = logits1001.slice([0, 1], [-1, 1000]);
+        result = tf.slice(logits1001, [0, 1], [-1, 1000]);
       }
 
       return result;
@@ -262,7 +263,7 @@ class MobileNetImpl implements MobileNet {
 
 async function getTopKClasses(logits: tf.Tensor2D, topK: number):
     Promise<Array<{className: string, probability: number}>> {
-  const softmax = logits.softmax();
+  const softmax = tf.softmax(logits);
   const values = await softmax.data();
   softmax.dispose();
 

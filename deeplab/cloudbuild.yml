@@ -8,7 +8,7 @@ steps:
 
 # Install tfjs dependencies.
 - name: 'node:10'
-  dir: 'universal-sentence-encoder'
+  dir: 'deeplab'
   entrypoint: 'yarn'
   id: 'yarn'
   args: ['install']
@@ -24,7 +24,7 @@ steps:
 
 # Build.
 - name: 'node:10'
-  dir: 'universal-sentence-encoder'
+  dir: 'deeplab'
   entrypoint: 'yarn'
   id: 'build'
   args: ['build']
@@ -32,7 +32,7 @@ steps:
 
 # Run tests.
 - name: 'node:10'
-  dir: 'universal-sentence-encoder'
+  dir: 'deeplab'
   entrypoint: 'yarn'
   id: 'test'
   args: ['test']

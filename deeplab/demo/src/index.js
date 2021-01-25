@@ -16,6 +16,7 @@
  */
 
 import 'bulma/css/bulma.css';
+import '@tensorflow/tfjs-backend-webgl';
 
 import {load} from '@tensorflow-models/deeplab';
 import * as tf from '@tensorflow/tfjs-core';
@@ -134,7 +135,7 @@ const runPrediction = (modelName, input, initialisationStart) => {
     model.segment(input).then((output) => {
       displaySegmentationMap(modelName, output);
       status(`Ran in ${
-        ((performance.now() - initialisationStart) / 1000).toFixed(2)} s`);
+          ((performance.now() - initialisationStart) / 1000).toFixed(2)} s`);
     });
   });
 };
@@ -166,7 +167,7 @@ const runDeeplab = async (modelName) => {
     deeplab[modelName] = load({base: modelName, quantizationBytes});
     await deeplab[modelName];
     status(`Loaded the model in ${
-      ((performance.now() - loadingStart) / 1000).toFixed(2)} s`);
+        ((performance.now() - loadingStart) / 1000).toFixed(2)} s`);
   }
   const predictionStart = performance.now();
   if (input.complete && input.naturalHeight !== 0) {

@@ -71,7 +71,8 @@ export class HandDetector {
       tf.Tensor2D {
     return tf.tidy(() => {
       const landmarks = tf.add(
-          tf.div(rawPalmLandmarks.reshape([-1, 7, 2]), this.inputSizeTensor),
+          tf.div(tf.reshape(
+              rawPalmLandmarks, [-1, 7, 2]), this.inputSizeTensor),
           this.anchors[index]);
 
       return tf.mul(landmarks, this.inputSizeTensor);
@@ -99,11 +100,11 @@ export class HandDetector {
       batchedPrediction = this.model.predict(normalizedInput) as tf.Tensor3D;
     }
 
-    const prediction: tf.Tensor2D = batchedPrediction.squeeze();
+    const prediction: tf.Tensor2D = tf.squeeze(batchedPrediction);
 
     // Regression score for each anchor point.
     const scores: tf.Tensor1D = tf.tidy(
-        () => tf.sigmoid(tf.slice(prediction, [0, 0], [-1, 1])).squeeze());
+        () => tf.squeeze(tf.sigmoid(tf.slice(prediction, [0, 0], [-1, 1]))));
 
     // Bounding box for each anchor point.
     const rawBoxes = tf.slice(prediction, [0, 1], [-1, 4]);
@@ -131,7 +132,7 @@ export class HandDetector {
 
     const rawPalmLandmarks = tf.slice(prediction, [boxIndex, 5], [1, 14]);
     const palmLandmarks: tf.Tensor2D = tf.tidy(
-        () => this.normalizeLandmarks(rawPalmLandmarks, boxIndex).reshape([
+        () => tf.reshape(this.normalizeLandmarks(rawPalmLandmarks, boxIndex), [
           -1, 2
         ]));
 
@@ -152,7 +153,8 @@ export class HandDetector {
     const inputWidth = input.shape[2];
 
     const image: tf.Tensor4D =
-        tf.tidy(() => input.resizeBilinear([this.width, this.height]).div(255));
+        tf.tidy(() => tf.div(tf.image.resizeBilinear(
+            input, [this.width, this.height]), 255));
     const prediction = await this.getBoundingBoxes(image);
 
     if (prediction === null) {

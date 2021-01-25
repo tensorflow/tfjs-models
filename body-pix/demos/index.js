@@ -14,6 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
+import '@tensorflow/tfjs-backend-webgl';
 import * as bodyPix from '@tensorflow-models/body-pix';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
