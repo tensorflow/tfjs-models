@@ -12,6 +12,7 @@
     "@tensorflow-models/knn-classifier": "link:../dist",
     "@tensorflow-models/mobilenet": "link:../../mobilenet/dist",
     "@tensorflow/tfjs-backend-cpu": "^3.0.0-rc.1",
+    "@tensorflow/tfjs-backend-webgl": "^3.0.0",
     "@tensorflow/tfjs-converter": "^3.0.0-rc.1",
     "@tensorflow/tfjs-core": "^3.0.0-rc.1",
     "@tensorflow/tfjs-layers": "^3.0.0-rc.1",
