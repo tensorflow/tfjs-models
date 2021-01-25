@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/knn-classifier",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "KNN Classifier for TensorFlow.js",
   "main": "dist/index.js",
   "unpkg": "dist/knn-classifier.min.js",
@@ -18,22 +18,22 @@
     "@tensorflow/tfjs-layers": "^3.0.0-rc.1"
   },
   "devDependencies": {
-    "@tensorflow/tfjs-backend-cpu": "^3.0.0-rc.1",
-    "@tensorflow/tfjs-core": "^3.0.0-rc.1",
-    "@tensorflow/tfjs-layers": "^3.0.0-rc.1",
+    "@rollup/plugin-node-resolve": "^11.1.0",
+    "@rollup/plugin-typescript": "3.1.1",
+    "@tensorflow/tfjs-backend-cpu": "^3.0.0",
+    "@tensorflow/tfjs-core": "^3.0.0",
+    "@tensorflow/tfjs-layers": "^3.0.0",
     "@types/jasmine": "^3.6.3",
     "babel-core": "~6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",
     "jasmine": "^3.6.4",
     "jasmine-core": "~3.1.0",
     "rimraf": "~2.6.2",
-    "rollup": "~0.60.7",
-    "rollup-plugin-node-resolve": "~3.3.0",
-    "rollup-plugin-typescript2": "~0.15.0",
+    "rollup": "~2.38.0",
     "rollup-plugin-uglify": "~3.0.0",
     "ts-node": "~5.0.0",
     "tslint": "~5.18.0",
-    "typescript": "~3.5.3",
+    "typescript": "~4.1.3",
     "yalc": "~1.0.0-pre.21"
   },
   "scripts": {

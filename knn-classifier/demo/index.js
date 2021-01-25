@@ -15,7 +15,9 @@
  * =============================================================================
  */
 import * as mobilenetModule from '@tensorflow-models/mobilenet';
-import * as tf from '@tensorflow/tfjs';
+
+import * as tf from '@tensorflow/tfjs-core';
+import '@tensorflow/tfjs-backend-cpu';
 import Stats from 'stats.js';
 
 import * as knnClassifier from '../src/index';
