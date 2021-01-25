@@ -18,7 +18,7 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {loadVocabulary, Tokenizer} from './tokenizer';
+import {loadTokenizer, loadVocabulary, Tokenizer} from './tokenizer';
 import {loadQnA} from './use_qna';
 
 export {version} from './version';
@@ -93,4 +93,5 @@ export class UniversalSentenceEncoder {
 }
 
 export {Tokenizer};
+export {loadTokenizer};
 export {loadQnA};
