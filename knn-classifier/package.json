@@ -14,15 +14,13 @@
   },
   "peerDependencies": {
     "@tensorflow/tfjs-backend-cpu": "^3.0.0-rc.1",
-    "@tensorflow/tfjs-core": "^3.0.0-rc.1",
-    "@tensorflow/tfjs-layers": "^3.0.0-rc.1"
+    "@tensorflow/tfjs-core": "^3.0.0-rc.1"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^11.1.0",
     "@rollup/plugin-typescript": "3.1.1",
     "@tensorflow/tfjs-backend-cpu": "^3.0.0",
     "@tensorflow/tfjs-core": "^3.0.0",
-    "@tensorflow/tfjs-layers": "^3.0.0",
     "@types/jasmine": "^3.6.3",
     "babel-core": "~6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",
