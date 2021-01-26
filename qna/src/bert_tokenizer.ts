@@ -37,8 +37,8 @@ class TrieNode {
   index: number;
   constructor(private key: string) {}
 
-  getWord() {
-    const output = [];
+  getWord(): [string[], number, number] {
+    const output: string[] = [];
     let node: TrieNode = this;
 
     while (node != null) {
@@ -148,7 +148,7 @@ export class BertTokenizer {
   }
 
   processInput(text: string): Token[] {
-    const charOriginalIndex = [];
+    const charOriginalIndex: number[] = [];
     const cleanedText = this.cleanText(text, charOriginalIndex);
     const origTokens = cleanedText.split(' ');
 
@@ -160,7 +160,7 @@ export class BertTokenizer {
       return tokens;
     });
 
-    let flattenTokens = [];
+    let flattenTokens: Token[] = [];
     for (let index = 0; index < tokens.length; index++) {
       flattenTokens = flattenTokens.concat(tokens[index]);
     }
@@ -228,7 +228,7 @@ export class BertTokenizer {
     // Source:
     // https://github.com/google-research/bert/blob/88a817c37f788702a363ff935fd173b6dc6ac0d6/tokenization.py#L311
 
-    let outputTokens = [];
+    let outputTokens: number[] = [];
 
     const words = this.processInput(text);
     words.forEach(word => {
@@ -245,7 +245,7 @@ export class BertTokenizer {
 
       let isUnknown = false;
       let start = 0;
-      const subTokens = [];
+      const subTokens: number[] = [];
 
       const charsLength = chars.length;
 
