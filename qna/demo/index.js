@@ -16,6 +16,8 @@
  */
 
 import * as qna from '@tensorflow-models/qna';
+import '@tensorflow/tfjs-backend-cpu';
+import '@tensorflow/tfjs-backend-webgl';
 
 let modelPromise = {};
 let search;
