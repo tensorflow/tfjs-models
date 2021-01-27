@@ -169,7 +169,7 @@ export class BertTokenizer {
 
   /* Performs invalid character removal and whitespace cleanup on text. */
   private cleanText(text: string, charOriginalIndex: number[]): string {
-    const stringBuilder = [];
+    const stringBuilder: string[] = [];
     let originalCharIndex = 0, newCharIndex = 0;
     for (const ch of text) {
       // Skip the characters that cannot be used.
@@ -201,7 +201,7 @@ export class BertTokenizer {
   private runSplitOnPunc(
       text: string, count: number,
       charOriginalIndex: number[]): Token[] {
-    const tokens = [];
+    const tokens: Token[] = [];
     let startNewWord = true;
     for (const ch of text) {
       if (isPunctuation(ch)) {

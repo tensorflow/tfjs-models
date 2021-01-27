@@ -129,7 +129,7 @@ class QuestionAndAnswerImpl implements QuestionAndAnswer {
     // length. To deal with this we do a sliding window approach, where we
     // take chunks of the up to our max length with a stride of
     // `doc_stride`.
-    const docSpans = [];
+    const docSpans: Array<{start: number, length: number}> = [];
     let startOffset = 0;
     while (startOffset < allDocTokens.length) {
       let length = allDocTokens.length - startOffset;
@@ -156,8 +156,8 @@ class QuestionAndAnswerImpl implements QuestionAndAnswer {
       }
       tokens.push(SEP_INDEX);
       segmentIds.push(0);
-      for (let i = 0; i < docSpan['length']; i++) {
-        const splitTokenIndex = i + docSpan['start'];
+      for (let i = 0; i < docSpan.length; i++) {
+        const splitTokenIndex = i + docSpan.start;
         const docToken = allDocTokens[splitTokenIndex];
         tokens.push(docToken);
         segmentIds.push(1);
