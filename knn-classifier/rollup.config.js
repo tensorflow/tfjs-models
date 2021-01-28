@@ -52,13 +52,11 @@ function config({plugins = [], output = {}}) {
       banner: PREAMBLE,
       globals: {
 	'@tensorflow/tfjs-core': 'tf',
-        '@tensorflow/tfjs-converter': 'tf',
       },
       ...output
     },
     external: [
       '@tensorflow/tfjs-core',
-      '@tensorflow/tfjs-converter',
     ],
   };
 }
