@@ -17,7 +17,8 @@
 
 // tslint:disable-next-line:no-require-imports
 const packageJSON = require('../package.json');
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
+import * as tfl from '@tensorflow/tfjs-layers';
 import * as speechCommands from './index';
 
 describe('Public API', () => {
@@ -29,15 +30,15 @@ describe('Public API', () => {
 
 describe('Creating recognizer', () => {
   async function makeModelArtifacts(): Promise<tf.io.ModelArtifacts> {
-    const model = tf.sequential();
-    model.add(tf.layers.conv2d({
+    const model = tfl.sequential();
+    model.add(tfl.layers.conv2d({
       filters: 8,
       kernelSize: 3,
       activation: 'relu',
       inputShape: [86, 500, 1]
     }));
-    model.add(tf.layers.flatten());
-    model.add(tf.layers.dense({units: 3, activation: 'softmax'}));
+    model.add(tfl.layers.flatten());
+    model.add(tfl.layers.dense({units: 3, activation: 'softmax'}));
     let modelArtifacts: tf.io.ModelArtifacts;
     await model.save(tf.io.withSaveHandler(artifacts => {
       modelArtifacts = artifacts;
