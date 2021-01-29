@@ -110,7 +110,7 @@ class QuestionAndAnswerImpl implements QuestionAndAnswer {
           `The length of question token exceeds the limit (${maxQueryLen}).`);
     }
 
-    const origTokens = this.tokenizer.processInput(context.trim());
+    const origTokens = this.tokenizer.processInput(context);
     const tokenToOrigIndex = [];
     const allDocTokens = [];
     for (let i = 0; i < origTokens.length; i++) {
@@ -207,6 +207,8 @@ class QuestionAndAnswerImpl implements QuestionAndAnswer {
           'The input to findAnswers call is null, ' +
           'please pass a string as input.');
     }
+    // it is better to trim early, otherwise string indices can be wrong later on
+    context = context.trim();
 
     const features =
         this.process(question, context, MAX_QUERY_LEN, MAX_SEQ_LEN);
