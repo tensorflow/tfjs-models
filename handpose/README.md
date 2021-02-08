@@ -108,9 +108,8 @@ main();
 
 `handpose.load()` takes a configuration object with the following properties:
 
-* **handskeletonModelUrl** - URL to the skeleton model. Default to https://tfhub.dev/mediapipe/tfjs-model/handskeleton/1/default/1.
-
-* **handdetectorModelUrl** - URL to the skeleton model. Default to https://tfhub.dev/mediapipe/tfjs-model/handdetector/1/default/1.
+* **fromExternalStorage** optional object with paths for **handskeletonModelUrl**, **handdetectorModelUrl**, **anchorsUrl**
+and **fromTFHub** flag should it be loaded from TFHub
 
 * **maxContinuousChecks** - How many frames to go without running the bounding box detector. Defaults to infinity. Set to a lower value if you want a safety net in case the mesh detector produces consistently flawed predictions.
 

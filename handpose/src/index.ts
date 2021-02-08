@@ -23,26 +23,24 @@ import {MESH_ANNOTATIONS} from './keypoints';
 import {Coords3D, HandPipeline, Prediction} from './pipeline';
 
 // Load the bounding box detector model.
-async function loadHandDetectorModel(modelPath: string) {
-  const HANDDETECT_MODEL_PATH = `${modelPath}/model.json`;
-  return tfconv.loadGraphModel(HANDDETECT_MODEL_PATH);
+async function loadHandDetectorModel(modelPath: string, fromTFHub: boolean) {
+  return tfconv.loadGraphModel(modelPath, {fromTFHub});
 }
 
 const MESH_MODEL_INPUT_WIDTH = 256;
 const MESH_MODEL_INPUT_HEIGHT = 256;
 
 // Load the mesh detector model.
-async function loadHandPoseModel(modelPath: string) {
-  const HANDPOSE_MODEL_PATH = `${modelPath}/model.json`;
-  return tfconv.loadGraphModel(HANDPOSE_MODEL_PATH);
+async function loadHandPoseModel(modelPath: string, fromTFHub: boolean) {
+  return tfconv.loadGraphModel(modelPath, {fromTFHub});
 }
 
 // In single shot detector pipelines, the output space is discretized into a set
 // of bounding boxes, each of which is assigned a score during prediction. The
 // anchors define the coordinates of these boxes.
-async function loadAnchors(modelPath: string) {
+async function loadAnchors(anchorsPath: string) {
   return tf.util
-    .fetch(`${modelPath}/anchors.json`)
+    .fetch(anchorsPath)
     .then((d) => d.json());
 }
 
@@ -54,6 +52,8 @@ export interface AnnotatedPrediction extends Prediction {
  * Load handpose.
  *
  * @param config A configuration object with the following properties:
+ * - `fromExternalStorage` optional object with fields for Skeleton Model, HandDetector Model and anchors
+ * and anchors and fromTFHub flag is it TFHub
  * - `maxContinuousChecks` How many frames to go without running the bounding
  * box detector. Defaults to infinity. Set to a lower value if you want a safety
  * net in case the mesh detector produces consistently flawed predictions.
@@ -66,17 +66,21 @@ export interface AnnotatedPrediction extends Prediction {
  * on score in non-maximum suppression. Defaults to 0.75.
  */
 export async function load({
-  handskeletonModelUrl = 'https://tfhub.dev/mediapipe/tfjs-model/handskeleton/1/default/1',
-  handdetectorModelUrl = 'https://tfhub.dev/mediapipe/tfjs-model/handdetector/1/default/1',
+  fromExternalStorage: {
+    handskeletonModelUrl = 'https://tfhub.dev/mediapipe/tfjs-model/handskeleton/1/default/1',
+    handdetectorModelUrl = 'https://tfhub.dev/mediapipe/tfjs-model/handdetector/1/default/1',
+    anchorsUrl = 'https://tfhub.dev/mediapipe/tfjs-model/handskeleton/1/default/1/anchors.json?tfjs-format=file',
+    fromTFHub = true
+  } = {},
   maxContinuousChecks = Infinity,
   detectionConfidence = 0.8,
   iouThreshold = 0.3,
   scoreThreshold = 0.5
 } = {}): Promise<HandPose> {
   const [ANCHORS, handDetectorModel, handPoseModel] = await Promise.all([
-    loadAnchors(handskeletonModelUrl),
-    loadHandDetectorModel(handdetectorModelUrl),
-    loadHandPoseModel(handskeletonModelUrl),
+    loadAnchors(anchorsUrl),
+    loadHandDetectorModel(handdetectorModelUrl, fromTFHub),
+    loadHandPoseModel(handskeletonModelUrl, fromTFHub),
   ]);
 
   const detector = new HandDetector(
