@@ -23,30 +23,27 @@ import {MESH_ANNOTATIONS} from './keypoints';
 import {Coords3D, HandPipeline, Prediction} from './pipeline';
 
 // Load the bounding box detector model.
-async function loadHandDetectorModel() {
-  const HANDDETECT_MODEL_PATH =
-      'https://tfhub.dev/mediapipe/tfjs-model/handdetector/1/default/1';
-  return tfconv.loadGraphModel(HANDDETECT_MODEL_PATH, {fromTFHub: true});
+async function loadHandDetectorModel(modelPath: string) {
+  const HANDDETECT_MODEL_PATH = `${modelPath}/model.json`;
+  return tfconv.loadGraphModel(HANDDETECT_MODEL_PATH);
 }
 
 const MESH_MODEL_INPUT_WIDTH = 256;
 const MESH_MODEL_INPUT_HEIGHT = 256;
 
 // Load the mesh detector model.
-async function loadHandPoseModel() {
-  const HANDPOSE_MODEL_PATH =
-      'https://tfhub.dev/mediapipe/tfjs-model/handskeleton/1/default/1';
-  return tfconv.loadGraphModel(HANDPOSE_MODEL_PATH, {fromTFHub: true});
+async function loadHandPoseModel(modelPath: string) {
+  const HANDPOSE_MODEL_PATH = `${modelPath}/model.json`;
+  return tfconv.loadGraphModel(HANDPOSE_MODEL_PATH);
 }
 
 // In single shot detector pipelines, the output space is discretized into a set
 // of bounding boxes, each of which is assigned a score during prediction. The
 // anchors define the coordinates of these boxes.
-async function loadAnchors() {
+async function loadAnchors(modelPath: string) {
   return tf.util
-      .fetch(
-          'https://tfhub.dev/mediapipe/tfjs-model/handskeleton/1/default/1/anchors.json?tfjs-format=file')
-      .then(d => d.json());
+    .fetch(`${modelPath}/anchors.json`)
+    .then((d) => d.json());
 }
 
 export interface AnnotatedPrediction extends Prediction {
@@ -69,13 +66,18 @@ export interface AnnotatedPrediction extends Prediction {
  * on score in non-maximum suppression. Defaults to 0.75.
  */
 export async function load({
+  handskeletonModelUrl = 'https://tfhub.dev/mediapipe/tfjs-model/handskeleton/1/default/1',
+  handdetectorModelUrl = 'https://tfhub.dev/mediapipe/tfjs-model/handdetector/1/default/1',
   maxContinuousChecks = Infinity,
   detectionConfidence = 0.8,
   iouThreshold = 0.3,
   scoreThreshold = 0.5
 } = {}): Promise<HandPose> {
-  const [ANCHORS, handDetectorModel, handPoseModel] = await Promise.all(
-      [loadAnchors(), loadHandDetectorModel(), loadHandPoseModel()]);
+  const [ANCHORS, handDetectorModel, handPoseModel] = await Promise.all([
+    loadAnchors(handskeletonModelUrl),
+    loadHandDetectorModel(handdetectorModelUrl),
+    loadHandPoseModel(handskeletonModelUrl),
+  ]);
 
   const detector = new HandDetector(
       handDetectorModel, MESH_MODEL_INPUT_WIDTH, MESH_MODEL_INPUT_HEIGHT,
