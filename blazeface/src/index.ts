@@ -17,7 +17,7 @@
 
 import * as tf from '@tensorflow/tfjs-core';
 import * as tfconv from '@tensorflow/tfjs-converter';
-import { BlazeFaceModel } from './face';
+import {BlazeFaceModel} from './face';
 
 const BLAZEFACE_MODEL_URL =
   'https://tfhub.dev/tensorflow/tfjs-model/blazeface/1/default/1';
@@ -71,4 +71,4 @@ export async function load({
   return model;
 }
 
-export { NormalizedFace, BlazeFaceModel, BlazeFacePrediction } from './face';
+export {NormalizedFace, BlazeFaceModel, BlazeFacePrediction} from './face';
