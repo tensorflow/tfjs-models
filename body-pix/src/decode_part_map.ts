@@ -25,15 +25,15 @@ import * as tf from '@tensorflow/tfjs-core';
  */
 function toFlattenedOneHotPartMap(partHeatmapScores: tf.Tensor3D): tf.Tensor2D {
   const numParts = partHeatmapScores.shape[2];
-  const partMapLocations = partHeatmapScores.argMax(2);
+  const partMapLocations = tf.argMax(partHeatmapScores, 2);
 
-  const partMapFlattened = partMapLocations.reshape([-1]);
+  const partMapFlattened = tf.reshape(partMapLocations, [-1]);
 
   return tf.oneHot(partMapFlattened, numParts) as tf.Tensor2D;
 }
 
 function clipByMask2d(image: tf.Tensor2D, mask: tf.Tensor2D): tf.Tensor2D {
-  return image.mul(mask);
+  return tf.mul(image, mask);
 }
 
 /**
@@ -53,7 +53,8 @@ export function toMaskTensor(
     segmentScores: tf.Tensor2D, threshold: number): tf.Tensor2D {
   return tf.tidy(
       () =>
-          (segmentScores.greater(tf.scalar(threshold)).toInt() as tf.Tensor2D));
+          (tf.cast(tf.greater(
+              segmentScores, tf.scalar(threshold)), 'int32') as tf.Tensor2D));
 }
 
 /**
@@ -77,18 +78,18 @@ export function decodePartSegmentation(
   const [partMapHeight, partMapWidth, numParts] = partHeatmapScores.shape;
   return tf.tidy(() => {
     const flattenedMap = toFlattenedOneHotPartMap(partHeatmapScores);
-    const partNumbers = tf.range(0, numParts, 1, 'int32').expandDims(1);
+    const partNumbers = tf.expandDims(tf.range(0, numParts, 1, 'int32'), 1);
 
     const partMapFlattened =
-        flattenedMap.matMul(partNumbers as tf.Tensor2D).toInt();
+        tf.cast(tf.matMul(flattenedMap, partNumbers as tf.Tensor2D), 'int32');
 
-    const partMap = partMapFlattened.reshape([partMapHeight, partMapWidth]);
+    const partMap = tf.reshape(partMapFlattened, [partMapHeight, partMapWidth]);
 
-    const partMapShiftedUpForClipping = partMap.add(tf.scalar(1, 'int32'));
+    const partMapShiftedUpForClipping = tf.add(partMap, tf.scalar(1, 'int32'));
 
-    return clipByMask2d(
+    return tf.sub(clipByMask2d(
                partMapShiftedUpForClipping as tf.Tensor2D, segmentationMask)
-        .sub(tf.scalar(1, 'int32'));
+        , tf.scalar(1, 'int32'));
   });
 }
 
@@ -97,11 +98,11 @@ export function decodeOnlyPartSegmentation(partHeatmapScores: tf.Tensor3D):
   const [partMapHeight, partMapWidth, numParts] = partHeatmapScores.shape;
   return tf.tidy(() => {
     const flattenedMap = toFlattenedOneHotPartMap(partHeatmapScores);
-    const partNumbers = tf.range(0, numParts, 1, 'int32').expandDims(1);
+    const partNumbers = tf.expandDims(tf.range(0, numParts, 1, 'int32'), 1);
 
     const partMapFlattened =
-        flattenedMap.matMul(partNumbers as tf.Tensor2D).toInt();
+        tf.cast(tf.matMul(flattenedMap, partNumbers as tf.Tensor2D), 'int32');
 
-    return partMapFlattened.reshape([partMapHeight, partMapWidth]);
+    return tf.reshape(partMapFlattened, [partMapHeight, partMapWidth]);
   });
 }
