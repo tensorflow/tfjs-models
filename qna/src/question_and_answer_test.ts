@@ -16,16 +16,20 @@
  */
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
+import '@tensorflow/tfjs-backend-cpu';
 import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
+import 'jasmine';
 
 import {load} from './index';
 
-let model;
 describeWithFlags('qna', NODE_ENVS, () => {
+
+  let model: tfconv.GraphModel;
+  let executeSpy: jasmine.Spy<typeof model.execute>;
   beforeEach(() => {
     spyOn(tfconv, 'loadGraphModel').and.callFake((modelUrl: string) => {
       model = new tfconv.GraphModel(modelUrl);
-      spyOn(model, 'execute')
+      executeSpy = spyOn(model, 'execute')
           .and.callFake(
               (x: tf.Tensor) =>
                   [tf.tensor2d(
@@ -78,7 +82,7 @@ describeWithFlags('qna', NODE_ENVS, () => {
   it('qna detect method should work for long context', async () => {
     const qna = await load();
     const context = 'text '.repeat(1000);
-    model.execute.and.returnValue(
+    executeSpy.and.returnValue(
       [tf.tensor2d(
         [
           0, 0, 0, 0, 10, 20, 30, 20, 10, 0,

@@ -138,8 +138,8 @@ export function toInputTensor(input: DeepLabInput) {
     const resizeRatio = config['CROP_SIZE'] / Math.max(width, height);
     const targetHeight = Math.round(height * resizeRatio);
     const targetWidth = Math.round(width * resizeRatio);
-    return tf.image.resizeBilinear(image, [targetHeight, targetWidth])
-        .expandDims(0);
+    return tf.expandDims(
+      tf.image.resizeBilinear(image, [targetHeight, targetWidth]));
   });
 }
 

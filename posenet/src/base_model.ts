@@ -62,15 +62,15 @@ export abstract class BaseModel {
     displacementBwd: tf.Tensor3D
   } {
     return tf.tidy(() => {
-      const asFloat = this.preprocessInput(input.toFloat());
-      const asBatch = asFloat.expandDims(0);
+      const asFloat = this.preprocessInput(tf.cast(input, 'float32'));
+      const asBatch = tf.expandDims(asFloat, 0);
       const results = this.model.predict(asBatch) as tf.Tensor4D[];
-      const results3d: tf.Tensor3D[] = results.map(y => y.squeeze([0]));
+      const results3d: tf.Tensor3D[] = results.map(y => tf.squeeze(y, [0]));
 
       const namedResults = this.nameOutputResults(results3d);
 
       return {
-        heatmapScores: namedResults.heatmap.sigmoid(),
+        heatmapScores: tf.sigmoid(namedResults.heatmap),
         offsets: namedResults.offsets,
         displacementFwd: namedResults.displacementFwd,
         displacementBwd: namedResults.displacementBwd

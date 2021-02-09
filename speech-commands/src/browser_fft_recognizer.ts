@@ -15,7 +15,9 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
+import * as tfl from '@tensorflow/tfjs-layers';
+import * as tfd from '@tensorflow/tfjs-data';
 
 import {BrowserFftFeatureExtractor, SpectrogramCallback} from './browser_fft_extractor';
 import {loadMetadataJson, normalize, normalizeFloat32Array} from './browser_fft_utils';
@@ -66,8 +68,8 @@ export class BrowserFftSpeechCommandRecognizer implements
   private readonly FFT_SIZE = 1024;
   private readonly DEFAULT_SUPPRESSION_TIME_MILLIS = 0;
 
-  model: tf.LayersModel;
-  modelWithEmbeddingOutput: tf.LayersModel;
+  model: tfl.LayersModel;
+  modelWithEmbeddingOutput: tfl.LayersModel;
   readonly vocabulary: string;
   readonly parameters: RecognizerParams;
   protected words: string[];
@@ -86,7 +88,7 @@ export class BrowserFftSpeechCommandRecognizer implements
 
   // The second-last dense layer in the base model.
   // To be used for unfreezing during fine-tuning.
-  protected secondLastBaseDenseLayer: tf.layers.Layer;
+  protected secondLastBaseDenseLayer: tfl.layers.Layer;
 
   /**
    * Constructor of BrowserFftSpeechCommandRecognizer.
@@ -290,12 +292,12 @@ export class BrowserFftSpeechCommandRecognizer implements
 
     await this.ensureMetadataLoaded();
 
-    let model: tf.LayersModel;
+    let model: tfl.LayersModel;
     if (typeof this.modelArtifactsOrURL === 'string') {
-      model = await tf.loadLayersModel(this.modelArtifactsOrURL);
+      model = await tfl.loadLayersModel(this.modelArtifactsOrURL);
     } else {
       // this.modelArtifactsOrURL is an instance of `tf.io.ModelArtifacts`.
-      model = await tf.loadLayersModel(tf.io.fromMemory(
+      model = await tfl.loadLayersModel(tf.io.fromMemory(
           this.modelArtifactsOrURL.modelTopology,
           this.modelArtifactsOrURL.weightSpecs,
           this.modelArtifactsOrURL.weightData));
@@ -320,7 +322,7 @@ export class BrowserFftSpeechCommandRecognizer implements
     }
     // Check the consistency between the word labels and the model's output
     // shape.
-    const outputShape = model.outputShape as tf.Shape;
+    const outputShape = model.outputShape as tfl.Shape;
     if (outputShape.length !== 2) {
       throw new Error(
           `Expected loaded model to have an output shape of rank 2,` +
@@ -362,7 +364,7 @@ export class BrowserFftSpeechCommandRecognizer implements
     await this.ensureModelLoaded();
 
     // Find the second last dense layer of the original model.
-    let secondLastDenseLayer: tf.layers.Layer;
+    let secondLastDenseLayer: tfl.layers.Layer;
     for (let i = this.model.layers.length - 2; i >= 0; --i) {
       if (this.model.layers[i].getClassName() === 'Dense') {
         secondLastDenseLayer = this.model.layers[i];
@@ -373,10 +375,10 @@ export class BrowserFftSpeechCommandRecognizer implements
       throw new Error(
           'Failed to find second last dense layer in the original model.');
     }
-    this.modelWithEmbeddingOutput = tf.model({
+    this.modelWithEmbeddingOutput = tfl.model({
       inputs: this.model.inputs,
       outputs: [
-        this.model.outputs[0], secondLastDenseLayer.output as tf.SymbolicTensor
+        this.model.outputs[0], secondLastDenseLayer.output as tfl.SymbolicTensor
       ]
     });
   }
@@ -458,7 +460,7 @@ export class BrowserFftSpeechCommandRecognizer implements
    *
    * @returns The input shape.
    */
-  modelInputShape(): tf.Shape {
+  modelInputShape(): tfl.Shape {
     if (this.model == null) {
       throw new Error(
           'Model has not been loaded yet. Load model by calling ' +
@@ -628,7 +630,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     BrowserFftSpeechCommandRecognizer implements
         TransferSpeechCommandRecognizer {
   private dataset: Dataset;
-  private transferHead: tf.Sequential;
+  private transferHead: tfl.Sequential;
 
   /**
    * Constructor of TransferBrowserFftSpeechCommandRecognizer.
@@ -640,7 +642,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
    */
   constructor(
       readonly name: string, readonly parameters: RecognizerParams,
-      readonly baseModel: tf.LayersModel) {
+      readonly baseModel: tfl.LayersModel) {
     super();
     tf.util.assert(
         name != null && typeof name === 'string' && name.length > 0,
@@ -971,7 +973,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
   private collectTransferDataAsTfDataset(
       windowHopRatio?: number, validationSplit = 0.15, batchSize = 32,
       augmentationOptions?: AudioDataAugmentationOptions):
-      [tf.data.Dataset<{}>, tf.data.Dataset<{}>] {
+      [tfd.Dataset<{}>, tfd.Dataset<{}>] {
     const numFrames = this.nonBatchInputShape[0];
     windowHopRatio = windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
     const hopFrames = Math.round(windowHopRatio * numFrames);
@@ -982,7 +984,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       datasetBatchSize: batchSize,
       datasetValidationSplit: validationSplit,
       ...augmentationOptions
-    }) as [tf.data.Dataset<{}>, tf.data.Dataset<{}>];
+    }) as [tfd.Dataset<{}>, tfd.Dataset<{}>];
     // TODO(cais): See if we can tighten the typing.
   }
 
@@ -1003,7 +1005,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
    *   examples have been collected yet.
    */
   async train(config?: TransferLearnConfig):
-      Promise<tf.History|[tf.History, tf.History]> {
+      Promise<tfl.History|[tfl.History, tfl.History]> {
     tf.util.assert(
         this.words != null && this.words.length > 0,
         () =>
@@ -1063,7 +1065,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
 
   /** Helper function for training on tf.data.Dataset objects. */
   private async trainOnDataset(config?: TransferLearnConfig):
-      Promise<tf.History|[tf.History, tf.History]> {
+      Promise<tfl.History|[tfl.History, tfl.History]> {
     tf.util.assert(config.epochs > 0, () => `Invalid config.epochs`);
     // Train transfer-learning model using fitDataset
 
@@ -1096,7 +1098,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
 
   /** Helper function for training on tf.Tensor objects. */
   private async trainOnTensors(config?: TransferLearnConfig):
-      Promise<tf.History|[tf.History, tf.History]> {
+      Promise<tfl.History|[tfl.History, tfl.History]> {
     // Prepare the data.
     const windowHopRatio = config.windowHopRatio || DEFAULT_WINDOW_HOP_RATIO;
     const {xs, ys} = this.collectTransferDataAsTensors(
@@ -1144,8 +1146,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
   }
 
   private async fineTuningUsingTfDatasets(
-      config: TransferLearnConfig, trainDataset: tf.data.Dataset<{}>,
-      valDataset: tf.data.Dataset<{}>): Promise<tf.History> {
+      config: TransferLearnConfig, trainDataset: tfd.Dataset<{}>,
+      valDataset: tfd.Dataset<{}>): Promise<tfl.History> {
     const originalTrainableValue = this.secondLastBaseDenseLayer.trainable;
     this.secondLastBaseDenseLayer.trainable = true;
 
@@ -1171,7 +1173,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
 
   private async fineTuningUsingTensors(
       config: TransferLearnConfig, trainXs: tf.Tensor, trainYs: tf.Tensor,
-      valData: [tf.Tensor, tf.Tensor]): Promise<tf.History> {
+      valData: [tf.Tensor, tf.Tensor]): Promise<tfl.History> {
     const originalTrainableValue = this.secondLastBaseDenseLayer.trainable;
     this.secondLastBaseDenseLayer.trainable = true;
 
@@ -1228,7 +1230,8 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       // positive class, while _background_noise_ is treated as the
       // negative class.
       const maxWordProbs =
-          probs.slice([0, 1], [probs.shape[0], probs.shape[1] - 1]).max(-1);
+          tf.max(tf.slice(
+              probs, [0, 1], [probs.shape[0], probs.shape[1] - 1]), -1);
       const total = probs.shape[0];
 
       // Calculate ROC curve.
@@ -1301,19 +1304,19 @@ class TransferBrowserFftSpeechCommandRecognizer extends
     }
     this.secondLastBaseDenseLayer = layers[layerIndex];
     const truncatedBaseOutput =
-        this.secondLastBaseDenseLayer.output as tf.SymbolicTensor;
+        this.secondLastBaseDenseLayer.output as tfl.SymbolicTensor;
 
-    this.transferHead = tf.sequential();
-    this.transferHead.add(tf.layers.dense({
+    this.transferHead = tfl.sequential();
+    this.transferHead.add(tfl.layers.dense({
       units: this.words.length,
       activation: 'softmax',
       inputShape: truncatedBaseOutput.shape.slice(1),
       name: 'NewHeadDense'
     }));
     const transferOutput =
-        this.transferHead.apply(truncatedBaseOutput) as tf.SymbolicTensor;
+        this.transferHead.apply(truncatedBaseOutput) as tfl.SymbolicTensor;
     this.model =
-        tf.model({inputs: this.baseModel.inputs, outputs: transferOutput});
+        tfl.model({inputs: this.baseModel.inputs, outputs: transferOutput});
   }
 
   /**
@@ -1321,7 +1324,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
    *
    * @returns The input shape.
    */
-  modelInputShape(): tf.Shape {
+  modelInputShape(): tfl.Shape {
     return this.baseModel.inputs[0].shape;
   }
 
@@ -1368,7 +1371,7 @@ class TransferBrowserFftSpeechCommandRecognizer extends
       console.log(
           `Loaded word list for model named ${this.name}: ${this.words}`);
     }
-    this.model = await tf.loadLayersModel(handlerOrURL);
+    this.model = await tfl.loadLayersModel(handlerOrURL);
     console.log(`Loaded model from ${handlerOrURL}:`);
     this.model.summary();
   }
