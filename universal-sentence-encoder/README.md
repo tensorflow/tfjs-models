@@ -73,6 +73,8 @@ use.load().then(model => {
 });
 ```
 
+`load()` accepts an optional configuration object where you can set custom `modelUrl` and/or `vocabUrl` strings (e.g. `use.load({modelUrl: '', vocabUrl: ''})`).
+
 To use the Tokenizer separately:
 
 ```js
