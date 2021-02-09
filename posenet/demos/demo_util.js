@@ -15,7 +15,7 @@
  * =============================================================================
  */
 import * as posenet from '@tensorflow-models/posenet';
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
 
 const color = 'aqua';
 const boundingBoxColor = 'red';

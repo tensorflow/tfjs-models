@@ -1,13 +1,13 @@
-# Object Detection (COCO-SSD) Demo
+# Mobilenet Demo
 
-This demo allows you to try out object detection on a couple of preset images using different base models.
+This demo allows you to try out image classification using the mobilenet model.
 
 ## Setup
 
 `cd` into the demo/ folder:
 
 ```sh
-cd coco-ssd/demo
+cd mobilenet/demo
 ```
 
 Install dependencies:
@@ -16,7 +16,7 @@ Install dependencies:
 yarn
 ```
 
-Build the coco-ssd model locally which the demo depends on:
+Build the mobilenet model locally which the demo depends on:
 
 ```sh
 yarn build-deps
@@ -31,13 +31,13 @@ yarn watch
 
 ## If you are developing the model locally and want to test the changes in the demo
 
-`cd` into the coco-ssd/demo folder:
+`cd` into the mobilenet/demo folder:
 
 ```sh
-cd coco-ssd/demo
+cd mobilenet/demo
 ```
 
-Rebuild coco-ssd locally:
+Rebuild mobilenet locally:
 ```sh
 yarn build-deps
 ```
@@ -47,5 +47,5 @@ Start the dev demo server:
 yarn watch
 ```
 
-To get future updates from the `coco-ssd` source code, just run `yarn build-deps` in the coco-ssd/demo
+To get future updates from the `mobilenet` source code, just run `yarn build-deps` in the mobilenet/demo
 folder again.
