@@ -104,6 +104,8 @@ export type AnnotatedPrediction =
  * Defaults to true.
  *  - `modelUrl` Optional param for specifying a custom facemesh model url or
  * a `tf.io.IOHandler` object.
+ *  - `detectorModelUrl` Optional param for specifying a custom blazeface model
+ * url or a `tf.io.IOHandler` object.
  *  - `irisModelUrl` Optional param for specifying a custom iris model url or
  * a `tf.io.IOHandler` object.
  */
@@ -115,6 +117,7 @@ export async function load(config: {
   scoreThreshold?: number,
   shouldLoadIrisModel?: boolean,
   modelUrl?: string|tf.io.IOHandler,
+  detectorModelUrl?: string|tf.io.IOHandler,
   irisModelUrl?: string|tf.io.IOHandler,
 }): Promise<FaceMesh> {
   const {
@@ -125,18 +128,24 @@ export async function load(config: {
     scoreThreshold = 0.75,
     shouldLoadIrisModel = true,
     modelUrl,
+    detectorModelUrl,
     irisModelUrl
   } = config;
 
   let models;
   if (shouldLoadIrisModel) {
     models = await Promise.all([
-      loadDetectorModel(maxFaces, iouThreshold, scoreThreshold),
-      loadMeshModel(modelUrl), loadIrisModel(irisModelUrl)
+      loadDetectorModel(
+        detectorModelUrl, maxFaces, iouThreshold, scoreThreshold
+      ),
+      loadMeshModel(modelUrl),
+      loadIrisModel(irisModelUrl)
     ]);
   } else {
     models = await Promise.all([
-      loadDetectorModel(maxFaces, iouThreshold, scoreThreshold),
+      loadDetectorModel(
+        detectorModelUrl, maxFaces, iouThreshold, scoreThreshold
+      ),
       loadMeshModel(modelUrl)
     ]);
   }
@@ -148,9 +157,12 @@ export async function load(config: {
 }
 
 async function loadDetectorModel(
-    maxFaces: number, iouThreshold: number,
-    scoreThreshold: number): Promise<blazeface.BlazeFaceModel> {
-  return blazeface.load({maxFaces, iouThreshold, scoreThreshold});
+    modelUrl: string|tf.io.IOHandler,
+    maxFaces: number,
+    iouThreshold: number,
+    scoreThreshold: number
+): Promise<blazeface.BlazeFaceModel> {
+  return blazeface.load({modelUrl, maxFaces, iouThreshold, scoreThreshold});
 }
 
 async function loadMeshModel(modelUrl?: string|
