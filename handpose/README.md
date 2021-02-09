@@ -108,8 +108,19 @@ main();
 
 `handpose.load()` takes a configuration object with the following properties:
 
-* **fromExternalStorage** optional object with paths for **handskeletonModelUrl**, **handdetectorModelUrl**, **anchorsUrl**
-and **fromTFHub** flag should it be loaded from TFHub
+* **modelUrl**: An optional string that specifies custom url of the HandPose model.
+
+* **handDetectorModelUrl**: An optional string that specifies custom url of the
+bounding box detector model.
+
+* **anchorsUrl**: An optional string that specifies custom url of the anhors.
+In single shot detector pipelines, the output space is discretized into a set
+of bounding boxes, each of which is assigned a score during prediction. The
+anchors define the coordinates of these boxes.
+
+* **fromTFHub**: Whether the module or model is to be loaded from TF Hub.
+Setting this to true allows passing a TF-Hub module URL,
+omitting the standard model file name and the query parameters.
 
 * **maxContinuousChecks** - How many frames to go without running the bounding box detector. Defaults to infinity. Set to a lower value if you want a safety net in case the mesh detector produces consistently flawed predictions.
 

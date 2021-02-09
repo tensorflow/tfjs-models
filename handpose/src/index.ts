@@ -23,24 +23,24 @@ import {MESH_ANNOTATIONS} from './keypoints';
 import {Coords3D, HandPipeline, Prediction} from './pipeline';
 
 // Load the bounding box detector model.
-async function loadHandDetectorModel(modelPath: string, fromTFHub: boolean) {
-  return tfconv.loadGraphModel(modelPath, {fromTFHub});
+async function loadHandDetectorModel(modelUrl: string, fromTFHub: boolean) {
+  return tfconv.loadGraphModel(modelUrl, {fromTFHub});
 }
 
 const MESH_MODEL_INPUT_WIDTH = 256;
 const MESH_MODEL_INPUT_HEIGHT = 256;
 
 // Load the mesh detector model.
-async function loadHandPoseModel(modelPath: string, fromTFHub: boolean) {
-  return tfconv.loadGraphModel(modelPath, {fromTFHub});
+async function loadHandPoseModel(modelUrl: string, fromTFHub: boolean) {
+  return tfconv.loadGraphModel(modelUrl, {fromTFHub});
 }
 
 // In single shot detector pipelines, the output space is discretized into a set
 // of bounding boxes, each of which is assigned a score during prediction. The
 // anchors define the coordinates of these boxes.
-async function loadAnchors(anchorsPath: string) {
+async function loadAnchors(anchorsUrl: string) {
   return tf.util
-    .fetch(anchorsPath)
+    .fetch(anchorsUrl)
     .then((d) => d.json());
 }
 
@@ -49,46 +49,65 @@ export interface AnnotatedPrediction extends Prediction {
 }
 
 /**
- * Load handpose.
+ * Handpose model loading is configurable using the following config dictionary.
  *
- * @param config A configuration object with the following properties:
- * - `fromExternalStorage` optional object with fields for Skeleton Model, HandDetector Model and anchors
- * and anchors and fromTFHub flag is it TFHub
- * - `maxContinuousChecks` How many frames to go without running the bounding
+ * - `modelUrl`: An optional string that specifies custom url of the HandPose model.
+ * - `handDetectorModelUrl`: An optional string that specifies custom url of the
+ * bounding box detector model.
+ * - `anchorsUrl`: An optional string that specifies custom url of the anhors.
+ * In single shot detector pipelines, the output space is discretized into a set
+ * of bounding boxes, each of which is assigned a score during prediction. The
+ * anchors define the coordinates of these boxes.
+ * - `fromTFHub`: Whether the module or model is to be loaded from TF Hub.
+*  Setting this to true allows passing a TF-Hub module URL,
+*  omitting the standard model file name and the query parameters.
+ * - `maxContinuousChecks`: How many frames to go without running the bounding
  * box detector. Defaults to infinity. Set to a lower value if you want a safety
  * net in case the mesh detector produces consistently flawed predictions.
- * - `detectionConfidence` Threshold for discarding a prediction. Defaults to
+ * - `detectionConfidence`: Threshold for discarding a prediction. Defaults to
  * 0.8.
- * - `iouThreshold` A float representing the threshold for deciding whether
+ * - `iouThreshold`: A float representing the threshold for deciding whether
  * boxes overlap too much in non-maximum suppression. Must be between [0, 1].
  * Defaults to 0.3.
- * - `scoreThreshold` A threshold for deciding when to remove boxes based
- * on score in non-maximum suppression. Defaults to 0.75.
+ * - `scoreThreshold`: A threshold for deciding when to remove boxes based
+ * on score in non-maximum suppression. Defaults to 0.5.
  */
-export async function load({
-  fromExternalStorage: {
-    handskeletonModelUrl = 'https://tfhub.dev/mediapipe/tfjs-model/handskeleton/1/default/1',
-    handdetectorModelUrl = 'https://tfhub.dev/mediapipe/tfjs-model/handdetector/1/default/1',
-    anchorsUrl = 'https://tfhub.dev/mediapipe/tfjs-model/handskeleton/1/default/1/anchors.json?tfjs-format=file',
-    fromTFHub = true
-  } = {},
-  maxContinuousChecks = Infinity,
-  detectionConfidence = 0.8,
-  iouThreshold = 0.3,
-  scoreThreshold = 0.5
-} = {}): Promise<HandPose> {
+export interface ModelConfig {
+  modelUrl?: string,
+  handDetectorModelUrl?: string,
+  anchorsUrl?: string,
+  fromTFHub?: boolean,
+  maxContinuousChecks?: number,
+  detectionConfidence?: number,
+  iouThreshold?: number,
+  scoreThreshold?: number
+};
+
+const MODEL_DEFAULTS: ModelConfig = {
+  modelUrl: 'https://tfhub.dev/mediapipe/tfjs-model/handskeleton/1/default/1',
+  handDetectorModelUrl: 'https://tfhub.dev/mediapipe/tfjs-model/handdetector/1/default/1',
+  anchorsUrl: 'https://tfhub.dev/mediapipe/tfjs-model/handskeleton/1/default/1/anchors.json?tfjs-format=file',
+  fromTFHub: true,
+  maxContinuousChecks: Infinity,
+  detectionConfidence: 0.8,
+  iouThreshold: 0.3,
+  scoreThreshold: 0.5
+};
+
+export async function load(config: ModelConfig = {}): Promise<HandPose> {
+  config =  {...MODEL_DEFAULTS, ...config};
   const [ANCHORS, handDetectorModel, handPoseModel] = await Promise.all([
-    loadAnchors(anchorsUrl),
-    loadHandDetectorModel(handdetectorModelUrl, fromTFHub),
-    loadHandPoseModel(handskeletonModelUrl, fromTFHub),
+    loadAnchors(config.anchorsUrl),
+    loadHandDetectorModel(config.handDetectorModelUrl, config.fromTFHub),
+    loadHandPoseModel(config.modelUrl, config.fromTFHub),
   ]);
 
   const detector = new HandDetector(
       handDetectorModel, MESH_MODEL_INPUT_WIDTH, MESH_MODEL_INPUT_HEIGHT,
-      ANCHORS, iouThreshold, scoreThreshold);
+      ANCHORS, config.iouThreshold, config.scoreThreshold);
   const pipeline = new HandPipeline(
       detector, handPoseModel, MESH_MODEL_INPUT_WIDTH, MESH_MODEL_INPUT_HEIGHT,
-      maxContinuousChecks, detectionConfidence);
+      config.maxContinuousChecks, config.detectionConfidence);
   const handpose = new HandPose(pipeline);
 
   return handpose;
