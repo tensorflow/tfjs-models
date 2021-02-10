@@ -38,7 +38,7 @@ and can be used as building blocks in other apps.
   </tr>
   <tr>
     <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./handpose"><div style='vertical-align:middle; display:inline;'>HandPose</div></a></b></td>
-    <td><a href="https://storage.googleapis.com/tfjs-models/demos/handpose/index.html">live</a></td>
+    <td><a href="https://storage.googleapis.com/tfjs-models/demos/handtrack/index.html">live</a></td>
     <td rowspan="2">Real-time hand pose detection in the browser using TensorFlow.js.</td>
     <td rowspan="2"><code>npm i @tensorflow-models/handpose</code></td>
   </tr>
