@@ -111,8 +111,8 @@ class QuestionAndAnswerImpl implements QuestionAndAnswer {
     }
 
     const origTokens = this.tokenizer.processInput(context.trim());
-    const tokenToOrigIndex = [];
-    const allDocTokens = [];
+    const tokenToOrigIndex: number[] = [];
+    const allDocTokens: number[] = [];
     for (let i = 0; i < origTokens.length; i++) {
       const token = origTokens[i].text;
       const subTokens = this.tokenizer.tokenize(token);
@@ -129,7 +129,7 @@ class QuestionAndAnswerImpl implements QuestionAndAnswer {
     // length. To deal with this we do a sliding window approach, where we
     // take chunks of the up to our max length with a stride of
     // `doc_stride`.
-    const docSpans = [];
+    const docSpans: Array<{start: number, length: number}> = [];
     let startOffset = 0;
     while (startOffset < allDocTokens.length) {
       let length = allDocTokens.length - startOffset;
@@ -146,7 +146,7 @@ class QuestionAndAnswerImpl implements QuestionAndAnswer {
     const features = docSpans.map(docSpan => {
       const tokens = [];
       const segmentIds = [];
-      const tokenToOrigMap = {};
+      const tokenToOrigMap: {[index: number]: number} = {};
       tokens.push(CLS_INDEX);
       segmentIds.push(0);
       for (let i = 0; i < queryTokens.length; i++) {
@@ -156,8 +156,8 @@ class QuestionAndAnswerImpl implements QuestionAndAnswer {
       }
       tokens.push(SEP_INDEX);
       segmentIds.push(0);
-      for (let i = 0; i < docSpan['length']; i++) {
-        const splitTokenIndex = i + docSpan['start'];
+      for (let i = 0; i < docSpan.length; i++) {
+        const splitTokenIndex = i + docSpan.start;
         const docToken = allDocTokens[splitTokenIndex];
         tokens.push(docToken);
         segmentIds.push(1);
@@ -229,7 +229,7 @@ class QuestionAndAnswerImpl implements QuestionAndAnswer {
             input_mask: inputMask,
             global_step: globalStep
           },
-          ['start_logits', 'end_logits']);
+        ['start_logits', 'end_logits']) as [tf.Tensor2D, tf.Tensor2D];
     });
     const logits = await Promise.all([result[0].array(), result[1].array()]);
     // dispose all intermediate tensors

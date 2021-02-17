@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/handpose",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Pretrained hand detection model",
   "main": "dist/index.js",
   "jsnext:main": "dist/handpose.esm.js",
@@ -13,18 +13,18 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs-converter": "^3.0.0-rc.1",
-    "@tensorflow/tfjs-core": "^3.0.0-rc.1",
-    "@tensorflow/tfjs-backend-webgl": "^3.0.0-rc.1"
+    "@tensorflow/tfjs-converter": "^3.0.0",
+    "@tensorflow/tfjs-core": "^3.0.0",
+    "@tensorflow/tfjs-backend-webgl": "^3.0.0"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^11.0.2",
     "@rollup/plugin-node-resolve": "^7.1.1",
     "@rollup/plugin-typescript": "^3.0.0",
-    "@tensorflow/tfjs-converter": "^3.0.0-rc.1",
-    "@tensorflow/tfjs-core": "^3.0.0-rc.1",
-    "@tensorflow/tfjs-backend-cpu": "^3.0.0-rc.1",
-    "@tensorflow/tfjs-backend-webgl": "^3.0.0-rc.1",
+    "@tensorflow/tfjs-converter": "^3.0.0",
+    "@tensorflow/tfjs-core": "^3.0.0",
+    "@tensorflow/tfjs-backend-cpu": "^3.0.0",
+    "@tensorflow/tfjs-backend-webgl": "^3.0.0",
     "@types/jasmine": "~2.8.8",
     "babel-core": "~6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",
