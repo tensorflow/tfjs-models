@@ -18,23 +18,23 @@
     esutils "^2.0.2"
     js-tokens "^4.0.0"
 
-"@tensorflow/tfjs-backend-cpu@^3.0.0-rc.1":
-  version "3.0.0-rc.1"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-backend-cpu/-/tfjs-backend-cpu-3.0.0-rc.1.tgz#b02e05706b2d91ab601e7eb397b6ea60ac0a9e2e"
-  integrity sha512-9+13fs3vVpfOpDY+Aa/JXdda2SuBN/clxxoNYIX3pMY0GAGwpUaAkSECLuOOhnngHcl9pxuaJtgqrCcrq+A3/A==
+"@tensorflow/tfjs-backend-cpu@^3.1.0":
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-backend-cpu/-/tfjs-backend-cpu-3.1.0.tgz#eabe616df679d567b6b6b929c06e45c4f24771a8"
+  integrity sha512-BsuDEg11z3QDuvjZSge/ssITl/GHUvHjvHgJOptz4lVwAMFxzNErkL/e8fUeWQp2SI2m7oWsx2vx/H1Y9cd3Gg==
   dependencies:
     "@types/seedrandom" "2.4.27"
     seedrandom "2.4.3"
 
-"@tensorflow/tfjs-converter@^3.0.0-rc.1":
-  version "3.0.0-rc.1"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-3.0.0-rc.1.tgz#a15eb72ade80f7ae0e6403020763be0c5af6f2f7"
-  integrity sha512-vVezwsDtrqM9CGDU+9c1WvPbLB5Odi9uiyEUHZEXMgNnPZ9Ix8a7RFOL7Y+8uBsI3B5wmLrWJuUNeyxUjA7yiA==
+"@tensorflow/tfjs-converter@^3.1.0":
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-3.1.0.tgz#9825d26eec177920ee2e184cb794d697066dd1c5"
+  integrity sha512-V1DJ9ha9fy7pSXm6H6IGH4iF/5V32o32M8ZhFy7eydYUNWTJau8svpFI/i8AhJ1htVHKXtPTEPAo/T5XXsWN/g==
 
-"@tensorflow/tfjs-core@^3.0.0-rc.1":
-  version "3.0.0-rc.1"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-core/-/tfjs-core-3.0.0-rc.1.tgz#0b5316871eef2a4c8aa149d154e6ea6bbc7b631e"
-  integrity sha512-h9a0TyWNJFqgmyfSklwI2q0SC93WFr8FBHwHorvsfm2mDK0ZrSs6bhWqa44tWRJjCrJNRq9J4GoTZQM292RTwg==
+"@tensorflow/tfjs-core@^3.1.0":
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-core/-/tfjs-core-3.1.0.tgz#63884b124b38f8b2c00b8b4f88e36d3de7f07963"
+  integrity sha512-KGSJEB6CTIk5YVgKbdpW0nAKuNtWaMdqYSrNYX43IAGdNrH0vDsipACH/bhrQyo9/NYiK/4Jbkr4k9pGwwiPJQ==
   dependencies:
     "@types/offscreencanvas" "~2019.3.0"
     "@types/seedrandom" "2.4.27"
