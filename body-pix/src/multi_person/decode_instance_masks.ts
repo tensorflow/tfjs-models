@@ -54,10 +54,13 @@ export async function decodePersonInstanceMasks(
 
   if (isWebGlBackend()) {
     const personSegmentations = tf.tidy(() => {
-      const masksTensor = decodeMultipleMasksWebGl(
+      const masksTensorInfo = decodeMultipleMasksWebGl(
           segmentation, longOffsets, posesAboveScore, height, width, stride,
           [inHeight, inWidth], padding, refineSteps, minKeypointScore,
           maxNumPeople);
+      const masksTensor = tf.engine().makeTensorFromDataId(
+          masksTensorInfo.dataId, masksTensorInfo.shape,
+          masksTensorInfo.dtype) as tf.Tensor2D;
 
       return posesAboveScore.map(
           (_, k) => toPersonKSegmentation(masksTensor, k));
@@ -93,10 +96,13 @@ export async function decodePersonInstancePartMasks(
 
   if (isWebGlBackend()) {
     const partSegmentations = tf.tidy(() => {
-      const masksTensor = decodeMultipleMasksWebGl(
+      const masksTensorInfo = decodeMultipleMasksWebGl(
           segmentation, longOffsets, posesAboveScore, height, width, stride,
           [inHeight, inWidth], padding, refineSteps, minKeypointScore,
           maxNumPeople);
+      const masksTensor = tf.engine().makeTensorFromDataId(
+        masksTensorInfo.dataId, masksTensorInfo.shape,
+        masksTensorInfo.dtype) as tf.Tensor2D;
 
       return posesAboveScore.map(
           (_, k) =>
