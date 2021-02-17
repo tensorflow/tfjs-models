@@ -263,9 +263,9 @@ export class Pipeline {
       const scaledBoxes =
           boxes.map((prediction: blazeface.BlazeFacePrediction): Box => {
             const predictionBoxCPU = {
-              startPoint: prediction.box.startPoint.squeeze().arraySync() as
+              startPoint: tf.squeeze(prediction.box.startPoint).arraySync() as
                   Coord2D,
-              endPoint: prediction.box.endPoint.squeeze().arraySync() as Coord2D
+              endPoint: tf.squeeze(prediction.box.endPoint).arraySync() as Coord2D
             };
 
             const scaledBox =
@@ -330,9 +330,9 @@ export class Pipeline {
 
         const boxCPU = {startPoint: box.startPoint, endPoint: box.endPoint};
         const face: tf.Tensor4D =
-            cutBoxFromImageAndResize(boxCPU, rotatedImage, [
+            tf.div(cutBoxFromImageAndResize(boxCPU, rotatedImage, [
               this.meshHeight, this.meshWidth
-            ]).div(255);
+            ]), 255);
 
         // The first returned tensor represents facial contours, which are
         // included in the coordinates.
@@ -407,7 +407,7 @@ export class Pipeline {
 
         const landmarksBox = enlargeBox(
             this.calculateLandmarksBoundingBox(transformedCoordsData));
-        const squarifiedLandmarksBox = squarifyBox(landmarksBox)
+        const squarifiedLandmarksBox = squarifyBox(landmarksBox);
         this.regionsOfInterest[i] = {
           ...squarifiedLandmarksBox,
           landmarks: transformedCoords.arraySync() as Coords3D
@@ -417,7 +417,7 @@ export class Pipeline {
           coords: tf.tensor2d(rawCoords, [rawCoords.length, 3]),
           scaledCoords: transformedCoords,
           box: landmarksBox,
-          flag: flag.squeeze()
+          flag: tf.squeeze(flag)
         };
 
         return prediction;

@@ -199,17 +199,17 @@ function flipFaceHorizontal(
           tf.concat([
             tf.sub(
                 imageWidth - 1,
-                (face.boundingBox.topLeft as tf.Tensor1D).slice(0, 1)),
-            (face.boundingBox.topLeft as tf.Tensor1D).slice(1, 1)
+                tf.slice((face.boundingBox.topLeft as tf.Tensor1D), 0, 1)),
+            tf.slice((face.boundingBox.topLeft as tf.Tensor1D), 1, 1)
           ]),
           tf.concat([
             tf.sub(
                 imageWidth - 1,
-                (face.boundingBox.bottomRight as tf.Tensor1D).slice(0, 1)),
-            (face.boundingBox.bottomRight as tf.Tensor1D).slice(1, 1)
+                tf.slice((face.boundingBox.bottomRight as tf.Tensor1D), 0, 1)),
+            tf.slice((face.boundingBox.bottomRight as tf.Tensor1D), 1, 1)
           ]),
-          tf.sub(subtractBasis, face.mesh).mul(multiplyBasis),
-          tf.sub(subtractBasis, face.scaledMesh).mul(multiplyBasis)
+          tf.mul(tf.sub(subtractBasis, face.mesh), multiplyBasis),
+          tf.mul(tf.sub(subtractBasis, face.scaledMesh), multiplyBasis)
         ];
       });
     });
@@ -312,7 +312,7 @@ class FaceMesh implements MediaPipeFaceMesh {
       if (!(input instanceof tf.Tensor)) {
         input = tf.browser.fromPixels(input);
       }
-      return (input as tf.Tensor).toFloat().expandDims(0);
+      return tf.expandDims(tf.cast((input as tf.Tensor), 'float32'), 0);
     });
 
     let predictions;
