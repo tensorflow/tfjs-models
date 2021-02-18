@@ -27,7 +27,7 @@ export function decodeMultipleMasksWebGl(
     posesAboveScore: Pose[], height: number, width: number, stride: number,
     [inHeight, inWidth]: [number, number], padding: Padding,
     refineSteps: number, minKptScore: number,
-    maxNumPeople: number): tf.Tensor2D {
+    maxNumPeople: number): tf.TensorInfo {
   // The height/width of the image/canvas itself.
   const [origHeight, origWidth] = segmentation.shape;
   // The height/width of the output of the model.
