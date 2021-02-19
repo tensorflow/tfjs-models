@@ -14,11 +14,9 @@
  * limitations under the License.
  * =============================================================================
  */
-
-import resolve from '@rollup/plugin-node-resolve';
-import typescript from '@rollup/plugin-typescript';
-import {terser} from 'rollup-plugin-terser';
-import commonjs from '@rollup/plugin-commonjs';
+import node from 'rollup-plugin-node-resolve';
+import typescript from 'rollup-plugin-typescript2';
+import uglify from 'rollup-plugin-uglify';
 
 const PREAMBLE = `/**
     * @license
@@ -37,33 +35,31 @@ const PREAMBLE = `/**
     * =============================================================================
     */`;
 
-function config({ plugins = [], output = {}, tsCompilerOptions = {} }) {
-  const defaultTsOptions = {
-    include: ['src/**/*.ts'],
-    module: 'ES2015',
-  };
-  const tsoptions = Object.assign({}, defaultTsOptions, tsCompilerOptions);
+function minify() {
+  return uglify({ output: { preamble: PREAMBLE } });
+}
 
+function config({ plugins = [], output = {} }) {
   return {
     input: 'src/index.ts',
     plugins: [
-      typescript(tsoptions),
-      resolve(),
-      commonjs({
-        ignore: ['crypto', 'node-fetch', 'util'],
-        include: 'node_modules/**',
-        namedExports: {
-          './node_modules/seedrandom/index.js': ['alea'],
-        },
-      }),
-      ...plugins
+      typescript({ tsconfigOverride: { compilerOptions: { module: 'ES2015' } } }),
+      node(), ...plugins
     ],
     output: {
-      sourcemap: true,
-      globals: {'@tensorflow/tfjs': 'tf'},
-      ...output,
+      banner: PREAMBLE,
+      globals: {
+        '@tensorflow/tfjs-core': 'tf',
+        '@tensorflow/tfjs-layers': 'tf',
+        '@tensorflow/tfjs-data': 'tf',
+      },
+      ...output
     },
-    external: ['@tensorflow/tfjs']
+    external: [
+      '@tensorflow/tfjs-core',
+      '@tensorflow/tfjs-layers',
+      '@tensorflow/tfjs-data',
+    ]
   };
 }
 
@@ -71,11 +67,11 @@ const packageName = 'speechCommands';
 export default [
   config({output: {format: 'umd', name: packageName, file: 'dist/speech-commands.js'}}),
   config({
-    plugins: [terser({output: {preamble: PREAMBLE, comments: false}})],
+    plugins: [minify()],
     output: {format: 'umd', name: packageName, file: 'dist/speech-commands.min.js'}
   }),
   config({
-    plugins: [terser({output: {preamble: PREAMBLE, comments: false}})],
+    plugins: [minify()],
     output: {format: 'es', file: 'dist/speech-commands.esm.js'}
   })
 ];
