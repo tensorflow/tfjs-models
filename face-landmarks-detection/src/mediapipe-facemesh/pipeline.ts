@@ -31,7 +31,6 @@ export type Prediction = {
 };
 
 const LANDMARKS_COUNT = 468;
-const UPDATE_REGION_OF_INTEREST_IOU_THRESHOLD = 0.25;
 
 const MESH_MOUTH_INDEX = 13;
 const MESH_KEYPOINTS_LINE_OF_SYMMETRY_INDICES =
@@ -265,7 +264,8 @@ export class Pipeline {
             const predictionBoxCPU = {
               startPoint: tf.squeeze(prediction.box.startPoint).arraySync() as
                   Coord2D,
-              endPoint: tf.squeeze(prediction.box.endPoint).arraySync() as Coord2D
+              endPoint: tf.squeeze(prediction.box.endPoint).arraySync() as
+                  Coord2D
             };
 
             const scaledBox =
@@ -290,7 +290,7 @@ export class Pipeline {
         }
       });
 
-      this.updateRegionsOfInterest(scaledBoxes);
+      this.regionsOfInterest = scaledBoxes;
       this.runsWithoutFaceDetector = 0;
     } else {
       this.runsWithoutFaceDetector++;
@@ -423,40 +423,6 @@ export class Pipeline {
         return prediction;
       });
     });
-  }
-
-  // Updates regions of interest if the intersection over union between
-  // the incoming and previous regions falls below a threshold.
-  updateRegionsOfInterest(boxes: Box[]) {
-    for (let i = 0; i < boxes.length; i++) {
-      const box = boxes[i];
-      const previousBox = this.regionsOfInterest[i];
-      let iou = 0;
-
-      if (previousBox && previousBox.startPoint) {
-        const [boxStartX, boxStartY] = box.startPoint;
-        const [boxEndX, boxEndY] = box.endPoint;
-        const [previousBoxStartX, previousBoxStartY] = previousBox.startPoint;
-        const [previousBoxEndX, previousBoxEndY] = previousBox.endPoint;
-
-        const xStartMax = Math.max(boxStartX, previousBoxStartX);
-        const yStartMax = Math.max(boxStartY, previousBoxStartY);
-        const xEndMin = Math.min(boxEndX, previousBoxEndX);
-        const yEndMin = Math.min(boxEndY, previousBoxEndY);
-
-        const intersection = (xEndMin - xStartMax) * (yEndMin - yStartMax);
-        const boxArea = (boxEndX - boxStartX) * (boxEndY - boxStartY);
-        const previousBoxArea = (previousBoxEndX - previousBoxStartX) *
-            (previousBoxEndY - boxStartY);
-        iou = intersection / (boxArea + previousBoxArea - intersection);
-      }
-
-      if (iou < UPDATE_REGION_OF_INTEREST_IOU_THRESHOLD) {
-        this.regionsOfInterest[i] = box;
-      }
-    }
-
-    this.regionsOfInterest = this.regionsOfInterest.slice(0, boxes.length);
   }
 
   clearRegionOfInterest(index: number) {
