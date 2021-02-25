@@ -157,7 +157,8 @@ export function decodeMultipleMasksWebGl(
   `
   };
   const webglBackend = tf.backend() as tf_webgl.MathBackendWebGL;
-  return webglBackend.compileAndRun(
-             program, [segmentation, shapedLongOffsets, posesTensor]) as
-      tf.Tensor2D;
+  const outInfo = webglBackend.compileAndRun(
+      program, [segmentation, shapedLongOffsets, posesTensor]);
+  return tf.engine().makeTensorFromDataId(
+             outInfo.dataId, outInfo.shape, outInfo.dtype) as tf.Tensor2D;
 }

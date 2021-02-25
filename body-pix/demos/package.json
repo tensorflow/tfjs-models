@@ -9,7 +9,7 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow-models/body-pix": "file:../dist",
+    "@tensorflow-models/body-pix": "link:../dist",
     "@tensorflow-models/posenet": "^2.1.3",
     "@tensorflow/tfjs-backend-webgl": "^3.2.0",
     "@tensorflow/tfjs-converter": "~3.2.0",
