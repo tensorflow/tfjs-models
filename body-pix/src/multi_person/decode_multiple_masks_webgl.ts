@@ -15,11 +15,12 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs-core';
 import * as tf_webgl from '@tensorflow/tfjs-backend-webgl';
+import * as tf from '@tensorflow/tfjs-core';
 
 import {NUM_KEYPOINTS} from '../keypoints';
 import {Padding, Pose} from '../types';
+
 import {getScale} from './util';
 
 export function decodeMultipleMasksWebGl(
@@ -157,5 +158,6 @@ export function decodeMultipleMasksWebGl(
   };
   const webglBackend = tf.backend() as tf_webgl.MathBackendWebGL;
   return webglBackend.compileAndRun(
-      program, [segmentation, shapedLongOffsets, posesTensor]);
+             program, [segmentation, shapedLongOffsets, posesTensor]) as
+      tf.Tensor2D;
 }
