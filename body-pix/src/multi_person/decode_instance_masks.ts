@@ -25,7 +25,6 @@ import {decodeMultipleMasksWebGl} from './decode_multiple_masks_webgl';
 
 export function toPersonKSegmentation(
     segmentation: tf.Tensor2D, k: number): tf.Tensor2D {
-  console.log(segmentation);
   return tf.tidy(
       () =>
           (tf.cast(tf.equal(segmentation, tf.scalar(k)), 'int32') as
@@ -34,7 +33,6 @@ export function toPersonKSegmentation(
 
 export function toPersonKPartSegmentation(
     segmentation: tf.Tensor2D, bodyParts: tf.Tensor2D, k: number): tf.Tensor2D {
-  console.log(segmentation);
   return tf.tidy(
       () => tf.sub(
           tf.mul(
