@@ -51,7 +51,7 @@ function config({ plugins = [], output = {} }) {
       globals: {
         '@tensorflow/tfjs-core': 'tf',
         '@tensorflow/tfjs-layers': 'tf',
-        '@tensorflow/tfjs-data': 'tf',
+        '@tensorflow/tfjs-data': 'tf.data',
       },
       ...output
     },
