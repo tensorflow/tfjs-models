@@ -16,21 +16,20 @@
  */
 
 import {PoseDetector} from './pose_detector';
-import {SupportedPipelines} from './types';
+import {SupportedModels} from './types';
 
-/** Supported pipelines. */
-export {SupportedPipelines};
+/** Supported models. */
+export {SupportedModels};
 
 /**
  * Create a pose detector instance.
  *
- * @param pipeline The name of the pipeline to load.
- * @param pipelineConfig
+ * @param model The name of the pipeline to load.
  */
-export async function createDetector(
-    pipeline: SupportedPipelines): Promise<PoseDetector> {
-  switch (pipeline) {
+export async function createDetector(model: SupportedModels):
+    Promise<PoseDetector> {
+  switch (model) {
     default:
-      throw new Error(`${pipeline} is not a valid package name.`);
+      throw new Error(`${model} is not a valid package name.`);
   }
 }

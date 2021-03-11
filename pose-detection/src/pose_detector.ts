@@ -14,20 +14,18 @@
  * limitations under the License.
  * =============================================================================
  */
-import {EstimationConfig, Keypoint, PipelineConfig, PoseDetectorInput} from './types';
+import {EstimationConfig, Keypoint, PoseDetectorInput} from './types';
 
 /**
  * Base class for all pose detectors.
  *
  * Each pipeline's detetector subclass should extend from this class.
  */
-export abstract class PoseDetector {
-  constructor(config: PipelineConfig) {}
-
+export interface PoseDetector {
   /**
    * Load models for the pipeline.
    */
-  abstract async load(): Promise<void>;
+  load(): Promise<void>;
 
   /**
    * Estimate poses for an image or video frame.
@@ -35,7 +33,6 @@ export abstract class PoseDetector {
    * @param config See `EstimationConfig` for available options.
    * @returns An array of poses, each pose contains an array of `Keypoint`s.
    */
-  abstract async estimatePoses(
-      image: PoseDetectorInput,
-      config?: EstimationConfig): Promise<[Keypoint[]]>;
+  estimatePoses(image: PoseDetectorInput, config?: EstimationConfig):
+      Promise<[Keypoint[]]>;
 }

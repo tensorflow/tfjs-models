@@ -16,16 +16,8 @@
  */
 import * as tf from '@tensorflow/tfjs-core';
 
-export enum SupportedPipelines {
+export enum SupportedModels {
   posenet = 'posenet'
-}
-
-/**
- * Common config to create the pose detector.
- */
-export interface PipelineConfig {
-  inputResolution?: number;
-  quantBytes?: number;
 }
 
 /**
