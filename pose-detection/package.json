@@ -13,9 +13,9 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs-converter": "3.3.0",
-    "@tensorflow/tfjs-core": "3.3.0",
-    "@tensorflow/tfjs-backend-webgl": "3.3.0"
+    "@tensorflow/tfjs-converter": "^3.3.0",
+    "@tensorflow/tfjs-core": "^3.3.0",
+    "@tensorflow/tfjs-backend-webgl": "^3.3.0"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^11.0.2",
