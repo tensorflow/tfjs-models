@@ -24,6 +24,9 @@ import {EstimationConfig, Keypoint, PipelineConfig, PoseDetectorInput} from './t
 export abstract class PoseDetector {
   constructor(config: PipelineConfig) {}
 
+  /**
+   * Load models for the pipeline.
+   */
   abstract async load(): Promise<void>;
 
   /**
