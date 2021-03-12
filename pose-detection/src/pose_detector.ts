@@ -17,16 +17,9 @@
 import {EstimationConfig, Keypoint, PoseDetectorInput} from './types';
 
 /**
- * Base class for all pose detectors.
- *
- * Each pipeline's detetector subclass should extend from this class.
+ * User-facing interface for all pose detectors.
  */
 export interface PoseDetector {
-  /**
-   * Load models for the pipeline.
-   */
-  load(): Promise<void>;
-
   /**
    * Estimate poses for an image or video frame.
    * @param image An image or video frame.
@@ -35,4 +28,14 @@ export interface PoseDetector {
    */
   estimatePoses(image: PoseDetectorInput, config?: EstimationConfig):
       Promise<[Keypoint[]]>;
+}
+
+/**
+ * Internal interface for all pose detectors to create instance and load models.
+ */
+export interface PoseDetectorLoader {
+  /**
+   * Load models.
+   */
+  load(): Promise<void>;
 }

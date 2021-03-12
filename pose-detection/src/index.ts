@@ -16,7 +16,7 @@
  */
 
 import {PoseDetector} from './pose_detector';
-import {SupportedModels} from './types';
+import {ModelConfig, SupportedModels} from './types';
 
 /** Supported models. */
 export {SupportedModels};
@@ -26,8 +26,9 @@ export {SupportedModels};
  *
  * @param model The name of the pipeline to load.
  */
-export async function createDetector(model: SupportedModels):
-    Promise<PoseDetector> {
+export async function createDetector(
+    model: SupportedModels,
+    modelConfig: ModelConfig = {}): Promise<PoseDetector> {
   switch (model) {
     default:
       throw new Error(`${model} is not a valid package name.`);

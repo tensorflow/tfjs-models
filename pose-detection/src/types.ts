@@ -21,6 +21,13 @@ export enum SupportedModels {
 }
 
 /**
+ * Common config to create the pose detector.
+ */
+export interface ModelConfig {
+  quantBytes?: number;
+}
+
+/**
  * Allowed input format for the `estimatePoses` method.
  */
 export type PoseDetectorInput =
