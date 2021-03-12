@@ -37,7 +37,7 @@ export abstract class BasePoseDetector implements PoseDetector {
   constructor() {}
 
   /**
-   * Load models.
+   * Initiate class instance and async load the model.
    */
   static async load(): Promise<PoseDetector> {
     const detector = this.constructor();

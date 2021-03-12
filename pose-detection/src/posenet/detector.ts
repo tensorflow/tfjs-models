@@ -19,11 +19,13 @@ import {BasePoseDetector, PoseDetector} from '../pose_detector';
 import {Keypoint, ModelConfig} from '../types';
 
 export class PosenetDetector extends BasePoseDetector {
+  // Should not be called outside.
   private constructor() {
     super();
     // initialize global states.
   }
 
+  // Use this method to instantiate new instance and async load.
   static async load(modelConfig: ModelConfig = {}): Promise<PoseDetector> {
     const detector = this.constructor();
     // async load with modelConfig.
