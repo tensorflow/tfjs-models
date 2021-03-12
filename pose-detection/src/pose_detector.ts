@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import {EstimationConfig, Keypoint, PoseDetectorInput} from './types';
+import {EstimationConfig, Keypoint, ModelConfig, PoseDetectorInput} from './types';
 
 /**
  * User-facing interface for all pose detectors.
@@ -31,11 +31,19 @@ export interface PoseDetector {
 }
 
 /**
- * Internal interface for all pose detectors to create instance and load models.
+ * Internal interface for all pose detectors to create instance and load
+ * models.
  */
-export interface PoseDetectorLoader {
+export abstract class BasePoseDetector implements PoseDetector {
+  constructor() {}
+
   /**
-   * Load models.
+   * Initiate class instance and async load the model.
    */
-  load(): Promise<void>;
+  static async load(modelConfig: ModelConfig = {}): Promise<PoseDetector> {
+    const detector = this.constructor();
+    return detector;
+  };
+
+  abstract async estimatePoses(): Promise<[Keypoint[]]>;
 }

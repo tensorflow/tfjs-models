@@ -15,25 +15,24 @@
  * =============================================================================
  */
 
-import {PoseDetector} from './pose_detector';
-import {PosenetDetector} from './posenet/detector';
-import {ModelConfig, SupportedModels} from './types';
+import {BasePoseDetector, PoseDetector} from '../pose_detector';
+import {Keypoint, ModelConfig} from '../types';
 
-/** Supported models. */
-export {SupportedModels};
+export class PosenetDetector extends BasePoseDetector {
+  // Should not be called outside.
+  private constructor() {
+    super();
+    // initialize global states.
+  }
 
-/**
- * Create a pose detector instance.
- *
- * @param model The name of the pipeline to load.
- */
-export async function createDetector(
-    model: SupportedModels,
-    modelConfig: ModelConfig = {}): Promise<PoseDetector> {
-  switch (model) {
-    case SupportedModels.posenet:
-      return await PosenetDetector.load(modelConfig);
-    default:
-      throw new Error(`${model} is not a valid package name.`);
+  // Use this method to instantiate new instance and async load.
+  static async load(modelConfig: ModelConfig = {}): Promise<PoseDetector> {
+    const detector = this.constructor();
+    // async load with modelConfig.
+    return detector;
+  };
+
+  async estimatePoses(): Promise<[Keypoint[]]> {
+    return [null];
   }
 }
