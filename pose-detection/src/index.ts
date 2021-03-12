@@ -32,8 +32,7 @@ export async function createDetector(
     modelConfig: ModelConfig = {}): Promise<PoseDetector> {
   switch (model) {
     case SupportedModels.posenet:
-      const detector = await PosenetDetector.load(modelConfig);
-      return detector;
+      return await PosenetDetector.load(modelConfig);
     default:
       throw new Error(`${model} is not a valid package name.`);
   }

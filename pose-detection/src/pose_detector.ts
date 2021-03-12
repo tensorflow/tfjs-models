@@ -31,7 +31,8 @@ export interface PoseDetector {
 }
 
 /**
- * Internal interface for all pose detectors to create instance and load models.
+ * Internal interface for all pose detectors to create instance and load
+ * models.
  */
 export abstract class BasePoseDetector implements PoseDetector {
   constructor() {}
@@ -39,7 +40,7 @@ export abstract class BasePoseDetector implements PoseDetector {
   /**
    * Initiate class instance and async load the model.
    */
-  static async load(modelConfig: ModelConfig): Promise<PoseDetector> {
+  static async load(modelConfig: ModelConfig = {}): Promise<PoseDetector> {
     const detector = this.constructor();
     return detector;
   };
