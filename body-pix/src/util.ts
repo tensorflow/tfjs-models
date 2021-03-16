@@ -23,8 +23,10 @@ import {Pose, TensorBuffer3D} from './types';
 import {BodyPixInternalResolution} from './types';
 
 function getSizeFromImageLikeElement(input: HTMLImageElement|
-                                     HTMLCanvasElement): [number, number] {
-  if (input.offsetHeight !== 0 && input.offsetWidth !== 0) {
+                                     HTMLCanvasElement|
+                                     OffscreenCanvas): [number, number] {
+  if ('offsetHeight' in input && input.offsetHeight !== 0
+      && 'offsetWidth' in input && input.offsetWidth !== 0) {
     return [input.offsetHeight, input.offsetWidth];
   } else if (input.height != null && input.width != null) {
     return [input.height, input.width];
@@ -48,6 +50,8 @@ function getSizeFromVideoElement(input: HTMLVideoElement): [number, number] {
 export function getInputSize(input: BodyPixInput): [number, number] {
   if ((typeof (HTMLCanvasElement) !== 'undefined' &&
        input instanceof HTMLCanvasElement) ||
+      (typeof (OffscreenCanvas) !== 'undefined' &&
+          input instanceof OffscreenCanvas) ||
       (typeof (HTMLImageElement) !== 'undefined' &&
        input instanceof HTMLImageElement)) {
     return getSizeFromImageLikeElement(input);
@@ -136,6 +140,8 @@ export function toInputResolutionHeightAndWidth(
 }
 
 export function toInputTensor(input: BodyPixInput) {
+  // TODO: tf.browser.fromPixels types to support OffscreenCanvas
+  // @ts-ignore
   return input instanceof tf.Tensor ? input : tf.browser.fromPixels(input);
 }
 
