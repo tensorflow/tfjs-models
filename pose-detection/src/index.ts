@@ -15,25 +15,9 @@
  * =============================================================================
  */
 
-import {PoseDetector} from './pose_detector';
-import {PosenetDetector} from './posenet/detector';
-import {ModelConfig, SupportedModels} from './types';
-
-/** Supported models. */
-export {SupportedModels};
-
-/**
- * Create a pose detector instance.
- *
- * @param model The name of the pipeline to load.
- */
-export async function createDetector(
-    model: SupportedModels,
-    modelConfig: ModelConfig = {}): Promise<PoseDetector> {
-  switch (model) {
-    case SupportedModels.posenet:
-      return PosenetDetector.load(modelConfig);
-    default:
-      throw new Error(`${model} is not a valid package name.`);
-  }
-}
+// Entry point to create a new detector instance.
+export {createDetector} from './create_detector';
+// PoseDetector class.
+export {PoseDetector} from './pose_detector';
+// Supported models enum.
+export {SupportedModels} from './types';
