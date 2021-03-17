@@ -32,6 +32,6 @@ export async function createDetector(
     case SupportedModels.PoseNet:
       return PosenetDetector.load(modelConfig);
     default:
-      throw new Error(`${model} is not a valid package name.`);
+      throw new Error(`${model} is not a supported model name.`);
   }
 }

@@ -106,16 +106,18 @@ export class PosenetDetector extends BasePoseDetector {
    * single pose or multiple poses based on the maxPose parameter from the
    * `config`.
    *
-   * @param input
-   * ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement) The input
+   * @param image
+   * ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement The input
    * image to feed through the network.
    *
-   * @param config SinglePersonEstimationConfig object that contains
-   * parameters for the PoseNet inference using single pose estimation.
+   * @param config
+   *       maxPoses: Max number of poses to estimate. When maxPoses = 1, a
+   *       single pose is detected, it is usually much more efficient than
+   *       maxPoses > 1. When maxPoses > 1, multiple poses are detected.
+   *       flipHorizontal?: Optional. Default to false. When image data comes
+   *       from camera, the result has to flip horizontally.
    *
-   * @return An pose and its scores, containing keypoints and
-   * the corresponding keypoint scores.  The positions of the keypoints are
-   * in the same scale as the original image
+   * @return An array of `Pose`s.
    */
   async estimatePoses(
       image: PoseDetectorInput,
@@ -132,18 +134,15 @@ export class PosenetDetector extends BasePoseDetector {
       throw new Error('Multi-person poses is not implemented yet.');
     }
 
-    // ==== ConvertImageToTensor =============================================
     const {imageTensor, padding} = convertImageToTensor(
         image, {inputResolution: this.inputResolution, keepAspectRatio: true});
 
-    // ==== ShiftImageTensorValue =============================================
-    const imageTransformed = this.architecture === 'ResNet50' ?
+    const imageValueShifted = this.architecture === 'ResNet50' ?
         tf.add(imageTensor, RESNET_MEAN) :
         shiftImageValue(imageTensor, [-1, 1]);
 
-    // ==== ModelInference ====================================================
     const results =
-        this.posenetModel.predict(imageTransformed) as tf.Tensor4D[];
+        this.posenetModel.predict(imageValueShifted) as tf.Tensor4D[];
 
     let offsets, heatmap;
     if (this.architecture === 'ResNet50') {
@@ -155,23 +154,20 @@ export class PosenetDetector extends BasePoseDetector {
     }
     const heatmapScores = tf.sigmoid(heatmap) as tf.Tensor3D;
 
-    // ==== DecodeResults =====================================================
     const pose =
         await decodeSinglePose(heatmapScores, offsets, this.outputStride);
     const poses = [pose];
 
-    // ==== ScaleBackKeyPoints ================================================
     const imageSize = getImageSize(image);
     let scaledPoses =
         scalePoses(poses, imageSize, this.inputResolution, padding);
 
-    // ==== FlipPoseIfNeeded ==================================================
     if (config.flipHorizontal) {
       scaledPoses = flipPosesHorizontal(scaledPoses, imageSize);
     }
 
     imageTensor.dispose();
-    imageTransformed.dispose();
+    imageValueShifted.dispose();
     tf.dispose(results);
     offsets.dispose();
     heatmap.dispose();

@@ -14,9 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-export const COCO_KEYPOINTS_NUM = 17;
-
-export const COCO_KEYPOINTS_NAMES = [
+export const COCO_KEYPOINTS = [
   'nose', 'leftEye', 'rightEye', 'leftEar', 'rightEar', 'leftShoulder',
   'rightShoulder', 'leftElbow', 'rightElbow', 'leftWrist', 'rightWrist',
   'leftHip', 'rightHip', 'leftKnee', 'rightKnee', 'leftAnkle', 'rightAnkle'

@@ -47,6 +47,12 @@ export function transformValueRange(
     toMax: number): ValueTransform {
   const fromRange = fromMax - fromMin;
   const toRange = toMax - toMin;
+
+  if (fromRange === 0) {
+    throw new Error(
+        `Original min and max are both ${fromMin}, range cannot be 0.`);
+  }
+
   const scale = toRange / fromRange;
   const offset = toMin - fromMin * scale;
   return {scale, offset};
@@ -87,26 +93,29 @@ export function padRoi(
   const targetH = targetSize.height;
   const targetW = targetSize.width;
 
+  validateSize(targetSize, 'targetSize');
+  validateSize(roi, 'roi');
+
   const tensorAspectRatio = targetH / targetW;
-  const roiAspectRatio = roi.h / roi.w;
+  const roiAspectRatio = roi.height / roi.width;
   let newWidth;
   let newHeight;
   let horizontalPadding = 0;
   let verticalPadding = 0;
   if (tensorAspectRatio > roiAspectRatio) {
     // pad height;
-    newWidth = roi.w;
-    newHeight = roi.w * tensorAspectRatio;
+    newWidth = roi.width;
+    newHeight = roi.width * tensorAspectRatio;
     verticalPadding = (1 - roiAspectRatio / tensorAspectRatio) / 2;
   } else {
     // pad width.
-    newWidth = roi.h / tensorAspectRatio;
-    newHeight = roi.h;
+    newWidth = roi.height / tensorAspectRatio;
+    newHeight = roi.height;
     horizontalPadding = (1 - tensorAspectRatio / roiAspectRatio) / 2;
   }
 
-  roi.w = newWidth;
-  roi.h = newHeight;
+  roi.width = newWidth;
+  roi.height = newHeight;
 
   return {
     top: verticalPadding,
@@ -130,16 +139,16 @@ export function getRoi(imageSize: ImageSize, normRect?: Rect): Rect {
     return {
       xCenter: normRect.xCenter * imageSize.width,
       yCenter: normRect.yCenter * imageSize.height,
-      w: normRect.w * imageSize.width,
-      h: normRect.h * imageSize.height,
+      width: normRect.width * imageSize.width,
+      height: normRect.height * imageSize.height,
       rotation: normRect.rotation
     };
   } else {
     return {
       xCenter: 0.5 * imageSize.width,
       yCenter: 0.5 * imageSize.height,
-      w: imageSize.width,
-      h: imageSize.height,
+      width: imageSize.width,
+      height: imageSize.height,
       rotation: 0
     };
   }
@@ -160,6 +169,8 @@ export function getProjectiveTransformMatrix(
     subRect: Rect, imageSize: ImageSize, flipHorizontally: boolean,
     inputResolution: InputResolution):
     [number, number, number, number, number, number, number, number] {
+  validateSize(inputResolution, 'inputResolution');
+
   // The resulting matrix is multiplication of below matrices:
   // M = postScaleMatrix * translateMatrix * rotateMatrix * flipMatrix *
   //     scaleMatrix * initialTranslateMatrix
@@ -201,8 +212,8 @@ export function getProjectiveTransformMatrix(
   //   | a  0  0 |
   //   | 0  b  0 |
   //   | 0  0  1 |
-  const a = subRect.w;
-  const b = subRect.h;
+  const a = subRect.width;
+  const b = subRect.height;
 
   // initialTranslateMatrix: Matrix convert x, y to [-0.5, 0.5] range.
   //   | 1  0 -0.5 |
@@ -229,4 +240,9 @@ export function getProjectiveTransformMatrix(
   const b2 = (-0.5 * b * c - 0.5 * a * d * flip + f) * h * imageSize.height;
 
   return [a0, a1, a2, b0, b1, b2, 0, 0];
+}
+
+function validateSize(size: {width: number, height: number}, name: string) {
+  tf.util.assert(size.width !== 0, () => `${name} width cannot be 0.`);
+  tf.util.assert(size.height !== 0, () => `${name} height cannot be 0.`);
 }

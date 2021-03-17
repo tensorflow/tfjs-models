@@ -16,7 +16,7 @@
  */
 
 import * as tf from '@tensorflow/tfjs-core';
-import {COCO_KEYPOINTS_NAMES} from '../../constants';
+import {COCO_KEYPOINTS} from '../../constants';
 import {Keypoint, Pose} from '../../types';
 import {PoseNetOutputStride} from '../types';
 import {argmax2d, getOffsetPoints, getPointsConfidence} from './decode_single_pose_util';
@@ -79,7 +79,7 @@ export async function decodeSinglePose(
       y: offsetPointsBuffer.get(keypointId, 0),
       x: offsetPointsBuffer.get(keypointId, 1),
       score,
-      name: COCO_KEYPOINTS_NAMES[keypointId]
+      name: COCO_KEYPOINTS[keypointId]
     };
   });
 

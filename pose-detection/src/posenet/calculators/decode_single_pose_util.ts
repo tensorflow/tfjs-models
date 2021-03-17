@@ -16,7 +16,7 @@
  */
 
 import * as tf from '@tensorflow/tfjs-core';
-import {COCO_KEYPOINTS_NUM} from '../../constants';
+import {COCO_KEYPOINTS} from '../../constants';
 import {Vector2D} from '../types';
 
 function mod(a: tf.Tensor1D, b: number): tf.Tensor1D {
@@ -77,7 +77,7 @@ export function getOffsetVectors(
     offsetsBuffer: tf.TensorBuffer<tf.Rank.R3>): tf.Tensor2D {
   const result: number[] = [];
 
-  for (let keypoint = 0; keypoint < COCO_KEYPOINTS_NUM; keypoint++) {
+  for (let keypoint = 0; keypoint < COCO_KEYPOINTS.length; keypoint++) {
     const heatmapY = heatMapCoordsBuffer.get(keypoint, 0).valueOf();
     const heatmapX = heatMapCoordsBuffer.get(keypoint, 1).valueOf();
 
@@ -87,7 +87,7 @@ export function getOffsetVectors(
     result.push(x);
   }
 
-  return tf.tensor2d(result, [COCO_KEYPOINTS_NUM, 2]);
+  return tf.tensor2d(result, [COCO_KEYPOINTS.length, 2]);
 }
 
 function getOffsetPoint(
@@ -95,6 +95,6 @@ function getOffsetPoint(
     offsetsBuffer: tf.TensorBuffer<tf.Rank.R3>): Vector2D {
   return {
     y: offsetsBuffer.get(y, x, keypoint),
-    x: offsetsBuffer.get(y, x, keypoint + COCO_KEYPOINTS_NUM)
+    x: offsetsBuffer.get(y, x, keypoint + COCO_KEYPOINTS.length)
   };
 }

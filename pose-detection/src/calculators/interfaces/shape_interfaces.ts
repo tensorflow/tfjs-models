@@ -22,7 +22,7 @@
 export interface Rect {
   xCenter: number;
   yCenter: number;
-  h: number;
-  w: number;
+  height: number;
+  width: number;
   rotation?: number;
 }

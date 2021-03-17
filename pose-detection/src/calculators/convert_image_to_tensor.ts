@@ -28,7 +28,9 @@ import {Rect} from './interfaces/shape_interfaces';
  * @param config
  *      inputResolution: The target height and width.
  *      keepAspectRatio?: Whether target tensor should keep aspect ratio.
- * @param normRect
+ * @param normRect A normalized rectangle, representing the subarea to crop from
+ *      the image. If normRect is provided, the returned image tensor represents
+ *      the subarea.
  */
 export function convertImageToTensor(
     image: PoseDetectorInput, config: ImageToTensorConfig,
