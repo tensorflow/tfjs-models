@@ -171,6 +171,8 @@ export function getProjectiveTransformMatrix(
     [number, number, number, number, number, number, number, number] {
   validateSize(inputResolution, 'inputResolution');
 
+  // Ref:
+  // https://github.com/google/mediapipe/blob/master/mediapipe/calculators/tensor/image_to_tensor_utils.cc
   // The resulting matrix is multiplication of below matrices:
   // M = postScaleMatrix * translateMatrix * rotateMatrix * flipMatrix *
   //     scaleMatrix * initialTranslateMatrix

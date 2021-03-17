@@ -37,6 +37,8 @@ export function convertImageToTensor(
     normRect?: Rect): {imageTensor: tf.Tensor4D, padding: Padding} {
   const {inputResolution, keepAspectRatio} = config;
 
+  // Ref:
+  // https://github.com/google/mediapipe/blob/master/mediapipe/calculators/tensor/image_to_tensor_calculator.cc
   const imageSize = getImageSize(image);
   const roi = getRoi(imageSize, normRect);
   const padding = padRoi(roi, inputResolution, keepAspectRatio);
