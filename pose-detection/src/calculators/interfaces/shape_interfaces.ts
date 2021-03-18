@@ -15,9 +15,14 @@
  * =============================================================================
  */
 
-// Entry point to create a new detector instance.
-export {createDetector} from './create_detector';
-// PoseDetector class.
-export {PoseDetector} from './pose_detector';
-// Supported models enum.
-export {SupportedModels} from './types';
+/**
+ * A rectangle that contains center point, height, width and rotation info.
+ * Can be normalized or non-normalized.
+ */
+export interface Rect {
+  xCenter: number;
+  yCenter: number;
+  height: number;
+  width: number;
+  rotation?: number;
+}

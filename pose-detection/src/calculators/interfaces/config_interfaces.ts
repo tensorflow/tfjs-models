@@ -15,9 +15,9 @@
  * =============================================================================
  */
 
-// Entry point to create a new detector instance.
-export {createDetector} from './create_detector';
-// PoseDetector class.
-export {PoseDetector} from './pose_detector';
-// Supported models enum.
-export {SupportedModels} from './types';
+import {InputResolution} from '../../types';
+
+export interface ImageToTensorConfig {
+  inputResolution: InputResolution;
+  keepAspectRatio?: boolean;
+}
