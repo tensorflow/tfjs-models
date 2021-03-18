@@ -39,7 +39,22 @@ limitations under the License.
   }
 </style>
 <body>
-  <div>Content Placeholder</div>
+  <div id="main">
+    <div class="container">
+      <div class="canvas-wrapper">
+        <canvas id="output"></canvas>
+        <video id="video" playsinline style="
+          -webkit-transform: scaleX(-1);
+          transform: scaleX(-1);
+          visibility: hidden;
+          width: auto;
+          height: auto;
+          ">
+        </video>
+      </div>
+    </div>
+  </div>
 </body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.6/dat.gui.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js"></script>
+<script src="index.js"></script>
