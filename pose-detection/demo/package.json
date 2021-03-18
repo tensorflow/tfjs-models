@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@tensorflow-models/posedetection": "link:../dist",
-    "@tensorflow/tfjs-backend-wasm": "3.3.0",
     "@tensorflow/tfjs-backend-webgl": "3.3.0",
     "@tensorflow/tfjs-converter": "3.3.0",
     "@tensorflow/tfjs-core": "3.3.0"

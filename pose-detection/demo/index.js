@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2020 Google LLC. All Rights Reserved.
+ * Copyright 2021 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,17 +18,7 @@
 import '@tensorflow/tfjs-backend-webgl';
 
 import * as posedetection from '@tensorflow-models/posedetection';
-import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
 import * as tf from '@tensorflow/tfjs-core';
-
-tfjsWasm.setWasmPaths({
-  'tfjs-backend-wasm.wasm':
-      'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@latest/dist/tfjs-backend-wasm.wasm',
-  'tfjs-backend-wasm-simd.wasm':
-      'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@latest/dist/tfjs-backend-wasm-simd.wasm',
-  'tfjs-backend-wasm-threaded-simd.wasm':
-      'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@latest/dist/tfjs-backend-wasm-threaded-simd.wasm'
-});
 
 const stats = new Stats();
 stats.showPanel(0);
