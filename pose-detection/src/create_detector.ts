@@ -15,9 +15,23 @@
  * =============================================================================
  */
 
-// Entry point to create a new detector instance.
-export {createDetector} from './create_detector';
-// PoseDetector class.
-export {PoseDetector} from './pose_detector';
-// Supported models enum.
-export {SupportedModels} from './types';
+import {PoseDetector} from './pose_detector';
+import {PosenetDetector} from './posenet/detector';
+import {PosenetModelConfig} from './posenet/types';
+import {SupportedModels} from './types';
+
+/**
+ * Create a pose detector instance.
+ *
+ * @param model The name of the pipeline to load.
+ */
+export async function createDetector(
+    model: SupportedModels,
+    modelConfig: PosenetModelConfig): Promise<PoseDetector> {
+  switch (model) {
+    case SupportedModels.PoseNet:
+      return PosenetDetector.load(modelConfig);
+    default:
+      throw new Error(`${model} is not a supported model name.`);
+  }
+}

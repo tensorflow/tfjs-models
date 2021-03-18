@@ -14,10 +14,16 @@
  * limitations under the License.
  * =============================================================================
  */
+import * as tf from '@tensorflow/tfjs-core';
+import {transformValueRange} from './image_utils';
 
-// Entry point to create a new detector instance.
-export {createDetector} from './create_detector';
-// PoseDetector class.
-export {PoseDetector} from './pose_detector';
-// Supported models enum.
-export {SupportedModels} from './types';
+export function shiftImageValue(
+    image: tf.Tensor4D, outputFloatRange: [number, number]): tf.Tensor4D {
+  // Calculate the scale and offset to shift from [0, 255] to [-1, 1].
+  const valueRange = transformValueRange(
+      0, 255, outputFloatRange[0] /* min */, outputFloatRange[1] /* max */);
+
+  // Shift value range.
+  return tf.tidy(
+      () => tf.add(tf.mul(image, valueRange.scale), valueRange.offset));
+}

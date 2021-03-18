@@ -14,10 +14,8 @@
  * limitations under the License.
  * =============================================================================
  */
-
-// Entry point to create a new detector instance.
-export {createDetector} from './create_detector';
-// PoseDetector class.
-export {PoseDetector} from './pose_detector';
-// Supported models enum.
-export {SupportedModels} from './types';
+export const COCO_KEYPOINTS = [
+  'nose', 'leftEye', 'rightEye', 'leftEar', 'rightEar', 'leftShoulder',
+  'rightShoulder', 'leftElbow', 'rightElbow', 'leftWrist', 'rightWrist',
+  'leftHip', 'rightHip', 'leftKnee', 'rightKnee', 'leftAnkle', 'rightAnkle'
+];

@@ -14,10 +14,19 @@
  * limitations under the License.
  * =============================================================================
  */
+export interface ImageSize {
+  height: number;
+  width: number;
+}
 
-// Entry point to create a new detector instance.
-export {createDetector} from './create_detector';
-// PoseDetector class.
-export {PoseDetector} from './pose_detector';
-// Supported models enum.
-export {SupportedModels} from './types';
+export interface Padding {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+}
+
+export type ValueTransform = {
+  scale: number,
+  offset: number
+};
