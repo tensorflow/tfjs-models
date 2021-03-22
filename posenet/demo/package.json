@@ -9,10 +9,11 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow-models/posenet": "file:../dist",
-    "@tensorflow/tfjs-backend-webgl": "^3.3.0",
-    "@tensorflow/tfjs-converter": "^3.3.0",
-    "@tensorflow/tfjs-core": "^3.3.0",
+    "@haoyunfeix/posenet": "2.2.3",
+    "@tensorflow/tfjs-converter": "3.3.0",
+    "@tensorflow/tfjs-core": "3.3.0",
+    "@haoyunfeix/tfjs-backend-webgpu": "0.0.1-alpha.6",
+    "@tensorflow/tfjs-backend-webgl": "3.3.0",
     "stats.js": "^0.17.0"
   },
   "scripts": {

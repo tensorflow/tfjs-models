@@ -16,7 +16,7 @@
  */
 import '@tensorflow/tfjs-backend-webgl';
 
-import * as posenet from '@tensorflow-models/posenet';
+import * as posenet from '@haoyunfeix/posenet';
 import * as tf from '@tensorflow/tfjs-core';
 import '@tensorflow/tfjs-backend-webgl';
 

@@ -14,9 +14,11 @@
  * limitations under the License.
  * =============================================================================
  */
-import '@tensorflow/tfjs-backend-webgl';
 
-import * as posenet from '@tensorflow-models/posenet';
+import * as posenet from '@haoyunfeix/posenet';
+import * as tfc from '@tensorflow/tfjs-core';
+import '@tensorflow/tfjs-backend-webgl';
+import '@haoyunfeix/tfjs-backend-webgpu';
 import dat from 'dat.gui';
 import Stats from 'stats.js';
 
@@ -101,6 +103,7 @@ const guiState = {
     showBoundingBox: false,
   },
   net: null,
+  environment: 'webgl',
 };
 
 /**
@@ -255,6 +258,14 @@ function setupGui(cameras, net) {
   output.add(guiState.output, 'showPoints');
   output.add(guiState.output, 'showBoundingBox');
   output.open();
+
+  let backendsController = null;
+  backendsController = gui.add(guiState, 'environment', ['webgl', 'webgpu']);
+  backendsController.onChange(async backend => {
+  // TODO: Failed to set backend
+  await tfc.setBackend(backend);
+  //await showFlagSettings(envFolder, state.backend);
+  });
 
 
   architectureController.onChange(function(architecture) {
@@ -454,6 +465,7 @@ function detectPoseInRealTime(video, net) {
  */
 export async function bindPage() {
   toggleLoadingUI(true);
+  await tfc.ready();
   const net = await posenet.load({
     architecture: guiState.input.architecture,
     outputStride: guiState.input.outputStride,

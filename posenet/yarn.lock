@@ -23,7 +23,7 @@
     chalk "^2.0.0"
     js-tokens "^4.0.0"
 
-"@tensorflow/tfjs-backend-cpu@^3.0.0-rc.1":
+"@tensorflow/tfjs-backend-cpu@3.3.0":
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-backend-cpu/-/tfjs-backend-cpu-3.3.0.tgz#aa0a3ed2c6237a6e0c169678c5bd4b5a88766b1c"
   integrity sha512-DLctv+PUZni26kQW1hq8jwQQ8u+GGc/p764WQIC4/IDagGtfGAUW1mHzWcTxtni2l4re1VrwE41ogWLhv4sGHg==
@@ -31,12 +31,12 @@
     "@types/seedrandom" "2.4.27"
     seedrandom "2.4.3"
 
-"@tensorflow/tfjs-converter@^3.0.0-rc.1":
+"@tensorflow/tfjs-converter@3.3.0":
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-3.3.0.tgz#d9f2ffd0fbdbb47c07d5fd7c3e5dc180cff317aa"
   integrity sha512-k57wN4yelePhmO9orcT/wzGMIuyedrMpVtg0FhxpV6BQu0+TZ/ti3W4Kb97GWJsoHKXMoing9SnioKfVnBW6hw==
 
-"@tensorflow/tfjs-core@^3.0.0-rc.1":
+"@tensorflow/tfjs-core@3.3.0":
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-core/-/tfjs-core-3.3.0.tgz#3d26bd03cb58e0ecf46c96d118c39c4a90b7f5ed"
   integrity sha512-6G+LcCiQBl4Kza5mDbWbf8QSWBTW3l7SDjGhQzMO1ITtQatHzxkuHGHcJ4CTUJvNA0JmKf4QJWOvlFqEmxwyLQ==
