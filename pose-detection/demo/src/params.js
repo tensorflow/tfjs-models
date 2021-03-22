@@ -18,7 +18,7 @@ export const DEFAULT_LINE_WIDTH = 4;
 
 export const VIDEO_SIZE = {
   '640 X 480': {width: 640, height: 480},
-  '500 X 500': {width: 500, height: 500}
+  '640 X 360': {width: 640, height: 360}
 };
 export const STATE = {
   camera: {targetFPS: 60, sizeOption: '640 X 480'}
