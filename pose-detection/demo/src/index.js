@@ -28,14 +28,17 @@ import {setupStats} from './stats_panel';
 let detector, camera, stats;
 
 async function checkGuiUpdate() {
-  if (STATE.changeToTargetFPS) {
-    STATE.camera.targetFPS = STATE.changeToTargetFPS;
-    STATE.changeToTargetFPS = null;
-    camera = await Camera.setupCamera(STATE.camera);
-  }
-  if (STATE.changeToSizeOption) {
-    STATE.camera.sizeOption = STATE.changeToSizeOption;
-    STATE.changeToSizeOption = null;
+  if (STATE.changeToTargetFPS || STATE.changeToSizeOption) {
+    if (STATE.changeToTargetFPS) {
+      STATE.camera.targetFPS = STATE.changeToTargetFPS;
+      STATE.changeToTargetFPS = null;
+    }
+
+    if (STATE.changeToSizeOption) {
+      STATE.camera.sizeOption = STATE.changeToSizeOption;
+      STATE.changeToSizeOption = null;
+    }
+
     camera = await Camera.setupCamera(STATE.camera);
   }
 
@@ -53,8 +56,6 @@ async function renderResult() {
 
     if (poses.length > 0) {
       camera.drawResult(poses[0]);
-    } else {
-      camera.clearCtx();
     }
   }
 }
