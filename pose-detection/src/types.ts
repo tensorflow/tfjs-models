@@ -17,7 +17,8 @@
 import * as tf from '@tensorflow/tfjs-core';
 
 export enum SupportedModels {
-  PoseNet = 'posenet'
+  PoseNet = 'posenet',
+  MediapipeBlazepose = 'mediapipe_blazepose'
 }
 
 export type QuantBytes = 1|2|4;
@@ -60,8 +61,10 @@ export interface InputResolution {
 export interface Keypoint {
   x: number;
   y: number;
+  z?: number;
   score?: number;
   name?: string;
+  visibility?: number;
 }
 
 export interface Pose {

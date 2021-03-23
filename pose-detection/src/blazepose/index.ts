@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2021 Google LLC. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,23 +15,4 @@
  * =============================================================================
  */
 
-/**
- * A rectangle that contains center point, height, width and rotation info.
- * Can be normalized or non-normalized.
- */
-export interface Rect {
-  xCenter: number;
-  yCenter: number;
-  height: number;
-  width: number;
-  rotation?: number;
-}
-
-export interface BoundingBox {
-  xMin: number;
-  yMin: number;
-  xMax: number;
-  yMax: number;
-  width: number;
-  height: number;
-}
+export {BlazeposeDetector} from './detector';

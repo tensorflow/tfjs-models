@@ -15,6 +15,8 @@
  * =============================================================================
  */
 
+import {BlazeposeDetector} from './blazepose/detector';
+import {BlazeposeModelConfig} from './blazepose/types';
 import {PoseDetector} from './pose_detector';
 import {PosenetDetector} from './posenet/detector';
 import {PosenetModelConfig} from './posenet/types';
@@ -27,10 +29,13 @@ import {SupportedModels} from './types';
  */
 export async function createDetector(
     model: SupportedModels,
-    modelConfig: PosenetModelConfig): Promise<PoseDetector> {
+    modelConfig: PosenetModelConfig|
+    BlazeposeModelConfig): Promise<PoseDetector> {
   switch (model) {
     case SupportedModels.PoseNet:
-      return PosenetDetector.load(modelConfig);
+      return PosenetDetector.load(modelConfig as PosenetModelConfig);
+    case SupportedModels.MediapipeBlazepose:
+      return BlazeposeDetector.load(modelConfig);
     default:
       throw new Error(`${model} is not a supported model name.`);
   }
