@@ -37,18 +37,18 @@ export interface ModelConfig {
 }
 
 /**
- * Allowed input format for the `estimatePoses` method.
- */
-export type PoseDetectorInput =
-    tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|HTMLCanvasElement;
-
-/**
  * Common config for the `estimatePoses` method.
  */
 export interface EstimationConfig {
   maxPoses: number;
   flipHorizontal?: boolean;
 }
+
+/**
+ * Allowed input format for the `estimatePoses` method.
+ */
+export type PoseDetectorInput =
+    tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|HTMLCanvasElement;
 
 export interface InputResolution {
   width: number;

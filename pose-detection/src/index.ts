@@ -16,10 +16,10 @@
  */
 
 // Entry point to create a new detector instance.
-export {BlazeposeModelConfig} from './blazepose/types';
+export {BlazeposeEstimationConfig, BlazeposeModelConfig} from './blazepose/types';
 export {createDetector} from './create_detector';
 // PoseDetector class.
 export {PoseDetector} from './pose_detector';
-export {PosenetModelConfig} from './posenet/types';
+export {PoseNetEstimationConfig, PosenetModelConfig} from './posenet/types';
 // Supported models enum.
-export {SupportedModels} from './types';
+export * from './types';

@@ -25,9 +25,12 @@ describeWithFlags('Blazepose', ALL_ENVS, () => {
   let detector: poseDetection.PoseDetector;
   beforeEach(async () => {
     // Note: this makes a network request for model assets.
+    const modelConfig: poseDetection.BlazeposeModelConfig = {
+      quantBytes: 4,
+      upperBodyOnly: false
+    };
     detector = await poseDetection.createDetector(
-        poseDetection.SupportedModels.MediapipeBlazepose,
-        {quantBytes: 4, upperBodyOnly: false});
+        poseDetection.SupportedModels.MediapipeBlazepose, modelConfig);
   });
 
   it('estimatePoses does not leak memory', async () => {
@@ -35,7 +38,12 @@ describeWithFlags('Blazepose', ALL_ENVS, () => {
 
     const beforeTensors = tf.memory().numTensors;
 
-    await detector.estimatePoses(input, {maxPoses: 1, flipHorizontal: false});
+    const estimationConfig: poseDetection.BlazeposeEstimationConfig = {
+      maxPoses: 1,
+      flipHorizontal: false
+    };
+
+    await detector.estimatePoses(input, estimationConfig);
 
     expect(tf.memory().numTensors).toEqual(beforeTensors);
   });
