@@ -35,6 +35,7 @@ import {EstimationConfig, ModelConfig} from '../types';
  */
 export interface BlazeposeModelConfig extends ModelConfig {
   upperBodyOnly?: boolean;
+  lite?: boolean;
   detectorModelUrl?: string;
   landmarkModelUrl?: string;
 }
