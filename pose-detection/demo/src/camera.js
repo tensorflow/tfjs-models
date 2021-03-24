@@ -89,17 +89,25 @@ export class Camera {
     this.ctx.clearRect(0, 0, this.video.videoWidth, this.video.videoHeight);
   }
 
-  drawResult(pose) {
-    this.drawKeypoints(pose.keypoints);
+  drawResult(pose, shouldScale = false) {
+    this.drawKeypoints(pose.keypoints, shouldScale);
   }
 
-  drawKeypoints(keypoints) {
+  /**
+   * Draw the keypoints on the video.
+   * @param keypoints A list of keypoints, may be normalized.
+   * @param scale If the keypoints are normalized, need to pass in the video
+   *     width and height to scale to the actual coord.
+   */
+  drawKeypoints(keypoints, shouldScale) {
+    const scaleX = shouldScale ? this.video.videoWidth : 1;
+    const scaleY = shouldScale ? this.video.videoHeight : 1;
     this.ctx.fillStyle = 'red';
     this.ctx.strokeStyle = 'white';
     this.ctx.lineWidth = 4;
     keypoints.forEach(keypoint => {
       const circle = new Path2D();
-      circle.arc(keypoint.x, keypoint.y, 4, 0, 2 * Math.PI);
+      circle.arc(keypoint.x * scaleX, keypoint.y * scaleY, 4, 0, 2 * Math.PI);
       this.ctx.fill(circle);
       this.ctx.stroke(circle);
     });

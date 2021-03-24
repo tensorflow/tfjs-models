@@ -27,6 +27,24 @@ import {setupStats} from './stats_panel';
 
 let detector, camera, stats;
 
+async function createDetector(model) {
+  switch (model) {
+    case posedetection.SupportedModels.PoseNet:
+      detector = await posedetection.createDetector(STATE.model.model, {
+        quantBytes: 4,
+        architecture: 'MobileNetV1',
+        outputStride: 16,
+        inputResolution: {width: 500, height: 500},
+        multiplier: 0.75
+      });
+      break;
+    case posedetection.SupportedModels.MediapipeBlazepose:
+      detector = await posedetection.createDetector(
+          STATE.model.model, {quantBytes: 4, upperBodyOnly: false});
+      break;
+  }
+}
+
 async function checkGuiUpdate() {
   if (STATE.changeToTargetFPS || STATE.changeToSizeOption) {
     if (STATE.changeToTargetFPS) {
@@ -42,6 +60,13 @@ async function checkGuiUpdate() {
     camera = await Camera.setupCamera(STATE.camera);
   }
 
+  if (STATE.changeToModel) {
+    STATE.model.model = STATE.changeToModel;
+    STATE.changeToModel = null;
+
+    await createDetector(STATE.model.model);
+  }
+
   await tf.nextFrame();
 }
 
@@ -55,7 +80,14 @@ async function renderResult() {
     camera.drawCtx();
 
     if (poses.length > 0) {
-      camera.drawResult(poses[0]);
+      if (STATE.model.model === posedetection.SupportedModels.PoseNet) {
+        camera.drawResult(poses[0]);
+      } else if (
+          STATE.model.model ===
+          posedetection.SupportedModels.MediapipeBlazepose) {
+        // MediapipeBlazepose keypoints are normalized.
+        camera.drawResult(poses[0], true /* shouldScale */);
+      }
     }
   }
 }
@@ -78,14 +110,7 @@ async function app() {
   stats = setupStats();
   camera = await Camera.setupCamera(STATE.camera);
 
-  detector = await posedetection.createDetector(
-      posedetection.SupportedModels.PoseNet, {
-        quantBytes: 4,
-        architecture: 'MobileNetV1',
-        outputStride: 16,
-        inputResolution: {width: 500, height: 500},
-        multiplier: 0.75
-      });
+  await createDetector(STATE.model.model);
 
   renderPrediction();
 };

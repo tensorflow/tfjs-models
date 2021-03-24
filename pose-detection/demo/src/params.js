@@ -14,6 +14,8 @@
  * limitations under the License.
  * =============================================================================
  */
+import * as posedetection from '@tensorflow-models/posedetection';
+
 export const DEFAULT_LINE_WIDTH = 4;
 
 export const VIDEO_SIZE = {
@@ -21,5 +23,6 @@ export const VIDEO_SIZE = {
   '640 X 360': {width: 640, height: 360}
 };
 export const STATE = {
-  camera: {targetFPS: 60, sizeOption: '640 X 480'}
+  camera: {targetFPS: 60, sizeOption: '640 X 480'},
+  model: {model: posedetection.SupportedModels.PoseNet}
 };

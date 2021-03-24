@@ -150,8 +150,7 @@ export class BlazeposeDetector extends BasePoseDetector {
     }
 
     // Detects pose landmarks within specified region of interest of the image.
-    const poseLandmarks =
-        await this.poseLandmarkByRoi(poseRect, image3d, this.upperBodyOnly);
+    const poseLandmarks = await this.poseLandmarkByRoi(poseRect, image3d);
 
     if (poseLandmarks == null) {
       this.regionOfInterest = null;
@@ -258,9 +257,8 @@ export class BlazeposeDetector extends BasePoseDetector {
   // subgraph: PoseLandmarkByRoiCpu
   // ref:
   // https://github.com/google/mediapipe/blob/master/mediapipe/modules/pose_landmark/pose_landmark_by_roi_cpu.pbtxt
-  private async poseLandmarkByRoi(
-      poseRect: Rect, image: tf.Tensor3D,
-      upperBodyOnly: boolean): Promise<PoseLandmarkByRoiResult> {
+  private async poseLandmarkByRoi(poseRect: Rect, image: tf.Tensor3D):
+      Promise<PoseLandmarkByRoiResult> {
     // Transforms the input image into a 256x256 tensor while keeping the aspect
     // ratio, resulting in potential letterboxing in the transformed image.
     const {imageTensor, padding} = convertImageToTensor(
@@ -269,12 +267,19 @@ export class BlazeposeDetector extends BasePoseDetector {
     const imageValueShifted = shiftImageValue(imageTensor, [0, 1]);
 
     // PoseLandmarkByRoiCPU: InferenceCalculator
-    // The model returns 5 tensor with the following shape:
+    // The model returns 4 tensor with the following shape:
+    // For upperBodyOnly:
+    // Only Output[1] and Output[2] matters for the pipeline.
+    // Output[1]: This tensor (shape: [1, 155]) represents 31 5-d keypoints.
+    // The first 25 refer to the upper body. The final 6 key points refer to
+    // the alignment points from the detector model and the hands.)
+    // Output [2]: This tensor (shape: [1, 1]) represents the confidence
+    // score.
+    // For full body:
     // Only Output[3] and Output[2] matters for the pipeline.
     // Output[3]: This tensor (shape: [1, 195]) represents 39 5-d keypoints.
-    // The first 33 refer to the full body. The final 6 key points can be
-    // ignored. They refer to the alignment points from the detector model
-    // and the hands.)
+    // The first 33 refer to the upper body. The final 6 key points refer to
+    // the alignment points from the detector model and the hands.)
     // Output [2]: This tensor (shape: [1, 1]) represents the confidence
     // score.
     // [1 (batch), 896 (anchor points), 13 (data for each anchor)]
@@ -284,9 +289,9 @@ export class BlazeposeDetector extends BasePoseDetector {
     let landmarkTensor;
     let poseFlag;
 
-    if (upperBodyOnly) {
-      landmarkTensor = landmarkResult[3] as tf.Tensor2D;
-      poseFlag = landmarkResult[4] as tf.Tensor2D;
+    if (this.upperBodyOnly) {
+      landmarkTensor = landmarkResult[1] as tf.Tensor2D;
+      poseFlag = landmarkResult[2] as tf.Tensor2D;
     } else {
       landmarkTensor = landmarkResult[3] as tf.Tensor2D;
       poseFlag = landmarkResult[2] as tf.Tensor2D;
@@ -310,8 +315,8 @@ export class BlazeposeDetector extends BasePoseDetector {
     // PoseLandmarkByRoiCpu: TensorsToLandmarksCalculator.
     const landmarks = await tensorsToLandmarks(
         landmarkTensor,
-        upperBodyOnly ? BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG_UPPERBODY :
-                        BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG_FULLBODY);
+        this.upperBodyOnly ? BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG_UPPERBODY :
+                             BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG_FULLBODY);
 
     // Adjusts landmarks (already normalized to [0.0, 1.0]) on the letterboxed
     // pose image to the corresponding locations on the same image with the
@@ -327,9 +332,10 @@ export class BlazeposeDetector extends BasePoseDetector {
 
     // Splits the landmarks into two sets: the actual pose landmarks and the
     // auxiliary landmarks.
-    const actualLandmarks = upperBodyOnly ? landmarksProjected.slice(0, 25) :
-                                            landmarksProjected.slice(0, 33);
-    const auxiliaryLandmarks = upperBodyOnly ?
+    const actualLandmarks = this.upperBodyOnly ?
+        landmarksProjected.slice(0, 25) :
+        landmarksProjected.slice(0, 33);
+    const auxiliaryLandmarks = this.upperBodyOnly ?
         landmarksProjected.slice(25, 27) :
         landmarksProjected.slice(33, 35);
 
