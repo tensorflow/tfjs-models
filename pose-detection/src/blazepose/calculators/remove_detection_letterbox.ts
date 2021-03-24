@@ -30,6 +30,8 @@ import {Detection} from './interfaces/shape_interfaces';
  * @returns detections: A list of detection boxes representing detections with
  *     their locations adjusted to the letterbox-removed (non-padded) image.
  */
+// ref:
+// https://github.com/google/mediapipe/blob/master/mediapipe/calculators/util/detection_letterbox_removal_calculator.cc
 export function removeDetectionLetterbox(
     detections: Detection[] = [], letterboxPadding: Padding): Detection[] {
   const left = letterboxPadding.left;

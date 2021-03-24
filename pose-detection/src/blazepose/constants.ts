@@ -21,11 +21,11 @@ export const DEFAULT_BLAZEPOSE_FULLBODY_CONFIG: BlazeposeModelConfig = {
   upperBodyOnly: false
 };
 export const DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL =
-    './detector_model/model.json';
+    'https://storage.googleapis.com/tfjs-models/savedmodel/blazepose/detector/model.json';
 export const DEFAULT_BLAZEPOSE_LANDMARK_FULL_BODY_MODEL_URL =
-    './landmark_model_fullbody/model.json';
+    'https://storage.googleapis.com/tfjs-models/savedmodel/blazepose/landmark/fullbody/model.json';
 export const DEFAULT_BLAZEPOSE_LANDMARK_UPPER_BODY_MODEL_URL =
-    './landmark_model_upperbody/model.json';
+    'https://storage.googleapis.com/tfjs-models/savedmodel/blazepose/landmark/upperbody/model.json';
 export const BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION = {
   reduceBoxesInLowestlayer: false,
   interpolatedScaleAspectRatio: 1.0,

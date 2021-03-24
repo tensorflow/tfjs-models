@@ -26,6 +26,8 @@ import {Keypoint} from '../../types';
  * @param inputRect A normalized rectangle.
  * @param config Config object has one field ignoreRotation, default to false.
  */
+// ref:
+// https://github.com/google/mediapipe/blob/master/mediapipe/calculators/util/landmark_projection_calculator.cc
 export function calculateLandmarkProjection(
     landmarks: Keypoint[], inputRect: Rect,
     config: {ignoreRotation: boolean} = {

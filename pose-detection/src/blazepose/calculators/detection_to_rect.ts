@@ -20,6 +20,8 @@ import {ImageSize} from '../../calculators/interfaces/common_interfaces';
 import {DetectionToRectConfig} from './interfaces/config_interfaces';
 import {Detection} from './interfaces/shape_interfaces';
 
+// ref:
+// https://github.com/google/mediapipe/blob/master/mediapipe/calculators/util/detections_to_rects_calculator.cc
 export function computeRotation(
     detection: Detection, imageSize: ImageSize, config: DetectionToRectConfig) {
   const locationData = detection.locationData;

@@ -28,6 +28,8 @@ import {Keypoint} from '../../types';
  *     the letterboxed image dimensions.
  * @returns Normalized landmarks.
  */
+// ref:
+// https://github.com/google/mediapipe/blob/master/mediapipe/calculators/util/landmark_letterbox_removal_calculator.cc
 export function removeLandmarkLetterbox(
     rawLandmark: Keypoint[], padding: Padding) {
   const left = padding.left;

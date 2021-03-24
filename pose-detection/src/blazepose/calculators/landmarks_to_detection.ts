@@ -25,6 +25,8 @@ import {Detection} from './interfaces/shape_interfaces';
  *
  * @returns A `Detection`.
  */
+// ref:
+// https://github.com/google/mediapipe/blob/master/mediapipe/calculators/util/landmarks_to_detection_calculator.cc
 export function landmarksToDetection(landmarks: Keypoint[]): Detection {
   const detection:
       Detection = {locationData: {relativeKeypoints: [] as Keypoint[]}};

@@ -138,84 +138,92 @@ function convertToDetection(
 function decodeBoxes(
     rawBoxes: tf.Tensor2D, anchor: AnchorTensor,
     config: TensorsToDetectionsConfig): tf.Tensor2D {
-  let yCenter;
-  let xCenter;
-  let h;
-  let w;
+  return tf.tidy(() => {
+    let yCenter;
+    let xCenter;
+    let h;
+    let w;
 
-  if (config.reverseOutputOrder) {
-    // Shape [numOfBoxes, 1].
-    xCenter =
-        tf.squeeze(tf.slice(rawBoxes, [0, config.boxCoordOffset + 0], [-1, 1]));
-    yCenter =
-        tf.squeeze(tf.slice(rawBoxes, [0, config.boxCoordOffset + 1], [-1, 1]));
-    w = tf.squeeze(tf.slice(rawBoxes, [0, config.boxCoordOffset + 2], [-1, 1]));
-    h = tf.squeeze(tf.slice(rawBoxes, [0, config.boxCoordOffset + 3], [-1, 1]));
-  } else {
-    yCenter =
-        tf.squeeze(tf.slice(rawBoxes, [0, config.boxCoordOffset + 0], [-1, 1]));
-    xCenter =
-        tf.squeeze(tf.slice(rawBoxes, [0, config.boxCoordOffset + 1], [-1, 1]));
-    h = tf.squeeze(tf.slice(rawBoxes, [0, config.boxCoordOffset + 2], [-1, 1]));
-    w = tf.squeeze(tf.slice(rawBoxes, [0, config.boxCoordOffset + 3], [-1, 1]));
-  }
-
-  xCenter = tf.add(tf.mul(tf.div(xCenter, config.xScale), anchor.w), anchor.x);
-  yCenter = tf.add(tf.mul(tf.div(yCenter, config.yScale), anchor.h), anchor.y);
-
-  if (config.applyExponentialOnBoxSize) {
-    h = tf.mul(tf.exp(tf.div(h, config.hScale)), anchor.h);
-    w = tf.mul(tf.exp(tf.div(w, config.wScale)), anchor.w);
-  } else {
-    h = tf.mul(tf.div(h, config.hScale), anchor.h);
-    w = tf.mul(tf.div(w, config.wScale), anchor.h);
-  }
-
-  const yMin = tf.sub(yCenter, tf.div(h, 2));
-  const xMin = tf.sub(xCenter, tf.div(w, 2));
-  const yMax = tf.add(yCenter, tf.div(h, 2));
-  const xMax = tf.add(xCenter, tf.div(w, 2));
-
-  // Shape [numOfBoxes, 4].
-  let boxes = tf.concat(
-      [
-        tf.reshape(yMin, [config.numBoxes, 1]),
-        tf.reshape(xMin, [config.numBoxes, 1]),
-        tf.reshape(yMax, [config.numBoxes, 1]),
-        tf.reshape(xMax, [config.numBoxes, 1])
-      ],
-      1);
-
-  if (config.numKeypoints) {
-    for (let k = 0; k < config.numKeypoints; ++k) {
-      const keypointOffset =
-          config.keypointCoordOffset + k * config.numValuesPerKeypoint;
-      let keypointX;
-      let keypointY;
-      if (config.reverseOutputOrder) {
-        keypointX =
-            tf.squeeze(tf.slice(rawBoxes, [0, keypointOffset], [-1, 1]));
-        keypointY =
-            tf.squeeze(tf.slice(rawBoxes, [0, keypointOffset + 1], [-1, 1]));
-      } else {
-        keypointY =
-            tf.squeeze(tf.slice(rawBoxes, [0, keypointOffset], [-1, 1]));
-        keypointX =
-            tf.squeeze(tf.slice(rawBoxes, [0, keypointOffset + 1], [-1, 1]));
-      }
-      const keypointXNormalized =
-          tf.add(tf.mul(tf.div(keypointX, config.xScale), anchor.w), anchor.x);
-      const keypointYNormalized =
-          tf.add(tf.mul(tf.div(keypointY, config.yScale), anchor.h), anchor.y);
-      boxes = tf.concat(
-          [
-            boxes, tf.reshape(keypointXNormalized, [config.numBoxes, 1]),
-            tf.reshape(keypointYNormalized, [config.numBoxes, 1])
-          ],
-          1);
+    if (config.reverseOutputOrder) {
+      // Shape [numOfBoxes, 1].
+      xCenter = tf.squeeze(
+          tf.slice(rawBoxes, [0, config.boxCoordOffset + 0], [-1, 1]));
+      yCenter = tf.squeeze(
+          tf.slice(rawBoxes, [0, config.boxCoordOffset + 1], [-1, 1]));
+      w = tf.squeeze(
+          tf.slice(rawBoxes, [0, config.boxCoordOffset + 2], [-1, 1]));
+      h = tf.squeeze(
+          tf.slice(rawBoxes, [0, config.boxCoordOffset + 3], [-1, 1]));
+    } else {
+      yCenter = tf.squeeze(
+          tf.slice(rawBoxes, [0, config.boxCoordOffset + 0], [-1, 1]));
+      xCenter = tf.squeeze(
+          tf.slice(rawBoxes, [0, config.boxCoordOffset + 1], [-1, 1]));
+      h = tf.squeeze(
+          tf.slice(rawBoxes, [0, config.boxCoordOffset + 2], [-1, 1]));
+      w = tf.squeeze(
+          tf.slice(rawBoxes, [0, config.boxCoordOffset + 3], [-1, 1]));
     }
-  }
 
-  // Shape [numOfBoxes, 4] || [numOfBoxes, 12].
-  return boxes as tf.Tensor2D;
+    xCenter =
+        tf.add(tf.mul(tf.div(xCenter, config.xScale), anchor.w), anchor.x);
+    yCenter =
+        tf.add(tf.mul(tf.div(yCenter, config.yScale), anchor.h), anchor.y);
+
+    if (config.applyExponentialOnBoxSize) {
+      h = tf.mul(tf.exp(tf.div(h, config.hScale)), anchor.h);
+      w = tf.mul(tf.exp(tf.div(w, config.wScale)), anchor.w);
+    } else {
+      h = tf.mul(tf.div(h, config.hScale), anchor.h);
+      w = tf.mul(tf.div(w, config.wScale), anchor.h);
+    }
+
+    const yMin = tf.sub(yCenter, tf.div(h, 2));
+    const xMin = tf.sub(xCenter, tf.div(w, 2));
+    const yMax = tf.add(yCenter, tf.div(h, 2));
+    const xMax = tf.add(xCenter, tf.div(w, 2));
+
+    // Shape [numOfBoxes, 4].
+    let boxes = tf.concat(
+        [
+          tf.reshape(yMin, [config.numBoxes, 1]),
+          tf.reshape(xMin, [config.numBoxes, 1]),
+          tf.reshape(yMax, [config.numBoxes, 1]),
+          tf.reshape(xMax, [config.numBoxes, 1])
+        ],
+        1);
+
+    if (config.numKeypoints) {
+      for (let k = 0; k < config.numKeypoints; ++k) {
+        const keypointOffset =
+            config.keypointCoordOffset + k * config.numValuesPerKeypoint;
+        let keypointX;
+        let keypointY;
+        if (config.reverseOutputOrder) {
+          keypointX =
+              tf.squeeze(tf.slice(rawBoxes, [0, keypointOffset], [-1, 1]));
+          keypointY =
+              tf.squeeze(tf.slice(rawBoxes, [0, keypointOffset + 1], [-1, 1]));
+        } else {
+          keypointY =
+              tf.squeeze(tf.slice(rawBoxes, [0, keypointOffset], [-1, 1]));
+          keypointX =
+              tf.squeeze(tf.slice(rawBoxes, [0, keypointOffset + 1], [-1, 1]));
+        }
+        const keypointXNormalized = tf.add(
+            tf.mul(tf.div(keypointX, config.xScale), anchor.w), anchor.x);
+        const keypointYNormalized = tf.add(
+            tf.mul(tf.div(keypointY, config.yScale), anchor.h), anchor.y);
+        boxes = tf.concat(
+            [
+              boxes, tf.reshape(keypointXNormalized, [config.numBoxes, 1]),
+              tf.reshape(keypointYNormalized, [config.numBoxes, 1])
+            ],
+            1);
+      }
+    }
+
+    // Shape [numOfBoxes, 4] || [numOfBoxes, 12].
+    return boxes as tf.Tensor2D;
+  });
 }

@@ -21,6 +21,8 @@ import {computeRotation} from './detection_to_rect';
 import {DetectionToRectConfig} from './interfaces/config_interfaces';
 import {Detection} from './interfaces/shape_interfaces';
 
+// ref:
+// https://github.com/google/mediapipe/blob/master/mediapipe/calculators/util/alignment_points_to_rects_calculator.cc
 export function calculateAlignmentPointsRects(
     detection: Detection, imageSize: ImageSize,
     config: DetectionToRectConfig): Rect {

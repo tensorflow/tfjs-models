@@ -155,6 +155,9 @@ export class BlazeposeDetector extends BasePoseDetector {
 
     if (poseLandmarks == null) {
       this.regionOfInterest = null;
+
+      image3d.dispose();
+
       return [];
     }
 
@@ -296,6 +299,9 @@ export class BlazeposeDetector extends BasePoseDetector {
     // Applies a threshold to the confidence score to determine whether a pose
     // is present.
     if (poseScore < BLAZEPOSE_POSE_PRESENCE_SCORE) {
+      tf.dispose(landmarkResult);
+      tf.dispose([imageTensor, imageValueShifted]);
+
       return null;
     }
 
@@ -328,8 +334,7 @@ export class BlazeposeDetector extends BasePoseDetector {
         landmarksProjected.slice(33, 35);
 
     tf.dispose(landmarkResult);
-    imageTensor.dispose();
-    imageValueShifted.dispose();
+    tf.dispose([imageTensor, imageValueShifted]);
 
     return {actualLandmarks, auxiliaryLandmarks, poseScore};
   }
