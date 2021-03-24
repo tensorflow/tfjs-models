@@ -27,16 +27,16 @@ export function scalePoses(
   const scaleX =
       width / (inputResolution.width * (1 - padding.left - padding.right));
 
-  const offsetY = -padding.top;
-  const offsetX = -padding.left;
+  const offsetY = -padding.top * inputResolution.height;
+  const offsetX = -padding.left * inputResolution.width;
 
   if (scaleX === 1 && scaleY === 1 && offsetY === 0 && offsetX === 0) {
     return poses;
   }
 
   poses.forEach(pose => pose.keypoints.forEach(kp => {
-    kp.x = kp.x * scaleX + offsetX;
-    kp.y = kp.y * scaleY + offsetY;
+    kp.x = (kp.x + offsetX) * scaleX;
+    kp.y = (kp.y + offsetY) * scaleY;
   }));
 
   return poses;
