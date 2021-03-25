@@ -37,7 +37,7 @@ import {removeLandmarkLetterbox} from './calculators/remove_landmark_letterbox';
 import {tensorsToDetections} from './calculators/tensors_to_detections';
 import {tensorsToLandmarks} from './calculators/tensors_to_landmarks';
 import {transformNormalizedRect} from './calculators/transform_rect';
-import {BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION, BLAZEPOSE_DETECTOR_IMAGE_TO_TENSOR_CONFIG, BLAZEPOSE_DETECTOR_NON_MAX_SUPPRESSION_CONFIGURATION, BLAZEPOSE_DETECTOR_RECT_TRANSFORMATION_CONFIG, BLAZEPOSE_LANDMARK_IMAGE_TO_TENSOR_CONFIG, BLAZEPOSE_POSE_PRESENCE_SCORE, BLAZEPOSE_TENSORS_TO_DETECTION_CONFIGURATION, BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG_FULLBODY, BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG_UPPERBODY, DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG} from './constants';
+import {BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION, BLAZEPOSE_DETECTOR_IMAGE_TO_TENSOR_CONFIG, BLAZEPOSE_DETECTOR_NON_MAX_SUPPRESSION_CONFIGURATION, BLAZEPOSE_DETECTOR_RECT_TRANSFORMATION_CONFIG, BLAZEPOSE_LANDMARK_IMAGE_TO_TENSOR_CONFIG, BLAZEPOSE_NUM_AUXILIARY_KEYPOINTS_FULLBODY, BLAZEPOSE_NUM_AUXILIARY_KEYPOINTS_UPPERBODY, BLAZEPOSE_NUM_KEYPOINTS_FULLBODY, BLAZEPOSE_NUM_KEYPOINTS_UPPERBODY, BLAZEPOSE_POSE_PRESENCE_SCORE, BLAZEPOSE_TENSORS_TO_DETECTION_CONFIGURATION, BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG_FULLBODY, BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG_UPPERBODY, DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG} from './constants';
 import {validateEstimationConfig, validateModelConfig} from './detector_utils';
 import {BlazeposeEstimationConfig, BlazeposeModelConfig} from './types';
 
@@ -142,6 +142,9 @@ export class BlazeposeDetector extends BasePoseDetector {
 
       if (detections.length === 0) {
         this.regionOfInterest = null;
+
+        image3d.dispose();
+
         return [];
       };
 
@@ -293,7 +296,6 @@ export class BlazeposeDetector extends BasePoseDetector {
     // the alignment points from the detector model and the hands.)
     // Output [2]: This tensor (shape: [1, 1]) represents the confidence
     // score.
-    // [1 (batch), 896 (anchor points), 13 (data for each anchor)]
     const landmarkResult =
         this.landmarkModel.predict(imageValueShifted) as tf.Tensor[];
 
@@ -344,11 +346,15 @@ export class BlazeposeDetector extends BasePoseDetector {
     // Splits the landmarks into two sets: the actual pose landmarks and the
     // auxiliary landmarks.
     const actualLandmarks = this.upperBodyOnly ?
-        landmarksProjected.slice(0, 25) :
-        landmarksProjected.slice(0, 33);
+        landmarksProjected.slice(0, BLAZEPOSE_NUM_KEYPOINTS_UPPERBODY) :
+        landmarksProjected.slice(0, BLAZEPOSE_NUM_KEYPOINTS_FULLBODY);
     const auxiliaryLandmarks = this.upperBodyOnly ?
-        landmarksProjected.slice(25, 27) :
-        landmarksProjected.slice(33, 35);
+        landmarksProjected.slice(
+            BLAZEPOSE_NUM_KEYPOINTS_UPPERBODY,
+            BLAZEPOSE_NUM_AUXILIARY_KEYPOINTS_UPPERBODY) :
+        landmarksProjected.slice(
+            BLAZEPOSE_NUM_KEYPOINTS_FULLBODY,
+            BLAZEPOSE_NUM_AUXILIARY_KEYPOINTS_FULLBODY);
 
     tf.dispose(landmarkResult);
     tf.dispose([imageTensor, imageValueShifted]);

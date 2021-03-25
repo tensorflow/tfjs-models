@@ -15,20 +15,35 @@
  * =============================================================================
  */
 export interface AnchorConfig {
-  numLayers: number;
-  minScale: number;
-  maxScale: number;
-  inputSizeHeight: number;
+  numLayers:
+      number;  // Number of output feature maps to generate the anchors on.
+  minScale: number;  // Min scales for generating anchor boxes on feature maps.
+  maxScale: number;  // Max scales for generating anchor boxes on feature maps.
+  inputSizeHeight: number;  // Size of input images.
   inputSizeWidth: number;
-  anchorOffsetX: number;
+  anchorOffsetX: number;  // The offset for the center of anchors. The values is
+                          // in the scale of stride. E.g. 0.5 meaning 0.5 *
+                          // currentStride in pixels.
   anchorOffsetY: number;
-  featureMapWidth: number[];
+  featureMapWidth:
+      number[];  // Sizes of output feature maps to create anchors. Either
+                 // featureMap size or stride should be provided.
   featureMapHeight: number[];
-  strides?: number[];
-  aspectRatios?: number[];
-  fixedAnchorSize?: boolean;
-  reduceBoxesInLowestLayer?: boolean;
-  interpolatedScaleAspectRatio?: number;
+  strides?: number[];  // Strides of each output feature maps.
+  aspectRatios?:
+      number[];  // List of different aspect ratio to generate anchors.
+  fixedAnchorSize?:
+      boolean;  // Whether use fixed width and height (e.g. both 1.0) for each
+                // anchor. This option can be used when the predicted anchor
+                // width and height are in pixels.
+  reduceBoxesInLowestLayer?:
+      boolean;  // A boolean to indicate whether the fixed 3 boxes per location
+                // is used in the lowest layer.
+  interpolatedScaleAspectRatio?:
+      number;  // An additional anchor is added with this aspect ratio and a
+               // scale interpolated between the scale for a layer and the scale
+               // for the next layer (1.0 for the last layer). This anchor is
+               // not included if this value is 0.
 }
 
 export interface TensorsToDetectionsConfig {

@@ -27,6 +27,8 @@ import {RectTransformationConfig} from './interfaces/config_interfaces';
  * @param imageSize The original imageSize.
  * @param config See documentation in `RectTransformationConfig`.
  */
+// ref:
+// https://github.com/google/mediapipe/blob/master/mediapipe/calculators/util/rect_transformation_calculator.cc
 export function transformNormalizedRect(
     rect: Rect, imageSize: ImageSize, config: RectTransformationConfig): Rect {
   let width = rect.width;
@@ -58,7 +60,7 @@ export function transformNormalizedRect(
         Math.max(width * imageSize.width, height * imageSize.height);
     width = longSide / imageSize.width;
     height = longSide / imageSize.height;
-  } else {
+  } else if (config.squareShort) {
     const shortSide =
         Math.min(width * imageSize.width, height * imageSize.height);
     width = shortSide / imageSize.width;

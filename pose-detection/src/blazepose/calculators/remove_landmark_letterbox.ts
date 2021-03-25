@@ -41,8 +41,7 @@ export function removeLandmarkLetterbox(
     const landmark = rawLandmark[i];
     const newX = (landmark.x - left) / (1 - leftAndRight);
     const newY = (landmark.y - top) / (1 - topAndBottom);
-    const newZ =
-        (landmark.z - top) / (1 - leftAndRight);  // Scale Z coordinate as X.
+    const newZ = landmark.z / (1 - leftAndRight);  // Scale Z coordinate as X.
     landmark.x = newX;
     landmark.y = newY;
     landmark.z = newZ;
