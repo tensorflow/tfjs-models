@@ -180,7 +180,6 @@ const guiState = {
     maxDetections: 5,
     scoreThreshold: 0.3,
     nmsRadius: 20,
-    numKeypointForMatching: 17,
     refineSteps: 10
   },
   segmentation: {
@@ -379,8 +378,6 @@ function setupGui(cameras) {
       guiState.multiPersonDecoding, 'scoreThreshold', 0.0, 1.0);
   multiPersonDecoding.add(guiState.multiPersonDecoding, 'nmsRadius', 0, 30, 1);
   multiPersonDecoding.add(
-      guiState.multiPersonDecoding, 'numKeypointForMatching', 1, 17, 1);
-  multiPersonDecoding.add(
       guiState.multiPersonDecoding, 'refineSteps', 1, 10, 1);
   multiPersonDecoding.open();
 
@@ -525,8 +522,6 @@ async function estimateSegmentation() {
         maxDetections: guiState.multiPersonDecoding.maxDetections,
         scoreThreshold: guiState.multiPersonDecoding.scoreThreshold,
         nmsRadius: guiState.multiPersonDecoding.nmsRadius,
-        numKeypointForMatching:
-            guiState.multiPersonDecoding.numKeypointForMatching,
         refineSteps: guiState.multiPersonDecoding.refineSteps
       });
     case 'person':
@@ -552,8 +547,6 @@ async function estimatePartSegmentation() {
         maxDetections: guiState.multiPersonDecoding.maxDetections,
         scoreThreshold: guiState.multiPersonDecoding.scoreThreshold,
         nmsRadius: guiState.multiPersonDecoding.nmsRadius,
-        numKeypointForMatching:
-            guiState.multiPersonDecoding.numKeypointForMatching,
         refineSteps: guiState.multiPersonDecoding.refineSteps
       });
     case 'person':
