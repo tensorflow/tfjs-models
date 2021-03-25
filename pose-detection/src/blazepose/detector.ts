@@ -170,6 +170,11 @@ export class BlazeposeDetector extends BasePoseDetector {
 
     const {actualLandmarks, auxiliaryLandmarks, poseScore} = poseLandmarks;
 
+    // Smoothes landmarks to reduce jitter.
+    // TODO: Add a flag to control whether run this.
+    const {actualLandmarksFiltered, auxiliaryLandmarksFiltered} =
+        this.poseLandmarkFiltering(actualLandmarks, auxiliaryLandmarks, true);
+
     // Calculates region of interest based on the auxiliary landmarks, to be
     // used in the subsequent image.
     const poseRectFromLandmarks =
@@ -387,4 +392,12 @@ export class BlazeposeDetector extends BasePoseDetector {
 
     return roi;
   }
+
+  // Filter landmarks temporally to reduce jitter.
+  // subgraph: PoseLandmarkFiltering
+  // ref:
+  // https://github.com/google/mediapipe/blob/master/mediapipe/modules/pose_landmark/pose_landmark_filtering.pbtxt
+  private poseLandmarkFiltering(
+      landmarks: Keypoint[], auxiliaryLandmarks: Keypoint[],
+      imageSize: ImageSize, smoothLandmarks: boolean = false) {}
 }
