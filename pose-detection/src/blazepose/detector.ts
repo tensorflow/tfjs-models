@@ -178,27 +178,9 @@ export class BlazeposeDetector extends BasePoseDetector {
     const {actualLandmarks, auxiliaryLandmarks, poseScore} = poseLandmarks;
 
     // Smoothes landmarks to reduce jitter.
-    let actualLandmarksFiltered;
-    let auxiliaryLandmarksFiltered;
-    if (!isVideo(image) || !config.enableSmoothing) {
-      actualLandmarksFiltered = actualLandmarks;
-      auxiliaryLandmarksFiltered = auxiliaryLandmarks;
-    } else {
-      // Smoothes pose landmark visibilities to reduce jitter.
-      if (this.visibilitySmoothingFilterActual == null) {
-        this.visibilitySmoothingFilterActual =
-            new LowPassVisibilityFilter(BLAZEPOSE_VISIBILITY_SMOOTHING_CONFIG);
-      }
-      actualLandmarksFiltered =
-          this.visibilitySmoothingFilterActual.apply(actualLandmarks);
-
-      if (this.visibilitySmoothingFilterAuxiliary == null) {
-        this.visibilitySmoothingFilterAuxiliary =
-            new LowPassVisibilityFilter(BLAZEPOSE_VISIBILITY_SMOOTHING_CONFIG);
-        auxiliaryLandmarksFiltered =
-            this.visibilitySmoothingFilterAuxiliary.apply(auxiliaryLandmarks);
-      }
-    }
+    const {actualLandmarksFiltered, auxiliaryLandmarksFiltered} =
+        this.poseLandmarkFiltering(
+            actualLandmarks, auxiliaryLandmarks, image, config.enableSmoothing);
 
     // Calculates region of interest based on the auxiliary landmarks, to be
     // used in the subsequent image.
@@ -416,5 +398,39 @@ export class BlazeposeDetector extends BasePoseDetector {
         rawRoi, imageSize, BLAZEPOSE_DETECTOR_RECT_TRANSFORMATION_CONFIG);
 
     return roi;
+  }
+
+  // Filter landmarks temporally to reduce jitter.
+  // Subgraph: PoseLandmarkFiltering
+  // ref:
+  // https://github.com/google/mediapipe/blob/master/mediapipe/modules/pose_landmark/pose_landmark_filtering.pbtxt
+  private poseLandmarkFiltering(
+      actualLandmarks: Keypoint[], auxiliaryLandmarks: Keypoint[],
+      image: PoseDetectorInput, enableSmoothing: boolean): {
+    actualLandmarksFiltered: Keypoint[],
+    auxiliaryLandmarksFiltered: Keypoint[]
+  } {
+    let actualLandmarksFiltered;
+    let auxiliaryLandmarksFiltered;
+    if (!isVideo(image) || !enableSmoothing) {
+      actualLandmarksFiltered = actualLandmarks;
+      auxiliaryLandmarksFiltered = auxiliaryLandmarks;
+    } else {
+      // Smoothes pose landmark visibilities to reduce jitter.
+      if (this.visibilitySmoothingFilterActual == null) {
+        this.visibilitySmoothingFilterActual =
+            new LowPassVisibilityFilter(BLAZEPOSE_VISIBILITY_SMOOTHING_CONFIG);
+      }
+      actualLandmarksFiltered =
+          this.visibilitySmoothingFilterActual.apply(actualLandmarks);
+
+      if (this.visibilitySmoothingFilterAuxiliary == null) {
+        this.visibilitySmoothingFilterAuxiliary =
+            new LowPassVisibilityFilter(BLAZEPOSE_VISIBILITY_SMOOTHING_CONFIG);
+        auxiliaryLandmarksFiltered =
+            this.visibilitySmoothingFilterAuxiliary.apply(auxiliaryLandmarks);
+      }
+    }
+    return {actualLandmarksFiltered, auxiliaryLandmarksFiltered};
   }
 }
