@@ -47,11 +47,14 @@ export function calculateLandmarkProjection(
     newY = newY * inputRect.height + inputRect.yCenter;
 
     const newZ = landmark.z * inputRect.width;  // Scale Z coordinate as x.
-    landmark.x = newX;
-    landmark.y = newY;
-    landmark.z = newZ;
 
-    outputLandmarks.push(landmark);
+    const newLandmark = {...landmark};
+
+    newLandmark.x = newX;
+    newLandmark.y = newY;
+    newLandmark.z = newZ;
+
+    outputLandmarks.push(newLandmark);
   }
 
   return outputLandmarks;

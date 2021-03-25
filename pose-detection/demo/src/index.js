@@ -74,7 +74,7 @@ async function renderResult() {
     camera.lastVideoTime = camera.video.currentTime;
 
     const poses = await detector.estimatePoses(
-        video, {maxPoses: 1, flipHorizontal: false});
+        camera.video, {maxPoses: 1, flipHorizontal: false});
 
     camera.drawCtx();
 
@@ -105,7 +105,7 @@ async function app() {
   stats = setupStats();
   camera = await Camera.setupCamera(STATE.camera);
 
-  await createDetector(STATE.model.model);
+  detector = await createDetector(STATE.model.model);
 
   renderPrediction();
 };

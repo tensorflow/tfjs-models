@@ -53,7 +53,7 @@ export function validateModelConfig(modelConfig: BlazeposeModelConfig):
 
 export function validateEstimationConfig(
     estimationConfig: BlazeposeEstimationConfig): BlazeposeEstimationConfig {
-  let config = estimationConfig;
+  let config = {...estimationConfig};
 
   if (config.maxPoses == null) {
     config.maxPoses = 1;
