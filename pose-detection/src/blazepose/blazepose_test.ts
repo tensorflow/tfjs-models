@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2019 Google LLC. All Rights Reserved.
+ * Copyright 2021 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,18 +21,20 @@ import {ALL_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_ut
 
 import * as poseDetection from '../index';
 
-describeWithFlags('PoseNet', ALL_ENVS, () => {
+describeWithFlags('Blazepose', ALL_ENVS, () => {
   let detector: poseDetection.PoseDetector;
+  let startTensors: number;
+
   beforeEach(async () => {
+    startTensors = tf.memory().numTensors;
+
     // Note: this makes a network request for model assets.
+    const modelConfig: poseDetection.BlazeposeModelConfig = {
+      quantBytes: 4,
+      upperBodyOnly: false
+    };
     detector = await poseDetection.createDetector(
-        poseDetection.SupportedModels.PoseNet, {
-          quantBytes: 4,
-          architecture: 'MobileNetV1',
-          outputStride: 16,
-          inputResolution: {width: 514, height: 513},
-          multiplier: 1
-        });
+        poseDetection.SupportedModels.MediapipeBlazepose, modelConfig);
   });
 
   it('estimatePoses does not leak memory', async () => {
@@ -43,5 +45,10 @@ describeWithFlags('PoseNet', ALL_ENVS, () => {
     await detector.estimatePoses(input);
 
     expect(tf.memory().numTensors).toEqual(beforeTensors);
+
+    detector.dispose();
+    input.dispose();
+
+    expect(tf.memory().numTensors).toEqual(startTensors);
   });
 });

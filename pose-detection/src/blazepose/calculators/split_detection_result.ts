@@ -14,12 +14,18 @@
  * limitations under the License.
  * =============================================================================
  */
+import * as tf from '@tensorflow/tfjs-core';
 
-// Entry point to create a new detector instance.
-export {BlazeposeEstimationConfig, BlazeposeModelConfig} from './blazepose/types';
-export {createDetector} from './create_detector';
-// PoseDetector class.
-export {PoseDetector} from './pose_detector';
-export {PoseNetEstimationConfig, PosenetModelConfig} from './posenet/types';
-// Supported models enum.
-export * from './types';
+export function splitDetectionResult(detectionResult: tf.Tensor3D):
+    [tf.Tensor3D, tf.Tensor3D] {
+  return tf.tidy(() => {
+    // Score is stored in the first element in each anchor data.
+    const logits = tf.slice(detectionResult, [0, 0, 0], [1, -1, 1]);
+    const scores = tf.sigmoid(logits);
+    // Bounding box coords are stored in the next four elements for each anchor
+    // point.
+    const rawBoxes = tf.slice(detectionResult, [0, 0, 1], [1, -1, -1]);
+
+    return [scores, rawBoxes];
+  });
+}

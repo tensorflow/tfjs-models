@@ -14,6 +14,8 @@
  * limitations under the License.
  * =============================================================================
  */
+import * as posedetection from '@tensorflow-models/posedetection';
+
 import {STATE, VIDEO_SIZE} from './params';
 
 export function setupDatGui() {
@@ -31,6 +33,15 @@ export function setupDatGui() {
     STATE.changeToSizeOption = option;
   });
   cameraFolder.open();
+
+  // The model folder contains options for model settings.
+  const modelFolder = gui.addFolder('Model');
+  const modelController = modelFolder.add(
+      STATE.model, 'model', Object.values(posedetection.SupportedModels));
+  modelController.onChange(model => {
+    STATE.changeToModel = model;
+  });
+  modelFolder.open();
 
   return gui;
 }

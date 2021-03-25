@@ -28,6 +28,11 @@ export interface PoseDetector {
    */
   estimatePoses(image: PoseDetectorInput, config?: EstimationConfig):
       Promise<Pose[]>;
+
+  /**
+   * Dispose the underlying models from memory.
+   */
+  dispose(): void;
 }
 
 /**
@@ -47,4 +52,6 @@ export abstract class BasePoseDetector implements PoseDetector {
 
   abstract async estimatePoses(
       image: PoseDetectorInput, config?: EstimationConfig): Promise<Pose[]>;
+
+  abstract dispose(): void;
 }

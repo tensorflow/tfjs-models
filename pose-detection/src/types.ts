@@ -17,7 +17,8 @@
 import * as tf from '@tensorflow/tfjs-core';
 
 export enum SupportedModels {
-  PoseNet = 'posenet'
+  PoseNet = 'PoseNet',
+  MediapipeBlazepose = 'MediapipeBlazepose'
 }
 
 export type QuantBytes = 1|2|4;
@@ -36,18 +37,27 @@ export interface ModelConfig {
 }
 
 /**
+ * Common config for the `estimatePoses` method.
+ *
+ * `maxPoses`: Optional. Max number poses to detect. Default to 1, which means
+ * single pose detection. Single pose detection runs more efficiently, while
+ * multi-pose (maxPoses > 1) detection is usually much slower. Multi-pose
+ * detection should only be used when needed.
+ *
+ * `flipHorizontal`: Optional. Default to false. In some cases, the image is
+ * mirrored, e.g. video stream from camera, flipHorizontal will flip the
+ * keypoints horizontally.
+ */
+export interface EstimationConfig {
+  maxPoses?: number;
+  flipHorizontal?: boolean;
+}
+
+/**
  * Allowed input format for the `estimatePoses` method.
  */
 export type PoseDetectorInput =
     tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|HTMLCanvasElement;
-
-/**
- * Common config for the `estimatePoses` method.
- */
-export interface EstimationConfig {
-  maxPoses: number;
-  flipHorizontal?: boolean;
-}
 
 export interface InputResolution {
   width: number;
@@ -60,8 +70,10 @@ export interface InputResolution {
 export interface Keypoint {
   x: number;
   y: number;
+  z?: number;
   score?: number;
   name?: string;
+  visibility?: number;
 }
 
 export interface Pose {

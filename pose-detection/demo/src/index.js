@@ -27,6 +27,22 @@ import {setupStats} from './stats_panel';
 
 let detector, camera, stats;
 
+async function createDetector(model) {
+  switch (model) {
+    case posedetection.SupportedModels.PoseNet:
+      return posedetection.createDetector(STATE.model.model, {
+        quantBytes: 4,
+        architecture: 'MobileNetV1',
+        outputStride: 16,
+        inputResolution: {width: 500, height: 500},
+        multiplier: 0.75
+      });
+    case posedetection.SupportedModels.MediapipeBlazepose:
+      return posedetection.createDetector(
+          STATE.model.model, {quantBytes: 4, upperBodyOnly: false});
+  }
+}
+
 async function checkGuiUpdate() {
   if (STATE.changeToTargetFPS || STATE.changeToSizeOption) {
     if (STATE.changeToTargetFPS) {
@@ -42,6 +58,14 @@ async function checkGuiUpdate() {
     camera = await Camera.setupCamera(STATE.camera);
   }
 
+  if (STATE.changeToModel) {
+    STATE.model.model = STATE.changeToModel;
+    STATE.changeToModel = null;
+
+    detector.dispose();
+    detector = await createDetector(STATE.model.model);
+  }
+
   await tf.nextFrame();
 }
 
@@ -50,12 +74,15 @@ async function renderResult() {
     camera.lastVideoTime = camera.video.currentTime;
 
     const poses = await detector.estimatePoses(
-        video, {maxPoses: 1, flipHorizontal: false});
+        camera.video, {maxPoses: 1, flipHorizontal: false});
 
     camera.drawCtx();
 
     if (poses.length > 0) {
-      camera.drawResult(poses[0]);
+      const shouldScale = STATE.model.model ===
+          posedetection.SupportedModels.MediapipeBlazepose;
+
+      camera.drawResult(poses[0], shouldScale);
     }
   }
 }
@@ -78,14 +105,7 @@ async function app() {
   stats = setupStats();
   camera = await Camera.setupCamera(STATE.camera);
 
-  detector = await posedetection.createDetector(
-      posedetection.SupportedModels.PoseNet, {
-        quantBytes: 4,
-        architecture: 'MobileNetV1',
-        outputStride: 16,
-        inputResolution: {width: 500, height: 500},
-        multiplier: 0.75
-      });
+  detector = await createDetector(STATE.model.model);
 
   renderPrediction();
 };

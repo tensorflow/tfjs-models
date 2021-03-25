@@ -26,3 +26,12 @@ export interface Rect {
   width: number;
   rotation?: number;
 }
+
+export interface BoundingBox {
+  xMin: number;
+  yMin: number;
+  xMax: number;
+  yMax: number;
+  width: number;
+  height: number;
+}
