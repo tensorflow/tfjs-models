@@ -21,6 +21,7 @@ import {convertImageToTensor} from '../calculators/convert_image_to_tensor';
 import {getImageSize, toImageTensor} from '../calculators/image_utils';
 import {ImageSize} from '../calculators/interfaces/common_interfaces';
 import {Rect} from '../calculators/interfaces/shape_interfaces';
+import {isVideo} from '../calculators/is_video';
 import {shiftImageValue} from '../calculators/shift_image_value';
 
 import {BasePoseDetector, PoseDetector} from '../pose_detector';
@@ -37,7 +38,8 @@ import {removeLandmarkLetterbox} from './calculators/remove_landmark_letterbox';
 import {tensorsToDetections} from './calculators/tensors_to_detections';
 import {tensorsToLandmarks} from './calculators/tensors_to_landmarks';
 import {transformNormalizedRect} from './calculators/transform_rect';
-import {BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION, BLAZEPOSE_DETECTOR_IMAGE_TO_TENSOR_CONFIG, BLAZEPOSE_DETECTOR_NON_MAX_SUPPRESSION_CONFIGURATION, BLAZEPOSE_DETECTOR_RECT_TRANSFORMATION_CONFIG, BLAZEPOSE_LANDMARK_IMAGE_TO_TENSOR_CONFIG, BLAZEPOSE_NUM_AUXILIARY_KEYPOINTS_FULLBODY, BLAZEPOSE_NUM_AUXILIARY_KEYPOINTS_UPPERBODY, BLAZEPOSE_NUM_KEYPOINTS_FULLBODY, BLAZEPOSE_NUM_KEYPOINTS_UPPERBODY, BLAZEPOSE_POSE_PRESENCE_SCORE, BLAZEPOSE_TENSORS_TO_DETECTION_CONFIGURATION, BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG_FULLBODY, BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG_UPPERBODY, DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG} from './constants';
+import {LowPassVisibilityFilter} from './calculators/visibility_smoothing';
+import {BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION, BLAZEPOSE_DETECTOR_IMAGE_TO_TENSOR_CONFIG, BLAZEPOSE_DETECTOR_NON_MAX_SUPPRESSION_CONFIGURATION, BLAZEPOSE_DETECTOR_RECT_TRANSFORMATION_CONFIG, BLAZEPOSE_LANDMARK_IMAGE_TO_TENSOR_CONFIG, BLAZEPOSE_NUM_AUXILIARY_KEYPOINTS_FULLBODY, BLAZEPOSE_NUM_AUXILIARY_KEYPOINTS_UPPERBODY, BLAZEPOSE_NUM_KEYPOINTS_FULLBODY, BLAZEPOSE_NUM_KEYPOINTS_UPPERBODY, BLAZEPOSE_POSE_PRESENCE_SCORE, BLAZEPOSE_TENSORS_TO_DETECTION_CONFIGURATION, BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG_FULLBODY, BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG_UPPERBODY, BLAZEPOSE_VISIBILITY_SMOOTHING_CONFIG, DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG} from './constants';
 import {validateEstimationConfig, validateModelConfig} from './detector_utils';
 import {BlazeposeEstimationConfig, BlazeposeModelConfig} from './types';
 
@@ -56,6 +58,8 @@ export class BlazeposeDetector extends BasePoseDetector {
   private anchors: Rect[];
   private anchorTensor: AnchorTensor;
   private regionOfInterest: Rect = null;
+  private visibilitySmoothingFilterActual: LowPassVisibilityFilter;
+  private visibilitySmoothingFilterAuxiliary: LowPassVisibilityFilter;
 
   // Should not be called outside.
   private constructor(
@@ -110,6 +114,9 @@ export class BlazeposeDetector extends BasePoseDetector {
    *
    *       flipHorizontal: Optional. Default to false. When image data comes
    *       from camera, the result has to flip horizontally.
+   *
+   *       enableSmoothing: Optional. Default to false. Smooth pose landmarks
+   *       coordinates and visibility scores to reduce jitter.
    *
    * @return An array of `Pose`s.
 
@@ -171,21 +178,39 @@ export class BlazeposeDetector extends BasePoseDetector {
     const {actualLandmarks, auxiliaryLandmarks, poseScore} = poseLandmarks;
 
     // Smoothes landmarks to reduce jitter.
-    // TODO: Add a flag to control whether run this.
-    const {actualLandmarksFiltered, auxiliaryLandmarksFiltered} =
-        this.poseLandmarkFiltering(actualLandmarks, auxiliaryLandmarks, true);
+    let actualLandmarksFiltered;
+    let auxiliaryLandmarksFiltered;
+    if (!isVideo(image) || !config.enableSmoothing) {
+      actualLandmarksFiltered = actualLandmarks;
+      auxiliaryLandmarksFiltered = auxiliaryLandmarks;
+    } else {
+      // Smoothes pose landmark visibilities to reduce jitter.
+      if (this.visibilitySmoothingFilterActual == null) {
+        this.visibilitySmoothingFilterActual =
+            new LowPassVisibilityFilter(BLAZEPOSE_VISIBILITY_SMOOTHING_CONFIG);
+      }
+      actualLandmarksFiltered =
+          this.visibilitySmoothingFilterActual.apply(actualLandmarks);
+
+      if (this.visibilitySmoothingFilterAuxiliary == null) {
+        this.visibilitySmoothingFilterAuxiliary =
+            new LowPassVisibilityFilter(BLAZEPOSE_VISIBILITY_SMOOTHING_CONFIG);
+        auxiliaryLandmarksFiltered =
+            this.visibilitySmoothingFilterAuxiliary.apply(auxiliaryLandmarks);
+      }
+    }
 
     // Calculates region of interest based on the auxiliary landmarks, to be
     // used in the subsequent image.
     const poseRectFromLandmarks =
-        this.poseLandmarksToRoi(auxiliaryLandmarks, imageSize);
+        this.poseLandmarksToRoi(auxiliaryLandmarksFiltered, imageSize);
 
     // Cache roi for next image.
     this.regionOfInterest = poseRectFromLandmarks;
 
     image3d.dispose();
 
-    const pose: Pose = {score: poseScore, keypoints: actualLandmarks};
+    const pose: Pose = {score: poseScore, keypoints: actualLandmarksFiltered};
 
     return [pose];
   }
@@ -392,12 +417,4 @@ export class BlazeposeDetector extends BasePoseDetector {
 
     return roi;
   }
-
-  // Filter landmarks temporally to reduce jitter.
-  // subgraph: PoseLandmarkFiltering
-  // ref:
-  // https://github.com/google/mediapipe/blob/master/mediapipe/modules/pose_landmark/pose_landmark_filtering.pbtxt
-  private poseLandmarkFiltering(
-      landmarks: Keypoint[], auxiliaryLandmarks: Keypoint[],
-      imageSize: ImageSize, smoothLandmarks: boolean = false) {}
 }

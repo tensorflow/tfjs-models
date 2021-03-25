@@ -40,4 +40,6 @@ export interface BlazeposeModelConfig extends ModelConfig {
   landmarkModelUrl?: string;
 }
 
-export interface BlazeposeEstimationConfig extends EstimationConfig {}
+export interface BlazeposeEstimationConfig extends EstimationConfig {
+  enableSmoothing?: boolean;
+}

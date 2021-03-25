@@ -69,5 +69,9 @@ export function validateEstimationConfig(
         'to 1.');
   }
 
+  if (config.enableSmoothing == null) {
+    config.enableSmoothing = false;
+  }
+
   return config;
 }

@@ -15,15 +15,40 @@
  * =============================================================================
  */
 
-/**
- * Performs geometric transformation to the input normalized rectangle,
- * correpsonding to input normalized rectangle respectively.
- * @param rect The normalized rectangle.
- * @param imageSize The original imageSize.
- * @param config See documentation in `RectTransformationConfig`.
- */
-// ref:
-// https://github.com/google/mediapipe/blob/master/mediapipe/calculators/util/rect_transformation_calculator.cc
-export function visibilitySmoothing(): {
+import {LowPassFilter} from '../../calculators/low_pass_filter';
+import {Keypoint} from '../../types';
+import {VisibilitySmoothingCalculatorConfig} from './interfaces/config_interfaces';
 
+/**
+ * Smoothing visibility using a `LowPassFilter` for each landmark.
+ */
+export class LowPassVisibilityFilter {
+  private alpha: number;
+  private visibilityFilters: LowPassFilter[];
+
+  constructor(config: VisibilitySmoothingCalculatorConfig) {
+    this.alpha = config.alpha;
+  };
+
+  apply(landmarks: Keypoint[]) {
+    if (this.visibilityFilters == null) {
+      this.visibilityFilters =
+          landmarks.map(_ => new LowPassFilter(this.alpha));
+    }
+
+    const outLandmarks = [];
+
+    // Filter visibilities.
+    for (let i = 0; i < landmarks.length; ++i) {
+      const landmark = landmarks[i];
+
+      const outLandmark = {...landmark};
+      outLandmark.visibility =
+          this.visibilityFilters[i].apply(landmark.visibility);
+
+      outLandmarks.push(outLandmark);
+    }
+
+    return outLandmarks;
+  }
 }
