@@ -96,8 +96,8 @@ export class Camera {
   /**
    * Draw the keypoints on the video.
    * @param keypoints A list of keypoints, may be normalized.
-   * @param scale If the keypoints are normalized, need to pass in the video
-   *     width and height to scale to the actual coord.
+   * @param shouldScale If the keypoints are normalized, shouldScale should be
+   *     set to true.
    */
   drawKeypoints(keypoints, shouldScale) {
     const scaleX = shouldScale ? this.video.videoWidth : 1;

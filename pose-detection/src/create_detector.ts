@@ -35,7 +35,7 @@ export async function createDetector(
     case SupportedModels.PoseNet:
       return PosenetDetector.load(modelConfig as PosenetModelConfig);
     case SupportedModels.MediapipeBlazepose:
-      return BlazeposeDetector.load(modelConfig);
+      return BlazeposeDetector.load(modelConfig as BlazeposeModelConfig);
     default:
       throw new Error(`${model} is not a supported model name.`);
   }

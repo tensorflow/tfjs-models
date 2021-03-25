@@ -42,4 +42,3 @@ export interface Detection {
   labelId?: number[];
   ind?: number;
 }
-;

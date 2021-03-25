@@ -175,4 +175,8 @@ export class PosenetDetector extends BasePoseDetector {
 
     return scaledPoses;
   }
+
+  dispose() {
+    this.posenetModel.dispose();
+  }
 }

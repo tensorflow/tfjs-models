@@ -177,6 +177,12 @@ export class BlazeposeDetector extends BasePoseDetector {
     return [pose];
   }
 
+  dispose() {
+    this.detectorModel.dispose();
+    this.landmarkModel.dispose();
+    tf.dispose(Object.values(this.anchorTensor));
+  }
+
   // Detects poses.
   // Subgraph: PoseDetectionCpu.
   // ref:

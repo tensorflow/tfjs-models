@@ -23,7 +23,11 @@ import * as poseDetection from '../index';
 
 describeWithFlags('Blazepose', ALL_ENVS, () => {
   let detector: poseDetection.PoseDetector;
+  let startTensors: number;
+
   beforeEach(async () => {
+    startTensors = tf.memory().numTensors;
+
     // Note: this makes a network request for model assets.
     const modelConfig: poseDetection.BlazeposeModelConfig = {
       quantBytes: 4,
@@ -46,5 +50,10 @@ describeWithFlags('Blazepose', ALL_ENVS, () => {
     await detector.estimatePoses(input, estimationConfig);
 
     expect(tf.memory().numTensors).toEqual(beforeTensors);
+
+    detector.dispose();
+    input.dispose();
+
+    expect(tf.memory().numTensors).toEqual(startTensors);
   });
 });
