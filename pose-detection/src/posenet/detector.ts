@@ -27,7 +27,7 @@ import {decodeSinglePose} from './calculators/decode_single_pose';
 import {flipPosesHorizontal} from './calculators/flip_poses';
 import {scalePoses} from './calculators/scale_poses';
 
-import {MOBILENET_V1_CONFIG, RESNET_MEAN} from './constants';
+import {MOBILENET_V1_CONFIG, RESNET_MEAN, SINGLE_PERSON_ESTIMATION_CONFIG} from './constants';
 import {assertValidOutputStride, assertValidResolution, validateEstimationConfig, validateModelConfig} from './detector_utils';
 import {getValidInputResolutionDimensions, mobileNetCheckpoint, resNet50Checkpoint} from './load_utils';
 import {PoseNetArchitecture, PoseNetEstimationConfig, PosenetModelConfig, PoseNetOutputStride} from './types';
@@ -111,17 +111,21 @@ export class PosenetDetector extends BasePoseDetector {
    * image to feed through the network.
    *
    * @param config
-   *       maxPoses: Max number of poses to estimate. When maxPoses = 1, a
-   *       single pose is detected, it is usually much more efficient than
-   *       maxPoses > 1. When maxPoses > 1, multiple poses are detected.
-   *       flipHorizontal?: Optional. Default to false. When image data comes
+   *       maxPoses: Optional. Max number of poses to estimate.
+   *       When maxPoses = 1, a single pose is detected, it is usually much more
+   *       efficient than maxPoses > 1. When maxPoses > 1, multiple poses are
+   *       detected.
+   *
+   *       flipHorizontal: Optional. Default to false. When image data comes
    *       from camera, the result has to flip horizontally.
    *
    * @return An array of `Pose`s.
    */
   async estimatePoses(
       image: PoseDetectorInput,
-      estimationConfig: PoseNetEstimationConfig): Promise<Pose[]> {
+      estimationConfig:
+          PoseNetEstimationConfig = SINGLE_PERSON_ESTIMATION_CONFIG):
+      Promise<Pose[]> {
     const config = validateEstimationConfig(estimationConfig);
 
     if (image == null) {

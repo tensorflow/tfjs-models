@@ -40,7 +40,7 @@ describeWithFlags('PoseNet', ALL_ENVS, () => {
 
     const beforeTensors = tf.memory().numTensors;
 
-    await detector.estimatePoses(input, {maxPoses: 1, flipHorizontal: false});
+    await detector.estimatePoses(input);
 
     expect(tf.memory().numTensors).toEqual(beforeTensors);
   });

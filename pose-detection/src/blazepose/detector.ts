@@ -37,7 +37,7 @@ import {removeLandmarkLetterbox} from './calculators/remove_landmark_letterbox';
 import {tensorsToDetections} from './calculators/tensors_to_detections';
 import {tensorsToLandmarks} from './calculators/tensors_to_landmarks';
 import {transformNormalizedRect} from './calculators/transform_rect';
-import {BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION, BLAZEPOSE_DETECTOR_IMAGE_TO_TENSOR_CONFIG, BLAZEPOSE_DETECTOR_NON_MAX_SUPPRESSION_CONFIGURATION, BLAZEPOSE_DETECTOR_RECT_TRANSFORMATION_CONFIG, BLAZEPOSE_LANDMARK_IMAGE_TO_TENSOR_CONFIG, BLAZEPOSE_POSE_PRESENCE_SCORE, BLAZEPOSE_TENSORS_TO_DETECTION_CONFIGURATION, BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG_FULLBODY, BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG_UPPERBODY} from './constants';
+import {BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION, BLAZEPOSE_DETECTOR_IMAGE_TO_TENSOR_CONFIG, BLAZEPOSE_DETECTOR_NON_MAX_SUPPRESSION_CONFIGURATION, BLAZEPOSE_DETECTOR_RECT_TRANSFORMATION_CONFIG, BLAZEPOSE_LANDMARK_IMAGE_TO_TENSOR_CONFIG, BLAZEPOSE_POSE_PRESENCE_SCORE, BLAZEPOSE_TENSORS_TO_DETECTION_CONFIGURATION, BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG_FULLBODY, BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG_UPPERBODY, DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG} from './constants';
 import {validateEstimationConfig, validateModelConfig} from './detector_utils';
 import {BlazeposeEstimationConfig, BlazeposeModelConfig} from './types';
 
@@ -103,20 +103,25 @@ export class BlazeposeDetector extends BasePoseDetector {
    * image to feed through the network.
    *
    * @param config
-   *       maxPoses: Max number of poses to estimate. When maxPoses = 1, a
-   *       single pose is detected, it is usually much more efficient than
-   *       maxPoses > 1. When maxPoses > 1, multiple poses are detected.
-   *       flipHorizontal?: Optional. Default to false. When image data comes
+   *       maxPoses: Optional. Max number of poses to estimate.
+   *       When maxPoses = 1, a single pose is detected, it is usually much more
+   *       efficient than maxPoses > 1. When maxPoses > 1, multiple poses are
+   *       detected.
+   *
+   *       flipHorizontal: Optional. Default to false. When image data comes
    *       from camera, the result has to flip horizontally.
    *
    * @return An array of `Pose`s.
+
    */
   // TF.js implementation of the mediapipe pose detection pipeline.
   // ref graph:
   // https://github.com/google/mediapipe/blob/master/mediapipe/modules/pose_landmark/pose_landmark_cpu.pbtxt
   async estimatePoses(
       image: PoseDetectorInput,
-      estimationConfig: BlazeposeEstimationConfig): Promise<Pose[]> {
+      estimationConfig:
+          BlazeposeEstimationConfig = DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG):
+      Promise<Pose[]> {
     const config = validateEstimationConfig(estimationConfig);
 
     if (image == null) {

@@ -18,7 +18,7 @@
 import * as tf from '@tensorflow/tfjs-core';
 import {InputResolution} from '../types';
 
-import {MOBILENET_V1_CONFIG, MULTI_PERSON_ESTIMATION_CONFIG, SINGLE_PERSON_ESTIMATION_CONFIG, VALID_ARCHITECTURE, VALID_MULTIPLIER, VALID_OUTPUT_STRIDES, VALID_QUANT_BYTES, VALID_STRIDE} from './constants';
+import {MOBILENET_V1_CONFIG, MULTI_PERSON_ESTIMATION_CONFIG, VALID_ARCHITECTURE, VALID_MULTIPLIER, VALID_OUTPUT_STRIDES, VALID_QUANT_BYTES, VALID_STRIDE} from './constants';
 import {PoseNetEstimationConfig, PosenetModelConfig, PoseNetOutputStride} from './types';
 
 export function validateModelConfig(modelConfig: PosenetModelConfig):
@@ -109,16 +109,17 @@ export function assertValidResolution(
 
 export function validateEstimationConfig(
     estimationConfig: PoseNetEstimationConfig): PoseNetEstimationConfig {
-  let config = estimationConfig || SINGLE_PERSON_ESTIMATION_CONFIG;
+  let config = estimationConfig;
+
+  if (config.maxPoses == null) {
+    config.maxPoses = 1;
+  }
 
   if (config.maxPoses <= 0) {
     throw new Error(`Invalid maxPoses ${config.maxPoses}. Should be > 0.`);
   }
 
-  if (config.maxPoses === 1) {
-    // Single pose estimation.
-    config = {...SINGLE_PERSON_ESTIMATION_CONFIG, ...config};
-  } else {
+  if (config.maxPoses > 1) {
     // Multi-poses estimation, needs additional check for multi-poses
     // parameters.
     config = {...MULTI_PERSON_ESTIMATION_CONFIG, ...config};

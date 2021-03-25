@@ -38,9 +38,18 @@ export interface ModelConfig {
 
 /**
  * Common config for the `estimatePoses` method.
+ *
+ * `maxPoses`: Optional. Max number poses to detect. Default to 1, which means
+ * single pose detection. Single pose detection runs more efficiently, while
+ * multi-pose (maxPoses > 1) detection is usually much slower. Multi-pose
+ * detection should only be used when needed.
+ *
+ * `flipHorizontal`: Optional. Default to false. In some cases, the image is
+ * mirrored, e.g. video stream from camera, flipHorizontal will flip the
+ * keypoints horizontally.
  */
 export interface EstimationConfig {
-  maxPoses: number;
+  maxPoses?: number;
   flipHorizontal?: boolean;
 }
 

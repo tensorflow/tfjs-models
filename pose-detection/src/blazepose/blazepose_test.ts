@@ -42,12 +42,7 @@ describeWithFlags('Blazepose', ALL_ENVS, () => {
 
     const beforeTensors = tf.memory().numTensors;
 
-    const estimationConfig: poseDetection.BlazeposeEstimationConfig = {
-      maxPoses: 1,
-      flipHorizontal: false
-    };
-
-    await detector.estimatePoses(input, estimationConfig);
+    await detector.estimatePoses(input);
 
     expect(tf.memory().numTensors).toEqual(beforeTensors);
 
