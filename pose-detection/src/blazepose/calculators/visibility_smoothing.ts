@@ -31,7 +31,8 @@ export class LowPassVisibilityFilter {
   };
 
   apply(landmarks: Keypoint[]) {
-    if (this.visibilityFilters == null) {
+    if (this.visibilityFilters == null ||
+        (this.visibilityFilters.length !== landmarks.length)) {
       this.visibilityFilters =
           landmarks.map(_ => new LowPassFilter(this.alpha));
     }
