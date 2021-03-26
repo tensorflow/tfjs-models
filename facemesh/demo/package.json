@@ -34,7 +34,7 @@
     "cross-env": "^5.2.0",
     "eslint": "^4.19.1",
     "eslint-config-google": "^0.9.1",
-    "parcel-bundler": "^1.12.4",
+    "parcel-bundler": "^1.12.5",
     "yalc": "~1.0.0-pre.27"
   },
   "eslintConfig": {

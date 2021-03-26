@@ -9,10 +9,10 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow-models/posenet": "file:../dist",
-    "@tensorflow/tfjs-backend-webgl": "^3.0.0-rc.1",
-    "@tensorflow/tfjs-converter": "^3.0.0-rc.1",
-    "@tensorflow/tfjs-core": "^3.0.0-rc.1",
+    "@tensorflow-models/posenet": "2.2.2",
+    "@tensorflow/tfjs-backend-webgl": "^3.3.0",
+    "@tensorflow/tfjs-converter": "^3.3.0",
+    "@tensorflow/tfjs-core": "^3.3.0",
     "stats.js": "^0.17.0"
   },
   "scripts": {
@@ -36,8 +36,8 @@
     "dat.gui": "^0.7.2",
     "eslint": "^4.19.1",
     "eslint-config-google": "^0.9.1",
-    "parcel-bundler": "~1.12.4",
-    "yalc": "~1.0.0-pre.27"
+    "parcel-bundler": "~1.12.5",
+    "yalc": "~1.0.0-pre.50"
   },
   "eslintConfig": {
     "extends": "google",

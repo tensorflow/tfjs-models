@@ -9,11 +9,11 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow-models/mobilenet": "link:../dist",
-    "@tensorflow/tfjs-backend-cpu": "^3.1.0",
-    "@tensorflow/tfjs-backend-webgl": "^3.1.0",
-    "@tensorflow/tfjs-converter": "^3.1.0",
-    "@tensorflow/tfjs-core": "^3.1.0"
+    "@tensorflow-models/mobilenet": "2.1.0",
+    "@tensorflow/tfjs-backend-cpu": "^3.3.0",
+    "@tensorflow/tfjs-backend-webgl": "^3.3.0",
+    "@tensorflow/tfjs-converter": "^3.3.0",
+    "@tensorflow/tfjs-core": "^3.3.0"
   },
   "scripts": {
     "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr --open",
@@ -32,6 +32,6 @@
     "babel-preset-env": "^1.7.0",
     "clang-format": "~1.2.2",
     "cross-env": "^5.2.0",
-    "parcel-bundler": "~1.12.4"
+    "parcel-bundler": "~1.12.5"
   }
 }
