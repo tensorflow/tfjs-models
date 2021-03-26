@@ -122,7 +122,8 @@ export class Pipeline {
             const predictionBoxCPU = {
               startPoint: tf.squeeze(prediction.box.startPoint).arraySync() as
                   Coord2D,
-              endPoint: tf.squeeze(prediction.box.endPoint).arraySync() as Coord2D
+              endPoint: tf.squeeze(prediction.box.endPoint).arraySync() as
+                  Coord2D
             };
 
             const scaledBox =
