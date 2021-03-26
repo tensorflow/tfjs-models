@@ -118,7 +118,7 @@ export class BlazeposeDetector extends BasePoseDetector {
    *       flipHorizontal: Optional. Default to false. When image data comes
    *       from camera, the result has to flip horizontally.
    *
-   *       enableSmoothing: Optional. Default to false. Smooth pose landmarks
+   *       enableSmoothing: Optional. Default to true. Smooth pose landmarks
    *       coordinates and visibility scores to reduce jitter.
    *
    * @return An array of `Pose`s.

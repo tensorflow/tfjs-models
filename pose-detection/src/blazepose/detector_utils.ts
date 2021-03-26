@@ -70,7 +70,7 @@ export function validateEstimationConfig(
   }
 
   if (config.enableSmoothing == null) {
-    config.enableSmoothing = false;
+    config.enableSmoothing = true;
   }
 
   return config;

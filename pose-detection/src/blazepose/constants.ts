@@ -45,7 +45,7 @@ export const BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION = {
 export const DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG = {
   maxPoses: 1,
   flipHorizontal: false,
-  enableSmoothing: false
+  enableSmoothing: true
 };
 export const BLAZEPOSE_DETECTION_MODEL_INPUT_RESOLUTION = {
   width: 128,
