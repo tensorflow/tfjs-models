@@ -23,7 +23,7 @@ export function validateModelConfig(modelConfig: BlazeposeModelConfig):
   let config;
 
   if (modelConfig == null) {
-    config = DEFAULT_BLAZEPOSE_FULLBODY_CONFIG;
+    config = {...DEFAULT_BLAZEPOSE_FULLBODY_CONFIG};
   } else {
     config = {...modelConfig};
   }

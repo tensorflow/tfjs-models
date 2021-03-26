@@ -37,15 +37,15 @@ export function removeLandmarkLetterbox(
   const leftAndRight = padding.left + padding.right;
   const topAndBottom = padding.top + padding.bottom;
 
-  for (let i = 0; i < rawLandmark.length; ++i) {
-    const landmark = rawLandmark[i];
-    const newX = (landmark.x - left) / (1 - leftAndRight);
-    const newY = (landmark.y - top) / (1 - topAndBottom);
-    const newZ = landmark.z / (1 - leftAndRight);  // Scale Z coordinate as X.
-    landmark.x = newX;
-    landmark.y = newY;
-    landmark.z = newZ;
-  }
+  const outLandmarks = rawLandmark.map(landmark => {
+    return {
+      ...landmark,
+      x: (landmark.x - left) / (1 - leftAndRight),
+      y: (landmark.y - top) / (1 - topAndBottom),
+      z: landmark.z / (1 - leftAndRight)  // Scale Z coordinate as X.
+    };
+  });
 
-  return rawLandmark;
+
+  return outLandmarks;
 }

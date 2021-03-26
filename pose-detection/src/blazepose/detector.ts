@@ -39,7 +39,7 @@ import {tensorsToDetections} from './calculators/tensors_to_detections';
 import {tensorsToLandmarks} from './calculators/tensors_to_landmarks';
 import {transformNormalizedRect} from './calculators/transform_rect';
 import {LowPassVisibilityFilter} from './calculators/visibility_smoothing';
-import {BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION, BLAZEPOSE_DETECTOR_IMAGE_TO_TENSOR_CONFIG, BLAZEPOSE_DETECTOR_NON_MAX_SUPPRESSION_CONFIGURATION, BLAZEPOSE_DETECTOR_RECT_TRANSFORMATION_CONFIG, BLAZEPOSE_LANDMARK_IMAGE_TO_TENSOR_CONFIG, BLAZEPOSE_NUM_AUXILIARY_KEYPOINTS_FULLBODY, BLAZEPOSE_NUM_AUXILIARY_KEYPOINTS_UPPERBODY, BLAZEPOSE_NUM_KEYPOINTS_FULLBODY, BLAZEPOSE_NUM_KEYPOINTS_UPPERBODY, BLAZEPOSE_POSE_PRESENCE_SCORE, BLAZEPOSE_TENSORS_TO_DETECTION_CONFIGURATION, BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG_FULLBODY, BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG_UPPERBODY, BLAZEPOSE_VISIBILITY_SMOOTHING_CONFIG, DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG} from './constants';
+import * as constants from './constants';
 import {validateEstimationConfig, validateModelConfig} from './detector_utils';
 import {BlazeposeEstimationConfig, BlazeposeModelConfig} from './types';
 
@@ -70,7 +70,8 @@ export class BlazeposeDetector extends BasePoseDetector {
 
     this.upperBodyOnly = config.upperBodyOnly;
 
-    this.anchors = createSsdAnchors(BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION);
+    this.anchors =
+        createSsdAnchors(constants.BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION);
     const anchorW = tf.tensor1d(this.anchors.map(a => a.width));
     const anchorH = tf.tensor1d(this.anchors.map(a => a.height));
     const anchorX = tf.tensor1d(this.anchors.map(a => a.xCenter));
@@ -90,8 +91,10 @@ export class BlazeposeDetector extends BasePoseDetector {
   static async load(modelConfig: BlazeposeModelConfig): Promise<PoseDetector> {
     const config = validateModelConfig(modelConfig);
 
-    const detectorModel = await tfconv.loadGraphModel(config.detectorModelUrl);
-    const landmarkModel = await tfconv.loadGraphModel(config.landmarkModelUrl);
+    const [detectorModel, landmarkModel] = await Promise.all([
+      tfconv.loadGraphModel(config.detectorModelUrl),
+      tfconv.loadGraphModel(config.landmarkModelUrl)
+    ]);
 
     return new BlazeposeDetector(detectorModel, landmarkModel, config);
   }
@@ -126,9 +129,8 @@ export class BlazeposeDetector extends BasePoseDetector {
   // https://github.com/google/mediapipe/blob/master/mediapipe/modules/pose_landmark/pose_landmark_cpu.pbtxt
   async estimatePoses(
       image: PoseDetectorInput,
-      estimationConfig:
-          BlazeposeEstimationConfig = DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG):
-      Promise<Pose[]> {
+      estimationConfig: BlazeposeEstimationConfig =
+          constants.DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG): Promise<Pose[]> {
     const config = validateEstimationConfig(estimationConfig);
 
     if (image == null) {
@@ -211,8 +213,8 @@ export class BlazeposeDetector extends BasePoseDetector {
     // PoseDetectionCpu: ImageToTensorCalculator
     // Transforms the input image into a 128x128 while keeping the aspect ratio
     // resulting in potential letterboxing in the transformed image.
-    const {imageTensor, padding} =
-        convertImageToTensor(image, BLAZEPOSE_DETECTOR_IMAGE_TO_TENSOR_CONFIG);
+    const {imageTensor, padding} = convertImageToTensor(
+        image, constants.BLAZEPOSE_DETECTOR_IMAGE_TO_TENSOR_CONFIG);
 
     const imageValueShifted = shiftImageValue(imageTensor, [-1, 1]);
 
@@ -225,14 +227,15 @@ export class BlazeposeDetector extends BasePoseDetector {
     // PoseDetectionCpu: TensorsToDetectionsCalculator
     const detections: Detection[] = await tensorsToDetections(
         [scores, boxes], this.anchorTensor,
-        BLAZEPOSE_TENSORS_TO_DETECTION_CONFIGURATION);
+        constants.BLAZEPOSE_TENSORS_TO_DETECTION_CONFIGURATION);
 
     // PoseDetectionCpu: NonMaxSuppressionCalculator
     const selectedDetections = await nonMaxSuppression(
         detections, this.maxPoses,
-        BLAZEPOSE_DETECTOR_NON_MAX_SUPPRESSION_CONFIGURATION
+        constants.BLAZEPOSE_DETECTOR_NON_MAX_SUPPRESSION_CONFIGURATION
             .minSuppressionThreshold,
-        BLAZEPOSE_DETECTOR_NON_MAX_SUPPRESSION_CONFIGURATION.minScoreThreshold);
+        constants.BLAZEPOSE_DETECTOR_NON_MAX_SUPPRESSION_CONFIGURATION
+            .minScoreThreshold);
 
     // PoseDetectionCpu: DetectionLetterboxRemovalCalculator
     const newDetections = removeDetectionLetterbox(selectedDetections, padding);
@@ -274,7 +277,8 @@ export class BlazeposeDetector extends BasePoseDetector {
     // Expands pose rect with marging used during training.
     // PoseDetectionToRoi: RectTransformationCalculation.
     const roi = transformNormalizedRect(
-        rawRoi, imageSize, BLAZEPOSE_DETECTOR_RECT_TRANSFORMATION_CONFIG);
+        rawRoi, imageSize,
+        constants.BLAZEPOSE_DETECTOR_RECT_TRANSFORMATION_CONFIG);
 
     return roi;
   }
@@ -288,7 +292,7 @@ export class BlazeposeDetector extends BasePoseDetector {
     // Transforms the input image into a 256x256 tensor while keeping the aspect
     // ratio, resulting in potential letterboxing in the transformed image.
     const {imageTensor, padding} = convertImageToTensor(
-        image, BLAZEPOSE_LANDMARK_IMAGE_TO_TENSOR_CONFIG, poseRect);
+        image, constants.BLAZEPOSE_LANDMARK_IMAGE_TO_TENSOR_CONFIG, poseRect);
 
     const imageValueShifted = shiftImageValue(imageTensor, [0, 1]);
 
@@ -311,16 +315,9 @@ export class BlazeposeDetector extends BasePoseDetector {
     const landmarkResult =
         this.landmarkModel.predict(imageValueShifted) as tf.Tensor[];
 
-    let landmarkTensor;
-    let poseFlag;
-
-    if (this.upperBodyOnly) {
-      landmarkTensor = landmarkResult[1] as tf.Tensor2D;
-      poseFlag = landmarkResult[2] as tf.Tensor2D;
-    } else {
-      landmarkTensor = landmarkResult[3] as tf.Tensor2D;
-      poseFlag = landmarkResult[2] as tf.Tensor2D;
-    }
+    const landmarkTensor =
+        landmarkResult[this.upperBodyOnly ? 1 : 3] as tf.Tensor2D;
+    const poseFlag = landmarkResult[2] as tf.Tensor2D;
 
     // Converts the pose-flag tensor into a float that represents the
     // confidence score of pose presence.
@@ -328,7 +325,7 @@ export class BlazeposeDetector extends BasePoseDetector {
 
     // Applies a threshold to the confidence score to determine whether a pose
     // is present.
-    if (poseScore < BLAZEPOSE_POSE_PRESENCE_SCORE) {
+    if (poseScore < constants.BLAZEPOSE_POSE_PRESENCE_SCORE) {
       tf.dispose(landmarkResult);
       tf.dispose([imageTensor, imageValueShifted]);
 
@@ -340,8 +337,9 @@ export class BlazeposeDetector extends BasePoseDetector {
     // PoseLandmarkByRoiCpu: TensorsToLandmarksCalculator.
     const landmarks = await tensorsToLandmarks(
         landmarkTensor,
-        this.upperBodyOnly ? BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG_UPPERBODY :
-                             BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG_FULLBODY);
+        this.upperBodyOnly ?
+            constants.BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG_UPPERBODY :
+            constants.BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG_FULLBODY);
 
     // Adjusts landmarks (already normalized to [0.0, 1.0]) on the letterboxed
     // pose image to the corresponding locations on the same image with the
@@ -358,15 +356,16 @@ export class BlazeposeDetector extends BasePoseDetector {
     // Splits the landmarks into two sets: the actual pose landmarks and the
     // auxiliary landmarks.
     const actualLandmarks = this.upperBodyOnly ?
-        landmarksProjected.slice(0, BLAZEPOSE_NUM_KEYPOINTS_UPPERBODY) :
-        landmarksProjected.slice(0, BLAZEPOSE_NUM_KEYPOINTS_FULLBODY);
+        landmarksProjected.slice(
+            0, constants.BLAZEPOSE_NUM_KEYPOINTS_UPPERBODY) :
+        landmarksProjected.slice(0, constants.BLAZEPOSE_NUM_KEYPOINTS_FULLBODY);
     const auxiliaryLandmarks = this.upperBodyOnly ?
         landmarksProjected.slice(
-            BLAZEPOSE_NUM_KEYPOINTS_UPPERBODY,
-            BLAZEPOSE_NUM_AUXILIARY_KEYPOINTS_UPPERBODY) :
+            constants.BLAZEPOSE_NUM_KEYPOINTS_UPPERBODY,
+            constants.BLAZEPOSE_NUM_AUXILIARY_KEYPOINTS_UPPERBODY) :
         landmarksProjected.slice(
-            BLAZEPOSE_NUM_KEYPOINTS_FULLBODY,
-            BLAZEPOSE_NUM_AUXILIARY_KEYPOINTS_FULLBODY);
+            constants.BLAZEPOSE_NUM_KEYPOINTS_FULLBODY,
+            constants.BLAZEPOSE_NUM_AUXILIARY_KEYPOINTS_FULLBODY);
 
     tf.dispose(landmarkResult);
     tf.dispose([imageTensor, imageValueShifted]);
@@ -395,7 +394,8 @@ export class BlazeposeDetector extends BasePoseDetector {
     // Expands pose rect with marging used during training.
     // PoseLandmarksToRoi: RectTransformationCalculator.
     const roi = transformNormalizedRect(
-        rawRoi, imageSize, BLAZEPOSE_DETECTOR_RECT_TRANSFORMATION_CONFIG);
+        rawRoi, imageSize,
+        constants.BLAZEPOSE_DETECTOR_RECT_TRANSFORMATION_CONFIG);
 
     return roi;
   }
@@ -418,15 +418,15 @@ export class BlazeposeDetector extends BasePoseDetector {
     } else {
       // Smoothes pose landmark visibilities to reduce jitter.
       if (this.visibilitySmoothingFilterActual == null) {
-        this.visibilitySmoothingFilterActual =
-            new LowPassVisibilityFilter(BLAZEPOSE_VISIBILITY_SMOOTHING_CONFIG);
+        this.visibilitySmoothingFilterActual = new LowPassVisibilityFilter(
+            constants.BLAZEPOSE_VISIBILITY_SMOOTHING_CONFIG);
       }
       actualLandmarksFiltered =
           this.visibilitySmoothingFilterActual.apply(actualLandmarks);
 
       if (this.visibilitySmoothingFilterAuxiliary == null) {
-        this.visibilitySmoothingFilterAuxiliary =
-            new LowPassVisibilityFilter(BLAZEPOSE_VISIBILITY_SMOOTHING_CONFIG);
+        this.visibilitySmoothingFilterAuxiliary = new LowPassVisibilityFilter(
+            constants.BLAZEPOSE_VISIBILITY_SMOOTHING_CONFIG);
         auxiliaryLandmarksFiltered =
             this.visibilitySmoothingFilterAuxiliary.apply(auxiliaryLandmarks);
       }

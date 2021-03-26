@@ -34,9 +34,7 @@ export function calculateLandmarkProjection(
       ignoreRotation: false
     }) {
   const outputLandmarks = [];
-  for (let i = 0; i < landmarks.length; ++i) {
-    const landmark = landmarks[i];
-
+  for (const landmark of landmarks) {
     const x = landmark.x - 0.5;
     const y = landmark.y - 0.5;
     const angle = config.ignoreRotation ? 0 : inputRect.rotation;
