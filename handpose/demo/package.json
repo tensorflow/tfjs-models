@@ -9,7 +9,7 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow-models/handpose": "0.0.7",
+    "@tensorflow-models/handpose": "file:../dist",
     "@tensorflow/tfjs-core": "^3.3.0",
     "@tensorflow/tfjs-converter": "^3.3.0",
     "@tensorflow/tfjs-backend-webgl": "^3.3.0",

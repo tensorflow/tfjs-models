@@ -9,7 +9,7 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow-models/speech-commands": "0.5.4",
+    "@tensorflow-models/speech-commands": "file:../dist",
     "stats.js": "^0.17.0"
   },
   "scripts": {
