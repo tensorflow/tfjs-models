@@ -427,9 +427,9 @@ export class BlazeposeDetector extends BasePoseDetector {
       if (this.visibilitySmoothingFilterAuxiliary == null) {
         this.visibilitySmoothingFilterAuxiliary = new LowPassVisibilityFilter(
             constants.BLAZEPOSE_VISIBILITY_SMOOTHING_CONFIG);
-        auxiliaryLandmarksFiltered =
-            this.visibilitySmoothingFilterAuxiliary.apply(auxiliaryLandmarks);
       }
+      auxiliaryLandmarksFiltered =
+          this.visibilitySmoothingFilterAuxiliary.apply(auxiliaryLandmarks);
     }
     return {actualLandmarksFiltered, auxiliaryLandmarksFiltered};
   }
