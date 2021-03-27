@@ -43,5 +43,20 @@ export function setupDatGui() {
   });
   modelFolder.open();
 
+  const blazePoseFolder = gui.addFolder('MediapipeBlazepose');
+  const windowSizeController =
+      blazePoseFolder.add(STATE.blazePose, 'windowSize');
+  windowSizeController.onChange(windowSize => {
+    console.log('heard windowsize change');
+    STATE.changeToWindowSize = windowSize;
+  });
+  const velocityScaleController =
+      blazePoseFolder.add(STATE.blazePose, 'velocityScale');
+  velocityScaleController.onChange(velocityScale => {
+    console.log('heard velocity change');
+    STATE.changeToVelocityScale = velocityScale;
+  });
+  blazePoseFolder.open();
+
   return gui;
 }

@@ -15,6 +15,7 @@
  * =============================================================================
  */
 
+import {VelocityFilterConfig} from '../calculators/interfaces/config_interfaces';
 import {EstimationConfig, ModelConfig} from '../types';
 
 /**
@@ -35,6 +36,7 @@ import {EstimationConfig, ModelConfig} from '../types';
  */
 export interface BlazeposeModelConfig extends ModelConfig {
   upperBodyOnly?: boolean;
+  smoothConfig?: VelocityFilterConfig;
   lite?: boolean;
   detectorModelUrl?: string;
   landmarkModelUrl?: string;

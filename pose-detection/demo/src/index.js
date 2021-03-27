@@ -39,12 +39,16 @@ async function createDetector(model) {
       });
     case posedetection.SupportedModels.MediapipeBlazepose:
       return posedetection.createDetector(
-          STATE.model.model, {quantBytes: 4, upperBodyOnly: false});
+          STATE.model.model,
+          {quantBytes: 4, upperBodyOnly: false, smoothConfig: STATE.blazePose});
   }
 }
 
 async function checkGuiUpdate() {
+  let changes = false;
+
   if (STATE.changeToTargetFPS || STATE.changeToSizeOption) {
+    changes = true;
     if (STATE.changeToTargetFPS) {
       STATE.camera.targetFPS = STATE.changeToTargetFPS;
       STATE.changeToTargetFPS = null;
@@ -59,6 +63,7 @@ async function checkGuiUpdate() {
   }
 
   if (STATE.changeToModel) {
+    changes = true;
     STATE.model.model = STATE.changeToModel;
     STATE.changeToModel = null;
 
@@ -66,7 +71,27 @@ async function checkGuiUpdate() {
     detector = await createDetector(STATE.model.model);
   }
 
-  await tf.nextFrame();
+  if (STATE.changeToWindowSize || STATE.changeToVelocityScale) {
+    changes = true;
+    console.log('there change');
+    if (STATE.changeToWindowSize) {
+      console.log('change to window size');
+      STATE.blazePose.windowSize = STATE.changeToWindowSize;
+      STATE.changeToWindowSize = null;
+    }
+
+    if (STATE.changeToVelocityScale) {
+      STATE.blazePose.velocityScale = STATE.changeToVelocityScale;
+      STATE.changeToVelocityScale = null;
+    }
+
+    detector.dispose();
+    detector = await createDetector(STATE.model.model);
+  }
+
+  if (changes) {
+    await tf.nextFrame();
+  }
 }
 
 async function renderResult() {
@@ -76,7 +101,7 @@ async function renderResult() {
     stats.begin();
 
     const poses = await detector.estimatePoses(
-        camera.video, {maxPoses: 1, flipHorizontal: false});
+        camera.video, {maxPoses: 1, flipHorizontal: false, enableSmooth: true});
 
     stats.end();
 

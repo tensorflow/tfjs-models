@@ -63,7 +63,7 @@ export class RelativeVelocityFilter {
     const $macroSeconds = Math.trunc(macroSeconds);
     if (this.lastTimestamp >= $macroSeconds) {
       // Results are unpreditable in this case, so nothing to do but return
-      // same value
+      // same value.
       return value;
     }
 

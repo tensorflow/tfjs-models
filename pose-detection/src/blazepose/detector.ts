@@ -68,7 +68,7 @@ export class BlazeposeDetector extends BasePoseDetector {
   private constructor(
       private readonly detectorModel: tfconv.GraphModel,
       private readonly landmarkModel: tfconv.GraphModel,
-      config: BlazeposeModelConfig) {
+      private readonly config: BlazeposeModelConfig) {
     super();
 
     this.upperBodyOnly = config.upperBodyOnly;
@@ -439,15 +439,15 @@ export class BlazeposeDetector extends BasePoseDetector {
 
     // Smoothes pose landmark coordinates to reduce jitter.
     if (this.landmarksSmoothingFilterActual == null) {
-      this.landmarksSmoothingFilterActual = new LandmarksSmoothingFilter(
-          constants.BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG);
+      this.landmarksSmoothingFilterActual =
+          new LandmarksSmoothingFilter(this.config.smoothConfig);
     }
     actualLandmarksFiltered = this.landmarksSmoothingFilterActual.apply(
         actualLandmarksFiltered, image);
 
     if (this.landmarksSmoothingFilterAuxiliary == null) {
-      this.landmarksSmoothingFilterAuxiliary = new LandmarksSmoothingFilter(
-          constants.BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG);
+      this.landmarksSmoothingFilterAuxiliary =
+          new LandmarksSmoothingFilter(this.config.smoothConfig);
     }
     auxiliaryLandmarksFiltered = this.landmarksSmoothingFilterAuxiliary.apply(
         auxiliaryLandmarksFiltered, image);

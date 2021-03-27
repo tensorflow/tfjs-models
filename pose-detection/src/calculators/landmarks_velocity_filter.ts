@@ -41,7 +41,7 @@ export class LandmarksVelocityFilter {
     // If value is too small smoothing will be disabled and landmarks will be
     // returned as is.
     let valueScale = 1;
-    if (this.config.disableValueScaling) {
+    if (!this.config.disableValueScaling) {
       const objectScale = getObjectScale(landmarks);
       if (objectScale < config.minAllowedObjectScale) {
         return [...landmarks];

@@ -24,5 +24,6 @@ export const VIDEO_SIZE = {
 };
 export const STATE = {
   camera: {targetFPS: 60, sizeOption: '640 X 480'},
-  model: {model: posedetection.SupportedModels.PoseNet}
+  model: {model: posedetection.SupportedModels.PoseNet},
+  blazePose: {windowSize: 5, velocityScale: 10}
 };
