@@ -15,7 +15,7 @@
  * =============================================================================
  */
 import {VIDEO_SIZE} from './params';
-import {isMobile} from './util';
+import {isMobile, sigmoid} from './util';
 
 export class Camera {
   constructor() {
@@ -106,10 +106,17 @@ export class Camera {
     this.ctx.strokeStyle = 'white';
     this.ctx.lineWidth = 4;
     keypoints.forEach(keypoint => {
-      const circle = new Path2D();
-      circle.arc(keypoint.x * scaleX, keypoint.y * scaleY, 4, 0, 2 * Math.PI);
-      this.ctx.fill(circle);
-      this.ctx.stroke(circle);
+      let score = 1;
+      if (keypoint.visibility) {
+        score = sigmoid(keypoint.visibility);
+      }
+
+      if (score > 0.65) {
+        const circle = new Path2D();
+        circle.arc(keypoint.x * scaleX, keypoint.y * scaleY, 4, 0, 2 * Math.PI);
+        this.ctx.fill(circle);
+        this.ctx.stroke(circle);
+      }
     });
   }
 }

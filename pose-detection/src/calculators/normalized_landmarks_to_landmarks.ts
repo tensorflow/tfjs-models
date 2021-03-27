@@ -1,3 +1,6 @@
+import {Keypoint} from '..';
+import {ImageSize} from './interfaces/common_interfaces';
+
 /**
  * @license
  * Copyright 2021 Google LLC. All Rights Reserved.
@@ -14,14 +17,20 @@
  * limitations under the License.
  * =============================================================================
  */
+export function normalizedLandmarksToLandmarks(
+    normalizedLandmarks: Keypoint[], imageSize: ImageSize): Keypoint[] {
+  return normalizedLandmarks.map(normalizedLandmark => {
+    const landmark = {
+      ...normalizedLandmark,
+      x: normalizedLandmark.x * imageSize.width,
+      y: normalizedLandmark.y * imageSize.height
+    };
 
-export function isMobile() {
-  const isAndroid = /Android/i.test(navigator.userAgent);
-  const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-  return isAndroid || isiOS;
-}
+    if (normalizedLandmark.z != null) {
+      // Scale z the same way as x (using image width).
+      landmark.z = normalizedLandmark.z * imageSize.width;
+    }
 
-export function sigmoid(value) {
-  // Sigmoid.
-  return 1 / 1 + Math.exp(-value);
+    return landmark;
+  });
 }

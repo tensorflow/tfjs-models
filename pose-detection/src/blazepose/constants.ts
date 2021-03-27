@@ -107,4 +107,10 @@ export const BLAZEPOSE_NUM_AUXILIARY_KEYPOINTS_UPPERBODY = 27;
 export const BLAZEPOSE_NUM_AUXILIARY_KEYPOINTS_FULLBODY = 35;
 export const BLAZEPOSE_VISIBILITY_SMOOTHING_CONFIG = {
   alpha: 0.1
-}
+};
+export const BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG = {
+  windowSize: 5,
+  velocityScale: 10,
+  minAllowedObjectScale: 1e-6,
+  disableValueScaling: false,
+};

@@ -73,8 +73,12 @@ async function renderResult() {
   if (camera.video.currentTime !== camera.lastVideoTime) {
     camera.lastVideoTime = camera.video.currentTime;
 
+    stats.begin();
+
     const poses = await detector.estimatePoses(
         camera.video, {maxPoses: 1, flipHorizontal: false});
+
+    stats.end();
 
     camera.drawCtx();
 
@@ -90,11 +94,7 @@ async function renderResult() {
 async function renderPrediction() {
   await checkGuiUpdate();
 
-  stats.begin();
-
   await renderResult();
-
-  stats.end();
 
   requestAnimationFrame(renderPrediction);
 };

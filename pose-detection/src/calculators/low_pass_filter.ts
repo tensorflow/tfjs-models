@@ -28,7 +28,7 @@ export class LowPassFilter {
   private initialized: boolean;
   private storedValue: number;
 
-  constructor(private readonly alpha: number) {
+  constructor(private alpha: number) {
     this.initialized = false;
   }
 
@@ -44,5 +44,10 @@ export class LowPassFilter {
     this.storedValue = result;
 
     return result;
+  }
+
+  applyWithAlpha(value: number, alpha: number): number {
+    this.alpha = alpha;
+    return this.apply(value);
   }
 }
