@@ -27,7 +27,7 @@
   },
   "devDependencies": {
     "@babel/core": "7.7.5",
-    "@babel/plugin-transform-runtime": "^7.7.6",
+    "@babel/plugin-transform-runtime": "^7.13.10",
     "@babel/preset-env": "^7.7.6",
     "babel-plugin-external-helpers": "^6.22.0",
     "clang-format": "~1.2.2",
@@ -35,7 +35,10 @@
     "eslint": "^4.19.1",
     "eslint-config-google": "^0.9.1",
     "parcel-bundler": "^1.12.5",
-    "yalc": "~1.0.0-pre.27"
+    "yalc": "~1.0.0-pre.50"
+  },
+  "resolutions": {
+    "is-svg": "4.3.1"
   },
   "eslintConfig": {
     "extends": "google",

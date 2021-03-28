@@ -39,6 +39,9 @@
     "parcel-plugin-static-files-copy": "^2.5.1",
     "yalc": "~1.0.0-pre.50"
   },
+  "resolutions": {
+    "is-svg": "4.3.1"
+  },
   "eslintConfig": {
     "extends": "google",
     "rules": {

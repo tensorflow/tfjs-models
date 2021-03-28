@@ -36,6 +36,9 @@
     "typescript": "3.5.3",
     "yalc": "~1.0.0-pre.50"
   },
+  "resolutions": {
+    "is-svg": "4.3.1"
+  },
   "scripts": {
     "build": "rimraf dist && tsc",
     "publish-local": "yarn build && rollup -c && yalc push",

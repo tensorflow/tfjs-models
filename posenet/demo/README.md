@@ -18,10 +18,10 @@ The [coco images](http://cocodataset.org/#home) demo shows how to estimate poses
 
 ## Setup
 
-cd into the demos folder:
+cd into the demo folder:
 
 ```sh
-cd posenet/demos
+cd posenet/demo
 ```
 
 Install dependencies and prepare the build directory:
@@ -53,14 +53,14 @@ Publish posenet locally:
 yarn build && yarn yalc publish
 ```
 
-Cd into the demos and install dependencies:
+Cd into the demo and install dependencies:
 
 ```sh
-cd demos
+cd demo
 yarn
 ```
 
-Link the local posenet to the demos:
+Link the local posenet to the demo:
 ```sh
 yarn yalc link @tensorflow-models/posenet
 ```

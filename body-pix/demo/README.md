@@ -6,10 +6,10 @@ The demo shows how to estimate segmentation in real-time from a webcam video str
 
 ## Setup
 
-cd into the demos folder:
+cd into the demo folder:
 
 ```sh
-cd body-pix/demos
+cd body-pix/demo
 ```
 
 Install dependencies and prepare the build directory:
@@ -24,7 +24,7 @@ To watch files for changes, and launch a dev server:
 yarn watch
 ```
 
-## If you are developing body-pix locally, and want to test the changes in the demos
+## If you are developing body-pix locally, and want to test the changes in the demo
 
 Cd into the body-pix folder:
 ```sh
@@ -41,14 +41,14 @@ Build and publish the body-pix locally:
 yarn publish-local
 ```
 
-Cd into the demos and install dependencies:
+Cd into the demo and install dependencies:
 
 ```sh
-cd demos
+cd demo
 yarn
 ```
 
-Link the local body-pix to the demos:
+Link the local body-pix to the demo:
 ```sh
 yarn yalc link @tensorflow-models/body-pix
 ```
