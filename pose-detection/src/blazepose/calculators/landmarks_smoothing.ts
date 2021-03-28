@@ -33,8 +33,13 @@ export class LandmarksSmoothingFilter {
   }
 
   apply(landmarks: Keypoint[], image: HTMLVideoElement): Keypoint[] {
+    if (landmarks == null) {
+      this.landmarksFilter.reset();
+      return null;
+    }
     if (landmarks.length === 0) {
       this.landmarksFilter.reset();
+      return null;
     }
     const imageSize = getImageSize(image);
     const macroSeconds = image.currentTime * 1e6;

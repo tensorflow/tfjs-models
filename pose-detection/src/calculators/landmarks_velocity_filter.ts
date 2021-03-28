@@ -37,6 +37,10 @@ export class LandmarksVelocityFilter {
   apply(
       landmarks: Keypoint[], macroSeconds: number,
       config: VelocityFilterConfig): Keypoint[] {
+    if (landmarks == null) {
+      this.reset();
+      return null;
+    }
     // Get value scale as inverse value of the object scale.
     // If value is too small smoothing will be disabled and landmarks will be
     // returned as is.

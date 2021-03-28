@@ -14,6 +14,8 @@
  * limitations under the License.
  * =============================================================================
  */
+import * as posedetection from '@tensorflow-models/posedetection';
+
 import {VIDEO_SIZE} from './params';
 import {isMobile, sigmoid} from './util';
 
@@ -89,8 +91,9 @@ export class Camera {
     this.ctx.clearRect(0, 0, this.video.videoWidth, this.video.videoHeight);
   }
 
-  drawResult(pose, shouldScale = false) {
-    this.drawKeypoints(pose.keypoints, shouldScale);
+  drawResult(pose, model, confidence) {
+    this.drawKeypoints(pose.keypoints, model, confidence);
+    this.drawSkeleton(pose.keypoints, model, confidence);
   }
 
   /**
@@ -99,24 +102,85 @@ export class Camera {
    * @param shouldScale If the keypoints are normalized, shouldScale should be
    *     set to true.
    */
-  drawKeypoints(keypoints, shouldScale) {
+  drawKeypoints(keypoints, model, confidence) {
+    const shouldScale =
+        model === posedetection.SupportedModels.MediapipeBlazepose;
+    const scaleX = shouldScale ? this.video.videoWidth : 1;
+    const scaleY = shouldScale ? this.video.videoHeight : 1;
+
+    const keypointInd = posedetection.util.getKeypointIndexBySide(model);
+    this.ctx.fillStyle = 'LightCyan';
+    this.ctx.strokeStyle = 'white';
+    this.ctx.lineWidth = 2;
+
+    keypointInd.middle.forEach(
+        keypointInd => this.drawKeypoint(
+            keypoints[keypointInd], scaleY, scaleX, confidence));
+    this.ctx.fillStyle = 'green';
+    keypointInd.left.forEach(
+        keypointInd => this.drawKeypoint(
+            keypoints[keypointInd], scaleY, scaleX, confidence));
+    this.ctx.fillStyle = 'orange';
+    keypointInd.right.forEach(
+        keypointInd => this.drawKeypoint(
+            keypoints[keypointInd], scaleY, scaleX, confidence));
+  }
+
+  drawKeypoint(keypoint, scaleY, scaleX, confidence) {
+    let score = 1;
+    let scoreP = 1;
+    if (keypoint.visibility) {
+      score = sigmoid(keypoint.visibility);
+      scoreP = sigmoid(keypoint.score);
+    }
+
+    console.log('Going to draw');
+    console.log(score);
+    console.log(scoreP);
+    if (score > confidence && scoreP > confidence) {
+      console.log('Drawing');
+      const circle = new Path2D();
+      circle.arc(keypoint.x * scaleX, keypoint.y * scaleY, 4, 0, 2 * Math.PI);
+      this.ctx.fill(circle);
+      this.ctx.stroke(circle);
+    }
+  }
+
+  /**
+   * Draws a pose skeleton by looking up all adjacent keypoints/joints
+   */
+  drawSkeleton(keypoints, model, confidence) {
+    const shouldScale =
+        model === posedetection.SupportedModels.MediapipeBlazepose;
     const scaleX = shouldScale ? this.video.videoWidth : 1;
     const scaleY = shouldScale ? this.video.videoHeight : 1;
     this.ctx.fillStyle = 'red';
     this.ctx.strokeStyle = 'white';
     this.ctx.lineWidth = 4;
-    keypoints.forEach(keypoint => {
-      let score = 1;
-      if (keypoint.visibility) {
-        score = sigmoid(keypoint.visibility);
-      }
 
-      if (score > 0.65) {
-        const circle = new Path2D();
-        circle.arc(keypoint.x * scaleX, keypoint.y * scaleY, 4, 0, 2 * Math.PI);
-        this.ctx.fill(circle);
-        this.ctx.stroke(circle);
-      }
-    });
+    posedetection.util.getAdjacentKeypointIndexPair(model).forEach(
+        ([keypointAInd, keypointBInd]) => {
+          const keypointA = keypoints[keypointAInd];
+          const keypointB = keypoints[keypointBInd];
+
+          let scoreA = 1;
+          let scoreB = 1;
+          let scoreAP = 1;
+          let scoreBP = 1;
+          if (keypointA.visibility) {
+            scoreA = sigmoid(keypointA.visibility);
+            scoreB = sigmoid(keypointB.visibility);
+            scoreAP = sigmoid(keypointA.score);
+            scoreBP = sigmoid(keypointB.score);
+          }
+
+          if (scoreA > confidence && scoreB > confidence &&
+              scoreAP > confidence && scoreBP > confidence) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(keypointA.x * scaleX, keypointA.y * scaleY);
+            this.ctx.lineTo(keypointB.x * scaleX, keypointB.y * scaleY);
+            this.ctx.stroke();
+          }
+        });
   }
 }

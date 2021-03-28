@@ -56,6 +56,8 @@ export function setupDatGui() {
     console.log('heard velocity change');
     STATE.changeToVelocityScale = velocityScale;
   });
+  const confidenceController =
+      blazePoseFolder.add(STATE.blazePose, 'confidence');
   blazePoseFolder.open();
 
   return gui;

@@ -14,17 +14,22 @@
  * limitations under the License.
  * =============================================================================
  */
-// Top level exports.
-// Entry point to create a new detector instance.
-export {BlazeposeEstimationConfig, BlazeposeModelConfig} from './blazepose/types';
-export {createDetector} from './create_detector';
-// PoseDetector class.
-export {PoseDetector} from './pose_detector';
-export {PoseNetEstimationConfig, PosenetModelConfig} from './posenet/types';
-// Supported models enum.
-export * from './types';
+import {BLAZEPOSE_CONNECTED_KEYPOINTS_PAIRS, BLAZEPOSE_KEYPOINTS_BY_SIDE, COCO_CONNECTED_KEYPOINTS_PAIRS} from './constants';
+import {SupportedModels} from './types';
 
-// Second level exports.
-// Utils for rendering.
-import * as util from './util';
-export {util};
+export function getAdjacentKeypointIndexPair(model: SupportedModels):
+    number[][] {
+  switch (model) {
+    case SupportedModels.MediapipeBlazepose:
+      return BLAZEPOSE_CONNECTED_KEYPOINTS_PAIRS;
+    case SupportedModels.PoseNet:
+      return COCO_CONNECTED_KEYPOINTS_PAIRS;
+    default:
+      throw new Error(`Model ${model} is not supported.`);
+  }
+}
+
+export function getKeypointIndexBySide(model: SupportedModels):
+    {left: number[], right: number[], middle: number[]} {
+  return BLAZEPOSE_KEYPOINTS_BY_SIDE;
+}

@@ -64,18 +64,14 @@ async function checkGuiUpdate() {
 
   if (STATE.changeToModel) {
     changes = true;
-    STATE.model.model = STATE.changeToModel;
     STATE.changeToModel = null;
-
     detector.dispose();
     detector = await createDetector(STATE.model.model);
   }
 
   if (STATE.changeToWindowSize || STATE.changeToVelocityScale) {
     changes = true;
-    console.log('there change');
     if (STATE.changeToWindowSize) {
-      console.log('change to window size');
       STATE.blazePose.windowSize = STATE.changeToWindowSize;
       STATE.changeToWindowSize = null;
     }
@@ -95,8 +91,8 @@ async function checkGuiUpdate() {
 }
 
 async function renderResult() {
-  if (camera.video.currentTime !== camera.lastVideoTime) {
-    camera.lastVideoTime = camera.video.currentTime;
+  if (Math.trunc(camera.video.currentTime * 1000) !== camera.lastVideoTime) {
+    camera.lastVideoTime = Math.trunc(camera.video.currentTime * 1000);
 
     stats.begin();
 
@@ -107,11 +103,9 @@ async function renderResult() {
 
     camera.drawCtx();
 
-    if (poses.length > 0) {
-      const shouldScale = STATE.model.model ===
-          posedetection.SupportedModels.MediapipeBlazepose;
-
-      camera.drawResult(poses[0], shouldScale);
+    if (poses.length > 0 && STATE.changeToModel == null) {
+      camera.drawResult(
+          poses[0], STATE.model.model, STATE.blazePose.confidence);
     }
   }
 }
