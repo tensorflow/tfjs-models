@@ -17,14 +17,40 @@
 import * as tf from '@tensorflow/tfjs-core';
 
 export enum SupportedModels {
-  posenet = 'posenet'
+  PoseNet = 'PoseNet',
+  MediapipeBlazepose = 'MediapipeBlazepose'
 }
+
+export type QuantBytes = 1|2|4;
 
 /**
  * Common config to create the pose detector.
+ *
+ * `quantBytes`: Optional. Options: 1, 2, or 4.  This parameter affects weight
+ * quantization in the models. The available options are
+ * 1 byte, 2 bytes, and 4 bytes. The higher the value, the larger the model size
+ * and thus the longer the loading time, the lower the value, the shorter the
+ * loading time but lower the accuracy.
  */
 export interface ModelConfig {
-  quantBytes?: number;
+  quantBytes?: QuantBytes;
+}
+
+/**
+ * Common config for the `estimatePoses` method.
+ *
+ * `maxPoses`: Optional. Max number poses to detect. Default to 1, which means
+ * single pose detection. Single pose detection runs more efficiently, while
+ * multi-pose (maxPoses > 1) detection is usually much slower. Multi-pose
+ * detection should only be used when needed.
+ *
+ * `flipHorizontal`: Optional. Default to false. In some cases, the image is
+ * mirrored, e.g. video stream from camera, flipHorizontal will flip the
+ * keypoints horizontally.
+ */
+export interface EstimationConfig {
+  maxPoses?: number;
+  flipHorizontal?: boolean;
 }
 
 /**
@@ -33,19 +59,24 @@ export interface ModelConfig {
 export type PoseDetectorInput =
     tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|HTMLCanvasElement;
 
-/**
- * Common config for the `estimatePoses` method.
- */
-export interface EstimationConfig {
-  maxPoses?: number;
-  flipHorizontal?: boolean;
-  smoothLandmarks?: boolean;
-  maxContinousChecks?: number;
+export interface InputResolution {
+  width: number;
+  height: number;
 }
 
 /**
  * A keypoint that contains coordinate information.
  */
 export interface Keypoint {
-  x: number, y: number
+  x: number;
+  y: number;
+  z?: number;
+  score?: number;
+  name?: string;
+  visibility?: number;
+}
+
+export interface Pose {
+  keypoints: Keypoint[];
+  score?: number;
 }
