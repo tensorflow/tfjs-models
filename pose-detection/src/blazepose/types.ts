@@ -14,7 +14,6 @@
  * limitations under the License.
  * =============================================================================
  */
-
 import {VelocityFilterConfig} from '../calculators/interfaces/config_interfaces';
 import {EstimationConfig, ModelConfig} from '../types';
 

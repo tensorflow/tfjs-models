@@ -32,7 +32,7 @@
     "rollup-plugin-uglify": "~3.0.0",
     "ts-node": "~5.0.0",
     "tslint": "~5.18.0",
-    "typescript": "3.3.3333"
+    "typescript": "3.5.3"
   },
   "scripts": {
     "build": "rimraf dist && tsc",

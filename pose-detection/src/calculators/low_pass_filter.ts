@@ -25,12 +25,10 @@
 // ref:
 // https://github.com/google/mediapipe/blob/master/mediapipe/util/filtering/low_pass_filter.cc
 export class LowPassFilter {
-  private initialized: boolean;
+  private initialized: boolean = false;
   private storedValue: number;
 
-  constructor(private alpha: number) {
-    this.initialized = false;
-  }
+  constructor(private alpha: number) {}
 
   apply(value: number): number {
     let result;

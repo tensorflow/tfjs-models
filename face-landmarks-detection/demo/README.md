@@ -24,7 +24,7 @@ To watch files for changes, and launch a dev server:
 yarn watch
 ```
 
-## If you are developing face-landmarks-detection locally, and want to test the changes in the demos
+## If you are developing face-landmarks-detection locally, and want to test the changes in the demo
 
 Cd into the face-landmarks-detection folder:
 ```sh
@@ -41,14 +41,14 @@ Publish face-landmarks-detection locally:
 yarn build && yarn yalc publish
 ```
 
-Cd into the demos and install dependencies:
+Cd into the demo and install dependencies:
 
 ```sh
 cd demo
 yarn
 ```
 
-Link the local face-landmarks-detection to the demos:
+Link the local face-landmarks-detection to the demo:
 ```sh
 yarn yalc link @tensorflow-models/face-landmarks-detection
 ```

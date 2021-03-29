@@ -19,6 +19,7 @@ import '@tensorflow/tfjs-node';
 
 import * as tf from '@tensorflow/tfjs-core';
 import * as tfl from '@tensorflow/tfjs-layers';
+// tslint:disable-next-line: no-imports-from-dist
 import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 import {writeFileSync} from 'fs';
 import {join} from 'path';
