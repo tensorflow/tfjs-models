@@ -16,7 +16,7 @@
  */
 import * as posedetection from '@tensorflow-models/posedetection';
 
-import {VIDEO_SIZE} from './params';
+import * as params from './params';
 import {isMobile, sigmoid} from './util';
 
 export class Camera {
@@ -36,7 +36,7 @@ export class Camera {
    */
   static async setupCamera(cameraParam) {
     const {targetFPS, sizeOption} = cameraParam;
-    const $size = VIDEO_SIZE[sizeOption];
+    const $size = params.VIDEO_SIZE[sizeOption];
     const videoConfig = {
       'audio': false,
       'video': {
@@ -136,7 +136,9 @@ export class Camera {
 
     if (score > confidence && scoreP > confidence) {
       const circle = new Path2D();
-      circle.arc(keypoint.x * scaleX, keypoint.y * scaleY, 4, 0, 2 * Math.PI);
+      circle.arc(
+          keypoint.x * scaleX, keypoint.y * scaleY, params.DEFAULT_LINE_WIDTH,
+          0, 2 * Math.PI);
       this.ctx.fill(circle);
       this.ctx.stroke(circle);
     }
@@ -152,7 +154,7 @@ export class Camera {
     const scaleY = shouldScale ? this.video.videoHeight : 1;
     this.ctx.fillStyle = 'red';
     this.ctx.strokeStyle = 'white';
-    this.ctx.lineWidth = 4;
+    this.ctx.lineWidth = params.DEFAULT_LINE_WIDTH;
 
     posedetection.util.getAdjacentKeypointIndexPair(model).forEach(
         ([keypointAInd, keypointBInd]) => {
