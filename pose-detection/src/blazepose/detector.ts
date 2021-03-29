@@ -280,7 +280,7 @@ export class BlazeposeDetector extends BasePoseDetector {
     if (poseRect == null) {
       // Return empty array instead of null because downstream calculators
       // may expect an array type.
-      return {actualLandmarks: [], auxiliaryLandmarks: [], poseScore: 0};
+      return {actualLandmarks: null, auxiliaryLandmarks: null, poseScore: 0};
     }
     // Transforms the input image into a 256x256 tensor while keeping the aspect
     // ratio, resulting in potential letterboxing in the transformed image.
@@ -322,7 +322,7 @@ export class BlazeposeDetector extends BasePoseDetector {
       tf.dispose(landmarkResult);
       tf.dispose([imageTensor, imageValueShifted]);
 
-      return {actualLandmarks: [], auxiliaryLandmarks: [], poseScore};
+      return {actualLandmarks: null, auxiliaryLandmarks: null, poseScore};
     }
 
     // Decodes the landmark tensors into a list of landmarks, where the landmark
@@ -372,7 +372,7 @@ export class BlazeposeDetector extends BasePoseDetector {
   // https://github.com/google/mediapipe/blob/master/mediapipe/modules/pose_landmark/pose_landmarks_to_roi.pbtxt
   private poseLandmarksToRoi(landmarks: Keypoint[], imageSize: ImageSize):
       Rect {
-    if (landmarks.length === 0) {
+    if (landmarks == null) {
       return null;
     }
     // PoseLandmarksToRoi: LandmarksToDetectionCalculator.
