@@ -30,7 +30,7 @@ To watch files for changes, and launch a dev server:
 yarn watch
 ```
 
-## If you are developing universal-sentence-encoder locally, and want to test the changes in the demos
+## If you are developing universal-sentence-encoder locally, and want to test the changes in the demo
 
 cd into the universal-sentence-encoder/demo folder:
 ```sh

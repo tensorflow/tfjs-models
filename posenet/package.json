@@ -40,7 +40,7 @@
     "test": "ts-node --skip-ignore --project tsconfig.test.json run_tests.ts",
     "publish-local": "yarn build && rollup -c && yalc push",
     "build-npm": "yarn build && rollup -c",
-    "dev": "cd demos && yarn watch",
+    "dev": "cd demo && yarn watch",
     "lint": "tslint -p . -t verbose"
   },
   "license": "Apache-2.0"

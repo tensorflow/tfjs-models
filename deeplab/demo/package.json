@@ -10,9 +10,9 @@
   },
   "dependencies": {
     "@tensorflow-models/deeplab": "file:../dist",
-    "@tensorflow/tfjs-converter": "^3.0.0",
-    "@tensorflow/tfjs-core": "^3.0.0",
-    "@tensorflow/tfjs-backend-webgl": "^3.0.0",
+    "@tensorflow/tfjs-converter": "^3.3.0",
+    "@tensorflow/tfjs-core": "^3.3.0",
+    "@tensorflow/tfjs-backend-webgl": "^3.3.0",
     "bulma": "^0.7.5"
   },
   "scripts": {
@@ -29,9 +29,12 @@
     "cross-env": "^5.2.0",
     "eslint": "^6.1.0",
     "eslint-config-google": "^0.13.0",
-    "parcel-bundler": "~1.12.3",
+    "parcel-bundler": "~1.12.5",
     "ts-node": "^8.3.0",
-    "yalc": "~1.0.0-pre.32"
+    "yalc": "~1.0.0-pre.50"
+  },
+  "resolutions": {
+    "is-svg": "4.3.1"
   },
   "eslintConfig": {
     "extends": "google",
