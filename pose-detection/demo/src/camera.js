@@ -134,11 +134,7 @@ export class Camera {
       scoreP = sigmoid(keypoint.score);
     }
 
-    console.log('Going to draw');
-    console.log(score);
-    console.log(scoreP);
     if (score > confidence && scoreP > confidence) {
-      console.log('Drawing');
       const circle = new Path2D();
       circle.arc(keypoint.x * scaleX, keypoint.y * scaleY, 4, 0, 2 * Math.PI);
       this.ctx.fill(circle);
