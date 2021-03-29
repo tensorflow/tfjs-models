@@ -27,6 +27,7 @@
     "babel-core": "~6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",
     "jasmine-core": "~3.5.0",
+    "rimraf": "~2.6.2",
     "rollup": "~2.3.2",
     "rollup-plugin-terser": "^7.0.2",
     "rollup-plugin-visualizer": "~3.3.2",
