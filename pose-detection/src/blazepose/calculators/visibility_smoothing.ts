@@ -1,0 +1,55 @@
+/**
+ * @license
+ * Copyright 2021 Google LLC. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * =============================================================================
+ */
+
+import {LowPassFilter} from '../../calculators/low_pass_filter';
+import {Keypoint} from '../../types';
+import {VisibilitySmoothingCalculatorConfig} from './interfaces/config_interfaces';
+
+/**
+ * Smoothing visibility using a `LowPassFilter` for each landmark.
+ */
+export class LowPassVisibilityFilter {
+  private alpha: number;
+  private visibilityFilters: LowPassFilter[];
+
+  constructor(config: VisibilitySmoothingCalculatorConfig) {
+    this.alpha = config.alpha;
+  };
+
+  apply(landmarks: Keypoint[]): Keypoint[] {
+    if (this.visibilityFilters == null ||
+        (this.visibilityFilters.length !== landmarks.length)) {
+      this.visibilityFilters =
+          landmarks.map(_ => new LowPassFilter(this.alpha));
+    }
+
+    const outLandmarks = [];
+
+    // Filter visibilities.
+    for (let i = 0; i < landmarks.length; ++i) {
+      const landmark = landmarks[i];
+
+      const outLandmark = {...landmark};
+      outLandmark.visibility =
+          this.visibilityFilters[i].apply(landmark.visibility);
+
+      outLandmarks.push(outLandmark);
+    }
+
+    return outLandmarks;
+  }
+}
