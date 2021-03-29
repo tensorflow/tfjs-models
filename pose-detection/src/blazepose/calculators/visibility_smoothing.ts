@@ -30,7 +30,7 @@ export class LowPassVisibilityFilter {
     this.alpha = config.alpha;
   };
 
-  apply(landmarks: Keypoint[]) {
+  apply(landmarks: Keypoint[]): Keypoint[] {
     if (this.visibilityFilters == null ||
         (this.visibilityFilters.length !== landmarks.length)) {
       this.visibilityFilters =
