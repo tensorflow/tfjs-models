@@ -63,11 +63,9 @@ export async function tensorsToLandmarks(
       landmark.z = rawLandmarks[offset + 2];
     }
     if (numDimensions > 3) {
-      landmark.visibility = applyActivation(rawLandmarks[offset + 3]);
+      landmark.score = applyActivation(rawLandmarks[offset + 3]);
     }
-    if (numDimensions > 4) {
-      landmark.score = applyActivation(rawLandmarks[offset + 4]);
-    }
+    // presence is in rawLandmarks[offset + 4], we don't expose it.
 
     outputLandmarks.push(landmark);
   }
