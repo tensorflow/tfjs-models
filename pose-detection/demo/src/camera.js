@@ -116,7 +116,7 @@ export class Camera {
           constants.STATE.model[constants.STATE.model.model].scoreThreshold ||
           0;
 
-      if (score > scoreThreshold) {
+      if (score >= scoreThreshold) {
         const circle = new Path2D();
         circle.arc(keypoint.x * scaleX, keypoint.y * scaleY, 4, 0, 2 * Math.PI);
         this.ctx.fill(circle);
