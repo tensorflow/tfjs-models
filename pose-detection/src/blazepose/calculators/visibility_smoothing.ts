@@ -50,8 +50,7 @@ export class LowPassVisibilityFilter {
       const landmark = landmarks[i];
 
       const outLandmark = {...landmark};
-      outLandmark.visibility =
-          this.visibilityFilters[i].apply(landmark.visibility);
+      outLandmark.score = this.visibilityFilters[i].apply(landmark.score);
 
       outLandmarks.push(outLandmark);
     }
