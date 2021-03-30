@@ -122,8 +122,6 @@ export class Camera {
             constants.STATE.model.blazePoseConfig.visibilityThreshold;
         scoreThreshold = constants.STATE.model.blazePoseConfig.scoreThreshold;
       }
-      console.log(constants.STATE);
-      console.log(visibilityThreshold, scoreThreshold);
       if (visibility > visibilityThreshold && score > scoreThreshold) {
         const circle = new Path2D();
         circle.arc(keypoint.x * scaleX, keypoint.y * scaleY, 4, 0, 2 * Math.PI);
