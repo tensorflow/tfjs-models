@@ -57,6 +57,8 @@ export class BlazeposeDetector extends BasePoseDetector {
   private upperBodyOnly: boolean;
   private anchors: Rect[];
   private anchorTensor: AnchorTensor;
+
+  // Store global states.
   private regionOfInterest: Rect = null;
   private visibilitySmoothingFilterActual: LowPassVisibilityFilter;
   private visibilitySmoothingFilterAuxiliary: LowPassVisibilityFilter;
@@ -134,6 +136,7 @@ export class BlazeposeDetector extends BasePoseDetector {
     const config = validateEstimationConfig(estimationConfig);
 
     if (image == null) {
+      this.regionOfInterest = null;
       return [];
     }
 
@@ -149,33 +152,16 @@ export class BlazeposeDetector extends BasePoseDetector {
       // Need to run detector again.
       const detections = await this.detectPose(image3d);
 
-      if (detections.length === 0) {
-        this.regionOfInterest = null;
-
-        image3d.dispose();
-
-        return [];
-      };
-
       // Gets the very first detection from PoseDetection.
-      const firstDetection = detections[0];
+      const firstDetection = detections.length > 0 ? detections[0] : null;
 
       // Calculates region of interest based on pose detection, so that can be
       // used to detect landmarks.
-      poseRect = this.poseDetectionToRoi(
-          firstDetection, imageSize, this.upperBodyOnly);
+      poseRect = this.poseDetectionToRoi(firstDetection, imageSize);
     }
 
     // Detects pose landmarks within specified region of interest of the image.
     const poseLandmarks = await this.poseLandmarkByRoi(poseRect, image3d);
-
-    if (poseLandmarks == null) {
-      this.regionOfInterest = null;
-
-      image3d.dispose();
-
-      return [];
-    }
 
     const {actualLandmarks, auxiliaryLandmarks, poseScore} = poseLandmarks;
 
@@ -249,16 +235,20 @@ export class BlazeposeDetector extends BasePoseDetector {
   // Subgraph: PoseDetectionToRoi.
   // ref:
   // https://github.com/google/mediapipe/blob/master/mediapipe/modules/pose_landmark/pose_detection_to_roi.pbtxt
-  private poseDetectionToRoi(
-      detection: Detection, imageSize: ImageSize,
-      upperBodyOnly: boolean): Rect {
+  // If detection is not null, imageSize should not be null either.
+  private poseDetectionToRoi(detection?: Detection, imageSize?: ImageSize):
+      Rect {
+    if (detection == null) {
+      return null;
+    }
+
     let startKeypointIndex;
     let endKeypointIndex;
 
     // Converts pose detection into a rectangle based on center and scale
     // alignment points. Pose detection contains four key points: first two for
     // full-body pose and two more for upper-body pose.
-    if (upperBodyOnly) {
+    if (this.upperBodyOnly) {
       startKeypointIndex = 2;
       endKeypointIndex = 3;
     } else {
@@ -287,8 +277,14 @@ export class BlazeposeDetector extends BasePoseDetector {
   // subgraph: PoseLandmarkByRoiCpu
   // ref:
   // https://github.com/google/mediapipe/blob/master/mediapipe/modules/pose_landmark/pose_landmark_by_roi_cpu.pbtxt
-  private async poseLandmarkByRoi(poseRect: Rect, image: tf.Tensor3D):
+  // When poseRect is not null, image should not be null either.
+  private async poseLandmarkByRoi(poseRect?: Rect, image?: tf.Tensor3D):
       Promise<PoseLandmarkByRoiResult> {
+    if (poseRect == null) {
+      // Return empty array instead of null because downstream calculators
+      // may expect an array type.
+      return {actualLandmarks: null, auxiliaryLandmarks: null, poseScore: 0};
+    }
     // Transforms the input image into a 256x256 tensor while keeping the aspect
     // ratio, resulting in potential letterboxing in the transformed image.
     const {imageTensor, padding} = convertImageToTensor(
@@ -329,7 +325,7 @@ export class BlazeposeDetector extends BasePoseDetector {
       tf.dispose(landmarkResult);
       tf.dispose([imageTensor, imageValueShifted]);
 
-      return null;
+      return {actualLandmarks: null, auxiliaryLandmarks: null, poseScore};
     }
 
     // Decodes the landmark tensors into a list of landmarks, where the landmark
@@ -377,8 +373,12 @@ export class BlazeposeDetector extends BasePoseDetector {
   // Subgraph: PoseLandmarkByRoiCpu
   // ref:
   // https://github.com/google/mediapipe/blob/master/mediapipe/modules/pose_landmark/pose_landmarks_to_roi.pbtxt
-  private poseLandmarksToRoi(landmarks: Keypoint[], imageSize: ImageSize):
+  // When landmarks is not null, imageSize should not be null either.
+  private poseLandmarksToRoi(landmarks?: Keypoint[], imageSize?: ImageSize):
       Rect {
+    if (landmarks == null) {
+      return null;
+    }
     // PoseLandmarksToRoi: LandmarksToDetectionCalculator.
     const detection = landmarksToDetection(landmarks);
 

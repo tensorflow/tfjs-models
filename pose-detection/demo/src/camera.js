@@ -90,7 +90,9 @@ export class Camera {
   }
 
   drawResult(pose, shouldScale = false) {
-    this.drawKeypoints(pose.keypoints, shouldScale);
+    if (pose.keypoints != null) {
+      this.drawKeypoints(pose.keypoints, shouldScale);
+    }
   }
 
   /**

@@ -25,6 +25,17 @@ describeWithFlags('Blazepose', ALL_ENVS, () => {
   let detector: poseDetection.PoseDetector;
   let startTensors: number;
 
+  let timeout: number;
+
+  beforeAll(() => {
+    timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
+  })
+
+  afterAll(() => {
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
+  })
+
   beforeEach(async () => {
     startTensors = tf.memory().numTensors;
 
