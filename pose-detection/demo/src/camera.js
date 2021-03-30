@@ -14,8 +14,6 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as posedetection from '@tensorflow-models/posedetection';
-
 import * as constants from './params';
 import {isMobile} from './util';
 
