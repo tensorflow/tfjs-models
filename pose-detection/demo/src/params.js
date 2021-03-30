@@ -26,7 +26,11 @@ export const STATE = {
   camera: {targetFPS: 60, sizeOption: '640 X 480'},
   model: {
     model: posedetection.SupportedModels.PoseNet,
-    blazePoseConfig: {visibilityThreshold: 0.65, scoreThreshold: 0.65},
-    poseNetConfig: {}
   }
+};
+STATE.model[posedetection.SupportedModels.MediapipeBlazepose] = {
+  scoreThreshold: 0.65
+};
+STATE.model[posedetection.SupportedModels.PoseNet] = {
+  scoreThreshold: 0.5
 };

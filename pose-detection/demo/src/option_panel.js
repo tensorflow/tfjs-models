@@ -42,10 +42,12 @@ export function setupDatGui() {
     STATE.changeToModel = model;
     switch (model) {
       case posedetection.SupportedModels.PoseNet:
+        poseNetFolder.open();
         blazePoseFolder.close();
         break;
       case posedetection.SupportedModels.MediapipeBlazepose:
         blazePoseFolder.open();
+        poseNetFolder.close();
         break;
       default:
         throw new Error(`${model} is not supported.`);
@@ -53,11 +55,20 @@ export function setupDatGui() {
   });
   modelFolder.open();
 
+  // The PoseNet model config folder contains options for PoseNet config
+  // settings.
+  const poseNetFolder = gui.addFolder('PoseNet Config');
+  poseNetFolder.add(
+      STATE.model[posedetection.SupportedModels.PoseNet], 'scoreThreshold', 0,
+      1);
+  poseNetFolder.open();
+
   // The Blazepose model config folder contains options for Blazepose config
   // settings.
   const blazePoseFolder = gui.addFolder('MediapipeBlazepose Config');
-  blazePoseFolder.add(STATE.model.blazePoseConfig, 'visibilityThreshold', 0, 1);
-  blazePoseFolder.add(STATE.model.blazePoseConfig, 'scoreThreshold', 0, 1);
+  blazePoseFolder.add(
+      STATE.model[posedetection.SupportedModels.MediapipeBlazepose],
+      'scoreThreshold', 0, 1);
 
   return gui;
 }

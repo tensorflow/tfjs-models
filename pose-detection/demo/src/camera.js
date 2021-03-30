@@ -110,19 +110,13 @@ export class Camera {
     this.ctx.strokeStyle = 'white';
     this.ctx.lineWidth = constants.DEFAULT_LINE_WIDTH;
     keypoints.forEach(keypoint => {
-      // If visibility is null, just show the keypoint.
-      const visibility = keypoint.visibility != null ? keypoint.visibility : 1;
       // If score is null, just show the keypoint.
       const score = keypoint.score != null ? keypoint.score : 1;
-      let visibilityThreshold = 0;
-      let scoreThreshold = 0;
-      if (constants.STATE.model.model ===
-          posedetection.SupportedModels.MediapipeBlazepose) {
-        visibilityThreshold =
-            constants.STATE.model.blazePoseConfig.visibilityThreshold;
-        scoreThreshold = constants.STATE.model.blazePoseConfig.scoreThreshold;
-      }
-      if (visibility > visibilityThreshold && score > scoreThreshold) {
+      const scoreThreshold =
+          constants.STATE.model[constants.STATE.model.model].scoreThreshold ||
+          0;
+
+      if (score > scoreThreshold) {
         const circle = new Path2D();
         circle.arc(keypoint.x * scaleX, keypoint.y * scaleY, 4, 0, 2 * Math.PI);
         this.ctx.fill(circle);
