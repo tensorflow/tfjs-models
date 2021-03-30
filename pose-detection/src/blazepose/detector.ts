@@ -235,7 +235,9 @@ export class BlazeposeDetector extends BasePoseDetector {
   // Subgraph: PoseDetectionToRoi.
   // ref:
   // https://github.com/google/mediapipe/blob/master/mediapipe/modules/pose_landmark/pose_detection_to_roi.pbtxt
-  private poseDetectionToRoi(detection: Detection, imageSize: ImageSize): Rect {
+  // If detection is not null, imageSize should not be null either.
+  private poseDetectionToRoi(detection?: Detection, imageSize?: ImageSize):
+      Rect {
     if (detection == null) {
       return null;
     }
@@ -275,7 +277,8 @@ export class BlazeposeDetector extends BasePoseDetector {
   // subgraph: PoseLandmarkByRoiCpu
   // ref:
   // https://github.com/google/mediapipe/blob/master/mediapipe/modules/pose_landmark/pose_landmark_by_roi_cpu.pbtxt
-  private async poseLandmarkByRoi(poseRect: Rect, image: tf.Tensor3D):
+  // When poseRect is not null, image should not be null either.
+  private async poseLandmarkByRoi(poseRect?: Rect, image?: tf.Tensor3D):
       Promise<PoseLandmarkByRoiResult> {
     if (poseRect == null) {
       // Return empty array instead of null because downstream calculators
@@ -370,7 +373,8 @@ export class BlazeposeDetector extends BasePoseDetector {
   // Subgraph: PoseLandmarkByRoiCpu
   // ref:
   // https://github.com/google/mediapipe/blob/master/mediapipe/modules/pose_landmark/pose_landmarks_to_roi.pbtxt
-  private poseLandmarksToRoi(landmarks: Keypoint[], imageSize: ImageSize):
+  // When landmarks is not null, imageSize should not be null either.
+  private poseLandmarksToRoi(landmarks?: Keypoint[], imageSize?: ImageSize):
       Rect {
     if (landmarks == null) {
       return null;
