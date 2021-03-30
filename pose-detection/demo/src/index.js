@@ -61,6 +61,7 @@ async function renderResult() {
   if (camera.video.currentTime !== camera.lastVideoTime) {
     camera.lastVideoTime = camera.video.currentTime;
 
+    // FPS only counts the time it takes to finish estimatePoses.
     stats.begin();
 
     const poses = await detector.estimatePoses(
