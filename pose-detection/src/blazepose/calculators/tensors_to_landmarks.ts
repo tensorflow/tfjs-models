@@ -83,5 +83,5 @@ export async function tensorsToLandmarks(
 
 function applyActivation(value: number) {
   // Sigmoid.
-  return 1 / 1 + Math.exp(-value);
+  return 1 / (1 + Math.exp(-value));
 }

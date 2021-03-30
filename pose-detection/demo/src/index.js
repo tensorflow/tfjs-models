@@ -45,40 +45,35 @@ async function createDetector(model) {
 
 async function checkGuiUpdate() {
   if (STATE.changeToTargetFPS || STATE.changeToSizeOption) {
-    if (STATE.changeToTargetFPS) {
-      STATE.camera.targetFPS = STATE.changeToTargetFPS;
-      STATE.changeToTargetFPS = null;
-    }
-
-    if (STATE.changeToSizeOption) {
-      STATE.camera.sizeOption = STATE.changeToSizeOption;
-      STATE.changeToSizeOption = null;
-    }
-
     camera = await Camera.setupCamera(STATE.camera);
+    STATE.changeToTargetFPS = null;
+    STATE.changeToSizeOption = null;
   }
 
   if (STATE.changeToModel) {
-    STATE.model.model = STATE.changeToModel;
-    STATE.changeToModel = null;
-
     detector.dispose();
     detector = await createDetector(STATE.model.model);
+    STATE.changeToModel = null;
   }
-
-  await tf.nextFrame();
 }
 
 async function renderResult() {
   if (camera.video.currentTime !== camera.lastVideoTime) {
     camera.lastVideoTime = camera.video.currentTime;
 
+    stats.begin();
+
     const poses = await detector.estimatePoses(
         camera.video, {maxPoses: 1, flipHorizontal: false});
 
+    stats.end();
+
     camera.drawCtx();
 
-    if (poses.length > 0) {
+    // The null check makes sure the UI is not in the middle of changing to a
+    // different model. If changeToModel is non-null, the result is from an
+    // old model, which shouldn't be rendered.
+    if (poses.length > 0 && STATE.changeToModel == null) {
       const shouldScale = STATE.model.model ===
           posedetection.SupportedModels.MediapipeBlazepose;
 
@@ -90,11 +85,7 @@ async function renderResult() {
 async function renderPrediction() {
   await checkGuiUpdate();
 
-  stats.begin();
-
   await renderResult();
-
-  stats.end();
 
   requestAnimationFrame(renderPrediction);
 };

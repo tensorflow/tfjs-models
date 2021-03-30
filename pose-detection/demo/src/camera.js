@@ -14,7 +14,9 @@
  * limitations under the License.
  * =============================================================================
  */
-import {VIDEO_SIZE} from './params';
+import * as posedetection from '@tensorflow-models/posedetection';
+
+import * as constants from './params';
 import {isMobile} from './util';
 
 export class Camera {
@@ -34,7 +36,7 @@ export class Camera {
    */
   static async setupCamera(cameraParam) {
     const {targetFPS, sizeOption} = cameraParam;
-    const $size = VIDEO_SIZE[sizeOption];
+    const $size = constants.VIDEO_SIZE[sizeOption];
     const videoConfig = {
       'audio': false,
       'video': {
@@ -106,12 +108,28 @@ export class Camera {
     const scaleY = shouldScale ? this.video.videoHeight : 1;
     this.ctx.fillStyle = 'red';
     this.ctx.strokeStyle = 'white';
-    this.ctx.lineWidth = 4;
+    this.ctx.lineWidth = constants.DEFAULT_LINE_WIDTH;
     keypoints.forEach(keypoint => {
-      const circle = new Path2D();
-      circle.arc(keypoint.x * scaleX, keypoint.y * scaleY, 4, 0, 2 * Math.PI);
-      this.ctx.fill(circle);
-      this.ctx.stroke(circle);
+      // If visibility is null, just show the keypoint.
+      const visibility = keypoint.visibility != null ? keypoint.visibility : 1;
+      // If score is null, just show the keypoint.
+      const score = keypoint.score != null ? keypoint.score : 1;
+      let visibilityThreshold = 0;
+      let scoreThreshold = 0;
+      if (constants.STATE.model.model ===
+          posedetection.SupportedModels.MediapipeBlazepose) {
+        visibilityThreshold =
+            constants.STATE.model.blazePoseConfig.visibilityThreshold;
+        scoreThreshold = constants.STATE.model.blazePoseConfig.scoreThreshold;
+      }
+      console.log(constants.STATE);
+      console.log(visibilityThreshold, scoreThreshold);
+      if (visibility > visibilityThreshold && score > scoreThreshold) {
+        const circle = new Path2D();
+        circle.arc(keypoint.x * scaleX, keypoint.y * scaleY, 4, 0, 2 * Math.PI);
+        this.ctx.fill(circle);
+        this.ctx.stroke(circle);
+      }
     });
   }
 }
