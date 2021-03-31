@@ -36,7 +36,7 @@ export class LandmarksVelocityFilter implements LandmarksFilter {
 
   constructor(private readonly config: VelocityFilterConfig) {}
 
-  apply(landmarks: Keypoint[], macroSeconds: number): Keypoint[] {
+  apply(landmarks: Keypoint[], microSeconds: number): Keypoint[] {
     if (landmarks == null) {
       this.reset();
       return null;
@@ -60,13 +60,13 @@ export class LandmarksVelocityFilter implements LandmarksFilter {
     return landmarks.map((landmark, i) => {
       const outLandmark = {
         ...landmark,
-        x: this.xFilters[i].apply(landmark.x, macroSeconds, valueScale),
-        y: this.yFilters[i].apply(landmark.y, macroSeconds, valueScale),
+        x: this.xFilters[i].apply(landmark.x, microSeconds, valueScale),
+        y: this.yFilters[i].apply(landmark.y, microSeconds, valueScale),
       };
 
       if (landmark.z != null) {
         outLandmark.z =
-            this.zFilters[i].apply(landmark.z, macroSeconds, valueScale);
+            this.zFilters[i].apply(landmark.z, microSeconds, valueScale);
       }
 
       return outLandmark;

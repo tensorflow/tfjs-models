@@ -18,6 +18,6 @@
 import {Keypoint} from '../../../types';
 
 export interface LandmarksFilter {
-  apply(landmarks: Keypoint[], macroSeconds: number): Keypoint[];
+  apply(landmarks: Keypoint[], microSeconds: number): Keypoint[];
   reset(): void;
 }

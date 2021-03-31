@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import {SECOND_TO_MACRO_SECONDS} from '../../calculators/constants';
+import {SECOND_TO_MICRO_SECONDS} from '../../calculators/constants';
 import {getImageSize} from '../../calculators/image_utils';
 import {landmarksToNormalizedLandmarks} from '../../calculators/landmarks_to_normalized_landmarks';
 import {normalizedLandmarksToLandmarks} from '../../calculators/normalized_landmarks_to_landmarks';
@@ -34,8 +34,12 @@ export class LandmarksSmoothingFilter {
   constructor(config: LandmarksSmoothingConfig) {
     if (config.velocityFilter != null) {
       this.landmarksFilter = new LandmarksVelocityFilter(config.velocityFilter);
-    } else {
+    } else if (config.oneEuroFilter != null) {
       this.landmarksFilter = new LandmarksOneEuroFilter(config.oneEuroFilter);
+    } else {
+      throw new Error(
+          'Either configure velocityFilter or oneEuroFilter, but got ' +
+          `${config}.`);
     }
   }
 
@@ -45,11 +49,11 @@ export class LandmarksSmoothingFilter {
       return null;
     }
     const imageSize = getImageSize(image);
-    const macroSeconds = image.currentTime * SECOND_TO_MACRO_SECONDS;
+    const microSeconds = image.currentTime * SECOND_TO_MICRO_SECONDS;
     const scaledLandmarks =
         normalizedLandmarksToLandmarks(landmarks, imageSize);
     const scaledOutLandmarks =
-        this.landmarksFilter.apply(scaledLandmarks, macroSeconds);
+        this.landmarksFilter.apply(scaledLandmarks, microSeconds);
 
     return landmarksToNormalizedLandmarks(scaledOutLandmarks, imageSize);
   }

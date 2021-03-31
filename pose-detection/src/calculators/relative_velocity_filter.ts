@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import {MACRO_SECONDS_TO_SECOND, SECOND_TO_MACRO_SECONDS} from './constants';
+import {MICRO_SECONDS_TO_SECOND, SECOND_TO_MICRO_SECONDS} from './constants';
 import {WindowElement} from './interfaces/common_interfaces';
 import {VelocityFilterConfig} from './interfaces/config_interfaces';
 import {LowPassFilter} from './low_pass_filter';
@@ -29,9 +29,9 @@ import {LowPassFilter} from './low_pass_filter';
 // ref:
 // https://github.com/google/mediapipe/blob/master/mediapipe/util/filtering/relative_velocity_filter.cc
 export class RelativeVelocityFilter {
-  private lastValue: number = 0;
-  private lastValueScale: number = 1;
-  private lastTimestamp: number = -1;
+  private lastValue = 0;
+  private lastValueScale = 1;
+  private lastTimestamp = -1;
 
   private window: WindowElement[] = [];
   private lowPassFilter: LowPassFilter = new LowPassFilter(1.0);
@@ -47,7 +47,7 @@ export class RelativeVelocityFilter {
   /**
    * Applies filter to the value.
    * @param value valueToFilter.
-   * @param macroSeconds timestamp associated with the value (for instance,
+   * @param microSeconds timestamp associated with the value (for instance,
    *     timestamp of the frame where you got value from).
    * @param valueScale value scale (for instance, if your value is a distance
    *     detected on a frame, it can look same on different devices but have
@@ -55,13 +55,13 @@ export class RelativeVelocityFilter {
    *     should come up with an appropriate parameter for your particular use
    *     case).
    */
-  apply(value: number, macroSeconds: number, valueScale: number): number {
+  apply(value: number, microSeconds: number, valueScale: number): number {
     if (value == null) {
       return value;
     }
 
-    const $macroSeconds = Math.trunc(macroSeconds);
-    if (this.lastTimestamp >= $macroSeconds) {
+    const $microSeconds = Math.trunc(microSeconds);
+    if (this.lastTimestamp >= $microSeconds) {
       // Results are unpreditable in this case, so nothing to do but return
       // same value.
       return value;
@@ -72,9 +72,11 @@ export class RelativeVelocityFilter {
       alpha = 1;
     } else {
       // Implement the DistanceEstimationMode.kLegacyTransition.
+      // TODO(lina128): Change to kForceCurrentScale or at least add an option
+      // that can be tweaked with parameter.
       const distance =
           value * valueScale - this.lastValue * this.lastValueScale;
-      const duration = $macroSeconds - this.lastTimestamp;
+      const duration = $microSeconds - this.lastTimestamp;
 
       let cumulativeDistance = distance;
       let cumulativeDuration = duration;
@@ -82,7 +84,7 @@ export class RelativeVelocityFilter {
       // Define max cumulative duration assuming 30 frames per second is a good
       // frame rate, so assuming 30 values per second or 1 / 30 of a second is
       // a good duration per window element.
-      const assumedMaxDuration = SECOND_TO_MACRO_SECONDS / 30;
+      const assumedMaxDuration = SECOND_TO_MICRO_SECONDS / 30;
       const maxCumulativeDuration =
           (1 + this.window.length) * assumedMaxDuration;
       for (const el of this.window) {
@@ -96,17 +98,17 @@ export class RelativeVelocityFilter {
       }
 
       const velocity =
-          cumulativeDistance / (cumulativeDuration * MACRO_SECONDS_TO_SECOND);
+          cumulativeDistance / (cumulativeDuration * MICRO_SECONDS_TO_SECOND);
       alpha = 1 - 1 / (1 + this.config.velocityScale * Math.abs(velocity));
-      this.window.push({distance, duration});
+      this.window.unshift({distance, duration});
       if (this.window.length > this.config.windowSize) {
-        this.window.shift();
+        this.window.pop();
       }
     }
 
     this.lastValue = value;
     this.lastValueScale = valueScale;
-    this.lastTimestamp = $macroSeconds;
+    this.lastTimestamp = $microSeconds;
 
     return this.lowPassFilter.applyWithAlpha(value, alpha);
   }

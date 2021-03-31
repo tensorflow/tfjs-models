@@ -36,7 +36,7 @@ export class LandmarksOneEuroFilter implements LandmarksFilter {
 
   constructor(private readonly config: OneEuroFilterConfig) {}
 
-  apply(landmarks: Keypoint[], macroSeconds: number): Keypoint[] {
+  apply(landmarks: Keypoint[], microSeconds: number): Keypoint[] {
     if (landmarks == null) {
       this.reset();
       return null;
@@ -49,12 +49,12 @@ export class LandmarksOneEuroFilter implements LandmarksFilter {
     return landmarks.map((landmark, i) => {
       const outLandmark = {
         ...landmark,
-        x: this.xFilters[i].apply(landmark.x, macroSeconds),
-        y: this.yFilters[i].apply(landmark.y, macroSeconds),
+        x: this.xFilters[i].apply(landmark.x, microSeconds),
+        y: this.yFilters[i].apply(landmark.y, microSeconds),
       };
 
       if (landmark.z != null) {
-        outLandmark.z = this.zFilters[i].apply(landmark.z, macroSeconds);
+        outLandmark.z = this.zFilters[i].apply(landmark.z, microSeconds);
       }
 
       return outLandmark;

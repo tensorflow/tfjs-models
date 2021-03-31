@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import {MACRO_SECONDS_TO_SECOND} from './constants';
+import {MICRO_SECONDS_TO_SECOND} from './constants';
 import {OneEuroFilterConfig} from './interfaces/config_interfaces';
 import {LowPassFilter} from './low_pass_filter';
 /**
@@ -47,27 +47,27 @@ export class OneEuroFilter {
   /**
    * Applies filter to the value.
    * @param value valueToFilter.
-   * @param macroSeconds timestamp associated with the value (for instance,
+   * @param microSeconds timestamp associated with the value (for instance,
    *     timestamp of the frame where you got value from).
    */
-  apply(value: number, macroSeconds: number): number {
+  apply(value: number, microSeconds: number): number {
     if (value == null) {
       return value;
     }
 
-    const $macroSeconds = Math.trunc(macroSeconds);
-    if (this.lastTimestamp >= $macroSeconds) {
+    const $microSeconds = Math.trunc(microSeconds);
+    if (this.lastTimestamp >= $microSeconds) {
       // Results are unpreditable in this case, so nothing to do but return
       // same value.
       return value;
     }
 
     // Update the sampling frequency based on timestamps.
-    if (this.lastTimestamp !== 0 && $macroSeconds !== 0) {
+    if (this.lastTimestamp !== 0 && $microSeconds !== 0) {
       this.frequency =
-          1 / (($macroSeconds - this.lastTimestamp) * MACRO_SECONDS_TO_SECOND);
+          1 / (($microSeconds - this.lastTimestamp) * MICRO_SECONDS_TO_SECOND);
     }
-    this.lastTimestamp = $macroSeconds;
+    this.lastTimestamp = $microSeconds;
 
     // Estimate the current variation per second.
     const dValue = this.x.hasLastRawValue() ?
@@ -84,6 +84,6 @@ export class OneEuroFilter {
   private getAlpha(cutoff: number): number {
     const te = 1.0 / this.frequency;
     const tau = 1.0 / (2 * Math.PI * cutoff);
-    return 1.0 / (1.0 + tau / te);
+    return 1.0 / (1.0 + (tau / te));
   }
 }
