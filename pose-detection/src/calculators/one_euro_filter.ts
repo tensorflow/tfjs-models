@@ -31,10 +31,7 @@ export class OneEuroFilter {
   private lastTimestamp: number;
   /**
    * Constructor of `OneEuroFilter` class.
-   * @param frequency Higher windowSize adds to lag and to stability.
-   * @param minCutOff Lower velocityScale adds to lag and to stability.
-   * @param beta
-   * @param derivateCutOff
+   * @param config See documentation of `OneEuroFilterConfig`.
    */
   constructor(config: OneEuroFilterConfig) {
     this.frequency = config.frequency;
