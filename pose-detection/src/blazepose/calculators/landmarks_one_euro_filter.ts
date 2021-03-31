@@ -18,6 +18,7 @@
 import {OneEuroFilterConfig} from '../../calculators/interfaces/config_interfaces';
 import {OneEuroFilter} from '../../calculators/one_euro_filter';
 import {Keypoint} from '../../types';
+import {LandmarksFilter} from './interfaces/common_interfaces';
 
 /**
  * A stateful filter that smoothes landmark values overtime.
@@ -28,7 +29,7 @@ import {Keypoint} from '../../types';
  */
 // ref:
 // https://github.com/google/mediapipe/blob/master/mediapipe/calculators/util/landmarks_smoothing_calculator.cc
-export class LandmarksOneEuroFilter {
+export class LandmarksOneEuroFilter implements LandmarksFilter {
   private xFilters: OneEuroFilter[];
   private yFilters: OneEuroFilter[];
   private zFilters: OneEuroFilter[];

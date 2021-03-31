@@ -19,6 +19,7 @@ import {getImageSize} from '../../calculators/image_utils';
 import {landmarksToNormalizedLandmarks} from '../../calculators/landmarks_to_normalized_landmarks';
 import {normalizedLandmarksToLandmarks} from '../../calculators/normalized_landmarks_to_landmarks';
 import {Keypoint} from '../../types';
+import {LandmarksFilter} from './interfaces/common_interfaces';
 import {LandmarksSmoothingConfig} from './interfaces/config_interfaces';
 import {LandmarksOneEuroFilter} from './landmarks_one_euro_filter';
 import {LandmarksVelocityFilter} from './landmarks_velocity_filter';
@@ -27,9 +28,9 @@ import {LandmarksVelocityFilter} from './landmarks_velocity_filter';
  * A Calculator to smooth normalized landmarks over time.
  */
 export class LandmarksSmoothingFilter {
-  private landmarksFilter: LandmarksVelocityFilter|LandmarksOneEuroFilter;
+  private landmarksFilter: LandmarksFilter;
 
-  constructor(private readonly config: LandmarksSmoothingConfig) {
+  constructor(config: LandmarksSmoothingConfig) {
     if (config.velocityFilter != null) {
       this.landmarksFilter = new LandmarksVelocityFilter(config.velocityFilter);
     } else {
@@ -42,16 +43,11 @@ export class LandmarksSmoothingFilter {
       this.landmarksFilter.reset();
       return null;
     }
-    if (landmarks.length === 0) {
-      this.landmarksFilter.reset();
-      return null;
-    }
     const imageSize = getImageSize(image);
     const macroSeconds = image.currentTime * 1e6;
     const scaledLandmarks =
         normalizedLandmarksToLandmarks(landmarks, imageSize);
-    const scaledOutLandmarks = this.config.velocityFilter != null ?
-        this.landmarksFilter.apply(scaledLandmarks, macroSeconds) :
+    const scaledOutLandmarks =
         this.landmarksFilter.apply(scaledLandmarks, macroSeconds);
 
     return landmarksToNormalizedLandmarks(scaledOutLandmarks, imageSize);

@@ -18,7 +18,7 @@ import {VelocityFilterConfig} from '../../calculators/interfaces/config_interfac
 import {RelativeVelocityFilter} from '../../calculators/relative_velocity_filter';
 import {getObjectScale} from '../../calculators/velocity_filter_utils';
 import {Keypoint} from '../../types';
-
+import {LandmarksFilter} from './interfaces/common_interfaces';
 
 /**
  * A stateful filter that smoothes landmark values overtime.
@@ -29,7 +29,7 @@ import {Keypoint} from '../../types';
  */
 // ref:
 // https://github.com/google/mediapipe/blob/master/mediapipe/calculators/util/landmarks_smoothing_calculator.cc
-export class LandmarksVelocityFilter {
+export class LandmarksVelocityFilter implements LandmarksFilter {
   private xFilters: RelativeVelocityFilter[];
   private yFilters: RelativeVelocityFilter[];
   private zFilters: RelativeVelocityFilter[];
