@@ -17,15 +17,15 @@
 
 import * as tf from '@tensorflow/tfjs-core';
 
-import { toImageTensor } from '../calculators/image_utils';
-import { BasePoseDetector, PoseDetector } from '../pose_detector';
-import { Keypoint, Pose, PoseDetectorInput } from '../types';
+import {toImageTensor} from '../calculators/image_utils';
+import {BasePoseDetector, PoseDetector} from '../pose_detector';
+import {Keypoint, Pose, PoseDetectorInput} from '../types';
 
-import { MOVENET_CONFIG, MOVENET_SINGLE_PERSON_ESTIMATION_CONFIG } from './constants';
-import { validateEstimationConfig, validateModelConfig } from './detector_utils';
-import { KeypointModel } from './keypoint_model';
-import { OneEuroFilter } from './one_euro_filter';
-import { MoveNetEstimationConfig, MoveNetModelConfig } from './types';
+import {MOVENET_CONFIG, MOVENET_SINGLE_PERSON_ESTIMATION_CONFIG} from './constants';
+import {validateEstimationConfig, validateModelConfig} from './detector_utils';
+import {KeypointModel} from './keypoint_model';
+import {OneEuroFilter} from './one_euro_filter';
+import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
 
 /**
  * MoveNet detector class.
@@ -42,8 +42,8 @@ export class MoveNetDetector extends BasePoseDetector {
 
   // Should not be called outside.
   private constructor(
-    private readonly moveNetModel: KeypointModel,
-    config: MoveNetModelConfig) {
+      private readonly moveNetModel: KeypointModel,
+      config: MoveNetModelConfig) {
     super();
     this.model = moveNetModel;
     // Should we retrieve these values from the config? Or the URL maybe?
@@ -67,14 +67,12 @@ export class MoveNetDetector extends BasePoseDetector {
    * in the documentation of the ModelConfig interface.
    */
   static async load(modelConfig: MoveNetModelConfig = MOVENET_CONFIG):
-    Promise<PoseDetector> {
+      Promise<PoseDetector> {
     const config = validateModelConfig(modelConfig);
-    //    const defaultUrl = "";
-    //    const model = await tfconv.loadGraphModel(config.modelUrl ||
-    //    defaultUrl);
+    // TODO: add URLs here once we know them.
+    const defaultUrl = '';
     const model: KeypointModel = new KeypointModel();
-    //    await model.load('http://localhost:8080/movenet/model.json');
-    await model.load('http://localhost:8080/movenet/model.json');
+    await model.load(config.modelUrl || defaultUrl);
     return new MoveNetDetector(model, config);
   }
 
@@ -100,10 +98,10 @@ export class MoveNetDetector extends BasePoseDetector {
    * @return An array of `Pose`s.
    */
   async estimatePoses(
-    image: PoseDetectorInput,
-    estimationConfig:
-      MoveNetEstimationConfig = MOVENET_SINGLE_PERSON_ESTIMATION_CONFIG):
-    Promise<Pose[]> {
+      image: PoseDetectorInput,
+      estimationConfig:
+          MoveNetEstimationConfig = MOVENET_SINGLE_PERSON_ESTIMATION_CONFIG):
+      Promise<Pose[]> {
     const config = validateEstimationConfig(estimationConfig);
 
     if (image == null) {
@@ -120,7 +118,7 @@ export class MoveNetDetector extends BasePoseDetector {
     const now = performance.now();
     if (this.previousFrameTime !== 0) {
       this.frameTimeDiff =
-        0.02 * this.frameTimeDiff + 0.98 * (now - this.previousFrameTime);
+          0.02 * this.frameTimeDiff + 0.98 * (now - this.previousFrameTime);
     }
     this.previousFrameTime = now;
 
@@ -138,15 +136,15 @@ export class MoveNetDetector extends BasePoseDetector {
     }
 
     const poses: Pose[] = [];
-    poses[0] = { 'keypoints': keypoints };
+    poses[0] = {'keypoints': keypoints};
 
     return poses;
   }
 
   determineCropRegion(
-    keypoints: Keypoint[], webcamHeight: number, webcamWidth: number,
-    minimumKeypointScore: number) {
-    const keypointIndices: { [index: string]: number } = {
+      keypoints: Keypoint[], webcamHeight: number, webcamWidth: number,
+      minimumKeypointScore: number) {
+    const keypointIndices: {[index: string]: number} = {
       nose: 0,
       left_eye: 1,
       right_eye: 2,
@@ -166,7 +164,7 @@ export class MoveNetDetector extends BasePoseDetector {
       right_ankle: 16
     };
 
-    const targetKeypoints: { [index: string]: number[] } = {
+    const targetKeypoints: {[index: string]: number[]} = {
       nose: [0.0, 0.0],
       left_eye: [0.0, 0.0],
       right_eye: [0.0, 0.0],
@@ -194,22 +192,22 @@ export class MoveNetDetector extends BasePoseDetector {
     }
 
     if (keypoints[keypointIndices['left_hip']].score > minimumKeypointScore &&
-      keypoints[keypointIndices['right_hip']].score > minimumKeypointScore &&
-      keypoints[keypointIndices['left_shoulder']].score >
-      minimumKeypointScore &&
-      keypoints[keypointIndices['right_shoulder']].score >
-      minimumKeypointScore) {
+        keypoints[keypointIndices['right_hip']].score > minimumKeypointScore &&
+        keypoints[keypointIndices['left_shoulder']].score >
+            minimumKeypointScore &&
+        keypoints[keypointIndices['right_shoulder']].score >
+            minimumKeypointScore) {
       let centerX = 0.0;
       let centerY = 0.0;
       centerY =
-        (targetKeypoints['left_hip'][0] + targetKeypoints['right_hip'][0]) /
-        2;
+          (targetKeypoints['left_hip'][0] + targetKeypoints['right_hip'][0]) /
+          2;
       centerX =
-        (targetKeypoints['left_hip'][1] + targetKeypoints['right_hip'][1]) /
-        2;
+          (targetKeypoints['left_hip'][1] + targetKeypoints['right_hip'][1]) /
+          2;
 
       const torsoJoints =
-        ['left_shoulder', 'right_shoulder', 'left_hip', 'right_hip'];
+          ['left_shoulder', 'right_shoulder', 'left_hip', 'right_hip'];
       let maxTorsoYrange = 0.0;
       let maxTorsoXrange = 0.0;
       for (let i = 0; i < torsoJoints.length; i++) {
@@ -239,13 +237,13 @@ export class MoveNetDetector extends BasePoseDetector {
       }
 
       let cropLengthHalf = Math.max(
-        maxTorsoXrange * 2.0, maxTorsoYrange * 2.0, maxBodyYrange * 1.2,
-        maxBodyXrange * 1.2);
+          maxTorsoXrange * 2.0, maxTorsoYrange * 2.0, maxBodyYrange * 1.2,
+          maxBodyXrange * 1.2);
 
       cropLengthHalf = Math.min(
-        cropLengthHalf,
-        Math.max(
-          centerX, webcamWidth - centerX, centerY, webcamHeight - centerY));
+          cropLengthHalf,
+          Math.max(
+              centerX, webcamWidth - centerX, centerY, webcamHeight - centerY));
 
       let cropCorner = [centerY - cropLengthHalf, centerX - cropLengthHalf];
 
@@ -283,7 +281,7 @@ export class MoveNetDetector extends BasePoseDetector {
   }
 
   async runInference(inputImage: tf.Tensor4D, minimumKeypointScore: number):
-    Promise<[Keypoint[], number, number[]]> {
+      Promise<[Keypoint[], number, number[]]> {
     let keypoints: Keypoint[] = null;
     let processingTime = 0.0;
     let visualizeCropRegion = null;
@@ -298,9 +296,9 @@ export class MoveNetDetector extends BasePoseDetector {
         // Target size of each crop.
         const cropSize: [number, number] = [this.modelHeight, this.modelWidth];
         return tf.cast(
-          tf.image.cropAndResize(
-            inputImage, cropRegionTensor, boxInd, cropSize, 'bilinear', 0),
-          'int32');
+            tf.image.cropAndResize(
+                inputImage, cropRegionTensor, boxInd, cropSize, 'bilinear', 0),
+            'int32');
       });
 
       // Run cropModel. Model will dispose croppedImage.
@@ -319,9 +317,9 @@ export class MoveNetDetector extends BasePoseDetector {
       // Apply the sequential filter before estimating the cropping area
       // to make it more stable.
       this.arrayToKeypoints(
-        this.filter.insert(
-          this.keypointsToArray(keypoints), 1.0 / this.frameTimeDiff),
-        keypoints);
+          this.filter.insert(
+              this.keypointsToArray(keypoints), 1.0 / this.frameTimeDiff),
+          keypoints);
 
       // Determine next crop region based on detected keypoints and if a crop
       // region is not detected, this will trigger the full model to run.
@@ -329,8 +327,8 @@ export class MoveNetDetector extends BasePoseDetector {
 
       // Use exponential filter on the cropping region to make it less jittery.
       let newCropRegion = this.determineCropRegion(
-        keypoints, inputImage.shape[1], inputImage.shape[2],
-        minimumKeypointScore);
+          keypoints, inputImage.shape[1], inputImage.shape[2],
+          minimumKeypointScore);
       if (newCropRegion != null) {
         newCropRegion = newCropRegion.map(x => x * 0.9);
         this.cropRegion = this.cropRegion.map(x => x * 0.1);
@@ -342,7 +340,7 @@ export class MoveNetDetector extends BasePoseDetector {
 
     if (!this.cropRegion) {
       const resizedImage: tf.Tensor = tf.image.resizeBilinear(
-        inputImage, [this.modelHeight, this.modelWidth]);
+          inputImage, [this.modelHeight, this.modelWidth]);
       const resizedImageInt = tf.cast(resizedImage, 'int32');
       resizedImage.dispose();
 
@@ -351,15 +349,15 @@ export class MoveNetDetector extends BasePoseDetector {
       processingTime += this.model.getProcessingTime();
 
       this.arrayToKeypoints(
-        this.filter.insert(
-          this.keypointsToArray(keypoints), 1.0 / this.frameTimeDiff),
-        keypoints);
+          this.filter.insert(
+              this.keypointsToArray(keypoints), 1.0 / this.frameTimeDiff),
+          keypoints);
 
       // Determine crop region based on detected keypoints.
       visualizeCropRegion = null;
       this.cropRegion = this.determineCropRegion(
-        keypoints, inputImage.shape[1], inputImage.shape[2],
-        minimumKeypointScore);
+          keypoints, inputImage.shape[1], inputImage.shape[2],
+          minimumKeypointScore);
     }
 
     inputImage.dispose();
