@@ -40,6 +40,9 @@ async function createDetector(model) {
     case posedetection.SupportedModels.MediapipeBlazepose:
       return posedetection.createDetector(
           STATE.model.model, {quantBytes: 4, upperBodyOnly: false});
+    case posedetection.SupportedModels.MoveNet:
+      return posedetection.createDetector(
+          STATE.model.model, {});
   }
 }
 

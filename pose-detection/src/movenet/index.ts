@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2021 Google LLC. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,12 +15,4 @@
  * =============================================================================
  */
 
-// Entry point to create a new detector instance.
-export {BlazeposeEstimationConfig, BlazeposeModelConfig} from './blazepose/types';
-export {createDetector} from './create_detector';
-// PoseDetector class.
-export {PoseDetector} from './pose_detector';
-export {PoseNetEstimationConfig, PosenetModelConfig} from './posenet/types';
-export {MoveNetEstimationConfig, MoveNetModelConfig} from './movenet/types';
-// Supported models enum.
-export * from './types';
+export {MoveNetDetector} from './detector';

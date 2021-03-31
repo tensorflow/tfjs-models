@@ -18,7 +18,8 @@ import * as tf from '@tensorflow/tfjs-core';
 
 export enum SupportedModels {
   PoseNet = 'PoseNet',
-  MediapipeBlazepose = 'MediapipeBlazepose'
+  MediapipeBlazepose = 'MediapipeBlazepose',
+  MoveNet = 'MoveNet'
 }
 
 export type QuantBytes = 1|2|4;

@@ -44,10 +44,17 @@ export function setupDatGui() {
       case posedetection.SupportedModels.PoseNet:
         poseNetFolder.open();
         blazePoseFolder.close();
+        moveNetFolder.close();
         break;
       case posedetection.SupportedModels.MediapipeBlazepose:
         blazePoseFolder.open();
         poseNetFolder.close();
+        moveNetFolder.close();
+        break;
+      case posedetection.SupportedModels.MoveNet:
+        blazePoseFolder.close();
+        poseNetFolder.close();
+        moveNetFolder.open();
         break;
       default:
         throw new Error(`${model} is not supported.`);
@@ -70,5 +77,12 @@ export function setupDatGui() {
       STATE.model[posedetection.SupportedModels.MediapipeBlazepose],
       'scoreThreshold', 0, 1);
 
-  return gui;
+  // The MoveNet model config folder contains options for MoveNet config
+  // settings.
+  const moveNetFolder = gui.addFolder('MoveNet Config');
+  moveNetFolder.add(
+      STATE.model[posedetection.SupportedModels.MoveNet],
+      'scoreThreshold', 0, 1);
+
+      return gui;
 }

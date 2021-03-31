@@ -14,26 +14,26 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as posedetection from '@tensorflow-models/posedetection';
 
-export const DEFAULT_LINE_WIDTH = 2;
+import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
 
-export const VIDEO_SIZE = {
-  '640 X 480': {width: 640, height: 480},
-  '640 X 360': {width: 640, height: 360}
+// The default configuration for loading MobileNetV1 based PoseNet.
+//
+// (And for references, the default configuration for loading ResNet
+// based PoseNet is also included).
+//
+// ```
+// const RESNET_CONFIG = {
+//   architecture: 'ResNet50',
+//   outputStride: 32,
+//   quantBytes: 2,
+// } as ModelConfig;
+// ```
+export const MOVENET_CONFIG: MoveNetModelConfig = {
+  inputResolution: {height: 192, width: 192}
 };
-export const STATE = {
-  camera: {targetFPS: 60, sizeOption: '640 X 480'},
-  model: {
-    model: posedetection.SupportedModels.PoseNet,
-  }
-};
-STATE.model[posedetection.SupportedModels.MediapipeBlazepose] = {
-  scoreThreshold: 0.65
-};
-STATE.model[posedetection.SupportedModels.PoseNet] = {
-  scoreThreshold: 0.5
-};
-STATE.model[posedetection.SupportedModels.MoveNet] = {
-  scoreThreshold: 0.3
+
+export const SINGLE_PERSON_ESTIMATION_CONFIG: MoveNetEstimationConfig = {
+  maxPoses: 1,
+  flipHorizontal: false
 };
