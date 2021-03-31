@@ -29,7 +29,6 @@ export function calculateAlignmentPointsRects(
   const startKeypoint = config.rotationVectorStartKeypointIndex;
   const endKeypoint = config.rotationVectorEndKeypointIndex;
 
-
   const locationData = detection.locationData;
   const xCenter =
       locationData.relativeKeypoints[startKeypoint].x * imageSize.width;
