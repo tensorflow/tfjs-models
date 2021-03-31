@@ -28,4 +28,5 @@ export interface MoveNetModelConfig extends ModelConfig {
  * MoveNet Specific Inference Config
  */
 export interface MoveNetEstimationConfig extends EstimationConfig {
+  minimumKeypointScore?: number;
 }

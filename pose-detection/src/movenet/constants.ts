@@ -17,18 +17,7 @@
 
 import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
 
-// The default configuration for loading MobileNetV1 based PoseNet.
-//
-// (And for references, the default configuration for loading ResNet
-// based PoseNet is also included).
-//
-// ```
-// const RESNET_CONFIG = {
-//   architecture: 'ResNet50',
-//   outputStride: 32,
-//   quantBytes: 2,
-// } as ModelConfig;
-// ```
+// The default configuration for loading MoveNet.
 export const MOVENET_CONFIG: MoveNetModelConfig = {
   inputResolution: {height: 192, width: 192}
 };
