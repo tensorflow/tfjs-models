@@ -17,8 +17,8 @@
 
 import * as tfc from '@tensorflow/tfjs-core';
 
-import {Keypoint} from '../types';
-import {Model} from './model';
+import { Keypoint } from '../types';
+import { Model } from './model';
 
 /**
  * Encapsulates a TensorFlow person keypoint model.
@@ -38,8 +38,8 @@ export class KeypointModel extends Model {
    *     inference call could not be executed (for example when the model was
    *     not initialized yet) or if it produced an unexpected tensor size.
    */
-  async detectKeypoints(inputImage: tfc.Tensor, executeSync: boolean = true):
-      Promise<Keypoint[]|null> {
+  async detectKeypoints(inputImage: tfc.Tensor, executeSync = true):
+    Promise<Keypoint[] | null> {
     const outputTensor = await super.runInference(inputImage, executeSync);
     // We expect an output tensor of shape [1, 1, 17, 3].
     if (!outputTensor || outputTensor.shape.length !== 4) {

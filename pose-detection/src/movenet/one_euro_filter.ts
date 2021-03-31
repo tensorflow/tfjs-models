@@ -16,90 +16,90 @@
  */
 
 class EWMA {
-  private update_rate: number;
+  private updateRate: number;
   private state: number[];
 
-	constructor(update_rate: number) {
-		this.update_rate = update_rate;
-		this.state = [];
-	}
+  constructor(updateRate: number) {
+    this.updateRate = updateRate;
+    this.state = [];
+  }
 
-	insert(observations: number[]) {
-		if (!this.state.length) {
-			this.state = observations.slice();
-		} else {
-			for (var obs_idx = 0; obs_idx < observations.length; obs_idx += 1) {
-				this.state[obs_idx] =
-					(1 - this.update_rate) * this.state[obs_idx] +
-					this.update_rate * observations[obs_idx];
-			}
-		}
-		return this.state;
-	}
+  insert(observations: number[]) {
+    if (!this.state.length) {
+      this.state = observations.slice();
+    } else {
+      for (let obsIdx = 0; obsIdx < observations.length; obsIdx += 1) {
+        this.state[obsIdx] =
+          (1 - this.updateRate) * this.state[obsIdx] +
+          this.updateRate * observations[obsIdx];
+      }
+    }
+    return this.state;
+  }
 }
 
 export class OneEuroFilter {
-  private update_rate_offset: number;
-  private update_rate_slope: number;
+  private updateRateOffset: number;
+  private updateRateSlope: number;
   private fps: number;
-  private threshold_offset: number;
-  private threshold_slope: number;
-  private prev_obs: number[];
+  private thresholdOffset: number;
+  private thresholdSlope: number;
+  private prevObs: number[];
   private speed: number[];
-  private speed_ewma: EWMA;
+  private speedEwma: EWMA;
   private threshold: number[];
   private state: number[];
 
-	constructor(update_rate_offset=40.0, update_rate_slope=4e3, speed_update_rate=0.5, fps=30,
-	            threshold_offset=0.5, threshold_slope=5.0) {
-		this.update_rate_offset = update_rate_offset;
-		this.update_rate_slope = update_rate_slope;
-		this.fps = fps;
-		this.threshold_offset = threshold_offset;
-		this.threshold_slope = threshold_slope;
+  constructor(updateRateOffset = 40.0, updateRateSlope = 4e3, speedUpdateRate = 0.5, fps = 30,
+    thresholdOffset = 0.5, thresholdSlope = 5.0) {
+    this.updateRateOffset = updateRateOffset;
+    this.updateRateSlope = updateRateSlope;
+    this.fps = fps;
+    this.thresholdOffset = thresholdOffset;
+    this.thresholdSlope = thresholdSlope;
 
-		this.prev_obs = [];
-		this.speed = [];
-		this.speed_ewma = new EWMA(speed_update_rate);
-		this.threshold = [];
+    this.prevObs = [];
+    this.speed = [];
+    this.speedEwma = new EWMA(speedUpdateRate);
+    this.threshold = [];
 
-		this.state = [];
-	}
+    this.state = [];
+  }
 
-	insert(observations: number[], fps=30) {
-		if (fps > 0) {
-			this.fps = fps;
-		}
+  insert(observations: number[], fps = 30) {
+    if (fps > 0) {
+      this.fps = fps;
+    }
     this.threshold = observations.slice();
-    for (var obs_idx = 0; obs_idx < observations.length; obs_idx += 1) {
-    	this.threshold[obs_idx] = this.threshold_offset;
+    for (let obsIdx = 0; obsIdx < observations.length; obsIdx += 1) {
+      this.threshold[obsIdx] = this.thresholdOffset;
     }
 
-		if (this.prev_obs.length) {
-			var raw_diff = observations.slice();
-			for (var obs_idx = 0; obs_idx < observations.length; obs_idx += 1) {
-				raw_diff[obs_idx] -= this.prev_obs[obs_idx];
-			}
+    if (this.prevObs.length) {
+      const rawDiff = observations.slice();
+      for (let obsIdx = 0; obsIdx < observations.length; obsIdx += 1) {
+        rawDiff[obsIdx] -= this.prevObs[obsIdx];
+      }
       if (this.speed.length) {
-      	for (var obs_idx = 0; obs_idx < observations.length; obs_idx += 1) {
-        	this.threshold[obs_idx] = this.threshold_offset + this.threshold_slope * Math.abs(this.speed[obs_idx]);
+        for (let obsIdx = 0; obsIdx < observations.length; obsIdx += 1) {
+          this.threshold[obsIdx] = this.thresholdOffset + this.thresholdSlope * Math.abs(this.speed[obsIdx]);
         }
       }
-			this.speed = this.speed_ewma.insert(raw_diff);
-		}
-		this.prev_obs = observations.slice();
+      this.speed = this.speedEwma.insert(rawDiff);
+    }
+    this.prevObs = observations.slice();
 
-		if (!this.state.length) {
-			this.state = observations.slice();
-		} else {
-			for (var obs_idx = 0; obs_idx < observations.length; obs_idx += 1) {
-				var update_rate = 1.0 /
-					(1.0 + this.fps / (
-						this.update_rate_offset + this.update_rate_slope * Math.abs(this.speed[obs_idx])));
-        this.state[obs_idx] = this.state[obs_idx] + update_rate * this.threshold[obs_idx] * Math.asinh(
-        	(observations[obs_idx] - this.state[obs_idx]) / this.threshold[obs_idx]);
-			}
-		}
-		return this.state;
-	}
+    if (!this.state.length) {
+      this.state = observations.slice();
+    } else {
+      for (let obsIdx = 0; obsIdx < observations.length; obsIdx += 1) {
+        const updateRate = 1.0 /
+          (1.0 + this.fps / (
+            this.updateRateOffset + this.updateRateSlope * Math.abs(this.speed[obsIdx])));
+        this.state[obsIdx] = this.state[obsIdx] + updateRate * this.threshold[obsIdx] * Math.asinh(
+          (observations[obsIdx] - this.state[obsIdx]) / this.threshold[obsIdx]);
+      }
+    }
+    return this.state;
+  }
 }
