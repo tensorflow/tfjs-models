@@ -14,6 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
+import {MACRO_SECONDS_TO_SECOND, SECOND_TO_MACRO_SECONDS} from './constants';
 import {WindowElement} from './interfaces/common_interfaces';
 import {VelocityFilterConfig} from './interfaces/config_interfaces';
 import {LowPassFilter} from './low_pass_filter';
@@ -81,7 +82,7 @@ export class RelativeVelocityFilter {
       // Define max cumulative duration assuming 30 frames per second is a good
       // frame rate, so assuming 30 values per second or 1 / 30 of a second is
       // a good duration per window element.
-      const assumedMaxDuration = 1e6 / 30;
+      const assumedMaxDuration = SECOND_TO_MACRO_SECONDS / 30;
       const maxCumulativeDuration =
           (1 + this.window.length) * assumedMaxDuration;
       for (const el of this.window) {
@@ -94,9 +95,8 @@ export class RelativeVelocityFilter {
         cumulativeDuration += el.duration;
       }
 
-      const macroSecondsToSecond = 1e-6;
       const velocity =
-          cumulativeDistance / (cumulativeDuration * macroSecondsToSecond);
+          cumulativeDistance / (cumulativeDuration * MACRO_SECONDS_TO_SECOND);
       alpha = 1 - 1 / (1 + this.config.velocityScale * Math.abs(velocity));
       this.window.push({distance, duration});
       if (this.window.length > this.config.windowSize) {

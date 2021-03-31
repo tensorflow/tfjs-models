@@ -14,6 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
+import {MACRO_SECONDS_TO_SECOND} from './constants';
 import {OneEuroFilterConfig} from './interfaces/config_interfaces';
 import {LowPassFilter} from './low_pass_filter';
 /**
@@ -63,9 +64,8 @@ export class OneEuroFilter {
 
     // Update the sampling frequency based on timestamps.
     if (this.lastTimestamp !== 0 && $macroSeconds !== 0) {
-      const macroSecondsToSecond = 1e-6;
       this.frequency =
-          1 / (($macroSeconds - this.lastTimestamp) * macroSecondsToSecond);
+          1 / (($macroSeconds - this.lastTimestamp) * MACRO_SECONDS_TO_SECOND);
     }
     this.lastTimestamp = $macroSeconds;
 

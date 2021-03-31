@@ -15,6 +15,7 @@
  * =============================================================================
  */
 
+import {SECOND_TO_MACRO_SECONDS} from '../../calculators/constants';
 import {getImageSize} from '../../calculators/image_utils';
 import {landmarksToNormalizedLandmarks} from '../../calculators/landmarks_to_normalized_landmarks';
 import {normalizedLandmarksToLandmarks} from '../../calculators/normalized_landmarks_to_landmarks';
@@ -44,7 +45,7 @@ export class LandmarksSmoothingFilter {
       return null;
     }
     const imageSize = getImageSize(image);
-    const macroSeconds = image.currentTime * 1e6;
+    const macroSeconds = image.currentTime * SECOND_TO_MACRO_SECONDS;
     const scaledLandmarks =
         normalizedLandmarksToLandmarks(landmarks, imageSize);
     const scaledOutLandmarks =
