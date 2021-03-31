@@ -82,8 +82,9 @@ export class OneEuroFilter {
   }
 
   private getAlpha(cutoff: number): number {
-    const te = 1.0 / this.frequency;
-    const tau = 1.0 / (2 * Math.PI * cutoff);
-    return 1.0 / (1.0 + (tau / te));
+    // te = 1.0 / this.frequency
+    // tau = 1.0 / (2 * Math.PI * cutoff)
+    // result = 1 / (1.0 + (tau / te))
+    return 1.0 / (1.0 + (this.frequency / (2 * Math.PI * cutoff)));
   }
 }
