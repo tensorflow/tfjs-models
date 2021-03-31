@@ -28,8 +28,8 @@ import * as tfc from '@tensorflow/tfjs-core';
  */
 interface InferenceResult {
   shape: number[];
-  values: number | number[] | number[][] | number[][][] | number[][][][] |
-  number[][][][][] | number[][][][][][];
+  values: number|number[]|number[][]|number[][][]|number[][][][]|
+      number[][][][][]|number[][][][][][];
 }
 
 /**
@@ -65,7 +65,7 @@ export class Model {
    *     tensor or 'null' if the model was not initialized yet.
    */
   async runInference(inputImage: tfc.Tensor, executeSync: boolean):
-    Promise<InferenceResult | null> {
+      Promise<InferenceResult|null> {
     if (!this.model) {
       return null;
     }
@@ -99,7 +99,7 @@ export class Model {
         // TensorFlow.js inference times can vary quite a bit.
         const newSampleWeight = 0.02;
         this.processingTime = (1 - newSampleWeight) * this.processingTime +
-          newSampleWeight * totalInferenceTime;
+            newSampleWeight * totalInferenceTime;
       }
     }
 

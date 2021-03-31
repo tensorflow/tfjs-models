@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import { EstimationConfig, InputResolution, ModelConfig } from '../types';
+import {EstimationConfig, InputResolution, ModelConfig} from '../types';
 
 /**
  * Additional MoveNet model loading config.

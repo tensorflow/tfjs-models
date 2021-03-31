@@ -15,15 +15,16 @@
  * =============================================================================
  */
 
-import { MoveNetEstimationConfig, MoveNetModelConfig } from './types';
+import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
 
 // The default configuration for loading MoveNet.
 export const MOVENET_CONFIG: MoveNetModelConfig = {
-  inputResolution: { height: 192, width: 192 }
+  inputResolution: {height: 192, width: 192}
 };
 
-export const MOVENET_SINGLE_PERSON_ESTIMATION_CONFIG: MoveNetEstimationConfig = {
-  maxPoses: 1,
-  flipHorizontal: false,
-  minimumKeypointScore: 0.3
-};
+export const MOVENET_SINGLE_PERSON_ESTIMATION_CONFIG:
+    MoveNetEstimationConfig = {
+      maxPoses: 1,
+      flipHorizontal: false,
+      minimumKeypointScore: 0.3
+    };

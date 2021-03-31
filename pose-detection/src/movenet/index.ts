@@ -15,4 +15,4 @@
  * =============================================================================
  */
 
-export { MoveNetDetector } from './detector';
+export {MoveNetDetector} from './detector';

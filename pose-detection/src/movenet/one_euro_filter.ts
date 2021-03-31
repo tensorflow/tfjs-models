@@ -29,9 +29,8 @@ class EWMA {
       this.state = observations.slice();
     } else {
       for (let obsIdx = 0; obsIdx < observations.length; obsIdx += 1) {
-        this.state[obsIdx] =
-          (1 - this.updateRate) * this.state[obsIdx] +
-          this.updateRate * observations[obsIdx];
+        this.state[obsIdx] = (1 - this.updateRate) * this.state[obsIdx] +
+            this.updateRate * observations[obsIdx];
       }
     }
     return this.state;
@@ -50,8 +49,9 @@ export class OneEuroFilter {
   private threshold: number[];
   private state: number[];
 
-  constructor(updateRateOffset = 40.0, updateRateSlope = 4e3, speedUpdateRate = 0.5, fps = 30,
-    thresholdOffset = 0.5, thresholdSlope = 5.0) {
+  constructor(
+      updateRateOffset = 40.0, updateRateSlope = 4e3, speedUpdateRate = 0.5,
+      fps = 30, thresholdOffset = 0.5, thresholdSlope = 5.0) {
     this.updateRateOffset = updateRateOffset;
     this.updateRateSlope = updateRateSlope;
     this.fps = fps;
@@ -82,7 +82,8 @@ export class OneEuroFilter {
       }
       if (this.speed.length) {
         for (let obsIdx = 0; obsIdx < observations.length; obsIdx += 1) {
-          this.threshold[obsIdx] = this.thresholdOffset + this.thresholdSlope * Math.abs(this.speed[obsIdx]);
+          this.threshold[obsIdx] = this.thresholdOffset +
+              this.thresholdSlope * Math.abs(this.speed[obsIdx]);
         }
       }
       this.speed = this.speedEwma.insert(rawDiff);
@@ -94,10 +95,15 @@ export class OneEuroFilter {
     } else {
       for (let obsIdx = 0; obsIdx < observations.length; obsIdx += 1) {
         const updateRate = 1.0 /
-          (1.0 + this.fps / (
-            this.updateRateOffset + this.updateRateSlope * Math.abs(this.speed[obsIdx])));
-        this.state[obsIdx] = this.state[obsIdx] + updateRate * this.threshold[obsIdx] * Math.asinh(
-          (observations[obsIdx] - this.state[obsIdx]) / this.threshold[obsIdx]);
+            (1.0 +
+             this.fps /
+                 (this.updateRateOffset +
+                  this.updateRateSlope * Math.abs(this.speed[obsIdx])));
+        this.state[obsIdx] = this.state[obsIdx] +
+            updateRate * this.threshold[obsIdx] *
+                Math.asinh(
+                    (observations[obsIdx] - this.state[obsIdx]) /
+                    this.threshold[obsIdx]);
       }
     }
     return this.state;

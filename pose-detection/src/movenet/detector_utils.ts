@@ -15,22 +15,22 @@
  * =============================================================================
  */
 
-import { MOVENET_CONFIG } from './constants';
-import { MoveNetEstimationConfig, MoveNetModelConfig } from './types';
+import {MOVENET_CONFIG} from './constants';
+import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
 
 export function validateModelConfig(modelConfig: MoveNetModelConfig):
-  MoveNetModelConfig {
+    MoveNetModelConfig {
   const config = modelConfig || MOVENET_CONFIG;
 
   if (config.inputResolution == null) {
-    config.inputResolution = { height: 192, width: 192 };
+    config.inputResolution = {height: 192, width: 192};
   }
 
   return config;
 }
 
 export function validateEstimationConfig(
-  estimationConfig: MoveNetEstimationConfig): MoveNetEstimationConfig {
+    estimationConfig: MoveNetEstimationConfig): MoveNetEstimationConfig {
   const config = estimationConfig;
 
   if (config.maxPoses == null) {
@@ -42,7 +42,8 @@ export function validateEstimationConfig(
   }
 
   if (config.maxPoses > 1) {
-    throw new Error(`Invalid maxPoses ${config.maxPoses}. > 1 not supported yet.`);
+    throw new Error(
+        `Invalid maxPoses ${config.maxPoses}. > 1 not supported yet.`);
   }
 
   if (!config.minimumKeypointScore) {
