@@ -26,9 +26,10 @@
 // https://github.com/google/mediapipe/blob/master/mediapipe/util/filtering/low_pass_filter.cc
 export class LowPassFilter {
   private initialized: boolean = false;
+  private rawValue: number;
   private storedValue: number;
 
-  constructor(private readonly alpha: number) {}
+  constructor(private alpha: number) {}
 
   apply(value: number): number {
     let result;
@@ -38,9 +39,22 @@ export class LowPassFilter {
       result = value;
       this.initialized = true;
     }
-
+    this.rawValue = value;
     this.storedValue = result;
 
     return result;
+  }
+
+  applyWithAlpha(value: number, alpha: number): number {
+    this.alpha = alpha;
+    return this.apply(value);
+  }
+
+  hasLastRawValue(): boolean {
+    return this.initialized;
+  }
+
+  lastRawValue(): number {
+    return this.rawValue;
   }
 }

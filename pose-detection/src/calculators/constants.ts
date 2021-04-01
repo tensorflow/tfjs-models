@@ -14,24 +14,6 @@
  * limitations under the License.
  * =============================================================================
  */
-export interface ImageSize {
-  height: number;
-  width: number;
-}
+export const MICRO_SECONDS_TO_SECOND = 1e-6;
 
-export interface Padding {
-  top: number;
-  bottom: number;
-  left: number;
-  right: number;
-}
-
-export type ValueTransform = {
-  scale: number,
-  offset: number
-}
-
-export interface WindowElement {
-  distance: number;
-  duration: number;
-}
+export const SECOND_TO_MICRO_SECONDS = 1e6;

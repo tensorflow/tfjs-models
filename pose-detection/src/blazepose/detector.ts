@@ -31,6 +31,7 @@ import {calculateLandmarkProjection} from './calculators/calculate_landmark_proj
 import {createSsdAnchors} from './calculators/create_ssd_anchors';
 import {detectorInference} from './calculators/detector_inference';
 import {AnchorTensor, Detection} from './calculators/interfaces/shape_interfaces';
+import {LandmarksSmoothingFilter} from './calculators/landmarks_smoothing';
 import {landmarksToDetection} from './calculators/landmarks_to_detection';
 import {nonMaxSuppression} from './calculators/non_max_suppression';
 import {removeDetectionLetterbox} from './calculators/remove_detection_letterbox';
@@ -62,6 +63,8 @@ export class BlazeposeDetector extends BasePoseDetector {
   private regionOfInterest: Rect = null;
   private visibilitySmoothingFilterActual: LowPassVisibilityFilter;
   private visibilitySmoothingFilterAuxiliary: LowPassVisibilityFilter;
+  private landmarksSmoothingFilterActual: LandmarksSmoothingFilter;
+  private landmarksSmoothingFilterAuxiliary: LandmarksSmoothingFilter;
 
   // Should not be called outside.
   private constructor(
@@ -188,7 +191,10 @@ export class BlazeposeDetector extends BasePoseDetector {
   dispose() {
     this.detectorModel.dispose();
     this.landmarkModel.dispose();
-    tf.dispose(Object.values(this.anchorTensor));
+    tf.dispose([
+      this.anchorTensor.x, this.anchorTensor.y, this.anchorTensor.w,
+      this.anchorTensor.h
+    ]);
   }
 
   // Detects poses.
@@ -430,7 +436,23 @@ export class BlazeposeDetector extends BasePoseDetector {
       }
       auxiliaryLandmarksFiltered =
           this.visibilitySmoothingFilterAuxiliary.apply(auxiliaryLandmarks);
+
+      // Smoothes pose landmark coordinates to reduce jitter.
+      if (this.landmarksSmoothingFilterActual == null) {
+        this.landmarksSmoothingFilterActual = new LandmarksSmoothingFilter(
+            constants.BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG);
+      }
+      actualLandmarksFiltered = this.landmarksSmoothingFilterActual.apply(
+          actualLandmarksFiltered, image);
+
+      if (this.landmarksSmoothingFilterAuxiliary == null) {
+        this.landmarksSmoothingFilterAuxiliary = new LandmarksSmoothingFilter(
+            constants.BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG);
+      }
+      auxiliaryLandmarksFiltered = this.landmarksSmoothingFilterAuxiliary.apply(
+          auxiliaryLandmarksFiltered, image);
     }
+
     return {actualLandmarksFiltered, auxiliaryLandmarksFiltered};
   }
 }

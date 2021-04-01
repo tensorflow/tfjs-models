@@ -14,24 +14,10 @@
  * limitations under the License.
  * =============================================================================
  */
-export interface ImageSize {
-  height: number;
-  width: number;
-}
 
-export interface Padding {
-  top: number;
-  bottom: number;
-  left: number;
-  right: number;
-}
+import {Keypoint} from '../../../types';
 
-export type ValueTransform = {
-  scale: number,
-  offset: number
-}
-
-export interface WindowElement {
-  distance: number;
-  duration: number;
+export interface LandmarksFilter {
+  apply(landmarks: Keypoint[], microSeconds: number): Keypoint[];
+  reset(): void;
 }
