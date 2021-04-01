@@ -14,18 +14,28 @@
  * limitations under the License.
  * =============================================================================
  */
-
+import * as tf from '@tensorflow/tfjs-converter';
 import * as tfc from '@tensorflow/tfjs-core';
 
 import {Keypoint} from '../types';
-import {Model} from './model';
 
 /**
  * Encapsulates a TensorFlow person keypoint model.
  */
-export class KeypointModel extends Model {
-  constructor() {
-    super();
+export class KeypointModel {
+  private model: tf.GraphModel;
+
+  /**
+   * Loads the model from a URL.
+   * @param url URL that points to the model.json file.
+   * @param fromTfHub Indicates whether the model is hosted on TF Hub.
+   */
+  async load(url: string, fromTfHub = false) {
+    if (!fromTfHub) {
+      this.model = await tf.loadGraphModel(url);
+    } else {
+      this.model = await tf.loadGraphModel(url, {fromTFHub: true});
+    }
   }
 
   /**
@@ -40,27 +50,46 @@ export class KeypointModel extends Model {
    */
   async detectKeypoints(inputImage: tfc.Tensor4D, executeSync = true):
       Promise<Keypoint[]|null> {
-    const inferenceResult = await super.runInference(inputImage, executeSync);
-    // We expect an output array of shape [1, 1, 17, 3] (batch, person,
-    // keypoint, coordinate + score).
-    if (!inferenceResult || inferenceResult.shape.length !== 4 ||
-        inferenceResult.shape[0] !== 1 || inferenceResult.shape[1] !== 1 ||
-        inferenceResult.shape[2] !== 17 || inferenceResult.shape[3] !== 3) {
+    if (!this.model) {
       return null;
     }
-    const instanceValues = (inferenceResult.values as number[][][][])[0][0];
+
+    const numKeypoints = 17;
+
+    let outputTensor;
+    if (executeSync) {
+      outputTensor = this.model.execute(inputImage) as tfc.Tensor;
+    } else {
+      outputTensor = await this.model.executeAsync(inputImage) as tfc.Tensor;
+    }
+    inputImage.dispose();
+
+    // We expect an output array of shape [1, 1, 17, 3] (batch, person,
+    // keypoint, coordinate + score).
+    if (!outputTensor || outputTensor.shape.length !== 4 ||
+        outputTensor.shape[0] !== 1 || outputTensor.shape[1] !== 1 ||
+        outputTensor.shape[2] !== numKeypoints || outputTensor.shape[3] !== 3) {
+      outputTensor.dispose();
+      return null;
+    }
+
+    const inferenceResult = outputTensor.dataSync();
+    outputTensor.dispose();
 
     const keypoints: Keypoint[] = [];
 
-    const numKeypoints = 17;
     for (let i = 0; i < numKeypoints; ++i) {
       keypoints[i] = {
-        y: instanceValues[i][0],
-        x: instanceValues[i][1],
-        score: instanceValues[i][2]
+        y: inferenceResult[i * 3],
+        x: inferenceResult[i * 3 + 1],
+        score: inferenceResult[i * 3 + 2]
       };
     }
 
     return keypoints;
+  }
+
+  dispose() {
+    this.model.dispose();
   }
 }

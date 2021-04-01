@@ -20,9 +20,9 @@ import * as tf from '@tensorflow/tfjs-core';
 import {toImageTensor} from '../calculators/image_utils';
 import {OneEuroFilterArray} from '../calculators/one_euro_filter_array';
 import {BasePoseDetector, PoseDetector} from '../pose_detector';
-import {Keypoint, Pose, PoseDetectorInput} from '../types';
+import {InputResolution, Keypoint, Pose, PoseDetectorInput} from '../types';
 
-import {ARCHITECTURE_SINGLEPOSE_LIGHTNING, ARCHITECTURE_SINGLEPOSE_THUNDER, KPT_INDICES, MIN_CROP_KEYPOINT_SCORE, MOVENET_CONFIG, MOVENET_SINGLE_POSE_ESTIMATION_CONFIG, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION} from './constants';
+import {ARCHITECTURE_SINGLEPOSE_LIGHTNING, ARCHITECTURE_SINGLEPOSE_THUNDER, KPT_INDICES, MIN_CROP_KEYPOINT_SCORE, MOVENET_CONFIG, MOVENET_SINGLE_POSE_ESTIMATION_CONFIG, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_URL} from './constants';
 import {validateEstimationConfig, validateModelConfig} from './detector_utils';
 import {KeypointModel} from './keypoint_model';
 import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
@@ -31,10 +31,8 @@ import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
  * MoveNet detector class.
  */
 export class MoveNetDetector extends BasePoseDetector {
-  private maxPoses: number;
   private model: KeypointModel;
-  private modelWidth: number;
-  private modelHeight: number;
+  private modelInputResolution: InputResolution = {height: 0, width: 0};
   private cropRegion: number[];
   private filter: OneEuroFilterArray;
   private previousFrameTime: number;
@@ -48,11 +46,12 @@ export class MoveNetDetector extends BasePoseDetector {
     this.model = moveNetModel;
 
     if (config.modelType === ARCHITECTURE_SINGLEPOSE_LIGHTNING) {
-      this.modelWidth = MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION;
-      this.modelHeight = MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION;
+      this.modelInputResolution.width = MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION;
+      this.modelInputResolution.height =
+          MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION;
     } else if (config.modelType === ARCHITECTURE_SINGLEPOSE_THUNDER) {
-      this.modelWidth = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
-      this.modelHeight = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
+      this.modelInputResolution.width = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
+      this.modelInputResolution.height = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
     }
 
     this.previousFrameTime = 0;
@@ -81,11 +80,9 @@ export class MoveNetDetector extends BasePoseDetector {
     } else {
       let modelUrl;
       if (config.modelType === ARCHITECTURE_SINGLEPOSE_LIGHTNING) {
-        modelUrl =
-            'https://tfhub.dev/google/tfjs-model/movenet/singlepose/lightning/1';
+        modelUrl = MOVENET_SINGLEPOSE_LIGHTNING_URL;
       } else if (config.modelType === ARCHITECTURE_SINGLEPOSE_THUNDER) {
-        modelUrl =
-            'https://tfhub.dev/google/tfjs-model/movenet/singlepose/thunder/1';
+        modelUrl = MOVENET_SINGLEPOSE_THUNDER_URL;
       }
       await model.load(modelUrl, true);
     }
@@ -104,11 +101,6 @@ export class MoveNetDetector extends BasePoseDetector {
    * image to feed through the network.
    *
    * @param config
-   *       maxPoses: Optional. Max number of poses to estimate. Only 1 pose is
-   *       currently supported.
-   *
-   *       flipHorizontal: Optional. Default to false. When image data comes
-   *       from camera, the result has to flip horizontally.
    *
    * @return An array of `Pose`s.
    */
@@ -117,24 +109,19 @@ export class MoveNetDetector extends BasePoseDetector {
       estimationConfig:
           MoveNetEstimationConfig = MOVENET_SINGLE_POSE_ESTIMATION_CONFIG):
       Promise<Pose[]> {
-    const config = validateEstimationConfig(estimationConfig);
+    // We only validate that maxPoses is 1.
+    validateEstimationConfig(estimationConfig);
 
     if (image == null) {
       return [];
-    }
-
-    this.maxPoses = config.maxPoses;
-
-    if (this.maxPoses > 1) {
-      throw new Error('Multi-person poses is not implemented yet.');
     }
 
     // Keep track of fps for one euro filter.
     const now = performance.now();
     if (this.previousFrameTime !== 0) {
       const newSampleWeight = 0.02;
-      this.frameTimeDiff = newSampleWeight * this.frameTimeDiff +
-          (1.0 - newSampleWeight) * (now - this.previousFrameTime);
+      this.frameTimeDiff = (1.0 - newSampleWeight) * this.frameTimeDiff +
+          newSampleWeight * (now - this.previousFrameTime);
     }
     this.previousFrameTime = now;
 
@@ -156,7 +143,8 @@ export class MoveNetDetector extends BasePoseDetector {
         // tensor.
         const boxInd = tf.zeros([1], 'int32') as tf.Tensor1D;
         // Target size of each crop.
-        const cropSize: [number, number] = [this.modelHeight, this.modelWidth];
+        const cropSize: [number, number] =
+            [this.modelInputResolution.height, this.modelInputResolution.width];
         return tf.cast(
             tf.image.cropAndResize(
                 imageTensor4D, cropRegionTensor, boxInd, cropSize, 'bilinear',
@@ -183,7 +171,8 @@ export class MoveNetDetector extends BasePoseDetector {
           keypoints);
 
       // Determine next crop region based on detected keypoints and if a crop
-      // region is not detected, this will trigger the full model to run.
+      // region is not detected, this will trigger the model to run on the full
+      // image.
       let newCropRegion = this.determineCropRegion(
           keypoints, imageTensor4D.shape[1], imageTensor4D.shape[2]);
 
@@ -195,13 +184,12 @@ export class MoveNetDetector extends BasePoseDetector {
       } else {
         this.cropRegion = null;
       }
-    }
-
-    // If no cropRegion was available from a previous run, or if no new
-    // cropRegion could be determined, run the model on the full image.
-    if (!this.cropRegion) {
+    } else {
+      // No cropRegion was available from a previous run, so run the model on
+      // the full image.
       const resizedImage: tf.Tensor = tf.image.resizeBilinear(
-          imageTensor4D, [this.modelHeight, this.modelWidth]);
+          imageTensor4D,
+          [this.modelInputResolution.height, this.modelInputResolution.width]);
       const resizedImageInt = tf.cast(resizedImage, 'int32') as tf.Tensor4D;
       resizedImage.dispose();
 
