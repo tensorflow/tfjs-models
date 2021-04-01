@@ -22,6 +22,7 @@ import {Keypoint} from '../types';
 // returned as is.
 // Object scale is calculated as average between bounding box width and height
 // with sides parallel to axis.
+// TODO(lina128): Follow up with bazarevsky@ about a better pose scale approach.
 export function getObjectScale(landmarks: Keypoint[]): number {
   const x = landmarks.map(landmark => landmark.x);
   const xMin = Math.min(...x);
