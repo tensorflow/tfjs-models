@@ -30,11 +30,11 @@ describeWithFlags('Blazepose', ALL_ENVS, () => {
   beforeAll(() => {
     timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
-  })
+  });
 
   afterAll(() => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
-  })
+  });
 
   beforeEach(async () => {
     startTensors = tf.memory().numTensors;

@@ -29,8 +29,7 @@ export async function nonMaxSuppression(
   const scoresTensor = tf.tensor1d(detections.map(d => d.score[0]));
 
   const selectedIdsTensor = await tf.image.nonMaxSuppressionAsync(
-                                detectionsTensor, scoresTensor, maxPoses,
-                                iouThreshold, scoreThreshold) as tf.Tensor1D;
+      detectionsTensor, scoresTensor, maxPoses, iouThreshold, scoreThreshold);
   const selectedIds = await selectedIdsTensor.array();
 
   const selectedDetections =

@@ -31,6 +31,7 @@ import {calculateLandmarkProjection} from './calculators/calculate_landmark_proj
 import {createSsdAnchors} from './calculators/create_ssd_anchors';
 import {detectorInference} from './calculators/detector_inference';
 import {AnchorTensor, Detection} from './calculators/interfaces/shape_interfaces';
+import {LandmarksSmoothingFilter} from './calculators/landmarks_smoothing';
 import {landmarksToDetection} from './calculators/landmarks_to_detection';
 import {nonMaxSuppression} from './calculators/non_max_suppression';
 import {removeDetectionLetterbox} from './calculators/remove_detection_letterbox';
@@ -47,7 +48,7 @@ type PoseLandmarkByRoiResult = {
   actualLandmarks: Keypoint[],
   auxiliaryLandmarks: Keypoint[],
   poseScore: number
-}
+};
 
 /**
  * Blazepose detector class.
@@ -62,6 +63,8 @@ export class BlazeposeDetector extends BasePoseDetector {
   private regionOfInterest: Rect = null;
   private visibilitySmoothingFilterActual: LowPassVisibilityFilter;
   private visibilitySmoothingFilterAuxiliary: LowPassVisibilityFilter;
+  private landmarksSmoothingFilterActual: LandmarksSmoothingFilter;
+  private landmarksSmoothingFilterAuxiliary: LandmarksSmoothingFilter;
 
   // Should not be called outside.
   private constructor(
@@ -124,7 +127,6 @@ export class BlazeposeDetector extends BasePoseDetector {
    *       coordinates and visibility scores to reduce jitter.
    *
    * @return An array of `Pose`s.
-
    */
   // TF.js implementation of the mediapipe pose detection pipeline.
   // ref graph:
@@ -143,8 +145,7 @@ export class BlazeposeDetector extends BasePoseDetector {
     this.maxPoses = config.maxPoses;
 
     const imageSize = getImageSize(image);
-    const image3d =
-        tf.tidy(() => tf.cast(toImageTensor(image), 'float32')) as tf.Tensor3D;
+    const image3d = tf.tidy(() => tf.cast(toImageTensor(image), 'float32'));
 
     let poseRect = this.regionOfInterest;
 
@@ -188,7 +189,10 @@ export class BlazeposeDetector extends BasePoseDetector {
   dispose() {
     this.detectorModel.dispose();
     this.landmarkModel.dispose();
-    tf.dispose(Object.values(this.anchorTensor));
+    tf.dispose([
+      this.anchorTensor.x, this.anchorTensor.y, this.anchorTensor.w,
+      this.anchorTensor.h
+    ]);
   }
 
   // Detects poses.
@@ -430,7 +434,23 @@ export class BlazeposeDetector extends BasePoseDetector {
       }
       auxiliaryLandmarksFiltered =
           this.visibilitySmoothingFilterAuxiliary.apply(auxiliaryLandmarks);
+
+      // Smoothes pose landmark coordinates to reduce jitter.
+      if (this.landmarksSmoothingFilterActual == null) {
+        this.landmarksSmoothingFilterActual = new LandmarksSmoothingFilter(
+            constants.BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG);
+      }
+      actualLandmarksFiltered = this.landmarksSmoothingFilterActual.apply(
+          actualLandmarksFiltered, image);
+
+      if (this.landmarksSmoothingFilterAuxiliary == null) {
+        this.landmarksSmoothingFilterAuxiliary = new LandmarksSmoothingFilter(
+            constants.BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG);
+      }
+      auxiliaryLandmarksFiltered = this.landmarksSmoothingFilterAuxiliary.apply(
+          auxiliaryLandmarksFiltered, image);
     }
+
     return {actualLandmarksFiltered, auxiliaryLandmarksFiltered};
   }
 }

@@ -61,7 +61,7 @@ export async function tensorsToDetections(
   const outputDetections =
       await convertToDetections(boxes, normalizedScore, config);
 
-  tf.dispose([boxes, normalizedScore])
+  tf.dispose([boxes, normalizedScore]);
 
   return outputDetections;
 }
@@ -79,7 +79,7 @@ export async function convertToDetections(
       continue;
     }
     const boxOffset = i * config.numCoords;
-    let detection = convertToDetection(
+    const detection = convertToDetection(
         detectionBoxesData[boxOffset + 0] /* boxYMin */,
         detectionBoxesData[boxOffset + 1] /* boxXMin */,
         detectionBoxesData[boxOffset + 2] /* boxYMax */,
@@ -131,7 +131,7 @@ function convertToDetection(
       }
     }
   };
-};
+}
 
 //[xCenter, yCenter, w, h, kp1, kp2, kp3, kp4]
 //[yMin, xMin, yMax, xMax, kpX, kpY, kpX, kpY]

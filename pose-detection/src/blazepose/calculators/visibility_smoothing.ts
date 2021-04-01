@@ -17,7 +17,7 @@
 
 import {LowPassFilter} from '../../calculators/low_pass_filter';
 import {Keypoint} from '../../types';
-import {VisibilitySmoothingCalculatorConfig} from './interfaces/config_interfaces';
+import {VisibilitySmoothingConfig} from './interfaces/config_interfaces';
 
 /**
  * Smoothing visibility using a `LowPassFilter` for each landmark.
@@ -26,9 +26,9 @@ export class LowPassVisibilityFilter {
   private alpha: number;
   private visibilityFilters: LowPassFilter[];
 
-  constructor(config: VisibilitySmoothingCalculatorConfig) {
+  constructor(config: VisibilitySmoothingConfig) {
     this.alpha = config.alpha;
-  };
+  }
 
   apply(landmarks?: Keypoint[]): Keypoint[] {
     if (landmarks == null) {

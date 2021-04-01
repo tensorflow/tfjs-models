@@ -51,6 +51,7 @@ export function convertImageToTensor(
         [1, 8]);
 
     const imageTransformed = tf.image.transform(
+        // tslint:disable-next-line: no-unnecessary-type-assertion
         tf.expandDims(tf.cast($image, 'float32')) as tf.Tensor4D,
         transformMatrix, 'bilinear', 'constant', 0,
         [inputResolution.height, inputResolution.width]);

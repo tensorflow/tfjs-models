@@ -14,6 +14,9 @@
  * limitations under the License.
  * =============================================================================
  */
+
+import {OneEuroFilterConfig, VelocityFilterConfig} from '../../../calculators/interfaces/config_interfaces';
+
 export interface AnchorConfig {
   numLayers:
       number;  // Number of output feature maps to generate the anchors on.
@@ -115,8 +118,13 @@ export interface TensorsToLandmarksCalculatorConfig {
   inputImageHeight: number;
   normalizeZ?: number;
 }
-export interface VisibilitySmoothingCalculatorConfig {
+export interface VisibilitySmoothingConfig {
   alpha: number;  // Coefficient applied to a new value, and `1 - alpha` is
                   // applied to a stored value. Should be in [0, 1] range. The
                   // smaller the value, the smoother result and the bigger lag.
+}
+
+export interface LandmarksSmoothingConfig {
+  velocityFilter?: VelocityFilterConfig;
+  oneEuroFilter?: OneEuroFilterConfig;
 }

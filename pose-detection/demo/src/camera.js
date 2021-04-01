@@ -14,7 +14,9 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as constants from './params';
+import * as posedetection from '@tensorflow-models/posedetection';
+
+import * as params from './params';
 import {isMobile} from './util';
 
 export class Camera {
@@ -34,7 +36,7 @@ export class Camera {
    */
   static async setupCamera(cameraParam) {
     const {targetFPS, sizeOption} = cameraParam;
-    const $size = constants.VIDEO_SIZE[sizeOption];
+    const $size = params.VIDEO_SIZE[sizeOption];
     const videoConfig = {
       'audio': false,
       'video': {
@@ -91,7 +93,11 @@ export class Camera {
 
   drawResult(pose, shouldScale = false) {
     if (pose.keypoints != null) {
-      this.drawKeypoints(pose.keypoints, shouldScale);
+      const scaleX = shouldScale ? this.video.videoWidth : 1;
+      const scaleY = shouldScale ? this.video.videoHeight : 1;
+
+      this.drawKeypoints(pose.keypoints, scaleY, scaleX);
+      this.drawSkeleton(pose.keypoints, scaleY, scaleX);
     }
   }
 
@@ -101,29 +107,63 @@ export class Camera {
    * @param shouldScale If the keypoints are normalized, shouldScale should be
    *     set to true.
    */
-  drawKeypoints(keypoints, shouldScale) {
-    const scaleX = shouldScale ? this.video.videoWidth : 1;
-    const scaleY = shouldScale ? this.video.videoHeight : 1;
-    this.ctx.fillStyle = 'red';
-    this.ctx.strokeStyle = 'white';
-    this.ctx.lineWidth = constants.DEFAULT_LINE_WIDTH;
-    keypoints.forEach(keypoint => {
-      if (!keypoint) {
-        return;
-      }
+  drawKeypoints(keypoints, scaleY, scaleX) {
+    const keypointInd =
+        posedetection.util.getKeypointIndexBySide(params.STATE.model.model);
+    this.ctx.fillStyle = 'White';
+    this.ctx.strokeStyle = 'White';
+    this.ctx.lineWidth = params.DEFAULT_LINE_WIDTH;
 
-      // If score is null, just show the keypoint.
-      const score = keypoint.score != null ? keypoint.score : 1;
-      const scoreThreshold =
-          constants.STATE.model[constants.STATE.model.model].scoreThreshold ||
-          0;
+    keypointInd.middle.forEach(
+        i => this.drawKeypoint(keypoints[i], scaleY, scaleX));
 
-      if (score >= scoreThreshold) {
-        const circle = new Path2D();
-        circle.arc(keypoint.x * scaleX, keypoint.y * scaleY, 4, 0, 2 * Math.PI);
-        this.ctx.fill(circle);
-        this.ctx.stroke(circle);
-      }
-    });
+    this.ctx.fillStyle = 'Green';
+    keypointInd.left.forEach(
+        i => this.drawKeypoint(keypoints[i], scaleY, scaleX));
+
+    this.ctx.fillStyle = 'Orange';
+    keypointInd.right.forEach(
+        i => this.drawKeypoint(keypoints[i], scaleY, scaleX));
+  }
+
+  drawKeypoint(keypoint, scaleY, scaleX) {
+    // If score is null, just show the keypoint.
+    const score = keypoint.score != null ? keypoint.score : 1;
+    const scoreThreshold =
+        params.STATE.model[params.STATE.model.model].scoreThreshold || 0;
+
+    if (score >= scoreThreshold) {
+      const circle = new Path2D();
+      circle.arc(
+          keypoint.x * scaleX, keypoint.y * scaleY, params.DEFAULT_RADIUS, 0,
+          2 * Math.PI);
+      this.ctx.fill(circle);
+      this.ctx.stroke(circle);
+    }
+  }
+
+  drawSkeleton(keypoints, scaleY, scaleX) {
+    this.ctx.fillStyle = 'White';
+    this.ctx.strokeStyle = 'White';
+    this.ctx.lineWidth = params.DEFAULT_LINE_WIDTH;
+
+    posedetection.util.getAdjacentPairs(params.STATE.model.model)
+        .forEach(([i, j]) => {
+          const kp1 = keypoints[i];
+          const kp2 = keypoints[j];
+
+          // If score is null, just show the keypoint.
+          const score1 = kp1.score != null ? kp1.score : 1;
+          const score2 = kp2.score != null ? kp2.score : 1;
+          const scoreThreshold =
+              params.STATE.model[params.STATE.model.model].scoreThreshold || 0;
+
+          if (score1 >= scoreThreshold && score2 >= scoreThreshold) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(kp1.x * scaleX, kp1.y * scaleY);
+            this.ctx.lineTo(kp2.x * scaleX, kp2.y * scaleY);
+            this.ctx.stroke();
+          }
+        });
   }
 }

@@ -24,13 +24,11 @@ export interface AnchorTensor {
   w: tf.Tensor1D;
   h: tf.Tensor1D;
 }
-;
 
 export interface LocationData {
   relativeBoundingBox?: BoundingBox;
   relativeKeypoints?: Keypoint[];
 }
-;
 
 export interface Detection {
   score?: number[];

@@ -14,27 +14,6 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as posedetection from '@tensorflow-models/posedetection';
+export const MICRO_SECONDS_TO_SECOND = 1e-6;
 
-export const DEFAULT_LINE_WIDTH = 2;
-export const DEFAULT_RADIUS = 4;
-
-export const VIDEO_SIZE = {
-  '640 X 480': {width: 640, height: 480},
-  '640 X 360': {width: 640, height: 360}
-};
-export const STATE = {
-  camera: {targetFPS: 60, sizeOption: '640 X 480'},
-  model: {
-    model: posedetection.SupportedModels.PoseNet,
-  }
-};
-STATE.model[posedetection.SupportedModels.MediapipeBlazepose] = {
-  scoreThreshold: 0.65
-};
-STATE.model[posedetection.SupportedModels.PoseNet] = {
-  scoreThreshold: 0.5
-};
-STATE.model[posedetection.SupportedModels.MoveNet] = {
-  scoreThreshold: 0.3
-};
+export const SECOND_TO_MICRO_SECONDS = 1e6;
