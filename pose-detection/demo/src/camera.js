@@ -91,6 +91,12 @@ export class Camera {
     this.ctx.clearRect(0, 0, this.video.videoWidth, this.video.videoHeight);
   }
 
+  /**
+   * Draw the keypoints and skeleton on the video.
+   * @param pose A pose with keypoints to render.
+   * @param shouldScale If the keypoints are normalized, shouldScale should be
+   *     set to true.
+   */
   drawResult(pose, shouldScale = false) {
     if (pose.keypoints != null) {
       const scaleX = shouldScale ? this.video.videoWidth : 1;
@@ -104,8 +110,10 @@ export class Camera {
   /**
    * Draw the keypoints on the video.
    * @param keypoints A list of keypoints, may be normalized.
-   * @param shouldScale If the keypoints are normalized, shouldScale should be
-   *     set to true.
+   * @param scaleY If keypoints are normalized, y needs to be scaled back based
+   *     on the scaleY.
+   * @param scaleX If keypoints are normalized, x needs to be scaled back based
+   *     on the scaleX..
    */
   drawKeypoints(keypoints, scaleY, scaleX) {
     const keypointInd =
@@ -142,6 +150,14 @@ export class Camera {
     }
   }
 
+  /**
+   * Draw the skeleton of a body on the video.
+   * @param keypoints A list of keypoints, may be normalized.
+   * @param scaleY If keypoints are normalized, y needs to be scaled back based
+   *     on the scaleY.
+   * @param scaleX If keypoints are normalized, x needs to be scaled back based
+   *     on the scaleX..
+   */
   drawSkeleton(keypoints, scaleY, scaleX) {
     this.ctx.fillStyle = 'White';
     this.ctx.strokeStyle = 'White';
