@@ -24,6 +24,8 @@ export function getKeypointIndexBySide(model: SupportedModels):
       return constants.BLAZEPOSE_KEYPOINTS_BY_SIDE;
     case SupportedModels.PoseNet:
       return constants.COCO_KEYPOINTS_BY_SIDE;
+    case SupportedModels.MoveNet:
+      return constants.COCO_KEYPOINTS_BY_SIDE;
     default:
       throw new Error(`Model ${model} is not supported.`);
   }
@@ -33,6 +35,8 @@ export function getAdjacentPairs(model: SupportedModels): number[][] {
     case SupportedModels.MediapipeBlazepose:
       return constants.BLAZEPOSE_CONNECTED_KEYPOINTS_PAIRS;
     case SupportedModels.PoseNet:
+      return constants.COCO_CONNECTED_KEYPOINTS_PAIRS;
+    case SupportedModels.MoveNet:
       return constants.COCO_CONNECTED_KEYPOINTS_PAIRS;
     default:
       throw new Error(`Model ${model} is not supported.`);

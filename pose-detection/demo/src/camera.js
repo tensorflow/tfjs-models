@@ -128,7 +128,7 @@ export class Camera {
 
   drawKeypoint(keypoint, scaleY, scaleX) {
     // If score is null, just show the keypoint.
-    const score = keypoint.score != null ? keypoint.score : 1;
+    const score = !keypoint ? 0 : keypoint.score != null ? keypoint.score : 1;
     const scoreThreshold =
         params.STATE.model[params.STATE.model.model].scoreThreshold || 0;
 
@@ -153,8 +153,8 @@ export class Camera {
           const kp2 = keypoints[j];
 
           // If score is null, just show the keypoint.
-          const score1 = kp1.score != null ? kp1.score : 1;
-          const score2 = kp2.score != null ? kp2.score : 1;
+          const score1 = !kp1 ? 0 : kp1.score != null ? kp1.score : 1;
+          const score2 = !kp2 ? 0 : kp2.score != null ? kp2.score : 1;
           const scoreThreshold =
               params.STATE.model[params.STATE.model.model].scoreThreshold || 0;
 
