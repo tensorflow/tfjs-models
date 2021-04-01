@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import {Keypoint} from '..';
+import {Keypoint} from '../types';
 import {ImageSize} from './interfaces/common_interfaces';
 export function landmarksToNormalizedLandmarks(
     landmarks: Keypoint[], imageSize: ImageSize): Keypoint[] {

@@ -17,6 +17,7 @@
 import * as posedetection from '@tensorflow-models/posedetection';
 
 export const DEFAULT_LINE_WIDTH = 2;
+export const DEFAULT_RADIUS = 4;
 
 export const VIDEO_SIZE = {
   '640 X 480': {width: 640, height: 480},
