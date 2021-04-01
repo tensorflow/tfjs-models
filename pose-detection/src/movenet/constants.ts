@@ -17,14 +17,18 @@
 
 import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
 
+export const VALID_ARCHITECTURES =
+    ['SinglePose.Lightning', 'SinglePose.Thunder'];
+
+export const MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION = 192;
+export const MOVENET_SINGLEPOSE_THUNDER_RESOLUTION = 256;
+
 // The default configuration for loading MoveNet.
 export const MOVENET_CONFIG: MoveNetModelConfig = {
-  inputResolution: {height: 192, width: 192}
+  modelType: 'SinglePose.Lightning'
 };
 
-export const MOVENET_SINGLE_PERSON_ESTIMATION_CONFIG:
-    MoveNetEstimationConfig = {
-      maxPoses: 1,
-      flipHorizontal: false,
-      minimumKeypointScore: 0.3
-    };
+export const MOVENET_SINGLE_POSE_ESTIMATION_CONFIG: MoveNetEstimationConfig = {
+  maxPoses: 1,
+  minimumKeypointScore: 0.3
+};

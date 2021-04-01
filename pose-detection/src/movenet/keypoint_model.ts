@@ -38,23 +38,26 @@ export class KeypointModel extends Model {
    *     inference call could not be executed (for example when the model was
    *     not initialized yet) or if it produced an unexpected tensor size.
    */
-  async detectKeypoints(inputImage: tfc.Tensor, executeSync = true):
+  async detectKeypoints(inputImage: tfc.Tensor4D, executeSync = true):
       Promise<Keypoint[]|null> {
-    const outputTensor = await super.runInference(inputImage, executeSync);
-    // We expect an output tensor of shape [1, 1, 17, 3].
-    if (!outputTensor || outputTensor.shape.length !== 4) {
+    const inferenceResult = await super.runInference(inputImage, executeSync);
+    // We expect an output array of shape [1, 1, 17, 3] (batch, person,
+    // keypoint, coordinate + score).
+    if (!inferenceResult || inferenceResult.shape.length !== 4 ||
+        inferenceResult.shape[0] !== 1 || inferenceResult.shape[1] !== 1 ||
+        inferenceResult.shape[2] !== 17 || inferenceResult.shape[3] !== 3) {
       return null;
     }
-    const instanceValues = (outputTensor.values as number[][][][])[0][0];
+    const instanceValues = (inferenceResult.values as number[][][][])[0][0];
 
     const keypoints: Keypoint[] = [];
 
     const numKeypoints = 17;
     for (let i = 0; i < numKeypoints; ++i) {
       keypoints[i] = {
-        'y': instanceValues[i][0],
-        'x': instanceValues[i][1],
-        'score': instanceValues[i][2]
+        y: instanceValues[i][0],
+        x: instanceValues[i][1],
+        score: instanceValues[i][2]
       };
     }
 

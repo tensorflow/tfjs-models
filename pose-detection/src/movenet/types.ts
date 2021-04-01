@@ -14,18 +14,33 @@
  * limitations under the License.
  * =============================================================================
  */
-import {EstimationConfig, InputResolution, ModelConfig} from '../types';
+import {EstimationConfig, ModelConfig} from '../types';
 
 /**
  * Additional MoveNet model loading config.
+ *
+ * 'modelType': Optional. The type of MoveNet model to load, Lighting or
+ * Thunder. Defaults to Lightning. Lightning is a lower capacity model that can
+ * run >50FPS on most modern laptops while achieving good performance. Thunder
+ * is A higher capacity model that performs better prediction quality while
+ * still achieving real-time (>30FPS) speed. Thunder will lag behind the
+ * lightning, but it will pack a punch.
+ *
+ * `modelUrl`: Optional. An optional string that specifies custom url of the
+ * model. This is useful for area/countries that don't have access to the model
+ * hosted on TF Hub.
  */
 export interface MoveNetModelConfig extends ModelConfig {
-  inputResolution: InputResolution;
+  modelType?: string;
   modelUrl?: string;
 }
 
 /**
  * MoveNet Specific Inference Config
+ *
+ * 'minimumKeypointScore': Optional. The minimum keypoint confidence score that
+ * a keypoint needs to have to be included in the estimatePoses result.
+ * Keypoints will be set to null otherwise.
  */
 export interface MoveNetEstimationConfig extends EstimationConfig {
   minimumKeypointScore?: number;

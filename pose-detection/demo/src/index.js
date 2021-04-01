@@ -42,7 +42,7 @@ async function createDetector(model) {
           STATE.model.model, {quantBytes: 4, upperBodyOnly: false});
     case posedetection.SupportedModels.MoveNet:
       return posedetection.createDetector(
-          STATE.model.model, {});
+          STATE.model.model, {modelType: 'SinglePose.Lightning'});
   }
 }
 

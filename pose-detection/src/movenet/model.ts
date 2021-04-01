@@ -15,9 +15,6 @@
  * =============================================================================
  */
 
-import '@tensorflow/tfjs-backend-cpu';
-import '@tensorflow/tfjs-backend-webgl';
-
 import * as tf from '@tensorflow/tfjs-converter';
 import * as tfc from '@tensorflow/tfjs-core';
 
@@ -33,25 +30,24 @@ interface InferenceResult {
 }
 
 /**
- * Encapsulates a TensorFlow model and keeps track of the average inference
- * time.
+ * Encapsulates a TensorFlow model.
  */
 export class Model {
-  private processingTime: number;
-  private numInferences: number;
-  private model?: tf.GraphModel;
+  private model: tf.GraphModel;
 
-  constructor() {
-    this.processingTime = 0;
-    this.numInferences = 0;
-  }
+  constructor() {}
 
   /**
    * Loads the model from a URL.
    * @param url URL that points to the model.json file.
+   * @param fromTfHub Indicates whether the model is hosted on TF Hub.
    */
-  async load(url: string) {
-    this.model = await tf.loadGraphModel(url);
+  async load(url: string, fromTfHub = false) {
+    if (!fromTfHub) {
+      this.model = await tf.loadGraphModel(url);
+    } else {
+      this.model = await tf.loadGraphModel(url, {fromTFHub: true});
+    }
   }
 
   /**
@@ -64,13 +60,12 @@ export class Model {
    * @return An multidimensional array containing the values of the first output
    *     tensor or 'null' if the model was not initialized yet.
    */
-  async runInference(inputImage: tfc.Tensor, executeSync: boolean):
+  async runInference(inputImage: tfc.Tensor4D, executeSync: boolean):
       Promise<InferenceResult|null> {
     if (!this.model) {
       return null;
     }
 
-    const startInferenceTime = performance.now();
     let outputTensor;
     if (executeSync) {
       outputTensor = this.model.execute(inputImage) as tfc.Tensor;
@@ -84,37 +79,12 @@ export class Model {
       'values': outputTensor.arraySync(),
     } as InferenceResult;
 
-    const totalInferenceTime = performance.now() - startInferenceTime;
     outputTensor.dispose();
-
-    // Skip first few inference in statistics because those usually take a lot
-    // longer while the model 'warms up'.
-    const inferencesToSkip = 5;
-    this.numInferences++;
-    if (this.numInferences > inferencesToSkip) {
-      if (!this.processingTime) {
-        this.processingTime = totalInferenceTime;
-      } else {
-        // Use a moving average to make the visualization of the FPS less jumpy.
-        // TensorFlow.js inference times can vary quite a bit.
-        const newSampleWeight = 0.02;
-        this.processingTime = (1 - newSampleWeight) * this.processingTime +
-            newSampleWeight * totalInferenceTime;
-      }
-    }
 
     return inferenceResult;
   }
 
   dispose() {
     this.model.dispose();
-  }
-
-  /**
-   * Returns the average inference time.
-   * @return The average inference time in milliseconds.
-   */
-  getProcessingTime() {
-    return this.processingTime;
   }
 }

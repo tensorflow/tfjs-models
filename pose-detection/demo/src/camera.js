@@ -108,6 +108,10 @@ export class Camera {
     this.ctx.strokeStyle = 'white';
     this.ctx.lineWidth = constants.DEFAULT_LINE_WIDTH;
     keypoints.forEach(keypoint => {
+      if (!keypoint) {
+        return;
+      }
+
       // If score is null, just show the keypoint.
       const score = keypoint.score != null ? keypoint.score : 1;
       const scoreThreshold =

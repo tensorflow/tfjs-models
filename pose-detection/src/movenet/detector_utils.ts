@@ -15,15 +15,19 @@
  * =============================================================================
  */
 
-import {MOVENET_CONFIG} from './constants';
+import {MOVENET_CONFIG, MOVENET_SINGLE_POSE_ESTIMATION_CONFIG, VALID_ARCHITECTURES} from './constants';
 import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
 
 export function validateModelConfig(modelConfig: MoveNetModelConfig):
     MoveNetModelConfig {
-  const config = modelConfig || MOVENET_CONFIG;
+  const config = modelConfig == null ? MOVENET_CONFIG : {...modelConfig};
 
-  if (config.inputResolution == null) {
-    config.inputResolution = {height: 192, width: 192};
+  if (!modelConfig.modelType) {
+    modelConfig.modelType = 'SinglePose.Lightning';
+  } else if (VALID_ARCHITECTURES.indexOf(config.modelType) < 0) {
+    throw new Error(
+        `Invalid architecture ${config.modelType}. ` +
+        `Should be one of ${VALID_ARCHITECTURES}`);
   }
 
   return config;
@@ -31,19 +35,16 @@ export function validateModelConfig(modelConfig: MoveNetModelConfig):
 
 export function validateEstimationConfig(
     estimationConfig: MoveNetEstimationConfig): MoveNetEstimationConfig {
-  const config = estimationConfig;
+  const config = estimationConfig == null ?
+      MOVENET_SINGLE_POSE_ESTIMATION_CONFIG :
+      {...estimationConfig};
 
-  if (config.maxPoses == null) {
+  if (!config.maxPoses) {
     config.maxPoses = 1;
   }
 
-  if (config.maxPoses <= 0) {
-    throw new Error(`Invalid maxPoses ${config.maxPoses}. Should be > 0.`);
-  }
-
-  if (config.maxPoses > 1) {
-    throw new Error(
-        `Invalid maxPoses ${config.maxPoses}. > 1 not supported yet.`);
+  if (config.maxPoses <= 0 || config.maxPoses > 1) {
+    throw new Error(`Invalid maxPoses ${config.maxPoses}. Should be 1.`);
   }
 
   if (!config.minimumKeypointScore) {

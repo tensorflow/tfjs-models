@@ -21,7 +21,7 @@ import {toImageTensor} from '../calculators/image_utils';
 import {BasePoseDetector, PoseDetector} from '../pose_detector';
 import {Keypoint, Pose, PoseDetectorInput} from '../types';
 
-import {MOVENET_CONFIG, MOVENET_SINGLE_PERSON_ESTIMATION_CONFIG} from './constants';
+import {MOVENET_CONFIG, MOVENET_SINGLE_POSE_ESTIMATION_CONFIG, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION} from './constants';
 import {validateEstimationConfig, validateModelConfig} from './detector_utils';
 import {KeypointModel} from './keypoint_model';
 import {OneEuroFilter} from './one_euro_filter';
@@ -46,9 +46,14 @@ export class MoveNetDetector extends BasePoseDetector {
       config: MoveNetModelConfig) {
     super();
     this.model = moveNetModel;
-    // Should we retrieve these values from the config? Or the URL maybe?
-    this.modelWidth = 192;
-    this.modelHeight = 192;
+
+    if (config.modelType === 'SinglePose.Lightning') {
+      this.modelWidth = MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION;
+      this.modelHeight = MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION;
+    } else if (config.modelType === 'SinglePose.Thunder') {
+      this.modelWidth = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
+      this.modelHeight = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
+    }
 
     this.previousFrameTime = 0;
     // Assume 30 fps.
@@ -69,10 +74,20 @@ export class MoveNetDetector extends BasePoseDetector {
   static async load(modelConfig: MoveNetModelConfig = MOVENET_CONFIG):
       Promise<PoseDetector> {
     const config = validateModelConfig(modelConfig);
-    // TODO: add URLs here once we know them.
-    const defaultUrl = '';
     const model: KeypointModel = new KeypointModel();
-    await model.load(config.modelUrl || defaultUrl);
+    if (config.modelUrl) {
+      await model.load(config.modelUrl);
+    } else {
+      let modelUrl;
+      if (config.modelType === 'SinglePose.Lightning') {
+        modelUrl =
+            'https://tfhub.dev/google/tfjs-model/movenet/singlepose/lightning/1';
+      } else if (config.modelType === 'SinglePose.Thunder') {
+        modelUrl =
+            'https://tfhub.dev/google/tfjs-model/movenet/singlepose/thunder/1';
+      }
+      await model.load(modelUrl, true);
+    }
     return new MoveNetDetector(model, config);
   }
 
@@ -81,16 +96,15 @@ export class MoveNetDetector extends BasePoseDetector {
    *
    * This does standard ImageNet pre-processing before inferring through the
    * model. The image should pixels should have values [0-255]. It returns a
-   * single pose or multiple poses based on the maxPose parameter from the
-   * `config`.
+   * single pose.
    *
    * @param image
    * ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement The input
    * image to feed through the network.
    *
    * @param config
-   *       maxPoses: Optional. Max number of poses to estimate.
-   *       Only 1 pose is supported.
+   *       maxPoses: Optional. Max number of poses to estimate. Only 1 pose is
+   *       currently supported.
    *
    *       flipHorizontal: Optional. Default to false. When image data comes
    *       from camera, the result has to flip horizontally.
@@ -100,7 +114,7 @@ export class MoveNetDetector extends BasePoseDetector {
   async estimatePoses(
       image: PoseDetectorInput,
       estimationConfig:
-          MoveNetEstimationConfig = MOVENET_SINGLE_PERSON_ESTIMATION_CONFIG):
+          MoveNetEstimationConfig = MOVENET_SINGLE_POSE_ESTIMATION_CONFIG):
       Promise<Pose[]> {
     const config = validateEstimationConfig(estimationConfig);
 
@@ -117,22 +131,105 @@ export class MoveNetDetector extends BasePoseDetector {
     // Keep track of fps for one euro filter.
     const now = performance.now();
     if (this.previousFrameTime !== 0) {
-      this.frameTimeDiff =
-          0.02 * this.frameTimeDiff + 0.98 * (now - this.previousFrameTime);
+      const newSampleWeight = 0.02;
+      this.frameTimeDiff = newSampleWeight * this.frameTimeDiff +
+          (1.0 - newSampleWeight) * (now - this.previousFrameTime);
     }
     this.previousFrameTime = now;
 
     const imageTensor3D = toImageTensor(image);
     const imageHeight = imageTensor3D.shape[0];
     const imageWidth = imageTensor3D.shape[1];
-    const imageTensor4D = tf.expandDims(imageTensor3D, 0) as tf.Tensor4D;
+    const imageTensor4D: tf.Tensor4D = tf.expandDims(imageTensor3D, 0);
     imageTensor3D.dispose();
 
-    const [keypoints, ,] = await this.runInference(imageTensor4D, estimationConfig.minimumKeypointScore);
+    let keypoints: Keypoint[] = null;
 
+    // If we have a cropRegion from a previous run, try to run the model on an
+    // image crop first.
+    if (this.cropRegion != null) {
+      const croppedImage = tf.tidy(() => {
+        // Crop region is a [batch, 4] size tensor.
+        const cropRegionTensor = tf.tensor2d([this.cropRegion]);
+        // The batch index that the crop should operate on. A [batch] size
+        // tensor.
+        const boxInd = tf.zeros([1], 'int32') as tf.Tensor1D;
+        // Target size of each crop.
+        const cropSize: [number, number] = [this.modelHeight, this.modelWidth];
+        return tf.cast(
+            tf.image.cropAndResize(
+                imageTensor4D, cropRegionTensor, boxInd, cropSize, 'bilinear',
+                0),
+            'int32');
+      });
+
+      // Run cropModel. Model will dispose croppedImage.
+      keypoints = await this.model.detectKeypoints(croppedImage);
+
+      // Convert keypoints to image coordinates.
+      const cropHeight = this.cropRegion[2] - this.cropRegion[0];
+      const cropWidth = this.cropRegion[3] - this.cropRegion[1];
+      for (let i = 0; i < keypoints.length; ++i) {
+        keypoints[i].y = this.cropRegion[0] + keypoints[i].y * cropHeight;
+        keypoints[i].x = this.cropRegion[1] + keypoints[i].x * cropWidth;
+      }
+
+      // Apply the sequential filter before estimating the cropping area
+      // to make it more stable.
+      this.arrayToKeypoints(
+          this.filter.insert(
+              this.keypointsToArray(keypoints), 1.0 / this.frameTimeDiff),
+          keypoints);
+
+      // Determine next crop region based on detected keypoints and if a crop
+      // region is not detected, this will trigger the full model to run.
+      let newCropRegion = this.determineCropRegion(
+          keypoints, imageTensor4D.shape[1], imageTensor4D.shape[2],
+          config.minimumKeypointScore);
+
+      // Use exponential filter on the cropping region to make it less jittery.
+      if (newCropRegion != null) {
+        newCropRegion = newCropRegion.map(x => x * 0.9);
+        this.cropRegion = this.cropRegion.map(x => x * 0.1);
+        this.cropRegion = this.cropRegion.map((e, i) => e + newCropRegion[i]);
+      } else {
+        this.cropRegion = null;
+      }
+    }
+
+    // If no cropRegion was available from a previous run, or if no new
+    // cropRegion could be determined, run the model on the full image.
+    if (!this.cropRegion) {
+      const resizedImage: tf.Tensor = tf.image.resizeBilinear(
+          imageTensor4D, [this.modelHeight, this.modelWidth]);
+      const resizedImageInt = tf.cast(resizedImage, 'int32') as tf.Tensor4D;
+      resizedImage.dispose();
+
+      // Model will dispose resizedImageInt.
+      keypoints = await this.model.detectKeypoints(resizedImageInt, true);
+
+      this.arrayToKeypoints(
+          this.filter.insert(
+              this.keypointsToArray(keypoints), 1.0 / this.frameTimeDiff),
+          keypoints);
+
+      // Determine crop region based on detected keypoints.
+      this.cropRegion = this.determineCropRegion(
+          keypoints, imageTensor4D.shape[1], imageTensor4D.shape[2],
+          config.minimumKeypointScore);
+    }
+
+    imageTensor4D.dispose();
+
+    // Convert keypoint coordinates from normalized coordinates to image space
+    // and leave out keypoints that don't have a high enough confidence.
     for (let i = 0; i < keypoints.length; ++i) {
-      keypoints[i].y *= imageHeight;
-      keypoints[i].x *= imageWidth;
+      if (keypoints[i].score >= config.minimumKeypointScore) {
+        keypoints[i].y *= imageHeight;
+        keypoints[i].x *= imageWidth;
+      } else {
+        keypoints[i] = null;
+      }
     }
 
     const poses: Pose[] = [];
@@ -278,91 +375,6 @@ export class MoveNetDetector extends BasePoseDetector {
       keypoints[i].y = values[i * 2];
       keypoints[i].x = values[i * 2 + 1];
     }
-  }
-
-  async runInference(inputImage: tf.Tensor4D, minimumKeypointScore: number):
-      Promise<[Keypoint[], number, number[]]> {
-    let keypoints: Keypoint[] = null;
-    let processingTime = 0.0;
-    let visualizeCropRegion = null;
-
-    if (this.cropRegion != null) {
-      const croppedImage = tf.tidy(() => {
-        // Crop region is a [batch, 4] size tensor.
-        const cropRegionTensor = tf.tensor2d([this.cropRegion]);
-        // The batch index that the crop should operate on. A [batch] size
-        // tensor.
-        const boxInd = tf.zeros([1], 'int32') as tf.Tensor1D;
-        // Target size of each crop.
-        const cropSize: [number, number] = [this.modelHeight, this.modelWidth];
-        return tf.cast(
-            tf.image.cropAndResize(
-                inputImage, cropRegionTensor, boxInd, cropSize, 'bilinear', 0),
-            'int32');
-      });
-
-      // Run cropModel. Model will dispose croppedImage.
-      keypoints = await this.model.detectKeypoints(croppedImage);
-
-      processingTime += this.model.getProcessingTime();
-
-      // Convert keypoints to image coordinates.
-      const cropHeight = this.cropRegion[2] - this.cropRegion[0];
-      const cropWidth = this.cropRegion[3] - this.cropRegion[1];
-      for (let i = 0; i < keypoints.length; ++i) {
-        keypoints[i].y = this.cropRegion[0] + keypoints[i].y * cropHeight;
-        keypoints[i].x = this.cropRegion[1] + keypoints[i].x * cropWidth;
-      }
-
-      // Apply the sequential filter before estimating the cropping area
-      // to make it more stable.
-      this.arrayToKeypoints(
-          this.filter.insert(
-              this.keypointsToArray(keypoints), 1.0 / this.frameTimeDiff),
-          keypoints);
-
-      // Determine next crop region based on detected keypoints and if a crop
-      // region is not detected, this will trigger the full model to run.
-      visualizeCropRegion = this.cropRegion;
-
-      // Use exponential filter on the cropping region to make it less jittery.
-      let newCropRegion = this.determineCropRegion(
-          keypoints, inputImage.shape[1], inputImage.shape[2],
-          minimumKeypointScore);
-      if (newCropRegion != null) {
-        newCropRegion = newCropRegion.map(x => x * 0.9);
-        this.cropRegion = this.cropRegion.map(x => x * 0.1);
-        this.cropRegion = this.cropRegion.map((e, i) => e + newCropRegion[i]);
-      } else {
-        this.cropRegion = null;
-      }
-    }
-
-    if (!this.cropRegion) {
-      const resizedImage: tf.Tensor = tf.image.resizeBilinear(
-          inputImage, [this.modelHeight, this.modelWidth]);
-      const resizedImageInt = tf.cast(resizedImage, 'int32');
-      resizedImage.dispose();
-
-      // Model will dispose resizedImageInt.
-      keypoints = await this.model.detectKeypoints(resizedImageInt, true);
-      processingTime += this.model.getProcessingTime();
-
-      this.arrayToKeypoints(
-          this.filter.insert(
-              this.keypointsToArray(keypoints), 1.0 / this.frameTimeDiff),
-          keypoints);
-
-      // Determine crop region based on detected keypoints.
-      visualizeCropRegion = null;
-      this.cropRegion = this.determineCropRegion(
-          keypoints, inputImage.shape[1], inputImage.shape[2],
-          minimumKeypointScore);
-    }
-
-    inputImage.dispose();
-
-    return [keypoints, processingTime, visualizeCropRegion];
   }
 
   dispose() {
