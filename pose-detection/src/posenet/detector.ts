@@ -87,7 +87,7 @@ export class PosenetDetector extends BasePoseDetector {
           resNet50Checkpoint(config.outputStride, config.quantBytes);
       const model = await tfconv.loadGraphModel(config.modelUrl || defaultUrl);
 
-      return this.constructor(model, config);
+      return new PosenetDetector(model, config);
     }
 
     // Load MobileNetV1 model.
