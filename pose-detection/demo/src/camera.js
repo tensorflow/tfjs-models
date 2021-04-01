@@ -93,7 +93,11 @@ export class Camera {
 
   drawResult(pose, shouldScale = false) {
     if (pose.keypoints != null) {
-      this.drawKeypoints(pose.keypoints, shouldScale);
+      const scaleX = shouldScale ? this.video.videoWidth : 1;
+      const scaleY = shouldScale ? this.video.videoHeight : 1;
+
+      this.drawKeypoints(pose.keypoints, scaleY, scaleX);
+      this.drawSkeleton(pose.keypoints, scaleY, scaleX);
     }
   }
 
@@ -103,10 +107,7 @@ export class Camera {
    * @param shouldScale If the keypoints are normalized, shouldScale should be
    *     set to true.
    */
-  drawKeypoints(keypoints, shouldScale) {
-    const scaleX = shouldScale ? this.video.videoWidth : 1;
-    const scaleY = shouldScale ? this.video.videoHeight : 1;
-
+  drawKeypoints(keypoints, scaleY, scaleX) {
     const keypointInd =
         posedetection.util.getKeypointIndexBySide(params.STATE.model.model);
     this.ctx.fillStyle = 'White';
@@ -139,5 +140,30 @@ export class Camera {
       this.ctx.fill(circle);
       this.ctx.stroke(circle);
     }
+  }
+
+  drawSkeleton(keypoints, scaleY, scaleX) {
+    this.ctx.fillStyle = 'White';
+    this.ctx.strokeStyle = 'White';
+    this.ctx.lineWidth = params.DEFAULT_LINE_WIDTH;
+
+    posedetection.util.getAdjacentPairs(params.STATE.model.model)
+        .forEach(([i, j]) => {
+          const kp1 = keypoints[i];
+          const kp2 = keypoints[j];
+
+          // If score is null, just show the keypoint.
+          const score1 = kp1.score != null ? kp1.score : 1;
+          const score2 = kp2.score != null ? kp2.score : 1;
+          const scoreThreshold =
+              params.STATE.model[params.STATE.model.model].scoreThreshold || 0;
+
+          if (score1 >= scoreThreshold && score2 >= scoreThreshold) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(kp1.x * scaleX, kp1.y * scaleY);
+            this.ctx.lineTo(kp2.x * scaleX, kp2.y * scaleY);
+            this.ctx.stroke();
+          }
+        });
   }
 }

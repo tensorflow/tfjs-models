@@ -28,3 +28,13 @@ export function getKeypointIndexBySide(model: SupportedModels):
       throw new Error(`Model ${model} is not supported.`);
   }
 }
+export function getAdjacentPairs(model: SupportedModels): number[][] {
+  switch (model) {
+    case SupportedModels.MediapipeBlazepose:
+      return constants.BLAZEPOSE_CONNECTED_KEYPOINTS_PAIRS;
+    case SupportedModels.PoseNet:
+      return constants.COCO_CONNECTED_KEYPOINTS_PAIRS;
+    default:
+      throw new Error(`Model ${model} is not supported.`);
+  }
+}
