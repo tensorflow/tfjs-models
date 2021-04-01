@@ -14,24 +14,22 @@
  * limitations under the License.
  * =============================================================================
  */
-export interface ImageSize {
-  height: number;
-  width: number;
-}
+import {Keypoint} from '..';
+import {ImageSize} from './interfaces/common_interfaces';
+export function landmarksToNormalizedLandmarks(
+    landmarks: Keypoint[], imageSize: ImageSize): Keypoint[] {
+  return landmarks.map(landmark => {
+    const normalizedLandmark = {
+      ...landmark,
+      x: landmark.x / imageSize.width,
+      y: landmark.y / imageSize.height
+    };
 
-export interface Padding {
-  top: number;
-  bottom: number;
-  left: number;
-  right: number;
-}
+    if (landmark.z != null) {
+      // Scale z the same way as x (using image width).
+      landmark.z = landmark.z / imageSize.width;
+    }
 
-export type ValueTransform = {
-  scale: number,
-  offset: number
-}
-
-export interface WindowElement {
-  distance: number;
-  duration: number;
+    return normalizedLandmark;
+  });
 }

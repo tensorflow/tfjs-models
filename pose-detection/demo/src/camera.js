@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as constants from './params';
+import * as params from './params';
 import {isMobile} from './util';
 
 export class Camera {
@@ -34,7 +34,7 @@ export class Camera {
    */
   static async setupCamera(cameraParam) {
     const {targetFPS, sizeOption} = cameraParam;
-    const $size = constants.VIDEO_SIZE[sizeOption];
+    const $size = params.VIDEO_SIZE[sizeOption];
     const videoConfig = {
       'audio': false,
       'video': {
@@ -106,13 +106,12 @@ export class Camera {
     const scaleY = shouldScale ? this.video.videoHeight : 1;
     this.ctx.fillStyle = 'red';
     this.ctx.strokeStyle = 'white';
-    this.ctx.lineWidth = constants.DEFAULT_LINE_WIDTH;
+    this.ctx.lineWidth = params.DEFAULT_LINE_WIDTH;
     keypoints.forEach(keypoint => {
       // If score is null, just show the keypoint.
       const score = keypoint.score != null ? keypoint.score : 1;
       const scoreThreshold =
-          constants.STATE.model[constants.STATE.model.model].scoreThreshold ||
-          0;
+          params.STATE.model[params.STATE.model.model].scoreThreshold || 0;
 
       if (score >= scoreThreshold) {
         const circle = new Path2D();
