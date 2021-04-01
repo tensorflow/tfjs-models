@@ -17,18 +17,41 @@
 
 import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
 
+export const ARCHITECTURE_SINGLEPOSE_LIGHTNING = 'SinglePose.Lightning';
+export const ARCHITECTURE_SINGLEPOSE_THUNDER = 'SinglePose.Thunder';
+
 export const VALID_ARCHITECTURES =
-    ['SinglePose.Lightning', 'SinglePose.Thunder'];
+    [ARCHITECTURE_SINGLEPOSE_LIGHTNING, ARCHITECTURE_SINGLEPOSE_THUNDER];
 
 export const MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION = 192;
 export const MOVENET_SINGLEPOSE_THUNDER_RESOLUTION = 256;
 
 // The default configuration for loading MoveNet.
 export const MOVENET_CONFIG: MoveNetModelConfig = {
-  modelType: 'SinglePose.Lightning'
+  modelType: ARCHITECTURE_SINGLEPOSE_LIGHTNING
 };
 
 export const MOVENET_SINGLE_POSE_ESTIMATION_CONFIG: MoveNetEstimationConfig = {
   maxPoses: 1,
   minimumKeypointScore: 0.3
+};
+
+export const KPT_INDICES: {[index: string]: number} = {
+  nose: 0,
+  left_eye: 1,
+  right_eye: 2,
+  left_ear: 3,
+  right_ear: 4,
+  left_shoulder: 5,
+  right_shoulder: 6,
+  left_elbow: 7,
+  right_elbow: 8,
+  left_wrist: 9,
+  right_wrist: 10,
+  left_hip: 11,
+  right_hip: 12,
+  left_knee: 13,
+  right_knee: 14,
+  left_ankle: 15,
+  right_ankle: 16
 };

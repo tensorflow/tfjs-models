@@ -15,6 +15,10 @@
  * =============================================================================
  */
 
+/**
+ * Exponentially weighted moving average filter.
+ * https://en.wikipedia.org/wiki/Moving_average
+ */
 class EWMA {
   private updateRate: number;
   private state: number[];
@@ -37,7 +41,11 @@ class EWMA {
   }
 }
 
-export class OneEuroFilter {
+/**
+ * One-euro filter that works on arrays of numbers.
+ * https://hal.inria.fr/hal-00670496/document
+ */
+export class OneEuroFilterArray {
   private updateRateOffset: number;
   private updateRateSlope: number;
   private fps: number;

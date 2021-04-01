@@ -18,13 +18,13 @@
 import * as tf from '@tensorflow/tfjs-core';
 
 import {toImageTensor} from '../calculators/image_utils';
+import {OneEuroFilterArray} from '../calculators/one_euro_filter_array';
 import {BasePoseDetector, PoseDetector} from '../pose_detector';
 import {Keypoint, Pose, PoseDetectorInput} from '../types';
 
-import {MOVENET_CONFIG, MOVENET_SINGLE_POSE_ESTIMATION_CONFIG, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION} from './constants';
+import {ARCHITECTURE_SINGLEPOSE_LIGHTNING, ARCHITECTURE_SINGLEPOSE_THUNDER, KPT_INDICES, MOVENET_CONFIG, MOVENET_SINGLE_POSE_ESTIMATION_CONFIG, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION} from './constants';
 import {validateEstimationConfig, validateModelConfig} from './detector_utils';
 import {KeypointModel} from './keypoint_model';
-import {OneEuroFilter} from './one_euro_filter';
 import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
 
 /**
@@ -36,7 +36,7 @@ export class MoveNetDetector extends BasePoseDetector {
   private modelWidth: number;
   private modelHeight: number;
   private cropRegion: number[];
-  private filter: OneEuroFilter;
+  private filter: OneEuroFilterArray;
   private previousFrameTime: number;
   private frameTimeDiff: number;
 
@@ -47,29 +47,30 @@ export class MoveNetDetector extends BasePoseDetector {
     super();
     this.model = moveNetModel;
 
-    if (config.modelType === 'SinglePose.Lightning') {
+    if (config.modelType === ARCHITECTURE_SINGLEPOSE_LIGHTNING) {
       this.modelWidth = MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION;
       this.modelHeight = MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION;
-    } else if (config.modelType === 'SinglePose.Thunder') {
+    } else if (config.modelType === ARCHITECTURE_SINGLEPOSE_THUNDER) {
       this.modelWidth = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
       this.modelHeight = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
     }
 
     this.previousFrameTime = 0;
-    // Assume 30 fps.
+    // This will be used to calculate the actual camera fps. Starts with 30 fps
+    // as an assumption.
     this.frameTimeDiff = 0.0333;
 
-    this.filter = new OneEuroFilter();
+    this.filter = new OneEuroFilterArray();
   }
 
   /**
    * Loads the MoveNet model instance from a checkpoint. The model to be loaded
-   * is configurable using the config dictionary ModelConfig. Please find more
-   * details in the documentation of the ModelConfig.
+   * is configurable using the config dictionary `ModelConfig`. Please find more
+   * details in the documentation of the `ModelConfig`.
    *
-   * @param config ModelConfig dictionary that contains parameters for
-   * the MoveNet loading process. Please find more details of each parameters
-   * in the documentation of the ModelConfig interface.
+   * @param config `ModelConfig` dictionary that contains parameters for
+   * the MoveNet loading process. Please find more details of each parameter
+   * in the documentation of the `ModelConfig` interface.
    */
   static async load(modelConfig: MoveNetModelConfig = MOVENET_CONFIG):
       Promise<PoseDetector> {
@@ -79,10 +80,10 @@ export class MoveNetDetector extends BasePoseDetector {
       await model.load(config.modelUrl);
     } else {
       let modelUrl;
-      if (config.modelType === 'SinglePose.Lightning') {
+      if (config.modelType === ARCHITECTURE_SINGLEPOSE_LIGHTNING) {
         modelUrl =
             'https://tfhub.dev/google/tfjs-model/movenet/singlepose/lightning/1';
-      } else if (config.modelType === 'SinglePose.Thunder') {
+      } else if (config.modelType === ARCHITECTURE_SINGLEPOSE_THUNDER) {
         modelUrl =
             'https://tfhub.dev/google/tfjs-model/movenet/singlepose/thunder/1';
       }
@@ -238,29 +239,53 @@ export class MoveNetDetector extends BasePoseDetector {
     return poses;
   }
 
+  torsoVisible(keypoints: Keypoint[], minimumKeypointScore: number) {
+    return (
+        keypoints[KPT_INDICES['left_hip']].score > minimumKeypointScore &&
+        keypoints[KPT_INDICES['right_hip']].score > minimumKeypointScore &&
+        keypoints[KPT_INDICES['left_shoulder']].score > minimumKeypointScore &&
+        keypoints[KPT_INDICES['right_shoulder']].score > minimumKeypointScore);
+  }
+
+  determineTorsoAndBodyRange(
+      keypoints: Keypoint[], targetKeypoints: {[index: string]: number[]},
+      centerY: number, centerX: number, minimumKeypointScore: number) {
+    const torsoJoints =
+        ['left_shoulder', 'right_shoulder', 'left_hip', 'right_hip'];
+    let maxTorsoYrange = 0.0;
+    let maxTorsoXrange = 0.0;
+    for (let i = 0; i < torsoJoints.length; i++) {
+      const distY = Math.abs(centerY - targetKeypoints[torsoJoints[i]][0]);
+      const distX = Math.abs(centerX - targetKeypoints[torsoJoints[i]][1]);
+      if (distY > maxTorsoYrange) {
+        maxTorsoYrange = distY;
+      }
+      if (distX > maxTorsoXrange) {
+        maxTorsoXrange = distX;
+      }
+    }
+    let maxBodyYrange = 0.0;
+    let maxBodyXrange = 0.0;
+    for (const key of Object.keys(targetKeypoints)) {
+      if (keypoints[KPT_INDICES[key]].score < minimumKeypointScore) {
+        continue;
+      }
+      const distY = Math.abs(centerY - targetKeypoints[key][0]);
+      const distX = Math.abs(centerX - targetKeypoints[key][1]);
+      if (distY > maxBodyYrange) {
+        maxBodyYrange = distY;
+      }
+      if (distX > maxBodyXrange) {
+        maxBodyXrange = distX;
+      }
+    }
+
+    return [maxTorsoYrange, maxTorsoXrange, maxBodyYrange, maxBodyXrange];
+  }
+
   determineCropRegion(
       keypoints: Keypoint[], webcamHeight: number, webcamWidth: number,
       minimumKeypointScore: number) {
-    const keypointIndices: {[index: string]: number} = {
-      nose: 0,
-      left_eye: 1,
-      right_eye: 2,
-      left_ear: 3,
-      right_ear: 4,
-      left_shoulder: 5,
-      right_shoulder: 6,
-      left_elbow: 7,
-      right_elbow: 8,
-      left_wrist: 9,
-      right_wrist: 10,
-      left_hip: 11,
-      right_hip: 12,
-      left_knee: 13,
-      right_knee: 14,
-      left_ankle: 15,
-      right_ankle: 16
-    };
-
     const targetKeypoints: {[index: string]: number[]} = {
       nose: [0.0, 0.0],
       left_eye: [0.0, 0.0],
@@ -283,55 +308,23 @@ export class MoveNetDetector extends BasePoseDetector {
 
     for (const key of Object.keys(targetKeypoints)) {
       targetKeypoints[key] = [
-        keypoints[keypointIndices[key]].y * webcamHeight,
-        keypoints[keypointIndices[key]].x * webcamWidth
+        keypoints[KPT_INDICES[key]].y * webcamHeight,
+        keypoints[KPT_INDICES[key]].x * webcamWidth
       ];
     }
 
-    if (keypoints[keypointIndices['left_hip']].score > minimumKeypointScore &&
-        keypoints[keypointIndices['right_hip']].score > minimumKeypointScore &&
-        keypoints[keypointIndices['left_shoulder']].score >
-            minimumKeypointScore &&
-        keypoints[keypointIndices['right_shoulder']].score >
-            minimumKeypointScore) {
-      let centerX = 0.0;
-      let centerY = 0.0;
-      centerY =
+    if (this.torsoVisible(keypoints, minimumKeypointScore)) {
+      const centerY =
           (targetKeypoints['left_hip'][0] + targetKeypoints['right_hip'][0]) /
           2;
-      centerX =
+      const centerX =
           (targetKeypoints['left_hip'][1] + targetKeypoints['right_hip'][1]) /
           2;
 
-      const torsoJoints =
-          ['left_shoulder', 'right_shoulder', 'left_hip', 'right_hip'];
-      let maxTorsoYrange = 0.0;
-      let maxTorsoXrange = 0.0;
-      for (let i = 0; i < torsoJoints.length; i++) {
-        const distY = Math.abs(centerY - targetKeypoints[torsoJoints[i]][0]);
-        const distX = Math.abs(centerX - targetKeypoints[torsoJoints[i]][1]);
-        if (distY > maxTorsoYrange) {
-          maxTorsoYrange = distY;
-        }
-        if (distX > maxTorsoXrange) {
-          maxTorsoXrange = distX;
-        }
-      }
-      let maxBodyYrange = 0.0;
-      let maxBodyXrange = 0.0;
-      for (const key of Object.keys(targetKeypoints)) {
-        if (keypoints[keypointIndices[key]].score < minimumKeypointScore) {
-          continue;
-        }
-        const distY = Math.abs(centerY - targetKeypoints[key][0]);
-        const distX = Math.abs(centerX - targetKeypoints[key][1]);
-        if (distY > maxBodyYrange) {
-          maxBodyYrange = distY;
-        }
-        if (distX > maxBodyXrange) {
-          maxBodyXrange = distX;
-        }
-      }
+      const [maxTorsoYrange, maxTorsoXrange, maxBodyYrange, maxBodyXrange] =
+          this.determineTorsoAndBodyRange(
+              keypoints, targetKeypoints, centerY, centerX,
+              minimumKeypointScore);
 
       let cropLengthHalf = Math.max(
           maxTorsoXrange * 2.0, maxTorsoYrange * 2.0, maxBodyYrange * 1.2,
