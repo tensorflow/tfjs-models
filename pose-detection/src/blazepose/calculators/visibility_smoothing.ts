@@ -28,7 +28,7 @@ export class LowPassVisibilityFilter {
 
   constructor(config: VisibilitySmoothingConfig) {
     this.alpha = config.alpha;
-  };
+  }
 
   apply(landmarks?: Keypoint[]): Keypoint[] {
     if (landmarks == null) {

@@ -48,7 +48,7 @@ type PoseLandmarkByRoiResult = {
   actualLandmarks: Keypoint[],
   auxiliaryLandmarks: Keypoint[],
   poseScore: number
-}
+};
 
 /**
  * Blazepose detector class.
@@ -127,7 +127,6 @@ export class BlazeposeDetector extends BasePoseDetector {
    *       coordinates and visibility scores to reduce jitter.
    *
    * @return An array of `Pose`s.
-
    */
   // TF.js implementation of the mediapipe pose detection pipeline.
   // ref graph:
@@ -146,8 +145,7 @@ export class BlazeposeDetector extends BasePoseDetector {
     this.maxPoses = config.maxPoses;
 
     const imageSize = getImageSize(image);
-    const image3d =
-        tf.tidy(() => tf.cast(toImageTensor(image), 'float32')) as tf.Tensor3D;
+    const image3d = tf.tidy(() => tf.cast(toImageTensor(image), 'float32'));
 
     let poseRect = this.regionOfInterest;
 

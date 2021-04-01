@@ -44,7 +44,7 @@ export function validateModelConfig(modelConfig: BlazeposeModelConfig):
     if (config.upperBodyOnly) {
       config.landmarkModelUrl = DEFAULT_BLAZEPOSE_LANDMARK_UPPER_BODY_MODEL_URL;
     } else {
-      config.landmarkModelUrl = DEFAULT_BLAZEPOSE_LANDMARK_FULL_BODY_MODEL_URL
+      config.landmarkModelUrl = DEFAULT_BLAZEPOSE_LANDMARK_FULL_BODY_MODEL_URL;
     }
   }
 
@@ -53,7 +53,7 @@ export function validateModelConfig(modelConfig: BlazeposeModelConfig):
 
 export function validateEstimationConfig(
     estimationConfig: BlazeposeEstimationConfig): BlazeposeEstimationConfig {
-  let config = {...estimationConfig};
+  const config = {...estimationConfig};
 
   if (config.maxPoses == null) {
     config.maxPoses = 1;

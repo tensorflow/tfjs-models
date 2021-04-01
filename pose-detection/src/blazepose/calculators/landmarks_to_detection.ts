@@ -47,14 +47,8 @@ export function landmarksToDetection(landmarks: Keypoint[]): Detection {
         {x: landmark.x, y: landmark.y} as Keypoint);
   }
 
-  detection.locationData.relativeBoundingBox = {
-    xMin,
-    yMin,
-    xMax,
-    yMax,
-    width: (xMax - xMin),
-    height: (yMax - yMin)
-  }
+  detection.locationData.relativeBoundingBox =
+      {xMin, yMin, xMax, yMax, width: (xMax - xMin), height: (yMax - yMin)};
 
   return detection;
 }

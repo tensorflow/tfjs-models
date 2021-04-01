@@ -25,7 +25,7 @@
 // ref:
 // https://github.com/google/mediapipe/blob/master/mediapipe/util/filtering/low_pass_filter.cc
 export class LowPassFilter {
-  private initialized: boolean = false;
+  private initialized = false;
   private rawValue: number;
   private storedValue: number;
 
