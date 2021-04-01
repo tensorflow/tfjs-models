@@ -14,22 +14,17 @@
  * limitations under the License.
  * =============================================================================
  */
-import {Keypoint} from '../types';
-import {ImageSize} from './interfaces/common_interfaces';
-export function normalizedLandmarksToLandmarks(
-    normalizedLandmarks: Keypoint[], imageSize: ImageSize): Keypoint[] {
-  return normalizedLandmarks.map(normalizedLandmark => {
-    const landmark = {
-      ...normalizedLandmark,
-      x: normalizedLandmark.x * imageSize.width,
-      y: normalizedLandmark.y * imageSize.height
-    };
+import * as constants from './constants';
+import {SupportedModels} from './types';
 
-    if (normalizedLandmark.z != null) {
-      // Scale z the same way as x (using image width).
-      landmark.z = normalizedLandmark.z * imageSize.width;
-    }
-
-    return landmark;
-  });
+export function getKeypointIndexBySide(model: SupportedModels):
+    {left: number[], right: number[], middle: number[]} {
+  switch (model) {
+    case SupportedModels.MediapipeBlazepose:
+      return constants.BLAZEPOSE_KEYPOINTS_BY_SIDE;
+    case SupportedModels.PoseNet:
+      return constants.COCO_KEYPOINTS_BY_SIDE;
+    default:
+      throw new Error(`Model ${model} is not supported.`);
+  }
 }

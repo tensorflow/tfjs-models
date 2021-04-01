@@ -14,6 +14,8 @@
  * limitations under the License.
  * =============================================================================
  */
+import * as posedetection from '@tensorflow-models/posedetection';
+
 import * as params from './params';
 import {isMobile} from './util';
 
@@ -104,21 +106,38 @@ export class Camera {
   drawKeypoints(keypoints, shouldScale) {
     const scaleX = shouldScale ? this.video.videoWidth : 1;
     const scaleY = shouldScale ? this.video.videoHeight : 1;
-    this.ctx.fillStyle = 'red';
-    this.ctx.strokeStyle = 'white';
-    this.ctx.lineWidth = params.DEFAULT_LINE_WIDTH;
-    keypoints.forEach(keypoint => {
-      // If score is null, just show the keypoint.
-      const score = keypoint.score != null ? keypoint.score : 1;
-      const scoreThreshold =
-          params.STATE.model[params.STATE.model.model].scoreThreshold || 0;
 
-      if (score >= scoreThreshold) {
-        const circle = new Path2D();
-        circle.arc(keypoint.x * scaleX, keypoint.y * scaleY, 4, 0, 2 * Math.PI);
-        this.ctx.fill(circle);
-        this.ctx.stroke(circle);
-      }
-    });
+    const keypointInd =
+        posedetection.util.getKeypointIndexBySide(params.STATE.model.model);
+    this.ctx.fillStyle = 'White';
+    this.ctx.strokeStyle = 'White';
+    this.ctx.lineWidth = params.DEFAULT_LINE_WIDTH;
+
+    keypointInd.middle.forEach(
+        i => this.drawKeypoint(keypoints[i], scaleY, scaleX));
+
+    this.ctx.fillStyle = 'Green';
+    keypointInd.left.forEach(
+        i => this.drawKeypoint(keypoints[i], scaleY, scaleX));
+
+    this.ctx.fillStyle = 'Orange';
+    keypointInd.right.forEach(
+        i => this.drawKeypoint(keypoints[i], scaleY, scaleX));
+  }
+
+  drawKeypoint(keypoint, scaleY, scaleX) {
+    // If score is null, just show the keypoint.
+    const score = keypoint.score != null ? keypoint.score : 1;
+    const scoreThreshold =
+        params.STATE.model[params.STATE.model.model].scoreThreshold || 0;
+
+    if (score >= scoreThreshold) {
+      const circle = new Path2D();
+      circle.arc(
+          keypoint.x * scaleX, keypoint.y * scaleY, params.DEFAULT_RADIUS, 0,
+          2 * Math.PI);
+      this.ctx.fill(circle);
+      this.ctx.stroke(circle);
+    }
   }
 }

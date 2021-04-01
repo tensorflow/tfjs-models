@@ -19,3 +19,26 @@ export const COCO_KEYPOINTS = [
   'rightShoulder', 'leftElbow', 'rightElbow', 'leftWrist', 'rightWrist',
   'leftHip', 'rightHip', 'leftKnee', 'rightKnee', 'leftAnkle', 'rightAnkle'
 ];
+export const BLAZEPOSE_KEYPOINTS_UPPERBODY = [
+  'nose',         'rightEyeInner', 'rightEye',     'rightEyeOuter',
+  'leftEyeInner', 'leftEye',       'leftEyeOuter', 'rightEar',
+  'leftEar',      'mouthRight',    'mouthLeft',    'rightShoulder',
+  'leftShoulder', 'rightElbow',    'leftElbow',    'rightWrist',
+  'leftWrist',    'rightPinky',    'leftPinky',    'rightIndex',
+  'leftIndex',    'rightThumb',    'leftThumb',    'rightHip',
+  'leftHip'
+];
+export const BLAZEPOSE_KEYPOINTS_FULLBODY = [
+  ...BLAZEPOSE_KEYPOINTS_UPPERBODY, 'rightKnee', 'leftKnee', 'rightAnkle',
+  'leftAnkle', 'rightHeel', 'leftHeel', 'rightFoot', 'leftFoot'
+];
+export const BLAZEPOSE_KEYPOINTS_BY_SIDE = {
+  left: [4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32],
+  right: [1, 2, 3, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31],
+  middle: [0]
+};
+export const COCO_KEYPOINTS_BY_SIDE = {
+  left: [1, 3, 5, 7, 9, 11, 13, 15],
+  right: [2, 4, 6, 8, 10, 12, 14, 16],
+  middle: [0]
+};
