@@ -32,9 +32,10 @@ export const MOVENET_CONFIG: MoveNetModelConfig = {
 };
 
 export const MOVENET_SINGLE_POSE_ESTIMATION_CONFIG: MoveNetEstimationConfig = {
-  maxPoses: 1,
-  minimumKeypointScore: 0.3
+  maxPoses: 1
 };
+
+export const MIN_CROP_KEYPOINT_SCORE = 0.3;
 
 export const KPT_INDICES: {[index: string]: number} = {
   nose: 0,

@@ -36,12 +36,6 @@ export interface MoveNetModelConfig extends ModelConfig {
 }
 
 /**
- * MoveNet Specific Inference Config
- *
- * 'minimumKeypointScore': Optional. The minimum keypoint confidence score that
- * a keypoint needs to have to be included in the estimatePoses result.
- * Keypoints will be set to null otherwise.
+ * MoveNet Specific Inference Config.
  */
-export interface MoveNetEstimationConfig extends EstimationConfig {
-  minimumKeypointScore?: number;
-}
+export interface MoveNetEstimationConfig extends EstimationConfig {}

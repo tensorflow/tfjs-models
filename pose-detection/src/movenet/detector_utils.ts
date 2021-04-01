@@ -47,9 +47,5 @@ export function validateEstimationConfig(
     throw new Error(`Invalid maxPoses ${config.maxPoses}. Should be 1.`);
   }
 
-  if (!config.minimumKeypointScore) {
-    config.minimumKeypointScore = 0.3;
-  }
-
   return config;
 }
