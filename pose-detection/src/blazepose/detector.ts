@@ -17,20 +17,21 @@
 
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
-
 import {convertImageToTensor} from '../calculators/convert_image_to_tensor';
 import {getImageSize, toImageTensor} from '../calculators/image_utils';
 import {ImageSize} from '../calculators/interfaces/common_interfaces';
 import {Rect} from '../calculators/interfaces/shape_interfaces';
+import {isVideo} from '../calculators/is_video';
 import {shiftImageValue} from '../calculators/shift_image_value';
+
 import {BasePoseDetector, PoseDetector} from '../pose_detector';
 import {Keypoint, Pose, PoseDetectorInput} from '../types';
-
 import {calculateAlignmentPointsRects} from './calculators/calculate_alignment_points_rects';
 import {calculateLandmarkProjection} from './calculators/calculate_landmark_projection';
 import {createSsdAnchors} from './calculators/create_ssd_anchors';
 import {detectorInference} from './calculators/detector_inference';
 import {AnchorTensor, Detection} from './calculators/interfaces/shape_interfaces';
+import {LandmarksSmoothingFilter} from './calculators/landmarks_smoothing';
 import {landmarksToDetection} from './calculators/landmarks_to_detection';
 import {nonMaxSuppression} from './calculators/non_max_suppression';
 import {removeDetectionLetterbox} from './calculators/remove_detection_letterbox';
@@ -38,6 +39,7 @@ import {removeLandmarkLetterbox} from './calculators/remove_landmark_letterbox';
 import {tensorsToDetections} from './calculators/tensors_to_detections';
 import {tensorsToLandmarks} from './calculators/tensors_to_landmarks';
 import {transformNormalizedRect} from './calculators/transform_rect';
+import {LowPassVisibilityFilter} from './calculators/visibility_smoothing';
 import * as constants from './constants';
 import {validateEstimationConfig, validateModelConfig} from './detector_utils';
 import {BlazeposeEstimationConfig, BlazeposeModelConfig} from './types';
@@ -46,7 +48,7 @@ type PoseLandmarkByRoiResult = {
   actualLandmarks: Keypoint[],
   auxiliaryLandmarks: Keypoint[],
   poseScore: number
-}
+};
 
 /**
  * Blazepose detector class.
@@ -56,7 +58,13 @@ export class BlazeposeDetector extends BasePoseDetector {
   private upperBodyOnly: boolean;
   private anchors: Rect[];
   private anchorTensor: AnchorTensor;
+
+  // Store global states.
   private regionOfInterest: Rect = null;
+  private visibilitySmoothingFilterActual: LowPassVisibilityFilter;
+  private visibilitySmoothingFilterAuxiliary: LowPassVisibilityFilter;
+  private landmarksSmoothingFilterActual: LandmarksSmoothingFilter;
+  private landmarksSmoothingFilterAuxiliary: LandmarksSmoothingFilter;
 
   // Should not be called outside.
   private constructor(
@@ -115,8 +123,10 @@ export class BlazeposeDetector extends BasePoseDetector {
    *       flipHorizontal: Optional. Default to false. When image data comes
    *       from camera, the result has to flip horizontally.
    *
+   *       enableSmoothing: Optional. Default to true. Smooth pose landmarks
+   *       coordinates and visibility scores to reduce jitter.
+   *
    * @return An array of `Pose`s.
-
    */
   // TF.js implementation of the mediapipe pose detection pipeline.
   // ref graph:
@@ -128,14 +138,14 @@ export class BlazeposeDetector extends BasePoseDetector {
     const config = validateEstimationConfig(estimationConfig);
 
     if (image == null) {
+      this.regionOfInterest = null;
       return [];
     }
 
     this.maxPoses = config.maxPoses;
 
     const imageSize = getImageSize(image);
-    const image3d =
-        tf.tidy(() => tf.cast(toImageTensor(image), 'float32')) as tf.Tensor3D;
+    const image3d = tf.tidy(() => tf.cast(toImageTensor(image), 'float32'));
 
     let poseRect = this.regionOfInterest;
 
@@ -143,47 +153,35 @@ export class BlazeposeDetector extends BasePoseDetector {
       // Need to run detector again.
       const detections = await this.detectPose(image3d);
 
-      if (detections.length === 0) {
-        this.regionOfInterest = null;
-
-        image3d.dispose();
-
-        return [];
-      };
-
       // Gets the very first detection from PoseDetection.
-      const firstDetection = detections[0];
+      const firstDetection = detections.length > 0 ? detections[0] : null;
 
       // Calculates region of interest based on pose detection, so that can be
       // used to detect landmarks.
-      poseRect = this.poseDetectionToRoi(
-          firstDetection, imageSize, this.upperBodyOnly);
+      poseRect = this.poseDetectionToRoi(firstDetection, imageSize);
     }
 
     // Detects pose landmarks within specified region of interest of the image.
     const poseLandmarks = await this.poseLandmarkByRoi(poseRect, image3d);
 
-    if (poseLandmarks == null) {
-      this.regionOfInterest = null;
-
-      image3d.dispose();
-
-      return [];
-    }
-
     const {actualLandmarks, auxiliaryLandmarks, poseScore} = poseLandmarks;
+
+    // Smoothes landmarks to reduce jitter.
+    const {actualLandmarksFiltered, auxiliaryLandmarksFiltered} =
+        this.poseLandmarkFiltering(
+            actualLandmarks, auxiliaryLandmarks, image, config.enableSmoothing);
 
     // Calculates region of interest based on the auxiliary landmarks, to be
     // used in the subsequent image.
     const poseRectFromLandmarks =
-        this.poseLandmarksToRoi(auxiliaryLandmarks, imageSize);
+        this.poseLandmarksToRoi(auxiliaryLandmarksFiltered, imageSize);
 
     // Cache roi for next image.
     this.regionOfInterest = poseRectFromLandmarks;
 
     image3d.dispose();
 
-    const pose: Pose = {score: poseScore, keypoints: actualLandmarks};
+    const pose: Pose = {score: poseScore, keypoints: actualLandmarksFiltered};
 
     return [pose];
   }
@@ -191,7 +189,10 @@ export class BlazeposeDetector extends BasePoseDetector {
   dispose() {
     this.detectorModel.dispose();
     this.landmarkModel.dispose();
-    tf.dispose(Object.values(this.anchorTensor));
+    tf.dispose([
+      this.anchorTensor.x, this.anchorTensor.y, this.anchorTensor.w,
+      this.anchorTensor.h
+    ]);
   }
 
   // Detects poses.
@@ -238,16 +239,20 @@ export class BlazeposeDetector extends BasePoseDetector {
   // Subgraph: PoseDetectionToRoi.
   // ref:
   // https://github.com/google/mediapipe/blob/master/mediapipe/modules/pose_landmark/pose_detection_to_roi.pbtxt
-  private poseDetectionToRoi(
-      detection: Detection, imageSize: ImageSize,
-      upperBodyOnly: boolean): Rect {
+  // If detection is not null, imageSize should not be null either.
+  private poseDetectionToRoi(detection?: Detection, imageSize?: ImageSize):
+      Rect {
+    if (detection == null) {
+      return null;
+    }
+
     let startKeypointIndex;
     let endKeypointIndex;
 
     // Converts pose detection into a rectangle based on center and scale
     // alignment points. Pose detection contains four key points: first two for
     // full-body pose and two more for upper-body pose.
-    if (upperBodyOnly) {
+    if (this.upperBodyOnly) {
       startKeypointIndex = 2;
       endKeypointIndex = 3;
     } else {
@@ -276,8 +281,14 @@ export class BlazeposeDetector extends BasePoseDetector {
   // subgraph: PoseLandmarkByRoiCpu
   // ref:
   // https://github.com/google/mediapipe/blob/master/mediapipe/modules/pose_landmark/pose_landmark_by_roi_cpu.pbtxt
-  private async poseLandmarkByRoi(poseRect: Rect, image: tf.Tensor3D):
+  // When poseRect is not null, image should not be null either.
+  private async poseLandmarkByRoi(poseRect?: Rect, image?: tf.Tensor3D):
       Promise<PoseLandmarkByRoiResult> {
+    if (poseRect == null) {
+      // Return empty array instead of null because downstream calculators
+      // may expect an array type.
+      return {actualLandmarks: null, auxiliaryLandmarks: null, poseScore: 0};
+    }
     // Transforms the input image into a 256x256 tensor while keeping the aspect
     // ratio, resulting in potential letterboxing in the transformed image.
     const {imageTensor, padding} = convertImageToTensor(
@@ -318,7 +329,7 @@ export class BlazeposeDetector extends BasePoseDetector {
       tf.dispose(landmarkResult);
       tf.dispose([imageTensor, imageValueShifted]);
 
-      return null;
+      return {actualLandmarks: null, auxiliaryLandmarks: null, poseScore};
     }
 
     // Decodes the landmark tensors into a list of landmarks, where the landmark
@@ -366,8 +377,12 @@ export class BlazeposeDetector extends BasePoseDetector {
   // Subgraph: PoseLandmarkByRoiCpu
   // ref:
   // https://github.com/google/mediapipe/blob/master/mediapipe/modules/pose_landmark/pose_landmarks_to_roi.pbtxt
-  private poseLandmarksToRoi(landmarks: Keypoint[], imageSize: ImageSize):
+  // When landmarks is not null, imageSize should not be null either.
+  private poseLandmarksToRoi(landmarks?: Keypoint[], imageSize?: ImageSize):
       Rect {
+    if (landmarks == null) {
+      return null;
+    }
     // PoseLandmarksToRoi: LandmarksToDetectionCalculator.
     const detection = landmarksToDetection(landmarks);
 
@@ -387,5 +402,55 @@ export class BlazeposeDetector extends BasePoseDetector {
         constants.BLAZEPOSE_DETECTOR_RECT_TRANSFORMATION_CONFIG);
 
     return roi;
+  }
+
+  // Filter landmarks temporally to reduce jitter.
+  // Subgraph: PoseLandmarkFiltering
+  // ref:
+  // https://github.com/google/mediapipe/blob/master/mediapipe/modules/pose_landmark/pose_landmark_filtering.pbtxt
+  private poseLandmarkFiltering(
+      actualLandmarks: Keypoint[], auxiliaryLandmarks: Keypoint[],
+      image: PoseDetectorInput, enableSmoothing: boolean): {
+    actualLandmarksFiltered: Keypoint[],
+    auxiliaryLandmarksFiltered: Keypoint[]
+  } {
+    let actualLandmarksFiltered;
+    let auxiliaryLandmarksFiltered;
+    if (!isVideo(image) || !enableSmoothing) {
+      actualLandmarksFiltered = actualLandmarks;
+      auxiliaryLandmarksFiltered = auxiliaryLandmarks;
+    } else {
+      // Smoothes pose landmark visibilities to reduce jitter.
+      if (this.visibilitySmoothingFilterActual == null) {
+        this.visibilitySmoothingFilterActual = new LowPassVisibilityFilter(
+            constants.BLAZEPOSE_VISIBILITY_SMOOTHING_CONFIG);
+      }
+      actualLandmarksFiltered =
+          this.visibilitySmoothingFilterActual.apply(actualLandmarks);
+
+      if (this.visibilitySmoothingFilterAuxiliary == null) {
+        this.visibilitySmoothingFilterAuxiliary = new LowPassVisibilityFilter(
+            constants.BLAZEPOSE_VISIBILITY_SMOOTHING_CONFIG);
+      }
+      auxiliaryLandmarksFiltered =
+          this.visibilitySmoothingFilterAuxiliary.apply(auxiliaryLandmarks);
+
+      // Smoothes pose landmark coordinates to reduce jitter.
+      if (this.landmarksSmoothingFilterActual == null) {
+        this.landmarksSmoothingFilterActual = new LandmarksSmoothingFilter(
+            constants.BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG);
+      }
+      actualLandmarksFiltered = this.landmarksSmoothingFilterActual.apply(
+          actualLandmarksFiltered, image);
+
+      if (this.landmarksSmoothingFilterAuxiliary == null) {
+        this.landmarksSmoothingFilterAuxiliary = new LandmarksSmoothingFilter(
+            constants.BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG);
+      }
+      auxiliaryLandmarksFiltered = this.landmarksSmoothingFilterAuxiliary.apply(
+          auxiliaryLandmarksFiltered, image);
+    }
+
+    return {actualLandmarksFiltered, auxiliaryLandmarksFiltered};
   }
 }

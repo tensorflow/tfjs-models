@@ -14,7 +14,9 @@
  * limitations under the License.
  * =============================================================================
  */
-import {VIDEO_SIZE} from './params';
+import * as posedetection from '@tensorflow-models/posedetection';
+
+import * as params from './params';
 import {isMobile} from './util';
 
 export class Camera {
@@ -34,7 +36,7 @@ export class Camera {
    */
   static async setupCamera(cameraParam) {
     const {targetFPS, sizeOption} = cameraParam;
-    const $size = VIDEO_SIZE[sizeOption];
+    const $size = params.VIDEO_SIZE[sizeOption];
     const videoConfig = {
       'audio': false,
       'video': {
@@ -89,27 +91,95 @@ export class Camera {
     this.ctx.clearRect(0, 0, this.video.videoWidth, this.video.videoHeight);
   }
 
+  /**
+   * Draw the keypoints and skeleton on the video.
+   * @param pose A pose with keypoints to render.
+   * @param shouldScale If the keypoints are normalized, shouldScale should be
+   *     set to true.
+   */
   drawResult(pose, shouldScale = false) {
-    this.drawKeypoints(pose.keypoints, shouldScale);
+    if (pose.keypoints != null) {
+      const scaleX = shouldScale ? this.video.videoWidth : 1;
+      const scaleY = shouldScale ? this.video.videoHeight : 1;
+
+      this.drawKeypoints(pose.keypoints, scaleY, scaleX);
+      this.drawSkeleton(pose.keypoints, scaleY, scaleX);
+    }
   }
 
   /**
    * Draw the keypoints on the video.
    * @param keypoints A list of keypoints, may be normalized.
-   * @param shouldScale If the keypoints are normalized, shouldScale should be
-   *     set to true.
+   * @param scaleY If keypoints are normalized, y needs to be scaled back based
+   *     on the scaleY.
+   * @param scaleX If keypoints are normalized, x needs to be scaled back based
+   *     on the scaleX..
    */
-  drawKeypoints(keypoints, shouldScale) {
-    const scaleX = shouldScale ? this.video.videoWidth : 1;
-    const scaleY = shouldScale ? this.video.videoHeight : 1;
-    this.ctx.fillStyle = 'red';
-    this.ctx.strokeStyle = 'white';
-    this.ctx.lineWidth = 4;
-    keypoints.forEach(keypoint => {
+  drawKeypoints(keypoints, scaleY, scaleX) {
+    const keypointInd =
+        posedetection.util.getKeypointIndexBySide(params.STATE.model.model);
+    this.ctx.fillStyle = 'White';
+    this.ctx.strokeStyle = 'White';
+    this.ctx.lineWidth = params.DEFAULT_LINE_WIDTH;
+
+    keypointInd.middle.forEach(
+        i => this.drawKeypoint(keypoints[i], scaleY, scaleX));
+
+    this.ctx.fillStyle = 'Green';
+    keypointInd.left.forEach(
+        i => this.drawKeypoint(keypoints[i], scaleY, scaleX));
+
+    this.ctx.fillStyle = 'Orange';
+    keypointInd.right.forEach(
+        i => this.drawKeypoint(keypoints[i], scaleY, scaleX));
+  }
+
+  drawKeypoint(keypoint, scaleY, scaleX) {
+    // If score is null, just show the keypoint.
+    const score = keypoint.score != null ? keypoint.score : 1;
+    const scoreThreshold =
+        params.STATE.model[params.STATE.model.model].scoreThreshold || 0;
+
+    if (score >= scoreThreshold) {
       const circle = new Path2D();
-      circle.arc(keypoint.x * scaleX, keypoint.y * scaleY, 4, 0, 2 * Math.PI);
+      circle.arc(
+          keypoint.x * scaleX, keypoint.y * scaleY, params.DEFAULT_RADIUS, 0,
+          2 * Math.PI);
       this.ctx.fill(circle);
       this.ctx.stroke(circle);
-    });
+    }
+  }
+
+  /**
+   * Draw the skeleton of a body on the video.
+   * @param keypoints A list of keypoints, may be normalized.
+   * @param scaleY If keypoints are normalized, y needs to be scaled back based
+   *     on the scaleY.
+   * @param scaleX If keypoints are normalized, x needs to be scaled back based
+   *     on the scaleX..
+   */
+  drawSkeleton(keypoints, scaleY, scaleX) {
+    this.ctx.fillStyle = 'White';
+    this.ctx.strokeStyle = 'White';
+    this.ctx.lineWidth = params.DEFAULT_LINE_WIDTH;
+
+    posedetection.util.getAdjacentPairs(params.STATE.model.model)
+        .forEach(([i, j]) => {
+          const kp1 = keypoints[i];
+          const kp2 = keypoints[j];
+
+          // If score is null, just show the keypoint.
+          const score1 = kp1.score != null ? kp1.score : 1;
+          const score2 = kp2.score != null ? kp2.score : 1;
+          const scoreThreshold =
+              params.STATE.model[params.STATE.model.model].scoreThreshold || 0;
+
+          if (score1 >= scoreThreshold && score2 >= scoreThreshold) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(kp1.x * scaleX, kp1.y * scaleY);
+            this.ctx.lineTo(kp2.x * scaleX, kp2.y * scaleY);
+            this.ctx.stroke();
+          }
+        });
   }
 }

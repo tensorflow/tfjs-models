@@ -9,7 +9,7 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow-models/qna": "link:../dist"
+    "@tensorflow-models/qna": "file:../dist"
   },
   "scripts": {
     "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr --open",
@@ -22,19 +22,22 @@
     "crypto": false
   },
   "devDependencies": {
-    "@tensorflow/tfjs-backend-cpu": "^3.0.0",
-    "@tensorflow/tfjs-backend-webgl": "^3.0.0",
-    "@tensorflow/tfjs-converter": "3.0.0",
-    "@tensorflow/tfjs-core": "3.0.0",
+    "@tensorflow/tfjs-backend-cpu": "^3.3.0",
+    "@tensorflow/tfjs-backend-webgl": "^3.3.0",
+    "@tensorflow/tfjs-converter": "3.3.0",
+    "@tensorflow/tfjs-core": "3.3.0",
     "babel-core": "^6.26.3",
     "babel-plugin-transform-runtime": "~6.23.0",
     "babel-preset-env": "^1.7.0",
     "clang-format": "~1.5.0",
     "cross-env": "^7.0.3",
     "dat.gui": "^0.7.7",
-    "parcel-bundler": "~1.12.4",
+    "parcel-bundler": "~1.12.5",
     "tslint": "~6.1.3",
     "typescript": "4.1.3"
+  },
+  "resolutions": {
+    "is-svg": "4.3.1"
   },
   "eslintConfig": {
     "extends": "google",

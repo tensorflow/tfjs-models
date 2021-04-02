@@ -37,7 +37,7 @@ import {TensorsToLandmarksCalculatorConfig} from './interfaces/config_interfaces
  */
 export async function tensorsToLandmarks(
     landmarkTensor: tf.Tensor2D, config: TensorsToLandmarksCalculatorConfig,
-    flipHorizontally: boolean = false, flipVertically: boolean = false) {
+    flipHorizontally = false, flipVertically = false) {
   const numValues = landmarkTensor.size;
   const numDimensions = numValues / config.numLandmarks;
   const rawLandmarks = await landmarkTensor.data() as Float32Array;
@@ -63,11 +63,9 @@ export async function tensorsToLandmarks(
       landmark.z = rawLandmarks[offset + 2];
     }
     if (numDimensions > 3) {
-      landmark.visibility = applyActivation(rawLandmarks[offset + 3]);
+      landmark.score = applyActivation(rawLandmarks[offset + 3]);
     }
-    if (numDimensions > 4) {
-      landmark.score = applyActivation(rawLandmarks[offset + 4]);
-    }
+    // presence is in rawLandmarks[offset + 4], we don't expose it.
 
     outputLandmarks.push(landmark);
   }
@@ -85,5 +83,5 @@ export async function tensorsToLandmarks(
 
 function applyActivation(value: number) {
   // Sigmoid.
-  return 1 / 1 + Math.exp(-value);
+  return 1 / (1 + Math.exp(-value));
 }

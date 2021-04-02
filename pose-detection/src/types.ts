@@ -71,12 +71,11 @@ export interface Keypoint {
   x: number;
   y: number;
   z?: number;
-  score?: number;
+  score?: number;  // The probability of a keypoint's visibility.
   name?: string;
-  visibility?: number;
 }
 
 export interface Pose {
   keypoints: Keypoint[];
-  score?: number;
+  score?: number;  // The probability of an actual pose.
 }

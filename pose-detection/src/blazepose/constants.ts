@@ -44,7 +44,8 @@ export const BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION = {
 };
 export const DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG = {
   maxPoses: 1,
-  flipHorizontal: false
+  flipHorizontal: false,
+  enableSmoothing: true
 };
 export const BLAZEPOSE_DETECTION_MODEL_INPUT_RESOLUTION = {
   width: 128,
@@ -104,3 +105,14 @@ export const BLAZEPOSE_NUM_KEYPOINTS_UPPERBODY = 25;
 export const BLAZEPOSE_NUM_KEYPOINTS_FULLBODY = 33;
 export const BLAZEPOSE_NUM_AUXILIARY_KEYPOINTS_UPPERBODY = 27;
 export const BLAZEPOSE_NUM_AUXILIARY_KEYPOINTS_FULLBODY = 35;
+export const BLAZEPOSE_VISIBILITY_SMOOTHING_CONFIG = {
+  alpha: 0.1
+};
+export const BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG = {
+  velocityFilter: {
+    windowSize: 5,
+    velocityScale: 10,
+    minAllowedObjectScale: 1e-6,
+    disableValueScaling: false
+  }
+};

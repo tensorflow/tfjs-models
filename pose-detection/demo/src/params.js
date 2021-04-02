@@ -16,7 +16,8 @@
  */
 import * as posedetection from '@tensorflow-models/posedetection';
 
-export const DEFAULT_LINE_WIDTH = 4;
+export const DEFAULT_LINE_WIDTH = 2;
+export const DEFAULT_RADIUS = 4;
 
 export const VIDEO_SIZE = {
   '640 X 480': {width: 640, height: 480},
@@ -24,5 +25,13 @@ export const VIDEO_SIZE = {
 };
 export const STATE = {
   camera: {targetFPS: 60, sizeOption: '640 X 480'},
-  model: {model: posedetection.SupportedModels.PoseNet}
+  model: {
+    model: posedetection.SupportedModels.PoseNet,
+  }
+};
+STATE.model[posedetection.SupportedModels.MediapipeBlazepose] = {
+  scoreThreshold: 0.65
+};
+STATE.model[posedetection.SupportedModels.PoseNet] = {
+  scoreThreshold: 0.5
 };

@@ -30,3 +30,8 @@ export type ValueTransform = {
   scale: number,
   offset: number
 };
+
+export interface WindowElement {
+  distance: number;
+  duration: number;
+}

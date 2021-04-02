@@ -9,7 +9,7 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow-models/face-landmarks-detection": "0.0.3",
+    "@tensorflow-models/face-landmarks-detection": "file:../dist",
     "@tensorflow/tfjs-backend-wasm": "^3.1.0",
     "@tensorflow/tfjs-backend-webgl": "^3.1.0",
     "@tensorflow/tfjs-backend-cpu": "^3.1.0",
@@ -36,8 +36,11 @@
     "cross-env": "^5.2.0",
     "eslint": "^4.19.1",
     "eslint-config-google": "^0.9.1",
-    "parcel-bundler": "^1.12.4",
-    "yalc": "~1.0.0-pre.27"
+    "parcel-bundler": "^1.12.5",
+    "yalc": "~1.0.0-pre.50"
+  },
+  "resolutions": {
+    "is-svg": "4.3.1"
   },
   "eslintConfig": {
     "extends": "google",

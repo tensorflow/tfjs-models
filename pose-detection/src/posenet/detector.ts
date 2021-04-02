@@ -87,7 +87,7 @@ export class PosenetDetector extends BasePoseDetector {
           resNet50Checkpoint(config.outputStride, config.quantBytes);
       const model = await tfconv.loadGraphModel(config.modelUrl || defaultUrl);
 
-      return this.constructor(model, config);
+      return new PosenetDetector(model, config);
     }
 
     // Load MobileNetV1 model.
@@ -150,16 +150,16 @@ export class PosenetDetector extends BasePoseDetector {
 
     let offsets, heatmap;
     if (this.architecture === 'ResNet50') {
-      offsets = tf.squeeze(results[2]) as tf.Tensor3D;
-      heatmap = tf.squeeze(results[3]) as tf.Tensor3D;
+      offsets = tf.squeeze(results[2]);
+      heatmap = tf.squeeze(results[3]);
     } else {
-      offsets = tf.squeeze(results[0]) as tf.Tensor3D;
-      heatmap = tf.squeeze(results[1]) as tf.Tensor3D;
+      offsets = tf.squeeze(results[0]);
+      heatmap = tf.squeeze(results[1]);
     }
     const heatmapScores = tf.sigmoid(heatmap) as tf.Tensor3D;
 
-    const pose =
-        await decodeSinglePose(heatmapScores, offsets, this.outputStride);
+    const pose = await decodeSinglePose(
+        heatmapScores, offsets as tf.Tensor3D, this.outputStride);
     const poses = [pose];
 
     const imageSize = getImageSize(image);
