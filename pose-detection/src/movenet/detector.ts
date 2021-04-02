@@ -116,20 +116,28 @@ export class MoveNetDetector extends BasePoseDetector {
       return [];
     }
 
-    // Keep track of fps for one euro filter.
-    const now = performance.now();
-    if (this.previousFrameTime !== 0) {
-      const newSampleWeight = 0.02;
-      this.frameTimeDiff = (1.0 - newSampleWeight) * this.frameTimeDiff +
-          newSampleWeight * (now - this.previousFrameTime);
+    // Keep track of fps for one euro filter. The 'window' check is to make sure
+    // the detector can run in NodeJS, that doesn't have performance.now()
+    // without require('perf_hooks').
+    if (typeof window !== 'undefined') {
+      const now = performance.now();
+      if (this.previousFrameTime !== 0) {
+        const newSampleWeight = 0.02;
+        this.frameTimeDiff = (1.0 - newSampleWeight) * this.frameTimeDiff +
+            newSampleWeight * (now - this.previousFrameTime);
+      }
+      this.previousFrameTime = now;
     }
-    this.previousFrameTime = now;
 
     const imageTensor3D = toImageTensor(image);
     const imageHeight = imageTensor3D.shape[0];
     const imageWidth = imageTensor3D.shape[1];
     const imageTensor4D: tf.Tensor4D = tf.expandDims(imageTensor3D, 0);
-    imageTensor3D.dispose();
+
+    // Make sure we don't dispose the input image if it's already a tensor.
+    if (!(image instanceof tf.Tensor)) {
+      imageTensor3D.dispose();
+    }
 
     let keypoints: Keypoint[] = null;
 
