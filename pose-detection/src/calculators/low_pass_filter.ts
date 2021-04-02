@@ -31,10 +31,21 @@ export class LowPassFilter {
 
   constructor(private alpha: number) {}
 
-  apply(value: number): number {
+  apply(value: number, threshold?: number): number {
     let result;
     if (this.initialized) {
-      result = this.alpha * value + (1 - this.alpha) * this.storedValue;
+      // Apply lowpass filter for current value:
+      if (threshold == null) {
+        // result = this.alpha * value + (1 - this.alpha) * this.storedValue;
+        // We need to reformat the formula to be able to conveniently apply
+        // another optional non-linear function to the
+        // (value - this.storedValue) part.
+        result = this.storedValue + this.alpha * (value - this.storedValue);
+      } else {
+        result = this.storedValue +
+            this.alpha * threshold *
+                Math.asinh((value - this.storedValue) / threshold);
+      }
     } else {
       result = value;
       this.initialized = true;
