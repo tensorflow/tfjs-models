@@ -18,13 +18,13 @@
 import * as tf from '@tensorflow/tfjs-core';
 
 import {toImageTensor} from '../calculators/image_utils';
-import {OneEuroFilterArray} from '../calculators/one_euro_filter_array';
 import {BasePoseDetector, PoseDetector} from '../pose_detector';
 import {InputResolution, Keypoint, Pose, PoseDetectorInput} from '../types';
 
 import {ARCHITECTURE_SINGLEPOSE_LIGHTNING, ARCHITECTURE_SINGLEPOSE_THUNDER, KPT_INDICES, MIN_CROP_KEYPOINT_SCORE, MOVENET_CONFIG, MOVENET_SINGLE_POSE_ESTIMATION_CONFIG, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_URL} from './constants';
 import {validateEstimationConfig, validateModelConfig} from './detector_utils';
 import {KeypointModel} from './keypoint_model';
+import {RobustOneEuroFilter} from './robust_one_euro_filter';
 import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
 
 /**
@@ -34,7 +34,7 @@ export class MoveNetDetector extends BasePoseDetector {
   private model: KeypointModel;
   private modelInputResolution: InputResolution = {height: 0, width: 0};
   private cropRegion: number[];
-  private filter: OneEuroFilterArray;
+  private filter: RobustOneEuroFilter;
   private previousFrameTime: number;
   private frameTimeDiff: number;
 
@@ -59,7 +59,7 @@ export class MoveNetDetector extends BasePoseDetector {
     // as an assumption.
     this.frameTimeDiff = 0.0333;
 
-    this.filter = new OneEuroFilterArray();
+    this.filter = new RobustOneEuroFilter();
   }
 
   /**
@@ -270,23 +270,23 @@ export class MoveNetDetector extends BasePoseDetector {
   determineCropRegion(
       keypoints: Keypoint[], webcamHeight: number, webcamWidth: number) {
     const targetKeypoints: {[index: string]: number[]} = {
-      nose: [0.0, 0.0],
-      left_eye: [0.0, 0.0],
-      right_eye: [0.0, 0.0],
-      left_ear: [0.0, 0.0],
-      right_ear: [0.0, 0.0],
-      left_shoulder: [0.0, 0.0],
-      right_shoulder: [0.0, 0.0],
-      left_elbow: [0.0, 0.0],
-      right_elbow: [0.0, 0.0],
-      left_wrist: [0.0, 0.0],
-      right_wrist: [0.0, 0.0],
-      left_hip: [0.0, 0.0],
-      right_hip: [0.0, 0.0],
-      left_knee: [0.0, 0.0],
-      right_knee: [0.0, 0.0],
-      left_ankle: [0.0, 0.0],
-      right_ankle: [0.0, 0.0],
+      nose: [],
+      left_eye: [],
+      right_eye: [],
+      left_ear: [],
+      right_ear: [],
+      left_shoulder: [],
+      right_shoulder: [],
+      left_elbow: [],
+      right_elbow: [],
+      left_wrist: [],
+      right_wrist: [],
+      left_hip: [],
+      right_hip: [],
+      left_knee: [],
+      right_knee: [],
+      left_ankle: [],
+      right_ankle: [],
     };
 
     for (const key of Object.keys(targetKeypoints)) {

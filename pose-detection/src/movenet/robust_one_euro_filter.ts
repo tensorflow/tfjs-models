@@ -15,6 +15,10 @@
  * =============================================================================
  */
 
+// TODO(ardoerlemans): This filter should be merged with the existing
+// one euro filter in pose_detection/src/calculators once PR #632 has been
+// merged.
+
 /**
  * Exponentially weighted moving average filter.
  * https://en.wikipedia.org/wiki/Moving_average
@@ -45,7 +49,7 @@ class EWMA {
  * One-euro filter that works on arrays of numbers.
  * https://hal.inria.fr/hal-00670496/document
  */
-export class OneEuroFilterArray {
+export class RobustOneEuroFilter {
   private updateRateOffset: number;
   private updateRateSlope: number;
   private fps: number;
