@@ -22,6 +22,8 @@ import {LowPassFilter} from './low_pass_filter';
  */
 // ref:
 // https://github.com/google/mediapipe/blob/master/mediapipe/util/filtering/one_euro_filter.cc
+// Also ref original paper:
+// https://cristal.univ-lille.fr/~casiez/1euro/
 export class OneEuroFilter {
   private frequency: number;
   private minCutOff: number;
@@ -30,6 +32,8 @@ export class OneEuroFilter {
   private x: LowPassFilter;
   private dx: LowPassFilter;
   private lastTimestamp: number;
+  private thresholdCutOff: number;
+  private thresholdBeta: number;
   /**
    * Constructor of `OneEuroFilter` class.
    * @param config See documentation of `OneEuroFilterConfig`.
@@ -38,6 +42,8 @@ export class OneEuroFilter {
     this.frequency = config.frequency;
     this.minCutOff = config.minCutOff;
     this.beta = config.beta;
+    this.thresholdCutOff = config.thresholdCutOff;
+    this.thresholdBeta = config.thresholdBeta;
     this.derivateCutOff = config.derivateCutOff;
     this.x = new LowPassFilter(this.getAlpha(this.minCutOff));
     this.dx = new LowPassFilter(this.getAlpha(this.derivateCutOff));
@@ -77,8 +83,12 @@ export class OneEuroFilter {
         this.dx.applyWithAlpha(dValue, this.getAlpha(this.derivateCutOff));
     const cutOff = this.minCutOff + this.beta * Math.abs(edValue);
 
+    const threshold = this.thresholdCutOff != null ?
+        this.thresholdCutOff + this.thresholdBeta * Math.abs(edValue) :
+        null;
+
     // filter the given value.
-    return this.x.applyWithAlpha(value, this.getAlpha(cutOff));
+    return this.x.applyWithAlpha(value, this.getAlpha(cutOff), threshold);
   }
 
   private getAlpha(cutoff: number): number {

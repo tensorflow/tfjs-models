@@ -34,14 +34,15 @@ export class LowPassFilter {
   apply(value: number, threshold?: number): number {
     let result;
     if (this.initialized) {
-      // Apply lowpass filter for current value:
       if (threshold == null) {
+        // Regular lowpass filter.
         // result = this.alpha * value + (1 - this.alpha) * this.storedValue;
         // We need to reformat the formula to be able to conveniently apply
         // another optional non-linear function to the
         // (value - this.storedValue) part.
         result = this.storedValue + this.alpha * (value - this.storedValue);
       } else {
+        // Add additional non-linearity to cap extreme value.
         result = this.storedValue +
             this.alpha * threshold *
                 Math.asinh((value - this.storedValue) / threshold);
@@ -56,9 +57,9 @@ export class LowPassFilter {
     return result;
   }
 
-  applyWithAlpha(value: number, alpha: number): number {
+  applyWithAlpha(value: number, alpha: number, threshold?: number): number {
     this.alpha = alpha;
-    return this.apply(value);
+    return this.apply(value, threshold);
   }
 
   hasLastRawValue(): boolean {
