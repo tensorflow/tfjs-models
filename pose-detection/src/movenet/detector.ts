@@ -279,7 +279,7 @@ export class MoveNetDetector extends BasePoseDetector {
       keypoints: Keypoint[], webcamHeight: number, webcamWidth: number) {
     const targetKeypoints: {[index: string]: number[]} = {};
 
-    for (const key of Object.keys(targetKeypoints)) {
+    for (const key of Object.keys(KPT_INDICES)) {
       targetKeypoints[key] = [
         keypoints[KPT_INDICES[key]].y * webcamHeight,
         keypoints[KPT_INDICES[key]].x * webcamWidth
