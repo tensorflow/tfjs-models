@@ -37,12 +37,15 @@ export class LowPassFilter {
       if (threshold == null) {
         // Regular lowpass filter.
         // result = this.alpha * value + (1 - this.alpha) * this.storedValue;
+        result = this.storedValue + this.alpha * (value - this.storedValue);
+      } else {
         // We need to reformat the formula to be able to conveniently apply
         // another optional non-linear function to the
         // (value - this.storedValue) part.
-        result = this.storedValue + this.alpha * (value - this.storedValue);
-      } else {
         // Add additional non-linearity to cap extreme value.
+        // More specifically, when x is close zero, the derived x is close to x,
+        // when x is several magnitudes larger, the drived x grows much slower
+        // then x. It behaves like sign(x)log(abs(x)).
         result = this.storedValue +
             this.alpha * threshold *
                 Math.asinh((value - this.storedValue) / threshold);
