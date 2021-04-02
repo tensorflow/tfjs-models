@@ -65,6 +65,12 @@ export function setupDatGui() {
   // The MoveNet model config folder contains options for MoveNet config
   // settings.
   const moveNetFolder = gui.addFolder('MoveNet Config');
+  const moveNetTypeController = moveNetFolder.add(
+      STATE.model[posedetection.SupportedModels.MoveNet], 'modelType',
+      ['Thunder', 'Lightning']);
+  moveNetTypeController.onChange(type => {
+    STATE.changeToModel = STATE.model;
+  });
   moveNetFolder.add(
       STATE.model[posedetection.SupportedModels.MoveNet], 'scoreThreshold', 0,
       1);

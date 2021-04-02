@@ -20,7 +20,7 @@ import '@tensorflow/tfjs-backend-webgl';
 import * as posedetection from '@tensorflow-models/posedetection';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {ARCHITECTURE_SINGLEPOSE_THUNDER} from '../../src/movenet/constants';
+import {ARCHITECTURE_SINGLEPOSE_LIGHTNING, ARCHITECTURE_SINGLEPOSE_THUNDER} from '../../src/movenet/constants';
 
 import {Camera} from './camera';
 import {setupDatGui} from './option_panel';
@@ -43,8 +43,12 @@ async function createDetector(model) {
       return posedetection.createDetector(
           STATE.model.model, {quantBytes: 4, upperBodyOnly: false});
     case posedetection.SupportedModels.MoveNet:
+      let modelType = ARCHITECTURE_SINGLEPOSE_THUNDER;
+      if (STATE.model[STATE.model.model].modelType == 'Lightning') {
+        modelType = ARCHITECTURE_SINGLEPOSE_LIGHTNING;
+      }
       return posedetection.createDetector(
-          STATE.model.model, {modelType: ARCHITECTURE_SINGLEPOSE_THUNDER});
+          STATE.model.model, {modelType: modelType});
   }
 }
 

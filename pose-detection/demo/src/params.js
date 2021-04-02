@@ -36,5 +36,6 @@ STATE.model[posedetection.SupportedModels.PoseNet] = {
   scoreThreshold: 0.5
 };
 STATE.model[posedetection.SupportedModels.MoveNet] = {
+  modelType: 'Thunder',
   scoreThreshold: 0.3
 };
