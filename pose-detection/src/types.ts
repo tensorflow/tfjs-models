@@ -17,7 +17,6 @@
 import * as tf from '@tensorflow/tfjs-core';
 
 export enum SupportedModels {
-  // Ordered by speed/accuracy.
   MoveNet = 'MoveNet',
   MediapipeBlazepose = 'MediapipeBlazepose',
   PoseNet = 'PoseNet'
