@@ -43,9 +43,10 @@ export class LowPassFilter {
         // another optional non-linear function to the
         // (value - this.storedValue) part.
         // Add additional non-linearity to cap extreme value.
-        // More specifically, when x is close zero, the derived x is close to x,
-        // when x is several magnitudes larger, the drived x grows much slower
-        // then x. It behaves like sign(x)log(abs(x)).
+        // More specifically, assume x = (value - this.storedValue), when x is
+        // close zero, the derived x is close to x, when x is several magnitudes
+        // larger, the drived x grows much slower then x. It behaves like
+        // sign(x)log(abs(x)).
         result = this.storedValue +
             this.alpha * threshold *
                 Math.asinh((value - this.storedValue) / threshold);
