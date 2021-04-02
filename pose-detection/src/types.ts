@@ -17,9 +17,10 @@
 import * as tf from '@tensorflow/tfjs-core';
 
 export enum SupportedModels {
-  PoseNet = 'PoseNet',
+  // Ordered by speed/accuracy.
+  MoveNet = 'MoveNet',
   MediapipeBlazepose = 'MediapipeBlazepose',
-  MoveNet = 'MoveNet'
+  PoseNet = 'PoseNet'
 }
 
 export type QuantBytes = 1|2|4;

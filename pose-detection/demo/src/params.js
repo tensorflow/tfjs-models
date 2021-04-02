@@ -26,7 +26,7 @@ export const VIDEO_SIZE = {
 export const STATE = {
   camera: {targetFPS: 60, sizeOption: '640 X 480'},
   model: {
-    model: posedetection.SupportedModels.PoseNet,
+    model: posedetection.SupportedModels.MoveNet,
   }
 };
 STATE.model[posedetection.SupportedModels.MediapipeBlazepose] = {

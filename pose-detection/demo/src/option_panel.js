@@ -62,13 +62,12 @@ export function setupDatGui() {
   });
   modelFolder.open();
 
-  // The PoseNet model config folder contains options for PoseNet config
+  // The MoveNet model config folder contains options for MoveNet config
   // settings.
-  const poseNetFolder = gui.addFolder('PoseNet Config');
-  poseNetFolder.add(
-      STATE.model[posedetection.SupportedModels.PoseNet], 'scoreThreshold', 0,
+  const moveNetFolder = gui.addFolder('MoveNet Config');
+  moveNetFolder.add(
+      STATE.model[posedetection.SupportedModels.MoveNet], 'scoreThreshold', 0,
       1);
-  poseNetFolder.open();
 
   // The Blazepose model config folder contains options for Blazepose config
   // settings.
@@ -77,12 +76,14 @@ export function setupDatGui() {
       STATE.model[posedetection.SupportedModels.MediapipeBlazepose],
       'scoreThreshold', 0, 1);
 
-  // The MoveNet model config folder contains options for MoveNet config
+  // The PoseNet model config folder contains options for PoseNet config
   // settings.
-  const moveNetFolder = gui.addFolder('MoveNet Config');
-  moveNetFolder.add(
-      STATE.model[posedetection.SupportedModels.MoveNet],
-      'scoreThreshold', 0, 1);
+  const poseNetFolder = gui.addFolder('PoseNet Config');
+  poseNetFolder.add(
+      STATE.model[posedetection.SupportedModels.PoseNet], 'scoreThreshold', 0,
+      1);
 
-      return gui;
+  moveNetFolder.open();
+
+  return gui;
 }
