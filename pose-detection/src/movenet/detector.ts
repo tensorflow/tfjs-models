@@ -270,7 +270,7 @@ export class MoveNetDetector extends BasePoseDetector {
     }
 
     const poses: Pose[] = [];
-    poses[0] = {'keypoints': keypoints};
+    poses[0] = {keypoints};
 
     return poses;
   }
