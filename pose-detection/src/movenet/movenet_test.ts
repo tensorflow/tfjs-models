@@ -21,7 +21,7 @@ import {ALL_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_ut
 
 import * as poseDetection from '../index';
 
-import {ARCHITECTURE_SINGLEPOSE_LIGHTNING} from './constants';
+import {SINGLEPOSE_LIGHTNING} from './constants';
 
 describeWithFlags('MoveNet', ALL_ENVS, () => {
   let detector: poseDetection.PoseDetector;
@@ -29,7 +29,7 @@ describeWithFlags('MoveNet', ALL_ENVS, () => {
     // Note: this makes a network request for model assets.
     detector = await poseDetection.createDetector(
         poseDetection.SupportedModels.MoveNet,
-        {modelType: ARCHITECTURE_SINGLEPOSE_LIGHTNING});
+        {modelType: SINGLEPOSE_LIGHTNING});
   });
 
   it('estimatePoses does not leak memory', async () => {

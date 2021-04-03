@@ -69,7 +69,7 @@ export function setupDatGui() {
       STATE.model[posedetection.SupportedModels.MoveNet], 'modelType',
       ['Thunder', 'Lightning']);
   moveNetTypeController.onChange(type => {
-    STATE.changeToModel = STATE.model;
+    STATE.changeToModel = type;
   });
   moveNetFolder.add(
       STATE.model[posedetection.SupportedModels.MoveNet], 'scoreThreshold', 0,
