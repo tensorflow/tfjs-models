@@ -44,10 +44,17 @@ export function setupDatGui() {
       case posedetection.SupportedModels.PoseNet:
         poseNetFolder.open();
         blazePoseFolder.close();
+        moveNetFolder.close();
         break;
       case posedetection.SupportedModels.MediapipeBlazepose:
         blazePoseFolder.open();
         poseNetFolder.close();
+        moveNetFolder.close();
+        break;
+      case posedetection.SupportedModels.MoveNet:
+        blazePoseFolder.close();
+        poseNetFolder.close();
+        moveNetFolder.open();
         break;
       default:
         throw new Error(`${model} is not supported.`);
@@ -55,13 +62,18 @@ export function setupDatGui() {
   });
   modelFolder.open();
 
-  // The PoseNet model config folder contains options for PoseNet config
+  // The MoveNet model config folder contains options for MoveNet config
   // settings.
-  const poseNetFolder = gui.addFolder('PoseNet Config');
-  poseNetFolder.add(
-      STATE.model[posedetection.SupportedModels.PoseNet], 'scoreThreshold', 0,
+  const moveNetFolder = gui.addFolder('MoveNet Config');
+  const moveNetTypeController = moveNetFolder.add(
+      STATE.model[posedetection.SupportedModels.MoveNet], 'modelType',
+      ['Thunder', 'Lightning']);
+  moveNetTypeController.onChange(type => {
+    STATE.changeToModel = type;
+  });
+  moveNetFolder.add(
+      STATE.model[posedetection.SupportedModels.MoveNet], 'scoreThreshold', 0,
       1);
-  poseNetFolder.open();
 
   // The Blazepose model config folder contains options for Blazepose config
   // settings.
@@ -69,6 +81,15 @@ export function setupDatGui() {
   blazePoseFolder.add(
       STATE.model[posedetection.SupportedModels.MediapipeBlazepose],
       'scoreThreshold', 0, 1);
+
+  // The PoseNet model config folder contains options for PoseNet config
+  // settings.
+  const poseNetFolder = gui.addFolder('PoseNet Config');
+  poseNetFolder.add(
+      STATE.model[posedetection.SupportedModels.PoseNet], 'scoreThreshold', 0,
+      1);
+
+  moveNetFolder.open();
 
   return gui;
 }
