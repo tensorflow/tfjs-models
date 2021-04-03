@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as posedetection from '@tensorflow-models/posedetection';
+import * as posedetection from '@tensorflow-models/pose-detection';
 
 export const DEFAULT_LINE_WIDTH = 2;
 export const DEFAULT_RADIUS = 4;
