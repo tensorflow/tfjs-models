@@ -17,7 +17,7 @@
 
 import '@tensorflow/tfjs-backend-webgl';
 
-import * as posedetection from '@tensorflow-models/posedetection';
+import * as posedetection from '@tensorflow-models/pose-detection';
 import * as tf from '@tensorflow/tfjs-core';
 
 import {Camera} from './camera';
@@ -40,6 +40,13 @@ async function createDetector(model) {
     case posedetection.SupportedModels.MediapipeBlazepose:
       return posedetection.createDetector(
           STATE.model.model, {quantBytes: 4, upperBodyOnly: false});
+    case posedetection.SupportedModels.MoveNet:
+      const modelType =
+          STATE.model[STATE.model.model].modelType == 'Lightning' ?
+          posedetection.movenet.modelType.SINGLEPOSE_LIGHTNING :
+          posedetection.movenet.modelType.SINGLEPOSE_THUNDER;
+      return posedetection.createDetector(
+          STATE.model.model, {modelType: modelType});
   }
 }
 
@@ -58,28 +65,24 @@ async function checkGuiUpdate() {
 }
 
 async function renderResult() {
-  if (camera.video.currentTime !== camera.lastVideoTime) {
-    camera.lastVideoTime = camera.video.currentTime;
+  // FPS only counts the time it takes to finish estimatePoses.
+  stats.begin();
 
-    // FPS only counts the time it takes to finish estimatePoses.
-    stats.begin();
+  const poses = await detector.estimatePoses(
+      camera.video, {maxPoses: 1, flipHorizontal: false});
 
-    const poses = await detector.estimatePoses(
-        camera.video, {maxPoses: 1, flipHorizontal: false});
+  stats.end();
 
-    stats.end();
+  camera.drawCtx();
 
-    camera.drawCtx();
+  // The null check makes sure the UI is not in the middle of changing to a
+  // different model. If changeToModel is non-null, the result is from an
+  // old model, which shouldn't be rendered.
+  if (poses.length > 0 && STATE.changeToModel == null) {
+    const shouldScale =
+        STATE.model.model === posedetection.SupportedModels.MediapipeBlazepose;
 
-    // The null check makes sure the UI is not in the middle of changing to a
-    // different model. If changeToModel is non-null, the result is from an
-    // old model, which shouldn't be rendered.
-    if (poses.length > 0 && STATE.changeToModel == null) {
-      const shouldScale = STATE.model.model ===
-          posedetection.SupportedModels.MediapipeBlazepose;
-
-      camera.drawResult(poses[0], shouldScale);
-    }
+    camera.drawResult(poses[0], shouldScale);
   }
 }
 

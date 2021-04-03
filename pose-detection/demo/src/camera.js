@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as posedetection from '@tensorflow-models/posedetection';
+import * as posedetection from '@tensorflow-models/pose-detection';
 
 import * as params from './params';
 import {isMobile} from './util';
@@ -24,10 +24,6 @@ export class Camera {
     this.video = document.getElementById('video');
     this.canvas = document.getElementById('output');
     this.ctx = this.canvas.getContext('2d');
-
-    // The video frame rate may be lower than the browser animate frame
-    // rate. We use this to avoid processing the same frame twice.
-    this.lastVideoTime = 0;
   }
 
   /**

@@ -9,7 +9,7 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow-models/posedetection": "link:../dist",
+    "@tensorflow-models/pose-detection": "link:../dist",
     "@tensorflow/tfjs-backend-webgl": "3.3.0",
     "@tensorflow/tfjs-converter": "3.3.0",
     "@tensorflow/tfjs-core": "3.3.0"
