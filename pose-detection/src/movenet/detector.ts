@@ -190,7 +190,7 @@ export class MoveNetDetector extends BasePoseDetector {
         const cropRegionTensor = tf.tensor2d([this.cropRegion]);
         // The batch index that the crop should operate on. A [batch] size
         // tensor.
-        const boxInd = tf.zeros([1], 'int32') as tf.Tensor1D;
+        const boxInd: tf.Tensor1D = tf.zeros([1], 'int32');
         // Target size of each crop.
         const cropSize: [number, number] =
             [this.modelInputResolution.height, this.modelInputResolution.width];
