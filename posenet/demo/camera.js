@@ -264,7 +264,6 @@ function setupGui(cameras, net) {
   backendsController.onChange(async backend => {
   // TODO: Failed to set backend
   await tfc.setBackend(backend);
-  //await showFlagSettings(envFolder, state.backend);
   });
 
 
