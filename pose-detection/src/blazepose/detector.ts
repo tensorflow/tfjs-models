@@ -182,7 +182,9 @@ export class BlazeposeDetector extends BasePoseDetector {
 
     image3d.dispose();
 
-    const keypoints = actualLandmarksFiltered != null ? normalizedLandmarksToLandmarks(actualLandmarksFiltered, imageSize) : null;
+    const keypoints = actualLandmarksFiltered != null ?
+        normalizedLandmarksToLandmarks(actualLandmarksFiltered, imageSize) :
+        null;
     const pose: Pose = {score: poseScore, keypoints};
 
     return [pose];
