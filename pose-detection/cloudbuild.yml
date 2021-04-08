@@ -45,6 +45,7 @@ steps:
   entrypoint: 'yarn'
   id: 'test'
   args: ['test-ci']
+  env: ['BROWSERSTACK_USERNAME=deeplearnjs1']
   secretEnv: ['BROWSERSTACK_KEY']
   waitFor: ['yarn']
 
