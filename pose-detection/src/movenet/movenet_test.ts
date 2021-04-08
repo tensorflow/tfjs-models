@@ -25,8 +25,6 @@ import {SINGLEPOSE_LIGHTNING} from './constants';
 
 describeWithFlags('MoveNet', ALL_ENVS, () => {
   let detector: poseDetection.PoseDetector;
-<<<<<<< HEAD
-=======
   let timeout: number;
 
   beforeAll(() => {
@@ -38,7 +36,6 @@ describeWithFlags('MoveNet', ALL_ENVS, () => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
   });
 
->>>>>>> upstream/master
   beforeEach(async () => {
     // Note: this makes a network request for model assets.
     detector = await poseDetection.createDetector(
