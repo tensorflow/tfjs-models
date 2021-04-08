@@ -22,6 +22,7 @@ import {getImageSize, toImageTensor} from '../calculators/image_utils';
 import {ImageSize} from '../calculators/interfaces/common_interfaces';
 import {Rect} from '../calculators/interfaces/shape_interfaces';
 import {isVideo} from '../calculators/is_video';
+import {normalizedLandmarksToLandmarks} from '../calculators/normalized_landmarks_to_landmarks';
 import {shiftImageValue} from '../calculators/shift_image_value';
 
 import {BasePoseDetector, PoseDetector} from '../pose_detector';
@@ -181,7 +182,10 @@ export class BlazeposeDetector extends BasePoseDetector {
 
     image3d.dispose();
 
-    const pose: Pose = {score: poseScore, keypoints: actualLandmarksFiltered};
+    const keypoints = actualLandmarksFiltered != null ?
+        normalizedLandmarksToLandmarks(actualLandmarksFiltered, imageSize) :
+        null;
+    const pose: Pose = {score: poseScore, keypoints};
 
     return [pose];
   }

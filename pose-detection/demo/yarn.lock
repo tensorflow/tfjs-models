@@ -955,7 +955,7 @@
     "@parcel/utils" "^1.11.0"
     physical-cpu-count "^2.0.0"
 
-"@tensorflow-models/posedetection@link:../dist":
+"@tensorflow-models/pose-detection@link:../dist":
   version "0.0.0"
   uid ""
 

@@ -17,7 +17,7 @@
 
 import '@tensorflow/tfjs-backend-webgl';
 
-import * as posedetection from '@tensorflow-models/posedetection';
+import * as posedetection from '@tensorflow-models/pose-detection';
 import * as tf from '@tensorflow/tfjs-core';
 
 import {Camera} from './camera';
@@ -79,10 +79,7 @@ async function renderResult() {
   // different model. If changeToModel is non-null, the result is from an
   // old model, which shouldn't be rendered.
   if (poses.length > 0 && STATE.changeToModel == null) {
-    const shouldScale =
-        STATE.model.model === posedetection.SupportedModels.MediapipeBlazepose;
-
-    camera.drawResult(poses[0], shouldScale);
+    camera.drawResult(poses[0]);
   }
 }
 
