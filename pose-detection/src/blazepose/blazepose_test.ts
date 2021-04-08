@@ -52,7 +52,7 @@ describeWithFlags('Blazepose', ALL_ENVS, () => {
 
   beforeAll(() => {
     timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 300000;  // 5mins
   });
 
   afterAll(() => {
