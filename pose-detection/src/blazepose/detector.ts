@@ -55,10 +55,11 @@ type PoseLandmarkByRoiResult = {
  * Blazepose detector class.
  */
 export class BlazeposeDetector extends BasePoseDetector {
-  private maxPoses: number;
   private readonly upperBodyOnly: boolean;
   private readonly anchors: Rect[];
   private readonly anchorTensor: AnchorTensor;
+
+  private maxPoses: number;
 
   // Store global states.
   private regionOfInterest: Rect = null;
@@ -197,6 +198,14 @@ export class BlazeposeDetector extends BasePoseDetector {
       this.anchorTensor.x, this.anchorTensor.y, this.anchorTensor.w,
       this.anchorTensor.h
     ]);
+  }
+
+  reset() {
+    this.regionOfInterest = null;
+    this.visibilitySmoothingFilterActual = null;
+    this.visibilitySmoothingFilterAuxiliary = null;
+    this.landmarksSmoothingFilterActual = null;
+    this.landmarksSmoothingFilterAuxiliary = null;
   }
 
   // Detects poses.

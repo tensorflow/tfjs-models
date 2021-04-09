@@ -14,7 +14,10 @@
  * limitations under the License.
  * =============================================================================
  */
-import {EstimationConfig, ModelConfig, Pose, PoseDetectorInput} from './types';
+import {BlazeposeEstimationConfig} from './blazepose/types';
+import {MoveNetEstimationConfig} from './movenet/types';
+import {PoseNetEstimationConfig} from './posenet/types';
+import {ModelConfig, Pose, PoseDetectorInput} from './types';
 
 /**
  * User-facing interface for all pose detectors.
@@ -26,13 +29,20 @@ export interface PoseDetector {
    * @param config See `EstimationConfig` for available options.
    * @returns An array of poses, each pose contains an array of `Keypoint`s.
    */
-  estimatePoses(image: PoseDetectorInput, config?: EstimationConfig):
-      Promise<Pose[]>;
+  estimatePoses(
+      image: PoseDetectorInput,
+      config?: PoseNetEstimationConfig|BlazeposeEstimationConfig|
+      MoveNetEstimationConfig): Promise<Pose[]>;
 
   /**
    * Dispose the underlying models from memory.
    */
   dispose(): void;
+
+  /**
+   * Reset global states in the model.
+   */
+  reset(): void;
 }
 
 /**
@@ -50,8 +60,12 @@ export abstract class BasePoseDetector implements PoseDetector {
     return detector;
   }
 
-  abstract async estimatePoses(
-      image: PoseDetectorInput, config?: EstimationConfig): Promise<Pose[]>;
+  abstract estimatePoses(
+      image: PoseDetectorInput,
+      config?: PoseNetEstimationConfig|BlazeposeEstimationConfig|
+      MoveNetEstimationConfig): Promise<Pose[]>;
 
   abstract dispose(): void;
+
+  abstract reset(): void;
 }

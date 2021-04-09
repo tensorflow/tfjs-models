@@ -184,4 +184,8 @@ export class PosenetDetector extends BasePoseDetector {
   dispose() {
     this.posenetModel.dispose();
   }
+
+  reset() {
+    // No-op. There's no global state.
+  }
 }
