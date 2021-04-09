@@ -32,9 +32,11 @@ import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
  * MoveNet detector class.
  */
 export class MoveNetDetector extends BasePoseDetector {
-  private modelInputResolution: InputResolution = {height: 0, width: 0};
+  private readonly modelInputResolution:
+      InputResolution = {height: 0, width: 0};
+  private readonly filter: RobustOneEuroFilter;
+
   private cropRegion: number[];
-  private filter: RobustOneEuroFilter;
   // This will be used to calculate the actual camera fps. Starts with 30 fps
   // as an assumption.
   private previousFrameTime = 0;
