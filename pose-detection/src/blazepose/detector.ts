@@ -56,9 +56,9 @@ type PoseLandmarkByRoiResult = {
  */
 export class BlazeposeDetector extends BasePoseDetector {
   private maxPoses: number;
-  private upperBodyOnly: boolean;
-  private anchors: Rect[];
-  private anchorTensor: AnchorTensor;
+  private readonly upperBodyOnly: boolean;
+  private readonly anchors: Rect[];
+  private readonly anchorTensor: AnchorTensor;
 
   // Store global states.
   private regionOfInterest: Rect = null;

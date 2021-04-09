@@ -36,9 +36,10 @@ import {PoseNetArchitecture, PoseNetEstimationConfig, PosenetModelConfig, PoseNe
  * PoseNet detector class.
  */
 export class PosenetDetector extends BasePoseDetector {
-  private inputResolution: InputResolution;
-  private architecture: PoseNetArchitecture;
-  private outputStride: PoseNetOutputStride;
+  private readonly inputResolution: InputResolution;
+  private readonly architecture: PoseNetArchitecture;
+  private readonly outputStride: PoseNetOutputStride;
+
   private maxPoses: number;
 
   // Should not be called outside.

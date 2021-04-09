@@ -25,15 +25,17 @@ import {LowPassFilter} from './low_pass_filter';
 // Also ref original paper:
 // https://cristal.univ-lille.fr/~casiez/1euro/
 export class OneEuroFilter {
+  private readonly minCutOff: number;
+  private readonly beta: number;
+  private readonly derivateCutOff: number;
+  private readonly x: LowPassFilter;
+  private readonly dx: LowPassFilter;
+  private readonly thresholdCutOff: number;
+  private readonly thresholdBeta: number;
+
   private frequency: number;
-  private minCutOff: number;
-  private beta: number;
-  private derivateCutOff: number;
-  private x: LowPassFilter;
-  private dx: LowPassFilter;
   private lastTimestamp: number;
-  private thresholdCutOff: number;
-  private thresholdBeta: number;
+
   /**
    * Constructor of `OneEuroFilter` class.
    * @param config See documentation of `OneEuroFilterConfig`.

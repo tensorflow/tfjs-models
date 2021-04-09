@@ -34,10 +34,12 @@ export function scalePoses(
     return poses;
   }
 
-  poses.forEach(pose => pose.keypoints.forEach(kp => {
-    kp.x = (kp.x + offsetX) * scaleX;
-    kp.y = (kp.y + offsetY) * scaleY;
-  }));
+  for (const pose of poses) {
+    for (const kp of pose.keypoints) {
+      kp.x = (kp.x + offsetX) * scaleX;
+      kp.y = (kp.y + offsetY) * scaleY;
+    }
+  }
 
   return poses;
 }
