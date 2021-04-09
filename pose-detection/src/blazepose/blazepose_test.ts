@@ -24,7 +24,7 @@ import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
 import * as poseDetection from '../index';
 import {loadImage} from '../test_util';
 
-const MODEL_TYPE = ['fullbody', 'upperbody'];
+const UPPERBODY_ONLY = [false];
 const EPSILON = 10;
 // ref:
 // https://github.com/google/mediapipe/blob/7c331ad58b2cca0dca468e342768900041d65adc/mediapipe/python/solutions/pose_test.py#L31-L51
@@ -103,10 +103,8 @@ describeWithFlags('Blazepose static image ', BROWSER_ENVS, () => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
   });
 
-  MODEL_TYPE.forEach(type => {
-    it('test.', async () => {
-      const upperBodyOnly = type === 'upperbody' ? true : false;
-
+  UPPERBODY_ONLY.forEach(upperBodyOnly => {
+    fit('test.', async () => {
       const startTensors = tf.memory().numTensors;
 
       // Note: this makes a network request for model assets.
@@ -135,3 +133,52 @@ describeWithFlags('Blazepose static image ', BROWSER_ENVS, () => {
     });
   });
 });
+
+// describeWithFlags('Blazepose video ', BROWSER_ENVS, () => {
+//   let detector: poseDetection.PoseDetector;
+//   let image: HTMLVideoElement;
+//   let timeout: number;
+
+
+//   beforeAll(async () => {
+//     timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
+//     jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
+
+//     image = await loadVideo('pose_squats.mp4', 320, 480);
+//     image.onseeked(() => {
+//       const result = detector.estimatePoses(image);
+//     })
+//   });
+
+//   afterAll(() => {
+//     jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
+//   });
+
+//   UPPERBODY_ONLY.forEach(upperBodyOnly => {
+//     it('test.', async () => {
+//       // Note: this makes a network request for model assets.
+//       const modelConfig:
+//           poseDetection.BlazeposeModelConfig = {quantBytes: 4,
+//           upperBodyOnly};
+//       detector = await poseDetection.createDetector(
+//           poseDetection.SupportedModels.MediapipeBlazepose, modelConfig);
+
+//       let currentTime = 0;
+
+//       while (true) {
+//         if (currentTime > image.duration) {
+//           break;
+//         }
+
+//         const result = await detector.estimatePoses(
+//             image,
+//             {maxPoses: 1, flipHorizontal: false, enableSmoothing: false} as
+//                 poseDetection.BlazeposeEstimationConfig);
+//       }
+
+
+
+//       detector.dispose();
+//     });
+//   });
+// });

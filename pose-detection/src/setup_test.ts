@@ -18,20 +18,22 @@
 // Import core for side effects (e.g. flag registration)
 import '@tensorflow/tfjs-core';
 // Import webgl for side effects (e.g. backend registration)
-import '@tensorflow/tfjs-backend-webgl';
+// import '@tensorflow/tfjs-backend-webgl';
+import '@tensorflow/tfjs-backend-cpu';
 // tslint:disable-next-line: no-imports-from-dist
 import {parseTestEnvFromKarmaFlags, registerTestEnv, setTestEnvs, TEST_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
-registerTestEnv({
-  name: 'webgl',
-  backendName: 'webgl',
-  flags: {
-    'WEBGL_VERSION': 2,
-    'WEBGL_CPU_FORWARD': false,
-    'WEBGL_SIZE_UPLOAD_UNIFORM': 0
-  },
-  isDataSync: true
-});
+// registerTestEnv({
+//   name: 'webgl',
+//   backendName: 'webgl',
+//   flags: {
+//     'WEBGL_VERSION': 2,
+//     'WEBGL_CPU_FORWARD': false,
+//     'WEBGL_SIZE_UPLOAD_UNIFORM': 0
+//   },
+//   isDataSync: true
+// });
+registerTestEnv({name: 'cpu', backendName: 'cpu', isDataSync: true});
 
 // tslint:disable-next-line:no-any
 declare let __karma__: any;
