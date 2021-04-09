@@ -18,7 +18,9 @@
 /** Karma server directory serving local files. */
 export const KARMA_SERVER = './base/src/test_data';
 
-export async function loadImage(imagePath: string, width: number, height: number): Promise<HTMLImageElement> {
+export async function loadImage(
+    imagePath: string, width: number,
+    height: number): Promise<HTMLImageElement> {
   const img = new Image(width, height);
   const promise = new Promise<HTMLImageElement>((resolve, reject) => {
     img.crossOrigin = '';
@@ -28,6 +30,34 @@ export async function loadImage(imagePath: string, width: number, height: number
   });
 
   img.src = `${KARMA_SERVER}/${imagePath}`;
+
+  return promise;
+}
+
+export async function loadVideo(
+    videoPath: string, width: number,
+    height: number): Promise<HTMLVideoElement> {
+  const video = document.createElement('video');
+
+  const promise = new Promise<HTMLVideoElement>((resolve, reject) => {
+    video.onloadedmetadata = () => {
+      resolve(video);
+    };
+  });
+
+  video.setAttribute('src', videoPath);
+  video.width = width;
+  video.height = height;
+
+  return promise;
+}
+
+export async function seekFrame(video: HTMLVideoElement, seconds: number) {
+  const promise = new Promise<HTMLVideoElement>(
+      (resolve, reject) => {
+
+      });
+  video.currentTime = seconds;
 
   return promise;
 }
