@@ -29,7 +29,7 @@ import {LandmarksVelocityFilter} from './landmarks_velocity_filter';
  * A Calculator to smooth normalized landmarks over time.
  */
 export class LandmarksSmoothingFilter {
-  private landmarksFilter: LandmarksFilter;
+  private readonly landmarksFilter: LandmarksFilter;
 
   constructor(config: LandmarksSmoothingConfig) {
     if (config.velocityFilter != null) {
