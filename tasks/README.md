@@ -14,6 +14,9 @@ TFLite is supported by the [`@tensorflow/tfjs-tflite`][tfjs-tflite] package that
 is built on top of the [TFLite Task Library][tflite task library] and
 WebAssembly. As a result, all TFLite custom models should comply with the
 metadata requirements of the corresonding task in the TFLite task library.
+Check out the "model compatibility requirements" section of the official task
+library page. For example, the requirements of `ImageClassifier` can be found
+[here][req].
 
 # Usage
 
@@ -122,6 +125,7 @@ $ yarn build-npm
 # (TODO): publish
 ```
 
+[req]: https://www.tensorflow.org/lite/inference_with_metadata/task_library/image_classifier#model_compatibility_requirements
 [tfjs-tflite]: https://github.com/tensorflow/tfjs/tree/master/tfjs-tflite
 [tflite task library]: https://www.tensorflow.org/lite/inference_with_metadata/task_library/overview
 [xnnpack]: https://github.com/google/XNNPACK
