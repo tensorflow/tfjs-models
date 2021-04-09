@@ -148,6 +148,11 @@ export class MoveNetDetector extends BasePoseDetector {
    * image to feed through the network.
    *
    * @param config
+   *       maxPoses: Optional. Has to be set to 1.
+   *
+   *       enableSmoothing: Optional. Optional. Defaults to 'true'. When
+   *       enabled, a temporal smoothing filter will be used on the keypoint
+   *       locations to reduce jitter.
    *
    * @return An array of `Pose`s.
    */
@@ -156,8 +161,7 @@ export class MoveNetDetector extends BasePoseDetector {
       estimationConfig:
           MoveNetEstimationConfig = MOVENET_SINGLE_POSE_ESTIMATION_CONFIG):
       Promise<Pose[]> {
-    // We only validate that maxPoses is 1.
-    validateEstimationConfig(estimationConfig);
+    estimationConfig = validateEstimationConfig(estimationConfig);
 
     if (image == null) {
       return [];
@@ -216,10 +220,12 @@ export class MoveNetDetector extends BasePoseDetector {
 
       // Apply the sequential filter before estimating the cropping area
       // to make it more stable.
-      this.arrayToKeypoints(
-          this.filter.insert(
-              this.keypointsToArray(keypoints), 1.0 / this.frameTimeDiff),
-          keypoints);
+      if (estimationConfig.enableSmoothing) {
+        this.arrayToKeypoints(
+            this.filter.insert(
+                this.keypointsToArray(keypoints), 1.0 / this.frameTimeDiff),
+            keypoints);
+      }
 
       // Determine next crop region based on detected keypoints and if a crop
       // region is not detected, this will trigger the model to run on the full
@@ -251,10 +257,12 @@ export class MoveNetDetector extends BasePoseDetector {
       keypoints = await this.detectKeypoints(resizedImageInt, true);
       resizedImageInt.dispose();
 
-      this.arrayToKeypoints(
-          this.filter.insert(
-              this.keypointsToArray(keypoints), 1.0 / this.frameTimeDiff),
-          keypoints);
+      if (estimationConfig.enableSmoothing) {
+        this.arrayToKeypoints(
+            this.filter.insert(
+                this.keypointsToArray(keypoints), 1.0 / this.frameTimeDiff),
+            keypoints);
+      }
 
       // Determine crop region based on detected keypoints.
       this.cropRegion = this.determineCropRegion(
