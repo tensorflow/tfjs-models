@@ -18,33 +18,19 @@
 import * as mobilenet from '@tensorflow-models/mobilenet';
 import * as tfwebClient from '../tfweb_client';
 
-import {TaskModelTransformer} from './common';
+import {BaseTaskModel, TaskModelTransformer} from './common';
 
 /**
  * The canonical ImageClassifier task model for all image classification related
  * TFJS/TFLite models.
  */
-export interface ImageClassifier {
+export interface ImageClassifier extends BaseTaskModel {
   /**
    * Performs classification on the given image-like resource, and returns
    * result.
    */
   classify(img: ImageData|HTMLImageElement|HTMLCanvasElement|
            HTMLVideoElement): Promise<ImageClassifierResult>;
-}
-
-/** Options to customize model loading and inference. */
-export interface ImageClassifierOptions {
-  // Common options.
-  maxResult?: number;
-
-  // Options for tfweb.
-  modelPath?: string;
-  scoreThreshold?: number;
-  numThreads?: number;
-
-  // Options for tfjs mobilenet model.
-  mobilentConfig?: mobilenet.ModelConfig;
 }
 
 /** Classification result. */
@@ -58,19 +44,45 @@ export interface Class {
   probability: number;
 }
 
-/** The transformer for the TFJS mobilenet model. */
-export const ImageClassifierTFJS:
-    TaskModelTransformer<ImageClassifier, ImageClassifierOptions> = {
-      async loadAndTransform(options?: ImageClassifierOptions):
+/** Options for TFJS mobilenet model. */
+export interface TFJSMobileNetOptoins {
+  maxResult?: number;
+  modelConfig?: mobilenet.ModelConfig;
+}
+
+/** Base options for all TFLite models. */
+export interface TFLiteBaseOptions {
+  maxResults?: number;
+  scoreThreshold?: number;
+  numThreads?: number;
+}
+
+/** Options for TFLiteMobileNet models. */
+export interface TFLiteMobileNetOptions extends TFLiteBaseOptions {
+  version?: 1|2;
+  alpha?: 0.25|0.50|0.75|1.0;
+}
+
+/** Options for TFLite image classification custom models. */
+export interface TFLiteImageClassificationCustomModelOptions extends
+    TFLiteBaseOptions {
+  modelUrl: string;
+}
+
+/** The transformer for the TFJS MobileNet model. */
+export const TFJSMobileNetTransformer:
+    TaskModelTransformer<ImageClassifier, TFJSMobileNetOptoins> = {
+      async loadAndTransform(options?: TFJSMobileNetOptoins):
           Promise<ImageClassifier> {
             // Load the model.
             if (!mobilenet) {
               throw new Error('@tensorflow-models/mobilenet package not found');
             }
-            const mobilenetModel = await mobilenet.load(
-                options ? options.mobilentConfig : undefined);
+            let config: mobilenet.ModelConfig =
+                (options && options.modelConfig) || {version: 1, alpha: 1.0};
+            const mobilenetModel = await mobilenet.load(config);
 
-            // Transform to ImageClassifier.
+            // Transform to ImageClassifier task model.
             const imageClassifier: ImageClassifier = {
               classify: async (img) => {
                 const mobilenetResults = await mobilenetModel.classify(
@@ -86,57 +98,104 @@ export const ImageClassifierTFJS:
                 };
                 return finalResult;
               },
+
+              cleanUp: () => {},
             };
 
             return imageClassifier;
           }
+
     };
 
-/** The transformer for the tfweb image classifier. */
-export const ImageClassifierTFLite:
-    TaskModelTransformer<ImageClassifier, ImageClassifierOptions> = {
-      async loadAndTransform(options?: ImageClassifierOptions):
+/** The transformer for the TFLite MobileNet model. */
+export const TFLiteMobileNetTransformer:
+    TaskModelTransformer<ImageClassifier, TFLiteMobileNetOptions> = {
+      async loadAndTransform(options?: TFLiteMobileNetOptions):
           Promise<ImageClassifier> {
-            if (!options || !options.modelPath) {
-              throw new Error('Must provide modelPath');
+            let modelName = '';
+            const version = `${((options && options.version) || 1).toFixed(2)}`;
+            const alpha = `${((options && options.alpha) || 1.0).toFixed(2)}`;
+            if (version === '1.00') {
+              if (alpha === '0.25') {
+                modelName = 'mobilenet_v1_0.25_224_1_metadata_1.tflite';
+              } else if (alpha === '0.50') {
+                modelName = 'mobilenet_v1_0.50_224_1_metadata_1.tflite';
+              } else if (alpha === '0.75') {
+                modelName = 'mobilenet_v1_0.75_224_1_metadata_1.tflite';
+              } else if (alpha === '1.00') {
+                modelName = 'mobilenet_v1_1.0_224_1_metadata_1.tflite';
+              }
+            } else if (version === '2.00') {
+              if (alpha === '1.00') {
+                modelName = 'mobilenet_v2_1.0_224_1_metadata_1.tflite';
+              } else {
+                modelName = 'mobilenet_v1_1.0_224_1_metadata_1.tflite';
+                console.warn(`WARNING: MobileNet v${version}_${
+                    alpha} not supported. Use the default one instead: ${
+                    modelName}`);
+              }
             }
-            // Load the model.
-            const tfwebOptions = new tfwebClient.tfweb.ImageClassifierOptions();
-            if (options.maxResult) {
-              tfwebOptions.setMaxResults(options.maxResult);
-            }
-            if (options.scoreThreshold) {
-              tfwebOptions.setScoreThreshold(options.scoreThreshold);
-            }
-            if (options.numThreads) {
-              tfwebOptions.setNumThreads(options.numThreads);
-            }
-            const tfwebImageClassifier =
-                await tfwebClient.tfweb.ImageClassifier.create(
-                    options.modelPath, tfwebOptions);
-
-            // Transform to ImageClassifier.
-            const imageClassifier: ImageClassifier = {
-              classify: async (img) => {
-                const tfwebResults = tfwebImageClassifier.classify(img);
-                const classes: Class[] = [];
-                const tfwebClassificationsList =
-                    tfwebResults.getClassificationsList();
-                if (tfwebClassificationsList.length > 0) {
-                  tfwebClassificationsList[0].getClassesList().forEach(cls => {
-                    classes.push({
-                      className: cls.getDisplayName() || cls.getClassName(),
-                      probability: cls.getScore(),
-                    });
-                  });
-                }
-                const finalResult: ImageClassifierResult = {
-                  classes,
-                };
-                return finalResult;
-              },
-            };
-
-            return imageClassifier;
+            // TODO: use tfhub url instead when it is ready.
+            const modelUrl =
+                `https://storage.googleapis.com/tfweb/models/${modelName}`;
+            return transformTFLiteImageClassifierModel(modelUrl, options);
           }
     };
+
+/** The transformer for the TFLite image classifier with custom model url. */
+export const TFLiteImageClassifierTransformer: TaskModelTransformer<
+    ImageClassifier, TFLiteImageClassificationCustomModelOptions> = {
+  async loadAndTransform(options?: TFLiteImageClassificationCustomModelOptions):
+      Promise<ImageClassifier> {
+        if (!options) {
+          throw new Error('Must provide options with modelUrl specified');
+        }
+        return transformTFLiteImageClassifierModel(options.modelUrl, options);
+      }
+};
+
+async function transformTFLiteImageClassifierModel(
+    modelUrl: string, options?: TFLiteBaseOptions): Promise<ImageClassifier> {
+  // Load the model.
+  const tfwebOptions = new tfwebClient.tfweb.ImageClassifierOptions();
+  if (options) {
+    if (options.maxResults !== undefined) {
+      tfwebOptions.setMaxResults(options.maxResults);
+    }
+    if (options.numThreads !== undefined) {
+      tfwebOptions.setNumThreads(options.numThreads);
+    }
+    if (options.scoreThreshold !== undefined) {
+      tfwebOptions.setScoreThreshold(options.scoreThreshold);
+    }
+  }
+  const tfwebImageClassifier =
+      await tfwebClient.tfweb.ImageClassifier.create(modelUrl, tfwebOptions);
+
+  // Transform to ImageClassifier task model.
+  const imageClassifier: ImageClassifier = {
+    classify: async (img) => {
+      const tfwebResults = tfwebImageClassifier.classify(img);
+      const classes: Class[] = [];
+      const tfwebClassificationsList = tfwebResults.getClassificationsList();
+      if (tfwebClassificationsList.length > 0) {
+        tfwebClassificationsList[0].getClassesList().forEach(cls => {
+          classes.push({
+            className: cls.getDisplayName() || cls.getClassName(),
+            probability: cls.getScore(),
+          });
+        });
+      }
+      const finalResult: ImageClassifierResult = {
+        classes,
+      };
+      return finalResult;
+    },
+
+    cleanUp: () => {
+      tfwebImageClassifier.cleanUp();
+    },
+  };
+
+  return imageClassifier;
+}

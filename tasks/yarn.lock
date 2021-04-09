@@ -1601,9 +1601,10 @@
   version "0.0.0"
   uid ""
 
-"@tensorflow/tfjs-tflite@link:../../tfjs/tfjs-tflite":
-  version "0.0.0"
-  uid ""
+"@tensorflow/tfjs-tflite@0.0.1-alpha.0":
+  version "0.0.1-alpha.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-tflite/-/tfjs-tflite-0.0.1-alpha.0.tgz#3162eea3f14f4e218b3d6b727deb44320481f040"
+  integrity sha512-UVTzEFTNuMd2ZNdSJVI1oKs5YvjWo8lYPxleEEP7uzUW1326o4FUU8yclOpgdB7nhN5A3Yq8PXHt8fKGs44fNw==
 
 "@types/component-emitter@^1.2.10":
   version "1.2.10"

@@ -15,17 +15,49 @@
  * =============================================================================
  */
 
-import {TaskModelTransformer} from './tasks/common';
+import {BaseTaskModel, TaskModelTransformer} from './tasks/common';
 
 /**
  * The main function to load a task model.
  *
- * @param taskModelTransforer The transformer for the task model. Typically this
- *     is specified by using `ML_TASK` in tasks/all_tasks.ts (e.g.
- *     ML_TASK.ImageClassifier_TFLite).
+ * <M>: The type of the transformed task model. Models with the same task type
+ *     will have the same task model. For example, TFLite image classifier model
+ *     and TFJS mobilenet model will be transformed to the same ImageClassifier
+ *     task model.
+ *
+ * <O>: The type of options to configure model loading and inference. Different
+ *     models could be associated with different option types.
+ *
+ * Sample usage:
+ *
+ * // Use a pre-trained TFLite mobilenet model.
+ * const model = await loadTaskModel(
+ *     MLTask.ImageClassification.TFLiteMobileNet);
+ *
+ * // Use a custom TFLite image classification model.
+ * const model = await loadTaskModel(
+ *     MLTask.ImageClassification.TFLiteCustomModel,
+ *     {modelUrl: 'url/to/your/model.tflite'});
+ *
+ * // Use a pre-trained TFJS mobilenet model.
+ * const model = await loadTaskModel(
+ *     MLTask.ImageClassification.TFJSMobileNet,
+ *     {version: 2, alpha: 1.0});
+ *
+ * // Task models for the same task type (MLTask.ImageClassification in this
+ * // case) have the same model type (ImageClassifier in this case) that provide
+ * // methods best and most intuitive for the task.
+ * const result = model.classify(img)
+ * console.log(result.classes);
+ *
+ * @param taskModelTransformer The transformer for the task model. Typically
+ *     this is specified by using `MLTask` in tasks/all_tasks.ts (e.g.
+ *     MLTask.ImageClassification.TFJSMobileNet).
  * @param options The options to configure model loading and inference.
+ *
+ * @returns The transformed task model.
  */
-export async function loadTaskModel<M, O>(
+export async function loadTaskModel<M extends BaseTaskModel, O>(
     taskModelTransformer: TaskModelTransformer<M, O>, options?: O): Promise<M> {
   return taskModelTransformer.loadAndTransform(options);
 }

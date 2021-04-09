@@ -15,12 +15,21 @@
  * =============================================================================
  */
 
-import {ImageClassifierTFJS, ImageClassifierTFLite} from './image_classification';
+import {TFJSMobileNetTransformer, TFLiteImageClassifierTransformer, TFLiteMobileNetTransformer} from './image_classification';
+import {TFLiteNLClassifierTransformer} from './nl_classification';
 
 /**
- * Lists all supported task models. Each name points to its model transformer.
+ * Lists all supported tasks with their models.
+ *
+ * Each model points to its TaskModelTransformer.
  */
-export const ML_TASK = {
-  'ImageClassifier_TFJS': ImageClassifierTFJS,
-  'ImageClassifier_TFLite': ImageClassifierTFLite,
+export const MLTask = {
+  ImageClassification: {
+    TFJSMobileNet: TFJSMobileNetTransformer,
+    TFLiteMobileNet: TFLiteMobileNetTransformer,
+    TFLiteCustomModel: TFLiteImageClassifierTransformer,
+  },
+  NLClassification: {
+    TFLiteCustomModel: TFLiteNLClassifierTransformer,
+  }
 };

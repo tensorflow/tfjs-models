@@ -16,16 +16,16 @@
  */
 
 /**
- * A transformer that loads an existing TFJS or TFLite task library model and
- * transforms it to a task model.
+ * A transformer that loads an existing model and transforms it to a task model.
  *
- * <M>: The type of the transformed task model. Models with the same task type
- * will have the same task model. For example, TFLite image classifier model and
- * TFJS mobilenet model will be transformed to the same ImageClassifier task
- * model.
- *
- * <O>: The options to configure model loading and inference.
+ * For more details, see src/task_model.ts.
  */
-export interface TaskModelTransformer<M, O> {
+export interface TaskModelTransformer<M extends BaseTaskModel, O> {
   loadAndTransform(options?: O): Promise<M>;
+}
+
+/** The base interface for all task models. */
+export interface BaseTaskModel {
+  /** Cleans up resources if necessary. */
+  cleanUp(): void;
 }
