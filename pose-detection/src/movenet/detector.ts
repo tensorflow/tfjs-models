@@ -36,6 +36,7 @@ export class MoveNetDetector extends BasePoseDetector {
       InputResolution = {height: 0, width: 0};
   private readonly filter: RobustOneEuroFilter;
 
+  // Global states.
   private cropRegion: number[];
   // This will be used to calculate the actual camera fps. Starts with 30 fps
   // as an assumption.
@@ -277,6 +278,16 @@ export class MoveNetDetector extends BasePoseDetector {
     return poses;
   }
 
+  dispose() {
+    this.moveNetModel.dispose();
+  }
+
+  reset() {
+    this.cropRegion = null;
+    this.previousFrameTime = 0;
+    this.frameTimeDiff = 0.0333;
+  }
+
   torsoVisible(keypoints: Keypoint[]): boolean {
     return (
         keypoints[COCO_KEYPOINTS_NAMED_MAP['left_hip']].score >
@@ -408,9 +419,5 @@ export class MoveNetDetector extends BasePoseDetector {
       keypoints[i].y = values[i * 2];
       keypoints[i].x = values[i * 2 + 1];
     }
-  }
-
-  dispose() {
-    this.moveNetModel.dispose();
   }
 }
