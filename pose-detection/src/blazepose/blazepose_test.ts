@@ -22,7 +22,7 @@ import {ALL_ENVS, BROWSER_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/d
 import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
 
 import * as poseDetection from '../index';
-import {loadImage} from '../test_util';
+import {KARMA_SERVER, loadImage, loadVideo} from '../test_util';
 
 const UPPERBODY_ONLY = [false];
 const EPSILON = 10;
@@ -104,7 +104,7 @@ describeWithFlags('Blazepose static image ', BROWSER_ENVS, () => {
   });
 
   UPPERBODY_ONLY.forEach(upperBodyOnly => {
-    fit('test.', async () => {
+    it('test.', async () => {
       const startTensors = tf.memory().numTensors;
 
       // Note: this makes a network request for model assets.
@@ -134,51 +134,64 @@ describeWithFlags('Blazepose static image ', BROWSER_ENVS, () => {
   });
 });
 
-// describeWithFlags('Blazepose video ', BROWSER_ENVS, () => {
-//   let detector: poseDetection.PoseDetector;
-//   let image: HTMLVideoElement;
-//   let timeout: number;
+describeWithFlags('Blazepose video ', BROWSER_ENVS, () => {
+  let detector: poseDetection.PoseDetector;
+  let timeout: number;
+  let expectedFull: number[][][];
 
+  beforeAll(async () => {
+    timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
 
-//   beforeAll(async () => {
-//     timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
-//     jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
+    expectedFull = await fetch(`${KARMA_SERVER}/pose_squats.full_body.json`)
+                       .then(response => response.json());
+    expectedFull = expectedFull.map(frameResult => {
+      return frameResult.map(keypoint => [keypoint[0], keypoint[1]]);
+    });
+  });
 
-//     image = await loadVideo('pose_squats.mp4', 320, 480);
-//     image.onseeked(() => {
-//       const result = detector.estimatePoses(image);
-//     })
-//   });
+  afterAll(() => {
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
+  });
 
-//   afterAll(() => {
-//     jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
-//   });
+  UPPERBODY_ONLY.forEach(upperBodyOnly => {
+    it('test.', async () => {
+      // Note: this makes a network request for model assets.
+      const modelConfig:
+          poseDetection.BlazeposeModelConfig = {quantBytes: 4, upperBodyOnly};
+      detector = await poseDetection.createDetector(
+          poseDetection.SupportedModels.MediapipeBlazepose, modelConfig);
 
-//   UPPERBODY_ONLY.forEach(upperBodyOnly => {
-//     it('test.', async () => {
-//       // Note: this makes a network request for model assets.
-//       const modelConfig:
-//           poseDetection.BlazeposeModelConfig = {quantBytes: 4,
-//           upperBodyOnly};
-//       detector = await poseDetection.createDetector(
-//           poseDetection.SupportedModels.MediapipeBlazepose, modelConfig);
+      const result: number[][][] = [];
 
-//       let currentTime = 0;
+      const callback = async(video: HTMLVideoElement): Promise<void> => {
+        const poses = await detector.estimatePoses(video);
+        result.push(poses[0].keypoints.map(kp => [kp.x, kp.y]));
+      };
+      await loadVideo('pose_squats.mp4', callback);
 
-//       while (true) {
-//         if (currentTime > image.duration) {
-//           break;
-//         }
+      let count = 0;
+      for (let i = 0; i < result.length; i++) {
+        const frameResult = result[i];
+        for (let j = 0; j < frameResult.length; j++) {
+          const keypoint = frameResult[j];
+          const x = keypoint[0];
+          const y = keypoint[1];
 
-//         const result = await detector.estimatePoses(
-//             image,
-//             {maxPoses: 1, flipHorizontal: false, enableSmoothing: false} as
-//                 poseDetection.BlazeposeEstimationConfig);
-//       }
+          const ex = expectedFull[i][j][0];
+          const ey = expectedFull[i][j][1];
 
+          if (Math.abs(x - ex) > 30 || Math.abs(y - ey) > 30) {
+            count++;
+            console.log(`Frame ${i}, Keypoint ${j}: Actual [${x}, ${
+                y}], Expected [${ex}, ${ey}]`);
+          }
+        }
+      }
+      console.log(count);
+      // expectArraysClose(result.slice(0, 65), expectedFull, 45);
 
-
-//       detector.dispose();
-//     });
-//   });
-// });
+      detector.dispose();
+    });
+  });
+});
