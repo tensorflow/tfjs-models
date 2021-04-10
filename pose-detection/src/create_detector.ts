@@ -31,7 +31,7 @@ import {SupportedModels} from './types';
  */
 export async function createDetector(
     model: SupportedModels,
-    modelConfig: PosenetModelConfig|BlazeposeModelConfig|
+    modelConfig?: PosenetModelConfig|BlazeposeModelConfig|
     MoveNetModelConfig): Promise<PoseDetector> {
   switch (model) {
     case SupportedModels.PoseNet:

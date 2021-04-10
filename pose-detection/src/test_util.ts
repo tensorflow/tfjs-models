@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2019 Google LLC. All Rights Reserved.
+ * Copyright 2021 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,16 +15,19 @@
  * =============================================================================
  */
 
-import {ImageSize} from '../../calculators/interfaces/common_interfaces';
-import {Pose} from '../../types';
+/** Karma server directory serving local files. */
+export const KARMA_SERVER = './base/src/test_data';
 
-export function flipPosesHorizontal(
-    poses: Pose[], imageSize: ImageSize): Pose[] {
-  for (const pose of poses) {
-    for (const kp of pose.keypoints) {
-      kp.x = imageSize.width - 1 - kp.x;
-    }
-  }
+export async function loadImage(imagePath: string, width: number, height: number): Promise<HTMLImageElement> {
+  const img = new Image(width, height);
+  const promise = new Promise<HTMLImageElement>((resolve, reject) => {
+    img.crossOrigin = '';
+    img.onload = () => {
+      resolve(img);
+    };
+  });
 
-  return poses;
+  img.src = `${KARMA_SERVER}/${imagePath}`;
+
+  return promise;
 }

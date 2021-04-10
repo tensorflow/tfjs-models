@@ -36,7 +36,8 @@ export const MOVENET_CONFIG: MoveNetModelConfig = {
 };
 
 export const MOVENET_SINGLE_POSE_ESTIMATION_CONFIG: MoveNetEstimationConfig = {
-  maxPoses: 1
+  maxPoses: 1,
+  enableSmoothing: true
 };
 
 export const MIN_CROP_KEYPOINT_SCORE = 0.3;
