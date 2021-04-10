@@ -35,29 +35,41 @@ export async function loadImage(
 }
 
 export async function loadVideo(
-    videoPath: string, width: number,
-    height: number): Promise<HTMLVideoElement> {
+    videoPath: string, callback: (video: HTMLVideoElement) => Promise<void>) {
   const video = document.createElement('video');
+  const source = document.createElement('source');
+  source.src = `${KARMA_SERVER}/${videoPath}`;
+  source.type = 'video/mp4';
+  video.appendChild(source);
+  document.body.appendChild(video);
+  const canvas = document.createElement('canvas');
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
 
-  const promise = new Promise<HTMLVideoElement>((resolve, reject) => {
-    video.onloadedmetadata = () => {
-      resolve(video);
+  const promise = new Promise((resolve, reject) => {
+    video.onseeked = async () => {
+      canvas.height = video.videoHeight;
+      canvas.width = video.videoWidth;
+
+      ctx.drawImage(video, 200, 0);
+      await callback(video);
+      const nextTime = video.currentTime + 0.2;
+      if (nextTime < video.duration) {
+        video.currentTime = nextTime;
+      } else {
+        resolve();
+      }
     };
   });
 
-  video.setAttribute('src', videoPath);
-  video.width = width;
-  video.height = height;
-
-  return promise;
-}
-
-export async function seekFrame(video: HTMLVideoElement, seconds: number) {
-  const promise = new Promise<HTMLVideoElement>(
-      (resolve, reject) => {
-
-      });
-  video.currentTime = seconds;
+  video.onloadedmetadata = () => {
+    video.currentTime = 0.001;
+    const videoWidth = video.videoWidth;
+    const videoHeight = video.videoHeight;
+    // Must set below two lines, otherwise video width and height are 0.
+    video.width = videoWidth;
+    video.height = videoHeight;
+  };
 
   return promise;
 }
