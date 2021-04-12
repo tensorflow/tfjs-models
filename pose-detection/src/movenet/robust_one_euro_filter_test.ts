@@ -21,7 +21,7 @@ import {ALL_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_ut
 import {RobustOneEuroFilter} from './robust_one_euro_filter';
 
 describeWithFlags('MoveNet', ALL_ENVS, () => {
-  let robust_filter: RobustOneEuroFilter;
+  let robustFilter: RobustOneEuroFilter;
   let timeout: number;
 
   beforeAll(() => {
@@ -34,32 +34,39 @@ describeWithFlags('MoveNet', ALL_ENVS, () => {
   });
 
   beforeEach(async () => {
-    robust_filter = new RobustOneEuroFilter();
+    // Note: this makes a network request for model assets.
+    robustFilter = new RobustOneEuroFilter();
   });
 
-  it('robust filter produces right output shape', async () => {
+  it ('robust filter produces right output shape', async () => {
     const input: number[] = [-1.0, 2.0, 3.0];
 
-    const output: number[] = robust_filter.insert(input);
+    const output: number[] = robustFilter.insert(input);
 
     expect(input.length).toEqual(output.length);
   });
 
   it ('robust filter outputs are in convex hull of inputs', async() => {
-    const input_0: number[] = [-1.0, 2.0, 3.0];
-    const input_1: number[] = [5.0, -2.5, 7.0];
-
-    robust_filter.insert(input_0);
-    const output_1: number[] = robust_filter.insert(input_1);
-
-    expect(output_1[0]).toBeLessThan(5.0);
-    expect(output_1[0]).toBeGreaterThan(-1.0);
-
-    expect(output_1[1]).toBeLessThan(2.0);
-    expect(output_1[1]).toBeGreaterThan(-2.5);
-
-    expect(output_1[2]).toBeLessThan(7.0);
-    expect(output_1[2]).toBeGreaterThan(3.0);
-
+    const input0: number[] = [-1.0, 2.0, 3.0];
+    const input1: number[] = [5.0, -2.5, 7.0];
+    const input2: number[] = [2.5, 1.5, -5.5];
+    
+    robustFilter.insert(input0);
+    
+    const output1: number[] = robustFilter.insert(input1);
+    expect(output1[0]).toBeLessThan(5.0);
+    expect(output1[0]).toBeGreaterThan(-1.0);
+    expect(output1[1]).toBeLessThan(2.0);
+    expect(output1[1]).toBeGreaterThan(-2.5);
+    expect(output1[2]).toBeLessThan(7.0);
+    expect(output1[2]).toBeGreaterThan(3.0);
+    
+    const output2: number[] = robustFilter.insert(input2);
+    expect(output2[0]).toBeLessThan(5.0);
+    expect(output2[0]).toBeGreaterThan(-1.0);
+    expect(output1[1]).toBeLessThan(2.0);
+    expect(output2[1]).toBeGreaterThan(-2.5);
+    expect(output2[2]).toBeLessThan(7.0);
+    expect(output2[2]).toBeGreaterThan(-5.5);
   });
 });
