@@ -17,6 +17,7 @@
 
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
+import {SECOND_TO_MICRO_SECONDS} from '../calculators/constants';
 import {convertImageToTensor} from '../calculators/convert_image_to_tensor';
 import {getImageSize, toImageTensor} from '../calculators/image_utils';
 import {ImageSize} from '../calculators/interfaces/common_interfaces';
@@ -60,7 +61,7 @@ export class BlazeposeDetector extends BasePoseDetector {
   private readonly anchorTensor: AnchorTensor;
 
   private maxPoses: number;
-  private timestamp: number;
+  private timestamp: number;  // In microseconds.
 
   // Store global states.
   private regionOfInterest: Rect = null;
@@ -129,9 +130,9 @@ export class BlazeposeDetector extends BasePoseDetector {
    *       enableSmoothing: Optional. Default to true. Smooth pose landmarks
    *       coordinates and visibility scores to reduce jitter.
    *
-   * @param timestamp Optional. In seconds. This is useful when image is a
-   *     tensor, which doesn't have timestamp info. Or to override timestamp in
-   *     a video.
+   * @param timestamp Optional. In microseconds, i.e. 1e-6 of a second. This is
+   *     useful when image is a tensor, which doesn't have timestamp info. Or
+   *     to override timestamp in a video.
    *
    * @return An array of `Pose`s.
    */
@@ -155,7 +156,8 @@ export class BlazeposeDetector extends BasePoseDetector {
       this.timestamp = timestamp;
     } else {
       // For static images, timestamp should be null.
-      this.timestamp = isVideo(image) ? image.currentTime : null;
+      this.timestamp =
+          isVideo(image) ? image.currentTime * SECOND_TO_MICRO_SECONDS : null;
     }
 
     const imageSize = getImageSize(image);
