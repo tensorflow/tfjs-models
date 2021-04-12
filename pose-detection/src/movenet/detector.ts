@@ -201,8 +201,6 @@ export class MoveNetDetector extends BasePoseDetector {
       } else {
         this.cropRegion = [0.0, 0.0, 1.0, imageSize.height / imageSize.width];
       }
-    } else {
-      this.cropRegion = this.cropRegion;
     }
 
     const croppedImage = tf.tidy(() => {
