@@ -27,6 +27,8 @@ describeWithFlags('PoseNet', ALL_ENVS, () => {
 
   beforeAll(() => {
     timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
+    // This test suite makes real network request for model assets, increase
+    // the default timeout to allow enough time to load and reduce flakiness.
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 300000;  // 5mins
   });
 
