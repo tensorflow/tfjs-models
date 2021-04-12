@@ -34,7 +34,6 @@ describeWithFlags('MoveNet', ALL_ENVS, () => {
   });
 
   beforeEach(async () => {
-    // Note: this makes a network request for model assets.
     robust_filter = new RobustOneEuroFilter();
   });
 
