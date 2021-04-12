@@ -15,6 +15,8 @@
  * =============================================================================
  */
 
+import {PoseDetectorInput} from './types';
+
 /** Karma server directory serving local files. */
 export const KARMA_SERVER = './base/src/test_data';
 
@@ -35,27 +37,32 @@ export async function loadImage(
 }
 
 export async function loadVideo(
-    videoPath: string, callback: (video: HTMLVideoElement) => Promise<void>) {
+    videoPath: string, fps: number,
+    callback: (video: PoseDetectorInput, timestamp: number) => Promise<void>) {
+  // We override video's timestamp with a fake timestamp.
+  let simulatedTimestamp: number;
+
+  const interval = 1 / fps;
+
+  // Create a video element on the html page and serve the content through karma
   const video = document.createElement('video');
   const source = document.createElement('source');
   source.src = `${KARMA_SERVER}/${videoPath}`;
   source.type = 'video/mp4';
   video.appendChild(source);
   document.body.appendChild(video);
-  const canvas = document.createElement('canvas');
-  document.body.appendChild(canvas);
-  const ctx = canvas.getContext('2d');
 
   const promise = new Promise((resolve, reject) => {
     video.onseeked = async () => {
-      canvas.height = video.videoHeight;
-      canvas.width = video.videoWidth;
-
-      ctx.drawImage(video, 200, 0);
-      await callback(video);
-      const nextTime = video.currentTime + 0.2;
+      await callback(video, simulatedTimestamp);
+      const nextTime = video.currentTime + interval;
       if (nextTime < video.duration) {
         video.currentTime = nextTime;
+        // We set the timestamp increment to 33.333 microseconds to simulate
+        // the 30 fps video input. We do this so that the filter uses the
+        // same fps as the python test.
+        // https://github.com/google/mediapipe/blob/ecb5b5f44ab23ea620ef97a479407c699e424aa7/mediapipe/python/solution_base.py#L297
+        simulatedTimestamp += 33.333;
       } else {
         resolve();
       }
@@ -63,7 +70,8 @@ export async function loadVideo(
   });
 
   video.onloadedmetadata = () => {
-    video.currentTime = 0.001;
+    video.currentTime = 0;
+    simulatedTimestamp = 0;
     const videoWidth = video.videoWidth;
     const videoHeight = video.videoHeight;
     // Must set below two lines, otherwise video width and height are 0.
