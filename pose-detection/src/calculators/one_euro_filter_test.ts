@@ -20,7 +20,7 @@ import {ALL_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_ut
 
 import {OneEuroFilter} from './one_euro_filter';
 
-describeWithFlags('MoveNet', ALL_ENVS, () => {
+describeWithFlags('OneEuroFilter ', ALL_ENVS, () => {
   let oneEuroFilter: OneEuroFilter;
 
   beforeEach(async () => {
@@ -34,7 +34,7 @@ describeWithFlags('MoveNet', ALL_ENVS, () => {
     });
   });
 
-  it('one-euro filter outputs are in convex hull of inputs', async () => {
+  it('outputs are in convex hull of inputs', async () => {
     const value0 = -1.0;
     const timestamp0 = 1;
 
