@@ -15,7 +15,6 @@
  * =============================================================================
  */
 
-import {SECOND_TO_MICRO_SECONDS} from '../../calculators/constants';
 import {getImageSize} from '../../calculators/image_utils';
 import {landmarksToNormalizedLandmarks} from '../../calculators/landmarks_to_normalized_landmarks';
 import {normalizedLandmarksToLandmarks} from '../../calculators/normalized_landmarks_to_landmarks';
