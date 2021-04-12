@@ -60,6 +60,7 @@ export class BlazeposeDetector extends BasePoseDetector {
   private readonly anchorTensor: AnchorTensor;
 
   private maxPoses: number;
+  private timestamp: number;
 
   // Store global states.
   private regionOfInterest: Rect = null;
@@ -116,7 +117,7 @@ export class BlazeposeDetector extends BasePoseDetector {
    * ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement The input
    * image to feed through the network.
    *
-   * @param config
+   * @param config Optional.
    *       maxPoses: Optional. Max number of poses to estimate.
    *       When maxPoses = 1, a single pose is detected, it is usually much more
    *       efficient than maxPoses > 1. When maxPoses > 1, multiple poses are
@@ -128,23 +129,34 @@ export class BlazeposeDetector extends BasePoseDetector {
    *       enableSmoothing: Optional. Default to true. Smooth pose landmarks
    *       coordinates and visibility scores to reduce jitter.
    *
+   * @param timestamp Optional. In seconds. This is useful when image is a
+   *     tensor, which doesn't have timestamp info. Or to override timestamp in
+   *     a video.
+   *
    * @return An array of `Pose`s.
    */
   // TF.js implementation of the mediapipe pose detection pipeline.
   // ref graph:
   // https://github.com/google/mediapipe/blob/master/mediapipe/modules/pose_landmark/pose_landmark_cpu.pbtxt
   async estimatePoses(
-      image: PoseDetectorInput,
-      estimationConfig: BlazeposeEstimationConfig =
-          constants.DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG): Promise<Pose[]> {
+      image: PoseDetectorInput, estimationConfig: BlazeposeEstimationConfig,
+      timestamp?: number): Promise<Pose[]> {
     const config = validateEstimationConfig(estimationConfig);
 
     if (image == null) {
-      this.regionOfInterest = null;
+      this.reset();
       return [];
     }
 
     this.maxPoses = config.maxPoses;
+
+    // User provided timestamp will override video's timestamp.
+    if (timestamp != null) {
+      this.timestamp = timestamp;
+    } else {
+      // For static images, timestamp should be null.
+      this.timestamp = isVideo(image) ? image.currentTime : null;
+    }
 
     const imageSize = getImageSize(image);
     const image3d = tf.tidy(() => tf.cast(toImageTensor(image), 'float32'));
@@ -429,7 +441,7 @@ export class BlazeposeDetector extends BasePoseDetector {
   } {
     let actualLandmarksFiltered;
     let auxiliaryLandmarksFiltered;
-    if (!isVideo(image) || !enableSmoothing) {
+    if (this.timestamp == null || !enableSmoothing) {
       actualLandmarksFiltered = actualLandmarks;
       auxiliaryLandmarksFiltered = auxiliaryLandmarks;
     } else {
@@ -454,14 +466,14 @@ export class BlazeposeDetector extends BasePoseDetector {
             constants.BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG);
       }
       actualLandmarksFiltered = this.landmarksSmoothingFilterActual.apply(
-          actualLandmarksFiltered, image);
+          actualLandmarksFiltered, image, this.timestamp);
 
       if (this.landmarksSmoothingFilterAuxiliary == null) {
         this.landmarksSmoothingFilterAuxiliary = new LandmarksSmoothingFilter(
             constants.BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG);
       }
       auxiliaryLandmarksFiltered = this.landmarksSmoothingFilterAuxiliary.apply(
-          auxiliaryLandmarksFiltered, image);
+          auxiliaryLandmarksFiltered, image, this.timestamp);
     }
 
     return {actualLandmarksFiltered, auxiliaryLandmarksFiltered};

@@ -120,13 +120,16 @@ export class PosenetDetector extends BasePoseDetector {
    *       flipHorizontal: Optional. Default to false. When image data comes
    *       from camera, the result has to flip horizontally.
    *
+   * @param timestamp Optional. In seconds. This is useful when image is a
+   *     tensor, which doesn't have timestamp info. Or to override timestamp in
+   *     a video.
    * @return An array of `Pose`s.
    */
   async estimatePoses(
       image: PoseDetectorInput,
       estimationConfig:
-          PoseNetEstimationConfig = SINGLE_PERSON_ESTIMATION_CONFIG):
-      Promise<Pose[]> {
+          PoseNetEstimationConfig = SINGLE_PERSON_ESTIMATION_CONFIG,
+      timestamp?: number): Promise<Pose[]> {
     const config = validateEstimationConfig(estimationConfig);
 
     if (image == null) {

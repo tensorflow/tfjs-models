@@ -150,20 +150,24 @@ export class MoveNetDetector extends BasePoseDetector {
    * ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement The input
    * image to feed through the network.
    *
-   * @param config
+   * @param config Optional.
    *       maxPoses: Optional. Has to be set to 1.
    *
    *       enableSmoothing: Optional. Optional. Defaults to 'true'. When
    *       enabled, a temporal smoothing filter will be used on the keypoint
    *       locations to reduce jitter.
    *
+   * @param timestamp Optional. In seconds. This is useful when image is a
+   *     tensor, which doesn't have timestamp info. Or to override timestamp in
+   *     a video.
+   *
    * @return An array of `Pose`s.
    */
   async estimatePoses(
       image: PoseDetectorInput,
       estimationConfig:
-          MoveNetEstimationConfig = MOVENET_SINGLE_POSE_ESTIMATION_CONFIG):
-      Promise<Pose[]> {
+          MoveNetEstimationConfig = MOVENET_SINGLE_POSE_ESTIMATION_CONFIG,
+      timestamp?: number): Promise<Pose[]> {
     estimationConfig = validateEstimationConfig(estimationConfig);
 
     if (image == null) {

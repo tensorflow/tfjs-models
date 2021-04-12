@@ -19,7 +19,7 @@ import {SECOND_TO_MICRO_SECONDS} from '../../calculators/constants';
 import {getImageSize} from '../../calculators/image_utils';
 import {landmarksToNormalizedLandmarks} from '../../calculators/landmarks_to_normalized_landmarks';
 import {normalizedLandmarksToLandmarks} from '../../calculators/normalized_landmarks_to_landmarks';
-import {Keypoint} from '../../types';
+import {Keypoint, PoseDetectorInput} from '../../types';
 import {LandmarksFilter} from './interfaces/common_interfaces';
 import {LandmarksSmoothingConfig} from './interfaces/config_interfaces';
 import {LandmarksOneEuroFilter} from './landmarks_one_euro_filter';
@@ -43,13 +43,14 @@ export class LandmarksSmoothingFilter {
     }
   }
 
-  apply(landmarks: Keypoint[], image: HTMLVideoElement): Keypoint[] {
+  apply(landmarks: Keypoint[], image: PoseDetectorInput, timestamp: number):
+      Keypoint[] {
     if (landmarks == null) {
       this.landmarksFilter.reset();
       return null;
     }
     const imageSize = getImageSize(image);
-    const microSeconds = image.currentTime * SECOND_TO_MICRO_SECONDS;
+    const microSeconds = timestamp * SECOND_TO_MICRO_SECONDS;
     const scaledLandmarks =
         normalizedLandmarksToLandmarks(landmarks, imageSize);
     const scaledOutLandmarks =
