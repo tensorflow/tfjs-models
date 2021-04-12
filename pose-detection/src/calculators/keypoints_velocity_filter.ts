@@ -21,7 +21,6 @@ import {VelocityFilterConfig} from './interfaces/config_interfaces';
 import {RelativeVelocityFilter} from './relative_velocity_filter';
 import {getObjectScale} from './velocity_filter_utils';
 
-
 /**
  * A stateful filter that smoothes landmark values overtime.
  *
