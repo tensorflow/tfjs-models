@@ -49,11 +49,10 @@ export class LandmarksSmoothingFilter {
       return null;
     }
     const imageSize = getImageSize(image);
-    const microSeconds = timestamp;
     const scaledLandmarks =
         normalizedLandmarksToLandmarks(landmarks, imageSize);
     const scaledOutLandmarks =
-        this.landmarksFilter.apply(scaledLandmarks, microSeconds);
+        this.landmarksFilter.apply(scaledLandmarks, timestamp);
 
     return landmarksToNormalizedLandmarks(scaledOutLandmarks, imageSize);
   }
