@@ -14,11 +14,13 @@
  * limitations under the License.
  * =============================================================================
  */
-import {VelocityFilterConfig} from '../../calculators/interfaces/config_interfaces';
-import {RelativeVelocityFilter} from '../../calculators/relative_velocity_filter';
-import {getObjectScale} from '../../calculators/velocity_filter_utils';
-import {Keypoint} from '../../types';
-import {LandmarksFilter} from './interfaces/common_interfaces';
+import {Keypoint} from '../types';
+
+import {KeypointsFilter} from './interfaces/common_interfaces';
+import {VelocityFilterConfig} from './interfaces/config_interfaces';
+import {RelativeVelocityFilter} from './relative_velocity_filter';
+import {getObjectScale} from './velocity_filter_utils';
+
 
 /**
  * A stateful filter that smoothes landmark values overtime.
@@ -29,47 +31,47 @@ import {LandmarksFilter} from './interfaces/common_interfaces';
  */
 // ref:
 // https://github.com/google/mediapipe/blob/master/mediapipe/calculators/util/landmarks_smoothing_calculator.cc
-export class LandmarksVelocityFilter implements LandmarksFilter {
+export class KeypointsVelocityFilter implements KeypointsFilter {
   private xFilters: RelativeVelocityFilter[];
   private yFilters: RelativeVelocityFilter[];
   private zFilters: RelativeVelocityFilter[];
 
   constructor(private readonly config: VelocityFilterConfig) {}
 
-  apply(landmarks: Keypoint[], microSeconds: number): Keypoint[] {
-    if (landmarks == null) {
+  apply(keypoints: Keypoint[], microSeconds: number): Keypoint[] {
+    if (keypoints == null) {
       this.reset();
       return null;
     }
     // Get value scale as inverse value of the object scale.
-    // If value is too small smoothing will be disabled and landmarks will be
+    // If value is too small smoothing will be disabled and keypoints will be
     // returned as is.
     let valueScale = 1;
     if (!this.config.disableValueScaling) {
-      const objectScale = getObjectScale(landmarks);
+      const objectScale = getObjectScale(keypoints);
       if (objectScale < this.config.minAllowedObjectScale) {
-        return [...landmarks];
+        return [...keypoints];
       }
       valueScale = 1 / objectScale;
     }
 
     // Initialize filters once.
-    this.initializeFiltersIfEmpty(landmarks);
+    this.initializeFiltersIfEmpty(keypoints);
 
-    // Filter landmarks. Every axis of every landmark is filtered separately.
-    return landmarks.map((landmark, i) => {
-      const outLandmark = {
-        ...landmark,
-        x: this.xFilters[i].apply(landmark.x, microSeconds, valueScale),
-        y: this.yFilters[i].apply(landmark.y, microSeconds, valueScale),
+    // Filter keypoints. Every axis of every keypoint is filtered separately.
+    return keypoints.map((keypoint, i) => {
+      const outKeypoint = {
+        ...keypoint,
+        x: this.xFilters[i].apply(keypoint.x, microSeconds, valueScale),
+        y: this.yFilters[i].apply(keypoint.y, microSeconds, valueScale),
       };
 
-      if (landmark.z != null) {
-        outLandmark.z =
-            this.zFilters[i].apply(landmark.z, microSeconds, valueScale);
+      if (keypoint.z != null) {
+        outKeypoint.z =
+            this.zFilters[i].apply(keypoint.z, microSeconds, valueScale);
       }
 
-      return outLandmark;
+      return outKeypoint;
     });
   }
 
@@ -81,14 +83,14 @@ export class LandmarksVelocityFilter implements LandmarksFilter {
 
   // Initializes filters for the first time or after reset. If initialized the
   // check the size.
-  private initializeFiltersIfEmpty(landmarks: Keypoint[]) {
-    if (this.xFilters == null || this.xFilters.length !== landmarks.length) {
+  private initializeFiltersIfEmpty(keypoints: Keypoint[]) {
+    if (this.xFilters == null || this.xFilters.length !== keypoints.length) {
       this.xFilters =
-          landmarks.map(_ => new RelativeVelocityFilter(this.config));
+          keypoints.map(_ => new RelativeVelocityFilter(this.config));
       this.yFilters =
-          landmarks.map(_ => new RelativeVelocityFilter(this.config));
+          keypoints.map(_ => new RelativeVelocityFilter(this.config));
       this.zFilters =
-          landmarks.map(_ => new RelativeVelocityFilter(this.config));
+          keypoints.map(_ => new RelativeVelocityFilter(this.config));
     }
   }
 }
