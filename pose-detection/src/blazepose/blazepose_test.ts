@@ -164,11 +164,19 @@ describeWithFlags('Blazepose video ', BROWSER_ENVS, () => {
 
       const result: number[][][] = [];
 
-      const callback = async(video: HTMLVideoElement): Promise<void> => {
-        const poses = await detector.estimatePoses(video);
+      const callback =
+          async(video: HTMLVideoElement, timestamp: number): Promise<void> => {
+        const poses =
+            await detector.estimatePoses(video, null /* config */, timestamp);
         result.push(poses[0].keypoints.map(kp => [kp.x, kp.y]));
       };
-      await loadVideo('pose_squats.mp4', callback);
+
+      // Original video source in 720 * 1280 resolution:
+      // https://www.pexels.com/video/woman-doing-squats-4838220/ Video is
+      // compressed to be smaller with less frames (5fps), using below command:
+      // `ffmpeg -i original_pose.mp4 -r 5 -vcodec libx264 -crf 28 -profile:v
+      // baseline pose_squats.mp4`
+      await loadVideo('pose_squats.mp4', 5 /* fps */, callback);
 
       let count = 0;
       for (let i = 0; i < result.length; i++) {
