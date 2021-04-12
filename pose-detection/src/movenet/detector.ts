@@ -193,87 +193,70 @@ export class MoveNetDetector extends BasePoseDetector {
 
     let keypoints: Keypoint[] = null;
 
-    // If we have a cropRegion from a previous run, try to run the model on an
-    // image crop first.
-    if (this.cropRegion != null) {
-      const croppedImage = tf.tidy(() => {
-        // Crop region is a [batch, 4] size tensor.
-        const cropRegionTensor = tf.tensor2d([this.cropRegion]);
-        // The batch index that the crop should operate on. A [batch] size
-        // tensor.
-        const boxInd: tf.Tensor1D = tf.zeros([1], 'int32');
-        // Target size of each crop.
-        const cropSize: [number, number] =
-            [this.modelInputResolution.height, this.modelInputResolution.width];
-        return tf.cast(
-            tf.image.cropAndResize(
-                imageTensor4D, cropRegionTensor, boxInd, cropSize, 'bilinear',
-                0),
-            'int32');
-      });
-
-      // Run cropModel. Model will dispose croppedImage.
-      keypoints = await this.detectKeypoints(croppedImage);
-      croppedImage.dispose();
-
-      // Convert keypoints to image coordinates. cropRegion is stored as
-      // top-left and bottom-right coordinates: [y1, x1, y2, x2].
-      const cropHeight = this.cropRegion[2] - this.cropRegion[0];
-      const cropWidth = this.cropRegion[3] - this.cropRegion[1];
-      for (let i = 0; i < keypoints.length; ++i) {
-        keypoints[i].y = this.cropRegion[0] + keypoints[i].y * cropHeight;
-        keypoints[i].x = this.cropRegion[1] + keypoints[i].x * cropWidth;
-      }
-
-      // Apply the sequential filter before estimating the cropping area
-      // to make it more stable.
-      if (estimationConfig.enableSmoothing) {
-        this.arrayToKeypoints(
-            this.filter.insert(
-                this.keypointsToArray(keypoints), 1.0 / this.frameTimeDiff),
-            keypoints);
-      }
-
-      // Determine next crop region based on detected keypoints and if a crop
-      // region is not detected, this will trigger the model to run on the full
-      // image.
-      let newCropRegion = this.determineCropRegion(
-          keypoints, imageTensor4D.shape[1], imageTensor4D.shape[2]);
-
-      // Use exponential filter on the cropping region to make it less jittery.
-      if (newCropRegion != null) {
-        // TODO(ardoerlemans): Use existing low pass filter from shared
-        // calculators.
-        const oldCropRegionWeight = 0.1;
-        newCropRegion = newCropRegion.map(x => x * (1 - oldCropRegionWeight));
-        this.cropRegion = this.cropRegion.map(x => x * oldCropRegionWeight);
-        this.cropRegion = this.cropRegion.map((e, i) => e + newCropRegion[i]);
+    if (!this.cropRegion) {
+      // No cropRegion was available from a previous run, so run the model on
+      // the full image with padding. Crop region is stored as [y1, x1, y2, x2].
+      if (imageSize.width > imageSize.height) {
+        this.cropRegion = [0.0, 0.0, imageSize.width / imageSize.height, 1.0];
       } else {
-        this.cropRegion = null;
+        this.cropRegion = [0.0, 0.0, 1.0, imageSize.height / imageSize.width];
       }
     } else {
-      // No cropRegion was available from a previous run, so run the model on
-      // the full image.
-      const resizedImage: tf.Tensor = tf.image.resizeBilinear(
-          imageTensor4D,
-          [this.modelInputResolution.height, this.modelInputResolution.width]);
-      const resizedImageInt = tf.cast(resizedImage, 'int32') as tf.Tensor4D;
-      resizedImage.dispose();
+      this.cropRegion = this.cropRegion;
+    }
 
-      // Model will dispose resizedImageInt.
-      keypoints = await this.detectKeypoints(resizedImageInt, true);
-      resizedImageInt.dispose();
+    const croppedImage = tf.tidy(() => {
+      // Crop region is a [batch, 4] size tensor.
+      const cropRegionTensor = tf.tensor2d([this.cropRegion]);
+      // The batch index that the crop should operate on. A [batch] size
+      // tensor.
+      const boxInd: tf.Tensor1D = tf.zeros([1], 'int32');
+      // Target size of each crop.
+      const cropSize: [number, number] =
+          [this.modelInputResolution.height, this.modelInputResolution.width];
+      return tf.cast(
+          tf.image.cropAndResize(
+              imageTensor4D, cropRegionTensor, boxInd, cropSize, 'bilinear', 0),
+          'int32');
+    });
 
-      if (estimationConfig.enableSmoothing) {
-        this.arrayToKeypoints(
-            this.filter.insert(
-                this.keypointsToArray(keypoints), 1.0 / this.frameTimeDiff),
-            keypoints);
-      }
+    keypoints = await this.detectKeypoints(croppedImage);
+    croppedImage.dispose();
 
-      // Determine crop region based on detected keypoints.
-      this.cropRegion = this.determineCropRegion(
-          keypoints, imageSize.height, imageSize.width);
+    // Convert keypoints to image coordinates. cropRegion is stored as
+    // top-left and bottom-right coordinates: [y1, x1, y2, x2].
+    const cropHeight = this.cropRegion[2] - this.cropRegion[0];
+    const cropWidth = this.cropRegion[3] - this.cropRegion[1];
+    for (let i = 0; i < keypoints.length; ++i) {
+      keypoints[i].y = this.cropRegion[0] + keypoints[i].y * cropHeight;
+      keypoints[i].x = this.cropRegion[1] + keypoints[i].x * cropWidth;
+    }
+
+    // Apply the sequential filter before estimating the cropping area
+    // to make it more stable.
+    if (estimationConfig.enableSmoothing) {
+      this.arrayToKeypoints(
+          this.filter.insert(
+              this.keypointsToArray(keypoints), 1.0 / this.frameTimeDiff),
+          keypoints);
+    }
+
+    // Determine next crop region based on detected keypoints and if a crop
+    // region is not detected, this will trigger the model to run on the full
+    // image.
+    let newCropRegion = this.determineCropRegion(
+        keypoints, imageTensor4D.shape[1], imageTensor4D.shape[2]);
+
+    // Use exponential filter on the cropping region to make it less jittery.
+    if (newCropRegion != null && this.cropRegion) {
+      // TODO(ardoerlemans): Use existing low pass filter from shared
+      // calculators.
+      const oldCropRegionWeight = 0.1;
+      newCropRegion = newCropRegion.map(x => x * (1 - oldCropRegionWeight));
+      this.cropRegion = this.cropRegion.map(x => x * oldCropRegionWeight);
+      this.cropRegion = this.cropRegion.map((e, i) => e + newCropRegion[i]);
+    } else {
+      this.cropRegion = null;
     }
 
     imageTensor4D.dispose();
