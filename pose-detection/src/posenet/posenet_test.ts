@@ -23,6 +23,17 @@ import * as poseDetection from '../index';
 
 describeWithFlags('PoseNet', ALL_ENVS, () => {
   let detector: poseDetection.PoseDetector;
+  let timeout: number;
+
+  beforeAll(() => {
+    timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 300000;  // 5mins
+  });
+
+  afterAll(() => {
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
+  });
+
   beforeEach(async () => {
     // Note: this makes a network request for model assets.
     detector = await poseDetection.createDetector(
