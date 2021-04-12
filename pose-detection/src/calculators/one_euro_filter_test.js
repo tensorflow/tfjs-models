@@ -34,14 +34,13 @@ describeWithFlags('MoveNet', ALL_ENVS, () => {
   });
 
   beforeEach(async () => {
-    // Note: this makes a network request for model assets.
     oneEuroFilter = new OneEuroFilter({
       frequency: 30.0,
       minCutOff: 15.5,
       beta: 20.2,
       derivateCutOff: 21.5,
-      // thresholdCutOff: 0.02,
-      // thresholdBeta: 0.5
+      thresholdCutOff: 0.02,
+      thresholdBeta: 0.5
     });
   });
 
