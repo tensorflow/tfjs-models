@@ -22,16 +22,6 @@ import {OneEuroFilter} from './one_euro_filter';
 
 describeWithFlags('MoveNet', ALL_ENVS, () => {
   let oneEuroFilter: OneEuroFilter;
-  let timeout: number;
-
-  beforeAll(() => {
-    timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 300000;  // 5mins
-  });
-
-  afterAll(() => {
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
-  });
 
   beforeEach(async () => {
     oneEuroFilter = new OneEuroFilter({
@@ -44,16 +34,16 @@ describeWithFlags('MoveNet', ALL_ENVS, () => {
     });
   });
 
-  it ('one-euro filter outputs are in convex hull of inputs', async() => {
-    const value0: number = -1.0;
-    const timestamp0: number = 1;
+  it('one-euro filter outputs are in convex hull of inputs', async () => {
+    const value0 = -1.0;
+    const timestamp0 = 1;
 
-    const value1: number = 2.0;
-    const timestamp1: number = 15;
+    const value1 = 2.0;
+    const timestamp1 = 15;
 
-    const value2: number = -3.0;
-    const timestamp2: number = 33;    
-    
+    const value2 = -3.0;
+    const timestamp2 = 33;
+
     const output0: number = oneEuroFilter.apply(value0, timestamp0);
     expect(output0).toEqual(value0);
 
@@ -61,7 +51,7 @@ describeWithFlags('MoveNet', ALL_ENVS, () => {
     expect(output1).toBeLessThan(Math.max(value0, value1));
     expect(output1).toBeGreaterThan(Math.min(value0, value1));
 
-    const output2: number = oneEuroFilter.apply(value2, timestamp2);        
+    const output2: number = oneEuroFilter.apply(value2, timestamp2);
     expect(output2).toBeLessThan(Math.max(value0, value1, value2));
     expect(output2).toBeGreaterThan(Math.min(value0, value1, value2));
   });
