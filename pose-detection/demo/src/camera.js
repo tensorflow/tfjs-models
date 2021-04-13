@@ -109,16 +109,19 @@ export class Camera {
     this.ctx.strokeStyle = 'White';
     this.ctx.lineWidth = params.DEFAULT_LINE_WIDTH;
 
-    keypointInd.middle.forEach(
-        i => this.drawKeypoint(keypoints[i]));
+    for (const i of keypointInd.middle) {
+      this.drawKeypoint(keypoints[i]);
+    }
 
     this.ctx.fillStyle = 'Green';
-    keypointInd.left.forEach(
-        i => this.drawKeypoint(keypoints[i]));
+    for (const i of keypointInd.left) {
+      this.drawKeypoint(keypoints[i]);
+    }
 
     this.ctx.fillStyle = 'Orange';
-    keypointInd.right.forEach(
-        i => this.drawKeypoint(keypoints[i]));
+    for (const i of keypointInd.right) {
+      this.drawKeypoint(keypoints[i]);
+    }
   }
 
   drawKeypoint(keypoint) {
@@ -129,9 +132,7 @@ export class Camera {
 
     if (score >= scoreThreshold) {
       const circle = new Path2D();
-      circle.arc(
-          keypoint.x, keypoint.y, params.DEFAULT_RADIUS, 0,
-          2 * Math.PI);
+      circle.arc(keypoint.x, keypoint.y, params.DEFAULT_RADIUS, 0, 2 * Math.PI);
       this.ctx.fill(circle);
       this.ctx.stroke(circle);
     }
