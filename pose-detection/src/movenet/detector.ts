@@ -290,10 +290,13 @@ export class MoveNetDetector extends BasePoseDetector {
       const filteredYMax = this.cropRegionFilterYMax.apply(newCropRegion.yMax);
       const filteredXMax = this.cropRegionFilterXMax.apply(newCropRegion.xMax);
       return {
-        yMin: filteredYMin, xMin: filteredXMin, yMax: filteredYMax,
-            xMax: filteredXMax, height: filteredYMax - filteredYMin,
-            width: filteredXMax - filteredXMin
-      }
+        yMin: filteredYMin,
+        xMin: filteredXMin,
+        yMax: filteredYMax,
+        xMax: filteredXMax,
+        height: filteredYMax - filteredYMin,
+        width: filteredXMax - filteredXMin
+      };
     }
   }
 
