@@ -17,23 +17,24 @@
 
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
+
 import {SECOND_TO_MICRO_SECONDS} from '../calculators/constants';
 import {convertImageToTensor} from '../calculators/convert_image_to_tensor';
 import {getImageSize, toImageTensor} from '../calculators/image_utils';
 import {ImageSize} from '../calculators/interfaces/common_interfaces';
 import {Rect} from '../calculators/interfaces/shape_interfaces';
 import {isVideo} from '../calculators/is_video';
-import {normalizedLandmarksToLandmarks} from '../calculators/normalized_landmarks_to_landmarks';
+import {KeypointsSmoothingFilter} from '../calculators/keypoints_smoothing';
+import {normalizedKeypointsToKeypoints} from '../calculators/normalized_keypoints_to_keypoints';
 import {shiftImageValue} from '../calculators/shift_image_value';
-
 import {BasePoseDetector, PoseDetector} from '../pose_detector';
 import {Keypoint, Pose, PoseDetectorInput} from '../types';
+
 import {calculateAlignmentPointsRects} from './calculators/calculate_alignment_points_rects';
 import {calculateLandmarkProjection} from './calculators/calculate_landmark_projection';
 import {createSsdAnchors} from './calculators/create_ssd_anchors';
 import {detectorInference} from './calculators/detector_inference';
 import {AnchorTensor, Detection} from './calculators/interfaces/shape_interfaces';
-import {LandmarksSmoothingFilter} from './calculators/landmarks_smoothing';
 import {landmarksToDetection} from './calculators/landmarks_to_detection';
 import {nonMaxSuppression} from './calculators/non_max_suppression';
 import {removeDetectionLetterbox} from './calculators/remove_detection_letterbox';
@@ -67,8 +68,8 @@ export class BlazeposeDetector extends BasePoseDetector {
   private regionOfInterest: Rect = null;
   private visibilitySmoothingFilterActual: LowPassVisibilityFilter;
   private visibilitySmoothingFilterAuxiliary: LowPassVisibilityFilter;
-  private landmarksSmoothingFilterActual: LandmarksSmoothingFilter;
-  private landmarksSmoothingFilterAuxiliary: LandmarksSmoothingFilter;
+  private landmarksSmoothingFilterActual: KeypointsSmoothingFilter;
+  private landmarksSmoothingFilterAuxiliary: KeypointsSmoothingFilter;
 
   // Should not be called outside.
   private constructor(
@@ -185,7 +186,8 @@ export class BlazeposeDetector extends BasePoseDetector {
     // Smoothes landmarks to reduce jitter.
     const {actualLandmarksFiltered, auxiliaryLandmarksFiltered} =
         this.poseLandmarkFiltering(
-            actualLandmarks, auxiliaryLandmarks, image, config.enableSmoothing);
+            actualLandmarks, auxiliaryLandmarks, imageSize,
+            config.enableSmoothing);
 
     // Calculates region of interest based on the auxiliary landmarks, to be
     // used in the subsequent image.
@@ -198,7 +200,7 @@ export class BlazeposeDetector extends BasePoseDetector {
     image3d.dispose();
 
     const keypoints = actualLandmarksFiltered != null ?
-        normalizedLandmarksToLandmarks(actualLandmarksFiltered, imageSize) :
+        normalizedKeypointsToKeypoints(actualLandmarksFiltered, imageSize) :
         null;
     const pose: Pose = {score: poseScore, keypoints};
 
@@ -437,7 +439,7 @@ export class BlazeposeDetector extends BasePoseDetector {
   // https://github.com/google/mediapipe/blob/master/mediapipe/modules/pose_landmark/pose_landmark_filtering.pbtxt
   private poseLandmarkFiltering(
       actualLandmarks: Keypoint[], auxiliaryLandmarks: Keypoint[],
-      image: PoseDetectorInput, enableSmoothing: boolean): {
+      imageSize: ImageSize, enableSmoothing: boolean): {
     actualLandmarksFiltered: Keypoint[],
     auxiliaryLandmarksFiltered: Keypoint[]
   } {
@@ -464,18 +466,20 @@ export class BlazeposeDetector extends BasePoseDetector {
 
       // Smoothes pose landmark coordinates to reduce jitter.
       if (this.landmarksSmoothingFilterActual == null) {
-        this.landmarksSmoothingFilterActual = new LandmarksSmoothingFilter(
+        this.landmarksSmoothingFilterActual = new KeypointsSmoothingFilter(
             constants.BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG);
       }
       actualLandmarksFiltered = this.landmarksSmoothingFilterActual.apply(
-          actualLandmarksFiltered, image, this.timestamp);
+          actualLandmarksFiltered, this.timestamp, imageSize,
+          true /* normalized */);
 
       if (this.landmarksSmoothingFilterAuxiliary == null) {
-        this.landmarksSmoothingFilterAuxiliary = new LandmarksSmoothingFilter(
+        this.landmarksSmoothingFilterAuxiliary = new KeypointsSmoothingFilter(
             constants.BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG);
       }
       auxiliaryLandmarksFiltered = this.landmarksSmoothingFilterAuxiliary.apply(
-          auxiliaryLandmarksFiltered, image, this.timestamp);
+          auxiliaryLandmarksFiltered, this.timestamp, imageSize,
+          true /* normalized */);
     }
 
     return {actualLandmarksFiltered, auxiliaryLandmarksFiltered};
