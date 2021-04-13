@@ -184,28 +184,6 @@ describeWithFlags('Blazepose video ', BROWSER_ENVS, () => {
       // baseline pose_squats.mp4`
       await loadVideo('pose_squats.mp4', 5 /* fps */, callback);
 
-      // result = result.slice(0, 65);
-      let count = 0;
-      for (let i = 0; i < result.length; i++) {
-        const frameResult = result[i];
-        for (let j = 0; j < frameResult.length; j++) {
-          const keypoint = frameResult[j];
-          const x = keypoint[0];
-          const y = keypoint[1];
-
-          const ex = upperBodyOnly ? expectedUpperBody[i][j][0] :
-                                     expectedFullBody[i][j][0];
-          const ey = upperBodyOnly ? expectedUpperBody[i][j][1] :
-                                     expectedFullBody[i][j][1];
-
-          if (Math.abs(x - ex) > 30 || Math.abs(y - ey) > 30) {
-            count++;
-            console.log(`Frame ${i}, Keypoint ${j}: Actual [${x}, ${
-                y}], Expected [${ex}, ${ey}]`);
-          }
-        }
-      }
-      console.log(count);
       expectArraysClose(
           result, upperBodyOnly ? expectedUpperBody : expectedFullBody,
           EPSILON_VIDEO);

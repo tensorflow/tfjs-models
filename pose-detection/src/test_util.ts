@@ -39,12 +39,12 @@ export async function loadImage(
 }
 
 export async function loadVideo(
-    videoPath: string, fps: number,
+    videoPath: string, videoFPS: number,
     callback: (video: PoseDetectorInput, timestamp: number) => Promise<void>) {
   // We override video's timestamp with a fake timestamp.
   let simulatedTimestamp: number;
 
-  const interval = 1 / fps;
+  const actualInterval = 1 / videoFPS;
 
   // Create a video element on the html page and serve the content through karma
   const video = document.createElement('video');
@@ -57,7 +57,7 @@ export async function loadVideo(
   const promise = new Promise((resolve, reject) => {
     video.onseeked = async () => {
       await callback(video, simulatedTimestamp);
-      const nextTime = video.currentTime + interval;
+      const nextTime = video.currentTime + actualInterval;
       if (nextTime < video.duration) {
         video.currentTime = nextTime;
         // We set the timestamp increment to 33.333 microseconds to simulate
