@@ -169,24 +169,26 @@ describeWithFlags('Blazepose video ', BROWSER_ENVS, () => {
           poseDetection.SupportedModels.MediapipeBlazepose, modelConfig);
 
       const result: number[][][] = [];
+      const expected = upperBodyOnly ? expectedUpperBody : expectedFullBody;
 
-      const callback =
-          async(video: HTMLVideoElement, timestamp: number): Promise<void> => {
-        const poses =
-            await detector.estimatePoses(video, null /* config */, timestamp);
-        result.push(poses[0].keypoints.map(kp => [kp.x, kp.y]));
-      };
+      const callback = async(video: HTMLVideoElement, timestamp: number):
+          Promise<poseDetection.Pose[]> => {
+            const poses = await detector.estimatePoses(
+                video, null /* config */, timestamp);
+            result.push(poses[0].keypoints.map(kp => [kp.x, kp.y]));
+            return poses;
+          };
 
       // Original video source in 720 * 1280 resolution:
       // https://www.pexels.com/video/woman-doing-squats-4838220/ Video is
       // compressed to be smaller with less frames (5fps), using below command:
       // `ffmpeg -i original_pose.mp4 -r 5 -vcodec libx264 -crf 28 -profile:v
       // baseline pose_squats.mp4`
-      await loadVideo('pose_squats.mp4', 5 /* fps */, callback);
+      await loadVideo(
+          'pose_squats.mp4', 5 /* fps */, callback, expected,
+          poseDetection.SupportedModels.MediapipeBlazepose);
 
-      expectArraysClose(
-          result, upperBodyOnly ? expectedUpperBody : expectedFullBody,
-          EPSILON_VIDEO);
+      expectArraysClose(result, expected, EPSILON_VIDEO);
 
       detector.dispose();
     });

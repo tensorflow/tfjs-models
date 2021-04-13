@@ -109,13 +109,19 @@ export class Camera {
     this.ctx.strokeStyle = 'White';
     this.ctx.lineWidth = params.DEFAULT_LINE_WIDTH;
 
-    keypointInd.middle.forEach(i => this.drawKeypoint(keypoints[i]));
+    for (const i of keypointInd.middle) {
+      this.drawKeypoint(keypoints[i]);
+    }
 
     this.ctx.fillStyle = 'Green';
-    keypointInd.left.forEach(i => this.drawKeypoint(keypoints[i]));
+    for (const i of keypointInd.left) {
+      this.drawKeypoint(keypoints[i]);
+    }
 
     this.ctx.fillStyle = 'Orange';
-    keypointInd.right.forEach(i => this.drawKeypoint(keypoints[i]));
+    for (const i of keypointInd.right) {
+      this.drawKeypoint(keypoints[i]);
+    }
   }
 
   drawKeypoint(keypoint) {
