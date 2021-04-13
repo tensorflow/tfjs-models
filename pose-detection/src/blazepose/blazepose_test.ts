@@ -161,7 +161,7 @@ describeWithFlags('Blazepose video ', BROWSER_ENVS, () => {
   });
 
   UPPERBODY_ONLY.forEach(upperBodyOnly => {
-    fit('test.', async () => {
+    it('test.', async () => {
       // Note: this makes a network request for model assets.
       const modelConfig:
           poseDetection.BlazeposeModelConfig = {quantBytes: 4, upperBodyOnly};
