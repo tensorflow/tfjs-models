@@ -1,3 +1,5 @@
+import {Keypoint} from '../../types';
+
 /**
  * @license
  * Copyright 2021 Google LLC. All Rights Reserved.
@@ -34,4 +36,9 @@ export type ValueTransform = {
 export interface WindowElement {
   distance: number;
   duration: number;
+}
+
+export interface KeypointsFilter {
+  apply(landmarks: Keypoint[], microSeconds: number): Keypoint[];
+  reset(): void;
 }
