@@ -22,10 +22,11 @@ import {ALL_ENVS, BROWSER_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/d
 import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
 
 import * as poseDetection from '../index';
-import {KARMA_SERVER, loadImage, loadVideo} from '../test_util';
+import {getXYPerFrame, KARMA_SERVER, loadImage, loadVideo} from '../test_util';
 
-const UPPERBODY_ONLY = [false];
-const EPSILON = 10;
+const UPPERBODY_ONLY = [false, true];
+const EPSILON_IMAGE = 10;
+const EPSILON_VIDEO = 50;
 // ref:
 // https://github.com/google/mediapipe/blob/7c331ad58b2cca0dca468e342768900041d65adc/mediapipe/python/solutions/pose_test.py#L31-L51
 const EXPECTED_UPPERBODY_LANDMARKS = [
@@ -52,7 +53,7 @@ describeWithFlags('Blazepose', ALL_ENVS, () => {
 
   beforeAll(() => {
     timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 300000;  // 5mins
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
   });
 
   afterAll(() => {
@@ -123,7 +124,7 @@ describeWithFlags('Blazepose static image ', BROWSER_ENVS, () => {
           result[0].keypoints.map((keypoint) => [keypoint.x, keypoint.y]);
       const expected = upperBodyOnly ? EXPECTED_UPPERBODY_LANDMARKS :
                                        EXPECTED_FULLBODY_LANDMARKS;
-      expectArraysClose(xy, expected, EPSILON);
+      expectArraysClose(xy, expected, EPSILON_IMAGE);
 
       expect(tf.memory().numTensors).toEqual(beforeTensors);
 
@@ -137,17 +138,22 @@ describeWithFlags('Blazepose static image ', BROWSER_ENVS, () => {
 describeWithFlags('Blazepose video ', BROWSER_ENVS, () => {
   let detector: poseDetection.PoseDetector;
   let timeout: number;
-  let expectedFull: number[][][];
+  let expectedFullBody: number[][][];
+  let expectedUpperBody: number[][][];
 
   beforeAll(async () => {
     timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
 
-    expectedFull = await fetch(`${KARMA_SERVER}/pose_squats.full_body.json`)
-                       .then(response => response.json());
-    expectedFull = expectedFull.map(frameResult => {
-      return frameResult.map(keypoint => [keypoint[0], keypoint[1]]);
-    });
+    [expectedFullBody, expectedUpperBody] = await Promise.all([
+      fetch(`${KARMA_SERVER}/pose_squats.full_body.json`)
+          .then(response => response.json()),
+      fetch(`${KARMA_SERVER}/pose_squats.upper_body.json`)
+          .then(response => response.json())
+    ]);
+
+    expectedFullBody = getXYPerFrame(expectedFullBody);
+    expectedUpperBody = getXYPerFrame(expectedUpperBody);
   });
 
   afterAll(() => {
@@ -155,7 +161,7 @@ describeWithFlags('Blazepose video ', BROWSER_ENVS, () => {
   });
 
   UPPERBODY_ONLY.forEach(upperBodyOnly => {
-    it('test.', async () => {
+    fit('test.', async () => {
       // Note: this makes a network request for model assets.
       const modelConfig:
           poseDetection.BlazeposeModelConfig = {quantBytes: 4, upperBodyOnly};
@@ -178,6 +184,7 @@ describeWithFlags('Blazepose video ', BROWSER_ENVS, () => {
       // baseline pose_squats.mp4`
       await loadVideo('pose_squats.mp4', 5 /* fps */, callback);
 
+      // result = result.slice(0, 65);
       let count = 0;
       for (let i = 0; i < result.length; i++) {
         const frameResult = result[i];
@@ -186,8 +193,10 @@ describeWithFlags('Blazepose video ', BROWSER_ENVS, () => {
           const x = keypoint[0];
           const y = keypoint[1];
 
-          const ex = expectedFull[i][j][0];
-          const ey = expectedFull[i][j][1];
+          const ex = upperBodyOnly ? expectedUpperBody[i][j][0] :
+                                     expectedFullBody[i][j][0];
+          const ey = upperBodyOnly ? expectedUpperBody[i][j][1] :
+                                     expectedFullBody[i][j][1];
 
           if (Math.abs(x - ex) > 30 || Math.abs(y - ey) > 30) {
             count++;
@@ -197,7 +206,9 @@ describeWithFlags('Blazepose video ', BROWSER_ENVS, () => {
         }
       }
       console.log(count);
-      // expectArraysClose(result.slice(0, 65), expectedFull, 45);
+      expectArraysClose(
+          result, upperBodyOnly ? expectedUpperBody : expectedFullBody,
+          EPSILON_VIDEO);
 
       detector.dispose();
     });
