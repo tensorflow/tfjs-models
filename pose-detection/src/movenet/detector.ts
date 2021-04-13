@@ -25,7 +25,7 @@ import {COCO_KEYPOINTS_NAMED_MAP} from '../constants';
 import {BasePoseDetector, PoseDetector} from '../pose_detector';
 import {InputResolution, Keypoint, Pose, PoseDetectorInput} from '../types';
 
-import {MIN_CROP_KEYPOINT_SCORE, MOVENET_CONFIG, MOVENET_SINGLE_POSE_ESTIMATION_CONFIG, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_URL, SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER} from './constants';
+import {CROP_FILTER_ALPHA, MIN_CROP_KEYPOINT_SCORE, MOVENET_CONFIG, MOVENET_SINGLE_POSE_ESTIMATION_CONFIG, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_URL, SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER} from './constants';
 import {validateEstimationConfig, validateModelConfig} from './detector_utils';
 import {RobustOneEuroFilter} from './robust_one_euro_filter';
 import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
@@ -40,10 +40,10 @@ export class MoveNetDetector extends BasePoseDetector {
 
   // Global states.
   private cropRegion: BoundingBox;
-  private cropRegionFilterYMin = new LowPassFilter(0.9);
-  private cropRegionFilterXMin = new LowPassFilter(0.9);
-  private cropRegionFilterYMax = new LowPassFilter(0.9);
-  private cropRegionFilterXMax = new LowPassFilter(0.9);
+  private cropRegionFilterYMin = new LowPassFilter(CROP_FILTER_ALPHA);
+  private cropRegionFilterXMin = new LowPassFilter(CROP_FILTER_ALPHA);
+  private cropRegionFilterYMax = new LowPassFilter(CROP_FILTER_ALPHA);
+  private cropRegionFilterXMax = new LowPassFilter(CROP_FILTER_ALPHA);
   // This will be used to calculate the actual camera fps. Starts with 30 fps
   // as an assumption.
   private previousFrameTime = 0;
@@ -202,9 +202,31 @@ export class MoveNetDetector extends BasePoseDetector {
       // run the model on the full image with padding.
       let boxHeight, boxWidth;
       if (imageSize.width > imageSize.height) {
+        // Create a crop region that will extend below the image, effectively
+        // padding the image with a black bar at the bottom. boxHeight will be
+        // larger than 1.0.
+        //
+        // -----------
+        // |         |
+        // |  image  |
+        // |         |
+        // -----------
+        // | padding |
+        // -----------
         boxHeight = imageSize.width / imageSize.height;
         boxWidth = 1.0;
       } else {
+        // Create a crop region that will extend to the right of the image,
+        // effectively padding the image with a black bar at the right. boxWidth
+        // will be larger than 1.0.
+        //
+        // --------------|
+        // |       |     |
+        // |       | pa  |
+        // | image | dd  |
+        // |       | ing |
+        // |       |     |
+        // --------------|
         boxHeight = 1.0;
         boxWidth = imageSize.height / imageSize.width;
       }
