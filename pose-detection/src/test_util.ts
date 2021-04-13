@@ -17,6 +17,8 @@
 
 import {PoseDetectorInput} from './types';
 
+const SIMULATED_INTERVAL = 33.333;
+
 /** Karma server directory serving local files. */
 export const KARMA_SERVER = './base/src/test_data';
 
@@ -62,7 +64,7 @@ export async function loadVideo(
         // the 30 fps video input. We do this so that the filter uses the
         // same fps as the python test.
         // https://github.com/google/mediapipe/blob/ecb5b5f44ab23ea620ef97a479407c699e424aa7/mediapipe/python/solution_base.py#L297
-        simulatedTimestamp += 33.333;
+        simulatedTimestamp += SIMULATED_INTERVAL;
       } else {
         resolve();
       }
@@ -70,7 +72,7 @@ export async function loadVideo(
   });
 
   video.onloadedmetadata = () => {
-    video.currentTime = 0;
+    video.currentTime = 0.001;
     simulatedTimestamp = 0;
     const videoWidth = video.videoWidth;
     const videoHeight = video.videoHeight;
@@ -80,4 +82,10 @@ export async function loadVideo(
   };
 
   return promise;
+}
+
+export function getXYPerFrame(result: number[][][]): number[][][] {
+  return result.map(frameResult => {
+    return frameResult.map(keypoint => [keypoint[0], keypoint[1]]);
+  });
 }
