@@ -243,8 +243,7 @@ export class MoveNetDetector extends BasePoseDetector {
           [this.modelInputResolution.height, this.modelInputResolution.width];
       return tf.cast(
           tf.image.cropAndResize(
-              imageTensor4D, cropRegionTensor, boxInd, cropSize, 'bilinear',
-              128),
+              imageTensor4D, cropRegionTensor, boxInd, cropSize, 'bilinear', 0),
           'int32');
     });
     imageTensor4D.dispose();
