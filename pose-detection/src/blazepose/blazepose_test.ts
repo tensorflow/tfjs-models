@@ -22,10 +22,11 @@ import {ALL_ENVS, BROWSER_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/d
 import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
 
 import * as poseDetection from '../index';
-import {loadImage} from '../test_util';
+import {getXYPerFrame, KARMA_SERVER, loadImage, loadVideo} from '../test_util';
 
-const MODEL_TYPE = ['fullbody', 'upperbody'];
-const EPSILON = 10;
+const UPPERBODY_ONLY = [false, true];
+const EPSILON_IMAGE = 10;
+const EPSILON_VIDEO = 50;
 // ref:
 // https://github.com/google/mediapipe/blob/7c331ad58b2cca0dca468e342768900041d65adc/mediapipe/python/solutions/pose_test.py#L31-L51
 const EXPECTED_UPPERBODY_LANDMARKS = [
@@ -52,7 +53,7 @@ describeWithFlags('Blazepose', ALL_ENVS, () => {
 
   beforeAll(() => {
     timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 300000;  // 5mins
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
   });
 
   afterAll(() => {
@@ -103,10 +104,8 @@ describeWithFlags('Blazepose static image ', BROWSER_ENVS, () => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
   });
 
-  MODEL_TYPE.forEach(type => {
+  UPPERBODY_ONLY.forEach(upperBodyOnly => {
     it('test.', async () => {
-      const upperBodyOnly = type === 'upperbody' ? true : false;
-
       const startTensors = tf.memory().numTensors;
 
       // Note: this makes a network request for model assets.
@@ -125,13 +124,73 @@ describeWithFlags('Blazepose static image ', BROWSER_ENVS, () => {
           result[0].keypoints.map((keypoint) => [keypoint.x, keypoint.y]);
       const expected = upperBodyOnly ? EXPECTED_UPPERBODY_LANDMARKS :
                                        EXPECTED_FULLBODY_LANDMARKS;
-      expectArraysClose(xy, expected, EPSILON);
+      expectArraysClose(xy, expected, EPSILON_IMAGE);
 
       expect(tf.memory().numTensors).toEqual(beforeTensors);
 
       detector.dispose();
 
       expect(tf.memory().numTensors).toEqual(startTensors);
+    });
+  });
+});
+
+describeWithFlags('Blazepose video ', BROWSER_ENVS, () => {
+  let detector: poseDetection.PoseDetector;
+  let timeout: number;
+  let expectedFullBody: number[][][];
+  let expectedUpperBody: number[][][];
+
+  beforeAll(async () => {
+    timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
+
+    [expectedFullBody, expectedUpperBody] = await Promise.all([
+      fetch(`${KARMA_SERVER}/pose_squats.full_body.json`)
+          .then(response => response.json()),
+      fetch(`${KARMA_SERVER}/pose_squats.upper_body.json`)
+          .then(response => response.json())
+    ]);
+
+    expectedFullBody = getXYPerFrame(expectedFullBody);
+    expectedUpperBody = getXYPerFrame(expectedUpperBody);
+  });
+
+  afterAll(() => {
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
+  });
+
+  UPPERBODY_ONLY.forEach(upperBodyOnly => {
+    it('test.', async () => {
+      // Note: this makes a network request for model assets.
+      const modelConfig:
+          poseDetection.BlazeposeModelConfig = {quantBytes: 4, upperBodyOnly};
+      detector = await poseDetection.createDetector(
+          poseDetection.SupportedModels.MediapipeBlazepose, modelConfig);
+
+      const result: number[][][] = [];
+      const expected = upperBodyOnly ? expectedUpperBody : expectedFullBody;
+
+      const callback = async(video: HTMLVideoElement, timestamp: number):
+          Promise<poseDetection.Pose[]> => {
+            const poses = await detector.estimatePoses(
+                video, null /* config */, timestamp);
+            result.push(poses[0].keypoints.map(kp => [kp.x, kp.y]));
+            return poses;
+          };
+
+      // Original video source in 720 * 1280 resolution:
+      // https://www.pexels.com/video/woman-doing-squats-4838220/ Video is
+      // compressed to be smaller with less frames (5fps), using below command:
+      // `ffmpeg -i original_pose.mp4 -r 5 -vcodec libx264 -crf 28 -profile:v
+      // baseline pose_squats.mp4`
+      await loadVideo(
+          'pose_squats.mp4', 5 /* fps */, callback, expected,
+          poseDetection.SupportedModels.MediapipeBlazepose);
+
+      expectArraysClose(result, expected, EPSILON_VIDEO);
+
+      detector.dispose();
     });
   });
 });

@@ -40,4 +40,5 @@ export const MOVENET_SINGLE_POSE_ESTIMATION_CONFIG: MoveNetEstimationConfig = {
   enableSmoothing: true
 };
 
+export const CROP_FILTER_ALPHA = 0.9;
 export const MIN_CROP_KEYPOINT_SCORE = 0.3;

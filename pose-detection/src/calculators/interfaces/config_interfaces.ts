@@ -61,3 +61,7 @@ export interface OneEuroFilterConfig {
                            // keypoint speed increases by being less likely to
                            // consider that an observation is an outlier.
 }
+export interface KeypointsSmoothingConfig {
+  velocityFilter?: VelocityFilterConfig;
+  oneEuroFilter?: OneEuroFilterConfig;
+}

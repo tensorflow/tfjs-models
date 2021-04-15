@@ -19,11 +19,13 @@ import * as tfc from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
 import {getImageSize, toImageTensor} from '../calculators/image_utils';
+import {BoundingBox} from '../calculators/interfaces/shape_interfaces';
+import {LowPassFilter} from '../calculators/low_pass_filter';
 import {COCO_KEYPOINTS_NAMED_MAP} from '../constants';
 import {BasePoseDetector, PoseDetector} from '../pose_detector';
 import {InputResolution, Keypoint, Pose, PoseDetectorInput} from '../types';
 
-import {MIN_CROP_KEYPOINT_SCORE, MOVENET_CONFIG, MOVENET_SINGLE_POSE_ESTIMATION_CONFIG, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_URL, SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER} from './constants';
+import {CROP_FILTER_ALPHA, MIN_CROP_KEYPOINT_SCORE, MOVENET_CONFIG, MOVENET_SINGLE_POSE_ESTIMATION_CONFIG, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_URL, SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER} from './constants';
 import {validateEstimationConfig, validateModelConfig} from './detector_utils';
 import {RobustOneEuroFilter} from './robust_one_euro_filter';
 import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
@@ -37,7 +39,11 @@ export class MoveNetDetector extends BasePoseDetector {
   private readonly filter: RobustOneEuroFilter;
 
   // Global states.
-  private cropRegion: number[];
+  private cropRegion: BoundingBox;
+  private cropRegionFilterYMin = new LowPassFilter(CROP_FILTER_ALPHA);
+  private cropRegionFilterXMin = new LowPassFilter(CROP_FILTER_ALPHA);
+  private cropRegionFilterYMax = new LowPassFilter(CROP_FILTER_ALPHA);
+  private cropRegionFilterXMax = new LowPassFilter(CROP_FILTER_ALPHA);
   // This will be used to calculate the actual camera fps. Starts with 30 fps
   // as an assumption.
   private previousFrameTime = 0;
@@ -150,20 +156,24 @@ export class MoveNetDetector extends BasePoseDetector {
    * ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement The input
    * image to feed through the network.
    *
-   * @param config
+   * @param config Optional.
    *       maxPoses: Optional. Has to be set to 1.
    *
    *       enableSmoothing: Optional. Optional. Defaults to 'true'. When
    *       enabled, a temporal smoothing filter will be used on the keypoint
    *       locations to reduce jitter.
    *
+   * @param timestamp Optional. In microseconds, i.e. 1e-6 of a second. This is
+   *     useful when image is a tensor, which doesn't have timestamp info. Or
+   *     to override timestamp in a video.
+   *
    * @return An array of `Pose`s.
    */
   async estimatePoses(
       image: PoseDetectorInput,
       estimationConfig:
-          MoveNetEstimationConfig = MOVENET_SINGLE_POSE_ESTIMATION_CONFIG):
-      Promise<Pose[]> {
+          MoveNetEstimationConfig = MOVENET_SINGLE_POSE_ESTIMATION_CONFIG,
+      timestamp?: number): Promise<Pose[]> {
     estimationConfig = validateEstimationConfig(estimationConfig);
 
     if (image == null) {
@@ -187,92 +197,95 @@ export class MoveNetDetector extends BasePoseDetector {
       imageTensor3D.dispose();
     }
 
-    let keypoints: Keypoint[] = null;
-
-    // If we have a cropRegion from a previous run, try to run the model on an
-    // image crop first.
-    if (this.cropRegion != null) {
-      const croppedImage = tf.tidy(() => {
-        // Crop region is a [batch, 4] size tensor.
-        const cropRegionTensor = tf.tensor2d([this.cropRegion]);
-        // The batch index that the crop should operate on. A [batch] size
-        // tensor.
-        const boxInd: tf.Tensor1D = tf.zeros([1], 'int32');
-        // Target size of each crop.
-        const cropSize: [number, number] =
-            [this.modelInputResolution.height, this.modelInputResolution.width];
-        return tf.cast(
-            tf.image.cropAndResize(
-                imageTensor4D, cropRegionTensor, boxInd, cropSize, 'bilinear',
-                0),
-            'int32');
-      });
-
-      // Run cropModel. Model will dispose croppedImage.
-      keypoints = await this.detectKeypoints(croppedImage);
-      croppedImage.dispose();
-
-      // Convert keypoints to image coordinates. cropRegion is stored as
-      // top-left and bottom-right coordinates: [y1, x1, y2, x2].
-      const cropHeight = this.cropRegion[2] - this.cropRegion[0];
-      const cropWidth = this.cropRegion[3] - this.cropRegion[1];
-      for (let i = 0; i < keypoints.length; ++i) {
-        keypoints[i].y = this.cropRegion[0] + keypoints[i].y * cropHeight;
-        keypoints[i].x = this.cropRegion[1] + keypoints[i].x * cropWidth;
-      }
-
-      // Apply the sequential filter before estimating the cropping area
-      // to make it more stable.
-      if (estimationConfig.enableSmoothing) {
-        this.arrayToKeypoints(
-            this.filter.insert(
-                this.keypointsToArray(keypoints), 1.0 / this.frameTimeDiff),
-            keypoints);
-      }
-
-      // Determine next crop region based on detected keypoints and if a crop
-      // region is not detected, this will trigger the model to run on the full
-      // image.
-      let newCropRegion = this.determineCropRegion(
-          keypoints, imageTensor4D.shape[1], imageTensor4D.shape[2]);
-
-      // Use exponential filter on the cropping region to make it less jittery.
-      if (newCropRegion != null) {
-        // TODO(ardoerlemans): Use existing low pass filter from shared
-        // calculators.
-        const oldCropRegionWeight = 0.1;
-        newCropRegion = newCropRegion.map(x => x * (1 - oldCropRegionWeight));
-        this.cropRegion = this.cropRegion.map(x => x * oldCropRegionWeight);
-        this.cropRegion = this.cropRegion.map((e, i) => e + newCropRegion[i]);
+    if (!this.cropRegion) {
+      // No cropRegion was available from a previous estimatePoses() call, so
+      // run the model on the full image with padding.
+      let boxHeight, boxWidth;
+      if (imageSize.width > imageSize.height) {
+        // Create a crop region that will extend below the image, effectively
+        // padding the image with a black bar at the bottom. boxHeight will be
+        // larger than 1.0.
+        //
+        // -----------
+        // |         |
+        // |  image  |
+        // |         |
+        // -----------
+        // | padding |
+        // -----------
+        boxHeight = imageSize.width / imageSize.height;
+        boxWidth = 1.0;
       } else {
-        this.cropRegion = null;
+        // Create a crop region that will extend to the right of the image,
+        // effectively padding the image with a black bar at the right. boxWidth
+        // will be larger than 1.0.
+        //
+        // --------------|
+        // |       |     |
+        // |       | pa  |
+        // | image | dd  |
+        // |       | ing |
+        // |       |     |
+        // --------------|
+        boxHeight = 1.0;
+        boxWidth = imageSize.height / imageSize.width;
       }
-    } else {
-      // No cropRegion was available from a previous run, so run the model on
-      // the full image.
-      const resizedImage: tf.Tensor = tf.image.resizeBilinear(
-          imageTensor4D,
-          [this.modelInputResolution.height, this.modelInputResolution.width]);
-      const resizedImageInt = tf.cast(resizedImage, 'int32') as tf.Tensor4D;
-      resizedImage.dispose();
-
-      // Model will dispose resizedImageInt.
-      keypoints = await this.detectKeypoints(resizedImageInt, true);
-      resizedImageInt.dispose();
-
-      if (estimationConfig.enableSmoothing) {
-        this.arrayToKeypoints(
-            this.filter.insert(
-                this.keypointsToArray(keypoints), 1.0 / this.frameTimeDiff),
-            keypoints);
-      }
-
-      // Determine crop region based on detected keypoints.
-      this.cropRegion = this.determineCropRegion(
-          keypoints, imageSize.height, imageSize.width);
+      this.cropRegion = {
+        yMin: 0.0,
+        xMin: 0.0,
+        yMax: boxHeight,
+        xMax: boxWidth,
+        height: boxHeight,
+        width: boxWidth
+      };
     }
 
+    const croppedImage = tf.tidy(() => {
+      // Crop region is a [batch, 4] size tensor.
+      const cropRegionTensor = tf.tensor2d([[
+        this.cropRegion.yMin, this.cropRegion.xMin, this.cropRegion.yMax,
+        this.cropRegion.xMax
+      ]]);
+      // The batch index that the crop should operate on. A [batch] size
+      // tensor.
+      const boxInd: tf.Tensor1D = tf.zeros([1], 'int32');
+      // Target size of each crop.
+      const cropSize: [number, number] =
+          [this.modelInputResolution.height, this.modelInputResolution.width];
+      return tf.cast(
+          tf.image.cropAndResize(
+              imageTensor4D, cropRegionTensor, boxInd, cropSize, 'bilinear', 0),
+          'int32');
+    });
     imageTensor4D.dispose();
+
+    const keypoints = await this.detectKeypoints(croppedImage);
+    croppedImage.dispose();
+
+    // Convert keypoints from crop coordinates to image coordinates.
+    for (let i = 0; i < keypoints.length; ++i) {
+      keypoints[i].y =
+          this.cropRegion.yMin + keypoints[i].y * this.cropRegion.height;
+      keypoints[i].x =
+          this.cropRegion.xMin + keypoints[i].x * this.cropRegion.width;
+    }
+
+    // Apply the sequential filter before estimating the cropping area to make
+    // it more stable.
+    if (estimationConfig.enableSmoothing) {
+      this.arrayToKeypoints(
+          this.filter.insert(
+              this.keypointsToArray(keypoints), 1.0 / this.frameTimeDiff),
+          keypoints);
+    }
+
+    // Determine next crop region based on detected keypoints and if a crop
+    // region is not detected, this will trigger the model to run on the full
+    // image the next time estimatePoses() is called.
+    const newCropRegion =
+        this.determineCropRegion(keypoints, imageSize.height, imageSize.width);
+
+    this.cropRegion = this.filterCropRegion(newCropRegion);
 
     // Convert keypoint coordinates from normalized coordinates to image space.
     for (let i = 0; i < keypoints.length; ++i) {
@@ -284,6 +297,29 @@ export class MoveNetDetector extends BasePoseDetector {
     poses[0] = {keypoints};
 
     return poses;
+  }
+
+  filterCropRegion(newCropRegion: BoundingBox): BoundingBox {
+    if (!newCropRegion) {
+      this.cropRegionFilterYMin.reset();
+      this.cropRegionFilterXMin.reset();
+      this.cropRegionFilterYMax.reset();
+      this.cropRegionFilterXMax.reset();
+      return null;
+    } else {
+      const filteredYMin = this.cropRegionFilterYMin.apply(newCropRegion.yMin);
+      const filteredXMin = this.cropRegionFilterXMin.apply(newCropRegion.xMin);
+      const filteredYMax = this.cropRegionFilterYMax.apply(newCropRegion.yMax);
+      const filteredXMax = this.cropRegionFilterXMax.apply(newCropRegion.xMax);
+      return {
+        yMin: filteredYMin,
+        xMin: filteredXMin,
+        yMax: filteredYMax,
+        xMax: filteredXMax,
+        height: filteredYMax - filteredYMin,
+        width: filteredXMax - filteredXMin
+      };
+    }
   }
 
   dispose() {
@@ -363,7 +399,8 @@ export class MoveNetDetector extends BasePoseDetector {
    * function returns a default crop which is the full image padded to square.
    */
   determineCropRegion(
-      keypoints: Keypoint[], imageHeight: number, imageWidth: number) {
+      keypoints: Keypoint[], imageHeight: number,
+      imageWidth: number): BoundingBox {
     const targetKeypoints: {[index: string]: number[]} = {};
 
     for (const key of Object.keys(COCO_KEYPOINTS_NAMED_MAP)) {
@@ -402,12 +439,16 @@ export class MoveNetDetector extends BasePoseDetector {
       }
 
       const cropLength = cropLengthHalf * 2;
-      const cropRegion = [
-        cropCorner[0] / imageHeight, cropCorner[1] / imageWidth,
-        (cropCorner[0] + cropLength) / imageHeight,
-        (cropCorner[1] + cropLength) / imageWidth
-      ];
-      return cropRegion;
+      return {
+        yMin: cropCorner[0] / imageHeight,
+        xMin: cropCorner[1] / imageWidth,
+        yMax: (cropCorner[0] + cropLength) / imageHeight,
+        xMax: (cropCorner[1] + cropLength) / imageWidth,
+        height: (cropCorner[0] + cropLength) / imageHeight -
+            cropCorner[0] / imageHeight,
+        width: (cropCorner[1] + cropLength) / imageWidth -
+            cropCorner[1] / imageWidth
+      };
     } else {
       return null;
     }

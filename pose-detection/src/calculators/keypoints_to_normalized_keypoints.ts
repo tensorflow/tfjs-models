@@ -16,20 +16,20 @@
  */
 import {Keypoint} from '../types';
 import {ImageSize} from './interfaces/common_interfaces';
-export function normalizedLandmarksToLandmarks(
-    normalizedLandmarks: Keypoint[], imageSize: ImageSize): Keypoint[] {
-  return normalizedLandmarks.map(normalizedLandmark => {
-    const landmark = {
-      ...normalizedLandmark,
-      x: normalizedLandmark.x * imageSize.width,
-      y: normalizedLandmark.y * imageSize.height
+export function keypointsToNormalizedKeypoints(
+    keypoints: Keypoint[], imageSize: ImageSize): Keypoint[] {
+  return keypoints.map(keypoint => {
+    const normalizedKeypoint = {
+      ...keypoint,
+      x: keypoint.x / imageSize.width,
+      y: keypoint.y / imageSize.height
     };
 
-    if (normalizedLandmark.z != null) {
+    if (keypoint.z != null) {
       // Scale z the same way as x (using image width).
-      landmark.z = normalizedLandmark.z * imageSize.width;
+      keypoint.z = keypoint.z / imageSize.width;
     }
 
-    return landmark;
+    return normalizedKeypoint;
   });
 }
