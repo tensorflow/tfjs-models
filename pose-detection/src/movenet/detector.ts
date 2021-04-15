@@ -24,7 +24,7 @@ import {BoundingBox} from '../calculators/interfaces/shape_interfaces';
 import {isVideo} from '../calculators/is_video';
 import {KeypointsOneEuroFilter} from '../calculators/keypoints_one_euro_filter';
 import {LowPassFilter} from '../calculators/low_pass_filter';
-import {COCO_KEYPOINTS_NAMED_MAP} from '../constants';
+import {COCO_KEYPOINTS, COCO_KEYPOINTS_NAMED_MAP} from '../constants';
 import {BasePoseDetector, PoseDetector} from '../pose_detector';
 import {InputResolution, Keypoint, Pose, PoseDetectorInput} from '../types';
 
@@ -273,11 +273,12 @@ export class MoveNetDetector extends BasePoseDetector {
 
     this.cropRegion = this.filterCropRegion(newCropRegion);
 
-    // Convert keypoint coordinates from normalized coordinates to image space
-    // and calculate the overall pose score.
+    // Convert keypoint coordinates from normalized coordinates to image space,
+    // add keypoint names and calculate the overall pose score.
     let numValidKeypoints = 0.0;
     let poseScore = 0.0;
     for (let i = 0; i < keypoints.length; ++i) {
+      keypoints[i].name = COCO_KEYPOINTS[i];
       keypoints[i].y *= imageSize.height;
       keypoints[i].x *= imageSize.width;
       if (keypoints[i].score > MIN_CROP_KEYPOINT_SCORE) {
