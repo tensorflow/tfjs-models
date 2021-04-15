@@ -273,16 +273,30 @@ export class MoveNetDetector extends BasePoseDetector {
 
     this.cropRegion = this.filterCropRegion(newCropRegion);
 
-    // Convert keypoint coordinates from normalized coordinates to image space.
+    // Convert keypoint coordinates from normalized coordinates to image space
+    // and calculate the overall pose score.
+    let numValidKeypoints = 0.0;
+    let poseScore = 0.0;
     for (let i = 0; i < keypoints.length; ++i) {
       keypoints[i].y *= imageSize.height;
       keypoints[i].x *= imageSize.width;
+      if (keypoints[i].score > MIN_CROP_KEYPOINT_SCORE) {
+        ++numValidKeypoints;
+        poseScore += keypoints[i].score;
+      }
     }
 
-    const poses: Pose[] = [];
-    poses[0] = {keypoints};
+    if (numValidKeypoints > 0) {
+      poseScore /= numValidKeypoints;
+    } else {
+      // No pose detected, so make sure we don't use an old pose to smooth
+      // keypoints with.
+      this.keypointsFilter.reset();
+    }
 
-    return poses;
+    const pose: Pose = {score: poseScore, keypoints};
+
+    return [pose];
   }
 
   filterCropRegion(newCropRegion: BoundingBox): BoundingBox {
