@@ -261,7 +261,7 @@ export class MoveNetDetector extends BasePoseDetector {
 
     // Apply the sequential filter before estimating the cropping area to make
     // it more stable.
-    if (timestamp && estimationConfig.enableSmoothing) {
+    if (timestamp != null && estimationConfig.enableSmoothing) {
       keypoints = this.keypointsFilter.apply(keypoints, timestamp);
     }
 
