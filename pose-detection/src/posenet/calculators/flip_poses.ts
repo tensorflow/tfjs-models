@@ -20,9 +20,11 @@ import {Pose} from '../../types';
 
 export function flipPosesHorizontal(
     poses: Pose[], imageSize: ImageSize): Pose[] {
-  poses.forEach(pose => pose.keypoints.forEach(kp => {
-    kp.x = imageSize.width - 1 - kp.x;
-  }));
+  for (const pose of poses) {
+    for (const kp of pose.keypoints) {
+      kp.x = imageSize.width - 1 - kp.x;
+    }
+  }
 
   return poses;
 }

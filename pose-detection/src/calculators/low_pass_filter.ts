@@ -73,4 +73,8 @@ export class LowPassFilter {
   lastRawValue(): number {
     return this.rawValue;
   }
+
+  reset() {
+    this.initialized = false;
+  }
 }

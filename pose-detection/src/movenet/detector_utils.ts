@@ -47,5 +47,9 @@ export function validateEstimationConfig(
     throw new Error(`Invalid maxPoses ${config.maxPoses}. Should be 1.`);
   }
 
+  if (config.enableSmoothing == null) {
+    config.enableSmoothing = true;
+  }
+
   return config;
 }

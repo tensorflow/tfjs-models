@@ -90,47 +90,41 @@ export class Camera {
   /**
    * Draw the keypoints and skeleton on the video.
    * @param pose A pose with keypoints to render.
-   * @param shouldScale If the keypoints are normalized, shouldScale should be
-   *     set to true.
    */
-  drawResult(pose, shouldScale = false) {
+  drawResult(pose) {
     if (pose.keypoints != null) {
-      const scaleX = shouldScale ? this.video.videoWidth : 1;
-      const scaleY = shouldScale ? this.video.videoHeight : 1;
-
-      this.drawKeypoints(pose.keypoints, scaleY, scaleX);
-      this.drawSkeleton(pose.keypoints, scaleY, scaleX);
+      this.drawKeypoints(pose.keypoints);
+      this.drawSkeleton(pose.keypoints);
     }
   }
 
   /**
    * Draw the keypoints on the video.
-   * @param keypoints A list of keypoints, may be normalized.
-   * @param scaleY If keypoints are normalized, y needs to be scaled back based
-   *     on the scaleY.
-   * @param scaleX If keypoints are normalized, x needs to be scaled back based
-   *     on the scaleX..
+   * @param keypoints A list of keypoints.
    */
-  drawKeypoints(keypoints, scaleY, scaleX) {
+  drawKeypoints(keypoints) {
     const keypointInd =
         posedetection.util.getKeypointIndexBySide(params.STATE.model.model);
     this.ctx.fillStyle = 'White';
     this.ctx.strokeStyle = 'White';
     this.ctx.lineWidth = params.DEFAULT_LINE_WIDTH;
 
-    keypointInd.middle.forEach(
-        i => this.drawKeypoint(keypoints[i], scaleY, scaleX));
+    for (const i of keypointInd.middle) {
+      this.drawKeypoint(keypoints[i]);
+    }
 
     this.ctx.fillStyle = 'Green';
-    keypointInd.left.forEach(
-        i => this.drawKeypoint(keypoints[i], scaleY, scaleX));
+    for (const i of keypointInd.left) {
+      this.drawKeypoint(keypoints[i]);
+    }
 
     this.ctx.fillStyle = 'Orange';
-    keypointInd.right.forEach(
-        i => this.drawKeypoint(keypoints[i], scaleY, scaleX));
+    for (const i of keypointInd.right) {
+      this.drawKeypoint(keypoints[i]);
+    }
   }
 
-  drawKeypoint(keypoint, scaleY, scaleX) {
+  drawKeypoint(keypoint) {
     // If score is null, just show the keypoint.
     const score = keypoint.score != null ? keypoint.score : 1;
     const scoreThreshold =
@@ -138,9 +132,7 @@ export class Camera {
 
     if (score >= scoreThreshold) {
       const circle = new Path2D();
-      circle.arc(
-          keypoint.x * scaleX, keypoint.y * scaleY, params.DEFAULT_RADIUS, 0,
-          2 * Math.PI);
+      circle.arc(keypoint.x, keypoint.y, params.DEFAULT_RADIUS, 0, 2 * Math.PI);
       this.ctx.fill(circle);
       this.ctx.stroke(circle);
     }
@@ -148,13 +140,9 @@ export class Camera {
 
   /**
    * Draw the skeleton of a body on the video.
-   * @param keypoints A list of keypoints, may be normalized.
-   * @param scaleY If keypoints are normalized, y needs to be scaled back based
-   *     on the scaleY.
-   * @param scaleX If keypoints are normalized, x needs to be scaled back based
-   *     on the scaleX..
+   * @param keypoints A list of keypoints.
    */
-  drawSkeleton(keypoints, scaleY, scaleX) {
+  drawSkeleton(keypoints) {
     this.ctx.fillStyle = 'White';
     this.ctx.strokeStyle = 'White';
     this.ctx.lineWidth = params.DEFAULT_LINE_WIDTH;
@@ -172,8 +160,8 @@ export class Camera {
 
           if (score1 >= scoreThreshold && score2 >= scoreThreshold) {
             this.ctx.beginPath();
-            this.ctx.moveTo(kp1.x * scaleX, kp1.y * scaleY);
-            this.ctx.lineTo(kp2.x * scaleX, kp2.y * scaleY);
+            this.ctx.moveTo(kp1.x, kp1.y);
+            this.ctx.lineTo(kp2.x, kp2.y);
             this.ctx.stroke();
           }
         });

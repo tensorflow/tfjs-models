@@ -36,9 +36,10 @@ import {PoseNetArchitecture, PoseNetEstimationConfig, PosenetModelConfig, PoseNe
  * PoseNet detector class.
  */
 export class PosenetDetector extends BasePoseDetector {
-  private inputResolution: InputResolution;
-  private architecture: PoseNetArchitecture;
-  private outputStride: PoseNetOutputStride;
+  private readonly inputResolution: InputResolution;
+  private readonly architecture: PoseNetArchitecture;
+  private readonly outputStride: PoseNetOutputStride;
+
   private maxPoses: number;
 
   // Should not be called outside.
@@ -119,13 +120,17 @@ export class PosenetDetector extends BasePoseDetector {
    *       flipHorizontal: Optional. Default to false. When image data comes
    *       from camera, the result has to flip horizontally.
    *
+   * @param timestamp Optional. In microseconds, i.e. 1e-6 of a second. This is
+   *     useful when image is a tensor, which doesn't have timestamp info. Or
+   *     to override timestamp in a video.
+   *
    * @return An array of `Pose`s.
    */
   async estimatePoses(
       image: PoseDetectorInput,
       estimationConfig:
-          PoseNetEstimationConfig = SINGLE_PERSON_ESTIMATION_CONFIG):
-      Promise<Pose[]> {
+          PoseNetEstimationConfig = SINGLE_PERSON_ESTIMATION_CONFIG,
+      timestamp?: number): Promise<Pose[]> {
     const config = validateEstimationConfig(estimationConfig);
 
     if (image == null) {
@@ -182,5 +187,9 @@ export class PosenetDetector extends BasePoseDetector {
 
   dispose() {
     this.posenetModel.dispose();
+  }
+
+  reset() {
+    // No-op. There's no global state.
   }
 }
