@@ -40,5 +40,13 @@ export const MOVENET_SINGLE_POSE_ESTIMATION_CONFIG: MoveNetEstimationConfig = {
   enableSmoothing: true
 };
 
+export const KEYPOINT_FILTER_CONFIG = {
+  frequency: 30,
+  minCutOff: 6.36,
+  beta: 636.61,
+  derivateCutOff: 4.77,
+  thresholdCutOff: 0.5,
+  thresholdBeta: 5.0
+};
 export const CROP_FILTER_ALPHA = 0.9;
 export const MIN_CROP_KEYPOINT_SCORE = 0.3;
