@@ -116,7 +116,7 @@ export class MoveNetDetector extends BasePoseDetector {
     }
 
     // We expect an output array of shape [1, 1, 17, 3] (batch, person,
-    // keypoint, coordinate + score).
+    // keypoint, (y, x, score)).
     if (!outputTensor || outputTensor.shape.length !== 4 ||
         outputTensor.shape[0] !== 1 || outputTensor.shape[1] !== 1 ||
         outputTensor.shape[2] !== numKeypoints || outputTensor.shape[3] !== 3) {
@@ -124,7 +124,7 @@ export class MoveNetDetector extends BasePoseDetector {
       return null;
     }
 
-    const inferenceResult = outputTensor.dataSync();
+    const inferenceResult = await outputTensor.data();
     outputTensor.dispose();
 
     const keypoints: Keypoint[] = [];
@@ -170,6 +170,7 @@ export class MoveNetDetector extends BasePoseDetector {
     estimationConfig = validateEstimationConfig(estimationConfig);
 
     if (image == null) {
+      this.reset();
       return [];
     }
 
@@ -251,6 +252,11 @@ export class MoveNetDetector extends BasePoseDetector {
     let keypoints = await this.detectKeypoints(croppedImage);
     croppedImage.dispose();
 
+    if (!keypoints) {
+      this.reset();
+      return [];
+    }
+
     // Convert keypoints from crop coordinates to image coordinates.
     for (let i = 0; i < keypoints.length; ++i) {
       keypoints[i].y =
@@ -290,9 +296,8 @@ export class MoveNetDetector extends BasePoseDetector {
     if (numValidKeypoints > 0) {
       poseScore /= numValidKeypoints;
     } else {
-      // No pose detected, so make sure we don't use an old pose to smooth
-      // keypoints with.
-      this.keypointsFilter.reset();
+      // No pose detected, so reset all filters.
+      this.reset();
     }
 
     const pose: Pose = {score: poseScore, keypoints};
@@ -328,7 +333,12 @@ export class MoveNetDetector extends BasePoseDetector {
   }
 
   reset() {
+    this.keypointsFilter.reset();
     this.cropRegion = null;
+    this.cropRegionFilterYMin.reset();
+    this.cropRegionFilterXMin.reset();
+    this.cropRegionFilterYMax.reset();
+    this.cropRegionFilterXMax.reset();
   }
 
   torsoVisible(keypoints: Keypoint[]): boolean {
