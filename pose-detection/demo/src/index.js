@@ -27,8 +27,8 @@ import {setupStats} from './stats_panel';
 
 let detector, camera, stats;
 
-async function createDetector(model) {
-  switch (model) {
+async function createDetector() {
+  switch (STATE.model.model) {
     case posedetection.SupportedModels.PoseNet:
       return posedetection.createDetector(STATE.model.model, {
         quantBytes: 4,
@@ -41,12 +41,10 @@ async function createDetector(model) {
       return posedetection.createDetector(
           STATE.model.model, {quantBytes: 4, upperBodyOnly: false});
     case posedetection.SupportedModels.MoveNet:
-      const modelType =
-          STATE.model[STATE.model.model].modelType == 'Lightning' ?
+      const modelType = STATE.model.type == 'lightning' ?
           posedetection.movenet.modelType.SINGLEPOSE_LIGHTNING :
           posedetection.movenet.modelType.SINGLEPOSE_THUNDER;
-      return posedetection.createDetector(
-          STATE.model.model, {modelType: modelType});
+      return posedetection.createDetector(STATE.model.model, {modelType});
   }
 }
 
@@ -93,11 +91,21 @@ async function renderPrediction() {
 
 async function app() {
   await tf.setBackend('webgl');
-  setupDatGui();
+
+  // Gui content will change depending on which model is in the query string.
+  const urlParams = new URLSearchParams(window.location.search);
+  if (!urlParams.has('model')) {
+    alert('Cannot find model in the query string.');
+    return;
+  }
+
+  setupDatGui(urlParams);
+
   stats = setupStats();
+
   camera = await Camera.setupCamera(STATE.camera);
 
-  detector = await createDetector(STATE.model.model);
+  detector = await createDetector();
 
   renderPrediction();
 };
