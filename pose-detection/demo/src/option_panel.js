@@ -67,12 +67,8 @@ function addMoveNetControllers(modelFolder, type) {
     ...params.MOVENET_CONFIG
   };
 
-  let $type = type != null ? type : 'thunder';
-  if ($type !== 'thunder' && $type !== 'lightning') {
-    $type = 'thunder';
-  }
-
-  params.STATE.model.type = $type;
+  params.STATE.model.type =
+      type !== 'thunder' && type !== 'lightning' ? 'thunder' : type;
 
   const typeController =
       modelFolder.add(params.STATE.model, 'type', ['thunder', 'lightning']);
