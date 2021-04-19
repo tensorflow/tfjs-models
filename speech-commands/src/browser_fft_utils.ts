@@ -31,7 +31,8 @@ export async function loadMetadataJson(url: string):
   } else if (url.indexOf(FILE_SCHEME) === 0) {
     // tslint:disable-next-line:no-require-imports
     const fs = require('fs');
-    const promisify = require("util").promisify;
+    // tslint:disable-next-line:no-require-imports
+    const promisify = require('util').promisify;
     const readFile = promisify(fs.readFile);
 
     return JSON.parse(
