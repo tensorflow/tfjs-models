@@ -88,9 +88,7 @@ function addBlazePoseControllers(modelFolder, type) {
   params.STATE.model.model = type === 'upperbody' ?
       posedetection.SupportedModels.MediapipeBlazeposeUpperBody :
       posedetection.SupportedModels.MediapipeBlazeposeFullBody;
-  console.log(type);
-  console.log(params.STATE.model);
-  console.log(posedetection.SupportedModels);
+
   params.STATE.model.type = type === 'upperbody' ? 'upperbody' : 'fullbody';
 
   const typeController =
