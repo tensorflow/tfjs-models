@@ -252,7 +252,7 @@ export class MoveNetDetector extends BasePoseDetector {
     let keypoints = await this.detectKeypoints(croppedImage);
     croppedImage.dispose();
 
-    if (!keypoints) {
+    if (keypoints == null) {
       this.reset();
       return [];
     }
