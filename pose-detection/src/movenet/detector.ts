@@ -24,7 +24,7 @@ import {BoundingBox} from '../calculators/interfaces/shape_interfaces';
 import {isVideo} from '../calculators/is_video';
 import {KeypointsOneEuroFilter} from '../calculators/keypoints_one_euro_filter';
 import {LowPassFilter} from '../calculators/low_pass_filter';
-import {COCO_KEYPOINTS_NAMED_MAP} from '../constants';
+import {COCO_KEYPOINTS, COCO_KEYPOINTS_NAMED_MAP} from '../constants';
 import {BasePoseDetector, PoseDetector} from '../pose_detector';
 import {InputResolution, Keypoint, Pose, PoseDetectorInput} from '../types';
 
@@ -116,7 +116,7 @@ export class MoveNetDetector extends BasePoseDetector {
     }
 
     // We expect an output array of shape [1, 1, 17, 3] (batch, person,
-    // keypoint, coordinate + score).
+    // keypoint, (y, x, score)).
     if (!outputTensor || outputTensor.shape.length !== 4 ||
         outputTensor.shape[0] !== 1 || outputTensor.shape[1] !== 1 ||
         outputTensor.shape[2] !== numKeypoints || outputTensor.shape[3] !== 3) {
@@ -124,7 +124,7 @@ export class MoveNetDetector extends BasePoseDetector {
       return null;
     }
 
-    const inferenceResult = outputTensor.dataSync();
+    const inferenceResult = await outputTensor.data();
     outputTensor.dispose();
 
     const keypoints: Keypoint[] = [];
@@ -170,6 +170,7 @@ export class MoveNetDetector extends BasePoseDetector {
     estimationConfig = validateEstimationConfig(estimationConfig);
 
     if (image == null) {
+      this.reset();
       return [];
     }
 
@@ -251,6 +252,11 @@ export class MoveNetDetector extends BasePoseDetector {
     let keypoints = await this.detectKeypoints(croppedImage);
     croppedImage.dispose();
 
+    if (keypoints == null) {
+      this.reset();
+      return [];
+    }
+
     // Convert keypoints from crop coordinates to image coordinates.
     for (let i = 0; i < keypoints.length; ++i) {
       keypoints[i].y =
@@ -273,16 +279,30 @@ export class MoveNetDetector extends BasePoseDetector {
 
     this.cropRegion = this.filterCropRegion(newCropRegion);
 
-    // Convert keypoint coordinates from normalized coordinates to image space.
+    // Convert keypoint coordinates from normalized coordinates to image space,
+    // add keypoint names and calculate the overall pose score.
+    let numValidKeypoints = 0.0;
+    let poseScore = 0.0;
     for (let i = 0; i < keypoints.length; ++i) {
+      keypoints[i].name = COCO_KEYPOINTS[i];
       keypoints[i].y *= imageSize.height;
       keypoints[i].x *= imageSize.width;
+      if (keypoints[i].score > MIN_CROP_KEYPOINT_SCORE) {
+        ++numValidKeypoints;
+        poseScore += keypoints[i].score;
+      }
     }
 
-    const poses: Pose[] = [];
-    poses[0] = {keypoints};
+    if (numValidKeypoints > 0) {
+      poseScore /= numValidKeypoints;
+    } else {
+      // No pose detected, so reset all filters.
+      this.reset();
+    }
 
-    return poses;
+    const pose: Pose = {score: poseScore, keypoints};
+
+    return [pose];
   }
 
   filterCropRegion(newCropRegion: BoundingBox): BoundingBox {
@@ -313,7 +333,12 @@ export class MoveNetDetector extends BasePoseDetector {
   }
 
   reset() {
+    this.keypointsFilter.reset();
     this.cropRegion = null;
+    this.cropRegionFilterYMin.reset();
+    this.cropRegionFilterXMin.reset();
+    this.cropRegionFilterYMax.reset();
+    this.cropRegionFilterXMax.reset();
   }
 
   torsoVisible(keypoints: Keypoint[]): boolean {
