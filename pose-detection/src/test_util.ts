@@ -136,15 +136,13 @@ function drawSkeleton(
   ctx.lineWidth = 2;
 
   poseDetection.util.getAdjacentPairs(model).forEach(([i, j]) => {
-    if (i < keypoints.length && j < keypoints.length) {
-      const kp1 = keypoints[i];
-      const kp2 = keypoints[j];
+    const kp1 = keypoints[i];
+    const kp2 = keypoints[j];
 
-      ctx.beginPath();
-      ctx.moveTo(kp1.x, kp1.y);
-      ctx.lineTo(kp2.x, kp2.y);
-      ctx.stroke();
-    }
+    ctx.beginPath();
+    ctx.moveTo(kp1.x, kp1.y);
+    ctx.lineTo(kp2.x, kp2.y);
+    ctx.stroke();
   });
 }
 

@@ -37,9 +37,9 @@ async function createDetector() {
         inputResolution: {width: 500, height: 500},
         multiplier: 0.75
       });
-    case posedetection.SupportedModels.MediapipeBlazepose:
-      return posedetection.createDetector(
-          STATE.model.model, {quantBytes: 4, upperBodyOnly: false});
+    case posedetection.SupportedModels.MediapipeBlazeposeUpperBody:
+    case posedetection.SupportedModels.MediapipeBlazeposeFullBody:
+      return posedetection.createDetector(STATE.model.model, {quantBytes: 4});
     case posedetection.SupportedModels.MoveNet:
       const modelType = STATE.model.type == 'lightning' ?
           posedetection.movenet.modelType.SINGLEPOSE_LIGHTNING :
