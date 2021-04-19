@@ -16,80 +16,91 @@
  */
 import * as posedetection from '@tensorflow-models/pose-detection';
 
-import {STATE, VIDEO_SIZE} from './params';
+import * as params from './params';
 
-export function setupDatGui() {
+export function setupDatGui(urlParams) {
   const gui = new dat.GUI({width: 300});
 
   // The camera folder contains options for video settings.
   const cameraFolder = gui.addFolder('Camera');
-  const fpsController = cameraFolder.add(STATE.camera, 'targetFPS');
+  const fpsController = cameraFolder.add(params.STATE.camera, 'targetFPS');
   fpsController.onFinishChange((targetFPS) => {
-    STATE.changeToTargetFPS = +targetFPS;
+    params.STATE.changeToTargetFPS = +targetFPS;
   });
-  const sizeController =
-      cameraFolder.add(STATE.camera, 'sizeOption', Object.keys(VIDEO_SIZE));
+  const sizeController = cameraFolder.add(
+      params.STATE.camera, 'sizeOption', Object.keys(params.VIDEO_SIZE));
   sizeController.onChange(option => {
-    STATE.changeToSizeOption = option;
+    params.STATE.changeToSizeOption = option;
   });
   cameraFolder.open();
 
   // The model folder contains options for model selection.
   const modelFolder = gui.addFolder('Model');
-  const modelController = modelFolder.add(
-      STATE.model, 'model', Object.values(posedetection.SupportedModels));
-  modelController.onChange(model => {
-    STATE.changeToModel = model;
-    switch (model) {
-      case posedetection.SupportedModels.PoseNet:
-        poseNetFolder.open();
-        blazePoseFolder.close();
-        moveNetFolder.close();
-        break;
-      case posedetection.SupportedModels.MediapipeBlazepose:
-        blazePoseFolder.open();
-        poseNetFolder.close();
-        moveNetFolder.close();
-        break;
-      case posedetection.SupportedModels.MoveNet:
-        blazePoseFolder.close();
-        poseNetFolder.close();
-        moveNetFolder.open();
-        break;
-      default:
-        throw new Error(`${model} is not supported.`);
-    }
-  });
+
+  const model = urlParams.get('model');
+  const type = urlParams.get('type');
+  switch (model) {
+    case 'posenet':
+      addPoseNetControllers(modelFolder);
+      break;
+    case 'movenet':
+      addMoveNetControllers(modelFolder, type);
+      break;
+    case 'blazepose':
+      addBlazePoseControllers(modelFolder, type);
+      break;
+    default:
+      alert(`${urlParams.get('model')}`);
+      break;
+  }
+
   modelFolder.open();
 
-  // The MoveNet model config folder contains options for MoveNet config
-  // settings.
-  const moveNetFolder = gui.addFolder('MoveNet Config');
-  const moveNetTypeController = moveNetFolder.add(
-      STATE.model[posedetection.SupportedModels.MoveNet], 'modelType',
-      ['Thunder', 'Lightning']);
-  moveNetTypeController.onChange(type => {
-    STATE.changeToModel = type;
-  });
-  moveNetFolder.add(
-      STATE.model[posedetection.SupportedModels.MoveNet], 'scoreThreshold', 0,
-      1);
-
-  // The Blazepose model config folder contains options for Blazepose config
-  // settings.
-  const blazePoseFolder = gui.addFolder('MediapipeBlazepose Config');
-  blazePoseFolder.add(
-      STATE.model[posedetection.SupportedModels.MediapipeBlazepose],
-      'scoreThreshold', 0, 1);
-
-  // The PoseNet model config folder contains options for PoseNet config
-  // settings.
-  const poseNetFolder = gui.addFolder('PoseNet Config');
-  poseNetFolder.add(
-      STATE.model[posedetection.SupportedModels.PoseNet], 'scoreThreshold', 0,
-      1);
-
-  moveNetFolder.open();
-
   return gui;
+}
+
+// The MoveNet model config folder contains options for MoveNet config
+// settings.
+function addMoveNetControllers(modelFolder, type) {
+  params.STATE.model = {
+    model: posedetection.SupportedModels.MoveNet,
+    ...params.MOVENET_CONFIG
+  };
+
+  let $type = type != null ? type : 'thunder';
+  if ($type !== 'thunder' && $type !== 'lightning') {
+    $type = 'thunder';
+  }
+
+  params.STATE.model.type = $type;
+
+  const typeController =
+      modelFolder.add(params.STATE.model, 'type', ['thunder', 'lightning']);
+  typeController.onChange(type => {
+    params.STATE.changeToModel = type;
+  });
+
+  modelFolder.add(params.STATE.model, 'scoreThreshold', 0, 1);
+}
+
+// The Blazepose model config folder contains options for Blazepose config
+// settings.
+function addBlazePoseControllers(modelFolder) {
+  params.STATE.model = {
+    model: posedetection.SupportedModels.MediapipeBlazepose,
+    ...params.BLAZEPOSE_CONFIG
+  };
+
+  modelFolder.add(params.STATE.model, 'scoreThreshold', 0, 1);
+}
+
+// The PoseNet model config folder contains options for PoseNet config
+// settings.
+function addPoseNetControllers(modelFolder) {
+  params.STATE.model = {
+    model: posedetection.SupportedModels.PoseNet,
+    ...params.POSENET_CONFIG
+  };
+
+  modelFolder.add(params.STATE.model, 'scoreThreshold', 0, 1);
 }

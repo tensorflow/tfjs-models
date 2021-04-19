@@ -127,8 +127,7 @@ export class Camera {
   drawKeypoint(keypoint) {
     // If score is null, just show the keypoint.
     const score = keypoint.score != null ? keypoint.score : 1;
-    const scoreThreshold =
-        params.STATE.model[params.STATE.model.model].scoreThreshold || 0;
+    const scoreThreshold = params.STATE.model.scoreThreshold || 0;
 
     if (score >= scoreThreshold) {
       const circle = new Path2D();
@@ -155,8 +154,7 @@ export class Camera {
           // If score is null, just show the keypoint.
           const score1 = kp1.score != null ? kp1.score : 1;
           const score2 = kp2.score != null ? kp2.score : 1;
-          const scoreThreshold =
-              params.STATE.model[params.STATE.model.model].scoreThreshold || 0;
+          const scoreThreshold = params.STATE.model.scoreThreshold || 0;
 
           if (score1 >= scoreThreshold && score2 >= scoreThreshold) {
             this.ctx.beginPath();
