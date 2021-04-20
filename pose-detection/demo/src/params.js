@@ -24,18 +24,14 @@ export const VIDEO_SIZE = {
   '640 X 360': {width: 640, height: 360}
 };
 export const STATE = {
-  camera: {targetFPS: 60, sizeOption: '640 X 480'},
-  model: {
-    model: posedetection.SupportedModels.MoveNet,
-  }
+  camera: {targetFPS: 60, sizeOption: '640 X 480'}
 };
-STATE.model[posedetection.SupportedModels.MediapipeBlazepose] = {
+export const BLAZEPOSE_CONFIG = {
   scoreThreshold: 0.65
 };
-STATE.model[posedetection.SupportedModels.PoseNet] = {
+export const POSENET_CONFIG = {
   scoreThreshold: 0.5
 };
-STATE.model[posedetection.SupportedModels.MoveNet] = {
-  modelType: 'Thunder',
+export const MOVENET_CONFIG = {
   scoreThreshold: 0.3
 };

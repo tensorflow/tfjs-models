@@ -57,7 +57,6 @@ type PoseLandmarkByRoiResult = {
  * Blazepose detector class.
  */
 export class BlazeposeDetector extends BasePoseDetector {
-  private readonly upperBodyOnly: boolean;
   private readonly anchors: Rect[];
   private readonly anchorTensor: AnchorTensor;
 
@@ -75,10 +74,8 @@ export class BlazeposeDetector extends BasePoseDetector {
   private constructor(
       private readonly detectorModel: tfconv.GraphModel,
       private readonly landmarkModel: tfconv.GraphModel,
-      config: BlazeposeModelConfig) {
+      private readonly upperBodyOnly: boolean) {
     super();
-
-    this.upperBodyOnly = config.upperBodyOnly;
 
     this.anchors =
         createSsdAnchors(constants.BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION);
@@ -98,15 +95,16 @@ export class BlazeposeDetector extends BasePoseDetector {
    * the Blazepose loading process. Please find more details of each parameters
    * in the documentation of the `BlazeposeModelConfig` interface.
    */
-  static async load(modelConfig: BlazeposeModelConfig): Promise<PoseDetector> {
-    const config = validateModelConfig(modelConfig);
+  static async load(modelConfig: BlazeposeModelConfig, upperBodyOnly = false):
+      Promise<PoseDetector> {
+    const config = validateModelConfig(modelConfig, upperBodyOnly);
 
     const [detectorModel, landmarkModel] = await Promise.all([
       tfconv.loadGraphModel(config.detectorModelUrl),
       tfconv.loadGraphModel(config.landmarkModelUrl)
     ]);
 
-    return new BlazeposeDetector(detectorModel, landmarkModel, config);
+    return new BlazeposeDetector(detectorModel, landmarkModel, upperBodyOnly);
   }
 
   /**
