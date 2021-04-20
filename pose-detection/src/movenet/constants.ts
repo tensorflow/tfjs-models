@@ -49,4 +49,4 @@ export const KEYPOINT_FILTER_CONFIG = {
   thresholdBeta: 5.0
 };
 export const CROP_FILTER_ALPHA = 0.9;
-export const MIN_CROP_KEYPOINT_SCORE = 0.3;
+export const MIN_CROP_KEYPOINT_SCORE = 0.2;

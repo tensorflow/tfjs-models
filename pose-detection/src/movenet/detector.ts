@@ -46,6 +46,8 @@ export class MoveNetDetector extends BasePoseDetector {
   private cropRegionFilterYMax = new LowPassFilter(CROP_FILTER_ALPHA);
   private cropRegionFilterXMax = new LowPassFilter(CROP_FILTER_ALPHA);
 
+  private isFirstFrame = true;
+
   // Should not be called outside.
   private constructor(
       private readonly moveNetModel: tfc.GraphModel,
@@ -188,46 +190,7 @@ export class MoveNetDetector extends BasePoseDetector {
     }
 
     if (!this.cropRegion) {
-      // No cropRegion was available from a previous estimatePoses() call, so
-      // run the model on the full image with padding.
-      let boxHeight, boxWidth;
-      if (imageSize.width > imageSize.height) {
-        // Create a crop region that will extend below the image, effectively
-        // padding the image with a black bar at the bottom. boxHeight will be
-        // larger than 1.0.
-        //
-        // -----------
-        // |         |
-        // |  image  |
-        // |         |
-        // -----------
-        // | padding |
-        // -----------
-        boxHeight = imageSize.width / imageSize.height;
-        boxWidth = 1.0;
-      } else {
-        // Create a crop region that will extend to the right of the image,
-        // effectively padding the image with a black bar at the right. boxWidth
-        // will be larger than 1.0.
-        //
-        // ---------------
-        // |       |     |
-        // |       | pa  |
-        // | image | dd  |
-        // |       | ing |
-        // |       |     |
-        // ---------------
-        boxHeight = 1.0;
-        boxWidth = imageSize.height / imageSize.width;
-      }
-      this.cropRegion = {
-        yMin: 0.0,
-        xMin: 0.0,
-        yMax: boxHeight,
-        xMax: boxWidth,
-        height: boxHeight,
-        width: boxWidth
-      };
+      this.cropRegion = this.initCropRegion(imageSize.width, imageSize.height);
     }
 
     const croppedImage = tf.tidy(() => {
@@ -251,6 +214,9 @@ export class MoveNetDetector extends BasePoseDetector {
 
     let keypoints = await this.detectKeypoints(croppedImage);
     croppedImage.dispose();
+
+    // After the first run, set the isFirstFrame to false.
+    this.isFirstFrame = false
 
     if (keypoints == null) {
       this.reset();
@@ -339,18 +305,19 @@ export class MoveNetDetector extends BasePoseDetector {
     this.cropRegionFilterXMin.reset();
     this.cropRegionFilterYMax.reset();
     this.cropRegionFilterXMax.reset();
+    this.isFirstFrame = true;
   }
 
   torsoVisible(keypoints: Keypoint[]): boolean {
     return (
-        keypoints[COCO_KEYPOINTS_BY_NAME['left_hip']].score >
-            MIN_CROP_KEYPOINT_SCORE &&
+        (keypoints[COCO_KEYPOINTS_BY_NAME['left_hip']].score >
+            MIN_CROP_KEYPOINT_SCORE ||
         keypoints[COCO_KEYPOINTS_BY_NAME['right_hip']].score >
-            MIN_CROP_KEYPOINT_SCORE &&
-        keypoints[COCO_KEYPOINTS_BY_NAME['left_shoulder']].score >
-            MIN_CROP_KEYPOINT_SCORE &&
+            MIN_CROP_KEYPOINT_SCORE) &&
+        (keypoints[COCO_KEYPOINTS_BY_NAME['left_shoulder']].score >
+            MIN_CROP_KEYPOINT_SCORE ||
         keypoints[COCO_KEYPOINTS_BY_NAME['right_shoulder']].score >
-            MIN_CROP_KEYPOINT_SCORE);
+            MIN_CROP_KEYPOINT_SCORE));
   }
 
   /**
@@ -432,8 +399,7 @@ export class MoveNetDetector extends BasePoseDetector {
               keypoints, targetKeypoints, centerY, centerX);
 
       let cropLengthHalf = Math.max(
-          maxTorsoXrange * 2.0, maxTorsoYrange * 2.0, maxBodyYrange * 1.2,
-          maxBodyXrange * 1.2);
+          maxTorsoXrange * 1.9, maxTorsoYrange * 1.9, maxBodyYrange * 1.1, maxBodyXrange * 1.1);
 
       cropLengthHalf = Math.min(
           cropLengthHalf,
@@ -443,23 +409,75 @@ export class MoveNetDetector extends BasePoseDetector {
       let cropCorner = [centerY - cropLengthHalf, centerX - cropLengthHalf];
 
       if (cropLengthHalf > Math.max(imageWidth, imageHeight) / 2) {
-        cropLengthHalf = Math.max(imageWidth, imageHeight) / 2;
-        cropCorner = [0.0, 0.0];
+        return this.initCropRegion(imageHeight, imageWidth);
+      } else {
+        const cropLength = cropLengthHalf * 2;
+        return {
+          yMin: cropCorner[0] / imageHeight,
+          xMin: cropCorner[1] / imageWidth,
+          yMax: (cropCorner[0] + cropLength) / imageHeight,
+          xMax: (cropCorner[1] + cropLength) / imageWidth,
+          height: (cropCorner[0] + cropLength) / imageHeight -
+              cropCorner[0] / imageHeight,
+          width: (cropCorner[1] + cropLength) / imageWidth -
+              cropCorner[1] / imageWidth
+        };
       }
-
-      const cropLength = cropLengthHalf * 2;
-      return {
-        yMin: cropCorner[0] / imageHeight,
-        xMin: cropCorner[1] / imageWidth,
-        yMax: (cropCorner[0] + cropLength) / imageHeight,
-        xMax: (cropCorner[1] + cropLength) / imageWidth,
-        height: (cropCorner[0] + cropLength) / imageHeight -
-            cropCorner[0] / imageHeight,
-        width: (cropCorner[1] + cropLength) / imageWidth -
-            cropCorner[1] / imageWidth
-      };
     } else {
-      return null;
+      return this.initCropRegion(imageHeight, imageWidth);
     }
+  }
+
+  /**
+   * Provides initial crop region.
+   *
+   * The function provides the initial crop region when the algorithm cannot
+   * reliably determine the crop region from the previous frame. There are two
+   * scenarios:
+   *   1) The very frist frame: the function returns the best quess by cropping
+   *      a square in the middle of the image.
+   *   2) Not enough reliable keypoints detected from the previous frame: the
+   *      function pads the full image from both sides to make it a square
+   *      image.
+   */
+  initCropRegion(imageHeight: number, imageWidth: number) {
+    let boxHeight, boxWidth, yMin, xMin;
+    if (this.isFirstFrame) {
+      // If it is the first frame, perform a best guess by making the square
+      // crop at the image center.
+      if (imageWidth > imageHeight) {
+        boxHeight = 1.0;
+        boxWidth = imageHeight / imageWidth;
+        yMin = 0.0;
+        xMin = (imageWidth / 2 - imageHeight / 2) / imageWidth;
+      } else {
+        boxHeight = imageWidth / imageHeight;
+        boxWidth = 1.0;
+        yMin = (imageHeight / 2 - imageWidth / 2) / imageHeight;
+        xMin = 0.0;
+      }
+    } else {
+      // No cropRegion was available from a previous estimatePoses() call, so
+      // run the model on the full image with padding on both sides.
+      if (imageWidth > imageHeight) {
+        boxHeight = imageWidth / imageHeight;
+        boxWidth = 1.0;
+        yMin = (imageHeight / 2 - imageWidth / 2) / imageHeight;
+        xMin = 0.0;
+      } else {
+        boxHeight = 1.0;
+        boxWidth = imageHeight / imageWidth;
+        yMin = 0.0;
+        xMin = (imageWidth / 2 - imageHeight / 2) / imageWidth;
+      }
+    }
+    return {
+      yMin: yMin,
+      xMin: xMin,
+      yMax: yMin + boxHeight,
+      xMax: xMin + boxWidth,
+      height: boxHeight,
+      width: boxWidth
+    };
   }
 }
