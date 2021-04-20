@@ -18,16 +18,18 @@
 import * as tfc from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
+import {SECOND_TO_MICRO_SECONDS} from '../calculators/constants';
 import {getImageSize, toImageTensor} from '../calculators/image_utils';
 import {BoundingBox} from '../calculators/interfaces/shape_interfaces';
+import {isVideo} from '../calculators/is_video';
+import {KeypointsOneEuroFilter} from '../calculators/keypoints_one_euro_filter';
 import {LowPassFilter} from '../calculators/low_pass_filter';
-import {COCO_KEYPOINTS_NAMED_MAP} from '../constants';
+import {COCO_KEYPOINTS, COCO_KEYPOINTS_NAMED_MAP} from '../constants';
 import {BasePoseDetector, PoseDetector} from '../pose_detector';
 import {InputResolution, Keypoint, Pose, PoseDetectorInput} from '../types';
 
-import {CROP_FILTER_ALPHA, MIN_CROP_KEYPOINT_SCORE, MOVENET_CONFIG, MOVENET_SINGLE_POSE_ESTIMATION_CONFIG, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_URL, SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER} from './constants';
+import {CROP_FILTER_ALPHA, KEYPOINT_FILTER_CONFIG, MIN_CROP_KEYPOINT_SCORE, MOVENET_CONFIG, MOVENET_SINGLE_POSE_ESTIMATION_CONFIG, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_URL, SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER} from './constants';
 import {validateEstimationConfig, validateModelConfig} from './detector_utils';
-import {RobustOneEuroFilter} from './robust_one_euro_filter';
 import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
 
 /**
@@ -36,18 +38,13 @@ import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
 export class MoveNetDetector extends BasePoseDetector {
   private readonly modelInputResolution:
       InputResolution = {height: 0, width: 0};
-  private readonly filter: RobustOneEuroFilter;
-
   // Global states.
+  private keypointsFilter = new KeypointsOneEuroFilter(KEYPOINT_FILTER_CONFIG);
   private cropRegion: BoundingBox;
   private cropRegionFilterYMin = new LowPassFilter(CROP_FILTER_ALPHA);
   private cropRegionFilterXMin = new LowPassFilter(CROP_FILTER_ALPHA);
   private cropRegionFilterYMax = new LowPassFilter(CROP_FILTER_ALPHA);
   private cropRegionFilterXMax = new LowPassFilter(CROP_FILTER_ALPHA);
-  // This will be used to calculate the actual camera fps. Starts with 30 fps
-  // as an assumption.
-  private previousFrameTime = 0;
-  private frameTimeDiff = 0.0333;
 
   // Should not be called outside.
   private constructor(
@@ -63,8 +60,6 @@ export class MoveNetDetector extends BasePoseDetector {
       this.modelInputResolution.width = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
       this.modelInputResolution.height = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
     }
-
-    this.filter = new RobustOneEuroFilter();
   }
 
   /**
@@ -121,7 +116,7 @@ export class MoveNetDetector extends BasePoseDetector {
     }
 
     // We expect an output array of shape [1, 1, 17, 3] (batch, person,
-    // keypoint, coordinate + score).
+    // keypoint, (y, x, score)).
     if (!outputTensor || outputTensor.shape.length !== 4 ||
         outputTensor.shape[0] !== 1 || outputTensor.shape[1] !== 1 ||
         outputTensor.shape[2] !== numKeypoints || outputTensor.shape[3] !== 3) {
@@ -129,7 +124,7 @@ export class MoveNetDetector extends BasePoseDetector {
       return null;
     }
 
-    const inferenceResult = outputTensor.dataSync();
+    const inferenceResult = await outputTensor.data();
     outputTensor.dispose();
 
     const keypoints: Keypoint[] = [];
@@ -152,20 +147,18 @@ export class MoveNetDetector extends BasePoseDetector {
    * model. The image should pixels should have values [0-255]. It returns a
    * single pose.
    *
-   * @param image
-   * ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement The input
-   * image to feed through the network.
+   * @param image ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
+   * The input image to feed through the network.
    *
-   * @param config Optional.
-   *       maxPoses: Optional. Has to be set to 1.
-   *
-   *       enableSmoothing: Optional. Optional. Defaults to 'true'. When
-   *       enabled, a temporal smoothing filter will be used on the keypoint
-   *       locations to reduce jitter.
+   * @param config Optional. A configuration object with the following
+   * properties:
+   *  `maxPoses`: Optional. Has to be set to 1.
+   *  `enableSmoothing`: Optional. Defaults to `true`. When enabled, a temporal
+   *  smoothing filter will be used on the keypoint locations to reduce jitter.
    *
    * @param timestamp Optional. In microseconds, i.e. 1e-6 of a second. This is
-   *     useful when image is a tensor, which doesn't have timestamp info. Or
-   *     to override timestamp in a video.
+   * useful when image is a tensor, which doesn't have timestamp info. Or to
+   * override timestamp in a video.
    *
    * @return An array of `Pose`s.
    */
@@ -177,16 +170,13 @@ export class MoveNetDetector extends BasePoseDetector {
     estimationConfig = validateEstimationConfig(estimationConfig);
 
     if (image == null) {
+      this.reset();
       return [];
     }
 
-    const now = tf.util.now();
-    if (this.previousFrameTime !== 0) {
-      const newSampleWeight = 0.02;
-      this.frameTimeDiff = (1.0 - newSampleWeight) * this.frameTimeDiff +
-          newSampleWeight * (now - this.previousFrameTime);
+    if (timestamp == null && isVideo(image)) {
+      timestamp = image.currentTime * SECOND_TO_MICRO_SECONDS;
     }
-    this.previousFrameTime = now;
 
     const imageTensor3D = toImageTensor(image);
     const imageSize = getImageSize(imageTensor3D);
@@ -220,13 +210,13 @@ export class MoveNetDetector extends BasePoseDetector {
         // effectively padding the image with a black bar at the right. boxWidth
         // will be larger than 1.0.
         //
-        // --------------|
+        // ---------------
         // |       |     |
         // |       | pa  |
         // | image | dd  |
         // |       | ing |
         // |       |     |
-        // --------------|
+        // ---------------
         boxHeight = 1.0;
         boxWidth = imageSize.height / imageSize.width;
       }
@@ -259,8 +249,13 @@ export class MoveNetDetector extends BasePoseDetector {
     });
     imageTensor4D.dispose();
 
-    const keypoints = await this.detectKeypoints(croppedImage);
+    let keypoints = await this.detectKeypoints(croppedImage);
     croppedImage.dispose();
+
+    if (keypoints == null) {
+      this.reset();
+      return [];
+    }
 
     // Convert keypoints from crop coordinates to image coordinates.
     for (let i = 0; i < keypoints.length; ++i) {
@@ -272,11 +267,8 @@ export class MoveNetDetector extends BasePoseDetector {
 
     // Apply the sequential filter before estimating the cropping area to make
     // it more stable.
-    if (estimationConfig.enableSmoothing) {
-      this.arrayToKeypoints(
-          this.filter.insert(
-              this.keypointsToArray(keypoints), 1.0 / this.frameTimeDiff),
-          keypoints);
+    if (timestamp != null && estimationConfig.enableSmoothing) {
+      keypoints = this.keypointsFilter.apply(keypoints, timestamp);
     }
 
     // Determine next crop region based on detected keypoints and if a crop
@@ -287,16 +279,30 @@ export class MoveNetDetector extends BasePoseDetector {
 
     this.cropRegion = this.filterCropRegion(newCropRegion);
 
-    // Convert keypoint coordinates from normalized coordinates to image space.
+    // Convert keypoint coordinates from normalized coordinates to image space,
+    // add keypoint names and calculate the overall pose score.
+    let numValidKeypoints = 0.0;
+    let poseScore = 0.0;
     for (let i = 0; i < keypoints.length; ++i) {
+      keypoints[i].name = COCO_KEYPOINTS[i];
       keypoints[i].y *= imageSize.height;
       keypoints[i].x *= imageSize.width;
+      if (keypoints[i].score > MIN_CROP_KEYPOINT_SCORE) {
+        ++numValidKeypoints;
+        poseScore += keypoints[i].score;
+      }
     }
 
-    const poses: Pose[] = [];
-    poses[0] = {keypoints};
+    if (numValidKeypoints > 0) {
+      poseScore /= numValidKeypoints;
+    } else {
+      // No pose detected, so reset all filters.
+      this.reset();
+    }
 
-    return poses;
+    const pose: Pose = {score: poseScore, keypoints};
+
+    return [pose];
   }
 
   filterCropRegion(newCropRegion: BoundingBox): BoundingBox {
@@ -327,9 +333,12 @@ export class MoveNetDetector extends BasePoseDetector {
   }
 
   reset() {
+    this.keypointsFilter.reset();
     this.cropRegion = null;
-    this.previousFrameTime = 0;
-    this.frameTimeDiff = 0.0333;
+    this.cropRegionFilterYMin.reset();
+    this.cropRegionFilterXMin.reset();
+    this.cropRegionFilterYMax.reset();
+    this.cropRegionFilterXMax.reset();
   }
 
   torsoVisible(keypoints: Keypoint[]): boolean {
@@ -451,22 +460,6 @@ export class MoveNetDetector extends BasePoseDetector {
       };
     } else {
       return null;
-    }
-  }
-
-  keypointsToArray(keypoints: Keypoint[]) {
-    const values: number[] = [];
-    for (let i = 0; i < 17; ++i) {
-      values[i * 2] = keypoints[i].y;
-      values[i * 2 + 1] = keypoints[i].x;
-    }
-    return values;
-  }
-
-  arrayToKeypoints(values: number[], keypoints: Keypoint[]) {
-    for (let i = 0; i < 17; ++i) {
-      keypoints[i].y = values[i * 2];
-      keypoints[i].x = values[i * 2 + 1];
     }
   }
 }

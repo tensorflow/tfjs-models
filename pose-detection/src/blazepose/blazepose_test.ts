@@ -24,7 +24,10 @@ import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
 import * as poseDetection from '../index';
 import {getXYPerFrame, KARMA_SERVER, loadImage, loadVideo} from '../test_util';
 
-const UPPERBODY_ONLY = [false, true];
+const MODEL_LIST = [
+  poseDetection.SupportedModels.MediapipeBlazeposeUpperBody,
+  poseDetection.SupportedModels.MediapipeBlazeposeFullBody
+];
 const EPSILON_IMAGE = 10;
 const EPSILON_VIDEO = 50;
 // ref:
@@ -66,10 +69,9 @@ describeWithFlags('Blazepose', ALL_ENVS, () => {
     // Note: this makes a network request for model assets.
     const modelConfig: poseDetection.BlazeposeModelConfig = {
       quantBytes: 4,
-      upperBodyOnly: false
     };
     detector = await poseDetection.createDetector(
-        poseDetection.SupportedModels.MediapipeBlazepose, modelConfig);
+        poseDetection.SupportedModels.MediapipeBlazeposeFullBody, modelConfig);
   });
 
   it('estimatePoses does not leak memory', async () => {
@@ -104,15 +106,13 @@ describeWithFlags('Blazepose static image ', BROWSER_ENVS, () => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
   });
 
-  UPPERBODY_ONLY.forEach(upperBodyOnly => {
+  MODEL_LIST.forEach(model => {
     it('test.', async () => {
       const startTensors = tf.memory().numTensors;
 
       // Note: this makes a network request for model assets.
-      const modelConfig:
-          poseDetection.BlazeposeModelConfig = {quantBytes: 4, upperBodyOnly};
-      detector = await poseDetection.createDetector(
-          poseDetection.SupportedModels.MediapipeBlazepose, modelConfig);
+      const modelConfig: poseDetection.BlazeposeModelConfig = {quantBytes: 4};
+      detector = await poseDetection.createDetector(model, modelConfig);
 
       const beforeTensors = tf.memory().numTensors;
 
@@ -122,8 +122,10 @@ describeWithFlags('Blazepose static image ', BROWSER_ENVS, () => {
               poseDetection.BlazeposeEstimationConfig);
       const xy =
           result[0].keypoints.map((keypoint) => [keypoint.x, keypoint.y]);
-      const expected = upperBodyOnly ? EXPECTED_UPPERBODY_LANDMARKS :
-                                       EXPECTED_FULLBODY_LANDMARKS;
+      const expected =
+          model === poseDetection.SupportedModels.MediapipeBlazeposeUpperBody ?
+          EXPECTED_UPPERBODY_LANDMARKS :
+          EXPECTED_FULLBODY_LANDMARKS;
       expectArraysClose(xy, expected, EPSILON_IMAGE);
 
       expect(tf.memory().numTensors).toEqual(beforeTensors);
@@ -160,16 +162,18 @@ describeWithFlags('Blazepose video ', BROWSER_ENVS, () => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
   });
 
-  UPPERBODY_ONLY.forEach(upperBodyOnly => {
+  MODEL_LIST.forEach(model => {
     it('test.', async () => {
       // Note: this makes a network request for model assets.
-      const modelConfig:
-          poseDetection.BlazeposeModelConfig = {quantBytes: 4, upperBodyOnly};
-      detector = await poseDetection.createDetector(
-          poseDetection.SupportedModels.MediapipeBlazepose, modelConfig);
+
+      const modelConfig: poseDetection.BlazeposeModelConfig = {quantBytes: 4};
+      detector = await poseDetection.createDetector(model, modelConfig);
 
       const result: number[][][] = [];
-      const expected = upperBodyOnly ? expectedUpperBody : expectedFullBody;
+      const expected =
+          model === poseDetection.SupportedModels.MediapipeBlazeposeUpperBody ?
+          expectedUpperBody :
+          expectedFullBody;
 
       const callback = async(video: HTMLVideoElement, timestamp: number):
           Promise<poseDetection.Pose[]> => {
@@ -185,8 +189,7 @@ describeWithFlags('Blazepose video ', BROWSER_ENVS, () => {
       // `ffmpeg -i original_pose.mp4 -r 5 -vcodec libx264 -crf 28 -profile:v
       // baseline pose_squats.mp4`
       await loadVideo(
-          'pose_squats.mp4', 5 /* fps */, callback, expected,
-          poseDetection.SupportedModels.MediapipeBlazepose);
+          'pose_squats.mp4', 5 /* fps */, callback, expected, model);
 
       expectArraysClose(result, expected, EPSILON_VIDEO);
 
