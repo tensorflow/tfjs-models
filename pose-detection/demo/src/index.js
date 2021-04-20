@@ -28,9 +28,9 @@ import {setupStats} from './stats_panel';
 let detector, camera, stats;
 
 async function createDetector() {
-  switch (STATE.model.model) {
+  switch (STATE.model) {
     case posedetection.SupportedModels.PoseNet:
-      return posedetection.createDetector(STATE.model.model, {
+      return posedetection.createDetector(STATE.model, {
         quantBytes: 4,
         architecture: 'MobileNetV1',
         outputStride: 16,
@@ -39,12 +39,12 @@ async function createDetector() {
       });
     case posedetection.SupportedModels.MediapipeBlazeposeUpperBody:
     case posedetection.SupportedModels.MediapipeBlazeposeFullBody:
-      return posedetection.createDetector(STATE.model.model, {quantBytes: 4});
+      return posedetection.createDetector(STATE.model, {quantBytes: 4});
     case posedetection.SupportedModels.MoveNet:
-      const modelType = STATE.model.type == 'lightning' ?
+      const modelType = STATE.modelConfig.type == 'lightning' ?
           posedetection.movenet.modelType.SINGLEPOSE_LIGHTNING :
           posedetection.movenet.modelType.SINGLEPOSE_THUNDER;
-      return posedetection.createDetector(STATE.model.model, {modelType});
+      return posedetection.createDetector(STATE.model, {modelType});
   }
 }
 
@@ -55,9 +55,9 @@ async function checkGuiUpdate() {
     STATE.changeToSizeOption = null;
   }
 
-  if (STATE.changeToModel) {
+  if (STATE.changeToModel != null) {
     detector.dispose();
-    detector = await createDetector(STATE.model.model);
+    detector = await createDetector(STATE.model);
     STATE.changeToModel = null;
   }
 }
