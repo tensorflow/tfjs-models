@@ -15,6 +15,7 @@
  * =============================================================================
  */
 import * as posedetection from '@tensorflow-models/pose-detection';
+import {type} from 'os';
 
 import * as params from './params';
 
@@ -81,11 +82,23 @@ function addMoveNetControllers(modelFolder, type) {
 
 // The Blazepose model config folder contains options for Blazepose config
 // settings.
-function addBlazePoseControllers(modelFolder) {
-  params.STATE.model = {
-    model: posedetection.SupportedModels.MediapipeBlazepose,
-    ...params.BLAZEPOSE_CONFIG
-  };
+function addBlazePoseControllers(modelFolder, type) {
+  params.STATE.model = {...params.BLAZEPOSE_CONFIG};
+
+  params.STATE.model.model = type === 'upperbody' ?
+      posedetection.SupportedModels.MediapipeBlazeposeUpperBody :
+      posedetection.SupportedModels.MediapipeBlazeposeFullBody;
+
+  params.STATE.model.type = type === 'upperbody' ? 'upperbody' : 'fullbody';
+
+  const typeController =
+      modelFolder.add(params.STATE.model, 'type', ['fullbody', 'upperbody']);
+  typeController.onChange(type => {
+    params.STATE.changeToModel = type;
+    params.STATE.model.model = type === 'upperbody' ?
+        posedetection.SupportedModels.MediapipeBlazeposeUpperBody :
+        posedetection.SupportedModels.MediapipeBlazeposeFullBody;
+  })
 
   modelFolder.add(params.STATE.model, 'scoreThreshold', 0, 1);
 }

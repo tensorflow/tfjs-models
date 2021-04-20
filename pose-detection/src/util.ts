@@ -20,8 +20,10 @@ import {SupportedModels} from './types';
 export function getKeypointIndexBySide(model: SupportedModels):
     {left: number[], right: number[], middle: number[]} {
   switch (model) {
-    case SupportedModels.MediapipeBlazepose:
-      return constants.BLAZEPOSE_KEYPOINTS_BY_SIDE;
+    case SupportedModels.MediapipeBlazeposeUpperBody:
+      return constants.BLAZEPOSE_KEYPOINTS_BY_SIDE_UPPER_BODY;
+    case SupportedModels.MediapipeBlazeposeFullBody:
+      return constants.BLAZEPOSE_KEYPOINTS_BY_SIDE_FULL_BODY;
     case SupportedModels.PoseNet:
     case SupportedModels.MoveNet:
       return constants.COCO_KEYPOINTS_BY_SIDE;
@@ -31,8 +33,10 @@ export function getKeypointIndexBySide(model: SupportedModels):
 }
 export function getAdjacentPairs(model: SupportedModels): number[][] {
   switch (model) {
-    case SupportedModels.MediapipeBlazepose:
-      return constants.BLAZEPOSE_CONNECTED_KEYPOINTS_PAIRS;
+    case SupportedModels.MediapipeBlazeposeUpperBody:
+      return constants.BLAZEPOSE_CONNECTED_KEYPOINTS_PAIRS_UPPER_BODY;
+    case SupportedModels.MediapipeBlazeposeFullBody:
+      return constants.BLAZEPOSE_CONNECTED_KEYPOINTS_PAIRS_FULL_BODY;
     case SupportedModels.PoseNet:
     case SupportedModels.MoveNet:
       return constants.COCO_CONNECTED_KEYPOINTS_PAIRS;
