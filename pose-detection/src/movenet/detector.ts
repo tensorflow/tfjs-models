@@ -216,7 +216,7 @@ export class MoveNetDetector extends BasePoseDetector {
     croppedImage.dispose();
 
     // After the first run, set the isFirstFrame to false.
-    this.isFirstFrame = false
+    this.isFirstFrame = false;
 
     if (keypoints == null) {
       this.reset();
@@ -403,14 +403,15 @@ export class MoveNetDetector extends BasePoseDetector {
               keypoints, targetKeypoints, centerY, centerX);
 
       let cropLengthHalf = Math.max(
-          maxTorsoXrange * 1.9, maxTorsoYrange * 1.9, maxBodyYrange * 1.1, maxBodyXrange * 1.1);
+          maxTorsoXrange * 1.9, maxTorsoYrange * 1.9, 
+          maxBodyYrange * 1.1, maxBodyXrange * 1.1);
 
       cropLengthHalf = Math.min(
           cropLengthHalf,
           Math.max(
               centerX, imageWidth - centerX, centerY, imageHeight - centerY));
 
-      let cropCorner = [centerY - cropLengthHalf, centerX - cropLengthHalf];
+      const cropCorner = [centerY - cropLengthHalf, centerX - cropLengthHalf];
 
       if (cropLengthHalf > Math.max(imageWidth, imageHeight) / 2) {
         return this.initCropRegion(imageHeight, imageWidth);
@@ -476,8 +477,8 @@ export class MoveNetDetector extends BasePoseDetector {
       }
     }
     return {
-      yMin: yMin,
-      xMin: xMin,
+      yMin,
+      xMin,
       yMax: yMin + boxHeight,
       xMax: xMin + boxWidth,
       height: boxHeight,
