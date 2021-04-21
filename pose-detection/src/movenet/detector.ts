@@ -263,7 +263,7 @@ export class MoveNetDetector extends BasePoseDetector {
       poseScore /= numValidKeypoints;
     } else {
       // No pose detected, so reset all filters.
-      this.reset();
+      this.resetFilters();
     }
 
     const pose: Pose = {score: poseScore, keypoints};
@@ -299,13 +299,17 @@ export class MoveNetDetector extends BasePoseDetector {
   }
 
   reset() {
-    this.keypointsFilter.reset();
     this.cropRegion = null;
+    this.isFirstFrame = true;
+    this.resetFilters();
+  }
+
+  resetFilters() {
+    this.keypointsFilter.reset();
     this.cropRegionFilterYMin.reset();
     this.cropRegionFilterXMin.reset();
     this.cropRegionFilterYMax.reset();
     this.cropRegionFilterXMax.reset();
-    this.isFirstFrame = true;
   }
 
   torsoVisible(keypoints: Keypoint[]): boolean {
