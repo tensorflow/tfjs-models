@@ -439,7 +439,7 @@ export class MoveNetDetector extends BasePoseDetector {
    * The function provides the initial crop region when the algorithm cannot
    * reliably determine the crop region from the previous frame. There are two
    * scenarios:
-   *   1) The very frist frame: the function returns the best quess by cropping
+   *   1) The very first frame: the function returns the best quess by cropping
    *      a square in the middle of the image.
    *   2) Not enough reliable keypoints detected from the previous frame: the
    *      function pads the full image from both sides to make it a square
