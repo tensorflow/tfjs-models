@@ -46,8 +46,6 @@ export class MoveNetDetector extends BasePoseDetector {
   private cropRegionFilterYMax = new LowPassFilter(CROP_FILTER_ALPHA);
   private cropRegionFilterXMax = new LowPassFilter(CROP_FILTER_ALPHA);
 
-  private isFirstFrame = true;
-
   // Should not be called outside.
   private constructor(
       private readonly moveNetModel: tfc.GraphModel,
@@ -215,9 +213,6 @@ export class MoveNetDetector extends BasePoseDetector {
     let keypoints = await this.detectKeypoints(croppedImage);
     croppedImage.dispose();
 
-    // After the first run, set the isFirstFrame to false.
-    this.isFirstFrame = false;
-
     if (keypoints == null) {
       this.reset();
       return [];
@@ -300,7 +295,6 @@ export class MoveNetDetector extends BasePoseDetector {
 
   reset() {
     this.cropRegion = null;
-    this.isFirstFrame = true;
     this.resetFilters();
   }
 
@@ -445,11 +439,12 @@ export class MoveNetDetector extends BasePoseDetector {
    *      function pads the full image from both sides to make it a square
    *      image.
    */
-  initCropRegion(imageHeight: number, imageWidth: number) {
+  private initCropRegion(imageHeight: number, imageWidth: number) {
     let boxHeight, boxWidth, yMin, xMin;
-    if (this.isFirstFrame) {
+    if (!this.cropRegion) {
       // If it is the first frame, perform a best guess by making the square
-      // crop at the image center.
+      // crop at the image center to better utilize the image pixels and
+      // create higher chance to enter the cropping loop.
       if (imageWidth > imageHeight) {
         boxHeight = 1.0;
         boxWidth = imageHeight / imageWidth;
