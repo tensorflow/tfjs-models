@@ -65,7 +65,7 @@ export const BLAZEPOSE_CONNECTED_KEYPOINTS_PAIRS_UPPER_BODY = [
   [12, 24], [13, 15], [15, 17], [16, 18], [16, 20], [15, 17], [15, 19],
   [15, 21], [16, 22], [17, 19], [18, 20], [23, 24]
 ];
-export const COCO_KEYPOINTS_NAMED_MAP: {[index: string]: number} = {
+export const COCO_KEYPOINTS_BY_NAME: {[index: string]: number} = {
   nose: 0,
   left_eye: 1,
   right_eye: 2,
@@ -84,3 +84,67 @@ export const COCO_KEYPOINTS_NAMED_MAP: {[index: string]: number} = {
   left_ankle: 15,
   right_ankle: 16
 };
+export const BLAZEPOSE_KEYPOINTS_BY_NAME_UPPER_BODY:
+    {[index: string]: number} = {
+      nose: 0,
+      left_eye_inner: 1,
+      left_eye: 2,
+      left_eye_outer: 3,
+      right_eye_inner: 4,
+      right_eye: 5,
+      right_eye_outer: 6,
+      left_ear: 7,
+      right_ear: 8,
+      mouth_left: 9,
+      mouth_right: 10,
+      left_shoulder: 11,
+      right_shoulder: 12,
+      left_elbow: 13,
+      right_elbow: 14,
+      left_wrist: 15,
+      right_wrist: 16,
+      left_pinky: 17,
+      right_pinky: 18,
+      left_index: 19,
+      right_index: 20,
+      left_thumb: 21,
+      right_thumb: 22,
+      left_hip: 23,
+      right_hip: 24
+    };
+export const BLAZEPOSE_KEYPOINTS_BY_NAME_FULL_BODY:
+    {[index: string]: number} = {
+      nose: 0,
+      left_eye_inner: 1,
+      left_eye: 2,
+      left_eye_outer: 3,
+      right_eye_inner: 4,
+      right_eye: 5,
+      right_eye_outer: 6,
+      left_ear: 7,
+      right_ear: 8,
+      mouth_left: 9,
+      mouth_right: 10,
+      left_shoulder: 11,
+      right_shoulder: 12,
+      left_elbow: 13,
+      right_elbow: 14,
+      left_wrist: 15,
+      right_wrist: 16,
+      left_pinky: 17,
+      right_pinky: 18,
+      left_index: 19,
+      right_index: 20,
+      left_thumb: 21,
+      right_thumb: 22,
+      left_hip: 23,
+      right_hip: 24,
+      left_knee: 25,
+      right_knee: 26,
+      left_ankle: 27,
+      right_ankle: 28,
+      left_heel: 29,
+      right_heel: 30,
+      left_foot_index: 31,
+      right_foot_index: 32
+    };

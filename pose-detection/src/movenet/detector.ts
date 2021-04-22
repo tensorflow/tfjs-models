@@ -24,7 +24,7 @@ import {BoundingBox} from '../calculators/interfaces/shape_interfaces';
 import {isVideo} from '../calculators/is_video';
 import {KeypointsOneEuroFilter} from '../calculators/keypoints_one_euro_filter';
 import {LowPassFilter} from '../calculators/low_pass_filter';
-import {COCO_KEYPOINTS, COCO_KEYPOINTS_NAMED_MAP} from '../constants';
+import {COCO_KEYPOINTS, COCO_KEYPOINTS_BY_NAME} from '../constants';
 import {BasePoseDetector, PoseDetector} from '../pose_detector';
 import {InputResolution, Keypoint, Pose, PoseDetectorInput} from '../types';
 
@@ -343,13 +343,13 @@ export class MoveNetDetector extends BasePoseDetector {
 
   torsoVisible(keypoints: Keypoint[]): boolean {
     return (
-        keypoints[COCO_KEYPOINTS_NAMED_MAP['left_hip']].score >
+        keypoints[COCO_KEYPOINTS_BY_NAME['left_hip']].score >
             MIN_CROP_KEYPOINT_SCORE &&
-        keypoints[COCO_KEYPOINTS_NAMED_MAP['right_hip']].score >
+        keypoints[COCO_KEYPOINTS_BY_NAME['right_hip']].score >
             MIN_CROP_KEYPOINT_SCORE &&
-        keypoints[COCO_KEYPOINTS_NAMED_MAP['left_shoulder']].score >
+        keypoints[COCO_KEYPOINTS_BY_NAME['left_shoulder']].score >
             MIN_CROP_KEYPOINT_SCORE &&
-        keypoints[COCO_KEYPOINTS_NAMED_MAP['right_shoulder']].score >
+        keypoints[COCO_KEYPOINTS_BY_NAME['right_shoulder']].score >
             MIN_CROP_KEYPOINT_SCORE);
   }
 
@@ -381,7 +381,7 @@ export class MoveNetDetector extends BasePoseDetector {
     let maxBodyYrange = 0.0;
     let maxBodyXrange = 0.0;
     for (const key of Object.keys(targetKeypoints)) {
-      if (keypoints[COCO_KEYPOINTS_NAMED_MAP[key]].score <
+      if (keypoints[COCO_KEYPOINTS_BY_NAME[key]].score <
           MIN_CROP_KEYPOINT_SCORE) {
         continue;
       }
@@ -412,10 +412,10 @@ export class MoveNetDetector extends BasePoseDetector {
       imageWidth: number): BoundingBox {
     const targetKeypoints: {[index: string]: number[]} = {};
 
-    for (const key of Object.keys(COCO_KEYPOINTS_NAMED_MAP)) {
+    for (const key of Object.keys(COCO_KEYPOINTS_BY_NAME)) {
       targetKeypoints[key] = [
-        keypoints[COCO_KEYPOINTS_NAMED_MAP[key]].y * imageHeight,
-        keypoints[COCO_KEYPOINTS_NAMED_MAP[key]].x * imageWidth
+        keypoints[COCO_KEYPOINTS_BY_NAME[key]].y * imageHeight,
+        keypoints[COCO_KEYPOINTS_BY_NAME[key]].x * imageWidth
       ];
     }
 

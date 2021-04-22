@@ -15,7 +15,6 @@
  * =============================================================================
  */
 import * as posedetection from '@tensorflow-models/pose-detection';
-import {type} from 'os';
 
 import * as params from './params';
 
@@ -39,77 +38,111 @@ export function setupDatGui(urlParams) {
   const modelFolder = gui.addFolder('Model');
 
   const model = urlParams.get('model');
-  const type = urlParams.get('type');
+  let type = urlParams.get('type');
+
+  let modelConfigFolder;
+
   switch (model) {
     case 'posenet':
-      addPoseNetControllers(modelFolder);
+      params.STATE.model = posedetection.SupportedModels.PoseNet;
       break;
     case 'movenet':
-      addMoveNetControllers(modelFolder, type);
+      params.STATE.model = posedetection.SupportedModels.MoveNet;
+      if (type !== 'lightning' && type !== 'thunder') {
+        // Nulify invalid value.
+        type = null;
+      }
       break;
     case 'blazepose':
-      addBlazePoseControllers(modelFolder, type);
+      params.STATE.model = type === 'upperbody' ?
+          posedetection.SupportedModels.MediapipeBlazeposeUpperBody :
+          posedetection.SupportedModels.MediapipeBlazeposeFullBody;
+      if (type !== 'fullbody' && type !== 'upperbody') {
+        // Nulify invalid value.
+        type = null;
+      }
       break;
     default:
       alert(`${urlParams.get('model')}`);
       break;
   }
 
+  const modelController = modelFolder.add(
+      params.STATE, 'model', Object.values(posedetection.SupportedModels));
+
+  modelController.onChange(model => {
+    params.STATE.changeToModel = model;
+
+    // We don't pass in type, so that it will use default type when switching
+    // models.
+    modelConfigFolder = updateModelConfigFolder(gui, model, modelConfigFolder);
+
+    modelConfigFolder.open();
+  });
+
   modelFolder.open();
+
+  // For initialization, pass in type from url.
+  modelConfigFolder =
+      updateModelConfigFolder(gui, params.STATE.model, modelConfigFolder, type);
+
+  modelConfigFolder.open();
 
   return gui;
 }
 
-// The MoveNet model config folder contains options for MoveNet config
-// settings.
-function addMoveNetControllers(modelFolder, type) {
-  params.STATE.model = {
-    model: posedetection.SupportedModels.MoveNet,
-    ...params.MOVENET_CONFIG
-  };
+function updateModelConfigFolder(gui, model, modelConfigFolder, type) {
+  if (modelConfigFolder != null) {
+    gui.removeFolder(modelConfigFolder);
+  }
 
-  params.STATE.model.type =
-      type !== 'thunder' && type !== 'lightning' ? 'thunder' : type;
+  const newModelConfigFolder = gui.addFolder('Model Config');
 
-  const typeController =
-      modelFolder.add(params.STATE.model, 'type', ['thunder', 'lightning']);
-  typeController.onChange(type => {
-    params.STATE.changeToModel = type;
-  });
+  switch (model) {
+    case posedetection.SupportedModels.PoseNet:
+      addPoseNetControllers(newModelConfigFolder);
+      break;
+    case posedetection.SupportedModels.MoveNet:
+      addMoveNetControllers(newModelConfigFolder, type);
+      break;
+    case posedetection.SupportedModels.MediapipeBlazeposeUpperBody:
+    case posedetection.SupportedModels.MediapipeBlazeposeFullBody:
+      addBlazePoseControllers(newModelConfigFolder);
+      break;
+    default:
+      alert(`Model ${model} is not supported.`);
+  }
 
-  modelFolder.add(params.STATE.model, 'scoreThreshold', 0, 1);
-}
-
-// The Blazepose model config folder contains options for Blazepose config
-// settings.
-function addBlazePoseControllers(modelFolder, type) {
-  params.STATE.model = {...params.BLAZEPOSE_CONFIG};
-
-  params.STATE.model.model = type === 'upperbody' ?
-      posedetection.SupportedModels.MediapipeBlazeposeUpperBody :
-      posedetection.SupportedModels.MediapipeBlazeposeFullBody;
-
-  params.STATE.model.type = type === 'upperbody' ? 'upperbody' : 'fullbody';
-
-  const typeController =
-      modelFolder.add(params.STATE.model, 'type', ['fullbody', 'upperbody']);
-  typeController.onChange(type => {
-    params.STATE.changeToModel = type;
-    params.STATE.model.model = type === 'upperbody' ?
-        posedetection.SupportedModels.MediapipeBlazeposeUpperBody :
-        posedetection.SupportedModels.MediapipeBlazeposeFullBody;
-  })
-
-  modelFolder.add(params.STATE.model, 'scoreThreshold', 0, 1);
+  return newModelConfigFolder;
 }
 
 // The PoseNet model config folder contains options for PoseNet config
 // settings.
-function addPoseNetControllers(modelFolder) {
-  params.STATE.model = {
-    model: posedetection.SupportedModels.PoseNet,
-    ...params.POSENET_CONFIG
-  };
+function addPoseNetControllers(modelConfigFolder) {
+  params.STATE.modelConfig = {...params.POSENET_CONFIG};
+  modelConfigFolder.add(params.STATE.modelConfig, 'scoreThreshold', 0, 1);
+}
 
-  modelFolder.add(params.STATE.model, 'scoreThreshold', 0, 1);
+// The MoveNet model config folder contains options for MoveNet config
+// settings.
+function addMoveNetControllers(modelConfigFolder, type) {
+  params.STATE.modelConfig = {...params.MOVENET_CONFIG};
+  params.STATE.modelConfig.type = type != null ? type : 'thunder';
+
+  const typeController = modelConfigFolder.add(
+      params.STATE.modelConfig, 'type', ['thunder', 'lightning']);
+  typeController.onChange(_ => {
+    // Set changeToModel to non-null, so that we don't render any result when
+    // changeToModel is non-null.
+    params.STATE.changeToModel = params.STATE.model;
+  });
+
+  modelConfigFolder.add(params.STATE.modelConfig, 'scoreThreshold', 0, 1);
+}
+
+// The Blazepose model config folder contains options for Blazepose config
+// settings.
+function addBlazePoseControllers(modelConfigFolder) {
+  params.STATE.modelConfig = {...params.BLAZEPOSE_CONFIG};
+  modelConfigFolder.add(params.STATE.modelConfig, 'scoreThreshold', 0, 1);
 }
