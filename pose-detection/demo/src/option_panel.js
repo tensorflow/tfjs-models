@@ -51,8 +51,6 @@ export async function setupDatGui(urlParams) {
   const model = urlParams.get('model');
   let type = urlParams.get('type');
 
-  let modelConfigFolder;
-
   switch (model) {
     case 'posenet':
       params.STATE.model = posedetection.SupportedModels.PoseNet;
