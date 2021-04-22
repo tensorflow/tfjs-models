@@ -14,7 +14,10 @@
  * limitations under the License.
  * =============================================================================
  */
-import {EstimationConfig, ModelConfig, Pose, PoseDetectorInput} from './types';
+import {BlazeposeEstimationConfig} from './blazepose/types';
+import {MoveNetEstimationConfig} from './movenet/types';
+import {PoseNetEstimationConfig} from './posenet/types';
+import {ModelConfig, Pose, PoseDetectorInput} from './types';
 
 /**
  * User-facing interface for all pose detectors.
@@ -23,16 +26,27 @@ export interface PoseDetector {
   /**
    * Estimate poses for an image or video frame.
    * @param image An image or video frame.
-   * @param config See `EstimationConfig` for available options.
+   * @param config Optional. See `EstimationConfig` for available options.
+   * @param timestamp Optional. In microseconds, i.e. 1e-6 of a second. This is
+   *     useful when image is a tensor, which doesn't have timestamp info. Or
+   *     to override timestamp in a video.
    * @returns An array of poses, each pose contains an array of `Keypoint`s.
    */
-  estimatePoses(image: PoseDetectorInput, config?: EstimationConfig):
-      Promise<Pose[]>;
+  estimatePoses(
+      image: PoseDetectorInput,
+      config?: PoseNetEstimationConfig|BlazeposeEstimationConfig|
+      MoveNetEstimationConfig,
+      timestamp?: number): Promise<Pose[]>;
 
   /**
    * Dispose the underlying models from memory.
    */
   dispose(): void;
+
+  /**
+   * Reset global states in the model.
+   */
+  reset(): void;
 }
 
 /**
@@ -50,8 +64,13 @@ export abstract class BasePoseDetector implements PoseDetector {
     return detector;
   }
 
-  abstract async estimatePoses(
-      image: PoseDetectorInput, config?: EstimationConfig): Promise<Pose[]>;
+  abstract estimatePoses(
+      image: PoseDetectorInput,
+      config?: PoseNetEstimationConfig|BlazeposeEstimationConfig|
+      MoveNetEstimationConfig,
+      timestamp?: number): Promise<Pose[]>;
 
   abstract dispose(): void;
+
+  abstract reset(): void;
 }

@@ -37,7 +37,7 @@ import {TensorsToLandmarksCalculatorConfig} from './interfaces/config_interfaces
  */
 export async function tensorsToLandmarks(
     landmarkTensor: tf.Tensor2D, config: TensorsToLandmarksCalculatorConfig,
-    flipHorizontally: boolean = false, flipVertically: boolean = false) {
+    flipHorizontally = false, flipVertically = false) {
   const numValues = landmarkTensor.size;
   const numDimensions = numValues / config.numLandmarks;
   const rawLandmarks = await landmarkTensor.data() as Float32Array;

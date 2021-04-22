@@ -14,12 +14,29 @@
  * limitations under the License.
  * =============================================================================
  */
-
+// Top level exports.
 // Entry point to create a new detector instance.
 export {BlazeposeEstimationConfig, BlazeposeModelConfig} from './blazepose/types';
 export {createDetector} from './create_detector';
+export {MoveNetEstimationConfig, MoveNetModelConfig} from './movenet/types';
 // PoseDetector class.
 export {PoseDetector} from './pose_detector';
 export {PoseNetEstimationConfig, PosenetModelConfig} from './posenet/types';
+
 // Supported models enum.
 export * from './types';
+
+// Second level exports.
+// Utils for rendering.
+import * as util from './util';
+export {util};
+
+// MoveNet model types.
+import {SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER} from './movenet/constants';
+const movenet = {
+  modelType: {
+    'SINGLEPOSE_LIGHTNING': SINGLEPOSE_LIGHTNING,
+    'SINGLEPOSE_THUNDER': SINGLEPOSE_THUNDER
+  }
+};
+export {movenet};

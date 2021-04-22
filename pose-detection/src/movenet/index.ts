@@ -14,22 +14,5 @@
  * limitations under the License.
  * =============================================================================
  */
-import {Keypoint} from '..';
-import {ImageSize} from './interfaces/common_interfaces';
-export function normalizedLandmarksToLandmarks(
-    normalizedLandmarks: Keypoint[], imageSize: ImageSize): Keypoint[] {
-  return normalizedLandmarks.map(normalizedLandmark => {
-    const landmark = {
-      ...normalizedLandmark,
-      x: normalizedLandmark.x * imageSize.width,
-      y: normalizedLandmark.y * imageSize.height
-    };
 
-    if (normalizedLandmark.z != null) {
-      // Scale z the same way as x (using image width).
-      landmark.z = normalizedLandmark.z * imageSize.width;
-    }
-
-    return landmark;
-  });
-}
+export {MoveNetDetector} from './detector';

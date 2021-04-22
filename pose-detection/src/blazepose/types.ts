@@ -20,11 +20,6 @@ import {EstimationConfig, ModelConfig} from '../types';
 /**
  * Additional Blazepose model loading config.
  *
- * `upperBodyOnly`: Optional. Default to false. If upperBody is true, then the
- * detector only detects 25 keypoints of the upperbody. The upperbody model
- * has a higher accuracy for upperbody prediction than the fullbody model. If
- * upperBody is false, then the detector detects 33 keypoints of the full body.
- *
  * `detectorModelUrl`: Optional. An optional string that specifies custom url of
  * the detector model. This is useful for area/countries that don't have access
  * to the model hosted on GCP.
@@ -34,7 +29,6 @@ import {EstimationConfig, ModelConfig} from '../types';
  * to the model hosted on GCP.
  */
 export interface BlazeposeModelConfig extends ModelConfig {
-  upperBodyOnly?: boolean;
   lite?: boolean;
   detectorModelUrl?: string;
   landmarkModelUrl?: string;
