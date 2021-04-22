@@ -688,10 +688,10 @@
   resolved "https://registry.yarnpkg.com/@haoyunfeix/posenet/-/posenet-2.2.3.tgz#65b5e75492306055905813fc74d432b911ee969b"
   integrity sha512-F/1RleBjqTaeWtJJMqdA8NUuLmjEXda34uTwxA38OhfTBc/SdKAjtkwxKJ2e0IQosp7kIFyv5qiRNt0ITcYA1Q==
 
-"@haoyunfeix/tfjs-backend-webgpu@0.0.1-alpha.6":
-  version "0.0.1-alpha.6"
-  resolved "https://registry.yarnpkg.com/@haoyunfeix/tfjs-backend-webgpu/-/tfjs-backend-webgpu-0.0.1-alpha.6.tgz#aabf850d5cc930d84d3042c90d21e6f9cc53b6d1"
-  integrity sha512-NyoB1PY6+MFF7AQk111RRf8l7itE+JjTv06+mhQLtMx5XJhnHmyW1jcIRbPFi+gGxTHF4lvaVTAtI9IdQFu5vA==
+"@haoyunfeix/tfjs-backend-webgpu@0.0.1-alpha.8":
+  version "0.0.1-alpha.8"
+  resolved "https://registry.yarnpkg.com/@haoyunfeix/tfjs-backend-webgpu/-/tfjs-backend-webgpu-0.0.1-alpha.8.tgz#4f0d5cb2db79627204bafa3ec150a2a6e94d62c0"
+  integrity sha512-ELiwrwL9Tvdruqq8C/9XCo1PCWbBeM2Pzjdis4Vxs7n4vSZ+pIZ8W8hDubYwNnIryrhbSabf1WltDS9K5uvAmg==
   dependencies:
     "@tensorflow/tfjs-backend-cpu" "3.3.0"
     "@webgpu/glslang" "0.0.12"
