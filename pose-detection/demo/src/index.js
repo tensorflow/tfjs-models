@@ -17,6 +17,12 @@
 
 import '@tensorflow/tfjs-backend-webgl';
 
+import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
+
+tfjsWasm.setWasmPaths(
+    `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
+        tfjsWasm.version_wasm}/dist/`);
+
 import * as posedetection from '@tensorflow-models/pose-detection';
 import * as tf from '@tensorflow/tfjs-core';
 
@@ -24,8 +30,9 @@ import {Camera} from './camera';
 import {setupDatGui} from './option_panel';
 import {STATE} from './params';
 import {setupStats} from './stats_panel';
+import {setEnvFlags} from './util';
 
-let detector, camera, stats;
+let detector, camera, stats, pauseInference;
 
 async function createDetector() {
   switch (STATE.model) {
@@ -60,6 +67,15 @@ async function checkGuiUpdate() {
     detector = await createDetector(STATE.model);
     STATE.changeToModel = null;
   }
+
+  if (STATE.isFlagChanged) {
+    STATE.changeToModel = true;
+    detector.dispose();
+    await setEnvFlags(STATE.flags);
+    detector = await createDetector(STATE.model);
+    STATE.isFlagChanged = false;
+    STATE.changeToModel = false;
+  }
 }
 
 async function renderResult() {
@@ -90,7 +106,7 @@ async function renderPrediction() {
 };
 
 async function app() {
-  await tf.setBackend('webgl');
+  await tf.setBackend(STATE.backend);
 
   // Gui content will change depending on which model is in the query string.
   const urlParams = new URLSearchParams(window.location.search);
@@ -99,7 +115,7 @@ async function app() {
     return;
   }
 
-  setupDatGui(urlParams);
+  await setupDatGui(urlParams);
 
   stats = setupStats();
 
