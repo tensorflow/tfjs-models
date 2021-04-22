@@ -59,15 +59,6 @@ export class MoveNetDetector extends BasePoseDetector {
     } else if (config.modelType === SINGLEPOSE_THUNDER) {
       this.modelInputResolution.width = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
       this.modelInputResolution.height = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
-    } else { 
-      if (config.modelUrl.includes('lightning')) {
-        this.modelInputResolution.width = MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION;
-        this.modelInputResolution.height =
-            MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION;
-      } else if (config.modelUrl.includes('thunder')) {
-        this.modelInputResolution.width = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
-        this.modelInputResolution.height = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
-      }
     }
   }
 
