@@ -33,5 +33,6 @@ export const POSENET_CONFIG = {
   scoreThreshold: 0.5
 };
 export const MOVENET_CONFIG = {
+  type: 'lightning',
   scoreThreshold: 0.3
 };
