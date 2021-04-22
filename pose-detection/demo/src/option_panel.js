@@ -198,8 +198,7 @@ async function initDefaultValueMap() {
  */
 function getTunableRange(flag) {
   const defaultValue = TUNABLE_FLAG_DEFAULT_VALUE_MAP[flag];
-  if (flag === 'WEBGL_FORCE_F16_TEXTURES' ||
-      flag === 'WEBGL_PACK_DEPTHWISECONV') {
+  if (flag === 'WEBGL_FORCE_F16_TEXTURES') {
     return [false, true];
   } else if (flag === 'WEBGL_VERSION') {
     const tunableRange = [];
