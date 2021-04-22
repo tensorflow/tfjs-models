@@ -59,6 +59,15 @@ export class MoveNetDetector extends BasePoseDetector {
     } else if (config.modelType === SINGLEPOSE_THUNDER) {
       this.modelInputResolution.width = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
       this.modelInputResolution.height = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
+    } else { 
+      if (config.modelUrl.includes('lightning')) {
+        this.modelInputResolution.width = MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION;
+        this.modelInputResolution.height =
+            MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION;
+      } else if (config.modelUrl.includes('thunder')) {
+        this.modelInputResolution.width = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
+        this.modelInputResolution.height = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
+      }
     }
   }
 
@@ -398,7 +407,7 @@ export class MoveNetDetector extends BasePoseDetector {
 
       let cropLengthHalf = Math.max(
           maxTorsoXrange * 1.9, maxTorsoYrange * 1.9, 
-          maxBodyYrange * 1.1, maxBodyXrange * 1.1);
+          maxBodyYrange * 1.2, maxBodyXrange * 1.2);
 
       cropLengthHalf = Math.min(
           cropLengthHalf,
