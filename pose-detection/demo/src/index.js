@@ -15,8 +15,9 @@
  * =============================================================================
  */
 
+import '@tensorflow/tfjs-backend-webgl';
+
 import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
-import * as tfjsWebGL from '@tensorflow/tfjs-backend-webgl';
 
 tfjsWasm.setWasmPaths(
     `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${

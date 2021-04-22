@@ -39,14 +39,6 @@ export const MOVENET_CONFIG = {
   type: 'lightning',
   scoreThreshold: 0.3
 };
-export const WEBGL_CONFIG = {
-  precision: 'float16'
-};
-export const MODEL_CONFIGS_MAP = {
-  posenet: ['scoreThreshold'],
-  movenet: ['scoreThreshold', 'type'],
-  blazepose: ['scoreThreshold']
-}
 /**
  * This map descripes tunable flags and theior corresponding types.
  *
