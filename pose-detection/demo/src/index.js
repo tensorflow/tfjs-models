@@ -81,9 +81,7 @@ async function renderResult() {
   // FPS only counts the time it takes to finish estimatePoses.
   stats.begin();
 
-  let poses = [];
-
-  poses = await detector.estimatePoses(
+  const poses = await detector.estimatePoses(
       camera.video, {maxPoses: 1, flipHorizontal: false});
 
   stats.end();
