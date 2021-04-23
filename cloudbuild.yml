@@ -63,6 +63,13 @@ steps:
   args: ['./scripts/run-build.sh', 'posenet']
   waitFor: ['diff']
 
+# Pose Detection.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'pose-detection'
+  args: ['./scripts/run-build.sh', 'pose-detection']
+  waitFor: ['diff']
+
 # Speech commands.
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'

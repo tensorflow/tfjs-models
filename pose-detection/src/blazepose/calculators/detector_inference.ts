@@ -21,20 +21,20 @@ import {splitDetectionResult} from './split_detection_result';
 export type DetectorInferenceResult = {
   boxes: tf.Tensor2D,
   scores: tf.Tensor1D
-}
+};
 
 export function detectorInference(
-    imageTensor: tf.Tensor4D, poseDetectorModel: tfconv.GraphModel):
-    DetectorInferenceResult {
-      return tf.tidy(() => {
-        const detectionResult =
-            poseDetectorModel.predict(imageTensor) as tf.Tensor3D;
-        const [scores, rawBoxes] = splitDetectionResult(detectionResult);
-        // Shape [896, 12]
-        const rawBoxes2d = tf.squeeze(rawBoxes) as tf.Tensor2D;
-        // Shape [896]
-        const scores1d = tf.squeeze(scores) as tf.Tensor1D;
+    imageTensor: tf.Tensor4D,
+    poseDetectorModel: tfconv.GraphModel): DetectorInferenceResult {
+  return tf.tidy(() => {
+    const detectionResult =
+        poseDetectorModel.predict(imageTensor) as tf.Tensor3D;
+    const [scores, rawBoxes] = splitDetectionResult(detectionResult);
+    // Shape [896, 12]
+    const rawBoxes2d = tf.squeeze(rawBoxes);
+    // Shape [896]
+    const scores1d = tf.squeeze(scores);
 
-        return {boxes: rawBoxes2d, scores: scores1d};
-      })
-    }
+    return {boxes: rawBoxes2d as tf.Tensor2D, scores: scores1d as tf.Tensor1D};
+  });
+}

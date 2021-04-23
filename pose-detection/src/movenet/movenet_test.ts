@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2019 Google LLC. All Rights Reserved.
+ * Copyright 2021 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,14 +21,14 @@ import {ALL_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_ut
 
 import * as poseDetection from '../index';
 
-describeWithFlags('PoseNet', ALL_ENVS, () => {
+import {SINGLEPOSE_LIGHTNING} from './constants';
+
+describeWithFlags('MoveNet', ALL_ENVS, () => {
   let detector: poseDetection.PoseDetector;
   let timeout: number;
 
   beforeAll(() => {
     timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
-    // This test suite makes real network request for model assets, increase
-    // the default timeout to allow enough time to load and reduce flakiness.
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 300000;  // 5mins
   });
 
@@ -39,13 +39,8 @@ describeWithFlags('PoseNet', ALL_ENVS, () => {
   beforeEach(async () => {
     // Note: this makes a network request for model assets.
     detector = await poseDetection.createDetector(
-        poseDetection.SupportedModels.PoseNet, {
-          quantBytes: 4,
-          architecture: 'MobileNetV1',
-          outputStride: 16,
-          inputResolution: {width: 514, height: 513},
-          multiplier: 1
-        });
+        poseDetection.SupportedModels.MoveNet,
+        {modelType: SINGLEPOSE_LIGHTNING});
   });
 
   it('estimatePoses does not leak memory', async () => {

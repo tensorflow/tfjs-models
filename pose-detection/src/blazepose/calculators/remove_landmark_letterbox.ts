@@ -46,6 +46,5 @@ export function removeLandmarkLetterbox(
     };
   });
 
-
   return outLandmarks;
 }

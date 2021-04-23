@@ -15,21 +15,18 @@
  * =============================================================================
  */
 
-import {DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL, DEFAULT_BLAZEPOSE_FULLBODY_CONFIG, DEFAULT_BLAZEPOSE_LANDMARK_FULL_BODY_MODEL_URL, DEFAULT_BLAZEPOSE_LANDMARK_UPPER_BODY_MODEL_URL} from './constants';
+import {DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL, DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG, DEFAULT_BLAZEPOSE_LANDMARK_FULL_BODY_MODEL_URL, DEFAULT_BLAZEPOSE_LANDMARK_UPPER_BODY_MODEL_URL} from './constants';
 import {BlazeposeEstimationConfig, BlazeposeModelConfig} from './types';
 
-export function validateModelConfig(modelConfig: BlazeposeModelConfig):
-    BlazeposeModelConfig {
+export function validateModelConfig(
+    modelConfig: BlazeposeModelConfig,
+    upperBodyOnly: boolean): BlazeposeModelConfig {
   let config;
 
   if (modelConfig == null) {
-    config = {...DEFAULT_BLAZEPOSE_FULLBODY_CONFIG};
+    config = {};
   } else {
     config = {...modelConfig};
-  }
-
-  if (config.upperBodyOnly == null) {
-    config.upperBodyOnly = false;
   }
 
   if (config.quantBytes == null) {
@@ -41,10 +38,10 @@ export function validateModelConfig(modelConfig: BlazeposeModelConfig):
   }
 
   if (config.landmarkModelUrl == null) {
-    if (config.upperBodyOnly) {
+    if (upperBodyOnly) {
       config.landmarkModelUrl = DEFAULT_BLAZEPOSE_LANDMARK_UPPER_BODY_MODEL_URL;
     } else {
-      config.landmarkModelUrl = DEFAULT_BLAZEPOSE_LANDMARK_FULL_BODY_MODEL_URL
+      config.landmarkModelUrl = DEFAULT_BLAZEPOSE_LANDMARK_FULL_BODY_MODEL_URL;
     }
   }
 
@@ -53,7 +50,13 @@ export function validateModelConfig(modelConfig: BlazeposeModelConfig):
 
 export function validateEstimationConfig(
     estimationConfig: BlazeposeEstimationConfig): BlazeposeEstimationConfig {
-  let config = {...estimationConfig};
+  let config;
+
+  if (estimationConfig == null) {
+    config = DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG;
+  } else {
+    config = {...estimationConfig};
+  }
 
   if (config.maxPoses == null) {
     config.maxPoses = 1;

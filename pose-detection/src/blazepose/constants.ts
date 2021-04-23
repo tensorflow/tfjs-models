@@ -15,11 +15,6 @@
  * =============================================================================
  */
 
-import {BlazeposeModelConfig} from './types';
-
-export const DEFAULT_BLAZEPOSE_FULLBODY_CONFIG: BlazeposeModelConfig = {
-  upperBodyOnly: false
-};
 export const DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL =
     'https://storage.googleapis.com/tfjs-models/savedmodel/blazepose/detector/model.json';
 export const DEFAULT_BLAZEPOSE_LANDMARK_FULL_BODY_MODEL_URL =

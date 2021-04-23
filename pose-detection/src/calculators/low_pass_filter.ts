@@ -25,16 +25,32 @@
 // ref:
 // https://github.com/google/mediapipe/blob/master/mediapipe/util/filtering/low_pass_filter.cc
 export class LowPassFilter {
-  private initialized: boolean = false;
+  private initialized = false;
   private rawValue: number;
   private storedValue: number;
 
   constructor(private alpha: number) {}
 
-  apply(value: number): number {
+  apply(value: number, threshold?: number): number {
     let result;
     if (this.initialized) {
-      result = this.alpha * value + (1 - this.alpha) * this.storedValue;
+      if (threshold == null) {
+        // Regular lowpass filter.
+        // result = this.alpha * value + (1 - this.alpha) * this.storedValue;
+        result = this.storedValue + this.alpha * (value - this.storedValue);
+      } else {
+        // We need to reformat the formula to be able to conveniently apply
+        // another optional non-linear function to the
+        // (value - this.storedValue) part.
+        // Add additional non-linearity to cap extreme value.
+        // More specifically, assume x = (value - this.storedValue), when x is
+        // close zero, the derived x is close to x, when x is several magnitudes
+        // larger, the drived x grows much slower then x. It behaves like
+        // sign(x)log(abs(x)).
+        result = this.storedValue +
+            this.alpha * threshold *
+                Math.asinh((value - this.storedValue) / threshold);
+      }
     } else {
       result = value;
       this.initialized = true;
@@ -45,9 +61,9 @@ export class LowPassFilter {
     return result;
   }
 
-  applyWithAlpha(value: number, alpha: number): number {
+  applyWithAlpha(value: number, alpha: number, threshold?: number): number {
     this.alpha = alpha;
-    return this.apply(value);
+    return this.apply(value, threshold);
   }
 
   hasLastRawValue(): boolean {
@@ -56,5 +72,9 @@ export class LowPassFilter {
 
   lastRawValue(): number {
     return this.rawValue;
+  }
+
+  reset() {
+    this.initialized = false;
   }
 }

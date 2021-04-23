@@ -14,22 +14,22 @@
  * limitations under the License.
  * =============================================================================
  */
-import {Keypoint} from '..';
+import {Keypoint} from '../types';
 import {ImageSize} from './interfaces/common_interfaces';
-export function landmarksToNormalizedLandmarks(
-    landmarks: Keypoint[], imageSize: ImageSize): Keypoint[] {
-  return landmarks.map(landmark => {
-    const normalizedLandmark = {
-      ...landmark,
-      x: landmark.x / imageSize.width,
-      y: landmark.y / imageSize.height
+export function keypointsToNormalizedKeypoints(
+    keypoints: Keypoint[], imageSize: ImageSize): Keypoint[] {
+  return keypoints.map(keypoint => {
+    const normalizedKeypoint = {
+      ...keypoint,
+      x: keypoint.x / imageSize.width,
+      y: keypoint.y / imageSize.height
     };
 
-    if (landmark.z != null) {
+    if (keypoint.z != null) {
       // Scale z the same way as x (using image width).
-      landmark.z = landmark.z / imageSize.width;
+      keypoint.z = keypoint.z / imageSize.width;
     }
 
-    return normalizedLandmark;
+    return normalizedKeypoint;
   });
 }

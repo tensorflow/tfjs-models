@@ -53,4 +53,15 @@ export interface OneEuroFilterConfig {
       number;  // Cutoff frequency for derivate. It is set to 1Hz in the
                // original algorithm, but can be turned to further smooth the
                // speed (i.e. derivate) on the object.
+  thresholdCutOff?:
+      number;  // The outlier threshold offset, will lead to a generally more
+               // reactive filter that will be less likely to discount outliers.
+  thresholdBeta?: number;  // The outlier threshold slope, will lead to a filter
+                           // that will more aggressively react whenever the
+                           // keypoint speed increases by being less likely to
+                           // consider that an observation is an outlier.
+}
+export interface KeypointsSmoothingConfig {
+  velocityFilter?: VelocityFilterConfig;
+  oneEuroFilter?: OneEuroFilterConfig;
 }
