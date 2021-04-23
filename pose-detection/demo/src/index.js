@@ -92,7 +92,8 @@ async function renderResult() {
   stats.begin();
 
   const poses = await detector.estimatePoses(
-      camera.video, {maxPoses: 1, flipHorizontal: false});
+      camera.video,
+      {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
 
   stats.end();
 
@@ -102,7 +103,7 @@ async function renderResult() {
   // different model. If changeToModel is non-null, the result is from an
   // old model, which shouldn't be rendered.
   if (poses.length > 0 && STATE.changeToModel == null) {
-    camera.drawResult(poses[0]);
+    camera.drawResults(poses);
   }
 }
 

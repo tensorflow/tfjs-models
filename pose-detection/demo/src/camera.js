@@ -95,6 +95,16 @@ export class Camera {
 
   /**
    * Draw the keypoints and skeleton on the video.
+   * @param poses A list of poses to render.
+   */
+  drawResults(poses) {
+    for (const pose of poses) {
+      this.drawResult(pose);
+    }
+  }
+
+  /**
+   * Draw the keypoints and skeleton on the video.
    * @param pose A pose with keypoints to render.
    */
   drawResult(pose) {

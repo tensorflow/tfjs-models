@@ -23,6 +23,7 @@ import {shiftImageValue} from '../calculators/shift_image_value';
 
 import {BasePoseDetector, PoseDetector} from '../pose_detector';
 import {InputResolution, Pose, PoseDetectorInput} from '../types';
+import {decodeMultiplePoses} from './calculators/decode_multiple_poses';
 import {decodeSinglePose} from './calculators/decode_single_pose';
 import {flipPosesHorizontal} from './calculators/flip_poses';
 import {scalePoses} from './calculators/scale_poses';
@@ -120,17 +121,13 @@ export class PosenetDetector extends BasePoseDetector {
    *       flipHorizontal: Optional. Default to false. When image data comes
    *       from camera, the result has to flip horizontally.
    *
-   * @param timestamp Optional. In microseconds, i.e. 1e-6 of a second. This is
-   *     useful when image is a tensor, which doesn't have timestamp info. Or
-   *     to override timestamp in a video.
-   *
    * @return An array of `Pose`s.
    */
   async estimatePoses(
       image: PoseDetectorInput,
       estimationConfig:
-          PoseNetEstimationConfig = SINGLE_PERSON_ESTIMATION_CONFIG,
-      timestamp?: number): Promise<Pose[]> {
+          PoseNetEstimationConfig = SINGLE_PERSON_ESTIMATION_CONFIG):
+      Promise<Pose[]> {
     const config = validateEstimationConfig(estimationConfig);
 
     if (image == null) {
@@ -138,10 +135,6 @@ export class PosenetDetector extends BasePoseDetector {
     }
 
     this.maxPoses = config.maxPoses;
-
-    if (this.maxPoses > 1) {
-      throw new Error('Multi-person poses is not implemented yet.');
-    }
 
     const {imageTensor, padding} = convertImageToTensor(
         image, {inputResolution: this.inputResolution, keepAspectRatio: true});
@@ -153,19 +146,32 @@ export class PosenetDetector extends BasePoseDetector {
     const results =
         this.posenetModel.predict(imageValueShifted) as tf.Tensor4D[];
 
-    let offsets, heatmap;
+    let offsets, heatmap, displacementFwd, displacementBwd;
     if (this.architecture === 'ResNet50') {
       offsets = tf.squeeze(results[2]);
       heatmap = tf.squeeze(results[3]);
+      displacementFwd = tf.squeeze(results[0]);
+      displacementBwd = tf.squeeze(results[1]);
     } else {
       offsets = tf.squeeze(results[0]);
       heatmap = tf.squeeze(results[1]);
+      displacementFwd = tf.squeeze(results[2]);
+      displacementBwd = tf.squeeze(results[3]);
     }
     const heatmapScores = tf.sigmoid(heatmap) as tf.Tensor3D;
 
-    const pose = await decodeSinglePose(
-        heatmapScores, offsets as tf.Tensor3D, this.outputStride);
-    const poses = [pose];
+    let poses;
+
+    if (this.maxPoses === 1) {
+      const pose = await decodeSinglePose(
+          heatmapScores, offsets as tf.Tensor3D, this.outputStride);
+      poses = [pose];
+    } else {
+      poses = await decodeMultiplePoses(
+          heatmapScores, offsets as tf.Tensor3D, displacementFwd as tf.Tensor3D,
+          displacementBwd as tf.Tensor3D, this.outputStride, this.maxPoses,
+          config.scoreThreshold, config.nmsRadius);
+    }
 
     const imageSize = getImageSize(image);
     let scaledPoses =
@@ -180,6 +186,8 @@ export class PosenetDetector extends BasePoseDetector {
     tf.dispose(results);
     offsets.dispose();
     heatmap.dispose();
+    displacementFwd.dispose();
+    displacementBwd.dispose();
     heatmapScores.dispose();
 
     return scaledPoses;

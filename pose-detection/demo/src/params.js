@@ -28,15 +28,18 @@ export const STATE = {
   camera: {targetFPS: 60, sizeOption: '640 X 480'},
   backend: 'webgl',
   flags: {},
-  modelConfigs: {}
+  modelConfig: {}
 };
 export const BLAZEPOSE_CONFIG = {
+  maxPoses: 1,
   scoreThreshold: 0.65
 };
 export const POSENET_CONFIG = {
+  maxPoses: 1,
   scoreThreshold: 0.5
 };
 export const MOVENET_CONFIG = {
+  maxPoses: 1,
   type: 'lightning',
   scoreThreshold: 0.3
 };

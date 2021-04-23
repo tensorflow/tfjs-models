@@ -133,6 +133,8 @@ function showModelConfigs(folderController, type) {
 // settings.
 function addPoseNetControllers(modelConfigFolder) {
   params.STATE.modelConfig = {...params.POSENET_CONFIG};
+
+  modelConfigFolder.add(params.STATE.modelConfig, 'maxPoses', [1, 2, 3, 4, 5]);
   modelConfigFolder.add(params.STATE.modelConfig, 'scoreThreshold', 0, 1);
 }
 
