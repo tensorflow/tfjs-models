@@ -32,7 +32,7 @@ import {STATE} from './params';
 import {setupStats} from './stats_panel';
 import {setEnvFlags} from './util';
 
-let detector, camera, stats, pauseInference;
+let detector, camera, stats;
 
 async function createDetector() {
   switch (STATE.model) {
@@ -68,13 +68,14 @@ async function checkGuiUpdate() {
     STATE.changeToModel = null;
   }
 
-  if (STATE.isFlagChanged) {
+  if (STATE.isFlagChanged || STATE.isBackendChanged) {
     STATE.changeToModel = true;
     detector.dispose();
-    await setEnvFlags(STATE.flags);
+    await setEnvFlags(STATE.flags, STATE.backend);
     detector = await createDetector(STATE.model);
     STATE.isFlagChanged = false;
-    STATE.changeToModel = false;
+    STATE.isBackendChanged = false;
+    STATE.changeToModel = null;
   }
 }
 

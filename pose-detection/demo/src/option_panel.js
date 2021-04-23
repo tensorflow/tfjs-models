@@ -92,7 +92,7 @@ export async function setupDatGui(urlParams) {
   const backendController =
       backendFolder.add(params.STATE, 'backend', ['webgl', 'wasm']);
   backendController.onChange(async backend => {
-    await tf.setBackend(backend);
+    params.STATE.isBackendChanged = true;
     await showFlagSettings(backendFolder, backend);
   });
   await showFlagSettings(backendFolder, params.STATE.backend);
@@ -165,7 +165,7 @@ function addBlazePoseControllers(modelConfigFolder) {
  */
 async function initDefaultValueMap() {
   // Clean up the cache to query tunable flags' default values.
-  setEnvFlags({});
+  setEnvFlags({}, params.STATE.backend);
   TUNABLE_FLAG_DEFAULT_VALUE_MAP = {};
   params.STATE.flags = {};
   for (const backend in params.BACKEND_FLAGS_MAP) {
