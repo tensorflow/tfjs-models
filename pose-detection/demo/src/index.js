@@ -32,7 +32,7 @@ import {STATE} from './params';
 import {setupStats} from './stats_panel';
 import {setEnvFlags} from './util';
 
-let detector, camera, stats;
+let detector, camera, stats, pauseInference;
 
 async function createDetector() {
   switch (STATE.model) {
