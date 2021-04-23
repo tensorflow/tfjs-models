@@ -32,7 +32,7 @@ import {STATE} from './params';
 import {setupStats} from './stats_panel';
 import {setEnvFlags} from './util';
 
-let detector, camera, stats, pauseInference;
+let detector, camera, stats;
 
 async function createDetector() {
   switch (STATE.model) {
@@ -79,6 +79,14 @@ async function checkGuiUpdate() {
 }
 
 async function renderResult() {
+  if (video.readyState < 2) {
+    await new Promise((resolve) => {
+      camera.video.onloadeddata = () => {
+        resolve(video);
+      };
+    });
+  }
+
   // FPS only counts the time it takes to finish estimatePoses.
   stats.begin();
 
