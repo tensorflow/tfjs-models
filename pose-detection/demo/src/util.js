@@ -34,8 +34,6 @@ async function resetBackend(backendName) {
     throw new Error(`${backendName} backend is not registed.`);
   }
 
-  const currentBackend = tf.getBackend();
-
   if (backendName in ENGINE.registry) {
     const backendFactory = tf.findBackendFactory(backendName);
     tf.removeBackend(backendName);
