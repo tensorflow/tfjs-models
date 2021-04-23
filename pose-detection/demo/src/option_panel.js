@@ -18,7 +18,7 @@ import * as posedetection from '@tensorflow-models/pose-detection';
 import * as tf from '@tensorflow/tfjs-core';
 
 import * as params from './params';
-import {setEnvFlags} from './util';
+import {setBackendAndEnvFlags} from './util';
 
 /**
  * Records each flag's default value under the runtime environment and is a
@@ -92,7 +92,7 @@ export async function setupDatGui(urlParams) {
   const backendController =
       backendFolder.add(params.STATE, 'backend', ['webgl', 'wasm']);
   backendController.onChange(async backend => {
-    await tf.setBackend(backend);
+    params.STATE.isBackendChanged = true;
     await showFlagSettings(backendFolder, backend);
   });
   await showFlagSettings(backendFolder, params.STATE.backend);
@@ -165,7 +165,7 @@ function addBlazePoseControllers(modelConfigFolder) {
  */
 async function initDefaultValueMap() {
   // Clean up the cache to query tunable flags' default values.
-  setEnvFlags({});
+  setBackendAndEnvFlags({}, params.STATE.backend);
   TUNABLE_FLAG_DEFAULT_VALUE_MAP = {};
   params.STATE.flags = {};
   for (const backend in params.BACKEND_FLAGS_MAP) {

@@ -30,9 +30,9 @@ import {Camera} from './camera';
 import {setupDatGui} from './option_panel';
 import {STATE} from './params';
 import {setupStats} from './stats_panel';
-import {setEnvFlags} from './util';
+import {setBackendAndEnvFlags} from './util';
 
-let detector, camera, stats, pauseInference;
+let detector, camera, stats;
 
 async function createDetector() {
   switch (STATE.model) {
@@ -68,17 +68,26 @@ async function checkGuiUpdate() {
     STATE.changeToModel = null;
   }
 
-  if (STATE.isFlagChanged) {
+  if (STATE.isFlagChanged || STATE.isBackendChanged) {
     STATE.changeToModel = true;
     detector.dispose();
-    await setEnvFlags(STATE.flags);
+    await setBackendAndEnvFlags(STATE.flags, STATE.backend);
     detector = await createDetector(STATE.model);
     STATE.isFlagChanged = false;
-    STATE.changeToModel = false;
+    STATE.isBackendChanged = false;
+    STATE.changeToModel = null;
   }
 }
 
 async function renderResult() {
+  if (video.readyState < 2) {
+    await new Promise((resolve) => {
+      camera.video.onloadeddata = () => {
+        resolve(video);
+      };
+    });
+  }
+
   // FPS only counts the time it takes to finish estimatePoses.
   stats.begin();
 

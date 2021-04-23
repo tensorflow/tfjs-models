@@ -34,17 +34,13 @@ async function resetBackend(backendName) {
     throw new Error(`${backendName} backend is not registed.`);
   }
 
-  const currentBackend = tf.getBackend();
-
   if (backendName in ENGINE.registry) {
     const backendFactory = tf.findBackendFactory(backendName);
     tf.removeBackend(backendName);
     tf.registerBackend(backendName, backendFactory);
   }
 
-  if (currentBackend === backendName) {
-    await tf.setBackend(backendName);
-  }
+  await tf.setBackend(backendName);
 }
 
 /**
@@ -65,7 +61,7 @@ async function resetBackend(backendName) {
  *
  * @param flagConfig An object to store flag-value pairs.
  */
-export async function setEnvFlags(flagConfig) {
+export async function setBackendAndEnvFlags(flagConfig, backend) {
   if (flagConfig == null) {
     return;
   } else if (typeof flagConfig !== 'object') {
@@ -89,15 +85,5 @@ export async function setEnvFlags(flagConfig) {
 
   tf.env().setFlags(flagConfig);
 
-  // `WASM_HAS_SIMD_SUPPORT` and `WEBGL_VERSION` are also evaluated when
-  // initializing backends, not only inferring.
-  // TODO: The following backend rebuild logics can be implemented in `setHook`
-  // when registering these flags.
-  if ('WASM_HAS_SIMD_SUPPORT' in flagConfig) {
-    await resetBackend('wasm');
-  }
-
-  if ('WEBGL_VERSION' in flagConfig) {
-    await resetBackend('webgl');
-  }
+  await resetBackend(backend);
 }
