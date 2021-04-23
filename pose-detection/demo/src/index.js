@@ -30,7 +30,7 @@ import {Camera} from './camera';
 import {setupDatGui} from './option_panel';
 import {STATE} from './params';
 import {setupStats} from './stats_panel';
-import {setEnvFlags} from './util';
+import {setBackendAndEnvFlags} from './util';
 
 let detector, camera, stats;
 
@@ -71,7 +71,7 @@ async function checkGuiUpdate() {
   if (STATE.isFlagChanged || STATE.isBackendChanged) {
     STATE.changeToModel = true;
     detector.dispose();
-    await setEnvFlags(STATE.flags, STATE.backend);
+    await setBackendAndEnvFlags(STATE.flags, STATE.backend);
     detector = await createDetector(STATE.model);
     STATE.isFlagChanged = false;
     STATE.isBackendChanged = false;

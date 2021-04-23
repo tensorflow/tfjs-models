@@ -18,7 +18,7 @@ import * as posedetection from '@tensorflow-models/pose-detection';
 import * as tf from '@tensorflow/tfjs-core';
 
 import * as params from './params';
-import {setEnvFlags} from './util';
+import {setBackendAndEnvFlags} from './util';
 
 /**
  * Records each flag's default value under the runtime environment and is a
@@ -165,7 +165,7 @@ function addBlazePoseControllers(modelConfigFolder) {
  */
 async function initDefaultValueMap() {
   // Clean up the cache to query tunable flags' default values.
-  setEnvFlags({}, params.STATE.backend);
+  setBackendAndEnvFlags({}, params.STATE.backend);
   TUNABLE_FLAG_DEFAULT_VALUE_MAP = {};
   params.STATE.flags = {};
   for (const backend in params.BACKEND_FLAGS_MAP) {

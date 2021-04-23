@@ -63,7 +63,7 @@ async function resetBackend(backendName) {
  *
  * @param flagConfig An object to store flag-value pairs.
  */
-export async function setEnvFlags(flagConfig, backend) {
+export async function setBackendAndEnvFlags(flagConfig, backend) {
   if (flagConfig == null) {
     return;
   } else if (typeof flagConfig !== 'object') {
