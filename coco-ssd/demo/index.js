@@ -14,14 +14,15 @@
  * limitations under the License.
  * =============================================================================
  */
+import '@tensorflow/tfjs-backend-cpu';
+import '@tensorflow/tfjs-backend-webgl';
 
-import * as cocoSsd from '@tensorflow-models/coco-ssd'
+import * as cocoSsd from '@tensorflow-models/coco-ssd';
 
 import imageURL from './image1.jpg';
 import image2URL from './image2.jpg';
 
 let modelPromise;
-let baseModel = 'lite_mobilenet_v2';
 
 window.onload = () => modelPromise = cocoSsd.load();
 

@@ -9,16 +9,19 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow-models/blazeface": "0.0.5",
-    "@tensorflow/tfjs-core": "^1.5.2",
-    "@tensorflow/tfjs-converter": "^1.5.2",
-    "@tensorflow/tfjs-backend-wasm": "^1.5.2-alpha1"
+    "@tensorflow-models/blazeface": "link:../dist",
+    "@tensorflow/tfjs-backend-wasm": "^3.1.0",
+    "@tensorflow/tfjs-backend-webgl": "^3.1.0",
+    "@tensorflow/tfjs-converter": "^3.1.0",
+    "@tensorflow/tfjs-core": "3.1.0"
   },
   "scripts": {
     "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr --open --target browser",
     "build": "cross-env NODE_ENV=production parcel build index.html --no-minify --target browser --public-url ./",
     "lint": "eslint .",
-    "link-local": "yalc link @tensorflow-models/blazeface"
+    "link-local": "yalc link @tensorflow-models/blazeface",
+    "build-model": "cd .. && yarn && yarn build-npm",
+    "build-deps": "yarn build-model"
   },
   "browser": {
     "crypto": false
@@ -33,8 +36,11 @@
     "dat.gui": "^0.7.2",
     "eslint": "^4.19.1",
     "eslint-config-google": "^0.9.1",
-    "parcel-bundler": "~1.10.3",
-    "yalc": "~1.0.0-pre.27"
+    "parcel-bundler": "~1.12.5",
+    "yalc": "~1.0.0-pre.50"
+  },
+  "resolutions": {
+    "is-svg": "4.3.1"
   },
   "eslintConfig": {
     "extends": "google",

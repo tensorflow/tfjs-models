@@ -20,4 +20,5 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-"${SCRIPT_DIR}/speech-commands/training/browser-fft/py_lint_and_test.sh"
+# This file is currently an empty placeholder. Add Python tests here when
+# they are added in the future.

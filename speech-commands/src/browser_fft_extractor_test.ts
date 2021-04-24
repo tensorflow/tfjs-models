@@ -15,7 +15,8 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
+// tslint:disable-next-line: no-imports-from-dist
 import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 import {BrowserFftFeatureExtractor, flattenQueue, getInputTensorFromFrequencyData} from './browser_fft_extractor';
 import * as BrowserFftUtils from './browser_fft_utils';

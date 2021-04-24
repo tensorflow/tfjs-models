@@ -49,7 +49,7 @@ async function loadAnchors() {
       .then(d => d.json());
 }
 
-interface AnnotatedPrediction extends Prediction {
+export interface AnnotatedPrediction extends Prediction {
   annotations: {[key: string]: Array<[number, number, number]>};
 }
 
@@ -113,11 +113,7 @@ function flipHandHorizontal(prediction: Prediction, width: number): Prediction {
 }
 
 export class HandPose {
-  private pipeline: HandPipeline;
-
-  constructor(pipeline: HandPipeline) {
-    this.pipeline = pipeline;
-  }
+  constructor(private readonly pipeline: HandPipeline) {}
 
   static getAnnotations(): {[key: string]: number[]} {
     return MESH_ANNOTATIONS;
@@ -141,7 +137,7 @@ export class HandPose {
       if (!(input instanceof tf.Tensor)) {
         input = tf.browser.fromPixels(input);
       }
-      return input.toFloat().expandDims(0);
+      return tf.expandDims(tf.cast(input, 'float32'));
     });
 
     const result = await this.pipeline.estimateHand(image);

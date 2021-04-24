@@ -86,11 +86,12 @@ export class ObjectDetection {
   async load() {
     this.model = await tfconv.loadGraphModel(this.modelPath);
 
+    const zeroTensor = tf.zeros([1, 300, 300, 3], 'int32');
     // Warmup the model.
-    const result = await this.model.executeAsync(
-                       tf.zeros([1, 300, 300, 3], 'int32')) as tf.Tensor[];
+    const result = await this.model.executeAsync(zeroTensor) as tf.Tensor[];
     await Promise.all(result.map(t => t.data()));
     result.map(t => t.dispose());
+    zeroTensor.dispose();
   }
 
   /**
@@ -101,17 +102,19 @@ export class ObjectDetection {
    * @param maxNumBoxes The maximum number of bounding boxes of detected
    * objects. There can be multiple objects of the same class, but at different
    * locations. Defaults to 20.
+   * @param minScore The minimum score of the returned bounding boxes
+   * of detected objects. Value between 0 and 1. Defaults to 0.5.
    */
   private async infer(
       img: tf.Tensor3D|ImageData|HTMLImageElement|HTMLCanvasElement|
       HTMLVideoElement,
-      maxNumBoxes: number): Promise<DetectedObject[]> {
+      maxNumBoxes: number, minScore: number): Promise<DetectedObject[]> {
     const batched = tf.tidy(() => {
       if (!(img instanceof tf.Tensor)) {
         img = tf.browser.fromPixels(img);
       }
       // Reshape to a single-element batch so we can pass it to executeAsync.
-      return img.expandDims(0);
+      return tf.expandDims(img);
     });
     const height = batched.shape[1];
     const width = batched.shape[2];
@@ -135,19 +138,23 @@ export class ObjectDetection {
 
     const prevBackend = tf.getBackend();
     // run post process in cpu
-    tf.setBackend('cpu');
+    if (tf.getBackend() === 'webgl') {
+      tf.setBackend('cpu');
+    }
     const indexTensor = tf.tidy(() => {
       const boxes2 =
           tf.tensor2d(boxes, [result[1].shape[1], result[1].shape[3]]);
       return tf.image.nonMaxSuppression(
-          boxes2, maxScores, maxNumBoxes, 0.5, 0.5);
+          boxes2, maxScores, maxNumBoxes, minScore, minScore);
     });
 
     const indexes = indexTensor.dataSync() as Float32Array;
     indexTensor.dispose();
 
     // restore previous backend
-    tf.setBackend(prevBackend);
+    if (prevBackend !== tf.getBackend()) {
+      tf.setBackend(prevBackend);
+    }
 
     return this.buildDetectedObjects(
         width, height, boxes, maxScores, indexes, classes);
@@ -209,13 +216,14 @@ export class ObjectDetection {
    * @param maxNumBoxes The maximum number of bounding boxes of detected
    * objects. There can be multiple objects of the same class, but at different
    * locations. Defaults to 20.
-   *
+   * @param minScore The minimum score of the returned bounding boxes
+   * of detected objects. Value between 0 and 1. Defaults to 0.5.
    */
   async detect(
       img: tf.Tensor3D|ImageData|HTMLImageElement|HTMLCanvasElement|
       HTMLVideoElement,
-      maxNumBoxes = 20): Promise<DetectedObject[]> {
-    return this.infer(img, maxNumBoxes);
+      maxNumBoxes = 20, minScore = 0.5): Promise<DetectedObject[]> {
+    return this.infer(img, maxNumBoxes, minScore);
   }
 
   /**
@@ -223,7 +231,7 @@ export class ObjectDetection {
    * are done with the model.
    */
   dispose() {
-    if (this.model) {
+    if (this.model != null) {
       this.model.dispose();
     }
   }

@@ -4,6 +4,10 @@ This demo allows you to try out semantic segmentation on a couple of preset imag
 
 ## Setup
 
+Run `yarn` in the root and 'deeplab' folder to install dependencies.
+
+Run `yarn build-npm` in the 'deeplab' folder.
+
 Change the directory to the `demo` folder:
 
 ```sh

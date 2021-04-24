@@ -9,12 +9,13 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow/tfjs": "^1.5.2",
+    "@tensorflow-models/speech-commands": "file:../dist",
     "stats.js": "^0.17.0"
   },
   "scripts": {
-    "watch": "cross-env NODE_OPTIONS=--max_old_space_size=4096 NODE_ENV=development parcel index.html --no-hmr --open",
-    "build": "cross-env NODE_OPTIONS=--max_old_space_size=4096 NODE_ENV=production parcel build index.html --public-url ./",
+    "build-model": "cd .. && yarn && yarn build",
+    "watch": "yarn build-model && cross-env NODE_OPTIONS=--max_old_space_size=4096 NODE_ENV=development parcel index.html --no-hmr --open",
+    "build": "yarn build-model && cross-env NODE_OPTIONS=--max_old_space_size=4096 NODE_ENV=production parcel build index.html --public-url ./",
     "lint": "eslint .",
     "link-local": "yalc link @tensorflow-models/speech-commands"
   },
@@ -24,7 +25,6 @@
   "devDependencies": {
     "@babel/core": "^7.0.0-0",
     "@babel/plugin-transform-runtime": "^7.1.0",
-    "babel-core": "^6.26.3",
     "babel-polyfill": "~6.26.0",
     "babel-preset-env": "~1.6.1",
     "babel-preset-es2017": "^6.24.1",
@@ -33,9 +33,12 @@
     "dat.gui": "^0.7.1",
     "eslint": "^4.19.1",
     "eslint-config-google": "^0.9.1",
-    "parcel-bundler": "~1.12.4",
+    "parcel-bundler": "~1.12.5",
     "plotly.js-dist": "^1.39.4",
-    "yalc": "~1.0.0-pre.21"
+    "yalc": "~1.0.0-pre.50"
+  },
+  "resolutions": {
+    "is-svg": "4.3.1"
   },
   "eslintConfig": {
     "extends": "google",

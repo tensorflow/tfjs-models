@@ -15,11 +15,21 @@
  * =============================================================================
  */
 
+import * as tf from '@tensorflow/tfjs-core';
 import * as tfconv from '@tensorflow/tfjs-converter';
 import {BlazeFaceModel} from './face';
 
 const BLAZEFACE_MODEL_URL =
-    'https://tfhub.dev/tensorflow/tfjs-model/blazeface/1/default/1';
+  'https://tfhub.dev/tensorflow/tfjs-model/blazeface/1/default/1';
+
+interface BlazeFaceConfig {
+  maxFaces?: number;
+  inputWidth?: number;
+  inputHeight?: number;
+  iouThreshold?: number;
+  scoreThreshold?: number;
+  modelUrl?: string | tf.io.IOHandler;
+}
 
 /**
  * Load blazeface.
@@ -38,14 +48,26 @@ export async function load({
   inputWidth = 128,
   inputHeight = 128,
   iouThreshold = 0.3,
-  scoreThreshold = 0.75
-} = {}): Promise<BlazeFaceModel> {
-  const blazeface =
-      await tfconv.loadGraphModel(BLAZEFACE_MODEL_URL, {fromTFHub: true});
+  scoreThreshold = 0.75,
+  modelUrl,
+}: BlazeFaceConfig = {}): Promise<BlazeFaceModel> {
+  let blazeface;
+  if (modelUrl != null) {
+    blazeface = await tfconv.loadGraphModel(modelUrl);
+  } else {
+    blazeface = await tfconv.loadGraphModel(BLAZEFACE_MODEL_URL, {
+      fromTFHub: true,
+    });
+  }
 
   const model = new BlazeFaceModel(
-      blazeface, inputWidth, inputHeight, maxFaces, iouThreshold,
-      scoreThreshold);
+    blazeface,
+    inputWidth,
+    inputHeight,
+    maxFaces,
+    iouThreshold,
+    scoreThreshold
+  );
   return model;
 }
 

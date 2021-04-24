@@ -23,7 +23,7 @@ const imageNetMean = [-123.15, -115.90, -103.06];
 
 export class ResNet extends BaseModel {
   preprocessInput(input: tf.Tensor3D): tf.Tensor3D {
-    return input.add(imageNetMean);
+    return tf.add(input, imageNetMean);
   }
 
   nameOutputResults(results: tf.Tensor3D[]) {

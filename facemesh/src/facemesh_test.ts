@@ -78,5 +78,18 @@ describeWithFlags('Facemesh', ALL_ENVS, () => {
     expect(face.boundingBox).toBeDefined();
     expect(face.mesh).toBeDefined();
     expect(face.scaledMesh).toBeDefined();
+
+    const topLeft = face.boundingBox.topLeft as [number, number];
+    const bottomRight = face.boundingBox.bottomRight as [number, number];
+
+    expect(topLeft[0]).toBeDefined();
+    expect(topLeft[0]).not.toBeNaN();
+    expect(topLeft[1]).toBeDefined();
+    expect(topLeft[1]).not.toBeNaN();
+
+    expect(bottomRight[0]).toBeDefined();
+    expect(bottomRight[0]).not.toBeNaN();
+    expect(bottomRight[1]).toBeDefined();
+    expect(bottomRight[1]).not.toBeNaN();
   });
 });

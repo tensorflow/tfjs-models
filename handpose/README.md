@@ -9,7 +9,7 @@ Given an input, the model predicts whether it contains a hand. If so, the model 
 
 More background information about the model, as well as its performance characteristics on different datasets, can be found here: [https://drive.google.com/file/d/1sv4sSb9BSNVZhLzxXJ0jBv9DqD-4jnAz/view](https://drive.google.com/file/d/1sv4sSb9BSNVZhLzxXJ0jBv9DqD-4jnAz/view)
 
-Check out our [demo](https://storage.googleapis.com/tfjs-models/demos/handpose/index.html), which uses the model to detect hand landmarks in a live video stream.
+Check out our [demo](https://storage.googleapis.com/tfjs-models/demos/handtrack/index.html), which uses the model to detect hand landmarks in a live video stream.
 
 This model is also available as part of [MediaPipe](https://hand.mediapipe.dev/), a framework for building multimodal applied ML pipelines.
 
@@ -19,30 +19,39 @@ MediaPipe Handpose consists of ~12MB of weights, and is well-suited for real tim
 
 ## Installation
 
+Via script tags:
+
+```html
+<!-- Require the peer dependencies of handpose. -->
+<script src="https://unpkg.com/@tensorflow/tfjs-core@2.1.0/dist/tf-core.js"></script>
+<script src="https://unpkg.com/@tensorflow/tfjs-converter@2.1.0/dist/tf-converter.js"></script>
+
+<!-- You must explicitly require a TF.js backend if you're not using the tfs union bundle. -->
+<script src="https://unpkg.com/@tensorflow/tfjs-backend-webgl@2.1.0/dist/tf-backend-webgl.js"></script>
+<!-- Alternatively you can use the WASM backend: <script src="https://unpkg.com/@tensorflow/tfjs-backend-wasm@2.1.0/dist/tf-backend-wasm.js"></script> -->
+
+<script src="https://unpkg.com/@tensorflow-models/handpose@0.0.6/dist/handpose.js"></script>
+```
+
+Via npm:
+
 Using `yarn`:
 
     $ yarn add @tensorflow-models/handpose
-
-Using `npm`:
-
-    $ npm install @tensorflow-models/handpose
-
-Note that this package specifies `@tensorflow/tfjs-core` and `@tensorflow/tfjs-converter` as peer dependencies, so they will also need to be installed.
+    $ yarn add @tensorflow/tfjs-core, @tensorflow/tfjs-converter
+    $ yarn add @tensorflow/tfjs-backend-webgl # or @tensorflow/tfjs-backend-wasm
 
 ## Usage
 
-To import in npm:
+If you are using npm, first add:
 
 ```js
 const handpose = require('@tensorflow-models/handpose');
-```
 
-or as a standalone script tag:
+require('@tensorflow/tfjs-backend-webgl'); // handpose does not itself require a backend, so you must explicitly install one.
 
-```html
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/handpose"></script>
+// If you are using the WASM backend:
+// require('@tensorflow/tfjs-backend-wasm');
 ```
 
 Then:

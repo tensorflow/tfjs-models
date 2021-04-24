@@ -24,7 +24,7 @@ export type BodyPixArchitecture = 'ResNet50'|'MobileNetV1';
 export type BodyPixQuantBytes = 1|2|4;
 export type BodyPixMultiplier = 1.0|0.75|0.50;
 
-export type ImageType = HTMLImageElement|HTMLCanvasElement|HTMLVideoElement;
+export type ImageType = HTMLImageElement|HTMLCanvasElement|HTMLVideoElement|OffscreenCanvas;
 export type BodyPixInput = ImageData|ImageType|tf.Tensor3D;
 
 export type PersonSegmentation = {

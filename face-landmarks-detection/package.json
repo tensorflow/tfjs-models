@@ -1,0 +1,51 @@
+{
+  "name": "@tensorflow-models/face-landmarks-detection",
+  "version": "0.0.3",
+  "description": "Pretrained face landmarks detection model",
+  "main": "dist/index.js",
+  "jsnext:main": "dist/face-landmarks-detection.esm.js",
+  "module": "dist/face-landmarks-detection.esm.js",
+  "unpkg": "dist/face-landmarks-detection.min.js",
+  "jsdelivr": "dist/face-landmarks-detection.min.js",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tensorflow/tfjs-models.git"
+  },
+  "peerDependencies": {
+    "@tensorflow/tfjs-converter": "^3.1.0",
+    "@tensorflow/tfjs-core": "^3.1.0"
+  },
+  "dependencies": {
+    "@tensorflow-models/blazeface": "0.0.7",
+    "rimraf": "^3.0.2"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^11.0.2",
+    "@rollup/plugin-node-resolve": "^7.1.1",
+    "@rollup/plugin-typescript": "^3.0.0",
+    "@tensorflow/tfjs-converter": "^3.1.0",
+    "@tensorflow/tfjs-core": "^3.1.0",
+    "@tensorflow/tfjs-backend-cpu": "^3.1.0",
+    "@types/jasmine": "~2.8.8",
+    "babel-core": "~6.26.0",
+    "babel-plugin-transform-runtime": "~6.23.0",
+    "jasmine-core": "~3.5.0",
+    "rollup": "~2.3.2",
+    "rollup-plugin-terser": "~5.3.0",
+    "rollup-plugin-visualizer": "~3.3.2",
+    "ts-node": "~8.8.2",
+    "tslint": "~5.18.0",
+    "typescript": "~3.5.3",
+    "yalc": "~1.0.0-pre.21"
+  },
+  "scripts": {
+    "build": "rimraf dist && tsc",
+    "publish-local": "yarn build && rollup -c && yalc publish",
+    "test": "ts-node --skip-ignore --project tsconfig.test.json run_tests.ts",
+    "build-npm": "yarn build && rollup -c",
+    "lint": "tslint -p . -t verbose",
+    "publish-demo": "./scripts/publish-demo.sh"
+  },
+  "license": "Apache-2.0"
+}

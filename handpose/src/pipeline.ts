@@ -20,8 +20,6 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {Box, cutBoxFromImageAndResize, enlargeBox, getBoxCenter, getBoxSize, shiftBox, squarifyBox} from './box';
 import {HandDetector} from './hand';
-import {rotate as rotateCpu} from './rotate_cpu';
-import {rotate as rotateWebgl} from './rotate_gpu';
 import {buildRotationMatrix, computeRotation, dot, invertTransformMatrix, rotatePoint, TransformationMatrix} from './util';
 
 const UPDATE_REGION_OF_INTEREST_IOU_THRESHOLD = 0.8;
@@ -47,32 +45,20 @@ export interface Prediction {
 
 // The Pipeline coordinates between the bounding box and skeleton models.
 export class HandPipeline {
-  // MediaPipe model for detecting hand bounding box.
-  private boundingBoxDetector: HandDetector;
-  // MediaPipe model for detecting hand mesh.
-  private meshDetector: tfconv.GraphModel;
-
-  private maxHandsNumber: number;
-  private maxContinuousChecks: number;
-  private detectionConfidence: number;
-  private meshWidth: number;
-  private meshHeight: number;
+  private readonly maxHandsNumber: number;
 
   // An array of hand bounding boxes.
   private regionsOfInterest: Box[] = [];
   private runsWithoutHandDetector = 0;
 
   constructor(
-      boundingBoxDetector: HandDetector, meshDetector: tfconv.GraphModel,
-      meshWidth: number, meshHeight: number, maxContinuousChecks: number,
-      detectionConfidence: number) {
-    this.boundingBoxDetector = boundingBoxDetector;
-    this.meshDetector = meshDetector;
-    this.maxContinuousChecks = maxContinuousChecks;
-    this.detectionConfidence = detectionConfidence;
-    this.meshWidth = meshWidth;
-    this.meshHeight = meshHeight;
-
+      private readonly boundingBoxDetector: HandDetector
+      /* MediaPipe model for detecting hand bounding box */,
+      private readonly meshDetector: tfconv.GraphModel
+      /* MediaPipe model for detecting hand mesh */,
+      private readonly meshWidth: number, private readonly meshHeight: number,
+      private readonly maxContinuousChecks: number,
+      private readonly detectionConfidence: number) {
     this.maxHandsNumber = 1;  // TODO(annxingyuan): Add multi-hand support.
   }
 
@@ -159,7 +145,7 @@ export class HandPipeline {
     const useFreshBox = this.shouldUpdateRegionsOfInterest();
     if (useFreshBox === true) {
       const boundingBoxPrediction =
-          this.boundingBoxDetector.estimateHandBounds(image);
+          await this.boundingBoxDetector.estimateHandBounds(image);
       if (boundingBoxPrediction === null) {
         image.dispose();
         this.regionsOfInterest = [];
@@ -182,18 +168,8 @@ export class HandPipeline {
     const palmCenter = getBoxCenter(currentBox);
     const palmCenterNormalized: [number, number] =
         [palmCenter[0] / image.shape[2], palmCenter[1] / image.shape[1]];
-    let rotatedImage: tf.Tensor4D;
-    const backend = tf.getBackend();
-
-    if (backend === 'webgl') {
-      rotatedImage = rotateWebgl(image, angle, 0, palmCenterNormalized);
-    } else if (backend === 'cpu') {
-      rotatedImage = rotateCpu(image, angle, 0, palmCenterNormalized);
-    } else {
-      throw new Error(
-          `Handpose is not yet supported by the ${backend} ` +
-          `backend - rotation kernel is not defined.`);
-    }
+    const rotatedImage =
+        tf.image.rotateWithOffset(image, angle, 0, palmCenterNormalized);
 
     const rotationMatrix = buildRotationMatrix(-angle, palmCenter);
 
@@ -210,20 +186,28 @@ export class HandPipeline {
 
     const croppedInput = cutBoxFromImageAndResize(
         box, rotatedImage, [this.meshWidth, this.meshHeight]);
-    const handImage = croppedInput.div(255);
+    const handImage = tf.div(croppedInput, 255);
     croppedInput.dispose();
     rotatedImage.dispose();
 
-    // Currently tfjs-core does not pack depthwiseConv because it fails for
-    // very large inputs (https://github.com/tensorflow/tfjs/issues/1652).
-    // TODO(annxingyuan): call tf.enablePackedDepthwiseConv when available
-    // (https://github.com/tensorflow/tfjs/issues/2821)
-    const savedWebglPackDepthwiseConvFlag =
-        tf.env().get('WEBGL_PACK_DEPTHWISECONV');
-    tf.env().set('WEBGL_PACK_DEPTHWISECONV', true);
-    const [flag, keypoints] =
-        this.meshDetector.predict(handImage) as [tf.Tensor, tf.Tensor];
-    tf.env().set('WEBGL_PACK_DEPTHWISECONV', savedWebglPackDepthwiseConvFlag);
+    let prediction;
+    if (tf.getBackend() === 'webgl') {
+      // Currently tfjs-core does not pack depthwiseConv because it fails for
+      // very large inputs (https://github.com/tensorflow/tfjs/issues/1652).
+      // TODO(annxingyuan): call tf.enablePackedDepthwiseConv when available
+      // (https://github.com/tensorflow/tfjs/issues/2821)
+      const savedWebglPackDepthwiseConvFlag =
+          tf.env().get('WEBGL_PACK_DEPTHWISECONV');
+      tf.env().set('WEBGL_PACK_DEPTHWISECONV', true);
+      prediction =
+          this.meshDetector.predict(handImage) as [tf.Tensor, tf.Tensor];
+      tf.env().set('WEBGL_PACK_DEPTHWISECONV', savedWebglPackDepthwiseConvFlag);
+    } else {
+      prediction =
+          this.meshDetector.predict(handImage) as [tf.Tensor, tf.Tensor];
+    }
+
+    const [flag, keypoints] = prediction;
 
     handImage.dispose();
 

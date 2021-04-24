@@ -14,8 +14,11 @@
  * limitations under the License.
  * =============================================================================
  */
+import '@tensorflow/tfjs-backend-cpu';
+import '@tensorflow/tfjs-backend-webgl';
 
 import * as use from '@tensorflow-models/universal-sentence-encoder';
+import * as tf from '@tensorflow/tfjs-core';
 import {interpolateReds} from 'd3-scale-chromatic';
 
 const sentences = [
@@ -26,12 +29,10 @@ const sentences = [
 
 const init = async () => {
   const model = await use.load();
-
   document.querySelector('#loading').style.display = 'none';
   renderSentences();
 
   const embeddings = await model.embed(sentences);
-
   const matrixSize = 250;
   const cellSize = matrixSize / sentences.length;
   const canvas = document.querySelector('canvas');
@@ -56,12 +57,13 @@ const init = async () => {
     yLabelsContainer.appendChild(labelYDom);
 
     for (let j = i; j < sentences.length; j++) {
-      const sentenceI = embeddings.slice([i, 0], [1]);
-      const sentenceJ = embeddings.slice([j, 0], [1]);
+      const sentenceI = tf.slice(embeddings, [i, 0], [1]);
+      const sentenceJ = tf.slice(embeddings, [j, 0], [1]);
       const sentenceITranspose = false;
       const sentenceJTransepose = true;
       const score =
-          sentenceI.matMul(sentenceJ, sentenceITranspose, sentenceJTransepose)
+          tf.matMul(
+                sentenceI, sentenceJ, sentenceITranspose, sentenceJTransepose)
               .dataSync();
 
       ctx.fillStyle = interpolateReds(score);
@@ -70,8 +72,42 @@ const init = async () => {
     }
   }
 };
-
+const initQnA = async () => {
+  const input = {
+    queries: ['How are you feeling today?'],
+    responses: [
+      'I\'m not feeling very well.', 'Beijing is the capital of China.',
+      'You have five fingers on your hand.'
+    ]
+  };
+  const model = await use.loadQnA();
+  document.querySelector('#loadingQnA').style.display = 'none';
+  let result = model.embed(input);
+  const query = result['queryEmbedding'].arraySync();
+  const answers = result['responseEmbedding'].arraySync();
+  for (let i = 0; i < answers.length; i++) {
+    document.getElementById(`answer_${i + 1}`).textContent =
+        `${dotProduct(query[0], answers[i])}`
+  }
+};
 init();
+initQnA();
+// zipWith :: (a -> b -> c) -> [a] -> [b] -> [c]
+const zipWith =
+    (f, xs, ys) => {
+      const ny = ys.length;
+      return (xs.length <= ny ? xs : xs.slice(0, ny))
+          .map((x, i) => f(x, ys[i]));
+    }
+
+// dotProduct :: [Int] -> [Int] -> Int
+const dotProduct =
+    (xs, ys) => {
+      const sum = xs => xs ? xs.reduce((a, b) => a + b, 0) : undefined;
+
+      return xs.length === ys.length ? (sum(zipWith((a, b) => a * b, xs, ys))) :
+                                       undefined;
+    }
 
 const renderSentences = () => {
   sentences.forEach((sentence, i) => {
