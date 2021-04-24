@@ -31,6 +31,11 @@ export class Camera {
    * @param cameraParam From app `STATE.camera`.
    */
   static async setupCamera(cameraParam) {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error(
+          'Browser API navigator.mediaDevices.getUserMedia not available');
+    }
+
     const {targetFPS, sizeOption} = cameraParam;
     const $size = params.VIDEO_SIZE[sizeOption];
     const videoConfig = {
@@ -39,8 +44,9 @@ export class Camera {
         facingMode: 'user',
         // Only setting the video to a specified size for large screen, on
         // mobile devices accept the default size.
-        width: isMobile() ? undefined : $size.width,
-        height: isMobile() ? undefined : $size.height,
+        width: isMobile() ? params.VIDEO_SIZE['360 X 270'].width : $size.width,
+        height: isMobile() ? params.VIDEO_SIZE['360 X 270'].height :
+                             $size.height,
         frameRate: {
           ideal: targetFPS,
         }
@@ -89,6 +95,16 @@ export class Camera {
 
   /**
    * Draw the keypoints and skeleton on the video.
+   * @param poses A list of poses to render.
+   */
+  drawResults(poses) {
+    for (const pose of poses) {
+      this.drawResult(pose);
+    }
+  }
+
+  /**
+   * Draw the keypoints and skeleton on the video.
    * @param pose A pose with keypoints to render.
    */
   drawResult(pose) {
@@ -104,7 +120,7 @@ export class Camera {
    */
   drawKeypoints(keypoints) {
     const keypointInd =
-        posedetection.util.getKeypointIndexBySide(params.STATE.model.model);
+        posedetection.util.getKeypointIndexBySide(params.STATE.model);
     this.ctx.fillStyle = 'White';
     this.ctx.strokeStyle = 'White';
     this.ctx.lineWidth = params.DEFAULT_LINE_WIDTH;
@@ -127,7 +143,7 @@ export class Camera {
   drawKeypoint(keypoint) {
     // If score is null, just show the keypoint.
     const score = keypoint.score != null ? keypoint.score : 1;
-    const scoreThreshold = params.STATE.model.scoreThreshold || 0;
+    const scoreThreshold = params.STATE.modelConfig.scoreThreshold || 0;
 
     if (score >= scoreThreshold) {
       const circle = new Path2D();
@@ -146,22 +162,23 @@ export class Camera {
     this.ctx.strokeStyle = 'White';
     this.ctx.lineWidth = params.DEFAULT_LINE_WIDTH;
 
-    posedetection.util.getAdjacentPairs(params.STATE.model.model)
-        .forEach(([i, j]) => {
-          const kp1 = keypoints[i];
-          const kp2 = keypoints[j];
+    posedetection.util.getAdjacentPairs(params.STATE.model).forEach(([
+                                                                      i, j
+                                                                    ]) => {
+      const kp1 = keypoints[i];
+      const kp2 = keypoints[j];
 
-          // If score is null, just show the keypoint.
-          const score1 = kp1.score != null ? kp1.score : 1;
-          const score2 = kp2.score != null ? kp2.score : 1;
-          const scoreThreshold = params.STATE.model.scoreThreshold || 0;
+      // If score is null, just show the keypoint.
+      const score1 = kp1.score != null ? kp1.score : 1;
+      const score2 = kp2.score != null ? kp2.score : 1;
+      const scoreThreshold = params.STATE.modelConfig.scoreThreshold || 0;
 
-          if (score1 >= scoreThreshold && score2 >= scoreThreshold) {
-            this.ctx.beginPath();
-            this.ctx.moveTo(kp1.x, kp1.y);
-            this.ctx.lineTo(kp2.x, kp2.y);
-            this.ctx.stroke();
-          }
-        });
+      if (score1 >= scoreThreshold && score2 >= scoreThreshold) {
+        this.ctx.beginPath();
+        this.ctx.moveTo(kp1.x, kp1.y);
+        this.ctx.lineTo(kp2.x, kp2.y);
+        this.ctx.stroke();
+      }
+    });
   }
 }

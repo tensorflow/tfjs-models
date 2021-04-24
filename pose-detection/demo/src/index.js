@@ -17,6 +17,12 @@
 
 import '@tensorflow/tfjs-backend-webgl';
 
+import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
+
+tfjsWasm.setWasmPaths(
+    `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
+        tfjsWasm.version_wasm}/dist/`);
+
 import * as posedetection from '@tensorflow-models/pose-detection';
 import * as tf from '@tensorflow/tfjs-core';
 
@@ -24,13 +30,14 @@ import {Camera} from './camera';
 import {setupDatGui} from './option_panel';
 import {STATE} from './params';
 import {setupStats} from './stats_panel';
+import {setBackendAndEnvFlags} from './util';
 
 let detector, camera, stats;
 
 async function createDetector() {
-  switch (STATE.model.model) {
+  switch (STATE.model) {
     case posedetection.SupportedModels.PoseNet:
-      return posedetection.createDetector(STATE.model.model, {
+      return posedetection.createDetector(STATE.model, {
         quantBytes: 4,
         architecture: 'MobileNetV1',
         outputStride: 16,
@@ -39,12 +46,12 @@ async function createDetector() {
       });
     case posedetection.SupportedModels.MediapipeBlazeposeUpperBody:
     case posedetection.SupportedModels.MediapipeBlazeposeFullBody:
-      return posedetection.createDetector(STATE.model.model, {quantBytes: 4});
+      return posedetection.createDetector(STATE.model, {quantBytes: 4});
     case posedetection.SupportedModels.MoveNet:
-      const modelType = STATE.model.type == 'lightning' ?
+      const modelType = STATE.modelConfig.type == 'lightning' ?
           posedetection.movenet.modelType.SINGLEPOSE_LIGHTNING :
           posedetection.movenet.modelType.SINGLEPOSE_THUNDER;
-      return posedetection.createDetector(STATE.model.model, {modelType});
+      return posedetection.createDetector(STATE.model, {modelType});
   }
 }
 
@@ -55,19 +62,38 @@ async function checkGuiUpdate() {
     STATE.changeToSizeOption = null;
   }
 
-  if (STATE.changeToModel) {
+  if (STATE.changeToModel != null) {
     detector.dispose();
-    detector = await createDetector(STATE.model.model);
+    detector = await createDetector(STATE.model);
+    STATE.changeToModel = null;
+  }
+
+  if (STATE.isFlagChanged || STATE.isBackendChanged) {
+    STATE.changeToModel = true;
+    detector.dispose();
+    await setBackendAndEnvFlags(STATE.flags, STATE.backend);
+    detector = await createDetector(STATE.model);
+    STATE.isFlagChanged = false;
+    STATE.isBackendChanged = false;
     STATE.changeToModel = null;
   }
 }
 
 async function renderResult() {
+  if (video.readyState < 2) {
+    await new Promise((resolve) => {
+      camera.video.onloadeddata = () => {
+        resolve(video);
+      };
+    });
+  }
+
   // FPS only counts the time it takes to finish estimatePoses.
   stats.begin();
 
   const poses = await detector.estimatePoses(
-      camera.video, {maxPoses: 1, flipHorizontal: false});
+      camera.video,
+      {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
 
   stats.end();
 
@@ -77,7 +103,7 @@ async function renderResult() {
   // different model. If changeToModel is non-null, the result is from an
   // old model, which shouldn't be rendered.
   if (poses.length > 0 && STATE.changeToModel == null) {
-    camera.drawResult(poses[0]);
+    camera.drawResults(poses);
   }
 }
 
@@ -90,7 +116,7 @@ async function renderPrediction() {
 };
 
 async function app() {
-  await tf.setBackend('webgl');
+  await tf.setBackend(STATE.backend);
 
   // Gui content will change depending on which model is in the query string.
   const urlParams = new URLSearchParams(window.location.search);
@@ -99,7 +125,7 @@ async function app() {
     return;
   }
 
-  setupDatGui(urlParams);
+  await setupDatGui(urlParams);
 
   stats = setupStats();
 
