@@ -56,26 +56,26 @@ async function createDetector() {
 }
 
 async function checkGuiUpdate() {
-  if (STATE.changeToTargetFPS || STATE.changeToSizeOption) {
+  if (STATE.isTargetFPSChanged || STATE.isSizeOptionChanged) {
     camera = await Camera.setupCamera(STATE.camera);
-    STATE.changeToTargetFPS = null;
-    STATE.changeToSizeOption = null;
+    STATE.isTargetFPSChanged = false;
+    STATE.isSizeOptionChanged = false;
   }
 
-  if (STATE.changeToModel != null) {
+  if (STATE.isModelChanged) {
     detector.dispose();
     detector = await createDetector(STATE.model);
-    STATE.changeToModel = null;
+    STATE.isModelChanged = false;
   }
 
   if (STATE.isFlagChanged || STATE.isBackendChanged) {
-    STATE.changeToModel = true;
+    STATE.isModelChanged = true;
     detector.dispose();
     await setBackendAndEnvFlags(STATE.flags, STATE.backend);
     detector = await createDetector(STATE.model);
     STATE.isFlagChanged = false;
     STATE.isBackendChanged = false;
-    STATE.changeToModel = null;
+    STATE.isModelChanged = false;
   }
 }
 
@@ -100,9 +100,9 @@ async function renderResult() {
   camera.drawCtx();
 
   // The null check makes sure the UI is not in the middle of changing to a
-  // different model. If changeToModel is non-null, the result is from an
-  // old model, which shouldn't be rendered.
-  if (poses.length > 0 && STATE.changeToModel == null) {
+  // different model. If during model change, the result is from an old model,
+  // which shouldn't be rendered.
+  if (poses.length > 0 && !STATE.isModelChanged) {
     camera.drawResults(poses);
   }
 }
