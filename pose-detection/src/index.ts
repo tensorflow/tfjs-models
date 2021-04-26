@@ -31,6 +31,11 @@ export * from './types';
 import * as util from './util';
 export {util};
 
+// General calculators.
+import {keypointsToNormalizedKeypoints} from './calculators/keypoints_to_normalized_keypoints';
+const calculators = {keypointsToNormalizedKeypoints};
+export {calculators};
+
 // MoveNet model types.
 import {SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER} from './movenet/constants';
 const movenet = {
