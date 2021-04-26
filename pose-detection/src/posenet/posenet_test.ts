@@ -57,4 +57,14 @@ describeWithFlags('PoseNet', ALL_ENVS, () => {
 
     expect(tf.memory().numTensors).toEqual(beforeTensors);
   });
+
+  it('estimatePoses with multiple poses does not leak memory', async () => {
+    const input: tf.Tensor3D = tf.zeros([128, 128, 3]);
+
+    const beforeTensors = tf.memory().numTensors;
+
+    await detector.estimatePoses(input, {maxPoses: 2});
+
+    expect(tf.memory().numTensors).toEqual(beforeTensors);
+  });
 });
