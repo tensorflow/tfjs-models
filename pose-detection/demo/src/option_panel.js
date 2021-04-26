@@ -35,13 +35,13 @@ export async function setupDatGui(urlParams) {
   // The camera folder contains options for video settings.
   const cameraFolder = gui.addFolder('Camera');
   const fpsController = cameraFolder.add(params.STATE.camera, 'targetFPS');
-  fpsController.onFinishChange((targetFPS) => {
-    params.STATE.changeToTargetFPS = +targetFPS;
+  fpsController.onFinishChange((_) => {
+    params.STATE.isTargetFPSChanged = true;
   });
   const sizeController = cameraFolder.add(
       params.STATE.camera, 'sizeOption', Object.keys(params.VIDEO_SIZE));
-  sizeController.onChange(option => {
-    params.STATE.changeToSizeOption = option;
+  sizeController.onChange(_ => {
+    params.STATE.isSizeOptionChanged = true;
   });
   cameraFolder.open();
 
@@ -79,8 +79,8 @@ export async function setupDatGui(urlParams) {
   const modelController = modelFolder.add(
       params.STATE, 'model', Object.values(posedetection.SupportedModels));
 
-  modelController.onChange(model => {
-    params.STATE.changeToModel = model;
+  modelController.onChange(_ => {
+    params.STATE.isModelChanged = true;
     showModelConfigs(modelFolder);
   });
 
@@ -147,9 +147,9 @@ function addMoveNetControllers(modelConfigFolder, type) {
   const typeController = modelConfigFolder.add(
       params.STATE.modelConfig, 'type', ['thunder', 'lightning']);
   typeController.onChange(_ => {
-    // Set changeToModel to non-null, so that we don't render any result when
-    // changeToModel is non-null.
-    params.STATE.changeToModel = params.STATE.model;
+    // Set isModelChanged to true, so that we don't render any result during
+    // changing models.
+    params.STATE.isModelChanged = true;
   });
 
   modelConfigFolder.add(params.STATE.modelConfig, 'scoreThreshold', 0, 1);
