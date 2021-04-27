@@ -21,6 +21,12 @@ it provides additional keypoints for face, hands and feet.
 
 PoseNet can detect multiple poses, each pose contains 17 keypoints.
 
+## Table of Contents
+1. [Installation](#installation) \
+2. [Usage](#usage) \
+3. [Keypoint Diagram](#keypoint-diagram) \
+4. [Example Code and Demos](#example-code-and-demos) \
+
 ## Installation
 
 Via script tags:
@@ -157,7 +163,7 @@ See the diagram below for what those keypoints are and their index in the array.
 31: right_foot_index  \
 32: left_foot_index  \
 
-## Example Code abd the Demos
+## Example Code and Demos
 You may reference the demos for code examples. Details for how to run the demos
 are included in the `demo/`
 [folder](https://github.com/tensorflow/tfjs-models/tree/master/pose-detection).
