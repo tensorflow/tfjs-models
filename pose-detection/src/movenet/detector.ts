@@ -24,7 +24,7 @@ import {BoundingBox} from '../calculators/interfaces/shape_interfaces';
 import {isVideo} from '../calculators/is_video';
 import {KeypointsOneEuroFilter} from '../calculators/keypoints_one_euro_filter';
 import {LowPassFilter} from '../calculators/low_pass_filter';
-import {COCO_KEYPOINTS, COCO_KEYPOINTS_BY_NAME} from '../constants';
+import {COCO_KEYPOINTS_BY_NAME} from '../constants';
 import {BasePoseDetector, PoseDetector} from '../pose_detector';
 import {InputResolution, Keypoint, Pose, PoseDetectorInput} from '../types';
 
@@ -242,10 +242,11 @@ export class MoveNetDetector extends BasePoseDetector {
 
     // Convert keypoint coordinates from normalized coordinates to image space,
     // add keypoint names and calculate the overall pose score.
+    const keypointNames = Object.keys(COCO_KEYPOINTS_BY_NAME);
     let numValidKeypoints = 0.0;
     let poseScore = 0.0;
     for (let i = 0; i < keypoints.length; ++i) {
-      keypoints[i].name = COCO_KEYPOINTS[i];
+      keypoints[i].name = keypointNames[i];
       keypoints[i].y *= imageSize.height;
       keypoints[i].x *= imageSize.width;
       if (keypoints[i].score > MIN_CROP_KEYPOINT_SCORE) {
@@ -309,13 +310,13 @@ export class MoveNetDetector extends BasePoseDetector {
   torsoVisible(keypoints: Keypoint[]): boolean {
     return (
         (keypoints[COCO_KEYPOINTS_BY_NAME['left_hip']].score >
-            MIN_CROP_KEYPOINT_SCORE ||
-        keypoints[COCO_KEYPOINTS_BY_NAME['right_hip']].score >
-            MIN_CROP_KEYPOINT_SCORE) &&
+             MIN_CROP_KEYPOINT_SCORE ||
+         keypoints[COCO_KEYPOINTS_BY_NAME['right_hip']].score >
+             MIN_CROP_KEYPOINT_SCORE) &&
         (keypoints[COCO_KEYPOINTS_BY_NAME['left_shoulder']].score >
-            MIN_CROP_KEYPOINT_SCORE ||
-        keypoints[COCO_KEYPOINTS_BY_NAME['right_shoulder']].score >
-            MIN_CROP_KEYPOINT_SCORE));
+             MIN_CROP_KEYPOINT_SCORE ||
+         keypoints[COCO_KEYPOINTS_BY_NAME['right_shoulder']].score >
+             MIN_CROP_KEYPOINT_SCORE));
   }
 
   /**
@@ -397,8 +398,8 @@ export class MoveNetDetector extends BasePoseDetector {
               keypoints, targetKeypoints, centerY, centerX);
 
       let cropLengthHalf = Math.max(
-          maxTorsoXrange * 1.9, maxTorsoYrange * 1.9, 
-          maxBodyYrange * 1.2, maxBodyXrange * 1.2);
+          maxTorsoXrange * 1.9, maxTorsoYrange * 1.9, maxBodyYrange * 1.2,
+          maxBodyXrange * 1.2);
 
       cropLengthHalf = Math.min(
           cropLengthHalf,
