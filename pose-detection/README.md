@@ -2,19 +2,14 @@
 
 This package provides multiple state-of-the-art models for running real-time pose detection.
 
+Currently, we provide 3 model options:
+MoveNet
+
+MediapipeBlazepose:
+
+PoseNet
+
 [Try the demo here!](https://storage.googleapis.com/tfjs-models/demos/posenet/camera.html)
-
-<img src="demos/camera.gif" alt="cameraDemo" style="width: 600px;"/>
-
-PoseNet can be used to estimate either a single pose or multiple poses, meaning there is a version of the algorithm that can detect only one person in an image/video and one version that can detect multiple persons in an image/video.
-
-[Refer to this blog post](https://medium.com/tensorflow/real-time-human-pose-estimation-in-the-browser-with-tensorflow-js-7dd0bc881cd5) for a high-level description of PoseNet running on Tensorflow.js.
-
-To keep track of issues we use the [tensorflow/tfjs](https://github.com/tensorflow/tfjs) Github repo.
-
-## Documentation Note
-
->> The README you see here is for the [PoseNet 2.0 version](https://www.npmjs.com/package/@tensorflow-models/posenet). For README of the previous 1.0 version, please look at the [README published on NPM](https://www.npmjs.com/package/@tensorflow-models/posenet/v/1.0.3).
 
 ## Installation
 
