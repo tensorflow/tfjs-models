@@ -21,11 +21,14 @@ it provides additional keypoints for face, hands and feet.
 
 PoseNet can detect multiple poses, each pose contains 17 keypoints.
 
+-------------------------------------------------------------------------------
 ## Table of Contents
-1. [Installation](#installation) \
-2. [Usage](#usage) \
-3. [Keypoint Diagram](#keypoint-diagram) \
-4. [Example Code and Demos](#example-code-and-demos) \
+1. [Installation](#installation)
+2. [Usage](#usage)
+3. [Keypoint Diagram](#keypoint-diagram)
+4. [Example Code and Demos](#example-code-and-demos)
+
+-------------------------------------------------------------------------------
 
 ## Installation
 
@@ -50,6 +53,8 @@ yarn add @tensorflow-models/pose-detection
 yarn add @tensorflow/tfjs-core, @tensorflow/tfjs-converter
 yarn add @tensorflow/tfjs-backend-webgl # or @tensorflow/tfjs-backend-wasm
 ```
+
+-------------------------------------------------------------------------------
 
 ## Usage
 If you are using via npm, you need to import the libraries first.
@@ -103,6 +108,8 @@ MediapipeBlazepose returns 33 keypoints. Each keypoint contains `x`, `y`,
 The `score` ranges from `0` to `1`. It represents the model's confidence of a
 keypoint. Usually, keypoints with low confidence scores should not be rendered.
 You may test where is the threshold based on your application.
+
+-------------------------------------------------------------------------------
 
 ## Keypoint Diagram
 See the diagram below for what those keypoints are and their index in the array.
@@ -162,6 +169,8 @@ See the diagram below for what those keypoints are and their index in the array.
 30: left_heel  \
 31: right_foot_index  \
 32: left_foot_index  \
+
+-------------------------------------------------------------------------------
 
 ## Example Code and Demos
 You may reference the demos for code examples. Details for how to run the demos
