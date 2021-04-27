@@ -6,16 +6,19 @@ Currently, we provide 3 model options:
 
 #### MoveNet
 [Demo](https://storage.googleapis.com/tfjs-models/demos/pose-detection/index.html?model=movenet)
+
 MoveNet is an ultra fast and accurate model that detects 17 keypoints of a body.
 It can run at 50+ fps on modern laptop and phones.
 
 #### MediapipeBlazepose:
 [Demo](https://storage.googleapis.com/tfjs-models/demos/pose-detection/index.html?model=blazepose)
+
 MediapipeBlazepose can detect 33 keypoints, in addition to the 17 COCO keypoints,
 it provides additional keypoints for face, hands and feet.
 
 #### PoseNet
 [Demo](https://storage.googleapis.com/tfjs-models/demos/pose-detection/index.html?model=posenet)
+
 PoseNet can detect multiple poses, each pose contains 17 keypoints.
 
 ## Installation
@@ -43,7 +46,8 @@ yarn add @tensorflow/tfjs-backend-webgl # or @tensorflow/tfjs-backend-wasm
 ```
 
 ## Usage
-### First import the libraries:
+If you are using via npm, you need to import the libraries first.
+### Import the libraries:
 ```javascript
 import * as poseDetection from '@tensorflow-models/pose-detection';
 import * as tf from '@tensorflow/tfjs-core';
@@ -55,17 +59,21 @@ import '@tensorflow/tfjs-backend-webgl';
 
 ### Create a detector:
 Choose a model from `posedetection.SupportedModels` enum list and pass it to the
-`createDetector` method. This method will fetch and load the model in memory. It
-will also prepare the detector to be ready to run. There is a default setting
-for each model, if you want more options, you can pass in a `ModelConfig` as the
-second parameter. For details, see the README for the model you are interested.
+`createDetector` method.
+
+`SupportedModels` include `MoveNet`, `MediapipeBlazepose` and `PoseNet`.
 
 ```javascript
 const detector = await poseDetection.createDetector(model);
 ```
 
+This method will fetch and load the model in memory. It
+will also prepare the detector to be ready to run. There is a default setting
+for each model, if you want more options, you can pass in a `ModelConfig` as the
+second parameter. For details, see the README for the model you are interested.
+
 ### Pose Estimation
-Once the detector is ready, you can start use it to detect poses. The
+Once the detector is ready, you can start using it to detect poses. The
 `estimatePoses` method accepts both image and video in many formats, including:
 `tf.Tensor3D`, `ImageData`, `HTMLVideoElement`, `HTMLImageElement`,
 `HTMLCanvasElement`. By default, the detector detects 1 pose per image, if you
@@ -78,13 +86,17 @@ const poses = await detector.estimatePoses(image);
 
 `poses` contains a list of poses, how many poses is returned is controlled by
 the `maxPose` option of the `EstimationConfig` and the model's own limitation.
-Currently, only PoseNet supports multi-pose estimation.
+Currently, only PoseNet supports multi-pose estimation. If the model cannot
+detect any pose, it will return an empty array.
 
 For each pose, it contains a confidence score of the pose and an array of
 keypoints. The PoseNet and MoveNet both return 17 keypoints. The
 MediapipeBlazepose returns 33 keypoints. Each keypoint contains `x`, `y`,
 `score` and `name`.
 
+The `score` ranges from `0` to `1`. It represents the model's confidence of a
+keypoint. Usually, keypoints with low confidence scores should not be rendered.
+You may test where is the threshold based on your application.
 
 ## Keypoint Diagram
 See the diagram below for what those keypoints are and their index in the array.
@@ -93,7 +105,7 @@ See the diagram below for what those keypoints are and their index in the array.
 ![COCO Keypoints](https://storage.googleapis.com/movenet/coco-keypoints.png)
 
 ### Blazepose Keypoints: Used in Mediapipe Blazepose
-![Blazepose Keypoints](https://storage.googleapis.com/mediapipe/blazepose-keypoints.png)
+![Blazepose Keypoints](https://storage.googleapis.com/mediapipe/blazepose-keypoints-500.png)
 
 ## Developing the Demos
 Details for how to run the demos are included in the `demo/` folder.
