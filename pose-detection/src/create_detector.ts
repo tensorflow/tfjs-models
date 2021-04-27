@@ -36,10 +36,7 @@ export async function createDetector(
   switch (model) {
     case SupportedModels.PoseNet:
       return PosenetDetector.load(modelConfig as PosenetModelConfig);
-    case SupportedModels.MediapipeBlazeposeUpperBody:
-      return BlazeposeDetector.load(
-          modelConfig as BlazeposeModelConfig, true /* upperBodyOnly */);
-    case SupportedModels.MediapipeBlazeposeFullBody:
+    case SupportedModels.MediapipeBlazepose:
       return BlazeposeDetector.load(modelConfig as BlazeposeModelConfig);
     case SupportedModels.MoveNet:
       return MoveNetDetector.load(modelConfig as MoveNetModelConfig);
