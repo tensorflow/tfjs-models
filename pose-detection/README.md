@@ -116,6 +116,8 @@ See the diagram below for what those keypoints are and their index in the array.
 
 ### COCO Keypoints: Used in MoveNet and PoseNet
 ![COCO Keypoints](https://storage.googleapis.com/movenet/coco-keypoints-500.png)
+
+
 0: nose  \
 1: left_eye  \
 2: right_eye  \
@@ -136,6 +138,8 @@ See the diagram below for what those keypoints are and their index in the array.
 
 ### Blazepose Keypoints: Used in Mediapipe Blazepose
 ![Blazepose Keypoints](https://storage.googleapis.com/mediapipe/blazepose-keypoints-500.png)
+
+
 0: nose  \
 1: right_eye_inner \
 2: right_eye  \
