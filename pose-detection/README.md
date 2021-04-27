@@ -103,9 +103,61 @@ See the diagram below for what those keypoints are and their index in the array.
 
 ### COCO Keypoints: Used in MoveNet and PoseNet
 ![COCO Keypoints](https://storage.googleapis.com/movenet/coco-keypoints-500.png)
+0: nose  \
+1: left_eye  \
+2: right_eye  \
+3: left_ear  \
+4: right_ear  \
+5: left_shoulder  \
+6: right_shoulder  \
+7: left_elbow  \
+8: right_elbow  \
+9: left_wrist  \
+10: right_wrist  \
+11: left_hip  \
+12: right_hip  \
+13: left_knee  \
+14: right_knee  \
+15: left_ankle  \
+16: right_ankle  \
 
 ### Blazepose Keypoints: Used in Mediapipe Blazepose
 ![Blazepose Keypoints](https://storage.googleapis.com/mediapipe/blazepose-keypoints-500.png)
+0: nose  \
+1: right_eye_inner \
+2: right_eye  \
+3: right_eye_outer  \
+4: left_eye_inner  \
+5: left_eye  \
+6: left_eye_outer  \
+7: right_ear  \
+8: left_ear  \
+9: mouth_right  \
+10: mouth_left  \
+11: right_shoulder  \
+12: left_shoulder  \
+13: right_elbow  \
+14: left_elbow  \
+15: right_wrist  \
+16: left_wrist  \
+17: right_pinky  \
+18: left_pinky  \
+19: right_index  \
+20: left_index  \
+21: right_thumb  \
+22: left_thumb  \
+23: right_hip  \
+24: left_hip  \
+25: right_knee  \
+26: left_knee  \
+27: right_ankle  \
+28: left_ankle  \
+29: right_heel  \
+30: left_heel  \
+31: right_foot_index  \
+32: left_foot_index  \
 
-## Developing the Demos
-Details for how to run the demos are included in the `demo/` [folder](https://github.com/tensorflow/tfjs-models/tree/master/pose-detection).
+## Example Code abd the Demos
+You may reference the demos for code examples. Details for how to run the demos
+are included in the `demo/`
+[folder](https://github.com/tensorflow/tfjs-models/tree/master/pose-detection).
