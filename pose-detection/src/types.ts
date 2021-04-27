@@ -18,8 +18,7 @@ import * as tf from '@tensorflow/tfjs-core';
 
 export enum SupportedModels {
   MoveNet = 'MoveNet',
-  MediapipeBlazeposeFullBody = 'MediapipeBlazeposeFullBody',
-  MediapipeBlazeposeUpperBody = 'MediapipeBlazeposeUpperBody',
+  MediapipeBlazepose = 'MediapipeBlazepose',
   PoseNet = 'PoseNet'
 }
 

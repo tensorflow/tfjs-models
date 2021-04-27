@@ -15,12 +15,11 @@
  * =============================================================================
  */
 
-import {DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL, DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG, DEFAULT_BLAZEPOSE_LANDMARK_FULL_BODY_MODEL_URL, DEFAULT_BLAZEPOSE_LANDMARK_UPPER_BODY_MODEL_URL} from './constants';
+import {DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL, DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG, DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL} from './constants';
 import {BlazeposeEstimationConfig, BlazeposeModelConfig} from './types';
 
-export function validateModelConfig(
-    modelConfig: BlazeposeModelConfig,
-    upperBodyOnly: boolean): BlazeposeModelConfig {
+export function validateModelConfig(modelConfig: BlazeposeModelConfig):
+    BlazeposeModelConfig {
   let config;
 
   if (modelConfig == null) {
@@ -38,11 +37,7 @@ export function validateModelConfig(
   }
 
   if (config.landmarkModelUrl == null) {
-    if (upperBodyOnly) {
-      config.landmarkModelUrl = DEFAULT_BLAZEPOSE_LANDMARK_UPPER_BODY_MODEL_URL;
-    } else {
-      config.landmarkModelUrl = DEFAULT_BLAZEPOSE_LANDMARK_FULL_BODY_MODEL_URL;
-    }
+    config.landmarkModelUrl = DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL;
   }
 
   return config;

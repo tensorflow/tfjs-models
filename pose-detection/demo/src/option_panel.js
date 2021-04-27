@@ -63,13 +63,7 @@ export async function setupDatGui(urlParams) {
       }
       break;
     case 'blazepose':
-      params.STATE.model = type === 'upperbody' ?
-          posedetection.SupportedModels.MediapipeBlazeposeUpperBody :
-          posedetection.SupportedModels.MediapipeBlazeposeFullBody;
-      if (type !== 'fullbody' && type !== 'upperbody') {
-        // Nulify invalid value.
-        type = null;
-      }
+      params.STATE.model = posedetection.SupportedModels.MediapipeBlazepose;
       break;
     default:
       alert(`${urlParams.get('model')}`);
@@ -120,8 +114,7 @@ function showModelConfigs(folderController, type) {
     case posedetection.SupportedModels.MoveNet:
       addMoveNetControllers(folderController, type);
       break;
-    case posedetection.SupportedModels.MediapipeBlazeposeUpperBody:
-    case posedetection.SupportedModels.MediapipeBlazeposeFullBody:
+    case posedetection.SupportedModels.MediapipeBlazepose:
       addBlazePoseControllers(folderController);
       break;
     default:
