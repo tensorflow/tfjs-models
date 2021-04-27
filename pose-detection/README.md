@@ -102,10 +102,10 @@ You may test where is the threshold based on your application.
 See the diagram below for what those keypoints are and their index in the array.
 
 ### COCO Keypoints: Used in MoveNet and PoseNet
-![COCO Keypoints](https://storage.googleapis.com/movenet/coco-keypoints.png)
+![COCO Keypoints](https://storage.googleapis.com/movenet/coco-keypoints-500.png)
 
 ### Blazepose Keypoints: Used in Mediapipe Blazepose
 ![Blazepose Keypoints](https://storage.googleapis.com/mediapipe/blazepose-keypoints-500.png)
 
 ## Developing the Demos
-Details for how to run the demos are included in the `demo/` folder.
+Details for how to run the demos are included in the `demo/` [folder](https://github.com/tensorflow/tfjs-models/tree/master/pose-detection).
