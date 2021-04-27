@@ -14,12 +14,14 @@
  * limitations under the License.
  * =============================================================================
  */
+// Don't change the order.
 export const COCO_KEYPOINTS = [
   'nose', 'left_eye', 'right_eye', 'left_ear', 'right_ear', 'left_shoulder',
   'right_shoulder', 'left_elbow', 'right_elbow', 'left_wrist', 'right_wrist',
   'left_hip', 'right_hip', 'left_knee', 'right_knee', 'left_ankle',
   'right_ankle'
 ];
+// Don't change the order.
 export const BLAZEPOSE_KEYPOINTS = [
   'nose',           'right_eye_inner', 'right_eye',      'right_eye_outer',
   'left_eye_inner', 'left_eye',        'left_eye_outer', 'right_ear',
@@ -53,57 +55,3 @@ export const BLAZEPOSE_CONNECTED_KEYPOINTS_PAIRS = [
   [18, 20], [23, 25], [23, 24], [24, 26], [25, 27], [26, 28],
   [27, 29], [28, 30], [27, 31], [28, 32], [29, 31], [30, 32]
 ];
-export const COCO_KEYPOINTS_BY_NAME: {[index: string]: number} = {
-  nose: 0,
-  left_eye: 1,
-  right_eye: 2,
-  left_ear: 3,
-  right_ear: 4,
-  left_shoulder: 5,
-  right_shoulder: 6,
-  left_elbow: 7,
-  right_elbow: 8,
-  left_wrist: 9,
-  right_wrist: 10,
-  left_hip: 11,
-  right_hip: 12,
-  left_knee: 13,
-  right_knee: 14,
-  left_ankle: 15,
-  right_ankle: 16
-};
-export const BLAZEPOSE_KEYPOINTS_BY_NAME: {[index: string]: number} = {
-  nose: 0,
-  right_eye_inner: 1,
-  right_eye: 2,
-  right_eye_outer: 3,
-  left_eye_inner: 4,
-  left_eye: 5,
-  left_eye_outer: 6,
-  right_ear: 7,
-  left_ear: 8,
-  mouth_right: 9,
-  mouth_left: 10,
-  right_shoulder: 11,
-  left_shoulder: 12,
-  right_elbow: 13,
-  left_elbow: 14,
-  right_wrist: 15,
-  left_wrist: 16,
-  right_pinky: 17,
-  left_pinky: 18,
-  right_index: 19,
-  left_index: 20,
-  right_thumb: 21,
-  left_thumb: 22,
-  right_hip: 23,
-  left_hip: 24,
-  right_knee: 25,
-  left_knee: 26,
-  right_ankle: 27,
-  left_ankle: 28,
-  right_heel: 29,
-  left_heel: 30,
-  right_foot_index: 31,
-  left_foot_index: 32
-};
