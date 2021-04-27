@@ -87,13 +87,18 @@ second parameter. For details, see the README for the model you are interested.
 Once the detector is ready, you can start using it to detect poses. The
 `estimatePoses` method accepts both image and video in many formats, including:
 `tf.Tensor3D`, `ImageData`, `HTMLVideoElement`, `HTMLImageElement`,
-`HTMLCanvasElement`. By default, the detector detects 1 pose per image, if you
-want more options, you can pass in an `EstimationConfig` as the second parameter.
+`HTMLCanvasElement`. If you want more options, you can pass in an
+`EstimationConfig` as the second parameter.
 For details, see the README for the model you are interested.
 
 ```javascript
 const poses = await detector.estimatePoses(image);
 ```
+
+The returned `poses` list contains detected poses for each individual in the
+image. For single-person models, there will only be one element in the list.
+Currently, only PoseNet supports multi-pose estimation. If the model cannot
+detect any people, the list will be empty.
 
 `poses` contains a list of poses, how many poses is returned is controlled by
 the `maxPose` option of the `EstimationConfig` and the model's own limitation.
@@ -105,9 +110,21 @@ keypoints. The PoseNet and MoveNet both return 17 keypoints. The
 MediapipeBlazepose returns 33 keypoints. Each keypoint contains `x`, `y`,
 `score` and `name`.
 
+`x` and `y` represent the keypoint actual position in the image. If you need
+normalized keypoint positions, you can use the method
+`poseDetection.calculator.keypointsToNormalizedKeypoints(keypoints, imageSize)`
+to convert `x` and `y` to `[0, 1]` range.
+
 The `score` ranges from `0` to `1`. It represents the model's confidence of a
-keypoint. Usually, keypoints with low confidence scores should not be rendered.
-You may test where is the threshold based on your application.
+keypoint. Usually, keypoints with low confidence scores should not be used.
+Each application may require a custom confidence threshold. For applications
+that require high precision, we recommend a larger confidence value. Conversely,
+applications that require high recall may choose to lower the threshold. The
+confidence values are not calibrated between models, and therefore setting a
+proper confidence threshold may involve some experimentation.
+
+The `name` provides a label for each keypoint, such as 'nose', 'left_eye',
+'right_knee', etc.
 
 -------------------------------------------------------------------------------
 
@@ -134,7 +151,7 @@ See the diagram below for what those keypoints are and their index in the array.
 13: left_knee  \
 14: right_knee  \
 15: left_ankle  \
-16: right_ankle  \
+16: right_ankle
 
 ### Blazepose Keypoints: Used in Mediapipe Blazepose
 ![Blazepose Keypoints](https://storage.googleapis.com/mediapipe/blazepose-keypoints-500.png)
@@ -172,11 +189,11 @@ See the diagram below for what those keypoints are and their index in the array.
 29: right_heel  \
 30: left_heel  \
 31: right_foot_index  \
-32: left_foot_index  \
+32: left_foot_index
 
 -------------------------------------------------------------------------------
 
 ## Example Code and Demos
 You may reference the demos for code examples. Details for how to run the demos
 are included in the `demo/`
-[folder](https://github.com/tensorflow/tfjs-models/tree/master/pose-detection).
+[folder](https://github.com/tensorflow/tfjs-models/tree/master/pose-detection/demo).
