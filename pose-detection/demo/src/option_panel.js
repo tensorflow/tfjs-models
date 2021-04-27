@@ -135,10 +135,10 @@ function addPoseNetControllers(modelConfigFolder) {
 // settings.
 function addMoveNetControllers(modelConfigFolder, type) {
   params.STATE.modelConfig = {...params.MOVENET_CONFIG};
-  params.STATE.modelConfig.type = type != null ? type : 'thunder';
+  params.STATE.modelConfig.type = type != null ? type : 'lightning';
 
   const typeController = modelConfigFolder.add(
-      params.STATE.modelConfig, 'type', ['thunder', 'lightning']);
+      params.STATE.modelConfig, 'type', ['lightning', 'thunder']);
   typeController.onChange(_ => {
     // Set isModelChanged to true, so that we don't render any result during
     // changing models.
