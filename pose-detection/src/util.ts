@@ -15,7 +15,6 @@
  * =============================================================================
  */
 import * as constants from './constants';
-import {COCO_KEYPOINTS_BY_NAME} from './constants';
 import {SupportedModels} from './types';
 
 export function getKeypointIndexBySide(model: SupportedModels):
@@ -53,12 +52,4 @@ export function getKeypointIndexByName(model: SupportedModels):
     default:
       throw new Error(`Model ${model} is not supported.`);
   }
-}
-
-export function getCOCOKeypointNames() {
-  return Object.keys(COCO_KEYPOINTS_BY_NAME);
-}
-
-export function getBlazePoseKeypointNames() {
-  return Object.keys(BLAZEPOSE_KEYPOINTS_BY_NAME);
 }
