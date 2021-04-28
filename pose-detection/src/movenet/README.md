@@ -4,7 +4,7 @@ MoveNet is an ultra fast and accurate model that detects 17 keypoints of a body.
 The model is offered on TF.Hub with two variants,
 [Lightning](https://tfhub.dev/google/movenet/singlepose/lightning/3) and
 [Thunder](https://tfhub.dev/google/movenet/singlepose/thunder/3). Lightning is
-intended for latency-critical application, and Thunder is intended for
+intended for latency-critical applications, and Thunder is intended for
 applications that require high accuracy. Both models run faster than real time
 (30+ FPS) on most modern desktops and laptops, which proves crucial for live
 fitness, health, and wellness applications. Please try it out using the live
@@ -21,7 +21,7 @@ fitness, health, and wellness applications. Please try it out using the live
 ## Installation
 
 Please follow the instructions in the Pose API
-[README](https://github.com/tensorflow/tfjs-models/blob/master/pose-detection/README.md)
+[README](https://github.com/tensorflow/tfjs-models/blob/master/pose-detection/README.md#installation)
 to install the package.
 
 ## Usage
@@ -87,7 +87,7 @@ const poses = await detector.estimatePoses(image, estimationConfig);
 ```
 
 Please refer to the Pose API
-[README](https://github.com/tensorflow/tfjs-models/blob/master/pose-detection/README.md)
+[README](https://github.com/tensorflow/tfjs-models/blob/master/pose-detection/README.md#pose-estimation)
 about the structure of the returned `poses`.
 
 ## Example Code and Demos
