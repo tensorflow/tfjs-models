@@ -3,7 +3,7 @@
 MoveNet is an ultra fast and accurate model that detects 17 keypoints of a body.
 The model is offered on TF.Hub with two variants,
 [Lightning](https://tfhub.dev/google/movenet/singlepose/lightning/3) and
-[Thunder](https://tfhub.dev/google/movenet/singlepose/lightning/3). Lightning is
+[Thunder](https://tfhub.dev/google/movenet/singlepose/thunder/3). Lightning is
 intended for latency-critical application, and Thunder is intended for
 applications that require high accuracy. Both models run faster than real time
 (30+ FPS) on most modern desktops and laptops, which proves crucial for live
@@ -73,10 +73,10 @@ accepts both image and video in many formats, including:
 at inference time:
 
 *   *enableSmoothing*: A boolean indicating whether to use temporal filter to
-    smooth the predicted keypoints. Default to *True*. The temporal filter 
+    smooth the predicted keypoints. Defaults to *True*. The temporal filter 
     relies on the `currentTime` field of the `HTMLVideoElement`. You can 
     override this timestamp by passing in your own timestamp (in microseconds) 
-    as the third parameter. This is useful when input is a tensor, which 
+    as the third parameter. This is useful when the input is a tensor, which 
     doesn't have the `currentTime` field. Or in testing, to simulate different FPS.
 
 The following code snippet demonstrates how to run the model inference:
