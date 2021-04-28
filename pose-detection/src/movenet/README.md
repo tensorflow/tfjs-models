@@ -26,7 +26,7 @@ to install the package.
 
 ## Usage
 
-If you are using via npm, you need to import the libraries first.
+If you are using the Pose API via npm, you need to import the libraries first.
 
 ### Import the libraries
 
