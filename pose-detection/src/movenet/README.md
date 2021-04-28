@@ -49,8 +49,9 @@ Pass in `poseDetection.SupportedModels.MoveNet` from the
 *   *modelType*: specify which MoveNet variant to load from the
     `poseDetection.movenet.modelType` enum list.
 
-*   *modelUrl* (optional): provide the tf.hub url to download the model. this is
-    used only when the *modelType* is not provided.
+*   *modelUrl* (optional): An optional string that specifies custom url of the
+	MoveNet model. This is useful for area/countries that don't have access
+	to the model hosted on tf.hub and only when the *modelType* is not provided.
 
 The following code snippet demonstrates how to load the
 **MoveNet.SinglePose.Lightning** model:
@@ -62,8 +63,8 @@ const detector = await poseDetection.createDetector(poseDetection.SupportedModel
 
 ### Run inference
 
-Once the detector is ready, you can start using it to detect poses. The
-`estimatePoses` method accepts both image and video in many formats, including:
+Now you can use the detector to detect poses. The `estimatePoses` method 
+accepts both image and video in many formats, including:
 `tf.Tensor3D`, `ImageData`, `HTMLVideoElement`, `HTMLImageElement`,
 `HTMLCanvasElement`. If you want more options, you can pass in an
 `estimationConfig` as the second parameter.
@@ -72,7 +73,11 @@ Once the detector is ready, you can start using it to detect poses. The
 at inference time:
 
 *   *enableSmoothing*: A boolean indicating whether to use temporal filter to
-    smooth the predicted keypoints. Default to *True*.
+    smooth the predicted keypoints. Default to *True*. The temporal filter 
+    relies on the `currentTime` field of the `HTMLVideoElement`. You can 
+    override this timestamp by passing in your own timestamp (in microseconds) 
+    as the third parameter. This is useful when input is a tensor, which 
+    doesn't have the `currentTime` field. Or in testing, to simulate different FPS.
 
 The following code snippet demonstrates how to run the model inference:
 
