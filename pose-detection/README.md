@@ -41,7 +41,6 @@ Via script tags:
 
 <!-- You must explicitly require a TF.js backend if you're not using the TF.js union bundle. -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
-<!-- Alternatively you can use the WASM backend: <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm/dist/tf-backend-wasm.js"></script> -->
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
 ```
@@ -51,7 +50,7 @@ Via npm:
 ```sh
 yarn add @tensorflow-models/pose-detection
 yarn add @tensorflow/tfjs-core, @tensorflow/tfjs-converter
-yarn add @tensorflow/tfjs-backend-webgl # or @tensorflow/tfjs-backend-wasm
+yarn add @tensorflow/tfjs-backend-webgl
 ```
 
 -------------------------------------------------------------------------------
@@ -65,31 +64,30 @@ import * as tf from '@tensorflow/tfjs-core';
 
 // Register one of the TF.js backends.
 import '@tensorflow/tfjs-backend-webgl';
-// import '@tensorflow/tfjs-backend-wasm';
 ```
 
 ### Create a detector:
-Choose a model from `posedetection.SupportedModels` enum list and pass it to the
+Choose a model from `poseDetection.SupportedModels` enum list and pass it to the
 `createDetector` method.
 
 `SupportedModels` include `MoveNet`, `MediapipeBlazepose` and `PoseNet`.
 
 ```javascript
-const detector = await poseDetection.createDetector(model);
+const detector = await poseDetection.createDetector(poseDetection.SupportedModels.MoveNet);
 ```
 
 This method will fetch and load the model in memory. It
 will also prepare the detector to be ready to run. There is a default setting
 for each model, if you want more options, you can pass in a `ModelConfig` as the
-second parameter. For details, see the README for the model you are interested.
+second parameter. For details, see the README for the model you are interested in.
 
 ### Pose Estimation
-Once the detector is ready, you can start using it to detect poses. The
+Now you can use the detector to detect poses. The
 `estimatePoses` method accepts both image and video in many formats, including:
 `tf.Tensor3D`, `ImageData`, `HTMLVideoElement`, `HTMLImageElement`,
 `HTMLCanvasElement`. If you want more options, you can pass in an
 `EstimationConfig` as the second parameter.
-For details, see the README for the model you are interested.
+For details, see the README for the model you are interested in.
 
 ```javascript
 const poses = await detector.estimatePoses(image);
@@ -100,17 +98,26 @@ image. For single-person models, there will only be one element in the list.
 Currently, only PoseNet supports multi-pose estimation. If the model cannot
 detect any people, the list will be empty.
 
-`poses` contains a list of poses, how many poses is returned is controlled by
-the `maxPose` option of the `EstimationConfig` and the model's own limitation.
-Currently, only PoseNet supports multi-pose estimation. If the model cannot
-detect any pose, it will return an empty array.
-
 For each pose, it contains a confidence score of the pose and an array of
-keypoints. The PoseNet and MoveNet both return 17 keypoints. The
+keypoints. PoseNet and MoveNet both return 17 keypoints.
 MediapipeBlazepose returns 33 keypoints. Each keypoint contains `x`, `y`,
 `score` and `name`.
 
-`x` and `y` represent the keypoint actual position in the image. If you need
+Example output:
+```javascript
+[
+  {
+    score: 0.8,
+    keypoints: [
+      {x: 230, y: 220, score: 0.9, name: "nose"},
+      {x: 212, y: 190, score: 0.8, name: "left_eye"},
+      ...
+    ]
+  }
+]
+```
+
+`x` and `y` represent the actual keypoint position in the image. If you need
 normalized keypoint positions, you can use the method
 `poseDetection.calculator.keypointsToNormalizedKeypoints(keypoints, imageSize)`
 to convert `x` and `y` to `[0, 1]` range.
