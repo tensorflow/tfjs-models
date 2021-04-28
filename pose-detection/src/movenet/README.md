@@ -50,8 +50,9 @@ Pass in `poseDetection.SupportedModels.MoveNet` from the
     `poseDetection.movenet.modelType` enum list.
 
 *   *modelUrl* (optional): An optional string that specifies custom url of the
-	MoveNet model. This is useful for area/countries that don't have access
-	to the model hosted on tf.hub and only when the *modelType* is not provided.
+	MoveNet model. If not provided, it will load the model specified by 
+	*modelType* from tf.hub. This argument is useful for area/countries that 
+	don't have access to the model hosted on tf.hub.
 
 The following code snippet demonstrates how to load the
 **MoveNet.SinglePose.Lightning** model:
