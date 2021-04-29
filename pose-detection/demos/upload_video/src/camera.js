@@ -24,6 +24,10 @@ export class Context {
     this.canvas = document.getElementById('output');
     this.source = document.getElementById('currentVID');
     this.ctx = this.canvas.getContext('2d');
+    const stream = this.canvas.captureStream();
+    const options = {mimeType: 'video/webm; codecs=vp9'};
+    this.mediaRecorder = new MediaRecorder(stream, options);
+    this.mediaRecorder.ondataavailable = this.handleDataAvailable;
   }
 
   drawCtx() {
@@ -122,5 +126,32 @@ export class Context {
         this.ctx.stroke();
       }
     });
+  }
+
+  start() {
+    this.mediaRecorder.start();
+  }
+
+  stop() {
+    this.mediaRecorder.stop();
+  }
+
+  handleDataAvailable(event) {
+    if (event.data.size > 0) {
+      console.log('preparing download');
+      const recordedChunks = [event.data];
+
+      // Download.
+      const blob = new Blob(recordedChunks, {type: 'video/webm'});
+      const url = URL.createObjectURL(blob);
+      console.log(url);
+      const a = document.createElement('a');
+      document.body.appendChild(a);
+      a.style = 'display: none';
+      a.href = url;
+      a.download = 'pose.webm';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    }
   }
 }
