@@ -103,21 +103,14 @@ export class MoveNetDetector extends BasePoseDetector {
    *     inference call could not be executed (for example when the model was
    *     not initialized yet) or if it produced an unexpected tensor size.
    */
-  async detectKeypoints(inputImage: tf.Tensor4D, executeSync = true):
-      Promise<Keypoint[]|null> {
+  detectKeypoints(inputImage: tf.Tensor4D): Keypoint[]|null {
     if (!this.moveNetModel) {
       return null;
     }
 
     const numKeypoints = 17;
 
-    let outputTensor;
-    if (executeSync) {
-      outputTensor = this.moveNetModel.execute(inputImage) as tf.Tensor;
-    } else {
-      outputTensor =
-          await this.moveNetModel.executeAsync(inputImage) as tf.Tensor;
-    }
+    const outputTensor = this.moveNetModel.execute(inputImage) as tf.Tensor;
 
     // We expect an output array of shape [1, 1, 17, 3] (batch, person,
     // keypoint, (y, x, score)).
@@ -128,7 +121,7 @@ export class MoveNetDetector extends BasePoseDetector {
       return null;
     }
 
-    const inferenceResult = await outputTensor.data();
+    const inferenceResult = outputTensor.dataSync();
     outputTensor.dispose();
 
     const keypoints: Keypoint[] = [];
