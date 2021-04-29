@@ -19,8 +19,7 @@ import * as tflite from '@tensorflow/tfjs-tflite';
 import {Class, ImageClassifier, ImageClassifierResult} from './common';
 
 /**
- * Helper function to transform TFLite image classifier result to task model's
- * result.
+ * Helper function to transform TFLite image classifier to task model.
  */
 export async function transformImageClassifier<T>(
     sourceModelGlobal: typeof tflite,

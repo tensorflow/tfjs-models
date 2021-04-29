@@ -27,7 +27,7 @@ import {mobilenetTfliteLoader} from './image_classification/mobilenet_tflite';
  * The index structure is: {task_name}.{model_name}.{runtime}
  *
  * Note that it is possible to programmatically generate the index from a list
- * of loaders, but that would mean that we need to define a generic type for
+ * of loaders, but it would mean that we need to define a generic type for
  * each level of the index structure (e.g. {[taskName: string]: TaskModels}).
  * This will not work well for the auto-complete system in IDEs because
  * typescript doesn't know the candidates to show from the generic types.
@@ -49,6 +49,8 @@ const modelIndex = {
     },
   },
 };
+
+// Export each task individually.
 
 export const ImageClassification = modelIndex[Task.IMAGE_CLASSIFICATION];
 

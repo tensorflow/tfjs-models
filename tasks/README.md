@@ -1,49 +1,38 @@
-# TFJS task API
+# TFJS Task API
 
 _WORK IN PROGRESS_
 
-TFJS task API provides an unified experience for running task-specific TFJS and
-TFLite models on the web. Each task has various models for users to choose.
-Models within a task will have the same easy-to-use API interface.
+TFJS task API provides an unified experience for running task-specific models
+on the web. It covers popular machine learning tasks, such as sentiment
+detection, image classification, pose detection, etc. For each task, you can
+choose from various models supported by different runtime systems, such as
+TFJS, TFLite, MediaPipe, etc. The model interfaces are specifically designed
+for each task. They are intuitive and easy-to-use, even for developers without
+any comprehensive ML knowledge. In addition, the API will automatically load
+required packages on the fly. You never need to worry about missing dependencies
+again.
 
 The following table summarizes all the supported tasks and their models:
 
 (TODO)
 
-TFLite is supported by the [`@tensorflow/tfjs-tflite`][tfjs-tflite] package that
-is built on top of the [TFLite Task Library][tflite task library] and
-WebAssembly. As a result, all TFLite custom models should comply with the
-metadata requirements of the corresonding task in the TFLite task library.
-Check out the "model compatibility requirements" section of the official task
-library page. For example, the requirements of `ImageClassifier` can be found
-[here][req].
-
 # Usage
 
-## Import the packages
+## Import the package
 
-Other than this package itself, you will also need to import the corresponding
-TFJS model package and a TFJS backend if you are loading a TFJS model through
-the API. You don't need to import extra packages for TFLite models.
+This package is all you need. The packages required by different models will be
+loaded on demand automatically.
 
 ### Via NPM
 
 ```js
-// Adds the webgl backend.
-import '@tensorflow/tfjs-backend-webgl';
-// Adds the TFJS mobilenet model (as an example).
-import '@tensorflow-models/mobilenet';
 // Import @tensorflow-models/tasks.
-import {loadTaskModel, MLTask} from '@tensorflow-models/tasks';
+import * as tftask from '@tensorflow-models/tasks';
 ```
 
 ### Via a script tag
 
 ```html
-<!-- Adds the webgl backend -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
-<!-- Adds the TFJS mobilenet model (as an example) -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
 <!-- Import @tensorflow-models/tasks -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/tasks"></script>
 ```
@@ -54,20 +43,18 @@ The code snippet below shows how to load various models for the
 `Image Classification` task:
 
 ```js
-import {loadTaskModel, MLTask} from '@tensorflow-models/tasks';
+import * as tftask from '@tensorflow-models/tasks';
 
 // Load the TFJS mobilenet model.
-const model1 = await loadTaskModel(
-    MLTask.ImageClassification.TFJSMobileNet);
+const model1 = await tftask.ImageClassification.MobileNet.TFJS.load({
+  backend: 'wasm'});
 
 // Load the TFLite mobilenet model.
-const model2 = await loadTaskModel(
-    MLTask.ImageClassification.TFLiteMobileNet);
+const model2 = await tftask.ImageClassification.MobileNet.TFLite.load();
 
 // Load a custom image classification TFLite model.
-const model3 = await loadTaskModel(
-    MLTask.ImageClassification.TFLiteCustomModel),
-    {modelUrl: 'url/to/your/bird_classifier.tflite'});
+const model3 = await tftask.ImageClassification.CustomModel.TFLite.load({
+  model: 'url/to/your/bird_classifier.tflite'});
 ```
 
 Since all these models are for the `Image Classification` task, they will have
@@ -81,28 +68,32 @@ const result = model1.classify(document.querySelector(img)!);
 console.log(result.classes);
 ```
 
+# TFLite custom model compatibility
+
+TFLite is supported by the [`@tensorflow/tfjs-tflite`][tfjs-tflite] package that
+is built on top of the [TFLite Task Library][tflite task library] and
+WebAssembly. As a result, all TFLite custom models should comply with the
+metadata requirements of the corresonding task in the TFLite task library.
+Check out the "model compatibility requirements" section of the official task
+library page. For example, the requirements of `ImageClassifier` can be found
+[here][req].
+
 # Performance
 
 For TFJS models, the choice of backend affects the performance the most.
-For most cases, the WebGL backend is usually the fastest.
+For most cases, the WebGL backend (default) is usually the fastest.
 
 For TFLite models, we use WebAssembly under the hood. It uses [XNNPACK][xnnpack]
 to accelerate model inference. To achieve the best performance, use a browser
 that supports "WebAssembly SIMD" and "WebAssembly threads". In Chrome, these can
-be enabled in `chrome://flags/`. As of March 2021, XNNPACK can only be enabled
-for non-quantized TFLite models. Quantized models can still be used, but not
-accelerated. Support for quantized model acceleration is in the works.
+be enabled in `chrome://flags/`. The task API will automatically choose the best
+WASM module to load and set the number of threads for best performance based on
+the current browser environment.
 
-Setting the number of threads when calling `loadTaskModel` can also help with
-the performance. In most cases, the threads count should be the same as the
-number of physical cores, which is half of `navigator.hardwareConcurrency` on
-many x86-64 processors.
-
-```js
-const model = await loadTaskModel(
-    MLTask.ImageClassification.TFLiteMobileNet),
-    {numThreads: navigator.hardwareConcurrency / 2});
-```
+As of March 2021, XNNPACK works best for non-quantized TFLite models. Quantized
+models can still be used, but XNNPACK only supports ADD, CONV_2D,
+DEPTHWISE_CONV_2D, and FULLY_CONNECTED ops for models with quantization-aware
+training using [TF MOT][mot].
 
 # Development
 
@@ -129,3 +120,4 @@ $ yarn build-npm
 [tfjs-tflite]: https://github.com/tensorflow/tfjs/tree/master/tfjs-tflite
 [tflite task library]: https://www.tensorflow.org/lite/inference_with_metadata/task_library/overview
 [xnnpack]: https://github.com/google/XNNPACK
+[mot]: https://www.tensorflow.org/model_optimization/api_docs/python/tfmot

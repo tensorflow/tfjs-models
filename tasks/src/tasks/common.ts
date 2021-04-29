@@ -31,7 +31,7 @@ export interface TFJSModelCommonLoadingOption {
   backend: TFJSBackend;
 }
 
-/** Common loading goptions for TFLite models. */
+/** Common loading options for custom TFLite models. */
 export interface TFLiteCustomModelCommonLoadingOption {
   model: string|ArrayBuffer;
 }
@@ -39,7 +39,6 @@ export interface TFLiteCustomModelCommonLoadingOption {
 /** All supported tasks. */
 export enum Task {
   IMAGE_CLASSIFICATION = 'IMAGE_CLASSIFICATION',
-  NL_CLASSIFIER = 'NL_CLASSIFIER',
 }
 
 /** All supported runtimes. */

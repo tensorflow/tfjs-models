@@ -18,7 +18,7 @@
 import {TaskModel} from '../../task_model';
 
 /**
- * The common base class for all ImageClassification task models.
+ * The common interface for all ImageClassification task models.
  *
  * @template IO The type of options used during the inference process.
  */

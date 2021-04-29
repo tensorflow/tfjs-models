@@ -23,7 +23,7 @@ import {ensureTFJSBackend, getTFJSModelDependencyPackages, Runtime, Task, TFJSMo
  *
  * In TFJS Task API, models are grouped into different tasks (e.g.
  * ImageClassification, PoseDetection, etc). Each model is a "task model", and
- * it is implemented as an instance of the `Taskmodel` interface defined here.
+ * it is implemented as an instance of the `TaskModel` interface defined here.
  *
  * A task model is loaded through the corresponding `TaskModelLoader` (see below
  * for more details). In order to help users easily locate various loaders, we
@@ -37,7 +37,7 @@ import {ensureTFJSBackend, getTFJSModelDependencyPackages, Runtime, Task, TFJSMo
  * // Load the model.
  * //
  * // - This will dynamically load all the packages that the model depends on.
- * // - Different models have different loading options.
+ * // - Different models can have different loading options.
  * const model = await ImageClassification.Mobilenet.TFJS.load(
  *   {backend: 'wasm'});
  *
@@ -46,7 +46,7 @@ import {ensureTFJSBackend, getTFJSModelDependencyPackages, Runtime, Task, TFJSMo
  * // - All the models under the same task should have the same API signature.
  * //   For example, all the ImageClassification models should have the
  * //   `classify` method with the same input and output type.
- * // - Different models have different inference options.
+ * // - Different models can have different inference options.
  * const results = await model.classify(img, {topK: 5});
  *
  * // Clean up if needed.
@@ -64,11 +64,11 @@ export interface TaskModel {
  *
  * A task model is backed by a "source model" that does the actual work, so the
  * main task of a model loader is to load this source model and "transform" it
- * to the target task model. To do that, the client that implements the
+ * into the target task model. To do that, the client that implements the
  * `TaskModelLoader` needs to:
  *
  * - Provide a set of metadata, such as model name, runtime, etc. These
- *   metadata entries are shared between all the task models loaded from this
+ *   metadata fields are shared between all the task models loaded from this
  *   model loader so it makes more sense to put them here.
  *
  * - Provide package urls for the source model. `TaskModelLoader` will load the
@@ -115,8 +115,8 @@ export abstract class TaskModelLoader<N, LO, M> {
   /**
    * Tasks that the model supports.
    *
-   * This needs to match the location(s) of this model in the main index in
-   * all_tasks.ts file. A test will run to make sure of this.
+   * This needs to match the location(s) of this model loader in the main index
+   * in all_tasks.ts file. A test will run to make sure of this.
    */
   abstract readonly supportedTasks: Task[];
 
@@ -206,10 +206,10 @@ export abstract class TaskModelLoader<N, LO, M> {
    * Loads the source model with the given global namespace and options, and
    * transforms it to the corresponding task model.
    *
-   * A subclass should implement this method and use the
-   * `sourceModelGlobalNs` to load the source model. Note that the subclass
-   * should *NOT* use the namespace from the import statement to implement this
-   * method (e.g. the "mobilenet" variable in `import * as mobilenet from
+   * A subclass should implement this method and use the `sourceModelGlobalNs`
+   * to load the source model. Note that the subclass should *NOT* use the
+   * namespace from the import statement to implement this method (e.g. the
+   * "mobilenet" variable in `import * as mobilenet from
    * '@tensorflow-models/mobilenet`). Instead, only `sourceModelGlobalNs` should
    * be used, which should have the same type as the imported namespace. The
    * imported namespace can only be used to reference types. This makes sure
