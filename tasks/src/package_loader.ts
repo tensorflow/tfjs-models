@@ -56,7 +56,6 @@ export class PackageLoader<G> {
       return this.promises[packageUrl];
     }
 
-    console.log('loading ' + packageUrl);
     // From webworker.
     if (typeof window === 'undefined') {
       importScripts(packageUrl);
