@@ -126,6 +126,7 @@ async function updateVideo(event) {
 async function runFrame() {
   if (video.paused) {
     // video has finished.
+    camera.mediaRecorder.stop();
     camera.clearCtx();
     camera.video.style.visibility = 'visible';
     return;
@@ -150,6 +151,7 @@ async function run() {
   video.pause();
   video.currentTime = 0;
   video.play();
+  camera.mediaRecorder.start();
 
   await new Promise((resolve) => {
     camera.video.onseeked = () => {
