@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/tasks",
-  "version": "0.0.1-alpha.5",
+  "version": "0.0.1-alpha.6",
   "description": "Tensorflow.js tasks API",
   "main": "dist/tfjs-tasks.min.js",
   "jsnext:main": "dist/tfjs-tasks.esm.js",
