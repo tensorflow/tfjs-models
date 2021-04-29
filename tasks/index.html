@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Cartoonizer</title>
+
+<head>
+  <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Google+Sans:400,500,700">
+  <script src="./dist//tfjs-tasks.js"></script>
+</head>
+
+<body class="disabled">
+  <h1>Cartoonizer Demo</h1>
+</body>
+
+<script>
+  async function start() {
+    const model = await tf.MLTask.NLClassification.TFLiteCustomModel.load(
+        {modelUrl: 'https://storage.googleapis.com/tfweb/models/movie_review_sentiment_classification.tflite'});
+    const result = await model.classify('What a waste of time!');
+    console.log(result);
+  }
+
+  start();
+</script>
+</html>

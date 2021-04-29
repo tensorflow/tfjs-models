@@ -15,49 +15,204 @@
  * =============================================================================
  */
 
-import {BaseTaskModel, TaskModelTransformer} from './tasks/common';
+import {PackageLoader} from './package_loader';
+import {DEFAULT_TFJS_BACKEND, getTFJSModelDependencyPackages, Runtime, Task, TFJSBackend, TFJSModelCommonLoadingOption} from './tasks/common';
+import {isWebWorker} from './utils';
 
 /**
- * The main function to load a task model.
+ * A model that belongs to one or more machine learning tasks.
  *
- * <M>: The type of the transformed task model. Models with the same task type
- *     will have the same task model. For example, TFLite image classifier model
- *     and TFJS mobilenet model will be transformed to the same ImageClassifier
- *     task model.
+ * A task model will be put under its supported task(s) in our main "model
+ * index" defined in all_tasks.ts. The index is structured
+ * by: {task_name}.{model_name}.{runtime}.
  *
- * <O>: The type of options to configure model loading and inference. Different
- *     models could be associated with different option types.
+ * For example, for an image classification model Mobilenet from TFJS runtime,
+ * its index entry is: ImageClassification.Mobilenet.TFJS.
  *
- * Sample usage:
+ * To use this model:
  *
- * // Use a pre-trained TFLite mobilenet model.
- * const model = await loadTaskModel(
- *     MLTask.ImageClassification.TFLiteMobileNet);
+ * // Load.
+ * //
+ * // This will dynamically load all the packages this model depends on.
+ * const model = ImageClassification.Mobilenet.TFJS.load(options);
  *
- * // Use a custom TFLite image classification model.
- * const model = await loadTaskModel(
- *     MLTask.ImageClassification.TFLiteCustomModel,
- *     {modelUrl: 'url/to/your/model.tflite'});
+ * // Inference.
+ * //
+ * // All models under the same task should have the same API signature. For
+ * // example, all the ImageClassification models should have the `classify`
+ * // method with the same input and output type.
+ * const results = model.classify(img);
  *
- * // Use a pre-trained TFJS mobilenet model.
- * const model = await loadTaskModel(
- *     MLTask.ImageClassification.TFJSMobileNet,
- *     {version: 2, alpha: 1.0});
+ * // Clean up if needed.
+ * model.cleanUp();
  *
- * // Task models for the same task type (MLTask.ImageClassification in this
- * // case) have the same model type (ImageClassifier in this case) that provide
- * // methods best and most intuitive for the task.
- * const result = model.classify(img)
- * console.log(result.classes);
+ * A task model is backed by a "source model". To implement the corresponding
+ * task model, a subclass of `TaskModel` needs to be created to:
  *
- * @param taskModelTransformer The transformer for the task model. Typically
- *     this is specified by using `MLTask` in tasks/all_tasks.ts (e.g.
- *     MLTask.ImageClassification.TFJSMobileNet).
- * @param options The options to configure model loading and inference.
+ * - Provide a set of metadata, such as model names, runtime, etc.
+ * - Provide package urls for the source model. `TaskModel` will load the
+ *   packages, and return the global namespace variable provided by the source
+ *   model.
+ * - Implement the `loadSourceModel` method with the loaded global namespace.
+ * - Add and implement a task-specific method that uses the loaded source model
+ *   to run inference for a given input and return results.
  *
- * @returns The transformed task model.
+ * To make this process more structured, each task will have a more concrete
+ * subclass of `TaskModel` that has the task-specific method defined. All the
+ * models under that task will then extend this subclass to make sure they have
+ * the same API.
+ *
+ * For example, for the ImageClassification task, an ImageClassifier class is
+ * defined as:
+ *
+ * class ImageClassifier<N, LO, IO> extends TaskModel<N, LO> {
+ *   abstract classify(
+ *     img: ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement,
+ *     options?: IO): Promise<ImageClassifierResult>;
+ * }
+ *
+ * Then all the models under the ImageClassification task should extend the
+ * ImageClassifier class instead.
+ *
+ * @template N The type of the global namespace provided by the source model.
+ * @template LO The type of options used during the model loading process.
  */
-export async function loadTaskModel<M extends BaseTaskModel, O>(
-    taskModelTransformer: TaskModelTransformer<M, O>, options?: O): Promise<M> {
-  return taskModelTransformer.loadAndTransform(options);
+export abstract class TaskModel<N, LO> {
+  /** The model name. */
+  abstract readonly name: string;
+
+  /** The model runtime. */
+  abstract readonly runtime: Runtime;
+
+  /**
+   * The model version.
+   *
+   * This is part of the metadata of the model. It doesn't affect which version
+   * of the package to load. For that, set the corresponding package url in the
+   * `packageUrls` field below.
+   *
+   * TODO: allow users to dynamically specify which version to load.
+   */
+  abstract readonly version: string;
+
+  /**
+   * Tasks that the model supports.
+   *
+   * This needs to match the location(s) of this model in the main index in
+   * all_tasks.ts file. A test will run to make sure of this.
+   */
+  abstract readonly supportedTasks: Task[];
+
+  /**
+   * URLs of packages to load for the model.
+   *
+   * Each element in the array is an array of package urls (package set).
+   * Package sets are loaded one after another. Within each set, packages are
+   * loaded at the same time.
+   *
+   * For example, if packageUrls = [ [url1, url2], [url3] ], then url1 and
+   * url2 are loaded together first. url3 will then be loaded when url1 and
+   * url2 are both done loading.
+   *
+   * Note: for TFJS model, only the model package itself needs to be set
+   * here. The TFJS related dependencies (e.g. core, backends, etc) will be
+   * added automatically.
+   */
+  abstract readonly packageUrls: Array<string[]>;
+
+  /**
+   * The global namespace of the source model.
+   *
+   * For example, for TFJS mobilenet model, this would be 'mobilenet'.
+   */
+  abstract readonly sourceModelGlobalNs: string;
+
+  /**
+   * Callback to wait for (await) after all packages are loaded.
+   *
+   * This is necessary for certain models where certain conditions need to be
+   * met before using the model.
+   */
+  readonly postPackageLoadingCallback?: () => Promise<void> = undefined;
+
+  /** A loader for loading packages. */
+  private readonly packageLoader = new PackageLoader<N>();
+
+  /**
+   * Loads the task model with the given options.
+   *
+   * @param options Options to use when loading the model.
+   * @returns The loaded instance.
+   */
+  async load(options?: LO): Promise<this> {
+    const sourceModelGlobal = await this.loadSourceModelGlobalNs(options);
+    // Wait for the callback if set.
+    if (this.postPackageLoadingCallback) {
+      await this.postPackageLoadingCallback();
+    }
+    // For tfjs models, we automatically wait for "tf.ready()" before
+    // proceeding. Subclasses don't need to set postPackageLoadingCallback
+    // explicitly.
+    if (this.runtime === Runtime.TFJS) {
+      // tslint:disable-next-line:no-any
+      const global: any = isWebWorker() ? self : window;
+      const tfjsOptions = options as {} as TFJSModelCommonLoadingOption;
+      const backend: TFJSBackend =
+          tfjsOptions ? tfjsOptions.backend : DEFAULT_TFJS_BACKEND;
+      await (global['tf'].setBackend(backend) as Promise<void>);
+    }
+    await this.loadSourceModel(sourceModelGlobal, options);
+    return this;
+  }
+
+  /**
+   * Cleans up resources if necessary.
+   *
+   * It does nothing by default. A subclass should override this method if it
+   * has any clean up related tasks to do.
+   */
+  cleanUp() {}
+
+  /**
+   * Loads the global namespace of the source model by loading its packages
+   * specified in the `packageUrls` field above.
+   *
+   * It is typically not necessary for subclasses to override this method as
+   * long as they set the `packageUrls` and `sourceModelGlobalNs` field above.
+   */
+  protected async loadSourceModelGlobalNs(options?: LO): Promise<N> {
+    const packages: Array<string[]> = [];
+
+    // Add TFJS dependencies for TFJS models.
+    if (this.runtime === Runtime.TFJS) {
+      const tfjsOptions = options as {} as TFJSModelCommonLoadingOption;
+      packages.push(...getTFJSModelDependencyPackages(
+          tfjsOptions ? tfjsOptions.backend : undefined));
+    }
+
+    // Load packages.
+    packages.push(...this.packageUrls);
+    return await this.packageLoader.loadPackagesAndGetGlobalNs(
+        this.sourceModelGlobalNs, packages);
+  }
+
+  /**
+   * Loads the source model with the given global namespace and options.
+   *
+   * A subclass should implement this method and use the
+   * `sourceModelGlobalNs` to load the source model. The loaded source model
+   * should be stored in a property in the subclass that can then be used during
+   * the inference.
+   *
+   * Note that the subclass should *NOT* use the namespace from the import
+   * statement to implement this method (e.g. the "mobilenet" variable in
+   * `import * as mobilenet from '@tensorflow-models/mobilenet`). Instead, only
+   * `sourceModelGlobalNs` should be used, which should have the same type as
+   * the imported namespace. The imported namespace can only be used to
+   * reference types. This makes sure that the code from the source model is NOT
+   * bundled in the final binary.
+   */
+  protected async loadSourceModel(sourceModelGlobalNs: N, options?: LO) {
+    throw new Error('not implemented');
+  }
 }

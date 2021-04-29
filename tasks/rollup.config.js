@@ -51,31 +51,18 @@ function config({plugins = [], output = {}}) {
     plugins: [typescript(tsoptions), resolve(), commonjs(), ...plugins],
     output: {
       banner: PREAMBLE,
-      globals: {
-        '@tensorflow/tfjs-core': 'tf',
-        '@tensorflow/tfjs-converter': 'tf',
-        '@tensorflow-models/mobilenet': 'mobilenet',
-      },
-      ...output
+      sourcemap: true,
+      ...output,
     },
-    external: [
-      '@tensorflow/tfjs-core',
-      '@tensorflow/tfjs-converter',
-      '@tensorflow-models/mobilenet',
-    ]
   };
 }
 
-const packageName = 'tfjs-tasks';
+const packageName = 'tftask';
 export default [
   config(
       {output: {format: 'umd', name: packageName, file: 'dist/tfjs-tasks.js'}}),
   config({
     plugins: [minify()],
     output: {format: 'umd', name: packageName, file: 'dist/tfjs-tasks.min.js'}
-  }),
-  config({
-    plugins: [minify()],
-    output: {format: 'es', file: 'dist/tfjs-tasks.esm.js'}
   })
 ];

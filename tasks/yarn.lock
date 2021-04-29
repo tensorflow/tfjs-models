@@ -1597,14 +1597,26 @@
   resolved "https://registry.yarnpkg.com/@tensorflow-models/mobilenet/-/mobilenet-2.1.0.tgz#58583f0793a7091eda370aa441d09d94b808aeb1"
   integrity sha512-JjqT9ijHDFA2FEpUGWg7H2lQ0GrMuE2VmiCRBYmUew6b4JKht8LXDjG5HxZh95YH6c/25sZWTpGeHbquloH+hw==
 
-"@tensorflow/tfjs-core@link:../../tfjs/tfjs-core":
-  version "0.0.0"
-  uid ""
+"@tensorflow/tfjs-converter@^3.5.0":
+  version "3.5.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-3.5.0.tgz#6625723e347a452c227469a92541930d5b4aa12f"
+  integrity sha512-eAx1nEaREzPfcIOnyp1PUvQdjob9MtCJM/syh4v05FBV7UrUNpxNMliA4JgjiFvdnhrM4e06/CeqMA8/AVw2wg==
 
-"@tensorflow/tfjs-tflite@0.0.1-alpha.0":
-  version "0.0.1-alpha.0"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-tflite/-/tfjs-tflite-0.0.1-alpha.0.tgz#3162eea3f14f4e218b3d6b727deb44320481f040"
-  integrity sha512-UVTzEFTNuMd2ZNdSJVI1oKs5YvjWo8lYPxleEEP7uzUW1326o4FUU8yclOpgdB7nhN5A3Yq8PXHt8fKGs44fNw==
+"@tensorflow/tfjs-core@^3.5.0":
+  version "3.5.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-core/-/tfjs-core-3.5.0.tgz#e1ff14f2121208242a192e935f52e86b19be279e"
+  integrity sha512-NOs9hY9nj/iPaz2cSrWpq8G07i96/ot+1l1RoBoA1s1cZakb43pLhntm1Mj4vhSxp7dbc/BSs+t6/S+45OZTUA==
+  dependencies:
+    "@types/offscreencanvas" "~2019.3.0"
+    "@types/seedrandom" "2.4.27"
+    "@types/webgl-ext" "0.0.30"
+    node-fetch "~2.6.1"
+    seedrandom "2.4.3"
+
+"@tensorflow/tfjs-tflite@0.0.1-alpha.3":
+  version "0.0.1-alpha.3"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-tflite/-/tfjs-tflite-0.0.1-alpha.3.tgz#8aacb9d6677e698ee23dd10735efbe6775689a05"
+  integrity sha512-2ZpoWG5yvvp4lGIiOm8TBgp2CZCJCXtLGEcbUyIUDDzGeYrMjlpD2K+VJvQ3JFpMhTPgjzyRfy5WjwcWPrRfUw==
 
 "@types/component-emitter@^1.2.10":
   version "1.2.10"

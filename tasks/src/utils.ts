@@ -15,11 +15,7 @@
  * =============================================================================
  */
 
-// The bridge file for importing tfweb JS client.
-//
-// See
-// https://github.com/tensorflow/tfjs/blob/master/tfjs-tflite/src/tfweb_client.js
-// for more details.
-var tfwebClient = require('@tensorflow/tfjs-tflite/dist/tfweb_client.js');
-
-export default tfwebClient;
+/** Whether the current environment is in web worker or not. */
+export function isWebWorker(): boolean {
+  return typeof window === 'undefined';
+}

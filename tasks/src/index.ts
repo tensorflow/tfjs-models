@@ -16,5 +16,7 @@
  */
 
 export * from './task_model';
-export * from './tasks/image_classification';
 export * from './tasks/all_tasks';
+export * from './tasks/image_classification/mobilenet_tfjs';
+export * from './tasks/image_classification/custom_model_tflite';
+// export * from './tasks/nl_classification';

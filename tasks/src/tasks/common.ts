@@ -15,17 +15,64 @@
  * =============================================================================
  */
 
-/**
- * A transformer that loads an existing model and transforms it to a task model.
- *
- * For more details, see src/task_model.ts.
- */
-export interface TaskModelTransformer<M extends BaseTaskModel, O> {
-  loadAndTransform(options?: O): Promise<M>;
+/** Default TFJS backend. */
+export const DEFAULT_TFJS_BACKEND: TFJSBackend = 'webgl';
+
+/** Default TFJS version. */
+export const DEFAULT_TFJS_VERSION = '3.5.0';
+
+/** Type of TFJS bckends. */
+export type TFJSBackend = 'cpu'|'webgl'|'wasm';
+
+/** Common loading options for TFJS models. */
+export interface TFJSModelCommonLoadingOption {
+  backend: TFJSBackend;
 }
 
-/** The base interface for all task models. */
-export interface BaseTaskModel {
-  /** Cleans up resources if necessary. */
-  cleanUp(): void;
+/** Common loading goptions for TFLite models. */
+export interface TFLiteCustomModelCommonLoadingOption {
+  model: string|ArrayBuffer;
+}
+
+/** All supported tasks. */
+export enum Task {
+  IMAGE_CLASSIFICATION = 'IMAGE_CLASSIFICATION',
+}
+
+/** All supported runtimes. */
+export enum Runtime {
+  TFJS = 'TFJS',
+  TFLITE = 'TFLite',
+  MEDIA_PIPE = 'MediaPipe',
+}
+
+/** A helper function to get the TFJS packages that a TFJS model depends on. */
+export function getTFJSModelDependencyPackages(
+    backend = DEFAULT_TFJS_BACKEND,
+    version = DEFAULT_TFJS_VERSION): Array<string[]> {
+  const packages = [
+    [`https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core@${version}`],
+    [`https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter@${version}`],
+  ];
+  switch (backend) {
+    case 'cpu':
+      packages[1].push(
+          `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-cpu@${
+              version}`);
+      break;
+    case 'webgl':
+      packages[1].push(
+          `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-cpu@${
+              version}`);
+      packages[1].push(
+          `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl@${
+              version}`);
+      break;
+    case 'wasm':
+      packages[1].push(
+          `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
+              version}/dist/tf-backend-wasm.js`);
+      break;
+  }
+  return packages;
 }

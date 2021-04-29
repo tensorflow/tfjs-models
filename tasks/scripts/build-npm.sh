@@ -14,14 +14,15 @@
 # limitations under the License.
 # =============================================================================
 
+# Start in scripts/ even if run from root directory
+cd "$(dirname "$0")"
+
 set -e
 
-yarn rimraf dist/
-mkdir -p dist
+yarn rimraf ../dist/
+mkdir -p ../dist
 yarn
 
-# Copy WASM module files from tfjs-tflite to dist.
-cp -f node_modules/@tensorflow/tfjs-tflite/deps/* dist/
 yarn build
 yarn rollup -c
 
