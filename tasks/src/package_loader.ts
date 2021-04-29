@@ -22,7 +22,7 @@ declare function importScripts(...urls: string[]): void;
 
 /** A package loader. */
 export class PackageLoader<G> {
-  private readonly promises: {[url: string]: Promise<void>} = {};
+  private static readonly promises: {[url: string]: Promise<void>} = {};
 
   /**
    * Loads the given packages and returns the loaded global namespace.
@@ -52,14 +52,14 @@ export class PackageLoader<G> {
   private async loadPackage(packageUrl: string): Promise<void> {
     // Don't load a package if the package is being loaded or has already been
     // loaded.
-    if (this.promises[packageUrl]) {
-      return this.promises[packageUrl];
+    if (PackageLoader.promises[packageUrl]) {
+      return PackageLoader.promises[packageUrl];
     }
 
     // From webworker.
     if (typeof window === 'undefined') {
       importScripts(packageUrl);
-      this.promises[packageUrl] = Promise.resolve();
+      PackageLoader.promises[packageUrl] = Promise.resolve();
     }
     // From webpage.
     else {
@@ -75,8 +75,8 @@ export class PackageLoader<G> {
       });
       document.head.appendChild(script);
       script.setAttribute('src', packageUrl);
-      this.promises[packageUrl] = promise;
+      PackageLoader.promises[packageUrl] = promise;
     }
-    return this.promises[packageUrl];
+    return PackageLoader.promises[packageUrl];
   }
 }
