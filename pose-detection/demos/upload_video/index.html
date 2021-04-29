@@ -24,31 +24,41 @@ limitations under the License.
     }
     #canvas-wrapper {
       position: relative;
+      margin-top: 80px;
     }
     canvas {
       position: absolute;
       top: 0;
       left: 0;
     }
+    #top-bar {
+      position: relative;
+      margin-left: 300px;
+    }
   </style>
 </head>
 <body>
+  <div id="stats"></div>
   <div id="main">
     <div class="container">
-      <div>
-        <label for="videofile">Upload a video file (video should be captured at or converted to 30fps):</label>
+      <div id="top-bar">
+        <label for="videofile">Upload a video file:</label>
         <input type="file" id="videofile" name="video" accept="video/*">
         <button id="submit">Run</button>
       </div>
     </div>
     <div class="container" id="canvas-wrapper">
       <canvas id="output"></canvas>
-      <video id="video" style="visibility: hidden;">
+      <video id="video">
         <source id="currentVID" src="" type="video/mp4">
       </video>
+    </div>
+    <div class="container">
+      <span id="status"></span>
     </div>
   </div>
 </body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.6/dat.gui.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js"></script>
 <script src="src/index.js"></script>
 </html>

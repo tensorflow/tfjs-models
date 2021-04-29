@@ -26,12 +26,14 @@ tfjsWasm.setWasmPaths(
 import * as posedetection from '@tensorflow-models/pose-detection';
 import * as tf from '@tensorflow/tfjs-core';
 
+import {setupStats} from './stats_panel';
 import {Context} from './camera';
 import {setupDatGui} from './option_panel';
 import {STATE} from './params';
 import {setBackendAndEnvFlags} from './util';
 
-let detector, camera;
+let detector, camera, stats;
+const statusElement = document.getElementById('status');
 
 async function createDetector() {
   switch (STATE.model) {
@@ -71,19 +73,14 @@ async function checkGuiUpdate() {
   }
 }
 
-async function renderResult(simulatedTimestamp) {
-  if (video.readyState < 2) {
-    await new Promise((resolve) => {
-      camera.video.onloadeddata = () => {
-        resolve(video);
-      };
-    });
-  }
+async function renderResult() {
+  stats.begin();
 
   const poses = await detector.estimatePoses(
       camera.video,
-      {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false},
-      simulatedTimestamp);
+      {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
+
+  stats.end();
 
   camera.drawCtx();
 
@@ -101,43 +98,16 @@ async function checkUpdate() {
   requestAnimationFrame(checkUpdate);
 };
 
-async function app() {
-  await tf.setBackend(STATE.backend);
-
-  // Gui content will change depending on which model is in the query string.
-  const urlParams = new URLSearchParams(window.location.search);
-  if (!urlParams.has('model')) {
-    alert('Cannot find model in the query string.');
-    return;
-  }
-
-  await setupDatGui(urlParams);
-
-  detector = await createDetector();
-
-  camera = new Context();
-
-  camera.video.onseeked = async () => {
-    await renderResult();
-  };
-
-  const runButton = document.getElementById('submit');
-  runButton.onclick = run;
-
-  const uploadButton = document.getElementById('videofile');
-  uploadButton.onchange = updateVideo;
-
-  checkUpdate();
-};
-
 async function updateVideo(event) {
+  // Clear reference to any previous uploaded video.
   URL.revokeObjectURL(camera.video.currentSrc);
   const file = event.target.files[0];
   camera.source.src = URL.createObjectURL(file);
-  camera.video.load();
 
+  // Wait for video to be loaded.
+  camera.video.load();
   await new Promise((resolve) => {
-    camera.video.onloadedmetadata = () => {
+    camera.video.onloadeddata = () => {
       resolve(video);
     };
   });
@@ -149,23 +119,69 @@ async function updateVideo(event) {
   camera.video.height = videoHeight;
   camera.canvas.width = videoWidth;
   camera.canvas.height = videoHeight;
+
+  statusElement.innerHTML = 'Video is loaded.';
 }
 
-function run() {
-  camera.video.currentTime = 0.0;
-  // Advance to next frame.
-  const actualInterval = 1 / 30;
-  const actualIntervalInMilliseconds = actualInterval * 1000;
-  const timer = setInterval(() => {
-    const nextTime = camera.video.currentTime + actualInterval;
-
-    if (nextTime < camera.video.duration) {
-      video.currentTime = nextTime;
-    } else {
-      camera.clearCtx();
-      clearInterval(timer);
-    }
-  }, actualIntervalInMilliseconds);
+async function runFrame() {
+  if (video.paused) {
+    // video has finished.
+    camera.clearCtx();
+    camera.video.style.visibility = 'visible';
+    return;
+  }
+  await renderResult();
+  requestAnimationFrame(runFrame);
 }
+
+async function run() {
+  statusElement.innerHTML = 'Warming up model.';
+
+  // Warming up pipeline.
+  const warmUpTensor = tf.fill([camera.video.height, camera.video.width, 3], 0);
+  await detector.estimatePoses(
+      warmUpTensor,
+      {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
+  warmUpTensor.dispose();
+
+  statusElement.innerHTML = 'Model is warmed up.';
+
+  camera.video.style.visibility = 'hidden';
+  video.pause();
+  video.currentTime = 0;
+  video.play();
+
+  await new Promise((resolve) => {
+    camera.video.onseeked = () => {
+      resolve(video);
+    };
+  });
+
+  await runFrame();
+}
+
+async function app() {
+  await tf.setBackend(STATE.backend);
+
+  // Gui content will change depending on which model is in the query string.
+  const urlParams = new URLSearchParams(window.location.search);
+  if (!urlParams.has('model')) {
+    alert('Cannot find model in the query string.');
+    return;
+  }
+
+  await setupDatGui(urlParams);
+  stats = setupStats();
+  detector = await createDetector();
+  camera = new Context();
+
+  const runButton = document.getElementById('submit');
+  runButton.onclick = run;
+
+  const uploadButton = document.getElementById('videofile');
+  uploadButton.onchange = updateVideo;
+
+  checkUpdate();
+};
 
 app();
