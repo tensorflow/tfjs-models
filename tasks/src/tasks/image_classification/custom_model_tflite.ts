@@ -16,8 +16,10 @@
  */
 
 import * as tflite from '@tensorflow/tfjs-tflite';
-import {Runtime, TFLiteCustomModelCommonLoadingOption} from '../common';
-import {Class, ImageClassifier, ImageClassifierResult} from './common';
+import {TaskModelLoader} from '../../task_model';
+import {Runtime, Task, TFLiteCustomModelCommonLoadingOption} from '../common';
+import {ImageClassifier} from './common';
+import {transformImageClassifier} from './tflite_utils';
 
 // The global namespace type.
 type TFLiteNS = typeof tflite;
@@ -33,54 +35,37 @@ export type ImageClassificationCustomModelTFLiteLoadingOptions =
  */
 export type ImageClassificationCustomModelTFLiteInferanceOptions = {}
 
-/** Custom TFLite model. */
-export class ImageClassificationCustomModelTFLite extends ImageClassifier<
+/** Loader for custom image classification TFLite model. */
+export class ImageClassificationCustomModelTFLiteLoader extends TaskModelLoader<
     TFLiteNS, ImageClassificationCustomModelTFLiteLoadingOptions,
-    ImageClassificationCustomModelTFLiteInferanceOptions> {
-  private tfliteImageClassifier: tflite.ImageClassifier;
-
-  readonly name = 'Custom image classification TFLite model';
+    ImageClassifier<ImageClassificationCustomModelTFLiteInferanceOptions>> {
+  readonly name = 'Image classification with TFLite models';
+  readonly description =
+      'An image classfier backed by the TFLite Task Library. ' +
+      'It can work with any models that meet the ' +
+      '<a href="https://www.tensorflow.org/lite/inference_with_metadata/' +
+      'task_library/image_classifier#model_compatibility_requirements" ' +
+      'target="_blank">model requirements</a>.';
+  readonly resourceUrls = {
+    'TFLite task library': 'https://www.tensorflow.org/lite/' +
+        'inference_with_metadata/task_library/overview',
+  };
   readonly runtime = Runtime.TFLITE;
   readonly version = '0.0.1-alpha.3';
+  readonly supportedTasks = [Task.IMAGE_CLASSIFICATION];
   readonly packageUrls =
-      [['https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-tflite@0.0.1-alpha.3' +
-        '/dist/tf-tflite.min.js']];
+      [[`https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-tflite@${
+          this.version}/dist/tf-tflite.min.js`]];
   readonly sourceModelGlobalNs = 'tflite';
 
-  protected async loadSourceModel(
+  protected async transformSourceModel(
       sourceModelGlobal: TFLiteNS,
-      options?: ImageClassificationCustomModelTFLiteLoadingOptions) {
-    this.tfliteImageClassifier =
-        await sourceModelGlobal.ImageClassifier.create(options.model);
-  }
-
-  async classify(
-      img: ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement,
-      options?: ImageClassificationCustomModelTFLiteInferanceOptions):
-      Promise<ImageClassifierResult> {
-    if (!this.tfliteImageClassifier) {
-      throw new Error('source model is not loaded');
-    }
-    const tfliteResults = this.tfliteImageClassifier.classify(img);
-    const classes: Class[] = tfliteResults.map(result => {
-      return {
-        className: result.className,
-        probability: result.probability,
-      };
-    });
-    const finalResult: ImageClassifierResult = {
-      classes,
-    };
-    return finalResult;
-  }
-
-  cleanUp() {
-    if (!this.tfliteImageClassifier) {
-      throw new Error('source model is not loaded');
-    }
-    this.tfliteImageClassifier.cleanUp();
+      loadingOptions?: ImageClassificationCustomModelTFLiteLoadingOptions):
+      Promise<ImageClassifier<
+          ImageClassificationCustomModelTFLiteInferanceOptions>> {
+    return transformImageClassifier(sourceModelGlobal, loadingOptions.model);
   }
 }
 
-export const imageClassificationCustomModelTflite =
-    new ImageClassificationCustomModelTFLite();
+export const imageClassificationCustomModelTfliteLoader =
+    new ImageClassificationCustomModelTFLiteLoader();

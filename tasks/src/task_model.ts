@@ -16,70 +16,88 @@
  */
 
 import {PackageLoader} from './package_loader';
-import {DEFAULT_TFJS_BACKEND, getTFJSModelDependencyPackages, Runtime, Task, TFJSBackend, TFJSModelCommonLoadingOption} from './tasks/common';
-import {isWebWorker} from './utils';
+import {ensureTFJSBackend, getTFJSModelDependencyPackages, Runtime, Task, TFJSModelCommonLoadingOption} from './tasks/common';
 
 /**
  * A model that belongs to one or more machine learning tasks.
  *
- * A task model will be put under its supported task(s) in our main "model
- * index" defined in all_tasks.ts. The index is structured
- * by: {task_name}.{model_name}.{runtime}.
+ * In TFJS Task API, models are grouped into different tasks (e.g.
+ * ImageClassification, PoseDetection, etc). Each model is a "task model", and
+ * it is implemented as an instance of the `Taskmodel` interface defined here.
  *
- * For example, for an image classification model Mobilenet from TFJS runtime,
- * its index entry is: ImageClassification.Mobilenet.TFJS.
+ * A task model is loaded through the corresponding `TaskModelLoader` (see below
+ * for more details). In order to help users easily locate various loaders, we
+ * organize them into a central "model loader index" defined in all_tasks.ts.
+ * The index structure is {task_name}.{model_name}.{runtime}. For example:
+ * `ImageClassification.MobileNet.TFJS`.
  *
- * To use this model:
  *
- * // Load.
+ * Basic usage:
+ *
+ * // Load the model.
  * //
- * // This will dynamically load all the packages this model depends on.
- * const model = ImageClassification.Mobilenet.TFJS.load(options);
+ * // - This will dynamically load all the packages that the model depends on.
+ * // - Different models have different loading options.
+ * const model = await ImageClassification.Mobilenet.TFJS.load(
+ *   {backend: 'wasm'});
  *
  * // Inference.
  * //
- * // All models under the same task should have the same API signature. For
- * // example, all the ImageClassification models should have the `classify`
- * // method with the same input and output type.
- * const results = model.classify(img);
+ * // - All the models under the same task should have the same API signature.
+ * //   For example, all the ImageClassification models should have the
+ * //   `classify` method with the same input and output type.
+ * // - Different models have different inference options.
+ * const results = await model.classify(img, {topK: 5});
  *
  * // Clean up if needed.
  * model.cleanUp();
+ */
+export interface TaskModel {
+  /**
+   * Cleans up resources if necessary.
+   */
+  cleanUp(): void;
+}
+
+/**
+ * A loader that loads a task model.
  *
- * A task model is backed by a "source model". To implement the corresponding
- * task model, a subclass of `TaskModel` needs to be created to:
+ * A task model is backed by a "source model" that does the actual work, so the
+ * main task of a model loader is to load this source model and "transform" it
+ * to the target task model. To do that, the client that implements the
+ * `TaskModelLoader` needs to:
  *
- * - Provide a set of metadata, such as model names, runtime, etc.
- * - Provide package urls for the source model. `TaskModel` will load the
+ * - Provide a set of metadata, such as model name, runtime, etc. These
+ *   metadata entries are shared between all the task models loaded from this
+ *   model loader so it makes more sense to put them here.
+ *
+ * - Provide package urls for the source model. `TaskModelLoader` will load the
  *   packages, and return the global namespace variable provided by the source
  *   model.
- * - Implement the `loadSourceModel` method with the loaded global namespace.
- * - Add and implement a task-specific method that uses the loaded source model
- *   to run inference for a given input and return results.
  *
- * To make this process more structured, each task will have a more concrete
- * subclass of `TaskModel` that has the task-specific method defined. All the
- * models under that task will then extend this subclass to make sure they have
- * the same API.
+ * - Implement the `transformSourceModel` method to load the source model using
+ *   the global namespace variable from the previous step, and transform the
+ *   source model to the corresponding task model.
  *
- * For example, for the ImageClassification task, an ImageClassifier class is
- * defined as:
- *
- * class ImageClassifier<N, LO, IO> extends TaskModel<N, LO> {
- *   abstract classify(
- *     img: ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement,
- *     options?: IO): Promise<ImageClassifierResult>;
- * }
- *
- * Then all the models under the ImageClassification task should extend the
- * ImageClassifier class instead.
+ *   To make this process more structured, each task will have a more concrete
+ *   interface of `TaskModel` with the task-specific method defined. All the
+ *   models under the task will transform to this interface to make sure they
+ *   have the same API signature. See tasks/image_classification/common.ts for
+ *   an example.
  *
  * @template N The type of the global namespace provided by the source model.
  * @template LO The type of options used during the model loading process.
+ * @template M The type of the target task model to transform to.
  */
-export abstract class TaskModel<N, LO> {
+export abstract class TaskModelLoader<N, LO, M> {
   /** The model name. */
   abstract readonly name: string;
+
+  /** The model description. Can have simple HTML tags. */
+  readonly description: string = '';
+
+  /** Resource urls (e.g. github page, docs, etc) indexed by names. */
+  readonly resourceUrls: {[name: string]: string} = {};
 
   /** The model runtime. */
   abstract readonly runtime: Runtime;
@@ -87,9 +105,8 @@ export abstract class TaskModel<N, LO> {
   /**
    * The model version.
    *
-   * This is part of the metadata of the model. It doesn't affect which version
-   * of the package to load. For that, set the corresponding package url in the
-   * `packageUrls` field below.
+   * This should be used to construct the main package url in the `packageUrls`
+   * field below so that the package version matches the version specified here.
    *
    * TODO: allow users to dynamically specify which version to load.
    */
@@ -130,8 +147,8 @@ export abstract class TaskModel<N, LO> {
   /**
    * Callback to wait for (await) after all packages are loaded.
    *
-   * This is necessary for certain models where certain conditions need to be
-   * met before using the model.
+   * This is necessary for models where certain conditions need to be met before
+   * using the model.
    */
   readonly postPackageLoadingCallback?: () => Promise<void> = undefined;
 
@@ -144,34 +161,23 @@ export abstract class TaskModel<N, LO> {
    * @param options Options to use when loading the model.
    * @returns The loaded instance.
    */
-  async load(options?: LO): Promise<this> {
+  async load(options?: LO): Promise<M> {
+    // Load the packages to get the global namespace ready.
     const sourceModelGlobal = await this.loadSourceModelGlobalNs(options);
-    // Wait for the callback if set.
+
+    // Wait for the callback to resolve if set.
     if (this.postPackageLoadingCallback) {
       await this.postPackageLoadingCallback();
     }
-    // For tfjs models, we automatically wait for "tf.ready()" before
-    // proceeding. Subclasses don't need to set postPackageLoadingCallback
-    // explicitly.
+    // For tfjs models, we automatically wait for the backend to be set before
+    // proceeding. Subclasses don't need to do worry about this.
     if (this.runtime === Runtime.TFJS) {
-      // tslint:disable-next-line:no-any
-      const global: any = isWebWorker() ? self : window;
-      const tfjsOptions = options as {} as TFJSModelCommonLoadingOption;
-      const backend: TFJSBackend =
-          tfjsOptions ? tfjsOptions.backend : DEFAULT_TFJS_BACKEND;
-      await (global['tf'].setBackend(backend) as Promise<void>);
+      await ensureTFJSBackend(options as {} as TFJSModelCommonLoadingOption);
     }
-    await this.loadSourceModel(sourceModelGlobal, options);
-    return this;
-  }
 
-  /**
-   * Cleans up resources if necessary.
-   *
-   * It does nothing by default. A subclass should override this method if it
-   * has any clean up related tasks to do.
-   */
-  cleanUp() {}
+    // Load the source model using the global namespace variable loaded above.
+    return this.transformSourceModel(sourceModelGlobal, options);
+  }
 
   /**
    * Loads the global namespace of the source model by loading its packages
@@ -197,22 +203,20 @@ export abstract class TaskModel<N, LO> {
   }
 
   /**
-   * Loads the source model with the given global namespace and options.
+   * Loads the source model with the given global namespace and options, and
+   * transforms it to the corresponding task model.
    *
    * A subclass should implement this method and use the
-   * `sourceModelGlobalNs` to load the source model. The loaded source model
-   * should be stored in a property in the subclass that can then be used during
-   * the inference.
-   *
-   * Note that the subclass should *NOT* use the namespace from the import
-   * statement to implement this method (e.g. the "mobilenet" variable in
-   * `import * as mobilenet from '@tensorflow-models/mobilenet`). Instead, only
-   * `sourceModelGlobalNs` should be used, which should have the same type as
-   * the imported namespace. The imported namespace can only be used to
-   * reference types. This makes sure that the code from the source model is NOT
-   * bundled in the final binary.
+   * `sourceModelGlobalNs` to load the source model. Note that the subclass
+   * should *NOT* use the namespace from the import statement to implement this
+   * method (e.g. the "mobilenet" variable in `import * as mobilenet from
+   * '@tensorflow-models/mobilenet`). Instead, only `sourceModelGlobalNs` should
+   * be used, which should have the same type as the imported namespace. The
+   * imported namespace can only be used to reference types. This makes sure
+   * that the code from the source model is NOT bundled in the final binary.
    */
-  protected async loadSourceModel(sourceModelGlobalNs: N, options?: LO) {
+  protected async transformSourceModel(sourceModelGlobalNs: N, options?: LO):
+      Promise<M> {
     throw new Error('not implemented');
   }
 }

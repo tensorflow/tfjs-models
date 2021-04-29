@@ -16,23 +16,18 @@
  */
 
 import {TaskModel} from '../../task_model';
-import {Task} from '../common';
 
 /**
  * The common base class for all ImageClassification task models.
  *
- * @template N The global namespace provided by the source model.
- * @template LO The type of options used during the model loading process.
  * @template IO The type of options used during the inference process.
  */
-export abstract class ImageClassifier<N, LO, IO> extends TaskModel<N, LO> {
-  readonly supportedTasks = [Task.IMAGE_CLASSIFICATION];
-
+export interface ImageClassifier<IO> extends TaskModel {
   /**
    * Performs classification on the given image-like input, and returns
    * result.
    */
-  abstract classify(
+  classify(
       img: ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement,
       options?: IO): Promise<ImageClassifierResult>;
 }

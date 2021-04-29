@@ -16,14 +16,15 @@
  */
 
 import * as mobilenet from '@tensorflow-models/mobilenet';
-import {Runtime, TFJSModelCommonLoadingOption} from '../common';
+import {TaskModelLoader} from '../../task_model';
+import {ensureTFJSBackend, Runtime, Task, TFJSModelCommonLoadingOption} from '../common';
 import {Class, ImageClassifier, ImageClassifierResult} from './common';
 
 // The global namespace type.
 type MobilenetNS = typeof mobilenet;
 
 /** Loading options. */
-export type MobilenetTFJSLoadOptions =
+export type MobilenetTFJSLoadingOptions =
     TFJSModelCommonLoadingOption&mobilenet.ModelConfig;
 
 /** Inference options. */
@@ -32,42 +33,52 @@ export interface MobilenetTFJSInferenceOptions {
   topK?: number;
 }
 
-/** Mobilenet model from TFJS. */
-export class MobilenetTFJS extends ImageClassifier<
-    MobilenetNS, MobilenetTFJSLoadOptions, MobilenetTFJSInferenceOptions> {
-  private mobilenetModel: mobilenet.MobileNet;
-
-  readonly name = 'Mobilenet';
+/** Loader for mobilenet TFJS model. */
+export class MobilenetTFJSLoader extends TaskModelLoader<
+    MobilenetNS, MobilenetTFJSLoadingOptions,
+    ImageClassifier<MobilenetTFJSInferenceOptions>> {
+  readonly name = 'TFJS Mobilenet';
+  readonly description = 'Run mobilenet with TFJS models';
+  readonly resourceUrls = {
+    'github': 'https://github.com/tensorflow/tfjs-models/tree/master/mobilenet',
+  };
   readonly runtime = Runtime.TFJS;
   readonly version = '2.1.0';
-  readonly packageUrls =
-      [['https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.0']];
+  readonly supportedTasks = [Task.IMAGE_CLASSIFICATION];
+  readonly packageUrls = [[
+    `https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@${this.version}`
+  ]];
   readonly sourceModelGlobalNs = 'mobilenet';
 
-  protected async loadSourceModel(
-      sourceModelGlobal: MobilenetNS, options?: MobilenetTFJSLoadOptions) {
-    this.mobilenetModel = await sourceModelGlobal.load(options);
-  }
+  protected async transformSourceModel(
+      sourceModelGlobal: MobilenetNS,
+      loadingOptions?: MobilenetTFJSLoadingOptions):
+      Promise<ImageClassifier<MobilenetTFJSInferenceOptions>> {
+    const mobilenetModel = await sourceModelGlobal.load(loadingOptions);
 
-  async classify(
-      img: ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement,
-      options?: MobilenetTFJSInferenceOptions): Promise<ImageClassifierResult> {
-    if (!this.mobilenetModel) {
-      throw new Error('source model is not loaded');
-    }
-    const mobilenetResults = await this.mobilenetModel.classify(
-        img, options ? options.topK : undefined);
-    const classes: Class[] = mobilenetResults.map(result => {
-      return {
-        className: result.className,
-        probability: result.probability,
-      };
-    });
-    const finalResult: ImageClassifierResult = {
-      classes,
+    return {
+      classify: async (img, infereceOptions) => {
+        if (!mobilenetModel) {
+          throw new Error('source model is not loaded');
+        }
+        await ensureTFJSBackend(loadingOptions);
+        const mobilenetResults = await mobilenetModel.classify(
+            img, infereceOptions ? infereceOptions.topK : undefined);
+        const classes: Class[] = mobilenetResults.map(result => {
+          return {
+            className: result.className,
+            probability: result.probability,
+          };
+        });
+        const finalResult: ImageClassifierResult = {
+          classes,
+        };
+        return finalResult;
+      },
+
+      cleanUp: () => {},
     };
-    return finalResult;
   }
 }
 
-export const mobilenetTfjs = new MobilenetTFJS();
+export const mobilenetTfjsLoader = new MobilenetTFJSLoader();

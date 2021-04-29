@@ -15,6 +15,8 @@
  * =============================================================================
  */
 
+import {isWebWorker} from '../utils';
+
 /** Default TFJS backend. */
 export const DEFAULT_TFJS_BACKEND: TFJSBackend = 'webgl';
 
@@ -37,6 +39,7 @@ export interface TFLiteCustomModelCommonLoadingOption {
 /** All supported tasks. */
 export enum Task {
   IMAGE_CLASSIFICATION = 'IMAGE_CLASSIFICATION',
+  NL_CLASSIFIER = 'NL_CLASSIFIER',
 }
 
 /** All supported runtimes. */
@@ -75,4 +78,29 @@ export function getTFJSModelDependencyPackages(
       break;
   }
   return packages;
+}
+
+/**
+ * Makes sure the current tfjs backend matches the one in the given option.
+ *
+ * For TFJS models, this function should be called at the loading time as well
+ * as before running inference.
+ *
+ * Users might run multiple TFJS models with different backend options in a web
+ * app. Only setting the backend at the model loading time is not enough because
+ * the backend might be set to another one when loading a different model. We
+ * also need to call this right before running the inference.
+ */
+export async function ensureTFJSBackend(
+    options?: TFJSModelCommonLoadingOption) {
+  const backend: TFJSBackend = options ? options.backend : DEFAULT_TFJS_BACKEND;
+  // tslint:disable-next-line:no-any
+  const global: any = isWebWorker() ? self : window;
+  const tf = global['tf'];
+  if (!tf) {
+    throw new Error('tfjs not loaded');
+  }
+  if (tf.getBackend() !== backend) {
+    await tf.setBackend(backend);
+  }
 }
