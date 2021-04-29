@@ -138,7 +138,6 @@ export class Context {
 
   handleDataAvailable(event) {
     if (event.data.size > 0) {
-      console.log('preparing download');
       const recordedChunks = [event.data];
 
       // Download.
