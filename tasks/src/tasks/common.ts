@@ -21,7 +21,7 @@ import {isWebWorker} from '../utils';
 export const DEFAULT_TFJS_BACKEND: TFJSBackend = 'webgl';
 
 /** Default TFJS version. */
-export const DEFAULT_TFJS_VERSION = '3.5.0';
+export const DEFAULT_TFJS_VERSION = '3.6.0';
 
 /** Type of TFJS bckends. */
 export type TFJSBackend = 'cpu'|'webgl'|'wasm';

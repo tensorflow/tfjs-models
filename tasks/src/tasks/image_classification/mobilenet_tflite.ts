@@ -51,7 +51,7 @@ export class MobilenetTFLiteLoader extends TaskModelLoader<
   readonly packageUrls =
       [[`https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-tflite@${
           this.metadata.version}/dist/tf-tflite.min.js`]];
-  readonly sourceModelGlobalNs = 'tflite';
+  readonly sourceModelGlobalNamespace = 'tflite';
 
   protected async transformSourceModel(
       sourceModelGlobal: TFLiteNS,

@@ -51,7 +51,7 @@ export class MobilenetTFJSLoader extends TaskModelLoader<
   readonly packageUrls =
       [[`https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@${
           this.metadata.version}`]];
-  readonly sourceModelGlobalNs = 'mobilenet';
+  readonly sourceModelGlobalNamespace = 'mobilenet';
 
   protected async transformSourceModel(
       sourceModelGlobal: MobilenetNS,

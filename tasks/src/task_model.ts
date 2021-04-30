@@ -61,7 +61,7 @@ export interface TaskModel {
 
 /** Metadata for a task model. */
 export interface TaskModelMetadata {
-  /** Model name. */
+  /** Human-readable model name. */
   name: string;
 
   /** The model description. Can have simple HTML tags. */
@@ -100,9 +100,7 @@ export interface TaskModelMetadata {
  * into the target task model. To do that, the client that implements the
  * `TaskModelLoader` needs to:
  *
- * - Provide a set of metadata, such as model name, runtime, etc. These
- *   metadata fields are shared between all the task models loaded from this
- *   model loader so it makes more sense to put them here.
+ * - Provide a set of metadata, such as model name, runtime, etc.
  *
  * - Provide package urls and global namespace name for the source model.
  *   `TaskModelLoader` will load the packages, and return the global namespace
@@ -148,7 +146,7 @@ export abstract class TaskModelLoader<N, LO, M> {
    *
    * For example, for TFJS mobilenet model, this would be 'mobilenet'.
    */
-  abstract readonly sourceModelGlobalNs: string;
+  abstract readonly sourceModelGlobalNamespace: string;
 
   /**
    * Callback to wait for (await) after all packages are loaded.
@@ -169,7 +167,8 @@ export abstract class TaskModelLoader<N, LO, M> {
    */
   async load(options?: LO): Promise<M> {
     // Load the packages to get the global namespace ready.
-    const sourceModelGlobal = await this.loadSourceModelGlobalNs(options);
+    const sourceModelGlobal =
+        await this.loadSourceModelGlobalNamespace(options);
 
     // Wait for the callback to resolve if set.
     if (this.postPackageLoadingCallback) {
@@ -190,9 +189,10 @@ export abstract class TaskModelLoader<N, LO, M> {
    * specified in the `packageUrls` field above.
    *
    * It is typically not necessary for subclasses to override this method as
-   * long as they set the `packageUrls` and `sourceModelGlobalNs` field above.
+   * long as they set the `packageUrls` and `sourceModelGlobalNamespace` field
+   * above.
    */
-  protected async loadSourceModelGlobalNs(options?: LO): Promise<N> {
+  protected async loadSourceModelGlobalNamespace(options?: LO): Promise<N> {
     const packages: Array<string[]> = [];
 
     // Add TFJS dependencies for TFJS models.
@@ -205,24 +205,24 @@ export abstract class TaskModelLoader<N, LO, M> {
     // Load packages.
     packages.push(...this.packageUrls);
     return await this.packageLoader.loadPackagesAndGetGlobalNamespace(
-        this.sourceModelGlobalNs, packages);
+        this.sourceModelGlobalNamespace, packages);
   }
 
   /**
-   * Loads the source model with the given global namespace and options, and
-   * transforms it to the corresponding task model.
+   * Loads the source model and transforms it to the corresponding task model.
    *
-   * A subclass should implement this method and use the `sourceModelGlobalNs`
-   * to load the source model. Note that the subclass should *NOT* use the
-   * namespace from the import statement to implement this method (e.g. the
-   * "mobilenet" variable in `import * as mobilenet from
-   * '@tensorflow-models/mobilenet`). Instead, only `sourceModelGlobalNs` should
-   * be used, which should have the same type as the imported namespace. The
-   * imported namespace can only be used to reference types. This makes sure
+   * A subclass should implement this method and use the
+   * `sourceModelGlobalNamespace` to load the source model. Note that the
+   * subclass should *NOT* use the namespace from the import statement to
+   * implement this method (e.g. the "mobilenet" variable in `import * as
+   * mobilenet from
+   * '@tensorflow-models/mobilenet`). Instead, only `sourceModelGlobalNamespace`
+   * should be used, which should have the same type as the imported namespace.
+   * The imported namespace can only be used to reference types. This makes sure
    * that the code from the source model is NOT bundled in the final binary.
    */
-  protected async transformSourceModel(sourceModelGlobalNs: N, options?: LO):
-      Promise<M> {
+  protected async transformSourceModel(
+      sourceModelGlobalNamespace: N, options?: LO): Promise<M> {
     throw new Error('not implemented');
   }
 }
