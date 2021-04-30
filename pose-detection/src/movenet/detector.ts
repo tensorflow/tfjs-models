@@ -43,6 +43,7 @@ export class MoveNetDetector extends BasePoseDetector {
       getKeypointIndexByName(SupportedModels.MoveNet);
 
   // Global states.
+  private inEstimatePoses = false;
   private keypointsFilter = new KeypointsOneEuroFilter(KEYPOINT_FILTER_CONFIG);
   private cropRegion: BoundingBox;
   private cropRegionFilterYMin = new LowPassFilter(CROP_FILTER_ALPHA);
@@ -171,12 +172,19 @@ export class MoveNetDetector extends BasePoseDetector {
       estimationConfig:
           MoveNetEstimationConfig = MOVENET_SINGLE_POSE_ESTIMATION_CONFIG,
       timestamp?: number): Promise<Pose[]> {
-    estimationConfig = validateEstimationConfig(estimationConfig);
+    // Prevent an estimatePoses call when one is already running, because every
+    // estimatePoses() call needs the cropping result of the previous call.
+    if (this.inEstimatePoses) {
+      return [];
+    }
+    this.inEstimatePoses = true;
 
     if (image == null) {
       this.reset();
       return [];
     }
+
+    estimationConfig = validateEstimationConfig(estimationConfig);
 
     if (timestamp == null && isVideo(image)) {
       timestamp = image.currentTime * SECOND_TO_MICRO_SECONDS;
@@ -266,6 +274,8 @@ export class MoveNetDetector extends BasePoseDetector {
     }
 
     const pose: Pose = {score: poseScore, keypoints};
+
+    this.inEstimatePoses = false;
 
     return [pose];
   }
