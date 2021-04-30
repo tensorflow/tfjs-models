@@ -31,6 +31,11 @@ export class Camera {
    * @param cameraParam From app `STATE.camera`.
    */
   static async setupCamera(cameraParam) {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error(
+          'Browser API navigator.mediaDevices.getUserMedia not available');
+    }
+
     const {targetFPS, sizeOption} = cameraParam;
     const $size = params.VIDEO_SIZE[sizeOption];
     const videoConfig = {
@@ -39,8 +44,9 @@ export class Camera {
         facingMode: 'user',
         // Only setting the video to a specified size for large screen, on
         // mobile devices accept the default size.
-        width: isMobile() ? undefined : $size.width,
-        height: isMobile() ? undefined : $size.height,
+        width: isMobile() ? params.VIDEO_SIZE['360 X 270'].width : $size.width,
+        height: isMobile() ? params.VIDEO_SIZE['360 X 270'].height :
+                             $size.height,
         frameRate: {
           ideal: targetFPS,
         }
@@ -85,6 +91,16 @@ export class Camera {
 
   clearCtx() {
     this.ctx.clearRect(0, 0, this.video.videoWidth, this.video.videoHeight);
+  }
+
+  /**
+   * Draw the keypoints and skeleton on the video.
+   * @param poses A list of poses to render.
+   */
+  drawResults(poses) {
+    for (const pose of poses) {
+      this.drawResult(pose);
+    }
   }
 
   /**

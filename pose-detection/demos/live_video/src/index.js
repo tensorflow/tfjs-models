@@ -30,9 +30,9 @@ import {Camera} from './camera';
 import {setupDatGui} from './option_panel';
 import {STATE} from './params';
 import {setupStats} from './stats_panel';
-import {setEnvFlags} from './util';
+import {setBackendAndEnvFlags} from './util';
 
-let detector, camera, stats, pauseInference;
+let detector, camera, stats;
 
 async function createDetector() {
   switch (STATE.model) {
@@ -44,8 +44,7 @@ async function createDetector() {
         inputResolution: {width: 500, height: 500},
         multiplier: 0.75
       });
-    case posedetection.SupportedModels.MediapipeBlazeposeUpperBody:
-    case posedetection.SupportedModels.MediapipeBlazeposeFullBody:
+    case posedetection.SupportedModels.MediapipeBlazepose:
       return posedetection.createDetector(STATE.model, {quantBytes: 4});
     case posedetection.SupportedModels.MoveNet:
       const modelType = STATE.modelConfig.type == 'lightning' ?
@@ -56,44 +55,54 @@ async function createDetector() {
 }
 
 async function checkGuiUpdate() {
-  if (STATE.changeToTargetFPS || STATE.changeToSizeOption) {
+  if (STATE.isTargetFPSChanged || STATE.isSizeOptionChanged) {
     camera = await Camera.setupCamera(STATE.camera);
-    STATE.changeToTargetFPS = null;
-    STATE.changeToSizeOption = null;
+    STATE.isTargetFPSChanged = false;
+    STATE.isSizeOptionChanged = false;
   }
 
-  if (STATE.changeToModel != null) {
+  if (STATE.isModelChanged) {
     detector.dispose();
     detector = await createDetector(STATE.model);
-    STATE.changeToModel = null;
+    STATE.isModelChanged = false;
   }
 
-  if (STATE.isFlagChanged) {
-    STATE.changeToModel = true;
+  if (STATE.isFlagChanged || STATE.isBackendChanged) {
+    STATE.isModelChanged = true;
     detector.dispose();
-    await setEnvFlags(STATE.flags);
+    await setBackendAndEnvFlags(STATE.flags, STATE.backend);
     detector = await createDetector(STATE.model);
     STATE.isFlagChanged = false;
-    STATE.changeToModel = false;
+    STATE.isBackendChanged = false;
+    STATE.isModelChanged = false;
   }
 }
 
 async function renderResult() {
+  if (video.readyState < 2) {
+    await new Promise((resolve) => {
+      camera.video.onloadeddata = () => {
+        resolve(video);
+      };
+    });
+  }
+
   // FPS only counts the time it takes to finish estimatePoses.
   stats.begin();
 
   const poses = await detector.estimatePoses(
-      camera.video, {maxPoses: 1, flipHorizontal: false});
+      camera.video,
+      {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
 
   stats.end();
 
   camera.drawCtx();
 
   // The null check makes sure the UI is not in the middle of changing to a
-  // different model. If changeToModel is non-null, the result is from an
-  // old model, which shouldn't be rendered.
-  if (poses.length > 0 && STATE.changeToModel == null) {
-    camera.drawResult(poses[0]);
+  // different model. If during model change, the result is from an old model,
+  // which shouldn't be rendered.
+  if (poses.length > 0 && !STATE.isModelChanged) {
+    camera.drawResults(poses);
   }
 }
 

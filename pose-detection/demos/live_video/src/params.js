@@ -14,28 +14,32 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as posedetection from '@tensorflow-models/pose-detection';
+
 
 export const DEFAULT_LINE_WIDTH = 2;
 export const DEFAULT_RADIUS = 4;
 
 export const VIDEO_SIZE = {
   '640 X 480': {width: 640, height: 480},
-  '640 X 360': {width: 640, height: 360}
+  '640 X 360': {width: 640, height: 360},
+  '360 X 270': {width: 360, height: 270}
 };
 export const STATE = {
   camera: {targetFPS: 60, sizeOption: '640 X 480'},
   backend: 'webgl',
   flags: {},
-  modelConfigs: {}
+  modelConfig: {}
 };
 export const BLAZEPOSE_CONFIG = {
+  maxPoses: 1,
   scoreThreshold: 0.65
 };
 export const POSENET_CONFIG = {
+  maxPoses: 1,
   scoreThreshold: 0.5
 };
 export const MOVENET_CONFIG = {
+  maxPoses: 1,
   type: 'lightning',
   scoreThreshold: 0.3
 };

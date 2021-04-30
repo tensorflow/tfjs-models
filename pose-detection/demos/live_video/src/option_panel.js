@@ -18,7 +18,7 @@ import * as posedetection from '@tensorflow-models/pose-detection';
 import * as tf from '@tensorflow/tfjs-core';
 
 import * as params from './params';
-import {setEnvFlags} from './util';
+import {setBackendAndEnvFlags} from './util';
 
 /**
  * Records each flag's default value under the runtime environment and is a
@@ -35,13 +35,13 @@ export async function setupDatGui(urlParams) {
   // The camera folder contains options for video settings.
   const cameraFolder = gui.addFolder('Camera');
   const fpsController = cameraFolder.add(params.STATE.camera, 'targetFPS');
-  fpsController.onFinishChange((targetFPS) => {
-    params.STATE.changeToTargetFPS = +targetFPS;
+  fpsController.onFinishChange((_) => {
+    params.STATE.isTargetFPSChanged = true;
   });
   const sizeController = cameraFolder.add(
       params.STATE.camera, 'sizeOption', Object.keys(params.VIDEO_SIZE));
-  sizeController.onChange(option => {
-    params.STATE.changeToSizeOption = option;
+  sizeController.onChange(_ => {
+    params.STATE.isSizeOptionChanged = true;
   });
   cameraFolder.open();
 
@@ -63,13 +63,7 @@ export async function setupDatGui(urlParams) {
       }
       break;
     case 'blazepose':
-      params.STATE.model = type === 'upperbody' ?
-          posedetection.SupportedModels.MediapipeBlazeposeUpperBody :
-          posedetection.SupportedModels.MediapipeBlazeposeFullBody;
-      if (type !== 'fullbody' && type !== 'upperbody') {
-        // Nulify invalid value.
-        type = null;
-      }
+      params.STATE.model = posedetection.SupportedModels.MediapipeBlazepose;
       break;
     default:
       alert(`${urlParams.get('model')}`);
@@ -79,8 +73,8 @@ export async function setupDatGui(urlParams) {
   const modelController = modelFolder.add(
       params.STATE, 'model', Object.values(posedetection.SupportedModels));
 
-  modelController.onChange(model => {
-    params.STATE.changeToModel = model;
+  modelController.onChange(_ => {
+    params.STATE.isModelChanged = true;
     showModelConfigs(modelFolder);
   });
 
@@ -92,7 +86,7 @@ export async function setupDatGui(urlParams) {
   const backendController =
       backendFolder.add(params.STATE, 'backend', ['webgl', 'wasm']);
   backendController.onChange(async backend => {
-    await tf.setBackend(backend);
+    params.STATE.isBackendChanged = true;
     await showFlagSettings(backendFolder, backend);
   });
   await showFlagSettings(backendFolder, params.STATE.backend);
@@ -120,8 +114,7 @@ function showModelConfigs(folderController, type) {
     case posedetection.SupportedModels.MoveNet:
       addMoveNetControllers(folderController, type);
       break;
-    case posedetection.SupportedModels.MediapipeBlazeposeUpperBody:
-    case posedetection.SupportedModels.MediapipeBlazeposeFullBody:
+    case posedetection.SupportedModels.MediapipeBlazepose:
       addBlazePoseControllers(folderController);
       break;
     default:
@@ -133,6 +126,8 @@ function showModelConfigs(folderController, type) {
 // settings.
 function addPoseNetControllers(modelConfigFolder) {
   params.STATE.modelConfig = {...params.POSENET_CONFIG};
+
+  modelConfigFolder.add(params.STATE.modelConfig, 'maxPoses', [1, 2, 3, 4, 5]);
   modelConfigFolder.add(params.STATE.modelConfig, 'scoreThreshold', 0, 1);
 }
 
@@ -140,14 +135,14 @@ function addPoseNetControllers(modelConfigFolder) {
 // settings.
 function addMoveNetControllers(modelConfigFolder, type) {
   params.STATE.modelConfig = {...params.MOVENET_CONFIG};
-  params.STATE.modelConfig.type = type != null ? type : 'thunder';
+  params.STATE.modelConfig.type = type != null ? type : 'lightning';
 
   const typeController = modelConfigFolder.add(
-      params.STATE.modelConfig, 'type', ['thunder', 'lightning']);
+      params.STATE.modelConfig, 'type', ['lightning', 'thunder']);
   typeController.onChange(_ => {
-    // Set changeToModel to non-null, so that we don't render any result when
-    // changeToModel is non-null.
-    params.STATE.changeToModel = params.STATE.model;
+    // Set isModelChanged to true, so that we don't render any result during
+    // changing models.
+    params.STATE.isModelChanged = true;
   });
 
   modelConfigFolder.add(params.STATE.modelConfig, 'scoreThreshold', 0, 1);
@@ -165,7 +160,7 @@ function addBlazePoseControllers(modelConfigFolder) {
  */
 async function initDefaultValueMap() {
   // Clean up the cache to query tunable flags' default values.
-  setEnvFlags({});
+  setBackendAndEnvFlags({}, params.STATE.backend);
   TUNABLE_FLAG_DEFAULT_VALUE_MAP = {};
   params.STATE.flags = {};
   for (const backend in params.BACKEND_FLAGS_MAP) {

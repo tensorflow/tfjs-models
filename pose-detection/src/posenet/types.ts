@@ -80,3 +80,21 @@ export type Vector2D = {
   y: number,
   x: number
 };
+
+export declare type Part = {
+  heatmapX: number,
+  heatmapY: number,
+  id: number
+};
+
+export declare type PartWithScore = {
+  score: number,
+  part: Part
+};
+
+export type Tuple<T> = [T, T];
+export type StringTuple = Tuple<string>;
+export type NumberTuple = Tuple<number>;
+export interface NumberDict {
+  [key: string]: number;
+}
