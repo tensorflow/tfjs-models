@@ -41,14 +41,16 @@ export type MobilenetTFLiteInferanceOptions = {}
 export class MobilenetTFLiteLoader extends TaskModelLoader<
     TFLiteNS, MobilenetTFLiteLoadingOptions,
     ImageClassifier<MobilenetTFLiteInferanceOptions>> {
-  readonly name = 'TFLite Mobilenet';
-  readonly description = 'Run mobilenet with TFLite models';
-  readonly runtime = Runtime.TFLITE;
-  readonly version = '0.0.1-alpha.3';
-  readonly supportedTasks = [Task.IMAGE_CLASSIFICATION];
+  readonly metadata = {
+    name: 'TFLite Mobilenet',
+    description: 'Run mobilenet with TFLite models',
+    runtime: Runtime.TFLITE,
+    version: '0.0.1-alpha.3',
+    supportedTasks: [Task.IMAGE_CLASSIFICATION],
+  };
   readonly packageUrls =
       [[`https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-tflite@${
-          this.version}/dist/tf-tflite.min.js`]];
+          this.metadata.version}/dist/tf-tflite.min.js`]];
   readonly sourceModelGlobalNs = 'tflite';
 
   protected async transformSourceModel(

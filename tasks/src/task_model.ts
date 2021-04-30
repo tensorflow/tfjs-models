@@ -59,6 +59,39 @@ export interface TaskModel {
   cleanUp(): void;
 }
 
+/** Metadata for a task model. */
+export interface TaskModelMetadata {
+  /** Model name. */
+  name: string;
+
+  /** The model description. Can have simple HTML tags. */
+  description?: string;
+
+  /** Resource urls (e.g. github page, docs, etc) indexed by names. */
+  resourceUrls?: {[name: string]: string};
+
+  /** The model runtime. */
+  runtime: Runtime;
+
+  /**
+   * The model version.
+   *
+   * This should be used to construct the main package url in the `packageUrls`
+   * field below so that the package version matches the version specified here.
+   *
+   * TODO: allow users to dynamically specify which version to load.
+   */
+  version: string;
+
+  /**
+   * Tasks that the model supports.
+   *
+   * This needs to match the location(s) of this model loader in the main index
+   * in all_tasks.ts file. A test will run to make sure of this.
+   */
+  supportedTasks: Task[];
+}
+
 /**
  * A loader that loads a task model.
  *
@@ -71,9 +104,9 @@ export interface TaskModel {
  *   metadata fields are shared between all the task models loaded from this
  *   model loader so it makes more sense to put them here.
  *
- * - Provide package urls for the source model. `TaskModelLoader` will load the
- *   packages, and return the global namespace variable provided by the source
- *   model.
+ * - Provide package urls and global namespace name for the source model.
+ *   `TaskModelLoader` will load the packages, and return the global namespace
+ *   variable provided by the source model.
  *
  * - Implement the `transformSourceModel` method to load the source model using
  *   the global namespace variable from the previous step, and transform the
@@ -90,35 +123,8 @@ export interface TaskModel {
  * @template M The type of the target task model to transform to.
  */
 export abstract class TaskModelLoader<N, LO, M> {
-  /** The model name. */
-  abstract readonly name: string;
-
-  /** The model description. Can have simple HTML tags. */
-  readonly description: string = '';
-
-  /** Resource urls (e.g. github page, docs, etc) indexed by names. */
-  readonly resourceUrls: {[name: string]: string} = {};
-
-  /** The model runtime. */
-  abstract readonly runtime: Runtime;
-
-  /**
-   * The model version.
-   *
-   * This should be used to construct the main package url in the `packageUrls`
-   * field below so that the package version matches the version specified here.
-   *
-   * TODO: allow users to dynamically specify which version to load.
-   */
-  abstract readonly version: string;
-
-  /**
-   * Tasks that the model supports.
-   *
-   * This needs to match the location(s) of this model loader in the main index
-   * in all_tasks.ts file. A test will run to make sure of this.
-   */
-  abstract readonly supportedTasks: Task[];
+  /** Metadata */
+  abstract readonly metadata: TaskModelMetadata;
 
   /**
    * URLs of packages to load for the model.
@@ -171,7 +177,7 @@ export abstract class TaskModelLoader<N, LO, M> {
     }
     // For tfjs models, we automatically wait for the backend to be set before
     // proceeding. Subclasses don't need to do worry about this.
-    if (this.runtime === Runtime.TFJS) {
+    if (this.metadata.runtime === Runtime.TFJS) {
       await ensureTFJSBackend(options as {} as TFJSModelCommonLoadingOption);
     }
 
@@ -190,7 +196,7 @@ export abstract class TaskModelLoader<N, LO, M> {
     const packages: Array<string[]> = [];
 
     // Add TFJS dependencies for TFJS models.
-    if (this.runtime === Runtime.TFJS) {
+    if (this.metadata.runtime === Runtime.TFJS) {
       const tfjsOptions = options as {} as TFJSModelCommonLoadingOption;
       packages.push(...getTFJSModelDependencyPackages(
           tfjsOptions ? tfjsOptions.backend : undefined));
@@ -198,7 +204,7 @@ export abstract class TaskModelLoader<N, LO, M> {
 
     // Load packages.
     packages.push(...this.packageUrls);
-    return await this.packageLoader.loadPackagesAndGetGlobalNs(
+    return await this.packageLoader.loadPackagesAndGetGlobalNamespace(
         this.sourceModelGlobalNs, packages);
   }
 

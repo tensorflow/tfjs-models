@@ -62,7 +62,8 @@ export const ImageClassification = modelIndex[Task.IMAGE_CLASSIFICATION];
  */
 export function getModelLoadersByRuntime(runtimes: Runtime[]):
     TaskModelLoader<{}, {}, {}>[] {
-  return filterModelLoaders((loader) => runtimes.includes(loader.runtime));
+  return filterModelLoaders(
+      (loader) => runtimes.includes(loader.metadata.runtime));
 }
 
 /** Gets all model loaders from the index. */

@@ -5,12 +5,14 @@ _WORK IN PROGRESS_
 TFJS task API provides an unified experience for running task-specific models
 on the web. It covers popular machine learning tasks, such as sentiment
 detection, image classification, pose detection, etc. For each task, you can
-choose from various models supported by different runtime systems, such as
-TFJS, TFLite, MediaPipe, etc. The model interfaces are specifically designed
-for each task. They are intuitive and easy-to-use, even for developers without
-any comprehensive ML knowledge. In addition, the API will automatically load
-required packages on the fly. You never need to worry about missing dependencies
-again.
+choose from a collection of state-of-the-art models regardless of the underlying
+runtime systems (e.g. TFJS, TFLite, MediaPipe, etc). We are aiming to provide an
+intuitive and easy-to-use API for each task and improve usability for developers
+without ML knowledge. In addition, the API will automatically load required
+packages on the fly. You never need to worry about missing dependencies again.
+
+The initial version only supports the web browser environment. NodeJS support is
+coming soon.
 
 The following table summarizes all the supported tasks and their models:
 
@@ -27,7 +29,7 @@ loaded on demand automatically.
 
 ```js
 // Import @tensorflow-models/tasks.
-import * as tftask from '@tensorflow-models/tasks';
+import * as tfTask from '@tensorflow-models/tasks';
 ```
 
 ### Via a script tag
@@ -43,23 +45,23 @@ The code snippet below shows how to load various models for the
 `Image Classification` task:
 
 ```js
-import * as tftask from '@tensorflow-models/tasks';
+import * as tfTask from '@tensorflow-models/tasks';
 
 // Load the TFJS mobilenet model.
-const model1 = await tftask.ImageClassification.MobileNet.TFJS.load({
+const model1 = await tfTask.ImageClassification.MobileNet.TFJS.load({
   backend: 'wasm'});
 
 // Load the TFLite mobilenet model.
-const model2 = await tftask.ImageClassification.MobileNet.TFLite.load();
+const model2 = await tfTask.ImageClassification.MobileNet.TFLite.load();
 
 // Load a custom image classification TFLite model.
-const model3 = await tftask.ImageClassification.CustomModel.TFLite.load({
+const model3 = await tfTask.ImageClassification.CustomModel.TFLite.load({
   model: 'url/to/your/bird_classifier.tflite'});
 ```
 
 Since all these models are for the `Image Classification` task, they will have
-the same task model type: `ImageClassifier` in this case. Each task model
-defines an unique and easy-to-use inference method that fits its task the best.
+the same task model type: [`ImageClassifier`][image classifier interface] in
+this case. Each task model defines an unique and easy-to-use inference method.
 For example, the `ImageClassiier` task model defines a `classify` method that
 takes an image-like element and returns the predicted classes:
 
@@ -121,3 +123,4 @@ $ yarn build-npm
 [tflite task library]: https://www.tensorflow.org/lite/inference_with_metadata/task_library/overview
 [xnnpack]: https://github.com/google/XNNPACK
 [mot]: https://www.tensorflow.org/model_optimization/api_docs/python/tfmot
+[image classifier interface]: https://github.com/tensorflow/tfjs-models/blob/master/tasks/src/tasks/image_classification/common.ts

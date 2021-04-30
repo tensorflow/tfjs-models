@@ -39,23 +39,24 @@ export type ImageClassificationCustomModelTFLiteInferanceOptions = {}
 export class ImageClassificationCustomModelTFLiteLoader extends TaskModelLoader<
     TFLiteNS, ImageClassificationCustomModelTFLiteLoadingOptions,
     ImageClassifier<ImageClassificationCustomModelTFLiteInferanceOptions>> {
-  readonly name = 'Image classification with TFLite models';
-  readonly description =
-      'An image classfier backed by the TFLite Task Library. ' +
-      'It can work with any models that meet the ' +
-      '<a href="https://www.tensorflow.org/lite/inference_with_metadata/' +
-      'task_library/image_classifier#model_compatibility_requirements" ' +
-      'target="_blank">model requirements</a>.';
-  readonly resourceUrls = {
-    'TFLite task library': 'https://www.tensorflow.org/lite/' +
-        'inference_with_metadata/task_library/overview',
+  readonly metadata = {
+    name: 'Image classification with TFLite models',
+    description: 'An image classfier backed by the TFLite Task Library. ' +
+        'It can work with any models that meet the ' +
+        '<a href:"https://www.tensorflow.org/lite/inference_with_metadata/' +
+        'task_library/image_classifier#model_compatibility_requirements" ' +
+        'target:"_blank">model requirements</a>.',
+    resourceUrls: {
+      'TFLite task library': 'https://www.tensorflow.org/lite/' +
+          'inference_with_metadata/task_library/overview',
+    },
+    runtime: Runtime.TFLITE,
+    version: '0.0.1-alpha.3',
+    supportedTasks: [Task.IMAGE_CLASSIFICATION],
   };
-  readonly runtime = Runtime.TFLITE;
-  readonly version = '0.0.1-alpha.3';
-  readonly supportedTasks = [Task.IMAGE_CLASSIFICATION];
   readonly packageUrls =
       [[`https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-tflite@${
-          this.version}/dist/tf-tflite.min.js`]];
+          this.metadata.version}/dist/tf-tflite.min.js`]];
   readonly sourceModelGlobalNs = 'tflite';
 
   protected async transformSourceModel(

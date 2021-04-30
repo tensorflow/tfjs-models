@@ -37,17 +37,20 @@ export interface MobilenetTFJSInferenceOptions {
 export class MobilenetTFJSLoader extends TaskModelLoader<
     MobilenetNS, MobilenetTFJSLoadingOptions,
     ImageClassifier<MobilenetTFJSInferenceOptions>> {
-  readonly name = 'TFJS Mobilenet';
-  readonly description = 'Run mobilenet with TFJS models';
-  readonly resourceUrls = {
-    'github': 'https://github.com/tensorflow/tfjs-models/tree/master/mobilenet',
+  readonly metadata = {
+    name: 'TFJS Mobilenet',
+    description: 'Run mobilenet with TFJS models',
+    resourceUrls: {
+      'github':
+          'https://github.com/tensorflow/tfjs-models/tree/master/mobilenet',
+    },
+    runtime: Runtime.TFJS,
+    version: '2.1.0',
+    supportedTasks: [Task.IMAGE_CLASSIFICATION],
   };
-  readonly runtime = Runtime.TFJS;
-  readonly version = '2.1.0';
-  readonly supportedTasks = [Task.IMAGE_CLASSIFICATION];
-  readonly packageUrls = [[
-    `https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@${this.version}`
-  ]];
+  readonly packageUrls =
+      [[`https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@${
+          this.metadata.version}`]];
   readonly sourceModelGlobalNs = 'mobilenet';
 
   protected async transformSourceModel(

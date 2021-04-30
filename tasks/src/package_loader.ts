@@ -34,8 +34,11 @@ export class PackageLoader<G> {
    * For example, if packageUrls = [ [url1, url2], [url3] ], then url1 and
    * url2 are loaded together first. url3 will then be loaded when url1 and
    * url2 are both done loading.
+   *
+   * TODO: use a design similar to tfjs' `Platform` to provide different
+   * implmentations for dynamic package loading, global, etc.
    */
-  async loadPackagesAndGetGlobalNs(
+  async loadPackagesAndGetGlobalNamespace(
       namespace: string, packageUrls: Array<string[]>,
       curIndex = 0): Promise<G> {
     if (curIndex >= packageUrls.length) {
@@ -45,7 +48,7 @@ export class PackageLoader<G> {
     }
     await Promise.all(
         packageUrls[curIndex].map(name => this.loadPackage(name)));
-    return await this.loadPackagesAndGetGlobalNs(
+    return await this.loadPackagesAndGetGlobalNamespace(
         namespace, packageUrls, curIndex + 1);
   }
 
@@ -57,7 +60,7 @@ export class PackageLoader<G> {
     }
 
     // From webworker.
-    if (typeof window === 'undefined') {
+    if (isWebWorker()) {
       importScripts(packageUrl);
       PackageLoader.promises[packageUrl] = Promise.resolve();
     }

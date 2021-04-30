@@ -40,12 +40,12 @@ function minify() {
   return uglify({output: {preamble: PREAMBLE}});
 }
 
-function config({plugins = [], output = {}}) {
+function config({plugins = [], output = {}, tsCompilerOptions = {}}) {
   const defaultTsOptions = {
     include: ['src/**/*.ts'],
     module: 'ES2015',
   };
-  const tsoptions = Object.assign({}, defaultTsOptions);
+  const tsoptions = Object.assign({}, defaultTsOptions, tsCompilerOptions);
   return {
     input: 'src/index.ts',
     plugins: [typescript(tsoptions), resolve(), commonjs(), ...plugins],
@@ -57,12 +57,50 @@ function config({plugins = [], output = {}}) {
   };
 }
 
-const packageName = 'tftask';
+const packageName = 'tfTask';
 export default [
-  config(
-      {output: {format: 'umd', name: packageName, file: 'dist/tfjs-tasks.js'}}),
+  // node
+  config({
+    output: {format: 'cjs', name: packageName, file: 'dist/tfjs-tasks.node.js'},
+    tsCompilerOptions: {target: 'es5'},
+  }),
+  // UMD ES5 unminified.
+  config({
+    output: {format: 'umd', name: packageName, file: 'dist/tfjs-tasks.js'},
+    tsCompilerOptions: {target: 'es5'},
+  }),
+  // UMD ES5 minified.
   config({
     plugins: [minify()],
-    output: {format: 'umd', name: packageName, file: 'dist/tfjs-tasks.min.js'}
-  })
+    output: {format: 'umd', name: packageName, file: 'dist/tfjs-tasks.min.js'},
+    tsCompilerOptions: {target: 'es5'},
+  }),
+  // UMD ES2017 unminified.
+  config({
+    output:
+        {format: 'umd', name: packageName, file: 'dist/tfjs-tasks.es2017.js'},
+    tsCompilerOptions: {target: 'es2017'},
+  }),
+  // UMD ES2017 minified.
+  config({
+    plugins: [minify()],
+    output: {
+      format: 'umd',
+      name: packageName,
+      file: 'dist/tfjs-tasks.es2017.min.js'
+    },
+    tsCompilerOptions: {target: 'es2017'},
+  }),
+  // FESM ES2017 unminified.
+  config({
+    output: {format: 'es', name: packageName, file: 'dist/tfjs-tasks.fesm.js'},
+    tsCompilerOptions: {target: 'es2017'},
+  }),
+  // FESM ES2017 minified.
+  config({
+    plugins: [minify()],
+    output:
+        {format: 'es', name: packageName, file: 'dist/tfjs-tasks.fesm.min.js'},
+    tsCompilerOptions: {target: 'es2017'},
+  }),
 ];

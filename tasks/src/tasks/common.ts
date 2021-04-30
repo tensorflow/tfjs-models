@@ -73,7 +73,7 @@ export function getTFJSModelDependencyPackages(
     case 'wasm':
       packages[1].push(
           `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
-              version}/dist/tf-backend-wasm.js`);
+              version}/dist/tf-backend-wasm.min.js`);
       break;
   }
   return packages;
