@@ -2,21 +2,37 @@
 
 _WORK IN PROGRESS_
 
-TFJS task API provides an unified experience for running task-specific models
-on the web. It covers popular machine learning tasks, such as sentiment
-detection, image classification, pose detection, etc. For each task, you can
-choose from a collection of state-of-the-art models regardless of the underlying
-runtime systems (e.g. TFJS, TFLite, MediaPipe, etc). We are aiming to provide an
-intuitive and easy-to-use API for each task and improve usability for developers
-without ML knowledge. In addition, the API will automatically load required
-packages on the fly. You never need to worry about missing dependencies again.
+TFJS Task API provides an unified experience for running task-specific models
+on the Web. It is designed with ease-of-use in mind, aiming to improve usability
+for JS developers without ML knowledge. It has the following features:
 
-The initial version only supports the web browser environment. NodeJS support is
-coming soon.
+- **Easy-to-discover models**
+
+  Models from different runtime systems (e.g. [TFJS][tfjs], [TFLite][tflite],
+  [MediaPipe][mediapipe], etc) are grouped by popular ML tasks, such as.
+  sentiment detection, image classification, pose detection, etc.
+
+- **Clean and powerful APIs**
+
+  Different tasks come with different API interfaces that are the most intuitive
+  to use for that particular task. Models under the same task share the same
+  API, making it easy to explore. Inference can be done within just 3 lines of
+  code.
+
+- **Simple installation**
+
+  You only need to import this package (<20K in size) to start using the API
+  without needing to worry about other dependencies, such as model packages,
+  runtimes, backends, etc. They will be dynamically loaded on demand without
+  duplication.
 
 The following table summarizes all the supported tasks and their models:
 
 (TODO)
+
+(The initial version only supports the web browser environment. NodeJS support is
+coming soon)
+
 
 # Usage
 
@@ -70,7 +86,7 @@ const result = model1.classify(document.querySelector(img)!);
 console.log(result.classes);
 ```
 
-# TFLite custom model compatibility
+## TFLite custom model compatibility
 
 TFLite is supported by the [`@tensorflow/tfjs-tflite`][tfjs-tflite] package that
 is built on top of the [TFLite Task Library][tflite task library] and
@@ -80,7 +96,12 @@ Check out the "model compatibility requirements" section of the official task
 library page. For example, the requirements of `ImageClassifier` can be found
 [here][req].
 
-# Performance
+See an example of how to use TFLite custom model in the `Load model and run
+inference` section above.
+
+# Advanced Topics
+
+## Performance
 
 For TFJS models, the choice of backend affects the performance the most.
 For most cases, the WebGL backend (default) is usually the fastest.
@@ -118,6 +139,9 @@ $ yarn build-npm
 # (TODO): publish
 ```
 
+[tfjs]: https://github.com/tensorflow/tfjs
+[tflite]: https://www.tensorflow.org/lite
+[mediapipe]: https://github.com/google/mediapipe
 [req]: https://www.tensorflow.org/lite/inference_with_metadata/task_library/image_classifier#model_compatibility_requirements
 [tfjs-tflite]: https://github.com/tensorflow/tfjs/tree/master/tfjs-tflite
 [tflite task library]: https://www.tensorflow.org/lite/inference_with_metadata/task_library/overview

@@ -20,16 +20,21 @@ import {isWebWorker} from './utils';
 /** Function type declaration for loading script in a webworker. */
 declare function importScripts(...urls: string[]): void;
 
-/** A package loader. */
+/**
+ * A loader for dynamically loading a set of packages (with dependencies) and
+ * returning the global namespace variable initialized by those packages.
+ *
+ * @template G The type of the global namespace variable.
+ */
 export class PackageLoader<G> {
   private static readonly promises: {[url: string]: Promise<void>} = {};
 
   /**
    * Loads the given packages and returns the loaded global namespace.
    *
-   * Each element in `packageUrls` is an array of package urls (package set).
-   * Package sets are loaded one after another. Within each set, packages are
-   * loaded at the same time.
+   * `packageUrls` allows you to express package dependencies. Each element in
+   * it is an array of package urls (package set). Package sets are loaded one
+   * after another. Within each set, packages are loaded at the same time.
    *
    * For example, if packageUrls = [ [url1, url2], [url3] ], then url1 and
    * url2 are loaded together first. url3 will then be loaded when url1 and
@@ -67,6 +72,7 @@ export class PackageLoader<G> {
     // From webpage.
     else {
       const script = document.createElement('script');
+      script.crossOrigin = 'anonymous';
       const promise = new Promise<void>((resolve, reject) => {
         script.onerror = () => {
           reject();
