@@ -14,7 +14,7 @@ perform inference and transfer learning entirely in the browser, using
 WebGL GPU acceleration.
 
 The underlying deep neural network has been trained using the
-[TensorFlow Speech Commands Dataset](https://www.tensorflow.org/tutorials/sequences/audio_recognition).
+[TensorFlow Speech Commands Dataset](https://www.tensorflow.org/datasets/catalog/speech_commands).
 
 For more details on the data set, see:
 
