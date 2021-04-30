@@ -33,6 +33,7 @@ import {setupStats} from './stats_panel';
 import {setBackendAndEnvFlags} from './util';
 
 let detector, camera, stats;
+let startInferenceTime, averageInferenceTime = 0, lastPanelUpdate = 0;
 
 async function createDetector() {
   switch (STATE.model) {
@@ -78,6 +79,28 @@ async function checkGuiUpdate() {
   }
 }
 
+function beginEstimatePosesStats() {
+  startInferenceTime = (performance || Date).now();
+}
+
+function endEstimatePosesStats() {
+  const inferenceTime = (performance || Date).now() - startInferenceTime;
+  if (averageInferenceTime != 0) {
+    const previousValueWeight = 0.9;
+    averageInferenceTime = previousValueWeight * averageInferenceTime +
+                           (1.0 - previousValueWeight) * inferenceTime;
+  } else {
+    averageInferenceTime = inferenceTime;
+  }
+
+  const panelUpdateMilliseconds = 1000;
+  if (startInferenceTime - lastPanelUpdate >= panelUpdateMilliseconds) {
+    lastPanelUpdate = startInferenceTime;
+    stats.customFpsPanel.update(1000.0 / averageInferenceTime,
+                                120 /* maxValue */);
+  }
+}
+
 async function renderResult() {
   if (video.readyState < 2) {
     await new Promise((resolve) => {
@@ -88,13 +111,13 @@ async function renderResult() {
   }
 
   // FPS only counts the time it takes to finish estimatePoses.
-  stats.begin();
+  beginEstimatePosesStats();
 
   const poses = await detector.estimatePoses(
       camera.video,
       {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
 
-  stats.end();
+  endEstimatePosesStats();
 
   camera.drawCtx();
 
