@@ -160,7 +160,6 @@ function addBlazePoseControllers(modelConfigFolder) {
  */
 async function initDefaultValueMap() {
   // Clean up the cache to query tunable flags' default values.
-  setBackendAndEnvFlags({}, params.STATE.backend);
   TUNABLE_FLAG_DEFAULT_VALUE_MAP = {};
   params.STATE.flags = {};
   for (const backend in params.BACKEND_FLAGS_MAP) {
@@ -177,7 +176,6 @@ async function initDefaultValueMap() {
       params.STATE.flags[flag] = TUNABLE_FLAG_DEFAULT_VALUE_MAP[flag];
     }
   }
-  params.STATE.isFlagChanged = false;
 }
 
 /**
