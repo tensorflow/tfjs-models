@@ -79,7 +79,7 @@ async function checkGuiUpdate() {
     STATE.isBackendChanged = false;
     STATE.isModelChanged = false;
 
-    requestAnimationFrame(renderPrediction);
+    rafId = requestAnimationFrame(renderPrediction);
   }
 }
 
@@ -128,7 +128,7 @@ async function renderResult() {
   // The null check makes sure the UI is not in the middle of changing to a
   // different model. If during model change, the result is from an old model,
   // which shouldn't be rendered.
-  if (poses.length > 0) {
+  if (poses.length > 0 && !STATE.isModelChanged) {
     camera.drawResults(poses);
   }
 }
