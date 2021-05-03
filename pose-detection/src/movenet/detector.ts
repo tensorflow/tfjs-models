@@ -128,7 +128,15 @@ export class MoveNetDetector extends BasePoseDetector {
       return null;
     }
 
-    const inferenceResult = await outputTensor.data();
+    // Only use asynchronous downloads when we really have to (WebGPU) because
+    // that will poll for download completion using setTimeOut which introduces
+    // extra latency.
+    let inferenceResult;
+    if (tf.getBackend() != 'webgpu') {
+      inferenceResult = outputTensor.dataSync();
+    } else {
+      inferenceResult = await outputTensor.data();
+    }
     outputTensor.dispose();
 
     const keypoints: Keypoint[] = [];
