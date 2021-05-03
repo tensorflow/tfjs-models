@@ -39,7 +39,7 @@ describeWithFlags('BodyPix', ALL_ENVS, () => {
         {architecture: 'ResNet50', outputStride, inputResolution, quantBytes} as
         bodyPixModel.ModelConfig;
 
-    spyOn(tfconv, 'loadGraphModel').and.callFake((): tfconv.GraphModel => {
+    spyOn(tfconv, 'loadGraphModel').and.callFake(() => {
       return null;
     });
 
@@ -67,7 +67,7 @@ describeWithFlags('BodyPix', ALL_ENVS, () => {
           };
         },
         dipose: () => {}
-      };
+      } as any as resnet.ResNet;
     });
 
     bodyPix = await bodyPixModel.load(resNetConfig);
