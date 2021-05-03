@@ -23,6 +23,7 @@ import {shiftImageValue} from '../calculators/shift_image_value';
 
 import {BasePoseDetector, PoseDetector} from '../pose_detector';
 import {InputResolution, Pose, PoseDetectorInput} from '../types';
+import {decodeMultiplePoses} from './calculators/decode_multiple_poses';
 import {decodeSinglePose} from './calculators/decode_single_pose';
 import {flipPosesHorizontal} from './calculators/flip_poses';
 import {scalePoses} from './calculators/scale_poses';
@@ -36,9 +37,10 @@ import {PoseNetArchitecture, PoseNetEstimationConfig, PosenetModelConfig, PoseNe
  * PoseNet detector class.
  */
 export class PosenetDetector extends BasePoseDetector {
-  private inputResolution: InputResolution;
-  private architecture: PoseNetArchitecture;
-  private outputStride: PoseNetOutputStride;
+  private readonly inputResolution: InputResolution;
+  private readonly architecture: PoseNetArchitecture;
+  private readonly outputStride: PoseNetOutputStride;
+
   private maxPoses: number;
 
   // Should not be called outside.
@@ -134,10 +136,6 @@ export class PosenetDetector extends BasePoseDetector {
 
     this.maxPoses = config.maxPoses;
 
-    if (this.maxPoses > 1) {
-      throw new Error('Multi-person poses is not implemented yet.');
-    }
-
     const {imageTensor, padding} = convertImageToTensor(
         image, {inputResolution: this.inputResolution, keepAspectRatio: true});
 
@@ -148,19 +146,32 @@ export class PosenetDetector extends BasePoseDetector {
     const results =
         this.posenetModel.predict(imageValueShifted) as tf.Tensor4D[];
 
-    let offsets, heatmap;
+    let offsets, heatmap, displacementFwd, displacementBwd;
     if (this.architecture === 'ResNet50') {
       offsets = tf.squeeze(results[2]);
       heatmap = tf.squeeze(results[3]);
+      displacementFwd = tf.squeeze(results[0]);
+      displacementBwd = tf.squeeze(results[1]);
     } else {
       offsets = tf.squeeze(results[0]);
       heatmap = tf.squeeze(results[1]);
+      displacementFwd = tf.squeeze(results[2]);
+      displacementBwd = tf.squeeze(results[3]);
     }
     const heatmapScores = tf.sigmoid(heatmap) as tf.Tensor3D;
 
-    const pose = await decodeSinglePose(
-        heatmapScores, offsets as tf.Tensor3D, this.outputStride);
-    const poses = [pose];
+    let poses;
+
+    if (this.maxPoses === 1) {
+      const pose = await decodeSinglePose(
+          heatmapScores, offsets as tf.Tensor3D, this.outputStride);
+      poses = [pose];
+    } else {
+      poses = await decodeMultiplePoses(
+          heatmapScores, offsets as tf.Tensor3D, displacementFwd as tf.Tensor3D,
+          displacementBwd as tf.Tensor3D, this.outputStride, this.maxPoses,
+          config.scoreThreshold, config.nmsRadius);
+    }
 
     const imageSize = getImageSize(image);
     let scaledPoses =
@@ -175,6 +186,8 @@ export class PosenetDetector extends BasePoseDetector {
     tf.dispose(results);
     offsets.dispose();
     heatmap.dispose();
+    displacementFwd.dispose();
+    displacementBwd.dispose();
     heatmapScores.dispose();
 
     return scaledPoses;
@@ -182,5 +195,9 @@ export class PosenetDetector extends BasePoseDetector {
 
   dispose() {
     this.posenetModel.dispose();
+  }
+
+  reset() {
+    // No-op. There's no global state.
   }
 }

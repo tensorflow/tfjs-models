@@ -40,3 +40,22 @@ export function getAdjacentPairs(model: SupportedModels): number[][] {
       throw new Error(`Model ${model} is not supported.`);
   }
 }
+
+export function getKeypointIndexByName(model: SupportedModels):
+    {[index: string]: number} {
+  switch (model) {
+    case SupportedModels.MediapipeBlazepose:
+      return constants.BLAZEPOSE_KEYPOINTS.reduce((map, name, i) => {
+        map[name] = i;
+        return map;
+      }, {} as {[index: string]: number});
+    case SupportedModels.PoseNet:
+    case SupportedModels.MoveNet:
+      return constants.COCO_KEYPOINTS.reduce((map, name, i) => {
+        map[name] = i;
+        return map;
+      }, {} as {[index: string]: number});
+    default:
+      throw new Error(`Model ${model} is not supported.`);
+  }
+}

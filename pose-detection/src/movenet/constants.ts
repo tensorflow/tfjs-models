@@ -23,9 +23,9 @@ export const SINGLEPOSE_THUNDER = 'SinglePose.Thunder';
 export const VALID_MODELS = [SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER];
 
 export const MOVENET_SINGLEPOSE_LIGHTNING_URL =
-    'https://tfhub.dev/google/tfjs-model/movenet/singlepose/lightning/1';
+    'https://tfhub.dev/google/tfjs-model/movenet/singlepose/lightning/3';
 export const MOVENET_SINGLEPOSE_THUNDER_URL =
-    'https://tfhub.dev/google/tfjs-model/movenet/singlepose/thunder/1';
+    'https://tfhub.dev/google/tfjs-model/movenet/singlepose/thunder/3';
 
 export const MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION = 192;
 export const MOVENET_SINGLEPOSE_THUNDER_RESOLUTION = 256;
@@ -36,7 +36,17 @@ export const MOVENET_CONFIG: MoveNetModelConfig = {
 };
 
 export const MOVENET_SINGLE_POSE_ESTIMATION_CONFIG: MoveNetEstimationConfig = {
-  maxPoses: 1
+  maxPoses: 1,
+  enableSmoothing: true
 };
 
-export const MIN_CROP_KEYPOINT_SCORE = 0.3;
+export const KEYPOINT_FILTER_CONFIG = {
+  frequency: 30,
+  minCutOff: 6.36,
+  beta: 636.61,
+  derivateCutOff: 4.77,
+  thresholdCutOff: 0.5,
+  thresholdBeta: 5.0
+};
+export const CROP_FILTER_ALPHA = 0.9;
+export const MIN_CROP_KEYPOINT_SCORE = 0.2;

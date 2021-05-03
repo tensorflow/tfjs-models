@@ -37,5 +37,10 @@ export interface MoveNetModelConfig extends ModelConfig {
 
 /**
  * MoveNet Specific Inference Config.
+ *
+ * `enableSmoothing`: Optional. Defaults to 'true'. When enabled, a temporal
+ * smoothing filter will be used on the keypoint locations to reduce jitter.
  */
-export interface MoveNetEstimationConfig extends EstimationConfig {}
+export interface MoveNetEstimationConfig extends EstimationConfig {
+  enableSmoothing?: boolean;
+}

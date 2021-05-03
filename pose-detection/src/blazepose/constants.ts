@@ -15,17 +15,10 @@
  * =============================================================================
  */
 
-import {BlazeposeModelConfig} from './types';
-
-export const DEFAULT_BLAZEPOSE_FULLBODY_CONFIG: BlazeposeModelConfig = {
-  upperBodyOnly: false
-};
 export const DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL =
     'https://storage.googleapis.com/tfjs-models/savedmodel/blazepose/detector/model.json';
-export const DEFAULT_BLAZEPOSE_LANDMARK_FULL_BODY_MODEL_URL =
+export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL =
     'https://storage.googleapis.com/tfjs-models/savedmodel/blazepose/landmark/fullbody/model.json';
-export const DEFAULT_BLAZEPOSE_LANDMARK_UPPER_BODY_MODEL_URL =
-    'https://storage.googleapis.com/tfjs-models/savedmodel/blazepose/landmark/upperbody/model.json';
 export const BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION = {
   reduceBoxesInLowestlayer: false,
   interpolatedScaleAspectRatio: 1.0,
@@ -91,20 +84,13 @@ export const BLAZEPOSE_LANDMARK_IMAGE_TO_TENSOR_CONFIG = {
   keepAspectRatio: true
 };
 export const BLAZEPOSE_POSE_PRESENCE_SCORE = 0.5;
-export const BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG_UPPERBODY = {
-  numLandmarks: 31,
-  inputImageWidth: 256,
-  inputImageHeight: 256
-};
-export const BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG_FULLBODY = {
+export const BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG = {
   numLandmarks: 39,
   inputImageWidth: 256,
   inputImageHeight: 256
 };
-export const BLAZEPOSE_NUM_KEYPOINTS_UPPERBODY = 25;
-export const BLAZEPOSE_NUM_KEYPOINTS_FULLBODY = 33;
-export const BLAZEPOSE_NUM_AUXILIARY_KEYPOINTS_UPPERBODY = 27;
-export const BLAZEPOSE_NUM_AUXILIARY_KEYPOINTS_FULLBODY = 35;
+export const BLAZEPOSE_NUM_KEYPOINTS = 33;
+export const BLAZEPOSE_NUM_AUXILIARY_KEYPOINTS = 35;
 export const BLAZEPOSE_VISIBILITY_SMOOTHING_CONFIG = {
   alpha: 0.1
 };

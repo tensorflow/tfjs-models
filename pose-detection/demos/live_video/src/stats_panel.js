@@ -14,22 +14,19 @@
  * limitations under the License.
  * =============================================================================
  */
-import {Keypoint} from '../types';
-import {ImageSize} from './interfaces/common_interfaces';
-export function normalizedLandmarksToLandmarks(
-    normalizedLandmarks: Keypoint[], imageSize: ImageSize): Keypoint[] {
-  return normalizedLandmarks.map(normalizedLandmark => {
-    const landmark = {
-      ...normalizedLandmark,
-      x: normalizedLandmark.x * imageSize.width,
-      y: normalizedLandmark.y * imageSize.height
-    };
+export function setupStats() {
+  const stats = new Stats();
+  stats.customFpsPanel = stats.addPanel(new Stats.Panel('FPS', '#0ff', '#002'));
+  stats.showPanel(stats.domElement.children.length - 1);
 
-    if (normalizedLandmark.z != null) {
-      // Scale z the same way as x (using image width).
-      landmark.z = normalizedLandmark.z * imageSize.width;
-    }
+  const parent = document.getElementById('stats');
+  parent.appendChild(stats.domElement);
 
-    return landmark;
-  });
+  const statsPanes = parent.querySelectorAll('canvas');
+
+  for (let i = 0; i < statsPanes.length; ++i) {
+    statsPanes[i].style.width = '140px';
+    statsPanes[i].style.height = '80px';
+  }
+  return stats;
 }

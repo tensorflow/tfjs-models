@@ -29,12 +29,12 @@ import {LowPassFilter} from './low_pass_filter';
 // ref:
 // https://github.com/google/mediapipe/blob/master/mediapipe/util/filtering/relative_velocity_filter.cc
 export class RelativeVelocityFilter {
+  private readonly window: WindowElement[] = [];
+  private readonly lowPassFilter: LowPassFilter = new LowPassFilter(1.0);
+
   private lastValue = 0;
   private lastValueScale = 1;
   private lastTimestamp = -1;
-
-  private window: WindowElement[] = [];
-  private lowPassFilter: LowPassFilter = new LowPassFilter(1.0);
 
   /**
    * Constructor of `RelativeVelocityFilter` class.

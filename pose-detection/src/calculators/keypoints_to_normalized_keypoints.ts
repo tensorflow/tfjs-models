@@ -14,9 +14,22 @@
  * limitations under the License.
  * =============================================================================
  */
+import {Keypoint} from '../types';
+import {ImageSize} from './interfaces/common_interfaces';
+export function keypointsToNormalizedKeypoints(
+    keypoints: Keypoint[], imageSize: ImageSize): Keypoint[] {
+  return keypoints.map(keypoint => {
+    const normalizedKeypoint = {
+      ...keypoint,
+      x: keypoint.x / imageSize.width,
+      y: keypoint.y / imageSize.height
+    };
 
-export function isMobile() {
-  const isAndroid = /Android/i.test(navigator.userAgent);
-  const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-  return isAndroid || isiOS;
+    if (keypoint.z != null) {
+      // Scale z the same way as x (using image width).
+      keypoint.z = keypoint.z / imageSize.width;
+    }
+
+    return normalizedKeypoint;
+  });
 }
