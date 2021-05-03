@@ -67,6 +67,7 @@ describeWithFlags('BodyPix', ALL_ENVS, () => {
           };
         },
         dipose: () => {}
+        // tslint:disable-next-line:no-any
       } as any as resnet.ResNet;
     });
 
