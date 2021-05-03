@@ -33,7 +33,8 @@ import {setupStats} from './stats_panel';
 import {setBackendAndEnvFlags} from './util';
 
 let detector, camera, stats;
-let startInferenceTime, averageInferenceTime = 0, lastPanelUpdate = 0;
+let startInferenceTime, numInferences = 0;
+let inferenceTimeSum = 0, lastPanelUpdate = 0;
 let rafId;
 
 async function createDetector() {
@@ -88,20 +89,18 @@ function beginEstimatePosesStats() {
 }
 
 function endEstimatePosesStats() {
-  const inferenceTime = (performance || Date).now() - startInferenceTime;
-  if (averageInferenceTime != 0) {
-    const previousValueWeight = 0.9;
-    averageInferenceTime = previousValueWeight * averageInferenceTime +
-        (1.0 - previousValueWeight) * inferenceTime;
-  } else {
-    averageInferenceTime = inferenceTime;
-  }
+  const endInferenceTime = (performance || Date).now();
+  inferenceTimeSum += endInferenceTime - startInferenceTime;
+  ++numInferences;
 
   const panelUpdateMilliseconds = 1000;
-  if (startInferenceTime - lastPanelUpdate >= panelUpdateMilliseconds) {
-    lastPanelUpdate = startInferenceTime;
+  if (endInferenceTime - lastPanelUpdate >= panelUpdateMilliseconds) {
+    const averageInferenceTime = inferenceTimeSum / numInferences;
+    inferenceTimeSum = 0;
+    numInferences = 0;
     stats.customFpsPanel.update(
         1000.0 / averageInferenceTime, 120 /* maxValue */);
+    lastPanelUpdate = endInferenceTime;
   }
 }
 
