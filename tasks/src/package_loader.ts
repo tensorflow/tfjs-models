@@ -44,7 +44,12 @@ export class PackageLoader<G> {
     if (curIndex >= packageUrls.length) {
       // tslint:disable-next-line:no-any
       const global: any = isWebWorker() ? self : window;
-      return global[namespace] as G;
+      const globalNamespace = global[namespace] as G;
+      if (!globalNamespace) {
+        throw new Error(`Global namespace '${
+            namespace}' not set after loading packages ${packageUrls}`);
+      }
+      return globalNamespace;
     }
     await Promise.all(
         packageUrls[curIndex].map(name => this.loadPackage(name)));
