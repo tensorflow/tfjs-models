@@ -27,7 +27,7 @@ export interface ImageClassifier<IO> extends TaskModel {
    * Performs classification on the given image-like input, and returns
    * result.
    */
-  classify(
+  predict(
       img: ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement,
       options?: IO): Promise<ImageClassifierResult>;
 }

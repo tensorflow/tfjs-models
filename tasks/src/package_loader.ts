@@ -32,13 +32,8 @@ export class PackageLoader<G> {
   /**
    * Loads the given packages and returns the loaded global namespace.
    *
-   * `packageUrls` allows you to express package dependencies. Each element in
-   * it is an array of package urls (package set). Package sets are loaded one
-   * after another. Within each set, packages are loaded at the same time.
-   *
-   * For example, if packageUrls = [ [url1, url2], [url3] ], then url1 and
-   * url2 are loaded together first. url3 will then be loaded when url1 and
-   * url2 are both done loading.
+   * See `TaskModelLoader.packageUrls` for more info about how to use it to
+   * specify packages with dependencies.
    *
    * TODO: use a design similar to tfjs' `Platform` to provide different
    * implmentations for dynamic package loading, global, etc.

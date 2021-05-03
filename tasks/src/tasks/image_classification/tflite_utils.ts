@@ -27,7 +27,7 @@ export async function transformImageClassifier<T>(
   const tfliteImageClassifier =
       await sourceModelGlobal.ImageClassifier.create(model);
   return {
-    classify: async (img, infereceOptions) => {
+    predict: async (img, infereceOptions) => {
       if (!tfliteImageClassifier) {
         throw new Error('source model is not loaded');
       }

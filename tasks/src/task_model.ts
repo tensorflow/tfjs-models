@@ -127,13 +127,18 @@ export abstract class TaskModelLoader<N, LO, M> {
   /**
    * URLs of packages to load for the model.
    *
-   * Each element in the array is an array of package urls (package set).
-   * Package sets are loaded one after another. Within each set, packages are
-   * loaded at the same time.
+   * `packageUrls` allows you to express package dependencies. Each element in
+   * it is an array of package urls (package set). Package sets are downloaded
+   * and evaluated one after another. Within each set, packages are downloaded
+   * in parallel, and evaluated in the order of download finish time. Packages
+   * in a package set should yeild the same outcome no matter what order they
+   * are evaluated in.
    *
    * For example, if packageUrls = [ [url1, url2], [url3] ], then url1 and
-   * url2 are loaded together first. url3 will then be loaded when url1 and
-   * url2 are both done loading.
+   * url2 will be downloaded in parallel first. They will then be
+   * evaluated by the browser in sequence depends on which one is downloaded
+   * first. After that is done, the package loader will start downloading
+   * and evaluating url3.
    *
    * Note: for TFJS model, only the model package itself needs to be set
    * here. The TFJS related dependencies (e.g. core, backends, etc) will be

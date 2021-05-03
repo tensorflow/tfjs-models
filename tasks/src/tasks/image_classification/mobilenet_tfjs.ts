@@ -60,7 +60,7 @@ export class MobilenetTFJSLoader extends TaskModelLoader<
     const mobilenetModel = await sourceModelGlobal.load(loadingOptions);
 
     return {
-      classify: async (img, infereceOptions) => {
+      predict: async (img, infereceOptions) => {
         if (!mobilenetModel) {
           throw new Error('source model is not loaded');
         }
