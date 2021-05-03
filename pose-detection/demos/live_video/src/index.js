@@ -79,8 +79,6 @@ async function checkGuiUpdate() {
     STATE.isFlagChanged = false;
     STATE.isBackendChanged = false;
     STATE.isModelChanged = false;
-
-    rafId = requestAnimationFrame(renderPrediction);
   }
 }
 
