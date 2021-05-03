@@ -77,12 +77,12 @@ const model3 = await tfTask.ImageClassification.CustomModel.TFLite.load({
 
 Since all these models are for the `Image Classification` task, they will have
 the same task model type: [`ImageClassifier`][image classifier interface] in
-this case. Each task model defines an unique and easy-to-use inference method.
-For example, the `ImageClassiier` task model defines a `classify` method that
-takes an image-like element and returns the predicted classes:
+this case. Each task model's `predict` inference method has an unique and
+easy-to-use API interface. For example, in `ImageClassiier`, the method takes an
+image-like element and returns the predicted classes:
 
 ```js
-const result = model1.classify(document.querySelector(img)!);
+const result = model1.predict(document.querySelector(img)!);
 console.log(result.classes);
 ```
 
