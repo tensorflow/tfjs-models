@@ -34,6 +34,7 @@ import {setBackendAndEnvFlags} from './util';
 
 let detector, camera, stats;
 let startInferenceTime, averageInferenceTime = 0, lastPanelUpdate = 0;
+let rafId;
 
 async function createDetector() {
   switch (STATE.model) {
@@ -62,20 +63,23 @@ async function checkGuiUpdate() {
     STATE.isSizeOptionChanged = false;
   }
 
-  if (STATE.isModelChanged) {
-    detector.dispose();
-    detector = await createDetector(STATE.model);
-    STATE.isModelChanged = false;
-  }
-
-  if (STATE.isFlagChanged || STATE.isBackendChanged) {
+  if (STATE.isModelChanged || STATE.isFlagChanged || STATE.isBackendChanged) {
     STATE.isModelChanged = true;
+
+    window.cancelAnimationFrame(rafId);
+
     detector.dispose();
-    await setBackendAndEnvFlags(STATE.flags, STATE.backend);
+
+    if (STATE.isFlagChanged || STATE.isBackendChanged) {
+      await setBackendAndEnvFlags(STATE.flags, STATE.backend);
+    }
+
     detector = await createDetector(STATE.model);
     STATE.isFlagChanged = false;
     STATE.isBackendChanged = false;
     STATE.isModelChanged = false;
+
+    rafId = requestAnimationFrame(renderPrediction);
   }
 }
 
@@ -88,7 +92,7 @@ function endEstimatePosesStats() {
   if (averageInferenceTime != 0) {
     const previousValueWeight = 0.9;
     averageInferenceTime = previousValueWeight * averageInferenceTime +
-                           (1.0 - previousValueWeight) * inferenceTime;
+        (1.0 - previousValueWeight) * inferenceTime;
   } else {
     averageInferenceTime = inferenceTime;
   }
@@ -96,8 +100,8 @@ function endEstimatePosesStats() {
   const panelUpdateMilliseconds = 1000;
   if (startInferenceTime - lastPanelUpdate >= panelUpdateMilliseconds) {
     lastPanelUpdate = startInferenceTime;
-    stats.customFpsPanel.update(1000.0 / averageInferenceTime,
-                                120 /* maxValue */);
+    stats.customFpsPanel.update(
+        1000.0 / averageInferenceTime, 120 /* maxValue */);
   }
 }
 
@@ -132,9 +136,11 @@ async function renderResult() {
 async function renderPrediction() {
   await checkGuiUpdate();
 
-  await renderResult();
+  if (!STATE.isModelChanged) {
+    await renderResult();
+  }
 
-  requestAnimationFrame(renderPrediction);
+  rafId = requestAnimationFrame(renderPrediction);
 };
 
 async function app() {
