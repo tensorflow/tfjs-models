@@ -13,6 +13,7 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
+    "@mediapipe/pose": "0.3.x",
     "@tensorflow/tfjs-converter": "^3.6.0",
     "@tensorflow/tfjs-core": "^3.6.0",
     "@tensorflow/tfjs-backend-webgl": "^3.6.0",
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "@babel/polyfill": "^7.10.4",
+    "@mediapipe/pose": "0.3.x",
     "@rollup/plugin-commonjs": "^11.0.2",
     "@rollup/plugin-node-resolve": "^7.1.1",
     "@rollup/plugin-typescript": "^3.0.0",

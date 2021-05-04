@@ -10,7 +10,7 @@
     "@types/jasmine": "^3.4.0",
     "@types/node": "~10.3.4",
     "@types/shelljs": "~0.8.0",
-    "clang-format": "~1.2.2",
+    "clang-format": "^1.2.4",
     "fs": "~0.0.1-security",
     "jasmine": "~3.1.0",
     "semver": "^6.3.0",

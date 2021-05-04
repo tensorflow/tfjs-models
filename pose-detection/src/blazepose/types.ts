@@ -29,6 +29,7 @@ import {EstimationConfig, ModelConfig} from '../types';
  * to the model hosted on GCP.
  */
 export interface BlazeposeModelConfig extends ModelConfig {
+  useSolution?: boolean;
   lite?: boolean;
   detectorModelUrl?: string;
   landmarkModelUrl?: string;

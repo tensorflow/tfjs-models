@@ -17,6 +17,8 @@
 
 import {BlazeposeDetector} from './blazepose/detector';
 import {BlazeposeModelConfig} from './blazepose/types';
+import {MediapipeDetector} from './mediapipe/detector';
+import {MediapipeModelConfig} from './mediapipe/types';
 import {MoveNetDetector} from './movenet/detector';
 import {MoveNetModelConfig} from './movenet/types';
 import {PoseDetector} from './pose_detector';
@@ -31,13 +33,17 @@ import {SupportedModels} from './types';
  */
 export async function createDetector(
     model: SupportedModels,
-    modelConfig?: PosenetModelConfig|BlazeposeModelConfig|
-    MoveNetModelConfig): Promise<PoseDetector> {
+    modelConfig?: PosenetModelConfig|BlazeposeModelConfig|MoveNetModelConfig|
+    MediapipeModelConfig): Promise<PoseDetector> {
   switch (model) {
     case SupportedModels.PoseNet:
       return PosenetDetector.load(modelConfig as PosenetModelConfig);
     case SupportedModels.MediapipeBlazepose:
-      return BlazeposeDetector.load(modelConfig as BlazeposeModelConfig);
+      const config = modelConfig as BlazeposeModelConfig;
+      if (config.useSolution) {
+        return MediapipeDetector.load(config as MediapipeModelConfig);
+      }
+      return BlazeposeDetector.load(config);
     case SupportedModels.MoveNet:
       return MoveNetDetector.load(modelConfig as MoveNetModelConfig);
     default:
