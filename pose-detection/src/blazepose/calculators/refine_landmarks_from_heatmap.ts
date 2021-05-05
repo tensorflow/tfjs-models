@@ -29,14 +29,12 @@ import {RefineLandmarksFromHeatmapConfig} from './interfaces/config_interfaces';
  * weighted average inside the kernel. We update the landmark if heatmap is
  * confident in it's prediction i.e. max(heatmap) in kernel is at least bigger
  * than config.minConfidenceToRefine.
- * @param landmarkTensor List of Tensors of type float32. Only the first tensor
- * will be used. The size of the values must be (num_dimension x num_landmarks).
- * @param config
- * @param flipHorizontally Optional. Whether to flip landmarks horizontally or
- * not. Overrides corresponding side packet and/or field in the calculator
- * options.
- * @param flipVertically Optional. Whether to flip landmarks vertically or not.
- * Overrides corresponding side packet and/or field in the calculator options.
+ * @param landmarks List of lardmarks to refine.
+ * @param heatmapTensor The heatmap for the landmarks with shape
+ *     [height, width, channel]. The channel dimension has to be the same as
+ *     the number of landmarks.
+ * @param config The config for refineLandmarksFromHeap,
+ *     see `RefineLandmarksFromHeatmapConfig` for detail.
  *
  * @returns Normalized landmarks.
  */
