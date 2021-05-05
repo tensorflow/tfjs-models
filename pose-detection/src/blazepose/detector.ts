@@ -37,6 +37,7 @@ import {detectorInference} from './calculators/detector_inference';
 import {AnchorTensor, Detection} from './calculators/interfaces/shape_interfaces';
 import {landmarksToDetection} from './calculators/landmarks_to_detection';
 import {nonMaxSuppression} from './calculators/non_max_suppression';
+import {refineLandmarksFromHeatmap} from './calculators/refine_landmarks_from_heatmap';
 import {removeDetectionLetterbox} from './calculators/remove_detection_letterbox';
 import {removeLandmarkLetterbox} from './calculators/remove_landmark_letterbox';
 import {tensorsToDetections} from './calculators/tensors_to_detections';
@@ -47,7 +48,7 @@ import * as constants from './constants';
 import {validateEstimationConfig, validateModelConfig} from './detector_utils';
 import {BlazePoseEstimationConfig, BlazePoseModelConfig} from './types';
 
-type PoseLandmarkByRoiResult = {
+type PoseLandmarksByRoiResult = {
   actualLandmarks: Keypoint[],
   auxiliaryLandmarks: Keypoint[],
   poseScore: number
@@ -180,7 +181,7 @@ export class BlazePoseDetector extends BasePoseDetector {
     }
 
     // Detects pose landmarks within specified region of interest of the image.
-    const poseLandmarks = await this.poseLandmarkByRoi(poseRect, image3d);
+    const poseLandmarks = await this.poseLandmarksByRoi(poseRect, image3d);
 
     image3d.dispose();
 
@@ -235,7 +236,7 @@ export class BlazePoseDetector extends BasePoseDetector {
   // https://github.com/google/mediapipe/blob/master/mediapipe/modules/pose_detection/pose_detection_cpu.pbtxt
   private async detectPose(image: PoseDetectorInput): Promise<Detection[]> {
     // PoseDetectionCpu: ImageToTensorCalculator
-    // Transforms the input image into a 128x128 while keeping the aspect ratio
+    // Transforms the input image into a 224x224 while keeping the aspect ratio
     // resulting in potential letterboxing in the transformed image.
     const {imageTensor, padding} = convertImageToTensor(
         image, constants.BLAZEPOSE_DETECTOR_IMAGE_TO_TENSOR_CONFIG);
@@ -301,12 +302,12 @@ export class BlazePoseDetector extends BasePoseDetector {
   }
 
   // Predict pose landmarks.
-  // subgraph: PoseLandmarkByRoiCpu
+  // subgraph: PoseLandmarksByRoiCpu
   // ref:
   // https://github.com/google/mediapipe/blob/master/mediapipe/modules/pose_landmark/pose_landmark_by_roi_cpu.pbtxt
   // When poseRect is not null, image should not be null either.
-  private async poseLandmarkByRoi(poseRect: Rect, image?: tf.Tensor3D):
-      Promise<PoseLandmarkByRoiResult> {
+  private async poseLandmarksByRoi(poseRect: Rect, image?: tf.Tensor3D):
+      Promise<PoseLandmarksByRoiResult> {
     // Transforms the input image into a 256x256 tensor while keeping the aspect
     // ratio, resulting in potential letterboxing in the transformed image.
     const {imageTensor, padding} = convertImageToTensor(
@@ -314,23 +315,26 @@ export class BlazePoseDetector extends BasePoseDetector {
 
     const imageValueShifted = shiftImageValue(imageTensor, [0, 1]);
 
-    // PoseLandmarkByRoiCPU: InferenceCalculator
-    // The model returns 4 tensor with the following shape:
-    // Only Output[3] and Output[2] matters for the pipeline.
+    // PoseLandmarksByRoiCPU: InferenceCalculator
+    // The model returns 5 tensor with the following shape:
+    // Only Output[0] and Output[3] matters for the pipeline.
     // Output[3]: This tensor (shape: [1, 195]) represents 39 5-d keypoints.
     // The first 33 refer to the keypoints. The final 6 key points refer to
     // the alignment points from the detector model and the hands.)
-    // Output [2]: This tensor (shape: [1, 1]) represents the confidence
+    // Output [0]: This tensor (shape: [1, 1]) represents the confidence
     // score.
+    // Output [2]: This tensor (shape: [1, 64, 64, 39]) represents heatmap for
+    // the 39 landmarks.
     const landmarkResult =
         this.landmarkModel.predict(imageValueShifted) as tf.Tensor[];
 
     const landmarkTensor = landmarkResult[3] as tf.Tensor2D;
-    const poseFlag = landmarkResult[2] as tf.Tensor2D;
+    const poseFlagTensor = landmarkResult[0] as tf.Tensor2D;
+    const heatmapTensor = landmarkResult[2] as tf.Tensor4D;
 
     // Converts the pose-flag tensor into a float that represents the
     // confidence score of pose presence.
-    const poseScore = (await poseFlag.data())[0];
+    const poseScore = (await poseFlagTensor.data())[0];
 
     // Applies a threshold to the confidence score to determine whether a pose
     // is present.
@@ -343,19 +347,25 @@ export class BlazePoseDetector extends BasePoseDetector {
 
     // Decodes the landmark tensors into a list of landmarks, where the landmark
     // coordinates are normalized by the size of the input image to the model.
-    // PoseLandmarkByRoiCpu: TensorsToLandmarksCalculator.
+    // PoseLandmarksByRoiCpu: TensorsToLandmarksCalculator.
     const landmarks = await tensorsToLandmarks(
         landmarkTensor, constants.BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG);
+
+    // Refine landmarks with heatmap tensor.
+    const refinedLandmarks = await refineLandmarksFromHeatmap(
+        landmarks, heatmapTensor,
+        constants.BLAZEPOSE_REFINE_LANDMARKS_FROM_HEATMAP_CONFIG);
 
     // Adjusts landmarks (already normalized to [0.0, 1.0]) on the letterboxed
     // pose image to the corresponding locations on the same image with the
     // letterbox removed.
-    // PoseLandmarkByRoiCpu: LandmarkLetterboxRemovalCalculator.
-    const adjustedLandmarks = removeLandmarkLetterbox(landmarks, padding);
+    // PoseLandmarksByRoiCpu: LandmarkLetterboxRemovalCalculator.
+    const adjustedLandmarks =
+        removeLandmarkLetterbox(refinedLandmarks, padding);
 
     // Projects the landmarks from the cropped pose image to the corresponding
     // locations on the full image before cropping (input to the graph).
-    // PoseLandmarkByRoiCpu: LandmarkProjectionCalculator.
+    // PoseLandmarksByRoiCpu: LandmarkProjectionCalculator.
     const landmarksProjected =
         calculateLandmarkProjection(adjustedLandmarks, poseRect);
 
@@ -374,7 +384,7 @@ export class BlazePoseDetector extends BasePoseDetector {
   }
 
   // Calculate region of interest (ROI) from landmarks.
-  // Subgraph: PoseLandmarkByRoiCpu
+  // Subgraph: PoseLandmarksToRoiCpu
   // ref:
   // https://github.com/google/mediapipe/blob/master/mediapipe/modules/pose_landmark/pose_landmarks_to_roi.pbtxt
   // When landmarks is not null, imageSize should not be null either.
