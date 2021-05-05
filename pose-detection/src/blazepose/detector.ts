@@ -317,7 +317,6 @@ export class BlazePoseDetector extends BasePoseDetector {
 
     // PoseLandmarksByRoiCPU: InferenceCalculator
     // The model returns 5 tensor with the following shape:
-    // Only Output[0] and Output[3] matters for the pipeline.
     // Output[3]: This tensor (shape: [1, 195]) represents 39 5-d keypoints.
     // The first 33 refer to the keypoints. The final 6 key points refer to
     // the alignment points from the detector model and the hands.)
