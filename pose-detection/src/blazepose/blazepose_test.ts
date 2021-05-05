@@ -25,7 +25,7 @@ import * as poseDetection from '../index';
 import {getXYPerFrame, KARMA_SERVER, loadImage, loadVideo} from '../test_util';
 
 const EPSILON_IMAGE = 10;
-const EPSILON_VIDEO = 50;
+const EPSILON_VIDEO = 65;
 // ref:
 // https://github.com/google/mediapipe/blob/7c331ad58b2cca0dca468e342768900041d65adc/mediapipe/python/solutions/pose_test.py#L31-L51
 const EXPECTED_LANDMARKS = [
@@ -139,7 +139,7 @@ describeWithFlags('Blazepose video ', BROWSER_ENVS, () => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
   });
 
-  it('test.', async () => {
+  fit('test.', async () => {
     // Note: this makes a network request for model assets.
 
     const modelConfig: poseDetection.BlazeposeModelConfig = {quantBytes: 4};
