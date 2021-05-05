@@ -16,7 +16,7 @@
  */
 
 export const DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL =
-    'https://storage.googleapis.com/tfjs-models/savedmodel/blazepose/detector/model.json';
+    'https://storage.googleapis.com/tfjs-models/savedmodel/blazepose/detector/heatmap/model.json';
 export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL =
     'https://storage.googleapis.com/tfjs-models/savedmodel/blazepose/landmark/full/model.json';
 export const BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION = {
@@ -91,8 +91,8 @@ export const BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG = {
   inputImageHeight: 256
 };
 export const BLAZEPOSE_REFINE_LANDMARKS_FROM_HEATMAP_CONFIG = {
-  kernelSize: 5,
-  minConfidenceToRefine: 0.9
+  kernelSize: 7,
+  minConfidenceToRefine: 0.5
 };
 export const BLAZEPOSE_NUM_KEYPOINTS = 33;
 export const BLAZEPOSE_NUM_AUXILIARY_KEYPOINTS = 35;
