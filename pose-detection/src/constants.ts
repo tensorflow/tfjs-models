@@ -25,19 +25,43 @@ export const COCO_KEYPOINTS = [
 // Don't change the order. The order needs to be consistent with the model
 // keypoint result list.
 export const BLAZEPOSE_KEYPOINTS = [
-  'nose',           'right_eye_inner', 'right_eye',      'right_eye_outer',
-  'left_eye_inner', 'left_eye',        'left_eye_outer', 'right_ear',
-  'left_ear',       'mouth_right',     'mouth_left',     'right_shoulder',
-  'left_shoulder',  'right_elbow',     'left_elbow',     'right_wrist',
-  'left_wrist',     'right_pinky',     'left_pinky',     'right_index',
-  'left_index',     'right_thumb',     'left_thumb',     'right_hip',
-  'left_hip',       'right_knee',      'left_knee',      'right_ankle',
-  'left_ankle',     'right_heel',      'left_heel',      'right_foot_index',
-  'left_foot_index'
+  'nose',
+  'left_eye_inner',
+  'left_eye',
+  'left_eye_outer',
+  'right_eye_inner',
+  'right_eye',
+  'right_eye_outer',
+  'left_ear',
+  'right_ear',
+  'mouth_left',
+  'mouth_right',
+  'left_shoulder',
+  'right_shoulder',
+  'left_elbow',
+  'right_elbow',
+  'left_wrist',
+  'right_wrist',
+  'left_pinky',
+  'right_pinky',
+  'left_index',
+  'right_index',
+  'left_thumb',
+  'right_thumb',
+  'left_hip',
+  'right_hip',
+  'left_knee',
+  'right_knee',
+  'left_ankle',
+  'right_ankle',
+  'left_heel',
+  'right_heel',
+  'left_foot_index',
+  'right_foot_index'
 ];
 export const BLAZEPOSE_KEYPOINTS_BY_SIDE = {
-  left: [4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32],
-  right: [1, 2, 3, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31],
+  left: [1, 2, 3, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31],
+  right: [4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32],
   middle: [0]
 };
 export const COCO_KEYPOINTS_BY_SIDE = {
