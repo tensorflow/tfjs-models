@@ -9,7 +9,7 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow-models/pose-detection": "file:../dist",
+    "@tensorflow-models/pose-detection": "file:../../dist",
     "@tensorflow/tfjs-backend-wasm": "^3.5.0",
     "@tensorflow/tfjs-backend-webgl": "^3.5.0",
     "@tensorflow/tfjs-converter": "^3.5.0",
@@ -19,7 +19,7 @@
     "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr --open",
     "build": "cross-env NODE_ENV=production parcel build index.html --public-url ./",
     "lint": "eslint .",
-    "build-dep": "cd ../ && yarn && yarn build",
+    "build-dep": "cd ../../ && yarn && yarn build",
     "link-core": "yalc link @tensorflow/tfjs-core",
     "link-webgl": "yalc link @tensorflow/tfjs-backend-webgl"
   },

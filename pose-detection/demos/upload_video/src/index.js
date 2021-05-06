@@ -26,13 +26,14 @@ tfjsWasm.setWasmPaths(
 import * as posedetection from '@tensorflow-models/pose-detection';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {Camera} from './camera';
+import {setupStats} from './stats_panel';
+import {Context} from './camera';
 import {setupDatGui} from './option_panel';
 import {STATE} from './params';
-import {setupStats} from './stats_panel';
 import {setBackendAndEnvFlags} from './util';
 
 let detector, camera, stats;
+const statusElement = document.getElementById('status');
 
 async function createDetector() {
   switch (STATE.model) {
@@ -44,8 +45,7 @@ async function createDetector() {
         inputResolution: {width: 500, height: 500},
         multiplier: 0.75
       });
-    case posedetection.SupportedModels.MediapipeBlazeposeUpperBody:
-    case posedetection.SupportedModels.MediapipeBlazeposeFullBody:
+    case posedetection.SupportedModels.MediapipeBlazepose:
       return posedetection.createDetector(STATE.model, {quantBytes: 4});
     case posedetection.SupportedModels.MoveNet:
       const modelType = STATE.modelConfig.type == 'lightning' ?
@@ -56,39 +56,24 @@ async function createDetector() {
 }
 
 async function checkGuiUpdate() {
-  if (STATE.changeToTargetFPS || STATE.changeToSizeOption) {
-    camera = await Camera.setupCamera(STATE.camera);
-    STATE.changeToTargetFPS = null;
-    STATE.changeToSizeOption = null;
-  }
-
-  if (STATE.changeToModel != null) {
+  if (STATE.isModelChanged) {
     detector.dispose();
     detector = await createDetector(STATE.model);
-    STATE.changeToModel = null;
+    STATE.isModelChanged = false;
   }
 
   if (STATE.isFlagChanged || STATE.isBackendChanged) {
-    STATE.changeToModel = true;
+    STATE.isModelChanged = true;
     detector.dispose();
     await setBackendAndEnvFlags(STATE.flags, STATE.backend);
     detector = await createDetector(STATE.model);
     STATE.isFlagChanged = false;
     STATE.isBackendChanged = false;
-    STATE.changeToModel = null;
+    STATE.isModelChanged = false;
   }
 }
 
 async function renderResult() {
-  if (video.readyState < 2) {
-    await new Promise((resolve) => {
-      camera.video.onloadeddata = () => {
-        resolve(video);
-      };
-    });
-  }
-
-  // FPS only counts the time it takes to finish estimatePoses.
   stats.begin();
 
   const poses = await detector.estimatePoses(
@@ -100,20 +85,82 @@ async function renderResult() {
   camera.drawCtx();
 
   // The null check makes sure the UI is not in the middle of changing to a
-  // different model. If changeToModel is non-null, the result is from an
-  // old model, which shouldn't be rendered.
-  if (poses.length > 0 && STATE.changeToModel == null) {
+  // different model. If during model change, the result is from an old
+  // model, which shouldn't be rendered.
+  if (poses.length > 0 && !STATE.isModelChanged) {
     camera.drawResults(poses);
   }
 }
 
-async function renderPrediction() {
+async function checkUpdate() {
   await checkGuiUpdate();
 
-  await renderResult();
-
-  requestAnimationFrame(renderPrediction);
+  requestAnimationFrame(checkUpdate);
 };
+
+async function updateVideo(event) {
+  // Clear reference to any previous uploaded video.
+  URL.revokeObjectURL(camera.video.currentSrc);
+  const file = event.target.files[0];
+  camera.source.src = URL.createObjectURL(file);
+
+  // Wait for video to be loaded.
+  camera.video.load();
+  await new Promise((resolve) => {
+    camera.video.onloadeddata = () => {
+      resolve(video);
+    };
+  });
+
+  const videoWidth = camera.video.videoWidth;
+  const videoHeight = camera.video.videoHeight;
+  // Must set below two lines, otherwise video element doesn't show.
+  camera.video.width = videoWidth;
+  camera.video.height = videoHeight;
+  camera.canvas.width = videoWidth;
+  camera.canvas.height = videoHeight;
+
+  statusElement.innerHTML = 'Video is loaded.';
+}
+
+async function runFrame() {
+  if (video.paused) {
+    // video has finished.
+    camera.mediaRecorder.stop();
+    camera.clearCtx();
+    camera.video.style.visibility = 'visible';
+    return;
+  }
+  await renderResult();
+  requestAnimationFrame(runFrame);
+}
+
+async function run() {
+  statusElement.innerHTML = 'Warming up model.';
+
+  // Warming up pipeline.
+  const warmUpTensor = tf.fill([camera.video.height, camera.video.width, 3], 0);
+  await detector.estimatePoses(
+      warmUpTensor,
+      {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
+  warmUpTensor.dispose();
+
+  statusElement.innerHTML = 'Model is warmed up.';
+
+  camera.video.style.visibility = 'hidden';
+  video.pause();
+  video.currentTime = 0;
+  video.play();
+  camera.mediaRecorder.start();
+
+  await new Promise((resolve) => {
+    camera.video.onseeked = () => {
+      resolve(video);
+    };
+  });
+
+  await runFrame();
+}
 
 async function app() {
   await tf.setBackend(STATE.backend);
@@ -126,14 +173,17 @@ async function app() {
   }
 
   await setupDatGui(urlParams);
-
   stats = setupStats();
-
-  camera = await Camera.setupCamera(STATE.camera);
-
   detector = await createDetector();
+  camera = new Context();
 
-  renderPrediction();
+  const runButton = document.getElementById('submit');
+  runButton.onclick = run;
+
+  const uploadButton = document.getElementById('videofile');
+  uploadButton.onchange = updateVideo;
+
+  checkUpdate();
 };
 
 app();

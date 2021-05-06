@@ -24,9 +24,10 @@ import {BoundingBox} from '../calculators/interfaces/shape_interfaces';
 import {isVideo} from '../calculators/is_video';
 import {KeypointsOneEuroFilter} from '../calculators/keypoints_one_euro_filter';
 import {LowPassFilter} from '../calculators/low_pass_filter';
-import {COCO_KEYPOINTS, COCO_KEYPOINTS_BY_NAME} from '../constants';
+import {COCO_KEYPOINTS} from '../constants';
 import {BasePoseDetector, PoseDetector} from '../pose_detector';
-import {InputResolution, Keypoint, Pose, PoseDetectorInput} from '../types';
+import {InputResolution, Keypoint, Pose, PoseDetectorInput, SupportedModels} from '../types';
+import {getKeypointIndexByName} from '../util';
 
 import {CROP_FILTER_ALPHA, KEYPOINT_FILTER_CONFIG, MIN_CROP_KEYPOINT_SCORE, MOVENET_CONFIG, MOVENET_SINGLE_POSE_ESTIMATION_CONFIG, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_URL, SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER} from './constants';
 import {validateEstimationConfig, validateModelConfig} from './detector_utils';
@@ -38,6 +39,9 @@ import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
 export class MoveNetDetector extends BasePoseDetector {
   private readonly modelInputResolution:
       InputResolution = {height: 0, width: 0};
+  private readonly keypointIndexByName =
+      getKeypointIndexByName(SupportedModels.MoveNet);
+
   // Global states.
   private keypointsFilter = new KeypointsOneEuroFilter(KEYPOINT_FILTER_CONFIG);
   private cropRegion: BoundingBox;
@@ -124,7 +128,15 @@ export class MoveNetDetector extends BasePoseDetector {
       return null;
     }
 
-    const inferenceResult = await outputTensor.data();
+    // Only use asynchronous downloads when we really have to (WebGPU) because
+    // that will poll for download completion using setTimeOut which introduces
+    // extra latency.
+    let inferenceResult;
+    if (tf.getBackend() !== 'webgpu') {
+      inferenceResult = outputTensor.dataSync();
+    } else {
+      inferenceResult = await outputTensor.data();
+    }
     outputTensor.dispose();
 
     const keypoints: Keypoint[] = [];
@@ -308,14 +320,14 @@ export class MoveNetDetector extends BasePoseDetector {
 
   torsoVisible(keypoints: Keypoint[]): boolean {
     return (
-        (keypoints[COCO_KEYPOINTS_BY_NAME['left_hip']].score >
-            MIN_CROP_KEYPOINT_SCORE ||
-        keypoints[COCO_KEYPOINTS_BY_NAME['right_hip']].score >
-            MIN_CROP_KEYPOINT_SCORE) &&
-        (keypoints[COCO_KEYPOINTS_BY_NAME['left_shoulder']].score >
-            MIN_CROP_KEYPOINT_SCORE ||
-        keypoints[COCO_KEYPOINTS_BY_NAME['right_shoulder']].score >
-            MIN_CROP_KEYPOINT_SCORE));
+        (keypoints[this.keypointIndexByName['left_hip']].score >
+             MIN_CROP_KEYPOINT_SCORE ||
+         keypoints[this.keypointIndexByName['right_hip']].score >
+             MIN_CROP_KEYPOINT_SCORE) &&
+        (keypoints[this.keypointIndexByName['left_shoulder']].score >
+             MIN_CROP_KEYPOINT_SCORE ||
+         keypoints[this.keypointIndexByName['right_shoulder']].score >
+             MIN_CROP_KEYPOINT_SCORE));
   }
 
   /**
@@ -346,7 +358,7 @@ export class MoveNetDetector extends BasePoseDetector {
     let maxBodyYrange = 0.0;
     let maxBodyXrange = 0.0;
     for (const key of Object.keys(targetKeypoints)) {
-      if (keypoints[COCO_KEYPOINTS_BY_NAME[key]].score <
+      if (keypoints[this.keypointIndexByName[key]].score <
           MIN_CROP_KEYPOINT_SCORE) {
         continue;
       }
@@ -377,10 +389,10 @@ export class MoveNetDetector extends BasePoseDetector {
       imageWidth: number): BoundingBox {
     const targetKeypoints: {[index: string]: number[]} = {};
 
-    for (const key of Object.keys(COCO_KEYPOINTS_BY_NAME)) {
+    for (const key of COCO_KEYPOINTS) {
       targetKeypoints[key] = [
-        keypoints[COCO_KEYPOINTS_BY_NAME[key]].y * imageHeight,
-        keypoints[COCO_KEYPOINTS_BY_NAME[key]].x * imageWidth
+        keypoints[this.keypointIndexByName[key]].y * imageHeight,
+        keypoints[this.keypointIndexByName[key]].x * imageWidth
       ];
     }
 
@@ -397,8 +409,8 @@ export class MoveNetDetector extends BasePoseDetector {
               keypoints, targetKeypoints, centerY, centerX);
 
       let cropLengthHalf = Math.max(
-          maxTorsoXrange * 1.9, maxTorsoYrange * 1.9, 
-          maxBodyYrange * 1.2, maxBodyXrange * 1.2);
+          maxTorsoXrange * 1.9, maxTorsoYrange * 1.9, maxBodyYrange * 1.2,
+          maxBodyXrange * 1.2);
 
       cropLengthHalf = Math.min(
           cropLengthHalf,
