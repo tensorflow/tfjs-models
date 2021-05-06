@@ -18,27 +18,49 @@
 import {TaskModel} from '../../task_model';
 
 /**
- * The common interface for all ImageClassification task models.
+ * The base class for all ImageClassification task models.
  *
- * @template IO The type of options used during the inference process.
+ * @template IO The type of options used during the inference process. Different
+ *     models have different inference options. See individual model for more
+ *     details.
+ *
+ * @doc {heading: 'Image Classification', subheading: 'Base model'}
  */
-export interface ImageClassifier<IO> extends TaskModel {
+export abstract class ImageClassifier<IO> extends TaskModel {
   /**
    * Performs classification on the given image-like input, and returns
    * result.
+   *
+   * @param img The image-like element to run classification on.
+   * @param options Inference options. Different models have different
+   *     inference options. See individual model for more details.
+   * @returns
+   *
+   * @docunpackreturn ['ImageClassifierResult', 'Class']
+   * @doc {heading: 'Image Classification', subheading: 'Base model'}
    */
-  predict(
+  abstract predict(
       img: ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement,
       options?: IO): Promise<ImageClassifierResult>;
+
+  /**
+   * Cleans up resources if needed.
+   *
+   * @doc {heading: 'Image Classification', subheading: 'Base model'}
+   */
+  cleanUp() {}
 }
 
 /** Image classification result. */
 export interface ImageClassifierResult {
+  /** All predicted classes. */
   classes: Class[];
 }
 
 /** A single class in the classification result. */
 export interface Class {
+  /** The name of the class. */
   className: string;
+  /** The probability (score) of the class. */
   probability: number;
 }

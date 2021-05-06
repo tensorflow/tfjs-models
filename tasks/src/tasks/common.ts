@@ -23,16 +23,27 @@ export const DEFAULT_TFJS_BACKEND: TFJSBackend = 'webgl';
 /** Default TFJS version. */
 export const DEFAULT_TFJS_VERSION = '3.6.0';
 
-/** Type of TFJS bckends. */
+/**
+ * Type of TFJS bckends.
+ *
+ * @docinline
+ */
 export type TFJSBackend = 'cpu'|'webgl'|'wasm';
 
 /** Common loading options for TFJS models. */
 export interface TFJSModelCommonLoadingOption {
+  /** The backend to use to run TFJS models. Default to 'webgl'. */
   backend: TFJSBackend;
 }
 
 /** Common loading options for custom TFLite models. */
 export interface TFLiteCustomModelCommonLoadingOption {
+  /**
+   * The model url, or the model content stored in an `ArrayBuffer`.
+   *
+   * You can use TFLite model urls from `tfhub.dev` directly. For model
+   * compatibility, see comments in the corresponding model class.
+   */
   model: string|ArrayBuffer;
 }
 
