@@ -39,7 +39,6 @@ export interface MobilenetTFLiteLoadingOptions extends
    */
   alpha?: 0.25|0.50|0.75|1.0;
 }
-;
 
 /**
  * Inference options.
