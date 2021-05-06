@@ -81,11 +81,8 @@ describe('Relative velocity filter ', () => {
 
   it('Different constant value scales same velocity scale legacy.', () => {
     const sameVelocityScale = 1;
-    // More sensitive filter.
     const filter1 = new RelativeVelocityFilter(
         {windowSize: 3, velocityScale: sameVelocityScale});
-
-    // Less sensitive filter.
     const filter2 = new RelativeVelocityFilter(
         {windowSize: 3, velocityScale: sameVelocityScale});
 
