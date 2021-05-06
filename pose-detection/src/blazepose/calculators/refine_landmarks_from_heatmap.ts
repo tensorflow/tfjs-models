@@ -56,6 +56,8 @@ export async function refineLandmarksFromHeatmap(
   for (let i = 0; i < landmarks.length; i++) {
     const landmark = landmarks[i];
     const outLandmark = {...landmark};
+    outLandmarks.push(outLandmark);
+
     const centerCol = Math.trunc(outLandmark.x * hmWidth);
     const centerRow = Math.trunc(outLandmark.y * hmHeight);
     // Point is outside of the image let's keep it intact.
@@ -92,7 +94,6 @@ export async function refineLandmarksFromHeatmap(
       outLandmark.x = weightedCol / hmWidth / sum;
       outLandmark.y = weightedRow / hmHeight / sum;
     }
-    outLandmarks.push(outLandmark);
   }
 
   $heatmapTensor.dispose();
