@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import {RelativeVelocityFilter} from './relative_velocity_filter'
+import {RelativeVelocityFilter} from './relative_velocity_filter';
 
 describe('Relative velocity filter ', () => {
   it('Can handle incorrect timestamp.', () => {
@@ -41,7 +41,7 @@ describe('Relative velocity filter ', () => {
     let result1;
     let result2;
     let value;
-    let valueScale = 1;
+    const valueScale = 1;
 
     value = 1;
     result1 = filter1.apply(value, 1000 /* 1ms */, valueScale);
@@ -95,8 +95,8 @@ describe('Relative velocity filter ', () => {
     // smaller value scale will decrease cumulative speed and alpha so with
     // smaller scale and same other params filter will believe new values
     // a little bit less.
-    let valueScale1 = 0.5;
-    let valueScale2 = 1;
+    const valueScale1 = 0.5;
+    const valueScale2 = 1;
 
     value = 1;
     result1 = filter1.apply(value, 1000 /* 1ms */, valueScale1);
@@ -136,11 +136,11 @@ describe('Relative velocity filter ', () => {
 
     // The filter parameters are the same between the two filters.
     const windowSize = 5;
-    const velocityScale = 0.1
+    const velocityScale = 0.1;
 
     // Perform the translation.
     const translatedDataPoints = [];
-    for (let dp of originalDataPoints) {
+    for (const dp of originalDataPoints) {
       translatedDataPoints.push(
           {value: dp.value + valueOffset, scale: dp.scale});
     }
