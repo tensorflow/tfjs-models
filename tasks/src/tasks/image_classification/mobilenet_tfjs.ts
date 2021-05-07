@@ -24,8 +24,8 @@ import {Class, ImageClassifier, ImageClassifierResult} from './common';
 type MobilenetNS = typeof mobilenet;
 
 /** Loading options. */
-export type MobilenetTFJSLoadingOptions =
-    TFJSModelCommonLoadingOption&mobilenet.ModelConfig;
+export interface MobilenetTFJSLoadingOptions extends
+    TFJSModelCommonLoadingOption, mobilenet.ModelConfig {}
 
 /** Inference options. */
 export interface MobilenetTFJSInferenceOptions {
@@ -34,9 +34,8 @@ export interface MobilenetTFJSInferenceOptions {
 }
 
 /** Loader for mobilenet TFJS model. */
-export class MobilenetTFJSLoader extends TaskModelLoader<
-    MobilenetNS, MobilenetTFJSLoadingOptions,
-    ImageClassifier<MobilenetTFJSInferenceOptions>> {
+export class MobilenetTFJSLoader extends
+    TaskModelLoader<MobilenetNS, MobilenetTFJSLoadingOptions, MobilenetTFJS> {
   readonly metadata = {
     name: 'TFJS Mobilenet',
     description: 'Run mobilenet with TFJS models',
@@ -55,32 +54,74 @@ export class MobilenetTFJSLoader extends TaskModelLoader<
 
   protected async transformSourceModel(
       sourceModelGlobal: MobilenetNS,
-      loadingOptions?: MobilenetTFJSLoadingOptions):
-      Promise<ImageClassifier<MobilenetTFJSInferenceOptions>> {
+      loadingOptions?: MobilenetTFJSLoadingOptions): Promise<MobilenetTFJS> {
     const mobilenetModel = await sourceModelGlobal.load(loadingOptions);
+    return new MobilenetTFJS(mobilenetModel, loadingOptions);
+  }
+}
 
-    return {
-      predict: async (img, infereceOptions) => {
-        if (!mobilenetModel) {
-          throw new Error('source model is not loaded');
-        }
-        await ensureTFJSBackend(loadingOptions);
-        const mobilenetResults = await mobilenetModel.classify(
-            img, infereceOptions ? infereceOptions.topK : undefined);
-        const classes: Class[] = mobilenetResults.map(result => {
-          return {
-            className: result.className,
-            probability: result.probability,
-          };
-        });
-        const finalResult: ImageClassifierResult = {
-          classes,
-        };
-        return finalResult;
-      },
+/**
+ * Pre-trained TFJS mobilenet model.
+ *
+ * Usage:
+ *
+ * ```js
+ * // Load the model with options (optional).
+ * //
+ * // By default, it uses mobilenet V1 with webgl backend. You can change them
+ * // in options.
+ * const model = await tfTask.ImageClassification.Mobilenet.TFJS.load({
+ *   version: 2,
+ *   backend: 'wasm',
+ * });
+ *
+ * // Run inference on an image with options (optional).
+ * const img = document.querySelector('img');
+ * const result = await model.predict(img, {topK: 5});
+ * console.log(result.classes);
+ *
+ * // Clean up.
+ * model.cleanUp();
+ * ```
+ *
+ * Refer to `tfTask.ImageClassifier` for the `predict` and `cleanUp` method.
+ *
+ * @docextratypes [
+ *   {description: 'Options for `load`', symbol: 'MobilenetTFJSLoadingOptions'},
+ *   {description: 'Options for `predict`', symbol:
+ * 'MobilenetTFJSInferenceOptions'}
+ * ]
+ *
+ * @doc {heading: 'Image Classification', subheading: 'Models'}
+ */
+export class MobilenetTFJS extends
+    ImageClassifier<MobilenetTFJSInferenceOptions> {
+  constructor(
+      private mobilenetModel?: mobilenet.MobileNet,
+      private loadingOptions?: MobilenetTFJSLoadingOptions) {
+    super();
+  }
 
-      cleanUp: () => {},
+  async predict(
+      img: ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement,
+      infereceOptions?: MobilenetTFJSInferenceOptions):
+      Promise<ImageClassifierResult> {
+    if (!this.mobilenetModel) {
+      throw new Error('source model is not loaded');
+    }
+    await ensureTFJSBackend(this.loadingOptions);
+    const mobilenetResults = await this.mobilenetModel.classify(
+        img, infereceOptions ? infereceOptions.topK : undefined);
+    const classes: Class[] = mobilenetResults.map(result => {
+      return {
+        className: result.className,
+        probability: result.probability,
+      };
+    });
+    const finalResult: ImageClassifierResult = {
+      classes,
     };
+    return finalResult;
   }
 }
 
