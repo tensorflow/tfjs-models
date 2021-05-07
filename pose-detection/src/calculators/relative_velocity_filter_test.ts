@@ -17,7 +17,7 @@
 import {RelativeVelocityFilter} from './relative_velocity_filter';
 
 describe('Relative velocity filter ', () => {
-  it('Can handle incorrect timestamp.', () => {
+  it('Smoke.', () => {
     const filter =
         new RelativeVelocityFilter({windowSize: 1, velocityScale: 1});
 
