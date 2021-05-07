@@ -44,7 +44,7 @@ export interface MobilenetTFLiteLoadingOptions extends
  *
  * TODO: placeholder for now.
  */
-export interface MobilenetTFLiteInferanceOptions {}
+export interface MobilenetTFLiteInferenceOptions {}
 
 /** Loader for custom image classification TFLite model. */
 export class MobilenetTFLiteLoader extends
@@ -119,12 +119,12 @@ export class MobilenetTFLiteLoader extends
  *   {description: 'Options for `load`', symbol:
  * 'MobilenetTFLiteLoadingOptions'},
  *   {description: 'Options for `predict`',
- * symbol: 'MobilenetTFLiteInferanceOptions'}
+ * symbol: 'MobilenetTFLiteInferenceOptions'}
  * ]
  *
  * @doc {heading: 'Image Classification', subheading: 'Models'}
  */
 export class MobilenetTFLite extends
-    ImageClassifierTFLite<MobilenetTFLiteInferanceOptions> {}
+    ImageClassifierTFLite<MobilenetTFLiteInferenceOptions> {}
 
 export const mobilenetTfliteLoader = new MobilenetTFLiteLoader();

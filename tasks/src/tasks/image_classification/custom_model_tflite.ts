@@ -32,7 +32,7 @@ export interface ICCustomModelTFLiteLoadingOptions extends
  *
  * TODO: placeholder for now.
  */
-export interface ICCustomModelTFLiteInferanceOptions {}
+export interface ICCustomModelTFLiteInferenceOptions {}
 
 /** Loader for custom image classification TFLite model. */
 export class ImageClassificationCustomModelTFLiteLoader extends TaskModelLoader<
@@ -100,14 +100,14 @@ export class ImageClassificationCustomModelTFLiteLoader extends TaskModelLoader<
  *   {description: 'Options for `load`', symbol:
  * 'ICCustomModelTFLiteLoadingOptions'},
  *   {description: 'Options for `predict`', symbol:
- * 'ICCustomModelTFLiteInferanceOptions'}
+ * 'ICCustomModelTFLiteInferenceOptions'}
  * ]
  *
  *
  * @doc {heading: 'Image Classification', subheading: 'Models'}
  */
 export class ICCustomModelTFLite extends
-    ImageClassifierTFLite<ICCustomModelTFLiteInferanceOptions> {}
+    ImageClassifierTFLite<ICCustomModelTFLiteInferenceOptions> {}
 
 export const imageClassificationCustomModelTfliteLoader =
     new ImageClassificationCustomModelTFLiteLoader();
