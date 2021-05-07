@@ -18,7 +18,6 @@
 import * as tflite from '@tensorflow/tfjs-tflite';
 import {TaskModelLoader} from '../../task_model';
 import {Runtime, Task, TFLiteCustomModelCommonLoadingOption} from '../common';
-import {ImageClassifier} from './common';
 import {ImageClassifierTFLite} from './tflite_common';
 
 // The global namespace type.
@@ -37,8 +36,7 @@ export interface ICCustomModelTFLiteInferanceOptions {}
 
 /** Loader for custom image classification TFLite model. */
 export class ImageClassificationCustomModelTFLiteLoader extends TaskModelLoader<
-    TFLiteNS, ICCustomModelTFLiteLoadingOptions,
-    ImageClassifier<ICCustomModelTFLiteInferanceOptions>> {
+    TFLiteNS, ICCustomModelTFLiteLoadingOptions, ICCustomModelTFLite> {
   readonly metadata = {
     name: 'Image classification with TFLite models',
     description: 'An image classfier backed by the TFLite Task Library. ' +
@@ -62,7 +60,7 @@ export class ImageClassificationCustomModelTFLiteLoader extends TaskModelLoader<
   protected async transformSourceModel(
       sourceModelGlobal: TFLiteNS,
       loadingOptions?: ICCustomModelTFLiteLoadingOptions):
-      Promise<ImageClassifier<ICCustomModelTFLiteInferanceOptions>> {
+      Promise<ICCustomModelTFLite> {
     const tfliteImageClassifier =
         await sourceModelGlobal.ImageClassifier.create(loadingOptions.model);
     return new ICCustomModelTFLite(tfliteImageClassifier);

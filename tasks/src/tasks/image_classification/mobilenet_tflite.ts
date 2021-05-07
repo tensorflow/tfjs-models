@@ -18,7 +18,6 @@
 import * as tflite from '@tensorflow/tfjs-tflite';
 import {TaskModelLoader} from '../../task_model';
 import {Runtime, Task} from '../common';
-import {ImageClassifier} from './common';
 import {ImageClassifierTFLite} from './tflite_common';
 
 // The global namespace type.
@@ -48,9 +47,8 @@ export interface MobilenetTFLiteLoadingOptions extends
 export interface MobilenetTFLiteInferanceOptions {}
 
 /** Loader for custom image classification TFLite model. */
-export class MobilenetTFLiteLoader extends TaskModelLoader<
-    TFLiteNS, MobilenetTFLiteLoadingOptions,
-    ImageClassifier<MobilenetTFLiteInferanceOptions>> {
+export class MobilenetTFLiteLoader extends
+    TaskModelLoader<TFLiteNS, MobilenetTFLiteLoadingOptions, MobilenetTFLite> {
   readonly metadata = {
     name: 'TFLite Mobilenet',
     description: 'Run mobilenet with TFLite models',

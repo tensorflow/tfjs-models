@@ -52,11 +52,11 @@ import {ensureTFJSBackend, getTFJSModelDependencyPackages, Runtime, Task, TFJSMo
  * // Clean up if needed.
  * model.cleanUp();
  */
-export abstract class TaskModel {
+export interface TaskModel {
   /**
    * Cleans up resources if necessary.
    */
-  abstract cleanUp(): void;
+  cleanUp(): void;
 }
 
 /** Metadata for a task model. */

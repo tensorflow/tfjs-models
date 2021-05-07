@@ -26,7 +26,7 @@ import {TaskModel} from '../../task_model';
  *
  * @doc {heading: 'Image Classification', subheading: 'Base model'}
  */
-export abstract class ImageClassifier<IO> extends TaskModel {
+export abstract class ImageClassifier<IO> implements TaskModel {
   /**
    * Performs classification on the given image-like input, and returns
    * result.
