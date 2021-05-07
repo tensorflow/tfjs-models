@@ -15,7 +15,6 @@
  * =============================================================================
  */
 import * as tf from '@tensorflow/tfjs-core';
-import {sigmoid} from '../../calculators/sigmoid';
 import {Keypoint} from '../../types';
 import {RefineLandmarksFromHeatmapConfig} from './interfaces/config_interfaces';
 
@@ -83,7 +82,7 @@ export async function refineLandmarksFromHeatmap(
     // sum of weights and max weights.
     for (let row = beginRow; row < endRow; ++row) {
       for (let col = beginCol; col < endCol; ++col) {
-        const confidence = sigmoid(heatmapBuf.get(row, col, i));
+        const confidence = heatmapBuf.get(row, col, i);
         sum += confidence;
         maxValue = Math.max(maxValue, confidence);
         weightedCol += col * confidence;

@@ -40,7 +40,8 @@ describe('refineLandmarksFromHeatmap ', () => {
   it('smoke.', async () => {
     const landmarks = [{x: 0.5, y: 0.5}];
     const heatmapTensor =
-        tf.tensor4d([z, z, z, 1, z, z, z, z, z], [1, 3, 3, 1]);
+        tf.sigmoid(tf.tensor4d([z, z, z, 1, z, z, z, z, z], [1, 3, 3, 1]));
+
     const result = await refineLandmarksFromHeatmap(
         landmarks, heatmapTensor, {kernelSize: 3, minConfidenceToRefine: 0.1});
     expect(result[0].x).toBe(0);
@@ -49,14 +50,14 @@ describe('refineLandmarksFromHeatmap ', () => {
 
   it('multi-layer.', async () => {
     const landmarks = [{x: 0.5, y: 0.5}, {x: 0.5, y: 0.5}, {x: 0.5, y: 0.5}];
-    const heatmapTensor = tf.tensor4d(
+    const heatmapTensor = tf.sigmoid(tf.tensor4d(
         chwToHWC(
             [
               z, z, z, 1, z, z, z, z, z, z, z, z, 1, z,
               z, z, z, z, z, z, z, 1, z, z, z, z, z
             ],
             3, 3, 3),
-        [1, 3, 3, 3]);
+        [1, 3, 3, 3]));
     const result = await refineLandmarksFromHeatmap(
         landmarks, heatmapTensor, {kernelSize: 3, minConfidenceToRefine: 0.1});
 
@@ -68,14 +69,14 @@ describe('refineLandmarksFromHeatmap ', () => {
 
   it('keep if not sure.', async () => {
     const landmarks = [{x: 0.5, y: 0.5}, {x: 0.5, y: 0.5}, {x: 0.5, y: 0.5}];
-    const heatmapTensor = tf.tensor4d(
+    const heatmapTensor = tf.sigmoid(tf.tensor4d(
         chwToHWC(
             [
               z, z, z, 0, z, z, z, z, z, z, z, z, 0, z,
               z, z, z, z, z, z, z, 0, z, z, z, z, z
             ],
             3, 3, 3),
-        [1, 3, 3, 3]);
+        [1, 3, 3, 3]));
     const result = await refineLandmarksFromHeatmap(
         landmarks, heatmapTensor, {kernelSize: 3, minConfidenceToRefine: 0.6});
 
@@ -87,10 +88,11 @@ describe('refineLandmarksFromHeatmap ', () => {
 
   it('border.', async () => {
     const landmarks = [{x: 0, y: 0}, {x: 0.9, y: 0.9}];
-    const heatmapTensor = tf.tensor4d(
+    const heatmapTensor = tf.sigmoid(tf.tensor4d(
         chwToHWC(
             [z, z, z, 0, z, 0, z, z, z, z, z, z, 0, z, 0, z, z, 0], 3, 3, 2),
-        [1, 3, 3, 2]);
+        [1, 3, 3, 2]));
+
     const result = await refineLandmarksFromHeatmap(
         landmarks, heatmapTensor, {kernelSize: 3, minConfidenceToRefine: 0.1});
 
