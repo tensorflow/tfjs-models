@@ -23,28 +23,37 @@ export {version} from './version';
 
 const IMAGE_SIZE = 224;
 
+/** @docinline */
 export type MobileNetVersion = 1|2;
+/** @docinline */
 export type MobileNetAlpha = 0.25|0.50|0.75|1.0;
 
 /**
  * Mobilenet model loading configuration
  *
  * Users should provide a version and alpha *OR* a modelURL and inputRange.
- *
- * @param version The MobileNet version number. Use 1 for MobileNetV1, and 2
- * for MobileNetV2. Defaults to 1.
- * @param alpha Controls the width of the network, trading accuracy for
- * performance. A smaller alpha decreases accuracy and increases performance.
- * Defaults to 1.0.
- * @param modelUrl Optional param for specifying the custom model url or
- * an `tf.io.IOHandler` object.
- * @param inputRange The input range expected by the trained
- * model hosted at the modelUrl. This is typically [0, 1] or [-1, 1].
  */
 export interface ModelConfig {
+  /**
+   * The MobileNet version number. Use 1 for MobileNetV1, and 2 for
+   * MobileNetV2. Defaults to 1.
+   */
   version: MobileNetVersion;
+  /**
+   * Controls the width of the network, trading accuracy for performance. A
+   * smaller alpha decreases accuracy and increases performance. Defaults
+   * to 1.0.
+   */
   alpha?: MobileNetAlpha;
+  /**
+   * Optional param for specifying the custom model url or an `tf.io.IOHandler`
+   * object.
+   */
   modelUrl?: string|tf.io.IOHandler;
+  /**
+   * The input range expected by the trained model hosted at the modelUrl. This
+   * is typically [0, 1] or [-1, 1].
+   */
   inputRange?: [number, number];
 }
 
