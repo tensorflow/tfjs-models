@@ -10,7 +10,7 @@ Currently, we provide 3 model options:
 MoveNet is an ultra fast and accurate model that detects 17 keypoints of a body.
 It can run at 50+ fps on modern laptop and phones.
 
-#### MediaPipe Blazepose:
+#### BlazePose:
 [Demo](https://storage.googleapis.com/tfjs-models/demos/pose-detection/index.html?model=blazepose)
 
 MediaPipe BlazePose can detect 33 keypoints, in addition to the 17 COCO keypoints,
