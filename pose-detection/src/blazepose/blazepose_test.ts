@@ -56,11 +56,8 @@ describeWithFlags('BlazePose', ALL_ENVS, () => {
     startTensors = tf.memory().numTensors;
 
     // Note: this makes a network request for model assets.
-    const modelConfig: poseDetection.BlazePoseModelConfig = {
-      quantBytes: 4,
-    };
     detector = await poseDetection.createDetector(
-        poseDetection.SupportedModels.BlazePose, modelConfig);
+        poseDetection.SupportedModels.BlazePose);
   });
 
   it('estimatePoses does not leak memory', async () => {
@@ -99,9 +96,8 @@ describeWithFlags('BlazePose static image ', BROWSER_ENVS, () => {
     const startTensors = tf.memory().numTensors;
 
     // Note: this makes a network request for model assets.
-    const modelConfig: poseDetection.BlazePoseModelConfig = {quantBytes: 4};
     detector = await poseDetection.createDetector(
-        poseDetection.SupportedModels.BlazePose, modelConfig);
+        poseDetection.SupportedModels.BlazePose);
 
     const beforeTensors = tf.memory().numTensors;
 
@@ -142,9 +138,8 @@ describeWithFlags('BlazePose video ', BROWSER_ENVS, () => {
   it('test.', async () => {
     // Note: this makes a network request for model assets.
 
-    const modelConfig: poseDetection.BlazePoseModelConfig = {quantBytes: 4};
     const model = poseDetection.SupportedModels.BlazePose;
-    detector = await poseDetection.createDetector(model, modelConfig);
+    detector = await poseDetection.createDetector(model);
 
     const result: number[][][] = [];
 

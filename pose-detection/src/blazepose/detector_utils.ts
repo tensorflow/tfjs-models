@@ -15,29 +15,28 @@
  * =============================================================================
  */
 
-import {DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL, DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG, DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL} from './constants';
+import {DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG, DEFAULT_BLAZEPOSE_MODEL_CONFIG} from './constants';
 import {BlazePoseEstimationConfig, BlazePoseModelConfig} from './types';
 
 export function validateModelConfig(modelConfig: BlazePoseModelConfig):
     BlazePoseModelConfig {
-  let config;
+  const config = modelConfig == null ? {...DEFAULT_BLAZEPOSE_MODEL_CONFIG} :
+                                       {...modelConfig};
 
-  if (modelConfig == null) {
-    config = {};
-  } else {
-    config = {...modelConfig};
+  if (config.enableSmoothing == null) {
+    config.enableSmoothing = DEFAULT_BLAZEPOSE_MODEL_CONFIG.enableSmoothing;
   }
 
-  if (config.quantBytes == null) {
-    config.quantBytes = 4;
+  if (config.lite == null) {
+    config.lite = DEFAULT_BLAZEPOSE_MODEL_CONFIG.lite;
   }
 
   if (config.detectorModelUrl == null) {
-    config.detectorModelUrl = DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL;
+    config.detectorModelUrl = DEFAULT_BLAZEPOSE_MODEL_CONFIG.detectorModelUrl;
   }
 
   if (config.landmarkModelUrl == null) {
-    config.landmarkModelUrl = DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL;
+    config.landmarkModelUrl = DEFAULT_BLAZEPOSE_MODEL_CONFIG.landmarkModelUrl;
   }
 
   return config;
@@ -65,10 +64,6 @@ export function validateEstimationConfig(
     throw new Error(
         'Multi-pose detection is not implemented yet. Please set maxPoses ' +
         'to 1.');
-  }
-
-  if (config.enableSmoothing == null) {
-    config.enableSmoothing = true;
   }
 
   return config;
