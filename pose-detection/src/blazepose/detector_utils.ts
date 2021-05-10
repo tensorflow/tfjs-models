@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import {DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG, DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_FULL, DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_LITE, DEFAULT_BLAZEPOSE_MODEL_CONFIG} from './constants';
+import {DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG, DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_FULL, DEFAULT_BLAZEPOSE_MODEL_CONFIG} from './constants';
 import {BlazePoseEstimationConfig, BlazePoseModelConfig} from './types';
 
 export function validateModelConfig(modelConfig: BlazePoseModelConfig):
@@ -27,10 +27,6 @@ export function validateModelConfig(modelConfig: BlazePoseModelConfig):
     config.enableSmoothing = DEFAULT_BLAZEPOSE_MODEL_CONFIG.enableSmoothing;
   }
 
-  if (config.lite == null) {
-    config.lite = DEFAULT_BLAZEPOSE_MODEL_CONFIG.lite;
-  }
-
   if (config.detectorModelUrl == null) {
     config.detectorModelUrl = DEFAULT_BLAZEPOSE_MODEL_CONFIG.detectorModelUrl;
   }
@@ -40,9 +36,7 @@ export function validateModelConfig(modelConfig: BlazePoseModelConfig):
   }
 
   if (config.landmarkModelUrl == null) {
-    config.landmarkModelUrl = config.lite ?
-        DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_LITE :
-        DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_FULL;
+    config.landmarkModelUrl = DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_FULL;
   }
 
   return config;

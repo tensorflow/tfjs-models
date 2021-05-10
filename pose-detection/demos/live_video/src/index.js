@@ -48,7 +48,7 @@ async function createDetector() {
         multiplier: 0.75
       });
     case posedetection.SupportedModels.BlazePose:
-      return posedetection.createDetector(STATE.model, {quantBytes: 4});
+      return posedetection.createDetector(STATE.model);
     case posedetection.SupportedModels.MoveNet:
       const modelType = STATE.modelConfig.type == 'lightning' ?
           posedetection.movenet.modelType.SINGLEPOSE_LIGHTNING :
