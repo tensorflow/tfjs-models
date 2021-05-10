@@ -73,7 +73,8 @@ export class BlazePoseDetector extends BasePoseDetector {
   // Should not be called outside.
   private constructor(
       private readonly detectorModel: tfconv.GraphModel,
-      private readonly landmarkModel: tfconv.GraphModel) {
+      private readonly landmarkModel: tfconv.GraphModel,
+      private readonly enableSmoothing: boolean) {
     super();
 
     this.anchors =
@@ -102,7 +103,8 @@ export class BlazePoseDetector extends BasePoseDetector {
       tfconv.loadGraphModel(config.landmarkModelUrl)
     ]);
 
-    return new BlazePoseDetector(detectorModel, landmarkModel);
+    return new BlazePoseDetector(
+        detectorModel, landmarkModel, config.enableSmoothing);
   }
 
   /**
@@ -123,9 +125,6 @@ export class BlazePoseDetector extends BasePoseDetector {
    *
    *       flipHorizontal: Optional. Default to false. When image data comes
    *       from camera, the result has to flip horizontally.
-   *
-   *       enableSmoothing: Optional. Default to true. Smooth pose landmarks
-   *       coordinates and visibility scores to reduce jitter.
    *
    * @param timestamp Optional. In microseconds, i.e. 1e-6 of a second. This is
    *     useful when image is a tensor, which doesn't have timestamp info. Or
@@ -195,8 +194,7 @@ export class BlazePoseDetector extends BasePoseDetector {
     // Smoothes landmarks to reduce jitter.
     const {actualLandmarksFiltered, auxiliaryLandmarksFiltered} =
         this.poseLandmarkFiltering(
-            actualLandmarks, auxiliaryLandmarks, imageSize,
-            config.enableSmoothing);
+            actualLandmarks, auxiliaryLandmarks, imageSize);
 
     // Calculates region of interest based on the auxiliary landmarks, to be
     // used in the subsequent image.
@@ -409,13 +407,13 @@ export class BlazePoseDetector extends BasePoseDetector {
   // https://github.com/google/mediapipe/blob/master/mediapipe/modules/pose_landmark/pose_landmark_filtering.pbtxt
   private poseLandmarkFiltering(
       actualLandmarks: Keypoint[], auxiliaryLandmarks: Keypoint[],
-      imageSize: ImageSize, enableSmoothing: boolean): {
+      imageSize: ImageSize): {
     actualLandmarksFiltered: Keypoint[],
     auxiliaryLandmarksFiltered: Keypoint[]
   } {
     let actualLandmarksFiltered;
     let auxiliaryLandmarksFiltered;
-    if (this.timestamp == null || !enableSmoothing) {
+    if (this.timestamp == null || !this.enableSmoothing) {
       actualLandmarksFiltered = actualLandmarks;
       auxiliaryLandmarksFiltered = auxiliaryLandmarks;
     } else {

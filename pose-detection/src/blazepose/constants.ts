@@ -35,10 +35,15 @@ export const BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION = {
   aspectRatios: [1.0],
   fixedAnchorSize: true
 };
+export const DEFAULT_BLAZEPOSE_MODEL_CONFIG = {
+  lite: false,
+  enableSmoothing: true,
+  detectorModelUrl: DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL,
+  landmarkModelUrl: DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL
+};
 export const DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG = {
   maxPoses: 1,
-  flipHorizontal: false,
-  enableSmoothing: true
+  flipHorizontal: false
 };
 export const BLAZEPOSE_DETECTION_MODEL_INPUT_RESOLUTION = {
   width: 128,
