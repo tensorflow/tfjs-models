@@ -24,8 +24,8 @@ import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
 import * as poseDetection from '../index';
 import {getXYPerFrame, KARMA_SERVER, loadImage, loadVideo} from '../test_util';
 
-const EPSILON_IMAGE = 70;
-const EPSILON_VIDEO = 70;
+const EPSILON_IMAGE = 18;
+const EPSILON_VIDEO = 57;
 // ref:
 // https://github.com/google/mediapipe/blob/7c331ad58b2cca0dca468e342768900041d65adc/mediapipe/python/solutions/pose_test.py#L31-L51
 const EXPECTED_LANDMARKS = [
@@ -97,13 +97,13 @@ describeWithFlags('BlazePose static image ', BROWSER_ENVS, () => {
 
     // Note: this makes a network request for model assets.
     detector = await poseDetection.createDetector(
-        poseDetection.SupportedModels.BlazePose);
+        poseDetection.SupportedModels.BlazePose, {enableSmoothing: false});
 
     const beforeTensors = tf.memory().numTensors;
 
     const result = await detector.estimatePoses(
         image,
-        {maxPoses: 1, flipHorizontal: false, enableSmoothing: false} as
+        {maxPoses: 1, flipHorizontal: false} as
             poseDetection.BlazePoseEstimationConfig);
     const xy = result[0].keypoints.map((keypoint) => [keypoint.x, keypoint.y]);
     const expected = EXPECTED_LANDMARKS;

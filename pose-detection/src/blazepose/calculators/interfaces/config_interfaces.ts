@@ -109,11 +109,15 @@ export interface RectTransformationConfig {
                          // respectively.
   squareShort?: boolean;
 }
-export interface TensorsToLandmarksCalculatorConfig {
+export interface TensorsToLandmarksConfig {
   numLandmarks: number;
   inputImageWidth: number;
   inputImageHeight: number;
   normalizeZ?: number;
+}
+export interface RefineLandmarksFromHeatmapConfig {
+  kernelSize?: number;
+  minConfidenceToRefine: number;
 }
 export interface VisibilitySmoothingConfig {
   alpha: number;  // Coefficient applied to a new value, and `1 - alpha` is

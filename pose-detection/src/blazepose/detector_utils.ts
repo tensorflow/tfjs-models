@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import {DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG, DEFAULT_BLAZEPOSE_MODEL_CONFIG} from './constants';
+import {DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG, DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_FULL, DEFAULT_BLAZEPOSE_MODEL_CONFIG} from './constants';
 import {BlazePoseEstimationConfig, BlazePoseModelConfig} from './types';
 
 export function validateModelConfig(modelConfig: BlazePoseModelConfig):
@@ -36,7 +36,7 @@ export function validateModelConfig(modelConfig: BlazePoseModelConfig):
   }
 
   if (config.landmarkModelUrl == null) {
-    config.landmarkModelUrl = DEFAULT_BLAZEPOSE_MODEL_CONFIG.landmarkModelUrl;
+    config.landmarkModelUrl = DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_FULL;
   }
 
   return config;
