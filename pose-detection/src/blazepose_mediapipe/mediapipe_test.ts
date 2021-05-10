@@ -15,17 +15,21 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs-core';
 // tslint:disable-next-line: no-imports-from-dist
-import {ALL_ENVS, BROWSER_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
+import {BROWSER_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
 // tslint:disable-next-line: no-imports-from-dist
 import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
 
 import * as poseDetection from '../index';
 import {getXYPerFrame, KARMA_SERVER, loadImage, loadVideo} from '../test_util';
 
-const EPSILON_IMAGE = 18;
-const EPSILON_VIDEO = 57;
+const MEDIAPIPE_MODEL_CONFIG = {
+  solutionPath: 'base/node_modules/@mediapipe/pose',
+  lite: true,
+};
+
+const EPSILON_IMAGE = 30;
+const EPSILON_VIDEO = 75;
 // ref:
 // https://github.com/google/mediapipe/blob/7c331ad58b2cca0dca468e342768900041d65adc/mediapipe/python/solutions/pose_test.py#L31-L51
 const EXPECTED_LANDMARKS = [
@@ -37,46 +41,7 @@ const EXPECTED_LANDMARKS = [
   [357, 633], [737, 625], [306, 639]
 ];
 
-describeWithFlags('BlazePose', ALL_ENVS, () => {
-  let detector: poseDetection.PoseDetector;
-  let startTensors: number;
-
-  let timeout: number;
-
-  beforeAll(() => {
-    timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
-  });
-
-  afterAll(() => {
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
-  });
-
-  beforeEach(async () => {
-    startTensors = tf.memory().numTensors;
-
-    // Note: this makes a network request for model assets.
-    detector = await poseDetection.createDetector(
-        poseDetection.SupportedModels.BlazePose);
-  });
-
-  it('estimatePoses does not leak memory', async () => {
-    const input: tf.Tensor3D = tf.zeros([128, 128, 3]);
-
-    const beforeTensors = tf.memory().numTensors;
-
-    await detector.estimatePoses(input);
-
-    expect(tf.memory().numTensors).toEqual(beforeTensors);
-
-    detector.dispose();
-    input.dispose();
-
-    expect(tf.memory().numTensors).toEqual(startTensors);
-  });
-});
-
-describeWithFlags('BlazePose static image ', BROWSER_ENVS, () => {
+describeWithFlags('MediaPipe Pose static image ', BROWSER_ENVS, () => {
   let detector: poseDetection.PoseDetector;
   let image: HTMLImageElement;
   let timeout: number;
@@ -84,8 +49,6 @@ describeWithFlags('BlazePose static image ', BROWSER_ENVS, () => {
   beforeAll(async () => {
     timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
-
-    image = await loadImage('pose.jpg', 1000, 667);
   });
 
   afterAll(() => {
@@ -93,31 +56,21 @@ describeWithFlags('BlazePose static image ', BROWSER_ENVS, () => {
   });
 
   it('test.', async () => {
-    const startTensors = tf.memory().numTensors;
-
     // Note: this makes a network request for model assets.
-    detector = await poseDetection.createDetector(
-        poseDetection.SupportedModels.BlazePose, {enableSmoothing: false});
+    const model = poseDetection.SupportedModels.BlazePose;
+    detector =
+        await poseDetection.createDetector(model, MEDIAPIPE_MODEL_CONFIG);
+    image = await loadImage('pose.jpg', 1000, 667);
 
-    const beforeTensors = tf.memory().numTensors;
-
-    const result = await detector.estimatePoses(
-        image,
-        {maxPoses: 1, flipHorizontal: false} as
-            poseDetection.BlazePoseEstimationConfig);
+    const result = await detector.estimatePoses(image, {});
     const xy = result[0].keypoints.map((keypoint) => [keypoint.x, keypoint.y]);
     const expected = EXPECTED_LANDMARKS;
     expectArraysClose(xy, expected, EPSILON_IMAGE);
-
-    expect(tf.memory().numTensors).toEqual(beforeTensors);
-
     detector.dispose();
-
-    expect(tf.memory().numTensors).toEqual(startTensors);
   });
 });
 
-describeWithFlags('BlazePose video ', BROWSER_ENVS, () => {
+describeWithFlags('MediaPipe Pose video ', BROWSER_ENVS, () => {
   let detector: poseDetection.PoseDetector;
   let timeout: number;
   let expected: number[][][];
@@ -137,9 +90,9 @@ describeWithFlags('BlazePose video ', BROWSER_ENVS, () => {
 
   it('test.', async () => {
     // Note: this makes a network request for model assets.
-
     const model = poseDetection.SupportedModels.BlazePose;
-    detector = await poseDetection.createDetector(model);
+    detector =
+        await poseDetection.createDetector(model, MEDIAPIPE_MODEL_CONFIG);
 
     const result: number[][][] = [];
 
