@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import {BlazePoseEstimationConfig} from './blazepose/types';
+import {BlazePoseEstimationConfig} from './blazepose_mediapipe/types';
 import {MoveNetEstimationConfig} from './movenet/types';
 import {PoseNetEstimationConfig} from './posenet/types';
 import {ModelConfig, Pose, PoseDetectorInput} from './types';

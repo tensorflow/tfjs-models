@@ -16,12 +16,13 @@
  */
 
 import {DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG, DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_FULL, DEFAULT_BLAZEPOSE_MODEL_CONFIG} from './constants';
-import {BlazePoseEstimationConfig, BlazePoseModelConfig} from './types';
+import {BlazePoseTfjsEstimationConfig, BlazePoseTfjsModelConfig} from './types';
 
-export function validateModelConfig(modelConfig: BlazePoseModelConfig):
-    BlazePoseModelConfig {
-  const config = modelConfig == null ? {...DEFAULT_BLAZEPOSE_MODEL_CONFIG} :
-                                       {...modelConfig};
+export function validateModelConfig(modelConfig: BlazePoseTfjsModelConfig):
+    BlazePoseTfjsModelConfig {
+  const config: BlazePoseTfjsModelConfig = modelConfig == null ?
+      {...DEFAULT_BLAZEPOSE_MODEL_CONFIG} as BlazePoseTfjsModelConfig :
+      {...modelConfig};
 
   if (config.enableSmoothing == null) {
     config.enableSmoothing = DEFAULT_BLAZEPOSE_MODEL_CONFIG.enableSmoothing;
@@ -43,7 +44,8 @@ export function validateModelConfig(modelConfig: BlazePoseModelConfig):
 }
 
 export function validateEstimationConfig(
-    estimationConfig: BlazePoseEstimationConfig): BlazePoseEstimationConfig {
+    estimationConfig: BlazePoseTfjsEstimationConfig):
+    BlazePoseTfjsEstimationConfig {
   let config;
 
   if (estimationConfig == null) {

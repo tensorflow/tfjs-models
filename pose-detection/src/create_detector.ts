@@ -15,8 +15,10 @@
  * =============================================================================
  */
 
-import {BlazePoseDetector} from './blazepose/detector';
-import {BlazePoseModelConfig} from './blazepose/types';
+import {BlazePoseMediaPipeDetector} from './blazepose_mediapipe/detector';
+import {BlazePoseMediaPipeModelConfig, BlazePoseModelConfig} from './blazepose_mediapipe/types';
+import {BlazePoseTfjsDetector} from './blazepose_tfjs/detector';
+import {BlazePoseTfjsModelConfig} from './blazepose_tfjs/types';
 import {MoveNetDetector} from './movenet/detector';
 import {MoveNetModelConfig} from './movenet/types';
 import {PoseDetector} from './pose_detector';
@@ -37,7 +39,11 @@ export async function createDetector(
     case SupportedModels.PoseNet:
       return PosenetDetector.load(modelConfig as PosenetModelConfig);
     case SupportedModels.BlazePose:
-      return BlazePoseDetector.load(modelConfig as BlazePoseModelConfig);
+      const config = modelConfig as BlazePoseModelConfig;
+      return config.runtime === 'tfjs' ?
+          BlazePoseTfjsDetector.load(modelConfig as BlazePoseTfjsModelConfig) :
+          BlazePoseMediaPipeDetector.load(
+              config as BlazePoseMediaPipeModelConfig);
     case SupportedModels.MoveNet:
       return MoveNetDetector.load(modelConfig as MoveNetModelConfig);
     default:
