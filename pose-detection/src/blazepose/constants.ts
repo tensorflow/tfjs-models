@@ -17,8 +17,10 @@
 
 export const DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL =
     'https://storage.googleapis.com/tfjs-models/savedmodel/blazepose/detector/heatmap/model.json';
-export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL =
+export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_FULL =
     'https://storage.googleapis.com/tfjs-models/savedmodel/blazepose/landmark/full/model.json';
+export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_LITE =
+    'https://storage.googleapis.com/tfjs-models/savedmodel/blazepose/landmark/lite/model.json';
 export const BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION = {
   reduceBoxesInLowestlayer: false,
   interpolatedScaleAspectRatio: 1.0,
@@ -39,7 +41,7 @@ export const DEFAULT_BLAZEPOSE_MODEL_CONFIG = {
   lite: false,
   enableSmoothing: true,
   detectorModelUrl: DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL,
-  landmarkModelUrl: DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL
+  landmarkModelUrl: DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_FULL
 };
 export const DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG = {
   maxPoses: 1,

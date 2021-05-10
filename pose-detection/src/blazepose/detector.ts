@@ -75,7 +75,8 @@ export class BlazePoseDetector extends BasePoseDetector {
   private constructor(
       private readonly detectorModel: tfconv.GraphModel,
       private readonly landmarkModel: tfconv.GraphModel,
-      private readonly enableSmoothing: boolean) {
+      private readonly enableSmoothing: boolean,
+      private readonly lite: boolean) {
     super();
 
     this.anchors =
@@ -105,7 +106,7 @@ export class BlazePoseDetector extends BasePoseDetector {
     ]);
 
     return new BlazePoseDetector(
-        detectorModel, landmarkModel, config.enableSmoothing);
+        detectorModel, landmarkModel, config.enableSmoothing, config.lite);
   }
 
   /**
@@ -317,6 +318,7 @@ export class BlazePoseDetector extends BasePoseDetector {
 
     // PoseLandmarksByRoiCPU: InferenceCalculator
     // The model returns 5 tensor with the following shape:
+    // Full model:
     // Output[3]: This tensor (shape: [1, 195]) represents 39 5-d keypoints.
     // The first 33 refer to the keypoints. The final 6 key points refer to
     // the alignment points from the detector model and the hands.)
@@ -324,12 +326,25 @@ export class BlazePoseDetector extends BasePoseDetector {
     // score.
     // Output [2]: This tensor (shape: [1, 64, 64, 39]) represents heatmap for
     // the 39 landmarks.
+    // Lite model:
+    // Output[1]: This tensor (shape: [1, 195]) represents 39 5-d keypoints.
+    // Output[2]: This tensor (shape: [1, 1]) represents the confidence score.
+    // Output[4]: This tensor (shape: [1, 64, 64, 39]) represents heatmap for
+    // the 39 landmarks.
     const landmarkResult =
         this.landmarkModel.predict(imageValueShifted) as tf.Tensor[];
 
-    const landmarkTensor = landmarkResult[3] as tf.Tensor2D;
-    const poseFlagTensor = landmarkResult[0] as tf.Tensor2D;
-    const heatmapTensor = landmarkResult[2] as tf.Tensor4D;
+    let landmarkTensor, poseFlagTensor, heatmapTensor;
+
+    if (this.lite) {
+      landmarkTensor = landmarkResult[1] as tf.Tensor2D;
+      poseFlagTensor = landmarkResult[2] as tf.Tensor2D;
+      heatmapTensor = landmarkResult[4] as tf.Tensor4D;
+    } else {
+      landmarkTensor = landmarkResult[3] as tf.Tensor2D;
+      poseFlagTensor = landmarkResult[0] as tf.Tensor2D;
+      heatmapTensor = landmarkResult[2] as tf.Tensor4D;
+    }
 
     // Converts the pose-flag tensor into a float that represents the
     // confidence score of pose presence.
