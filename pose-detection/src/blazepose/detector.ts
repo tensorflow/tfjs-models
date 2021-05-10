@@ -45,7 +45,7 @@ import {transformNormalizedRect} from './calculators/transform_rect';
 import {LowPassVisibilityFilter} from './calculators/visibility_smoothing';
 import * as constants from './constants';
 import {validateEstimationConfig, validateModelConfig} from './detector_utils';
-import {BlazeposeEstimationConfig, BlazeposeModelConfig} from './types';
+import {BlazePoseEstimationConfig, BlazePoseModelConfig} from './types';
 
 type PoseLandmarkByRoiResult = {
   actualLandmarks: Keypoint[],
@@ -54,9 +54,9 @@ type PoseLandmarkByRoiResult = {
 };
 
 /**
- * Blazepose detector class.
+ * BlazePose detector class.
  */
-export class BlazeposeDetector extends BasePoseDetector {
+export class BlazePoseDetector extends BasePoseDetector {
   private readonly anchors: Rect[];
   private readonly anchorTensor: AnchorTensor;
 
@@ -86,15 +86,15 @@ export class BlazeposeDetector extends BasePoseDetector {
   }
 
   /**
-   * Loads the Blazepose model. The model to be loaded is configurable using the
-   * config dictionary `BlazeposeModelConfig`. Please find more details in the
-   * documentation of the `BlazeposeModelConfig`.
+   * Loads the BlazePose model. The model to be loaded is configurable using the
+   * config dictionary `BlazePoseModelConfig`. Please find more details in the
+   * documentation of the `BlazePoseModelConfig`.
    *
    * @param modelConfig ModelConfig dictionary that contains parameters for
-   * the Blazepose loading process. Please find more details of each parameters
-   * in the documentation of the `BlazeposeModelConfig` interface.
+   * the BlazePose loading process. Please find more details of each parameters
+   * in the documentation of the `BlazePoseModelConfig` interface.
    */
-  static async load(modelConfig: BlazeposeModelConfig): Promise<PoseDetector> {
+  static async load(modelConfig: BlazePoseModelConfig): Promise<PoseDetector> {
     const config = validateModelConfig(modelConfig);
 
     const [detectorModel, landmarkModel] = await Promise.all([
@@ -102,7 +102,7 @@ export class BlazeposeDetector extends BasePoseDetector {
       tfconv.loadGraphModel(config.landmarkModelUrl)
     ]);
 
-    return new BlazeposeDetector(detectorModel, landmarkModel);
+    return new BlazePoseDetector(detectorModel, landmarkModel);
   }
 
   /**
@@ -137,7 +137,7 @@ export class BlazeposeDetector extends BasePoseDetector {
   // ref graph:
   // https://github.com/google/mediapipe/blob/master/mediapipe/modules/pose_landmark/pose_landmark_cpu.pbtxt
   async estimatePoses(
-      image: PoseDetectorInput, estimationConfig: BlazeposeEstimationConfig,
+      image: PoseDetectorInput, estimationConfig: BlazePoseEstimationConfig,
       timestamp?: number): Promise<Pose[]> {
     const config = validateEstimationConfig(estimationConfig);
 

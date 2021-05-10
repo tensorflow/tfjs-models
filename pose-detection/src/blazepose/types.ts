@@ -18,7 +18,7 @@
 import {EstimationConfig, ModelConfig} from '../types';
 
 /**
- * Additional Blazepose model loading config.
+ * Additional BlazePose model loading config.
  *
  * `detectorModelUrl`: Optional. An optional string that specifies custom url of
  * the detector model. This is useful for area/countries that don't have access
@@ -28,12 +28,12 @@ import {EstimationConfig, ModelConfig} from '../types';
  * the landmark model. This is useful for area/countries that don't have access
  * to the model hosted on GCP.
  */
-export interface BlazeposeModelConfig extends ModelConfig {
+export interface BlazePoseModelConfig extends ModelConfig {
   lite?: boolean;
   detectorModelUrl?: string;
   landmarkModelUrl?: string;
 }
 
-export interface BlazeposeEstimationConfig extends EstimationConfig {
+export interface BlazePoseEstimationConfig extends EstimationConfig {
   enableSmoothing?: boolean;
 }

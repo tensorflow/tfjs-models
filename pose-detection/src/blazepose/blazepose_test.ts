@@ -37,7 +37,7 @@ const EXPECTED_LANDMARKS = [
   [357, 633], [737, 625], [306, 639]
 ];
 
-describeWithFlags('Blazepose', ALL_ENVS, () => {
+describeWithFlags('BlazePose', ALL_ENVS, () => {
   let detector: poseDetection.PoseDetector;
   let startTensors: number;
 
@@ -56,11 +56,11 @@ describeWithFlags('Blazepose', ALL_ENVS, () => {
     startTensors = tf.memory().numTensors;
 
     // Note: this makes a network request for model assets.
-    const modelConfig: poseDetection.BlazeposeModelConfig = {
+    const modelConfig: poseDetection.BlazePoseModelConfig = {
       quantBytes: 4,
     };
     detector = await poseDetection.createDetector(
-        poseDetection.SupportedModels.MediapipeBlazepose, modelConfig);
+        poseDetection.SupportedModels.BlazePose, modelConfig);
   });
 
   it('estimatePoses does not leak memory', async () => {
@@ -79,7 +79,7 @@ describeWithFlags('Blazepose', ALL_ENVS, () => {
   });
 });
 
-describeWithFlags('Blazepose static image ', BROWSER_ENVS, () => {
+describeWithFlags('BlazePose static image ', BROWSER_ENVS, () => {
   let detector: poseDetection.PoseDetector;
   let image: HTMLImageElement;
   let timeout: number;
@@ -99,16 +99,16 @@ describeWithFlags('Blazepose static image ', BROWSER_ENVS, () => {
     const startTensors = tf.memory().numTensors;
 
     // Note: this makes a network request for model assets.
-    const modelConfig: poseDetection.BlazeposeModelConfig = {quantBytes: 4};
+    const modelConfig: poseDetection.BlazePoseModelConfig = {quantBytes: 4};
     detector = await poseDetection.createDetector(
-        poseDetection.SupportedModels.MediapipeBlazepose, modelConfig);
+        poseDetection.SupportedModels.BlazePose, modelConfig);
 
     const beforeTensors = tf.memory().numTensors;
 
     const result = await detector.estimatePoses(
         image,
         {maxPoses: 1, flipHorizontal: false, enableSmoothing: false} as
-            poseDetection.BlazeposeEstimationConfig);
+            poseDetection.BlazePoseEstimationConfig);
     const xy = result[0].keypoints.map((keypoint) => [keypoint.x, keypoint.y]);
     const expected = EXPECTED_LANDMARKS;
     expectArraysClose(xy, expected, EPSILON_IMAGE);
@@ -121,7 +121,7 @@ describeWithFlags('Blazepose static image ', BROWSER_ENVS, () => {
   });
 });
 
-describeWithFlags('Blazepose video ', BROWSER_ENVS, () => {
+describeWithFlags('BlazePose video ', BROWSER_ENVS, () => {
   let detector: poseDetection.PoseDetector;
   let timeout: number;
   let expected: number[][][];
@@ -142,8 +142,8 @@ describeWithFlags('Blazepose video ', BROWSER_ENVS, () => {
   it('test.', async () => {
     // Note: this makes a network request for model assets.
 
-    const modelConfig: poseDetection.BlazeposeModelConfig = {quantBytes: 4};
-    const model = poseDetection.SupportedModels.MediapipeBlazepose;
+    const modelConfig: poseDetection.BlazePoseModelConfig = {quantBytes: 4};
+    const model = poseDetection.SupportedModels.BlazePose;
     detector = await poseDetection.createDetector(model, modelConfig);
 
     const result: number[][][] = [];

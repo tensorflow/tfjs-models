@@ -15,4 +15,4 @@
  * =============================================================================
  */
 
-export {BlazeposeDetector} from './detector';
+export {BlazePoseDetector} from './detector';
