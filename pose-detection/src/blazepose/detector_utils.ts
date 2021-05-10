@@ -27,12 +27,12 @@ export function validateModelConfig(modelConfig: BlazePoseModelConfig):
     config.enableSmoothing = DEFAULT_BLAZEPOSE_MODEL_CONFIG.enableSmoothing;
   }
 
-  if (config.detectorModelUrl == null) {
-    config.detectorModelUrl = DEFAULT_BLAZEPOSE_MODEL_CONFIG.detectorModelUrl;
+  if (config.lite == null) {
+    config.lite = DEFAULT_BLAZEPOSE_MODEL_CONFIG.lite;
   }
 
-  if (config.lite == null) {
-    config.lite = false;
+  if (config.detectorModelUrl == null) {
+    config.detectorModelUrl = DEFAULT_BLAZEPOSE_MODEL_CONFIG.detectorModelUrl;
   }
 
   if (config.landmarkModelUrl == null) {
