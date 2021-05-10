@@ -16,10 +16,10 @@
  */
 
 import {DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL, DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG, DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL} from './constants';
-import {BlazeposeEstimationConfig, BlazeposeModelConfig} from './types';
+import {BlazePoseEstimationConfig, BlazePoseModelConfig} from './types';
 
-export function validateModelConfig(modelConfig: BlazeposeModelConfig):
-    BlazeposeModelConfig {
+export function validateModelConfig(modelConfig: BlazePoseModelConfig):
+    BlazePoseModelConfig {
   let config;
 
   if (modelConfig == null) {
@@ -44,7 +44,7 @@ export function validateModelConfig(modelConfig: BlazeposeModelConfig):
 }
 
 export function validateEstimationConfig(
-    estimationConfig: BlazeposeEstimationConfig): BlazeposeEstimationConfig {
+    estimationConfig: BlazePoseEstimationConfig): BlazePoseEstimationConfig {
   let config;
 
   if (estimationConfig == null) {

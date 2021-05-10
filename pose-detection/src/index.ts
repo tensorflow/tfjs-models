@@ -16,7 +16,7 @@
  */
 // Top level exports.
 // Entry point to create a new detector instance.
-export {BlazeposeEstimationConfig, BlazeposeModelConfig} from './blazepose/types';
+export {BlazePoseEstimationConfig, BlazePoseModelConfig} from './blazepose/types';
 export {createDetector} from './create_detector';
 export {MoveNetEstimationConfig, MoveNetModelConfig} from './movenet/types';
 // PoseDetector class.
