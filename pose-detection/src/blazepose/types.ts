@@ -29,11 +29,10 @@ import {EstimationConfig, ModelConfig} from '../types';
  * to the model hosted on GCP.
  */
 export interface BlazePoseModelConfig extends ModelConfig {
+  enableSmoothing?: boolean;
   lite?: boolean;
   detectorModelUrl?: string;
   landmarkModelUrl?: string;
 }
 
-export interface BlazePoseEstimationConfig extends EstimationConfig {
-  enableSmoothing?: boolean;
-}
+export interface BlazePoseEstimationConfig extends EstimationConfig {}
