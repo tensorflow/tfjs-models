@@ -46,6 +46,14 @@ const devConfig = {
       served: true,
       nocache: true
     },
+    {
+      // Serve MediaPipe wasm/binarypb/data as static resources.
+      pattern: './node_modules/@mediapipe/pose/**',
+      watched: true,
+      included: false,
+      served: true,
+      nocache: true
+    },
     'src/setup_test.ts',
     {pattern: 'src/**/*.ts'},
   ],
