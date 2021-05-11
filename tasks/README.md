@@ -65,7 +65,7 @@ The following table summarizes all the supported tasks and their models:
       <td>Custom model</td>
       <td>
         <div>
-          <span>TFLite</span>
+          <span><code>TFLite</code></span>
           <span>·</span>
           <a href="#">API doc</a>
           <span>·</span>
@@ -86,12 +86,12 @@ The following table summarizes all the supported tasks and their models:
       <td>COCO-SSD</td>
       <td>
         <div>
-          <span>TFJS</span>
+          <span><code>TFJS  </code></span>
           <span>·</span>
           <a href="#">API doc</a>
         </div>
         <div>
-          <span>TFLite</span>
+          <span><code>TFLite</code></span>
           <span>·</span>
           <a href="#">API doc</a>
         </div>
@@ -101,7 +101,7 @@ The following table summarizes all the supported tasks and their models:
       <td>Custom model</td>
       <td>
         <div>
-          <span>TFLite</span>
+          <span><code>TFLite</code></span>
           <span>·</span>
           <a href="#">API doc</a>
           <span>·</span>
