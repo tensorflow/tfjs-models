@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import {DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG, DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_FULL, DEFAULT_BLAZEPOSE_MODEL_CONFIG} from './constants';
+import {DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG, DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_FULL, DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_HEAVY, DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_LITE, DEFAULT_BLAZEPOSE_MODEL_CONFIG} from './constants';
 import {BlazePoseTfjsEstimationConfig, BlazePoseTfjsModelConfig} from './types';
 
 export function validateModelConfig(modelConfig: BlazePoseTfjsModelConfig):
@@ -28,8 +28,8 @@ export function validateModelConfig(modelConfig: BlazePoseTfjsModelConfig):
     config.enableSmoothing = DEFAULT_BLAZEPOSE_MODEL_CONFIG.enableSmoothing;
   }
 
-  if (config.lite == null) {
-    config.lite = DEFAULT_BLAZEPOSE_MODEL_CONFIG.lite;
+  if (config.modelType == null) {
+    config.modelType = DEFAULT_BLAZEPOSE_MODEL_CONFIG.modelType;
   }
 
   if (config.detectorModelUrl == null) {
@@ -37,7 +37,18 @@ export function validateModelConfig(modelConfig: BlazePoseTfjsModelConfig):
   }
 
   if (config.landmarkModelUrl == null) {
-    config.landmarkModelUrl = DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_FULL;
+    switch (config.modelType) {
+      case 'lite':
+        config.landmarkModelUrl = DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_LITE;
+        break;
+      case 'heavy':
+        config.landmarkModelUrl = DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_HEAVY;
+        break;
+      case 'full':
+      default:
+        config.landmarkModelUrl = DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_FULL;
+        break;
+    }
   }
 
   return config;

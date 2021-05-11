@@ -47,8 +47,23 @@ export class BlazePoseMediaPipeDetector extends BasePoseDetector {
         return `${base}/${path}`;
       }
     });
+    let modelComplexity: 0|1|2;
+    switch (config.modelType) {
+      case 'lite':
+        modelComplexity = 0;
+        break;
+      case 'full':
+        modelComplexity = 1;
+        break;
+      case 'heavy':
+        modelComplexity = 2;
+        break;
+      default:
+        modelComplexity = 1;
+        break;
+    }
     this.poseSolution.setOptions({
-      modelComplexity: config.lite ? 0 : 1,
+      modelComplexity,
       smoothLandmarks: config.enableSmoothing || true,
       selfieMode: this.selfieMode,
     });

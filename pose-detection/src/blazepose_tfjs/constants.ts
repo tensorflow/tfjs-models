@@ -15,10 +15,16 @@
  * =============================================================================
  */
 
+import {BlazePoseTfjsModelConfig} from './types';
+
 export const DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL =
     'https://storage.googleapis.com/tfjs-models/savedmodel/blazepose/detector/heatmap/model.json';
 export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_FULL =
     'https://storage.googleapis.com/tfjs-models/savedmodel/blazepose/landmark/full/model.json';
+export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_LITE =
+    'https://storage.googleapis.com/tfjs-models/savedmodel/blazepose/landmark/lite/model.json';
+export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_HEAVY =
+    'https://storage.googleapis.com/tfjs-models/savedmodel/blazepose/landmark/heavy/model.json';
 export const BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION = {
   reduceBoxesInLowestlayer: false,
   interpolatedScaleAspectRatio: 1.0,
@@ -35,9 +41,9 @@ export const BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION = {
   aspectRatios: [1.0],
   fixedAnchorSize: true
 };
-export const DEFAULT_BLAZEPOSE_MODEL_CONFIG = {
+export const DEFAULT_BLAZEPOSE_MODEL_CONFIG: BlazePoseTfjsModelConfig = {
   runtime: 'tfjs',
-  lite: false,
+  modelType: 'full',
   enableSmoothing: true,
   detectorModelUrl: DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL,
   landmarkModelUrl: DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_FULL
