@@ -40,7 +40,7 @@ export async function createDetector(
       return PosenetDetector.load(modelConfig as PosenetModelConfig);
     case SupportedModels.BlazePose:
       const config = modelConfig as BlazePoseModelConfig;
-      return config.runtime === 'tfjs' ?
+      return config != null && config.runtime === 'tfjs' ?
           BlazePoseTfjsDetector.load(modelConfig as BlazePoseTfjsModelConfig) :
           BlazePoseMediaPipeDetector.load(
               config as BlazePoseMediaPipeModelConfig);

@@ -18,7 +18,6 @@ import * as posedetection from '@tensorflow-models/pose-detection';
 import * as tf from '@tensorflow/tfjs-core';
 
 import * as params from './params';
-import {setBackendAndEnvFlags} from './util';
 
 /**
  * Records each flag's default value under the runtime environment and is a
@@ -76,6 +75,7 @@ export async function setupDatGui(urlParams) {
   modelController.onChange(_ => {
     params.STATE.isModelChanged = true;
     showModelConfigs(modelFolder);
+    showBackendConfigs(backendFolder);
   });
 
   showModelConfigs(modelFolder, type);
@@ -83,17 +83,33 @@ export async function setupDatGui(urlParams) {
   modelFolder.open();
 
   const backendFolder = gui.addFolder('Backend');
-  const backendController =
-      backendFolder.add(params.STATE, 'backend', ['webgl', 'wasm']);
-  backendController.onChange(async backend => {
-    params.STATE.isBackendChanged = true;
-    await showFlagSettings(backendFolder, backend);
-  });
-  await showFlagSettings(backendFolder, params.STATE.backend);
+
+  showBackendConfigs(backendFolder);
 
   backendFolder.open();
 
   return gui;
+}
+
+async function showBackendConfigs(folderController) {
+  // Clean up backend configs for the previous model.
+  const fixedSelectionCount = 0;
+  while (folderController.__controllers.length > fixedSelectionCount) {
+    folderController.remove(
+        folderController
+            .__controllers[folderController.__controllers.length - 1]);
+  }
+  const backends = params.MODEL_BACKEND_MAP[params.STATE.model];
+  // The first element of the array is the default backend for the model.
+  params.STATE.backend = backends[0];
+  const backendController =
+      folderController.add(params.STATE, 'backend', backends);
+  backendController.name('runtime-backend');
+  backendController.onChange(async backend => {
+    params.STATE.isBackendChanged = true;
+    await showFlagSettings(folderController, backend);
+  });
+  await showFlagSettings(folderController, params.STATE.backend);
 }
 
 function showModelConfigs(folderController, type) {

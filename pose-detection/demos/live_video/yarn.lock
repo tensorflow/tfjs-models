@@ -917,6 +917,11 @@
   resolved "https://registry.npmjs.org/@iarna/toml/-/toml-2.2.5.tgz#b32366c89b43c6f8cefbdefac778b9c828e3ba8c"
   integrity sha512-trnsAYxU3xnS1gPHPyU961coFyLkh4gAD/0zQ5mymY4yOZ+CYvsPqUbOFSw0aDM4y0tV7tiFxL/1XfXPNC6IPg==
 
+"@mediapipe/pose@0.3.x":
+  version "0.3.1620676110"
+  resolved "https://registry.npmjs.org/@mediapipe/pose/-/pose-0.3.1620676110.tgz#35d522196db581e213259fbc42290a577bd239ed"
+  integrity sha512-macv7l2fuaqLArYvUSuoUrxoOVut4KEFHEqPU0i6SLpfohJFhBRgpJXiy8w+KTWkdh0e7cTLkPTESiV2+u9tNA==
+
 "@mrmlnc/readdir-enhanced@^2.2.1":
   version "2.2.1"
   resolved "https://registry.npmjs.org/@mrmlnc/readdir-enhanced/-/readdir-enhanced-2.2.1.tgz#524af240d1a360527b730475ecfa1344aa540dde"

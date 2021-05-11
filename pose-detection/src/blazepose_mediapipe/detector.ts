@@ -18,6 +18,7 @@ import * as pose from '@mediapipe/pose';
 
 import {BasePoseDetector, PoseDetector} from '../pose_detector';
 import {Pose, PoseDetectorInput} from '../types';
+import {validateModelConfig} from './detector_utils';
 
 import {BlazePoseMediaPipeEstimationConfig, BlazePoseMediaPipeModelConfig} from './types';
 
@@ -92,8 +93,9 @@ export class BlazePoseMediaPipeDetector extends BasePoseDetector {
    * the BlazePose loading process. Please find more details of each parameters
    * in the documentation of the `BlazePoseMediaPipeModelConfig` interface.
    */
-  static async load(config: BlazePoseMediaPipeModelConfig):
+  static async load(modelConfig: BlazePoseMediaPipeModelConfig):
       Promise<PoseDetector> {
+    const config = validateModelConfig(modelConfig);
     return new BlazePoseMediaPipeDetector(config);
   }
 
