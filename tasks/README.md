@@ -70,6 +70,8 @@ The following table summarizes all the supported tasks and their models:
           <a href="#">API doc</a>
           <span>·</span>
           <a href="https://www.tensorflow.org/lite/inference_with_metadata/task_library/image_classifier#model_compatibility_requirements">Model requirements</a>
+          <span>·</span>
+          <a href="https://tfhub.dev/tensorflow/collections/lite/task-library/image-classifier/1">Model collection</a>
         </div>
       </td>
     </tr>
@@ -106,6 +108,45 @@ The following table summarizes all the supported tasks and their models:
           <a href="#">API doc</a>
           <span>·</span>
           <a href="https://www.tensorflow.org/lite/inference_with_metadata/task_library/object_detector#model_compatibility_requirements">Model requirements</a>
+          <span>·</span>
+          <a href="https://tfhub.dev/tensorflow/collections/lite/task-library/object-detector/1">Model collection</a>
+        </div>
+      </td>
+    </tr>
+    <!-- Image Segmentation -->
+    <tr>
+      <td rowspan="2">
+        <b>Image Segmentation</b>
+        <br>
+        Predict associated class for each pixel of an image.
+        <br>
+        <a href="https://codepen.io/jinjingforever/pen/yLMYVJw">Demo</a>
+      </td>
+      <td>Deeplab</td>
+      <td>
+        <div>
+          <span><code>TFJS  </code></span>
+          <span>·</span>
+          <a href="#">API doc</a>
+        </div>
+        <div>
+          <span><code>TFLite</code></span>
+          <span>·</span>
+          <a href="#">API doc</a>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>Custom model</td>
+      <td>
+        <div>
+          <span><code>TFLite</code></span>
+          <span>·</span>
+          <a href="#">API doc</a>
+          <span>·</span>
+          <a href="https://www.tensorflow.org/lite/inference_with_metadata/task_library/image_segmenter#model_compatibility_requirements">Model requirements</a>
+          <span>·</span>
+          <a href="https://tfhub.dev/tensorflow/collections/lite/task-library/image-segmenter/1">Model collection</a>
         </div>
       </td>
     </tr>
