@@ -36,6 +36,7 @@ export const BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION = {
   fixedAnchorSize: true
 };
 export const DEFAULT_BLAZEPOSE_MODEL_CONFIG = {
+  runtime: 'tfjs',
   lite: false,
   enableSmoothing: true,
   detectorModelUrl: DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL,

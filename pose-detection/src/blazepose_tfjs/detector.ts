@@ -46,7 +46,7 @@ import {transformNormalizedRect} from './calculators/transform_rect';
 import {LowPassVisibilityFilter} from './calculators/visibility_smoothing';
 import * as constants from './constants';
 import {validateEstimationConfig, validateModelConfig} from './detector_utils';
-import {BlazePoseEstimationConfig, BlazePoseModelConfig} from './types';
+import {BlazePoseTfjsEstimationConfig, BlazePoseTfjsModelConfig} from './types';
 
 type PoseLandmarksByRoiResult = {
   actualLandmarks: Keypoint[],
@@ -57,7 +57,7 @@ type PoseLandmarksByRoiResult = {
 /**
  * BlazePose detector class.
  */
-export class BlazePoseDetector extends BasePoseDetector {
+export class BlazePoseTfjsDetector extends BasePoseDetector {
   private readonly anchors: Rect[];
   private readonly anchorTensor: AnchorTensor;
 
@@ -89,14 +89,15 @@ export class BlazePoseDetector extends BasePoseDetector {
 
   /**
    * Loads the BlazePose model. The model to be loaded is configurable using the
-   * config dictionary `BlazePoseModelConfig`. Please find more details in the
-   * documentation of the `BlazePoseModelConfig`.
+   * config dictionary `BlazePoseTfjsModelConfig`. Please find more details in
+   * the documentation of the `BlazePoseTfjsModelConfig`.
    *
    * @param modelConfig ModelConfig dictionary that contains parameters for
    * the BlazePose loading process. Please find more details of each parameters
-   * in the documentation of the `BlazePoseModelConfig` interface.
+   * in the documentation of the `BlazePoseTfjsModelConfig` interface.
    */
-  static async load(modelConfig: BlazePoseModelConfig): Promise<PoseDetector> {
+  static async load(modelConfig: BlazePoseTfjsModelConfig):
+      Promise<PoseDetector> {
     const config = validateModelConfig(modelConfig);
 
     const [detectorModel, landmarkModel] = await Promise.all([
@@ -104,7 +105,7 @@ export class BlazePoseDetector extends BasePoseDetector {
       tfconv.loadGraphModel(config.landmarkModelUrl)
     ]);
 
-    return new BlazePoseDetector(
+    return new BlazePoseTfjsDetector(
         detectorModel, landmarkModel, config.enableSmoothing);
   }
 
@@ -137,7 +138,7 @@ export class BlazePoseDetector extends BasePoseDetector {
   // ref graph:
   // https://github.com/google/mediapipe/blob/master/mediapipe/modules/pose_landmark/pose_landmark_cpu.pbtxt
   async estimatePoses(
-      image: PoseDetectorInput, estimationConfig: BlazePoseEstimationConfig,
+      image: PoseDetectorInput, estimationConfig: BlazePoseTfjsEstimationConfig,
       timestamp?: number): Promise<Pose[]> {
     const config = validateEstimationConfig(estimationConfig);
 

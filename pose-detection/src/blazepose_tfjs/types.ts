@@ -15,10 +15,10 @@
  * =============================================================================
  */
 
-import {EstimationConfig, ModelConfig} from '../types';
+import {BlazePoseEstimationConfig, BlazePoseModelConfig} from '../blazepose_mediapipe/types';
 
 /**
- * Additional BlazePose model loading config.
+ * Additional model parameters for BlazePose Tfjs backend
  *
  * `detectorModelUrl`: Optional. An optional string that specifies custom url of
  * the detector model. This is useful for area/countries that don't have access
@@ -28,11 +28,11 @@ import {EstimationConfig, ModelConfig} from '../types';
  * the landmark model. This is useful for area/countries that don't have access
  * to the model hosted on GCP.
  */
-export interface BlazePoseModelConfig extends ModelConfig {
-  enableSmoothing?: boolean;
-  lite?: boolean;
+export interface BlazePoseTfjsModelConfig extends BlazePoseModelConfig {
+  runtime: 'tfjs';
   detectorModelUrl?: string;
   landmarkModelUrl?: string;
 }
 
-export interface BlazePoseEstimationConfig extends EstimationConfig {}
+export interface BlazePoseTfjsEstimationConfig extends
+    BlazePoseEstimationConfig {}
