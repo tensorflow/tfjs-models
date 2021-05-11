@@ -20,6 +20,12 @@ import {Runtime, Task} from './common';
 import {imageClassificationCustomModelTfliteLoader} from './image_classification/custom_model_tflite';
 import {mobilenetTfjsLoader} from './image_classification/mobilenet_tfjs';
 import {mobilenetTfliteLoader} from './image_classification/mobilenet_tflite';
+import {imageSegmenterCustomModelTfliteLoader} from './image_segmentation/custom_model_tflite';
+import {deeplabTfjsLoader} from './image_segmentation/deeplab_tfjs';
+import {deeplabTfliteLoader} from './image_segmentation/deeplab_tflite';
+import {cocoSsdTfjsLoader} from './object_detection/cocossd_tfjs';
+import {cocoSsdTfliteLoader} from './object_detection/cocossd_tflite';
+import {objectDetectorCustomModelTfliteLoader} from './object_detection/custom_model_tflite';
 
 /**
  * The main model index.
@@ -48,11 +54,31 @@ const modelIndex = {
       [Runtime.TFLITE]: imageClassificationCustomModelTfliteLoader,
     },
   },
+  [Task.OBJECT_DETECTION]: {
+    CocoSsd: {
+      [Runtime.TFJS]: cocoSsdTfjsLoader,
+      [Runtime.TFLITE]: cocoSsdTfliteLoader,
+    },
+    CustomModel: {
+      [Runtime.TFLITE]: objectDetectorCustomModelTfliteLoader,
+    },
+  },
+  [Task.IMAGE_SEGMENTATION]: {
+    Deeplab: {
+      [Runtime.TFJS]: deeplabTfjsLoader,
+      [Runtime.TFLITE]: deeplabTfliteLoader,
+    },
+    CustomModel: {
+      [Runtime.TFLITE]: imageSegmenterCustomModelTfliteLoader,
+    },
+  },
 };
 
 // Export each task individually.
 
 export const ImageClassification = modelIndex[Task.IMAGE_CLASSIFICATION];
+export const ObjectDetection = modelIndex[Task.OBJECT_DETECTION];
+export const ImageSegmentation = modelIndex[Task.IMAGE_SEGMENTATION];
 
 /**
  * Filter model loaders by runtimes.

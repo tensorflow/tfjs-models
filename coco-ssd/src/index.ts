@@ -24,6 +24,7 @@ const BASE_PATH = 'https://storage.googleapis.com/tfjs-models/savedmodel/';
 
 export {version} from './version';
 
+/** @docinline */
 export type ObjectDetectionBaseModel =
     'mobilenet_v1'|'mobilenet_v2'|'lite_mobilenet_v2';
 
@@ -45,6 +46,11 @@ export interface DetectedObject {
  * GCP.
  */
 export interface ModelConfig {
+  /**
+   * It determines wich PoseNet architecture to load. The supported
+   * architectures are: 'mobilenet_v1', 'mobilenet_v2' and 'lite_mobilenet_v2'.
+   * It is default to 'lite_mobilenet_v2'.
+   */
   base?: ObjectDetectionBaseModel;
   modelUrl?: string;
 }

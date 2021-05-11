@@ -9,7 +9,7 @@ for JS developers without ML knowledge. It has the following features:
 - **Easy-to-discover models**
 
   Models from different runtime systems (e.g. [TFJS][tfjs], [TFLite][tflite],
-  [MediaPipe][mediapipe], etc) are grouped by popular ML tasks, such as.
+  [MediaPipe][mediapipe], etc) are grouped by popular ML tasks, such as
   sentiment detection, image classification, pose detection, etc.
 
 - **Clean and powerful APIs**
@@ -28,7 +28,39 @@ for JS developers without ML knowledge. It has the following features:
 
 The following table summarizes all the supported tasks and their models:
 
-(TODO)
+<table>
+  <thead>
+    <tr>
+      <th>Task</th>
+      <th>Model</th>
+      <th>Supported runtimes & APIs</th>
+      <th>Demo</th>
+    </tr>
+  </thead>
+    <tr>
+      <td>Image Classification</td>
+      <td>Mobilenet</td>
+      <td>
+        <div style="display: flex">
+          <div style="margin-right: 10px">
+            <div>TFJS</div>
+            <a style="font-size: 11px">API doc</a>
+          </div>
+          <div style="margin-right: 10px">
+            <div>TFLite</div>
+            <a style="font-size: 11px">API doc</a>
+          </div>
+        </div>
+      </td>
+      <td>
+        <a href="https://codepen.io/jinjingforever/pen/VwPOePq" target="_blank">
+          Codepen
+        </a>
+      </td>
+    </tr>
+  <tbody>
+  <tbody>
+</table>
 
 (The initial version only supports the web browser environment. NodeJS support is
 coming soon)
@@ -78,7 +110,7 @@ const model3 = await tfTask.ImageClassification.CustomModel.TFLite.load({
 Since all these models are for the `Image Classification` task, they will have
 the same task model type: [`ImageClassifier`][image classifier interface] in
 this case. Each task model's `predict` inference method has an unique and
-easy-to-use API interface. For example, in `ImageClassiier`, the method takes an
+easy-to-use API interface. For example, in `ImageClassifier`, the method takes an
 image-like element and returns the predicted classes:
 
 ```js
