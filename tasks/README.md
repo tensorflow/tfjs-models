@@ -34,18 +34,21 @@ The following table summarizes all the supported tasks and their models:
       <th>Task</th>
       <th>Model</th>
       <th>Supported runtimes & APIs</th>
-      <th>Demo</th>
     </tr>
   </thead>
   <tbody>
+    <!-- Image classification -->
     <tr>
       <td rowspan="2">
         <b>Image Classification</b>
-        <p>
-        Classify images with labels
+        <br>
+        Classify images with labels.
+        <br>
+        <br>
+        <a href="https://codepen.io/jinjingforever/pen/VwPOePq">Demo</a>
       </td>
       <td>Mobilenet</td>
-      <td class="runtimes">
+      <td>
         <div>
           <span>TFJS</span>
           <span>·</span>
@@ -57,21 +60,52 @@ The following table summarizes all the supported tasks and their models:
           <a href="#">API doc</a>
         </div>
       </td>
-      <td rowspan="2">
-        <a href="https://codepen.io/jinjingforever/pen/VwPOePq">
-          Codepen
-        </a>
-      </td>
     </tr>
     <tr>
       <td>Custom model</td>
-      <td class="runtimes">
+      <td>
         <div>
           <span>TFLite</span>
           <span>·</span>
           <a href="#">API doc</a>
           <span>·</span>
           <a href="https://www.tensorflow.org/lite/inference_with_metadata/task_library/image_classifier#model_compatibility_requirements">Model requirements</a>
+        </div>
+      </td>
+    </tr>
+    <!-- Object detection -->
+    <tr>
+      <td rowspan="2">
+        <b>Object Detection</b>
+        <br>
+        Localize and identify multiple objects in a single image.
+        <br>
+        <br>
+        <a href="https://codepen.io/jinjingforever/pen/PopPPXo">Demo</a>
+      </td>
+      <td>COCO-SSD</td>
+      <td>
+        <div>
+          <span>TFJS</span>
+          <span>·</span>
+          <a href="#">API doc</a>
+        </div>
+        <div>
+          <span>TFLite</span>
+          <span>·</span>
+          <a href="#">API doc</a>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>Custom model</td>
+      <td>
+        <div>
+          <span>TFLite</span>
+          <span>·</span>
+          <a href="#">API doc</a>
+          <span>·</span>
+          <a href="https://www.tensorflow.org/lite/inference_with_metadata/task_library/object_detector#model_compatibility_requirements">Model requirements</a>
         </div>
       </td>
     </tr>
