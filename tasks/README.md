@@ -39,27 +39,40 @@ The following table summarizes all the supported tasks and their models:
   </thead>
   <tbody>
     <tr>
-      <td>
+      <td rowspan="2">
         <b>Image Classification</b>
-        ```diff
-        # Classify images with labels
-        ```
+        <p>
+        Classify images with labels
       </td>
       <td>Mobilenet</td>
       <td class="runtimes">
         <div>
           <span>TFJS</span>
-          <a>API doc</a>
+          <span>·</span>
+          <a href="#">API doc</a>
         </div>
         <div>
           <span>TFLite</span>
-          <a>API doc</a>
+          <span>·</span>
+          <a href="#">API doc</a>
         </div>
       </td>
-      <td>
-        <a href="https://codepen.io/jinjingforever/pen/VwPOePq" target="_blank">
+      <td rowspan="2">
+        <a href="https://codepen.io/jinjingforever/pen/VwPOePq">
           Codepen
         </a>
+      </td>
+    </tr>
+    <tr>
+      <td>Custom model</td>
+      <td class="runtimes">
+        <div>
+          <span>TFLite</span>
+          <span>·</span>
+          <a href="#">API doc</a>
+          <span>·</span>
+          <a href="https://www.tensorflow.org/lite/inference_with_metadata/task_library/image_classifier#model_compatibility_requirements">Model requirements</a>
+        </div>
       </td>
     </tr>
   </tbody>
