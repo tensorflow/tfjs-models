@@ -28,39 +28,8 @@ for JS developers without ML knowledge. It has the following features:
 
 The following table summarizes all the supported tasks and their models:
 
-<table>
-  <thead>
-    <tr>
-      <th>Task</th>
-      <th>Model</th>
-      <th>Supported runtimes & APIs</th>
-      <th>Demo</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Image Classification</td>
-      <td>Mobilenet</td>
-      <td>
-        <div style="display:flex;">
-          <div style="margin-right:10px;">
-            <div>TFJS</div>
-            <a style="font-size:11px;">API doc</a>
-          </div>
-          <div style="margin-right: 10px;">
-            <div>TFLite</div>
-            <a style="font-size: 11px;">API doc</a>
-          </div>
-        </div>
-      </td>
-      <td>
-        <a href="https://codepen.io/jinjingforever/pen/VwPOePq" target="_blank">
-          Codepen
-        </a>
-      </td>
-    </tr>
-  <tbody>
-</table>
+<img src="model-table.svg">
+
 
 (The initial version only supports the web browser environment. NodeJS support is
 coming soon)
