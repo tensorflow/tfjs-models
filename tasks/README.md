@@ -33,7 +33,7 @@ The following table summarizes all the supported tasks and their models:
     <tr>
       <th>Task</th>
       <th>Model</th>
-      <th>Supported runtimes & API docs</th>
+      <th>Supported runtimes · Docs · Resources</th>
     </tr>
   </thead>
   <tbody>
@@ -42,7 +42,7 @@ The following table summarizes all the supported tasks and their models:
       <td rowspan="2">
         <b>Image Classification</b>
         <br>
-        Classify images with labels.
+        Identify images into predefined classes.
         <br>
         <br>
         <a href="https://codepen.io/jinjingforever/pen/VwPOePq">Demo</a>
@@ -119,6 +119,7 @@ The following table summarizes all the supported tasks and their models:
         <b>Image Segmentation</b>
         <br>
         Predict associated class for each pixel of an image.
+        <br>
         <br>
         <a href="https://codepen.io/jinjingforever/pen/yLMYVJw">Demo</a>
       </td>
