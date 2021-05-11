@@ -17,6 +17,8 @@
 
 import {EstimationConfig, ModelConfig} from '../types';
 
+export type BlazePoseModelType = 'lite'|'full'|'heavy';
+
 /**
  * Common BlazePose model config.
  */
@@ -24,7 +26,7 @@ export interface BlazePoseModelConfig extends ModelConfig {
   // Defaults to 'mediapipe' if not provided.
   runtime?: 'mediapipe'|'tfjs';
   enableSmoothing?: boolean;
-  lite?: boolean;
+  modelType?: BlazePoseModelType;
 }
 
 export interface BlazePoseEstimationConfig extends EstimationConfig {}

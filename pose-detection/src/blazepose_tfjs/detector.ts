@@ -17,6 +17,7 @@
 
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
+import {BlazePoseModelType} from '../blazepose_mediapipe/types';
 
 import {SECOND_TO_MICRO_SECONDS} from '../calculators/constants';
 import {convertImageToTensor} from '../calculators/convert_image_to_tensor';
@@ -75,7 +76,8 @@ export class BlazePoseTfjsDetector extends BasePoseDetector {
   private constructor(
       private readonly detectorModel: tfconv.GraphModel,
       private readonly landmarkModel: tfconv.GraphModel,
-      private readonly enableSmoothing: boolean) {
+      private readonly enableSmoothing: boolean,
+      private readonly modelType: BlazePoseModelType) {
     super();
 
     this.anchors =
@@ -106,7 +108,7 @@ export class BlazePoseTfjsDetector extends BasePoseDetector {
     ]);
 
     return new BlazePoseTfjsDetector(
-        detectorModel, landmarkModel, config.enableSmoothing);
+        detectorModel, landmarkModel, config.enableSmoothing, config.modelType);
   }
 
   /**
@@ -326,14 +328,42 @@ export class BlazePoseTfjsDetector extends BasePoseDetector {
     // score.
     // Output [2]: This tensor (shape: [1, 64, 64, 39]) represents heatmap for
     // the 39 landmarks.
+    // Lite model:
+    // Output[1]: This tensor (shape: [1, 195]) represents 39 5-d keypoints.
+    // Output[2]: This tensor (shape: [1, 1]) represents the confidence score.
+    // Output[4]: This tensor (shape: [1, 64, 64, 39]) represents heatmap for
+    // the 39 landmarks.
+    // Heavy model:
+    // Output[3]: This tensor (shape: [1, 195]) represents 39 5-d keypoints.
+    // Output[2]: This tensor (shape: [1, 1]) represents the confidence score.
+    // Output[4]: This tensor (shape: [1, 64, 64, 39]) represents heatmap for
+    // the 39 landmarks.
     const landmarkResult =
         this.landmarkModel.predict(imageValueShifted) as tf.Tensor[];
 
     let landmarkTensor, poseFlagTensor, heatmapTensor;
 
-    landmarkTensor = landmarkResult[3] as tf.Tensor2D;
-    poseFlagTensor = landmarkResult[0] as tf.Tensor2D;
-    heatmapTensor = landmarkResult[2] as tf.Tensor4D;
+    switch (this.modelType) {
+      case 'lite':
+        landmarkTensor = landmarkResult[1] as tf.Tensor2D;
+        poseFlagTensor = landmarkResult[2] as tf.Tensor2D;
+        heatmapTensor = landmarkResult[4] as tf.Tensor4D;
+        break;
+      case 'full':
+        landmarkTensor = landmarkResult[3] as tf.Tensor2D;
+        poseFlagTensor = landmarkResult[0] as tf.Tensor2D;
+        heatmapTensor = landmarkResult[2] as tf.Tensor4D;
+        break;
+      case 'heavy':
+        landmarkTensor = landmarkResult[3] as tf.Tensor2D;
+        poseFlagTensor = landmarkResult[2] as tf.Tensor2D;
+        heatmapTensor = landmarkResult[4] as tf.Tensor4D;
+        break;
+      default:
+        throw new Error(
+            'Model type must be one of lite, full or heavy,' +
+            `but got ${this.modelType}`);
+    }
 
     // Converts the pose-flag tensor into a float that represents the
     // confidence score of pose presence.
