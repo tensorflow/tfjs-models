@@ -50,7 +50,7 @@ The following table summarizes all the supported tasks and their models:
       <td>Mobilenet</td>
       <td>
         <div>
-          <span><code>TFJS  </code></span>
+          <span><code>TFJS  </code></span>
           <span>·</span>
           <a href="#">API doc</a>
         </div>
