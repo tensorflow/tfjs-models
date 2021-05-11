@@ -33,7 +33,7 @@ The following table summarizes all the supported tasks and their models:
     <tr>
       <th>Task</th>
       <th>Model</th>
-      <th>Supported runtimes & APIs</th>
+      <th>Supported runtimes & API docs</th>
     </tr>
   </thead>
   <tbody>
@@ -50,12 +50,12 @@ The following table summarizes all the supported tasks and their models:
       <td>Mobilenet</td>
       <td>
         <div>
-          <span>TFJS</span>
+          <span><code>TFJS  </code></span>
           <span>·</span>
           <a href="#">API doc</a>
         </div>
         <div>
-          <span>TFLite</span>
+          <span><code>TFLite</code></span>
           <span>·</span>
           <a href="#">API doc</a>
         </div>
