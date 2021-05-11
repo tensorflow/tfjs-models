@@ -62,7 +62,7 @@ The following table summarizes all the supported tasks and their models:
         </a>
       </td>
     </tr>
-  <tbody>
+  </tbody>
 </table>
 
 (The initial version only supports the web browser environment. NodeJS support is
