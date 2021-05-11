@@ -41,10 +41,10 @@ The following table summarizes all the supported tasks and their models:
       <td>Image Classification</td>
       <td>Mobilenet</td>
       <td>
-        <div style="display: flex;">
-          <div style="margin-right: 10px;">
+        <div style="display: inline;">
+          <div style="margin-right:10px;">
             <div>TFJS</div>
-            <a style="font-size: 11px;">API doc</a>
+            <a style="font-size:11px;">API doc</a>
           </div>
           <div style="margin-right: 10px;">
             <div>TFLite</div>
