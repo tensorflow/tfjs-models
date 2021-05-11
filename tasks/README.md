@@ -37,11 +37,12 @@ The following table summarizes all the supported tasks and their models:
       <th>Demo</th>
     </tr>
   </thead>
+  <tbody>
     <tr>
       <td>Image Classification</td>
       <td>Mobilenet</td>
       <td>
-        <div style="display: inline;">
+        <div style="display:flex;">
           <div style="margin-right:10px;">
             <div>TFJS</div>
             <a style="font-size:11px;">API doc</a>
@@ -58,7 +59,6 @@ The following table summarizes all the supported tasks and their models:
         </a>
       </td>
     </tr>
-  <tbody>
   <tbody>
 </table>
 
