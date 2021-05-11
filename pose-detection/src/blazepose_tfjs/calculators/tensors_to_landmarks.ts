@@ -15,8 +15,11 @@
  * =============================================================================
  */
 import * as tf from '@tensorflow/tfjs-core';
+
+import {sigmoid} from '../../calculators/sigmoid';
 import {Keypoint} from '../../types';
-import {TensorsToLandmarksCalculatorConfig} from './interfaces/config_interfaces';
+
+import {TensorsToLandmarksConfig} from './interfaces/config_interfaces';
 
 /**
  * A calculator for converting Tensors from regression models into landmarks.
@@ -36,7 +39,7 @@ import {TensorsToLandmarksCalculatorConfig} from './interfaces/config_interfaces
  * @returns Normalized landmarks.
  */
 export async function tensorsToLandmarks(
-    landmarkTensor: tf.Tensor2D, config: TensorsToLandmarksCalculatorConfig,
+    landmarkTensor: tf.Tensor2D, config: TensorsToLandmarksConfig,
     flipHorizontally = false, flipVertically = false) {
   const numValues = landmarkTensor.size;
   const numDimensions = numValues / config.numLandmarks;
@@ -63,7 +66,7 @@ export async function tensorsToLandmarks(
       landmark.z = rawLandmarks[offset + 2];
     }
     if (numDimensions > 3) {
-      landmark.score = applyActivation(rawLandmarks[offset + 3]);
+      landmark.score = sigmoid(rawLandmarks[offset + 3]);
     }
     // presence is in rawLandmarks[offset + 4], we don't expose it.
 
@@ -79,9 +82,4 @@ export async function tensorsToLandmarks(
   }
 
   return outputLandmarks;
-}
-
-function applyActivation(value: number) {
-  // Sigmoid.
-  return 1 / (1 + Math.exp(-value));
 }

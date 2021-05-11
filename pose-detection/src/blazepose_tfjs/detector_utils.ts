@@ -15,36 +15,37 @@
  * =============================================================================
  */
 
-import {DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL, DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG, DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL} from './constants';
-import {BlazeposeEstimationConfig, BlazeposeModelConfig} from './types';
+import {DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG, DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_FULL, DEFAULT_BLAZEPOSE_MODEL_CONFIG} from './constants';
+import {BlazePoseTfjsEstimationConfig, BlazePoseTfjsModelConfig} from './types';
 
-export function validateModelConfig(modelConfig: BlazeposeModelConfig):
-    BlazeposeModelConfig {
-  let config;
+export function validateModelConfig(modelConfig: BlazePoseTfjsModelConfig):
+    BlazePoseTfjsModelConfig {
+  const config: BlazePoseTfjsModelConfig = modelConfig == null ?
+      {...DEFAULT_BLAZEPOSE_MODEL_CONFIG} as BlazePoseTfjsModelConfig :
+      {...modelConfig};
 
-  if (modelConfig == null) {
-    config = {};
-  } else {
-    config = {...modelConfig};
+  if (config.enableSmoothing == null) {
+    config.enableSmoothing = DEFAULT_BLAZEPOSE_MODEL_CONFIG.enableSmoothing;
   }
 
-  if (config.quantBytes == null) {
-    config.quantBytes = 4;
+  if (config.lite == null) {
+    config.lite = DEFAULT_BLAZEPOSE_MODEL_CONFIG.lite;
   }
 
   if (config.detectorModelUrl == null) {
-    config.detectorModelUrl = DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL;
+    config.detectorModelUrl = DEFAULT_BLAZEPOSE_MODEL_CONFIG.detectorModelUrl;
   }
 
   if (config.landmarkModelUrl == null) {
-    config.landmarkModelUrl = DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL;
+    config.landmarkModelUrl = DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_FULL;
   }
 
   return config;
 }
 
 export function validateEstimationConfig(
-    estimationConfig: BlazeposeEstimationConfig): BlazeposeEstimationConfig {
+    estimationConfig: BlazePoseTfjsEstimationConfig):
+    BlazePoseTfjsEstimationConfig {
   let config;
 
   if (estimationConfig == null) {
@@ -65,10 +66,6 @@ export function validateEstimationConfig(
     throw new Error(
         'Multi-pose detection is not implemented yet. Please set maxPoses ' +
         'to 1.');
-  }
-
-  if (config.enableSmoothing == null) {
-    config.enableSmoothing = true;
   }
 
   return config;

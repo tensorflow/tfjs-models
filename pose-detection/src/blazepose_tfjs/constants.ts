@@ -16,40 +16,42 @@
  */
 
 export const DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL =
-    'https://storage.googleapis.com/tfjs-models/savedmodel/blazepose/detector/model.json';
-export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL =
-    'https://storage.googleapis.com/tfjs-models/savedmodel/blazepose/landmark/fullbody/model.json';
+    'https://storage.googleapis.com/tfjs-models/savedmodel/blazepose/detector/heatmap/model.json';
+export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_FULL =
+    'https://storage.googleapis.com/tfjs-models/savedmodel/blazepose/landmark/full/model.json';
 export const BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION = {
   reduceBoxesInLowestlayer: false,
   interpolatedScaleAspectRatio: 1.0,
   featureMapHeight: [] as number[],
   featureMapWidth: [] as number[],
-  numLayers: 4,
+  numLayers: 5,
   minScale: 0.1484375,
   maxScale: 0.75,
-  inputSizeHeight: 128,
-  inputSizeWidth: 128,
+  inputSizeHeight: 224,
+  inputSizeWidth: 224,
   anchorOffsetX: 0.5,
   anchorOffsetY: 0.5,
-  strides: [8, 16, 16, 16],
+  strides: [8, 16, 32, 32, 32],
   aspectRatios: [1.0],
   fixedAnchorSize: true
 };
+export const DEFAULT_BLAZEPOSE_MODEL_CONFIG = {
+  runtime: 'tfjs',
+  lite: false,
+  enableSmoothing: true,
+  detectorModelUrl: DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL,
+  landmarkModelUrl: DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_FULL
+};
 export const DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG = {
   maxPoses: 1,
-  flipHorizontal: false,
-  enableSmoothing: true
-};
-export const BLAZEPOSE_DETECTION_MODEL_INPUT_RESOLUTION = {
-  width: 128,
-  height: 128
+  flipHorizontal: false
 };
 export const BLAZEPOSE_TENSORS_TO_DETECTION_CONFIGURATION = {
   applyExponentialOnBoxSize: false,
   flipVertically: false,
   ignoreClasses: [] as number[],
   numClasses: 1,
-  numBoxes: 896,
+  numBoxes: 2254,
   numCoords: 12,
   boxCoordOffset: 0,
   keypointCoordOffset: 4,
@@ -58,10 +60,10 @@ export const BLAZEPOSE_TENSORS_TO_DETECTION_CONFIGURATION = {
   sigmoidScore: true,
   scoreClippingThresh: 100.0,
   reverseOutputOrder: true,
-  xScale: 128.0,
-  yScale: 128.0,
-  hScale: 128.0,
-  wScale: 128.0,
+  xScale: 224.0,
+  yScale: 224.0,
+  hScale: 224.0,
+  wScale: 224.0,
   minScoreThresh: 0.5
 };
 export const BLAZEPOSE_DETECTOR_NON_MAX_SUPPRESSION_CONFIGURATION = {
@@ -71,12 +73,12 @@ export const BLAZEPOSE_DETECTOR_NON_MAX_SUPPRESSION_CONFIGURATION = {
 export const BLAZEPOSE_DETECTOR_RECT_TRANSFORMATION_CONFIG = {
   shiftX: 0,
   shiftY: 0,
-  scaleX: 1.5,
-  scaleY: 1.5,
+  scaleX: 1.25,
+  scaleY: 1.25,
   squareLong: true
 };
 export const BLAZEPOSE_DETECTOR_IMAGE_TO_TENSOR_CONFIG = {
-  inputResolution: {width: 128, height: 128},
+  inputResolution: {width: 224, height: 224},
   keepAspectRatio: true
 };
 export const BLAZEPOSE_LANDMARK_IMAGE_TO_TENSOR_CONFIG = {
@@ -88,6 +90,10 @@ export const BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG = {
   numLandmarks: 39,
   inputImageWidth: 256,
   inputImageHeight: 256
+};
+export const BLAZEPOSE_REFINE_LANDMARKS_FROM_HEATMAP_CONFIG = {
+  kernelSize: 7,
+  minConfidenceToRefine: 0.5
 };
 export const BLAZEPOSE_NUM_KEYPOINTS = 33;
 export const BLAZEPOSE_NUM_AUXILIARY_KEYPOINTS = 35;

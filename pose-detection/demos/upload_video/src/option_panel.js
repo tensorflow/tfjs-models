@@ -50,7 +50,7 @@ export async function setupDatGui(urlParams) {
       }
       break;
     case 'blazepose':
-      params.STATE.model = posedetection.SupportedModels.MediapipeBlazepose;
+      params.STATE.model = posedetection.SupportedModels.BlazePose;
       break;
     default:
       alert(`${urlParams.get('model')}`);
@@ -101,7 +101,7 @@ function showModelConfigs(folderController, type) {
     case posedetection.SupportedModels.MoveNet:
       addMoveNetControllers(folderController, type);
       break;
-    case posedetection.SupportedModels.MediapipeBlazepose:
+    case posedetection.SupportedModels.BlazePose:
       addBlazePoseControllers(folderController);
       break;
     default:
@@ -135,7 +135,7 @@ function addMoveNetControllers(modelConfigFolder, type) {
   modelConfigFolder.add(params.STATE.modelConfig, 'scoreThreshold', 0, 1);
 }
 
-// The Blazepose model config folder contains options for Blazepose config
+// The BlazePose model config folder contains options for BlazePose config
 // settings.
 function addBlazePoseControllers(modelConfigFolder) {
   params.STATE.modelConfig = {...params.BLAZEPOSE_CONFIG};

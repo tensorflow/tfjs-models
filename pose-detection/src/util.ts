@@ -20,7 +20,7 @@ import {SupportedModels} from './types';
 export function getKeypointIndexBySide(model: SupportedModels):
     {left: number[], right: number[], middle: number[]} {
   switch (model) {
-    case SupportedModels.MediapipeBlazepose:
+    case SupportedModels.BlazePose:
       return constants.BLAZEPOSE_KEYPOINTS_BY_SIDE;
     case SupportedModels.PoseNet:
     case SupportedModels.MoveNet:
@@ -31,7 +31,7 @@ export function getKeypointIndexBySide(model: SupportedModels):
 }
 export function getAdjacentPairs(model: SupportedModels): number[][] {
   switch (model) {
-    case SupportedModels.MediapipeBlazepose:
+    case SupportedModels.BlazePose:
       return constants.BLAZEPOSE_CONNECTED_KEYPOINTS_PAIRS;
     case SupportedModels.PoseNet:
     case SupportedModels.MoveNet:
@@ -44,7 +44,7 @@ export function getAdjacentPairs(model: SupportedModels): number[][] {
 export function getKeypointIndexByName(model: SupportedModels):
     {[index: string]: number} {
   switch (model) {
-    case SupportedModels.MediapipeBlazepose:
+    case SupportedModels.BlazePose:
       return constants.BLAZEPOSE_KEYPOINTS.reduce((map, name, i) => {
         map[name] = i;
         return map;

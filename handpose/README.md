@@ -134,4 +134,4 @@ omitting the standard model file name and the query parameters.
 
 * **input** - The image to classify. Can be a tensor, DOM element image, video, or canvas.
 
-* **flipHorizontal** - Whether to flip/mirror the facial keypoints horizontally. Should be true for videos that are flipped by default (e.g. webcams).
+* **flipHorizontal** - Whether to flip/mirror the hand keypoints horizontally. Should be true for videos that are flipped by default (e.g. webcams).

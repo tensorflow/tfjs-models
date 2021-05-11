@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import {EstimationConfig, InputResolution, ModelConfig} from '../types';
+import {EstimationConfig, InputResolution, ModelConfig, QuantBytes} from '../types';
 
 export type PoseNetOutputStride = 32|16|8;
 export type PoseNetArchitecture = 'ResNet50'|'MobileNetV1';
@@ -52,6 +52,12 @@ export type MobileNetMultiplier = 0.50|0.75|1.0;
  * `modelUrl`: Optional. An optional string that specifies custom url of the
  * model. This is useful for area/countries that don't have access to the model
  * hosted on GCP.
+ *
+ * `quantBytes`: Optional. Options: 1, 2, or 4.  This parameter affects weight
+ * quantization in the models. The available options are
+ * 1 byte, 2 bytes, and 4 bytes. The higher the value, the larger the model size
+ * and thus the longer the loading time, the lower the value, the shorter the
+ * loading time but lower the accuracy.
  */
 export interface PosenetModelConfig extends ModelConfig {
   architecture: PoseNetArchitecture;
@@ -59,6 +65,7 @@ export interface PosenetModelConfig extends ModelConfig {
   inputResolution: InputResolution;
   multiplier?: MobileNetMultiplier;
   modelUrl?: string;
+  quantBytes?: QuantBytes;
 }
 
 /**

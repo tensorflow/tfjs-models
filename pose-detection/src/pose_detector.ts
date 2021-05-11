@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import {BlazeposeEstimationConfig} from './blazepose/types';
+import {BlazePoseEstimationConfig} from './blazepose_mediapipe/types';
 import {MoveNetEstimationConfig} from './movenet/types';
 import {PoseNetEstimationConfig} from './posenet/types';
 import {ModelConfig, Pose, PoseDetectorInput} from './types';
@@ -34,7 +34,7 @@ export interface PoseDetector {
    */
   estimatePoses(
       image: PoseDetectorInput,
-      config?: PoseNetEstimationConfig|BlazeposeEstimationConfig|
+      config?: PoseNetEstimationConfig|BlazePoseEstimationConfig|
       MoveNetEstimationConfig,
       timestamp?: number): Promise<Pose[]>;
 
@@ -66,7 +66,7 @@ export abstract class BasePoseDetector implements PoseDetector {
 
   abstract estimatePoses(
       image: PoseDetectorInput,
-      config?: PoseNetEstimationConfig|BlazeposeEstimationConfig|
+      config?: PoseNetEstimationConfig|BlazePoseEstimationConfig|
       MoveNetEstimationConfig,
       timestamp?: number): Promise<Pose[]>;
 

@@ -10,10 +10,10 @@ Currently, we provide 3 model options:
 MoveNet is an ultra fast and accurate model that detects 17 keypoints of a body.
 It can run at 50+ fps on modern laptop and phones.
 
-#### MediapipeBlazepose:
+#### BlazePose:
 [Demo](https://storage.googleapis.com/tfjs-models/demos/pose-detection/index.html?model=blazepose)
 
-MediapipeBlazepose can detect 33 keypoints, in addition to the 17 COCO keypoints,
+MediaPipe BlazePose can detect 33 keypoints, in addition to the 17 COCO keypoints,
 it provides additional keypoints for face, hands and feet.
 
 #### PoseNet
@@ -70,7 +70,7 @@ import '@tensorflow/tfjs-backend-webgl';
 Choose a model from `poseDetection.SupportedModels` enum list and pass it to the
 `createDetector` method.
 
-`SupportedModels` include `MoveNet`, `MediapipeBlazepose` and `PoseNet`.
+`SupportedModels` include `MoveNet`, `BlazePose` and `PoseNet`.
 
 ```javascript
 const detector = await poseDetection.createDetector(poseDetection.SupportedModels.MoveNet);
@@ -100,7 +100,7 @@ detect any people, the list will be empty.
 
 For each pose, it contains a confidence score of the pose and an array of
 keypoints. PoseNet and MoveNet both return 17 keypoints.
-MediapipeBlazepose returns 33 keypoints. Each keypoint contains `x`, `y`,
+Mediapipe BlazePose returns 33 keypoints. Each keypoint contains `x`, `y`,
 `score` and `name`.
 
 Example output:
@@ -160,8 +160,8 @@ See the diagram below for what those keypoints are and their index in the array.
 15: left_ankle  \
 16: right_ankle
 
-### Blazepose Keypoints: Used in Mediapipe Blazepose
-![Blazepose Keypoints](https://storage.googleapis.com/mediapipe/blazepose-keypoints-updated.png)
+### BlazePose Keypoints: Used in MediaPipe BlazePose
+![BlazePose Keypoints](https://storage.googleapis.com/mediapipe/blazepose-keypoints-updated.png)
 
 0: nose  \
 1: left_eye_inner \
