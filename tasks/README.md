@@ -44,7 +44,6 @@ The following table summarizes all the supported tasks and their models:
         <br>
         Identify images into predefined classes.
         <br>
-        <br>
         <a href="https://codepen.io/jinjingforever/pen/VwPOePq">Demo</a>
       </td>
       <td>Mobilenet</td>
@@ -82,7 +81,6 @@ The following table summarizes all the supported tasks and their models:
         <br>
         Localize and identify multiple objects in a single image.
         <br>
-        <br>
         <a href="https://codepen.io/jinjingforever/pen/PopPPXo">Demo</a>
       </td>
       <td>COCO-SSD</td>
@@ -119,7 +117,6 @@ The following table summarizes all the supported tasks and their models:
         <b>Image Segmentation</b>
         <br>
         Predict associated class for each pixel of an image.
-        <br>
         <br>
         <a href="https://codepen.io/jinjingforever/pen/yLMYVJw">Demo</a>
       </td>
