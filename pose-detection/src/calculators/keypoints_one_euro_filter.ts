@@ -20,6 +20,7 @@ import {Keypoint} from '../types';
 import {KeypointsFilter} from './interfaces/common_interfaces';
 import {OneEuroFilterConfig} from './interfaces/config_interfaces';
 import {OneEuroFilter} from './one_euro_filter';
+import {getObjectScale} from './velocity_filter_utils';
 
 /**
  * A stateful filter that smoothes keypoints values overtime.
@@ -46,16 +47,29 @@ export class KeypointsOneEuroFilter implements KeypointsFilter {
     // Initialize filters once.
     this.initializeFiltersIfEmpty(keypoints);
 
+    // Get value scale as inverse value of the object scale.
+    // If value is too small smoothing will be disabled and keypoints will be
+    // returned as is.
+    let valueScale = 1;
+    if (this.config.minAllowedObjectScale != null) {
+      const objectScale = getObjectScale(keypoints);
+      if (objectScale < this.config.minAllowedObjectScale) {
+        return [...keypoints];
+      }
+      valueScale = 1 / objectScale;
+    }
+
     // Filter keypoints. Every axis of every keypoint is filtered separately.
     return keypoints.map((keypoint, i) => {
       const outKeypoint = {
         ...keypoint,
-        x: this.xFilters[i].apply(keypoint.x, microSeconds),
-        y: this.yFilters[i].apply(keypoint.y, microSeconds),
+        x: this.xFilters[i].apply(keypoint.x, microSeconds, valueScale),
+        y: this.yFilters[i].apply(keypoint.y, microSeconds, valueScale),
       };
 
       if (keypoint.z != null) {
-        outKeypoint.z = this.zFilters[i].apply(keypoint.z, microSeconds);
+        outKeypoint.z =
+            this.zFilters[i].apply(keypoint.z, microSeconds, valueScale);
       }
 
       return outKeypoint;
