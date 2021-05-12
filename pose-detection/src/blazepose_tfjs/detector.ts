@@ -478,7 +478,7 @@ export class BlazePoseTfjsDetector extends BasePoseDetector {
       // Smoothes pose landmark coordinates to reduce jitter.
       if (this.landmarksSmoothingFilterActual == null) {
         this.landmarksSmoothingFilterActual = new KeypointsSmoothingFilter(
-            constants.BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG);
+            constants.BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG_ACTUAL);
       }
       actualLandmarksFiltered = this.landmarksSmoothingFilterActual.apply(
           actualLandmarksFiltered, this.timestamp, imageSize,
@@ -486,7 +486,7 @@ export class BlazePoseTfjsDetector extends BasePoseDetector {
 
       if (this.landmarksSmoothingFilterAuxiliary == null) {
         this.landmarksSmoothingFilterAuxiliary = new KeypointsSmoothingFilter(
-            constants.BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG);
+            constants.BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG_AUXILIARY);
       }
       auxiliaryLandmarksFiltered = this.landmarksSmoothingFilterAuxiliary.apply(
           auxiliaryLandmarksFiltered, this.timestamp, imageSize,

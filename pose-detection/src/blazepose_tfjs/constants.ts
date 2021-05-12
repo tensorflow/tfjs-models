@@ -106,11 +106,30 @@ export const BLAZEPOSE_NUM_AUXILIARY_KEYPOINTS = 35;
 export const BLAZEPOSE_VISIBILITY_SMOOTHING_CONFIG = {
   alpha: 0.1
 };
-export const BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG = {
-  velocityFilter: {
-    windowSize: 5,
-    velocityScale: 10,
-    minAllowedObjectScale: 1e-6,
-    disableValueScaling: false
+export const BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG_ACTUAL = {
+  oneEuroFilter: {
+    frequency: 30,
+    minCutOff: 0.1,  // minCutOff 0.1 results into ~0.02 alpha in landmark EMA
+                     // filter when landmark is static.
+    beta: 40,  // beta 40 in combination with minCutOff 0.1 results into ~0.8
+               // alpha in landmark EMA filter when landmark is moving fast.
+    derivateCutOff: 1.0,  // derivativeCutOff 1.0 results into ~0.17 alpha in
+                          // landmark velocity EMA filter.,
+    minAllowedObjectScale: 1e-6
+  }
+};
+// Auxiliary landmarks are smoothed heavier than main landmarks to make ROI
+// crop for pose landmarks prediction very stable when object is not moving but
+// responsive enough in case of sudden movements.
+export const BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG_AUXILIARY = {
+  oneEuroFilter: {
+    frequency: 30,
+    minCutOff: 0.01,  // minCutOff 0.01 results into ~0.002 alpha in landmark
+                      // EMA filter when landmark is static.
+    beta: 1.0,  // beta 1.0 in combination with minCutOff 0.01 results into ~0.2
+                // alpha in landmark EMA filter when landmark is moving fast.
+    derivateCutOff: 1.0,  // derivateCutOff 1.0 results into ~0.17 alpha in
+                          // landmark velocity EMA filter.
+    minAllowedObjectScale: 1e-6
   }
 };

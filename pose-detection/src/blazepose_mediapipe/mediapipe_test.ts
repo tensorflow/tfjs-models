@@ -78,7 +78,7 @@ describeWithFlags('MediaPipe Pose video ', BROWSER_ENVS, () => {
     timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
 
-    expected = await fetch(`${KARMA_SERVER}/pose_squats.json`)
+    expected = await fetch(`${KARMA_SERVER}/pose_squats.full.json`)
                    .then(response => response.json())
                    .then(result => getXYPerFrame(result));
   });
@@ -97,8 +97,8 @@ describeWithFlags('MediaPipe Pose video ', BROWSER_ENVS, () => {
 
     const callback = async(video: HTMLVideoElement, timestamp: number):
         Promise<poseDetection.Pose[]> => {
-          const poses =
-              await detector.estimatePoses(video, null /* config */, timestamp);
+          const poses = await detector.estimatePoses(
+              video, null /* config */, timestamp / 1000);
           result.push(poses[0].keypoints.map(kp => [kp.x, kp.y]));
           return poses;
         };
