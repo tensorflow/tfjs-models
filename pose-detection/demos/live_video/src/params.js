@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-
+import * as posedetection from '@tensorflow-models/pose-detection';
 
 export const DEFAULT_LINE_WIDTH = 2;
 export const DEFAULT_RADIUS = 4;
@@ -26,7 +26,7 @@ export const VIDEO_SIZE = {
 };
 export const STATE = {
   camera: {targetFPS: 60, sizeOption: '640 X 480'},
-  backend: 'webgl',
+  backend: '',
   flags: {},
   modelConfig: {}
 };
@@ -69,13 +69,20 @@ export const TUNABLE_FLAG_VALUE_RANGE_MAP = {
 };
 
 export const BACKEND_FLAGS_MAP = {
-  wasm: ['WASM_HAS_SIMD_SUPPORT', 'WASM_HAS_MULTITHREAD_SUPPORT'],
-  webgl: [
+  ['tfjs-wasm']: ['WASM_HAS_SIMD_SUPPORT', 'WASM_HAS_MULTITHREAD_SUPPORT'],
+  ['tfjs-webgl']: [
     'WEBGL_VERSION', 'WEBGL_CPU_FORWARD', 'WEBGL_PACK',
     'WEBGL_FORCE_F16_TEXTURES', 'WEBGL_RENDER_FLOAT32_CAPABLE',
     'WEBGL_FLUSH_THRESHOLD'
-  ]
+  ],
+  ['mediapipe-gpu']: []
 };
+
+export const MODEL_BACKEND_MAP = {
+  [posedetection.SupportedModels.PoseNet]: ['tfjs-webgl'],
+  [posedetection.SupportedModels.MoveNet]: ['tfjs-webgl', 'tfjs-wasm'],
+  [posedetection.SupportedModels.BlazePose]: ['mediapipe-gpu', 'tfjs-webgl']
+}
 
 export const TUNABLE_FLAG_NAME_MAP = {
   PROD: 'production mode',
