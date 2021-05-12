@@ -78,7 +78,7 @@ describeWithFlags('MediaPipe Pose video ', BROWSER_ENVS, () => {
     timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
 
-    expected = await fetch(`${KARMA_SERVER}/pose_squats.json`)
+    expected = await fetch(`${KARMA_SERVER}/pose_squats.full.json`)
                    .then(response => response.json())
                    .then(result => getXYPerFrame(result));
   });

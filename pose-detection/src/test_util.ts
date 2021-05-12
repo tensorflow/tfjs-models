@@ -38,6 +38,12 @@ export async function loadImage(
   return promise;
 }
 
+async function timeOut() {
+  return new Promise((resolve, reject) => {
+    setTimeout(resolve, 5000);
+  });
+}
+
 export async function loadVideo(
     videoPath: string, videoFPS: number,
     callback: (video: poseDetection.PoseDetectorInput, timestamp: number) =>
@@ -80,6 +86,7 @@ export async function loadVideo(
       if (poses.length > 0 && poses[0].keypoints != null) {
         draw(poses[0].keypoints, ctx, model, 'Red');
       }
+      await timeOut();
 
       const nextTime = video.currentTime + actualInterval;
       if (nextTime < video.duration) {

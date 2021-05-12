@@ -128,7 +128,7 @@ describeWithFlags('BlazePose', ALL_ENVS, () => {
       timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
       jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
 
-      expected = await fetch(`${KARMA_SERVER}/pose_squats.json`)
+      expected = await fetch(`${KARMA_SERVER}/pose_squats.full.json`)
                      .then(response => response.json())
                      .then(result => getXYPerFrame(result));
     });
@@ -137,7 +137,7 @@ describeWithFlags('BlazePose', ALL_ENVS, () => {
       jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
     });
 
-    it('test.', async () => {
+    fit('test.', async () => {
       // Note: this makes a network request for model assets.
 
       const model = poseDetection.SupportedModels.BlazePose;

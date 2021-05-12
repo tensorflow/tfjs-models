@@ -119,6 +119,11 @@ export const BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG_ACTUAL = {
   }
 };
 export const BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG_AUXILIARY = {
-  oneEuroFilter:
-      {frequency: 30, minCutOff: 0.01, beta: 1.0, derivateCutOff: 1.0}
+  oneEuroFilter: {
+    frequency: 30,
+    minCutOff: 0.01,
+    beta: 1.0,
+    derivateCutOff: 1.0,
+    minAllowedObjectScale: 1e-6
+  }
 };
