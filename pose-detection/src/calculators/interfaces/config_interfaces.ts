@@ -57,9 +57,13 @@ export interface OneEuroFilterConfig {
       number;  // The outlier threshold offset, will lead to a generally more
                // reactive filter that will be less likely to discount outliers.
   thresholdBeta?: number;  // The outlier threshold slope, will lead to a filter
-                           // that will more aggressively react whenever the
-                           // keypoint speed increases by being less likely to
-                           // consider that an observation is an outlier.
+  // that will more aggressively react whenever the
+  // keypoint speed increases by being less likely to
+  // consider that an observation is an outlier.
+  minAllowedObjectScale?:
+      number;  // If calculated object scale is less than given value smoothing
+               // will be disabled and keypoints will be returned as is. This
+               // value helps filter adjust to the distance to camera.
 }
 export interface KeypointsSmoothingConfig {
   velocityFilter?: VelocityFilterConfig;

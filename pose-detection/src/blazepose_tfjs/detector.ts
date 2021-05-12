@@ -67,8 +67,12 @@ export class BlazePoseTfjsDetector extends BasePoseDetector {
 
   // Store global states.
   private regionOfInterest: Rect = null;
+  private visibilitySmoothingFilterActualPre: LowPassVisibilityFilter;
+  private visibilitySmoothingFilterAuxiliaryPre: LowPassVisibilityFilter;
   private visibilitySmoothingFilterActual: LowPassVisibilityFilter;
   private visibilitySmoothingFilterAuxiliary: LowPassVisibilityFilter;
+  private landmarksSmoothingFilterActualPre: KeypointsSmoothingFilter;
+  private landmarksSmoothingFilterAuxiliaryPre: KeypointsSmoothingFilter;
   private landmarksSmoothingFilterActual: KeypointsSmoothingFilter;
   private landmarksSmoothingFilterAuxiliary: KeypointsSmoothingFilter;
 
@@ -460,6 +464,42 @@ export class BlazePoseTfjsDetector extends BasePoseDetector {
       actualLandmarksFiltered = actualLandmarks;
       auxiliaryLandmarksFiltered = auxiliaryLandmarks;
     } else {
+      // Smoothes pose landmark visibilities to reduce jitter.
+      if (this.visibilitySmoothingFilterActualPre == null) {
+        this.visibilitySmoothingFilterActualPre = new LowPassVisibilityFilter(
+            constants.BLAZEPOSE_VISIBILITY_SMOOTHING_CONFIG);
+      }
+      actualLandmarksFiltered =
+          this.visibilitySmoothingFilterActualPre.apply(actualLandmarks);
+
+      if (this.visibilitySmoothingFilterAuxiliaryPre == null) {
+        this.visibilitySmoothingFilterAuxiliaryPre =
+            new LowPassVisibilityFilter(
+                constants.BLAZEPOSE_VISIBILITY_SMOOTHING_CONFIG);
+      }
+      auxiliaryLandmarksFiltered =
+          this.visibilitySmoothingFilterAuxiliaryPre.apply(auxiliaryLandmarks);
+
+      // Smoothes pose landmark coordinates differently for actual and auxiliary
+      // landmarks.
+      if (this.landmarksSmoothingFilterActualPre == null) {
+        this.landmarksSmoothingFilterActualPre = new KeypointsSmoothingFilter(
+            constants.BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG_ACTUAL_PRE);
+      }
+      actualLandmarksFiltered = this.landmarksSmoothingFilterActualPre.apply(
+          actualLandmarksFiltered, this.timestamp, imageSize,
+          true /* normalized */);
+
+      if (this.landmarksSmoothingFilterAuxiliaryPre == null) {
+        this.landmarksSmoothingFilterAuxiliaryPre =
+            new KeypointsSmoothingFilter(
+                constants.BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG_AUXILIARY_PRE);
+      }
+      auxiliaryLandmarksFiltered =
+          this.landmarksSmoothingFilterAuxiliaryPre.apply(
+              auxiliaryLandmarksFiltered, this.timestamp, imageSize,
+              true /* normalized */);
+
       // Smoothes pose landmark visibilities to reduce jitter.
       if (this.visibilitySmoothingFilterActual == null) {
         this.visibilitySmoothingFilterActual = new LowPassVisibilityFilter(
