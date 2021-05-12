@@ -20,9 +20,11 @@ import {BlazePoseMediaPipeEstimationConfig, BlazePoseMediaPipeModelConfig} from 
 
 export function validateModelConfig(modelConfig: BlazePoseMediaPipeModelConfig):
     BlazePoseMediaPipeModelConfig {
-  const config: BlazePoseMediaPipeModelConfig = modelConfig == null ?
-      {...DEFAULT_BLAZEPOSE_MODEL_CONFIG} :
-      {...modelConfig};
+  if (modelConfig == null) {
+    return {...DEFAULT_BLAZEPOSE_MODEL_CONFIG};
+  }
+
+  const config: BlazePoseMediaPipeModelConfig = {...modelConfig};
 
   config.runtime = 'mediapipe';
 
@@ -40,13 +42,11 @@ export function validateModelConfig(modelConfig: BlazePoseMediaPipeModelConfig):
 export function validateEstimationConfig(
     estimationConfig: BlazePoseMediaPipeEstimationConfig):
     BlazePoseMediaPipeEstimationConfig {
-  let config;
-
   if (estimationConfig == null) {
-    config = {...DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG};
-  } else {
-    config = {...estimationConfig};
+    return {...DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG};
   }
+
+  const config = {...estimationConfig};
 
   if (config.maxPoses == null) {
     config.maxPoses = 1;
