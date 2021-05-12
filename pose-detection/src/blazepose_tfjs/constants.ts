@@ -118,12 +118,18 @@ export const BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG_ACTUAL = {
     minAllowedObjectScale: 1e-6
   }
 };
+// Auxiliary landmarks are smoothed heavier than main landmarks to make ROI
+// crop for pose landmarks prediction very stable when object is not moving but
+// responsive enough in case of sudden movements.
 export const BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG_AUXILIARY = {
   oneEuroFilter: {
     frequency: 30,
-    minCutOff: 0.01,
-    beta: 1.0,
-    derivateCutOff: 1.0,
+    minCutOff: 0.01,  // minCutOff 0.01 results into ~0.002 alpha in landmark
+                      // EMA filter when landmark is static.
+    beta: 1.0,  // beta 1.0 in combination with minCutOff 0.01 results into ~0.2
+                // alpha in landmark EMA filter when landmark is moving fast.
+    derivateCutOff: 1.0,  // derivateCutOff 1.0 results into ~0.17 alpha in
+                          // landmark velocity EMA filter.
     minAllowedObjectScale: 1e-6
   }
 };

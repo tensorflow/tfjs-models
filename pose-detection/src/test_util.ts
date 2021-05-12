@@ -17,7 +17,7 @@
 
 import * as poseDetection from './index';
 
-const SIMULATED_INTERVAL = 33.333;
+const SIMULATED_INTERVAL = 33333;  // in microseconds
 
 /** Karma server directory serving local files. */
 export const KARMA_SERVER = './base/src/test_data';
@@ -36,12 +36,6 @@ export async function loadImage(
   img.src = `${KARMA_SERVER}/${imagePath}`;
 
   return promise;
-}
-
-async function timeOut() {
-  return new Promise((resolve, reject) => {
-    setTimeout(resolve, 5000);
-  });
 }
 
 export async function loadVideo(
@@ -86,12 +80,11 @@ export async function loadVideo(
       if (poses.length > 0 && poses[0].keypoints != null) {
         draw(poses[0].keypoints, ctx, model, 'Red');
       }
-      await timeOut();
 
       const nextTime = video.currentTime + actualInterval;
       if (nextTime < video.duration) {
         video.currentTime = nextTime;
-        // We set the timestamp increment to 33.333 microseconds to simulate
+        // We set the timestamp increment to 33333 microseconds to simulate
         // the 30 fps video input. We do this so that the filter uses the
         // same fps as the reference test.
         // https://github.com/google/mediapipe/blob/ecb5b5f44ab23ea620ef97a479407c699e424aa7/mediapipe/python/solution_base.py#L297

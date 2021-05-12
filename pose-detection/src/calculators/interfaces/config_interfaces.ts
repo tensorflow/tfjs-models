@@ -62,8 +62,8 @@ export interface OneEuroFilterConfig {
   // consider that an observation is an outlier.
   minAllowedObjectScale?:
       number;  // If calculated object scale is less than given value smoothing
-               // will be disabled and keypoints will be returned as is. This
-               // value helps filter adjust to the distance to camera.
+  // will be disabled and keypoints will be returned as is. This
+  // value helps filter adjust to the distance to camera.
 }
 export interface KeypointsSmoothingConfig {
   velocityFilter?: VelocityFilterConfig;

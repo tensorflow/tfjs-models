@@ -56,7 +56,7 @@ export class KeypointsOneEuroFilter implements KeypointsFilter {
       if (objectScale < this.config.minAllowedObjectScale) {
         return [...keypoints];
       }
-      valueScale = 1 / objectScale;
+      valueScale = 1.0 / objectScale;
     }
 
     // Filter keypoints. Every axis of every keypoint is filtered separately.

@@ -25,7 +25,7 @@ import * as poseDetection from '../index';
 import {getXYPerFrame, KARMA_SERVER, loadImage, loadVideo} from '../test_util';
 
 const EPSILON_IMAGE = 18;
-const EPSILON_VIDEO = 57;
+const EPSILON_VIDEO = 15;
 
 // ref:
 // https://github.com/google/mediapipe/blob/7c331ad58b2cca0dca468e342768900041d65adc/mediapipe/python/solutions/pose_test.py#L31-L51
@@ -137,7 +137,7 @@ describeWithFlags('BlazePose', ALL_ENVS, () => {
       jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
     });
 
-    fit('test.', async () => {
+    it('test.', async () => {
       // Note: this makes a network request for model assets.
 
       const model = poseDetection.SupportedModels.BlazePose;
@@ -155,7 +155,8 @@ describeWithFlags('BlazePose', ALL_ENVS, () => {
 
       // Original video source in 720 * 1280 resolution:
       // https://www.pexels.com/video/woman-doing-squats-4838220/ Video is
-      // compressed to be smaller with less frames (5fps), using below command:
+      // compressed to be smaller with less frames (5fps), using below
+      // command:
       // `ffmpeg -i original_pose.mp4 -r 5 -vcodec libx264 -crf 28 -profile:v
       // baseline pose_squats.mp4`
       await loadVideo(
