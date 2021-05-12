@@ -46,9 +46,7 @@ export class ImageClassifierTFLite<T> extends ImageClassifier<T> {
         score: result.probability,
       };
     });
-    const finalResult: ImageClassificationResult = {
-      classes,
-    };
+    const finalResult: ImageClassificationResult = {classes};
     return finalResult;
   }
 

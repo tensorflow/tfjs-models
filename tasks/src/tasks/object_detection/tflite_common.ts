@@ -46,9 +46,7 @@ export class ObjectDetectorTFLite<T> extends ObjectDetector<T> {
         score: result.classes[0].probability,
       };
     });
-    const finalResult: ObjectDetectionResult = {
-      objects,
-    };
+    const finalResult: ObjectDetectionResult = {objects};
     return finalResult;
   }
 

@@ -39,7 +39,7 @@ export interface DetectedObject {
  */
 export interface ModelConfig {
   /**
-   * It determines wich PoseNet architecture to load. The supported
+   * It determines wich object detection architecture to load. The supported
    * architectures are: 'mobilenet_v1', 'mobilenet_v2' and 'lite_mobilenet_v2'.
    * It is default to 'lite_mobilenet_v2'.
    */
