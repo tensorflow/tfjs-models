@@ -10,10 +10,11 @@
   },
   "dependencies": {
     "@tensorflow-models/pose-detection": "file:../../dist",
-    "@tensorflow/tfjs-backend-wasm": "^3.5.0",
-    "@tensorflow/tfjs-backend-webgl": "^3.5.0",
-    "@tensorflow/tfjs-converter": "^3.5.0",
-    "@tensorflow/tfjs-core": "^3.5.0"
+    "@tensorflow/tfjs-backend-wasm": "^3.6.0",
+    "@tensorflow/tfjs-backend-webgl": "^3.6.0",
+    "@tensorflow/tfjs-converter": "^3.6.0",
+    "@tensorflow/tfjs-core": "^3.6.0",
+    "@mediapipe/pose": "~0.3.0"
   },
   "scripts": {
     "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr --open",
@@ -27,7 +28,7 @@
     "crypto": false
   },
   "devDependencies": {
-    "@babel/core": "7.7.5",
+    "@babel/core": "^7.7.5",
     "@babel/plugin-transform-runtime": "^7.7.6",
     "@babel/preset-env": "^7.7.6",
     "babel-plugin-external-helpers": "^6.22.0",
@@ -59,5 +60,8 @@
   },
   "eslintIgnore": [
     "dist/"
-  ]
+  ],
+  "staticFiles": {
+    "staticPath": "./node_modules/@mediapipe/pose"
+  }
 }
