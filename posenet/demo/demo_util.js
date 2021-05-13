@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as posenet from '@tensorflow-models/posenet';
+import * as posenet from '@haoyunfeix/posenet';
 import * as tf from '@tensorflow/tfjs-core';
 
 const color = 'aqua';
