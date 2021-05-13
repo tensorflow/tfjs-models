@@ -15,14 +15,18 @@
  * =============================================================================
  */
 
-import {DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG, DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_FULL, DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_HEAVY, DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_LITE, DEFAULT_BLAZEPOSE_MODEL_CONFIG} from './constants';
-import {BlazePoseTfjsEstimationConfig, BlazePoseTfjsModelConfig} from './types';
+import {DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG, DEFAULT_BLAZEPOSE_MODEL_CONFIG} from './constants';
+import {BlazePoseMediaPipeEstimationConfig, BlazePoseMediaPipeModelConfig} from './types';
 
-export function validateModelConfig(modelConfig: BlazePoseTfjsModelConfig):
-    BlazePoseTfjsModelConfig {
-  const config: BlazePoseTfjsModelConfig = modelConfig == null ?
-      {...DEFAULT_BLAZEPOSE_MODEL_CONFIG} as BlazePoseTfjsModelConfig :
-      {...modelConfig};
+export function validateModelConfig(modelConfig: BlazePoseMediaPipeModelConfig):
+    BlazePoseMediaPipeModelConfig {
+  if (modelConfig == null) {
+    return {...DEFAULT_BLAZEPOSE_MODEL_CONFIG};
+  }
+
+  const config: BlazePoseMediaPipeModelConfig = {...modelConfig};
+
+  config.runtime = 'mediapipe';
 
   if (config.enableSmoothing == null) {
     config.enableSmoothing = DEFAULT_BLAZEPOSE_MODEL_CONFIG.enableSmoothing;
@@ -32,38 +36,17 @@ export function validateModelConfig(modelConfig: BlazePoseTfjsModelConfig):
     config.modelType = DEFAULT_BLAZEPOSE_MODEL_CONFIG.modelType;
   }
 
-  if (config.detectorModelUrl == null) {
-    config.detectorModelUrl = DEFAULT_BLAZEPOSE_MODEL_CONFIG.detectorModelUrl;
-  }
-
-  if (config.landmarkModelUrl == null) {
-    switch (config.modelType) {
-      case 'lite':
-        config.landmarkModelUrl = DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_LITE;
-        break;
-      case 'heavy':
-        config.landmarkModelUrl = DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_HEAVY;
-        break;
-      case 'full':
-      default:
-        config.landmarkModelUrl = DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_FULL;
-        break;
-    }
-  }
-
   return config;
 }
 
 export function validateEstimationConfig(
-    estimationConfig: BlazePoseTfjsEstimationConfig):
-    BlazePoseTfjsEstimationConfig {
-  let config;
-
+    estimationConfig: BlazePoseMediaPipeEstimationConfig):
+    BlazePoseMediaPipeEstimationConfig {
   if (estimationConfig == null) {
-    config = DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG;
-  } else {
-    config = {...estimationConfig};
+    return {...DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG};
   }
+
+  const config = {...estimationConfig};
 
   if (config.maxPoses == null) {
     config.maxPoses = 1;
@@ -77,6 +60,10 @@ export function validateEstimationConfig(
     throw new Error(
         'Multi-pose detection is not implemented yet. Please set maxPoses ' +
         'to 1.');
+  }
+
+  if (config.flipHorizontal == null) {
+    config.flipHorizontal = DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG.flipHorizontal;
   }
 
   return config;

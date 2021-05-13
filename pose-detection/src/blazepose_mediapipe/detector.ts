@@ -18,6 +18,7 @@ import * as pose from '@mediapipe/pose';
 
 import {BasePoseDetector, PoseDetector} from '../pose_detector';
 import {Pose, PoseDetectorInput} from '../types';
+import {validateModelConfig} from './detector_utils';
 
 import {BlazePoseMediaPipeEstimationConfig, BlazePoseMediaPipeModelConfig} from './types';
 
@@ -47,8 +48,23 @@ export class BlazePoseMediaPipeDetector extends BasePoseDetector {
         return `${base}/${path}`;
       }
     });
+    let modelComplexity: 0|1|2;
+    switch (config.modelType) {
+      case 'lite':
+        modelComplexity = 0;
+        break;
+      case 'full':
+        modelComplexity = 1;
+        break;
+      case 'heavy':
+        modelComplexity = 2;
+        break;
+      default:
+        modelComplexity = 1;
+        break;
+    }
     this.poseSolution.setOptions({
-      modelComplexity: config.lite ? 0 : 1,
+      modelComplexity,
       smoothLandmarks: config.enableSmoothing || true,
       selfieMode: this.selfieMode,
     });
@@ -77,8 +93,9 @@ export class BlazePoseMediaPipeDetector extends BasePoseDetector {
    * the BlazePose loading process. Please find more details of each parameters
    * in the documentation of the `BlazePoseMediaPipeModelConfig` interface.
    */
-  static async load(config: BlazePoseMediaPipeModelConfig):
+  static async load(modelConfig: BlazePoseMediaPipeModelConfig):
       Promise<PoseDetector> {
+    const config = validateModelConfig(modelConfig);
     return new BlazePoseMediaPipeDetector(config);
   }
 

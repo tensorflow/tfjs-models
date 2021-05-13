@@ -33,14 +33,14 @@ import {SupportedModels} from './types';
  */
 export async function createDetector(
     model: SupportedModels,
-    modelConfig?: PosenetModelConfig|BlazePoseModelConfig|
-    MoveNetModelConfig): Promise<PoseDetector> {
+    modelConfig?: PosenetModelConfig|BlazePoseTfjsModelConfig|
+    BlazePoseMediaPipeModelConfig|MoveNetModelConfig): Promise<PoseDetector> {
   switch (model) {
     case SupportedModels.PoseNet:
       return PosenetDetector.load(modelConfig as PosenetModelConfig);
     case SupportedModels.BlazePose:
       const config = modelConfig as BlazePoseModelConfig;
-      return config.runtime === 'tfjs' ?
+      return config != null && config.runtime === 'tfjs' ?
           BlazePoseTfjsDetector.load(modelConfig as BlazePoseTfjsModelConfig) :
           BlazePoseMediaPipeDetector.load(
               config as BlazePoseMediaPipeModelConfig);

@@ -24,8 +24,8 @@ import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
 import * as poseDetection from '../index';
 import {getXYPerFrame, KARMA_SERVER, loadImage, loadVideo} from '../test_util';
 
-const EPSILON_IMAGE = 18;
-const EPSILON_VIDEO = 57;
+const EPSILON_IMAGE = 19;
+const EPSILON_VIDEO = 15;
 
 // ref:
 // https://github.com/google/mediapipe/blob/7c331ad58b2cca0dca468e342768900041d65adc/mediapipe/python/solutions/pose_test.py#L31-L51
@@ -128,7 +128,7 @@ describeWithFlags('BlazePose', ALL_ENVS, () => {
       timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
       jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
 
-      expected = await fetch(`${KARMA_SERVER}/pose_squats.json`)
+      expected = await fetch(`${KARMA_SERVER}/pose_squats.full.json`)
                      .then(response => response.json())
                      .then(result => getXYPerFrame(result));
     });
@@ -155,7 +155,8 @@ describeWithFlags('BlazePose', ALL_ENVS, () => {
 
       // Original video source in 720 * 1280 resolution:
       // https://www.pexels.com/video/woman-doing-squats-4838220/ Video is
-      // compressed to be smaller with less frames (5fps), using below command:
+      // compressed to be smaller with less frames (5fps), using below
+      // command:
       // `ffmpeg -i original_pose.mp4 -r 5 -vcodec libx264 -crf 28 -profile:v
       // baseline pose_squats.mp4`
       await loadVideo(
