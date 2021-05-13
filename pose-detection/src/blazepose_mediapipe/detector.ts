@@ -146,8 +146,8 @@ class BlazePoseMediaPipeDetector implements PoseDetector {
  * the BlazePose loading process. Please find more details of each parameters
  * in the documentation of the `BlazePoseMediaPipeModelConfig` interface.
  */
-export async function loadBlazePoseMediaPipeDetector(
-    modelConfig: BlazePoseMediaPipeModelConfig): Promise<PoseDetector> {
+export async function load(modelConfig: BlazePoseMediaPipeModelConfig):
+    Promise<PoseDetector> {
   const config = validateModelConfig(modelConfig);
   const result = new BlazePoseMediaPipeDetector(config);
   await result.initialize();

@@ -473,8 +473,8 @@ class MoveNetDetector implements PoseDetector {
  * the MoveNet loading process. Please find more details of each parameter
  * in the documentation of the `ModelConfig` interface.
  */
-export async function loadMoveNetDetector(
-    modelConfig: MoveNetModelConfig = MOVENET_CONFIG): Promise<PoseDetector> {
+export async function load(modelConfig: MoveNetModelConfig = MOVENET_CONFIG):
+    Promise<PoseDetector> {
   const config = validateModelConfig(modelConfig);
   let model: tfc.GraphModel;
   if (config.modelUrl) {

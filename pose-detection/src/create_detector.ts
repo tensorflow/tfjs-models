@@ -15,14 +15,14 @@
  * =============================================================================
  */
 
-import {loadBlazePoseMediaPipeDetector} from './blazepose_mediapipe/detector';
+import {load as loadBlazePoseMediaPipeDetector} from './blazepose_mediapipe/detector';
 import {BlazePoseMediaPipeModelConfig, BlazePoseModelConfig} from './blazepose_mediapipe/types';
-import {loadBlazePoseTfjsDetector} from './blazepose_tfjs/detector';
+import {load as loadBlazePoseTfjsDetector} from './blazepose_tfjs/detector';
 import {BlazePoseTfjsModelConfig} from './blazepose_tfjs/types';
-import {loadMoveNetDetector} from './movenet/detector';
+import {load as loadMoveNetDetector} from './movenet/detector';
 import {MoveNetModelConfig} from './movenet/types';
 import {PoseDetector} from './pose_detector';
-import {loadPoseNetDetector} from './posenet/detector';
+import {load as loadPoseNetDetector} from './posenet/detector';
 import {PosenetModelConfig} from './posenet/types';
 import {SupportedModels} from './types';
 

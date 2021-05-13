@@ -179,7 +179,7 @@ class PosenetDetector implements PoseDetector {
  * `MOBILENET_V1_CONFIG` and `RESNET_CONFIG` can also be used as references
  * for defining your customized config.
  */
-export async function loadPoseNetDetector(
+export async function load(
     modelConfig: PosenetModelConfig =
         MOBILENET_V1_CONFIG): Promise<PoseDetector> {
   const config = validateModelConfig(modelConfig);

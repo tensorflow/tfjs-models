@@ -481,8 +481,8 @@ class BlazePoseTfjsDetector implements PoseDetector {
  * the BlazePose loading process. Please find more details of each parameters
  * in the documentation of the `BlazePoseTfjsModelConfig` interface.
  */
-export async function loadBlazePoseTfjsDetector(
-    modelConfig: BlazePoseTfjsModelConfig): Promise<PoseDetector> {
+export async function load(modelConfig: BlazePoseTfjsModelConfig):
+    Promise<PoseDetector> {
   const config = validateModelConfig(modelConfig);
 
   const [detectorModel, landmarkModel] = await Promise.all([
