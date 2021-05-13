@@ -16,6 +16,7 @@
  */
 
 import '@tensorflow/tfjs-backend-webgl';
+import '@mediapipe/pose';
 
 import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
 
@@ -24,7 +25,6 @@ tfjsWasm.setWasmPaths(
         tfjsWasm.version_wasm}/dist/`);
 
 import * as posedetection from '@tensorflow-models/pose-detection';
-import * as tf from '@tensorflow/tfjs-core';
 
 import {Camera} from './camera';
 import {setupDatGui} from './option_panel';
@@ -48,7 +48,13 @@ async function createDetector() {
         multiplier: 0.75
       });
     case posedetection.SupportedModels.BlazePose:
-      return posedetection.createDetector(STATE.model);
+      const runtime = STATE.backend.split('-')[0];
+      if (runtime === 'mediapipe') {
+        return posedetection.createDetector(
+            STATE.model, {runtime, solutionPath: './'});
+      } else if (runtime === 'tfjs') {
+        return posedetection.createDetector(STATE.model, {runtime});
+      }
     case posedetection.SupportedModels.MoveNet:
       const modelType = STATE.modelConfig.type == 'lightning' ?
           posedetection.movenet.modelType.SINGLEPOSE_LIGHTNING :
@@ -103,7 +109,7 @@ function endEstimatePosesStats() {
 }
 
 async function renderResult() {
-  if (video.readyState < 2) {
+  if (camera.video.readyState < 2) {
     await new Promise((resolve) => {
       camera.video.onloadeddata = () => {
         resolve(video);
@@ -141,8 +147,6 @@ async function renderPrediction() {
 };
 
 async function app() {
-  await tf.setBackend(STATE.backend);
-
   // Gui content will change depending on which model is in the query string.
   const urlParams = new URLSearchParams(window.location.search);
   if (!urlParams.has('model')) {
@@ -155,6 +159,8 @@ async function app() {
   stats = setupStats();
 
   camera = await Camera.setupCamera(STATE.camera);
+
+  await setBackendAndEnvFlags(STATE.flags, STATE.backend);
 
   detector = await createDetector();
 

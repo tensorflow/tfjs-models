@@ -58,7 +58,7 @@ export class OneEuroFilter {
    * @param microSeconds timestamp associated with the value (for instance,
    *     timestamp of the frame where you got value from).
    */
-  apply(value: number, microSeconds: number): number {
+  apply(value: number, microSeconds: number, valueScale: number): number {
     if (value == null) {
       return value;
     }
@@ -79,7 +79,7 @@ export class OneEuroFilter {
 
     // Estimate the current variation per second.
     const dValue = this.x.hasLastRawValue() ?
-        (value - this.x.lastRawValue()) * this.frequency :
+        (value - this.x.lastRawValue()) * valueScale * this.frequency :
         0;
     const edValue =
         this.dx.applyWithAlpha(dValue, this.getAlpha(this.derivateCutOff));
