@@ -17,6 +17,7 @@
 
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
+import {BlazePoseModelType} from '../blazepose_mediapipe/types';
 
 import {SECOND_TO_MICRO_SECONDS} from '../calculators/constants';
 import {convertImageToTensor} from '../calculators/convert_image_to_tensor';
@@ -75,7 +76,8 @@ export class BlazePoseTfjsDetector extends BasePoseDetector {
   private constructor(
       private readonly detectorModel: tfconv.GraphModel,
       private readonly landmarkModel: tfconv.GraphModel,
-      private readonly enableSmoothing: boolean) {
+      private readonly enableSmoothing: boolean,
+      private readonly modelType: BlazePoseModelType) {
     super();
 
     this.anchors =
@@ -106,7 +108,7 @@ export class BlazePoseTfjsDetector extends BasePoseDetector {
     ]);
 
     return new BlazePoseTfjsDetector(
-        detectorModel, landmarkModel, config.enableSmoothing);
+        detectorModel, landmarkModel, config.enableSmoothing, config.modelType);
   }
 
   /**
@@ -322,18 +324,46 @@ export class BlazePoseTfjsDetector extends BasePoseDetector {
     // Output[3]: This tensor (shape: [1, 195]) represents 39 5-d keypoints.
     // The first 33 refer to the keypoints. The final 6 key points refer to
     // the alignment points from the detector model and the hands.)
-    // Output [0]: This tensor (shape: [1, 1]) represents the confidence
+    // Output [4]: This tensor (shape: [1, 1]) represents the confidence
     // score.
-    // Output [2]: This tensor (shape: [1, 64, 64, 39]) represents heatmap for
+    // Output [1]: This tensor (shape: [1, 64, 64, 39]) represents heatmap for
+    // the 39 landmarks.
+    // Lite model:
+    // Output[4]: This tensor (shape: [1, 195]) represents 39 5-d keypoints.
+    // Output[3]: This tensor (shape: [1, 1]) represents the confidence score.
+    // Output[1]: This tensor (shape: [1, 64, 64, 39]) represents heatmap for
+    // the 39 landmarks.
+    // Heavy model:
+    // Output[3]: This tensor (shape: [1, 195]) represents 39 5-d keypoints.
+    // Output[1]: This tensor (shape: [1, 1]) represents the confidence score.
+    // Output[4]: This tensor (shape: [1, 64, 64, 39]) represents heatmap for
     // the 39 landmarks.
     const landmarkResult =
         this.landmarkModel.predict(imageValueShifted) as tf.Tensor[];
 
     let landmarkTensor, poseFlagTensor, heatmapTensor;
 
-    landmarkTensor = landmarkResult[3] as tf.Tensor2D;
-    poseFlagTensor = landmarkResult[0] as tf.Tensor2D;
-    heatmapTensor = landmarkResult[2] as tf.Tensor4D;
+    switch (this.modelType) {
+      case 'lite':
+        landmarkTensor = landmarkResult[3] as tf.Tensor2D;
+        poseFlagTensor = landmarkResult[4] as tf.Tensor2D;
+        heatmapTensor = landmarkResult[1] as tf.Tensor4D;
+        break;
+      case 'full':
+        landmarkTensor = landmarkResult[4] as tf.Tensor2D;
+        poseFlagTensor = landmarkResult[3] as tf.Tensor2D;
+        heatmapTensor = landmarkResult[1] as tf.Tensor4D;
+        break;
+      case 'heavy':
+        landmarkTensor = landmarkResult[3] as tf.Tensor2D;
+        poseFlagTensor = landmarkResult[1] as tf.Tensor2D;
+        heatmapTensor = landmarkResult[4] as tf.Tensor4D;
+        break;
+      default:
+        throw new Error(
+            'Model type must be one of lite, full or heavy,' +
+            `but got ${this.modelType}`);
+    }
 
     // Converts the pose-flag tensor into a float that represents the
     // confidence score of pose presence.
@@ -448,7 +478,7 @@ export class BlazePoseTfjsDetector extends BasePoseDetector {
       // Smoothes pose landmark coordinates to reduce jitter.
       if (this.landmarksSmoothingFilterActual == null) {
         this.landmarksSmoothingFilterActual = new KeypointsSmoothingFilter(
-            constants.BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG);
+            constants.BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG_ACTUAL);
       }
       actualLandmarksFiltered = this.landmarksSmoothingFilterActual.apply(
           actualLandmarksFiltered, this.timestamp, imageSize,
@@ -456,7 +486,7 @@ export class BlazePoseTfjsDetector extends BasePoseDetector {
 
       if (this.landmarksSmoothingFilterAuxiliary == null) {
         this.landmarksSmoothingFilterAuxiliary = new KeypointsSmoothingFilter(
-            constants.BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG);
+            constants.BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG_AUXILIARY);
       }
       auxiliaryLandmarksFiltered = this.landmarksSmoothingFilterAuxiliary.apply(
           auxiliaryLandmarksFiltered, this.timestamp, imageSize,

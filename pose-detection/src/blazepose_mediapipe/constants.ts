@@ -14,29 +14,16 @@
  * limitations under the License.
  * =============================================================================
  */
+import {BlazePoseMediaPipeEstimationConfig, BlazePoseMediaPipeModelConfig} from './types';
 
-import {EstimationConfig, ModelConfig} from '../types';
+export const DEFAULT_BLAZEPOSE_MODEL_CONFIG: BlazePoseMediaPipeModelConfig = {
+  runtime: 'mediapipe',
+  enableSmoothing: true,
+  modelType: 'full'
+};
 
-export type BlazePoseModelType = 'lite'|'full'|'heavy';
-
-/**
- * Common BlazePose model config.
- */
-export interface BlazePoseModelConfig extends ModelConfig {
-  // Defaults to 'mediapipe' if not provided.
-  runtime?: 'mediapipe'|'tfjs';
-  enableSmoothing?: boolean;
-  modelType?: BlazePoseModelType;
-}
-
-export interface BlazePoseEstimationConfig extends EstimationConfig {}
-
-/**
- * Mediapipe model loading config.
- */
-export interface BlazePoseMediaPipeModelConfig extends BlazePoseModelConfig {
-  solutionPath?: string;
-}
-
-export interface BlazePoseMediaPipeEstimationConfig extends
-    BlazePoseEstimationConfig {}
+export const DEFAULT_BLAZEPOSE_ESTIMATION_CONFIG:
+    BlazePoseMediaPipeEstimationConfig = {
+      maxPoses: 1,
+      flipHorizontal: false
+    };
