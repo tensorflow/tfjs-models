@@ -16,7 +16,7 @@
  */
 import * as pose from '@mediapipe/pose';
 
-import {BasePoseDetector, PoseDetector} from '../pose_detector';
+import {PoseDetector} from '../pose_detector';
 import {Pose, PoseDetectorInput} from '../types';
 import {validateModelConfig} from './detector_utils';
 
@@ -25,7 +25,7 @@ import {BlazePoseMediaPipeEstimationConfig, BlazePoseMediaPipeModelConfig} from 
 /**
  * MediaPipe detector class.
  */
-export class BlazePoseMediaPipeDetector extends BasePoseDetector {
+class BlazePoseMediaPipeDetector implements PoseDetector {
   private readonly poseSolution: pose.Pose;
 
   // This will be filled out by asynchronous calls to onResults. They will be
@@ -38,7 +38,6 @@ export class BlazePoseMediaPipeDetector extends BasePoseDetector {
 
   // Should not be called outside.
   constructor(config: BlazePoseMediaPipeModelConfig) {
-    super();
     this.poseSolution = new pose.Pose({
       locateFile: (path, base) => {
         if (config.solutionPath) {
@@ -138,19 +137,19 @@ export class BlazePoseMediaPipeDetector extends BasePoseDetector {
   initialize(): Promise<void> {
     return this.poseSolution.initialize();
   }
+}
 
-  /**
-   * Loads the MediaPipe solution.
-   *
-   * @param modelConfig ModelConfig dictionary that contains parameters for
-   * the BlazePose loading process. Please find more details of each parameters
-   * in the documentation of the `BlazePoseMediaPipeModelConfig` interface.
-   */
-  static async load(modelConfig: BlazePoseMediaPipeModelConfig):
-      Promise<PoseDetector> {
-    const config = validateModelConfig(modelConfig);
-    const result = new BlazePoseMediaPipeDetector(config);
-    await result.initialize();
-    return result;
-  }
+/**
+ * Loads the MediaPipe solution.
+ *
+ * @param modelConfig ModelConfig dictionary that contains parameters for
+ * the BlazePose loading process. Please find more details of each parameters
+ * in the documentation of the `BlazePoseMediaPipeModelConfig` interface.
+ */
+export async function load(modelConfig: BlazePoseMediaPipeModelConfig):
+    Promise<PoseDetector> {
+  const config = validateModelConfig(modelConfig);
+  const result = new BlazePoseMediaPipeDetector(config);
+  await result.initialize();
+  return result;
 }
