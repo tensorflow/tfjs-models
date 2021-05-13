@@ -24,7 +24,7 @@ import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
 import * as poseDetection from '../index';
 import {getXYPerFrame, KARMA_SERVER, loadImage, loadVideo} from '../test_util';
 
-const EPSILON_IMAGE = 18;
+const EPSILON_IMAGE = 19;
 const EPSILON_VIDEO = 15;
 
 // ref:

@@ -324,18 +324,18 @@ export class BlazePoseTfjsDetector extends BasePoseDetector {
     // Output[3]: This tensor (shape: [1, 195]) represents 39 5-d keypoints.
     // The first 33 refer to the keypoints. The final 6 key points refer to
     // the alignment points from the detector model and the hands.)
-    // Output [0]: This tensor (shape: [1, 1]) represents the confidence
+    // Output [4]: This tensor (shape: [1, 1]) represents the confidence
     // score.
-    // Output [2]: This tensor (shape: [1, 64, 64, 39]) represents heatmap for
+    // Output [1]: This tensor (shape: [1, 64, 64, 39]) represents heatmap for
     // the 39 landmarks.
     // Lite model:
-    // Output[1]: This tensor (shape: [1, 195]) represents 39 5-d keypoints.
-    // Output[2]: This tensor (shape: [1, 1]) represents the confidence score.
-    // Output[4]: This tensor (shape: [1, 64, 64, 39]) represents heatmap for
+    // Output[4]: This tensor (shape: [1, 195]) represents 39 5-d keypoints.
+    // Output[3]: This tensor (shape: [1, 1]) represents the confidence score.
+    // Output[1]: This tensor (shape: [1, 64, 64, 39]) represents heatmap for
     // the 39 landmarks.
     // Heavy model:
     // Output[3]: This tensor (shape: [1, 195]) represents 39 5-d keypoints.
-    // Output[2]: This tensor (shape: [1, 1]) represents the confidence score.
+    // Output[1]: This tensor (shape: [1, 1]) represents the confidence score.
     // Output[4]: This tensor (shape: [1, 64, 64, 39]) represents heatmap for
     // the 39 landmarks.
     const landmarkResult =
@@ -345,18 +345,18 @@ export class BlazePoseTfjsDetector extends BasePoseDetector {
 
     switch (this.modelType) {
       case 'lite':
-        landmarkTensor = landmarkResult[1] as tf.Tensor2D;
-        poseFlagTensor = landmarkResult[2] as tf.Tensor2D;
-        heatmapTensor = landmarkResult[4] as tf.Tensor4D;
+        landmarkTensor = landmarkResult[3] as tf.Tensor2D;
+        poseFlagTensor = landmarkResult[4] as tf.Tensor2D;
+        heatmapTensor = landmarkResult[1] as tf.Tensor4D;
         break;
       case 'full':
-        landmarkTensor = landmarkResult[3] as tf.Tensor2D;
-        poseFlagTensor = landmarkResult[0] as tf.Tensor2D;
-        heatmapTensor = landmarkResult[2] as tf.Tensor4D;
+        landmarkTensor = landmarkResult[4] as tf.Tensor2D;
+        poseFlagTensor = landmarkResult[3] as tf.Tensor2D;
+        heatmapTensor = landmarkResult[1] as tf.Tensor4D;
         break;
       case 'heavy':
         landmarkTensor = landmarkResult[3] as tf.Tensor2D;
-        poseFlagTensor = landmarkResult[2] as tf.Tensor2D;
+        poseFlagTensor = landmarkResult[1] as tf.Tensor2D;
         heatmapTensor = landmarkResult[4] as tf.Tensor4D;
         break;
       default:
