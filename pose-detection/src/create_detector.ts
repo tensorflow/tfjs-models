@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import {BlazePoseMediaPipeDetector} from './blazepose_mediapipe/detector';
+import {createBlazePoseMediaPipeDetector} from './blazepose_mediapipe/detector';
 import {BlazePoseMediaPipeModelConfig, BlazePoseModelConfig} from './blazepose_mediapipe/types';
 import {BlazePoseTfjsDetector} from './blazepose_tfjs/detector';
 import {BlazePoseTfjsModelConfig} from './blazepose_tfjs/types';
@@ -42,7 +42,7 @@ export async function createDetector(
       const config = modelConfig as BlazePoseModelConfig;
       return config != null && config.runtime === 'tfjs' ?
           BlazePoseTfjsDetector.load(modelConfig as BlazePoseTfjsModelConfig) :
-          BlazePoseMediaPipeDetector.load(
+          await createBlazePoseMediaPipeDetector(
               config as BlazePoseMediaPipeModelConfig);
     case SupportedModels.MoveNet:
       return MoveNetDetector.load(modelConfig as MoveNetModelConfig);

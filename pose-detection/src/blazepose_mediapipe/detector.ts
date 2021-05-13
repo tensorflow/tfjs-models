@@ -25,7 +25,7 @@ import {BlazePoseMediaPipeEstimationConfig, BlazePoseMediaPipeModelConfig} from 
 /**
  * MediaPipe detector class.
  */
-export class BlazePoseMediaPipeDetector extends BasePoseDetector {
+class BlazePoseMediaPipeDetector extends BasePoseDetector {
   private readonly poseSolution: pose.Pose;
 
   // This will be filled out by asynchronous calls to onResults. They will be
@@ -37,7 +37,7 @@ export class BlazePoseMediaPipeDetector extends BasePoseDetector {
   private selfieMode = false;
 
   // Should not be called outside.
-  private constructor(config: BlazePoseMediaPipeModelConfig) {
+  constructor(config: BlazePoseMediaPipeModelConfig) {
     super();
     this.poseSolution = new pose.Pose({
       locateFile: (path, base) => {
@@ -53,13 +53,10 @@ export class BlazePoseMediaPipeDetector extends BasePoseDetector {
       case 'lite':
         modelComplexity = 0;
         break;
-      case 'full':
-        modelComplexity = 1;
-        break;
       case 'heavy':
         modelComplexity = 2;
         break;
-      default:
+      default:  // "full"
         modelComplexity = 1;
         break;
     }
@@ -84,19 +81,6 @@ export class BlazePoseMediaPipeDetector extends BasePoseDetector {
                                              score: landmark.visibility
                                            }))
     }];
-  }
-
-  /**
-   * Loads the MediaPipe solution.
-   *
-   * @param modelConfig ModelConfig dictionary that contains parameters for
-   * the BlazePose loading process. Please find more details of each parameters
-   * in the documentation of the `BlazePoseMediaPipeModelConfig` interface.
-   */
-  static async load(modelConfig: BlazePoseMediaPipeModelConfig):
-      Promise<PoseDetector> {
-    const config = validateModelConfig(modelConfig);
-    return new BlazePoseMediaPipeDetector(config);
   }
 
   /**
@@ -149,4 +133,23 @@ export class BlazePoseMediaPipeDetector extends BasePoseDetector {
   reset() {
     this.poseSolution.reset();
   }
+
+  initialize(): Promise<void> {
+    return this.poseSolution.initialize();
+  }
+}
+
+/**
+ * Loads the MediaPipe solution.
+ *
+ * @param modelConfig ModelConfig dictionary that contains parameters for
+ * the BlazePose loading process. Please find more details of each parameters
+ * in the documentation of the `BlazePoseMediaPipeModelConfig` interface.
+ */
+export async function createBlazePoseMediaPipeDetector(
+    modelConfig: BlazePoseMediaPipeModelConfig): Promise<PoseDetector> {
+  const config = validateModelConfig(modelConfig);
+  const result = new BlazePoseMediaPipeDetector(config);
+  await result.initialize();
+  return result;
 }

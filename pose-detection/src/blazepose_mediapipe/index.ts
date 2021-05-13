@@ -15,4 +15,4 @@
  * =============================================================================
  */
 
-export {BlazePoseMediaPipeDetector} from './detector';
+export {createBlazePoseMediaPipeDetector} from './detector';
