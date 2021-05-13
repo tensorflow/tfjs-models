@@ -43,7 +43,7 @@ export async function createDetector(
       return config != null && config.runtime === 'tfjs' ?
           BlazePoseTfjsDetector.load(modelConfig as BlazePoseTfjsModelConfig) :
           BlazePoseMediaPipeDetector.load(
-              config as BlazePoseMediaPipeModelConfig);
+              modelConfig as BlazePoseMediaPipeModelConfig);
     case SupportedModels.MoveNet:
       return MoveNetDetector.load(modelConfig as MoveNetModelConfig);
     default:
