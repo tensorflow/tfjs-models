@@ -28,7 +28,7 @@ import {isVideo} from '../calculators/is_video';
 import {KeypointsSmoothingFilter} from '../calculators/keypoints_smoothing';
 import {normalizedKeypointsToKeypoints} from '../calculators/normalized_keypoints_to_keypoints';
 import {shiftImageValue} from '../calculators/shift_image_value';
-import {BasePoseDetector, PoseDetector} from '../pose_detector';
+import {PoseDetector} from '../pose_detector';
 import {Keypoint, Pose, PoseDetectorInput} from '../types';
 
 import {calculateAlignmentPointsRects} from './calculators/calculate_alignment_points_rects';
@@ -58,7 +58,7 @@ type PoseLandmarksByRoiResult = {
 /**
  * BlazePose detector class.
  */
-export class BlazePoseTfjsDetector extends BasePoseDetector {
+class BlazePoseTfjsDetector implements PoseDetector {
   private readonly anchors: Rect[];
   private readonly anchorTensor: AnchorTensor;
 
@@ -72,14 +72,11 @@ export class BlazePoseTfjsDetector extends BasePoseDetector {
   private landmarksSmoothingFilterActual: KeypointsSmoothingFilter;
   private landmarksSmoothingFilterAuxiliary: KeypointsSmoothingFilter;
 
-  // Should not be called outside.
-  private constructor(
+  constructor(
       private readonly detectorModel: tfconv.GraphModel,
       private readonly landmarkModel: tfconv.GraphModel,
       private readonly enableSmoothing: boolean,
       private readonly modelType: BlazePoseModelType) {
-    super();
-
     this.anchors =
         createSsdAnchors(constants.BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION);
     const anchorW = tf.tensor1d(this.anchors.map(a => a.width));
@@ -87,28 +84,6 @@ export class BlazePoseTfjsDetector extends BasePoseDetector {
     const anchorX = tf.tensor1d(this.anchors.map(a => a.xCenter));
     const anchorY = tf.tensor1d(this.anchors.map(a => a.yCenter));
     this.anchorTensor = {x: anchorX, y: anchorY, w: anchorW, h: anchorH};
-  }
-
-  /**
-   * Loads the BlazePose model. The model to be loaded is configurable using the
-   * config dictionary `BlazePoseTfjsModelConfig`. Please find more details in
-   * the documentation of the `BlazePoseTfjsModelConfig`.
-   *
-   * @param modelConfig ModelConfig dictionary that contains parameters for
-   * the BlazePose loading process. Please find more details of each parameters
-   * in the documentation of the `BlazePoseTfjsModelConfig` interface.
-   */
-  static async load(modelConfig: BlazePoseTfjsModelConfig):
-      Promise<PoseDetector> {
-    const config = validateModelConfig(modelConfig);
-
-    const [detectorModel, landmarkModel] = await Promise.all([
-      tfconv.loadGraphModel(config.detectorModelUrl),
-      tfconv.loadGraphModel(config.landmarkModelUrl)
-    ]);
-
-    return new BlazePoseTfjsDetector(
-        detectorModel, landmarkModel, config.enableSmoothing, config.modelType);
   }
 
   /**
@@ -495,4 +470,26 @@ export class BlazePoseTfjsDetector extends BasePoseDetector {
 
     return {actualLandmarksFiltered, auxiliaryLandmarksFiltered};
   }
+}
+
+/**
+ * Loads the BlazePose model. The model to be loaded is configurable using the
+ * config dictionary `BlazePoseTfjsModelConfig`. Please find more details in
+ * the documentation of the `BlazePoseTfjsModelConfig`.
+ *
+ * @param modelConfig ModelConfig dictionary that contains parameters for
+ * the BlazePose loading process. Please find more details of each parameters
+ * in the documentation of the `BlazePoseTfjsModelConfig` interface.
+ */
+export async function loadBlazePoseTfjsDetector(
+    modelConfig: BlazePoseTfjsModelConfig): Promise<PoseDetector> {
+  const config = validateModelConfig(modelConfig);
+
+  const [detectorModel, landmarkModel] = await Promise.all([
+    tfconv.loadGraphModel(config.detectorModelUrl),
+    tfconv.loadGraphModel(config.landmarkModelUrl)
+  ]);
+
+  return new BlazePoseTfjsDetector(
+      detectorModel, landmarkModel, config.enableSmoothing, config.modelType);
 }

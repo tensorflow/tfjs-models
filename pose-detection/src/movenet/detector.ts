@@ -25,7 +25,7 @@ import {isVideo} from '../calculators/is_video';
 import {KeypointsOneEuroFilter} from '../calculators/keypoints_one_euro_filter';
 import {LowPassFilter} from '../calculators/low_pass_filter';
 import {COCO_KEYPOINTS} from '../constants';
-import {BasePoseDetector, PoseDetector} from '../pose_detector';
+import {PoseDetector} from '../pose_detector';
 import {InputResolution, Keypoint, Pose, PoseDetectorInput, SupportedModels} from '../types';
 import {getKeypointIndexByName} from '../util';
 
@@ -36,7 +36,7 @@ import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
 /**
  * MoveNet detector class.
  */
-export class MoveNetDetector extends BasePoseDetector {
+class MoveNetDetector implements PoseDetector {
   private readonly modelInputResolution:
       InputResolution = {height: 0, width: 0};
   private readonly keypointIndexByName =
@@ -50,12 +50,9 @@ export class MoveNetDetector extends BasePoseDetector {
   private cropRegionFilterYMax = new LowPassFilter(CROP_FILTER_ALPHA);
   private cropRegionFilterXMax = new LowPassFilter(CROP_FILTER_ALPHA);
 
-  // Should not be called outside.
-  private constructor(
+  constructor(
       private readonly moveNetModel: tfc.GraphModel,
       config: MoveNetModelConfig) {
-    super();
-
     if (config.modelType === SINGLEPOSE_LIGHTNING) {
       this.modelInputResolution.width = MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION;
       this.modelInputResolution.height =
@@ -64,33 +61,6 @@ export class MoveNetDetector extends BasePoseDetector {
       this.modelInputResolution.width = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
       this.modelInputResolution.height = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
     }
-  }
-
-  /**
-   * Loads the MoveNet model instance from a checkpoint. The model to be loaded
-   * is configurable using the config dictionary `ModelConfig`. Please find more
-   * details in the documentation of the `ModelConfig`.
-   *
-   * @param config `ModelConfig` dictionary that contains parameters for
-   * the MoveNet loading process. Please find more details of each parameter
-   * in the documentation of the `ModelConfig` interface.
-   */
-  static async load(modelConfig: MoveNetModelConfig = MOVENET_CONFIG):
-      Promise<PoseDetector> {
-    const config = validateModelConfig(modelConfig);
-    let model: tfc.GraphModel;
-    if (config.modelUrl) {
-      model = await tfc.loadGraphModel(config.modelUrl);
-    } else {
-      let modelUrl;
-      if (config.modelType === SINGLEPOSE_LIGHTNING) {
-        modelUrl = MOVENET_SINGLEPOSE_LIGHTNING_URL;
-      } else if (config.modelType === SINGLEPOSE_THUNDER) {
-        modelUrl = MOVENET_SINGLEPOSE_THUNDER_URL;
-      }
-      model = await tfc.loadGraphModel(modelUrl, {fromTFHub: true});
-    }
-    return new MoveNetDetector(model, config);
   }
 
   /**
@@ -492,4 +462,31 @@ export class MoveNetDetector extends BasePoseDetector {
       width: boxWidth
     };
   }
+}
+
+/**
+ * Loads the MoveNet model instance from a checkpoint. The model to be loaded
+ * is configurable using the config dictionary `ModelConfig`. Please find more
+ * details in the documentation of the `ModelConfig`.
+ *
+ * @param config `ModelConfig` dictionary that contains parameters for
+ * the MoveNet loading process. Please find more details of each parameter
+ * in the documentation of the `ModelConfig` interface.
+ */
+export async function loadMoveNetDetector(
+    modelConfig: MoveNetModelConfig = MOVENET_CONFIG): Promise<PoseDetector> {
+  const config = validateModelConfig(modelConfig);
+  let model: tfc.GraphModel;
+  if (config.modelUrl) {
+    model = await tfc.loadGraphModel(config.modelUrl);
+  } else {
+    let modelUrl;
+    if (config.modelType === SINGLEPOSE_LIGHTNING) {
+      modelUrl = MOVENET_SINGLEPOSE_LIGHTNING_URL;
+    } else if (config.modelType === SINGLEPOSE_THUNDER) {
+      modelUrl = MOVENET_SINGLEPOSE_THUNDER_URL;
+    }
+    model = await tfc.loadGraphModel(modelUrl, {fromTFHub: true});
+  }
+  return new MoveNetDetector(model, config);
 }
