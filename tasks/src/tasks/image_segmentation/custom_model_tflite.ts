@@ -18,41 +18,41 @@
 import * as tflite from '@tensorflow/tfjs-tflite';
 import {TaskModelLoader} from '../../task_model';
 import {Runtime, Task, TFLiteCustomModelCommonLoadingOption} from '../common';
-import {ImageClassifierTFLite} from './tflite_common';
+import {ImageSegmenterTFLite} from './tflite_common';
 
 // The global namespace type.
 type TFLiteNS = typeof tflite;
 
 /** Loading options. */
-export interface ICCustomModelTFLiteLoadingOptions extends
-    TFLiteCustomModelCommonLoadingOption, tflite.ImageClassifierOptions {}
+export interface ISCustomModelTFLiteLoadingOptions extends
+    TFLiteCustomModelCommonLoadingOption, tflite.ImageSegmenterOptions {}
 
 /**
  * Inference options.
  *
  * TODO: placeholder for now.
  */
-export interface ICCustomModelTFLiteInferenceOptions {}
+export interface ISCustomModelTFLiteInferenceOptions {}
 
-/** Loader for custom image classification TFLite model. */
-export class ImageClassificationCustomModelTFLiteLoader extends TaskModelLoader<
-    TFLiteNS, ICCustomModelTFLiteLoadingOptions, ICCustomModelTFLite> {
+/** Loader for custom image segmentation TFLite model. */
+export class ImageSegmentationCustomModelTFLiteLoader extends TaskModelLoader<
+    TFLiteNS, ISCustomModelTFLiteLoadingOptions, ISCustomModelTFLite> {
   readonly metadata = {
-    name: 'Image classification with TFLite models',
-    description: 'An image classfier backed by the TFLite Task Library. ' +
+    name: 'Image segmentation with TFLite models',
+    description: 'An image segmentation backed by the TFLite Task Library. ' +
         'It can work with any models that meet the ' +
         '<a href="https://www.tensorflow.org/lite/inference_with_metadata/' +
-        'task_library/image_classifier#model_compatibility_requirements" ' +
-        'target:"_blank">model requirements</a>. Try models from this ' +
+        'task_library/image_segmenter#model_compatibility_requirements" ' +
+        'target="_blank">model requirements</a>.Try models from this ' +
         '<a href="https://tfhub.dev/tensorflow/collections/lite/task-library/' +
-        'image-classifier/1" target="_blank">collection</a>.',
+        'image-segmenter/1" target="_blank">collection</a>.',
     resourceUrls: {
       'TFLite task library': 'https://www.tensorflow.org/lite/' +
           'inference_with_metadata/task_library/overview',
     },
     runtime: Runtime.TFLITE,
     version: '0.0.1-alpha.3',
-    supportedTasks: [Task.IMAGE_CLASSIFICATION],
+    supportedTasks: [Task.IMAGE_SEGMENTATION],
   };
   readonly packageUrls =
       [[`https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-tflite@${
@@ -61,55 +61,55 @@ export class ImageClassificationCustomModelTFLiteLoader extends TaskModelLoader<
 
   protected async transformSourceModel(
       sourceModelGlobal: TFLiteNS,
-      loadingOptions?: ICCustomModelTFLiteLoadingOptions):
-      Promise<ICCustomModelTFLite> {
-    const tfliteImageClassifier =
-        await sourceModelGlobal.ImageClassifier.create(loadingOptions.model);
-    return new ICCustomModelTFLite(tfliteImageClassifier);
+      loadingOptions?: ISCustomModelTFLiteLoadingOptions):
+      Promise<ISCustomModelTFLite> {
+    const tfliteImageSegmenter =
+        await sourceModelGlobal.ImageSegmenter.create(loadingOptions.model);
+    return new ISCustomModelTFLite(tfliteImageSegmenter);
   }
 }
 
 /**
- * A custom TFLite image classification model loaded from a model url or
- * an `ArrayBuffer` in memory.
+ * A custom TFLite image segmentation model loaded from a model url or an
+ * `ArrayBuffer` in memory.
  *
- * The underlying image classifier is built on top of the [TFLite Task
+ * The underlying image segmenter is built on top of the [TFLite Task
  * Library](https://www.tensorflow.org/lite/inference_with_metadata/task_library/overview).
  * As a result, the custom model needs to meet the [metadata
- * requirements](https://www.tensorflow.org/lite/inference_with_metadata/task_library/image_classifier#model_compatibility_requirements).
+ * requirements](https://www.tensorflow.org/lite/inference_with_metadata/task_library/image_segmenter#model_compatibility_requirements).
  *
  * Usage:
  *
  * ```js
  * // Load the model from a custom url with other options (optional).
- * const model = await tfTask.ImageClassification.CustomModel.TFLite.load({
+ * const model = await tfTask.ImageSemgentation.CustomModel.TFLite.load({
  *   model:
- * 'https://tfhub.dev/google/lite-model/aiy/vision/classifier/plants_V1/3',
+ * 'https://tfhub.dev/tensorflow/lite-model/deeplabv3/1/metadata/2?lite-format=tflite',
  * });
  *
  * // Run inference on an image.
  * const img = document.querySelector('img');
  * const result = await model.predict(img);
- * console.log(result.classes);
+ * console.log(result);
  *
  * // Clean up.
  * model.cleanUp();
  * ```
  *
- * Refer to `tfTask.ImageClassifier` for the `predict` and `cleanUp` method.
+ * Refer to `tfTask.ImageSegmenter` for the `predict` and `cleanUp` method.
  *
  * @docextratypes [
  *   {description: 'Options for `load`', symbol:
- * 'ICCustomModelTFLiteLoadingOptions'},
+ * 'ISCustomModelTFLiteLoadingOptions'},
  *   {description: 'Options for `predict`', symbol:
- * 'ICCustomModelTFLiteInferenceOptions'}
+ * 'ISCustomModelTFLiteInferenceOptions'}
  * ]
  *
  *
- * @doc {heading: 'Image Classification', subheading: 'Models'}
+ * @doc {heading: 'Image Segmentation', subheading: 'Models'}
  */
-export class ICCustomModelTFLite extends
-    ImageClassifierTFLite<ICCustomModelTFLiteInferenceOptions> {}
+export class ISCustomModelTFLite extends
+    ImageSegmenterTFLite<ISCustomModelTFLiteInferenceOptions> {}
 
-export const imageClassificationCustomModelTfliteLoader =
-    new ImageClassificationCustomModelTFLiteLoader();
+export const imageSegmenterCustomModelTfliteLoader =
+    new ImageSegmentationCustomModelTFLiteLoader();

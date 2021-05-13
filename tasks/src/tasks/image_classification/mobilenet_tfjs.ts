@@ -16,9 +16,11 @@
  */
 
 import * as mobilenet from '@tensorflow-models/mobilenet';
+
 import {TaskModelLoader} from '../../task_model';
-import {ensureTFJSBackend, Runtime, Task, TFJSModelCommonLoadingOption} from '../common';
-import {Class, ImageClassifier, ImageClassifierResult} from './common';
+import {Class, ensureTFJSBackend, Runtime, Task, TFJSModelCommonLoadingOption} from '../common';
+
+import {ImageClassificationResult, ImageClassifier} from './common';
 
 // The global namespace type.
 type MobilenetNS = typeof mobilenet;
@@ -38,7 +40,7 @@ export class MobilenetTFJSLoader extends
     TaskModelLoader<MobilenetNS, MobilenetTFJSLoadingOptions, MobilenetTFJS> {
   readonly metadata = {
     name: 'TFJS Mobilenet',
-    description: 'Run mobilenet with TFJS models',
+    description: 'Run mobilenet image classification model with TFJS',
     resourceUrls: {
       'github':
           'https://github.com/tensorflow/tfjs-models/tree/master/mobilenet',
@@ -69,11 +71,8 @@ export class MobilenetTFJSLoader extends
  * // Load the model with options (optional).
  * //
  * // By default, it uses mobilenet V1 with webgl backend. You can change them
- * // in options.
- * const model = await tfTask.ImageClassification.Mobilenet.TFJS.load({
- *   version: 2,
- *   backend: 'wasm',
- * });
+ * // in the options parameter of the `load` function (see below for docs).
+ * const model = await tfTask.ImageClassification.Mobilenet.TFJS.load();
  *
  * // Run inference on an image with options (optional).
  * const img = document.querySelector('img');
@@ -105,7 +104,7 @@ export class MobilenetTFJS extends
   async predict(
       img: ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement,
       infereceOptions?: MobilenetTFJSInferenceOptions):
-      Promise<ImageClassifierResult> {
+      Promise<ImageClassificationResult> {
     if (!this.mobilenetModel) {
       throw new Error('source model is not loaded');
     }
@@ -115,10 +114,10 @@ export class MobilenetTFJS extends
     const classes: Class[] = mobilenetResults.map(result => {
       return {
         className: result.className,
-        probability: result.probability,
+        score: result.probability,
       };
     });
-    const finalResult: ImageClassifierResult = {
+    const finalResult: ImageClassificationResult = {
       classes,
     };
     return finalResult;

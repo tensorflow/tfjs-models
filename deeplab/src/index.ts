@@ -22,7 +22,14 @@ import {DeepLabInput, DeepLabOutput, ModelArchitecture, ModelConfig, PredictionC
 import {getColormap, getLabels, getURL, toInputTensor, toSegmentationImage} from './utils';
 
 export {version} from './version';
-export {getColormap, getLabels, getURL, toSegmentationImage};
+export {
+  getColormap,
+  getLabels,
+  getURL,
+  ModelConfig,
+  PredictionConfig,
+  toSegmentationImage
+};
 
 /**
  * Initializes the DeepLab model and returns a `SemanticSegmentation` object.

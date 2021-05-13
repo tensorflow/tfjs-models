@@ -16,44 +16,44 @@
  */
 
 import * as tflite from '@tensorflow/tfjs-tflite';
-import {Class} from '../common';
 
-import {ImageClassificationResult, ImageClassifier} from './common';
+import {DetectedObject, ObjectDetectionResult, ObjectDetector} from './common';
 
 /**
- * The base class for all image classification TFLite models.
+ * The base class for all object detection TFLite models.
  *
  * @template T The type of inference options.
  */
-export class ImageClassifierTFLite<T> extends ImageClassifier<T> {
-  constructor(private tfliteImageClassifier: tflite.ImageClassifier) {
+export class ObjectDetectorTFLite<T> extends ObjectDetector<T> {
+  constructor(private tfliteObjectDetector: tflite.ObjectDetector) {
     super();
   }
 
   async predict(
       img: ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement,
-      infereceOptions?: T): Promise<ImageClassificationResult> {
-    if (!this.tfliteImageClassifier) {
+      infereceOptions?: T): Promise<ObjectDetectionResult> {
+    if (!this.tfliteObjectDetector) {
       throw new Error('source model is not loaded');
     }
-    const tfliteResults = this.tfliteImageClassifier.classify(img);
+    const tfliteResults = this.tfliteObjectDetector.detect(img);
     if (!tfliteResults) {
-      return {classes: []};
-    }
-    const classes: Class[] = tfliteResults.map(result => {
+      return {objects: []};
+    };
+    const objects: DetectedObject[] = tfliteResults.map(result => {
       return {
-        className: result.className,
-        score: result.probability,
+        boundingBox: result.boundingBox,
+        className: result.classes[0].className,
+        score: result.classes[0].probability,
       };
     });
-    const finalResult: ImageClassificationResult = {classes};
+    const finalResult: ObjectDetectionResult = {objects};
     return finalResult;
   }
 
   cleanUp() {
-    if (!this.tfliteImageClassifier) {
+    if (!this.tfliteObjectDetector) {
       throw new Error('source model is not loaded');
     }
-    this.tfliteImageClassifier.cleanUp();
+    this.tfliteObjectDetector.cleanUp();
   }
 }
