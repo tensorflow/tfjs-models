@@ -51,9 +51,11 @@ async function createDetector() {
       const runtime = STATE.backend.split('-')[0];
       if (runtime === 'mediapipe') {
         return posedetection.createDetector(
-            STATE.model, {runtime, solutionPath: './'});
+            STATE.model,
+            {runtime, modelType: STATE.modelConfig.type, solutionPath: './'});
       } else if (runtime === 'tfjs') {
-        return posedetection.createDetector(STATE.model, {runtime});
+        return posedetection.createDetector(
+            STATE.model, {runtime, modelType: STATE.modelConfig.type});
       }
     case posedetection.SupportedModels.MoveNet:
       const modelType = STATE.modelConfig.type == 'lightning' ?
