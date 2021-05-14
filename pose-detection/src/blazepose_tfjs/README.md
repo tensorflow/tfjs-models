@@ -1,13 +1,14 @@
 # BlazePose
 
-BlazePose-MediaPipe wraps our powerful MediaPipe JS Solution within the familiar
-TFJS API [mediapipe.dev](https://mediapipe.dev). Three models are offered.
+BlazePose TFJS uses TF.js runtime to execute the model, the preprocessing and postprocessing steps.
+Three models are offered.
 
-* 'lite' - our smallest model which trades footprint for accuracy.
+* 'lite' - our smallest model that is less accurate but smaller in model size and minimal memory footprint.
 * 'heavy' - our largest model intended for high accuracy, regardless of size.
-* 'full' - A middle ground between Lite and Heavy.
+* 'full' - A middle ground between performance and accuracy.
 
 Please try our our live [demo](https://storage.googleapis.com/tfjs-models/demos/pose-detection/index.html?model=blazepose).
+In the runtime-backend dropdown, choose 'tfjs-webgl'.
 
 --------------------------------------------------------------------------------
 
@@ -29,15 +30,11 @@ If you are using the Pose API via npm, you need to import the libraries first.
 
 ### Import the library
 
-For NPM, you will install the module. At the time of this release, the supported
-version is 0.3.x.
-
-```bash
-npm install @mediapipe/pose@0.3.x
-```
-
 ```javascript
 import * as poseDetection from '@tensorflow-models/pose-detection';
+import * as tf from '@tensorflow/tfjs-core';
+// Register one of the TF.js backends.
+import '@tensorflow/tfjs-backend-webgl';
 ```
 
 
@@ -46,26 +43,23 @@ import * as poseDetection from '@tensorflow-models/pose-detection';
 ```javascript
 const model = poseDetection.SupportedModels.BlazePose;
 const detectorConfig = {
-  runtime: 'mediapipe',
-  solutionPath: 'base/node_modules/@mediapipe/pose'
+  runtime: 'tfjs'
 };
 detector = await poseDetection.createDetector(model, detectorConfig);
 ```
 export interface BlazePoseModelConfig extends ModelConfig {
-  runtime?: 'mediapipe'|'tfjs';
+  runtime: 'mediapipe'|'tfjs';
   enableSmoothing?: boolean;
   modelType?: BlazePoseModelType;
 }
 Pass in `poseDetection.SupportedModels.BlazePose` from the
 `posedetection.SupportedModels` enum list along with a `detectorConfig` to the
-`createDetector` method to load and initialize the MediaPipe model.
+`createDetector` method to load and initialize the model.
 
 `detectorConfig` is a dictionary that defines BlazePose specific configurations.
-For BlazePose-MediaPipe:
+For BlazePoseTfjs:
 
-*   *backend*: Must be set to 'mediapipe' to use this model.
-*   *solutionPath*: The path to where the additional model files are located on
-    your server.
+*   *backend*: Must be set to 'tfjs' to use this model.
 *   *enableSmoothing*: Defaults to true, but you can turn this off by setting
     this option to false.
 *   *modelType*: specify which variant to load from BlazePoseModelType (i.e.,
@@ -74,25 +68,14 @@ For BlazePose-MediaPipe:
 ### Run inference
 
 Now you can use the detector to detect poses. The `estimatePoses` method
-accepts both image and video in many formats, including:
+accepts either image or video in many formats, including: `tf.Tensor3D`,
 `HTMLVideoElement`, `HTMLImageElement`, `HTMLCanvasElement`. If you want more
 options, you can pass in a second `estimationConfig` parameter.
-
-`estimationConfig` is a dictionary that defines the parameters used by
-BlazePose-MediaPipe at inference time:
-
-*   *enableSmoothing*: A boolean indicating whether to use temporal filter to
-    smooth the predicted keypoints. Defaults to *True*. The temporal filter
-    relies on the `currentTime` field of the `HTMLVideoElement`. You can
-    override this timestamp by passing in your own timestamp (in microseconds)
-    as the third parameter. This is useful when the input is a tensor, which
-    doesn't have the `currentTime` field. Or in testing, to simulate different FPS.
 
 The following code snippet demonstrates how to run the model inference:
 
 ```javascript
-const estimationConfig = {enableSmoothing: true};
-const poses = await detector.estimatePoses(image, estimationConfig);
+const poses = await detector.estimatePoses(image);
 ```
 
 Please refer to the Pose API
