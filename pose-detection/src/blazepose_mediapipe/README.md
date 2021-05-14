@@ -52,7 +52,6 @@ const detectorConfig = {
 detector = await poseDetection.createDetector(model, detectorConfig);
 ```
 export interface BlazePoseModelConfig extends ModelConfig {
-  // Defaults to 'mediapipe' if not provided.
   runtime?: 'mediapipe'|'tfjs';
   enableSmoothing?: boolean;
   modelType?: BlazePoseModelType;
