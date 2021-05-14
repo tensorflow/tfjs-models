@@ -17,7 +17,7 @@
 
 import * as poseDetection from './index';
 
-const SIMULATED_INTERVAL = 33333;  // in microseconds
+const SIMULATED_INTERVAL = 33.333;  // in milliseconds
 
 /** Karma server directory serving local files. */
 export const KARMA_SERVER = './base/src/test_data';

@@ -99,8 +99,8 @@ describeWithFlags('MediaPipe Pose video ', BROWSER_ENVS, () => {
 
     const callback = async(video: HTMLVideoElement, timestamp: number):
         Promise<poseDetection.Pose[]> => {
-          const poses = await detector.estimatePoses(
-              video, null /* config */, timestamp / 1000);
+          const poses =
+              await detector.estimatePoses(video, null /* config */, timestamp);
           result.push(poses[0].keypoints.map(kp => [kp.x, kp.y]));
           return poses;
         };

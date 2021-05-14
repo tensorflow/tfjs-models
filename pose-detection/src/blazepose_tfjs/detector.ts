@@ -19,7 +19,7 @@ import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 import {BlazePoseModelType} from '../blazepose_mediapipe/types';
 
-import {SECOND_TO_MICRO_SECONDS} from '../calculators/constants';
+import {MILLISECOND_TO_MICRO_SECONDS, SECOND_TO_MICRO_SECONDS} from '../calculators/constants';
 import {convertImageToTensor} from '../calculators/convert_image_to_tensor';
 import {getImageSize, toImageTensor} from '../calculators/image_utils';
 import {ImageSize} from '../calculators/interfaces/common_interfaces';
@@ -105,9 +105,9 @@ class BlazePoseTfjsDetector implements PoseDetector {
    *       flipHorizontal: Optional. Default to false. When image data comes
    *       from camera, the result has to flip horizontally.
    *
-   * @param timestamp Optional. In microseconds, i.e. 1e-6 of a second. This is
-   *     useful when image is a tensor, which doesn't have timestamp info. Or
-   *     to override timestamp in a video.
+   * @param timestamp Optional. In milliseconds. This is useful when image is
+   *     a tensor, which doesn't have timestamp info. Or to override timestamp
+   *     in a video.
    *
    * @return An array of `Pose`s.
    */
@@ -128,7 +128,7 @@ class BlazePoseTfjsDetector implements PoseDetector {
 
     // User provided timestamp will override video's timestamp.
     if (timestamp != null) {
-      this.timestamp = timestamp;
+      this.timestamp = timestamp * MILLISECOND_TO_MICRO_SECONDS;
     } else {
       // For static images, timestamp should be null.
       this.timestamp =
