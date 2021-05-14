@@ -23,8 +23,7 @@ export type BlazePoseModelType = 'lite'|'full'|'heavy';
  * Common BlazePose model config.
  */
 export interface BlazePoseModelConfig extends ModelConfig {
-  // Defaults to 'mediapipe' if not provided.
-  runtime?: 'mediapipe'|'tfjs';
+  runtime: 'mediapipe'|'tfjs';
   enableSmoothing?: boolean;
   modelType?: BlazePoseModelType;
 }
@@ -35,6 +34,7 @@ export interface BlazePoseEstimationConfig extends EstimationConfig {}
  * Mediapipe model loading config.
  */
 export interface BlazePoseMediaPipeModelConfig extends BlazePoseModelConfig {
+  runtime: 'mediapipe';
   solutionPath?: string;
 }
 

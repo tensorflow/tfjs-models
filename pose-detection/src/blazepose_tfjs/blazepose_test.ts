@@ -39,9 +39,6 @@ const EXPECTED_LANDMARKS = [
 ];
 
 describeWithFlags('BlazePose', ALL_ENVS, () => {
-  let detector: poseDetection.PoseDetector;
-  let startTensors: number;
-
   let timeout: number;
 
   beforeAll(() => {
@@ -53,15 +50,12 @@ describeWithFlags('BlazePose', ALL_ENVS, () => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
   });
 
-  beforeEach(async () => {
-    startTensors = tf.memory().numTensors;
+  it('estimatePoses does not leak memory.', async () => {
+    const startTensors = tf.memory().numTensors;
 
     // Note: this makes a network request for model assets.
-    detector = await poseDetection.createDetector(
+    const detector = await poseDetection.createDetector(
         poseDetection.SupportedModels.BlazePose, {runtime: 'tfjs'});
-  });
-
-  it('estimatePoses does not leak memory', async () => {
     const input: tf.Tensor3D = tf.zeros([128, 128, 3]);
 
     const beforeTensors = tf.memory().numTensors;
@@ -76,95 +70,106 @@ describeWithFlags('BlazePose', ALL_ENVS, () => {
     expect(tf.memory().numTensors).toEqual(startTensors);
   });
 
-  describeWithFlags('BlazePose static image ', BROWSER_ENVS, () => {
-    let detector: poseDetection.PoseDetector;
-    let image: HTMLImageElement;
-    let timeout: number;
+  it('throws error when runtime is not set.', async (done) => {
+    try {
+      await poseDetection.createDetector(
+          poseDetection.SupportedModels.BlazePose);
+      done.fail('Loading without runtime succeeded unexpectedly.');
+    } catch (e) {
+      expect(e.message).toEqual(
+          'Expect modelConfig.runtime to be either ' +
+          'tfjs or mediapipe, but got undefined');
+      done();
+    }
+  });
+});
 
-    beforeAll(async () => {
-      timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
-      jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
+describeWithFlags('BlazePose static image ', BROWSER_ENVS, () => {
+  let detector: poseDetection.PoseDetector;
+  let image: HTMLImageElement;
+  let timeout: number;
 
-      image = await loadImage('pose.jpg', 1000, 667);
-    });
+  beforeAll(async () => {
+    timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
 
-    afterAll(() => {
-      jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
-    });
-
-    it('test.', async () => {
-      const startTensors = tf.memory().numTensors;
-
-      // Note: this makes a network request for model assets.
-      detector = await poseDetection.createDetector(
-          poseDetection.SupportedModels.BlazePose,
-          {runtime: 'tfjs', enableSmoothing: false});
-
-      const beforeTensors = tf.memory().numTensors;
-
-      const result = await detector.estimatePoses(
-          image,
-          {runtime: 'tfjs', maxPoses: 1, flipHorizontal: false} as
-              poseDetection.BlazePoseTfjsEstimationConfig);
-      const xy =
-          result[0].keypoints.map((keypoint) => [keypoint.x, keypoint.y]);
-      const expected = EXPECTED_LANDMARKS;
-      expectArraysClose(xy, expected, EPSILON_IMAGE);
-
-      expect(tf.memory().numTensors).toEqual(beforeTensors);
-
-      detector.dispose();
-
-      expect(tf.memory().numTensors).toEqual(startTensors);
-    });
+    image = await loadImage('pose.jpg', 1000, 667);
   });
 
-  describeWithFlags('BlazePose video ', BROWSER_ENVS, () => {
-    let detector: poseDetection.PoseDetector;
-    let timeout: number;
-    let expected: number[][][];
+  afterAll(() => {
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
+  });
 
-    beforeAll(async () => {
-      timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
-      jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
+  it('test.', async () => {
+    const startTensors = tf.memory().numTensors;
 
-      expected = await fetch(`${KARMA_SERVER}/pose_squats.full.json`)
-                     .then(response => response.json())
-                     .then(result => getXYPerFrame(result));
-    });
+    // Note: this makes a network request for model assets.
+    detector = await poseDetection.createDetector(
+        poseDetection.SupportedModels.BlazePose,
+        {runtime: 'tfjs', enableSmoothing: false});
 
-    afterAll(() => {
-      jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
-    });
+    const beforeTensors = tf.memory().numTensors;
 
-    it('test.', async () => {
-      // Note: this makes a network request for model assets.
+    const result = await detector.estimatePoses(
+        image,
+        {runtime: 'tfjs', maxPoses: 1, flipHorizontal: false} as
+            poseDetection.BlazePoseTfjsEstimationConfig);
+    const xy = result[0].keypoints.map((keypoint) => [keypoint.x, keypoint.y]);
+    const expected = EXPECTED_LANDMARKS;
+    expectArraysClose(xy, expected, EPSILON_IMAGE);
 
-      const model = poseDetection.SupportedModels.BlazePose;
-      detector = await poseDetection.createDetector(model, {runtime: 'tfjs'});
+    expect(tf.memory().numTensors).toEqual(beforeTensors);
 
-      const result: number[][][] = [];
+    detector.dispose();
 
-      const callback = async(video: HTMLVideoElement, timestamp: number):
-          Promise<poseDetection.Pose[]> => {
-            const poses = await detector.estimatePoses(
-                video, null /* config */, timestamp);
-            result.push(poses[0].keypoints.map(kp => [kp.x, kp.y]));
-            return poses;
-          };
+    expect(tf.memory().numTensors).toEqual(startTensors);
+  });
+});
 
-      // Original video source in 720 * 1280 resolution:
-      // https://www.pexels.com/video/woman-doing-squats-4838220/ Video is
-      // compressed to be smaller with less frames (5fps), using below
-      // command:
-      // `ffmpeg -i original_pose.mp4 -r 5 -vcodec libx264 -crf 28 -profile:v
-      // baseline pose_squats.mp4`
-      await loadVideo(
-          'pose_squats.mp4', 5 /* fps */, callback, expected, model);
+describeWithFlags('BlazePose video ', BROWSER_ENVS, () => {
+  let detector: poseDetection.PoseDetector;
+  let timeout: number;
+  let expected: number[][][];
 
-      expectArraysClose(result, expected, EPSILON_VIDEO);
+  beforeAll(async () => {
+    timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
 
-      detector.dispose();
-    });
+    expected = await fetch(`${KARMA_SERVER}/pose_squats.full.json`)
+                   .then(response => response.json())
+                   .then(result => getXYPerFrame(result));
+  });
+
+  afterAll(() => {
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
+  });
+
+  it('test.', async () => {
+    // Note: this makes a network request for model assets.
+
+    const model = poseDetection.SupportedModels.BlazePose;
+    detector = await poseDetection.createDetector(model, {runtime: 'tfjs'});
+
+    const result: number[][][] = [];
+
+    const callback = async(video: HTMLVideoElement, timestamp: number):
+        Promise<poseDetection.Pose[]> => {
+          const poses =
+              await detector.estimatePoses(video, null /* config */, timestamp);
+          result.push(poses[0].keypoints.map(kp => [kp.x, kp.y]));
+          return poses;
+        };
+
+    // Original video source in 720 * 1280 resolution:
+    // https://www.pexels.com/video/woman-doing-squats-4838220/ Video is
+    // compressed to be smaller with less frames (5fps), using below
+    // command:
+    // `ffmpeg -i original_pose.mp4 -r 5 -vcodec libx264 -crf 28 -profile:v
+    // baseline pose_squats.mp4`
+    await loadVideo('pose_squats.mp4', 5 /* fps */, callback, expected, model);
+
+    expectArraysClose(result, expected, EPSILON_VIDEO);
+
+    detector.dispose();
   });
 });
