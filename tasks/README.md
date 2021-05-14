@@ -51,12 +51,12 @@ The following table summarizes all the supported tasks and their models:
         <div>
           <span><code>TFJS  </code></span>
           <span>·</span>
-          <a href="#">API doc</a>
+          <a href="https://js.tensorflow.org/api_tasks/latest/#class:MobilenetTFJS">API doc</a>
         </div>
         <div>
           <span><code>TFLite</code></span>
           <span>·</span>
-          <a href="#">API doc</a>
+          <a href="https://js.tensorflow.org/api_tasks/latest/#class:MobilenetTFLite">API doc</a>
         </div>
       </td>
     </tr>
@@ -66,7 +66,7 @@ The following table summarizes all the supported tasks and their models:
         <div>
           <span><code>TFLite</code></span>
           <span>·</span>
-          <a href="#">API doc</a>
+          <a href="https://js.tensorflow.org/api_tasks/latest/#class:ICCustomModelTFLite">API doc</a>
           <span>·</span>
           <a href="https://www.tensorflow.org/lite/inference_with_metadata/task_library/image_classifier#model_compatibility_requirements">Model requirements</a>
           <span>·</span>
@@ -88,12 +88,12 @@ The following table summarizes all the supported tasks and their models:
         <div>
           <span><code>TFJS  </code></span>
           <span>·</span>
-          <a href="#">API doc</a>
+          <a href="https://js.tensorflow.org/api_tasks/latest/#class:CocoSsdTFJS">API doc</a>
         </div>
         <div>
           <span><code>TFLite</code></span>
           <span>·</span>
-          <a href="#">API doc</a>
+          <a href="https://js.tensorflow.org/api_tasks/latest/#class:CocoSsdTFLite">API doc</a>
         </div>
       </td>
     </tr>
@@ -103,7 +103,7 @@ The following table summarizes all the supported tasks and their models:
         <div>
           <span><code>TFLite</code></span>
           <span>·</span>
-          <a href="#">API doc</a>
+          <a href="https://js.tensorflow.org/api_tasks/latest/#class:ODCustomModelTFLite">API doc</a>
           <span>·</span>
           <a href="https://www.tensorflow.org/lite/inference_with_metadata/task_library/object_detector#model_compatibility_requirements">Model requirements</a>
           <span>·</span>
@@ -125,12 +125,12 @@ The following table summarizes all the supported tasks and their models:
         <div>
           <span><code>TFJS  </code></span>
           <span>·</span>
-          <a href="#">API doc</a>
+          <a href="https://js.tensorflow.org/api_tasks/latest/#class:DeeplabTFJS">API doc</a>
         </div>
         <div>
           <span><code>TFLite</code></span>
           <span>·</span>
-          <a href="#">API doc</a>
+          <a href="https://js.tensorflow.org/api_tasks/latest/#class:DeeplabTFLite">API doc</a>
         </div>
       </td>
     </tr>
@@ -140,7 +140,7 @@ The following table summarizes all the supported tasks and their models:
         <div>
           <span><code>TFLite</code></span>
           <span>·</span>
-          <a href="#">API doc</a>
+          <a href="https://js.tensorflow.org/api_tasks/latest/#class:ISCustomModelTFLite">API doc</a>
           <span>·</span>
           <a href="https://www.tensorflow.org/lite/inference_with_metadata/task_library/image_segmenter#model_compatibility_requirements">Model requirements</a>
           <span>·</span>
