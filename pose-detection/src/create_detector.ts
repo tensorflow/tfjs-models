@@ -53,8 +53,8 @@ export async function createDetector(
         runtime = config.runtime;
       }
       throw new Error(
-          `Expect modelConfig.runtime to be either tfjs ` +
-          `or mediapipe, but got ${runtime}`);
+          `Expect modelConfig.runtime to be either 'tfjs' ` +
+          `or 'mediapipe', but got ${runtime}`);
     case SupportedModels.MoveNet:
       return loadMoveNetDetector(modelConfig as MoveNetModelConfig);
     default:

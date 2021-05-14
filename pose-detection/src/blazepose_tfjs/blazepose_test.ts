@@ -77,8 +77,8 @@ describeWithFlags('BlazePose', ALL_ENVS, () => {
       done.fail('Loading without runtime succeeded unexpectedly.');
     } catch (e) {
       expect(e.message).toEqual(
-          'Expect modelConfig.runtime to be either ' +
-          'tfjs or mediapipe, but got undefined');
+          `Expect modelConfig.runtime to be either ` +
+          `'tfjs' or 'mediapipe', but got undefined`);
       done();
     }
   });

@@ -195,9 +195,6 @@ export async function load(
   // Load MobileNetV1 model.
   const defaultUrl = mobileNetCheckpoint(
       config.outputStride, config.multiplier, config.quantBytes);
-  console.log('kjflkjlkfjkljlkfew');
-  console.log(config.modelUrl);
-  console.log(defaultUrl);
   const model = await tfconv.loadGraphModel(config.modelUrl || defaultUrl);
 
   return new PosenetDetector(model, config);
