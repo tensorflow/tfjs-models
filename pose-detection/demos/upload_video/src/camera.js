@@ -143,7 +143,6 @@ export class Context {
       // Download.
       const blob = new Blob(recordedChunks, {type: 'video/webm'});
       const url = URL.createObjectURL(blob);
-      console.log(url);
       const a = document.createElement('a');
       document.body.appendChild(a);
       a.style = 'display: none';

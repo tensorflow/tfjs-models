@@ -22,8 +22,10 @@ import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
 
 import * as poseDetection from '../index';
 import {getXYPerFrame, KARMA_SERVER, loadVideo} from '../test_util';
+import {BlazePoseMediaPipeModelConfig} from './types';
 
-const MEDIAPIPE_MODEL_CONFIG = {
+const MEDIAPIPE_MODEL_CONFIG: BlazePoseMediaPipeModelConfig = {
+  runtime: 'mediapipe',
   solutionPath: 'base/node_modules/@mediapipe/pose'
 };
 

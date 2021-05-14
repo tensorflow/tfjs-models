@@ -14,10 +14,11 @@
  * limitations under the License.
  * =============================================================================
  */
-import {BlazePoseEstimationConfig} from './blazepose_mediapipe/types';
+import {BlazePoseMediaPipeEstimationConfig} from './blazepose_mediapipe/types';
+import {BlazePoseTfjsEstimationConfig} from './blazepose_tfjs/types';
 import {MoveNetEstimationConfig} from './movenet/types';
 import {PoseNetEstimationConfig} from './posenet/types';
-import {ModelConfig, Pose, PoseDetectorInput} from './types';
+import {Pose, PoseDetectorInput} from './types';
 
 /**
  * User-facing interface for all pose detectors.
@@ -34,8 +35,8 @@ export interface PoseDetector {
    */
   estimatePoses(
       image: PoseDetectorInput,
-      config?: PoseNetEstimationConfig|BlazePoseEstimationConfig|
-      MoveNetEstimationConfig,
+      config?: PoseNetEstimationConfig|BlazePoseTfjsEstimationConfig|
+      BlazePoseMediaPipeEstimationConfig|MoveNetEstimationConfig,
       timestamp?: number): Promise<Pose[]>;
 
   /**
@@ -47,30 +48,4 @@ export interface PoseDetector {
    * Reset global states in the model.
    */
   reset(): void;
-}
-
-/**
- * Internal interface for all pose detectors to create instance and load
- * models.
- */
-export abstract class BasePoseDetector implements PoseDetector {
-  constructor() {}
-
-  /**
-   * Initiate class instance and async load the model.
-   */
-  static async load(modelConfig: ModelConfig = {}): Promise<PoseDetector> {
-    const detector = this.constructor();
-    return detector;
-  }
-
-  abstract estimatePoses(
-      image: PoseDetectorInput,
-      config?: PoseNetEstimationConfig|BlazePoseEstimationConfig|
-      MoveNetEstimationConfig,
-      timestamp?: number): Promise<Pose[]>;
-
-  abstract dispose(): void;
-
-  abstract reset(): void;
 }
