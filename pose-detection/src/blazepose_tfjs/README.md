@@ -1,11 +1,11 @@
 # BlazePose
 
-BlazePoseTfjs uses TF.js runtime to execute the model, the preprocessing and postprocessing steps.
+BlazePose TFJS uses TF.js runtime to execute the model, the preprocessing and postprocessing steps.
 Three models are offered.
 
-* 'lite' - our smallest model which trades footprint for accuracy.
+* 'lite' - our smallest model that is less accurate but smaller in model size and minimal memory footprint.
 * 'heavy' - our largest model intended for high accuracy, regardless of size.
-* 'full' - A middle ground between Lite and Heavy.
+* 'full' - A middle ground between performance and accuracy.
 
 Please try our our live [demo](https://storage.googleapis.com/tfjs-models/demos/pose-detection/index.html?model=blazepose).
 In the runtime-backend dropdown, choose 'tfjs-webgl'.
@@ -35,7 +35,6 @@ import * as poseDetection from '@tensorflow-models/pose-detection';
 import * as tf from '@tensorflow/tfjs-core';
 // Register one of the TF.js backends.
 import '@tensorflow/tfjs-backend-webgl';
-// import '@tensorflow/tfjs-backend-wasm';
 ```
 
 
@@ -49,7 +48,7 @@ const detectorConfig = {
 detector = await poseDetection.createDetector(model, detectorConfig);
 ```
 export interface BlazePoseModelConfig extends ModelConfig {
-  runtime?: 'mediapipe'|'tfjs';
+  runtime: 'mediapipe'|'tfjs';
   enableSmoothing?: boolean;
   modelType?: BlazePoseModelType;
 }
@@ -69,7 +68,7 @@ For BlazePoseTfjs:
 ### Run inference
 
 Now you can use the detector to detect poses. The `estimatePoses` method
-accepts both image and video in many formats, including: `tf.Tensor3D`,
+accepts either image or video in many formats, including: `tf.Tensor3D`,
 `HTMLVideoElement`, `HTMLImageElement`, `HTMLCanvasElement`. If you want more
 options, you can pass in a second `estimationConfig` parameter.
 
