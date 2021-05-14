@@ -18,7 +18,7 @@
 import * as tfc from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {SECOND_TO_MICRO_SECONDS} from '../calculators/constants';
+import {MILLISECOND_TO_MICRO_SECONDS, SECOND_TO_MICRO_SECONDS} from '../calculators/constants';
 import {getImageSize, toImageTensor} from '../calculators/image_utils';
 import {BoundingBox} from '../calculators/interfaces/shape_interfaces';
 import {isVideo} from '../calculators/is_video';
@@ -138,9 +138,9 @@ class MoveNetDetector implements PoseDetector {
    *  `enableSmoothing`: Optional. Defaults to `true`. When enabled, a temporal
    *  smoothing filter will be used on the keypoint locations to reduce jitter.
    *
-   * @param timestamp Optional. In microseconds, i.e. 1e-6 of a second. This is
-   * useful when image is a tensor, which doesn't have timestamp info. Or to
-   * override timestamp in a video.
+   * @param timestamp Optional. In milliseconds. This is useful when image is
+   *     a tensor, which doesn't have timestamp info. Or to override timestamp
+   *     in a video.
    *
    * @return An array of `Pose`s.
    */
@@ -156,8 +156,12 @@ class MoveNetDetector implements PoseDetector {
       return [];
     }
 
-    if (timestamp == null && isVideo(image)) {
-      timestamp = image.currentTime * SECOND_TO_MICRO_SECONDS;
+    if (timestamp == null) {
+      if (isVideo(image)) {
+        timestamp = image.currentTime * SECOND_TO_MICRO_SECONDS;
+      }
+    } else {
+      timestamp = timestamp * MILLISECOND_TO_MICRO_SECONDS;
     }
 
     const imageTensor3D = toImageTensor(image);
