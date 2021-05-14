@@ -40,10 +40,21 @@ export async function createDetector(
       return loadPoseNetDetector(modelConfig as PosenetModelConfig);
     case SupportedModels.BlazePose:
       const config = modelConfig as BlazePoseModelConfig;
-      return config != null && config.runtime === 'tfjs' ?
-          loadBlazePoseTfjsDetector(modelConfig as BlazePoseTfjsModelConfig) :
-          loadBlazePoseMediaPipeDetector(
+      let runtime;
+      if (config != null) {
+        if (config.runtime === 'tfjs') {
+          return loadBlazePoseTfjsDetector(
+              modelConfig as BlazePoseTfjsModelConfig);
+        }
+        if (config.runtime === 'mediapipe') {
+          return loadBlazePoseMediaPipeDetector(
               modelConfig as BlazePoseMediaPipeModelConfig);
+        }
+        runtime = config.runtime;
+      }
+      throw new Error(
+          `Expect modelConfig.runtime to be either 'tfjs' ` +
+          `or 'mediapipe', but got ${runtime}`);
     case SupportedModels.MoveNet:
       return loadMoveNetDetector(modelConfig as MoveNetModelConfig);
     default:
