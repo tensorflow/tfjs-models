@@ -63,8 +63,8 @@ export class ImageSegmentationCustomModelTFLiteLoader extends TaskModelLoader<
       sourceModelGlobal: TFLiteNS,
       loadingOptions?: ISCustomModelTFLiteLoadingOptions):
       Promise<ISCustomModelTFLite> {
-    const tfliteImageSegmenter =
-        await sourceModelGlobal.ImageSegmenter.create(loadingOptions.model);
+    const tfliteImageSegmenter = await sourceModelGlobal.ImageSegmenter.create(
+        loadingOptions.model, loadingOptions);
     return new ISCustomModelTFLite(tfliteImageSegmenter);
   }
 }
