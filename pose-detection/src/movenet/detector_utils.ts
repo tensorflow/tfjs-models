@@ -30,6 +30,10 @@ export function validateModelConfig(modelConfig: MoveNetModelConfig):
         `Should be one of ${VALID_MODELS}`);
   }
 
+  if (config.enableSmoothing == null) {
+    config.enableSmoothing = true;
+  }
+
   return config;
 }
 
@@ -45,10 +49,6 @@ export function validateEstimationConfig(
 
   if (config.maxPoses <= 0 || config.maxPoses > 1) {
     throw new Error(`Invalid maxPoses ${config.maxPoses}. Should be 1.`);
-  }
-
-  if (config.enableSmoothing == null) {
-    config.enableSmoothing = true;
   }
 
   return config;

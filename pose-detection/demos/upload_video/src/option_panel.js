@@ -51,6 +51,10 @@ export async function setupDatGui(urlParams) {
       break;
     case 'blazepose':
       params.STATE.model = posedetection.SupportedModels.BlazePose;
+      if (type !== 'full' && type !== 'lite' && type !== 'heavy') {
+        // Nulify invalid value.
+        type = null;
+      }
       break;
     default:
       alert(`${urlParams.get('model')}`);
@@ -63,6 +67,7 @@ export async function setupDatGui(urlParams) {
   modelController.onChange(_ => {
     params.STATE.isModelChanged = true;
     showModelConfigs(modelFolder);
+    showBackendConfigs(backendFolder);
   });
 
   showModelConfigs(modelFolder, type);
@@ -70,17 +75,33 @@ export async function setupDatGui(urlParams) {
   modelFolder.open();
 
   const backendFolder = gui.addFolder('Backend');
-  const backendController =
-      backendFolder.add(params.STATE, 'backend', ['webgl', 'wasm']);
-  backendController.onChange(async backend => {
-    params.STATE.isBackendChanged = true;
-    await showFlagSettings(backendFolder, backend);
-  });
-  await showFlagSettings(backendFolder, params.STATE.backend);
+
+  showBackendConfigs(backendFolder);
 
   backendFolder.open();
 
   return gui;
+}
+
+async function showBackendConfigs(folderController) {
+  // Clean up backend configs for the previous model.
+  const fixedSelectionCount = 0;
+  while (folderController.__controllers.length > fixedSelectionCount) {
+    folderController.remove(
+        folderController
+            .__controllers[folderController.__controllers.length - 1]);
+  }
+  const backends = params.MODEL_BACKEND_MAP[params.STATE.model];
+  // The first element of the array is the default backend for the model.
+  params.STATE.backend = backends[0];
+  const backendController =
+      folderController.add(params.STATE, 'backend', backends);
+  backendController.name('runtime-backend');
+  backendController.onChange(async backend => {
+    params.STATE.isBackendChanged = true;
+    await showFlagSettings(folderController, backend);
+  });
+  await showFlagSettings(folderController, params.STATE.backend);
 }
 
 function showModelConfigs(folderController, type) {
@@ -102,7 +123,7 @@ function showModelConfigs(folderController, type) {
       addMoveNetControllers(folderController, type);
       break;
     case posedetection.SupportedModels.BlazePose:
-      addBlazePoseControllers(folderController);
+      addBlazePoseControllers(folderController, type);
       break;
     default:
       alert(`Model ${params.STATE.model} is not supported.`);
@@ -137,8 +158,18 @@ function addMoveNetControllers(modelConfigFolder, type) {
 
 // The BlazePose model config folder contains options for BlazePose config
 // settings.
-function addBlazePoseControllers(modelConfigFolder) {
+function addBlazePoseControllers(modelConfigFolder, type) {
   params.STATE.modelConfig = {...params.BLAZEPOSE_CONFIG};
+  params.STATE.modelConfig.type = type != null ? type : 'heavy';
+
+  const typeController = modelConfigFolder.add(
+      params.STATE.modelConfig, 'type', ['heavy', 'full', 'lite']);
+  typeController.onChange(_ => {
+    // Set isModelChanged to true, so that we don't render any result during
+    // changing models.
+    params.STATE.isModelChanged = true;
+  });
+
   modelConfigFolder.add(params.STATE.modelConfig, 'scoreThreshold', 0, 1);
 }
 
@@ -147,7 +178,6 @@ function addBlazePoseControllers(modelConfigFolder) {
  */
 async function initDefaultValueMap() {
   // Clean up the cache to query tunable flags' default values.
-  setBackendAndEnvFlags({}, params.STATE.backend);
   TUNABLE_FLAG_DEFAULT_VALUE_MAP = {};
   params.STATE.flags = {};
   for (const backend in params.BACKEND_FLAGS_MAP) {
@@ -164,7 +194,6 @@ async function initDefaultValueMap() {
       params.STATE.flags[flag] = TUNABLE_FLAG_DEFAULT_VALUE_MAP[flag];
     }
   }
-  params.STATE.isFlagChanged = false;
 }
 
 /**

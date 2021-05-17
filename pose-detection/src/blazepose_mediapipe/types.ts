@@ -23,8 +23,7 @@ export type BlazePoseModelType = 'lite'|'full'|'heavy';
  * Common BlazePose model config.
  */
 export interface BlazePoseModelConfig extends ModelConfig {
-  // Defaults to 'mediapipe' if not provided.
-  runtime?: 'mediapipe'|'tfjs';
+  runtime: 'mediapipe'|'tfjs';
   enableSmoothing?: boolean;
   modelType?: BlazePoseModelType;
 }
@@ -32,11 +31,38 @@ export interface BlazePoseModelConfig extends ModelConfig {
 export interface BlazePoseEstimationConfig extends EstimationConfig {}
 
 /**
- * Mediapipe model loading config.
+ * Model parameters for BlazePose MediaPipe runtime
+ *
+ * `runtime`: Must set to be 'mediapipe'.
+ *
+ * `enableSmoothing`: Optional. A boolean indicating whether to use temporal
+ * filter to smooth the predicted keypoints. Defaults to True. The temporal
+ * filter relies on `performance.now()`. You can override this timestamp by
+ * passing in your own timestamp (in milliseconds) as the third parameter in
+ * `estimatePoses`.
+ *
+ * `modelType`: Optional. Possible values: 'lite'|'full'|'heavy'. Defaults to
+ * 'full'. The model accuracy increases from lite to heavy, while the inference
+ * speed decreases and memory footprint increases. The heavy variant is intended
+ * for applications that require high accuracy, while the lite variant is
+ * intended for latency-critical applications. The full variant is a balanced
+ * option.
+ *
+ * `solutionPath`: Optional. The path to where the wasm binary and model files
+ * are located.
  */
 export interface BlazePoseMediaPipeModelConfig extends BlazePoseModelConfig {
+  runtime: 'mediapipe';
   solutionPath?: string;
 }
 
+/**
+ * Pose estimation parameters for BlazePose MediaPipe runtime.
+ *
+ * `maxPoses`: Optional. Defaults to 1. BlazePose only supports 1 pose for now.
+ *
+ * `flipHorizontal`: Optional. Default to false. When image data comes from
+ * camera, the result has to flip horizontally.
+ */
 export interface BlazePoseMediaPipeEstimationConfig extends
     BlazePoseEstimationConfig {}

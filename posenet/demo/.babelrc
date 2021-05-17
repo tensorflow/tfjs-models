@@ -11,8 +11,6 @@
         }
       }
     ]
-    ],
-    "plugins": [
-      ["transform-runtime", {"polyfill": false}]
-    ]
+  ],
+  "plugins": ["@babel/plugin-transform-runtime"]
 }
