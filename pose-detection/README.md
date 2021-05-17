@@ -23,64 +23,41 @@ PoseNet can detect multiple poses, each pose contains 17 keypoints.
 
 -------------------------------------------------------------------------------
 ## Table of Contents
-1. [Installation](#installation)
-2. [Usage](#usage)
-3. [Keypoint Diagram](#keypoint-diagram)
-4. [Example Code and Demos](#example-code-and-demos)
+1  [How to Run It](#how-to-run-it)
+2. [Keypoint Diagram](#keypoint-diagram)
+3. [Example Code and Demos](#example-code-and-demos)
 
 -------------------------------------------------------------------------------
+## How to Run It
+In general,
 
-## Installation
+You first create a detector by choosing one of the models from `SupportedModels`,
+include `MoveNet`, `BlazePose` and `PoseNet`.
 
-Via script tags:
-
-```html
-<!-- Require the peer dependencies of pose-detection. -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
-
-<!-- You must explicitly require a TF.js backend if you're not using the TF.js union bundle. -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
-```
-
-Via npm:
-
-```sh
-yarn add @tensorflow-models/pose-detection
-yarn add @tensorflow/tfjs-core, @tensorflow/tfjs-converter
-yarn add @tensorflow/tfjs-backend-webgl
-```
-
--------------------------------------------------------------------------------
-
-
-
-### Pose Estimation
-Now you can use the detector to detect poses. The
-`estimatePoses` method accepts both image and video in many formats, including:
-`tf.Tensor3D`, `ImageData`, `HTMLVideoElement`, `HTMLImageElement`,
-`HTMLCanvasElement`. If you want more options, you can pass in an
-`EstimationConfig` as the second parameter.
-For details, see the README for the model you are interested in.
+For example:
 
 ```javascript
+const model = poseDetection.SupportedModels.MoveNet;
+const detector = await poseDetection.createDetector(model);
+```
+
+Then you can use the detector to detect poses.
+
+```
 const poses = await detector.estimatePoses(image);
 ```
 
-The returned `poses` list contains detected poses for each individual in the
-image. For single-person models, there will only be one element in the list.
-Currently, only PoseNet supports multi-pose estimation. If the model cannot
-detect any people, the list will be empty.
+The returned poses list contains detected poses for each individual in the image.
+For single-person models, there will only be one element in the list. Currently,
+only PoseNet supports multi-pose estimation. If the model cannot detect any people,
+the list will be empty.
 
-For each pose, it contains a confidence score of the pose and an array of
-keypoints. PoseNet and MoveNet both return 17 keypoints.
-Mediapipe BlazePose returns 33 keypoints. Each keypoint contains `x`, `y`,
-`score` and `name`.
+For each pose, it contains a confidence score of the pose and an array of keypoints.
+PoseNet and MoveNet both return 17 keypoints. Mediapipe BlazePose returns 33 keypoints.
+Each keypoint contains x, y, score and name.
 
 Example output:
-```javascript
+```
 [
   {
     score: 0.8,
@@ -93,21 +70,30 @@ Example output:
 ]
 ```
 
-`x` and `y` represent the actual keypoint position in the image. If you need
-normalized keypoint positions, you can use the method
-`poseDetection.calculator.keypointsToNormalizedKeypoints(keypoints, imageSize)`
-to convert `x` and `y` to `[0, 1]` range.
+x and y represent the actual keypoint position in the image. If you need normalized
+keypoint positions, you can use the method
+`poseDetection.calculator.keypointsToNormalizedKeypoints(keypoints, imageSize)` to
+convert x and y to [0, 1] range.
 
-The `score` ranges from `0` to `1`. It represents the model's confidence of a
-keypoint. Usually, keypoints with low confidence scores should not be used.
-Each application may require a custom confidence threshold. For applications
-that require high precision, we recommend a larger confidence value. Conversely,
-applications that require high recall may choose to lower the threshold. The
-confidence values are not calibrated between models, and therefore setting a
-proper confidence threshold may involve some experimentation.
+The score ranges from 0 to 1. It represents the model's confidence of a keypoint.
+Usually, keypoints with low confidence scores should not be used. Each application
+may require a custom confidence threshold. For applications that require high precision,
+we recommend a larger confidence value. Conversely, applications that require high recall
+may choose to lower the threshold. The confidence values are not calibrated between models,
+and therefore setting a proper confidence threshold may involve some experimentation.
 
-The `name` provides a label for each keypoint, such as 'nose', 'left_eye',
-'right_knee', etc.
+The name provides a label for each keypoint, such as 'nose', 'left_eye', 'right_knee', etc.
+
+Refer to each model's documentation for specific configurations for each model
+and their performance.
+
+[MoveNet Documentation](https://github.com/tensorflow/tfjs-models/tree/master/pose-detection/src/movenet)
+
+[BlazePose TFJS Documentation](https://github.com/tensorflow/tfjs-models/tree/master/pose-detection/src/blazepose_tfjs)
+
+[BlazePose MediaPipe Documentation](https://github.com/tensorflow/tfjs-models/tree/master/pose-detection/src/blazepose_mediapipe)
+
+[PoseNet Documentation](https://github.com/tensorflow/tfjs-models/tree/master/pose-detection/src/posenet)
 
 -------------------------------------------------------------------------------
 
@@ -177,5 +163,5 @@ See the diagram below for what those keypoints are and their index in the array.
 
 ## Example Code and Demos
 You may reference the demos for code examples. Details for how to run the demos
-are included in the `demo/`
-[folder](https://github.com/tensorflow/tfjs-models/tree/master/pose-detection/demo).
+are included in the `demos/`
+[folder](https://github.com/tensorflow/tfjs-models/tree/master/pose-detection/demos).
