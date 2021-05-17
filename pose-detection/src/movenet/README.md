@@ -20,9 +20,39 @@ fitness, health, and wellness applications. Please try it out using the live
 
 ## Installation
 
-Please follow the instructions in the Pose API
-[README](https://github.com/tensorflow/tfjs-models/blob/master/pose-detection/README.md#installation)
-to install the package.
+Via script tags:
+
+```html
+<!-- Require the peer dependencies of pose-detection. -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
+
+<!-- You must explicitly require a TF.js backend if you're not using the TF.js union bundle. -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
+<!-- Alternatively you can use the WASM backend: <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm/dist/tf-backend-wasm.js"></script> -->
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
+```
+
+Via npm:
+
+```sh
+yarn add @tensorflow-models/pose-detection
+yarn add @tensorflow/tfjs-core, @tensorflow/tfjs-converter
+```
+
+Install one of the backends:
+WebGL:
+```sh
+yarn add @tensorflow/tfjs-backend-webgl
+```
+
+WASM:
+```sh
+yarn add @tensorflow/tfjs-backend-wasm
+```
+
+-------------------------------------------------------------------------------
 
 ## Usage
 
@@ -44,14 +74,15 @@ Pass in `poseDetection.SupportedModels.MoveNet` from the
 `posedetection.SupportedModels` enum list along with a `detectorConfig` to the
 `createDetector` method to load and initialize the MoveNet model.
 
-`detectorConfig` is a dictionary that defines MoveNet specific configurations:
+`detectorConfig` is an object that defines MoveNet specific configurations:
 
-*   *modelType*: specify which MoveNet variant to load from the
-    `poseDetection.movenet.modelType` enum list.
+*   *modelType* (optional): specify which MoveNet variant to load from the
+    `poseDetection.movenet.modelType` enum list. Default to
+    `poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING`.
 
 *   *modelUrl* (optional): An optional string that specifies custom url of the
-	MoveNet model. If not provided, it will load the model specified by 
-	*modelType* from tf.hub. This argument is useful for area/countries that 
+	MoveNet model. If not provided, it will load the model specified by
+	*modelType* from tf.hub. This argument is useful for area/countries that
 	don't have access to the model hosted on tf.hub.
 
 The following code snippet demonstrates how to load the
@@ -64,20 +95,20 @@ const detector = await poseDetection.createDetector(poseDetection.SupportedModel
 
 ### Run inference
 
-Now you can use the detector to detect poses. The `estimatePoses` method 
+Now you can use the detector to detect poses. The `estimatePoses` method
 accepts both image and video in many formats, including:
 `tf.Tensor3D`, `ImageData`, `HTMLVideoElement`, `HTMLImageElement`,
 `HTMLCanvasElement`. If you want more options, you can pass in an
 `estimationConfig` as the second parameter.
 
-`estimationConfig` is a dictionary that defines the parameters used by MoveNet
+`estimationConfig` is an object that defines the parameters used by MoveNet
 at inference time:
 
 *   *enableSmoothing*: A boolean indicating whether to use temporal filter to
-    smooth the predicted keypoints. Defaults to *True*. The temporal filter 
-    relies on the `currentTime` field of the `HTMLVideoElement`. You can 
-    override this timestamp by passing in your own timestamp (in microseconds) 
-    as the third parameter. This is useful when the input is a tensor, which 
+    smooth the predicted keypoints. Defaults to *True*. The temporal filter
+    relies on the `currentTime` field of the `HTMLVideoElement`. You can
+    override this timestamp by passing in your own timestamp (in microseconds)
+    as the third parameter. This is useful when the input is a tensor, which
     doesn't have the `currentTime` field. Or in testing, to simulate different FPS.
 
 The following code snippet demonstrates how to run the model inference:

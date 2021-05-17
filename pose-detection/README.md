@@ -55,31 +55,7 @@ yarn add @tensorflow/tfjs-backend-webgl
 
 -------------------------------------------------------------------------------
 
-## Usage
-If you are using via npm, you need to import the libraries first.
-### Import the libraries:
-```javascript
-import * as poseDetection from '@tensorflow-models/pose-detection';
-import * as tf from '@tensorflow/tfjs-core';
 
-// Register one of the TF.js backends.
-import '@tensorflow/tfjs-backend-webgl';
-```
-
-### Create a detector:
-Choose a model from `poseDetection.SupportedModels` enum list and pass it to the
-`createDetector` method.
-
-`SupportedModels` include `MoveNet`, `BlazePose` and `PoseNet`.
-
-```javascript
-const detector = await poseDetection.createDetector(poseDetection.SupportedModels.MoveNet);
-```
-
-This method will fetch and load the model in memory. It
-will also prepare the detector to be ready to run. There is a default setting
-for each model, if you want more options, you can pass in a `ModelConfig` as the
-second parameter. For details, see the README for the model you are interested in.
 
 ### Pose Estimation
 Now you can use the detector to detect poses. The
