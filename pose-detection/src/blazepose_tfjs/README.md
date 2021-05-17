@@ -18,6 +18,7 @@ In the runtime-backend dropdown, choose 'tfjs-webgl'.
 1.  [Installation](#installation)
 2.  [Usage](#usage)
 3.  [Performance](#performance)
+4.  [Bundle Size](#bundle-size)
 
 ## Installation
 
@@ -96,7 +97,7 @@ options, you can pass in a second `estimationConfig` parameter.
 
 *   *flipHorizontal*: Optional. Defaults to false. When image data comes from camera, the result has to flip horizontally.
 
-You can also override a video's timestamp by pass in a timestamp in
+You can also override a video's timestamp by passing in a timestamp in
 milliseconds as the third parameter. This is useful when video is
 a tensor, which doesn't have timestamp info. Or to override timestamp
 in a video.
