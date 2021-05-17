@@ -20,6 +20,11 @@ Please try our our live [demo](https://storage.googleapis.com/tfjs-models/demos/
 
 ## Installation
 
+To use BlazePose, you have to first decide whether to use the TensorFlow.js runtime
+or MediaPipe runtime. To understand the advantages of each runtime, check the performance
+and bundle size section for further details. This guide is for MediaPipe
+runtime. The guide for TensorFlow.js runtime can be found
+[here](https://github.com/tensorflow/tfjs-models/tree/master/pose-detection/src/blazepose_tfjs).
 
 Via script tags:
 
