@@ -41,6 +41,7 @@ class MoveNetDetector implements PoseDetector {
       InputResolution = {height: 0, width: 0};
   private readonly keypointIndexByName =
       getKeypointIndexByName(SupportedModels.MoveNet);
+  private readonly enableSmoothing: boolean;
 
   // Global states.
   private keypointsFilter = new KeypointsOneEuroFilter(KEYPOINT_FILTER_CONFIG);
@@ -61,6 +62,7 @@ class MoveNetDetector implements PoseDetector {
       this.modelInputResolution.width = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
       this.modelInputResolution.height = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
     }
+    this.enableSmoothing = config.enableSmoothing;
   }
 
   /**
@@ -135,8 +137,6 @@ class MoveNetDetector implements PoseDetector {
    * @param config Optional. A configuration object with the following
    * properties:
    *  `maxPoses`: Optional. Has to be set to 1.
-   *  `enableSmoothing`: Optional. Defaults to `true`. When enabled, a temporal
-   *  smoothing filter will be used on the keypoint locations to reduce jitter.
    *
    * @param timestamp Optional. In milliseconds. This is useful when image is
    *     a tensor, which doesn't have timestamp info. Or to override timestamp
@@ -214,7 +214,7 @@ class MoveNetDetector implements PoseDetector {
 
     // Apply the sequential filter before estimating the cropping area to make
     // it more stable.
-    if (timestamp != null && estimationConfig.enableSmoothing) {
+    if (timestamp != null && this.enableSmoothing) {
       keypoints = this.keypointsFilter.apply(keypoints, timestamp);
     }
 

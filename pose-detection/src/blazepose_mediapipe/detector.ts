@@ -143,7 +143,7 @@ class BlazePoseMediaPipeDetector implements PoseDetector {
 /**
  * Loads the MediaPipe solution.
  *
- * @param modelConfig ModelConfig dictionary that contains parameters for
+ * @param modelConfig ModelConfig object that contains parameters for
  * the BlazePose loading process. Please find more details of each parameters
  * in the documentation of the `BlazePoseMediaPipeModelConfig` interface.
  */
