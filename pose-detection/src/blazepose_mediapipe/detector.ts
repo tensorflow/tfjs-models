@@ -73,14 +73,15 @@ class BlazePoseMediaPipeDetector implements PoseDetector {
   }
 
   private translateOutputs(results: pose.Results): Pose[] {
-    return [{
+    return results.poseLandmarks != null ? [{
       keypoints: results.poseLandmarks.map(landmark => ({
                                              x: landmark.x * this.width,
                                              y: landmark.y * this.height,
                                              z: landmark.z,
                                              score: landmark.visibility
                                            }))
-    }];
+    }] :
+                                           [];
   }
 
   /**
