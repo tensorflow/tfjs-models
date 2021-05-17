@@ -15,5 +15,5 @@
  * =============================================================================
  */
 export const MICRO_SECONDS_TO_SECOND = 1e-6;
-
 export const SECOND_TO_MICRO_SECONDS = 1e6;
+export const MILLISECOND_TO_MICRO_SECONDS = 1000;

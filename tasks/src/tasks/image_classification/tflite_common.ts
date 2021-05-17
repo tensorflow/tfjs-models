@@ -16,7 +16,9 @@
  */
 
 import * as tflite from '@tensorflow/tfjs-tflite';
-import {Class, ImageClassifier, ImageClassifierResult} from './common';
+import {Class} from '../common';
+
+import {ImageClassificationResult, ImageClassifier} from './common';
 
 /**
  * The base class for all image classification TFLite models.
@@ -30,20 +32,21 @@ export class ImageClassifierTFLite<T> extends ImageClassifier<T> {
 
   async predict(
       img: ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement,
-      infereceOptions?: T): Promise<ImageClassifierResult> {
+      infereceOptions?: T): Promise<ImageClassificationResult> {
     if (!this.tfliteImageClassifier) {
       throw new Error('source model is not loaded');
     }
     const tfliteResults = this.tfliteImageClassifier.classify(img);
+    if (!tfliteResults) {
+      return {classes: []};
+    }
     const classes: Class[] = tfliteResults.map(result => {
       return {
         className: result.className,
-        probability: result.probability,
+        score: result.probability,
       };
     });
-    const finalResult: ImageClassifierResult = {
-      classes,
-    };
+    const finalResult: ImageClassificationResult = {classes};
     return finalResult;
   }
 

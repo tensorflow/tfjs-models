@@ -16,6 +16,7 @@
  */
 
 import {TaskModel} from '../../task_model';
+import {Class} from '../common';
 
 /**
  * The base class for all ImageClassification task models.
@@ -36,12 +37,12 @@ export abstract class ImageClassifier<IO> implements TaskModel {
    *     inference options. See individual model for more details.
    * @returns
    *
-   * @docunpackreturn ['ImageClassifierResult', 'Class']
+   * @docunpackreturn ['ImageClassificationResult', 'Class']
    * @doc {heading: 'Image Classification', subheading: 'Base model'}
    */
   abstract predict(
       img: ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement,
-      options?: IO): Promise<ImageClassifierResult>;
+      options?: IO): Promise<ImageClassificationResult>;
 
   /**
    * Cleans up resources if needed.
@@ -52,15 +53,7 @@ export abstract class ImageClassifier<IO> implements TaskModel {
 }
 
 /** Image classification result. */
-export interface ImageClassifierResult {
+export interface ImageClassificationResult {
   /** All predicted classes. */
   classes: Class[];
-}
-
-/** A single class in the classification result. */
-export interface Class {
-  /** The name of the class. */
-  className: string;
-  /** The probability (score) of the class. */
-  probability: number;
 }

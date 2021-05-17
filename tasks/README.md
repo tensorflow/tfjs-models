@@ -9,7 +9,7 @@ for JS developers without ML knowledge. It has the following features:
 - **Easy-to-discover models**
 
   Models from different runtime systems (e.g. [TFJS][tfjs], [TFLite][tflite],
-  [MediaPipe][mediapipe], etc) are grouped by popular ML tasks, such as.
+  [MediaPipe][mediapipe], etc) are grouped by popular ML tasks, such as
   sentiment detection, image classification, pose detection, etc.
 
 - **Clean and powerful APIs**
@@ -28,7 +28,128 @@ for JS developers without ML knowledge. It has the following features:
 
 The following table summarizes all the supported tasks and their models:
 
-(TODO)
+<table>
+  <thead>
+    <tr>
+      <th>Task</th>
+      <th>Model</th>
+      <th>Supported runtimes · Docs · Resources</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- Image classification -->
+    <tr>
+      <td rowspan="2">
+        <b>Image Classification</b>
+        <br>
+        Identify images into predefined classes.
+        <br>
+        <a href="https://codepen.io/jinjingforever/pen/VwPOePq">Demo</a>
+      </td>
+      <td>Mobilenet</td>
+      <td>
+        <div>
+          <span><code>TFJS  </code></span>
+          <span>·</span>
+          <a href="#">API doc</a>
+        </div>
+        <div>
+          <span><code>TFLite</code></span>
+          <span>·</span>
+          <a href="#">API doc</a>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>Custom model</td>
+      <td>
+        <div>
+          <span><code>TFLite</code></span>
+          <span>·</span>
+          <a href="#">API doc</a>
+          <span>·</span>
+          <a href="https://www.tensorflow.org/lite/inference_with_metadata/task_library/image_classifier#model_compatibility_requirements">Model requirements</a>
+          <span>·</span>
+          <a href="https://tfhub.dev/tensorflow/collections/lite/task-library/image-classifier/1">Model collection</a>
+        </div>
+      </td>
+    </tr>
+    <!-- Object detection -->
+    <tr>
+      <td rowspan="2">
+        <b>Object Detection</b>
+        <br>
+        Localize and identify multiple objects in a single image.
+        <br>
+        <a href="https://codepen.io/jinjingforever/pen/PopPPXo">Demo</a>
+      </td>
+      <td>COCO-SSD</td>
+      <td>
+        <div>
+          <span><code>TFJS  </code></span>
+          <span>·</span>
+          <a href="#">API doc</a>
+        </div>
+        <div>
+          <span><code>TFLite</code></span>
+          <span>·</span>
+          <a href="#">API doc</a>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>Custom model</td>
+      <td>
+        <div>
+          <span><code>TFLite</code></span>
+          <span>·</span>
+          <a href="#">API doc</a>
+          <span>·</span>
+          <a href="https://www.tensorflow.org/lite/inference_with_metadata/task_library/object_detector#model_compatibility_requirements">Model requirements</a>
+          <span>·</span>
+          <a href="https://tfhub.dev/tensorflow/collections/lite/task-library/object-detector/1">Model collection</a>
+        </div>
+      </td>
+    </tr>
+    <!-- Image Segmentation -->
+    <tr>
+      <td rowspan="2">
+        <b>Image Segmentation</b>
+        <br>
+        Predict associated class for each pixel of an image.
+        <br>
+        <a href="https://codepen.io/jinjingforever/pen/yLMYVJw">Demo</a>
+      </td>
+      <td>Deeplab</td>
+      <td>
+        <div>
+          <span><code>TFJS  </code></span>
+          <span>·</span>
+          <a href="#">API doc</a>
+        </div>
+        <div>
+          <span><code>TFLite</code></span>
+          <span>·</span>
+          <a href="#">API doc</a>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>Custom model</td>
+      <td>
+        <div>
+          <span><code>TFLite</code></span>
+          <span>·</span>
+          <a href="#">API doc</a>
+          <span>·</span>
+          <a href="https://www.tensorflow.org/lite/inference_with_metadata/task_library/image_segmenter#model_compatibility_requirements">Model requirements</a>
+          <span>·</span>
+          <a href="https://tfhub.dev/tensorflow/collections/lite/task-library/image-segmenter/1">Model collection</a>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
 
 (The initial version only supports the web browser environment. NodeJS support is
 coming soon)
@@ -78,7 +199,7 @@ const model3 = await tfTask.ImageClassification.CustomModel.TFLite.load({
 Since all these models are for the `Image Classification` task, they will have
 the same task model type: [`ImageClassifier`][image classifier interface] in
 this case. Each task model's `predict` inference method has an unique and
-easy-to-use API interface. For example, in `ImageClassiier`, the method takes an
+easy-to-use API interface. For example, in `ImageClassifier`, the method takes an
 image-like element and returns the predicted classes:
 
 ```js

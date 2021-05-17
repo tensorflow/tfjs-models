@@ -63,6 +63,10 @@ export async function setupDatGui(urlParams) {
       break;
     case 'blazepose':
       params.STATE.model = posedetection.SupportedModels.BlazePose;
+      if (type !== 'full' && type !== 'lite' && type !== 'heavy') {
+        // Nulify invalid value.
+        type = null;
+      }
       break;
     default:
       alert(`${urlParams.get('model')}`);
@@ -131,7 +135,7 @@ function showModelConfigs(folderController, type) {
       addMoveNetControllers(folderController, type);
       break;
     case posedetection.SupportedModels.BlazePose:
-      addBlazePoseControllers(folderController);
+      addBlazePoseControllers(folderController, type);
       break;
     default:
       alert(`Model ${params.STATE.model} is not supported.`);
@@ -166,8 +170,18 @@ function addMoveNetControllers(modelConfigFolder, type) {
 
 // The BlazePose model config folder contains options for BlazePose config
 // settings.
-function addBlazePoseControllers(modelConfigFolder) {
+function addBlazePoseControllers(modelConfigFolder, type) {
   params.STATE.modelConfig = {...params.BLAZEPOSE_CONFIG};
+  params.STATE.modelConfig.type = type != null ? type : 'full';
+
+  const typeController = modelConfigFolder.add(
+      params.STATE.modelConfig, 'type', ['lite', 'full', 'heavy']);
+  typeController.onChange(_ => {
+    // Set isModelChanged to true, so that we don't render any result during
+    // changing models.
+    params.STATE.isModelChanged = true;
+  });
+
   modelConfigFolder.add(params.STATE.modelConfig, 'scoreThreshold', 0, 1);
 }
 

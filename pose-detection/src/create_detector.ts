@@ -15,14 +15,14 @@
  * =============================================================================
  */
 
-import {BlazePoseMediaPipeDetector} from './blazepose_mediapipe/detector';
+import {load as loadBlazePoseMediaPipeDetector} from './blazepose_mediapipe/detector';
 import {BlazePoseMediaPipeModelConfig, BlazePoseModelConfig} from './blazepose_mediapipe/types';
-import {BlazePoseTfjsDetector} from './blazepose_tfjs/detector';
+import {load as loadBlazePoseTfjsDetector} from './blazepose_tfjs/detector';
 import {BlazePoseTfjsModelConfig} from './blazepose_tfjs/types';
-import {MoveNetDetector} from './movenet/detector';
+import {load as loadMoveNetDetector} from './movenet/detector';
 import {MoveNetModelConfig} from './movenet/types';
 import {PoseDetector} from './pose_detector';
-import {PosenetDetector} from './posenet/detector';
+import {load as loadPoseNetDetector} from './posenet/detector';
 import {PosenetModelConfig} from './posenet/types';
 import {SupportedModels} from './types';
 
@@ -37,15 +37,26 @@ export async function createDetector(
     BlazePoseMediaPipeModelConfig|MoveNetModelConfig): Promise<PoseDetector> {
   switch (model) {
     case SupportedModels.PoseNet:
-      return PosenetDetector.load(modelConfig as PosenetModelConfig);
+      return loadPoseNetDetector(modelConfig as PosenetModelConfig);
     case SupportedModels.BlazePose:
       const config = modelConfig as BlazePoseModelConfig;
-      return config != null && config.runtime === 'tfjs' ?
-          BlazePoseTfjsDetector.load(modelConfig as BlazePoseTfjsModelConfig) :
-          BlazePoseMediaPipeDetector.load(
-              config as BlazePoseMediaPipeModelConfig);
+      let runtime;
+      if (config != null) {
+        if (config.runtime === 'tfjs') {
+          return loadBlazePoseTfjsDetector(
+              modelConfig as BlazePoseTfjsModelConfig);
+        }
+        if (config.runtime === 'mediapipe') {
+          return loadBlazePoseMediaPipeDetector(
+              modelConfig as BlazePoseMediaPipeModelConfig);
+        }
+        runtime = config.runtime;
+      }
+      throw new Error(
+          `Expect modelConfig.runtime to be either 'tfjs' ` +
+          `or 'mediapipe', but got ${runtime}`);
     case SupportedModels.MoveNet:
-      return MoveNetDetector.load(modelConfig as MoveNetModelConfig);
+      return loadMoveNetDetector(modelConfig as MoveNetModelConfig);
     default:
       throw new Error(`${model} is not a supported model name.`);
   }

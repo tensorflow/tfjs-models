@@ -41,9 +41,11 @@ export class ImageClassificationCustomModelTFLiteLoader extends TaskModelLoader<
     name: 'Image classification with TFLite models',
     description: 'An image classfier backed by the TFLite Task Library. ' +
         'It can work with any models that meet the ' +
-        '<a href:"https://www.tensorflow.org/lite/inference_with_metadata/' +
+        '<a href="https://www.tensorflow.org/lite/inference_with_metadata/' +
         'task_library/image_classifier#model_compatibility_requirements" ' +
-        'target:"_blank">model requirements</a>.',
+        'target:"_blank">model requirements</a>. Try models from this ' +
+        '<a href="https://tfhub.dev/tensorflow/collections/lite/task-library/' +
+        'image-classifier/1" target="_blank">collection</a>.',
     resourceUrls: {
       'TFLite task library': 'https://www.tensorflow.org/lite/' +
           'inference_with_metadata/task_library/overview',

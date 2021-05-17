@@ -16,7 +16,7 @@
  */
 import * as pose from '@mediapipe/pose';
 
-import {BasePoseDetector, PoseDetector} from '../pose_detector';
+import {PoseDetector} from '../pose_detector';
 import {Pose, PoseDetectorInput} from '../types';
 import {validateModelConfig} from './detector_utils';
 
@@ -25,7 +25,7 @@ import {BlazePoseMediaPipeEstimationConfig, BlazePoseMediaPipeModelConfig} from 
 /**
  * MediaPipe detector class.
  */
-export class BlazePoseMediaPipeDetector extends BasePoseDetector {
+class BlazePoseMediaPipeDetector implements PoseDetector {
   private readonly poseSolution: pose.Pose;
 
   // This will be filled out by asynchronous calls to onResults. They will be
@@ -37,8 +37,7 @@ export class BlazePoseMediaPipeDetector extends BasePoseDetector {
   private selfieMode = false;
 
   // Should not be called outside.
-  private constructor(config: BlazePoseMediaPipeModelConfig) {
-    super();
+  constructor(config: BlazePoseMediaPipeModelConfig) {
     this.poseSolution = new pose.Pose({
       locateFile: (path, base) => {
         if (config.solutionPath) {
@@ -53,12 +52,10 @@ export class BlazePoseMediaPipeDetector extends BasePoseDetector {
       case 'lite':
         modelComplexity = 0;
         break;
-      case 'full':
-        modelComplexity = 1;
-        break;
       case 'heavy':
         modelComplexity = 2;
         break;
+      case 'full':
       default:
         modelComplexity = 1;
         break;
@@ -76,27 +73,15 @@ export class BlazePoseMediaPipeDetector extends BasePoseDetector {
   }
 
   private translateOutputs(results: pose.Results): Pose[] {
-    return [{
+    return results.poseLandmarks != null ? [{
       keypoints: results.poseLandmarks.map(landmark => ({
                                              x: landmark.x * this.width,
                                              y: landmark.y * this.height,
                                              z: landmark.z,
                                              score: landmark.visibility
                                            }))
-    }];
-  }
-
-  /**
-   * Loads the MediaPipe solution.
-   *
-   * @param modelConfig ModelConfig dictionary that contains parameters for
-   * the BlazePose loading process. Please find more details of each parameters
-   * in the documentation of the `BlazePoseMediaPipeModelConfig` interface.
-   */
-  static async load(modelConfig: BlazePoseMediaPipeModelConfig):
-      Promise<PoseDetector> {
-    const config = validateModelConfig(modelConfig);
-    return new BlazePoseMediaPipeDetector(config);
+    }] :
+                                           [];
   }
 
   /**
@@ -121,9 +106,9 @@ export class BlazePoseMediaPipeDetector extends BasePoseDetector {
    *       enableSmoothing: Optional. Default to true. Smooth pose landmarks
    *       coordinates and visibility scores to reduce jitter.
    *
-   * @param timestamp Optional. In microseconds, i.e. 1e-6 of a second. This is
-   *     useful when image is a tensor, which doesn't have timestamp info. Or
-   *     to override timestamp in a video.
+   * @param timestamp Optional. In milliseconds. This is useful when image is
+   *     a tensor, which doesn't have timestamp info. Or to override timestamp
+   *     in a video.
    *
    * @return An array of `Pose`s.
    */
@@ -149,4 +134,23 @@ export class BlazePoseMediaPipeDetector extends BasePoseDetector {
   reset() {
     this.poseSolution.reset();
   }
+
+  initialize(): Promise<void> {
+    return this.poseSolution.initialize();
+  }
+}
+
+/**
+ * Loads the MediaPipe solution.
+ *
+ * @param modelConfig ModelConfig object that contains parameters for
+ * the BlazePose loading process. Please find more details of each parameters
+ * in the documentation of the `BlazePoseMediaPipeModelConfig` interface.
+ */
+export async function load(modelConfig: BlazePoseMediaPipeModelConfig):
+    Promise<PoseDetector> {
+  const config = validateModelConfig(modelConfig);
+  const result = new BlazePoseMediaPipeDetector(config);
+  await result.initialize();
+  return result;
 }

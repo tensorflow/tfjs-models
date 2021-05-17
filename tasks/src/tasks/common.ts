@@ -50,6 +50,8 @@ export interface TFLiteCustomModelCommonLoadingOption {
 /** All supported tasks. */
 export enum Task {
   IMAGE_CLASSIFICATION = 'IMAGE_CLASSIFICATION',
+  OBJECT_DETECTION = 'OBJECT_DETECTION',
+  IMAGE_SEGMENTATION = 'IMAGE_SEGMENTATION',
 }
 
 /** All supported runtimes. */
@@ -57,6 +59,14 @@ export enum Runtime {
   TFJS = 'TFJS',
   TFLITE = 'TFLite',
   MEDIA_PIPE = 'MediaPipe',
+}
+
+/** A single class in the classification result. */
+export interface Class {
+  /** The name of the class. */
+  className: string;
+  /** The score of the class. */
+  score: number;
 }
 
 /** A helper function to get the TFJS packages that a TFJS model depends on. */

@@ -17,20 +17,30 @@
 import {EstimationConfig, ModelConfig} from '../types';
 
 /**
- * Additional MoveNet model loading config.
+ * MoveNet model loading config.
  *
- * 'modelType': Optional. The type of MoveNet model to load, Lighting or
+ * `enableSmoothing`: Optional. A boolean indicating whether to use temporal
+ * filter to smooth the predicted keypoints. Defaults to True. The temporal
+ * filter relies on the currentTime field of the HTMLVideoElement. You can
+ * override this timestamp by passing in your own timestamp (in milliseconds)
+ * as the third parameter in `estimatePoses`. This is useful when the input is
+ * a tensor, which doesn't have the currentTime field. Or in testing, to
+ * simulate different FPS.
+ *
+ * `modelType`: Optional. The type of MoveNet model to load, Lighting or
  * Thunder. Defaults to Lightning. Lightning is a lower capacity model that can
  * run >50FPS on most modern laptops while achieving good performance. Thunder
- * is A higher capacity model that performs better prediction quality while
+ * is a higher capacity model that performs better prediction quality while
  * still achieving real-time (>30FPS) speed. Thunder will lag behind the
  * lightning, but it will pack a punch.
  *
  * `modelUrl`: Optional. An optional string that specifies custom url of the
  * model. This is useful for area/countries that don't have access to the model
- * hosted on TF Hub.
+ * hosted on TF Hub. If not provided, it will load the model specified by
+ * `modelType` from tf.hub.
  */
 export interface MoveNetModelConfig extends ModelConfig {
+  enableSmoothing?: boolean;
   modelType?: string;
   modelUrl?: string;
 }
@@ -38,9 +48,6 @@ export interface MoveNetModelConfig extends ModelConfig {
 /**
  * MoveNet Specific Inference Config.
  *
- * `enableSmoothing`: Optional. Defaults to 'true'. When enabled, a temporal
- * smoothing filter will be used on the keypoint locations to reduce jitter.
+ * `maxPoses`: Optional. Defaults to 1. MoveNet only supports 1 pose for now.
  */
-export interface MoveNetEstimationConfig extends EstimationConfig {
-  enableSmoothing?: boolean;
-}
+export interface MoveNetEstimationConfig extends EstimationConfig {}

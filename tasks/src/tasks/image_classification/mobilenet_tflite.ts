@@ -46,12 +46,12 @@ export interface MobilenetTFLiteLoadingOptions extends
  */
 export interface MobilenetTFLiteInferenceOptions {}
 
-/** Loader for custom image classification TFLite model. */
+/** Loader for mobilenet TFLite model. */
 export class MobilenetTFLiteLoader extends
     TaskModelLoader<TFLiteNS, MobilenetTFLiteLoadingOptions, MobilenetTFLite> {
   readonly metadata = {
     name: 'TFLite Mobilenet',
-    description: 'Run mobilenet with TFLite models',
+    description: 'Run mobilenet image classification model with TFLite',
     runtime: Runtime.TFLITE,
     version: '0.0.1-alpha.3',
     supportedTasks: [Task.IMAGE_CLASSIFICATION],
@@ -92,17 +92,16 @@ export class MobilenetTFLiteLoader extends
 }
 
 /**
- * Pre-trained TFLite mobilenet model.
+ * Pre-trained TFLite mobilenet image classification model.
  *
  * Usage:
  *
  * ```js
  * // Load the model with options (optional).
  * //
- * // By default, it uses mobilenet V1.
- * const model = await tfTask.ImageClassification.Mobilenet.TFJS.load({
- *   version: 2,
- * });
+ * // By default, it uses mobilenet V1. You can change it in the options
+ * // parameter of the `load` function (see below for docs).
+ * const model = await tfTask.ImageClassification.Mobilenet.TFJS.load();
  *
  * // Run inference on an image.
  * const img = document.querySelector('img');
