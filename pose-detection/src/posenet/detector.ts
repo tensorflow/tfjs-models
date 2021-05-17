@@ -113,15 +113,15 @@ class PosenetDetector implements PoseDetector {
 
     let offsets, heatmap, displacementFwd, displacementBwd;
     if (this.architecture === 'ResNet50') {
-      offsets = tf.squeeze(results[2]);
-      heatmap = tf.squeeze(results[3]);
-      displacementFwd = tf.squeeze(results[0]);
-      displacementBwd = tf.squeeze(results[1]);
+      offsets = tf.squeeze(results[2], [0]);
+      heatmap = tf.squeeze(results[3], [0]);
+      displacementFwd = tf.squeeze(results[0], [0]);
+      displacementBwd = tf.squeeze(results[1], [0]);
     } else {
-      offsets = tf.squeeze(results[0]);
-      heatmap = tf.squeeze(results[1]);
-      displacementFwd = tf.squeeze(results[2]);
-      displacementBwd = tf.squeeze(results[3]);
+      offsets = tf.squeeze(results[0], [0]);
+      heatmap = tf.squeeze(results[1], [0]);
+      displacementFwd = tf.squeeze(results[2], [0]);
+      displacementBwd = tf.squeeze(results[3], [0]);
     }
     const heatmapScores = tf.sigmoid(heatmap) as tf.Tensor3D;
 

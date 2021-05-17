@@ -85,5 +85,9 @@ export async function setBackendAndEnvFlags(flagConfig, backend) {
 
   tf.env().setFlags(flagConfig);
 
-  await resetBackend(backend);
+  const [runtime, $backend] = backend.split('-');
+
+  if (runtime === 'tfjs') {
+    await resetBackend($backend);
+  }
 }

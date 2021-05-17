@@ -96,14 +96,8 @@ class BlazePoseTfjsDetector implements PoseDetector {
    * ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement The input
    * image to feed through the network.
    *
-   * @param config Optional.
-   *       maxPoses: Optional. Max number of poses to estimate.
-   *       When maxPoses = 1, a single pose is detected, it is usually much more
-   *       efficient than maxPoses > 1. When maxPoses > 1, multiple poses are
-   *       detected.
-   *
-   *       flipHorizontal: Optional. Default to false. When image data comes
-   *       from camera, the result has to flip horizontally.
+   * @param estimationConfig Optional. See `BlazePoseTfjsEstimationConfig`
+   *       documentation for detail.
    *
    * @param timestamp Optional. In milliseconds. This is useful when image is
    *     a tensor, which doesn't have timestamp info. Or to override timestamp
@@ -473,11 +467,9 @@ class BlazePoseTfjsDetector implements PoseDetector {
 }
 
 /**
- * Loads the BlazePose model. The model to be loaded is configurable using the
- * config dictionary `BlazePoseTfjsModelConfig`. Please find more details in
- * the documentation of the `BlazePoseTfjsModelConfig`.
+ * Loads the BlazePose model.
  *
- * @param modelConfig ModelConfig dictionary that contains parameters for
+ * @param modelConfig ModelConfig object that contains parameters for
  * the BlazePose loading process. Please find more details of each parameters
  * in the documentation of the `BlazePoseTfjsModelConfig` interface.
  */

@@ -32,12 +32,12 @@ export const MOVENET_SINGLEPOSE_THUNDER_RESOLUTION = 256;
 
 // The default configuration for loading MoveNet.
 export const MOVENET_CONFIG: MoveNetModelConfig = {
-  modelType: SINGLEPOSE_LIGHTNING
+  modelType: SINGLEPOSE_LIGHTNING,
+  enableSmoothing: true
 };
 
 export const MOVENET_SINGLE_POSE_ESTIMATION_CONFIG: MoveNetEstimationConfig = {
-  maxPoses: 1,
-  enableSmoothing: true
+  maxPoses: 1
 };
 
 export const KEYPOINT_FILTER_CONFIG = {
