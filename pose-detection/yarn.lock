@@ -880,7 +880,7 @@
   resolved "https://registry.npmjs.org/@istanbuljs/schema/-/schema-0.1.3.tgz#e45e384e4b8ec16bce2fd903af78450f6bf7ec98"
   integrity sha512-ZXRY4jNvVgSVQ8DL3LTcakaAtXwTVUxE81hslsyD2AtoXW/wVob10HkOJ1X/pAlcI7D+2YoZKg5do8G/w6RYgA==
 
-"@mediapipe/pose@0.3.x":
+"@mediapipe/pose@~0.3.0":
   version "0.3.1620676110"
   resolved "https://registry.npmjs.org/@mediapipe/pose/-/pose-0.3.1620676110.tgz#35d522196db581e213259fbc42290a577bd239ed"
   integrity sha512-macv7l2fuaqLArYvUSuoUrxoOVut4KEFHEqPU0i6SLpfohJFhBRgpJXiy8w+KTWkdh0e7cTLkPTESiV2+u9tNA==
