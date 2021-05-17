@@ -52,7 +52,8 @@ export abstract class SentimentDetector<IO> implements TaskModel {
 /** Sentiment detection result. */
 export interface SentimentDetectionResult {
   /**
-   * A map from sentiment labels to their detection result.
+   * A map from sentiment labels to their detection result along with the raw
+   * probabilities ([negative probability, positive probability]).
    *
    * For example:
    * {

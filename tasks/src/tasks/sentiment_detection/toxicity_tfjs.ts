@@ -93,7 +93,19 @@ export class ToxicityTFJSLoader extends
  * model.cleanUp();
  * ```
  *
- * Refer to `tfTask.SentimentDetection` for the `predict` and `cleanUp` method.
+ * By default, the model returns the prediction results of the following
+ * sentiment labels:
+ *
+ * - toxicity
+ * - severe_toxicity
+ * - identity_attack
+ * - insult
+ * - threat
+ * - sexual_explicit
+ * - obscene
+ *
+ * Refer to `tfTask.SentimentDetection` for the `predict` and `cleanUp` method,
+ * and more details about the result interface.
  *
  * @docextratypes [
  *   {description: 'Options for `load`', symbol: 'ToxicityTFJSLoadingOptions'},

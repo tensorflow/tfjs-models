@@ -24,7 +24,7 @@ import {SentimentDetectionBaseOptions, SentimentDetectionResult, SentimentDetect
 // The global namespace type.
 type TFLiteNS = typeof tflite;
 
-const DEFAULT_THRESHOLD = 0.65;
+const DEFAULT_THRESHOLD = 0.5;
 
 /** Loading options. */
 export interface MovieReviewTFLiteLoadingOptions extends
@@ -87,7 +87,13 @@ export class MovieReviewTFLiteLoader extends TaskModelLoader<
  * model.cleanUp();
  * ```
  *
- * Refer to `tfTask.SentimentDetector` for the `predict` and `cleanUp` method.
+ * The model returns the prediction results of the following sentiment labels:
+ *
+ * - positive
+ * - negative
+ *
+ * Refer to `tfTask.SentimentDetector` for the `predict` and `cleanUp` method,
+ * and more details about the result interface.
  *
  * @docextratypes [
  *   {description: 'Options for `load`', symbol:
@@ -118,15 +124,21 @@ export class MovieReviewTFLite extends
 
     const negativeProbability = tfliteResults[0].probability;
     const positiveProbability = tfliteResults[1].probability;
-    let result: boolean|null = null;
+    let positiveResult: boolean|null = null;
+    let negativeResult: boolean|null = null;
     if (Math.max(negativeProbability, positiveProbability) > this.threshold) {
-      result = positiveProbability > negativeProbability;
+      positiveResult = positiveProbability > negativeProbability;
+      negativeResult = positiveProbability < negativeProbability;
     }
     return {
       sentimentLabels: {
         'positive': {
-          result,
+          result: positiveResult,
           probabilities: [negativeProbability, positiveProbability],
+        },
+        'negative': {
+          result: negativeResult,
+          probabilities: [positiveProbability, negativeProbability],
         }
       }
     };
