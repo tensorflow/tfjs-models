@@ -3,9 +3,9 @@
 BlazePose-MediaPipe wraps our powerful MediaPipe JS Solution within the familiar
 TFJS API [mediapipe.dev](https://mediapipe.dev). Three models are offered.
 
-* 'lite' - our smallest model which trades footprint for accuracy.
-* 'heavy' - our largest model intended for high accuracy, regardless of size.
-* 'full' - A middle ground between Lite and Heavy.
+* lite - our smallest model which trades footprint for accuracy.
+* heavy - our largest model intended for high accuracy, regardless of size.
+* full - A middle ground between Lite and Heavy.
 
 Please try our our live [demo](https://storage.googleapis.com/tfjs-models/demos/pose-detection/index.html?model=blazepose).
 
@@ -104,8 +104,8 @@ multiple devices. The model latency (expressed in FPS) was measured on GPU with
 WebGL, as well as WebAssembly (WASM), which is the typical backend for devices
 with lower-end or no GPUs.
 
-|              | MacBook Pro 15" 2019 <br> Intel core i9. <br> AMD Radeon Pro Vega 20 Graphics. <br> (FPS) | iPhone 12 <br> (FPS) | Pixel 5 <br> (FPS) | Desktop <br> Intel i9-10900K. <br> Nvidia GTX 1070 GPU. <br> (FPS) |
-| ------------ | ------------- |
+|  |MacBook Pro 15" 2019<br>Intel core i9.<br>AMD Radeon Pro Vega 20 Graphics.<br> (FPS)| iPhone12<br>(FPS) | Pixel5 <br> (FPS)|Desktop <br> Intel i9-10900K. <br> Nvidia GTX 1070 GPU. <br> (FPS)|
+| --- | --- | --- | --- | --- |
 |       *MediaPipe Runtime* <br> With WASM & GPU Accel.                        |  92 \| 81 \| 38 | N/A | 32 \| 22 \| N/A | 160 \| 140 \| 98 |
 |  *TensorFlow.js Runtime* <br> with WebGL backend |  48 \| 53 \| 28 | 34 \| 30 \| N/A | 12  \| 11 \| 5 | 44 \| 40 \| 30 |
 
@@ -119,7 +119,9 @@ Bundle size can affect initial page loading experience, such as Time-To-Interact
 
 There is a difference of how things are loaded between the two runtimes. For the MediaPipe runtime, only the @tensorflow-models/pose-detection and the @mediapipe/pose library are loaded at initial page download; the runtime and the model assets are loaded when the createDetector method is called. For the TF.js runtime with WebGL backend, the runtime is loaded at initial page download; only the model assets are loaded when the createDetector method is called. The TensorFlow.js package sizes can be further reduced with a custom bundle technique. Also, if your application is currently using TensorFlow.js, you don’t need to load those packages again, models will share the same TensorFlow.js runtime. Choose the runtime that best suits your latency and bundle size requirements. A summary of loading times and bundle sizes is provided below:
 
-| | Bundle Size <br> gzipped + minified | Average Loading Time <br> download speed 100Mbps |
+
+|  |Bundle Size<br>gzipped + minified|Average Loading Time <br> download speed 100Mbps|
+| --- | --- | --- |
 | MediaPipe Runtime | | |
 | Initial Page Load | 22.1KB | 0.04s |
 | Initial Detector Creation: | | |
