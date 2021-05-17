@@ -4,8 +4,10 @@ Try various of our demos and models and get inspired with what you can do with
 pose-detection models!
 
 ## Table of Contents
-1  [Live Camera](#live-camera)
+1.  [Live Camera](#live-camera)
+
 2. [Upload a Video](#upload-a-video)
+
 3. [How to Run a Demo](#how-to-run-a-demo)
 
 -------------------------------------------------------------------------------
