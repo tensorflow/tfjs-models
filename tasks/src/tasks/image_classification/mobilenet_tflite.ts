@@ -86,7 +86,7 @@ export class MobilenetTFLiteLoader extends
     const url = `https://storage.googleapis.com/tfweb/models/mobilenet_v${
         mobilenetVersion}_${mobilenetAlpha}_224_1_metadata_1.tflite`;
     const tfliteImageClassifier =
-        await sourceModelGlobal.ImageClassifier.create(url);
+        await sourceModelGlobal.ImageClassifier.create(url, loadingOptions);
     return new MobilenetTFLite(tfliteImageClassifier);
   }
 }
