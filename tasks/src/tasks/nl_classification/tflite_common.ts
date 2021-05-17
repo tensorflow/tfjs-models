@@ -70,22 +70,22 @@ export function getNLClassifierOptions(options?: tflite.NLClassifierOptions):
   if (!options) {
     return nlclassifierOptions;
   }
-  if (options.inputTensorIndex !== null) {
+  if (options.inputTensorIndex != null) {
     nlclassifierOptions.inputTensorIndex = options.inputTensorIndex;
   }
-  if (options.outputScoreTensorIndex !== null) {
+  if (options.outputScoreTensorIndex != null) {
     nlclassifierOptions.outputScoreTensorIndex = options.outputScoreTensorIndex;
   }
-  if (options.outputLabelTensorIndex !== null) {
+  if (options.outputLabelTensorIndex != null) {
     nlclassifierOptions.outputLabelTensorIndex = options.outputLabelTensorIndex;
   }
-  if (options.inputTensorName !== null) {
+  if (options.inputTensorName != null) {
     nlclassifierOptions.inputTensorName = options.inputTensorName;
   }
-  if (options.outputScoreTensorName !== null) {
+  if (options.outputScoreTensorName != null) {
     nlclassifierOptions.outputScoreTensorName = options.outputScoreTensorName;
   }
-  if (options.outputLabelTensorName !== null) {
+  if (options.outputLabelTensorName != null) {
     nlclassifierOptions.outputLabelTensorName = options.outputLabelTensorName;
   }
   return nlclassifierOptions;
