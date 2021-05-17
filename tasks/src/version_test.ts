@@ -15,9 +15,12 @@
  * =============================================================================
  */
 
-export * from './task_model';
-export * from './tasks/all_tasks';
-export * from './tasks/image_classification/mobilenet_tfjs';
-export * from './tasks/image_classification/mobilenet_tflite';
-export * from './tasks/image_classification/custom_model_tflite';
-export {version} from './version';
+import {version} from './index';
+
+describe('version', () => {
+  it('version matches package.json', () => {
+    // tslint:disable-next-line:no-require-imports
+    const expected = require('../package.json').version;
+    expect(version).toBe(expected);
+  });
+});
