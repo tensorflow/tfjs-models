@@ -82,13 +82,10 @@ export async function decodeMultiplePoses(
     displacementFwd: tf.Tensor3D, displacementBwd: tf.Tensor3D,
     outputStride: PoseNetOutputStride, maxPoseDetections: number,
     scoreThreshold = 0.5, nmsRadius = 20): Promise<Pose[]> {
-  const allTensorBuffers = await toTensorBuffers3D(
-      [heatmapScores, offsets, displacementFwd, displacementBwd]);
-
-  const scoresBuffer = allTensorBuffers[0];
-  const offsetsBuffer = allTensorBuffers[1];
-  const displacementsFwdBuffer = allTensorBuffers[2];
-  const displacementsBwdBuffer = allTensorBuffers[3];
+  // tslint:disable-next-line: max-line-length
+  const [scoresBuffer, offsetsBuffer, displacementsFwdBuffer, displacementsBwdBuffer] =
+      await toTensorBuffers3D(
+          [heatmapScores, offsets, displacementFwd, displacementBwd]);
 
   const poses: Pose[] = [];
 
@@ -117,7 +114,6 @@ export async function decodeMultiplePoses(
     const keypoints = decodePose(
         root, scoresBuffer, offsetsBuffer, outputStride, displacementsFwdBuffer,
         displacementsBwdBuffer);
-
     const score = getInstanceScore(poses, squaredNmsRadius, keypoints);
 
     poses.push({keypoints, score});

@@ -16,7 +16,8 @@
  */
 export function setupStats() {
   const stats = new Stats();
-  stats.showPanel(0);  // 0: fps, 1: ms, 2: mb, 3+: custom
+  stats.customFpsPanel = stats.addPanel(new Stats.Panel('FPS', '#0ff', '#002'));
+  stats.showPanel(stats.domElement.children.length - 1);
 
   const parent = document.getElementById('stats');
   parent.appendChild(stats.domElement);

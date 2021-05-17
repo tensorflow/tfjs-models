@@ -60,8 +60,5 @@
   },
   "eslintIgnore": [
     "dist/"
-  ],
-  "staticFiles": {
-    "staticPath": "./node_modules/@mediapipe/pose"
-  }
+  ]
 }

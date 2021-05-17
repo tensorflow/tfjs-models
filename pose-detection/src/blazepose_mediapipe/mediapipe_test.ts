@@ -22,8 +22,10 @@ import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
 
 import * as poseDetection from '../index';
 import {getXYPerFrame, KARMA_SERVER, loadVideo} from '../test_util';
+import {BlazePoseMediaPipeModelConfig} from './types';
 
-const MEDIAPIPE_MODEL_CONFIG = {
+const MEDIAPIPE_MODEL_CONFIG: BlazePoseMediaPipeModelConfig = {
+  runtime: 'mediapipe',
   solutionPath: 'base/node_modules/@mediapipe/pose'
 };
 
@@ -97,8 +99,8 @@ describeWithFlags('MediaPipe Pose video ', BROWSER_ENVS, () => {
 
     const callback = async(video: HTMLVideoElement, timestamp: number):
         Promise<poseDetection.Pose[]> => {
-          const poses = await detector.estimatePoses(
-              video, null /* config */, timestamp / 1000);
+          const poses =
+              await detector.estimatePoses(video, null /* config */, timestamp);
           result.push(poses[0].keypoints.map(kp => [kp.x, kp.y]));
           return poses;
         };

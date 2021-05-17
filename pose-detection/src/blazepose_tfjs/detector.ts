@@ -19,7 +19,7 @@ import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 import {BlazePoseModelType} from '../blazepose_mediapipe/types';
 
-import {SECOND_TO_MICRO_SECONDS} from '../calculators/constants';
+import {MILLISECOND_TO_MICRO_SECONDS, SECOND_TO_MICRO_SECONDS} from '../calculators/constants';
 import {convertImageToTensor} from '../calculators/convert_image_to_tensor';
 import {getImageSize, toImageTensor} from '../calculators/image_utils';
 import {ImageSize} from '../calculators/interfaces/common_interfaces';
@@ -28,7 +28,7 @@ import {isVideo} from '../calculators/is_video';
 import {KeypointsSmoothingFilter} from '../calculators/keypoints_smoothing';
 import {normalizedKeypointsToKeypoints} from '../calculators/normalized_keypoints_to_keypoints';
 import {shiftImageValue} from '../calculators/shift_image_value';
-import {BasePoseDetector, PoseDetector} from '../pose_detector';
+import {PoseDetector} from '../pose_detector';
 import {Keypoint, Pose, PoseDetectorInput} from '../types';
 
 import {calculateAlignmentPointsRects} from './calculators/calculate_alignment_points_rects';
@@ -58,7 +58,7 @@ type PoseLandmarksByRoiResult = {
 /**
  * BlazePose detector class.
  */
-export class BlazePoseTfjsDetector extends BasePoseDetector {
+class BlazePoseTfjsDetector implements PoseDetector {
   private readonly anchors: Rect[];
   private readonly anchorTensor: AnchorTensor;
 
@@ -72,14 +72,11 @@ export class BlazePoseTfjsDetector extends BasePoseDetector {
   private landmarksSmoothingFilterActual: KeypointsSmoothingFilter;
   private landmarksSmoothingFilterAuxiliary: KeypointsSmoothingFilter;
 
-  // Should not be called outside.
-  private constructor(
+  constructor(
       private readonly detectorModel: tfconv.GraphModel,
       private readonly landmarkModel: tfconv.GraphModel,
       private readonly enableSmoothing: boolean,
       private readonly modelType: BlazePoseModelType) {
-    super();
-
     this.anchors =
         createSsdAnchors(constants.BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION);
     const anchorW = tf.tensor1d(this.anchors.map(a => a.width));
@@ -87,28 +84,6 @@ export class BlazePoseTfjsDetector extends BasePoseDetector {
     const anchorX = tf.tensor1d(this.anchors.map(a => a.xCenter));
     const anchorY = tf.tensor1d(this.anchors.map(a => a.yCenter));
     this.anchorTensor = {x: anchorX, y: anchorY, w: anchorW, h: anchorH};
-  }
-
-  /**
-   * Loads the BlazePose model. The model to be loaded is configurable using the
-   * config dictionary `BlazePoseTfjsModelConfig`. Please find more details in
-   * the documentation of the `BlazePoseTfjsModelConfig`.
-   *
-   * @param modelConfig ModelConfig dictionary that contains parameters for
-   * the BlazePose loading process. Please find more details of each parameters
-   * in the documentation of the `BlazePoseTfjsModelConfig` interface.
-   */
-  static async load(modelConfig: BlazePoseTfjsModelConfig):
-      Promise<PoseDetector> {
-    const config = validateModelConfig(modelConfig);
-
-    const [detectorModel, landmarkModel] = await Promise.all([
-      tfconv.loadGraphModel(config.detectorModelUrl),
-      tfconv.loadGraphModel(config.landmarkModelUrl)
-    ]);
-
-    return new BlazePoseTfjsDetector(
-        detectorModel, landmarkModel, config.enableSmoothing, config.modelType);
   }
 
   /**
@@ -121,18 +96,12 @@ export class BlazePoseTfjsDetector extends BasePoseDetector {
    * ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement The input
    * image to feed through the network.
    *
-   * @param config Optional.
-   *       maxPoses: Optional. Max number of poses to estimate.
-   *       When maxPoses = 1, a single pose is detected, it is usually much more
-   *       efficient than maxPoses > 1. When maxPoses > 1, multiple poses are
-   *       detected.
+   * @param estimationConfig Optional. See `BlazePoseTfjsEstimationConfig`
+   *       documentation for detail.
    *
-   *       flipHorizontal: Optional. Default to false. When image data comes
-   *       from camera, the result has to flip horizontally.
-   *
-   * @param timestamp Optional. In microseconds, i.e. 1e-6 of a second. This is
-   *     useful when image is a tensor, which doesn't have timestamp info. Or
-   *     to override timestamp in a video.
+   * @param timestamp Optional. In milliseconds. This is useful when image is
+   *     a tensor, which doesn't have timestamp info. Or to override timestamp
+   *     in a video.
    *
    * @return An array of `Pose`s.
    */
@@ -153,7 +122,7 @@ export class BlazePoseTfjsDetector extends BasePoseDetector {
 
     // User provided timestamp will override video's timestamp.
     if (timestamp != null) {
-      this.timestamp = timestamp;
+      this.timestamp = timestamp * MILLISECOND_TO_MICRO_SECONDS;
     } else {
       // For static images, timestamp should be null.
       this.timestamp =
@@ -495,4 +464,24 @@ export class BlazePoseTfjsDetector extends BasePoseDetector {
 
     return {actualLandmarksFiltered, auxiliaryLandmarksFiltered};
   }
+}
+
+/**
+ * Loads the BlazePose model.
+ *
+ * @param modelConfig ModelConfig object that contains parameters for
+ * the BlazePose loading process. Please find more details of each parameters
+ * in the documentation of the `BlazePoseTfjsModelConfig` interface.
+ */
+export async function load(modelConfig: BlazePoseTfjsModelConfig):
+    Promise<PoseDetector> {
+  const config = validateModelConfig(modelConfig);
+
+  const [detectorModel, landmarkModel] = await Promise.all([
+    tfconv.loadGraphModel(config.detectorModelUrl),
+    tfconv.loadGraphModel(config.landmarkModelUrl)
+  ]);
+
+  return new BlazePoseTfjsDetector(
+      detectorModel, landmarkModel, config.enableSmoothing, config.modelType);
 }
