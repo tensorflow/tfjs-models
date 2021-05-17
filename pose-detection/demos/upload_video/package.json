@@ -1,5 +1,5 @@
 {
-  "name": "posedetection_demo",
+  "name": "posedetection_demo_upload_video",
   "version": "0.0.1",
   "description": "Demo for pose detection api",
   "main": "index.js",
@@ -60,8 +60,5 @@
   },
   "eslintIgnore": [
     "dist/"
-  ],
-  "staticFiles": {
-    "staticPath": "./node_modules/@mediapipe/pose"
-  }
+  ]
 }

@@ -52,9 +52,11 @@ async function createDetector() {
     case posedetection.SupportedModels.BlazePose:
       const runtime = STATE.backend.split('-')[0];
       if (runtime === 'mediapipe') {
-        return posedetection.createDetector(
-            STATE.model,
-            {runtime, modelType: STATE.modelConfig.type, solutionPath: './'});
+        return posedetection.createDetector(STATE.model, {
+          runtime,
+          modelType: STATE.modelConfig.type,
+          solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/pose'
+        });
       } else if (runtime === 'tfjs') {
         return posedetection.createDetector(
             STATE.model, {runtime, modelType: STATE.modelConfig.type});
@@ -177,7 +179,7 @@ async function run() {
 
   if (runtime === 'tfjs') {
     const warmUpTensor =
-        tf.fill([camera.video.height, camera.video.width, 3], 0);
+        tf.fill([camera.video.height, camera.video.width, 3], 0, 'float32');
     await detector.estimatePoses(
         warmUpTensor,
         {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
