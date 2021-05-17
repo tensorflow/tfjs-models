@@ -15,6 +15,7 @@
  * =============================================================================
  */
 import * as pose from '@mediapipe/pose';
+import {BLAZEPOSE_KEYPOINTS} from '../constants';
 
 import {PoseDetector} from '../pose_detector';
 import {Pose, PoseDetectorInput} from '../types';
@@ -74,11 +75,12 @@ class BlazePoseMediaPipeDetector implements PoseDetector {
 
   private translateOutputs(results: pose.Results): Pose[] {
     return results.poseLandmarks != null ? [{
-      keypoints: results.poseLandmarks.map(landmark => ({
+      keypoints: results.poseLandmarks.map((landmark, i) => ({
                                              x: landmark.x * this.width,
                                              y: landmark.y * this.height,
                                              z: landmark.z,
-                                             score: landmark.visibility
+                                             score: landmark.visibility,
+                                             name: BLAZEPOSE_KEYPOINTS[i]
                                            }))
     }] :
                                            [];
