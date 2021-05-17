@@ -29,7 +29,7 @@ PoseNet can detect multiple poses, each pose contains 17 keypoints.
 
 -------------------------------------------------------------------------------
 ## How to Run It
-In general,
+In general there are two steps:
 
 You first create a detector by choosing one of the models from `SupportedModels`,
 including `MoveNet`, `BlazePose` and `PoseNet`.
@@ -49,7 +49,7 @@ const poses = await detector.estimatePoses(image);
 
 The returned poses list contains detected poses for each individual in the image.
 For single-person models, there will only be one element in the list. Currently,
-only PoseNet supports multi-pose estimation. If the model cannot detect any person,
+only PoseNet supports multi-pose estimation. If the model cannot detect any poses,
 the list will be empty.
 
 For each pose, it contains a confidence score of the pose and an array of keypoints.

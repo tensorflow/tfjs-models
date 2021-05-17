@@ -1,6 +1,6 @@
 # BlazePose
 
-BlazePose-MediaPipe wraps our powerful MediaPipe JS Solution within the familiar
+BlazePose-MediaPipe wraps the powerful MediaPipe JS Solution within the familiar
 TFJS API [mediapipe.dev](https://mediapipe.dev). Three models are offered.
 
 * lite - our smallest model which trades footprint for accuracy.
