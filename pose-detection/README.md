@@ -32,7 +32,7 @@ PoseNet can detect multiple poses, each pose contains 17 keypoints.
 In general,
 
 You first create a detector by choosing one of the models from `SupportedModels`,
-include `MoveNet`, `BlazePose` and `PoseNet`.
+including `MoveNet`, `BlazePose` and `PoseNet`.
 
 For example:
 
@@ -49,7 +49,7 @@ const poses = await detector.estimatePoses(image);
 
 The returned poses list contains detected poses for each individual in the image.
 For single-person models, there will only be one element in the list. Currently,
-only PoseNet supports multi-pose estimation. If the model cannot detect any people,
+only PoseNet supports multi-pose estimation. If the model cannot detect any person,
 the list will be empty.
 
 For each pose, it contains a confidence score of the pose and an array of keypoints.
@@ -84,7 +84,7 @@ and therefore setting a proper confidence threshold may involve some experimenta
 
 The name provides a label for each keypoint, such as 'nose', 'left_eye', 'right_knee', etc.
 
-Refer to each model's documentation for specific configurations for each model
+Refer to each model's documentation for specific configurations for the model
 and their performance.
 
 [MoveNet Documentation](https://github.com/tensorflow/tfjs-models/tree/master/pose-detection/src/movenet)
