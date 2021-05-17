@@ -18,31 +18,34 @@
 import * as tflite from '@tensorflow/tfjs-tflite';
 import {TaskModelLoader} from '../../task_model';
 import {Runtime, Task} from '../common';
-import {ObjectDetectorTFLite} from './tflite_common';
+import {QuestionAnswererTFLite} from './tflite_common';
 
 // The global namespace type.
 type TFLiteNS = typeof tflite;
 
-/** Loading options. */
-export interface CocoSsdTFLiteLoadingOptions extends
-    tflite.ObjectDetectorOptions {}
+/**
+ * Loading options.
+ *
+ * TODO: placeholder for now.
+ */
+export interface BertQATFLiteLoadingOptions {}
 
 /**
  * Inference options.
  *
  * TODO: placeholder for now.
  */
-export interface CocoSsdTFLiteInferenceOptions {}
+export interface BertQATFLiteInferenceOptions {}
 
-/** Loader for cocossd TFLite model. */
-export class CocoSsdTFLiteLoader extends
-    TaskModelLoader<TFLiteNS, CocoSsdTFLiteLoadingOptions, CocoSsdTFLite> {
+/** Loader for Bert Q&A TFLite model. */
+export class BertQATFLiteLoader extends
+    TaskModelLoader<TFLiteNS, BertQATFLiteLoadingOptions, BertQATFLite> {
   readonly metadata = {
-    name: 'TFLite COCO-SSD',
-    description: 'Run COCO-SSD object detection model with TFLite',
+    name: 'TFLite Bert Q&A model',
+    description: 'Run Bert Q&A model with TFLite',
     runtime: Runtime.TFLITE,
     version: '0.0.1-alpha.3',
-    supportedTasks: [Task.OBJECT_DETECTION],
+    supportedTasks: [Task.QUESTION_AND_ANSWER],
   };
   readonly packageUrls =
       [[`https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-tflite@${
@@ -51,45 +54,43 @@ export class CocoSsdTFLiteLoader extends
 
   protected async transformSourceModel(
       sourceModelGlobal: TFLiteNS,
-      loadingOptions?: CocoSsdTFLiteLoadingOptions): Promise<CocoSsdTFLite> {
+      loadingOptions?: BertQATFLiteLoadingOptions): Promise<BertQATFLite> {
     const url = 'https://tfhub.dev/tensorflow/lite-model/' +
-        'ssd_mobilenet_v1/1/metadata/2?lite-format=tflite';
-    const tfliteObjectDetector =
-        await sourceModelGlobal.ObjectDetector.create(url, loadingOptions);
-    return new CocoSsdTFLite(tfliteObjectDetector);
+        'mobilebert/1/metadata/1?lite-format=tflite';
+    const tfliteQa = await sourceModelGlobal.BertQuestionAnswerer.create(url);
+    return new BertQATFLite(tfliteQa);
   }
 }
 
 /**
- * Pre-trained TFLite coco-ssd object detection model.
+ * Pre-trained TFLite Bert Q&A model.
  *
  * Usage:
  *
  * ```js
- * // Load the model with options (optional).
- * const model = await tfTask.ObjectDetection.CocoSsd.TFLite.load();
+ * // Load the model.
+ * const model = await tfTask.QuestionAndAnswer.BertQA.TFLite.load();
  *
  * // Run inference on an image.
- * const img = document.querySelector('img');
- * const result = await model.predict(img);
- * console.log(result.objects);
+ * const result = await model.predict(question, context);
+ * console.log(result);
  *
  * // Clean up.
  * model.cleanUp();
  * ```
  *
- * Refer to `tfTask.ObjectDetector` for the `predict` and `cleanUp` method.
+ * Refer to `tfTask.QuestionAnswerer` for the `predict` and `cleanUp` method.
  *
  * @docextratypes [
  *   {description: 'Options for `load`', symbol:
- * 'CocoSsdTFLiteLoadingOptions'},
+ * 'BertQATFLiteLoadingOptions'},
  *   {description: 'Options for `predict`',
- * symbol: 'CocoSsdTFLiteInferenceOptions'}
+ * symbol: 'BertQATFLiteInferenceOptions'}
  * ]
  *
- * @doc {heading: 'Object Detection', subheading: 'Models'}
+ * @doc {heading: 'Question & Answer', subheading: 'Models'}
  */
-export class CocoSsdTFLite extends
-    ObjectDetectorTFLite<CocoSsdTFLiteInferenceOptions> {}
+export class BertQATFLite extends
+    QuestionAnswererTFLite<BertQATFLiteInferenceOptions> {}
 
-export const cocoSsdTfliteLoader = new CocoSsdTFLiteLoader();
+export const bertQaTfliteLoader = new BertQATFLiteLoader();

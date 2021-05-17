@@ -1604,6 +1604,19 @@
   version "0.0.0"
   uid ""
 
+"@tensorflow-models/qna@link:../qna":
+  version "0.0.0"
+  uid ""
+
+"@tensorflow-models/toxicity@link:../toxicity":
+  version "0.0.0"
+  uid ""
+
+"@tensorflow-models/universal-sentence-encoder@~1.2.2":
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/@tensorflow-models/universal-sentence-encoder/-/universal-sentence-encoder-1.2.2.tgz#27a38c39424b5e85389ac461be177c9f44ba19bd"
+  integrity sha512-fGCl/gwB7jmKCRI2FhgIBeIa/LCSUcjlEcckH2Bc2dIjhJ+2nspp+22lubxcseN6jjrmP42kkXt/reAPe+KJkQ==
+
 "@tensorflow/tfjs-converter@^3.5.0":
   version "3.5.0"
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-3.5.0.tgz#6625723e347a452c227469a92541930d5b4aa12f"

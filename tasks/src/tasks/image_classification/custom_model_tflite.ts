@@ -64,7 +64,8 @@ export class ImageClassificationCustomModelTFLiteLoader extends TaskModelLoader<
       loadingOptions?: ICCustomModelTFLiteLoadingOptions):
       Promise<ICCustomModelTFLite> {
     const tfliteImageClassifier =
-        await sourceModelGlobal.ImageClassifier.create(loadingOptions.model);
+        await sourceModelGlobal.ImageClassifier.create(
+            loadingOptions.model, loadingOptions);
     return new ICCustomModelTFLite(tfliteImageClassifier);
   }
 }
