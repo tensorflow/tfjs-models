@@ -23,7 +23,7 @@ PoseNet can detect multiple poses, each pose contains 17 keypoints.
 
 -------------------------------------------------------------------------------
 ## Table of Contents
-1  [How to Run It](#how-to-run-it)
+1.  [How to Run It](#how-to-run-it)
 2. [Keypoint Diagram](#keypoint-diagram)
 3. [Example Code and Demos](#example-code-and-demos)
 
