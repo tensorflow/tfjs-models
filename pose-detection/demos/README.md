@@ -39,7 +39,7 @@ If you want to run any of the demos locally, follow these steps:
 
 1. Go to the demo folder, e.g. `cd live_video`
 
-2. Remove cache etc. `yarn -rf .cache dist node_modules`
+2. Remove cache etc. `rm -rf .cache dist node_modules`
 
 3. Build dependency. `yarn build-dep`
 
