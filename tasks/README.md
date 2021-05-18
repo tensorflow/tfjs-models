@@ -68,7 +68,7 @@ The following table summarizes all the supported tasks and their models:
           <span>·</span>
           <a href="https://js.tensorflow.org/api_tasks/latest/#class:ICCustomModelTFLite">API doc</a>
           <span>·</span>
-          <a href="https://www.tensorflow.org/lite/inference_with_metadata/task_library/image_classifier#model_compatibility_requirements">Model requirements</a>
+          <a href="https://www.tensorflow.org/lite/inference_with_metadata/task_library/image_classifier#model_compatibility_requirements">Requirements</a>
           <span>·</span>
           <a href="https://tfhub.dev/tensorflow/collections/lite/task-library/image-classifier/1">Model collection</a>
         </div>
@@ -105,7 +105,7 @@ The following table summarizes all the supported tasks and their models:
           <span>·</span>
           <a href="https://js.tensorflow.org/api_tasks/latest/#class:ODCustomModelTFLite">API doc</a>
           <span>·</span>
-          <a href="https://www.tensorflow.org/lite/inference_with_metadata/task_library/object_detector#model_compatibility_requirements">Model requirements</a>
+          <a href="https://www.tensorflow.org/lite/inference_with_metadata/task_library/object_detector#model_compatibility_requirements">Requirements</a>
           <span>·</span>
           <a href="https://tfhub.dev/tensorflow/collections/lite/task-library/object-detector/1">Model collection</a>
         </div>
@@ -142,9 +142,80 @@ The following table summarizes all the supported tasks and their models:
           <span>·</span>
           <a href="https://js.tensorflow.org/api_tasks/latest/#class:ISCustomModelTFLite">API doc</a>
           <span>·</span>
-          <a href="https://www.tensorflow.org/lite/inference_with_metadata/task_library/image_segmenter#model_compatibility_requirements">Model requirements</a>
+          <a href="https://www.tensorflow.org/lite/inference_with_metadata/task_library/image_segmenter#model_compatibility_requirements">Requirements</a>
           <span>·</span>
           <a href="https://tfhub.dev/tensorflow/collections/lite/task-library/image-segmenter/1">Model collection</a>
+        </div>
+      </td>
+    </tr>
+    <!-- Sentiment Detection -->
+    <tr>
+      <td rowspan="2">
+        <b>Sentiment Detection</b>
+        <br>
+        Detect pre-defined sentiments in a given paragraph of text.
+        <br>
+        <a href="https://codepen.io/jinjingforever/pen/xxqVMyK">Demo</a>
+      </td>
+      <td>Toxicity</td>
+      <td>
+        <div>
+          <span><code>TFJS  </code></span>
+          <span>·</span>
+          <a href="https://js.tensorflow.org/api_tasks/latest/#class:ToxicityTFJS">API doc</a>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>Movie review</td>
+      <td>
+        <div>
+          <span><code>TFLite</code></span>
+          <span>·</span>
+          <a href="https://js.tensorflow.org/api_tasks/latest/#class:MovieReviewTFLite">API doc</a>
+        </div>
+      </td>
+    </tr>
+    <!-- NL Classification -->
+    <tr>
+      <td>
+        <b>NL Classification</b>
+        <br>
+        Identify texts into predefined classes.
+        <br>
+        <a href="https://codepen.io/jinjingforever/pen/LYWRjRj">Demo</a>
+      </td>
+      <td>Custom model</td>
+      <td>
+        <div>
+          <span><code>TFLite</code></span>
+          <span>·</span>
+          <a href="https://js.tensorflow.org/api_tasks/latest/#class:NCCustomModelTFLite">API doc</a>
+          <span>·</span>
+          <a href="https://www.tensorflow.org/lite/inference_with_metadata/task_library/nl_classifier#model_compatibility_requirements">Requirements</a>
+        </div>
+      </td>
+    </tr>
+    <!-- Question & Answer -->
+    <tr>
+      <td>
+        <b>Question & Answer</b>
+        <br>
+        Answer questions based on the content of a given passage.
+        <br>
+        <a href="https://codepen.io/jinjingforever/pen/poeyYqo">Demo</a>
+      </td>
+      <td>BertQA</td>
+      <td>
+        <div>
+          <span><code>TFJS  </code></span>
+          <span>·</span>
+          <a href="https://js.tensorflow.org/api_tasks/latest/#class:BertQATFJS">API doc</a>
+        </div>
+        <div>
+          <span><code>TFLite</code></span>
+          <span>·</span>
+          <a href="https://js.tensorflow.org/api_tasks/latest/#class:BertQATFLite">API doc</a>
         </div>
       </td>
     </tr>

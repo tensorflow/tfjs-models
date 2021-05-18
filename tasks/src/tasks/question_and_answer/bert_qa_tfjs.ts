@@ -60,7 +60,7 @@ export class BertQATFJSLoader extends
     if (loadingOptions && loadingOptions.modelUrl) {
       modelConfig = {modelUrl: loadingOptions.modelUrl};
     }
-    if (loadingOptions && loadingOptions.fromTFHub !== null && modelConfig) {
+    if (loadingOptions && loadingOptions.fromTFHub != null && modelConfig) {
       modelConfig.fromTFHub = loadingOptions.fromTFHub;
     }
     const bertQaModel = await sourceModelGlobal.load(modelConfig);

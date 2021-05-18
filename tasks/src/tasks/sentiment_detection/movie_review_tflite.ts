@@ -61,7 +61,7 @@ export class MovieReviewTFLiteLoader extends TaskModelLoader<
         'movie_review_sentiment_classification.tflite';
     const tfliteNLClassifier = await sourceModelGlobal.NLClassifier.create(
         url, getNLClassifierOptions());
-    const threshold = loadingOptions && loadingOptions.threshold !== null ?
+    const threshold = loadingOptions && loadingOptions.threshold != null ?
         loadingOptions.threshold :
         DEFAULT_THRESHOLD;
     return new MovieReviewTFLite(tfliteNLClassifier, threshold);
