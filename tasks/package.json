@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/tasks",
-  "version": "0.0.1-alpha.6",
+  "version": "0.0.1-alpha.8",
   "description": "Tensorflow.js tasks API",
   "main": "dist/tfjs-tasks.min.js",
   "jsnext:main": "dist/tfjs-tasks.esm.js",
@@ -30,6 +30,8 @@
     "@tensorflow-models/mobilenet": "link:../mobilenet",
     "@tensorflow-models/coco-ssd": "link:../coco-ssd",
     "@tensorflow-models/deeplab": "link:../deeplab",
+    "@tensorflow-models/toxicity": "link:../toxicity",
+    "@tensorflow-models/qna": "link:../qna",
     "@types/jasmine": "~3.6.9",
     "clang-format": "~1.5.0",
     "jasmine": "~3.7.0",

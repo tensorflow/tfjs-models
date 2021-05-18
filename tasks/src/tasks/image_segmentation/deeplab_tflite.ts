@@ -55,7 +55,7 @@ export class DeeplabTFLiteLoader extends
     const url = 'https://tfhub.dev/tensorflow/lite-model/' +
         'deeplabv3/1/metadata/2?lite-format=tflite';
     const tfliteImageSegmenter =
-        await sourceModelGlobal.ImageSegmenter.create(url);
+        await sourceModelGlobal.ImageSegmenter.create(url, loadingOptions);
     return new DeeplabTFLite(tfliteImageSegmenter);
   }
 }

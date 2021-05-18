@@ -16,6 +16,7 @@
  */
 
 import {TaskModelLoader} from '../task_model';
+
 import {Runtime, Task} from './common';
 import {imageClassificationCustomModelTfliteLoader} from './image_classification/custom_model_tflite';
 import {mobilenetTfjsLoader} from './image_classification/mobilenet_tfjs';
@@ -23,9 +24,15 @@ import {mobilenetTfliteLoader} from './image_classification/mobilenet_tflite';
 import {imageSegmenterCustomModelTfliteLoader} from './image_segmentation/custom_model_tflite';
 import {deeplabTfjsLoader} from './image_segmentation/deeplab_tfjs';
 import {deeplabTfliteLoader} from './image_segmentation/deeplab_tflite';
+import {nlClassifierCustomModelTfliteLoader} from './nl_classification/custom_model_tflite';
 import {cocoSsdTfjsLoader} from './object_detection/cocossd_tfjs';
 import {cocoSsdTfliteLoader} from './object_detection/cocossd_tflite';
 import {objectDetectorCustomModelTfliteLoader} from './object_detection/custom_model_tflite';
+import {bertQaTfjsLoader} from './question_and_answer/bert_qa_tfjs';
+import {bertQaTfliteLoader} from './question_and_answer/bert_qa_tflite';
+import {qaCustomModelTfliteLoader} from './question_and_answer/custom_model_tflite';
+import {movieReviewTfliteLoader} from './sentiment_detection/movie_review_tflite';
+import {toxicityTfjsLoader} from './sentiment_detection/toxicity_tfjs';
 
 /**
  * The main model index.
@@ -72,6 +79,28 @@ const modelIndex = {
       [Runtime.TFLITE]: imageSegmenterCustomModelTfliteLoader,
     },
   },
+  [Task.SENTIMENT_DETECTION]: {
+    MovieReview: {
+      [Runtime.TFLITE]: movieReviewTfliteLoader,
+    },
+    Toxicity: {
+      [Runtime.TFJS]: toxicityTfjsLoader,
+    }
+  },
+  [Task.NL_CLASSIFICATION]: {
+    CustomModel: {
+      [Runtime.TFLITE]: nlClassifierCustomModelTfliteLoader,
+    },
+  },
+  [Task.QUESTION_AND_ANSWER]: {
+    BertQA: {
+      [Runtime.TFJS]: bertQaTfjsLoader,
+      [Runtime.TFLITE]: bertQaTfliteLoader,
+    },
+    CustomModel: {
+      [Runtime.TFLITE]: qaCustomModelTfliteLoader,
+    }
+  },
 };
 
 // Export each task individually.
@@ -79,6 +108,9 @@ const modelIndex = {
 export const ImageClassification = modelIndex[Task.IMAGE_CLASSIFICATION];
 export const ObjectDetection = modelIndex[Task.OBJECT_DETECTION];
 export const ImageSegmentation = modelIndex[Task.IMAGE_SEGMENTATION];
+export const SentimentDetection = modelIndex[Task.SENTIMENT_DETECTION];
+export const NLClassification = modelIndex[Task.NL_CLASSIFICATION];
+export const QuestionAndAnswer = modelIndex[Task.QUESTION_AND_ANSWER];
 
 /**
  * Filter model loaders by runtimes.

@@ -48,27 +48,28 @@ function config({plugins = [], output = {}, tsCompilerOptions = {}}) {
     plugins: [typescript(tsoptions), resolve(), ...plugins],
     output: {
       banner: PREAMBLE,
-      globals:
-          {'@tensorflow/tfjs-core': 'tf', '@tensorflow/tfjs-converter': 'tf'},
+      globals: {
+        '@tensorflow/tfjs-core': 'tf',
+        '@tensorflow/tfjs-converter': 'tf',
+        '@mediapipe/pose': 'Pose'
+      },
       ...output,
     },
-    external: ['@tensorflow/tfjs-core', '@tensorflow/tfjs-converter']
+    external: [
+      '@tensorflow/tfjs-core', '@tensorflow/tfjs-converter', '@mediapipe/pose'
+    ]
   };
 }
 
 const packageName = 'poseDetection';
 export default [
   config({
-    output:
-        {format: 'umd', name: packageName, file: 'dist/pose-detection.js'}
+    output: {format: 'umd', name: packageName, file: 'dist/pose-detection.js'}
   }),
   config({
     plugins: [terser({output: {preamble: PREAMBLE, comments: false}})],
-    output: {
-      format: 'umd',
-      name: packageName,
-      file: 'dist/pose-detection.min.js'
-    }
+    output:
+        {format: 'umd', name: packageName, file: 'dist/pose-detection.min.js'}
   }),
   config({
     plugins: [terser({output: {preamble: PREAMBLE, comments: false}})],

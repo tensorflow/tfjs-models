@@ -18,41 +18,41 @@
 import * as tflite from '@tensorflow/tfjs-tflite';
 import {TaskModelLoader} from '../../task_model';
 import {Runtime, Task, TFLiteCustomModelCommonLoadingOption} from '../common';
-import {ObjectDetectorTFLite} from './tflite_common';
+import {QuestionAnswererTFLite} from './tflite_common';
 
 // The global namespace type.
 type TFLiteNS = typeof tflite;
 
 /** Loading options. */
-export interface ODCustomModelTFLiteLoadingOptions extends
-    TFLiteCustomModelCommonLoadingOption, tflite.ObjectDetectorOptions {}
+export interface QACustomModelTFLiteLoadingOptions extends
+    TFLiteCustomModelCommonLoadingOption {}
 
 /**
  * Inference options.
  *
  * TODO: placeholder for now.
  */
-export interface ODCustomModelTFLiteInferenceOptions {}
+export interface QACustomModelTFLiteInferenceOptions {}
 
-/** Loader for custom object detection TFLite model. */
-export class ObjectDetectionCustomModelTFLiteLoader extends TaskModelLoader<
-    TFLiteNS, ODCustomModelTFLiteLoadingOptions, ODCustomModelTFLite> {
+/** Loader for custom Q&A TFLite model. */
+export class QuestionAnswerCustomModelTFLiteLoader extends TaskModelLoader<
+    TFLiteNS, QACustomModelTFLiteLoadingOptions, QACustomModelTFLite> {
   readonly metadata = {
-    name: 'Object detection with TFLite models',
-    description: 'An object detector backed by the TFLite Task Library. ' +
+    name: 'Question&Answer with TFLite models',
+    description: 'A QuestionAnswerer backed by the TFLite Task Library. ' +
         'It can work with any models that meet the ' +
         '<a href="https://www.tensorflow.org/lite/inference_with_metadata/' +
-        'task_library/object_detector#model_compatibility_requirements" ' +
+        'task_library/bert_question_answerer#model_compatibility_requirements" ' +
         'target="_blank">model requirements</a>. Try models from this ' +
         '<a href="https://tfhub.dev/tensorflow/collections/lite/task-library/' +
-        'object-detector/1" target="_blank">collection</a>.',
+        'bert-question-answerer/1" target="_blank">collection</a>.',
     resourceUrls: {
       'TFLite task library': 'https://www.tensorflow.org/lite/' +
           'inference_with_metadata/task_library/overview',
     },
     runtime: Runtime.TFLITE,
     version: '0.0.1-alpha.3',
-    supportedTasks: [Task.OBJECT_DETECTION],
+    supportedTasks: [Task.QUESTION_AND_ANSWER],
   };
   readonly packageUrls =
       [[`https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-tflite@${
@@ -61,55 +61,54 @@ export class ObjectDetectionCustomModelTFLiteLoader extends TaskModelLoader<
 
   protected async transformSourceModel(
       sourceModelGlobal: TFLiteNS,
-      loadingOptions?: ODCustomModelTFLiteLoadingOptions):
-      Promise<ODCustomModelTFLite> {
-    const tfliteObjectDetector = await sourceModelGlobal.ObjectDetector.create(
-        loadingOptions.model, loadingOptions);
-    return new ODCustomModelTFLite(tfliteObjectDetector);
+      loadingOptions?: QACustomModelTFLiteLoadingOptions):
+      Promise<QACustomModelTFLite> {
+    const tfliteQa = await sourceModelGlobal.BertQuestionAnswerer.create(
+        loadingOptions.model);
+    return new QACustomModelTFLite(tfliteQa);
   }
 }
 
 /**
- * A custom TFLite object detection model loaded from a model url or an
- * `ArrayBuffer` in memory.
+ * A custom TFLite Q&A model loaded from a model url or an `ArrayBuffer` in
+ * memory.
  *
- * The underlying object detector is built on top of the [TFLite Task
+ * The underlying question answerer is built on top of the [TFLite Task
  * Library](https://www.tensorflow.org/lite/inference_with_metadata/task_library/overview).
  * As a result, the custom model needs to meet the [metadata
- * requirements](https://www.tensorflow.org/lite/inference_with_metadata/task_library/object_detector#model_compatibility_requirements).
+ * requirements](https://www.tensorflow.org/lite/inference_with_metadata/task_library/bert_question_answerer#model_compatibility_requirements).
  *
  * Usage:
  *
  * ```js
- * // Load the model from a custom url with other options (optional).
- * const model = await tfTask.ObjectDetection.CustomModel.TFLite.load({
+ * // Load the model from a custom url.
+ * const model = await tfTask.QuestionAndAnswer.CustomModel.TFLite.load({
  *   model:
- * 'https://tfhub.dev/tensorflow/lite-model/ssd_mobilenet_v1/1/metadata/2?lite-format=tflite',
+ * 'https://tfhub.dev/tensorflow/lite-model/mobilebert/1/metadata/1?lite-format=tflite',
  * });
  *
- * // Run inference on an image.
- * const img = document.querySelector('img');
- * const result = await model.predict(img);
- * console.log(result.objects);
+ * // Run inference with question and context.
+ * const result = await model.predict(question, context);
+ * console.log(result.answers);
  *
  * // Clean up.
  * model.cleanUp();
  * ```
  *
- * Refer to `tfTask.ObjectDetector` for the `predict` and `cleanUp` method.
+ * Refer to `tfTask.QuestionAnswerer` for the `predict` and `cleanUp` method.
  *
  * @docextratypes [
  *   {description: 'Options for `load`', symbol:
- * 'ODCustomModelTFLiteLoadingOptions'},
+ * 'QACustomModelTFLiteLoadingOptions'},
  *   {description: 'Options for `predict`', symbol:
- * 'ODCustomModelTFLiteInferenceOptions'}
+ * 'QACustomModelTFLiteInferenceOptions'}
  * ]
  *
  *
- * @doc {heading: 'Object Detection', subheading: 'Models'}
+ * @doc {heading: 'Question & Answer', subheading: 'Models'}
  */
-export class ODCustomModelTFLite extends
-    ObjectDetectorTFLite<ODCustomModelTFLiteInferenceOptions> {}
+export class QACustomModelTFLite extends
+    QuestionAnswererTFLite<QACustomModelTFLiteInferenceOptions> {}
 
-export const objectDetectorCustomModelTfliteLoader =
-    new ObjectDetectionCustomModelTFLiteLoader();
+export const qaCustomModelTfliteLoader =
+    new QuestionAnswerCustomModelTFLiteLoader();

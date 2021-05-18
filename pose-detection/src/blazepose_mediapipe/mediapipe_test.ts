@@ -21,7 +21,7 @@ import {BROWSER_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmin
 import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
 
 import * as poseDetection from '../index';
-import {getXYPerFrame, KARMA_SERVER, loadVideo} from '../test_util';
+import {getXYPerFrame, KARMA_SERVER, loadImage, loadVideo} from '../test_util';
 import {BlazePoseMediaPipeModelConfig} from './types';
 
 const MEDIAPIPE_MODEL_CONFIG: BlazePoseMediaPipeModelConfig = {
@@ -29,47 +29,47 @@ const MEDIAPIPE_MODEL_CONFIG: BlazePoseMediaPipeModelConfig = {
   solutionPath: 'base/node_modules/@mediapipe/pose'
 };
 
-// const EPSILON_IMAGE = 30;
-const EPSILON_VIDEO = 75;
+const EPSILON_IMAGE = 10;
+const EPSILON_VIDEO = 18;
 // ref:
 // https://github.com/google/mediapipe/blob/7c331ad58b2cca0dca468e342768900041d65adc/mediapipe/python/solutions/pose_test.py#L31-L51
-// const EXPECTED_LANDMARKS = [
-//   [460, 287], [469, 277], [472, 276], [475, 276], [464, 277], [463, 277],
-//   [463, 276], [492, 277], [472, 277], [471, 295], [465, 295], [542, 323],
-//   [448, 318], [619, 319], [372, 313], [695, 316], [296, 308], [717, 313],
-//   [273, 304], [718, 304], [280, 298], [709, 307], [289, 303], [521, 470],
-//   [459, 466], [626, 533], [364, 500], [704, 616], [347, 614], [710, 631],
-//   [357, 633], [737, 625], [306, 639]
-// ];
+const EXPECTED_LANDMARKS = [
+  [460, 283], [467, 273], [471, 273], [474, 273], [465, 273], [465, 273],
+  [466, 273], [491, 277], [480, 277], [470, 294], [465, 294], [545, 319],
+  [453, 329], [622, 323], [375, 316], [696, 316], [299, 307], [719, 316],
+  [278, 306], [721, 311], [274, 304], [713, 313], [283, 306], [520, 476],
+  [467, 471], [612, 550], [358, 490], [701, 613], [349, 611], [709, 624],
+  [363, 630], [730, 633], [303, 628]
+];
 
-// Disable this test until @mediapipe/pose bug is fixed.
-// describeWithFlags('MediaPipe Pose static image ', BROWSER_ENVS, () => {
-//   let detector: poseDetection.PoseDetector;
-//   let image: HTMLImageElement;
-//   let timeout: number;
+describeWithFlags('MediaPipe Pose static image ', BROWSER_ENVS, () => {
+  let detector: poseDetection.PoseDetector;
+  let image: HTMLImageElement;
+  let timeout: number;
 
-//   beforeAll(async () => {
-//     timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
-//     jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
-//   });
+  beforeAll(async () => {
+    timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
+    image = await loadImage('pose.jpg', 1000, 667);
+  });
 
-//   afterAll(() => {
-//     jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
-//   });
+  afterAll(() => {
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
+  });
 
-//   it('test.', async () => {
-//     // Note: this makes a network request for model assets.
-//     const model = poseDetection.SupportedModels.BlazePose;
-//     detector =
-//         await poseDetection.createDetector(model, MEDIAPIPE_MODEL_CONFIG);
-//     image = await loadImage('pose.jpg', 1000, 667);
+  it('test.', async () => {
+    // Note: this makes a network request for model assets.
+    const model = poseDetection.SupportedModels.BlazePose;
+    detector =
+        await poseDetection.createDetector(model, MEDIAPIPE_MODEL_CONFIG);
 
-//     const result = await detector.estimatePoses(image, {});
-//     const xy = result[0].keypoints.map((keypoint) => [keypoint.x,
-//     keypoint.y]); const expected = EXPECTED_LANDMARKS; expectArraysClose(xy,
-//     expected, EPSILON_IMAGE); detector.dispose();
-//   });
-// });
+    const result = await detector.estimatePoses(image, {});
+    const xy = result[0].keypoints.map((keypoint) => [keypoint.x, keypoint.y]);
+    const expected = EXPECTED_LANDMARKS;
+    expectArraysClose(xy, expected, EPSILON_IMAGE);
+    detector.dispose();
+  });
+});
 
 describeWithFlags('MediaPipe Pose video ', BROWSER_ENVS, () => {
   let detector: poseDetection.PoseDetector;

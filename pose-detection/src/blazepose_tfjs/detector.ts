@@ -28,6 +28,7 @@ import {isVideo} from '../calculators/is_video';
 import {KeypointsSmoothingFilter} from '../calculators/keypoints_smoothing';
 import {normalizedKeypointsToKeypoints} from '../calculators/normalized_keypoints_to_keypoints';
 import {shiftImageValue} from '../calculators/shift_image_value';
+import {BLAZEPOSE_KEYPOINTS} from '../constants';
 import {PoseDetector} from '../pose_detector';
 import {Keypoint, Pose, PoseDetectorInput} from '../types';
 
@@ -177,9 +178,18 @@ class BlazePoseTfjsDetector implements PoseDetector {
     // Cache roi for next image.
     this.regionOfInterest = poseRectFromLandmarks;
 
+    // Scale back keypoints.
     const keypoints = actualLandmarksFiltered != null ?
         normalizedKeypointsToKeypoints(actualLandmarksFiltered, imageSize) :
         null;
+
+    // Add keypoint name.
+    if (keypoints != null) {
+      keypoints.forEach((keypoint, i) => {
+        keypoint.name = BLAZEPOSE_KEYPOINTS[i];
+      });
+    }
+
     const pose: Pose = {score: poseScore, keypoints};
 
     return [pose];
