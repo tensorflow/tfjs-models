@@ -61,6 +61,6 @@
     "build": "tsc",
     "build-npm": "./scripts/build-npm.sh",
     "lint": "tslint -p . -t verbose",
-    "test": "yarn && yarn build-deps && yarn build && karma start"
+    "test": "ts-node --skip-ignore --project tsconfig.test.json run_tests.ts"
   }
 }
