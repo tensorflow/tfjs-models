@@ -19,6 +19,7 @@ In the runtime-backend dropdown, choose 'tfjs-webgl'.
 2.  [Usage](#usage)
 3.  [Performance](#performance)
 4.  [Bundle Size](#bundle-size)
+5.  [Model Accuracy](#model-accuracy)
 
 ## Installation
 
@@ -157,3 +158,16 @@ There is a difference of how things are loaded between the two runtimes. For the
 | Lite model | 10.41MB | 1.91s |
 | Full model | 13.8MB | 1.91s |
 | Heavy model | 34.7MB | 4.82s |
+
+## Model Accuracy
+This table compares MediaPipe BlazePose accuracy against other state-of-the-art
+pose solutions. For more detail, see the [article](https://google.github.io/mediapipe/solutions/pose#pose-estimation-quality).
+| Method | Yoga | Yoga | Dance | Dance | HIIT | HIIT |
+| --- | --- | --- | --- | --- | --- | --- |
+| BlazePose.Heavy | 68.1 | 96.4 | 73.0 | 97.2 | 74.0 | 97.5 |
+| BlazePose.Full | 62.6 | 95.5 | 67.4 | 96.3 | 68.0 | 95.7 |
+| BlazePose.Lite | 45.0 | 90.2 | 53.6 | 92.5 | 53.8 | 93.5 |
+| AlphaPose.ResNet50 | 63.4 | 96.0 | 57.8 | 95.5 | 63.4 | 96.0 |
+| Apple.Vision | 32.8 | 82.7 | 36.4 | 91.4 | 44.5 | 88.6 |
+
+![Accuracy Chart](https://google.github.io/mediapipe/images/mobile/pose_tracking_pck_chart.png)
