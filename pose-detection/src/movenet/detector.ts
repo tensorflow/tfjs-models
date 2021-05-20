@@ -216,7 +216,8 @@ class MoveNetDetector implements PoseDetector {
     // Apply the sequential filter before estimating the cropping area to make
     // it more stable.
     if (timestamp != null && this.enableSmoothing) {
-      keypoints = this.keypointsFilter.apply(keypoints, timestamp);
+      keypoints =
+          this.keypointsFilter.apply(keypoints, timestamp, 1 /* objectScale */);
     }
 
     // Determine next crop region based on detected keypoints and if a crop
