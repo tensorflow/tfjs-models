@@ -30,7 +30,7 @@ const MEDIAPIPE_MODEL_CONFIG: BlazePoseMediaPipeModelConfig = {
 };
 
 const EPSILON_IMAGE = 10;
-const EPSILON_VIDEO = 18;
+const EPSILON_VIDEO = 40;
 // ref:
 // https://github.com/google/mediapipe/blob/7c331ad58b2cca0dca468e342768900041d65adc/mediapipe/python/solutions/pose_test.py#L31-L51
 const EXPECTED_LANDMARKS = [
