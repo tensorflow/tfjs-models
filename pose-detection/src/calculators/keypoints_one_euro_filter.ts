@@ -20,7 +20,6 @@ import {Keypoint} from '../types';
 import {KeypointsFilter} from './interfaces/common_interfaces';
 import {OneEuroFilterConfig} from './interfaces/config_interfaces';
 import {OneEuroFilter} from './one_euro_filter';
-import {getObjectScale} from './velocity_filter_utils';
 
 /**
  * A stateful filter that smoothes keypoints values overtime.
@@ -38,7 +37,8 @@ export class KeypointsOneEuroFilter implements KeypointsFilter {
 
   constructor(private readonly config: OneEuroFilterConfig) {}
 
-  apply(keypoints: Keypoint[], microSeconds: number): Keypoint[] {
+  apply(keypoints: Keypoint[], microSeconds: number, objectScale: number):
+      Keypoint[] {
     if (keypoints == null) {
       this.reset();
       return null;
@@ -52,7 +52,6 @@ export class KeypointsOneEuroFilter implements KeypointsFilter {
     // returned as is.
     let valueScale = 1;
     if (this.config.minAllowedObjectScale != null) {
-      const objectScale = getObjectScale(keypoints);
       if (objectScale < this.config.minAllowedObjectScale) {
         return [...keypoints];
       }

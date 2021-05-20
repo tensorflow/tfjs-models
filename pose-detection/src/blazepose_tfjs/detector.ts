@@ -439,6 +439,14 @@ class BlazePoseTfjsDetector implements PoseDetector {
       actualLandmarksFiltered = actualLandmarks;
       auxiliaryLandmarksFiltered = auxiliaryLandmarks;
     } else {
+      const auxDetection = landmarksToDetection(auxiliaryLandmarks);
+      const objectScaleROI =
+          calculateAlignmentPointsRects(auxDetection, imageSize, {
+            rotationVectorEndKeypointIndex: 0,
+            rotationVectorStartKeypointIndex: 1,
+            rotationVectorTargetAngleDegree: 90
+          });
+
       // Smoothes pose landmark visibilities to reduce jitter.
       if (this.visibilitySmoothingFilterActual == null) {
         this.visibilitySmoothingFilterActual = new LowPassVisibilityFilter(
@@ -461,7 +469,7 @@ class BlazePoseTfjsDetector implements PoseDetector {
       }
       actualLandmarksFiltered = this.landmarksSmoothingFilterActual.apply(
           actualLandmarksFiltered, this.timestamp, imageSize,
-          true /* normalized */);
+          true /* normalized */, objectScaleROI);
 
       if (this.landmarksSmoothingFilterAuxiliary == null) {
         this.landmarksSmoothingFilterAuxiliary = new KeypointsSmoothingFilter(
@@ -469,7 +477,7 @@ class BlazePoseTfjsDetector implements PoseDetector {
       }
       auxiliaryLandmarksFiltered = this.landmarksSmoothingFilterAuxiliary.apply(
           auxiliaryLandmarksFiltered, this.timestamp, imageSize,
-          true /* normalized */);
+          true /* normalized */, objectScaleROI);
     }
 
     return {actualLandmarksFiltered, auxiliaryLandmarksFiltered};

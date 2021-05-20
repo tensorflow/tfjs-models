@@ -17,8 +17,10 @@
 
 import {Keypoint} from '../types';
 
+import {getObjectScale} from './get_object_scale';
 import {ImageSize, KeypointsFilter} from './interfaces/common_interfaces';
 import {KeypointsSmoothingConfig} from './interfaces/config_interfaces';
+import {Rect} from './interfaces/shape_interfaces';
 import {KeypointsOneEuroFilter} from './keypoints_one_euro_filter';
 import {keypointsToNormalizedKeypoints} from './keypoints_to_normalized_keypoints';
 import {KeypointsVelocityFilter} from './keypoints_velocity_filter';
@@ -53,20 +55,25 @@ export class KeypointsSmoothingFilter {
    *     normalized.
    * @param normalized Optional. Whether the keypoints are normalized. Default
    *     to false.
+   * @param objectScaleROI Optional. The auxiliary ROI to calculate object
+   *     scale. If not set, objectScale defaults to 1.
    */
   apply(
       keypoints: Keypoint[], timestamp: number, imageSize?: ImageSize,
-      normalized = false): Keypoint[] {
+      normalized = false, objectScaleROI?: Rect): Keypoint[] {
     if (keypoints == null) {
       this.keypointsFilter.reset();
       return null;
     }
 
+    const objectScale =
+        objectScaleROI != null ? getObjectScale(objectScaleROI, imageSize) : 1;
+
     const scaledKeypoints = normalized ?
         normalizedKeypointsToKeypoints(keypoints, imageSize) :
         keypoints;
     const scaledKeypointsFiltered =
-        this.keypointsFilter.apply(scaledKeypoints, timestamp);
+        this.keypointsFilter.apply(scaledKeypoints, timestamp, objectScale);
 
     return normalized ?
         keypointsToNormalizedKeypoints(scaledKeypointsFiltered, imageSize) :
