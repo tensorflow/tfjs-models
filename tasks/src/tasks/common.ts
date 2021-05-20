@@ -75,7 +75,7 @@ export interface Class {
 /** A helper function to get the TFJS packages that a TFJS model depends on. */
 export function getTFJSModelDependencyPackages(
     backend = DEFAULT_TFJS_BACKEND,
-    version = DEFAULT_TFJS_VERSION): Array<string[]> {
+    version = DEFAULT_TFJS_VERSION): string[][] {
   const packages = [
     [`https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core@${version}`],
     [`https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter@${version}`],
@@ -98,6 +98,17 @@ export function getTFJSModelDependencyPackages(
       packages[1].push(
           `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
               version}/dist/tf-backend-wasm.min.js`);
+      break;
+    default:
+      console.warn(
+          'WARNING',
+          `Backend '${backend}' not supported. Use 'webgl' as the default.`);
+      packages[1].push(
+          `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-cpu@${
+              version}`);
+      packages[1].push(
+          `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl@${
+              version}`);
       break;
   }
   return packages;
