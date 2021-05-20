@@ -39,8 +39,7 @@ export class PackageLoader<G> {
    * implmentations for dynamic package loading, global, etc.
    */
   async loadPackagesAndGetGlobalNamespace(
-      namespace: string, packageUrls: Array<string[]>,
-      curIndex = 0): Promise<G> {
+      namespace: string, packageUrls: string[][], curIndex = 0): Promise<G> {
     if (curIndex >= packageUrls.length) {
       // tslint:disable-next-line:no-any
       const global: any = isWebWorker() ? self : window;
@@ -53,7 +52,7 @@ export class PackageLoader<G> {
     }
     await Promise.all(
         packageUrls[curIndex].map(name => this.loadPackage(name)));
-    return await this.loadPackagesAndGetGlobalNamespace(
+    return this.loadPackagesAndGetGlobalNamespace(
         namespace, packageUrls, curIndex + 1);
   }
 

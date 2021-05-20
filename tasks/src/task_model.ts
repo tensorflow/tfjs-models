@@ -144,7 +144,7 @@ export abstract class TaskModelLoader<N, LO, M> {
    * here. The TFJS related dependencies (e.g. core, backends, etc) will be
    * added automatically.
    */
-  abstract readonly packageUrls: Array<string[]>;
+  abstract readonly packageUrls: string[][];
 
   /**
    * The global namespace of the source model.
@@ -198,7 +198,7 @@ export abstract class TaskModelLoader<N, LO, M> {
    * above.
    */
   protected async loadSourceModelGlobalNamespace(options?: LO): Promise<N> {
-    const packages: Array<string[]> = [];
+    const packages: string[][] = [];
 
     // Add TFJS dependencies for TFJS models.
     if (this.metadata.runtime === Runtime.TFJS) {
@@ -209,7 +209,7 @@ export abstract class TaskModelLoader<N, LO, M> {
 
     // Load packages.
     packages.push(...this.packageUrls);
-    return await this.packageLoader.loadPackagesAndGetGlobalNamespace(
+    return this.packageLoader.loadPackagesAndGetGlobalNamespace(
         this.sourceModelGlobalNamespace, packages);
   }
 
