@@ -44,12 +44,13 @@ class MoveNetDetector implements PoseDetector {
   private readonly enableSmoothing: boolean;
 
   // Global states.
-  private keypointsFilter = new KeypointsOneEuroFilter(KEYPOINT_FILTER_CONFIG);
+  private readonly keypointsFilter =
+      new KeypointsOneEuroFilter(KEYPOINT_FILTER_CONFIG);
+  private readonly cropRegionFilterYMin = new LowPassFilter(CROP_FILTER_ALPHA);
+  private readonly cropRegionFilterXMin = new LowPassFilter(CROP_FILTER_ALPHA);
+  private readonly cropRegionFilterYMax = new LowPassFilter(CROP_FILTER_ALPHA);
+  private readonly cropRegionFilterXMax = new LowPassFilter(CROP_FILTER_ALPHA);
   private cropRegion: BoundingBox;
-  private cropRegionFilterYMin = new LowPassFilter(CROP_FILTER_ALPHA);
-  private cropRegionFilterXMin = new LowPassFilter(CROP_FILTER_ALPHA);
-  private cropRegionFilterYMax = new LowPassFilter(CROP_FILTER_ALPHA);
-  private cropRegionFilterXMax = new LowPassFilter(CROP_FILTER_ALPHA);
 
   constructor(
       private readonly moveNetModel: tfc.GraphModel,
@@ -426,7 +427,7 @@ class MoveNetDetector implements PoseDetector {
    *      image.
    */
   private initCropRegion(imageHeight: number, imageWidth: number) {
-    let boxHeight, boxWidth, yMin, xMin;
+    let boxHeight: number, boxWidth: number, yMin: number, xMin: number;
     if (!this.cropRegion) {
       // If it is the first frame, perform a best guess by making the square
       // crop at the image center to better utilize the image pixels and
