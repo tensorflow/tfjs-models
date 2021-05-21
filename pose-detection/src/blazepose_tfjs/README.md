@@ -19,6 +19,7 @@ In the runtime-backend dropdown, choose 'tfjs-webgl'.
 2.  [Usage](#usage)
 3.  [Performance](#performance)
 4.  [Bundle Size](#bundle-size)
+5.  [Model Quality](#model-quality)
 
 ## Installation
 
@@ -157,3 +158,16 @@ There is a difference of how things are loaded between the two runtimes. For the
 | Lite model | 10.41MB | 1.91s |
 | Full model | 13.8MB | 1.91s |
 | Heavy model | 34.7MB | 4.82s |
+
+## Model Quality
+To evaluate the quality of our models against other well-performing publicly available solutions, we use three different validation datasets, representing different verticals: Yoga, Dance and HIIT. Each image contains only a single person located 2-4 meters from the camera. To be consistent with other solutions, we perform evaluation only for 17 keypoints from [COCO topology](https://cocodataset.org/#keypoints-2020). For more detail, see the [article](https://google.github.io/mediapipe/solutions/pose#pose-estimation-quality).
+
+| Method | Yoga<br>[mAP](https://cocodataset.org/#keypoints-eval) | Yoga<br>[PCK@0.2](https://github.com/cbsudux/Human-Pose-Estimation-101#percentage-of-correct-key-points---pck) | Dance<br>[mAP](https://cocodataset.org/#keypoints-eval) | Dance<br>[PCK@0.2](https://github.com/cbsudux/Human-Pose-Estimation-101#percentage-of-correct-key-points---pck) | HIIT<br>[mAP](https://cocodataset.org/#keypoints-eval) | HIIT<br>[PCK@0.2](https://github.com/cbsudux/Human-Pose-Estimation-101#percentage-of-correct-key-points---pck) |
+| --- | --- | --- | --- | --- | --- | --- |
+| BlazePose.Heavy | 68.1 | 96.4 | 73.0 | 97.2 | 74.0 | 97.5 |
+| BlazePose.Full | 62.6 | 95.5 | 67.4 | 96.3 | 68.0 | 95.7 |
+| BlazePose.Lite | 45.0 | 90.2 | 53.6 | 92.5 | 53.8 | 93.5 |
+| [AlphaPose.ResNet50](https://github.com/MVIG-SJTU/AlphaPose) | 63.4 | 96.0 | 57.8 | 95.5 | 63.4 | 96.0 |
+| [Apple.Vision](https://developer.apple.com/documentation/vision/detecting_human_body_poses_in_images) | 32.8 | 82.7 | 36.4 | 91.4 | 44.5 | 88.6 |
+
+![Quality Chart](https://google.github.io/mediapipe/images/mobile/pose_tracking_pck_chart.png)
