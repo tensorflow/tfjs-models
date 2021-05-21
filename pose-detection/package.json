@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/pose-detection",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Pretrained pose detection model",
   "main": "dist/index.js",
   "jsnext:main": "dist/pose-detection.esm.js",
