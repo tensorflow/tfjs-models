@@ -162,7 +162,7 @@ There is a difference of how things are loaded between the two runtimes. For the
 ## Model Accuracy
 This table compares MediaPipe BlazePose accuracy against other state-of-the-art
 pose solutions. For more detail, see the [article](https://google.github.io/mediapipe/solutions/pose#pose-estimation-quality).
-| Method | Yoga | Yoga | Dance | Dance | HIIT | HIIT |
+| Method | Yoga<br>[mAP](https://cocodataset.org/#keypoints-eval) | Yoga<br>[PCK@0.2](https://github.com/cbsudux/Human-Pose-Estimation-101#percentage-of-correct-key-points---pck) | Dance<br>[mAP](https://cocodataset.org/#keypoints-eval) | Dance<br>[PCK@0.2](https://github.com/cbsudux/Human-Pose-Estimation-101#percentage-of-correct-key-points---pck) | HIIT<br>[mAP](https://cocodataset.org/#keypoints-eval) | HIIT<br>[PCK@0.2](https://github.com/cbsudux/Human-Pose-Estimation-101#percentage-of-correct-key-points---pck) |
 | --- | --- | --- | --- | --- | --- | --- |
 | BlazePose.Heavy | 68.1 | 96.4 | 73.0 | 97.2 | 74.0 | 97.5 |
 | BlazePose.Full | 62.6 | 95.5 | 67.4 | 96.3 | 68.0 | 95.7 |
