@@ -150,7 +150,7 @@ pose solutions. For more detail, see the [article](https://google.github.io/medi
 | BlazePose.Heavy | 68.1 | 96.4 | 73.0 | 97.2 | 74.0 | 97.5 |
 | BlazePose.Full | 62.6 | 95.5 | 67.4 | 96.3 | 68.0 | 95.7 |
 | BlazePose.Lite | 45.0 | 90.2 | 53.6 | 92.5 | 53.8 | 93.5 |
-| AlphaPose.ResNet50 | 63.4 | 96.0 | 57.8 | 95.5 | 63.4 | 96.0 |
-| Apple.Vision | 32.8 | 82.7 | 36.4 | 91.4 | 44.5 | 88.6 |
+| [AlphaPose.ResNet50](https://github.com/MVIG-SJTU/AlphaPose) | 63.4 | 96.0 | 57.8 | 95.5 | 63.4 | 96.0 |
+| [Apple.Vision](https://developer.apple.com/documentation/vision/detecting_human_body_poses_in_images) | 32.8 | 82.7 | 36.4 | 91.4 | 44.5 | 88.6 |
 
 ![Accuracy Chart](https://google.github.io/mediapipe/images/mobile/pose_tracking_pck_chart.png)
