@@ -19,7 +19,6 @@ import {Keypoint} from '../types';
 import {KeypointsFilter} from './interfaces/common_interfaces';
 import {VelocityFilterConfig} from './interfaces/config_interfaces';
 import {RelativeVelocityFilter} from './relative_velocity_filter';
-import {getObjectScale} from './velocity_filter_utils';
 
 /**
  * A stateful filter that smoothes landmark values overtime.
@@ -37,7 +36,8 @@ export class KeypointsVelocityFilter implements KeypointsFilter {
 
   constructor(private readonly config: VelocityFilterConfig) {}
 
-  apply(keypoints: Keypoint[], microSeconds: number): Keypoint[] {
+  apply(keypoints: Keypoint[], microSeconds: number, objectScale: number):
+      Keypoint[] {
     if (keypoints == null) {
       this.reset();
       return null;
@@ -47,7 +47,6 @@ export class KeypointsVelocityFilter implements KeypointsFilter {
     // returned as is.
     let valueScale = 1;
     if (!this.config.disableValueScaling) {
-      const objectScale = getObjectScale(keypoints);
       if (objectScale < this.config.minAllowedObjectScale) {
         return [...keypoints];
       }

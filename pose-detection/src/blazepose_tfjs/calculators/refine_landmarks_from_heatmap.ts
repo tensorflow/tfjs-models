@@ -46,7 +46,8 @@ export async function refineLandmarksFromHeatmap(
   if (landmarks.length !== hmChannels) {
     throw new Error(
         'Expected heatmap to have same number of channels ' +
-        'as the number of landmarks.');
+        'as the number of landmarks. But got landmarks length: ' +
+        `${landmarks.length}, heatmap length: ${hmChannels}`);
   }
 
   const outLandmarks = [];
