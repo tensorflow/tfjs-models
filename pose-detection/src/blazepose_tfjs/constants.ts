@@ -18,13 +18,13 @@
 import {BlazePoseTfjsModelConfig} from './types';
 
 export const DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL =
-    'https://storage.googleapis.com/tfjs-models/savedmodel/blazepose/detector/f16/model.json';
+    'https://tfhub.dev/mediapipe/tfjs-model/blazeposedetector/1/default/1';
 export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_FULL =
-    'https://storage.googleapis.com/tfjs-models/savedmodel/blazepose/landmark/full-f16/model.json';
+    'https://tfhub.dev/mediapipe/tfjs-model/blazeposelandmark_full/1/default/1';
 export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_LITE =
-    'https://storage.googleapis.com/tfjs-models/savedmodel/blazepose/landmark/lite-f16/model.json';
+    'https://tfhub.dev/mediapipe/tfjs-model/blazeposelandmark_lite/1/default/1';
 export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_HEAVY =
-    'https://storage.googleapis.com/tfjs-models/savedmodel/blazepose/landmark/heavy-f16/model.json';
+    'https://tfhub.dev/mediapipe/tfjs-model/blazeposelandmark_heavy/1/default/1';
 export const BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION = {
   reduceBoxesInLowestlayer: false,
   interpolatedScaleAspectRatio: 1.0,
@@ -109,9 +109,9 @@ export const BLAZEPOSE_VISIBILITY_SMOOTHING_CONFIG = {
 export const BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG_ACTUAL = {
   oneEuroFilter: {
     frequency: 30,
-    minCutOff: 0.1,  // minCutOff 0.1 results into ~0.02 alpha in landmark EMA
-                     // filter when landmark is static.
-    beta: 40,  // beta 40 in combination with minCutOff 0.1 results into ~0.8
+    minCutOff: 0.05,  // minCutOff 0.05 results into ~0.01 alpha in landmark EMA
+                      // filter when landmark is static.
+    beta: 80,  // beta 80 in combination with minCutOff 0.05 results into ~0.94
                // alpha in landmark EMA filter when landmark is moving fast.
     derivateCutOff: 1.0,  // derivativeCutOff 1.0 results into ~0.17 alpha in
                           // landmark velocity EMA filter.,
@@ -126,8 +126,9 @@ export const BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG_AUXILIARY = {
     frequency: 30,
     minCutOff: 0.01,  // minCutOff 0.01 results into ~0.002 alpha in landmark
                       // EMA filter when landmark is static.
-    beta: 1.0,  // beta 1.0 in combination with minCutOff 0.01 results into ~0.2
-                // alpha in landmark EMA filter when landmark is moving fast.
+    beta: 10.0,  // beta 10.0 in combination with minCutOff 0.01 results into
+                 // ~0.68 alpha in landmark EMA filter when landmark is moving
+                 // fast.
     derivateCutOff: 1.0,  // derivateCutOff 1.0 results into ~0.17 alpha in
                           // landmark velocity EMA filter.
     minAllowedObjectScale: 1e-6

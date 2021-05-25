@@ -308,9 +308,9 @@ class BlazePoseTfjsDetector implements PoseDetector {
     // Output [1]: This tensor (shape: [1, 64, 64, 39]) represents heatmap for
     // the 39 landmarks.
     // Lite model:
-    // Output[4]: This tensor (shape: [1, 195]) represents 39 5-d keypoints.
-    // Output[3]: This tensor (shape: [1, 1]) represents the confidence score.
-    // Output[1]: This tensor (shape: [1, 64, 64, 39]) represents heatmap for
+    // Output[2]: This tensor (shape: [1, 195]) represents 39 5-d keypoints.
+    // Output[4]: This tensor (shape: [1, 1]) represents the confidence score.
+    // Output[3]: This tensor (shape: [1, 64, 64, 39]) represents heatmap for
     // the 39 landmarks.
     // Heavy model:
     // Output[3]: This tensor (shape: [1, 195]) represents 39 5-d keypoints.
@@ -324,9 +324,9 @@ class BlazePoseTfjsDetector implements PoseDetector {
 
     switch (this.modelType) {
       case 'lite':
-        landmarkTensor = landmarkResult[3] as tf.Tensor2D;
+        landmarkTensor = landmarkResult[2] as tf.Tensor2D;
         poseFlagTensor = landmarkResult[4] as tf.Tensor2D;
-        heatmapTensor = landmarkResult[1] as tf.Tensor4D;
+        heatmapTensor = landmarkResult[3] as tf.Tensor4D;
         break;
       case 'full':
         landmarkTensor = landmarkResult[4] as tf.Tensor2D;
@@ -439,6 +439,14 @@ class BlazePoseTfjsDetector implements PoseDetector {
       actualLandmarksFiltered = actualLandmarks;
       auxiliaryLandmarksFiltered = auxiliaryLandmarks;
     } else {
+      const auxDetection = landmarksToDetection(auxiliaryLandmarks);
+      const objectScaleROI =
+          calculateAlignmentPointsRects(auxDetection, imageSize, {
+            rotationVectorEndKeypointIndex: 0,
+            rotationVectorStartKeypointIndex: 1,
+            rotationVectorTargetAngleDegree: 90
+          });
+
       // Smoothes pose landmark visibilities to reduce jitter.
       if (this.visibilitySmoothingFilterActual == null) {
         this.visibilitySmoothingFilterActual = new LowPassVisibilityFilter(
@@ -461,7 +469,7 @@ class BlazePoseTfjsDetector implements PoseDetector {
       }
       actualLandmarksFiltered = this.landmarksSmoothingFilterActual.apply(
           actualLandmarksFiltered, this.timestamp, imageSize,
-          true /* normalized */);
+          true /* normalized */, objectScaleROI);
 
       if (this.landmarksSmoothingFilterAuxiliary == null) {
         this.landmarksSmoothingFilterAuxiliary = new KeypointsSmoothingFilter(
@@ -469,7 +477,7 @@ class BlazePoseTfjsDetector implements PoseDetector {
       }
       auxiliaryLandmarksFiltered = this.landmarksSmoothingFilterAuxiliary.apply(
           auxiliaryLandmarksFiltered, this.timestamp, imageSize,
-          true /* normalized */);
+          true /* normalized */, objectScaleROI);
     }
 
     return {actualLandmarksFiltered, auxiliaryLandmarksFiltered};
@@ -487,9 +495,16 @@ export async function load(modelConfig: BlazePoseTfjsModelConfig):
     Promise<PoseDetector> {
   const config = validateModelConfig(modelConfig);
 
+  const detectorFromTFHub =
+      (config.detectorModelUrl.indexOf('https://tfhub.dev') > -1);
+  const landmarkFromTFHub =
+      (config.landmarkModelUrl.indexOf('https://tfhub.dev') > -1);
+
   const [detectorModel, landmarkModel] = await Promise.all([
-    tfconv.loadGraphModel(config.detectorModelUrl),
-    tfconv.loadGraphModel(config.landmarkModelUrl)
+    tfconv.loadGraphModel(
+        config.detectorModelUrl, {fromTFHub: detectorFromTFHub}),
+    tfconv.loadGraphModel(
+        config.landmarkModelUrl, {fromTFHub: landmarkFromTFHub})
   ]);
 
   return new BlazePoseTfjsDetector(

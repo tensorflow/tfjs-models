@@ -1,5 +1,3 @@
-import {Keypoint} from '../../types';
-
 /**
  * @license
  * Copyright 2021 Google LLC. All Rights Reserved.
@@ -16,30 +14,19 @@ import {Keypoint} from '../../types';
  * limitations under the License.
  * =============================================================================
  */
-export interface ImageSize {
-  height: number;
-  width: number;
-}
+import {ImageSize} from './interfaces/common_interfaces';
+import {Rect} from './interfaces/shape_interfaces';
 
-export interface Padding {
-  top: number;
-  bottom: number;
-  left: number;
-  right: number;
-}
+/**
+ * Estimate object scale to allow filter work similarly on nearer or futher
+ * objects.
+ * @param roi Normalized rectangle.
+ * @param imageSize An object that contains width and height.
+ * @returns A number representing the object scale.
+ */
+export function getObjectScale(roi: Rect, imageSize: ImageSize): number {
+  const objectWidth = roi.width * imageSize.width;
+  const objectHeight = roi.height * imageSize.height;
 
-export type ValueTransform = {
-  scale: number,
-  offset: number
-};
-
-export interface WindowElement {
-  distance: number;
-  duration: number;
-}
-
-export interface KeypointsFilter {
-  apply(landmarks: Keypoint[], microSeconds: number, objectScale: number):
-      Keypoint[];
-  reset(): void;
+  return (objectWidth + objectHeight) / 2;
 }

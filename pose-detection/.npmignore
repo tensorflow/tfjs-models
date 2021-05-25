@@ -2,7 +2,8 @@
 .yalc/
 .vscode/
 .rpt2_cache/
-demo/
+demos/
+assets/
 scripts/
 src/
 coverage/
