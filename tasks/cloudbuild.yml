@@ -22,13 +22,21 @@ steps:
   args: ['lint']
   waitFor: ['yarn']
 
+# Build deps.
+- name: 'node:10'
+  dir: 'tasks'
+  entrypoint: 'yarn'
+  id: 'build-deps'
+  args: ['build-deps']
+  waitFor: ['yarn']
+
 # Build.
 - name: 'node:10'
   dir: 'tasks'
   entrypoint: 'yarn'
   id: 'build'
   args: ['build']
-  waitFor: ['yarn']
+  waitFor: ['yarn', 'build-deps']
 
 # Run tests.
 - name: 'node:10'
@@ -36,7 +44,7 @@ steps:
   entrypoint: 'yarn'
   id: 'test'
   args: ['test']
-  waitFor: ['yarn']
+  waitFor: ['yarn', 'build-deps']
 
 # General configuration
 timeout: 1800s
