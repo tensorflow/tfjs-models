@@ -42,7 +42,8 @@ export class QuestionAnswerCustomModelTFLiteLoader extends TaskModelLoader<
     description: 'A QuestionAnswerer backed by the TFLite Task Library. ' +
         'It can work with any models that meet the ' +
         '<a href="https://www.tensorflow.org/lite/inference_with_metadata/' +
-        'task_library/bert_question_answerer#model_compatibility_requirements" ' +
+        'task_library/bert_question_answerer' +
+        '#model_compatibility_requirements" ' +
         'target="_blank">model requirements</a>. Try models from this ' +
         '<a href="https://tfhub.dev/tensorflow/collections/lite/task-library/' +
         'bert-question-answerer/1" target="_blank">collection</a>.',

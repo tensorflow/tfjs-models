@@ -51,7 +51,7 @@ import {toxicityTfjsLoader} from './sentiment_detection/toxicity_tfjs';
  *
  * TODO: add test to make sure loaders are located in the correct index entries.
  */
-const modelIndex = {
+export const modelIndex = {
   [Task.IMAGE_CLASSIFICATION]: {
     MobileNet: {
       [Runtime.TFJS]: mobilenetTfjsLoader,
@@ -105,11 +105,17 @@ const modelIndex = {
 
 // Export each task individually.
 
+// tslint:disable:variable-name
 export const ImageClassification = modelIndex[Task.IMAGE_CLASSIFICATION];
+// tslint:disable:variable-name
 export const ObjectDetection = modelIndex[Task.OBJECT_DETECTION];
+// tslint:disable:variable-name
 export const ImageSegmentation = modelIndex[Task.IMAGE_SEGMENTATION];
+// tslint:disable:variable-name
 export const SentimentDetection = modelIndex[Task.SENTIMENT_DETECTION];
+// tslint:disable:variable-name
 export const NLClassification = modelIndex[Task.NL_CLASSIFICATION];
+// tslint:disable:variable-name
 export const QuestionAndAnswer = modelIndex[Task.QUESTION_AND_ANSWER];
 
 /**
@@ -119,14 +125,14 @@ export const QuestionAndAnswer = modelIndex[Task.QUESTION_AND_ANSWER];
  * given array.
  */
 export function getModelLoadersByRuntime(runtimes: Runtime[]):
-    TaskModelLoader<{}, {}, {}>[] {
+    Array<TaskModelLoader<{}, {}, {}>> {
   return filterModelLoaders(
       (loader) => runtimes.includes(loader.metadata.runtime));
 }
 
 /** Gets all model loaders from the index. */
 export function getAllModelLoaders(): Array<TaskModelLoader<{}, {}, {}>> {
-  const modelLoaders: TaskModelLoader<{}, {}, {}>[] = [];
+  const modelLoaders: Array<TaskModelLoader<{}, {}, {}>> = [];
   for (const task of Object.keys(modelIndex)) {
     // tslint:disable-next-line:no-any
     const models = (modelIndex as any)[task];
@@ -143,7 +149,7 @@ export function getAllModelLoaders(): Array<TaskModelLoader<{}, {}, {}>> {
 
 function filterModelLoaders(
     filterFn: (loader: TaskModelLoader<{}, {}, {}>) => boolean) {
-  const filteredModelLoaders: TaskModelLoader<{}, {}, {}>[] = [];
+  const filteredModelLoaders: Array<TaskModelLoader<{}, {}, {}>> = [];
   for (const modelLoader of getAllModelLoaders()) {
     if (filterFn(modelLoader)) {
       filteredModelLoaders.push(modelLoader);
