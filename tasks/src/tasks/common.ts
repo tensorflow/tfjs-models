@@ -88,9 +88,6 @@ export function getTFJSModelDependencyPackages(
       break;
     case 'webgl':
       packages[1].push(
-          `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-cpu@${
-              version}`);
-      packages[1].push(
           `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl@${
               version}`);
       break;
@@ -103,9 +100,6 @@ export function getTFJSModelDependencyPackages(
       console.warn(
           'WARNING',
           `Backend '${backend}' not supported. Use 'webgl' as the default.`);
-      packages[1].push(
-          `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-cpu@${
-              version}`);
       packages[1].push(
           `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl@${
               version}`);
