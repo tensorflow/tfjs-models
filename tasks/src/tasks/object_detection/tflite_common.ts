@@ -38,7 +38,7 @@ export class ObjectDetectorTFLite<T> extends ObjectDetector<T> {
     const tfliteResults = this.tfliteObjectDetector.detect(img);
     if (!tfliteResults) {
       return {objects: []};
-    };
+    }
     const objects: DetectedObject[] = tfliteResults.map(result => {
       return {
         boundingBox: result.boundingBox,

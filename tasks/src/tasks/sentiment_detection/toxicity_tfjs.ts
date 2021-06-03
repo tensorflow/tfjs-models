@@ -135,7 +135,7 @@ export class ToxicityTFJS extends
       sentimentLabels[labelResult.label] = {
         result: labelResult.results[0].match,
         probabilities: Array.from(labelResult.results[0].probabilities),
-      }
+      };
     }
     return {sentimentLabels};
   }

@@ -42,7 +42,6 @@
     "karma-jasmine": "~4.0.1",
     "karma-typescript": "~5.5.1",
     "karma-typescript-es6-transform": "^5.5.1",
-    "parcel": "^2.0.0-beta.2",
     "postcss": "^8.2.1",
     "rimraf": "~3.0.2",
     "rollup": "~2.44.0",
@@ -60,7 +59,13 @@
   "scripts": {
     "build": "tsc",
     "build-npm": "./scripts/build-npm.sh",
+    "build-mobilenet": "cd .. && cd mobilenet && yarn && yarn build-npm",
+    "build-coco-ssd": "cd .. && cd coco-ssd && yarn && yarn build-npm",
+    "build-deeplab": "cd .. && cd deeplab && yarn && yarn build-npm",
+    "build-toxicity": "cd .. && cd toxicity && yarn && yarn build-npm",
+    "build-qna": "cd .. && cd qna && yarn && yarn build-npm",
+    "build-deps": "yarn build-mobilenet && yarn build-coco-ssd && yarn build-deeplab && yarn build-toxicity && yarn build-qna",
     "lint": "tslint -p . -t verbose",
-    "test": "yarn && yarn build-deps && yarn build && karma start"
+    "test": "ts-node --skip-ignore --project tsconfig.test.json run_tests.ts"
   }
 }
