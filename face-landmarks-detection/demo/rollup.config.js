@@ -44,7 +44,6 @@ function config({plugins = [], output = {}, tsCompilerOptions = {}}) {
       // Polyfill require() from dependencies.
       commonjs({
         ignore: ['crypto', 'node-fetch', 'util'],
-        include: ['node_modules/**', 'wasm-out/**']
       }),
       ...plugins
     ],

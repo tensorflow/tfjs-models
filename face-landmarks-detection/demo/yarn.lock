@@ -997,18 +997,9 @@
     estree-walker "^1.0.1"
     picomatch "^2.2.2"
 
-"@tensorflow-models/blazeface@0.0.7":
-  version "0.0.7"
-  resolved "https://registry.yarnpkg.com/@tensorflow-models/blazeface/-/blazeface-0.0.7.tgz#0a16499a0cc97fc87e11ae1f78140731c5f63bf2"
-  integrity sha512-+hInPkvHJoubfiXlmNuF3SCucZvU6W1PMC25IV99NSAftJUpKvLokfF93iX8UkOFQCXkPFbnLKacGfGlbjgvMw==
-
-"@tensorflow-models/face-landmarks-detection@^0.0.3":
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/@tensorflow-models/face-landmarks-detection/-/face-landmarks-detection-0.0.3.tgz#6fdf3b49a50796acf08b7ea350f8ea5a5a45eca1"
-  integrity sha512-WFzoknHev00yEVDFDk55eKBnRDEo9EAzfi7IxxIpm+31TJfj0TX6soQPiAE/qQGoHo9MnD6CkFH189ZZuwQblw==
-  dependencies:
-    "@tensorflow-models/blazeface" "0.0.7"
-    rimraf "^3.0.2"
+"@tensorflow-models/face-landmarks-detection@link:../dist":
+  version "0.0.0"
+  uid ""
 
 "@tensorflow/tfjs-backend-cpu@3.3.0", "@tensorflow/tfjs-backend-cpu@^3.1.0":
   version "3.3.0"
@@ -2965,6 +2956,11 @@ es-to-primitive@^1.2.1:
     is-callable "^1.1.4"
     is-date-object "^1.0.1"
     is-symbol "^1.0.2"
+
+esbuild@0.12.7:
+  version "0.12.7"
+  resolved "https://registry.yarnpkg.com/esbuild/-/esbuild-0.12.7.tgz#0243ff94b241d9c815720083633731bc5b601b24"
+  integrity sha512-vxENKWBo928ErLiT/uUv8Sl2EoC5cF3cZzCTc8hDEh9ZAZ75xblJCr72NeJo74lxWaGopIePZPIWq1qDpLUHQQ==
 
 escalade@^3.1.1:
   version "3.1.1"
