@@ -61,8 +61,7 @@ export async function proposal_layer <T extends tf.Tensor4D, X extends tf.Tensor
 	proposals = tf.gather(proposals, tf.cast(keep,'int32'));
 	scores = tf.gather(scores, tf.cast(keep,'int32'));
 	bboxDeltas = tf.gather(bboxDeltas, tf.cast(keep,'int32'));
-
-	//scores.print()
+	
 	let order = tf.reverse(utils.argSort(utils.ravel(scores)));
 	if(cfg.pre_nms_topN > 0){
 		order = tf.slice(order,0, cfg.pre_nms_topN);

@@ -25,7 +25,7 @@ function polyfit<T extends tf.Tensor>(_x: T, _y: T, order: number){
         console.warn('Warning: Polyfit may be poorly conditioned.');
     }
     const xMatrix = [];
-    const yMatrix = yArray;//numeric.transpose([yArray])
+    const yMatrix = yArray;
 
     for (let i = 0; i < xArray.length; i++) {
         const temp = [];

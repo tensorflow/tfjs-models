@@ -103,5 +103,3 @@ export class TextDetector{
 					textLineConfig.MIN_NUM_PROPOSALS)) ) );
 	}
 }
-
-// module.exports = TextDetector;
