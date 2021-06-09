@@ -36,16 +36,14 @@ export interface CTPN {
 		color: string): void;
 }
 
-export async function load(modelUrl: string): Promise<CTPN> {
+export async function load(modelUrl?: string): Promise<CTPN> {
 	if (tf == null) {
 		throw new Error(
 			`Cannot find TensorFlow.js. If you are using a <script> tag, please ` +
 			`also include @tensorflow/tfjs on the page before using this model.`);
 	}
-	if (!modelUrl) {
-		throw new Error(
-			`Invalid url for CTPN model. Valid versions are: ` +
-			`https://cdn.jsdelivr.net/gh/BadMachine/tfjs-text-detection-ctpn/ctpn_web/model.json`);
+	if(!modelUrl){
+		modelUrl = `https://cdn.jsdelivr.net/gh/BadMachine/tfjs-text-detection-ctpn/ctpn_web/model.json`;
 	}
 
 	// User provides versionStr / alphaStr.
@@ -75,6 +73,21 @@ class CTPNImpl implements CTPN {
 	async predict(img: HTMLImageElement, config: PredictionConfig):
 		Promise<{prediction: tf.Tensor, scalefactor: number}>{
 
+		if(!config){
+			config ={
+				nms_function: 'TF',
+				anchor_scales: [16],
+				pixel_means: tf.tensor([[[102.9801, 115.9465, 122.7717]]]),
+				scales: [600,] ,
+				max_size:  1000,
+				has_rpn: true,
+				detect_mode: 'O',
+				pre_nms_topN: 12000,
+				post_nms_topN: 2000,
+				nms_thresh:0.7,
+				min_size: 8,
+			};
+		}
 		const origin = tf.browser.fromPixels(img);
 		const originBGR = utils.bgr2rgb(origin);
 		const [image, scale] = utils.resize_im(originBGR, IMAGE_SIZE, MAX_SCALE);
@@ -103,11 +116,31 @@ class CTPNImpl implements CTPN {
 		return {prediction:_boxes, scalefactor:scale};
 	}
 
-	draw <T extends tf.Tensor>(
+	async draw<T extends tf.Tensor>(
 		canvas: HTMLCanvasElement,
-		_boxes: T,
-		scale: number,
-		color: string): void{
+		_boxes: T, scale: number,
+		color: string
+	){
+
+		const boxes = _boxes.arraySync() as number[][];
+		for(const box of boxes){
+			const ctx = canvas.getContext('2d');
+			ctx!.beginPath();
+			ctx!.strokeStyle = color;
+			ctx!.lineWidth = 4;
+			ctx!.moveTo(box[0]/ scale, box[1]/ scale);
+			ctx!.lineTo(box[2] / scale, box[3] / scale);
+
+			ctx!.lineTo(box[0] / scale, box[1] / scale);
+			ctx!.lineTo(box[4] / scale, box[5] / scale);
+
+			ctx!.lineTo(box[6] / scale, box[7] / scale);
+			ctx!.lineTo(box[2] / scale, box[3] / scale);
+
+			ctx!.stroke();
+			ctx!.closePath();
+
+		}
 
 	}
 }
