@@ -118,7 +118,8 @@ class CTPNImpl implements CTPN {
 
 	async draw<T extends tf.Tensor>(
 		canvas: HTMLCanvasElement,
-		_boxes: T, scale: number,
+		_boxes: T,
+		scale: number,
 		color: string
 	){
 

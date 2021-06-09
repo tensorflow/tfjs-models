@@ -42,7 +42,7 @@ async function run() {
   const prediction = await model.predict(img, config);
   canvasPrediction.width = img.width;
   canvasPrediction.height = img.height;
-  await model.draw(canvasPrediction, prediction, 'red');
+  await model.draw(canvasPrediction, prediction.prediction, prediction.scalefactor, 'red');
   console.log('Prediction');
   prediction.print();
 }
