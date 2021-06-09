@@ -20,15 +20,29 @@ import '@tensorflow/tfjs-backend-webgl';
 import * as mobilenet from '@tensorflow-models/ctpn';
 
 const img = document.getElementById('img');
-const version = 2;
-const alpha = 0.5;
-
+const canvasPrediction = document.getElementById('prediction');
+const config = {
+      nms_function: 'TF',
+      anchor_scales: [16],
+      pixel_means: tf.tensor([[[102.9801, 115.9465, 122.7717]]]),
+      scales: [600,] ,
+      max_size:  1000,
+      has_rpn: true,
+      detect_mode: 'O',
+      pre_nms_topN: 12000,
+      post_nms_topN: 2000,
+      nms_thresh:0.7,
+      min_size: 8,
+};
 async function run() {
   // Load the model.
   const model = await ctpn.load();
 
   // Get the prediction.
-  const prediction = model.predict(img);
+  const prediction = await model.predict(img, config);
+  canvasPrediction.width = img.width;
+  canvasPrediction.height = img.height;
+  await model.draw(canvasPrediction, prediction, 'red');
   console.log('Prediction');
   prediction.print();
 }
