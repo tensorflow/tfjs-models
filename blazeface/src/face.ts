@@ -434,4 +434,13 @@ export class BlazeFaceModel {
       return normalizedFace;
     }));
   }
+
+  /**
+   * Dispose the WebGL memory held by the underlying model.
+   */
+  dispose(): void {
+    if (this.blazeFaceModel != null) {
+      this.blazeFaceModel.dispose();
+    }
+  }
 }
