@@ -145,13 +145,13 @@ and can be used as building blocks in other apps.
     <td rowspan="2">
       <b><a style="white-space:nowrap; display:inline-block;" href="./face-landmarks-detection"><div style='vertical-align:middle; display:inline;'>CTPN Text Detection</div></a></b>
     </td>
-    <td><a href="https://storage.googleapis.com/tfjs-models/demos/ctpn-text-detection/index.html">live</a></td>
+    <td><a href="https://storage.googleapis.com/tfjs-models/demos/ctpn/index.html">live</a></td>
     <td rowspan="2">Text detection mainly based on ctpn model in tensorflow, id card detect, connectionist text proposal network The origin paper can be found <a href="https://github.com/tianzhi0549/CTPN">here</a>. Also, the origin repo in caffe can be found in <a href="https://arxiv.org/abs/1609.03605">here</a>.
     </td>
     <td rowspan="2"><code>npm i @tensorflow-models/ctpn</code></td>
   </tr>
   <tr>
-    <td><a href="./ctpn-text-detection/demo/index.html">source</a></td>
+    <td><a href="./ctpn/demo/index.html">source</a></td>
   </tr>
 
   <!-- * Audio -->

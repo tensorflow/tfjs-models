@@ -21,5 +21,11 @@
     "typescript": "3.5.3",
     "yalc": "~1.0.0-pre.50"
   },
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@tensorflow/tfjs-converter": "^3.7.0",
+    "@tensorflow/tfjs-core": "^3.7.0",
+    "@types/numeric": "^1.2.1",
+    "numeric": "^1.2.6"
+  }
 }
