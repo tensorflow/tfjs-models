@@ -15,24 +15,26 @@
  * =============================================================================
  */
 
-import * as faceLandmarksDetection from '@tensorflow-models/face-landmarks-detection';
-import Stats from 'stats.js';
-import * as tf from '@tensorflow/tfjs-core';
 import '@tensorflow/tfjs-backend-webgl';
 import '@tensorflow/tfjs-backend-cpu';
 
+import * as faceLandmarksDetection from '@tensorflow-models/face-landmarks-detection';
 import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
+import * as tf from '@tensorflow/tfjs-core';
+import Stats from 'stats.js';
 
 import {TRIANGULATION} from './triangulation';
 
 tfjsWasm.setWasmPaths(
-    `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${tfjsWasm.version_wasm}/dist/`);
+    `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
+        tfjsWasm.version_wasm}/dist/`);
 
 const NUM_KEYPOINTS = 468;
 const NUM_IRIS_KEYPOINTS = 5;
 const GREEN = '#32EEDB';
-const RED = "#FF2C35";
-const BLUE = "#157AB3";
+const RED = '#FF2C35';
+const BLUE = '#157AB3';
+let stopRendering = false;
 
 function isMobile() {
   const isAndroid = /Android/i.test(navigator.userAgent);
@@ -82,15 +84,17 @@ function setupDatGui() {
   const gui = new dat.GUI();
   gui.add(state, 'backend', ['webgl', 'wasm', 'cpu'])
       .onChange(async backend => {
+        stopRendering = true;
         window.cancelAnimationFrame(rafID);
         await tf.setBackend(backend);
+        stopRendering = false;
         requestAnimationFrame(renderPrediction);
       });
 
   gui.add(state, 'maxFaces', 1, 20, 1).onChange(async val => {
     model = await faceLandmarksDetection.load(
-      faceLandmarksDetection.SupportedPackages.mediapipeFacemesh,
-      {maxFaces: val});
+        faceLandmarksDetection.SupportedPackages.mediapipeFacemesh,
+        {maxFaces: val});
   });
 
   gui.add(state, 'triangulateMesh');
@@ -127,6 +131,10 @@ async function setupCamera() {
 }
 
 async function renderPrediction() {
+  if (stopRendering) {
+    return;
+  }
+
   stats.begin();
 
   const predictions = await model.estimateFaces({
@@ -167,33 +175,35 @@ async function renderPrediction() {
         }
       }
 
-      if(keypoints.length > NUM_KEYPOINTS) {
+      if (keypoints.length > NUM_KEYPOINTS) {
         ctx.strokeStyle = RED;
         ctx.lineWidth = 1;
 
         const leftCenter = keypoints[NUM_KEYPOINTS];
         const leftDiameterY = distance(
-          keypoints[NUM_KEYPOINTS + 4],
-          keypoints[NUM_KEYPOINTS + 2]);
+            keypoints[NUM_KEYPOINTS + 4], keypoints[NUM_KEYPOINTS + 2]);
         const leftDiameterX = distance(
-          keypoints[NUM_KEYPOINTS + 3],
-          keypoints[NUM_KEYPOINTS + 1]);
+            keypoints[NUM_KEYPOINTS + 3], keypoints[NUM_KEYPOINTS + 1]);
 
         ctx.beginPath();
-        ctx.ellipse(leftCenter[0], leftCenter[1], leftDiameterX / 2, leftDiameterY / 2, 0, 0, 2 * Math.PI);
+        ctx.ellipse(
+            leftCenter[0], leftCenter[1], leftDiameterX / 2, leftDiameterY / 2,
+            0, 0, 2 * Math.PI);
         ctx.stroke();
 
-        if(keypoints.length > NUM_KEYPOINTS + NUM_IRIS_KEYPOINTS) {
+        if (keypoints.length > NUM_KEYPOINTS + NUM_IRIS_KEYPOINTS) {
           const rightCenter = keypoints[NUM_KEYPOINTS + NUM_IRIS_KEYPOINTS];
           const rightDiameterY = distance(
-            keypoints[NUM_KEYPOINTS + NUM_IRIS_KEYPOINTS + 2],
-            keypoints[NUM_KEYPOINTS + NUM_IRIS_KEYPOINTS + 4]);
+              keypoints[NUM_KEYPOINTS + NUM_IRIS_KEYPOINTS + 2],
+              keypoints[NUM_KEYPOINTS + NUM_IRIS_KEYPOINTS + 4]);
           const rightDiameterX = distance(
-            keypoints[NUM_KEYPOINTS + NUM_IRIS_KEYPOINTS + 3],
-            keypoints[NUM_KEYPOINTS + NUM_IRIS_KEYPOINTS + 1]);
+              keypoints[NUM_KEYPOINTS + NUM_IRIS_KEYPOINTS + 3],
+              keypoints[NUM_KEYPOINTS + NUM_IRIS_KEYPOINTS + 1]);
 
           ctx.beginPath();
-          ctx.ellipse(rightCenter[0], rightCenter[1], rightDiameterX / 2, rightDiameterY / 2, 0, 0, 2 * Math.PI);
+          ctx.ellipse(
+              rightCenter[0], rightCenter[1], rightDiameterX / 2,
+              rightDiameterY / 2, 0, 0, 2 * Math.PI);
           ctx.stroke();
         }
       }
@@ -213,7 +223,7 @@ async function renderPrediction() {
 
       if (!scatterGLHasInitialized) {
         scatterGL.setPointColorer((i) => {
-          if(i % (NUM_KEYPOINTS + NUM_IRIS_KEYPOINTS * 2) > NUM_KEYPOINTS) {
+          if (i % (NUM_KEYPOINTS + NUM_IRIS_KEYPOINTS * 2) > NUM_KEYPOINTS) {
             return RED;
           }
           return BLUE;
@@ -258,8 +268,8 @@ async function main() {
   ctx.lineWidth = 0.5;
 
   model = await faceLandmarksDetection.load(
-    faceLandmarksDetection.SupportedPackages.mediapipeFacemesh,
-    {maxFaces: state.maxFaces});
+      faceLandmarksDetection.SupportedPackages.mediapipeFacemesh,
+      {maxFaces: state.maxFaces});
   renderPrediction();
 
   if (renderPointcloud) {
