@@ -9,7 +9,7 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow-models/face-landmarks-detection": "file:../dist",
+    "@tensorflow-models/face-landmarks-detection": "link:../dist",
     "@tensorflow/tfjs-backend-wasm": "^3.1.0",
     "@tensorflow/tfjs-backend-webgl": "^3.1.0",
     "@tensorflow/tfjs-backend-cpu": "^3.1.0",
@@ -18,8 +18,10 @@
     "stats.js": "^0.17.0"
   },
   "scripts": {
-    "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr --target browser --open",
-    "build": "cross-env NODE_ENV=production parcel build index.html --target browser --public-url ./",
+    "watch": "esbuild index.js --servedir=. --bundle --target=es6 --external:os",
+    "build": "./scripts/build-demo.sh",
+    "build-deps": "yarn build-model && yarn build",
+    "build-model": "cd .. && yarn && yarn build-npm",
     "lint": "eslint .",
     "link-local": "yalc link @tensorflow-models/face-landmarks-detection"
   },
@@ -30,13 +32,21 @@
     "@babel/core": "7.7.5",
     "@babel/plugin-transform-runtime": "^7.7.6",
     "@babel/preset-env": "^7.7.6",
+    "@rollup/plugin-commonjs": "^11.0.2",
+    "@rollup/plugin-node-resolve": "^7.1.1",
+    "@rollup/plugin-typescript": "^3.0.0",
     "babel-plugin-external-helpers": "^6.22.0",
     "babel-preset-env": "^1.7.0",
     "clang-format": "~1.2.2",
     "cross-env": "^5.2.0",
+    "esbuild": "0.12.7",
     "eslint": "^4.19.1",
     "eslint-config-google": "^0.9.1",
     "parcel-bundler": "^1.12.5",
+    "rimraf": "^3.0.2",
+    "rollup": "~2.3.2",
+    "rollup-plugin-terser": "~5.3.0",
+    "rollup-plugin-visualizer": "~3.3.2",
     "yalc": "~1.0.0-pre.50"
   },
   "resolutions": {

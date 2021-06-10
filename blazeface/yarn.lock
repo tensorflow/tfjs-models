@@ -274,10 +274,22 @@ get-caller-file@^2.0.5:
   resolved "https://registry.yarnpkg.com/get-caller-file/-/get-caller-file-2.0.5.tgz#4f94412a82db32f36e3b0b9741f8a97feb031f7e"
   integrity sha512-DyFP3BM/3YHTQOCUL/w0OZHR0lpKeGrxotcHWcqNEdnltqFwXVfhEBQ94eIo34AfQpo0rGki4cyIiftY06h2Fg==
 
-glob@^7.0.6, glob@^7.1.1, glob@^7.1.3, glob@^7.1.4:
+glob@^7.1.1, glob@^7.1.3, glob@^7.1.4:
   version "7.1.6"
   resolved "https://registry.yarnpkg.com/glob/-/glob-7.1.6.tgz#141f33b81a7c2492e125594307480c46679278a6"
   integrity sha512-LwaxwyZ72Lk7vZINtNNrywX0ZuLyStrdDtabefZKAY5ZGJhVtgdznluResxNmPitE0SAO+O26sWTHeKSI2wMBA==
+  dependencies:
+    fs.realpath "^1.0.0"
+    inflight "^1.0.4"
+    inherits "2"
+    minimatch "^3.0.4"
+    once "^1.3.0"
+    path-is-absolute "^1.0.0"
+
+glob@^7.1.6:
+  version "7.1.7"
+  resolved "https://registry.nlark.com/glob/download/glob-7.1.7.tgz?cache=0&other_urls=https%3A%2F%2Fregistry.nlark.com%2Fglob%2Fdownload%2Fglob-7.1.7.tgz#3b193e9233f01d42d0b3f78294bbeeb418f94a90"
+  integrity sha1-Oxk+kjPwHULQs/eClLvutBj5SpA=
   dependencies:
     fs.realpath "^1.0.0"
     inflight "^1.0.4"
@@ -355,23 +367,18 @@ is-module@^1.0.0:
   resolved "https://registry.yarnpkg.com/is-module/-/is-module-1.0.0.tgz#3258fb69f78c14d5b815d664336b4cffb6441591"
   integrity sha1-Mlj7afeMFNW4FdZkM2tM/7ZEFZE=
 
-jasmine-core@~3.1.0:
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/jasmine-core/-/jasmine-core-3.1.0.tgz#a4785e135d5df65024dfc9224953df585bd2766c"
-  integrity sha1-pHheE11d9lAk38kiSVPfWFvSdmw=
+jasmine-core@^3.7.1, jasmine-core@~3.7.0:
+  version "3.7.1"
+  resolved "https://registry.npm.taobao.org/jasmine-core/download/jasmine-core-3.7.1.tgz?cache=0&sync_timestamp=1616115717801&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fjasmine-core%2Fdownload%2Fjasmine-core-3.7.1.tgz#0401327f6249eac993d47bbfa18d4e8efacfb561"
+  integrity sha1-BAEyf2JJ6smT1Hu/oY1OjvrPtWE=
 
-jasmine-core@~3.2.0:
-  version "3.2.1"
-  resolved "https://registry.yarnpkg.com/jasmine-core/-/jasmine-core-3.2.1.tgz#8e4ff5b861603ee83343f2b49eee6a0ffe9650ce"
-  integrity sha512-pa9tbBWgU0EE4SWgc85T4sa886ufuQdsgruQANhECYjwqgV4z7Vw/499aCaP8ZH79JDS4vhm8doDG9HO4+e4sA==
-
-jasmine@~3.2.0:
-  version "3.2.0"
-  resolved "https://registry.yarnpkg.com/jasmine/-/jasmine-3.2.0.tgz#b3a018454781805650e46578803d08e7cfdd7b3d"
-  integrity sha512-qv6TZ32r+slrQz8fbx2EhGbD9zlJo3NwPrpLK1nE8inILtZO9Fap52pyHk7mNTh4tG50a+1+tOiWVT3jO5I0Sg==
+jasmine@^3.7.0:
+  version "3.7.0"
+  resolved "https://registry.npm.taobao.org/jasmine/download/jasmine-3.7.0.tgz#d36638c0c815e6ad5666676e386d79e2ccb70835"
+  integrity sha1-02Y4wMgV5q1WZmduOG154sy3CDU=
   dependencies:
-    glob "^7.0.6"
-    jasmine-core "~3.2.0"
+    glob "^7.1.6"
+    jasmine-core "~3.7.0"
 
 js-tokens@^4.0.0:
   version "4.0.0"
