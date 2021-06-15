@@ -24,7 +24,7 @@ export {version} from './version';
 const IMAGE_SIZE = 224;
 
 /** @docinline */
-export type MobileNetVersion = 1|2;
+export type MobileNetVersion = 1|2|3;
 /** @docinline */
 export type MobileNetAlpha = 0.25|0.50|0.75|1.0;
 
@@ -106,6 +106,18 @@ const MODEL_INFO: {[version: string]: {[alpha: string]: MobileNetInfo}} = {
     '1.00': {
       url:
           'https://tfhub.dev/google/imagenet/mobilenet_v2_100_224/classification/2',
+      inputRange: [0, 1]
+    }
+  },
+  '3.00': {
+    '0.75': {
+      url:
+          'https://tfhub.dev/google/tfjs-model/imagenet/mobilenet_v3_large_075_224/classification/5/default/1',
+      inputRange: [0, 1]
+    },
+    '1.00': {
+      url:
+          'https://tfhub.dev/google/tfjs-model/imagenet/mobilenet_v3_large_100_224/classification/5/default/1',
       inputRange: [0, 1]
     }
   }
