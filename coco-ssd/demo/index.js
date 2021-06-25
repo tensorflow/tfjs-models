@@ -19,8 +19,8 @@ import '@tensorflow/tfjs-backend-webgl';
 
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
 
-import imageURL from './image1.jpg';
-import image2URL from './image2.jpg';
+const imageURL = 'image1.jpg';
+const image2URL = 'image2.jpg';
 
 let modelPromise;
 
