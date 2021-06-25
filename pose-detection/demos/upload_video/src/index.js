@@ -16,6 +16,7 @@
  */
 
 import '@tensorflow/tfjs-backend-webgl';
+import '@mediapipe/pose';
 
 import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
 
@@ -33,6 +34,9 @@ import {STATE} from './params';
 import {setBackendAndEnvFlags} from './util';
 
 let detector, camera, stats;
+let startInferenceTime, numInferences = 0;
+let inferenceTimeSum = 0, lastPanelUpdate = 0;
+let rafId;
 const statusElement = document.getElementById('status');
 
 async function createDetector() {
@@ -45,8 +49,18 @@ async function createDetector() {
         inputResolution: {width: 500, height: 500},
         multiplier: 0.75
       });
-    case posedetection.SupportedModels.MediapipeBlazepose:
-      return posedetection.createDetector(STATE.model, {quantBytes: 4});
+    case posedetection.SupportedModels.BlazePose:
+      const runtime = STATE.backend.split('-')[0];
+      if (runtime === 'mediapipe') {
+        return posedetection.createDetector(STATE.model, {
+          runtime,
+          modelType: STATE.modelConfig.type,
+          solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/pose'
+        });
+      } else if (runtime === 'tfjs') {
+        return posedetection.createDetector(
+            STATE.model, {runtime, modelType: STATE.modelConfig.type});
+      }
     case posedetection.SupportedModels.MoveNet:
       const modelType = STATE.modelConfig.type == 'lightning' ?
           posedetection.movenet.modelType.SINGLEPOSE_LIGHTNING :
@@ -56,16 +70,17 @@ async function createDetector() {
 }
 
 async function checkGuiUpdate() {
-  if (STATE.isModelChanged) {
-    detector.dispose();
-    detector = await createDetector(STATE.model);
-    STATE.isModelChanged = false;
-  }
-
-  if (STATE.isFlagChanged || STATE.isBackendChanged) {
+  if (STATE.isModelChanged || STATE.isFlagChanged || STATE.isBackendChanged) {
     STATE.isModelChanged = true;
+
+    window.cancelAnimationFrame(rafId);
+
     detector.dispose();
-    await setBackendAndEnvFlags(STATE.flags, STATE.backend);
+
+    if (STATE.isFlagChanged || STATE.isBackendChanged) {
+      await setBackendAndEnvFlags(STATE.flags, STATE.backend);
+    }
+
     detector = await createDetector(STATE.model);
     STATE.isFlagChanged = false;
     STATE.isBackendChanged = false;
@@ -73,14 +88,35 @@ async function checkGuiUpdate() {
   }
 }
 
+function beginEstimatePosesStats() {
+  startInferenceTime = (performance || Date).now();
+}
+
+function endEstimatePosesStats() {
+  const endInferenceTime = (performance || Date).now();
+  inferenceTimeSum += endInferenceTime - startInferenceTime;
+  ++numInferences;
+
+  const panelUpdateMilliseconds = 1000;
+  if (endInferenceTime - lastPanelUpdate >= panelUpdateMilliseconds) {
+    const averageInferenceTime = inferenceTimeSum / numInferences;
+    inferenceTimeSum = 0;
+    numInferences = 0;
+    stats.customFpsPanel.update(
+        1000.0 / averageInferenceTime, 120 /* maxValue */);
+    lastPanelUpdate = endInferenceTime;
+  }
+}
+
 async function renderResult() {
-  stats.begin();
+  // FPS only counts the time it takes to finish estimatePoses.
+  beginEstimatePosesStats();
 
   const poses = await detector.estimatePoses(
       camera.video,
       {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
 
-  stats.end();
+  endEstimatePosesStats();
 
   camera.drawCtx();
 
@@ -132,20 +168,24 @@ async function runFrame() {
     return;
   }
   await renderResult();
-  requestAnimationFrame(runFrame);
+  rafId = requestAnimationFrame(runFrame);
 }
 
 async function run() {
   statusElement.innerHTML = 'Warming up model.';
 
   // Warming up pipeline.
-  const warmUpTensor = tf.fill([camera.video.height, camera.video.width, 3], 0);
-  await detector.estimatePoses(
-      warmUpTensor,
-      {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
-  warmUpTensor.dispose();
+  const [runtime, $backend] = STATE.backend.split('-');
 
-  statusElement.innerHTML = 'Model is warmed up.';
+  if (runtime === 'tfjs') {
+    const warmUpTensor =
+        tf.fill([camera.video.height, camera.video.width, 3], 0, 'float32');
+    await detector.estimatePoses(
+        warmUpTensor,
+        {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
+    warmUpTensor.dispose();
+    statusElement.innerHTML = 'Model is warmed up.';
+  }
 
   camera.video.style.visibility = 'hidden';
   video.pause();
@@ -163,8 +203,6 @@ async function run() {
 }
 
 async function app() {
-  await tf.setBackend(STATE.backend);
-
   // Gui content will change depending on which model is in the query string.
   const urlParams = new URLSearchParams(window.location.search);
   if (!urlParams.has('model')) {
@@ -176,6 +214,8 @@ async function app() {
   stats = setupStats();
   detector = await createDetector();
   camera = new Context();
+
+  await setBackendAndEnvFlags(STATE.flags, STATE.backend);
 
   const runButton = document.getElementById('submit');
   runButton.onclick = run;

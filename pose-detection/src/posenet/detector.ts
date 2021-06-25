@@ -21,7 +21,7 @@ import {convertImageToTensor} from '../calculators/convert_image_to_tensor';
 import {getImageSize} from '../calculators/image_utils';
 import {shiftImageValue} from '../calculators/shift_image_value';
 
-import {BasePoseDetector, PoseDetector} from '../pose_detector';
+import {PoseDetector} from '../pose_detector';
 import {InputResolution, Pose, PoseDetectorInput} from '../types';
 import {decodeMultiplePoses} from './calculators/decode_multiple_poses';
 import {decodeSinglePose} from './calculators/decode_single_pose';
@@ -36,19 +36,16 @@ import {PoseNetArchitecture, PoseNetEstimationConfig, PosenetModelConfig, PoseNe
 /**
  * PoseNet detector class.
  */
-export class PosenetDetector extends BasePoseDetector {
+class PosenetDetector implements PoseDetector {
   private readonly inputResolution: InputResolution;
   private readonly architecture: PoseNetArchitecture;
   private readonly outputStride: PoseNetOutputStride;
 
   private maxPoses: number;
 
-  // Should not be called outside.
-  private constructor(
+  constructor(
       private readonly posenetModel: tfconv.GraphModel,
       config: PosenetModelConfig) {
-    super();
-
     // validate params.
     const inputShape =
         this.posenetModel.inputs[0].shape as [number, number, number, number];
@@ -66,38 +63,6 @@ export class PosenetDetector extends BasePoseDetector {
     this.inputResolution = validInputResolution;
     this.outputStride = config.outputStride;
     this.architecture = config.architecture;
-  }
-
-  /**
-   * Loads the PoseNet model instance from a checkpoint, with the ResNet
-   * or MobileNet architecture. The model to be loaded is configurable using the
-   * config dictionary ModelConfig. Please find more details in the
-   * documentation of the ModelConfig.
-   *
-   * @param config ModelConfig dictionary that contains parameters for
-   * the PoseNet loading process. Please find more details of each parameters
-   * in the documentation of the ModelConfig interface. The predefined
-   * `MOBILENET_V1_CONFIG` and `RESNET_CONFIG` can also be used as references
-   * for defining your customized config.
-   */
-  static async load(modelConfig: PosenetModelConfig = MOBILENET_V1_CONFIG):
-      Promise<PoseDetector> {
-    const config = validateModelConfig(modelConfig);
-    if (config.architecture === 'ResNet50') {
-      // Load ResNet50 model.
-      const defaultUrl =
-          resNet50Checkpoint(config.outputStride, config.quantBytes);
-      const model = await tfconv.loadGraphModel(config.modelUrl || defaultUrl);
-
-      return new PosenetDetector(model, config);
-    }
-
-    // Load MobileNetV1 model.
-    const defaultUrl = mobileNetCheckpoint(
-        config.outputStride, config.multiplier, config.quantBytes);
-    const model = await tfconv.loadGraphModel(config.modelUrl || defaultUrl);
-
-    return new PosenetDetector(model, config);
   }
 
   /**
@@ -148,15 +113,15 @@ export class PosenetDetector extends BasePoseDetector {
 
     let offsets, heatmap, displacementFwd, displacementBwd;
     if (this.architecture === 'ResNet50') {
-      offsets = tf.squeeze(results[2]);
-      heatmap = tf.squeeze(results[3]);
-      displacementFwd = tf.squeeze(results[0]);
-      displacementBwd = tf.squeeze(results[1]);
+      offsets = tf.squeeze(results[2], [0]);
+      heatmap = tf.squeeze(results[3], [0]);
+      displacementFwd = tf.squeeze(results[0], [0]);
+      displacementBwd = tf.squeeze(results[1], [0]);
     } else {
-      offsets = tf.squeeze(results[0]);
-      heatmap = tf.squeeze(results[1]);
-      displacementFwd = tf.squeeze(results[2]);
-      displacementBwd = tf.squeeze(results[3]);
+      offsets = tf.squeeze(results[0], [0]);
+      heatmap = tf.squeeze(results[1], [0]);
+      displacementFwd = tf.squeeze(results[2], [0]);
+      displacementBwd = tf.squeeze(results[3], [0]);
     }
     const heatmapScores = tf.sigmoid(heatmap) as tf.Tensor3D;
 
@@ -200,4 +165,37 @@ export class PosenetDetector extends BasePoseDetector {
   reset() {
     // No-op. There's no global state.
   }
+}
+
+/**
+ * Loads the PoseNet model instance from a checkpoint, with the ResNet
+ * or MobileNet architecture. The model to be loaded is configurable using the
+ * config dictionary ModelConfig. Please find more details in the
+ * documentation of the ModelConfig.
+ *
+ * @param config ModelConfig dictionary that contains parameters for
+ * the PoseNet loading process. Please find more details of each parameters
+ * in the documentation of the ModelConfig interface. The predefined
+ * `MOBILENET_V1_CONFIG` and `RESNET_CONFIG` can also be used as references
+ * for defining your customized config.
+ */
+export async function load(
+    modelConfig: PosenetModelConfig =
+        MOBILENET_V1_CONFIG): Promise<PoseDetector> {
+  const config = validateModelConfig(modelConfig);
+  if (config.architecture === 'ResNet50') {
+    // Load ResNet50 model.
+    const defaultUrl =
+        resNet50Checkpoint(config.outputStride, config.quantBytes);
+    const model = await tfconv.loadGraphModel(config.modelUrl || defaultUrl);
+
+    return new PosenetDetector(model, config);
+  }
+
+  // Load MobileNetV1 model.
+  const defaultUrl = mobileNetCheckpoint(
+      config.outputStride, config.multiplier, config.quantBytes);
+  const model = await tfconv.loadGraphModel(config.modelUrl || defaultUrl);
+
+  return new PosenetDetector(model, config);
 }

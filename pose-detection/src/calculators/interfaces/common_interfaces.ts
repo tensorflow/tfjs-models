@@ -39,6 +39,7 @@ export interface WindowElement {
 }
 
 export interface KeypointsFilter {
-  apply(landmarks: Keypoint[], microSeconds: number): Keypoint[];
+  apply(landmarks: Keypoint[], microSeconds: number, objectScale: number):
+      Keypoint[];
   reset(): void;
 }

@@ -18,7 +18,13 @@ Install dependencies and prepare the build directory:
 yarn
 ```
 
-To watch files for changes, and launch a dev server:
+Build the model locally which the demo depends on:
+
+```sh
+yarn build-deps
+```
+
+Launch a development server, and watch files for changes.
 
 ```sh
 yarn watch
@@ -26,31 +32,14 @@ yarn watch
 
 ## If you are developing face-landmarks-detection locally, and want to test the changes in the demo
 
-Cd into the face-landmarks-detection folder:
+Cd into the face-landmarks-detection/demo folder:
 ```sh
-cd face-landmarks-detection
+cd face-landmarks-detection/demo
 ```
 
-Install dependencies:
+Rebuild the model locally:
 ```sh
-yarn
-```
-
-Publish face-landmarks-detection locally:
-```sh
-yarn build && yarn yalc publish
-```
-
-Cd into the demo and install dependencies:
-
-```sh
-cd demo
-yarn
-```
-
-Link the local face-landmarks-detection to the demo:
-```sh
-yarn yalc link @tensorflow-models/face-landmarks-detection
+yarn build-deps
 ```
 
 Start the dev demo server:
@@ -58,9 +47,5 @@ Start the dev demo server:
 yarn watch
 ```
 
-To get future updates from the face-landmarks-detection source code:
-```
-# cd up into the face-landmarks-detection directory
-cd ../
-yarn build && yarn yalc push
-```
+To get future updates from the `face-landmarks-detection` source code, just run
+`yarn build-deps` in the face-landmarks-detection/demo folder again.

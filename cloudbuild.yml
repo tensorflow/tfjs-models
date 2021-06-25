@@ -105,6 +105,13 @@ steps:
   args: ['./scripts/run-build.sh', 'facemesh']
   waitFor: ['diff']
 
+# Task API.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'tasks'
+  args: ['./scripts/run-build.sh', 'tasks']
+  waitFor: ['diff']
+
 # Run the top-level sanity checks.
 - name: 'node:10'
   entrypoint: 'yarn'

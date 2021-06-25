@@ -50,7 +50,15 @@ export interface QuestionAndAnswer {
  * GCP.
  */
 export interface ModelConfig {
+  /**
+   * An optional string that specifies custom url of the model. This
+   * is useful for area/countries that don't have access to the model hosted on
+   * GCP.
+   */
   modelUrl: string;
+  /**
+   * Wheter the url is from tfhub.
+   */
   fromTFHub?: boolean;
 }
 
@@ -223,13 +231,13 @@ class QuestionAndAnswerImpl implements QuestionAndAnswer {
       const inputMask =
           tf.tensor2d(inputMaskArray, [batchSize, INPUT_SIZE], 'int32');
       return this.model.execute(
-          {
-            input_ids: inputIds,
-            segment_ids: segmentIds,
-            input_mask: inputMask,
-            global_step: globalStep
-          },
-        ['start_logits', 'end_logits']) as [tf.Tensor2D, tf.Tensor2D];
+                 {
+                   input_ids: inputIds,
+                   segment_ids: segmentIds,
+                   input_mask: inputMask,
+                   global_step: globalStep
+                 },
+                 ['start_logits', 'end_logits']) as [tf.Tensor2D, tf.Tensor2D];
     });
     const logits = await Promise.all([result[0].array(), result[1].array()]);
     // dispose all intermediate tensors

@@ -44,14 +44,17 @@ describeWithFlags('OneEuroFilter ', ALL_ENVS, () => {
     const value2 = -3.0;
     const timestamp2 = 33;
 
-    const output0: number = oneEuroFilter.apply(value0, timestamp0);
+    const output0: number =
+        oneEuroFilter.apply(value0, timestamp0, 1 /* valueScale */);
     expect(output0).toEqual(value0);
 
-    const output1: number = oneEuroFilter.apply(value1, timestamp1);
+    const output1: number =
+        oneEuroFilter.apply(value1, timestamp1, 1 /* valueScale */);
     expect(output1).toBeLessThan(Math.max(value0, value1));
     expect(output1).toBeGreaterThan(Math.min(value0, value1));
 
-    const output2: number = oneEuroFilter.apply(value2, timestamp2);
+    const output2: number =
+        oneEuroFilter.apply(value2, timestamp2, 1 /* valueScale */);
     expect(output2).toBeLessThan(Math.max(value0, value1, value2));
     expect(output2).toBeGreaterThan(Math.min(value0, value1, value2));
   });

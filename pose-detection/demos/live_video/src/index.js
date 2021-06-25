@@ -16,6 +16,7 @@
  */
 
 import '@tensorflow/tfjs-backend-webgl';
+import '@mediapipe/pose';
 
 import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
 
@@ -24,7 +25,6 @@ tfjsWasm.setWasmPaths(
         tfjsWasm.version_wasm}/dist/`);
 
 import * as posedetection from '@tensorflow-models/pose-detection';
-import * as tf from '@tensorflow/tfjs-core';
 
 import {Camera} from './camera';
 import {setupDatGui} from './option_panel';
@@ -33,6 +33,9 @@ import {setupStats} from './stats_panel';
 import {setBackendAndEnvFlags} from './util';
 
 let detector, camera, stats;
+let startInferenceTime, numInferences = 0;
+let inferenceTimeSum = 0, lastPanelUpdate = 0;
+let rafId;
 
 async function createDetector() {
   switch (STATE.model) {
@@ -44,8 +47,18 @@ async function createDetector() {
         inputResolution: {width: 500, height: 500},
         multiplier: 0.75
       });
-    case posedetection.SupportedModels.MediapipeBlazepose:
-      return posedetection.createDetector(STATE.model, {quantBytes: 4});
+    case posedetection.SupportedModels.BlazePose:
+      const runtime = STATE.backend.split('-')[0];
+      if (runtime === 'mediapipe') {
+        return posedetection.createDetector(STATE.model, {
+          runtime,
+          modelType: STATE.modelConfig.type,
+          solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/pose'
+        });
+      } else if (runtime === 'tfjs') {
+        return posedetection.createDetector(
+            STATE.model, {runtime, modelType: STATE.modelConfig.type});
+      }
     case posedetection.SupportedModels.MoveNet:
       const modelType = STATE.modelConfig.type == 'lightning' ?
           posedetection.movenet.modelType.SINGLEPOSE_LIGHTNING :
@@ -61,16 +74,17 @@ async function checkGuiUpdate() {
     STATE.isSizeOptionChanged = false;
   }
 
-  if (STATE.isModelChanged) {
-    detector.dispose();
-    detector = await createDetector(STATE.model);
-    STATE.isModelChanged = false;
-  }
-
-  if (STATE.isFlagChanged || STATE.isBackendChanged) {
+  if (STATE.isModelChanged || STATE.isFlagChanged || STATE.isBackendChanged) {
     STATE.isModelChanged = true;
+
+    window.cancelAnimationFrame(rafId);
+
     detector.dispose();
-    await setBackendAndEnvFlags(STATE.flags, STATE.backend);
+
+    if (STATE.isFlagChanged || STATE.isBackendChanged) {
+      await setBackendAndEnvFlags(STATE.flags, STATE.backend);
+    }
+
     detector = await createDetector(STATE.model);
     STATE.isFlagChanged = false;
     STATE.isBackendChanged = false;
@@ -78,8 +92,28 @@ async function checkGuiUpdate() {
   }
 }
 
+function beginEstimatePosesStats() {
+  startInferenceTime = (performance || Date).now();
+}
+
+function endEstimatePosesStats() {
+  const endInferenceTime = (performance || Date).now();
+  inferenceTimeSum += endInferenceTime - startInferenceTime;
+  ++numInferences;
+
+  const panelUpdateMilliseconds = 1000;
+  if (endInferenceTime - lastPanelUpdate >= panelUpdateMilliseconds) {
+    const averageInferenceTime = inferenceTimeSum / numInferences;
+    inferenceTimeSum = 0;
+    numInferences = 0;
+    stats.customFpsPanel.update(
+        1000.0 / averageInferenceTime, 120 /* maxValue */);
+    lastPanelUpdate = endInferenceTime;
+  }
+}
+
 async function renderResult() {
-  if (video.readyState < 2) {
+  if (camera.video.readyState < 2) {
     await new Promise((resolve) => {
       camera.video.onloadeddata = () => {
         resolve(video);
@@ -88,13 +122,13 @@ async function renderResult() {
   }
 
   // FPS only counts the time it takes to finish estimatePoses.
-  stats.begin();
+  beginEstimatePosesStats();
 
   const poses = await detector.estimatePoses(
       camera.video,
       {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
 
-  stats.end();
+  endEstimatePosesStats();
 
   camera.drawCtx();
 
@@ -109,14 +143,14 @@ async function renderResult() {
 async function renderPrediction() {
   await checkGuiUpdate();
 
-  await renderResult();
+  if (!STATE.isModelChanged) {
+    await renderResult();
+  }
 
-  requestAnimationFrame(renderPrediction);
+  rafId = requestAnimationFrame(renderPrediction);
 };
 
 async function app() {
-  await tf.setBackend(STATE.backend);
-
   // Gui content will change depending on which model is in the query string.
   const urlParams = new URLSearchParams(window.location.search);
   if (!urlParams.has('model')) {
@@ -129,6 +163,8 @@ async function app() {
   stats = setupStats();
 
   camera = await Camera.setupCamera(STATE.camera);
+
+  await setBackendAndEnvFlags(STATE.flags, STATE.backend);
 
   detector = await createDetector();
 

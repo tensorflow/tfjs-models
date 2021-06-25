@@ -17,10 +17,16 @@
 import * as tf from '@tensorflow/tfjs-core';
 import {TUNABLE_FLAG_VALUE_RANGE_MAP} from './params';
 
+export function isiOS() {
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+export function isAndroid() {
+  return /Android/i.test(navigator.userAgent);
+}
+
 export function isMobile() {
-  const isAndroid = /Android/i.test(navigator.userAgent);
-  const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-  return isAndroid || isiOS;
+  return isAndroid() || isiOS();
 }
 
 /**
@@ -85,5 +91,9 @@ export async function setBackendAndEnvFlags(flagConfig, backend) {
 
   tf.env().setFlags(flagConfig);
 
-  await resetBackend(backend);
+  const [runtime, $backend] = backend.split('-');
+
+  if (runtime === 'tfjs') {
+    await resetBackend($backend);
+  }
 }

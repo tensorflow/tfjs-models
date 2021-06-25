@@ -17,7 +17,7 @@
 
 import * as poseDetection from './index';
 
-const SIMULATED_INTERVAL = 33.333;
+const SIMULATED_INTERVAL = 33.333;  // in milliseconds
 
 /** Karma server directory serving local files. */
 export const KARMA_SERVER = './base/src/test_data';
@@ -42,7 +42,8 @@ export async function loadVideo(
     videoPath: string, videoFPS: number,
     callback: (video: poseDetection.PoseDetectorInput, timestamp: number) =>
         Promise<poseDetection.Pose[]>,
-    expected: number[][][], model: poseDetection.SupportedModels) {
+    expected: number[][][],
+    model: poseDetection.SupportedModels): Promise<HTMLVideoElement> {
   // We override video's timestamp with a fake timestamp.
   let simulatedTimestamp: number;
   // We keep a pointer for the expected array.
@@ -67,7 +68,7 @@ export async function loadVideo(
   document.body.appendChild(canvas);
   const ctx = canvas.getContext('2d');
 
-  const promise = new Promise((resolve, reject) => {
+  const promise = new Promise<HTMLVideoElement>((resolve, reject) => {
     video.onseeked = async () => {
       const poses = await callback(video, simulatedTimestamp);
       ctx.drawImage(video, 0, 0);
@@ -84,14 +85,14 @@ export async function loadVideo(
       const nextTime = video.currentTime + actualInterval;
       if (nextTime < video.duration) {
         video.currentTime = nextTime;
-        // We set the timestamp increment to 33.333 microseconds to simulate
+        // We set the timestamp increment to 33333 microseconds to simulate
         // the 30 fps video input. We do this so that the filter uses the
         // same fps as the reference test.
         // https://github.com/google/mediapipe/blob/ecb5b5f44ab23ea620ef97a479407c699e424aa7/mediapipe/python/solution_base.py#L297
         simulatedTimestamp += SIMULATED_INTERVAL;
         idx++;
       } else {
-        resolve();
+        resolve(video);
       }
     };
   });
@@ -135,7 +136,9 @@ function drawSkeleton(
   ctx.strokeStyle = color;
   ctx.lineWidth = 2;
 
-  poseDetection.util.getAdjacentPairs(model).forEach(([i, j]) => {
+  const pairs = poseDetection.util.getAdjacentPairs(model);
+  for (const pair of pairs) {
+    const [i, j] = pair;
     const kp1 = keypoints[i];
     const kp2 = keypoints[j];
 
@@ -143,7 +146,7 @@ function drawSkeleton(
     ctx.moveTo(kp1.x, kp1.y);
     ctx.lineTo(kp2.x, kp2.y);
     ctx.stroke();
-  });
+  }
 }
 
 function draw(

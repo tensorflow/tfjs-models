@@ -45,6 +45,16 @@ and can be used as building blocks in other apps.
   <tr>
     <td><a href="./handpose/demo/index.html">source</a></td>
   </tr>
+    <!-- ** Pose -->
+  <tr>
+    <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./pose-detection"><div style='vertical-align:middle; display:inline;'>Pose</div></a></b></td>
+    <td><a href="https://storage.googleapis.com/tfjs-models/demos/pose-detection/index.html?model=movenet">live</a></td>
+    <td rowspan="2">An API for real-time human pose detection in the browser.</td>
+    <td rowspan="2"><code>npm i @tensorflow-models/pose-detection</code></td>
+  </tr>
+  <tr>
+    <td><a href="./pose-detection/demos/live_video/index.html">source</a></td>
+  </tr>
   <!-- ** PoseNet -->
   <tr>
     <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./posenet"><div style='vertical-align:middle; display:inline;'>PoseNet</div></a></b></td>

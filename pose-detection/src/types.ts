@@ -18,7 +18,7 @@ import * as tf from '@tensorflow/tfjs-core';
 
 export enum SupportedModels {
   MoveNet = 'MoveNet',
-  MediapipeBlazepose = 'MediapipeBlazepose',
+  BlazePose = 'BlazePose',
   PoseNet = 'PoseNet'
 }
 
@@ -26,16 +26,8 @@ export type QuantBytes = 1|2|4;
 
 /**
  * Common config to create the pose detector.
- *
- * `quantBytes`: Optional. Options: 1, 2, or 4.  This parameter affects weight
- * quantization in the models. The available options are
- * 1 byte, 2 bytes, and 4 bytes. The higher the value, the larger the model size
- * and thus the longer the loading time, the lower the value, the shorter the
- * loading time but lower the accuracy.
  */
-export interface ModelConfig {
-  quantBytes?: QuantBytes;
-}
+export interface ModelConfig {}
 
 /**
  * Common config for the `estimatePoses` method.

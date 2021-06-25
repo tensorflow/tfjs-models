@@ -14,10 +14,11 @@
  * limitations under the License.
  * =============================================================================
  */
-import {BlazeposeEstimationConfig} from './blazepose/types';
+import {BlazePoseMediaPipeEstimationConfig} from './blazepose_mediapipe/types';
+import {BlazePoseTfjsEstimationConfig} from './blazepose_tfjs/types';
 import {MoveNetEstimationConfig} from './movenet/types';
 import {PoseNetEstimationConfig} from './posenet/types';
-import {ModelConfig, Pose, PoseDetectorInput} from './types';
+import {Pose, PoseDetectorInput} from './types';
 
 /**
  * User-facing interface for all pose detectors.
@@ -27,15 +28,15 @@ export interface PoseDetector {
    * Estimate poses for an image or video frame.
    * @param image An image or video frame.
    * @param config Optional. See `EstimationConfig` for available options.
-   * @param timestamp Optional. In microseconds, i.e. 1e-6 of a second. This is
-   *     useful when image is a tensor, which doesn't have timestamp info. Or
-   *     to override timestamp in a video.
+   * @param timestamp Optional. In milliseconds. This is useful when image is
+   *     a tensor, which doesn't have timestamp info. Or to override timestamp
+   *     in a video.
    * @returns An array of poses, each pose contains an array of `Keypoint`s.
    */
   estimatePoses(
       image: PoseDetectorInput,
-      config?: PoseNetEstimationConfig|BlazeposeEstimationConfig|
-      MoveNetEstimationConfig,
+      config?: PoseNetEstimationConfig|BlazePoseTfjsEstimationConfig|
+      BlazePoseMediaPipeEstimationConfig|MoveNetEstimationConfig,
       timestamp?: number): Promise<Pose[]>;
 
   /**
@@ -47,30 +48,4 @@ export interface PoseDetector {
    * Reset global states in the model.
    */
   reset(): void;
-}
-
-/**
- * Internal interface for all pose detectors to create instance and load
- * models.
- */
-export abstract class BasePoseDetector implements PoseDetector {
-  constructor() {}
-
-  /**
-   * Initiate class instance and async load the model.
-   */
-  static async load(modelConfig: ModelConfig = {}): Promise<PoseDetector> {
-    const detector = this.constructor();
-    return detector;
-  }
-
-  abstract estimatePoses(
-      image: PoseDetectorInput,
-      config?: PoseNetEstimationConfig|BlazeposeEstimationConfig|
-      MoveNetEstimationConfig,
-      timestamp?: number): Promise<Pose[]>;
-
-  abstract dispose(): void;
-
-  abstract reset(): void;
 }
