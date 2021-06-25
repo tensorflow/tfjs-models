@@ -12,9 +12,9 @@
     "@tensorflow-models/face-landmarks-detection": "link:../dist",
     "@tensorflow/tfjs-backend-wasm": "^3.1.0",
     "@tensorflow/tfjs-backend-webgl": "^3.1.0",
-    "@tensorflow/tfjs-backend-cpu": "link:../../../bazel_ts_library/link-package/node_modules/@tensorflow/tfjs-backend-cpu",
+    "@tensorflow/tfjs-backend-cpu": "^3.1.0",
     "@tensorflow/tfjs-converter": "^3.1.0",
-    "@tensorflow/tfjs-core": "link:../../../bazel_ts_library/link-package/node_modules/@tensorflow/tfjs-core",
+    "@tensorflow/tfjs-core": "^3.1.0",
     "stats.js": "^0.17.0"
   },
   "scripts": {
