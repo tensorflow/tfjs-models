@@ -10,14 +10,14 @@
   },
   "dependencies": {
     "@tensorflow-models/handpose": "file:../dist",
-    "@tensorflow/tfjs-core": "^3.3.0",
-    "@tensorflow/tfjs-converter": "^3.3.0",
+    "@tensorflow/tfjs-backend-wasm": "^3.3.0",
     "@tensorflow/tfjs-backend-webgl": "^3.3.0",
-    "@tensorflow/tfjs-backend-wasm": "^3.3.0"
+    "@tensorflow/tfjs-converter": "^3.3.0",
+    "@tensorflow/tfjs-core": "^3.3.0"
   },
   "scripts": {
-    "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr ",
-    "build": "cross-env NODE_ENV=production parcel build index.html --public-url ./",
+    "watch": "esbuild index.js --sourcemap --target=es6 --sources-content=true --external:os --bundle --resolve-extensions=.mjs,.js --servedir=.",
+    "build": "./scripts/build-demo.sh",
     "lint": "eslint .",
     "link-local": "yalc link @tensorflow-models/handpose"
   },
@@ -25,16 +25,12 @@
     "crypto": false
   },
   "devDependencies": {
-    "babel-core": "~6.26.3",
-    "babel-plugin-transform-runtime": "~6.23.0",
-    "babel-polyfill": "~6.26.0",
-    "babel-preset-env": "~1.7.0",
     "clang-format": "~1.2.2",
     "cross-env": "^5.2.0",
     "dat.gui": "~0.7.2",
+    "esbuild": "^0.12.9",
     "eslint": "~4.19.1",
     "eslint-config-google": "~0.9.1",
-    "parcel-bundler": "~1.12.5",
     "yalc": "~1.0.0-pre.50"
   },
   "resolutions": {
