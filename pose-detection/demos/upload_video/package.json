@@ -9,12 +9,12 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
+    "@mediapipe/pose": "~0.3.0",
     "@tensorflow-models/pose-detection": "file:../../dist",
     "@tensorflow/tfjs-backend-wasm": "^3.6.0",
     "@tensorflow/tfjs-backend-webgl": "^3.6.0",
     "@tensorflow/tfjs-converter": "^3.6.0",
-    "@tensorflow/tfjs-core": "^3.6.0",
-    "@mediapipe/pose": "~0.3.0"
+    "@tensorflow/tfjs-core": "^3.6.0"
   },
   "scripts": {
     "watch": "esbuild src/index.js --sourcemap --target=es6 --sources-content=true --external:os --bundle --resolve-extensions=.mjs,.js --servedir=src",
@@ -29,8 +29,10 @@
   },
   "devDependencies": {
     "clang-format": "~1.2.2",
+    "esbuild": "^0.12.11",
     "eslint": "^4.19.1",
     "eslint-config-google": "^0.9.1",
+    "rimraf": "^3.0.2",
     "yalc": "~1.0.0-pre.50"
   },
   "resolutions": {
