@@ -17,8 +17,8 @@
     "@mediapipe/pose": "~0.3.0"
   },
   "scripts": {
-    "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr --open",
-    "build": "cross-env NODE_ENV=production parcel build index.html --public-url ./",
+    "watch": "esbuild src/index.js --sourcemap --target=es6 --sources-content=true --external:os --bundle --resolve-extensions=.mjs,.js --servedir=src",
+    "build": "./scripts/build-demo.sh",
     "lint": "eslint .",
     "build-dep": "cd ../../ && yarn && yarn build",
     "link-core": "yalc link @tensorflow/tfjs-core",
@@ -28,17 +28,9 @@
     "crypto": false
   },
   "devDependencies": {
-    "@babel/core": "^7.7.5",
-    "@babel/plugin-transform-runtime": "^7.7.6",
-    "@babel/preset-env": "^7.7.6",
-    "babel-plugin-external-helpers": "^6.22.0",
-    "babel-preset-env": "^1.7.0",
     "clang-format": "~1.2.2",
-    "cross-env": "^5.2.0",
     "eslint": "^4.19.1",
     "eslint-config-google": "^0.9.1",
-    "parcel-bundler": "1.12.5",
-    "parcel-plugin-static-files-copy": "^2.5.1",
     "yalc": "~1.0.0-pre.50"
   },
   "resolutions": {
