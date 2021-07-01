@@ -73,3 +73,6 @@ toxicity.load(threshold).then(model => {
   });
 });
 ```
+
+### Other Demos
+[Is it Toxic?](https://isittoxic.surge.sh/)
