@@ -40,8 +40,7 @@ Via npm:
 
 Using `yarn`:
 
-    $ yarn add @tensorflow-models/face-landmarks-detection@0.0.1
-
+    $ yarn add @tensorflow-models/face-landmarks-detection@0.0.2
     $ yarn add @tensorflow/tfjs-core@2.4.0, @tensorflow/tfjs-converter@2.4.0
     $ yarn add @tensorflow/tfjs-backend-webgl@2.4.0 # or @tensorflow/tfjs-backend-wasm@2.4.0
 
