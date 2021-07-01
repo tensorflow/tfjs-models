@@ -1,0 +1,1 @@
+test_image0.jpg is taken from the creative commons image at https://www.pexels.com/photo/group-of-people-in-a-meeting-1367272/
