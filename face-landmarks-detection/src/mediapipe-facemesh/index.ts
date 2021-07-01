@@ -100,6 +100,8 @@ export type AnnotatedPrediction =
  * Defaults to 0.3.
  *  - `scoreThreshold` A threshold for deciding when to remove boxes based
  * on score in non-maximum suppression. Defaults to 0.75.
+ *  - `boundingBoxUpdateRoiIouThreshold` A threshold to decide how much does
+ *  face detector bounding boxes overlap to be updated. Defaults to 0.25.
  *  - `shouldLoadIrisModel` Whether to also load the iris detection model.
  * Defaults to true.
  *  - `modelUrl` Optional param for specifying a custom facemesh model url or
@@ -115,6 +117,7 @@ export async function load(config: {
   maxFaces?: number,
   iouThreshold?: number,
   scoreThreshold?: number,
+  boundingBoxUpdateRoiIouThreshold?: number,
   shouldLoadIrisModel?: boolean,
   modelUrl?: string|tf.io.IOHandler,
   detectorModelUrl?: string|tf.io.IOHandler,
@@ -126,6 +129,7 @@ export async function load(config: {
     maxFaces = 10,
     iouThreshold = 0.3,
     scoreThreshold = 0.75,
+    boundingBoxUpdateRoiIouThreshold = 0.25,
     shouldLoadIrisModel = true,
     modelUrl,
     detectorModelUrl,
@@ -152,7 +156,7 @@ export async function load(config: {
 
   const faceMesh = new FaceMesh(
       models[0], models[1], maxContinuousChecks, detectionConfidence, maxFaces,
-      shouldLoadIrisModel ? models[2] : null);
+      shouldLoadIrisModel ? models[2] : null, boundingBoxUpdateRoiIouThreshold);
   return faceMesh;
 }
 
@@ -256,10 +260,12 @@ class FaceMesh implements MediaPipeFaceMesh {
   constructor(
       blazeFace: blazeface.BlazeFaceModel, blazeMeshModel: tfconv.GraphModel,
       maxContinuousChecks: number, detectionConfidence: number,
-      maxFaces: number, irisModel: tfconv.GraphModel|null) {
+      maxFaces: number, irisModel: tfconv.GraphModel|null,
+      boundingBoxUpdateRoiIouThreshold: number) {
     this.pipeline = new Pipeline(
         blazeFace, blazeMeshModel, MESH_MODEL_INPUT_WIDTH,
-        MESH_MODEL_INPUT_HEIGHT, maxContinuousChecks, maxFaces, irisModel);
+        MESH_MODEL_INPUT_HEIGHT, maxContinuousChecks, maxFaces, irisModel,
+        boundingBoxUpdateRoiIouThreshold);
 
     this.detectionConfidence = detectionConfidence;
   }
