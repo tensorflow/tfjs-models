@@ -18,7 +18,7 @@ set -e
 
 yarn
 yarn rimraf dist/
-yarn esbuild index.js --sourcemap --minify --target=es6 --sources-content=true --external:os --bundle --resolve-extensions=.mjs,.js --outdir=dist/
-cp index.html dist/
+yarn esbuild camera.js coco.js --sourcemap --minify --target=es6 --sources-content=true --external:os --bundle --resolve-extensions=.mjs,.js --outdir=dist/
+cp *.html dist/
 
 echo "Demo built successfully"

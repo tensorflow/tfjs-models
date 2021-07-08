@@ -12,8 +12,8 @@
     "@tensorflow-models/qna": "file:../dist"
   },
   "scripts": {
-    "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr --open",
-    "build": "cross-env NODE_ENV=production parcel build index.html --public-url ./",
+    "watch": "esbuild index.js --sourcemap --target=es6 --sources-content=true --external:os --bundle --resolve-extensions=.mjs,.js --servedir=.",
+    "build": "./scripts/build-demo.sh",
     "build-deps": "yarn build-qna",
     "build-qna": "cd .. && yarn && yarn build-npm",
     "lint": "eslint ."
@@ -22,19 +22,14 @@
     "crypto": false
   },
   "devDependencies": {
-    "@babel/core": "^7.7.5",
-    "@babel/plugin-transform-runtime": "^7.7.6",
-    "@babel/polyfill": "^7.10.4",
-    "@babel/preset-env": "^7.7.6",
     "@tensorflow/tfjs-backend-cpu": "^3.3.0",
     "@tensorflow/tfjs-backend-webgl": "^3.3.0",
     "@tensorflow/tfjs-converter": "3.3.0",
     "@tensorflow/tfjs-core": "3.3.0",
-    "babel-preset-env": "^1.7.0",
     "clang-format": "~1.5.0",
-    "cross-env": "^7.0.3",
     "dat.gui": "^0.7.7",
-    "parcel-bundler": "~1.12.5",
+    "esbuild": "^0.12.11",
+    "rimraf": "^3.0.2",
     "tslint": "~6.1.3",
     "typescript": "4.1.3"
   },

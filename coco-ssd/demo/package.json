@@ -12,13 +12,13 @@
     "@tensorflow-models/coco-ssd": "file:../dist",
     "@tensorflow/tfjs-backend-cpu": "^3.3.0",
     "@tensorflow/tfjs-backend-webgl": "^3.3.0",
-    "@tensorflow/tfjs-core": "^3.3.0",
     "@tensorflow/tfjs-converter": "^3.3.0",
+    "@tensorflow/tfjs-core": "^3.3.0",
     "stats.js": "^0.17.0"
   },
   "scripts": {
-    "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr --open",
-    "build": "cross-env NODE_ENV=production parcel build index.html --public-url ./",
+    "watch": "esbuild index.js --sourcemap --target=es6 --sources-content=true --external:os --bundle --resolve-extensions=.mjs,.js --servedir=.",
+    "build": "./scripts/build-demo.sh",
     "build-deps": "yarn build-model && yarn build",
     "build-model": "cd .. && yarn && yarn build-npm",
     "lint": "eslint .",
@@ -28,17 +28,11 @@
     "crypto": false
   },
   "devDependencies": {
-    "@babel/core": "7.7.5",
-    "@babel/plugin-transform-runtime": "^7.7.6",
-    "@babel/preset-env": "^7.7.6",
-    "babel-plugin-external-helpers": "^6.22.0",
-    "babel-preset-env": "^1.7.0",
     "clang-format": "~1.2.2",
-    "cross-env": "^5.2.0",
     "dat.gui": "^0.7.1",
+    "esbuild": "^0.12.9",
     "eslint": "^4.19.1",
     "eslint-config-google": "^0.9.1",
-    "parcel-bundler": "~1.12.5",
     "yalc": "~1.0.0-pre.50"
   },
   "resolutions": {

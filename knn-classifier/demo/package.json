@@ -19,8 +19,8 @@
     "stats.js": "^0.17.0"
   },
   "scripts": {
-    "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr --open",
-    "build": "cross-env NODE_ENV=production parcel build index.html --public-url ./",
+    "watch": "esbuild index.js --sourcemap --target=es6 --sources-content=true --external:os --bundle --resolve-extensions=.mjs,.js --servedir=.",
+    "build": "./scripts/build-demo.sh",
     "lint": "eslint .",
     "build-deps": "yarn build-knn-classifier && yarn build-mobilenet",
     "build-knn-classifier": "cd .. && yarn && yarn build-npm",
@@ -30,14 +30,9 @@
     "crypto": false
   },
   "devDependencies": {
-    "@babel/core": "^7.7.5",
-    "@babel/plugin-transform-runtime": "^7.7.6",
-    "@babel/polyfill": "^7.10.4",
-    "@babel/preset-env": "^7.7.6",
-    "babel-preset-es2017": "^6.24.1",
     "clang-format": "~1.2.2",
-    "cross-env": "^5.2.0",
     "dat.gui": "^0.7.1",
+    "esbuild": "^0.12.11",
     "eslint": "^4.19.1",
     "eslint-config-google": "^0.9.1",
     "parcel-bundler": "~1.12.5",
