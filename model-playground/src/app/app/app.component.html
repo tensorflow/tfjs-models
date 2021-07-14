@@ -15,7 +15,7 @@ limitations under the License.
 -->
 
 <div class="container">
-  <navigation-tree *ngIf="!(isMobilePhone$ | async)"></navigation-tree>
+  <navigation-tree *ngIf="!(isSmallScreen$ | async)"></navigation-tree>
   <div class="content">
     Selected Item: {{(selectedItemId$ | async) || 'Nothing selected'}}
   </div>

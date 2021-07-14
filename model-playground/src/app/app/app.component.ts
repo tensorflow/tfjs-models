@@ -31,7 +31,7 @@ import {AppState} from '../store/state';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent {
-  isMobilePhone$ = this.mqServide.getMediaQueryState('mobile-phone');
+  isSmallScreen$ = this.mqServide.getMediaQueryState('small-screen');
   selectedItemId$ = this.store.pipe(select(selectSelectedModelItemId));
 
   constructor(

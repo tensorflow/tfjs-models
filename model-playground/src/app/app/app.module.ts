@@ -15,6 +15,9 @@
  * =============================================================================
  */
 
+// This is needed to make media queries work in Angular zone.
+import 'zone.js/dist/webapis-media-query';
+
 import {APP_INITIALIZER, NgModule} from '@angular/core';
 import {BrowserModule} from '@angular/platform-browser';
 import {RouterModule} from '@angular/router';
@@ -35,10 +38,12 @@ import {AppComponent} from './app.component';
     BrowserModule,
     NavigationTreeModule,
     NgrxMediaqueriesModule.forRoot({
-      // Detect if the app is running on a mobile device.
-      // TODO: add more (e.g. tablet, etc) as needed.
-      'mobile-phone':
-          'screen and (min-device-width:320px) and (max-device-width:480px)',
+      // Detect if the app is running on a small screen/area for responsive
+      // design purposes. UI elements will be arranged differently on screens
+      // with different sizes.
+      //
+      // TODO: add more (e.g. medium-screen, etc) as needed.
+      'small-screen': 'screen and (max-width:600px)',
     }),
     StoreModule.forRoot(MERGE_REDUCERS),
     RouterModule.forRoot([
