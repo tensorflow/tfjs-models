@@ -20,11 +20,11 @@ import {BlazePoseTfjsModelConfig} from './types';
 export const DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL =
     'https://tfhub.dev/mediapipe/tfjs-model/blazeposedetector/1/default/1';
 export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_FULL =
-    'https://tfhub.dev/mediapipe/tfjs-model/blazeposelandmark_full/1/default/1';
+    'https://tfhub.dev/mediapipe/tfjs-model/blazeposelandmark_full/2/default/2';
 export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_LITE =
-    'https://tfhub.dev/mediapipe/tfjs-model/blazeposelandmark_lite/1/default/1';
+    'https://tfhub.dev/mediapipe/tfjs-model/blazeposelandmark_lite/2/default/2';
 export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_HEAVY =
-    'https://tfhub.dev/mediapipe/tfjs-model/blazeposelandmark_heavy/1/default/1';
+    'https://tfhub.dev/mediapipe/tfjs-model/blazeposelandmark_heavy/2/default/2';
 export const BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION = {
   reduceBoxesInLowestlayer: false,
   interpolatedScaleAspectRatio: 1.0,
