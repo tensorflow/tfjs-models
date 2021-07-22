@@ -33,7 +33,9 @@ export const STATE = {
 };
 export const BLAZEPOSE_CONFIG = {
   maxPoses: 1,
-  scoreThreshold: 0.65
+  type: 'full',
+  scoreThreshold: 0.65,
+  render3D: false
 };
 export const POSENET_CONFIG = {
   maxPoses: 1,

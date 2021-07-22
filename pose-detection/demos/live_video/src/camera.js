@@ -18,12 +18,15 @@ import * as posedetection from '@tensorflow-models/pose-detection';
 
 import * as params from './params';
 import {isMobile} from './util';
-
 export class Camera {
   constructor() {
     this.video = document.getElementById('video');
     this.canvas = document.getElementById('output');
     this.ctx = this.canvas.getContext('2d');
+    this.scatterGLEl = document.querySelector('#scatter-gl-container');
+    this.scatterGL = new ScatterGL(
+        this.scatterGLEl, {'rotateOnStart': false, 'selectEnabled': false});
+    this.scatterGLHasInitialized = false;
   }
 
   /**
@@ -81,6 +84,13 @@ export class Camera {
     camera.ctx.translate(camera.video.videoWidth, 0);
     camera.ctx.scale(-1, 1);
 
+    camera.scatterGLEl.style =
+        `width: ${videoWidth}px; height: ${videoHeight}px;`;
+    camera.scatterGL.resize();
+
+    camera.scatterGLEl.style.display =
+        params.STATE.modelConfig.render3D ? 'inline-block' : 'none';
+
     return camera;
   }
 
@@ -103,6 +113,35 @@ export class Camera {
     }
   }
 
+  draw3DPoses(poses) {
+    const pointsData = poses.map(
+        pose => {return pose.keypoints.map(
+            keypoint => ([-keypoint.x, -keypoint.y, -keypoint.z]))});
+
+    const flattenedPointsData = [].concat(...pointsData);
+    const dataset = new ScatterGL.Dataset(flattenedPointsData);
+
+    if (!this.scatterGLHasInitialized) {
+      const keypointInd =
+          posedetection.util.getKeypointIndexBySide(params.STATE.model);
+
+      this.scatterGL.setPointColorer((i) => {
+        if (i === 0) {
+          return '#ff0000' /* Red */;
+        }
+        if (keypointInd.left.indexOf(i) > -1) {
+          return '#00ff00' /* Green */;
+        } else {
+          return '#ffa500' /* Orange */;
+        }
+      });
+      this.scatterGL.render(dataset);
+    } else {
+      this.scatterGL.updateDataset(dataset);
+    }
+    this.scatterGLHasInitialized = true;
+  }
+
   /**
    * Draw the keypoints and skeleton on the video.
    * @param pose A pose with keypoints to render.
@@ -121,7 +160,7 @@ export class Camera {
   drawKeypoints(keypoints) {
     const keypointInd =
         posedetection.util.getKeypointIndexBySide(params.STATE.model);
-    this.ctx.fillStyle = 'White';
+    this.ctx.fillStyle = 'Red';
     this.ctx.strokeStyle = 'White';
     this.ctx.lineWidth = params.DEFAULT_LINE_WIDTH;
 

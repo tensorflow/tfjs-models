@@ -124,7 +124,7 @@ async function renderResult() {
   // FPS only counts the time it takes to finish estimatePoses.
   beginEstimatePosesStats();
 
-  const poses = await detector.estimatePoses(
+  const result = await detector.estimatePoses(
       camera.video,
       {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
 
@@ -135,8 +135,16 @@ async function renderResult() {
   // The null check makes sure the UI is not in the middle of changing to a
   // different model. If during model change, the result is from an old model,
   // which shouldn't be rendered.
-  if (poses.length > 0 && !STATE.isModelChanged) {
-    camera.drawResults(poses);
+  if (result != null && !STATE.isModelChanged) {
+    const poses = Array.isArray(result) ? result : result.poses;
+    if (poses != null && poses.length > 0) {
+      camera.drawResults(poses);
+    }
+
+    if (STATE.modelConfig.render3D && result.poses3D != null &&
+        result.poses3D.length > 0) {
+      camera.draw3DPoses(result.poses3D);
+    }
   }
 }
 

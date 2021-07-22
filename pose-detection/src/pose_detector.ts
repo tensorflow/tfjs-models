@@ -18,7 +18,7 @@ import {BlazePoseMediaPipeEstimationConfig} from './blazepose_mediapipe/types';
 import {BlazePoseTfjsEstimationConfig} from './blazepose_tfjs/types';
 import {MoveNetEstimationConfig} from './movenet/types';
 import {PoseNetEstimationConfig} from './posenet/types';
-import {Pose, PoseDetectorInput} from './types';
+import {NamedPoseMap, Pose, PoseDetectorInput} from './types';
 
 /**
  * User-facing interface for all pose detectors.
@@ -37,7 +37,7 @@ export interface PoseDetector {
       image: PoseDetectorInput,
       config?: PoseNetEstimationConfig|BlazePoseTfjsEstimationConfig|
       BlazePoseMediaPipeEstimationConfig|MoveNetEstimationConfig,
-      timestamp?: number): Promise<Pose[]>;
+      timestamp?: number): Promise<Pose[]|NamedPoseMap>;
 
   /**
    * Dispose the underlying models from memory.

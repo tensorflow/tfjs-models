@@ -183,6 +183,13 @@ function addBlazePoseControllers(modelConfigFolder, type) {
   });
 
   modelConfigFolder.add(params.STATE.modelConfig, 'scoreThreshold', 0, 1);
+
+  const render3DController =
+      modelConfigFolder.add(params.STATE.modelConfig, 'render3D');
+  render3DController.onChange(render3D => {
+    document.querySelector('#scatter-gl-container').style.display =
+        render3D ? 'inline-block' : 'none';
+  });
 }
 
 /**
