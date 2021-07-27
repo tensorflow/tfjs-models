@@ -69,3 +69,13 @@ export interface KeypointsSmoothingConfig {
   velocityFilter?: VelocityFilterConfig;
   oneEuroFilter?: OneEuroFilterConfig;
 }
+export interface TrackerConfig {
+  max_tracks: number;  // The maximum number of tracks that an internal tracker
+                       // will maintain.
+  max_age: number;  // The maximum duration of time that a track can exist
+                    // without being linked with a new detection before it is
+                    // removed. Set this value large if you would like to
+                    // recover people that are not detected for long stretches
+                    // of time (at the cost of potential false
+                    // re-identifications).
+}
