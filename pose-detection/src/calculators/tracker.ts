@@ -15,7 +15,9 @@
  * =============================================================================
  */
 
-import {Pose, Track} from '../types';
+import {Pose} from '../types';
+import {validateTrackerConfig} from './tracker_utils';
+import {Track} from './interfaces/common_interfaces';
 import {TrackerConfig} from './interfaces/config_interfaces';
 
 /**
@@ -29,6 +31,7 @@ export abstract class Tracker {
   private readonly maxAge: number;
 
   constructor(config: TrackerConfig) {
+    validateTrackerConfig(config);
     this.maxTracks = config.maxTracks;
     this.maxAge = config.maxAge;
   }
@@ -109,7 +112,7 @@ export abstract class Tracker {
    */
   updateTracks(timestamp: number): void {
     this.tracks = this.tracks.filter(track => {
-      return timestamp - track.lastTimestamp < this.maxAge;
+      return timestamp - track.lastTimestamp <= this.maxAge;
     });
 
     // Sort tracks from most recent to most stale, and then only keep the top

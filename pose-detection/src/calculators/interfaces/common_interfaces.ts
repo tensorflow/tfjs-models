@@ -1,4 +1,5 @@
 import {Keypoint} from '../../types';
+import {BoundingBox} from './shape_interfaces';
 
 /**
  * @license
@@ -42,4 +43,13 @@ export interface KeypointsFilter {
   apply(landmarks: Keypoint[], microSeconds: number, objectScale: number):
       Keypoint[];
   reset(): void;
+}
+
+export interface Track {
+  id: number;  // A unique identifier for each tracker person.
+  lastTimestamp: number;  // The last timestamp (in milliseconds) in which a
+                          // detection was linked with the track.
+  keypoints?: Keypoint[];  // The most recent set of keypoints.
+  boundingBox?: BoundingBox;  // The most recent bounding box.
+  score?: number;  // A confidence value of the track.
 }
