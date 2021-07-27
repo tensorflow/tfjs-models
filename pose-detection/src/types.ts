@@ -74,7 +74,6 @@ export interface Pose {
   score?: number;  // The probability of an actual pose.
 }
 
-
 export interface Track {
   id: number;
   lastTimestamp: number;

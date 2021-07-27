@@ -51,7 +51,8 @@ export abstract class Tracker {
    * Computes pairwise similarity scores between detections and tracks, based
    * on detected features.
    * @param poses An array of detected `Pose`s.
-   * @returns A 2D array of shape [num_det, num_tracks] with pairwise similarity scores between detections and tracks.
+   * @returns A 2D array of shape [num_det, num_tracks] with pairwise
+   * similarity scores between detections and tracks.
    */
   computeSimilarity(
       poses: Pose[]): number[][] {
