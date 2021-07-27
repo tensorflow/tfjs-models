@@ -25,12 +25,12 @@ import {TrackerConfig} from './interfaces/config_interfaces';
  */
 export abstract class Tracker {
   private tracks: Track[];
-  private readonly max_tracks: number;
-  private readonly max_age: number;
+  private readonly maxTracks: number;
+  private readonly maxAge: number;
 
   constructor(config: TrackerConfig) {
-    this.max_tracks = config.max_tracks;
-    this.max_age = config.max_age;
+    this.maxTracks = config.maxTracks;
+    this.maxAge = config.maxAge;
   }
 
   /**
@@ -43,7 +43,7 @@ export abstract class Tracker {
       poses: Pose[], timestamp: number): Pose[] {
     const sim_matrix = this.computeSimilarity(poses);
     this.assignTracks(poses, sim_matrix);
-    this.removeStaleTracks(timestamp);
+    this.updateTracks(timestamp);
     return poses;
   }
 
@@ -94,18 +94,32 @@ export abstract class Tracker {
 
 
   /**
-   * Removes tracks that have not been linked with poses for a length of time.
+   * Updates the stored tracks in the tracker. Specifically, the following
+   * operations are applied in order:
+   * 1. Tracks that have not been linked in the past `maxAge` milliseconds are
+   *    removed.
+   * 2. Tracks are sorted based on freshness (i.e. the most recently linked
+   *    tracks are placed at the beginning of the array and the most stale are
+   *    at the end).
+   * 3. The tracks array is sliced to only contain `maxTracks` tracks (i.e. the
+   *    most fresh tracks).
+   * @param timestamp The current timestamp in milliseconds.
    */
-  removeStaleTracks(timestamp): void {
+  updateTracks(timestamp: number): void {
     this.tracks = this.tracks.filter(track => {
-      return timestamp - track.lastTimestamp < this.max_age;
+      return timestamp - track.lastTimestamp < this.maxAge;
     })
+
+    // Sort tracks from most recent to most stale, and then only keep the top
+    // `maxTracks` tracks.
+    this.tracks.sort((ta, tb) => tb.lastTimestamp - ta.lastTimestamp);
+    this.tracks = this.tracks.slice(0, this.maxTracks);
   }
 
   /**
    * Removes specific tracks, based on their ids.
    */
-  remove(...ids): void {
+  remove(...ids: number[]): void {
     this.tracks = this.tracks.filter(track => !ids.includes(track.id));
   }
 
