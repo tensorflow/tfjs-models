@@ -41,8 +41,8 @@ export abstract class Tracker {
    */
   apply(
       poses: Pose[], timestamp: number): Pose[] {
-    const sim_matrix = this.computeSimilarity(poses);
-    this.assignTracks(poses, sim_matrix);
+    const simMatrix = this.computeSimilarity(poses);
+    this.assignTracks(poses, simMatrix);
     this.updateTracks(timestamp);
     return poses;
   }
@@ -56,21 +56,21 @@ export abstract class Tracker {
    */
   computeSimilarity(
       poses: Pose[]): number[][] {
-    const num_poses = poses.length;
-    const num_tracks = this.tracks.length;
-    if (!(num_poses && num_tracks)) {
+    const numPoses = poses.length;
+    const numTracks = this.tracks.length;
+    if (!(numPoses && numTracks)) {
       return [[]];
     }
 
-    const sim_matrix = [];
-    for (let i = 0; i < num_poses; ++i) {
-      const sim_row = [];
-      for (let j = 0; j < num_tracks; ++j) {
-        sim_row.push(this.similarityFn(poses[i], this.tracks[j]));
+    const simMatris = [];
+    for (let i = 0; i < numPoses; ++i) {
+      const simRow = [];
+      for (let j = 0; j < numTracks; ++j) {
+        simRow.push(this.similarityFn(poses[i], this.tracks[j]));
       }
-      sim_matrix.push(sim_row);
+      simMatris.push(simRow);
     }
-    return sim_matrix;
+    return simMatris;
   }
 
   /**
@@ -87,12 +87,13 @@ export abstract class Tracker {
    * array is updated in place by providing an `id` property. If incoming 
    * detections are not linked with existing tracks, new tracks will be created.
    * @param poses An array of detected `Pose's.
+   * @param simMatrix A 2D array of shape [num_det, num_tracks] with pairwse
+   * similarity scores between detections and tracks.
    */
   assignTracks(
-      poses: Pose[], similarity_matrix: number[][]): void {
+      poses: Pose[], simMatrix: number[][]): void {
     //TODO: Implement optimization and track store mechanics.
   }
-
 
   /**
    * Updates the stored tracks in the tracker. Specifically, the following
@@ -109,7 +110,7 @@ export abstract class Tracker {
   updateTracks(timestamp: number): void {
     this.tracks = this.tracks.filter(track => {
       return timestamp - track.lastTimestamp < this.maxAge;
-    })
+    });
 
     // Sort tracks from most recent to most stale, and then only keep the top
     // `maxTracks` tracks.
@@ -124,7 +125,7 @@ export abstract class Tracker {
     this.tracks = this.tracks.filter(track => !ids.includes(track.id));
   }
 
-   /**
+  /**
    * Resets tracks.
    */
   reset(): void {
