@@ -46,10 +46,11 @@ export interface KeypointsFilter {
 }
 
 export interface Track {
-  id: number;  // A unique identifier for each tracker person.
+  id: number;  // A unique identifier for each tracked person.
   lastTimestamp: number;  // The last timestamp (in milliseconds) in which a
                           // detection was linked with the track.
-  keypoints?: Keypoint[];  // The most recent set of keypoints.
-  boundingBox?: BoundingBox;  // The most recent bounding box.
+  keypoints?: Keypoint[];  // Keypoints associated with the tracked person.
+  boundingBox?: BoundingBox;  // Bounding box associated with the tracked
+                              // person.
   score?: number;  // A confidence value of the track.
 }

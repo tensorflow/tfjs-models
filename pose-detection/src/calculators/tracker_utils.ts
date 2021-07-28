@@ -18,14 +18,14 @@
  import {TrackerConfig} from './interfaces/config_interfaces';
 
  export function validateTrackerConfig(config: TrackerConfig): void {
-  if (config.maxTracks < 0) {
+  if (config.maxTracks < 1) {
     throw new Error(
-      `Must specify 'maxTracks' to be non-negative, but ` +
+      `Must specify 'maxTracks' to be at least 1, but ` +
       `encountered ${config.maxTracks}`);
   }
-  if (config.maxAge < 0) {
+  if (config.maxAge <= 0) {
     throw new Error(
-      `Must specify 'maxAge' to be non-negative, but ` +
+      `Must specify 'maxAge' to be positive, but ` +
       `encountered ${config.maxAge}`);
   }
  }

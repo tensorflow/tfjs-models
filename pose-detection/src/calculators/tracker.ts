@@ -45,7 +45,7 @@ export abstract class Tracker {
   apply(
       poses: Pose[], timestamp: number): Pose[] {
     const simMatrix = this.computeSimilarity(poses);
-    this.assignTracks(poses, simMatrix);
+    this.assignTracks(poses, simMatrix, timestamp);
     this.updateTracks(timestamp);
     return poses;
   }
@@ -57,44 +57,20 @@ export abstract class Tracker {
    * @returns A 2D array of shape [num_det, num_tracks] with pairwise
    * similarity scores between detections and tracks.
    */
-  computeSimilarity(
-      poses: Pose[]): number[][] {
-    const numPoses = poses.length;
-    const numTracks = this.tracks.length;
-    if (!(numPoses && numTracks)) {
-      return [[]];
-    }
-
-    const simMatris = [];
-    for (let i = 0; i < numPoses; ++i) {
-      const simRow = [];
-      for (let j = 0; j < numTracks; ++j) {
-        simRow.push(this.similarityFn(poses[i], this.tracks[j]));
-      }
-      simMatris.push(simRow);
-    }
-    return simMatris;
-  }
-
-  /**
-   * Computes the similarity between a single detection and track.
-   * @param pose A single `Pose`.
-   * @returns A scalar which represents the similarity between the given pose
-   * detection and track.
-   */
-  abstract similarityFn(
-      pose: Pose, track: Track): number;
+  abstract computeSimilarity(
+      poses: Pose[]): number[][];
 
   /**
    * Performs an optimization to link detections with tracks. The `poses`
    * array is updated in place by providing an `id` property. If incoming 
    * detections are not linked with existing tracks, new tracks will be created.
    * @param poses An array of detected `Pose's.
-   * @param simMatrix A 2D array of shape [num_det, num_tracks] with pairwse
+   * @param simMatrix A 2D array of shape [num_det, num_tracks] with pairwise
    * similarity scores between detections and tracks.
+   * @param timestamp The current timestamp in milliseconds.
    */
   assignTracks(
-      poses: Pose[], simMatrix: number[][]): void {
+      poses: Pose[], simMatrix: number[][], timestamp: number): void {
     //TODO: Implement optimization and track store mechanics.
   }
 
