@@ -45,6 +45,7 @@ export abstract class Tracker {
   apply(
       poses: Pose[], timestamp: number): Pose[] {
     const simMatrix = this.computeSimilarity(poses);
+    this.filterOldTracks(timestamp);
     this.assignTracks(poses, simMatrix, timestamp);
     this.updateTracks(timestamp);
     return poses;
@@ -59,6 +60,16 @@ export abstract class Tracker {
    */
   abstract computeSimilarity(
       poses: Pose[]): number[][];
+
+  /**
+   * Filters tracks based on their age.
+   * @param timestamp The current timestamp in milliseconds.
+   */
+  filterOldTracks(timestamp: number): void {
+    this.tracks = this.tracks.filter(track => {
+    return timestamp - track.lastTimestamp <= this.maxAge;
+    });
+  }
 
   /**
    * Performs an optimization to link detections with tracks. The `poses`
@@ -77,20 +88,14 @@ export abstract class Tracker {
   /**
    * Updates the stored tracks in the tracker. Specifically, the following
    * operations are applied in order:
-   * 1. Tracks that have not been linked in the past `maxAge` milliseconds are
-   *    removed.
-   * 2. Tracks are sorted based on freshness (i.e. the most recently linked
+   * 1. Tracks are sorted based on freshness (i.e. the most recently linked
    *    tracks are placed at the beginning of the array and the most stale are
    *    at the end).
-   * 3. The tracks array is sliced to only contain `maxTracks` tracks (i.e. the
+   * 2. The tracks array is sliced to only contain `maxTracks` tracks (i.e. the
    *    most fresh tracks).
    * @param timestamp The current timestamp in milliseconds.
    */
   updateTracks(timestamp: number): void {
-    this.tracks = this.tracks.filter(track => {
-      return timestamp - track.lastTimestamp <= this.maxAge;
-    });
-
     // Sort tracks from most recent to most stale, and then only keep the top
     // `maxTracks` tracks.
     this.tracks.sort((ta, tb) => tb.lastTimestamp - ta.lastTimestamp);
