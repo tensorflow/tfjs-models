@@ -53,7 +53,7 @@ async function createDetector() {
         return posedetection.createDetector(STATE.model, {
           runtime,
           modelType: STATE.modelConfig.type,
-          solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/pose'
+          solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.3.1621277220'
         });
       } else if (runtime === 'tfjs') {
         return posedetection.createDetector(
