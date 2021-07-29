@@ -44,8 +44,8 @@ export abstract class Tracker {
    */
   apply(
       poses: Pose[], timestamp: number): Pose[] {
-    const simMatrix = this.computeSimilarity(poses);
     this.filterOldTracks(timestamp);
+    const simMatrix = this.computeSimilarity(poses);
     this.assignTracks(poses, simMatrix, timestamp);
     this.updateTracks(timestamp);
     return poses;
