@@ -37,7 +37,7 @@ export abstract class Tracker {
     this.maxTracks = config.maxTracks;
     this.maxAge = config.maxAge;
     this.minSimilarity = config.minSimilarity;
-    this.nextID = 1
+    this.nextID = 1;
   }
 
   /**
@@ -91,7 +91,7 @@ export abstract class Tracker {
     const detectionIndices = Array.from(Array(poses.length).keys());
     const matchedDetectionIndices: number[] = [];
 
-    for (let detectionIndex of detectionIndices) {
+    for (const detectionIndex of detectionIndices) {
       if (!unmatchedTrackIndices) {
         break;
       }
@@ -101,7 +101,7 @@ export abstract class Tracker {
       // threshold.
       let maxTrackIndex = -1;
       let maxSimilarity = -1;
-      for (let trackIndex of unmatchedTrackIndices) {
+      for (const trackIndex of unmatchedTrackIndices) {
         const similarity = simMatrix[detectionIndex][trackIndex];
         if (similarity >= this.minSimilarity && similarity > maxSimilarity) {
           maxTrackIndex = trackIndex;
@@ -120,7 +120,7 @@ export abstract class Tracker {
     }
 
     // Spawn new tracks for all unmatched detections.
-    for (let detectionIndex of detectionIndices) {
+    for (const detectionIndex of detectionIndices) {
       if (matchedDetectionIndices.includes(detectionIndex)) {
         continue;
       }
@@ -129,7 +129,7 @@ export abstract class Tracker {
         id: newID,
         lastTimestamp: timestamp,
         keypoints: poses[detectionIndex].keypoints.slice()
-      }
+      };
       this.tracks.push(newTrack);
     }
   }
