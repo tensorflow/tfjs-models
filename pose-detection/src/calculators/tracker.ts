@@ -151,7 +151,9 @@ export abstract class Tracker {
     this.tracks = this.tracks.slice(0, this.maxTracks);
   }
 
-  // Returns the next free track ID. 
+  /**
+   * Returns the next free track ID. 
+   */
   nextTrackID() {
     const nextID = this.nextID;
     this.nextID += 1;
