@@ -15,17 +15,25 @@
  * =============================================================================
  */
 import * as posedetection from '@tensorflow-models/pose-detection';
+import * as scatter from 'scatter-gl';
 
 import * as params from './params';
 import {isMobile} from './util';
+
+// These anchor points allow the hand pointcloud to resize according to its
+// position in the input.
+const ANCHOR_POINTS = [[0, 0, 0], [0, 1, 0], [-1, 0, 0], [-1, -1, 0]];
 export class Camera {
   constructor() {
     this.video = document.getElementById('video');
     this.canvas = document.getElementById('output');
     this.ctx = this.canvas.getContext('2d');
     this.scatterGLEl = document.querySelector('#scatter-gl-container');
-    this.scatterGL = new ScatterGL(
-        this.scatterGLEl, {'rotateOnStart': false, 'selectEnabled': false});
+    this.scatterGL = new scatter.ScatterGL(this.scatterGLEl, {
+      'rotateOnStart': false,
+      'selectEnabled': false,
+      'styles': {polyline: {defaultOpacity: 1, deselectedOpacity: 1}}
+    });
     this.scatterGLHasInitialized = false;
   }
 
@@ -113,32 +121,45 @@ export class Camera {
     }
   }
 
-  draw3DPoses(poses) {
-    const pointsData = poses.map(
-        pose => {return pose.keypoints.map(
-            keypoint => ([-keypoint.x, -keypoint.y, -keypoint.z]))});
+  draw3DPose(pose) {
+    const scoreThreshold = params.STATE.modelConfig.scoreThreshold || 0;
+    const pointsData = pose.keypoints.map(
+        keypoint => ([-keypoint.x, -keypoint.y, -keypoint.z]));
 
-    const flattenedPointsData = [].concat(...pointsData);
-    const dataset = new ScatterGL.Dataset(flattenedPointsData);
+    const dataset =
+        new scatter.ScatterGL.Dataset([...pointsData, ...ANCHOR_POINTS]);
+
+    const keypointInd =
+        posedetection.util.getKeypointIndexBySide(params.STATE.model);
+    this.scatterGL.setPointColorer((i) => {
+      if (pose.keypoints[i] == null ||
+          pose.keypoints[i].score < scoreThreshold) {
+        // hide anchor points and low-confident points.
+        return '#ffffff';
+      }
+      if (i === 0) {
+        return '#ff0000' /* Red */;
+      }
+      if (keypointInd.left.indexOf(i) > -1) {
+        return '#00ff00' /* Green */;
+      }
+      if (keypointInd.right.indexOf(i) > -1) {
+        return '#ffa500' /* Orange */;
+      }
+    });
 
     if (!this.scatterGLHasInitialized) {
-      const keypointInd =
-          posedetection.util.getKeypointIndexBySide(params.STATE.model);
-
-      this.scatterGL.setPointColorer((i) => {
-        if (i === 0) {
-          return '#ff0000' /* Red */;
-        }
-        if (keypointInd.left.indexOf(i) > -1) {
-          return '#00ff00' /* Green */;
-        } else {
-          return '#ffa500' /* Orange */;
-        }
-      });
+      // const connections =
+      //     posedetection.util.getAdjacentPairs(params.STATE.model);
+      // this.scatterGL.setSequences(connections.map(pair => ({indices:
+      // pair})));
       this.scatterGL.render(dataset);
     } else {
       this.scatterGL.updateDataset(dataset);
     }
+    const connections = posedetection.util.getAdjacentPairs(params.STATE.model);
+    const sequences = connections.map(pair => ({indices: pair}));
+    this.scatterGL.setSequences(sequences);
     this.scatterGLHasInitialized = true;
   }
 

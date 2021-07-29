@@ -143,7 +143,8 @@ async function renderResult() {
 
     if (STATE.modelConfig.render3D && result.poses3D != null &&
         result.poses3D.length > 0) {
-      camera.draw3DPoses(result.poses3D);
+      // Only support single pose rendering for now.
+      camera.draw3DPose(result.poses3D[0]);
     }
   }
 }

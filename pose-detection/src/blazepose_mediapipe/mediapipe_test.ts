@@ -99,7 +99,7 @@ describeWithFlags('MediaPipe Pose video ', BROWSER_ENVS, () => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
   });
 
-  fit('test.', async () => {
+  it('test.', async () => {
     // Note: this makes a network request for model assets.
     const model = poseDetection.SupportedModels.BlazePose;
     detector =
