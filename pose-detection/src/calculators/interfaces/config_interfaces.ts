@@ -81,4 +81,6 @@ export interface TrackerConfig {
                    // like to recover people that are not detected for long
                    // stretches of time (at the cost of potential false
                    // re-identifications).
+  minSimilarity: number;  // New poses will only be linked with tracks if the
+                          // similarity score exceeds this threshold.
 }
