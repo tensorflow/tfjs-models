@@ -89,10 +89,10 @@ export abstract class Tracker {
       poses: Pose[], simMatrix: number[][], timestamp: number): void {
     const unmatchedTrackIndices = Array.from(Array(simMatrix[0].length).keys());
     const detectionIndices = Array.from(Array(poses.length).keys());
-    const matchedDetectionIndices: number[] = [];
+    const unmatchedDetectionIndices: number[] = [];
 
     for (const detectionIndex of detectionIndices) {
-      if (!unmatchedTrackIndices) {
+      if (unmatchedTrackIndices.length === 0) {
         break;
       }
 
@@ -115,15 +115,13 @@ export abstract class Tracker {
           poses[detectionIndex].keypoints.slice());
         const index = unmatchedTrackIndices.indexOf(maxTrackIndex);
         unmatchedTrackIndices.splice(index, 1);
-        matchedDetectionIndices.push(detectionIndex);
+      } else {
+        unmatchedDetectionIndices.push(detectionIndex);
       }
     }
 
     // Spawn new tracks for all unmatched detections.
-    for (const detectionIndex of detectionIndices) {
-      if (matchedDetectionIndices.includes(detectionIndex)) {
-        continue;
-      }
+    for (const detectionIndex of unmatchedDetectionIndices) {
       const newID = this.nextTrackID();
       const newTrack: Track = {
         id: newID,
