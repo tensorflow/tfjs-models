@@ -37,6 +37,13 @@ Once the video is processed, it automatically downloads the video with pose keyp
 ## How to Run a Demo
 If you want to run any of the demos locally, follow these steps:
 
+0. Make sure you have these dependencies installed via npm: `yarn`, `parcel` `cross-env`. If not, install them:
+```
+npm install --global yarn
+npm install --global parcel
+npm install --global cross-env
+```
+
 1. Go to the demo folder, e.g. `cd live_video`
 
 2. Remove cache etc. `rm -rf .cache dist node_modules`
