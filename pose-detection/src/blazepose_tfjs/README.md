@@ -61,7 +61,7 @@ If you are using the Pose API via npm, you need to import the libraries first.
 import * as poseDetection from '@tensorflow-models/pose-detection';
 import * as tf from '@tensorflow/tfjs-core';
 // Register WebGL backend.
-import '@tensorflow/tfjs-backend-webgl';
+// import '@tensorflow/tfjs-backend-webgl';
 ```
 ### Create a detector
 
