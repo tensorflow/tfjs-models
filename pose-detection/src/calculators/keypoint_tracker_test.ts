@@ -21,7 +21,7 @@ import {TrackerConfig} from './interfaces/config_interfaces'
 
 describe('Keypoint tracker', () => {
   const trackerConfig: TrackerConfig = {
-      maxTracks: 10,
+      maxTracks: 4,
       maxAge: 1000,
       minSimilarity: 0.5,
       trackerParams: {
@@ -84,7 +84,6 @@ describe('Keypoint tracker', () => {
       ]};
     const oks = kptTracker.oks(pose, track);
     expect(oks).toBeCloseTo(0.0, 6);
-
   });
 
   it('Compute area', () => {
@@ -99,7 +98,6 @@ describe('Keypoint tracker', () => {
 
     const expectedArea = (0.4 - 0.1) * (0.6 - 0.2);
     expect(area).toBeCloseTo(expectedArea, 6);
-
   });
 
   it('Apply tracker', () => {
@@ -181,7 +179,7 @@ describe('Keypoint tracker', () => {
     // Timestamp: 1200. First pose spawns a new track (id = 4), even though it
     // has the same keypoints as track 1. This is because the age exceeds 1000
     // msec. The second pose links with id 2. The third pose spawns a new
-    // track (id = 5)
+    // track (id = 5).
     poses = [
         {keypoints: [  // Becomes id = 4.
             {x: 0.2, y: 0.2, score: 1.0},
@@ -216,5 +214,29 @@ describe('Keypoint tracker', () => {
     expect(tracks[2].lastTimestamp).toEqual(1200);
     expect(tracks[3].id).toEqual(3);
     expect(tracks[3].lastTimestamp).toEqual(900);
+
+    // Timestamp: 1300. First pose spawns a new track (id = 6). Since maxTracks
+    // is 4, the oldest track (id = 3) is removed.
+    poses = [
+        {keypoints: [  // Becomes id = 6.
+            {x: 0.1, y: 0.8, score: 1.0},
+            {x: 0.2, y: 0.9, score: 0.6},
+            {x: 0.2, y: 0.9, score: 0.5},
+            {x: 0.8, y: 0.2, score: 0.4}
+        ]},
+    ];
+    poses = kptTracker.apply(poses, 1300);
+    tracks = kptTracker.getTracks();
+    expect(poses.length).toEqual(1);
+    expect(poses[0].id).toEqual(6);
+    expect(tracks.length).toEqual(4);
+    expect(tracks[0].id).toEqual(6);
+    expect(tracks[0].lastTimestamp).toEqual(1300);
+    expect(tracks[1].id).toEqual(2);
+    expect(tracks[1].lastTimestamp).toEqual(1200);
+    expect(tracks[2].id).toEqual(4);
+    expect(tracks[2].lastTimestamp).toEqual(1200);
+    expect(tracks[3].id).toEqual(5);
+    expect(tracks[3].lastTimestamp).toEqual(1200);
   });
 });

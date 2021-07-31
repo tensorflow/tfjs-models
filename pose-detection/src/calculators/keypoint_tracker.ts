@@ -67,7 +67,8 @@ export class KeypointTracker extends Tracker {
    *   c_ti is the confidence of keypoint i from the track
    *   d_i is the Euclidean distance between the pose and track keypoint
    *   a_ti is the area of the track object (the box covering the keypoints)
-   *   x_i is per-keypoint falloff, computes as 2*keypointFalloff[i]
+   *   x_i is a constant that controls falloff in a Gaussian distribution,
+   *    computed as 2*keypointFalloff[i].
    * @param pose A `Pose`.
    * @param track A `Track`.
    * @returns The OKS score between the pose and the track. This number is
@@ -100,7 +101,7 @@ export class KeypointTracker extends Tracker {
   /**
    * Computes the area of a bounding box that tightly covers keypoints.
    * @param Keypoint[] An array of `Keypoint`s.
-   * @returns A number with the box area.
+   * @returns The area of the object.
    */
   area(keypoints: Keypoint[]): number {
     const validKeypoint = keypoints.filter(
