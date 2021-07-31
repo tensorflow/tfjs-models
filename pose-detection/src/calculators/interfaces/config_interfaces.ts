@@ -83,10 +83,10 @@ export interface TrackerConfig {
                    // re-identifications).
   minSimilarity: number;  // New poses will only be linked with tracks if the
                           // similarity score exceeds this threshold.
-  trackerParams: KeypointTrackerConfig  // Config for tracker. Note that as
-                                        // more trackers are implemented, this
-                                        // should become a union of all tracker
-                                        // types.
+  trackerParams: KeypointTrackerConfig;  // Config for tracker. Note that as
+                                         // more trackers are implemented, this
+                                         // should become a union of all tracker
+                                         // types.
 }
 // A tracker that links detections (i.e. poses) and tracks based on keypoint
 // similarity.

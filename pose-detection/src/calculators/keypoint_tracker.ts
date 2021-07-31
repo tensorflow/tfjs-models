@@ -25,7 +25,6 @@ export class KeypointTracker extends Tracker {
   private readonly keypointFalloff: number[];
   private readonly minNumKeyoints: number;
 
-
   constructor(config: TrackerConfig) {
     super(config);
     //TODO(ronnyvotel): validate.
@@ -46,9 +45,9 @@ export class KeypointTracker extends Tracker {
     }
 
     const simMatrix = [];
-    for (let pose of poses) {
+    for (const pose of poses) {
       const row = [];
-      for (let track of this.tracks) {
+      for (const track of this.tracks) {
         row.push(this.oks(pose, track));
       }
       simMatrix.push(row);
@@ -86,11 +85,11 @@ export class KeypointTracker extends Tracker {
         continue;
       }
       numValidKeypoints += 1;
-      const d_squared =
+      const dSquared =
           Math.pow(poseKpt.x - trackKpt.x, 2) +
           Math.pow(poseKpt.y - trackKpt.y, 2);
       const x = 2 * this.keypointFalloff[i];
-      oksTotal += Math.exp(-1*d_squared/(2*boxArea*x**2));
+      oksTotal += Math.exp(-1*dSquared/(2*boxArea*x**2));
     }
     if (numValidKeypoints < this.minNumKeyoints) {
       return 0.0;

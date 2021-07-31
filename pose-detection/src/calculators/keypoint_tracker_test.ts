@@ -17,7 +17,7 @@
 import {Keypoint, Pose} from '../types';
 import {KeypointTracker} from './keypoint_tracker';
 import {Track} from './interfaces/common_interfaces';
-import {TrackerConfig} from './interfaces/config_interfaces'
+import {TrackerConfig} from './interfaces/config_interfaces';
 
 describe('Keypoint tracker', () => {
   const trackerConfig: TrackerConfig = {
@@ -45,7 +45,7 @@ describe('Keypoint tracker', () => {
           {x: 0.6, y: 0.6, score: 0.1},  // Low confidence.
           {x: 0.8, y: 0.7, score: 0.8}
       ]};
-    let track: Track = {
+    const track: Track = {
       id: 0,
       lastTimestamp: 1000,
       keypoints: [
