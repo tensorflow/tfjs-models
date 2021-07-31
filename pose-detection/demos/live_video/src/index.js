@@ -21,16 +21,15 @@ import '@mediapipe/pose';
 import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
 
 tfjsWasm.setWasmPaths(
-    `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
-        tfjsWasm.version_wasm}/dist/`);
+  `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${tfjsWasm.version_wasm}/dist/`);
 
 import * as posedetection from '@tensorflow-models/pose-detection';
 
-import {Camera} from './camera';
-import {setupDatGui} from './option_panel';
-import {STATE} from './params';
-import {setupStats} from './stats_panel';
-import {setBackendAndEnvFlags} from './util';
+import { Camera } from './camera';
+import { setupDatGui } from './option_panel';
+import { STATE } from './params';
+import { setupStats } from './stats_panel';
+import { setBackendAndEnvFlags } from './util';
 
 let detector, camera, stats;
 let startInferenceTime, numInferences = 0;
@@ -44,7 +43,7 @@ async function createDetector() {
         quantBytes: 4,
         architecture: 'MobileNetV1',
         outputStride: 16,
-        inputResolution: {width: 500, height: 500},
+        inputResolution: { width: 500, height: 500 },
         multiplier: 0.75
       });
     case posedetection.SupportedModels.BlazePose:
@@ -57,13 +56,13 @@ async function createDetector() {
         });
       } else if (runtime === 'tfjs') {
         return posedetection.createDetector(
-            STATE.model, {runtime, modelType: STATE.modelConfig.type});
+          STATE.model, { runtime, modelType: STATE.modelConfig.type });
       }
     case posedetection.SupportedModels.MoveNet:
       const modelType = STATE.modelConfig.type == 'lightning' ?
-          posedetection.movenet.modelType.SINGLEPOSE_LIGHTNING :
-          posedetection.movenet.modelType.SINGLEPOSE_THUNDER;
-      return posedetection.createDetector(STATE.model, {modelType});
+        posedetection.movenet.modelType.SINGLEPOSE_LIGHTNING :
+        posedetection.movenet.modelType.SINGLEPOSE_THUNDER;
+      return posedetection.createDetector(STATE.model, { modelType });
   }
 }
 
@@ -107,7 +106,7 @@ function endEstimatePosesStats() {
     inferenceTimeSum = 0;
     numInferences = 0;
     stats.customFpsPanel.update(
-        1000.0 / averageInferenceTime, 120 /* maxValue */);
+      1000.0 / averageInferenceTime, 120 /* maxValue */);
     lastPanelUpdate = endInferenceTime;
   }
 }
@@ -125,8 +124,8 @@ async function renderResult() {
   beginEstimatePosesStats();
 
   const poses = await detector.estimatePoses(
-      camera.video,
-      {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
+    camera.video,
+    { maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false });
 
   endEstimatePosesStats();
 
@@ -154,8 +153,8 @@ async function app() {
   // Gui content will change depending on which model is in the query string.
   const urlParams = new URLSearchParams(window.location.search);
   if (!urlParams.has('model')) {
-    alert('Cannot find model in the query string.');
-    return;
+    alert('Cannot find model in the query string. Setting blazepose as default. (To change model, either choose in demo panel or through appending "?model=blazepose" to the URL. Supports models "blazepose", "movenet" and "posenet")');
+    urlParams.set('model', 'blazepose')
   }
 
   await setupDatGui(urlParams);

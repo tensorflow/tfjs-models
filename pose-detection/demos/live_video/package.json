@@ -9,7 +9,7 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@tensorflow-models/pose-detection": "file:../../dist",
+    "@tensorflow-models/pose-detection": "^0.0.4",
     "@tensorflow/tfjs-backend-wasm": "^3.6.0",
     "@tensorflow/tfjs-backend-webgl": "^3.6.0",
     "@tensorflow/tfjs-converter": "^3.6.0",
