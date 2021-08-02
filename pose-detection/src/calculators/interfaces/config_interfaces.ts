@@ -95,7 +95,7 @@ export interface KeypointTrackerConfig {
                                         // threshold. A keypoint is only
                                         // compared in the OKS calculation if
                                         // both the new detected keypoint and
-                                        // the corresponding track keyoint have
+                                        // the corresponding track keypoint have
                                         // confidences above this threshold.
   
   keypointFalloff: number[];  // Per-keypoint falloff in OKS calculation.

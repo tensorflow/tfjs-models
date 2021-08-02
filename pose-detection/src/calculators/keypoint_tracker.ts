@@ -38,9 +38,7 @@ export class KeypointTracker extends Tracker {
    * `Tracker` for more details.
    */
   computeSimilarity(poses: Pose[]): number[][] {
-    const numPoses = poses.length;
-    const numTracks = this.tracks.length;
-    if (!(numPoses && numTracks)) {
+    if (poses.length === 0 && this.tracks.length === 0) {
       return [[]];
     }
 
@@ -89,7 +87,7 @@ export class KeypointTracker extends Tracker {
           Math.pow(poseKpt.x - trackKpt.x, 2) +
           Math.pow(poseKpt.y - trackKpt.y, 2);
       const x = 2 * this.keypointFalloff[i];
-      oksTotal += Math.exp(-1*dSquared/(2*boxArea*x**2));
+      oksTotal += Math.exp(-1 * dSquared / (2 * boxArea * x**2));
     }
     if (numValidKeypoints < this.minNumKeyoints) {
       return 0.0;
