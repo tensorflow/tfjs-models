@@ -54,7 +54,7 @@ describe('Keypoint tracker', () => {
           {x: 0.6, y: 0.6, score: 0.9},
           {x: 0.8, y: 0.8, score: 0.8}
       ]};
-    const oks = kptTracker.oks(pose, track);
+    const oks = kptTracker['oks'](pose, track);
 
     const boxArea = (0.8 - 0.2) * (0.8 - 0.2);
     const x = 2*trackerConfig.trackerParams.keypointFalloff[3];
@@ -82,7 +82,7 @@ describe('Keypoint tracker', () => {
           {x: 0.6, y: 0.6, score: 0.1},  // Low confidence.
           {x: 0.8, y: 0.8, score: 0.0}  // Low confidence.
       ]};
-    const oks = kptTracker.oks(pose, track);
+    const oks = kptTracker['oks'](pose, track);
     expect(oks).toBeCloseTo(0.0, 6);
   });
 
@@ -94,7 +94,7 @@ describe('Keypoint tracker', () => {
           {x: 0.4, y: 0.6, score: 0.9},
           {x: 0.7, y: 0.8, score: 0.1}  // Low confidence.
       ];
-    const area = kptTracker.area(keypoints);
+    const area = kptTracker['area'](keypoints);
 
     const expectedArea = (0.4 - 0.1) * (0.6 - 0.2);
     expect(area).toBeCloseTo(expectedArea, 6);

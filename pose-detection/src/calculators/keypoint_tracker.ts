@@ -20,6 +20,11 @@ import {Tracker} from './tracker';
 import {Track} from './interfaces/common_interfaces';
 import {TrackerConfig} from './interfaces/config_interfaces';
 
+/**
+   * KeypointTracker, which tracks poses based on keypoint similarity. This
+   * tracker assumes that keypoints are provided in normalized image
+   *  coordinates.
+ */
 export class KeypointTracker extends Tracker {
   private readonly keypointThreshold: number;
   private readonly keypointFalloff: number[];
@@ -34,8 +39,9 @@ export class KeypointTracker extends Tracker {
   }
 
   /**
-   * Computes similarity based on Object Keypoint Similarity (OKS). See
-   * `Tracker` for more details.
+   * Computes similarity based on Object Keypoint Similarity (OKS). It's
+   * assumed that the keypoints within each `Pose` are in normalized image
+   * coordinates. See `Tracker` for more details.
    */
   computeSimilarity(poses: Pose[]): number[][] {
     if (poses.length === 0 || this.tracks.length === 0) {
@@ -55,7 +61,9 @@ export class KeypointTracker extends Tracker {
 
   /**
    * Computes the Object Keypoint Similarity (OKS) between a pose and track.
-   * The OKS is calculated as:
+   * This is similar in spirit to the calculation used by COCO keypoint eval:
+   * https://cocodataset.org/#keypoints-eval
+   * In this case, OKS is calculated as:
    * (1/sum_i d(c_i, c_ti)) * \sum_i exp(-d_i^2/(2*a_ti*x_i^2))*d(c_i, c_ti)
    * where
    *   d(x, y) is an indicator function which only produces 1 if x and y
@@ -71,7 +79,7 @@ export class KeypointTracker extends Tracker {
    * @returns The OKS score between the pose and the track. This number is
    * between 0 and 1, and larger values indicate more keypoint similarity.
    */
-  oks(pose: Pose, track: Track): number {
+  private oks(pose: Pose, track: Track): number {
     const boxArea = this.area(track.keypoints) + 1e-6;
     let oksTotal = 0;
     let numValidKeypoints = 0;
@@ -100,7 +108,7 @@ export class KeypointTracker extends Tracker {
    * @param Keypoint[] An array of `Keypoint`s.
    * @returns The area of the object.
    */
-  area(keypoints: Keypoint[]): number {
+  private area(keypoints: Keypoint[]): number {
     const validKeypoint = keypoints.filter(
         kpt => kpt.score > this.keypointThreshold);
     const minX = Math.min(1.0, ...validKeypoint.map(kpt => kpt.x));
