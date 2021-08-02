@@ -20,6 +20,7 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {MILLISECOND_TO_MICRO_SECONDS, SECOND_TO_MICRO_SECONDS} from '../calculators/constants';
 import {getImageSize, toImageTensor} from '../calculators/image_utils';
+import {ImageSize} from '../calculators/interfaces/common_interfaces';
 import {BoundingBox} from '../calculators/interfaces/shape_interfaces';
 import {isVideo} from '../calculators/is_video';
 import {KeypointsOneEuroFilter} from '../calculators/keypoints_one_euro_filter';
@@ -29,7 +30,7 @@ import {PoseDetector} from '../pose_detector';
 import {InputResolution, Keypoint, Pose, PoseDetectorInput, SupportedModels} from '../types';
 import {getKeypointIndexByName} from '../util';
 
-import {CROP_FILTER_ALPHA, KEYPOINT_FILTER_CONFIG, MIN_CROP_KEYPOINT_SCORE, MOVENET_CONFIG, MOVENET_SINGLE_POSE_ESTIMATION_CONFIG, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_URL, SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER} from './constants';
+import {CROP_FILTER_ALPHA, KEYPOINT_FILTER_CONFIG, MIN_CROP_KEYPOINT_SCORE, MOVENET_CONFIG, MOVENET_MULTIPOSE_RESOLUTION, MOVENET_SINGLE_POSE_ESTIMATION_CONFIG, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_URL, MULTIPOSE, SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER} from './constants';
 import {validateEstimationConfig, validateModelConfig} from './detector_utils';
 import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
 
@@ -41,6 +42,7 @@ class MoveNetDetector implements PoseDetector {
       InputResolution = {height: 0, width: 0};
   private readonly keypointIndexByName =
       getKeypointIndexByName(SupportedModels.MoveNet);
+  private readonly multiPoseModel: boolean;
   private readonly enableSmoothing: boolean;
 
   // Global states.
@@ -55,6 +57,7 @@ class MoveNetDetector implements PoseDetector {
   constructor(
       private readonly moveNetModel: tfc.GraphModel,
       config: MoveNetModelConfig) {
+    // Only single-pose models have a fixed input resolution.
     if (config.modelType === SINGLEPOSE_LIGHTNING) {
       this.modelInputResolution.width = MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION;
       this.modelInputResolution.height =
@@ -63,40 +66,37 @@ class MoveNetDetector implements PoseDetector {
       this.modelInputResolution.width = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
       this.modelInputResolution.height = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
     }
+    this.multiPoseModel = config.modelType === MULTIPOSE;
     this.enableSmoothing = config.enableSmoothing;
   }
 
   /**
-   * Runs inference on an image using a model that is assumed to be a person
-   * keypoint model that outputs 17 keypoints.
+   * Runs inference on an image using a model that is assumed to be a single
+   * person keypoint model that outputs 17 keypoints.
    * @param inputImage 4D tensor containing the input image. Should be of size
    *     [1, modelHeight, modelWidth, 3].
-   * @param executeSync Whether to execute the model synchronously.
-   * @return An InferenceResult with keypoints and scores, or null if the
-   *     inference call could not be executed (for example when the model was
-   *     not initialized yet) or if it produced an unexpected tensor size.
+   * @return An array of `Keypoint`s, or null if the inference call could not be
+   *     executed (for example when the model was not initialized yet) or if it
+   *     produced an unexpected tensor size.
    */
-  async detectKeypoints(inputImage: tf.Tensor4D, executeSync = true):
+  async detectSinglePersonKeypoints(inputImage: tf.Tensor4D):
       Promise<Keypoint[]|null> {
     if (!this.moveNetModel) {
       return null;
     }
 
-    const numKeypoints = 17;
+    const outputTensor = this.moveNetModel.execute(inputImage) as tf.Tensor;
 
-    let outputTensor;
-    if (executeSync) {
-      outputTensor = this.moveNetModel.execute(inputImage) as tf.Tensor;
-    } else {
-      outputTensor =
-          await this.moveNetModel.executeAsync(inputImage) as tf.Tensor;
+    if (!outputTensor) {
+      return null;
     }
 
-    // We expect an output array of shape [1, 1, 17, 3] (batch, person,
+    // We expect an output tensor of shape [1, 1, 17, 3] (batch, person,
     // keypoint, (y, x, score)).
-    if (!outputTensor || outputTensor.shape.length !== 4 ||
-        outputTensor.shape[0] !== 1 || outputTensor.shape[1] !== 1 ||
-        outputTensor.shape[2] !== numKeypoints || outputTensor.shape[3] !== 3) {
+    const numKeypoints = 17;
+    if (outputTensor.shape.length !== 4 || outputTensor.shape[0] !== 1 ||
+        outputTensor.shape[1] !== 1 || outputTensor.shape[2] !== numKeypoints ||
+        outputTensor.shape[3] !== 3) {
       outputTensor.dispose();
       return null;
     }
@@ -113,7 +113,6 @@ class MoveNetDetector implements PoseDetector {
     outputTensor.dispose();
 
     const keypoints: Keypoint[] = [];
-
     for (let i = 0; i < numKeypoints; ++i) {
       keypoints[i] = {
         y: inferenceResult[i * 3],
@@ -126,11 +125,72 @@ class MoveNetDetector implements PoseDetector {
   }
 
   /**
+   * Runs inference on an image using a model that is assumed to be a
+   * multi-person keypoint model that outputs 17 keypoints and a box for a
+   * multiple persons.
+   * @param inputImage 4D tensor containing the input image. Should be of size
+   *     [1, width, height, 3], where width and height are divisible by 32.
+   * @return An array of an array of `Keypoint`s, or null if the inference call
+   *     could not be executed (for example when the model was not initialized
+   *     yet) or if it produced an unexpected tensor size.
+   */
+  async detectMultiPersonKeypoints(inputImage: tf.Tensor4D):
+      Promise<Keypoint[][]|null> {
+    if (!this.moveNetModel) {
+      return null;
+    }
+
+    const outputTensor = this.moveNetModel.execute(inputImage) as tf.Tensor;
+
+    if (!outputTensor) {
+      return null;
+    }
+
+    // Multi-pose model output is a [1, n, 56] tensor ([batch, num_instances,
+    // instance_keypoints_and_box]).
+    const numKeypoints = 17;
+    const boundingBoxSize = 5;  // ymin, xmin, ymax, xmax, score
+    const multiPoseInstanceSize = numKeypoints * 3 + boundingBoxSize;
+    if (outputTensor.shape.length !== 3 || outputTensor.shape[0] !== 1 ||
+        outputTensor.shape[2] !== multiPoseInstanceSize) {
+      outputTensor.dispose();
+      return null;
+    }
+
+    // Only use asynchronous downloads when we really have to (WebGPU) because
+    // that will poll for download completion using setTimeOut which introduces
+    // extra latency.
+    let inferenceResult;
+    if (tf.getBackend() !== 'webgpu') {
+      inferenceResult = outputTensor.dataSync();
+    } else {
+      inferenceResult = await outputTensor.data();
+    }
+    outputTensor.dispose();
+
+    const keypoints: Keypoint[][] = [];
+
+    const numInstances = inferenceResult.length / multiPoseInstanceSize;
+    for (let i = 0; i < numInstances; ++i) {
+      keypoints[i] = [];
+      for (let j = 0; j < numKeypoints; ++j) {
+        keypoints[i][j] = {
+          y: inferenceResult[i * multiPoseInstanceSize + j * 3],
+          x: inferenceResult[i * multiPoseInstanceSize + j * 3 + 1],
+          score: inferenceResult[i * multiPoseInstanceSize + j * 3 + 2]
+        }
+      }
+    }
+
+    return keypoints;
+  }
+
+  /**
    * Estimates poses for an image or video frame.
    *
    * This does standard ImageNet pre-processing before inferring through the
-   * model. The image should pixels should have values [0-255]. It returns a
-   * single pose.
+   * model. The image should pixels should have values [0-255]. It returns an
+   * array of poses.
    *
    * @param image ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
    * The input image to feed through the network.
@@ -174,6 +234,65 @@ class MoveNetDetector implements PoseDetector {
       imageTensor3D.dispose();
     }
 
+    let keypoints: Keypoint[][] = [];
+    if (!this.multiPoseModel) {
+      keypoints =
+          [await this.estimateSinglePose(imageTensor4D, imageSize, timestamp)];
+    } else {
+      keypoints = await this.estimateMultiplePoses(imageTensor4D, imageSize);
+    }
+
+    if (!keypoints) {
+      return [];
+    }
+
+    // Convert keypoint coordinates from normalized coordinates to image space,
+    // add keypoint names and calculate the overall pose score.
+    let poseScores: number[] = [];
+    for (let i = 0; i < keypoints.length; ++i) {
+      let numValidKeypoints = 0.0;
+      poseScores[i] = 0.0;
+      for (let j = 0; j < keypoints[i].length; ++j) {
+        keypoints[i][j].name = COCO_KEYPOINTS[j];
+        keypoints[i][j].y *= imageSize.height;
+        keypoints[i][j].x *= imageSize.width;
+        if (keypoints[i][j].score > MIN_CROP_KEYPOINT_SCORE) {
+          ++numValidKeypoints;
+          poseScores[i] += keypoints[i][j].score;
+        }
+      }
+
+      if (numValidKeypoints > 0) {
+        poseScores[i] /= numValidKeypoints;
+      } else if (!this.multiPoseModel) {
+        // No pose detected, so reset all filters.
+        this.resetFilters();
+      }
+    }
+
+    const poses: Pose[] = [];
+    for (let i = 0; i < keypoints.length; ++i) {
+      poses[i] = {score: poseScores[i], keypoints: keypoints[i]};
+    }
+
+    return poses;
+  }
+
+  /**
+   * Runs a single-person keypoint model on an image, including the image
+   * cropping and keypoint filtering logic.
+   *
+   * @param imageTensor4D A tf.Tensor4D that contains the input image.
+   *
+   * @param imageSize: The width and height of the input image.
+   *
+   * @param timestamp Image timestamp in milliseconds.
+   *
+   * @return An array of `Keypoint` or null.
+   */
+  async estimateSinglePose(
+      imageTensor4D: tf.Tensor4D, imageSize: ImageSize,
+      timestamp: number): Promise<Keypoint[]|null> {
     if (!this.cropRegion) {
       this.cropRegion = this.initCropRegion(imageSize.width, imageSize.height);
     }
@@ -197,7 +316,7 @@ class MoveNetDetector implements PoseDetector {
     });
     imageTensor4D.dispose();
 
-    let keypoints = await this.detectKeypoints(croppedImage);
+    let keypoints = await this.detectSinglePersonKeypoints(croppedImage);
     croppedImage.dispose();
 
     if (keypoints == null) {
@@ -228,30 +347,76 @@ class MoveNetDetector implements PoseDetector {
 
     this.cropRegion = this.filterCropRegion(newCropRegion);
 
-    // Convert keypoint coordinates from normalized coordinates to image space,
-    // add keypoint names and calculate the overall pose score.
-    let numValidKeypoints = 0.0;
-    let poseScore = 0.0;
+    return keypoints;
+  }
+
+  /**
+   * Runs a multi-person keypoint model on an image, including input image
+   * padding.
+   *
+   * @param imageTensor4D A tf.Tensor4D that contains the input image.
+   *
+   * @param imageSize: The width and height of the input image.
+   *
+   * @return An array of `Keypoint` or null.
+   */
+  async estimateMultiplePoses(imageTensor4D: tf.Tensor4D, imageSize: ImageSize):
+      Promise<Keypoint[][]|null> {
+    let resizedImage: tf.Tensor4D;
+    let resizedWidth: number;
+    let resizedHeight: number;
+    let paddedImage: tf.Tensor4D;
+    let paddedWidth: number;
+    let paddedHeight: number;
+    const dimensionDivisor = 32;  // Dimensions need to be divisible by 32.
+    if (imageSize.width > imageSize.height) {
+      resizedWidth = MOVENET_MULTIPOSE_RESOLUTION;
+      resizedHeight =
+          MOVENET_MULTIPOSE_RESOLUTION * imageSize.height / imageSize.width;
+      resizedImage =
+          tf.image.resizeBilinear(imageTensor4D, [resizedHeight, resizedWidth]);
+
+      paddedWidth = resizedWidth;
+      paddedHeight =
+          Math.ceil(resizedHeight / dimensionDivisor) * dimensionDivisor;
+      paddedImage = tf.pad(
+          resizedImage,
+          [[0, 0], [0, paddedHeight - resizedHeight], [0, 0], [0, 0]]);
+    } else {
+      resizedWidth =
+          MOVENET_MULTIPOSE_RESOLUTION * imageSize.width / imageSize.height;
+      resizedHeight = MOVENET_MULTIPOSE_RESOLUTION;
+      resizedImage =
+          tf.image.resizeBilinear(imageTensor4D, [resizedHeight, resizedWidth]);
+
+      paddedWidth =
+          Math.ceil(resizedWidth / dimensionDivisor) * dimensionDivisor;
+      paddedHeight = resizedHeight;
+      paddedImage = tf.pad(
+          resizedImage,
+          [[0, 0], [0, 0], [0, paddedWidth - resizedWidth], [0, 0]]);
+    }
+    resizedImage.dispose();
+    imageTensor4D.dispose();
+
+    const paddedImageInt32 = tf.cast(paddedImage, 'int32');
+    paddedImage.dispose();
+    let keypoints = await this.detectMultiPersonKeypoints(paddedImageInt32);
+    paddedImageInt32.dispose();
+
+    if (keypoints == null) {
+      return [];
+    }
+
+    // Convert keypoints from padded coordinates to image coordinates.
     for (let i = 0; i < keypoints.length; ++i) {
-      keypoints[i].name = COCO_KEYPOINTS[i];
-      keypoints[i].y *= imageSize.height;
-      keypoints[i].x *= imageSize.width;
-      if (keypoints[i].score > MIN_CROP_KEYPOINT_SCORE) {
-        ++numValidKeypoints;
-        poseScore += keypoints[i].score;
+      for (let j = 0; j < keypoints[i].length; ++j) {
+        keypoints[i][j].y = keypoints[i][j].y * paddedHeight / resizedHeight;
+        keypoints[i][j].x = keypoints[i][j].x * paddedWidth / resizedWidth;
       }
     }
 
-    if (numValidKeypoints > 0) {
-      poseScore /= numValidKeypoints;
-    } else {
-      // No pose detected, so reset all filters.
-      this.resetFilters();
-    }
-
-    const pose: Pose = {score: poseScore, keypoints};
-
-    return [pose];
+    return keypoints;
   }
 
   filterCropRegion(newCropRegion: BoundingBox): BoundingBox {
@@ -491,6 +656,9 @@ export async function load(modelConfig: MoveNetModelConfig = MOVENET_CONFIG):
       modelUrl = MOVENET_SINGLEPOSE_LIGHTNING_URL;
     } else if (config.modelType === SINGLEPOSE_THUNDER) {
       modelUrl = MOVENET_SINGLEPOSE_THUNDER_URL;
+    } else {
+      throw new Error(`MoveNet multi-pose can only be loaded from a URL, ' +
+        'not from TF.Hub yet.`);
     }
     model = await tfc.loadGraphModel(modelUrl, {fromTFHub: true});
   }
