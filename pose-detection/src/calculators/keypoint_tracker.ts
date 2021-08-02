@@ -21,9 +21,9 @@ import {Track} from './interfaces/common_interfaces';
 import {TrackerConfig} from './interfaces/config_interfaces';
 
 /**
-   * KeypointTracker, which tracks poses based on keypoint similarity. This
-   * tracker assumes that keypoints are provided in normalized image
-   * coordinates.
+ * KeypointTracker, which tracks poses based on keypoint similarity. This
+ * tracker assumes that keypoints are provided in normalized image
+ * coordinates.
  */
 export class KeypointTracker extends Tracker {
   private readonly keypointThreshold: number;
