@@ -38,7 +38,7 @@ export class KeypointTracker extends Tracker {
    * `Tracker` for more details.
    */
   computeSimilarity(poses: Pose[]): number[][] {
-    if (poses.length === 0 && this.tracks.length === 0) {
+    if (poses.length === 0 || this.tracks.length === 0) {
       return [[]];
     }
 
