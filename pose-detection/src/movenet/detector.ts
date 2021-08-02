@@ -178,7 +178,7 @@ class MoveNetDetector implements PoseDetector {
           y: inferenceResult[i * multiPoseInstanceSize + j * 3],
           x: inferenceResult[i * multiPoseInstanceSize + j * 3 + 1],
           score: inferenceResult[i * multiPoseInstanceSize + j * 3 + 2]
-        }
+        };
       }
     }
 
@@ -248,7 +248,7 @@ class MoveNetDetector implements PoseDetector {
 
     // Convert keypoint coordinates from normalized coordinates to image space,
     // add keypoint names and calculate the overall pose score.
-    let poseScores: number[] = [];
+    const poseScores: number[] = [];
     for (let i = 0; i < keypoints.length; ++i) {
       let numValidKeypoints = 0.0;
       poseScores[i] = 0.0;
@@ -401,7 +401,7 @@ class MoveNetDetector implements PoseDetector {
 
     const paddedImageInt32 = tf.cast(paddedImage, 'int32');
     paddedImage.dispose();
-    let keypoints = await this.detectMultiPersonKeypoints(paddedImageInt32);
+    const keypoints = await this.detectMultiPersonKeypoints(paddedImageInt32);
     paddedImageInt32.dispose();
 
     if (keypoints == null) {
