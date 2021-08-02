@@ -63,6 +63,9 @@ async function createDetector() {
       const modelType = STATE.modelConfig.type == 'lightning' ?
           posedetection.movenet.modelType.SINGLEPOSE_LIGHTNING :
           posedetection.movenet.modelType.SINGLEPOSE_THUNDER;
+      if (STATE.modelConfig.customModel !== '') {
+        return posedetection.createDetector(STATE.model, {modelType, modelUrl: STATE.modelConfig.customModel});
+      }
       return posedetection.createDetector(STATE.model, {modelType});
   }
 }
