@@ -71,4 +71,5 @@ export interface Keypoint {
 export interface Pose {
   keypoints: Keypoint[];
   score?: number;  // The probability of an actual pose.
+  id?: number;  // The unique identifier for this (tracked) pose.
 }
