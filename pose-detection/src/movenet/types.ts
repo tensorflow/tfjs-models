@@ -43,13 +43,9 @@ export interface MoveNetModelConfig extends ModelConfig {
   enableSmoothing?: boolean;
   modelType?: string;
   modelUrl?: string;
-  // TEMP!
-  targetResolution?: number;
 }
 
 /**
  * MoveNet Specific Inference Config.
- *
- * `maxPoses`: Optional. Defaults to 1. MoveNet only supports 1 pose for now.
  */
 export interface MoveNetEstimationConfig extends EstimationConfig {}

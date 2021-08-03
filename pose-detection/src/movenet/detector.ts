@@ -131,8 +131,8 @@ class MoveNetDetector implements PoseDetector {
    *
    * @param inputImage 4D tensor containing the input image. Should be of size
    * [1, width, height, 3], where width and height are divisible by 32.
-   * @return An array of an array of `Pose`s, or null if the model returned an
-   * unexpected tensor size.
+   * @return An array of `Pose`s, or null if the model returned an unexpected
+   * tensor size.
    */
   async runMultiPersonPoseModel(inputImage: tf.Tensor4D): Promise<Pose[]|null> {
     const outputTensor = this.moveNetModel.execute(inputImage) as tf.Tensor;
@@ -161,6 +161,15 @@ class MoveNetDetector implements PoseDetector {
     const numInstances = inferenceResult.length / MULTIPOSE_INSTANCE_SIZE;
     for (let i = 0; i < numInstances; ++i) {
       poses[i] = {keypoints: []};
+      const boxIndex = i * MULTIPOSE_INSTANCE_SIZE;
+      poses[i].box = {
+        yMin: inferenceResult[boxIndex],
+        xMin: inferenceResult[boxIndex + 1],
+        yMax: inferenceResult[boxIndex + 2],
+        xMax: inferenceResult[boxIndex + 3],
+        width: inferenceResult[boxIndex + 3] - inferenceResult[boxIndex + 1],
+        height: inferenceResult[boxIndex + 2] - inferenceResult[boxIndex]
+      };
       const scoreIndex = i * MULTIPOSE_INSTANCE_SIZE + MULTIPOSE_BOX_SCORE_IDX;
       poses[i].score = inferenceResult[scoreIndex];
       poses[i].keypoints = [];
@@ -228,8 +237,8 @@ class MoveNetDetector implements PoseDetector {
       poses = await this.estimateMultiplePoses(imageTensor4D, imageSize);
     }
 
-    // Convert keypoint coordinates from normalized coordinates to image space,
-    // add keypoint names and calculate the overall pose score.
+    // Convert keypoint coordinates from normalized coordinates to image space
+    // and add keypoint names.
     for (let poseIdx = 0; poseIdx < poses.length; ++poseIdx) {
       for (let keypointIdx = 0; keypointIdx < poses[poseIdx].keypoints.length;
            ++keypointIdx) {
@@ -367,10 +376,8 @@ class MoveNetDetector implements PoseDetector {
     // Convert keypoints from padded coordinates to normalized coordinates.
     for (let i = 0; i < poses.length; ++i) {
       for (let j = 0; j < poses[i].keypoints.length; ++j) {
-        poses[i].keypoints[j].y =
-            poses[i].keypoints[j].y * paddedHeight / resizedHeight;
-        poses[i].keypoints[j].x =
-            poses[i].keypoints[j].x * paddedWidth / resizedWidth;
+        poses[i].keypoints[j].y *= paddedHeight / resizedHeight;
+        poses[i].keypoints[j].x *= paddedWidth / resizedWidth;
       }
     }
 

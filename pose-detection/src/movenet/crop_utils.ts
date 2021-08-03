@@ -45,7 +45,7 @@ export function torsoVisible(
 }
 
 /**
- * Calculates the maximum distance from each keypoints to the center location.
+ * Calculates the maximum distance from each keypoint to the center location.
  * The function returns the maximum distances from the two sets of keypoints:
  * full 17 keypoints and 4 torso keypoints. The returned information will be
  * used to determine the crop size. See determineCropRegion for more detail.
@@ -101,7 +101,7 @@ function determineTorsoAndBodyRange(
  * The algorithm uses the detected joints from the previous frame to estimate
  * the square region that encloses the full body of the target person and
  * centers at the midpoint of two hip joints. The crop size is determined by
- * the distances between each joints and the center point.
+ * the distances between each joint and the center point.
  * When the model is not confident with the four torso joint predictions, the
  * function returns a default crop which is the full image padded to square.
  *
@@ -174,7 +174,7 @@ export function determineNextCropRegion(
  * The function provides the initial crop region when the algorithm cannot
  * reliably determine the crop region from the previous frame. There are two
  * scenarios:
- *   1) The very first frame: the function returns the best quess by cropping
+ *   1) The very first frame: the function returns the best guess by cropping
  *      a square in the middle of the image.
  *   2) Not enough reliable keypoints detected from the previous frame: the
  *      function pads the full image from both sides to make it a square
