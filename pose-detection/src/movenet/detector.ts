@@ -438,8 +438,12 @@ export async function load(modelConfig: MoveNetModelConfig = MOVENET_CONFIG):
     Promise<PoseDetector> {
   const config = validateModelConfig(modelConfig);
   let model: tfc.GraphModel;
-  if (config.modelUrl) {
-    model = await tfc.loadGraphModel(config.modelUrl);
+
+  let fromTFHub = true;
+
+  if (!!config.modelUrl) {
+    fromTFHub = config.modelUrl.indexOf('https://tfhub.dev') > -1;
+    model = await tfc.loadGraphModel(config.modelUrl, {fromTFHub});
   } else {
     let modelUrl;
     if (config.modelType === SINGLEPOSE_LIGHTNING) {
@@ -450,7 +454,7 @@ export async function load(modelConfig: MoveNetModelConfig = MOVENET_CONFIG):
       throw new Error(`MoveNet multi-pose can only be loaded from a URL, ' +
         'not from TF.Hub yet.`);
     }
-    model = await tfc.loadGraphModel(modelUrl, {fromTFHub: true});
+    model = await tfc.loadGraphModel(modelUrl, {fromTFHub});
   }
   return new MoveNetDetector(model, config);
 }

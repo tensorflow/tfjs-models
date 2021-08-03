@@ -26,7 +26,7 @@ import {TrackerConfig} from './interfaces/config_interfaces';
  * inherit from this class.
  */
 export abstract class Tracker {
-  private tracks: Track[];
+  protected tracks: Track[];
   private readonly maxTracks: number;
   private readonly maxAge: number;
   private readonly minSimilarity: number;
@@ -34,6 +34,7 @@ export abstract class Tracker {
 
   constructor(config: TrackerConfig) {
     validateTrackerConfig(config);
+    this.tracks = [];
     this.maxTracks = config.maxTracks;
     this.maxAge = config.maxAge;
     this.minSimilarity = config.minSimilarity;
@@ -66,6 +67,13 @@ export abstract class Tracker {
       poses: Pose[]): number[][];
 
   /**
+   * Returns a copy of the stored tracks.
+   */
+   getTracks(): Track[] {
+     return this.tracks.slice();
+   }
+
+  /**
    * Filters tracks based on their age.
    * @param timestamp The current timestamp in milliseconds.
    */
@@ -79,7 +87,7 @@ export abstract class Tracker {
    * Performs a greedy optimization to link detections with tracks. The `poses`
    * array is updated in place by providing an `id` property. If incoming 
    * detections are not linked with existing tracks, new tracks will be created.
-   * @param poses An array of detected `Pose's. It's assumed that poses are
+   * @param poses An array of detected `Pose`s. It's assumed that poses are
    * sorted from most confident to least confident.
    * @param simMatrix A 2D array of shape [num_det, num_tracks] with pairwise
    * similarity scores between detections and tracks.
@@ -93,7 +101,8 @@ export abstract class Tracker {
 
     for (const detectionIndex of detectionIndices) {
       if (unmatchedTrackIndices.length === 0) {
-        break;
+        unmatchedDetectionIndices.push(detectionIndex);
+        continue;
       }
 
       // Assign the detection to the track which produces the highest pairwise
@@ -113,6 +122,7 @@ export abstract class Tracker {
         this.tracks[maxTrackIndex].lastTimestamp = timestamp;
         this.tracks[maxTrackIndex].keypoints = (
           poses[detectionIndex].keypoints.slice());
+        poses[detectionIndex].id = this.tracks[maxTrackIndex].id;
         const index = unmatchedTrackIndices.indexOf(maxTrackIndex);
         unmatchedTrackIndices.splice(index, 1);
       } else {
@@ -129,6 +139,7 @@ export abstract class Tracker {
         keypoints: poses[detectionIndex].keypoints.slice()
       };
       this.tracks.push(newTrack);
+      poses[detectionIndex].id = newID;
     }
   }
 
