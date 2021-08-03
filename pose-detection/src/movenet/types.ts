@@ -43,6 +43,8 @@ export interface MoveNetModelConfig extends ModelConfig {
   enableSmoothing?: boolean;
   modelType?: string;
   modelUrl?: string;
+  // TEMP!
+  targetResolution?: number;
 }
 
 /**
