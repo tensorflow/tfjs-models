@@ -43,9 +43,9 @@ export const MOVENET_ESTIMATION_CONFIG: MoveNetEstimationConfig = {};
 
 export const KEYPOINT_FILTER_CONFIG = {
   frequency: 30,
-  minCutOff: 6.36,
-  beta: 636.61,
-  derivateCutOff: 4.77,
+  minCutOff: 2.5,
+  beta: 300.0,
+  derivateCutOff: 2.5,
   thresholdCutOff: 0.5,
   thresholdBeta: 5.0
 };
