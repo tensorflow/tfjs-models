@@ -41,7 +41,7 @@ export async function loadImage(
 export async function loadVideo(
     videoPath: string, videoFPS: number,
     callback: (video: poseDetection.PoseDetectorInput, timestamp: number) =>
-        Promise<poseDetection.Pose[]>,
+        Promise<poseDetection.Pose[]|poseDetection.NamedPoseMap[]>,
     expected: number[][][],
     model: poseDetection.SupportedModels): Promise<HTMLVideoElement> {
   // We override video's timestamp with a fake timestamp.
@@ -70,12 +70,18 @@ export async function loadVideo(
 
   const promise = new Promise<HTMLVideoElement>((resolve, reject) => {
     video.onseeked = async () => {
-      const poses = await callback(video, simulatedTimestamp);
-      ctx.drawImage(video, 0, 0);
+      const result = await callback(video, simulatedTimestamp);
+
+      const poses = (result[0] as poseDetection.NamedPoseMap).pose3D != null ?
+          (result as poseDetection.NamedPoseMap[])
+              .map(namedPoseMap => namedPoseMap.pose) :
+          result as poseDetection.Pose[];
 
       const expectedKeypoints = expected[idx].map(([x, y]) => {
         return {x, y};
       });
+
+      ctx.drawImage(video, 0, 0);
       draw(expectedKeypoints, ctx, model, 'Green');
 
       if (poses.length > 0 && poses[0].keypoints != null) {

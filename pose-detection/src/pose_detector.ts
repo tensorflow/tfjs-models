@@ -37,7 +37,7 @@ export interface PoseDetector {
       image: PoseDetectorInput,
       config?: PoseNetEstimationConfig|BlazePoseTfjsEstimationConfig|
       BlazePoseMediaPipeEstimationConfig|MoveNetEstimationConfig,
-      timestamp?: number): Promise<Pose[]|NamedPoseMap>;
+      timestamp?: number): Promise<Pose[]|NamedPoseMap[]>;
 
   /**
    * Dispose the underlying models from memory.

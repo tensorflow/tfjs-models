@@ -33,7 +33,7 @@ const MEDIAPIPE_MODEL_CONFIG: BlazePoseMediaPipeModelConfig = {
 const EPSILON_IMAGE = 10;
 // TODO(lina128): Reduce video tolerance once MP Web Solution publishes new
 // version.
-const EPSILON_VIDEO = 180;
+const EPSILON_VIDEO = 30;
 // ref:
 // https://github.com/google/mediapipe/blob/7c331ad58b2cca0dca468e342768900041d65adc/mediapipe/python/solutions/pose_test.py#L31-L51
 const EXPECTED_LANDMARKS = [
@@ -66,15 +66,11 @@ describeWithFlags('MediaPipe Pose static image ', BROWSER_ENVS, () => {
     detector =
         await poseDetection.createDetector(model, MEDIAPIPE_MODEL_CONFIG);
 
-    // (TODO: lina128): The @mediapipe/pose@0.4 expects a warmup round before
-    // the actual inference. This is a breaking change to user who doesn't
-    // run warmup. Need to either remove the requirement or add notice to user.
-    // tslint:disable-next-line: no-unused-expression
-    await detector.estimatePoses(image, {}) as poseDetection.NamedPoseMap;
     const res =
-        await detector.estimatePoses(image, {}) as poseDetection.NamedPoseMap;
-    const poses = res.poses;
-    const xy = poses[0].keypoints.map((keypoint) => [keypoint.x, keypoint.y]);
+        (await detector.estimatePoses(image, {}) as
+         poseDetection.NamedPoseMap[])[0];
+
+    const xy = res.pose.keypoints.map((keypoint) => [keypoint.x, keypoint.y]);
     const expected = EXPECTED_LANDMARKS;
     expectArraysClose(xy, expected, EPSILON_IMAGE);
     detector.dispose();
@@ -85,6 +81,7 @@ describeWithFlags('MediaPipe Pose video ', BROWSER_ENVS, () => {
   let detector: poseDetection.PoseDetector;
   let timeout: number;
   let expected: number[][][];
+  let expected3D: number[][][];
 
   beforeAll(async () => {
     timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
@@ -93,6 +90,9 @@ describeWithFlags('MediaPipe Pose video ', BROWSER_ENVS, () => {
     expected = await fetch(`${KARMA_SERVER}/pose_squats.full.json`)
                    .then(response => response.json())
                    .then(result => getXYPerFrame(result));
+
+    expected3D = await fetch(`${KARMA_SERVER}/pose_squats_3d.full.json`)
+                     .then(response => response.json());
   });
 
   afterAll(() => {
@@ -106,20 +106,21 @@ describeWithFlags('MediaPipe Pose video ', BROWSER_ENVS, () => {
         await poseDetection.createDetector(model, MEDIAPIPE_MODEL_CONFIG);
 
     const result: number[][][] = [];
+    const result3D: number[][][] = [];
 
-    const callback = async(video: HTMLVideoElement, timestamp: number):
-        Promise<poseDetection.Pose[]> => {
-          const res = await detector.estimatePoses(
-                          video, null /* config */, timestamp) as
-              poseDetection.NamedPoseMap;
-          const poses = res.poses;
-          if (poses != null) {
-            result.push(poses[0].keypoints.map(kp => [kp.x, kp.y]));
-            return poses;
-          } else {
-            return [];
-          }
-        };
+    const callback = async(
+        video: HTMLVideoElement,
+        timestamp: number): Promise<poseDetection.Pose[]> => {
+      // BlazePose only returns single pose for now.
+      const res =
+          (await detector.estimatePoses(video, null /* config */, timestamp) as
+           poseDetection.NamedPoseMap[])[0];
+
+      result.push(res.pose.keypoints.map(kp => [kp.x, kp.y]));
+      result3D.push(res.pose3D.keypoints.map(kp => [kp.x, kp.y, kp.z]));
+
+      return [res.pose];
+    };
 
     // Original video source in 720 * 1280 resolution:
     // https://www.pexels.com/video/woman-doing-squats-4838220/ Video is
@@ -128,11 +129,8 @@ describeWithFlags('MediaPipe Pose video ', BROWSER_ENVS, () => {
     // baseline pose_squats.mp4`
     await loadVideo('pose_squats.mp4', 5 /* fps */, callback, expected, model);
 
-    // (TODO:lina128): The first inference result from the pipeline is empty,
-    // this result in the final result contains 64 results, instead of 65.
-    // Need to fix the first inference empty first.
-    const slicedExpected = expected.slice(-result.length);
-    expectArraysClose(result, slicedExpected, EPSILON_VIDEO);
+    expectArraysClose(result, expected, EPSILON_VIDEO);
+    expectArraysClose(result3D, expected3D, EPSILON_VIDEO);
 
     detector.dispose();
   });

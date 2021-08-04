@@ -18,7 +18,7 @@ import * as pose from '@mediapipe/pose';
 import {BLAZEPOSE_KEYPOINTS} from '../constants';
 
 import {PoseDetector} from '../pose_detector';
-import {NamedPoseMap, Pose, PoseDetectorInput} from '../types';
+import {NamedPoseMap, PoseDetectorInput} from '../types';
 import {validateModelConfig} from './detector_utils';
 
 import {BlazePoseMediaPipeEstimationConfig, BlazePoseMediaPipeModelConfig} from './types';
@@ -33,8 +33,7 @@ class BlazePoseMediaPipeDetector implements PoseDetector {
   // stable after `await send` is called on the pose solution.
   private width = 0;
   private height = 0;
-  private poses: Pose[];
-  private poses3D: Pose[];
+  private poses: NamedPoseMap[];
 
   private selfieMode = false;
 
@@ -70,41 +69,39 @@ class BlazePoseMediaPipeDetector implements PoseDetector {
     this.poseSolution.onResults((results) => {
       this.height = results.image.height;
       this.width = results.image.width;
-      this.poses =
-          this.translateOutputs(results.poseLandmarks, true /* shouldScale */);
-      this.poses3D = this.translateOutputs(
-          results.poseWorldLandmarks, false /* shouldScale */);
+      this.poses = [this.translateOutput(
+          results.poseLandmarks, results.poseWorldLandmarks)];
     });
   }
 
-  private translateOutputs(
-      poses: pose.NormalizedLandmarkList|pose.LandmarkList,
-      shouldScale: boolean): Pose[] {
-    if (poses == null) {
-      return [];
+  private translateOutput(
+      pose: pose.NormalizedLandmarkList,
+      pose3D?: pose.LandmarkList): NamedPoseMap {
+    const output: NamedPoseMap = {
+      pose: {
+        keypoints: pose.map((landmark, i) => ({
+                              x: landmark.x * this.width,
+                              y: landmark.y * this.height,
+                              z: landmark.z,
+                              score: landmark.visibility,
+                              name: BLAZEPOSE_KEYPOINTS[i]
+                            }))
+      }
+    };
+
+    if (pose3D != null) {
+      output.pose3D = {
+        keypoints: pose3D.map((landmark, i) => ({
+                                x: landmark.x,
+                                y: landmark.y,
+                                z: landmark.z,
+                                score: landmark.visibility,
+                                name: BLAZEPOSE_KEYPOINTS[i]
+                              }))
+      };
     }
 
-    if (shouldScale) {
-      return [{
-        keypoints: poses.map((landmark, i) => ({
-                               x: landmark.x * this.width,
-                               y: landmark.y * this.height,
-                               z: landmark.z,
-                               score: landmark.visibility,
-                               name: BLAZEPOSE_KEYPOINTS[i]
-                             }))
-      }];
-    } else {
-      return [{
-        keypoints: poses.map((landmark, i) => ({
-                               x: landmark.x,
-                               y: landmark.y,
-                               z: landmark.z,
-                               score: landmark.visibility,
-                               name: BLAZEPOSE_KEYPOINTS[i]
-                             }))
-      }];
-    }
+    return output;
   }
 
   /**
@@ -142,7 +139,7 @@ class BlazePoseMediaPipeDetector implements PoseDetector {
   async estimatePoses(
       image: PoseDetectorInput,
       estimationConfig: BlazePoseMediaPipeEstimationConfig,
-      timestamp?: number): Promise<NamedPoseMap> {
+      timestamp?: number): Promise<NamedPoseMap[]> {
     if (estimationConfig && estimationConfig.flipHorizontal &&
         (estimationConfig.flipHorizontal !== this.selfieMode)) {
       this.selfieMode = estimationConfig.flipHorizontal;
@@ -151,7 +148,7 @@ class BlazePoseMediaPipeDetector implements PoseDetector {
       });
     }
     await this.poseSolution.send({image: image as pose.InputImage}, timestamp);
-    return {poses: this.poses, poses3D: this.poses3D};
+    return this.poses;
   }
 
   dispose() {

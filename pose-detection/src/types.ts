@@ -75,6 +75,6 @@ export interface Pose {
 }
 
 export interface NamedPoseMap {
-  poses: Pose[];
-  poses3D?: Pose[];
+  pose: Pose;
+  pose3D?: Pose;
 }
