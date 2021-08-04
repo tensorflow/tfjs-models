@@ -111,10 +111,9 @@ describeWithFlags('BlazePose static image ', BROWSER_ENVS, () => {
     const beforeTensors = tf.memory().numTensors;
 
     const result = await detector.estimatePoses(
-                       image,
-                       {runtime: 'tfjs', maxPoses: 1, flipHorizontal: false} as
-                           poseDetection.BlazePoseTfjsEstimationConfig) as
-        poseDetection.Pose[];
+        image,
+        {runtime: 'tfjs', maxPoses: 1, flipHorizontal: false} as
+            poseDetection.BlazePoseTfjsEstimationConfig);
     const xy = result[0].keypoints.map((keypoint) => [keypoint.x, keypoint.y]);
     const expected = EXPECTED_LANDMARKS;
     expectArraysClose(xy, expected, EPSILON_IMAGE);
@@ -156,8 +155,7 @@ describeWithFlags('BlazePose video ', BROWSER_ENVS, () => {
     const callback = async(video: HTMLVideoElement, timestamp: number):
         Promise<poseDetection.Pose[]> => {
           const poses =
-              await detector.estimatePoses(
-                  video, null /* config */, timestamp) as poseDetection.Pose[];
+              await detector.estimatePoses(video, null /* config */, timestamp);
           result.push(poses[0].keypoints.map(kp => [kp.x, kp.y]));
           return poses;
         };

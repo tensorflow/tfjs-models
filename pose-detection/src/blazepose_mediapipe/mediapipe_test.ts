@@ -67,7 +67,6 @@ describeWithFlags('MediaPipe Pose static image ', BROWSER_ENVS, () => {
         await poseDetection.createDetector(model, MEDIAPIPE_MODEL_CONFIG);
 
     const result = await detector.estimatePoses(image, {});
-
     const xy = result[0].keypoints.map((keypoint) => [keypoint.x, keypoint.y]);
     const expected = EXPECTED_LANDMARKS;
     expectArraysClose(xy, expected, EPSILON_IMAGE);
@@ -108,10 +107,9 @@ describeWithFlags('MediaPipe Pose video ', BROWSER_ENVS, () => {
 
     const callback = async(video: HTMLVideoElement, timestamp: number):
         Promise<poseDetection.Pose[]> => {
-          // BlazePose only returns single pose for now.
           const poses =
               await detector.estimatePoses(video, null /* config */, timestamp);
-
+          // BlazePose only returns single pose for now.
           result.push(poses[0].keypoints.map(kp => [kp.x, kp.y]));
           result3D.push(poses[0].keypoints3D.map(kp => [kp.x, kp.y, kp.z]));
 

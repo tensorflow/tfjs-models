@@ -53,7 +53,7 @@ async function createDetector() {
         return posedetection.createDetector(STATE.model, {
           runtime,
           modelType: STATE.modelConfig.type,
-          solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.3.1621277220'
+          solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/pose'
         });
       } else if (runtime === 'tfjs') {
         return posedetection.createDetector(
@@ -64,8 +64,8 @@ async function createDetector() {
           posedetection.movenet.modelType.SINGLEPOSE_LIGHTNING :
           posedetection.movenet.modelType.SINGLEPOSE_THUNDER;
       if (STATE.modelConfig.customModel !== '') {
-        return posedetection.createDetector(STATE.model, {modelType,
-          modelUrl: STATE.modelConfig.customModel});
+        return posedetection.createDetector(
+            STATE.model, {modelType, modelUrl: STATE.modelConfig.customModel});
       }
       return posedetection.createDetector(STATE.model, {modelType});
   }
@@ -128,7 +128,7 @@ async function renderResult() {
   // FPS only counts the time it takes to finish estimatePoses.
   beginEstimatePosesStats();
 
-  const result = await detector.estimatePoses(
+  const poses = await detector.estimatePoses(
       camera.video,
       {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
 
@@ -139,17 +139,8 @@ async function renderResult() {
   // The null check makes sure the UI is not in the middle of changing to a
   // different model. If during model change, the result is from an old model,
   // which shouldn't be rendered.
-  if (result != null && !STATE.isModelChanged) {
-    const poses = Array.isArray(result) ? result : result.poses;
-    if (poses != null && poses.length > 0) {
-      camera.drawResults(poses);
-    }
-
-    if (STATE.modelConfig.render3D && result.poses3D != null &&
-        result.poses3D.length > 0) {
-      // Only support single pose rendering for now.
-      camera.draw3DPose(result.poses3D[0]);
-    }
+  if (poses.length > 0 && !STATE.isModelChanged) {
+    camera.drawResults(poses);
   }
 }
 

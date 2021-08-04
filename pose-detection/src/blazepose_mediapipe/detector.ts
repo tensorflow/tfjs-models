@@ -129,11 +129,7 @@ class BlazePoseMediaPipeDetector implements PoseDetector {
    *     a tensor, which doesn't have timestamp info. Or to override timestamp
    *     in a video.
    *
-   * @return NamedPoseMap `{poses: Pose[], poses3D: Pose[]}`. `poses` contains
-   *     a list of `Pose`, each with 33 keypoints, the x and y are scaled to
-   *     image size (non-normalized). `poses3D` contains the same list of
-   *     `Pose`, the x, y, z are in meters with the origin at the center between
-   *     hips.
+   * @return An array of `Pose`s.
    */
   async estimatePoses(
       image: PoseDetectorInput,

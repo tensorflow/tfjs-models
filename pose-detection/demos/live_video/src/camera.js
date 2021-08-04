@@ -121,48 +121,6 @@ export class Camera {
     }
   }
 
-  draw3DPose(pose) {
-    const scoreThreshold = params.STATE.modelConfig.scoreThreshold || 0;
-    const pointsData = pose.keypoints.map(
-        keypoint => ([-keypoint.x, -keypoint.y, -keypoint.z]));
-
-    const dataset =
-        new scatter.ScatterGL.Dataset([...pointsData, ...ANCHOR_POINTS]);
-
-    const keypointInd =
-        posedetection.util.getKeypointIndexBySide(params.STATE.model);
-    this.scatterGL.setPointColorer((i) => {
-      if (pose.keypoints[i] == null ||
-          pose.keypoints[i].score < scoreThreshold) {
-        // hide anchor points and low-confident points.
-        return '#ffffff';
-      }
-      if (i === 0) {
-        return '#ff0000' /* Red */;
-      }
-      if (keypointInd.left.indexOf(i) > -1) {
-        return '#00ff00' /* Green */;
-      }
-      if (keypointInd.right.indexOf(i) > -1) {
-        return '#ffa500' /* Orange */;
-      }
-    });
-
-    if (!this.scatterGLHasInitialized) {
-      // const connections =
-      //     posedetection.util.getAdjacentPairs(params.STATE.model);
-      // this.scatterGL.setSequences(connections.map(pair => ({indices:
-      // pair})));
-      this.scatterGL.render(dataset);
-    } else {
-      this.scatterGL.updateDataset(dataset);
-    }
-    const connections = posedetection.util.getAdjacentPairs(params.STATE.model);
-    const sequences = connections.map(pair => ({indices: pair}));
-    this.scatterGL.setSequences(sequences);
-    this.scatterGLHasInitialized = true;
-  }
-
   /**
    * Draw the keypoints and skeleton on the video.
    * @param pose A pose with keypoints to render.
@@ -171,6 +129,9 @@ export class Camera {
     if (pose.keypoints != null) {
       this.drawKeypoints(pose.keypoints);
       this.drawSkeleton(pose.keypoints);
+    }
+    if (pose.keypoints3D != null && params.STATE.modelConfig.render3D) {
+      this.drawKeypoints3D(pose.keypoints3D);
     }
   }
 
@@ -240,5 +201,42 @@ export class Camera {
         this.ctx.stroke();
       }
     });
+  }
+
+  drawKeypoints3D(keypoints) {
+    const scoreThreshold = params.STATE.modelConfig.scoreThreshold || 0;
+    const pointsData =
+        keypoints.map(keypoint => ([-keypoint.x, -keypoint.y, -keypoint.z]));
+
+    const dataset =
+        new scatter.ScatterGL.Dataset([...pointsData, ...ANCHOR_POINTS]);
+
+    const keypointInd =
+        posedetection.util.getKeypointIndexBySide(params.STATE.model);
+    this.scatterGL.setPointColorer((i) => {
+      if (keypoints[i] == null || keypoints[i].score < scoreThreshold) {
+        // hide anchor points and low-confident points.
+        return '#ffffff';
+      }
+      if (i === 0) {
+        return '#ff0000' /* Red */;
+      }
+      if (keypointInd.left.indexOf(i) > -1) {
+        return '#00ff00' /* Green */;
+      }
+      if (keypointInd.right.indexOf(i) > -1) {
+        return '#ffa500' /* Orange */;
+      }
+    });
+
+    if (!this.scatterGLHasInitialized) {
+      this.scatterGL.render(dataset);
+    } else {
+      this.scatterGL.updateDataset(dataset);
+    }
+    const connections = posedetection.util.getAdjacentPairs(params.STATE.model);
+    const sequences = connections.map(pair => ({indices: pair}));
+    this.scatterGL.setSequences(sequences);
+    this.scatterGLHasInitialized = true;
   }
 }
