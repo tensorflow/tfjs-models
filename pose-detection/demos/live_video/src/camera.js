@@ -20,7 +20,7 @@ import * as scatter from 'scatter-gl';
 import * as params from './params';
 import {isMobile} from './util';
 
-// These anchor points allow the hand pointcloud to resize according to its
+// These anchor points allow the pose pointcloud to resize according to its
 // position in the input.
 const ANCHOR_POINTS = [[0, 0, 0], [0, 1, 0], [-1, 0, 0], [-1, -1, 0]];
 export class Camera {
