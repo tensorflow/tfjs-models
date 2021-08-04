@@ -77,7 +77,7 @@ class MoveNetDetector implements PoseDetector {
    *
    * @param inputImage 4D tensor containing the input image. Should be of size
    * [1, modelHeight, modelWidth, 3].
-   * @return A `Pose`, or null if the model returned an unexpected tensor size.
+   * @return A `Pose`.
    */
   async runSinglePersonPoseModel(inputImage: tf.Tensor4D): Promise<Pose> {
     const outputTensor = this.moveNetModel.execute(inputImage) as tf.Tensor;
@@ -132,8 +132,7 @@ class MoveNetDetector implements PoseDetector {
    *
    * @param inputImage 4D tensor containing the input image. Should be of size
    * [1, width, height, 3], where width and height are divisible by 32.
-   * @return An array of `Pose`s, or null if the model returned an unexpected
-   * tensor size.
+   * @return An array of `Pose`s.
    */
   async runMultiPersonPoseModel(inputImage: tf.Tensor4D): Promise<Pose[]> {
     const outputTensor = this.moveNetModel.execute(inputImage) as tf.Tensor;
