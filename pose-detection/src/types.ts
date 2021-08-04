@@ -15,6 +15,7 @@
  * =============================================================================
  */
 import * as tf from '@tensorflow/tfjs-core';
+import {BoundingBox} from './calculators/interfaces/shape_interfaces';
 
 export enum SupportedModels {
   MoveNet = 'MoveNet',
@@ -70,6 +71,7 @@ export interface Keypoint {
 
 export interface Pose {
   keypoints: Keypoint[];
-  score?: number;  // The probability of an actual pose.
-  id?: number;  // The unique identifier for this (tracked) pose.
+  box?: BoundingBox;  // A bounding box around the detected person.
+  score?: number;     // The probability of an actual pose.
+  id?: number;        // The unique identifier for this (tracked) pose.
 }
