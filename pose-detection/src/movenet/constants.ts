@@ -51,6 +51,7 @@ export const KEYPOINT_FILTER_CONFIG = {
 };
 export const CROP_FILTER_ALPHA = 0.9;
 export const MIN_CROP_KEYPOINT_SCORE = 0.2;
+export const MIN_POSE_SCORE = 0.2;
 
 export const NUM_KEYPOINTS = 17;
 export const NUM_KEYPOINT_VALUES = 3;  // [y, x, score]

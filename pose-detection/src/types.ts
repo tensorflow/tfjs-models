@@ -71,7 +71,7 @@ export interface Keypoint {
 
 export interface Pose {
   keypoints: Keypoint[];
-  box?: BoundingBox;
-  score?: number;  // The probability of an actual pose.
-  id?: number;  // The unique identifier for this (tracked) pose.
+  box?: BoundingBox;  // A bounding box around the detected person.
+  score?: number;     // The probability of an actual pose.
+  id?: number;        // The unique identifier for this (tracked) pose.
 }

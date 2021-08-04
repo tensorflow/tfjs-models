@@ -30,7 +30,7 @@ import {PoseDetector} from '../pose_detector';
 import {InputResolution, Pose, PoseDetectorInput, SupportedModels} from '../types';
 import {getKeypointIndexByName} from '../util';
 
-import {CROP_FILTER_ALPHA, KEYPOINT_FILTER_CONFIG, MIN_CROP_KEYPOINT_SCORE, MOVENET_CONFIG, MOVENET_ESTIMATION_CONFIG, MOVENET_MULTIPOSE_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_URL, MULTIPOSE, MULTIPOSE_BOX_SCORE_IDX, MULTIPOSE_INSTANCE_SIZE, NUM_KEYPOINT_VALUES, NUM_KEYPOINTS, SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER} from './constants';
+import {CROP_FILTER_ALPHA, KEYPOINT_FILTER_CONFIG, MIN_CROP_KEYPOINT_SCORE, MIN_POSE_SCORE, MOVENET_CONFIG, MOVENET_ESTIMATION_CONFIG, MOVENET_MULTIPOSE_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_URL, MULTIPOSE, MULTIPOSE_BOX_SCORE_IDX, MULTIPOSE_INSTANCE_SIZE, NUM_KEYPOINT_VALUES, NUM_KEYPOINTS, SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER} from './constants';
 import {determineNextCropRegion, initCropRegion} from './crop_utils';
 import {validateEstimationConfig, validateModelConfig} from './detector_utils';
 import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
@@ -79,7 +79,7 @@ class MoveNetDetector implements PoseDetector {
    * [1, modelHeight, modelWidth, 3].
    * @return A `Pose`, or null if the model returned an unexpected tensor size.
    */
-  async runSinglePersonPoseModel(inputImage: tf.Tensor4D): Promise<Pose|null> {
+  async runSinglePersonPoseModel(inputImage: tf.Tensor4D): Promise<Pose> {
     const outputTensor = this.moveNetModel.execute(inputImage) as tf.Tensor;
 
     // We expect an output tensor of shape [1, 1, 17, 3] (batch, person,
@@ -89,7 +89,8 @@ class MoveNetDetector implements PoseDetector {
         outputTensor.shape[2] !== NUM_KEYPOINTS ||
         outputTensor.shape[3] !== NUM_KEYPOINT_VALUES) {
       outputTensor.dispose();
-      return null;
+      throw new Error(
+          `Unexpected output shape from model: [${outputTensor.shape}]`);
     }
 
     // Only use asynchronous downloads when we really have to (WebGPU) because
@@ -134,7 +135,7 @@ class MoveNetDetector implements PoseDetector {
    * @return An array of `Pose`s, or null if the model returned an unexpected
    * tensor size.
    */
-  async runMultiPersonPoseModel(inputImage: tf.Tensor4D): Promise<Pose[]|null> {
+  async runMultiPersonPoseModel(inputImage: tf.Tensor4D): Promise<Pose[]> {
     const outputTensor = this.moveNetModel.execute(inputImage) as tf.Tensor;
 
     // Multi-pose model output is a [1, n, 56] tensor ([batch, num_instances,
@@ -142,7 +143,8 @@ class MoveNetDetector implements PoseDetector {
     if (outputTensor.shape.length !== 3 || outputTensor.shape[0] !== 1 ||
         outputTensor.shape[2] !== MULTIPOSE_INSTANCE_SIZE) {
       outputTensor.dispose();
-      return null;
+      throw new Error(
+          `Unexpected output shape from model: [${outputTensor.shape}]`);
     }
 
     // Only use asynchronous downloads when we really have to (WebGPU) because
@@ -263,7 +265,7 @@ class MoveNetDetector implements PoseDetector {
    */
   async estimateSinglePose(
       imageTensor4D: tf.Tensor4D, imageSize: ImageSize,
-      timestamp: number): Promise<Pose|null> {
+      timestamp: number): Promise<Pose> {
     if (!this.cropRegion) {
       this.cropRegion = initCropRegion(this.cropRegion == null, imageSize);
     }
@@ -290,9 +292,9 @@ class MoveNetDetector implements PoseDetector {
     const pose = await this.runSinglePersonPoseModel(croppedImage);
     croppedImage.dispose();
 
-    if (pose == null || pose.score === 0.0) {
+    if (pose.score < MIN_POSE_SCORE) {
       this.reset();
-      return {keypoints: [], score: 0.0};
+      return null;
     }
 
     // Convert keypoints from crop coordinates to image coordinates.
@@ -370,8 +372,10 @@ class MoveNetDetector implements PoseDetector {
 
     const paddedImageInt32 = tf.cast(paddedImage, 'int32');
     paddedImage.dispose();
-    const poses = await this.runMultiPersonPoseModel(paddedImageInt32);
+    let poses = await this.runMultiPersonPoseModel(paddedImageInt32);
     paddedImageInt32.dispose();
+
+    poses = poses.filter(pose => pose.score >= MIN_POSE_SCORE);
 
     // Convert keypoints from padded coordinates to normalized coordinates.
     for (let i = 0; i < poses.length; ++i) {
