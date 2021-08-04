@@ -26,14 +26,19 @@ import {TrackerConfig} from './interfaces/config_interfaces';
  * inherit from this class.
  */
 export abstract class Tracker {
-  private tracks: Track[];
+  protected tracks: Track[];
   private readonly maxTracks: number;
   private readonly maxAge: number;
+  private readonly minSimilarity: number;
+  private nextID: number;
 
   constructor(config: TrackerConfig) {
     validateTrackerConfig(config);
+    this.tracks = [];
     this.maxTracks = config.maxTracks;
     this.maxAge = config.maxAge;
+    this.minSimilarity = config.minSimilarity;
+    this.nextID = 1;
   }
 
   /**
@@ -62,6 +67,13 @@ export abstract class Tracker {
       poses: Pose[]): number[][];
 
   /**
+   * Returns a copy of the stored tracks.
+   */
+   getTracks(): Track[] {
+     return this.tracks.slice();
+   }
+
+  /**
    * Filters tracks based on their age.
    * @param timestamp The current timestamp in milliseconds.
    */
@@ -72,17 +84,63 @@ export abstract class Tracker {
   }
 
   /**
-   * Performs an optimization to link detections with tracks. The `poses`
+   * Performs a greedy optimization to link detections with tracks. The `poses`
    * array is updated in place by providing an `id` property. If incoming 
    * detections are not linked with existing tracks, new tracks will be created.
-   * @param poses An array of detected `Pose's.
+   * @param poses An array of detected `Pose`s. It's assumed that poses are
+   * sorted from most confident to least confident.
    * @param simMatrix A 2D array of shape [num_det, num_tracks] with pairwise
    * similarity scores between detections and tracks.
    * @param timestamp The current timestamp in milliseconds.
    */
   assignTracks(
       poses: Pose[], simMatrix: number[][], timestamp: number): void {
-    //TODO: Implement optimization and track store mechanics.
+    const unmatchedTrackIndices = Array.from(Array(simMatrix[0].length).keys());
+    const detectionIndices = Array.from(Array(poses.length).keys());
+    const unmatchedDetectionIndices: number[] = [];
+
+    for (const detectionIndex of detectionIndices) {
+      if (unmatchedTrackIndices.length === 0) {
+        unmatchedDetectionIndices.push(detectionIndex);
+        continue;
+      }
+
+      // Assign the detection to the track which produces the highest pairwise
+      // similarity score, assuming the score exceeds the minimum similarity
+      // threshold.
+      let maxTrackIndex = -1;
+      let maxSimilarity = -1;
+      for (const trackIndex of unmatchedTrackIndices) {
+        const similarity = simMatrix[detectionIndex][trackIndex];
+        if (similarity >= this.minSimilarity && similarity > maxSimilarity) {
+          maxTrackIndex = trackIndex;
+          maxSimilarity = similarity;
+        }
+      }
+      if (maxTrackIndex >= 0) {
+        // Link the detection with the highest scoring track.
+        this.tracks[maxTrackIndex].lastTimestamp = timestamp;
+        this.tracks[maxTrackIndex].keypoints = (
+          poses[detectionIndex].keypoints.slice());
+        poses[detectionIndex].id = this.tracks[maxTrackIndex].id;
+        const index = unmatchedTrackIndices.indexOf(maxTrackIndex);
+        unmatchedTrackIndices.splice(index, 1);
+      } else {
+        unmatchedDetectionIndices.push(detectionIndex);
+      }
+    }
+
+    // Spawn new tracks for all unmatched detections.
+    for (const detectionIndex of unmatchedDetectionIndices) {
+      const newID = this.nextTrackID();
+      const newTrack: Track = {
+        id: newID,
+        lastTimestamp: timestamp,
+        keypoints: poses[detectionIndex].keypoints.slice()
+      };
+      this.tracks.push(newTrack);
+      poses[detectionIndex].id = newID;
+    }
   }
 
   /**
@@ -100,6 +158,15 @@ export abstract class Tracker {
     // `maxTracks` tracks.
     this.tracks.sort((ta, tb) => tb.lastTimestamp - ta.lastTimestamp);
     this.tracks = this.tracks.slice(0, this.maxTracks);
+  }
+
+  /**
+   * Returns the next free track ID. 
+   */
+  nextTrackID() {
+    const nextID = this.nextID;
+    this.nextID += 1;
+    return nextID;
   }
 
   /**

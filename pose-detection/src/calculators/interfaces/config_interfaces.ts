@@ -81,4 +81,27 @@ export interface TrackerConfig {
                    // like to recover people that are not detected for long
                    // stretches of time (at the cost of potential false
                    // re-identifications).
+  minSimilarity: number;  // New poses will only be linked with tracks if the
+                          // similarity score exceeds this threshold.
+  trackerParams: KeypointTrackerConfig;  // Config for tracker. Note that as
+                                         // more trackers are implemented, this
+                                         // should become a union of all tracker
+                                         // types.
+}
+// A tracker that links detections (i.e. poses) and tracks based on keypoint
+// similarity.
+export interface KeypointTrackerConfig {
+  keypointConfidenceThreshold: number;  // The minimum keypoint confidence
+                                        // threshold. A keypoint is only
+                                        // compared in the OKS calculation if
+                                        // both the new detected keypoint and
+                                        // the corresponding track keypoint have
+                                        // confidences above this threshold.
+  
+  keypointFalloff: number[];  // Per-keypoint falloff in OKS calculation.
+  minNumberOfKeypoints: number;  // The minimum number of keypoints that are
+                                 // necessary for computing OKS. If the number
+                                 // of confident keypoints (between a pose and
+                                 // track) are under this value, an OKS of 0.0
+                                 // will be given.
 }

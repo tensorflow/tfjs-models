@@ -165,6 +165,11 @@ function addMoveNetControllers(modelConfigFolder, type) {
     params.STATE.isModelChanged = true;
   });
 
+  const customModelController = modelConfigFolder.add(params.STATE.modelConfig, 'customModel');
+  customModelController.onFinishChange(_ => {
+    params.STATE.isModelChanged = true;
+  })
+
   modelConfigFolder.add(params.STATE.modelConfig, 'scoreThreshold', 0, 1);
 }
 

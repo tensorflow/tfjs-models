@@ -19,23 +19,26 @@
     "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr ",
     "build": "cross-env NODE_ENV=production parcel build index.html --public-url ./",
     "lint": "eslint .",
-    "link-local": "yalc link @tensorflow-models/handpose"
+    "link-local": "yalc link @tensorflow-models/handpose",
+    "build-dep": "cd ../ && yarn && yarn build"
   },
   "browser": {
     "crypto": false
   },
   "devDependencies": {
-    "babel-core": "~6.26.3",
-    "babel-plugin-transform-runtime": "~6.23.0",
-    "babel-polyfill": "~6.26.0",
-    "babel-preset-env": "~1.7.0",
+    "@babel/core": "^7.7.5",
+    "@babel/plugin-transform-runtime": "^7.7.6",
+    "@babel/preset-env": "^7.7.6",
+    "babel-plugin-external-helpers": "^6.22.0",
+    "babel-preset-env": "^1.7.0",
     "clang-format": "~1.2.2",
     "cross-env": "^5.2.0",
-    "dat.gui": "~0.7.2",
-    "eslint": "~4.19.1",
-    "eslint-config-google": "~0.9.1",
-    "parcel-bundler": "~1.12.5",
-    "yalc": "~1.0.0-pre.50"
+    "eslint": "^4.19.1",
+    "eslint-config-google": "^0.9.1",
+    "parcel-bundler": "1.12.5",
+    "parcel-plugin-static-files-copy": "^2.5.1",
+    "yalc": "~1.0.0-pre.50",
+    "dat.gui": "~0.7.2"
   },
   "resolutions": {
     "is-svg": "4.3.1"
