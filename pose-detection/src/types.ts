@@ -73,8 +73,3 @@ export interface Pose {
   score?: number;            // The probability of an actual pose.
   keypoints3D?: Keypoint[];  // Keypoints in meters in a 1m * 1m * 1m space.
 }
-
-export interface NamedPoseMap {
-  pose: Pose;
-  pose3D?: Pose;
-}

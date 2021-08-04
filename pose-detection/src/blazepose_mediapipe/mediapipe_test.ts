@@ -66,11 +66,9 @@ describeWithFlags('MediaPipe Pose static image ', BROWSER_ENVS, () => {
     detector =
         await poseDetection.createDetector(model, MEDIAPIPE_MODEL_CONFIG);
 
-    const res =
-        (await detector.estimatePoses(image, {}) as
-         poseDetection.NamedPoseMap[])[0];
+    const result = await detector.estimatePoses(image, {});
 
-    const xy = res.pose.keypoints.map((keypoint) => [keypoint.x, keypoint.y]);
+    const xy = result[0].keypoints.map((keypoint) => [keypoint.x, keypoint.y]);
     const expected = EXPECTED_LANDMARKS;
     expectArraysClose(xy, expected, EPSILON_IMAGE);
     detector.dispose();
@@ -108,19 +106,17 @@ describeWithFlags('MediaPipe Pose video ', BROWSER_ENVS, () => {
     const result: number[][][] = [];
     const result3D: number[][][] = [];
 
-    const callback = async(
-        video: HTMLVideoElement,
-        timestamp: number): Promise<poseDetection.Pose[]> => {
-      // BlazePose only returns single pose for now.
-      const res =
-          (await detector.estimatePoses(video, null /* config */, timestamp) as
-           poseDetection.NamedPoseMap[])[0];
+    const callback = async(video: HTMLVideoElement, timestamp: number):
+        Promise<poseDetection.Pose[]> => {
+          // BlazePose only returns single pose for now.
+          const poses =
+              await detector.estimatePoses(video, null /* config */, timestamp);
 
-      result.push(res.pose.keypoints.map(kp => [kp.x, kp.y]));
-      result3D.push(res.pose3D.keypoints.map(kp => [kp.x, kp.y, kp.z]));
+          result.push(poses[0].keypoints.map(kp => [kp.x, kp.y]));
+          result3D.push(poses[0].keypoints3D.map(kp => [kp.x, kp.y, kp.z]));
 
-      return [res.pose];
-    };
+          return poses;
+        };
 
     // Original video source in 720 * 1280 resolution:
     // https://www.pexels.com/video/woman-doing-squats-4838220/ Video is
