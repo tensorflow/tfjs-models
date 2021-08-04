@@ -234,7 +234,7 @@ class MoveNetDetector implements PoseDetector {
     let poses: Pose[] = [];
     if (!this.multiPoseModel) {
       poses =
-          [await this.estimateSinglePose(imageTensor4D, imageSize, timestamp)];
+          await this.estimateSinglePose(imageTensor4D, imageSize, timestamp);
     } else {
       poses = await this.estimateMultiplePoses(imageTensor4D, imageSize);
     }
@@ -261,11 +261,11 @@ class MoveNetDetector implements PoseDetector {
    * @param imageTensor4D A tf.Tensor4D that contains the input image.
    * @param imageSize: The width and height of the input image.
    * @param timestamp Image timestamp in milliseconds.
-   * @return An array of `Keypoint` or null.
+   * @return An array of `Pose`s.
    */
   async estimateSinglePose(
       imageTensor4D: tf.Tensor4D, imageSize: ImageSize,
-      timestamp: number): Promise<Pose> {
+      timestamp: number): Promise<Pose[]> {
     if (!this.cropRegion) {
       this.cropRegion = initCropRegion(this.cropRegion == null, imageSize);
     }
@@ -294,7 +294,7 @@ class MoveNetDetector implements PoseDetector {
 
     if (pose.score < MIN_POSE_SCORE) {
       this.reset();
-      return null;
+      return [];
     }
 
     // Convert keypoints from crop coordinates to image coordinates.
@@ -320,7 +320,7 @@ class MoveNetDetector implements PoseDetector {
 
     this.cropRegion = this.filterCropRegion(nextCropRegion);
 
-    return pose;
+    return [pose];
   }
 
   /**
@@ -329,10 +329,10 @@ class MoveNetDetector implements PoseDetector {
    *
    * @param imageTensor4D A tf.Tensor4D that contains the input image.
    * @param imageSize: The width and height of the input image.
-   * @return An array of `Keypoint` or null.
+   * @return An array of `Pose`s.
    */
   async estimateMultiplePoses(imageTensor4D: tf.Tensor4D, imageSize: ImageSize):
-      Promise<Pose[]|null> {
+      Promise<Pose[]> {
     let resizedImage: tf.Tensor4D;
     let resizedWidth: number;
     let resizedHeight: number;
