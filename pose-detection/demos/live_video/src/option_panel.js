@@ -56,7 +56,7 @@ export async function setupDatGui(urlParams) {
       break;
     case 'movenet':
       params.STATE.model = posedetection.SupportedModels.MoveNet;
-      if (type !== 'lightning' && type !== 'thunder') {
+      if (type !== 'lightning' && type !== 'thunder' && type !== 'multipose') {
         // Nulify invalid value.
         type = null;
       }
@@ -158,14 +158,15 @@ function addMoveNetControllers(modelConfigFolder, type) {
   params.STATE.modelConfig.type = type != null ? type : 'lightning';
 
   const typeController = modelConfigFolder.add(
-      params.STATE.modelConfig, 'type', ['lightning', 'thunder']);
+      params.STATE.modelConfig, 'type', ['lightning', 'thunder', 'multipose']);
   typeController.onChange(_ => {
     // Set isModelChanged to true, so that we don't render any result during
     // changing models.
     params.STATE.isModelChanged = true;
   });
 
-  const customModelController = modelConfigFolder.add(params.STATE.modelConfig, 'customModel');
+  const customModelController =
+      modelConfigFolder.add(params.STATE.modelConfig, 'customModel');
   customModelController.onFinishChange(_ => {
     params.STATE.isModelChanged = true;
   })
