@@ -69,21 +69,38 @@ class BlazePoseMediaPipeDetector implements PoseDetector {
     this.poseSolution.onResults((results) => {
       this.height = results.image.height;
       this.width = results.image.width;
-      this.poses = this.translateOutputs(results);
+      if (results.poseLandmarks == null) {
+        this.poses = [];
+      } else {
+        this.poses = [this.translateOutput(
+            results.poseLandmarks, results.poseWorldLandmarks)];
+      }
     });
   }
 
-  private translateOutputs(results: pose.Results): Pose[] {
-    return results.poseLandmarks != null ? [{
-      keypoints: results.poseLandmarks.map((landmark, i) => ({
-                                             x: landmark.x * this.width,
-                                             y: landmark.y * this.height,
-                                             z: landmark.z,
-                                             score: landmark.visibility,
-                                             name: BLAZEPOSE_KEYPOINTS[i]
-                                           }))
-    }] :
-                                           [];
+  private translateOutput(
+      pose: pose.NormalizedLandmarkList, pose3D?: pose.LandmarkList): Pose {
+    const output: Pose = {
+      keypoints: pose.map((landmark, i) => ({
+                            x: landmark.x * this.width,
+                            y: landmark.y * this.height,
+                            z: landmark.z,
+                            score: landmark.visibility,
+                            name: BLAZEPOSE_KEYPOINTS[i]
+                          }))
+    };
+
+    if (pose3D != null) {
+      output.keypoints3D = pose3D.map((landmark, i) => ({
+                                        x: landmark.x,
+                                        y: landmark.y,
+                                        z: landmark.z,
+                                        score: landmark.visibility,
+                                        name: BLAZEPOSE_KEYPOINTS[i]
+                                      }));
+    }
+
+    return output;
   }
 
   /**

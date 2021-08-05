@@ -22,6 +22,7 @@ import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
 
 import * as poseDetection from '../index';
 import {getXYPerFrame, KARMA_SERVER, loadImage, loadVideo} from '../test_util';
+
 import {BlazePoseMediaPipeModelConfig} from './types';
 
 const MEDIAPIPE_MODEL_CONFIG: BlazePoseMediaPipeModelConfig = {
@@ -32,7 +33,7 @@ const MEDIAPIPE_MODEL_CONFIG: BlazePoseMediaPipeModelConfig = {
 const EPSILON_IMAGE = 10;
 // TODO(lina128): Reduce video tolerance once MP Web Solution publishes new
 // version.
-const EPSILON_VIDEO = 42;
+const EPSILON_VIDEO = 30;
 // ref:
 // https://github.com/google/mediapipe/blob/7c331ad58b2cca0dca468e342768900041d65adc/mediapipe/python/solutions/pose_test.py#L31-L51
 const EXPECTED_LANDMARKS = [
@@ -77,6 +78,7 @@ describeWithFlags('MediaPipe Pose video ', BROWSER_ENVS, () => {
   let detector: poseDetection.PoseDetector;
   let timeout: number;
   let expected: number[][][];
+  let expected3D: number[][][];
 
   beforeAll(async () => {
     timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
@@ -85,6 +87,9 @@ describeWithFlags('MediaPipe Pose video ', BROWSER_ENVS, () => {
     expected = await fetch(`${KARMA_SERVER}/pose_squats.full.json`)
                    .then(response => response.json())
                    .then(result => getXYPerFrame(result));
+
+    expected3D = await fetch(`${KARMA_SERVER}/pose_squats_3d.full.json`)
+                     .then(response => response.json());
   });
 
   afterAll(() => {
@@ -98,12 +103,16 @@ describeWithFlags('MediaPipe Pose video ', BROWSER_ENVS, () => {
         await poseDetection.createDetector(model, MEDIAPIPE_MODEL_CONFIG);
 
     const result: number[][][] = [];
+    const result3D: number[][][] = [];
 
     const callback = async(video: HTMLVideoElement, timestamp: number):
         Promise<poseDetection.Pose[]> => {
           const poses =
               await detector.estimatePoses(video, null /* config */, timestamp);
+          // BlazePose only returns single pose for now.
           result.push(poses[0].keypoints.map(kp => [kp.x, kp.y]));
+          result3D.push(poses[0].keypoints3D.map(kp => [kp.x, kp.y, kp.z]));
+
           return poses;
         };
 
@@ -115,6 +124,7 @@ describeWithFlags('MediaPipe Pose video ', BROWSER_ENVS, () => {
     await loadVideo('pose_squats.mp4', 5 /* fps */, callback, expected, model);
 
     expectArraysClose(result, expected, EPSILON_VIDEO);
+    expectArraysClose(result3D, expected3D, EPSILON_VIDEO);
 
     detector.dispose();
   });
