@@ -47,5 +47,7 @@ export interface MoveNetModelConfig extends ModelConfig {
 
 /**
  * MoveNet Specific Inference Config.
+ *
+ * `maxPoses`: Optional. Defaults to 1. MoveNet only supports 1 pose for now.
  */
 export interface MoveNetEstimationConfig extends EstimationConfig {}
