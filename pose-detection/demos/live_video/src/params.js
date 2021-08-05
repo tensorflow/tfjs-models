@@ -85,8 +85,7 @@ export const BACKEND_FLAGS_MAP = {
 export const MODEL_BACKEND_MAP = {
   [posedetection.SupportedModels.PoseNet]: ['tfjs-webgl'],
   [posedetection.SupportedModels.MoveNet]: ['tfjs-webgl', 'tfjs-wasm'],
-  [posedetection.SupportedModels.BlazePose]:
-      isiOS() ? ['tfjs-webgl'] : ['mediapipe-gpu', 'tfjs-webgl']
+  [posedetection.SupportedModels.BlazePose]: ['mediapipe-gpu', 'tfjs-webgl']
 }
 
 export const TUNABLE_FLAG_NAME_MAP = {
