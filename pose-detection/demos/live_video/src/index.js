@@ -66,7 +66,7 @@ async function createDetector() {
         modelType = posedetection.movenet.modelType.SINGLEPOSE_LIGHTNING;
       } else if (STATE.modelConfig.type == 'thunder') {
         modelType = posedetection.movenet.modelType.SINGLEPOSE_THUNDER;
-      } else {
+      } else if (STATE.modelConfig.type == 'multipose') {
         modelType = posedetection.movenet.modelType.MULTIPOSE;
       }
       if (STATE.modelConfig.customModel !== '') {
@@ -89,7 +89,7 @@ async function checkGuiUpdate() {
 
     window.cancelAnimationFrame(rafId);
 
-    if (detector) {
+    if (detector != null) {
       detector.dispose();
     }
 
@@ -143,7 +143,7 @@ async function renderResult() {
 
   // Detector can be null if initialization failed (for example when loading
   // from a URL that does not exist).
-  if (detector) {
+  if (detector != null) {
     // FPS only counts the time it takes to finish estimatePoses.
     beginEstimatePosesStats();
 
