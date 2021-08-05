@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import {MOVENET_CONFIG, MOVENET_ESTIMATION_CONFIG, VALID_MODELS} from './constants';
+import {MOVENET_CONFIG, MOVENET_SINGLE_POSE_ESTIMATION_CONFIG, VALID_MODELS} from './constants';
 import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
 
 export function validateModelConfig(modelConfig: MoveNetModelConfig):
@@ -39,8 +39,17 @@ export function validateModelConfig(modelConfig: MoveNetModelConfig):
 
 export function validateEstimationConfig(
     estimationConfig: MoveNetEstimationConfig): MoveNetEstimationConfig {
-  const config = estimationConfig == null ? MOVENET_ESTIMATION_CONFIG :
-                                            {...estimationConfig};
+  const config = estimationConfig == null ?
+      MOVENET_SINGLE_POSE_ESTIMATION_CONFIG :
+      {...estimationConfig};
+
+  if (!config.maxPoses) {
+    config.maxPoses = 1;
+  }
+
+  if (config.maxPoses <= 0 || config.maxPoses > 1) {
+    throw new Error(`Invalid maxPoses ${config.maxPoses}. Should be 1.`);
+  }
 
   return config;
 }

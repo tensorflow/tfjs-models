@@ -38,12 +38,11 @@ const calculators = {keypointsToNormalizedKeypoints};
 export {calculators};
 
 // MoveNet model types.
-import {SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER, MULTIPOSE} from './movenet/constants';
+import {SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER} from './movenet/constants';
 const movenet = {
   modelType: {
     'SINGLEPOSE_LIGHTNING': SINGLEPOSE_LIGHTNING,
-    'SINGLEPOSE_THUNDER': SINGLEPOSE_THUNDER,
-    'MULTIPOSE': MULTIPOSE
+    'SINGLEPOSE_THUNDER': SINGLEPOSE_THUNDER
   }
 };
 export {movenet};
