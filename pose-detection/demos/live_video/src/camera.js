@@ -30,7 +30,7 @@ export class Camera {
     this.ctx = this.canvas.getContext('2d');
     this.scatterGLEl = document.querySelector('#scatter-gl-container');
     this.scatterGL = new scatter.ScatterGL(this.scatterGLEl, {
-      'rotateOnStart': false,
+      'rotateOnStart': true,
       'selectEnabled': false,
       'styles': {polyline: {defaultOpacity: 1, deselectedOpacity: 1}}
     });
