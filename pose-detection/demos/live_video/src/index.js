@@ -60,9 +60,14 @@ async function createDetector() {
             STATE.model, {runtime, modelType: STATE.modelConfig.type});
       }
     case posedetection.SupportedModels.MoveNet:
-      const modelType = STATE.modelConfig.type == 'lightning' ?
-          posedetection.movenet.modelType.SINGLEPOSE_LIGHTNING :
-          posedetection.movenet.modelType.SINGLEPOSE_THUNDER;
+      let modelType;
+      if (STATE.modelConfig.type == 'lightning') {
+        modelType = posedetection.movenet.modelType.SINGLEPOSE_LIGHTNING;
+      } else if (STATE.modelConfig.type == 'thunder') {
+        modelType = posedetection.movenet.modelType.SINGLEPOSE_THUNDER;
+      } else if (STATE.modelConfig.type == 'multipose') {
+        modelType = posedetection.movenet.modelType.MULTIPOSE;
+      }
       if (STATE.modelConfig.customModel !== '') {
         return posedetection.createDetector(
             STATE.model, {modelType, modelUrl: STATE.modelConfig.customModel});
@@ -83,13 +88,21 @@ async function checkGuiUpdate() {
 
     window.cancelAnimationFrame(rafId);
 
-    detector.dispose();
+    if (detector != null) {
+      detector.dispose();
+    }
 
     if (STATE.isFlagChanged || STATE.isBackendChanged) {
       await setBackendAndEnvFlags(STATE.flags, STATE.backend);
     }
 
-    detector = await createDetector(STATE.model);
+    try {
+      detector = await createDetector(STATE.model);
+    } catch (error) {
+      detector = null;
+      alert(error);
+    }
+
     STATE.isFlagChanged = false;
     STATE.isBackendChanged = false;
     STATE.isModelChanged = false;
@@ -125,21 +138,35 @@ async function renderResult() {
     });
   }
 
-  // FPS only counts the time it takes to finish estimatePoses.
-  beginEstimatePosesStats();
+  let poses = null;
 
-  const poses = await detector.estimatePoses(
-      camera.video,
-      {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
+  // Detector can be null if initialization failed (for example when loading
+  // from a URL that does not exist).
+  if (detector != null) {
+    // FPS only counts the time it takes to finish estimatePoses.
+    beginEstimatePosesStats();
 
-  endEstimatePosesStats();
+    // Detectors can throw errors, for example when using custom URLs that
+    // contain a model that doesn't provide the expected output.
+    try {
+      poses = await detector.estimatePoses(
+          camera.video,
+          {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
+    } catch (error) {
+      detector.dispose();
+      detector = null;
+      alert(error);
+    }
+
+    endEstimatePosesStats();
+  }
 
   camera.drawCtx();
 
   // The null check makes sure the UI is not in the middle of changing to a
   // different model. If during model change, the result is from an old model,
   // which shouldn't be rendered.
-  if (poses.length > 0 && !STATE.isModelChanged) {
+  if (poses && poses.length > 0 && !STATE.isModelChanged) {
     camera.drawResults(poses);
   }
 }
