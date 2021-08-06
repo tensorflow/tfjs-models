@@ -20,7 +20,7 @@ import * as poseDetection from './index';
 const SIMULATED_INTERVAL = 33.333;  // in milliseconds
 
 /** Karma server directory serving local files. */
-export const KARMA_SERVER = './base/src/test_data';
+export const KARMA_SERVER = './base/test_data';
 
 export async function loadImage(
     imagePath: string, width: number,
