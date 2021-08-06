@@ -47,28 +47,16 @@ export class KeypointsOneEuroFilter implements KeypointsFilter {
     // Initialize filters once.
     this.initializeFiltersIfEmpty(keypoints);
 
-    // Get value scale as inverse value of the object scale.
-    // If value is too small smoothing will be disabled and keypoints will be
-    // returned as is.
-    let valueScale = 1;
-    if (this.config.minAllowedObjectScale != null) {
-      if (objectScale < this.config.minAllowedObjectScale) {
-        return [...keypoints];
-      }
-      valueScale = 1.0 / objectScale;
-    }
-
     // Filter keypoints. Every axis of every keypoint is filtered separately.
     return keypoints.map((keypoint, i) => {
       const outKeypoint = {
         ...keypoint,
-        x: this.xFilters[i].apply(keypoint.x, microSeconds, valueScale),
-        y: this.yFilters[i].apply(keypoint.y, microSeconds, valueScale),
+        x: this.xFilters[i].apply(keypoint.x, microSeconds),
+        y: this.yFilters[i].apply(keypoint.y, microSeconds),
       };
 
       if (keypoint.z != null) {
-        outKeypoint.z =
-            this.zFilters[i].apply(keypoint.z, microSeconds, valueScale);
+        outKeypoint.z = this.zFilters[i].apply(keypoint.z, microSeconds);
       }
 
       return outKeypoint;
