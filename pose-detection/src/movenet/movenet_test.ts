@@ -79,7 +79,7 @@ describeWithFlags('MoveNet video ', BROWSER_ENVS, () => {
                      return (result as NamedKeypoint[]).map(namedKeypoint => {
                        return COCO_KEYPOINTS.map(name => {
                          const keypoint = namedKeypoint[name];
-                         return [keypoint.x * 576, keypoint.y * 576];
+                         return [keypoint.x, keypoint.y];
                        });
                      });
                    });
