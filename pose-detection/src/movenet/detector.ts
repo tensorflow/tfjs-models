@@ -58,8 +58,7 @@ class MoveNetDetector implements PoseDetector {
   private cropRegion: BoundingBox;
 
   // Global states for multi-person model.
-  private readonly keypointTracker: KeypointTracker =
-      new KeypointTracker(DEFAULT_TRACKER_CONFIG);
+  private readonly keypointTracker: KeypointTracker;
 
   constructor(
       private readonly moveNetModel: tfc.GraphModel,
@@ -74,6 +73,9 @@ class MoveNetDetector implements PoseDetector {
       this.modelInputResolution.height = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
     }
     this.multiPoseModel = config.modelType === MULTIPOSE;
+    if (this.multiPoseModel) {
+      this.keypointTracker = new KeypointTracker(DEFAULT_TRACKER_CONFIG);
+    }
     this.enableSmoothing = config.enableSmoothing;
     if (config.minPoseScore) {
       this.minPoseScore = config.minPoseScore;
