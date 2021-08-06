@@ -33,7 +33,7 @@ import {PoseDetector} from '../pose_detector';
 import {Keypoint, Pose, PoseDetectorInput} from '../types';
 
 import {calculateAlignmentPointsRects} from './calculators/calculate_alignment_points_rects';
-import {calculateLandmarkProjection} from './calculators/calculate_landmark_projection';
+import {calculateLandmarkProjection} from './calculators/calculate_world_landmark_projection';
 import {createSsdAnchors} from './calculators/create_ssd_anchors';
 import {detectorInference} from './calculators/detector_inference';
 import {AnchorTensor, Detection} from './calculators/interfaces/shape_interfaces';
