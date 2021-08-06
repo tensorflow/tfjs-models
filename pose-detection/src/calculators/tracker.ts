@@ -118,7 +118,8 @@ export abstract class Tracker {
       if (maxTrackIndex >= 0) {
         // Link the detection with the highest scoring track.
         this.tracks[maxTrackIndex].lastTimestamp = timestamp;
-        // Make sure to copy the Keypoint objects.
+        // Make sure to copy the Keypoint objects so they can't be modified
+        // anymore.
         this.tracks[maxTrackIndex].keypoints =
             [...poses[detectionIndex].keypoints].map(i => ({...i}));
         poses[detectionIndex].id = this.tracks[maxTrackIndex].id;
@@ -135,7 +136,8 @@ export abstract class Tracker {
       const newTrack: Track = {
         id: newID,
         lastTimestamp: timestamp,
-        // Make sure to copy the Keypoint objects.
+        // Make sure to copy the Keypoint objects so they can't be modified
+        // anymore.
         keypoints: [...poses[detectionIndex].keypoints].map(i => ({...i}))
       };
       this.tracks.push(newTrack);
