@@ -20,7 +20,7 @@ import * as poseDetection from './index';
 const SIMULATED_INTERVAL = 33.333;  // in milliseconds
 
 /** Karma server directory serving local files. */
-export const KARMA_SERVER = './base/src/test_data';
+export const KARMA_SERVER = './base/test_data';
 
 export async function loadImage(
     imagePath: string, width: number,
@@ -71,11 +71,12 @@ export async function loadVideo(
   const promise = new Promise<HTMLVideoElement>((resolve, reject) => {
     video.onseeked = async () => {
       const poses = await callback(video, simulatedTimestamp);
-      ctx.drawImage(video, 0, 0);
 
       const expectedKeypoints = expected[idx].map(([x, y]) => {
         return {x, y};
       });
+
+      ctx.drawImage(video, 0, 0);
       draw(expectedKeypoints, ctx, model, 'Green');
 
       if (poses.length > 0 && poses[0].keypoints != null) {

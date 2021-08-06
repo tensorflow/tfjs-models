@@ -19,8 +19,10 @@ import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
 
 export const SINGLEPOSE_LIGHTNING = 'SinglePose.Lightning';
 export const SINGLEPOSE_THUNDER = 'SinglePose.Thunder';
+export const MULTIPOSE = 'MultiPose';
 
-export const VALID_MODELS = [SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER];
+export const VALID_MODELS =
+    [SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER, MULTIPOSE];
 
 export const MOVENET_SINGLEPOSE_LIGHTNING_URL =
     'https://tfhub.dev/google/tfjs-model/movenet/singlepose/lightning/4';
@@ -29,6 +31,7 @@ export const MOVENET_SINGLEPOSE_THUNDER_URL =
 
 export const MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION = 192;
 export const MOVENET_SINGLEPOSE_THUNDER_RESOLUTION = 256;
+export const MOVENET_MULTIPOSE_RESOLUTION = 320;
 
 // The default configuration for loading MoveNet.
 export const MOVENET_CONFIG: MoveNetModelConfig = {
@@ -36,17 +39,23 @@ export const MOVENET_CONFIG: MoveNetModelConfig = {
   enableSmoothing: true
 };
 
-export const MOVENET_SINGLE_POSE_ESTIMATION_CONFIG: MoveNetEstimationConfig = {
-  maxPoses: 1
-};
+export const MOVENET_ESTIMATION_CONFIG: MoveNetEstimationConfig = {};
 
 export const KEYPOINT_FILTER_CONFIG = {
   frequency: 30,
-  minCutOff: 6.36,
-  beta: 636.61,
-  derivateCutOff: 4.77,
+  minCutOff: 2.5,
+  beta: 300.0,
+  derivateCutOff: 2.5,
   thresholdCutOff: 0.5,
   thresholdBeta: 5.0
 };
 export const CROP_FILTER_ALPHA = 0.9;
 export const MIN_CROP_KEYPOINT_SCORE = 0.2;
+export const MIN_POSE_SCORE = 0.2;
+
+export const NUM_KEYPOINTS = 17;
+export const NUM_KEYPOINT_VALUES = 3;  // [y, x, score]
+export const MULTIPOSE_BOX_SIZE = 5;   // [ymin, xmin, ymax, xmax, score]
+export const MULTIPOSE_BOX_SCORE_IDX = NUM_KEYPOINTS * NUM_KEYPOINT_VALUES + 4;
+export const MULTIPOSE_INSTANCE_SIZE =
+    NUM_KEYPOINTS * NUM_KEYPOINT_VALUES + MULTIPOSE_BOX_SIZE;
