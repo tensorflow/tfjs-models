@@ -75,7 +75,7 @@ export abstract class Tracker {
 
   /**
    * Filters tracks based on their age.
-   * @param timestamp The current timestamp in milliseconds.
+   * @param timestamp The current timestamp in microseconds.
    */
   filterOldTracks(timestamp: number): void {
     this.tracks = this.tracks.filter(track => {
@@ -91,7 +91,7 @@ export abstract class Tracker {
    * sorted from most confident to least confident.
    * @param simMatrix A 2D array of shape [num_det, num_tracks] with pairwise
    * similarity scores between detections and tracks.
-   * @param timestamp The current timestamp in milliseconds.
+   * @param timestamp The current timestamp in microseconds.
    */
   assignTracks(
       poses: Pose[], simMatrix: number[][], timestamp: number): void {
@@ -151,7 +151,7 @@ export abstract class Tracker {
    *    at the end).
    * 2. The tracks array is sliced to only contain `maxTracks` tracks (i.e. the
    *    most fresh tracks).
-   * @param timestamp The current timestamp in milliseconds.
+   * @param timestamp The current timestamp in microseconds.
    */
   updateTracks(timestamp: number): void {
     // Sort tracks from most recent to most stale, and then only keep the top
