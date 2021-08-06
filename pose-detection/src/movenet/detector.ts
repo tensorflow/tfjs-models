@@ -23,6 +23,7 @@ import {getImageSize, toImageTensor} from '../calculators/image_utils';
 import {ImageSize} from '../calculators/interfaces/common_interfaces';
 import {BoundingBox} from '../calculators/interfaces/shape_interfaces';
 import {isVideo} from '../calculators/is_video';
+import {KeypointTracker} from '../calculators/keypoint_tracker';
 import {KeypointsOneEuroFilter} from '../calculators/keypoints_one_euro_filter';
 import {LowPassFilter} from '../calculators/low_pass_filter';
 import {COCO_KEYPOINTS} from '../constants';
@@ -30,7 +31,7 @@ import {PoseDetector} from '../pose_detector';
 import {InputResolution, Pose, PoseDetectorInput, SupportedModels} from '../types';
 import {getKeypointIndexByName} from '../util';
 
-import {CROP_FILTER_ALPHA, KEYPOINT_FILTER_CONFIG, MIN_CROP_KEYPOINT_SCORE, MIN_POSE_SCORE, MOVENET_CONFIG, MOVENET_ESTIMATION_CONFIG, MOVENET_MULTIPOSE_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_URL, MULTIPOSE, MULTIPOSE_BOX_SCORE_IDX, MULTIPOSE_INSTANCE_SIZE, NUM_KEYPOINT_VALUES, NUM_KEYPOINTS, SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER} from './constants';
+import {CROP_FILTER_ALPHA, DEFAULT_MIN_POSE_SCORE, DEFAULT_TRACKER_CONFIG, KEYPOINT_FILTER_CONFIG, MIN_CROP_KEYPOINT_SCORE, MOVENET_CONFIG, MOVENET_ESTIMATION_CONFIG, MOVENET_MULTIPOSE_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_URL, MULTIPOSE, MULTIPOSE_BOX_IDX, MULTIPOSE_BOX_SCORE_IDX, MULTIPOSE_INSTANCE_SIZE, NUM_KEYPOINT_VALUES, NUM_KEYPOINTS, SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER} from './constants';
 import {determineNextCropRegion, initCropRegion} from './crop_utils';
 import {validateEstimationConfig, validateModelConfig} from './detector_utils';
 import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
@@ -45,8 +46,9 @@ class MoveNetDetector implements PoseDetector {
       getKeypointIndexByName(SupportedModels.MoveNet);
   private readonly multiPoseModel: boolean;
   private readonly enableSmoothing: boolean;
+  private readonly minPoseScore: number;
 
-  // Global states.
+  // Global states for single person model.
   private readonly keypointsFilter =
       new KeypointsOneEuroFilter(KEYPOINT_FILTER_CONFIG);
   private readonly cropRegionFilterYMin = new LowPassFilter(CROP_FILTER_ALPHA);
@@ -54,6 +56,10 @@ class MoveNetDetector implements PoseDetector {
   private readonly cropRegionFilterYMax = new LowPassFilter(CROP_FILTER_ALPHA);
   private readonly cropRegionFilterXMax = new LowPassFilter(CROP_FILTER_ALPHA);
   private cropRegion: BoundingBox;
+
+  // Global states for multi-person model.
+  private readonly keypointTracker: KeypointTracker =
+      new KeypointTracker(DEFAULT_TRACKER_CONFIG);
 
   constructor(
       private readonly moveNetModel: tfc.GraphModel,
@@ -69,6 +75,11 @@ class MoveNetDetector implements PoseDetector {
     }
     this.multiPoseModel = config.modelType === MULTIPOSE;
     this.enableSmoothing = config.enableSmoothing;
+    if (config.minPoseScore) {
+      this.minPoseScore = config.minPoseScore;
+    } else {
+      this.minPoseScore = DEFAULT_MIN_POSE_SCORE;
+    }
   }
 
   /**
@@ -162,7 +173,7 @@ class MoveNetDetector implements PoseDetector {
     const numInstances = inferenceResult.length / MULTIPOSE_INSTANCE_SIZE;
     for (let i = 0; i < numInstances; ++i) {
       poses[i] = {keypoints: []};
-      const boxIndex = i * MULTIPOSE_INSTANCE_SIZE;
+      const boxIndex = i * MULTIPOSE_INSTANCE_SIZE + MULTIPOSE_BOX_IDX;
       poses[i].box = {
         yMin: inferenceResult[boxIndex],
         xMin: inferenceResult[boxIndex + 1],
@@ -235,7 +246,8 @@ class MoveNetDetector implements PoseDetector {
       poses =
           await this.estimateSinglePose(imageTensor4D, imageSize, timestamp);
     } else {
-      poses = await this.estimateMultiplePoses(imageTensor4D, imageSize);
+      poses =
+          await this.estimateMultiplePoses(imageTensor4D, imageSize, timestamp);
     }
 
     // Convert keypoint coordinates from normalized coordinates to image space
@@ -259,7 +271,7 @@ class MoveNetDetector implements PoseDetector {
    *
    * @param imageTensor4D A tf.Tensor4D that contains the input image.
    * @param imageSize: The width and height of the input image.
-   * @param timestamp Image timestamp in milliseconds.
+   * @param timestamp Image timestamp in microseconds.
    * @return An array of `Pose`s.
    */
   async estimateSinglePose(
@@ -291,7 +303,7 @@ class MoveNetDetector implements PoseDetector {
     const pose = await this.runSinglePersonPoseModel(croppedImage);
     croppedImage.dispose();
 
-    if (pose.score < MIN_POSE_SCORE) {
+    if (pose.score < this.minPoseScore) {
       this.reset();
       return [];
     }
@@ -328,10 +340,12 @@ class MoveNetDetector implements PoseDetector {
    *
    * @param imageTensor4D A tf.Tensor4D that contains the input image.
    * @param imageSize: The width and height of the input image.
+   * @param timestamp Image timestamp in microseconds.
    * @return An array of `Pose`s.
    */
-  async estimateMultiplePoses(imageTensor4D: tf.Tensor4D, imageSize: ImageSize):
-      Promise<Pose[]> {
+  async estimateMultiplePoses(
+      imageTensor4D: tf.Tensor4D, imageSize: ImageSize,
+      timestamp: number): Promise<Pose[]> {
     let resizedImage: tf.Tensor4D;
     let resizedWidth: number;
     let resizedHeight: number;
@@ -374,7 +388,7 @@ class MoveNetDetector implements PoseDetector {
     let poses = await this.runMultiPersonPoseModel(paddedImageInt32);
     paddedImageInt32.dispose();
 
-    poses = poses.filter(pose => pose.score >= MIN_POSE_SCORE);
+    poses = poses.filter(pose => pose.score >= this.minPoseScore);
 
     // Convert keypoints from padded coordinates to normalized coordinates.
     for (let i = 0; i < poses.length; ++i) {
@@ -383,6 +397,9 @@ class MoveNetDetector implements PoseDetector {
         poses[i].keypoints[j].x *= paddedWidth / resizedWidth;
       }
     }
+
+    // Tracker wants a timestamp in milliseconds.
+    this.keypointTracker.apply(poses, timestamp / 1000);
 
     return poses;
   }

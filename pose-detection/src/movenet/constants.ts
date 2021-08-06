@@ -51,11 +51,28 @@ export const KEYPOINT_FILTER_CONFIG = {
 };
 export const CROP_FILTER_ALPHA = 0.9;
 export const MIN_CROP_KEYPOINT_SCORE = 0.2;
-export const MIN_POSE_SCORE = 0.2;
+export const DEFAULT_MIN_POSE_SCORE = 0.2;
 
 export const NUM_KEYPOINTS = 17;
 export const NUM_KEYPOINT_VALUES = 3;  // [y, x, score]
 export const MULTIPOSE_BOX_SIZE = 5;   // [ymin, xmin, ymax, xmax, score]
-export const MULTIPOSE_BOX_SCORE_IDX = NUM_KEYPOINTS * NUM_KEYPOINT_VALUES + 4;
+export const MULTIPOSE_BOX_IDX = NUM_KEYPOINTS * NUM_KEYPOINT_VALUES;
+export const MULTIPOSE_BOX_SCORE_IDX = MULTIPOSE_BOX_IDX + 4;
 export const MULTIPOSE_INSTANCE_SIZE =
     NUM_KEYPOINTS * NUM_KEYPOINT_VALUES + MULTIPOSE_BOX_SIZE;
+
+export const DEFAULT_TRACKER_CONFIG = {
+  maxTracks: 18,  // 3 times max detections of the multi-pose model.
+  maxAge: 1000,
+  minSimilarity: 0.2,
+  trackerParams: {
+    keypointConfidenceThreshold: 0.3,
+    // From COCO:
+    // https://cocodataset.org/#keypoints-eval
+    keypointFalloff: [
+      0.026, 0.025, 0.025, 0.035, 0.035, 0.079, 0.079, 0.072, 0.072, 0.062,
+      0.062, 0.107, 0.107, 0.087, 0.087, 0.089, 0.089
+    ],
+    minNumberOfKeypoints: 4
+  }
+};
