@@ -14,7 +14,6 @@
  * limitations under the License.
  * =============================================================================
  */
-import {TrackerConfig} from '../calculators/interfaces/config_interfaces';
 import {EstimationConfig, ModelConfig} from '../types';
 
 /**
