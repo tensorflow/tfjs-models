@@ -9,12 +9,13 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
+    "@mediapipe/pose": "~0.4.0",
     "@tensorflow-models/pose-detection": "file:../../dist",
-    "@tensorflow/tfjs-backend-wasm": "^3.6.0",
-    "@tensorflow/tfjs-backend-webgl": "^3.6.0",
-    "@tensorflow/tfjs-converter": "^3.6.0",
-    "@tensorflow/tfjs-core": "^3.6.0",
-    "@mediapipe/pose": "~0.3.0"
+    "@tensorflow/tfjs-backend-wasm": "^3.8.0",
+    "@tensorflow/tfjs-backend-webgl": "^3.8.0",
+    "@tensorflow/tfjs-converter": "^3.8.0",
+    "@tensorflow/tfjs-core": "^3.8.0",
+    "scatter-gl": "0.0.8"
   },
   "scripts": {
     "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr --open",
