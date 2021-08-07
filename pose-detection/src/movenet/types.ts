@@ -14,6 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
+import {TrackerConfig} from '../calculators/interfaces/config_interfaces';
 import {EstimationConfig, ModelConfig} from '../types';
 
 /**
@@ -41,12 +42,22 @@ import {EstimationConfig, ModelConfig} from '../types';
  *
  * `minPoseScore`: Optional. The minimum confidence score a pose needs to have
  * to be considered a valid pose detection.
+ *
+ * `enableTracking': Optional. A boolean indicating whether a tracking algorithm
+ * will be applied to the detected poses. Can only be used with multi-pose
+ * models.
+ *
+ * `trackerConfig`: Optional. A `TrackerConfig` object that specifies the
+ * configuration to use for the tracker. For properties that are not specified,
+ * default values will be used.
  */
 export interface MoveNetModelConfig extends ModelConfig {
   enableSmoothing?: boolean;
   modelType?: string;
   modelUrl?: string;
   minPoseScore?: number;
+  enableTracking?: boolean;
+  trackerConfig?: TrackerConfig;
 }
 
 /**

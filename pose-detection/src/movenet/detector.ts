@@ -33,7 +33,7 @@ import {getKeypointIndexByName} from '../util';
 
 import {CROP_FILTER_ALPHA, DEFAULT_MIN_POSE_SCORE, DEFAULT_TRACKER_CONFIG, KEYPOINT_FILTER_CONFIG, MIN_CROP_KEYPOINT_SCORE, MOVENET_CONFIG, MOVENET_ESTIMATION_CONFIG, MOVENET_MULTIPOSE_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_URL, MULTIPOSE, MULTIPOSE_BOX_IDX, MULTIPOSE_BOX_SCORE_IDX, MULTIPOSE_INSTANCE_SIZE, NUM_KEYPOINT_VALUES, NUM_KEYPOINTS, SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER} from './constants';
 import {determineNextCropRegion, initCropRegion} from './crop_utils';
-import {validateEstimationConfig, validateModelConfig} from './detector_utils';
+import {mergeDeep, validateEstimationConfig, validateModelConfig} from './detector_utils';
 import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
 
 /**
@@ -73,14 +73,22 @@ class MoveNetDetector implements PoseDetector {
       this.modelInputResolution.height = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
     }
     this.multiPoseModel = config.modelType === MULTIPOSE;
-    if (this.multiPoseModel) {
-      this.keypointTracker = new KeypointTracker(DEFAULT_TRACKER_CONFIG);
-    }
     this.enableSmoothing = config.enableSmoothing;
     if (config.minPoseScore) {
       this.minPoseScore = config.minPoseScore;
     } else {
       this.minPoseScore = DEFAULT_MIN_POSE_SCORE;
+    }
+    if (this.multiPoseModel && config.enableTracking) {
+      if (config.trackerConfig) {
+        // To make sure we don't modify the default config, mergeDeep returns a
+        // copy of the default config merged with the user specified config.
+        const trackerConfig =
+            mergeDeep(DEFAULT_TRACKER_CONFIG, config.trackerConfig);
+        this.keypointTracker = new KeypointTracker(trackerConfig);
+      } else {
+        this.keypointTracker = new KeypointTracker(DEFAULT_TRACKER_CONFIG);
+      }
     }
   }
 

@@ -39,6 +39,8 @@ export function validateModelConfig(modelConfig: MoveNetModelConfig):
     throw new Error(`minPoseScore should be between 0.0 and 1.0`);
   }
 
+  // Tracker will validate the trackingConfig.
+
   return config;
 }
 
@@ -48,4 +50,34 @@ export function validateEstimationConfig(
                                             {...estimationConfig};
 
   return config;
+}
+
+function isObject(item: any) {
+  return (item && typeof item === 'object' && !Array.isArray(item));
+}
+
+/**
+ * Merges two objects that may contain nested objects. Outputs a copy, so does
+ * not modify the inputs.
+ *
+ * @param target The object to merge into.
+ * @param source The object to merge from.
+ * @return A copy of `target` with all the properties of `source` merged into
+ * it.
+ */
+export function mergeDeep(target: any, source: any) {
+  let output = Object.assign({}, target);
+  if (isObject(target) && isObject(source)) {
+    Object.keys(source).forEach(key => {
+      if (isObject(source[key])) {
+        if (!(key in target))
+          Object.assign(output, {[key]: source[key]});
+        else
+          output[key] = mergeDeep(target[key], source[key]);
+      } else {
+        Object.assign(output, {[key]: source[key]});
+      }
+    });
+  }
+  return output;
 }
