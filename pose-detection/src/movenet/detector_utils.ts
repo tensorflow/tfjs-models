@@ -39,7 +39,8 @@ export function validateModelConfig(modelConfig: MoveNetModelConfig):
     throw new Error(`minPoseScore should be between 0.0 and 1.0`);
   }
 
-  // Tracker will validate the trackingConfig.
+  // We don't need to validate the trackingConfig here because the tracker will
+  // take care of that.
 
   return config;
 }
