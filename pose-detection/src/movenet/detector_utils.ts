@@ -34,6 +34,11 @@ export function validateModelConfig(modelConfig: MoveNetModelConfig):
     config.enableSmoothing = true;
   }
 
+  if (config.minPoseScore != null &&
+      (config.minPoseScore < 0.0 || config.minPoseScore > 1.0)) {
+    throw new Error(`minPoseScore should be between 0.0 and 1.0`);
+  }
+
   return config;
 }
 
