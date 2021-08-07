@@ -37,7 +37,7 @@ export abstract class Tracker {
     validateTrackerConfig(config);
     this.tracks = [];
     this.maxTracks = config.maxTracks;
-    this.maxAge = config.maxAge;
+    this.maxAge = config.maxAge * 1000;  // Convert msec to usec.
     this.minSimilarity = config.minSimilarity;
     this.nextID = 1;
   }
@@ -45,7 +45,8 @@ export abstract class Tracker {
   /**
    * Tracks person instances across frames based on detections.
    * @param poses An array of detected `Pose`s.
-   * @param timestamp The timestamp associated with the incoming poses.
+   * @param timestamp The timestamp associated with the incoming poses, in
+   * microseconds.
    * @returns An updated array of `Pose`s with tracking id properties.
    */
   apply(poses: Pose[], timestamp: number): Pose[] {
@@ -74,7 +75,7 @@ export abstract class Tracker {
 
   /**
    * Filters tracks based on their age.
-   * @param timestamp The current timestamp in milliseconds.
+   * @param timestamp The current timestamp in microseconds.
    */
   filterOldTracks(timestamp: number): void {
     this.tracks = this.tracks.filter(track => {
@@ -90,7 +91,7 @@ export abstract class Tracker {
    * sorted from most confident to least confident.
    * @param simMatrix A 2D array of shape [num_det, num_tracks] with pairwise
    * similarity scores between detections and tracks.
-   * @param timestamp The current timestamp in milliseconds.
+   * @param timestamp The current timestamp in microseconds.
    */
   assignTracks(poses: Pose[], simMatrix: number[][], timestamp: number): void {
     const unmatchedTrackIndices = Array.from(Array(simMatrix[0].length).keys());
@@ -155,7 +156,7 @@ export abstract class Tracker {
    *    at the end).
    * 2. The tracks array is sliced to only contain `maxTracks` tracks (i.e. the
    *    most fresh tracks).
-   * @param timestamp The current timestamp in milliseconds.
+   * @param timestamp The current timestamp in microseconds.
    */
   updateTracks(timestamp: number): void {
     // Sort tracks from most recent to most stale, and then only keep the top
