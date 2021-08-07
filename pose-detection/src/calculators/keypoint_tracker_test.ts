@@ -22,7 +22,7 @@ import {TrackerConfig} from './interfaces/config_interfaces';
 describe('Keypoint tracker', () => {
   const trackerConfig: TrackerConfig = {
       maxTracks: 4,
-      maxAge: 1000,
+      maxAge: 1000,  // Unit: milliseconds.
       minSimilarity: 0.5,
       trackerParams: {
         keypointConfidenceThreshold: 0.2,
@@ -47,7 +47,7 @@ describe('Keypoint tracker', () => {
       ]};
     const track: Track = {
       id: 0,
-      lastTimestamp: 1000,
+      lastTimestamp: 1000000,
       keypoints: [
           {x: 0.2, y: 0.2, score: 1.0},
           {x: 0.4, y: 0.4, score: 0.8},
@@ -75,7 +75,7 @@ describe('Keypoint tracker', () => {
       ]};
     const track: Track = {
       id: 0,
-      lastTimestamp: 1000,
+      lastTimestamp: 1000000,
       keypoints: [
           {x: 0.2, y: 0.2, score: 1.0},
           {x: 0.4, y: 0.4, score: 0.8},
@@ -120,8 +120,8 @@ describe('Keypoint tracker', () => {
     expect(tracks[0].id).toEqual(1);
     expect(tracks[0].lastTimestamp).toEqual(0);
 
-    // Timestamp: 100. First pose is linked with track 1. Second pose spawns a
-    // new track (id = 2).
+    // Timestamp: 100000. First pose is linked with track 1. Second pose spawns
+    // a new track (id = 2).
     poses = [
         {keypoints: [  // Links with id = 1.
             {x: 0.2, y: 0.2, score: 1.0},
@@ -136,19 +136,19 @@ describe('Keypoint tracker', () => {
             {x: 0.2, y: 0.2, score: 0.8}
         ]}
     ];
-    poses = kptTracker.apply(poses, 100);
+    poses = kptTracker.apply(poses, 100000);
     tracks = kptTracker.getTracks();
     expect(poses.length).toEqual(2);
     expect(poses[0].id).toEqual(1);
     expect(poses[1].id).toEqual(2);
     expect(tracks.length).toEqual(2);
     expect(tracks[0].id).toEqual(1);
-    expect(tracks[0].lastTimestamp).toEqual(100);
+    expect(tracks[0].lastTimestamp).toEqual(100000);
     expect(tracks[1].id).toEqual(2);
-    expect(tracks[1].lastTimestamp).toEqual(100);
+    expect(tracks[1].lastTimestamp).toEqual(100000);
 
-    // Timestamp: 900. First pose is linked with track 2. Second pose spawns a
-    // new track (id = 3).
+    // Timestamp: 900000. First pose is linked with track 2. Second pose spawns
+    // a new track (id = 3).
     poses = [
         {keypoints: [  // Links with id = 2.
             {x: 0.6, y: 0.7, score: 0.7},
@@ -163,22 +163,22 @@ describe('Keypoint tracker', () => {
             {x: 0.4, y: 0.4, score: 0.1}  // Low confidence.
         ]},
     ];
-    poses = kptTracker.apply(poses, 900);
+    poses = kptTracker.apply(poses, 900000);
     tracks = kptTracker.getTracks();
     expect(poses.length).toEqual(2);
     expect(poses[0].id).toEqual(2);
     expect(poses[1].id).toEqual(3);
     expect(tracks.length).toEqual(3);
     expect(tracks[0].id).toEqual(2);
-    expect(tracks[0].lastTimestamp).toEqual(900);
+    expect(tracks[0].lastTimestamp).toEqual(900000);
     expect(tracks[1].id).toEqual(3);
-    expect(tracks[1].lastTimestamp).toEqual(900);
+    expect(tracks[1].lastTimestamp).toEqual(900000);
     expect(tracks[2].id).toEqual(1);
-    expect(tracks[2].lastTimestamp).toEqual(100);
+    expect(tracks[2].lastTimestamp).toEqual(100000);
 
-    // Timestamp: 1200. First pose spawns a new track (id = 4), even though it
-    // has the same keypoints as track 1. This is because the age exceeds 1000
-    // msec. The second pose links with id 2. The third pose spawns a new
+    // Timestamp: 1200000. First pose spawns a new track (id = 4), even though
+    // it has the same keypoints as track 1. This is because the age exceeds
+    // 1000 msec. The second pose links with id 2. The third pose spawns a new
     // track (id = 5).
     poses = [
         {keypoints: [  // Becomes id = 4.
@@ -200,23 +200,23 @@ describe('Keypoint tracker', () => {
             {x: 0.4, y: 0.4, score: 0.8} 
         ]},
     ];
-    poses = kptTracker.apply(poses, 1200);
+    poses = kptTracker.apply(poses, 1200000);
     tracks = kptTracker.getTracks();
     expect(poses.length).toEqual(3);
     expect(poses[0].id).toEqual(4);
     expect(poses[1].id).toEqual(2);
     expect(tracks.length).toEqual(4);
     expect(tracks[0].id).toEqual(2);
-    expect(tracks[0].lastTimestamp).toEqual(1200);
+    expect(tracks[0].lastTimestamp).toEqual(1200000);
     expect(tracks[1].id).toEqual(4);
-    expect(tracks[1].lastTimestamp).toEqual(1200);
+    expect(tracks[1].lastTimestamp).toEqual(1200000);
     expect(tracks[2].id).toEqual(5);
-    expect(tracks[2].lastTimestamp).toEqual(1200);
+    expect(tracks[2].lastTimestamp).toEqual(1200000);
     expect(tracks[3].id).toEqual(3);
-    expect(tracks[3].lastTimestamp).toEqual(900);
+    expect(tracks[3].lastTimestamp).toEqual(900000);
 
-    // Timestamp: 1300. First pose spawns a new track (id = 6). Since maxTracks
-    // is 4, the oldest track (id = 3) is removed.
+    // Timestamp: 1300000. First pose spawns a new track (id = 6). Since
+    // maxTracks is 4, the oldest track (id = 3) is removed.
     poses = [
         {keypoints: [  // Becomes id = 6.
             {x: 0.1, y: 0.8, score: 1.0},
@@ -225,18 +225,18 @@ describe('Keypoint tracker', () => {
             {x: 0.8, y: 0.2, score: 0.4}
         ]},
     ];
-    poses = kptTracker.apply(poses, 1300);
+    poses = kptTracker.apply(poses, 1300000);
     tracks = kptTracker.getTracks();
     expect(poses.length).toEqual(1);
     expect(poses[0].id).toEqual(6);
     expect(tracks.length).toEqual(4);
     expect(tracks[0].id).toEqual(6);
-    expect(tracks[0].lastTimestamp).toEqual(1300);
+    expect(tracks[0].lastTimestamp).toEqual(1300000);
     expect(tracks[1].id).toEqual(2);
-    expect(tracks[1].lastTimestamp).toEqual(1200);
+    expect(tracks[1].lastTimestamp).toEqual(1200000);
     expect(tracks[2].id).toEqual(4);
-    expect(tracks[2].lastTimestamp).toEqual(1200);
+    expect(tracks[2].lastTimestamp).toEqual(1200000);
     expect(tracks[3].id).toEqual(5);
-    expect(tracks[3].lastTimestamp).toEqual(1200);
+    expect(tracks[3].lastTimestamp).toEqual(1200000);
   });
 });

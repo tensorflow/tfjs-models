@@ -36,7 +36,7 @@ export abstract class Tracker {
     validateTrackerConfig(config);
     this.tracks = [];
     this.maxTracks = config.maxTracks;
-    this.maxAge = config.maxAge;
+    this.maxAge = config.maxAge * 1000;  // Convert msec to usec.
     this.minSimilarity = config.minSimilarity;
     this.nextID = 1;
   }
@@ -44,7 +44,8 @@ export abstract class Tracker {
   /**
    * Tracks person instances across frames based on detections.
    * @param poses An array of detected `Pose`s.
-   * @param timestamp The timestamp associated with the incoming poses.
+   * @param timestamp The timestamp associated with the incoming poses, in
+   * microseconds.
    * @returns An updated array of `Pose`s with tracking id properties.
    */
   apply(
