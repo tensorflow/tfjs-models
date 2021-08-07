@@ -121,7 +121,8 @@ export abstract class Tracker {
         // Make sure to copy the Keypoint objects so they can't be modified
         // anymore.
         this.tracks[maxTrackIndex].keypoints =
-            [...poses[detectionIndex].keypoints].map(i => ({...i}));
+            [...poses[detectionIndex].keypoints].map(
+                keypoint => ({...keypoint}));
         poses[detectionIndex].id = this.tracks[maxTrackIndex].id;
         const index = unmatchedTrackIndices.indexOf(maxTrackIndex);
         unmatchedTrackIndices.splice(index, 1);
@@ -138,7 +139,8 @@ export abstract class Tracker {
         lastTimestamp: timestamp,
         // Make sure to copy the Keypoint objects so they can't be modified
         // anymore.
-        keypoints: [...poses[detectionIndex].keypoints].map(i => ({...i}))
+        keypoints: [...poses[detectionIndex].keypoints].map(
+            keypoint => ({...keypoint}))
       };
       this.tracks.push(newTrack);
       poses[detectionIndex].id = newID;
