@@ -38,11 +38,15 @@ import {EstimationConfig, ModelConfig} from '../types';
  * model. This is useful for area/countries that don't have access to the model
  * hosted on TF Hub. If not provided, it will load the model specified by
  * `modelType` from tf.hub.
+ *
+ * `minPoseScore`: Optional. The minimum confidence score a pose needs to have
+ * to be considered a valid pose detection.
  */
 export interface MoveNetModelConfig extends ModelConfig {
   enableSmoothing?: boolean;
   modelType?: string;
   modelUrl?: string;
+  minPoseScore?: number;
 }
 
 /**

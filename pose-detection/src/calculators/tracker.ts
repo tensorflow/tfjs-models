@@ -16,9 +16,10 @@
  */
 
 import {Pose} from '../types';
-import {validateTrackerConfig} from './tracker_utils';
+
 import {Track} from './interfaces/common_interfaces';
 import {TrackerConfig} from './interfaces/config_interfaces';
+import {validateTrackerConfig} from './tracker_utils';
 
 /**
  * A stateful tracker for associating detections between frames. This is an
@@ -47,8 +48,7 @@ export abstract class Tracker {
    * @param timestamp The timestamp associated with the incoming poses.
    * @returns An updated array of `Pose`s with tracking id properties.
    */
-  apply(
-      poses: Pose[], timestamp: number): Pose[] {
+  apply(poses: Pose[], timestamp: number): Pose[] {
     this.filterOldTracks(timestamp);
     const simMatrix = this.computeSimilarity(poses);
     this.assignTracks(poses, simMatrix, timestamp);
@@ -63,15 +63,14 @@ export abstract class Tracker {
    * @returns A 2D array of shape [num_det, num_tracks] with pairwise
    * similarity scores between detections and tracks.
    */
-  abstract computeSimilarity(
-      poses: Pose[]): number[][];
+  abstract computeSimilarity(poses: Pose[]): number[][];
 
   /**
    * Returns a copy of the stored tracks.
    */
-   getTracks(): Track[] {
-     return this.tracks.slice();
-   }
+  getTracks(): Track[] {
+    return this.tracks.slice();
+  }
 
   /**
    * Filters tracks based on their age.
@@ -79,13 +78,13 @@ export abstract class Tracker {
    */
   filterOldTracks(timestamp: number): void {
     this.tracks = this.tracks.filter(track => {
-    return timestamp - track.lastTimestamp <= this.maxAge;
+      return timestamp - track.lastTimestamp <= this.maxAge;
     });
   }
 
   /**
    * Performs a greedy optimization to link detections with tracks. The `poses`
-   * array is updated in place by providing an `id` property. If incoming 
+   * array is updated in place by providing an `id` property. If incoming
    * detections are not linked with existing tracks, new tracks will be created.
    * @param poses An array of detected `Pose`s. It's assumed that poses are
    * sorted from most confident to least confident.
@@ -93,8 +92,7 @@ export abstract class Tracker {
    * similarity scores between detections and tracks.
    * @param timestamp The current timestamp in milliseconds.
    */
-  assignTracks(
-      poses: Pose[], simMatrix: number[][], timestamp: number): void {
+  assignTracks(poses: Pose[], simMatrix: number[][], timestamp: number): void {
     const unmatchedTrackIndices = Array.from(Array(simMatrix[0].length).keys());
     const detectionIndices = Array.from(Array(poses.length).keys());
     const unmatchedDetectionIndices: number[] = [];
@@ -120,8 +118,11 @@ export abstract class Tracker {
       if (maxTrackIndex >= 0) {
         // Link the detection with the highest scoring track.
         this.tracks[maxTrackIndex].lastTimestamp = timestamp;
-        this.tracks[maxTrackIndex].keypoints = (
-          poses[detectionIndex].keypoints.slice());
+        // Make sure to copy the Keypoint objects so they can't be modified
+        // anymore.
+        this.tracks[maxTrackIndex].keypoints =
+            [...poses[detectionIndex].keypoints].map(
+                keypoint => ({...keypoint}));
         poses[detectionIndex].id = this.tracks[maxTrackIndex].id;
         const index = unmatchedTrackIndices.indexOf(maxTrackIndex);
         unmatchedTrackIndices.splice(index, 1);
@@ -136,7 +137,10 @@ export abstract class Tracker {
       const newTrack: Track = {
         id: newID,
         lastTimestamp: timestamp,
-        keypoints: poses[detectionIndex].keypoints.slice()
+        // Make sure to copy the Keypoint objects so they can't be modified
+        // anymore.
+        keypoints: [...poses[detectionIndex].keypoints].map(
+            keypoint => ({...keypoint}))
       };
       this.tracks.push(newTrack);
       poses[detectionIndex].id = newID;
@@ -161,7 +165,7 @@ export abstract class Tracker {
   }
 
   /**
-   * Returns the next free track ID. 
+   * Returns the next free track ID.
    */
   nextTrackID() {
     const nextID = this.nextID;
