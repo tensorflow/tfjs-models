@@ -52,7 +52,7 @@ export function validateEstimationConfig(
   return config;
 }
 
-function isObject(item: any) {
+function isObject(item: unknown) {
   return (item && typeof item === 'object' && !Array.isArray(item));
 }
 
@@ -60,20 +60,24 @@ function isObject(item: any) {
  * Merges two objects that may contain nested objects. Outputs a copy, so does
  * not modify the inputs.
  *
+ * Solution taken from:
+ * https://stackoverflow.com/questions/27936772/how-to-deep-merge-instead-of-shallow-merge
+ *
  * @param target The object to merge into.
  * @param source The object to merge from.
  * @return A copy of `target` with all the properties of `source` merged into
  * it.
  */
-export function mergeDeep(target: any, source: any) {
-  let output = Object.assign({}, target);
+export function mergeDeep(target: unknown, source: unknown) {
+  const output = Object.assign({}, target);
   if (isObject(target) && isObject(source)) {
     Object.keys(source).forEach(key => {
       if (isObject(source[key])) {
-        if (!(key in target))
+        if (!(key in target)) {
           Object.assign(output, {[key]: source[key]});
-        else
+        } else {
           output[key] = mergeDeep(target[key], source[key]);
+        }
       } else {
         Object.assign(output, {[key]: source[key]});
       }
