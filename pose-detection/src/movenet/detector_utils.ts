@@ -68,7 +68,9 @@ function isObject(item: unknown) {
  * @return A copy of `target` with all the properties of `source` merged into
  * it.
  */
-export function mergeDeep(target: unknown, source: unknown) {
+export function mergeDeep(
+    target: {[index: string]: unknown},
+    source: {[index: string]: unknown}): {[index: string]: unknown} {
   const output = Object.assign({}, target);
   if (isObject(target) && isObject(source)) {
     Object.keys(source).forEach(key => {
@@ -76,7 +78,7 @@ export function mergeDeep(target: unknown, source: unknown) {
         if (!(key in target)) {
           Object.assign(output, {[key]: source[key]});
         } else {
-          output[key] = mergeDeep(target[key], source[key]);
+          output[key] = mergeDeep(target[key] as {}, source[key] as {});
         }
       } else {
         Object.assign(output, {[key]: source[key]});

@@ -21,6 +21,7 @@ import * as tf from '@tensorflow/tfjs-core';
 import {MILLISECOND_TO_MICRO_SECONDS, SECOND_TO_MICRO_SECONDS} from '../calculators/constants';
 import {getImageSize, toImageTensor} from '../calculators/image_utils';
 import {ImageSize} from '../calculators/interfaces/common_interfaces';
+import {TrackerConfig} from '../calculators/interfaces/config_interfaces';
 import {BoundingBox} from '../calculators/interfaces/shape_interfaces';
 import {isVideo} from '../calculators/is_video';
 import {KeypointTracker} from '../calculators/keypoint_tracker';
@@ -58,6 +59,7 @@ class MoveNetDetector implements PoseDetector {
   private cropRegion: BoundingBox;
 
   // Global states for multi-person model.
+  private readonly enableTracking: boolean;
   private readonly keypointTracker: KeypointTracker;
 
   constructor(
@@ -79,12 +81,14 @@ class MoveNetDetector implements PoseDetector {
     } else {
       this.minPoseScore = DEFAULT_MIN_POSE_SCORE;
     }
-    if (this.multiPoseModel && config.enableTracking) {
+    this.enableTracking = config.enableTracking;
+    if (this.multiPoseModel && this.enableTracking) {
       if (config.trackerConfig) {
         // To make sure we don't modify the default config, mergeDeep returns a
         // copy of the default config merged with the user specified config.
         const trackerConfig =
-            mergeDeep(DEFAULT_TRACKER_CONFIG, config.trackerConfig);
+            mergeDeep(DEFAULT_TRACKER_CONFIG, config.trackerConfig) as
+            TrackerConfig;
         this.keypointTracker = new KeypointTracker(trackerConfig);
       } else {
         this.keypointTracker = new KeypointTracker(DEFAULT_TRACKER_CONFIG);
@@ -408,8 +412,9 @@ class MoveNetDetector implements PoseDetector {
       }
     }
 
-    // Tracker wants a timestamp in milliseconds.
-    this.keypointTracker.apply(poses, timestamp / 1000);
+    if (this.enableTracking) {
+      this.keypointTracker.apply(poses, timestamp);
+    }
 
     return poses;
   }
