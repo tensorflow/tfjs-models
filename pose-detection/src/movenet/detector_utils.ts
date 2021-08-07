@@ -53,7 +53,7 @@ export function validateEstimationConfig(
 }
 
 function isObject(item: unknown) {
-  return (item && typeof item === 'object' && !Array.isArray(item));
+  return (item != null && typeof item === 'object' && !Array.isArray(item));
 }
 
 /**
@@ -69,8 +69,8 @@ function isObject(item: unknown) {
  * it.
  */
 export function mergeDeep(
-    target: {[index: string]: unknown},
-    source: {[index: string]: unknown}): {[index: string]: unknown} {
+    target: {[name: string]: unknown},
+    source: {[name: string]: unknown}): {[name: string]: unknown} {
   const output = Object.assign({}, target);
   if (isObject(target) && isObject(source)) {
     Object.keys(source).forEach(key => {

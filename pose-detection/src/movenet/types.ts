@@ -43,9 +43,9 @@ import {EstimationConfig, ModelConfig} from '../types';
  * `minPoseScore`: Optional. The minimum confidence score a pose needs to have
  * to be considered a valid pose detection.
  *
- * `enableTracking': Optional. A boolean indicating whether a tracking algorithm
- * will be applied to the detected poses. Can only be used with multi-pose
- * models.
+ * `enableTracking': Optional. A boolean indicating whether detected persons
+ * will be tracked across frames. If true, each pose will have an ID that
+ * uniquely identifies a person. Only used with multi-pose models.
  *
  * `trackerConfig`: Optional. A `TrackerConfig` object that specifies the
  * configuration to use for the tracker. For properties that are not specified,
