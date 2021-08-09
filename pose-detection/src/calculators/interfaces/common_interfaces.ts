@@ -50,7 +50,6 @@ export interface Track {
   lastTimestamp: number;  // The last timestamp (in milliseconds) in which a
                           // detection was linked with the track.
   keypoints?: Keypoint[];  // Keypoints associated with the tracked person.
-  boundingBox?: BoundingBox;  // Bounding box associated with the tracked
-                              // person.
+  box?: BoundingBox;  // Bounding box associated with the tracked person.
   score?: number;  // A confidence value of the track.
 }
