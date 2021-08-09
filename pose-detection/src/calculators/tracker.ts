@@ -168,7 +168,7 @@ export abstract class Tracker {
       id: trackID || this.nextTrackID(),
       lastTimestamp: timestamp,
       keypoints: [...pose.keypoints].map(keypoint => ({...keypoint}))
-    }
+    };
     if (pose.box !== undefined) {
         track.box = {...pose.box};
     }

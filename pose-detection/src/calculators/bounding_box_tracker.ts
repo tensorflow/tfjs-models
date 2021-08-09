@@ -59,8 +59,8 @@ export class BoundingBoxTracker extends Tracker {
       return 0.0;
     }
     const intersection = (xMax - xMin) * (yMax - yMin);
-    const area_pose = pose.box.width * pose.box.height;
-    const area_track = track.box.width * track.box.height;
-    return intersection / (area_pose + area_track - intersection);
+    const areaPose = pose.box.width * pose.box.height;
+    const areaTrack = track.box.width * track.box.height;
+    return intersection / (areaPose + areaTrack - intersection);
   }
 }

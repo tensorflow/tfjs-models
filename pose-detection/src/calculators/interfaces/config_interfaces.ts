@@ -110,4 +110,3 @@ export interface BoundingBoxTrackerConfig {
                          // a new detection bounding box and a track bounding
                          // box to consider a match.
 }
-
