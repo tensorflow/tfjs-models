@@ -21,18 +21,18 @@ import {Track} from './interfaces/common_interfaces';
 import {TrackerConfig} from './interfaces/config_interfaces';
 
 /**
- * BoundingBoxTracker, which tracks objects based on bounding box similarity.
+ * BoundingBoxTracker, which tracks objects based on bounding box similarity,
+ * currently defined as intersection-over-union (IoU).
  */
 export class BoundingBoxTracker extends Tracker {
-  private readonly iouThreshold: number;
 
   constructor(config: TrackerConfig) {
     super(config);
-    this.iouThreshold = config.boundingBoxTrackerParams.iouThreshold;
   }
 
   /**
-   * Computes similarity based on intersection-over-union (IoU).
+   * Computes similarity based on intersection-over-union (IoU). See `Tracker`
+   * for more details.
    */
   computeSimilarity(poses: Pose[]): number[][] {
     if (poses.length === 0 || this.tracks.length === 0) {
@@ -40,8 +40,7 @@ export class BoundingBoxTracker extends Tracker {
     }
     const simMatrix = poses.map(pose => {
       return this.tracks.map(track => {
-        const iou = this.iou(pose, track);
-        return iou >= this.iouThreshold ? iou : 0.0;
+        return this.iou(pose, track);
       });
     });
     return simMatrix;
@@ -49,6 +48,10 @@ export class BoundingBoxTracker extends Tracker {
 
   /**
    * Computes the intersection-over-union (IoU) between a pose and a track.
+   * @param pose A `Pose`.
+   * @param track A `Track`.
+   * @returns The IoU  between the pose and the track. This number is
+   * between 0 and 1, and larger values indicate more box similarity.
    */
   private iou(pose: Pose, track: Track): number {
     const xMin = Math.max(pose.box.xMin, track.box.xMin);

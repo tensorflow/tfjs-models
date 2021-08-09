@@ -36,6 +36,22 @@ describe('Keypoint tracker', () => {
     expect(kptTracker instanceof KeypointTracker).toBe(true);
   });
 
+  it('Config validation fail on kpt confidence threshold',() => {
+    const badConfig: TrackerConfig = {
+      maxTracks: 4,
+      maxAge: 1000,  // Unit: milliseconds.
+      minSimilarity: 0.5,
+      keypointTrackerParams: {
+        keypointConfidenceThreshold: -0.1,  // Should be positive.
+        keypointFalloff: [0.1, 0.1, 0.1, 0.1],
+        minNumberOfKeypoints: 2
+      }
+    };
+    expect(function(){new KeypointTracker(badConfig);}).toThrow(
+      new Error("Must specify 'keypointConfidenceThreshold' to be in the " +
+                "range [0, 1], but encountered -0.1"));
+  });
+
   it('Compute OKS', () => {
     const kptTracker = new KeypointTracker(trackerConfig);
     const pose: Pose = {

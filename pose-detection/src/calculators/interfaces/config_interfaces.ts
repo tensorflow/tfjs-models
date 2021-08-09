@@ -106,7 +106,4 @@ export interface KeypointTrackerConfig {
 // A tracker that links detections (i.e. poses) and tracks based on bounding
 // box similarity.
 export interface BoundingBoxTrackerConfig {
-  iouThreshold: number;  // The minimum intersection-over-union (IoU) between
-                         // a new detection bounding box and a track bounding
-                         // box to consider a match.
 }

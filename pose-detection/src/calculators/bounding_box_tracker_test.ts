@@ -24,9 +24,7 @@ describe('Bounding box tracker', () => {
       maxTracks: 4,
       maxAge: 1000,  // Unit: milliseconds.
       minSimilarity: 0.5,
-      boundingBoxTrackerParams: {
-        iouThreshold: 0.2,
-      }
+      boundingBoxTrackerParams: {}
     };
 
   it('Instantiate tracker', () => {
