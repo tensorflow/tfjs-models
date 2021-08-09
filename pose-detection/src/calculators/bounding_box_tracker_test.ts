@@ -46,7 +46,7 @@ describe('Bounding box tracker', () => {
         width: 2/3,
         height: 1.0
       }
-    }
+    };
     const track: Track = {
       id: 0,
       lastTimestamp: 1000000,
@@ -75,7 +75,7 @@ describe('Bounding box tracker', () => {
         width: 1.0,
         height: 1.0
       }
-    }
+    };
     const track: Track = {
       id: 0,
       lastTimestamp: 1000000,
@@ -104,7 +104,7 @@ describe('Bounding box tracker', () => {
         width: 0.5,
         height: 0.5
       }
-    }
+    };
     const track: Track = {
       id: 0,
       lastTimestamp: 1000000,
