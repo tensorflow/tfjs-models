@@ -61,11 +61,11 @@ export const MULTIPOSE_BOX_SCORE_IDX = MULTIPOSE_BOX_IDX + 4;
 export const MULTIPOSE_INSTANCE_SIZE =
     NUM_KEYPOINTS * NUM_KEYPOINT_VALUES + MULTIPOSE_BOX_SIZE;
 
-export const DEFAULT_TRACKER_CONFIG = {
+export const DEFAULT_KEYPOINT_TRACKER_CONFIG = {
   maxTracks: 18,  // 3 times max detections of the multi-pose model.
   maxAge: 1000,
   minSimilarity: 0.2,
-  trackerParams: {
+  keypointTrackerParams: {
     keypointConfidenceThreshold: 0.3,
     // From COCO:
     // https://cocodataset.org/#keypoints-eval
@@ -75,4 +75,11 @@ export const DEFAULT_TRACKER_CONFIG = {
     ],
     minNumberOfKeypoints: 4
   }
+};
+
+export const DEFAULT_BOUNDING_BOX_TRACKER_CONFIG = {
+  maxTracks: 18,  // 3 times max detections of the multi-pose model.
+  maxAge: 1000,
+  minSimilarity: 0.2,
+  trackerParams: {}
 };
