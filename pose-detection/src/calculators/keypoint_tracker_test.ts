@@ -47,9 +47,10 @@ describe('Keypoint tracker', () => {
         minNumberOfKeypoints: 2
       }
     };
-    expect(function(){new KeypointTracker(badConfig);}).toThrow(
-      new Error("Must specify 'keypointConfidenceThreshold' to be in the " +
-                "range [0, 1], but encountered -0.1"));
+    expect(() => {
+      return new KeypointTracker(badConfig)}).toThrow(
+      new Error('Must specify \'keypointConfidenceThreshold\' to be in the ' +
+                'range [0, 1], but encountered -0.1'));
   });
 
   it('Compute OKS', () => {

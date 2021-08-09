@@ -42,7 +42,7 @@ export function validateTrackerConfig(config: TrackerConfig): void {
         `Must specify 'minNumberOfKeypoints' to be at least 1, but ` +
         `encountered ${config.keypointTrackerParams.minNumberOfKeypoints}`);
     }
-    for (let falloff of config.keypointTrackerParams.keypointFalloff) {
+    for (const falloff of config.keypointTrackerParams.keypointFalloff) {
       if (falloff <= 0.0) {
         throw new Error(
           `Must specify each keypoint falloff parameterto be positive ` +
