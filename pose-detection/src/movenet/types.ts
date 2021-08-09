@@ -18,6 +18,14 @@ import {TrackerConfig} from '../calculators/interfaces/config_interfaces';
 import {EstimationConfig, ModelConfig} from '../types';
 
 /**
+ * The trackers that MoveNet supports.
+ */
+export enum MoveNetTrackerType {
+  Keypoint = 'keypoint',
+  BoundingBox = 'bounding_box'
+}
+
+/**
  * MoveNet model loading config.
  *
  * `enableSmoothing`: Optional. A boolean indicating whether to use temporal
@@ -47,6 +55,9 @@ import {EstimationConfig, ModelConfig} from '../types';
  * will be tracked across frames. If true, each pose will have an ID that
  * uniquely identifies a person. Only used with multi-pose models.
  *
+ * `trackerType`: Optional. A `MoveNetTrackerType` indicating which type of
+ * tracker to use. Defaults to keypoint tracking.
+ *
  * `trackerConfig`: Optional. A `TrackerConfig` object that specifies the
  * configuration to use for the tracker. For properties that are not specified,
  * default values will be used.
@@ -57,6 +68,7 @@ export interface MoveNetModelConfig extends ModelConfig {
   modelUrl?: string;
   minPoseScore?: number;
   enableTracking?: boolean;
+  trackerType?: MoveNetTrackerType;
   trackerConfig?: TrackerConfig;
 }
 

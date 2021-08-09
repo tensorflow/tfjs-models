@@ -16,8 +16,9 @@
  */
 
 import {TrackerConfig} from '../calculators/interfaces/config_interfaces';
-import {MOVENET_CONFIG, MOVENET_ESTIMATION_CONFIG, VALID_MODELS} from './constants';
-import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
+
+import {DEFAULT_BOUNDING_BOX_TRACKER_CONFIG, DEFAULT_KEYPOINT_TRACKER_CONFIG, MOVENET_CONFIG, MOVENET_ESTIMATION_CONFIG, MULTIPOSE, VALID_MODELS} from './constants';
+import {MoveNetEstimationConfig, MoveNetModelConfig, MoveNetTrackerType} from './types';
 
 export function validateModelConfig(modelConfig: MoveNetModelConfig):
     MoveNetModelConfig {
@@ -40,8 +41,33 @@ export function validateModelConfig(modelConfig: MoveNetModelConfig):
     throw new Error(`minPoseScore should be between 0.0 and 1.0`);
   }
 
-  // We don't need to validate the trackingConfig here because the tracker will
-  // take care of that.
+  if (modelConfig.modelType === MULTIPOSE && config.enableTracking == null) {
+    config.enableTracking = true;
+  }
+
+  if (modelConfig.modelType === MULTIPOSE && config.enableTracking === true) {
+    if (modelConfig.trackerType == null) {
+      modelConfig.trackerType = MoveNetTrackerType.Keypoint;
+    }
+    if (modelConfig.trackerType === MoveNetTrackerType.Keypoint) {
+      if (config.trackerConfig != null) {
+        config.trackerConfig = mergeKeypointTrackerConfig(
+            DEFAULT_KEYPOINT_TRACKER_CONFIG, config.trackerConfig);
+      } else {
+        config.trackerConfig = DEFAULT_KEYPOINT_TRACKER_CONFIG;
+      }
+    } else if (modelConfig.trackerType === MoveNetTrackerType.BoundingBox) {
+      if (config.trackerConfig != null) {
+        config.trackerConfig = mergeBoundingBoxTrackerConfig(
+            DEFAULT_BOUNDING_BOX_TRACKER_CONFIG, config.trackerConfig);
+      } else {
+        config.trackerConfig = DEFAULT_BOUNDING_BOX_TRACKER_CONFIG;
+      }
+    }
+
+    // We don't need to validate the trackerConfig here because the tracker will
+    // take care of that.
+  }
 
   return config;
 }
@@ -54,28 +80,60 @@ export function validateEstimationConfig(
   return config;
 }
 
-export function mergeTrackerConfigs(
+function mergeBaseTrackerConfig(
     defaultConfig: TrackerConfig, userConfig: TrackerConfig): TrackerConfig {
   const mergedConfig: TrackerConfig = {
-    maxTracks: userConfig.maxTracks || defaultConfig.maxTracks,
-    maxAge: userConfig.maxAge || defaultConfig.maxAge,
-    minSimilarity: userConfig.minSimilarity || defaultConfig.minSimilarity,
-    trackerParams: {
-      keypointConfidenceThreshold:
-          (userConfig.trackerParams ?
-               userConfig.trackerParams.keypointConfidenceThreshold :
-               null) ||
-          defaultConfig.trackerParams.keypointConfidenceThreshold,
-      keypointFalloff:
-          (userConfig.trackerParams ? userConfig.trackerParams.keypointFalloff :
-                                      null) ||
-          defaultConfig.trackerParams.keypointFalloff,
-      minNumberOfKeypoints: (userConfig.trackerParams ?
-                                 userConfig.trackerParams.minNumberOfKeypoints :
-                                 null) ||
-          defaultConfig.trackerParams.minNumberOfKeypoints,
-    }
+    maxTracks: defaultConfig.maxTracks,
+    maxAge: defaultConfig.maxAge,
+    minSimilarity: defaultConfig.minSimilarity,
   };
+
+  if (userConfig.maxTracks != null) {
+    mergedConfig.maxTracks = userConfig.maxTracks;
+  }
+  if (userConfig.maxAge != null) {
+    mergedConfig.maxAge = userConfig.maxAge;
+  }
+  if (userConfig.minSimilarity != null) {
+    mergedConfig.minSimilarity = userConfig.minSimilarity;
+  }
+
+  return mergedConfig;
+}
+
+export function mergeKeypointTrackerConfig(
+    defaultConfig: TrackerConfig, userConfig: TrackerConfig): TrackerConfig {
+  const mergedConfig = mergeBaseTrackerConfig(defaultConfig, userConfig);
+
+  mergedConfig.keypointTrackerParams = {
+    keypointConfidenceThreshold:
+        defaultConfig.keypointTrackerParams.keypointConfidenceThreshold,
+    keypointFalloff: defaultConfig.keypointTrackerParams.keypointFalloff,
+    minNumberOfKeypoints:
+        defaultConfig.keypointTrackerParams.minNumberOfKeypoints
+  };
+
+  if (userConfig.keypointTrackerParams != null) {
+    if (userConfig.keypointTrackerParams.keypointConfidenceThreshold != null) {
+      mergedConfig.keypointTrackerParams.keypointConfidenceThreshold =
+          userConfig.keypointTrackerParams.keypointConfidenceThreshold;
+    }
+    if (userConfig.keypointTrackerParams.keypointFalloff != null) {
+      mergedConfig.keypointTrackerParams.keypointFalloff =
+          userConfig.keypointTrackerParams.keypointFalloff;
+    }
+    if (userConfig.keypointTrackerParams.minNumberOfKeypoints != null) {
+      mergedConfig.keypointTrackerParams.minNumberOfKeypoints =
+          userConfig.keypointTrackerParams.minNumberOfKeypoints;
+    }
+  }
+
+  return mergedConfig;
+}
+
+export function mergeBoundingBoxTrackerConfig(
+    defaultConfig: TrackerConfig, userConfig: TrackerConfig): TrackerConfig {
+  const mergedConfig = mergeBaseTrackerConfig(defaultConfig, userConfig);
 
   return mergedConfig;
 }
