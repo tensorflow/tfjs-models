@@ -22,7 +22,7 @@ import {EstimationConfig, ModelConfig} from '../types';
  */
 export enum MoveNetTrackerType {
   Keypoint = 'keypoint',
-  BoundingBox = 'bounding_box'
+  BoundingBox = 'boundingBox'
 }
 
 /**

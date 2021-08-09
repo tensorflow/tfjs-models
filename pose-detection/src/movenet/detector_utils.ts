@@ -51,15 +51,14 @@ export function validateModelConfig(modelConfig: MoveNetModelConfig):
     }
     if (modelConfig.trackerType === MoveNetTrackerType.Keypoint) {
       if (config.trackerConfig != null) {
-        config.trackerConfig = mergeKeypointTrackerConfig(
-            DEFAULT_KEYPOINT_TRACKER_CONFIG, config.trackerConfig);
+        config.trackerConfig = mergeKeypointTrackerConfig(config.trackerConfig);
       } else {
         config.trackerConfig = DEFAULT_KEYPOINT_TRACKER_CONFIG;
       }
     } else if (modelConfig.trackerType === MoveNetTrackerType.BoundingBox) {
       if (config.trackerConfig != null) {
-        config.trackerConfig = mergeBoundingBoxTrackerConfig(
-            DEFAULT_BOUNDING_BOX_TRACKER_CONFIG, config.trackerConfig);
+        config.trackerConfig =
+            mergeBoundingBoxTrackerConfig(config.trackerConfig);
       } else {
         config.trackerConfig = DEFAULT_BOUNDING_BOX_TRACKER_CONFIG;
       }
@@ -101,17 +100,13 @@ function mergeBaseTrackerConfig(
   return mergedConfig;
 }
 
-export function mergeKeypointTrackerConfig(
-    defaultConfig: TrackerConfig, userConfig: TrackerConfig): TrackerConfig {
-  const mergedConfig = mergeBaseTrackerConfig(defaultConfig, userConfig);
+export function mergeKeypointTrackerConfig(userConfig: TrackerConfig):
+    TrackerConfig {
+  const mergedConfig =
+      mergeBaseTrackerConfig(DEFAULT_KEYPOINT_TRACKER_CONFIG, userConfig);
 
   mergedConfig.keypointTrackerParams = {
-    keypointConfidenceThreshold:
-        defaultConfig.keypointTrackerParams.keypointConfidenceThreshold,
-    keypointFalloff: defaultConfig.keypointTrackerParams.keypointFalloff,
-    minNumberOfKeypoints:
-        defaultConfig.keypointTrackerParams.minNumberOfKeypoints
-  };
+      ...DEFAULT_KEYPOINT_TRACKER_CONFIG.keypointTrackerParams};
 
   if (userConfig.keypointTrackerParams != null) {
     if (userConfig.keypointTrackerParams.keypointConfidenceThreshold != null) {
@@ -131,9 +126,10 @@ export function mergeKeypointTrackerConfig(
   return mergedConfig;
 }
 
-export function mergeBoundingBoxTrackerConfig(
-    defaultConfig: TrackerConfig, userConfig: TrackerConfig): TrackerConfig {
-  const mergedConfig = mergeBaseTrackerConfig(defaultConfig, userConfig);
+export function mergeBoundingBoxTrackerConfig(userConfig: TrackerConfig):
+    TrackerConfig {
+  const mergedConfig =
+      mergeBaseTrackerConfig(DEFAULT_BOUNDING_BOX_TRACKER_CONFIG, userConfig);
 
   return mergedConfig;
 }
