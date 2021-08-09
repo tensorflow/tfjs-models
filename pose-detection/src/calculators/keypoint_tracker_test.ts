@@ -24,7 +24,7 @@ describe('Keypoint tracker', () => {
       maxTracks: 4,
       maxAge: 1000,  // Unit: milliseconds.
       minSimilarity: 0.5,
-      trackerParams: {
+      keypointTrackerParams: {
         keypointConfidenceThreshold: 0.2,
         keypointFalloff: [0.1, 0.1, 0.1, 0.1],
         minNumberOfKeypoints: 2
@@ -57,7 +57,7 @@ describe('Keypoint tracker', () => {
     const oks = kptTracker['oks'](pose, track);
 
     const boxArea = (0.8 - 0.2) * (0.8 - 0.2);
-    const x = 2*trackerConfig.trackerParams.keypointFalloff[3];
+    const x = 2*trackerConfig.keypointTrackerParams.keypointFalloff[3];
     const d = 0.1;
     const expectedOks =
         (1 + 1 + Math.exp(-1*d**2/(2*boxArea*x**2))) / 3;
@@ -100,7 +100,7 @@ describe('Keypoint tracker', () => {
     expect(area).toBeCloseTo(expectedArea, 6);
   });
 
-  it('Apply tracker', () => {
+  it('Apply keypoint tracker', () => {
     // Timestamp: 0. Pose becomes the only track.
     const kptTracker = new KeypointTracker(trackerConfig);
     let tracks: Track[];

@@ -32,10 +32,10 @@ export class KeypointTracker extends Tracker {
 
   constructor(config: TrackerConfig) {
     super(config);
-    //TODO(ronnyvotel): validate.
-    this.keypointThreshold = config.trackerParams.keypointConfidenceThreshold;
-    this.keypointFalloff = config.trackerParams.keypointFalloff;
-    this.minNumKeyoints = config.trackerParams.minNumberOfKeypoints;
+    this.keypointThreshold =
+        config.keypointTrackerParams.keypointConfidenceThreshold;
+    this.keypointFalloff = config.keypointTrackerParams.keypointFalloff;
+    this.minNumKeyoints = config.keypointTrackerParams.minNumberOfKeypoints;
   }
 
   /**

@@ -118,13 +118,11 @@ export abstract class Tracker {
       }
       if (maxTrackIndex >= 0) {
         // Link the detection with the highest scoring track.
-        this.tracks[maxTrackIndex].lastTimestamp = timestamp;
-        // Make sure to copy the Keypoint objects so they can't be modified
-        // anymore.
-        this.tracks[maxTrackIndex].keypoints =
-            [...poses[detectionIndex].keypoints].map(
-                keypoint => ({...keypoint}));
-        poses[detectionIndex].id = this.tracks[maxTrackIndex].id;
+        let linkedTrack = this.tracks[maxTrackIndex];
+        linkedTrack = Object.assign(
+          linkedTrack,
+          this.createTrack(poses[detectionIndex], timestamp, linkedTrack.id));
+        poses[detectionIndex].id = linkedTrack.id;
         const index = unmatchedTrackIndices.indexOf(maxTrackIndex);
         unmatchedTrackIndices.splice(index, 1);
       } else {
@@ -134,17 +132,9 @@ export abstract class Tracker {
 
     // Spawn new tracks for all unmatched detections.
     for (const detectionIndex of unmatchedDetectionIndices) {
-      const newID = this.nextTrackID();
-      const newTrack: Track = {
-        id: newID,
-        lastTimestamp: timestamp,
-        // Make sure to copy the Keypoint objects so they can't be modified
-        // anymore.
-        keypoints: [...poses[detectionIndex].keypoints].map(
-            keypoint => ({...keypoint}))
-      };
+      const newTrack = this.createTrack(poses[detectionIndex], timestamp);
       this.tracks.push(newTrack);
-      poses[detectionIndex].id = newID;
+      poses[detectionIndex].id = newTrack.id;
     }
   }
 
@@ -163,6 +153,26 @@ export abstract class Tracker {
     // `maxTracks` tracks.
     this.tracks.sort((ta, tb) => tb.lastTimestamp - ta.lastTimestamp);
     this.tracks = this.tracks.slice(0, this.maxTracks);
+  }
+
+  /**
+   * Creates a track from information in a pose.
+   * @param pose A `Pose`.
+   * @param timestamp The current timestamp in microseconds.
+   * @param trackID The id to assign to the new track. If not provided,
+   * will assign the next available id.
+   * @returns A `Track`.
+   */
+  createTrack(pose: Pose, timestamp: number, trackID?: number): Track {
+    const track: Track = {
+      id: trackID || this.nextTrackID(),
+      lastTimestamp: timestamp,
+      keypoints: [...pose.keypoints].map(keypoint => ({...keypoint}))
+    }
+    if (pose.box !== undefined) {
+        track.box = {...pose.box};
+    }
+    return track;
   }
 
   /**
