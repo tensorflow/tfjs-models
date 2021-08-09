@@ -15,6 +15,7 @@
  * =============================================================================
  */
 
+import {TrackerConfig} from '../calculators/interfaces/config_interfaces';
 import {MOVENET_CONFIG, MOVENET_ESTIMATION_CONFIG, VALID_MODELS} from './constants';
 import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
 
@@ -53,38 +54,28 @@ export function validateEstimationConfig(
   return config;
 }
 
-function isObject(item: unknown) {
-  return (item != null && typeof item === 'object' && !Array.isArray(item));
-}
+export function mergeTrackerConfigs(
+    defaultConfig: TrackerConfig, userConfig: TrackerConfig): TrackerConfig {
+  const mergedConfig: TrackerConfig = {
+    maxTracks: userConfig.maxTracks || defaultConfig.maxTracks,
+    maxAge: userConfig.maxAge || defaultConfig.maxAge,
+    minSimilarity: userConfig.minSimilarity || defaultConfig.minSimilarity,
+    trackerParams: {
+      keypointConfidenceThreshold:
+          (userConfig.trackerParams ?
+               userConfig.trackerParams.keypointConfidenceThreshold :
+               null) ||
+          defaultConfig.trackerParams.keypointConfidenceThreshold,
+      keypointFalloff:
+          (userConfig.trackerParams ? userConfig.trackerParams.keypointFalloff :
+                                      null) ||
+          defaultConfig.trackerParams.keypointFalloff,
+      minNumberOfKeypoints: (userConfig.trackerParams ?
+                                 userConfig.trackerParams.minNumberOfKeypoints :
+                                 null) ||
+          defaultConfig.trackerParams.minNumberOfKeypoints,
+    }
+  };
 
-/**
- * Merges two objects that may contain nested objects. Outputs a copy, so does
- * not modify the inputs.
- *
- * Solution taken from:
- * https://stackoverflow.com/questions/27936772/how-to-deep-merge-instead-of-shallow-merge
- *
- * @param target The object to merge into.
- * @param source The object to merge from.
- * @return A copy of `target` with all the properties of `source` merged into
- * it.
- */
-export function mergeDeep(
-    target: {[name: string]: unknown},
-    source: {[name: string]: unknown}): {[name: string]: unknown} {
-  const output = Object.assign({}, target);
-  if (isObject(target) && isObject(source)) {
-    Object.keys(source).forEach(key => {
-      if (isObject(source[key])) {
-        if (!(key in target)) {
-          Object.assign(output, {[key]: source[key]});
-        } else {
-          output[key] = mergeDeep(target[key] as {}, source[key] as {});
-        }
-      } else {
-        Object.assign(output, {[key]: source[key]});
-      }
-    });
-  }
-  return output;
+  return mergedConfig;
 }

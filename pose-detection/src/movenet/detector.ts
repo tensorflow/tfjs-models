@@ -21,7 +21,6 @@ import * as tf from '@tensorflow/tfjs-core';
 import {MILLISECOND_TO_MICRO_SECONDS, SECOND_TO_MICRO_SECONDS} from '../calculators/constants';
 import {getImageSize, toImageTensor} from '../calculators/image_utils';
 import {ImageSize} from '../calculators/interfaces/common_interfaces';
-import {TrackerConfig} from '../calculators/interfaces/config_interfaces';
 import {BoundingBox} from '../calculators/interfaces/shape_interfaces';
 import {isVideo} from '../calculators/is_video';
 import {KeypointTracker} from '../calculators/keypoint_tracker';
@@ -34,7 +33,7 @@ import {getKeypointIndexByName} from '../util';
 
 import {CROP_FILTER_ALPHA, DEFAULT_MIN_POSE_SCORE, DEFAULT_TRACKER_CONFIG, KEYPOINT_FILTER_CONFIG, MIN_CROP_KEYPOINT_SCORE, MOVENET_CONFIG, MOVENET_ESTIMATION_CONFIG, MOVENET_MULTIPOSE_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_URL, MULTIPOSE, MULTIPOSE_BOX_IDX, MULTIPOSE_BOX_SCORE_IDX, MULTIPOSE_INSTANCE_SIZE, NUM_KEYPOINT_VALUES, NUM_KEYPOINTS, SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER} from './constants';
 import {determineNextCropRegion, initCropRegion} from './crop_utils';
-import {mergeDeep, validateEstimationConfig, validateModelConfig} from './detector_utils';
+import {mergeTrackerConfigs, validateEstimationConfig, validateModelConfig} from './detector_utils';
 import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
 
 /**
@@ -84,11 +83,8 @@ class MoveNetDetector implements PoseDetector {
     this.enableTracking = config.enableTracking;
     if (this.multiPoseModel && this.enableTracking) {
       if (config.trackerConfig) {
-        // To make sure we don't modify the default config, mergeDeep returns a
-        // copy of the default config merged with the user specified config.
         const trackerConfig =
-            mergeDeep(DEFAULT_TRACKER_CONFIG, config.trackerConfig) as
-            TrackerConfig;
+            mergeTrackerConfigs(DEFAULT_TRACKER_CONFIG, config.trackerConfig);
         this.keypointTracker = new KeypointTracker(trackerConfig);
       } else {
         this.keypointTracker = new KeypointTracker(DEFAULT_TRACKER_CONFIG);

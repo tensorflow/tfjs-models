@@ -70,7 +70,6 @@ export interface KeypointsSmoothingConfig {
   oneEuroFilter?: OneEuroFilterConfig;
 }
 export interface TrackerConfig {
-  [name: string]: unknown;  // Keep the linter happy in MoveNet's mergeDeep.
   maxTracks: number;  // The maximum number of tracks that an internal tracker
                       // will maintain. Note that this number should be set
                       // larger than EstimationConfig.maxPoses. How to set this
