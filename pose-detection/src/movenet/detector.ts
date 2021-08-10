@@ -18,6 +18,7 @@
 import * as tfc from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
+import {BoundingBoxTracker} from '../calculators/bounding_box_tracker';
 import {MILLISECOND_TO_MICRO_SECONDS, SECOND_TO_MICRO_SECONDS} from '../calculators/constants';
 import {getImageSize, toImageTensor} from '../calculators/image_utils';
 import {ImageSize} from '../calculators/interfaces/common_interfaces';
@@ -26,6 +27,7 @@ import {isVideo} from '../calculators/is_video';
 import {KeypointTracker} from '../calculators/keypoint_tracker';
 import {KeypointsOneEuroFilter} from '../calculators/keypoints_one_euro_filter';
 import {LowPassFilter} from '../calculators/low_pass_filter';
+import {Tracker} from '../calculators/tracker';
 import {COCO_KEYPOINTS} from '../constants';
 import {PoseDetector} from '../pose_detector';
 import {InputResolution, Pose, PoseDetectorInput, SupportedModels} from '../types';
@@ -34,7 +36,7 @@ import {getKeypointIndexByName} from '../util';
 import {CROP_FILTER_ALPHA, DEFAULT_MIN_POSE_SCORE, KEYPOINT_FILTER_CONFIG, MIN_CROP_KEYPOINT_SCORE, MOVENET_CONFIG, MOVENET_ESTIMATION_CONFIG, MOVENET_MULTIPOSE_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_URL, MULTIPOSE, MULTIPOSE_BOX_IDX, MULTIPOSE_BOX_SCORE_IDX, MULTIPOSE_INSTANCE_SIZE, NUM_KEYPOINT_VALUES, NUM_KEYPOINTS, SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER} from './constants';
 import {determineNextCropRegion, initCropRegion} from './crop_utils';
 import {validateEstimationConfig, validateModelConfig} from './detector_utils';
-import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
+import {MoveNetEstimationConfig, MoveNetModelConfig, MoveNetTrackerType} from './types';
 
 /**
  * MoveNet detector class.
@@ -49,17 +51,18 @@ class MoveNetDetector implements PoseDetector {
   private readonly minPoseScore: number;
 
   // Global states for single person model.
-  private readonly keypointsFilter =
-      new KeypointsOneEuroFilter(KEYPOINT_FILTER_CONFIG);
-  private readonly cropRegionFilterYMin = new LowPassFilter(CROP_FILTER_ALPHA);
-  private readonly cropRegionFilterXMin = new LowPassFilter(CROP_FILTER_ALPHA);
-  private readonly cropRegionFilterYMax = new LowPassFilter(CROP_FILTER_ALPHA);
-  private readonly cropRegionFilterXMax = new LowPassFilter(CROP_FILTER_ALPHA);
+  private readonly keypointFilter: KeypointsOneEuroFilter;
+  private readonly cropRegionFilterYMin: LowPassFilter;
+  private readonly cropRegionFilterXMin: LowPassFilter;
+  private readonly cropRegionFilterYMax: LowPassFilter;
+  private readonly cropRegionFilterXMax: LowPassFilter;
   private cropRegion: BoundingBox;
 
   // Global states for multi-person model.
   private readonly enableTracking: boolean;
-  private readonly keypointTracker: KeypointTracker;
+  private readonly tracker: Tracker;
+  // Key is the track ID.
+  private readonly keypointFilterMap: Map<number, KeypointsOneEuroFilter>;
 
   constructor(
       private readonly moveNetModel: tfc.GraphModel,
@@ -74,6 +77,13 @@ class MoveNetDetector implements PoseDetector {
       this.modelInputResolution.height = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
     }
     this.multiPoseModel = config.modelType === MULTIPOSE;
+    if (!this.multiPoseModel) {
+      this.keypointFilter = new KeypointsOneEuroFilter(KEYPOINT_FILTER_CONFIG);
+      this.cropRegionFilterYMin = new LowPassFilter(CROP_FILTER_ALPHA);
+      this.cropRegionFilterXMin = new LowPassFilter(CROP_FILTER_ALPHA);
+      this.cropRegionFilterYMax = new LowPassFilter(CROP_FILTER_ALPHA);
+      this.cropRegionFilterXMax = new LowPassFilter(CROP_FILTER_ALPHA);
+    }
     this.enableSmoothing = config.enableSmoothing;
     if (config.minPoseScore) {
       this.minPoseScore = config.minPoseScore;
@@ -81,8 +91,15 @@ class MoveNetDetector implements PoseDetector {
       this.minPoseScore = DEFAULT_MIN_POSE_SCORE;
     }
     this.enableTracking = config.enableTracking;
-    if (this.enableTracking === true) {
-      this.keypointTracker = new KeypointTracker(config.trackerConfig);
+    if (this.multiPoseModel && this.enableTracking) {
+      if (config.trackerType === MoveNetTrackerType.Keypoint) {
+        this.tracker = new KeypointTracker(config.trackerConfig);
+      } else if (config.trackerType === MoveNetTrackerType.BoundingBox) {
+        this.tracker = new BoundingBoxTracker(config.trackerConfig);
+      }
+      if (this.enableSmoothing) {
+        this.keypointFilterMap = new Map();
+      }
     }
   }
 
@@ -323,7 +340,7 @@ class MoveNetDetector implements PoseDetector {
     // Apply the sequential filter before estimating the cropping area to make
     // it more stable.
     if (timestamp != null && this.enableSmoothing) {
-      pose.keypoints = this.keypointsFilter.apply(
+      pose.keypoints = this.keypointFilter.apply(
           pose.keypoints, timestamp, 1 /* objectScale */);
     }
 
@@ -403,7 +420,27 @@ class MoveNetDetector implements PoseDetector {
     }
 
     if (this.enableTracking) {
-      this.keypointTracker.apply(poses, timestamp);
+      this.tracker.apply(poses, timestamp);
+
+      if (this.enableSmoothing) {
+        for (let i = 0; i < poses.length; ++i) {
+          if (!this.keypointFilterMap.has(poses[i].id)) {
+            this.keypointFilterMap.set(
+                poses[i].id,
+                new KeypointsOneEuroFilter(KEYPOINT_FILTER_CONFIG));
+          }
+          poses[i].keypoints =
+              this.keypointFilterMap.get(poses[i].id)
+                  .apply(poses[i].keypoints, timestamp, 1 /* objectScale */);
+        }
+
+        const trackIDs = this.tracker.getTrackIDs();
+        this.keypointFilterMap.forEach((_, trackID) => {
+          if (!trackIDs.has(trackID)) {
+            this.keypointFilterMap.delete(trackID);
+          }
+        });
+      }
     }
 
     return poses;
@@ -442,7 +479,7 @@ class MoveNetDetector implements PoseDetector {
   }
 
   resetFilters() {
-    this.keypointsFilter.reset();
+    this.keypointFilter.reset();
     this.cropRegionFilterYMin.reset();
     this.cropRegionFilterXMin.reset();
     this.cropRegionFilterYMax.reset();

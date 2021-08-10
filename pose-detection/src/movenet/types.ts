@@ -29,12 +29,13 @@ export enum MoveNetTrackerType {
  * MoveNet model loading config.
  *
  * `enableSmoothing`: Optional. A boolean indicating whether to use temporal
- * filter to smooth the predicted keypoints. Defaults to True. The temporal
- * filter relies on the currentTime field of the HTMLVideoElement. You can
- * override this timestamp by passing in your own timestamp (in milliseconds)
- * as the third parameter in `estimatePoses`. This is useful when the input is
- * a tensor, which doesn't have the currentTime field. Or in testing, to
- * simulate different FPS.
+ * filter to smooth the predicted keypoints. Defaults to True. To use smoothing
+ * with multi-pose detection, tracking needs to be enabled. The temporal filter
+ * relies on the currentTime field of the HTMLVideoElement. You can override
+ * this timestamp by passing in your own timestamp (in milliseconds) as the
+ * third parameter in `estimatePoses`. This is useful when the input is a
+ * tensor, which doesn't have the currentTime field. Or in testing, to simulate
+ * different FPS.
  *
  * `modelType`: Optional. The type of MoveNet model to load, Lighting or
  * Thunder. Defaults to Lightning. Lightning is a lower capacity model that can
