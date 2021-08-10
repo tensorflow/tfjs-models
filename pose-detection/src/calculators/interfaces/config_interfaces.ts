@@ -75,8 +75,8 @@ export interface TrackerConfig {
                       // larger than EstimationConfig.maxPoses. How to set this
                       // number requires experimentation with a given detector,
                       // but a good starting place is about 3 * maxPoses.
-  maxAge: number;  // The maximum duration of time (in milliseconds) that a
-                   // track can exist without being linked with a new detection 
+  maxAge: number;     // The maximum duration of time (in milliseconds) that a
+                   // track can exist without being linked with a new detection
                    // before it is removed. Set this value large if you would
                    // like to recover people that are not detected for long
                    // stretches of time (at the cost of potential false
@@ -95,8 +95,8 @@ export interface KeypointTrackerConfig {
                                         // both the new detected keypoint and
                                         // the corresponding track keypoint have
                                         // confidences above this threshold.
-  
-  keypointFalloff: number[];  // Per-keypoint falloff in OKS calculation.
+
+  keypointFalloff: number[];     // Per-keypoint falloff in OKS calculation.
   minNumberOfKeypoints: number;  // The minimum number of keypoints that are
                                  // necessary for computing OKS. If the number
                                  // of confident keypoints (between a pose and
