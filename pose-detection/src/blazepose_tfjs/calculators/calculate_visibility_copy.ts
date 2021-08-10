@@ -15,7 +15,6 @@
  * =============================================================================
  */
 
-import {Rect} from '../../calculators/interfaces/shape_interfaces';
 import {Keypoint} from '../../types';
 
 /**
