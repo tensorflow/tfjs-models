@@ -24,16 +24,20 @@ import {Keypoint} from '../../types';
  * @param landmarks A normalized Landmark list representing landmarks in a
  *     normalized rectangle.
  * @param inputRect A normalized rectangle.
+ * @param config Config object has one field ignoreRotation, default to false.
  */
 // ref:
 // https://github.com/google/mediapipe/blob/master/mediapipe/calculators/util/landmark_projection_calculator.cc
 export function calculateLandmarkProjection(
-    landmarks: Keypoint[], inputRect: Rect) {
+    landmarks: Keypoint[], inputRect: Rect,
+    config: {ignoreRotation: boolean} = {
+      ignoreRotation: false
+    }) {
   const outputLandmarks = [];
   for (const landmark of landmarks) {
     const x = landmark.x - 0.5;
     const y = landmark.y - 0.5;
-    const angle = inputRect.rotation;
+    const angle = config.ignoreRotation ? 0 : inputRect.rotation;
     let newX = Math.cos(angle) * x - Math.sin(angle) * y;
     let newY = Math.sin(angle) * x + Math.cos(angle) * y;
 

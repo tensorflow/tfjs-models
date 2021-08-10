@@ -440,6 +440,7 @@ class BlazePoseTfjsDetector implements PoseDetector {
     const projectedWorldLandmarks = calculateWorldLandmarkProjection(
         worldLandmarksWithVisibility, poseRect);
 
+    // Take only actual world landmarks.
     const actualWorldLandmarks =
         projectedWorldLandmarks.slice(0, constants.BLAZEPOSE_NUM_KEYPOINTS);
 
