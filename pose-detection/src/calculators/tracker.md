@@ -2,7 +2,7 @@
 
 The purpose of *detection* is to locate objects in a frame; but there is no
 association of objects from one frame to the next. To understand whether object
-$k$ in frame $t$ corresponds to a detected object in frame $t-1$, we must employ
+*k* in frame *t* corresponds to a detected object in frame *t-1*, we must employ
 a *tracker*.
 
 Why would we want a tracker? Well, in a multi-person detection setting, it is
@@ -19,9 +19,9 @@ ones).
 
 To adequately match incoming detections with preexisting tracks, we must have a
 measure that scores the similarity:
-$$
-\mathrm{score} = \mathrm{similarity\_fn}(\mathrm{detection}, \mathrm{track}).
-$$
+
+<img src="https://latex.codecogs.com/png.image?\dpi{300}&space;\mathrm{score}&space;=&space;\mathrm{similarity\_fn}(\mathrm{detection},&space;\mathrm{track})" title="\mathrm{score} = \mathrm{similarity\_fn}(\mathrm{detection}, \mathrm{track})" width="300"/>
+
 Once we have a 2d matrix that contains pairwise scores from all detections in
 the current frame against all stored tracks in the tracker, we can solve an
 optimization procedure (a *matching algorithm*) to associate specific detections
