@@ -77,11 +77,7 @@ export abstract class Tracker {
    * Returns a Set of active track IDs.
    */
   getTrackIDs(): Set<number> {
-    const trackIDs: Set<number> = new Set();
-    for (const track of this.tracks) {
-      trackIDs.add(track.id);
-    }
-    return trackIDs;
+    return new Set(this.tracks.map(track => track.id));
   }
 
   /**

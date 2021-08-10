@@ -51,18 +51,18 @@ class MoveNetDetector implements PoseDetector {
   private readonly minPoseScore: number;
 
   // Global states for single person model.
-  private readonly keypointFilter =
-      new KeypointsOneEuroFilter(KEYPOINT_FILTER_CONFIG);
-  private readonly cropRegionFilterYMin = new LowPassFilter(CROP_FILTER_ALPHA);
-  private readonly cropRegionFilterXMin = new LowPassFilter(CROP_FILTER_ALPHA);
-  private readonly cropRegionFilterYMax = new LowPassFilter(CROP_FILTER_ALPHA);
-  private readonly cropRegionFilterXMax = new LowPassFilter(CROP_FILTER_ALPHA);
+  private readonly keypointFilter;
+  private readonly cropRegionFilterYMin;
+  private readonly cropRegionFilterXMin;
+  private readonly cropRegionFilterYMax;
+  private readonly cropRegionFilterXMax;
   private cropRegion: BoundingBox;
 
   // Global states for multi-person model.
   private readonly enableTracking: boolean;
   private readonly tracker: Tracker;
-  private readonly keypointFilters: Map<number, KeypointsOneEuroFilter>;
+  // Key is the track ID.
+  private readonly keypointFilterMap: Map<number, KeypointsOneEuroFilter>;
 
   constructor(
       private readonly moveNetModel: tfc.GraphModel,
@@ -77,6 +77,13 @@ class MoveNetDetector implements PoseDetector {
       this.modelInputResolution.height = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
     }
     this.multiPoseModel = config.modelType === MULTIPOSE;
+    if (!this.multiPoseModel) {
+      this.keypointFilter = new KeypointsOneEuroFilter(KEYPOINT_FILTER_CONFIG);
+      this.cropRegionFilterYMin = new LowPassFilter(CROP_FILTER_ALPHA);
+      this.cropRegionFilterXMin = new LowPassFilter(CROP_FILTER_ALPHA);
+      this.cropRegionFilterYMax = new LowPassFilter(CROP_FILTER_ALPHA);
+      this.cropRegionFilterXMax = new LowPassFilter(CROP_FILTER_ALPHA);
+    }
     this.enableSmoothing = config.enableSmoothing;
     if (config.minPoseScore) {
       this.minPoseScore = config.minPoseScore;
@@ -84,14 +91,14 @@ class MoveNetDetector implements PoseDetector {
       this.minPoseScore = DEFAULT_MIN_POSE_SCORE;
     }
     this.enableTracking = config.enableTracking;
-    if (this.multiPoseModel === true && this.enableTracking === true) {
+    if (this.multiPoseModel && this.enableTracking) {
       if (config.trackerType === MoveNetTrackerType.Keypoint) {
         this.tracker = new KeypointTracker(config.trackerConfig);
       } else if (config.trackerType === MoveNetTrackerType.BoundingBox) {
         this.tracker = new BoundingBoxTracker(config.trackerConfig);
       }
-      if (this.enableSmoothing === true) {
-        this.keypointFilters = new Map();
+      if (this.enableSmoothing) {
+        this.keypointFilterMap = new Map();
       }
     }
   }
@@ -417,20 +424,20 @@ class MoveNetDetector implements PoseDetector {
 
       if (this.enableSmoothing) {
         for (let i = 0; i < poses.length; ++i) {
-          if (!this.keypointFilters.has(poses[i].id)) {
-            this.keypointFilters.set(
+          if (!this.keypointFilterMap.has(poses[i].id)) {
+            this.keypointFilterMap.set(
                 poses[i].id,
                 new KeypointsOneEuroFilter(KEYPOINT_FILTER_CONFIG));
           }
           poses[i].keypoints =
-              this.keypointFilters.get(poses[i].id)
+              this.keypointFilterMap.get(poses[i].id)
                   .apply(poses[i].keypoints, timestamp, 1 /* objectScale */);
         }
 
         const trackIDs = this.tracker.getTrackIDs();
-        this.keypointFilters.forEach((_, filterID) => {
-          if (!trackIDs.has(filterID)) {
-            this.keypointFilters.delete(filterID);
+        this.keypointFilterMap.forEach((_, trackID) => {
+          if (!trackIDs.has(trackID)) {
+            this.keypointFilterMap.delete(trackID);
           }
         });
       }
