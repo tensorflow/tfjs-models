@@ -56,8 +56,8 @@ export enum MoveNetTrackerType {
  * will be tracked across frames. If true, each pose will have an ID that
  * uniquely identifies a person. Only used with multi-pose models.
  *
- * `trackerType`: Optional. The type of tracker to use. Options are 'keypoint'
- * and 'boundingBox'. Defaults to 'keypoint'.
+ * `trackerType`: Optional. A `MoveNetTrackerType` indicating which type of
+ * tracker to use. Defaults to keypoint tracking.
  *
  * `trackerConfig`: Optional. A `TrackerConfig` object that specifies the
  * configuration to use for the tracker. For properties that are not specified,
