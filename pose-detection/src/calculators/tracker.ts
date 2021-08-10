@@ -74,6 +74,17 @@ export abstract class Tracker {
   }
 
   /**
+   * Returns a Set of active track IDs.
+   */
+  getTrackIDs(): Set<number> {
+    const trackIDs: Set<number> = new Set();
+    for (const track of this.tracks) {
+      trackIDs.add(track.id);
+    }
+    return trackIDs;
+  }
+
+  /**
    * Filters tracks based on their age.
    * @param timestamp The current timestamp in microseconds.
    */
@@ -120,8 +131,8 @@ export abstract class Tracker {
         // Link the detection with the highest scoring track.
         let linkedTrack = this.tracks[maxTrackIndex];
         linkedTrack = Object.assign(
-          linkedTrack,
-          this.createTrack(poses[detectionIndex], timestamp, linkedTrack.id));
+            linkedTrack,
+            this.createTrack(poses[detectionIndex], timestamp, linkedTrack.id));
         poses[detectionIndex].id = linkedTrack.id;
         const index = unmatchedTrackIndices.indexOf(maxTrackIndex);
         unmatchedTrackIndices.splice(index, 1);
@@ -170,7 +181,7 @@ export abstract class Tracker {
       keypoints: [...pose.keypoints].map(keypoint => ({...keypoint}))
     };
     if (pose.box !== undefined) {
-        track.box = {...pose.box};
+      track.box = {...pose.box};
     }
     return track;
   }
