@@ -85,9 +85,9 @@ class MoveNetDetector implements PoseDetector {
     }
     this.enableTracking = config.enableTracking;
     if (this.multiPoseModel === true && this.enableTracking === true) {
-      if (config.trackerType == MoveNetTrackerType.Keypoint) {
+      if (config.trackerType === MoveNetTrackerType.Keypoint) {
         this.tracker = new KeypointTracker(config.trackerConfig);
-      } else if (config.trackerType == MoveNetTrackerType.BoundingBox) {
+      } else if (config.trackerType === MoveNetTrackerType.BoundingBox) {
         this.tracker = new BoundingBoxTracker(config.trackerConfig);
       }
       if (this.enableSmoothing === true) {
