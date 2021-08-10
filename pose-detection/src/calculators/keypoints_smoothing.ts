@@ -67,7 +67,7 @@ export class KeypointsSmoothingFilter {
     }
 
     const objectScale =
-        objectScaleROI != null ? getObjectScale(objectScaleROI) : 1;
+        objectScaleROI != null ? getObjectScale(objectScaleROI, imageSize) : 1;
 
     const scaledKeypoints = normalized ?
         normalizedKeypointsToKeypoints(keypoints, imageSize) :

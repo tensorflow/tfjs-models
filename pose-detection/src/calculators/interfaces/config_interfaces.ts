@@ -64,6 +64,11 @@ export interface OneEuroFilterConfig {
       number;  // If calculated object scale is less than given value smoothing
   // will be disabled and keypoints will be returned as is. This
   // value helps filter adjust to the distance to camera.
+  disableValueScaling?:
+      boolean;  // Disable value scaling based on object size and use `1.0`
+                // instead. Value scale is calculated as inverse value of object
+                // size. Object size is calculated as maximum side of
+                // rectangular bounding box of the object in XY plane.
 }
 export interface KeypointsSmoothingConfig {
   velocityFilter?: VelocityFilterConfig;
