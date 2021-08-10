@@ -51,11 +51,11 @@ class MoveNetDetector implements PoseDetector {
   private readonly minPoseScore: number;
 
   // Global states for single person model.
-  private readonly keypointFilter;
-  private readonly cropRegionFilterYMin;
-  private readonly cropRegionFilterXMin;
-  private readonly cropRegionFilterYMax;
-  private readonly cropRegionFilterXMax;
+  private readonly keypointFilter: KeypointsOneEuroFilter;
+  private readonly cropRegionFilterYMin: LowPassFilter;
+  private readonly cropRegionFilterXMin: LowPassFilter;
+  private readonly cropRegionFilterYMax: LowPassFilter;
+  private readonly cropRegionFilterXMax: LowPassFilter;
   private cropRegion: BoundingBox;
 
   // Global states for multi-person model.
