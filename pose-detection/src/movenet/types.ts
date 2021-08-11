@@ -52,6 +52,13 @@ export enum MoveNetTrackerType {
  * `minPoseScore`: Optional. The minimum confidence score a pose needs to have
  * to be considered a valid pose detection.
  *
+ * `multiPoseResolution`: Optional. The target resolution to use as the input to
+ * the multi-pose model. Must be a multiple of 32 and defaults to 320. The input
+ * image will be resized so that its maximum dimension will be this resolution,
+ * while maintaining the input image aspect ratio. As an example: with 320 as
+ * the resolution and a 640x480 input image, the model will resize the input to
+ * 320x240. A 720x1280 image will be resized to 180x320.
+ *
  * `enableTracking': Optional. A boolean indicating whether detected persons
  * will be tracked across frames. If true, each pose will have an ID that
  * uniquely identifies a person. Only used with multi-pose models.
@@ -68,6 +75,7 @@ export interface MoveNetModelConfig extends ModelConfig {
   modelType?: string;
   modelUrl?: string;
   minPoseScore?: number;
+  multiPoseResolution?: number;
   enableTracking?: boolean;
   trackerType?: MoveNetTrackerType;
   trackerConfig?: TrackerConfig;

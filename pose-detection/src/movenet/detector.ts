@@ -59,6 +59,7 @@ class MoveNetDetector implements PoseDetector {
   private cropRegion: BoundingBox;
 
   // Global states for multi-person model.
+  private readonly multiPoseResolution: number;
   private readonly enableTracking: boolean;
   private readonly tracker: Tracker;
   // Key is the track ID.
@@ -89,6 +90,11 @@ class MoveNetDetector implements PoseDetector {
       this.minPoseScore = config.minPoseScore;
     } else {
       this.minPoseScore = DEFAULT_MIN_POSE_SCORE;
+    }
+    if (config.multiPoseResolution) {
+      this.multiPoseResolution = config.multiPoseResolution;
+    } else {
+      this.multiPoseResolution = MOVENET_MULTIPOSE_RESOLUTION;
     }
     this.enableTracking = config.enableTracking;
     if (this.multiPoseModel && this.enableTracking) {
@@ -375,9 +381,9 @@ class MoveNetDetector implements PoseDetector {
     let paddedHeight: number;
     const dimensionDivisor = 32;  // Dimensions need to be divisible by 32.
     if (imageSize.width > imageSize.height) {
-      resizedWidth = MOVENET_MULTIPOSE_RESOLUTION;
+      resizedWidth = this.multiPoseResolution;
       resizedHeight = Math.round(
-          MOVENET_MULTIPOSE_RESOLUTION * imageSize.height / imageSize.width);
+          this.multiPoseResolution * imageSize.height / imageSize.width);
       resizedImage =
           tf.image.resizeBilinear(imageTensor4D, [resizedHeight, resizedWidth]);
 
@@ -389,8 +395,8 @@ class MoveNetDetector implements PoseDetector {
           [[0, 0], [0, paddedHeight - resizedHeight], [0, 0], [0, 0]]);
     } else {
       resizedWidth = Math.round(
-          MOVENET_MULTIPOSE_RESOLUTION * imageSize.width / imageSize.height);
-      resizedHeight = MOVENET_MULTIPOSE_RESOLUTION;
+          this.multiPoseResolution * imageSize.width / imageSize.height);
+      resizedHeight = this.multiPoseResolution;
       resizedImage =
           tf.image.resizeBilinear(imageTensor4D, [resizedHeight, resizedWidth]);
 
