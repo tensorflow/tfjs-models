@@ -428,7 +428,8 @@ class BlazePoseTfjsDetector implements PoseDetector {
     // model.
     // PoseLandmarksByRoiCpu: TensorsToLandmarksCalculator.
     const worldLandmarks = await tensorsToLandmarks(
-        worldLandmarkTensor, constants.BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG);
+        worldLandmarkTensor,
+        constants.BLAZEPOSE_TENSORS_TO_WORLD_LANDMARKS_CONFIG);
 
     const worldLandmarksWithVisibility =
         calculateVisibilityCopy(landmarks, worldLandmarks, true);
@@ -553,7 +554,7 @@ class BlazePoseTfjsDetector implements PoseDetector {
       actualWorldLandmarksFiltered =
           this.worldLandmarksSmoothingFilterActual.apply(
               actualWorldLandmarks, this.timestamp, imageSize,
-              true /* normalized */, objectScaleROI);
+              false /* normalized */, objectScaleROI);
     }
 
     return {
