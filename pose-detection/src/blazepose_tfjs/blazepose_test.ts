@@ -24,7 +24,10 @@ import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
 import * as poseDetection from '../index';
 import {getXYPerFrame, KARMA_SERVER, loadImage, loadVideo} from '../test_util';
 
+// Measured in pixels
 const EPSILON_IMAGE = 10;
+// Measured in meters.
+const EPSILON_IMAGE_WORLD = 0.1;
 const EPSILON_VIDEO = 28;
 
 // ref:
@@ -36,6 +39,21 @@ const EXPECTED_LANDMARKS = [
   [278, 306], [721, 311], [274, 304], [713, 313], [283, 306], [520, 476],
   [467, 471], [612, 550], [358, 490], [701, 613], [349, 611], [709, 624],
   [363, 630], [730, 633], [303, 628]
+];
+const EXPECTED_WORLD_LANDMARKS = [
+  [-0.11, -0.59, -0.18], [-0.09, -0.63, -0.18], [-0.09, -0.63, -0.18],
+  [-0.09, -0.63, -0.18], [-0.11, -0.63, -0.16], [-0.11, -0.63, -0.16],
+  [-0.11, -0.63, -0.16], [0.02, -0.62, -0.16],  [-0.07, -0.63, -0.08],
+  [-0.08, -0.57, -0.17], [-0.1, -0.57, -0.15],  [0.17, -0.47, -0.11],
+  [-0.14, -0.5, -0.05],  [0.44, -0.46, -0.1],   [-0.39, -0.49, -0.05],
+  [0.65, -0.48, -0.16],  [-0.63, -0.5, -0.13],  [0.72, -0.49, -0.18],
+  [-0.69, -0.5, -0.14],  [0.71, -0.51, -0.22],  [-0.7, -0.52, -0.18],
+  [0.66, -0.49, -0.18],  [-0.64, -0.5, -0.15],  [0.11, 0.01, -0.02],
+  [-0.11, -0.01, 0.02],  [0.39, 0.22, -0.12],   [-0.44, 0.07, -0.11],
+  [0.7, 0.48, -0.05],    [-0.46, 0.44, -0.03],  [0.73, 0.51, -0.06],
+  [-0.46, 0.49, -0.03],  [0.78, 0.5, -0.16],    [-0.59, 0.51, -0.09],
+  [0., -0., -0.],        [0.05, -0.08, 0.05],   [0.08, 0.03, -0.13],
+  [-0.21, 0.2, 0.14],    [-0.28, -0.15, -0.03], [-0.07, 0.08, -0.03],
 ];
 
 describeWithFlags('BlazePose', ALL_ENVS, () => {
@@ -115,8 +133,11 @@ describeWithFlags('BlazePose static image ', BROWSER_ENVS, () => {
         {runtime: 'tfjs', maxPoses: 1, flipHorizontal: false} as
             poseDetection.BlazePoseTfjsEstimationConfig);
     const xy = result[0].keypoints.map((keypoint) => [keypoint.x, keypoint.y]);
-    const expected = EXPECTED_LANDMARKS;
-    expectArraysClose(xy, expected, EPSILON_IMAGE);
+    const xyz = result[0].keypoints3D.map(
+        (keypoint) => [keypoint.x, keypoint.y, keypoint.z]);
+
+    expectArraysClose(xy, EXPECTED_LANDMARKS, EPSILON_IMAGE);
+    expectArraysClose(xyz, EXPECTED_WORLD_LANDMARKS, EPSILON_IMAGE_WORLD);
 
     expect(tf.memory().numTensors).toEqual(beforeTensors);
 
