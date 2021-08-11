@@ -31,7 +31,7 @@ const EPSILON_IMAGE_WORLD = 0.07;
 // Measured in pixels.
 const EPSILON_VIDEO = 28;
 // Measured in meters.
-const EPSILON_VIDEO_WORLD = 0.06;
+const EPSILON_VIDEO_WORLD = 0.07;
 
 // ref:
 // https://github.com/google/mediapipe/blob/7c331ad58b2cca0dca468e342768900041d65adc/mediapipe/python/solutions/pose_test.py#L31-L51
