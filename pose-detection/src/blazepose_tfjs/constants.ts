@@ -97,6 +97,11 @@ export const BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG = {
   inputImageWidth: 256,
   inputImageHeight: 256
 };
+export const BLAZEPOSE_TENSORS_TO_WORLD_LANDMARKS_CONFIG = {
+  numLandmarks: 39,
+  inputImageWidth: 1,
+  inputImageHeight: 1
+};
 export const BLAZEPOSE_REFINE_LANDMARKS_FROM_HEATMAP_CONFIG = {
   kernelSize: 7,
   minConfidenceToRefine: 0.5
