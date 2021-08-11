@@ -24,11 +24,14 @@ import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
 import * as poseDetection from '../index';
 import {getXYPerFrame, KARMA_SERVER, loadImage, loadVideo} from '../test_util';
 
-// Measured in pixels
-const EPSILON_IMAGE = 10;
+// Measured in pixels.
+const EPSILON_IMAGE = 15;
 // Measured in meters.
-const EPSILON_IMAGE_WORLD = 0.1;
+const EPSILON_IMAGE_WORLD = 0.07;
+// Measured in pixels.
 const EPSILON_VIDEO = 28;
+// Measured in meters.
+const EPSILON_VIDEO_WORLD = 0.06;
 
 // ref:
 // https://github.com/google/mediapipe/blob/7c331ad58b2cca0dca468e342768900041d65adc/mediapipe/python/solutions/pose_test.py#L31-L51
@@ -52,8 +55,6 @@ const EXPECTED_WORLD_LANDMARKS = [
   [-0.11, -0.01, 0.02],  [0.39, 0.22, -0.12],   [-0.44, 0.07, -0.11],
   [0.7, 0.48, -0.05],    [-0.46, 0.44, -0.03],  [0.73, 0.51, -0.06],
   [-0.46, 0.49, -0.03],  [0.78, 0.5, -0.16],    [-0.59, 0.51, -0.09],
-  [0., -0., -0.],        [0.05, -0.08, 0.05],   [0.08, 0.03, -0.13],
-  [-0.21, 0.2, 0.14],    [-0.28, -0.15, -0.03], [-0.07, 0.08, -0.03],
 ];
 
 describeWithFlags('BlazePose', ALL_ENVS, () => {
@@ -151,6 +152,7 @@ describeWithFlags('BlazePose video ', BROWSER_ENVS, () => {
   let detector: poseDetection.PoseDetector;
   let timeout: number;
   let expected: number[][][];
+  let expected3D: number[][][];
 
   beforeAll(async () => {
     timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
@@ -159,6 +161,9 @@ describeWithFlags('BlazePose video ', BROWSER_ENVS, () => {
     expected = await fetch(`${KARMA_SERVER}/pose_squats.full.json`)
                    .then(response => response.json())
                    .then(result => getXYPerFrame(result));
+
+    expected3D = await fetch(`${KARMA_SERVER}/pose_squats_3d.full.json`)
+                     .then(response => response.json());
   });
 
   afterAll(() => {
@@ -172,12 +177,15 @@ describeWithFlags('BlazePose video ', BROWSER_ENVS, () => {
     detector = await poseDetection.createDetector(model, {runtime: 'tfjs'});
 
     const result: number[][][] = [];
+    const result3D: number[][][] = [];
 
     const callback = async(video: HTMLVideoElement, timestamp: number):
         Promise<poseDetection.Pose[]> => {
           const poses =
               await detector.estimatePoses(video, null /* config */, timestamp);
+          // BlazePose only returns single pose for now.
           result.push(poses[0].keypoints.map(kp => [kp.x, kp.y]));
+          result3D.push(poses[0].keypoints3D.map(kp => [kp.x, kp.y, kp.z]));
           return poses;
         };
 
@@ -190,6 +198,7 @@ describeWithFlags('BlazePose video ', BROWSER_ENVS, () => {
     await loadVideo('pose_squats.mp4', 5 /* fps */, callback, expected, model);
 
     expectArraysClose(result, expected, EPSILON_VIDEO);
+    expectArraysClose(result3D, expected3D, EPSILON_VIDEO_WORLD);
 
     detector.dispose();
   });
