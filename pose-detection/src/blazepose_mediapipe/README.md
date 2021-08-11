@@ -105,7 +105,7 @@ Please refer to the Pose API
 about the structure of the returned `poses`.
 
 ## Performance
-To quantify the inference speed of BlazePose, the model was benchmarked across
+To quantify the inference speed of MoveNet, the model was benchmarked across
 multiple devices. The model latency (expressed in FPS) was measured on GPU with
 WebGL, as well as WebAssembly (WASM), which is the typical backend for devices
 with lower-end or no GPUs.
