@@ -30,13 +30,16 @@ const MEDIAPIPE_MODEL_CONFIG: BlazePoseMediaPipeModelConfig = {
   solutionPath: 'base/node_modules/@mediapipe/pose'
 };
 
-// Measured in pixels
+// Measured in pixels.
 const EPSILON_IMAGE = 10;
 // Measured in meters.
-const EPSILON_IMAGE_WORLD = 0.1;
+const EPSILON_IMAGE_WORLD = 0.08;
 // TODO(lina128): Reduce video tolerance once MP Web Solution publishes new
 // version.
+// Measured in pixels.
 const EPSILON_VIDEO = 30;
+// Measured in meters.
+const EPSILON_VIDEO_WORLD = 0.1;
 // ref:
 // https://github.com/google/mediapipe/blob/7c331ad58b2cca0dca468e342768900041d65adc/mediapipe/python/solutions/pose_test.py#L31-L51
 const EXPECTED_LANDMARKS = [
@@ -59,8 +62,6 @@ const EXPECTED_WORLD_LANDMARKS = [
   [-0.11, -0.01, 0.02],  [0.39, 0.22, -0.12],   [-0.44, 0.07, -0.11],
   [0.7, 0.48, -0.05],    [-0.46, 0.44, -0.03],  [0.73, 0.51, -0.06],
   [-0.46, 0.49, -0.03],  [0.78, 0.5, -0.16],    [-0.59, 0.51, -0.09],
-  [0., -0., -0.],        [0.05, -0.08, 0.05],   [0.08, 0.03, -0.13],
-  [-0.21, 0.2, 0.14],    [-0.28, -0.15, -0.03], [-0.07, 0.08, -0.03],
 ];
 
 describeWithFlags('MediaPipe Pose static image ', BROWSER_ENVS, () => {
@@ -145,7 +146,7 @@ describeWithFlags('MediaPipe Pose video ', BROWSER_ENVS, () => {
     await loadVideo('pose_squats.mp4', 5 /* fps */, callback, expected, model);
 
     expectArraysClose(result, expected, EPSILON_VIDEO);
-    expectArraysClose(result3D, expected3D, EPSILON_VIDEO);
+    expectArraysClose(result3D, expected3D, EPSILON_VIDEO_WORLD);
 
     detector.dispose();
   });
