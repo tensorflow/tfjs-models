@@ -320,55 +320,29 @@ class BlazePoseTfjsDetector implements PoseDetector {
 
     const imageValueShifted = shiftImageValue(imageTensor, [0, 1]);
 
-    // PoseLandmarksByRoiCPU: InferenceCalculator
-    // The model returns 5 tensor with the following shape:
-    // Lite model:
-    // Output[3]: This tensor (shape: [1, 195]) represents 39 5-d keypoints.
-    // Output[1]: This tensor (shape: [1, 1]) represents the confidence score.
-    // Output[2]: This tensor (shape: [1, 64, 64, 39]) represents heatmap for
-    // the 39 landmarks.
-    // Output[0]: This tensor (shape: [1, 117]) represents 39 3DWorld keypoints.
-    // Full model:
-    // Output[3]: This tensor (shape: [1, 195]) represents 39 5-d keypoints.
-    // Output[1]: This tensor (shape: [1, 1]) represents the confidence score.
-    // Output[2]: This tensor (shape: [1, 64, 64, 39]) represents heatmap for
-    // the 39 landmarks.
-    // Output[0]: This tensor (shape: [1, 117]) represents 39 3DWorld keypoints.
-    // Heavy model:
-    // Output[0]: This tensor (shape: [1, 195]) represents 39 5-d keypoints.
-    // Output[2]: This tensor (shape: [1, 1]) represents the confidence score.
-    // Output[3]: This tensor (shape: [1, 64, 64, 39]) represents heatmap for
-    // the 39 landmarks.
-    // Output[4]: This tensor (shape: [1, 117]) represents 39 3DWorld keypoints.
-    const landmarkResult =
-        this.landmarkModel.predict(imageValueShifted) as tf.Tensor[];
-
-    let landmarkTensor, poseFlagTensor, heatmapTensor, worldLandmarkTensor;
-
-    switch (this.modelType) {
-      case 'lite':
-        landmarkTensor = landmarkResult[3] as tf.Tensor2D;
-        poseFlagTensor = landmarkResult[1] as tf.Tensor2D;
-        heatmapTensor = landmarkResult[2] as tf.Tensor4D;
-        worldLandmarkTensor = landmarkResult[0] as tf.Tensor2D;
-        break;
-      case 'full':
-        landmarkTensor = landmarkResult[3] as tf.Tensor2D;
-        poseFlagTensor = landmarkResult[1] as tf.Tensor2D;
-        heatmapTensor = landmarkResult[2] as tf.Tensor4D;
-        worldLandmarkTensor = landmarkResult[0] as tf.Tensor2D;
-        break;
-      case 'heavy':
-        landmarkTensor = landmarkResult[0] as tf.Tensor2D;
-        poseFlagTensor = landmarkResult[2] as tf.Tensor2D;
-        heatmapTensor = landmarkResult[3] as tf.Tensor4D;
-        worldLandmarkTensor = landmarkResult[4] as tf.Tensor2D;
-        break;
-      default:
-        throw new Error(
-            'Model type must be one of lite, full or heavy,' +
-            `but got ${this.modelType}`);
+    if (this.modelType !== 'lite' && this.modelType !== 'full' &&
+        this.modelType !== 'heavy') {
+      throw new Error(
+          'Model type must be one of lite, full or heavy,' +
+          `but got ${this.modelType}`);
     }
+
+    // PoseLandmarksByRoiCPU: InferenceCalculator
+    // The model returns 5 tensors with the following shape:
+    // ld_3d: This tensor (shape: [1, 195]) represents 39 5-d keypoints.
+    // output_poseflag: This tensor (shape: [1, 1]) represents the confidence
+    //                                                                  score.
+    // activation_heatmap: This tensor (shape: [1, 64, 64, 39]) represents
+    //                                        heatmap for the 39 landmarks.
+    // world_3d: This tensor (shape: [1, 117]) represents 39 3DWorld keypoints.
+    const landmarkResult = this.landmarkModel.execute(imageValueShifted, [
+      'ld_3d', 'output_poseflag', 'activation_heatmap', 'world_3d'
+    ]) as tf.Tensor[];
+
+    const landmarkTensor = landmarkResult[0] as tf.Tensor2D,
+          poseFlagTensor = landmarkResult[1] as tf.Tensor2D,
+          heatmapTensor = landmarkResult[2] as tf.Tensor4D,
+          worldLandmarkTensor = landmarkResult[3] as tf.Tensor2D;
 
     // Converts the pose-flag tensor into a float that represents the
     // confidence score of pose presence.
@@ -387,8 +361,9 @@ class BlazePoseTfjsDetector implements PoseDetector {
     // ---------------------------- Pose landmarks -----------------------------
     // -------------------------------------------------------------------------
 
-    // Decodes the landmark tensors into a list of landmarks, where the landmark
-    // coordinates are normalized by the size of the input image to the model.
+    // Decodes the landmark tensors into a list of landmarks, where the
+    // landmark coordinates are normalized by the size of the input image to
+    // the model.
     // PoseLandmarksByRoiCpu: TensorsToLandmarksCalculator.
     const landmarks = await tensorsToLandmarks(
         landmarkTensor, constants.BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG);
@@ -424,8 +399,8 @@ class BlazePoseTfjsDetector implements PoseDetector {
     // -------------------------------------------------------------------------
 
     // Decodes the world landmark tensors into a list of landmarks, where the
-    // landmark coordinates are normalized by the size of the input image to the
-    // model.
+    // landmark coordinates are normalized by the size of the input image to
+    // the model.
     // PoseLandmarksByRoiCpu: TensorsToLandmarksCalculator.
     const worldLandmarks = await tensorsToLandmarks(
         worldLandmarkTensor,
