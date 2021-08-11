@@ -33,7 +33,7 @@ import {PoseDetector} from '../pose_detector';
 import {InputResolution, Pose, PoseDetectorInput, SupportedModels} from '../types';
 import {getKeypointIndexByName} from '../util';
 
-import {CROP_FILTER_ALPHA, DEFAULT_MIN_POSE_SCORE, KEYPOINT_FILTER_CONFIG, MIN_CROP_KEYPOINT_SCORE, MOVENET_CONFIG, MOVENET_ESTIMATION_CONFIG, MOVENET_MULTIPOSE_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_URL, MULTIPOSE, MULTIPOSE_BOX_IDX, MULTIPOSE_BOX_SCORE_IDX, MULTIPOSE_INSTANCE_SIZE, NUM_KEYPOINT_VALUES, NUM_KEYPOINTS, SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER} from './constants';
+import {CROP_FILTER_ALPHA, DEFAULT_MIN_POSE_SCORE, KEYPOINT_FILTER_CONFIG, MIN_CROP_KEYPOINT_SCORE, MOVENET_CONFIG, MOVENET_ESTIMATION_CONFIG, MOVENET_MULTIPOSE_RESOLUTION as MOVENET_MULTIPOSE_MAX_DIMENSION, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_URL, MULTIPOSE, MULTIPOSE_BOX_IDX, MULTIPOSE_BOX_SCORE_IDX, MULTIPOSE_INSTANCE_SIZE, NUM_KEYPOINT_VALUES, NUM_KEYPOINTS, SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER} from './constants';
 import {determineNextCropRegion, initCropRegion} from './crop_utils';
 import {validateEstimationConfig, validateModelConfig} from './detector_utils';
 import {MoveNetEstimationConfig, MoveNetModelConfig, MoveNetTrackerType} from './types';
@@ -59,6 +59,7 @@ class MoveNetDetector implements PoseDetector {
   private cropRegion: BoundingBox;
 
   // Global states for multi-person model.
+  private readonly multiPoseMaxDimension: number;
   private readonly enableTracking: boolean;
   private readonly tracker: Tracker;
   // Key is the track ID.
@@ -89,6 +90,11 @@ class MoveNetDetector implements PoseDetector {
       this.minPoseScore = config.minPoseScore;
     } else {
       this.minPoseScore = DEFAULT_MIN_POSE_SCORE;
+    }
+    if (config.multiPoseMaxDimension) {
+      this.multiPoseMaxDimension = config.multiPoseMaxDimension;
+    } else {
+      this.multiPoseMaxDimension = MOVENET_MULTIPOSE_MAX_DIMENSION;
     }
     this.enableTracking = config.enableTracking;
     if (this.multiPoseModel && this.enableTracking) {
@@ -375,9 +381,9 @@ class MoveNetDetector implements PoseDetector {
     let paddedHeight: number;
     const dimensionDivisor = 32;  // Dimensions need to be divisible by 32.
     if (imageSize.width > imageSize.height) {
-      resizedWidth = MOVENET_MULTIPOSE_RESOLUTION;
+      resizedWidth = this.multiPoseMaxDimension;
       resizedHeight = Math.round(
-          MOVENET_MULTIPOSE_RESOLUTION * imageSize.height / imageSize.width);
+          this.multiPoseMaxDimension * imageSize.height / imageSize.width);
       resizedImage =
           tf.image.resizeBilinear(imageTensor4D, [resizedHeight, resizedWidth]);
 
@@ -389,8 +395,8 @@ class MoveNetDetector implements PoseDetector {
           [[0, 0], [0, paddedHeight - resizedHeight], [0, 0], [0, 0]]);
     } else {
       resizedWidth = Math.round(
-          MOVENET_MULTIPOSE_RESOLUTION * imageSize.width / imageSize.height);
-      resizedHeight = MOVENET_MULTIPOSE_RESOLUTION;
+          this.multiPoseMaxDimension * imageSize.width / imageSize.height);
+      resizedHeight = this.multiPoseMaxDimension;
       resizedImage =
           tf.image.resizeBilinear(imageTensor4D, [resizedHeight, resizedWidth]);
 
