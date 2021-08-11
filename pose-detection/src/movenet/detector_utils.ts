@@ -41,9 +41,10 @@ export function validateModelConfig(modelConfig: MoveNetModelConfig):
     throw new Error(`minPoseScore should be between 0.0 and 1.0`);
   }
 
-  if (config.multiPoseResolution != null &&
-      (config.multiPoseResolution % 32 !== 0 ||
-       config.multiPoseResolution < 128 || config.multiPoseResolution > 512)) {
+  if (config.multiPoseMaxDimension != null &&
+      (config.multiPoseMaxDimension % 32 !== 0 ||
+       config.multiPoseMaxDimension < 128 ||
+       config.multiPoseMaxDimension > 512)) {
     throw new Error(
         `multiPoseResolution must be a multiple of 32 and between 128 and 512`);
   }
