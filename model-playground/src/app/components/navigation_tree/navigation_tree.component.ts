@@ -42,7 +42,7 @@ export class NavigationTree {
   ) {}
 
   handleClick(item: ModelItem) {
-    this.router.navigate([this.router.url.split('?')[0]], {
+    this.router.navigate([], {
       queryParams: {
         [UrlParamKey.MODEL_ITEM_ID]: item.id,
       },

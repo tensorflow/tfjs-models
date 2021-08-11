@@ -63,7 +63,7 @@ module.exports = function(config) {
       accessKey: process.env.BROWSERSTACK_KEY,
       timeout: 1800,
       tunnelIdentifier:
-          `tfjs_backend_webgl_${Date.now()}_${Math.floor(Math.random() * 1000)}`
+          `model_playground_${Date.now()}_${Math.floor(Math.random() * 1000)}`
     },
     captureTimeout: 3e5,
     reportSlowerThan: 500,

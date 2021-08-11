@@ -29,22 +29,22 @@
 @include mat.core();
 
 // Theme colors and font.
-$my-primary: mat.define-palette(mat.$amber-palette, 500);
-$my-accent: mat.define-palette(mat.$blue-grey-palette, 800);
-$my-typography: mat.define-typography-config(
+$model-playground-primary: mat.define-palette(mat.$amber-palette, 500);
+$model-playground-accent: mat.define-palette(mat.$blue-grey-palette, 800);
+$model-playground-typography: mat.define-typography-config(
   $font-family: var.$font-face,
 );
 
 // Set up theme.
-$my-theme: mat.define-light-theme((
+$model-playground-theme: mat.define-light-theme((
   color: (
-    primary: $my-primary,
-    accent: $my-accent,
+    primary: $model-playground-primary,
+    accent: $model-playground-accent,
   ),
-  typography: $my-typography
+  typography: $model-playground-typography
 ));
-@include mat.all-component-themes($my-theme);
+@include mat.all-component-themes($model-playground-theme);
 
 // Export theme colors that can be used in components.
-$primary-color: mat-color($my-primary);
-$accent-color: mat-color($my-accent);
+$primary-color: mat-color($model-playground-primary);
+$accent-color: mat-color($model-playground-accent);
