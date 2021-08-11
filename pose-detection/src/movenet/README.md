@@ -90,9 +90,9 @@ Pass in `poseDetection.SupportedModels.MoveNet` from the
   doesn't have the `currentTime` field. Or in testing, to simulate different FPS.
 
 * *modelUrl* (optional): An optional string that specifies custom url of the
-	MoveNet model. If not provided, it will load the model specified by
-	*modelType* from tf.hub. This argument is useful for area/countries that
-	don't have access to the model hosted on tf.hub.
+  MoveNet model. If not provided, it will load the model specified by
+  *modelType* from tf.hub. This argument is useful for area/countries that
+  don't have access to the model hosted on tf.hub.
 
 * *minPoseScore* (optional): The minimum confidence score a pose needs to have
   to be considered a valid pose detection.
