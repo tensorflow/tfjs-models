@@ -39,11 +39,16 @@ export {calculators};
 
 // MoveNet model types.
 import {SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER, MULTIPOSE} from './movenet/constants';
+import {MoveNetTrackerType} from './movenet/types';
 const movenet = {
   modelType: {
     'SINGLEPOSE_LIGHTNING': SINGLEPOSE_LIGHTNING,
     'SINGLEPOSE_THUNDER': SINGLEPOSE_THUNDER,
     'MULTIPOSE': MULTIPOSE
+  },
+  trackerType: {
+    'keypoint': MoveNetTrackerType.Keypoint,
+    'boundingBox': MoveNetTrackerType.BoundingBox
   }
 };
 export {movenet};
