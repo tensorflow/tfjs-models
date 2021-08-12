@@ -45,7 +45,8 @@ export const MOVENET_CONFIG = {
   maxPoses: 1,
   type: 'lightning',
   scoreThreshold: 0.3,
-  customModel: ''
+  customModel: '',
+  enableTracking: false
 };
 /**
  * This map descripes tunable flags and theior corresponding types.

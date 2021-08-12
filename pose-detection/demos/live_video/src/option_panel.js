@@ -169,9 +169,19 @@ function addMoveNetControllers(modelConfigFolder, type) {
       modelConfigFolder.add(params.STATE.modelConfig, 'customModel');
   customModelController.onFinishChange(_ => {
     params.STATE.isModelChanged = true;
-  })
+  });
 
   modelConfigFolder.add(params.STATE.modelConfig, 'scoreThreshold', 0, 1);
+
+  const enableTrackingController = modelConfigFolder.add(
+      params.STATE.modelConfig,
+      'enableTracking',
+  );
+  enableTrackingController.onChange(_ => {
+    // Set isModelChanged to true, so that we don't render any result during
+    // changing models.
+    params.STATE.isModelChanged = true;
+  })
 }
 
 // The BlazePose model config folder contains options for BlazePose config
