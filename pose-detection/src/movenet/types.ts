@@ -54,6 +54,8 @@ export enum MoveNetTrackerType {
  *
  * `multiPoseMaxDimension`: Optional. The target maximum dimension to use as the
  * input to the multi-pose model. Must be a multiple of 32 and defaults to 320.
+ * A higher maximum dimension results in higher accuracy but slower speed,
+ * whereas a lower maximum dimension results in lower accuracy but higher speed.
  * The input image will be resized so that its maximum dimension will be the
  * given number, while maintaining the input image aspect ratio. As an example:
  * with 320 as the maximum dimension and a 640x480 input image, the model will
