@@ -23,10 +23,11 @@ import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
 
 export function validateModelConfig(modelConfig: MoveNetModelConfig):
     MoveNetModelConfig {
-  const config = modelConfig == null ? MOVENET_CONFIG : {...modelConfig};
+  const config = modelConfig == null ? {...MOVENET_CONFIG} :
+                                       {...MOVENET_CONFIG, ...modelConfig};
 
-  if (!modelConfig.modelType) {
-    modelConfig.modelType = 'SinglePose.Lightning';
+  if (modelConfig.modelType == null) {
+    config.modelType = 'SinglePose.Lightning';
   } else if (VALID_MODELS.indexOf(config.modelType) < 0) {
     throw new Error(
         `Invalid architecture ${config.modelType}. ` +
@@ -50,35 +51,33 @@ export function validateModelConfig(modelConfig: MoveNetModelConfig):
         `multiPoseResolution must be a multiple of 32 and between 128 and 512`);
   }
 
-  if (modelConfig.modelType === MULTIPOSE_LIGHTNING &&
-      config.enableTracking == null) {
+  if (config.modelType === MULTIPOSE && config.enableTracking == null) {
     config.enableTracking = true;
   }
 
-  if (modelConfig.modelType === MULTIPOSE_LIGHTNING &&
-      config.enableTracking === true) {
-    if (modelConfig.trackerType == null) {
-      modelConfig.trackerType = TrackerType.BoundingBox;
+  if (config.modelType === MULTIPOSE && config.enableTracking === true) {
+    if (config.trackerType == null) {
+      config.trackerType = MoveNetTrackerType.Keypoint;
     }
-    if (modelConfig.trackerType === TrackerType.Keypoint) {
+    if (config.trackerType === MoveNetTrackerType.Keypoint) {
       if (config.trackerConfig != null) {
         config.trackerConfig = mergeKeypointTrackerConfig(config.trackerConfig);
       } else {
-        config.trackerConfig = DEFAULT_KEYPOINT_TRACKER_CONFIG;
+        config.trackerConfig = {...DEFAULT_KEYPOINT_TRACKER_CONFIG};
       }
-    } else if (modelConfig.trackerType === TrackerType.BoundingBox) {
+    } else if (config.trackerType === MoveNetTrackerType.BoundingBox) {
       if (config.trackerConfig != null) {
         config.trackerConfig =
             mergeBoundingBoxTrackerConfig(config.trackerConfig);
       } else {
-        config.trackerConfig = DEFAULT_BOUNDING_BOX_TRACKER_CONFIG;
+        config.trackerConfig = {...DEFAULT_BOUNDING_BOX_TRACKER_CONFIG};
       }
     } else {
       throw new Error('Tracker type not supported by MoveNet');
     }
 
-    // We don't need to validate the trackerConfig here because the tracker will
-    // take care of that.
+    // We don't need to validate the trackerConfig here because the tracker
+    // will take care of that.
   }
 
   return config;
@@ -86,8 +85,9 @@ export function validateModelConfig(modelConfig: MoveNetModelConfig):
 
 export function validateEstimationConfig(
     estimationConfig: MoveNetEstimationConfig): MoveNetEstimationConfig {
-  const config = estimationConfig == null ? MOVENET_ESTIMATION_CONFIG :
-                                            {...estimationConfig};
+  const config = estimationConfig == null ?
+      {...MOVENET_ESTIMATION_CONFIG} :
+      {...MOVENET_ESTIMATION_CONFIG, ...estimationConfig};
 
   return config;
 }
