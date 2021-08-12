@@ -331,9 +331,9 @@ class BlazePoseTfjsDetector implements PoseDetector {
     // The model returns 5 tensors with the following shape:
     // ld_3d: This tensor (shape: [1, 195]) represents 39 5-d keypoints.
     // output_poseflag: This tensor (shape: [1, 1]) represents the confidence
-    //                                                                  score.
+    //  score.
     // activation_heatmap: This tensor (shape: [1, 64, 64, 39]) represents
-    //                                        heatmap for the 39 landmarks.
+    //  heatmap for the 39 landmarks.
     // world_3d: This tensor (shape: [1, 117]) represents 39 3DWorld keypoints.
     const landmarkResult = this.landmarkModel.execute(imageValueShifted, [
       'ld_3d', 'output_poseflag', 'activation_heatmap', 'world_3d'
@@ -398,9 +398,7 @@ class BlazePoseTfjsDetector implements PoseDetector {
     // ------------------------- Pose world landmarks --------------------------
     // -------------------------------------------------------------------------
 
-    // Decodes the world landmark tensors into a list of landmarks, where the
-    // landmark coordinates are normalized by the size of the input image to
-    // the model.
+    // Decodes the world landmark tensors into a list of landmarks.
     // PoseLandmarksByRoiCpu: TensorsToLandmarksCalculator.
     const worldLandmarks = await tensorsToLandmarks(
         worldLandmarkTensor,

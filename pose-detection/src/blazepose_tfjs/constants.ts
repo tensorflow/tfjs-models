@@ -18,13 +18,13 @@
 import {BlazePoseTfjsModelConfig} from './types';
 
 export const DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL =
-    'https://storage.googleapis.com/tfjs-blazepose/blazepose_detector_eff_retina_4kp_sparse_w1_0_2021_05_19_named/model.json';
+    'https://storage.googleapis.com/tfjs-blazepose/blazeposedetector_named/model.json';
 export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_FULL =
-    'https://storage.googleapis.com/tfjs-blazepose/blazepose_ghum_39kp_full_2021_05_06_named/model.json';
+    'https://storage.googleapis.com/tfjs-blazepose/blazeposelandmark_full/model.json';
 export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_LITE =
-    'https://storage.googleapis.com/tfjs-blazepose/blazepose_ghum_39kp_heavy_2021_05_06_named/model.json';
+    'https://storage.googleapis.com/tfjs-blazepose/blazeposelandmark_lite/model.json';
 export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_HEAVY =
-    'https://storage.googleapis.com/tfjs-blazepose/blazepose_ghum_39kp_lite_2021_05_06_named/model.json';
+    'https://storage.googleapis.com/tfjs-blazepose/blazeposelandmark_heavy/model.json';
 export const BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION = {
   reduceBoxesInLowestlayer: false,
   interpolatedScaleAspectRatio: 1.0,
@@ -150,6 +150,9 @@ export const BLAZEPOSE_WORLD_LANDMARKS_SMOOTHING_CONFIG_ACTUAL = {
     derivateCutOff: 1.0,  // Derivative cutoff 1.0 results into ~0.17 alpha in
                           // landmark velocity EMA filter.
     minAllowedObjectScale: 1e-6,
-    disableValueScaling: true
+    disableValueScaling:
+        true  // As world landmarks are predicted in real world 3D coordintates
+              // in meters (rather than in pixels of input image) prediction
+              // scale does not depend on the pose size in the image.
   }
 };
