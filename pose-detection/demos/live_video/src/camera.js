@@ -25,8 +25,8 @@ import {isMobile} from './util';
 const ANCHOR_POINTS = [[0, 0, 0], [0, 1, 0], [-1, 0, 0], [-1, -1, 0]];
 // Each tracker will get assigned a color based on their id. The id always
 // starts from 1 and gets increased by 1 for each new detected pose. We give
-// each id a different color. We support at most 49 poses. We map the pose id
-// uniformly into the color range, i.e. #000000 - #ffffff.
+// each id a different color. We support visualizing at most 20 poses. We map
+// the pose id uniformly into the color range, i.e. #000000 - #ffffff.
 // Note: 16777215 is equal to #ffffff.
 const COLOR_INTERVAL = Math.floor(16777215 / 20);
 export class Camera {
