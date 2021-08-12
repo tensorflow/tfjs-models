@@ -185,9 +185,9 @@ export class Camera {
    * @param keypoints A list of keypoints.
    */
   drawSkeleton(keypoints, poseId) {
-    // To get the hex color, convert the integer to hex string, mask it to only
-    // get RRGGBB and pad to 6 to satisfy the required color format. Also add a
-    // # at the beginning.
+    // To get the hex color, mask the interger to only get RRGGBB, convert the
+    // integer to hex string, and pad to 6 to satisfy the required color format.
+    // Also add a # at the beginning.
     const color = params.STATE.modelConfig.enableTracking && poseId != null ?
         `#${
             (0xFFFFFF & (poseId * COLOR_INTERVAL))
