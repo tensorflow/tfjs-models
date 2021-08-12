@@ -31,7 +31,7 @@ const MEDIAPIPE_MODEL_CONFIG: BlazePoseMediaPipeModelConfig = {
 };
 
 // Measured in pixels.
-const EPSILON_IMAGE = 10;
+const EPSILON_IMAGE = 11;
 // Measured in meters.
 const EPSILON_IMAGE_WORLD = 0.1;
 // TODO(lina128): Reduce video tolerance once MP Web Solution publishes new
