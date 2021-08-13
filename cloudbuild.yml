@@ -56,6 +56,13 @@ steps:
   args: ['./scripts/run-build.sh', 'mobilenet']
   waitFor: ['diff']
 
+# Model playground.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'model-playground'
+  args: ['./scripts/run-build.sh', 'model-playground']
+  waitFor: ['diff']
+
 # Posenet.
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
