@@ -44,11 +44,15 @@ const movenet = {
   modelType: {
     'SINGLEPOSE_LIGHTNING': SINGLEPOSE_LIGHTNING,
     'SINGLEPOSE_THUNDER': SINGLEPOSE_THUNDER,
+<<<<<<< Updated upstream
     'MULTIPOSE': MULTIPOSE_LIGHTNING
   },
   trackerType: {
     'keypoint': MoveNetTrackerType.Keypoint,
     'boundingBox': MoveNetTrackerType.BoundingBox
+=======
+    'MULTIPOSE_LIGHTNING': MULTIPOSE_LIGHTNING
+>>>>>>> Stashed changes
   }
 };
 export {movenet};
