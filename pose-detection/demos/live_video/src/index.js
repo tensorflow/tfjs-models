@@ -75,7 +75,6 @@ async function createDetector() {
         if (STATE.modelConfig.type === 'multipose') {
           modelConfig.enableTracking = STATE.modelConfig.enableTracking;
         }
-        return posedetection.createDetector(STATE.model, modelConfig);
       }
       return posedetection.createDetector(STATE.model, modelConfig);
   }

@@ -23,12 +23,32 @@ import {isMobile} from './util';
 // These anchor points allow the pose pointcloud to resize according to its
 // position in the input.
 const ANCHOR_POINTS = [[0, 0, 0], [0, 1, 0], [-1, 0, 0], [-1, -1, 0]];
-// Each tracker will get assigned a color based on their id. The id always
-// starts from 1 and gets increased by 1 for each new detected pose. We give
-// each id a different color. We support visualizing at most 20 poses. We map
-// the pose id uniformly into the color range, i.e. #000000 - #ffffff.
-// Note: 16777215 is equal to #ffffff.
-const COLOR_INTERVAL = Math.floor(16777215 / 20);
+
+// #ffffff - White
+// #800000 - Maroon
+// #469990 - Malachite
+// #e6194b - Crimson
+// #42d4f4 - Picton Blue
+// #fabed4 - Cupid
+// #aaffc3 - Mint Green
+// #9a6324 - Kumera
+// #000075 - Navy Blue
+// #f58231 - Jaffa
+// #4363d8 - Royal Blue
+// #ffd8b1 - Caramel
+// #dcbeff - Mauve
+// #808000 - Olive
+// #ffe119 - Candlelight
+// #911eb4 - Seance
+// #bfef45 - Inchworm
+// #f032e6 - Razzle Dazzle Rose
+// #3cb44b - Chateau Green
+// #a9a9a9 - Silver Chalice
+const COLOR_PALETTE = [
+  '#ffffff', '#800000', '#469990', '#e6194b', '#42d4f4', '#fabed4', '#aaffc3',
+  '#9a6324', '#000075', '#f58231', '#4363d8', '#ffd8b1', '#dcbeff', '#808000',
+  '#ffe119', '#911eb4', '#bfef45', '#f032e6', '#3cb44b', '#a9a9a9'
+];
 export class Camera {
   constructor() {
     this.video = document.getElementById('video');
@@ -185,14 +205,9 @@ export class Camera {
    * @param keypoints A list of keypoints.
    */
   drawSkeleton(keypoints, poseId) {
-    // To get the hex color, mask the interger to only get RRGGBB, convert the
-    // integer to hex string, and pad to 6 to satisfy the required color format.
-    // Also add a # at the beginning.
+    // Each poseId is mapped to a color in the color palette.
     const color = params.STATE.modelConfig.enableTracking && poseId != null ?
-        `#${
-            (0xFFFFFF & (poseId * COLOR_INTERVAL))
-                .toString(16)
-                .padStart(6, 0)}` :
+        COLOR_PALETTE[poseId % 20] :
         'White';
     this.ctx.fillStyle = color;
     this.ctx.strokeStyle = color;
