@@ -19,10 +19,10 @@ import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
 
 export const SINGLEPOSE_LIGHTNING = 'SinglePose.Lightning';
 export const SINGLEPOSE_THUNDER = 'SinglePose.Thunder';
-export const MULTIPOSE = 'MultiPose';
+export const MULTIPOSE_LIGHTNING = 'MultiPose.Lightning';
 
 export const VALID_MODELS =
-    [SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER, MULTIPOSE];
+    [SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER, MULTIPOSE_LIGHTNING];
 
 export const MOVENET_SINGLEPOSE_LIGHTNING_URL =
     'https://tfhub.dev/google/tfjs-model/movenet/singlepose/lightning/4';

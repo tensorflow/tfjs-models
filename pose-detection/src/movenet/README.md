@@ -114,7 +114,7 @@ Pass in `poseDetection.SupportedModels.MoveNet` from the
   [here](https://github.com/tensorflow/tfjs-models/blob/master/pose-detection/src/calculators/tracker.md).
 
 * *trackerType* (optional): A `MoveNetTrackerType` indicating which type of
-  tracker to use. Defaults to keypoint tracking.
+  tracker to use. Defaults to bounding box tracking.
 
 * *trackerConfig* (optional): A `TrackerConfig` object that specifies the
   configuration to use for the tracker. For properties that are not specified,
