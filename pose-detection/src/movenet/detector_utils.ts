@@ -17,7 +17,7 @@
 
 import {TrackerConfig} from '../calculators/interfaces/config_interfaces';
 
-import {DEFAULT_BOUNDING_BOX_TRACKER_CONFIG, DEFAULT_KEYPOINT_TRACKER_CONFIG, MOVENET_CONFIG, MOVENET_ESTIMATION_CONFIG, MULTIPOSE, VALID_MODELS} from './constants';
+import {DEFAULT_BOUNDING_BOX_TRACKER_CONFIG, DEFAULT_KEYPOINT_TRACKER_CONFIG, MOVENET_CONFIG, MOVENET_ESTIMATION_CONFIG, MULTIPOSE_LIGHTNING, VALID_MODELS} from './constants';
 import {MoveNetEstimationConfig, MoveNetModelConfig, MoveNetTrackerType} from './types';
 
 export function validateModelConfig(modelConfig: MoveNetModelConfig):
@@ -49,13 +49,15 @@ export function validateModelConfig(modelConfig: MoveNetModelConfig):
         `multiPoseResolution must be a multiple of 32 and between 128 and 512`);
   }
 
-  if (modelConfig.modelType === MULTIPOSE && config.enableTracking == null) {
+  if (modelConfig.modelType === MULTIPOSE_LIGHTNING &&
+      config.enableTracking == null) {
     config.enableTracking = true;
   }
 
-  if (modelConfig.modelType === MULTIPOSE && config.enableTracking === true) {
+  if (modelConfig.modelType === MULTIPOSE_LIGHTNING &&
+      config.enableTracking === true) {
     if (modelConfig.trackerType == null) {
-      modelConfig.trackerType = MoveNetTrackerType.Keypoint;
+      modelConfig.trackerType = MoveNetTrackerType.BoundingBox;
     }
     if (modelConfig.trackerType === MoveNetTrackerType.Keypoint) {
       if (config.trackerConfig != null) {
