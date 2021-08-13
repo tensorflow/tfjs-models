@@ -137,7 +137,7 @@ enabled:
 const detectorConfig = {
   modelType: poseDetection.movenet.modelType.MULTIPOSE_LIGHTNING,
   enableTracking: true,
-  trackerType: poseDetection.movenet.trackerType.BoundingBox
+  trackerType: poseDetection.TrackerType.BoundingBox
 };
 const detector = await poseDetection.createDetector(poseDetection.SupportedModels.MoveNet, detectorConfig);
 ```

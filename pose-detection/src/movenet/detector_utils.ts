@@ -16,9 +16,10 @@
  */
 
 import {TrackerConfig} from '../calculators/interfaces/config_interfaces';
+import {TrackerType} from '../calculators/types';
 
 import {DEFAULT_BOUNDING_BOX_TRACKER_CONFIG, DEFAULT_KEYPOINT_TRACKER_CONFIG, MOVENET_CONFIG, MOVENET_ESTIMATION_CONFIG, MULTIPOSE_LIGHTNING, VALID_MODELS} from './constants';
-import {MoveNetEstimationConfig, MoveNetModelConfig, MoveNetTrackerType} from './types';
+import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
 
 export function validateModelConfig(modelConfig: MoveNetModelConfig):
     MoveNetModelConfig {
@@ -57,21 +58,23 @@ export function validateModelConfig(modelConfig: MoveNetModelConfig):
   if (modelConfig.modelType === MULTIPOSE_LIGHTNING &&
       config.enableTracking === true) {
     if (modelConfig.trackerType == null) {
-      modelConfig.trackerType = MoveNetTrackerType.BoundingBox;
+      modelConfig.trackerType = TrackerType.BoundingBox;
     }
-    if (modelConfig.trackerType === MoveNetTrackerType.Keypoint) {
+    if (modelConfig.trackerType === TrackerType.Keypoint) {
       if (config.trackerConfig != null) {
         config.trackerConfig = mergeKeypointTrackerConfig(config.trackerConfig);
       } else {
         config.trackerConfig = DEFAULT_KEYPOINT_TRACKER_CONFIG;
       }
-    } else if (modelConfig.trackerType === MoveNetTrackerType.BoundingBox) {
+    } else if (modelConfig.trackerType === TrackerType.BoundingBox) {
       if (config.trackerConfig != null) {
         config.trackerConfig =
             mergeBoundingBoxTrackerConfig(config.trackerConfig);
       } else {
         config.trackerConfig = DEFAULT_BOUNDING_BOX_TRACKER_CONFIG;
       }
+    } else {
+      throw new Error('Tracker type not supported by MoveNet');
     }
 
     // We don't need to validate the trackerConfig here because the tracker will

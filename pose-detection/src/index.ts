@@ -27,6 +27,8 @@ export {PoseNetEstimationConfig, PosenetModelConfig} from './posenet/types';
 // Supported models enum.
 export * from './types';
 
+export {TrackerType} from './calculators/types';
+
 // Second level exports.
 // Utils for rendering.
 import * as util from './util';
@@ -39,16 +41,11 @@ export {calculators};
 
 // MoveNet model types.
 import {SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER, MULTIPOSE_LIGHTNING} from './movenet/constants';
-import {MoveNetTrackerType} from './movenet/types';
 const movenet = {
   modelType: {
     'SINGLEPOSE_LIGHTNING': SINGLEPOSE_LIGHTNING,
     'SINGLEPOSE_THUNDER': SINGLEPOSE_THUNDER,
     'MULTIPOSE': MULTIPOSE_LIGHTNING
-  },
-  trackerType: {
-    'keypoint': MoveNetTrackerType.Keypoint,
-    'boundingBox': MoveNetTrackerType.BoundingBox
   }
 };
 export {movenet};
