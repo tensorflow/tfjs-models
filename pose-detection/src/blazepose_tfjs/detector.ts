@@ -34,7 +34,7 @@ import {Keypoint, Pose, PoseDetectorInput} from '../types';
 
 import {calculateAlignmentPointsRects} from './calculators/calculate_alignment_points_rects';
 import {calculateLandmarkProjection} from './calculators/calculate_landmark_projection';
-import {calculateVisibilityCopy} from './calculators/calculate_visibility_copy';
+import {calculateScoreCopy} from './calculators/calculate_score_copy';
 import {calculateWorldLandmarkProjection} from './calculators/calculate_world_landmark_projection';
 import {createSsdAnchors} from './calculators/create_ssd_anchors';
 import {detectorInference} from './calculators/detector_inference';
@@ -405,7 +405,7 @@ class BlazePoseTfjsDetector implements PoseDetector {
         constants.BLAZEPOSE_TENSORS_TO_WORLD_LANDMARKS_CONFIG);
 
     const worldLandmarksWithVisibility =
-        calculateVisibilityCopy(landmarks, worldLandmarks, true);
+        calculateScoreCopy(landmarks, worldLandmarks, true);
 
     // Projects the world landmarks from the cropped pose image to the
     // corresponding locations on the full image before cropping (input to the
