@@ -15,15 +15,8 @@
  * =============================================================================
  */
 import {TrackerConfig} from '../calculators/interfaces/config_interfaces';
+import {TrackerType} from '../calculators/types';
 import {EstimationConfig, ModelConfig} from '../types';
-
-/**
- * The trackers that MoveNet supports.
- */
-export enum MoveNetTrackerType {
-  Keypoint = 'keypoint',
-  BoundingBox = 'boundingBox'
-}
 
 /**
  * MoveNet model loading config.
@@ -79,7 +72,7 @@ export interface MoveNetModelConfig extends ModelConfig {
   minPoseScore?: number;
   multiPoseMaxDimension?: number;
   enableTracking?: boolean;
-  trackerType?: MoveNetTrackerType;
+  trackerType?: TrackerType;
   trackerConfig?: TrackerConfig;
 }
 
