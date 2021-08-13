@@ -80,7 +80,7 @@ Pass in `poseDetection.SupportedModels.MoveNet` from the
   `poseDetection.movenet.modelType` enum list:
   * `SINGLEPOSE_LIGHTNING`. Default. The fastest single-pose detector.
   * `SINGLEPOSE_THUNDER`. A more accurate but slower single-pose detector.
-  * `MULTIPOSE`. Multi-pose detector.
+  * `MULTIPOSE_LIGHTNING`. Multi-pose detector.
 
 * *enableSmoothing* (optional): A boolean indicating whether to use temporal
   filter to smooth the predicted keypoints. Defaults to *True*. The temporal
@@ -129,13 +129,13 @@ const detector = await poseDetection.createDetector(poseDetection.SupportedModel
 ```
 
 The following code snippet demonstrates how to load the
-**MoveNet.MultiPose** model with bounding box
+**MoveNet.MultiPose.Lightning** model with bounding box
 [tracking](https://github.com/tensorflow/tfjs-models/blob/master/pose-detection/src/calculators/tracker.md)
 enabled:
 
 ```javascript
 const detectorConfig = {
-  modelType: poseDetection.movenet.modelType.MULTIPOSE,
+  modelType: poseDetection.movenet.modelType.MULTIPOSE_LIGHTNING,
   enableTracking: true,
   trackerType: poseDetection.movenet.trackerType.BoundingBox
 };
