@@ -28,6 +28,7 @@ import {KeypointTracker} from '../calculators/keypoint_tracker';
 import {KeypointsOneEuroFilter} from '../calculators/keypoints_one_euro_filter';
 import {LowPassFilter} from '../calculators/low_pass_filter';
 import {Tracker} from '../calculators/tracker';
+import {TrackerType} from '../calculators/types';
 import {COCO_KEYPOINTS} from '../constants';
 import {PoseDetector} from '../pose_detector';
 import {InputResolution, Pose, PoseDetectorInput, SupportedModels} from '../types';
@@ -36,7 +37,7 @@ import {getKeypointIndexByName} from '../util';
 import {CROP_FILTER_ALPHA, DEFAULT_MIN_POSE_SCORE, KEYPOINT_FILTER_CONFIG, MIN_CROP_KEYPOINT_SCORE, MOVENET_CONFIG, MOVENET_ESTIMATION_CONFIG, MOVENET_MULTIPOSE_RESOLUTION as MOVENET_MULTIPOSE_MAX_DIMENSION, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_URL, MULTIPOSE_BOX_IDX, MULTIPOSE_BOX_SCORE_IDX, MULTIPOSE_INSTANCE_SIZE, MULTIPOSE_LIGHTNING, NUM_KEYPOINT_VALUES, NUM_KEYPOINTS, SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER} from './constants';
 import {determineNextCropRegion, initCropRegion} from './crop_utils';
 import {validateEstimationConfig, validateModelConfig} from './detector_utils';
-import {MoveNetEstimationConfig, MoveNetModelConfig, MoveNetTrackerType} from './types';
+import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
 
 /**
  * MoveNet detector class.
@@ -98,9 +99,9 @@ class MoveNetDetector implements PoseDetector {
     }
     this.enableTracking = config.enableTracking;
     if (this.multiPoseModel && this.enableTracking) {
-      if (config.trackerType === MoveNetTrackerType.Keypoint) {
+      if (config.trackerType === TrackerType.Keypoint) {
         this.tracker = new KeypointTracker(config.trackerConfig);
-      } else if (config.trackerType === MoveNetTrackerType.BoundingBox) {
+      } else if (config.trackerType === TrackerType.BoundingBox) {
         this.tracker = new BoundingBoxTracker(config.trackerConfig);
       }
       if (this.enableSmoothing) {
