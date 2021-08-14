@@ -23,6 +23,12 @@ import {isMobile} from './util';
 // These anchor points allow the pose pointcloud to resize according to its
 // position in the input.
 const ANCHOR_POINTS = [[0, 0, 0], [0, 1, 0], [-1, 0, 0], [-1, -1, 0]];
+// Each tracker will get assigned a color based on their id. The id always
+// starts from 1 and gets increased by 1 for each new detected pose. We give
+// each id a different color. We support at most 49 poses. We map the pose id
+// uniformly into the color range, i.e. #000000 - #ffffff.
+// Note: 16777215 is equal to #ffffff.
+const COLOR_INTERVAL = Math.floor(16777215 / 20);
 export class Camera {
   constructor() {
     this.video = document.getElementById('video');
@@ -128,7 +134,7 @@ export class Camera {
   drawResult(pose) {
     if (pose.keypoints != null) {
       this.drawKeypoints(pose.keypoints);
-      this.drawSkeleton(pose.keypoints);
+      this.drawSkeleton(pose.keypoints, pose.id);
     }
     if (pose.keypoints3D != null && params.STATE.modelConfig.render3D) {
       this.drawKeypoints3D(pose.keypoints3D);
@@ -178,9 +184,18 @@ export class Camera {
    * Draw the skeleton of a body on the video.
    * @param keypoints A list of keypoints.
    */
-  drawSkeleton(keypoints) {
-    this.ctx.fillStyle = 'White';
-    this.ctx.strokeStyle = 'White';
+  drawSkeleton(keypoints, poseId) {
+    // To get the hex color, convert the integer to hex string, mask it to only
+    // get RRGGBB and pad to 6 to satisfy the required color format. Also add a
+    // # at the beginning.
+    const color = params.STATE.modelConfig.enableTracking && poseId != null ?
+        `#${
+            (0xFFFFFF & (poseId * COLOR_INTERVAL))
+                .toString(16)
+                .padStart(6, 0)}` :
+        'White';
+    this.ctx.fillStyle = color;
+    this.ctx.strokeStyle = color;
     this.ctx.lineWidth = params.DEFAULT_LINE_WIDTH;
 
     posedetection.util.getAdjacentPairs(params.STATE.model).forEach(([
