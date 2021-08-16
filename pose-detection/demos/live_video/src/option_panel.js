@@ -25,6 +25,8 @@ import * as params from './params';
  */
 let TUNABLE_FLAG_DEFAULT_VALUE_MAP;
 
+let enableTrackingController;
+
 const stringValueMap = {};
 
 export async function setupDatGui(urlParams) {
@@ -159,10 +161,18 @@ function addMoveNetControllers(modelConfigFolder, type) {
 
   const typeController = modelConfigFolder.add(
       params.STATE.modelConfig, 'type', ['lightning', 'thunder', 'multipose']);
-  typeController.onChange(_ => {
+  typeController.onChange(type => {
     // Set isModelChanged to true, so that we don't render any result during
     // changing models.
     params.STATE.isModelChanged = true;
+    if (type === 'multipose') {
+      // Default to enable tracking for multi pose
+      if (enableTrackingController) {
+        enableTrackingController.setValue(true);
+      }
+    } else {
+      enableTrackingController.setValue(false);
+    }
   });
 
   const customModelController =
@@ -173,7 +183,7 @@ function addMoveNetControllers(modelConfigFolder, type) {
 
   modelConfigFolder.add(params.STATE.modelConfig, 'scoreThreshold', 0, 1);
 
-  const enableTrackingController = modelConfigFolder.add(
+  enableTrackingController = modelConfigFolder.add(
       params.STATE.modelConfig,
       'enableTracking',
   );
