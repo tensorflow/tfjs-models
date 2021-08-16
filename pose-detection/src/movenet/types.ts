@@ -30,12 +30,14 @@ import {EstimationConfig, ModelConfig} from '../types';
  * tensor, which doesn't have the currentTime field. Or in testing, to simulate
  * different FPS.
  *
- * `modelType`: Optional. The type of MoveNet model to load, Lighting or
- * Thunder. Defaults to Lightning. Lightning is a lower capacity model that can
- * run >50FPS on most modern laptops while achieving good performance. Thunder
- * is a higher capacity model that performs better prediction quality while
- * still achieving real-time (>30FPS) speed. Thunder will lag behind the
- * lightning, but it will pack a punch.
+ * `modelType`: Optional. The type of MoveNet model to load, SinglePose
+ * Lighting, SinglePose Thunder or MultiPose Lightning. Defaults to SinglePose
+ * Lightning. SinglePose Lightning is a lower capacity model that can
+ * run >50FPS on most modern laptops while achieving good performance.
+ * SinglePose Thunder is a higher capacity model that performs better prediction
+ * quality while still achieving real-time (>30FPS) speed. MultiPose Lightning
+ * enables detection of up to 6 poses with similar accuracy as SinglePose
+ * Lightning.
  *
  * `modelUrl`: Optional. An optional string that specifies custom url of the
  * model. This is useful for area/countries that don't have access to the model

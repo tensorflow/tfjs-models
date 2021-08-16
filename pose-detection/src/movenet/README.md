@@ -80,7 +80,7 @@ Pass in `poseDetection.SupportedModels.MoveNet` from the
   `poseDetection.movenet.modelType` enum list:
   * `SINGLEPOSE_LIGHTNING`. Default. The fastest single-pose detector.
   * `SINGLEPOSE_THUNDER`. A more accurate but slower single-pose detector.
-  * `MULTIPOSE_LIGHTNING`. Multi-pose detector.
+  * `MULTIPOSE_LIGHTNING`. Multi-pose detector that detects up to 6 poses.
 
 * *enableSmoothing* (optional): A boolean indicating whether to use temporal
   filter to smooth the predicted keypoints. Defaults to *True*. The temporal
