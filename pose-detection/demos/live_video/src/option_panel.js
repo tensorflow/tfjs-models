@@ -159,6 +159,10 @@ function addMoveNetControllers(modelConfigFolder, type) {
   params.STATE.modelConfig = {...params.MOVENET_CONFIG};
   params.STATE.modelConfig.type = type != null ? type : 'lightning';
 
+  if (params.STATE.modelConfig.type === 'multipose') {
+    params.STATE.modelConfig.enableTracking = true;
+  }
+
   const typeController = modelConfigFolder.add(
       params.STATE.modelConfig, 'type', ['lightning', 'thunder', 'multipose']);
   typeController.onChange(type => {
