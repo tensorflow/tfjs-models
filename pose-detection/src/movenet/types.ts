@@ -58,8 +58,8 @@ import {EstimationConfig, ModelConfig} from '../types';
  * will be tracked across frames. If true, each pose will have an ID that
  * uniquely identifies a person. Only used with multi-pose models.
  *
- * `trackerType`: Optional. A `MoveNetTrackerType` indicating which type of
- * tracker to use. Defaults to bounding box tracking.
+ * `trackerType`: Optional. A `TrackerType` indicating which type of tracker to
+ * use. Defaults to bounding box tracking.
  *
  * `trackerConfig`: Optional. A `TrackerConfig` object that specifies the
  * configuration to use for the tracker. For properties that are not specified,
