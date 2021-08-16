@@ -18,13 +18,13 @@
 import {BlazePoseTfjsModelConfig} from './types';
 
 export const DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL =
-    'https://storage.googleapis.com/tfjs-blazepose/blazepose_detector_eff_retina_4kp_sparse_w1_0_2021_05_19_named/model.json';
+    'https://storage.googleapis.com/tfjs-blazepose/blazeposedetector_named/model.json';
 export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_FULL =
-    'https://storage.googleapis.com/tfjs-blazepose/blazepose_ghum_39kp_full_2021_05_06_named/model.json';
+    'https://storage.googleapis.com/tfjs-blazepose/blazeposelandmark_full/model.json';
 export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_LITE =
-    'https://storage.googleapis.com/tfjs-blazepose/blazepose_ghum_39kp_heavy_2021_05_06_named/model.json';
+    'https://storage.googleapis.com/tfjs-blazepose/blazeposelandmark_lite/model.json';
 export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_HEAVY =
-    'https://storage.googleapis.com/tfjs-blazepose/blazepose_ghum_39kp_lite_2021_05_06_named/model.json';
+    'https://storage.googleapis.com/tfjs-blazepose/blazeposelandmark_heavy/model.json';
 export const BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION = {
   reduceBoxesInLowestlayer: false,
   interpolatedScaleAspectRatio: 1.0,
