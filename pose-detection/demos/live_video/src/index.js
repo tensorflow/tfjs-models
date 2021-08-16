@@ -68,11 +68,15 @@ async function createDetector() {
       } else if (STATE.modelConfig.type == 'multipose') {
         modelType = posedetection.movenet.modelType.MULTIPOSE;
       }
+      const modelConfig = {modelType};
+
       if (STATE.modelConfig.customModel !== '') {
-        return posedetection.createDetector(
-            STATE.model, {modelType, modelUrl: STATE.modelConfig.customModel});
+        modelConfig.modelUrl = STATE.modelConfig.customModel;
+        if (STATE.modelConfig.type === 'multipose') {
+          modelConfig.enableTracking = STATE.modelConfig.enableTracking;
+        }
       }
-      return posedetection.createDetector(STATE.model, {modelType});
+      return posedetection.createDetector(STATE.model, modelConfig);
   }
 }
 
