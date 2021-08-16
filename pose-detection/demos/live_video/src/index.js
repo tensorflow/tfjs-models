@@ -66,15 +66,15 @@ async function createDetector() {
       } else if (STATE.modelConfig.type == 'thunder') {
         modelType = posedetection.movenet.modelType.SINGLEPOSE_THUNDER;
       } else if (STATE.modelConfig.type == 'multipose') {
-        modelType = posedetection.movenet.modelType.MULTIPOSE;
+        modelType = posedetection.movenet.modelType.MULTIPOSE_LIGHTNING;
       }
       const modelConfig = {modelType};
 
       if (STATE.modelConfig.customModel !== '') {
         modelConfig.modelUrl = STATE.modelConfig.customModel;
-        if (STATE.modelConfig.type === 'multipose') {
-          modelConfig.enableTracking = STATE.modelConfig.enableTracking;
-        }
+      }
+      if (STATE.modelConfig.type === 'multipose') {
+        modelConfig.enableTracking = STATE.modelConfig.enableTracking;
       }
       return posedetection.createDetector(STATE.model, modelConfig);
   }

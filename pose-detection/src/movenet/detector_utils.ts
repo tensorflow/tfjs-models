@@ -25,8 +25,8 @@ export function validateModelConfig(modelConfig: MoveNetModelConfig):
     MoveNetModelConfig {
   const config = modelConfig == null ? MOVENET_CONFIG : {...modelConfig};
 
-  if (!modelConfig.modelType) {
-    modelConfig.modelType = 'SinglePose.Lightning';
+  if (config.modelType == null) {
+    config.modelType = 'SinglePose.Lightning';
   } else if (VALID_MODELS.indexOf(config.modelType) < 0) {
     throw new Error(
         `Invalid architecture ${config.modelType}. ` +
@@ -50,23 +50,23 @@ export function validateModelConfig(modelConfig: MoveNetModelConfig):
         `multiPoseResolution must be a multiple of 32 and between 128 and 512`);
   }
 
-  if (modelConfig.modelType === MULTIPOSE_LIGHTNING &&
+  if (config.modelType === MULTIPOSE_LIGHTNING &&
       config.enableTracking == null) {
     config.enableTracking = true;
   }
 
-  if (modelConfig.modelType === MULTIPOSE_LIGHTNING &&
+  if (config.modelType === MULTIPOSE_LIGHTNING &&
       config.enableTracking === true) {
-    if (modelConfig.trackerType == null) {
-      modelConfig.trackerType = TrackerType.BoundingBox;
+    if (config.trackerType == null) {
+      config.trackerType = TrackerType.BoundingBox;
     }
-    if (modelConfig.trackerType === TrackerType.Keypoint) {
+    if (config.trackerType === TrackerType.Keypoint) {
       if (config.trackerConfig != null) {
         config.trackerConfig = mergeKeypointTrackerConfig(config.trackerConfig);
       } else {
         config.trackerConfig = DEFAULT_KEYPOINT_TRACKER_CONFIG;
       }
-    } else if (modelConfig.trackerType === TrackerType.BoundingBox) {
+    } else if (config.trackerType === TrackerType.BoundingBox) {
       if (config.trackerConfig != null) {
         config.trackerConfig =
             mergeBoundingBoxTrackerConfig(config.trackerConfig);
