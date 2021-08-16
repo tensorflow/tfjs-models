@@ -527,7 +527,7 @@ export async function load(modelConfig: MoveNetModelConfig = MOVENET_CONFIG):
 
   if (tf.getBackend() === 'webgl') {
     // MoveNet has a top-k op that runs faster on GPU for our value of k.
-    tf.env().setFlags({'TOPK_LAST_DIM_CPU_HANDOFF_SIZE_THRESHOLD': 0});
+    tf.env().set('TOPK_LAST_DIM_CPU_HANDOFF_SIZE_THRESHOLD', 0);
   }
 
   return new MoveNetDetector(model, config);
