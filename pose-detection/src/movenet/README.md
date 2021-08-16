@@ -168,12 +168,16 @@ multiple devices. The model latency (expressed in FPS) was measured on GPU with
 WebGL, as well as WebAssembly (WASM), which is the typical backend for devices
 with lower-end or no GPUs.
 
-SinglePose Lightning | SinglePose Thunder
+SinglePose Lightning | SinglePose Thunder | Multipose.Lightning
 
 |              | MacBook Pro 15" 2019 <br> Intel core i9. <br> AMD Radeon Pro Vega 20 Graphics. <br> (FPS) | iPhone 12 <br> (FPS) | Pixel 5 <br> (FPS) | Desktop <br> Intel i9-10900K. <br> Nvidia GTX 1070 GPU. <br> (FPS) |
 | --- | --- | --- | --- | --- |
-|       *WebGL*                        |  104 \| 77 | 51 \| 43 | 34 \| 12 | 87 \| 82 |
-|  *WASM* <br> with SIMD + Multithread |  42 \| 21 | N/A | N/A | 71 \| 30 |
+|       *WebGL*                        |  104 \| 77 \| 47 | 51 \| 43 \| 22 | 34 \| 12 \| 8 | 87 \| 82 \| 62 |
+|  *WASM* <br> with SIMD + Multithread |  42 \| 21 \| N/A | N/A | N/A | 71 \| 30 \| N/A |
+
+Note that for multi-person detection, the number of detected persons does not
+impact inference speed and the accuracy of detections is similar to that of
+SinglePose.Lightning.
 
 To see the model’s FPS on your device, try our
 [demo](https://storage.googleapis.com/tfjs-models/demos/pose-detection/index.html?model=movenet).
