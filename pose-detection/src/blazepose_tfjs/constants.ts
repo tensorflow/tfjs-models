@@ -150,6 +150,9 @@ export const BLAZEPOSE_WORLD_LANDMARKS_SMOOTHING_CONFIG_ACTUAL = {
     derivateCutOff: 1.0,  // Derivative cutoff 1.0 results into ~0.17 alpha in
                           // landmark velocity EMA filter.
     minAllowedObjectScale: 1e-6,
-    disableValueScaling: true
+    disableValueScaling:
+        true  // As world landmarks are predicted in real world 3D coordintates
+              // in meters (rather than in pixels of input image) prediction
+              // scale does not depend on the pose size in the image.
   }
 };
