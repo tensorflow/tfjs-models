@@ -172,7 +172,7 @@ SinglePose Lightning | SinglePose Thunder | Multipose Lightning
 
 |              | MacBook Pro 15" 2019 <br> Intel core i9. <br> AMD Radeon Pro Vega 20 Graphics. <br> (FPS) | iPhone 12 <br> (FPS) | Pixel 5 <br> (FPS) | Desktop <br> Intel i9-10900K. <br> Nvidia GTX 1070 GPU. <br> (FPS) |
 | --- | --- | --- | --- | --- |
-|       *WebGL*                        |  104 \| 77 \| 47 | 51 \| 43 \| 22 | 34 \| 12 \| 8 | 87 \| 82 \| 62 |
+|       *WebGL*                        |  104 \| 77 \| 54 | 51 \| 43 \| 24 | 34 \| 12 \| 8 | 87 \| 82 \| 62 |
 |  *WASM* <br> with SIMD + Multithread |  42 \| 21 \| N/A | N/A | N/A | 71 \| 30 \| N/A |
 
 Note that for multi-person detection, the number of detected persons does not
