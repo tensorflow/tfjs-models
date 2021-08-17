@@ -524,5 +524,21 @@ export async function load(modelConfig: MoveNetModelConfig = MOVENET_CONFIG):
     }
     model = await tfc.loadGraphModel(modelUrl, {fromTFHub});
   }
+
+  if (tf.getBackend() === 'webgl') {
+    // MoveNet has a top-k op that runs faster on GPU for the size of our last
+    // dimension (6400). There are three checks that could make the top-k op run
+    // on CPU (see
+    // https://github.com/tensorflow/tfjs/blob/master/tfjs-backend-webgl/src/kernels/TopK.ts)
+    //
+    // 1. All input shapes < 128
+    // 2. lastDim < TOPK_LAST_DIM_CPU_HANDOFF_SIZE_THRESHOLD
+    // 3. k > TOPK_K_CPU_HANDOFF_THRESHOLD
+    //
+    // In our case, setting TOPK_LAST_DIM_CPU_HANDOFF_SIZE_THRESHOLD = 0 will
+    // will disable the CPU forwarding.
+    tf.env().set('TOPK_LAST_DIM_CPU_HANDOFF_SIZE_THRESHOLD', 0);
+  }
+
   return new MoveNetDetector(model, config);
 }
