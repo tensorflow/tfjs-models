@@ -26,6 +26,7 @@ import * as params from './params';
 let TUNABLE_FLAG_DEFAULT_VALUE_MAP;
 
 let enableTrackingController;
+let scoreThresholdController;
 
 const stringValueMap = {};
 
@@ -159,8 +160,10 @@ function addMoveNetControllers(modelConfigFolder, type) {
   params.STATE.modelConfig = {...params.MOVENET_CONFIG};
   params.STATE.modelConfig.type = type != null ? type : 'lightning';
 
+  // Set multipose defaults on initial page load.
   if (params.STATE.modelConfig.type === 'multipose') {
     params.STATE.modelConfig.enableTracking = true;
+    params.STATE.modelConfig.scoreThreshold = 0.2;
   }
 
   const typeController = modelConfigFolder.add(
@@ -170,9 +173,13 @@ function addMoveNetControllers(modelConfigFolder, type) {
     // changing models.
     params.STATE.isModelChanged = true;
     if (type === 'multipose') {
-      // Default to enable tracking for multi pose
+      // Defaults to enable tracking for multi pose.
       if (enableTrackingController) {
         enableTrackingController.setValue(true);
+      }
+      // Defaults to a lower scoreThreshold for multi pose.
+      if (scoreThresholdController) {
+        scoreThresholdController.setValue(0.2);
       }
     } else {
       enableTrackingController.setValue(false);
@@ -185,7 +192,8 @@ function addMoveNetControllers(modelConfigFolder, type) {
     params.STATE.isModelChanged = true;
   });
 
-  modelConfigFolder.add(params.STATE.modelConfig, 'scoreThreshold', 0, 1);
+  scoreThresholdController =
+      modelConfigFolder.add(params.STATE.modelConfig, 'scoreThreshold', 0, 1);
 
   enableTrackingController = modelConfigFolder.add(
       params.STATE.modelConfig,
