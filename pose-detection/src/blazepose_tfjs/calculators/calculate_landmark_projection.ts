@@ -33,7 +33,7 @@ export function calculateLandmarkProjection(
     config: {ignoreRotation: boolean} = {
       ignoreRotation: false
     }) {
-  const outputLandmarks = [];
+  const outputLandmarks: Keypoint[] = [];
   for (const landmark of landmarks) {
     const x = landmark.x - 0.5;
     const y = landmark.y - 0.5;
