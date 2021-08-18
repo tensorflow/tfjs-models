@@ -526,8 +526,7 @@ class BlazePoseTfjsDetector implements PoseDetector {
       }
       actualWorldLandmarksFiltered =
           this.worldLandmarksSmoothingFilterActual.apply(
-              actualWorldLandmarks, this.timestamp, imageSize,
-              false /* normalized */, objectScaleROI);
+              actualWorldLandmarks, this.timestamp);
     }
 
     return {
