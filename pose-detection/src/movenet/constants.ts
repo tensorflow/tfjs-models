@@ -49,7 +49,8 @@ export const KEYPOINT_FILTER_CONFIG = {
   beta: 300.0,
   derivateCutOff: 2.5,
   thresholdCutOff: 0.5,
-  thresholdBeta: 5.0
+  thresholdBeta: 5.0,
+  disableValueScaling: true,
 };
 export const CROP_FILTER_ALPHA = 0.9;
 export const MIN_CROP_KEYPOINT_SCORE = 0.2;

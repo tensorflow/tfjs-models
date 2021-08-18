@@ -18,13 +18,13 @@
 import {BlazePoseTfjsModelConfig} from './types';
 
 export const DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL =
-    'https://tfhub.dev/mediapipe/tfjs-model/blazeposedetector/1/default/1';
+    'https://storage.googleapis.com/tfjs-blazepose/blazeposedetector_named/model.json';
 export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_FULL =
-    'https://tfhub.dev/mediapipe/tfjs-model/blazeposelandmark_full/2/default/2';
+    'https://storage.googleapis.com/tfjs-blazepose/blazeposelandmark_full/model.json';
 export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_LITE =
-    'https://tfhub.dev/mediapipe/tfjs-model/blazeposelandmark_lite/2/default/2';
+    'https://storage.googleapis.com/tfjs-blazepose/blazeposelandmark_lite/model.json';
 export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_HEAVY =
-    'https://tfhub.dev/mediapipe/tfjs-model/blazeposelandmark_heavy/2/default/2';
+    'https://storage.googleapis.com/tfjs-blazepose/blazeposelandmark_heavy/model.json';
 export const BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION = {
   reduceBoxesInLowestlayer: false,
   interpolatedScaleAspectRatio: 1.0,
@@ -97,6 +97,11 @@ export const BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG = {
   inputImageWidth: 256,
   inputImageHeight: 256
 };
+export const BLAZEPOSE_TENSORS_TO_WORLD_LANDMARKS_CONFIG = {
+  numLandmarks: 39,
+  inputImageWidth: 1,
+  inputImageHeight: 1
+};
 export const BLAZEPOSE_REFINE_LANDMARKS_FROM_HEATMAP_CONFIG = {
   kernelSize: 7,
   minConfidenceToRefine: 0.5
@@ -132,5 +137,22 @@ export const BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG_AUXILIARY = {
     derivateCutOff: 1.0,  // derivateCutOff 1.0 results into ~0.17 alpha in
                           // landmark velocity EMA filter.
     minAllowedObjectScale: 1e-6
+  }
+};
+export const BLAZEPOSE_WORLD_LANDMARKS_SMOOTHING_CONFIG_ACTUAL = {
+  oneEuroFilter: {
+    frequency: 30,
+    minCutOff: 0.1,  // Min cutoff 0.1 results into ~ 0.02 alpha in landmark EMA
+                     // filter when landmark is static.
+    beta:
+        40,  // Beta 40.0 in combintation with min_cutoff 0.1 results into ~0.8
+             // alpha in landmark EMA filter when landmark is moving fast.
+    derivateCutOff: 1.0,  // Derivative cutoff 1.0 results into ~0.17 alpha in
+                          // landmark velocity EMA filter.
+    minAllowedObjectScale: 1e-6,
+    disableValueScaling:
+        true  // As world landmarks are predicted in real world 3D coordintates
+              // in meters (rather than in pixels of input image) prediction
+              // scale does not depend on the pose size in the image.
   }
 };

@@ -51,7 +51,7 @@ export class KeypointsOneEuroFilter implements KeypointsFilter {
     // If value is too small smoothing will be disabled and keypoints will be
     // returned as is.
     let valueScale = 1;
-    if (this.config.minAllowedObjectScale != null) {
+    if (!this.config.disableValueScaling) {
       if (objectScale < this.config.minAllowedObjectScale) {
         return [...keypoints];
       }

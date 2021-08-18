@@ -19,38 +19,33 @@ import {Rect} from '../../calculators/interfaces/shape_interfaces';
 import {Keypoint} from '../../types';
 
 /**
- * Projects normalized landmarks in a rectangle to its original coordinates. The
- * rectangle must also be in normalized coordinates.
- * @param landmarks A normalized Landmark list representing landmarks in a
- *     normalized rectangle.
+ * Projects world landmarks from the rectangle to original coordinates.
+ *
+ * World landmarks are predicted in meters rather than in pixels of the image
+ * and have origin in the middle of the hips rather than in the corner of the
+ * pose image (cropped with given rectangle). Thus only rotation (but not scale
+ * and translation) is applied to the landmarks to transform them back to
+ * original coordinates.
+ * @param worldLandmarks A Landmark list representing world landmarks in the
+ *     rectangle.
  * @param inputRect A normalized rectangle.
- * @param config Config object has one field ignoreRotation, default to false.
  */
 // ref:
 // https://github.com/google/mediapipe/blob/master/mediapipe/calculators/util/landmark_projection_calculator.cc
-export function calculateLandmarkProjection(
-    landmarks: Keypoint[], inputRect: Rect,
-    config: {ignoreRotation: boolean} = {
-      ignoreRotation: false
-    }) {
-  const outputLandmarks: Keypoint[] = [];
-  for (const landmark of landmarks) {
-    const x = landmark.x - 0.5;
-    const y = landmark.y - 0.5;
-    const angle = config.ignoreRotation ? 0 : inputRect.rotation;
-    let newX = Math.cos(angle) * x - Math.sin(angle) * y;
-    let newY = Math.sin(angle) * x + Math.cos(angle) * y;
+export function calculateWorldLandmarkProjection(
+    worldLandmarks: Keypoint[], inputRect: Rect) {
+  const outputLandmarks = [];
+  for (const worldLandmark of worldLandmarks) {
+    const x = worldLandmark.x;
+    const y = worldLandmark.y;
+    const angle = inputRect.rotation;
+    const newX = Math.cos(angle) * x - Math.sin(angle) * y;
+    const newY = Math.sin(angle) * x + Math.cos(angle) * y;
 
-    newX = newX * inputRect.width + inputRect.xCenter;
-    newY = newY * inputRect.height + inputRect.yCenter;
-
-    const newZ = landmark.z * inputRect.width;  // Scale Z coordinate as x.
-
-    const newLandmark = {...landmark};
+    const newLandmark = {...worldLandmark};
 
     newLandmark.x = newX;
     newLandmark.y = newY;
-    newLandmark.z = newZ;
 
     outputLandmarks.push(newLandmark);
   }
