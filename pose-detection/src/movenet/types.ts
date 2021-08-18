@@ -30,12 +30,14 @@ import {EstimationConfig, ModelConfig} from '../types';
  * tensor, which doesn't have the currentTime field. Or in testing, to simulate
  * different FPS.
  *
- * `modelType`: Optional. The type of MoveNet model to load, Lighting or
- * Thunder. Defaults to Lightning. Lightning is a lower capacity model that can
- * run >50FPS on most modern laptops while achieving good performance. Thunder
- * is a higher capacity model that performs better prediction quality while
- * still achieving real-time (>30FPS) speed. Thunder will lag behind the
- * lightning, but it will pack a punch.
+ * `modelType`: Optional. The type of MoveNet model to load, SinglePose
+ * Lighting, SinglePose Thunder or MultiPose Lightning. Defaults to SinglePose
+ * Lightning. SinglePose Lightning is a lower capacity model that can
+ * run >50FPS on most modern laptops while achieving good performance.
+ * SinglePose Thunder is a higher capacity model that performs better prediction
+ * quality while still achieving real-time (>30FPS) speed. MultiPose Lightning
+ * enables detection of up to 6 poses with similar accuracy as SinglePose
+ * Lightning.
  *
  * `modelUrl`: Optional. An optional string that specifies custom url of the
  * model. This is useful for area/countries that don't have access to the model
@@ -58,8 +60,8 @@ import {EstimationConfig, ModelConfig} from '../types';
  * will be tracked across frames. If true, each pose will have an ID that
  * uniquely identifies a person. Only used with multi-pose models.
  *
- * `trackerType`: Optional. A `MoveNetTrackerType` indicating which type of
- * tracker to use. Defaults to bounding box tracking.
+ * `trackerType`: Optional. A `TrackerType` indicating which type of tracker to
+ * use. Defaults to bounding box tracking.
  *
  * `trackerConfig`: Optional. A `TrackerConfig` object that specifies the
  * configuration to use for the tracker. For properties that are not specified,

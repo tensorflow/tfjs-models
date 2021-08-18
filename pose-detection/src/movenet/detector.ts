@@ -34,7 +34,7 @@ import {PoseDetector} from '../pose_detector';
 import {InputResolution, Pose, PoseDetectorInput, SupportedModels} from '../types';
 import {getKeypointIndexByName} from '../util';
 
-import {CROP_FILTER_ALPHA, DEFAULT_MIN_POSE_SCORE, KEYPOINT_FILTER_CONFIG, MIN_CROP_KEYPOINT_SCORE, MOVENET_CONFIG, MOVENET_ESTIMATION_CONFIG, MOVENET_MULTIPOSE_RESOLUTION as MOVENET_MULTIPOSE_MAX_DIMENSION, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_URL, MULTIPOSE_BOX_IDX, MULTIPOSE_BOX_SCORE_IDX, MULTIPOSE_INSTANCE_SIZE, MULTIPOSE_LIGHTNING, NUM_KEYPOINT_VALUES, NUM_KEYPOINTS, SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER} from './constants';
+import {CROP_FILTER_ALPHA, DEFAULT_MIN_POSE_SCORE, KEYPOINT_FILTER_CONFIG, MIN_CROP_KEYPOINT_SCORE, MOVENET_CONFIG, MOVENET_ESTIMATION_CONFIG, MOVENET_MULTIPOSE_LIGHTNING_RESOLUTION as MOVENET_MULTIPOSE_MAX_DIMENSION, MOVENET_MULTIPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_URL, MULTIPOSE_BOX_IDX, MULTIPOSE_BOX_SCORE_IDX, MULTIPOSE_INSTANCE_SIZE, MULTIPOSE_LIGHTNING, NUM_KEYPOINT_VALUES, NUM_KEYPOINTS, SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER} from './constants';
 import {determineNextCropRegion, initCropRegion} from './crop_utils';
 import {validateEstimationConfig, validateModelConfig} from './detector_utils';
 import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
@@ -519,11 +519,26 @@ export async function load(modelConfig: MoveNetModelConfig = MOVENET_CONFIG):
       modelUrl = MOVENET_SINGLEPOSE_LIGHTNING_URL;
     } else if (config.modelType === SINGLEPOSE_THUNDER) {
       modelUrl = MOVENET_SINGLEPOSE_THUNDER_URL;
-    } else {
-      throw new Error(`MoveNet multi-pose can only be loaded from a URL, ' +
-        'not from TF.Hub yet.`);
+    } else if (config.modelType === MULTIPOSE_LIGHTNING) {
+      modelUrl = MOVENET_MULTIPOSE_LIGHTNING_URL;
     }
     model = await tfc.loadGraphModel(modelUrl, {fromTFHub});
   }
+
+  if (tf.getBackend() === 'webgl') {
+    // MoveNet has a top-k op that runs faster on GPU for the size of our last
+    // dimension (6400). There are three checks that could make the top-k op run
+    // on CPU (see
+    // https://github.com/tensorflow/tfjs/blob/master/tfjs-backend-webgl/src/kernels/TopK.ts)
+    //
+    // 1. All input shapes < 128
+    // 2. lastDim < TOPK_LAST_DIM_CPU_HANDOFF_SIZE_THRESHOLD
+    // 3. k > TOPK_K_CPU_HANDOFF_THRESHOLD
+    //
+    // In our case, setting TOPK_LAST_DIM_CPU_HANDOFF_SIZE_THRESHOLD = 0 will
+    // will disable the CPU forwarding.
+    tf.env().set('TOPK_LAST_DIM_CPU_HANDOFF_SIZE_THRESHOLD', 0);
+  }
+
   return new MoveNetDetector(model, config);
 }

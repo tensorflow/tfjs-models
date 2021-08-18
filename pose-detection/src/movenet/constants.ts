@@ -28,10 +28,12 @@ export const MOVENET_SINGLEPOSE_LIGHTNING_URL =
     'https://tfhub.dev/google/tfjs-model/movenet/singlepose/lightning/4';
 export const MOVENET_SINGLEPOSE_THUNDER_URL =
     'https://tfhub.dev/google/tfjs-model/movenet/singlepose/thunder/4';
+export const MOVENET_MULTIPOSE_LIGHTNING_URL =
+    'https://tfhub.dev/google/tfjs-model/movenet/multipose/lightning/1';
 
 export const MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION = 192;
 export const MOVENET_SINGLEPOSE_THUNDER_RESOLUTION = 256;
-export const MOVENET_MULTIPOSE_RESOLUTION = 320;
+export const MOVENET_MULTIPOSE_LIGHTNING_RESOLUTION = 256;
 
 // The default configuration for loading MoveNet.
 export const MOVENET_CONFIG: MoveNetModelConfig = {
@@ -52,7 +54,7 @@ export const KEYPOINT_FILTER_CONFIG = {
 };
 export const CROP_FILTER_ALPHA = 0.9;
 export const MIN_CROP_KEYPOINT_SCORE = 0.2;
-export const DEFAULT_MIN_POSE_SCORE = 0.2;
+export const DEFAULT_MIN_POSE_SCORE = 0.25;
 
 export const NUM_KEYPOINTS = 17;
 export const NUM_KEYPOINT_VALUES = 3;  // [y, x, score]
@@ -81,6 +83,6 @@ export const DEFAULT_KEYPOINT_TRACKER_CONFIG = {
 export const DEFAULT_BOUNDING_BOX_TRACKER_CONFIG = {
   maxTracks: 18,  // 3 times max detections of the multi-pose model.
   maxAge: 1000,
-  minSimilarity: 0.2,
+  minSimilarity: 0.15,
   trackerParams: {}
 };
