@@ -15,15 +15,52 @@
  * =============================================================================
  */
 import * as posedetection from '@tensorflow-models/pose-detection';
+import * as scatter from 'scatter-gl';
 
 import * as params from './params';
 import {isMobile} from './util';
 
+// These anchor points allow the pose pointcloud to resize according to its
+// position in the input.
+const ANCHOR_POINTS = [[0, 0, 0], [0, 1, 0], [-1, 0, 0], [-1, -1, 0]];
+
+// #ffffff - White
+// #800000 - Maroon
+// #469990 - Malachite
+// #e6194b - Crimson
+// #42d4f4 - Picton Blue
+// #fabed4 - Cupid
+// #aaffc3 - Mint Green
+// #9a6324 - Kumera
+// #000075 - Navy Blue
+// #f58231 - Jaffa
+// #4363d8 - Royal Blue
+// #ffd8b1 - Caramel
+// #dcbeff - Mauve
+// #808000 - Olive
+// #ffe119 - Candlelight
+// #911eb4 - Seance
+// #bfef45 - Inchworm
+// #f032e6 - Razzle Dazzle Rose
+// #3cb44b - Chateau Green
+// #a9a9a9 - Silver Chalice
+const COLOR_PALETTE = [
+  '#ffffff', '#800000', '#469990', '#e6194b', '#42d4f4', '#fabed4', '#aaffc3',
+  '#9a6324', '#000075', '#f58231', '#4363d8', '#ffd8b1', '#dcbeff', '#808000',
+  '#ffe119', '#911eb4', '#bfef45', '#f032e6', '#3cb44b', '#a9a9a9'
+];
 export class Camera {
   constructor() {
     this.video = document.getElementById('video');
     this.canvas = document.getElementById('output');
     this.ctx = this.canvas.getContext('2d');
+    this.scatterGLEl = document.querySelector('#scatter-gl-container');
+    this.scatterGL = new scatter.ScatterGL(this.scatterGLEl, {
+      'rotateOnStart': true,
+      'selectEnabled': false,
+      'styles': {polyline: {defaultOpacity: 1, deselectedOpacity: 1}}
+    });
+    this.scatterGLHasInitialized = false;
   }
 
   /**
@@ -81,6 +118,13 @@ export class Camera {
     camera.ctx.translate(camera.video.videoWidth, 0);
     camera.ctx.scale(-1, 1);
 
+    camera.scatterGLEl.style =
+        `width: ${videoWidth}px; height: ${videoHeight}px;`;
+    camera.scatterGL.resize();
+
+    camera.scatterGLEl.style.display =
+        params.STATE.modelConfig.render3D ? 'inline-block' : 'none';
+
     return camera;
   }
 
@@ -110,7 +154,10 @@ export class Camera {
   drawResult(pose) {
     if (pose.keypoints != null) {
       this.drawKeypoints(pose.keypoints);
-      this.drawSkeleton(pose.keypoints);
+      this.drawSkeleton(pose.keypoints, pose.id);
+    }
+    if (pose.keypoints3D != null && params.STATE.modelConfig.render3D) {
+      this.drawKeypoints3D(pose.keypoints3D);
     }
   }
 
@@ -121,7 +168,7 @@ export class Camera {
   drawKeypoints(keypoints) {
     const keypointInd =
         posedetection.util.getKeypointIndexBySide(params.STATE.model);
-    this.ctx.fillStyle = 'White';
+    this.ctx.fillStyle = 'Red';
     this.ctx.strokeStyle = 'White';
     this.ctx.lineWidth = params.DEFAULT_LINE_WIDTH;
 
@@ -157,9 +204,13 @@ export class Camera {
    * Draw the skeleton of a body on the video.
    * @param keypoints A list of keypoints.
    */
-  drawSkeleton(keypoints) {
-    this.ctx.fillStyle = 'White';
-    this.ctx.strokeStyle = 'White';
+  drawSkeleton(keypoints, poseId) {
+    // Each poseId is mapped to a color in the color palette.
+    const color = params.STATE.modelConfig.enableTracking && poseId != null ?
+        COLOR_PALETTE[poseId % 20] :
+        'White';
+    this.ctx.fillStyle = color;
+    this.ctx.strokeStyle = color;
     this.ctx.lineWidth = params.DEFAULT_LINE_WIDTH;
 
     posedetection.util.getAdjacentPairs(params.STATE.model).forEach(([
@@ -180,5 +231,42 @@ export class Camera {
         this.ctx.stroke();
       }
     });
+  }
+
+  drawKeypoints3D(keypoints) {
+    const scoreThreshold = params.STATE.modelConfig.scoreThreshold || 0;
+    const pointsData =
+        keypoints.map(keypoint => ([-keypoint.x, -keypoint.y, -keypoint.z]));
+
+    const dataset =
+        new scatter.ScatterGL.Dataset([...pointsData, ...ANCHOR_POINTS]);
+
+    const keypointInd =
+        posedetection.util.getKeypointIndexBySide(params.STATE.model);
+    this.scatterGL.setPointColorer((i) => {
+      if (keypoints[i] == null || keypoints[i].score < scoreThreshold) {
+        // hide anchor points and low-confident points.
+        return '#ffffff';
+      }
+      if (i === 0) {
+        return '#ff0000' /* Red */;
+      }
+      if (keypointInd.left.indexOf(i) > -1) {
+        return '#00ff00' /* Green */;
+      }
+      if (keypointInd.right.indexOf(i) > -1) {
+        return '#ffa500' /* Orange */;
+      }
+    });
+
+    if (!this.scatterGLHasInitialized) {
+      this.scatterGL.render(dataset);
+    } else {
+      this.scatterGL.updateDataset(dataset);
+    }
+    const connections = posedetection.util.getAdjacentPairs(params.STATE.model);
+    const sequences = connections.map(pair => ({indices: pair}));
+    this.scatterGL.setSequences(sequences);
+    this.scatterGLHasInitialized = true;
   }
 }

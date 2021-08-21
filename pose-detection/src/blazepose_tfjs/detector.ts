@@ -17,8 +17,8 @@
 
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
-import {BlazePoseModelType} from '../blazepose_mediapipe/types';
 
+import {BlazePoseModelType} from '../blazepose_mediapipe/types';
 import {MILLISECOND_TO_MICRO_SECONDS, SECOND_TO_MICRO_SECONDS} from '../calculators/constants';
 import {convertImageToTensor} from '../calculators/convert_image_to_tensor';
 import {getImageSize, toImageTensor} from '../calculators/image_utils';
@@ -34,6 +34,8 @@ import {Keypoint, Pose, PoseDetectorInput} from '../types';
 
 import {calculateAlignmentPointsRects} from './calculators/calculate_alignment_points_rects';
 import {calculateLandmarkProjection} from './calculators/calculate_landmark_projection';
+import {calculateScoreCopy} from './calculators/calculate_score_copy';
+import {calculateWorldLandmarkProjection} from './calculators/calculate_world_landmark_projection';
 import {createSsdAnchors} from './calculators/create_ssd_anchors';
 import {detectorInference} from './calculators/detector_inference';
 import {AnchorTensor, Detection} from './calculators/interfaces/shape_interfaces';
@@ -53,7 +55,8 @@ import {BlazePoseTfjsEstimationConfig, BlazePoseTfjsModelConfig} from './types';
 type PoseLandmarksByRoiResult = {
   actualLandmarks: Keypoint[],
   auxiliaryLandmarks: Keypoint[],
-  poseScore: number
+  poseScore: number,
+  actualWorldLandmarks: Keypoint[],
 };
 
 /**
@@ -72,6 +75,7 @@ class BlazePoseTfjsDetector implements PoseDetector {
   private visibilitySmoothingFilterAuxiliary: LowPassVisibilityFilter;
   private landmarksSmoothingFilterActual: KeypointsSmoothingFilter;
   private landmarksSmoothingFilterAuxiliary: KeypointsSmoothingFilter;
+  private worldLandmarksSmoothingFilterActual: KeypointsSmoothingFilter;
 
   constructor(
       private readonly detectorModel: tfconv.GraphModel,
@@ -163,12 +167,22 @@ class BlazePoseTfjsDetector implements PoseDetector {
       return [];
     }
 
-    const {actualLandmarks, auxiliaryLandmarks, poseScore} = poseLandmarks;
+    const {
+      actualLandmarks,
+      auxiliaryLandmarks,
+      poseScore,
+      actualWorldLandmarks
+    } = poseLandmarks;
 
     // Smoothes landmarks to reduce jitter.
-    const {actualLandmarksFiltered, auxiliaryLandmarksFiltered} =
+    const {
+      actualLandmarksFiltered,
+      auxiliaryLandmarksFiltered,
+      actualWorldLandmarksFiltered
+    } =
         this.poseLandmarkFiltering(
-            actualLandmarks, auxiliaryLandmarks, imageSize);
+            actualLandmarks, auxiliaryLandmarks, actualWorldLandmarks,
+            imageSize);
 
     // Calculates region of interest based on the auxiliary landmarks, to be
     // used in the subsequent image.
@@ -190,7 +204,16 @@ class BlazePoseTfjsDetector implements PoseDetector {
       });
     }
 
-    const pose: Pose = {score: poseScore, keypoints};
+    const keypoints3D = actualWorldLandmarksFiltered;
+
+    // Add keypoint name.
+    if (keypoints3D != null) {
+      keypoints3D.forEach((keypoint3D, i) => {
+        keypoint3D.name = BLAZEPOSE_KEYPOINTS[i];
+      });
+    }
+
+    const pose: Pose = {score: poseScore, keypoints, keypoints3D};
 
     return [pose];
   }
@@ -297,52 +320,29 @@ class BlazePoseTfjsDetector implements PoseDetector {
 
     const imageValueShifted = shiftImageValue(imageTensor, [0, 1]);
 
-    // PoseLandmarksByRoiCPU: InferenceCalculator
-    // The model returns 5 tensor with the following shape:
-    // Full model:
-    // Output[4]: This tensor (shape: [1, 195]) represents 39 5-d keypoints.
-    // The first 33 refer to the keypoints. The final 6 key points refer to
-    // the alignment points from the detector model and the hands.)
-    // Output [3]: This tensor (shape: [1, 1]) represents the confidence
-    // score.
-    // Output [2]: This tensor (shape: [1, 64, 64, 39]) represents heatmap for
-    // the 39 landmarks.
-    // Lite model:
-    // Output[4]: This tensor (shape: [1, 195]) represents 39 5-d keypoints.
-    // Output[0]: This tensor (shape: [1, 1]) represents the confidence score.
-    // Output[3]: This tensor (shape: [1, 64, 64, 39]) represents heatmap for
-    // the 39 landmarks.
-    // Heavy model:
-    // Output[2]: This tensor (shape: [1, 195]) represents 39 5-d keypoints.
-    // Output[4]: This tensor (shape: [1, 1]) represents the confidence score.
-    // Output[1]: This tensor (shape: [1, 64, 64, 39]) represents heatmap for
-    // the 39 landmarks.
-    const landmarkResult =
-        this.landmarkModel.predict(imageValueShifted) as tf.Tensor[];
-
-    let landmarkTensor, poseFlagTensor, heatmapTensor;
-
-    switch (this.modelType) {
-      case 'lite':
-        landmarkTensor = landmarkResult[4] as tf.Tensor2D;
-        poseFlagTensor = landmarkResult[0] as tf.Tensor2D;
-        heatmapTensor = landmarkResult[3] as tf.Tensor4D;
-        break;
-      case 'full':
-        landmarkTensor = landmarkResult[4] as tf.Tensor2D;
-        poseFlagTensor = landmarkResult[3] as tf.Tensor2D;
-        heatmapTensor = landmarkResult[2] as tf.Tensor4D;
-        break;
-      case 'heavy':
-        landmarkTensor = landmarkResult[2] as tf.Tensor2D;
-        poseFlagTensor = landmarkResult[4] as tf.Tensor2D;
-        heatmapTensor = landmarkResult[1] as tf.Tensor4D;
-        break;
-      default:
-        throw new Error(
-            'Model type must be one of lite, full or heavy,' +
-            `but got ${this.modelType}`);
+    if (this.modelType !== 'lite' && this.modelType !== 'full' &&
+        this.modelType !== 'heavy') {
+      throw new Error(
+          'Model type must be one of lite, full or heavy,' +
+          `but got ${this.modelType}`);
     }
+
+    // PoseLandmarksByRoiCPU: InferenceCalculator
+    // The model returns 5 tensors with the following shape:
+    // ld_3d: This tensor (shape: [1, 195]) represents 39 5-d keypoints.
+    // output_poseflag: This tensor (shape: [1, 1]) represents the confidence
+    //  score.
+    // activation_heatmap: This tensor (shape: [1, 64, 64, 39]) represents
+    //  heatmap for the 39 landmarks.
+    // world_3d: This tensor (shape: [1, 117]) represents 39 3DWorld keypoints.
+    const landmarkResult = this.landmarkModel.execute(imageValueShifted, [
+      'ld_3d', 'output_poseflag', 'activation_heatmap', 'world_3d'
+    ]) as tf.Tensor[];
+
+    const landmarkTensor = landmarkResult[0] as tf.Tensor2D,
+          poseFlagTensor = landmarkResult[1] as tf.Tensor2D,
+          heatmapTensor = landmarkResult[2] as tf.Tensor4D,
+          worldLandmarkTensor = landmarkResult[3] as tf.Tensor2D;
 
     // Converts the pose-flag tensor into a float that represents the
     // confidence score of pose presence.
@@ -357,8 +357,13 @@ class BlazePoseTfjsDetector implements PoseDetector {
       return null;
     }
 
-    // Decodes the landmark tensors into a list of landmarks, where the landmark
-    // coordinates are normalized by the size of the input image to the model.
+    // -------------------------------------------------------------------------
+    // ---------------------------- Pose landmarks -----------------------------
+    // -------------------------------------------------------------------------
+
+    // Decodes the landmark tensors into a list of landmarks, where the
+    // landmark coordinates are normalized by the size of the input image to
+    // the model.
     // PoseLandmarksByRoiCpu: TensorsToLandmarksCalculator.
     const landmarks = await tensorsToLandmarks(
         landmarkTensor, constants.BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG);
@@ -389,10 +394,39 @@ class BlazePoseTfjsDetector implements PoseDetector {
         constants.BLAZEPOSE_NUM_KEYPOINTS,
         constants.BLAZEPOSE_NUM_AUXILIARY_KEYPOINTS);
 
+    // -------------------------------------------------------------------------
+    // ------------------------- Pose world landmarks --------------------------
+    // -------------------------------------------------------------------------
+
+    // Decodes the world landmark tensors into a list of landmarks.
+    // PoseLandmarksByRoiCpu: TensorsToLandmarksCalculator.
+    const worldLandmarks = await tensorsToLandmarks(
+        worldLandmarkTensor,
+        constants.BLAZEPOSE_TENSORS_TO_WORLD_LANDMARKS_CONFIG);
+
+    const worldLandmarksWithVisibility =
+        calculateScoreCopy(landmarks, worldLandmarks, true);
+
+    // Projects the world landmarks from the cropped pose image to the
+    // corresponding locations on the full image before cropping (input to the
+    // graph).
+    // PoseLandmarksByRoiCpu: WorldLandmarkProjectionCalculator.
+    const projectedWorldLandmarks = calculateWorldLandmarkProjection(
+        worldLandmarksWithVisibility, poseRect);
+
+    // Take only actual world landmarks.
+    const actualWorldLandmarks =
+        projectedWorldLandmarks.slice(0, constants.BLAZEPOSE_NUM_KEYPOINTS);
+
     tf.dispose(landmarkResult);
     tf.dispose([imageTensor, imageValueShifted]);
 
-    return {actualLandmarks, auxiliaryLandmarks, poseScore};
+    return {
+      actualLandmarks,
+      auxiliaryLandmarks,
+      poseScore,
+      actualWorldLandmarks
+    };
   }
 
   // Calculate region of interest (ROI) from landmarks.
@@ -429,15 +463,18 @@ class BlazePoseTfjsDetector implements PoseDetector {
   // https://github.com/google/mediapipe/blob/master/mediapipe/modules/pose_landmark/pose_landmark_filtering.pbtxt
   private poseLandmarkFiltering(
       actualLandmarks: Keypoint[], auxiliaryLandmarks: Keypoint[],
-      imageSize: ImageSize): {
+      actualWorldLandmarks: Keypoint[], imageSize: ImageSize): {
     actualLandmarksFiltered: Keypoint[],
-    auxiliaryLandmarksFiltered: Keypoint[]
+    auxiliaryLandmarksFiltered: Keypoint[],
+    actualWorldLandmarksFiltered: Keypoint[],
   } {
     let actualLandmarksFiltered;
     let auxiliaryLandmarksFiltered;
+    let actualWorldLandmarksFiltered;
     if (this.timestamp == null || !this.enableSmoothing) {
       actualLandmarksFiltered = actualLandmarks;
       auxiliaryLandmarksFiltered = auxiliaryLandmarks;
+      actualWorldLandmarksFiltered = actualWorldLandmarks;
     } else {
       const auxDetection = landmarksToDetection(auxiliaryLandmarks);
       const objectScaleROI =
@@ -462,6 +499,9 @@ class BlazePoseTfjsDetector implements PoseDetector {
       auxiliaryLandmarksFiltered =
           this.visibilitySmoothingFilterAuxiliary.apply(auxiliaryLandmarks);
 
+      actualWorldLandmarksFiltered =
+          this.visibilitySmoothingFilterActual.apply(actualWorldLandmarks);
+
       // Smoothes pose landmark coordinates to reduce jitter.
       if (this.landmarksSmoothingFilterActual == null) {
         this.landmarksSmoothingFilterActual = new KeypointsSmoothingFilter(
@@ -478,9 +518,22 @@ class BlazePoseTfjsDetector implements PoseDetector {
       auxiliaryLandmarksFiltered = this.landmarksSmoothingFilterAuxiliary.apply(
           auxiliaryLandmarksFiltered, this.timestamp, imageSize,
           true /* normalized */, objectScaleROI);
+
+      // Smoothes pose world landmark coordinates to reduce jitter.
+      if (this.worldLandmarksSmoothingFilterActual == null) {
+        this.worldLandmarksSmoothingFilterActual = new KeypointsSmoothingFilter(
+            constants.BLAZEPOSE_WORLD_LANDMARKS_SMOOTHING_CONFIG_ACTUAL);
+      }
+      actualWorldLandmarksFiltered =
+          this.worldLandmarksSmoothingFilterActual.apply(
+              actualWorldLandmarks, this.timestamp);
     }
 
-    return {actualLandmarksFiltered, auxiliaryLandmarksFiltered};
+    return {
+      actualLandmarksFiltered,
+      auxiliaryLandmarksFiltered,
+      actualWorldLandmarksFiltered
+    };
   }
 }
 
