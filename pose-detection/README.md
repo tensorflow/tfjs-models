@@ -72,7 +72,7 @@ Example output:
 
 x and y represent the actual keypoint position in the image. If you need normalized
 keypoint positions, you can use the method
-`poseDetection.calculator.keypointsToNormalizedKeypoints(keypoints, imageSize)` to
+`poseDetection.calculators.keypointsToNormalizedKeypoints(keypoints, imageSize)` to
 convert x and y to [0, 1] range.
 
 The score ranges from 0 to 1. It represents the model's confidence of a keypoint.
