@@ -46,6 +46,7 @@ Via npm:
 
 ```sh
 yarn add @tensorflow-models/pose-detection
+yarn add @mediapipe/pose
 yarn add @tensorflow/tfjs-core, @tensorflow/tfjs-converter
 yarn add @tensorflow/tfjs-backend-webgl
 ```
