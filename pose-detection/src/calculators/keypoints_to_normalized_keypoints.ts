@@ -25,9 +25,9 @@ export function keypointsToNormalizedKeypoints(
       y: keypoint.y / imageSize.height
     };
 
-    if (keypoint.z != null) {
+    if (normalizedKeypoint.z != null) {
       // Scale z the same way as x (using image width).
-      keypoint.z = keypoint.z / imageSize.width;
+      normalizedKeypoint.z = normalizedKeypoint.z / imageSize.width;
     }
 
     return normalizedKeypoint;
