@@ -81,10 +81,9 @@ If you need normalized keypoint positions, you can use the method
 convert x and y to [0, 1] range.
 
 For the `keypoints3D`, x, y and z represent absolute distance in meters in a
-1 x 1 x 1 meter cubic space. To map the 3D pose to real world size, applications
-need to get the actual distance, for example between the two hips, and scale
-accordingly. The z is always perpendicular to the xy plane defined as the plane
-that passes the center of the hip.
+2 x 2 x 2 meter cubic space. The range for each axis goes from -1 to 1 (therefore
+2m total delta). The z is always perpendicular to the xy plane that passes the
+center of the hip, so the coordinate for the hip center is (0, 0, 0).
 
 The score ranges from 0 to 1. It represents the model's confidence of a keypoint.
 Usually, keypoints with low confidence scores should not be used. Each application
