@@ -23,7 +23,7 @@ PoseNet can detect multiple poses, each pose contains 17 keypoints.
 
 -------------------------------------------------------------------------------
 ## Table of Contents
-1.  [How to Run It](#how-to-run-it)
+1. [How to Run It](#how-to-run-it)
 2. [Keypoint Diagram](#keypoint-diagram)
 3. [Example Code and Demos](#example-code-and-demos)
 
@@ -53,8 +53,9 @@ only PoseNet supports multi-pose estimation. If the model cannot detect any pose
 the list will be empty.
 
 For each pose, it contains a confidence score of the pose and an array of keypoints.
-PoseNet and MoveNet both return 17 keypoints. Mediapipe BlazePose returns 33 keypoints.
-Each keypoint contains x, y, score and name.
+PoseNet and MoveNet both return 17 keypoints. MediaPipe BlazePose returns 33 keypoints.
+Each keypoint contains x, y, score and name. In addition, MediaPipe BlazePose
+also returns an array of 3D keypoints.
 
 Example output:
 ```
@@ -62,18 +63,27 @@ Example output:
   {
     score: 0.8,
     keypoints: [
-      {x: 230, y: 220, score: 0.9, name: "nose"},
-      {x: 212, y: 190, score: 0.8, name: "left_eye"},
+      {x: 230, y: 220, score: 0.9, score: 0.99, name: "nose"},
+      {x: 212, y: 190, score: 0.8, score: 0.91, name: "left_eye"},
+      ...
+    ],
+    keypoints3D: [
+      {x: 0.65, y: 0.11, z: 0.05, score: 0.99, name: "nose"},
       ...
     ]
   }
 ]
 ```
 
-x and y represent the actual keypoint position in the image. If you need normalized
-keypoint positions, you can use the method
+For the `keypoints`, x and y represent the actual keypoint position in the image.
+If you need normalized keypoint positions, you can use the method
 `poseDetection.calculator.keypointsToNormalizedKeypoints(keypoints, imageSize)` to
 convert x and y to [0, 1] range.
+
+For the `keypoints3D`, x, y and z represent absolute distance in meters in a
+2 x 2 x 2 meter cubic space. The range for each axis goes from -1 to 1 (therefore
+2m total delta). The z is always perpendicular to the xy plane that passes the
+center of the hip, so the coordinate for the hip center is (0, 0, 0).
 
 The score ranges from 0 to 1. It represents the model's confidence of a keypoint.
 Usually, keypoints with low confidence scores should not be used. Each application
