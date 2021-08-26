@@ -34,12 +34,10 @@ const MEDIAPIPE_MODEL_CONFIG: BlazePoseMediaPipeModelConfig = {
 const EPSILON_IMAGE = 11;
 // Measured in meters.
 const EPSILON_IMAGE_WORLD = 0.1;
-// TODO(lina128): Reduce video tolerance once MP Web Solution publishes new
-// version.
 // Measured in pixels.
 const EPSILON_VIDEO = 31;
 // Measured in meters.
-const EPSILON_VIDEO_WORLD = 0.1;
+const EPSILON_VIDEO_WORLD = 0.24;
 // ref:
 // https://github.com/google/mediapipe/blob/7c331ad58b2cca0dca468e342768900041d65adc/mediapipe/python/solutions/pose_test.py#L31-L51
 const EXPECTED_LANDMARKS = [
