@@ -56,6 +56,7 @@
     "bundle": "rollup -c",
     "build": "rimraf dist && tsc && yarn bundle",
     "build-util": "cd ../util && yarn && yarn build",
+    "build-deps": "yarn build-util && yarn build",
     "publish-local": "yarn build-deps && yarn build && rollup -c && yalc publish",
     "run-browserstack": "karma start --browserstack",
     "test-node": "ts-node --skip-ignore --project tsconfig.test.json run_tests.ts",

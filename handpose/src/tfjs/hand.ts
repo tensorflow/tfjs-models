@@ -71,8 +71,8 @@ export class HandDetector {
       tf.Tensor2D {
     return tf.tidy(() => {
       const landmarks = tf.add(
-          tf.div(tf.reshape(
-              rawPalmLandmarks, [-1, 7, 2]), this.inputSizeTensor),
+          tf.div(
+              tf.reshape(rawPalmLandmarks, [-1, 7, 2]), this.inputSizeTensor),
           this.anchors[index]);
 
       return tf.mul(landmarks, this.inputSizeTensor);
@@ -132,9 +132,8 @@ export class HandDetector {
 
     const rawPalmLandmarks = tf.slice(prediction, [boxIndex, 5], [1, 14]);
     const palmLandmarks: tf.Tensor2D = tf.tidy(
-        () => tf.reshape(this.normalizeLandmarks(rawPalmLandmarks, boxIndex), [
-          -1, 2
-        ]));
+        () => tf.reshape(
+            this.normalizeLandmarks(rawPalmLandmarks, boxIndex), [-1, 2]));
 
     toDispose.push(rawPalmLandmarks);
     toDispose.forEach(tensor => tensor.dispose());
@@ -152,9 +151,9 @@ export class HandDetector {
     const inputHeight = input.shape[1];
     const inputWidth = input.shape[2];
 
-    const image: tf.Tensor4D =
-        tf.tidy(() => tf.div(tf.image.resizeBilinear(
-            input, [this.width, this.height]), 255));
+    const image: tf.Tensor4D = tf.tidy(
+        () => tf.div(
+            tf.image.resizeBilinear(input, [this.width, this.height]), 255));
     const prediction = await this.getBoundingBoxes(image);
 
     if (prediction === null) {
