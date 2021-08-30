@@ -22,6 +22,16 @@ import {HandDetector} from './hand';
 import {MESH_ANNOTATIONS} from './keypoints';
 import {Coords3D, HandPipeline, Prediction} from './pipeline';
 
+export {createDetector} from './create_detector';
+// HandDetector class.
+export {HandDetector} from './hand_detector';
+// Top level exports.
+// Entry point to create a new detector instance.
+export {MPHandsMediaPipeEstimationConfig, MPHandsMediaPipeModelConfig} from './mediapipe/types';
+
+// Supported models enum.
+export * from './types';
+
 // Load the bounding box detector model.
 async function loadHandDetectorModel() {
   const HANDDETECT_MODEL_PATH =
@@ -105,9 +115,8 @@ function flipHandHorizontal(prediction: Prediction, width: number): Prediction {
         }),
     boundingBox: {
       topLeft: [width - 1 - boundingBox.topLeft[0], boundingBox.topLeft[1]],
-      bottomRight: [
-        width - 1 - boundingBox.bottomRight[0], boundingBox.bottomRight[1]
-      ]
+      bottomRight:
+          [width - 1 - boundingBox.bottomRight[0], boundingBox.bottomRight[1]]
     }
   };
 }
