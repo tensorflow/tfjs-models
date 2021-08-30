@@ -1,4 +1,4 @@
-import {Keypoint} from '../../types';
+import {Keypoint} from '@tensorflow-models/util';
 import {BoundingBox} from './shape_interfaces';
 
 /**
@@ -46,10 +46,10 @@ export interface KeypointsFilter {
 }
 
 export interface Track {
-  id: number;  // A unique identifier for each tracked person.
-  lastTimestamp: number;  // The last timestamp (in milliseconds) in which a
-                          // detection was linked with the track.
+  id: number;              // A unique identifier for each tracked person.
+  lastTimestamp: number;   // The last timestamp (in milliseconds) in which a
+                           // detection was linked with the track.
   keypoints?: Keypoint[];  // Keypoints associated with the tracked person.
-  box?: BoundingBox;  // Bounding box associated with the tracked person.
-  score?: number;  // A confidence value of the track.
+  box?: BoundingBox;       // Bounding box associated with the tracked person.
+  score?: number;          // A confidence value of the track.
 }

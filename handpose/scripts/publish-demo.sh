@@ -16,6 +16,7 @@
 
 cd demo
 rm -rf dist
+yarn build-deps
 yarn build
 gsutil -m rm -r gs://tfjs-models/demos/handpose/*
 gsutil -m cp -Z -r dist/ gs://tfjs-models/demos/handpose

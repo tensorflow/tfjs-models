@@ -16,12 +16,13 @@
  */
 
 // tslint:disable-next-line: no-imports-from-dist
+import {KARMA_SERVER, loadImage} from '@tensorflow-models/util';
 import {BROWSER_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
 // tslint:disable-next-line: no-imports-from-dist
 import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
 
 import * as poseDetection from '../index';
-import {getXYPerFrame, KARMA_SERVER, loadImage, loadVideo} from '../test_util';
+import {getXYPerFrame, loadVideo} from '../test_util';
 
 import {BlazePoseMediaPipeModelConfig} from './types';
 

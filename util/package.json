@@ -1,34 +1,25 @@
 {
-  "name": "@tensorflow-models/handpose",
-  "version": "0.0.7",
-  "description": "Pretrained hand detection model",
+  "name": "@tensorflow-models/util",
+  "version": "0.0.1",
+  "description": "Utilities for building and testing TFJS models",
   "main": "dist/index.js",
-  "jsnext:main": "dist/handpose.esm.js",
-  "module": "dist/handpose.esm.js",
-  "unpkg": "dist/handpose.min.js",
-  "jsdelivr": "dist/handpose.min.js",
+  "jsnext:main": "dist/util.esm.js",
+  "module": "dist/util.esm.js",
+  "unpkg": "dist/util.min.js",
+  "jsdelivr": "dist/util.min.js",
   "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
-  "peerDependencies": {
-    "@mediapipe/hands": "~0.3.0",
-    "@tensorflow/tfjs-backend-webgl": "^3.0.0",
-    "@tensorflow/tfjs-converter": "^3.0.0",
-    "@tensorflow/tfjs-core": "^3.0.0"
-  },
+  "peerDependencies": {},
   "devDependencies": {
     "@babel/polyfill": "^7.10.4",
-    "@mediapipe/hands": "0.3.1630010197",
     "@rollup/plugin-commonjs": "^11.0.2",
     "@rollup/plugin-node-resolve": "^7.1.1",
     "@rollup/plugin-typescript": "^3.0.0",
-    "@tensorflow/tfjs-backend-cpu": "^3.0.0",
-    "@tensorflow/tfjs-backend-webgl": "^3.0.0",
-    "@tensorflow/tfjs-converter": "^3.0.0",
-    "@tensorflow/tfjs-core": "^3.0.0",
     "@types/jasmine": "~2.8.8",
+    "@types/node": "~10.3.4",
     "babel-core": "~6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",
     "jasmine": "~3.1.0",
@@ -51,18 +42,15 @@
   "scripts": {
     "bundle": "rollup -c",
     "build": "rimraf dist && tsc && yarn bundle",
-    "build-util": "cd ../util && yarn && yarn build",
-    "build-deps": "yarn build-util && yarn build",
-    "publish-local": "yarn build-deps && yarn build && rollup -c && yalc publish",
+    "publish-local": "yarn build && rollup -c && yalc publish",
     "test-node": "ts-node --skip-ignore --project tsconfig.test.json run_tests.ts",
-    "test": "yarn && yarn build-deps && karma start",
-    "build-npm": "yarn build-deps && yarn build && yarn bundle",
+    "test": "yarn && karma start",
+    "build-npm": "yarn build && yarn bundle",
     "lint": "tslint -p . -t verbose",
     "publish-demo": "./scripts/publish-demo.sh"
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "@tensorflow-models/util": "link:../util",
     "rimraf": "^3.0.2"
   }
 }

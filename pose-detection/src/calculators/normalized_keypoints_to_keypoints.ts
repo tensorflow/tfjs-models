@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import {Keypoint} from '../types';
+import {Keypoint} from '@tensorflow-models/util';
 import {ImageSize} from './interfaces/common_interfaces';
 export function normalizedKeypointsToKeypoints(
     normalizedKeypoints: Keypoint[], imageSize: ImageSize): Keypoint[] {

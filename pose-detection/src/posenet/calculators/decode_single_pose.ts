@@ -15,10 +15,13 @@
  * =============================================================================
  */
 
+import {Keypoint} from '@tensorflow-models/util';
 import * as tf from '@tensorflow/tfjs-core';
+
 import {COCO_KEYPOINTS} from '../../constants';
-import {Keypoint, Pose} from '../../types';
+import {Pose} from '../../types';
 import {PoseNetOutputStride} from '../types';
+
 import {argmax2d, getOffsetPoints, getPointsConfidence} from './decode_single_pose_util';
 
 /**

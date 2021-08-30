@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2020 Google LLC. All Rights Reserved.
+ * Copyright 2021 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -52,28 +52,22 @@ function config({ plugins = [], output = {}, tsCompilerOptions = {} }) {
     output: {
       banner: PREAMBLE,
       globals: {
-        '@tensorflow/tfjs-core': 'tf',
-        '@tensorflow/tfjs-converter': 'tf',
-        '@mediapipe/hands': 'Hands'
       },
       ...output,
     },
     external: [
-      '@tensorflow/tfjs-core',
-      '@tensorflow/tfjs-converter',
-      '@mediapipe/hands'
     ]
   };
 }
 
 export default [
-  config({ output: { format: 'umd', name: 'handpose', file: 'dist/handpose.js' } }),
+  config({ output: { format: 'umd', name: 'util', file: 'dist/util.js' } }),
   config({
     plugins: [terser({output: {preamble: PREAMBLE, comments: false}})],
-    output: { format: 'umd', name: 'handpose', file: 'dist/handpose.min.js' }
+    output: { format: 'umd', name: 'util', file: 'dist/util.min.js' }
   }),
   config({
     plugins: [terser({output: {preamble: PREAMBLE, comments: false}})],
-    output: { format: 'es', file: 'dist/handpose.esm.js' }
+    output: { format: 'es', file: 'dist/util.esm.js' }
   })
 ];
