@@ -14,9 +14,11 @@
  * limitations under the License.
  * =============================================================================
  */
+import {Keypoint} from '@tensorflow-models/util';
 import * as tf from '@tensorflow/tfjs-core';
+
 import {COCO_KEYPOINTS} from '../../constants';
-import {Keypoint, Pose} from '../../types';
+import {Pose} from '../../types';
 import {NUM_KEYPOINTS, POSE_CHAIN} from '../constants';
 import {NumberDict, NumberTuple, Part, PartWithScore, Vector2D} from '../types';
 

@@ -15,8 +15,10 @@
  * =============================================================================
  */
 
+import {Keypoint} from '@tensorflow-models/util';
+
 import {LowPassFilter} from '../../calculators/low_pass_filter';
-import {Keypoint} from '../../types';
+
 import {VisibilitySmoothingConfig} from './interfaces/config_interfaces';
 
 /**

@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import {Keypoint} from '../types';
+import {Keypoint} from '@tensorflow-models/util';
 
 import {KeypointsFilter} from './interfaces/common_interfaces';
 import {VelocityFilterConfig} from './interfaces/config_interfaces';

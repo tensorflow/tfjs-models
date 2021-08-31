@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import {Keypoint} from '../../types';
+import {Keypoint} from '@tensorflow-models/util';
 import {Detection} from './interfaces/shape_interfaces';
 
 /**

@@ -98,6 +98,13 @@ steps:
   args: ['./scripts/run-build.sh', 'universal-sentence-encoder']
   waitFor: ['diff']
 
+# Util.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'util'
+  args: ['./scripts/run-build.sh', 'util']
+  waitFor: ['diff']
+
 # Handpose
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'

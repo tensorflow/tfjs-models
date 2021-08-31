@@ -1,4 +1,4 @@
-import {Keypoint} from '../../types';
+import {Keypoint} from '@tensorflow-models/util';
 import {BoundingBox} from './shape_interfaces';
 
 /**
