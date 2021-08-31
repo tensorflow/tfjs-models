@@ -15,6 +15,9 @@
  * =============================================================================
  */
 import * as tf from '@tensorflow/tfjs-core';
+
+import {Keypoint} from '../../shared/types';
+
 import {BoundingBox} from './calculators/interfaces/shape_interfaces';
 
 export enum SupportedModels {
@@ -56,17 +59,6 @@ export type PoseDetectorInput =
 export interface InputResolution {
   width: number;
   height: number;
-}
-
-/**
- * A keypoint that contains coordinate information.
- */
-export interface Keypoint {
-  x: number;
-  y: number;
-  z?: number;
-  score?: number;  // The probability of a keypoint's visibility.
-  name?: string;
 }
 
 export interface Pose {

@@ -57,8 +57,9 @@ const devConfig = {
     },
     'src/setup_test.ts',
     {pattern: 'src/**/*.ts'},
+    {pattern: '../shared/*.ts'},
   ],
-  preprocessors: {'**/*.ts': ['karma-typescript']},
+  preprocessors: {'../**/*.ts': ['karma-typescript']},
   karmaTypescriptConfig,
   reporters: ['dots', 'karma-typescript']
 };

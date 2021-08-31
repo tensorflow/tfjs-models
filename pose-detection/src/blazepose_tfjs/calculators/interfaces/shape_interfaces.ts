@@ -15,8 +15,9 @@
  * =============================================================================
  */
 import * as tf from '@tensorflow/tfjs-core';
+
+import {Keypoint} from '../../../../../shared/types';
 import {BoundingBox} from '../../../calculators/interfaces/shape_interfaces';
-import {Keypoint} from '../../../types';
 
 export interface AnchorTensor {
   x: tf.Tensor1D;

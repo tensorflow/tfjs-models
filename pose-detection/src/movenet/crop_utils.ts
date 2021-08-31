@@ -15,10 +15,11 @@
  * =============================================================================
  */
 
+import {Keypoint} from '../../../shared/types';
+
 import {ImageSize} from '../calculators/interfaces/common_interfaces';
 import {BoundingBox} from '../calculators/interfaces/shape_interfaces';
 import {COCO_KEYPOINTS} from '../constants';
-import {Keypoint} from '../types';
 
 import {MIN_CROP_KEYPOINT_SCORE} from './constants';
 

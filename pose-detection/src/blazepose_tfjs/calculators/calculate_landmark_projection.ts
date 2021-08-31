@@ -15,8 +15,8 @@
  * =============================================================================
  */
 
+import {Keypoint} from '../../../../shared/types';
 import {Rect} from '../../calculators/interfaces/shape_interfaces';
-import {Keypoint} from '../../types';
 
 /**
  * Projects normalized landmarks in a rectangle to its original coordinates. The

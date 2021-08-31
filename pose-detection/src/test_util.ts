@@ -15,28 +15,12 @@
  * =============================================================================
  */
 
+import {KARMA_SERVER} from '../../shared/test_util';
+import {Keypoint} from '../../shared/types';
+
 import * as poseDetection from './index';
 
 const SIMULATED_INTERVAL = 33.333;  // in milliseconds
-
-/** Karma server directory serving local files. */
-export const KARMA_SERVER = './base/test_data';
-
-export async function loadImage(
-    imagePath: string, width: number,
-    height: number): Promise<HTMLImageElement> {
-  const img = new Image(width, height);
-  const promise = new Promise<HTMLImageElement>((resolve, reject) => {
-    img.crossOrigin = '';
-    img.onload = () => {
-      resolve(img);
-    };
-  });
-
-  img.src = `${KARMA_SERVER}/${imagePath}`;
-
-  return promise;
-}
 
 export async function loadVideo(
     videoPath: string, videoFPS: number,
@@ -121,8 +105,7 @@ export function getXYPerFrame(result: number[][][]): number[][][] {
   });
 }
 
-function drawKeypoint(
-    keypoint: poseDetection.Keypoint, ctx: CanvasRenderingContext2D): void {
+function drawKeypoint(keypoint: Keypoint, ctx: CanvasRenderingContext2D): void {
   const circle = new Path2D();
   circle.arc(
       keypoint.x, keypoint.y, 4 /* radius */, 0 /* startAngle */, 2 * Math.PI);
@@ -131,7 +114,7 @@ function drawKeypoint(
 }
 
 function drawSkeleton(
-    keypoints: poseDetection.Keypoint[], model: poseDetection.SupportedModels,
+    keypoints: Keypoint[], model: poseDetection.SupportedModels,
     ctx: CanvasRenderingContext2D, color: string) {
   ctx.fillStyle = color;
   ctx.strokeStyle = color;
@@ -151,7 +134,7 @@ function drawSkeleton(
 }
 
 function draw(
-    keypoints: poseDetection.Keypoint[], ctx: CanvasRenderingContext2D,
+    keypoints: Keypoint[], ctx: CanvasRenderingContext2D,
     model: poseDetection.SupportedModels, color: string) {
   ctx.fillStyle = color;
   ctx.strokeStyle = color;

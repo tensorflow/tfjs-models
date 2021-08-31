@@ -14,22 +14,14 @@
  * limitations under the License.
  * =============================================================================
  */
-import {Keypoint} from '../../../shared/types';
-import {ImageSize} from './interfaces/common_interfaces';
-export function normalizedKeypointsToKeypoints(
-    normalizedKeypoints: Keypoint[], imageSize: ImageSize): Keypoint[] {
-  return normalizedKeypoints.map(normalizedKeypoint => {
-    const keypoint = {
-      ...normalizedKeypoint,
-      x: normalizedKeypoint.x * imageSize.width,
-      y: normalizedKeypoint.y * imageSize.height
-    };
 
-    if (normalizedKeypoint.z != null) {
-      // Scale z the same way as x (using image width).
-      keypoint.z = normalizedKeypoint.z * imageSize.width;
-    }
-
-    return keypoint;
-  });
+/**
+ * A keypoint that contains coordinate information.
+ */
+export interface Keypoint {
+  x: number;
+  y: number;
+  z?: number;
+  score?: number;  // The probability of a keypoint's visibility.
+  name?: string;
 }
