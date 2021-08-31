@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import {Keypoint} from '../types';
+import {Keypoint} from '@tensorflow-models/util';
 
 import {KeypointsFilter} from './interfaces/common_interfaces';
 import {OneEuroFilterConfig} from './interfaces/config_interfaces';

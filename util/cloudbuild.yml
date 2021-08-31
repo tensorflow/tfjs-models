@@ -1,0 +1,40 @@
+
+steps:
+
+# Install common dependencies.
+- name: 'node:10'
+  id: 'yarn-common'
+  entrypoint: 'yarn'
+  args: ['install']
+
+# Install util dependencies.
+- name: 'node:10'
+  dir: 'util'
+  entrypoint: 'yarn'
+  id: 'yarn'
+  args: ['install']
+  waitFor: ['yarn-common']
+
+# Lint.
+- name: 'node:10'
+  dir: 'util'
+  entrypoint: 'yarn'
+  id: 'lint'
+  args: ['lint']
+  waitFor: ['yarn']
+
+# Build.
+- name: 'node:10'
+  dir: 'util'
+  entrypoint: 'yarn'
+  id: 'build'
+  args: ['build']
+  waitFor: ['yarn']
+
+timeout: 1800s
+logsBucket: 'gs://tfjs-build-logs'
+substitutions:
+  _NIGHTLY: ''
+options:
+  logStreamingOption: 'STREAM_ON'
+  substitution_option: 'ALLOW_LOOSE'
