@@ -170,28 +170,62 @@ export function assertValidOutputStride(outputStride: PoseNetOutputStride) {
           `It must be either 8, 16, or 32`);
 }
 
-function isValidInputResolution(
-    resolution: number, outputStride: number): boolean {
-  return (resolution - 1) % outputStride === 0;
-}
 
-export function assertValidResolution(
-    resolution: [number, number], outputStride: number) {
-  tf.util.assert(
-      typeof resolution[0] === 'number' && typeof resolution[1] === 'number',
-      () => `both resolution values must be a number but had values ${
-          resolution}`);
+ 
+ 
+ 
+ function isValidInputResolution(
+   resolution: number, outputStride: number): boolean {
+   return (resolution - 1) % outputStride === 0;
+ }
+ 
+ 
+ export function assertValidResolution(
+   resolution: [number, number], outputStride: number) {
+ 
+   const isNumber = typeof resolution[0] === 'number' && typeof resolution[1] === 'number'
+   const isValidHeight = isValidInputResolution(resolution[0], outputStride)
+   const isValidWidth = isValidInputResolution(resolution[1], outputStride)
+ 
+   let result = true;
+   let conditions = [isNumber, isValidHeight, isValidWidth];
+   for (let i = 0; i < conditions.length; i++) {
+     if (conditions[i] == false) {
+       result = false;
+       return;
+     }
+   }
+   // this wont be able to resolve async nature
+   if (!result) {
+     waitingTime(resolution, outputStride);
+   }
+ 
+   tf.util.assert(
+     isNumber,
+     () => `both resolution values must be a number but had values ${resolution}`);
+ 
+   tf.util.assert(
+     isValidHeight,
+     () => `height of ${resolution[0]} is invalid for output stride ` +
+       `${outputStride}.`);
+ 
+   tf.util.assert(
+     isValidWidth,
+     () => `width of ${resolution[1]} is invalid for output stride ` +
+       `${outputStride}.`);
+ }
+ 
+ // function required for timeout
+ 
+ function waitingTime(resolution: [number, number], outputStride: number) {
+   if (resolution[0] === 0 || resolution[1] < 1) {
+     setTimeout(waitingTime, 100, resolution, outputStride);
+     return;
+   }
+   isValidInputResolution(resolution[0], outputStride);
+   isValidInputResolution(resolution[1], outputStride);
+ }
 
-  tf.util.assert(
-      isValidInputResolution(resolution[0], outputStride),
-      () => `height of ${resolution[0]} is invalid for output stride ` +
-          `${outputStride}.`);
-
-  tf.util.assert(
-      isValidInputResolution(resolution[1], outputStride),
-      () => `width of ${resolution[1]} is invalid for output stride ` +
-          `${outputStride}.`);
-}
 
 export function getInputTensorDimensions(input: PosenetInput):
     [number, number] {
