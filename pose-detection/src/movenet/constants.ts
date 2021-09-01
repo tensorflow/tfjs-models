@@ -33,7 +33,7 @@ export const MOVENET_MULTIPOSE_LIGHTNING_URL =
 
 export const MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION = 192;
 export const MOVENET_SINGLEPOSE_THUNDER_RESOLUTION = 256;
-export const MOVENET_MULTIPOSE_LIGHTNING_RESOLUTION = 256;
+export const MOVENET_MULTIPOSE_DEFAULT_MAX_DIMENSION = 256;
 
 // The default configuration for loading MoveNet.
 export const MOVENET_CONFIG: MoveNetModelConfig = {
