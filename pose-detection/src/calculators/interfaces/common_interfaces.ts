@@ -1,4 +1,4 @@
-import {Keypoint} from '../../../../shared/types';
+import {Keypoint} from '../../shared/types';
 import {BoundingBox} from './shape_interfaces';
 
 /**

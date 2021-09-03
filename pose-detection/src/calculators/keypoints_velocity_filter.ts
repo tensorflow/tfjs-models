@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import {Keypoint} from '../../../shared/types';
+import {Keypoint} from '../shared/types';
 
 import {KeypointsFilter} from './interfaces/common_interfaces';
 import {VelocityFilterConfig} from './interfaces/config_interfaces';

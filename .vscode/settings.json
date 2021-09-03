@@ -6,7 +6,10 @@
     "coverage/": true,
     "dist/": true,
     "**/bundle.js": true,
-    "**/yarn.lock": true
+    "**/yarn.lock": true,
+    // shared is symlinked in specific projects so search results should be
+    // excluded from root level to avoid duplicates.
+    "shared/": true
   },
   "tslint.enable": true,
   "tslint.run": "onType",
@@ -20,7 +23,9 @@
   "[javascript]": {
     "editor.formatOnSave": true
   },
-  "editor.rulers": [80],
+  "editor.rulers": [
+    80
+  ],
   "clang-format.style": "Google",
   "files.insertFinalNewline": true,
   "editor.detectIndentation": false,

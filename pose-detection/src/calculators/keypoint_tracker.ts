@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import {Keypoint} from '../../../shared/types';
+import {Keypoint} from '../shared/types';
 
 import {Pose} from '../types';
 

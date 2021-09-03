@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import {Keypoint} from '../../../shared/types';
+import {Keypoint} from '../shared/types';
 import {ImageSize} from './interfaces/common_interfaces';
 export function keypointsToNormalizedKeypoints(
     keypoints: Keypoint[], imageSize: ImageSize): Keypoint[] {

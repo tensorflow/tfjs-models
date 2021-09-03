@@ -17,8 +17,8 @@
 
 import * as tf from '@tensorflow/tfjs-core';
 
-import {Keypoint} from '../../../../shared/types';
 import {COCO_KEYPOINTS} from '../../constants';
+import {Keypoint} from '../../shared/types';
 import {Pose} from '../../types';
 import {PoseNetOutputStride} from '../types';
 
