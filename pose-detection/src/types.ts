@@ -18,6 +18,7 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {BoundingBox} from './calculators/interfaces/shape_interfaces';
 import {Keypoint} from './shared/types';
+export {Keypoint};
 
 export enum SupportedModels {
   MoveNet = 'MoveNet',

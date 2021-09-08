@@ -104,7 +104,8 @@ export function getXYPerFrame(result: number[][][]): number[][][] {
   });
 }
 
-function drawKeypoint(keypoint: Keypoint, ctx: CanvasRenderingContext2D): void {
+function drawKeypoint(
+    keypoint: poseDetection.Keypoint, ctx: CanvasRenderingContext2D): void {
   const circle = new Path2D();
   circle.arc(
       keypoint.x, keypoint.y, 4 /* radius */, 0 /* startAngle */, 2 * Math.PI);
@@ -113,7 +114,7 @@ function drawKeypoint(keypoint: Keypoint, ctx: CanvasRenderingContext2D): void {
 }
 
 function drawSkeleton(
-    keypoints: Keypoint[], model: poseDetection.SupportedModels,
+    keypoints: poseDetection.Keypoint[], model: poseDetection.SupportedModels,
     ctx: CanvasRenderingContext2D, color: string) {
   ctx.fillStyle = color;
   ctx.strokeStyle = color;
@@ -133,7 +134,7 @@ function drawSkeleton(
 }
 
 function draw(
-    keypoints: Keypoint[], ctx: CanvasRenderingContext2D,
+    keypoints: poseDetection.Keypoint[], ctx: CanvasRenderingContext2D,
     model: poseDetection.SupportedModels, color: string) {
   ctx.fillStyle = color;
   ctx.strokeStyle = color;
