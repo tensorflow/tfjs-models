@@ -52,7 +52,7 @@ You can see example code [here](https://github.com/tensorflow/tfjs-models/tree/m
 
       // Make a prediction.
       const x = tf.browser.fromPixels(document.getElementById('test'));
-      const xlogits = mobilenetModule.infer(x, true');
+      const xlogits = mobilenetModule.infer(x, true);
       console.log('Predictions:');
       const result = await classifier.predictClass(xlogits);
       console.log(result);
