@@ -98,6 +98,13 @@ steps:
   args: ['./scripts/run-build.sh', 'universal-sentence-encoder']
   waitFor: ['diff']
 
+# Hand Detection.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'hand-detection'
+  args: ['./scripts/run-build.sh', 'hand-detection']
+  waitFor: ['diff']
+
 # Handpose
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
@@ -105,7 +112,7 @@ steps:
   args: ['./scripts/run-build.sh', 'handpose']
   waitFor: ['diff']
 
-# Handpose
+# Facemesh
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
   id: 'facemesh'
