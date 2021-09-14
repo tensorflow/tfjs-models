@@ -15,7 +15,9 @@
  * =============================================================================
  */
 import * as tf from '@tensorflow/tfjs-core';
-import {Keypoint} from '../../types';
+
+import {Keypoint} from '../../shared/types';
+
 import {RefineLandmarksFromHeatmapConfig} from './interfaces/config_interfaces';
 
 /**

@@ -16,7 +16,7 @@
  */
 
 import {Rect} from '../../calculators/interfaces/shape_interfaces';
-import {Keypoint} from '../../types';
+import {Keypoint} from '../../shared/types';
 
 /**
  * Projects world landmarks from the rectangle to original coordinates.

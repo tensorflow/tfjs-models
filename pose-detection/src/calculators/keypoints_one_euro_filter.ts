@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import {Keypoint} from '../types';
+import {Keypoint} from '../shared/types';
 
 import {KeypointsFilter} from './interfaces/common_interfaces';
 import {OneEuroFilterConfig} from './interfaces/config_interfaces';

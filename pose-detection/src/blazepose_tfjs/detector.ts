@@ -30,7 +30,8 @@ import {normalizedKeypointsToKeypoints} from '../calculators/normalized_keypoint
 import {shiftImageValue} from '../calculators/shift_image_value';
 import {BLAZEPOSE_KEYPOINTS} from '../constants';
 import {PoseDetector} from '../pose_detector';
-import {Keypoint, Pose, PoseDetectorInput} from '../types';
+import {Keypoint} from '../shared/types';
+import {Pose, PoseDetectorInput} from '../types';
 
 import {calculateAlignmentPointsRects} from './calculators/calculate_alignment_points_rects';
 import {calculateLandmarkProjection} from './calculators/calculate_landmark_projection';

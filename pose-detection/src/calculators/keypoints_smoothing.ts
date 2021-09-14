@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import {Keypoint} from '../types';
+import {Keypoint} from '../shared/types';
 
 import {getObjectScale} from './get_object_scale';
 import {ImageSize, KeypointsFilter} from './interfaces/common_interfaces';
