@@ -18,12 +18,6 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {Keypoint} from './shared/types';
 
-/**
- * Allowed input format for the `estimatePoses` method.
- */
-export type DetectorInput =
-    tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|HTMLCanvasElement;
-
 export interface InputResolution {
   width: number;
   height: number;
@@ -36,12 +30,12 @@ export enum SupportedModels {
 /**
  * Common config to create the hands detector.
  *
- * `maxNumHands`: Optional. Default to 2. The maximum number of hands that will
+ * `maxHands`: Optional. Default to 2. The maximum number of hands that will
  * be detected by the model. The number of returned hands can be less than the
  * maximum (for example when no hands are present in the input).
  */
 export interface ModelConfig {
-  maxNumHands?: number;
+  maxHands?: number;
 }
 
 /**
@@ -71,6 +65,8 @@ export type HandDetectorInput =
 export interface Hand {
   keypoints: Keypoint[];
   keypoints3D?: Keypoint[];
+  // handedness is determined assuming the input image is mirrored, i.e., taken
+  // with a front-facing/selfie camera with images flipped horizontally.
   handedness: 'Left'|'Right';
   score: number;  // The probability of the handedness label.
 }
