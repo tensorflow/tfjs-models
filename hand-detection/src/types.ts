@@ -18,11 +18,6 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {Keypoint} from './shared/types';
 
-export interface InputResolution {
-  width: number;
-  height: number;
-}
-
 export enum SupportedModels {
   MPHands = 'MPHands',
 }
