@@ -19,7 +19,7 @@ import * as tf from '@tensorflow/tfjs-core';
 import {Keypoint} from './shared/types';
 
 export enum SupportedModels {
-  MPHands = 'MPHands',
+  MediaPipeHands = 'MediaPipeHands',
 }
 
 /**
@@ -60,8 +60,10 @@ export type HandDetectorInput =
 export interface Hand {
   keypoints: Keypoint[];
   keypoints3D?: Keypoint[];
-  // handedness is determined assuming the input image is mirrored, i.e., taken
-  // with a front-facing/selfie camera with images flipped horizontally.
-  handedness: 'Left'|'Right';
+  handedness: 'Left'|
+      'Right';    // Note that handedness is determined assuming the input image
+                  // is mirrored, i.e., taken with a front-facing/selfie camera
+                  // with images flipped horizontally. If it is not the case,
+                  // please swap the handedness output in the application.
   score: number;  // The probability of the handedness label.
 }
