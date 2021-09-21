@@ -33,15 +33,11 @@ export interface MediaPipeHandsEstimationConfig extends EstimationConfig {}
  *
  * `solutionPath`: Optional. The path to where the wasm binary and model files
  * are located.
- *
- * `minDetectionConfidence`: Optional. Default to 0.5. Minimum confidence value
- * from the hand detection model for detection to be considered succesful.
  */
 export interface MediaPipeHandsMediaPipeModelConfig extends
     MediaPipeHandsModelConfig {
   runtime: 'mediapipe';
   solutionPath?: string;
-  minDetectionConfidence?: number;
 }
 
 /**
