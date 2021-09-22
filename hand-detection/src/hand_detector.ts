@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import {MPHandsMediaPipeEstimationConfig} from './mediapipe/types';
+import {MediaPipeHandsMediaPipeEstimationConfig} from './mediapipe/types';
 import {Hand, HandDetectorInput} from './types';
 
 /**
@@ -30,7 +30,8 @@ export interface HandDetector {
    */
   estimateHands(
       input: HandDetectorInput,
-      estimationConfig?: MPHandsMediaPipeEstimationConfig): Promise<Hand[]>;
+      estimationConfig?: MediaPipeHandsMediaPipeEstimationConfig):
+      Promise<Hand[]>;
 
   /**
    * Dispose the underlying models from memory.
