@@ -14,12 +14,16 @@
  * limitations under the License.
  * =============================================================================
  */
+import {MediaPipeHandsMediaPipeEstimationConfig, MediaPipeHandsMediaPipeModelConfig} from './types';
 
-export {createDetector} from './create_detector';
-// HandDetector class.
-export {HandDetector} from './hand_detector';
-// Entry point to create a new detector instance.
-export {MediaPipeHandsMediaPipeEstimationConfig, MediaPipeHandsMediaPipeModelConfig} from './mediapipe/types';
+export const DEFAULT_MPHANDS_MODEL_CONFIG:
+    MediaPipeHandsMediaPipeModelConfig = {
+      runtime: 'mediapipe',
+      maxHands: 2,
+    };
 
-// Supported models enum.
-export * from './types';
+export const DEFAULT_MPHANDS_ESTIMATION_CONFIG:
+    MediaPipeHandsMediaPipeEstimationConfig = {
+      flipHorizontal: false,
+      staticImageMode: true,
+    };
