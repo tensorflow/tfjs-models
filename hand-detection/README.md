@@ -32,8 +32,8 @@ Then you can use the detector to detect hands.
 const hands = await detector.estimateHands(image);
 ```
 
-The returned poses list contains detected hands for each hand in the image.
-For single-hand models, there will only be one element in the list. If the model cannot detect any hands, the list will be empty.
+The returned hands list contains detected hands for each hand in the image.
+If the model cannot detect any hands, the list will be empty.
 
 For each hand, it contains a prediction of the handedness (left or right), a confidence score of this prediction, as well as an array of keypoints.
 MediaPipeHands returns 21 keypoints.

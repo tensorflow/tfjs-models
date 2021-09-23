@@ -51,7 +51,7 @@ class MediaPipeHandsMediaPipeDetector implements HandDetector {
     });
     this.handsSolution.setOptions({
       selfieMode: this.selfieMode,
-      maxNumHands: config.maxHands || 2,
+      maxNumHands: config.maxHands,
     });
     this.handsSolution.onResults((results) => {
       this.height = results.image.height;
@@ -96,9 +96,9 @@ class MediaPipeHandsMediaPipeDetector implements HandDetector {
    *       flipHorizontal: Optional. Default to false. When image data comes
    *       from camera, the result has to flip horizontally.
    *
-   *       staticImageMode: Optional. Defaults to true. Currently unused in this
-   *       implementation. Image input types are assumed to be static images,
-   *       and video inputs are assumed to be non static images.
+   *       staticImageMode: Optional. Defaults to false. Currently unused in
+   * this implementation. Image input types are assumed to be static images, and
+   * video inputs are assumed to be non static images.
    *
    * @return An array of `Hand`s.
    */
@@ -123,6 +123,10 @@ class MediaPipeHandsMediaPipeDetector implements HandDetector {
 
   reset() {
     this.handsSolution.reset();
+    this.width = 0;
+    this.height = 0;
+    this.hands = null;
+    this.selfieMode = false;
   }
 
   initialize(): Promise<void> {
@@ -133,7 +137,7 @@ class MediaPipeHandsMediaPipeDetector implements HandDetector {
 /**
  * Loads the MediaPipe solution.
  *
- * @param modelConfig ModelConfig object that contains parameters for
+ * @param modelConfig An object that contains parameters for
  * the MediaPipeHands loading process. Please find more details of each
  * parameters in the documentation of the `MediaPipeHandsMediaPipeModelConfig`
  * interface.
@@ -141,7 +145,7 @@ class MediaPipeHandsMediaPipeDetector implements HandDetector {
 export async function load(modelConfig: MediaPipeHandsMediaPipeModelConfig):
     Promise<HandDetector> {
   const config = validateModelConfig(modelConfig);
-  const result = new MediaPipeHandsMediaPipeDetector(config);
-  await result.initialize();
-  return result;
+  const detector = new MediaPipeHandsMediaPipeDetector(config);
+  await detector.initialize();
+  return detector;
 }

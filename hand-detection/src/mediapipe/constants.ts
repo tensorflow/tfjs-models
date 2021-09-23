@@ -25,5 +25,5 @@ export const DEFAULT_MPHANDS_MODEL_CONFIG:
 export const DEFAULT_MPHANDS_ESTIMATION_CONFIG:
     MediaPipeHandsMediaPipeEstimationConfig = {
       flipHorizontal: false,
-      staticImageMode: true,
+      staticImageMode: false,
     };

@@ -31,7 +31,7 @@ yarn add @mediapipe/hands
 -----------------------------------------------------------------------
 ## Usage
 
-If you are using the Hands API via npm, you need to import the libraries first.
+If you are using the hand-detection API via npm, you need to import the libraries first.
 
 ### Import the libraries
 
