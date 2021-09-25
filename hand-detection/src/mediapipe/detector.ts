@@ -76,7 +76,7 @@ class MediaPipeHandsMediaPipeDetector implements HandDetector {
     return landmarks.map((landmark, i) => ({
                            x: landmark.x * this.width,
                            y: landmark.y * this.height,
-                           z: landmark.z,
+                           z: landmark.z * this.width,
                            score: landmark.visibility,
                            name: MEDIAPIPE_KEYPOINTS[i],
                          }));

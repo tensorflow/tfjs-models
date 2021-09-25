@@ -37,7 +37,7 @@ If the model cannot detect any hands, the list will be empty.
 
 For each hand, it contains a prediction of the handedness (left or right), a confidence score of this prediction, as well as an array of keypoints.
 MediaPipeHands returns 21 keypoints.
-Each keypoint contains x, y, and name.
+Each keypoint contains x, y, z, and name.
 
 Example output:
 ```
@@ -46,8 +46,8 @@ Example output:
     score: 0.8,
     Handedness: ‘Right’,
     keypoints: [
-      {x: 105, y: 107, name: "wrist"},
-      {x: 108, y: 160, name: "pinky_tip"},
+      {x: 105, y: 107, z: -15, name: "wrist"},
+      {x: 108, y: 160, z: -40, name: "pinky_tip"},
       ...
     ]
   }
@@ -55,6 +55,7 @@ Example output:
 ```
 
 For the `keypoints`, x and y represent the actual keypoint position in the image.
+z represents the landmark depth with the depth at the wrist being the origin, and the smaller the value the closer the landmark is to the camera.
 
 The name provides a label for each keypoint, such as 'wrist', 'pinky_tip', etc.
 
