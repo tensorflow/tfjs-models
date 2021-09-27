@@ -26,6 +26,7 @@ const filesWhitelistToTriggerBuild = [
 ];
 
 const CLONE_PATH = 'clone';
+const SHARED_DIR = 'shared';
 
 const dirs = readdirSync('.').filter(f => {
   return f !== 'node_modules' && f !== '.git' && statSync(f).isDirectory();
@@ -90,7 +91,11 @@ console.log();  // Break up the console for readability.
 let triggeredBuilds = [];
 dirs.forEach(dir => {
   shell.rm('-f', `${dir}/diff`);
-  const diffOutput = diff(`${dir}/`);
+  const dirDiffOutput = diff(`${dir}/`);
+  const sharedDiffOutput = hasSharedSymlink(`${dir}`) ?
+                           diff(`${SHARED_DIR}/`) :
+                           '';
+  const diffOutput = [dirDiffOutput, sharedDiffOutput].filter(Boolean).join('\n');
   if (diffOutput !== '') {
     console.log(`${dir} has modified files.`);
   } else {
@@ -118,4 +123,13 @@ function diff(fileOrDirName) {
       `${CLONE_PATH}/${fileOrDirName} ` +
       `${fileOrDirName}`;
   return exec(diffCmd, {silent: true}, true).stdout.trim();
+}
+
+function hasSharedSymlink(fileOrDirName) {
+  const hasSymLinkCmd = `/bin/sh -c '` +
+      `if [ -L ${CLONE_PATH}/${fileOrDirName}/src/${SHARED_DIR} ];` +
+        `then exit 0;` +
+        `else exit 1;` +
+      `fi'`;
+  return exec(hasSymLinkCmd, {silent: true}, true).code === 0;
 }

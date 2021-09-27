@@ -1,3 +1,6 @@
+import {BoundingBox} from '../../../shared/calculators/interfaces/shape_interfaces';
+import {Keypoint} from '../../../shared/types';
+
 /**
  * @license
  * Copyright 2021 Google LLC. All Rights Reserved.
@@ -14,23 +17,12 @@
  * limitations under the License.
  * =============================================================================
  */
-import {Tensor3D} from '@tensorflow/tfjs-core';
 
-export type DetectorInput =
-    Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|HTMLCanvasElement;
-
-export interface InputResolution {
-  width: number;
-  height: number;
-}
-
-/**
- * A keypoint that contains coordinate information.
- */
-export interface Keypoint {
-  x: number;
-  y: number;
-  z?: number;
-  score?: number;  // The probability of a keypoint's visibility.
-  name?: string;
+export interface Track {
+  id: number;              // A unique identifier for each tracked person.
+  lastTimestamp: number;   // The last timestamp (in milliseconds) in which a
+                           // detection was linked with the track.
+  keypoints?: Keypoint[];  // Keypoints associated with the tracked person.
+  box?: BoundingBox;       // Bounding box associated with the tracked person.
+  score?: number;          // A confidence value of the track.
 }

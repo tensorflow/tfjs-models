@@ -1,3 +1,5 @@
+import {Keypoint} from '../../types';
+
 /**
  * @license
  * Copyright 2021 Google LLC. All Rights Reserved.
@@ -14,23 +16,30 @@
  * limitations under the License.
  * =============================================================================
  */
-import {Tensor3D} from '@tensorflow/tfjs-core';
-
-export type DetectorInput =
-    Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|HTMLCanvasElement;
-
-export interface InputResolution {
-  width: number;
+export interface ImageSize {
   height: number;
+  width: number;
 }
 
-/**
- * A keypoint that contains coordinate information.
- */
-export interface Keypoint {
-  x: number;
-  y: number;
-  z?: number;
-  score?: number;  // The probability of a keypoint's visibility.
-  name?: string;
+export interface Padding {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+}
+
+export type ValueTransform = {
+  scale: number,
+  offset: number
+};
+
+export interface WindowElement {
+  distance: number;
+  duration: number;
+}
+
+export interface KeypointsFilter {
+  apply(landmarks: Keypoint[], microSeconds: number, objectScale: number):
+      Keypoint[];
+  reset(): void;
 }

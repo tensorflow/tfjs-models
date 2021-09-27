@@ -14,23 +14,22 @@
  * limitations under the License.
  * =============================================================================
  */
-import {Tensor3D} from '@tensorflow/tfjs-core';
+import {Keypoint} from '../types';
+import {ImageSize} from './interfaces/common_interfaces';
+export function normalizedKeypointsToKeypoints(
+    normalizedKeypoints: Keypoint[], imageSize: ImageSize): Keypoint[] {
+  return normalizedKeypoints.map(normalizedKeypoint => {
+    const keypoint = {
+      ...normalizedKeypoint,
+      x: normalizedKeypoint.x * imageSize.width,
+      y: normalizedKeypoint.y * imageSize.height
+    };
 
-export type DetectorInput =
-    Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|HTMLCanvasElement;
+    if (normalizedKeypoint.z != null) {
+      // Scale z the same way as x (using image width).
+      keypoint.z = normalizedKeypoint.z * imageSize.width;
+    }
 
-export interface InputResolution {
-  width: number;
-  height: number;
-}
-
-/**
- * A keypoint that contains coordinate information.
- */
-export interface Keypoint {
-  x: number;
-  y: number;
-  z?: number;
-  score?: number;  // The probability of a keypoint's visibility.
-  name?: string;
+    return keypoint;
+  });
 }

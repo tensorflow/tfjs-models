@@ -14,23 +14,9 @@
  * limitations under the License.
  * =============================================================================
  */
-import {Tensor3D} from '@tensorflow/tfjs-core';
 
-export type DetectorInput =
-    Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|HTMLCanvasElement;
+import {DetectorInput} from '../types';
 
-export interface InputResolution {
-  width: number;
-  height: number;
-}
-
-/**
- * A keypoint that contains coordinate information.
- */
-export interface Keypoint {
-  x: number;
-  y: number;
-  z?: number;
-  score?: number;  // The probability of a keypoint's visibility.
-  name?: string;
+export function isVideo(image: DetectorInput): image is HTMLVideoElement {
+  return (image != null) && (image as HTMLVideoElement).currentTime != null;
 }

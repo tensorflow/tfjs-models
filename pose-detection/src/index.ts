@@ -27,7 +27,7 @@ export {PoseNetEstimationConfig, PosenetModelConfig} from './posenet/types';
 // Supported models enum.
 export * from './types';
 
-export {TrackerType} from './calculators/types';
+export {TrackerType} from './movenet/calculators/types';
 
 // Second level exports.
 // Utils for rendering.
@@ -35,7 +35,7 @@ import * as util from './util';
 export {util};
 
 // General calculators.
-import {keypointsToNormalizedKeypoints} from './calculators/keypoints_to_normalized_keypoints';
+import {keypointsToNormalizedKeypoints} from './shared/calculators/keypoints_to_normalized_keypoints';
 const calculators = {keypointsToNormalizedKeypoints};
 export {calculators};
 
