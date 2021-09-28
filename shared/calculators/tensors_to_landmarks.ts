@@ -16,7 +16,7 @@
  */
 import * as tf from '@tensorflow/tfjs-core';
 
-import {Keypoint} from '../types';
+import {Keypoint} from './interfaces/common_interfaces';
 
 import {TensorsToLandmarksConfig} from './interfaces/config_interfaces';
 import {sigmoid} from './sigmoid';

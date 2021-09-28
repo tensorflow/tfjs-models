@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import {DetectorInput} from '../types';
+import {DetectorInput} from './interfaces/common_interfaces';
 
 export function isVideo(image: DetectorInput): image is HTMLVideoElement {
   return (image != null) && (image as HTMLVideoElement).currentTime != null;

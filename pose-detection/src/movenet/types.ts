@@ -14,10 +14,9 @@
  * limitations under the License.
  * =============================================================================
  */
+import {TrackerConfig} from '../calculators/interfaces/config_interfaces';
+import {TrackerType} from '../calculators/types';
 import {EstimationConfig, ModelConfig} from '../types';
-
-import {TrackerConfig} from './calculators/interfaces/config_interfaces';
-import {TrackerType} from './calculators/types';
 
 /**
  * MoveNet model loading config.

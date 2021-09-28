@@ -14,9 +14,9 @@
  * limitations under the License.
  * =============================================================================
  */
-import {Keypoint} from '../../shared/types';
+import {Keypoint} from '../shared/calculators/interfaces/common_interfaces';
 
-import {Pose} from '../../types';
+import {Pose} from '../types';
 
 import {Track} from './interfaces/common_interfaces';
 import {TrackerConfig} from './interfaces/config_interfaces';

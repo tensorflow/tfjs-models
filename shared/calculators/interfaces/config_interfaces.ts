@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import {InputResolution} from '../../types';
+import {InputResolution} from './common_interfaces';
 
 export interface ImageToTensorConfig {
   inputResolution: InputResolution;

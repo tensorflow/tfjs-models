@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import {Keypoint} from '../types';
+import {Keypoint} from './interfaces/common_interfaces';
 import {Detection} from './interfaces/shape_interfaces';
 
 /**

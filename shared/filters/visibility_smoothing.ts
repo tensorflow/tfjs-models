@@ -15,9 +15,9 @@
  * =============================================================================
  */
 
-import {Keypoint} from '../types';
+import {Keypoint} from '../calculators/interfaces/common_interfaces';
 
-import {VisibilitySmoothingConfig} from './interfaces/config_interfaces';
+import {VisibilitySmoothingConfig} from '../calculators/interfaces/config_interfaces';
 import {LowPassFilter} from './low_pass_filter';
 
 /**

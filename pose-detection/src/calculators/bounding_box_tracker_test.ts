@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import {Pose} from '../../types';
+import {Pose} from '../types';
 import {BoundingBoxTracker} from './bounding_box_tracker';
 import {Track} from './interfaces/common_interfaces';
 import {TrackerConfig} from './interfaces/config_interfaces';

@@ -15,9 +15,9 @@
  * =============================================================================
  */
 import * as tf from '@tensorflow/tfjs-core';
-import {DetectorInput} from '../types';
+
 import {getImageSize, getProjectiveTransformMatrix, getRoi, padRoi, toImageTensor} from './image_utils';
-import {Padding} from './interfaces/common_interfaces';
+import {DetectorInput, Padding} from './interfaces/common_interfaces';
 import {ImageToTensorConfig} from './interfaces/config_interfaces';
 import {Rect} from './interfaces/shape_interfaces';
 

@@ -16,8 +16,7 @@
  */
 import * as tf from '@tensorflow/tfjs-core';
 
-import {DetectorInput, InputResolution} from '../types';
-import {ImageSize, Padding, ValueTransform} from './interfaces/common_interfaces';
+import {DetectorInput, ImageSize, InputResolution, Padding, ValueTransform} from './interfaces/common_interfaces';
 import {Rect} from './interfaces/shape_interfaces';
 
 export function getImageSize(input: DetectorInput): ImageSize {

@@ -30,11 +30,10 @@ import {convertImageToTensor} from '../shared/calculators/convert_image_to_tenso
 import {createSsdAnchors} from '../shared/calculators/create_ssd_anchors';
 import {detectorInference} from '../shared/calculators/detector_inference';
 import {getImageSize, toImageTensor} from '../shared/calculators/image_utils';
-import {ImageSize} from '../shared/calculators/interfaces/common_interfaces';
+import {ImageSize, Keypoint} from '../shared/calculators/interfaces/common_interfaces';
 import {Rect} from '../shared/calculators/interfaces/shape_interfaces';
 import {AnchorTensor, Detection} from '../shared/calculators/interfaces/shape_interfaces';
 import {isVideo} from '../shared/calculators/is_video';
-import {KeypointsSmoothingFilter} from '../shared/calculators/keypoints_smoothing';
 import {landmarksToDetection} from '../shared/calculators/landmarks_to_detection';
 import {nonMaxSuppression} from '../shared/calculators/non_max_suppression';
 import {normalizedKeypointsToKeypoints} from '../shared/calculators/normalized_keypoints_to_keypoints';
@@ -45,8 +44,8 @@ import {shiftImageValue} from '../shared/calculators/shift_image_value';
 import {tensorsToDetections} from '../shared/calculators/tensors_to_detections';
 import {tensorsToLandmarks} from '../shared/calculators/tensors_to_landmarks';
 import {transformNormalizedRect} from '../shared/calculators/transform_rect';
-import {LowPassVisibilityFilter} from '../shared/calculators/visibility_smoothing';
-import {Keypoint} from '../shared/types';
+import {KeypointsSmoothingFilter} from '../shared/filters/keypoints_smoothing';
+import {LowPassVisibilityFilter} from '../shared/filters/visibility_smoothing';
 import {Pose, PoseDetectorInput} from '../types';
 
 import * as constants from './constants';

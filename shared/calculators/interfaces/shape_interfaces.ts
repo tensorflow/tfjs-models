@@ -16,7 +16,7 @@
  */
 import * as tf from '@tensorflow/tfjs-core';
 
-import {Keypoint} from '../../../shared/types';
+import {Keypoint} from './common_interfaces';
 
 /**
  * A rectangle that contains center point, height, width and rotation info.

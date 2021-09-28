@@ -15,8 +15,8 @@
  * =============================================================================
  */
 
-import {TrackerConfig} from './calculators/interfaces/config_interfaces';
-import {TrackerType} from './calculators/types';
+import {TrackerConfig} from '../calculators/interfaces/config_interfaces';
+import {TrackerType} from '../calculators/types';
 
 import {DEFAULT_BOUNDING_BOX_TRACKER_CONFIG, DEFAULT_KEYPOINT_TRACKER_CONFIG, MOVENET_CONFIG, MOVENET_ESTIMATION_CONFIG, MULTIPOSE_LIGHTNING, VALID_MODELS} from './constants';
 import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';

@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import {Pose} from '../../types';
+import {Pose} from '../types';
 
 import {Track} from './interfaces/common_interfaces';
 import {TrackerConfig} from './interfaces/config_interfaces';

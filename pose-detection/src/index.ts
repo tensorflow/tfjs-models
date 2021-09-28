@@ -27,7 +27,7 @@ export {PoseNetEstimationConfig, PosenetModelConfig} from './posenet/types';
 // Supported models enum.
 export * from './types';
 
-export {TrackerType} from './movenet/calculators/types';
+export {TrackerType} from './calculators/types';
 
 // Second level exports.
 // Utils for rendering.
