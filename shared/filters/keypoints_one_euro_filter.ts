@@ -19,8 +19,6 @@ import {Keypoint, KeypointsFilter} from '../calculators/interfaces/common_interf
 import {OneEuroFilterConfig} from '../calculators/interfaces/config_interfaces';
 import {OneEuroFilter} from './one_euro_filter';
 
-
-
 /**
  * A stateful filter that smoothes keypoints values overtime.
  *

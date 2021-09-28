@@ -18,8 +18,6 @@ import {Keypoint, KeypointsFilter} from '../calculators/interfaces/common_interf
 import {VelocityFilterConfig} from '../calculators/interfaces/config_interfaces';
 import {RelativeVelocityFilter} from './relative_velocity_filter';
 
-
-
 /**
  * A stateful filter that smoothes landmark values overtime.
  *
