@@ -18,7 +18,7 @@
 import {normalizeRadians} from './image_utils';
 import {ImageSize} from './interfaces/common_interfaces';
 import {DetectionToRectConfig} from './interfaces/config_interfaces';
-import {Detection} from './interfaces/shape_interfaces';
+import {Detection, Rect} from './interfaces/shape_interfaces';
 
 // ref:
 // https://github.com/google/mediapipe/blob/master/mediapipe/calculators/util/detections_to_rects_calculator.cc
@@ -45,4 +45,22 @@ export function computeRotation(
       normalizeRadians(targetAngle - Math.atan2(-(y1 - y0), x1 - x0));
 
   return rotation;
+}
+
+// ref:
+// https://github.com/google/mediapipe/blob/master/mediapipe/calculators/util/detections_to_rects_calculator.cc
+export function calculateDetectionsToRects(
+    detection: Detection, imageSize: ImageSize,
+    config: DetectionToRectConfig): Rect {
+  const box = detection.locationData.relativeBoundingBox;
+  const rotation = computeRotation(detection, imageSize, config);
+
+  // Set resulting bounding box.
+  return {
+    xCenter: box.xMin + box.width / 2,
+    yCenter: box.yMin + box.height / 2,
+    width: box.width,
+    height: box.height,
+    rotation
+  };
 }
