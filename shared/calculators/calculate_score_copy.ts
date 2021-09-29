@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import {Keypoint} from '../../shared/types';
+import {Keypoint} from './interfaces/common_interfaces';
 
 /**
  * A calculator to copy score between landmarks.

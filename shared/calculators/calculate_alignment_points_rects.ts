@@ -15,10 +15,10 @@
  * =============================================================================
  */
 
-import {ImageSize} from '../../calculators/interfaces/common_interfaces';
-import {Rect} from '../../calculators/interfaces/shape_interfaces';
 import {computeRotation} from './detection_to_rect';
+import {ImageSize} from './interfaces/common_interfaces';
 import {DetectionToRectConfig} from './interfaces/config_interfaces';
+import {Rect} from './interfaces/shape_interfaces';
 import {Detection} from './interfaces/shape_interfaces';
 
 // ref:

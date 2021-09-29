@@ -15,6 +15,16 @@
  * =============================================================================
  */
 
+import {Tensor3D} from '@tensorflow/tfjs-core';
+
+export type DetectorInput =
+    Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|HTMLCanvasElement;
+
+export interface InputResolution {
+  width: number;
+  height: number;
+}
+
 /**
  * A keypoint that contains coordinate information.
  */
@@ -24,4 +34,32 @@ export interface Keypoint {
   z?: number;
   score?: number;  // The probability of a keypoint's visibility.
   name?: string;
+}
+
+export interface ImageSize {
+  height: number;
+  width: number;
+}
+
+export interface Padding {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+}
+
+export type ValueTransform = {
+  scale: number,
+  offset: number
+};
+
+export interface WindowElement {
+  distance: number;
+  duration: number;
+}
+
+export interface KeypointsFilter {
+  apply(landmarks: Keypoint[], microSeconds: number, objectScale: number):
+      Keypoint[];
+  reset(): void;
 }

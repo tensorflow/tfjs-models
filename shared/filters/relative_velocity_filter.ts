@@ -14,9 +14,9 @@
  * limitations under the License.
  * =============================================================================
  */
-import {MICRO_SECONDS_TO_SECOND, SECOND_TO_MICRO_SECONDS} from './constants';
-import {WindowElement} from './interfaces/common_interfaces';
-import {VelocityFilterConfig} from './interfaces/config_interfaces';
+import {MICRO_SECONDS_TO_SECOND, SECOND_TO_MICRO_SECONDS} from '../calculators/constants';
+import {WindowElement} from '../calculators/interfaces/common_interfaces';
+import {VelocityFilterConfig} from '../calculators/interfaces/config_interfaces';
 import {LowPassFilter} from './low_pass_filter';
 
 /**

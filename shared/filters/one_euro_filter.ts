@@ -14,8 +14,8 @@
  * limitations under the License.
  * =============================================================================
  */
-import {MICRO_SECONDS_TO_SECOND} from './constants';
-import {OneEuroFilterConfig} from './interfaces/config_interfaces';
+import {MICRO_SECONDS_TO_SECOND} from '../calculators/constants';
+import {OneEuroFilterConfig} from '../calculators/interfaces/config_interfaces';
 import {LowPassFilter} from './low_pass_filter';
 /**
  * OneEuroFilter.

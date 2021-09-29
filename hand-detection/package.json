@@ -54,7 +54,7 @@
     "build": "rimraf dist && tsc && yarn bundle",
     "publish-local": "yarn build && rollup -c && yalc publish",
     "run-browserstack": "karma start --browserstack",
-    "test-node": "ts-node --skip-ignore --project tsconfig.test.json run_tests.ts",
+    "test-node": "NODE_PRESERVE_SYMLINKS=1 ts-node --skip-ignore --project tsconfig.test.json run_tests.ts",
     "test": "yarn && karma start",
     "test-ci": "yarn run-browserstack --browsers=bs_chrome_mac",
     "build-npm": "yarn build && yarn bundle",

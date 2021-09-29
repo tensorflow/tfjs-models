@@ -14,22 +14,9 @@
  * limitations under the License.
  * =============================================================================
  */
-import {Keypoint} from '../shared/types';
-import {ImageSize} from './interfaces/common_interfaces';
-export function keypointsToNormalizedKeypoints(
-    keypoints: Keypoint[], imageSize: ImageSize): Keypoint[] {
-  return keypoints.map(keypoint => {
-    const normalizedKeypoint = {
-      ...keypoint,
-      x: keypoint.x / imageSize.width,
-      y: keypoint.y / imageSize.height
-    };
 
-    if (keypoint.z != null) {
-      // Scale z the same way as x (using image width).
-      keypoint.z = keypoint.z / imageSize.width;
-    }
+import {DetectorInput} from './interfaces/common_interfaces';
 
-    return normalizedKeypoint;
-  });
+export function isVideo(image: DetectorInput): image is HTMLVideoElement {
+  return (image != null) && (image as HTMLVideoElement).currentTime != null;
 }

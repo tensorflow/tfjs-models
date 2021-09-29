@@ -15,10 +15,10 @@
  * =============================================================================
  */
 
-import {normalizeRadians} from '../../calculators/image_utils';
-import {ImageSize} from '../../calculators/interfaces/common_interfaces';
-import {Rect} from '../../calculators/interfaces/shape_interfaces';
+import {normalizeRadians} from './image_utils';
+import {ImageSize} from './interfaces/common_interfaces';
 import {RectTransformationConfig} from './interfaces/config_interfaces';
+import {Rect} from './interfaces/shape_interfaces';
 
 /**
  * Performs geometric transformation to the input normalized rectangle,

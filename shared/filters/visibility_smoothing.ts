@@ -15,10 +15,10 @@
  * =============================================================================
  */
 
-import {LowPassFilter} from '../../calculators/low_pass_filter';
-import {Keypoint} from '../../shared/types';
+import {Keypoint} from '../calculators/interfaces/common_interfaces';
 
-import {VisibilitySmoothingConfig} from './interfaces/config_interfaces';
+import {VisibilitySmoothingConfig} from '../calculators/interfaces/config_interfaces';
+import {LowPassFilter} from './low_pass_filter';
 
 /**
  * Smoothing visibility using a `LowPassFilter` for each landmark.

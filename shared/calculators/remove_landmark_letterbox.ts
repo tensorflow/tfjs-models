@@ -15,8 +15,7 @@
  * =============================================================================
  */
 
-import {Padding} from '../../calculators/interfaces/common_interfaces';
-import {Keypoint} from '../../shared/types';
+import {Keypoint, Padding} from './interfaces/common_interfaces';
 
 /**
  * Adjusts landmark locations on a letterboxed image to the corresponding

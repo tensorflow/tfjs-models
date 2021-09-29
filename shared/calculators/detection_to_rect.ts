@@ -15,8 +15,8 @@
  * =============================================================================
  */
 
-import {normalizeRadians} from '../../calculators/image_utils';
-import {ImageSize} from '../../calculators/interfaces/common_interfaces';
+import {normalizeRadians} from './image_utils';
+import {ImageSize} from './interfaces/common_interfaces';
 import {DetectionToRectConfig} from './interfaces/config_interfaces';
 import {Detection} from './interfaces/shape_interfaces';
 

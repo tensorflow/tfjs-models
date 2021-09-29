@@ -21,11 +21,11 @@ import {TrackerConfig} from './interfaces/config_interfaces';
 
 describe('Bounding box tracker', () => {
   const trackerConfig: TrackerConfig = {
-      maxTracks: 4,
-      maxAge: 1000,  // Unit: milliseconds.
-      minSimilarity: 0.5,
-      boundingBoxTrackerParams: {}
-    };
+    maxTracks: 4,
+    maxAge: 1000,  // Unit: milliseconds.
+    minSimilarity: 0.5,
+    boundingBoxTrackerParams: {}
+  };
 
   it('Instantiate tracker', () => {
     const bboxTracker = new BoundingBoxTracker(trackerConfig);
@@ -40,8 +40,8 @@ describe('Bounding box tracker', () => {
         yMin: 0.0,
         xMin: 0.0,
         yMax: 1.0,
-        xMax: 2/3,
-        width: 2/3,
+        xMax: 2 / 3,
+        width: 2 / 3,
         height: 1.0
       }
     };
@@ -51,41 +51,29 @@ describe('Bounding box tracker', () => {
       keypoints: [],
       box: {
         yMin: 0.0,
-        xMin: 1/3,
+        xMin: 1 / 3,
         yMax: 1.0,
         xMax: 1.0,
-        width: 2/3,
+        width: 2 / 3,
         height: 1.0
-      }};
+      }
+    };
     const computedIoU = bboxTracker['iou'](pose, track);
-    expect(computedIoU).toBeCloseTo(1/3, 6);
+    expect(computedIoU).toBeCloseTo(1 / 3, 6);
   });
 
   it('Compute IoU with full overlap', () => {
     const bboxTracker = new BoundingBoxTracker(trackerConfig);
     const pose: Pose = {
       keypoints: [],
-      box: {
-        yMin: 0.0,
-        xMin: 0.0,
-        yMax: 1.0,
-        xMax: 1.0,
-        width: 1.0,
-        height: 1.0
-      }
+      box: {yMin: 0.0, xMin: 0.0, yMax: 1.0, xMax: 1.0, width: 1.0, height: 1.0}
     };
     const track: Track = {
       id: 0,
       lastTimestamp: 1000000,
       keypoints: [],
-      box: {
-        yMin: 0.0,
-        xMin: 0.0,
-        yMax: 1.0,
-        xMax: 1.0,
-        width: 1.0,
-        height: 1.0
-      }};
+      box: {yMin: 0.0, xMin: 0.0, yMax: 1.0, xMax: 1.0, width: 1.0, height: 1.0}
+    };
     const computedIoU = bboxTracker['iou'](pose, track);
     expect(computedIoU).toBeCloseTo(1.0, 6);
   });
@@ -94,27 +82,14 @@ describe('Bounding box tracker', () => {
     const bboxTracker = new BoundingBoxTracker(trackerConfig);
     const pose: Pose = {
       keypoints: [],
-      box: {
-        yMin: 0.0,
-        xMin: 0.0,
-        yMax: 0.5,
-        xMax: 0.5,
-        width: 0.5,
-        height: 0.5
-      }
+      box: {yMin: 0.0, xMin: 0.0, yMax: 0.5, xMax: 0.5, width: 0.5, height: 0.5}
     };
     const track: Track = {
       id: 0,
       lastTimestamp: 1000000,
       keypoints: [],
-      box: {
-        yMin: 0.5,
-        xMin: 0.5,
-        yMax: 1.0,
-        xMax: 1.0,
-        width: 0.5,
-        height: 0.5
-      }};
+      box: {yMin: 0.5, xMin: 0.5, yMax: 1.0, xMax: 1.0, width: 0.5, height: 0.5}
+    };
     const computedIoU = bboxTracker['iou'](pose, track);
     expect(computedIoU).toBeCloseTo(0.0, 6);
   });
@@ -124,28 +99,30 @@ describe('Bounding box tracker', () => {
     const bboxTracker = new BoundingBoxTracker(trackerConfig);
     let tracks: Track[];
     let poses: Pose[] = [
-        {  // Becomes track 1.
-          keypoints: [],
-          box: {
-            yMin: 0.0,
-            xMin: 0.0,
-            yMax: 0.5,
-            xMax: 0.5,
-            width: 0.5,
-            height: 0.5
-          }
-        },
-        {  // Becomes track 2.
-          keypoints: [],
-          box: {
-            yMin: 0.0,
-            xMin: 0.0,
-            yMax: 1.0,
-            xMax: 1.0,
-            width: 1.0,
-            height: 1.0
-          }
+      {
+        // Becomes track 1.
+        keypoints: [],
+        box: {
+          yMin: 0.0,
+          xMin: 0.0,
+          yMax: 0.5,
+          xMax: 0.5,
+          width: 0.5,
+          height: 0.5
         }
+      },
+      {
+        // Becomes track 2.
+        keypoints: [],
+        box: {
+          yMin: 0.0,
+          xMin: 0.0,
+          yMax: 1.0,
+          xMax: 1.0,
+          width: 1.0,
+          height: 1.0
+        }
+      }
     ];
     poses = bboxTracker.apply(poses, 0);
     tracks = bboxTracker.getTracks();
@@ -161,28 +138,30 @@ describe('Bounding box tracker', () => {
     // Timestamp: 100000. First pose is linked with track 1. Second pose spawns
     // a new track (id = 2).
     poses = [
-        {  // Linked with track 1.
-          keypoints: [],
-          box: {
-            yMin: 0.1,
-            xMin: 0.1,
-            yMax: 0.5,
-            xMax: 0.5,
-            width: 0.4,
-            height: 0.4
-          }
-        },
-        {  // Becomes track 3.
-          keypoints: [],
-          box: {
-            yMin: 0.3,
-            xMin: 0.2,
-            yMax: 0.9,
-            xMax: 0.9,
-            width: 0.7,
-            height: 0.6
-          }
+      {
+        // Linked with track 1.
+        keypoints: [],
+        box: {
+          yMin: 0.1,
+          xMin: 0.1,
+          yMax: 0.5,
+          xMax: 0.5,
+          width: 0.4,
+          height: 0.4
         }
+      },
+      {
+        // Becomes track 3.
+        keypoints: [],
+        box: {
+          yMin: 0.3,
+          xMin: 0.2,
+          yMax: 0.9,
+          xMax: 0.9,
+          width: 0.7,
+          height: 0.6
+        }
+      }
     ];
     poses = bboxTracker.apply(poses, 100000);
     tracks = bboxTracker.getTracks();
@@ -201,28 +180,30 @@ describe('Bounding box tracker', () => {
     // identical to track 2, but is not linked because track 2 is deleted due to
     // age. Instead it spawns track 4.
     poses = [
-        {  // Linked with track 1.
-          keypoints: [],
-          box: {
-            yMin: 0.1,
-            xMin: 0.1,
-            yMax: 0.5,
-            xMax: 0.55,
-            width: 0.4,
-            height: 0.45
-          }
-        },
-        {  // Becomes track 4.
-          keypoints: [],
-          box: {
-            yMin: 0.0,
-            xMin: 0.0,
-            yMax: 1.0,
-            xMax: 1.0,
-            width: 1.0,
-            height: 1.0
-          }
+      {
+        // Linked with track 1.
+        keypoints: [],
+        box: {
+          yMin: 0.1,
+          xMin: 0.1,
+          yMax: 0.5,
+          xMax: 0.55,
+          width: 0.4,
+          height: 0.45
         }
+      },
+      {
+        // Becomes track 4.
+        keypoints: [],
+        box: {
+          yMin: 0.0,
+          xMin: 0.0,
+          yMax: 1.0,
+          xMax: 1.0,
+          width: 1.0,
+          height: 1.0
+        }
+      }
     ];
     poses = bboxTracker.apply(poses, 1050000);
     tracks = bboxTracker.getTracks();
@@ -237,5 +218,4 @@ describe('Bounding box tracker', () => {
     expect(tracks[2].id).toEqual(3);
     expect(tracks[2].lastTimestamp).toEqual(100000);
   });
-
 });

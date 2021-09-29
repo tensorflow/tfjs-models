@@ -14,9 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as tf from '@tensorflow/tfjs-core';
-
-import {Keypoint} from './shared/types';
+import {DetectorInput, Keypoint} from './shared/calculators/interfaces/common_interfaces';
 
 export enum SupportedModels {
   MediaPipeHands = 'MediaPipeHands',
@@ -54,8 +52,7 @@ export interface EstimationConfig {
 /**
  * Allowed input format for the `estimateHands` method.
  */
-export type HandDetectorInput =
-    tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|HTMLCanvasElement;
+export type HandDetectorInput = DetectorInput;
 
 export interface Hand {
   keypoints: Keypoint[];

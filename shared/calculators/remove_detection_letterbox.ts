@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import {Padding} from '../../calculators/interfaces/common_interfaces';
+import {Padding} from './interfaces/common_interfaces';
 import {Detection} from './interfaces/shape_interfaces';
 
 /**

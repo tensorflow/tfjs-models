@@ -16,8 +16,28 @@
  */
 import * as tf from '@tensorflow/tfjs-core';
 
-import {BoundingBox} from '../../../calculators/interfaces/shape_interfaces';
-import {Keypoint} from '../../../shared/types';
+import {Keypoint} from './common_interfaces';
+
+/**
+ * A rectangle that contains center point, height, width and rotation info.
+ * Can be normalized or non-normalized.
+ */
+export interface Rect {
+  xCenter: number;
+  yCenter: number;
+  height: number;
+  width: number;
+  rotation?: number;
+}
+
+export interface BoundingBox {
+  xMin: number;
+  yMin: number;
+  xMax: number;
+  yMax: number;
+  width: number;
+  height: number;
+}
 
 export interface AnchorTensor {
   x: tf.Tensor1D;

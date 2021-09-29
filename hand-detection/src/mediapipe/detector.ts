@@ -18,7 +18,7 @@ import * as hands from '@mediapipe/hands';
 
 import {MEDIAPIPE_KEYPOINTS} from '../constants';
 import {HandDetector} from '../hand_detector';
-import {Keypoint} from '../shared/types';
+import {Keypoint} from '../shared/calculators/interfaces/common_interfaces';
 import {Hand, HandDetectorInput} from '../types';
 
 import {validateModelConfig} from './detector_utils';

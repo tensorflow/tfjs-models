@@ -16,16 +16,16 @@
  */
 
 import {Pose} from '../types';
-import {Tracker} from './tracker';
+
 import {Track} from './interfaces/common_interfaces';
 import {TrackerConfig} from './interfaces/config_interfaces';
+import {Tracker} from './tracker';
 
 /**
  * BoundingBoxTracker, which tracks objects based on bounding box similarity,
  * currently defined as intersection-over-union (IoU).
  */
 export class BoundingBoxTracker extends Tracker {
-
   constructor(config: TrackerConfig) {
     super(config);
   }

@@ -14,27 +14,26 @@
  * limitations under the License.
  * =============================================================================
  */
-import {Keypoint} from '../shared/types';
 
-import {KeypointsFilter} from './interfaces/common_interfaces';
-import {VelocityFilterConfig} from './interfaces/config_interfaces';
-import {RelativeVelocityFilter} from './relative_velocity_filter';
+import {Keypoint, KeypointsFilter} from '../calculators/interfaces/common_interfaces';
+import {OneEuroFilterConfig} from '../calculators/interfaces/config_interfaces';
+import {OneEuroFilter} from './one_euro_filter';
 
 /**
- * A stateful filter that smoothes landmark values overtime.
+ * A stateful filter that smoothes keypoints values overtime.
  *
- * More specifically, it uses `RelativeVelocityFilter` to smooth every x, y, z
+ * More specifically, it uses `OneEuroFilter` to smooth every x, y, z
  * coordinates over time, which as result gives us velocity of how these values
  * change over time. With higher velocity it weights new values higher.
  */
 // ref:
 // https://github.com/google/mediapipe/blob/master/mediapipe/calculators/util/landmarks_smoothing_calculator.cc
-export class KeypointsVelocityFilter implements KeypointsFilter {
-  private xFilters: RelativeVelocityFilter[];
-  private yFilters: RelativeVelocityFilter[];
-  private zFilters: RelativeVelocityFilter[];
+export class KeypointsOneEuroFilter implements KeypointsFilter {
+  private xFilters: OneEuroFilter[];
+  private yFilters: OneEuroFilter[];
+  private zFilters: OneEuroFilter[];
 
-  constructor(private readonly config: VelocityFilterConfig) {}
+  constructor(private readonly config: OneEuroFilterConfig) {}
 
   apply(keypoints: Keypoint[], microSeconds: number, objectScale: number):
       Keypoint[] {
@@ -42,6 +41,10 @@ export class KeypointsVelocityFilter implements KeypointsFilter {
       this.reset();
       return null;
     }
+
+    // Initialize filters once.
+    this.initializeFiltersIfEmpty(keypoints);
+
     // Get value scale as inverse value of the object scale.
     // If value is too small smoothing will be disabled and keypoints will be
     // returned as is.
@@ -50,11 +53,8 @@ export class KeypointsVelocityFilter implements KeypointsFilter {
       if (objectScale < this.config.minAllowedObjectScale) {
         return [...keypoints];
       }
-      valueScale = 1 / objectScale;
+      valueScale = 1.0 / objectScale;
     }
-
-    // Initialize filters once.
-    this.initializeFiltersIfEmpty(keypoints);
 
     // Filter keypoints. Every axis of every keypoint is filtered separately.
     return keypoints.map((keypoint, i) => {
@@ -83,12 +83,9 @@ export class KeypointsVelocityFilter implements KeypointsFilter {
   // check the size.
   private initializeFiltersIfEmpty(keypoints: Keypoint[]) {
     if (this.xFilters == null || this.xFilters.length !== keypoints.length) {
-      this.xFilters =
-          keypoints.map(_ => new RelativeVelocityFilter(this.config));
-      this.yFilters =
-          keypoints.map(_ => new RelativeVelocityFilter(this.config));
-      this.zFilters =
-          keypoints.map(_ => new RelativeVelocityFilter(this.config));
+      this.xFilters = keypoints.map(_ => new OneEuroFilter(this.config));
+      this.yFilters = keypoints.map(_ => new OneEuroFilter(this.config));
+      this.zFilters = keypoints.map(_ => new OneEuroFilter(this.config));
     }
   }
 }

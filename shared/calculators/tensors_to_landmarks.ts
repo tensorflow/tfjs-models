@@ -16,10 +16,10 @@
  */
 import * as tf from '@tensorflow/tfjs-core';
 
-import {sigmoid} from '../../calculators/sigmoid';
-import {Keypoint} from '../../shared/types';
+import {Keypoint} from './interfaces/common_interfaces';
 
 import {TensorsToLandmarksConfig} from './interfaces/config_interfaces';
+import {sigmoid} from './sigmoid';
 
 /**
  * A calculator for converting Tensors from regression models into landmarks.

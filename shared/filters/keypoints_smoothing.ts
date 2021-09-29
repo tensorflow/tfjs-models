@@ -15,16 +15,15 @@
  * =============================================================================
  */
 
-import {Keypoint} from '../shared/types';
+import {getObjectScale} from '../calculators/get_object_scale';
+import {ImageSize, Keypoint, KeypointsFilter} from '../calculators/interfaces/common_interfaces';
+import {KeypointsSmoothingConfig} from '../calculators/interfaces/config_interfaces';
+import {Rect} from '../calculators/interfaces/shape_interfaces';
+import {keypointsToNormalizedKeypoints} from '../calculators/keypoints_to_normalized_keypoints';
+import {normalizedKeypointsToKeypoints} from '../calculators/normalized_keypoints_to_keypoints';
 
-import {getObjectScale} from './get_object_scale';
-import {ImageSize, KeypointsFilter} from './interfaces/common_interfaces';
-import {KeypointsSmoothingConfig} from './interfaces/config_interfaces';
-import {Rect} from './interfaces/shape_interfaces';
 import {KeypointsOneEuroFilter} from './keypoints_one_euro_filter';
-import {keypointsToNormalizedKeypoints} from './keypoints_to_normalized_keypoints';
 import {KeypointsVelocityFilter} from './keypoints_velocity_filter';
-import {normalizedKeypointsToKeypoints} from './normalized_keypoints_to_keypoints';
 
 /**
  * A Calculator to smooth keypoints over time.

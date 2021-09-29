@@ -15,9 +15,9 @@
  * =============================================================================
  */
 import * as tf from '@tensorflow/tfjs-core';
-import {PoseDetectorInput} from '../types';
+
 import {getImageSize, getProjectiveTransformMatrix, getRoi, padRoi, toImageTensor} from './image_utils';
-import {Padding} from './interfaces/common_interfaces';
+import {DetectorInput, Padding} from './interfaces/common_interfaces';
 import {ImageToTensorConfig} from './interfaces/config_interfaces';
 import {Rect} from './interfaces/shape_interfaces';
 
@@ -33,7 +33,7 @@ import {Rect} from './interfaces/shape_interfaces';
  *      the subarea.
  */
 export function convertImageToTensor(
-    image: PoseDetectorInput, config: ImageToTensorConfig,
+    image: DetectorInput, config: ImageToTensorConfig,
     normRect?: Rect): {imageTensor: tf.Tensor4D, padding: Padding} {
   const {inputResolution, keepAspectRatio} = config;
 

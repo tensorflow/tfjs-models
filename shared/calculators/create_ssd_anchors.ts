@@ -15,8 +15,8 @@
  * =============================================================================
  */
 
-import {Rect} from '../../calculators/interfaces/shape_interfaces';
 import {AnchorConfig} from './interfaces/config_interfaces';
+import {Rect} from './interfaces/shape_interfaces';
 
 // ref:
 // https://github.com/google/mediapipe/blob/350fbb2100ad531bc110b93aaea23d96af5a5064/mediapipe/calculators/tflite/ssd_anchors_calculator.cc

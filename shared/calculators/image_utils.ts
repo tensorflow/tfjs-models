@@ -15,11 +15,11 @@
  * =============================================================================
  */
 import * as tf from '@tensorflow/tfjs-core';
-import {InputResolution, PoseDetectorInput} from '../types';
-import {ImageSize, Padding, ValueTransform} from './interfaces/common_interfaces';
+
+import {DetectorInput, ImageSize, InputResolution, Padding, ValueTransform} from './interfaces/common_interfaces';
 import {Rect} from './interfaces/shape_interfaces';
 
-export function getImageSize(input: PoseDetectorInput): ImageSize {
+export function getImageSize(input: DetectorInput): ImageSize {
   if (input instanceof tf.Tensor) {
     return {height: input.shape[0], width: input.shape[1]};
   } else {
