@@ -173,6 +173,9 @@ export interface TensorsToLandmarksConfig {
   numLandmarks: number;
   inputImageWidth: number;
   inputImageHeight: number;
+  visibilityActivation: 'none'|'sigmoid';
+  flipHorizontally?: boolean;
+  flipVertically?: boolean;
   normalizeZ?: number;
 }
 export interface RefineLandmarksFromHeatmapConfig {

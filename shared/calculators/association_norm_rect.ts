@@ -59,10 +59,16 @@ function overlapSimilarity(rect1: Rect, rect2: Rect): number {
 
 // ref:
 // https://github.com/google/mediapipe/blob/master/mediapipe/calculators/util/association_norm_rect_calculator.cc
+// Previous image rects are ignored due to our API not handling previous image
+// to current image ID association
 export function calculateAssociationNormRect(
     rectsArray: Rect[][], minSimilarityThreshold: number): Rect[] {
   let result: Rect[] = [];
 
+  // rectsArray elements are interpreted to be sorted in reverse priority order,
+  // so later elements are higher in priority. This means that if there's a
+  // large overlap, the later rect will be added and the older rect will be
+  // removed.
   rectsArray.forEach(rects => rects.forEach(curRect => {
     result = result.filter(
         prevRect =>
