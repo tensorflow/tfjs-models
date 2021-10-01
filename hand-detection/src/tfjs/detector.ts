@@ -131,8 +131,9 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
 
       // HandLandmarkTrackingCpu: ClipDetectionVectorSizeCalculator
       // HandLandmarkTrackingCpu: Makes sure there are no more detections than
-      // the provided maxHands.
-      const palmDetections = allPalmDetections.slice(0, this.maxHands);
+      // the provided maxHands. This is already done by our implementation of
+      // nonMaxSuppresion.
+      const palmDetections = allPalmDetections;
 
       // HandLandmarkTrackingCpu: PalmDetectionDetectionToRoi
       // Calculates region of interest (ROI) based on the specified palm.
@@ -140,17 +141,15 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
           detection => this.palmDetectionToRoi(detection, imageSize));
 
       // HandLandmarkTrackingCpu: AssociationNormRectCalculator
-      // Performs association between Rect elements from
-      // previous image and rects based on palm detections from the current
-      // image. This calculator ensures that the output handRects varray
+      // This calculator ensures that the output handRects array
       // doesn't contain overlapping regions based on the specified
-      // minSimilarityThreshold.
-      handRects = handRects || [];
-      handRects = config.staticImageMode ?
-          handRectsFromPalmDetections :
-          calculateAssociationNormRect(
-              [handRects, handRectsFromPalmDetections],
-              constants.MPHANDS_MIN_SIMILARITY_THRESHOLD);
+      // minSimilarityThreshold. Note that our implementation does not perform
+      // association between rects from previous image and rects based
+      // on palm detections from the current image due to not having tracking
+      // IDs in our API.
+      handRects = calculateAssociationNormRect(
+          [handRectsFromPalmDetections],
+          constants.MPHANDS_MIN_SIMILARITY_THRESHOLD);
     }
 
     // HandLandmarkTrackingCpu: HandLandmarkCpu
@@ -275,7 +274,7 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
   // ref:
   // https://github.com/google/mediapipe/blob/master/mediapipe/modules/hand_landmark/hand_landmark_cpu.pbtxt
   private async handLandmarks(handRect: Rect, image?: tf.Tensor3D):
-      Promise<HandLandmarksResult> {
+      Promise<HandLandmarksResult|null> {
     // HandLandmarkCpu: ImageToTensorCalculator
     // Transforms a region of image into a 224x224 tensor while keeping the
     // aspect ratio, and therefore may result in potential letterboxing.
@@ -286,16 +285,15 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
 
     // HandLandmarkCpu: InferenceCalculator
     // Runs a model takes an image tensor and
-    // outputs a vector of tensors representing, for instance, detection
+    // outputs a list of tensors representing, for instance, detection
     // boxes/keypoints and scores.
-    // The model returns 5 tensors with the following shape:
-    // ld_3d: This tensor (shape: [1, 195]) represents 39 5-d
+    // The model returns 3 tensors with the following shape:
+    // conv_landmarks: This tensor (shape: [1, 63]) represents 39 5-d
     // keypoints.
-    // output_poseflag: This tensor (shape: [1, 1]) represents the
-    // confidence score.
-    // activation_heatmap: This tensor (shape: [1, 64, 64, 39]) represents
-    //  heatmap for the 39 landmarks.
-    // world_3d: This tensor (shape: [1, 117]) represents 39 3DWorld keypoints.
+    // Identity_1:0: This tensor (shape: [1, 1]) represents the
+    // confidence score of the presence of a hand.
+    // Identity:0: This tensor (shape: [1, 1]) represents the classication
+    // score of handedness
     const landmarkResult = this.landmarkModel.execute(imageValueShifted, [
       'conv_landmarks', 'Identity_1:0', 'Identity:0'
     ]) as tf.Tensor[];

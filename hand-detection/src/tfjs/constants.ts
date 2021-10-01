@@ -51,6 +51,9 @@ export const DEFAULT_MPHANDS_ESTIMATION_CONFIG:
     };
 export const MPHANDS_TENSORS_TO_DETECTION_CONFIGURATION:
     TensorsToDetectionsConfig = {
+      applyExponentialOnBoxSize: false,
+      flipVertically: false,
+      ignoreClasses: [] as number[],
       numClasses: 1,
       numBoxes: 896,
       numCoords: 18,
@@ -101,5 +104,6 @@ export const MPHANDS_TENSORS_TO_LANDMARKS_CONFIG: TensorsToLandmarksConfig = {
   numLandmarks: 21,
   inputImageWidth: 224,
   inputImageHeight: 224,
-  normalizeZ: 0.4
+  normalizeZ: 0.4,
+  visibilityActivation: 'none'
 };

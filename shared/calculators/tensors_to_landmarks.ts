@@ -21,6 +21,10 @@ import {Keypoint} from './interfaces/common_interfaces';
 import {TensorsToLandmarksConfig} from './interfaces/config_interfaces';
 import {sigmoid} from './sigmoid';
 
+function applyActivation(activation: 'none'|'sigmoid', value: number) {
+  return activation === 'none' ? value : sigmoid(value);
+}
+
 /**
  * A calculator for converting Tensors from regression models into landmarks.
  * Note that if the landmarks in the tensor has more than 5 dimensions, only the
@@ -30,20 +34,16 @@ import {sigmoid} from './sigmoid';
  * @param landmarkTensor List of Tensors of type float32. Only the first tensor
  * will be used. The size of the values must be (num_dimension x num_landmarks).
  * @param config
- * @param flipHorizontally Optional. Whether to flip landmarks horizontally or
- * not. Overrides corresponding side packet and/or field in the calculator
- * options.
- * @param flipVertically Optional. Whether to flip landmarks vertically or not.
- * Overrides corresponding side packet and/or field in the calculator options.
  *
  * @returns Normalized landmarks.
  */
 export async function tensorsToLandmarks(
-    landmarkTensor: tf.Tensor2D, config: TensorsToLandmarksConfig,
-    flipHorizontally = false, flipVertically = false) {
+    landmarkTensor: tf.Tensor2D, config: TensorsToLandmarksConfig) {
   const numValues = landmarkTensor.size;
   const numDimensions = numValues / config.numLandmarks;
   const rawLandmarks = await landmarkTensor.data() as Float32Array;
+  const flipHorizontally = config.flipHorizontally || false;
+  const flipVertically = config.flipVertically || false;
 
   const outputLandmarks: Keypoint[] = [];
   for (let ld = 0; ld < config.numLandmarks; ++ld) {
@@ -66,7 +66,8 @@ export async function tensorsToLandmarks(
       landmark.z = rawLandmarks[offset + 2];
     }
     if (numDimensions > 3) {
-      landmark.score = sigmoid(rawLandmarks[offset + 3]);
+      landmark.score = applyActivation(
+          config.visibilityActivation, rawLandmarks[offset + 3]);
     }
     // presence is in rawLandmarks[offset + 4], we don't expose it.
 
