@@ -15,6 +15,7 @@
  * =============================================================================
  */
 
+import {TensorsToLandmarksConfig} from '../shared/calculators/interfaces/config_interfaces';
 import {BlazePoseTfjsModelConfig} from './types';
 
 export const DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL =
@@ -92,16 +93,19 @@ export const BLAZEPOSE_LANDMARK_IMAGE_TO_TENSOR_CONFIG = {
   keepAspectRatio: true
 };
 export const BLAZEPOSE_POSE_PRESENCE_SCORE = 0.5;
-export const BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG = {
+export const BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG: TensorsToLandmarksConfig = {
   numLandmarks: 39,
   inputImageWidth: 256,
-  inputImageHeight: 256
+  inputImageHeight: 256,
+  visibilityActivation: 'sigmoid'
 };
-export const BLAZEPOSE_TENSORS_TO_WORLD_LANDMARKS_CONFIG = {
-  numLandmarks: 39,
-  inputImageWidth: 1,
-  inputImageHeight: 1
-};
+export const BLAZEPOSE_TENSORS_TO_WORLD_LANDMARKS_CONFIG:
+    TensorsToLandmarksConfig = {
+      numLandmarks: 39,
+      inputImageWidth: 1,
+      inputImageHeight: 1,
+      visibilityActivation: 'sigmoid'
+    };
 export const BLAZEPOSE_REFINE_LANDMARKS_FROM_HEATMAP_CONFIG = {
   kernelSize: 7,
   minConfidenceToRefine: 0.5
