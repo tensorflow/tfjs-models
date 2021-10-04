@@ -20,7 +20,6 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {MEDIAPIPE_KEYPOINTS} from '../constants';
 import {HandDetector} from '../hand_detector';
-import {calculateAssociationNormRect} from '../shared/calculators/association_norm_rect';
 import {calculateLandmarkProjection} from '../shared/calculators/calculate_landmark_projection';
 import {convertImageToTensor} from '../shared/calculators/convert_image_to_tensor';
 import {createSsdAnchors} from '../shared/calculators/create_ssd_anchors';
@@ -146,10 +145,8 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
       // minSimilarityThreshold. Note that our implementation does not perform
       // association between rects from previous image and rects based
       // on palm detections from the current image due to not having tracking
-      // IDs in our API.
-      handRects = calculateAssociationNormRect(
-          [handRectsFromPalmDetections],
-          constants.MPHANDS_MIN_SIMILARITY_THRESHOLD);
+      // IDs in our API so no calculator call is needed.
+      handRects = handRectsFromPalmDetections;
     }
 
     // HandLandmarkTrackingCpu: HandLandmarkCpu
@@ -288,7 +285,7 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
     // outputs a list of tensors representing, for instance, detection
     // boxes/keypoints and scores.
     // The model returns 3 tensors with the following shape:
-    // conv_landmarks: This tensor (shape: [1, 63]) represents 39 5-d
+    // conv_landmarks: This tensor (shape: [1, 63]) represents 21 3-d
     // keypoints.
     // Identity_1:0: This tensor (shape: [1, 1]) represents the
     // confidence score of the presence of a hand.

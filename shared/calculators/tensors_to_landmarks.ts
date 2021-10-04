@@ -33,17 +33,24 @@ function applyActivation(activation: 'none'|'sigmoid', value: number) {
  * the model.
  * @param landmarkTensor List of Tensors of type float32. Only the first tensor
  * will be used. The size of the values must be (num_dimension x num_landmarks).
+ * @param flipHorizontally Optional. Whether to flip landmarks horizontally or
+ * not. Overrides corresponding field in config.
+ * @param flipVertically Optional. Whether to flip landmarks vertically or not.
+ * Overrides corresponding field in config.
+ *
  * @param config
  *
  * @returns Normalized landmarks.
  */
 export async function tensorsToLandmarks(
-    landmarkTensor: tf.Tensor2D, config: TensorsToLandmarksConfig) {
+    landmarkTensor: tf.Tensor2D, config: TensorsToLandmarksConfig,
+    flipHorizontally = false, flipVertically = false) {
+  flipHorizontally = config.flipHorizontally || flipHorizontally;
+  flipVertically = flipVertically || config.flipVertically;
+
   const numValues = landmarkTensor.size;
   const numDimensions = numValues / config.numLandmarks;
   const rawLandmarks = await landmarkTensor.data() as Float32Array;
-  const flipHorizontally = config.flipHorizontally || false;
-  const flipVertically = config.flipVertically || false;
 
   const outputLandmarks: Keypoint[] = [];
   for (let ld = 0; ld < config.numLandmarks; ++ld) {
