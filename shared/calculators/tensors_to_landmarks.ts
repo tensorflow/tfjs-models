@@ -44,9 +44,9 @@ function applyActivation(activation: 'none'|'sigmoid', value: number) {
  */
 export async function tensorsToLandmarks(
     landmarkTensor: tf.Tensor2D, config: TensorsToLandmarksConfig,
-    flipHorizontally = false, flipVertically = false) {
-  flipHorizontally = config.flipHorizontally || flipHorizontally;
-  flipVertically = flipVertically || config.flipVertically;
+    flipHorizontally?: boolean, flipVertically?: boolean) {
+  flipHorizontally = flipHorizontally || config.flipHorizontally || false;
+  flipVertically = flipVertically || config.flipVertically || false;
 
   const numValues = landmarkTensor.size;
   const numDimensions = numValues / config.numLandmarks;
