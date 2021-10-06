@@ -14,8 +14,10 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as tf from '@tensorflow/tfjs-core';
-import {BoundingBox} from './calculators/interfaces/shape_interfaces';
+import {DetectorInput, Keypoint} from './shared/calculators/interfaces/common_interfaces';
+import {BoundingBox} from './shared/calculators/interfaces/shape_interfaces';
+
+export {Keypoint};
 
 export enum SupportedModels {
   MoveNet = 'MoveNet',
@@ -50,23 +52,11 @@ export interface EstimationConfig {
 /**
  * Allowed input format for the `estimatePoses` method.
  */
-export type PoseDetectorInput =
-    tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|HTMLCanvasElement;
+export type PoseDetectorInput = DetectorInput;
 
 export interface InputResolution {
   width: number;
   height: number;
-}
-
-/**
- * A keypoint that contains coordinate information.
- */
-export interface Keypoint {
-  x: number;
-  y: number;
-  z?: number;
-  score?: number;  // The probability of a keypoint's visibility.
-  name?: string;
 }
 
 export interface Pose {

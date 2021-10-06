@@ -16,27 +16,9 @@
  */
 
 import * as poseDetection from './index';
+import {KARMA_SERVER} from './shared/test_util';
 
 const SIMULATED_INTERVAL = 33.333;  // in milliseconds
-
-/** Karma server directory serving local files. */
-export const KARMA_SERVER = './base/test_data';
-
-export async function loadImage(
-    imagePath: string, width: number,
-    height: number): Promise<HTMLImageElement> {
-  const img = new Image(width, height);
-  const promise = new Promise<HTMLImageElement>((resolve, reject) => {
-    img.crossOrigin = '';
-    img.onload = () => {
-      resolve(img);
-    };
-  });
-
-  img.src = `${KARMA_SERVER}/${imagePath}`;
-
-  return promise;
-}
 
 export async function loadVideo(
     videoPath: string, videoFPS: number,

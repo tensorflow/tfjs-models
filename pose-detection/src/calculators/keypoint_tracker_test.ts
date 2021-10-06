@@ -14,29 +14,32 @@
  * limitations under the License.
  * =============================================================================
  */
-import {Keypoint, Pose} from '../types';
-import {KeypointTracker} from './keypoint_tracker';
+import {Keypoint} from '../shared/calculators/interfaces/common_interfaces';
+
+import {Pose} from '../types';
+
 import {Track} from './interfaces/common_interfaces';
 import {TrackerConfig} from './interfaces/config_interfaces';
+import {KeypointTracker} from './keypoint_tracker';
 
 describe('Keypoint tracker', () => {
   const trackerConfig: TrackerConfig = {
-      maxTracks: 4,
-      maxAge: 1000,  // Unit: milliseconds.
-      minSimilarity: 0.5,
-      keypointTrackerParams: {
-        keypointConfidenceThreshold: 0.2,
-        keypointFalloff: [0.1, 0.1, 0.1, 0.1],
-        minNumberOfKeypoints: 2
-      }
-    };
+    maxTracks: 4,
+    maxAge: 1000,  // Unit: milliseconds.
+    minSimilarity: 0.5,
+    keypointTrackerParams: {
+      keypointConfidenceThreshold: 0.2,
+      keypointFalloff: [0.1, 0.1, 0.1, 0.1],
+      minNumberOfKeypoints: 2
+    }
+  };
 
   it('Instantiate tracker', () => {
     const kptTracker = new KeypointTracker(trackerConfig);
     expect(kptTracker instanceof KeypointTracker).toBe(true);
   });
 
-  it('Config validation fail on kpt confidence threshold',() => {
+  it('Config validation fail on kpt confidence threshold', () => {
     const badConfig: TrackerConfig = {
       maxTracks: 4,
       maxAge: 1000,  // Unit: milliseconds.
@@ -48,36 +51,37 @@ describe('Keypoint tracker', () => {
       }
     };
     expect(() => {
-      return new KeypointTracker(badConfig);}).toThrow(
-      new Error('Must specify \'keypointConfidenceThreshold\' to be in the ' +
-                'range [0, 1], but encountered -0.1'));
+      return new KeypointTracker(badConfig);
+    })
+        .toThrow(new Error(
+            'Must specify \'keypointConfidenceThreshold\' to be in the ' +
+            'range [0, 1], but encountered -0.1'));
   });
 
   it('Compute OKS', () => {
     const kptTracker = new KeypointTracker(trackerConfig);
     const pose: Pose = {
       keypoints: [
-          {x: 0.2, y: 0.2, score: 1.0},
-          {x: 0.4, y: 0.4, score: 0.8},
-          {x: 0.6, y: 0.6, score: 0.1},  // Low confidence.
-          {x: 0.8, y: 0.7, score: 0.8}
-      ]};
+        {x: 0.2, y: 0.2, score: 1.0}, {x: 0.4, y: 0.4, score: 0.8},
+        {x: 0.6, y: 0.6, score: 0.1},  // Low confidence.
+        {x: 0.8, y: 0.7, score: 0.8}
+      ]
+    };
     const track: Track = {
       id: 0,
       lastTimestamp: 1000000,
       keypoints: [
-          {x: 0.2, y: 0.2, score: 1.0},
-          {x: 0.4, y: 0.4, score: 0.8},
-          {x: 0.6, y: 0.6, score: 0.9},
-          {x: 0.8, y: 0.8, score: 0.8}
-      ]};
+        {x: 0.2, y: 0.2, score: 1.0}, {x: 0.4, y: 0.4, score: 0.8},
+        {x: 0.6, y: 0.6, score: 0.9}, {x: 0.8, y: 0.8, score: 0.8}
+      ]
+    };
     const oks = kptTracker['oks'](pose, track);
 
     const boxArea = (0.8 - 0.2) * (0.8 - 0.2);
-    const x = 2*trackerConfig.keypointTrackerParams.keypointFalloff[3];
+    const x = 2 * trackerConfig.keypointTrackerParams.keypointFalloff[3];
     const d = 0.1;
     const expectedOks =
-        (1 + 1 + Math.exp(-1*d**2/(2*boxArea*x**2))) / 3;
+        (1 + 1 + Math.exp(-1 * d ** 2 / (2 * boxArea * x ** 2))) / 3;
     expect(oks).toBeCloseTo(expectedOks, 6);
   });
 
@@ -85,20 +89,20 @@ describe('Keypoint tracker', () => {
     const kptTracker = new KeypointTracker(trackerConfig);
     const pose: Pose = {
       keypoints: [
-          {x: 0.2, y: 0.2, score: 1.0},
-          {x: 0.4, y: 0.4, score: 0.1},  // Low confidence.
-          {x: 0.6, y: 0.6, score: 0.9},
-          {x: 0.8, y: 0.8, score: 0.8}
-      ]};
+        {x: 0.2, y: 0.2, score: 1.0},
+        {x: 0.4, y: 0.4, score: 0.1},  // Low confidence.
+        {x: 0.6, y: 0.6, score: 0.9}, {x: 0.8, y: 0.8, score: 0.8}
+      ]
+    };
     const track: Track = {
       id: 0,
       lastTimestamp: 1000000,
       keypoints: [
-          {x: 0.2, y: 0.2, score: 1.0},
-          {x: 0.4, y: 0.4, score: 0.8},
-          {x: 0.6, y: 0.6, score: 0.1},  // Low confidence.
-          {x: 0.8, y: 0.8, score: 0.0}  // Low confidence.
-      ]};
+        {x: 0.2, y: 0.2, score: 1.0}, {x: 0.4, y: 0.4, score: 0.8},
+        {x: 0.6, y: 0.6, score: 0.1},  // Low confidence.
+        {x: 0.8, y: 0.8, score: 0.0}   // Low confidence.
+      ]
+    };
     const oks = kptTracker['oks'](pose, track);
     expect(oks).toBeCloseTo(0.0, 6);
   });
@@ -106,11 +110,10 @@ describe('Keypoint tracker', () => {
   it('Compute area', () => {
     const kptTracker = new KeypointTracker(trackerConfig);
     const keypoints: Keypoint[] = [
-          {x: 0.1, y: 0.2, score: 1.0},
-          {x: 0.3, y: 0.4, score: 0.9},
-          {x: 0.4, y: 0.6, score: 0.9},
-          {x: 0.7, y: 0.8, score: 0.1}  // Low confidence.
-      ];
+      {x: 0.1, y: 0.2, score: 1.0}, {x: 0.3, y: 0.4, score: 0.9},
+      {x: 0.4, y: 0.6, score: 0.9},
+      {x: 0.7, y: 0.8, score: 0.1}  // Low confidence.
+    ];
     const area = kptTracker['area'](keypoints);
 
     const expectedArea = (0.4 - 0.1) * (0.6 - 0.2);
@@ -121,14 +124,14 @@ describe('Keypoint tracker', () => {
     // Timestamp: 0. Pose becomes the only track.
     const kptTracker = new KeypointTracker(trackerConfig);
     let tracks: Track[];
-    let poses: Pose[] = [
-        {keypoints: [  // Becomes id = 1.
-            {x: 0.2, y: 0.2, score: 1.0},
-            {x: 0.4, y: 0.4, score: 0.8},
-            {x: 0.6, y: 0.6, score: 0.9},
-            {x: 0.8, y: 0.8, score: 0.0}  // Low confidence.
-        ]}
-    ];
+    let poses: Pose[] = [{
+      keypoints: [
+        // Becomes id = 1.
+        {x: 0.2, y: 0.2, score: 1.0}, {x: 0.4, y: 0.4, score: 0.8},
+        {x: 0.6, y: 0.6, score: 0.9},
+        {x: 0.8, y: 0.8, score: 0.0}  // Low confidence.
+      ]
+    }];
     poses = kptTracker.apply(poses, 0);
     tracks = kptTracker.getTracks();
     expect(poses.length).toEqual(1);
@@ -214,7 +217,7 @@ describe('Keypoint tracker', () => {
             {x: 0.1, y: 0.1, score: 0.1},  // Low confidence.
             {x: 0.2, y: 0.2, score: 0.9},
             {x: 0.3, y: 0.3, score: 0.7},
-            {x: 0.4, y: 0.4, score: 0.8} 
+            {x: 0.4, y: 0.4, score: 0.8}
         ]},
     ];
     poses = kptTracker.apply(poses, 1200000);
