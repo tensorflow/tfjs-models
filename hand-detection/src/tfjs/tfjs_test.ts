@@ -25,7 +25,7 @@ import * as handDetection from '../index';
 import {loadImage} from '../shared/test_util';
 
 // Measured in pixels.
-const EPSILON_IMAGE = 16;
+const EPSILON_IMAGE = 35;
 
 // ref:
 // https://github.com/google/mediapipe/blob/master/mediapipe/python/solutions/hands_test.py
@@ -118,7 +118,7 @@ describeWithFlags('MediaPipeHands static image ', BROWSER_ENVS, () => {
         image, {staticImageMode:
                     true} as handDetection.MediaPipeHandsTfjsEstimationConfig);
     const keypoints = result.map(
-        hand => hand.keypoints.map(keypoint => [keypoint.x, 382 - keypoint.y]));
+        hand => hand.keypoints.map(keypoint => [keypoint.x, keypoint.y]));
 
     expectArraysClose(
         keypoints, EXPECTED_HAND_KEYPOINTS_PREDICTION, EPSILON_IMAGE);
