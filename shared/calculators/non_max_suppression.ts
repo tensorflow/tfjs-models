@@ -20,6 +20,11 @@ import {Detection} from './interfaces/shape_interfaces';
 export async function nonMaxSuppression(
     detections: Detection[], maxPoses: number, iouThreshold: number,
     scoreThreshold: number): Promise<Detection[]> {
+  // Sort to match NonMaxSuppresion calculator's decreasing detection score
+  // traversal.
+  detections.sort(
+      (detectionA, detectionB) => detectionB.score[0] - detectionA.score[0]);
+
   const detectionsTensor = tf.tensor2d(detections.map(
       d =>
           [d.locationData.relativeBoundingBox.yMin,

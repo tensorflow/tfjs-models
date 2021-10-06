@@ -105,11 +105,16 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
     // Extracts image size.
     const imageSize = getImageSize(image);
 
-    // HandLandmarkTrackingCpu: ImageTransformationCalculator
-    const reverseAxes = config.flipHorizontal ? [0, 1] : [1];
-    const image3d = tf.tidy(
-        () => tf.reverse3d(
-            tf.cast(toImageTensor(image), 'float32'), reverseAxes));
+    const image3d = tf.tidy(() => {
+      let imageTensor = tf.cast(toImageTensor(image), 'float32');
+      if (config.flipHorizontal) {
+        const batchAxis = 0;
+        imageTensor = tf.squeeze(
+            tf.image.flipLeftRight(tf.expandDims(imageTensor, batchAxis)),
+            [batchAxis]);
+      }
+      return imageTensor;
+    });
 
     let handRects = this.prevHandRectsFromLandmarks;
 
