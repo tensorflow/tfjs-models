@@ -183,8 +183,7 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
       // Add keypoint name.
       if (keypoints != null) {
         keypoints.forEach((keypoint, i) => {
-          // Unset z value.
-          keypoint.z = undefined;
+          delete keypoint.z;
           keypoint.name = MEDIAPIPE_KEYPOINTS[i];
         });
       }
