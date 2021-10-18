@@ -356,8 +356,10 @@ export class PoseNet {
 
     const {resized, padding} = padAndResizeTo(input, inputResolution);
 
-    const {heatmapScores, offsets, displacementFwd, displacementBwd} =
-        this.baseModel.predict(resized);
+    const debug = tf.env().getBool('KEEP_INTERMEDIATE_TENSORS');
+    let {heatmapScores, offsets, displacementFwd, displacementBwd} = debug ?
+        await this.baseModel.predictAsync(resized) :
+        this.baseModel.predict(resized);;
 
     const pose = await decodeSinglePose(heatmapScores, offsets, outputStride);
     const poses = [pose];

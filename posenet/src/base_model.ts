@@ -78,6 +78,27 @@ export abstract class BaseModel {
     });
   }
 
+  async predictAsync(input: tf.Tensor3D): Promise<{
+    heatmapScores: tf.Tensor3D,
+    offsets: tf.Tensor3D,
+    displacementFwd: tf.Tensor3D,
+    displacementBwd: tf.Tensor3D
+  }> {
+      const asFloat = this.preprocessInput(tf.cast(input, 'float32'));
+      const asBatch = tf.expandDims(asFloat, 0);
+      const results = await this.model.executeAsync(asBatch) as tf.Tensor4D[];
+      const results3d: tf.Tensor3D[] = results.map(y => tf.squeeze(y, [0]));
+
+      const namedResults = this.nameOutputResults(results3d);
+
+      return {
+        heatmapScores: tf.sigmoid(namedResults.heatmap),
+        offsets: namedResults.offsets,
+        displacementFwd: namedResults.displacementFwd,
+        displacementBwd: namedResults.displacementBwd
+      };
+  }
+
   // Because MobileNet and ResNet predict() methods output a different order for
   // these values, we have a method that needs to be implemented to order them.
   abstract nameOutputResults(results: tf.Tensor3D[]): {
