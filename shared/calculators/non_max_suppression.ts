@@ -18,8 +18,15 @@ import * as tf from '@tensorflow/tfjs-core';
 import {Detection} from './interfaces/shape_interfaces';
 
 export async function nonMaxSuppression(
-    detections: Detection[], maxPoses: number, iouThreshold: number,
+    detections: Detection[], maxDetections: number, iouThreshold: number,
     scoreThreshold: number): Promise<Detection[]> {
+  // Sort to match NonMaxSuppresion calculator's decreasing detection score
+  // traversal.
+  // NonMaxSuppresionCalculator: RetainMaxScoringLabelOnly
+  detections.sort(
+      (detectionA, detectionB) =>
+          Math.max(...detectionB.score) - Math.max(...detectionA.score));
+
   const detectionsTensor = tf.tensor2d(detections.map(
       d =>
           [d.locationData.relativeBoundingBox.yMin,
@@ -29,7 +36,8 @@ export async function nonMaxSuppression(
   const scoresTensor = tf.tensor1d(detections.map(d => d.score[0]));
 
   const selectedIdsTensor = await tf.image.nonMaxSuppressionAsync(
-      detectionsTensor, scoresTensor, maxPoses, iouThreshold, scoreThreshold);
+      detectionsTensor, scoresTensor, maxDetections, iouThreshold,
+      scoreThreshold);
   const selectedIds = await selectedIdsTensor.array();
 
   const selectedDetections =
