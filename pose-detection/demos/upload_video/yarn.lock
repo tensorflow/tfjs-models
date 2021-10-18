@@ -987,6 +987,14 @@
     "@types/seedrandom" "2.4.27"
     seedrandom "2.4.3"
 
+"@tensorflow/tfjs-backend-cpu@3.7.0":
+  version "3.7.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-backend-cpu/-/tfjs-backend-cpu-3.7.0.tgz#146ad00a8fffdf4794f9b1a0bfc080cddba96836"
+  integrity sha512-ZTs2ak9UDL/1CgUDsWn1g711G2X4Crwivbj+KxBZahlcM/OADYS3I0LZb7Q0IGnlGZsVoAFDWuywYw62Pgj9Tg==
+  dependencies:
+    "@types/seedrandom" "2.4.27"
+    seedrandom "2.4.3"
+
 "@tensorflow/tfjs-backend-wasm@^3.6.0":
   version "3.6.0"
   resolved "https://registry.npmjs.org/@tensorflow/tfjs-backend-wasm/-/tfjs-backend-wasm-3.6.0.tgz#106832a225a92bd30c1e53e430dd863176a63905"
@@ -1006,6 +1014,15 @@
     "@types/webgl-ext" "0.0.30"
     "@types/webgl2" "0.0.5"
     seedrandom "2.4.3"
+
+"@tensorflow/tfjs-backend-webgpu@^0.0.1-alpha.7":
+  version "0.0.1-alpha.7"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-backend-webgpu/-/tfjs-backend-webgpu-0.0.1-alpha.7.tgz#3a8c4f8afad5828d15cd8bba692086d97d737bb1"
+  integrity sha512-KAb0WMmyYldMXQcnIhFhbNhvCAAwGQasiBmJXKwDgIbDc6vYMFf+YyWlWwZdEWyNdxbRwTJ1I62GKD8sWJDdjw==
+  dependencies:
+    "@tensorflow/tfjs-backend-cpu" "3.7.0"
+    "@webgpu/glslang" "0.0.12"
+    "@webgpu/types" "0.1.3"
 
 "@tensorflow/tfjs-converter@^3.6.0":
   version "3.6.0"
@@ -1052,6 +1069,16 @@
   version "0.0.5"
   resolved "https://registry.npmjs.org/@types/webgl2/-/webgl2-0.0.5.tgz#dd925e20ab8ace80eb4b1e46fda5b109c508fb0d"
   integrity sha512-oGaKsBbxQOY5+aJFV3KECDhGaXt+yZJt2y/OZsnQGLRkH6Fvr7rv4pCt3SRH1somIHfej/c4u7NSpCyd9x+1Ow==
+
+"@webgpu/glslang@0.0.12":
+  version "0.0.12"
+  resolved "https://registry.yarnpkg.com/@webgpu/glslang/-/glslang-0.0.12.tgz#ee40e8d38c31436508147feaf0f646fde9bb4da6"
+  integrity sha512-GfEVo1GUxNfXjO4Z7I06XXYJA45N6sHoKqI5Ptf3vafnPowq2C1woCqVe7frsClMfBB2yLn1vJss2oWl5EdTig==
+
+"@webgpu/types@0.1.3":
+  version "0.1.3"
+  resolved "https://registry.yarnpkg.com/@webgpu/types/-/types-0.1.3.tgz#0c223b06e81713ae011fc8986921725a1685d967"
+  integrity sha512-rvqmSxoSMqwIjtvMHOvdvgCtJaz8PS4okXTL47Jyf/X5rDTiRoKEW1U3+XPsWcfY9Hp5gir3A0ksi+Eh81bbyg==
 
 abab@^2.0.0:
   version "2.0.5"
