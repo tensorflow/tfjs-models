@@ -18,6 +18,8 @@
 import {HandDetector} from './hand_detector';
 import {load as loadMediaPipeHandsMediaPipeDetector} from './mediapipe/detector';
 import {MediaPipeHandsMediaPipeModelConfig, MediaPipeHandsModelConfig} from './mediapipe/types';
+import {load as loadMediaPipeHandsTfjsDetector} from './tfjs/detector';
+import {MediaPipeHandsTfjsModelConfig} from './tfjs/types';
 import {SupportedModels} from './types';
 
 /**
@@ -28,14 +30,16 @@ import {SupportedModels} from './types';
  */
 export async function createDetector(
     model: SupportedModels,
-    modelConfig?: MediaPipeHandsMediaPipeModelConfig): Promise<HandDetector> {
+    modelConfig?: MediaPipeHandsMediaPipeModelConfig|
+    MediaPipeHandsTfjsModelConfig): Promise<HandDetector> {
   switch (model) {
     case SupportedModels.MediaPipeHands:
       const config = modelConfig as MediaPipeHandsModelConfig;
       let runtime;
       if (config != null) {
         if (config.runtime === 'tfjs') {
-          throw new Error(`tfjs runtime not yet supported.`);
+          return loadMediaPipeHandsTfjsDetector(
+              config as MediaPipeHandsTfjsModelConfig);
         }
         if (config.runtime === 'mediapipe') {
           return loadMediaPipeHandsMediaPipeDetector(

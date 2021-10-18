@@ -16,6 +16,8 @@
  */
 import {DetectorInput, Keypoint} from './shared/calculators/interfaces/common_interfaces';
 
+export {Keypoint};
+
 export enum SupportedModels {
   MediaPipeHands = 'MediaPipeHands',
 }
