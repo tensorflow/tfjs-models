@@ -134,3 +134,54 @@ export function xyDistanceBetweenPoints(
     a: Coord2D|Coord3D, b: Coord2D|Coord3D): number {
   return Math.sqrt(Math.pow(a[0] - b[0], 2) + Math.pow(a[1] - b[1], 2));
 }
+
+function normalizeVector(v: Coord3D): Coord3D {
+    const l = Math.sqrt(v[0]**2 + v[1]**2 + v[2]**2);
+    return [v[0] / l, v[1] / l, v[2] / l];
+}
+
+function crossP(v1: Coord3D, v2: Coord3D): Coord3D {
+    const e1 = v1[1] * v2[2] - v1[2] * v2[1];
+    const e2 = v1[2] * v2[0] - v1[0] * v2[2];
+    const e3 = v1[0] * v2[1] - v1[1] * v2[0];
+
+    return [e1, e2, e3];
+}
+
+ /**
+  * 
+  * @param meshPoints - points produced by facemesh model
+  * @returns normalized direction vectors x, y, z; right-handed system
+  */
+export function getDirectionVectors(meshPoints: Coords3D): [Coord3D, Coord3D, Coord3D] {
+    // These points lie *almost* on same line in uv coordinates
+    const p1 = meshPoints[127]; // cheek
+    const p2 = meshPoints[356]; // cheek
+    const p3 = meshPoints[6]; // nose
+
+    const vhelp = [p3[0] - p1[0], p3[1] - p1[1], p3[2] - p1[2]] as Coord3D;
+    const vx_d = [p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]] as Coord3D;
+    const vy_d = crossP(vhelp, vx_d);
+
+    const vx = normalizeVector(vx_d);
+    const vy = normalizeVector(vy_d);
+    const vz = normalizeVector(crossP(vx_d, vy_d));
+
+    return [vx, vy, vz];
+ }
+
+ /**
+  * 
+  * @param meshPoints - points produced by facemesh model
+  * @returns 3x3 rotation matrix; right-handed system
+  */
+export function getRotationMatrix(meshPoints: Coords3D): TransformationMatrix {
+    const [vx, vy, vz] = getDirectionVectors();
+
+    return [
+        [vx[0], vy[0], vz[0]],
+        [vx[1], vy[1], vz[1]],
+        [vx[2], vy[2], vz[2]]
+    ];
+
+ }
