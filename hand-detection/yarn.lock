@@ -882,9 +882,9 @@
   integrity sha512-ZXRY4jNvVgSVQ8DL3LTcakaAtXwTVUxE81hslsyD2AtoXW/wVob10HkOJ1X/pAlcI7D+2YoZKg5do8G/w6RYgA==
 
 "@mediapipe/hands@^0.3.0":
-  version "0.3.1630010197"
-  resolved "https://registry.yarnpkg.com/@mediapipe/hands/-/hands-0.3.1630010197.tgz#60c6630a9d17481d91569fead6d57903da19d054"
-  integrity sha512-xSVWlV4zl3RXJod8+eO0o0QqLL83D94hcKSEm0lHVcQqufzBLo+Qaes20p0wj4c+UEHT7BNNNdUXk9L18r13/w==
+  version "0.3.1634603088"
+  resolved "https://registry.yarnpkg.com/@mediapipe/hands/-/hands-0.3.1634603088.tgz#6f65d0b05cccbcc5d0985e3ac2073465dea2a122"
+  integrity sha512-tL3qmM41gPMHe0jU3iM+u1oa2VPIUxSzRhDhedHQQaqdibFzbup3sPzsam3//7i2zkVnn39uCoWFMzQKdiGp4Q==
 
 "@rollup/plugin-commonjs@^11.0.2":
   version "11.1.0"

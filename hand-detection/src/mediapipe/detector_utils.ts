@@ -33,6 +33,10 @@ export function validateModelConfig(
     config.maxHands = DEFAULT_MPHANDS_MODEL_CONFIG.maxHands;
   }
 
+  if (config.modelType == null) {
+    config.modelType = DEFAULT_MPHANDS_MODEL_CONFIG.modelType;
+  }
+
   return config;
 }
 
