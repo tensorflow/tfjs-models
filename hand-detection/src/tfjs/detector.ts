@@ -20,6 +20,7 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {MEDIAPIPE_KEYPOINTS} from '../constants';
 import {HandDetector} from '../hand_detector';
+import {MediaPipeHandsModelType} from '../mediapipe/types';
 import {calculateAssociationNormRect} from '../shared/calculators/association_norm_rect';
 import {calculateLandmarkProjection} from '../shared/calculators/calculate_landmark_projection';
 import {convertImageToTensor} from '../shared/calculators/convert_image_to_tensor';
@@ -64,7 +65,8 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
   constructor(
       private readonly detectorModel: tfconv.GraphModel,
       private readonly landmarkModel: tfconv.GraphModel,
-      private readonly maxHands: number) {
+      private readonly maxHands: number,
+      private readonly modelType: MediaPipeHandsModelType) {
     this.anchors =
         createSsdAnchors(constants.MPHANDS_DETECTOR_ANCHOR_CONFIGURATION);
     const anchorW = tf.tensor1d(this.anchors.map(a => a.width));
@@ -296,19 +298,24 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
 
     const imageValueShifted = shiftImageValue(imageTensor, [0, 1]);
 
+    if (this.modelType !== 'lite' && this.modelType !== 'full') {
+      throw new Error(
+          `Model type must be one of lite or full, but got ${this.modelType}`);
+    }
+
     // HandLandmarkCpu: InferenceCalculator
     // Runs a model takes an image tensor and
     // outputs a list of tensors representing, for instance, detection
     // boxes/keypoints and scores.
     // The model returns 3 tensors with the following shape:
-    // conv_landmarks: This tensor (shape: [1, 63]) represents 21 3-d
+    // Identity_2:0: This tensor (shape: [1, 63]) represents 21 3-d
     // keypoints.
     // Identity_1:0: This tensor (shape: [1, 1]) represents the
     // confidence score of the presence of a hand.
     // Identity:0: This tensor (shape: [1, 1]) represents the classication
     // score of handedness
     const landmarkResult = this.landmarkModel.execute(imageValueShifted, [
-      'conv_landmarks', 'Identity_1:0', 'Identity:0'
+      'Identity_2:0', 'Identity_1:0', 'Identity:0'
     ]) as tf.Tensor[];
 
     const landmarkTensor = landmarkResult[0] as tf.Tensor2D,
@@ -417,5 +424,5 @@ export async function load(modelConfig: MediaPipeHandsTfjsModelConfig):
   ]);
 
   return new MediaPipeHandsTfjsDetector(
-      detectorModel, landmarkModel, config.maxHands);
+      detectorModel, landmarkModel, config.maxHands, config.modelType);
 }
