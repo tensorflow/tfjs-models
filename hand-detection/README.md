@@ -64,6 +64,8 @@ and their performance.
 
 [MediaPipeHands MediaPipe Documentation](https://github.com/tensorflow/tfjs-models/tree/master/hand-detection/src/mediapipe)
 
+[MediaPipeHands TFJS Documentation](https://github.com/tensorflow/tfjs-models/tree/master/hand-detection/src/tfjs)
+
 -------------------------------------------------------------------------------
 
 ## Keypoint Diagram

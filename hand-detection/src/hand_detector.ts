@@ -15,6 +15,7 @@
  * =============================================================================
  */
 import {MediaPipeHandsMediaPipeEstimationConfig} from './mediapipe/types';
+import {MediaPipeHandsTfjsEstimationConfig} from './tfjs/types';
 import {Hand, HandDetectorInput} from './types';
 
 /**
@@ -30,8 +31,8 @@ export interface HandDetector {
    */
   estimateHands(
       input: HandDetectorInput,
-      estimationConfig?: MediaPipeHandsMediaPipeEstimationConfig):
-      Promise<Hand[]>;
+      estimationConfig?: MediaPipeHandsMediaPipeEstimationConfig|
+      MediaPipeHandsTfjsEstimationConfig): Promise<Hand[]>;
 
   /**
    * Dispose the underlying models from memory.

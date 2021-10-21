@@ -20,6 +20,7 @@ export {createDetector} from './create_detector';
 export {HandDetector} from './hand_detector';
 // Entry point to create a new detector instance.
 export {MediaPipeHandsMediaPipeEstimationConfig, MediaPipeHandsMediaPipeModelConfig} from './mediapipe/types';
+export {MediaPipeHandsTfjsEstimationConfig, MediaPipeHandsTfjsModelConfig} from './tfjs/types';
 
 // Supported models enum.
 export * from './types';
