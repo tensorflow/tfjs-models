@@ -30,6 +30,7 @@ export function argmax2d(inputs: tf.Tensor3D): tf.Tensor2D {
 
   return tf.tidy(() => {
     const reshaped = tf.reshape(inputs, [height * width, depth]);
+    console.log("width=" + width+ ", height= "+ height + ", depth="+depth);
     const coords = tf.argMax(reshaped, 0);
 
     const yCoords = tf.expandDims(tf.div(coords, tf.scalar(width, 'int32')), 1);
@@ -37,4 +38,29 @@ export function argmax2d(inputs: tf.Tensor3D): tf.Tensor2D {
 
     return tf.concat([yCoords, xCoords], 1);
   }) as tf.Tensor2D;
+}
+
+
+export async function argmax2dAsync(inputs: tf.Tensor3D): Promise<tf.Tensor2D> {
+  const [height, width, depth] = inputs.shape;
+    console.log("inputs");
+    console.log(JSON.stringify(await inputs.data()));
+
+    const reshaped = tf.reshape(inputs, [height * width, depth]);
+    console.log("width=" + width+ ", height= "+ height + ", depth="+depth);
+    console.log("reshaped");
+    // console.log(JSON.stringify(await reshaped.data()));
+    console.log(JSON.stringify(await reshaped.data(), function(key, val) {
+      return val.toFixed ? Number(val.toFixed(12)) : val;
+    }));
+    const coords = tf.argMax(reshaped, 0);
+    console.log("coords");
+    console.log(JSON.stringify(await coords.data()));
+    const yCoords = tf.expandDims(tf.div(coords, tf.scalar(width, 'int32')), 1);
+    const xCoords = tf.expandDims(mod(coords as tf.Tensor1D, width), 1);
+    console.log("yCoords");
+    console.log(JSON.stringify(await yCoords.data()));
+    console.log("xCoords");
+    console.log(JSON.stringify(await xCoords.data()));
+    return tf.concat([yCoords, xCoords], 1) as tf.Tensor2D;
 }

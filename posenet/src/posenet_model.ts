@@ -359,14 +359,16 @@ export class PoseNet {
     const debug = tf.env().getBool('KEEP_INTERMEDIATE_TENSORS');
     let {heatmapScores, offsets, displacementFwd, displacementBwd} = debug ?
         await this.baseModel.predictAsync(resized) :
-        this.baseModel.predict(resized);;
-
+        this.baseModel.predict(resized);
+    console.log(JSON.stringify(heatmapScores));
     const pose = await decodeSinglePose(heatmapScores, offsets, outputStride);
     const poses = [pose];
+    console.log(JSON.stringify(pose));
 
     const resultPoses = scaleAndFlipPoses(
         poses, [height, width], inputResolution, padding,
         configWithDefaults.flipHorizontal);
+    console.log(JSON.stringify(resultPoses));
 
     heatmapScores.dispose();
     offsets.dispose();
@@ -375,6 +377,10 @@ export class PoseNet {
     resized.dispose();
 
     return resultPoses[0];
+  }
+
+  getGraphModel():tfconv.GraphModel{
+    return this.baseModel.getGraphModel();
   }
 
   /** Deprecated: Use either estimateSinglePose or estimateMultiplePoses */
