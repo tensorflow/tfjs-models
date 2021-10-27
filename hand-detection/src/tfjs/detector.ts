@@ -20,6 +20,7 @@ import * as tf from '@tensorflow/tfjs-core';
 
 import {MEDIAPIPE_KEYPOINTS} from '../constants';
 import {HandDetector} from '../hand_detector';
+import {calculateAssociationNormRect} from '../shared/calculators/association_norm_rect';
 import {calculateLandmarkProjection} from '../shared/calculators/calculate_landmark_projection';
 import {convertImageToTensor} from '../shared/calculators/convert_image_to_tensor';
 import {createSsdAnchors} from '../shared/calculators/create_ssd_anchors';
@@ -118,13 +119,13 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
       return imageTensor;
     });
 
-    let handRects = this.prevHandRectsFromLandmarks;
-
+    const prevHandRectsFromLandmarks = this.prevHandRectsFromLandmarks;
+    let handRects: Rect[];
     // Drops the incoming image for detection if enough hands have already been
     // identified from the previous image. Otherwise, passes the incoming image
     // through to trigger a new round of palm detection.
-    if (config.staticImageMode || handRects == null ||
-        handRects.length < this.maxHands) {
+    if (config.staticImageMode || prevHandRectsFromLandmarks == null ||
+        prevHandRectsFromLandmarks.length < this.maxHands) {
       // HandLandmarkTrackingCpu: PalmDetectionCpu
       // Detects palms.
       const allPalmDetections = await this.detectPalm(image3d);
@@ -146,15 +147,22 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
       const handRectsFromPalmDetections = palmDetections.map(
           detection => this.palmDetectionToRoi(detection, imageSize));
 
-      // HandLandmarkTrackingCpu: AssociationNormRectCalculator
-      // This calculator ensures that the output handRects array
-      // doesn't contain overlapping regions based on the specified
-      // minSimilarityThreshold. Note that our implementation does not perform
-      // association between rects from previous image and rects based
-      // on palm detections from the current image due to not having tracking
-      // IDs in our API so no calculator call is needed.
       handRects = handRectsFromPalmDetections;
+    } else {
+      handRects = prevHandRectsFromLandmarks;
     }
+
+    // HandLandmarkTrackingCpu: AssociationNormRectCalculator
+    // This calculator ensures that the output handRects array
+    // doesn't contain overlapping regions based on the specified
+    // minSimilarityThreshold. Note that our implementation does not perform
+    // association between rects from previous image and rects based
+    // on palm detections from the current image due to not having tracking
+    // IDs in our API, so we don't call it with two inputs like MediaPipe
+    // (previous and new rects). The call is nonetheless still necessary
+    // since rects from previous image could overlap.
+    handRects = calculateAssociationNormRect(
+        [handRects], constants.MPHANDS_MIN_SIMILARITY_THRESHOLD);
 
     // HandLandmarkTrackingCpu: HandLandmarkCpu
     // Detect hand landmarks for the specific hand rect.
