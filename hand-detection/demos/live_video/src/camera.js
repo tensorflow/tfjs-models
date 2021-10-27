@@ -21,7 +21,7 @@ import {isMobile} from './util';
 
 // These anchor points allow the hand pointcloud to resize according to its
 // position in the input.
-const ANCHOR_POINTS = [[0, 0, 0], [0, 1, 0], [-1, 0, 0], [-1, -1, 0]];
+const ANCHOR_POINTS = [[0, 0, 0], [0, 0.1, 0], [-0.1, 0, 0], [-0.1, -0.1, 0]];
 
 const fingerLookupIndices = {
   thumb: [0, 1, 2, 3, 4],
@@ -39,18 +39,27 @@ const connections = [
   [0, 17], [17, 18],[18, 19], [19,20]
 ];
 
+function createScatterGLContext(selectors) {
+  const scatterGLEl = document.querySelector(selectors);
+  return {
+    scatterGLEl,
+    scatterGL: new scatter.ScatterGL(scatterGLEl, {
+      'rotateOnStart': true,
+      'selectEnabled': false,
+      'styles': {polyline: {defaultOpacity: 1, deselectedOpacity: 1}}
+    }),
+    scatterGLHasInitialized: false,
+  };
+}
+
+
 export class Camera {
   constructor() {
     this.video = document.getElementById('video');
     this.canvas = document.getElementById('output');
     this.ctx = this.canvas.getContext('2d');
-    this.scatterGLEl = document.querySelector('#scatter-gl-container');
-    this.scatterGL = new scatter.ScatterGL(this.scatterGLEl, {
-      'rotateOnStart': true,
-      'selectEnabled': false,
-      'styles': {polyline: {defaultOpacity: 1, deselectedOpacity: 1}}
-    });
-    this.scatterGLHasInitialized = false;
+    this.scatterGLCtxtLeftHand = createScatterGLContext('#scatter-gl-container-left');
+    this.scatterGLCtxtRightHand = createScatterGLContext('#scatter-gl-container-right');
   }
 
   /**
@@ -108,12 +117,14 @@ export class Camera {
     camera.ctx.translate(camera.video.videoWidth, 0);
     camera.ctx.scale(-1, 1);
 
-    camera.scatterGLEl.style =
-        `width: ${videoWidth}px; height: ${videoHeight}px;`;
-    camera.scatterGL.resize();
+    for (const ctxt of [camera.scatterGLCtxtLeftHand, camera.scatterGLCtxtRightHand]) {
+      ctxt.scatterGLEl.style =
+          `width: ${videoWidth / 2}px; height: ${videoHeight / 2}px;`;
+      ctxt.scatterGL.resize();
 
-    camera.scatterGLEl.style.display =
-        params.STATE.modelConfig.render3D ? 'inline-block' : 'none';
+      ctxt.scatterGLEl.style.display =
+          params.STATE.modelConfig.render3D ? 'inline-block' : 'none';
+    }
 
     return camera;
   }
@@ -132,21 +143,37 @@ export class Camera {
    * @param hands A list of hands to render.
    */
   drawResults(hands) {
-    for (const hand of hands) {
-      this.drawResult(hand);
+    // Sort by right to left hands.
+    hands.sort((hand1, hand2) => {
+      if (hand1.handedness < hand2.handedness) return 1;
+      if (hand1.handedness > hand2.handedness) return -1;
+      return 0;
+    });
+
+    // Pad hands to clear empty scatter GL plots.
+    while (hands.length < 2) hands.push({});
+
+    for (let i = 0; i < hands.length; ++i) {
+      const ctxt = i === 0 ? this.scatterGLCtxtLeftHand :
+                             this.scatterGLCtxtRightHand;
+      this.drawResult(hands[i], ctxt);
     }
   }
 
   /**
    * Draw the keypoints on the video.
    * @param hand A hand with keypoints to render.
+   * @param ctxt Scatter GL context to render 3D keypoints to.
    */
-  drawResult(hand) {
+  drawResult(hand, ctxt) {
     if (hand.keypoints != null) {
       this.drawKeypoints(hand.keypoints);
     }
     if (hand.keypoints3D != null && params.STATE.modelConfig.render3D) {
-      this.drawKeypoints3D(hand.keypoints3D);
+      this.drawKeypoints3D(hand.keypoints3D, ctxt);
+    } else {
+      // Clear scatter plot.
+      this.drawKeypoints3D([], ctxt);
     }
   }
 
@@ -194,7 +221,7 @@ export class Camera {
     this.ctx.fill();
   }
 
-  drawKeypoints3D(keypoints) {
+  drawKeypoints3D(keypoints, ctxt) {
     const scoreThreshold = params.STATE.modelConfig.scoreThreshold || 0;
     const pointsData =
         keypoints.map(keypoint => ([-keypoint.x, -keypoint.y, -keypoint.z]));
@@ -202,7 +229,7 @@ export class Camera {
     const dataset =
         new scatter.ScatterGL.Dataset([...pointsData, ...ANCHOR_POINTS]);
 
-    this.scatterGL.setPointColorer((i) => {
+    ctxt.scatterGL.setPointColorer((i) => {
       if (keypoints[i] == null || keypoints[i].score < scoreThreshold) {
         // hide anchor points and low-confident points.
         return '#ffffff';
@@ -210,13 +237,13 @@ export class Camera {
       return '#ff0000' /* Red */;
     });
 
-    if (!this.scatterGLHasInitialized) {
-      this.scatterGL.render(dataset);
+    if (!ctxt.scatterGLHasInitialized) {
+      ctxt.scatterGL.render(dataset);
     } else {
-      this.scatterGL.updateDataset(dataset);
+      ctxt.scatterGL.updateDataset(dataset);
     }
     const sequences = connections.map(pair => ({indices: pair}));
-    this.scatterGL.setSequences(sequences);
-    this.scatterGLHasInitialized = true;
+    ctxt.scatterGL.setSequences(sequences);
+    ctxt.scatterGLHasInitialized = true;
   }
 }

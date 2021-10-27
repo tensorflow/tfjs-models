@@ -27,9 +27,12 @@ limitations under the License.
       position: relative;
       margin: 0;
     }
-    #canvas-wrapper,
-    #scatter-gl-container {
+    #canvas-wrapper {
+      positive: relative;
+    }
+    #scatter-gl-container-left, #scatter-gl-container-right {
       position: relative;
+      float: left;
     }
   </style>
 </head>
@@ -48,7 +51,9 @@ limitations under the License.
           ">
         </video>
       </div>
-      <div id="scatter-gl-container"></div>
+      <div id="scatter-gl-container-left"></div>
+      </div>
+      <div id="scatter-gl-container-right"></div>
     </div>
   </div>
 </body>

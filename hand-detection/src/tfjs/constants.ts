@@ -112,3 +112,12 @@ export const MPHANDS_TENSORS_TO_LANDMARKS_CONFIG: TensorsToLandmarksConfig = {
   flipHorizontally: false,
   flipVertically: false
 };
+export const MPHANDS_TENSORS_TO_WORLD_LANDMARKS_CONFIG:
+    TensorsToLandmarksConfig = {
+      numLandmarks: 21,
+      inputImageWidth: 1,
+      inputImageHeight: 1,
+      visibilityActivation: 'none',
+      flipHorizontally: false,
+      flipVertically: false
+    };
