@@ -49,7 +49,18 @@ class MediaPipeHandsMediaPipeDetector implements HandDetector {
         return `${base}/${path}`;
       }
     });
+    let modelComplexity: 0|1;
+    switch (config.modelType) {
+      case 'lite':
+        modelComplexity = 0;
+        break;
+      case 'full':
+      default:
+        modelComplexity = 1;
+        break;
+    }
     this.handsSolution.setOptions({
+      modelComplexity,
       selfieMode: this.selfieMode,
       maxNumHands: config.maxHands,
     });
