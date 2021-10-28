@@ -36,6 +36,11 @@ export function validateModelConfig(modelConfig: MediaPipeHandsTfjsModelConfig):
     config.modelType = DEFAULT_MPHANDS_MODEL_CONFIG.modelType;
   }
 
+  if (config.modelType !== 'lite' && config.modelType !== 'full') {
+    throw new Error(
+        `Model type must be one of lite or full, but got ${config.modelType}`);
+  }
+
   if (config.detectorModelUrl == null) {
     config.detectorModelUrl = DEFAULT_MPHANDS_MODEL_CONFIG.detectorModelUrl;
   }
