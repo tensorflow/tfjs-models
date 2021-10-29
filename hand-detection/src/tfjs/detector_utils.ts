@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import {DEFAULT_MPHANDS_ESTIMATION_CONFIG, DEFAULT_MPHANDS_MODEL_CONFIG} from './constants';
+import {DEFAULT_MPHANDS_ESTIMATION_CONFIG, DEFAULT_MPHANDS_LANDMARK_MODEL_URL_FULL, DEFAULT_MPHANDS_LANDMARK_MODEL_URL_LITE, DEFAULT_MPHANDS_MODEL_CONFIG} from './constants';
 import {MediaPipeHandsTfjsEstimationConfig, MediaPipeHandsTfjsModelConfig} from './types';
 
 export function validateModelConfig(modelConfig: MediaPipeHandsTfjsModelConfig):
@@ -32,12 +32,29 @@ export function validateModelConfig(modelConfig: MediaPipeHandsTfjsModelConfig):
     config.maxHands = DEFAULT_MPHANDS_MODEL_CONFIG.maxHands;
   }
 
+  if (config.modelType == null) {
+    config.modelType = DEFAULT_MPHANDS_MODEL_CONFIG.modelType;
+  }
+
+  if (config.modelType !== 'lite' && config.modelType !== 'full') {
+    throw new Error(
+        `Model type must be one of lite or full, but got ${config.modelType}`);
+  }
+
   if (config.detectorModelUrl == null) {
     config.detectorModelUrl = DEFAULT_MPHANDS_MODEL_CONFIG.detectorModelUrl;
   }
 
   if (config.landmarkModelUrl == null) {
-    config.landmarkModelUrl = DEFAULT_MPHANDS_MODEL_CONFIG.landmarkModelUrl;
+    switch (config.modelType) {
+      case 'lite':
+        config.landmarkModelUrl = DEFAULT_MPHANDS_LANDMARK_MODEL_URL_LITE;
+        break;
+      case 'full':
+      default:
+        config.landmarkModelUrl = DEFAULT_MPHANDS_LANDMARK_MODEL_URL_FULL;
+        break;
+    }
   }
 
   return config;
