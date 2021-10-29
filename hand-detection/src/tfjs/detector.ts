@@ -301,14 +301,14 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
     // outputs a list of tensors representing, for instance, detection
     // boxes/keypoints and scores.
     // The model returns 3 tensors with the following shape:
-    // conv_landmarks: This tensor (shape: [1, 63]) represents 21 3-d
+    // Identity_2:0: This tensor (shape: [1, 63]) represents 21 3-d
     // keypoints.
     // Identity_1:0: This tensor (shape: [1, 1]) represents the
     // confidence score of the presence of a hand.
     // Identity:0: This tensor (shape: [1, 1]) represents the classication
     // score of handedness
     const landmarkResult = this.landmarkModel.execute(imageValueShifted, [
-      'conv_landmarks', 'Identity_1:0', 'Identity:0'
+      'Identity_2:0', 'Identity_1:0', 'Identity:0'
     ]) as tf.Tensor[];
 
     const landmarkTensor = landmarkResult[0] as tf.Tensor2D,

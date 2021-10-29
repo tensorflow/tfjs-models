@@ -22,6 +22,10 @@ import {MediaPipeHandsEstimationConfig, MediaPipeHandsModelConfig} from '../medi
  *
  * `runtime`: Must set to be 'tfjs'.
  *
+ * `modelType`: Optional. Possible values: 'lite'|'full'. Defaults to
+ * 'full'. Landmark accuracy as well as inference latency generally go up with
+ * the increasing model complexity (lite to full).
+ *
  * `detectorModelUrl`: Optional. An optional string that specifies custom url of
  * the detector model. This is useful for area/countries that don't have access
  * to the model hosted on tf.hub.

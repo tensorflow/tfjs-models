@@ -62,6 +62,9 @@ Pass in `handDetection.SupportedModels.MediaPipeHands` from the
 
 *   *maxHands*: Defaults to 2. The maximum number of hands that will be detected by the model. The number of returned hands can be less than the maximum (for example when no hands are present in the input).
 
+*   *modelType*: specify which variant to load from `MediaPipeHandsModelType` (i.e.,
+    'lite', 'full'). If unset, the default is 'full'.
+
 *   *detectorModelUrl*: An optional string that specifies custom url of
 the detector model. This is useful for area/countries that don't have access to the model hosted on tf.hub.
 *   *landmarkModelUrl* An optional string that specifies custom url of
