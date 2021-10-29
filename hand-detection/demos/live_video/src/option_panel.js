@@ -49,6 +49,7 @@ export async function setupDatGui(urlParams) {
 
   const model = urlParams.get('model');
   let type = urlParams.get('type');
+  let maxNumHands = urlParams.get('maxNumHands');
 
   switch (model) {
     case 'mediapipe_hands':
@@ -56,6 +57,10 @@ export async function setupDatGui(urlParams) {
       if (type !== 'full' && type !== 'lite') {
         // Nulify invalid value.
         type = null;
+      }
+      if (maxNumHands == null || maxNumHands < 1 ) {
+        // Nulify invalid value.
+        maxNumHands = 2;
       }
       break;
     default:
@@ -72,7 +77,7 @@ export async function setupDatGui(urlParams) {
     showBackendConfigs(backendFolder);
   });
 
-  showModelConfigs(modelFolder, type);
+  showModelConfigs(modelFolder, type, maxNumHands);
 
   modelFolder.open();
 
@@ -106,7 +111,7 @@ async function showBackendConfigs(folderController) {
   await showFlagSettings(folderController, params.STATE.backend);
 }
 
-function showModelConfigs(folderController, type) {
+function showModelConfigs(folderController, type, maxNumHands) {
   // Clean up model configs for the previous model.
   // The first constroller under the `folderController` is the model
   // selection.
@@ -119,7 +124,7 @@ function showModelConfigs(folderController, type) {
 
   switch (params.STATE.model) {
     case handdetection.SupportedModels.MediaPipeHands:
-      addMediaPipeHandsControllers(folderController, type);
+      addMediaPipeHandsControllers(folderController, type, maxNumHands);
       break;
     default:
       alert(`Model ${params.STATE.model} is not supported.`);
@@ -128,13 +133,22 @@ function showModelConfigs(folderController, type) {
 
 // The MediaPipeHands model config folder contains options for MediaPipeHands config
 // settings.
-function addMediaPipeHandsControllers(modelConfigFolder, type) {
+function addMediaPipeHandsControllers(modelConfigFolder, type, maxNumHands) {
   params.STATE.modelConfig = {...params.MEDIAPIPE_HANDS_CONFIG};
   params.STATE.modelConfig.type = type != null ? type : 'full';
+  params.STATE.modelConfig.maxNumHands = maxNumHands != null ? maxNumHands : 2;
 
   const typeController = modelConfigFolder.add(
       params.STATE.modelConfig, 'type', ['lite', 'full']);
   typeController.onChange(_ => {
+    // Set isModelChanged to true, so that we don't render any result during
+    // changing models.
+    params.STATE.isModelChanged = true;
+  });
+
+  const maxNumHandsController = modelConfigFolder.add(
+    params.STATE.modelConfig, 'maxNumHands', 1, 10).step(1);
+    maxNumHandsController.onChange(_ => {
     // Set isModelChanged to true, so that we don't render any result during
     // changing models.
     params.STATE.isModelChanged = true;

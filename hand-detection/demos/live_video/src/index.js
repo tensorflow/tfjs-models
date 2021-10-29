@@ -45,14 +45,14 @@ async function createDetector() {
         return handdetection.createDetector(STATE.model, {
           runtime,
           modelType: STATE.modelConfig.type,
-          maxHands: STATE.modelConfig.maxHands,
+          maxHands: STATE.modelConfig.maxNumHands,
           solutionPath: `https://cdn.jsdelivr.net/npm/@mediapipe/hands@${mpHands.VERSION}`
         });
       } else if (runtime === 'tfjs') {
         return handdetection.createDetector(STATE.model, {
           runtime,
           modelType: STATE.modelConfig.type,
-          maxHands: STATE.modelConfig.maxHands
+          maxHands: STATE.modelConfig.maxNumHands
         });
       }
   }

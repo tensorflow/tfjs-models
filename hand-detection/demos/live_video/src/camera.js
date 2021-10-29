@@ -154,8 +154,9 @@ export class Camera {
     while (hands.length < 2) hands.push({});
 
     for (let i = 0; i < hands.length; ++i) {
-      const ctxt = i === 0 ? scatterGLCtxtLeftHand :
-                             scatterGLCtxtRightHand;
+      // Third hand and onwards scatterGL context is set to null since we
+      // don't render them.
+      const ctxt = [scatterGLCtxtLeftHand, scatterGLCtxtRightHand][i];
       this.drawResult(hands[i], ctxt);
     }
   }
@@ -167,23 +168,28 @@ export class Camera {
    */
   drawResult(hand, ctxt) {
     if (hand.keypoints != null) {
-      this.drawKeypoints(hand.keypoints);
+      this.drawKeypoints(hand.keypoints, hand.handedness);
+    }
+    // Don't render 3D hands after first two.
+    if (ctxt == null) {
+      return;
     }
     if (hand.keypoints3D != null && params.STATE.modelConfig.render3D) {
-      this.drawKeypoints3D(hand.keypoints3D, ctxt);
+      this.drawKeypoints3D(hand.keypoints3D, hand.handedness, ctxt);
     } else {
       // Clear scatter plot.
-      this.drawKeypoints3D([], ctxt);
+      this.drawKeypoints3D([], '', ctxt);
     }
   }
 
   /**
    * Draw the keypoints on the video.
    * @param keypoints A list of keypoints.
+   * @param handedness Label of hand (either Left or Right).
    */
-   drawKeypoints(keypoints) {
+   drawKeypoints(keypoints, handedness) {
     const keypointsArray = keypoints;
-    this.ctx.fillStyle = 'Red';
+    this.ctx.fillStyle = handedness === 'Left' ? 'Red' : 'Blue';
     this.ctx.strokeStyle = 'White';
     this.ctx.lineWidth = params.DEFAULT_LINE_WIDTH;
 
@@ -221,7 +227,7 @@ export class Camera {
     this.ctx.fill();
   }
 
-  drawKeypoints3D(keypoints, ctxt) {
+  drawKeypoints3D(keypoints, handedness, ctxt) {
     const scoreThreshold = params.STATE.modelConfig.scoreThreshold || 0;
     const pointsData =
         keypoints.map(keypoint => ([-keypoint.x, -keypoint.y, -keypoint.z]));
@@ -234,7 +240,7 @@ export class Camera {
         // hide anchor points and low-confident points.
         return '#ffffff';
       }
-      return '#ff0000' /* Red */;
+      return handedness === 'Left' ? '#ff0000' : '#0000ff';
     });
 
     if (!ctxt.scatterGLHasInitialized) {
