@@ -29,7 +29,8 @@
     "clang-format": "~1.2.2",
     "dat.gui": "^0.7.2",
     "eslint": "^4.19.1",
-    "eslint-config-google": "^0.9.1"
+    "eslint-config-google": "^0.9.1",
+    "mkdirp": "^1.0.4"
   },
   "resolutions": {
     "is-svg": "4.3.1"
