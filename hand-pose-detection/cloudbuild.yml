@@ -6,9 +6,9 @@ steps:
   entrypoint: 'yarn'
   args: ['install']
 
-# Install hand-detection dependencies.
+# Install hand-pose-detection dependencies.
 - name: 'node:10'
-  dir: 'hand-detection'
+  dir: 'hand-pose-detection'
   entrypoint: 'yarn'
   id: 'yarn'
   args: ['install']
@@ -16,7 +16,7 @@ steps:
 
 # Lint.
 - name: 'node:10'
-  dir: 'hand-detection'
+  dir: 'hand-pose-detection'
   entrypoint: 'yarn'
   id: 'lint'
   args: ['lint']
@@ -24,7 +24,7 @@ steps:
 
 # Build.
 - name: 'node:10'
-  dir: 'hand-detection'
+  dir: 'hand-pose-detection'
   entrypoint: 'yarn'
   id: 'build'
   args: ['build']
@@ -32,7 +32,7 @@ steps:
 
 # Run browser tests.
 - name: 'node:10'
-  dir: 'hand-detection'
+  dir: 'hand-pose-detection'
   entrypoint: 'yarn'
   id: 'test'
   args: ['test-ci']

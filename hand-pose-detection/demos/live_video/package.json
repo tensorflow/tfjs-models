@@ -1,7 +1,7 @@
 {
-  "name": "handdetection_demo",
+  "name": "handposedetection_demo",
   "version": "0.0.1",
-  "description": "Demo for hand detection api",
+  "description": "Demo for hand pose detection api",
   "main": "index.js",
   "license": "Apache-2.0",
   "private": true,
@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@mediapipe/hands": "~0.3.0",
-    "@tensorflow-models/hand-detection": "file:../../dist",
+    "@tensorflow-models/hand-pose-detection": "file:../../dist",
     "@tensorflow/tfjs-backend-wasm": "^3.9.0",
     "@tensorflow/tfjs-backend-webgl": "^3.9.0",
     "@tensorflow/tfjs-converter": "^3.9.0",

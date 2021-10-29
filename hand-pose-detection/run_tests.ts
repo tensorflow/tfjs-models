@@ -30,7 +30,7 @@ process.on('unhandledRejection', e => {
 });
 
 jasmine_util.setTestEnvs(
-    [{name: 'test-hand-detection', backendName: 'cpu', flags: {}}]);
+    [{name: 'test-hand-pose-detection', backendName: 'cpu', flags: {}}]);
 
 const unitTests = 'src/**/*_test.ts';
 

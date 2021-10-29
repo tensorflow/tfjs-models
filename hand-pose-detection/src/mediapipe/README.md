@@ -19,31 +19,31 @@ Via script tags:
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/hand-detection"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/hand-pose-detection"></script>
 ```
 
 Via npm:
 ```sh
-yarn add @tensorflow-models/hand-detection
+yarn add @tensorflow-models/hand-pose-detection
 yarn add @mediapipe/hands
 ```
 
 -----------------------------------------------------------------------
 ## Usage
 
-If you are using the hand-detection API via npm, you need to import the libraries first.
+If you are using the hand-pose-detection API via npm, you need to import the libraries first.
 
 ### Import the libraries
 
 ```javascript
-import * as handDetection from '@tensorflow-models/hand-detection';
+import * as handPoseDetection from '@tensorflow-models/hand-pose-detection';
 import '@mediapipe/hands';
 ```
 
 ### Create a detector
 
-Pass in `handDetection.SupportedModels.MediaPipeHands` from the
-`handDetection.SupportedModel` enum list along with a `detectorConfig` to the
+Pass in `handPoseDetection.SupportedModels.MediaPipeHands` from the
+`handPoseDetection.SupportedModel` enum list along with a `detectorConfig` to the
 `createDetector` method to load and initialize the model.
 
 `detectorConfig` is an object that defines MediaPipeHands specific configurations for `MediaPipeHandsMediaPipeModelConfig`:
@@ -58,12 +58,12 @@ Pass in `handDetection.SupportedModels.MediaPipeHands` from the
 *   *solutionPath*: The path to where the wasm binary and model files are located.
 
 ```javascript
-const model = handDetection.SupportedModels.MediaPipeHands;
+const model = handPoseDetection.SupportedModels.MediaPipeHands;
 const detectorConfig = {
   runtime: 'mediapipe',
   solutionPath: 'base/node_modules/@mediapipe/hands'
 };
-detector = await handDetection.createDetector(model, detectorConfig);
+detector = await handPoseDetection.createDetector(model, detectorConfig);
 ```
 
 ### Run inference
