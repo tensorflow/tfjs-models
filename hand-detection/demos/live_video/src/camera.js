@@ -52,14 +52,14 @@ function createScatterGLContext(selectors) {
   };
 }
 
+const scatterGLCtxtLeftHand = createScatterGLContext('#scatter-gl-container-left');
+const scatterGLCtxtRightHand = createScatterGLContext('#scatter-gl-container-right');
 
 export class Camera {
   constructor() {
     this.video = document.getElementById('video');
     this.canvas = document.getElementById('output');
     this.ctx = this.canvas.getContext('2d');
-    this.scatterGLCtxtLeftHand = createScatterGLContext('#scatter-gl-container-left');
-    this.scatterGLCtxtRightHand = createScatterGLContext('#scatter-gl-container-right');
   }
 
   /**
@@ -117,7 +117,7 @@ export class Camera {
     camera.ctx.translate(camera.video.videoWidth, 0);
     camera.ctx.scale(-1, 1);
 
-    for (const ctxt of [camera.scatterGLCtxtLeftHand, camera.scatterGLCtxtRightHand]) {
+    for (const ctxt of [scatterGLCtxtLeftHand, scatterGLCtxtRightHand]) {
       ctxt.scatterGLEl.style =
           `width: ${videoWidth / 2}px; height: ${videoHeight / 2}px;`;
       ctxt.scatterGL.resize();
@@ -154,8 +154,8 @@ export class Camera {
     while (hands.length < 2) hands.push({});
 
     for (let i = 0; i < hands.length; ++i) {
-      const ctxt = i === 0 ? this.scatterGLCtxtLeftHand :
-                             this.scatterGLCtxtRightHand;
+      const ctxt = i === 0 ? scatterGLCtxtLeftHand :
+                             scatterGLCtxtRightHand;
       this.drawResult(hands[i], ctxt);
     }
   }
