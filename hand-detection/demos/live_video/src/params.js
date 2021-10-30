@@ -31,7 +31,6 @@ export const STATE = {
   modelConfig: {}
 };
 export const MEDIAPIPE_HANDS_CONFIG = {
-  maxHands: 2,
   type: 'full',
   render3D: true
 };

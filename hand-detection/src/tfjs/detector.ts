@@ -22,6 +22,7 @@ import {MEDIAPIPE_KEYPOINTS} from '../constants';
 import {HandDetector} from '../hand_detector';
 import {calculateAssociationNormRect} from '../shared/calculators/association_norm_rect';
 import {calculateLandmarkProjection} from '../shared/calculators/calculate_landmark_projection';
+import {calculateWorldLandmarkProjection} from '../shared/calculators/calculate_world_landmark_projection';
 import {convertImageToTensor} from '../shared/calculators/convert_image_to_tensor';
 import {createSsdAnchors} from '../shared/calculators/create_ssd_anchors';
 import {calculateDetectionsToRects} from '../shared/calculators/detection_to_rect';
@@ -47,6 +48,7 @@ import {MediaPipeHandsTfjsEstimationConfig, MediaPipeHandsTfjsModelConfig} from 
 
 type HandLandmarksResult = {
   landmarks: Keypoint[],
+  worldLandmarks: Keypoint[],
   handScore: number,
   handedness: 'Left'|'Right',
 };
@@ -177,7 +179,8 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
         continue;
       }
 
-      const {landmarks, handScore: score, handedness} = handResult;
+      const {landmarks, worldLandmarks, handScore: score, handedness} =
+          handResult;
 
       // HandLandmarkTrackingCpu: HandLandmarkLandmarksToRoi
       // Calculate region of interest (ROI) based on detected hand landmarks to
@@ -195,7 +198,17 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
           keypoint.name = MEDIAPIPE_KEYPOINTS[i];
         });
       }
-      hands.push({keypoints, handedness, score} as Hand);
+
+      const keypoints3D = worldLandmarks;
+
+      // Add keypoint name.
+      if (keypoints3D != null) {
+        keypoints3D.forEach((keypoint3D, i) => {
+          keypoint3D.name = MEDIAPIPE_KEYPOINTS[i];
+        });
+      }
+
+      hands.push({keypoints, keypoints3D, handedness, score} as Hand);
     }
     image3d.dispose();
 
@@ -307,13 +320,15 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
     // confidence score of the presence of a hand.
     // Identity:0: This tensor (shape: [1, 1]) represents the classication
     // score of handedness
+    // Identity:3: This tensor (shape: [1, 63]) represents 21 3DWorld keypoints.
     const landmarkResult = this.landmarkModel.execute(imageValueShifted, [
-      'Identity_2:0', 'Identity_1:0', 'Identity:0'
+      'Identity_2:0', 'Identity_1:0', 'Identity:0', 'Identity_3:0'
     ]) as tf.Tensor[];
 
     const landmarkTensor = landmarkResult[0] as tf.Tensor2D,
           handFlagTensor = landmarkResult[1] as tf.Tensor2D,
-          handednessTensor = landmarkResult[2] as tf.Tensor2D;
+          handednessTensor = landmarkResult[2] as tf.Tensor2D,
+          worldLandmarkTensor = landmarkResult[3] as tf.Tensor2D;
 
     // Converts the hand-flag tensor into a float that represents the
     // confidence score of pose presence.
@@ -340,6 +355,13 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
     const landmarks = await tensorsToLandmarks(
         landmarkTensor, constants.MPHANDS_TENSORS_TO_LANDMARKS_CONFIG);
 
+    // Decodes the landmark tensors into a list of landmarks, where the landmark
+    // coordinates are normalized by the size of the input image to the model.
+    // HandLandmarkCpu: TensorsToLandmarksCalculator.
+    const worldLandmarks = await tensorsToLandmarks(
+        worldLandmarkTensor,
+        constants.MPHANDS_TENSORS_TO_WORLD_LANDMARKS_CONFIG);
+
     // Adjusts landmarks (already normalized to [0.0, 1.0]) on the letterboxed
     // hand image to the corresponding locations on the same image with the
     // letterbox removed.
@@ -352,10 +374,22 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
     const landmarksProjected =
         calculateLandmarkProjection(adjustedLandmarks, handRect);
 
+    // Projects the world landmarks from the cropped pose image to the
+    // corresponding locations on the full image before cropping (input to the
+    // graph).
+    // HandLandmarkCpu: WorldLandmarkProjectionCalculator.
+    const worldLandmarksProjected =
+        calculateWorldLandmarkProjection(worldLandmarks, handRect);
+
     tf.dispose(landmarkResult);
     tf.dispose([imageTensor, imageValueShifted]);
 
-    return {landmarks: landmarksProjected, handScore, handedness};
+    return {
+      landmarks: landmarksProjected,
+      worldLandmarks: worldLandmarksProjected,
+      handScore,
+      handedness
+    };
   }
 
   // Calculate hand region of interest (ROI) from landmarks.
