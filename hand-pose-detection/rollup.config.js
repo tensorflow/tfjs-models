@@ -66,15 +66,15 @@ function config({ plugins = [], output = {}, tsCompilerOptions = {} }) {
   };
 }
 
-const packageName = 'handDetection';
+const packageName = 'handPoseDetection';
 export default [
-  config({ output: { format: 'umd', name: packageName, file: 'dist/hand-detection.js' } }),
+  config({ output: { format: 'umd', name: packageName, file: 'dist/hand-pose-detection.js' } }),
   config({
     plugins: [terser({output: {preamble: PREAMBLE, comments: false}})],
-    output: { format: 'umd', name: packageName, file: 'dist/hand-detection.min.js' }
+    output: { format: 'umd', name: packageName, file: 'dist/hand-pose-detection.min.js' }
   }),
   config({
     plugins: [terser({output: {preamble: PREAMBLE, comments: false}})],
-    output: { format: 'es', file: 'dist/hand-detection.esm.js' }
+    output: { format: 'es', file: 'dist/hand-pose-detection.esm.js' }
   })
 ];

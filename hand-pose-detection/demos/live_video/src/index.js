@@ -24,7 +24,7 @@ tfjsWasm.setWasmPaths(
     `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
         tfjsWasm.version_wasm}/dist/`);
 
-import * as handdetection from '@tensorflow-models/hand-detection';
+import * as handdetection from '@tensorflow-models/hand-pose-detection';
 
 import {Camera} from './camera';
 import {setupDatGui} from './option_panel';

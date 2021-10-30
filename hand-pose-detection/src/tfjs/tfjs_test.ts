@@ -15,23 +15,18 @@
  * =============================================================================
  */
 
+import * as tf from '@tensorflow/tfjs-core';
 // tslint:disable-next-line: no-imports-from-dist
-import {BROWSER_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
+import {ALL_ENVS, BROWSER_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
 // tslint:disable-next-line: no-imports-from-dist
 import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
 
-import * as handDetection from '../index';
+import * as handPoseDetection from '../index';
 import {loadImage} from '../shared/test_util';
 
-import {MediaPipeHandsMediaPipeModelConfig} from './types';
+// Measured in pixels.
+const EPSILON_IMAGE = 35;
 
-const MEDIAPIPE_MODEL_CONFIG: MediaPipeHandsMediaPipeModelConfig = {
-  runtime: 'mediapipe',
-  solutionPath: 'base/node_modules/@mediapipe/hands'
-};
-
-// In pixels.
-const EPSILON_IMAGE = 20;
 // ref:
 // https://github.com/google/mediapipe/blob/master/mediapipe/python/solutions/hands_test.py
 const EXPECTED_HAND_KEYPOINTS_PREDICTION = [
@@ -49,8 +44,54 @@ const EXPECTED_HAND_KEYPOINTS_PREDICTION = [
   ]
 ];
 
-describeWithFlags('MediaPipe Hands multi hands ', BROWSER_ENVS, () => {
-  let detector: handDetection.HandDetector;
+describeWithFlags('MediaPipeHands', ALL_ENVS, () => {
+  let timeout: number;
+
+  beforeAll(() => {
+    timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
+  });
+
+  afterAll(() => {
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
+  });
+
+  it('estimateHands does not leak memory.', async () => {
+    const startTensors = tf.memory().numTensors;
+
+    // Note: this makes a network request for model assets.
+    const detector = await handPoseDetection.createDetector(
+        handPoseDetection.SupportedModels.MediaPipeHands, {runtime: 'tfjs'});
+    const input: tf.Tensor3D = tf.zeros([128, 128, 3]);
+
+    const beforeTensors = tf.memory().numTensors;
+
+    await detector.estimateHands(input);
+
+    expect(tf.memory().numTensors).toEqual(beforeTensors);
+
+    detector.dispose();
+    input.dispose();
+
+    expect(tf.memory().numTensors).toEqual(startTensors);
+  });
+
+  it('throws error when runtime is not set.', async (done) => {
+    try {
+      await handPoseDetection.createDetector(
+          handPoseDetection.SupportedModels.MediaPipeHands);
+      done.fail('Loading without runtime succeeded unexpectedly.');
+    } catch (e) {
+      expect(e.message).toEqual(
+          `Expect modelConfig.runtime to be either ` +
+          `'tfjs' or 'mediapipe', but got undefined`);
+      done();
+    }
+  });
+});
+
+describeWithFlags('MediaPipeHands static image ', BROWSER_ENVS, () => {
+  let detector: handPoseDetection.HandDetector;
   let image: HTMLImageElement;
   let timeout: number;
 
@@ -65,17 +106,27 @@ describeWithFlags('MediaPipe Hands multi hands ', BROWSER_ENVS, () => {
   });
 
   it('test.', async () => {
-    // Note: this makes a network request for model assets.
-    const model = handDetection.SupportedModels.MediaPipeHands;
-    detector =
-        await handDetection.createDetector(model, MEDIAPIPE_MODEL_CONFIG);
+    const startTensors = tf.memory().numTensors;
 
-    const result = await detector.estimateHands(image, {staticImageMode: true});
+    // Note: this makes a network request for model assets.
+    detector = await handPoseDetection.createDetector(
+        handPoseDetection.SupportedModels.MediaPipeHands, {runtime: 'tfjs'});
+
+    const beforeTensors = tf.memory().numTensors;
+
+    const result = await detector.estimateHands(
+        image, {staticImageMode:
+                    true} as handPoseDetection.MediaPipeHandsTfjsEstimationConfig);
     const keypoints = result.map(
         hand => hand.keypoints.map(keypoint => [keypoint.x, keypoint.y]));
 
     expectArraysClose(
         keypoints, EXPECTED_HAND_KEYPOINTS_PREDICTION, EPSILON_IMAGE);
+
+    expect(tf.memory().numTensors).toEqual(beforeTensors);
+
     detector.dispose();
+
+    expect(tf.memory().numTensors).toEqual(startTensors);
   });
 });

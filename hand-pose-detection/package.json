@@ -1,12 +1,12 @@
 {
-  "name": "@tensorflow-models/hand-detection",
+  "name": "@tensorflow-models/hand-pose-detection",
   "version": "0.0.1",
-  "description": "Pretrained hand detection model",
+  "description": "Pretrained hand pose detection model",
   "main": "dist/index.js",
-  "jsnext:main": "dist/hand-detection.esm.js",
-  "module": "dist/hand-detection.esm.js",
-  "unpkg": "dist/hand-detection.min.js",
-  "jsdelivr": "dist/hand-detection.min.js",
+  "jsnext:main": "dist/hand-pose-detection.esm.js",
+  "module": "dist/hand-pose-detection.esm.js",
+  "unpkg": "dist/hand-pose-detection.min.js",
+  "jsdelivr": "dist/hand-pose-detection.min.js",
   "types": "dist/index.d.ts",
   "repository": {
     "type": "git",

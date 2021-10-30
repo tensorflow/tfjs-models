@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as handdetection from '@tensorflow-models/hand-detection';
+import * as handdetection from '@tensorflow-models/hand-pose-detection';
 
 export const DEFAULT_LINE_WIDTH = 2;
 export const DEFAULT_RADIUS = 4;

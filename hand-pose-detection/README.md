@@ -1,6 +1,6 @@
-# Hand Detection
+# Hand Pose Detection
 
-This package provides multiple models for running real-time hand detection.
+This package provides models for running real-time hand pose detection.
 
 Currently, we provide 1 model option:
 
@@ -22,8 +22,8 @@ including `MediaPipeHands`.
 For example:
 
 ```javascript
-const model = handDetection.SupportedModels.MediaPipeHands;
-const detector = await handDetection.createDetector(model);
+const model = handPoseDetection.SupportedModels.MediaPipeHands;
+const detector = await handPoseDetection.createDetector(model);
 ```
 
 Then you can use the detector to detect hands.
@@ -62,9 +62,9 @@ The name provides a label for each keypoint, such as 'wrist', 'pinky_tip', etc.
 Refer to each model's documentation for specific configurations for the model
 and their performance.
 
-[MediaPipeHands MediaPipe Documentation](https://github.com/tensorflow/tfjs-models/tree/master/hand-detection/src/mediapipe)
+[MediaPipeHands MediaPipe Documentation](https://github.com/tensorflow/tfjs-models/tree/master/hand-pose-detection/src/mediapipe)
 
-[MediaPipeHands TFJS Documentation](https://github.com/tensorflow/tfjs-models/tree/master/hand-detection/src/tfjs)
+[MediaPipeHands TFJS Documentation](https://github.com/tensorflow/tfjs-models/tree/master/hand-pose-detection/src/tfjs)
 
 -------------------------------------------------------------------------------
 

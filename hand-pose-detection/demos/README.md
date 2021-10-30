@@ -1,6 +1,6 @@
 # Demos
 
-Try our demos and get inspired with what you can do with hand-detection models!
+Try our demos and get inspired with what you can do with hand-pose-detection models!
 
 ## Table of Contents
 1. [Live Camera Demo](#live-camera-demo)
@@ -14,7 +14,7 @@ This demo uses your camera to get live stream and tracks your hands in real-time
 You can try out different runtimes to see the difference. It
 works on laptops, iPhones and android phones.
 
-[MediaPipeHands model entry](https://storage.googleapis.com/tfjs-models/demos/hand-detection/index.html?model=mediapipe_hands)
+[MediaPipeHands model entry](https://storage.googleapis.com/tfjs-models/demos/hand-pose-detection/index.html?model=mediapipe_hands)
 
 ## How to Run a Demo
 If you want to run any of the demos locally, follow these steps:
