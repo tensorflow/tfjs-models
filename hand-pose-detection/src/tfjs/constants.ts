@@ -18,8 +18,10 @@
 import {AnchorConfig, ImageToTensorConfig, RectTransformationConfig, TensorsToDetectionsConfig, TensorsToLandmarksConfig} from '../shared/calculators/interfaces/config_interfaces';
 import {MediaPipeHandsTfjsEstimationConfig, MediaPipeHandsTfjsModelConfig} from './types';
 
-export const DEFAULT_MPHANDS_DETECTOR_MODEL_URL =
-    'https://storage.googleapis.com/tfjs-testing/hand-detection/handdetector/model.json';
+export const DEFAULT_MPHANDS_DETECTOR_MODEL_URL_LITE =
+    'https://storage.googleapis.com/tfjs-testing/hand-detection/handdetector_lite/model.json';
+export const DEFAULT_MPHANDS_DETECTOR_MODEL_URL_FULL =
+    'https://storage.googleapis.com/tfjs-testing/hand-detection/handdetector_full/model.json';
 export const DEFAULT_MPHANDS_LANDMARK_MODEL_URL_LITE =
     'https://storage.googleapis.com/tfjs-testing/hand-detection/handskeleton_lite/model.json';
 export const DEFAULT_MPHANDS_LANDMARK_MODEL_URL_FULL =
@@ -32,8 +34,8 @@ export const MPHANDS_DETECTOR_ANCHOR_CONFIGURATION: AnchorConfig = {
   numLayers: 4,
   minScale: 0.1484375,
   maxScale: 0.75,
-  inputSizeHeight: 128,
-  inputSizeWidth: 128,
+  inputSizeHeight: 192,
+  inputSizeWidth: 192,
   anchorOffsetX: 0.5,
   anchorOffsetY: 0.5,
   strides: [8, 16, 16, 16],
@@ -44,7 +46,7 @@ export const DEFAULT_MPHANDS_MODEL_CONFIG: MediaPipeHandsTfjsModelConfig = {
   runtime: 'tfjs',
   modelType: 'full',
   maxHands: 2,
-  detectorModelUrl: DEFAULT_MPHANDS_DETECTOR_MODEL_URL,
+  detectorModelUrl: DEFAULT_MPHANDS_DETECTOR_MODEL_URL_FULL,
   landmarkModelUrl: DEFAULT_MPHANDS_LANDMARK_MODEL_URL_FULL
 };
 export const DEFAULT_MPHANDS_ESTIMATION_CONFIG:
@@ -58,7 +60,7 @@ export const MPHANDS_TENSORS_TO_DETECTION_CONFIGURATION:
       flipVertically: false,
       ignoreClasses: [] as number[],
       numClasses: 1,
-      numBoxes: 896,
+      numBoxes: 2016,
       numCoords: 18,
       boxCoordOffset: 0,
       keypointCoordOffset: 4,
@@ -67,10 +69,10 @@ export const MPHANDS_TENSORS_TO_DETECTION_CONFIGURATION:
       sigmoidScore: true,
       scoreClippingThresh: 100.0,
       reverseOutputOrder: true,
-      xScale: 128.0,
-      yScale: 128.0,
-      hScale: 128.0,
-      wScale: 128.0,
+      xScale: 192.0,
+      yScale: 192.0,
+      hScale: 192.0,
+      wScale: 192.0,
       minScoreThresh: 0.5
     };
 export const MPHANDS_DETECTOR_NON_MAX_SUPPRESSION_CONFIGURATION = {
@@ -94,7 +96,7 @@ export const MPHANDS_LANDMARK_RECT_TRANSFORMATION_CONFIG:
       squareLong: true
     };
 export const MPHANDS_DETECTOR_IMAGE_TO_TENSOR_CONFIG: ImageToTensorConfig = {
-  inputResolution: {width: 128, height: 128},
+  inputResolution: {width: 192, height: 192},
   keepAspectRatio: true
 };
 export const MPHANDS_LANDMARK_IMAGE_TO_TENSOR_CONFIG: ImageToTensorConfig = {

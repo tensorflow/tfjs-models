@@ -25,22 +25,22 @@ import * as handPoseDetection from '../index';
 import {loadImage} from '../shared/test_util';
 
 // Measured in pixels.
-const EPSILON_IMAGE = 35;
+const EPSILON_IMAGE = 12;
 
 // ref:
 // https://github.com/google/mediapipe/blob/master/mediapipe/python/solutions/hands_test.py
 const EXPECTED_HAND_KEYPOINTS_PREDICTION = [
   [
-    [144, 345], [211, 323], [257, 286], [289, 237], [322, 203], [219, 216],
+    [580, 34],  [504, 50],  [459, 94],  [429, 146], [397, 182], [507, 167],
+    [479, 245], [469, 292], [464, 330], [545, 180], [534, 265], [533, 319],
+    [536, 360], [581, 172], [587, 252], [593, 304], [599, 346], [615, 168],
+    [628, 223], [638, 258], [648, 288]
+  ],
+  [
+    [138, 343], [211, 330], [257, 286], [289, 237], [322, 203], [219, 216],
     [238, 138], [249, 90],  [253, 51],  [177, 204], [184, 115], [187, 60],
     [185, 19],  [138, 208], [131, 127], [124, 77],  [117, 36],  [106, 222],
     [92, 159],  [79, 124],  [68, 93]
-  ],
-  [
-    [577, 37],  [504, 56],  [459, 94],  [429, 146], [397, 182], [496, 167],
-    [479, 245], [469, 292], [464, 330], [540, 177], [534, 265], [533, 319],
-    [536, 360], [581, 172], [587, 252], [593, 304], [599, 346], [615, 157],
-    [628, 223], [638, 258], [648, 288]
   ]
 ];
 
@@ -105,18 +105,45 @@ describeWithFlags('MediaPipeHands static image ', BROWSER_ENVS, () => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
   });
 
-  it('test.', async () => {
+  it('test lite model.', async () => {
     const startTensors = tf.memory().numTensors;
 
     // Note: this makes a network request for model assets.
     detector = await handPoseDetection.createDetector(
-        handPoseDetection.SupportedModels.MediaPipeHands, {runtime: 'tfjs'});
+        handPoseDetection.SupportedModels.MediaPipeHands,
+        {runtime: 'tfjs', modelType: 'lite'});
 
     const beforeTensors = tf.memory().numTensors;
 
-    const result = await detector.estimateHands(
-        image, {staticImageMode:
-                    true} as handPoseDetection.MediaPipeHandsTfjsEstimationConfig);
+    const result = await detector.estimateHands(image, {
+      staticImageMode: true
+    } as handPoseDetection.MediaPipeHandsTfjsEstimationConfig);
+    const keypoints = result.map(
+        hand => hand.keypoints.map(keypoint => [keypoint.x, keypoint.y]));
+
+    expectArraysClose(
+        keypoints, EXPECTED_HAND_KEYPOINTS_PREDICTION, EPSILON_IMAGE);
+
+    expect(tf.memory().numTensors).toEqual(beforeTensors);
+
+    detector.dispose();
+
+    expect(tf.memory().numTensors).toEqual(startTensors);
+  });
+
+  it('test full model.', async () => {
+    const startTensors = tf.memory().numTensors;
+
+    // Note: this makes a network request for model assets.
+    detector = await handPoseDetection.createDetector(
+        handPoseDetection.SupportedModels.MediaPipeHands,
+        {runtime: 'tfjs', modelType: 'full'});
+
+    const beforeTensors = tf.memory().numTensors;
+
+    const result = await detector.estimateHands(image, {
+      staticImageMode: true
+    } as handPoseDetection.MediaPipeHandsTfjsEstimationConfig);
     const keypoints = result.map(
         hand => hand.keypoints.map(keypoint => [keypoint.x, keypoint.y]));
 

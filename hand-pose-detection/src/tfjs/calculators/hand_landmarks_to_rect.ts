@@ -54,41 +54,48 @@ export function handLandmarksToRect(
   const rotation = computeRotation(landmarks, imageSize);
   const reverseAngle = normalizeRadians(-rotation);
 
+  let minX = Number.POSITIVE_INFINITY, maxX = Number.NEGATIVE_INFINITY,
+      minY = Number.POSITIVE_INFINITY, maxY = Number.NEGATIVE_INFINITY;
+
   // Find boundaries of landmarks.
-  let minX = Math.min(...landmarks.map(kpt => kpt.x));
-  let maxX = Math.max(...landmarks.map(kpt => kpt.x));
-  let minY = Math.min(...landmarks.map(kpt => kpt.y));
-  let maxY = Math.max(...landmarks.map(kpt => kpt.y));
+  for (const landmark of landmarks) {
+    const x = landmark.x;
+    const y = landmark.y;
+    minX = Math.min(minX, x);
+    maxX = Math.max(maxX, x);
+    minY = Math.min(minY, y);
+    maxY = Math.max(maxY, y);
+  }
 
   const axisAlignedcenterX = (maxX + minX) / 2;
   const axisAlignedcenterY = (maxY + minY) / 2;
 
+  minX = Number.POSITIVE_INFINITY, maxX = Number.NEGATIVE_INFINITY,
+  minY = Number.POSITIVE_INFINITY, maxY = Number.NEGATIVE_INFINITY;
   // Find boundaries of rotated landmarks.
-  const projectedXY = landmarks.map(kpt => {
-    const originalX = (kpt.x - axisAlignedcenterX) * imageSize.width;
-    const originalY = (kpt.y - axisAlignedcenterY) * imageSize.height;
+  for (const landmark of landmarks) {
+    const originalX = (landmark.x - axisAlignedcenterX) * imageSize.width;
+    const originalY = (landmark.y - axisAlignedcenterY) * imageSize.height;
 
     const projectedX =
         originalX * Math.cos(reverseAngle) - originalY * Math.sin(reverseAngle);
     const projectedY =
         originalX * Math.sin(reverseAngle) + originalY * Math.cos(reverseAngle);
 
-    return [projectedX, projectedY];
-  });
+    minX = Math.min(minX, projectedX);
+    maxX = Math.max(maxX, projectedX);
+    minY = Math.min(minY, projectedY);
+    maxY = Math.max(maxY, projectedY);
+  };
 
-  minX = Math.min(...projectedXY.map(xy => xy[0]));
-  maxX = Math.max(...projectedXY.map(xy => xy[0]));
-  minY = Math.min(...projectedXY.map(xy => xy[1]));
-  maxY = Math.max(...projectedXY.map(xy => xy[1]));
+  const projectedCenterX = (maxX + minX) / 2;
+  const projectedCenterY = (maxY + minY) / 2;
 
-  const projectedcenterX = (maxX + minX) / 2;
-  const projectedcenterY = (maxY + minY) / 2;
-
-  const centerX = projectedcenterX * Math.cos(rotation) -
-      projectedcenterY * Math.sin(rotation) +
+  const centerX = projectedCenterX * Math.cos(rotation) -
+      projectedCenterY * Math.sin(rotation) +
       imageSize.width * axisAlignedcenterX;
-  const centerY = projectedcenterX * Math.sin(rotation) +
-      projectedcenterY * Math.cos(rotation) +
+  const centerY = projectedCenterX * Math.sin(rotation) +
+      projectedCenterY * Math.cos(rotation) +
       imageSize.height * axisAlignedcenterY;
   const width = (maxX - minX) / imageSize.width;
   const height = (maxY - minY) / imageSize.height;

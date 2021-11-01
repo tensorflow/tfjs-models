@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import {DEFAULT_MPHANDS_ESTIMATION_CONFIG, DEFAULT_MPHANDS_LANDMARK_MODEL_URL_FULL, DEFAULT_MPHANDS_LANDMARK_MODEL_URL_LITE, DEFAULT_MPHANDS_MODEL_CONFIG} from './constants';
+import {DEFAULT_MPHANDS_DETECTOR_MODEL_URL_FULL, DEFAULT_MPHANDS_DETECTOR_MODEL_URL_LITE, DEFAULT_MPHANDS_ESTIMATION_CONFIG, DEFAULT_MPHANDS_LANDMARK_MODEL_URL_FULL, DEFAULT_MPHANDS_LANDMARK_MODEL_URL_LITE, DEFAULT_MPHANDS_MODEL_CONFIG} from './constants';
 import {MediaPipeHandsTfjsEstimationConfig, MediaPipeHandsTfjsModelConfig} from './types';
 
 export function validateModelConfig(modelConfig: MediaPipeHandsTfjsModelConfig):
@@ -42,7 +42,15 @@ export function validateModelConfig(modelConfig: MediaPipeHandsTfjsModelConfig):
   }
 
   if (config.detectorModelUrl == null) {
-    config.detectorModelUrl = DEFAULT_MPHANDS_MODEL_CONFIG.detectorModelUrl;
+    switch (config.modelType) {
+      case 'lite':
+        config.detectorModelUrl = DEFAULT_MPHANDS_DETECTOR_MODEL_URL_LITE;
+        break;
+      case 'full':
+      default:
+        config.detectorModelUrl = DEFAULT_MPHANDS_DETECTOR_MODEL_URL_FULL;
+        break;
+    }
   }
 
   if (config.landmarkModelUrl == null) {
