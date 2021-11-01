@@ -16,8 +16,8 @@
  */
 import * as scatter from 'scatter-gl';
 
-import * as params from './params';
-import {isMobile} from './util';
+import * as params from './shared/params';
+import {isMobile} from './shared/util';
 
 // These anchor points allow the hand pointcloud to resize according to its
 // position in the input.
