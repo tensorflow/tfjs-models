@@ -5,7 +5,9 @@ Try our demos and get inspired with what you can do with hand-pose-detection mod
 ## Table of Contents
 1. [Live Camera Demo](#live-camera-demo)
 
-2. [How to Run a Demo](#how-to-run-a-demo)
+2. [Upload a Video Demo](#upload-a-video-demo)
+
+3. [How to Run a Demo](#how-to-run-a-demo)
 
 -------------------------------------------------------------------------------
 
@@ -15,6 +17,12 @@ You can try out different runtimes to see the difference. It
 works on laptops, iPhones and android phones.
 
 [MediaPipeHands model entry](https://storage.googleapis.com/tfjs-models/demos/hand-pose-detection/index.html?model=mediapipe_hands)
+
+## Upload a Video Demo
+This demo allows you to upload a video (in .mp4 format) to run with the model.
+Once the video is processed, it automatically downloads the video with hands keypoints.
+
+[MediaPipeHands model entry](https://storage.googleapis.com/tfjs-models/demos/hand-pose-detection-upload-video/index.html?model=mediapipe_hands)
 
 ## How to Run a Demo
 If you want to run any of the demos locally, follow these steps:
