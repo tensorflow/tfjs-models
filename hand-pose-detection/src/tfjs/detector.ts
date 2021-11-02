@@ -239,7 +239,7 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
     const {imageTensor, padding} = convertImageToTensor(
         image, constants.MPHANDS_DETECTOR_IMAGE_TO_TENSOR_CONFIG);
 
-    const imageValueShifted = shiftImageValue(imageTensor, [-1, 1]);
+    const imageValueShifted = shiftImageValue(imageTensor, [0, 1]);
 
     // PalmDetectionCpu: InferenceCalculator
     // The model returns a tensor with the following shape:
