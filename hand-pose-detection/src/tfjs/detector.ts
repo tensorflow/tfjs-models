@@ -244,13 +244,18 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
     // PalmDetectionCpu: InferenceCalculator
     // The model returns a tensor with the following shape:
     // [1 (batch), 896 (anchor points), 19 (data for each anchor)]
-    const {boxes, scores} =
+    const {boxes, logits} =
         detectorInference(imageValueShifted, this.detectorModel);
 
     // PalmDetectionCpu: TensorsToDetectionsCalculator
     const detections: Detection[] = await tensorsToDetections(
-        [scores, boxes], this.anchorTensor,
+        [logits, boxes], this.anchorTensor,
         constants.MPHANDS_TENSORS_TO_DETECTION_CONFIGURATION);
+
+    if (detections.length === 0) {
+      tf.dispose([imageTensor, imageValueShifted, logits, boxes]);
+      return detections;
+    }
 
     // PalmDetectionCpu: NonMaxSuppressionCalculator
     const selectedDetections = await nonMaxSuppression(
@@ -263,7 +268,7 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
     // PalmDetectionCpu: DetectionLetterboxRemovalCalculator
     const newDetections = removeDetectionLetterbox(selectedDetections, padding);
 
-    tf.dispose([imageTensor, imageValueShifted, scores, boxes]);
+    tf.dispose([imageTensor, imageValueShifted, logits, boxes]);
 
     return newDetections;
   }

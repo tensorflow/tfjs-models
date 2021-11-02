@@ -19,13 +19,12 @@ import * as tf from '@tensorflow/tfjs-core';
 export function splitDetectionResult(detectionResult: tf.Tensor3D):
     [tf.Tensor3D, tf.Tensor3D] {
   return tf.tidy(() => {
-    // Score is stored in the first element in each anchor data.
+    // logit is stored in the first element in each anchor data.
     const logits = tf.slice(detectionResult, [0, 0, 0], [1, -1, 1]);
-    const scores = tf.sigmoid(logits);
     // Bounding box coords are stored in the next four elements for each anchor
     // point.
     const rawBoxes = tf.slice(detectionResult, [0, 0, 1], [1, -1, -1]);
 
-    return [scores, rawBoxes];
+    return [logits, rawBoxes];
   });
 }
