@@ -86,7 +86,7 @@ export function handLandmarksToRect(
     maxX = Math.max(maxX, projectedX);
     minY = Math.min(minY, projectedY);
     maxY = Math.max(maxY, projectedY);
-  };
+  }
 
   const projectedCenterX = (maxX + minX) / 2;
   const projectedCenterY = (maxY + minY) / 2;
