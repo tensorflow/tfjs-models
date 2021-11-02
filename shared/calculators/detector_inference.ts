@@ -38,3 +38,17 @@ export function detectorInference(
     return {boxes: rawBoxes2d as tf.Tensor2D, scores: scores1d as tf.Tensor1D};
   });
 }
+
+export async function detectorInferenceAync(
+    imageTensor: tf.Tensor4D,
+    poseDetectorModel: tfconv.GraphModel): Promise<DetectorInferenceResult> {
+  const detectionResult =
+      await poseDetectorModel.executeAsync(imageTensor) as tf.Tensor3D;
+  const [scores, rawBoxes] = splitDetectionResult(detectionResult);
+  // Shape [896, 12]
+  const rawBoxes2d = tf.squeeze(rawBoxes);
+  // Shape [896]
+  const scores1d = tf.squeeze(scores);
+
+  return {boxes: rawBoxes2d as tf.Tensor2D, scores: scores1d as tf.Tensor1D};
+}

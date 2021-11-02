@@ -28,7 +28,7 @@ import {calculateWorldLandmarkProjection} from '../shared/calculators/calculate_
 import {MILLISECOND_TO_MICRO_SECONDS, SECOND_TO_MICRO_SECONDS} from '../shared/calculators/constants';
 import {convertImageToTensor} from '../shared/calculators/convert_image_to_tensor';
 import {createSsdAnchors} from '../shared/calculators/create_ssd_anchors';
-import {detectorInference} from '../shared/calculators/detector_inference';
+import {detectorInference, detectorInferenceAync} from '../shared/calculators/detector_inference';
 import {getImageSize, toImageTensor} from '../shared/calculators/image_utils';
 import {ImageSize, Keypoint} from '../shared/calculators/interfaces/common_interfaces';
 import {Rect} from '../shared/calculators/interfaces/shape_interfaces';
@@ -188,7 +188,6 @@ class BlazePoseTfjsDetector implements PoseDetector {
     // used in the subsequent image.
     const poseRectFromLandmarks =
         this.poseLandmarksToRoi(auxiliaryLandmarksFiltered, imageSize);
-
     // Cache roi for next image.
     this.regionOfInterest = poseRectFromLandmarks;
 
@@ -251,7 +250,10 @@ class BlazePoseTfjsDetector implements PoseDetector {
     // PoseDetectionCpu: InferenceCalculator
     // The model returns a tensor with the following shape:
     // [1 (batch), 896 (anchor points), 13 (data for each anchor)]
-    const {boxes, scores} =
+
+    const debug = tf.env().getBool('KEEP_INTERMEDIATE_TENSORS');
+    let {boxes, scores} = debug ?
+        await detectorInferenceAync(imageValueShifted, this.detectorModel) :
         detectorInference(imageValueShifted, this.detectorModel);
 
     // PoseDetectionCpu: TensorsToDetectionsCalculator

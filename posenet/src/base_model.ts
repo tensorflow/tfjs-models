@@ -18,7 +18,9 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 import {PoseNetOutputStride} from './types';
-
+type NamedTensorsMap = {
+  [key: string]: tf.Tensor[]
+};
 /**
  * PoseNet supports using various convolution neural network models
  * (e.g. ResNet and MobileNetV1) as its underlying base model.
@@ -30,7 +32,7 @@ import {PoseNetOutputStride} from './types';
  */
 export abstract class BaseModel {
   constructor(
-      protected readonly model: tfconv.GraphModel,
+      public readonly model: tfconv.GraphModel,
       public readonly outputStride: PoseNetOutputStride) {
     const inputShape =
         this.model.inputs[0].shape as [number, number, number, number];
@@ -76,6 +78,48 @@ export abstract class BaseModel {
         displacementBwd: namedResults.displacementBwd
       };
     });
+  }
+
+  async printTensors(tensorsMap: NamedTensorsMap) {
+    if (!tensorsMap) {
+      return;
+    }
+    const keysOfTensors = Object.keys(tensorsMap);
+    for (let i = 0; i < keysOfTensors.length; i++) {
+      console.warn(keysOfTensors[i]);
+      for (let j = 0; j < tensorsMap[keysOfTensors[i]].length; j++) {
+        console.warn(await (tensorsMap[keysOfTensors[i]][j]).data());
+      }
+    }
+  }
+
+  getGraphModel() : tfconv.GraphModel{
+    return this.model;
+  }
+
+  async predictAsync(input: tf.Tensor3D): Promise<{
+    heatmapScores: tf.Tensor3D,
+    offsets: tf.Tensor3D,
+    displacementFwd: tf.Tensor3D,
+    displacementBwd: tf.Tensor3D
+  }> {
+      const asFloat = this.preprocessInput(tf.cast(input, 'float32'));
+      const asBatch = tf.expandDims(asFloat, 0);
+      const results = await this.model.executeAsync(asBatch) as tf.Tensor4D[];
+      //await this.printTensors(this.model.getIntermediateTensors());
+      //this.model.disposeIntermediateTensors();
+      console.log(results[0].data());
+  
+      const results3d: tf.Tensor3D[] = results.map(y => tf.squeeze(y, [0]));
+
+      const namedResults = this.nameOutputResults(results3d);
+
+      return {
+        heatmapScores: tf.sigmoid(namedResults.heatmap),
+        offsets: namedResults.offsets,
+        displacementFwd: namedResults.displacementFwd,
+        displacementBwd: namedResults.displacementBwd
+      };
   }
 
   // Because MobileNet and ResNet predict() methods output a different order for
