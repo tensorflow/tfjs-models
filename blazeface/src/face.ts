@@ -253,7 +253,7 @@ export class BlazeFaceModel {
     // warnings for not using async version, pass that flag in.
     const savedConsoleWarnFn = console.warn;
     console.warn = () => {};
-    const boxIndicesTensor = tf.image.nonMaxSuppression(
+    const boxIndicesTensor = await tf.image.nonMaxSuppressionAsync(
         boxes, scores, this.maxFaces, this.iouThreshold, this.scoreThreshold);
     console.warn = savedConsoleWarnFn;
 
