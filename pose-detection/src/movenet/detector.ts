@@ -19,18 +19,18 @@ import * as tfc from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
 import {BoundingBoxTracker} from '../calculators/bounding_box_tracker';
-import {MILLISECOND_TO_MICRO_SECONDS, SECOND_TO_MICRO_SECONDS} from '../calculators/constants';
-import {getImageSize, toImageTensor} from '../calculators/image_utils';
-import {ImageSize} from '../calculators/interfaces/common_interfaces';
-import {BoundingBox} from '../calculators/interfaces/shape_interfaces';
-import {isVideo} from '../calculators/is_video';
 import {KeypointTracker} from '../calculators/keypoint_tracker';
-import {KeypointsOneEuroFilter} from '../calculators/keypoints_one_euro_filter';
-import {LowPassFilter} from '../calculators/low_pass_filter';
 import {Tracker} from '../calculators/tracker';
 import {TrackerType} from '../calculators/types';
 import {COCO_KEYPOINTS} from '../constants';
 import {PoseDetector} from '../pose_detector';
+import {MILLISECOND_TO_MICRO_SECONDS, SECOND_TO_MICRO_SECONDS} from '../shared/calculators/constants';
+import {getImageSize, toImageTensor} from '../shared/calculators/image_utils';
+import {ImageSize} from '../shared/calculators/interfaces/common_interfaces';
+import {BoundingBox} from '../shared/calculators/interfaces/shape_interfaces';
+import {isVideo} from '../shared/calculators/is_video';
+import {KeypointsOneEuroFilter} from '../shared/filters/keypoints_one_euro_filter';
+import {LowPassFilter} from '../shared/filters/low_pass_filter';
 import {InputResolution, Pose, PoseDetectorInput, SupportedModels} from '../types';
 import {getKeypointIndexByName} from '../util';
 
