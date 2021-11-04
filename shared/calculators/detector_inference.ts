@@ -20,7 +20,7 @@ import {splitDetectionResult} from './split_detection_result';
 
 export type DetectorInferenceResult = {
   boxes: tf.Tensor2D,
-  scores: tf.Tensor1D
+  logits: tf.Tensor1D
 };
 
 export function detectorInference(
@@ -29,12 +29,12 @@ export function detectorInference(
   return tf.tidy(() => {
     const detectionResult =
         poseDetectorModel.predict(imageTensor) as tf.Tensor3D;
-    const [scores, rawBoxes] = splitDetectionResult(detectionResult);
+    const [logits, rawBoxes] = splitDetectionResult(detectionResult);
     // Shape [896, 12]
     const rawBoxes2d = tf.squeeze(rawBoxes);
     // Shape [896]
-    const scores1d = tf.squeeze(scores);
+    const logits1d = tf.squeeze(logits);
 
-    return {boxes: rawBoxes2d as tf.Tensor2D, scores: scores1d as tf.Tensor1D};
+    return {boxes: rawBoxes2d as tf.Tensor2D, logits: logits1d as tf.Tensor1D};
   });
 }

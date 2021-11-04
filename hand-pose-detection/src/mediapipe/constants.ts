@@ -14,17 +14,17 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as tf from '@tensorflow/tfjs-core';
+import {MediaPipeHandsMediaPipeEstimationConfig, MediaPipeHandsMediaPipeModelConfig} from './types';
 
-export function splitDetectionResult(detectionResult: tf.Tensor3D):
-    [tf.Tensor3D, tf.Tensor3D] {
-  return tf.tidy(() => {
-    // logit is stored in the first element in each anchor data.
-    const logits = tf.slice(detectionResult, [0, 0, 0], [1, -1, 1]);
-    // Bounding box coords are stored in the next four elements for each anchor
-    // point.
-    const rawBoxes = tf.slice(detectionResult, [0, 0, 1], [1, -1, -1]);
+export const DEFAULT_MPHANDS_MODEL_CONFIG:
+    MediaPipeHandsMediaPipeModelConfig = {
+      runtime: 'mediapipe',
+      maxHands: 2,
+      modelType: 'full'
+    };
 
-    return [logits, rawBoxes];
-  });
-}
+export const DEFAULT_MPHANDS_ESTIMATION_CONFIG:
+    MediaPipeHandsMediaPipeEstimationConfig = {
+      flipHorizontal: false,
+      staticImageMode: false,
+    };

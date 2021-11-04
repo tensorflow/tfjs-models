@@ -14,17 +14,19 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as tf from '@tensorflow/tfjs-core';
+export function setupStats() {
+  const stats = new Stats();
+  stats.customFpsPanel = stats.addPanel(new Stats.Panel('FPS', '#0ff', '#002'));
+  stats.showPanel(stats.domElement.children.length - 1);
 
-export function splitDetectionResult(detectionResult: tf.Tensor3D):
-    [tf.Tensor3D, tf.Tensor3D] {
-  return tf.tidy(() => {
-    // logit is stored in the first element in each anchor data.
-    const logits = tf.slice(detectionResult, [0, 0, 0], [1, -1, 1]);
-    // Bounding box coords are stored in the next four elements for each anchor
-    // point.
-    const rawBoxes = tf.slice(detectionResult, [0, 0, 1], [1, -1, -1]);
+  const parent = document.getElementById('stats');
+  parent.appendChild(stats.domElement);
 
-    return [logits, rawBoxes];
-  });
+  const statsPanes = parent.querySelectorAll('canvas');
+
+  for (let i = 0; i < statsPanes.length; ++i) {
+    statsPanes[i].style.width = '140px';
+    statsPanes[i].style.height = '80px';
+  }
+  return stats;
 }
