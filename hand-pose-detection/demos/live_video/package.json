@@ -9,7 +9,7 @@
     "node": ">=8.9.0"
   },
   "dependencies": {
-    "@mediapipe/hands": "~0.3.0",
+    "@mediapipe/hands": "~0.4.0",
     "@tensorflow-models/hand-pose-detection": "file:../../dist",
     "@tensorflow/tfjs-backend-wasm": "^3.9.0",
     "@tensorflow/tfjs-backend-webgl": "^3.9.0",

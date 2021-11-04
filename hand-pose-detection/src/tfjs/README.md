@@ -2,6 +2,14 @@
 
 MediaPipeHands-TFJS uses TF.js runtime to execute the model, the preprocessing and postprocessing steps.
 
+Two models are offered.
+
+* lite - our smallest model that is less accurate but smaller in model size and minimal memory footprint.
+* full - A middle ground between performance and accuracy.
+
+Please try it out using the live [demo](https://storage.googleapis.com/tfjs-models/demos/hand-pose-detection/index.html?model=mediapipe_hands).
+In the runtime-backend dropdown, choose 'tfjs-webgl'.
+
 --------------------------------------------------------------------------------
 
 ## Table of Contents
@@ -60,7 +68,7 @@ Pass in `handPoseDetection.SupportedModels.MediaPipeHands` from the
 
 *   *runtime*: Must set to be 'tfjs'.
 
-*   *maxHands*: Defaults to 2. The maximum number of hands that will be detected by the model. The number of returned hands can be less than the maximum (for example when no hands are present in the input).
+*   *maxHands*: Defaults to 2. The maximum number of hands that will be detected by the model. The number of returned hands can be less than the maximum (for example when no hands are present in the input). It is highly recommended to set this value to the expected max number of hands, otherwise the model will continue to search for the missing hands which can slow down the performance.
 
 *   *modelType*: specify which variant to load from `MediaPipeHandsModelType` (i.e.,
     'lite', 'full'). If unset, the default is 'full'.

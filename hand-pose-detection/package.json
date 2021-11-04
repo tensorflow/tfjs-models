@@ -13,14 +13,14 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@mediapipe/hands": "~0.3.0",
+    "@mediapipe/hands": "~0.4.0",
     "@tensorflow/tfjs-backend-webgl": "^3.9.0",
     "@tensorflow/tfjs-converter": "^3.9.0",
     "@tensorflow/tfjs-core": "^3.9.0"
   },
   "devDependencies": {
     "@babel/polyfill": "^7.10.4",
-    "@mediapipe/hands": "^0.3.0",
+    "@mediapipe/hands": "^0.4.0",
     "@rollup/plugin-commonjs": "^11.0.2",
     "@rollup/plugin-node-resolve": "^7.1.1",
     "@rollup/plugin-typescript": "^3.0.0",

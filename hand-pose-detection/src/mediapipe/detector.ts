@@ -18,7 +18,6 @@ import * as hands from '@mediapipe/hands';
 
 import {MEDIAPIPE_KEYPOINTS} from '../constants';
 import {HandDetector} from '../hand_detector';
-import {Keypoint} from '../shared/calculators/interfaces/common_interfaces';
 import {Hand, HandDetectorInput} from '../types';
 
 import {validateModelConfig} from './detector_utils';
@@ -71,10 +70,11 @@ class MediaPipeHandsMediaPipeDetector implements HandDetector {
       if (results.multiHandLandmarks !== null) {
         const handednessList = results.multiHandedness;
         const landmarksList = results.multiHandLandmarks;
+        const worldLandmarksList = results.multiHandWorldLandmarks;
 
         for (let i = 0; i < handednessList.length; i++) {
           this.hands.push({
-            keypoints: this.translateOutput(landmarksList[i]),
+            ...this.translateOutput(landmarksList[i], worldLandmarksList[i]),
             score: handednessList[i].score,
             handedness: handednessList[i].label
           });
@@ -83,13 +83,23 @@ class MediaPipeHandsMediaPipeDetector implements HandDetector {
     });
   }
 
-  private translateOutput(landmarks: hands.NormalizedLandmarkList): Keypoint[] {
-    return landmarks.map((landmark, i) => ({
-                           x: landmark.x * this.width,
-                           y: landmark.y * this.height,
-                           score: landmark.visibility,
-                           name: MEDIAPIPE_KEYPOINTS[i],
-                         }));
+  private translateOutput(
+      landmarks: hands.NormalizedLandmarkList,
+      worldLandmarks: hands.LandmarkList) {
+    const keypoints = landmarks.map((landmark, i) => ({
+                                      x: landmark.x * this.width,
+                                      y: landmark.y * this.height,
+                                      score: landmark.visibility,
+                                      name: MEDIAPIPE_KEYPOINTS[i],
+                                    }));
+    const keypoints3D = worldLandmarks.map((landmark, i) => ({
+                                             x: landmark.x,
+                                             y: landmark.y,
+                                             z: landmark.z,
+                                             score: landmark.visibility,
+                                             name: MEDIAPIPE_KEYPOINTS[i]
+                                           }));
+    return {keypoints, keypoints3D};
   }
 
   /**
