@@ -2,6 +2,7 @@
 .yalc/
 .vscode/
 .rpt2_cache/
+demos/
 scripts/
 src/
 test_data/
