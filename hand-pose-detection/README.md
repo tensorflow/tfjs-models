@@ -9,6 +9,8 @@ Currently, we provide 1 model option:
 
 MediaPipe Hands can detect multiple hands, each hand contains 21 3D hand keypoints.
 
+More background information about the model, as well as its performance characteristics on different datasets, can be found here: [https://drive.google.com/file/d/1-rmIgTfuCbBPW_IFHkh3f0-U_lnGrWpg/view](https://drive.google.com/file/d/1-rmIgTfuCbBPW_IFHkh3f0-U_lnGrWpg/view)
+
 -------------------------------------------------------------------------------
 ## Table of Contents
 1. [How to Run It](#how-to-run-it)
