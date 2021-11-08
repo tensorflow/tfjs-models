@@ -5,12 +5,17 @@ This package provides models for running real-time hand pose detection.
 Currently, we provide 1 model option:
 
 #### MediaPipe:
-MediaPipe Hands can detect multiple hands, each hand contains 21 hand keypoints.
+[Demo](https://storage.googleapis.com/tfjs-models/demos/hand-pose-detection/index.html?model=mediapipe_hands)
+
+MediaPipe Hands can detect multiple hands, each hand contains 21 3D hand keypoints.
+
+More background information about the model, as well as its performance characteristics on different datasets, can be found here: [Model Card](https://drive.google.com/file/d/1-rmIgTfuCbBPW_IFHkh3f0-U_lnGrWpg/view)
 
 -------------------------------------------------------------------------------
 ## Table of Contents
 1. [How to Run It](#how-to-run-it)
 2. [Keypoint Diagram](#keypoint-diagram)
+3. [Example Code and Demos](#example-code-and-demos)
 
 -------------------------------------------------------------------------------
 ## How to Run It
@@ -37,27 +42,37 @@ If the model cannot detect any hands, the list will be empty.
 
 For each hand, it contains a prediction of the handedness (left or right), a confidence score of this prediction, as well as an array of keypoints.
 MediaPipeHands returns 21 keypoints.
-Each keypoint contains x, y, z, and name.
+Each keypoint contains x and y, as well as a name. In addition, an array of 3D keypoints is returned.
 
 Example output:
 ```
 [
   {
     score: 0.8,
-    Handedness: ‘Right’,
+    handedness: ‘Right’,
     keypoints: [
-      {x: 105, y: 107, z: -15, name: "wrist"},
-      {x: 108, y: 160, z: -40, name: "pinky_tip"},
+      {x: 105, y: 107, name: "wrist"},
+      {x: 108, y: 160, name: "pinky_finger_tip"},
+      ...
+    ],
+    keypoints3D: [
+      {x: 0.00388, y: -0.0205, z: 0.0217, name: "wrist"},
+      {x: -0.025138, y: -0.0255, z: -0.0051, name: "pinky_finger_tip"},
       ...
     ]
   }
 ]
 ```
 
-For the `keypoints`, x and y represent the actual keypoint position in the image.
-z represents the landmark depth with the depth at the wrist being the origin, and the smaller the value the closer the landmark is to the camera.
+The `score` ranges from 0 to 1. It represents the model's confidence of the detected hand.
 
-The name provides a label for each keypoint, such as 'wrist', 'pinky_tip', etc.
+`handedness` is set to either 'Left' or 'Right', which is the model prediction of the detected hand's handedness.
+
+For the `keypoints`, x and y represent the actual keypoint position in the image pixel space.
+
+For the `keypoints3D`, x, y and z represent absolute distance in a metric scale, where the origin is formed as an average between the first knuckles of index, middle, ring and pinky fingers.
+
+The name provides a label for each keypoint, such as 'wrist', 'pinky_finger_tip', etc.
 
 Refer to each model's documentation for specific configurations for the model
 and their performance.
@@ -94,3 +109,10 @@ See the diagram below for what those keypoints are and their index in the array.
 18: pinky_finger_pip  \
 19: pinky_finger_dip  \
 20: pinky_finger_tip
+
+-------------------------------------------------------------------------------
+
+## Example Code and Demos
+You may reference the demos for code examples. Details for how to run the demos
+are included in the `demos/`
+[folder](https://github.com/tensorflow/tfjs-models/tree/master/hand-pose-detection/demos).
