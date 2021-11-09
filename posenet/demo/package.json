@@ -1,0 +1,63 @@
+{
+  "name": "tfjs-models",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "license": "Apache-2.0",
+  "private": true,
+  "engines": {
+    "node": ">=8.9.0"
+  },
+  "dependencies": {
+    "@tensorflow-models/posenet": "file:../dist",
+    "@tensorflow/tfjs-backend-webgl": "^3.3.0",
+    "@tensorflow/tfjs-converter": "^3.3.0",
+    "@tensorflow/tfjs-core": "^3.3.0",
+    "stats.js": "^0.17.0"
+  },
+  "scripts": {
+    "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr --open",
+    "build": "cross-env NODE_ENV=production parcel build index.html --public-url ./",
+    "build-camera": "cross-env NODE_ENV=production parcel build camera.html --public-url ./",
+    "lint": "eslint .",
+    "link-local": "yalc link",
+    "build-dep": "cd ../ && yarn && yarn build"
+  },
+  "browser": {
+    "crypto": false
+  },
+  "devDependencies": {
+    "@babel/core": "^7.7.5",
+    "@babel/plugin-transform-runtime": "^7.7.6",
+    "@babel/preset-env": "^7.7.6",
+    "babel-plugin-external-helpers": "^6.22.0",
+    "babel-preset-env": "^1.7.0",
+    "clang-format": "~1.2.2",
+    "cross-env": "^5.2.0",
+    "dat.gui": "^0.7.2",
+    "eslint": "^4.19.1",
+    "eslint-config-google": "^0.9.1",
+    "parcel-bundler": "1.12.5",
+    "yalc": "~1.0.0-pre.50"
+  },
+  "resolutions": {
+    "is-svg": "4.3.1"
+  },
+  "eslintConfig": {
+    "extends": "google",
+    "rules": {
+      "require-jsdoc": 0,
+      "valid-jsdoc": 0
+    },
+    "env": {
+      "es6": true
+    },
+    "parserOptions": {
+      "ecmaVersion": 8,
+      "sourceType": "module"
+    }
+  },
+  "eslintIgnore": [
+    "dist/"
+  ]
+}

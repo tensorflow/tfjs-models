@@ -21,6 +21,13 @@ steps:
   args: ['./scripts/run-build.sh', 'body-pix']
   waitFor: ['diff']
 
+# Blaze face.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'blazeface'
+  args: ['./scripts/run-build.sh', 'blazeface']
+  waitFor: ['diff']
+
 # Coco SSD.
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
@@ -32,7 +39,7 @@ steps:
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
   id: 'deeplab'
-  args: ['./scripts/run-build.sh', 'deep-lab']
+  args: ['./scripts/run-build.sh', 'deeplab']
   waitFor: ['diff']
 
 # KNN Classifier.
@@ -49,11 +56,25 @@ steps:
   args: ['./scripts/run-build.sh', 'mobilenet']
   waitFor: ['diff']
 
+# Model playground.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'model-playground'
+  args: ['./scripts/run-build.sh', 'model-playground']
+  waitFor: ['diff']
+
 # Posenet.
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
   id: 'posenet'
   args: ['./scripts/run-build.sh', 'posenet']
+  waitFor: ['diff']
+
+# Pose Detection.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'pose-detection'
+  args: ['./scripts/run-build.sh', 'pose-detection']
   waitFor: ['diff']
 
 # Speech commands.
@@ -77,18 +98,32 @@ steps:
   args: ['./scripts/run-build.sh', 'universal-sentence-encoder']
   waitFor: ['diff']
 
-# Handpose
+# Hand Detection.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'hand-detection'
+  args: ['./scripts/run-build.sh', 'hand-detection']
+  waitFor: ['diff']
+
+# Handpose.
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
   id: 'handpose'
   args: ['./scripts/run-build.sh', 'handpose']
   waitFor: ['diff']
 
-# Handpose
+# Facemesh.
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
   id: 'facemesh'
   args: ['./scripts/run-build.sh', 'facemesh']
+  waitFor: ['diff']
+
+# Task API.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'tasks'
+  args: ['./scripts/run-build.sh', 'tasks']
   waitFor: ['diff']
 
 # Run the top-level sanity checks.

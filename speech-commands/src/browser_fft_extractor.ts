@@ -19,7 +19,7 @@
  * Audio FFT Feature Extractor based on Browser-Native FFT.
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
 
 import {getAudioContextConstructor, getAudioMediaStream} from './browser_fft_utils';
 import {FeatureExtractor, RecognizerParams} from './types';
@@ -181,14 +181,9 @@ export class BrowserFftFeatureExtractor implements FeatureExtractor {
     }
 
     this.stream = await getAudioMediaStream(audioTrackConstraints);
+    this.audioContext = new this.audioContextConstructor(
+                            {sampleRate: this.sampleRateHz}) as AudioContext;
 
-    this.audioContext = new this.audioContextConstructor() as AudioContext;
-    if (this.audioContext.sampleRate !== this.sampleRateHz) {
-      console.warn(
-          `Mismatch in sampling rate: ` +
-          `Expected: ${this.sampleRateHz}; ` +
-          `Actual: ${this.audioContext.sampleRate}`);
-    }
     const streamSource = this.audioContext.createMediaStreamSource(this.stream);
     this.analyser = this.audioContext.createAnalyser();
     this.analyser.fftSize = this.fftSize * 2;

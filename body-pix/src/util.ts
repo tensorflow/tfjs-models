@@ -23,8 +23,10 @@ import {Pose, TensorBuffer3D} from './types';
 import {BodyPixInternalResolution} from './types';
 
 function getSizeFromImageLikeElement(input: HTMLImageElement|
-                                     HTMLCanvasElement): [number, number] {
-  if (input.offsetHeight !== 0 && input.offsetWidth !== 0) {
+                                     HTMLCanvasElement|
+                                     OffscreenCanvas): [number, number] {
+  if ('offsetHeight' in input && input.offsetHeight !== 0
+      && 'offsetWidth' in input && input.offsetWidth !== 0) {
     return [input.offsetHeight, input.offsetWidth];
   } else if (input.height != null && input.width != null) {
     return [input.height, input.width];
@@ -48,6 +50,8 @@ function getSizeFromVideoElement(input: HTMLVideoElement): [number, number] {
 export function getInputSize(input: BodyPixInput): [number, number] {
   if ((typeof (HTMLCanvasElement) !== 'undefined' &&
        input instanceof HTMLCanvasElement) ||
+      (typeof (OffscreenCanvas) !== 'undefined' &&
+          input instanceof OffscreenCanvas) ||
       (typeof (HTMLImageElement) !== 'undefined' &&
        input instanceof HTMLImageElement)) {
     return getSizeFromImageLikeElement(input);
@@ -136,6 +140,8 @@ export function toInputResolutionHeightAndWidth(
 }
 
 export function toInputTensor(input: BodyPixInput) {
+  // TODO: tf.browser.fromPixels types to support OffscreenCanvas
+  // @ts-ignore
   return input instanceof tf.Tensor ? input : tf.browser.fromPixels(input);
 }
 
@@ -182,9 +188,10 @@ export function resizeAndPadTo(
     // resize to have largest dimension match image
     let resized: tf.Tensor3D;
     if (flipHorizontal) {
-      resized = imageTensor.reverse(1).resizeBilinear([resizeH, resizeW]);
+      resized = tf.image.resizeBilinear(
+          tf.reverse(imageTensor, 1), [resizeH, resizeW]);
     } else {
-      resized = imageTensor.resizeBilinear([resizeH, resizeW]);
+      resized = tf.image.resizeBilinear(imageTensor, [resizeH, resizeW]);
     }
 
     const padded = tf.pad3d(resized, [[padT, padB], [padL, padR], [0, 0]]);
@@ -202,11 +209,11 @@ export function scaleAndCropToInputTensorShape(
     [[padT, padB], [padL, padR]]: [[number, number], [number, number]],
     applySigmoidActivation = false): tf.Tensor3D {
   return tf.tidy(() => {
-    let inResizedAndPadded: tf.Tensor3D = tensor.resizeBilinear(
+    let inResizedAndPadded: tf.Tensor3D = tf.image.resizeBilinear(tensor,
         [resizedAndPaddedHeight, resizedAndPaddedWidth], true);
 
     if (applySigmoidActivation) {
-      inResizedAndPadded = inResizedAndPadded.sigmoid();
+      inResizedAndPadded = tf.sigmoid(inResizedAndPadded);
     }
 
     return removePaddingAndResizeBack(
@@ -221,8 +228,8 @@ export function removePaddingAndResizeBack(
     [[padT, padB], [padL, padR]]: [[number, number], [number, number]]):
     tf.Tensor3D {
   return tf.tidy(() => {
-    const batchedImage: tf.Tensor4D = resizedAndPadded.expandDims();
-    return tf.image
+    const batchedImage: tf.Tensor4D = tf.expandDims(resizedAndPadded);
+    return tf.squeeze(tf.image
         .cropAndResize(
             batchedImage, [[
               padT / (originalHeight + padT + padB - 1.0),
@@ -231,8 +238,7 @@ export function removePaddingAndResizeBack(
                   (originalHeight + padT + padB - 1.0),
               (padL + originalWidth - 1.0) / (originalWidth + padL + padR - 1.0)
             ]],
-            [0], [originalHeight, originalWidth])
-        .squeeze([0]);
+            [0], [originalHeight, originalWidth]), [0]);
   });
 }
 
@@ -240,8 +246,9 @@ export function resize2d(
     tensor: tf.Tensor2D, resolution: [number, number],
     nearestNeighbor?: boolean): tf.Tensor2D {
   return tf.tidy(() => {
-    const batchedImage: tf.Tensor4D = tensor.expandDims(2);
-    return batchedImage.resizeBilinear(resolution, nearestNeighbor).squeeze();
+    const batchedImage: tf.Tensor4D = tf.expandDims(tensor, 2);
+    return tf.squeeze(
+        tf.image.resizeBilinear(batchedImage, resolution, nearestNeighbor));
   });
 }
 
@@ -270,7 +277,7 @@ export function padAndResizeTo(
     let imageTensor = toInputTensor(input);
     imageTensor = tf.pad3d(imageTensor, [[padT, padB], [padL, padR], [0, 0]]);
 
-    return imageTensor.resizeBilinear([targetH, targetW]);
+    return tf.image.resizeBilinear(imageTensor, [targetH, targetW]);
   });
 
   return {resized, padding: {top: padT, left: padL, right: padR, bottom: padB}};

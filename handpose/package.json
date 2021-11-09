@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/handpose",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Pretrained hand detection model",
   "main": "dist/index.js",
   "jsnext:main": "dist/handpose.esm.js",
@@ -13,22 +13,24 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs-converter": "^2.1.0",
-    "@tensorflow/tfjs-core": "^2.1.0"
+    "@tensorflow/tfjs-converter": "^3.0.0",
+    "@tensorflow/tfjs-core": "^3.0.0",
+    "@tensorflow/tfjs-backend-webgl": "^3.0.0"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^11.0.2",
     "@rollup/plugin-node-resolve": "^7.1.1",
     "@rollup/plugin-typescript": "^3.0.0",
-    "@tensorflow/tfjs-converter": "^2.1.0",
-    "@tensorflow/tfjs-core": "^2.1.0",
-    "@tensorflow/tfjs-backend-cpu": "^2.1.0",
+    "@tensorflow/tfjs-converter": "^3.0.0",
+    "@tensorflow/tfjs-core": "^3.0.0",
+    "@tensorflow/tfjs-backend-cpu": "^3.0.0",
+    "@tensorflow/tfjs-backend-webgl": "^3.0.0",
     "@types/jasmine": "~2.8.8",
     "babel-core": "~6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",
     "jasmine-core": "~3.5.0",
     "rollup": "~2.3.2",
-    "rollup-plugin-terser": "~5.3.0",
+    "rollup-plugin-terser": "~7.0.2",
     "rollup-plugin-visualizer": "~3.3.2",
     "ts-node": "~8.8.2",
     "tslint": "~5.18.0",
@@ -36,10 +38,11 @@
     "yalc": "~1.0.0-pre.21"
   },
   "scripts": {
-    "build": "rimraf dist && tsc",
+    "bundle": "rollup -c",
+    "build": "rimraf dist && tsc && yarn bundle",
     "publish-local": "yarn build && rollup -c && yalc publish",
     "test": "ts-node --skip-ignore --project tsconfig.test.json run_tests.ts",
-    "build-npm": "yarn build && rollup -c",
+    "build-npm": "yarn build && yarn bundle",
     "lint": "tslint -p . -t verbose",
     "publish-demo": "./scripts/publish-demo.sh"
   },

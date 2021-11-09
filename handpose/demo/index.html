@@ -22,7 +22,9 @@ limitations under the License.
   #canvas-wrapper {
     position: relative;
   }
-  #canvas-wrapper, #scatter-gl-container {
+
+  #canvas-wrapper,
+  #scatter-gl-container {
     display: inline-block;
     vertical-align: top;
   }
@@ -30,7 +32,7 @@ limitations under the License.
 <script src="https://cdn.jsdelivr.net/npm/stats.js@0.17.0/build/stats.min.js"></script>
 
 <body>
-  <div id="info" style='display:none'></div>
+  <div id="info"></div>
   <div id="predictions"></div>
   <div id="canvas-wrapper">
     <canvas id="output" style=""></canvas>
@@ -42,7 +44,7 @@ limitations under the License.
     height: auto;
     position: absolute;
     ">
-  </video>
+    </video>
   </div>
   <div id="scatter-gl-container"></div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.6/dat.gui.min.js"></script>

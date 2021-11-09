@@ -16,6 +16,7 @@
  */
 
 import * as tf from '@tensorflow/tfjs-core';
+import * as tf_webgl from '@tensorflow/tfjs-backend-webgl';
 
 import {NUM_KEYPOINTS} from '../keypoints';
 import {Padding, Pose} from '../types';
@@ -26,14 +27,14 @@ export function decodeMultipleMasksWebGl(
     posesAboveScore: Pose[], height: number, width: number, stride: number,
     [inHeight, inWidth]: [number, number], padding: Padding,
     refineSteps: number, minKptScore: number,
-    maxNumPeople: number): tf.Tensor2D {
+    maxNumPeople: number): tf.TensorInfo {
   // The height/width of the image/canvas itself.
   const [origHeight, origWidth] = segmentation.shape;
   // The height/width of the output of the model.
   const [outHeight, outWidth] = longOffsets.shape.slice(0, 2);
 
   const shapedLongOffsets: tf.Tensor4D =
-      longOffsets.reshape([outHeight, outWidth, 2, NUM_KEYPOINTS]);
+      tf.reshape(longOffsets, [outHeight, outWidth, 2, NUM_KEYPOINTS]);
 
   // Make pose tensor of shape [MAX_NUM_PEOPLE, NUM_KEYPOINTS, 3] where
   // the last 3 coordinates correspond to the score, h and w coordinate of that
@@ -58,7 +59,7 @@ export function decodeMultipleMasksWebGl(
 
   const {top: padT, left: padL} = padding;
 
-  const program: tf.webgl.GPGPUProgram = {
+  const program: tf_webgl.GPGPUProgram = {
     variableNames: ['segmentation', 'longOffsets', 'poses'],
     outputShape: [origHeight, origWidth],
     userCode: `
@@ -154,7 +155,7 @@ export function decodeMultipleMasksWebGl(
       }
   `
   };
-  const webglBackend = tf.backend() as tf.webgl.MathBackendWebGL;
+  const webglBackend = tf.backend() as tf_webgl.MathBackendWebGL;
   return webglBackend.compileAndRun(
       program, [segmentation, shapedLongOffsets, posesTensor]);
 }

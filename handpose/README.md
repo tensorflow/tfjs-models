@@ -9,7 +9,7 @@ Given an input, the model predicts whether it contains a hand. If so, the model 
 
 More background information about the model, as well as its performance characteristics on different datasets, can be found here: [https://drive.google.com/file/d/1sv4sSb9BSNVZhLzxXJ0jBv9DqD-4jnAz/view](https://drive.google.com/file/d/1sv4sSb9BSNVZhLzxXJ0jBv9DqD-4jnAz/view)
 
-Check out our [demo](https://storage.googleapis.com/tfjs-models/demos/handpose/index.html), which uses the model to detect hand landmarks in a live video stream.
+Check out our [demo](https://storage.googleapis.com/tfjs-models/demos/handtrack/index.html), which uses the model to detect hand landmarks in a live video stream.
 
 This model is also available as part of [MediaPipe](https://hand.mediapipe.dev/), a framework for building multimodal applied ML pipelines.
 
@@ -120,4 +120,4 @@ main();
 
 * **input** - The image to classify. Can be a tensor, DOM element image, video, or canvas.
 
-* **flipHorizontal** - Whether to flip/mirror the facial keypoints horizontally. Should be true for videos that are flipped by default (e.g. webcams).
+* **flipHorizontal** - Whether to flip/mirror the hand keypoints horizontally. Should be true for videos that are flipped by default (e.g. webcams).

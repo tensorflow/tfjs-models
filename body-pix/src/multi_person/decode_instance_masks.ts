@@ -26,16 +26,15 @@ import {decodeMultipleMasksWebGl} from './decode_multiple_masks_webgl';
 export function toPersonKSegmentation(
     segmentation: tf.Tensor2D, k: number): tf.Tensor2D {
   return tf.tidy(
-      () => (segmentation.equal(tf.scalar(k)).toInt() as tf.Tensor2D));
+      () => (tf.cast(tf.equal(
+          segmentation, tf.scalar(k)), 'int32') as tf.Tensor2D));
 }
 
 export function toPersonKPartSegmentation(
     segmentation: tf.Tensor2D, bodyParts: tf.Tensor2D, k: number): tf.Tensor2D {
   return tf.tidy(
-      () => segmentation.equal(tf.scalar(k))
-                .toInt()
-                .mul(bodyParts.add(1))
-                .sub(1));
+      () => tf.sub(tf.mul(tf.cast(tf.equal(
+          segmentation, tf.scalar(k)), 'int32'), tf.add(bodyParts, 1)), 1));
 }
 
 function isWebGlBackend() {
@@ -55,10 +54,13 @@ export async function decodePersonInstanceMasks(
 
   if (isWebGlBackend()) {
     const personSegmentations = tf.tidy(() => {
-      const masksTensor = decodeMultipleMasksWebGl(
+      const masksTensorInfo = decodeMultipleMasksWebGl(
           segmentation, longOffsets, posesAboveScore, height, width, stride,
           [inHeight, inWidth], padding, refineSteps, minKeypointScore,
           maxNumPeople);
+      const masksTensor = tf.engine().makeTensorFromDataId(
+          masksTensorInfo.dataId, masksTensorInfo.shape,
+          masksTensorInfo.dtype) as tf.Tensor2D;
 
       return posesAboveScore.map(
           (_, k) => toPersonKSegmentation(masksTensor, k));
@@ -94,10 +96,13 @@ export async function decodePersonInstancePartMasks(
 
   if (isWebGlBackend()) {
     const partSegmentations = tf.tidy(() => {
-      const masksTensor = decodeMultipleMasksWebGl(
+      const masksTensorInfo = decodeMultipleMasksWebGl(
           segmentation, longOffsets, posesAboveScore, height, width, stride,
           [inHeight, inWidth], padding, refineSteps, minKeypointScore,
           maxNumPeople);
+      const masksTensor = tf.engine().makeTensorFromDataId(
+        masksTensorInfo.dataId, masksTensorInfo.shape,
+        masksTensorInfo.dtype) as tf.Tensor2D;
 
       return posesAboveScore.map(
           (_, k) =>

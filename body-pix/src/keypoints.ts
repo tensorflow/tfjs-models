@@ -35,7 +35,7 @@ export const PART_IDS =
     PART_NAMES.reduce((result: NumberDict, jointName, i): NumberDict => {
       result[jointName] = i;
       return result;
-    }, {}) as NumberDict;
+    }, {});
 
 const CONNECTED_PART_NAMES: StringTuple[] = [
   ['leftHip', 'leftShoulder'], ['leftElbow', 'leftShoulder'],

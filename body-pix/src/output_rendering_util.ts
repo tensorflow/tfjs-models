@@ -20,9 +20,11 @@ import {Color, PartSegmentation, PersonSegmentation} from './types';
 import {SemanticPartSegmentation, SemanticPersonSegmentation} from './types';
 import {getInputSize} from './util';
 
-const offScreenCanvases: {[name: string]: HTMLCanvasElement} = {};
+export type Canvas = HTMLCanvasElement | OffscreenCanvas;
 
-type ImageType = HTMLImageElement|HTMLVideoElement|HTMLCanvasElement;
+const offScreenCanvases: {[name: string]: Canvas} = {};
+
+type ImageType = HTMLImageElement|HTMLVideoElement|Canvas;
 type HasDimensions = {
   width: number,
   height: number
@@ -42,25 +44,31 @@ function assertSameDimensions(
   }
 }
 
-function flipCanvasHorizontal(canvas: HTMLCanvasElement) {
+function flipCanvasHorizontal(canvas: Canvas) {
   const ctx = canvas.getContext('2d');
   ctx.scale(-1, 1);
   ctx.translate(-canvas.width, 0);
 }
 
 function drawWithCompositing(
-    ctx: CanvasRenderingContext2D, image: HTMLCanvasElement|ImageType,
-    compositOperation: string) {
-  ctx.globalCompositeOperation = compositOperation;
+    ctx: CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D,
+    image: Canvas|ImageType,
+    compositeOperation: string) {
+  ctx.globalCompositeOperation = compositeOperation;
   ctx.drawImage(image, 0, 0);
 }
 
-function createOffScreenCanvas(): HTMLCanvasElement {
-  const offScreenCanvas = document.createElement('canvas');
-  return offScreenCanvas;
+function createOffScreenCanvas(): Canvas {
+  if (typeof document !== 'undefined' ) {
+    return document.createElement('canvas');
+  } else if (typeof OffscreenCanvas !== 'undefined') {
+    return new OffscreenCanvas(0, 0);
+  } else {
+    throw new Error('Cannot create a canvas in this context');
+  }
 }
 
-function ensureOffscreenCanvasCreated(id: string): HTMLCanvasElement {
+function ensureOffscreenCanvasCreated(id: string): Canvas {
   if (!offScreenCanvases[id]) {
     offScreenCanvases[id] = createOffScreenCanvas();
   }
@@ -68,7 +76,7 @@ function ensureOffscreenCanvasCreated(id: string): HTMLCanvasElement {
 }
 
 function drawAndBlurImageOnCanvas(
-    image: ImageType, blurAmount: number, canvas: HTMLCanvasElement) {
+    image: ImageType, blurAmount: number, canvas: Canvas) {
   const {height, width} = image;
   const ctx = canvas.getContext('2d');
   canvas.width = width;
@@ -87,7 +95,7 @@ function drawAndBlurImageOnCanvas(
 
 function drawAndBlurImageOnOffScreenCanvas(
     image: ImageType, blurAmount: number,
-    offscreenCanvasName: string): HTMLCanvasElement {
+    offscreenCanvasName: string): Canvas {
   const canvas = ensureOffscreenCanvasCreated(offscreenCanvasName);
   if (blurAmount === 0) {
     renderImageToCanvas(image, canvas);
@@ -97,7 +105,7 @@ function drawAndBlurImageOnOffScreenCanvas(
   return canvas;
 }
 
-function renderImageToCanvas(image: ImageType, canvas: HTMLCanvasElement) {
+function renderImageToCanvas(image: ImageType, canvas: Canvas) {
   const {width, height} = image;
   canvas.width = width;
   canvas.height = height;
@@ -108,7 +116,7 @@ function renderImageToCanvas(image: ImageType, canvas: HTMLCanvasElement) {
 /**
  * Draw an image on a canvas
  */
-function renderImageDataToCanvas(image: ImageData, canvas: HTMLCanvasElement) {
+function renderImageDataToCanvas(image: ImageData, canvas: Canvas) {
   canvas.width = image.width;
   canvas.height = image.height;
   const ctx = canvas.getContext('2d');
@@ -117,7 +125,7 @@ function renderImageDataToCanvas(image: ImageData, canvas: HTMLCanvasElement) {
 }
 
 function renderImageDataToOffScreenCanvas(
-    image: ImageData, canvasName: string): HTMLCanvasElement {
+    image: ImageData, canvasName: string): Canvas {
   const canvas = ensureOffscreenCanvasCreated(canvasName);
   renderImageDataToCanvas(image, canvas);
 
@@ -436,7 +444,7 @@ const CANVAS_NAMES = {
  * to false.
  */
 export function drawMask(
-    canvas: HTMLCanvasElement, image: ImageType, maskImage: ImageData|null,
+    canvas: Canvas, image: ImageType, maskImage: ImageData|null,
     maskOpacity = 0.7, maskBlurAmount = 0, flipHorizontal = false) {
   const [height, width] = getInputSize(image);
   canvas.width = width;
@@ -486,7 +494,7 @@ export function drawMask(
  * @param pixelCellWidth The width of each pixel cell. Default to 10 px.
  */
 export function drawPixelatedMask(
-    canvas: HTMLCanvasElement, image: ImageType, maskImage: ImageData,
+    canvas: Canvas, image: ImageType, maskImage: ImageData,
     maskOpacity = 0.7, maskBlurAmount = 0, flipHorizontal = false,
     pixelCellWidth = 10.0) {
   const [height, width] = getInputSize(image);
@@ -544,7 +552,7 @@ export function drawPixelatedMask(
 
 function createPersonMask(
     multiPersonSegmentation: PersonSegmentation[]|SemanticPersonSegmentation,
-    edgeBlurAmount: number): HTMLCanvasElement {
+    edgeBlurAmount: number): Canvas {
   const backgroundMaskImage = toMask(
       multiPersonSegmentation, {r: 0, g: 0, b: 0, a: 255},
       {r: 0, g: 0, b: 0, a: 0});
@@ -580,7 +588,7 @@ function createPersonMask(
  * to false.
  */
 export function drawBokehEffect(
-    canvas: HTMLCanvasElement, image: ImageType,
+    canvas: Canvas, image: ImageType,
     multiPersonSegmentation: SemanticPersonSegmentation|PersonSegmentation[],
     backgroundBlurAmount = 3, edgeBlurAmount = 3, flipHorizontal = false) {
   const blurredImage = drawAndBlurImageOnOffScreenCanvas(
@@ -622,7 +630,7 @@ export function drawBokehEffect(
 
 function createBodyPartMask(
     multiPersonPartSegmentation: SemanticPartSegmentation|PartSegmentation[],
-    bodyPartIdsToMask: number[], edgeBlurAmount: number): HTMLCanvasElement {
+    bodyPartIdsToMask: number[], edgeBlurAmount: number): Canvas {
   const backgroundMaskImage = toMask(
       multiPersonPartSegmentation, {r: 0, g: 0, b: 0, a: 0},
       {r: 0, g: 0, b: 0, a: 255}, true, bodyPartIdsToMask);
@@ -661,7 +669,7 @@ function createBodyPartMask(
  * to false.
  */
 export function blurBodyPart(
-    canvas: HTMLCanvasElement, image: ImageType,
+    canvas: Canvas, image: ImageType,
     partSegmentation: SemanticPartSegmentation|PartSegmentation[],
     bodyPartIdsToBlur = [0, 1], backgroundBlurAmount = 3, edgeBlurAmount = 3,
     flipHorizontal = false) {

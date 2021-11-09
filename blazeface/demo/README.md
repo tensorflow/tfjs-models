@@ -6,10 +6,10 @@ This demo shows how to use the Blazeface model to detect faces in a video stream
 
 ## Setup
 
-cd into the demos folder:
+cd into the demo folder:
 
 ```sh
-cd blazeface/demos
+cd blazeface/demo
 ```
 
 Install dependencies and prepare the build directory:
@@ -24,7 +24,7 @@ To watch files for changes, and launch a dev server:
 yarn watch
 ```
 
-## If you are developing blazeface locally, and want to test the changes in the demos
+## If you are developing blazeface locally, and want to test the changes in the demo
 
 Cd into the blazeface folder:
 ```sh
@@ -41,14 +41,14 @@ Publish blazeface locally:
 yarn build && yarn yalc publish
 ```
 
-Cd into the demos and install dependencies:
+Cd into the demo and install dependencies:
 
 ```sh
-cd demos
+cd demo
 yarn
 ```
 
-Link the local blazeface to the demos:
+Link the local blazeface to the demo:
 ```sh
 yarn yalc link @tensorflow-models/blazeface
 ```
