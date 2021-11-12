@@ -16,10 +16,10 @@
  */
 import * as tf from '@tensorflow/tfjs-core';
 
-import {DetectorInput, ImageSize, InputResolution, Padding, ValueTransform} from './interfaces/common_interfaces';
+import {ImageSize, InputResolution, Padding, PixelInput, ValueTransform} from './interfaces/common_interfaces';
 import {Rect} from './interfaces/shape_interfaces';
 
-export function getImageSize(input: DetectorInput): ImageSize {
+export function getImageSize(input: PixelInput): ImageSize {
   if (input instanceof tf.Tensor) {
     return {height: input.shape[0], width: input.shape[1]};
   } else {
@@ -65,8 +65,7 @@ export function transformValueRange(
  *
  * @param input An image, video frame, or image tensor.
  */
-export function toImageTensor(input: tf.Tensor3D|ImageData|HTMLVideoElement|
-                              HTMLImageElement|HTMLCanvasElement) {
+export function toImageTensor(input: PixelInput) {
   return input instanceof tf.Tensor ? input : tf.browser.fromPixels(input);
 }
 

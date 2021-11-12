@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import {DetectorInput, Keypoint} from './shared/calculators/interfaces/common_interfaces';
+import {Keypoint, PixelInput} from './shared/calculators/interfaces/common_interfaces';
 
 export {Keypoint};
 
@@ -54,7 +54,7 @@ export interface EstimationConfig {
 /**
  * Allowed input format for the `estimateHands` method.
  */
-export type HandDetectorInput = DetectorInput;
+export type HandDetectorInput = PixelInput;
 
 export interface Hand {
   keypoints: Keypoint[];

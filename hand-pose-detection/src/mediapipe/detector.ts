@@ -15,6 +15,7 @@
  * =============================================================================
  */
 import * as hands from '@mediapipe/hands';
+import * as tf from '@tensorflow/tfjs-core';
 
 import {MEDIAPIPE_KEYPOINTS} from '../constants';
 import {HandDetector} from '../hand_detector';
@@ -133,6 +134,11 @@ class MediaPipeHandsMediaPipeDetector implements HandDetector {
         selfieMode: this.selfieMode,
       });
     }
+    // Cast to GL TexImageSource types.
+    input = input instanceof tf.Tensor ?
+        new ImageData(
+            await tf.browser.toPixels(input), input.shape[1], input.shape[0]) :
+        input;
     await this.handsSolution.send({image: input as hands.InputImage});
     return this.hands;
   }

@@ -1,0 +1,98 @@
+# SelfieSegmentation
+
+SelfieSegmentation-MediaPipe wraps the MediaPipe JS Solution within the familiar
+TFJS API [mediapipe.dev](https://mediapipe.dev).
+
+Two models are offered.
+
+* general - implementation operates on a 256x256x3 tensor, and outputs a 256x256x1 tensor representing the segmentation mask
+* landscape - similar to the general model, but operates on a 144x256x3 tensor. It has fewer FLOPs than the general model, and therefore, runs faster.
+
+Please try our our live [demo](https://storage.googleapis.com/tfjs-models/demos/body-segmentation/index.html?model=selfie_segmentation).
+
+--------------------------------------------------------------------------------
+
+## Table of Contents
+
+1.  [Installation](#installation)
+2.  [Usage](#usage)
+3.  [Keypoint Diagram](#keypoint-diagram)
+
+## Installation
+
+To use SelfieSegmentation:
+
+Via script tags:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-segmentation"></script>
+```
+
+Via npm:
+```sh
+yarn add @tensorflow-models/body-segmentation
+yarn add @mediapipe/selfie_segmentation
+```
+
+-----------------------------------------------------------------------
+## Usage
+
+If you are using the Body Segmentation API via npm, you need to import the libraries first.
+
+### Import the libraries
+
+```javascript
+import * as bodySegmentation from '@tensorflow-models/body-segmentation';
+import '@mediapipe/selfie_segmentation';
+```
+
+### Create a detector
+
+Pass in `bodySegmentation.SupportedModels.SelfieSegmentation` from the
+`bodySegmentation.SupportedModel` enum list along with a `segmenterConfig` to the
+`createSegmenter` method to load and initialize the model.
+
+`segmenterConfig` is an object that defines SelfieSegmentation specific configurations for `SelfieSegmentationMediaPipeModelConfig`:
+
+*   *runtime*: Must set to be 'mediapipe'.
+
+*   *modelType*: specify which variant to load from `SelfieSegmentationModelType` (i.e.,
+    'general', 'landscape'). If unset, the default is 'general'.
+
+*   *solutionPath*: The path to where the wasm binary and model files are located.
+
+```javascript
+const model = bodySegmentation.SupportedModels.SelfieSegmentation;
+const segmenterConfig = {
+  runtime: 'mediapipe',
+  solutionPath: 'base/node_modules/@mediapipe/selfie_segmentation'
+};
+segmenter = await bodySegmentation.createSegmenter(model, segmenterConfig);
+```
+
+### Run inference
+
+Now you can use the segmenter to segment people. The `segmentPeople` method
+accepts both image and video in many formats, including:
+`HTMLVideoElement`, `HTMLImageElement`, `HTMLCanvasElement`. If you want more
+options, you can pass in a second `segmentationConfig` parameter.
+
+`segmentationConfig` is an object that defines SelfieSegmentation specific configurations for `SelfieSegmentationMediaPipeSegmentationConfig`:
+
+*   *flipHorizontal*: Optional. Defaults to false. When image data comes from camera, the result has to flip horizontally.
+
+The following code snippet demonstrates how to run the model inference:
+
+```javascript
+const segmentationConfig = {flipHorizontal: false};
+const people = await segmenter.segmentPeople(image, segmentationConfig);
+```
+
+The returned `people` array contains a single element only, where all the people segmented in the image are found in that single segmentation element.
+
+The only labels returned by the maskValueToLabel function by the model is 'upper_body'.
+
+Please refer to the Body Segmentation API
+[README](https://github.com/tensorflow/tfjs-models/blob/master/body-segmentation/README.md#how-to-run-it)
+about the structure of the returned `people`.

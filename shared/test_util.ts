@@ -33,3 +33,28 @@ export async function loadImage(
 
   return promise;
 }
+
+
+export function imageToBooleanMask(
+    rgbaData: Uint8ClampedArray, r: number, g: number, b: number) {
+  const mask: boolean[] = [];
+  for (let i = 0; i < rgbaData.length; i += 4) {
+    mask.push(rgbaData[i] >= r && rgbaData[i + 1] >= g && rgbaData[i + 2] >= b);
+  }
+  return mask;
+}
+
+export function segmentationIOU(
+    expectedMask: boolean[], actualMask: boolean[]) {
+  expect(expectedMask.length === actualMask.length);
+
+  const sum = (mask: boolean[]) => mask.reduce((a, b) => a + +b, 0);
+
+  const intersectionMask =
+      expectedMask.map((value, index) => value && actualMask[index]);
+  const iou = sum(intersectionMask) /
+      (sum(expectedMask) + sum(actualMask) - sum(intersectionMask) +
+       Number.EPSILON);
+
+  return iou;
+}

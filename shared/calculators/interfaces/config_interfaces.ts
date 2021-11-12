@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import {InputResolution} from './common_interfaces';
+import {ImageSize, InputResolution} from './common_interfaces';
 
 export interface ImageToTensorConfig {
   inputResolution: InputResolution;
@@ -177,6 +177,10 @@ export interface TensorsToLandmarksConfig {
   flipHorizontally?: boolean;
   flipVertically?: boolean;
   normalizeZ?: number;
+}
+export interface TensorsToSegmentationConfig {
+  activation: 'none'|'sigmoid'|'softmax';
+  outputSize?: ImageSize
 }
 export interface RefineLandmarksFromHeatmapConfig {
   kernelSize?: number;
