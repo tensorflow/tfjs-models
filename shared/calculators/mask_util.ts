@@ -88,11 +88,13 @@ export async function toImageDataLossy(image: CanvasImageSource|
  */
 export async function toTensorLossy(image: CanvasImageSource|
                                     ImageData): Promise<tf.Tensor3D> {
-  const pixelsInput =
-      (image instanceof SVGImageElement || image instanceof OffscreenCanvas) ?
-      await toHTMLCanvasElementLossy(image) :
-      image;
-  return tf.browser.fromPixels(pixelsInput, 4);
+  if (image instanceof SVGImageElement || image instanceof OffscreenCanvas) {
+    const pixelsInput = {canvas: await toHTMLCanvasElementLossy(image)};
+    const tensor = tf.browser.fromPixels(pixelsInput.canvas, 4);
+    delete pixelsInput.canvas;
+    return tensor;
+  }
+  return tf.browser.fromPixels(image, 4);
 }
 
 export function assertMaskValue(maskValue: number) {
