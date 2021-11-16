@@ -15,6 +15,7 @@
  * =============================================================================
  */
 import * as pose from '@mediapipe/pose';
+import * as tf from '@tensorflow/tfjs-core';
 import {BLAZEPOSE_KEYPOINTS} from '../constants';
 
 import {PoseDetector} from '../pose_detector';
@@ -142,6 +143,11 @@ class BlazePoseMediaPipeDetector implements PoseDetector {
         selfieMode: this.selfieMode,
       });
     }
+    // Cast to GL TexImageSource types.
+    image = image instanceof tf.Tensor ?
+        new ImageData(
+            await tf.browser.toPixels(image), image.shape[1], image.shape[0]) :
+        image;
     await this.poseSolution.send({image: image as pose.InputImage}, timestamp);
     return this.poses;
   }
