@@ -65,6 +65,11 @@ Pass in `poseDetection.SupportedModels.BlazePose` from the
 
 *   *enableSmoothing*: Defaults to true. If your input is a static image, set it to false. This flag is used to indicate whether to use temporal filter to smooth the predicted keypoints.
 
+*   *enableSegmentation*: Defaults to false. A boolean indicating whether to generate the segmentation mask.
+
+*   *smoothSegmentation*: Defaults to true. A boolean indicating whether the solution filters segmentation masks across different input images to reduce jitter.
+    Ignored if `enableSegmentation` is false or static images are passed in.
+
 *   *modelType*: specify which variant to load from `BlazePoseModelType` (i.e.,
     'lite', 'full', 'heavy'). If unset, the default is 'full'.
 
