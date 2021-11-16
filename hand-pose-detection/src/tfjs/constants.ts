@@ -19,13 +19,13 @@ import {AnchorConfig, ImageToTensorConfig, RectTransformationConfig, TensorsToDe
 import {MediaPipeHandsTfjsEstimationConfig, MediaPipeHandsTfjsModelConfig} from './types';
 
 export const DEFAULT_MPHANDS_DETECTOR_MODEL_URL_LITE =
-    'https://storage.googleapis.com/tfjs-testing/hand-detection/handdetector_lite/model.json';
+    'https://tfhub.dev/mediapipe/tfjs-model/handpose_3d/detector/lite/1';
 export const DEFAULT_MPHANDS_DETECTOR_MODEL_URL_FULL =
-    'https://storage.googleapis.com/tfjs-testing/hand-detection/handdetector_full/model.json';
+    'https://tfhub.dev/mediapipe/tfjs-model/handpose_3d/detector/full/1';
 export const DEFAULT_MPHANDS_LANDMARK_MODEL_URL_LITE =
-    'https://storage.googleapis.com/tfjs-testing/hand-detection/handskeleton_lite/model.json';
+    'https://tfhub.dev/mediapipe/tfjs-model/handpose_3d/landmark/lite/1';
 export const DEFAULT_MPHANDS_LANDMARK_MODEL_URL_FULL =
-    'https://storage.googleapis.com/tfjs-testing/hand-detection/handskeleton_full/model.json';
+    'https://tfhub.dev/mediapipe/tfjs-model/handpose_3d/landmark/full/1';
 export const MPHANDS_DETECTOR_ANCHOR_CONFIGURATION: AnchorConfig = {
   reduceBoxesInLowestLayer: false,
   interpolatedScaleAspectRatio: 1.0,
