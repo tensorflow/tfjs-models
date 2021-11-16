@@ -17,13 +17,38 @@
 import * as pose from '@mediapipe/pose';
 import * as tf from '@tensorflow/tfjs-core';
 import {BLAZEPOSE_KEYPOINTS} from '../constants';
-
 import {PoseDetector} from '../pose_detector';
+import {Mask} from '../shared/calculators/interfaces/common_interfaces';
+import {assertMaskValue, toImageDataLossy, toTensorLossy} from '../shared/calculators/mask_util';
 import {Pose, PoseDetectorInput} from '../types';
-import {validateModelConfig} from './detector_utils';
 
+import {validateModelConfig} from './detector_utils';
 import {BlazePoseMediaPipeEstimationConfig, BlazePoseMediaPipeModelConfig} from './types';
 
+class BlazePoseMediaPipeMask implements Mask {
+  constructor(private mask: pose.GpuBuffer) {}
+
+  async toCanvasImageSource() {
+    return this.mask;
+  }
+
+  async toImageData() {
+    return toImageDataLossy(this.mask);
+  }
+
+  async toTensor() {
+    return toTensorLossy(this.mask);
+  }
+
+  getUnderlyingType() {
+    return 'canvasimagesource' as const ;
+  }
+}
+
+function maskValueToLabel(maskValue: number) {
+  assertMaskValue(maskValue);
+  return 'person';
+}
 /**
  * MediaPipe detector class.
  */
@@ -65,6 +90,8 @@ class BlazePoseMediaPipeDetector implements PoseDetector {
     this.poseSolution.setOptions({
       modelComplexity,
       smoothLandmarks: config.enableSmoothing || true,
+      enableSegmentation: config.enableSegmentation || false,
+      smoothSegmentation: config.smoothSegmentation || true,
       selfieMode: this.selfieMode,
     });
     this.poseSolution.onResults((results) => {
@@ -73,8 +100,15 @@ class BlazePoseMediaPipeDetector implements PoseDetector {
       if (results.poseLandmarks == null) {
         this.poses = [];
       } else {
-        this.poses = [this.translateOutput(
-            results.poseLandmarks, results.poseWorldLandmarks)];
+        const pose = this.translateOutput(
+            results.poseLandmarks, results.poseWorldLandmarks);
+        if (results.segmentationMask) {
+          pose.segmentation = {
+            maskValueToLabel,
+            mask: new BlazePoseMediaPipeMask(results.segmentationMask)
+          };
+        }
+        this.poses = [pose];
       }
     });
   }
@@ -116,8 +150,8 @@ class BlazePoseMediaPipeDetector implements PoseDetector {
    *
    * @param config Optional.
    *       maxPoses: Optional. Max number of poses to estimate.
-   *       When maxPoses = 1, a single pose is detected, it is usually much more
-   *       efficient than maxPoses > 1. When maxPoses > 1, multiple poses are
+   *       When maxPoses = 1, a single pose is detected, it is usually much
+   * more efficient than maxPoses > 1. When maxPoses > 1, multiple poses are
    *       detected.
    *
    *       flipHorizontal: Optional. Default to false. When image data comes
