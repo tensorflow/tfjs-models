@@ -14,12 +14,15 @@
  * limitations under the License.
  * =============================================================================
  */
+import {SelfieSegmentationMediaPipeModelConfig, SelfieSegmentationMediaPipeSegmentationConfig} from './types';
 
-// BodySegmenter class.
-export {BodySegmenter} from './body_segmenter';
-export {createSegmenter} from './create_segmenter';
-// Entry point to create a new segmentation instance.
-export {SelfieSegmentationMediaPipeModelConfig, SelfieSegmentationMediaPipeSegmentationConfig, SelfieSegmentationModelType} from './selfie_segmentation_mediapipe/types';
+export const DEFAULT_SELFIESEGMENTATION_MODEL_CONFIG:
+    SelfieSegmentationMediaPipeModelConfig = {
+      runtime: 'mediapipe',
+      modelType: 'general'
+    };
 
-// Supported models enum.
-export * from './types';
+export const DEFAULT_SELFIESEGMENTATION_SEGMENTATION_CONFIG:
+    SelfieSegmentationMediaPipeSegmentationConfig = {
+      flipHorizontal: false,
+    };
