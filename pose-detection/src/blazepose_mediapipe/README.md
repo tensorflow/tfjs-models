@@ -9,6 +9,9 @@ TFJS API [mediapipe.dev](https://mediapipe.dev). Three models are offered.
 
 Please try our our live [demo](https://storage.googleapis.com/tfjs-models/demos/pose-detection/index.html?model=blazepose).
 
+Note that BlazePose-MediaPipe uses WebAssembly behind the scene and cannot be
+used with [tfjs-react-native](https://github.com/tensorflow/tfjs/tree/master/tfjs-react-native).
+
 --------------------------------------------------------------------------------
 
 ## Table of Contents
