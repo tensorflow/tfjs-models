@@ -17,8 +17,8 @@
 
 import {Tensor3D} from '@tensorflow/tfjs-core';
 
-export type DetectorInput =
-    Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|HTMLCanvasElement;
+export type PixelInput = Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|
+    HTMLCanvasElement|ImageBitmap;
 
 export interface InputResolution {
   width: number;

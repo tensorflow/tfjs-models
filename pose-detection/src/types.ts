@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import {DetectorInput, Keypoint} from './shared/calculators/interfaces/common_interfaces';
+import {Keypoint, PixelInput} from './shared/calculators/interfaces/common_interfaces';
 import {BoundingBox} from './shared/calculators/interfaces/shape_interfaces';
 
 export {Keypoint};
@@ -52,7 +52,7 @@ export interface EstimationConfig {
 /**
  * Allowed input format for the `estimatePoses` method.
  */
-export type PoseDetectorInput = DetectorInput;
+export type PoseDetectorInput = PixelInput;
 
 export interface InputResolution {
   width: number;
