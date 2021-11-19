@@ -34,6 +34,18 @@ export async function loadImage(
   return promise;
 }
 
+/**
+ * Converts an RGBA image to a binary foreground mask based on an RGBA
+ * threshold.
+ *
+ * @param image Input image to convert.
+ *
+ * @param r Minimum red value that denotes a foreground mask.
+ * @param g Minimum green value that denotes a foreground mask.
+ * @param b Minimum blue value that denotes a foreground mask.
+ *
+ * @return A boolean array of size number of pixels.
+ */
 export function imageToBooleanMask(
     rgbaData: Uint8ClampedArray, r: number, g: number, b: number) {
   const mask: boolean[] = [];
@@ -43,6 +55,16 @@ export function imageToBooleanMask(
   return mask;
 }
 
+/**
+ * Given two boolean masks, calculates the IOU percentage.
+ *
+ * @param image Input image to convert.
+ *
+ * @param expectedMask Expected mask values.
+ * @param actualMask Actual mask values.
+ *
+ * @return A number denoting the IOU.
+ */
 export function segmentationIOU(
     expectedMask: boolean[], actualMask: boolean[]) {
   expect(expectedMask.length === actualMask.length);

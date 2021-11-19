@@ -89,9 +89,9 @@ class BlazePoseMediaPipeDetector implements PoseDetector {
     }
     this.poseSolution.setOptions({
       modelComplexity,
-      smoothLandmarks: config.enableSmoothing || true,
-      enableSegmentation: config.enableSegmentation || false,
-      smoothSegmentation: config.smoothSegmentation || true,
+      smoothLandmarks: config.enableSmoothing,
+      enableSegmentation: config.enableSegmentation,
+      smoothSegmentation: config.smoothSegmentation,
       selfieMode: this.selfieMode,
     });
     this.poseSolution.onResults((results) => {
@@ -151,8 +151,8 @@ class BlazePoseMediaPipeDetector implements PoseDetector {
    * @param config Optional.
    *       maxPoses: Optional. Max number of poses to estimate.
    *       When maxPoses = 1, a single pose is detected, it is usually much
-   * more efficient than maxPoses > 1. When maxPoses > 1, multiple poses are
-   *       detected.
+   *       more efficient than maxPoses > 1. When maxPoses > 1, multiple poses
+   *       are detected.
    *
    *       flipHorizontal: Optional. Default to false. When image data comes
    *       from camera, the result has to flip horizontally.
