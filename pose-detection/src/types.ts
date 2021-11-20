@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import {Keypoint, PixelInput} from './shared/calculators/interfaces/common_interfaces';
+import {Keypoint, PixelInput, Segmentation} from './shared/calculators/interfaces/common_interfaces';
 import {BoundingBox} from './shared/calculators/interfaces/shape_interfaces';
 
 export {Keypoint};
@@ -61,8 +61,9 @@ export interface InputResolution {
 
 export interface Pose {
   keypoints: Keypoint[];
-  score?: number;            // The probability of an actual pose.
-  keypoints3D?: Keypoint[];  // Keypoints in meters in a 1m * 1m * 1m space.
-  box?: BoundingBox;         // A bounding box around the detected person.
-  id?: number;               // The unique identifier for this (tracked) pose.
+  score?: number;               // The probability of an actual pose.
+  keypoints3D?: Keypoint[];     // Keypoints in meters in a 1m * 1m * 1m space.
+  box?: BoundingBox;            // A bounding box around the detected person.
+  segmentation?: Segmentation;  // Segmentation mask of the detected person.
+  id?: number;  // The unique identifier for this (tracked) pose.
 }

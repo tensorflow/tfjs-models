@@ -25,6 +25,8 @@ export type BlazePoseModelType = 'lite'|'full'|'heavy';
 export interface BlazePoseModelConfig extends ModelConfig {
   runtime: 'mediapipe'|'tfjs';
   enableSmoothing?: boolean;
+  enableSegmentation?: boolean;
+  smoothSegmentation?: boolean;
   modelType?: BlazePoseModelType;
 }
 
@@ -40,6 +42,14 @@ export interface BlazePoseEstimationConfig extends EstimationConfig {}
  * filter relies on `performance.now()`. You can override this timestamp by
  * passing in your own timestamp (in milliseconds) as the third parameter in
  * `estimatePoses`.
+ *
+ * `enableSegmentation`: Optional. A boolean indicating whether to generate the
+ * segmentation mask. Defaults to false.
+ *
+ * `smoothSegmentation`: Optional. A boolean indicating whether the solution
+ * filters segmentation masks across different input images to reduce jitter.
+ * Ignored if `enableSegmentation` is false or static images are passed in.
+ * Defaults to true.
  *
  * `modelType`: Optional. Possible values: 'lite'|'full'|'heavy'. Defaults to
  * 'full'. The model accuracy increases from lite to heavy, while the inference
