@@ -2,9 +2,13 @@
 
 ## Contents
 
-The demo shows how to use predictions produced by the Toxicity classifier.
+The demo shows how to use predictions produced by the Toxicity classifier. Below you'll find two different sets of directions depending on your use. 
 
-## Setup
+* [General Setup](#setup)
+* [Local Development](#local-development)
+
+
+### Setup
 
 cd into the demo folder:
 
@@ -24,7 +28,8 @@ To watch files for changes, and launch a dev server:
 yarn watch
 ```
 
-## If you are developing toxicity locally, and want to test the changes in the demo
+### Local Development
+_If you are developing toxicity locally, and want to test the changes in the demo_
 
 cd into the toxicity folder:
 ```sh
