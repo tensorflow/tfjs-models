@@ -32,7 +32,8 @@ import {Keypoint} from './interfaces/common_interfaces';
 // ref:
 // https://github.com/google/mediapipe/blob/master/mediapipe/calculators/util/visibility_copy_calculator.cc
 export function calculateScoreCopy(
-    landmarksFrom: Keypoint[], landmarksTo: Keypoint[], copyScore = true) {
+    landmarksFrom: Keypoint[], landmarksTo: Keypoint[],
+    copyScore = true): Keypoint[] {
   const outputLandmarks = [];
   for (let i = 0; i < landmarksFrom.length; i++) {
     // Create output landmark and copy all fields from the `to` landmarks

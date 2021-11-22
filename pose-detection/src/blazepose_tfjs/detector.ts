@@ -22,6 +22,7 @@ import {BlazePoseModelType} from '../blazepose_mediapipe/types';
 import {BLAZEPOSE_KEYPOINTS} from '../constants';
 import {PoseDetector} from '../pose_detector';
 import {calculateAlignmentPointsRects} from '../shared/calculators/calculate_alignment_points_rects';
+import {calculateInverseMatrix, TransformationMatrix, transformationMatrixToArray} from '../shared/calculators/calculate_inverse_matrix';
 import {calculateLandmarkProjection} from '../shared/calculators/calculate_landmark_projection';
 import {calculateScoreCopy} from '../shared/calculators/calculate_score_copy';
 import {calculateWorldLandmarkProjection} from '../shared/calculators/calculate_world_landmark_projection';
@@ -30,11 +31,12 @@ import {convertImageToTensor} from '../shared/calculators/convert_image_to_tenso
 import {createSsdAnchors} from '../shared/calculators/create_ssd_anchors';
 import {detectorInference} from '../shared/calculators/detector_inference';
 import {getImageSize, toImageTensor} from '../shared/calculators/image_utils';
-import {ImageSize, Keypoint} from '../shared/calculators/interfaces/common_interfaces';
+import {ImageSize, Keypoint, Mask, Padding} from '../shared/calculators/interfaces/common_interfaces';
 import {Rect} from '../shared/calculators/interfaces/shape_interfaces';
 import {AnchorTensor, Detection} from '../shared/calculators/interfaces/shape_interfaces';
 import {isVideo} from '../shared/calculators/is_video';
 import {landmarksToDetection} from '../shared/calculators/landmarks_to_detection';
+import {assertMaskValue, toHTMLCanvasElementLossy, toImageDataLossy} from '../shared/calculators/mask_util';
 import {nonMaxSuppression} from '../shared/calculators/non_max_suppression';
 import {normalizedKeypointsToKeypoints} from '../shared/calculators/normalized_keypoints_to_keypoints';
 import {refineLandmarksFromHeatmap} from '../shared/calculators/refine_landmarks_from_heatmap';
@@ -43,6 +45,7 @@ import {removeLandmarkLetterbox} from '../shared/calculators/remove_landmark_let
 import {shiftImageValue} from '../shared/calculators/shift_image_value';
 import {tensorsToDetections} from '../shared/calculators/tensors_to_detections';
 import {tensorsToLandmarks} from '../shared/calculators/tensors_to_landmarks';
+import {tensorsToSegmentation} from '../shared/calculators/tensors_to_segmentation';
 import {transformNormalizedRect} from '../shared/calculators/transform_rect';
 import {KeypointsSmoothingFilter} from '../shared/filters/keypoints_smoothing';
 import {LowPassVisibilityFilter} from '../shared/filters/visibility_smoothing';
@@ -53,11 +56,37 @@ import {validateEstimationConfig, validateModelConfig} from './detector_utils';
 import {BlazePoseTfjsEstimationConfig, BlazePoseTfjsModelConfig} from './types';
 
 type PoseLandmarksByRoiResult = {
-  actualLandmarks: Keypoint[],
+  landmarks: Keypoint[],
   auxiliaryLandmarks: Keypoint[],
   poseScore: number,
-  actualWorldLandmarks: Keypoint[],
+  worldLandmarks: Keypoint[],
+  segmentationMask: tf.Tensor2D,
 };
+
+class BlazePoseTfjsMask implements Mask {
+  constructor(private mask: tf.Tensor3D) {}
+
+  async toCanvasImageSource() {
+    return toHTMLCanvasElementLossy(this.mask);
+  }
+
+  async toImageData() {
+    return toImageDataLossy(this.mask);
+  }
+
+  async toTensor() {
+    return this.mask;
+  }
+
+  getUnderlyingType() {
+    return 'tensor' as const ;
+  }
+}
+
+function maskValueToLabel(maskValue: number) {
+  assertMaskValue(maskValue);
+  return 'person';
+}
 
 /**
  * BlazePose detector class.
@@ -71,6 +100,7 @@ class BlazePoseTfjsDetector implements PoseDetector {
 
   // Store global states.
   private regionOfInterest: Rect = null;
+  private prevFilteredSegmentationMask: tf.Tensor2D = null;
   private visibilitySmoothingFilterActual: LowPassVisibilityFilter;
   private visibilitySmoothingFilterAuxiliary: LowPassVisibilityFilter;
   private landmarksSmoothingFilterActual: KeypointsSmoothingFilter;
@@ -81,6 +111,7 @@ class BlazePoseTfjsDetector implements PoseDetector {
       private readonly detectorModel: tfconv.GraphModel,
       private readonly landmarkModel: tfconv.GraphModel,
       private readonly enableSmoothing: boolean,
+      private enableSegmentation: boolean, private smoothSegmentation: boolean,
       private readonly modelType: BlazePoseModelType) {
     this.anchors =
         createSsdAnchors(constants.BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION);
@@ -89,6 +120,8 @@ class BlazePoseTfjsDetector implements PoseDetector {
     const anchorX = tf.tensor1d(this.anchors.map(a => a.xCenter));
     const anchorY = tf.tensor1d(this.anchors.map(a => a.yCenter));
     this.anchorTensor = {x: anchorX, y: anchorY, w: anchorW, h: anchorH};
+    this.prevFilteredSegmentationMask =
+        this.enableSegmentation ? tf.tensor2d([], [0, 0]) : null;
   }
 
   /**
@@ -158,43 +191,51 @@ class BlazePoseTfjsDetector implements PoseDetector {
     }
 
     // Detects pose landmarks within specified region of interest of the image.
-    const poseLandmarks = await this.poseLandmarksByRoi(poseRect, image3d);
+    const poseLandmarksByRoiResult =
+        await this.poseLandmarksByRoi(poseRect, image3d);
 
     image3d.dispose();
 
-    if (poseLandmarks == null) {
+    if (poseLandmarksByRoiResult == null) {
       this.reset();
       return [];
     }
 
     const {
-      actualLandmarks,
-      auxiliaryLandmarks,
+      landmarks: unfilteredPoseLandmarks,
+      auxiliaryLandmarks: unfilteredAuxiliaryLandmarks,
       poseScore,
-      actualWorldLandmarks
-    } = poseLandmarks;
+      worldLandmarks: unfilteredWorldLandmarks,
+      segmentationMask: unfilteredSegmentationMask,
+    } = poseLandmarksByRoiResult;
 
     // Smoothes landmarks to reduce jitter.
     const {
-      actualLandmarksFiltered,
-      auxiliaryLandmarksFiltered,
-      actualWorldLandmarksFiltered
+      actualLandmarksFiltered: poseLandmarks,
+      auxiliaryLandmarksFiltered: auxiliaryLandmarks,
+      actualWorldLandmarksFiltered: poseWorldLandmarks
     } =
         this.poseLandmarkFiltering(
-            actualLandmarks, auxiliaryLandmarks, actualWorldLandmarks,
-            imageSize);
+            unfilteredPoseLandmarks, unfilteredAuxiliaryLandmarks,
+            unfilteredWorldLandmarks, imageSize);
 
     // Calculates region of interest based on the auxiliary landmarks, to be
     // used in the subsequent image.
     const poseRectFromLandmarks =
-        this.poseLandmarksToRoi(auxiliaryLandmarksFiltered, imageSize);
+        this.poseLandmarksToRoi(auxiliaryLandmarks, imageSize);
 
     // Cache roi for next image.
     this.regionOfInterest = poseRectFromLandmarks;
 
+    // Smoothes segmentation to reduce jitter
+    const filteredSegmentationMask =
+        this.smoothSegmentation && unfilteredSegmentationMask != null ?
+        this.poseSegmentationFiltering(unfilteredSegmentationMask) :
+        unfilteredSegmentationMask;
+
     // Scale back keypoints.
-    const keypoints = actualLandmarksFiltered != null ?
-        normalizedKeypointsToKeypoints(actualLandmarksFiltered, imageSize) :
+    const keypoints = poseLandmarks != null ?
+        normalizedKeypointsToKeypoints(poseLandmarks, imageSize) :
         null;
 
     // Add keypoint name.
@@ -204,7 +245,7 @@ class BlazePoseTfjsDetector implements PoseDetector {
       });
     }
 
-    const keypoints3D = actualWorldLandmarksFiltered;
+    const keypoints3D = poseWorldLandmarks;
 
     // Add keypoint name.
     if (keypoints3D != null) {
@@ -215,7 +256,96 @@ class BlazePoseTfjsDetector implements PoseDetector {
 
     const pose: Pose = {score: poseScore, keypoints, keypoints3D};
 
+    if (filteredSegmentationMask) {
+      // Grayscale to RGBA
+      const rgbaMask = tf.tidy(() => {
+        const mask3D =
+            tf.expandDims(filteredSegmentationMask, 2) as tf.Tensor3D;
+        // Pads a pixel [r] to [r, 0].
+        const rgMask = tf.pad(mask3D, [[0, 0], [0, 0], [0, 1]]);
+        // Pads a pixel [r, 0] to [r, 0, 0, r].
+        return tf.mirrorPad(rgMask, [[0, 0], [0, 0], [0, 2]], 'symmetric');
+      });
+
+      if (!this.smoothSegmentation) {
+        tf.dispose(filteredSegmentationMask);
+      }
+
+      const segmentation = {
+        maskValueToLabel,
+        mask: new BlazePoseTfjsMask(rgbaMask)
+      };
+
+      pose.segmentation = segmentation;
+    }
+
     return [pose];
+  }
+
+  poseSegmentationFiltering(segmentationMask: tf.Tensor2D) {
+    const prevMask = this.prevFilteredSegmentationMask;
+    if (prevMask.size === 0) {
+      this.prevFilteredSegmentationMask = segmentationMask;
+    } else {
+      // SegmentationSmoothingCalculator
+      this.prevFilteredSegmentationMask = tf.tidy(() => {
+        const newMask = segmentationMask;
+        /*
+         * Assume p := newMaskValue
+         * H(p) := 1 + (p * log(p) + (1-p) * log(1-p)) / log(2)
+         * uncertainty alpha(p) =
+         *   Clamp(1 - (1 - H(p)) * (1 - H(p)), 0, 1) [squaring the
+         * uncertainty]
+         *
+         * The following polynomial approximates uncertainty alpha as a
+         * function of (p + 0.5):
+         */
+        const c1 = 5.68842;
+        const c2 = -0.748699;
+        const c3 = -57.8051;
+        const c4 = 291.309;
+        const c5 = -624.717;
+        const t = tf.sub(newMask, 0.5);
+        const x = tf.square(t);
+
+        // Per element calculation is: 1.0 - Math.min(1.0, x * (c1 + x * (c2 + x
+        // * (c3 + x * (c4 + x * c5))))).
+
+        const uncertainty = tf.sub(
+            1,
+            tf.minimum(
+                1,
+                tf.mul(
+                    x,
+                    tf.add(
+                        c1,
+                        tf.mul(
+                            x,
+                            tf.add(
+                                c2,
+                                tf.mul(
+                                    x,
+                                    tf.add(
+                                        c3,
+                                        tf.mul(
+                                            x,
+                                            tf.add(c4, tf.mul(x, c5)))))))))));
+
+        // Per element calculation is: newMaskValue + (prevMaskValue -
+        // newMaskValue) * (uncertainty * combineWithPreviousRatio).
+        return tf.add(
+            newMask,
+            tf.mul(
+                tf.sub(prevMask, newMask),
+                tf.mul(
+                    uncertainty,
+                    constants.BLAZEPOSE_SEGMENTATION_SMOOTHING_CONFIG
+                        .combineWithPreviousRatio)));
+      });
+      tf.dispose([segmentationMask]);
+    }
+    tf.dispose([prevMask]);
+    return this.prevFilteredSegmentationMask;
   }
 
   dispose() {
@@ -223,12 +353,13 @@ class BlazePoseTfjsDetector implements PoseDetector {
     this.landmarkModel.dispose();
     tf.dispose([
       this.anchorTensor.x, this.anchorTensor.y, this.anchorTensor.w,
-      this.anchorTensor.h
+      this.anchorTensor.h, this.prevFilteredSegmentationMask
     ]);
   }
 
   reset() {
     this.regionOfInterest = null;
+    this.prevFilteredSegmentationMask = null;
     this.visibilitySmoothingFilterActual = null;
     this.visibilitySmoothingFilterAuxiliary = null;
     this.landmarksSmoothingFilterActual = null;
@@ -311,17 +442,19 @@ class BlazePoseTfjsDetector implements PoseDetector {
     return roi;
   }
 
-  // Predict pose landmarks.
+  // Predict pose landmarks  and optionally segmentation within an ROI
   // subgraph: PoseLandmarksByRoiCpu
   // ref:
   // https://github.com/google/mediapipe/blob/master/mediapipe/modules/pose_landmark/pose_landmark_by_roi_cpu.pbtxt
   // When poseRect is not null, image should not be null either.
-  private async poseLandmarksByRoi(poseRect: Rect, image?: tf.Tensor3D):
+  private async poseLandmarksByRoi(roi: Rect, image?: tf.Tensor3D):
       Promise<PoseLandmarksByRoiResult> {
+    const imageSize = getImageSize(image);
     // Transforms the input image into a 256x256 tensor while keeping the aspect
     // ratio, resulting in potential letterboxing in the transformed image.
-    const {imageTensor, padding} = convertImageToTensor(
-        image, constants.BLAZEPOSE_LANDMARK_IMAGE_TO_TENSOR_CONFIG, poseRect);
+    const {imageTensor, padding: letterboxPadding, transformationMatrix} =
+        convertImageToTensor(
+            image, constants.BLAZEPOSE_LANDMARK_IMAGE_TO_TENSOR_CONFIG, roi);
 
     const imageValueShifted = shiftImageValue(imageTensor, [0, 1]);
 
@@ -337,17 +470,135 @@ class BlazePoseTfjsDetector implements PoseDetector {
     // ld_3d: This tensor (shape: [1, 195]) represents 39 5-d keypoints.
     // output_poseflag: This tensor (shape: [1, 1]) represents the confidence
     //  score.
+    // activation_segmentation: This tensor (shape: [256, 256]) represents the
+    // mask of the input image.
     // activation_heatmap: This tensor (shape: [1, 64, 64, 39]) represents
     //  heatmap for the 39 landmarks.
     // world_3d: This tensor (shape: [1, 117]) represents 39 3DWorld keypoints.
-    const landmarkResult = this.landmarkModel.execute(imageValueShifted, [
-      'ld_3d', 'output_poseflag', 'activation_heatmap', 'world_3d'
+    const outputTensor = this.landmarkModel.execute(imageValueShifted, [
+      'ld_3d', 'output_poseflag', 'activation_segmentation',
+      'activation_heatmap', 'world_3d'
     ]) as tf.Tensor[];
 
-    const landmarkTensor = landmarkResult[0] as tf.Tensor2D,
-          poseFlagTensor = landmarkResult[1] as tf.Tensor2D,
-          heatmapTensor = landmarkResult[2] as tf.Tensor4D,
-          worldLandmarkTensor = landmarkResult[3] as tf.Tensor2D;
+    // Decodes the tensors into the corresponding landmark and segmentation mask
+    // representation.
+    // PoseLandmarksByRoiCPU: TensorsToPoseLandmarksAndSegmentation
+    const tensorsToPoseLandmarksAndSegmentationResult =
+        this.tensorsToPoseLandmarksAndSegmentation(outputTensor);
+
+    if (tensorsToPoseLandmarksAndSegmentationResult == null) {
+      tf.dispose(outputTensor);
+      tf.dispose([imageTensor, imageValueShifted]);
+      return null;
+    }
+
+    const {
+      landmarks: roiLandmarks,
+      auxiliaryLandmarks: roiAuxiliaryLandmarks,
+      poseScore,
+      worldLandmarks: roiWorldLandmarks,
+      segmentationMask: roiSegmentationMask
+    } = await tensorsToPoseLandmarksAndSegmentationResult;
+
+    const poseLandmarksAndSegmentationInverseProjectionResults =
+        await this.poseLandmarksAndSegmentationInverseProjection(
+            imageSize, roi, letterboxPadding, transformationMatrix,
+            roiLandmarks, roiAuxiliaryLandmarks, roiWorldLandmarks,
+            roiSegmentationMask);
+
+    tf.dispose(outputTensor);
+    tf.dispose([imageTensor, imageValueShifted]);
+
+    return {poseScore, ...poseLandmarksAndSegmentationInverseProjectionResults};
+  }
+  async poseLandmarksAndSegmentationInverseProjection(
+      imageSize: ImageSize, roi: Rect, letterboxPadding: Padding,
+      transformationMatrix: TransformationMatrix, roiLandmarks: Keypoint[],
+      roiAuxiliaryLandmarks: Keypoint[], roiWorldLandmarks: Keypoint[],
+      roiSegmentationMask: tf.Tensor2D) {
+    // -------------------------------------------------------------------------
+    // ------------------------------ Landmarks --------------------------------
+    // -------------------------------------------------------------------------
+
+    // Adjusts landmarks (already normalized to [0.0, 1.0]) on the letterboxed
+    // pose image to the corresponding coordinates with the letterbox removed.
+    // PoseLandmarksAndSegmentationInverseProjection:
+    // LandmarkLetterboxRemovalCalculator.
+    const adjustedLandmarks =
+        removeLandmarkLetterbox(roiLandmarks, letterboxPadding);
+
+    // PoseLandmarksAndSegmentationInverseProjection:
+    // LandmarkLetterboxRemovalCalculator.
+    const adjustedAuxiliaryLandmarks =
+        removeLandmarkLetterbox(roiAuxiliaryLandmarks, letterboxPadding);
+
+    // PoseLandmarksAndSegmentationInverseProjection:
+    // LandmarkProjectionCalculator.
+    const landmarks = calculateLandmarkProjection(adjustedLandmarks, roi);
+
+    const auxiliaryLandmarks =
+        calculateLandmarkProjection(adjustedAuxiliaryLandmarks, roi);
+
+    // -------------------------------------------------------------------------
+    // --------------------------- World Landmarks -----------------------------
+    // -------------------------------------------------------------------------
+
+    // Projects the world landmarks from the letterboxed ROI to the full image.
+    // PoseLandmarksAndSegmentationInverseProjection:
+    // WorldLandmarkProjectionCalculator.
+    const worldLandmarks =
+        calculateWorldLandmarkProjection(roiWorldLandmarks, roi);
+
+    // -------------------------------------------------------------------------
+    // -------------------------- Segmentation Mask ----------------------------
+    // -------------------------------------------------------------------------
+    let segmentationMask: tf.Tensor2D|null = null;
+
+    if (this.enableSegmentation) {
+      segmentationMask = tf.tidy(() => {
+        const [inputHeight, inputWidth] = roiSegmentationMask.shape;
+        // Calculates the inverse transformation matrix.
+        // PoseLandmarksAndSegmentationInverseProjection:
+        // InverseMatrixCalculator.
+        const inverseTransformationMatrix = transformationMatrixToArray(
+            calculateInverseMatrix(transformationMatrix));
+
+        const projectiveTransform = tf.tensor2d(
+            [
+              inverseTransformationMatrix[0] * inputWidth / imageSize.width,
+              inverseTransformationMatrix[1] * inputWidth / imageSize.height,
+              inverseTransformationMatrix[3] * inputWidth,
+              inverseTransformationMatrix[4] * inputHeight / imageSize.width,
+              inverseTransformationMatrix[5] * inputHeight / imageSize.height,
+              inverseTransformationMatrix[7] * inputHeight, 0, 0
+            ],
+            [1, 8]);
+
+        // Projects the segmentation mask from the letterboxed ROI back to the
+        // full image.
+        // PoseLandmarksAndSegmentationInverseProjection: WarpAffineCalculator.
+        const shape4D =
+            [1, inputHeight, inputWidth, 1] as [number, number, number, number];
+        return tf.squeeze(
+            tf.image.transform(
+                tf.reshape(roiSegmentationMask, shape4D), projectiveTransform,
+                'bilinear', 'constant', 0, [imageSize.height, imageSize.width]),
+            [0, 3]);
+      });
+
+      tf.dispose([roiSegmentationMask]);
+    }
+
+    return {landmarks, auxiliaryLandmarks, worldLandmarks, segmentationMask};
+  }
+
+  private async tensorsToPoseLandmarksAndSegmentation(tensors: tf.Tensor[]) {
+    // TensorsToPoseLandmarksAndSegmentation: SplitTensorVectorCalculator.
+    const landmarkTensor = tensors[0] as tf.Tensor2D,
+          poseFlagTensor = tensors[1] as tf.Tensor2D,
+          segmentationTensor = tensors[2] as tf.Tensor4D,
+          heatmapTensor = tensors[3] as tf.Tensor4D,
+          worldLandmarkTensor = tensors[4] as tf.Tensor2D;
 
     // Converts the pose-flag tensor into a float that represents the
     // confidence score of pose presence.
@@ -356,9 +607,6 @@ class BlazePoseTfjsDetector implements PoseDetector {
     // Applies a threshold to the confidence score to determine whether a pose
     // is present.
     if (poseScore < constants.BLAZEPOSE_POSE_PRESENCE_SCORE) {
-      tf.dispose(landmarkResult);
-      tf.dispose([imageTensor, imageValueShifted]);
-
       return null;
     }
 
@@ -369,33 +617,23 @@ class BlazePoseTfjsDetector implements PoseDetector {
     // Decodes the landmark tensors into a list of landmarks, where the
     // landmark coordinates are normalized by the size of the input image to
     // the model.
-    // PoseLandmarksByRoiCpu: TensorsToLandmarksCalculator.
-    const landmarks = await tensorsToLandmarks(
+    // TensorsToPoseLandmarksAndSegmentation: TensorsToLandmarksCalculator.
+    const rawLandmarks = await tensorsToLandmarks(
         landmarkTensor, constants.BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG);
 
     // Refine landmarks with heatmap tensor.
-    const refinedLandmarks = await refineLandmarksFromHeatmap(
-        landmarks, heatmapTensor,
+    // TensorsToPoseLandmarksAndSegmentation:
+    // RefineLandmarksFromHeatmapCalculator
+    const allLandmarks = await refineLandmarksFromHeatmap(
+        rawLandmarks, heatmapTensor,
         constants.BLAZEPOSE_REFINE_LANDMARKS_FROM_HEATMAP_CONFIG);
-
-    // Adjusts landmarks (already normalized to [0.0, 1.0]) on the letterboxed
-    // pose image to the corresponding locations on the same image with the
-    // letterbox removed.
-    // PoseLandmarksByRoiCpu: LandmarkLetterboxRemovalCalculator.
-    const adjustedLandmarks =
-        removeLandmarkLetterbox(refinedLandmarks, padding);
-
-    // Projects the landmarks from the cropped pose image to the corresponding
-    // locations on the full image before cropping (input to the graph).
-    // PoseLandmarksByRoiCpu: LandmarkProjectionCalculator.
-    const landmarksProjected =
-        calculateLandmarkProjection(adjustedLandmarks, poseRect);
 
     // Splits the landmarks into two sets: the actual pose landmarks and the
     // auxiliary landmarks.
-    const actualLandmarks =
-        landmarksProjected.slice(0, constants.BLAZEPOSE_NUM_KEYPOINTS);
-    const auxiliaryLandmarks = landmarksProjected.slice(
+    // TensorsToPoseLandmarksAndSegmentation:
+    // SplitNormalizedLandmarkListCalculator
+    const landmarks = allLandmarks.slice(0, constants.BLAZEPOSE_NUM_KEYPOINTS);
+    const auxiliaryLandmarks = allLandmarks.slice(
         constants.BLAZEPOSE_NUM_KEYPOINTS,
         constants.BLAZEPOSE_NUM_AUXILIARY_KEYPOINTS);
 
@@ -404,33 +642,33 @@ class BlazePoseTfjsDetector implements PoseDetector {
     // -------------------------------------------------------------------------
 
     // Decodes the world landmark tensors into a list of landmarks.
-    // PoseLandmarksByRoiCpu: TensorsToLandmarksCalculator.
-    const worldLandmarks = await tensorsToLandmarks(
+    // TensorsToPoseLandmarksAndSegmentation: TensorsToLandmarksCalculator.
+    const allWorldLandmarks = await tensorsToLandmarks(
         worldLandmarkTensor,
         constants.BLAZEPOSE_TENSORS_TO_WORLD_LANDMARKS_CONFIG);
 
-    const worldLandmarksWithVisibility =
-        calculateScoreCopy(landmarks, worldLandmarks, true);
-
-    // Projects the world landmarks from the cropped pose image to the
-    // corresponding locations on the full image before cropping (input to the
-    // graph).
-    // PoseLandmarksByRoiCpu: WorldLandmarkProjectionCalculator.
-    const projectedWorldLandmarks = calculateWorldLandmarkProjection(
-        worldLandmarksWithVisibility, poseRect);
-
     // Take only actual world landmarks.
-    const actualWorldLandmarks =
-        projectedWorldLandmarks.slice(0, constants.BLAZEPOSE_NUM_KEYPOINTS);
+    const worldLandmarksWithoutVisibility =
+        allWorldLandmarks.slice(0, constants.BLAZEPOSE_NUM_KEYPOINTS);
 
-    tf.dispose(landmarkResult);
-    tf.dispose([imageTensor, imageValueShifted]);
+    const worldLandmarks =
+        calculateScoreCopy(landmarks, worldLandmarksWithoutVisibility, true);
+
+    // -------------------------------------------------------------------------
+    // -------------------------- Segmentation Mask ----------------------------
+    // -------------------------------------------------------------------------
+    const segmentationMask: tf.Tensor2D|null = this.enableSegmentation ?
+        tensorsToSegmentation(
+            segmentationTensor,
+            constants.BLAZEPOSE_TENSORS_TO_SEGMENTATION_CONFIG) :
+        null;
 
     return {
-      actualLandmarks,
+      landmarks,
       auxiliaryLandmarks,
       poseScore,
-      actualWorldLandmarks
+      worldLandmarks,
+      segmentationMask
     };
   }
 
@@ -566,5 +804,6 @@ export async function load(modelConfig: BlazePoseTfjsModelConfig):
   ]);
 
   return new BlazePoseTfjsDetector(
-      detectorModel, landmarkModel, config.enableSmoothing, config.modelType);
+      detectorModel, landmarkModel, config.enableSmoothing,
+      config.enableSegmentation, config.smoothSegmentation, config.modelType);
 }
