@@ -178,6 +178,9 @@ export interface TensorsToLandmarksConfig {
   flipVertically?: boolean;
   normalizeZ?: number;
 }
+export interface TensorsToSegmentationConfig {
+  activation: 'none'|'sigmoid'|'softmax';
+}
 export interface RefineLandmarksFromHeatmapConfig {
   kernelSize?: number;
   minConfidenceToRefine: number;
