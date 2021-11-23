@@ -19,7 +19,7 @@
 export {BodySegmenter} from './body_segmenter';
 export {createSegmenter} from './create_segmenter';
 // Entry point to create a new segmentation instance.
-export {SelfieSegmentationMediaPipeModelConfig, SelfieSegmentationMediaPipeSegmentationConfig, SelfieSegmentationModelType} from './selfie_segmentation_mediapipe/types';
+export {MediaPipeSelfieSegmentationMediaPipeModelConfig, MediaPipeSelfieSegmentationMediaPipeSegmentationConfig, MediaPipeSelfieSegmentationModelType} from './selfie_segmentation_mediapipe/types';
 
 // Supported models enum.
 export * from './types';

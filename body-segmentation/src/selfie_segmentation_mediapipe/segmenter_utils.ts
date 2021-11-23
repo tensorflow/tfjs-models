@@ -15,39 +15,42 @@
  * =============================================================================
  */
 
-import {DEFAULT_SELFIESEGMENTATION_MODEL_CONFIG, DEFAULT_SELFIESEGMENTATION_SEGMENTATION_CONFIG} from './constants';
-import {SelfieSegmentationMediaPipeModelConfig, SelfieSegmentationMediaPipeSegmentationConfig} from './types';
+import {DEFAULT_MEDIAPIPE_SELFIE_SEGMENTATION_MODEL_CONFIG, DEFAULT_MEDIAPIPE_SELFIE_SEGMENTATION_SEGMENTATION_CONFIG} from './constants';
+import {MediaPipeSelfieSegmentationMediaPipeModelConfig, MediaPipeSelfieSegmentationMediaPipeSegmentationConfig} from './types';
 
 export function validateModelConfig(
-    modelConfig: SelfieSegmentationMediaPipeModelConfig):
-    SelfieSegmentationMediaPipeModelConfig {
+    modelConfig: MediaPipeSelfieSegmentationMediaPipeModelConfig):
+    MediaPipeSelfieSegmentationMediaPipeModelConfig {
   if (modelConfig == null) {
-    return {...DEFAULT_SELFIESEGMENTATION_MODEL_CONFIG};
+    return {...DEFAULT_MEDIAPIPE_SELFIE_SEGMENTATION_MODEL_CONFIG};
   }
 
-  const config: SelfieSegmentationMediaPipeModelConfig = {...modelConfig};
+  const config:
+      MediaPipeSelfieSegmentationMediaPipeModelConfig = {...modelConfig};
 
   config.runtime = 'mediapipe';
 
   if (config.modelType == null) {
-    config.modelType = DEFAULT_SELFIESEGMENTATION_MODEL_CONFIG.modelType;
+    config.modelType =
+        DEFAULT_MEDIAPIPE_SELFIE_SEGMENTATION_MODEL_CONFIG.modelType;
   }
 
   return config;
 }
 
 export function validateSegmentationConfig(
-    segmentationConfig: SelfieSegmentationMediaPipeSegmentationConfig):
-    SelfieSegmentationMediaPipeSegmentationConfig {
+    segmentationConfig: MediaPipeSelfieSegmentationMediaPipeSegmentationConfig):
+    MediaPipeSelfieSegmentationMediaPipeSegmentationConfig {
   if (segmentationConfig == null) {
-    return {...DEFAULT_SELFIESEGMENTATION_SEGMENTATION_CONFIG};
+    return {...DEFAULT_MEDIAPIPE_SELFIE_SEGMENTATION_SEGMENTATION_CONFIG};
   }
 
   const config = {...segmentationConfig};
 
   if (config.flipHorizontal == null) {
     config.flipHorizontal =
-        DEFAULT_SELFIESEGMENTATION_SEGMENTATION_CONFIG.flipHorizontal;
+        DEFAULT_MEDIAPIPE_SELFIE_SEGMENTATION_SEGMENTATION_CONFIG
+            .flipHorizontal;
   }
 
   return config;

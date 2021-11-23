@@ -16,8 +16,8 @@
  */
 
 import {BodySegmenter} from './body_segmenter';
-import {load as loadSelfieSegmentationMediaPipeDetector} from './selfie_segmentation_mediapipe/segmenter';
-import {SelfieSegmentationMediaPipeModelConfig, SelfieSegmentationModelConfig} from './selfie_segmentation_mediapipe/types';
+import {load as loadMediaPipeSelfieSegmentationMediaPipeDetector} from './selfie_segmentation_mediapipe/segmenter';
+import {MediaPipeSelfieSegmentationMediaPipeModelConfig, MediaPipeSelfieSegmentationModelConfig} from './selfie_segmentation_mediapipe/types';
 import {SupportedModels} from './types';
 
 /**
@@ -28,19 +28,19 @@ import {SupportedModels} from './types';
  */
 export async function createSegmenter(
     model: SupportedModels,
-    modelConfig?: SelfieSegmentationMediaPipeModelConfig):
+    modelConfig?: MediaPipeSelfieSegmentationMediaPipeModelConfig):
     Promise<BodySegmenter> {
   switch (model) {
-    case SupportedModels.SelfieSegmentation:
-      const config = modelConfig as SelfieSegmentationModelConfig;
+    case SupportedModels.MediaPipeSelfieSegmentation:
+      const config = modelConfig as MediaPipeSelfieSegmentationModelConfig;
       let runtime;
       if (config != null) {
         if (config.runtime === 'tfjs') {
           throw new Error(`tfjs runtime not yet supported.`);
         }
         if (config.runtime === 'mediapipe') {
-          return loadSelfieSegmentationMediaPipeDetector(
-              config as SelfieSegmentationMediaPipeModelConfig);
+          return loadMediaPipeSelfieSegmentationMediaPipeDetector(
+              config as MediaPipeSelfieSegmentationMediaPipeModelConfig);
         }
         runtime = config.runtime;
       }

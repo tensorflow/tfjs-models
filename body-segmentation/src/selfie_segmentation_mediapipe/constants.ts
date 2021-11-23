@@ -14,15 +14,15 @@
  * limitations under the License.
  * =============================================================================
  */
-import {SelfieSegmentationMediaPipeModelConfig, SelfieSegmentationMediaPipeSegmentationConfig} from './types';
+import {MediaPipeSelfieSegmentationMediaPipeModelConfig, MediaPipeSelfieSegmentationMediaPipeSegmentationConfig} from './types';
 
-export const DEFAULT_SELFIESEGMENTATION_MODEL_CONFIG:
-    SelfieSegmentationMediaPipeModelConfig = {
+export const DEFAULT_MEDIAPIPE_SELFIE_SEGMENTATION_MODEL_CONFIG:
+    MediaPipeSelfieSegmentationMediaPipeModelConfig = {
       runtime: 'mediapipe',
       modelType: 'general'
     };
 
-export const DEFAULT_SELFIESEGMENTATION_SEGMENTATION_CONFIG:
-    SelfieSegmentationMediaPipeSegmentationConfig = {
+export const DEFAULT_MEDIAPIPE_SELFIE_SEGMENTATION_SEGMENTATION_CONFIG:
+    MediaPipeSelfieSegmentationMediaPipeSegmentationConfig = {
       flipHorizontal: false,
     };

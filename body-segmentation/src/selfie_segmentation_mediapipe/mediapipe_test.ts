@@ -22,12 +22,13 @@ import * as bodySegmentation from '../index';
 import {toImageDataLossy} from '../shared/calculators/mask_util';
 import {imageToBooleanMask, loadImage, segmentationIOU} from '../shared/test_util';
 
-import {SelfieSegmentationMediaPipeModelConfig} from './types';
+import {MediaPipeSelfieSegmentationMediaPipeModelConfig} from './types';
 
-const MEDIAPIPE_MODEL_CONFIG: SelfieSegmentationMediaPipeModelConfig = {
-  runtime: 'mediapipe',
-  solutionPath: 'base/node_modules/@mediapipe/selfie_segmentation'
-};
+const MEDIAPIPE_MODEL_CONFIG:
+    MediaPipeSelfieSegmentationMediaPipeModelConfig = {
+      runtime: 'mediapipe',
+      solutionPath: 'base/node_modules/@mediapipe/selfie_segmentation'
+    };
 
 // Measured in percent.
 const EPSILON_IOU = 0.93;
@@ -46,7 +47,7 @@ async function expectSegmenter(
   const expectedBooleanMask = imageToBooleanMask(
       (await toImageDataLossy(segmentationImage)).data, 0, 0, 255);
 
-  expect(maskValuesToLabel.every(label => label === 'upper_body'));
+  expect(maskValuesToLabel.every(label => label === 'person'));
   expect(mask.getUnderlyingType() === 'canvasimagesource');
   expect(segmentationIOU(expectedBooleanMask, actualBooleanMask))
       .toBeGreaterThanOrEqual(EPSILON_IOU);
@@ -73,7 +74,8 @@ describeWithFlags(
 
       it('general model test.', async () => {
         // Note: this makes a network request for model assets.
-        const model = bodySegmentation.SupportedModels.SelfieSegmentation;
+        const model =
+            bodySegmentation.SupportedModels.MediaPipeSelfieSegmentation;
         segmenter = await bodySegmentation.createSegmenter(
             model, {...MEDIAPIPE_MODEL_CONFIG, modelType: 'general'});
 
@@ -84,7 +86,8 @@ describeWithFlags(
 
       it('landscape model test.', async () => {
         // Note: this makes a network request for model assets.
-        const model = bodySegmentation.SupportedModels.SelfieSegmentation;
+        const model =
+            bodySegmentation.SupportedModels.MediaPipeSelfieSegmentation;
         segmenter = await bodySegmentation.createSegmenter(
             model, {...MEDIAPIPE_MODEL_CONFIG, modelType: 'landscape'});
 

@@ -23,9 +23,9 @@ import {assertMaskValue, toImageDataLossy, toTensorLossy} from '../shared/calcul
 import {BodySegmenterInput} from '../types';
 
 import {validateModelConfig} from './segmenter_utils';
-import {SelfieSegmentationMediaPipeModelConfig, SelfieSegmentationMediaPipeSegmentationConfig} from './types';
+import {MediaPipeSelfieSegmentationMediaPipeModelConfig, MediaPipeSelfieSegmentationMediaPipeSegmentationConfig} from './types';
 
-class SelfieSegmentationMediaPipeMask implements Mask {
+class MediaPipeSelfieSegmentationMediaPipeMask implements Mask {
   constructor(private mask: selfieSegmentation.GpuBuffer) {}
 
   async toCanvasImageSource() {
@@ -47,13 +47,13 @@ class SelfieSegmentationMediaPipeMask implements Mask {
 
 function maskValueToLabel(maskValue: number) {
   assertMaskValue(maskValue);
-  return 'upper_body';
+  return 'person';
 }
 
 /**
  * MediaPipe segmenter class.
  */
-class SelfieSegmentationMediaPipeSegmenter implements BodySegmenter {
+class MediaPipeSelfieSegmentationMediaPipeSegmenter implements BodySegmenter {
   private readonly selfieSegmentationSolution:
       selfieSegmentation.SelfieSegmentation;
 
@@ -64,7 +64,7 @@ class SelfieSegmentationMediaPipeSegmenter implements BodySegmenter {
   private selfieMode = false;
 
   // Should not be called outside.
-  constructor(config: SelfieSegmentationMediaPipeModelConfig) {
+  constructor(config: MediaPipeSelfieSegmentationMediaPipeModelConfig) {
     this.selfieSegmentationSolution =
         new selfieSegmentation.SelfieSegmentation({
           locateFile: (path, base) => {
@@ -92,7 +92,8 @@ class SelfieSegmentationMediaPipeSegmenter implements BodySegmenter {
     this.selfieSegmentationSolution.onResults((results) => {
       this.segmentation = [{
         maskValueToLabel,
-        mask: new SelfieSegmentationMediaPipeMask(results.segmentationMask)
+        mask: new MediaPipeSelfieSegmentationMediaPipeMask(
+            results.segmentationMask)
       }];
     });
   }
@@ -115,7 +116,8 @@ class SelfieSegmentationMediaPipeSegmenter implements BodySegmenter {
    */
   async segmentPeople(
       input: BodySegmenterInput,
-      segmentationConfig?: SelfieSegmentationMediaPipeSegmentationConfig):
+      segmentationConfig?:
+          MediaPipeSelfieSegmentationMediaPipeSegmentationConfig):
       Promise<Segmentation[]> {
     if (segmentationConfig && segmentationConfig.flipHorizontal &&
         (segmentationConfig.flipHorizontal !== this.selfieMode)) {
@@ -153,14 +155,15 @@ class SelfieSegmentationMediaPipeSegmenter implements BodySegmenter {
  * Loads the MediaPipe solution.
  *
  * @param modelConfig An object that contains parameters for
- * the SelfieSegmentation loading process. Please find more details of each
- * parameters in the documentation of the
- * `SelfieSegmentationMediaPipeModelConfig` interface.
+ * the MediaPipeSelfieSegmentation loading process. Please find more details of
+ * each parameters in the documentation of the
+ * `MediaPipeSelfieSegmentationMediaPipeModelConfig` interface.
  */
-export async function load(modelConfig: SelfieSegmentationMediaPipeModelConfig):
+export async function load(
+    modelConfig: MediaPipeSelfieSegmentationMediaPipeModelConfig):
     Promise<BodySegmenter> {
   const config = validateModelConfig(modelConfig);
-  const segmenter = new SelfieSegmentationMediaPipeSegmenter(config);
+  const segmenter = new MediaPipeSelfieSegmentationMediaPipeSegmenter(config);
   await segmenter.initialize();
   return segmenter;
 }
