@@ -181,6 +181,9 @@ export interface TensorsToLandmarksConfig {
 export interface TensorsToSegmentationConfig {
   activation: 'none'|'sigmoid'|'softmax';
 }
+export interface SegmentationSmoothingConfig {
+  combineWithPreviousRatio: number;
+}
 export interface RefineLandmarksFromHeatmapConfig {
   kernelSize?: number;
   minConfidenceToRefine: number;
