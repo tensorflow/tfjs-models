@@ -34,6 +34,7 @@ export function tensorsToSegmentation(
   return tf.tidy(() => {
     // Remove batch dimension.
     const $segmentationTensor =
+        // tslint:disable-next-line: no-unnecessary-type-assertion
         tf.squeeze(segmentationTensor, [0]) as tf.Tensor3D;
 
     const tensorChannels = $segmentationTensor.shape[2];

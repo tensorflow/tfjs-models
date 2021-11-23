@@ -22,7 +22,7 @@ import {BlazePoseModelType} from '../blazepose_mediapipe/types';
 import {BLAZEPOSE_KEYPOINTS} from '../constants';
 import {PoseDetector} from '../pose_detector';
 import {calculateAlignmentPointsRects} from '../shared/calculators/calculate_alignment_points_rects';
-import {calculateInverseMatrix, TransformationMatrix, transformationMatrixToArray} from '../shared/calculators/calculate_inverse_matrix';
+import {calculateInverseMatrix, Matrix4x4} from '../shared/calculators/calculate_inverse_matrix';
 import {calculateLandmarkProjection} from '../shared/calculators/calculate_landmark_projection';
 import {calculateScoreCopy} from '../shared/calculators/calculate_score_copy';
 import {calculateWorldLandmarkProjection} from '../shared/calculators/calculate_world_landmark_projection';
@@ -30,7 +30,7 @@ import {MILLISECOND_TO_MICRO_SECONDS, SECOND_TO_MICRO_SECONDS} from '../shared/c
 import {convertImageToTensor} from '../shared/calculators/convert_image_to_tensor';
 import {createSsdAnchors} from '../shared/calculators/create_ssd_anchors';
 import {detectorInference} from '../shared/calculators/detector_inference';
-import {getImageSize, toImageTensor} from '../shared/calculators/image_utils';
+import {getImageSize, getProjectiveTransformMatrix, toImageTensor} from '../shared/calculators/image_utils';
 import {ImageSize, Keypoint, Mask, Padding} from '../shared/calculators/interfaces/common_interfaces';
 import {Rect} from '../shared/calculators/interfaces/shape_interfaces';
 import {AnchorTensor, Detection} from '../shared/calculators/interfaces/shape_interfaces';
@@ -42,6 +42,7 @@ import {normalizedKeypointsToKeypoints} from '../shared/calculators/normalized_k
 import {refineLandmarksFromHeatmap} from '../shared/calculators/refine_landmarks_from_heatmap';
 import {removeDetectionLetterbox} from '../shared/calculators/remove_detection_letterbox';
 import {removeLandmarkLetterbox} from '../shared/calculators/remove_landmark_letterbox';
+import {smoothSegmentation} from '../shared/calculators/segmentation_smoothing';
 import {shiftImageValue} from '../shared/calculators/shift_image_value';
 import {tensorsToDetections} from '../shared/calculators/tensors_to_detections';
 import {tensorsToLandmarks} from '../shared/calculators/tensors_to_landmarks';
@@ -256,10 +257,11 @@ class BlazePoseTfjsDetector implements PoseDetector {
 
     const pose: Pose = {score: poseScore, keypoints, keypoints3D};
 
-    if (filteredSegmentationMask) {
+    if (filteredSegmentationMask !== null) {
       // Grayscale to RGBA
       const rgbaMask = tf.tidy(() => {
         const mask3D =
+            // tslint:disable-next-line: no-unnecessary-type-assertion
             tf.expandDims(filteredSegmentationMask, 2) as tf.Tensor3D;
         // Pads a pixel [r] to [r, 0].
         const rgMask = tf.pad(mask3D, [[0, 0], [0, 0], [0, 1]]);
@@ -287,61 +289,9 @@ class BlazePoseTfjsDetector implements PoseDetector {
     if (prevMask.size === 0) {
       this.prevFilteredSegmentationMask = segmentationMask;
     } else {
-      // SegmentationSmoothingCalculator
-      this.prevFilteredSegmentationMask = tf.tidy(() => {
-        const newMask = segmentationMask;
-        /*
-         * Assume p := newMaskValue
-         * H(p) := 1 + (p * log(p) + (1-p) * log(1-p)) / log(2)
-         * uncertainty alpha(p) =
-         *   Clamp(1 - (1 - H(p)) * (1 - H(p)), 0, 1) [squaring the
-         * uncertainty]
-         *
-         * The following polynomial approximates uncertainty alpha as a
-         * function of (p + 0.5):
-         */
-        const c1 = 5.68842;
-        const c2 = -0.748699;
-        const c3 = -57.8051;
-        const c4 = 291.309;
-        const c5 = -624.717;
-        const t = tf.sub(newMask, 0.5);
-        const x = tf.square(t);
-
-        // Per element calculation is: 1.0 - Math.min(1.0, x * (c1 + x * (c2 + x
-        // * (c3 + x * (c4 + x * c5))))).
-
-        const uncertainty = tf.sub(
-            1,
-            tf.minimum(
-                1,
-                tf.mul(
-                    x,
-                    tf.add(
-                        c1,
-                        tf.mul(
-                            x,
-                            tf.add(
-                                c2,
-                                tf.mul(
-                                    x,
-                                    tf.add(
-                                        c3,
-                                        tf.mul(
-                                            x,
-                                            tf.add(c4, tf.mul(x, c5)))))))))));
-
-        // Per element calculation is: newMaskValue + (prevMaskValue -
-        // newMaskValue) * (uncertainty * combineWithPreviousRatio).
-        return tf.add(
-            newMask,
-            tf.mul(
-                tf.sub(prevMask, newMask),
-                tf.mul(
-                    uncertainty,
-                    constants.BLAZEPOSE_SEGMENTATION_SMOOTHING_CONFIG
-                        .combineWithPreviousRatio)));
-      });
+      this.prevFilteredSegmentationMask = smoothSegmentation(
+          prevMask, segmentationMask,
+          constants.BLAZEPOSE_SEGMENTATION_SMOOTHING_CONFIG);
       tf.dispose([segmentationMask]);
     }
     tf.dispose([prevMask]);
@@ -513,7 +463,7 @@ class BlazePoseTfjsDetector implements PoseDetector {
   }
   async poseLandmarksAndSegmentationInverseProjection(
       imageSize: ImageSize, roi: Rect, letterboxPadding: Padding,
-      transformationMatrix: TransformationMatrix, roiLandmarks: Keypoint[],
+      transformationMatrix: Matrix4x4, roiLandmarks: Keypoint[],
       roiAuxiliaryLandmarks: Keypoint[], roiWorldLandmarks: Keypoint[],
       roiSegmentationMask: tf.Tensor2D) {
     // -------------------------------------------------------------------------
@@ -560,18 +510,13 @@ class BlazePoseTfjsDetector implements PoseDetector {
         // Calculates the inverse transformation matrix.
         // PoseLandmarksAndSegmentationInverseProjection:
         // InverseMatrixCalculator.
-        const inverseTransformationMatrix = transformationMatrixToArray(
-            calculateInverseMatrix(transformationMatrix));
+        const inverseTransformationMatrix =
+            calculateInverseMatrix(transformationMatrix);
 
         const projectiveTransform = tf.tensor2d(
-            [
-              inverseTransformationMatrix[0] * inputWidth / imageSize.width,
-              inverseTransformationMatrix[1] * inputWidth / imageSize.height,
-              inverseTransformationMatrix[3] * inputWidth,
-              inverseTransformationMatrix[4] * inputHeight / imageSize.width,
-              inverseTransformationMatrix[5] * inputHeight / imageSize.height,
-              inverseTransformationMatrix[7] * inputHeight, 0, 0
-            ],
+            getProjectiveTransformMatrix(
+                inverseTransformationMatrix,
+                {width: inputWidth, height: inputHeight}, imageSize),
             [1, 8]);
 
         // Projects the segmentation mask from the letterboxed ROI back to the
