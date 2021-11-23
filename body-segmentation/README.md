@@ -39,8 +39,6 @@ one person. Each model will have its own semantics for the segmentation output.
 
 MediaPipe SelfieSegmentation returns exactly one segmentation corresponding to all people in the input image.
 
-Each segmentation contains a maskValueToLabel function, as well as the actual mask.
-
 Example output:
 ```
 [
@@ -58,7 +56,7 @@ Example output:
 
 The `mask` key stores an object which provides access to the underlying mask image using the conversion functions toCanvasImageSource, toImageData, and toTensor depending on the desired output type. Note that getUnderlyingType can be queried to determine what is the type being used underneath the hood to avoid expensive conversions (such as from tensor to image data).
 
-The semantics of the RGBA values of the `mask` is as follows: the image mask is the same size as the input image, where green and blue channels are always set to 0. Different red values denote different body parts (see maskValueToLabel key below). Different alpha values denote the probability of pixel being a foreground pixel (0 being lowest probability and 255 being highest).
+The semantics of the RGBA values of the `mask` is as follows: the image mask is the same size as the input image, where green and blue channels are always set to 0. Different red values denote different body parts (see maskValueToLabel key below). Different alpha values denote the probability of pixel being a body part pixel (0 being lowest probability and 255 being highest).
 
 `maskValueToLabel` maps a foreground pixel’s red value to the segmented part name of that pixel. Should throw error for unsupported input values. This is not necessarily the same across different models (for example MediaPipeSelfieSegmentation will always return 'person' since it does not distinguish individual body parts).
 
