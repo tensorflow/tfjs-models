@@ -123,7 +123,7 @@ async function expectModel(
       poseDetection.SupportedModels.BlazePose, {
         runtime: 'tfjs',
         modelType,
-        enableSmoothing: false,
+        enableSmoothing: true,
         enableSegmentation: true,
         smoothSegmentation: false
       });
