@@ -20,7 +20,7 @@ import * as tf from '@tensorflow/tfjs-core';
 import {ALL_ENVS, BROWSER_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
 // tslint:disable-next-line: no-imports-from-dist
 import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
-import {FINGER_CONNECTIONS} from '../constants';
+import {MEDIAPIPE_CONNECTED_KEYPOINTS_PAIRS} from '../constants';
 
 import * as handPoseDetection from '../index';
 import {getXYPerFrame, KARMA_SERVER, loadImage, loadVideo} from '../shared/test_util';
@@ -207,7 +207,7 @@ describeWithFlags('MediaPipe Hands video ', BROWSER_ENVS, () => {
 
     await loadVideo(
         'asl_hand.25fps.mp4', 25 /* fps */, callback, expected,
-        FINGER_CONNECTIONS, 0 /* simulatedInterval unused */);
+        MEDIAPIPE_CONNECTED_KEYPOINTS_PAIRS, 0 /* simulatedInterval unused */);
 
     expectArraysClose(result, expected, EPSILON_VIDEO);
     expectArraysClose(result3D, expected3D, EPSILON_VIDEO_WORLD);
