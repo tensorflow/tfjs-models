@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import {SelfieSegmentationMediaPipeSegmentationConfig} from './selfie_segmentation_mediapipe/types';
+import {MediaPipeSelfieSegmentationMediaPipeSegmentationConfig} from './selfie_segmentation_mediapipe/types';
 import {Segmentation} from './shared/calculators/interfaces/common_interfaces';
 import {BodySegmenterInput} from './types';
 
@@ -31,7 +31,8 @@ export interface BodySegmenter {
    */
   segmentPeople(
       input: BodySegmenterInput,
-      segmentationConfig?: SelfieSegmentationMediaPipeSegmentationConfig):
+      segmentationConfig?:
+          MediaPipeSelfieSegmentationMediaPipeSegmentationConfig):
       Promise<Segmentation[]>;
 
   /**

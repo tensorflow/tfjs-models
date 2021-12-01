@@ -21,6 +21,13 @@ steps:
   args: ['./scripts/run-build.sh', 'body-pix']
   waitFor: ['diff']
 
+# Body segmentation.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'body-segmentation'
+  args: ['./scripts/run-build.sh', 'body-segmentation']
+  waitFor: ['diff']
+
 # Blaze face.
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'

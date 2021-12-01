@@ -17,17 +17,17 @@
 
 import {ModelConfig, SegmentationConfig} from '../types';
 
-export type SelfieSegmentationModelType = 'general'|'landscape';
+export type MediaPipeSelfieSegmentationModelType = 'general'|'landscape';
 
 /**
  * Common SelfieSegmentation model config.
  */
-export interface SelfieSegmentationModelConfig extends ModelConfig {
+export interface MediaPipeSelfieSegmentationModelConfig extends ModelConfig {
   runtime: 'mediapipe'|'tfjs';
-  modelType?: SelfieSegmentationModelType;
+  modelType?: MediaPipeSelfieSegmentationModelType;
 }
 
-export interface SelfieSegmentationSegmentationConfig extends
+export interface MediaPipeSelfieSegmentationSegmentationConfig extends
     SegmentationConfig {}
 
 /**
@@ -43,8 +43,8 @@ export interface SelfieSegmentationSegmentationConfig extends
  * `solutionPath`: Optional. The path to where the wasm binary and model files
  * are located.
  */
-export interface SelfieSegmentationMediaPipeModelConfig extends
-    SelfieSegmentationModelConfig {
+export interface MediaPipeSelfieSegmentationMediaPipeModelConfig extends
+    MediaPipeSelfieSegmentationModelConfig {
   runtime: 'mediapipe';
   solutionPath?: string;
 }
@@ -52,5 +52,5 @@ export interface SelfieSegmentationMediaPipeModelConfig extends
 /**
  * Body segmentation parameters for SelfieSegmentation MediaPipe runtime.
  */
-export interface SelfieSegmentationMediaPipeSegmentationConfig extends
-    SelfieSegmentationSegmentationConfig {}
+export interface MediaPipeSelfieSegmentationMediaPipeSegmentationConfig extends
+    MediaPipeSelfieSegmentationSegmentationConfig {}
