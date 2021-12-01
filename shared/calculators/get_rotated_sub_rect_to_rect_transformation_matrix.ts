@@ -19,10 +19,10 @@ import {arrayToMatrix4x4, Matrix4x4} from './calculate_inverse_matrix';
 import {Rect} from './interfaces/shape_interfaces';
 
 /**
- * Populates 4x4 'matrix' with row major order transformation matrix which
- * maps (x, y) in range [0, 1] (describing points of subRect)
- * to (x', y') in range [0, 1]*** (describing points of a rect:
- * [0, rectWidth] x [0, rectHeight]).
+ * Generates the 4x4 projective transform row-major 'matrix' which
+ * maps output point (x, y) in range [0, 1] (describing points of subRect)
+ * to a transformed input point (x', y') in range [0, 1]*** (describing points
+ * of a rect: [0, rectWidth] x [0, rectHeight]).
  *
  * (x', y') will go out of the range for points from subRect
  * which are not contained by rect and it's expected behavior
@@ -44,6 +44,12 @@ export function getRotatedSubRectToRectTransformMatrix(
   //     * flipMatrix
   //     * scaleMatrix
   //     * initialTranslateMatrix
+
+  // For any point in the transformed image p, we can use the above matrix to
+  // calculate the projected point in the original image p'. So that:
+  // p' = p * M;
+  // Note: The transform matrix below assumes image coordinates is normalized
+  // to [0, 1] range.
 
   // Matrix to convert X,Y to [-0.5, 0.5] range "initialTranslateMatrix"
   // [ 1.0,  0.0, 0.0, -0.5]

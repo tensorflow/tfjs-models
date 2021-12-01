@@ -159,7 +159,8 @@ export function getRoi(imageSize: ImageSize, normRect?: Rect): Rect {
  *
  * See more documentation in `tf.transform`.
  *
- * @param matrix The transformation matrix mapping subRect to rect.
+ * @param matrix The transformation matrix mapping subRect to rect, can be
+ *     computed using `getRotatedSubRectToRectTransformMatrix` calculator.
  * @param imageSize The original image height and width.
  * @param inputResolution The target height and width.
  */
