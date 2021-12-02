@@ -15,8 +15,6 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs-core';
-
 export type Matrix4x4Row = [number, number, number, number];
 export type Matrix4x4 =
     [Matrix4x4Row, Matrix4x4Row, Matrix4x4Row, Matrix4x4Row];
@@ -29,8 +27,12 @@ export function arrayToMatrix4x4(array: ArrayLike<number>): Matrix4x4 {
   if (array.length !== 16) {
     throw new Error(`Array length must be 16 but got ${array.length}`);
   }
-  return tf.tidy(() => tf.reshape(Array.from(array), [4, 4]).arraySync()) as
-      Matrix4x4;
+  return [
+    [array[0], array[1], array[2], array[3]],
+    [array[4], array[5], array[6], array[7]],
+    [array[8], array[9], array[10], array[11]],
+    [array[12], array[13], array[14], array[15]],
+  ];
 }
 
 function generalDet3Helper(

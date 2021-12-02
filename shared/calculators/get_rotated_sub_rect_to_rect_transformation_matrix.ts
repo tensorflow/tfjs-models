@@ -19,13 +19,9 @@ import {arrayToMatrix4x4, Matrix4x4} from './calculate_inverse_matrix';
 import {Rect} from './interfaces/shape_interfaces';
 
 /**
- * Generates the 4x4 projective transform row-major 'matrix' which
- * maps output point (x, y) in range [0, 1] (describing points of subRect)
- * to a transformed input point (x', y') in range [0, 1]*** (describing points
- * of a rect: [0, rectWidth] x [0, rectHeight]).
- *
- * (x', y') will go out of the range for points from subRect
- * which are not contained by rect and it's expected behavior
+ * Generates a 4x4 projective transform matrix M, so that for any point in the
+ * subRect image p(x, y), we can use the matrix to calculate the projected point
+ * in the original image p' (x', y'): p' = p * M;
  *
  * @param subRect Rotated sub rect in absolute coordinates.
  * @param rectWidth

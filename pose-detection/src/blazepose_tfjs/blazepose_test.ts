@@ -33,7 +33,7 @@ const EPSILON_IMAGE_WORLD = 0.15;
 // Measured in pixels.
 const EPSILON_VIDEO = 28;
 // Measured in meters.
-const EPSILON_VIDEO_WORLD = 0.17;
+const EPSILON_VIDEO_WORLD = 0.18;
 // Measured in percent.
 const EPSILON_IOU = 0.94;
 
