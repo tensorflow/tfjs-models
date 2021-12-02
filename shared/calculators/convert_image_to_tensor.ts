@@ -33,6 +33,12 @@ import {Rect} from './interfaces/shape_interfaces';
  * @param normRect A normalized rectangle, representing the subarea to crop from
  *      the image. If normRect is provided, the returned image tensor represents
  *      the subarea.
+ * @returns A map with the following properties:
+ *     - imageTensor
+ *     - padding: Padding ratio of left, top, right, bottom, based on the output
+ * dimensions.
+ *     - transformationMatrix: Projective transform matrix used to transform
+ * input image to transformed image.
  */
 export function convertImageToTensor(
     image: PixelInput, config: ImageToTensorConfig, normRect?: Rect): {

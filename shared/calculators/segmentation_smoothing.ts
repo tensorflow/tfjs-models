@@ -14,6 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
+import * as tf_webgl from '@tensorflow/tfjs-backend-webgl';
 import * as tf from '@tensorflow/tfjs-core';
 
 import {SegmentationSmoothingConfig} from './interfaces/config_interfaces';
@@ -33,6 +34,11 @@ import {SegmentationSmoothingConfig} from './interfaces/config_interfaces';
 export function smoothSegmentation(
     prevMask: tf.Tensor2D, newMask: tf.Tensor2D,
     config: SegmentationSmoothingConfig): tf.Tensor2D {
+  if (tf.getBackend() === 'webgl') {
+    // Same as implementation in the else case but reduces number of shader
+    // calls to 1 instead of 17.
+    return smoothSegmentationWebGL(prevMask, newMask, config);
+  }
   return tf.tidy(() => {
     /*
      * Assume p := newMaskValue
@@ -81,5 +87,59 @@ export function smoothSegmentation(
         tf.mul(
             tf.sub(prevMask, newMask),
             tf.mul(uncertainty, config.combineWithPreviousRatio)));
+  });
+}
+
+function smoothSegmentationWebGL(
+    prevMask: tf.Tensor2D, newMask: tf.Tensor2D,
+    config: SegmentationSmoothingConfig): tf.Tensor2D {
+  const program: tf_webgl.GPGPUProgram = {
+    variableNames: ['prevMask', 'newMask'],
+    outputShape: prevMask.shape,
+    userCode: `
+  void main() {
+      ivec2 coords = getOutputCoords();
+      int height = coords[0];
+      int width = coords[1];
+
+      float prevMaskValue = getPrevMask(height, width);
+      float newMaskValue = getNewMask(height, width);
+
+      /*
+      * Assume p := newMaskValue
+      * H(p) := 1 + (p * log(p) + (1-p) * log(1-p)) / log(2)
+      * uncertainty alpha(p) =
+      *   Clamp(1 - (1 - H(p)) * (1 - H(p)), 0, 1) [squaring the
+      * uncertainty]
+      *
+      * The following polynomial approximates uncertainty alpha as a
+      * function of (p + 0.5):
+      */
+      const float c1 = 5.68842;
+      const float c2 = -0.748699;
+      const float c3 = -57.8051;
+      const float c4 = 291.309;
+      const float c5 = -624.717;
+      float t = newMaskValue - 0.5;
+      float x = t * t;
+
+      float uncertainty =
+        1.0 - min(1.0, x * (c1 + x * (c2 + x * (c3 + x * (c4 + x * c5)))));
+
+      float outputValue = newMaskValue + (prevMaskValue - newMaskValue) *
+                             (uncertainty * ${config.combineWithPreviousRatio});
+
+      setOutput(outputValue);
+    }
+`
+  };
+  const webglBackend = tf.backend() as tf_webgl.MathBackendWebGL;
+
+  return tf.tidy(() => {
+    const outputTensorInfo =
+        webglBackend.compileAndRun(program, [prevMask, newMask]);
+    return tf.engine().makeTensorFromDataId(
+               outputTensorInfo.dataId, outputTensorInfo.shape,
+               outputTensorInfo.dtype) as tf.Tensor2D;
   });
 }
