@@ -14,29 +14,15 @@
  * limitations under the License.
  * =============================================================================
  */
-import {PixelInput} from './shared/calculators/interfaces/common_interfaces';
+import {MediaPipeSelfieSegmentationMediaPipeModelConfig, MediaPipeSelfieSegmentationMediaPipeSegmentationConfig} from './types';
 
-export enum SupportedModels {
-  MediaPipeSelfieSegmentation = 'MediaPipeSelfieSegmentation',
-}
+export const DEFAULT_MEDIAPIPE_SELFIE_SEGMENTATION_MODEL_CONFIG:
+    MediaPipeSelfieSegmentationMediaPipeModelConfig = {
+      runtime: 'mediapipe',
+      modelType: 'general'
+    };
 
-/**
- * Common config to create the body segmenter.
- */
-export interface ModelConfig {}
-
-/**
- * Common config for the `segmentPeople` method.
- *
- * `flipHorizontal`: Optional. Default to false. In some cases, the image is
- * mirrored, e.g. video stream from camera, flipHorizontal will flip the
- * keypoints horizontally.
- */
-export interface SegmentationConfig {
-  flipHorizontal?: boolean;
-}
-
-/**
- * Allowed input format for the `segmentPeople` method.
- */
-export type BodySegmenterInput = PixelInput;
+export const DEFAULT_MEDIAPIPE_SELFIE_SEGMENTATION_SEGMENTATION_CONFIG:
+    MediaPipeSelfieSegmentationMediaPipeSegmentationConfig = {
+      flipHorizontal: false,
+    };
