@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as tf_webgl from '@tensorflow/tfjs-backend-webgl';
+import {GPGPUProgram, MathBackendWebGL} from '@tensorflow/tfjs-backend-webgl';
 import * as tf from '@tensorflow/tfjs-core';
 
 import {SegmentationSmoothingConfig} from './interfaces/config_interfaces';
@@ -93,7 +93,7 @@ export function smoothSegmentation(
 function smoothSegmentationWebGL(
     prevMask: tf.Tensor2D, newMask: tf.Tensor2D,
     config: SegmentationSmoothingConfig): tf.Tensor2D {
-  const program: tf_webgl.GPGPUProgram = {
+  const program: GPGPUProgram = {
     variableNames: ['prevMask', 'newMask'],
     outputShape: prevMask.shape,
     userCode: `
@@ -133,7 +133,7 @@ function smoothSegmentationWebGL(
     }
 `
   };
-  const webglBackend = tf.backend() as tf_webgl.MathBackendWebGL;
+  const webglBackend = tf.backend() as MathBackendWebGL;
 
   return tf.tidy(() => {
     const outputTensorInfo =
