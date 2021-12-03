@@ -62,9 +62,9 @@ const init = async () => {
       const sentenceITranspose = false;
       const sentenceJTransepose = true;
       const score =
-          tf.matMul(
+          await tf.matMul(
                 sentenceI, sentenceJ, sentenceITranspose, sentenceJTransepose)
-              .dataSync();
+              .data();
 
       ctx.fillStyle = interpolateReds(score);
       ctx.fillRect(j * cellSize, i * cellSize, cellSize, cellSize);
@@ -83,8 +83,8 @@ const initQnA = async () => {
   const model = await use.loadQnA();
   document.querySelector('#loadingQnA').style.display = 'none';
   let result = model.embed(input);
-  const query = result['queryEmbedding'].arraySync();
-  const answers = result['responseEmbedding'].arraySync();
+  const query = await result['queryEmbedding'].array();
+  const answers = await result['responseEmbedding'].array();
   for (let i = 0; i < answers.length; i++) {
     document.getElementById(`answer_${i + 1}`).textContent =
         `${dotProduct(query[0], answers[i])}`
