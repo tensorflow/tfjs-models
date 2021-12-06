@@ -70,34 +70,6 @@ describeWithFlags('BlazePose', ALL_ENVS, () => {
     expect(tf.memory().numTensors).toEqual(startTensors);
   });
 
-  it('estimatePoses does not leak memory with segmentation on.', async () => {
-    const startTensors = tf.memory().numTensors;
-
-    // Note: this makes a network request for model assets.
-    const detector = await poseDetection.createDetector(
-        poseDetection.SupportedModels.BlazePose,
-        {runtime: 'tfjs', enableSegmentation: true, smoothSegmentation: true});
-    const input = await loadImage('pose.jpg', 1000, 667);
-
-    const beforeTensors = tf.memory().numTensors;
-
-    let output = await detector.estimatePoses(input);
-    (await output[0].segmentation.mask.toTensor()).dispose();
-
-    expect(tf.memory().numTensors).toEqual(beforeTensors);
-
-    // Call again to test smoothing code.
-    output = await detector.estimatePoses(input);
-    (await output[0].segmentation.mask.toTensor()).dispose();
-
-    expect(tf.memory().numTensors).toEqual(beforeTensors);
-
-    detector.dispose();
-    (await output[0].segmentation.mask.toTensor()).dispose();
-
-    expect(tf.memory().numTensors).toEqual(startTensors);
-  });
-
   it('throws error when runtime is not set.', async (done) => {
     try {
       await poseDetection.createDetector(
@@ -178,6 +150,33 @@ describeWithFlags('BlazePose static image ', BROWSER_ENVS, () => {
 
   afterAll(() => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
+  });
+
+  it('estimatePoses does not leak memory with segmentation on.', async () => {
+    const startTensors = tf.memory().numTensors;
+
+    // Note: this makes a network request for model assets.
+    const detector = await poseDetection.createDetector(
+        poseDetection.SupportedModels.BlazePose,
+        {runtime: 'tfjs', enableSegmentation: true, smoothSegmentation: true});
+
+    const beforeTensors = tf.memory().numTensors;
+
+    let output = await detector.estimatePoses(image);
+    (await output[0].segmentation.mask.toTensor()).dispose();
+
+    expect(tf.memory().numTensors).toEqual(beforeTensors);
+
+    // Call again to test smoothing code.
+    output = await detector.estimatePoses(image);
+    (await output[0].segmentation.mask.toTensor()).dispose();
+
+    expect(tf.memory().numTensors).toEqual(beforeTensors);
+
+    detector.dispose();
+    (await output[0].segmentation.mask.toTensor()).dispose();
+
+    expect(tf.memory().numTensors).toEqual(startTensors);
   });
 
   it('test lite model.', async () => {
