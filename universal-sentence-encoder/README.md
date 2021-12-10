@@ -125,9 +125,8 @@ use.loadQnA().then(model => {
     * And embed_responses[0] is the embedding for the answer
     * 'I\'m not feeling very well.'
     */
-  let result = model.embed(input);
-  const scores = tf.matMul(result['queryEmbedding'],
-      result['responseEmbedding'], false, true).dataSync();
+  const scores = tf.matMul(embeddings['queryEmbedding'],
+      embeddings['responseEmbedding'], false, true).dataSync();
 });
 
 ```
