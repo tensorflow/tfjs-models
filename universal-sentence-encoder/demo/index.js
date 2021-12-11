@@ -83,31 +83,15 @@ const initQnA = async () => {
   const model = await use.loadQnA();
   document.querySelector('#loadingQnA').style.display = 'none';
   let result = model.embed(input);
-  const query = result['queryEmbedding'].arraySync();
-  const answers = result['responseEmbedding'].arraySync();
-  for (let i = 0; i < answers.length; i++) {
+  const dp = tf.matMul(result['queryEmbedding'], result['responseEmbedding'],
+      false, true).dataSync();
+  for (let i = 0; i < dp.length; i++) {
     document.getElementById(`answer_${i + 1}`).textContent =
-        `${dotProduct(query[0], answers[i])}`
+        `${dp[i]}`
   }
 };
 init();
 initQnA();
-// zipWith :: (a -> b -> c) -> [a] -> [b] -> [c]
-const zipWith =
-    (f, xs, ys) => {
-      const ny = ys.length;
-      return (xs.length <= ny ? xs : xs.slice(0, ny))
-          .map((x, i) => f(x, ys[i]));
-    }
-
-// dotProduct :: [Int] -> [Int] -> Int
-const dotProduct =
-    (xs, ys) => {
-      const sum = xs => xs ? xs.reduce((a, b) => a + b, 0) : undefined;
-
-      return xs.length === ys.length ? (sum(zipWith((a, b) => a * b, xs, ys))) :
-                                       undefined;
-    }
 
 const renderSentences = () => {
   sentences.forEach((sentence, i) => {
