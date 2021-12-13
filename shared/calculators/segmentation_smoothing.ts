@@ -93,6 +93,7 @@ export function smoothSegmentation(
 function smoothSegmentationWebGL(
     prevMask: tf.Tensor2D, newMask: tf.Tensor2D,
     config: SegmentationSmoothingConfig): tf.Tensor2D {
+  const ratio = config.combineWithPreviousRatio.toFixed(2);
   const program: GPGPUProgram = {
     variableNames: ['prevMask', 'newMask'],
     outputShape: prevMask.shape,
@@ -127,7 +128,7 @@ function smoothSegmentationWebGL(
         1.0 - min(1.0, x * (c1 + x * (c2 + x * (c3 + x * (c4 + x * c5)))));
 
       float outputValue = newMaskValue + (prevMaskValue - newMaskValue) *
-                             (uncertainty * ${config.combineWithPreviousRatio});
+                             (uncertainty * ${ratio});
 
       setOutput(outputValue);
     }

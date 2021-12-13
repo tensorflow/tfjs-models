@@ -30,6 +30,23 @@ describe('calculateInverseMatrix', () => {
     expectArraysClose(matrix4x4ToArray(inverse), matrix4x4ToArray(identity));
   });
 
+  it('precision.', async () => {
+    const matrix: Matrix4x4 = [
+      [0.00001, 0.0, 0.0, 0.0], [0.0, 0.00001, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0],
+      [0.0, 0.0, 0.0, 1.0]
+    ];
+
+    const inverse = calculateInverseMatrix(matrix);
+
+    const expectedInverse: Matrix4x4 = [
+      [100000.0, 0.0, 0.0, 0.0], [0.0, 100000.0, 0.0, 0.0],
+      [0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 1.0]
+    ];
+
+    expectArraysClose(
+        matrix4x4ToArray(inverse), matrix4x4ToArray(expectedInverse));
+  });
+
   it('random matrix.', async () => {
     for (let seed = 1; seed <= 5; ++seed) {
       const matrix = tf.randomUniform([4, 4], 0, 10, 'float32', seed);

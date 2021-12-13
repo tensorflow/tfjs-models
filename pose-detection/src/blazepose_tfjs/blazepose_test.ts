@@ -106,7 +106,7 @@ async function expectModel(
       {runtime: 'tfjs', maxPoses: 1, flipHorizontal: false} as
           poseDetection.BlazePoseTfjsEstimationConfig);
   const xy = result[0].keypoints.map((keypoint) => [keypoint.x, keypoint.y]);
-  const xyz = result[0].keypoints3D.map(
+  const worldXyz = result[0].keypoints3D.map(
       (keypoint) => [keypoint.x, keypoint.y, keypoint.z]);
 
   const segmentation = result[0].segmentation;
@@ -120,7 +120,7 @@ async function expectModel(
       (await toImageDataLossy(segmentationImage)).data, 0, 0, 255);
 
   expectArraysClose(xy, EXPECTED_LANDMARKS, EPSILON_IMAGE);
-  expectArraysClose(xyz, EXPECTED_WORLD_LANDMARKS, EPSILON_IMAGE_WORLD);
+  expectArraysClose(worldXyz, EXPECTED_WORLD_LANDMARKS, EPSILON_IMAGE_WORLD);
 
   expect(maskValuesToLabel.every(label => label === 'person'));
   expect(mask.getUnderlyingType() === 'tensor');
