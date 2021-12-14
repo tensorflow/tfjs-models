@@ -16,6 +16,8 @@
  */
 import * as tf from '@tensorflow/tfjs-core';
 
+import {Matrix4x4} from './calculate_inverse_matrix';
+import {getRotatedSubRectToRectTransformMatrix} from './get_rotated_sub_rect_to_rect_transformation_matrix';
 import {getImageSize, getProjectiveTransformMatrix, getRoi, padRoi, toImageTensor} from './image_utils';
 import {Padding, PixelInput} from './interfaces/common_interfaces';
 import {ImageToTensorConfig} from './interfaces/config_interfaces';
@@ -31,10 +33,19 @@ import {Rect} from './interfaces/shape_interfaces';
  * @param normRect A normalized rectangle, representing the subarea to crop from
  *      the image. If normRect is provided, the returned image tensor represents
  *      the subarea.
+ * @returns A map with the following properties:
+ *     - imageTensor
+ *     - padding: Padding ratio of left, top, right, bottom, based on the output
+ * dimensions.
+ *     - transformationMatrix: Projective transform matrix used to transform
+ * input image to transformed image.
  */
 export function convertImageToTensor(
-    image: PixelInput, config: ImageToTensorConfig,
-    normRect?: Rect): {imageTensor: tf.Tensor4D, padding: Padding} {
+    image: PixelInput, config: ImageToTensorConfig, normRect?: Rect): {
+  imageTensor: tf.Tensor4D,
+  padding: Padding,
+  transformationMatrix: Matrix4x4
+} {
   const {inputResolution, keepAspectRatio} = config;
 
   // Ref:
@@ -42,12 +53,15 @@ export function convertImageToTensor(
   const imageSize = getImageSize(image);
   const roi = getRoi(imageSize, normRect);
   const padding = padRoi(roi, inputResolution, keepAspectRatio);
+  const transformationMatrix = getRotatedSubRectToRectTransformMatrix(
+      roi, imageSize.width, imageSize.height, false);
 
   const imageTensor = tf.tidy(() => {
     const $image = toImageTensor(image);
 
     const transformMatrix = tf.tensor2d(
-        getProjectiveTransformMatrix(roi, imageSize, false, inputResolution),
+        getProjectiveTransformMatrix(
+            transformationMatrix, imageSize, inputResolution),
         [1, 8]);
 
     const imageTransformed = tf.image.transform(
@@ -59,5 +73,5 @@ export function convertImageToTensor(
     return imageTransformed;
   });
 
-  return {imageTensor, padding};
+  return {imageTensor, padding, transformationMatrix};
 }
