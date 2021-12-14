@@ -65,6 +65,8 @@ and their performance.
 
 [MediaPipeSelfieSegmentation MediaPipe Documentation](https://github.com/tensorflow/tfjs-models/tree/master/body-segmentation/src/selfie_segmentation_mediapipe)
 
+[MediaPipeSelfieSegmentation TFJS Documentation](https://github.com/tensorflow/tfjs-models/tree/master/body-segmentation/src/selfie_segmentation_tfjs)
+
 -------------------------------------------------------------------------------
 
 ## Example Code and Demos
