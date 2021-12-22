@@ -59,7 +59,7 @@ import '@tensorflow/tfjs-backend-webgl';
 
 Pass in `bodySegmentation.SupportedModels.MediaPipeSelfieSegmentation` from the
 `bodySegmentation.SupportedModel` enum list along with a `segmenterConfig` to the
-`createDetector` method to load and initialize the model.
+`createSegmenter` method to load and initialize the model.
 
 `segmenterConfig` is an object that defines MediaPipeSelfieSegmentation specific configurations for `MediaPipeSelfieSegmentationTfjsModelConfig`:
 
