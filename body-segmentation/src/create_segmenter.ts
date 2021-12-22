@@ -16,8 +16,10 @@
  */
 
 import {BodySegmenter} from './body_segmenter';
-import {load as loadMediaPipeSelfieSegmentationMediaPipeDetector} from './selfie_segmentation_mediapipe/segmenter';
+import {load as loadMediaPipeSelfieSegmentationMediaPipeSegmenter} from './selfie_segmentation_mediapipe/segmenter';
 import {MediaPipeSelfieSegmentationMediaPipeModelConfig, MediaPipeSelfieSegmentationModelConfig} from './selfie_segmentation_mediapipe/types';
+import {load as loadMediaPipeSelfieSegmentationTfjsSegmenter} from './selfie_segmentation_tfjs/segmenter';
+import {MediaPipeSelfieSegmentationTfjsModelConfig} from './selfie_segmentation_tfjs/types';
 import {SupportedModels} from './types';
 
 /**
@@ -28,18 +30,19 @@ import {SupportedModels} from './types';
  */
 export async function createSegmenter(
     model: SupportedModels,
-    modelConfig?: MediaPipeSelfieSegmentationMediaPipeModelConfig):
-    Promise<BodySegmenter> {
+    modelConfig?: MediaPipeSelfieSegmentationMediaPipeModelConfig|
+    MediaPipeSelfieSegmentationTfjsModelConfig): Promise<BodySegmenter> {
   switch (model) {
-    case SupportedModels.MediaPipeSelfieSegmentation:
+    case SupportedModels.MediaPipeSelfieSegmentation: {
       const config = modelConfig as MediaPipeSelfieSegmentationModelConfig;
       let runtime;
       if (config != null) {
         if (config.runtime === 'tfjs') {
-          throw new Error(`tfjs runtime not yet supported.`);
+          return loadMediaPipeSelfieSegmentationTfjsSegmenter(
+              config as MediaPipeSelfieSegmentationTfjsModelConfig);
         }
         if (config.runtime === 'mediapipe') {
-          return loadMediaPipeSelfieSegmentationMediaPipeDetector(
+          return loadMediaPipeSelfieSegmentationMediaPipeSegmenter(
               config as MediaPipeSelfieSegmentationMediaPipeModelConfig);
         }
         runtime = config.runtime;
@@ -47,6 +50,7 @@ export async function createSegmenter(
       throw new Error(
           `Expect modelConfig.runtime to be either 'tfjs' ` +
           `or 'mediapipe', but got ${runtime}`);
+    }
     default:
       throw new Error(`${model} is not a supported model name.`);
   }

@@ -1,7 +1,6 @@
 # MediaPipe SelfieSegmentation
 
-MediaPipe SelfieSegmentation-MediaPipe wraps the MediaPipe JS Solution within the familiar
-TFJS API [mediapipe.dev](https://mediapipe.dev).
+MediaPipe SelfieSegmentation-TFJS uses TF.js runtime to execute the model, the preprocessing and postprocessing steps.
 
 Two variants of the model are offered.
 
@@ -17,14 +16,17 @@ Two variants of the model are offered.
 
 ## Installation
 
-To use MediaPipe SelfieSegmentation:
+To use MediaPipe SelfieSegmentation, you need to first select a runtime (TensorFlow.js or MediaPipe).
+This guide is for TensorFlow.js
+runtime. The guide for MediaPipe runtime can be found
+[here](https://github.com/tensorflow/tfjs-models/tree/master/body-segmentation/src/selfie_segmentation_mediapipe).
 
 Via script tags:
 
 ```html
-<!-- Require the peer dependencies. -->
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation"></script>
+<!-- Require the peer dependencies of body-segmentation. -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
 
 <!-- You must explicitly require a TF.js backend if you're not using the TF.js union bundle. -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
@@ -33,10 +35,11 @@ Via script tags:
 ```
 
 Via npm:
+
 ```sh
 yarn add @tensorflow-models/body-segmentation
-yarn add @tensorflow/tfjs-core, @tensorflow/tfjs-backend-webgl
-yarn add @mediapipe/selfie_segmentation
+yarn add @tensorflow/tfjs-core, @tensorflow/tfjs-converter
+yarn add @tensorflow/tfjs-backend-webgl
 ```
 
 -----------------------------------------------------------------------
@@ -48,32 +51,30 @@ If you are using the Body Segmentation API via npm, you need to import the libra
 
 ```javascript
 import * as bodySegmentation from '@tensorflow-models/body-segmentation';
-import '@tensorflow/tfjs-core';
+import * as tf from '@tensorflow/tfjs-core';
 // Register WebGL backend.
 import '@tensorflow/tfjs-backend-webgl';
-import '@mediapipe/selfie_segmentation';
 ```
-
 ### Create a detector
 
 Pass in `bodySegmentation.SupportedModels.MediaPipeSelfieSegmentation` from the
 `bodySegmentation.SupportedModel` enum list along with a `segmenterConfig` to the
-`createSegmenter` method to load and initialize the model.
+`createDetector` method to load and initialize the model.
 
-`segmenterConfig` is an object that defines MediaPipeSelfieSegmentation specific configurations for `MediaPipeSelfieSegmentationMediaPipeModelConfig`:
+`segmenterConfig` is an object that defines MediaPipeSelfieSegmentation specific configurations for `MediaPipeSelfieSegmentationTfjsModelConfig`:
 
-*   *runtime*: Must set to be 'mediapipe'.
+*   *runtime*: Must set to be 'tfjs'.
 
 *   *modelType*: specify which variant to load from `MediaPipeSelfieSegmentationModelType` (i.e.,
     'general', 'landscape'). If unset, the default is 'general'.
 
-*   *solutionPath*: The path to where the wasm binary and model files are located.
+*   *modelUrl*: An optional string that specifies custom url of
+the segmentation model. This is useful for area/countries that don't have access to the model hosted on tf.hub.
 
 ```javascript
 const model = bodySegmentation.SupportedModels.MediaPipeSelfieSegmentation;
 const segmenterConfig = {
-  runtime: 'mediapipe',
-  solutionPath: 'base/node_modules/@mediapipe/selfie_segmentation'
+  runtime: 'tfjs',
 };
 segmenter = await bodySegmentation.createSegmenter(model, segmenterConfig);
 ```
@@ -85,7 +86,7 @@ accepts both image and video in many formats, including:
 `HTMLVideoElement`, `HTMLImageElement`, `HTMLCanvasElement`, `ImageData`, `Tensor3D`. If you want more
 options, you can pass in a second `segmentationConfig` parameter.
 
-`segmentationConfig` is an object that defines MediaPipeSelfieSegmentation specific configurations for `MediaPipeSelfieSegmentationMediaPipeSegmentationConfig`:
+`segmentationConfig` is an object that defines MediaPipe SelfieSegmentation specific configurations for `MediaPipeSelfieSegmentationTfjsSegmentationConfig`:
 
 *   *flipHorizontal*: Optional. Defaults to false. When image data comes from camera, the result has to flip horizontally.
 
@@ -98,7 +99,7 @@ const people = await segmenter.segmentPeople(image, segmentationConfig);
 
 The returned `people` array contains a single element only, where all the people segmented in the image are found in that single segmentation element.
 
-The only label returned by the maskValueToLabel function is 'person'.
+The only label returned by the maskValueToLabel function by the model is 'person'.
 
 Please refer to the Body Segmentation API
 [README](https://github.com/tensorflow/tfjs-models/blob/master/body-segmentation/README.md#how-to-run-it)
