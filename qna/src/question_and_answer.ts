@@ -274,7 +274,7 @@ class QuestionAndAnswerImpl implements QuestionAndAnswer {
     const origResults: AnswerIndex[] = [];
     startIndexes.forEach(start => {
       endIndexes.forEach(end => {
-        if (tokenToOrigMap[start] && tokenToOrigMap[end] && end >= start) {
+        if (tokenToOrigMap[start + OUTPUT_OFFSET] && tokenToOrigMap[end + OUTPUT_OFFSET] && end >= start) {
           const length = end - start + 1;
           if (length < MAX_ANSWER_LEN) {
             origResults.push(
