@@ -26,7 +26,7 @@ import {loadImage} from '../shared/test_util';
 import {BodyPixSegmentationConfig} from './types';
 
 // Measured in channels.
-const DIFF_IMAGE = 3;
+const DIFF_IMAGE = 30;
 
 class CanvasImageSourceMask implements Mask {
   constructor(private mask: CanvasImageSource) {}
