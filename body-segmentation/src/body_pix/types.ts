@@ -16,9 +16,9 @@
  */
 
 // tslint:disable-next-line: no-imports-from-dist
-import {ModelConfig as BodyPixBaseModelConfig, MultiPersonInstanceInferenceConfig, PersonInferenceConfig} from '@tensorflow-models/body-pix/dist/body_pix_model';
-
 import {ModelConfig as BodySegmentationModelConfig, SegmentationConfig} from '../types';
+
+import {ModelConfig as BodyPixBaseModelConfig, MultiPersonInstanceInferenceConfig, PersonInferenceConfig} from './impl/body_pix_model';
 
 /**
  * BodyPix model config.

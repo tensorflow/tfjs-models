@@ -16,8 +16,7 @@
     "@mediapipe/selfie_segmentation": "~0.1.0",
     "@tensorflow/tfjs-backend-webgl": "^3.11.0",
     "@tensorflow/tfjs-converter": "^3.11.0",
-    "@tensorflow/tfjs-core": "^3.11.0",
-    "@tensorflow-models/body-pix": "~2.2.0"
+    "@tensorflow/tfjs-core": "^3.11.0"
   },
   "devDependencies": {
     "@babel/polyfill": "^7.10.4",
@@ -29,7 +28,6 @@
     "@tensorflow/tfjs-backend-webgl": "^3.11.0",
     "@tensorflow/tfjs-converter": "^3.11.0",
     "@tensorflow/tfjs-core": "^3.11.0",
-    "@tensorflow-models/body-pix": "~2.2.0",
     "@types/jasmine": "~3.4.0",
     "babel-core": "~6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",

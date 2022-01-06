@@ -89,7 +89,7 @@ are included in the `demos/`
 
 ## Output Visualization Utility Functions
 
-Body Segmentation provides utility functions to help with drawing and compositing using the outputs. These utility functions are based on the ones provided by the [BodyPix Package](https://github.com/tensorflow/tfjs-models/tree/master/body-pix#output-visualization-utility-functions).
+Body Segmentation provides utility functions to help with drawing and compositing using the outputs. These utility functions are based on the ones provided by the deprecated [BodyPix Package](https://github.com/tensorflow/tfjs-models/tree/master/body-pix#output-visualization-utility-functions).
 
 ### bodySegmentation.toBinaryMask
 

@@ -3,6 +3,9 @@
 Body Segmentation - Body Pix wraps the BodyPix JS Solution within the familiar
 TFJS API [BodyPix](https://github.com/tensorflow/tfjs-models/tree/master/body-pix).
 
+This model can be used to segment an image into pixels that are and are not part of a person, and into
+pixels that belong to each of twenty-four body parts.  It works for multiple people in an input image or video.
+
 --------------------------------------------------------------------------------
 
 ## Table of Contents
@@ -24,13 +27,12 @@ Via script tags:
 <!-- You must explicitly require a TF.js backend if you're not using the TF.js union bundle. -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-segmentation"></script>
 ```
 
 Via npm:
 ```sh
-yarn add @tensorflow-models/body-segmentation, @tensorflow-models/body-pix
+yarn add @tensorflow-models/body-segmentation
 yarn add @tensorflow/tfjs-core, @tensorflow/tfjs-converter
 yarn add @tensorflow/tfjs-backend-webgl
 ```
@@ -44,7 +46,6 @@ If you are using the Body Segmentation API via npm, you need to import the libra
 
 ```javascript
 import * as bodySegmentation from '@tensorflow-models/body-segmentation';
-import '@tensorflow-models/body-pix';
 import '@tensorflow/tfjs-core';
 import '@tensorflow/tfjs-converter';
 // Register WebGL backend.
@@ -57,7 +58,9 @@ Pass in `bodySegmentation.SupportedModels.BodyPix` from the
 `bodySegmentation.SupportedModel` enum list along with an optional `segmenterConfig` to the
 `createSegmenter` method to load and initialize the model.
 
-`segmenterConfig` is an object that defines BodyPix specific configurations for `BodyPixModelConfig` (for more information on these parameters refer to the [body-pix package documentation](https://github.com/tensorflow/tfjs-models/tree/master/body-pix#loading-the-model).):
+**By default**, BodyPix loads a MobileNetV1 architecture with a **`0.75`** multiplier.  This is recommended for computers with mid-range/lower-end GPUs.  A model with a **`0.50`** multiplier is recommended for mobile. The ResNet architecture is recommended for computers with even more powerful GPUs.
+
+`segmenterConfig` is an object that defines BodyPix specific configurations for `BodyPixModelConfig`:
 
  * **architecture** - Can be either `MobileNetV1` or `ResNet50`. It determines which BodyPix architecture to load.
 
@@ -128,7 +131,23 @@ const people = await segmenter.segmentPeople(image, segmentationConfig);
 
 When `multiSegmentation` is set to false, the returned `people` array contains a single element where all the people segmented in the image are found in that single segmentation element. When `multiSegmentation` is set to true, then the length of the array will be equal to the number of detected people, each segmentation containing one person.
 
-When `segmentBodyParts` is set to false, the only label returned by the maskValueToLabel function is 'person'. When `segmentBodyParts` is set to true, the maskValueToLabel function will return one of the body parts defined by BodyPix, these names can be found in the [BodyPix docs](https://github.com/tensorflow/tfjs-models/tree/master/body-pix#the-body-parts).
+When `segmentBodyParts` is set to false, the only label returned by the maskValueToLabel function is 'person'. When `segmentBodyParts` is set to true, the maskValueToLabel function will return one of the body parts defined by BodyPix, where the mapping of mask values to label is as follows:
+
+| Part Id | Part Name              | Part Id | Part Name              |
+|---------|------------------------|---------|------------------------|
+| 0       | left_face              | 12      | torso_front            |
+| 1       | right_face             | 13      | torso_back             |
+| 2       | left_upper_arm_front   | 14      | left_upper_leg_front   |
+| 3       | left_upper_arm_back    | 15      | left_upper_leg_back
+| 4       | right_upper_arm_front  | 16      | right_upper_leg_front
+| 5       | right_upper_arm_back   | 17      | right_upper_leg_back
+| 6       | left_lower_arm_front   | 18      | left_lower_leg_front
+| 7       | left_lower_arm_back    |  19      | left_lower_leg_back
+| 8       | right_lower_arm_front  | 20      | right_lower_leg_front
+| 9       | right_lower_arm_back   | 21      | right_lower_leg_back
+| 10      | left_hand              | 22      | left_foot
+| 11      | right_hand             | 23      | right_foot
+
 
 Please refer to the Body Segmentation API
 [README](https://github.com/tensorflow/tfjs-models/blob/master/body-segmentation/README.md#how-to-run-it)

@@ -14,13 +14,12 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as bodyPix from '@tensorflow-models/body-pix';
-
 import {BodySegmenter} from '../body_segmenter';
 import {Mask, Segmentation} from '../shared/calculators/interfaces/common_interfaces';
 import {assertMaskValue, toHTMLCanvasElementLossy, toTensorLossy} from '../shared/calculators/mask_util';
 import {BodySegmenterInput} from '../types';
 
+import * as bodyPix from './impl';
 import {BodyPixModelConfig, BodyPixSegmentationConfig} from './types';
 
 class BodyPixMask implements Mask {
