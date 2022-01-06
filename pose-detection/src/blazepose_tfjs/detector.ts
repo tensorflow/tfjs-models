@@ -309,7 +309,10 @@ class BlazePoseTfjsDetector implements PoseDetector {
 
   reset() {
     this.regionOfInterest = null;
-    this.prevFilteredSegmentationMask = null;
+    if (this.enableSegmentation) {
+      tf.dispose([this.prevFilteredSegmentationMask]);
+      this.prevFilteredSegmentationMask = tf.tensor2d([], [0, 0]);
+    }
     this.visibilitySmoothingFilterActual = null;
     this.visibilitySmoothingFilterAuxiliary = null;
     this.landmarksSmoothingFilterActual = null;
@@ -434,7 +437,7 @@ class BlazePoseTfjsDetector implements PoseDetector {
     // representation.
     // PoseLandmarksByRoiCPU: TensorsToPoseLandmarksAndSegmentation
     const tensorsToPoseLandmarksAndSegmentationResult =
-        this.tensorsToPoseLandmarksAndSegmentation(outputTensor);
+        await this.tensorsToPoseLandmarksAndSegmentation(outputTensor);
 
     if (tensorsToPoseLandmarksAndSegmentationResult == null) {
       tf.dispose(outputTensor);
@@ -448,7 +451,7 @@ class BlazePoseTfjsDetector implements PoseDetector {
       poseScore,
       worldLandmarks: roiWorldLandmarks,
       segmentationMask: roiSegmentationMask
-    } = await tensorsToPoseLandmarksAndSegmentationResult;
+    } = tensorsToPoseLandmarksAndSegmentationResult;
 
     const poseLandmarksAndSegmentationInverseProjectionResults =
         await this.poseLandmarksAndSegmentationInverseProjection(
