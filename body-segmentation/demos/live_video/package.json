@@ -12,7 +12,6 @@
     "@mediapipe/pose": "~0.4.0",
     "@mediapipe/selfie_segmentation": "~0.1.0",
     "@tensorflow-models/body-segmentation": "file:../../dist",
-    "@tensorflow-models/body-pix": "~2.2.0",
     "@tensorflow-models/pose-detection": "file:../../../pose-detection/dist",
     "@tensorflow/tfjs-backend-wasm": "^3.11.0",
     "@tensorflow/tfjs-backend-webgl": "^3.11.0",
