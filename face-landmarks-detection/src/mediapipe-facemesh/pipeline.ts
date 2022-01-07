@@ -31,7 +31,6 @@ export type Prediction = {
 };
 
 const LANDMARKS_COUNT = 468;
-const UPDATE_REGION_OF_INTEREST_IOU_THRESHOLD = 0.25;
 
 const MESH_MOUTH_INDEX = 13;
 const MESH_KEYPOINTS_LINE_OF_SYMMETRY_INDICES =
@@ -100,6 +99,7 @@ function replaceRawCoordinates(
 export class Pipeline {
   // MediaPipe model for detecting facial bounding boxes.
   private boundingBoxDetector: blazeface.BlazeFaceModel;
+  private boundingBoxUpdateRoiIouThreshold: number;
   // MediaPipe model for detecting facial mesh.
   private meshDetector: tfconv.GraphModel;
 
@@ -118,8 +118,10 @@ export class Pipeline {
       boundingBoxDetector: blazeface.BlazeFaceModel,
       meshDetector: tfconv.GraphModel, meshWidth: number, meshHeight: number,
       maxContinuousChecks: number, maxFaces: number,
-      irisModel: tfconv.GraphModel|null) {
+      irisModel: tfconv.GraphModel|null,
+      boundingBoxUpdateRoiIouThreshold: number) {
     this.boundingBoxDetector = boundingBoxDetector;
+    this.boundingBoxUpdateRoiIouThreshold = boundingBoxUpdateRoiIouThreshold;
     this.meshDetector = meshDetector;
     this.irisModel = irisModel;
     this.meshWidth = meshWidth;
@@ -451,7 +453,7 @@ export class Pipeline {
         iou = intersection / (boxArea + previousBoxArea - intersection);
       }
 
-      if (iou < UPDATE_REGION_OF_INTEREST_IOU_THRESHOLD) {
+      if (iou < this.boundingBoxUpdateRoiIouThreshold) {
         this.regionsOfInterest[i] = box;
       }
     }

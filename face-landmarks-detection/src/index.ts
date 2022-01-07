@@ -40,6 +40,8 @@ export enum SupportedPackages {
  * Defaults to 0.3.
  *  - `scoreThreshold` A threshold for deciding when to remove boxes based
  * on score in non-maximum suppression. Defaults to 0.75.
+ *  - `boundingBoxUpdateRoiIouThreshold` A threshold to decide how much does
+ *  face detector bounding boxes overlap to be updated. Defaults to 0.25.
  *  - `shouldLoadIrisModel` Whether to also load the iris detection model.
  * Defaults to true.
  */
