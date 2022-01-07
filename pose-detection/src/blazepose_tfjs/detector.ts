@@ -462,7 +462,8 @@ class BlazePoseTfjsDetector implements PoseDetector {
     tf.dispose(outputTensor);
     tf.dispose([imageTensor, imageValueShifted]);
 
-    return { poseScore, ...poseLandmarksAndSegmentationInverseProjectionResults };
+    return { poseScore,
+             ...poseLandmarksAndSegmentationInverseProjectionResults };
   }
   async poseLandmarksAndSegmentationInverseProjection(
     imageSize: ImageSize, roi: Rect, letterboxPadding: Padding,
