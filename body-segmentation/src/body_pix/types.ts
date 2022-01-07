@@ -15,9 +15,7 @@
  * =============================================================================
  */
 
-// tslint:disable-next-line: no-imports-from-dist
 import {ModelConfig as BodySegmentationModelConfig, SegmentationConfig} from '../types';
-
 import {ModelConfig as BodyPixBaseModelConfig, MultiPersonInstanceInferenceConfig, PersonInferenceConfig} from './impl/body_pix_model';
 
 /**
