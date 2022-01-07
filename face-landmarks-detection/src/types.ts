@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2020 Google LLC. All Rights Reserved.
+ * Copyright 2021 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,15 +14,50 @@
  * limitations under the License.
  * =============================================================================
  */
+import {Keypoint, PixelInput} from './shared/calculators/interfaces/common_interfaces';
+import {BoundingBox} from './shared/calculators/interfaces/shape_interfaces';
 
-import {AnnotatedPrediction as MediaPipePrediction, MediaPipeFaceMesh} from './mediapipe-facemesh';
+export {Keypoint};
 
-// The union of types describing objects returned by a FaceLandmarksPackage
-// (currently with only one option);
-export type FaceLandmarksPrediction = MediaPipePrediction;
+export enum SupportedModels {
+  MediaPipeFaceMesh = 'MediaPipeFaceMesh',
+}
 
-// The union of types describing packages that detect face landmarks in an
-// input (currently with only one option).
-export type FaceLandmarksDetector = MediaPipeFaceMesh;
+/**
+ * Common config to create the face detector.
+ *
+ * `maxFaces`: Optional. Default to 1. The maximum number of faces that will
+ * be detected by the model. The number of returned faces can be less than the
+ * maximum (for example when no faces are present in the input).
+ */
+export interface ModelConfig {
+  maxFaces?: number;
+}
 
-export {MediaPipePrediction, MediaPipeFaceMesh};
+/**
+ * Common config for the `estimateFaces` method.
+ *
+ * `flipHorizontal`: Optional. Default to false. In some cases, the image is
+ * mirrored, e.g. video stream from camera, flipHorizontal will flip the
+ * keypoints horizontally.
+ *
+ * `staticImageMode`: Optional. Default to true. If set to true, face detection
+ * will run on every input image, otherwise if set to false then detection runs
+ * once and then the model simply tracks those landmarks without invoking
+ * another detection until it loses track of any of the faces (ideal for
+ * videos).
+ */
+export interface EstimationConfig {
+  flipHorizontal?: boolean;
+  staticImageMode?: boolean;
+}
+
+/**
+ * Allowed input format for the `estimateHands` method.
+ */
+export type FaceDetectorInput = PixelInput;
+
+export interface Face {
+  keypoints: Keypoint[];
+  box?: BoundingBox;  // A bounding box around the detected person.
+}
