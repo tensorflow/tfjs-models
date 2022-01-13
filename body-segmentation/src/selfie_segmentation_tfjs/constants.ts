@@ -34,13 +34,17 @@ export const DEFAULT_TFJS_SELFIE_SEGMENTATION_SEGMENTATION_CONFIG:
     };
 export const SELFIE_SEGMENTATION_IMAGE_TO_TENSOR_GENERAL_CONFIG:
     ImageToTensorConfig = {
-      inputResolution: {width: 256, height: 256},
-      keepAspectRatio: false
+      outputTensorSize: {width: 256, height: 256},
+      keepAspectRatio: false,
+      borderMode: 'zero',
+      outputTensorFloatRange: [0, 1]
     };
 export const SELFIE_SEGMENTATION_IMAGE_TO_TENSOR_LANDSCAPE_CONFIG:
     ImageToTensorConfig = {
-      inputResolution: {width: 256, height: 144},
-      keepAspectRatio: false
+      outputTensorSize: {width: 256, height: 144},
+      keepAspectRatio: false,
+      borderMode: 'zero',
+      outputTensorFloatRange: [0, 1]
     };
 export const SELFIE_SEGMENTATION_TENSORS_TO_SEGMENTATION_CONFIG:
     TensorsToSegmentationConfig = {
