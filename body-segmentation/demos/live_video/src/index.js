@@ -177,22 +177,29 @@ async function renderResult() {
     }
 
     // Ensure GPU is done for timing purposes.
-    segmentation.forEach(async (value) => {
+    for (const value of segmentation) {
       const mask = value.mask;
       const tensor = await mask.toTensor();
-      const res = tensor.dataToGPU();
 
-      const webGLBackend = tf.backend();
-      const buffer =
-        webGLBackend.gpgpu.createBufferFromTexture(res.texture, 1, 1);
-      webGLBackend.gpgpu.downloadFloat32MatrixFromBuffer(buffer, 1);
+      try {
+        const res = tensor.dataToGPU();
 
-      res.tensorRef.dispose();
+        const webGLBackend = tf.backend();
+        const buffer =
+          webGLBackend.gpgpu.createBufferFromTexture(res.texture, 1, 1);
+        webGLBackend.gpgpu.downloadFloat32MatrixFromBuffer(buffer, 1);
 
-      if (mask.getUnderlyingType() !== 'tensor') {
-        tf.dispose(tensor);
+        res.tensorRef.dispose();
+
+        if (mask.getUnderlyingType() !== 'tensor') {
+          tf.dispose(tensor);
+        }
+      } catch (error) {
+        if (error.message !== 'Data is not on GPU but on CPU.') {
+          throw error;
+        }
       }
-    });
+    }
 
     endEstimateSegmentationStats();
   }
