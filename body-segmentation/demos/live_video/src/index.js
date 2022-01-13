@@ -15,6 +15,7 @@
  * =============================================================================
  */
 
+import * as tf from '@tensorflow/tfjs-core';
 import '@tensorflow/tfjs-backend-webgl';
 import * as mpSelfieSegmentation from '@mediapipe/selfie_segmentation';
 import * as mpPose from '@mediapipe/pose';
@@ -174,6 +175,24 @@ async function renderResult() {
       segmenter = null;
       alert(error);
     }
+
+    // Ensure GPU is done for timing purposes.
+    segmentation.forEach(async (value) => {
+      const mask = value.mask;
+      const tensor = await mask.toTensor();
+      const res = tensor.dataToGPU();
+
+      const webGLBackend = tf.backend();
+      const buffer =
+        webGLBackend.gpgpu.createBufferFromTexture(res.texture, 1, 1);
+      webGLBackend.gpgpu.downloadFloat32MatrixFromBuffer(buffer, 1);
+
+      res.tensorRef.dispose();
+
+      if (mask.getUnderlyingType() !== 'tensor') {
+        tf.dispose(tensor);
+      }
+    });
 
     endEstimateSegmentationStats();
   }

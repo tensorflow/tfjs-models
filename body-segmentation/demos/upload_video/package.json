@@ -13,10 +13,10 @@
     "@mediapipe/selfie_segmentation": "~0.1.0",
     "@tensorflow-models/body-segmentation": "file:../../dist",
     "@tensorflow-models/pose-detection": "file:../../../pose-detection/dist",
-    "@tensorflow/tfjs-backend-wasm": "^3.11.0",
-    "@tensorflow/tfjs-backend-webgl": "^3.11.0",
-    "@tensorflow/tfjs-converter": "^3.11.0",
-    "@tensorflow/tfjs-core": "^3.11.0"
+    "@tensorflow/tfjs-backend-wasm": "^3.13.0",
+    "@tensorflow/tfjs-backend-webgl": "^3.13.0",
+    "@tensorflow/tfjs-converter": "^3.13.0",
+    "@tensorflow/tfjs-core": "^3.13.0"
   },
   "scripts": {
     "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr --open",
