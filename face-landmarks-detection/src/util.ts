@@ -14,17 +14,24 @@
  * limitations under the License.
  * =============================================================================
  */
+import * as constants from './constants';
+import {SupportedModels} from './types';
 
-export {createDetector} from './create_detector';
-// FaceDetector class.
-export {FaceDetector} from './face_detector';
-// Entry point to create a new detector instance.
-export {MediaPipeFaceMeshMediaPipeEstimationConfig, MediaPipeFaceMeshMediaPipeModelConfig} from './mediapipe/types';
+export function getKeypointIndexByContour(model: SupportedModels):
+    {[label: string]: number[]} {
+  switch (model) {
+    case SupportedModels.MediaPipeFaceMesh:
+      return constants.MEDIAPIPE_KEYPOINTS_BY_CONTOUR;
+    default:
+      throw new Error(`Model ${model} is not supported.`);
+  }
+}
 
-// Supported models enum.
-export * from './types';
-
-// Second level exports.
-// Utils for rendering.
-import * as util from './util';
-export {util};
+export function getAdjacentPairs(model: SupportedModels): number[][] {
+  switch (model) {
+    case SupportedModels.MediaPipeFaceMesh:
+      return constants.MEDIAPIPE_CONNECTED_KEYPOINTS_PAIRS;
+    default:
+      throw new Error(`Model ${model} is not supported.`);
+  }
+}

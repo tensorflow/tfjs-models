@@ -14,17 +14,17 @@
  * limitations under the License.
  * =============================================================================
  */
+import {MediaPipeFaceMeshMediaPipeEstimationConfig, MediaPipeFaceMeshMediaPipeModelConfig} from './types';
 
-export {createDetector} from './create_detector';
-// FaceDetector class.
-export {FaceDetector} from './face_detector';
-// Entry point to create a new detector instance.
-export {MediaPipeFaceMeshMediaPipeEstimationConfig, MediaPipeFaceMeshMediaPipeModelConfig} from './mediapipe/types';
+export const DEFAULT_FACE_MESH_MODEL_CONFIG:
+    MediaPipeFaceMeshMediaPipeModelConfig = {
+      runtime: 'mediapipe',
+      maxFaces: 1,
+      predictIrises: false
+    };
 
-// Supported models enum.
-export * from './types';
-
-// Second level exports.
-// Utils for rendering.
-import * as util from './util';
-export {util};
+export const DEFAULT_FACE_MESH_ESTIMATION_CONFIG:
+    MediaPipeFaceMeshMediaPipeEstimationConfig = {
+      flipHorizontal: false,
+      staticImageMode: false,
+    };
