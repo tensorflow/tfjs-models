@@ -76,7 +76,8 @@ export const MPHANDS_TENSORS_TO_DETECTION_CONFIGURATION:
       minScoreThresh: 0.5
     };
 export const MPHANDS_DETECTOR_NON_MAX_SUPPRESSION_CONFIGURATION = {
-  minSuppressionThreshold: 0.3
+  minSuppressionThreshold: 0.3,
+  overlapType: 'intersection-over-union' as const
 };
 export const MPHANDS_DETECTOR_RECT_TRANSFORMATION_CONFIG:
     RectTransformationConfig = {

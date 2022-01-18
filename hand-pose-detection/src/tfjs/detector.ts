@@ -259,7 +259,8 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
         detections, this.maxHands,
         constants.MPHANDS_DETECTOR_NON_MAX_SUPPRESSION_CONFIGURATION
             .minSuppressionThreshold,
-        'intersection-over-union');
+        constants.MPHANDS_DETECTOR_NON_MAX_SUPPRESSION_CONFIGURATION
+            .overlapType);
 
     // PalmDetectionCpu: DetectionLetterboxRemovalCalculator
     const newDetections = removeDetectionLetterbox(selectedDetections, padding);

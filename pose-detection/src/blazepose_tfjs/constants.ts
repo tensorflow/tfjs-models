@@ -76,7 +76,8 @@ export const BLAZEPOSE_TENSORS_TO_DETECTION_CONFIGURATION = {
   minScoreThresh: 0.5
 };
 export const BLAZEPOSE_DETECTOR_NON_MAX_SUPPRESSION_CONFIGURATION = {
-  minSuppressionThreshold: 0.3
+  minSuppressionThreshold: 0.3,
+  overlapType: 'intersection-over-union' as const
 };
 export const BLAZEPOSE_DETECTOR_RECT_TRANSFORMATION_CONFIG = {
   shiftX: 0,

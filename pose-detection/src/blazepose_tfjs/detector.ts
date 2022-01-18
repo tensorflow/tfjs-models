@@ -350,7 +350,8 @@ class BlazePoseTfjsDetector implements PoseDetector {
         detections, this.maxPoses,
         constants.BLAZEPOSE_DETECTOR_NON_MAX_SUPPRESSION_CONFIGURATION
             .minSuppressionThreshold,
-        'intersection-over-union');
+        constants.BLAZEPOSE_DETECTOR_NON_MAX_SUPPRESSION_CONFIGURATION
+            .overlapType);
 
     // PoseDetectionCpu: DetectionLetterboxRemovalCalculator
     const newDetections = removeDetectionLetterbox(selectedDetections, padding);

@@ -78,7 +78,7 @@ export function convertImageToTensor(
         transformMatrix, 'bilinear', fillMode, 0,
         [outputTensorSize.height, outputTensorSize.width]);
 
-    const imageShifted = outputTensorFloatRange ?
+    const imageShifted = outputTensorFloatRange != null ?
         shiftImageValue(imageTransformed, outputTensorFloatRange) :
         imageTransformed;
 
