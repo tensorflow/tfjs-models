@@ -177,11 +177,12 @@ async function renderResult() {
     }
 
     // Ensure GPU is done for timing purposes.
-    for (const value of segmentation) {
-      const mask = value.mask;
-      const tensor = await mask.toTensor();
+    const [backend] = STATE.backend.split('-');
+    if (backend === 'tfjs') {
+      for (const value of segmentation) {
+        const mask = value.mask;
+        const tensor = await mask.toTensor();
 
-      try {
         const res = tensor.dataToGPU();
 
         const webGLBackend = tf.backend();
@@ -193,10 +194,6 @@ async function renderResult() {
 
         if (mask.getUnderlyingType() !== 'tensor') {
           tf.dispose(tensor);
-        }
-      } catch (error) {
-        if (error.message !== 'Data is not on GPU but on CPU.') {
-          throw error;
         }
       }
     }
