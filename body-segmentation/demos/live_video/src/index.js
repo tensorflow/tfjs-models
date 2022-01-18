@@ -191,11 +191,11 @@ async function renderResult() {
         webGLBackend.gpgpu.downloadFloat32MatrixFromBuffer(buffer, 1);
 
         res.tensorRef.dispose();
-
-        if (mask.getUnderlyingType() !== 'tensor') {
-          tf.dispose(tensor);
-        }
       }
+    } else if (backend === 'mediapipe') {
+      const gl = window.ExposedContext;
+      if (gl)
+        gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(4));
     }
 
     endEstimateSegmentationStats();
