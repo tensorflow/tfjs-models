@@ -738,9 +738,9 @@ export async function load(modelConfig: BlazePoseTfjsModelConfig):
     Promise<PoseDetector> {
   const config = validateModelConfig(modelConfig);
 
-  const detectorFromTFHub =
+  const detectorFromTFHub = typeof config.detectorModelUrl === 'string' &&
       (config.detectorModelUrl.indexOf('https://tfhub.dev') > -1);
-  const landmarkFromTFHub =
+  const landmarkFromTFHub = typeof config.landmarkModelUrl === 'string' &&
       (config.landmarkModelUrl.indexOf('https://tfhub.dev') > -1);
 
   const [detectorModel, landmarkModel] = await Promise.all([

@@ -511,7 +511,8 @@ export async function load(modelConfig: MoveNetModelConfig = MOVENET_CONFIG):
   let fromTFHub = true;
 
   if (!!config.modelUrl) {
-    fromTFHub = config.modelUrl.indexOf('https://tfhub.dev') > -1;
+    fromTFHub = typeof config.modelUrl === 'string' &&
+        config.modelUrl.indexOf('https://tfhub.dev') > -1;
     model = await tfc.loadGraphModel(config.modelUrl, {fromTFHub});
   } else {
     let modelUrl;

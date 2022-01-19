@@ -15,6 +15,8 @@
  * =============================================================================
  */
 
+import {io} from '@tensorflow/tfjs-core';
+
 import {BlazePoseEstimationConfig, BlazePoseModelConfig} from '../blazepose_mediapipe/types';
 
 /**
@@ -47,8 +49,8 @@ import {BlazePoseEstimationConfig, BlazePoseModelConfig} from '../blazepose_medi
  */
 export interface BlazePoseTfjsModelConfig extends BlazePoseModelConfig {
   runtime: 'tfjs';
-  detectorModelUrl?: string;
-  landmarkModelUrl?: string;
+  detectorModelUrl?: string|io.IOHandler;
+  landmarkModelUrl?: string|io.IOHandler;
 }
 
 /**
