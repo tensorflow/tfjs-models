@@ -329,11 +329,12 @@ class BlazePoseTfjsDetector implements PoseDetector {
     const {imageTensor: imageValueShifted, padding} = convertImageToTensor(
         image, constants.BLAZEPOSE_DETECTOR_IMAGE_TO_TENSOR_CONFIG);
 
+    const detectionResult =
+        this.detectorModel.predict(imageValueShifted) as tf.Tensor3D;
     // PoseDetectionCpu: InferenceCalculator
     // The model returns a tensor with the following shape:
     // [1 (batch), 896 (anchor points), 13 (data for each anchor)]
-    const {boxes, logits} =
-        detectorInference(imageValueShifted, this.detectorModel);
+    const {boxes, logits} = detectorInference(detectionResult);
 
     // PoseDetectionCpu: TensorsToDetectionsCalculator
     const detections: Detection[] = await tensorsToDetections(
@@ -341,7 +342,7 @@ class BlazePoseTfjsDetector implements PoseDetector {
         constants.BLAZEPOSE_TENSORS_TO_DETECTION_CONFIGURATION);
 
     if (detections.length === 0) {
-      tf.dispose([imageValueShifted, logits, boxes]);
+      tf.dispose([imageValueShifted, detectionResult, logits, boxes]);
       return detections;
     }
 
@@ -356,7 +357,7 @@ class BlazePoseTfjsDetector implements PoseDetector {
     // PoseDetectionCpu: DetectionLetterboxRemovalCalculator
     const newDetections = removeDetectionLetterbox(selectedDetections, padding);
 
-    tf.dispose([imageValueShifted, logits, boxes]);
+    tf.dispose([imageValueShifted, detectionResult, logits, boxes]);
 
     return newDetections;
   }
