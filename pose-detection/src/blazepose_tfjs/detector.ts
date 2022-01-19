@@ -31,8 +31,9 @@ import {convertImageToTensor} from '../shared/calculators/convert_image_to_tenso
 import {createSsdAnchors} from '../shared/calculators/create_ssd_anchors';
 import {detectorInference} from '../shared/calculators/detector_inference';
 import {getImageSize, getProjectiveTransformMatrix, toImageTensor} from '../shared/calculators/image_utils';
-import {ImageSize, Keypoint, Mask, Padding} from '../shared/calculators/interfaces/common_interfaces';
-import {AnchorTensor, Detection, Rect} from '../shared/calculators/interfaces/shape_interfaces';
+import {ImageSize, Keypoint, Mask, Padding} from '../shared/calculators/interfaces/common_interfaces
+import {Rect} from '../shared/calculators/interfaces/shape_interfaces';
+import {AnchorTensor, Detection} from '../shared/calculators/interfaces/shape_interfaces';
 import {isVideo} from '../shared/calculators/is_video';
 import {landmarksToDetection} from '../shared/calculators/landmarks_to_detection';
 import {assertMaskValue, toHTMLCanvasElementLossy, toImageDataLossy} from '../shared/calculators/mask_util';
@@ -42,7 +43,6 @@ import {refineLandmarksFromHeatmap} from '../shared/calculators/refine_landmarks
 import {removeDetectionLetterbox} from '../shared/calculators/remove_detection_letterbox';
 import {removeLandmarkLetterbox} from '../shared/calculators/remove_landmark_letterbox';
 import {smoothSegmentation} from '../shared/calculators/segmentation_smoothing';
-import {shiftImageValue} from '../shared/calculators/shift_image_value';
 import {tensorsToDetections} from '../shared/calculators/tensors_to_detections';
 import {tensorsToLandmarks} from '../shared/calculators/tensors_to_landmarks';
 import {tensorsToSegmentation} from '../shared/calculators/tensors_to_segmentation';
@@ -79,7 +79,7 @@ class BlazePoseTfjsMask implements Mask {
   }
 
   getUnderlyingType() {
-    return 'tensor' as const;
+    return 'tensor' as const ;
   }
 }
 
@@ -326,10 +326,8 @@ class BlazePoseTfjsDetector implements PoseDetector {
     // PoseDetectionCpu: ImageToTensorCalculator
     // Transforms the input image into a 224x224 while keeping the aspect ratio
     // resulting in potential letterboxing in the transformed image.
-    const {imageTensor, padding} = convertImageToTensor(
+    const {imageTensor: imageValueShifted, padding} = convertImageToTensor(
         image, constants.BLAZEPOSE_DETECTOR_IMAGE_TO_TENSOR_CONFIG);
-
-    const imageValueShifted = shiftImageValue(imageTensor, [-1, 1]);
 
     // PoseDetectionCpu: InferenceCalculator
     // The model returns a tensor with the following shape:
@@ -343,7 +341,7 @@ class BlazePoseTfjsDetector implements PoseDetector {
         constants.BLAZEPOSE_TENSORS_TO_DETECTION_CONFIGURATION);
 
     if (detections.length === 0) {
-      tf.dispose([imageTensor, imageValueShifted, logits, boxes]);
+      tf.dispose([imageValueShifted, logits, boxes]);
       return detections;
     }
 
@@ -353,12 +351,12 @@ class BlazePoseTfjsDetector implements PoseDetector {
         constants.BLAZEPOSE_DETECTOR_NON_MAX_SUPPRESSION_CONFIGURATION
             .minSuppressionThreshold,
         constants.BLAZEPOSE_DETECTOR_NON_MAX_SUPPRESSION_CONFIGURATION
-            .minScoreThreshold);
+            .overlapType);
 
     // PoseDetectionCpu: DetectionLetterboxRemovalCalculator
     const newDetections = removeDetectionLetterbox(selectedDetections, padding);
 
-    tf.dispose([imageTensor, imageValueShifted, logits, boxes]);
+    tf.dispose([imageValueShifted, logits, boxes]);
 
     return newDetections;
   }
@@ -404,11 +402,13 @@ class BlazePoseTfjsDetector implements PoseDetector {
     const imageSize = getImageSize(image);
     // Transforms the input image into a 256x256 tensor while keeping the aspect
     // ratio, resulting in potential letterboxing in the transformed image.
-    const {imageTensor, padding: letterboxPadding, transformationMatrix} =
+    const {
+      imageTensor: imageValueShifted,
+      padding: letterboxPadding,
+      transformationMatrix
+    } =
         convertImageToTensor(
             image, constants.BLAZEPOSE_LANDMARK_IMAGE_TO_TENSOR_CONFIG, roi);
-
-    const imageValueShifted = shiftImageValue(imageTensor, [0, 1]);
 
     if (this.modelType !== 'lite' && this.modelType !== 'full' &&
         this.modelType !== 'heavy') {
@@ -440,7 +440,7 @@ class BlazePoseTfjsDetector implements PoseDetector {
 
     if (tensorsToPoseLandmarksAndSegmentationResult == null) {
       tf.dispose(outputTensor);
-      tf.dispose([imageTensor, imageValueShifted]);
+      tf.dispose(imageValueShifted);
       return null;
     }
 
@@ -459,7 +459,7 @@ class BlazePoseTfjsDetector implements PoseDetector {
             roiSegmentationMask);
 
     tf.dispose(outputTensor);
-    tf.dispose([imageTensor, imageValueShifted]);
+    tf.dispose(imageValueShifted);
 
     return {poseScore, ...poseLandmarksAndSegmentationInverseProjectionResults};
   }

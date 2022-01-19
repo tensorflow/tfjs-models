@@ -101,8 +101,11 @@ class PosenetDetector implements PoseDetector {
 
     this.maxPoses = config.maxPoses;
 
-    const {imageTensor, padding} = convertImageToTensor(
-        image, {inputResolution: this.inputResolution, keepAspectRatio: true});
+    const {imageTensor, padding} = convertImageToTensor(image, {
+      outputTensorSize: this.inputResolution,
+      keepAspectRatio: true,
+      borderMode: 'replicate'
+    });
 
     const imageValueShifted = this.architecture === 'ResNet50' ?
         tf.add(imageTensor, RESNET_MEAN) :
