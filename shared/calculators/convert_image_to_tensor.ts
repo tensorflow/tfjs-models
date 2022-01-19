@@ -22,6 +22,7 @@ import {getImageSize, getProjectiveTransformMatrix, getRoi, padRoi, toImageTenso
 import {Padding, PixelInput} from './interfaces/common_interfaces';
 import {ImageToTensorConfig} from './interfaces/config_interfaces';
 import {Rect} from './interfaces/shape_interfaces';
+import {shiftImageValue} from './shift_image_value';
 
 /**
  * Convert an image or part of it to an image tensor.
@@ -46,13 +47,18 @@ export function convertImageToTensor(
   padding: Padding,
   transformationMatrix: Matrix4x4
 } {
-  const {inputResolution, keepAspectRatio} = config;
+  const {
+    outputTensorSize,
+    keepAspectRatio,
+    borderMode,
+    outputTensorFloatRange
+  } = config;
 
   // Ref:
   // https://github.com/google/mediapipe/blob/master/mediapipe/calculators/tensor/image_to_tensor_calculator.cc
   const imageSize = getImageSize(image);
   const roi = getRoi(imageSize, normRect);
-  const padding = padRoi(roi, inputResolution, keepAspectRatio);
+  const padding = padRoi(roi, outputTensorSize, keepAspectRatio);
   const transformationMatrix = getRotatedSubRectToRectTransformMatrix(
       roi, imageSize.width, imageSize.height, false);
 
@@ -61,16 +67,22 @@ export function convertImageToTensor(
 
     const transformMatrix = tf.tensor2d(
         getProjectiveTransformMatrix(
-            transformationMatrix, imageSize, inputResolution),
+            transformationMatrix, imageSize, outputTensorSize),
         [1, 8]);
+
+    const fillMode = borderMode === 'zero' ? 'constant' : 'nearest';
 
     const imageTransformed = tf.image.transform(
         // tslint:disable-next-line: no-unnecessary-type-assertion
         tf.expandDims(tf.cast($image, 'float32')) as tf.Tensor4D,
-        transformMatrix, 'bilinear', 'nearest', 0,
-        [inputResolution.height, inputResolution.width]);
+        transformMatrix, 'bilinear', fillMode, 0,
+        [outputTensorSize.height, outputTensorSize.width]);
 
-    return imageTransformed;
+    const imageShifted = outputTensorFloatRange != null ?
+        shiftImageValue(imageTransformed, outputTensorFloatRange) :
+        imageTransformed;
+
+    return imageShifted;
   });
 
   return {imageTensor, padding, transformationMatrix};

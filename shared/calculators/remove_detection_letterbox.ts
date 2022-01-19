@@ -50,13 +50,18 @@ export function removeDetectionLetterbox(
     relativeBoundingBox.yMin = yMin;
     relativeBoundingBox.width = width;
     relativeBoundingBox.height = height;
+    relativeBoundingBox.xMax = xMin + width;
+    relativeBoundingBox.yMax = yMin + height;
 
-    for (let i = 0; i < detection.locationData.relativeKeypoints.length; ++i) {
-      const keypoint = detection.locationData.relativeKeypoints[i];
-      const newX = (keypoint.x - left) / (1 - leftAndRight);
-      const newY = (keypoint.y - top) / (1 - topAndBottom);
-      keypoint.x = newX;
-      keypoint.y = newY;
+    const relativeKeypoints = detection.locationData.relativeKeypoints;
+
+    if (relativeKeypoints) {
+      relativeKeypoints.forEach(keypoint => {
+        const newX = (keypoint.x - left) / (1 - leftAndRight);
+        const newY = (keypoint.y - top) / (1 - topAndBottom);
+        keypoint.x = newX;
+        keypoint.y = newY;
+      });
     }
   }
 

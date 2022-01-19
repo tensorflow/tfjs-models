@@ -47,6 +47,7 @@ export interface AnchorTensor {
 }
 
 export interface LocationData {
+  boundingBox?: BoundingBox;
   relativeBoundingBox?: BoundingBox;
   relativeKeypoints?: Keypoint[];
 }

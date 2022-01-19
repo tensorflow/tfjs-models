@@ -25,7 +25,6 @@ import {convertImageToTensor} from '../shared/calculators/convert_image_to_tenso
 import {getImageSize} from '../shared/calculators/image_utils';
 import {Mask, Segmentation} from '../shared/calculators/interfaces/common_interfaces';
 import {assertMaskValue, toHTMLCanvasElementLossy, toImageDataLossy} from '../shared/calculators/mask_util';
-import {shiftImageValue} from '../shared/calculators/shift_image_value';
 import {tensorsToSegmentation} from '../shared/calculators/tensors_to_segmentation';
 import {BodySegmenterInput} from '../types';
 import * as constants from './constants';
@@ -99,12 +98,11 @@ class MediaPipeSelfieSegmentationTfjsSegmenter implements BodySegmenter {
     // SelfieSegmentationCpu: ImageToTensorCalculator.
     // Resizes the input image into a tensor with a dimension desired by the
     // model.
-    const {imageTensor} = convertImageToTensor(
+    const {imageTensor: imageValueShifted} = convertImageToTensor(
         image,
         this.modelType === 'general' ?
             constants.SELFIE_SEGMENTATION_IMAGE_TO_TENSOR_GENERAL_CONFIG :
             constants.SELFIE_SEGMENTATION_IMAGE_TO_TENSOR_LANDSCAPE_CONFIG);
-    const imageValueShifted = shiftImageValue(imageTensor, [0, 1]);
 
     // SelfieSegmentationCpu: InferenceCalculator
     // The model returns a tensor with the following shape:
@@ -135,7 +133,7 @@ class MediaPipeSelfieSegmentationTfjsSegmenter implements BodySegmenter {
       return tf.mirrorPad(rgMask, [[0, 0], [0, 0], [0, 2]], 'symmetric');
     });
 
-    tf.dispose([imageTensor, imageValueShifted]);
+    tf.dispose([imageValueShifted]);
     return [{
       maskValueToLabel,
       mask: new MediaPipeSelfieSegmentationTfjsMask(rgbaMask)
