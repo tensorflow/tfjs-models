@@ -15,6 +15,7 @@
  * =============================================================================
  */
 import {MediaPipeFaceMeshMediaPipeEstimationConfig} from './mediapipe/types';
+import {MediaPipeFaceMeshTfjsEstimationConfig} from './tfjs/types';
 import {Face, FaceDetectorInput} from './types';
 
 /**
@@ -30,8 +31,8 @@ export interface FaceDetector {
    */
   estimateFaces(
       input: FaceDetectorInput,
-      estimationConfig?: MediaPipeFaceMeshMediaPipeEstimationConfig):
-      Promise<Face[]>;
+      estimationConfig?: MediaPipeFaceMeshMediaPipeEstimationConfig|
+      MediaPipeFaceMeshTfjsEstimationConfig): Promise<Face[]>;
 
   /**
    * Dispose the underlying models from memory.

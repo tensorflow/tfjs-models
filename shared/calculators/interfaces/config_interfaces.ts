@@ -195,3 +195,11 @@ export interface VisibilitySmoothingConfig {
                   // applied to a stored value. Should be in [0, 1] range. The
                   // smaller the value, the smoother result and the bigger lag.
 }
+export interface LandmarksRefinementConfig {
+  indexesMapping:
+      number[];  // Maps indexes of the given set of landmarks to indexes of the
+                 // resulting set of landmarks. Should be non empty and contain
+                 // the same amount of indexes as landmarks in the corresponding
+                 // input.
+  zRefinement: 'none'|'copy'|number[];  // Z refinement instructions.
+}

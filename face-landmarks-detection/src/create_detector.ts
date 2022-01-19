@@ -18,6 +18,8 @@
 import {FaceDetector} from './face_detector';
 import {load as loadMediaPipeFaceMeshMediaPipeDetector} from './mediapipe/detector';
 import {MediaPipeFaceMeshMediaPipeModelConfig, MediaPipeFaceMeshModelConfig} from './mediapipe/types';
+import {loadMeshModel as loadMediaPipeFaceMeshTfjsDetector} from './tfjs/detector';
+import {MediaPipeFaceMeshTfjsModelConfig} from './tfjs/types';
 import {SupportedModels} from './types';
 
 /**
@@ -28,15 +30,16 @@ import {SupportedModels} from './types';
  */
 export async function createDetector(
     model: SupportedModels,
-    modelConfig?: MediaPipeFaceMeshMediaPipeModelConfig):
-    Promise<FaceDetector> {
+    modelConfig?: MediaPipeFaceMeshMediaPipeModelConfig|
+    MediaPipeFaceMeshTfjsModelConfig): Promise<FaceDetector> {
   switch (model) {
     case SupportedModels.MediaPipeFaceMesh:
       const config = modelConfig as MediaPipeFaceMeshModelConfig;
       let runtime;
       if (config != null) {
         if (config.runtime === 'tfjs') {
-          throw new Error('TFJS runtime is not yet supported.');
+          return loadMediaPipeFaceMeshTfjsDetector(
+              config as MediaPipeFaceMeshTfjsModelConfig);
         }
         if (config.runtime === 'mediapipe') {
           return loadMediaPipeFaceMeshMediaPipeDetector(
