@@ -31,7 +31,7 @@ import {convertImageToTensor} from '../shared/calculators/convert_image_to_tenso
 import {createSsdAnchors} from '../shared/calculators/create_ssd_anchors';
 import {detectorInference} from '../shared/calculators/detector_inference';
 import {getImageSize, getProjectiveTransformMatrix, toImageTensor} from '../shared/calculators/image_utils';
-import {ImageSize, Keypoint, Mask, Padding} from '../shared/calculators/interfaces/common_interfaces
+import {ImageSize, Keypoint, Mask, Padding} from '../shared/calculators/interfaces/common_interfaces';
 import {Rect} from '../shared/calculators/interfaces/shape_interfaces';
 import {AnchorTensor, Detection} from '../shared/calculators/interfaces/shape_interfaces';
 import {isVideo} from '../shared/calculators/is_video';
