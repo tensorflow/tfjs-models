@@ -92,7 +92,11 @@ Pass in `poseDetection.SupportedModels.MoveNet` from the
 * *modelUrl* (optional): An optional string that specifies custom url of the
   MoveNet model. If not provided, it will load the model specified by
   *modelType* from tf.hub. This argument is useful for area/countries that
-  don't have access to the model hosted on tf.hub.
+  don't have access to the model hosted on tf.hub. It also accepts
+  `io.IOHandler` which can be used with
+  [tfjs-react-native](https://github.com/tensorflow/tfjs/tree/master/tfjs-react-native)
+  to load model from app bundle directory using
+  [bundleResourceIO](https://github.com/tensorflow/tfjs/blob/master/tfjs-react-native/src/bundle_resource_io.ts#L169).
 
 * *minPoseScore* (optional): The minimum confidence score a pose needs to have
   to be considered a valid pose detection.
