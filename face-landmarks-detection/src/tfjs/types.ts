@@ -49,8 +49,9 @@ export interface MediaPipeFaceDetectorTfjsModelConfig {
  *
  * `runtime`: Must set to be 'tfjs'.
  *
- * `predictIrises`: If set to true, refines the landmark coordinates around
- * the eyes and lips, and output additional landmarks around the irises.
+ * `predictIrises`: Defaults to false. If set to true, refines the landmark
+ * coordinates around the eyes and lips, and output additional landmarks around
+ * the irises.
  *
  * `detectorModelUrl`: Optional. An optional string that specifies custom url of
  * the detector model. This is useful for area/countries that don't have access
