@@ -20,6 +20,7 @@ import '@tensorflow/tfjs-backend-webgl';
 import * as mpPose from '@mediapipe/pose';
 import * as mpSelfieSegmentation from '@mediapipe/selfie_segmentation';
 import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
+import * as tf from '@tensorflow/tfjs-core';
 
 tfjsWasm.setWasmPaths(
     `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
@@ -34,10 +35,20 @@ import {STATE} from './shared/params';
 import {setupStats} from './shared/stats_panel';
 import {setBackendAndEnvFlags} from './shared/util';
 
-let segmenter, camera, stats;
+let segmenter, camera, statsModel, statsE2E;
 let cameras;
-let startInferenceTime, numInferences = 0;
-let inferenceTimeSum = 0, lastPanelUpdate = 0;
+let modelTime = {
+  startInferenceTime: 0,
+  numInferences: 0,
+  inferenceTimeSum: 0,
+  lastPanelUpdate: 0
+};
+let E2ETime = {
+  startInferenceTime: 0,
+  numInferences: 0,
+  inferenceTimeSum: 0,
+  lastPanelUpdate: 0
+};
 let rafId;
 const canvas = document.createElement('canvas');
 const ctx = canvas.getContext('2d');
@@ -128,23 +139,23 @@ async function checkGuiUpdate() {
   }
 }
 
-function beginEstimateSegmentationStats() {
-  startInferenceTime = (performance || Date).now();
+function beginEstimateSegmentationStats(time) {
+  time.startInferenceTime = (performance || Date).now();
 }
 
-function endEstimateSegmentationStats() {
+function endEstimateSegmentationStats(time, stats) {
   const endInferenceTime = (performance || Date).now();
-  inferenceTimeSum += endInferenceTime - startInferenceTime;
-  ++numInferences;
+  time.inferenceTimeSum += endInferenceTime - time.startInferenceTime;
+  ++time.numInferences;
 
   const panelUpdateMilliseconds = 1000;
-  if (endInferenceTime - lastPanelUpdate >= panelUpdateMilliseconds) {
-    const averageInferenceTime = inferenceTimeSum / numInferences;
-    inferenceTimeSum = 0;
-    numInferences = 0;
+  if (endInferenceTime - time.lastPanelUpdate >= panelUpdateMilliseconds) {
+    const averageInferenceTime = time.inferenceTimeSum / time.numInferences;
+    time.inferenceTimeSum = 0;
+    time.numInferences = 0;
     stats.customFpsPanel.update(
         1000.0 / averageInferenceTime, 120 /* maxValue */);
-    lastPanelUpdate = endInferenceTime;
+    time.lastPanelUpdate = endInferenceTime;
   }
 }
 
@@ -162,8 +173,10 @@ async function renderResult() {
   // Segmenter can be null if initialization failed (for example when loading
   // from a URL that does not exist).
   if (segmenter != null) {
-    // FPS only counts the time it takes to finish segmentPeople.
-    beginEstimateSegmentationStats();
+    // Model FPS only counts the time it takes to finish segmentPeople.
+    beginEstimateSegmentationStats(modelTime);
+    // E2E FPS includes rendering time.
+    beginEstimateSegmentationStats(E2ETime);
 
     // Detectors can throw errors, for example when using custom URLs that
     // contain a model that doesn't provide the expected output.
@@ -187,7 +200,32 @@ async function renderResult() {
       alert(error);
     }
 
-    endEstimateSegmentationStats();
+    // Ensure GPU is done for timing purposes.
+    const [backend] = STATE.backend.split('-');
+    if (backend === 'tfjs') {
+      for (const value of segmentation) {
+        const mask = value.mask;
+        const tensor = await mask.toTensor();
+
+        const res = tensor.dataToGPU();
+
+        const webGLBackend = tf.backend();
+        const buffer =
+            webGLBackend.gpgpu.createBufferFromTexture(res.texture, 1, 1);
+        webGLBackend.gpgpu.downloadFloat32MatrixFromBuffer(buffer, 1);
+
+        res.tensorRef.dispose();
+      }
+    } else if (backend === 'mediapipe') {
+      // Code in
+      // node_modules/@mediapipe/selfie_segmentation/selfie_segmentation.js must
+      // be modified to expose the webgl context it uses.
+      const gl = window.exposedContext;
+      if (gl)
+        gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(4));
+    }
+
+    endEstimateSegmentationStats(modelTime, statsModel);
   }
 
   // The null check makes sure the UI is not in the middle of changing to a
@@ -229,6 +267,7 @@ async function renderResult() {
     }
   }
   camera.drawToCanvas(canvas);
+  endEstimateSegmentationStats(E2ETime, statsE2E);
 }
 
 async function renderPrediction() {
@@ -239,7 +278,7 @@ async function renderPrediction() {
   }
 
   rafId = requestAnimationFrame(renderPrediction);
-};
+}
 
 async function getVideoInputs() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
@@ -266,7 +305,8 @@ async function app() {
 
   await setupDatGui(urlParams, cameras);
 
-  stats = setupStats();
+  statsModel = setupStats('stats1', '(Model FPS)      ');
+  statsE2E = setupStats('stats2', '(End2End FPS)');
 
   camera = await Camera.setupCamera(STATE.camera, cameras);
   canvas.width = camera.canvas.width;
