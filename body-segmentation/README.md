@@ -286,6 +286,9 @@ An example of applying a [bokeh effect](https://www.nikonusa.com/en/learn-and-ex
 * **canvas** The canvas to draw the background-blurred image onto.
 * **image** The image to blur the background of and draw.
 * **segmentation** Single segmentation or array of segmentations.
+* **foregroundThreshold** The minimum probability to color a pixel as foreground
+rather than background. The alpha channel integer values will be taken as the
+probabilities.  Default to 0.5. Should be a number between 0 and 1.
 * **backgroundBlurAmount** How many pixels in the background blend into each
 other.  Defaults to 3. Should be an integer between 1 and 20.
 * **edgeBlurAmount** How many pixels to blur on the edge between the person
@@ -300,6 +303,7 @@ const img = document.getElementById('image');
 const segmenter = await bodySegmentation.createSegmenter(bodySegmentation.SupportedModels.MediaPipeSelfieSegmentation);
 const segmentation = await segmenter.segmentPeople(img);
 
+const foregroundThreshold = 0.5;
 const backgroundBlurAmount = 3;
 const edgeBlurAmount = 3;
 const flipHorizontal = false;
@@ -308,7 +312,7 @@ const canvas = document.getElementById('canvas');
 // Draw the image with the background blurred onto the canvas. The edge between
 // the person and blurred background is blurred by 3 pixels.
 await bodySegmentation.drawBokehEffect(
-    canvas, img, segmentation, backgroundBlurAmount,
+    canvas, img, segmentation, foregroundThreshold, backgroundBlurAmount,
     edgeBlurAmount, flipHorizontal);
 ```
 
@@ -331,6 +335,9 @@ An example of applying a body part blur on `left_face` and `right_face` body par
 * **image** The image with people to blur the body-part and draw.
 * **segmentation** Single segmentation or array of segmentations.
 * **maskValuesToBlur** An array of red channel mask values to blur (representing different body parts, refer to `Segmentation` interface for more details).
+* **foregroundThreshold** The minimum probability to color a pixel as foreground
+rather than background. The alpha channel integer values will be taken as the
+probabilities.  Default to 0.5. Should be a number between 0 and 1.
 * **backgroundBlurAmount** How many pixels in the background blend into each
 other.  Defaults to 3. Should be an integer between 1 and 20.
 * **edgeBlurAmount** How many pixels to blur on the edge between the person
@@ -345,6 +352,7 @@ const img = document.getElementById('image');
 const segmenter = await bodySegmentation.createSegmenter(bodySegmentation.SupportedModels.BodyPix);
 const segmentation = await segmenter.segmentPeople(img, {multiSegmentation: false, segmentBodyParts: true});
 
+const foregroundThreshold = 0.5;
 const backgroundBlurAmount = 3;
 const edgeBlurAmount = 3;
 const flipHorizontal = false;
@@ -353,6 +361,6 @@ const faceBodyPartIdsToBlur = [0, 1];
 const canvas = document.getElementById('canvas');
 
 await bodySegmentation.blurBodyPart(
-    canvas, img, partSegmentation, faceBodyPartIdsToBlur,
+    canvas, img, partSegmentation, faceBodyPartIdsToBlur, foregroundThreshold,
     backgroundBlurAmount, edgeBlurAmount, flipHorizontal);
 ```
