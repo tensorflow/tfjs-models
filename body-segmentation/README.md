@@ -287,8 +287,7 @@ An example of applying a [bokeh effect](https://www.nikonusa.com/en/learn-and-ex
 * **image** The image to blur the background of and draw.
 * **segmentation** Single segmentation or array of segmentations.
 * **foregroundThreshold** The minimum probability to color a pixel as foreground
-rather than background. The alpha channel integer values will be taken as the
-probabilities.  Default to 0.5. Should be a number between 0 and 1.
+rather than background.  Defaults to 0.5. Should be a number between 0 and 1.
 * **backgroundBlurAmount** How many pixels in the background blend into each
 other.  Defaults to 3. Should be an integer between 1 and 20.
 * **edgeBlurAmount** How many pixels to blur on the edge between the person
@@ -336,8 +335,7 @@ An example of applying a body part blur on `left_face` and `right_face` body par
 * **segmentation** Single segmentation or array of segmentations.
 * **maskValuesToBlur** An array of red channel mask values to blur (representing different body parts, refer to `Segmentation` interface for more details).
 * **foregroundThreshold** The minimum probability to color a pixel as foreground
-rather than background. The alpha channel integer values will be taken as the
-probabilities.  Default to 0.5. Should be a number between 0 and 1.
+rather than background.  Defaults to 0.5. Should be a number between 0 and 1.
 * **backgroundBlurAmount** How many pixels in the background blend into each
 other.  Defaults to 3. Should be an integer between 1 and 20.
 * **edgeBlurAmount** How many pixels to blur on the edge between the person
