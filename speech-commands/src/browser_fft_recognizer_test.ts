@@ -454,12 +454,13 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
       expect((result.scores as Float32Array).length).toEqual(fakeWords.length);
 
       callbackTimestamps.push(tf.util.now());
+      const timeDelta = 50;
       if (callbackTimestamps.length > 1) {
         expect(
             callbackTimestamps[callbackTimestamps.length - 1] -
             callbackTimestamps[callbackTimestamps.length - 2])
             .toBeGreaterThanOrEqual(
-                recognizer.params().spectrogramDurationMillis);
+                recognizer.params().spectrogramDurationMillis - timeDelta);
       }
 
       tensorCounts.push(tf.memory().numTensors);
