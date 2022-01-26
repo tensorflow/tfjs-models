@@ -140,8 +140,8 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
 
   it('start and stop: overlapFactor = 0', done => {
     setUpFakes();
-
-    const spectrogramDurationMillis = 1024 / 44100 * 43 * 1e3;
+    const timeDelta = 50;
+    const spectrogramDurationMillis = 1024 / 44100 * 43 * 1e3 - timeDelta;
     const numCallbacksToComplete = 3;
     let numCallbacksCompleted = 0;
     const tensorCounts: number[] = [];
