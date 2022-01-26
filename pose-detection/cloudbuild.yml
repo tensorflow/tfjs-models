@@ -2,13 +2,13 @@
 steps:
 
 # Install common dependencies.
-- name: 'node:10'
+- name: 'node:12'
   id: 'yarn-common'
   entrypoint: 'yarn'
   args: ['install']
 
 # Install pose-detection dependencies.
-- name: 'node:10'
+- name: 'node:12'
   dir: 'pose-detection'
   entrypoint: 'yarn'
   id: 'yarn'
@@ -16,7 +16,7 @@ steps:
   waitFor: ['yarn-common']
 
 # Lint.
-- name: 'node:10'
+- name: 'node:12'
   dir: 'pose-detection'
   entrypoint: 'yarn'
   id: 'lint'
@@ -24,7 +24,7 @@ steps:
   waitFor: ['yarn']
 
 # Build.
-- name: 'node:10'
+- name: 'node:12'
   dir: 'pose-detection'
   entrypoint: 'yarn'
   id: 'build'
@@ -32,7 +32,7 @@ steps:
   waitFor: ['yarn']
 
 # Run node tests.
-- name: 'node:10'
+- name: 'node:12'
   dir: 'pose-detection'
   entrypoint: 'yarn'
   id: 'test-node'
@@ -40,7 +40,7 @@ steps:
   waitFor: ['build']
 
 # Run browser tests.
-- name: 'node:10'
+- name: 'node:12'
   dir: 'pose-detection'
   entrypoint: 'yarn'
   id: 'test'
