@@ -19,9 +19,9 @@ import {ImageToTensorConfig, TensorsToSegmentationConfig} from '../shared/calcul
 import {MediaPipeSelfieSegmentationTfjsModelConfig, MediaPipeSelfieSegmentationTfjsSegmentationConfig} from './types';
 
 export const DEFAULT_TFJS_SELFIE_SEGMENTATION_MODEL_URL_GENERAL =
-    'https://storage.googleapis.com/tfjs-testing/selfie-segmentation/selfie-segmentation/model.json';
+    'https://tfhub.dev/mediapipe/tfjs-model/selfie_segmentation/general/1';
 export const DEFAULT_TFJS_SELFIE_SEGMENTATION_MODEL_URL_LANDSCAPE =
-    'https://storage.googleapis.com/tfjs-testing/selfie-segmentation/selfie-segmentation-landscape/model.json';
+    'https://tfhub.dev/mediapipe/tfjs-model/selfie_segmentation/landscape/1';
 export const DEFAULT_TFJS_SELFIE_SEGMENTATION_MODEL_CONFIG:
     MediaPipeSelfieSegmentationTfjsModelConfig = {
       runtime: 'tfjs',
