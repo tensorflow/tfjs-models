@@ -62,6 +62,11 @@ export async function setupDatGui(urlParams, cameras) {
   });
   cameraFolder.open();
 
+  // The fps display folder contains options for video settings.
+  const fpsDisplayFolder = gui.addFolder('FPS Display');
+  fpsDisplayFolder.add(params.STATE.fpsDisplay, 'mode', ['model', 'e2e']);
+  fpsDisplayFolder.open();
+
   // The model folder contains options for model selection.
   const modelFolder = gui.addFolder('Model');
 
