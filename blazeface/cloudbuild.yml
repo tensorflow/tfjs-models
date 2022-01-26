@@ -1,13 +1,13 @@
 steps:
 
 # Install common dependencies.
-- name: 'node:10'
+- name: 'node:12'
   id: 'yarn-common'
   entrypoint: 'yarn'
   args: ['install']
 
 # Install blazeface dependencies.
-- name: 'node:10'
+- name: 'node:12'
   dir: 'blazeface'
   entrypoint: 'yarn'
   id: 'yarn'
@@ -15,7 +15,7 @@ steps:
   waitFor: ['yarn-common']
 
 # Lint.
-- name: 'node:10'
+- name: 'node:12'
   dir: 'blazeface'
   entrypoint: 'yarn'
   id: 'lint'
@@ -23,7 +23,7 @@ steps:
   waitFor: ['yarn']
 
 # Build.
-- name: 'node:10'
+- name: 'node:12'
   dir: 'blazeface'
   entrypoint: 'yarn'
   id: 'build'
@@ -31,7 +31,7 @@ steps:
   waitFor: ['yarn']
 
 # Run tests.
-- name: 'node:10'
+- name: 'node:12'
   dir: 'blazeface'
   entrypoint: 'yarn'
   id: 'test'

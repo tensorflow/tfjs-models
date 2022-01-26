@@ -1,13 +1,13 @@
 steps:
 
 # Install common dependencies.
-- name: 'node:10'
+- name: 'node:12'
   id: 'yarn-common'
   entrypoint: 'yarn'
   args: ['install']
 
 # Install tfjs dependencies.
-- name: 'node:10'
+- name: 'node:12'
   dir: 'posenet'
   entrypoint: 'yarn'
   id: 'yarn'
@@ -15,7 +15,7 @@ steps:
   waitFor: ['yarn-common']
 
 # Build.
-- name: 'node:10'
+- name: 'node:12'
   dir: 'posenet'
   entrypoint: 'yarn'
   id: 'build'
@@ -23,7 +23,7 @@ steps:
   waitFor: ['yarn']
 
 # Run tests.
-- name: 'node:10'
+- name: 'node:12'
   dir: 'posenet'
   entrypoint: 'yarn'
   id: 'test'
