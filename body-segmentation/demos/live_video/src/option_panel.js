@@ -62,6 +62,11 @@ export async function setupDatGui(urlParams, cameras) {
   });
   cameraFolder.open();
 
+  // The fps display folder contains options for video settings.
+  const fpsDisplayFolder = gui.addFolder('FPS Display');
+  fpsDisplayFolder.add(params.STATE.fpsDisplay, 'mode', ['model', 'e2e']);
+  fpsDisplayFolder.open();
+
   // The model folder contains options for model selection.
   const modelFolder = gui.addFolder('Model');
 
@@ -69,10 +74,10 @@ export async function setupDatGui(urlParams, cameras) {
   let type = urlParams.get('type');
 
   switch (model) {
-    case 'blaze_pose':
+    case 'blazepose':
       params.STATE.model = poseDetection.SupportedModels.BlazePose;
       break;
-    case 'body_pix':
+    case 'bodypix':
       params.STATE.model = bodySegmentation.SupportedModels.BodyPix;
       break;
     case 'selfie_segmentation':

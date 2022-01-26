@@ -29,7 +29,7 @@ import {getXYPerFrame, imageToBooleanMask, KARMA_SERVER, loadImage, loadVideo, s
 // Measured in pixels.
 const EPSILON_IMAGE = 15;
 // Measured in meters.
-const EPSILON_IMAGE_WORLD = 0.18;
+const EPSILON_IMAGE_WORLD = 0.21;
 // Measured in pixels.
 const EPSILON_VIDEO = 28;
 // Measured in meters.
