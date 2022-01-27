@@ -39,6 +39,14 @@ If you want to run any of the demos locally, follow these steps:
 
 4. Install dependencies. `yarn`
 
-5. Run the demo. `yarn watch`
+5. To ensure GPU sync for a correct mediapipe FPS, edit
+`./node_modules/@mediapipe/selfie_segmentation/selfie_segmentation.js`
+as well as `./node_modules/@mediapipe/pose/pose.js`
+and after the statement `y=d.l.getContext("webgl2",{});` add the statement
+`window.exposedContext=y;`. This will give the demo access to this context. If
+you skip the step then the demo will work but the FPS for mediapipe will be
+incorrect.
 
-6. The demo runs at `localhost:1234`. (Remember to provide URL model parameter e. g. `localhost:1234/?model=mediapipe_hands`)
+6. Run the demo. `yarn watch`
+
+7. The demo runs at `localhost:1234`. (Remember to provide URL model parameter e. g. `localhost:1234/?model=mediapipe_hands`)
