@@ -15,6 +15,7 @@
  * =============================================================================
  */
 
+import {io} from '@tensorflow/tfjs-core';
 import {MediaPipeSelfieSegmentationModelConfig, MediaPipeSelfieSegmentationSegmentationConfig} from '../selfie_segmentation_mediapipe/types';
 
 /**
@@ -35,7 +36,7 @@ import {MediaPipeSelfieSegmentationModelConfig, MediaPipeSelfieSegmentationSegme
 export interface MediaPipeSelfieSegmentationTfjsModelConfig extends
     MediaPipeSelfieSegmentationModelConfig {
   runtime: 'tfjs';
-  modelUrl?: string;
+  modelUrl?: string|io.IOHandler;
 }
 
 /**

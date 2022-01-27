@@ -160,7 +160,8 @@ export async function load(
     Promise<BodySegmenter> {
   const config = validateModelConfig(modelConfig);
 
-  const modelFromTFHub = (config.modelUrl.indexOf('https://tfhub.dev') > -1);
+  const modelFromTFHub = typeof config.modelUrl === 'string' &&
+      (config.modelUrl.indexOf('https://tfhub.dev') > -1);
 
   const model =
       await tfconv.loadGraphModel(config.modelUrl, {fromTFHub: modelFromTFHub});
