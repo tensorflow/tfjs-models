@@ -427,10 +427,14 @@ class BlazePoseTfjsDetector implements PoseDetector {
     // activation_heatmap: This tensor (shape: [1, 64, 64, 39]) represents
     //  heatmap for the 39 landmarks.
     // world_3d: This tensor (shape: [1, 117]) represents 39 3DWorld keypoints.
-    const outputTensor = this.landmarkModel.execute(imageValueShifted, [
-      'ld_3d', 'output_poseflag', 'activation_segmentation',
-      'activation_heatmap', 'world_3d'
-    ]) as tf.Tensor[];
+    const outputs =
+        ['ld_3d', 'output_poseflag', 'activation_heatmap', 'world_3d'];
+    if (this.enableSegmentation) {
+      outputs.push('activation_segmentation');
+    }
+
+    const outputTensor =
+        this.landmarkModel.execute(imageValueShifted, outputs) as tf.Tensor[];
 
     // Decodes the tensors into the corresponding landmark and segmentation mask
     // representation.
@@ -543,9 +547,10 @@ class BlazePoseTfjsDetector implements PoseDetector {
     // TensorsToPoseLandmarksAndSegmentation: SplitTensorVectorCalculator.
     const landmarkTensor = tensors[0] as tf.Tensor2D,
           poseFlagTensor = tensors[1] as tf.Tensor2D,
-          segmentationTensor = tensors[2] as tf.Tensor4D,
-          heatmapTensor = tensors[3] as tf.Tensor4D,
-          worldLandmarkTensor = tensors[4] as tf.Tensor2D;
+          heatmapTensor = tensors[2] as tf.Tensor4D,
+          worldLandmarkTensor = tensors[3] as tf.Tensor2D,
+          segmentationTensor =
+              (this.enableSegmentation ? tensors[4] : null) as tf.Tensor4D;
 
     // Converts the pose-flag tensor into a float that represents the
     // confidence score of pose presence.
