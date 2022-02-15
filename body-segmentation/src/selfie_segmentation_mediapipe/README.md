@@ -34,9 +34,9 @@ Via script tags:
 
 Via npm:
 ```sh
-yarn add @tensorflow-models/body-segmentation
-yarn add @tensorflow/tfjs-core, @tensorflow/tfjs-backend-webgl
 yarn add @mediapipe/selfie_segmentation
+yarn add @tensorflow/tfjs-core, @tensorflow/tfjs-backend-webgl
+yarn add @tensorflow-models/body-segmentation
 ```
 
 -----------------------------------------------------------------------
@@ -73,7 +73,8 @@ Pass in `bodySegmentation.SupportedModels.MediaPipeSelfieSegmentation` from the
 const model = bodySegmentation.SupportedModels.MediaPipeSelfieSegmentation;
 const segmenterConfig = {
   runtime: 'mediapipe',
-  solutionPath: 'base/node_modules/@mediapipe/selfie_segmentation'
+  solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation'
+                // or 'base/node_modules/@mediapipe/selfie_segmentation' in npm.
 };
 segmenter = await bodySegmentation.createSegmenter(model, segmenterConfig);
 ```

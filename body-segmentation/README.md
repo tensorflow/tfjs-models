@@ -31,6 +31,7 @@ For example:
 const model = bodySegmentation.SupportedModels.MediaPipeSelfieSegmentation;
 const segmenterConfig = {
   runtime: 'mediapipe', // or 'tfjs'
+  solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation',
   modelType: 'general'
 }
 const segmenter = await bodySegmentation.createSegmenter(model, segmenterConfig);

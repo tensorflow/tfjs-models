@@ -29,6 +29,7 @@ For example:
 const model = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh;
 const detectorConfig = {
   runtime: 'mediapipe', // or 'tfjs'
+  solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh',
 }
 const detector = await faceLandmarksDetection.createDetector(model, detectorConfig);
 ```

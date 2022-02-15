@@ -31,9 +31,9 @@ Via script tags:
 
 Via npm:
 ```sh
-yarn add @tensorflow-models/face-landmarks-detection
-yarn add @tensorflow/tfjs-core, @tensorflow/tfjs-backend-webgl
 yarn add @mediapipe/face_mesh
+yarn add @tensorflow/tfjs-core, @tensorflow/tfjs-backend-webgl
+yarn add @tensorflow-models/face-landmarks-detection
 ```
 
 -----------------------------------------------------------------------
@@ -71,7 +71,8 @@ Pass in `faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh` from the
 const model = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh;
 const detectorConfig = {
   runtime: 'mediapipe',
-  solutionPath: 'base/node_modules/@mediapipe/face_mesh'
+  solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh',
+                // or 'base/node_modules/@mediapipe/face_mesh' in npm.
 };
 detector = await faceLandmarksDetection.createDetector(model, detectorConfig);
 ```
