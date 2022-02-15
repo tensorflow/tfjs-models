@@ -70,7 +70,7 @@ export const DEFAULT_FACE_MESH_MODEL_CONFIG:
     MediaPipeFaceMeshTfjsModelConfig = {
       runtime: 'tfjs',
       maxFaces: 1,
-      predictIrises: false,
+      refineLandmarks: false,
       detectorModelUrl: DEFAULT_DETECTOR_MODEL_URL_SHORT,
       landmarkModelUrl: DEFAULT_LANDMARK_MODEL_URL
     };

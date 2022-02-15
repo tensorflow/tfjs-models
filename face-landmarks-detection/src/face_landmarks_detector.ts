@@ -16,12 +16,12 @@
  */
 import {MediaPipeFaceMeshMediaPipeEstimationConfig} from './mediapipe/types';
 import {MediaPipeFaceMeshTfjsEstimationConfig} from './tfjs/types';
-import {Face, FaceDetectorInput} from './types';
+import {Face, FaceLandmarksDetectorInput} from './types';
 
 /**
  * User-facing interface for all face pose detectors.
  */
-export interface FaceDetector {
+export interface FaceLandmarksDetector {
   /**
    * Finds faces in the input image.
    *
@@ -30,7 +30,7 @@ export interface FaceDetector {
    * @param estimationConfig common config for `estimateFaces`.
    */
   estimateFaces(
-      input: FaceDetectorInput,
+      input: FaceLandmarksDetectorInput,
       estimationConfig?: MediaPipeFaceMeshMediaPipeEstimationConfig|
       MediaPipeFaceMeshTfjsEstimationConfig): Promise<Face[]>;
 

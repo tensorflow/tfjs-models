@@ -134,13 +134,13 @@ describeWithFlags('TFJS FaceMesh ', ALL_ENVS, () => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
   });
 
-  async function expectTFJSFaceMesh(predictIrises: boolean) {
+  async function expectTFJSFaceMesh(refineLandmarks: boolean) {
     const startTensors = tf.memory().numTensors;
 
     // Note: this makes a network request for model assets.
     const detector = await faceDetection.createDetector(
         faceDetection.SupportedModels.MediaPipeFaceMesh,
-        {...TFJS_MODEL_CONFIG, predictIrises});
+        {...TFJS_MODEL_CONFIG, refineLandmarks});
     const input: tf.Tensor3D = tf.zeros([128, 128, 3]);
 
     const beforeTensors = tf.memory().numTensors;
@@ -192,15 +192,15 @@ describeWithFlags('TFJS FaceMesh static image ', BROWSER_ENVS, () => {
   });
 
   async function expectTFJSFaceMesh(
-      image: HTMLImageElement, staticImageMode: boolean, predictIrises: boolean,
-      numFrames: number) {
+      image: HTMLImageElement, staticImageMode: boolean,
+      refineLandmarks: boolean, numFrames: number) {
     // Note: this makes a network request for model assets.
     const model = faceDetection.SupportedModels.MediaPipeFaceMesh;
     const detector = await faceDetection.createDetector(
-        model, {...TFJS_MODEL_CONFIG, predictIrises});
+        model, {...TFJS_MODEL_CONFIG, refineLandmarks});
 
     await expectFaceMesh(
-        detector, image, staticImageMode, predictIrises, numFrames,
+        detector, image, staticImageMode, refineLandmarks, numFrames,
         EPSILON_IMAGE);
   }
 
@@ -224,13 +224,14 @@ describeWithFlags('TFJS FaceMesh static image ', BROWSER_ENVS, () => {
     const model = faceDetection.SupportedModels.MediaPipeFaceMesh;
     const tfjsResults =
         await faceDetection
-            .createDetector(model, {...TFJS_MODEL_CONFIG, predictIrises: true})
+            .createDetector(
+                model, {...TFJS_MODEL_CONFIG, refineLandmarks: true})
             .then(detector => detector.estimateFaces(image));
 
     const mediapipeResults =
         await faceDetection
             .createDetector(
-                model, {...MEDIAPIPE_MODEL_CONFIG, predictIrises: true})
+                model, {...MEDIAPIPE_MODEL_CONFIG, refineLandmarks: true})
             .then(detector => detector.estimateFaces(image));
 
     expect(tfjsResults.length).toBe(mediapipeResults.length);

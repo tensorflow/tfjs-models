@@ -22,7 +22,7 @@ import {EstimationConfig, ModelConfig} from '../types';
  */
 export interface MediaPipeFaceMeshModelConfig extends ModelConfig {
   runtime: 'mediapipe'|'tfjs';
-  predictIrises: boolean;
+  refineLandmarks: boolean;
 }
 
 export interface MediaPipeFaceMeshEstimationConfig extends EstimationConfig {}
@@ -32,7 +32,7 @@ export interface MediaPipeFaceMeshEstimationConfig extends EstimationConfig {}
  *
  * `runtime`: Must set to be 'mediapipe'.
  *
- * `predictIrises`: If set to true, refines the landmark coordinates around
+ * `refineLandmarks`: If set to true, refines the landmark coordinates around
  * the eyes and lips, and output additional landmarks around the irises.
  *
  * `solutionPath`: Optional. The path to where the wasm binary and model files

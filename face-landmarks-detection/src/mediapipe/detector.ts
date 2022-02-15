@@ -18,10 +18,10 @@ import * as faceMesh from '@mediapipe/face_mesh';
 import * as tf from '@tensorflow/tfjs-core';
 
 import {MEDIAPIPE_KEYPOINTS} from '../constants';
-import {FaceDetector} from '../face_detector';
+import {FaceLandmarksDetector} from '../face_landmarks_detector';
 import {Keypoint} from '../shared/calculators/interfaces/common_interfaces';
 import {landmarksToDetection} from '../shared/calculators/landmarks_to_detection';
-import {Face, FaceDetectorInput} from '../types';
+import {Face, FaceLandmarksDetectorInput} from '../types';
 
 import {validateModelConfig} from './detector_utils';
 import {MediaPipeFaceMeshMediaPipeEstimationConfig, MediaPipeFaceMeshMediaPipeModelConfig} from './types';
@@ -29,7 +29,8 @@ import {MediaPipeFaceMeshMediaPipeEstimationConfig, MediaPipeFaceMeshMediaPipeMo
 /**
  * MediaPipe detector class.
  */
-class MediaPipeFaceMeshMediaPipeDetector implements FaceDetector {
+class MediaPipeFaceMeshMediaPipeLandmarksDetector implements
+    FaceLandmarksDetector {
   private readonly faceMeshSolution: faceMesh.FaceMesh;
 
   // This will be filled out by asynchronous calls to onResults. They will be
@@ -52,7 +53,7 @@ class MediaPipeFaceMeshMediaPipeDetector implements FaceDetector {
       }
     });
     this.faceMeshSolution.setOptions({
-      refineLandmarks: config.predictIrises,
+      refineLandmarks: config.refineLandmarks,
       selfieMode: this.selfieMode,
       maxNumFaces: config.maxFaces,
     });
@@ -113,7 +114,7 @@ class MediaPipeFaceMeshMediaPipeDetector implements FaceDetector {
    * @return An array of `Face`s.
    */
   async estimateFaces(
-      input: FaceDetectorInput,
+      input: FaceLandmarksDetectorInput,
       estimationConfig?: MediaPipeFaceMeshMediaPipeEstimationConfig):
       Promise<Face[]> {
     if (estimationConfig && estimationConfig.flipHorizontal &&
@@ -158,9 +159,9 @@ class MediaPipeFaceMeshMediaPipeDetector implements FaceDetector {
  * `MediaPipeFaceMeshMediaPipeModelConfig` interface.
  */
 export async function load(modelConfig: MediaPipeFaceMeshMediaPipeModelConfig):
-    Promise<FaceDetector> {
+    Promise<FaceLandmarksDetector> {
   const config = validateModelConfig(modelConfig);
-  const detector = new MediaPipeFaceMeshMediaPipeDetector(config);
+  const detector = new MediaPipeFaceMeshMediaPipeLandmarksDetector(config);
   await detector.initialize();
   return detector;
 }

@@ -17,13 +17,12 @@
 import * as tf from '@tensorflow/tfjs-core';
 import {splitDetectionResult} from './split_detection_result';
 
-export type DetectorInferenceResult = {
+export type detectorResult = {
   boxes: tf.Tensor2D,
   logits: tf.Tensor1D
 };
 
-export function detectorInference(detectionResult: tf.Tensor3D):
-    DetectorInferenceResult {
+export function detectorResult(detectionResult: tf.Tensor3D): detectorResult {
   return tf.tidy(() => {
     const [logits, rawBoxes] = splitDetectionResult(detectionResult);
     // Shape [896, 12]

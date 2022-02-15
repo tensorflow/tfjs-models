@@ -108,7 +108,7 @@ function refineZ(
  * @returns A list of refined landmarks.
  */
 // ref:
-// https://github.com/google/mediapipe/blob/master/mediapipe/calculators/util/detection_projection_calculator.cc
+// https://github.com/google/mediapipe/blob/master/mediapipe/calculators/util/landmarks_refinement_calculator.cc
 export function landmarksRefinement(
     allLandmarks: Keypoint[][],
     refinements: LandmarksRefinementConfig[]): Keypoint[] {

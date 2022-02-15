@@ -63,7 +63,7 @@ Pass in `faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh` from the
 
 *   *maxFaces*: Defaults to 1. The maximum number of faces that will be detected by the model. The number of returned faces can be less than the maximum (for example when no faces are present in the input). It is highly recommended to set this value to the expected max number of faces, otherwise the model will continue to search for the missing faces which can slow down the performance.
 
-*   *predictIrises*: Defaults to false. If set to true, refines the landmark coordinates around the eyes and lips, and output additional landmarks around the irises.
+*   *refineLandmarks*: Defaults to false. If set to true, refines the landmark coordinates around the eyes and lips, and output additional landmarks around the irises.
 
 *   *solutionPath*: The path to where the wasm binary and model files are located.
 

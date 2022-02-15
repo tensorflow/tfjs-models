@@ -65,8 +65,8 @@ export function validateMeshModelConfig(
     config.maxFaces = DEFAULT_FACE_MESH_MODEL_CONFIG.maxFaces;
   }
 
-  if (config.predictIrises == null) {
-    config.predictIrises = DEFAULT_FACE_MESH_MODEL_CONFIG.predictIrises;
+  if (config.refineLandmarks == null) {
+    config.refineLandmarks = DEFAULT_FACE_MESH_MODEL_CONFIG.refineLandmarks;
   }
 
   if (config.detectorModelUrl == null) {
@@ -74,7 +74,7 @@ export function validateMeshModelConfig(
   }
 
   if (config.landmarkModelUrl == null) {
-    config.landmarkModelUrl = config.predictIrises ?
+    config.landmarkModelUrl = config.refineLandmarks ?
         DEFAULT_LANDMARK_MODEL_URL_WITH_ATTENTION :
         DEFAULT_LANDMARK_MODEL_URL;
   }

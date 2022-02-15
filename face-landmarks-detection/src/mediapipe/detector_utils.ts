@@ -33,8 +33,8 @@ export function validateModelConfig(
     config.maxFaces = DEFAULT_FACE_MESH_MODEL_CONFIG.maxFaces;
   }
 
-  if (config.predictIrises == null) {
-    config.predictIrises = DEFAULT_FACE_MESH_MODEL_CONFIG.predictIrises;
+  if (config.refineLandmarks == null) {
+    config.refineLandmarks = DEFAULT_FACE_MESH_MODEL_CONFIG.refineLandmarks;
   }
 
   return config;

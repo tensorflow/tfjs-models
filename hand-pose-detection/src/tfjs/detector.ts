@@ -26,7 +26,7 @@ import {calculateWorldLandmarkProjection} from '../shared/calculators/calculate_
 import {convertImageToTensor} from '../shared/calculators/convert_image_to_tensor';
 import {createSsdAnchors} from '../shared/calculators/create_ssd_anchors';
 import {calculateDetectionsToRects} from '../shared/calculators/detection_to_rect';
-import {detectorInference} from '../shared/calculators/detector_inference';
+import {detectorResult} from '../shared/calculators/detector_result';
 import {getImageSize, toImageTensor} from '../shared/calculators/image_utils';
 import {ImageSize, Keypoint} from '../shared/calculators/interfaces/common_interfaces';
 import {Rect} from '../shared/calculators/interfaces/shape_interfaces';
@@ -243,7 +243,7 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
     // PalmDetectionCpu: InferenceCalculator
     // The model returns a tensor with the following shape:
     // [1 (batch), 896 (anchor points), 19 (data for each anchor)]
-    const {boxes, logits} = detectorInference(detectionResult);
+    const {boxes, logits} = detectorResult(detectionResult);
 
     // PalmDetectionCpu: TensorsToDetectionsCalculator
     const detections: Detection[] = await tensorsToDetections(
