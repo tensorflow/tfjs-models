@@ -59,8 +59,7 @@ function overlapSimilarity(rect1: Rect, rect2: Rect): number {
 
 // ref:
 // https://github.com/google/mediapipe/blob/master/mediapipe/calculators/util/association_norm_rect_calculator.cc
-// Previous image rects are ignored due to our API not handling previous image
-// to current image ID association
+// Propgating ids from previous to current is not performed by this code.
 export function calculateAssociationNormRect(
     rectsArray: Rect[][], minSimilarityThreshold: number): Rect[] {
   let result: Rect[] = [];

@@ -55,7 +55,7 @@ export interface EstimationConfig {
 /**
  * Allowed input format for the `estimateHands` method.
  */
-export type FaceDetectorInput = PixelInput;
+export type FaceLandmarksDetectorInput = PixelInput;
 
 export interface Face {
   keypoints: Keypoint[];

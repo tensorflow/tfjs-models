@@ -16,10 +16,11 @@
  */
 
 export {createDetector} from './create_detector';
-// FaceDetector class.
-export {FaceDetector} from './face_detector';
+// FaceLandmarksDetector class.
+export {FaceLandmarksDetector} from './face_landmarks_detector';
 // Entry point to create a new detector instance.
 export {MediaPipeFaceMeshMediaPipeEstimationConfig, MediaPipeFaceMeshMediaPipeModelConfig} from './mediapipe/types';
+export {MediaPipeFaceMeshTfjsEstimationConfig, MediaPipeFaceMeshTfjsModelConfig} from './tfjs/types';
 
 // Supported models enum.
 export * from './types';

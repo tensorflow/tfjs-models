@@ -59,8 +59,8 @@ Example output:
       height: 246.87222836072945
     },
     keypoints: [
-      {x: 406.53152857172876, y: 256.8054528661723, name: "lips"},
-      {x: 406.544237446397, y: 230.06933367750395},
+      {x: 406.53152857172876, y: 256.8054528661723, z: 10.2, name: "lips"},
+      {x: 406.544237446397, y: 230.06933367750395, z: 8},
       ...
     ],
   }
@@ -69,7 +69,7 @@ Example output:
 
 The `box` represents the bounding box of the face in the image pixel space, with `xMin`, `xMax` denoting the x-bounds, `yMin`, `yMax` denoting the y-bounds, and `width`, `height` are the dimensions of the bounding box.
 
-For the `keypoints`, x and y represent the actual keypoint position in the image pixel space.
+For the `keypoints`, x and y represent the actual keypoint position in the image pixel space. z represents the depth with the center of the head being the origin, and the smaller the value the closer the keypoint is to the camera. The magnitude of z uses roughly the same scale as x.
 
 The name provides a label for some keypoint, such as 'lips', 'leftEye', etc. Note that not each keypoint will have a label.
 
