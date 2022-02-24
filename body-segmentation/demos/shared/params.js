@@ -26,13 +26,19 @@ export const VIDEO_SIZE = {
   '360 X 270': {width: 360, height: 270}
 };
 export const STATE = {
-  camera: {targetFPS: 60, sizeOption: '640 X 480', cameraMode: 'front'},
+  camera: {targetFPS: 60, sizeOption: '640 X 480', cameraSelector: ''},
+  fpsDisplay: {mode: 'model'},
   backend: '',
   flags: {},
   modelConfig: {},
-  visualization: {foregroundThreshold: 0.5, maskOpacity: 0.7,
-                  maskBlur: 0, pixelCellWidth: 10, backgroundBlur: 3,
-                  edgeBlur: 3}
+  visualization: {
+    foregroundThreshold: 0.5,
+    maskOpacity: 0.7,
+    maskBlur: 0,
+    pixelCellWidth: 10,
+    backgroundBlur: 3,
+    edgeBlur: 3
+  }
 };
 export const SELFIE_SEGMENTATION_CONFIG = {
   type: 'general',
@@ -86,7 +92,8 @@ export const BACKEND_FLAGS_MAP = {
 };
 
 export const MODEL_BACKEND_MAP = {
-  [bodySegmentation.SupportedModels.MediaPipeSelfieSegmentation]: ['mediapipe-gpu', 'tfjs-webgl'],
+  [bodySegmentation.SupportedModels.MediaPipeSelfieSegmentation]:
+      ['mediapipe-gpu', 'tfjs-webgl'],
   [bodySegmentation.SupportedModels.BodyPix]: ['tfjs-webgl'],
   [poseDetection.SupportedModels.BlazePose]: ['mediapipe-gpu', 'tfjs-webgl'],
 }

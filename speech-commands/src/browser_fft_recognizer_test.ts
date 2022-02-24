@@ -18,9 +18,9 @@
 import '@tensorflow/tfjs-node';
 
 import * as tf from '@tensorflow/tfjs-core';
-import * as tfl from '@tensorflow/tfjs-layers';
 // tslint:disable-next-line: no-imports-from-dist
 import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
+import * as tfl from '@tensorflow/tfjs-layers';
 import {writeFileSync} from 'fs';
 import {join} from 'path';
 import * as rimraf from 'rimraf';
@@ -133,9 +133,8 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
 
   async function createFakeModelArtifact(tmpDir: string) {
     const model = tfl.sequential();
-    model.add(
-        tfl.layers.reshape(
-            {targetShape: [43 * 232], inputShape: [43, 232, 1]}));
+    model.add(tfl.layers.reshape(
+        {targetShape: [43 * 232], inputShape: [43, 232, 1]}));
     model.add(tfl.layers.dense({units: 4, activation: 'softmax'}));
     await model.save(`file://${tmpDir}`);
   }
@@ -406,7 +405,7 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
 
     const numCallbacksToComplete = 2;
     let numCallbacksCompleted = 0;
-    const spectroDurationMillis = 1000;
+    const spectroDurationMillis = 900;
     const tensorCounts: number[] = [];
     const callbackTimestamps: number[] = [];
     recognizer.listen(async (result: SpeechCommandRecognizerResult) => {
@@ -455,12 +454,13 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
       expect((result.scores as Float32Array).length).toEqual(fakeWords.length);
 
       callbackTimestamps.push(tf.util.now());
+      const timeDelta = 50;
       if (callbackTimestamps.length > 1) {
         expect(
             callbackTimestamps[callbackTimestamps.length - 1] -
             callbackTimestamps[callbackTimestamps.length - 2])
             .toBeGreaterThanOrEqual(
-                recognizer.params().spectrogramDurationMillis);
+                recognizer.params().spectrogramDurationMillis - timeDelta);
       }
 
       tensorCounts.push(tf.memory().numTensors);
@@ -491,7 +491,7 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
 
     const numCallbacksToComplete = 2;
     let numCallbacksCompleted = 0;
-    const spectroDurationMillis = 1000;
+    const spectroDurationMillis = 900;
     const tensorCounts: number[] = [];
     const callbackTimestamps: number[] = [];
     recognizer.listen(async (result: SpeechCommandRecognizerResult) => {
@@ -1066,8 +1066,10 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
     // Verify that the weight of the transfer-learning head model changes
     // after training.
     const maxWeightChanges = newTransferWeightValues.map(
-        (newValues, i) => tf.max(tf.abs(tf.sub(tf.tensor1d(newValues),
-            tf.tensor1d(oldTransferWeightValues[i])))).dataSync()[0]);
+        (newValues, i) => tf.max(tf.abs(tf.sub(
+                                     tf.tensor1d(newValues),
+                                     tf.tensor1d(oldTransferWeightValues[i]))))
+                              .dataSync()[0]);
     expect(Math.max(...maxWeightChanges)).toBeGreaterThan(1e-3);
 
     // Test recognize() with the transfer recognizer.

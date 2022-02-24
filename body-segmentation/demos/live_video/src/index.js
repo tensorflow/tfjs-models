@@ -16,10 +16,11 @@
  */
 
 import '@tensorflow/tfjs-backend-webgl';
-import * as mpSelfieSegmentation from '@mediapipe/selfie_segmentation';
-import * as mpPose from '@mediapipe/pose';
 
+import * as mpPose from '@mediapipe/pose';
+import * as mpSelfieSegmentation from '@mediapipe/selfie_segmentation';
 import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
+import * as tf from '@tensorflow/tfjs-core';
 
 tfjsWasm.setWasmPaths(
     `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
@@ -35,9 +36,19 @@ import {setupStats} from './shared/stats_panel';
 import {setBackendAndEnvFlags} from './shared/util';
 
 let segmenter, camera, stats;
-let startInferenceTime, numInferences = 0;
-let inferenceTimeSum = 0, lastPanelUpdate = 0;
+let cameras;
+let fpsDisplayMode = 'model';
+const resetTime = {
+  startInferenceTime: 0,
+  numInferences: 0,
+  inferenceTimeSum: 0,
+  lastPanelUpdate: 0
+};
+let modelTime = {...resetTime};
+let E2ETime = {...resetTime};
 let rafId;
+const MODEL_LABEL = '(Model FPS)      ';
+const E2E_LABEL = '(End2End FPS)';
 const canvas = document.createElement('canvas');
 const ctx = canvas.getContext('2d');
 
@@ -49,14 +60,18 @@ async function createSegmenter() {
         return poseDetection.createDetector(STATE.model, {
           runtime,
           modelType: STATE.modelConfig.type,
-          solutionPath: `https://cdn.jsdelivr.net/npm/@mediapipe/pose@${mpPose.VERSION}`,
+          solutionPath:
+              `https://cdn.jsdelivr.net/npm/@mediapipe/pose@${mpPose.VERSION}`,
           enableSegmentation: true,
           smoothSegmentation: true
         });
       } else if (runtime === 'tfjs') {
-        return poseDetection.createDetector(
-          STATE.model, {runtime, modelType: STATE.modelConfig.type,
-                        enableSegmentation: true, smoothSegmentation: true});
+        return poseDetection.createDetector(STATE.model, {
+          runtime,
+          modelType: STATE.modelConfig.type,
+          enableSegmentation: true,
+          smoothSegmentation: true
+        });
       }
     }
     case bodySegmentation.SupportedModels.BodyPix: {
@@ -73,7 +88,9 @@ async function createSegmenter() {
         return bodySegmentation.createSegmenter(STATE.model, {
           runtime,
           modelType: STATE.modelConfig.type,
-          solutionPath: `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation@${mpSelfieSegmentation.VERSION}`
+          solutionPath:
+              `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation@${
+                  mpSelfieSegmentation.VERSION}`
         });
       } else if (runtime === 'tfjs') {
         return bodySegmentation.createSegmenter(STATE.model, {
@@ -87,13 +104,14 @@ async function createSegmenter() {
 
 async function checkGuiUpdate() {
   if (STATE.isCameraChanged) {
-    camera = await Camera.setupCamera(STATE.camera);
+    camera = await Camera.setupCamera(STATE.camera, cameras);
     canvas.width = camera.canvas.width;
     canvas.height = camera.canvas.height;
     STATE.isCameraChanged = false;
   }
 
-  if (STATE.isModelChanged || STATE.isFlagChanged || STATE.isBackendChanged || STATE.isVisChanged) {
+  if (STATE.isModelChanged || STATE.isFlagChanged || STATE.isBackendChanged ||
+      STATE.isVisChanged) {
     STATE.isModelChanged = true;
 
     window.cancelAnimationFrame(rafId);
@@ -120,23 +138,23 @@ async function checkGuiUpdate() {
   }
 }
 
-function beginEstimateSegmentationStats() {
-  startInferenceTime = (performance || Date).now();
+function beginEstimateSegmentationStats(time) {
+  time.startInferenceTime = (performance || Date).now();
 }
 
-function endEstimateSegmentationStats() {
+function endEstimateSegmentationStats(time) {
   const endInferenceTime = (performance || Date).now();
-  inferenceTimeSum += endInferenceTime - startInferenceTime;
-  ++numInferences;
+  time.inferenceTimeSum += endInferenceTime - time.startInferenceTime;
+  ++time.numInferences;
 
   const panelUpdateMilliseconds = 1000;
-  if (endInferenceTime - lastPanelUpdate >= panelUpdateMilliseconds) {
-    const averageInferenceTime = inferenceTimeSum / numInferences;
-    inferenceTimeSum = 0;
-    numInferences = 0;
+  if (endInferenceTime - time.lastPanelUpdate >= panelUpdateMilliseconds) {
+    const averageInferenceTime = time.inferenceTimeSum / time.numInferences;
+    time.inferenceTimeSum = 0;
+    time.numInferences = 0;
     stats.customFpsPanel.update(
         1000.0 / averageInferenceTime, 120 /* maxValue */);
-    lastPanelUpdate = endInferenceTime;
+    time.lastPanelUpdate = endInferenceTime;
   }
 }
 
@@ -154,20 +172,40 @@ async function renderResult() {
   // Segmenter can be null if initialization failed (for example when loading
   // from a URL that does not exist).
   if (segmenter != null) {
-    // FPS only counts the time it takes to finish segmentPeople.
-    beginEstimateSegmentationStats();
+    // Change in what FPS should measure.
+    const newFpsDisplayMode = STATE.fpsDisplay.mode;
+    if (fpsDisplayMode != newFpsDisplayMode) {
+      if (newFpsDisplayMode === 'model') {
+        stats = setupStats(MODEL_LABEL);
+        modelTime = {...resetTime};
+      } else {
+        stats = setupStats(E2E_LABEL);
+        E2ETime = {...resetTime};
+      }
+      fpsDisplayMode = newFpsDisplayMode;
+    }
+    // Model FPS only counts the time it takes to finish segmentPeople.
+    if (fpsDisplayMode === 'model') {
+      beginEstimateSegmentationStats(modelTime);
+    } else {  // E2E FPS includes rendering time.
+      beginEstimateSegmentationStats(E2ETime);
+    }
 
     // Detectors can throw errors, for example when using custom URLs that
     // contain a model that doesn't provide the expected output.
     try {
       if (segmenter.segmentPeople != null) {
-        segmentation = await segmenter.segmentPeople(
-          camera.video,
-          {flipHorizontal: false, multiSegmentation: false, segmentBodyParts: true,
-            segmentationThreshold: STATE.visualization.foregroundThreshold});
+        segmentation = await segmenter.segmentPeople(camera.video, {
+          flipHorizontal: false,
+          multiSegmentation: false,
+          segmentBodyParts: true,
+          segmentationThreshold: STATE.visualization.foregroundThreshold
+        });
       } else {
-        segmentation = await segmenter.estimatePoses(camera.video, {flipHorizontal: false});
-        segmentation = segmentation.map(singleSegmentation => singleSegmentation.segmentation);
+        segmentation = await segmenter.estimatePoses(
+            camera.video, {flipHorizontal: false});
+        segmentation = segmentation.map(
+            singleSegmentation => singleSegmentation.segmentation);
       }
     } catch (error) {
       segmenter.dispose();
@@ -175,7 +213,35 @@ async function renderResult() {
       alert(error);
     }
 
-    endEstimateSegmentationStats();
+    if (fpsDisplayMode === 'model') {
+      // Ensure GPU is done for timing purposes.
+      const [backend] = STATE.backend.split('-');
+      if (backend === 'tfjs') {
+        for (const value of segmentation) {
+          const mask = value.mask;
+          const tensor = await mask.toTensor();
+
+          const res = tensor.dataToGPU();
+
+          const webGLBackend = tf.backend();
+          const buffer =
+              webGLBackend.gpgpu.createBufferFromTexture(res.texture, 1, 1);
+          webGLBackend.gpgpu.downloadFloat32MatrixFromBuffer(buffer, 1);
+
+          res.tensorRef.dispose();
+        }
+      } else if (backend === 'mediapipe') {
+        // Code in
+        // node_modules/@mediapipe/selfie_segmentation/selfie_segmentation.js
+        // must be modified to expose the webgl context it uses.
+        const gl = window.exposedContext;
+        if (gl)
+          gl.readPixels(
+              0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(4));
+      }
+
+      endEstimateSegmentationStats(modelTime);
+    }
   }
 
   // The null check makes sure the UI is not in the middle of changing to a
@@ -185,24 +251,42 @@ async function renderResult() {
     const vis = STATE.modelConfig.visualization;
     const options = STATE.visualization;
     if (vis === 'binaryMask') {
-      const data = await bodySegmentation.toBinaryMask(segmentation, {r: 0, g: 0, b: 0, a: 0}, {r: 0, g: 0, b: 0, a:255}, false, options.foregroundThreshold);
-      await bodySegmentation.drawMask(canvas, camera.video, data, options.maskOpacity, options.maskBlur);
+      const data = await bodySegmentation.toBinaryMask(
+          segmentation, {r: 0, g: 0, b: 0, a: 0}, {r: 0, g: 0, b: 0, a: 255},
+          false, options.foregroundThreshold);
+      await bodySegmentation.drawMask(
+          canvas, camera.video, data, options.maskOpacity, options.maskBlur);
     } else if (vis === 'coloredMask') {
-      const data = await bodySegmentation.toColoredMask(segmentation, bodySegmentation.bodyPixMaskValueToRainbowColor, {r: 0, g: 0, b: 0, a:255}, options.foregroundThreshold);
-      await bodySegmentation.drawMask(canvas, camera.video, data, options.maskOpacity, options.maskBlur);
+      const data = await bodySegmentation.toColoredMask(
+          segmentation, bodySegmentation.bodyPixMaskValueToRainbowColor,
+          {r: 0, g: 0, b: 0, a: 255}, options.foregroundThreshold);
+      await bodySegmentation.drawMask(
+          canvas, camera.video, data, options.maskOpacity, options.maskBlur);
     } else if (vis === 'pixelatedMask') {
-      const data = await bodySegmentation.toColoredMask(segmentation, bodySegmentation.bodyPixMaskValueToRainbowColor, {r: 0, g: 0, b: 0, a:255}, options.foregroundThreshold);
-      await bodySegmentation.drawPixelatedMask(canvas, camera.video, data, options.maskOpacity, options.maskBlur, false, options.pixelCellWidth);
+      const data = await bodySegmentation.toColoredMask(
+          segmentation, bodySegmentation.bodyPixMaskValueToRainbowColor,
+          {r: 0, g: 0, b: 0, a: 255}, options.foregroundThreshold);
+      await bodySegmentation.drawPixelatedMask(
+          canvas, camera.video, data, options.maskOpacity, options.maskBlur,
+          false, options.pixelCellWidth);
     } else if (vis === 'bokehEffect') {
-      await bodySegmentation.drawBokehEffect(canvas, camera.video, segmentation, options.foregroundThreshold, options.backgroundBlur, options.edgeBlur);
+      await bodySegmentation.drawBokehEffect(
+          canvas, camera.video, segmentation, options.foregroundThreshold,
+          options.backgroundBlur, options.edgeBlur);
     } else if (vis === 'blurFace') {
-      await bodySegmentation.blurBodyPart(canvas, camera.video, segmentation, [0,1], options.foregroundThreshold, options.backgroundBlur, options.edgeBlur);
+      await bodySegmentation.blurBodyPart(
+          canvas, camera.video, segmentation, [0, 1],
+          options.foregroundThreshold, options.backgroundBlur,
+          options.edgeBlur);
     } else {
       camera.drawFromVideo(ctx);
     }
   }
   camera.drawToCanvas(canvas);
 
+  if (fpsDisplayMode === 'e2e') {
+    endEstimateSegmentationStats(E2ETime);
+  }
 }
 
 async function renderPrediction() {
@@ -213,7 +297,20 @@ async function renderPrediction() {
   }
 
   rafId = requestAnimationFrame(renderPrediction);
-};
+}
+
+async function getVideoInputs() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+    console.log('enumerateDevices() not supported.');
+    return [];
+  }
+
+  const devices = await navigator.mediaDevices.enumerateDevices();
+
+  const videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+  return videoDevices;
+}
 
 async function app() {
   // Gui content will change depending on which model is in the query string.
@@ -223,11 +320,13 @@ async function app() {
     return;
   }
 
-  await setupDatGui(urlParams);
+  cameras = await getVideoInputs();
 
-  stats = setupStats();
+  await setupDatGui(urlParams, cameras);
 
-  camera = await Camera.setupCamera(STATE.camera);
+  stats = setupStats(MODEL_LABEL);
+
+  camera = await Camera.setupCamera(STATE.camera, cameras);
   canvas.width = camera.canvas.width;
   canvas.height = camera.canvas.height;
 

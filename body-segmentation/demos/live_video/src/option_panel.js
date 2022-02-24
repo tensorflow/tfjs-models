@@ -17,7 +17,6 @@
 import * as bodySegmentation from '@tensorflow-models/body-segmentation';
 import * as poseDetection from '@tensorflow-models/pose-detection';
 import * as tf from '@tensorflow/tfjs-core';
-import {isMobile} from './shared/util';
 
 import * as params from './shared/params';
 
@@ -29,7 +28,17 @@ let TUNABLE_FLAG_DEFAULT_VALUE_MAP;
 
 const stringValueMap = {};
 
-export async function setupDatGui(urlParams) {
+function toCameraOptions(cameras) {
+  const result = {default: null};
+
+  cameras.forEach(camera => {
+    result[camera.label] = camera.label;
+  })
+
+  return result;
+}
+
+export async function setupDatGui(urlParams, cameras) {
   const gui = new dat.GUI({width: 300});
   gui.domElement.id = 'gui';
 
@@ -44,14 +53,19 @@ export async function setupDatGui(urlParams) {
   sizeController.onChange(_ => {
     params.STATE.isCameraChanged = true;
   });
-  if (isMobile()) {
-    const facingModeController = cameraFolder.add(
-      params.STATE.camera, 'cameraMode', ['front', 'back']);
-    facingModeController.onChange(_ => {
-      params.STATE.isCameraChanged = true;
-    });
-  }
+  const cameraOptions = toCameraOptions(cameras);
+  params.STATE.camera.cameraSelector = cameraOptions['default'];
+  const cameraSelectorController =
+      cameraFolder.add(params.STATE.camera, 'cameraSelector', cameraOptions);
+  cameraSelectorController.onChange(_ => {
+    params.STATE.isCameraChanged = true;
+  });
   cameraFolder.open();
+
+  // The fps display folder contains options for video settings.
+  const fpsDisplayFolder = gui.addFolder('FPS Display');
+  fpsDisplayFolder.add(params.STATE.fpsDisplay, 'mode', ['model', 'e2e']);
+  fpsDisplayFolder.open();
 
   // The model folder contains options for model selection.
   const modelFolder = gui.addFolder('Model');
@@ -60,14 +74,15 @@ export async function setupDatGui(urlParams) {
   let type = urlParams.get('type');
 
   switch (model) {
-    case 'blaze_pose':
+    case 'blazepose':
       params.STATE.model = poseDetection.SupportedModels.BlazePose;
       break;
-    case 'body_pix':
+    case 'bodypix':
       params.STATE.model = bodySegmentation.SupportedModels.BodyPix;
       break;
     case 'selfie_segmentation':
-      params.STATE.model = bodySegmentation.SupportedModels.MediaPipeSelfieSegmentation;
+      params.STATE.model =
+          bodySegmentation.SupportedModels.MediaPipeSelfieSegmentation;
       if (type !== 'general' && type !== 'landscape') {
         // Nulify invalid value.
         type = null;
@@ -80,8 +95,7 @@ export async function setupDatGui(urlParams) {
 
   const modelNames = Object.values(bodySegmentation.SupportedModels);
   modelNames.push(poseDetection.SupportedModels.BlazePose);
-  const modelController = modelFolder.add(
-      params.STATE, 'model', modelNames);
+  const modelController = modelFolder.add(params.STATE, 'model', modelNames);
 
   modelController.onChange(_ => {
     params.STATE.isModelChanged = true;
@@ -91,7 +105,8 @@ export async function setupDatGui(urlParams) {
       params.STATE.isVisChanged = true;
       showVisualizationSettings(visFolder, mode);
     });
-    showVisualizationSettings(visFolder, params.STATE.modelConfig.visualization);
+    showVisualizationSettings(
+        visFolder, params.STATE.modelConfig.visualization);
   });
 
   const visSelector = showModelConfigs(modelFolder, type);
@@ -170,29 +185,54 @@ function showVisualizationSettings(folderController, vis) {
             .__controllers[folderController.__controllers.length - 1]);
   }
 
-  folderController.add(params.STATE.visualization, 'foregroundThreshold', 0.0, 1.0);
+  folderController.add(
+      params.STATE.visualization, 'foregroundThreshold', 0.0, 1.0);
 
   if (vis === 'binaryMask') {
     folderController.add(params.STATE.visualization, 'maskOpacity', 0.0, 1.0);
-    folderController.add(params.STATE.visualization, 'maskBlur').min(1).max(20).step(1);
+    folderController.add(params.STATE.visualization, 'maskBlur')
+        .min(1)
+        .max(20)
+        .step(1);
   } else if (vis === 'coloredMask') {
     folderController.add(params.STATE.visualization, 'maskOpacity', 0.0, 1.0);
-    folderController.add(params.STATE.visualization, 'maskBlur').min(1).max(20).step(1);
+    folderController.add(params.STATE.visualization, 'maskBlur')
+        .min(1)
+        .max(20)
+        .step(1);
   } else if (vis === 'pixelatedMask') {
     folderController.add(params.STATE.visualization, 'maskOpacity', 0.0, 1.0);
-    folderController.add(params.STATE.visualization, 'maskBlur').min(0).max(20).step(1);
-    folderController.add(params.STATE.visualization, 'pixelCellWidth').min(1).max(50).step(1);
+    folderController.add(params.STATE.visualization, 'maskBlur')
+        .min(0)
+        .max(20)
+        .step(1);
+    folderController.add(params.STATE.visualization, 'pixelCellWidth')
+        .min(1)
+        .max(50)
+        .step(1);
   } else if (vis === 'bokehEffect') {
-    folderController.add(params.STATE.visualization, 'backgroundBlur').min(1).max(20).step(1);
-    folderController.add(params.STATE.visualization, 'edgeBlur').min(0).max(20).step(1);
+    folderController.add(params.STATE.visualization, 'backgroundBlur')
+        .min(1)
+        .max(20)
+        .step(1);
+    folderController.add(params.STATE.visualization, 'edgeBlur')
+        .min(0)
+        .max(20)
+        .step(1);
   } else if (vis === 'blurFace') {
-    folderController.add(params.STATE.visualization, 'backgroundBlur').min(1).max(20).step(1);
-    folderController.add(params.STATE.visualization, 'edgeBlur').min(0).max(20).step(1);
+    folderController.add(params.STATE.visualization, 'backgroundBlur')
+        .min(1)
+        .max(20)
+        .step(1);
+    folderController.add(params.STATE.visualization, 'edgeBlur')
+        .min(0)
+        .max(20)
+        .step(1);
   }
 }
 
-// The MediaPipeHands model config folder contains options for MediaPipeHands config
-// settings.
+// The MediaPipeHands model config folder contains options for MediaPipeHands
+// config settings.
 function addSelfieSegmentationControllers(modelConfigFolder, type) {
   params.STATE.modelConfig = {...params.SELFIE_SEGMENTATION_CONFIG};
   params.STATE.modelConfig.type = type != null ? type : 'general';
@@ -205,7 +245,8 @@ function addSelfieSegmentationControllers(modelConfigFolder, type) {
     params.STATE.isModelChanged = true;
   });
 
-  const visSelector = modelConfigFolder.add(params.STATE.modelConfig, 'visualization', ['binaryMask', 'bokehEffect']);
+  const visSelector = modelConfigFolder.add(
+      params.STATE.modelConfig, 'visualization', ['binaryMask', 'bokehEffect']);
   return visSelector;
 }
 
@@ -215,10 +256,14 @@ function addBodyPixControllers(modelConfigFolder) {
   params.STATE.modelConfig = {...params.BODY_PIX_CONFIG};
 
   const controllers = [];
-  controllers.push(modelConfigFolder.add(params.STATE.modelConfig, 'architecture', ['ResNet50', 'MobileNetV1']));
-  controllers.push(modelConfigFolder.add(params.STATE.modelConfig, 'outputStride', [8, 16]));
-  controllers.push(modelConfigFolder.add(params.STATE.modelConfig, 'multiplier', [0.50, 0.75, 1.0]));
-  controllers.push(modelConfigFolder.add(params.STATE.modelConfig, 'quantBytes', [1,2,4]));
+  controllers.push(modelConfigFolder.add(
+      params.STATE.modelConfig, 'architecture', ['ResNet50', 'MobileNetV1']));
+  controllers.push(
+      modelConfigFolder.add(params.STATE.modelConfig, 'outputStride', [8, 16]));
+  controllers.push(modelConfigFolder.add(
+      params.STATE.modelConfig, 'multiplier', [0.50, 0.75, 1.0]));
+  controllers.push(
+      modelConfigFolder.add(params.STATE.modelConfig, 'quantBytes', [1, 2, 4]));
 
   for (const controller of controllers) {
     controller.onChange(_ => {
@@ -228,7 +273,10 @@ function addBodyPixControllers(modelConfigFolder) {
     });
   }
 
-  const visSelector = modelConfigFolder.add(params.STATE.modelConfig, 'visualization', ['binaryMask', 'coloredMask', 'pixelatedMask', 'bokehEffect', 'blurFace']);
+  const visSelector =
+      modelConfigFolder.add(params.STATE.modelConfig, 'visualization', [
+        'binaryMask', 'coloredMask', 'pixelatedMask', 'bokehEffect', 'blurFace'
+      ]);
   return visSelector;
 }
 
@@ -246,7 +294,8 @@ function addBlazePoseControllers(modelConfigFolder, type) {
     params.STATE.isModelChanged = true;
   });
 
-  const visSelector = modelConfigFolder.add(params.STATE.modelConfig, 'visualization', ['binaryMask', 'bokehEffect']);
+  const visSelector = modelConfigFolder.add(
+      params.STATE.modelConfig, 'visualization', ['binaryMask', 'bokehEffect']);
   return visSelector;
 }
 

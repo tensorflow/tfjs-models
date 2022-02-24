@@ -17,6 +17,17 @@
 import * as params from './shared/params';
 import {isMobile} from './shared/util';
 
+async function getDeviceIdForLabel(cameras, cameraLabel) {
+  for (let i = 0; i < cameras.length; i++) {
+    const camera = cameras[i];
+    if (camera.label === cameraLabel) {
+      return camera.deviceId;
+    }
+  }
+
+  return null;
+}
+
 export class Camera {
   constructor() {
     this.video = document.getElementById('video');
@@ -28,18 +39,19 @@ export class Camera {
    * Initiate a Camera instance and wait for the camera stream to be ready.
    * @param cameraParam From app `STATE.camera`.
    */
-  static async setupCamera(cameraParam) {
+  static async setupCamera(cameraParam, cameras) {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       throw new Error(
           'Browser API navigator.mediaDevices.getUserMedia not available');
     }
 
-    const {targetFPS, sizeOption, cameraMode} = cameraParam;
+    const {targetFPS, sizeOption, cameraSelector} = cameraParam;
     const $size = params.VIDEO_SIZE[sizeOption];
+    const deviceId = await getDeviceIdForLabel(cameras, cameraSelector);
     const videoConfig = {
       'audio': false,
       'video': {
-        facingMode: cameraMode === 'front' ? 'user' : 'environment',
+        deviceId,
         // Only setting the video to a specified size for large screen, on
         // mobile devices accept the default size.
         width: isMobile() ? params.VIDEO_SIZE['360 X 270'].width : $size.width,
@@ -83,7 +95,8 @@ export class Camera {
   }
 
   drawToCanvas(canvas) {
-    this.ctx.drawImage(canvas, 0, 0, this.video.videoWidth, this.video.videoHeight);
+    this.ctx.drawImage(
+        canvas, 0, 0, this.video.videoWidth, this.video.videoHeight);
   }
 
   drawFromVideo(ctx) {
