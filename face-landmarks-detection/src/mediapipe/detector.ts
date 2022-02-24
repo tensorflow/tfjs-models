@@ -81,6 +81,7 @@ class MediaPipeFaceMeshMediaPipeLandmarksDetector implements
       const keypoint: Keypoint = {
         x: landmark.x * this.width,
         y: landmark.y * this.height,
+        z: landmark.z * this.width,
       };
 
       const name = MEDIAPIPE_KEYPOINTS.get(i);

@@ -297,8 +297,6 @@ class MediaPipeFaceMeshTfjsLandmarksDetector implements FaceLandmarksDetector {
       // Add keypoint name.
       if (keypoints != null) {
         keypoints.forEach((keypoint, i) => {
-          delete keypoint.z;
-
           const name = MEDIAPIPE_KEYPOINTS.get(i);
           if (name != null) {
             keypoint.name = name;
@@ -488,6 +486,10 @@ class MediaPipeFaceMeshTfjsLandmarksDetector implements FaceLandmarksDetector {
     // Expands the face rectangle so that in the next video image it's likely
     // to still contain the face even with some motion.
     // FaceLandmarkLandmarksToRoi: RectTransformationCalculator.
+    // TODO: `squareLong` in the config should be set to false in MediaPipe code
+    // but is not due to a bug in their processing. Once fixed on their end,
+    // split RECT_TRANSFORMATION_CONFIG into separate detector and landmark
+    // configs, with landmark's config's `squareLong` set to false.
     const roi = transformNormalizedRect(
         faceRectFromLandmarks, imageSize, constants.RECT_TRANSFORMATION_CONFIG);
 
