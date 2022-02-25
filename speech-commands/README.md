@@ -219,7 +219,7 @@ await transferRecognizer.collectExample('green');
 await transferRecognizer.collectExample('blue');
 await transferRecognizer.collectExample('red');
 // Don't forget to collect some background-noise examples, so that the
-// trasnfer-learned model will be able to detect moments of silence.
+// transfer-learned model will be able to detect moments of silence.
 await transferRecognizer.collectExample('_background_noise_');
 await transferRecognizer.collectExample('green');
 await transferRecognizer.collectExample('blue');
