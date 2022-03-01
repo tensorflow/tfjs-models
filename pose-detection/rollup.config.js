@@ -51,8 +51,8 @@ function config({plugins = [], output = {}, tsCompilerOptions = {}}) {
       globals: {
         '@tensorflow/tfjs-core': 'tf',
         '@tensorflow/tfjs-converter': 'tf',
-        // Package is obfuscated so class is directly attached to window.
-        '@mediapipe/pose': 'window'
+        // Package is obfuscated so class is directly attached to globalThis.
+        '@mediapipe/pose': 'globalThis'
       },
       ...output,
     },
