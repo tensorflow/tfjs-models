@@ -20,7 +20,7 @@ export const DEFAULT_FACE_MESH_MODEL_CONFIG:
     MediaPipeFaceMeshMediaPipeModelConfig = {
       runtime: 'mediapipe',
       maxFaces: 1,
-      predictIrises: false
+      refineLandmarks: false
     };
 
 export const DEFAULT_FACE_MESH_ESTIMATION_CONFIG:

@@ -93,8 +93,8 @@ const EXPECTED_BOX: BoundingBox = {
 };
 
 export async function expectFaceMesh(
-    detector: faceDetection.FaceDetector, image: HTMLImageElement,
-    staticImageMode: boolean, predictIrises: boolean, numFrames: number,
+    detector: faceDetection.FaceLandmarksDetector, image: HTMLImageElement,
+    staticImageMode: boolean, refineLandmarks: boolean, numFrames: number,
     epsilon: number) {
   for (let i = 0; i < numFrames; ++i) {
     const result = await detector.estimateFaces(image, {staticImageMode});
@@ -112,14 +112,14 @@ export async function expectFaceMesh(
         result[0].keypoints.map(keypoint => [keypoint.x, keypoint.y]);
     expect(keypoints.length)
         .toBe(
-            predictIrises ? MEDIAPIPE_FACEMESH_NUM_KEYPOINTS_WITH_IRISES :
-                            MEDIAPIPE_FACEMESH_NUM_KEYPOINTS);
+            refineLandmarks ? MEDIAPIPE_FACEMESH_NUM_KEYPOINTS_WITH_IRISES :
+                              MEDIAPIPE_FACEMESH_NUM_KEYPOINTS);
 
     for (const [eyeIdx, gtLds] of EYE_INDICES_TO_LANDMARKS) {
       expectArraysClose(keypoints[eyeIdx], gtLds, epsilon);
     }
 
-    if (predictIrises) {
+    if (refineLandmarks) {
       for (const [irisIdx, gtLds] of IRIS_INDICES_TO_LANDMARKS) {
         expectArraysClose(keypoints[irisIdx], gtLds, epsilon);
       }
@@ -142,15 +142,15 @@ describeWithFlags('MediaPipe FaceMesh ', BROWSER_ENVS, () => {
   });
 
   async function expectMediaPipeFaceMesh(
-      image: HTMLImageElement, staticImageMode: boolean, predictIrises: boolean,
-      numFrames: number) {
+      image: HTMLImageElement, staticImageMode: boolean,
+      refineLandmarks: boolean, numFrames: number) {
     // Note: this makes a network request for model assets.
     const model = faceDetection.SupportedModels.MediaPipeFaceMesh;
     const detector = await faceDetection.createDetector(
-        model, {...MEDIAPIPE_MODEL_CONFIG, predictIrises});
+        model, {...MEDIAPIPE_MODEL_CONFIG, refineLandmarks});
 
     await expectFaceMesh(
-        detector, image, staticImageMode, predictIrises, numFrames,
+        detector, image, staticImageMode, refineLandmarks, numFrames,
         EPSILON_IMAGE);
   }
 

@@ -14,21 +14,16 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 import {splitDetectionResult} from './split_detection_result';
 
-export type DetectorInferenceResult = {
+export type detectorResult = {
   boxes: tf.Tensor2D,
   logits: tf.Tensor1D
 };
 
-export function detectorInference(
-    imageTensor: tf.Tensor4D,
-    poseDetectorModel: tfconv.GraphModel): DetectorInferenceResult {
+export function detectorResult(detectionResult: tf.Tensor3D): detectorResult {
   return tf.tidy(() => {
-    const detectionResult =
-        poseDetectorModel.predict(imageTensor) as tf.Tensor3D;
     const [logits, rawBoxes] = splitDetectionResult(detectionResult);
     // Shape [896, 12]
     const rawBoxes2d = tf.squeeze(rawBoxes);
