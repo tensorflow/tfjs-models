@@ -36,7 +36,7 @@ const PREAMBLE = `/**
     * =============================================================================
     */`;
 
-function config({ plugins = [], output = {}, tsCompilerOptions = {} }) {
+function config({plugins = [], output = {}, tsCompilerOptions = {}}) {
   const defaultTsOptions = {
     include: ['src/**/*.ts'],
     module: 'ES2015',
@@ -45,22 +45,19 @@ function config({ plugins = [], output = {}, tsCompilerOptions = {} }) {
 
   return {
     input: 'src/index.ts',
-    plugins: [
-      typescript(tsoptions),
-      resolve(), ...plugins
-    ],
+    plugins: [typescript(tsoptions), resolve(), ...plugins],
     output: {
       banner: PREAMBLE,
       globals: {
         '@tensorflow/tfjs-core': 'tf',
         '@tensorflow/tfjs-converter': 'tf',
-        '@mediapipe/selfie_segmentation': 'SelfieSegmentation'
+        // Package is obfuscated so class is directly attached to globalThis.
+        '@mediapipe/selfie_segmentation': 'globalThis'
       },
       ...output,
     },
     external: [
-      '@tensorflow/tfjs-core',
-      '@tensorflow/tfjs-converter',
+      '@tensorflow/tfjs-core', '@tensorflow/tfjs-converter',
       '@mediapipe/selfie_segmentation'
     ]
   };
@@ -68,13 +65,20 @@ function config({ plugins = [], output = {}, tsCompilerOptions = {} }) {
 
 const packageName = 'bodySegmentation';
 export default [
-  config({ output: { format: 'umd', name: packageName, file: 'dist/body-segmentation.js' } }),
   config({
-    plugins: [terser({output: {preamble: PREAMBLE, comments: false}})],
-    output: { format: 'umd', name: packageName, file: 'dist/body-segmentation.min.js' }
+    output:
+        {format: 'umd', name: packageName, file: 'dist/body-segmentation.js'}
   }),
   config({
     plugins: [terser({output: {preamble: PREAMBLE, comments: false}})],
-    output: { format: 'es', file: 'dist/body-segmentation.esm.js' }
+    output: {
+      format: 'umd',
+      name: packageName,
+      file: 'dist/body-segmentation.min.js'
+    }
+  }),
+  config({
+    plugins: [terser({output: {preamble: PREAMBLE, comments: false}})],
+    output: {format: 'es', file: 'dist/body-segmentation.esm.js'}
   })
 ];

@@ -36,7 +36,7 @@ const PREAMBLE = `/**
     * =============================================================================
     */`;
 
-function config({ plugins = [], output = {}, tsCompilerOptions = {} }) {
+function config({plugins = [], output = {}, tsCompilerOptions = {}}) {
   const defaultTsOptions = {
     include: ['src/**/*.ts'],
     module: 'ES2015',
@@ -45,22 +45,19 @@ function config({ plugins = [], output = {}, tsCompilerOptions = {} }) {
 
   return {
     input: 'src/index.ts',
-    plugins: [
-      typescript(tsoptions),
-      resolve(), ...plugins
-    ],
+    plugins: [typescript(tsoptions), resolve(), ...plugins],
     output: {
       banner: PREAMBLE,
       globals: {
         '@tensorflow/tfjs-core': 'tf',
         '@tensorflow/tfjs-converter': 'tf',
-        '@mediapipe/face_mesh': 'faceMesh'
+        // Package is obfuscated so class is directly attached to globalThis.
+        '@mediapipe/face_mesh': 'globalThis'
       },
       ...output,
     },
     external: [
-      '@tensorflow/tfjs-core',
-      '@tensorflow/tfjs-converter',
+      '@tensorflow/tfjs-core', '@tensorflow/tfjs-converter',
       '@mediapipe/face_mesh'
     ]
   };
@@ -68,13 +65,23 @@ function config({ plugins = [], output = {}, tsCompilerOptions = {} }) {
 
 const packageName = 'faceLandmarksDetection';
 export default [
-  config({ output: { format: 'umd', name: packageName, file: 'dist/face-landmarks-detection.js' } }),
   config({
-    plugins: [terser({output: {preamble: PREAMBLE, comments: false}})],
-    output: { format: 'umd', name: packageName, file: 'dist/face-landmarks-detection.min.js' }
+    output: {
+      format: 'umd',
+      name: packageName,
+      file: 'dist/face-landmarks-detection.js'
+    }
   }),
   config({
     plugins: [terser({output: {preamble: PREAMBLE, comments: false}})],
-    output: { format: 'es', file: 'dist/face-landmarks-detection.esm.js' }
+    output: {
+      format: 'umd',
+      name: packageName,
+      file: 'dist/face-landmarks-detection.min.js'
+    }
+  }),
+  config({
+    plugins: [terser({output: {preamble: PREAMBLE, comments: false}})],
+    output: {format: 'es', file: 'dist/face-landmarks-detection.esm.js'}
   })
 ];

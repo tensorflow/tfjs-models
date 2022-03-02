@@ -36,7 +36,7 @@ const PREAMBLE = `/**
     * =============================================================================
     */`;
 
-function config({ plugins = [], output = {}, tsCompilerOptions = {} }) {
+function config({plugins = [], output = {}, tsCompilerOptions = {}}) {
   const defaultTsOptions = {
     include: ['src/**/*.ts'],
     module: 'ES2015',
@@ -45,36 +45,39 @@ function config({ plugins = [], output = {}, tsCompilerOptions = {} }) {
 
   return {
     input: 'src/index.ts',
-    plugins: [
-      typescript(tsoptions),
-      resolve(), ...plugins
-    ],
+    plugins: [typescript(tsoptions), resolve(), ...plugins],
     output: {
       banner: PREAMBLE,
       globals: {
         '@tensorflow/tfjs-core': 'tf',
         '@tensorflow/tfjs-converter': 'tf',
-        '@mediapipe/hands': 'Hands'
+        // Package is obfuscated so class is directly attached to globalThis.
+        '@mediapipe/hands': 'globalThis'
       },
       ...output,
     },
     external: [
-      '@tensorflow/tfjs-core',
-      '@tensorflow/tfjs-converter',
-      '@mediapipe/hands'
+      '@tensorflow/tfjs-core', '@tensorflow/tfjs-converter', '@mediapipe/hands'
     ]
   };
 }
 
 const packageName = 'handPoseDetection';
 export default [
-  config({ output: { format: 'umd', name: packageName, file: 'dist/hand-pose-detection.js' } }),
   config({
-    plugins: [terser({output: {preamble: PREAMBLE, comments: false}})],
-    output: { format: 'umd', name: packageName, file: 'dist/hand-pose-detection.min.js' }
+    output:
+        {format: 'umd', name: packageName, file: 'dist/hand-pose-detection.js'}
   }),
   config({
     plugins: [terser({output: {preamble: PREAMBLE, comments: false}})],
-    output: { format: 'es', file: 'dist/hand-pose-detection.esm.js' }
+    output: {
+      format: 'umd',
+      name: packageName,
+      file: 'dist/hand-pose-detection.min.js'
+    }
+  }),
+  config({
+    plugins: [terser({output: {preamble: PREAMBLE, comments: false}})],
+    output: {format: 'es', file: 'dist/hand-pose-detection.esm.js'}
   })
 ];
