@@ -52,6 +52,7 @@ export type FaceDetectorInput = PixelInput;
 
 
 export interface Face {
-  keypoints: Keypoint[];
-  box: BoundingBox;  // A bounding box around the detected face.
+  box: BoundingBox;       // A bounding box around the detected face.
+  keypoints: Keypoint[];  // Points of interest in the detected face, such as
+                          // nose, eyes etc.
 }
