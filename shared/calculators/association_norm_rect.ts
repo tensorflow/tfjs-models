@@ -38,7 +38,7 @@ function intersect(rect1: BoundingBox, rect2: BoundingBox) {
   return {xMin, xMax, yMin, yMax, width, height};
 }
 
-function getBoundingBox(rect: Rect): BoundingBox {
+export function getBoundingBox(rect: Rect): BoundingBox {
   const xMin = rect.xCenter - rect.width / 2;
   const xMax = xMin + rect.width;
   const yMin = rect.yCenter - rect.height / 2;
