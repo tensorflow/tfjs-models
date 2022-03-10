@@ -32,7 +32,7 @@ const TFJS_MODEL_CONFIG = {
 };
 
 // Measured in pixels.
-const EPSILON_IMAGE = 5;
+const EPSILON_IMAGE = 10;
 
 describeWithFlags('TFJS FaceDetector ', ALL_ENVS, () => {
   let timeout: number;
@@ -81,7 +81,6 @@ describeWithFlags('TFJS FaceDetector static image ', BROWSER_ENVS, () => {
   let image: HTMLImageElement;
   let timeout: number;
 
-
   beforeAll(async () => {
     timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
@@ -118,7 +117,11 @@ describeWithFlags('TFJS FaceDetector static image ', BROWSER_ENVS, () => {
 
     const mediapipeResults =
         await faceDetection.createDetector(model, {...MEDIAPIPE_MODEL_CONFIG})
-            .then(detector => detector.estimateFaces(image));
+            .then(async detector => {
+              await detector.estimateFaces(image);
+              // Initialize model.
+              return detector.estimateFaces(image);
+            });
 
     expect(tfjsResults.length).toBe(mediapipeResults.length);
 

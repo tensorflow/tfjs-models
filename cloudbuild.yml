@@ -49,6 +49,13 @@ steps:
   args: ['./scripts/run-build.sh', 'deeplab']
   waitFor: ['diff']
 
+# Face detection.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'face-detection'
+  args: ['./scripts/run-build.sh', 'face-detection']
+  waitFor: ['diff']
+
 # Face landmarks detection.
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'

@@ -17,6 +17,7 @@
 
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
+import {MEDIAPIPE_FACE_DETECTOR_KEYPOINTS} from '../constants';
 
 import {FaceDetector} from '../face_detector';
 import {convertImageToTensor} from '../shared/calculators/convert_image_to_tensor';
@@ -149,10 +150,11 @@ export class MediaPipeFaceDetectorTfjs implements FaceDetector {
     return this.detectFaces(image, flipHorizontal)
         .then(detections => detections.map(detection => {
           const keypoints = detection.locationData.relativeKeypoints.map(
-              keypoint => ({
+              (keypoint, i) => ({
                 ...keypoint,
                 x: keypoint.x * imageSize.width,
-                y: keypoint.y * imageSize.height
+                y: keypoint.y * imageSize.height,
+                name: MEDIAPIPE_FACE_DETECTOR_KEYPOINTS[i]
               }));
           const box = detection.locationData.relativeBoundingBox;
           for (const key of ['width', 'xMax', 'xMin'] as const ) {
@@ -161,9 +163,7 @@ export class MediaPipeFaceDetectorTfjs implements FaceDetector {
           for (const key of ['height', 'yMax', 'yMin'] as const ) {
             box[key] *= imageSize.height;
           }
-          return {
-            keypoints, box
-          }
+          return {keypoints, box};
         }));
   }
 }

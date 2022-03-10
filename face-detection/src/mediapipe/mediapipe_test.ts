@@ -52,11 +52,13 @@ const FULL_RANGE_EXPECTED_BOX: BoundingBox = {
   height: 233
 };
 // Measured in pixels.
-const EPSILON_IMAGE = 5;
+const EPSILON_IMAGE = 10;
 
 export async function expectFaceDetector(
     detector: faceDetection.FaceDetector, image: HTMLImageElement,
     modelType: MediaPipeFaceDetectorModelType) {
+  // Initialize model.
+  await detector.estimateFaces(image);
   for (let i = 0; i < 5; ++i) {
     const result = await detector.estimateFaces(image);
     expect(result.length).toBe(1);
@@ -86,7 +88,6 @@ export async function expectFaceDetector(
 describeWithFlags('MediaPipe FaceDetector static image ', BROWSER_ENVS, () => {
   let image: HTMLImageElement;
   let timeout: number;
-
 
   beforeAll(async () => {
     timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;

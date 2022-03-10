@@ -50,9 +50,9 @@ export interface EstimationConfig {
  */
 export type FaceDetectorInput = PixelInput;
 
-
 export interface Face {
-  box: BoundingBox;       // A bounding box around the detected face.
-  keypoints: Keypoint[];  // Points of interest in the detected face, such as
-                          // nose, eyes etc.
+  box: BoundingBox;  // A bounding box around the detected face.
+  keypoints:
+      Keypoint[];  // Points of interest in the detected face, such as
+                   // nose, eyes etc. MediaPipeFaceDetector has 6 keypoints.
 }

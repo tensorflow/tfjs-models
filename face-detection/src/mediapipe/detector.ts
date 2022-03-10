@@ -21,6 +21,7 @@ import {MEDIAPIPE_FACE_DETECTOR_KEYPOINTS} from '../constants';
 import {FaceDetector} from '../face_detector';
 import {getBoundingBox} from '../shared/calculators/association_norm_rect';
 import {Keypoint} from '../shared/calculators/interfaces/common_interfaces';
+import {BoundingBox} from '../shared/calculators/interfaces/shape_interfaces';
 import {Face, FaceDetectorInput} from '../types';
 
 import {validateModelConfig} from './detector_utils';
@@ -58,18 +59,18 @@ export class MediaPipeFaceDetectorMediaPipe implements FaceDetector {
       this.width = results.image.width;
       this.faces = [];
       if (results.detections !== null) {
-        for (const detection of results.detections.slice(0, config.maxFaces)) {
-          this.faces.push({
-            keypoints: this.translateOutput(detection.landmarks),
-            box: getBoundingBox(detection.boundingBox)
-          });
+        for (const detection of results.detections) {
+          this.faces.push(this.normalizedToAbsolute(
+              detection.landmarks, getBoundingBox(detection.boundingBox)));
         }
       }
     });
   }
 
-  private translateOutput(landmarks: faceDetection.NormalizedLandmarkList) {
-    return landmarks.map((landmark, i) => {
+  private normalizedToAbsolute(
+      landmarks: faceDetection.NormalizedLandmarkList,
+      boundingBox: BoundingBox): Face {
+    const keypoints = landmarks.map((landmark, i) => {
       const keypoint: Keypoint = {
         x: landmark.x * this.width,
         y: landmark.y * this.height,
@@ -78,6 +79,17 @@ export class MediaPipeFaceDetectorMediaPipe implements FaceDetector {
 
       return keypoint;
     });
+
+    const boundingBoxScaled = {
+      xMin: boundingBox.xMin * this.width,
+      yMin: boundingBox.yMin * this.height,
+      xMax: boundingBox.xMax * this.width,
+      yMax: boundingBox.yMax * this.height,
+      width: boundingBox.width * this.width,
+      height: boundingBox.height * this.height
+    };
+
+    return {keypoints, box: boundingBoxScaled};
   }
 
   /**

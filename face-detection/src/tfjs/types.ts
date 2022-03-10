@@ -19,12 +19,11 @@ import {io} from '@tensorflow/tfjs-core';
 
 import {MediaPipeFaceDetectorEstimationConfig, MediaPipeFaceDetectorModelConfig} from '../mediapipe/types';
 
-
 /**
  * Model parameters for MediaPipeFaceDetector TFJS runtime.
  *
  * `runtime`: Must set to be 'tfjs'.
-
+ *
  * `modelType`: Optional. Possible values: 'short'|'full'. Defaults to
  * 'short'. The short-range model that works best for faces within 2 meters from
  * the camera, while the full-range model works best for faces within 5 meters.
