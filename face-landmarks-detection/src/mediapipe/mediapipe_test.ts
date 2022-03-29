@@ -19,9 +19,9 @@
 import {BROWSER_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
 // tslint:disable-next-line: no-imports-from-dist
 import {expectArraysClose, expectNumbersClose} from '@tensorflow/tfjs-core/dist/test_util';
-import {MEDIAPIPE_FACEMESH_NUM_KEYPOINTS, MEDIAPIPE_FACEMESH_NUM_KEYPOINTS_WITH_IRISES} from '../constants';
+import {MEDIAPIPE_FACE_MESH_NUM_KEYPOINTS, MEDIAPIPE_FACE_MESH_NUM_KEYPOINTS_WITH_IRISES} from '../constants';
 
-import * as faceDetection from '../index';
+import * as faceLandmarksDetection from '../index';
 import {BoundingBox} from '../shared/calculators/interfaces/shape_interfaces';
 import {loadImage} from '../shared/test_util';
 
@@ -93,9 +93,9 @@ const EXPECTED_BOX: BoundingBox = {
 };
 
 export async function expectFaceMesh(
-    detector: faceDetection.FaceLandmarksDetector, image: HTMLImageElement,
-    staticImageMode: boolean, refineLandmarks: boolean, numFrames: number,
-    epsilon: number) {
+    detector: faceLandmarksDetection.FaceLandmarksDetector,
+    image: HTMLImageElement, staticImageMode: boolean, refineLandmarks: boolean,
+    numFrames: number, epsilon: number) {
   for (let i = 0; i < numFrames; ++i) {
     const result = await detector.estimateFaces(image, {staticImageMode});
     expect(result.length).toBe(1);
@@ -112,8 +112,8 @@ export async function expectFaceMesh(
         result[0].keypoints.map(keypoint => [keypoint.x, keypoint.y]);
     expect(keypoints.length)
         .toBe(
-            refineLandmarks ? MEDIAPIPE_FACEMESH_NUM_KEYPOINTS_WITH_IRISES :
-                              MEDIAPIPE_FACEMESH_NUM_KEYPOINTS);
+            refineLandmarks ? MEDIAPIPE_FACE_MESH_NUM_KEYPOINTS_WITH_IRISES :
+                              MEDIAPIPE_FACE_MESH_NUM_KEYPOINTS);
 
     for (const [eyeIdx, gtLds] of EYE_INDICES_TO_LANDMARKS) {
       expectArraysClose(keypoints[eyeIdx], gtLds, epsilon);
@@ -145,8 +145,8 @@ describeWithFlags('MediaPipe FaceMesh ', BROWSER_ENVS, () => {
       image: HTMLImageElement, staticImageMode: boolean,
       refineLandmarks: boolean, numFrames: number) {
     // Note: this makes a network request for model assets.
-    const model = faceDetection.SupportedModels.MediaPipeFaceMesh;
-    const detector = await faceDetection.createDetector(
+    const model = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh;
+    const detector = await faceLandmarksDetection.createDetector(
         model, {...MEDIAPIPE_MODEL_CONFIG, refineLandmarks});
 
     await expectFaceMesh(
