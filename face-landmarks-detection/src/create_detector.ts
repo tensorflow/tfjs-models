@@ -18,7 +18,7 @@
 import {FaceLandmarksDetector} from './face_landmarks_detector';
 import {load as loadMediaPipeFaceMeshMediaPipeLandmarksDetector} from './mediapipe/detector';
 import {MediaPipeFaceMeshMediaPipeModelConfig, MediaPipeFaceMeshModelConfig} from './mediapipe/types';
-import {loadMeshModel as loadMediaPipeFaceMeshTfjsLandmarksDetector} from './tfjs/detector';
+import {load as loadMediaPipeFaceMeshTfjsLandmarksDetector} from './tfjs/detector';
 import {MediaPipeFaceMeshTfjsModelConfig} from './tfjs/types';
 import {SupportedModels} from './types';
 
