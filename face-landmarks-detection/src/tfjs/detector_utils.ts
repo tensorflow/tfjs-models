@@ -15,42 +15,10 @@
  * =============================================================================
  */
 
-import {DEFAULT_DETECTOR_MODEL_URL_FULL_SPARSE, DEFAULT_DETECTOR_MODEL_URL_SHORT, DEFAULT_FACE_DETECTOR_MODEL_CONFIG, DEFAULT_FACE_MESH_ESTIMATION_CONFIG, DEFAULT_FACE_MESH_MODEL_CONFIG, DEFAULT_LANDMARK_MODEL_URL, DEFAULT_LANDMARK_MODEL_URL_WITH_ATTENTION} from './constants';
-import {MediaPipeFaceDetectorTfjsModelConfig, MediaPipeFaceMeshTfjsEstimationConfig, MediaPipeFaceMeshTfjsModelConfig} from './types';
+import {DEFAULT_FACE_MESH_ESTIMATION_CONFIG, DEFAULT_FACE_MESH_MODEL_CONFIG, DEFAULT_LANDMARK_MODEL_URL, DEFAULT_LANDMARK_MODEL_URL_WITH_ATTENTION} from './constants';
+import {MediaPipeFaceMeshTfjsEstimationConfig, MediaPipeFaceMeshTfjsModelConfig} from './types';
 
-export function validateDetectorModelConfig(
-    modelConfig: MediaPipeFaceDetectorTfjsModelConfig):
-    MediaPipeFaceDetectorTfjsModelConfig {
-  if (modelConfig == null) {
-    return {...DEFAULT_FACE_DETECTOR_MODEL_CONFIG};
-  }
-
-  const config: MediaPipeFaceDetectorTfjsModelConfig = {...modelConfig};
-
-  if (config.modelType == null) {
-    config.modelType = DEFAULT_FACE_DETECTOR_MODEL_CONFIG.modelType;
-  }
-
-  if (config.maxFaces == null) {
-    config.maxFaces = DEFAULT_FACE_DETECTOR_MODEL_CONFIG.maxFaces;
-  }
-
-  if (config.detectorModelUrl == null) {
-    switch (config.modelType) {
-      case 'full':
-        config.detectorModelUrl = DEFAULT_DETECTOR_MODEL_URL_FULL_SPARSE;
-        break;
-      case 'short':
-      default:
-        config.detectorModelUrl = DEFAULT_DETECTOR_MODEL_URL_SHORT;
-        break;
-    }
-  }
-
-  return config;
-}
-
-export function validateMeshModelConfig(
+export function validateModelConfig(
     modelConfig: MediaPipeFaceMeshTfjsModelConfig):
     MediaPipeFaceMeshTfjsModelConfig {
   if (modelConfig == null) {
@@ -69,9 +37,7 @@ export function validateMeshModelConfig(
     config.refineLandmarks = DEFAULT_FACE_MESH_MODEL_CONFIG.refineLandmarks;
   }
 
-  if (config.detectorModelUrl == null) {
-    config.detectorModelUrl = DEFAULT_DETECTOR_MODEL_URL_SHORT;
-  }
+  // Default detectorModelUrl set by face-detection package.
 
   if (config.landmarkModelUrl == null) {
     config.landmarkModelUrl = config.refineLandmarks ?

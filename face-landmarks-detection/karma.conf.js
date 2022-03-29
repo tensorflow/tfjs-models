@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
- const karmaTypescriptConfig = {
+const karmaTypescriptConfig = {
   tsconfig: 'tsconfig.test.json',
   // Disable coverage reports and instrumentation by default for tests
   coverageOptions: {instrumentation: false},
@@ -103,8 +103,8 @@ module.exports = function(config) {
       username: process.env.BROWSERSTACK_USERNAME,
       accessKey: process.env.BROWSERSTACK_KEY,
       timeout: 1800,
-      tunnelIdentifier:
-          `face_detection_${Date.now()}_${Math.floor(Math.random() * 1000)}`
+      tunnelIdentifier: `face_landmarks_detection_${Date.now()}_${
+          Math.floor(Math.random() * 1000)}`
     },
     captureTimeout: 3e5,
     reportSlowerThan: 500,
