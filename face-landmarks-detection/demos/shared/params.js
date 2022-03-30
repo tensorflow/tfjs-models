@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2021 Google LLC. All Rights Reserved.
+ * Copyright 2022 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -62,7 +62,7 @@ export async function createDetector() {
   }
 }
 /**
- * This map descripes tunable flags and theior corresponding types.
+ * This map describes tunable flags and theior corresponding types.
  *
  * The flags (keys) in the map satisfy the following two conditions:
  * - Is tunable. For example, `IS_BROWSER` and `IS_CHROME` is not tunable,

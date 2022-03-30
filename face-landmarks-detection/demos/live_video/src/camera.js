@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2021 Google LLC. All Rights Reserved.
+ * Copyright 2022 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,8 +15,8 @@
  * =============================================================================
  */
 
-import {isMobile, drawResults} from './shared/util';
 import {VIDEO_SIZE} from './shared/params';
+import {drawResults, isMobile} from './shared/util';
 
 export class Camera {
   constructor() {
@@ -44,8 +44,7 @@ export class Camera {
         // Only setting the video to a specified size for large screen, on
         // mobile devices accept the default size.
         width: isMobile() ? VIDEO_SIZE['360 X 270'].width : $size.width,
-        height: isMobile() ? VIDEO_SIZE['360 X 270'].height :
-                             $size.height,
+        height: isMobile() ? VIDEO_SIZE['360 X 270'].height : $size.height,
         frameRate: {
           ideal: targetFPS,
         },

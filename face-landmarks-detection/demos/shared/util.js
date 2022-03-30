@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2021 Google LLC. All Rights Reserved.
+ * Copyright 2022 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,7 +16,7 @@
  */
 import * as tf from '@tensorflow/tfjs-core';
 
-import {TUNABLE_FLAG_VALUE_RANGE_MAP, NUM_KEYPOINTS, NUM_IRIS_KEYPOINTS, GREEN, RED} from './params';
+import {GREEN, NUM_IRIS_KEYPOINTS, NUM_KEYPOINTS, RED, TUNABLE_FLAG_VALUE_RANGE_MAP} from './params';
 import {TRIANGULATION} from './triangulation';
 
 export function isiOS() {
@@ -127,17 +127,21 @@ function drawPath(ctx, points, closePath) {
  */
 export function drawResults(ctx, faces, triangulateMesh, boundingBox) {
   faces.forEach((face) => {
-    const keypoints = face.keypoints.map((keypoint) => [keypoint.x, keypoint.y]);
+    const keypoints =
+        face.keypoints.map((keypoint) => [keypoint.x, keypoint.y]);
 
     if (boundingBox) {
       ctx.strokeStyle = RED;
       ctx.lineWidth = 1;
 
       const box = face.box;
-      drawPath(ctx, [[box.xMin, box.yMin],
-                    [box.xMax, box.yMin],
-                    [box.xMax, box.yMax],
-                    [box.xMin, box.yMax]], true);
+      drawPath(
+          ctx,
+          [
+            [box.xMin, box.yMin], [box.xMax, box.yMin], [box.xMax, box.yMax],
+            [box.xMin, box.yMax]
+          ],
+          true);
     }
 
     if (triangulateMesh) {
@@ -146,7 +150,8 @@ export function drawResults(ctx, faces, triangulateMesh, boundingBox) {
 
       for (let i = 0; i < TRIANGULATION.length / 3; i++) {
         const points = [
-          TRIANGULATION[i * 3], TRIANGULATION[i * 3 + 1],
+          TRIANGULATION[i * 3],
+          TRIANGULATION[i * 3 + 1],
           TRIANGULATION[i * 3 + 2],
         ].map((index) => keypoints[index]);
 
@@ -170,15 +175,15 @@ export function drawResults(ctx, faces, triangulateMesh, boundingBox) {
       ctx.lineWidth = 1;
 
       const leftCenter = keypoints[NUM_KEYPOINTS];
-      const leftDiameterY = distance(
-          keypoints[NUM_KEYPOINTS + 4], keypoints[NUM_KEYPOINTS + 2]);
-      const leftDiameterX = distance(
-          keypoints[NUM_KEYPOINTS + 3], keypoints[NUM_KEYPOINTS + 1]);
+      const leftDiameterY =
+          distance(keypoints[NUM_KEYPOINTS + 4], keypoints[NUM_KEYPOINTS + 2]);
+      const leftDiameterX =
+          distance(keypoints[NUM_KEYPOINTS + 3], keypoints[NUM_KEYPOINTS + 1]);
 
       ctx.beginPath();
       ctx.ellipse(
-          leftCenter[0], leftCenter[1], leftDiameterX / 2, leftDiameterY / 2,
-          0, 0, 2 * Math.PI);
+          leftCenter[0], leftCenter[1], leftDiameterX / 2, leftDiameterY / 2, 0,
+          0, 2 * Math.PI);
       ctx.stroke();
 
       if (keypoints.length > NUM_KEYPOINTS + NUM_IRIS_KEYPOINTS) {
