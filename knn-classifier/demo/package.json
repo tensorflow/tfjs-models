@@ -11,11 +11,11 @@
   "dependencies": {
     "@tensorflow-models/knn-classifier": "file:../dist",
     "@tensorflow-models/mobilenet": "2.1.0",
-    "@tensorflow/tfjs-backend-cpu": "^3.3.0",
-    "@tensorflow/tfjs-backend-webgl": "^3.3.0",
-    "@tensorflow/tfjs-converter": "^3.3.0",
-    "@tensorflow/tfjs-core": "^3.3.0",
-    "@tensorflow/tfjs-layers": "^3.3.0",
+    "@tensorflow/tfjs-backend-cpu": "^3.15.0",
+    "@tensorflow/tfjs-backend-webgl": "^3.15.0",
+    "@tensorflow/tfjs-converter": "^3.15.0",
+    "@tensorflow/tfjs-core": "^3.15.0",
+    "@tensorflow/tfjs-layers": "^3.15.0",
     "stats.js": "^0.17.0"
   },
   "scripts": {
@@ -34,6 +34,7 @@
     "@babel/plugin-transform-runtime": "^7.7.6",
     "@babel/polyfill": "^7.10.4",
     "@babel/preset-env": "^7.7.6",
+    "babel-preset-env": "^1.7.0",
     "babel-preset-es2017": "^6.24.1",
     "clang-format": "~1.2.2",
     "cross-env": "^5.2.0",
