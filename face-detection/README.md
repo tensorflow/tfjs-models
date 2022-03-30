@@ -5,7 +5,7 @@ This package provides models for running real-time face detection.
 Currently, we provide 1 model option:
 
 #### MediaPipe FaceDetection:
-[Demo](https://storage.googleapis.com/tfjs-models/demos/face-detection/index.html?model=mediapipe_face_detection)
+[Demo](https://storage.googleapis.com/tfjs-models/demos/face-detection/index.html?model=mediapipe_face_detector)
 
 MediaPipe FaceDetection can detect multiple faces, each face contains 6 keypoints.
 
