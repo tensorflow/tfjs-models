@@ -14,9 +14,10 @@
  * limitations under the License.
  * =============================================================================
  */
+import * as faceLandmarksDetection from '@tensorflow-models/face-landmarks-detection';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {GREEN, NUM_IRIS_KEYPOINTS, NUM_KEYPOINTS, RED, TUNABLE_FLAG_VALUE_RANGE_MAP} from './params';
+import {GREEN, LABEL_TO_COLOR, NUM_IRIS_KEYPOINTS, NUM_KEYPOINTS, RED, TUNABLE_FLAG_VALUE_RANGE_MAP} from './params';
 import {TRIANGULATION} from './triangulation';
 
 export function isiOS() {
@@ -200,6 +201,18 @@ export function drawResults(ctx, faces, triangulateMesh, boundingBox) {
             rightCenter[0], rightCenter[1], rightDiameterX / 2,
             rightDiameterY / 2, 0, 0, 2 * Math.PI);
         ctx.stroke();
+      }
+    }
+
+    const contours = faceLandmarksDetection.util.getKeypointIndexByContour(
+        faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh);
+
+    for (const [label, contour] of Object.entries(contours)) {
+      ctx.strokeStyle = LABEL_TO_COLOR[label];
+      ctx.lineWidth = 3;
+      const path = contour.map((index) => keypoints[index]);
+      if (path.every(value => value != undefined)) {
+        drawPath(ctx, path, false);
       }
     }
   });

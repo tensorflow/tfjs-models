@@ -40,6 +40,16 @@ export const MEDIAPIPE_FACE_CONFIG = {
   triangulateMesh: true,
   boundingBox: true,
 };
+export const LABEL_TO_COLOR = {
+  lips: '#E0E0E0',
+  leftEye: '#30FF30',
+  leftEyebrow: '#30FF30',
+  leftIris: '#30FF30',
+  rightEye: '#FF3030',
+  rightEyebrow: '#FF3030',
+  rightIris: '#FF3030',
+  faceOval: '#E0E0E0',
+};
 export async function createDetector() {
   switch (STATE.model) {
     case faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh:
