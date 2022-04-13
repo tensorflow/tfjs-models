@@ -20,9 +20,9 @@ import {ImageToTensorConfig, LandmarksRefinementConfig, RectTransformationConfig
 import {MediaPipeFaceMeshTfjsEstimationConfig, MediaPipeFaceMeshTfjsModelConfig} from './types';
 
 export const DEFAULT_LANDMARK_MODEL_URL =
-    'https://storage.googleapis.com/tfjs-testing/face-detection/face_landmark/model.json';
+    'https://tfhub.dev/mediapipe/tfjs-model/face_landmarks_detection/face_mesh/1';
 export const DEFAULT_LANDMARK_MODEL_URL_WITH_ATTENTION =
-    'https://storage.googleapis.com/tfjs-testing/face-detection/face_landmark_with_attention/model.json';
+    'https://tfhub.dev/mediapipe/tfjs-model/face_landmarks_detection/attention_mesh/1';
 export const DEFAULT_FACE_MESH_MODEL_CONFIG:
     MediaPipeFaceMeshTfjsModelConfig = {
       runtime: 'tfjs',
