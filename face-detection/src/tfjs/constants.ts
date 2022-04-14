@@ -21,12 +21,10 @@ import {MediaPipeFaceDetectorTfjsEstimationConfig, MediaPipeFaceDetectorTfjsMode
 
 // Non-sparse full model is not currently used but is available if needed for
 // future use cases.
-// export const DEFAULT_DETECTOR_MODEL_URL_FULL =
-//    'https://storage.googleapis.com/tfjs-testing/face-detection/face_detection_full_range/model.json';
 export const DEFAULT_DETECTOR_MODEL_URL_FULL_SPARSE =
-    'https://storage.googleapis.com/tfjs-testing/face-detection/face_detection_full_range_sparse/model.json';
+    'https://tfhub.dev/mediapipe/tfjs-model/face_detection/full/1';
 export const DEFAULT_DETECTOR_MODEL_URL_SHORT =
-    'https://storage.googleapis.com/tfjs-testing/face-detection/face_detection_short_range/model.json';
+    'https://tfhub.dev/mediapipe/tfjs-model/face_detection/short/1';
 export const SHORT_RANGE_DETECTOR_ANCHOR_CONFIG: AnchorConfig = {
   reduceBoxesInLowestLayer: false,
   interpolatedScaleAspectRatio: 1.0,
