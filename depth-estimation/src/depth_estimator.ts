@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import {PortraitDepthEstimationConfig} from './portrait_depth/types';
+import {ARPortraitDepthEstimationConfig} from './ar_portrait_depth/types';
 import {DepthEstimatorInput, DepthMap} from './types';
 
 /**
@@ -30,7 +30,7 @@ export interface DepthEstimator {
    */
   estimateDepth(
       input: DepthEstimatorInput,
-      estimationConfig?: PortraitDepthEstimationConfig): Promise<DepthMap>;
+      estimationConfig?: ARPortraitDepthEstimationConfig): Promise<DepthMap>;
 
   /**
    * Disposes the underlying models from memory.

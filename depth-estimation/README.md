@@ -2,9 +2,9 @@
 
 This package provides models for running depth estimation in TensorFlow.js.
 
-## Portrait Depth API
+## AR Portrait Depth API
 
-This portrait depth model estimates per-pixel depth (the distance to the camera center) for a single portrait image, which can be further used for creative applications.
+This AR portrait depth model estimates per-pixel depth (the distance to the camera center) for a single portrait image, which can be further used for creative applications.
 (See [DepthLab](https://augmentedperception.github.io/depthlab/) for potential
 applications).
 
@@ -16,7 +16,7 @@ For example, the following demo transforms a single 2D RGB image into a 3D Portr
 ## Table of Contents
 
 - [Depth Estimation](#depth-estimation)
-  - [Portrait Depth API](#portrait-depth-api)
+  - [AR Portrait Depth API](#ar-portrait-depth-api)
   - [Table of Contents](#table-of-contents)
   - [How to Run It](#how-to-run-it)
   - [Example Code and Demos](#example-code-and-demos)
@@ -25,17 +25,18 @@ For example, the following demo transforms a single 2D RGB image into a 3D Portr
 
 ## How to Run It
 
-There are two steps to run the portrait depth API:
+There are two steps to run the AR portrait depth API:
 
 First, you create an estimator by choosing one of the models from
-`SupportedModels`, including `PortraitDepth`.
+`SupportedModels`, including `ARPortraitDepth`.
 
 For example:
 
 ```javascript
-const model = depthEstimation.SupportedModels.PortraitDepth;
+const model = depthEstimation.SupportedModels.ARPortraitDepth;
 const estimatorConfig = {
-  outputDepthRange: [0, 1]
+  minDepth: 0,
+  maxDepth: 1,
 }
 const estimator = await depthEstimation.createEstimator(model, estimatorConfig);
 ```
@@ -68,7 +69,7 @@ tensor to image data).
 Refer to each model's documentation for specific configurations for the model
 and their performance.
 
-[PortraitDepth Documentation](TODO: add link)
+[ARPortraitDepth Documentation](https://github.com/tensorflow/tfjs-models/tree/master/depth-estimation/src/ar_portrait_depth)
 
 -------------------------------------------------------------------------------
 
@@ -76,4 +77,4 @@ and their performance.
 
 You may reference the demos for code examples.
 Details for how to run the demos are included in the `demos/`
-[folder](TODO: add link).
+[folder](https://github.com/tensorflow/tfjs-models/tree/master/depth-estimation/demos).

@@ -20,7 +20,7 @@ import {io} from '@tensorflow/tfjs-core';
 import {EstimationConfig, ModelConfig} from '../types';
 
 /**
- * Model parameters for PortraitDepth.
+ * Model parameters for ARPortraitDepth.
  *
  * `minDepth`: The minimum depth value for the model to map to 0. Any smaller
  * depth values will also get mapped to 0.
@@ -33,8 +33,8 @@ import {EstimationConfig, ModelConfig} from '../types';
  * access to the model hosted on tf.hub.
  *
  */
-export interface PortraitDepthModelConfig extends ModelConfig {
+export interface ARPortraitDepthModelConfig extends ModelConfig {
   modelUrl?: string|io.IOHandler;
 }
 
-export interface PortraitDepthEstimationConfig extends EstimationConfig {}
+export interface ARPortraitDepthEstimationConfig extends EstimationConfig {}

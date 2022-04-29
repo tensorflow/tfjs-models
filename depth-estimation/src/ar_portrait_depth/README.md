@@ -1,4 +1,4 @@
-# PortraitDepth
+# ARPortraitDepth
 
 This portrait depth model estimates per-pixel depth (the distance to the camera center) for a single portrait image, which can be further used for creative applications. (See [DepthLab](https://augmentedperception.github.io/depthlab/) for potential applications). Note that the model runs locally on the user’s device and no data is uploaded to the server.
 
@@ -13,7 +13,7 @@ For example, the following demo transforms a single 2D RGB image into a 3D Portr
 
 ## Installation
 
-To use PortraitDepth:
+To use ARPortraitDepth:
 
 Via script tags:
 
@@ -52,11 +52,11 @@ import * as depthEstimation from '@tensorflow-models/depth-estimation';
 
 ### Create an estimator
 
-Pass in `depthEstimation.SupportedModels.PortraitDepth` from the
+Pass in `depthEstimation.SupportedModels.ARPortraitDepth` from the
 `depthEstimation.SupportedModel` enum list along with an `estimatorConfig` to the
 `createEstimator` method to load and initialize the model.
 
-`estimatorConfig` is an object that defines PortraitDepth specific configurations for `PortraitDepthModelConfig`:
+`estimatorConfig` is an object that defines ARPortraitDepth specific configurations for `ARPortraitDepthModelConfig`:
 
 *   *minDepth*: The minimum depth value for the model to map to 0. Any smaller
 depth values will also get mapped to 0.
@@ -71,7 +71,7 @@ to load model from app bundle directory using
 [bundleResourceIO](https://github.com/tensorflow/tfjs/blob/master/tfjs-react-native/
 
 ```javascript
-const model = depthEstimation.SupportedModels.PortraitDepth;
+const model = depthEstimation.SupportedModels.ARPortraitDepth;
 const estimatorConfig = {
   outputDepthRange: [0, 1]
 };
@@ -85,7 +85,7 @@ accepts both image and video in many formats, including:
 `HTMLVideoElement`, `HTMLImageElement`, `HTMLCanvasElement`. If you want more
 options, you can pass in a second `estimationConfig` parameter.
 
-`estimationConfig` is an object that defines PortraitDepth specific configurations for `PortraitDepthEstimationConfig`:
+`estimationConfig` is an object that defines ARPortraitDepth specific configurations for `ARPortraitDepthEstimationConfig`:
 
 *   *flipHorizontal*: Optional. Defaults to false. When image data comes from camera, the result has to flip horizontally.
 
