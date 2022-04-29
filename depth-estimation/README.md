@@ -2,6 +2,8 @@
 
 This package provides models for running depth estimation in TensorFlow.js.
 
+Currently, we provide 1 model option:
+
 ## AR Portrait Depth API
 
 This AR portrait depth model estimates per-pixel depth (the distance to the camera center) for a single portrait image, which can be further used for creative applications.
@@ -15,11 +17,8 @@ For example, the following demo transforms a single 2D RGB image into a 3D Portr
 
 ## Table of Contents
 
-- [Depth Estimation](#depth-estimation)
-  - [AR Portrait Depth API](#ar-portrait-depth-api)
-  - [Table of Contents](#table-of-contents)
-  - [How to Run It](#how-to-run-it)
-  - [Example Code and Demos](#example-code-and-demos)
+- [How to Run It](#how-to-run-it)
+- [Example Code and Demos](#example-code-and-demos)
 
 -------------------------------------------------------------------------------
 
@@ -28,7 +27,7 @@ For example, the following demo transforms a single 2D RGB image into a 3D Portr
 There are two steps to run the AR portrait depth API:
 
 First, you create an estimator by choosing one of the models from
-`SupportedModels`, including `ARPortraitDepth`.
+`SupportedModels`.
 
 For example:
 

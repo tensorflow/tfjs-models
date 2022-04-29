@@ -1,4 +1,4 @@
-# ARPortraitDepth
+# AR Portrait Depth
 
 This portrait depth model estimates per-pixel depth (the distance to the camera center) for a single portrait image, which can be further used for creative applications. (See [DepthLab](https://augmentedperception.github.io/depthlab/) for potential applications). Note that the model runs locally on the user’s device and no data is uploaded to the server.
 

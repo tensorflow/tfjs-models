@@ -17,17 +17,17 @@
 
 const karmaTypescriptConfig = {
   tsconfig: 'tsconfig.test.json',
-  // Disable coverage reports and instrumentation by default for tests
+  // Disable coverage reports and instrumentation by default for tests.
   coverageOptions: {instrumentation: false},
   reports: {},
   bundlerOptions: {
     sourceMap: true,
-    // Process any non es5 code through karma-typescript-es6-transform (babel)
+    // Process any non ES5 code through karma-typescript-es6-transform (babel).
     acornOptions: {ecmaVersion: 8},
     transforms: [
       require('karma-typescript-es6-transform')({
         presets: [
-          // ensure we get es5 by adding IE 11 as a target
+          // Ensure we get ES5 by adding IE 11 as a target.
           ['@babel/env', {'targets': {'ie': '11'}, 'loose': true}]
         ]
       }),
