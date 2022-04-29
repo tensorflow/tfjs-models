@@ -58,9 +58,11 @@ Pass in `depthEstimation.SupportedModels.PortraitDepth` from the
 
 `estimatorConfig` is an object that defines PortraitDepth specific configurations for `PortraitDepthModelConfig`:
 
-*   *minDepth*: The minimum depth value outputted by the estimator.
+*   *minDepth*: The minimum depth value for the model to map to 0. Any smaller
+depth values will also get mapped to 0.
 
-*   *maxDepth*: The maximum depth value outputted by the estimator.
+*   *maxDepth*: The maximum depth value for the model to map to 1. Any larger
+depth values will also get mapped to 1.
 
 *   *modelUrl*: An optional string that specifies custom url of
 the estimator model. This is useful for area/countries that don't have access to the model hosted on tf.hub. It also accepts `io.IOHandler` which can be used with
