@@ -19,7 +19,7 @@ import {Tensor2D} from '@tensorflow/tfjs-core';
 import {PixelInput} from './shared/calculators/interfaces/common_interfaces';
 
 export enum SupportedModels {
-  PortraitDepth = 'PortraitDepth',
+  ARPortraitDepth = 'ARPortraitDepth',
 }
 
 /**
