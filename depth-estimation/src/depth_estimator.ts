@@ -33,12 +33,12 @@ export interface DepthEstimator {
       estimationConfig?: PortraitDepthEstimationConfig): Promise<DepthMap>;
 
   /**
-   * Dispose the underlying models from memory.
+   * Disposes the underlying models from memory.
    */
   dispose(): void;
 
   /**
-   * Reset global states in the model.
+   * Resets global states in the model.
    */
   reset(): void;
 }

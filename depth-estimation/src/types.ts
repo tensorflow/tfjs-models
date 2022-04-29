@@ -25,9 +25,11 @@ export enum SupportedModels {
 /**
  * Common config to create the depth estimator.
  *
- * `minDepth`: The minimum depth value outputted by the estimator.
+ * `minDepth`: The minimum depth value for the model to map to 0. Any smaller
+ * depth values will also get mapped to 0.
  *
- * `maxDepth`: The maximum depth value outputted by the estimator.
+ * `maxDepth`: The maximum depth value for the model to map to 1. Any larger
+ * depth values will also get mapped to 1.
  */
 export interface ModelConfig {
   minDepth: number;
@@ -38,7 +40,7 @@ export interface ModelConfig {
  * Common config for the `estimateDepth` method.
  *
  * `flipHorizontal`: Optional. Default to false. In some cases, the image is
- * mirrored, e.g. video stream from camera, flipHorizontal will flip the
+ * mirrored, e.g., video stream from camera, flipHorizontal will flip the
  * keypoints horizontally.
  */
 export interface EstimationConfig {
@@ -46,7 +48,7 @@ export interface EstimationConfig {
 }
 
 /**
- * Allowed input format for the `estimateHands` method.
+ * Allowed input format for the `estimateDepth` method.
  */
 export type DepthEstimatorInput = PixelInput;
 
