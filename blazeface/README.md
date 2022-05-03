@@ -1,3 +1,4 @@
+## Blazeface has been deprecated , please refere to new face-detection model [here](https://github.com/tensorflow/tfjs-models/blob/master/face-detection)
 # Blazeface detector
 
 [Blazeface](https://arxiv.org/abs/1907.05047) is a lightweight model that detects faces in images. Blazeface makes use of a modified [Single Shot Detector](https://arxiv.org/abs/1512.02325) architecture with a custom encoder. The model may serve as a first step for face-related computer vision applications, such as facial keypoint recognition.
