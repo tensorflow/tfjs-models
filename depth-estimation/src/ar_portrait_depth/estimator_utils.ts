@@ -32,8 +32,8 @@ export function validateModelConfig(modelConfig: ARPortraitDepthModelConfig):
 
   const config = {...modelConfig};
 
-  if (config.modelUrl == null) {
-    config.modelUrl = DEFAULT_AR_PORTRAIT_DEPTH_MODEL_URL;
+  if (config.depthModelUrl == null) {
+    config.depthModelUrl = DEFAULT_AR_PORTRAIT_DEPTH_MODEL_URL;
   }
 
   return config;

@@ -923,6 +923,11 @@
     "@jridgewell/resolve-uri" "^3.0.3"
     "@jridgewell/sourcemap-codec" "^1.4.10"
 
+"@mediapipe/selfie_segmentation@~0.1.0":
+  version "0.1.1632777926"
+  resolved "https://registry.yarnpkg.com/@mediapipe/selfie_segmentation/-/selfie_segmentation-0.1.1632777926.tgz#67d37a53b0de89efc4a0e3b63332a4da3a6ad9c8"
+  integrity sha512-OSGhYaZsdOXKyY0JCueOflq3ICLNMrBekI2V8vShum8wuoH3xjfEM6NnIujwJ5SlTdZEXi7Up2koOILDgQbWyg==
+
 "@rollup/plugin-commonjs@^11.0.2":
   version "11.1.0"
   resolved "https://registry.yarnpkg.com/@rollup/plugin-commonjs/-/plugin-commonjs-11.1.0.tgz#60636c7a722f54b41e419e1709df05c7234557ef"
@@ -968,6 +973,13 @@
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/@socket.io/base64-arraybuffer/-/base64-arraybuffer-1.0.2.tgz#568d9beae00b0d835f4f8c53fd55714986492e61"
   integrity sha512-dOlCBKnDw4iShaIsH/bxujKTM18+2TOAsYz+KSc11Am38H4q5Xw8Bbz97ZYdrVNM+um3p7w86Bvvmcn9q+5+eQ==
+
+"@tensorflow-models/body-segmentation@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow-models/body-segmentation/-/body-segmentation-1.0.0.tgz#3f2441e142c596669f93d22adc16def3d12486ff"
+  integrity sha512-LMXulkLNv7DNict/Tlg/TW1ACVx/fgnxdnuZG6VQ0tcDBULqfe1kmVpXQGLA19FHJrdRqggGt/jL3i356e83eQ==
+  dependencies:
+    rimraf "^3.0.2"
 
 "@tensorflow/tfjs-backend-cpu@3.15.0", "@tensorflow/tfjs-backend-cpu@^3.15.0":
   version "3.15.0"

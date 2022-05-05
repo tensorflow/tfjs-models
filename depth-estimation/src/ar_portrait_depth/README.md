@@ -25,6 +25,7 @@ Via script tags:
 <!-- You must explicitly require a TF.js backend if you're not using the TF.js union bundle. -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
 
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-segmentation"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/depth-estimation"></script>
 ```
 
@@ -32,6 +33,7 @@ Via npm:
 ```sh
 yarn add @tensorflow/tfjs-core, @tensorflow/tfjs-converter
 yarn add @tensorflow/tfjs-backend-webgl
+yarn add @tensorflow-models/body-segmentation
 yarn add @tensorflow-models/depth-estimation
 ```
 
@@ -64,7 +66,13 @@ depth values will also get mapped to 0.
 *   *maxDepth*: The maximum depth value for the model to map to 1. Any larger
 depth values will also get mapped to 1.
 
-*   *modelUrl*: An optional string that specifies custom url of
+*   *segmentationModelUrl*: An optional string that specifies custom url of
+the segmenter model. This is useful for area/countries that don't have access to the model hosted on tf.hub. It also accepts `io.IOHandler` which can be used with
+[tfjs-react-native](https://github.com/tensorflow/tfjs/tree/master/tfjs-react-native)
+to load model from app bundle directory using
+[bundleResourceIO](https://github.com/tensorflow/tfjs/blob/master/tfjs-react-native/
+
+*   *depthModelUrl*: An optional string that specifies custom url of
 the estimator model. This is useful for area/countries that don't have access to the model hosted on tf.hub. It also accepts `io.IOHandler` which can be used with
 [tfjs-react-native](https://github.com/tensorflow/tfjs/tree/master/tfjs-react-native)
 to load model from app bundle directory using
