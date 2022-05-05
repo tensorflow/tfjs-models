@@ -151,7 +151,8 @@ describeWithFlags('ARPortraitDepth', ALL_ENVS, () => {
           depthEstimation.SupportedModels.ARPortraitDepth,
           {minDepth: 1, maxDepth: 0.99});
       done.fail(
-          'Loading with minDepth greater than maxDepth succeeded unexpectedly.');
+          'Loading with minDepth greater than maxDepth ' +
+          'succeeded unexpectedly.');
     } catch (e) {
       expect(e.message).toEqual('minDepth must be <= maxDepth.');
       done();

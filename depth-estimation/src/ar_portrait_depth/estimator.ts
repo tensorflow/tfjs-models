@@ -110,7 +110,7 @@ class ARPortraitDepthEstimator implements DepthEstimator {
         flipHorizontal);
 
     const depthTensor = tf.tidy(() => {
-      let maskedImage = masked.getContext('2d').getImageData(
+      const maskedImage = masked.getContext('2d').getImageData(
           0, 0, masked.width, masked.height);
 
       const maskedImageTensor = tf.browser.fromPixels(maskedImage);
@@ -122,6 +122,7 @@ class ARPortraitDepthEstimator implements DepthEstimator {
       const imageNormalized =
           tf.add(
               tf.mul(image1Float, TRANSFORM_INPUT_IMAGE.scale),
+              // tslint:disable-next-line: no-unnecessary-type-assertion
               TRANSFORM_INPUT_IMAGE.offset) as tf.Tensor3D;
 
       const imageResized = tf.image.resizeBilinear(
@@ -141,6 +142,7 @@ class ARPortraitDepthEstimator implements DepthEstimator {
       // [0,1] range first.
       const scale = depthTransform.scale / 2;
       const result =
+          // tslint:disable-next-line: no-unnecessary-type-assertion
           tf.add(tf.mul(depth4D, scale), depthTransform.offset) as tf.Tensor3D;
 
       // Keep in [0,1] range.
