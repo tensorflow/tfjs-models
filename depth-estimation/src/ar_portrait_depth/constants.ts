@@ -17,7 +17,7 @@
 import {ARPortraitDepthEstimationConfig} from './types';
 
 export const DEFAULT_AR_PORTRAIT_DEPTH_MODEL_URL =
-    'https://storage.googleapis.com/tfjs-testing/depth/depth_model/model.json';
+    'https://tfhub.dev/tensorflow/tfjs-model/ar_portrait_depth/1';
 
 export const DEFAULT_AR_PORTRAIT_DEPTH_ESTIMATION_CONFIG:
     ARPortraitDepthEstimationConfig = {

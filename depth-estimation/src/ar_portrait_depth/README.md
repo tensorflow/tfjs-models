@@ -23,6 +23,7 @@ Via script tags:
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
 
 <!-- You must explicitly require a TF.js backend if you're not using the TF.js union bundle. -->
+<!-- WebGL is the recommended backend. -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-segmentation"></script>
@@ -49,6 +50,7 @@ import '@tensorflow/tfjs-core';
 import '@tensorflow/tfjs-converter';
 // Register WebGL backend.
 import '@tensorflow/tfjs-backend-webgl';
+import '@tensorflow-models/body-segmentation';
 import * as depthEstimation from '@tensorflow-models/depth-estimation';
 ```
 

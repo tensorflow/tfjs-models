@@ -123,14 +123,12 @@ describeWithFlags('ARPortraitDepth', ALL_ENVS, () => {
     const depthMap = await estimator.estimateDepth(input);
 
     (await depthMap.toTensor()).dispose();
-    // TODO: Remove +2 after body segmentation is leak is fixed.
-    expect(tf.memory().numTensors).toEqual(beforeTensors + 2);
+    expect(tf.memory().numTensors).toEqual(beforeTensors);
 
     estimator.dispose();
     input.dispose();
 
-    // TODO: Remove +2 after body segmentation is leak is fixed.
-    expect(tf.memory().numTensors).toEqual(startTensors + 2);
+    expect(tf.memory().numTensors).toEqual(startTensors);
   });
 
   it('throws error when minDepth is not set.', async (done) => {
@@ -175,7 +173,7 @@ describeWithFlags('ARPortraitDepth static image ', BROWSER_ENVS, () => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
   });
 
-  it('test.', async () => {
+  async function testBackend(backendName: 'cpu'|'webgl') {
     // Get expected depth values.
     const expectedDepthImage = await loadImage('depth.png', 192, 256);
     const expectedDepthValuesRGBA = await toImageDataLossy(expectedDepthImage);
@@ -183,6 +181,7 @@ describeWithFlags('ARPortraitDepth static image ', BROWSER_ENVS, () => {
     const expectedDepthValuesRGB =
         expectedDepthValuesRGBA.data.filter((_, i) => i % 4 !== 3);
 
+    tf.setBackend(backendName);
     const startTensors = tf.memory().numTensors;
 
     // Get actual depth values.
@@ -203,12 +202,18 @@ describeWithFlags('ARPortraitDepth static image ', BROWSER_ENVS, () => {
 
     actualDepthValues.dispose();
 
-    // TODO: Remove +2 after body segmentation is leak is fixed.
-    expect(tf.memory().numTensors).toEqual(beforeTensors + 2);
+    expect(tf.memory().numTensors).toEqual(beforeTensors);
 
     estimator.dispose();
 
-    // TODO: Remove +2 after body segmentation is leak is fixed.
-    expect(tf.memory().numTensors).toEqual(startTensors + 2);
+    expect(tf.memory().numTensors).toEqual(startTensors);
+  }
+
+  it('test CPU.', async () => {
+    await testBackend('cpu');
+  });
+
+  it('test WebGL.', async () => {
+    await testBackend('webgl');
   });
 });

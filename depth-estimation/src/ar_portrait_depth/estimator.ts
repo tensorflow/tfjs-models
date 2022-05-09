@@ -19,10 +19,11 @@ import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
 import {DepthEstimator} from '../depth_estimator';
-import {transformValueRange} from '../shared/calculators/image_utils';
+import {toImageTensor, transformValueRange} from '../shared/calculators/image_utils';
 import {toHTMLCanvasElementLossy} from '../shared/calculators/mask_util';
 import {DepthEstimatorInput, DepthMap} from '../types';
 
+import {segmentForeground} from './calculators/segment_foreground';
 import {validateEstimationConfig, validateModelConfig} from './estimator_utils';
 import {ARPortraitDepthEstimationConfig, ARPortraitDepthModelConfig} from './types';
 
@@ -83,45 +84,34 @@ class ARPortraitDepthEstimator implements DepthEstimator {
       return null;
     }
 
-    const segmentation = await this.segmenter.segmentPeople(
-        image, {flipHorizontal: config.flipHorizontal});
+    const image3d = tf.tidy(() => {
+      let imageTensor = tf.cast(toImageTensor(image), 'float32');
+      if (config.flipHorizontal) {
+        const batchAxis = 0;
+        imageTensor = tf.squeeze(
+            tf.image.flipLeftRight(
+                // tslint:disable-next-line: no-unnecessary-type-assertion
+                tf.expandDims(imageTensor, batchAxis) as tf.Tensor4D),
+            [batchAxis]);
+      }
+      return imageTensor;
+    });
+    const [height, width] = image3d.shape;
 
-    // Convert the segmentation into a mask to darken the background.
-    const foregroundColor = {r: 0, g: 0, b: 0, a: 0};
-    const backgroundColor = {r: 0, g: 0, b: 0, a: 255};
-    const backgroundDarkeningMask = await bodySegmentation.toBinaryMask(
-        segmentation, foregroundColor, backgroundColor);
+    const segmentations = await this.segmenter.segmentPeople(image3d);
 
-    segmentation.forEach(
-        singleSegmentation => singleSegmentation.mask.toTensor().then(
-            tensor => tensor.dispose()));
-
-    const opacity = 1.0;
-    const maskBlurAmount = 0;
-    const flipHorizontal = false;
-    const masked = document.createElement('canvas');
-    masked.width = PORTRAIT_WIDTH;
-    masked.height = PORTRAIT_HEIGHT;
-    // Draw the mask onto the image on a canvas.  With opacity set to 0.7
-    // and maskBlurAmount set to 3, this will darken the background and blur
-    // the darkened background's edge.
-    await bodySegmentation.drawMask(
-        masked, image, backgroundDarkeningMask, opacity, maskBlurAmount,
-        flipHorizontal);
+    const segmentation = segmentations[0];
+    const segmentationTensor = await segmentation.mask.toTensor();
 
     const depthTensor = tf.tidy(() => {
-      const maskedImage = masked.getContext('2d').getImageData(
-          0, 0, masked.width, masked.height);
-
-      const maskedImageTensor = tf.browser.fromPixels(maskedImage);
-      const [height, width] = maskedImageTensor.shape;
-      const image1Float = tf.cast(maskedImageTensor, 'float32');
+      const maskedImage = segmentForeground(image3d, segmentationTensor);
+      segmentationTensor.dispose();
 
       // Normalizes the values from [0, 255] to [0, 1], same ranged used
       // during training.
       const imageNormalized =
           tf.add(
-              tf.mul(image1Float, TRANSFORM_INPUT_IMAGE.scale),
+              tf.mul(maskedImage, TRANSFORM_INPUT_IMAGE.scale),
               // tslint:disable-next-line: no-unnecessary-type-assertion
               TRANSFORM_INPUT_IMAGE.offset) as tf.Tensor3D;
 
@@ -138,8 +128,8 @@ class ARPortraitDepthEstimator implements DepthEstimator {
       const depthTransform =
           transformValueRange(this.minDepth, this.maxDepth, 0, 1);
 
-      // Output is roughly in [0,2] range, so half the scale factor to put it in
-      // [0,1] range first.
+      // depth4D is roughly in [0,2] range, so half the scale factor to put it
+      // in [0,1] range.
       const scale = depthTransform.scale / 2;
       const result =
           // tslint:disable-next-line: no-unnecessary-type-assertion
@@ -153,12 +143,15 @@ class ARPortraitDepthEstimator implements DepthEstimator {
           tf.image.resizeBilinear(resultClipped, [height, width]);
 
       // Remove channel dimension.
-      const resultSqueezed = tf.squeeze(resultResized, [0, 3]);
+      // tslint:disable-next-line: no-unnecessary-type-assertion
+      const resultSqueezed = tf.squeeze(resultResized, [0, 3]) as tf.Tensor2D;
 
       return resultSqueezed;
     });
 
-    return new ARPortraitDepthMap(depthTensor as tf.Tensor2D);
+    image3d.dispose();
+
+    return new ARPortraitDepthMap(depthTensor);
   }
 
   dispose() {
