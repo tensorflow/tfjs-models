@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/body-segmentation",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Pretrained body segmentation model",
   "main": "dist/index.js",
   "jsnext:main": "dist/body-segmentation.esm.js",
