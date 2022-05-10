@@ -16,7 +16,7 @@
     "@tensorflow/tfjs-backend-webgl": "^3.15.0",
     "@tensorflow/tfjs-converter": "^3.15.0",
     "@tensorflow/tfjs-core": "^3.15.0",
-    "@tensorflow-models/body-segmentation": "^1.0.0"
+    "@tensorflow-models/body-segmentation": "^1.0.1"
   },
   "devDependencies": {
     "@babel/polyfill": "^7.10.4",

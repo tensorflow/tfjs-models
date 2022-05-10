@@ -23,17 +23,16 @@ import * as tf from '@tensorflow/tfjs-core';
  * @param image Input image.
  * @param segmentation Segmentation mask of foreground/background.
  *
- * @returns Segmented mask.
+ * @returns Masked image.
  */
-// ref:
-// https://github.com/google/mediapipe/blob/master/mediapipe/calculators/image/segmentation_smoothing_calculator.cc
 export function segmentForeground(
     image: tf.Tensor3D, segmentation: tf.Tensor3D): tf.Tensor3D {
   if (tf.getBackend() === 'webgl') {
-    // Same as implementation in the else case but reduces number of shader
-    // calls to 1 instead of 17.
+    // Same as implementation in the else case but in one custom shader on GPU.
     return segmentForegroundWebGL(image, segmentation);
   }
+  // tf.tidy is unnecessary since this function is called within a tf.tidy
+  // context.
   const [height, width, channels] = image.shape;
   // Extract red channel which stores probability
   const probability = tf.slice(segmentation, 0, [height, width, 1]);
@@ -63,11 +62,9 @@ function segmentForegroundWebGL(
   };
   const webglBackend = tf.backend() as MathBackendWebGL;
 
-  return tf.tidy(() => {
-    const outputTensorInfo =
-        webglBackend.compileAndRun(program, [image, segmentation]);
-    return tf.engine().makeTensorFromDataId(
-               outputTensorInfo.dataId, outputTensorInfo.shape,
-               outputTensorInfo.dtype) as tf.Tensor3D;
-  });
+  const outputTensorInfo =
+      webglBackend.compileAndRun(program, [image, segmentation]);
+  return tf.engine().makeTensorFromDataId(
+             outputTensorInfo.dataId, outputTensorInfo.shape,
+             outputTensorInfo.dtype) as tf.Tensor3D;
 }

@@ -100,6 +100,8 @@ class ARPortraitDepthEstimator implements DepthEstimator {
 
     const segmentations = await this.segmenter.segmentPeople(image3d);
 
+    // On a non-null input, SelfieSegmentation always returns one probability
+    // mask.
     const segmentation = segmentations[0];
     const segmentationTensor = await segmentation.mask.toTensor();
 
