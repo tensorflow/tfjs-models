@@ -14,12 +14,16 @@
  * limitations under the License.
  * =============================================================================
  */
-import {ARPortraitDepthEstimationConfig} from './types';
+import {ARPortraitDepthModelConfig} from './types';
 
 export const DEFAULT_AR_PORTRAIT_DEPTH_MODEL_URL =
     'https://tfhub.dev/tensorflow/tfjs-model/ar_portrait_depth/1';
 
-export const DEFAULT_AR_PORTRAIT_DEPTH_ESTIMATION_CONFIG:
-    ARPortraitDepthEstimationConfig = {
-      flipHorizontal: false,
+export const DEFAULT_AR_PORTRAIT_DEPTH_MODEL_CONFIG:
+    ARPortraitDepthModelConfig = {
+      depthModelUrl: DEFAULT_AR_PORTRAIT_DEPTH_MODEL_URL,
     };
+
+export const DEFAULT_AR_PORTRAIT_DEPTH_ESTIMATION_CONFIG = {
+  flipHorizontal: false,
+};

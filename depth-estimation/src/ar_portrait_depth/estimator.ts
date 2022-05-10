@@ -56,8 +56,7 @@ const PORTRAIT_WIDTH = 192;
 class ARPortraitDepthEstimator implements DepthEstimator {
   constructor(
       private readonly segmenter: bodySegmentation.BodySegmenter,
-      private readonly estimatorModel: tfconv.GraphModel,
-      private readonly minDepth: number, private readonly maxDepth: number) {}
+      private readonly estimatorModel: tfconv.GraphModel) {}
 
   /**
    * Estimates depth for an image or video frame.
@@ -69,8 +68,14 @@ class ARPortraitDepthEstimator implements DepthEstimator {
    * image to feed through the network.
    *
    * @param config Optional.
+   *       minDepth: The minimum depth value for the model to map to 0. Any
+   * smaller depth values will also get mapped to 0.
+   *
+   *       maxDepth`: The maximum depth value for the model to map to 1. Any
+   * larger depth values will also get mapped to 1.
+   *
    *       flipHorizontal: Optional. Default to false. When image data comes
-   *       from camera, the result has to flip horizontally.
+   * from camera, the result has to flip horizontally.
    *
    * @return `DepthMap`.
    */
@@ -128,7 +133,7 @@ class ARPortraitDepthEstimator implements DepthEstimator {
 
       // Normalize to user requirements.
       const depthTransform =
-          transformValueRange(this.minDepth, this.maxDepth, 0, 1);
+          transformValueRange(config.minDepth, config.maxDepth, 0, 1);
 
       // depth4D is roughly in [0,2] range, so half the scale factor to put it
       // in [0,1] range.
@@ -188,6 +193,5 @@ export async function load(modelConfig: ARPortraitDepthModelConfig):
       bodySegmentation.SupportedModels.MediaPipeSelfieSegmentation,
       {runtime: 'tfjs', modelUrl: config.segmentationModelUrl});
 
-  return new ARPortraitDepthEstimator(
-      segmenter, depthModel, config.minDepth, config.maxDepth);
+  return new ARPortraitDepthEstimator(segmenter, depthModel);
 }

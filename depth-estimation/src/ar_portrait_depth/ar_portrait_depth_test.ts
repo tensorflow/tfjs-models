@@ -114,13 +114,13 @@ describeWithFlags('ARPortraitDepth', ALL_ENVS, () => {
 
     // Note: this makes a network request for model assets.
     const estimator = await depthEstimation.createEstimator(
-        depthEstimation.SupportedModels.ARPortraitDepth,
-        {minDepth: 0, maxDepth: 1});
+        depthEstimation.SupportedModels.ARPortraitDepth);
     const input: tf.Tensor3D = tf.zeros([128, 128, 3]);
 
     const beforeTensors = tf.memory().numTensors;
 
-    const depthMap = await estimator.estimateDepth(input);
+    const depthMap =
+        await estimator.estimateDepth(input, {minDepth: 0, maxDepth: 1});
 
     (await depthMap.toTensor()).dispose();
     expect(tf.memory().numTensors).toEqual(beforeTensors);
@@ -133,21 +133,25 @@ describeWithFlags('ARPortraitDepth', ALL_ENVS, () => {
 
   it('throws error when minDepth is not set.', async (done) => {
     try {
-      await depthEstimation.createEstimator(
+      const estimator = await depthEstimation.createEstimator(
           depthEstimation.SupportedModels.ARPortraitDepth);
+      const input: tf.Tensor3D = tf.zeros([128, 128, 3]);
+      await estimator.estimateDepth(input);
       done.fail('Loading without minDepth succeeded unexpectedly.');
     } catch (e) {
       expect(e.message).toEqual(
-          'A model config with minDepth and maxDepth set must be provided.');
+          'An estimation config with ' +
+          'minDepth and maxDepth set must be provided.');
       done();
     }
   });
 
   it('throws error when minDepth is greater than maxDepth.', async (done) => {
     try {
-      await depthEstimation.createEstimator(
-          depthEstimation.SupportedModels.ARPortraitDepth,
-          {minDepth: 1, maxDepth: 0.99});
+      const estimator = await depthEstimation.createEstimator(
+          depthEstimation.SupportedModels.ARPortraitDepth);
+      const input: tf.Tensor3D = tf.zeros([128, 128, 3]);
+      await estimator.estimateDepth(input, {minDepth: 1, maxDepth: 0.99});
       done.fail(
           'Loading with minDepth greater than maxDepth ' +
           'succeeded unexpectedly.');
@@ -187,12 +191,12 @@ describeWithFlags('ARPortraitDepth static image ', BROWSER_ENVS, () => {
     // Get actual depth values.
     // Note: this makes a network request for model assets.
     estimator = await depthEstimation.createEstimator(
-        depthEstimation.SupportedModels.ARPortraitDepth,
-        {minDepth: 0.2, maxDepth: 0.9});
+        depthEstimation.SupportedModels.ARPortraitDepth);
 
     const beforeTensors = tf.memory().numTensors;
 
-    const result = await estimator.estimateDepth(image);
+    const result =
+        await estimator.estimateDepth(image, {minDepth: 0.2, maxDepth: 0.9});
     const actualDepthValues = await result.toTensor();
     const coloredDepthValues =
         actualDepthValues.arraySync().flat().map(value => turboPlus(value));
