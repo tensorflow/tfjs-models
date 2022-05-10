@@ -33,17 +33,17 @@ For example:
 
 ```javascript
 const model = depthEstimation.SupportedModels.ARPortraitDepth;
-const estimatorConfig = {
-  minDepth: 0,
-  maxDepth: 1,
-}
-const estimator = await depthEstimation.createEstimator(model, estimatorConfig);
+const estimator = await depthEstimation.createEstimator(model);
 ```
 
 Next, you can use the estimator to estimate depth.
 
 ```javascript
-const depthMap = await estimator.estimateDepth(image);
+const estimationConfig = {
+  minDepth: 0,
+  maxDepth: 1,
+}
+const depthMap = await estimator.estimateDepth(image, estimationConfig);
 ```
 
 The returned depth map contains depth values for each pixel in the image.

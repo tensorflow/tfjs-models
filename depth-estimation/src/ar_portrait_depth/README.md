@@ -62,12 +62,6 @@ Pass in `depthEstimation.SupportedModels.ARPortraitDepth` from the
 
 `estimatorConfig` is an object that defines ARPortraitDepth specific configurations for `ARPortraitDepthModelConfig`:
 
-*   *minDepth*: The minimum depth value for the model to map to 0. Any smaller
-depth values will also get mapped to 0.
-
-*   *maxDepth*: The maximum depth value for the model to map to 1. Any larger
-depth values will also get mapped to 1.
-
 *   *segmentationModelUrl*: An optional string that specifies custom url of
 the segmenter model. This is useful for area/countries that don't have access to the model hosted on tf.hub. It also accepts `io.IOHandler` which can be used with
 [tfjs-react-native](https://github.com/tensorflow/tfjs/tree/master/tfjs-react-native)
@@ -96,6 +90,12 @@ accepts both image and video in many formats, including:
 options, you can pass in a second `estimationConfig` parameter.
 
 `estimationConfig` is an object that defines ARPortraitDepth specific configurations for `ARPortraitDepthEstimationConfig`:
+
+*   *minDepth*: The minimum depth value for the model to map to 0. Any smaller
+depth values will also get mapped to 0.
+
+*   *maxDepth*: The maximum depth value for the model to map to 1. Any larger
+depth values will also get mapped to 1.
 
 *   *flipHorizontal*: Optional. Defaults to false. When image data comes from camera, the result has to flip horizontally.
 
