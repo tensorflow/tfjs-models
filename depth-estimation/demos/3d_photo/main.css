@@ -1,0 +1,147 @@
+/**
+ * @license
+ * Copyright 2022 Google LLC. All Rights Reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * =============================================================================
+ */
+.slidecontainer {
+  width: 100%;
+}
+
+.arrow {
+  text-align: center;
+}
+
+#title {
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 45px;
+  line-height: 52px;
+
+  display: flex;
+  align-items: center;
+
+  color: #000000;
+
+}
+
+#description {
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+
+  color: #000000;
+}
+
+#example {
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 36px;
+
+  color: #000000;
+}
+
+.load-preset {
+  width: 6px;
+  height: 20px;
+
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 20px;
+
+  display: flex;
+  align-items: center;
+  text-align: center;
+  letter-spacing: 0.25px;
+
+  color: #202124;
+
+
+  flex: none;
+  order: 0;
+  flex-grow: 0;
+}
+
+.btn-warning {
+  width: 40px;
+  height: 40px;
+  padding: 6px 0px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-family: 'Open Sans';
+  text-align: center;
+  border: none;
+  background: #E8EAED;
+  margin: 10px;
+}
+
+.btn-warning:focus {
+  background: #ffc107;
+  outline: none;
+  box-shadow: none;
+}
+
+.caption {
+  width: 164px;
+  height: 20px;
+
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 20px;
+
+  text-align: center;
+
+  color: #000000;
+}
+
+.dropzone {
+  height: 400px;
+  -webkit-filter: brightness(100%);
+}
+
+.dropzone:hover {
+  -webkit-filter: brightness(70%);
+  -webkit-transition: all 0.5s ease;
+  -moz-transition: all 0.5s ease;
+  -o-transition: all 0.5s ease;
+  -ms-transition: all 0.5s ease;
+  transition: all 0.5s ease;
+}
+
+.dz-message {
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-size: 20px;
+  padding-top: 120px;
+}
+
+.btn-secondary {
+  font-size: 13px;
+}
+
+.img-container {
+  max-width: 100%;
+}
+
+.img-container img {
+  width: 100%;
+}
