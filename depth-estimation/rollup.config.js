@@ -15,6 +15,7 @@
  * =============================================================================
  */
 
+import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
 import typescript from '@rollup/plugin-typescript';
 import {terser} from 'rollup-plugin-terser';
@@ -45,16 +46,24 @@ function config({plugins = [], output = {}, tsCompilerOptions = {}}) {
 
   return {
     input: 'src/index.ts',
-    plugins: [typescript(tsoptions), resolve(), ...plugins],
+    plugins: [
+      typescript(tsoptions), resolve(),
+      commonjs({include: ['node_modules/@mediapipe/selfie_segmentation/**']}),
+      ...plugins
+    ],
     output: {
       banner: PREAMBLE,
       globals: {
         '@tensorflow/tfjs-core': 'tf',
         '@tensorflow/tfjs-converter': 'tf',
+        '@tensorflow-models/body-segmentation': 'bodySegmentation',
       },
       ...output,
     },
-    external: ['@tensorflow/tfjs-core', '@tensorflow/tfjs-converter']
+    external: [
+      '@tensorflow/tfjs-core', '@tensorflow/tfjs-converter',
+      '@tensorflow-models/body-segmentation'
+    ]
   };
 }
 

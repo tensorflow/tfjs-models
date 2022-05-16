@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/depth-estimation",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "Pretrained depth model",
   "main": "dist/index.js",
   "jsnext:main": "dist/depth-estimation.esm.js",
@@ -15,17 +15,20 @@
   "peerDependencies": {
     "@tensorflow/tfjs-backend-webgl": "^3.15.0",
     "@tensorflow/tfjs-converter": "^3.15.0",
-    "@tensorflow/tfjs-core": "^3.15.0"
+    "@tensorflow/tfjs-core": "^3.15.0",
+    "@tensorflow-models/body-segmentation": "^1.0.1"
   },
   "devDependencies": {
     "@babel/polyfill": "^7.10.4",
-    "@rollup/plugin-commonjs": "^11.0.2",
+    "@mediapipe/selfie_segmentation": "~0.1.0",
+    "@rollup/plugin-commonjs": "^21.0.2",
     "@rollup/plugin-node-resolve": "^7.1.1",
     "@rollup/plugin-typescript": "^3.0.0",
     "@tensorflow/tfjs-backend-cpu": "^3.15.0",
     "@tensorflow/tfjs-backend-webgl": "^3.15.0",
     "@tensorflow/tfjs-converter": "^3.15.0",
     "@tensorflow/tfjs-core": "^3.15.0",
+    "@tensorflow-models/body-segmentation": "^1.0.0",
     "@types/jasmine": "~2.8.8",
     "babel-core": "~6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",
@@ -38,7 +41,7 @@
     "karma-spec-reporter": "~0.0.32",
     "karma-typescript": "~5.5.1",
     "karma-typescript-es6-transform": "^5.1.0",
-    "rollup": "~2.3.2",
+    "rollup": "~2.70.1",
     "rollup-plugin-terser": "~7.0.2",
     "rollup-plugin-visualizer": "~3.3.2",
     "ts-node": "~8.8.2",
