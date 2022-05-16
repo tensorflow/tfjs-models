@@ -56,11 +56,14 @@ function config({plugins = [], output = {}, tsCompilerOptions = {}}) {
       globals: {
         '@tensorflow/tfjs-core': 'tf',
         '@tensorflow/tfjs-converter': 'tf',
-        '@mediapipe/selfie_segmentation': 'globalThis',
+        '@tensorflow-models/body-segmentation': 'bodySegmentation',
       },
       ...output,
     },
-    external: ['@tensorflow/tfjs-core', '@tensorflow/tfjs-converter']
+    external: [
+      '@tensorflow/tfjs-core', '@tensorflow/tfjs-converter',
+      '@tensorflow-models/body-segmentation'
+    ]
   };
 }
 
