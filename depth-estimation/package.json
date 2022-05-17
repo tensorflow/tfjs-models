@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/depth-estimation",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Pretrained depth model",
   "main": "dist/index.js",
   "jsnext:main": "dist/depth-estimation.esm.js",
