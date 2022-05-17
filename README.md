@@ -76,17 +76,6 @@ and can be used as building blocks in other apps.
   <tr>
     <td><a href="./body-pix/demos/index.html">source</a></td>
   </tr>
-  <!-- ** BlazeFace -->
-  <tr>
-    <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./blazeface"><div style='vertical-align:middle; display:inline;'>BlazeFace</div></a></b></td>
-    <td><a href="https://storage.googleapis.com/tfjs-models/demos/blazeface/index.html">live</a></td>
-    <td rowspan="2">Real-time rapid Face detection in the browser using TensorFlow.js.</td>
-    <td rowspan="2"><code>npm i @tensorflow-models/blazeface</code></td>
-  </tr>
-  <tr>
-    <td><a href="./blazeface/demo/index.html">source</a></td>
-  </tr>
-    <!-- ** DeepLab -->
   <tr>
     <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./deeplab"><div style='vertical-align:middle; display:inline;'>DeepLab v3</div></a></b></td>
     <td><a href=""></a></td>
