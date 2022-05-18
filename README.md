@@ -66,34 +66,23 @@ and can be used as building blocks in other apps.
   <tr>
     <td><a href="./coco-ssd/demo">source</a></td>
   </tr>
-  <!-- ** BodyPix -->
-  <tr>
-    <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./body-pix"><div style='vertical-align:middle; display:inline;'>BodyPix</div></a></b></td>
-    <td><a href="https://storage.googleapis.com/tfjs-models/demos/body-pix/index.html">live</a></td>
-    <td rowspan="2">Real-time person and body part segmentation in the browser using TensorFlow.js.</td>
-    <td rowspan="2"><code>npm i @tensorflow-models/body-pix</code></td>
-  </tr>
-  <tr>
-    <td><a href="./body-pix/demos/index.html">source</a></td>
-  </tr>
-  <tr>
     <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./deeplab"><div style='vertical-align:middle; display:inline;'>DeepLab v3</div></a></b></td>
     <td><a href=""></a></td>
     <td rowspan="2">Semantic segmentation</td>
     <td rowspan="2"><code>npm i @tensorflow-models/deeplab</code></td>
   </tr>
   <tr>
-    <td><a href="./deeplab/demo/index.html">source</a></td>
+    <td><a href="./deeplab/demo">source</a></td>
   </tr>
     <!-- ** Face Landmark Detection -->
   <tr>
     <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./face-landmarks-detection"><div style='vertical-align:middle; display:inline;'>Face Landmark Detection</div></a></b></td>
-    <td><a href="https://storage.googleapis.com/tfjs-models/demos/face-landmarks-detection/index.html">live</a></td>
+    <td><a href="https://storage.googleapis.com/tfjs-models/demos/face-landmarks-detection/index.html?model=mediapipe_face_mesh">live</a></td>
     <td rowspan="2">Real-time 3D facial landmarks detection to infer the approximate surface geometry of a human face</td>
     <td rowspan="2"><code>npm i @tensorflow-models/face-landmarks-detection</code></td>
   </tr>
   <tr>
-    <td><a href="./face-landmarks-detection/demo/index.html">source</a></td>
+    <td><a href="./face-landmarks-detection/demos">source</a></td>
   </tr>
 
   <!-- * Audio -->
