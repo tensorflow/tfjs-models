@@ -77,7 +77,7 @@ and can be used as building blocks in other apps.
     <!-- ** Face Landmark Detection -->
   <tr>
     <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./face-landmarks-detection"><div style='vertical-align:middle; display:inline;'>Face Landmark Detection</div></a></b></td>
-    <td><a href="https://storage.googleapis.com/tfjs-models/demos/face-landmarks-detection/index.html">live</a></td>
+    <td><a href="https://storage.googleapis.com/tfjs-models/demos/face-landmarks-detection/index.html?model=mediapipe_face_mesh">live</a></td>
     <td rowspan="2">Real-time 3D facial landmarks detection to infer the approximate surface geometry of a human face</td>
     <td rowspan="2"><code>npm i @tensorflow-models/face-landmarks-detection</code></td>
   </tr>
