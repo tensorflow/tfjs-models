@@ -66,17 +66,6 @@ and can be used as building blocks in other apps.
   <tr>
     <td><a href="./coco-ssd/demo">source</a></td>
   </tr>
-  <!-- ** BodyPix -->
-  <tr>
-    <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./body-pix"><div style='vertical-align:middle; display:inline;'>BodyPix</div></a></b></td>
-    <td><a href="https://storage.googleapis.com/tfjs-models/demos/body-pix/index.html">live</a></td>
-    <td rowspan="2">Real-time person and body part segmentation in the browser using TensorFlow.js.</td>
-    <td rowspan="2"><code>npm i @tensorflow-models/body-pix</code></td>
-  </tr>
-  <tr>
-    <td><a href="./body-pix/demos/index.html">source</a></td>
-  </tr>
-  <tr>
     <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./deeplab"><div style='vertical-align:middle; display:inline;'>DeepLab v3</div></a></b></td>
     <td><a href=""></a></td>
     <td rowspan="2">Semantic segmentation</td>
