@@ -72,7 +72,7 @@ and can be used as building blocks in other apps.
     <td rowspan="2"><code>npm i @tensorflow-models/deeplab</code></td>
   </tr>
   <tr>
-    <td><a href="./deeplab/demo/index.html">source</a></td>
+    <td><a href="./deeplab/demo">source</a></td>
   </tr>
     <!-- ** Face Landmark Detection -->
   <tr>
@@ -82,7 +82,7 @@ and can be used as building blocks in other apps.
     <td rowspan="2"><code>npm i @tensorflow-models/face-landmarks-detection</code></td>
   </tr>
   <tr>
-    <td><a href="./face-landmarks-detection/demo/index.html">source</a></td>
+    <td><a href="./face-landmarks-detection/demos">source</a></td>
   </tr>
 
   <!-- * Audio -->
