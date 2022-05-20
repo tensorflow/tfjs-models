@@ -40,7 +40,11 @@ export async function setupModelFolder(gui, urlParams) {
           faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh;
       break;
     default:
-      alert(`${urlParams.get('model')}`);
+      alert(`${urlParams.get('model')} is not a supported model. `
+	    + 'Redirecting to mediapipe_face_mesh');
+      const url = new URL(window.location.href);
+      url.searchParams.set('model', 'mediapipe_face_mesh');
+      window.location.href = url;
       break;
   }
 
