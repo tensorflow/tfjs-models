@@ -58,9 +58,8 @@ export async function decodePersonInstanceMasks(
           segmentation, longOffsets, posesAboveScore, height, width, stride,
           [inHeight, inWidth], padding, refineSteps, minKeypointScore,
           maxNumPeople);
-      const masksTensor = tf.engine().makeTensorFromDataId(
-          masksTensorInfo.dataId, masksTensorInfo.shape,
-          masksTensorInfo.dtype) as tf.Tensor2D;
+      const masksTensor = tf.engine().makeTensorFromTensorInfo(
+        masksTensorInfo) as tf.Tensor2D;
 
       return posesAboveScore.map(
           (_, k) => toPersonKSegmentation(masksTensor, k));
@@ -100,9 +99,8 @@ export async function decodePersonInstancePartMasks(
           segmentation, longOffsets, posesAboveScore, height, width, stride,
           [inHeight, inWidth], padding, refineSteps, minKeypointScore,
           maxNumPeople);
-      const masksTensor = tf.engine().makeTensorFromDataId(
-        masksTensorInfo.dataId, masksTensorInfo.shape,
-        masksTensorInfo.dtype) as tf.Tensor2D;
+      const masksTensor = tf.engine().makeTensorFromTensorInfo(
+        masksTensorInfo) as tf.Tensor2D;
 
       return posesAboveScore.map(
           (_, k) =>
