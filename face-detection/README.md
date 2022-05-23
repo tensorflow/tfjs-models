@@ -74,9 +74,9 @@ The name provides a label for the keypoint, which are 'rightEye', 'leftEye', 'no
 Refer to each model's documentation for specific configurations for the model
 and their performance.
 
-[MediaPipeFaceDetector MediaPipe Documentation](https://github.com/tensorflow/tfjs-models/tree/master/face-detection/src/face_detector_mediapipe)
+[MediaPipeFaceDetector MediaPipe Documentation](https://github.com/tensorflow/tfjs-models/tree/master/face-detection/src/mediapipe)
 
-[MediaPipeFaceDetector TFJS Documentation](https://github.com/tensorflow/tfjs-models/tree/master/face-detection/src/face_detector_tfjs)
+[MediaPipeFaceDetector TFJS Documentation](https://github.com/tensorflow/tfjs-models/tree/master/face-detection/src/tfjs)
 
 ## Example Code and Demos
 You may reference the demos for code examples. Details for how to run the demos
