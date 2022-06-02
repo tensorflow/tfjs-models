@@ -27,10 +27,10 @@
   },
   "devDependencies": {
     "clang-format": "~1.2.2",
-    "dat.gui": "^0.7.2",
+    "dat.gui": "^0.7.9",
     "esbuild": "^0.13.10",
-    "eslint": "^4.19.1",
-    "eslint-config-google": "^0.9.1",
+    "eslint": "^8.16.0",
+    "eslint-config-google": "^0.14.0",
     "mkdirp": "^1.0.4"
   },
   "resolutions": {
