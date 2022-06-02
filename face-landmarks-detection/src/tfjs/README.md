@@ -59,7 +59,7 @@ import '@mediapipe/face_mesh';
 ```
 ### Create a detector
 
-Pass in `handPoseDetection.SupportedModels.MediaPipeFaceMesh` from the
+Pass in `faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh` from the
 `faceLandmarksDetection.SupportedModels` enum list along with a `detectorConfig` to the
 `createDetector` method to load and initialize the model.
 
