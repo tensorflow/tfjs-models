@@ -49,6 +49,13 @@ steps:
   args: ['./scripts/run-build.sh', 'deeplab']
   waitFor: ['diff']
 
+# Depth estimation.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'depth-estimation'
+  args: ['./scripts/run-build.sh', 'depth-estimation']
+  waitFor: ['diff']
+
 # Face detection.
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'

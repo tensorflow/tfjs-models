@@ -53,11 +53,12 @@ export interface EstimationConfig {
 }
 
 /**
- * Allowed input format for the `estimateHands` method.
+ * Allowed input format for the `estimateFaces` method.
  */
 export type FaceLandmarksDetectorInput = PixelInput;
 
 export interface Face {
-  keypoints: Keypoint[];
-  box?: BoundingBox;  // A bounding box around the detected person.
+  keypoints: Keypoint[];  // Points of mesh in the detected face.
+                          // MediaPipeFaceMesh has 468 keypoints.
+  box: BoundingBox;       // A bounding box around the detected face.
 }

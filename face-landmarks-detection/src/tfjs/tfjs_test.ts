@@ -18,109 +18,18 @@
 import * as tf from '@tensorflow/tfjs-core';
 // tslint:disable-next-line: no-imports-from-dist
 import {ALL_ENVS, BROWSER_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
-import {expectArraysClose, expectArraysEqual} from '@tensorflow/tfjs-core/dist/test_util';
+import {expectArraysClose, expectArraysEqual, expectNumbersClose} from '@tensorflow/tfjs-core/dist/test_util';
 
-import * as faceDetection from '../index';
+import * as faceLandmarksDetection from '../index';
 import {expectFaceMesh, MEDIAPIPE_MODEL_CONFIG} from '../mediapipe/mediapipe_test';
 import {loadImage} from '../shared/test_util';
-import {loadDetectorModel} from './detector';
-import {MediaPipeFaceDetectorModelType} from './types';
 
 const TFJS_MODEL_CONFIG = {
   runtime: 'tfjs' as const ,
 };
 
-const SHORT_RANGE_EXPECTED_FACE_KEY_POINTS =
-    [[363, 182], [460, 186], [420, 241], [417, 284], [295, 199], [502, 198]];
-const FULL_RANGE_EXPECTED_FACE_KEY_POINTS =
-    [[363, 181], [455, 181], [413, 233], [411, 278], [306, 204], [499, 207]];
 // Measured in pixels.
 const EPSILON_IMAGE = 5;
-
-describeWithFlags('TFJS FaceDetector ', ALL_ENVS, () => {
-  let timeout: number;
-
-  beforeAll(() => {
-    timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
-  });
-
-  afterAll(() => {
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
-  });
-
-  async function expectTFJSFaceDetector(
-      modelType: MediaPipeFaceDetectorModelType) {
-    const startTensors = tf.memory().numTensors;
-
-    // Note: this makes a network request for model assets.
-    const detector = await loadDetectorModel({modelType, maxFaces: 1});
-    const input: tf.Tensor3D = tf.zeros([128, 128, 3]);
-
-    const beforeTensors = tf.memory().numTensors;
-
-    await detector.detectFaces(input);
-
-    expect(tf.memory().numTensors).toEqual(beforeTensors);
-
-    detector.dispose();
-    input.dispose();
-
-    expect(tf.memory().numTensors).toEqual(startTensors);
-  }
-
-  it('short range detectFaces does not leak memory.', async () => {
-    await expectTFJSFaceDetector('short');
-  });
-
-  it('full range detectFaces does not leak memory.', async () => {
-    await expectTFJSFaceDetector('full');
-  });
-});
-
-describeWithFlags('TFJS FaceDetector static image ', BROWSER_ENVS, () => {
-  let image: HTMLImageElement;
-  let timeout: number;
-
-  async function expectTFJSFaceDetector(
-      image: HTMLImageElement, modelType: MediaPipeFaceDetectorModelType) {
-    // Note: this makes a network request for model assets.
-    const detector = await loadDetectorModel({modelType, maxFaces: 1});
-
-    for (let i = 0; i < 5; ++i) {
-      const result = await detector.detectFaces(image);
-      expect(result.length).toBe(1);
-
-      const keypoints = result[0].locationData.relativeKeypoints.map(
-          keypoint => [keypoint.x * image.width, keypoint.y * image.height]);
-      expect(keypoints.length).toBe(6);
-
-      const expectedKeypoints = modelType === 'short' ?
-          SHORT_RANGE_EXPECTED_FACE_KEY_POINTS :
-          FULL_RANGE_EXPECTED_FACE_KEY_POINTS;
-
-      expectArraysClose(keypoints, expectedKeypoints, EPSILON_IMAGE);
-    }
-  }
-
-  beforeAll(async () => {
-    timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
-    image = await loadImage('portrait.jpg', 820, 1024);
-  });
-
-  afterAll(() => {
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
-  });
-
-  it('short range.', async () => {
-    await expectTFJSFaceDetector(image, 'short');
-  });
-
-  it('full range.', async () => {
-    await expectTFJSFaceDetector(image, 'full');
-  });
-});
 
 describeWithFlags('TFJS FaceMesh ', ALL_ENVS, () => {
   let timeout: number;
@@ -138,8 +47,8 @@ describeWithFlags('TFJS FaceMesh ', ALL_ENVS, () => {
     const startTensors = tf.memory().numTensors;
 
     // Note: this makes a network request for model assets.
-    const detector = await faceDetection.createDetector(
-        faceDetection.SupportedModels.MediaPipeFaceMesh,
+    const detector = await faceLandmarksDetection.createDetector(
+        faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh,
         {...TFJS_MODEL_CONFIG, refineLandmarks});
     const input: tf.Tensor3D = tf.zeros([128, 128, 3]);
 
@@ -165,8 +74,8 @@ describeWithFlags('TFJS FaceMesh ', ALL_ENVS, () => {
 
   it('throws error when runtime is not set.', async (done) => {
     try {
-      await faceDetection.createDetector(
-          faceDetection.SupportedModels.MediaPipeFaceMesh);
+      await faceLandmarksDetection.createDetector(
+          faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh);
       done.fail('Loading without runtime succeeded unexpectedly.');
     } catch (e) {
       expect(e.message).toEqual(
@@ -195,8 +104,8 @@ describeWithFlags('TFJS FaceMesh static image ', BROWSER_ENVS, () => {
       image: HTMLImageElement, staticImageMode: boolean,
       refineLandmarks: boolean, numFrames: number) {
     // Note: this makes a network request for model assets.
-    const model = faceDetection.SupportedModels.MediaPipeFaceMesh;
-    const detector = await faceDetection.createDetector(
+    const model = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh;
+    const detector = await faceLandmarksDetection.createDetector(
         model, {...TFJS_MODEL_CONFIG, refineLandmarks});
 
     await expectFaceMesh(
@@ -221,15 +130,15 @@ describeWithFlags('TFJS FaceMesh static image ', BROWSER_ENVS, () => {
   });
 
   it('TFJS and Mediapipe backends match.', async () => {
-    const model = faceDetection.SupportedModels.MediaPipeFaceMesh;
+    const model = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh;
     const tfjsResults =
-        await faceDetection
+        await faceLandmarksDetection
             .createDetector(
                 model, {...TFJS_MODEL_CONFIG, refineLandmarks: true})
             .then(detector => detector.estimateFaces(image));
 
     const mediapipeResults =
-        await faceDetection
+        await faceLandmarksDetection
             .createDetector(
                 model, {...MEDIAPIPE_MODEL_CONFIG, refineLandmarks: true})
             .then(detector => detector.estimateFaces(image));
@@ -259,5 +168,14 @@ describeWithFlags('TFJS FaceMesh static image ', BROWSER_ENVS, () => {
     expectArraysEqual(
         tfjsKeypoints.map(keypoint => keypoint[2]),
         mediapipeKeypoints.map(keypoint => keypoint[2]));
+
+    for (let i = 0; i < tfjsResults.length; i++) {
+      for (const key of ['height', 'width', 'xMax', 'xMin', 'yMax', 'yMin'] as
+           const ) {
+        expectNumbersClose(
+            tfjsResults[i].box[key], mediapipeResults[i].box[key],
+            EPSILON_IMAGE);
+      }
+    }
   });
 });

@@ -29,9 +29,9 @@ function toNumber(value: number|SVGAnimatedLength) {
  *
  * @returns Converted HTMLCanvasElement.
  */
-export async function toHTMLCanvasElementLossy(image: ImageData|tf.Tensor3D|
-                                               SVGImageElement|OffscreenCanvas):
-    Promise<HTMLCanvasElement> {
+export async function toHTMLCanvasElementLossy(
+    image: ImageData|tf.Tensor2D|tf.Tensor3D|SVGImageElement|
+    OffscreenCanvas): Promise<HTMLCanvasElement> {
   const canvas = document.createElement('canvas');
 
   if (image instanceof tf.Tensor) {

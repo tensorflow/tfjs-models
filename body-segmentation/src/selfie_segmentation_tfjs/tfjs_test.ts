@@ -15,8 +15,9 @@
  * =============================================================================
  */
 
+import * as tf from '@tensorflow/tfjs-core';
 // tslint:disable-next-line: no-imports-from-dist
-import {BROWSER_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
+import {ALL_ENVS, BROWSER_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
 import * as bodySegmentation from '../index';
 import {toImageDataLossy} from '../shared/calculators/mask_util';
@@ -25,26 +26,49 @@ import {imageToBooleanMask, loadImage, segmentationIOU} from '../shared/test_uti
 // Measured in percent.
 const EPSILON_IOU = 0.98;
 
-async function expectSegmenter(
-    segmenter: bodySegmentation.BodySegmenter, image: HTMLImageElement,
-    segmentationImage: HTMLImageElement) {
-  const result = await segmenter.segmentPeople(image, {});
+describeWithFlags('TFJS MediaPipeSelfieSegmentation ', ALL_ENVS, () => {
+  let timeout: number;
 
-  const segmentation = result[0];
-  const maskValuesToLabel =
-      Array.from(Array(256).keys(), (v, _) => segmentation.maskValueToLabel(v));
-  const mask = segmentation.mask;
-  const actualBooleanMask = imageToBooleanMask(
-      // Round to binary mask using red value cutoff of 128.
-      (await segmentation.mask.toImageData()).data, 128, 0, 0);
-  const expectedBooleanMask = imageToBooleanMask(
-      (await toImageDataLossy(segmentationImage)).data, 0, 0, 255);
+  beforeAll(() => {
+    timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
+  });
 
-  expect(maskValuesToLabel.every(label => label === 'person'));
-  expect(mask.getUnderlyingType() === 'tensor');
-  expect(segmentationIOU(expectedBooleanMask, actualBooleanMask))
-      .toBeGreaterThanOrEqual(EPSILON_IOU);
-}
+  afterAll(() => {
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
+  });
+
+  async function expectSegmenter(
+      modelType: bodySegmentation.MediaPipeSelfieSegmentationModelType) {
+    const startTensors = tf.memory().numTensors;
+
+    // Note: this makes a network request for model assets.
+    const detector = await bodySegmentation.createSegmenter(
+        bodySegmentation.SupportedModels.MediaPipeSelfieSegmentation,
+        {runtime: 'tfjs', modelType});
+    const input: tf.Tensor3D = tf.zeros([128, 128, 3]);
+
+    const beforeTensors = tf.memory().numTensors;
+
+    const segmentation = await detector.segmentPeople(input);
+    (await segmentation[0].mask.toTensor()).dispose();
+
+    expect(tf.memory().numTensors).toEqual(beforeTensors);
+
+    detector.dispose();
+    input.dispose();
+
+    expect(tf.memory().numTensors).toEqual(startTensors);
+  }
+
+  it('general segmentPeople does not leak memory.', async () => {
+    await expectSegmenter('general');
+  });
+
+  it('landscape segmentPeople does not leak memory.', async () => {
+    await expectSegmenter('landscape');
+  });
+});
 
 describeWithFlags(
     'TFJS MediaPipeSelfieSegmentation static image ', BROWSER_ENVS, () => {
@@ -64,6 +88,27 @@ describeWithFlags(
       afterAll(() => {
         jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
       });
+
+      async function expectSegmenter(
+          segmenter: bodySegmentation.BodySegmenter, image: HTMLImageElement,
+          segmentationImage: HTMLImageElement) {
+        const result = await segmenter.segmentPeople(image, {});
+
+        const segmentation = result[0];
+        const maskValuesToLabel = Array.from(
+            Array(256).keys(), (v, _) => segmentation.maskValueToLabel(v));
+        const mask = segmentation.mask;
+        const actualBooleanMask = imageToBooleanMask(
+            // Round to binary mask using red value cutoff of 128.
+            (await segmentation.mask.toImageData()).data, 128, 0, 0);
+        const expectedBooleanMask = imageToBooleanMask(
+            (await toImageDataLossy(segmentationImage)).data, 0, 0, 255);
+
+        expect(maskValuesToLabel.every(label => label === 'person'));
+        expect(mask.getUnderlyingType() === 'tensor');
+        expect(segmentationIOU(expectedBooleanMask, actualBooleanMask))
+            .toBeGreaterThanOrEqual(EPSILON_IOU);
+      }
 
       it('general model test.', async () => {
         // Note: this makes a network request for model assets.

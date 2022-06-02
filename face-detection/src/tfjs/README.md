@@ -17,7 +17,7 @@ In the runtime-backend dropdown, choose 'tfjs-webgl'.
 To use MediaPipeFaceDetector, you need to first select a runtime (TensorFlow.js or MediaPipe).
 This guide is for TensorFlow.js
 runtime. The guide for MediaPipe runtime can be found
-[here](https://github.com/tensorflow/tfjs-models/tree/master/face-detection/src/mediapipe_face_detector).
+[here](https://github.com/tensorflow/tfjs-models/tree/master/face-detection/src/mediapipe).
 
 Via script tags:
 

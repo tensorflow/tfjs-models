@@ -17,7 +17,7 @@
 import * as faceMesh from '@mediapipe/face_mesh';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {MEDIAPIPE_KEYPOINTS} from '../constants';
+import {MEDIAPIPE_FACE_MESH_KEYPOINTS} from '../constants';
 import {FaceLandmarksDetector} from '../face_landmarks_detector';
 import {Keypoint} from '../shared/calculators/interfaces/common_interfaces';
 import {landmarksToDetection} from '../shared/calculators/landmarks_to_detection';
@@ -84,7 +84,7 @@ class MediaPipeFaceMeshMediaPipeLandmarksDetector implements
         z: landmark.z * this.width,
       };
 
-      const name = MEDIAPIPE_KEYPOINTS.get(i);
+      const name = MEDIAPIPE_FACE_MESH_KEYPOINTS.get(i);
       if (name != null) {
         keypoint.name = name;
       }

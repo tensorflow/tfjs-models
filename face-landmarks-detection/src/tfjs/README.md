@@ -1,8 +1,8 @@
 # MediaPipeFaceMesh
 
-MediaPipeHands-TFJS uses TF.js runtime to execute the model, the preprocessing and postprocessing steps.
+MediaPipeFaceMesh-TFJS uses TF.js runtime to execute the model, the preprocessing and postprocessing steps.
 
-Please try our our live [demo](https://storage.googleapis.com/tfjs-models/demos/face-landmarks-detection/index.html?model=mediapipe_facemesh).
+Please try our our live [demo](https://storage.googleapis.com/tfjs-models/demos/face-landmarks-detection/index.html?model=mediapipe_face_mesh).
 In the runtime-backend dropdown, choose 'tfjs-webgl'.
 
 --------------------------------------------------------------------------------
@@ -23,12 +23,13 @@ Via script tags:
 
 ```html
 <!-- Require the peer dependencies of face-landmarks-detection. -->
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
 
 <!-- You must explicitly require a TF.js backend if you're not using the TF.js union bundle. -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-detection"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection"></script>
 ```
@@ -36,10 +37,10 @@ Via script tags:
 Via npm:
 
 ```sh
-yarn add @tensorflow-models/face-landmarks-detection
 yarn add @tensorflow/tfjs-core, @tensorflow/tfjs-converter
 yarn add @tensorflow/tfjs-backend-webgl
-yarn add @mediapipe/face_mesh
+yarn add @tensorflow-models/face-detection
+yarn add @tensorflow-models/face-landmarks-detection
 ```
 
 -----------------------------------------------------------------------
@@ -58,8 +59,8 @@ import '@mediapipe/face_mesh';
 ```
 ### Create a detector
 
-Pass in `handPoseDetection.SupportedModels.MediaPipeFaceMesh` from the
-`faceLandmarksDetection.SupportedModel` enum list along with a `detectorConfig` to the
+Pass in `faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh` from the
+`faceLandmarksDetection.SupportedModels` enum list along with a `detectorConfig` to the
 `createDetector` method to load and initialize the model.
 
 `detectorConfig` is an object that defines MediaPipeFaceMesh specific configurations for `MediaPipeFaceMeshTfjsModelConfig`:

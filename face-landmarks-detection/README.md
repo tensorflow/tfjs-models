@@ -5,7 +5,7 @@ This package provides models for running real-time face detection and landmark t
 Currently, we provide 1 model option:
 
 #### MediaPipe:
-[Demo](https://storage.googleapis.com/tfjs-models/demos/face-landmarks-detection/index.html?model=mediapipe_facemesh)
+[Demo](https://storage.googleapis.com/tfjs-models/demos/face-landmarks-detection/index.html?model=mediapipe_face_mesh)
 
 MediaPipe Facemesh can detect multiple faces, each face contains 468 keypoints.
 

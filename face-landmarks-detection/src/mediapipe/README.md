@@ -3,7 +3,7 @@
 MediaPipeFaceMesh-MediaPipe wraps the MediaPipe JS Solution within the familiar
 TFJS API [mediapipe.dev](https://mediapipe.dev).
 
-Please try our our live [demo](https://storage.googleapis.com/tfjs-models/demos/face-landmarks-detection/index.html?model=mediapipe_facemesh).
+Please try our our live [demo](https://storage.googleapis.com/tfjs-models/demos/face-landmarks-detection/index.html?model=mediapipe_face_mesh).
 
 --------------------------------------------------------------------------------
 
@@ -44,17 +44,17 @@ If you are using the face-landmarks-detection API via npm, you need to import th
 ### Import the libraries
 
 ```javascript
-import * as faceLandmarksDetection from '@tensorflow-models/face-landmarks-detection';
+import '@mediapipe/face_mesh';
 import '@tensorflow/tfjs-core';
 // Register WebGL backend.
 import '@tensorflow/tfjs-backend-webgl';
-import '@mediapipe/face_mesh';
+import * as faceLandmarksDetection from '@tensorflow-models/face-landmarks-detection';
 ```
 
 ### Create a detector
 
 Pass in `faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh` from the
-`faceLandmarksDetection.SupportedModel` enum list along with a `detectorConfig` to the
+`faceLandmarksDetection.SupportedModels` enum list along with a `detectorConfig` to the
 `createDetector` method to load and initialize the model.
 
 `detectorConfig` is an object that defines MediaPipeFaceMesh specific configurations for `MediaPipeFaceMeshMediaPipeModelConfig`:
