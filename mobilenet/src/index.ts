@@ -268,6 +268,16 @@ class MobileNetImpl implements MobileNet {
 
     return classes;
   }
+
+  /**
+   * Dispose the tensors allocated by the model. You should call this when you
+   * are done with the model.
+   */
+  dispose() {
+    if (this.model != null) {
+      this.model.dispose();
+    }
+  }
 }
 
 async function getTopKClasses(logits: tf.Tensor2D, topK: number):
