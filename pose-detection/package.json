@@ -21,7 +21,7 @@
   },
   "devDependencies": {
     "@babel/polyfill": "^7.10.4",
-    "@mediapipe/pose": "~0.4.0",
+    "@mediapipe/pose": "~0.5.0",
     "@rollup/plugin-commonjs": "^11.0.2",
     "@rollup/plugin-node-resolve": "^7.1.1",
     "@rollup/plugin-typescript": "^3.0.0",
