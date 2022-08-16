@@ -47,6 +47,7 @@ export interface MediaPipeSelfieSegmentationMediaPipeModelConfig extends
     MediaPipeSelfieSegmentationModelConfig {
   runtime: 'mediapipe';
   solutionPath?: string;
+  locateFile?: (path: string, base: string) => string;
 }
 
 /**

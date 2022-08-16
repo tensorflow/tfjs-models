@@ -65,16 +65,17 @@ class MediaPipeSelfieSegmentationMediaPipeSegmenter implements BodySegmenter {
 
   // Should not be called outside.
   constructor(config: MediaPipeSelfieSegmentationMediaPipeModelConfig) {
+    const solutionPathLocateFile = (path: string, base: string): string => {
+      if (config.solutionPath) {
+        const solutionPath = config.solutionPath.replace(/\/+$/, '');
+        return `${solutionPath}/${path}`;
+      }
+      return `${base}/${path}`;
+    }
     this.selfieSegmentationSolution =
-        new selfieSegmentation.SelfieSegmentation({
-          locateFile: (path, base) => {
-            if (config.solutionPath) {
-              const solutionPath = config.solutionPath.replace(/\/+$/, '');
-              return `${solutionPath}/${path}`;
-            }
-            return `${base}/${path}`;
-          }
-        });
+      new selfieSegmentation.SelfieSegmentation({
+        locateFile: config.locateFile ?? solutionPathLocateFile
+      });
     let modelSelection: 0|1;
     switch (config.modelType) {
       case 'landscape':
