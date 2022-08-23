@@ -33,6 +33,7 @@ describe('Universal Sentence Encoder tokenizer', () => {
     const commonPrefixes =
         tokenizer.trie.commonPrefixSearch(['l', 'i', 'k', 'e'])
             .map(d => d[0].join(''));
-    expect(commonPrefixes).toEqual(['like', 'l']);
+
+    expect(commonPrefixes).toEqual(['l', 'like']);
   });
 });

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google LLC. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,9 +18,7 @@
 import * as tf from '@tensorflow/tfjs-core';
 
 import {partNames} from '../keypoints';
-import {PoseNetOutputStride} from '../posenet_model';
-import {Keypoint, Pose} from '../types';
-import {toTensorBuffer} from '../util';
+import {Keypoint, Pose, PoseNetOutputStride} from '../types';
 
 import {argmax2d} from './argmax2d';
 import {getOffsetPoints, getPointsConfidence} from './util';
@@ -38,7 +36,7 @@ import {getOffsetPoints, getPointsConfidence} from './util';
  * row being the offset vector for the corresponding keypoint.
  * To get the keypoint, each part’s heatmap y and x are multiplied
  * by the output stride then added to their corresponding offset vector,
- * which is in the same scale as the original image. 
+ * which is in the same scale as the original image.
  *
  * @param heatmapScores 3-D tensor with shape `[height, width, numParts]`.
  * The value of heatmapScores[y, x, k]` is the score of placing the `k`-th
@@ -63,14 +61,16 @@ export async function decodeSinglePose(
 
   const heatmapValues = argmax2d(heatmapScores);
 
-  const [scoresBuffer, offsetsBuffer, heatmapValuesBuffer] = await Promise.all([
-    toTensorBuffer(heatmapScores), toTensorBuffer(offsets),
-    toTensorBuffer(heatmapValues, 'int32')
-  ]);
+  const allTensorBuffers = await Promise.all(
+      [heatmapScores.buffer(), offsets.buffer(), heatmapValues.buffer()]);
+
+  const scoresBuffer = allTensorBuffers[0];
+  const offsetsBuffer = allTensorBuffers[1];
+  const heatmapValuesBuffer = allTensorBuffers[2];
 
   const offsetPoints =
       getOffsetPoints(heatmapValuesBuffer, outputStride, offsetsBuffer);
-  const offsetPointsBuffer = await toTensorBuffer(offsetPoints);
+  const offsetPointsBuffer = await offsetPoints.buffer();
 
   const keypointConfidence =
       Array.from(getPointsConfidence(scoresBuffer, heatmapValuesBuffer));

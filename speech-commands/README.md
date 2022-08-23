@@ -14,7 +14,7 @@ perform inference and transfer learning entirely in the browser, using
 WebGL GPU acceleration.
 
 The underlying deep neural network has been trained using the
-[TensorFlow Speech Commands Dataset](https://www.tensorflow.org/tutorials/sequences/audio_recognition).
+[TensorFlow Speech Commands Dataset](https://www.tensorflow.org/datasets/catalog/speech_commands).
 
 For more details on the data set, see:
 
@@ -42,8 +42,8 @@ To use the speech-command recognizer, first create a recognizer instance,
 then start the streaming recognition by calling its `listen()` method.
 
 ```js
-import * as tf from '@tensorflow/tfjs';
-import * as speechCommands from '@tensorflow-models/speech-commands';
+const tf = require('@tensorflow/tfjs');
+const speechCommands = require('@tensorflow-models/speech-commands');
 
 // When calling `create()`, you must provide the type of the audio input.
 // The two available options are `BROWSER_FFT` and `SOFT_FFT`.
@@ -132,8 +132,8 @@ shape of the Tensor must match the expectation of the recognizer instance.
 E.g.,
 
 ```js
-import * as tf from '@tensorflow/tfjs';
-import * as speechCommands from '@tensorflow-models/speech-commands';
+const tf = require('@tensorflow/tfjs');
+const speechCommands = require('@tensorflow-models/speech-commands');
 
 const recognizer = speechCommands.create('BROWSER_FFT');
 
@@ -151,17 +151,18 @@ console.log(recognizer.modelInputShape());
 console.log(recognizer.params().sampleRateHz);
 console.log(recognizer.params().fftSize);
 
-tf.tidy(() => {
-  const x = tf.tensor4d(
-      mySpectrogramData, [1].concat(recognizer.modelInputShape().slice(1)));
-  const output = recognizer.recognize(x);
-  // output has the same format as `result` in the online streaming example
-  // above: the `scores` field contains the probabilities of the words.
-});
+
+const x = tf.tensor4d(
+    mySpectrogramData, [1].concat(recognizer.modelInputShape().slice(1)));
+const output = await recognizer.recognize(x);
+// output has the same format as `result` in the online streaming example
+// above: the `scores` field contains the probabilities of the words.
+
+tf.dispose([x, output]);
 ```
 
 Note that you must provide a spectrogram value to the `recognize()` call
-in order to perform the offline recognition. If `recognzie()` as called
+in order to perform the offline recognition. If `recognize()` is called
 without a first argument, it will perform one-shot online recognition
 by collecting a frame of audio via WebAudio.
 

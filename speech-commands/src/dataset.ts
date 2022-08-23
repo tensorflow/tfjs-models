@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google LLC. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,7 +15,8 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
+import * as tfd from '@tensorflow/tfjs-data';
 import {normalize} from './browser_fft_utils';
 import {arrayBuffer2String, concatenateArrayBuffers, getRandomInteger, getUID, string2ArrayBuffer} from './generic_utils';
 import {balancedTrainValSplitNumArrays} from './training_utils';
@@ -172,7 +173,7 @@ export interface GetDataConfig extends AudioDataAugmentationOptions {
 }
 
 // tslint:disable-next-line:no-any
-export type SpectrogramAndTargetsTfDataset = tf.data.Dataset<{}>;
+export type SpectrogramAndTargetsTfDataset = tfd.Dataset<{}>;
 
 /**
  * A serializable, mutable set of speech/audio `Example`s;
@@ -421,7 +422,7 @@ export class Dataset {
               getValidWindows(snippetLength, focusIndex, numFrames, hopFrames);
           for (const window of windows) {
             const windowedSnippet = tf.tidy(() => {
-              const output = snippet.slice(
+              const output = tf.slice(snippet,
                   [window[0], 0, 0], [window[1] - window[0], -1, -1]);
               return toNormalize ? normalize(output) : output;
             });
@@ -442,8 +443,8 @@ export class Dataset {
 
       if (config.augmentByMixingNoiseRatio != null) {
         this.augmentByMixingNoise(
-            config.getDataset ? xArrays : xTensors as
-                Array<Float32Array | tf.Tensor>,
+            config.getDataset ? xArrays :
+                                xTensors as Array<Float32Array|tf.Tensor>,
             labelIndices, config.augmentByMixingNoiseRatio);
       }
 
@@ -474,13 +475,13 @@ export class Dataset {
         // fixed.
         // tslint:disable:no-any
         const xTrain =
-            tf.data.array(trainXs as any).map(x => tf.tensor3d(x as any, [
+            tfd.array(trainXs as any).map(x => tf.tensor3d(x as any, [
               numFrames, uniqueFrameSize, 1
             ]));
-        const yTrain = tf.data.array(trainYs).map(
-            y => tf.oneHot([y], vocab.length).squeeze([0]));
+        const yTrain = tfd.array(trainYs).map(
+            y => tf.squeeze(tf.oneHot([y], vocab.length), [0]));
         // TODO(cais): See if we can tighten the typing.
-        let trainDataset = tf.data.zip({xs: xTrain, ys: yTrain});
+        let trainDataset = tfd.zip({xs: xTrain, ys: yTrain});
         if (shuffle) {
           // Shuffle the dataset.
           trainDataset = trainDataset.shuffle(xArrays.length);
@@ -488,12 +489,12 @@ export class Dataset {
         trainDataset = trainDataset.batch(batchSize).prefetch(4);
 
         const xVal =
-            tf.data.array(valXs as any).map(x => tf.tensor3d(x as any, [
+            tfd.array(valXs as any).map(x => tf.tensor3d(x as any, [
               numFrames, uniqueFrameSize, 1
             ]));
-        const yVal = tf.data.array(valYs).map(
-            y => tf.oneHot([y], vocab.length).squeeze([0]));
-        let valDataset = tf.data.zip({xs: xVal, ys: yVal});
+        const yVal = tfd.array(valYs).map(
+            y => tf.squeeze(tf.oneHot([y], vocab.length), [0]));
+        let valDataset = tfd.zip({xs: xVal, ys: yVal});
         valDataset = valDataset.batch(batchSize).prefetch(4);
         // tslint:enable:no-any
 
@@ -512,8 +513,8 @@ export class Dataset {
         }
 
         const targets = label == null ?
-            tf.oneHot(tf.tensor1d(labelIndices, 'int32'), vocab.length)
-                .asType('float32') :
+            tf.cast(tf.oneHot(tf.tensor1d(labelIndices, 'int32'), vocab.length),
+                'float32') :
             undefined;
         return {
           xs: tf.stack(xTensors) as tf.Tensor4D,
@@ -523,7 +524,7 @@ export class Dataset {
     });
   }
 
-  private augmentByMixingNoise<T extends tf.Tensor | Float32Array>(
+  private augmentByMixingNoise<T extends tf.Tensor|Float32Array>(
       xs: T[], labelIndices: number[], ratio: number): void {
     if (xs == null || xs.length === 0) {
       throw new Error(
@@ -547,18 +548,20 @@ export class Dataset {
           `there is no example with label ${BACKGROUND_NOISE_TAG}`);
     }
 
-    const mixedXTensors: Array<tf.Tensor | Float32Array> = [];
+    const mixedXTensors: Array<tf.Tensor|Float32Array> = [];
     const mixedLabelIndices: number[] = [];
     for (const index of wordExampleIndices) {
       const noiseIndex =  // Randomly sample from the noises, with replacement.
           noiseExampleIndices[getRandomInteger(0, noiseExampleIndices.length)];
       const signalTensor = isTypedArray ?
-          tf.tensor1d(xs[index] as Float32Array) : xs[index] as tf.Tensor;
+          tf.tensor1d(xs[index] as Float32Array) :
+          xs[index] as tf.Tensor;
       const noiseTensor = isTypedArray ?
           tf.tensor1d(xs[noiseIndex] as Float32Array) :
           xs[noiseIndex] as tf.Tensor;
-      const mixed: tf.Tensor = tf.tidy(() =>
-          normalize(signalTensor.add(noiseTensor.mul(ratio))));
+      const mixed: tf.Tensor =
+          tf.tidy(() => normalize(
+              tf.add(signalTensor, tf.mul(noiseTensor, ratio))));
       if (isTypedArray) {
         mixedXTensors.push(mixed.dataSync() as Float32Array);
       } else {
@@ -955,7 +958,7 @@ export function spectrogram2IntensityCurve(spectrogram: SpectrogramData):
   return tf.tidy(() => {
     const numFrames = spectrogram.data.length / spectrogram.frameSize;
     const x = tf.tensor2d(spectrogram.data, [numFrames, spectrogram.frameSize]);
-    return x.mean(-1);
+    return tf.mean(x, -1);
   });
 }
 
@@ -970,5 +973,5 @@ export function spectrogram2IntensityCurve(spectrogram: SpectrogramData):
  */
 export function getMaxIntensityFrameIndex(spectrogram: SpectrogramData):
     tf.Scalar {
-  return tf.tidy(() => spectrogram2IntensityCurve(spectrogram).argMax());
+  return tf.tidy(() => tf.argMax(spectrogram2IntensityCurve(spectrogram)));
 }

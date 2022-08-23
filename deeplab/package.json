@@ -1,0 +1,46 @@
+{
+  "name": "@tensorflow-models/deeplab",
+  "version": "0.2.1",
+  "description": "Semantic Segmentation in the Browser: DeepLab v3 Model",
+  "main": "dist/index.js",
+  "jsnext:main": "dist/deeplab.esm.js",
+  "module": "dist/deeplab.esm.js",
+  "unpkg": "dist/deeplab.min.js",
+  "jsdelivr": "dist/deeplab.min.js",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tensorflow/tfjs-models"
+  },
+  "peerDependencies": {
+    "@tensorflow/tfjs-converter": "^3.0.0",
+    "@tensorflow/tfjs-core": "^3.0.0"
+  },
+  "devDependencies": {
+    "@tensorflow/tfjs-converter": "^3.0.0",
+    "@tensorflow/tfjs-core": "^3.0.0",
+    "@tensorflow/tfjs-backend-cpu": "^3.0.0",
+    "@types/jasmine": "~3.3.15",
+    "clang-format": "^1.2.4",
+    "jasmine": "^3.2.0",
+    "jasmine-core": "~3.4.0",
+    "rimraf": "~2.6.2",
+    "rollup": "~1.17.0",
+    "rollup-plugin-node-resolve": "~5.2.0",
+    "rollup-plugin-terser": "^5.1.1",
+    "rollup-plugin-typescript2": "~0.22.0",
+    "ts-node": "~5.0.0",
+    "tslint": "~5.18.0",
+    "typescript": "3.5.3",
+    "yalc": "~1.0.0-pre.32"
+  },
+  "scripts": {
+    "build": "rimraf dist && tsc",
+    "test": "ts-node --skip-ignore --project tsconfig.test.json run_tests.ts",
+    "publish-local": "yarn build && rollup -c && yalc push",
+    "build-npm": "yarn build && rollup -c",
+    "lint": "tslint -p . -t verbose"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {}
+}

@@ -1,0 +1,56 @@
+{
+  "name": "deeplab-demo",
+  "version": "0.0.1",
+  "description": "",
+  "main": "src/index.js",
+  "license": "Apache-2.0",
+  "private": true,
+  "engines": {
+    "node": ">=8.9.0"
+  },
+  "dependencies": {
+    "@tensorflow-models/deeplab": "file:../dist",
+    "@tensorflow/tfjs-converter": "^3.3.0",
+    "@tensorflow/tfjs-core": "^3.3.0",
+    "@tensorflow/tfjs-backend-webgl": "^3.3.0",
+    "bulma": "^0.7.5"
+  },
+  "scripts": {
+    "watch": "cross-env NODE_ENV=development parcel src/index.html --no-hmr --open",
+    "build": "cross-env NODE_ENV=production parcel build src/index.html --no-minify --public-url ./",
+    "lint": "eslint .",
+    "link-local": "yalc add --link @tensorflow-models/deeplab"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.0.0-0",
+    "@babel/plugin-transform-runtime": "^7.5.5",
+    "@babel/preset-env": "^7.5.5",
+    "clang-format": "^1.2.4",
+    "cross-env": "^5.2.0",
+    "eslint": "^6.1.0",
+    "eslint-config-google": "^0.13.0",
+    "parcel-bundler": "~1.12.5",
+    "ts-node": "^8.3.0",
+    "yalc": "~1.0.0-pre.50"
+  },
+  "resolutions": {
+    "is-svg": "4.3.1"
+  },
+  "eslintConfig": {
+    "extends": "google",
+    "rules": {
+      "require-jsdoc": 0,
+      "valid-jsdoc": 0
+    },
+    "env": {
+      "es6": true
+    },
+    "parserOptions": {
+      "ecmaVersion": 8,
+      "sourceType": "module"
+    }
+  },
+  "eslintIgnore": [
+    "dist/"
+  ]
+}

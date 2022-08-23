@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google LLC. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -17,29 +17,36 @@
 
 import * as tf from '@tensorflow/tfjs-core';
 
-export type Vector2D = {
+export type PoseNetOutputStride = 32|16|8;
+export type PoseNetArchitecture = 'ResNet50'|'MobileNetV1';
+export type PoseNetDecodingMethod = 'single-person'|'multi-person';
+export type PoseNetQuantBytes = 1|2|4;
+
+export type MobileNetMultiplier = 0.50|0.75|1.0;
+
+export declare type Vector2D = {
   y: number,
   x: number
 };
 
-export type Part = {
+export declare type Part = {
   heatmapX: number,
   heatmapY: number,
   id: number
 };
 
-export type PartWithScore = {
+export declare type PartWithScore = {
   score: number,
   part: Part
 };
 
-export type Keypoint = {
+export declare type Keypoint = {
   score: number,
   position: Vector2D,
   part: string
 };
 
-export type Pose = {
+export declare type Pose = {
   keypoints: Keypoint[],
   score: number,
 };
@@ -49,6 +56,11 @@ export type PosenetInput =
 
 export type TensorBuffer3D = tf.TensorBuffer<tf.Rank.R3>;
 
-export interface Padding {
-  top: number, bottom: number, left: number, right: number
+export declare interface Padding {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
 }
+
+export declare type InputResolution = number | {width: number, height: number};

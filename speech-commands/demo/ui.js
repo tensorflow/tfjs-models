@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google Inc. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -149,12 +149,12 @@ export async function plotSpectrogram(
   }
 
   if (config.markKeyFrame) {
-    const keyFrameIndex =
-        config.keyFrameIndex == null ?
-        await SpeechCommands.getMaxIntensityFrameIndex({
-          data: frequencyData,
-          frameSize: fftSize
-        }).data() : config.keyFrameIndex;
+    const keyFrameIndex = config.keyFrameIndex == null ?
+        await SpeechCommands
+            .getMaxIntensityFrameIndex(
+                {data: frequencyData, frameSize: fftSize})
+            .data() :
+        config.keyFrameIndex;
     // Draw lines to mark the maximum-intensity frame.
     context.strokeStyle = 'black';
     context.beginPath();

@@ -1,0 +1,48 @@
+steps:
+
+# Install common dependencies.
+- name: 'node:12'
+  id: 'yarn-common'
+  entrypoint: 'yarn'
+  args: ['install']
+
+# Install blazeface dependencies.
+- name: 'node:12'
+  dir: 'blazeface'
+  entrypoint: 'yarn'
+  id: 'yarn'
+  args: ['install']
+  waitFor: ['yarn-common']
+
+# Lint.
+- name: 'node:12'
+  dir: 'blazeface'
+  entrypoint: 'yarn'
+  id: 'lint'
+  args: ['lint']
+  waitFor: ['yarn']
+
+# Build.
+- name: 'node:12'
+  dir: 'blazeface'
+  entrypoint: 'yarn'
+  id: 'build'
+  args: ['build']
+  waitFor: ['yarn']
+
+# Run tests.
+- name: 'node:12'
+  dir: 'blazeface'
+  entrypoint: 'yarn'
+  id: 'test'
+  args: ['test']
+  waitFor: ['yarn']
+
+# General configuration
+timeout: 1800s
+logsBucket: 'gs://tfjs-build-logs'
+substitutions:
+  _NIGHTLY: ''
+options:
+  logStreamingOption: 'STREAM_ON'
+  substitution_option: 'ALLOW_LOOSE'

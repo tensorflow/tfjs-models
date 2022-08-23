@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google LLC. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,12 +15,13 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
 
 import {BrowserFftSpeechCommandRecognizer} from './browser_fft_recognizer';
 import {playRawAudio} from './browser_fft_utils';
 import {concatenateFloat32Arrays} from './generic_utils';
 import {FFT_TYPE, SpeechCommandRecognizer, SpeechCommandRecognizerMetadata} from './types';
+import { normalizeFloat32Array, normalize } from './browser_fft_utils';
 
 /**
  * Create an instance of speech-command recognizer.
@@ -78,6 +79,8 @@ export function create(
 
 const utils = {
   concatenateFloat32Arrays,
+  normalizeFloat32Array,
+  normalize,
   playRawAudio
 };
 

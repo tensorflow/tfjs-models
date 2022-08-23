@@ -1,5 +1,6 @@
 {
   "extends": ["tslint-no-circular-imports"],
+  "rulesDirectory": ".tslint",
   "rules": {
     "array-type": [true, "array-simple"],
     "arrow-return-shorthand": true,
@@ -19,6 +20,7 @@
       ["Number", "Use 'number' instead."],
       ["Boolean", "Use 'boolean' instead."]
     ],
+    "no-return-await": true,
     "class-name": true,
     "curly": true,
     "interface-name": [true, "never-prefix"],
@@ -26,7 +28,7 @@
     "forin": false,
     "label-position": true,
     "max-line-length": {
-      "options": {"limit": 80, "ignore-pattern": "^import |^export "}
+      "options": {"limit": 80, "ignore-pattern": "^import |^export |https?://"}
     },
     "new-parens": true,
     "no-angle-bracket-type-assertion": true,
@@ -35,6 +37,7 @@
     "no-consecutive-blank-lines": true,
     "no-debugger": true,
     "no-default-export": true,
+    "no-imports-from-dist": true,
     "no-inferrable-types": true,
     "no-namespace": [true, "allow-declarations"],
     "no-reference": true,
@@ -42,6 +45,7 @@
     "no-string-throw": true,
     "no-unused-expression": true,
     "no-var-keyword": true,
+    "no-unnecessary-type-assertion": true,
     "object-literal-shorthand": true,
     "only-arrow-functions": [true, "allow-declarations", "allow-named-functions"],
     "prefer-const": true,
