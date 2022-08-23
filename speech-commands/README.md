@@ -254,7 +254,7 @@ await transferRecognizer.listen(result => {
   const words = transferRecognizer.wordLabels();
   // `result.scores` contains the scores for the new words, not the original
   // words.
-  for (let i = 0; i < words; ++i) {
+  for (let i = 0; i < words.length; ++i) {
     console.log(`score for word '${words[i]}' = ${result.scores[i]}`);
   }
 }, {probabilityThreshold: 0.75});
