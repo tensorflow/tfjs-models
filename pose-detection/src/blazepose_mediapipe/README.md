@@ -46,9 +46,9 @@ Via script tags:
 Via npm:
 
 ```sh
-yarn add @tensorflow-models/pose-detection
-yarn add @tensorflow/tfjs-core, @tensorflow/tfjs-backend-webgl
 yarn add @mediapipe/pose
+yarn add @tensorflow/tfjs-core, @tensorflow/tfjs-backend-webgl
+yarn add @tensorflow-models/pose-detection
 ```
 
 -----------------------------------------------------------------------
@@ -91,7 +91,8 @@ Pass in `poseDetection.SupportedModels.BlazePose` from the
 const model = poseDetection.SupportedModels.BlazePose;
 const detectorConfig = {
   runtime: 'mediapipe',
-  solutionPath: 'base/node_modules/@mediapipe/pose'
+  solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/pose'
+                // or 'base/node_modules/@mediapipe/pose' in npm.
 };
 detector = await poseDetection.createDetector(model, detectorConfig);
 ```

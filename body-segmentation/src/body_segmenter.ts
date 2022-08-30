@@ -14,6 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
+import {BodyPixSegmentationConfig} from './body_pix/types';
 import {MediaPipeSelfieSegmentationMediaPipeSegmentationConfig} from './selfie_segmentation_mediapipe/types';
 import {MediaPipeSelfieSegmentationTfjsSegmentationConfig} from './selfie_segmentation_tfjs/types';
 import {Segmentation} from './shared/calculators/interfaces/common_interfaces';
@@ -34,8 +35,8 @@ export interface BodySegmenter {
       input: BodySegmenterInput,
       segmentationConfig?:
           MediaPipeSelfieSegmentationMediaPipeSegmentationConfig|
-      MediaPipeSelfieSegmentationTfjsSegmentationConfig):
-      Promise<Segmentation[]>;
+      MediaPipeSelfieSegmentationTfjsSegmentationConfig|
+      BodyPixSegmentationConfig): Promise<Segmentation[]>;
 
   /**
    * Dispose the underlying models from memory.

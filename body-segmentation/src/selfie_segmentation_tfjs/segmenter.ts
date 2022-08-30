@@ -25,7 +25,6 @@ import {convertImageToTensor} from '../shared/calculators/convert_image_to_tenso
 import {getImageSize} from '../shared/calculators/image_utils';
 import {Mask, Segmentation} from '../shared/calculators/interfaces/common_interfaces';
 import {assertMaskValue, toHTMLCanvasElementLossy, toImageDataLossy} from '../shared/calculators/mask_util';
-import {shiftImageValue} from '../shared/calculators/shift_image_value';
 import {tensorsToSegmentation} from '../shared/calculators/tensors_to_segmentation';
 import {BodySegmenterInput} from '../types';
 import * as constants from './constants';
@@ -96,46 +95,45 @@ class MediaPipeSelfieSegmentationTfjsSegmenter implements BodySegmenter {
       return [];
     }
 
-    // SelfieSegmentationCpu: ImageToTensorCalculator.
-    // Resizes the input image into a tensor with a dimension desired by the
-    // model.
-    const {imageTensor} = convertImageToTensor(
-        image,
-        this.modelType === 'general' ?
-            constants.SELFIE_SEGMENTATION_IMAGE_TO_TENSOR_GENERAL_CONFIG :
-            constants.SELFIE_SEGMENTATION_IMAGE_TO_TENSOR_LANDSCAPE_CONFIG);
-    const imageValueShifted = shiftImageValue(imageTensor, [0, 1]);
-
-    // SelfieSegmentationCpu: InferenceCalculator
-    // The model returns a tensor with the following shape:
-    // [1 (batch), 144, 256] or [1 (batch), 256, 256, 2] depending on modelType.
-    const segmentationTensor = tf.tidy(
-        // Slice activation output only.
-        () => tf.slice(
-            this.model.predict(imageValueShifted) as tf.Tensor4D, [0, 0, 0, 1],
-            -1));
-
-    // SelfieSegmentationCpu: ImagePropertiesCalculator
-    // Retrieves the size of the input image.
-    const imageSize = getImageSize(image);
-
-    // SelfieSegmentationCpu: TensorsToSegmentationCalculator
-    // Processes the output tensors into a segmentation mask that has the same
-    // size as the input image into the graph.
-    const maskImage = tensorsToSegmentation(
-        segmentationTensor,
-        constants.SELFIE_SEGMENTATION_TENSORS_TO_SEGMENTATION_CONFIG,
-        imageSize);
-
-    // Grayscale to RGBA
     const rgbaMask = tf.tidy(() => {
+      // SelfieSegmentationCpu: ImageToTensorCalculator.
+      // Resizes the input image into a tensor with a dimension desired by the
+      // model.
+      const {imageTensor: imageValueShifted} = convertImageToTensor(
+          image,
+          this.modelType === 'general' ?
+              constants.SELFIE_SEGMENTATION_IMAGE_TO_TENSOR_GENERAL_CONFIG :
+              constants.SELFIE_SEGMENTATION_IMAGE_TO_TENSOR_LANDSCAPE_CONFIG);
+
+      // SelfieSegmentationCpu: InferenceCalculator
+      // The model returns a tensor with the following shape:
+      // [1 (batch), 144, 256] or [1 (batch), 256, 256, 2] depending on
+      // modelType.
+      const segmentationTensor =
+          // Slice activation output only.
+          tf.slice(
+              this.model.predict(imageValueShifted) as tf.Tensor4D,
+              [0, 0, 0, 1], -1);
+
+      // SelfieSegmentationCpu: ImagePropertiesCalculator
+      // Retrieves the size of the input image.
+      const imageSize = getImageSize(image);
+
+      // SelfieSegmentationCpu: TensorsToSegmentationCalculator
+      // Processes the output tensors into a segmentation mask that has the same
+      // size as the input image into the graph.
+      const maskImage = tensorsToSegmentation(
+          segmentationTensor,
+          constants.SELFIE_SEGMENTATION_TENSORS_TO_SEGMENTATION_CONFIG,
+          imageSize);
+
+      // Grayscale to RGBA
       // tslint:disable-next-line: no-unnecessary-type-assertion
       const mask3D = tf.expandDims(maskImage, 2) as tf.Tensor3D;
       const rgMask = tf.pad(mask3D, [[0, 0], [0, 0], [0, 1]]);
       return tf.mirrorPad(rgMask, [[0, 0], [0, 0], [0, 2]], 'symmetric');
     });
 
-    tf.dispose([imageTensor, imageValueShifted]);
     return [{
       maskValueToLabel,
       mask: new MediaPipeSelfieSegmentationTfjsMask(rgbaMask)
@@ -162,7 +160,8 @@ export async function load(
     Promise<BodySegmenter> {
   const config = validateModelConfig(modelConfig);
 
-  const modelFromTFHub = (config.modelUrl.indexOf('https://tfhub.dev') > -1);
+  const modelFromTFHub = typeof config.modelUrl === 'string' &&
+      (config.modelUrl.indexOf('https://tfhub.dev') > -1);
 
   const model =
       await tfconv.loadGraphModel(config.modelUrl, {fromTFHub: modelFromTFHub});

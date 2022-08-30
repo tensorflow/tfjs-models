@@ -59,7 +59,7 @@ import '@tensorflow/tfjs-backend-webgl';
 
 Pass in `bodySegmentation.SupportedModels.MediaPipeSelfieSegmentation` from the
 `bodySegmentation.SupportedModel` enum list along with a `segmenterConfig` to the
-`createDetector` method to load and initialize the model.
+`createSegmenter` method to load and initialize the model.
 
 `segmenterConfig` is an object that defines MediaPipeSelfieSegmentation specific configurations for `MediaPipeSelfieSegmentationTfjsModelConfig`:
 
@@ -69,7 +69,10 @@ Pass in `bodySegmentation.SupportedModels.MediaPipeSelfieSegmentation` from the
     'general', 'landscape'). If unset, the default is 'general'.
 
 *   *modelUrl*: An optional string that specifies custom url of
-the segmentation model. This is useful for area/countries that don't have access to the model hosted on tf.hub.
+the segmentation model. This is useful for area/countries that don't have access to the model hosted on tf.hub. It also accepts `io.IOHandler` which can be used with
+[tfjs-react-native](https://github.com/tensorflow/tfjs/tree/master/tfjs-react-native)
+to load model from app bundle directory using
+[bundleResourceIO](https://github.com/tensorflow/tfjs/blob/master/tfjs-react-native/src/bundle_resource_io.ts#L169).
 
 ```javascript
 const model = bodySegmentation.SupportedModels.MediaPipeSelfieSegmentation;

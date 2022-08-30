@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2020 Google LLC. All Rights Reserved.
+ * Copyright 2021 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,6 +15,7 @@
  * =============================================================================
  */
 
+import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
 import typescript from '@rollup/plugin-typescript';
 import {terser} from 'rollup-plugin-terser';
@@ -36,7 +37,7 @@ const PREAMBLE = `/**
     * =============================================================================
     */`;
 
-function config({ plugins = [], output = {}, tsCompilerOptions = {} }) {
+function config({plugins = [], output = {}, tsCompilerOptions = {}}) {
   const defaultTsOptions = {
     include: ['src/**/*.ts'],
     module: 'ES2015',
@@ -46,30 +47,44 @@ function config({ plugins = [], output = {}, tsCompilerOptions = {} }) {
   return {
     input: 'src/index.ts',
     plugins: [
-      typescript(tsoptions),
-      resolve(), ...plugins
+      typescript(tsoptions), resolve(),
+      commonjs({include: ['node_modules/@mediapipe/face_detection/**']}),
+      ...plugins
     ],
     output: {
       banner: PREAMBLE,
       globals: {
         '@tensorflow/tfjs-core': 'tf',
-        '@tensorflow/tfjs-converter': 'tf'
+        '@tensorflow/tfjs-converter': 'tf',
+        '@tensorflow-models/face-detection': 'faceDetection',
+        // Package is obfuscated so class is directly attached to globalThis.
+        '@mediapipe/face_mesh': 'globalThis'
       },
       ...output,
     },
     external: [
-      '@tensorflow/tfjs-core',
-      '@tensorflow/tfjs-converter'
+      '@tensorflow/tfjs-core', '@tensorflow/tfjs-converter',
+      'tensorflow-models/face-detection', '@mediapipe/face_mesh'
     ]
   };
 }
 
 const packageName = 'faceLandmarksDetection';
 export default [
-  config({output: {format: 'umd', name: packageName, file: 'dist/face-landmarks-detection.js'}}),
+  config({
+    output: {
+      format: 'umd',
+      name: packageName,
+      file: 'dist/face-landmarks-detection.js'
+    }
+  }),
   config({
     plugins: [terser({output: {preamble: PREAMBLE, comments: false}})],
-    output: {format: 'umd', name: packageName, file: 'dist/face-landmarks-detection.min.js'}
+    output: {
+      format: 'umd',
+      name: packageName,
+      file: 'dist/face-landmarks-detection.min.js'
+    }
   }),
   config({
     plugins: [terser({output: {preamble: PREAMBLE, comments: false}})],

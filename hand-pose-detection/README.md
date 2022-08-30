@@ -28,7 +28,12 @@ For example:
 
 ```javascript
 const model = handPoseDetection.SupportedModels.MediaPipeHands;
-const detector = await handPoseDetection.createDetector(model);
+const detectorConfig = {
+  runtime: 'mediapipe', // or 'tfjs',
+  solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/hands',
+  modelType: 'full'
+}
+const detector = await handPoseDetection.createDetector(model, detectorConfig);
 ```
 
 Then you can use the detector to detect hands.

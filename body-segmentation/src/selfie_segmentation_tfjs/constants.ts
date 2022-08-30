@@ -19,9 +19,9 @@ import {ImageToTensorConfig, TensorsToSegmentationConfig} from '../shared/calcul
 import {MediaPipeSelfieSegmentationTfjsModelConfig, MediaPipeSelfieSegmentationTfjsSegmentationConfig} from './types';
 
 export const DEFAULT_TFJS_SELFIE_SEGMENTATION_MODEL_URL_GENERAL =
-    'https://storage.googleapis.com/tfjs-testing/selfie-segmentation/selfie-segmentation/model.json';
+    'https://tfhub.dev/mediapipe/tfjs-model/selfie_segmentation/general/1';
 export const DEFAULT_TFJS_SELFIE_SEGMENTATION_MODEL_URL_LANDSCAPE =
-    'https://storage.googleapis.com/tfjs-testing/selfie-segmentation/selfie-segmentation-landscape/model.json';
+    'https://tfhub.dev/mediapipe/tfjs-model/selfie_segmentation/landscape/1';
 export const DEFAULT_TFJS_SELFIE_SEGMENTATION_MODEL_CONFIG:
     MediaPipeSelfieSegmentationTfjsModelConfig = {
       runtime: 'tfjs',
@@ -34,13 +34,17 @@ export const DEFAULT_TFJS_SELFIE_SEGMENTATION_SEGMENTATION_CONFIG:
     };
 export const SELFIE_SEGMENTATION_IMAGE_TO_TENSOR_GENERAL_CONFIG:
     ImageToTensorConfig = {
-      inputResolution: {width: 256, height: 256},
-      keepAspectRatio: false
+      outputTensorSize: {width: 256, height: 256},
+      keepAspectRatio: false,
+      borderMode: 'zero',
+      outputTensorFloatRange: [0, 1]
     };
 export const SELFIE_SEGMENTATION_IMAGE_TO_TENSOR_LANDSCAPE_CONFIG:
     ImageToTensorConfig = {
-      inputResolution: {width: 256, height: 144},
-      keepAspectRatio: false
+      outputTensorSize: {width: 256, height: 144},
+      keepAspectRatio: false,
+      borderMode: 'zero',
+      outputTensorFloatRange: [0, 1]
     };
 export const SELFIE_SEGMENTATION_TENSORS_TO_SEGMENTATION_CONFIG:
     TensorsToSegmentationConfig = {

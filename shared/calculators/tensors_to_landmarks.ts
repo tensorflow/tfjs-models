@@ -43,7 +43,7 @@ function applyActivation(activation: 'none'|'sigmoid', value: number) {
  * @returns Normalized landmarks.
  */
 export async function tensorsToLandmarks(
-    landmarkTensor: tf.Tensor2D, config: TensorsToLandmarksConfig,
+    landmarkTensor: tf.Tensor, config: TensorsToLandmarksConfig,
     flipHorizontally?: boolean, flipVertically?: boolean) {
   flipHorizontally = flipHorizontally || config.flipHorizontally || false;
   flipVertically = flipVertically || config.flipVertically || false;

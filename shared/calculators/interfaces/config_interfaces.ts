@@ -18,8 +18,10 @@
 import {InputResolution} from './common_interfaces';
 
 export interface ImageToTensorConfig {
-  inputResolution: InputResolution;
+  outputTensorSize: InputResolution;
   keepAspectRatio?: boolean;
+  outputTensorFloatRange?: [number, number];
+  borderMode: 'zero'|'replicate';
 }
 export interface VelocityFilterConfig {
   windowSize?: number;  // Number of value changes to keep over time. Higher
@@ -89,8 +91,8 @@ export interface AnchorConfig {
       number[];  // Sizes of output feature maps to create anchors. Either
                  // featureMap size or stride should be provided.
   featureMapHeight: number[];
-  strides?: number[];  // Strides of each output feature maps.
-  aspectRatios?:
+  strides: number[];  // Strides of each output feature maps.
+  aspectRatios:
       number[];  // List of different aspect ratio to generate anchors.
   fixedAnchorSize?:
       boolean;  // Whether use fixed width and height (e.g. both 1.0) for each
@@ -192,4 +194,13 @@ export interface VisibilitySmoothingConfig {
   alpha: number;  // Coefficient applied to a new value, and `1 - alpha` is
                   // applied to a stored value. Should be in [0, 1] range. The
                   // smaller the value, the smoother result and the bigger lag.
+}
+type AssignAverage = number[];
+export interface LandmarksRefinementConfig {
+  indexesMapping:
+      number[];  // Maps indexes of the given set of landmarks to indexes of the
+                 // resulting set of landmarks. Should be non empty and contain
+                 // the same amount of indexes as landmarks in the corresponding
+                 // input.
+  zRefinement: 'none'|'copy'|AssignAverage;  // Z refinement instructions.
 }

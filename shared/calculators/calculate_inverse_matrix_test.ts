@@ -30,6 +30,69 @@ describe('calculateInverseMatrix', () => {
     expectArraysClose(matrix4x4ToArray(inverse), matrix4x4ToArray(identity));
   });
 
+  it('translation.', async () => {
+    const matrix: Matrix4x4 = [
+      [1.0, 0.0, 0.0, 2.0],
+      [0.0, 1.0, 0.0, -5.0],
+      [0.0, 0.0, 1.0, 0.0],
+      [0.0, 0.0, 0.0, 1.0],
+    ];
+
+    const inverse = calculateInverseMatrix(matrix);
+
+    const expectedInverse: Matrix4x4 = [
+      [1.0, 0.0, 0.0, -2.0],
+      [0.0, 1.0, 0.0, 5.0],
+      [0.0, 0.0, 1.0, 0.0],
+      [0.0, 0.0, 0.0, 1.0],
+    ];
+
+    expectArraysClose(
+        matrix4x4ToArray(inverse), matrix4x4ToArray(expectedInverse));
+  });
+
+  it('scale.', async () => {
+    const matrix: Matrix4x4 = [
+      [5.0, 0.0, 0.0, 0.0],
+      [0.0, 2.0, 0.0, 0.0],
+      [0.0, 0.0, 1.0, 0.0],
+      [0.0, 0.0, 0.0, 1.0],
+    ];
+
+    const inverse = calculateInverseMatrix(matrix);
+
+    const expectedInverse: Matrix4x4 = [
+      [0.2, 0.0, 0.0, 0.0],
+      [0.0, 0.5, 0.0, 0.0],
+      [0.0, 0.0, 1.0, 0.0],
+      [0.0, 0.0, 0.0, 1.0],
+    ];
+
+    expectArraysClose(
+        matrix4x4ToArray(inverse), matrix4x4ToArray(expectedInverse));
+  });
+
+  it('rotation90.', async () => {
+    const matrix: Matrix4x4 = [
+      [0.0, -1.0, 0.0, 0.0],
+      [1.0, 0.0, 0.0, 0.0],
+      [0.0, 0.0, 1.0, 0.0],
+      [0.0, 0.0, 0.0, 1.0],
+    ];
+
+    const inverse = calculateInverseMatrix(matrix);
+
+    const expectedInverse: Matrix4x4 = [
+      [0.0, 1.0, 0.0, 0.0],
+      [-1.0, 0.0, 0.0, 0.0],
+      [0.0, 0.0, 1.0, 0.0],
+      [0.0, 0.0, 0.0, 1.0],
+    ];
+
+    expectArraysClose(
+        matrix4x4ToArray(inverse), matrix4x4ToArray(expectedInverse));
+  });
+
   it('precision.', async () => {
     const matrix: Matrix4x4 = [
       [0.00001, 0.0, 0.0, 0.0], [0.0, 0.00001, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0],

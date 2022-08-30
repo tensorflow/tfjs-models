@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2020 Google LLC. All Rights Reserved.
+ * Copyright 2021 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -22,7 +22,6 @@ import * as jasmine_util from '@tensorflow/tfjs-core/dist/jasmine_util';
 
 // tslint:disable-next-line:no-require-imports
 const jasmineCtor = require('jasmine');
-// tslint:disable-next-line:no-require-imports
 
 Error.stackTraceLimit = Infinity;
 

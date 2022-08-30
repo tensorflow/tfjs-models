@@ -15,6 +15,8 @@
  * =============================================================================
  */
 
+export {bodyPixMaskValueToRainbowColor} from './body_pix/constants';
+export {BodyPixModelConfig, BodyPixSegmentationConfig} from './body_pix/types';
 // BodySegmenter class.
 export {BodySegmenter} from './body_segmenter';
 export {createSegmenter} from './create_segmenter';
@@ -22,5 +24,6 @@ export {createSegmenter} from './create_segmenter';
 export {MediaPipeSelfieSegmentationMediaPipeModelConfig, MediaPipeSelfieSegmentationMediaPipeSegmentationConfig, MediaPipeSelfieSegmentationModelType} from './selfie_segmentation_mediapipe/types';
 export {MediaPipeSelfieSegmentationTfjsModelConfig, MediaPipeSelfieSegmentationTfjsSegmentationConfig} from './selfie_segmentation_tfjs/types';
 
+export * from './shared/calculators/render_util';
 // Supported models enum.
 export * from './types';

@@ -29,7 +29,7 @@ import {calculateWorldLandmarkProjection} from '../shared/calculators/calculate_
 import {MILLISECOND_TO_MICRO_SECONDS, SECOND_TO_MICRO_SECONDS} from '../shared/calculators/constants';
 import {convertImageToTensor} from '../shared/calculators/convert_image_to_tensor';
 import {createSsdAnchors} from '../shared/calculators/create_ssd_anchors';
-import {detectorInference} from '../shared/calculators/detector_inference';
+import {detectorResult} from '../shared/calculators/detector_result';
 import {getImageSize, getProjectiveTransformMatrix, toImageTensor} from '../shared/calculators/image_utils';
 import {ImageSize, Keypoint, Mask, Padding} from '../shared/calculators/interfaces/common_interfaces';
 import {Rect} from '../shared/calculators/interfaces/shape_interfaces';
@@ -43,7 +43,6 @@ import {refineLandmarksFromHeatmap} from '../shared/calculators/refine_landmarks
 import {removeDetectionLetterbox} from '../shared/calculators/remove_detection_letterbox';
 import {removeLandmarkLetterbox} from '../shared/calculators/remove_landmark_letterbox';
 import {smoothSegmentation} from '../shared/calculators/segmentation_smoothing';
-import {shiftImageValue} from '../shared/calculators/shift_image_value';
 import {tensorsToDetections} from '../shared/calculators/tensors_to_detections';
 import {tensorsToLandmarks} from '../shared/calculators/tensors_to_landmarks';
 import {tensorsToSegmentation} from '../shared/calculators/tensors_to_segmentation';
@@ -292,9 +291,9 @@ class BlazePoseTfjsDetector implements PoseDetector {
       this.prevFilteredSegmentationMask = smoothSegmentation(
           prevMask, segmentationMask,
           constants.BLAZEPOSE_SEGMENTATION_SMOOTHING_CONFIG);
-      tf.dispose([segmentationMask]);
+      tf.dispose(segmentationMask);
     }
-    tf.dispose([prevMask]);
+    tf.dispose(prevMask);
     return this.prevFilteredSegmentationMask;
   }
 
@@ -309,7 +308,10 @@ class BlazePoseTfjsDetector implements PoseDetector {
 
   reset() {
     this.regionOfInterest = null;
-    this.prevFilteredSegmentationMask = null;
+    if (this.enableSegmentation) {
+      tf.dispose(this.prevFilteredSegmentationMask);
+      this.prevFilteredSegmentationMask = tf.tensor2d([], [0, 0]);
+    }
     this.visibilitySmoothingFilterActual = null;
     this.visibilitySmoothingFilterAuxiliary = null;
     this.landmarksSmoothingFilterActual = null;
@@ -324,16 +326,15 @@ class BlazePoseTfjsDetector implements PoseDetector {
     // PoseDetectionCpu: ImageToTensorCalculator
     // Transforms the input image into a 224x224 while keeping the aspect ratio
     // resulting in potential letterboxing in the transformed image.
-    const {imageTensor, padding} = convertImageToTensor(
+    const {imageTensor: imageValueShifted, padding} = convertImageToTensor(
         image, constants.BLAZEPOSE_DETECTOR_IMAGE_TO_TENSOR_CONFIG);
 
-    const imageValueShifted = shiftImageValue(imageTensor, [-1, 1]);
-
+    const detectionResult =
+        this.detectorModel.predict(imageValueShifted) as tf.Tensor3D;
     // PoseDetectionCpu: InferenceCalculator
     // The model returns a tensor with the following shape:
     // [1 (batch), 896 (anchor points), 13 (data for each anchor)]
-    const {boxes, logits} =
-        detectorInference(imageValueShifted, this.detectorModel);
+    const {boxes, logits} = detectorResult(detectionResult);
 
     // PoseDetectionCpu: TensorsToDetectionsCalculator
     const detections: Detection[] = await tensorsToDetections(
@@ -341,7 +342,7 @@ class BlazePoseTfjsDetector implements PoseDetector {
         constants.BLAZEPOSE_TENSORS_TO_DETECTION_CONFIGURATION);
 
     if (detections.length === 0) {
-      tf.dispose([imageTensor, imageValueShifted, logits, boxes]);
+      tf.dispose([imageValueShifted, detectionResult, logits, boxes]);
       return detections;
     }
 
@@ -351,12 +352,12 @@ class BlazePoseTfjsDetector implements PoseDetector {
         constants.BLAZEPOSE_DETECTOR_NON_MAX_SUPPRESSION_CONFIGURATION
             .minSuppressionThreshold,
         constants.BLAZEPOSE_DETECTOR_NON_MAX_SUPPRESSION_CONFIGURATION
-            .minScoreThreshold);
+            .overlapType);
 
     // PoseDetectionCpu: DetectionLetterboxRemovalCalculator
     const newDetections = removeDetectionLetterbox(selectedDetections, padding);
 
-    tf.dispose([imageTensor, imageValueShifted, logits, boxes]);
+    tf.dispose([imageValueShifted, detectionResult, logits, boxes]);
 
     return newDetections;
   }
@@ -402,11 +403,13 @@ class BlazePoseTfjsDetector implements PoseDetector {
     const imageSize = getImageSize(image);
     // Transforms the input image into a 256x256 tensor while keeping the aspect
     // ratio, resulting in potential letterboxing in the transformed image.
-    const {imageTensor, padding: letterboxPadding, transformationMatrix} =
+    const {
+      imageTensor: imageValueShifted,
+      padding: letterboxPadding,
+      transformationMatrix
+    } =
         convertImageToTensor(
             image, constants.BLAZEPOSE_LANDMARK_IMAGE_TO_TENSOR_CONFIG, roi);
-
-    const imageValueShifted = shiftImageValue(imageTensor, [0, 1]);
 
     if (this.modelType !== 'lite' && this.modelType !== 'full' &&
         this.modelType !== 'heavy') {
@@ -425,20 +428,24 @@ class BlazePoseTfjsDetector implements PoseDetector {
     // activation_heatmap: This tensor (shape: [1, 64, 64, 39]) represents
     //  heatmap for the 39 landmarks.
     // world_3d: This tensor (shape: [1, 117]) represents 39 3DWorld keypoints.
-    const outputTensor = this.landmarkModel.execute(imageValueShifted, [
-      'ld_3d', 'output_poseflag', 'activation_segmentation',
-      'activation_heatmap', 'world_3d'
-    ]) as tf.Tensor[];
+    const outputs =
+        ['ld_3d', 'output_poseflag', 'activation_heatmap', 'world_3d'];
+    if (this.enableSegmentation) {
+      outputs.push('activation_segmentation');
+    }
+
+    const outputTensor =
+        this.landmarkModel.execute(imageValueShifted, outputs) as tf.Tensor[];
 
     // Decodes the tensors into the corresponding landmark and segmentation mask
     // representation.
     // PoseLandmarksByRoiCPU: TensorsToPoseLandmarksAndSegmentation
     const tensorsToPoseLandmarksAndSegmentationResult =
-        this.tensorsToPoseLandmarksAndSegmentation(outputTensor);
+        await this.tensorsToPoseLandmarksAndSegmentation(outputTensor);
 
     if (tensorsToPoseLandmarksAndSegmentationResult == null) {
       tf.dispose(outputTensor);
-      tf.dispose([imageTensor, imageValueShifted]);
+      tf.dispose(imageValueShifted);
       return null;
     }
 
@@ -448,7 +455,7 @@ class BlazePoseTfjsDetector implements PoseDetector {
       poseScore,
       worldLandmarks: roiWorldLandmarks,
       segmentationMask: roiSegmentationMask
-    } = await tensorsToPoseLandmarksAndSegmentationResult;
+    } = tensorsToPoseLandmarksAndSegmentationResult;
 
     const poseLandmarksAndSegmentationInverseProjectionResults =
         await this.poseLandmarksAndSegmentationInverseProjection(
@@ -457,7 +464,7 @@ class BlazePoseTfjsDetector implements PoseDetector {
             roiSegmentationMask);
 
     tf.dispose(outputTensor);
-    tf.dispose([imageTensor, imageValueShifted]);
+    tf.dispose(imageValueShifted);
 
     return {poseScore, ...poseLandmarksAndSegmentationInverseProjectionResults};
   }
@@ -531,7 +538,7 @@ class BlazePoseTfjsDetector implements PoseDetector {
             [0, 3]);
       });
 
-      tf.dispose([roiSegmentationMask]);
+      tf.dispose(roiSegmentationMask);
     }
 
     return {landmarks, auxiliaryLandmarks, worldLandmarks, segmentationMask};
@@ -541,9 +548,10 @@ class BlazePoseTfjsDetector implements PoseDetector {
     // TensorsToPoseLandmarksAndSegmentation: SplitTensorVectorCalculator.
     const landmarkTensor = tensors[0] as tf.Tensor2D,
           poseFlagTensor = tensors[1] as tf.Tensor2D,
-          segmentationTensor = tensors[2] as tf.Tensor4D,
-          heatmapTensor = tensors[3] as tf.Tensor4D,
-          worldLandmarkTensor = tensors[4] as tf.Tensor2D;
+          heatmapTensor = tensors[2] as tf.Tensor4D,
+          worldLandmarkTensor = tensors[3] as tf.Tensor2D,
+          segmentationTensor =
+              (this.enableSegmentation ? tensors[4] : null) as tf.Tensor4D;
 
     // Converts the pose-flag tensor into a float that represents the
     // confidence score of pose presence.
@@ -736,9 +744,9 @@ export async function load(modelConfig: BlazePoseTfjsModelConfig):
     Promise<PoseDetector> {
   const config = validateModelConfig(modelConfig);
 
-  const detectorFromTFHub =
+  const detectorFromTFHub = typeof config.detectorModelUrl === 'string' &&
       (config.detectorModelUrl.indexOf('https://tfhub.dev') > -1);
-  const landmarkFromTFHub =
+  const landmarkFromTFHub = typeof config.landmarkModelUrl === 'string' &&
       (config.landmarkModelUrl.indexOf('https://tfhub.dev') > -1);
 
   const [detectorModel, landmarkModel] = await Promise.all([

@@ -15,17 +15,17 @@
  * =============================================================================
  */
 
-import {TensorsToLandmarksConfig} from '../shared/calculators/interfaces/config_interfaces';
+import {ImageToTensorConfig, TensorsToLandmarksConfig} from '../shared/calculators/interfaces/config_interfaces';
 import {BlazePoseTfjsModelConfig} from './types';
 
 export const DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL =
     'https://tfhub.dev/mediapipe/tfjs-model/blazepose_3d/detector/1';
 export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_FULL =
-    'https://storage.googleapis.com/tfjs-blazepose/blazepose-segmentation-full/model.json';
+    'https://tfhub.dev/mediapipe/tfjs-model/blazepose_3d/landmark/full/2';
 export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_LITE =
-    'https://storage.googleapis.com/tfjs-blazepose/blazepose-segmentation-lite/model.json';
+    'https://tfhub.dev/mediapipe/tfjs-model/blazepose_3d/landmark/lite/2';
 export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_HEAVY =
-    'https://storage.googleapis.com/tfjs-blazepose/blazepose-segmentation-heavy/model.json';
+    'https://tfhub.dev/mediapipe/tfjs-model/blazepose_3d/landmark/heavy/2';
 export const BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION = {
   reduceBoxesInLowestlayer: false,
   interpolatedScaleAspectRatio: 1.0,
@@ -76,8 +76,8 @@ export const BLAZEPOSE_TENSORS_TO_DETECTION_CONFIGURATION = {
   minScoreThresh: 0.5
 };
 export const BLAZEPOSE_DETECTOR_NON_MAX_SUPPRESSION_CONFIGURATION = {
-  minScoreThreshold: -1.0,
-  minSuppressionThreshold: 0.3
+  minSuppressionThreshold: 0.3,
+  overlapType: 'intersection-over-union' as const
 };
 export const BLAZEPOSE_DETECTOR_RECT_TRANSFORMATION_CONFIG = {
   shiftX: 0,
@@ -86,13 +86,17 @@ export const BLAZEPOSE_DETECTOR_RECT_TRANSFORMATION_CONFIG = {
   scaleY: 1.25,
   squareLong: true
 };
-export const BLAZEPOSE_DETECTOR_IMAGE_TO_TENSOR_CONFIG = {
-  inputResolution: {width: 224, height: 224},
-  keepAspectRatio: true
+export const BLAZEPOSE_DETECTOR_IMAGE_TO_TENSOR_CONFIG: ImageToTensorConfig = {
+  outputTensorSize: {width: 224, height: 224},
+  keepAspectRatio: true,
+  outputTensorFloatRange: [-1, 1],
+  borderMode: 'zero'
 };
-export const BLAZEPOSE_LANDMARK_IMAGE_TO_TENSOR_CONFIG = {
-  inputResolution: {width: 256, height: 256},
-  keepAspectRatio: true
+export const BLAZEPOSE_LANDMARK_IMAGE_TO_TENSOR_CONFIG: ImageToTensorConfig = {
+  outputTensorSize: {width: 256, height: 256},
+  keepAspectRatio: true,
+  outputTensorFloatRange: [0, 1],
+  borderMode: 'zero'
 };
 export const BLAZEPOSE_POSE_PRESENCE_SCORE = 0.5;
 export const BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG: TensorsToLandmarksConfig = {

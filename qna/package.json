@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/qna",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Question and Answer model (Mobile BERT)",
   "main": "dist/index.js",
   "unpkg": "dist/qna.min.js",
@@ -19,9 +19,9 @@
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^11.1.0",
     "@rollup/plugin-typescript": "3.1.1",
-    "@tensorflow/tfjs-backend-cpu": "^3.0.0",
-    "@tensorflow/tfjs-converter": "^3.0.0",
-    "@tensorflow/tfjs-core": "^3.0.0",
+    "@tensorflow/tfjs-backend-cpu": "^3.15.0",
+    "@tensorflow/tfjs-converter": "^3.15.0",
+    "@tensorflow/tfjs-core": "^3.15.0",
     "@types/jasmine": "^3.6.3",
     "babel-core": "~6.26.3",
     "babel-plugin-transform-runtime": "~6.23.0",

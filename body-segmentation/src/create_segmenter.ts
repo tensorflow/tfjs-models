@@ -15,6 +15,8 @@
  * =============================================================================
  */
 
+import {load as loadBodyPixSegmenter} from './body_pix/segmenter';
+import {BodyPixModelConfig} from './body_pix/types';
 import {BodySegmenter} from './body_segmenter';
 import {load as loadMediaPipeSelfieSegmentationMediaPipeSegmenter} from './selfie_segmentation_mediapipe/segmenter';
 import {MediaPipeSelfieSegmentationMediaPipeModelConfig, MediaPipeSelfieSegmentationModelConfig} from './selfie_segmentation_mediapipe/types';
@@ -31,7 +33,8 @@ import {SupportedModels} from './types';
 export async function createSegmenter(
     model: SupportedModels,
     modelConfig?: MediaPipeSelfieSegmentationMediaPipeModelConfig|
-    MediaPipeSelfieSegmentationTfjsModelConfig): Promise<BodySegmenter> {
+    MediaPipeSelfieSegmentationTfjsModelConfig|
+    BodyPixModelConfig): Promise<BodySegmenter> {
   switch (model) {
     case SupportedModels.MediaPipeSelfieSegmentation: {
       const config = modelConfig as MediaPipeSelfieSegmentationModelConfig;
@@ -50,6 +53,10 @@ export async function createSegmenter(
       throw new Error(
           `Expect modelConfig.runtime to be either 'tfjs' ` +
           `or 'mediapipe', but got ${runtime}`);
+    }
+    case SupportedModels.BodyPix: {
+      const config = modelConfig as BodyPixModelConfig;
+      return loadBodyPixSegmenter(config);
     }
     default:
       throw new Error(`${model} is not a supported model name.`);

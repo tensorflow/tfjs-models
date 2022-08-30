@@ -1,11 +1,11 @@
 steps:
-- name: 'node:10'
+- name: 'node:12'
   entrypoint: 'yarn'
   id: 'yarn'
   args: ['install']
 
 # Run diff to find modified files in each folder.
-- name: 'node:10'
+- name: 'node:12'
   entrypoint: 'yarn'
   id: 'diff'
   args: ['diff']
@@ -47,6 +47,27 @@ steps:
   entrypoint: 'bash'
   id: 'deeplab'
   args: ['./scripts/run-build.sh', 'deeplab']
+  waitFor: ['diff']
+
+# Depth estimation.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'depth-estimation'
+  args: ['./scripts/run-build.sh', 'depth-estimation']
+  waitFor: ['diff']
+
+# Face detection.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'face-detection'
+  args: ['./scripts/run-build.sh', 'face-detection']
+  waitFor: ['diff']
+
+# Face landmarks detection.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'face-landmarks-detection'
+  args: ['./scripts/run-build.sh', 'face-landmarks-detection']
   waitFor: ['diff']
 
 # KNN Classifier.
@@ -134,7 +155,7 @@ steps:
   waitFor: ['diff']
 
 # Run the top-level sanity checks.
-- name: 'node:10'
+- name: 'node:12'
   entrypoint: 'yarn'
   id: 'test'
   args: ['presubmit']
