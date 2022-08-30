@@ -182,7 +182,13 @@ See the diagram below for what those keypoints are and their index in the array.
 29: left_heel  \
 30: right_heel  \
 31: left_foot_index  \
-32: right_foot_index
+32: right_foot_index  \
+33: bodyCenter  \
+34: forehead  \
+35: leftThumb \
+36: leftHand  \
+37: rightThumb  \
+38: rightHand \
 
 -------------------------------------------------------------------------------
 

@@ -58,8 +58,9 @@ function refineXY(
     refinedLandmarks: Keypoint[]) {
   for (let i = 0; i < landmarks.length; ++i) {
     const landmark = landmarks[i];
-    const refinedLandmark = {x: landmark.x, y: landmark.y};
-    refinedLandmarks[indexesMapping[i]] = refinedLandmark;
+    const refinedLandmark = refinedLandmarks[indexesMapping[i]];
+    refinedLandmark.x = landmark.x;
+    refinedLandmark.y = landmark.y;
   }
 }
 
@@ -81,6 +82,7 @@ function refineZ(
         for (let i = 0; i < landmarks.length; ++i) {
           refinedLandmarks[indexesMapping[i]].z = landmarks[i].z;
         }
+
         break;
       }
       case 'none':
@@ -114,8 +116,8 @@ export function landmarksRefinement(
     refinements: LandmarksRefinementConfig[]): Keypoint[] {
   // Initialize refined landmarks list.
   const numRefinedLandmarks = getNumberOfRefinedLandmarks(refinements);
-  const refinedLandmarks: Keypoint[] = new Array(numRefinedLandmarks);
-
+  const refinedLandmarks: Keypoint[] =
+      new Array(numRefinedLandmarks).fill(null).map(Object);
   // Apply input landmarks to output refined landmarks in provided order.
   for (let i = 0; i < allLandmarks.length; ++i) {
     const landmarks = allLandmarks[i];
@@ -135,7 +137,6 @@ export function landmarksRefinement(
     refineZ(
         refinement.indexesMapping, refinement.zRefinement, landmarks,
         refinedLandmarks);
-
     // Visibility and presence are not currently refined and are left as `0`.
   }
 
