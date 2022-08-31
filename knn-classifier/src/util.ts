@@ -26,7 +26,7 @@ export function concatWithNulls(
   } else if (ndarray2 === null) {
     return ndarray1.clone();
   }
-  return ndarray1.concat(ndarray2, 0);
+  return tf.concat<tf.Tensor2D>([ndarray1, ndarray2], 0);
 }
 
 export function topK(values: Float32Array, k: number):

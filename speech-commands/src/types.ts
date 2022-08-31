@@ -15,7 +15,8 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
+import * as tfl from '@tensorflow/tfjs-layers';
 
 /**
  * This file defines the interfaces related to SpeechCommandRecognizer.
@@ -88,7 +89,7 @@ export interface SpeechCommandRecognizer {
   /**
    * Get the input shape of the tf.Model the underlies the recognizer.
    */
-  modelInputShape(): tf.Shape;
+  modelInputShape(): tfl.Shape;
 
   /**
    * Getter for word labels.
@@ -247,7 +248,7 @@ export interface TransferSpeechCommandRecognizer extends
    *   examples have been collected yet.
    */
   train(config?: TransferLearnConfig):
-      Promise<tf.History|[tf.History, tf.History]>;
+      Promise<tfl.History|[tfl.History, tfl.History]>;
 
   /**
    * Perform evaluation of the model using the examples that the model
@@ -592,7 +593,7 @@ export interface TransferLearnConfig extends AudioDataAugmentationOptions {
    * tf.Callback to be used during the initial training (i.e., not
    * the fine-tuning phase).
    */
-  callback?: tf.CustomCallbackArgs;
+  callback?: tfl.CustomCallbackArgs;
 
   /**
    * tf.Callback to be used durnig the fine-tuning phase.
@@ -600,7 +601,7 @@ export interface TransferLearnConfig extends AudioDataAugmentationOptions {
    * This parameter is used only if `fineTuningEpochs` is specified
    * and is a positive integer.
    */
-  fineTuningCallback?: tf.CustomCallbackArgs;
+  fineTuningCallback?: tfl.CustomCallbackArgs;
 
   /**
    * Ratio between the window hop and the window width.

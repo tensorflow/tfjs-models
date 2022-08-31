@@ -17,8 +17,10 @@
 
 import '@tensorflow/tfjs-node';
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
+// tslint:disable-next-line: no-imports-from-dist
 import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
+import * as tfl from '@tensorflow/tfjs-layers';
 import {writeFileSync} from 'fs';
 import {join} from 'path';
 import * as rimraf from 'rimraf';
@@ -53,26 +55,26 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
   const fakeNumFrames = 42;
   const fakeColumnTruncateLength = 232;
 
-  let secondLastBaseDenseLayer: tf.layers.Layer;
+  let secondLastBaseDenseLayer: tfl.layers.Layer;
   let tfLoadModelSpy: jasmine.Spy;
 
-  function setUpFakes(model?: tf.Sequential, backgroundAndNoiseOnly = false) {
+  function setUpFakes(model?: tfl.Sequential, backgroundAndNoiseOnly = false) {
     const words =
         backgroundAndNoiseOnly ? fakeWordsNoiseAndUnknownOnly : fakeWords;
     const numWords = words.length;
     tfLoadModelSpy =
-        spyOn(tf, 'loadLayersModel').and.callFake((url: string) => {
+        spyOn(tfl, 'loadLayersModel').and.callFake((url: string) => {
           if (model == null) {
-            model = tf.sequential();
-            model.add(tf.layers.flatten(
+            model = tfl.sequential();
+            model.add(tfl.layers.flatten(
                 {inputShape: [fakeNumFrames, fakeColumnTruncateLength, 1]}));
-            secondLastBaseDenseLayer = tf.layers.dense({
+            secondLastBaseDenseLayer = tfl.layers.dense({
               units: 4,
               activation: 'relu',
               kernelInitializer: 'leCunNormal'
             });
             model.add(secondLastBaseDenseLayer);
-            model.add(tf.layers.dense({
+            model.add(tfl.layers.dense({
               units: numWords,
               useBias: false,
               kernelInitializer: 'leCunNormal',
@@ -105,17 +107,17 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
     const recognizer = new BrowserFftSpeechCommandRecognizer();
     await recognizer.ensureModelLoaded();
     expect(recognizer.wordLabels()).toEqual(fakeWords);
-    expect(recognizer.model instanceof tf.LayersModel).toEqual(true);
+    expect(recognizer.model instanceof tfl.LayersModel).toEqual(true);
     expect(recognizer.modelInputShape()).toEqual([
       null, fakeNumFrames, fakeColumnTruncateLength, 1
     ]);
   });
 
   it('ensureModelLoaded fails: words - model output mismatch', async () => {
-    const fakeModel = tf.sequential();
-    fakeModel.add(tf.layers.flatten(
+    const fakeModel = tfl.sequential();
+    fakeModel.add(tfl.layers.flatten(
         {inputShape: [fakeNumFrames, fakeColumnTruncateLength, 1]}));
-    fakeModel.add(tf.layers.dense({units: 12, activation: 'softmax'}));
+    fakeModel.add(tfl.layers.dense({units: 12, activation: 'softmax'}));
     setUpFakes(fakeModel);
 
     const recognizer = new BrowserFftSpeechCommandRecognizer();
@@ -130,10 +132,10 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
   });
 
   async function createFakeModelArtifact(tmpDir: string) {
-    const model = tf.sequential();
-    model.add(
-        tf.layers.reshape({targetShape: [43 * 232], inputShape: [43, 232, 1]}));
-    model.add(tf.layers.dense({units: 4, activation: 'softmax'}));
+    const model = tfl.sequential();
+    model.add(tfl.layers.reshape(
+        {targetShape: [43 * 232], inputShape: [43, 232, 1]}));
+    model.add(tfl.layers.dense({units: 4, activation: 'softmax'}));
     await model.save(`file://${tmpDir}`);
   }
 
@@ -403,7 +405,7 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
 
     const numCallbacksToComplete = 2;
     let numCallbacksCompleted = 0;
-    const spectroDurationMillis = 1000;
+    const spectroDurationMillis = 900;
     const tensorCounts: number[] = [];
     const callbackTimestamps: number[] = [];
     recognizer.listen(async (result: SpeechCommandRecognizerResult) => {
@@ -452,12 +454,13 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
       expect((result.scores as Float32Array).length).toEqual(fakeWords.length);
 
       callbackTimestamps.push(tf.util.now());
+      const timeDelta = 50;
       if (callbackTimestamps.length > 1) {
         expect(
             callbackTimestamps[callbackTimestamps.length - 1] -
             callbackTimestamps[callbackTimestamps.length - 2])
             .toBeGreaterThanOrEqual(
-                recognizer.params().spectrogramDurationMillis);
+                recognizer.params().spectrogramDurationMillis - timeDelta);
       }
 
       tensorCounts.push(tf.memory().numTensors);
@@ -488,7 +491,7 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
 
     const numCallbacksToComplete = 2;
     let numCallbacksCompleted = 0;
-    const spectroDurationMillis = 1000;
+    const spectroDurationMillis = 900;
     const tensorCounts: number[] = [];
     const callbackTimestamps: number[] = [];
     recognizer.listen(async (result: SpeechCommandRecognizerResult) => {
@@ -1034,14 +1037,14 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
     });
 
     // tslint:disable-next-line:no-any
-    const transferHead = (transfer as any).transferHead as tf.Sequential;
+    const transferHead = (transfer as any).transferHead as tfl.Sequential;
     const numLayers = transferHead.layers.length;
     const oldTransferWeightValues = transferHead.getLayer(null, numLayers - 1)
                                         .getWeights()
                                         .map(weight => weight.dataSync());
 
     const history =
-        await transfer.train({optimizer: tf.train.sgd(1)}) as tf.History;
+        await transfer.train({optimizer: tf.train.sgd(1)}) as tfl.History;
     expect(history.history.loss.length).toEqual(20);
     expect(history.history.acc.length).toEqual(20);
 
@@ -1063,10 +1066,9 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
     // Verify that the weight of the transfer-learning head model changes
     // after training.
     const maxWeightChanges = newTransferWeightValues.map(
-        (newValues, i) => tf.tensor1d(newValues)
-                              .sub(tf.tensor1d(oldTransferWeightValues[i]))
-                              .abs()
-                              .max()
+        (newValues, i) => tf.max(tf.abs(tf.sub(
+                                     tf.tensor1d(newValues),
+                                     tf.tensor1d(oldTransferWeightValues[i]))))
                               .dataSync()[0]);
     expect(Math.max(...maxWeightChanges)).toBeGreaterThan(1e-3);
 
@@ -1098,7 +1100,7 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
       await transfer.collectExample('bar');
     }
     const history =
-        await transfer.train({epochs: 10, batchSize: 2}) as tf.History;
+        await transfer.train({epochs: 10, batchSize: 2}) as tfl.History;
     expect(history.history.loss.length).toEqual(10);
     expect(history.history.acc.length).toEqual(10);
 
@@ -1126,7 +1128,7 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
     const history =
         await transfer.train(
             {epochs: 10, batchSize: 2, augmentByMixingNoiseRatio: 0.5}) as
-        tf.History;
+        tfl.History;
     expect(history.history.loss.length).toEqual(10);
     expect(history.history.acc.length).toEqual(10);
 
@@ -1174,7 +1176,7 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
     await transfer.collectExample('bar');
     const history =
         await transfer.train({epochs: 3, batchSize: 2, validationSplit: 0.5}) as
-        tf.History;
+        tfl.History;
     expect(history.history.loss.length).toEqual(3);
     expect(history.history.acc.length).toEqual(3);
     expect(history.history.val_loss.length).toEqual(3);
@@ -1226,7 +1228,7 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
       validationSplit: 0.5,
       fitDatasetDurationMillisThreshold,
       fineTuningEpochs: 2
-    }) as [tf.History, tf.History];
+    }) as [tfl.History, tfl.History];
     expect(history.history.loss.length).toEqual(3);
     expect(history.history.acc.length).toEqual(3);
     expect(history.history.val_loss.length).toEqual(3);
@@ -1252,7 +1254,7 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
       batchSize: 2,
       fineTuningEpochs: 2,
       fineTuningOptimizer: 'adam'
-    }) as tf.History[];
+    }) as tfl.History[];
     expect(historyObjects.length).toEqual(2);
     expect(historyObjects[0].history.loss.length).toEqual(3);
     expect(historyObjects[0].history.acc.length).toEqual(3);
@@ -1294,11 +1296,11 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
     const history = await transfer.train({
       epochs: 5,
       callback: {
-        onEpochEnd: async (epoch: number, logs: tf.Logs) => {
+        onEpochEnd: async (epoch: number, logs: tfl.Logs) => {
           callbackEpochs.push(epoch);
         }
       }
-    }) as tf.History;
+    }) as tfl.History;
     expect(history.history.loss.length).toEqual(5);
     expect(history.history.acc.length).toEqual(5);
     expect(callbackEpochs).toEqual([0, 1, 2, 3, 4]);
@@ -1588,7 +1590,7 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
     expect(savedMetadata['xfer1']['wordLabels']).toEqual(['bar', 'foo']);
     expect(indexedDBStore.length).toEqual(1);
     const modelPrime =
-        await tf.models.modelFromJSON(indexedDBStore[0].modelTopology as {});
+        await tfl.models.modelFromJSON(indexedDBStore[0].modelTopology as {});
     expect(modelPrime.layers.length).toEqual(4);
     expect(indexedDBStore[0].weightSpecs.length).toEqual(4);
 
@@ -1626,7 +1628,7 @@ describeWithFlags('Browser FFT recognizer', NODE_ENVS, () => {
     // IndexedDB handler created above.
     tfLoadModelSpy.and.callThrough();
     const modelPrime =
-        await tf.loadLayersModel(`file://${tempSavePath}/model.json`);
+        await tfl.loadLayersModel(`file://${tempSavePath}/model.json`);
     expect(modelPrime.outputs.length).toEqual(1);
     expect(modelPrime.outputs[0].shape).toEqual([null, 2]);
 

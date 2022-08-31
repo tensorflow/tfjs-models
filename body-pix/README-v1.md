@@ -108,7 +108,7 @@ An object containing a width, height, and a binary array with 1 for the pixels t
 ###### via NPM
 
 ```javascript
-import * as bodyPix from '@tensorflow-models/body-pix';
+const bodyPix = require('@tensorflow-models/body-pix');
 
 const outputStride = 16;
 const segmentationThreshold = 0.5;
@@ -228,7 +228,7 @@ An object containing a width, height, and an array with a part id from 0-24 for 
 ###### via NPM
 
 ```javascript
-import * as bodyPix from '@tensorflow-models/body-pix';
+const bodyPix = require('@tensorflow-models/body-pix');
 
 const outputStride = 16;
 const segmentationThreshold = 0.5;
@@ -472,4 +472,4 @@ bodyPix.drawBokehEffect(
 
 ## Developing the Demos
 
-Details for how to run the demos are included in the `demos/` folder.
+Details for how to run the demo are included in the `demo/` folder.

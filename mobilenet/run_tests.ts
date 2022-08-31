@@ -15,6 +15,8 @@
  * =============================================================================
  */
 
+// Use the CPU backend for running tests.
+import '@tensorflow/tfjs-backend-cpu';
 import * as jasmine_util from '@tensorflow/tfjs-core/dist/jasmine_util';
 import {runTests} from '../test_util';
 

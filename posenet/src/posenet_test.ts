@@ -21,8 +21,10 @@ import * as tf from '@tensorflow/tfjs-core';
 import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
 import * as mobilenet from './mobilenet';
+import {MobileNet} from './mobilenet';
 import * as posenetModel from './posenet_model';
 import * as resnet from './resnet';
+import {ResNet} from './resnet';
 import {toValidInputResolution} from './util';
 
 describeWithFlags('PoseNet', NODE_ENVS, () => {
@@ -50,7 +52,7 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
       quantBytes
     } as posenetModel.ModelConfig;
 
-    spyOn(tfconv, 'loadGraphModel').and.callFake((): tfconv.GraphModel => {
+    spyOn(tfconv, 'loadGraphModel').and.callFake(() => {
       return null;
     });
 
@@ -71,7 +73,7 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
           };
         },
         dipose: () => {}
-      };
+      } as {} as ResNet;
     });
 
     spyOn(mobilenet, 'MobileNet').and.callFake(() => {
@@ -91,7 +93,7 @@ describeWithFlags('PoseNet', NODE_ENVS, () => {
           };
         },
         dipose: () => {}
-      };
+      } as {} as MobileNet;
     });
 
     resNet = await posenetModel.load(resNetConfig);

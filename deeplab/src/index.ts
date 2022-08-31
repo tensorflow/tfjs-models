@@ -22,7 +22,14 @@ import {DeepLabInput, DeepLabOutput, ModelArchitecture, ModelConfig, PredictionC
 import {getColormap, getLabels, getURL, toInputTensor, toSegmentationImage} from './utils';
 
 export {version} from './version';
-export {getColormap, getLabels, getURL, toSegmentationImage};
+export {
+  getColormap,
+  getLabels,
+  getURL,
+  ModelConfig,
+  PredictionConfig,
+  toSegmentationImage
+};
 
 /**
  * Initializes the DeepLab model and returns a `SemanticSegmentation` object.
@@ -119,7 +126,7 @@ export class SemanticSegmentation {
    */
   public predict(input: DeepLabInput): tf.Tensor2D {
     return tf.tidy(() => {
-      const data = toInputTensor(input);
+      const data = tf.cast(toInputTensor(input), 'int32');
       return tf.squeeze(this.model.execute(data) as tf.Tensor);
     });
   }

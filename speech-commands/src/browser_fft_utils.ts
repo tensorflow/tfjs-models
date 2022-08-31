@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
 import {promisify} from 'util';
 
 import {RawAudioData} from './types';
@@ -62,7 +62,7 @@ export function normalize(x: tf.Tensor): tf.Tensor {
   return tf.tidy(() => {
     const {mean, variance} = tf.moments(x);
     // Add an EPSILON to the denominator to prevent division-by-zero.
-    return x.sub(mean).div(variance.sqrt().add(EPSILON));
+    return tf.div(tf.sub(x, mean), tf.add(tf.sqrt(variance), EPSILON));
   });
 }
 

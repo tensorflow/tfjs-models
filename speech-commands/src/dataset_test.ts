@@ -15,8 +15,8 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
-import {test_util} from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
+import {test_util} from '@tensorflow/tfjs-core';
 
 import {normalize} from './browser_fft_utils';
 import {arrayBuffer2SerializedExamples, BACKGROUND_NOISE_TAG, Dataset, DATASET_SERIALIZATION_DESCRIPTOR, DATASET_SERIALIZATION_VERSION, deserializeExample, getMaxIntensityFrameIndex, getValidWindows, serializeExample, spectrogram2IntensityCurve, SpectrogramAndTargetsTfDataset} from './dataset';
@@ -624,7 +624,7 @@ describe('Dataset', () => {
     // 3 of the newly-generated ones at the end are from the augmentation.
     expect(xs.shape).toEqual([10, 3, 2, 1]);
     expect(ys.shape).toEqual([10, 2]);
-    const indices = ys.argMax(-1).dataSync();
+    const indices = tf.argMax(ys, -1).dataSync();
     const backgroundNoiseIndex = indices[0];
     for (let i = 0; i < 3; ++i) {
       expect(indices[indices.length - 1 - i] === backgroundNoiseIndex)
@@ -686,7 +686,7 @@ describe('Dataset', () => {
       const {ys} = dataset.getData(null, {numFrames: 3, hopFrames: 1}) as
           {xs: tf.Tensor, ys: tf.Tensor};
       // Use `argMax()` to convert the one-hot-encoded `ys` to indices.
-      argMaxTensors.push(ys.argMax(-1));
+      argMaxTensors.push(tf.argMax(ys, -1));
     }
     // `argMaxTensors` are the indices for the targets.
     // We stack them into a 2D tensor and then calculate the variance along
@@ -696,7 +696,7 @@ describe('Dataset', () => {
     // Assert that the orders are not all the same. This is asserting that
     // the indices are not all the same among the 5 iterations above.
     const {variance} = tf.moments(argMaxMerged, 0);
-    expect(variance.max().dataSync()[0]).toBeGreaterThan(0);
+    expect(tf.max(variance).dataSync()[0]).toBeGreaterThan(0);
   });
 
   it('getSpectrogramsAsTensors: shuffle=false leads to constant order', () => {
@@ -711,7 +711,7 @@ describe('Dataset', () => {
       const {ys} =
           dataset.getData(null, {numFrames: 3, hopFrames: 1, shuffle: false}) as
           {xs: tf.Tensor, ys: tf.Tensor};
-      argMaxTensors.push(ys.argMax(-1));
+      argMaxTensors.push(tf.argMax(ys, -1));
     }
     // `argMaxTensors` are the indices for the targets.
     // We stack them into a 2D tensor and then calculate the variance along
@@ -721,7 +721,7 @@ describe('Dataset', () => {
     // Assert that the orders are not all the same. This is asserting that
     // the indices are all the same among the 5 iterations above.
     const {variance} = tf.moments(argMaxMerged, 0);
-    expect(variance.max().dataSync()[0]).toEqual(0);
+    expect(tf.max(variance).dataSync()[0]).toEqual(0);
   });
 
   it('Uniform example lengths and multiple windows per example', () => {

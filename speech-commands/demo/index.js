@@ -18,7 +18,7 @@
 import * as tf from '@tensorflow/tfjs';
 import Plotly from 'plotly.js-dist';
 
-import * as SpeechCommands from '../src';
+import * as SpeechCommands from '@tensorflow-models/speech-commands';
 
 import {DatasetViz, removeNonFixedChildrenFromWordDiv} from './dataset-vis';
 import {hideCandidateWords, logToStatusDisplay, plotPredictions, plotSpectrogram, populateCandidateWords, showCandidateWords} from './ui';

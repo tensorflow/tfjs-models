@@ -15,12 +15,13 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
 
 import {BrowserFftSpeechCommandRecognizer} from './browser_fft_recognizer';
 import {playRawAudio} from './browser_fft_utils';
 import {concatenateFloat32Arrays} from './generic_utils';
 import {FFT_TYPE, SpeechCommandRecognizer, SpeechCommandRecognizerMetadata} from './types';
+import { normalizeFloat32Array, normalize } from './browser_fft_utils';
 
 /**
  * Create an instance of speech-command recognizer.
@@ -78,6 +79,8 @@ export function create(
 
 const utils = {
   concatenateFloat32Arrays,
+  normalizeFloat32Array,
+  normalize,
   playRawAudio
 };
 
