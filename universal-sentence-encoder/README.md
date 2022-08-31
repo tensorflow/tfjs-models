@@ -90,6 +90,7 @@ Pass a path to the Tokenizer to use a different vocabulary:
 use.loadTokenizer('https://storage.googleapis.com/learnjs-data/bert_vocab/vocab.json').then(tokenizer => {
   tokenizer.encode('Hello, how are you?'); // [0, 15350, 29623, 2129, 2024, 2017, 29632]
 });
+```
 
 To use the QnA dual encoder:
 ```js
