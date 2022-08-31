@@ -20,7 +20,6 @@ import * as tf from '@tensorflow/tfjs-core';
 import {config} from './config';
 import {Color, DeepLabInput, Label, Legend, ModelArchitecture, QuantizationBytes, SegmentationData} from './types';
 
-
 export function createPascalColormap(): Color[] {
   /**
    * Generates the colormap matching the Pascal VOC dev guidelines.
@@ -58,16 +57,20 @@ export function createPascalColormap(): Color[] {
  * float32 compressed to 1 or 2 bytes respectively.
  * Set it to 4 to disable quantization.
  *
- * @return The URL of the TF.js GraphModel weights
+ * @return The URL of the TF.js model
  */
 export function getURL(
-    base: ModelArchitecture,
-    quantizationBytes: QuantizationBytes,
-) {
-  return `${config['BASE_PATH']}/${
-      ([1, 2].indexOf(quantizationBytes) !== -1) ?
-          `quantized/${quantizationBytes}/` :
-          ''}${base}/model.json`;
+    base: ModelArchitecture, quantizationBytes: QuantizationBytes) {
+  const TFHUB_BASE = `${config['BASE_PATH']}`;
+  const TFHUB_QUERY_PARAM = 'tfjs-format=file';
+
+  const modelPath = quantizationBytes === 4 ?
+      `${base}/1/default/1/model.json` :
+      `${base}/1/quantized/${quantizationBytes}/1/model.json`;
+
+  // Example of url that should be generated.
+  // https://tfhub.dev/tensorflow/tfjs-model/deeplab/pascal/1/default/1/model.json?tfjs-format=file
+  return `${TFHUB_BASE}/${modelPath}?${TFHUB_QUERY_PARAM}`;
 }
 
 /**
@@ -135,8 +138,8 @@ export function toInputTensor(input: DeepLabInput) {
     const resizeRatio = config['CROP_SIZE'] / Math.max(width, height);
     const targetHeight = Math.round(height * resizeRatio);
     const targetWidth = Math.round(width * resizeRatio);
-    return tf.image.resizeBilinear(image, [targetHeight, targetWidth])
-        .expandDims(0);
+    return tf.expandDims(
+      tf.image.resizeBilinear(image, [targetHeight, targetWidth]));
   });
 }
 
@@ -192,7 +195,7 @@ export async function toSegmentationImage(
   }
   const [height, width] = rawSegmentationMap.shape;
   const segmentationImageBuffer = tf.buffer([height, width, 3], 'int32');
-  const mapData = (await rawSegmentationMap.array()) as number[][];
+  const mapData = await rawSegmentationMap.array();
   const labels = new Set<Label>();
   for (let columnIndex = 0; columnIndex < height; ++columnIndex) {
     for (let rowIndex = 0; rowIndex < width; ++rowIndex) {

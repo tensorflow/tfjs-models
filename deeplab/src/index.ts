@@ -21,7 +21,15 @@ import * as tf from '@tensorflow/tfjs-core';
 import {DeepLabInput, DeepLabOutput, ModelArchitecture, ModelConfig, PredictionConfig} from './types';
 import {getColormap, getLabels, getURL, toInputTensor, toSegmentationImage} from './utils';
 
-export {getColormap, getLabels, getURL, toSegmentationImage};
+export {version} from './version';
+export {
+  getColormap,
+  getLabels,
+  getURL,
+  ModelConfig,
+  PredictionConfig,
+  toSegmentationImage
+};
 
 /**
  * Initializes the DeepLab model and returns a `SemanticSegmentation` object.
@@ -83,8 +91,10 @@ export async function load(
         `together with the degree of quantization (either 1, 2 or 4).` +
         `Aborting, since neither has been provided.`);
   }
-  const url = getURL(modelConfig.base, modelConfig.quantizationBytes);
-  const graphModel = await tfconv.loadGraphModel(modelConfig.modelUrl || url);
+
+  const graphModel = await tfconv.loadGraphModel(
+      modelConfig.modelUrl ||
+      getURL(modelConfig.base, modelConfig.quantizationBytes));
   const deeplab = new SemanticSegmentation(graphModel, modelConfig.base);
   return deeplab;
 }
@@ -116,9 +126,9 @@ export class SemanticSegmentation {
    */
   public predict(input: DeepLabInput): tf.Tensor2D {
     return tf.tidy(() => {
-      const data = toInputTensor(input);
+      const data = tf.cast(toInputTensor(input), 'int32');
       return tf.squeeze(this.model.execute(data) as tf.Tensor);
-    }) as tf.Tensor2D;
+    });
   }
 
   /**

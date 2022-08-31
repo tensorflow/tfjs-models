@@ -1,0 +1,72 @@
+{
+  "name": "@tensorflow-models/pose-detection",
+  "version": "2.0.0",
+  "description": "Pretrained pose detection model",
+  "main": "dist/index.js",
+  "jsnext:main": "dist/pose-detection.esm.js",
+  "module": "dist/pose-detection.esm.js",
+  "unpkg": "dist/pose-detection.min.js",
+  "jsdelivr": "dist/pose-detection.min.js",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tensorflow/tfjs-models.git"
+  },
+  "peerDependencies": {
+    "@mediapipe/pose": "~0.4.0",
+    "@tensorflow/tfjs-converter": "^3.13.0",
+    "@tensorflow/tfjs-core": "^3.13.0",
+    "@tensorflow/tfjs-backend-webgl": "^3.13.0",
+    "@tensorflow/tfjs-backend-wasm": "^3.13.0"
+  },
+  "devDependencies": {
+    "@babel/polyfill": "^7.10.4",
+    "@mediapipe/pose": "~0.4.0",
+    "@rollup/plugin-commonjs": "^11.0.2",
+    "@rollup/plugin-node-resolve": "^7.1.1",
+    "@rollup/plugin-typescript": "^3.0.0",
+    "@tensorflow/tfjs-backend-cpu": "^3.13.0",
+    "@tensorflow/tfjs-backend-wasm": "^3.13.0",
+    "@tensorflow/tfjs-backend-webgl": "^3.13.0",
+    "@tensorflow/tfjs-converter": "^3.13.0",
+    "@tensorflow/tfjs-core": "^3.13.0",
+    "@types/jasmine": "^3.4.0",
+    "babel-core": "~6.26.0",
+    "babel-plugin-transform-runtime": "~6.23.0",
+    "jasmine": "~3.1.0",
+    "jasmine-core": "~3.1.0",
+    "karma": "~6.3.1",
+    "karma-browserstack-launcher": "~1.6.0",
+    "karma-chrome-launcher": "~2.2.0",
+    "karma-jasmine": "~1.1.0",
+    "karma-spec-reporter": "~0.0.32",
+    "karma-typescript": "~5.5.1",
+    "karma-typescript-es6-transform": "^5.1.0",
+    "rollup": "~2.3.2",
+    "rollup-plugin-terser": "~5.3.0",
+    "rollup-plugin-visualizer": "~3.3.2",
+    "ts-node": "~8.8.2",
+    "tslint": "^6.1.3",
+    "tslint-no-circular-imports": "~0.7.0",
+    "typescript": "~3.9.9",
+    "yalc": "~1.0.0-pre.50"
+  },
+  "scripts": {
+    "bundle": "rollup -c",
+    "build": "rimraf dist && tsc && yarn bundle",
+    "publish-local": "yarn build && rollup -c && yalc publish",
+    "run-browserstack": "karma start --browserstack",
+    "test-node": "NODE_PRESERVE_SYMLINKS=1 ts-node --skip-ignore --project tsconfig.test.json run_tests.ts",
+    "test": "yarn && karma start",
+    "test-ci": "yarn run-browserstack --browsers=bs_chrome_mac",
+    "build-npm": "yarn build && yarn bundle",
+    "lint": "tslint -p . -t verbose",
+    "publish-demo": "./scripts/publish-demo.sh",
+    "link-core": "yalc link @tensorflow/tfjs-core",
+    "link-webgl": "yalc link @tensorflow/tfjs-backend-webgl"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "rimraf": "^3.0.2"
+  }
+}

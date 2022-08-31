@@ -18,50 +18,48 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {Tokenizer} from './tokenizer';
+import {loadTokenizer, loadVocabulary, Tokenizer} from './tokenizer';
+import {loadQnA} from './use_qna';
+
+export {version} from './version';
 
 const BASE_PATH =
-    'https://storage.googleapis.com/tfjs-models/savedmodel/universal_sentence_encoder/';
+    'https://storage.googleapis.com/tfjs-models/savedmodel/universal_sentence_encoder';
 
-export async function load() {
+declare interface ModelInputs extends tf.NamedTensorMap {
+  indices: tf.Tensor;
+  values: tf.Tensor;
+}
+
+interface LoadConfig {
+  modelUrl?: string;
+  vocabUrl?: string;
+}
+
+export async function load(config?: LoadConfig) {
   const use = new UniversalSentenceEncoder();
-  await use.load();
+  await use.load(config);
   return use;
-}
-
-/**
- * Load the Tokenizer for use independently from the UniversalSentenceEncoder.
- *
- * @param pathToVocabulary (optional) Provide a path to the vocabulary file.
- */
-export async function loadTokenizer(pathToVocabulary?: string) {
-  const vocabulary = await loadVocabulary(pathToVocabulary);
-  const tokenizer = new Tokenizer(vocabulary);
-  return tokenizer;
-}
-
-/**
- * Load a vocabulary for the Tokenizer.
- *
- * @param pathToVocabulary Defaults to the path to the 8k vocabulary used by the
- * UniversalSentenceEncoder.
- */
-async function loadVocabulary(pathToVocabulary = `${BASE_PATH}vocab.json`) {
-  const vocabulary = await tf.util.fetch(pathToVocabulary);
-  return vocabulary.json();
 }
 
 export class UniversalSentenceEncoder {
   private model: tfconv.GraphModel;
   private tokenizer: Tokenizer;
 
-  async loadModel() {
-    return tfconv.loadGraphModel(`${BASE_PATH}model.json`);
+  async loadModel(modelUrl?: string) {
+    return modelUrl
+      ? tfconv.loadGraphModel(modelUrl)
+      : tfconv.loadGraphModel(
+          'https://tfhub.dev/tensorflow/tfjs-model/universal-sentence-encoder-lite/1/default/1',
+          {fromTFHub: true}
+        );
   }
 
-  async load() {
-    const [model, vocabulary] =
-        await Promise.all([this.loadModel(), loadVocabulary()]);
+  async load(config: LoadConfig = {}) {
+    const [model, vocabulary] = await Promise.all([
+      this.loadModel(config.modelUrl),
+      loadVocabulary(config.vocabUrl || `${BASE_PATH}/vocab.json`)
+    ]);
 
     this.model = model;
     this.tokenizer = new Tokenizer(vocabulary);
@@ -94,7 +92,9 @@ export class UniversalSentenceEncoder {
         flattenedIndicesArr, [flattenedIndicesArr.length, 2], 'int32');
     const values = tf.tensor1d(tf.util.flatten(encodings) as number[], 'int32');
 
-    const embeddings = await this.model.executeAsync({indices, values});
+    const modelInputs: ModelInputs = {indices, values};
+
+    const embeddings = await this.model.executeAsync(modelInputs);
     indices.dispose();
     values.dispose();
 
@@ -103,3 +103,5 @@ export class UniversalSentenceEncoder {
 }
 
 export {Tokenizer};
+export {loadTokenizer};
+export {loadQnA};

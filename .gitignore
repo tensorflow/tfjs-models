@@ -1,6 +1,9 @@
+.DS_Store
 node_modules
 dist/
+clone/
 
+*/diff
 **/*/node_modules
 **/*/coverage
 **/*/.cache
@@ -11,3 +14,5 @@ dist/
 .rpt2_cache/
 
 *.pyc
+
+*.tgz

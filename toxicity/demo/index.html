@@ -83,6 +83,7 @@ limitations under the License.
       #classify-new-text-input {
         border: none;
         border-bottom: solid 1px #ccc;
+        cursor: pointer;
         font-size: 14px;
         line-height: 2;
         width: calc(100% - 127px);
@@ -98,7 +99,7 @@ limitations under the License.
       }
 
       #classify-new-text {
-        cursor: pointer;
+        border: none;
         text-transform: uppercase;
         padding: 9px 14px 9px 14px;
         font-size: 13px;
@@ -126,10 +127,10 @@ limitations under the License.
     <div class="description">This is a demo of the TensorFlow.js toxicity model, which classifies text according to whether it exhibits offensive attributes (i.e. profanity, sexual explicitness). The samples in the table below were taken from this <a href="https://www.kaggle.com/c/jigsaw-toxic-comment-classification-challenge/data">Kaggle dataset</a>.</div>
     <div id="table-wrapper"></div>
     <p>Enter text below and click 'Classify' to add it to the table.</p>
-    <div>
-      <input id="classify-new-text-input" placeholder="i.e. 'you suck'">
-      <div id="classify-new-text">Classify</div>
-    </div>
+    <form id="classify-new">
+      <input id="classify-new-text-input" placeholder="i.e. 'you suck'" required="">
+      <button id="classify-new-text" type="submit">Classify</div>
+    </form>
   </div>
   <script src="index.js"></script>
 </body>

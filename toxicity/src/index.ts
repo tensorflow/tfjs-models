@@ -18,11 +18,12 @@
 import * as use from '@tensorflow-models/universal-sentence-encoder';
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
+export {version} from './version';
 
-// import {padInput} from './util';
-
-const BASE_PATH =
-    'https://storage.googleapis.com/tfjs-models/savedmodel/toxicity/';
+declare interface ModelInputs extends tf.NamedTensorMap {
+  Placeholder_1: tf.Tensor;
+  Placeholder: tf.Tensor;
+}
 
 /**
  * Load the toxicity model.
@@ -53,7 +54,9 @@ export class ToxicityClassifier {
   }
 
   async loadModel() {
-    return tfconv.loadGraphModel(`${BASE_PATH}model.json`);
+    return tfconv.loadGraphModel(
+        'https://tfhub.dev/tensorflow/tfjs-model/toxicity/1/default/1',
+        {fromTFHub: true});
   }
 
   async loadTokenizer() {
@@ -75,9 +78,8 @@ export class ToxicityClassifier {
     } else {
       tf.util.assert(
           this.toxicityLabels.every(d => this.labels.indexOf(d) > -1),
-          () =>
-              `toxicityLabels argument must contain only items from the model ` +
-              `heads ${this.labels.join(', ')}, ` +
+          () => `toxicityLabels argument must contain only items from the ` +
+              `model heads ${this.labels.join(', ')}, ` +
               `got ${this.toxicityLabels.join(', ')}`);
     }
   }
@@ -115,8 +117,12 @@ export class ToxicityClassifier {
         flattenedIndicesArr, [flattenedIndicesArr.length, 2], 'int32');
     const values = tf.tensor1d(tf.util.flatten(encodings) as number[], 'int32');
 
-    const labels = await this.model.executeAsync(
-        {Placeholder_1: indices, Placeholder: values});
+    const modelInputs: ModelInputs = {
+      Placeholder_1: indices,
+      Placeholder: values
+    };
+
+    const labels = await this.model.executeAsync(modelInputs);
 
     indices.dispose();
     values.dispose();

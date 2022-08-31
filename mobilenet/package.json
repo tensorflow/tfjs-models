@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/mobilenet",
-  "version": "2.0.4",
+  "version": "2.1.0",
   "description": "Pretrained MobileNet in TensorFlow.js",
   "main": "dist/index.js",
   "unpkg": "dist/mobilenet.min.js",
@@ -13,12 +13,13 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs-core": "~1.2.1",
-    "@tensorflow/tfjs-converter": "~1.2.1"
+    "@tensorflow/tfjs-converter": "^3.1.0",
+    "@tensorflow/tfjs-core": "^3.1.0"
   },
   "devDependencies": {
-    "@tensorflow/tfjs-core": "~1.2.1",
-    "@tensorflow/tfjs-converter": "~1.2.1",
+    "@tensorflow/tfjs-backend-cpu": "^3.1.0",
+    "@tensorflow/tfjs-converter": "^3.1.0",
+    "@tensorflow/tfjs-core": "^3.1.0",
     "@types/jasmine": "~2.5.53",
     "babel-core": "^6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",
@@ -30,14 +31,15 @@
     "rollup-plugin-typescript2": "~0.13.0",
     "rollup-plugin-uglify": "~3.0.0",
     "ts-node": "~5.0.0",
-    "tslint": "~5.8.0",
-    "typescript": "3.3.3333"
+    "tslint": "~5.18.0",
+    "typescript": "3.5.3"
   },
   "scripts": {
     "build": "rimraf dist && tsc",
-    "publish-local": "yarn build && rollup -c && yalc push",    
+    "build-npm": "yarn build && rollup -c",
+    "publish-local": "yarn build && rollup -c && yalc push",
     "lint": "tslint -p . -t verbose",
-    "test": "ts-node run_tests.ts"
+    "test": "ts-node --skip-ignore --project tsconfig.test.json run_tests.ts"
   },
   "license": "Apache-2.0"
 }

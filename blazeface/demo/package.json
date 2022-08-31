@@ -1,0 +1,56 @@
+{
+  "name": "blazeface_demo",
+  "version": "0.0.2",
+  "description": "",
+  "main": "index.js",
+  "license": "Apache-2.0",
+  "private": true,
+  "engines": {
+    "node": ">=8.9.0"
+  },
+  "dependencies": {
+    "@tensorflow-models/blazeface": "link:../",
+    "@tensorflow/tfjs-backend-wasm": "^3.11.0",
+    "@tensorflow/tfjs-backend-webgl": "^3.11.0",
+    "@tensorflow/tfjs-converter": "^3.11.0",
+    "@tensorflow/tfjs-core": "^3.11.0"
+  },
+  "scripts": {
+    "watch": "esbuild index.js --bundle --target=es6 --servedir=. --serve --sourcemap --sources-content=true --preserve-symlinks",
+    "build": "mkdirp dist && cp index.html dist && esbuild index.js --bundle --target=es6 --outfile=dist/index.js --sourcemap --sources-content=true --preserve-symlinks --minify",
+    "lint": "eslint .",
+    "build-model": "cd .. && yarn && yarn build-npm",
+    "build-deps": "yarn build-model"
+  },
+  "browser": {
+    "crypto": false
+  },
+  "devDependencies": {
+    "clang-format": "~1.2.2",
+    "dat.gui": "^0.7.2",
+    "esbuild": "^0.13.10",
+    "eslint": "^4.19.1",
+    "eslint-config-google": "^0.9.1",
+    "mkdirp": "^1.0.4"
+  },
+  "resolutions": {
+    "is-svg": "4.3.1"
+  },
+  "eslintConfig": {
+    "extends": "google",
+    "rules": {
+      "require-jsdoc": 0,
+      "valid-jsdoc": 0
+    },
+    "env": {
+      "es6": true
+    },
+    "parserOptions": {
+      "ecmaVersion": 8,
+      "sourceType": "module"
+    }
+  },
+  "eslintIgnore": [
+    "dist/"
+  ]
+}

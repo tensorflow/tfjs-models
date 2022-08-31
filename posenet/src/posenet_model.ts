@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google Inc. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,51 +18,14 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
+import {BaseModel} from './base_model';
 import {mobileNetCheckpoint, resNet50Checkpoint} from './checkpoints';
-import {MobileNet, MobileNetMultiplier} from './mobilenet';
+import {MobileNet} from './mobilenet';
 import {decodeMultiplePoses} from './multi_pose/decode_multiple_poses';
 import {ResNet} from './resnet';
 import {decodeSinglePose} from './single_pose/decode_single_pose';
-import {InputResolution, Pose, PosenetInput} from './types';
+import {InputResolution, MobileNetMultiplier, Pose, PoseNetArchitecture, PosenetInput, PoseNetOutputStride, PoseNetQuantBytes} from './types';
 import {assertValidOutputStride, assertValidResolution, getInputTensorDimensions, getValidInputResolutionDimensions, padAndResizeTo, scaleAndFlipPoses, toTensorBuffers3D, validateInputResolution} from './util';
-
-export type PoseNetOutputStride = 32|16|8;
-export type PoseNetArchitecture = 'ResNet50'|'MobileNetV1';
-export type PoseNetDecodingMethod = 'single-person'|'multi-person';
-export type PoseNetQuantBytes = 1|2|4;
-
-/**
- * PoseNet supports using various convolution neural network models
- * (e.g. ResNet and MobileNetV1) as its underlying base model.
- * The following BaseModel interface defines a unified interface for
- * creating such PoseNet base models. Currently both MobileNet (in
- * ./mobilenet.ts) and ResNet (in ./resnet.ts) implements the BaseModel
- * interface. New base models that conform to the BaseModel interface can be
- * added to PoseNet.
- */
-export interface BaseModel {
-  // The output stride of the base model.
-  readonly outputStride: PoseNetOutputStride;
-
-  /**
-   * Predicts intermediate Tensor representations.
-   *
-   * @param input The input RGB image of the base model.
-   * A Tensor of shape: [`inputResolution`, `inputResolution`, 3].
-   *
-   * @return A dictionary of base model's intermediate predictions.
-   * The returned dictionary should contains the following elements:
-   * heatmapScores: A Tensor3D that represents the heatmapScores.
-   * offsets: A Tensor3D that represents the offsets.
-   * displacementFwd: A Tensor3D that represents the forward displacement.
-   * displacementBwd: A Tensor3D that represents the backward displacement.
-   */
-  predict(input: tf.Tensor3D): {[key: string]: tf.Tensor3D};
-  /**
-   * Releases the CPU and GPU memory allocated by the model.
-   */
-  dispose(): void;
-}
 
 /**
  * PoseNet model loading is configurable using the following config dictionary.
@@ -167,7 +130,7 @@ function validateModelConfig(config: ModelConfig) {
     throw new Error(
         `Invalid outputStride ${config.outputStride}. ` +
         `Should be one of ${VALID_STRIDE[config.architecture]} ` +
-        `for architecutre ${config.architecture}.`);
+        `for architecture ${config.architecture}.`);
   }
 
   if (config.multiplier == null) {
@@ -177,7 +140,7 @@ function validateModelConfig(config: ModelConfig) {
     throw new Error(
         `Invalid multiplier ${config.multiplier}. ` +
         `Should be one of ${VALID_MULTIPLIER[config.architecture]} ` +
-        `for architecutre ${config.architecture}.`);
+        `for architecture ${config.architecture}.`);
   }
 
   if (config.quantBytes == null) {
@@ -187,7 +150,14 @@ function validateModelConfig(config: ModelConfig) {
     throw new Error(
         `Invalid quantBytes ${config.quantBytes}. ` +
         `Should be one of ${VALID_QUANT_BYTES} ` +
-        `for architecutre ${config.architecture}.`);
+        `for architecture ${config.architecture}.`);
+  }
+
+  if (config.architecture === 'MobileNetV1' && config.outputStride === 32 &&
+      config.multiplier !== 1) {
+    throw new Error(
+        `When using an output stride of 32, ` +
+        `you must select 1 as the multiplier.`);
   }
 
   return config;
@@ -222,7 +192,7 @@ export interface SinglePersonInterfaceConfig extends InferenceConfig {}
  * `nmsRadius`: Non-maximum suppression part distance in pixels. It needs
  * to be strictly positive. Two parts suppress each other if they are less
  * than `nmsRadius` pixels away. Defaults to 20.
- **/
+ */
 export interface MultiPersonInferenceConfig extends InferenceConfig {
   maxDetections?: number;
   scoreThreshold?: number;
@@ -232,12 +202,12 @@ export interface MultiPersonInferenceConfig extends InferenceConfig {
 // these added back to not break the existing api.
 export interface LegacyMultiPersonInferenceConfig extends
     MultiPersonInferenceConfig {
-  decodingMethod: 'multi-person'
+  decodingMethod: 'multi-person';
 }
 
 export interface LegacySinglePersonInferenceConfig extends
     SinglePersonInterfaceConfig {
-  decodingMethod: 'single-person'
+  decodingMethod: 'single-person';
 }
 
 export const SINGLE_PERSON_INFERENCE_CONFIG: SinglePersonInterfaceConfig = {
@@ -268,7 +238,6 @@ function validateMultiPersonInputConfig(config: MultiPersonInferenceConfig) {
         `Invalid scoreThreshold ${scoreThreshold}. ` +
         `Should be in range [0.0, 1.0]`);
   }
-
 
   if (nmsRadius <= 0) {
     throw new Error(`Invalid nmsRadius ${nmsRadius}.`);
@@ -411,7 +380,7 @@ export class PoseNet {
       input: PosenetInput,
       config: LegacySinglePersonInferenceConfig|
       LegacyMultiPersonInferenceConfig): Promise<Pose[]> {
-    if (config.decodingMethod == 'single-person') {
+    if (config.decodingMethod === 'single-person') {
       const pose = await this.estimateSinglePose(input, config);
       return [pose];
     } else {

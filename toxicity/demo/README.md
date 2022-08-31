@@ -6,10 +6,10 @@ The demo shows how to use predictions produced by the Toxicity classifier.
 
 ## Setup
 
-cd into the demos folder:
+cd into the demo folder:
 
 ```sh
-cd toxicity/demos
+cd toxicity/demo
 ```
 
 Install dependencies and prepare the build directory:
@@ -24,7 +24,7 @@ To watch files for changes, and launch a dev server:
 yarn watch
 ```
 
-## If you are developing toxicity locally, and want to test the changes in the demos
+## If you are developing toxicity locally, and want to test the changes in the demo
 
 cd into the toxicity folder:
 ```sh
@@ -41,14 +41,14 @@ Build and publish toxicity locally:
 yarn publish-local
 ```
 
-Cd into the demos and install dependencies:
+Cd into the demo and install dependencies:
 
 ```sh
-cd demos
+cd demo
 yarn
 ```
 
-Link the local toxicity to the demos:
+Link the local toxicity to the demo:
 ```sh
 yarn link-local
 ```

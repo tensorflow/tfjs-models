@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google LLC. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -67,9 +67,10 @@ export function getOffsetPoints(
   return tf.tidy(() => {
     const offsetVectors = getOffsetVectors(heatMapCoordsBuffer, offsetsBuffer);
 
-    return heatMapCoordsBuffer.toTensor()
-        .mul(tf.scalar(outputStride, 'int32'))
-        .toFloat()
-        .add(offsetVectors);
+    return tf
+        .add(tf
+          .cast(tf
+            .mul(heatMapCoordsBuffer.toTensor(), tf.scalar(outputStride,
+              'int32')), 'float32'), offsetVectors);
   });
 }

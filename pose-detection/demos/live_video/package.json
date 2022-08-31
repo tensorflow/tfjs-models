@@ -1,0 +1,65 @@
+{
+  "name": "posedetection_demo",
+  "version": "0.0.1",
+  "description": "Demo for pose detection api",
+  "main": "index.js",
+  "license": "Apache-2.0",
+  "private": true,
+  "engines": {
+    "node": ">=8.9.0"
+  },
+  "dependencies": {
+    "@mediapipe/pose": "~0.4.0",
+    "@tensorflow-models/pose-detection": "file:../../dist",
+    "@tensorflow/tfjs-backend-wasm": "^3.8.0",
+    "@tensorflow/tfjs-backend-webgl": "^3.8.0",
+    "@tensorflow/tfjs-converter": "^3.8.0",
+    "@tensorflow/tfjs-core": "^3.8.0",
+    "scatter-gl": "0.0.8"
+  },
+  "scripts": {
+    "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr --open",
+    "build": "cross-env NODE_ENV=production parcel build index.html --public-url ./",
+    "lint": "eslint .",
+    "build-dep": "cd ../../ && yarn && yarn build",
+    "link-core": "yalc link @tensorflow/tfjs-core",
+    "link-webgl": "yalc link @tensorflow/tfjs-backend-webgl"
+  },
+  "browser": {
+    "crypto": false
+  },
+  "devDependencies": {
+    "@babel/core": "^7.7.5",
+    "@babel/plugin-transform-runtime": "^7.7.6",
+    "@babel/preset-env": "^7.7.6",
+    "babel-plugin-external-helpers": "^6.22.0",
+    "babel-preset-env": "^1.7.0",
+    "clang-format": "~1.2.2",
+    "cross-env": "^5.2.0",
+    "eslint": "^4.19.1",
+    "eslint-config-google": "^0.9.1",
+    "parcel-bundler": "1.12.5",
+    "parcel-plugin-static-files-copy": "^2.5.1",
+    "yalc": "~1.0.0-pre.50"
+  },
+  "resolutions": {
+    "is-svg": "4.3.1"
+  },
+  "eslintConfig": {
+    "extends": "google",
+    "rules": {
+      "require-jsdoc": 0,
+      "valid-jsdoc": 0
+    },
+    "env": {
+      "es6": true
+    },
+    "parserOptions": {
+      "ecmaVersion": 8,
+      "sourceType": "module"
+    }
+  },
+  "eslintIgnore": [
+    "dist/"
+  ]
+}

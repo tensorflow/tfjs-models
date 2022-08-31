@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google Inc. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,8 +18,7 @@
 import * as tf from '@tensorflow/tfjs-core';
 
 import {connectedPartIndices} from './keypoints';
-import {PoseNetOutputStride} from './posenet_model';
-import {InputResolution, Keypoint, Padding, Pose, PosenetInput, TensorBuffer3D, Vector2D} from './types';
+import {InputResolution, Keypoint, Padding, Pose, PosenetInput, PoseNetOutputStride, TensorBuffer3D, Vector2D} from './types';
 
 function eitherPointDoesntMeetConfidence(
     a: number, b: number, minConfidence: number): boolean {
@@ -68,18 +67,9 @@ export function getBoundingBoxPoints(keypoints: Keypoint[]): Vector2D[] {
   ];
 }
 
-export async function toTensorBuffer<rank extends tf.Rank>(
-    tensor: tf.Tensor<rank>,
-    type: 'float32'|'int32' = 'float32'): Promise<tf.TensorBuffer<rank>> {
-  const tensorData = await tensor.data();
-
-  return tf.buffer(tensor.shape, type, tensorData as Float32Array) as
-      tf.TensorBuffer<rank>;
-}
-
 export async function toTensorBuffers3D(tensors: tf.Tensor3D[]):
     Promise<TensorBuffer3D[]> {
-  return Promise.all(tensors.map(tensor => toTensorBuffer(tensor, 'float32')));
+  return Promise.all(tensors.map(tensor => tensor.buffer()));
 }
 
 export function scalePose(
@@ -170,9 +160,8 @@ export function getValidInputResolutionDimensions(
   }
 }
 
-const VALID_OUTPUT_STRIDES = [8, 16, 32];
-// tslint:disable-next-line:no-any
-export function assertValidOutputStride(outputStride: number) {
+const VALID_OUTPUT_STRIDES: PoseNetOutputStride[] = [8, 16, 32];
+export function assertValidOutputStride(outputStride: PoseNetOutputStride) {
   tf.util.assert(
       typeof outputStride === 'number', () => 'outputStride is not a number');
   tf.util.assert(
@@ -221,9 +210,9 @@ export function toResizedInputTensor(
     const imageTensor = toInputTensor(input);
 
     if (flipHorizontal) {
-      return imageTensor.reverse(1).resizeBilinear([resizeHeight, resizeWidth]);
+      return tf.image.resizeBilinear(tf.reverse(imageTensor, 1), [resizeHeight, resizeWidth]);
     } else {
-      return imageTensor.resizeBilinear([resizeHeight, resizeWidth]);
+      return tf.image.resizeBilinear(imageTensor, [resizeHeight, resizeWidth]);
     }
   });
 }
@@ -253,12 +242,10 @@ export function padAndResizeTo(
     let imageTensor = toInputTensor(input);
     imageTensor = tf.pad3d(imageTensor, [[padT, padB], [padL, padR], [0, 0]]);
 
-    return imageTensor.resizeBilinear([targetH, targetW]);
-  })
+    return tf.image.resizeBilinear(imageTensor, [targetH, targetW]);
+  });
 
-  return {
-    resized, padding: {top: padT, left: padL, right: padR, bottom: padB}
-  }
+  return {resized, padding: {top: padT, left: padL, right: padR, bottom: padB}};
 }
 
 export function scaleAndFlipPoses(

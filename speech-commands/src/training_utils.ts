@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google LLC. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,7 +20,7 @@
  * model.
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
 
 /**
  * Split feature and target tensors into train and validation (val) splits.
@@ -50,7 +50,7 @@ export function balancedTrainValSplit(
           `but got ${valSplit}`);
 
   return tf.tidy(() => {
-    const classIndices = ys.argMax(-1).dataSync();
+    const classIndices = tf.argMax(ys, -1).dataSync();
 
     const indicesByClasses: number[][] = [];
     for (let i = 0; i < classIndices.length; ++i) {

@@ -83,12 +83,15 @@ const predict = async () => {
   const predictions = await classify(samples.map(d => d.text));
   addPredictions(predictions);
 
-  document.querySelector('#classify-new-text')
-      .addEventListener('click', (e) => {
+  document.querySelector('#classify-new')
+      .addEventListener('submit', (e) => {
         const text = document.querySelector('#classify-new-text-input').value;
         const predictions = classify([text]).then(d => {
           addPredictions(d);
         });
+
+        // Prevent submitting the form which would cause a page reload.
+        e.preventDefault();
       });
 };
 

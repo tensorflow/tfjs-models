@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google Inc. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,7 +15,8 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
+// tslint:disable-next-line: no-imports-from-dist
 import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
 import {BrowserFftFeatureExtractor, flattenQueue, getInputTensorFromFrequencyData} from './browser_fft_extractor';
 import * as BrowserFftUtils from './browser_fft_utils';
@@ -139,8 +140,8 @@ describeWithFlags('BrowserFftFeatureExtractor', testEnvs, () => {
 
   it('start and stop: overlapFactor = 0', done => {
     setUpFakes();
-
-    const spectrogramDurationMillis = 1024 / 44100 * 43 * 1e3;
+    const timeDelta = 50;
+    const spectrogramDurationMillis = 1024 / 44100 * 43 * 1e3 - timeDelta;
     const numCallbacksToComplete = 3;
     let numCallbacksCompleted = 0;
     const tensorCounts: number[] = [];
