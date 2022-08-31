@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import {ImageSize, Padding} from '../../calculators/interfaces/common_interfaces';
+import {ImageSize, Padding} from '../../shared/calculators/interfaces/common_interfaces';
 import {InputResolution, Pose} from '../../types';
 
 export function scalePoses(

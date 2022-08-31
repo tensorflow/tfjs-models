@@ -14,6 +14,8 @@
  * limitations under the License.
  * =============================================================================
  */
+import {io} from '@tensorflow/tfjs-core';
+
 import {TrackerConfig} from '../calculators/interfaces/config_interfaces';
 import {TrackerType} from '../calculators/types';
 import {EstimationConfig, ModelConfig} from '../types';
@@ -48,13 +50,14 @@ import {EstimationConfig, ModelConfig} from '../types';
  * to be considered a valid pose detection.
  *
  * `multiPoseMaxDimension`: Optional. The target maximum dimension to use as the
- * input to the multi-pose model. Must be a multiple of 32 and defaults to 320.
- * A higher maximum dimension results in higher accuracy but slower speed,
- * whereas a lower maximum dimension results in lower accuracy but higher speed.
- * The input image will be resized so that its maximum dimension will be the
- * given number, while maintaining the input image aspect ratio. As an example:
- * with 320 as the maximum dimension and a 640x480 input image, the model will
- * resize the input to 320x240. A 720x1280 image will be resized to 180x320.
+ * input to the multi-pose model. Must be a multiple of 32 and defaults to 256.
+ * The recommended range is [128, 512]. A higher maximum dimension results in
+ * higher accuracy but slower speed, whereas a lower maximum dimension results
+ * in lower accuracy but higher speed. The input image will be resized so that
+ * its maximum dimension will be the given number, while maintaining the input
+ * image aspect ratio. As an example: with 320 as the maximum dimension and a
+ * 640x480 input image, the model will resize the input to 320x240. A 720x1280
+ * image will be resized to 180x320.
  *
  * `enableTracking': Optional. A boolean indicating whether detected persons
  * will be tracked across frames. If true, each pose will have an ID that
@@ -70,7 +73,7 @@ import {EstimationConfig, ModelConfig} from '../types';
 export interface MoveNetModelConfig extends ModelConfig {
   enableSmoothing?: boolean;
   modelType?: string;
-  modelUrl?: string;
+  modelUrl?: string|io.IOHandler;
   minPoseScore?: number;
   multiPoseMaxDimension?: number;
   enableTracking?: boolean;

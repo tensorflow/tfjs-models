@@ -19,22 +19,22 @@ import * as tfc from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
 import {BoundingBoxTracker} from '../calculators/bounding_box_tracker';
-import {MILLISECOND_TO_MICRO_SECONDS, SECOND_TO_MICRO_SECONDS} from '../calculators/constants';
-import {getImageSize, toImageTensor} from '../calculators/image_utils';
-import {ImageSize} from '../calculators/interfaces/common_interfaces';
-import {BoundingBox} from '../calculators/interfaces/shape_interfaces';
-import {isVideo} from '../calculators/is_video';
 import {KeypointTracker} from '../calculators/keypoint_tracker';
-import {KeypointsOneEuroFilter} from '../calculators/keypoints_one_euro_filter';
-import {LowPassFilter} from '../calculators/low_pass_filter';
 import {Tracker} from '../calculators/tracker';
 import {TrackerType} from '../calculators/types';
 import {COCO_KEYPOINTS} from '../constants';
 import {PoseDetector} from '../pose_detector';
+import {MILLISECOND_TO_MICRO_SECONDS, SECOND_TO_MICRO_SECONDS} from '../shared/calculators/constants';
+import {getImageSize, toImageTensor} from '../shared/calculators/image_utils';
+import {ImageSize} from '../shared/calculators/interfaces/common_interfaces';
+import {BoundingBox} from '../shared/calculators/interfaces/shape_interfaces';
+import {isVideo} from '../shared/calculators/is_video';
+import {KeypointsOneEuroFilter} from '../shared/filters/keypoints_one_euro_filter';
+import {LowPassFilter} from '../shared/filters/low_pass_filter';
 import {InputResolution, Pose, PoseDetectorInput, SupportedModels} from '../types';
 import {getKeypointIndexByName} from '../util';
 
-import {CROP_FILTER_ALPHA, DEFAULT_MIN_POSE_SCORE, KEYPOINT_FILTER_CONFIG, MIN_CROP_KEYPOINT_SCORE, MOVENET_CONFIG, MOVENET_ESTIMATION_CONFIG, MOVENET_MULTIPOSE_LIGHTNING_RESOLUTION as MOVENET_MULTIPOSE_MAX_DIMENSION, MOVENET_MULTIPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_URL, MULTIPOSE_BOX_IDX, MULTIPOSE_BOX_SCORE_IDX, MULTIPOSE_INSTANCE_SIZE, MULTIPOSE_LIGHTNING, NUM_KEYPOINT_VALUES, NUM_KEYPOINTS, SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER} from './constants';
+import {CROP_FILTER_ALPHA, DEFAULT_MIN_POSE_SCORE, KEYPOINT_FILTER_CONFIG, MIN_CROP_KEYPOINT_SCORE, MOVENET_CONFIG, MOVENET_ESTIMATION_CONFIG, MOVENET_MULTIPOSE_DEFAULT_MAX_DIMENSION, MOVENET_MULTIPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_URL, MULTIPOSE_BOX_IDX, MULTIPOSE_BOX_SCORE_IDX, MULTIPOSE_INSTANCE_SIZE, MULTIPOSE_LIGHTNING, NUM_KEYPOINT_VALUES, NUM_KEYPOINTS, SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER} from './constants';
 import {determineNextCropRegion, initCropRegion} from './crop_utils';
 import {validateEstimationConfig, validateModelConfig} from './detector_utils';
 import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
@@ -95,7 +95,7 @@ class MoveNetDetector implements PoseDetector {
     if (config.multiPoseMaxDimension) {
       this.multiPoseMaxDimension = config.multiPoseMaxDimension;
     } else {
-      this.multiPoseMaxDimension = MOVENET_MULTIPOSE_MAX_DIMENSION;
+      this.multiPoseMaxDimension = MOVENET_MULTIPOSE_DEFAULT_MAX_DIMENSION;
     }
     this.enableTracking = config.enableTracking;
     if (this.multiPoseModel && this.enableTracking) {
@@ -511,7 +511,8 @@ export async function load(modelConfig: MoveNetModelConfig = MOVENET_CONFIG):
   let fromTFHub = true;
 
   if (!!config.modelUrl) {
-    fromTFHub = config.modelUrl.indexOf('https://tfhub.dev') > -1;
+    fromTFHub = typeof config.modelUrl === 'string' &&
+        config.modelUrl.indexOf('https://tfhub.dev') > -1;
     model = await tfc.loadGraphModel(config.modelUrl, {fromTFHub});
   } else {
     let modelUrl;

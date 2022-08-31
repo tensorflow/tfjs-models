@@ -15,65 +15,6 @@
  * =============================================================================
  */
 
-import {InputResolution} from '../../types';
-
-export interface ImageToTensorConfig {
-  inputResolution: InputResolution;
-  keepAspectRatio?: boolean;
-}
-export interface VelocityFilterConfig {
-  windowSize?: number;  // Number of value changes to keep over time. Higher
-                        // value adds to lag and to stability.
-  velocityScale?:
-      number;  // Scale to apply to the velocity calculated over the given
-               // window. With higher velocity `low pass filter` weights new new
-               // values higher. Lower value adds to lag and to stability.
-  minAllowedObjectScale?:
-      number;  // If calculated object scale is less than given value smoothing
-               // will be disabled and landmarks will be returned as is.
-  disableValueScaling?:
-      boolean;  // Disable value scaling based on object size and use `1.0`
-                // instead. Value scale is calculated as inverse value of object
-                // size. Object size is calculated as maximum side of
-                // rectangular bounding box of the object in XY plane.
-}
-export interface OneEuroFilterConfig {
-  frequency?: number;  // Frequency of incoming frames defined in seconds. Used
-                       // only if can't be calculated from provided events (e.g.
-                       // on the very fist frame).
-  minCutOff?:
-      number;  // Minimum cutoff frequency. Start by tuning this parameter while
-               // keeping `beta=0` to reduce jittering to the desired level. 1Hz
-               // (the default value) is a a good starting point.
-  beta?: number;  // Cutoff slope. After `minCutOff` is configured, start
-                  // increasing `beta` value to reduce the lag introduced by the
-                  // `minCutoff`. Find the desired balance between jittering and
-                  // lag.
-  derivateCutOff?:
-      number;  // Cutoff frequency for derivate. It is set to 1Hz in the
-               // original algorithm, but can be turned to further smooth the
-               // speed (i.e. derivate) on the object.
-  thresholdCutOff?:
-      number;  // The outlier threshold offset, will lead to a generally more
-               // reactive filter that will be less likely to discount outliers.
-  thresholdBeta?: number;  // The outlier threshold slope, will lead to a filter
-  // that will more aggressively react whenever the
-  // keypoint speed increases by being less likely to
-  // consider that an observation is an outlier.
-  minAllowedObjectScale?:
-      number;  // If calculated object scale is less than given value smoothing
-  // will be disabled and keypoints will be returned as is. This
-  // value helps filter adjust to the distance to camera.
-  disableValueScaling?:
-      boolean;  // Disable value scaling based on object size and use `1.0`
-                // instead. Value scale is calculated as inverse value of object
-                // size. Object size is calculated as maximum side of
-                // rectangular bounding box of the object in XY plane.
-}
-export interface KeypointsSmoothingConfig {
-  velocityFilter?: VelocityFilterConfig;
-  oneEuroFilter?: OneEuroFilterConfig;
-}
 export interface TrackerConfig {
   maxTracks: number;  // The maximum number of tracks that an internal tracker
                       // will maintain. Note that this number should be set
@@ -110,5 +51,4 @@ export interface KeypointTrackerConfig {
 }
 // A tracker that links detections (i.e. poses) and tracks based on bounding
 // box similarity.
-export interface BoundingBoxTrackerConfig {
-}
+export interface BoundingBoxTrackerConfig {}

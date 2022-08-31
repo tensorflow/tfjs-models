@@ -20,10 +20,10 @@ import * as tf from '@tensorflow/tfjs-core';
 import {ALL_ENVS, BROWSER_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
 // tslint:disable-next-line: no-imports-from-dist
 import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
-import {COCO_KEYPOINTS} from '../constants';
 
+import {COCO_KEYPOINTS} from '../constants';
 import * as poseDetection from '../index';
-import {KARMA_SERVER, loadVideo} from '../test_util';
+import {KARMA_SERVER, loadVideo} from '../shared/test_util';
 
 import {SINGLEPOSE_LIGHTNING} from './constants';
 
@@ -99,15 +99,23 @@ describeWithFlags('MoveNet video ', BROWSER_ENVS, () => {
     const result: number[][][] = [];
 
     const callback = async(video: HTMLVideoElement, timestamp: number):
-        Promise<poseDetection.Pose[]> => {
+        Promise<poseDetection.Keypoint[]> => {
           const poses =
               await detector.estimatePoses(video, null /* config */, timestamp);
           result.push(poses[0].keypoints.map(kp => [kp.x, kp.y]));
-          return poses;
+          return poses[0].keypoints;
         };
 
+    // We set the timestamp increment to 33333 microseconds to simulate
+    // the 30 fps video input. We do this so that the filter uses the
+    // same fps as the reference test.
+    // https://github.com/google/mediapipe/blob/ecb5b5f44ab23ea620ef97a479407c699e424aa7/mediapipe/python/solution_base.py#L297
+    const simulatedInterval = 33.3333;
+
     // Synthetic video at 30FPS.
-    await loadVideo('pose_1.mp4', 30 /* fps */, callback, expected, model);
+    await loadVideo(
+        'pose_1.mp4', 30 /* fps */, callback, expected,
+        poseDetection.util.getAdjacentPairs(model), simulatedInterval);
 
     expectArraysClose(result, expected, EPSILON_VIDEO);
 

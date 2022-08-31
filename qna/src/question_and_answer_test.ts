@@ -117,8 +117,8 @@ describeWithFlags('qna', NODE_ENVS, () => {
       {text: 'answer', score: 60, startIndex: 8, endIndex: 14},
       {text: 'answer for', score: 50, startIndex: 8, endIndex: 18},
       {text: 'answer for you!', score: 50, startIndex: 8, endIndex: 23},
-      {text: 'for', score: 40, startIndex: 15, endIndex: 18},
-      {text: 'for you!', score: 40, startIndex: 15, endIndex: 23}
+      {text: 'is answer', score: 50, startIndex: 5, endIndex: 14},
+      {text: 'is', score: 40, startIndex: 5, endIndex: 7}
     ]);
   });
 });

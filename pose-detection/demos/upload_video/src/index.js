@@ -16,7 +16,7 @@
  */
 
 import '@tensorflow/tfjs-backend-webgl';
-import '@mediapipe/pose';
+import * as mpPose from '@mediapipe/pose';
 
 import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
 
@@ -55,7 +55,7 @@ async function createDetector() {
         return posedetection.createDetector(STATE.model, {
           runtime,
           modelType: STATE.modelConfig.type,
-          solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/pose'
+          solutionPath: `https://cdn.jsdelivr.net/npm/@mediapipe/pose@${mpPose.VERSION}`
         });
       } else if (runtime === 'tfjs') {
         return posedetection.createDetector(

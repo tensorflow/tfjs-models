@@ -1,5 +1,5 @@
-import {Keypoint} from '../../types';
-import {BoundingBox} from './shape_interfaces';
+import {Keypoint} from '../../shared/calculators/interfaces/common_interfaces';
+import {BoundingBox} from '../../shared/calculators/interfaces/shape_interfaces';
 
 /**
  * @license
@@ -17,33 +17,6 @@ import {BoundingBox} from './shape_interfaces';
  * limitations under the License.
  * =============================================================================
  */
-export interface ImageSize {
-  height: number;
-  width: number;
-}
-
-export interface Padding {
-  top: number;
-  bottom: number;
-  left: number;
-  right: number;
-}
-
-export type ValueTransform = {
-  scale: number,
-  offset: number
-};
-
-export interface WindowElement {
-  distance: number;
-  duration: number;
-}
-
-export interface KeypointsFilter {
-  apply(landmarks: Keypoint[], microSeconds: number, objectScale: number):
-      Keypoint[];
-  reset(): void;
-}
 
 export interface Track {
   id: number;              // A unique identifier for each tracked person.

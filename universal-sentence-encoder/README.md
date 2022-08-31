@@ -83,6 +83,15 @@ use.loadTokenizer().then(tokenizer => {
 });
 ```
 
+
+Pass a path to the Tokenizer to use a different vocabulary:
+
+```js
+use.loadTokenizer('https://storage.googleapis.com/learnjs-data/bert_vocab/vocab.json').then(tokenizer => {
+  tokenizer.encode('Hello, how are you?'); // [0, 15350, 29623, 2129, 2024, 2017, 29632]
+});
+```
+
 To use the QnA dual encoder:
 ```js
 // Load the model.
@@ -125,30 +134,8 @@ use.loadQnA().then(model => {
     * And embed_responses[0] is the embedding for the answer
     * 'I\'m not feeling very well.'
     */
-  const embed_query = embeddings['queryEmbedding'].arraySync();
-  const embed_responses = embeddings['responseEmbedding'].arraySync();
-  // compute the dotProduct of each query and response pair.
-  for (let i = 0; i < input['queries'].length; i++) {
-    for (let j = 0; j < input['responses'].length; j++) {
-      scores.push(dotProduct(embed_query[i], embed_responses[j]));
-    }
-  }
+  const scores = tf.matMul(embeddings['queryEmbedding'],
+      embeddings['responseEmbedding'], false, true).dataSync();
 });
 
-// Calculate the dot product of two vector arrays.
-const dotProduct = (xs, ys) => {
-  const sum = xs => xs ? xs.reduce((a, b) => a + b, 0) : undefined;
-
-  return xs.length === ys.length ?
-    sum(zipWith((a, b) => a * b, xs, ys))
-    : undefined;
-}
-
-// zipWith :: (a -> b -> c) -> [a] -> [b] -> [c]
-const zipWith =
-    (f, xs, ys) => {
-      const ny = ys.length;
-      return (xs.length <= ny ? xs : xs.slice(0, ny))
-          .map((x, i) => f(x, ys[i]));
-    }
 ```

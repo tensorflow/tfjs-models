@@ -44,10 +44,9 @@ export function validateModelConfig(modelConfig: MoveNetModelConfig):
 
   if (config.multiPoseMaxDimension != null &&
       (config.multiPoseMaxDimension % 32 !== 0 ||
-       config.multiPoseMaxDimension < 128 ||
-       config.multiPoseMaxDimension > 512)) {
+       config.multiPoseMaxDimension < 32)) {
     throw new Error(
-        `multiPoseResolution must be a multiple of 32 and between 128 and 512`);
+        `multiPoseMaxDimension must be a multiple of 32 and higher than 0`);
   }
 
   if (config.modelType === MULTIPOSE_LIGHTNING &&

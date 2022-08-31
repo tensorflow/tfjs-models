@@ -9,6 +9,9 @@ TFJS API [mediapipe.dev](https://mediapipe.dev). Three models are offered.
 
 Please try our our live [demo](https://storage.googleapis.com/tfjs-models/demos/pose-detection/index.html?model=blazepose).
 
+Note that BlazePose-MediaPipe uses WebAssembly behind the scene and cannot be
+used with [tfjs-react-native](https://github.com/tensorflow/tfjs/tree/master/tfjs-react-native).
+
 --------------------------------------------------------------------------------
 
 ## Table of Contents
@@ -30,7 +33,12 @@ runtime. The guide for TensorFlow.js runtime can be found
 Via script tags:
 
 ```html
+<!-- Require the peer dependencies of pose-detection. -->
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
+
+<!-- You must explicitly require a TF.js backend if you're not using the TF.js union bundle. -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
 ```
@@ -38,8 +46,9 @@ Via script tags:
 Via npm:
 
 ```sh
-yarn add @tensorflow-models/pose-detection
 yarn add @mediapipe/pose
+yarn add @tensorflow/tfjs-core, @tensorflow/tfjs-backend-webgl
+yarn add @tensorflow-models/pose-detection
 ```
 
 -----------------------------------------------------------------------
@@ -51,6 +60,9 @@ If you are using the Pose API via npm, you need to import the libraries first.
 
 ```javascript
 import * as poseDetection from '@tensorflow-models/pose-detection';
+import '@tensorflow/tfjs-core';
+// Register WebGL backend.
+import '@tensorflow/tfjs-backend-webgl';
 import '@mediapipe/pose';
 ```
 
@@ -65,6 +77,11 @@ Pass in `poseDetection.SupportedModels.BlazePose` from the
 
 *   *enableSmoothing*: Defaults to true. If your input is a static image, set it to false. This flag is used to indicate whether to use temporal filter to smooth the predicted keypoints.
 
+*   *enableSegmentation*: Defaults to false. A boolean indicating whether to generate the segmentation mask.
+
+*   *smoothSegmentation*: Defaults to true. A boolean indicating whether the solution filters segmentation masks across different input images to reduce jitter.
+    Ignored if `enableSegmentation` is false or static images are passed in.
+
 *   *modelType*: specify which variant to load from `BlazePoseModelType` (i.e.,
     'lite', 'full', 'heavy'). If unset, the default is 'full'.
 
@@ -74,7 +91,8 @@ Pass in `poseDetection.SupportedModels.BlazePose` from the
 const model = poseDetection.SupportedModels.BlazePose;
 const detectorConfig = {
   runtime: 'mediapipe',
-  solutionPath: 'base/node_modules/@mediapipe/pose'
+  solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/pose'
+                // or 'base/node_modules/@mediapipe/pose' in npm.
 };
 detector = await poseDetection.createDetector(model, detectorConfig);
 ```

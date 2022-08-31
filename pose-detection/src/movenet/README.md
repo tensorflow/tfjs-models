@@ -92,19 +92,24 @@ Pass in `poseDetection.SupportedModels.MoveNet` from the
 * *modelUrl* (optional): An optional string that specifies custom url of the
   MoveNet model. If not provided, it will load the model specified by
   *modelType* from tf.hub. This argument is useful for area/countries that
-  don't have access to the model hosted on tf.hub.
+  don't have access to the model hosted on tf.hub. It also accepts
+  `io.IOHandler` which can be used with
+  [tfjs-react-native](https://github.com/tensorflow/tfjs/tree/master/tfjs-react-native)
+  to load model from app bundle directory using
+  [bundleResourceIO](https://github.com/tensorflow/tfjs/blob/master/tfjs-react-native/src/bundle_resource_io.ts#L169).
 
 * *minPoseScore* (optional): The minimum confidence score a pose needs to have
   to be considered a valid pose detection.
 
 * *multiPoseMaxDimension* (optional): The target maximum dimension to use as the
-  input to the multi-pose model. Must be a multiple of 32 and defaults to 320.
-  A higher maximum dimension results in higher accuracy but slower speed,
-  whereas a lower maximum dimension results in lower accuracy but higher speed.
-  The input image will be resized so that its maximum dimension will be the
-  given number, while maintaining the input image aspect ratio. As an example:
-  with 320 as the maximum dimension and a 640x480 input image, the model will
-  resize the input to 320x240. A 720x1280 image will be resized to 180x320.
+  input to the multi-pose model. Must be a multiple of 32 and defaults to 256.
+  The recommended range is [128, 512]. A higher maximum dimension results in
+  higher accuracy but slower speed, whereas a lower maximum dimension results in
+  lower accuracy but higher speed. The input image will be resized so that its
+  maximum dimension will be the given number, while maintaining the input image
+  aspect ratio. As an example: with 320 as the maximum dimension and a 640x480
+  input image, the model will resize the input to 320x240. A 720x1280 image will
+  be resized to 180x320.
 
 * *enableTracking* (optional): A boolean indicating whether detected persons
   will be tracked across frames. If true, each pose will have an ID that

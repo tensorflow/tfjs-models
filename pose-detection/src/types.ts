@@ -14,8 +14,10 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as tf from '@tensorflow/tfjs-core';
-import {BoundingBox} from './calculators/interfaces/shape_interfaces';
+import {Keypoint, PixelInput, Segmentation} from './shared/calculators/interfaces/common_interfaces';
+import {BoundingBox} from './shared/calculators/interfaces/shape_interfaces';
+
+export {Keypoint};
 
 export enum SupportedModels {
   MoveNet = 'MoveNet',
@@ -50,29 +52,18 @@ export interface EstimationConfig {
 /**
  * Allowed input format for the `estimatePoses` method.
  */
-export type PoseDetectorInput =
-    tf.Tensor3D|ImageData|HTMLVideoElement|HTMLImageElement|HTMLCanvasElement;
+export type PoseDetectorInput = PixelInput;
 
 export interface InputResolution {
   width: number;
   height: number;
 }
 
-/**
- * A keypoint that contains coordinate information.
- */
-export interface Keypoint {
-  x: number;
-  y: number;
-  z?: number;
-  score?: number;  // The probability of a keypoint's visibility.
-  name?: string;
-}
-
 export interface Pose {
   keypoints: Keypoint[];
-  score?: number;            // The probability of an actual pose.
-  keypoints3D?: Keypoint[];  // Keypoints in meters in a 1m * 1m * 1m space.
-  box?: BoundingBox;         // A bounding box around the detected person.
-  id?: number;               // The unique identifier for this (tracked) pose.
+  score?: number;               // The probability of an actual pose.
+  keypoints3D?: Keypoint[];     // Keypoints in meters in a 1m * 1m * 1m space.
+  box?: BoundingBox;            // A bounding box around the detected person.
+  segmentation?: Segmentation;  // Segmentation mask of the detected person.
+  id?: number;  // The unique identifier for this (tracked) pose.
 }

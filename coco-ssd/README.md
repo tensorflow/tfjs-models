@@ -67,7 +67,7 @@ const cocoSsd = require('@tensorflow-models/coco-ssd');
 })();
 ```
 
-You can also take a look at the [demo app](https://github.com/tensorflow/tfjs-models/blob/master/coco-ssd/demo).
+You can also take a look at the [demo app](https://tensorflow-js-object-detection.glitch.me/).
 
 ## API
 

@@ -1,11 +1,11 @@
 steps:
-- name: 'node:10'
+- name: 'node:12'
   entrypoint: 'yarn'
   id: 'yarn'
   args: ['install']
 
 # Run diff to find modified files in each folder.
-- name: 'node:10'
+- name: 'node:12'
   entrypoint: 'yarn'
   id: 'diff'
   args: ['diff']
@@ -19,6 +19,13 @@ steps:
   entrypoint: 'bash'
   id: 'body-pix'
   args: ['./scripts/run-build.sh', 'body-pix']
+  waitFor: ['diff']
+
+# Body segmentation.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'body-segmentation'
+  args: ['./scripts/run-build.sh', 'body-segmentation']
   waitFor: ['diff']
 
 # Blaze face.
@@ -40,6 +47,27 @@ steps:
   entrypoint: 'bash'
   id: 'deeplab'
   args: ['./scripts/run-build.sh', 'deeplab']
+  waitFor: ['diff']
+
+# Depth estimation.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'depth-estimation'
+  args: ['./scripts/run-build.sh', 'depth-estimation']
+  waitFor: ['diff']
+
+# Face detection.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'face-detection'
+  args: ['./scripts/run-build.sh', 'face-detection']
+  waitFor: ['diff']
+
+# Face landmarks detection.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'face-landmarks-detection'
+  args: ['./scripts/run-build.sh', 'face-landmarks-detection']
   waitFor: ['diff']
 
 # KNN Classifier.
@@ -98,14 +126,21 @@ steps:
   args: ['./scripts/run-build.sh', 'universal-sentence-encoder']
   waitFor: ['diff']
 
-# Handpose
+# Hand Detection.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'hand-detection'
+  args: ['./scripts/run-build.sh', 'hand-detection']
+  waitFor: ['diff']
+
+# Handpose.
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
   id: 'handpose'
   args: ['./scripts/run-build.sh', 'handpose']
   waitFor: ['diff']
 
-# Handpose
+# Facemesh.
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
   id: 'facemesh'
@@ -120,7 +155,7 @@ steps:
   waitFor: ['diff']
 
 # Run the top-level sanity checks.
-- name: 'node:10'
+- name: 'node:12'
   entrypoint: 'yarn'
   id: 'test'
   args: ['presubmit']

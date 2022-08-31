@@ -1,13 +1,13 @@
 steps:
 
 # Install common dependencies.
-- name: 'node:10'
+- name: 'node:12'
   id: 'yarn-common'
   entrypoint: 'yarn'
   args: ['install']
 
 # Install task API dependencies.
-- name: 'node:10'
+- name: 'node:12'
   dir: 'tasks'
   entrypoint: 'yarn'
   id: 'yarn'
@@ -15,7 +15,7 @@ steps:
   waitFor: ['yarn-common']
 
 # Lint.
-- name: 'node:10'
+- name: 'node:12'
   dir: 'tasks'
   entrypoint: 'yarn'
   id: 'lint'
@@ -23,7 +23,7 @@ steps:
   waitFor: ['yarn']
 
 # Build deps.
-- name: 'node:10'
+- name: 'node:12'
   dir: 'tasks'
   entrypoint: 'yarn'
   id: 'build-deps'
@@ -31,7 +31,7 @@ steps:
   waitFor: ['yarn']
 
 # Build.
-- name: 'node:10'
+- name: 'node:12'
   dir: 'tasks'
   entrypoint: 'yarn'
   id: 'build'
@@ -39,7 +39,7 @@ steps:
   waitFor: ['yarn', 'build-deps']
 
 # Run tests.
-- name: 'node:10'
+- name: 'node:12'
   dir: 'tasks'
   entrypoint: 'yarn'
   id: 'test'

@@ -17,17 +17,17 @@
 
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
-import {convertImageToTensor} from '../calculators/convert_image_to_tensor';
-import {getImageSize} from '../calculators/image_utils';
-import {shiftImageValue} from '../calculators/shift_image_value';
 
 import {PoseDetector} from '../pose_detector';
+import {convertImageToTensor} from '../shared/calculators/convert_image_to_tensor';
+import {getImageSize} from '../shared/calculators/image_utils';
+import {shiftImageValue} from '../shared/calculators/shift_image_value';
 import {InputResolution, Pose, PoseDetectorInput} from '../types';
+
 import {decodeMultiplePoses} from './calculators/decode_multiple_poses';
 import {decodeSinglePose} from './calculators/decode_single_pose';
 import {flipPosesHorizontal} from './calculators/flip_poses';
 import {scalePoses} from './calculators/scale_poses';
-
 import {MOBILENET_V1_CONFIG, RESNET_MEAN, SINGLE_PERSON_ESTIMATION_CONFIG} from './constants';
 import {assertValidOutputStride, assertValidResolution, validateEstimationConfig, validateModelConfig} from './detector_utils';
 import {getValidInputResolutionDimensions, mobileNetCheckpoint, resNet50Checkpoint} from './load_utils';
@@ -101,8 +101,11 @@ class PosenetDetector implements PoseDetector {
 
     this.maxPoses = config.maxPoses;
 
-    const {imageTensor, padding} = convertImageToTensor(
-        image, {inputResolution: this.inputResolution, keepAspectRatio: true});
+    const {imageTensor, padding} = convertImageToTensor(image, {
+      outputTensorSize: this.inputResolution,
+      keepAspectRatio: true,
+      borderMode: 'replicate'
+    });
 
     const imageValueShifted = this.architecture === 'ResNet50' ?
         tf.add(imageTensor, RESNET_MEAN) :

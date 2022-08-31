@@ -43,16 +43,16 @@ You can see example code [here](https://github.com/tensorflow/tfjs-models/tree/m
 
       // Add MobileNet activations to the model repeatedly for all classes.
       const img0 = tf.browser.fromPixels(document.getElementById('class0'));
-      const logits0 = mobilenetModule.infer(img0, 'conv_preds');
+      const logits0 = mobilenetModule.infer(img0, true);
       classifier.addExample(logits0, 0);
 
       const img1 = tf.browser.fromPixels(document.getElementById('class1'));
-      const logits1 = mobilenetModule.infer(img1, 'conv_preds');
+      const logits1 = mobilenetModule.infer(img1, true);
       classifier.addExample(logits1, 1);
 
       // Make a prediction.
       const x = tf.browser.fromPixels(document.getElementById('test'));
-      const xlogits = mobilenetModule.infer(x, 'conv_preds');
+      const xlogits = mobilenetModule.infer(x, true);
       console.log('Predictions:');
       const result = await classifier.predictClass(xlogits);
       console.log(result);
@@ -79,16 +79,16 @@ const mobilenet = await mobilenetModule.load();
 
 // Add MobileNet activations to the model repeatedly for all classes.
 const img0 = tf.browser.fromPixels(document.getElementById('class0'));
-const logits0 = mobilenet.infer(img0, 'conv_preds');
+const logits0 = mobilenet.infer(img0, true);
 classifier.addExample(logits0, 0);
 
 const img1 = tf.browser.fromPixels(document.getElementById('class1'));
-const logits1 = mobilenet.infer(img1, 'conv_preds');
+const logits1 = mobilenet.infer(img1, true);
 classifier.addExample(logits1, 1);
 
 // Make a prediction.
 const x = tf.browser.fromPixels(document.getElementById('test'));
-const xlogits = mobilenet.infer(x, 'conv_preds');
+const xlogits = mobilenet.infer(x, true);
 console.log('Predictions:');
 console.log(classifier.predictClass(xlogits));
 ```
@@ -180,7 +180,7 @@ classifier.setClassifierDataset(dataset: {[label: string]: Tensor2D})
 
 Args:
 - **dataset:** The label dataset matrices map. Can be retrieved from
-  getClassDatsetMatrices. Useful for restoring state.
+  getClassifierDataset. Useful for restoring state.
 
 ##### Get the total number of classes
 

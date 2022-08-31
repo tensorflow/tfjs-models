@@ -15,10 +15,13 @@
  * =============================================================================
  */
 
-import {Keypoint, Pose} from '../types';
-import {Tracker} from './tracker';
+import {Keypoint} from '../shared/calculators/interfaces/common_interfaces';
+
+import {Pose} from '../types';
+
 import {Track} from './interfaces/common_interfaces';
 import {TrackerConfig} from './interfaces/config_interfaces';
+import {Tracker} from './tracker';
 
 /**
  * KeypointTracker, which tracks poses based on keypoint similarity. This
@@ -91,11 +94,10 @@ export class KeypointTracker extends Tracker {
         continue;
       }
       numValidKeypoints += 1;
-      const dSquared =
-          Math.pow(poseKpt.x - trackKpt.x, 2) +
+      const dSquared = Math.pow(poseKpt.x - trackKpt.x, 2) +
           Math.pow(poseKpt.y - trackKpt.y, 2);
       const x = 2 * this.keypointFalloff[i];
-      oksTotal += Math.exp(-1 * dSquared / (2 * boxArea * x**2));
+      oksTotal += Math.exp(-1 * dSquared / (2 * boxArea * x ** 2));
     }
     if (numValidKeypoints < this.minNumKeyoints) {
       return 0.0;
@@ -109,8 +111,8 @@ export class KeypointTracker extends Tracker {
    * @returns The area of the object.
    */
   private area(keypoints: Keypoint[]): number {
-    const validKeypoint = keypoints.filter(
-        kpt => kpt.score > this.keypointThreshold);
+    const validKeypoint =
+        keypoints.filter(kpt => kpt.score > this.keypointThreshold);
     const minX = Math.min(1.0, ...validKeypoint.map(kpt => kpt.x));
     const maxX = Math.max(0.0, ...validKeypoint.map(kpt => kpt.x));
     const minY = Math.min(1.0, ...validKeypoint.map(kpt => kpt.y));

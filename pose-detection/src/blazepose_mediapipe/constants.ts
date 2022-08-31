@@ -19,6 +19,8 @@ import {BlazePoseMediaPipeEstimationConfig, BlazePoseMediaPipeModelConfig} from 
 export const DEFAULT_BLAZEPOSE_MODEL_CONFIG: BlazePoseMediaPipeModelConfig = {
   runtime: 'mediapipe',
   enableSmoothing: true,
+  enableSegmentation: false,
+  smoothSegmentation: true,
   modelType: 'full'
 };
 

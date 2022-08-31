@@ -21,41 +21,21 @@ import {ALL_ENVS, BROWSER_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/d
 // tslint:disable-next-line: no-imports-from-dist
 import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
 
+import {EXPECTED_LANDMARKS, EXPECTED_WORLD_LANDMARKS} from '../blazepose_mediapipe/mediapipe_test';
 import * as poseDetection from '../index';
-import {getXYPerFrame, KARMA_SERVER, loadImage, loadVideo} from '../test_util';
+import {toImageDataLossy} from '../shared/calculators/mask_util';
+import {getXYPerFrame, imageToBooleanMask, KARMA_SERVER, loadImage, loadVideo, segmentationIOU} from '../shared/test_util';
 
 // Measured in pixels.
 const EPSILON_IMAGE = 15;
 // Measured in meters.
-const EPSILON_IMAGE_WORLD = 0.1;
+const EPSILON_IMAGE_WORLD = 0.21;
 // Measured in pixels.
 const EPSILON_VIDEO = 28;
 // Measured in meters.
-const EPSILON_VIDEO_WORLD = 0.1;
-
-// ref:
-// https://github.com/google/mediapipe/blob/7c331ad58b2cca0dca468e342768900041d65adc/mediapipe/python/solutions/pose_test.py#L31-L51
-const EXPECTED_LANDMARKS = [
-  [463, 284], [470, 275], [473, 274], [476, 273], [464, 275], [464, 275],
-  [463, 275], [494, 275], [473, 276], [470, 293], [464, 293], [544, 322],
-  [450, 325], [626, 321], [371, 316], [697, 314], [300, 305], [717, 313],
-  [279, 305], [719, 311], [279, 302], [711, 313], [285, 304], [521, 471],
-  [465, 466], [608, 548], [357, 492], [701, 614], [350, 608], [707, 624],
-  [362, 628], [732, 632], [306, 630]
-];
-const EXPECTED_WORLD_LANDMARKS = [
-  [-0.12, -0.58, -0.19], [-0.1, -0.62, -0.19],  [-0.1, -0.62, -0.19],
-  [-0.1, -0.63, -0.19],  [-0.12, -0.62, -0.17], [-0.12, -0.62, -0.17],
-  [-0.12, -0.62, -0.17], [0., -0.63, -0.16],    [-0.08, -0.63, -0.08],
-  [-0.07, -0.57, -0.17], [-0.1, -0.56, -0.15],  [0.16, -0.49, -0.1],
-  [-0.15, -0.49, -0.03], [0.41, -0.49, -0.15],  [-0.42, -0.52, -0.04],
-  [0.65, -0.48, -0.2],   [-0.64, -0.52, -0.14], [0.71, -0.5, -0.21],
-  [-0.71, -0.54, -0.16], [0.72, -0.51, -0.24],  [-0.7, -0.55, -0.19],
-  [0.66, -0.49, -0.21],  [-0.65, -0.53, -0.16], [0.1, 0.01, -0.04],
-  [-0.1, -0.01, 0.04],   [0.36, 0.21, -0.1],    [-0.45, 0.05, -0.1],
-  [0.68, 0.44, 0.01],    [-0.49, 0.43, -0.],    [0.72, 0.46, 0.01],
-  [-0.5, 0.47, 0.01],    [0.78, 0.46, -0.1],    [-0.61, 0.51, -0.05],
-];
+const EPSILON_VIDEO_WORLD = 0.19;
+// Measured in percent.
+const EPSILON_IOU = 0.94;
 
 describeWithFlags('BlazePose', ALL_ENVS, () => {
   let timeout: number;
@@ -69,12 +49,13 @@ describeWithFlags('BlazePose', ALL_ENVS, () => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
   });
 
-  it('estimatePoses does not leak memory.', async () => {
+  it('estimatePoses does not leak memory with segmentation off.', async () => {
     const startTensors = tf.memory().numTensors;
 
     // Note: this makes a network request for model assets.
     const detector = await poseDetection.createDetector(
-        poseDetection.SupportedModels.BlazePose, {runtime: 'tfjs'});
+        poseDetection.SupportedModels.BlazePose,
+        {runtime: 'tfjs', enableSegmentation: false});
     const input: tf.Tensor3D = tf.zeros([128, 128, 3]);
 
     const beforeTensors = tf.memory().numTensors;
@@ -103,9 +84,60 @@ describeWithFlags('BlazePose', ALL_ENVS, () => {
   });
 });
 
+async function expectModel(
+    image: HTMLImageElement, segmentationImage: HTMLImageElement,
+    modelType: poseDetection.BlazePoseModelType) {
+  const startTensors = tf.memory().numTensors;
+
+  // Note: this makes a network request for model assets.
+  const detector = await poseDetection.createDetector(
+      poseDetection.SupportedModels.BlazePose, {
+        runtime: 'tfjs',
+        modelType,
+        enableSmoothing: true,
+        enableSegmentation: true,
+        smoothSegmentation: false
+      });
+
+  const beforeTensors = tf.memory().numTensors;
+
+  const result = await detector.estimatePoses(
+      image,
+      {runtime: 'tfjs', maxPoses: 1, flipHorizontal: false} as
+          poseDetection.BlazePoseTfjsEstimationConfig);
+  const xy = result[0].keypoints.map((keypoint) => [keypoint.x, keypoint.y]);
+  const worldXyz = result[0].keypoints3D.map(
+      (keypoint) => [keypoint.x, keypoint.y, keypoint.z]);
+
+  const segmentation = result[0].segmentation;
+  const maskValuesToLabel =
+      Array.from(Array(256).keys(), (v, _) => segmentation.maskValueToLabel(v));
+  const mask = segmentation.mask;
+  const actualBooleanMask = imageToBooleanMask(
+      // Round to binary mask using red value cutoff of 128.
+      (await segmentation.mask.toImageData()).data, 128, 0, 0);
+  const expectedBooleanMask = imageToBooleanMask(
+      (await toImageDataLossy(segmentationImage)).data, 0, 0, 255);
+
+  expectArraysClose(xy, EXPECTED_LANDMARKS, EPSILON_IMAGE);
+  expectArraysClose(worldXyz, EXPECTED_WORLD_LANDMARKS, EPSILON_IMAGE_WORLD);
+
+  expect(maskValuesToLabel.every(label => label === 'person'));
+  expect(mask.getUnderlyingType() === 'tensor');
+  expect(segmentationIOU(expectedBooleanMask, actualBooleanMask))
+      .toBeGreaterThanOrEqual(EPSILON_IOU);
+
+  tf.dispose([await segmentation.mask.toTensor()]);
+  expect(tf.memory().numTensors).toEqual(beforeTensors);
+
+  detector.dispose();
+
+  expect(tf.memory().numTensors).toEqual(startTensors);
+}
+
 describeWithFlags('BlazePose static image ', BROWSER_ENVS, () => {
-  let detector: poseDetection.PoseDetector;
   let image: HTMLImageElement;
+  let segmentationImage: HTMLImageElement;
   let timeout: number;
 
   beforeAll(async () => {
@@ -113,38 +145,50 @@ describeWithFlags('BlazePose static image ', BROWSER_ENVS, () => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
 
     image = await loadImage('pose.jpg', 1000, 667);
+    segmentationImage = await loadImage('pose_segmentation.png', 1000, 667);
   });
 
   afterAll(() => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
   });
 
-  it('test.', async () => {
+  it('estimatePoses does not leak memory with segmentation on.', async () => {
     const startTensors = tf.memory().numTensors;
 
     // Note: this makes a network request for model assets.
-    detector = await poseDetection.createDetector(
+    const detector = await poseDetection.createDetector(
         poseDetection.SupportedModels.BlazePose,
-        {runtime: 'tfjs', enableSmoothing: false});
+        {runtime: 'tfjs', enableSegmentation: true, smoothSegmentation: true});
 
     const beforeTensors = tf.memory().numTensors;
 
-    const result = await detector.estimatePoses(
-        image,
-        {runtime: 'tfjs', maxPoses: 1, flipHorizontal: false} as
-            poseDetection.BlazePoseTfjsEstimationConfig);
-    const xy = result[0].keypoints.map((keypoint) => [keypoint.x, keypoint.y]);
-    const xyz = result[0].keypoints3D.map(
-        (keypoint) => [keypoint.x, keypoint.y, keypoint.z]);
+    let output = await detector.estimatePoses(image);
+    (await output[0].segmentation.mask.toTensor()).dispose();
 
-    expectArraysClose(xy, EXPECTED_LANDMARKS, EPSILON_IMAGE);
-    expectArraysClose(xyz, EXPECTED_WORLD_LANDMARKS, EPSILON_IMAGE_WORLD);
+    expect(tf.memory().numTensors).toEqual(beforeTensors);
+
+    // Call again to test smoothing code.
+    output = await detector.estimatePoses(image);
+    (await output[0].segmentation.mask.toTensor()).dispose();
 
     expect(tf.memory().numTensors).toEqual(beforeTensors);
 
     detector.dispose();
+    (await output[0].segmentation.mask.toTensor()).dispose();
 
     expect(tf.memory().numTensors).toEqual(startTensors);
+  });
+
+  it('test lite model.', async () => {
+    await expectModel(image, segmentationImage, 'lite');
+  });
+
+  it('test full model.', async () => {
+    await expectModel(image, segmentationImage, 'full');
+  });
+
+  it('test heavy model.', async () => {
+    await expectModel(image, segmentationImage, 'heavy');
   });
 });
 
@@ -180,14 +224,21 @@ describeWithFlags('BlazePose video ', BROWSER_ENVS, () => {
     const result3D: number[][][] = [];
 
     const callback = async(video: HTMLVideoElement, timestamp: number):
-        Promise<poseDetection.Pose[]> => {
+        Promise<poseDetection.Keypoint[]> => {
           const poses =
               await detector.estimatePoses(video, null /* config */, timestamp);
           // BlazePose only returns single pose for now.
           result.push(poses[0].keypoints.map(kp => [kp.x, kp.y]));
           result3D.push(poses[0].keypoints3D.map(kp => [kp.x, kp.y, kp.z]));
-          return poses;
+
+          return poses[0].keypoints;
         };
+
+    // We set the timestamp increment to 33333 microseconds to simulate
+    // the 30 fps video input. We do this so that the filter uses the
+    // same fps as the reference test.
+    // https://github.com/google/mediapipe/blob/ecb5b5f44ab23ea620ef97a479407c699e424aa7/mediapipe/python/solution_base.py#L297
+    const simulatedInterval = 33.3333;
 
     // Original video source in 720 * 1280 resolution:
     // https://www.pexels.com/video/woman-doing-squats-4838220/ Video is
@@ -195,7 +246,9 @@ describeWithFlags('BlazePose video ', BROWSER_ENVS, () => {
     // command:
     // `ffmpeg -i original_pose.mp4 -r 5 -vcodec libx264 -crf 28 -profile:v
     // baseline pose_squats.mp4`
-    await loadVideo('pose_squats.mp4', 5 /* fps */, callback, expected, model);
+    await loadVideo(
+        'pose_squats.mp4', 5 /* fps */, callback, expected,
+        poseDetection.util.getAdjacentPairs(model), simulatedInterval);
 
     expectArraysClose(result, expected, EPSILON_VIDEO);
     expectArraysClose(result3D, expected3D, EPSILON_VIDEO_WORLD);
