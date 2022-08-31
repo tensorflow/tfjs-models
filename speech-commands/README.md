@@ -14,7 +14,7 @@ perform inference and transfer learning entirely in the browser, using
 WebGL GPU acceleration.
 
 The underlying deep neural network has been trained using the
-[TensorFlow Speech Commands Dataset](https://www.tensorflow.org/tutorials/sequences/audio_recognition).
+[TensorFlow Speech Commands Dataset](https://www.tensorflow.org/datasets/catalog/speech_commands).
 
 For more details on the data set, see:
 
@@ -42,8 +42,8 @@ To use the speech-command recognizer, first create a recognizer instance,
 then start the streaming recognition by calling its `listen()` method.
 
 ```js
-import * as tf from '@tensorflow/tfjs';
-import * as speechCommands from '@tensorflow-models/speech-commands';
+const tf = require('@tensorflow/tfjs');
+const speechCommands = require('@tensorflow-models/speech-commands');
 
 // When calling `create()`, you must provide the type of the audio input.
 // The two available options are `BROWSER_FFT` and `SOFT_FFT`.
@@ -132,8 +132,8 @@ shape of the Tensor must match the expectation of the recognizer instance.
 E.g.,
 
 ```js
-import * as tf from '@tensorflow/tfjs';
-import * as speechCommands from '@tensorflow-models/speech-commands';
+const tf = require('@tensorflow/tfjs');
+const speechCommands = require('@tensorflow-models/speech-commands');
 
 const recognizer = speechCommands.create('BROWSER_FFT');
 
@@ -162,7 +162,7 @@ tf.dispose([x, output]);
 ```
 
 Note that you must provide a spectrogram value to the `recognize()` call
-in order to perform the offline recognition. If `recognzie()` as called
+in order to perform the offline recognition. If `recognize()` is called
 without a first argument, it will perform one-shot online recognition
 by collecting a frame of audio via WebAudio.
 
@@ -219,7 +219,7 @@ await transferRecognizer.collectExample('green');
 await transferRecognizer.collectExample('blue');
 await transferRecognizer.collectExample('red');
 // Don't forget to collect some background-noise examples, so that the
-// trasnfer-learned model will be able to detect moments of silence.
+// transfer-learned model will be able to detect moments of silence.
 await transferRecognizer.collectExample('_background_noise_');
 await transferRecognizer.collectExample('green');
 await transferRecognizer.collectExample('blue');
@@ -254,7 +254,7 @@ await transferRecognizer.listen(result => {
   const words = transferRecognizer.wordLabels();
   // `result.scores` contains the scores for the new words, not the original
   // words.
-  for (let i = 0; i < words; ++i) {
+  for (let i = 0; i < words.length; ++i) {
     console.log(`score for word '${words[i]}' = ${result.scores[i]}`);
   }
 }, {probabilityThreshold: 0.75});

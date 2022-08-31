@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google LLC. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,34 +15,33 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
+import {promisify} from 'util';
 
 import {RawAudioData} from './types';
 
 export async function loadMetadataJson(url: string):
     Promise<{wordLabels: string[]}> {
-  return new Promise((resolve, reject) => {
-           const HTTP_SCHEME = 'http://';
-           const HTTPS_SCHEME = 'https://';
-           const FILE_SCHEME = 'file://';
-           if (url.indexOf(HTTP_SCHEME) === 0 ||
-               url.indexOf(HTTPS_SCHEME) === 0) {
-             fetch(url).then(response => {
-               response.json().then(parsed => resolve(parsed));
-             });
-           } else if (url.indexOf(FILE_SCHEME) === 0) {
-             // tslint:disable-next-line:no-require-imports
-             const fs = require('fs');
-             fs.readFile(
-                 url.slice(FILE_SCHEME.length), {encoding: 'utf-8'},
-                 (err: Error, data: string) => resolve(JSON.parse(data)));
-           } else {
-             reject(new Error(
-                 `Unsupported URL scheme in metadata URL: ${url}. ` +
-                 `Supported schemes are: http://, https://, and ` +
-                 `(node.js-only) file://`));
-           }
-         }) as Promise<{wordLabels: string[]}>;
+  const HTTP_SCHEME = 'http://';
+  const HTTPS_SCHEME = 'https://';
+  const FILE_SCHEME = 'file://';
+  if (url.indexOf(HTTP_SCHEME) === 0 || url.indexOf(HTTPS_SCHEME) === 0) {
+    const response = await fetch(url);
+    const parsed = await response.json();
+    return parsed;
+  } else if (url.indexOf(FILE_SCHEME) === 0) {
+    // tslint:disable-next-line:no-require-imports
+    const fs = require('fs');
+    const readFile = promisify(fs.readFile);
+
+    return JSON.parse(
+        await readFile(url.slice(FILE_SCHEME.length), {encoding: 'utf-8'}));
+  } else {
+    throw new Error(
+        `Unsupported URL scheme in metadata URL: ${url}. ` +
+        `Supported schemes are: http://, https://, and ` +
+        `(node.js-only) file://`);
+  }
 }
 
 let EPSILON: number = null;
@@ -63,7 +62,7 @@ export function normalize(x: tf.Tensor): tf.Tensor {
   return tf.tidy(() => {
     const {mean, variance} = tf.moments(x);
     // Add an EPSILON to the denominator to prevent division-by-zero.
-    return x.sub(mean).div(variance.sqrt().add(EPSILON));
+    return tf.div(tf.sub(x, mean), tf.add(tf.sqrt(variance), EPSILON));
   });
 }
 
@@ -99,7 +98,7 @@ export function getAudioContextConstructor(): AudioContext {
 
 export async function getAudioMediaStream(
     audioTrackConstraints?: MediaTrackConstraints): Promise<MediaStream> {
-  return await navigator.mediaDevices.getUserMedia({
+  return navigator.mediaDevices.getUserMedia({
     audio: audioTrackConstraints == null ? true : audioTrackConstraints,
     video: false
   });

@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google Inc. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,53 +18,14 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
+import {BaseModel} from './base_model';
 import {mobileNetCheckpoint, resNet50Checkpoint} from './checkpoints';
-import {assertValidOutputStride, assertValidResolution, MobileNet, MobileNetMultiplier} from './mobilenet';
+import {MobileNet} from './mobilenet';
 import {decodeMultiplePoses} from './multi_pose/decode_multiple_poses';
 import {ResNet} from './resnet';
 import {decodeSinglePose} from './single_pose/decode_single_pose';
-import {Pose, PosenetInput} from './types';
-import {getInputTensorDimensions, padAndResizeTo, scaleAndFlipPoses, toTensorBuffers3D} from './util';
-
-export type PoseNetInputResolution =
-    161|193|257|289|321|353|385|417|449|481|513|801|1217;
-export type PoseNetOutputStride = 32|16|8;
-export type PoseNetArchitecture = 'ResNet50'|'MobileNetV1';
-export type PoseNetDecodingMethod = 'single-person'|'multi-person';
-export type PoseNetQuantBytes = 1|2|4;
-
-/**
- * PoseNet supports using various convolution neural network models
- * (e.g. ResNet and MobileNetV1) as its underlying base model.
- * The following BaseModel interface defines a unified interface for
- * creating such PoseNet base models. Currently both MobileNet (in
- * ./mobilenet.ts) and ResNet (in ./resnet.ts) implements the BaseModel
- * interface. New base models that conform to the BaseModel interface can be
- * added to PoseNet.
- */
-export interface BaseModel {
-  // The output stride of the base model.
-  readonly outputStride: PoseNetOutputStride;
-
-  /**
-   * Predicts intermediate Tensor representations.
-   *
-   * @param input The input RGB image of the base model.
-   * A Tensor of shape: [`inputResolution`, `inputResolution`, 3].
-   *
-   * @return A dictionary of base model's intermediate predictions.
-   * The returned dictionary should contains the following elements:
-   * heatmapScores: A Tensor3D that represents the heatmapScores.
-   * offsets: A Tensor3D that represents the offsets.
-   * displacementFwd: A Tensor3D that represents the forward displacement.
-   * displacementBwd: A Tensor3D that represents the backward displacement.
-   */
-  predict(input: tf.Tensor3D): {[key: string]: tf.Tensor3D};
-  /**
-   * Releases the CPU and GPU memory allocated by the model.
-   */
-  dispose(): void;
-}
+import {InputResolution, MobileNetMultiplier, Pose, PoseNetArchitecture, PosenetInput, PoseNetOutputStride, PoseNetQuantBytes} from './types';
+import {assertValidOutputStride, assertValidResolution, getInputTensorDimensions, getValidInputResolutionDimensions, padAndResizeTo, scaleAndFlipPoses, toTensorBuffers3D, validateInputResolution} from './util';
 
 /**
  * PoseNet model loading is configurable using the following config dictionary.
@@ -77,6 +38,15 @@ export interface BaseModel {
  * the model at the cost of speed.  Set this to a larger value to increase speed
  * at the cost of accuracy. Stride 32 is supported for ResNet and
  * stride 8,16,32 are supported for various MobileNetV1 models.
+ *
+ * * `inputResolution`: A number or an Object of type {width: number, height:
+ * number}. Specifies the size the input image is scaled to before feeding it
+ * through the PoseNet model.  The larger the value, more accurate the model at
+ * the cost of speed. Set this to a smaller value to increase speed at the cost
+ * of accuracy. If a number is provided, the input will be resized and padded to
+ * be a square with the same width and height.  If width and height are
+ * provided, the input will be resized and padded to the specified width and
+ * height.
  *
  * `multiplier`: An optional number with values: 1.01, 1.0, 0.75, or
  * 0.50. The value is used only by MobileNet architecture. It is the float
@@ -98,7 +68,7 @@ export interface BaseModel {
 export interface ModelConfig {
   architecture: PoseNetArchitecture;
   outputStride: PoseNetOutputStride;
-  inputResolution: PoseNetInputResolution;
+  inputResolution: InputResolution;
   multiplier?: MobileNetMultiplier;
   modelUrl?: string;
   quantBytes?: PoseNetQuantBytes;
@@ -128,8 +98,7 @@ const VALID_STRIDE = {
   'MobileNetV1': [8, 16, 32],
   'ResNet50': [32, 16]
 };
-export const VALID_INPUT_RESOLUTION =
-    [161, 193, 257, 289, 321, 353, 385, 417, 449, 481, 513, 801];
+
 const VALID_MULTIPLIER = {
   'MobileNetV1': [0.50, 0.75, 1.0],
   'ResNet50': [1.0]
@@ -152,11 +121,7 @@ function validateModelConfig(config: ModelConfig) {
     config.inputResolution = 257;
   }
 
-  if (VALID_INPUT_RESOLUTION.indexOf(config.inputResolution) < 0) {
-    throw new Error(
-        `Invalid inputResolution ${config.inputResolution}. ` +
-        `Should be one of ${VALID_INPUT_RESOLUTION}`);
-  }
+  validateInputResolution(config.inputResolution);
 
   if (config.outputStride == null) {
     config.outputStride = 16;
@@ -165,7 +130,7 @@ function validateModelConfig(config: ModelConfig) {
     throw new Error(
         `Invalid outputStride ${config.outputStride}. ` +
         `Should be one of ${VALID_STRIDE[config.architecture]} ` +
-        `for architecutre ${config.architecture}.`);
+        `for architecture ${config.architecture}.`);
   }
 
   if (config.multiplier == null) {
@@ -175,7 +140,7 @@ function validateModelConfig(config: ModelConfig) {
     throw new Error(
         `Invalid multiplier ${config.multiplier}. ` +
         `Should be one of ${VALID_MULTIPLIER[config.architecture]} ` +
-        `for architecutre ${config.architecture}.`);
+        `for architecture ${config.architecture}.`);
   }
 
   if (config.quantBytes == null) {
@@ -185,7 +150,14 @@ function validateModelConfig(config: ModelConfig) {
     throw new Error(
         `Invalid quantBytes ${config.quantBytes}. ` +
         `Should be one of ${VALID_QUANT_BYTES} ` +
-        `for architecutre ${config.architecture}.`);
+        `for architecture ${config.architecture}.`);
+  }
+
+  if (config.architecture === 'MobileNetV1' && config.outputStride === 32 &&
+      config.multiplier !== 1) {
+    throw new Error(
+        `When using an output stride of 32, ` +
+        `you must select 1 as the multiplier.`);
   }
 
   return config;
@@ -198,11 +170,6 @@ function validateModelConfig(config: ModelConfig) {
  * This should be set to true for videos where the video is by default flipped
  * horizontally (i.e. a webcam), and you want the poses to be returned in the
  * proper orientation.
- *
- * `inputResolution`:Specifies the size the input image is scaled to before
- * feeding it through the PoseNet model.  The larger the value, more accurate
- * the model at the cost of speed. Set this to a smaller value to increase
- * speed at the cost of accuracy.
  *
  */
 export interface InferenceConfig {
@@ -225,7 +192,7 @@ export interface SinglePersonInterfaceConfig extends InferenceConfig {}
  * `nmsRadius`: Non-maximum suppression part distance in pixels. It needs
  * to be strictly positive. Two parts suppress each other if they are less
  * than `nmsRadius` pixels away. Defaults to 20.
- **/
+ */
 export interface MultiPersonInferenceConfig extends InferenceConfig {
   maxDetections?: number;
   scoreThreshold?: number;
@@ -235,12 +202,12 @@ export interface MultiPersonInferenceConfig extends InferenceConfig {
 // these added back to not break the existing api.
 export interface LegacyMultiPersonInferenceConfig extends
     MultiPersonInferenceConfig {
-  decodingMethod: 'multi-person'
+  decodingMethod: 'multi-person';
 }
 
 export interface LegacySinglePersonInferenceConfig extends
     SinglePersonInterfaceConfig {
-  decodingMethod: 'single-person'
+  decodingMethod: 'single-person';
 }
 
 export const SINGLE_PERSON_INFERENCE_CONFIG: SinglePersonInterfaceConfig = {
@@ -272,17 +239,19 @@ function validateMultiPersonInputConfig(config: MultiPersonInferenceConfig) {
         `Should be in range [0.0, 1.0]`);
   }
 
-
   if (nmsRadius <= 0) {
     throw new Error(`Invalid nmsRadius ${nmsRadius}.`);
   }
 }
 
 export class PoseNet {
-  baseModel: BaseModel;
-  inputResolution: PoseNetInputResolution;
+  readonly baseModel: BaseModel;
+  readonly inputResolution: [number, number];
 
-  constructor(net: BaseModel, inputResolution: PoseNetInputResolution) {
+  constructor(net: BaseModel, inputResolution: [number, number]) {
+    assertValidOutputStride(net.outputStride);
+    assertValidResolution(inputResolution, net.outputStride);
+
     this.baseModel = net;
     this.inputResolution = inputResolution;
   }
@@ -321,13 +290,9 @@ export class PoseNet {
     const outputStride = this.baseModel.outputStride;
     const inputResolution = this.inputResolution;
 
-    assertValidOutputStride(outputStride);
-    assertValidResolution(this.inputResolution, outputStride);
-
     const [height, width] = getInputTensorDimensions(input);
 
-    const {resized, padding} =
-        padAndResizeTo(input, [inputResolution, inputResolution]);
+    const {resized, padding} = padAndResizeTo(input, inputResolution);
 
     const {heatmapScores, offsets, displacementFwd, displacementBwd} =
         this.baseModel.predict(resized);
@@ -346,7 +311,7 @@ export class PoseNet {
         configWithDefaults.scoreThreshold, configWithDefaults.nmsRadius);
 
     const resultPoses = scaleAndFlipPoses(
-        poses, [height, width], [inputResolution, inputResolution], padding,
+        poses, [height, width], inputResolution, padding,
         configWithDefaults.flipHorizontal);
 
     heatmapScores.dispose();
@@ -386,13 +351,10 @@ export class PoseNet {
 
     const outputStride = this.baseModel.outputStride;
     const inputResolution = this.inputResolution;
-    assertValidOutputStride(outputStride);
-    assertValidResolution(inputResolution, outputStride);
 
     const [height, width] = getInputTensorDimensions(input);
 
-    const {resized, padding} =
-        padAndResizeTo(input, [inputResolution, inputResolution]);
+    const {resized, padding} = padAndResizeTo(input, inputResolution);
 
     const {heatmapScores, offsets, displacementFwd, displacementBwd} =
         this.baseModel.predict(resized);
@@ -401,7 +363,7 @@ export class PoseNet {
     const poses = [pose];
 
     const resultPoses = scaleAndFlipPoses(
-        poses, [height, width], [inputResolution, inputResolution], padding,
+        poses, [height, width], inputResolution, padding,
         configWithDefaults.flipHorizontal);
 
     heatmapScores.dispose();
@@ -418,7 +380,7 @@ export class PoseNet {
       input: PosenetInput,
       config: LegacySinglePersonInferenceConfig|
       LegacyMultiPersonInferenceConfig): Promise<Pose[]> {
-    if (config.decodingMethod == 'single-person') {
+    if (config.decodingMethod === 'single-person') {
       const pose = await this.estimateSinglePose(input, config);
       return [pose];
     } else {
@@ -445,7 +407,11 @@ async function loadMobileNet(config: ModelConfig): Promise<PoseNet> {
   const url = mobileNetCheckpoint(outputStride, multiplier, quantBytes);
   const graphModel = await tfconv.loadGraphModel(config.modelUrl || url);
   const mobilenet = new MobileNet(graphModel, outputStride);
-  return new PoseNet(mobilenet, config.inputResolution);
+
+  const validInputResolution = getValidInputResolutionDimensions(
+      config.inputResolution, mobilenet.outputStride);
+
+  return new PoseNet(mobilenet, validInputResolution);
 }
 
 async function loadResNet(config: ModelConfig): Promise<PoseNet> {
@@ -461,7 +427,9 @@ async function loadResNet(config: ModelConfig): Promise<PoseNet> {
   const url = resNet50Checkpoint(outputStride, quantBytes);
   const graphModel = await tfconv.loadGraphModel(config.modelUrl || url);
   const resnet = new ResNet(graphModel, outputStride);
-  return new PoseNet(resnet, config.inputResolution);
+  const validInputResolution = getValidInputResolutionDimensions(
+      config.inputResolution, resnet.outputStride);
+  return new PoseNet(resnet, validInputResolution);
 }
 
 /**

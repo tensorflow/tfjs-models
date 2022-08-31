@@ -1,0 +1,52 @@
+<!-- Copyright 2020 Google LLC. All Rights Reserved.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================-->
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1.0, user-scalable=no">
+<!-- Load three.js -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.106.2/build/three.min.js"></script>
+<!-- Load scatter-gl.js -->
+<!-- TODO(annxingyuan): Submit a PR to scatter-gl that allows polylines to update in the render loop. -->
+<script src="https://storage.googleapis.com/learnjs-data/handtrack_staging/scatter-gl.js"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/scatter-gl@0.0.1/lib/scatter-gl.min.js"></script> -->
+<style>
+  #canvas-wrapper {
+    position: relative;
+  }
+
+  #canvas-wrapper,
+  #scatter-gl-container {
+    display: inline-block;
+    vertical-align: top;
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/stats.js@0.17.0/build/stats.min.js"></script>
+
+<body>
+  <div id="info"></div>
+  <div id="predictions"></div>
+  <div id="canvas-wrapper">
+    <canvas id="output" style=""></canvas>
+    <video id="video" playsinline style="
+    -webkit-transform: scaleX(-1);
+    transform: scaleX(-1);
+    visibility: hidden;
+    width: auto;
+    height: auto;
+    position: absolute;
+    ">
+    </video>
+  </div>
+  <div id="scatter-gl-container"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.6/dat.gui.min.js"></script>
+  <script src="./index.js"></script>
+</body>

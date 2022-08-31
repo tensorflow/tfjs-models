@@ -16,8 +16,7 @@
  */
 
 export const config = {
-  // #TODO(tfjs): Replace this URL after you host the model
-  BASE_PATH: 'https://storage.googleapis.com/gsoc-tfjs/models/deeplab',
+  BASE_PATH: 'https://tfhub.dev/tensorflow/tfjs-model/deeplab',
   CROP_SIZE: 513,
   COLORMAPS: {
     ADE20K: [

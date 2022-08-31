@@ -27,24 +27,34 @@ and can be used as building blocks in other apps.
   <!-- Images -->
   <!-- ** MobileNet -->
   <tr>
-    <td rowspan="10"><b>Images</b></td>
+    <td rowspan="12"><b>Images</b></td>
     <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./mobilenet"><div style='vertical-align:middle; display:inline;'>MobileNet</div></a></b></td>
-    <td><a href=""></a></td>
+    <td><a href="https://storage.googleapis.com/tfjs-models/demos/mobilenet/index.html">live</a></td>
     <td rowspan="2">Classify images with labels from the <a href="http://www.image-net.org/">ImageNet database</a>.</td>
     <td rowspan="2"><code>npm i @tensorflow-models/mobilenet</code></td>
   </tr>
   <tr>
     <td><a href="./mobilenet/demo/index.html">source</a></td>
   </tr>
-  <!-- ** PoseNet -->
+  <!-- ** Hand -->
   <tr>
-    <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./posenet"><div style='vertical-align:middle; display:inline;'>PoseNet</div></a></b></td>
-    <td><a href="https://storage.googleapis.com/tfjs-models/demos/posenet/camera.html">live</a></td>
-    <td rowspan="2">A machine learning model which allows for real-time human pose estimation in the browser. See a detailed description <a href="https://medium.com/tensorflow/real-time-human-pose-estimation-in-the-browser-with-tensorflow-js-7dd0bc881cd5">here</a>.</td>
-    <td rowspan="2"><code>npm i @tensorflow-models/posenet</code></td>
+    <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./hand-pose-detection"><div style='vertical-align:middle; display:inline;'>Hand</div></a></b></td>
+    <td><a href="https://storage.googleapis.com/tfjs-models/demos/hand-pose-detection/index.html?model=mediapipe_hands">live</a></td>
+    <td rowspan="2">Real-time hand pose detection in the browser using TensorFlow.js.</td>
+    <td rowspan="2"><code>npm i @tensorflow-models/hand-pose-detection</code></td>
   </tr>
   <tr>
-    <td><a href="./posenet/demos/camera.html">source</a></td>
+    <td><a href="./hand-pose-detection/demos/live_video/index.html">source</a></td>
+  </tr>
+    <!-- ** Pose -->
+  <tr>
+    <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./pose-detection"><div style='vertical-align:middle; display:inline;'>Pose</div></a></b></td>
+    <td><a href="https://storage.googleapis.com/tfjs-models/demos/pose-detection/index.html?model=movenet">live</a></td>
+    <td rowspan="2">An API for real-time human pose detection in the browser.</td>
+    <td rowspan="2"><code>npm i @tensorflow-models/pose-detection</code></td>
+  </tr>
+  <tr>
+    <td><a href="./pose-detection/demos/live_video/index.html">source</a></td>
   </tr>
   <!-- ** Coco SSD -->
   <tr>
@@ -56,26 +66,25 @@ and can be used as building blocks in other apps.
   <tr>
     <td><a href="./coco-ssd/demo">source</a></td>
   </tr>
-  <!-- ** BodyPix -->
-  <tr>
-    <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./body-pix"><div style='vertical-align:middle; display:inline;'>BodyPix</div></a></b></td>
-    <td><a href="https://storage.googleapis.com/tfjs-models/demos/body-pix/index.html">live</a></td>
-    <td rowspan="2">Real-time person and body part segmentation in the browser using TensorFlow.js.</td>
-    <td rowspan="2"><code>npm i @tensorflow-models/body-pix</code></td>
-  </tr>
-  <tr>
-    <td><a href="./body-pix/demos/index.html">source</a></td>
-  </tr>
-    <!-- ** DeepLab -->
-  <tr>
     <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./deeplab"><div style='vertical-align:middle; display:inline;'>DeepLab v3</div></a></b></td>
     <td><a href=""></a></td>
     <td rowspan="2">Semantic segmentation</td>
     <td rowspan="2"><code>npm i @tensorflow-models/deeplab</code></td>
   </tr>
   <tr>
-    <td><a href="./deeplab/demo/index.html">source</a></td>
+    <td><a href="./deeplab/demo">source</a></td>
   </tr>
+    <!-- ** Face Landmark Detection -->
+  <tr>
+    <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./face-landmarks-detection"><div style='vertical-align:middle; display:inline;'>Face Landmark Detection</div></a></b></td>
+    <td><a href="https://storage.googleapis.com/tfjs-models/demos/face-landmarks-detection/index.html?model=mediapipe_face_mesh">live</a></td>
+    <td rowspan="2">Real-time 3D facial landmarks detection to infer the approximate surface geometry of a human face</td>
+    <td rowspan="2"><code>npm i @tensorflow-models/face-landmarks-detection</code></td>
+  </tr>
+  <tr>
+    <td><a href="./face-landmarks-detection/demos">source</a></td>
+  </tr>
+
   <!-- * Audio -->
   <!-- ** Speech Commands -->
   <tr>
@@ -109,6 +118,18 @@ and can be used as building blocks in other apps.
   </tr>
   <tr>
     <td><a href="./toxicity/demo/index.html">source</a></td>
+  </tr>
+  <!-- * Depth Estimation -->
+  <!-- ** Portrait Depth -->
+  <tr>
+    <td rowspan="2"><b>Depth Estimation</b></td>
+    <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./depth-estimation"><div style='vertical-align:middle; display:inline;'>Portrait Depth</div></a></b></td>
+    <td><a href="https://storage.googleapis.com/tfjs-models/demos/3dphoto/index.html">live</a></td>
+    <td rowspan="2">Estimate per-pixel depth (the distance to the camera center) for a single portrait image, which can be further used for creative applications such as <a href="https://blog.tensorflow.org/2022/05/portrait-depth-api-turning-single-image.html?linkId=8063793">3D photo</a> and <a href="https://storage.googleapis.com/tfjs-models/demos/relighting/index.html">relighting</a>.</td>
+    <td rowspan="2"><code>npm i @tensorflow-models/depth-estimation</code></td>
+  </tr>
+  <tr>
+    <td><a href="./depth-estimation/demos/3d_photo/index.html">source</a></td>
   </tr>
   <!-- * General Utilities -->
   <tr>

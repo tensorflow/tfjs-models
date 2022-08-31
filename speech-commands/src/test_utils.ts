@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import {Tensor, test_util, util} from '@tensorflow/tfjs';
+import {Tensor, test_util, util} from '@tensorflow/tfjs-core';
 
 export function expectTensorsClose(
     actual: Tensor|number[], expected: Tensor|number[], epsilon?: number) {

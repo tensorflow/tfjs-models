@@ -1,0 +1,16 @@
+.yalc/
+.vscode/
+.rpt2_cache/
+demo/
+scripts/
+src/
+coverage/
+node_modules/
+karma.conf.js
+*.tgz
+.travis.yml
+.npmignore
+tslint.json
+yarn.lock
+yalc.lock
+cloudbuild.yml

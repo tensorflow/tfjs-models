@@ -15,14 +15,14 @@
  * =============================================================================
  */
 import * as tf from '@tensorflow/tfjs-core';
+// tslint:disable-next-line: no-imports-from-dist
 import {describeWithFlags, NODE_ENVS,} from '@tensorflow/tfjs-core/dist/jasmine_util';
-import {createCanvas} from 'canvas';
 import {load} from '.';
 
 describeWithFlags('SemanticSegmentation', NODE_ENVS, () => {
   it('SemanticSegmentation should not leak', async () => {
     const model = await load();
-    const x = tf.zeros([227, 500, 3]) as tf.Tensor3D;
+    const x: tf.Tensor3D = tf.zeros([227, 500, 3]);
     const numOfTensorsBefore = tf.memory().numTensors;
 
     await model.segment(x);
@@ -30,7 +30,7 @@ describeWithFlags('SemanticSegmentation', NODE_ENVS, () => {
   });
 
   it('SemanticSegmentation map has matching dimensions', async () => {
-    const x = tf.zeros([513, 500, 3]) as tf.Tensor3D;
+    const x: tf.Tensor3D = tf.zeros([513, 500, 3]);
     const model = await load();
     const segmentationMapTensor = await model.predict(x);
     const [height, width] = segmentationMapTensor.shape;
@@ -39,18 +39,10 @@ describeWithFlags('SemanticSegmentation', NODE_ENVS, () => {
 
   it('SemanticSegmentation segment method generates valid output', async () => {
     const model = await load();
-    const x = tf.zeros([300, 500, 3]) as tf.Tensor3D;
+    const x: tf.Tensor3D = tf.zeros([300, 500, 3]);
 
     const {legend} = await model.segment(x);
     expect(Object.keys(legend)).toContain('background');
   });
 
-  it('SemanticSegmentation produces a valid segmentation of an empty canvas',
-     async () => {
-       const model = await load();
-       const x = createCanvas(200, 200);
-       // tslint:disable-next-line: no-any
-       const {legend} = await model.segment((x as any) as HTMLCanvasElement);
-       expect(Object.keys(legend)).toContain('background');
-     });
 });

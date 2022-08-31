@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google Inc. All Rights Reserved.
+ * Copyright 2019 Google LLC. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,8 +15,8 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
-import {test_util} from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
+import {test_util} from '@tensorflow/tfjs-core';
 
 import {normalize} from './browser_fft_utils';
 import {arrayBuffer2SerializedExamples, BACKGROUND_NOISE_TAG, Dataset, DATASET_SERIALIZATION_DESCRIPTOR, DATASET_SERIALIZATION_VERSION, deserializeExample, getMaxIntensityFrameIndex, getValidWindows, serializeExample, spectrogram2IntensityCurve, SpectrogramAndTargetsTfDataset} from './dataset';
@@ -592,12 +592,9 @@ describe('Dataset', () => {
     const windows = tf.unstack(xs);
 
     expect(windows.length).toEqual(6);
-    expectTensorsClose(
-        windows[0], tf.tensor3d([1, 1, 2, 2, 3, 3], [3, 2, 1]));
-    expectTensorsClose(
-        windows[1], tf.tensor3d([2, 2, 3, 3, 2, 2], [3, 2, 1]));
-    expectTensorsClose(
-        windows[2], tf.tensor3d([3, 3, 2, 2, 1, 1], [3, 2, 1]));
+    expectTensorsClose(windows[0], tf.tensor3d([1, 1, 2, 2, 3, 3], [3, 2, 1]));
+    expectTensorsClose(windows[1], tf.tensor3d([2, 2, 3, 3, 2, 2], [3, 2, 1]));
+    expectTensorsClose(windows[2], tf.tensor3d([3, 3, 2, 2, 1, 1], [3, 2, 1]));
     expectTensorsClose(
         windows[3], tf.tensor3d([10, 10, 20, 20, 30, 30], [3, 2, 1]));
     expectTensorsClose(
@@ -627,7 +624,7 @@ describe('Dataset', () => {
     // 3 of the newly-generated ones at the end are from the augmentation.
     expect(xs.shape).toEqual([10, 3, 2, 1]);
     expect(ys.shape).toEqual([10, 2]);
-    const indices = ys.argMax(-1).dataSync();
+    const indices = tf.argMax(ys, -1).dataSync();
     const backgroundNoiseIndex = indices[0];
     for (let i = 0; i < 3; ++i) {
       expect(indices[indices.length - 1 - i] === backgroundNoiseIndex)
@@ -689,7 +686,7 @@ describe('Dataset', () => {
       const {ys} = dataset.getData(null, {numFrames: 3, hopFrames: 1}) as
           {xs: tf.Tensor, ys: tf.Tensor};
       // Use `argMax()` to convert the one-hot-encoded `ys` to indices.
-      argMaxTensors.push(ys.argMax(-1));
+      argMaxTensors.push(tf.argMax(ys, -1));
     }
     // `argMaxTensors` are the indices for the targets.
     // We stack them into a 2D tensor and then calculate the variance along
@@ -699,7 +696,7 @@ describe('Dataset', () => {
     // Assert that the orders are not all the same. This is asserting that
     // the indices are not all the same among the 5 iterations above.
     const {variance} = tf.moments(argMaxMerged, 0);
-    expect(variance.max().dataSync()[0]).toBeGreaterThan(0);
+    expect(tf.max(variance).dataSync()[0]).toBeGreaterThan(0);
   });
 
   it('getSpectrogramsAsTensors: shuffle=false leads to constant order', () => {
@@ -714,7 +711,7 @@ describe('Dataset', () => {
       const {ys} =
           dataset.getData(null, {numFrames: 3, hopFrames: 1, shuffle: false}) as
           {xs: tf.Tensor, ys: tf.Tensor};
-      argMaxTensors.push(ys.argMax(-1));
+      argMaxTensors.push(tf.argMax(ys, -1));
     }
     // `argMaxTensors` are the indices for the targets.
     // We stack them into a 2D tensor and then calculate the variance along
@@ -724,7 +721,7 @@ describe('Dataset', () => {
     // Assert that the orders are not all the same. This is asserting that
     // the indices are all the same among the 5 iterations above.
     const {variance} = tf.moments(argMaxMerged, 0);
-    expect(variance.max().dataSync()[0]).toEqual(0);
+    expect(tf.max(variance).dataSync()[0]).toEqual(0);
   });
 
   it('Uniform example lengths and multiple windows per example', () => {
@@ -774,8 +771,7 @@ describe('Dataset', () => {
         windows[1], tf.tensor3d([20, 20, 30, 30, 20, 20], [3, 2, 1]));
     expectTensorsClose(
         windows[2], tf.tensor3d([20, 20, 10, 10, 0, 0], [3, 2, 1]));
-    expectTensorsClose(
-        windows[3], tf.tensor3d([2, 2, 3, 3, 2, 2], [3, 2, 1]));
+    expectTensorsClose(windows[3], tf.tensor3d([2, 2, 3, 3, 2, 2], [3, 2, 1]));
     expectTensorsClose(ys, tf.tensor2d([[1, 0], [1, 0], [1, 0], [0, 1]]));
   });
 
@@ -1049,8 +1045,7 @@ describe('Dataset serialization', () => {
     const {xs, ys} = datasetPrime.getData(null, {shuffle: false}) as
         {xs: tf.Tensor, ys: tf.Tensor};
     expect(xs.shape).toEqual([3, 10, 16, 1]);
-    expectTensorsClose(
-        ys, tf.tensor2d([[1, 0, 0], [0, 1, 0], [0, 0, 1]]));
+    expectTensorsClose(ys, tf.tensor2d([[1, 0, 0], [0, 1, 0], [0, 0, 1]]));
   });
 
   it('Attempt to load invalid ArrayBuffer errors out', () => {

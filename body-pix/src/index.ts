@@ -1,6 +1,6 @@
 /**
  * @license
- * Copyright 2018 Google Inc. All Rights Reserved.
+ * Copyright 2019 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,8 +16,8 @@
  */
 
 export {BodyPix, load} from './body_pix_model';
-export {Checkpoint, checkpoints} from './checkpoints';
-export {decodePartSegmentation, toMask} from './decode_part_map';
-export {drawBokehEffect, drawMask, drawPixelatedMask, toColoredPartImageData, toMaskImageData} from './output_rendering_util';
-export {partChannels} from './part_channels';
-export {resizeAndPadTo, scaleAndCropToInputTensorShape} from './util';
+export {blurBodyPart, drawBokehEffect, drawMask, drawPixelatedMask, toColoredPartMask, toMask} from './output_rendering_util';
+export {PART_CHANNELS} from './part_channels';
+export {PartSegmentation, PersonSegmentation, SemanticPartSegmentation, SemanticPersonSegmentation} from './types';
+export {flipPoseHorizontal, resizeAndPadTo, scaleAndCropToInputTensorShape} from './util';
+export {version} from './version';

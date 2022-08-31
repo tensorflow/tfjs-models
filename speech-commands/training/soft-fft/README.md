@@ -3,7 +3,7 @@
 ## Preparing data for training
 
 Before you can train your model that uses spectrogram from the browser's
-WebAudio as input features, you need to download the speech-commands [data set v1](https://storage.cloud.google.com/download.tensorflow.org/data/speech_commands_v0.0.1.tar.gz) or [data set v1](https://storage.cloud.google.com/download.tensorflow.org/data/speech_commands_v0.0.2.tar.gz).
+WebAudio as input features, you need to download the speech-commands [data set v0.01](https://storage.cloud.google.com/download.tensorflow.org/data/speech_commands_v0.01.tar.gz) or [data set v0.02](https://storage.cloud.google.com/download.tensorflow.org/data/speech_commands_v0.02.tar.gz).
 
 ## Training the TensorFlow.js Model
 

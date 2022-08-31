@@ -6,7 +6,7 @@ This module is a TensorFlow.js [`GraphModel`](https://js.tensorflow.org/api/late
 
 In [this demo](./demo/index.js) we embed six sentences with the USE, and render their self-similarity scores in a matrix (redder means more similar):
 
-![selfsimilarity](./images/self_similarity.jpg)
+![selfsimilarity](https://storage.googleapis.com/tfjs-models/assets/use/self_similarity.jpg)
 
 *The matrix shows that USE embeddings can be used to cluster sentences by similarity.*
 
@@ -17,6 +17,17 @@ The sentences (taken from the [TensorFlow Hub USE lite colab](https://colab.sand
 4. What is your age?
 5. An apple a day, keeps the doctors away.
 6. Eating strawberries is healthy.
+
+# Universal Sentence Encoder For Question Answering
+
+The Universal Sentence Encoder for question answering (USE QnA) is a model that encodes question and answer texts into 100-dimensional embeddings. The dot product of these embeddings measures how well the answer fits the question. It can also be used in other applications, including any type of text classification, clustering, etc.
+This module is a lightweight TensorFlow.js [`GraphModel`](https://js.tensorflow.org/api/latest/#loadGraphModel). The model is based on the Transformer ([Vaswani et al, 2017](https://arxiv.org/pdf/1706.03762.pdf)) architecture, and uses an 8k SentencePiece [vocabulary](https://tfhub.dev/google/tfjs-model/universal-sentence-encoder-qa-ondevice/1/vocab.json?tfjs-format=file). It is trained on a variety of data sources, with the goal of learning text representations that are useful out-of-the-box to retrieve an answer given a question.
+
+In [this demo](./demo/index.js) we embed a question and three answers with the USE QnA, and render their their scores:
+
+![QnA scores](https://storage.googleapis.com/tfjs-models/assets/use/qna_score.png)
+
+*The scores show how well each answer fits the question.*
 
 ## Installation
 
@@ -33,7 +44,8 @@ Using `npm`:
 To import in npm:
 
 ```js
-import * as use from '@tensorflow-models/universal-sentence-encoder';
+require('@tensorflow/tfjs');
+const use = require('@tensorflow-models/universal-sentence-encoder');
 ```
 
 or as a standalone script tag:
@@ -61,6 +73,8 @@ use.load().then(model => {
 });
 ```
 
+`load()` accepts an optional configuration object where you can set custom `modelUrl` and/or `vocabUrl` strings (e.g. `use.load({modelUrl: '', vocabUrl: ''})`).
+
 To use the Tokenizer separately:
 
 ```js
@@ -69,10 +83,58 @@ use.loadTokenizer().then(tokenizer => {
 });
 ```
 
+
 Pass a path to the Tokenizer to use a different vocabulary:
 
 ```js
 use.loadTokenizer('https://storage.googleapis.com/learnjs-data/bert_vocab/vocab.json').then(tokenizer => {
   tokenizer.encode('Hello, how are you?'); // [0, 15350, 29623, 2129, 2024, 2017, 29632]
 });
+
+To use the QnA dual encoder:
+```js
+// Load the model.
+use.loadQnA().then(model => {
+  // Embed a dictionary of a query and responses. The input to the embed method
+  // needs to be in following format:
+  // {
+  //   queries: string[];
+  //   responses: Response[];
+  // }
+  // queries is an array of question strings
+  // responses is an array of following structure:
+  // {
+  //   response: string;
+  //   context?: string;
+  // }
+  // context is optional, it provides the context string of the answer.
+
+  const input = {
+    queries: ['How are you feeling today?', 'What is captial of China?'],
+    responses: [
+      'I\'m not feeling very well.',
+      'Beijing is the capital of China.',
+      'You have five fingers on your hand.'
+    ]
+  };
+  var scores = [];
+  const embeddings = model.embed(input);
+  /*
+    * The output of the embed method is an object with two keys:
+    * {
+    *   queryEmbedding: tf.Tensor;
+    *   responseEmbedding: tf.Tensor;
+    * }
+    * queryEmbedding is a tensor containing embeddings for all queries.
+    * responseEmbedding is a tensor containing embeddings for all answers.
+    * You can call `arraySync()` to retrieve the values of the tensor.
+    * In this example, embed_query[0] is the embedding for the query
+    * 'How are you feeling today?'
+    * And embed_responses[0] is the embedding for the answer
+    * 'I\'m not feeling very well.'
+    */
+  const scores = tf.matMul(embeddings['queryEmbedding'],
+      embeddings['responseEmbedding'], false, true).dataSync();
+});
+
 ```

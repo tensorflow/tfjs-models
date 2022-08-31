@@ -1,7 +1,5 @@
 # Semantic Segmentation in the Browser: DeepLab v3 Model
 
-## This model is a work-in-progress and has not been released yet. We will update this README when the model is released and usable
-
 This package contains a standalone implementation of the DeepLab inference pipeline, as well as a [demo](./demo), for running semantic segmentation using TensorFlow.js.
 
 ![DeepLab Demo](./docs/deeplab-demo.gif)
@@ -13,11 +11,10 @@ In the first step of semantic segmentation, an image is fed through a pre-traine
 To get started, pick the model name from `pascal`, `cityscapes` and `ade20k`, and decide whether you want your model quantized to 1 or 2 bytes (set the `quantizationBytes` option to 4 if you want to disable quantization). Then, initialize the model as follows:
 
 ```typescript
-import * as tf from '@tensorflow-models/tfjs';
-import * as deeplab from '@tensorflow-models/deeplab';
+const tf = require('@tensorflow-models/tfjs');
+const deeplab = require('@tensorflow-models/deeplab');
 const loadModel = async () => {
-  const modelName = 'pascal';   // set to your preferred model, out of `pascal`,
-                                // `cityscapes` and `ade20k`
+  const modelName = 'pascal';   // set to your preferred model, either `pascal`, `cityscapes` or `ade20k`
   const quantizationBytes = 2;  // either 1, 2 or 4
   return await deeplab.load({base: modelName, quantizationBytes});
 };
@@ -37,10 +34,9 @@ By default, calling `load` initalizes the PASCAL variant of the model quantized 
 If you would rather load custom weights, you can pass the URL in the config instead:
 
 ```typescript
-import * as deeplab from '@tensorflow-models/deeplab';
+const deeplab = require('@tensorflow-models/deeplab');
 const loadModel = async () => {
-  // #TODO(tfjs): Replace this URL after you host the model
-  const url = 'https://storage.googleapis.com/gsoc-tfjs/models/deeplab/quantized/1/pascal/model.json';
+  const url = 'https://tfhub.dev/tensorflow/tfjs-model/deeplab/pascal/1/default/1/model.json?tfjs-format=file';
   return await deeplab.load({modelUrl: url});
 };
 loadModel().then(() => console.log(`Loaded the model successfully!`));
@@ -53,8 +49,8 @@ You can set the `base` attribute in the argument to `pascal`, `cityscapes` or `a
 If you require more careful control over the initialization and behavior of the model (e.g. you want to use your own labelling scheme and colormap), use the `SemanticSegmentation` class, passing a pre-loaded `GraphModel` in the constructor:
 
 ```typescript
-import * as tfconv from '@tensorflow/tfjs-converter';
-import * as deeplab from '@tensorflow-models/deeplab';
+const tfconv = require('@tensorflow/tfjs-converter');
+const deeplab = require('@tensorflow-models/deeplab');
 const loadModel = async () => {
   const base = 'pascal';        // set to your preferred model, out of `pascal`,
                                 // `cityscapes` and `ade20k`
@@ -84,9 +80,9 @@ The `segment` method of the `SemanticSegmentation` object covers most use cases.
 
 Each model recognises a different set of object classes in an image:
 
-- [PASCAL](./deeplab/src/config.ts#L60)
-- [CityScapes](./deeplab/src/config.ts#L66)
-- [ADE20K](./deeplab/src/config.ts#L72)
+- [PASCAL](./src/config.ts#L142)
+- [CityScapes](./src/config.ts#L149)
+- [ADE20K](./src/config.ts#L155)
 
 #### `model.segment(image, config?)` inputs
 

@@ -6,10 +6,10 @@ The demo shows how to use embeddings produced by the Universal Sentence Encoder.
 
 ## Setup
 
-cd into the demos folder:
+cd into the demo folder:
 
 ```sh
-cd universal-sentence-encoder/demos
+cd universal-sentence-encoder/demo
 ```
 
 Install dependencies and prepare the build directory:
@@ -18,39 +18,28 @@ Install dependencies and prepare the build directory:
 yarn
 ```
 
+Build the universal sentence encoder locally which the demo depends on:
+
+```sh
+yarn build-deps
+```
+
 To watch files for changes, and launch a dev server:
 
 ```sh
 yarn watch
 ```
 
-## If you are developing universal-sentence-encoder locally, and want to test the changes in the demos
+## If you are developing universal-sentence-encoder locally, and want to test the changes in the demo
 
-cd into the universal-sentence-encoder folder:
+cd into the universal-sentence-encoder/demo folder:
 ```sh
-cd universal-sentence-encoder
+cd universal-sentence-encoder/demo
 ```
 
-Install dependencies:
+Rebuild universal sentence encoder locally:
 ```sh
-yarn
-```
-
-Build and publish universal-sentence-encoder locally:
-```sh
-yarn publish-local
-```
-
-Cd into the demos and install dependencies:
-
-```sh
-cd demos
-yarn
-```
-
-Link the local universal-sentence-encoder to the demos:
-```sh
-yarn link-local
+yarn build-deps
 ```
 
 Start the dev demo server:
@@ -58,9 +47,5 @@ Start the dev demo server:
 yarn watch
 ```
 
-To get future updates from the universal-sentence-encoder source code:
-```
-# cd up into the universal-sentence-encoder directory
-cd ../
-yarn publish-local
-```
+To get future updates from the `universal-sentence-encoder` source code,
+just run `yarn build-deps` in the universal-sentence-encoder/demo folder again.
