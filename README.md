@@ -119,6 +119,18 @@ and can be used as building blocks in other apps.
   <tr>
     <td><a href="./toxicity/demo/index.html">source</a></td>
   </tr>
+  <!-- * Depth Estimation -->
+  <!-- ** Portrait Depth -->
+  <tr>
+    <td rowspan="2"><b>Depth Estimation</b></td>
+    <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./depth-estimation"><div style='vertical-align:middle; display:inline;'>Portrait Depth</div></a></b></td>
+    <td><a href="https://storage.googleapis.com/tfjs-models/demos/3dphoto/index.html">live</a></td>
+    <td rowspan="2">Estimate per-pixel depth (the distance to the camera center) for a single portrait image, which can be further used for creative applications such as <a href="https://blog.tensorflow.org/2022/05/portrait-depth-api-turning-single-image.html?linkId=8063793">3D photo</a> and <a href="https://storage.googleapis.com/tfjs-models/demos/relighting/index.html">relighting</a>.</td>
+    <td rowspan="2"><code>npm i @tensorflow-models/depth-estimation</code></td>
+  </tr>
+  <tr>
+    <td><a href="./depth-estimation/demos/3d_photo/index.html">source</a></td>
+  </tr>
   <!-- * General Utilities -->
   <tr>
     <td rowspan="2"><b>General Utilities</b></td>
