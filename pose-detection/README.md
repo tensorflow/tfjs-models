@@ -153,7 +153,7 @@ See the diagram below for what those keypoints are and their index in the array.
 
 0: nose  \
 1: left_eye_inner \
-2: left  \
+2: left_eye  \
 3: left_eye_outer  \
 4: right_eye_inner  \
 5: right_eye  \
