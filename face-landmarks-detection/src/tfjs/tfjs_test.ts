@@ -149,25 +149,28 @@ describeWithFlags('TFJS FaceMesh static image ', BROWSER_ENVS, () => {
         tfjsResults
             .map(
                 face => face.keypoints.map(
-                    keypoint => [keypoint.x, keypoint.y,
-                                 keypoint.name] as [number, number, string]))
+                    keypoint => [keypoint.x, keypoint.y, keypoint.z,
+                                 keypoint.name] as
+                                    [number, number, number, string]))
             .flat();
 
     const mediapipeKeypoints =
         mediapipeResults
             .map(
                 face => face.keypoints.map(
-                    keypoint => [keypoint.x, keypoint.y,
-                                 keypoint.name] as [number, number, string]))
+                    keypoint => [keypoint.x, keypoint.y, keypoint.z,
+                                 keypoint.name] as
+                                    [number, number, number, string]))
             .flat();
 
     expectArraysClose(
-        tfjsKeypoints.map(keypoint => [keypoint[0], keypoint[1]]),
-        mediapipeKeypoints.map(keypoint => [keypoint[0], keypoint[1]]),
+        tfjsKeypoints.map(keypoint => [keypoint[0], keypoint[1], keypoint[2]]),
+        mediapipeKeypoints.map(
+            keypoint => [keypoint[0], keypoint[1], keypoint[2]]),
         EPSILON_IMAGE);
     expectArraysEqual(
-        tfjsKeypoints.map(keypoint => keypoint[2]),
-        mediapipeKeypoints.map(keypoint => keypoint[2]));
+        tfjsKeypoints.map(keypoint => keypoint[3]),
+        mediapipeKeypoints.map(keypoint => keypoint[3]));
 
     for (let i = 0; i < tfjsResults.length; i++) {
       for (const key of ['height', 'width', 'xMax', 'xMin', 'yMax', 'yMin'] as
