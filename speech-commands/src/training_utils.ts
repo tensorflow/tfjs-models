@@ -20,7 +20,7 @@
  * model.
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
 
 /**
  * Split feature and target tensors into train and validation (val) splits.
@@ -50,7 +50,7 @@ export function balancedTrainValSplit(
           `but got ${valSplit}`);
 
   return tf.tidy(() => {
-    const classIndices = ys.argMax(-1).dataSync();
+    const classIndices = tf.argMax(ys, -1).dataSync();
 
     const indicesByClasses: number[][] = [];
     for (let i = 0; i < classIndices.length; ++i) {

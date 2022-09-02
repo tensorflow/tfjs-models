@@ -24,6 +24,7 @@ const BASE_PATH = 'https://storage.googleapis.com/tfjs-models/savedmodel/';
 
 export {version} from './version';
 
+/** @docinline */
 export type ObjectDetectionBaseModel =
     'mobilenet_v1'|'mobilenet_v2'|'lite_mobilenet_v2';
 
@@ -35,17 +36,19 @@ export interface DetectedObject {
 
 /**
  * Coco-ssd model loading is configurable using the following config dictionary.
- *
- * `base`: ObjectDetectionBaseModel. It determines wich PoseNet architecture
- * to load. The supported architectures are: 'mobilenet_v1', 'mobilenet_v2' and
- * 'lite_mobilenet_v2'. It is default to 'lite_mobilenet_v2'.
- *
- * `modelUrl`: An optional string that specifies custom url of the model. This
- * is useful for area/countries that don't have access to the model hosted on
- * GCP.
  */
 export interface ModelConfig {
+  /**
+   * It determines wich object detection architecture to load. The supported
+   * architectures are: 'mobilenet_v1', 'mobilenet_v2' and 'lite_mobilenet_v2'.
+   * It is default to 'lite_mobilenet_v2'.
+   */
   base?: ObjectDetectionBaseModel;
+  /**
+   *
+   * An optional string that specifies custom url of the model. This is useful
+   * for area/countries that don't have access to the model hosted on GCP.
+   */
   modelUrl?: string;
 }
 
@@ -108,14 +111,13 @@ export class ObjectDetection {
   private async infer(
       img: tf.Tensor3D|ImageData|HTMLImageElement|HTMLCanvasElement|
       HTMLVideoElement,
-      maxNumBoxes: number, 
-      minScore: number): Promise<DetectedObject[]> {
+      maxNumBoxes: number, minScore: number): Promise<DetectedObject[]> {
     const batched = tf.tidy(() => {
       if (!(img instanceof tf.Tensor)) {
         img = tf.browser.fromPixels(img);
       }
       // Reshape to a single-element batch so we can pass it to executeAsync.
-      return img.expandDims(0);
+      return tf.expandDims(img);
     });
     const height = batched.shape[1];
     const width = batched.shape[2];
@@ -139,7 +141,9 @@ export class ObjectDetection {
 
     const prevBackend = tf.getBackend();
     // run post process in cpu
-    tf.setBackend('cpu');
+    if (tf.getBackend() === 'webgl') {
+      tf.setBackend('cpu');
+    }
     const indexTensor = tf.tidy(() => {
       const boxes2 =
           tf.tensor2d(boxes, [result[1].shape[1], result[1].shape[3]]);
@@ -151,7 +155,9 @@ export class ObjectDetection {
     indexTensor.dispose();
 
     // restore previous backend
-    tf.setBackend(prevBackend);
+    if (prevBackend !== tf.getBackend()) {
+      tf.setBackend(prevBackend);
+    }
 
     return this.buildDetectedObjects(
         width, height, boxes, maxScores, indexes, classes);
@@ -219,8 +225,7 @@ export class ObjectDetection {
   async detect(
       img: tf.Tensor3D|ImageData|HTMLImageElement|HTMLCanvasElement|
       HTMLVideoElement,
-      maxNumBoxes = 20,
-      minScore = 0.5): Promise<DetectedObject[]> {
+      maxNumBoxes = 20, minScore = 0.5): Promise<DetectedObject[]> {
     return this.infer(img, maxNumBoxes, minScore);
   }
 

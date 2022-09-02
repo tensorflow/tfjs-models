@@ -18,7 +18,7 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {loadVocabulary, Tokenizer} from './tokenizer';
+import {loadTokenizer, loadVocabulary, Tokenizer} from './tokenizer';
 import {loadQnA} from './use_qna';
 
 export {version} from './version';
@@ -31,9 +31,14 @@ declare interface ModelInputs extends tf.NamedTensorMap {
   values: tf.Tensor;
 }
 
-export async function load() {
+interface LoadConfig {
+  modelUrl?: string;
+  vocabUrl?: string;
+}
+
+export async function load(config?: LoadConfig) {
   const use = new UniversalSentenceEncoder();
-  await use.load();
+  await use.load(config);
   return use;
 }
 
@@ -41,15 +46,20 @@ export class UniversalSentenceEncoder {
   private model: tfconv.GraphModel;
   private tokenizer: Tokenizer;
 
-  async loadModel() {
-    return tfconv.loadGraphModel(
-        'https://tfhub.dev/tensorflow/tfjs-model/universal-sentence-encoder-lite/1/default/1',
-        {fromTFHub: true});
+  async loadModel(modelUrl?: string) {
+    return modelUrl
+      ? tfconv.loadGraphModel(modelUrl)
+      : tfconv.loadGraphModel(
+          'https://tfhub.dev/tensorflow/tfjs-model/universal-sentence-encoder-lite/1/default/1',
+          {fromTFHub: true}
+        );
   }
 
-  async load() {
-    const [model, vocabulary] = await Promise.all(
-        [this.loadModel(), loadVocabulary(`${BASE_PATH}/vocab.json`)]);
+  async load(config: LoadConfig = {}) {
+    const [model, vocabulary] = await Promise.all([
+      this.loadModel(config.modelUrl),
+      loadVocabulary(config.vocabUrl || `${BASE_PATH}/vocab.json`)
+    ]);
 
     this.model = model;
     this.tokenizer = new Tokenizer(vocabulary);
@@ -93,4 +103,5 @@ export class UniversalSentenceEncoder {
 }
 
 export {Tokenizer};
+export {loadTokenizer};
 export {loadQnA};

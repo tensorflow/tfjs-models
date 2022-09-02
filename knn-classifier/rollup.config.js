@@ -15,8 +15,8 @@
  * =============================================================================
  */
 
-import node from 'rollup-plugin-node-resolve';
-import typescript from 'rollup-plugin-typescript2';
+import { nodeResolve } from '@rollup/plugin-node-resolve';
+import typescript from '@rollup/plugin-typescript';
 import uglify from 'rollup-plugin-uglify';
 
 const PREAMBLE = `/**
@@ -44,12 +44,20 @@ function config({plugins = [], output = {}}) {
   return {
     input: 'src/index.ts',
     plugins: [
-      typescript({tsconfigOverride: {compilerOptions: {module: 'ES2015'}}}),
-      node(), ...plugins
+      typescript({module: 'ES2015', sourceMap: true}),
+      nodeResolve(),
+      ...plugins
     ],
-    output:
-        {banner: PREAMBLE, globals: {'@tensorflow/tfjs-core': 'tf'}, ...output},
-    external: ['@tensorflow/tfjs-core']
+    output: {
+      banner: PREAMBLE,
+      globals: {
+	'@tensorflow/tfjs-core': 'tf',
+      },
+      ...output
+    },
+    external: [
+      '@tensorflow/tfjs-core',
+    ],
   };
 }
 

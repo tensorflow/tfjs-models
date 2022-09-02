@@ -25,29 +25,25 @@ type HandDetectorPrediction = {
   palmLandmarks: tf.Tensor2D
 };
 
-export class HandDetector {
-  private model: tfconv.GraphModel;
-  private width: number;
-  private height: number;
-  private iouThreshold: number;
-  private scoreThreshold: number;
+declare interface AnchorsConfig {
+  w: number;
+  h: number;
+  x_center: number;
+  y_center: number;
+}
 
-  private anchors: Array<[number, number]>;
-  private anchorsTensor: tf.Tensor2D;
-  private inputSizeTensor: tf.Tensor1D;
-  private doubleInputSizeTensor: tf.Tensor1D;
+export class HandDetector {
+  private readonly anchors: Array<[number, number]>;
+  private readonly anchorsTensor: tf.Tensor2D;
+  private readonly inputSizeTensor: tf.Tensor1D;
+  private readonly doubleInputSizeTensor: tf.Tensor1D;
 
   constructor(
-      model: tfconv.GraphModel, width: number, height: number,
-      anchors: Array<{x_center: number, y_center: number}>,
-      iouThreshold: number, scoreThreshold: number) {
-    this.model = model;
-    this.width = width;
-    this.height = height;
-    this.iouThreshold = iouThreshold;
-    this.scoreThreshold = scoreThreshold;
-
-    this.anchors = anchors.map(
+      private readonly model: tfconv.GraphModel, private readonly width: number,
+      private readonly height: number, anchorsAnnotated: AnchorsConfig[],
+      private readonly iouThreshold: number,
+      private readonly scoreThreshold: number) {
+    this.anchors = anchorsAnnotated.map(
         anchor => ([anchor.x_center, anchor.y_center] as [number, number]));
     this.anchorsTensor = tf.tensor2d(this.anchors);
     this.inputSizeTensor = tf.tensor1d([width, height]);
@@ -75,7 +71,8 @@ export class HandDetector {
       tf.Tensor2D {
     return tf.tidy(() => {
       const landmarks = tf.add(
-          tf.div(rawPalmLandmarks.reshape([-1, 7, 2]), this.inputSizeTensor),
+          tf.div(tf.reshape(
+              rawPalmLandmarks, [-1, 7, 2]), this.inputSizeTensor),
           this.anchors[index]);
 
       return tf.mul(landmarks, this.inputSizeTensor);
@@ -103,11 +100,11 @@ export class HandDetector {
       batchedPrediction = this.model.predict(normalizedInput) as tf.Tensor3D;
     }
 
-    const prediction: tf.Tensor2D = batchedPrediction.squeeze();
+    const prediction: tf.Tensor2D = tf.squeeze(batchedPrediction);
 
     // Regression score for each anchor point.
     const scores: tf.Tensor1D = tf.tidy(
-        () => tf.sigmoid(tf.slice(prediction, [0, 0], [-1, 1])).squeeze());
+        () => tf.squeeze(tf.sigmoid(tf.slice(prediction, [0, 0], [-1, 1]))));
 
     // Bounding box for each anchor point.
     const rawBoxes = tf.slice(prediction, [0, 1], [-1, 4]);
@@ -135,7 +132,7 @@ export class HandDetector {
 
     const rawPalmLandmarks = tf.slice(prediction, [boxIndex, 5], [1, 14]);
     const palmLandmarks: tf.Tensor2D = tf.tidy(
-        () => this.normalizeLandmarks(rawPalmLandmarks, boxIndex).reshape([
+        () => tf.reshape(this.normalizeLandmarks(rawPalmLandmarks, boxIndex), [
           -1, 2
         ]));
 
@@ -156,7 +153,8 @@ export class HandDetector {
     const inputWidth = input.shape[2];
 
     const image: tf.Tensor4D =
-        tf.tidy(() => input.resizeBilinear([this.width, this.height]).div(255));
+        tf.tidy(() => tf.div(tf.image.resizeBilinear(
+            input, [this.width, this.height]), 255));
     const prediction = await this.getBoundingBoxes(image);
 
     if (prediction === null) {

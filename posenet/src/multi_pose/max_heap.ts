@@ -23,9 +23,9 @@ function half(k: number) {
 }
 
 export class MaxHeap<T> {
-  private priorityQueue: T[];
+  private readonly priorityQueue: T[];
+  private readonly getElementValue: (element: T) => number;
   private numberOfElements: number;
-  private getElementValue: (element: T) => number;
 
   constructor(maxSize: number, getElementValue: (element: T) => number) {
     this.priorityQueue = new Array(maxSize);

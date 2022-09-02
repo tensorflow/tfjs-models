@@ -210,9 +210,9 @@ export function toResizedInputTensor(
     const imageTensor = toInputTensor(input);
 
     if (flipHorizontal) {
-      return imageTensor.reverse(1).resizeBilinear([resizeHeight, resizeWidth]);
+      return tf.image.resizeBilinear(tf.reverse(imageTensor, 1), [resizeHeight, resizeWidth]);
     } else {
-      return imageTensor.resizeBilinear([resizeHeight, resizeWidth]);
+      return tf.image.resizeBilinear(imageTensor, [resizeHeight, resizeWidth]);
     }
   });
 }
@@ -242,7 +242,7 @@ export function padAndResizeTo(
     let imageTensor = toInputTensor(input);
     imageTensor = tf.pad3d(imageTensor, [[padT, padB], [padL, padR], [0, 0]]);
 
-    return imageTensor.resizeBilinear([targetH, targetW]);
+    return tf.image.resizeBilinear(imageTensor, [targetH, targetW]);
   });
 
   return {resized, padding: {top: padT, left: padL, right: padR, bottom: padB}};

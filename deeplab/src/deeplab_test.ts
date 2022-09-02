@@ -17,7 +17,6 @@
 import * as tf from '@tensorflow/tfjs-core';
 // tslint:disable-next-line: no-imports-from-dist
 import {describeWithFlags, NODE_ENVS,} from '@tensorflow/tfjs-core/dist/jasmine_util';
-import {createCanvas} from 'canvas';
 import {load} from '.';
 
 describeWithFlags('SemanticSegmentation', NODE_ENVS, () => {
@@ -46,12 +45,4 @@ describeWithFlags('SemanticSegmentation', NODE_ENVS, () => {
     expect(Object.keys(legend)).toContain('background');
   });
 
-  it('SemanticSegmentation produces a valid segmentation of an empty canvas',
-     async () => {
-       const model = await load();
-       const x = createCanvas(200, 200);
-       // tslint:disable-next-line: no-any
-       const {legend} = await model.segment((x as any) as HTMLCanvasElement);
-       expect(Object.keys(legend)).toContain('background');
-     });
 });

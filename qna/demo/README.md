@@ -19,47 +19,15 @@ Install dependencies:
 yarn
 ```
 
+Build linked dependencies:
+
+```sh
+yarn build-deps
+```
+
 Launch a development server, and watch files for changes. This command will also automatically open
 the demo app in your browser.
 
 ```sh
 yarn watch
 ```
-
-## If you are developing the model locally and want to test the changes in the demo
-
-`cd` into the qna/ folder:
-
-```sh
-cd qna
-```
-
-Install dependencies:
-```sh
-yarn
-```
-
-Publish qna locally:
-```sh
-yarn publish-local
-```
-
-`cd` into this directory (qna/demo) and install dependencies:
-
-```sh
-cd demo
-yarn
-```
-
-Link the package published from the publish step above:
-```sh
-yarn link-local
-```
-
-Start the dev demo server:
-```sh
-yarn watch
-```
-
-To get future updates from the `qna` source code, just run `yarn publish-local` in the qna/
-folder again.

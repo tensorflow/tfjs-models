@@ -20,16 +20,19 @@ import * as tf from '@tensorflow/tfjs-core';
 import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
 import '@tensorflow/tfjs-backend-webgl';
 
-tfjsWasm.setWasmPath(
-    `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
-        tfjsWasm.version_wasm}/dist/tfjs-backend-wasm.wasm`);
-
 function isMobile() {
   const isAndroid = /Android/i.test(navigator.userAgent);
   const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
   return isAndroid || isiOS;
 }
-
+tfjsWasm.setWasmPaths({
+  'tfjs-backend-wasm.wasm': `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
+        tfjsWasm.version_wasm}/dist/tfjs-backend-wasm.wasm`,
+  'tfjs-backend-wasm-simd.wasm': `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
+        tfjsWasm.version_wasm}/dist/tfjs-backend-wasm-simd.wasm`,
+  'tfjs-backend-wasm-threaded-simd.wasm': `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
+        tfjsWasm.version_wasm}/dist/tfjs-backend-wasm-threaded-simd.wasm`,
+  });
 let videoWidth, videoHeight, rafID, ctx, canvas, ANCHOR_POINTS,
     scatterGLHasInitialized = false, scatterGL, fingerLookupIndices = {
       thumb: [0, 1, 2, 3, 4],
@@ -64,6 +67,7 @@ function setupDatGui() {
       .onChange(async backend => {
         window.cancelAnimationFrame(rafID);
         await tf.setBackend(backend);
+        await addFlagLabels();
         landmarksRealTime(video);
       });
 
@@ -145,9 +149,30 @@ async function loadVideo() {
   video.play();
   return video;
 }
+async function addFlagLabels() {
+  if(!document.querySelector("#simd_supported")) {
+    const simdSupportLabel = document.createElement("div");
+    simdSupportLabel.id = "simd_supported";
+    simdSupportLabel.style = "font-weight: bold";
+    const simdSupported = await tf.env().getAsync('WASM_HAS_SIMD_SUPPORT');
+    simdSupportLabel.innerHTML = `SIMD supported: <span class=${simdSupported}>${simdSupported}<span>`;
+    document.querySelector("#info").appendChild(simdSupportLabel);
+  }
 
+  if(!document.querySelector("#threads_supported")) {
+    const threadSupportLabel = document.createElement("div");
+    threadSupportLabel.id = "threads_supported";
+    threadSupportLabel.style = "font-weight: bold";
+    const threadsSupported = await tf.env().getAsync('WASM_HAS_MULTITHREAD_SUPPORT');
+    threadSupportLabel.innerHTML = `Threads supported: <span class=${threadsSupported}>${threadsSupported}</span>`;
+    document.querySelector("#info").appendChild(threadSupportLabel);
+  }
+}
 async function main() {
   await tf.setBackend(state.backend);
+  if (!tf.env().getAsync('WASM_HAS_SIMD_SUPPORT') && state.backend == "wasm") {
+    console.warn("The backend is set to WebAssembly and SIMD support is turned off.\nThis could bottleneck your performance greatly, thus to prevent this enable SIMD Support in chrome://flags");
+  }
   model = await handpose.load();
   let video;
 

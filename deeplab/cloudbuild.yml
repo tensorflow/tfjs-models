@@ -1,21 +1,21 @@
 steps:
 
 # Install common dependencies.
-- name: 'node:10'
+- name: 'node:12'
   id: 'yarn-common'
   entrypoint: 'yarn'
   args: ['install']
 
 # Install tfjs dependencies.
-- name: 'node:10'
-  dir: 'universal-sentence-encoder'
+- name: 'node:12'
+  dir: 'deeplab'
   entrypoint: 'yarn'
   id: 'yarn'
   args: ['install']
   waitFor: ['yarn-common']
 
 # Lint.
-- name: 'node:10'
+- name: 'node:12'
   dir: 'deeplab'
   entrypoint: 'yarn'
   id: 'lint'
@@ -23,16 +23,16 @@ steps:
   waitFor: ['yarn']
 
 # Build.
-- name: 'node:10'
-  dir: 'universal-sentence-encoder'
+- name: 'node:12'
+  dir: 'deeplab'
   entrypoint: 'yarn'
   id: 'build'
   args: ['build']
   waitFor: ['yarn']
 
 # Run tests.
-- name: 'node:10'
-  dir: 'universal-sentence-encoder'
+- name: 'node:12'
+  dir: 'deeplab'
   entrypoint: 'yarn'
   id: 'test'
   args: ['test']

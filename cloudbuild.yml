@@ -1,11 +1,11 @@
 steps:
-- name: 'node:10'
+- name: 'node:12'
   entrypoint: 'yarn'
   id: 'yarn'
   args: ['install']
 
 # Run diff to find modified files in each folder.
-- name: 'node:10'
+- name: 'node:12'
   entrypoint: 'yarn'
   id: 'diff'
   args: ['diff']
@@ -21,6 +21,20 @@ steps:
   args: ['./scripts/run-build.sh', 'body-pix']
   waitFor: ['diff']
 
+# Body segmentation.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'body-segmentation'
+  args: ['./scripts/run-build.sh', 'body-segmentation']
+  waitFor: ['diff']
+
+# Blaze face.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'blazeface'
+  args: ['./scripts/run-build.sh', 'blazeface']
+  waitFor: ['diff']
+
 # Coco SSD.
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
@@ -32,7 +46,28 @@ steps:
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
   id: 'deeplab'
-  args: ['./scripts/run-build.sh', 'deep-lab']
+  args: ['./scripts/run-build.sh', 'deeplab']
+  waitFor: ['diff']
+
+# Depth estimation.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'depth-estimation'
+  args: ['./scripts/run-build.sh', 'depth-estimation']
+  waitFor: ['diff']
+
+# Face detection.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'face-detection'
+  args: ['./scripts/run-build.sh', 'face-detection']
+  waitFor: ['diff']
+
+# Face landmarks detection.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'face-landmarks-detection'
+  args: ['./scripts/run-build.sh', 'face-landmarks-detection']
   waitFor: ['diff']
 
 # KNN Classifier.
@@ -49,11 +84,25 @@ steps:
   args: ['./scripts/run-build.sh', 'mobilenet']
   waitFor: ['diff']
 
+# Model playground.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'model-playground'
+  args: ['./scripts/run-build.sh', 'model-playground']
+  waitFor: ['diff']
+
 # Posenet.
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
   id: 'posenet'
   args: ['./scripts/run-build.sh', 'posenet']
+  waitFor: ['diff']
+
+# Pose Detection.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'pose-detection'
+  args: ['./scripts/run-build.sh', 'pose-detection']
   waitFor: ['diff']
 
 # Speech commands.
@@ -77,22 +126,36 @@ steps:
   args: ['./scripts/run-build.sh', 'universal-sentence-encoder']
   waitFor: ['diff']
 
-# Handpose
+# Hand Detection.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'hand-detection'
+  args: ['./scripts/run-build.sh', 'hand-detection']
+  waitFor: ['diff']
+
+# Handpose.
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
   id: 'handpose'
   args: ['./scripts/run-build.sh', 'handpose']
   waitFor: ['diff']
 
-# Handpose
+# Facemesh.
 - name: 'gcr.io/cloud-builders/gcloud'
   entrypoint: 'bash'
   id: 'facemesh'
   args: ['./scripts/run-build.sh', 'facemesh']
   waitFor: ['diff']
 
+# Task API.
+- name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  id: 'tasks'
+  args: ['./scripts/run-build.sh', 'tasks']
+  waitFor: ['diff']
+
 # Run the top-level sanity checks.
-- name: 'node:10'
+- name: 'node:12'
   entrypoint: 'yarn'
   id: 'test'
   args: ['presubmit']

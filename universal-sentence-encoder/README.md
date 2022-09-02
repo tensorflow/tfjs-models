@@ -73,11 +73,22 @@ use.load().then(model => {
 });
 ```
 
+`load()` accepts an optional configuration object where you can set custom `modelUrl` and/or `vocabUrl` strings (e.g. `use.load({modelUrl: '', vocabUrl: ''})`).
+
 To use the Tokenizer separately:
 
 ```js
 use.loadTokenizer().then(tokenizer => {
   tokenizer.encode('Hello, how are you?'); // [341, 4125, 8, 140, 31, 19, 54]
+});
+```
+
+
+Pass a path to the Tokenizer to use a different vocabulary:
+
+```js
+use.loadTokenizer('https://storage.googleapis.com/learnjs-data/bert_vocab/vocab.json').then(tokenizer => {
+  tokenizer.encode('Hello, how are you?'); // [0, 15350, 29623, 2129, 2024, 2017, 29632]
 });
 ```
 
@@ -108,46 +119,23 @@ use.loadQnA().then(model => {
     ]
   };
   var scores = [];
-  model.embed(input).then(embeddings => {
-    /*
-     * The output of the embed method is an object with two keys:
-     * {
-     *   queryEmbedding: tf.Tensor;
-     *   responseEmbedding: tf.Tensor;
-     * }
-     * queryEmbedding is a tensor containing embeddings for all queries.
-     * responseEmbedding is a tensor containing embeddings for all answers.
-     * You can call `arraySync()` to retrieve the values of the tensor.
-     * In this example, embed_query[0] is the embedding for the query
-     * 'How are you feeling today?'
-     * And embed_responses[0] is the embedding for the answer
-     * 'I\'m not feeling very well.'
-     */
-    const embed_query = embeddings['queryEmbedding'].arraySync();
-    const embed_responses = embeddings['responseEmbedding'].arraySync();
-    // compute the dotProduct of each query and response pair.
-    for (let i = 0; i < input['queries'].length; i++) {
-      for (let j = 0; j < input['responses'].length; j++) {
-        scores.push(dotProduct(embed_query[i], embed_responses[j]));
-      }
-    }
-  });
+  const embeddings = model.embed(input);
+  /*
+    * The output of the embed method is an object with two keys:
+    * {
+    *   queryEmbedding: tf.Tensor;
+    *   responseEmbedding: tf.Tensor;
+    * }
+    * queryEmbedding is a tensor containing embeddings for all queries.
+    * responseEmbedding is a tensor containing embeddings for all answers.
+    * You can call `arraySync()` to retrieve the values of the tensor.
+    * In this example, embed_query[0] is the embedding for the query
+    * 'How are you feeling today?'
+    * And embed_responses[0] is the embedding for the answer
+    * 'I\'m not feeling very well.'
+    */
+  const scores = tf.matMul(embeddings['queryEmbedding'],
+      embeddings['responseEmbedding'], false, true).dataSync();
 });
 
-// Calculate the dot product of two vector arrays.
-const dotProduct = (xs, ys) => {
-  const sum = xs => xs ? xs.reduce((a, b) => a + b, 0) : undefined;
-
-  return xs.length === ys.length ?
-    sum(zipWith((a, b) => a * b, xs, ys))
-    : undefined;
-}
-
-// zipWith :: (a -> b -> c) -> [a] -> [b] -> [c]
-const zipWith =
-    (f, xs, ys) => {
-      const ny = ys.length;
-      return (xs.length <= ny ? xs : xs.slice(0, ny))
-          .map((x, i) => f(x, ys[i]));
-    }
 ```

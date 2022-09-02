@@ -59,17 +59,19 @@ export class KNNClassifier {
 
     tf.tidy(() => {
       const normalizedExample =
-          this.normalizeVectorToUnitLength(example.flatten());
+        this.normalizeVectorToUnitLength(tf.reshape(example, [example.size]));
       const exampleSize = normalizedExample.shape[0];
 
       if (this.classDatasetMatrices[label] == null) {
         this.classDatasetMatrices[label] =
-            normalizedExample.as2D(1, exampleSize);
+          tf.reshape(normalizedExample, [1, exampleSize]);
       } else {
         const newTrainLogitsMatrix =
-            this.classDatasetMatrices[label]
-                .as2D(this.classExampleCount[label], exampleSize)
-                .concat(normalizedExample.as2D(1, exampleSize), 0);
+          tf.concat<tf.Tensor2D>([
+            tf.reshape(this.classDatasetMatrices[label],
+                          [this.classExampleCount[label], exampleSize]),
+            tf.reshape(normalizedExample, [1, exampleSize])
+          ], 0);
 
         this.classDatasetMatrices[label].dispose();
         this.classDatasetMatrices[label] = newTrainLogitsMatrix;
@@ -94,7 +96,7 @@ export class KNNClassifier {
   private similarities(input: Tensor): Tensor1D {
     return tf.tidy(() => {
       const normalizedExample =
-          this.normalizeVectorToUnitLength(input.flatten());
+        this.normalizeVectorToUnitLength(tf.reshape(input, [input.size]));
       const exampleSize = normalizedExample.shape[0];
 
       // Lazily create the logits matrix for all training examples if necessary.
@@ -116,9 +118,11 @@ export class KNNClassifier {
       tf.keep(this.trainDatasetMatrix);
 
       const numExamples = this.getNumExamples();
-      return this.trainDatasetMatrix.as2D(numExamples, exampleSize)
-          .matMul(normalizedExample.as2D(exampleSize, 1))
-          .as1D();
+      return tf.reshape(
+        tf.matMul(
+          tf.reshape(this.trainDatasetMatrix, [numExamples, exampleSize]),
+          tf.reshape(normalizedExample, [exampleSize, 1])
+        ), [numExamples]);
     });
   }
 
@@ -144,7 +148,7 @@ export class KNNClassifier {
           `You have not added any examples to the KNN classifier. ` +
           `Please add examples before calling predictClass.`);
     }
-    const knn = tf.tidy(() => this.similarities(input).asType('float32'));
+    const knn = tf.tidy(() => tf.cast(this.similarities(input),'float32'));
     const kVal = Math.min(k, this.getNumExamples());
     const topKIndices = topK(await knn.data() as Float32Array, kVal).indices;
     knn.dispose();
@@ -265,7 +269,7 @@ export class KNNClassifier {
    */
   private normalizeVectorToUnitLength(vec: Tensor1D) {
     return tf.tidy(() => {
-      const sqrtSum = vec.norm();
+      const sqrtSum = tf.norm(vec);
 
       return tf.div(vec, sqrtSum);
     });

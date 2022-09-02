@@ -14,7 +14,7 @@ perform inference and transfer learning entirely in the browser, using
 WebGL GPU acceleration.
 
 The underlying deep neural network has been trained using the
-[TensorFlow Speech Commands Dataset](https://www.tensorflow.org/tutorials/sequences/audio_recognition).
+[TensorFlow Speech Commands Dataset](https://www.tensorflow.org/datasets/catalog/speech_commands).
 
 For more details on the data set, see:
 
@@ -219,7 +219,7 @@ await transferRecognizer.collectExample('green');
 await transferRecognizer.collectExample('blue');
 await transferRecognizer.collectExample('red');
 // Don't forget to collect some background-noise examples, so that the
-// trasnfer-learned model will be able to detect moments of silence.
+// transfer-learned model will be able to detect moments of silence.
 await transferRecognizer.collectExample('_background_noise_');
 await transferRecognizer.collectExample('green');
 await transferRecognizer.collectExample('blue');
@@ -254,7 +254,7 @@ await transferRecognizer.listen(result => {
   const words = transferRecognizer.wordLabels();
   // `result.scores` contains the scores for the new words, not the original
   // words.
-  for (let i = 0; i < words; ++i) {
+  for (let i = 0; i < words.length; ++i) {
     console.log(`score for word '${words[i]}' = ${result.scores[i]}`);
   }
 }, {probabilityThreshold: 0.75});

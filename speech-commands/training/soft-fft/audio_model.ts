@@ -15,7 +15,8 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
+import * as tfl from '@tensorflow/tfjs-layers';
 import * as fs from 'fs';
 /// <reference path="./types/node-wav.d.ts" />
 import * as wav from 'node-wav';
@@ -32,7 +33,7 @@ import {WavFileFeatureExtractor} from './wav_file_feature_extractor';
  * It provide datasets loading, training, and model saving functions.
  */
 export class AudioModel {
-  private model: tf.LayersModel;
+  private model: tfl.LayersModel;
 
   /**
    *
@@ -57,26 +58,26 @@ export class AudioModel {
     this.model = this.createModel(inputShape);
   }
 
-  private createModel(inputShape: number[]): tf.LayersModel {
-    const model = tf.sequential();
-    model.add(tf.layers.conv2d(
+  private createModel(inputShape: number[]): tfl.LayersModel {
+    const model = tfl.sequential();
+    model.add(tfl.layers.conv2d(
         {filters: 8, kernelSize: [4, 2], activation: 'relu', inputShape}));
-    model.add(tf.layers.maxPooling2d({poolSize: [2, 2], strides: [2, 2]}));
-    model.add(tf.layers.conv2d(
+    model.add(tfl.layers.maxPooling2d({poolSize: [2, 2], strides: [2, 2]}));
+    model.add(tfl.layers.conv2d(
         {filters: 32, kernelSize: [4, 2], activation: 'relu'}));
-    model.add(tf.layers.maxPooling2d({poolSize: [2, 2], strides: [2, 2]}));
-    model.add(tf.layers.conv2d(
+    model.add(tfl.layers.maxPooling2d({poolSize: [2, 2], strides: [2, 2]}));
+    model.add(tfl.layers.conv2d(
         {filters: 32, kernelSize: [4, 2], activation: 'relu'}));
-    model.add(tf.layers.maxPooling2d({poolSize: [2, 2], strides: [2, 2]}));
-    model.add(tf.layers.conv2d(
+    model.add(tfl.layers.maxPooling2d({poolSize: [2, 2], strides: [2, 2]}));
+    model.add(tfl.layers.conv2d(
         {filters: 32, kernelSize: [4, 2], activation: 'relu'}));
-    model.add(tf.layers.maxPooling2d({poolSize: [2, 2], strides: [1, 2]}));
-    model.add(tf.layers.flatten({}));
-    model.add(tf.layers.dropout({rate: 0.25}));
-    model.add(tf.layers.dense({units: 2000, activation: 'relu'}));
-    model.add(tf.layers.dropout({rate: 0.5}));
+    model.add(tfl.layers.maxPooling2d({poolSize: [2, 2], strides: [1, 2]}));
+    model.add(tfl.layers.flatten({}));
+    model.add(tfl.layers.dropout({rate: 0.25}));
+    model.add(tfl.layers.dense({units: 2000, activation: 'relu'}));
+    model.add(tfl.layers.dropout({rate: 0.5}));
     model.add(
-        tf.layers.dense({units: this.labels.length, activation: 'softmax'}));
+        tfl.layers.dense({units: this.labels.length, activation: 'softmax'}));
 
     model.compile({
       loss: 'categoricalCrossentropy',
@@ -167,7 +168,7 @@ export class AudioModel {
    * @param epochs iteration of the training
    * @param trainCallback
    */
-  async train(epochs?: number, trainCallback?: tf.CustomCallbackArgs) {
+  async train(epochs?: number, trainCallback?: tfl.CustomCallbackArgs) {
     return this.model.fit(this.dataset.xs, this.dataset.ys, {
       batchSize: 64,
       epochs: epochs || 100,

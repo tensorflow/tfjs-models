@@ -1,0 +1,56 @@
+steps:
+
+# Install common dependencies.
+- name: 'node:12'
+  id: 'yarn-common'
+  entrypoint: 'yarn'
+  args: ['install']
+
+# Install task API dependencies.
+- name: 'node:12'
+  dir: 'tasks'
+  entrypoint: 'yarn'
+  id: 'yarn'
+  args: ['install']
+  waitFor: ['yarn-common']
+
+# Lint.
+- name: 'node:12'
+  dir: 'tasks'
+  entrypoint: 'yarn'
+  id: 'lint'
+  args: ['lint']
+  waitFor: ['yarn']
+
+# Build deps.
+- name: 'node:12'
+  dir: 'tasks'
+  entrypoint: 'yarn'
+  id: 'build-deps'
+  args: ['build-deps']
+  waitFor: ['yarn']
+
+# Build.
+- name: 'node:12'
+  dir: 'tasks'
+  entrypoint: 'yarn'
+  id: 'build'
+  args: ['build']
+  waitFor: ['yarn', 'build-deps']
+
+# Run tests.
+- name: 'node:12'
+  dir: 'tasks'
+  entrypoint: 'yarn'
+  id: 'test'
+  args: ['test']
+  waitFor: ['yarn', 'build-deps']
+
+# General configuration
+timeout: 1800s
+logsBucket: 'gs://tfjs-build-logs'
+substitutions:
+  _NIGHTLY: ''
+options:
+  logStreamingOption: 'STREAM_ON'
+  substitution_option: 'ALLOW_LOOSE'

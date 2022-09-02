@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs-core';
 import {normalize, normalizeFloat32Array} from './browser_fft_utils';
 import {expectTensorsClose} from './test_utils';
 
