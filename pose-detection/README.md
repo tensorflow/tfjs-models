@@ -86,7 +86,8 @@ Example output:
 
 For the `keypoints`, x and y represent the actual keypoint position in the image.
 If you need normalized keypoint positions, you can use the method
-`poseDetection.calculator.keypointsToNormalizedKeypoints(keypoints, imageSize)` to
+`poseDetection.calculators.keypointsToNormalizedKeypoints(keypoints, imageSize)` to
+
 convert x and y to [0, 1] range.
 
 For the `keypoints3D`, x, y and z represent absolute distance in meters in a
@@ -152,7 +153,7 @@ See the diagram below for what those keypoints are and their index in the array.
 
 0: nose  \
 1: left_eye_inner \
-2: left  \
+2: left_eye  \
 3: left_eye_outer  \
 4: right_eye_inner  \
 5: right_eye  \
@@ -182,7 +183,13 @@ See the diagram below for what those keypoints are and their index in the array.
 29: left_heel  \
 30: right_heel  \
 31: left_foot_index  \
-32: right_foot_index
+32: right_foot_index  \
+33: bodyCenter  \
+34: forehead  \
+35: leftThumb \
+36: leftHand  \
+37: rightThumb  \
+38: rightHand \
 
 -------------------------------------------------------------------------------
 

@@ -180,7 +180,7 @@ classifier.setClassifierDataset(dataset: {[label: string]: Tensor2D})
 
 Args:
 - **dataset:** The label dataset matrices map. Can be retrieved from
-  getClassDatsetMatrices. Useful for restoring state.
+  getClassifierDataset. Useful for restoring state.
 
 ##### Get the total number of classes
 
