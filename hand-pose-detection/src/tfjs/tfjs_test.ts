@@ -20,12 +20,17 @@ import * as tf from '@tensorflow/tfjs-core';
 import {ALL_ENVS, BROWSER_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
 // tslint:disable-next-line: no-imports-from-dist
 import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
+import {MEDIAPIPE_CONNECTED_KEYPOINTS_PAIRS} from '../constants';
 
 import * as handPoseDetection from '../index';
-import {loadImage} from '../shared/test_util';
+import {getXYPerFrame, KARMA_SERVER, loadImage, loadVideo} from '../shared/test_util';
 
 // Measured in pixels.
 const EPSILON_IMAGE = 12;
+// Measured in pixels.
+const EPSILON_VIDEO = 18;
+// Measured in meters.
+const EPSILON_VIDEO_WORLD = 0.01;
 
 // ref:
 // https://github.com/google/mediapipe/blob/master/mediapipe/python/solutions/hands_test.py
@@ -155,5 +160,58 @@ describeWithFlags('MediaPipeHands static image ', BROWSER_ENVS, () => {
     detector.dispose();
 
     expect(tf.memory().numTensors).toEqual(startTensors);
+  });
+});
+
+describeWithFlags('MediaPipe Hands video ', BROWSER_ENVS, () => {
+  let detector: handPoseDetection.HandDetector;
+  let timeout: number;
+  let expected: number[][][];
+  let expected3D: number[][][];
+
+  beforeAll(async () => {
+    timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
+
+    expected = await fetch(`${KARMA_SERVER}/asl_hand.full.json`)
+                   .then(response => response.json())
+                   .then(result => getXYPerFrame(result));
+
+    expected3D = await fetch(`${KARMA_SERVER}/asl_hand_3d.full.json`)
+                     .then(response => response.json());
+  });
+
+  afterAll(() => {
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = timeout;
+  });
+
+  it('test.', async () => {
+    // Note: this makes a network request for model assets.
+    const model = handPoseDetection.SupportedModels.MediaPipeHands;
+    detector = await handPoseDetection.createDetector(
+        model, {runtime: 'tfjs', maxHands: 1});
+
+    const result: number[][][] = [];
+    const result3D: number[][][] = [];
+
+    const callback = async(video: HTMLVideoElement, timestamp: number):
+        Promise<handPoseDetection.Keypoint[]> => {
+          const hands = await detector.estimateHands(video, null /* config */);
+
+          // maxNumHands is set to 1.
+          result.push(hands[0].keypoints.map(kp => [kp.x, kp.y]));
+          result3D.push(hands[0].keypoints3D.map(kp => [kp.x, kp.y, kp.z]));
+
+          return hands[0].keypoints;
+        };
+
+    await loadVideo(
+        'asl_hand.25fps.mp4', 25 /* fps */, callback, expected,
+        MEDIAPIPE_CONNECTED_KEYPOINTS_PAIRS, 0 /* simulatedInterval unused */);
+
+    expectArraysClose(result, expected, EPSILON_VIDEO);
+    expectArraysClose(result3D, expected3D, EPSILON_VIDEO_WORLD);
+
+    detector.dispose();
   });
 });

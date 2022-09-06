@@ -17,7 +17,8 @@
 import {PixelInput} from './shared/calculators/interfaces/common_interfaces';
 
 export enum SupportedModels {
-  SelfieSegmentation = 'SelfieSegmentation',
+  BodyPix = 'BodyPix',
+  MediaPipeSelfieSegmentation = 'MediaPipeSelfieSegmentation',
 }
 
 /**

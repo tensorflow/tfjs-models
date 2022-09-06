@@ -55,7 +55,7 @@ the list will be empty.
 For each pose, it contains a confidence score of the pose and an array of keypoints.
 PoseNet and MoveNet both return 17 keypoints. MediaPipe BlazePose returns 33 keypoints.
 Each keypoint contains x, y, score and name. In addition, MediaPipe BlazePose
-also returns an array of 3D keypoints.
+also returns an array of 3D keypoints and a segmentation mask.
 
 Example output:
 ```
@@ -70,14 +70,24 @@ Example output:
     keypoints3D: [
       {x: 0.65, y: 0.11, z: 0.05, score: 0.99, name: "nose"},
       ...
-    ]
+    ],
+    segmentation: {
+      maskValueToLabel: (maskValue: number) => { return 'person' },
+      mask: {
+        toCanvasImageSource(): ...
+        toImageData(): ...
+        toTensor(): ...
+        getUnderlyingType(): ...
+      }
+    }
   }
 ]
 ```
 
 For the `keypoints`, x and y represent the actual keypoint position in the image.
 If you need normalized keypoint positions, you can use the method
-`poseDetection.calculator.keypointsToNormalizedKeypoints(keypoints, imageSize)` to
+`poseDetection.calculators.keypointsToNormalizedKeypoints(keypoints, imageSize)` to
+
 convert x and y to [0, 1] range.
 
 For the `keypoints3D`, x, y and z represent absolute distance in meters in a
@@ -93,6 +103,12 @@ may choose to lower the threshold. The confidence values are not calibrated betw
 and therefore setting a proper confidence threshold may involve some experimentation.
 
 The name provides a label for each keypoint, such as 'nose', 'left_eye', 'right_knee', etc.
+
+The `mask` key of `segmentation` stores an object which provides access to the underlying mask image using the conversion functions toCanvasImageSource, toImageData, and toTensor depending on the desired output type. Note that getUnderlyingType can be queried to determine what is the type being used underneath the hood to avoid expensive conversions (such as from tensor to image data).
+
+The semantics of the RGBA values of the `mask` is as follows: the image mask is the same size as the input image, where green and blue channels are always set to 0. Different red values denote different segmentation labels (see maskValueToLabel key below, currently only foreground/background segmentation is performed). Different alpha values denote the probability of pixel being a foreground pixel (0 being lowest probability and 255 being highest).
+
+`maskValueToLabel` key of `segmentation` maps the `mask` key's foreground pixel’s red value to the name of that pixel. Should throw error for unsupported input values. BlazePose will always return 'person' since it is a binary segmentation.
 
 Refer to each model's documentation for specific configurations for the model
 and their performance.
@@ -137,7 +153,7 @@ See the diagram below for what those keypoints are and their index in the array.
 
 0: nose  \
 1: left_eye_inner \
-2: left  \
+2: left_eye  \
 3: left_eye_outer  \
 4: right_eye_inner  \
 5: right_eye  \
@@ -167,7 +183,13 @@ See the diagram below for what those keypoints are and their index in the array.
 29: left_heel  \
 30: right_heel  \
 31: left_foot_index  \
-32: right_foot_index
+32: right_foot_index  \
+33: bodyCenter  \
+34: forehead  \
+35: leftThumb \
+36: leftHand  \
+37: rightThumb  \
+38: rightHand \
 
 -------------------------------------------------------------------------------
 

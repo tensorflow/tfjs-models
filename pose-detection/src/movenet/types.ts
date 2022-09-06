@@ -14,6 +14,8 @@
  * limitations under the License.
  * =============================================================================
  */
+import {io} from '@tensorflow/tfjs-core';
+
 import {TrackerConfig} from '../calculators/interfaces/config_interfaces';
 import {TrackerType} from '../calculators/types';
 import {EstimationConfig, ModelConfig} from '../types';
@@ -71,7 +73,7 @@ import {EstimationConfig, ModelConfig} from '../types';
 export interface MoveNetModelConfig extends ModelConfig {
   enableSmoothing?: boolean;
   modelType?: string;
-  modelUrl?: string;
+  modelUrl?: string|io.IOHandler;
   minPoseScore?: number;
   multiPoseMaxDimension?: number;
   enableTracking?: boolean;

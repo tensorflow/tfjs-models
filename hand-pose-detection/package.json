@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/hand-pose-detection",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Pretrained hand pose detection model",
   "main": "dist/index.js",
   "jsnext:main": "dist/hand-pose-detection.esm.js",
@@ -29,7 +29,6 @@
     "@tensorflow/tfjs-converter": "^3.9.0",
     "@tensorflow/tfjs-core": "^3.9.0",
     "@types/jasmine": "~2.8.8",
-    "@types/node": "~10.3.4",
     "babel-core": "~6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",
     "jasmine": "~3.1.0",
@@ -46,7 +45,7 @@
     "rollup-plugin-visualizer": "~3.3.2",
     "ts-node": "~8.8.2",
     "tslint": "~5.18.0",
-    "typescript": "~3.5.3",
+    "typescript": "~3.9.9",
     "yalc": "~1.0.0-pre.21"
   },
   "scripts": {

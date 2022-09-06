@@ -22,8 +22,7 @@ import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
 
 import * as poseDetection from '../index';
 import {toImageDataLossy} from '../shared/calculators/mask_util';
-import {imageToBooleanMask, KARMA_SERVER, loadImage, segmentationIOU} from '../shared/test_util';
-import {getXYPerFrame, loadVideo} from '../test_util';
+import {getXYPerFrame, imageToBooleanMask, KARMA_SERVER, loadImage, loadVideo, segmentationIOU} from '../shared/test_util';
 
 import {BlazePoseMediaPipeModelConfig} from './types';
 
@@ -94,7 +93,7 @@ describeWithFlags('MediaPipe Pose static image ', BROWSER_ENVS, () => {
     const result = await detector.estimatePoses(image, {});
 
     const xy = result[0].keypoints.map((keypoint) => [keypoint.x, keypoint.y]);
-    const xyz = result[0].keypoints3D.map(
+    const worldXyz = result[0].keypoints3D.map(
         (keypoint) => [keypoint.x, keypoint.y, keypoint.z]);
 
     const segmentation = result[0].segmentation;
@@ -107,7 +106,7 @@ describeWithFlags('MediaPipe Pose static image ', BROWSER_ENVS, () => {
         (await toImageDataLossy(segmentationImage)).data, 0, 0, 255);
 
     expectArraysClose(xy, EXPECTED_LANDMARKS, EPSILON_IMAGE);
-    expectArraysClose(xyz, EXPECTED_WORLD_LANDMARKS, EPSILON_IMAGE_WORLD);
+    expectArraysClose(worldXyz, EXPECTED_WORLD_LANDMARKS, EPSILON_IMAGE_WORLD);
 
     expect(maskValuesToLabel.every(label => label === 'person'));
     expect(mask.getUnderlyingType() === 'canvasimagesource');
@@ -149,22 +148,30 @@ describeWithFlags('MediaPipe Pose video ', BROWSER_ENVS, () => {
     const result3D: number[][][] = [];
 
     const callback = async(video: HTMLVideoElement, timestamp: number):
-        Promise<poseDetection.Pose[]> => {
+        Promise<poseDetection.Keypoint[]> => {
           const poses =
               await detector.estimatePoses(video, null /* config */, timestamp);
           // BlazePose only returns single pose for now.
           result.push(poses[0].keypoints.map(kp => [kp.x, kp.y]));
           result3D.push(poses[0].keypoints3D.map(kp => [kp.x, kp.y, kp.z]));
 
-          return poses;
+          return poses[0].keypoints;
         };
+
+    // We set the timestamp increment to 33333 microseconds to simulate
+    // the 30 fps video input. We do this so that the filter uses the
+    // same fps as the reference test.
+    // https://github.com/google/mediapipe/blob/ecb5b5f44ab23ea620ef97a479407c699e424aa7/mediapipe/python/solution_base.py#L297
+    const simulatedInterval = 33.3333;
 
     // Original video source in 720 * 1280 resolution:
     // https://www.pexels.com/video/woman-doing-squats-4838220/ Video is
     // compressed to be smaller with less frames (5fps), using below command:
     // `ffmpeg -i original_pose.mp4 -r 5 -vcodec libx264 -crf 28 -profile:v
     // baseline pose_squats.mp4`
-    await loadVideo('pose_squats.mp4', 5 /* fps */, callback, expected, model);
+    await loadVideo(
+        'pose_squats.mp4', 5 /* fps */, callback, expected,
+        poseDetection.util.getAdjacentPairs(model), simulatedInterval);
 
     expectArraysClose(result, expected, EPSILON_VIDEO);
     expectArraysClose(result3D, expected3D, EPSILON_VIDEO_WORLD);

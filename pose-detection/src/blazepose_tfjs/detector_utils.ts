@@ -28,6 +28,16 @@ export function validateModelConfig(modelConfig: BlazePoseTfjsModelConfig):
     config.enableSmoothing = DEFAULT_BLAZEPOSE_MODEL_CONFIG.enableSmoothing;
   }
 
+  if (config.enableSegmentation == null) {
+    config.enableSegmentation =
+        DEFAULT_BLAZEPOSE_MODEL_CONFIG.enableSegmentation;
+  }
+
+  if (config.smoothSegmentation == null) {
+    config.smoothSegmentation =
+        DEFAULT_BLAZEPOSE_MODEL_CONFIG.smoothSegmentation;
+  }
+
   if (config.modelType == null) {
     config.modelType = DEFAULT_BLAZEPOSE_MODEL_CONFIG.modelType;
   }

@@ -37,9 +37,9 @@ Via script tags:
 
 Via npm:
 ```sh
-yarn add @tensorflow-models/hand-pose-detection
-yarn add @tensorflow/tfjs-core, @tensorflow/tfjs-backend-webgl
 yarn add @mediapipe/hands
+yarn add @tensorflow/tfjs-core, @tensorflow/tfjs-backend-webgl
+yarn add @tensorflow-models/hand-pose-detection
 ```
 
 -----------------------------------------------------------------------
@@ -78,7 +78,8 @@ Pass in `handPoseDetection.SupportedModels.MediaPipeHands` from the
 const model = handPoseDetection.SupportedModels.MediaPipeHands;
 const detectorConfig = {
   runtime: 'mediapipe',
-  solutionPath: 'base/node_modules/@mediapipe/hands'
+  solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/hands'
+                // or 'base/node_modules/@mediapipe/hands' in npm.
 };
 detector = await handPoseDetection.createDetector(model, detectorConfig);
 ```

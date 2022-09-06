@@ -76,8 +76,8 @@ export const MPHANDS_TENSORS_TO_DETECTION_CONFIGURATION:
       minScoreThresh: 0.5
     };
 export const MPHANDS_DETECTOR_NON_MAX_SUPPRESSION_CONFIGURATION = {
-  minScoreThreshold: -1.0,
-  minSuppressionThreshold: 0.3
+  minSuppressionThreshold: 0.3,
+  overlapType: 'intersection-over-union' as const
 };
 export const MPHANDS_DETECTOR_RECT_TRANSFORMATION_CONFIG:
     RectTransformationConfig = {
@@ -96,12 +96,16 @@ export const MPHANDS_LANDMARK_RECT_TRANSFORMATION_CONFIG:
       squareLong: true
     };
 export const MPHANDS_DETECTOR_IMAGE_TO_TENSOR_CONFIG: ImageToTensorConfig = {
-  inputResolution: {width: 192, height: 192},
-  keepAspectRatio: true
+  outputTensorSize: {width: 192, height: 192},
+  keepAspectRatio: true,
+  outputTensorFloatRange: [0, 1],
+  borderMode: 'zero'
 };
 export const MPHANDS_LANDMARK_IMAGE_TO_TENSOR_CONFIG: ImageToTensorConfig = {
-  inputResolution: {width: 224, height: 224},
-  keepAspectRatio: true
+  outputTensorSize: {width: 224, height: 224},
+  keepAspectRatio: true,
+  outputTensorFloatRange: [0, 1],
+  borderMode: 'zero'
 };
 export const MPHANDS_HAND_PRESENCE_SCORE = 0.5;
 export const MPHANDS_MIN_SIMILARITY_THRESHOLD = 0.5;

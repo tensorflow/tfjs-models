@@ -15,6 +15,7 @@
  * =============================================================================
  */
 import * as tf from '@tensorflow/tfjs-core';
+import {Matrix4x4} from './calculate_inverse_matrix';
 
 import {ImageSize, InputResolution, Padding, PixelInput, ValueTransform} from './interfaces/common_interfaces';
 import {Rect} from './interfaces/shape_interfaces';
@@ -158,73 +159,16 @@ export function getRoi(imageSize: ImageSize, normRect?: Rect): Rect {
  *
  * See more documentation in `tf.transform`.
  *
- * @param subRect The rectangle to generate the projective transformation matrix
- *     for.
+ * @param matrix The transformation matrix mapping subRect to rect, can be
+ *     computed using `getRotatedSubRectToRectTransformMatrix` calculator.
  * @param imageSize The original image height and width.
- * @param flipHorizontally Whether flip the image horizontally.
  * @param inputResolution The target height and width.
  */
 export function getProjectiveTransformMatrix(
-    subRect: Rect, imageSize: ImageSize, flipHorizontally: boolean,
-    inputResolution: InputResolution):
+    matrix: Matrix4x4, imageSize: ImageSize, inputResolution: InputResolution):
     [number, number, number, number, number, number, number, number] {
   validateSize(inputResolution, 'inputResolution');
 
-  // Ref:
-  // https://github.com/google/mediapipe/blob/master/mediapipe/calculators/tensor/image_to_tensor_utils.cc
-  // The resulting matrix is multiplication of below matrices:
-  // M = postScaleMatrix * translateMatrix * rotateMatrix * flipMatrix *
-  //     scaleMatrix * initialTranslateMatrix
-  //
-  // For any point in the transformed image p, we can use the above matrix to
-  // calculate the projected point in the original image p'. So that:
-  // p' = p * M;
-  // Note: The transform matrix below assumes image coordinates is normalized
-  // to [0, 1] range.
-
-  // postScaleMatrix: Matrix to scale x, y to [0, 1] range
-  //   | g  0  0 |
-  //   | 0  h  0 |
-  //   | 0  0  1 |
-  const g = 1 / imageSize.width;
-  const h = 1 / imageSize.height;
-
-  // translateMatrix: Matrix to move the center to the subRect center.
-  //   | 1  0  e |
-  //   | 0  1  f |
-  //   | 0  0  1 |
-  const e = subRect.xCenter;
-  const f = subRect.yCenter;
-
-  // rotateMatrix: Matrix to do rotate the image around the subRect center.
-  //   | c -d  0 |
-  //   | d  c  0 |
-  //   | 0  0  1 |
-  const c = Math.cos(subRect.rotation);
-  const d = Math.sin(subRect.rotation);
-
-  // flipMatrix: Matrix for optional horizontal flip around the subRect center.
-  //   | fl 0  0 |
-  //   | 0  1  0 |
-  //   | 0  0  1 |
-  const flip = flipHorizontally ? -1 : 1;
-
-  // scaleMatrix: Matrix to scale x, y to subRect size.
-  //   | a  0  0 |
-  //   | 0  b  0 |
-  //   | 0  0  1 |
-  const a = subRect.width;
-  const b = subRect.height;
-
-  // initialTranslateMatrix: Matrix convert x, y to [-0.5, 0.5] range.
-  //   | 1  0 -0.5 |
-  //   | 0  1 -0.5 |
-  //   | 0  0  1   |
-
-  // M is a 3 by 3 matrix denoted by:
-  // | a0  a1  a2 |
-  // | b0  b1  b2 |
-  // | 0   0   1  |
   // To use M with regular x, y coordinates, we need to normalize them first.
   // Because x' = a0 * x + a1 * y + a2, y' = b0 * x + b1 * y + b2,
   // we need to use factor (1/inputResolution.width) to normalize x for a0 and
@@ -233,12 +177,12 @@ export function getProjectiveTransformMatrix(
   // Also at the end, we need to de-normalize x' and y' to regular coordinates.
   // So we need to use factor imageSize.width for a0, a1 and a2, similarly
   // we need to use factor imageSize.height for b0, b1 and b2.
-  const a0 = (1 / inputResolution.width) * a * c * flip * g * imageSize.width;
-  const a1 = (1 / inputResolution.height) * -b * d * g * imageSize.width;
-  const a2 = (-0.5 * a * c * flip + 0.5 * b * d + e) * g * imageSize.width;
-  const b0 = (1 / inputResolution.width) * a * d * flip * h * imageSize.height;
-  const b1 = (1 / inputResolution.height) * b * c * h * imageSize.height;
-  const b2 = (-0.5 * b * c - 0.5 * a * d * flip + f) * h * imageSize.height;
+  const a0 = (1 / inputResolution.width) * matrix[0][0] * imageSize.width;
+  const a1 = (1 / inputResolution.height) * matrix[0][1] * imageSize.width;
+  const a2 = matrix[0][3] * imageSize.width;
+  const b0 = (1 / inputResolution.width) * matrix[1][0] * imageSize.height;
+  const b1 = (1 / inputResolution.height) * matrix[1][1] * imageSize.height;
+  const b2 = matrix[1][3] * imageSize.height;
 
   return [a0, a1, a2, b0, b1, b2, 0, 0];
 }

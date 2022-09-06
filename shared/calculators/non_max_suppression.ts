@@ -19,7 +19,8 @@ import {Detection} from './interfaces/shape_interfaces';
 
 export async function nonMaxSuppression(
     detections: Detection[], maxDetections: number, iouThreshold: number,
-    scoreThreshold: number): Promise<Detection[]> {
+    // Currently only IOU overap is supported.
+    overlapType: 'intersection-over-union'): Promise<Detection[]> {
   // Sort to match NonMaxSuppresion calculator's decreasing detection score
   // traversal.
   // NonMaxSuppresionCalculator: RetainMaxScoringLabelOnly
@@ -36,8 +37,7 @@ export async function nonMaxSuppression(
   const scoresTensor = tf.tensor1d(detections.map(d => d.score[0]));
 
   const selectedIdsTensor = await tf.image.nonMaxSuppressionAsync(
-      detectionsTensor, scoresTensor, maxDetections, iouThreshold,
-      scoreThreshold);
+      detectionsTensor, scoresTensor, maxDetections, iouThreshold);
   const selectedIds = await selectedIdsTensor.array();
 
   const selectedDetections =

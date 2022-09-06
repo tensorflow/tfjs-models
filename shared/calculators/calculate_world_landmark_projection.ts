@@ -33,7 +33,7 @@ import {Rect} from './interfaces/shape_interfaces';
 // ref:
 // https://github.com/google/mediapipe/blob/master/mediapipe/calculators/util/landmark_projection_calculator.cc
 export function calculateWorldLandmarkProjection(
-    worldLandmarks: Keypoint[], inputRect: Rect) {
+    worldLandmarks: Keypoint[], inputRect: Rect): Keypoint[] {
   const outputLandmarks = [];
   for (const worldLandmark of worldLandmarks) {
     const x = worldLandmark.x;

@@ -104,3 +104,10 @@ export interface Segmentation {
                  values.*/
   mask: Mask;
 }
+
+export type Color = {
+  r: number,
+  g: number,
+  b: number,
+  a: number,
+};

@@ -26,7 +26,7 @@ import {calculateWorldLandmarkProjection} from '../shared/calculators/calculate_
 import {convertImageToTensor} from '../shared/calculators/convert_image_to_tensor';
 import {createSsdAnchors} from '../shared/calculators/create_ssd_anchors';
 import {calculateDetectionsToRects} from '../shared/calculators/detection_to_rect';
-import {detectorInference} from '../shared/calculators/detector_inference';
+import {detectorResult} from '../shared/calculators/detector_result';
 import {getImageSize, toImageTensor} from '../shared/calculators/image_utils';
 import {ImageSize, Keypoint} from '../shared/calculators/interfaces/common_interfaces';
 import {Rect} from '../shared/calculators/interfaces/shape_interfaces';
@@ -35,7 +35,6 @@ import {nonMaxSuppression} from '../shared/calculators/non_max_suppression';
 import {normalizedKeypointsToKeypoints} from '../shared/calculators/normalized_keypoints_to_keypoints';
 import {removeDetectionLetterbox} from '../shared/calculators/remove_detection_letterbox';
 import {removeLandmarkLetterbox} from '../shared/calculators/remove_landmark_letterbox';
-import {shiftImageValue} from '../shared/calculators/shift_image_value';
 import {tensorsToDetections} from '../shared/calculators/tensors_to_detections';
 import {tensorsToLandmarks} from '../shared/calculators/tensors_to_landmarks';
 import {transformNormalizedRect} from '../shared/calculators/transform_rect';
@@ -236,16 +235,15 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
     // PalmDetectionCpu: ImageToTensorCalculator
     // Transforms the input image into a 128x128 while keeping the aspect ratio
     // resulting in potential letterboxing in the transformed image.
-    const {imageTensor, padding} = convertImageToTensor(
+    const {imageTensor: imageValueShifted, padding} = convertImageToTensor(
         image, constants.MPHANDS_DETECTOR_IMAGE_TO_TENSOR_CONFIG);
 
-    const imageValueShifted = shiftImageValue(imageTensor, [0, 1]);
-
+    const detectionResult =
+        this.detectorModel.predict(imageValueShifted) as tf.Tensor3D;
     // PalmDetectionCpu: InferenceCalculator
     // The model returns a tensor with the following shape:
     // [1 (batch), 896 (anchor points), 19 (data for each anchor)]
-    const {boxes, logits} =
-        detectorInference(imageValueShifted, this.detectorModel);
+    const {boxes, logits} = detectorResult(detectionResult);
 
     // PalmDetectionCpu: TensorsToDetectionsCalculator
     const detections: Detection[] = await tensorsToDetections(
@@ -253,7 +251,7 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
         constants.MPHANDS_TENSORS_TO_DETECTION_CONFIGURATION);
 
     if (detections.length === 0) {
-      tf.dispose([imageTensor, imageValueShifted, logits, boxes]);
+      tf.dispose([imageValueShifted, detectionResult, logits, boxes]);
       return detections;
     }
 
@@ -263,12 +261,12 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
         constants.MPHANDS_DETECTOR_NON_MAX_SUPPRESSION_CONFIGURATION
             .minSuppressionThreshold,
         constants.MPHANDS_DETECTOR_NON_MAX_SUPPRESSION_CONFIGURATION
-            .minScoreThreshold);
+            .overlapType);
 
     // PalmDetectionCpu: DetectionLetterboxRemovalCalculator
     const newDetections = removeDetectionLetterbox(selectedDetections, padding);
 
-    tf.dispose([imageTensor, imageValueShifted, logits, boxes]);
+    tf.dispose([imageValueShifted, detectionResult, logits, boxes]);
 
     return newDetections;
   }
@@ -284,11 +282,12 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
     // center of the wrist and MCP of the middle finger is aligned with the
     // Y-axis of the rectangle.
     // PalmDetectionDetectionToRoi: DetectionsToRectsCalculator.
-    const rawRoi = calculateDetectionsToRects(detection, imageSize, {
-      rotationVectorStartKeypointIndex: 0,
-      rotationVectorEndKeypointIndex: 2,
-      rotationVectorTargetAngleDegree: 90
-    });
+    const rawRoi = calculateDetectionsToRects(
+        detection, 'boundingbox', 'normRect', imageSize, {
+          rotationVectorStartKeypointIndex: 0,
+          rotationVectorEndKeypointIndex: 2,
+          rotationVectorTargetAngleDegree: 90
+        });
 
     // Expands and shifts the rectangle that contains the palm so that it's
     // likely to cover the entire hand.
@@ -309,10 +308,8 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
     // HandLandmarkCpu: ImageToTensorCalculator
     // Transforms a region of image into a 224x224 tensor while keeping the
     // aspect ratio, and therefore may result in potential letterboxing.
-    const {imageTensor, padding} = convertImageToTensor(
+    const {imageTensor: imageValueShifted, padding} = convertImageToTensor(
         image, constants.MPHANDS_LANDMARK_IMAGE_TO_TENSOR_CONFIG, handRect);
-
-    const imageValueShifted = shiftImageValue(imageTensor, [0, 1]);
 
     // HandLandmarkCpu: InferenceCalculator
     // Runs a model takes an image tensor and
@@ -343,7 +340,7 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
     // is present.
     if (handScore < constants.MPHANDS_HAND_PRESENCE_SCORE) {
       tf.dispose(landmarkResult);
-      tf.dispose([imageTensor, imageValueShifted]);
+      tf.dispose(imageValueShifted);
 
       return null;
     }
@@ -387,7 +384,7 @@ class MediaPipeHandsTfjsDetector implements HandDetector {
         calculateWorldLandmarkProjection(worldLandmarks, handRect);
 
     tf.dispose(landmarkResult);
-    tf.dispose([imageTensor, imageValueShifted]);
+    tf.dispose(imageValueShifted);
 
     return {
       landmarks: landmarksProjected,
