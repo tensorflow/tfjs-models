@@ -71,7 +71,7 @@ class MediaPipeSelfieSegmentationMediaPipeSegmenter implements BodySegmenter {
         return `${solutionPath}/${path}`;
       }
       return `${base}/${path}`;
-    }
+    };
     this.selfieSegmentationSolution =
       new selfieSegmentation.SelfieSegmentation({
         locateFile: config.locateFile ?? solutionPathLocateFile

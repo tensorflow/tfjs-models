@@ -42,12 +42,15 @@ export interface MediaPipeSelfieSegmentationSegmentationConfig extends
  *
  * `solutionPath`: Optional. The path to where the wasm binary and model files
  * are located.
+ * `locateFile`: Optional. The function to return URLs of the wasm binary and
+ * model files. If specified at the same time as solutionPath,
+ * solutionPath is ignored.
  */
 export interface MediaPipeSelfieSegmentationMediaPipeModelConfig extends
     MediaPipeSelfieSegmentationModelConfig {
   runtime: 'mediapipe';
   solutionPath?: string;
-  locateFile?: (path: string, base: string) => string;
+  locateFile?: (path: string, prefix?: string) => string;
 }
 
 /**
