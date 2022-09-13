@@ -24,6 +24,8 @@ import * as blazeface from './index';
 import {stubbedImageVals} from './test_util';
 
 describeWithFlags('BlazeFace', NODE_ENVS, () => {
+  const startTensors = tf.memory().numTensors;
+
   let model: BlazeFaceModel;
   beforeAll(async () => {
     model = await blazeface.load();
@@ -48,5 +50,10 @@ describeWithFlags('BlazeFace', NODE_ENVS, () => {
     expect(face.bottomRight).toBeDefined();
     expect(face.landmarks).toBeDefined();
     expect(face.probability).toBeDefined();
+  });
+
+  it('BlazeFace initialization does not leak memory', async () => {
+    model.dispose();
+    expect(tf.memory().numTensors).toEqual(startTensors);
   });
 });
