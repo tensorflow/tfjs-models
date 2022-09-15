@@ -68,6 +68,9 @@ Pass in `bodySegmentation.SupportedModels.MediaPipeSelfieSegmentation` from the
     'general', 'landscape'). If unset, the default is 'general'.
 
 *   *solutionPath*: The path to where the wasm binary and model files are located.
+*   *locateFile*: The function to return URLs of the wasm binary and  model files.
+If specified at the same time as solutionPath, solutionPath is ignored.
+
 
 ```javascript
 const model = bodySegmentation.SupportedModels.MediaPipeSelfieSegmentation;
