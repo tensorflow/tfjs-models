@@ -92,7 +92,7 @@ and their performance.
 See the diagram below for what those keypoints are and their index in the array.
 
 ### MediaPipe Hands Keypoints: Used in MediaPipe Hands
-![MediaPipeHands Keypoints](https://google.github.io/mediapipe/images/mobile/hand_landmarks.png)
+![MediaPipeHands Keypoints](https://mediapipe.dev/images/mobile/hand_landmarks.png)
 0: wrist  \
 1: thumb_cmc \
 2: thumb_mcp  \
