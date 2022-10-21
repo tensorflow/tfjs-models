@@ -52,6 +52,7 @@ export async function setupDatGui(urlParams) {
 
   const model = urlParams.get('model');
   let type = urlParams.get('type');
+  const backendFromURL = urlParams.get('backend');
 
   switch (model) {
     case 'posenet':
@@ -90,6 +91,7 @@ export async function setupDatGui(urlParams) {
   modelFolder.open();
 
   const backendFolder = gui.addFolder('Backend');
+  params.STATE.backend = backendFromURL;
 
   showBackendConfigs(backendFolder);
 
@@ -107,8 +109,10 @@ async function showBackendConfigs(folderController) {
             .__controllers[folderController.__controllers.length - 1]);
   }
   const backends = params.MODEL_BACKEND_MAP[params.STATE.model];
-  // The first element of the array is the default backend for the model.
-  params.STATE.backend = backends[0];
+  if(params.STATE.backend === undefined || params.STATE.backend === null) {
+    // The first element of the array is the default backend for the model.
+    params.STATE.backend = backends[0];
+  }
   const backendController =
       folderController.add(params.STATE, 'backend', backends);
   backendController.name('runtime-backend');
