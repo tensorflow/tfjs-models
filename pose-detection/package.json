@@ -14,10 +14,10 @@
   },
   "peerDependencies": {
     "@mediapipe/pose": "~0.5.0",
-    "@tensorflow/tfjs-converter": "^4.0.0",
-    "@tensorflow/tfjs-core": "^4.0.0",
+    "@tensorflow/tfjs-backend-wasm": "^4.0.0",
     "@tensorflow/tfjs-backend-webgl": "^4.0.0",
-    "@tensorflow/tfjs-backend-wasm": "^4.0.0"
+    "@tensorflow/tfjs-converter": "^4.0.0",
+    "@tensorflow/tfjs-core": "^4.0.0"
   },
   "devDependencies": {
     "@babel/polyfill": "^7.10.4",
@@ -68,6 +68,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "rimraf": "^3.0.2"
+    "rimraf": "^3.0.2",
+    "tslib": "2.4.0"
   }
 }
