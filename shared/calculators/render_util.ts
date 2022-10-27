@@ -180,7 +180,10 @@ function flipCanvasHorizontal(canvas: Canvas) {
 async function drawWithCompositing(
     ctx: CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D,
     image: ImageType, compositeOperation: string) {
-  ctx.globalCompositeOperation = compositeOperation as GlobalCompositeOperation;
+  // TODO: Assert type 'compositeOperation as GlobalCompositeOperation' after
+  // typescript update to 4.6.0 or later
+  // tslint:disable-next-line: no-any
+  ctx.globalCompositeOperation = compositeOperation as any;
   await drawImage(ctx, image, 0, 0);
 }
 
