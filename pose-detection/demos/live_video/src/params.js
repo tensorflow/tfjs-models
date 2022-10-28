@@ -84,7 +84,7 @@ export const BACKEND_FLAGS_MAP = {
 };
 
 export const MODEL_BACKEND_MAP = {
-  [posedetection.SupportedModels.PoseNet]: ['tfjs-webgl'],
+  [posedetection.SupportedModels.PoseNet]: ['tfjs-webgl', 'tfjs-wasm'],
   [posedetection.SupportedModels.MoveNet]: ['tfjs-webgl', 'tfjs-wasm'],
   [posedetection.SupportedModels.BlazePose]: ['mediapipe-gpu', 'tfjs-webgl']
 }
