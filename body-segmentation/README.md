@@ -16,7 +16,7 @@ BodyPix can be used to segment an image into pixels that are and are not part of
 ## Table of Contents
 1. [How to Run It](#how-to-run-it)
 2. [Example Code and Demos](#example-code-and-demos)
-3. [Output Visualization Utility Functions](#output-visualization-utility- functions)
+3. [Output Visualization Utility Functions](#output-visualization-utility-functions)
 
 -------------------------------------------------------------------------------
 ## How to Run It
