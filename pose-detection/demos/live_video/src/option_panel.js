@@ -29,6 +29,7 @@ let enableTrackingController;
 let scoreThresholdController;
 
 const stringValueMap = {};
+let backendFolder;
 
 export async function setupDatGui(urlParams) {
   const gui = new dat.GUI({width: 300});
@@ -90,7 +91,7 @@ export async function setupDatGui(urlParams) {
 
   modelFolder.open();
 
-  const backendFolder = gui.addFolder('Backend');
+  backendFolder = gui.addFolder('Backend');
   params.STATE.backend = backendFromURL;
 
   showBackendConfigs(backendFolder);
@@ -100,7 +101,10 @@ export async function setupDatGui(urlParams) {
   return gui;
 }
 
-async function showBackendConfigs(folderController) {
+export async function showBackendConfigs(folderController) {
+  if (folderController == null) {
+    folderController = backendFolder;
+  }
   // Clean up backend configs for the previous model.
   const fixedSelectionCount = 0;
   while (folderController.__controllers.length > fixedSelectionCount) {
@@ -109,7 +113,7 @@ async function showBackendConfigs(folderController) {
             .__controllers[folderController.__controllers.length - 1]);
   }
   const backends = params.MODEL_BACKEND_MAP[params.STATE.model];
-  if(params.STATE.backend === undefined || params.STATE.backend === null) {
+  if(params.STATE.backend == null) {
     // The first element of the array is the default backend for the model.
     params.STATE.backend = backends[0];
   }

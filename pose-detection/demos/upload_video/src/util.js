@@ -15,7 +15,8 @@
  * =============================================================================
  */
 import * as tf from '@tensorflow/tfjs-core';
-import {TUNABLE_FLAG_VALUE_RANGE_MAP} from './params';
+import {showBackendConfigs} from './option_panel';
+import {STATE, TUNABLE_FLAG_VALUE_RANGE_MAP} from './params';
 
 export function isMobile() {
   const isAndroid = /Android/i.test(navigator.userAgent);
@@ -31,7 +32,14 @@ export function isMobile() {
 async function resetBackend(backendName) {
   const ENGINE = tf.engine();
   if (!(backendName in ENGINE.registryFactory)) {
-    throw new Error(`${backendName} backend is not registed.`);
+    if(backendName === 'webgpu') {
+      alert(`${backendName} backend is not registered. Maybe should use a WebGPU enabled target e.g. chrome canary with --enable-unsafe-webgpu flag`);
+      STATE.backend = !!STATE.lastTFJSBackend ? STATE.lastTFJSBackend : 'tfjs-webgl';
+      showBackendConfigs();
+      return;
+    } else {
+      throw new Error(`${backendName} backend is not registered.`);
+    }
   }
 
   if (backendName in ENGINE.registry) {
@@ -41,6 +49,7 @@ async function resetBackend(backendName) {
   }
 
   await tf.setBackend(backendName);
+  STATE.lastTFJSBackend = `tfjs-${backendName}`;
 }
 
 /**

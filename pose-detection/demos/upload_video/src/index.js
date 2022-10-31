@@ -129,12 +129,6 @@ async function renderResult() {
   }
 }
 
-async function checkUpdate() {
-  await checkGuiUpdate();
-
-  requestAnimationFrame(checkUpdate);
-};
-
 async function updateVideo(event) {
   // Clear reference to any previous uploaded video.
   URL.revokeObjectURL(camera.video.currentSrc);
