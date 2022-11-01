@@ -33,7 +33,7 @@ async function resetBackend(backendName) {
   const ENGINE = tf.engine();
   if (!(backendName in ENGINE.registryFactory)) {
     if(backendName === 'webgpu') {
-      alert(`${backendName} backend is not registered. Maybe should use a WebGPU enabled target e.g. chrome canary with --enable-unsafe-webgpu flag`);
+      alert('webgpu backend is not registered. Your browser may not support WebGPU yet. To test this backend, please use a supported browser, e.g. Chrome canary with --enable-unsafe-webgpu flag');
       STATE.backend = !!STATE.lastTFJSBackend ? STATE.lastTFJSBackend : 'tfjs-webgl';
       showBackendConfigs();
       return;
