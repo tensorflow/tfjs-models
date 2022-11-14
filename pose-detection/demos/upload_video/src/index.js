@@ -16,6 +16,7 @@
  */
 
 import '@tensorflow/tfjs-backend-webgl';
+import '@tensorflow/tfjs-backend-webgpu';
 import * as mpPose from '@mediapipe/pose';
 
 import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
@@ -128,12 +129,6 @@ async function renderResult() {
   }
 }
 
-async function checkUpdate() {
-  await checkGuiUpdate();
-
-  requestAnimationFrame(checkUpdate);
-};
-
 async function updateVideo(event) {
   // Clear reference to any previous uploaded video.
   URL.revokeObjectURL(camera.video.currentSrc);
@@ -160,6 +155,7 @@ async function updateVideo(event) {
 }
 
 async function runFrame() {
+  await checkGuiUpdate();
   if (video.paused) {
     // video has finished.
     camera.mediaRecorder.stop();
@@ -212,18 +208,16 @@ async function app() {
 
   await setupDatGui(urlParams);
   stats = setupStats();
-  detector = await createDetector();
   camera = new Context();
 
   await setBackendAndEnvFlags(STATE.flags, STATE.backend);
+  detector = await createDetector();
 
   const runButton = document.getElementById('submit');
   runButton.onclick = run;
 
   const uploadButton = document.getElementById('videofile');
   uploadButton.onchange = updateVideo;
-
-  checkUpdate();
 };
 
 app();
