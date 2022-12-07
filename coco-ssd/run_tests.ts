@@ -33,10 +33,10 @@ process.on('unhandledRejection', e => {
 });
 
 jasmine_util.setTestEnvs(
-    [{name: 'test-cocossd', backendName: 'cpu', flags: {}}]);
+  [{name: 'test-cocossd', backendName: 'cpu', flags: {}}]);
 
 const unitTests = 'src/**/*_test.ts';
 
 const runner = new jasmineCtor();
-runner.loadConfig({spec_files: [unitTests], random: false});
+runner.loadConfig({spec_files: [unitTests], jsLoader: 'require', random: false});
 runner.execute();
