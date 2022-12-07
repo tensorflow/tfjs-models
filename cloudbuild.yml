@@ -1,11 +1,11 @@
 steps:
-- name: 'node:16.13.2-buster-slim'
+- name: 'gcr.io/learnjs-174218/release'
   entrypoint: 'yarn'
   id: 'yarn'
   args: ['install']
 
 # Run diff to find modified files in each folder.
-- name: 'node:16.13.2-buster-slim'
+- name: 'gcr.io/learnjs-174218/release'
   entrypoint: 'yarn'
   id: 'diff'
   args: ['diff']
@@ -15,147 +15,147 @@ steps:
   - 'BRANCH_NAME=$BRANCH_NAME'
 
 # Body pix.
-- name: 'node:16.13.2-buster-slim'
+- name: 'gcr.io/learnjs-174218/release'
   entrypoint: 'bash'
   id: 'body-pix'
   args: ['./scripts/run-build.sh', 'body-pix']
   waitFor: ['diff']
 
 # Body segmentation.
-- name: 'node:16.13.2-buster-slim'
+- name: 'gcr.io/learnjs-174218/release'
   entrypoint: 'bash'
   id: 'body-segmentation'
   args: ['./scripts/run-build.sh', 'body-segmentation']
   waitFor: ['diff']
 
 # Blaze face.
-- name: 'node:16.13.2-buster-slim'
+- name: 'gcr.io/learnjs-174218/release'
   entrypoint: 'bash'
   id: 'blazeface'
   args: ['./scripts/run-build.sh', 'blazeface']
   waitFor: ['diff']
 
 # Coco SSD.
-- name: 'node:16.13.2-buster-slim'
+- name: 'gcr.io/learnjs-174218/release'
   entrypoint: 'bash'
   id: 'coco-ssd'
   args: ['./scripts/run-build.sh', 'coco-ssd']
   waitFor: ['diff']
 
 # Deeplab.
-- name: 'node:16.13.2-buster-slim'
+- name: 'gcr.io/learnjs-174218/release'
   entrypoint: 'bash'
   id: 'deeplab'
   args: ['./scripts/run-build.sh', 'deeplab']
   waitFor: ['diff']
 
 # Depth estimation.
-- name: 'node:16.13.2-buster-slim'
+- name: 'gcr.io/learnjs-174218/release'
   entrypoint: 'bash'
   id: 'depth-estimation'
   args: ['./scripts/run-build.sh', 'depth-estimation']
   waitFor: ['diff']
 
 # Face detection.
-- name: 'node:16.13.2-buster-slim'
+- name: 'gcr.io/learnjs-174218/release'
   entrypoint: 'bash'
   id: 'face-detection'
   args: ['./scripts/run-build.sh', 'face-detection']
   waitFor: ['diff']
 
 # Face landmarks detection.
-- name: 'node:16.13.2-buster-slim'
+- name: 'gcr.io/learnjs-174218/release'
   entrypoint: 'bash'
   id: 'face-landmarks-detection'
   args: ['./scripts/run-build.sh', 'face-landmarks-detection']
   waitFor: ['diff']
 
 # KNN Classifier.
-- name: 'node:16.13.2-buster-slim'
+- name: 'gcr.io/learnjs-174218/release'
   entrypoint: 'bash'
   id: 'knn-classifier'
   args: ['./scripts/run-build.sh', 'knn-classifier']
   waitFor: ['diff']
 
 # Mobilenet.
-- name: 'node:16.13.2-buster-slim'
+- name: 'gcr.io/learnjs-174218/release'
   entrypoint: 'bash'
   id: 'mobilenet'
   args: ['./scripts/run-build.sh', 'mobilenet']
   waitFor: ['diff']
 
 # Model playground.
-- name: 'node:16.13.2-buster-slim'
+- name: 'gcr.io/learnjs-174218/release'
   entrypoint: 'bash'
   id: 'model-playground'
   args: ['./scripts/run-build.sh', 'model-playground']
   waitFor: ['diff']
 
 # Posenet.
-- name: 'node:16.13.2-buster-slim'
+- name: 'gcr.io/learnjs-174218/release'
   entrypoint: 'bash'
   id: 'posenet'
   args: ['./scripts/run-build.sh', 'posenet']
   waitFor: ['diff']
 
 # Pose Detection.
-- name: 'node:16.13.2-buster-slim'
+- name: 'gcr.io/learnjs-174218/release'
   entrypoint: 'bash'
   id: 'pose-detection'
   args: ['./scripts/run-build.sh', 'pose-detection']
   waitFor: ['diff']
 
 # Speech commands.
-- name: 'node:16.13.2-buster-slim'
+- name: 'gcr.io/learnjs-174218/release'
   entrypoint: 'bash'
   id: 'speech-commands'
   args: ['./scripts/run-build.sh', 'speech-commands']
   waitFor: ['diff']
 
 # Toxicity.
-- name: 'node:16.13.2-buster-slim'
+- name: 'gcr.io/learnjs-174218/release'
   entrypoint: 'bash'
   id: 'toxicity'
   args: ['./scripts/run-build.sh', 'toxicity']
   waitFor: ['diff']
 
 # Universal sentence encoder.
-- name: 'node:16.13.2-buster-slim'
+- name: 'gcr.io/learnjs-174218/release'
   entrypoint: 'bash'
   id: 'universal-sentence-encoder'
   args: ['./scripts/run-build.sh', 'universal-sentence-encoder']
   waitFor: ['diff']
 
 # Hand Detection.
-- name: 'node:16.13.2-buster-slim'
+- name: 'gcr.io/learnjs-174218/release'
   entrypoint: 'bash'
   id: 'hand-detection'
   args: ['./scripts/run-build.sh', 'hand-detection']
   waitFor: ['diff']
 
 # Handpose.
-- name: 'node:16.13.2-buster-slim'
+- name: 'gcr.io/learnjs-174218/release'
   entrypoint: 'bash'
   id: 'handpose'
   args: ['./scripts/run-build.sh', 'handpose']
   waitFor: ['diff']
 
 # Facemesh.
-- name: 'node:16.13.2-buster-slim'
+- name: 'gcr.io/learnjs-174218/release'
   entrypoint: 'bash'
   id: 'facemesh'
   args: ['./scripts/run-build.sh', 'facemesh']
   waitFor: ['diff']
 
 # Task API.
-- name: 'node:16.13.2-buster-slim'
+- name: 'gcr.io/learnjs-174218/release'
   entrypoint: 'bash'
   id: 'tasks'
   args: ['./scripts/run-build.sh', 'tasks']
   waitFor: ['diff']
 
 # Run the top-level sanity checks.
-- name: 'node:16.13.2-buster-slim'
+- name: 'gcr.io/learnjs-174218/release'
   entrypoint: 'yarn'
   id: 'test'
   args: ['presubmit']
