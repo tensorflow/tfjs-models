@@ -15,8 +15,8 @@
  * =============================================================================
  */
 import * as tf from '@tensorflow/tfjs-core';
-
-import {GREEN, NUM_KEYPOINTS, RED, TUNABLE_FLAG_VALUE_RANGE_MAP} from './params';
+import {showBackendConfigs} from './option_panel';
+import {GREEN, NUM_KEYPOINTS, RED, STATE, TUNABLE_FLAG_VALUE_RANGE_MAP} from './params';
 
 export function isiOS() {
   return /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -38,7 +38,14 @@ export function isMobile() {
 async function resetBackend(backendName) {
   const ENGINE = tf.engine();
   if (!(backendName in ENGINE.registryFactory)) {
-    throw new Error(`${backendName} backend is not registed.`);
+    if(backendName === 'webgpu') {
+      alert('webgpu backend is not registered. Your browser may not support WebGPU yet. To test this backend, please use a supported browser, e.g. Chrome canary with --enable-unsafe-webgpu flag');
+      STATE.backend = !!STATE.lastTFJSBackend ? STATE.lastTFJSBackend : 'tfjs-webgl';
+      showBackendConfigs();
+      return;
+    } else {
+      throw new Error(`${backendName} backend is not registered.`);
+    }
   }
 
   if (backendName in ENGINE.registry) {
@@ -48,6 +55,7 @@ async function resetBackend(backendName) {
   }
 
   await tf.setBackend(backendName);
+  STATE.lastTFJSBackend = `tfjs-${backendName}`;
 }
 
 /**
