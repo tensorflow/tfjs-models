@@ -1,11 +1,11 @@
 steps:
-- name: 'node:12'
+- name: 'node:16.13.2-buster-slim'
   entrypoint: 'yarn'
   id: 'yarn'
   args: ['install']
 
 # Run diff to find modified files in each folder.
-- name: 'node:12'
+- name: 'node:16.13.2-buster-slim'
   entrypoint: 'yarn'
   id: 'diff'
   args: ['diff']
@@ -15,147 +15,147 @@ steps:
   - 'BRANCH_NAME=$BRANCH_NAME'
 
 # Body pix.
-- name: 'gcr.io/cloud-builders/gcloud'
+- name: 'node:16.13.2-buster-slim'
   entrypoint: 'bash'
   id: 'body-pix'
   args: ['./scripts/run-build.sh', 'body-pix']
   waitFor: ['diff']
 
 # Body segmentation.
-- name: 'gcr.io/cloud-builders/gcloud'
+- name: 'node:16.13.2-buster-slim'
   entrypoint: 'bash'
   id: 'body-segmentation'
   args: ['./scripts/run-build.sh', 'body-segmentation']
   waitFor: ['diff']
 
 # Blaze face.
-- name: 'gcr.io/cloud-builders/gcloud'
+- name: 'node:16.13.2-buster-slim'
   entrypoint: 'bash'
   id: 'blazeface'
   args: ['./scripts/run-build.sh', 'blazeface']
   waitFor: ['diff']
 
 # Coco SSD.
-- name: 'gcr.io/cloud-builders/gcloud'
+- name: 'node:16.13.2-buster-slim'
   entrypoint: 'bash'
   id: 'coco-ssd'
   args: ['./scripts/run-build.sh', 'coco-ssd']
   waitFor: ['diff']
 
 # Deeplab.
-- name: 'gcr.io/cloud-builders/gcloud'
+- name: 'node:16.13.2-buster-slim'
   entrypoint: 'bash'
   id: 'deeplab'
   args: ['./scripts/run-build.sh', 'deeplab']
   waitFor: ['diff']
 
 # Depth estimation.
-- name: 'gcr.io/cloud-builders/gcloud'
+- name: 'node:16.13.2-buster-slim'
   entrypoint: 'bash'
   id: 'depth-estimation'
   args: ['./scripts/run-build.sh', 'depth-estimation']
   waitFor: ['diff']
 
 # Face detection.
-- name: 'gcr.io/cloud-builders/gcloud'
+- name: 'node:16.13.2-buster-slim'
   entrypoint: 'bash'
   id: 'face-detection'
   args: ['./scripts/run-build.sh', 'face-detection']
   waitFor: ['diff']
 
 # Face landmarks detection.
-- name: 'gcr.io/cloud-builders/gcloud'
+- name: 'node:16.13.2-buster-slim'
   entrypoint: 'bash'
   id: 'face-landmarks-detection'
   args: ['./scripts/run-build.sh', 'face-landmarks-detection']
   waitFor: ['diff']
 
 # KNN Classifier.
-- name: 'gcr.io/cloud-builders/gcloud'
+- name: 'node:16.13.2-buster-slim'
   entrypoint: 'bash'
   id: 'knn-classifier'
   args: ['./scripts/run-build.sh', 'knn-classifier']
   waitFor: ['diff']
 
 # Mobilenet.
-- name: 'gcr.io/cloud-builders/gcloud'
+- name: 'node:16.13.2-buster-slim'
   entrypoint: 'bash'
   id: 'mobilenet'
   args: ['./scripts/run-build.sh', 'mobilenet']
   waitFor: ['diff']
 
 # Model playground.
-- name: 'gcr.io/cloud-builders/gcloud'
+- name: 'node:16.13.2-buster-slim'
   entrypoint: 'bash'
   id: 'model-playground'
   args: ['./scripts/run-build.sh', 'model-playground']
   waitFor: ['diff']
 
 # Posenet.
-- name: 'gcr.io/cloud-builders/gcloud'
+- name: 'node:16.13.2-buster-slim'
   entrypoint: 'bash'
   id: 'posenet'
   args: ['./scripts/run-build.sh', 'posenet']
   waitFor: ['diff']
 
 # Pose Detection.
-- name: 'gcr.io/cloud-builders/gcloud'
+- name: 'node:16.13.2-buster-slim'
   entrypoint: 'bash'
   id: 'pose-detection'
   args: ['./scripts/run-build.sh', 'pose-detection']
   waitFor: ['diff']
 
 # Speech commands.
-- name: 'gcr.io/cloud-builders/gcloud'
+- name: 'node:16.13.2-buster-slim'
   entrypoint: 'bash'
   id: 'speech-commands'
   args: ['./scripts/run-build.sh', 'speech-commands']
   waitFor: ['diff']
 
 # Toxicity.
-- name: 'gcr.io/cloud-builders/gcloud'
+- name: 'node:16.13.2-buster-slim'
   entrypoint: 'bash'
   id: 'toxicity'
   args: ['./scripts/run-build.sh', 'toxicity']
   waitFor: ['diff']
 
 # Universal sentence encoder.
-- name: 'gcr.io/cloud-builders/gcloud'
+- name: 'node:16.13.2-buster-slim'
   entrypoint: 'bash'
   id: 'universal-sentence-encoder'
   args: ['./scripts/run-build.sh', 'universal-sentence-encoder']
   waitFor: ['diff']
 
 # Hand Detection.
-- name: 'gcr.io/cloud-builders/gcloud'
+- name: 'node:16.13.2-buster-slim'
   entrypoint: 'bash'
   id: 'hand-detection'
   args: ['./scripts/run-build.sh', 'hand-detection']
   waitFor: ['diff']
 
 # Handpose.
-- name: 'gcr.io/cloud-builders/gcloud'
+- name: 'node:16.13.2-buster-slim'
   entrypoint: 'bash'
   id: 'handpose'
   args: ['./scripts/run-build.sh', 'handpose']
   waitFor: ['diff']
 
 # Facemesh.
-- name: 'gcr.io/cloud-builders/gcloud'
+- name: 'node:16.13.2-buster-slim'
   entrypoint: 'bash'
   id: 'facemesh'
   args: ['./scripts/run-build.sh', 'facemesh']
   waitFor: ['diff']
 
 # Task API.
-- name: 'gcr.io/cloud-builders/gcloud'
+- name: 'node:16.13.2-buster-slim'
   entrypoint: 'bash'
   id: 'tasks'
   args: ['./scripts/run-build.sh', 'tasks']
   waitFor: ['diff']
 
 # Run the top-level sanity checks.
-- name: 'node:12'
+- name: 'node:16.13.2-buster-slim'
   entrypoint: 'yarn'
   id: 'test'
   args: ['presubmit']
