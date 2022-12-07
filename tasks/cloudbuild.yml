@@ -1,21 +1,30 @@
 steps:
 
 # Install common dependencies.
-- name: 'node:12'
+- name: 'gcr.io/learnjs-174218/release'
   id: 'yarn-common'
   entrypoint: 'yarn'
   args: ['install']
 
+# Install coco-ssd dependencies.
+# For some reason, yarn fails with ENOENT when looking for jasmine if this is
+# not done
+- name: 'gcr.io/learnjs-174218/release'
+  dir: 'coco-ssd'
+  id: 'yarn-coco-ssd'
+  entrypoint: 'yarn'
+  args: ['install']
+
 # Install task API dependencies.
-- name: 'node:12'
+- name: 'gcr.io/learnjs-174218/release'
   dir: 'tasks'
   entrypoint: 'yarn'
   id: 'yarn'
   args: ['install']
-  waitFor: ['yarn-common']
+  waitFor: ['yarn-common', 'yarn-coco-ssd']
 
 # Lint.
-- name: 'node:12'
+- name: 'gcr.io/learnjs-174218/release'
   dir: 'tasks'
   entrypoint: 'yarn'
   id: 'lint'
@@ -23,7 +32,7 @@ steps:
   waitFor: ['yarn']
 
 # Build deps.
-- name: 'node:12'
+- name: 'gcr.io/learnjs-174218/release'
   dir: 'tasks'
   entrypoint: 'yarn'
   id: 'build-deps'
@@ -31,7 +40,7 @@ steps:
   waitFor: ['yarn']
 
 # Build.
-- name: 'node:12'
+- name: 'gcr.io/learnjs-174218/release'
   dir: 'tasks'
   entrypoint: 'yarn'
   id: 'build'
@@ -39,7 +48,7 @@ steps:
   waitFor: ['yarn', 'build-deps']
 
 # Run tests.
-- name: 'node:12'
+- name: 'gcr.io/learnjs-174218/release'
   dir: 'tasks'
   entrypoint: 'yarn'
   id: 'test'

@@ -19,7 +19,7 @@ import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
 import typescript from '@rollup/plugin-typescript';
 import {terser} from 'rollup-plugin-terser';
-import visualizer from 'rollup-plugin-visualizer';
+import {visualizer} from 'rollup-plugin-visualizer';
 
 const PREAMBLE = `/**
  * @license
@@ -65,9 +65,6 @@ function config({
       commonjs({
         ignore: ['crypto', 'node-fetch', 'util'],
         include: 'node_modules/**',
-        namedExports: {
-          './node_modules/seedrandom/index.js': ['alea'],
-        },
       }),
       ...plugins
     ],
@@ -93,7 +90,7 @@ function config({
   };
 }
 
-module.exports = cmdOptions => {
+export default function(cmdOptions) {
   const bundles = [];
 
   const terserPlugin = terser({output: {preamble: PREAMBLE, comments: false}});
