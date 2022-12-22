@@ -25,7 +25,7 @@ import {Color, PixelInput, Segmentation} from './interfaces/common_interfaces';
  * It is adapted to account for the generic segmentation interface.
  */
 
-type ImageType = CanvasImageSource|PixelInput;
+type ImageType = CanvasImageSource|OffscreenCanvas|PixelInput;
 type HasDimensions = {
   width: number,
   height: number
@@ -180,7 +180,10 @@ function flipCanvasHorizontal(canvas: Canvas) {
 async function drawWithCompositing(
     ctx: CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D,
     image: ImageType, compositeOperation: string) {
-  ctx.globalCompositeOperation = compositeOperation;
+  // TODO: Assert type 'compositeOperation as GlobalCompositeOperation' after
+  // typescript update to 4.6.0 or later
+  // tslint:disable-next-line: no-any
+  ctx.globalCompositeOperation = compositeOperation as any;
   await drawImage(ctx, image, 0, 0);
 }
 

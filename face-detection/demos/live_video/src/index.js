@@ -16,6 +16,7 @@
  */
 
 import '@tensorflow/tfjs-backend-webgl';
+import '@tensorflow/tfjs-backend-webgpu';
 
 import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
 
