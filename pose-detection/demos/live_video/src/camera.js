@@ -50,10 +50,10 @@ const COLOR_PALETTE = [
   '#ffe119', '#911eb4', '#bfef45', '#f032e6', '#3cb44b', '#a9a9a9'
 ];
 export class Camera {
-  constructor() {
+  constructor(useGpuRenderer) {
     this.video = document.getElementById('video');
     this.canvas = document.getElementById('output');
-    this.ctx = this.canvas.getContext('2d');
+    this.ctx = useGpuRenderer ? null : this.canvas.getContext('2d');
     this.scatterGLEl = document.querySelector('#scatter-gl-container');
     this.scatterGL = new scatter.ScatterGL(this.scatterGLEl, {
       'rotateOnStart': true,
@@ -67,7 +67,7 @@ export class Camera {
    * Initiate a Camera instance and wait for the camera stream to be ready.
    * @param cameraParam From app `STATE.camera`.
    */
-  static async setupCamera(cameraParam) {
+  static async setupCamera(cameraParam, useGpuRenderer) {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       throw new Error(
           'Browser API navigator.mediaDevices.getUserMedia not available');
@@ -92,7 +92,7 @@ export class Camera {
 
     const stream = await navigator.mediaDevices.getUserMedia(videoConfig);
 
-    const camera = new Camera();
+    const camera = new Camera(useGpuRenderer);
     camera.video.srcObject = stream;
 
     await new Promise((resolve) => {
@@ -114,16 +114,18 @@ export class Camera {
     const canvasContainer = document.querySelector('.canvas-wrapper');
     canvasContainer.style = `width: ${videoWidth}px; height: ${videoHeight}px`;
 
-    // Because the image from camera is mirrored, need to flip horizontally.
-    camera.ctx.translate(camera.video.videoWidth, 0);
-    camera.ctx.scale(-1, 1);
+    if (camera.ctx != null) {
+      // Because the image from camera is mirrored, need to flip horizontally.
+      camera.ctx.translate(camera.video.videoWidth, 0);
+      camera.ctx.scale(-1, 1);
 
-    camera.scatterGLEl.style =
-        `width: ${videoWidth}px; height: ${videoHeight}px;`;
-    camera.scatterGL.resize();
+      camera.scatterGLEl.style =
+          `width: ${videoWidth}px; height: ${videoHeight}px;`;
+      camera.scatterGL.resize();
 
-    camera.scatterGLEl.style.display =
-        params.STATE.modelConfig.render3D ? 'inline-block' : 'none';
+      camera.scatterGLEl.style.display =
+          params.STATE.modelConfig.render3D ? 'inline-block' : 'none';
+    }
 
     return camera;
   }
@@ -171,7 +173,6 @@ export class Camera {
     this.ctx.fillStyle = 'Red';
     this.ctx.strokeStyle = 'White';
     this.ctx.lineWidth = params.DEFAULT_LINE_WIDTH;
-
     for (const i of keypointInd.middle) {
       this.drawKeypoint(keypoints[i]);
     }
