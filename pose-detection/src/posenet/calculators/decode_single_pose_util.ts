@@ -18,6 +18,7 @@
 import * as tf from '@tensorflow/tfjs-core';
 import {COCO_KEYPOINTS} from '../../constants';
 import {Vector2D} from '../types';
+import {getOffsetVectorsGPU} from '../ops/get_offset_vectors';
 
 function mod(a: tf.Tensor1D, b: number): tf.Tensor1D {
   return tf.tidy(() => {
@@ -97,4 +98,19 @@ function getOffsetPoint(
     y: offsetsBuffer.get(y, x, keypoint),
     x: offsetsBuffer.get(y, x, keypoint + COCO_KEYPOINTS.length)
   };
+}
+
+export function getOffsetPointsGPU(
+  heatMapCoordsBuffer: tf.Tensor<tf.Rank.R2>, outputStride: number,
+  offsetsBuffer: tf.Tensor<tf.Rank.R3>): tf.Tensor2D {
+return tf.tidy(() => {
+  const offsetVectors =
+      getOffsetVectorsGPU(heatMapCoordsBuffer, offsetsBuffer as tf.Tensor);
+
+  return tf.add(
+      tf.cast(
+          tf.mul(heatMapCoordsBuffer, tf.scalar(outputStride, 'int32')),
+          'float32'),
+      offsetVectors);
+});
 }
