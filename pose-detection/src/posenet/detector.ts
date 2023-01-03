@@ -21,11 +21,12 @@ import * as tf from '@tensorflow/tfjs-core';
 import {PoseDetector} from '../pose_detector';
 import {convertImageToTensor} from '../shared/calculators/convert_image_to_tensor';
 import {getImageSize} from '../shared/calculators/image_utils';
+import {ImageSize, Padding} from '../shared/calculators/interfaces/common_interfaces';
 import {shiftImageValue} from '../shared/calculators/shift_image_value';
 import {InputResolution, Pose, PoseDetectorInput} from '../types';
 
 import {decodeMultiplePoses} from './calculators/decode_multiple_poses';
-import {decodeSinglePose} from './calculators/decode_single_pose';
+import {decodeSinglePose, decodeSinglePoseGPU} from './calculators/decode_single_pose';
 import {flipPosesHorizontal} from './calculators/flip_poses';
 import {scalePoses} from './calculators/scale_poses';
 import {MOBILENET_V1_CONFIG, RESNET_MEAN, SINGLE_PERSON_ESTIMATION_CONFIG} from './constants';
@@ -159,6 +160,91 @@ class PosenetDetector implements PoseDetector {
     heatmapScores.dispose();
 
     return scaledPoses;
+  }
+
+  async estimateSinglePoseGPU(
+      image: PoseDetectorInput,
+      estimationConfig:
+          PoseNetEstimationConfig = SINGLE_PERSON_ESTIMATION_CONFIG):
+      Promise<[tf.Tensor[], number[]]> {
+    const config = validateEstimationConfig(estimationConfig);
+
+    if (image == null) {
+      return [[], []];
+    }
+
+    this.maxPoses = config.maxPoses;
+
+    const {imageTensor, padding} = convertImageToTensor(image, {
+      outputTensorSize: this.inputResolution,
+      keepAspectRatio: true,
+      borderMode: 'replicate'
+    });
+
+    const imageValueShifted = this.architecture === 'ResNet50' ?
+        tf.add(imageTensor, RESNET_MEAN) :
+        shiftImageValue(imageTensor, [-1, 1]);
+
+    const results =
+        this.posenetModel.predict(imageValueShifted) as tf.Tensor4D[];
+
+    let offsets, heatmap, displacementFwd, displacementBwd;
+    if (this.architecture === 'ResNet50') {
+      offsets = tf.squeeze(results[2], [0]);
+      heatmap = tf.squeeze(results[3], [0]);
+      displacementFwd = tf.squeeze(results[0], [0]);
+      displacementBwd = tf.squeeze(results[1], [0]);
+    } else {
+      offsets = tf.squeeze(results[0], [0]);
+      heatmap = tf.squeeze(results[1], [0]);
+      displacementFwd = tf.squeeze(results[2], [0]);
+      displacementBwd = tf.squeeze(results[3], [0]);
+    }
+    const heatmapScores = tf.sigmoid(heatmap) as tf.Tensor3D;
+
+    let poses;
+
+    if (this.maxPoses === 1) {
+      const pose = await decodeSinglePoseGPU(
+          heatmapScores, offsets as tf.Tensor3D, this.outputStride);
+      poses = [pose];
+    } else {
+      throw new Error('GPU renderer only supports single pose!');
+    }
+    // TODO: handle flipPosesHorizontal in GPU.
+    if (config.flipHorizontal === true) {
+      throw new Error('flipHorizontal is not supported!');
+    }
+
+    const canvasInfo =
+        this.getCanvasInfo(getImageSize(image), this.inputResolution, padding);
+    imageTensor.dispose();
+    imageValueShifted.dispose();
+    tf.dispose(results);
+    offsets.dispose();
+    heatmap.dispose();
+    displacementFwd.dispose();
+    displacementBwd.dispose();
+    heatmapScores.dispose();
+
+    return [poses, canvasInfo];
+  }
+
+  getCanvasInfo(
+      imageSize: ImageSize, inputResolution: InputResolution,
+      padding: Padding): number[] {
+    const {height, width} = imageSize;
+    const scaleY =
+        height / (inputResolution.height * (1 - padding.top - padding.bottom));
+    const scaleX =
+        width / (inputResolution.width * (1 - padding.left - padding.right));
+
+    const offsetY = -padding.top * inputResolution.height;
+    const offsetX = -padding.left * inputResolution.width;
+
+    return [
+      offsetX, offsetY, scaleX, scaleY, imageSize.width, imageSize.height
+    ];
   }
 
   dispose() {
