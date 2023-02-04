@@ -13,11 +13,51 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================-->
 <!doctype html>
-<html>
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <script src="./index.js"></script>
 </head>
+<!-- Load TensorFlow.js. This is required to use the qna model. -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"> </script>
+<!-- Load the qna model. -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/qna"> </script>
+
+<!-- Place your code in the script tag below. You can also use an external .js file -->
+<script>
+  // Notice there is no 'import' statement. 'qna' and 'tf' is
+  // available on the index-page because of the script tag above.
+
+  // Load the model.
+let modelPromise = {};
+let search;
+let input;
+let contextDiv;
+let answerDiv;
+
+const process = async () => {
+  const model = await modelPromise;
+  const answers = await model.findAnswers(input.value, contextDiv.value);
+  console.log(answers);
+  answerDiv.innerHTML =
+      answers.map(answer => answer.text + ' (score =' + answer.score + ')')
+          .join('<br>');
+};
+
+window.onload = () => {
+  modelPromise = qna.load();
+  input = document.getElementById('question');
+  search = document.getElementById('search');
+  contextDiv = document.getElementById('context');
+  answerDiv = document.getElementById('answer');
+  search.onclick = process;
+
+  input.addEventListener('keyup', async (event) => {
+    if (event.key === 'Enter') {
+      process();
+    }
+  });
+};
+</script>
+
 
 <body>
   <div>
