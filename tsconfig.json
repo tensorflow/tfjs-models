@@ -10,7 +10,7 @@
     "declaration": true,
     "target": "es5",
     "lib": [
-      "es2015",
+      "esnext",
       "dom"
     ],
     "outDir": "./dist",
