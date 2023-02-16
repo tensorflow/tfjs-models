@@ -18,35 +18,35 @@
 import * as tfc from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {BoundingBoxTracker} from '../calculators/bounding_box_tracker';
-import {KeypointTracker} from '../calculators/keypoint_tracker';
-import {Tracker} from '../calculators/tracker';
-import {TrackerType} from '../calculators/types';
-import {COCO_KEYPOINTS} from '../constants';
-import {PoseDetector} from '../pose_detector';
-import {MILLISECOND_TO_MICRO_SECONDS, SECOND_TO_MICRO_SECONDS} from '../shared/calculators/constants';
-import {getImageSize, toImageTensor} from '../shared/calculators/image_utils';
-import {ImageSize} from '../shared/calculators/interfaces/common_interfaces';
-import {BoundingBox} from '../shared/calculators/interfaces/shape_interfaces';
-import {isVideo} from '../shared/calculators/is_video';
-import {KeypointsOneEuroFilter} from '../shared/filters/keypoints_one_euro_filter';
-import {LowPassFilter} from '../shared/filters/low_pass_filter';
-import {InputResolution, Pose, PoseDetectorInput, SupportedModels} from '../types';
-import {getKeypointIndexByName} from '../util';
+import { BoundingBoxTracker } from '../calculators/bounding_box_tracker';
+import { KeypointTracker } from '../calculators/keypoint_tracker';
+import { Tracker } from '../calculators/tracker';
+import { TrackerType } from '../calculators/types';
+import { COCO_KEYPOINTS } from '../constants';
+import { PoseDetector } from '../pose_detector';
+import { MILLISECOND_TO_MICRO_SECONDS, SECOND_TO_MICRO_SECONDS } from '../shared/calculators/constants';
+import { getImageSize, toImageTensor } from '../shared/calculators/image_utils';
+import { ImageSize } from '../shared/calculators/interfaces/common_interfaces';
+import { BoundingBox } from '../shared/calculators/interfaces/shape_interfaces';
+import { isVideo } from '../shared/calculators/is_video';
+import { KeypointsOneEuroFilter } from '../shared/filters/keypoints_one_euro_filter';
+import { LowPassFilter } from '../shared/filters/low_pass_filter';
+import { InputResolution, Pose, PoseDetectorInput, SupportedModels } from '../types';
+import { getKeypointIndexByName } from '../util';
 
-import {CROP_FILTER_ALPHA, DEFAULT_MIN_POSE_SCORE, KEYPOINT_FILTER_CONFIG, MIN_CROP_KEYPOINT_SCORE, MOVENET_CONFIG, MOVENET_ESTIMATION_CONFIG, MOVENET_MULTIPOSE_DEFAULT_MAX_DIMENSION, MOVENET_MULTIPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_URL, MULTIPOSE_BOX_IDX, MULTIPOSE_BOX_SCORE_IDX, MULTIPOSE_INSTANCE_SIZE, MULTIPOSE_LIGHTNING, NUM_KEYPOINT_VALUES, NUM_KEYPOINTS, SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER} from './constants';
-import {determineNextCropRegion, initCropRegion} from './crop_utils';
-import {validateEstimationConfig, validateModelConfig} from './detector_utils';
-import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
+import { CROP_FILTER_ALPHA, DEFAULT_MIN_POSE_SCORE, KEYPOINT_FILTER_CONFIG, MIN_CROP_KEYPOINT_SCORE, MOVENET_CONFIG, MOVENET_ESTIMATION_CONFIG, MOVENET_MULTIPOSE_DEFAULT_MAX_DIMENSION, MOVENET_MULTIPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_URL, MULTIPOSE_BOX_IDX, MULTIPOSE_BOX_SCORE_IDX, MULTIPOSE_INSTANCE_SIZE, MULTIPOSE_LIGHTNING, NUM_KEYPOINT_VALUES, NUM_KEYPOINTS, SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER } from './constants';
+import { determineNextCropRegion, initCropRegion } from './crop_utils';
+import { validateEstimationConfig, validateModelConfig } from './detector_utils';
+import { MoveNetEstimationConfig, MoveNetModelConfig } from './types';
 
 /**
  * MoveNet detector class.
  */
 class MoveNetDetector implements PoseDetector {
   private readonly modelInputResolution:
-      InputResolution = {height: 0, width: 0};
+    InputResolution = { height: 0, width: 0 };
   private readonly keypointIndexByName =
-      getKeypointIndexByName(SupportedModels.MoveNet);
+    getKeypointIndexByName(SupportedModels.MoveNet);
   private readonly multiPoseModel: boolean;
   private readonly enableSmoothing: boolean;
   private readonly minPoseScore: number;
@@ -67,13 +67,13 @@ class MoveNetDetector implements PoseDetector {
   private readonly keypointFilterMap: Map<number, KeypointsOneEuroFilter>;
 
   constructor(
-      private readonly moveNetModel: tfc.GraphModel,
-      config: MoveNetModelConfig) {
+    private readonly moveNetModel: tfc.GraphModel,
+    config: MoveNetModelConfig) {
     // Only single-pose models have a fixed input resolution.
     if (config.modelType === SINGLEPOSE_LIGHTNING) {
       this.modelInputResolution.width = MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION;
       this.modelInputResolution.height =
-          MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION;
+        MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION;
     } else if (config.modelType === SINGLEPOSE_THUNDER) {
       this.modelInputResolution.width = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
       this.modelInputResolution.height = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
@@ -124,12 +124,12 @@ class MoveNetDetector implements PoseDetector {
     // We expect an output tensor of shape [1, 1, 17, 3] (batch, person,
     // keypoint, (y, x, score)).
     if (outputTensor.shape.length !== 4 || outputTensor.shape[0] !== 1 ||
-        outputTensor.shape[1] !== 1 ||
-        outputTensor.shape[2] !== NUM_KEYPOINTS ||
-        outputTensor.shape[3] !== NUM_KEYPOINT_VALUES) {
+      outputTensor.shape[1] !== 1 ||
+      outputTensor.shape[2] !== NUM_KEYPOINTS ||
+      outputTensor.shape[3] !== NUM_KEYPOINT_VALUES) {
       outputTensor.dispose();
       throw new Error(
-          `Unexpected output shape from model: [${outputTensor.shape}]`);
+        `Unexpected output shape from model: [${outputTensor.shape}]`);
     }
 
     // Only use asynchronous downloads when we really have to (WebGPU) because
@@ -143,7 +143,7 @@ class MoveNetDetector implements PoseDetector {
     }
     outputTensor.dispose();
 
-    const pose: Pose = {keypoints: [], score: 0.0};
+    const pose: Pose = { keypoints: [], score: 0.0 };
     let numValidKeypoints = 0;
     for (let i = 0; i < NUM_KEYPOINTS; ++i) {
       pose.keypoints[i] = {
@@ -179,10 +179,10 @@ class MoveNetDetector implements PoseDetector {
     // Multi-pose model output is a [1, n, 56] tensor ([batch, num_instances,
     // instance_keypoints_and_box]).
     if (outputTensor.shape.length !== 3 || outputTensor.shape[0] !== 1 ||
-        outputTensor.shape[2] !== MULTIPOSE_INSTANCE_SIZE) {
+      outputTensor.shape[2] !== MULTIPOSE_INSTANCE_SIZE) {
       outputTensor.dispose();
       throw new Error(
-          `Unexpected output shape from model: [${outputTensor.shape}]`);
+        `Unexpected output shape from model: [${outputTensor.shape}]`);
     }
 
     // Only use asynchronous downloads when we really have to (WebGPU) because
@@ -200,7 +200,7 @@ class MoveNetDetector implements PoseDetector {
 
     const numInstances = inferenceResult.length / MULTIPOSE_INSTANCE_SIZE;
     for (let i = 0; i < numInstances; ++i) {
-      poses[i] = {keypoints: []};
+      poses[i] = { keypoints: [] };
       const boxIndex = i * MULTIPOSE_INSTANCE_SIZE + MULTIPOSE_BOX_IDX;
       poses[i].box = {
         yMin: inferenceResult[boxIndex],
@@ -216,11 +216,11 @@ class MoveNetDetector implements PoseDetector {
       for (let j = 0; j < NUM_KEYPOINTS; ++j) {
         poses[i].keypoints[j] = {
           y: inferenceResult
-              [i * MULTIPOSE_INSTANCE_SIZE + j * NUM_KEYPOINT_VALUES],
+          [i * MULTIPOSE_INSTANCE_SIZE + j * NUM_KEYPOINT_VALUES],
           x: inferenceResult
-              [i * MULTIPOSE_INSTANCE_SIZE + j * NUM_KEYPOINT_VALUES + 1],
+          [i * MULTIPOSE_INSTANCE_SIZE + j * NUM_KEYPOINT_VALUES + 1],
           score: inferenceResult
-              [i * MULTIPOSE_INSTANCE_SIZE + j * NUM_KEYPOINT_VALUES + 2]
+          [i * MULTIPOSE_INSTANCE_SIZE + j * NUM_KEYPOINT_VALUES + 2]
         };
       }
     }
@@ -242,9 +242,9 @@ class MoveNetDetector implements PoseDetector {
    * @return An array of `Pose`s.
    */
   async estimatePoses(
-      image: PoseDetectorInput,
-      estimationConfig: MoveNetEstimationConfig = MOVENET_ESTIMATION_CONFIG,
-      timestamp?: number): Promise<Pose[]> {
+    image: PoseDetectorInput,
+    estimationConfig: MoveNetEstimationConfig = MOVENET_ESTIMATION_CONFIG,
+    timestamp?: number): Promise<Pose[]> {
     estimationConfig = validateEstimationConfig(estimationConfig);
 
     if (image == null) {
@@ -272,23 +272,32 @@ class MoveNetDetector implements PoseDetector {
     let poses: Pose[] = [];
     if (!this.multiPoseModel) {
       poses =
-          await this.estimateSinglePose(imageTensor4D, imageSize, timestamp);
+        await this.estimateSinglePose(imageTensor4D, imageSize, timestamp);
     } else {
       poses =
-          await this.estimateMultiplePoses(imageTensor4D, imageSize, timestamp);
+        await this.estimateMultiplePoses(imageTensor4D, imageSize, timestamp);
     }
 
-    // Convert keypoint coordinates from normalized coordinates to image space
-    // and add keypoint names.
+    // Convert keypoint and boundingbox coordinates from normalized coordinates
+    // to image space and add keypoint names.
     for (let poseIdx = 0; poseIdx < poses.length; ++poseIdx) {
       for (let keypointIdx = 0; keypointIdx < poses[poseIdx].keypoints.length;
-           ++keypointIdx) {
+        ++keypointIdx) {
         poses[poseIdx].keypoints[keypointIdx].name =
-            COCO_KEYPOINTS[keypointIdx];
+          COCO_KEYPOINTS[keypointIdx];
         poses[poseIdx].keypoints[keypointIdx].y *= imageSize.height;
         poses[poseIdx].keypoints[keypointIdx].x *= imageSize.width;
       }
+      if (poses[poseIdx].box != null) {
+        poses[poseIdx].box.yMin *= imageSize.height;
+        poses[poseIdx].box.xMin *= imageSize.width;
+        poses[poseIdx].box.yMax *= imageSize.height;
+        poses[poseIdx].box.xMax *= imageSize.width;
+        poses[poseIdx].box.width *= imageSize.width;
+        poses[poseIdx].box.height *= imageSize.height;
+      }
     }
+
 
     return poses;
   }
@@ -303,8 +312,8 @@ class MoveNetDetector implements PoseDetector {
    * @return An array of `Pose`s.
    */
   async estimateSinglePose(
-      imageTensor4D: tf.Tensor4D, imageSize: ImageSize,
-      timestamp: number): Promise<Pose[]> {
+    imageTensor4D: tf.Tensor4D, imageSize: ImageSize,
+    timestamp: number): Promise<Pose[]> {
     if (!this.cropRegion) {
       this.cropRegion = initCropRegion(this.cropRegion == null, imageSize);
     }
@@ -320,11 +329,11 @@ class MoveNetDetector implements PoseDetector {
       const boxInd: tf.Tensor1D = tf.zeros([1], 'int32');
       // Target size of each crop.
       const cropSize: [number, number] =
-          [this.modelInputResolution.height, this.modelInputResolution.width];
+        [this.modelInputResolution.height, this.modelInputResolution.width];
       return tf.cast(
-          tf.image.cropAndResize(
-              imageTensor4D, cropRegionTensor, boxInd, cropSize, 'bilinear', 0),
-          'int32');
+        tf.image.cropAndResize(
+          imageTensor4D, cropRegionTensor, boxInd, cropSize, 'bilinear', 0),
+        'int32');
     });
     imageTensor4D.dispose();
 
@@ -339,23 +348,23 @@ class MoveNetDetector implements PoseDetector {
     // Convert keypoints from crop coordinates to image coordinates.
     for (let i = 0; i < pose.keypoints.length; ++i) {
       pose.keypoints[i].y =
-          this.cropRegion.yMin + pose.keypoints[i].y * this.cropRegion.height;
+        this.cropRegion.yMin + pose.keypoints[i].y * this.cropRegion.height;
       pose.keypoints[i].x =
-          this.cropRegion.xMin + pose.keypoints[i].x * this.cropRegion.width;
+        this.cropRegion.xMin + pose.keypoints[i].x * this.cropRegion.width;
     }
 
     // Apply the sequential filter before estimating the cropping area to make
     // it more stable.
     if (timestamp != null && this.enableSmoothing) {
       pose.keypoints = this.keypointFilter.apply(
-          pose.keypoints, timestamp, 1 /* objectScale */);
+        pose.keypoints, timestamp, 1 /* objectScale */);
     }
 
     // Determine next crop region based on detected keypoints and if a crop
     // region is not detected, this will trigger the model to run on the full
     // image the next time estimatePoses() is called.
     const nextCropRegion = determineNextCropRegion(
-        this.cropRegion, pose.keypoints, this.keypointIndexByName, imageSize);
+      this.cropRegion, pose.keypoints, this.keypointIndexByName, imageSize);
 
     this.cropRegion = this.filterCropRegion(nextCropRegion);
 
@@ -372,8 +381,8 @@ class MoveNetDetector implements PoseDetector {
    * @return An array of `Pose`s.
    */
   async estimateMultiplePoses(
-      imageTensor4D: tf.Tensor4D, imageSize: ImageSize,
-      timestamp: number): Promise<Pose[]> {
+    imageTensor4D: tf.Tensor4D, imageSize: ImageSize,
+    timestamp: number): Promise<Pose[]> {
     let resizedImage: tf.Tensor4D;
     let resizedWidth: number;
     let resizedHeight: number;
@@ -384,29 +393,29 @@ class MoveNetDetector implements PoseDetector {
     if (imageSize.width > imageSize.height) {
       resizedWidth = this.multiPoseMaxDimension;
       resizedHeight = Math.round(
-          this.multiPoseMaxDimension * imageSize.height / imageSize.width);
+        this.multiPoseMaxDimension * imageSize.height / imageSize.width);
       resizedImage =
-          tf.image.resizeBilinear(imageTensor4D, [resizedHeight, resizedWidth]);
+        tf.image.resizeBilinear(imageTensor4D, [resizedHeight, resizedWidth]);
 
       paddedWidth = resizedWidth;
       paddedHeight =
-          Math.ceil(resizedHeight / dimensionDivisor) * dimensionDivisor;
+        Math.ceil(resizedHeight / dimensionDivisor) * dimensionDivisor;
       paddedImage = tf.pad(
-          resizedImage,
-          [[0, 0], [0, paddedHeight - resizedHeight], [0, 0], [0, 0]]);
+        resizedImage,
+        [[0, 0], [0, paddedHeight - resizedHeight], [0, 0], [0, 0]]);
     } else {
       resizedWidth = Math.round(
-          this.multiPoseMaxDimension * imageSize.width / imageSize.height);
+        this.multiPoseMaxDimension * imageSize.width / imageSize.height);
       resizedHeight = this.multiPoseMaxDimension;
       resizedImage =
-          tf.image.resizeBilinear(imageTensor4D, [resizedHeight, resizedWidth]);
+        tf.image.resizeBilinear(imageTensor4D, [resizedHeight, resizedWidth]);
 
       paddedWidth =
-          Math.ceil(resizedWidth / dimensionDivisor) * dimensionDivisor;
+        Math.ceil(resizedWidth / dimensionDivisor) * dimensionDivisor;
       paddedHeight = resizedHeight;
       paddedImage = tf.pad(
-          resizedImage,
-          [[0, 0], [0, 0], [0, paddedWidth - resizedWidth], [0, 0]]);
+        resizedImage,
+        [[0, 0], [0, 0], [0, paddedWidth - resizedWidth], [0, 0]]);
     }
     resizedImage.dispose();
     imageTensor4D.dispose();
@@ -433,12 +442,12 @@ class MoveNetDetector implements PoseDetector {
         for (let i = 0; i < poses.length; ++i) {
           if (!this.keypointFilterMap.has(poses[i].id)) {
             this.keypointFilterMap.set(
-                poses[i].id,
-                new KeypointsOneEuroFilter(KEYPOINT_FILTER_CONFIG));
+              poses[i].id,
+              new KeypointsOneEuroFilter(KEYPOINT_FILTER_CONFIG));
           }
           poses[i].keypoints =
-              this.keypointFilterMap.get(poses[i].id)
-                  .apply(poses[i].keypoints, timestamp, 1 /* objectScale */);
+            this.keypointFilterMap.get(poses[i].id)
+              .apply(poses[i].keypoints, timestamp, 1 /* objectScale */);
         }
 
         const trackIDs = this.tracker.getTrackIDs();
@@ -504,7 +513,7 @@ class MoveNetDetector implements PoseDetector {
  * in the documentation of the `ModelConfig` interface.
  */
 export async function load(modelConfig: MoveNetModelConfig = MOVENET_CONFIG):
-    Promise<PoseDetector> {
+  Promise<PoseDetector> {
   const config = validateModelConfig(modelConfig);
   let model: tfc.GraphModel;
 
@@ -512,8 +521,8 @@ export async function load(modelConfig: MoveNetModelConfig = MOVENET_CONFIG):
 
   if (!!config.modelUrl) {
     fromTFHub = typeof config.modelUrl === 'string' &&
-        config.modelUrl.indexOf('https://tfhub.dev') > -1;
-    model = await tfc.loadGraphModel(config.modelUrl, {fromTFHub});
+      config.modelUrl.indexOf('https://tfhub.dev') > -1;
+    model = await tfc.loadGraphModel(config.modelUrl, { fromTFHub });
   } else {
     let modelUrl;
     if (config.modelType === SINGLEPOSE_LIGHTNING) {
@@ -523,7 +532,7 @@ export async function load(modelConfig: MoveNetModelConfig = MOVENET_CONFIG):
     } else if (config.modelType === MULTIPOSE_LIGHTNING) {
       modelUrl = MOVENET_MULTIPOSE_LIGHTNING_URL;
     }
-    model = await tfc.loadGraphModel(modelUrl, {fromTFHub});
+    model = await tfc.loadGraphModel(modelUrl, { fromTFHub });
   }
 
   if (tf.getBackend() === 'webgl') {
