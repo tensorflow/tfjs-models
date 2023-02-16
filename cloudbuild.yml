@@ -1,11 +1,11 @@
 steps:
-- name: 'node:12'
+- name: 'node:16'
   entrypoint: 'yarn'
   id: 'yarn'
   args: ['install']
 
 # Run diff to find modified files in each folder.
-- name: 'node:12'
+- name: 'node:16'
   entrypoint: 'yarn'
   id: 'diff'
   args: ['diff']
@@ -155,7 +155,7 @@ steps:
   waitFor: ['diff']
 
 # Run the top-level sanity checks.
-- name: 'node:12'
+- name: 'node:16'
   entrypoint: 'yarn'
   id: 'test'
   args: ['presubmit']
