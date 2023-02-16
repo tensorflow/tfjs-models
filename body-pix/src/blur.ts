@@ -20,7 +20,7 @@ export function cpuBlur(
     canvas: HTMLCanvasElement|OffscreenCanvas,
     image: HTMLImageElement|HTMLVideoElement|HTMLCanvasElement|OffscreenCanvas,
     blur: number) {
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
 
   let sum = 0;
   const delta = 5;
