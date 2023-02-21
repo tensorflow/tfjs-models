@@ -137,7 +137,7 @@ function endEstimatePosesStats() {
   }
 }
 
-async function renderResult(renderParameter) {
+async function renderResult() {
   if (camera.video.readyState < 2) {
     await new Promise((resolve) => {
       camera.video.onloadeddata = () => {
@@ -195,16 +195,14 @@ async function renderResult(renderParameter) {
   }
 }
 
-async function renderPrediction(renderParameter) {
+async function renderPrediction() {
   await checkGuiUpdate();
 
   if (!STATE.isModelChanged) {
-    await renderResult(renderParameter);
+    await renderResult();
   }
 
-  rafId = requestAnimationFrame(function() {
-    renderPrediction(renderParameter);
-  });
+  rafId = requestAnimationFrame(renderPrediction);
 };
 
 let gpuRenderer = null;
@@ -218,8 +216,9 @@ async function app() {
   await setupDatGui(urlParams);
 
   stats = setupStats();
-  const useGpuRenderer = (urlParams.get('gpuRenderer') === 'true') &&
-      (STATE.backend === 'tfjs-webgpu');
+  const isWebGPU = STATE.backend === 'tfjs-webgpu';
+  const useGpuRenderer = (urlParams.get('gpuRenderer') === 'true') && isWebGPU;
+  const importVideo = (urlParams.get('importVideo') === 'true') && isWebGPU;
 
   camera = await Camera.setupCamera(STATE.camera, useGpuRenderer);
 
@@ -229,7 +228,7 @@ async function app() {
 
   if (useGpuRenderer) {
     const canvas = document.getElementById('output');
-    gpuRenderer = await RendererWebGPU.setup(canvas);
+    gpuRenderer = await RendererWebGPU.setup(canvas, importVideo);
   }
 
   renderPrediction();
