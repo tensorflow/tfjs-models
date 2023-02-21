@@ -57,6 +57,7 @@ export class RendererWebGPU {
     this.poseIndexCount = 0;
     this.texturePipeline = null;
     this.canvasInfo = null;
+    this.importVideo = true;
   }
 
   static async setup(canvas) {
@@ -243,9 +244,11 @@ fn main() -> @location(0) vec4<f32> {
   return pos[VertexIndex];
 }
       `;
+    const textureType =
+        this.importVideo ? 'texture_external' : 'texture_2d<f32>';
     const fragmentShaderCode = `
 @group(0) @binding(0) var s : sampler;
-@group(0) @binding(1) var t : texture_external;
+@group(0) @binding(1) var t : ${textureType};
 
 @fragment fn main(@builtin(position) FragCoord : vec4<f32>)
                          -> @location(0) vec4<f32> {
@@ -310,9 +313,25 @@ fn main() -> @location(0) vec4<f32> {
     }
 
     const linearSampler = this.device.createSampler();
-    const externalTexture = this.device.importExternalTexture({
-      source: video,
-    });
+    let externalTexture;
+    if (this.importVideo) {
+      externalTexture = this.device.importExternalTexture({
+        source: video,
+      });
+    } else {
+      const width = this.canvasInfo[4];
+      const height = this.canvasInfo[5];
+      const format = 'rgba8unorm';
+      const usage = GPUTextureUsage.COPY_DST |
+          GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING;
+      externalTexture = this.device.createTexture({
+        size: [width, height],
+        format,
+        usage,
+      });
+      this.device.queue.copyExternalImageToTexture(
+          {source: video}, {texture: externalTexture}, [width, height]);
+    }
 
     const bindGroup = this.device.createBindGroup({
       layout: this.texturePipeline.getBindGroupLayout(0),
@@ -323,7 +342,8 @@ fn main() -> @location(0) vec4<f32> {
         },
         {
           binding: 1,
-          resource: externalTexture,
+          resource: this.importVideo ? externalTexture :
+                                       externalTexture.createView(),
         },
       ],
     });
