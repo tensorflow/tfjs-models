@@ -24,13 +24,10 @@
     "jasmine": "^3.7.0",
     "jasmine-core": "^3.7.1",
     "rimraf": "~2.6.2",
-    "rollup": "~0.58.2",
-    "rollup-plugin-node-resolve": "~3.3.0",
-    "rollup-plugin-typescript2": "~0.13.0",
-    "rollup-plugin-uglify": "~3.0.0",
+    "rollup": "^3.15.0",
     "ts-node": "~5.0.0",
     "tslint": "~6.1.3",
-    "typescript": "3.5.3",
+    "typescript": "^4.9.5",
     "yalc": "^1.0.0-pre.50"
   },
   "scripts": {
@@ -41,5 +38,6 @@
     "lint": "tslint -p . -t verbose",
     "publish-demo": "./scripts/publish-demo.sh"
   },
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "dependencies": {}
 }
