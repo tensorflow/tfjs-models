@@ -220,6 +220,8 @@ async function app() {
   stats = setupStats();
   const useGpuRenderer = (urlParams.get('gpuRenderer') === 'true') &&
       (STATE.backend === 'tfjs-webgpu');
+  const importVideo = (urlParams.get('importVideo') === 'true') &&
+    (STATE.backend === 'tfjs-webgpu');
 
   camera = await Camera.setupCamera(STATE.camera, useGpuRenderer);
 
@@ -229,7 +231,7 @@ async function app() {
 
   if (useGpuRenderer) {
     const canvas = document.getElementById('output');
-    gpuRenderer = await RendererWebGPU.setup(canvas);
+    gpuRenderer = await RendererWebGPU.setup(canvas, importVideo);
   }
 
   renderPrediction();

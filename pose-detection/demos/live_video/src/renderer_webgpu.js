@@ -48,7 +48,7 @@ function byteSizeFromShape(shape) {
 }
 
 export class RendererWebGPU {
-  constructor(device, swapChain) {
+  constructor(device, swapChain, importVideo) {
     this.device = device;
     this.swapChain = swapChain;
     this.indexBuffer = null;
@@ -57,12 +57,15 @@ export class RendererWebGPU {
     this.poseIndexCount = 0;
     this.texturePipeline = null;
     this.canvasInfo = null;
-    this.importVideo = true;
+    this.importVideo = importVideo;
+    if (importVideo == false) {
+      this.pixels2DContext = document.createElement('canvas').getContext('2d');
+    }
   }
 
-  static async setup(canvas) {
+  static async setup(canvas, importVideo) {
     const [device, swapChain] = await getDevice(canvas);
-    return new RendererWebGPU(device, swapChain);
+    return new RendererWebGPU(device, swapChain, importVideo);
   }
 
   createBuffer(usage, size, array = null) {
@@ -321,6 +324,14 @@ fn main() -> @location(0) vec4<f32> {
     } else {
       const width = this.canvasInfo[4];
       const height = this.canvasInfo[5];
+
+      // Do not copyExternalImageToTexture(video) directly, instead draw it
+      // first.
+      this.pixels2DContext.canvas.width = width;
+      this.pixels2DContext.canvas.height = height;
+      this.pixels2DContext.drawImage(video, 0, 0, width, height);
+      const pixels = this.pixels2DContext.canvas;
+
       const format = 'rgba8unorm';
       const usage = GPUTextureUsage.COPY_DST |
           GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING;
@@ -330,7 +341,7 @@ fn main() -> @location(0) vec4<f32> {
         usage,
       });
       this.device.queue.copyExternalImageToTexture(
-          {source: video}, {texture: externalTexture}, [width, height]);
+          {source: pixels}, {texture: externalTexture}, [width, height]);
     }
 
     const bindGroup = this.device.createBindGroup({
