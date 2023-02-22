@@ -59,7 +59,7 @@ export class RendererWebGPU {
     this.canvasInfo = null;
     this.importVideo = importVideo;
     if (importVideo == false) {
-      this.pixels2DContext = document.createElement('canvas').getContext('2d');
+      this.drawImageContext = document.createElement('canvas').getContext('2d');
     }
   }
 
@@ -327,10 +327,10 @@ fn main() -> @location(0) vec4<f32> {
 
       // Do not copyExternalImageToTexture(video) directly, instead draw it
       // first.
-      this.pixels2DContext.canvas.width = width;
-      this.pixels2DContext.canvas.height = height;
-      this.pixels2DContext.drawImage(video, 0, 0, width, height);
-      const pixels = this.pixels2DContext.canvas;
+      this.drawImageContext.canvas.width = width;
+      this.drawImageContext.canvas.height = height;
+      this.drawImageContext.drawImage(video, 0, 0, width, height);
+      const pixels = this.drawImageContext.canvas;
 
       const format = 'rgba8unorm';
       const usage = GPUTextureUsage.COPY_DST |
