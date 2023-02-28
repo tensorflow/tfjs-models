@@ -19,9 +19,9 @@
   },
   "devDependencies": {
     "@babel/polyfill": "^7.10.4",
-    "@tensorflow/tfjs-backend-webgl": "^3.6.0",
-    "@tensorflow/tfjs-converter": "^3.6.0",
-    "@tensorflow/tfjs-core": "^3.6.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.2.0",
+    "@tensorflow/tfjs-converter": "^4.2.0",
+    "@tensorflow/tfjs-core": "^4.2.0",
     "@types/jasmine": "^4.3.1",
     "jasmine": "~4.5.0",
     "jasmine-core": "~4.5.0",
