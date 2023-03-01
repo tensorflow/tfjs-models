@@ -54,8 +54,8 @@ export class Tokenizer {
   trie: Trie;
 
   constructor(
-      private vocabulary: Vocabulary,
-      private reservedSymbolsCount = RESERVED_SYMBOLS_COUNT) {
+      private readonly vocabulary: Vocabulary,
+      private readonly reservedSymbolsCount = RESERVED_SYMBOLS_COUNT) {
     this.trie = new Trie();
 
     for (let i = this.reservedSymbolsCount; i < this.vocabulary.length; i++) {
@@ -121,7 +121,7 @@ export class Tokenizer {
     }
 
     // Merge consecutive unks.
-    const merged = [];
+    const merged: number[] = [];
     let isPreviousUnk = false;
     for (let i = 0; i < results.length; i++) {
       const id = results[i];
@@ -139,9 +139,9 @@ export class Tokenizer {
 /**
  * Load the Tokenizer for use independently from the UniversalSentenceEncoder.
  *
- * @param pathToVocabulary (optional) Provide a path to the vocabulary file.
+ * @param pathToVocabulary Provide a path to the vocabulary file.
  */
-export async function loadTokenizer(pathToVocabulary?: string) {
+export async function loadTokenizer(pathToVocabulary: string) {
   const vocabulary = await loadVocabulary(pathToVocabulary);
   const tokenizer = new Tokenizer(vocabulary);
   return tokenizer;

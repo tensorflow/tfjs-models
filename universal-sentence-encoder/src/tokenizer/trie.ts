@@ -21,7 +21,7 @@ import {stringToChars} from '../util';
 type OutputNode = [string[], number, number];
 
 class TrieNode {
-  public parent: TrieNode;
+  public parent: TrieNode|null;
   public end: boolean;
   public children: {[firstSymbol: string]: TrieNode};
   public word: OutputNode;
@@ -74,12 +74,16 @@ export class Trie {
     const output: OutputNode[] = [];
     let node = this.root.children[ss[0]];
 
-    for (let i = 0; i < ss.length && node; i++){
-      if (node.end){ output.push(node.word); }
+    for (let i = 0; i < ss.length && node; i++) {
+      if (node.end) {
+        output.push(node.word);
+      }
       node = node.children[ss[i + 1]];
     }
 
-    if (!output.length){ output.push([[ss[0]], 0, 0]); }
+    if (!output.length) {
+      output.push([[ss[0]], 0, 0]);
+    }
 
     return output;
   }
