@@ -98,7 +98,7 @@ export async function decodeSinglePoseGPU(
     heatmapScores: tf.Tensor3D, offsets: tf.Tensor3D,
     outputStride: PoseNetOutputStride): Promise<tf.Tensor> {
   const heatmapValues = argmax2d(heatmapScores);
-
+  // TODO: handle score.
   const offsetPoints = getOffsetPointsGPU(heatmapValues, outputStride, offsets);
   return offsetPoints;
 }

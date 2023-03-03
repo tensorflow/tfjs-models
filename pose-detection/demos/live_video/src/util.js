@@ -55,9 +55,6 @@ async function resetBackend(backendName) {
   }
 
   await tf.setBackend(backendName);
-  if(backendName === 'webgpu') {
-    await tf.ready();
-  }
   STATE.lastTFJSBackend = `tfjs-${backendName}`;
 }
 

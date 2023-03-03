@@ -53,7 +53,7 @@ class GetOffsetVectorsProgram implements tfwebgpu.WebGPUProgram {
       throw new Error(`GetOffsetVectorsProgram only supports shape of [x, ${
           this.supportedLastDimension}], but current shape is ${outputShape}`);
     }
-    const workgroupSizeX = 4;
+    const workgroupSizeX = 32;
     this.workgroupSize = [workgroupSizeX, 1, 1];
     this.outputShape = outputShape;
     const computeDispatchInfo = [outputShape[0], 1];
