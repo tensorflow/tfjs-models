@@ -88,7 +88,7 @@ export class RendererWebGPU {
     this.device.queue.submit([videoCommanderBuffer, poseCommanderBuffer]);
   }
 
-  getPoseShader(tensorShapeX) {
+  getPoseShader() {
     const vertexShaderCode = `
 struct Uniforms {
   offsetX : f32,
@@ -99,18 +99,14 @@ struct Uniforms {
   height : f32,
 }
 
-struct Pose {
-  keypoints : array<vec2<f32>, ${tensorShapeX}>
-}
-
 @binding(0) @group(0) var<uniform> uniforms : Uniforms;
-@binding(1) @group(0) var<storage> pose : Pose;
+@binding(1) @group(0) var<storage> keypoints : array<vec2<f32>>;
 @vertex
 fn main(
   @builtin(vertex_index) VertexIndex : u32
 ) -> @builtin(position) vec4<f32> {
-  let rawY = (pose.keypoints[VertexIndex].x + uniforms.offsetY) * uniforms.scaleY / uniforms.height;
-  let rawX  = (pose.keypoints[VertexIndex].y + uniforms.offsetX) * uniforms.scaleX / uniforms.width;
+  let rawY = (keypoints[VertexIndex].x + uniforms.offsetY) * uniforms.scaleY / uniforms.height;
+  let rawX  = (keypoints[VertexIndex].y + uniforms.offsetX) * uniforms.scaleX / uniforms.width;
   var x = rawX * 2.0 - 1.0;
   var y = 1.0 - rawY * 2.0;
   return vec4<f32>(x, y, 1.0, 1.0);
@@ -150,7 +146,7 @@ fn main() -> @location(0) vec4<f32> {
           this.canvasInfo.length * 4);
     }
     if (this.posePipeline == null) {
-      this.posePipeline = this.createPosePipeline(tensor.shape[0]);
+      this.posePipeline = this.createPosePipeline();
     }
     const bindings = [
       {
@@ -197,9 +193,8 @@ fn main() -> @location(0) vec4<f32> {
     return commandEncoder.finish();
   }
 
-  createPosePipeline(tensorShapeX) {
-    const [vertexShaderCode, fragmentShaderCode] =
-        this.getPoseShader(tensorShapeX);
+  createPosePipeline() {
+    const [vertexShaderCode, fragmentShaderCode] = this.getPoseShader();
     return this.device.createRenderPipeline({
       layout: 'auto',
       vertex: {
