@@ -15,25 +15,9 @@
  * =============================================================================
  */
 
-import '@tensorflow/tfjs-backend-webgl';
 import * as tfwebgpu from '@tensorflow/tfjs-backend-webgpu';
 import * as tf from '@tensorflow/tfjs-core';
-
-function getMainHeaderString(index: string): string;
-function getMainHeaderString(...params: string[]): string {
-  let snippet: string;
-  switch (params.length) {
-    case 0:
-      snippet = `fn main() `;
-      break;
-    case 1:
-      snippet = `fn main(${params[0]} : i32)`;
-      break;
-    default:
-      throw Error('Unreachable');
-  }
-  return snippet;
-}
+import {getMainHeaderString} from './webgpu_util';
 
 class GetOffsetVectorsProgram implements tfwebgpu.WebGPUProgram {
   outputShape: number[];

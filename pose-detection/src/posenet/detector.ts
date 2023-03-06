@@ -205,9 +205,9 @@ class PosenetDetector implements PoseDetector {
     let poses;
 
     if (this.maxPoses === 1) {
-      const pose = await decodeSinglePoseGPU(
+      const [pose, score] = await decodeSinglePoseGPU(
           heatmapScores, offsets as tf.Tensor3D, this.outputStride);
-      poses = [pose];
+      poses = [pose, score];
     } else {
       throw new Error('GPU renderer only supports single pose!');
     }

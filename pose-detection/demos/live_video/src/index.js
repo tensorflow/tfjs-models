@@ -182,7 +182,8 @@ async function renderResult() {
     endEstimatePosesStats();
   }
   if (gpuRenderer) {
-    gpuRenderer.draw(camera.video, poses[0], canvasInfo);
+    console.log(STATE.modelConfig.scoreThreshold);
+    gpuRenderer.draw(camera.video, poses, canvasInfo, STATE.modelConfig.scoreThreshold);
   } else {
     camera.drawCtx();
 

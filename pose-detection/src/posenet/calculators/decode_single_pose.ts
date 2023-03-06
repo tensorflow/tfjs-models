@@ -20,7 +20,9 @@ import * as tf from '@tensorflow/tfjs-core';
 import {COCO_KEYPOINTS} from '../../constants';
 import {Keypoint} from '../../shared/calculators/interfaces/common_interfaces';
 import {Pose} from '../../types';
+import {getPointsConfidenceGPU} from '../ops/get_points_confidence';
 import {PoseNetOutputStride} from '../types';
+
 import {argmax2d, getOffsetPoints, getOffsetPointsGPU, getPointsConfidence} from './decode_single_pose_util';
 
 /**
@@ -96,9 +98,11 @@ export async function decodeSinglePose(
  */
 export async function decodeSinglePoseGPU(
     heatmapScores: tf.Tensor3D, offsets: tf.Tensor3D,
-    outputStride: PoseNetOutputStride): Promise<tf.Tensor> {
+    outputStride: PoseNetOutputStride): Promise<tf.Tensor[]> {
   const heatmapValues = argmax2d(heatmapScores);
-  // TODO: handle score.
   const offsetPoints = getOffsetPointsGPU(heatmapValues, outputStride, offsets);
-  return offsetPoints;
+
+  const keypointConfidence =
+      getPointsConfidenceGPU(heatmapScores, heatmapValues as tf.Tensor);
+  return [offsetPoints, keypointConfidence];
 }

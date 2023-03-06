@@ -58,6 +58,8 @@ export class RendererWebGPU {
     this.texturePipeline = null;
     this.canvasInfo = null;
     this.importVideo = importVideo;
+    this.scoreThreshold = 0;
+    this.pipelineCache = {};
     if (importVideo == false) {
       this.drawImageContext = document.createElement('canvas').getContext('2d');
     }
@@ -81,10 +83,11 @@ export class RendererWebGPU {
     return buffer;
   }
 
-  draw(video, tensor, canvasInfo) {
+  draw(video, tensors, canvasInfo, scoreThreshold) {
     this.canvasInfo = canvasInfo;
+    this.scoreThreshold = scoreThreshold;
     const videoCommanderBuffer = this.drawTexture(video);
-    const poseCommanderBuffer = this.drawPose(tensor);
+    const poseCommanderBuffer = this.drawPose(tensors[0], tensors[1]);
     this.device.queue.submit([videoCommanderBuffer, poseCommanderBuffer]);
   }
 
@@ -99,31 +102,44 @@ struct Uniforms {
   height : f32,
 }
 
+struct VertexOutput {
+   @builtin(position) pos: vec4<f32>,
+   @location(0) score: f32,
+};
+
 @binding(0) @group(0) var<uniform> uniforms : Uniforms;
 @binding(1) @group(0) var<storage> keypoints : array<vec2<f32>>;
+@binding(2) @group(0) var<storage> scores : array<f32>;
 @vertex
 fn main(
   @builtin(vertex_index) VertexIndex : u32
-) -> @builtin(position) vec4<f32> {
+) -> VertexOutput {
+  var<function> vertexOutput: VertexOutput;
   let rawY = (keypoints[VertexIndex].x + uniforms.offsetY) * uniforms.scaleY / uniforms.height;
   let rawX  = (keypoints[VertexIndex].y + uniforms.offsetX) * uniforms.scaleX / uniforms.width;
   var x = rawX * 2.0 - 1.0;
   var y = 1.0 - rawY * 2.0;
-  return vec4<f32>(x, y, 1.0, 1.0);
+  vertexOutput.score = scores[VertexIndex];
+  vertexOutput.pos = vec4<f32>(x, y, 1.0, 1.0);
+  return vertexOutput;
 }
     `;
     const fragmentShaderCode = `
 @fragment
-fn main() -> @location(0) vec4<f32> {
+fn main(@location(0) score: f32) -> @location(0) vec4<f32> {
+  if (score < ${this.scoreThreshold}) {
+    discard;
+  }
   return vec4<f32>(1.0, 0.0, 0.0, 1.0);
 }
     `;
     return [vertexShaderCode, fragmentShaderCode];
   }
 
-  initDrawPose(tensor) {
+  initDrawPose(keypointsTensor, scoresTensor) {
     // Only 2d tensor whose last dimension is 2 is supported.
-    if (tensor == null || tensor.shape.length !== 2 || tensor.shape[1] !== 2) {
+    if (keypointsTensor == null || keypointsTensor.shape.length !== 2 ||
+        keypointsTensor.shape[1] !== 2) {
       throw new Error('Tensor is null or tensor shape is not supported!');
     }
 
@@ -145,9 +161,14 @@ fn main() -> @location(0) vec4<f32> {
           GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
           this.canvasInfo.length * 4);
     }
-    if (this.posePipeline == null) {
+
+    if (this.scoreThreshold in this.pipelineCache) {
+      this.posePipeline = this.pipelineCache[this.scoreThreshold];
+    } else {
       this.posePipeline = this.createPosePipeline();
+      this.pipelineCache[this.scoreThreshold] = this.posePipeline;
     }
+
     const bindings = [
       {
         buffer: this.uniformBuffer,
@@ -155,9 +176,14 @@ fn main() -> @location(0) vec4<f32> {
         size: this.canvasInfo.length * 4,
       },
       {
-        buffer: tensor.dataToGPU().buffer,
+        buffer: keypointsTensor.dataToGPU().buffer,
         offset: 0,
-        size: byteSizeFromShape(tensor.shape),
+        size: byteSizeFromShape(keypointsTensor.shape),
+      },
+      {
+        buffer: scoresTensor.dataToGPU().buffer,
+        offset: 0,
+        size: byteSizeFromShape(scoresTensor.shape),
       }
     ];
     return this.device.createBindGroup({
@@ -166,8 +192,8 @@ fn main() -> @location(0) vec4<f32> {
     });
   }
 
-  drawPose(tensor) {
-    const poseBindGroup = this.initDrawPose(tensor);
+  drawPose(keypointsTensor, scoresTensor) {
+    const poseBindGroup = this.initDrawPose(keypointsTensor, scoresTensor);
     const textureView = this.swapChain.getCurrentTexture().createView();
 
     const uniformData = new Float32Array(this.canvasInfo);
