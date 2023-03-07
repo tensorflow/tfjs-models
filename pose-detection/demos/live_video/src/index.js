@@ -39,6 +39,7 @@ let detector, camera, stats;
 let startInferenceTime, numInferences = 0;
 let inferenceTimeSum = 0, lastPanelUpdate = 0;
 let rafId;
+let gpuRenderer = null;
 
 async function createDetector() {
   switch (STATE.model) {
@@ -162,14 +163,14 @@ async function renderResult() {
     // contain a model that doesn't provide the expected output.
     try {
       if (gpuRenderer) {
-        const [posesTemp, canvasInfoTemp] =
-            await detector.estimateSinglePoseGPU(
-                camera.video,
-                {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
+        const [posesTemp, canvasInfoTemp] = await detector.estimatePosesNew(
+            camera.video,
+            {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false},
+            true);
         poses = posesTemp;
         canvasInfo = canvasInfoTemp;
       } else {
-        poses = await detector.estimatePoses(
+        poses = await detector.estimatePosesNew(
             camera.video,
             {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
       }
@@ -182,8 +183,8 @@ async function renderResult() {
     endEstimatePosesStats();
   }
   if (gpuRenderer) {
-    console.log(STATE.modelConfig.scoreThreshold);
-    gpuRenderer.draw(camera.video, poses, canvasInfo, STATE.modelConfig.scoreThreshold);
+    gpuRenderer.draw(
+        camera.video, poses, canvasInfo, STATE.modelConfig.scoreThreshold);
   } else {
     camera.drawCtx();
 
@@ -206,7 +207,6 @@ async function renderPrediction() {
   rafId = requestAnimationFrame(renderPrediction);
 };
 
-let gpuRenderer = null;
 async function app() {
   // Gui content will change depending on which model is in the query string.
   const urlParams = new URLSearchParams(window.location.search);

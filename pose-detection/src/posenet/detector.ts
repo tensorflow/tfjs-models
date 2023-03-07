@@ -78,7 +78,7 @@ class PosenetDetector implements PoseDetector {
    * ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement The input
    * image to feed through the network.
    *
-   * @param config
+   * @param estimationConfig
    *       maxPoses: Optional. Max number of poses to estimate.
    *       When maxPoses = 1, a single pose is detected, it is usually much more
    *       efficient than maxPoses > 1. When maxPoses > 1, multiple poses are
@@ -87,17 +87,22 @@ class PosenetDetector implements PoseDetector {
    *       flipHorizontal: Optional. Default to false. When image data comes
    *       from camera, the result has to flip horizontally.
    *
-   * @return An array of `Pose`s.
+   * @param useGpuRenderer
+   *        Whether rendering predict results with gpu or not.
+   *
+   * @return If not rendering with gpu, an array of poses, each pose contains an
+   *     array of `Keypoint`s. Otherwise an array of tensor, and canvas info.
    */
-  async estimatePoses(
+
+  async estimatePosesNew(
       image: PoseDetectorInput,
       estimationConfig:
-          PoseNetEstimationConfig = SINGLE_PERSON_ESTIMATION_CONFIG):
-      Promise<Pose[]> {
+          PoseNetEstimationConfig = SINGLE_PERSON_ESTIMATION_CONFIG,
+      useGpuRenderer = false): Promise<Pose[]|[tf.Tensor[], number[]]> {
     const config = validateEstimationConfig(estimationConfig);
 
     if (image == null) {
-      return [];
+      return useGpuRenderer ? [[], []] : [];
     }
 
     this.maxPoses = config.maxPoses;
@@ -132,22 +137,45 @@ class PosenetDetector implements PoseDetector {
     let poses;
 
     if (this.maxPoses === 1) {
-      const pose = await decodeSinglePose(
-          heatmapScores, offsets as tf.Tensor3D, this.outputStride);
-      poses = [pose];
+      if (useGpuRenderer) {
+        const [pose, score] = await decodeSinglePoseGPU(
+            heatmapScores, offsets as tf.Tensor3D, this.outputStride);
+        poses = [pose, score];
+
+      } else {
+        const pose = await decodeSinglePose(
+            heatmapScores, offsets as tf.Tensor3D, this.outputStride);
+        poses = [pose];
+      }
     } else {
+      if (useGpuRenderer) {
+        throw new Error('GPU renderer only supports single pose!');
+      }
       poses = await decodeMultiplePoses(
           heatmapScores, offsets as tf.Tensor3D, displacementFwd as tf.Tensor3D,
           displacementBwd as tf.Tensor3D, this.outputStride, this.maxPoses,
           config.scoreThreshold, config.nmsRadius);
     }
 
-    const imageSize = getImageSize(image);
-    let scaledPoses =
-        scalePoses(poses, imageSize, this.inputResolution, padding);
+    let canvasInfo;
+    let scaledPoses;
+    if (useGpuRenderer) {
+      // TODO: handle flipPosesHorizontal in GPU.
+      if (config.flipHorizontal === true) {
+        throw new Error('flipHorizontal is not supported!');
+      }
 
-    if (config.flipHorizontal) {
-      scaledPoses = flipPosesHorizontal(scaledPoses, imageSize);
+      canvasInfo = this.getCanvasInfo(
+          getImageSize(image), this.inputResolution, padding);
+
+    } else {
+      const imageSize = getImageSize(image);
+      scaledPoses =
+          scalePoses(poses as Pose[], imageSize, this.inputResolution, padding);
+
+      if (config.flipHorizontal) {
+        scaledPoses = flipPosesHorizontal(scaledPoses, imageSize);
+      }
     }
 
     imageTensor.dispose();
@@ -159,75 +187,7 @@ class PosenetDetector implements PoseDetector {
     displacementBwd.dispose();
     heatmapScores.dispose();
 
-    return scaledPoses;
-  }
-
-  async estimateSinglePoseGPU(
-      image: PoseDetectorInput,
-      estimationConfig:
-          PoseNetEstimationConfig = SINGLE_PERSON_ESTIMATION_CONFIG):
-      Promise<[tf.Tensor[], number[]]> {
-    const config = validateEstimationConfig(estimationConfig);
-
-    if (image == null) {
-      return [[], []];
-    }
-
-    this.maxPoses = config.maxPoses;
-
-    const {imageTensor, padding} = convertImageToTensor(image, {
-      outputTensorSize: this.inputResolution,
-      keepAspectRatio: true,
-      borderMode: 'replicate'
-    });
-
-    const imageValueShifted = this.architecture === 'ResNet50' ?
-        tf.add(imageTensor, RESNET_MEAN) :
-        shiftImageValue(imageTensor, [-1, 1]);
-
-    const results =
-        this.posenetModel.predict(imageValueShifted) as tf.Tensor4D[];
-
-    let offsets, heatmap, displacementFwd, displacementBwd;
-    if (this.architecture === 'ResNet50') {
-      offsets = tf.squeeze(results[2], [0]);
-      heatmap = tf.squeeze(results[3], [0]);
-      displacementFwd = tf.squeeze(results[0], [0]);
-      displacementBwd = tf.squeeze(results[1], [0]);
-    } else {
-      offsets = tf.squeeze(results[0], [0]);
-      heatmap = tf.squeeze(results[1], [0]);
-      displacementFwd = tf.squeeze(results[2], [0]);
-      displacementBwd = tf.squeeze(results[3], [0]);
-    }
-    const heatmapScores = tf.sigmoid(heatmap) as tf.Tensor3D;
-
-    let poses;
-
-    if (this.maxPoses === 1) {
-      const [pose, score] = await decodeSinglePoseGPU(
-          heatmapScores, offsets as tf.Tensor3D, this.outputStride);
-      poses = [pose, score];
-    } else {
-      throw new Error('GPU renderer only supports single pose!');
-    }
-    // TODO: handle flipPosesHorizontal in GPU.
-    if (config.flipHorizontal === true) {
-      throw new Error('flipHorizontal is not supported!');
-    }
-
-    const canvasInfo =
-        this.getCanvasInfo(getImageSize(image), this.inputResolution, padding);
-    imageTensor.dispose();
-    imageValueShifted.dispose();
-    tf.dispose(results);
-    offsets.dispose();
-    heatmap.dispose();
-    displacementFwd.dispose();
-    displacementBwd.dispose();
-    heatmapScores.dispose();
-
-    return [poses, canvasInfo];
+    return useGpuRenderer ? [poses as tf.Tensor[], canvasInfo] : scaledPoses;
   }
 
   getCanvasInfo(
