@@ -87,14 +87,46 @@ class PosenetDetector implements PoseDetector {
    *       flipHorizontal: Optional. Default to false. When image data comes
    *       from camera, the result has to flip horizontally.
    *
+   * @return An array of `Pose`s.
+   */
+  async estimatePoses(
+      image: PoseDetectorInput,
+      estimationConfig:
+          PoseNetEstimationConfig = SINGLE_PERSON_ESTIMATION_CONFIG):
+      Promise<Pose[]> {
+    return this.estimatePosesGPU(image, estimationConfig, false) as
+        Promise<Pose[]>;
+  }
+
+  /**
+   * Estimates poses for an image or video frame, optionally supports gpu
+   * rendering.
+   *
+   * This does standard ImageNet pre-processing before inferring through the
+   * model. The image should pixels should have values [0-255]. It returns a
+   * single pose or multiple poses based on the maxPose parameter from the
+   * `config`.
+   *
+   * @param image
+   * ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement The input
+   * image to feed through the network.
+   *
+   * @param estimationConfig
+   *       maxPoses: Optional. Max number of poses to estimate.
+   *       When maxPoses = 1, a single pose is detected, it is usually much more
+   *       efficient than maxPoses > 1. When maxPoses > 1, multiple poses are
+   *       detected.
+   *
+   *       flipHorizontal: Optional. Default to false. When image data comes
+   *       from camera, the result has to flip horizontally.
+   *
    * @param useGpuRenderer
    *        Whether rendering predict results with gpu or not.
    *
    * @return If not rendering with gpu, an array of poses, each pose contains an
    *     array of `Keypoint`s. Otherwise an array of tensor, and canvas info.
    */
-
-  async estimatePosesNew(
+  async estimatePosesGPU(
       image: PoseDetectorInput,
       estimationConfig:
           PoseNetEstimationConfig = SINGLE_PERSON_ESTIMATION_CONFIG,

@@ -14,8 +14,6 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as tf from '@tensorflow/tfjs-core';
-
 import {BlazePoseMediaPipeEstimationConfig} from './blazepose_mediapipe/types';
 import {BlazePoseTfjsEstimationConfig} from './blazepose_tfjs/types';
 import {MoveNetEstimationConfig} from './movenet/types';
@@ -35,26 +33,11 @@ export interface PoseDetector {
    *     in a video.
    * @returns An array of poses, each pose contains an array of `Keypoint`s.
    */
-  estimatePoses?
-      (image: PoseDetectorInput,
-       config?: PoseNetEstimationConfig|BlazePoseTfjsEstimationConfig|
-       BlazePoseMediaPipeEstimationConfig|MoveNetEstimationConfig,
-       timestamp?: number): Promise<Pose[]>;
-
-  /**
-   * Estimate poses for an image or video frame.
-   * @param image An image or video frame.
-   * @param config Optional. See `EstimationConfig` for available options.
-   * @param useGpuRenderer Optional. Whether rendering predict results with gpu
-   *     or not.
-   * @returns If not rendering with gpu, an array of poses, each pose contains
-   *     an array of `Keypoint`s. Otherwise an array of tensor, and canvas info.
-   */
-  estimatePosesNew?
-      (image: PoseDetectorInput,
-       config?: PoseNetEstimationConfig|BlazePoseTfjsEstimationConfig|
-       BlazePoseMediaPipeEstimationConfig|MoveNetEstimationConfig,
-       useGpuRenderer?: boolean): Promise<Pose[]|[tf.Tensor[], number[]]>;
+  estimatePoses(
+      image: PoseDetectorInput,
+      config?: PoseNetEstimationConfig|BlazePoseTfjsEstimationConfig|
+      BlazePoseMediaPipeEstimationConfig|MoveNetEstimationConfig,
+      timestamp?: number): Promise<Pose[]>;
 
   /**
    * Dispose the underlying models from memory.
