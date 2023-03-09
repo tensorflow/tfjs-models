@@ -163,14 +163,14 @@ async function renderResult() {
     // contain a model that doesn't provide the expected output.
     try {
       if (gpuRenderer) {
-        const [posesTemp, canvasInfoTemp] = await detector.estimatePosesNew(
+        const [posesTemp, canvasInfoTemp] = await detector.estimatePosesGPU(
             camera.video,
             {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false},
             true);
         poses = posesTemp;
         canvasInfo = canvasInfoTemp;
       } else {
-        poses = await detector.estimatePosesNew(
+        poses = await detector.estimatePoses(
             camera.video,
             {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false});
       }
