@@ -149,7 +149,10 @@ fn main(@location(0) score: f32) -> @location(0) vec4<f32> {
     // 'left_wrist', 'right_wrist', 'left_hip', 'right_hip', 'left_knee',
     // 'right_knee', 'left_ankle', 'right_ankle'. This demo draws the first
     // five.
-    const poseIndexArray = new Uint32Array([3, 1, 1, 0, 0, 2, 2, 4]);
+    const poseIndexArray = new Uint32Array([
+      4, 2, 2, 0,  0,  1,  1,  3,  10, 8,  8, 6,  6,  5,  5,  7,
+      7, 9, 6, 12, 12, 14, 14, 16, 12, 11, 5, 11, 11, 13, 13, 15
+    ]);
     this.poseIndexCount = poseIndexArray.length;
 
     if (this.indexBuffer == null) {
