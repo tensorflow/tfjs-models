@@ -223,7 +223,7 @@ async function app() {
   canvas.height = camera.video.height;
   useGpuRenderer = (urlParams.get('gpuRenderer') === 'true') && isWebGPU;
   if (useGpuRenderer) {
-    renderer = await RendererWebGPU.setup(canvas, importVideo);
+    renderer = new RendererWebGPU(canvas, importVideo);
   } else {
     renderer = new RendererCanvas2d(canvas);
   }

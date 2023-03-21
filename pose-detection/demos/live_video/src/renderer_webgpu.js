@@ -20,7 +20,7 @@ import * as tfwebgpu from '@tensorflow/tfjs-backend-webgpu';
 
 import * as tf from '@tensorflow/tfjs-core';
 
-async function getDevice(canvas) {
+function getDevice(canvas) {
   const device = tf.backend().device;
   if (!tf.backend() instanceof tfwebgpu.WebGPUBackend) {
     throw new Error('This is only supported in WebGPU backend!');
@@ -48,7 +48,8 @@ function byteSizeFromShape(shape) {
 }
 
 export class RendererWebGPU {
-  constructor(device, swapChain, importVideo) {
+  constructor(canvas, importVideo) {
+    const [device, swapChain] = getDevice(canvas);
     this.device = device;
     this.swapChain = swapChain;
     this.indexBuffer = null;
@@ -63,11 +64,6 @@ export class RendererWebGPU {
     if (importVideo == false) {
       this.drawImageContext = document.createElement('canvas').getContext('2d');
     }
-  }
-
-  static async setup(canvas, importVideo) {
-    const [device, swapChain] = await getDevice(canvas);
-    return new RendererWebGPU(device, swapChain, importVideo);
   }
 
   createBuffer(usage, size, array = null) {
