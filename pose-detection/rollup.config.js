@@ -57,7 +57,9 @@ function config({plugins = [], output = {}, tsCompilerOptions = {}}) {
       ...output,
     },
     external: [
-      '@tensorflow/tfjs-core', '@tensorflow/tfjs-converter', '@mediapipe/pose'
+      '@tensorflow/tfjs-core', '@tensorflow/tfjs-converter',
+      '@tensorflow/tfjs-backend-webgpu', '@tensorflow/tfjs-backend-webgl',
+      '@mediapipe/pose'
     ]
   };
 }
