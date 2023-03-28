@@ -20,7 +20,7 @@ import * as tfwebgpu from '@tensorflow/tfjs-backend-webgpu';
 
 import * as tf from '@tensorflow/tfjs-core';
 
-async function getDevice(canvas) {
+function getDevice(canvas) {
   const device = tf.backend().device;
   if (!tf.backend() instanceof tfwebgpu.WebGPUBackend) {
     throw new Error('This is only supported in WebGPU backend!');
@@ -48,7 +48,8 @@ function byteSizeFromShape(shape) {
 }
 
 export class RendererWebGPU {
-  constructor(device, swapChain, importVideo) {
+  constructor(canvas, importVideo) {
+    const [device, swapChain] = getDevice(canvas);
     this.device = device;
     this.swapChain = swapChain;
     this.indexBuffer = null;
@@ -65,11 +66,6 @@ export class RendererWebGPU {
     }
   }
 
-  static async setup(canvas, importVideo) {
-    const [device, swapChain] = await getDevice(canvas);
-    return new RendererWebGPU(device, swapChain, importVideo);
-  }
-
   createBuffer(usage, size, array = null) {
     const mappedAtCreation = array ? true : false;
     const buffer = this.device.createBuffer({size, usage, mappedAtCreation});
@@ -83,7 +79,8 @@ export class RendererWebGPU {
     return buffer;
   }
 
-  draw(video, tensors, canvasInfo, scoreThreshold) {
+  draw(rendererParams) {
+    const [video, tensors, canvasInfo, scoreThreshold] = rendererParams;
     this.canvasInfo = canvasInfo;
     this.scoreThreshold = scoreThreshold;
     const videoCommanderBuffer = this.drawTexture(video);
@@ -117,7 +114,8 @@ fn main(
   var<function> vertexOutput: VertexOutput;
   let rawY = (keypoints[VertexIndex].x + uniforms.offsetY) * uniforms.scaleY / uniforms.height;
   let rawX  = (keypoints[VertexIndex].y + uniforms.offsetX) * uniforms.scaleX / uniforms.width;
-  var x = rawX * 2.0 - 1.0;
+  // Flip horizontally.
+  var x = 1.0 - rawX * 2.0;
   var y = 1.0 - rawY * 2.0;
   vertexOutput.score = scores[VertexIndex];
   vertexOutput.pos = vec4<f32>(x, y, 1.0, 1.0);
@@ -279,8 +277,11 @@ fn main(@location(0) score: f32) -> @location(0) vec4<f32> {
 
 @fragment fn main(@builtin(position) FragCoord : vec4<f32>)
                          -> @location(0) vec4<f32> {
-    return textureSampleBaseClampToEdge(t, s, FragCoord.xy / vec2<f32>(${
-        this.canvasInfo[4]}, ${this.canvasInfo[5]}));
+    var coord = FragCoord.xy / vec2<f32>(${this.canvasInfo[4]}, ${
+        this.canvasInfo[5]});
+    // Flip horizontally.
+    coord.x = 1.0 - coord.x;
+    return textureSampleBaseClampToEdge(t, s, coord);
 }
       `;
     return [vertexShaderCode, fragmentShaderCode];

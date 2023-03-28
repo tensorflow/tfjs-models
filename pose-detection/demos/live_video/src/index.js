@@ -30,6 +30,7 @@ import * as posedetection from '@tensorflow-models/pose-detection';
 
 import {Camera} from './camera';
 import {RendererWebGPU} from './renderer_webgpu';
+import {RendererCanvas2d} from './renderer_canvas2d';
 import {setupDatGui} from './option_panel';
 import {STATE} from './params';
 import {setupStats} from './stats_panel';
@@ -39,7 +40,8 @@ let detector, camera, stats;
 let startInferenceTime, numInferences = 0;
 let inferenceTimeSum = 0, lastPanelUpdate = 0;
 let rafId;
-let gpuRenderer = null;
+let renderer = null;
+let useGpuRenderer = false;
 
 async function createDetector() {
   switch (STATE.model) {
@@ -156,13 +158,13 @@ async function renderResult() {
     // FPS only counts the time it takes to finish estimatePoses.
     beginEstimatePosesStats();
 
-    if (gpuRenderer && STATE.model !== 'PoseNet') {
+    if (useGpuRenderer && STATE.model !== 'PoseNet') {
       throw new Error('Only PoseNet supports GPU renderer!');
     }
     // Detectors can throw errors, for example when using custom URLs that
     // contain a model that doesn't provide the expected output.
     try {
-      if (gpuRenderer) {
+      if (useGpuRenderer) {
         const [posesTemp, canvasInfoTemp] = await detector.estimatePosesGPU(
             camera.video,
             {maxPoses: STATE.modelConfig.maxPoses, flipHorizontal: false},
@@ -182,19 +184,10 @@ async function renderResult() {
 
     endEstimatePosesStats();
   }
-  if (gpuRenderer) {
-    gpuRenderer.draw(
-        camera.video, poses, canvasInfo, STATE.modelConfig.scoreThreshold);
-  } else {
-    camera.drawCtx();
-
-    // The null check makes sure the UI is not in the middle of changing to a
-    // different model. If during model change, the result is from an old model,
-    // which shouldn't be rendered.
-    if (poses && poses.length > 0 && !STATE.isModelChanged) {
-      camera.drawResults(poses);
-    }
-  }
+  const rendererParams = useGpuRenderer ?
+      [camera.video, poses, canvasInfo, STATE.modelConfig.scoreThreshold] :
+      [camera.video, poses, STATE.isModelChanged];
+  renderer.draw(rendererParams);
 }
 
 async function renderPrediction() {
@@ -218,18 +211,21 @@ async function app() {
 
   stats = setupStats();
   const isWebGPU = STATE.backend === 'tfjs-webgpu';
-  const useGpuRenderer = (urlParams.get('gpuRenderer') === 'true') && isWebGPU;
   const importVideo = (urlParams.get('importVideo') === 'true') && isWebGPU;
 
-  camera = await Camera.setupCamera(STATE.camera, useGpuRenderer);
+  camera = await Camera.setup(STATE.camera);
 
   await setBackendAndEnvFlags(STATE.flags, STATE.backend);
 
   detector = await createDetector();
-
+  const canvas = document.getElementById('output');
+  canvas.width = camera.video.width;
+  canvas.height = camera.video.height;
+  useGpuRenderer = (urlParams.get('gpuRenderer') === 'true') && isWebGPU;
   if (useGpuRenderer) {
-    const canvas = document.getElementById('output');
-    gpuRenderer = await RendererWebGPU.setup(canvas, importVideo);
+    renderer = new RendererWebGPU(canvas, importVideo);
+  } else {
+    renderer = new RendererCanvas2d(canvas);
   }
 
   renderPrediction();
@@ -237,6 +233,6 @@ async function app() {
 
 app();
 
-if (gpuRenderer != null) {
-  gpuRenderer.dispose();
+if (useGpuRenderer) {
+  renderer.dispose();
 }
