@@ -48,7 +48,7 @@ toxicity.load(threshold).then(model => {
   model.classify(sentences).then(predictions => {
     // `predictions` is an array of objects, one for each prediction head,
     // that contains the raw probabilities for each input along with the
-    // final prediction in `match` (either `true` or `false`).
+    // final prediction in `match` (either `false` or `true`).
     // If neither prediction exceeds the threshold, `match` is `null`.
 
     console.log(predictions);
