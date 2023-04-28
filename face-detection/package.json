@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/face-detection",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Pretrained face detection model",
   "main": "dist/index.js",
   "jsnext:main": "dist/face-detection.esm.js",
