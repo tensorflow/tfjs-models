@@ -21,16 +21,15 @@ import '@tensorflow/tfjs-backend-webgpu';
 import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
 
 tfjsWasm.setWasmPaths(
-    `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${
-        tfjsWasm.version_wasm}/dist/`);
+  `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${tfjsWasm.version_wasm}/dist/`);
 
 import * as faceDetection from '@tensorflow-models/face-detection';
 
-import {Camera} from './camera';
-import {setupDatGui} from './option_panel';
-import {STATE, createDetector} from './shared/params';
-import {setupStats} from './shared/stats_panel';
-import {setBackendAndEnvFlags} from './shared/util';
+import { Camera } from './camera';
+import { setupDatGui } from './option_panel';
+import { STATE, createDetector } from './shared/params';
+import { setupStats } from './shared/stats_panel';
+import { setBackendAndEnvFlags } from './shared/util';
 
 let detector, camera, stats;
 let startInferenceTime, numInferences = 0;
@@ -85,7 +84,7 @@ function endEstimateFaceStats() {
     inferenceTimeSum = 0;
     numInferences = 0;
     stats.customFpsPanel.update(
-        1000.0 / averageInferenceTime, 120 /* maxValue */);
+      1000.0 / averageInferenceTime, 120 /* maxValue */);
     lastPanelUpdate = endInferenceTime;
   }
 }
@@ -111,7 +110,7 @@ async function renderResult() {
     // contain a model that doesn't provide the expected output.
     try {
       faces =
-          await detector.estimateFaces(camera.video, {flipHorizontal: false});
+        await detector.estimateFaces(camera.video, { flipHorizontal: false });
     } catch (error) {
       detector.dispose();
       detector = null;
@@ -128,7 +127,7 @@ async function renderResult() {
   // which shouldn't be rendered.
   if (faces && faces.length > 0 && !STATE.isModelChanged) {
     camera.drawResults(
-        faces, STATE.modelConfig.boundingBox, STATE.modelConfig.keypoints);
+      faces, STATE.modelConfig.boundingBox, STATE.modelConfig.keypoints);
   }
 }
 
@@ -145,10 +144,6 @@ async function renderPrediction() {
 async function app() {
   // Gui content will change depending on which model is in the query string.
   const urlParams = new URLSearchParams(window.location.search);
-  if (!urlParams.has('model')) {
-    alert('Cannot find model in the query string.');
-    return;
-  }
 
   await setupDatGui(urlParams);
 
