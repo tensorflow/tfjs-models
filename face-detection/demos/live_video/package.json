@@ -11,11 +11,11 @@
   "dependencies": {
     "@mediapipe/face_detection": "~0.4.0",
     "@tensorflow-models/face-detection": "file:../../dist",
-    "@tensorflow/tfjs-backend-wasm": "^4.0.0",
-    "@tensorflow/tfjs-backend-webgl": "^4.0.0",
-    "@tensorflow/tfjs-backend-webgpu": "^0.0.1-alpha.14",
-    "@tensorflow/tfjs-converter": "^4.0.0",
-    "@tensorflow/tfjs-core": "^4.0.0",
+    "@tensorflow/tfjs-backend-wasm": "^4.4.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.4.0",
+    "@tensorflow/tfjs-backend-webgpu": "^0.0.1-alpha.19",
+    "@tensorflow/tfjs-converter": "^4.4.0",
+    "@tensorflow/tfjs-core": "^4.4.0",
     "scatter-gl": "0.0.8"
   },
   "scripts": {
