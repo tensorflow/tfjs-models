@@ -24,7 +24,7 @@ import image2URL from './image2.jpg';
 
 let modelPromise;
 
-window.onload = () => modelPromise = cocoSsd.load();
+window.onload = () => modelPromise = cocoSsd.load({ saveUrl: "indexeddb://model" });
 
 const button = document.getElementById('toggle');
 button.onclick = () => {

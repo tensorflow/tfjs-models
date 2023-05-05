@@ -50,6 +50,12 @@ export interface ModelConfig {
    * for area/countries that don't have access to the model hosted on GCP.
    */
   modelUrl?: string;
+  /**
+    * If specified, it will be used to attempt to load the model instead of
+    * downloading, and to save after a successful download. If not specified,
+    * the model will be loaded from `modelUrl` on each load.
+    */
+  saveUrl?: string;
 }
 
 export async function load(config: ModelConfig = {}) {
@@ -67,19 +73,22 @@ export async function load(config: ModelConfig = {}) {
         `${base}. Valid names are 'mobilenet_v1',` +
         ` 'mobilenet_v2' and 'lite_mobilenet_v2'.`);
   }
+  const saveUrl = config.saveUrl;
 
-  const objectDetection = new ObjectDetection(base, modelUrl);
+  const objectDetection = new ObjectDetection(base, modelUrl, saveUrl);
   await objectDetection.load();
   return objectDetection;
 }
 
 export class ObjectDetection {
   private modelPath: string;
+  private saveUrl: string | null;
   private model: tfconv.GraphModel;
 
-  constructor(base: ObjectDetectionBaseModel, modelUrl?: string) {
+  constructor(base: ObjectDetectionBaseModel, modelUrl?: string, saveUrl?: string) {
     this.modelPath =
         modelUrl || `${BASE_PATH}${this.getPrefix(base)}/model.json`;
+    this.saveUrl = saveUrl || null;
   }
 
   private getPrefix(base: ObjectDetectionBaseModel) {
@@ -87,7 +96,20 @@ export class ObjectDetection {
   }
 
   async load() {
-    this.model = await tfconv.loadGraphModel(this.modelPath);
+    if (this.saveUrl) {
+      try {
+        // Attempt to load from local storage
+        this.model = await tfconv.loadGraphModel(this.saveUrl);
+      } catch {}
+    }
+
+    if (!this.model) {
+      // Model hasn't been loaded, download it
+      this.model = await tfconv.loadGraphModel(this.modelPath);
+
+      // Attempt to save model
+      if (this.saveUrl) await this.model.save(this.saveUrl);
+    }
 
     const zeroTensor = tf.zeros([1, 300, 300, 3], 'int32');
     // Warmup the model.
