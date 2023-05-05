@@ -15,10 +15,10 @@
  * =============================================================================
  */
 import * as params from './shared/params';
-import {setupModelFolder} from './shared/option_panel';
+import { setupModelFolder } from './shared/option_panel';
 
 export async function setupDatGui(urlParams) {
-  const gui = new dat.GUI({width: 300});
+  const gui = new dat.GUI({ width: 300 });
   gui.domElement.id = 'gui';
 
   // The camera folder contains options for video settings.
@@ -28,7 +28,7 @@ export async function setupDatGui(urlParams) {
     params.STATE.isTargetFPSChanged = true;
   });
   const sizeController = cameraFolder.add(
-      params.STATE.camera, 'sizeOption', Object.keys(params.VIDEO_SIZE));
+    params.STATE.camera, 'sizeOption', Object.keys(params.VIDEO_SIZE));
   sizeController.onChange(_ => {
     params.STATE.isSizeOptionChanged = true;
   });
