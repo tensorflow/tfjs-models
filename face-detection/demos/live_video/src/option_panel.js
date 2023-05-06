@@ -14,8 +14,8 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as params from './shared/params';
 import {setupModelFolder} from './shared/option_panel';
+import * as params from './shared/params';
 
 export async function setupDatGui(urlParams) {
   const gui = new dat.GUI({width: 300});

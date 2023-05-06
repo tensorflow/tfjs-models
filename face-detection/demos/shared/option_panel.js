@@ -33,7 +33,7 @@ export async function setupModelFolder(gui, urlParams) {
   // The model folder contains options for model selection.
   const modelFolder = gui.addFolder('Model');
 
-  const model = urlParams.get('model');
+  const model = urlParams.get('model') || 'mediapipe_face_detector';
   const backendFromURL = urlParams.get('backend');
 
   switch (model) {
@@ -41,7 +41,7 @@ export async function setupModelFolder(gui, urlParams) {
       params.STATE.model = faceDetection.SupportedModels.MediaPipeFaceDetector;
       break;
     default:
-      alert(`${urlParams.get('model')}`);
+      alert(`Unknown model ${urlParams.get('model')}.`);
       break;
   }
 
@@ -80,7 +80,7 @@ export async function showBackendConfigs(folderController) {
             .__controllers[folderController.__controllers.length - 1]);
   }
   const backends = params.MODEL_BACKEND_MAP[params.STATE.model];
-  if(params.STATE.backend == null) {
+  if (params.STATE.backend == null) {
     // The first element of the array is the default backend for the model.
     params.STATE.backend = backends[0];
   }
