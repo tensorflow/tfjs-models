@@ -118,7 +118,6 @@ use.loadQnA().then(model => {
       'You have five fingers on your hand.'
     ]
   };
-  var scores = [];
   const embeddings = model.embed(input);
   /*
     * The output of the embed method is an object with two keys:
