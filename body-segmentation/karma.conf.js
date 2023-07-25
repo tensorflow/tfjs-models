@@ -15,20 +15,20 @@
  * =============================================================================
  */
 
- const karmaTypescriptConfig = {
+const karmaTypescriptConfig = {
   tsconfig: 'tsconfig.test.json',
   // Disable coverage reports and instrumentation by default for tests
-  coverageOptions: {instrumentation: false},
+  coverageOptions: { instrumentation: false },
   reports: {},
   bundlerOptions: {
     sourceMap: true,
     // Process any non es5 code through karma-typescript-es6-transform (babel)
-    acornOptions: {ecmaVersion: 8},
+    acornOptions: { ecmaVersion: 8 },
     transforms: [
       require('karma-typescript-es6-transform')({
         presets: [
           // ensure we get es5 by adding IE 11 as a target
-          ['@babel/env', {'targets': {'ie': '11'}, 'loose': true}]
+          ['@babel/env', { 'targets': { 'ie': '11' }, 'loose': true }]
         ]
       }),
     ]
@@ -38,7 +38,7 @@
 const devConfig = {
   frameworks: ['jasmine', 'karma-typescript'],
   files: [
-    {pattern: './node_modules/@babel/polyfill/dist/polyfill.js'},
+    { pattern: './node_modules/@babel/polyfill/dist/polyfill.js' },
     {
       // Serve test data as static resources.
       pattern: 'test_data/**',
@@ -56,9 +56,9 @@ const devConfig = {
       nocache: true
     },
     'src/setup_test.ts',
-    {pattern: 'src/**/*.ts'},
+    { pattern: 'src/**/*.ts' },
   ],
-  preprocessors: {'**/*.ts': ['karma-typescript']},
+  preprocessors: { '**/*.ts': ['karma-typescript'] },
   karmaTypescriptConfig,
   reporters: ['dots', 'karma-typescript']
 };
@@ -69,7 +69,7 @@ const browserstackConfig = {
   port: 9886
 };
 
-module.exports = function(config) {
+module.exports = function (config) {
   const args = [];
   if (config.testEnv) {
     args.push('--testEnv', config.testEnv);
@@ -104,7 +104,7 @@ module.exports = function(config) {
       accessKey: process.env.BROWSERSTACK_KEY,
       timeout: 1800,
       tunnelIdentifier:
-          `body_segmentation_${Date.now()}_${Math.floor(Math.random() * 1000)}`
+        `body_segmentation_${Date.now()}_${Math.floor(Math.random() * 1000)}`
     },
     captureTimeout: 3e5,
     reportSlowerThan: 500,
@@ -160,6 +160,6 @@ module.exports = function(config) {
         os_version: '10'
       },
     },
-    client: {jasmine: {random: false}, args: args}
+    client: { jasmine: { random: false }, args: args }
   })
 }
