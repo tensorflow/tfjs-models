@@ -28,7 +28,6 @@ import { BodyPixSegmentationConfig } from './types';
 // Measured in channels.
 const DIFF_IMAGE_RATIO = 0.001;
 
-
 class CanvasImageSourceMask implements Mask {
   constructor(private mask: CanvasImageSource) { }
 
@@ -110,7 +109,8 @@ async function expectImage(actual: ImageData, imageName: string) {
     (mismatched, channel, i) =>
       mismatched + +(channel !== expectedImage.data[i]),
     0);
-  expect(mismatchedChannels).toBeLessThanOrEqual(expectedImage.data.length * DIFF_IMAGE_RATIO);
+  expect(mismatchedChannels)
+    .toBeLessThanOrEqual(expectedImage.data.length * DIFF_IMAGE_RATIO);
 }
 
 describeWithFlags('renderUtil', BROWSER_ENVS, () => {
