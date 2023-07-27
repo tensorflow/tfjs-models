@@ -26,7 +26,6 @@ import { loadImage } from '../shared/test_util';
 import { BodyPixSegmentationConfig } from './types';
 
 // Measured in channels.
-// const DIFF_IMAGE = 30;
 const DIFF_IMAGE_RATIO = 0.001;
 
 
