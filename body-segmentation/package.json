@@ -21,9 +21,6 @@
   "devDependencies": {
     "@babel/polyfill": "^7.10.4",
     "@mediapipe/selfie_segmentation": "^0.1.0",
-    "@rollup/plugin-commonjs": "^11.0.2",
-    "@rollup/plugin-node-resolve": "^7.1.1",
-    "@rollup/plugin-typescript": "^3.0.0",
     "@tensorflow/tfjs-backend-cpu": "^4.9.0",
     "@tensorflow/tfjs-backend-webgl": "^4.9.0",
     "@tensorflow/tfjs-backend-webgpu": "4.9.0",
@@ -41,7 +38,7 @@
     "karma-spec-reporter": "~0.0.32",
     "karma-typescript": "~5.5.1",
     "karma-typescript-es6-transform": "^5.1.0",
-    "rollup": "~2.3.2",
+    "rollup": "~3.26.3",
     "rollup-plugin-terser": "~7.0.2",
     "rollup-plugin-visualizer": "~3.3.2",
     "ts-node": "~10.9.1",
@@ -63,6 +60,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "rimraf": "^3.0.2"
+    "rimraf": "^3.0.2",
+    "tslib": "^2.6.1"
   }
 }
