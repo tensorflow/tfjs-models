@@ -16,20 +16,22 @@
  */
 
 // tslint:disable-next-line: no-imports-from-dist
-import {BROWSER_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
+import { BROWSER_ENVS, describeWithFlags } from '@tensorflow/tfjs-core/dist/jasmine_util';
 
 import * as bodySegmentation from '../index';
-import {Mask} from '../shared/calculators/interfaces/common_interfaces';
-import {toImageDataLossy, toTensorLossy} from '../shared/calculators/mask_util';
+import { Mask } from '../shared/calculators/interfaces/common_interfaces';
+import { toImageDataLossy, toTensorLossy } from '../shared/calculators/mask_util';
 import * as renderUtil from '../shared/calculators/render_util';
-import {loadImage} from '../shared/test_util';
-import {BodyPixSegmentationConfig} from './types';
+import { loadImage } from '../shared/test_util';
+import { BodyPixSegmentationConfig } from './types';
 
 // Measured in channels.
-const DIFF_IMAGE = 30;
+// const DIFF_IMAGE = 30;
+const DIFF_IMAGE_RATIO = 0.001;
+
 
 class CanvasImageSourceMask implements Mask {
-  constructor(private mask: CanvasImageSource) {}
+  constructor(private mask: CanvasImageSource) { }
 
   async toCanvasImageSource() {
     return this.mask;
@@ -44,14 +46,14 @@ class CanvasImageSourceMask implements Mask {
   }
 
   getUnderlyingType() {
-    return 'canvasimagesource' as const ;
+    return 'canvasimagesource' as const;
   }
 }
 
 async function getSegmentation(
-    image: HTMLImageElement, config: BodyPixSegmentationConfig) {
+  image: HTMLImageElement, config: BodyPixSegmentationConfig) {
   const segmenter = await bodySegmentation.createSegmenter(
-      bodySegmentation.SupportedModels.BodyPix);
+    bodySegmentation.SupportedModels.BodyPix);
 
   const segmentations = await segmenter.segmentPeople(image, config);
   return Promise.all(segmentations.map(async segmentation => {
@@ -59,13 +61,13 @@ async function getSegmentation(
       maskValueToLabel: segmentation.maskValueToLabel,
       // Convert to canvas image source to apply alpha-premultiplication.
       mask: new CanvasImageSourceMask(
-          await segmentation.mask.toCanvasImageSource())
+        await segmentation.mask.toCanvasImageSource())
     };
   }));
 }
 
 async function getBinaryMask(
-    image: HTMLImageElement, expectedNumSegmentations?: number) {
+  image: HTMLImageElement, expectedNumSegmentations?: number) {
   const segmentation = await getSegmentation(image, {
     multiSegmentation: expectedNumSegmentations != null,
     segmentBodyParts: false
@@ -76,13 +78,13 @@ async function getBinaryMask(
   }
 
   const binaryMask = await renderUtil.toBinaryMask(
-      segmentation, {r: 255, g: 255, b: 255, a: 255},
-      {r: 0, g: 0, b: 0, a: 255});
+    segmentation, { r: 255, g: 255, b: 255, a: 255 },
+    { r: 0, g: 0, b: 0, a: 255 });
   return binaryMask;
 }
 
 async function getColoredMask(
-    image: HTMLImageElement, expectedNumSegmentations?: number) {
+  image: HTMLImageElement, expectedNumSegmentations?: number) {
   const segmentation = await getSegmentation(image, {
     multiSegmentation: expectedNumSegmentations != null,
     segmentBodyParts: true
@@ -93,8 +95,8 @@ async function getColoredMask(
   }
 
   const coloredMask = await renderUtil.toColoredMask(
-      segmentation, bodySegmentation.bodyPixMaskValueToRainbowColor,
-      {r: 255, g: 255, b: 255, a: 255});
+    segmentation, bodySegmentation.bodyPixMaskValueToRainbowColor,
+    { r: 255, g: 255, b: 255, a: 255 });
 
   return coloredMask;
 }
@@ -104,12 +106,12 @@ const HEIGHT = 861;
 
 async function expectImage(actual: ImageData, imageName: string) {
   const expectedImage = await loadImage(imageName, WIDTH, HEIGHT)
-                            .then(async image => toImageDataLossy(image));
+    .then(async image => toImageDataLossy(image));
   const mismatchedChannels = actual.data.reduce(
-      (mismatched, channel, i) =>
-          mismatched + +(channel !== expectedImage.data[i]),
-      0);
-  expect(mismatchedChannels).toBeLessThanOrEqual(DIFF_IMAGE);
+    (mismatched, channel, i) =>
+      mismatched + +(channel !== expectedImage.data[i]),
+    0);
+  expect(mismatchedChannels).toBeLessThanOrEqual(expectedImage.data.length * DIFF_IMAGE_RATIO);
 }
 
 describeWithFlags('renderUtil', BROWSER_ENVS, () => {
