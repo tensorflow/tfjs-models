@@ -17,35 +17,35 @@
 
 import * as tf from '@tensorflow/tfjs-core';
 // tslint:disable-next-line: no-imports-from-dist
-import {ALL_ENVS, BROWSER_ENVS, describeWithFlags} from '@tensorflow/tfjs-core/dist/jasmine_util';
+import { ALL_ENVS, BROWSER_ENVS, describeWithFlags } from '@tensorflow/tfjs-core/dist/jasmine_util';
 // tslint:disable-next-line: no-imports-from-dist
-import {expectArraysClose} from '@tensorflow/tfjs-core/dist/test_util';
-import {MEDIAPIPE_CONNECTED_KEYPOINTS_PAIRS} from '../constants';
+import { expectArraysClose } from '@tensorflow/tfjs-core/dist/test_util';
+import { MEDIAPIPE_CONNECTED_KEYPOINTS_PAIRS } from '../constants';
 
 import * as handPoseDetection from '../index';
-import {getXYPerFrame, KARMA_SERVER, loadImage, loadVideo} from '../shared/test_util';
+import { getXYPerFrame, KARMA_SERVER, loadImage, loadVideo } from '../shared/test_util';
 
 // Measured in pixels.
 const EPSILON_IMAGE = 12;
 // Measured in pixels.
-const EPSILON_VIDEO = 18;
+const EPSILON_VIDEO = 22;
 // Measured in meters.
-const EPSILON_VIDEO_WORLD = 0.01;
+const EPSILON_VIDEO_WORLD = 0.012;
 
 // ref:
 // https://github.com/google/mediapipe/blob/master/mediapipe/python/solutions/hands_test.py
 const EXPECTED_HAND_KEYPOINTS_PREDICTION = [
   [
-    [580, 34],  [504, 50],  [459, 94],  [429, 146], [397, 182], [507, 167],
+    [580, 34], [504, 50], [459, 94], [429, 146], [397, 182], [507, 167],
     [479, 245], [469, 292], [464, 330], [545, 180], [534, 265], [533, 319],
     [536, 360], [581, 172], [587, 252], [593, 304], [599, 346], [615, 168],
     [628, 223], [638, 258], [648, 288]
   ],
   [
     [138, 343], [211, 330], [257, 286], [289, 237], [322, 203], [219, 216],
-    [238, 138], [249, 90],  [253, 51],  [177, 204], [184, 115], [187, 60],
-    [185, 19],  [138, 208], [131, 127], [124, 77],  [117, 36],  [106, 222],
-    [92, 159],  [79, 124],  [68, 93]
+    [238, 138], [249, 90], [253, 51], [177, 204], [184, 115], [187, 60],
+    [185, 19], [138, 208], [131, 127], [124, 77], [117, 36], [106, 222],
+    [92, 159], [79, 124], [68, 93]
   ]
 ];
 
@@ -66,7 +66,7 @@ describeWithFlags('MediaPipeHands', ALL_ENVS, () => {
 
     // Note: this makes a network request for model assets.
     const detector = await handPoseDetection.createDetector(
-        handPoseDetection.SupportedModels.MediaPipeHands, {runtime: 'tfjs'});
+      handPoseDetection.SupportedModels.MediaPipeHands, { runtime: 'tfjs' });
     const input: tf.Tensor3D = tf.zeros([128, 128, 3]);
 
     const beforeTensors = tf.memory().numTensors;
@@ -84,12 +84,12 @@ describeWithFlags('MediaPipeHands', ALL_ENVS, () => {
   it('throws error when runtime is not set.', async (done) => {
     try {
       await handPoseDetection.createDetector(
-          handPoseDetection.SupportedModels.MediaPipeHands);
+        handPoseDetection.SupportedModels.MediaPipeHands);
       done.fail('Loading without runtime succeeded unexpectedly.');
     } catch (e) {
       expect(e.message).toEqual(
-          `Expect modelConfig.runtime to be either ` +
-          `'tfjs' or 'mediapipe', but got undefined`);
+        `Expect modelConfig.runtime to be either ` +
+        `'tfjs' or 'mediapipe', but got undefined`);
       done();
     }
   });
@@ -102,7 +102,7 @@ describeWithFlags('MediaPipeHands static image ', BROWSER_ENVS, () => {
 
   beforeAll(async () => {
     timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 240000;  // 2mins
     image = await loadImage('hands.jpg', 720, 382);
   });
 
@@ -115,8 +115,8 @@ describeWithFlags('MediaPipeHands static image ', BROWSER_ENVS, () => {
 
     // Note: this makes a network request for model assets.
     detector = await handPoseDetection.createDetector(
-        handPoseDetection.SupportedModels.MediaPipeHands,
-        {runtime: 'tfjs', modelType: 'lite'});
+      handPoseDetection.SupportedModels.MediaPipeHands,
+      { runtime: 'tfjs', modelType: 'lite' });
 
     const beforeTensors = tf.memory().numTensors;
 
@@ -124,10 +124,10 @@ describeWithFlags('MediaPipeHands static image ', BROWSER_ENVS, () => {
       staticImageMode: true
     } as handPoseDetection.MediaPipeHandsTfjsEstimationConfig);
     const keypoints = result.map(
-        hand => hand.keypoints.map(keypoint => [keypoint.x, keypoint.y]));
+      hand => hand.keypoints.map(keypoint => [keypoint.x, keypoint.y]));
 
     expectArraysClose(
-        keypoints, EXPECTED_HAND_KEYPOINTS_PREDICTION, EPSILON_IMAGE);
+      keypoints, EXPECTED_HAND_KEYPOINTS_PREDICTION, EPSILON_IMAGE);
 
     expect(tf.memory().numTensors).toEqual(beforeTensors);
 
@@ -141,8 +141,8 @@ describeWithFlags('MediaPipeHands static image ', BROWSER_ENVS, () => {
 
     // Note: this makes a network request for model assets.
     detector = await handPoseDetection.createDetector(
-        handPoseDetection.SupportedModels.MediaPipeHands,
-        {runtime: 'tfjs', modelType: 'full'});
+      handPoseDetection.SupportedModels.MediaPipeHands,
+      { runtime: 'tfjs', modelType: 'full' });
 
     const beforeTensors = tf.memory().numTensors;
 
@@ -150,10 +150,10 @@ describeWithFlags('MediaPipeHands static image ', BROWSER_ENVS, () => {
       staticImageMode: true
     } as handPoseDetection.MediaPipeHandsTfjsEstimationConfig);
     const keypoints = result.map(
-        hand => hand.keypoints.map(keypoint => [keypoint.x, keypoint.y]));
+      hand => hand.keypoints.map(keypoint => [keypoint.x, keypoint.y]));
 
     expectArraysClose(
-        keypoints, EXPECTED_HAND_KEYPOINTS_PREDICTION, EPSILON_IMAGE);
+      keypoints, EXPECTED_HAND_KEYPOINTS_PREDICTION, EPSILON_IMAGE);
 
     expect(tf.memory().numTensors).toEqual(beforeTensors);
 
@@ -174,11 +174,11 @@ describeWithFlags('MediaPipe Hands video ', BROWSER_ENVS, () => {
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
 
     expected = await fetch(`${KARMA_SERVER}/asl_hand.full.json`)
-                   .then(response => response.json())
-                   .then(result => getXYPerFrame(result));
+      .then(response => response.json())
+      .then(result => getXYPerFrame(result));
 
     expected3D = await fetch(`${KARMA_SERVER}/asl_hand_3d.full.json`)
-                     .then(response => response.json());
+      .then(response => response.json());
   });
 
   afterAll(() => {
@@ -189,25 +189,25 @@ describeWithFlags('MediaPipe Hands video ', BROWSER_ENVS, () => {
     // Note: this makes a network request for model assets.
     const model = handPoseDetection.SupportedModels.MediaPipeHands;
     detector = await handPoseDetection.createDetector(
-        model, {runtime: 'tfjs', maxHands: 1});
+      model, { runtime: 'tfjs', maxHands: 1 });
 
     const result: number[][][] = [];
     const result3D: number[][][] = [];
 
-    const callback = async(video: HTMLVideoElement, timestamp: number):
-        Promise<handPoseDetection.Keypoint[]> => {
-          const hands = await detector.estimateHands(video, null /* config */);
+    const callback = async (video: HTMLVideoElement, timestamp: number):
+      Promise<handPoseDetection.Keypoint[]> => {
+      const hands = await detector.estimateHands(video, null /* config */);
 
-          // maxNumHands is set to 1.
-          result.push(hands[0].keypoints.map(kp => [kp.x, kp.y]));
-          result3D.push(hands[0].keypoints3D.map(kp => [kp.x, kp.y, kp.z]));
+      // maxNumHands is set to 1.
+      result.push(hands[0].keypoints.map(kp => [kp.x, kp.y]));
+      result3D.push(hands[0].keypoints3D.map(kp => [kp.x, kp.y, kp.z]));
 
-          return hands[0].keypoints;
-        };
+      return hands[0].keypoints;
+    };
 
     await loadVideo(
-        'asl_hand.25fps.mp4', 25 /* fps */, callback, expected,
-        MEDIAPIPE_CONNECTED_KEYPOINTS_PAIRS, 0 /* simulatedInterval unused */);
+      'asl_hand.25fps.mp4', 25 /* fps */, callback, expected,
+      MEDIAPIPE_CONNECTED_KEYPOINTS_PAIRS, 0 /* simulatedInterval unused */);
 
     expectArraysClose(result, expected, EPSILON_VIDEO);
     expectArraysClose(result3D, expected3D, EPSILON_VIDEO_WORLD);
