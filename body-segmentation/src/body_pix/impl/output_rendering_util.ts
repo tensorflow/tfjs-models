@@ -52,7 +52,7 @@ function flipCanvasHorizontal(canvas: Canvas) {
 function drawWithCompositing(
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   image: Canvas | ImageType,
-  compositeOperation: GlobalCompositeOperation) {
+  compositeOperation: string) {
   ctx.globalCompositeOperation = compositeOperation;
   ctx.drawImage(image, 0, 0);
 }
