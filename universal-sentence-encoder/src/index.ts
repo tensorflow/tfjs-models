@@ -18,7 +18,7 @@
 import * as tfconv from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {loadTokenizer, loadVocabulary, Tokenizer} from './tokenizer';
+import {loadTokenizer as loadTokenizerInternal, loadVocabulary, Tokenizer} from './tokenizer';
 import {loadQnA} from './use_qna';
 
 export {version} from './version';
@@ -47,12 +47,11 @@ export class UniversalSentenceEncoder {
   private tokenizer: Tokenizer;
 
   async loadModel(modelUrl?: string) {
-    return modelUrl
-      ? tfconv.loadGraphModel(modelUrl)
-      : tfconv.loadGraphModel(
-          'https://tfhub.dev/tensorflow/tfjs-model/universal-sentence-encoder-lite/1/default/1',
-          {fromTFHub: true}
-        );
+    return modelUrl ?
+        tfconv.loadGraphModel(modelUrl) :
+        tfconv.loadGraphModel(
+            'https://tfhub.dev/tensorflow/tfjs-model/universal-sentence-encoder-lite/1/default/1',
+            {fromTFHub: true});
   }
 
   async load(config: LoadConfig = {}) {
@@ -102,6 +101,14 @@ export class UniversalSentenceEncoder {
   }
 }
 
+/**
+ * Load the Tokenizer for use independently from the UniversalSentenceEncoder.
+ *
+ * @param pathToVocabulary (optional) Provide a path to the vocabulary file.
+ */
+export async function loadTokenizer(pathToVocabulary?: string) {
+  return loadTokenizerInternal(pathToVocabulary || BASE_PATH + '/vocab.json');
+}
+
 export {Tokenizer};
-export {loadTokenizer};
 export {loadQnA};

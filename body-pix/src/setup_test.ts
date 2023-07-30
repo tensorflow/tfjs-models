@@ -21,7 +21,7 @@
  */
 
 import '@tensorflow/tfjs-backend-webgl';
-
+// tslint:disable-next-line: no-imports-from-dist
 import {setTestEnvs} from '@tensorflow/tfjs-core/dist/jasmine_util';
 
 // Increase test timeout since we are fetching the model files from GCS.

@@ -45,7 +45,7 @@ function assertSameDimensions(
 }
 
 function flipCanvasHorizontal(canvas: Canvas) {
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
   ctx.scale(-1, 1);
   ctx.translate(-canvas.width, 0);
 }
@@ -53,7 +53,7 @@ function flipCanvasHorizontal(canvas: Canvas) {
 function drawWithCompositing(
     ctx: CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D,
     image: Canvas|ImageType,
-    compositeOperation: string) {
+    compositeOperation: GlobalCompositeOperation) {
   ctx.globalCompositeOperation = compositeOperation;
   ctx.drawImage(image, 0, 0);
 }
@@ -78,7 +78,7 @@ function ensureOffscreenCanvasCreated(id: string): Canvas {
 function drawAndBlurImageOnCanvas(
     image: ImageType, blurAmount: number, canvas: Canvas) {
   const {height, width} = image;
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
   canvas.width = width;
   canvas.height = height;
   ctx.clearRect(0, 0, width, height);
@@ -109,7 +109,7 @@ function renderImageToCanvas(image: ImageType, canvas: Canvas) {
   const {width, height} = image;
   canvas.width = width;
   canvas.height = height;
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
 
   ctx.drawImage(image, 0, 0, width, height);
 }
@@ -119,7 +119,7 @@ function renderImageToCanvas(image: ImageType, canvas: Canvas) {
 function renderImageDataToCanvas(image: ImageData, canvas: Canvas) {
   canvas.width = image.width;
   canvas.height = image.height;
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
 
   ctx.putImageData(image, 0, 0);
 }
@@ -365,7 +365,7 @@ export function drawMask(
   canvas.width = width;
   canvas.height = height;
 
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
   ctx.save();
   if (flipHorizontal) {
     flipCanvasHorizontal(canvas);
@@ -422,7 +422,7 @@ export function drawPixelatedMask(
   canvas.width = blurredMask.width;
   canvas.height = blurredMask.height;
 
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
   ctx.save();
   if (flipHorizontal) {
     flipCanvasHorizontal(canvas);
@@ -430,7 +430,8 @@ export function drawPixelatedMask(
 
   const offscreenCanvas =
       ensureOffscreenCanvasCreated(CANVAS_NAMES.lowresPartMask);
-  const offscreenCanvasCtx = offscreenCanvas.getContext('2d');
+  const offscreenCanvasCtx = offscreenCanvas
+    .getContext('2d') as CanvasRenderingContext2D;
   offscreenCanvas.width = blurredMask.width * (1.0 / pixelCellWidth);
   offscreenCanvas.height = blurredMask.height * (1.0 / pixelCellWidth);
   offscreenCanvasCtx.drawImage(
@@ -511,7 +512,7 @@ export function drawBokehEffect(
   canvas.width = blurredImage.width;
   canvas.height = blurredImage.height;
 
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
 
   if (Array.isArray(multiPersonSegmentation) &&
       multiPersonSegmentation.length === 0) {
@@ -593,7 +594,7 @@ export function blurBodyPart(
   canvas.width = blurredImage.width;
   canvas.height = blurredImage.height;
 
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
 
   if (Array.isArray(partSegmentation) && partSegmentation.length === 0) {
     ctx.drawImage(blurredImage, 0, 0);

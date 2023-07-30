@@ -16,7 +16,8 @@
  */
 
 import '@tensorflow/tfjs-backend-webgl';
-import '@mediapipe/pose';
+import '@tensorflow/tfjs-backend-webgpu';
+import * as mpPose from '@mediapipe/pose';
 
 import * as tfjsWasm from '@tensorflow/tfjs-backend-wasm';
 
@@ -55,7 +56,7 @@ async function createDetector() {
         return posedetection.createDetector(STATE.model, {
           runtime,
           modelType: STATE.modelConfig.type,
-          solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/pose'
+          solutionPath: `https://cdn.jsdelivr.net/npm/@mediapipe/pose@${mpPose.VERSION}`
         });
       } else if (runtime === 'tfjs') {
         return posedetection.createDetector(
@@ -128,12 +129,6 @@ async function renderResult() {
   }
 }
 
-async function checkUpdate() {
-  await checkGuiUpdate();
-
-  requestAnimationFrame(checkUpdate);
-};
-
 async function updateVideo(event) {
   // Clear reference to any previous uploaded video.
   URL.revokeObjectURL(camera.video.currentSrc);
@@ -160,6 +155,7 @@ async function updateVideo(event) {
 }
 
 async function runFrame() {
+  await checkGuiUpdate();
   if (video.paused) {
     // video has finished.
     camera.mediaRecorder.stop();
@@ -212,18 +208,16 @@ async function app() {
 
   await setupDatGui(urlParams);
   stats = setupStats();
-  detector = await createDetector();
   camera = new Context();
 
   await setBackendAndEnvFlags(STATE.flags, STATE.backend);
+  detector = await createDetector();
 
   const runButton = document.getElementById('submit');
   runButton.onclick = run;
 
   const uploadButton = document.getElementById('videofile');
   uploadButton.onchange = updateVideo;
-
-  checkUpdate();
 };
 
 app();

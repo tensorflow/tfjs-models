@@ -15,57 +15,40 @@
  * =============================================================================
  */
 
-import {InputResolution} from '../../types';
+export interface TrackerConfig {
+  maxTracks: number;  // The maximum number of tracks that an internal tracker
+                      // will maintain. Note that this number should be set
+                      // larger than EstimationConfig.maxPoses. How to set this
+                      // number requires experimentation with a given detector,
+                      // but a good starting place is about 3 * maxPoses.
+  maxAge: number;     // The maximum duration of time (in milliseconds) that a
+                   // track can exist without being linked with a new detection
+                   // before it is removed. Set this value large if you would
+                   // like to recover people that are not detected for long
+                   // stretches of time (at the cost of potential false
+                   // re-identifications).
+  minSimilarity: number;  // New poses will only be linked with tracks if the
+                          // similarity score exceeds this threshold.
+  keypointTrackerParams?: KeypointTrackerConfig;  // Keypoint tracker params.
+  boundingBoxTrackerParams?: BoundingBoxTrackerConfig;  // Box tracker params.
+}
+// A tracker that links detections (i.e. poses) and tracks based on keypoint
+// similarity.
+export interface KeypointTrackerConfig {
+  keypointConfidenceThreshold: number;  // The minimum keypoint confidence
+                                        // threshold. A keypoint is only
+                                        // compared in the OKS calculation if
+                                        // both the new detected keypoint and
+                                        // the corresponding track keypoint have
+                                        // confidences above this threshold.
 
-export interface ImageToTensorConfig {
-  inputResolution: InputResolution;
-  keepAspectRatio?: boolean;
+  keypointFalloff: number[];     // Per-keypoint falloff in OKS calculation.
+  minNumberOfKeypoints: number;  // The minimum number of keypoints that are
+                                 // necessary for computing OKS. If the number
+                                 // of confident keypoints (between a pose and
+                                 // track) are under this value, an OKS of 0.0
+                                 // will be given.
 }
-export interface VelocityFilterConfig {
-  windowSize?: number;  // Number of value changes to keep over time. Higher
-                        // value adds to lag and to stability.
-  velocityScale?:
-      number;  // Scale to apply to the velocity calculated over the given
-               // window. With higher velocity `low pass filter` weights new new
-               // values higher. Lower value adds to lag and to stability.
-  minAllowedObjectScale?:
-      number;  // If calculated object scale is less than given value smoothing
-               // will be disabled and landmarks will be returned as is.
-  disableValueScaling?:
-      boolean;  // Disable value scaling based on object size and use `1.0`
-                // instead. Value scale is calculated as inverse value of object
-                // size. Object size is calculated as maximum side of
-                // rectangular bounding box of the object in XY plane.
-}
-export interface OneEuroFilterConfig {
-  frequency?: number;  // Frequency of incoming frames defined in seconds. Used
-                       // only if can't be calculated from provided events (e.g.
-                       // on the very fist frame).
-  minCutOff?:
-      number;  // Minimum cutoff frequency. Start by tuning this parameter while
-               // keeping `beta=0` to reduce jittering to the desired level. 1Hz
-               // (the default value) is a a good starting point.
-  beta?: number;  // Cutoff slope. After `minCutOff` is configured, start
-                  // increasing `beta` value to reduce the lag introduced by the
-                  // `minCutoff`. Find the desired balance between jittering and
-                  // lag.
-  derivateCutOff?:
-      number;  // Cutoff frequency for derivate. It is set to 1Hz in the
-               // original algorithm, but can be turned to further smooth the
-               // speed (i.e. derivate) on the object.
-  thresholdCutOff?:
-      number;  // The outlier threshold offset, will lead to a generally more
-               // reactive filter that will be less likely to discount outliers.
-  thresholdBeta?: number;  // The outlier threshold slope, will lead to a filter
-  // that will more aggressively react whenever the
-  // keypoint speed increases by being less likely to
-  // consider that an observation is an outlier.
-  minAllowedObjectScale?:
-      number;  // If calculated object scale is less than given value smoothing
-  // will be disabled and keypoints will be returned as is. This
-  // value helps filter adjust to the distance to camera.
-}
-export interface KeypointsSmoothingConfig {
-  velocityFilter?: VelocityFilterConfig;
-  oneEuroFilter?: OneEuroFilterConfig;
-}
+// A tracker that links detections (i.e. poses) and tracks based on bounding
+// box similarity.
+export interface BoundingBoxTrackerConfig {}

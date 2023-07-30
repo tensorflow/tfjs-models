@@ -439,8 +439,8 @@ export class BlazeFaceModel {
    * Dispose the WebGL memory held by the underlying model.
    */
   dispose(): void {
-    if (this.blazeFaceModel != null) {
-      this.blazeFaceModel.dispose();
-    }
+    this.blazeFaceModel.dispose();
+    this.anchors.dispose();
+    this.inputSize.dispose();
   }
 }

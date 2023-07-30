@@ -86,7 +86,8 @@ export class ToxicityClassifier {
 
   /**
    * Returns an array of objects, one for each label, that contains
-   * the raw probabilities for each input along with the final prediction
+   * the raw probabilities (the first probability is for 'false', while the
+   * second is for 'true') for each input along with the final prediction
    * boolean given the threshold. If a prediction falls below the threshold,
    * `null` is returned.
    *

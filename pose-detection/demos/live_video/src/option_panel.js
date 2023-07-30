@@ -25,7 +25,11 @@ import * as params from './params';
  */
 let TUNABLE_FLAG_DEFAULT_VALUE_MAP;
 
+let enableTrackingController;
+let scoreThresholdController;
+
 const stringValueMap = {};
+let backendFolder;
 
 export async function setupDatGui(urlParams) {
   const gui = new dat.GUI({width: 300});
@@ -49,6 +53,7 @@ export async function setupDatGui(urlParams) {
 
   const model = urlParams.get('model');
   let type = urlParams.get('type');
+  const backendFromURL = urlParams.get('backend');
 
   switch (model) {
     case 'posenet':
@@ -56,7 +61,7 @@ export async function setupDatGui(urlParams) {
       break;
     case 'movenet':
       params.STATE.model = posedetection.SupportedModels.MoveNet;
-      if (type !== 'lightning' && type !== 'thunder') {
+      if (type !== 'lightning' && type !== 'thunder' && type !== 'multipose') {
         // Nulify invalid value.
         type = null;
       }
@@ -86,7 +91,8 @@ export async function setupDatGui(urlParams) {
 
   modelFolder.open();
 
-  const backendFolder = gui.addFolder('Backend');
+  backendFolder = gui.addFolder('Backend');
+  params.STATE.backend = backendFromURL;
 
   showBackendConfigs(backendFolder);
 
@@ -95,7 +101,10 @@ export async function setupDatGui(urlParams) {
   return gui;
 }
 
-async function showBackendConfigs(folderController) {
+export async function showBackendConfigs(folderController) {
+  if (folderController == null) {
+    folderController = backendFolder;
+  }
   // Clean up backend configs for the previous model.
   const fixedSelectionCount = 0;
   while (folderController.__controllers.length > fixedSelectionCount) {
@@ -104,8 +113,10 @@ async function showBackendConfigs(folderController) {
             .__controllers[folderController.__controllers.length - 1]);
   }
   const backends = params.MODEL_BACKEND_MAP[params.STATE.model];
-  // The first element of the array is the default backend for the model.
-  params.STATE.backend = backends[0];
+  if(params.STATE.backend == null) {
+    // The first element of the array is the default backend for the model.
+    params.STATE.backend = backends[0];
+  }
   const backendController =
       folderController.add(params.STATE, 'backend', backends);
   backendController.name('runtime-backend');
@@ -157,15 +168,50 @@ function addMoveNetControllers(modelConfigFolder, type) {
   params.STATE.modelConfig = {...params.MOVENET_CONFIG};
   params.STATE.modelConfig.type = type != null ? type : 'lightning';
 
+  // Set multipose defaults on initial page load.
+  if (params.STATE.modelConfig.type === 'multipose') {
+    params.STATE.modelConfig.enableTracking = true;
+    params.STATE.modelConfig.scoreThreshold = 0.2;
+  }
+
   const typeController = modelConfigFolder.add(
-      params.STATE.modelConfig, 'type', ['lightning', 'thunder']);
-  typeController.onChange(_ => {
+      params.STATE.modelConfig, 'type', ['lightning', 'thunder', 'multipose']);
+  typeController.onChange(type => {
     // Set isModelChanged to true, so that we don't render any result during
     // changing models.
     params.STATE.isModelChanged = true;
+    if (type === 'multipose') {
+      // Defaults to enable tracking for multi pose.
+      if (enableTrackingController) {
+        enableTrackingController.setValue(true);
+      }
+      // Defaults to a lower scoreThreshold for multi pose.
+      if (scoreThresholdController) {
+        scoreThresholdController.setValue(0.2);
+      }
+    } else {
+      enableTrackingController.setValue(false);
+    }
   });
 
-  modelConfigFolder.add(params.STATE.modelConfig, 'scoreThreshold', 0, 1);
+  const customModelController =
+      modelConfigFolder.add(params.STATE.modelConfig, 'customModel');
+  customModelController.onFinishChange(_ => {
+    params.STATE.isModelChanged = true;
+  });
+
+  scoreThresholdController =
+      modelConfigFolder.add(params.STATE.modelConfig, 'scoreThreshold', 0, 1);
+
+  enableTrackingController = modelConfigFolder.add(
+      params.STATE.modelConfig,
+      'enableTracking',
+  );
+  enableTrackingController.onChange(_ => {
+    // Set isModelChanged to true, so that we don't render any result during
+    // changing models.
+    params.STATE.isModelChanged = true;
+  })
 }
 
 // The BlazePose model config folder contains options for BlazePose config
@@ -183,6 +229,13 @@ function addBlazePoseControllers(modelConfigFolder, type) {
   });
 
   modelConfigFolder.add(params.STATE.modelConfig, 'scoreThreshold', 0, 1);
+
+  const render3DController =
+      modelConfigFolder.add(params.STATE.modelConfig, 'render3D');
+  render3DController.onChange(render3D => {
+    document.querySelector('#scatter-gl-container').style.display =
+        render3D ? 'inline-block' : 'none';
+  });
 }
 
 /**

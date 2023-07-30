@@ -27,10 +27,9 @@ limitations under the License.
       position: relative;
       margin: 0;
     }
-    canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
+    #canvas-wrapper,
+    #scatter-gl-container {
+      position: relative;
     }
   </style>
 </head>
@@ -49,6 +48,7 @@ limitations under the License.
           ">
         </video>
       </div>
+      <div id="scatter-gl-container"></div>
     </div>
   </div>
 </body>

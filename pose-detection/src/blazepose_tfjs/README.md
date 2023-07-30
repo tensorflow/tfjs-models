@@ -79,9 +79,15 @@ Pass in `poseDetection.SupportedModels.BlazePose` from the
     'lite', 'full', 'heavy'). If unset, the default is 'full'.
 
 *   *detectorModelUrl*: An optional string that specifies custom url of
-the detector model. This is useful for area/countries that don't have access to the model hosted on tf.hub.
+the detector model. This is useful for area/countries that don't have access to the model hosted on tf.hub. It also accepts `io.IOHandler` which can be used with
+[tfjs-react-native](https://github.com/tensorflow/tfjs/tree/master/tfjs-react-native)
+to load model from app bundle directory using
+[bundleResourceIO](https://github.com/tensorflow/tfjs/blob/master/tfjs-react-native/src/bundle_resource_io.ts#L169).
 *   *landmarkModelUrl* An optional string that specifies custom url of
-the landmark model. This is useful for area/countries that don't have access to the model hosted on tf.hub.
+the landmark model. This is useful for area/countries that don't have access to the model hosted on tf.hub. It also accepts `io.IOHandler` which can be used with
+[tfjs-react-native](https://github.com/tensorflow/tfjs/tree/master/tfjs-react-native)
+to load model from app bundle directory using
+[bundleResourceIO](https://github.com/tensorflow/tfjs/blob/master/tfjs-react-native/src/bundle_resource_io.ts#L169).
 
 ```javascript
 const model = poseDetection.SupportedModels.BlazePose;
@@ -122,7 +128,7 @@ Please refer to the Pose API
 about the structure of the returned `poses`.
 
 ## Performance
-To quantify the inference speed of MoveNet, the model was benchmarked across
+To quantify the inference speed of BlazePose, the model was benchmarked across
 multiple devices. The model latency (expressed in FPS) was measured on GPU with
 WebGL, as well as WebAssembly (WASM), which is the typical backend for devices
 with lower-end or no GPUs.

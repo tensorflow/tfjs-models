@@ -15,16 +15,17 @@
  * =============================================================================
  */
 
+import {ImageToTensorConfig, TensorsToLandmarksConfig} from '../shared/calculators/interfaces/config_interfaces';
 import {BlazePoseTfjsModelConfig} from './types';
 
 export const DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL =
-    'https://tfhub.dev/mediapipe/tfjs-model/blazeposedetector/1/default/1';
+    'https://tfhub.dev/mediapipe/tfjs-model/blazepose_3d/detector/1';
 export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_FULL =
-    'https://tfhub.dev/mediapipe/tfjs-model/blazeposelandmark_full/1/default/1';
+    'https://tfhub.dev/mediapipe/tfjs-model/blazepose_3d/landmark/full/2';
 export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_LITE =
-    'https://tfhub.dev/mediapipe/tfjs-model/blazeposelandmark_lite/1/default/1';
+    'https://tfhub.dev/mediapipe/tfjs-model/blazepose_3d/landmark/lite/2';
 export const DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_HEAVY =
-    'https://tfhub.dev/mediapipe/tfjs-model/blazeposelandmark_heavy/1/default/1';
+    'https://tfhub.dev/mediapipe/tfjs-model/blazepose_3d/landmark/heavy/2';
 export const BLAZEPOSE_DETECTOR_ANCHOR_CONFIGURATION = {
   reduceBoxesInLowestlayer: false,
   interpolatedScaleAspectRatio: 1.0,
@@ -45,6 +46,8 @@ export const DEFAULT_BLAZEPOSE_MODEL_CONFIG: BlazePoseTfjsModelConfig = {
   runtime: 'tfjs',
   modelType: 'full',
   enableSmoothing: true,
+  enableSegmentation: false,
+  smoothSegmentation: true,
   detectorModelUrl: DEFAULT_BLAZEPOSE_DETECTOR_MODEL_URL,
   landmarkModelUrl: DEFAULT_BLAZEPOSE_LANDMARK_MODEL_URL_FULL
 };
@@ -73,8 +76,8 @@ export const BLAZEPOSE_TENSORS_TO_DETECTION_CONFIGURATION = {
   minScoreThresh: 0.5
 };
 export const BLAZEPOSE_DETECTOR_NON_MAX_SUPPRESSION_CONFIGURATION = {
-  minScoreThreshold: -1.0,
-  minSuppressionThreshold: 0.3
+  minSuppressionThreshold: 0.3,
+  overlapType: 'intersection-over-union' as const
 };
 export const BLAZEPOSE_DETECTOR_RECT_TRANSFORMATION_CONFIG = {
   shiftX: 0,
@@ -83,20 +86,36 @@ export const BLAZEPOSE_DETECTOR_RECT_TRANSFORMATION_CONFIG = {
   scaleY: 1.25,
   squareLong: true
 };
-export const BLAZEPOSE_DETECTOR_IMAGE_TO_TENSOR_CONFIG = {
-  inputResolution: {width: 224, height: 224},
-  keepAspectRatio: true
+export const BLAZEPOSE_DETECTOR_IMAGE_TO_TENSOR_CONFIG: ImageToTensorConfig = {
+  outputTensorSize: {width: 224, height: 224},
+  keepAspectRatio: true,
+  outputTensorFloatRange: [-1, 1],
+  borderMode: 'zero'
 };
-export const BLAZEPOSE_LANDMARK_IMAGE_TO_TENSOR_CONFIG = {
-  inputResolution: {width: 256, height: 256},
-  keepAspectRatio: true
+export const BLAZEPOSE_LANDMARK_IMAGE_TO_TENSOR_CONFIG: ImageToTensorConfig = {
+  outputTensorSize: {width: 256, height: 256},
+  keepAspectRatio: true,
+  outputTensorFloatRange: [0, 1],
+  borderMode: 'zero'
 };
 export const BLAZEPOSE_POSE_PRESENCE_SCORE = 0.5;
-export const BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG = {
+export const BLAZEPOSE_TENSORS_TO_LANDMARKS_CONFIG: TensorsToLandmarksConfig = {
   numLandmarks: 39,
   inputImageWidth: 256,
-  inputImageHeight: 256
+  inputImageHeight: 256,
+  visibilityActivation: 'sigmoid',
+  flipHorizontally: false,
+  flipVertically: false
 };
+export const BLAZEPOSE_TENSORS_TO_WORLD_LANDMARKS_CONFIG:
+    TensorsToLandmarksConfig = {
+      numLandmarks: 39,
+      inputImageWidth: 1,
+      inputImageHeight: 1,
+      visibilityActivation: 'sigmoid',
+      flipHorizontally: false,
+      flipVertically: false
+    };
 export const BLAZEPOSE_REFINE_LANDMARKS_FROM_HEATMAP_CONFIG = {
   kernelSize: 7,
   minConfidenceToRefine: 0.5
@@ -110,11 +129,11 @@ export const BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG_ACTUAL = {
   oneEuroFilter: {
     frequency: 30,
     minCutOff: 0.05,  // minCutOff 0.05 results into ~0.01 alpha in landmark EMA
-                      // filter when landmark is static.
+    // filter when landmark is static.
     beta: 80,  // beta 80 in combination with minCutOff 0.05 results into ~0.94
-               // alpha in landmark EMA filter when landmark is moving fast.
+    // alpha in landmark EMA filter when landmark is moving fast.
     derivateCutOff: 1.0,  // derivativeCutOff 1.0 results into ~0.17 alpha in
-                          // landmark velocity EMA filter.,
+    // landmark velocity EMA filter.,
     minAllowedObjectScale: 1e-6
   }
 };
@@ -125,12 +144,36 @@ export const BLAZEPOSE_LANDMARKS_SMOOTHING_CONFIG_AUXILIARY = {
   oneEuroFilter: {
     frequency: 30,
     minCutOff: 0.01,  // minCutOff 0.01 results into ~0.002 alpha in landmark
-                      // EMA filter when landmark is static.
+    // EMA filter when landmark is static.
     beta: 10.0,  // beta 10.0 in combination with minCutOff 0.01 results into
-                 // ~0.68 alpha in landmark EMA filter when landmark is moving
-                 // fast.
+    // ~0.68 alpha in landmark EMA filter when landmark is moving
+    // fast.
     derivateCutOff: 1.0,  // derivateCutOff 1.0 results into ~0.17 alpha in
-                          // landmark velocity EMA filter.
+    // landmark velocity EMA filter.
     minAllowedObjectScale: 1e-6
   }
+};
+export const BLAZEPOSE_WORLD_LANDMARKS_SMOOTHING_CONFIG_ACTUAL = {
+  oneEuroFilter: {
+    frequency: 30,
+    minCutOff: 0.1,  // Min cutoff 0.1 results into ~ 0.02 alpha in landmark EMA
+    // filter when landmark is static.
+    beta:
+        40,  // Beta 40.0 in combintation with min_cutoff 0.1 results into ~0.8
+    // alpha in landmark EMA filter when landmark is moving fast.
+    derivateCutOff: 1.0,  // Derivative cutoff 1.0 results into ~0.17 alpha in
+    // landmark velocity EMA filter.
+    minAllowedObjectScale: 1e-6,
+    disableValueScaling:
+        true  // As world landmarks are predicted in real world 3D coordintates
+    // in meters (rather than in pixels of input image) prediction
+    // scale does not depend on the pose size in the image.
+  }
+};
+export const BLAZEPOSE_TENSORS_TO_SEGMENTATION_CONFIG = {
+  activation: 'none' as
+      const ,  // Sigmoid is not needed since it is already part of the model.
+};
+export const BLAZEPOSE_SEGMENTATION_SMOOTHING_CONFIG = {
+  combineWithPreviousRatio: 0.7
 };

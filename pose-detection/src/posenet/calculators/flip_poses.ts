@@ -15,7 +15,7 @@
  * =============================================================================
  */
 
-import {ImageSize} from '../../calculators/interfaces/common_interfaces';
+import {ImageSize} from '../../shared/calculators/interfaces/common_interfaces';
 import {Pose} from '../../types';
 
 export function flipPosesHorizontal(

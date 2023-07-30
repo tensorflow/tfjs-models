@@ -67,7 +67,7 @@ const cocoSsd = require('@tensorflow-models/coco-ssd');
 })();
 ```
 
-You can also take a look at the [demo app](https://github.com/tensorflow/tfjs-models/blob/master/coco-ssd/demo).
+You can also take a look at the [demo app](https://tensorflow-js-object-detection.glitch.me/).
 
 ## API
 
@@ -129,7 +129,7 @@ Returns an array of classes and probabilities that looks like:
 
 ### Technical details for advanced users
 
-This model is based on the TensorFlow object detection API. You can download the original models from [here](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md#coco-trained-models). We applied the following optimizations to improve the performance for browser execution:
+This model is based on the TensorFlow object detection API. You can download the original models from [here](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/tf2_detection_zoo.md). We applied the following optimizations to improve the performance for browser execution:
 
   1. Removed the post process graph from the original model.
   2. Used single class NonMaxSuppression instead of original multiple classes NonMaxSuppression for faster speed with similar accuracy.

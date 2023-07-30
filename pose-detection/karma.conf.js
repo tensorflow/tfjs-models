@@ -40,7 +40,8 @@ const devConfig = {
   files: [
     {pattern: './node_modules/@babel/polyfill/dist/polyfill.js'},
     {
-      pattern: 'src/test_data/**',
+      // Serve test data as static resources.
+      pattern: 'test_data/**',
       watched: true,
       included: false,
       served: true,

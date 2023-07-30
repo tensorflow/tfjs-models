@@ -28,8 +28,18 @@ export function validateModelConfig(modelConfig: BlazePoseMediaPipeModelConfig):
 
   config.runtime = 'mediapipe';
 
+  if (config.enableSegmentation == null) {
+    config.enableSegmentation =
+        DEFAULT_BLAZEPOSE_MODEL_CONFIG.enableSegmentation;
+  }
+
   if (config.enableSmoothing == null) {
     config.enableSmoothing = DEFAULT_BLAZEPOSE_MODEL_CONFIG.enableSmoothing;
+  }
+
+  if (config.smoothSegmentation == null) {
+    config.smoothSegmentation =
+        DEFAULT_BLAZEPOSE_MODEL_CONFIG.smoothSegmentation;
   }
 
   if (config.modelType == null) {

@@ -18,18 +18,24 @@
 import * as tfc from '@tensorflow/tfjs-converter';
 import * as tf from '@tensorflow/tfjs-core';
 
-import {MILLISECOND_TO_MICRO_SECONDS, SECOND_TO_MICRO_SECONDS} from '../calculators/constants';
-import {getImageSize, toImageTensor} from '../calculators/image_utils';
-import {BoundingBox} from '../calculators/interfaces/shape_interfaces';
-import {isVideo} from '../calculators/is_video';
-import {KeypointsOneEuroFilter} from '../calculators/keypoints_one_euro_filter';
-import {LowPassFilter} from '../calculators/low_pass_filter';
+import {BoundingBoxTracker} from '../calculators/bounding_box_tracker';
+import {KeypointTracker} from '../calculators/keypoint_tracker';
+import {Tracker} from '../calculators/tracker';
+import {TrackerType} from '../calculators/types';
 import {COCO_KEYPOINTS} from '../constants';
 import {PoseDetector} from '../pose_detector';
-import {InputResolution, Keypoint, Pose, PoseDetectorInput, SupportedModels} from '../types';
+import {MILLISECOND_TO_MICRO_SECONDS, SECOND_TO_MICRO_SECONDS} from '../shared/calculators/constants';
+import {getImageSize, toImageTensor} from '../shared/calculators/image_utils';
+import {ImageSize} from '../shared/calculators/interfaces/common_interfaces';
+import {BoundingBox} from '../shared/calculators/interfaces/shape_interfaces';
+import {isVideo} from '../shared/calculators/is_video';
+import {KeypointsOneEuroFilter} from '../shared/filters/keypoints_one_euro_filter';
+import {LowPassFilter} from '../shared/filters/low_pass_filter';
+import {InputResolution, Pose, PoseDetectorInput, SupportedModels} from '../types';
 import {getKeypointIndexByName} from '../util';
 
-import {CROP_FILTER_ALPHA, KEYPOINT_FILTER_CONFIG, MIN_CROP_KEYPOINT_SCORE, MOVENET_CONFIG, MOVENET_SINGLE_POSE_ESTIMATION_CONFIG, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_URL, SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER} from './constants';
+import {CROP_FILTER_ALPHA, DEFAULT_MIN_POSE_SCORE, KEYPOINT_FILTER_CONFIG, MIN_CROP_KEYPOINT_SCORE, MOVENET_CONFIG, MOVENET_ESTIMATION_CONFIG, MOVENET_MULTIPOSE_DEFAULT_MAX_DIMENSION, MOVENET_MULTIPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION, MOVENET_SINGLEPOSE_LIGHTNING_URL, MOVENET_SINGLEPOSE_THUNDER_RESOLUTION, MOVENET_SINGLEPOSE_THUNDER_URL, MULTIPOSE_BOX_IDX, MULTIPOSE_BOX_SCORE_IDX, MULTIPOSE_INSTANCE_SIZE, MULTIPOSE_LIGHTNING, NUM_KEYPOINT_VALUES, NUM_KEYPOINTS, SINGLEPOSE_LIGHTNING, SINGLEPOSE_THUNDER} from './constants';
+import {determineNextCropRegion, initCropRegion} from './crop_utils';
 import {validateEstimationConfig, validateModelConfig} from './detector_utils';
 import {MoveNetEstimationConfig, MoveNetModelConfig} from './types';
 
@@ -41,20 +47,29 @@ class MoveNetDetector implements PoseDetector {
       InputResolution = {height: 0, width: 0};
   private readonly keypointIndexByName =
       getKeypointIndexByName(SupportedModels.MoveNet);
+  private readonly multiPoseModel: boolean;
   private readonly enableSmoothing: boolean;
+  private readonly minPoseScore: number;
 
-  // Global states.
-  private readonly keypointsFilter =
-      new KeypointsOneEuroFilter(KEYPOINT_FILTER_CONFIG);
-  private readonly cropRegionFilterYMin = new LowPassFilter(CROP_FILTER_ALPHA);
-  private readonly cropRegionFilterXMin = new LowPassFilter(CROP_FILTER_ALPHA);
-  private readonly cropRegionFilterYMax = new LowPassFilter(CROP_FILTER_ALPHA);
-  private readonly cropRegionFilterXMax = new LowPassFilter(CROP_FILTER_ALPHA);
+  // Global states for single person model.
+  private readonly keypointFilter: KeypointsOneEuroFilter;
+  private readonly cropRegionFilterYMin: LowPassFilter;
+  private readonly cropRegionFilterXMin: LowPassFilter;
+  private readonly cropRegionFilterYMax: LowPassFilter;
+  private readonly cropRegionFilterXMax: LowPassFilter;
   private cropRegion: BoundingBox;
+
+  // Global states for multi-person model.
+  private readonly multiPoseMaxDimension: number;
+  private readonly enableTracking: boolean;
+  private readonly tracker: Tracker;
+  // Key is the track ID.
+  private readonly keypointFilterMap: Map<number, KeypointsOneEuroFilter>;
 
   constructor(
       private readonly moveNetModel: tfc.GraphModel,
       config: MoveNetModelConfig) {
+    // Only single-pose models have a fixed input resolution.
     if (config.modelType === SINGLEPOSE_LIGHTNING) {
       this.modelInputResolution.width = MOVENET_SINGLEPOSE_LIGHTNING_RESOLUTION;
       this.modelInputResolution.height =
@@ -63,42 +78,58 @@ class MoveNetDetector implements PoseDetector {
       this.modelInputResolution.width = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
       this.modelInputResolution.height = MOVENET_SINGLEPOSE_THUNDER_RESOLUTION;
     }
+    this.multiPoseModel = config.modelType === MULTIPOSE_LIGHTNING;
+    if (!this.multiPoseModel) {
+      this.keypointFilter = new KeypointsOneEuroFilter(KEYPOINT_FILTER_CONFIG);
+      this.cropRegionFilterYMin = new LowPassFilter(CROP_FILTER_ALPHA);
+      this.cropRegionFilterXMin = new LowPassFilter(CROP_FILTER_ALPHA);
+      this.cropRegionFilterYMax = new LowPassFilter(CROP_FILTER_ALPHA);
+      this.cropRegionFilterXMax = new LowPassFilter(CROP_FILTER_ALPHA);
+    }
     this.enableSmoothing = config.enableSmoothing;
+    if (config.minPoseScore) {
+      this.minPoseScore = config.minPoseScore;
+    } else {
+      this.minPoseScore = DEFAULT_MIN_POSE_SCORE;
+    }
+    if (config.multiPoseMaxDimension) {
+      this.multiPoseMaxDimension = config.multiPoseMaxDimension;
+    } else {
+      this.multiPoseMaxDimension = MOVENET_MULTIPOSE_DEFAULT_MAX_DIMENSION;
+    }
+    this.enableTracking = config.enableTracking;
+    if (this.multiPoseModel && this.enableTracking) {
+      if (config.trackerType === TrackerType.Keypoint) {
+        this.tracker = new KeypointTracker(config.trackerConfig);
+      } else if (config.trackerType === TrackerType.BoundingBox) {
+        this.tracker = new BoundingBoxTracker(config.trackerConfig);
+      }
+      if (this.enableSmoothing) {
+        this.keypointFilterMap = new Map();
+      }
+    }
   }
 
   /**
-   * Runs inference on an image using a model that is assumed to be a person
-   * keypoint model that outputs 17 keypoints.
+   * Runs inference on an image using a model that is assumed to be a single
+   * person keypoint model that outputs 17 keypoints.
+   *
    * @param inputImage 4D tensor containing the input image. Should be of size
-   *     [1, modelHeight, modelWidth, 3].
-   * @param executeSync Whether to execute the model synchronously.
-   * @return An InferenceResult with keypoints and scores, or null if the
-   *     inference call could not be executed (for example when the model was
-   *     not initialized yet) or if it produced an unexpected tensor size.
+   * [1, modelHeight, modelWidth, 3].
+   * @return A `Pose`.
    */
-  async detectKeypoints(inputImage: tf.Tensor4D, executeSync = true):
-      Promise<Keypoint[]|null> {
-    if (!this.moveNetModel) {
-      return null;
-    }
+  async runSinglePersonPoseModel(inputImage: tf.Tensor4D): Promise<Pose> {
+    const outputTensor = this.moveNetModel.execute(inputImage) as tf.Tensor;
 
-    const numKeypoints = 17;
-
-    let outputTensor;
-    if (executeSync) {
-      outputTensor = this.moveNetModel.execute(inputImage) as tf.Tensor;
-    } else {
-      outputTensor =
-          await this.moveNetModel.executeAsync(inputImage) as tf.Tensor;
-    }
-
-    // We expect an output array of shape [1, 1, 17, 3] (batch, person,
+    // We expect an output tensor of shape [1, 1, 17, 3] (batch, person,
     // keypoint, (y, x, score)).
-    if (!outputTensor || outputTensor.shape.length !== 4 ||
-        outputTensor.shape[0] !== 1 || outputTensor.shape[1] !== 1 ||
-        outputTensor.shape[2] !== numKeypoints || outputTensor.shape[3] !== 3) {
+    if (outputTensor.shape.length !== 4 || outputTensor.shape[0] !== 1 ||
+        outputTensor.shape[1] !== 1 ||
+        outputTensor.shape[2] !== NUM_KEYPOINTS ||
+        outputTensor.shape[3] !== NUM_KEYPOINT_VALUES) {
       outputTensor.dispose();
-      return null;
+      throw new Error(
+          `Unexpected output shape from model: [${outputTensor.shape}]`);
     }
 
     // Only use asynchronous downloads when we really have to (WebGPU) because
@@ -112,43 +143,107 @@ class MoveNetDetector implements PoseDetector {
     }
     outputTensor.dispose();
 
-    const keypoints: Keypoint[] = [];
-
-    for (let i = 0; i < numKeypoints; ++i) {
-      keypoints[i] = {
-        y: inferenceResult[i * 3],
-        x: inferenceResult[i * 3 + 1],
-        score: inferenceResult[i * 3 + 2]
+    const pose: Pose = {keypoints: [], score: 0.0};
+    let numValidKeypoints = 0;
+    for (let i = 0; i < NUM_KEYPOINTS; ++i) {
+      pose.keypoints[i] = {
+        y: inferenceResult[i * NUM_KEYPOINT_VALUES],
+        x: inferenceResult[i * NUM_KEYPOINT_VALUES + 1],
+        score: inferenceResult[i * NUM_KEYPOINT_VALUES + 2]
       };
+      if (pose.keypoints[i].score > MIN_CROP_KEYPOINT_SCORE) {
+        ++numValidKeypoints;
+        pose.score += pose.keypoints[i].score;
+      }
     }
 
-    return keypoints;
+    if (numValidKeypoints > 0) {
+      pose.score /= numValidKeypoints;
+    }
+
+    return pose;
   }
 
   /**
-   * Estimates poses for an image or video frame.
+   * Runs inference on an image using a model that is assumed to be a
+   * multi-person keypoint model that outputs 17 keypoints and a box for a
+   * multiple persons.
    *
-   * This does standard ImageNet pre-processing before inferring through the
-   * model. The image should pixels should have values [0-255]. It returns a
-   * single pose.
+   * @param inputImage 4D tensor containing the input image. Should be of size
+   * [1, width, height, 3], where width and height are divisible by 32.
+   * @return An array of `Pose`s.
+   */
+  async runMultiPersonPoseModel(inputImage: tf.Tensor4D): Promise<Pose[]> {
+    const outputTensor = this.moveNetModel.execute(inputImage) as tf.Tensor;
+
+    // Multi-pose model output is a [1, n, 56] tensor ([batch, num_instances,
+    // instance_keypoints_and_box]).
+    if (outputTensor.shape.length !== 3 || outputTensor.shape[0] !== 1 ||
+        outputTensor.shape[2] !== MULTIPOSE_INSTANCE_SIZE) {
+      outputTensor.dispose();
+      throw new Error(
+          `Unexpected output shape from model: [${outputTensor.shape}]`);
+    }
+
+    // Only use asynchronous downloads when we really have to (WebGPU) because
+    // that will poll for download completion using setTimeOut which introduces
+    // extra latency.
+    let inferenceResult;
+    if (tf.getBackend() !== 'webgpu') {
+      inferenceResult = outputTensor.dataSync();
+    } else {
+      inferenceResult = await outputTensor.data();
+    }
+    outputTensor.dispose();
+
+    const poses: Pose[] = [];
+
+    const numInstances = inferenceResult.length / MULTIPOSE_INSTANCE_SIZE;
+    for (let i = 0; i < numInstances; ++i) {
+      poses[i] = {keypoints: []};
+      const boxIndex = i * MULTIPOSE_INSTANCE_SIZE + MULTIPOSE_BOX_IDX;
+      poses[i].box = {
+        yMin: inferenceResult[boxIndex],
+        xMin: inferenceResult[boxIndex + 1],
+        yMax: inferenceResult[boxIndex + 2],
+        xMax: inferenceResult[boxIndex + 3],
+        width: inferenceResult[boxIndex + 3] - inferenceResult[boxIndex + 1],
+        height: inferenceResult[boxIndex + 2] - inferenceResult[boxIndex]
+      };
+      const scoreIndex = i * MULTIPOSE_INSTANCE_SIZE + MULTIPOSE_BOX_SCORE_IDX;
+      poses[i].score = inferenceResult[scoreIndex];
+      poses[i].keypoints = [];
+      for (let j = 0; j < NUM_KEYPOINTS; ++j) {
+        poses[i].keypoints[j] = {
+          y: inferenceResult
+              [i * MULTIPOSE_INSTANCE_SIZE + j * NUM_KEYPOINT_VALUES],
+          x: inferenceResult
+              [i * MULTIPOSE_INSTANCE_SIZE + j * NUM_KEYPOINT_VALUES + 1],
+          score: inferenceResult
+              [i * MULTIPOSE_INSTANCE_SIZE + j * NUM_KEYPOINT_VALUES + 2]
+        };
+      }
+    }
+
+    return poses;
+  }
+
+  /**
+   * Estimates poses for an image or video frame. This does standard ImageNet
+   * pre-processing before inferring through the model. The image pixels should
+   * have values [0-255]. It returns an array of poses.
    *
    * @param image ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement
    * The input image to feed through the network.
-   *
-   * @param config Optional. A configuration object with the following
-   * properties:
-   *  `maxPoses`: Optional. Has to be set to 1.
-   *
+   * @param config Optional. Currently not used.
    * @param timestamp Optional. In milliseconds. This is useful when image is
-   *     a tensor, which doesn't have timestamp info. Or to override timestamp
-   *     in a video.
-   *
+   * a tensor, which doesn't have timestamp info. Or to override timestamp in a
+   * video.
    * @return An array of `Pose`s.
    */
   async estimatePoses(
       image: PoseDetectorInput,
-      estimationConfig:
-          MoveNetEstimationConfig = MOVENET_SINGLE_POSE_ESTIMATION_CONFIG,
+      estimationConfig: MoveNetEstimationConfig = MOVENET_ESTIMATION_CONFIG,
       timestamp?: number): Promise<Pose[]> {
     estimationConfig = validateEstimationConfig(estimationConfig);
 
@@ -174,8 +269,44 @@ class MoveNetDetector implements PoseDetector {
       imageTensor3D.dispose();
     }
 
+    let poses: Pose[] = [];
+    if (!this.multiPoseModel) {
+      poses =
+          await this.estimateSinglePose(imageTensor4D, imageSize, timestamp);
+    } else {
+      poses =
+          await this.estimateMultiplePoses(imageTensor4D, imageSize, timestamp);
+    }
+
+    // Convert keypoint coordinates from normalized coordinates to image space
+    // and add keypoint names.
+    for (let poseIdx = 0; poseIdx < poses.length; ++poseIdx) {
+      for (let keypointIdx = 0; keypointIdx < poses[poseIdx].keypoints.length;
+           ++keypointIdx) {
+        poses[poseIdx].keypoints[keypointIdx].name =
+            COCO_KEYPOINTS[keypointIdx];
+        poses[poseIdx].keypoints[keypointIdx].y *= imageSize.height;
+        poses[poseIdx].keypoints[keypointIdx].x *= imageSize.width;
+      }
+    }
+
+    return poses;
+  }
+
+  /**
+   * Runs a single-person keypoint model on an image, including the image
+   * cropping and keypoint filtering logic.
+   *
+   * @param imageTensor4D A tf.Tensor4D that contains the input image.
+   * @param imageSize: The width and height of the input image.
+   * @param timestamp Image timestamp in microseconds.
+   * @return An array of `Pose`s.
+   */
+  async estimateSinglePose(
+      imageTensor4D: tf.Tensor4D, imageSize: ImageSize,
+      timestamp: number): Promise<Pose[]> {
     if (!this.cropRegion) {
-      this.cropRegion = this.initCropRegion(imageSize.width, imageSize.height);
+      this.cropRegion = initCropRegion(this.cropRegion == null, imageSize);
     }
 
     const croppedImage = tf.tidy(() => {
@@ -197,61 +328,129 @@ class MoveNetDetector implements PoseDetector {
     });
     imageTensor4D.dispose();
 
-    let keypoints = await this.detectKeypoints(croppedImage);
+    const pose = await this.runSinglePersonPoseModel(croppedImage);
     croppedImage.dispose();
 
-    if (keypoints == null) {
+    if (pose.score < this.minPoseScore) {
       this.reset();
       return [];
     }
 
     // Convert keypoints from crop coordinates to image coordinates.
-    for (let i = 0; i < keypoints.length; ++i) {
-      keypoints[i].y =
-          this.cropRegion.yMin + keypoints[i].y * this.cropRegion.height;
-      keypoints[i].x =
-          this.cropRegion.xMin + keypoints[i].x * this.cropRegion.width;
+    for (let i = 0; i < pose.keypoints.length; ++i) {
+      pose.keypoints[i].y =
+          this.cropRegion.yMin + pose.keypoints[i].y * this.cropRegion.height;
+      pose.keypoints[i].x =
+          this.cropRegion.xMin + pose.keypoints[i].x * this.cropRegion.width;
     }
 
     // Apply the sequential filter before estimating the cropping area to make
     // it more stable.
     if (timestamp != null && this.enableSmoothing) {
-      keypoints =
-          this.keypointsFilter.apply(keypoints, timestamp, 1 /* objectScale */);
+      pose.keypoints = this.keypointFilter.apply(
+          pose.keypoints, timestamp, 1 /* objectScale */);
     }
 
     // Determine next crop region based on detected keypoints and if a crop
     // region is not detected, this will trigger the model to run on the full
     // image the next time estimatePoses() is called.
-    const newCropRegion =
-        this.determineCropRegion(keypoints, imageSize.height, imageSize.width);
+    const nextCropRegion = determineNextCropRegion(
+        this.cropRegion, pose.keypoints, this.keypointIndexByName, imageSize);
 
-    this.cropRegion = this.filterCropRegion(newCropRegion);
+    this.cropRegion = this.filterCropRegion(nextCropRegion);
 
-    // Convert keypoint coordinates from normalized coordinates to image space,
-    // add keypoint names and calculate the overall pose score.
-    let numValidKeypoints = 0.0;
-    let poseScore = 0.0;
-    for (let i = 0; i < keypoints.length; ++i) {
-      keypoints[i].name = COCO_KEYPOINTS[i];
-      keypoints[i].y *= imageSize.height;
-      keypoints[i].x *= imageSize.width;
-      if (keypoints[i].score > MIN_CROP_KEYPOINT_SCORE) {
-        ++numValidKeypoints;
-        poseScore += keypoints[i].score;
+    return [pose];
+  }
+
+  /**
+   * Runs a multi-person keypoint model on an image, including image
+   * preprocessing.
+   *
+   * @param imageTensor4D A tf.Tensor4D that contains the input image.
+   * @param imageSize: The width and height of the input image.
+   * @param timestamp Image timestamp in microseconds.
+   * @return An array of `Pose`s.
+   */
+  async estimateMultiplePoses(
+      imageTensor4D: tf.Tensor4D, imageSize: ImageSize,
+      timestamp: number): Promise<Pose[]> {
+    let resizedImage: tf.Tensor4D;
+    let resizedWidth: number;
+    let resizedHeight: number;
+    let paddedImage: tf.Tensor4D;
+    let paddedWidth: number;
+    let paddedHeight: number;
+    const dimensionDivisor = 32;  // Dimensions need to be divisible by 32.
+    if (imageSize.width > imageSize.height) {
+      resizedWidth = this.multiPoseMaxDimension;
+      resizedHeight = Math.round(
+          this.multiPoseMaxDimension * imageSize.height / imageSize.width);
+      resizedImage =
+          tf.image.resizeBilinear(imageTensor4D, [resizedHeight, resizedWidth]);
+
+      paddedWidth = resizedWidth;
+      paddedHeight =
+          Math.ceil(resizedHeight / dimensionDivisor) * dimensionDivisor;
+      paddedImage = tf.pad(
+          resizedImage,
+          [[0, 0], [0, paddedHeight - resizedHeight], [0, 0], [0, 0]]);
+    } else {
+      resizedWidth = Math.round(
+          this.multiPoseMaxDimension * imageSize.width / imageSize.height);
+      resizedHeight = this.multiPoseMaxDimension;
+      resizedImage =
+          tf.image.resizeBilinear(imageTensor4D, [resizedHeight, resizedWidth]);
+
+      paddedWidth =
+          Math.ceil(resizedWidth / dimensionDivisor) * dimensionDivisor;
+      paddedHeight = resizedHeight;
+      paddedImage = tf.pad(
+          resizedImage,
+          [[0, 0], [0, 0], [0, paddedWidth - resizedWidth], [0, 0]]);
+    }
+    resizedImage.dispose();
+    imageTensor4D.dispose();
+
+    const paddedImageInt32 = tf.cast(paddedImage, 'int32');
+    paddedImage.dispose();
+    let poses = await this.runMultiPersonPoseModel(paddedImageInt32);
+    paddedImageInt32.dispose();
+
+    poses = poses.filter(pose => pose.score >= this.minPoseScore);
+
+    // Convert keypoints from padded coordinates to normalized coordinates.
+    for (let i = 0; i < poses.length; ++i) {
+      for (let j = 0; j < poses[i].keypoints.length; ++j) {
+        poses[i].keypoints[j].y *= paddedHeight / resizedHeight;
+        poses[i].keypoints[j].x *= paddedWidth / resizedWidth;
       }
     }
 
-    if (numValidKeypoints > 0) {
-      poseScore /= numValidKeypoints;
-    } else {
-      // No pose detected, so reset all filters.
-      this.resetFilters();
+    if (this.enableTracking) {
+      this.tracker.apply(poses, timestamp);
+
+      if (this.enableSmoothing) {
+        for (let i = 0; i < poses.length; ++i) {
+          if (!this.keypointFilterMap.has(poses[i].id)) {
+            this.keypointFilterMap.set(
+                poses[i].id,
+                new KeypointsOneEuroFilter(KEYPOINT_FILTER_CONFIG));
+          }
+          poses[i].keypoints =
+              this.keypointFilterMap.get(poses[i].id)
+                  .apply(poses[i].keypoints, timestamp, 1 /* objectScale */);
+        }
+
+        const trackIDs = this.tracker.getTrackIDs();
+        this.keypointFilterMap.forEach((_, trackID) => {
+          if (!trackIDs.has(trackID)) {
+            this.keypointFilterMap.delete(trackID);
+          }
+        });
+      }
     }
 
-    const pose: Pose = {score: poseScore, keypoints};
-
-    return [pose];
+    return poses;
   }
 
   filterCropRegion(newCropRegion: BoundingBox): BoundingBox {
@@ -287,186 +486,11 @@ class MoveNetDetector implements PoseDetector {
   }
 
   resetFilters() {
-    this.keypointsFilter.reset();
+    this.keypointFilter.reset();
     this.cropRegionFilterYMin.reset();
     this.cropRegionFilterXMin.reset();
     this.cropRegionFilterYMax.reset();
     this.cropRegionFilterXMax.reset();
-  }
-
-  torsoVisible(keypoints: Keypoint[]): boolean {
-    return (
-        (keypoints[this.keypointIndexByName['left_hip']].score >
-             MIN_CROP_KEYPOINT_SCORE ||
-         keypoints[this.keypointIndexByName['right_hip']].score >
-             MIN_CROP_KEYPOINT_SCORE) &&
-        (keypoints[this.keypointIndexByName['left_shoulder']].score >
-             MIN_CROP_KEYPOINT_SCORE ||
-         keypoints[this.keypointIndexByName['right_shoulder']].score >
-             MIN_CROP_KEYPOINT_SCORE));
-  }
-
-  /**
-   * Calculates the maximum distance from each keypoints to the center location.
-   * The function returns the maximum distances from the two sets of keypoints:
-   * full 17 keypoints and 4 torso keypoints. The returned information will be
-   * used to determine the crop size. See determineCropRegion for more detail.
-   *
-   * @param targetKeypoints Maps from joint names to coordinates.
-   */
-  determineTorsoAndBodyRange(
-      keypoints: Keypoint[], targetKeypoints: {[index: string]: number[]},
-      centerY: number, centerX: number): number[] {
-    const torsoJoints =
-        ['left_shoulder', 'right_shoulder', 'left_hip', 'right_hip'];
-    let maxTorsoYrange = 0.0;
-    let maxTorsoXrange = 0.0;
-    for (let i = 0; i < torsoJoints.length; i++) {
-      const distY = Math.abs(centerY - targetKeypoints[torsoJoints[i]][0]);
-      const distX = Math.abs(centerX - targetKeypoints[torsoJoints[i]][1]);
-      if (distY > maxTorsoYrange) {
-        maxTorsoYrange = distY;
-      }
-      if (distX > maxTorsoXrange) {
-        maxTorsoXrange = distX;
-      }
-    }
-    let maxBodyYrange = 0.0;
-    let maxBodyXrange = 0.0;
-    for (const key of Object.keys(targetKeypoints)) {
-      if (keypoints[this.keypointIndexByName[key]].score <
-          MIN_CROP_KEYPOINT_SCORE) {
-        continue;
-      }
-      const distY = Math.abs(centerY - targetKeypoints[key][0]);
-      const distX = Math.abs(centerX - targetKeypoints[key][1]);
-      if (distY > maxBodyYrange) {
-        maxBodyYrange = distY;
-      }
-      if (distX > maxBodyXrange) {
-        maxBodyXrange = distX;
-      }
-    }
-
-    return [maxTorsoYrange, maxTorsoXrange, maxBodyYrange, maxBodyXrange];
-  }
-
-  /**
-   * Determines the region to crop the image for the model to run inference on.
-   * The algorithm uses the detected joints from the previous frame to estimate
-   * the square region that encloses the full body of the target person and
-   * centers at the midpoint of two hip joints. The crop size is determined by
-   * the distances between each joints and the center point.
-   * When the model is not confident with the four torso joint predictions, the
-   * function returns a default crop which is the full image padded to square.
-   */
-  determineCropRegion(
-      keypoints: Keypoint[], imageHeight: number,
-      imageWidth: number): BoundingBox {
-    const targetKeypoints: {[index: string]: number[]} = {};
-
-    for (const key of COCO_KEYPOINTS) {
-      targetKeypoints[key] = [
-        keypoints[this.keypointIndexByName[key]].y * imageHeight,
-        keypoints[this.keypointIndexByName[key]].x * imageWidth
-      ];
-    }
-
-    if (this.torsoVisible(keypoints)) {
-      const centerY =
-          (targetKeypoints['left_hip'][0] + targetKeypoints['right_hip'][0]) /
-          2;
-      const centerX =
-          (targetKeypoints['left_hip'][1] + targetKeypoints['right_hip'][1]) /
-          2;
-
-      const [maxTorsoYrange, maxTorsoXrange, maxBodyYrange, maxBodyXrange] =
-          this.determineTorsoAndBodyRange(
-              keypoints, targetKeypoints, centerY, centerX);
-
-      let cropLengthHalf = Math.max(
-          maxTorsoXrange * 1.9, maxTorsoYrange * 1.9, maxBodyYrange * 1.2,
-          maxBodyXrange * 1.2);
-
-      cropLengthHalf = Math.min(
-          cropLengthHalf,
-          Math.max(
-              centerX, imageWidth - centerX, centerY, imageHeight - centerY));
-
-      const cropCorner = [centerY - cropLengthHalf, centerX - cropLengthHalf];
-
-      if (cropLengthHalf > Math.max(imageWidth, imageHeight) / 2) {
-        return this.initCropRegion(imageHeight, imageWidth);
-      } else {
-        const cropLength = cropLengthHalf * 2;
-        return {
-          yMin: cropCorner[0] / imageHeight,
-          xMin: cropCorner[1] / imageWidth,
-          yMax: (cropCorner[0] + cropLength) / imageHeight,
-          xMax: (cropCorner[1] + cropLength) / imageWidth,
-          height: (cropCorner[0] + cropLength) / imageHeight -
-              cropCorner[0] / imageHeight,
-          width: (cropCorner[1] + cropLength) / imageWidth -
-              cropCorner[1] / imageWidth
-        };
-      }
-    } else {
-      return this.initCropRegion(imageHeight, imageWidth);
-    }
-  }
-
-  /**
-   * Provides initial crop region.
-   *
-   * The function provides the initial crop region when the algorithm cannot
-   * reliably determine the crop region from the previous frame. There are two
-   * scenarios:
-   *   1) The very first frame: the function returns the best quess by cropping
-   *      a square in the middle of the image.
-   *   2) Not enough reliable keypoints detected from the previous frame: the
-   *      function pads the full image from both sides to make it a square
-   *      image.
-   */
-  private initCropRegion(imageHeight: number, imageWidth: number) {
-    let boxHeight: number, boxWidth: number, yMin: number, xMin: number;
-    if (!this.cropRegion) {
-      // If it is the first frame, perform a best guess by making the square
-      // crop at the image center to better utilize the image pixels and
-      // create higher chance to enter the cropping loop.
-      if (imageWidth > imageHeight) {
-        boxHeight = 1.0;
-        boxWidth = imageHeight / imageWidth;
-        yMin = 0.0;
-        xMin = (imageWidth / 2 - imageHeight / 2) / imageWidth;
-      } else {
-        boxHeight = imageWidth / imageHeight;
-        boxWidth = 1.0;
-        yMin = (imageHeight / 2 - imageWidth / 2) / imageHeight;
-        xMin = 0.0;
-      }
-    } else {
-      // No cropRegion was available from a previous estimatePoses() call, so
-      // run the model on the full image with padding on both sides.
-      if (imageWidth > imageHeight) {
-        boxHeight = imageWidth / imageHeight;
-        boxWidth = 1.0;
-        yMin = (imageHeight / 2 - imageWidth / 2) / imageHeight;
-        xMin = 0.0;
-      } else {
-        boxHeight = 1.0;
-        boxWidth = imageHeight / imageWidth;
-        yMin = 0.0;
-        xMin = (imageWidth / 2 - imageHeight / 2) / imageWidth;
-      }
-    }
-    return {
-      yMin,
-      xMin,
-      yMax: yMin + boxHeight,
-      xMax: xMin + boxWidth,
-      height: boxHeight,
-      width: boxWidth
-    };
   }
 }
 
@@ -483,16 +507,39 @@ export async function load(modelConfig: MoveNetModelConfig = MOVENET_CONFIG):
     Promise<PoseDetector> {
   const config = validateModelConfig(modelConfig);
   let model: tfc.GraphModel;
-  if (config.modelUrl) {
-    model = await tfc.loadGraphModel(config.modelUrl);
+
+  let fromTFHub = true;
+
+  if (!!config.modelUrl) {
+    fromTFHub = typeof config.modelUrl === 'string' &&
+        config.modelUrl.indexOf('https://tfhub.dev') > -1;
+    model = await tfc.loadGraphModel(config.modelUrl, {fromTFHub});
   } else {
     let modelUrl;
     if (config.modelType === SINGLEPOSE_LIGHTNING) {
       modelUrl = MOVENET_SINGLEPOSE_LIGHTNING_URL;
     } else if (config.modelType === SINGLEPOSE_THUNDER) {
       modelUrl = MOVENET_SINGLEPOSE_THUNDER_URL;
+    } else if (config.modelType === MULTIPOSE_LIGHTNING) {
+      modelUrl = MOVENET_MULTIPOSE_LIGHTNING_URL;
     }
-    model = await tfc.loadGraphModel(modelUrl, {fromTFHub: true});
+    model = await tfc.loadGraphModel(modelUrl, {fromTFHub});
   }
+
+  if (tf.getBackend() === 'webgl') {
+    // MoveNet has a top-k op that runs faster on GPU for the size of our last
+    // dimension (6400). There are three checks that could make the top-k op run
+    // on CPU (see
+    // https://github.com/tensorflow/tfjs/blob/master/tfjs-backend-webgl/src/kernels/TopK.ts)
+    //
+    // 1. All input shapes < 128
+    // 2. lastDim < TOPK_LAST_DIM_CPU_HANDOFF_SIZE_THRESHOLD
+    // 3. k > TOPK_K_CPU_HANDOFF_THRESHOLD
+    //
+    // In our case, setting TOPK_LAST_DIM_CPU_HANDOFF_SIZE_THRESHOLD = 0 will
+    // will disable the CPU forwarding.
+    tf.env().set('TOPK_LAST_DIM_CPU_HANDOFF_SIZE_THRESHOLD', 0);
+  }
+
   return new MoveNetDetector(model, config);
 }
