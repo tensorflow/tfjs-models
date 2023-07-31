@@ -11,10 +11,10 @@
   "dependencies": {
     "@mediapipe/hands": "~0.4.0",
     "@tensorflow-models/hand-pose-detection": "file:../../dist",
-    "@tensorflow/tfjs-backend-wasm": "^3.9.0",
-    "@tensorflow/tfjs-backend-webgl": "^3.9.0",
-    "@tensorflow/tfjs-converter": "^3.9.0",
-    "@tensorflow/tfjs-core": "^3.9.0",
+    "@tensorflow/tfjs-backend-wasm": "^4.9.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.9.0",
+    "@tensorflow/tfjs-converter": "^4.9.0",
+    "@tensorflow/tfjs-core": "^4.9.0",
     "scatter-gl": "0.0.8"
   },
   "scripts": {
