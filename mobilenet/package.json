@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/mobilenet",
-  "version": "2.1.4",
+  "version": "2.1.1",
   "description": "Pretrained MobileNet in TensorFlow.js",
   "main": "dist/index.js",
   "unpkg": "dist/mobilenet.min.js",
