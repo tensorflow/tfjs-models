@@ -10,9 +10,9 @@
   },
   "dependencies": {
     "@tensorflow-models/deeplab": "file:../dist",
-    "@tensorflow/tfjs-converter": "^3.3.0",
-    "@tensorflow/tfjs-core": "^3.3.0",
-    "@tensorflow/tfjs-backend-webgl": "^3.3.0",
+    "@tensorflow/tfjs-converter": "^4.9.0",
+    "@tensorflow/tfjs-core": "^4.9.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.9.0",
     "bulma": "^0.7.5"
   },
   "scripts": {
