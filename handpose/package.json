@@ -13,18 +13,18 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs-backend-webgl": "^4.9.0",
-    "@tensorflow/tfjs-converter": "^4.9.0",
-    "@tensorflow/tfjs-core": "^4.9.0"
+    "@tensorflow/tfjs-backend-webgl": "^4.10.0",
+    "@tensorflow/tfjs-converter": "^4.10.0",
+    "@tensorflow/tfjs-core": "^4.10.0"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^11.0.2",
     "@rollup/plugin-node-resolve": "^7.1.1",
     "@rollup/plugin-typescript": "^3.0.0",
-    "@tensorflow/tfjs-backend-cpu": "^4.9.0",
-    "@tensorflow/tfjs-backend-webgl": "^4.9.0",
-    "@tensorflow/tfjs-converter": "^4.9.0",
-    "@tensorflow/tfjs-core": "^4.9.0",
+    "@tensorflow/tfjs-backend-cpu": "^4.10.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.10.0",
+    "@tensorflow/tfjs-converter": "^4.10.0",
+    "@tensorflow/tfjs-core": "^4.10.0",
     "@types/jasmine": "~2.8.8",
     "babel-core": "~6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",
@@ -34,7 +34,7 @@
     "rollup-plugin-visualizer": "~3.3.2",
     "ts-node": "~8.8.2",
     "tslint": "~5.18.0",
-    "typescript": "~4.4.4",
+    "typescript": "~5.1.6",
     "yalc": "~1.0.0-pre.21"
   },
   "scripts": {
