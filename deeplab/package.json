@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/deeplab",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Semantic Segmentation in the Browser: DeepLab v3 Model",
   "main": "dist/index.js",
   "jsnext:main": "dist/deeplab.esm.js",
