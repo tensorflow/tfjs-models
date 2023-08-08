@@ -6,10 +6,7 @@ This demo shows how to use the GPT2 model to generate text.
 
 ## Setup
 
-cd into the `gpt2` folder:
-```sh
-cd gpt2
-```
+cd into the `gpt2` folder. From the root of the repo, this is located at `gpt2/`. From the demo, it's `../`.
 
 Install dependencies:
 ```sh
