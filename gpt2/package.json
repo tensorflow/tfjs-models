@@ -19,15 +19,26 @@
   },
   "devDependencies": {
     "@tensorflow/tfjs-backend-cpu": "^4.10.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.10.0",
     "@tensorflow/tfjs-converter": "^4.10.0",
     "@tensorflow/tfjs-core": "^4.10.0",
+    "@types/jasmine": "^4.3.5",
+    "jasmine": "3.1.x",
+    "karma": "~6.3.1",
+    "karma-browserstack-launcher": "~1.6.0",
+    "karma-chrome-launcher": "~2.2.0",
+    "karma-jasmine": "~1.1.0",
+    "karma-spec-reporter": "~0.0.32",
+    "karma-typescript": "~5.5.1",
+    "karma-typescript-es6-transform": "^5.1.0",
     "rollup": "^3.27.2",
+    "ts-node": "^10.9.1",
     "typescript": "^5.1.6"
   },
   "scripts": {
     "build": "rimraf dist && tsc",
-    "test": "ts-node --skip-ignore --project tsconfig.test.json run_tests.ts",
+    "test": "yarn && karma start",
     "build-npm": "yarn build && rollup -c",
-    "publish-demo": "./scripts/publish-demo.sh"
+    "test-node": "NODE_PRESERVE_SYMLINKS=1 ts-node --skip-ignore --project tsconfig.test.json run_tests.ts"
   }
 }

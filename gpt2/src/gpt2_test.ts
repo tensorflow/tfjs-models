@@ -15,16 +15,15 @@
  * =============================================================================
  */
 
-export class GPT2 {
-  // @pforderique feel free to change the API
-  // This api should be friendly to JS users.
-  async generate(input: string): Promise<string> {
-    // Fake delay for where the model will run.
-    await new Promise((resolve) => {
-      setTimeout(resolve, 300);
-    });
+import {GPT2} from './gpt2';
 
-    console.log(`got input '${input}'`);
-    return ' the park';
-  }
-}
+describe('gpt2', () => {
+  let gpt2: GPT2;
+  beforeEach(() => {
+    gpt2 = new GPT2();
+  });
+
+  it('this is a fake test', async () => {
+    expect(await gpt2.generate('asdf')).toEqual(' the park');
+  });
+});
