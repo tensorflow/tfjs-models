@@ -1,0 +1,33 @@
+{
+  "name": "@tfjs-models/gpt2",
+  "version": "0.0.1",
+  "description": "Run GPT2 in the browser with TensorFlow.js",
+  "license": "Apache-2.0",
+  "main": "dist/index.js",
+  "jsnext:main": "dist/blazeface.esm.js",
+  "module": "dist/blazeface.esm.js",
+  "unpkg": "dist/blazeface.min.js",
+  "jsdelivr": "dist/blazeface.min.js",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tensorflow/tfjs-models.git"
+  },
+  "peerDependencies": {
+    "@tensorflow/tfjs-converter": "^4.10.0",
+    "@tensorflow/tfjs-core": "^4.10.0"
+  },
+  "devDependencies": {
+    "@tensorflow/tfjs-backend-cpu": "^4.10.0",
+    "@tensorflow/tfjs-converter": "^4.10.0",
+    "@tensorflow/tfjs-core": "^4.10.0",
+    "rollup": "^3.27.2",
+    "typescript": "^5.1.6"
+  },
+  "scripts": {
+    "build": "rimraf dist && tsc",
+    "test": "ts-node --skip-ignore --project tsconfig.test.json run_tests.ts",
+    "build-npm": "yarn build && rollup -c",
+    "publish-demo": "./scripts/publish-demo.sh"
+  }
+}
