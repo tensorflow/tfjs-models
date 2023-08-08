@@ -20,7 +20,7 @@ cd demo
 yarn
 ```
 
-build the demo's dependencies
+build the demo's dependencies. You'll need to re-run this whenever you make changes to the `@tfjs-models/gpt2` package that this demo uses.
 ```sh
 yarn build-deps
 ```
