@@ -1,4 +1,4 @@
-<!-- copyright 2023 google llc. all rights reserved.
+<!-- copyright 2023 google llc.
 
 licensed under the apache license, version 2.0 (the "license");
 you may not use this file except in compliance with the license.
@@ -15,7 +15,26 @@ limitations under the License.
 
 
 <head>
+  <style>
+    .model-div {
+        display: flex;
+        margin-bottom: 1em;
+    }
+    .model-textbox {
+        flex-grow: 1;
+        min-height: 10em;
+    }
+    .generate-button {
+
+    }
+  </style>
 </head>
 <body>
+  <h1>GPT2</h1>
   <script src="bundle.js" defer></script>
+  <div class="model-div">
+    <textarea class="model-textbox" type="text">I like walking my dog at </textarea>
+  </div>
+  <button disabled="true" class="generate-button" type="button">Generate</button>
+
 </body>
