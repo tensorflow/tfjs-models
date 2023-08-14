@@ -15,7 +15,8 @@
  * =============================================================================
  */
 import * as tf from '@tensorflow/tfjs-core';
-import {describeWithFlags, NODE_ENVS} from '@tensorflow/tfjs-core/dist/jasmine_util';
+// tslint:disable-next-line: no-imports-from-dist
+import { describeWithFlags, NODE_ENVS } from '@tensorflow/tfjs-core/dist/jasmine_util';
 import * as knnClassifier from './index';
 
 describeWithFlags('KNNClassifier', NODE_ENVS, () => {
@@ -62,7 +63,7 @@ describeWithFlags('KNNClassifier', NODE_ENVS, () => {
       errorMessage = error.message;
     }
     expect(errorMessage)
-        .toMatch(/You have not added any examples to the KNN classifier/);
+      .toMatch(/You have not added any examples to the KNN classifier/);
 
     classifier.dispose();
   });
@@ -74,8 +75,8 @@ describeWithFlags('KNNClassifier', NODE_ENVS, () => {
     const result = await classifier.predictClass(tf.tensor2d([3, 3], [2, 1]));
     expect(result.classIndex).toBe(0);
     expect(result.label).toBe('1');
-    expect(result.confidences).toEqual({'1': 0.5, '2': 0.5});
-    expect(classifier.getClassExampleCount()).toEqual({1: 1, 2: 1});
+    expect(result.confidences).toEqual({ '1': 0.5, '2': 0.5 });
+    expect(classifier.getClassExampleCount()).toEqual({ 1: 1, 2: 1 });
 
     classifier.dispose();
   });
@@ -89,8 +90,8 @@ describeWithFlags('KNNClassifier', NODE_ENVS, () => {
     const result = await classifier.predictClass(tf.tensor1d([5, 5]));
     expect(result.classIndex).toBe(1);
     expect(result.label).toBe('5');
-    expect(result.confidences).toEqual({5: 2 / 3, 7: 1 / 3, 9: 0});
-    expect(classifier.getClassExampleCount()).toEqual({5: 2, 7: 1, 9: 1});
+    expect(result.confidences).toEqual({ 5: 2 / 3, 7: 1 / 3, 9: 0 });
+    expect(classifier.getClassExampleCount()).toEqual({ 5: 2, 7: 1, 9: 1 });
 
     classifier.dispose();
   });
@@ -104,8 +105,8 @@ describeWithFlags('KNNClassifier', NODE_ENVS, () => {
     const result = await classifier.predictClass(tf.tensor1d([5, 5]));
     expect(result.classIndex).toBe(1);
     expect(result.label).toBe('b');
-    expect(result.confidences).toEqual({b: 2 / 3, a: 1 / 3, c: 0});
-    expect(classifier.getClassExampleCount()).toEqual({b: 2, a: 1, c: 1});
+    expect(result.confidences).toEqual({ b: 2 / 3, a: 1 / 3, c: 0 });
+    expect(classifier.getClassExampleCount()).toEqual({ b: 2, a: 1, c: 1 });
 
     classifier.dispose();
   });
@@ -137,12 +138,12 @@ describeWithFlags('KNNClassifier', NODE_ENVS, () => {
     });
     const numTensorsBefore = tf.memory().numTensors;
 
-    expect(classifier.getClassExampleCount()).toEqual({5: 2, 7: 1, 9: 1});
+    expect(classifier.getClassExampleCount()).toEqual({ 5: 2, 7: 1, 9: 1 });
     expect(classifier.getNumClasses()).toBe(3);
     expect(numTensorsBefore).toBe(3);
 
     classifier.clearClass(5);
-    expect(classifier.getClassExampleCount()).toEqual({7: 1, 9: 1});
+    expect(classifier.getClassExampleCount()).toEqual({ 7: 1, 9: 1 });
     expect(classifier.getNumClasses()).toBe(2);
     const numTensorsAfter = tf.memory().numTensors;
     expect(numTensorsAfter).toBe(2);
