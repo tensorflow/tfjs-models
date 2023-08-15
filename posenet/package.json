@@ -13,13 +13,13 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs-converter": "^3.0.0-rc.1",
-    "@tensorflow/tfjs-core": "^3.0.0-rc.1"
+    "@tensorflow/tfjs-converter": "^4.10.0",
+    "@tensorflow/tfjs-core": "^4.10.0"
   },
   "devDependencies": {
-    "@tensorflow/tfjs-converter": "^3.0.0-rc.1",
-    "@tensorflow/tfjs-core": "^3.0.0-rc.1",
-    "@tensorflow/tfjs-backend-cpu": "^3.0.0-rc.1",
+    "@tensorflow/tfjs-converter": "^4.10.0",
+    "@tensorflow/tfjs-core": "^4.10.0",
+    "@tensorflow/tfjs-backend-cpu": "^4.10.0",
     "@types/jasmine": "~3.3.15",
     "babel-core": "^6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",
@@ -32,7 +32,7 @@
     "rollup-plugin-uglify": "~3.0.0",
     "ts-node": "~8.8.2",
     "tslint": "~5.18.0",
-    "typescript": "3.5.3",
+    "typescript": "5.1.6",
     "yalc": "~1.0.0-pre.27"
   },
   "scripts": {

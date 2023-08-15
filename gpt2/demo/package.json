@@ -1,0 +1,43 @@
+{
+  "name": "gpt2_demo",
+  "version": "1.0.0",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "watch": "esbuild index.ts --bundle --outfile=bundle.js --target=es6 --servedir=. --serve --sourcemap --sources-content=true --preserve-symlinks",
+    "build": "mkdirp dist && cp index.html dist && esbuild index.ts --bundle --target=es6 --outfile=dist/bundle.js --sourcemap --sources-content=true --preserve-symlinks --minify --metafile=./esbuild_bundle_meta.json",
+    "build-model": "cd .. && yarn && yarn build-npm",
+    "build-deps": "yarn build-model"
+  },
+  "dependencies": {
+    "@tensorflow-models/gpt2": "link:../",
+    "@tensorflow/tfjs-backend-wasm": "^4.10.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.10.0",
+    "@tensorflow/tfjs-backend-webgpu": "^4.10.0",
+    "lil-gui": "^0.18.2"
+  },
+  "devDependencies": {
+    "@tensorflow/tfjs-backend-cpu": "^4.10.0",
+    "esbuild": "^0.19.0",
+    "eslint": "^8.46.0",
+    "eslint-config-google": "^0.14.0",
+    "mkdirp": "^3.0.1"
+  },
+  "eslintConfig": {
+    "extends": "google",
+    "rules": {
+      "require-jsdoc": 0,
+      "valid-jsdoc": 0
+    },
+    "env": {
+      "es6": true
+    },
+    "parserOptions": {
+      "ecmaVersion": 8,
+      "sourceType": "module"
+    }
+  },
+  "eslintIgnore": [
+    "dist/"
+  ]
+}
