@@ -29,15 +29,15 @@ export function createDefaultGPT2() {
 
     const preprocessor = new tfl.GPT2CausalLMPreprocessor({
       tokenizer: new tfl.GPT2Tokenizer({vocabulary, merges}),
-      sequenceLength: 8
+      sequenceLength: 30
     });
 
     const backbone = new tfl.GPT2Backbone({
       vocabularySize: preprocessor.tokenizer.vocabularySize,
-      numLayers: 4, // 12,  // 2,
-      numHeads: 4, // 12,  // 2,
-      hiddenDim: 8, // 768,  // 4,
-      intermediateDim: 16, // 3072,  // 8,
+      numLayers: 4, // 12, // 4,
+      numHeads: 4, // 12, // 4,
+      hiddenDim: 64, // 768, // 8,
+      intermediateDim: 128, // 3072, // 16,
       maxSequenceLength: preprocessor.packer.sequenceLength,
     });
 
@@ -57,7 +57,6 @@ export class GPT2 {
   // This api should be friendly to JS users.
   async generate(input: string): Promise<string> {
     console.log(`[INPUT]: '${input}'`);
-
     const inputTensor = tf.tensor([input, input]);
     const outputTensor = this.gpt2.generate(inputTensor);
     const output = (outputTensor.dataSync() as unknown as string[])[0];

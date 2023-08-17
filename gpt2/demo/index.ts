@@ -91,22 +91,22 @@ async function init() {
 
 async function generate() {
   button.disabled = true;
+  const startTime = performance.now();
 
   statusElement.textContent = 'Processing...'
   const text = getText();
-  const outputText = await gpt2.generate(text);
-  setText(outputText);
-  // try {
-  //   const outputText = await gpt2.generate(text);
-  //   setText(outputText);
-  //   statusElement.textContent = 'Generated!'
-  // } catch (e) {
-  //   console.log(e);
-  //   statusElement.textContent = 'Error :('
-  // }
-  button.disabled = false
 
-  console.log('state', state.text);
+  try {
+    const outputText = await gpt2.generate(text);
+    setText(outputText);
+    statusElement.textContent = 'Generated!'
+  } catch (e) {
+    console.warn(e);
+    statusElement.textContent = 'Error :('
+  }
+  const totalTime = Math.round((performance.now() - startTime) / 1000);
+  console.log(`inference in ${totalTime}s.`);
+  button.disabled = false
 }
 
 init();
