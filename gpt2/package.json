@@ -21,7 +21,8 @@
     "@tensorflow/tfjs-backend-cpu": "^4.10.0",
     "@tensorflow/tfjs-backend-webgl": "^4.10.0",
     "@tensorflow/tfjs-converter": "^4.10.0",
-    "@tensorflow/tfjs-core": "^4.10.0",
+    "@tensorflow/tfjs-core": "link:../../tfjs/link-package/node_modules/@tensorflow/tfjs-core",
+    "@tensorflow/tfjs-layers": "link:../../tfjs/link-package/node_modules/@tensorflow/tfjs-layers",
     "@types/jasmine": "^4.3.5",
     "jasmine": "3.1.x",
     "karma": "~6.3.1",
@@ -40,5 +41,10 @@
     "test": "yarn && karma start",
     "build-npm": "yarn build && rollup -c",
     "test-node": "NODE_PRESERVE_SYMLINKS=1 ts-node --skip-ignore --project tsconfig.test.json run_tests.ts"
+  },
+  "dependencies": {
+    "@rollup/plugin-json": "^6.0.0",
+    "http-server": "^14.1.1",
+    "rollup-plugin-typescript2": "^0.35.0"
   }
 }

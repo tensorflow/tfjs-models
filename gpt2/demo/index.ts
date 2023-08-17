@@ -27,9 +27,31 @@ setWasmPaths('node_modules/@tensorflow/tfjs-backend-wasm/wasm-out/');
 
 (window as any).tf = tf;
 
-tf.setBackend('webgl');
+tf.setBackend('cpu');
+
+const textElement = document.querySelector(".model-textbox") as HTMLTextAreaElement;
+const statusElement = document.querySelector(".status") as HTMLTextAreaElement;
+
+function setText(text: string) {
+  state.text = text;
+  textElement.value = text;
+}
+
+function getText() {
+  return state.text;
+}
+
+textElement.onchange = (e) => {
+  setText((e.target as HTMLTextAreaElement).value || '');
+}
+
+const textButton = document.querySelector('.get-text-button') as HTMLButtonElement;
+if (textButton != null) {
+  textButton.onclick = () => console.log(`state text: ${state.text}`);
+}
 
 const state = {
+  text: textElement.value,
   backend: tf.getBackend(),
 };
 
@@ -52,34 +74,39 @@ const backendController = gui.add(state, 'backend', ['wasm', 'webgl', 'webgpu', 
     }
   }).listen(true);
 
-const textElement = document.querySelector(".model-textbox") as HTMLTextAreaElement;
-
-function setText(text: string) {
-  textElement.textContent = text;
-}
-function getText() {
-  return textElement.textContent || '';
-}
-
 const button = document.querySelector('.generate-button') as HTMLButtonElement;
 if (button == null) {
   throw new Error('No button found for generating text');
 }
-
 button.onclick = generate;
 
 let gpt2: GPT2;
 async function init() {
+  await tf.ready();
+  statusElement.textContent = 'Loading model...'
   gpt2 = await load();
+  statusElement.textContent = 'GPT2 loaded.'
   button.disabled = false;
 }
 
 async function generate() {
   button.disabled = true;
 
+  statusElement.textContent = 'Processing...'
   const text = getText();
-  setText(text + await gpt2.generate(text));
-  button.disabled = false;
+  const outputText = await gpt2.generate(text);
+  setText(outputText);
+  // try {
+  //   const outputText = await gpt2.generate(text);
+  //   setText(outputText);
+  //   statusElement.textContent = 'Generated!'
+  // } catch (e) {
+  //   console.log(e);
+  //   statusElement.textContent = 'Error :('
+  // }
+  button.disabled = false
+
+  console.log('state', state.text);
 }
 
 init();

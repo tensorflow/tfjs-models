@@ -1,0 +1,12 @@
+{
+  "vocabulary": {
+    "!": 0,
+    "air": 1,
+    "Ġair": 2,
+    "plane": 3,
+    "Ġat": 4,
+    "port": 5,
+    "<|endoftext|>": 6
+  },
+  "merges": ["Ġ a", "Ġ t", "Ġ i", "Ġ b", "a i", "p l", "n e", "Ġa t", "p o", "r t", "Ġt h", "ai r", "pl a", "po rt", "Ġai r", "Ġa i", "pla ne"]
+}

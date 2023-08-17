@@ -7,6 +7,8 @@
     "node_modules/"
   ],
   "compilerOptions": {
+    "resolveJsonModule": true,
+    "module": "ES2022",
     "outDir": "./dist"
   }
 }
