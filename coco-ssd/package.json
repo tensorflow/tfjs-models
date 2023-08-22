@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/coco-ssd",
-  "version": "2.2.2",
+  "version": "2.2.3",
   "description": "Object detection model (coco-ssd) in TensorFlow.js",
   "main": "dist/coco-ssd.node.js",
   "unpkg": "dist/coco-ssd.min.js",
