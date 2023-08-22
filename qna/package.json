@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/qna",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Question and Answer model (Mobile BERT)",
   "main": "dist/index.js",
   "unpkg": "dist/qna.min.js",
