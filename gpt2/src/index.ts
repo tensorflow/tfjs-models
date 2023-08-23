@@ -22,8 +22,9 @@ import {GPT2, createDefaultGPT2} from './gpt2';
 export {GPT2} from './gpt2';
 
 // const MODEL_PATH = `http://orderique.c.googlers.com:8080/model_data/model.json`;
-// const MODEL_PATH = `http://localhost:8000/model_data/model.json`;
-const MODEL_PATH = 'https://storage.googleapis.com/tfjs-testing/gpt2-temp/model.json';
+// const MODEL_PATH = `http://localhost:8000/model_data/modelsmall.json`;
+const MODEL_PATH = `http://localhost:8000/model_data/model.json`;
+// const MODEL_PATH = 'https://storage.googleapis.com/tfjs-testing/gpt2-temp/model.json';
 
 // Note that while `tfjs-core` is availble here, we shouldn't import any backends.
 // Let the user choose which backends they want in their bundle.

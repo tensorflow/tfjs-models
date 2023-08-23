@@ -20,9 +20,7 @@ import * as tfl from '@tensorflow/tfjs-layers';
 
 import * as config from './vocab.json';
 
-let defaultUsed = false;
 export function createDefaultGPT2() {
-    defaultUsed = true;
     console.log('VOCAB SIZE:', Object.keys(config.vocabulary).length);
     const vocabulary = new Map(Object.entries(config.vocabulary));
     const merges = config.merges;
@@ -42,11 +40,6 @@ export function createDefaultGPT2() {
     });
 
     const gpt2 = new tfl.GPT2CausalLM({backbone, preprocessor});
-
-    // const weights = {
-    //   dummy: tf.tensor([1]),
-    // };
-    // gpt2.loadWeights(weights)
     return gpt2;
 }
 
@@ -60,12 +53,8 @@ export class GPT2 {
     const inputTensor = tf.tensor([input, input]);
     const outputTensor = this.gpt2.generate(inputTensor);
     const output = (outputTensor.dataSync() as unknown as string[])[0];
-    if (defaultUsed) {
-      const cleaned = output.replace(/\u0120/g, ' ');
-      console.log(`[OUTPUT]: '${cleaned}'`);
-      return cleaned;
-    }
-    console.log(`[OUTPUT]: '${output}'`);
-    return output;
+    const cleaned = output.replace(/\u0120/g, ' ');
+    console.log(`[OUTPUT]: '${cleaned}'`);
+    return cleaned;
   }
 }
