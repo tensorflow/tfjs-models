@@ -211,6 +211,7 @@ async function app() {
   camera = new Context();
 
   await setBackendAndEnvFlags(STATE.flags, STATE.backend);
+  await tf.ready();
   detector = await createDetector();
 
   const runButton = document.getElementById('submit');
