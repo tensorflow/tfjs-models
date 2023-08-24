@@ -216,7 +216,7 @@ async function app() {
   camera = await Camera.setup(STATE.camera);
 
   await setBackendAndEnvFlags(STATE.flags, STATE.backend);
-
+  await tf.ready();
   detector = await createDetector();
   const canvas = document.getElementById('output');
   canvas.width = camera.video.width;

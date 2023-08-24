@@ -34,6 +34,7 @@ describe('ImageToTensorCalculator', () => {
   let timeout: number;
 
   beforeAll(async () => {
+    await tf.ready();
     timeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
     jasmine.DEFAULT_TIMEOUT_INTERVAL = 120000;  // 2mins
 

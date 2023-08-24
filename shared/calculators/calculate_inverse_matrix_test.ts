@@ -25,12 +25,14 @@ describe('calculateInverseMatrix', () => {
       [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]];
 
   it('identity matrix.', async () => {
+    await tf.ready();
     const inverse = calculateInverseMatrix(identity);
 
     expectArraysClose(matrix4x4ToArray(inverse), matrix4x4ToArray(identity));
   });
 
   it('translation.', async () => {
+    await tf.ready();
     const matrix: Matrix4x4 = [
       [1.0, 0.0, 0.0, 2.0],
       [0.0, 1.0, 0.0, -5.0],
@@ -52,6 +54,7 @@ describe('calculateInverseMatrix', () => {
   });
 
   it('scale.', async () => {
+    await tf.ready();
     const matrix: Matrix4x4 = [
       [5.0, 0.0, 0.0, 0.0],
       [0.0, 2.0, 0.0, 0.0],
@@ -73,6 +76,7 @@ describe('calculateInverseMatrix', () => {
   });
 
   it('rotation90.', async () => {
+    await tf.ready();
     const matrix: Matrix4x4 = [
       [0.0, -1.0, 0.0, 0.0],
       [1.0, 0.0, 0.0, 0.0],
@@ -94,6 +98,7 @@ describe('calculateInverseMatrix', () => {
   });
 
   it('precision.', async () => {
+    await tf.ready();
     const matrix: Matrix4x4 = [
       [0.00001, 0.0, 0.0, 0.0], [0.0, 0.00001, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0],
       [0.0, 0.0, 0.0, 1.0]
@@ -112,6 +117,7 @@ describe('calculateInverseMatrix', () => {
 
   it('random matrix.', async () => {
     for (let seed = 1; seed <= 5; ++seed) {
+      await tf.ready();
       const matrix = tf.randomUniform([4, 4], 0, 10, 'float32', seed);
       const inverse =
           calculateInverseMatrix(arrayToMatrix4x4(matrix.dataSync()));
