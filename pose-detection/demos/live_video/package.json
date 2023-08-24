@@ -13,7 +13,7 @@
     "@tensorflow-models/pose-detection": "file:../../dist",
     "@tensorflow/tfjs-backend-wasm": "^4.2.0",
     "@tensorflow/tfjs-backend-webgl": "^4.2.0",
-    "@tensorflow/tfjs-backend-webgpu": "^0.0.1-alpha.17",
+    "@tensorflow/tfjs-backend-webgpu": "^4.2.0",
     "@tensorflow/tfjs-converter": "^4.2.0",
     "@tensorflow/tfjs-core": "^4.2.0",
     "scatter-gl": "0.0.8"
