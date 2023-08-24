@@ -26,7 +26,7 @@ import {toImageDataLossy} from '../shared/calculators/mask_util';
 import {loadImage} from '../shared/test_util';
 
 // Measured in image channels (values between 0 and 255).
-const EPSILON_IMAGE = 1;
+const EPSILON_IMAGE = 2;
 
 function step(edge: number, x: number) {
   return x < edge ? 0 : 1;

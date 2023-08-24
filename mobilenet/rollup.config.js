@@ -16,7 +16,7 @@
  */
 
 import node from 'rollup-plugin-node-resolve';
-import typescript from 'rollup-plugin-typescript2';
+import typescript from '@rollup/plugin-typescript';
 import uglify from 'rollup-plugin-uglify';
 
 const PREAMBLE = `/**
@@ -37,14 +37,14 @@ const PREAMBLE = `/**
     */`;
 
 function minify() {
-  return uglify({output: {preamble: PREAMBLE}});
+  return uglify({ output: { preamble: PREAMBLE } });
 }
 
-function config({plugins = [], output = {}}) {
+function config({ plugins = [], output = {} }) {
   return {
     input: 'src/index.ts',
     plugins: [
-      typescript({tsconfigOverride: {compilerOptions: {module: 'ES2015'}}}),
+      typescript({ tsconfigOverride: { compilerOptions: { module: 'ES2015' } } }),
       node(), ...plugins
     ],
     output: {
@@ -64,13 +64,13 @@ function config({plugins = [], output = {}}) {
 
 export default [
   config(
-      {output: {format: 'umd', name: 'mobilenet', file: 'dist/mobilenet.js'}}),
+    { output: { format: 'umd', name: 'mobilenet', file: 'dist/mobilenet.js' } }),
   config({
     plugins: [minify()],
-    output: {format: 'umd', name: 'mobilenet', file: 'dist/mobilenet.min.js'}
+    output: { format: 'umd', name: 'mobilenet', file: 'dist/mobilenet.min.js' }
   }),
   config({
     plugins: [minify()],
-    output: {format: 'es', file: 'dist/mobilenet.esm.js'}
+    output: { format: 'es', file: 'dist/mobilenet.esm.js' }
   })
 ];
