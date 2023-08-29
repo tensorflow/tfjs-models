@@ -50,9 +50,7 @@ function config({plugins = [], output = {}, tsCompilerOptions = {}}) {
       banner: PREAMBLE,
       globals: {
         '@tensorflow/tfjs-core': 'tf',
-        '@tensorflow/tfjs-converter': 'tfconv',
-        '@tensorflow/tfjs-backend-webgpu': 'tfwebgpu',
-        '@tensorflow/tfjs-backend-webgl': 'tfwebgl',
+        '@tensorflow/tfjs-converter': 'tf',
         // Package is obfuscated so class is directly attached to globalThis.
         '@mediapipe/pose': 'globalThis'
       },
