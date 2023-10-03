@@ -33,14 +33,8 @@ const dirs = readdirSync('.').filter(f => {
 
 let commitSha = process.env['COMMIT_SHA'];
 let branchName = process.env['BRANCH_NAME'];
-const isNightlyBuild = process.env['nightly'] === 'true';
-
 // If commit sha or branch name are null we are running this locally and are in
 // a git repository.
-if (isNightlyBuild) {
-  branchName = 'master'; // Set to 'master' for nightly builds
-  commitSha = ''; // Set to empty string to trigger the latest commit on 'master'
-}
 if (commitSha == null) {
   commitSha = exec(`git rev-parse HEAD`).stdout.trim();
 }
@@ -49,7 +43,6 @@ if (branchName == null) {
 }
 console.log('commitSha: ', commitSha);
 console.log('branchName: ', branchName);
-console.log('isNightlyBuild:', isNightlyBuild);
 
 // We cannot do --depth=1 here because we need to check out an old merge base.
 // We cannot do --single-branch here because we need multiple branches.
