@@ -26,7 +26,7 @@
     "@rollup/plugin-typescript": "^3.0.0",
     "@tensorflow/tfjs-converter": "^4.12.0-rc.0",
     "@tensorflow/tfjs-core": "^4.12.0-rc.0",
-    "@tensorflow/tfjs-tflite": "4.12.0-rc.0",
+    "@tensorflow/tfjs-tflite": "0.0.1-alpha.3",
     "@tensorflow-models/mobilenet": "link:../mobilenet",
     "@tensorflow-models/coco-ssd": "link:../coco-ssd",
     "@tensorflow-models/deeplab": "link:../deeplab",
