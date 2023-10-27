@@ -14,9 +14,9 @@
   },
   "peerDependencies": {
     "@mediapipe/face_mesh": "~0.4.0",
-    "@tensorflow/tfjs-backend-webgl": "^4.9.0",
-    "@tensorflow/tfjs-converter": "^4.9.0",
-    "@tensorflow/tfjs-core": "^4.9.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.12.0",
+    "@tensorflow/tfjs-converter": "^4.12.0",
+    "@tensorflow/tfjs-core": "^4.12.0",
     "@tensorflow-models/face-detection": "~1.0.0"
   },
   "devDependencies": {
@@ -26,10 +26,10 @@
     "@rollup/plugin-commonjs": "^21.0.2",
     "@rollup/plugin-node-resolve": "^7.1.1",
     "@rollup/plugin-typescript": "^3.0.0",
-    "@tensorflow/tfjs-backend-cpu": "^4.9.0",
-    "@tensorflow/tfjs-backend-webgl": "^4.9.0",
-    "@tensorflow/tfjs-converter": "^4.9.0",
-    "@tensorflow/tfjs-core": "^4.9.0",
+    "@tensorflow/tfjs-backend-cpu": "^4.12.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.12.0",
+    "@tensorflow/tfjs-converter": "^4.12.0",
+    "@tensorflow/tfjs-core": "^4.12.0",
     "@tensorflow-models/face-detection": "^1.0.0",
     "@types/jasmine": "~2.8.8",
     "babel-core": "~6.26.0",
