@@ -14,6 +14,8 @@
     "@tensorflow/tfjs-backend-wasm": "^4.10.0",
     "@tensorflow/tfjs-backend-webgl": "^4.10.0",
     "@tensorflow/tfjs-backend-webgpu": "^4.10.0",
+    "@tensorflow/tfjs-core": "link:../../../tfjs/link-package/node_modules/@tensorflow/tfjs-core",
+    "@tensorflow/tfjs-layers": "link:../../../tfjs/link-package/node_modules/@tensorflow/tfjs-layers",
     "lil-gui": "^0.18.2"
   },
   "devDependencies": {

@@ -23,18 +23,27 @@ limitations under the License.
     .model-textbox {
         flex-grow: 1;
         min-height: 10em;
+        word-wrap: break-word;
     }
     .generate-button {
-
+      border-radius: 10%;
+    }
+    .controls {
+      display: flex;
+      justify-content: space-between;
     }
   </style>
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
 </head>
 <body>
   <h1>GPT2</h1>
   <script src="bundle.js" defer></script>
   <div class="model-div">
-    <textarea class="model-textbox" type="text">I like walking my dog at </textarea>
+    <textarea class="model-textbox" value="airplane at airport">airplane at airport</textarea>
   </div>
-  <button disabled="true" class="generate-button" type="button">Generate</button>
+  <div class="controls">
+    <div class="status"></div>
+    <button disabled="true" class="generate-button" type="button">Generate</button>
+  </div>
 
 </body>

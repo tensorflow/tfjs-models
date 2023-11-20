@@ -1,3 +1,12 @@
-import {makeRollupConfig} from '../tools/make_rollup_config.mjs';
+import typescript from "rollup-plugin-typescript2";
+import json from '@rollup/plugin-json';
 
-export default makeRollupConfig({name: 'gpt2'});
+export default {
+  input: './src/gpt2.ts',
+  plugins: [
+    typescript({
+      tsconfig: "./tsconfig.json",
+    }),
+    json()
+  ]
+};

@@ -15,16 +15,46 @@
  * =============================================================================
  */
 
-export class GPT2 {
-  // @pforderique feel free to change the API
-  // This api should be friendly to JS users.
-  async generate(input: string): Promise<string> {
-    // Fake delay for where the model will run.
-    await new Promise((resolve) => {
-      setTimeout(resolve, 300);
+import * as tf from '@tensorflow/tfjs-core';
+import * as tfl from '@tensorflow/tfjs-layers';
+
+import * as config from './vocab.json';
+
+export function createDefaultGPT2() {
+    console.log('VOCAB SIZE:', Object.keys(config.vocabulary).length);
+    const vocabulary = new Map(Object.entries(config.vocabulary));
+    const merges = config.merges;
+
+    const preprocessor = new tfl.GPT2CausalLMPreprocessor({
+      tokenizer: new tfl.GPT2Tokenizer({vocabulary, merges}),
+      sequenceLength: 30
     });
 
-    console.log(`got input '${input}'`);
-    return ' the park';
+    const backbone = new tfl.GPT2Backbone({
+      vocabularySize: preprocessor.tokenizer.vocabularySize,
+      numLayers: 4, // 12, // 4,
+      numHeads: 4, // 12, // 4,
+      hiddenDim: 64, // 768, // 8,
+      intermediateDim: 128, // 3072, // 16,
+      maxSequenceLength: preprocessor.packer.sequenceLength,
+    });
+
+    const gpt2 = new tfl.GPT2CausalLM({backbone, preprocessor});
+    return gpt2;
+}
+
+export class GPT2 {
+
+  constructor(private gpt2?: tfl.GPT2CausalLM) {}
+
+  // This api should be friendly to JS users.
+  async generate(input: string): Promise<string> {
+    console.log(`[INPUT]: '${input}'`);
+    const inputTensor = tf.tensor([input, input]);
+    const outputTensor = this.gpt2.generate(inputTensor);
+    const output = (outputTensor.dataSync() as unknown as string[])[0];
+    const cleaned = output.replace(/\u0120/g, ' ');
+    console.log(`[OUTPUT]: '${cleaned}'`);
+    return cleaned;
   }
 }

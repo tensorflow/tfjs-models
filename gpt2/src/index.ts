@@ -16,13 +16,28 @@
  */
 
 import * as tf from '@tensorflow/tfjs-core';
-import {GPT2} from './gpt2';
+import * as tfl from '@tensorflow/tfjs-layers';
+import '@tensorflow/tfjs-core/dist/public/chained_ops/register_all_chained_ops';
+import {GPT2, createDefaultGPT2} from './gpt2';
 export {GPT2} from './gpt2';
+
+// const MODEL_PATH = `http://orderique.c.googlers.com:8080/model_data/model.json`;
+// const MODEL_PATH = `http://localhost:8000/model_data/modelsmall.json`;
+const MODEL_PATH = `http://localhost:8000/model_data/model.json`;
+// const MODEL_PATH = 'https://storage.googleapis.com/tfjs-testing/gpt2-temp/model.json';
 
 // Note that while `tfjs-core` is availble here, we shouldn't import any backends.
 // Let the user choose which backends they want in their bundle.
-tf; // Prevent it from complaining about unused variables
+tf; tfl; createDefaultGPT2; MODEL_PATH; // Prevent it from complaining about unused variables
 
 export async function load(): Promise<GPT2>{
-  return new GPT2();
+  console.log('gpt2 loading...');
+  const startTime = performance.now();
+
+  const gpt2 = (await tfl.loadLayersModel(MODEL_PATH)) as tfl.GPT2CausalLM;
+  // const gpt2 = createDefaultGPT2();
+
+  const totalTime = Math.round((performance.now() - startTime) / 1000);
+  console.log(`gpt2 loaded in ${totalTime}s.`);
+  return new GPT2(gpt2);
 }
