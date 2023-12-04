@@ -10,50 +10,41 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================-->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1.0, user-scalable=no">
-  <style>
-    body {
-      margin: 0;
-    }
-    #stats {
-      position: relative;
-      width: 100%;
-      height: 80px;
-    }
-    #main {
-      position: relative;
-      margin: 0;
-    }
-    #canvas-wrapper,
-    #scatter-gl-container {
-      position: relative;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MoveNet Live Pose Estimator with Bar Graph</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script type="module">
+        import { detectPoseInRealTime } from './index.js';
+
+        // Add a canvas for rendering the bar graph
+        const canvas = document.createElement('canvas');
+        document.body.appendChild(canvas);
+        const ctx = canvas.getContext('2d');
+
+        // Set up MoveNet and render the bar graph
+        detectPoseInRealTime(video, net, (pose) => {
+            const hipY = pose.keypoints.find(keypoint => keypoint.part === 'leftHip').position.y;
+            
+            // Clear the canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw the bar graph
+            const barWidth = 50;
+            const barHeight = hipY;
+            ctx.fillStyle = 'blue';
+            ctx.fillRect(10, canvas.height - barHeight, barWidth, barHeight);
+
+            // You can customize the appearance of the bar graph as needed
+        });
+    </script>
 </head>
 <body>
-  <div id="stats"></div>
-  <div id="main">
-    <div class="container">
-      <div class="canvas-wrapper">
-        <canvas id="output"></canvas>
-        <video id="video" playsinline style="
-          -webkit-transform: scaleX(-1);
-          transform: scaleX(-1);
-          visibility: hidden;
-          width: auto;
-          height: auto;
-          ">
-        </video>
-      </div>
-      <div id="scatter-gl-container"></div>
-    </div>
-  </div>
+    <h1>MoveNet Live Pose Estimator with Bar Graph</h1>
+    <video playsinline style="display: none;"></video>
+    <script type="module" src="./index.js"></script>
 </body>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.6/dat.gui.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/r16/Stats.min.js"></script>
-<script src="src/index.js"></script>
-
 </html>
+
