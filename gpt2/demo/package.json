@@ -11,13 +11,13 @@
   },
   "dependencies": {
     "@tensorflow-models/gpt2": "link:../",
-    "@tensorflow/tfjs-backend-wasm": "^4.13.0",
-    "@tensorflow/tfjs-backend-webgl": "^4.13.0",
-    "@tensorflow/tfjs-backend-webgpu": "^4.13.0",
+    "@tensorflow/tfjs-backend-wasm": "^4.14.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.14.0",
+    "@tensorflow/tfjs-backend-webgpu": "^4.14.0",
     "lil-gui": "^0.18.2"
   },
   "devDependencies": {
-    "@tensorflow/tfjs-backend-cpu": "^4.13.0",
+    "@tensorflow/tfjs-backend-cpu": "^4.14.0",
     "esbuild": "^0.19.0",
     "eslint": "^8.46.0",
     "eslint-config-google": "^0.14.0",
