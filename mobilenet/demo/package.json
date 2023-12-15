@@ -10,10 +10,10 @@
   },
   "dependencies": {
     "@tensorflow-models/mobilenet": "file:../dist",
-    "@tensorflow/tfjs-backend-cpu": "^4.14.0",
-    "@tensorflow/tfjs-backend-webgl": "^4.14.0",
-    "@tensorflow/tfjs-converter": "^4.14.0",
-    "@tensorflow/tfjs-core": "^4.14.0"
+    "@tensorflow/tfjs-backend-cpu": "^4.15.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.15.0",
+    "@tensorflow/tfjs-converter": "^4.15.0",
+    "@tensorflow/tfjs-core": "^4.15.0"
   },
   "scripts": {
     "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr --open",
