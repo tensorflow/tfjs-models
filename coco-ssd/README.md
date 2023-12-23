@@ -5,7 +5,7 @@ Object detection model that aims to localize and identify multiple objects in a 
 This model is a TensorFlow.js port of the COCO-SSD model. For more information about Tensorflow object detection API, check out this readme in
 [tensorflow/object_detection](https://github.com/tensorflow/models/blob/master/research/object_detection/README.md).
 
-This model detects objects defined in the COCO dataset, which is a large-scale object detection, segmentation, and captioning dataset. You can find more information [here](http://cocodataset.org/#home). The model is capable of detecting [80 classes of objects](https://github.com/tensorflow/tfjs-models/blob/master/coco-ssd/src/classes.ts). (SSD stands for Single Shot MultiBox Detection).
+This model detects objects defined in the COCO dataset, which is a large-scale object detection, segmentation, and captioning dataset. You can find more information [here](http://cocodataset.org/#home). The model is capable of detecting [90 classes of objects](https://github.com/tensorflow/tfjs-models/blob/master/coco-ssd/src/classes.ts). (SSD stands for Single Shot MultiBox Detection).
 
 This TensorFlow.js model does not require you to know about machine learning.
 It can take input as any browser-based image elements (`<img>`, `<video>`, `<canvas>`
