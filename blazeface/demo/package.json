@@ -10,10 +10,10 @@
   },
   "dependencies": {
     "@tensorflow-models/blazeface": "link:../",
-    "@tensorflow/tfjs-backend-wasm": "^4.15.0",
-    "@tensorflow/tfjs-backend-webgl": "^4.15.0",
-    "@tensorflow/tfjs-converter": "^4.15.0",
-    "@tensorflow/tfjs-core": "^4.15.0"
+    "@tensorflow/tfjs-backend-wasm": "^4.16.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.16.0",
+    "@tensorflow/tfjs-converter": "^4.16.0",
+    "@tensorflow/tfjs-core": "^4.16.0"
   },
   "scripts": {
     "watch": "esbuild index.js --bundle --outfile=bundle.js --target=es6 --servedir=. --serve --sourcemap --sources-content=true --preserve-symlinks",
