@@ -34,9 +34,12 @@ declare interface ModelInputs extends tf.NamedTensorMap {
  * to detect. Labels must be one of `toxicity` | `severe_toxicity` |
  * `identity_attack` | `insult` | `threat` | `sexual_explicit` | `obscene`.
  * Defaults to all labels.
+ * @param modelURL. URL to load model from. Defaults to tfhub.dev.
  */
-export async function load(threshold: number, toxicityLabels: string[]) {
+export async function load(threshold: number, toxicityLabels: string[],
+    modelURL: 'https://tfhub.dev/tensorflow/tfjs-model/toxicity/1/default/1') {
   const model = new ToxicityClassifier(threshold, toxicityLabels);
+  model.setModelURL(modelURL);
   await model.load();
   return model;
 }
@@ -47,16 +50,19 @@ export class ToxicityClassifier {
   private labels: string[];
   private threshold: number;
   private toxicityLabels: string[];
+  private modelURL: string;
 
   constructor(threshold = 0.85, toxicityLabels: string[] = []) {
     this.threshold = threshold;
     this.toxicityLabels = toxicityLabels;
   }
 
+  setModelURL(url: string) {
+    this.modelURL = url
+  }
+
   async loadModel() {
-    return tfconv.loadGraphModel(
-        'https://tfhub.dev/tensorflow/tfjs-model/toxicity/1/default/1',
-        {fromTFHub: true});
+    return tfconv.loadGraphModel(this.modelURL, {fromTFHub: true});
   }
 
   async loadTokenizer() {
