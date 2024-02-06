@@ -10,9 +10,9 @@
   },
   "dependencies": {
     "@tensorflow-models/posenet": "file:../dist",
-    "@tensorflow/tfjs-backend-webgl": "^4.16.0",
-    "@tensorflow/tfjs-converter": "^4.16.0",
-    "@tensorflow/tfjs-core": "^4.16.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.17.0",
+    "@tensorflow/tfjs-converter": "^4.17.0",
+    "@tensorflow/tfjs-core": "^4.17.0",
     "stats.js": "^0.17.0"
   },
   "scripts": {
