@@ -35,7 +35,7 @@ declare interface ModelInputs extends tf.NamedTensorMap {
  * `identity_attack` | `insult` | `threat` | `sexual_explicit` | `obscene`.
  * Defaults to all labels.
  */
-export async function load(threshold: number, toxicityLabels: string[]) {
+export async function load(threshold?: number, toxicityLabels?: string[]) {
   const model = new ToxicityClassifier(threshold, toxicityLabels);
   await model.load();
   return model;
