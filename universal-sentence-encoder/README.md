@@ -103,10 +103,12 @@ use.loadQnA().then(model => {
   //   responses: Response[];
   // }
   // queries is an array of question strings
-  // responses is an array of following structure:
+  // To add context to support the answer,  context is also an Array of string corresponding to the answers.
+  // the input to the embed method would be
   // {
-  //   response: string;
-  //   context?: string;
+  //    queries:string[];
+  //    responses:string[];
+  //    context:string[];   
   // }
   // context is optional, it provides the context string of the answer.
 
