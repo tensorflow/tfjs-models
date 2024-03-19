@@ -104,8 +104,10 @@ export class KNNClassifier {
         let newTrainLogitsMatrix = null;
 
         for (const label in this.classDatasetMatrices) {
+          const newTrainLogitsMatrixToDispose = newTrainLogitsMatrix;
           newTrainLogitsMatrix = concatWithNulls(
               newTrainLogitsMatrix, this.classDatasetMatrices[label]);
+          newTrainLogitsMatrixToDispose?.dispose();
         }
         this.trainDatasetMatrix = newTrainLogitsMatrix;
       }
