@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@tensorflow-models/toxicity": "file:../dist",
-    "@tensorflow/tfjs": "^1.3.3"
+    "@tensorflow/tfjs": "^4.13.0"
   },
   "scripts": {
     "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr --open ",

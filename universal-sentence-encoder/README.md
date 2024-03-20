@@ -10,7 +10,7 @@ In [this demo](./demo/index.js) we embed six sentences with the USE, and render 
 
 *The matrix shows that USE embeddings can be used to cluster sentences by similarity.*
 
-The sentences (taken from the [TensorFlow Hub USE lite colab](https://colab.sandbox.google.com/github/tensorflow/hub/blob/master/examples/colab/semantic_similarity_with_tf_hub_universal_encoder_lite.ipynb#scrollTo=_GSCW5QIBKVe)):
+The sentences (taken from the [TensorFlow Hub USE lite colab](https://github.com/tensorflow/docs/blob/master/site/en/hub/tutorials/semantic_similarity_with_tf_hub_universal_encoder_lite.ipynb)):
 1. I like my phone.
 2. Your cellphone looks great.
 3. How old are you?

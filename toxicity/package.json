@@ -13,15 +13,15 @@
     "url": "https://github.com/tensorflow/tfjs-models.git"
   },
   "peerDependencies": {
-    "@tensorflow/tfjs-converter": "^3.3.0",
-    "@tensorflow/tfjs-core": "^3.3.0"
+    "@tensorflow/tfjs-converter": "^4.13.0",
+    "@tensorflow/tfjs-core": "^4.13.0"
   },
   "dependencies": {
     "@tensorflow-models/universal-sentence-encoder": "~1.2.2"
   },
   "devDependencies": {
-    "@tensorflow/tfjs-converter": "^3.3.0",
-    "@tensorflow/tfjs-core": "^3.3.0",
+    "@tensorflow/tfjs-converter": "^4.13.0",
+    "@tensorflow/tfjs-core": "^4.13.0",
     "@types/jasmine": "~3.6.8",
     "babel-core": "^6.26.3",
     "jasmine": "^3.3.1",
