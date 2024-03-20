@@ -91,7 +91,7 @@ and can be used as building blocks in other apps.
     <td rowspan="2"><b>Audio</b></td>
     <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./speech-commands"><div style='vertical-align:middle; display:inline;'>Speech Commands</div></a></b></td>
     <td><a href="https://storage.googleapis.com/tfjs-speech-model-test/2019-01-03a/dist/index.html">live</a></td>
-    <td rowspan="2">Classify 1 second audio snippets from the <a href="https://www.tensorflow.org/tutorials/sequences/audio_recognition">speech commands dataset</a>.</td>
+    <td rowspan="2">Classify 1 second audio snippets from the <a href="https://www.tensorflow.org/tutorials/audio/simple_audio">speech commands dataset</a>.</td>
     <td rowspan="2"><code>npm i @tensorflow-models/speech-commands</code></td>
   </tr>
   <tr>
