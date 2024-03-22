@@ -8,12 +8,22 @@ This demo shows how to use the GPT2 model to generate text.
 
 cd into the `gpt2` folder. From the root of the repo, this is located at `gpt2/`. From the demo, it's `../`.
 
+Compares the actual contents of node_modules with the expected contents listed in yarn.lock.  If any dependencies are missing, the command installs them.
+```sh
+yarn build-deps
+```
+
 Install dependencies:
 ```sh
 yarn
 ```
 
 cd into the demo and install dependencies:
+
+Compares the actual contents of node_modules with the expected contents listed in yarn.lock.  If any dependencies are missing, the command installs them.
+```sh
+yarn build-deps
+```
 
 ```sh
 cd demo
