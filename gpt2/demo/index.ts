@@ -55,10 +55,10 @@ const backendController = gui.add(state, 'backend', ['wasm', 'webgl', 'webgpu', 
 const textElement = document.querySelector(".model-textbox") as HTMLTextAreaElement;
 
 function setText(text: string) {
-  textElement.textContent = text;
+  textElement.value = text;
 }
 function getText() {
-  return textElement.textContent || '';
+  return textElement.value || '';
 }
 
 const button = document.querySelector('.generate-button') as HTMLButtonElement;
