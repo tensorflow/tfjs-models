@@ -26,77 +26,77 @@ export const CLASSES: {[key: string]: ObjectDetectionClass} = {
   1: {
     name: '/m/01g317',
     id: 1,
-    displayName: 'person',
+    displayName: 'plastic bottle',
   },
   2: {
     name: '/m/0199g',
     id: 2,
-    displayName: 'bicycle',
+    displayName: 'bottle',
   },
   3: {
     name: '/m/0k4j',
     id: 3,
-    displayName: 'car',
+    displayName: 'plastic bags',
   },
   4: {
     name: '/m/04_sv',
     id: 4,
-    displayName: 'motorcycle',
+    displayName: 'paper plates',
   },
   5: {
     name: '/m/05czz6l',
     id: 5,
-    displayName: 'airplane',
+    displayName: 'paper bags',
   },
   6: {
     name: '/m/01bjv',
     id: 6,
-    displayName: 'bus',
+    displayName: 'aluminium can',
   },
   7: {
     name: '/m/07jdr',
     id: 7,
-    displayName: 'train',
+    displayName: 'paper cup',
   },
   8: {
     name: '/m/07r04',
     id: 8,
-    displayName: 'truck',
+    displayName: 'crushed can',
   },
   9: {
     name: '/m/019jd',
     id: 9,
-    displayName: 'boat',
+    displayName: 'aluminium can',
   },
   10: {
     name: '/m/015qff',
     id: 10,
-    displayName: 'traffic light',
+    displayName: 'packet juice',
   },
   11: {
     name: '/m/01pns0',
     id: 11,
-    displayName: 'fire hydrant',
+    displayName: 'glass pieces',
   },
   13: {
     name: '/m/02pv19',
     id: 13,
-    displayName: 'stop sign',
+    displayName: 'cigarette butts',
   },
   14: {
     name: '/m/015qbp',
     id: 14,
-    displayName: 'parking meter',
+    displayName: 'crushed bottle',
   },
   15: {
     name: '/m/0cvnqh',
     id: 15,
-    displayName: 'bench',
+    displayName: 'nets',
   },
   16: {
     name: '/m/015p6',
     id: 16,
-    displayName: 'bird',
+    displayName: 'fishing nets',
   },
   17: {
     name: '/m/01yrx',
@@ -111,17 +111,17 @@ export const CLASSES: {[key: string]: ObjectDetectionClass} = {
   19: {
     name: '/m/03k3r',
     id: 19,
-    displayName: 'horse',
+    displayName: 'person',
   },
   20: {
     name: '/m/07bgp',
     id: 20,
-    displayName: 'sheep',
+    displayName: 'cloth',
   },
   21: {
     name: '/m/01xq0k1',
     id: 21,
-    displayName: 'cow',
+    displayName: 'food waste',
   },
   22: {
     name: '/m/0bwd_0j',
@@ -174,251 +174,121 @@ export const CLASSES: {[key: string]: ObjectDetectionClass} = {
     displayName: 'frisbee',
   },
   35: {
-    name: '/m/071p9',
-    id: 35,
-    displayName: 'skis',
-  },
-  36: {
     name: '/m/06__v',
     id: 36,
-    displayName: 'snowboard',
+    displayName: 'surfboard',
   },
-  37: {
+  36: {
     name: '/m/018xm',
     id: 37,
     displayName: 'sports ball',
   },
-  38: {
+  37: {
     name: '/m/02zt3',
     id: 38,
     displayName: 'kite',
   },
-  39: {
+  38: {
     name: '/m/03g8mr',
     id: 39,
     displayName: 'baseball bat',
   },
-  40: {
+  39: {
     name: '/m/03grzl',
     id: 40,
     displayName: 'baseball glove',
   },
-  41: {
+  40: {
     name: '/m/06_fw',
     id: 41,
     displayName: 'skateboard',
   },
-  42: {
-    name: '/m/019w40',
-    id: 42,
-    displayName: 'surfboard',
-  },
-  43: {
-    name: '/m/0dv9c',
-    id: 43,
-    displayName: 'tennis racket',
-  },
-  44: {
-    name: '/m/04dr76w',
-    id: 44,
-    displayName: 'bottle',
-  },
-  46: {
+  41: {
     name: '/m/09tvcd',
     id: 46,
     displayName: 'wine glass',
   },
-  47: {
+  42: {
     name: '/m/08gqpm',
     id: 47,
     displayName: 'cup',
   },
-  48: {
+  43: {
     name: '/m/0dt3t',
     id: 48,
     displayName: 'fork',
   },
-  49: {
+  44: {
     name: '/m/04ctx',
     id: 49,
     displayName: 'knife',
   },
-  50: {
+  45: {
     name: '/m/0cmx8',
     id: 50,
     displayName: 'spoon',
   },
-  51: {
+  46: {
     name: '/m/04kkgm',
     id: 51,
     displayName: 'bowl',
   },
-  52: {
+  47: {
     name: '/m/09qck',
     id: 52,
     displayName: 'banana',
   },
-  53: {
+  48: {
     name: '/m/014j1m',
     id: 53,
     displayName: 'apple',
   },
-  54: {
+  49: {
     name: '/m/0l515',
     id: 54,
     displayName: 'sandwich',
   },
-  55: {
+  50: {
     name: '/m/0cyhj_',
     id: 55,
     displayName: 'orange',
   },
-  56: {
+  51: {
     name: '/m/0hkxq',
     id: 56,
     displayName: 'broccoli',
   },
-  57: {
+  52: {
     name: '/m/0fj52s',
     id: 57,
     displayName: 'carrot',
   },
-  58: {
+  53: {
     name: '/m/01b9xk',
     id: 58,
-    displayName: 'hot dog',
+    displayName: 'ice cream cup',
   },
-  59: {
+  54: {
     name: '/m/0663v',
     id: 59,
-    displayName: 'pizza',
+    displayName: 'paper',
   },
-  60: {
+  55: {
     name: '/m/0jy4k',
     id: 60,
     displayName: 'donut',
   },
-  61: {
+  56: {
     name: '/m/0fszt',
     id: 61,
-    displayName: 'cake',
+    displayName: 'cardboard',
   },
-  62: {
-    name: '/m/01mzpv',
-    id: 62,
-    displayName: 'chair',
-  },
-  63: {
-    name: '/m/02crq1',
-    id: 63,
-    displayName: 'couch',
-  },
-  64: {
-    name: '/m/03fp41',
-    id: 64,
-    displayName: 'potted plant',
-  },
-  65: {
-    name: '/m/03ssj5',
-    id: 65,
-    displayName: 'bed',
-  },
-  67: {
-    name: '/m/04bcr3',
-    id: 67,
-    displayName: 'dining table',
-  },
-  70: {
-    name: '/m/09g1w',
-    id: 70,
-    displayName: 'toilet',
-  },
-  72: {
-    name: '/m/07c52',
-    id: 72,
-    displayName: 'tv',
-  },
-  73: {
-    name: '/m/01c648',
-    id: 73,
-    displayName: 'laptop',
-  },
-  74: {
-    name: '/m/020lf',
-    id: 74,
-    displayName: 'mouse',
-  },
-  75: {
-    name: '/m/0qjjc',
-    id: 75,
-    displayName: 'remote',
-  },
-  76: {
-    name: '/m/01m2v',
-    id: 76,
-    displayName: 'keyboard',
-  },
-  77: {
-    name: '/m/050k8',
-    id: 77,
-    displayName: 'cell phone',
-  },
-  78: {
-    name: '/m/0fx9l',
-    id: 78,
-    displayName: 'microwave',
-  },
-  79: {
-    name: '/m/029bxz',
-    id: 79,
-    displayName: 'oven',
-  },
-  80: {
-    name: '/m/01k6s3',
-    id: 80,
-    displayName: 'toaster',
-  },
-  81: {
-    name: '/m/0130jx',
-    id: 81,
-    displayName: 'sink',
-  },
-  82: {
-    name: '/m/040b_t',
-    id: 82,
-    displayName: 'refrigerator',
-  },
-  84: {
+  57: {
     name: '/m/0bt_c3',
     id: 84,
     displayName: 'book',
   },
-  85: {
-    name: '/m/01x3z',
-    id: 85,
-    displayName: 'clock',
-  },
-  86: {
-    name: '/m/02s195',
-    id: 86,
-    displayName: 'vase',
-  },
-  87: {
-    name: '/m/01lsmm',
-    id: 87,
-    displayName: 'scissors',
-  },
-  88: {
-    name: '/m/0kmg4',
-    id: 88,
-    displayName: 'teddy bear',
-  },
-  89: {
-    name: '/m/03wvsk',
-    id: 89,
-    displayName: 'hair drier',
-  },
-  90: {
+  58: {
     name: '/m/012xff',
     id: 90,
     displayName: 'toothbrush',
