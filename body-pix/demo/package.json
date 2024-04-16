@@ -11,9 +11,9 @@
   "dependencies": {
     "@tensorflow-models/body-pix": "link:../",
     "@tensorflow-models/posenet": "^2.2.2",
-    "@tensorflow/tfjs-backend-webgl": "^4.17.0",
-    "@tensorflow/tfjs-converter": "^4.17.0",
-    "@tensorflow/tfjs-core": "^4.17.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.18.0-rc.0",
+    "@tensorflow/tfjs-converter": "^4.18.0-rc.0",
+    "@tensorflow/tfjs-core": "^4.18.0-rc.0",
     "stats.js": "0.17.0"
   },
   "scripts": {
