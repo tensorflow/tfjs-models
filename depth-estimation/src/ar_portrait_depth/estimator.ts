@@ -128,7 +128,7 @@ class ARPortraitDepthEstimator implements DepthEstimator {
       // Shape after expansion is [1, height, width, 3].
       const batchInput = tf.expandDims(imageResized);
 
-      // Depth prediction (ouput shape is [1, height, width, 1]).
+      // Depth prediction (output shape is [1, height, width, 1]).
       const depth4D = this.estimatorModel.predict(batchInput) as tf.Tensor4D;
 
       // Normalize to user requirements.

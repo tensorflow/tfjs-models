@@ -29,7 +29,7 @@ class GlTextureImpl {
   }
 }
 
-// A wrapper class for WebGL texture and its associted framebuffer and utility
+// A wrapper class for WebGL texture and its associated framebuffer and utility
 // functions.
 class GlTextureFramebuffer extends GlTextureImpl {
   constructor(gl, framebuffer, texture, width, height) {
