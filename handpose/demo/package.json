@@ -10,10 +10,10 @@
   },
   "dependencies": {
     "@tensorflow-models/handpose": "file:../dist",
-    "@tensorflow/tfjs-core": "^4.18.0",
-    "@tensorflow/tfjs-converter": "^4.18.0",
-    "@tensorflow/tfjs-backend-webgl": "^4.18.0",
-    "@tensorflow/tfjs-backend-wasm": "^4.18.0"
+    "@tensorflow/tfjs-core": "^4.19.0",
+    "@tensorflow/tfjs-converter": "^4.19.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.19.0",
+    "@tensorflow/tfjs-backend-wasm": "^4.19.0"
   },
   "scripts": {
     "watch": "cross-env NODE_ENV=development parcel index.html --no-hmr ",
