@@ -52,5 +52,11 @@
     "build-npm": "yarn build && rollup -c",
     "test": "ts-node --skip-ignore --project tsconfig.test.json run_tests.ts"
   },
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "browser": {
+    "node-fetch": false,
+    "util": false,
+    "crypto": false,
+    "fs": false
+  }
 }
