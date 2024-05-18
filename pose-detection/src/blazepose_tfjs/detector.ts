@@ -384,7 +384,7 @@ class BlazePoseTfjsDetector implements PoseDetector {
       rotationVectorTargetAngleDegree: 90
     });
 
-    // Expands pose rect with marging used during training.
+    // Expands pose rect with margin used during training.
     // PoseDetectionToRoi: RectTransformationCalculation.
     const roi = transformNormalizedRect(
         rawRoi, imageSize,
@@ -644,7 +644,7 @@ class BlazePoseTfjsDetector implements PoseDetector {
       rotationVectorTargetAngleDegree: 90
     });
 
-    // Expands pose rect with marging used during training.
+    // Expands pose rect with margin used during training.
     // PoseLandmarksToRoi: RectTransformationCalculator.
     const roi = transformNormalizedRect(
         rawRoi, imageSize,
