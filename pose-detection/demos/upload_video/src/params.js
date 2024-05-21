@@ -39,7 +39,7 @@ export const MOVENET_CONFIG = {
   scoreThreshold: 0.3
 };
 /**
- * This map descripes tunable flags and theior corresponding types.
+ * This map describes tunable flags and theior corresponding types.
  *
  * The flags (keys) in the map satisfy the following two conditions:
  * - Is tunable. For example, `IS_BROWSER` and `IS_CHROME` is not tunable,
