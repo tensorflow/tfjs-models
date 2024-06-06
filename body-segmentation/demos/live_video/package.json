@@ -13,9 +13,9 @@
     "@mediapipe/selfie_segmentation": "~0.1.0",
     "@tensorflow-models/body-segmentation": "file:../../dist",
     "@tensorflow-models/pose-detection": "file:../../../pose-detection/dist",
-    "@tensorflow/tfjs-backend-wasm": "^4.19.0",
-    "@tensorflow/tfjs-backend-webgl": "^4.19.0",
-    "@tensorflow/tfjs-converter": "^4.19.0",
+    "@tensorflow/tfjs-backend-wasm": "^4.20.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.20.0",
+    "@tensorflow/tfjs-converter": "^4.20.0",
     "scatter-gl": "0.0.8"
   },
   "scripts": {
