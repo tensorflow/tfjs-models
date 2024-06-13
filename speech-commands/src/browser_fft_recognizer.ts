@@ -35,10 +35,42 @@ export const SAVED_MODEL_METADATA_KEY =
     'tfjs-speech-commands-saved-model-metadata';
 export const SAVE_PATH_PREFIX = 'indexeddb://tfjs-speech-commands-model/';
 
+/**
+ * Cross-browser way to check for localStorage
+ * necessary eg. when embedded in iframes
+ * from: https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API/Using_the_Web_Storage_API#Feature-detecting_localStorage
+ */
+function storageAvailable(type) {
+    let storage;
+    try {
+        storage = window[type];
+        const testItem = '__storage_test__';
+        storage.setItem(testItem, testItem);
+        storage.removeItem(testItem);
+        return true;
+    }
+    catch(e) {
+        return e instanceof DOMException && (
+            // everything except Firefox
+            e.code === 22 ||
+            // Firefox
+            e.code === 1014 ||
+            // test name field too, because code might not be present
+            // everything except Firefox
+            e.name === 'QuotaExceededError' ||
+            // Firefox
+            e.name === 'NS_ERROR_DOM_QUOTA_REACHED') &&
+            // acknowledge QuotaExceededError only if something is stored
+            (storage && storage.length !== 0);
+    }
+}
+
 // Export a variable for injection during unit testing.
 // tslint:disable-next-line:no-any
 export let localStorageWrapper = {
-  localStorage: typeof window === 'undefined' ? null : window.localStorage
+  localStorage:
+    (typeof window === 'undefined' || !storageAvailable('localStorage')) ?
+    null : window.localStorage
 };
 
 export function getMajorAndMinorVersion(version: string) {
