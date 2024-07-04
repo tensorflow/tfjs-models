@@ -39,7 +39,7 @@ export interface DetectedObject {
  */
 export interface ModelConfig {
   /**
-   * It determines wich object detection architecture to load. The supported
+   * It determines which object detection architecture to load. The supported
    * architectures are: 'mobilenet_v1', 'mobilenet_v2' and 'lite_mobilenet_v2'.
    * It is default to 'lite_mobilenet_v2'.
    */
@@ -212,7 +212,7 @@ export class ObjectDetection {
 
   /**
    * Detect objects for an image returning a list of bounding boxes with
-   * assocated class and score.
+   * associated class and score.
    *
    * @param img The image to detect objects from. Can be a tensor or a DOM
    *     element image, video, or canvas.

@@ -24,7 +24,7 @@ export type MobileNetMultiplier = 0.50|0.75|1.0;
 /**
  * Additional PoseNet model loading config.
  *
- * `architecture`: PoseNetArchitecture. It determines wich PoseNet architecture
+ * `architecture`: PoseNetArchitecture. It determines which PoseNet architecture
  * to load. The supported architectures are: MobileNetV1 and ResNet.
  *
  * `outputStride`: Specifies the output stride of the PoseNet model.

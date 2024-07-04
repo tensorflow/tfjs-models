@@ -10,10 +10,10 @@
   },
   "dependencies": {
     "@tensorflow-models/coco-ssd": "file:../dist",
-    "@tensorflow/tfjs-backend-cpu": "^4.17.0",
-    "@tensorflow/tfjs-backend-webgl": "^4.17.0",
-    "@tensorflow/tfjs-core": "^4.17.0",
-    "@tensorflow/tfjs-converter": "^4.17.0",
+    "@tensorflow/tfjs-backend-cpu": "^4.20.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.20.0",
+    "@tensorflow/tfjs-core": "^4.20.0",
+    "@tensorflow/tfjs-converter": "^4.20.0",
     "stats.js": "^0.17.0"
   },
   "scripts": {
