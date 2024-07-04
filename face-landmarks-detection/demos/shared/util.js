@@ -40,7 +40,7 @@ export function isMobile() {
 async function resetBackend(backendName) {
   const ENGINE = tf.engine();
   if (!(backendName in ENGINE.registryFactory)) {
-    throw new Error(`${backendName} backend is not registed.`);
+    throw new Error(`${backendName} backend is not registered.`);
   }
 
   if (backendName in ENGINE.registry) {

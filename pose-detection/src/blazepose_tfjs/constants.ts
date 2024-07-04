@@ -165,7 +165,7 @@ export const BLAZEPOSE_WORLD_LANDMARKS_SMOOTHING_CONFIG_ACTUAL = {
     // landmark velocity EMA filter.
     minAllowedObjectScale: 1e-6,
     disableValueScaling:
-        true  // As world landmarks are predicted in real world 3D coordintates
+        true  // As world landmarks are predicted in real world 3D coordinates
     // in meters (rather than in pixels of input image) prediction
     // scale does not depend on the pose size in the image.
   }
