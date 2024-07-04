@@ -47,7 +47,7 @@ out vec4 out_color;
 #define GetDepth(uv) (texture(uDepth, uv).r)
 #define GetColor(uv) (texture(uColor, uv).rgb)
 
-// Computes the aspect ratio for portait and landscape modes.
+// Computes the aspect ratio for portrait and landscape modes.
 vec2 CalculateAspectRatio(in vec2 size) {
   return pow(size.yy / size, vec2(step(size.x, size.y) * 2.0 - 1.0));
 }
@@ -177,7 +177,7 @@ vec3 RenderMotionLights(in vec2 uv) {
   col = smoothstep(0.0, 0.7, col + 0.05);
   col = pow(col, vec3(1.0 / 1.8));
   
-  // Perceptual light radius propotional to percentage in the screen space.
+  // Perceptual light radius proportional to percentage in the screen space.
   float light_radius = 2.0 * atan(kLightRadius, 2.0 * (1.0 - center.z));
 
   float l = distance(center.xy, normalized_uv);

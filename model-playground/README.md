@@ -2,7 +2,7 @@
 
 (TODO)
 
-## Developmenet
+## Development
 
 ### Development server
 

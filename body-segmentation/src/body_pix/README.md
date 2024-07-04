@@ -74,7 +74,7 @@ Pass in `bodySegmentation.SupportedModels.BodyPix` from the
    - `2`. 2 bytes per float. Leads to slightly lower accuracy and 2x model size reduction.
    - `1`. 1 byte per float. Leads to lower accuracy and 4x model size reduction.
 
-   The following table contains the corresponding BodyPix 2.0 model checkpoint sizes (widthout gzip) when using different quantization bytes:
+   The following table contains the corresponding BodyPix 2.0 model checkpoint sizes (without gzip) when using different quantization bytes:
 
      | Architecture       | quantBytes=4 | quantBytes=2 | quantBytes=1 |
      | ------------------ |:------------:|:------------:|:------------:|

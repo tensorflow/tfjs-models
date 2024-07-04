@@ -112,7 +112,7 @@ export class SemanticSegmentation {
 
   /**
    * Segments an arbitrary image and generates a two-dimensional tensor with
-   * class labels assigned to each cell of the grid overlayed on the image ( the
+   * class labels assigned to each cell of the grid overlaid on the image ( the
    * maximum number of cells on the side is fixed to 513).
    *
    * @param input ::
@@ -133,7 +133,7 @@ export class SemanticSegmentation {
 
   /**
    * Segments an arbitrary image and generates a two-dimensional tensor with
-   * class labels assigned to each cell of the grid overlayed on the image ( the
+   * class labels assigned to each cell of the grid overlaid on the image ( the
    * maximum number of cells on the side is fixed to 513).
    *
    * @param image :: `ImageData | HTMLImageElement | HTMLCanvasElement |

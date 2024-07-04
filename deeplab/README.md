@@ -29,7 +29,7 @@ loadModel()
             console.log(`The predicted classes are ${JSON.stringify(legend)}`));
 ```
 
-By default, calling `load` initalizes the PASCAL variant of the model quantized to 2 bytes.
+By default, calling `load` initializes the PASCAL variant of the model quantized to 2 bytes.
 
 If you would rather load custom weights, you can pass the URL in the config instead:
 
@@ -136,7 +136,7 @@ const classify = async (image) => {
 
 ### Producing a Semantic Segmentation Map
 
-To segment an arbitrary image and generate a two-dimensional tensor with class labels assigned to each cell of the grid overlayed on the image (with the maximum number of cells on the side fixed to 513), use the `predict` method of the `SemanticSegmentation` object.
+To segment an arbitrary image and generate a two-dimensional tensor with class labels assigned to each cell of the grid overlaid on the image (with the maximum number of cells on the side fixed to 513), use the `predict` method of the `SemanticSegmentation` object.
 
 #### `model.predict(image)` input
 
