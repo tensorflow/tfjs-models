@@ -44,8 +44,8 @@ The returned face list contains detected faces for each faces in the image.
 If the model cannot detect any faces, the list will be empty.
 
 For each face, it contains a bounding box of the detected face, as well as an array of keypoints.
-MediaPipeFaceMesh returns 468 keypoints.
-Each keypoint contains x and y, as well as a name.
+MediaPipeFaceMesh returns 478 keypoints.
+Each keypoint contains x, y and z as well as a name.
 
 Example output:
 ```
