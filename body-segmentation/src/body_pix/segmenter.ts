@@ -14,40 +14,20 @@
  * limitations under the License.
  * =============================================================================
  */
-import {BodySegmenter} from '../body_segmenter';
-import {Mask, Segmentation} from '../shared/calculators/interfaces/common_interfaces';
-import {assertMaskValue, toHTMLCanvasElementLossy, toTensorLossy} from '../shared/calculators/mask_util';
-import {BodySegmenterInput} from '../types';
+import { BodySegmenter } from "../body_segmenter";
+import { Segmentation } from "../shared/calculators/interfaces/common_interfaces";
+import { assertMaskValue } from "../shared/calculators/mask_util";
+import { BodySegmenterInput } from "../types";
 
-import * as bodyPix from './impl';
-import {BodyPixModelConfig, BodyPixSegmentationConfig} from './types';
-
-class BodyPixMask implements Mask {
-  constructor(private mask: ImageData) {}
-
-  async toCanvasImageSource() {
-    return toHTMLCanvasElementLossy(this.mask);
-  }
-
-  async toImageData() {
-    return this.mask;
-  }
-
-  async toTensor() {
-    return toTensorLossy(this.mask);
-  }
-
-  getUnderlyingType() {
-    return 'imagedata' as const ;
-  }
-}
+import * as bodyPix from "./impl";
+import { BodyPixModelConfig, BodyPixSegmentationConfig } from "./types";
 
 function singleMaskValueToLabel(maskValue: number) {
   assertMaskValue(maskValue);
   if (maskValue !== 255) {
     throw new Error(`Foreground id must be 255 but got ${maskValue}`);
   }
-  return 'person';
+  return "person";
 }
 
 function multiMaskValueToLabel(maskValue: number) {
@@ -86,28 +66,33 @@ class BodyPixSegmenter implements BodySegmenter {
    * @return An array of one `Segmentation`.
    */
   async segmentPeople(
-      input: BodySegmenterInput,
-      segmentationConfig: BodyPixSegmentationConfig): Promise<Segmentation[]> {
-    if (input instanceof ImageBitmap) {
-      const canvas = document.createElement('canvas');
-      canvas.getContext('2d').drawImage(input, 0, 0);
-      input = canvas;
-    }
-
+    input: BodySegmenterInput,
+    segmentationConfig: BodyPixSegmentationConfig
+  ): Promise<Segmentation[]> {
     let segmentations: Segmentation[];
 
     if (segmentationConfig.segmentBodyParts) {
-      type PartSegmentation = {data: Int32Array, width: number, height: number};
+      type PartSegmentation = {
+        data: Uint8ClampedArray;
+        width: number;
+        height: number;
+      };
 
       const partSegmentations: PartSegmentation[] =
-          segmentationConfig.multiSegmentation ?
-          await this.bodyPixModel.segmentMultiPersonParts(
-              input, segmentationConfig) :
-          [await this.bodyPixModel.segmentPersonParts(
-              input, segmentationConfig)];
+        segmentationConfig.multiSegmentation
+          ? await this.bodyPixModel.segmentMultiPersonParts(
+              input,
+              segmentationConfig
+            )
+          : [
+              await this.bodyPixModel.segmentPersonParts(
+                input,
+                segmentationConfig
+              ),
+            ];
 
-      segmentations = partSegmentations.map(partSegmentation => {
-        const {data, width, height} = partSegmentation;
+      segmentations = partSegmentations.map((partSegmentation) => {
+        const { data, width, height } = partSegmentation;
         const rgbaData = new Uint8ClampedArray(width * height * 4).fill(0);
         data.forEach((bodyPartLabel, i) => {
           // Background.
@@ -122,24 +107,26 @@ class BodyPixSegmenter implements BodySegmenter {
 
         return {
           maskValueToLabel: multiMaskValueToLabel,
-          mask: new BodyPixMask(new ImageData(rgbaData, width, height)),
+          mask: { data: rgbaData, width, height },
         };
       });
     } else {
       type SingleSegmentation = {
-        data: Uint8Array,
-        width: number,
-        height: number
+        data: Uint8Array;
+        width: number;
+        height: number;
       };
 
       const singleSegmentations: SingleSegmentation[] =
-          segmentationConfig.multiSegmentation ?
-          await this.bodyPixModel.segmentMultiPerson(
-              input, segmentationConfig) :
-          [await this.bodyPixModel.segmentPerson(input, segmentationConfig)];
+        segmentationConfig.multiSegmentation
+          ? await this.bodyPixModel.segmentMultiPerson(
+              input,
+              segmentationConfig
+            )
+          : [await this.bodyPixModel.segmentPerson(input, segmentationConfig)];
 
-      segmentations = singleSegmentations.map(singleSegmentation => {
-        const {data, width, height} = singleSegmentation;
+      segmentations = singleSegmentations.map((singleSegmentation) => {
+        const { data, width, height } = singleSegmentation;
         const rgbaData = new Uint8ClampedArray(width * height * 4).fill(0);
         data.forEach((bodyPartLabel, i) => {
           // Background.
@@ -154,7 +141,7 @@ class BodyPixSegmenter implements BodySegmenter {
 
         return {
           maskValueToLabel: singleMaskValueToLabel,
-          mask: new BodyPixMask(new ImageData(rgbaData, width, height)),
+          mask: { data: rgbaData, width, height },
         };
       });
     }
@@ -177,7 +164,8 @@ class BodyPixSegmenter implements BodySegmenter {
  * each parameters in the documentation of the
  * `BodyPixModelConfig` interface.
  */
-export async function load(modelConfig?: BodyPixModelConfig):
-    Promise<BodySegmenter> {
-  return bodyPix.load(modelConfig).then(model => new BodyPixSegmenter(model));
+export async function load(
+  modelConfig?: BodyPixModelConfig
+): Promise<BodySegmenter> {
+  return bodyPix.load(modelConfig).then((model) => new BodyPixSegmenter(model));
 }
