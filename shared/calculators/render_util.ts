@@ -15,8 +15,12 @@
  * =============================================================================
  */
 
-import * as tf from '@tensorflow/tfjs-core';
-import {Color, PixelInput, Segmentation} from './interfaces/common_interfaces';
+import * as tf from "@tensorflow/tfjs-core";
+import {
+  Color,
+  PixelInput,
+  Segmentation,
+} from "./interfaces/common_interfaces";
 
 /**
  * This render_util implementation is based on the body-pix output_rending_util
@@ -25,53 +29,62 @@ import {Color, PixelInput, Segmentation} from './interfaces/common_interfaces';
  * It is adapted to account for the generic segmentation interface.
  */
 
-type ImageType = CanvasImageSource|OffscreenCanvas|PixelInput;
+type ImageType = CanvasImageSource | OffscreenCanvas | PixelInput;
 type HasDimensions = {
-  width: number,
-  height: number
+  width: number;
+  height: number;
 };
 
-type Canvas = HTMLCanvasElement|OffscreenCanvas;
+type Canvas = HTMLCanvasElement | OffscreenCanvas;
 
 const CANVAS_NAMES = {
-  blurred: 'blurred',
-  blurredMask: 'blurred-mask',
-  mask: 'mask',
-  lowresPartMask: 'lowres-part-mask',
-  drawImage: 'draw-image',
+  blurred: "blurred",
+  blurredMask: "blurred-mask",
+  mask: "mask",
+  lowresPartMask: "lowres-part-mask",
+  drawImage: "draw-image",
 };
 
-const offScreenCanvases: {[name: string]: Canvas} = {};
+const offScreenCanvases: { [name: string]: Canvas } = {};
 
 function isSafari() {
-  return (/^((?!chrome|android).)*safari/i.test(navigator.userAgent));
+  return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 }
 
 function assertSameDimensions(
-    {width: widthA, height: heightA}: HasDimensions,
-    {width: widthB, height: heightB}: HasDimensions, nameA: string,
-    nameB: string) {
+  { width: widthA, height: heightA }: HasDimensions,
+  { width: widthB, height: heightB }: HasDimensions,
+  nameA: string,
+  nameB: string
+) {
   if (widthA !== widthB || heightA !== heightB) {
-    throw new Error(`error: dimensions must match. ${nameA} has dimensions ${
-        widthA}x${heightA}, ${nameB} has dimensions ${widthB}x${heightB}`);
+    throw new Error(
+      `error: dimensions must match. ${nameA} has dimensions ${widthA}x${heightA}, ${nameB} has dimensions ${widthB}x${heightB}`
+    );
   }
 }
 
-function getSizeFromImageLikeElement(input: HTMLImageElement|HTMLCanvasElement|
-                                     OffscreenCanvas): [number, number] {
-  if ('offsetHeight' in input && input.offsetHeight !== 0 &&
-      'offsetWidth' in input && input.offsetWidth !== 0) {
+function getSizeFromImageLikeElement(
+  input: HTMLImageElement | HTMLCanvasElement | OffscreenCanvas
+): [number, number] {
+  if (
+    "offsetHeight" in input &&
+    input.offsetHeight !== 0 &&
+    "offsetWidth" in input &&
+    input.offsetWidth !== 0
+  ) {
     return [input.offsetHeight, input.offsetWidth];
   } else if (input.height != null && input.width != null) {
     return [input.height, input.width];
   } else {
     throw new Error(
-        `HTMLImageElement must have height and width attributes set.`);
+      `HTMLImageElement must have height and width attributes set.`
+    );
   }
 }
 
 function getSizeFromVideoElement(input: HTMLVideoElement): [number, number] {
-  if (input.hasAttribute('height') && input.hasAttribute('width')) {
+  if (input.hasAttribute("height") && input.hasAttribute("width")) {
     // Prioritizes user specified height and width.
     // We can't test the .height and .width properties directly,
     // because they evaluate to 0 if unset.
@@ -82,18 +95,21 @@ function getSizeFromVideoElement(input: HTMLVideoElement): [number, number] {
 }
 
 function getInputSize(input: ImageType): [number, number] {
-  if ((typeof (HTMLCanvasElement) !== 'undefined' &&
-       input instanceof HTMLCanvasElement) ||
-      (typeof (OffscreenCanvas) !== 'undefined' &&
-       input instanceof OffscreenCanvas) ||
-      (typeof (HTMLImageElement) !== 'undefined' &&
-       input instanceof HTMLImageElement)) {
+  if (
+    (typeof HTMLCanvasElement !== "undefined" &&
+      input instanceof HTMLCanvasElement) ||
+    (typeof OffscreenCanvas !== "undefined" &&
+      input instanceof OffscreenCanvas) ||
+    (typeof HTMLImageElement !== "undefined" &&
+      input instanceof HTMLImageElement)
+  ) {
     return getSizeFromImageLikeElement(input);
-  } else if (typeof (ImageData) !== 'undefined' && input instanceof ImageData) {
+  } else if (typeof ImageData !== "undefined" && input instanceof ImageData) {
     return [input.height, input.width];
   } else if (
-      typeof (HTMLVideoElement) !== 'undefined' &&
-      input instanceof HTMLVideoElement) {
+    typeof HTMLVideoElement !== "undefined" &&
+    input instanceof HTMLVideoElement
+  ) {
     return getSizeFromVideoElement(input);
   } else if (input instanceof tf.Tensor) {
     return [input.shape[0], input.shape[1]];
@@ -103,12 +119,12 @@ function getInputSize(input: ImageType): [number, number] {
 }
 
 function createOffScreenCanvas(): Canvas {
-  if (typeof document !== 'undefined') {
-    return document.createElement('canvas');
-  } else if (typeof OffscreenCanvas !== 'undefined') {
+  if (typeof document !== "undefined") {
+    return document.createElement("canvas");
+  } else if (typeof OffscreenCanvas !== "undefined") {
     return new OffscreenCanvas(0, 0);
   } else {
-    throw new Error('Cannot create a canvas in this context');
+    throw new Error("Cannot create a canvas in this context");
   }
 }
 
@@ -125,13 +141,15 @@ function ensureOffscreenCanvasCreated(id: string): Canvas {
 function renderImageDataToCanvas(image: ImageData, canvas: Canvas) {
   canvas.width = image.width;
   canvas.height = image.height;
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
 
   ctx.putImageData(image, 0, 0);
 }
 
 function renderImageDataToOffScreenCanvas(
-    image: ImageData, canvasName: string): Canvas {
+  image: ImageData,
+  canvasName: string
+): Canvas {
   const canvas = ensureOffscreenCanvasCreated(canvasName);
   renderImageDataToCanvas(image, canvas);
 
@@ -142,8 +160,13 @@ function renderImageDataToOffScreenCanvas(
  * Draw image on a 2D rendering context.
  */
 async function drawImage(
-    ctx: CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D,
-    image: ImageType, dx: number, dy: number, dw?: number, dh?: number) {
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  image: ImageType,
+  dx: number,
+  dy: number,
+  dw?: number,
+  dh?: number
+) {
   if (image instanceof tf.Tensor) {
     const pixels = await tf.browser.toPixels(image);
     const [height, width] = getInputSize(image);
@@ -166,20 +189,22 @@ async function renderImageToCanvas(image: ImageType, canvas: Canvas) {
   const [height, width] = getInputSize(image);
   canvas.width = width;
   canvas.height = height;
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
 
   await drawImage(ctx, image, 0, 0, width, height);
 }
 
 function flipCanvasHorizontal(canvas: Canvas) {
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
   ctx.scale(-1, 1);
   ctx.translate(-canvas.width, 0);
 }
 
 async function drawWithCompositing(
-    ctx: CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D,
-    image: ImageType, compositeOperation: string) {
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  image: ImageType,
+  compositeOperation: string
+) {
   // TODO: Assert type 'compositeOperation as GlobalCompositeOperation' after
   // typescript update to 4.6.0 or later
   // tslint:disable-next-line: no-any
@@ -189,7 +214,7 @@ async function drawWithCompositing(
 
 // method copied from bGlur in https://codepen.io/zhaojun/pen/zZmRQe
 async function cpuBlur(canvas: Canvas, image: ImageType, blur: number) {
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
 
   let sum = 0;
   const delta = 5;
@@ -198,14 +223,15 @@ async function cpuBlur(canvas: Canvas, image: ImageType, blur: number) {
   for (let y = -blur; y <= blur; y += step) {
     for (let x = -blur; x <= blur; x += step) {
       const weight =
-          alphaLeft * Math.exp(-(x * x + y * y) / (2 * delta * delta));
+        alphaLeft * Math.exp(-(x * x + y * y) / (2 * delta * delta));
       sum += weight;
     }
   }
   for (let y = -blur; y <= blur; y += step) {
     for (let x = -blur; x <= blur; x += step) {
-      ctx.globalAlpha = alphaLeft *
-          Math.exp(-(x * x + y * y) / (2 * delta * delta)) / sum * blur;
+      ctx.globalAlpha =
+        ((alphaLeft * Math.exp(-(x * x + y * y) / (2 * delta * delta))) / sum) *
+        blur;
       await drawImage(ctx, image, x, y);
     }
   }
@@ -213,9 +239,12 @@ async function cpuBlur(canvas: Canvas, image: ImageType, blur: number) {
 }
 
 async function drawAndBlurImageOnCanvas(
-    image: ImageType, blurAmount: number, canvas: Canvas) {
+  image: ImageType,
+  blurAmount: number,
+  canvas: Canvas
+) {
   const [height, width] = getInputSize(image);
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
   canvas.width = width;
   canvas.height = height;
   ctx.clearRect(0, 0, width, height);
@@ -231,8 +260,10 @@ async function drawAndBlurImageOnCanvas(
 }
 
 async function drawAndBlurImageOnOffScreenCanvas(
-    image: ImageType, blurAmount: number,
-    offscreenCanvasName: string): Promise<Canvas> {
+  image: ImageType,
+  blurAmount: number,
+  offscreenCanvasName: string
+): Promise<Canvas> {
   const canvas = ensureOffscreenCanvasCreated(offscreenCanvasName);
   if (blurAmount === 0) {
     await renderImageToCanvas(image, canvas);
@@ -243,13 +274,18 @@ async function drawAndBlurImageOnOffScreenCanvas(
 }
 
 function drawStroke(
-    bytes: Uint8ClampedArray, row: number, column: number, width: number,
-    radius: number, color: Color = {
-      r: 0,
-      g: 255,
-      b: 255,
-      a: 255
-    }) {
+  bytes: Uint8ClampedArray,
+  row: number,
+  column: number,
+  width: number,
+  radius: number,
+  color: Color = {
+    r: 0,
+    g: 255,
+    b: 255,
+    a: 255,
+  }
+) {
   for (let i = -radius; i <= radius; i++) {
     for (let j = -radius; j <= radius; j++) {
       if (i !== 0 && j !== 0) {
@@ -264,14 +300,14 @@ function drawStroke(
 }
 
 function isSegmentationBoundary(
-    data: Uint8ClampedArray,
-    row: number,
-    column: number,
-    width: number,
-    isForegroundId: boolean[],
-    alphaCutoff: number,
-    radius = 1,
-    ): boolean {
+  data: Uint8ClampedArray,
+  row: number,
+  column: number,
+  width: number,
+  isForegroundId: boolean[],
+  alphaCutoff: number,
+  radius = 1
+): boolean {
   let numberBackgroundPixels = 0;
   for (let i = -radius; i <= radius; i++) {
     for (let j = -radius; j <= radius; j++) {
@@ -319,35 +355,39 @@ function isSegmentationBoundary(
  * segmentation value at the pixel from the output.
  */
 export async function toBinaryMask(
-    segmentation: Segmentation|Segmentation[], foreground: Color = {
-      r: 0,
-      g: 0,
-      b: 0,
-      a: 0
-    },
-    background: Color = {
-      r: 0,
-      g: 0,
-      b: 0,
-      a: 255
-    },
-    drawContour = false, foregroundThreshold = 0.5,
-    foregroundMaskValues = Array.from(Array(256).keys())) {
-  const segmentations =
-      !Array.isArray(segmentation) ? [segmentation] : segmentation;
+  segmentation: Segmentation | Segmentation[],
+  foreground: Color = {
+    r: 0,
+    g: 0,
+    b: 0,
+    a: 0,
+  },
+  background: Color = {
+    r: 0,
+    g: 0,
+    b: 0,
+    a: 255,
+  },
+  drawContour = false,
+  foregroundThreshold = 0.5,
+  foregroundMaskValues = Array.from(Array(256).keys())
+) {
+  const segmentations = !Array.isArray(segmentation)
+    ? [segmentation]
+    : segmentation;
 
   if (segmentations.length === 0) {
     return null;
   }
-
   const masks = await Promise.all(
-      segmentations.map(segmentation => segmentation.mask.toImageData()));
+    segmentations.map((segmentation) => segmentation.mask)
+  );
 
-  const {width, height} = masks[0];
+  const { width, height } = masks[0];
   const bytes = new Uint8ClampedArray(width * height * 4);
   const alphaCutoff = Math.round(255 * foregroundThreshold);
   const isForegroundId: boolean[] = new Array(256).fill(false);
-  foregroundMaskValues.forEach(id => isForegroundId[id] = true);
+  foregroundMaskValues.forEach((id) => (isForegroundId[id] = true));
 
   for (let i = 0; i < height; i++) {
     for (let j = 0; j < width; j++) {
@@ -357,16 +397,29 @@ export async function toBinaryMask(
       bytes[4 * n + 2] = background.b;
       bytes[4 * n + 3] = background.a;
       for (const mask of masks) {
-        if (isForegroundId[mask.data[4 * n]] &&
-            mask.data[4 * n + 3] >= alphaCutoff) {
+        if (
+          isForegroundId[mask.data[4 * n]] &&
+          mask.data[4 * n + 3] >= alphaCutoff
+        ) {
           bytes[4 * n] = foreground.r;
           bytes[4 * n + 1] = foreground.g;
           bytes[4 * n + 2] = foreground.b;
           bytes[4 * n + 3] = foreground.a;
-          if (drawContour && i - 1 >= 0 && i + 1 < height && j - 1 >= 0 &&
-              j + 1 < width &&
-              isSegmentationBoundary(
-                  mask.data, i, j, width, isForegroundId, alphaCutoff)) {
+          if (
+            drawContour &&
+            i - 1 >= 0 &&
+            i + 1 < height &&
+            j - 1 >= 0 &&
+            j + 1 < width &&
+            isSegmentationBoundary(
+              mask.data,
+              i,
+              j,
+              width,
+              isForegroundId,
+              alphaCutoff
+            )
+          ) {
             drawStroke(bytes, i, j, width, 1);
           }
         }
@@ -401,25 +454,29 @@ export async function toBinaryMask(
  * pixels where there is no part.
  */
 export async function toColoredMask(
-    segmentation: Segmentation|Segmentation[],
-    maskValueToColor: (maskValue: number) => Color, background: Color = {
-      r: 0,
-      g: 0,
-      b: 0,
-      a: 255
-    },
-    foregroundThreshold = 0.5) {
-  const segmentations =
-      !Array.isArray(segmentation) ? [segmentation] : segmentation;
+  segmentation: Segmentation | Segmentation[],
+  maskValueToColor: (maskValue: number) => Color,
+  background: Color = {
+    r: 0,
+    g: 0,
+    b: 0,
+    a: 255,
+  },
+  foregroundThreshold = 0.5
+) {
+  const segmentations = !Array.isArray(segmentation)
+    ? [segmentation]
+    : segmentation;
 
   if (segmentations.length === 0) {
     return null;
   }
 
   const masks = await Promise.all(
-      segmentations.map(segmentation => segmentation.mask.toImageData()));
+    segmentations.map((segmentation) => segmentation.mask)
+  );
 
-  const {width, height} = masks[0];
+  const { width, height } = masks[0];
   const bytes = new Uint8ClampedArray(width * height * 4);
   const alphaCutoff = Math.round(255 * foregroundThreshold);
 
@@ -442,7 +499,7 @@ export async function toColoredMask(
     }
   }
 
-  return new ImageData(bytes, width, height);
+  return { bytes, width, height };
 }
 
 /**
@@ -466,13 +523,18 @@ export async function toColoredMask(
  * to false.
  */
 export async function drawMask(
-    canvas: Canvas, image: ImageType, maskImage: ImageData|null,
-    maskOpacity = 0.7, maskBlurAmount = 0, flipHorizontal = false) {
+  canvas: Canvas,
+  image: ImageType,
+  maskImage: ImageData | null,
+  maskOpacity = 0.7,
+  maskBlurAmount = 0,
+  flipHorizontal = false
+) {
   const [height, width] = getInputSize(image);
   canvas.width = width;
   canvas.height = height;
 
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
   ctx.save();
   if (flipHorizontal) {
     flipCanvasHorizontal(canvas);
@@ -482,12 +544,15 @@ export async function drawMask(
 
   ctx.globalAlpha = maskOpacity;
   if (maskImage) {
-    assertSameDimensions({width, height}, maskImage, 'image', 'mask');
+    assertSameDimensions({ width, height }, maskImage, "image", "mask");
 
     const mask = renderImageDataToOffScreenCanvas(maskImage, CANVAS_NAMES.mask);
 
     const blurredMask = await drawAndBlurImageOnOffScreenCanvas(
-        mask, maskBlurAmount, CANVAS_NAMES.blurredMask);
+      mask,
+      maskBlurAmount,
+      CANVAS_NAMES.blurredMask
+    );
     ctx.drawImage(blurredMask, 0, 0, width, height);
   }
   ctx.restore();
@@ -516,41 +581,67 @@ export async function drawMask(
  * @param pixelCellWidth The width of each pixel cell. Default to 10 px.
  */
 export async function drawPixelatedMask(
-    canvas: Canvas, image: ImageType, maskImage: ImageData, maskOpacity = 0.7,
-    maskBlurAmount = 0, flipHorizontal = false, pixelCellWidth = 10.0) {
+  canvas: Canvas,
+  image: ImageType,
+  maskImage: ImageData,
+  maskOpacity = 0.7,
+  maskBlurAmount = 0,
+  flipHorizontal = false,
+  pixelCellWidth = 10.0
+) {
   const [height, width] = getInputSize(image);
-  assertSameDimensions({width, height}, maskImage, 'image', 'mask');
+  assertSameDimensions({ width, height }, maskImage, "image", "mask");
 
   const mask = renderImageDataToOffScreenCanvas(maskImage, CANVAS_NAMES.mask);
   const blurredMask = await drawAndBlurImageOnOffScreenCanvas(
-      mask, maskBlurAmount, CANVAS_NAMES.blurredMask);
+    mask,
+    maskBlurAmount,
+    CANVAS_NAMES.blurredMask
+  );
 
   canvas.width = blurredMask.width;
   canvas.height = blurredMask.height;
 
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
   ctx.save();
   if (flipHorizontal) {
     flipCanvasHorizontal(canvas);
   }
 
-  const offscreenCanvas =
-      ensureOffscreenCanvasCreated(CANVAS_NAMES.lowresPartMask);
-  const offscreenCanvasCtx = offscreenCanvas.getContext('2d');
+  const offscreenCanvas = ensureOffscreenCanvasCreated(
+    CANVAS_NAMES.lowresPartMask
+  );
+  const offscreenCanvasCtx = offscreenCanvas.getContext("2d");
   offscreenCanvas.width = blurredMask.width * (1.0 / pixelCellWidth);
   offscreenCanvas.height = blurredMask.height * (1.0 / pixelCellWidth);
   offscreenCanvasCtx.drawImage(
-      blurredMask, 0, 0, blurredMask.width, blurredMask.height, 0, 0,
-      offscreenCanvas.width, offscreenCanvas.height);
+    blurredMask,
+    0,
+    0,
+    blurredMask.width,
+    blurredMask.height,
+    0,
+    0,
+    offscreenCanvas.width,
+    offscreenCanvas.height
+  );
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(
-      offscreenCanvas, 0, 0, offscreenCanvas.width, offscreenCanvas.height, 0,
-      0, canvas.width, canvas.height);
+    offscreenCanvas,
+    0,
+    0,
+    offscreenCanvas.width,
+    offscreenCanvas.height,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
 
   // Draws vertical grid lines that are `pixelCellWidth` apart from each other.
   for (let i = 0; i < offscreenCanvas.width; i++) {
     ctx.beginPath();
-    ctx.strokeStyle = '#ffffff';
+    ctx.strokeStyle = "#ffffff";
     ctx.moveTo(pixelCellWidth * i, 0);
     ctx.lineTo(pixelCellWidth * i, canvas.height);
     ctx.stroke();
@@ -560,7 +651,7 @@ export async function drawPixelatedMask(
   // other.
   for (let i = 0; i < offscreenCanvas.height; i++) {
     ctx.beginPath();
-    ctx.strokeStyle = '#ffffff';
+    ctx.strokeStyle = "#ffffff";
     ctx.moveTo(0, pixelCellWidth * i);
     ctx.lineTo(canvas.width, pixelCellWidth * i);
     ctx.stroke();
@@ -572,19 +663,30 @@ export async function drawPixelatedMask(
 }
 
 async function createPersonMask(
-    segmentation: Segmentation|Segmentation[], foregroundThreshold: number,
-    edgeBlurAmount: number): Promise<Canvas> {
+  segmentation: Segmentation | Segmentation[],
+  foregroundThreshold: number,
+  edgeBlurAmount: number
+): Promise<Canvas> {
   const backgroundMaskImage = await toBinaryMask(
-      segmentation, {r: 0, g: 0, b: 0, a: 255}, {r: 0, g: 0, b: 0, a: 0}, false,
-      foregroundThreshold);
+    segmentation,
+    { r: 0, g: 0, b: 0, a: 255 },
+    { r: 0, g: 0, b: 0, a: 0 },
+    false,
+    foregroundThreshold
+  );
 
-  const backgroundMask =
-      renderImageDataToOffScreenCanvas(backgroundMaskImage, CANVAS_NAMES.mask);
+  const backgroundMask = renderImageDataToOffScreenCanvas(
+    backgroundMaskImage,
+    CANVAS_NAMES.mask
+  );
   if (edgeBlurAmount === 0) {
     return backgroundMask;
   } else {
     return drawAndBlurImageOnOffScreenCanvas(
-        backgroundMask, edgeBlurAmount, CANVAS_NAMES.blurredMask);
+      backgroundMask,
+      edgeBlurAmount,
+      CANVAS_NAMES.blurredMask
+    );
   }
 }
 
@@ -613,23 +715,34 @@ async function createPersonMask(
  * to false.
  */
 export async function drawBokehEffect(
-    canvas: Canvas, image: ImageType, segmentation: Segmentation|Segmentation[],
-    foregroundThreshold = 0.5, backgroundBlurAmount = 3, edgeBlurAmount = 3,
-    flipHorizontal = false) {
+  canvas: Canvas,
+  image: ImageType,
+  segmentation: Segmentation | Segmentation[],
+  foregroundThreshold = 0.5,
+  backgroundBlurAmount = 3,
+  edgeBlurAmount = 3,
+  flipHorizontal = false
+) {
   const blurredImage = await drawAndBlurImageOnOffScreenCanvas(
-      image, backgroundBlurAmount, CANVAS_NAMES.blurred);
+    image,
+    backgroundBlurAmount,
+    CANVAS_NAMES.blurred
+  );
   canvas.width = blurredImage.width;
   canvas.height = blurredImage.height;
 
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
 
   if (Array.isArray(segmentation) && segmentation.length === 0) {
     ctx.drawImage(blurredImage, 0, 0);
     return;
   }
 
-  const personMask =
-      await createPersonMask(segmentation, foregroundThreshold, edgeBlurAmount);
+  const personMask = await createPersonMask(
+    segmentation,
+    foregroundThreshold,
+    edgeBlurAmount
+  );
 
   ctx.save();
   if (flipHorizontal) {
@@ -643,30 +756,43 @@ export async function drawBokehEffect(
   // new shape and existing canvas content overlap. Everything else is made
   // transparent."
   // crop what's not the person using the mask from the original image
-  await drawWithCompositing(ctx, personMask, 'destination-in');
+  await drawWithCompositing(ctx, personMask, "destination-in");
   // "destination-over" - "The existing canvas content is kept where both the
   // new shape and existing canvas content overlap. Everything else is made
   // transparent."
   // draw the blurred background on top of the original image where it doesn't
   // overlap.
-  await drawWithCompositing(ctx, blurredImage, 'destination-over');
+  await drawWithCompositing(ctx, blurredImage, "destination-over");
   ctx.restore();
 }
 
 async function createBodyPartMask(
-    segmentation: Segmentation|Segmentation[], maskValuesToBlur: number[],
-    foregroundThreshold: number, edgeBlurAmount: number): Promise<Canvas> {
+  segmentation: Segmentation | Segmentation[],
+  maskValuesToBlur: number[],
+  foregroundThreshold: number,
+  edgeBlurAmount: number
+): Promise<Canvas> {
   const backgroundMaskImage = await toBinaryMask(
-      segmentation, {r: 0, g: 0, b: 0, a: 0}, {r: 0, g: 0, b: 0, a: 255}, true,
-      foregroundThreshold, maskValuesToBlur);
+    segmentation,
+    { r: 0, g: 0, b: 0, a: 0 },
+    { r: 0, g: 0, b: 0, a: 255 },
+    true,
+    foregroundThreshold,
+    maskValuesToBlur
+  );
 
-  const backgroundMask =
-      renderImageDataToOffScreenCanvas(backgroundMaskImage, CANVAS_NAMES.mask);
+  const backgroundMask = renderImageDataToOffScreenCanvas(
+    backgroundMaskImage,
+    CANVAS_NAMES.mask
+  );
   if (edgeBlurAmount === 0) {
     return backgroundMask;
   } else {
     return drawAndBlurImageOnOffScreenCanvas(
-        backgroundMask, edgeBlurAmount, CANVAS_NAMES.blurredMask);
+      backgroundMask,
+      edgeBlurAmount,
+      CANVAS_NAMES.blurredMask
+    );
   }
 }
 
@@ -699,22 +825,35 @@ async function createBodyPartMask(
  * to false.
  */
 export async function blurBodyPart(
-    canvas: Canvas, image: ImageType, segmentation: Segmentation|Segmentation[],
-    maskValuesToBlur: number[], foregroundThreshold = 0.5,
-    backgroundBlurAmount = 3, edgeBlurAmount = 3, flipHorizontal = false) {
+  canvas: Canvas,
+  image: ImageType,
+  segmentation: Segmentation | Segmentation[],
+  maskValuesToBlur: number[],
+  foregroundThreshold = 0.5,
+  backgroundBlurAmount = 3,
+  edgeBlurAmount = 3,
+  flipHorizontal = false
+) {
   const blurredImage = await drawAndBlurImageOnOffScreenCanvas(
-      image, backgroundBlurAmount, CANVAS_NAMES.blurred);
+    image,
+    backgroundBlurAmount,
+    CANVAS_NAMES.blurred
+  );
   canvas.width = blurredImage.width;
   canvas.height = blurredImage.height;
 
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
 
   if (Array.isArray(segmentation) && segmentation.length === 0) {
     ctx.drawImage(blurredImage, 0, 0);
     return;
   }
   const bodyPartMask = await createBodyPartMask(
-      segmentation, maskValuesToBlur, foregroundThreshold, edgeBlurAmount);
+    segmentation,
+    maskValuesToBlur,
+    foregroundThreshold,
+    edgeBlurAmount
+  );
 
   ctx.save();
   if (flipHorizontal) {
@@ -728,12 +867,12 @@ export async function blurBodyPart(
   // new shape and existing canvas content overlap. Everything else is made
   // transparent."
   // crop what's not the person using the mask from the original image
-  await drawWithCompositing(ctx, bodyPartMask, 'destination-in');
+  await drawWithCompositing(ctx, bodyPartMask, "destination-in");
   // "destination-over" - "The existing canvas content is kept where both the
   // new shape and existing canvas content overlap. Everything else is made
   // transparent."
   // draw the blurred background on top of the original image where it doesn't
   // overlap.
-  await drawWithCompositing(ctx, blurredImage, 'destination-over');
+  await drawWithCompositing(ctx, blurredImage, "destination-over");
   ctx.restore();
 }
