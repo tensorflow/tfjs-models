@@ -27,7 +27,7 @@
     "jasmine": "~3.1.0",
     "jasmine-core": "~3.1.0",
     "rimraf": "~2.6.2",
-    "rollup": "~0.58.2",
+    "rollup": "~2.79.2",
     "rollup-plugin-node-resolve": "~3.3.0",
     "rollup-plugin-typescript2": "~0.13.0",
     "rollup-plugin-uglify": "~3.0.0",
