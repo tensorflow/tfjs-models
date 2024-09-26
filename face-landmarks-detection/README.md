@@ -7,7 +7,7 @@ Currently, we provide 1 model option:
 #### MediaPipe:
 [Demo](https://storage.googleapis.com/tfjs-models/demos/face-landmarks-detection/index.html?model=mediapipe_face_mesh)
 
-MediaPipe Facemesh can detect multiple faces, each face contains 468 keypoints.
+MediaPipe Facemesh can detect multiple faces, each face contains 478 keypoints.
 
 More background information about the package, as well as its performance characteristics on different datasets, can be found here: [Model Card](https://drive.google.com/file/d/1QvwWNfFoweGVjsXF3DXzcrCnz-mx-Lha/preview). The facemesh package optionally loads an iris detection model, whose model card can be found here: [Model Card](https://drive.google.com/file/d/1tV7EJb3XgMS7FwOErTgLU1ZocYyNmwlf/preview).
 
@@ -44,8 +44,8 @@ The returned face list contains detected faces for each faces in the image.
 If the model cannot detect any faces, the list will be empty.
 
 For each face, it contains a bounding box of the detected face, as well as an array of keypoints.
-MediaPipeFaceMesh returns 468 keypoints.
-Each keypoint contains x and y, as well as a name.
+MediaPipeFaceMesh returns 478 keypoints.
+Each keypoint contains x, y and z, as well as a name.
 
 Example output:
 ```
