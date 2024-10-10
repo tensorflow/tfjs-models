@@ -294,7 +294,7 @@ const clearExisting = false;
 newTransferRecognizer.loadExamples(serialized, clearExisting);
 ```
 
-Theo `clearExisting` flag ensures that the examples that `newTransferRecognizer`
+The `clearExisting` flag ensures that the examples that `newTransferRecognizer`
 already holds are preserved. If `true`, the existing exampels will be cleared.
 If `clearExisting` is not specified, it'll default to `false`.
 
