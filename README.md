@@ -100,7 +100,7 @@ and can be used as building blocks in other apps.
   <!-- * Text -->
   <!-- ** Universal Sentence Encoder -->
   <tr>
-    <td rowspan="4"><b>Text</b></td>
+    <td rowspan="6"><b>Text</b></td>
     <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./universal-sentence-encoder"><div style='vertical-align:middle; display:inline;'>Universal Sentence Encoder</div></a></b></td>
     <td><a href=""></a></td>
     <td rowspan="2">Encode text into a 512-dimensional embedding to be used as inputs to natural language processing tasks such as sentiment classification and textual similarity.</td>
@@ -118,6 +118,16 @@ and can be used as building blocks in other apps.
   </tr>
   <tr>
     <td><a href="./toxicity/demo/index.html">source</a></td>
+  </tr>
+  <!-- ** Text Question and Answer -->
+  <tr>
+    <td rowspan="2"><b><a style="white-space:nowrap; display:inline-block;" href="./qna"><div style='vertical-align:middle; display:inline;'>Text Question and Answer</div></a></b></td>
+    <td><a href="https://storage.googleapis.com/tfjs-models/demos/mobilebert-qna/index.html">live</a></td>
+    <td rowspan="2">Use a pre-trained model to answer questions based on the content of a given passage and created using a pre-trained BERT model fine-tuned on <a href="https://rajpurkar.github.io/SQuAD-explorer/">SQuAD 2.0 dataset</a>.</td>
+    <td rowspan="2"><code>npm i @tensorflow-models/qna</code></td>
+  </tr>
+  <tr>
+    <td><a href="./qna/demo/index.html">source</a></td>
   </tr>
   <!-- * Depth Estimation -->
   <!-- ** Portrait Depth -->
