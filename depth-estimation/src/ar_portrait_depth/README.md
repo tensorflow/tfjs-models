@@ -2,7 +2,7 @@
 
 This portrait depth model estimates per-pixel depth (the distance to the camera center) for a single portrait image, which can be further used for creative applications. (See [DepthLab](https://augmentedperception.github.io/depthlab/) for potential applications). Note that the model runs locally on the user’s device and no data is uploaded to the server.
 
-For example, the following demo transforms a single 2D RGB image into a 3D Portrait: [3D Photo Demo](https://storage.googleapis.com/tfjs-models/demos/3dphoto).
+For example, the following demo transforms a single 2D RGB image into a 3D Portrait: [3D Photo Demo](https://storage.googleapis.com/tfjs-models/demos/3dphoto/index.html).
 
 --------------------------------------------------------------------------------
 
