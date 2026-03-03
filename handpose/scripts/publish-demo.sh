@@ -17,5 +17,5 @@
 cd demo
 rm -rf dist
 yarn build
-gsutil -m rm -r gs://tfjs-models/demos/handpose/*
-gsutil -m cp -Z -r dist/ gs://tfjs-models/demos/handpose
+gcloud storage rm --recursive gs://tfjs-models/demos/handpose/*
+gcloud storage cp --gzip-local-all --recursive dist/ gs://tfjs-models/demos/handpose
