@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@mediapipe/face_mesh": "~0.4.0",
-    "@tensorflow-models/face-detection": "~1.0.0",
+    "@tensorflow-models/face-detection": "^1.0.3",
     "@tensorflow-models/face-landmarks-detection": "file:../../dist",
     "@tensorflow/tfjs-backend-wasm": "^4.13.0",
     "@tensorflow/tfjs-backend-webgl": "^4.13.0",

@@ -1,6 +1,6 @@
 {
   "name": "@tensorflow-models/face-landmarks-detection",
-  "version": "1.0.3",
+  "version": "1.0.6",
   "description": "Pretrained face landmarks detection model",
   "main": "dist/index.js",
   "jsnext:main": "dist/face-landmarks-detection.esm.js",
@@ -14,10 +14,10 @@
   },
   "peerDependencies": {
     "@mediapipe/face_mesh": "~0.4.0",
+    "@tensorflow-models/face-detection": "^1.0.3",
     "@tensorflow/tfjs-backend-webgl": "^4.13.0",
     "@tensorflow/tfjs-converter": "^4.13.0",
-    "@tensorflow/tfjs-core": "^4.13.0",
-    "@tensorflow-models/face-detection": "~1.0.0"
+    "@tensorflow/tfjs-core": "^4.13.0"
   },
   "devDependencies": {
     "@babel/polyfill": "^7.10.4",
@@ -26,11 +26,11 @@
     "@rollup/plugin-commonjs": "^21.0.2",
     "@rollup/plugin-node-resolve": "^7.1.1",
     "@rollup/plugin-typescript": "^3.0.0",
+    "@tensorflow-models/face-detection": "^1.0.3",
     "@tensorflow/tfjs-backend-cpu": "^4.13.0",
     "@tensorflow/tfjs-backend-webgl": "^4.13.0",
     "@tensorflow/tfjs-converter": "^4.13.0",
     "@tensorflow/tfjs-core": "^4.13.0",
-    "@tensorflow-models/face-detection": "^1.0.0",
     "@types/jasmine": "~2.8.8",
     "babel-core": "~6.26.0",
     "babel-plugin-transform-runtime": "~6.23.0",
