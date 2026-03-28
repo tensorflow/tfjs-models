@@ -21,8 +21,57 @@ export const MEDIAPIPE_FACE_MESH_NUM_KEYPOINTS_WITH_IRISES = 478;
 type PairArray = Array<[number, number]>;
 
 function connectionsToIndices(connections: PairArray) {
-  const indices = connections.map(connection => connection[0]);
-  indices.push(connections[connections.length - 1][1]);
+  const unglued = connections.slice(); // copy array for removal of items (could use a Set...)
+  let indices: number[] = [unglued[0][0]]; // start with seed index
+  // alternatively, perhaps: while (indices.length < connections.length) {
+  const loops = [];
+  while (unglued.length) {
+    let gluedAny = false;
+    let closed = false;
+    for (const connection of unglued) {
+      if (connection[0] === indices[0]) {
+        if (connection[1] !== indices[indices.length - 1]) indices.unshift(connection[1]); else closed = true;
+      } else if (connection[1] === indices[0]) {
+        if (connection[0] !== indices[indices.length - 1]) indices.unshift(connection[0]); else closed = true;
+      } else if (connection[0] === indices[indices.length - 1]) {
+        if (connection[1] !== indices[0]) indices.push(connection[1]); else closed = true;
+      } else if (connection[1] === indices[indices.length - 1]) {
+        if (connection[0] !== indices[0]) indices.push(connection[0]); else closed = true;
+      } else {
+        continue; // don't remove
+      }
+      unglued.splice(unglued.indexOf(connection), 1);
+      gluedAny = true;
+      if (closed) {
+        loops.push(indices);
+        if (unglued.length) {
+          indices = [unglued[0][0]]; // restart with new seed index
+        } else {
+          // we're done; could return here, or just break out to return at the end
+          indices = [];
+        }
+      }
+      break; // avoid confusing behavior of skipping items due to removing other items;
+      // simply restart the loop at the start (might not be the most performant, but should be robust)
+    }
+    if (!gluedAny) {
+      break;
+    }
+  }
+  if (unglued.length) {
+    console.warn('Some connections were not used:', unglued);
+  }
+  if (loops.length == 0) {
+    console.warn('No loops found', 'indices:', indices, 'connections:', connections);
+    return indices;
+  }
+  if (indices.length) {
+    console.warn('Extra indices:', indices);
+  }
+  indices = [];
+  for (const loop of loops) {
+    indices = indices.concat(loop, [loop[0]]); // add loop and close it
+  }
   return indices;
 }
 
@@ -66,6 +115,8 @@ const LEFT_EYEBROW_CONNECTIONS: PairArray = [
   [293, 334],
   [334, 296],
   [296, 336],
+  [336, 285],
+  [276, 300],
 ];
 
 const LEFT_IRIS_CONNECTIONS: PairArray = [
@@ -103,6 +154,8 @@ const RIGHT_EYEBROW_CONNECTIONS: PairArray = [
   [63, 105],
   [105, 66],
   [66, 107],
+  [107, 55],
+  [46, 70],
 ];
 
 const RIGHT_IRIS_CONNECTIONS: PairArray = [
