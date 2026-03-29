@@ -1778,9 +1778,9 @@ engine.io-parser@~5.0.3:
   integrity sha512-tjuoZDMAdEhVnSFleYPCtdL2GXwVTGtNjoeJd9IhIG3C1xs9uwxqRNEu5WpnDZCaozwVlK/nuQhpodhXSIMaxw==
 
 engine.io@~6.4.0:
-  version "6.4.0"
-  resolved "https://registry.yarnpkg.com/engine.io/-/engine.io-6.4.0.tgz#de27f79ecb58301171aea7956f3f6f4fa578490a"
-  integrity sha512-OgxY1c/RuCSeO/rTr8DIFXx76IzUUft86R7/P7MMbbkuzeqJoTNw2lmeD91IyGz41QYleIIjWeMJGgug043sfQ==
+  version "6.4.2"
+  resolved "https://registry.yarnpkg.com/engine.io/-/engine.io-6.4.2.tgz#ffeaf68f69b1364b0286badddf15ff633476473f"
+  integrity sha512-FKn/3oMiJjrOEOeUub2WCox6JhxBXq/Zn3fZOMCBxKnNYtsdKjxhl7yR3fZhM9PV+rdE75SU5SYMc+2PGzo+Tg==
   dependencies:
     "@types/cookie" "^0.4.1"
     "@types/cors" "^2.8.12"
