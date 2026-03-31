@@ -278,7 +278,7 @@ class MoveNetDetector implements PoseDetector {
           await this.estimateMultiplePoses(imageTensor4D, imageSize, timestamp);
     }
 
-    // Convert keypoint coordinates from normalized coordinates to image space
+    // Convert keypoint and bounding box coordinates from normalized coordinates to image space
     // and add keypoint names.
     for (let poseIdx = 0; poseIdx < poses.length; ++poseIdx) {
       for (let keypointIdx = 0; keypointIdx < poses[poseIdx].keypoints.length;
@@ -287,6 +287,14 @@ class MoveNetDetector implements PoseDetector {
             COCO_KEYPOINTS[keypointIdx];
         poses[poseIdx].keypoints[keypointIdx].y *= imageSize.height;
         poses[poseIdx].keypoints[keypointIdx].x *= imageSize.width;
+      }
+			if (poses[poseIdx].box != null) {
+        poses[poseIdx].box.yMin *= imageSize.height;
+        poses[poseIdx].box.xMin *= imageSize.width;
+        poses[poseIdx].box.yMax *= imageSize.height;
+        poses[poseIdx].box.xMax *= imageSize.width;
+        poses[poseIdx].box.width *= imageSize.width;
+        poses[poseIdx].box.height *= imageSize.height;
       }
     }
 
