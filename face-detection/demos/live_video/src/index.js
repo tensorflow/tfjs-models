@@ -90,35 +90,21 @@ function endEstimateFaceStats() {
   }
 }
 
-async function renderResult() {
-  if (camera.video.readyState < 2) {
-    await new Promise((resolve) => {
-      camera.video.onloadeddata = () => {
-        resolve(video);
-      };
-    });
-  }
-
+async function predictAndRender(cameraVideo) {
   let faces = null;
-
   // Detector can be null if initialization failed (for example when loading
   // from a URL that does not exist).
   if (detector != null) {
-    // FPS only counts the time it takes to finish estimateFaces.
-    beginEstimateFaceStats();
-
     // Detectors can throw errors, for example when using custom URLs that
     // contain a model that doesn't provide the expected output.
     try {
       faces =
-          await detector.estimateFaces(camera.video, {flipHorizontal: false});
+          await detector.estimateFaces(cameraVideo, {flipHorizontal: false});
     } catch (error) {
       detector.dispose();
       detector = null;
       alert(error);
     }
-
-    endEstimateFaceStats();
   }
 
   camera.drawCtx();
@@ -132,19 +118,99 @@ async function renderResult() {
   }
 }
 
+let cameraVideo1 = null;
+let cameraVideo2 = null;
+async function renderResultWithDoubleBuffer() {
+  if (camera.video.readyState < 2) {
+    await new Promise((resolve) => {
+      camera.video.onloadeddata = () => {
+        resolve(video);
+      };
+    });
+  }
+
+  // FPS counts the predict and render time.
+  beginEstimateFaceStats();
+  if (cameraVideo1 === null) {
+    cameraVideo1 = camera.video;
+  } else if (cameraVideo2 === null) {
+    cameraVideo2 = camera.video;
+  }
+
+  if (cameraVideo1 && cameraVideo2) {
+    const promise1 = predictAndRender(cameraVideo1);
+    const promise2 = predictAndRender(cameraVideo2);
+    await promise1;
+    await promise2;
+    cameraVideo1 = null;
+    cameraVideo2 = null;
+  }
+  endEstimateFaceStats();
+}
+
+
+async function renderResult() {
+  if (camera.video.readyState < 2) {
+    await new Promise((resolve) => {
+      camera.video.onloadeddata = () => {
+        resolve(video);
+      };
+    });
+  }
+
+  let faces = null;
+
+  // FPS counts the predict and render time.
+  beginEstimateFaceStats();
+  // Detector can be null if initialization failed (for example when loading
+  // from a URL that does not exist).
+  if (detector != null) {
+    // Detectors can throw errors, for example when using custom URLs that
+    // contain a model that doesn't provide the expected output.
+    try {
+      faces =
+          await detector.estimateFaces(camera.video, {flipHorizontal: false});
+    } catch (error) {
+      detector.dispose();
+      detector = null;
+      alert(error);
+    }
+  }
+
+  camera.drawCtx();
+
+  // The null check makes sure the UI is not in the middle of changing to a
+  // different model. If during model change, the result is from an old model,
+  // which shouldn't be rendered.
+  if (faces && faces.length > 0 && !STATE.isModelChanged) {
+    camera.drawResults(
+        faces, STATE.modelConfig.boundingBox, STATE.modelConfig.keypoints);
+  }
+  endEstimateFaceStats();
+}
+
 async function renderPrediction() {
   await checkGuiUpdate();
 
   if (!STATE.isModelChanged) {
-    await renderResult();
+    if (doublebuffer) {
+      await renderResultWithDoubleBuffer();
+    } else {
+      await renderResult();
+    }
   }
 
   rafId = requestAnimationFrame(renderPrediction);
 };
 
+let doublebuffer = false;
 async function app() {
   // Gui content will change depending on which model is in the query string.
   const urlParams = new URLSearchParams(window.location.search);
+
+  if (urlParams.has('doublebuffer')) {
+    doublebuffer = urlParams.get('doublebuffer') == 'true' ? true : false;
+  }
 
   await setupDatGui(urlParams);
 
