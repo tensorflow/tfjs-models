@@ -19,7 +19,7 @@
     "rollup-plugin-sourcemaps": "^0.6.3",
     "rollup-plugin-terser": "^7.0.2",
     "rollup-plugin-visualizer": "^5.9.0",
-    "semver": "^6.3.0",
+    "semver": "^7.5.2",
     "shelljs": "0.8.2",
     "ts-node": "~5.0.0",
     "tslint": "~6.1.3",
