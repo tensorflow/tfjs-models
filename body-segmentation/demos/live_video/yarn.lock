@@ -996,37 +996,36 @@
 "@tensorflow-models/pose-detection@file:../../../pose-detection/dist":
   version "0.0.0"
 
-"@tensorflow/tfjs-backend-cpu@4.9.0":
-  version "4.9.0"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-backend-cpu/-/tfjs-backend-cpu-4.9.0.tgz#76ce8f4e83814293b662404f16d70f65926195a2"
-  integrity sha512-AHIfI3iD1fyQgQKeoQmtkI3exPWRfOo+W0Ws/bxOdapTXcAYWGg0179t52j8XPDwsl8WopfaTINNgYNG6FnP3Q==
+"@tensorflow/tfjs-backend-cpu@4.22.0":
+  version "4.22.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-backend-cpu/-/tfjs-backend-cpu-4.22.0.tgz#72aeaab14f6f16bbd995c9e6751a8d094d5639a9"
+  integrity sha512-1u0FmuLGuRAi8D2c3cocHTASGXOmHc/4OvoVDENJayjYkS119fcTcQf4iHrtLthWyDIPy3JiPhRrZQC9EwnhLw==
   dependencies:
     "@types/seedrandom" "^2.4.28"
     seedrandom "^3.0.5"
 
-"@tensorflow/tfjs-backend-wasm@^4.9.0":
-  version "4.9.0"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-backend-wasm/-/tfjs-backend-wasm-4.9.0.tgz#1e1fec3406b312efc814f8238c5c25052e01650e"
-  integrity sha512-HsRr9qyu/1pdpkmSoF+1QMtpuE61QOVpH55j6HGNcN+DGuF8TSh80imzZa9JC+A7DXyQdHBKCbUqytuisBQDaA==
+"@tensorflow/tfjs-backend-wasm@^4.22.0":
+  version "4.22.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-backend-wasm/-/tfjs-backend-wasm-4.22.0.tgz#98dfb03d45f1d4f85212ca5ce1ce9db4532ad463"
+  integrity sha512-/IYhReRIp4jg/wYW0OwbbJZG8ON87mbz0PgkiP3CdcACRSvUN0h8rvC0O3YcDtkTQtFWF/tcXq/KlVDyV49wmA==
   dependencies:
-    "@tensorflow/tfjs-backend-cpu" "4.9.0"
+    "@tensorflow/tfjs-backend-cpu" "4.22.0"
     "@types/emscripten" "~0.0.34"
 
-"@tensorflow/tfjs-backend-webgl@^4.9.0":
-  version "4.9.0"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-backend-webgl/-/tfjs-backend-webgl-4.9.0.tgz#272812af5c61d02af3b541ed543c3484f5eb8618"
-  integrity sha512-lSEOjR9zi6vb1V9yhrby8jWt6SS+wWBXRa3sDE5GCbpcHMWHv41wZktB2WQyIXDqJQcw1lRZBDoYneibMqr2uQ==
+"@tensorflow/tfjs-backend-webgl@^4.22.0":
+  version "4.22.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-backend-webgl/-/tfjs-backend-webgl-4.22.0.tgz#c6ffb8c5e737b1b1ef7fab8f721328b5b2e658c0"
+  integrity sha512-H535XtZWnWgNwSzv538czjVlbJebDl5QTMOth4RXr2p/kJ1qSIXE0vZvEtO+5EC9b00SvhplECny2yDewQb/Yg==
   dependencies:
-    "@tensorflow/tfjs-backend-cpu" "4.9.0"
+    "@tensorflow/tfjs-backend-cpu" "4.22.0"
     "@types/offscreencanvas" "~2019.3.0"
     "@types/seedrandom" "^2.4.28"
-    "@types/webgl-ext" "0.0.30"
     seedrandom "^3.0.5"
 
-"@tensorflow/tfjs-converter@^4.9.0":
-  version "4.9.0"
-  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-4.9.0.tgz#7958f563043b3c54f757f47d2b5b08e963f466ad"
-  integrity sha512-mRlzdG3jVsxMkFfHFgDNY10HMoh+vtfPPIghtY+Fc4U/ZnBUFvSfZqwEFyXfOJAewn4fY4BX8+6RE4a0kRXqGA==
+"@tensorflow/tfjs-converter@^4.22.0":
+  version "4.22.0"
+  resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-4.22.0.tgz#a5d727c1d97cf1fafda18b79be278e83b38a1ad3"
+  integrity sha512-PT43MGlnzIo+YfbsjM79Lxk9lOq6uUwZuCc8rrp0hfpLjF6Jv8jS84u2jFb+WpUeuF4K33ZDNx8CjiYrGQ2trQ==
 
 "@types/emscripten@~0.0.34":
   version "0.0.34"
@@ -1047,11 +1046,6 @@
   version "2.4.30"
   resolved "https://registry.yarnpkg.com/@types/seedrandom/-/seedrandom-2.4.30.tgz#d2efe425869b84163c2d56e779dddadb9372cbfa"
   integrity sha512-AnxLHewubLVzoF/A4qdxBGHCKifw8cY32iro3DQX9TPcetE95zBeVt3jnsvtvAUf1vwzMfwzp4t/L2yqPlnjkQ==
-
-"@types/webgl-ext@0.0.30":
-  version "0.0.30"
-  resolved "https://registry.yarnpkg.com/@types/webgl-ext/-/webgl-ext-0.0.30.tgz#0ce498c16a41a23d15289e0b844d945b25f0fb9d"
-  integrity sha512-LKVgNmBxN0BbljJrVUwkxwRYqzsAEPcZOe6S2T6ZaBDIrFp0qu4FNlpc5sM1tGbXUYFgdVQIoeLk1Y1UoblyEg==
 
 abab@^2.0.0:
   version "2.0.5"
@@ -4215,9 +4209,9 @@ lodash.uniq@^4.5.0:
   integrity sha1-0CJTc662Uq3BvILklFM5qEJ1R3M=
 
 lodash@^4.17.15, lodash@^4.17.19, lodash@^4.17.4, lodash@^4.3.0:
-  version "4.17.21"
-  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.21.tgz#679591c564c3bffaae8454cf0b3df370c3d6911c"
-  integrity sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==
+  version "4.17.23"
+  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.23.tgz#f113b0378386103be4f6893388c73d0bde7f2c5a"
+  integrity sha512-LgVTMpQtIopCi79SJeDiP0TfWi5CNEc/L/aRdTh3yIvmZXTnheWpKjSZhnvMl8iXbC1tFg9gdHHDMLoV7CnG+w==
 
 log-symbols@^2.2.0:
   version "2.2.0"
