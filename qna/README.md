@@ -11,7 +11,7 @@ This app uses a compressed version of BERT, [MobileBERT](https://openreview.net/
 
 [SQuAD](https://rajpurkar.github.io/SQuAD-explorer/), or Stanford Question Answering Dataset, is a reading comprehension dataset consisting of articles from Wikipedia and a set of question-answer pairs for each article.
 
-The model takes a passage and a question as input, then returns a segment of the passage that most likely answers the question. It requires semi-complex pre-processing including tokenization and post-processing steps that are described in the BERT [paper](https://arxiv.org/abs/1810.04805) and implemented in the sample app. This model is also available in [TFLite](https://www.tensorflow.org/lite/models/bert_qa/overview).
+The model takes a passage and a question as input, then returns a segment of the passage that most likely answers the question. It requires semi-complex pre-processing including tokenization and post-processing steps that are described in the BERT [paper](https://arxiv.org/abs/1810.04805) and implemented in the sample app. This model is also available in [TFLite](https://www.tensorflow.org/lite/models/modify/model_maker/question_answer).
 
 ## Usage
 
