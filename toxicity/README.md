@@ -51,24 +51,45 @@ toxicity.load(threshold).then(model => {
     // final prediction in `match` (either `false` or `true`).
     // If neither prediction exceeds the threshold, `match` is `null`.
 
-    console.log(predictions);
+    predictions.forEach(prediction => {
+        console.log("Label:", prediction.label);
+        prediction.results.forEach(result => {
+          for (const [key, value] of Object.entries(result)) {
+            console.log("\t-", key, ":", value);
+          }
+        });
+        console.log(); // Add an empty line between predictions
+      });
+  });
     /*
     prints:
-    {
-      "label": "identity_attack",
-      "results": [{
-        "probabilities": [0.9659664034843445, 0.03403361141681671],
-        "match": false
-      }]
-    },
-    {
-      "label": "insult",
-      "results": [{
-        "probabilities": [0.08124706149101257, 0.9187529683113098],
-        "match": true
-      }]
-    },
-    ...
+    Label: identity_attack
+        - probabilities : Float32Array(2) [ 0.9659663438796997, 0.034033700823783875 ]
+        - match : false
+
+    Label: insult
+        - probabilities : Float32Array(2) [ 0.08124702423810959, 0.9187529683113098 ]
+        - match : true
+
+    Label: obscene
+        - probabilities : Float32Array(2) [ 0.3993152379989624, 0.6006847620010376 ]
+        - match : null
+
+    Label: severe_toxicity
+        - probabilities : Float32Array(2) [ 0.9970394968986511, 0.002960436511784792 ]
+        - match : false
+
+    Label: sexual_explicit
+        - probabilities : Float32Array(2) [ 0.7053251266479492, 0.2946748435497284 ]
+        - match : null
+
+    Label: threat
+        - probabilities : Float32Array(2) [ 0.9106737971305847, 0.08932614326477051 ]
+        - match : false
+
+    Label: toxicity
+        - probabilities : Float32Array(2) [ 0.031176716089248657, 0.9688233137130737 ]
+        - match : true
      */
   });
 });
