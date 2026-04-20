@@ -14,7 +14,7 @@
  * limitations under the License.
  * =============================================================================
  */
-import * as faceDetection from '@mediapipe/face_detection';
+import faceDetection from '@mediapipe/face_detection';
 import * as tf from '@tensorflow/tfjs-core';
 
 import {MEDIAPIPE_FACE_DETECTOR_KEYPOINTS} from '../constants';

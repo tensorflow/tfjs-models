@@ -40,6 +40,7 @@ function config({plugins = [], output = {}, tsCompilerOptions = {}}) {
   const defaultTsOptions = {
     include: ['src/**/*.ts'],
     module: 'ES2015',
+    allowSyntheticDefaultImports: true
   };
   const tsoptions = Object.assign({}, defaultTsOptions, tsCompilerOptions);
 
