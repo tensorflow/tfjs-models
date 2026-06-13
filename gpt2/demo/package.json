@@ -18,7 +18,7 @@
   },
   "devDependencies": {
     "@tensorflow/tfjs-backend-cpu": "^4.22.0",
-    "esbuild": "^0.19.0",
+    "esbuild": "^0.28.1",
     "eslint": "^8.46.0",
     "eslint-config-google": "^0.14.0",
     "mkdirp": "^3.0.1"
