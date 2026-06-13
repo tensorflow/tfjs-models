@@ -29,7 +29,7 @@
   "devDependencies": {
     "clang-format": "~1.8.0",
     "dat.gui": "~0.7.9",
-    "esbuild": "^0.17.10",
+    "esbuild": "^0.28.1",
     "eslint": "~8.35.0",
     "eslint-config-google": "~0.14.0",
     "mkdirp": "^2.1.3"
